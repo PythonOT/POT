@@ -59,7 +59,7 @@ def sinkhorn(a,b, M, reg,numItermax = 1000,stopThr=1e-9):
 
     #print reg
  
-    K = np.exp(-reg*M)
+    K = np.exp(-M/reg)
     #print np.min(K)
       
     Kp = np.dot(np.diag(1/a),K)

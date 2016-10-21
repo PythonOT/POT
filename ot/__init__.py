@@ -1,11 +1,13 @@
 
+# utils submodules
+import utils
+import datasets
 
-
+# Ot functions
 from emd import emd
 from bregman import sinkhorn
 
-import utils
-import datasets
+
 
 from utils import dist,dots
 
