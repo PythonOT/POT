@@ -8,7 +8,7 @@ from Cython.Build import cythonize
 import os
 #import glob
 
-version=0.1
+version='0.1'
 
 ROOT = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(ROOT, 'README.md')).read()
