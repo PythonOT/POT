@@ -20,7 +20,7 @@ setup(name='python-webgen',
       author=u'Remi Flamary',
       author_email='remi.flamary@gmail.com',
       url='https://github.com/rflamary/POT',
-      packages=['ot','ot.emd'],
+      packages=['ot','ot.emd','ot.bregman'],
      ext_modules = cythonize(Extension(
                 "ot.emd.emd",                                # the extesion name
                  sources=["ot/emd/emd.pyx", "ot/emd/EMD_wrap.cpp"], # the Cython source and
