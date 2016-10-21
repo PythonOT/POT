@@ -2,11 +2,11 @@
 
 from distutils.core import setup, Extension
 import numpy
-from Cython.Distutils import build_ext
+#from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 
 import os
-import glob
+#import glob
 
 version=0.1
 
