@@ -5,7 +5,7 @@ from matplotlib import gridspec
 
 
 def otplot1D(a,b,M,title=''):
-    """ Plot a with the source and target 1D distribution """
+    """ Plot matrix M  with the source and target 1D distribution """
     
     na=M.shape[0]
     nb=M.shape[1]
