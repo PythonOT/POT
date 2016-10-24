@@ -36,14 +36,14 @@ pl.legend()
 #%% plot distributions and loss matrix
 
 pl.figure(2)
-ot.plot.otplot1D(a,b,M,'Cost matrix M')
+ot.plot.plot1D_mat(a,b,M,'Cost matrix M')
 
 #%% EMD
 
 G0=ot.emd(a,b,M)
 
 pl.figure(3)
-ot.plot.otplot1D(a,b,G0,'OT matrix G0')
+ot.plot.plot1D_mat(a,b,G0,'OT matrix G0')
 
 #%% Sinkhorn
 
@@ -51,4 +51,4 @@ lambd=1e-3
 Gs=ot.sinkhorn(a,b,M,lambd)
 
 pl.figure(4)
-ot.plot.otplot1D(a,b,Gs,'OT matrix Sinkhorn')
+ot.plot.plot1D_mat(a,b,Gs,'OT matrix Sinkhorn')

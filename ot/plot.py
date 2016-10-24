@@ -4,7 +4,7 @@ import matplotlib.pylab as pl
 from matplotlib import gridspec
 
 
-def otplot1D(a,b,M,title=''):
+def plot1D_mat(a,b,M,title=''):
     """ Plot matrix M  with the source and target 1D distribution """
     
     na=M.shape[0]
@@ -38,7 +38,7 @@ def otplot1D(a,b,M,title=''):
     pl.xlim((0,nb))
 
 
-def otplot2D_samples(xs,xt,G,thr=1e-8,**kwargs):
+def plot2D_samples_mat(xs,xt,G,thr=1e-8,**kwargs):
     """ Plot matrix M  in 2D with  lines using alpha values"""
     if ('color' not in kwargs) and ('c' not  in kwargs):
         kwargs['color']='k'
