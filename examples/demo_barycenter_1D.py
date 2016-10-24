@@ -42,9 +42,8 @@ pl.title('Distributions')
 bary_l2=A.mean(1)
 
 # wasserstein
-reg=1e-2
-log=dict()
-bary_wass=ot.bregman.barycenter(A,M,reg,log=log)
+reg=1e-3
+bary_wass,log=ot.bregman.barycenter(A,M,reg)
 
 pl.figure(2)
 pl.clf()

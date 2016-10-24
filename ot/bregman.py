@@ -136,7 +136,7 @@ def barycenter(A,M,reg, weights=None, numItermax = 1000, tol_error=1e-4,log=dict
             log['all_err'].append(err)
         
     log['niter']=cpt
-    return geometricBar(weights,UKv)
+    return geometricBar(weights,UKv),log
     
 
 def unmixBregman(distrib,D,M,M0,h0,reg,reg0,alpha,numItermax = 1000, tol_error=1e-3,log=dict()):
@@ -181,4 +181,4 @@ def unmixBregman(distrib,D,M,M0,h0,reg,reg0,alpha,numItermax = 1000, tol_error=1
         
         
     log['niter']=cpt
-    return np.sum(K0,axis=1)
+    return np.sum(K0,axis=1),log
