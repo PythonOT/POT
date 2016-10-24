@@ -2,6 +2,8 @@
 # utils submodules
 import utils
 import datasets
+import plot
+
 
 # Ot functions
 from emd import emd
