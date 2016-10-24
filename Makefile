@@ -30,3 +30,10 @@ sremove :
 	$(PYTHON) setup.py install  --record files.txt
 	tr '\n' '\0' < files.txt | sudo xargs -0 rm -f --
 	rm files.txt
+
+clean :
+	$(PYTHON) setup.py clean
+	
+notebook :
+	ipython notebook --matplotlib=inline  --notebook-dir=examples/
+
