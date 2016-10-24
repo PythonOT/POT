@@ -31,6 +31,11 @@ sremove :
 	tr '\n' '\0' < files.txt | sudo xargs -0 rm -f --
 	rm files.txt
 
+doc :
+	cd docs
+	make html
+	cd ..
+	
 clean :
 	$(PYTHON) setup.py clean
 	
