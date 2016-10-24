@@ -116,7 +116,7 @@ def barycenter(A,M,reg, weights=None, numItermax = 1000, tol_error=1e-4,log=dict
 
     #compute Mmax once for all
     #M = M/np.median(M) # suggested by G. Peyre
-    K = np.exp(-reg*M)
+    K = np.exp(-M/reg)
 
     cpt = 0
     err=1
@@ -124,7 +124,8 @@ def barycenter(A,M,reg, weights=None, numItermax = 1000, tol_error=1e-4,log=dict
     UKv=np.dot(K,np.divide(A.T,np.sum(K,axis=0)).T)
     u = (geometricMean(UKv)/UKv.T).T
     
-    log = {'niter':0, 'all_err':[]}
+    log['niter']=0
+    log['all_err']=[]
     
     while (err>tol_error and cpt<numItermax):
         cpt = cpt +1
@@ -149,16 +150,19 @@ def unmixBregman(distrib,D,M,M0,h0,reg,reg0,alpha,numItermax = 1000, tol_error=1
         alpha : how much should we trust the prior ? ([0,1])
     """
         
-    M = M/np.median(M) 
-    K = np.exp(-reg*M)
+    #M = M/np.median(M) 
+    K = np.exp(-M/reg)
  
-    M0 = M0/np.median(M0)  
-    K0 = np.exp(-reg0*M0)
+    #M0 = M0/np.median(M0)  
+    K0 = np.exp(-M0/reg0)
     old = h0
 
     err=1
     cpt=0    
-    log = {'niter':0, 'all_err':[]}
+    #log = {'niter':0, 'all_err':[]}
+    log['niter']=0
+    log['all_err']=[]
+    
     
     while (err>tol_error and cpt<numItermax):
         K = projC(K,distrib)  

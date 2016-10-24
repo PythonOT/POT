@@ -62,7 +62,7 @@ pl.title('OT matrix')
 
 #%% sinkhorn
 
-lambd=.8e-1
+lambd=1e-1
 Gs=ot.sinkhorn(a,b,M,lambd)
 
 

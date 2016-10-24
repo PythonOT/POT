@@ -8,9 +8,9 @@ import bregman
 
 # OT functions
 from emd import emd
-from bregman import sinkhorn
+from bregman import sinkhorn,barycenter
 
 # utils functions
 from utils import dist,unif
 
-__all__ = ["emd","sinkhorn","utils",'datasets','bregman','plot','dist','unif']
+__all__ = ["emd","sinkhorn","utils",'datasets','bregman','plot','dist','unif','barycenter']
