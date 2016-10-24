@@ -15,4 +15,4 @@ from bregman import sinkhorn
 
 from utils import dist,dots
 
-__all__ = ["emd","sinkhorn","utils",'datasets','plot','dist','dot']
+__all__ = ["emd","sinkhorn","utils",'datasets','plot','dist','dots']
