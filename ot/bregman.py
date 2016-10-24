@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 21 09:40:21 2016
-
-@author: rflamary
+Bregman projection for regularized Otimal transport
 """
 
 import numpy as np

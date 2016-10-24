@@ -1,3 +1,7 @@
+"""
+Functions for plotting OT matrices
+"""
+
 
 import numpy as np
 import matplotlib.pylab as pl
