@@ -7,7 +7,6 @@ Created on Fri Oct 21 09:51:45 2016
 
 import numpy as np
 import matplotlib.pylab as pl
-
 import ot
 
 
@@ -30,17 +29,14 @@ M/=M.max()
 #%% plot the distributions
 
 pl.figure(1)
-
 pl.plot(x,a,'b',label='Source distribution')
 pl.plot(x,b,'r',label='Target distribution')
-
 pl.legend()
 
 #%% plot distributions and loss matrix
 
 pl.figure(2)
 ot.plot.otplot1D(a,b,M,'Cost matrix M')
-
 
 #%% EMD
 
@@ -50,8 +46,8 @@ pl.figure(3)
 ot.plot.otplot1D(a,b,G0,'OT matrix G0')
 
 #%% Sinkhorn
-lambd=1e-3
 
+lambd=1e-3
 Gs=ot.sinkhorn(a,b,M,lambd)
 
 pl.figure(4)

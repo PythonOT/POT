@@ -3,6 +3,11 @@ import numpy as np
 from scipy.spatial.distance import cdist
 
 
+def unif(n):
+    """ return a uniform histogram (simplex) """
+    return np.ones((n,))/n
+
+
 def dist(x1,x2=None,metric='sqeuclidean'):
     """Compute distance between samples in x1 and x2"""
     if x2 is None:

@@ -12,6 +12,6 @@ from emd import emd
 from bregman import sinkhorn
 
 # utils functions
-from utils import dist,dots
+from utils import dist,dots,unif
 
 __all__ = ["emd","sinkhorn","utils",'datasets','plot','dist','dots']
