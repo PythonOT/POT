@@ -6,12 +6,11 @@ import datasets
 import plot
 import bregman
 
-
 # OT functions
 from emd import emd
 from bregman import sinkhorn
 
 # utils functions
-from utils import dist,dots,unif
+from utils import dist,unif
 
-__all__ = ["emd","sinkhorn","utils",'datasets','bregman','plot','dist','dots']
+__all__ = ["emd","sinkhorn","utils",'datasets','bregman','plot','dist','unif']
