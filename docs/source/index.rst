@@ -11,16 +11,41 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+
+Module ot
+=========
+
+This module provide easy access to solvers for the most common OT problems
+
 .. automodule:: ot
    :members:
+
+Module ot.emd
+=========
 .. automodule:: ot.emd
    :members:
+
+Module ot.bregman
+=========
+
 .. automodule:: ot.bregman
    :members:
+
+Module ot.utils
+=========
+
 .. automodule:: ot.utils
    :members:
+
+Module ot.datasets
+=========
+
 .. automodule:: ot.datasets
    :members:
+
+Module ot.plot
+=========
+
 .. automodule:: ot.plot
    :members:
 
