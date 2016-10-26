@@ -13,7 +13,7 @@ version='0.1'
 ROOT = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(ROOT, 'README.md')).read()
 
-setup(name='python-webgen',
+setup(name='POT',
       version=version,
       description='Python Optimal Transport Library',
       long_description=README,
