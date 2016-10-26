@@ -6,6 +6,7 @@ import datasets
 import plot
 import bregman
 import da
+import optim 
 
 # OT functions
 from emd import emd

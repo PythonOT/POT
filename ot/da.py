@@ -2,8 +2,6 @@
 domain adaptation with optimal transport
 """
 import numpy as np
-from scipy.spatial.distance import cdist
-
 from bregman import sinkhorn
 
 
