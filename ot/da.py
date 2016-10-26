@@ -48,3 +48,4 @@ def sinkhorn_lpl1_mm(a,labels_a, b, M, reg, eta=0.1):
                 W[indices_labels[0],t]=np.min(all_maj)
     
     return transp
+    

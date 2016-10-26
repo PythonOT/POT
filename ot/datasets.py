@@ -37,17 +37,17 @@ def get_data_classif(dataset,n,nz=.5,**kwargs):
         x[y==2,0]=-1.; x[y==2,1]=1.
         x[y==3,0]=1. ; x[y==3,1]=0
         
-        x[y!=3,:]+=nz*np.random.randn(sum(y!=3),2)
+        x[y!=3,:]+=1.5*nz*np.random.randn(sum(y!=3),2)
         x[y==3,:]+=2*nz*np.random.randn(sum(y==3),2)
         
     elif dataset.lower()=='3gauss2':
-        y=np.floor((np.arange(n)*1.0/n*4))+1
+        y=np.floor((np.arange(n)*1.0/n*3))+1
         x=np.zeros((n,2))
         y[y==4]=3
         # class 1
-        x[y==1,0]=-1.; x[y==1,1]=-1.
-        x[y==2,0]=-1.; x[y==2,1]=1.
-        x[y==3,0]=1. ; x[y==3,1]=0
+        x[y==1,0]=-2.; x[y==1,1]=-2.
+        x[y==2,0]=-2.; x[y==2,1]=2.
+        x[y==3,0]=2. ; x[y==3,1]=0
         
         x[y!=3,:]+=nz*np.random.randn(sum(y!=3),2)
         x[y==3,:]+=2*nz*np.random.randn(sum(y==3),2)   
