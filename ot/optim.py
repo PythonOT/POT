@@ -120,7 +120,7 @@ def cg(a,b,M,reg,f,df,G0=None,numItermax = 200,stopThr=1e-9,verbose=False,log=Fa
         deltaG=Gc-G
         
         # line search
-        alpha,fc,f_val = line_search_armijo(f,G,deltaG,Mi,f_val)
+        alpha,fc,f_val = line_search_armijo(cost,G,deltaG,Mi,f_val)
         
         
         G=G+alpha*deltaG
