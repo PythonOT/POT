@@ -30,11 +30,11 @@ After a correct installation, you should be able to import the module without er
 import ot
 ```
 
-Note that for easier acesss the module is name ot instead of pot.
+Note that for easier access the module is name ot instead of pot.
 
 ## Examples
 
-The examples folder contain several examples abnd use case for the library. Here is a list of the Ypython notebook if you want a quick look.
+The examples folder contain several examples and use case for the library. Here is a list of the Python notebook if you want a quick look.
 
 * [1D optimal transport](examples/Demo_1D_OT.ipynb)
 
