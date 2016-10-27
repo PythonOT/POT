@@ -8,7 +8,7 @@ Created on Wed Oct 26 15:08:19 2016
 import numpy as np
 import scipy as sp
 from scipy.optimize.linesearch import scalar_search_armijo
-from emd import emd
+from lp import emd
 
 # The corresponding scipy function does not work for matrices
 def line_search_armijo(f,xk,pk,gfk,old_fval,args=(),c1=1e-4,alpha0=0.99):

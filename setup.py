@@ -30,15 +30,15 @@ setup(name='POT',
       packages=find_packages(),
       ext_modules = cythonize(Extension(
                 "ot.emd.emd",                                # the extension name
-                 sources=["ot/emd/emd.pyx", "ot/emd/EMD_wrap.cpp"], # the Cython source and
+                 sources=["ot/lp/emd.pyx", "ot/lp/EMD_wrap.cpp"], # the Cython source and
                                                         # additional C++ source files
                  language="c++",                        # generate and compile C++ code,
-                 include_dirs=[numpy.get_include(),os.path.join(ROOT,'ot/emd')])),
+                 include_dirs=[numpy.get_include(),os.path.join(ROOT,'ot/lp')])),
       platforms=['linux','macosx','windows'],
       license = 'MIT',
       scripts=[],
       data_files=[],
-      requires=["numpy (>=1.11)"],
+      requires=["numpy (>=1.11)","scipy (>=0.17)"],
       classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
