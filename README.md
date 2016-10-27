@@ -1,39 +1,57 @@
-# POT: Python Optimal Transport library
+# POT: Python Optimal Transport
 
 This open source Python library provide several solvers for optimization problems related to Optimal Transport for signal, image processing and machine learning.
 
 It provides the following solvers:
-* Linear program (LP) OT solver/ Earth Movers Distance (using code from Antoine Rolet and Nicolas Bonneel [1]).
+* OT solver for the linear program/ Earth Movers Distance [1].
 * Entropic regularization OT solver  with Sinkhorn Knopp Algorithm [2].
 * Bregman projections for Wasserstein barycenter [3] and unmixing [4].
 * Optimal transport for domain adaptation with group lasso regularization [5]
 * Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
 
-Some demonstrations (both in Python and Jupyter Notebook Format) are available in the examples folder.
-
+Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 
 ## Installation
 
+The Library has been tested on Linux and MacOSX. It requires a C++ compiler for using the EMD solver and rely on the following Python modules:
+
+- Numpy (>=1.11)
+- Scipy (>=0.17)
+
+To install the library, you can install it locally (after downloading it) on you machine using
+```
+python setup.py install --user
+```
+
+
+
+After a correct installation, you should be able to import the module without errors:
+```python
+import ot
+```
+
+Note that for easier acesss the module is name ot instead of pot.
 
 ## Examples
 
 The examples folder contain several examples abnd use case for the library. Here is a list of the Ypython notebook if you want a quick look.
 
-* [1D Optimal transport](examples/Demo_1D_OT.ipynb)
+* [1D optimal transport](examples/Demo_1D_OT.ipynb)
 
 
 ## Acknowledgements
 
-The main developers of this library are:
-* Rémi Flamary
-* Nicolas Courty
+The contributors to this library are:
+* [Rémi Flamary](http://remi.flamary.com/)
+* [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
+* [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/)
 
 This toolbox benefit a lot from Open Source research and we would like to thank the Following persons for providing some code (in various languages):
 
-* Gabriel Peyré (Wasserstein Barycenters in Matlab)
-* Nicolas Bonneel ( C++ code for EMD)
-* Antoine Rolet ( Mex file fro EMD )
-* Marco Cuturi (Sinkhorn Knopp in Matlab/Cuda)
+* [Gabriel Peyré](http://gpeyre.github.io/) (Wasserstein Barycenters in Matlab)
+* [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) ( C++ code for EMD)
+* [Antoine Rolet](https://arolet.github.io/) ( Mex file for EMD )
+* [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
 
 ## References
 
