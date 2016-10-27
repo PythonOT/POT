@@ -9,9 +9,7 @@ import numpy as np
 import matplotlib.pylab as pl
 import ot
 
-
-
-#%% parameters
+#%% parameters and data generation
 
 n=20 # nb samples
 
@@ -24,7 +22,7 @@ cov_t=np.array([[1,-.8],[-.8,1]])
 xs=ot.datasets.get_2D_samples_gauss(n,mu_s,cov_s)
 xt=ot.datasets.get_2D_samples_gauss(n,mu_t,cov_t)
 
-a,b = ot.unif(n),ot.unif(n)
+a,b = ot.unif(n),ot.unif(n) # uniform distribution on samples
 
 # loss matrix
 M=ot.dist(xs,xt)
@@ -46,7 +44,6 @@ pl.title('Cost matrix M')
 #%% EMD
 
 G0=ot.emd(a,b,M)
-
 
 pl.figure(3)
 pl.imshow(G0,interpolation='nearest')
@@ -78,14 +75,4 @@ pl.plot(xt[:,0],xt[:,1],'xr',label='Target samples')
 pl.legend(loc=0)
 pl.title('OT matrix Sinkhorn with samples')
 
-#
-#pl.figure(3)
-#ot.plot.otplot1D(a,b,G0,'OT matrix G0')
-#
-##%% Sinkhorn
-#
-#lambd=1e-3
-#Gs=ot.sinkhorn(a,b,M,lambd)
-#
-#pl.figure(4)
-#ot.plot.otplot1D(a,b,Gs,'OT matrix Sinkhorn')
+
