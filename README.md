@@ -1,14 +1,13 @@
 # POT: Python Optimal Transport library
-Python Optimal Transport library
 
-This Python library is an open source implementation of several functions that allow to solve optimal transport problems in Python.
+This open source Python library provide several solvers for optimization problems related to Optimal Transport for signal, image processing and machine learning.
 
 It provides the following solvers:
 * Linear program (LP) OT solver/ Earth Movers Distance (using code from Antoine Rolet and Nicolas Bonneel [1]).
 * Entropic regularization OT solver  with Sinkhorn Knopp Algorithm [2].
 * Bregman projections for Wasserstein barycenter [3] and unmixing [4].
 * Optimal transport for domain adaptation with group lasso regularization [5]
-* Conditional gradient and Generalized conditional gradient for regularized OT [5].
+* Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
 
 Some demonstrations (both in Python and Jupyter Notebook Format) are available in the examples folder.
 
@@ -17,6 +16,11 @@ Some demonstrations (both in Python and Jupyter Notebook Format) are available i
 
 
 ## Examples
+
+The examples folder contain several examples abnd use case for the library. Here is a list of the Ypython notebook if you want a quick look.
+
+* [1D Optimal transport](examples/Demo_1D_OT.ipynb)
+
 
 ## Acknowledgements
 
@@ -44,3 +48,5 @@ This toolbox benefit a lot from Open Source research and we would like to thank 
 [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, "Optimal Transport for Domain Adaptation," in IEEE Transactions on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
 
 [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). Regularized discrete optimal transport. SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
+
+[7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized conditional gradient: analysis of convergence and applications. arXiv preprint arXiv:1510.06567.
