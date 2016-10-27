@@ -1,17 +1,17 @@
 # Python Optimal Transport toolbox
 
 # All submodules and packages
-import utils
-import datasets
-import plot
-import bregman
-import da
-import optim 
+from . import utils
+from . import datasets
+from . import plot
+from . import bregman
+from . import da
+from . import optim 
 
 # OT functions
-from emd import emd
-from bregman import sinkhorn,barycenter
-from da import sinkhorn_lpl1_mm
+from ot.emd import emd
+from ot.bregman import sinkhorn,barycenter
+from ot.da import sinkhorn_lpl1_mm
 
 # utils functions
 from utils import dist,unif

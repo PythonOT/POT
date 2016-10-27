@@ -40,7 +40,7 @@ def f(G):
 def df(G):
 #    return G
     return np.log(G)+1
-reg=1e-3
+reg=1e-1
   
 Greg=ot.optim.cg(a,b,M,reg,f,df,verbose=True)
 

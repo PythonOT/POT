@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 
-from distutils.core import setup, Extension
+from setuptools import setup, find_packages
+from codecs import open
+from os import path
 import numpy
-#from Cython.Distutils import build_ext
+from setuptools.extension import Extension
 from Cython.Build import cythonize
+
+
+here = path.abspath(path.dirname(__file__))
+
+
 
 import os
 #import glob
@@ -17,16 +24,14 @@ setup(name='POT',
       version=version,
       description='Python Optimal Transport Library',
       long_description=README,
-      author=u'Remi Flamary',
-      author_email='remi.flamary@gmail.com',
+      author=u'Remi Flamary, Nicolas Courty',
+      author_email='remi.flamary@gmail.com, ncourty@gmail.com',
       url='https://github.com/rflamary/POT',
-      packages=['ot','ot.emd'],
-     ext_modules = cythonize(Extension(
-                "ot.emd.emd",                                # the extesion name
+      packages=find_packages(),
+      ext_modules = cythonize(Extension(
+                "ot.emd.emd",                                # the extension name
                  sources=["ot/emd/emd.pyx", "ot/emd/EMD_wrap.cpp"], # the Cython source and
                                                         # additional C++ source files
-                 #extra_compile_args=['-fopenmp'],
-                 #extra_link_args=['-fopenmp'],
                  language="c++",                        # generate and compile C++ code,
                  include_dirs=[numpy.get_include(),os.path.join(ROOT,'ot/emd')])),
       platforms=['linux','macosx','windows'],
