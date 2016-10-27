@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 21 09:51:45 2016
+Demo for 2D Optimal transport between empirical distributions
 
 @author: rflamary
 """

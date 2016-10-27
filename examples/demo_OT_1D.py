@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 21 09:51:45 2016
+Demo for 1D optimal transport
 
 @author: rflamary
 """
