@@ -11,7 +11,7 @@ help :
 	@echo "    remove - remove the package (local user)"
 	@echo "    sremove - remove the package (system with sudo)"
 	@echo "    clean - remove any temporary files"
-
+	@echo "    notebook - launch ipython notebook"	
 build :
 	$(PYTHON) setup.py build
 
@@ -30,10 +30,9 @@ sremove :
 	$(PYTHON) setup.py install  --record files.txt
 	tr '\n' '\0' < files.txt | sudo xargs -0 rm -f --
 	rm files.txt
-	
+
 clean :
 	$(PYTHON) setup.py clean
-	
+
 notebook :
 	ipython notebook --matplotlib=inline  --notebook-dir=examples/
-
