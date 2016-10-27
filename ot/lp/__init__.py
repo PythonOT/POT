@@ -1,3 +1,3 @@
 
 
-from . import emd
+from .emd import emd
