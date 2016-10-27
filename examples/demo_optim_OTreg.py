@@ -34,12 +34,13 @@ ot.plot.plot1D_mat(a,b,G0,'OT matrix G0')
 #%% exampel of regularization with Frobnisu norm
 
 def f(G):
-    return 0.5*np.sum(G**2)
+    #return 0.5*np.sum(G**2)
+    return np.sum(G*np.log(G))
     
 def df(G):
-    return G
-
-reg=1e1
+#    return G
+    return np.log(G)+1
+reg=1e-3
   
 Greg=ot.optim.cg(a,b,M,reg,f,df,verbose=True)
 
