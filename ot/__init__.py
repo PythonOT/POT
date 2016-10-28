@@ -12,9 +12,9 @@ from . import da
 
 
 # OT functions
-from ot.lp import emd
-from ot.bregman import sinkhorn,barycenter
-from ot.da import sinkhorn_lpl1_mm
+from .lp import emd
+from .bregman import sinkhorn,barycenter
+from .da import sinkhorn_lpl1_mm
 
 # utils functions
 from utils import dist,unif
