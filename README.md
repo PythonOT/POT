@@ -34,7 +34,9 @@ Note that for easier access the module is name ot instead of pot.
 
 ## Examples
 
-The examples folder contain several examples and use case for the library. Here is a list of the Python notebook if you want a quick look.
+The examples folder contain several examples and use case for the library.
+
+ Here is a list of the Python notebook if you want a quick look:
 
 * [1D optimal transport](examples/Demo_1D_OT.ipynb)
 * [2D optimal transport on empirical distributions](examples/Demo_2D_OT_samples.ipynb)
@@ -47,7 +49,7 @@ The contributors to this library are:
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
 * [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/)
 
-This toolbox benefit a lot from Open Source research and we would like to thank the Following persons for providing some code (in various languages):
+This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
 * [Gabriel Peyré](http://gpeyre.github.io/) (Wasserstein Barycenters in Matlab)
 * [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) ( C++ code for EMD)
