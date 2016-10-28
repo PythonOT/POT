@@ -1,13 +1,14 @@
 # Python Optimal Transport toolbox
 
 # All submodules and packages
+from . import lp 
+from . import bregman
+from . import optim 
 from . import utils
 from . import datasets
 from . import plot
-from . import bregman
-from . import lp 
 from . import da
-from . import optim 
+
 
 
 # OT functions

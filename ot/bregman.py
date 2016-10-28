@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Bregman projection for regularized Otimal transport
+Bregman projections for regularized OT
 """
 
 import numpy as np
 
 
-def sinkhorn(a,b, M, reg,numItermax = 1000,stopThr=1e-9):
+def sinkhorn(a,b, M, reg,numItermax = 1000,stopThr=1e-9,verbose=False,log=False):
     """
     Solve the entropic regularization optimal transport problem and return the OT matrix
     
@@ -43,14 +43,18 @@ def sinkhorn(a,b, M, reg,numItermax = 1000,stopThr=1e-9):
         Max number of iterations
     stopThr: float, optional
         Stop threshol on error (>0)
-    
+    verbose : int, optional
+        Print information along iterations
+    log : int, optional
+        record log if True    
   
     
     Returns
     -------
     gamma: (ns x nt) ndarray
         Optimal transportation matrix for the given parameters
-        
+    log: dict
+        log dictionary return only if log==True in parameters         
 
     Examples
     --------
@@ -91,6 +95,8 @@ def sinkhorn(a,b, M, reg,numItermax = 1000,stopThr=1e-9):
     
     
     cpt = 0
+    if log:
+        log={'loss':[]}
     
     # we assume that no distances are null except those of the diagonal of distances
     u = np.ones(Nini)/Nini
@@ -124,10 +130,19 @@ def sinkhorn(a,b, M, reg,numItermax = 1000,stopThr=1e-9):
             # we can speed up the process by checking for the error only all the 10th iterations
             transp = np.dot(np.diag(u),np.dot(K,np.diag(v)))
             err = np.linalg.norm((np.sum(transp,axis=0)-b))**2
+            if log:
+                log['loss'].append(err)        
+        
+            if verbose:
+                if cpt%200 ==0:
+                    print('{:5s}|{:12s}'.format('It.','Err')+'\n'+'-'*19)
+                print('{:5d}|{:8e}|'.format(cpt,err))
         cpt = cpt +1
     #print 'err=',err,' cpt=',cpt  
-
-    return np.dot(np.diag(u),np.dot(K,np.diag(v)))
+    if log:
+        return np.dot(np.diag(u),np.dot(K,np.diag(v))),log
+    else:
+        return np.dot(np.diag(u),np.dot(K,np.diag(v)))
 
 
 def geometricBar(weights,alldistribT):
