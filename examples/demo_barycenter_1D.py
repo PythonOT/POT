@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 21 09:51:45 2016
+1D Wasserstein barycenter demo
 
 @author: rflamary
 """
@@ -22,10 +22,11 @@ x=np.arange(n,dtype=np.float64)
 a1=ot.datasets.get_1D_gauss(n,m=20,s=20) # m= mean, s= std
 a2=ot.datasets.get_1D_gauss(n,m=60,s=60)
 
+# creating matrix A containing all distributions
 A=np.vstack((a1,a2)).T
 nbd=A.shape[1]
 
-# loss matrix
+# loss matrix + normalization
 M=ot.utils.dist0(n)
 M/=M.max()
 
