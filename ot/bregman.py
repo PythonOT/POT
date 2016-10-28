@@ -39,6 +39,11 @@ def sinkhorn(a,b, M, reg,numItermax = 1000,stopThr=1e-9):
         loss matrix        
     reg: float
         Regularization term >0
+    numItermax: int, optional
+        Max number of iterations
+    stopThr: float, optional
+        Stop threshol on error (>0)
+    
   
     
     Returns
