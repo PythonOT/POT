@@ -15,7 +15,7 @@ here = path.abspath(path.dirname(__file__))
 import os
 #import glob
 
-version='0.1'
+version='0.1.3'
 
 ROOT = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(ROOT, 'README.md')).read()
@@ -35,6 +35,7 @@ setup(name='POT',
                  language="c++",                        # generate and compile C++ code,
                  include_dirs=[numpy.get_include(),os.path.join(ROOT,'ot/lp')])),
       platforms=['linux','macosx','windows'],
+      download_url='https://github.com/rflamary/POT/archive/V0.1.tar.gz',
       license = 'MIT',
       scripts=[],
       data_files=[],

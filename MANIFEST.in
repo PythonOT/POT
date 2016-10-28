@@ -1,0 +1,7 @@
+graft ot/lp/
+include README.md
+include ot/lp/core.h
+include ot/lp/EMD.h
+include ot/lp/emd.pyx
+include ot/lp/full_bipartitegraph.h
+include ot/lp/network_simplex_simple.h
