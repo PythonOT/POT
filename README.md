@@ -38,6 +38,7 @@ The examples folder contain several examples and use case for the library. Here 
 
 * [1D optimal transport](examples/Demo_1D_OT.ipynb)
 * [2D optimal transport on empirical distributions](examples/Demo_2D_OT_samples.ipynb)
+* [1D Wasserstein barycenter](examples/Demo_1D_barycenter.ipynb)
 
 ## Acknowledgements
 

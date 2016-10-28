@@ -12,3 +12,8 @@ Examples
 -----------------------------------------------
 
 .. literalinclude:: ../../examples/demo_OT_2D_samples.py
+
+1D Wasserstein barycenter
+-------------------------
+
+.. literalinclude:: ../../examples/demo_barycenter_1D.py
