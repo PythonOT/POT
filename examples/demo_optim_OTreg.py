@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-demo of Optimal transport for domain adaptation
+Regularized OT with generic solver
 """
 
 import numpy as np
@@ -31,18 +31,26 @@ G0=ot.emd(a,b,M)
 pl.figure(3)
 ot.plot.plot1D_mat(a,b,G0,'OT matrix G0')
 
-#%% exampel of regularization with Frobnisu norm
+#%% Example with Frobenisu norm regularization
 
-def f(G):
-    #return 0.5*np.sum(G**2)
-    return np.sum(G*np.log(G))
-    
-def df(G):
-#    return G
-    return np.log(G)+1
+def f(G): return 0.5*np.sum(G**2)
+def df(G): return G
+
 reg=1e-1
   
-Greg=ot.optim.cg(a,b,M,reg,f,df,verbose=True)
+Gl2=ot.optim.cg(a,b,M,reg,f,df,verbose=True)
+
+pl.figure(3)
+ot.plot.plot1D_mat(a,b,Gl2,'OT matrix Frob. reg')
+
+#%% Examlple with entropic regularization
+
+def f(G): return np.sum(G*np.log(G))
+def df(G): return np.log(G)+1
+    
+reg=1e-3
+  
+Ge=ot.optim.cg(a,b,M,reg,f,df,verbose=True)
 
 pl.figure(4)
-ot.plot.plot1D_mat(a,b,Greg,'OT matrix G0')
+ot.plot.plot1D_mat(a,b,Ge,'OT matrix Entrop. reg')

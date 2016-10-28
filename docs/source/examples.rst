@@ -17,3 +17,8 @@ Examples
 -------------------------
 
 .. literalinclude:: ../../examples/demo_barycenter_1D.py
+
+OT with user provided regularization
+------------------------------------
+
+.. literalinclude:: ../../examples/demo_optim_OTreg.py
