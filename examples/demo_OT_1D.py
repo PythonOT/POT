@@ -8,7 +8,7 @@ Demo for 1D optimal transport
 import numpy as np
 import matplotlib.pylab as pl
 import ot
-
+from ot.datasets import get_1D_gauss as gauss
 
 
 #%% parameters
@@ -19,8 +19,8 @@ n=100 # nb bins
 x=np.arange(n,dtype=np.float64)
 
 # Gaussian distributions
-a=ot.datasets.get_1D_gauss(n,m=20,s=20) # m= mean, s= std
-b=ot.datasets.get_1D_gauss(n,m=60,s=60)
+a=gauss(n,m=20,s=20) # m= mean, s= std
+b=gauss(n,m=60,s=60)
 
 # loss matrix
 M=ot.dist(x.reshape((n,1)),x.reshape((n,1)))
