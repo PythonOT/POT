@@ -18,7 +18,7 @@ cdef extern from "EMD.h":
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M):
+def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
         
@@ -39,11 +39,11 @@ def emd( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode=
              
     Parameters
     ----------
-    a : (ns,) ndarray
-        samples in the source domain (uniform waigth if empty)
-    b : (nt,) ndarray
-        samples in the target domain (uniform waigth if empty)
-    M : (ns,nt) ndarray
+    a : (ns,) ndarray, float64
+        source histogram 
+    b : (nt,) ndarray, float64
+        target histogram
+    M : (ns,nt) ndarray, float64
         loss matrix        
   
     

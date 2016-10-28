@@ -37,7 +37,7 @@ def sinkhorn(a,b, M, reg,numItermax = 1000,stopThr=1e-9):
         samples in the target domain
     M : np.ndarray (ns,nt)
         loss matrix        
-    reg: float()
+    reg: float
         Regularization term >0
   
     
@@ -54,7 +54,8 @@ def sinkhorn(a,b, M, reg,numItermax = 1000,stopThr=1e-9):
         
     See Also
     --------
-    ot.emd.emd : Unregularized optimal ransport
+    ot.lp.emd : Unregularized OT
+    ot.optim.cg : General regularized OT
         
     """    
     # init data
