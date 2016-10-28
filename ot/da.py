@@ -67,23 +67,12 @@ def sinkhorn_lpl1_mm(a,labels_a, b, M, reg, eta=0.1,numItermax = 10,numInnerIter
         Optimal transportation matrix for the given parameters
     log: dict
         log dictionary return only if log==True in parameters         
-
-    Examples
-    --------
-        
-    >>> a=[.5,.5]
-    >>> b=[.5,.5]
-    >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.sinkhorn(a,b,M,1)
-    array([[ 0.36552929,  0.13447071],
-           [ 0.13447071,  0.36552929]])
       
         
     References
     ----------
     
     .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, "Optimal Transport for Domain Adaptation," in IEEE Transactions on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
-    
     .. [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized conditional gradient: analysis of convergence and applications. arXiv preprint arXiv:1510.06567.
     
     See Also
