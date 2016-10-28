@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Various function that can be usefull
 """
@@ -6,7 +7,21 @@ from scipy.spatial.distance import cdist
 
 
 def unif(n):
-    """ return a uniform histogram of length n (simplex) """
+    """ return a uniform histogram of length n (simplex) 
+    
+    Parameters
+    ----------
+
+    n : int
+        number of bins in the histogram
+  
+    Returns
+    -------
+    h : np.array (n,)
+        histogram of length n such that h_i=1/n for all i    
+    
+    
+    """
     return np.ones((n,))/n
 
 
@@ -22,9 +37,9 @@ def dist(x1,x2=None,metric='sqeuclidean'):
         matrix with n2 samples of size d (if None then x2=x1)
     metric : str, fun, optional
         name of the metric to be computed (full list in the doc of scipy),  If a string, 
-        the distance function can be ‘braycurtis’, ‘canberra’, ‘chebyshev’, ‘cityblock’, 
+        the distance function can be ‘braycurtis’, ‘canberra’, ‘chebyshev’, ‘cityblock’,
         ‘correlation’, ‘cosine’, ‘dice’, ‘euclidean’, ‘hamming’, ‘jaccard’, ‘kulsinski’,
-        ‘mahalanobis’, ‘matching’, ‘minkowski’, ‘rogerstanimoto’, ‘russellrao’, ‘seuclidean’, 
+        ‘mahalanobis’, ‘matching’, ‘minkowski’, ‘rogerstanimoto’, ‘russellrao’, ‘seuclidean’,
         ‘sokalmichener’, ‘sokalsneath’, ‘sqeuclidean’, ‘wminkowski’, ‘yule’.
 
   
@@ -68,5 +83,5 @@ def dist0(n,method='lin_square'):
     
 
 def dots(*args):
-    """ Stupid but nice dots function for multiple matrix multiply """
+    """ dots function for multiple matrix multiply """
     return reduce(np.dot,args)

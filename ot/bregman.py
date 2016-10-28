@@ -276,14 +276,6 @@ def unmix(a,D,M,M0,h0,reg,reg0,alpha,numItermax = 1000, stopThr=1e-3,verbose=Fal
     
     The optimization problem is solved suing the algorithm described in [4]
   
-  
-          distrib : distribution to unmix
-        D : Dictionnary 
-        M : Metric matrix in the space of the distributions to unmix
-        M0 : Metric matrix in the space of the 'abundance values' to solve for
-        h0 : prior on solution (generally uniform distribution)
-        reg,reg0 : transport regularizations
-        alpha : how much should we trust the prior ? ([0,1])
         
     Parameters
     ----------
@@ -300,7 +292,9 @@ def unmix(a,D,M,M0,h0,reg,reg0,alpha,numItermax = 1000, stopThr=1e-3,verbose=Fal
     reg: float
         Regularization term >0 (Wasserstein data fitting)
     reg0: float
-        Regularization term >0 (Wasserstein reg with h0)        
+        Regularization term >0 (Wasserstein reg with h0)   
+    alpha: float
+        How much should we trust the prior ([0,1])
     numItermax: int, optional
         Max number of iterations
     stopThr: float, optional
@@ -318,7 +312,7 @@ def unmix(a,D,M,M0,h0,reg,reg0,alpha,numItermax = 1000, stopThr=1e-3,verbose=Fal
     log: dict
         log dictionary return only if log==True in parameters     
   
-     References
+    References
     ----------
     
     .. [4] S. Nakhostin, N. Courty, R. Flamary, D. Tuia, T. Corpetti, Supervised planetary unmixing with optimal transport, Whorkshop on Hyperspectral Image and Signal Processing : Evolution in Remote Sensing (WHISPERS), 2016.
