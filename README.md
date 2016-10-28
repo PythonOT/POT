@@ -37,7 +37,7 @@ Note that for easier access the module is name ot instead of pot.
 The examples folder contain several examples and use case for the library. Here is a list of the Python notebook if you want a quick look.
 
 * [1D optimal transport](examples/Demo_1D_OT.ipynb)
-* [2D optimal transport on empirical distributions](examples/Demo_2D_Ot_samples.ipynb)
+* [2D optimal transport on empirical distributions](examples/Demo_2D_OT_samples.ipynb)
 
 ## Acknowledgements
 
