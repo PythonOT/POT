@@ -6,8 +6,6 @@ Python modules
 ot
 --
 
-This module provide easy access to solvers for the most common OT problems
-
 .. automodule:: ot
    :members:
 
@@ -27,6 +25,12 @@ ot.optim
 
 .. automodule:: ot.optim
    :members:
+
+ot.da
+--------
+
+.. automodule:: ot.da
+  :members:
 
 ot.utils
 --------

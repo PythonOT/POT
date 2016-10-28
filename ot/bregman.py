@@ -6,12 +6,12 @@ Bregman projections for regularized OT
 import numpy as np
 
 
-def sinkhorn(a,b, M, reg,numItermax = 1000,stopThr=1e-9,verbose=False,log=False):
+def sinkhorn(a,b, M, reg, numItermax = 1000, stopThr=1e-9, verbose=False, log=False):
     """
-    Solve the entropic regularization optimal transport problem and return the OT matrix
-    
+    Solve the entropic regularization optimal transport problem
+
     The function solves the following optimization problem:
-    
+
     .. math::
         \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
         
