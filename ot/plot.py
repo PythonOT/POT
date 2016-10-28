@@ -9,7 +9,25 @@ from matplotlib import gridspec
 
 
 def plot1D_mat(a,b,M,title=''):
-    """ Plot matrix M  with the source and target 1D distribution """
+    """ Plot matrix M  with the source and target 1D distribution 
+    
+    Creates a subplot with the source distribution a on the left and 
+    target distribution b on the tot. The matrix M is shown in between.
+    
+    
+    Parameters
+    ----------
+
+    a : np.array (na,)
+        Source distribution
+    b : np.array (nb,)
+        Target distribution  
+    M : np.array (na,nb)
+        Matrix to plot
+    
+    
+    
+    """
     
     na=M.shape[0]
     nb=M.shape[1]
@@ -43,7 +61,27 @@ def plot1D_mat(a,b,M,title=''):
 
 
 def plot2D_samples_mat(xs,xt,G,thr=1e-8,**kwargs):
-    """ Plot matrix M  in 2D with  lines using alpha values"""
+    """ Plot matrix M  in 2D with  lines using alpha values
+    
+    Plot lines between source and target 2D samples with a color 
+    proportional to the value of the matrix G between samples.
+    
+    
+    Parameters
+    ----------
+
+    xs : np.array (ns,2)
+        Source samples positions
+    b : np.array (nt,2)
+        Target samples positions
+    G : np.array (na,nb)
+        OT matrix
+    thr : float, optional
+        threshold above which the line is drawn
+    **kwargs : dict
+        paameters given to the plot functions (default color is black if nothing given)
+    
+    """
     if ('color' not in kwargs) and ('c' not  in kwargs):
         kwargs['color']='k'
     mx=G.max()

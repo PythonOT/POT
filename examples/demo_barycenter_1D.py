@@ -37,7 +37,7 @@ for i in range(nbd):
     pl.plot(x,A[:,i])
 pl.title('Distributions')
 
-#%% barucenter computation
+#%% barycenter computation
 
 # l2bary
 bary_l2=A.mean(1)

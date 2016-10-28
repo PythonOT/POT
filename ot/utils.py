@@ -45,6 +45,7 @@ def dist(x1,x2=None,metric='sqeuclidean'):
   
     Returns
     -------
+    
     M : np.array (n1,n2)
         distance matrix computed with given metric
     
@@ -70,6 +71,7 @@ def dist0(n,method='lin_square'):
   
     Returns
     -------
+    
     M : np.array (n1,n2)
         distance matrix computed with given metric    
     
