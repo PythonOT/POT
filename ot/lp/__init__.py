@@ -1,5 +1,8 @@
+"""
+Solvers for the original linear program OT problem
+"""
 
-
+# import compiled emd
 from .emd import emd_c
 import numpy as np
 

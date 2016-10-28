@@ -43,7 +43,7 @@ bary_l2=A.mean(1)
 
 # wasserstein
 reg=1e-3
-bary_wass,log=ot.bregman.barycenter(A,M,reg)
+bary_wass=ot.bregman.barycenter(A,M,reg)
 
 pl.figure(2)
 pl.clf()

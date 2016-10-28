@@ -103,9 +103,9 @@ def cg(a,b,M,reg,f,df,G0=None,numItermax = 200,stopThr=1e-9,verbose=False,log=Fa
         Max number of iterations
     stopThr : float, optional
         Stop threshol on error (>0)
-    verbose : int, optional
+    verbose : bool, optional
         Print information along iterations
-    log : int, optional
+    log : bool, optional
         record log if True
     
     Returns
