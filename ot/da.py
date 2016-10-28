@@ -2,7 +2,7 @@
 domain adaptation with optimal transport
 """
 import numpy as np
-from bregman import sinkhorn
+from .bregman import sinkhorn
 
 
 
