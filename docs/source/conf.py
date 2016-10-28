@@ -76,9 +76,6 @@ release = u'0.1'
 # Usually you set "language" from the command line for these cases.
 language = None
 
-MOCK_MODULES = ['numpy', 'scipy']
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
-
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
 #today = ''
