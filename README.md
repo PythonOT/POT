@@ -23,7 +23,10 @@ To install the library, you can install it locally (after downloading it) on you
 python setup.py install --user
 ```
 
-
+The toolbox is also available on PyPI with a possibly slightly older version. You can install it with:
+```
+pip install POT
+```
 
 After a correct installation, you should be able to import the module without errors:
 ```python
