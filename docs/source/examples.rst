@@ -26,4 +26,4 @@ OT with user provided regularization
 Domain adaptation with optimal transport
 ----------------------------------------
 
-.. literalinclude:: ../../demo_OTDA_classes.py
+.. literalinclude:: ../../examples/demo_OTDA_classes.py
