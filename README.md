@@ -3,6 +3,7 @@
 This open source Python library provide several solvers for optimization problems related to Optimal Transport for signal, image processing and machine learning.
 
 It provides the following solvers:
+
 * OT solver for the linear program/ Earth Movers Distance [1].
 * Entropic regularization OT solver  with Sinkhorn Knopp Algorithm [2].
 * Bregman projections for Wasserstein barycenter [3] and unmixing [4].
@@ -19,6 +20,8 @@ The Library has been tested on Linux and MacOSX. It requires a C++ compiler for 
 - Scipy (>=0.17)
 - Cython (>=0.23)
 - Matplotlib (>=1.5)
+
+
 Under debian based linux the dependencies can be installed with
 ```
 sudo apt-get install python-numpy python-scipy python-matplotlib cython
@@ -56,6 +59,7 @@ The examples folder contain several examples and use case for the library. The f
 ## Acknowledgements
 
 The contributors to this library are:
+
 * [Rémi Flamary](http://remi.flamary.com/)
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
 * [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/)
