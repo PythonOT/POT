@@ -15,7 +15,7 @@ here = path.abspath(path.dirname(__file__))
 import os
 #import glob
 
-version='0.1.4'
+version='0.1.5'
 
 ROOT = os.path.abspath(os.path.dirname(__file__))
 
