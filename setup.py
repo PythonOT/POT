@@ -11,11 +11,6 @@ import os
 
 here = path.abspath(path.dirname(__file__))
 
-
-
-
-#import glob
-
 # dirty but working 
 __version__ = re.search(
     r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',  # It excludes inline comment too

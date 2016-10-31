@@ -122,7 +122,7 @@ def sinkhorn_lpl1_mm(a,labels_a, b, M, reg, eta=0.1,numItermax = 10,numInnerIter
 
 
 
-class OTDA():
+class OTDA(object):
     """Class for domain adaptation with optimal transport"""
     
     def __init__(self,metric='sqeuclidean'):
