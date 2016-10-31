@@ -16,7 +16,7 @@ It provides the following solvers:
 We are also currently working on the following features:
 
 - [ ] Image color adaptation demo
-- [ ] Scikit-learn inspired classes for domain adaptation
+- [x] Scikit-learn inspired classes for domain adaptation
 - [ ] Mapping estimation as proposed in [8]
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
