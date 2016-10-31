@@ -11,15 +11,13 @@ import ot
 
 #%% parameters
 
-n=150 # nb bins
+n=150 # nb samples in source and target datasets
 
 xs,ys=ot.datasets.get_data_classif('3gauss',n)
 xt,yt=ot.datasets.get_data_classif('3gauss2',n)
 
-a,b = ot.unif(n),ot.unif(n)
-# loss matrix
-M=ot.dist(xs,xt)
-#M/=M.max()
+
+
 
 #%% plot samples
 
@@ -38,17 +36,13 @@ pl.title('target  distributions')
 
 #%% OT estimation
 
-# EMD
+# LP problem
+da_emd=ot.da.OTDA()     # init class
+da_emd.fit(xs,xt)       # fit distributions
+xst0=da_emd.interp()    # interpolation of source samples
 
 
-da_emd=ot.da.OTDA()
-da_emd.fit(xs,xt)
-
-# interpolate samples
-xst0=da_emd.interp()
-
-
-# sinkhorn
+# sinkhorn regularization
 lambd=1e-1
 da_entrop=ot.da.OTDA_sinkhorn()
 da_entrop.fit(xs,xt,reg=lambd)
