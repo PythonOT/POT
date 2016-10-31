@@ -63,7 +63,7 @@ The examples folder contain several examples and use case for the library. The f
 * [2D optimal transport on empirical distributions](https://github.com/rflamary/POT/blob/master/examples/Demo_2D_OT_samples.ipynb)
 * [1D Wasserstein barycenter](https://github.com/rflamary/POT/blob/master/examples/Demo_1D_barycenter.ipynb)
 * [OT with user provided regularization](https://github.com/rflamary/POT/blob/master/examples/Demo_Optim_OTreg.ipynb)
-
+* [Domain adaptation with optimal transport](https://github.com/rflamary/POT/blob/master/examples/Demo_2D_OT_DomainAdaptation.ipynb)
 
 ## Acknowledgements
 
