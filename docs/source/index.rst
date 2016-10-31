@@ -30,11 +30,6 @@ Contents
    all
    examples
 
-Examples
---------
-
-
-
 
 References
 ----------

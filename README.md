@@ -1,13 +1,23 @@
 # POT: Python Optimal Transport
 
+
+[![Documentation Status](https://readthedocs.org/projects/pot/badge/?version=latest)](http://pot.readthedocs.io/en/latest/?badge=latest)
+
 This open source Python library provide several solvers for optimization problems related to Optimal Transport for signal, image processing and machine learning.
 
 It provides the following solvers:
+
 * OT solver for the linear program/ Earth Movers Distance [1].
 * Entropic regularization OT solver  with Sinkhorn Knopp Algorithm [2].
 * Bregman projections for Wasserstein barycenter [3] and unmixing [4].
 * Optimal transport for domain adaptation with group lasso regularization [5]
 * Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
+
+We are also currently working on the following features:
+
+- [ ] Image color adaptation demo
+- [ ] Scikit-learn inspired classes for domain adaptation
+- [ ] Mapping estimation as proposed in [8]
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 
@@ -17,13 +27,24 @@ The Library has been tested on Linux and MacOSX. It requires a C++ compiler for 
 
 - Numpy (>=1.11)
 - Scipy (>=0.17)
+- Cython (>=0.23)
+- Matplotlib (>=1.5)
+
+
+Under debian based linux the dependencies can be installed with
+```
+sudo apt-get install python-numpy python-scipy python-matplotlib cython
+```
 
 To install the library, you can install it locally (after downloading it) on you machine using
 ```
 python setup.py install --user
 ```
 
-
+The toolbox is also available on PyPI with a possibly slightly older version. You can install it with:
+```
+pip install POT
+```
 
 After a correct installation, you should be able to import the module without errors:
 ```python
@@ -34,19 +55,20 @@ Note that for easier access the module is name ot instead of pot.
 
 ## Examples
 
-The examples folder contain several examples and use case for the library.
+The examples folder contain several examples and use case for the library. The full documentation is available on [Readthedoc](http://pot.readthedocs.io/)
 
  Here is a list of the Python notebook if you want a quick look:
 
-* [1D optimal transport](examples/Demo_1D_OT.ipynb)
-* [2D optimal transport on empirical distributions](examples/Demo_2D_OT_samples.ipynb)
-* [1D Wasserstein barycenter](examples/Demo_1D_barycenter.ipynb)
-* [OT with user provided regularization](examples/Demo_Optim_OTreg.ipynb)
+* [1D optimal transport](https://github.com/rflamary/POT/blob/master/examples/Demo_1D_OT.ipynb)
+* [2D optimal transport on empirical distributions](https://github.com/rflamary/POT/blob/master/examples/Demo_2D_OT_samples.ipynb)
+* [1D Wasserstein barycenter](https://github.com/rflamary/POT/blob/master/examples/Demo_1D_barycenter.ipynb)
+* [OT with user provided regularization](https://github.com/rflamary/POT/blob/master/examples/Demo_Optim_OTreg.ipynb)
 
 
 ## Acknowledgements
 
 The contributors to this library are:
+
 * [Rémi Flamary](http://remi.flamary.com/)
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
 * [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/)
@@ -73,3 +95,5 @@ This toolbox benefit a lot from open source research and we would like to thank 
 [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). Regularized discrete optimal transport. SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
 
 [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized conditional gradient: analysis of convergence and applications. arXiv preprint arXiv:1510.06567.
+
+[8] M. Perrot, N. Courty, R. Flamary, A. Habrard, "Mapping estimation for discrete optimal transport", Neural Information Processing Systems (NIPS), 2016.

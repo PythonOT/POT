@@ -33,6 +33,11 @@ sremove :
 
 clean :
 	$(PYTHON) setup.py clean
+	
+uploadpypi:
+	python setup.py register
+	python setup.py sdist upload -r pypi
+
 
 notebook :
 	ipython notebook --matplotlib=inline  --notebook-dir=examples/
