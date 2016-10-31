@@ -18,7 +18,15 @@ import os
 version='0.1.4'
 
 ROOT = os.path.abspath(os.path.dirname(__file__))
-README = open(os.path.join(ROOT, 'README.md')).read()
+
+
+# convert markdown readme to rst in pypandoc installed
+try:
+   import pypandoc
+   README = pypandoc.convert('README.md', 'rst')
+except (IOError, ImportError):
+   README = open(os.path.join(ROOT, 'README.md')).read()
+
 
 setup(name='POT',
       version=version,
