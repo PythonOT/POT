@@ -1,5 +1,8 @@
 # POT: Python Optimal Transport
 
+
+[![Documentation Status](https://readthedocs.org/projects/pot/badge/?version=latest)](http://pot.readthedocs.io/en/latest/?badge=latest)
+                
 This open source Python library provide several solvers for optimization problems related to Optimal Transport for signal, image processing and machine learning.
 
 It provides the following solvers:
