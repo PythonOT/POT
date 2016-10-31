@@ -17,6 +17,12 @@ The Library has been tested on Linux and MacOSX. It requires a C++ compiler for 
 
 - Numpy (>=1.11)
 - Scipy (>=0.17)
+- Cython (>=0.23)
+- Matplotlib (>=1.5)
+Under debian based linux the dependencies can be installed with
+```
+sudo apt-get install python-numpy python-scipy python-matplotlib cython
+```
 
 To install the library, you can install it locally (after downloading it) on you machine using
 ```
@@ -37,7 +43,7 @@ Note that for easier access the module is name ot instead of pot.
 
 ## Examples
 
-The examples folder contain several examples and use case for the library.
+The examples folder contain several examples and use case for the library. The full documentation is available on [Readthedoc](http://pot.readthedocs.io/)
 
  Here is a list of the Python notebook if you want a quick look:
 
