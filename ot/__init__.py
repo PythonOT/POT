@@ -17,7 +17,7 @@ from .da import sinkhorn_lpl1_mm
 # utils functions
 from .utils import dist, unif
 
-__version__ = "0.1.6"
+__version__ = "0.1.7"
 
 __all__ = ["emd", "sinkhorn", "utils", 'datasets', 'bregman', 'lp', 'plot',
            'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim']

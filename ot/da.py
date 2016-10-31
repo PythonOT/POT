@@ -164,7 +164,7 @@ class OTDA():
         where k is the index of the sample in xs
         
         For the moment only squared euclidean distance is provided but more 
-        metric c can be used in teh future.            
+        metric  could be used in the future.            
         
         """
         if direction>0: # >0 then source to target 

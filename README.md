@@ -55,7 +55,7 @@ Note that for easier access the module is name ot instead of pot.
 
 ## Examples
 
-The examples folder contain several examples and use case for the library. The full documentation is available on [Readthedoc](http://pot.readthedocs.io/)
+The examples folder contain several examples and use case for the library. The full documentation is available on [Readthedocs](http://pot.readthedocs.io/)
 
  Here is a list of the Python notebook if you want a quick look:
 
