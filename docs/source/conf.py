@@ -14,9 +14,14 @@
 
 import sys
 import os
-from unittest.mock import MagicMock
+try:
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import MagicMock
 
 sys.path.insert(0, os.path.abspath("../.."))
+sys.setrecursionlimit(1500)
+
 
 
 class Mock(MagicMock):
