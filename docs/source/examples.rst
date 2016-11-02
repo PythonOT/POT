@@ -27,3 +27,8 @@ Domain adaptation with optimal transport
 ----------------------------------------
 
 .. literalinclude:: ../../examples/demo_OTDA_classes.py
+
+Color transfer in images
+------------------------
+
+.. literalinclude:: ../../examples/demo_OTDA_color_images.py

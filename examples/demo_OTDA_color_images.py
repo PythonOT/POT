@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-demo of Optimal transport for domain adaptation with image color adaptation as in [6]
+Demo of Optimal transport for domain adaptation with image color adaptation as in [6]
 
 [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). Regularized discrete optimal transport. SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
 """
@@ -50,6 +50,30 @@ idx2=np.random.randint(X2.shape[0],size=(nb,))
 
 xs=X1[idx1,:]
 xt=X2[idx2,:]
+
+#%% Plot image distributions
+
+
+pl.figure(2,(10,5))
+
+pl.subplot(1,2,1)
+pl.scatter(xs[:,0],xs[:,2],c=xs)
+pl.axis([0,1,0,1])
+pl.xlabel('Red')
+pl.ylabel('Blue')
+pl.title('Image 1')
+
+pl.subplot(1,2,2)
+#pl.imshow(I2)
+pl.scatter(xt[:,0],xt[:,2],c=xt)
+pl.axis([0,1,0,1])
+pl.xlabel('Red')
+pl.ylabel('Blue')
+pl.title('Image 2')
+
+pl.show()
+
+
 
 #%% domain adaptation between images
 
