@@ -617,8 +617,7 @@ class OTDA_lpl1(OTDA):
 
 
     def fit(self,xs,ys,xt,reg=1,eta=1,ws=None,wt=None,**kwargs):
-        """ Fit regularized domain adaptation between samples is xs and xt (with optional weights),
-        See ot.da.sinkhorn_lpl1_mm for fit parameters""""
+        """ Fit regularized domain adaptation between samples is xs and xt (with optional weights),  See ot.da.sinkhorn_lpl1_mm for fit parameters"""
         self.xs=xs
         self.xt=xt
 
