@@ -12,7 +12,7 @@ It provides the following solvers:
 * Bregman projections for Wasserstein barycenter [3] and unmixing [4].
 * Optimal transport for domain adaptation with group lasso regularization [5]
 * Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
-* Joint OT matix and mapping etsimation [8].
+* Joint OT matrix and mapping etsimation [8].
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 

@@ -11,7 +11,7 @@ help :
 	@echo "    remove - remove the package (local user)"
 	@echo "    sremove - remove the package (system with sudo)"
 	@echo "    clean - remove any temporary files"
-	@echo "    notebook - launch ipython notebook"	
+	@echo "    notebook - launch ipython notebook"
 build :
 	$(PYTHON) setup.py build
 
@@ -33,10 +33,13 @@ sremove :
 
 clean :
 	$(PYTHON) setup.py clean
-	
+
 uploadpypi:
 	python setup.py register
 	python setup.py sdist upload -r pypi
+
+rdoc:
+	pandoc pandoc --from=markdown --to=rst --output=docs/source/readme.rst README.md
 
 
 notebook :
