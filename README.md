@@ -65,7 +65,7 @@ The examples folder contain several examples and use case for the library. The f
 * [OT with user provided regularization](https://github.com/rflamary/POT/blob/master/examples/Demo_Optim_OTreg.ipynb)
 * [Domain adaptation with optimal transport](https://github.com/rflamary/POT/blob/master/examples/Demo_2D_OT_DomainAdaptation.ipynb)
 * [Color transfer in images](https://github.com/rflamary/POT/blob/master/examples/Demo_Image_ColorAdaptation.ipynb)
-
+* [OT mapping estimation for domain adaptation](https://github.com/rflamary/POT/blob/master/examples/Demo_2D_OTmapping_DomainAdaptation.ipynb)
 
 ## Acknowledgements
 
