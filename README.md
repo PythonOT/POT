@@ -12,12 +12,7 @@ It provides the following solvers:
 * Bregman projections for Wasserstein barycenter [3] and unmixing [4].
 * Optimal transport for domain adaptation with group lasso regularization [5]
 * Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
-
-We are also currently working on the following features:
-
-- [ ] Image color adaptation demo
-- [x] Scikit-learn inspired classes for domain adaptation
-- [ ] Mapping estimation as proposed in [8]
+* Joint OT matix and mapping etsimation [8].
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 
@@ -57,7 +52,7 @@ Note that for easier access the module is name ot instead of pot.
 
 The examples folder contain several examples and use case for the library. The full documentation is available on [Readthedocs](http://pot.readthedocs.io/)
 
- Here is a list of the Python notebook if you want a quick look:
+ Here is a list of the Python notebooks if you want a quick look:
 
 * [1D optimal transport](https://github.com/rflamary/POT/blob/master/examples/Demo_1D_OT.ipynb)
 * [2D optimal transport on empirical distributions](https://github.com/rflamary/POT/blob/master/examples/Demo_2D_OT_samples.ipynb)
