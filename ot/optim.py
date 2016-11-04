@@ -27,7 +27,7 @@ def line_search_armijo(f,xk,pk,gfk,old_fval,args=(),c1=1e-4,alpha0=0.99):
         descent direction
     gfk : np.ndarray
         gradient of f at xk
-    old_fval: float
+    old_fval : float
         loss value at xk
     args : tuple, optional
         arguments given to f
@@ -110,9 +110,9 @@ def cg(a,b,M,reg,f,df,G0=None,numItermax = 200,stopThr=1e-9,verbose=False,log=Fa
 
     Returns
     -------
-    gamma: (ns x nt) ndarray
+    gamma : (ns x nt) ndarray
         Optimal transportation matrix for the given parameters
-    log: dict
+    log : dict
         log dictionary return only if log==True in parameters
 
 

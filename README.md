@@ -62,6 +62,8 @@ The examples folder contain several examples and use case for the library. The f
 * [Color transfer in images](https://github.com/rflamary/POT/blob/master/examples/Demo_Image_ColorAdaptation.ipynb)
 * [OT mapping estimation for domain adaptation](https://github.com/rflamary/POT/blob/master/examples/Demo_2D_OTmapping_DomainAdaptation.ipynb)
 
+You can also see the notebooks with [Jupyter nbviewer](https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/examples/).
+
 ## Acknowledgements
 
 The contributors to this library are:
