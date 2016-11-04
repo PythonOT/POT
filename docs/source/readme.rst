@@ -16,7 +16,7 @@ It provides the following solvers:
    regularization [5]
 -  Conditional gradient [6] and Generalized conditional gradient for
    regularized OT [7].
--  Joint OT matrix and mapping etsimation [8].
+-  Joint OT matrix and mapping estimation [8].
 
 Some demonstrations (both in Python and Jupyter Notebook format) are
 available in the examples folder.

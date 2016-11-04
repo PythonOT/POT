@@ -39,7 +39,7 @@ uploadpypi:
 	python setup.py sdist upload -r pypi
 
 rdoc:
-	pandoc pandoc --from=markdown --to=rst --output=docs/source/readme.rst README.md
+	pandoc --from=markdown --to=rst --output=docs/source/readme.rst README.md
 
 
 notebook :
