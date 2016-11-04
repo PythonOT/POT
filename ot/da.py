@@ -123,7 +123,7 @@ def sinkhorn_lpl1_mm(a,labels_a, b, M, reg, eta=0.1,numItermax = 10,numInnerIter
 
     return transp
 
-def joint_OT_mapping_linear(xs,xt,mu=1,eta=0.001,bias=False,verbose=False,verbose2=False,numItermax = 100,numInnerItermax = 20,stopInnerThr=1e-9,stopThr=1e-6,log=False,**kwargs):
+def joint_OT_mapping_linear(xs,xt,mu=1,eta=0.001,bias=False,verbose=False,verbose2=False,numItermax = 100,numInnerItermax = 10,stopInnerThr=1e-6,stopThr=1e-5,log=False,**kwargs):
     """Joint Ot and mapping estimation (uniform weights and )
     """
 
@@ -209,7 +209,7 @@ def joint_OT_mapping_linear(xs,xt,mu=1,eta=0.001,bias=False,verbose=False,verbos
         if verbose:
             if it%20==0:
                 print('{:5s}|{:12s}|{:8s}'.format('It.','Loss','Delta loss')+'\n'+'-'*32)
-            print('{:5d}|{:8e}|{:8e}'.format(it,vloss[-1],abs(vloss[-1]-vloss[-2])/abs(vloss[-2])))
+            print('{:5d}|{:8e}|{:8e}'.format(it,vloss[-1],(vloss[-1]-vloss[-2])/abs(vloss[-2])))
     if log:
         log['loss']=vloss
         return G,L,log
@@ -217,7 +217,7 @@ def joint_OT_mapping_linear(xs,xt,mu=1,eta=0.001,bias=False,verbose=False,verbos
         return G,L
 
 
-def joint_OT_mapping_kernel(xs,xt,mu=1,eta=0.001,kerneltype='gaussian',sigma=1,bias=False,verbose=False,verbose2=False,numItermax = 100,numInnerItermax = 20,stopInnerThr=1e-9,stopThr=1e-6,log=False,**kwargs):
+def joint_OT_mapping_kernel(xs,xt,mu=1,eta=0.001,kerneltype='gaussian',sigma=1,bias=False,verbose=False,verbose2=False,numItermax = 100,numInnerItermax = 10,stopInnerThr=1e-6,stopThr=1e-5,log=False,**kwargs):
     """Joint Ot and mapping estimation (uniform weights and )
     """
 
@@ -228,15 +228,31 @@ def joint_OT_mapping_kernel(xs,xt,mu=1,eta=0.001,kerneltype='gaussian',sigma=1,b
         K1=np.hstack((K,np.ones((ns,1))))
         I=np.eye(ns+1)
         I[-1]=0
-        K0 = K1.T.dot(K1)+eta*I
-        Kreg=I
-        sel=lambda x : x[:-1,:]
+        Kp=np.eye(ns+1)
+        Kp[:ns,:ns]=K
+
+        # ls regu
+        #K0 = K1.T.dot(K1)+eta*I
+        #Kreg=I
+
+        # RKHS regul
+        K0 = K1.T.dot(K1)+eta*Kp
+        Kreg=Kp
+
     else:
         K1=K
         I=np.eye(ns)
+
+        # ls regul
+        #K0 = K1.T.dot(K1)+eta*I
+        #Kreg=I
+
+        # proper kernel ridge
         K0=K+eta*I
         Kreg=K
-        sel=lambda x : x
+
+
+
 
     if log:
         log={'err':[]}
@@ -313,7 +329,7 @@ def joint_OT_mapping_kernel(xs,xt,mu=1,eta=0.001,kerneltype='gaussian',sigma=1,b
         if verbose:
             if it%20==0:
                 print('{:5s}|{:12s}|{:8s}'.format('It.','Loss','Delta loss')+'\n'+'-'*32)
-            print('{:5d}|{:8e}|{:8e}'.format(it,vloss[-1],abs(vloss[-1]-vloss[-2])/abs(vloss[-2])))
+            print('{:5d}|{:8e}|{:8e}'.format(it,vloss[-1],(vloss[-1]-vloss[-2])/abs(vloss[-2])))
     if log:
         log['loss']=vloss
         return G,L,log

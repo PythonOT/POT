@@ -9,7 +9,7 @@ from scipy.spatial.distance import cdist
 def kernel(x1,x2,method='gaussian',sigma=1,**kwargs):
     """Compute kernel matrix"""
     if method.lower() in ['gaussian','gauss','rbf']:
-        K=np.exp(dist(x1,x2)/(2*sigma**2))
+        K=np.exp(-dist(x1,x2)/(2*sigma**2))
     return K
 
 def unif(n):

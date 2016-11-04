@@ -159,6 +159,8 @@ def cg(a,b,M,reg,f,df,G0=None,numItermax = 200,stopThr=1e-9,verbose=False,log=Fa
 
         # problem linearization
         Mi=M+reg*df(G)
+        # set M positive
+        Mi+=Mi.min()
 
         # solve linear program
         Gc=emd(a,b,Mi)
