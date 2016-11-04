@@ -32,3 +32,8 @@ Color transfer in images
 ------------------------
 
 .. literalinclude:: ../../examples/demo_OTDA_color_images.py
+
+OT mapping estimation for domain adaptation
+-------------------------------------------
+
+.. literalinclude:: ../../examples/demo_OTDA_mapping.py

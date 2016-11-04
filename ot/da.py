@@ -203,7 +203,7 @@ def joint_OT_mapping_linear(xs,xt,mu=1,eta=0.001,bias=False,verbose=False,verbos
         if it>=numItermax:
             loop=0
 
-        if abs(vloss[-1]-vloss[-2])<stopThr:
+        if abs(vloss[-1]-vloss[-2])/abs(vloss[-2])<stopThr:
             loop=0
 
         if verbose:
@@ -323,7 +323,7 @@ def joint_OT_mapping_kernel(xs,xt,mu=1,eta=0.001,kerneltype='gaussian',sigma=1,b
         if it>=numItermax:
             loop=0
 
-        if abs(vloss[-1]-vloss[-2])<stopThr:
+        if abs(vloss[-1]-vloss[-2])/abs(vloss[-2])<stopThr:
             loop=0
 
         if verbose:
