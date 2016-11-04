@@ -16,7 +16,7 @@ Contents
    all
    examples
 
-.. include:: ../readme.rst
+.. include:: readme.rst
     :start-line: 5
 
 
