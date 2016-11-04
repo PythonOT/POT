@@ -11,7 +11,7 @@ import os
 
 here = path.abspath(path.dirname(__file__))
 
-# dirty but working 
+# dirty but working
 __version__ = re.search(
     r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',  # It excludes inline comment too
     open('ot/__init__.py').read()).group(1)
@@ -48,8 +48,8 @@ setup(name='POT',
       license = 'MIT',
       scripts=[],
       data_files=[],
-      requires=["numpy (>=1.11)","scipy (>=0.17)","cython (>=0.23)","matplotlib (>=1.5)"],
-      install_requires=["numpy (>=1.11)","scipy (>=0.17)","cython (>=0.23)","matplotlib (>=1.5)"],
+      requires=["numpy","scipy","cython","matplotlib"],
+      install_requires=["numpy","scipy","cython","matplotlib"],
       classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

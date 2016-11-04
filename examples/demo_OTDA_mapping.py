@@ -11,7 +11,7 @@ import ot
 
 #%% dataset generation
 
-np.random.seed(0)
+np.random.seed(0) # makes example reproducible
 
 n=100 # nb samples in source and target datasets
 theta=2*np.pi/20
