@@ -19,8 +19,8 @@ n=100 # nb bins
 x=np.arange(n,dtype=np.float64)
 
 # Gaussian distributions
-a=gauss(n,m=20,s=20) # m= mean, s= std
-b=gauss(n,m=60,s=60)
+a=gauss(n,m=20,s=5) # m= mean, s= std
+b=gauss(n,m=60,s=10)
 
 # loss matrix
 M=ot.dist(x.reshape((n,1)),x.reshape((n,1)))

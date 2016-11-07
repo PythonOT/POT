@@ -8,7 +8,7 @@ This open source Python library provide several solvers for optimization problem
 It provides the following solvers:
 
 * OT solver for the linear program/ Earth Movers Distance [1].
-* Entropic regularization OT solver  with Sinkhorn Knopp Algorithm [2].
+* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2] and stabilized version [9][10].
 * Bregman projections for Wasserstein barycenter [3] and unmixing [4].
 * Optimal transport for domain adaptation with group lasso regularization [5]
 * Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
@@ -98,3 +98,7 @@ This toolbox benefit a lot from open source research and we would like to thank 
 [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized conditional gradient: analysis of convergence and applications. arXiv preprint arXiv:1510.06567.
 
 [8] M. Perrot, N. Courty, R. Flamary, A. Habrard, "Mapping estimation for discrete optimal transport", Neural Information Processing Systems (NIPS), 2016.
+
+[9] Schmitzer, B. (2016). Stabilized Sparse Scaling Algorithms for Entropy Regularized Transport Problems. arXiv preprint arXiv:1610.06519.
+
+[10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016). Scaling algorithms for unbalanced transport problems. arXiv preprint arXiv:1607.05816.
