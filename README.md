@@ -61,6 +61,8 @@ The examples folder contain several examples and use case for the library. The f
 * [Domain adaptation with optimal transport](https://github.com/rflamary/POT/blob/master/examples/Demo_2D_OT_DomainAdaptation.ipynb)
 * [Color transfer in images](https://github.com/rflamary/POT/blob/master/examples/Demo_Image_ColorAdaptation.ipynb)
 * [OT mapping estimation for domain adaptation](https://github.com/rflamary/POT/blob/master/examples/Demo_2D_OTmapping_DomainAdaptation.ipynb)
+* [OT mapping estimation for color transfer in images](https://github.com/rflamary/POT/blob/master/examples/Demo_Image_ColorAdaptation_mapping.ipynb)
+
 
 You can also see the notebooks with [Jupyter nbviewer](https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/examples/).
 
