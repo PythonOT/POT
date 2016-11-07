@@ -56,7 +56,7 @@ da_lpl1.fit(xs,ys,xt,reg=lambd,eta=eta)
 xstg=da_lpl1.interp()
 
 #%% plot interpolated source samples
-pl.figure(4)
+pl.figure(4,(15,10))
 
 param_img={'interpolation':'nearest','cmap':'jet'}
 
