@@ -85,6 +85,8 @@ Here is a list of the Python notebooks if you want a quick look:
    images <https://github.com/rflamary/POT/blob/master/examples/Demo_Image_ColorAdaptation.ipynb>`__
 -  `OT mapping estimation for domain
    adaptation <https://github.com/rflamary/POT/blob/master/examples/Demo_2D_OTmapping_DomainAdaptation.ipynb>`__
+-  `OT mapping estimation for color transfer in
+   images <https://github.com/rflamary/POT/blob/master/examples/Demo_Image_ColorAdaptation_mapping.ipynb>`__
 
 You can also see the notebooks with `Jupyter
 nbviewer <https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/examples/>`__.
