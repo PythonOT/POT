@@ -460,7 +460,7 @@ def sinkhorn_epsilon_scaling(a,b, M, reg, numItermax = 100, epsilon0=1e4, numInn
 
         regi=get_reg(cpt)
 
-        G,logi=sinkhorn_stabilized(a,b, M, regi, numItermax = numInnerItermax,tau=1e3, stopThr=1e-9,warmstart=(alpha,beta), verbose=False,print_period=20,tau=tau, log=True)
+        G,logi=sinkhorn_stabilized(a,b, M, regi, numItermax = numInnerItermax, stopThr=1e-9,warmstart=(alpha,beta), verbose=False,print_period=20,tau=tau, log=True)
 
         alpha=logi['alpha']
         beta=logi['beta']
