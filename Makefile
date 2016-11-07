@@ -35,7 +35,7 @@ clean :
 	$(PYTHON) setup.py clean
 
 uploadpypi:
-	python setup.py register
+	#python setup.py register
 	python setup.py sdist upload -r pypi
 
 rdoc:
