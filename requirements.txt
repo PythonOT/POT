@@ -1,4 +1,3 @@
-POT
 numpy
 scipy
 cython
