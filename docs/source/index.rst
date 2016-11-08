@@ -17,7 +17,7 @@ Contents
    examples
 
 .. include:: readme.rst
-    :start-line: 5
+    :start-line: 6
 
 
 Indices and tables
