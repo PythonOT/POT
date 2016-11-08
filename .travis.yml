@@ -10,7 +10,7 @@ python:
   - "pypy"
 # command to install dependencies
 install:
-  - pip install -r requirements.txt
-  - pip install .
+  - pip install --user -r requirements.txt
+  - python setup.py install --user
 # command to run tests
 script: pytest
