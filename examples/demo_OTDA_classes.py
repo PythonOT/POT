@@ -58,7 +58,7 @@ xstg=da_lpl1.interp()
 
 # True Group lasso regularization
 reg=1e-1
-eta=1e1
+eta=1e0
 da_l1l2=ot.da.OTDA_l1l2()
 da_l1l2.fit(xs,ys,xt,reg=reg,eta=eta,numItermax=20,verbose=True)
 xstgl=da_l1l2.interp()

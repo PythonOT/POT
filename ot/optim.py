@@ -304,7 +304,7 @@ def gcg(a,b,M,reg1,reg2,f,df,G0=None,numItermax = 10,numInnerItermax = 200,stopT
         deltaG=Gc-G
 
         # line search
-        dcost=Mi+reg1*np.sum(deltaG*(1+np.log(G))) #??
+        dcost=Mi+reg1*(1+np.log(G)) #??
         alpha,fc,f_val = line_search_armijo(cost,G,deltaG,dcost,f_val)
 
         G=G+alpha*deltaG
