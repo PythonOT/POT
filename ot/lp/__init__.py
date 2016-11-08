@@ -45,7 +45,7 @@ def emd(a, b, M):
 
     Simple example with obvious solution. The function emd accepts lists and
     perform automatic conversion to numpy arrays
-
+    >>> import ot
     >>> a=[.5,.5]
     >>> b=[.5,.5]
     >>> M=[[0.,1.],[1.,0.]]

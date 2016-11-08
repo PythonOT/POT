@@ -33,6 +33,9 @@ sremove :
 
 clean :
 	$(PYTHON) setup.py clean
+	
+test:
+	pytest
 
 uploadpypi:
 	#python setup.py register

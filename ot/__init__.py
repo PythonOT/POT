@@ -1,5 +1,6 @@
 """Python Optimal Transport toolbox"""
 
+
 # All submodules and packages
 from . import lp
 from . import bregman

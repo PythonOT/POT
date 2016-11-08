@@ -59,6 +59,7 @@ def sinkhorn(a,b, M, reg, numItermax = 1000, stopThr=1e-9, verbose=False, log=Fa
     Examples
     --------
 
+    >>> import ot
     >>> a=[.5,.5]
     >>> b=[.5,.5]
     >>> M=[[0.,1.],[1.,0.]]
@@ -203,10 +204,11 @@ def sinkhorn_stabilized(a,b, M, reg, numItermax = 1000,tau=1e3, stopThr=1e-9,war
     Examples
     --------
 
+    >>> import ot
     >>> a=[.5,.5]
     >>> b=[.5,.5]
     >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.sinkhorn(a,b,M,1)
+    >>> ot.bregman.sinkhorn_stabilized(a,b,M,1)
     array([[ 0.36552929,  0.13447071],
            [ 0.13447071,  0.36552929]])
 
@@ -394,10 +396,11 @@ def sinkhorn_epsilon_scaling(a,b, M, reg, numItermax = 100, epsilon0=1e4, numInn
     Examples
     --------
 
+    >>> import ot
     >>> a=[.5,.5]
     >>> b=[.5,.5]
     >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.sinkhorn(a,b,M,1)
+    >>> ot.bregman.sinkhorn_epsilon_scaling(a,b,M,1)
     array([[ 0.36552929,  0.13447071],
            [ 0.13447071,  0.36552929]])
 
