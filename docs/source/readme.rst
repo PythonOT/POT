@@ -1,7 +1,7 @@
 POT: Python Optimal Transport
 =============================
 
-|Documentation Status|
+|PyPI version| |Build Status| |Documentation Status|
 
 This open source Python library provide several solvers for optimization
 problems related to Optimal Transport for signal, image processing and
@@ -156,5 +156,9 @@ Entropy Regularized Transport Problems. arXiv preprint arXiv:1610.06519.
 Scaling algorithms for unbalanced transport problems. arXiv preprint
 arXiv:1607.05816.
 
+.. |PyPI version| image:: https://badge.fury.io/py/POT.svg
+   :target: https://badge.fury.io/py/POT
+.. |Build Status| image:: https://travis-ci.org/rflamary/POT.svg?branch=master
+   :target: https://travis-ci.org/rflamary/POT
 .. |Documentation Status| image:: https://readthedocs.org/projects/pot/badge/?version=latest
    :target: http://pot.readthedocs.io/en/latest/?badge=latest
