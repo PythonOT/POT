@@ -83,7 +83,7 @@ author = u'Rémi Flamary, Nicolas Courty'
 
 __version__ = re.search(
     r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',  # It excludes inline comment too
-    open('ot/__init__.py').read()).group(1)
+    open('../../ot/__init__.py').read()).group(1)
 # The short X.Y version.
 version = __version__
 # The full version, including alpha/beta/rc tags.
