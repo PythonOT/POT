@@ -14,4 +14,4 @@ install:
   - pip install -r requirements.txt
   - python setup.py install
 # command to run tests
-script: pytest -t test
+script: python test/test_load_module.py -v
