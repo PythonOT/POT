@@ -14,6 +14,7 @@
 
 import sys
 import os
+import re
 #try:
 from unittest.mock import MagicMock
 #except ImportError:
