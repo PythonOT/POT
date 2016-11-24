@@ -75,6 +75,7 @@ The contributors to this library are:
 * [Rémi Flamary](http://remi.flamary.com/)
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
 * [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/)
+* [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
