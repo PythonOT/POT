@@ -128,4 +128,4 @@ def get_data_classif(dataset,n,nz=.5,theta=0,**kwargs):
         y=0
         print("unknown dataset")
 
-    return x,y.astype(int)
+    return x,y
