@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
+==============================
 1D Wasserstein barycenter demo
+==============================
+
 
 @author: rflamary
 """

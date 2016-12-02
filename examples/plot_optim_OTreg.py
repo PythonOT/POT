@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
+==================================
 Regularized OT with generic solver
+==================================
+
+
 """
 
 import numpy as np
