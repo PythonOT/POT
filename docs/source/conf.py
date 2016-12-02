@@ -15,23 +15,25 @@
 import sys
 import os
 import re
+import sphinx_gallery
+
 #try:
-from unittest.mock import MagicMock
+# from unittest.mock import MagicMock
 #except ImportError:
 #    from mock import MagicMock
 
-sys.path.insert(0, os.path.abspath("../.."))
+# sys.path.insert(0, os.path.abspath("../.."))
 #sys.setrecursionlimit(1500)
 
 
 
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        return Mock()
+# class Mock(MagicMock):
+#     @classmethod
+#     def __getattr__(cls, name):
+#         return Mock()
 
-MOCK_MODULES = [ 'emd','ot.lp.emd']
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+# MOCK_MODULES = [ 'emd','ot.lp.emd']
+# sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -54,7 +56,9 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
-    'sphinx.ext.viewcode', 'sphinx.ext.napoleon'
+    'sphinx.ext.viewcode',
+    'sphinx.ext.napoleon',
+    'sphinx_gallery.gen_gallery',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -316,3 +320,11 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
+
+sphinx_gallery_conf = {
+    'examples_dirs': '../../examples',
+    'gallery_dirs': 'auto_examples',
+    'reference_url': {
+        'numpy': 'http://docs.scipy.org/doc/numpy-1.9.1',
+        'scipy': 'http://docs.scipy.org/doc/scipy-0.17.0/reference'}
+}

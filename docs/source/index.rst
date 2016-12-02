@@ -14,7 +14,7 @@ Contents
 
    self
    all
-   examples
+   auto_examples
 
 .. include:: readme.rst
     :start-line: 6

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
+=======================================================
 Demo of OT mapping estimation for domain adaptation [8]
+=======================================================
 
 [8] M. Perrot, N. Courty, R. Flamary, A. Habrard, "Mapping estimation for
     discrete optimal transport", Neural Information Processing Systems (NIPS), 2016.
@@ -106,8 +108,3 @@ pl.subplot(2,2,4)
 pl.scatter(xt[:,0],xt[:,1],c=yt,marker='o',label='Target samples',alpha=.2)
 pl.scatter(xst_kernel[:,0],xst_kernel[:,1],c=ys,marker='+',label='Learned mapping')
 pl.title("Estim. mapping (kernel)")
-
-
-
-
-

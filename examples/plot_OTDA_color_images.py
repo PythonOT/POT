@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
+=====================================================================================
 Demo of Optimal transport for domain adaptation with image color adaptation as in [6]
+=====================================================================================
 
 [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). Regularized discrete optimal transport. SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
 """
