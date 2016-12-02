@@ -2,3 +2,4 @@ numpy
 scipy
 cython
 matplotlib
+sphinx-gallery

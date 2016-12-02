@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
+===============================================
 demo of Optimal transport for domain adaptation
+===============================================
+
 """
 
 import matplotlib.pylab as pl
