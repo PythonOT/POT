@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-=============================================================
-Demo for 2D Optimal transport between empirical distributions
-=============================================================
+====================================================
+2D Optimal transport between empirical distributions
+====================================================
 
 @author: rflamary
 """

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-=============================
-Demo for 1D optimal transport
-=============================
+====================
+1D optimal transport
+====================
 
 @author: rflamary
 """

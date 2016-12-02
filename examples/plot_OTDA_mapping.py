@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-=======================================================
-Demo of OT mapping estimation for domain adaptation [8]
-=======================================================
+===============================================
+OT mapping estimation for domain adaptation [8]
+===============================================
 
 [8] M. Perrot, N. Courty, R. Flamary, A. Habrard, "Mapping estimation for
     discrete optimal transport", Neural Information Processing Systems (NIPS), 2016.

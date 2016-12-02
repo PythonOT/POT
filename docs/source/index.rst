@@ -10,11 +10,11 @@ Contents
 --------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    self
    all
-   auto_examples
+   auto_examples/index
 
 .. include:: readme.rst
     :start-line: 5
