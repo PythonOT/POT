@@ -11,6 +11,7 @@ import ot
 
 
 
+
 #%% parameters
 
 n=150 # nb samples in source and target datasets
