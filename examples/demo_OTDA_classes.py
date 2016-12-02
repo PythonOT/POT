@@ -3,7 +3,6 @@
 demo of Optimal transport for domain adaptation
 """
 
-import numpy as np
 import matplotlib.pylab as pl
 import ot
 

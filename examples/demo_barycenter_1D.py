@@ -9,9 +9,8 @@ import numpy as np
 import matplotlib.pylab as pl
 import ot
 
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.collections import PolyCollection
-from matplotlib.colors import colorConverter
+
 
 #%% parameters
 

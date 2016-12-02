@@ -6,7 +6,6 @@ Optimization algorithms for OT
 import numpy as np
 from scipy.optimize.linesearch import scalar_search_armijo
 from .lp import emd
-from .bregman import sinkhorn_stabilized
 from .bregman import sinkhorn
 
 # The corresponding scipy function does not work for matrices
@@ -261,7 +260,7 @@ def gcg(a,b,M,reg1,reg2,f,df,G0=None,numItermax = 10,numInnerItermax = 200,stopT
 
     See Also
     --------
-    ot.optim.cg : conditional gradient 
+    ot.optim.cg : conditional gradient
 
     """
 
