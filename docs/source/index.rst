@@ -17,7 +17,7 @@ Contents
    auto_examples
 
 .. include:: readme.rst
-    :start-line: 6
+    :start-line: 5
 
 
 Indices and tables

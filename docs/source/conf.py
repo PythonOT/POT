@@ -22,7 +22,7 @@ import sphinx_gallery
 #except ImportError:
 #    from mock import MagicMock
 
-# sys.path.insert(0, os.path.abspath("../.."))
+sys.path.insert(0, os.path.abspath("../.."))
 #sys.setrecursionlimit(1500)
 
 
@@ -58,7 +58,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    'sphinx_gallery.gen_gallery',
+#    'sphinx_gallery.gen_gallery',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -70,13 +70,13 @@ templates_path = ['_templates']
 source_suffix = '.rst'
 
 # The encoding of source files.
-#source_encoding = 'utf-8-sig'
+source_encoding = 'utf-8-sig'
 
 # The master toctree document.
 master_doc = 'index'
 
 # General information about the project.
-project = u'POT Python Optimal Transport library'
+project = u'POT Python Optimal Transport'
 copyright = u'2016, Rémi Flamary, Nicolas Courty'
 author = u'Rémi Flamary, Nicolas Courty'
 
