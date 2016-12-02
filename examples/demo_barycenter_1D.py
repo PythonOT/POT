@@ -8,7 +8,7 @@
 import numpy as np
 import matplotlib.pylab as pl
 import ot
-
+from mpl_toolkits.mplot3d import Axes3D #necessary for 3d plot even if not used
 from matplotlib.collections import PolyCollection
 
 
