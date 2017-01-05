@@ -141,9 +141,9 @@ def sinkhorn(a,b, M, reg, numItermax = 1000, stopThr=1e-9, verbose=False, log=Fa
         cpt = cpt +1
     #print 'err=',err,' cpt=',cpt
     if log:
-        return np.dot(np.diag(u),np.dot(K,np.diag(v))),log
+        return u.reshape((-1,1))*K*v.reshape((1,-1)),log
     else:
-        return np.dot(np.diag(u),np.dot(K,np.diag(v)))
+        return u.reshape((-1,1))*K*v.reshape((1,-1))
 
 def sinkhorn_stabilized(a,b, M, reg, numItermax = 1000,tau=1e3, stopThr=1e-9,warmstart=None, verbose=False,print_period=20, log=False):
     """
