@@ -100,6 +100,7 @@ The contributors to this library are:
 -  `Rémi Flamary <http://remi.flamary.com/>`__
 -  `Nicolas Courty <http://people.irisa.fr/Nicolas.Courty/>`__
 -  `Laetitia Chapel <http://people.irisa.fr/Laetitia.Chapel/>`__
+-  `Michael Perrot <http://perso.univ-st-etienne.fr/pem82055/>`__
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
