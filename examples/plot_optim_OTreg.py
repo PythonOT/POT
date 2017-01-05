@@ -64,7 +64,7 @@ ot.plot.plot1D_mat(a,b,Ge,'OT matrix Entrop. reg')
 def f(G): return 0.5*np.sum(G**2)
 def df(G): return G
 
-reg1=1e-1
+reg1=1e-3
 reg2=1e-1
 
 Gel2=ot.optim.gcg(a,b,M,reg1,reg2,f,df,verbose=True)
