@@ -139,6 +139,10 @@ def sinkhorn(a,b, M, reg, numItermax = 1000, stopThr=1e-9, verbose=False, log=Fa
                     print('{:5s}|{:12s}'.format('It.','Err')+'\n'+'-'*19)
                 print('{:5d}|{:8e}|'.format(cpt,err))
         cpt = cpt +1
+    if log:
+        log['u']=u
+        log['v']=v
+          
     #print 'err=',err,' cpt=',cpt
     if log:
         return u.reshape((-1,1))*K*v.reshape((1,-1)),log
