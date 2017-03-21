@@ -5,7 +5,7 @@ Solvers for the original linear program OT problem
 
 import numpy as np
 # import compiled emd
-from .emd import emd_c, emd2_c
+from .emd_wrap import emd_c, emd2_c
 from ..utils import parmap
 import multiprocessing
 

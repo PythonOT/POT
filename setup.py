@@ -38,8 +38,8 @@ setup(name='POT',
       url='https://github.com/rflamary/POT',
       packages=find_packages(),
       ext_modules = cythonize(Extension(
-                "ot.lp.emd",                                # the extension name
-                 sources=["ot/lp/emd.pyx", "ot/lp/EMD_wrap.cpp"], # the Cython source and
+                "ot.lp.emd_wrap",                                # the extension name
+                 sources=["ot/lp/emd_wrap.pyx", "ot/lp/EMD_wrap.cpp"], # the Cython source and
                                                         # additional C++ source files
                  language="c++",                        # generate and compile C++ code,
                  include_dirs=[numpy.get_include(),os.path.join(ROOT,'ot/lp')])),
