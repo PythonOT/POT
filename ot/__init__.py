@@ -18,7 +18,7 @@ from .da import sinkhorn_lpl1_mm
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.1.12"
+__version__ = "0.2"
 
 __all__ = ["emd", "emd2", "sinkhorn", "utils", 'datasets', 'bregman', 'lp', 
            'plot', 'tic', 'toc', 'toq',

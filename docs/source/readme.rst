@@ -18,6 +18,8 @@ It provides the following solvers:
 -  Conditional gradient [6] and Generalized conditional gradient for
    regularized OT [7].
 -  Joint OT matrix and mapping estimation [8].
+-  Wasserstein Discriminant Analysis [11] (requires autograd +
+   pymanopt).
 
 Some demonstrations (both in Python and Jupyter Notebook format) are
 available in the examples folder.
