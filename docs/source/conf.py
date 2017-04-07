@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
-        return Mock()
+        return MagicMock()
 MOCK_MODULES = ['ot.lp.emd_wrap']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 # !!!!
