@@ -18,7 +18,13 @@ import re
 import sphinx_gallery
 
 # !!!! allow readthedoc compilation
-from unittest.mock import MagicMock
+try:
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import Mock as MagicMock
+    ## check whether in the source directory...
+#
+
 sys.path.insert(0, os.path.abspath("../.."))
 class Mock(MagicMock):
     @classmethod
