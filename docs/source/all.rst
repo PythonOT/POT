@@ -32,6 +32,13 @@ ot.da
 .. automodule:: ot.da
   :members:
 
+ot.dr
+--------
+
+.. automodule:: ot.dr
+  :members:
+
+
 ot.utils
 --------
 
