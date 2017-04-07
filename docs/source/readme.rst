@@ -157,6 +157,9 @@ Entropy Regularized Transport Problems. arXiv preprint arXiv:1610.06519.
 Scaling algorithms for unbalanced transport problems. arXiv preprint
 arXiv:1607.05816.
 
+[11] Flamary, R., Cuturi, M., Courty, N., & Rakotomamonjy, A. (2016).
+Wasserstein Discriminant Analysis. arXiv preprint arXiv:1608.08063.
+
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
 .. |Build Status| image:: https://travis-ci.org/rflamary/POT.svg?branch=master
