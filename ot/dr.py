@@ -54,41 +54,28 @@ def wda(X,y,p=2,reg=1,k=10,solver = None,maxiter=100,verbose=0):
     
     Parameters
     ----------
-    a : np.ndarray (ns,)
-        samples weights in the source domain
-    b : np.ndarray (nt,)
-        samples in the target domain
-    M : np.ndarray (ns,nt)
-        loss matrix
-    reg : float
-        Regularization term >0
-    numItermax : int, optional
-        Max number of iterations
-    stopThr : float, optional
-        Stop threshol on error (>0)
-    verbose : bool, optional
+    X : numpy.ndarray (n,d)
+        Training samples
+    y : np.ndarray (n,)
+        labels for training samples
+    p : int, optional
+        size of dimensionnality reduction
+    reg : float, optional
+        Regularization term >0 (entropic regularization)
+    solver : str, optional
+        None for steepest decsent or 'TrustRegions' for trust regions algorithm
+        else shoudl be a pymanopt.sovers
+    verbose : int, optional
         Print information along iterations
-    log : bool, optional
-        record log if True
+
 
 
     Returns
     -------
-    gamma : (ns x nt) ndarray
+    P : (d x p) ndarray
         Optimal transportation matrix for the given parameters
-    log : dict
-        log dictionary return only if log==True in parameters
-
-    Examples
-    --------
-
-    >>> import ot
-    >>> a=[.5,.5]
-    >>> b=[.5,.5]
-    >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.sinkhorn(a,b,M,1)
-    array([[ 0.36552929,  0.13447071],
-           [ 0.13447071,  0.36552929]])
+    proj : fun
+        projectiuon function including mean centering
 
 
     References
