@@ -24,7 +24,7 @@ class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
         return Mock()
-MOCK_MODULES = [ 'emd','ot.lp.emd_wrap']
+MOCK_MODULES = [ 'emd_wrap','ot.lp.emd_wrap']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 # !!!!
 
