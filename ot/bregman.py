@@ -94,8 +94,6 @@ def sinkhorn(a,b, M, reg, numItermax = 1000, stopThr=1e-9, verbose=False, log=Fa
     Nini = len(a)
     Nfin = len(b)
 
-
-    cpt = 0
     if log:
         log={'err':[]}
 
@@ -108,8 +106,7 @@ def sinkhorn(a,b, M, reg, numItermax = 1000, stopThr=1e-9, verbose=False, log=Fa
     K = np.exp(-M/reg)
     #print(np.min(K))
 
-    Kp = np.dot(np.diag(1/a),K)
-    transp = K
+    Kp = (1/a).reshape(-1, 1) * K
     cpt = 0
     err=1
     while (err>stopThr and cpt<numItermax):
@@ -128,7 +125,7 @@ def sinkhorn(a,b, M, reg, numItermax = 1000, stopThr=1e-9, verbose=False, log=Fa
             break
         if cpt%10==0:
             # we can speed up the process by checking for the error only all the 10th iterations
-            transp = np.dot(np.diag(u),np.dot(K,np.diag(v)))
+            transp = u.reshape(-1, 1) * (K * v)
             err = np.linalg.norm((np.sum(transp,axis=0)-b))**2
             if log:
                 log['err'].append(err)
