@@ -94,8 +94,6 @@ def sinkhorn(a,b, M, reg, numItermax = 1000, stopThr=1e-9, verbose=False, log=Fa
     Nini = len(a)
     Nfin = len(b)
 
-
-    cpt = 0
     if log:
         log={'err':[]}
 
@@ -109,8 +107,6 @@ def sinkhorn(a,b, M, reg, numItermax = 1000, stopThr=1e-9, verbose=False, log=Fa
     #print(np.min(K))
 
     Kp = (1/a).reshape(-1, 1) * K
-
-    transp = K
     cpt = 0
     err=1
     while (err>stopThr and cpt<numItermax):
