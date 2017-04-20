@@ -77,5 +77,5 @@ class OTDA_sinkhorn_GPU(OTDA):
             M = np.log(1 + np.log(1 + self.M_GPU.asarray()))
             self.M_GPU = cudamat.CUDAMatrix(M)
 
-        self.G = sinkhorn(ws, wt, self.M_GPU, reg, cudamat=cudamat)
+        self.G = sinkhorn(ws, wt, self.M_GPU, reg, cudamat=cudamat, **kwargs)
         self.computed = True
