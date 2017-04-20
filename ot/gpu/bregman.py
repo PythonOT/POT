@@ -6,7 +6,7 @@ Bregman projections for regularized OT with GPU
 import numpy as np
 
 
-def sinkhornGPU(a, b, M_GPU, reg, numItermax=1000, stopThr=1e-9, verbose=False,
+def sinkhorn(a, b, M_GPU, reg, numItermax=1000, stopThr=1e-9, verbose=False,
                 log=False, cudamat=None):
     # init data
     Nini = len(a)
