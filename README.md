@@ -37,7 +37,7 @@ sudo apt-get install python-numpy python-scipy python-matplotlib cython
 
 To install the library, you can install it locally (after downloading it) on you machine using
 ```
-python setup.py install --user
+python setup.py install --user # for user install (no root)
 ```
 
 The toolbox is also available on PyPI with a possibly slightly older version. You can install it with:
@@ -51,6 +51,22 @@ import ot
 ```
 
 Note that for easier access the module is name ot instead of pot.
+
+
+### Dependencies
+
+Some sub-modules require additional dependences which are discussed below
+
+* ot.dr (Wasserstein dimensionality rediuction) depends on autograd and pymanopt that can be installed with:
+```
+pip install pymanopt autograd
+```
+* ot.gpu (GPU accelerated OT) depends on cudamat that have to be installed with:
+```
+git clone https://github.com/cudamat/cudamat.git
+cd cudamat
+python setup.py install --user # for user install (no root)
+```
 
 ## Examples
 
@@ -77,8 +93,8 @@ The contributors to this library are:
 * [Rémi Flamary](http://remi.flamary.com/)
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
 * [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/)
-* [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/)
-* [Léo Gautheron](https://github.com/aje)
+* [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/) (Mapping estimation)
+* [Léo Gautheron](https://github.com/aje) (GPU implementation)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
