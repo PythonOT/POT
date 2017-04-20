@@ -7,9 +7,10 @@ import numpy as np
 from ..utils import unif
 from ..da import OTDA
 from .bregman import sinkhorn
+import cudamat
 
 
-def pairwiseEuclideanGPU(a, b, returnAsGPU=False, squared=False, cudamat=None):
+def pairwiseEuclideanGPU(a, b, returnAsGPU=False, squared=False):
     # a is shape (n, f) and b shape (m, f). Return matrix c of shape (n, m).
     # First compute in c_GPU the squared euclidean distance. And return its
     # square root. At each cell [i,j] of c, we want to have
@@ -45,9 +46,24 @@ def pairwiseEuclideanGPU(a, b, returnAsGPU=False, squared=False, cudamat=None):
         return c_GPU.asarray()
 
 
-class OTDA_sinkhorn_GPU(OTDA):
+class OTDA_GPU(OTDA):
+    def normalizeM(self, norm):
+        if norm == "median":
+            self.M_GPU.divide(float(np.median(self.M_GPU.asarray())))
+        elif norm == "max":
+            self.M_GPU.divide(float(np.max(self.M_GPU.asarray())))
+        elif norm == "log":
+            self.M_GPU.add(1)
+            cudamat.log(self.M_GPU)
+        elif norm == "loglog":
+            self.M_GPU.add(1)
+            cudamat.log(self.M_GPU)
+            self.M_GPU.add(1)
+            cudamat.log(self.M_GPU)
+
+
+class OTDA_sinkhorn(OTDA_GPU):
     def fit(self, xs, xt, reg=1, ws=None, wt=None, norm=None, **kwargs):
-        import cudamat
         cudamat.init()
         xs = np.asarray(xs, dtype=np.float64)
         xt = np.asarray(xt, dtype=np.float64)
@@ -64,18 +80,7 @@ class OTDA_sinkhorn_GPU(OTDA):
         self.wt = wt
 
         self.M_GPU = pairwiseEuclideanGPU(xs, xt, returnAsGPU=True,
-                                          squared=True, cudamat=cudamat)
-
-        if norm == "median":
-            self.M_GPU.divide(float(np.median(self.M_GPU.asarray())))
-        elif norm == "max":
-            self.M_GPU.divide(float(np.max(self.M_GPU.asarray())))
-        elif norm == "log":
-            M = np.log(1 + self.M_GPU.asarray())
-            self.M_GPU = cudamat.CUDAMatrix(M)
-        elif norm == "loglog":
-            M = np.log(1 + np.log(1 + self.M_GPU.asarray()))
-            self.M_GPU = cudamat.CUDAMatrix(M)
-
-        self.G = sinkhorn(ws, wt, self.M_GPU, reg, cudamat=cudamat, **kwargs)
+                                          squared=True)
+        self.normalizeM(norm)
+        self.G = sinkhorn(ws, wt, self.M_GPU, reg, **kwargs)
         self.computed = True
