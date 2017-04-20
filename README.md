@@ -57,11 +57,11 @@ Note that for easier access the module is name ot instead of pot.
 
 Some sub-modules require additional dependences which are discussed below
 
-* *ot.dr* (Wasserstein dimensionality rediuction) depends on autograd and pymanopt that can be installed with:
+* **ot.dr** (Wasserstein dimensionality rediuction) depends on autograd and pymanopt that can be installed with:
 ```
 pip install pymanopt autograd
 ```
-* *ot.gpu* (GPU accelerated OT) depends on cudamat that have to be installed with:
+* **ot.gpu** (GPU accelerated OT) depends on cudamat that have to be installed with:
 ```
 git clone https://github.com/cudamat/cudamat.git
 cd cudamat
