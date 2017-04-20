@@ -112,9 +112,11 @@ def sinkhorn(a,b, M, reg, numItermax = 1000, stopThr=1e-9, verbose=False, log=Fa
     while (err>stopThr and cpt<numItermax):
         uprev = u
         vprev = v
-        v = np.divide(b,np.dot(K.T,u))
+        KtransposeU = np.dot(K.T, u)
+        v = np.divide(b, KtransposeU)
         u = 1./np.dot(Kp,v)
-        if (np.any(np.dot(K.T,u)==0) or
+
+        if (np.any(KtransposeU==0) or
            np.any(np.isnan(u)) or np.any(np.isnan(v)) or
            np.any(np.isinf(u)) or np.any(np.isinf(v))):
             # we have reached the machine precision

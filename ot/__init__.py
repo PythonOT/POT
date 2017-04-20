@@ -9,6 +9,7 @@ from . import utils
 from . import datasets
 from . import plot
 from . import da
+from . import gpu
 
 # OT functions
 from .lp import emd, emd2
@@ -20,6 +21,7 @@ from .utils import dist, unif, tic, toc, toq
 
 __version__ = "0.2"
 
-__all__ = ["emd", "emd2", "sinkhorn", "utils", 'datasets', 'bregman', 'lp', 
+__all__ = ["emd", "emd2", "sinkhorn", "utils", 'datasets', 'bregman', 'lp',
            'plot', 'tic', 'toc', 'toq',
-           'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim']
+           'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim',
+           'gpu']
