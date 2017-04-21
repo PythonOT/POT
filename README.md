@@ -10,7 +10,7 @@ This open source Python library provide several solvers for optimization problem
 It provides the following solvers:
 
 * OT solver for the linear program/ Earth Movers Distance [1].
-* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2] and stabilized version [9][10] with optional GPU implementation.
+* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2] and stabilized version [9][10] with optional GPU implementation (required cudamat).
 * Bregman projections for Wasserstein barycenter [3] and unmixing [4].
 * Optimal transport for domain adaptation with group lasso regularization [5]
 * Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
@@ -57,11 +57,11 @@ Note that for easier access the module is name ot instead of pot.
 
 Some sub-modules require additional dependences which are discussed below
 
-* *ot.dr* (Wasserstein dimensionality rediuction) depends on autograd and pymanopt that can be installed with:
+* **ot.dr** (Wasserstein dimensionality rediuction) depends on autograd and pymanopt that can be installed with:
 ```
 pip install pymanopt autograd
 ```
-* *ot.gpu* (GPU accelerated OT) depends on cudamat that have to be installed with:
+* **ot.gpu** (GPU accelerated OT) depends on cudamat that have to be installed with:
 ```
 git clone https://github.com/cudamat/cudamat.git
 cd cudamat
