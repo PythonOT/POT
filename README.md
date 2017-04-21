@@ -68,6 +68,8 @@ cd cudamat
 python setup.py install --user # for user install (no root)
 ```
 
+obviously you need CUDA installed and a compatible GPU.
+
 ## Examples
 
 The examples folder contain several examples and use case for the library. The full documentation is available on [Readthedocs](http://pot.readthedocs.io/)

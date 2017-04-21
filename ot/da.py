@@ -620,7 +620,7 @@ class OTDA(object):
         self.wt=wt
 
         self.M=dist(xs,xt,metric=self.metric)
-        self.normalize()
+        self.normalizeM(norm)
         self.G=emd(ws,wt,self.M)
         self.computed=True
 
