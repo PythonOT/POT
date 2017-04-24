@@ -8,7 +8,7 @@ import cudamat
 
 
 def sinkhorn(a, b, M_GPU, reg, numItermax=1000, stopThr=1e-9, verbose=False,
-                log=False):
+                log=False, returnAsGPU=False):
     # init data
     Nini = len(a)
     Nfin = len(b)
@@ -77,7 +77,13 @@ def sinkhorn(a, b, M_GPU, reg, numItermax=1000, stopThr=1e-9, verbose=False,
 
     K_GPU.mult_by_col(u_GPU, target=K_GPU)
     K_GPU.mult_by_row(v_GPU.transpose(), target=K_GPU)
-    if log:
-        return K_GPU.asarray(), log
+
+    if returnAsGPU:
+        res = K_GPU
     else:
-        return K_GPU.asarray()
+        res = K_GPU.asarray()
+
+    if log:
+        return res, log
+    else:
+        return res
