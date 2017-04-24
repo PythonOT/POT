@@ -69,11 +69,9 @@ def pairwiseEuclideanGPU(a, b, returnAsGPU=False, squared=False):
 
 def sinkhorn_lpl1_mm(a, labels_a, b, M_GPU, reg, eta=0.1, numItermax=10,
                      numInnerItermax=200, stopInnerThr=1e-9,
-                     unlabelledValue=-99, verbose=False, log=False):
+                     verbose=False, log=False):
     p = 0.5
     epsilon = 1e-3
-
-    # init data
     Nfin = len(b)
 
     indices_labels = []
@@ -94,37 +92,18 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M_GPU, reg, eta=0.1, numItermax=10,
         # separated
         W_GPU.assign(1)
         W_GPU = W_GPU.transpose()
-        all_majs_GPU = []
-        idx_unlabelled = -1
         for (i, c) in enumerate(classes):
-            if c != unlabelledValue:
-                (_, nbRow) = indices_labels[i].shape
-                tmpC_GPU = cudamat.empty((Nfin, nbRow)).assign(0)
-                transp_GPU.transpose().select_columns(indices_labels[i],
-                                                      tmpC_GPU)
-                majs_GPU = tmpC_GPU.sum(axis=1).add(epsilon)
-                cudamat.pow(majs_GPU, (p-1))
-                majs_GPU.mult(p)
-                all_majs_GPU.append(majs_GPU)
-
-                tmpC_GPU.assign(0)
-                tmpC_GPU.add_col_vec(majs_GPU)
-                W_GPU.set_selected_columns(indices_labels[i], tmpC_GPU)
-            else:
-                idx_unlabelled = i
-
-        # now we majorize the unlabelled (if there are any) by the min of
-        # the majorizations. do it only for unlabbled data
-        if idx_unlabelled != -1:
-            all_majs = np.array([m_GPU.asarray() for m_GPU in all_majs_GPU])
-            minMaj_GPU = (cudamat.CUDAMatrix(all_majs).min(axis=0)
-                          .transpose())
-            (_, nbRow) = indices_labels[idx_unlabelled].shape
+            (_, nbRow) = indices_labels[i].shape
             tmpC_GPU = cudamat.empty((Nfin, nbRow)).assign(0)
+            transp_GPU.transpose().select_columns(indices_labels[i], tmpC_GPU)
+            majs_GPU = tmpC_GPU.sum(axis=1).add(epsilon)
+            cudamat.pow(majs_GPU, (p-1))
+            majs_GPU.mult(p)
 
-            tmpC_GPU.add_col_vec(minMaj_GPU)
-            W_GPU.set_selected_columns(indices_labels[idx_unlabelled],
-                                       tmpC_GPU)
+            tmpC_GPU.assign(0)
+            tmpC_GPU.add_col_vec(majs_GPU)
+            W_GPU.set_selected_columns(indices_labels[i], tmpC_GPU)
+
         W_GPU = W_GPU.transpose()
 
     return transp_GPU.asarray()
