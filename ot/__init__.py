@@ -1,4 +1,8 @@
-"""Python Optimal Transport toolbox"""
+"""Python Optimal Transport toolbox
+
+
+
+"""
 
 
 # All submodules and packages

@@ -508,11 +508,11 @@ def geometricMean(alldistribT):
     return np.exp(np.mean(np.log(alldistribT),axis=1))
 
 def projR(gamma,p):
-    #return np.dot(np.diag(p/np.maximum(np.sum(gamma,axis=1),1e-10)),gamma)
+    """return the KL projection on the row constrints """
     return np.multiply(gamma.T,p/np.maximum(np.sum(gamma,axis=1),1e-10)).T
 
 def projC(gamma,q):
-    #return (np.dot(np.diag(q/np.maximum(np.sum(gamma,axis=0),1e-10)),gamma.T)).T
+    """return the KL projection on the column constrints """
     return np.multiply(gamma,q/np.maximum(np.sum(gamma,axis=0),1e-10))
 
 

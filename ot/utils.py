@@ -63,10 +63,10 @@ def dist(x1,x2=None,metric='sqeuclidean'):
         matrix with n2 samples of size d (if None then x2=x1)
     metric : str, fun, optional
         name of the metric to be computed (full list in the doc of scipy),  If a string,
-        the distance function can be ‘braycurtis’, ‘canberra’, ‘chebyshev’, ‘cityblock’,
-        ‘correlation’, ‘cosine’, ‘dice’, ‘euclidean’, ‘hamming’, ‘jaccard’, ‘kulsinski’,
-        ‘mahalanobis’, ‘matching’, ‘minkowski’, ‘rogerstanimoto’, ‘russellrao’, ‘seuclidean’,
-        ‘sokalmichener’, ‘sokalsneath’, ‘sqeuclidean’, ‘wminkowski’, ‘yule’.
+        the distance function can be 'braycurtis', 'canberra', 'chebyshev', 'cityblock',
+        'correlation', 'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'kulsinski',
+        'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
+        'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski', 'yule'.
 
 
     Returns
