@@ -2,9 +2,19 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.spyproject
+
+# sphinx-gallery temp files
+docs/source/auto_examples/*.pickle
+docs/source/auto_examples/*.md5
+docs/auto_examples/
+docs/modules/
 
 # C extensions
 *.so
+
+# Cython output
+ot/lp/emd_wrap.cpp
 
 # Distribution / packaging
 .Python
