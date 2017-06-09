@@ -483,10 +483,11 @@ Regularized OT with generic solver
       200|1.607143e-01|-2.151971e-10
     It.  |Loss        |Delta loss
     --------------------------------
-        0|-4.988764e-01|0.000000e+00
-        1|-4.993932e-01|-1.034993e-03
-        2|-4.993933e-01|-9.845917e-08
-        3|-4.993933e-01|-9.206594e-12
+        0|1.693084e-01|0.000000e+00
+        1|1.610121e-01|-5.152589e-02
+        2|1.609378e-01|-4.622297e-04
+        3|1.609284e-01|-5.830043e-05
+        4|1.609284e-01|-1.111580e-12
 
 
 
@@ -554,14 +555,14 @@ Regularized OT with generic solver
     def f(G): return 0.5*np.sum(G**2)
     def df(G): return G
 
-    reg1=1e-1
+    reg1=1e-3
     reg2=1e-1
 
     Gel2=ot.optim.gcg(a,b,M,reg1,reg2,f,df,verbose=True)
 
     pl.figure(5)
     ot.plot.plot1D_mat(a,b,Gel2,'OT entropic + matrix Frob. reg')
-**Total running time of the script:** ( 0 minutes  2.358 seconds)
+**Total running time of the script:** ( 0 minutes  2.422 seconds)
 
 
 

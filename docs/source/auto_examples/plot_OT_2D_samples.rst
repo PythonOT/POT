@@ -58,7 +58,7 @@
 
     #%% parameters and data generation
 
-    n=20 # nb samples
+    n=2 # nb samples
 
     mu_s=np.array([0,0])
     cov_s=np.array([[1,0],[0,1]])
@@ -122,7 +122,7 @@
     pl.legend(loc=0)
     pl.title('OT matrix Sinkhorn with samples')
 
-**Total running time of the script:** ( 0 minutes  1.051 seconds)
+**Total running time of the script:** ( 0 minutes  0.406 seconds)
 
 
 

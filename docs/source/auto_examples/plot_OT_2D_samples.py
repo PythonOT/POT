@@ -13,7 +13,7 @@ import ot
 
 #%% parameters and data generation
 
-n=20 # nb samples
+n=2 # nb samples
 
 mu_s=np.array([0,0])
 cov_s=np.array([[1,0],[0,1]])

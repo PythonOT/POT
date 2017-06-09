@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 =================================
-Wasserstein Discriminant Analysis
+WAsserstein Discriminant Analysis
 =================================
 
 @author: rflamary

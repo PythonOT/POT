@@ -23,6 +23,26 @@ POT Examples
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="@author: rflamary ">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_WDA_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_WDA.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_WDA
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip=" ">
 
 .. only:: html
