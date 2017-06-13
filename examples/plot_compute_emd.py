@@ -16,7 +16,7 @@ from ot.datasets import get_1D_gauss as gauss
 #%% parameters
 
 n=100 # nb bins
-n_target=10 # nb target distributions
+n_target=50 # nb target distributions
 
 
 # bin positions
@@ -61,14 +61,15 @@ pl.legend()
 
 #%%
 reg=1e-2
-d_sinkhorn=ot.sinkhorn(a,B,M,reg)
+d_sinkhorn=ot.sinkhorn(a,B,M,reg,method='sinkhorn_stabilized')
+d_sinkhorn0=ot.sinkhorn(a,B,M,reg)
 d_sinkhorn2=ot.sinkhorn(a,B,M2,reg)
 
 pl.figure(2)
 pl.clf()
 pl.plot(d_emd,label='Euclidean EMD')
 pl.plot(d_emd2,label='Squared Euclidean EMD')
-pl.plot(d_sinkhorn,label='Euclidean Sinkhorn')
-pl.plot(d_emd2,label='Squared Euclidean Sinkhorn')
+pl.plot(d_sinkhorn,'+',label='Euclidean Sinkhorn')
+pl.plot(d_sinkhorn2,'+',label='Squared Euclidean Sinkhorn')
 pl.title('EMD distances')
 pl.legend()
