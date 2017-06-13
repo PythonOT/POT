@@ -50,7 +50,7 @@ ot.plot.plot1D_mat(a,b,G0,'OT matrix G0')
 #%% Sinkhorn
 
 lambd=1e-3
-Gs=ot.sinkhorn(a,b,M,lambd)
+Gs=ot.sinkhorn(a,b,M,lambd,verbose=True)
 
 pl.figure(4)
 ot.plot.plot1D_mat(a,b,Gs,'OT matrix Sinkhorn')

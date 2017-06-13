@@ -32,10 +32,11 @@ B=np.zeros((n,n_target))
 for i,m in enumerate(lst_m):
     B[:,i]=gauss(n,m=m,s=5)
 
-# loss matrix
+# loss matrix and normalization
 M=ot.dist(x.reshape((n,1)),x.reshape((n,1)),'euclidean')
+M/=M.max()
 M2=ot.dist(x.reshape((n,1)),x.reshape((n,1)),'sqeuclidean')
-
+M2/=M2.max()
 #%% plot the distributions
 
 pl.figure(1)
@@ -46,12 +47,28 @@ pl.subplot(2,1,2)
 pl.plot(x,B,label='Target distributions')
 pl.title('Target distributions')
 
-#%% plot distributions and loss matrix
+#%% Compute and plot distributions and loss matrix
 
-emd=ot.emd2(a,B,M)
-emd2=ot.emd2(a,B,M2)
+d_emd=ot.emd2(a,B,M) # direct computation of EMD
+d_emd2=ot.emd2(a,B,M2)  # direct computation of EMD with loss M3
+
+
 pl.figure(2)
-pl.plot(emd,label='Euclidean loss')
-pl.plot(emd,label='Squared Euclidean loss')
+pl.plot(d_emd,label='Euclidean EMD')
+pl.plot(d_emd2,label='Squared Euclidean EMD')
+pl.title('EMD distances')
 pl.legend()
 
+#%%
+reg=1e-2
+d_sinkhorn=ot.sinkhorn(a,B,M,reg)
+d_sinkhorn2=ot.sinkhorn(a,B,M2,reg)
+
+pl.figure(2)
+pl.clf()
+pl.plot(d_emd,label='Euclidean EMD')
+pl.plot(d_emd2,label='Squared Euclidean EMD')
+pl.plot(d_sinkhorn,label='Euclidean Sinkhorn')
+pl.plot(d_emd2,label='Squared Euclidean Sinkhorn')
+pl.title('EMD distances')
+pl.legend()
