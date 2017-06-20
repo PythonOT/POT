@@ -50,6 +50,13 @@ def unif(n):
     """
     return np.ones((n,))/n
 
+def clean_zeros(a,b,M):
+    """ Remove all components with zeros weights in a and b 
+    """
+    M2=M[a>0,:][:,b>0].copy() # copy force c style matrix (froemd)
+    a2=a[a>0]
+    b2=b[b>0]
+    return a2,b2,M2
 
 def dist(x1,x2=None,metric='sqeuclidean'):
     """Compute distance between samples in x1 and x2 using function scipy.spatial.distance.cdist

@@ -108,6 +108,8 @@ def sinkhorn(a,b, M, reg,method='sinkhorn', numItermax = 1000, stopThr=1e-9, ver
     return sink()
     
 
+
+
 def sinkhorn_knopp(a,b, M, reg, numItermax = 1000, stopThr=1e-9, verbose=False, log=False,**kwargs):
     """
     Solve the entropic regularization optimal transport problem and return the OT matrix
