@@ -6,6 +6,7 @@ python:
   # maintainers to fix their pypy-dev package.
   # - "pypy"
 before_install:
+  - sudo apt-get update -q
   - sudo apt-get install libblas-dev liblapack-dev libatlas-base-dev #gfortran
 # command to install dependencies
 install:
