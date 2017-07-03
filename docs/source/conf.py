@@ -31,7 +31,8 @@ class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
         return MagicMock()
-MOCK_MODULES = ['ot.lp.emd_wrap','autograd','pymanopt']
+MOCK_MODULES = ['ot.lp.emd_wrap','autograd.numpy','pymanopt.manifolds','pymanopt'
+                'pymanopt.solvers','cudamat']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 # !!!!
 
