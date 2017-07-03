@@ -77,6 +77,8 @@ The examples folder contain several examples and use case for the library. The f
  Here is a list of the Python notebooks if you want a quick look:
 
 * [1D optimal transport](https://github.com/rflamary/POT/blob/master/examples/Demo_1D_OT.ipynb)
+* [OT Ground Loss](https://github.com/rflamary/POT/blob/master/examples/Demo_Ground_Loss.ipynb)
+* [Multiple EMD computation](https://github.com/rflamary/POT/blob/master/examples/Demo_Compute_EMD.ipynb)
 * [2D optimal transport on empirical distributions](https://github.com/rflamary/POT/blob/master/examples/Demo_2D_OT_samples.ipynb)
 * [1D Wasserstein barycenter](https://github.com/rflamary/POT/blob/master/examples/Demo_1D_barycenter.ipynb)
 * [OT with user provided regularization](https://github.com/rflamary/POT/blob/master/examples/Demo_Optim_OTreg.ipynb)
@@ -84,6 +86,7 @@ The examples folder contain several examples and use case for the library. The f
 * [Color transfer in images](https://github.com/rflamary/POT/blob/master/examples/Demo_Image_ColorAdaptation.ipynb)
 * [OT mapping estimation for domain adaptation](https://github.com/rflamary/POT/blob/master/examples/Demo_2D_OTmapping_DomainAdaptation.ipynb)
 * [OT mapping estimation for color transfer in images](https://github.com/rflamary/POT/blob/master/examples/Demo_Image_ColorAdaptation_mapping.ipynb)
+* [Wasserstein Discriminant Analysis](https://github.com/rflamary/POT/blob/master/examples/Demo_Wasserstein_Discriminant_Analysis.ipynb)
 
 
 You can also see the notebooks with [Jupyter nbviewer](https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/examples/).
