@@ -71,3 +71,4 @@ Gel2=ot.optim.gcg(a,b,M,reg1,reg2,f,df,verbose=True)
 
 pl.figure(5)
 ot.plot.plot1D_mat(a,b,Gel2,'OT entropic + matrix Frob. reg')
+pl.show()

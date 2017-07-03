@@ -13,7 +13,7 @@ import ot
 
 #%% parameters and data generation
 
-n=2 # nb samples
+n=50 # nb samples
 
 mu_s=np.array([0,0])
 cov_s=np.array([[1,0],[0,1]])
@@ -62,7 +62,7 @@ pl.title('OT matrix with samples')
 #%% sinkhorn
 
 # reg term
-lambd=5e-3
+lambd=5e-4
 
 Gs=ot.sinkhorn(a,b,M,lambd)
 

@@ -46,7 +46,16 @@
             :scale: 47
 
 
+.. rst-class:: sphx-glr-script-out
 
+ Out::
+
+    ('Warning: numerical errors at iteration', 0)
+
+
+
+
+|
 
 
 .. code-block:: python
@@ -58,7 +67,7 @@
 
     #%% parameters and data generation
 
-    n=2 # nb samples
+    n=50 # nb samples
 
     mu_s=np.array([0,0])
     cov_s=np.array([[1,0],[0,1]])
@@ -107,7 +116,7 @@
     #%% sinkhorn
 
     # reg term
-    lambd=5e-3
+    lambd=5e-4
 
     Gs=ot.sinkhorn(a,b,M,lambd)
 
@@ -122,7 +131,7 @@
     pl.legend(loc=0)
     pl.title('OT matrix Sinkhorn with samples')
 
-**Total running time of the script:** ( 0 minutes  0.406 seconds)
+**Total running time of the script:** ( 0 minutes  0.623 seconds)
 
 
 

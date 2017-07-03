@@ -36,7 +36,29 @@
             :scale: 47
 
 
+.. rst-class:: sphx-glr-script-out
 
+ Out::
+
+    It.  |Err         
+    -------------------
+        0|8.187970e-02|
+       10|3.460174e-02|
+       20|6.633335e-03|
+       30|9.797798e-04|
+       40|1.389606e-04|
+       50|1.959016e-05|
+       60|2.759079e-06|
+       70|3.885166e-07|
+       80|5.470605e-08|
+       90|7.702918e-09|
+      100|1.084609e-09|
+      110|1.527180e-10|
+
+
+
+
+|
 
 
 .. code-block:: python
@@ -85,12 +107,12 @@
     #%% Sinkhorn
 
     lambd=1e-3
-    Gs=ot.sinkhorn(a,b,M,lambd)
+    Gs=ot.sinkhorn(a,b,M,lambd,verbose=True)
 
     pl.figure(4)
     ot.plot.plot1D_mat(a,b,Gs,'OT matrix Sinkhorn')
 
-**Total running time of the script:** ( 0 minutes  0.597 seconds)
+**Total running time of the script:** ( 0 minutes  0.674 seconds)
 
 
 

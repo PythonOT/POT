@@ -83,6 +83,26 @@ POT Examples
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="@author: rflamary ">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_compute_emd_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_compute_emd.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_compute_emd
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="[6] Ferradans, S., Papadakis, N., Peyre, G., & Aujol, J. F. (2014). Regularized discrete optima...">
 
 .. only:: html
@@ -140,6 +160,26 @@ POT Examples
    :hidden:
 
    /auto_examples/plot_OTDA_2D
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Stole the figure idea from Fig. 1 and 2 in  https://arxiv.org/pdf/1706.07650.pdf">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_OT_L1_vs_L2_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_OT_L1_vs_L2.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_OT_L1_vs_L2
 
 .. raw:: html
 

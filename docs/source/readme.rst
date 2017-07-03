@@ -11,7 +11,8 @@ It provides the following solvers:
 
 -  OT solver for the linear program/ Earth Movers Distance [1].
 -  Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2]
-   and stabilized version [9][10].
+   and stabilized version [9][10] with optional GPU implementation
+   (required cudamat).
 -  Bregman projections for Wasserstein barycenter [3] and unmixing [4].
 -  Optimal transport for domain adaptation with group lasso
    regularization [5]
@@ -71,14 +72,14 @@ Dependencies
 Some sub-modules require additional dependences which are discussed
 below
 
--  ot.dr (Wasserstein dimensionality rediuction) depends on autograd and
-   pymanopt that can be installed with:
+-  **ot.dr** (Wasserstein dimensionality rediuction) depends on autograd
+   and pymanopt that can be installed with:
 
    ::
 
        pip install pymanopt autograd
 
--  ot.gpu (GPU accelerated OT) depends on cudamat that have to be
+-  **ot.gpu** (GPU accelerated OT) depends on cudamat that have to be
    installed with:
 
    ::
@@ -86,6 +87,8 @@ below
        git clone https://github.com/cudamat/cudamat.git
        cd cudamat
        python setup.py install --user # for user install (no root)
+
+obviously you need CUDA installed and a compatible GPU.
 
 Examples
 --------
@@ -144,47 +147,59 @@ References
 ----------
 
 [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W. (2011,
-December). Displacement interpolation using Lagrangian mass transport.
+December). `Displacement interpolation using Lagrangian mass
+transport <https://people.csail.mit.edu/sparis/publi/2011/sigasia/Bonneel_11_Displacement_Interpolation.pdf>`__.
 In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p. 158). ACM.
 
-[2] Cuturi, M. (2013). Sinkhorn distances: Lightspeed computation of
-optimal transport. In Advances in Neural Information Processing Systems
-(pp. 2292-2300).
+[2] Cuturi, M. (2013). `Sinkhorn distances: Lightspeed computation of
+optimal transport <https://arxiv.org/pdf/1306.0895.pdf>`__. In Advances
+in Neural Information Processing Systems (pp. 2292-2300).
 
 [3] Benamou, J. D., Carlier, G., Cuturi, M., Nenna, L., & Peyré, G.
-(2015). Iterative Bregman projections for regularized transportation
-problems. SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
+(2015). `Iterative Bregman projections for regularized transportation
+problems <https://arxiv.org/pdf/1412.5154.pdf>`__. SIAM Journal on
+Scientific Computing, 37(2), A1111-A1138.
 
 [4] S. Nakhostin, N. Courty, R. Flamary, D. Tuia, T. Corpetti,
-Supervised planetary unmixing with optimal transport, Whorkshop on
-Hyperspectral Image and Signal Processing : Evolution in Remote Sensing
-(WHISPERS), 2016.
+`Supervised planetary unmixing with optimal
+transport <https://hal.archives-ouvertes.fr/hal-01377236/document>`__,
+Whorkshop on Hyperspectral Image and Signal Processing : Evolution in
+Remote Sensing (WHISPERS), 2016.
 
-[5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, "Optimal Transport
-for Domain Adaptation," in IEEE Transactions on Pattern Analysis and
-Machine Intelligence , vol.PP, no.99, pp.1-1
+[5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, `Optimal Transport
+for Domain Adaptation <https://arxiv.org/pdf/1507.00504.pdf>`__, in IEEE
+Transactions on Pattern Analysis and Machine Intelligence , vol.PP,
+no.99, pp.1-1
 
 [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
-Regularized discrete optimal transport. SIAM Journal on Imaging
-Sciences, 7(3), 1853-1882.
+`Regularized discrete optimal
+transport <https://arxiv.org/pdf/1307.5551.pdf>`__. SIAM Journal on
+Imaging Sciences, 7(3), 1853-1882.
 
-[7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized
-conditional gradient: analysis of convergence and applications. arXiv
-preprint arXiv:1510.06567.
+[7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). `Generalized
+conditional gradient: analysis of convergence and
+applications <https://arxiv.org/pdf/1510.06567.pdf>`__. arXiv preprint
+arXiv:1510.06567.
 
-[8] M. Perrot, N. Courty, R. Flamary, A. Habrard, "Mapping estimation
-for discrete optimal transport", Neural Information Processing Systems
-(NIPS), 2016.
+[8] M. Perrot, N. Courty, R. Flamary, A. Habrard, `Mapping estimation
+for discrete optimal
+transport <http://remi.flamary.com/biblio/perrot2016mapping.pdf>`__,
+Neural Information Processing Systems (NIPS), 2016.
 
-[9] Schmitzer, B. (2016). Stabilized Sparse Scaling Algorithms for
-Entropy Regularized Transport Problems. arXiv preprint arXiv:1610.06519.
+[9] Schmitzer, B. (2016). `Stabilized Sparse Scaling Algorithms for
+Entropy Regularized Transport
+Problems <https://arxiv.org/pdf/1610.06519.pdf>`__. arXiv preprint
+arXiv:1610.06519.
 
 [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016).
-Scaling algorithms for unbalanced transport problems. arXiv preprint
+`Scaling algorithms for unbalanced transport
+problems <https://arxiv.org/pdf/1607.05816.pdf>`__. arXiv preprint
 arXiv:1607.05816.
 
 [11] Flamary, R., Cuturi, M., Courty, N., & Rakotomamonjy, A. (2016).
-Wasserstein Discriminant Analysis. arXiv preprint arXiv:1608.08063.
+`Wasserstein Discriminant
+Analysis <https://arxiv.org/pdf/1608.08063.pdf>`__. arXiv preprint
+arXiv:1608.08063.
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT

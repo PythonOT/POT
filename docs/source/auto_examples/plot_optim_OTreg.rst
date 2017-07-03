@@ -562,7 +562,8 @@ Regularized OT with generic solver
 
     pl.figure(5)
     ot.plot.plot1D_mat(a,b,Gel2,'OT entropic + matrix Frob. reg')
-**Total running time of the script:** ( 0 minutes  2.422 seconds)
+    pl.show()
+**Total running time of the script:** ( 0 minutes  2.319 seconds)
 
 
 
