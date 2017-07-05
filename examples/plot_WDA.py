@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pylab as pl
 import ot
 from ot.datasets import get_1D_gauss as gauss
-from ot.dr import wda
+from ot.dr import wda, fda
 
 
 #%% parameters
@@ -36,7 +36,12 @@ pl.legend(loc=0)
 pl.title('Discriminant dimensions')
 
 
-#%% plot distributions and loss matrix
+#%% Comlpute FDA
+p=2
+
+Pfda,projfda = fda(xs,ys,p)
+
+#%% Compute WDA
 p=2
 reg=1
 k=10
@@ -46,8 +51,8 @@ P,proj = wda(xs,ys,p,reg,k,maxiter=maxiter)
 
 #%% plot samples
 
-xsp=proj(xs)
-xtp=proj(xt)
+xsp=projfda(xs)
+xtp=projfda(xt)
 
 pl.figure(1,(10,5))
 

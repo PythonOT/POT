@@ -7,6 +7,7 @@ import autograd.numpy as np
 from pymanopt.manifolds import Stiefel
 from pymanopt import Problem
 from pymanopt.solvers import SteepestDescent, TrustRegions
+import scipy.linalg as la
 
 def dist(x1,x2):
     """ Compute squared euclidean distance between samples (autograd)
@@ -32,8 +33,72 @@ def split_classes(X,y):
     """
     lstsclass=np.unique(y)
     return [X[y==i,:].astype(np.float32) for i in lstsclass]
-    
 
+
+def fda(X,y,p=2,reg=1e-16):
+    """ 
+    Fisher Discriminant Analysis 
+      
+    
+    Parameters
+    ----------
+    X : numpy.ndarray (n,d)
+        Training samples
+    y : np.ndarray (n,)
+        labels for training samples
+    p : int, optional
+        size of dimensionnality reduction
+    reg : float, optional
+        Regularization term >0 (ridge regularization)
+
+
+    Returns
+    -------
+    P : (d x p) ndarray
+        Optimal transportation matrix for the given parameters
+    proj : fun
+        projection function including mean centering
+
+    
+    """    
+    
+    mx=np.mean(X)
+    X-=mx.reshape((1,-1))
+    
+    # data split between classes
+    d=X.shape[1]
+    xc=split_classes(X,y)  
+    nc=len(xc)
+    
+    p=min(nc-1,p)
+    
+    Cw=0
+    for x in xc:
+        Cw+=np.cov(x,rowvar=False)
+    Cw/=nc
+    
+    mxc=np.zeros((d,nc))
+    
+    for i in range(nc):
+        mxc[:,i]=np.mean(xc[i])
+        
+    mx0=np.mean(mxc,1)
+    Cb=0
+    for i in range(nc):
+        Cb+=(mxc[:,i]-mx0).reshape((-1,1))*(mxc[:,i]-mx0).reshape((1,-1))
+        
+    w,V=la.eig(Cb,Cw+reg*np.eye(d))
+    
+    idx=np.argsort(w.real)
+    
+    Popt=V[:,idx[-p:]]
+    
+    
+    
+    def proj(X):
+        return (X-mx.reshape((1,-1))).dot(Popt)
+    
+    return Popt, proj
 
 def wda(X,y,p=2,reg=1,k=10,solver = None,maxiter=100,verbose=0):
     """ 
@@ -73,16 +138,13 @@ def wda(X,y,p=2,reg=1,k=10,solver = None,maxiter=100,verbose=0):
     P : (d x p) ndarray
         Optimal transportation matrix for the given parameters
     proj : fun
-        projectiuon function including mean centering
+        projection function including mean centering
 
 
     References
     ----------
 
     .. [11] Flamary, R., Cuturi, M., Courty, N., & Rakotomamonjy, A. (2016). Wasserstein Discriminant Analysis. arXiv preprint arXiv:1608.08063.
-
-    
-    
     
     """
     
@@ -131,3 +193,6 @@ def wda(X,y,p=2,reg=1,k=10,solver = None,maxiter=100,verbose=0):
         return (X-mx.reshape((1,-1))).dot(Popt)
     
     return Popt, proj
+
+
+
