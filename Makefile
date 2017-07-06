@@ -46,4 +46,4 @@ rdoc:
 
 
 notebook :
-	ipython notebook --matplotlib=inline  --notebook-dir=examples/
+	ipython notebook --matplotlib=inline  --notebook-dir=notebooks/
