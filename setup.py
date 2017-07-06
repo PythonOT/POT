@@ -21,7 +21,7 @@ __version__ = re.search(
 ROOT = os.path.abspath(os.path.dirname(__file__))
 
 
-# convert markdown readme to rst in pypandoc installed
+# convert markdown readme to rst if pypandoc installed
 try:
    import pypandoc
    README = pypandoc.convert('README.md', 'rst')

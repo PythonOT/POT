@@ -93,11 +93,51 @@ obviously you need CUDA installed and a compatible GPU.
 Examples
 --------
 
+Short examples
+~~~~~~~~~~~~~~
+
+-  Import the toolbox
+
+   .. code:: python
+
+       import ot
+
+-  Compute Wasserstein distances
+
+   .. code:: python
+
+       # a,b are 1D histograms (sum to 1 and positive)
+       # M is the ground cost matrix
+       Wd=ot.emd2(a,b,M) # exact linear program
+       # if b is a matrix compute all distances to a and return a vector
+
+-  Compute OT matrix
+
+   .. code:: python
+
+       # a,b are 1D histograms (sum to 1 and positive)
+       # M is the ground cost matrix
+       Totp=ot.emd(a,b,M) # exact linear program
+       Totp_reg=ot.sinkhorn(a,b,M,reg) # entropic regularized OT
+
+-  Compute Wasserstein barycenter
+
+   .. code:: python
+
+       # A is a n*d matrix containing d  1D histograms
+       # M is the ground cost matrix
+       ba=ot.barycenter(A,M,reg) # reg is regularization parameter
+
+Examples and Notebooks
+~~~~~~~~~~~~~~~~~~~~~~
+
 The examples folder contain several examples and use case for the
 library. The full documentation is available on
-`Readthedocs <http://pot.readthedocs.io/>`__
+`Readthedocs <http://pot.readthedocs.io/>`__.
 
-Here is a list of the Python notebooks if you want a quick look:
+Here is a list of the Python notebooks available
+`here <https://github.com/rflamary/POT/blob/master/notebooks/>`__ if you
+want a quick look:
 
 -  `1D optimal
    transport <https://github.com/rflamary/POT/blob/master/notebooks/Demo_1D_OT.ipynb>`__
@@ -123,7 +163,7 @@ Here is a list of the Python notebooks if you want a quick look:
    Analysis <https://github.com/rflamary/POT/blob/master/notebooks/Demo_Wasserstein_Discriminant_Analysis.ipynb>`__
 
 You can also see the notebooks with `Jupyter
-nbviewer <https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/examples/>`__.
+nbviewer <https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/notebooks/>`__.
 
 Acknowledgements
 ----------------
