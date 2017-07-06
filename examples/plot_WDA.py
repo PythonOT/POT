@@ -56,7 +56,7 @@ Pfda,projfda = fda(xs,ys,p)
 
 #%% Compute WDA
 p=2
-reg=1e-1
+reg=1e0
 k=10
 maxiter=100
 
