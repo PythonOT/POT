@@ -4,7 +4,7 @@ matrix:
         - os: osx
     include:
         - os: osx
-          language: python
+          language: generic
         - os: linux
           sudo: required
           python: 3.4
