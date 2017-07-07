@@ -18,5 +18,6 @@ matrix:
     include:
         - os: osx
           language: python
-
+        - os: linux
+          sudo: required
 script: python test/test_load_module.py -v
