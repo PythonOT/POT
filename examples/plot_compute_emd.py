@@ -61,8 +61,8 @@ pl.legend()
 
 #%%
 reg=1e-2
-d_sinkhorn=ot.sinkhorn(a,B,M,reg)
-d_sinkhorn2=ot.sinkhorn(a,B,M2,reg)
+d_sinkhorn=ot.sinkhorn2(a,B,M,reg)
+d_sinkhorn2=ot.sinkhorn2(a,B,M2,reg)
 
 pl.figure(2)
 pl.clf()

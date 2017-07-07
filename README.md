@@ -83,14 +83,15 @@ import ot
 # a,b are 1D histograms (sum to 1 and positive)
 # M is the ground cost matrix
 Wd=ot.emd2(a,b,M) # exact linear program
+Wd_reg=ot.sinkhorn2(a,b,M,reg) # entropic regularized OT
 # if b is a matrix compute all distances to a and return a vector
 ```
 * Compute OT matrix
 ```python
 # a,b are 1D histograms (sum to 1 and positive)
 # M is the ground cost matrix
-Totp=ot.emd(a,b,M) # exact linear program
-Totp_reg=ot.sinkhorn(a,b,M,reg) # entropic regularized OT
+T=ot.emd(a,b,M) # exact linear program
+T_reg=ot.sinkhorn(a,b,M,reg) # entropic regularized OT
 ```
 * Compute Wasserstein barycenter
 ```python
