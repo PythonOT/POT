@@ -1,7 +1,6 @@
 language: python
 os:
   - linux
-  - osx
 python:
   - "2.7"
   - "3.4"
@@ -9,10 +8,7 @@ python:
   # maintainers to fix their pypy-dev package.
   # - "pypy"
 before_install:
-  - 'if [[ "$TRAVIS_OS_NAME" == "linux" ]]; sudo apt-get update -q ; fi'
-  - 'if [[ "$TRAVIS_OS_NAME" == "linux" ]]; sudo apt-get install libblas-dev liblapack-dev libatlas-base-dev; fi #gfortran'
-  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi'
-  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python; fi'  
+  - ./.travis/before_install.sh
 # command to install dependencies
 install:
   - pip install -r requirements.txt
@@ -20,15 +16,7 @@ install:
 # command to run tests
 matrix:
     include:
-        - os: linux
-          sudo: required
-          python: 3.2
-          env: TOXENV=py32
-        - os: linux
-          sudo: required
-          python: 3.3
-          env: TOXENV=py33
         - os: osx
-          language: generic
-          env: TOXENV=py3
+          language: python
+
 script: python test/test_load_module.py -v
