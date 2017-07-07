@@ -1,12 +1,16 @@
 language: python
-os:
-  - linux
-python:
-  - "2.7"
-  - "3.4"
-  # does not have headers provided, please ask https://launchpad.net/~pypy/+archive/ppa
-  # maintainers to fix their pypy-dev package.
-  # - "pypy"
+matrix:
+    allow_failures:
+        - os: osx
+    include:
+        - os: osx
+          language: python
+        - os: linux
+          sudo: required
+          python: 3.4
+        - os: linux
+          sudo: required
+          python: 2.7
 before_install:
   - ./.travis/before_install.sh
 # command to install dependencies
@@ -14,10 +18,4 @@ install:
   - pip install -r requirements.txt
   - python setup.py install
 # command to run tests
-matrix:
-    include:
-        - os: osx
-          language: python
-        - os: linux
-          sudo: required
 script: python test/test_load_module.py -v
