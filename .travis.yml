@@ -9,13 +9,26 @@ python:
   # maintainers to fix their pypy-dev package.
   # - "pypy"
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; sudo apt-get update -q ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; sudo apt-get install libblas-dev liblapack-dev libatlas-base-dev; fi #gfortran
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python; fi  
+  - 'if [[ "$TRAVIS_OS_NAME" == "linux" ]]; sudo apt-get update -q ; fi'
+  - 'if [[ "$TRAVIS_OS_NAME" == "linux" ]]; sudo apt-get install libblas-dev liblapack-dev libatlas-base-dev; fi #gfortran'
+  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi'
+  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python; fi'  
 # command to install dependencies
 install:
   - pip install -r requirements.txt
   - python setup.py install
 # command to run tests
+matrix:
+    include:
+        - os: linux
+          sudo: required
+          python: 3.2
+          env: TOXENV=py32
+        - os: linux
+          sudo: required
+          python: 3.3
+          env: TOXENV=py33
+        - os: osx
+          language: generic
+          env: TOXENV=py3
 script: python test/test_load_module.py -v
