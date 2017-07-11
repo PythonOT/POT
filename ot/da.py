@@ -670,10 +670,16 @@ class OTDA(object):
         return xf[idx,:]+x-x0[idx,:] # aply the delta to the interpolation
 
     def normalizeM(self, norm):
+        """ Apply normalization to the loss matrix
+        
+        
+        Parameters
+        ----------
+        norm : str
+            type of normalization from 'median','max','log','loglog'
+            
         """
-        It may help to normalize the cost matrix self.M if there are numerical
-        errors during the sinkhorn based algorithms.
-        """
+        
         if norm == "median":
             self.M /= float(np.median(self.M))
         elif norm == "max":
@@ -682,6 +688,7 @@ class OTDA(object):
             self.M = np.log(1 + self.M)
         elif norm == "loglog":
             self.M = np.log(1 + np.log(1 + self.M))
+            
 
 
 class OTDA_sinkhorn(OTDA):

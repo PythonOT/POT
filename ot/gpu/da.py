@@ -70,6 +70,76 @@ def pairwiseEuclideanGPU(a, b, returnAsGPU=False, squared=False):
 def sinkhorn_lpl1_mm(a, labels_a, b, M_GPU, reg, eta=0.1, numItermax=10,
                      numInnerItermax=200, stopInnerThr=1e-9,
                      verbose=False, log=False):
+    """
+    Solve the entropic regularization optimal transport problem with nonconvex group lasso regularization
+
+    The function solves the following optimization problem:
+
+    .. math::
+        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega_e(\gamma)+ \eta \Omega_g(\gamma)
+
+        s.t. \gamma 1 = a
+
+             \gamma^T 1= b
+
+             \gamma\geq 0
+    where :
+
+    - M is the (ns,nt) metric cost matrix
+    - :math:`\Omega_e` is the entropic regularization term :math:`\Omega_e(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\Omega_g` is the group lasso  regulaization term :math:`\Omega_g(\gamma)=\sum_{i,c} \|\gamma_{i,\mathcal{I}_c}\|^{1/2}_1`   where  :math:`\mathcal{I}_c` are the index of samples from class c in the source domain.
+    - a and b are source and target weights (sum to 1)
+
+    The algorithm used for solving the problem is the generalised conditional gradient as proposed in  [5]_ [7]_
+
+
+    Parameters
+    ----------
+    a : np.ndarray (ns,)
+        samples weights in the source domain
+    labels_a : np.ndarray (ns,)
+        labels of samples in the source domain
+    b : np.ndarray (nt,)
+        samples weights in the target domain
+    M_GPU : cudamat.CUDAMatrix (ns,nt)
+        loss matrix
+    reg : float
+        Regularization term for entropic regularization >0
+    eta : float, optional
+        Regularization term  for group lasso regularization >0
+    numItermax : int, optional
+        Max number of iterations
+    numInnerItermax : int, optional
+        Max number of iterations (inner sinkhorn solver)
+    stopInnerThr : float, optional
+        Stop threshold on error (inner sinkhorn solver) (>0)
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    gamma : (ns x nt) ndarray
+        Optimal transportation matrix for the given parameters
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    References
+    ----------
+
+    .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, "Optimal Transport for Domain Adaptation," in IEEE Transactions on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+    .. [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized conditional gradient: analysis of convergence and applications. arXiv preprint arXiv:1510.06567.
+
+    See Also
+    --------
+    ot.lp.emd : Unregularized OT
+    ot.bregman.sinkhorn : Entropic regularized OT
+    ot.optim.cg : General regularized OT
+
+    """
     p = 0.5
     epsilon = 1e-3
     Nfin = len(b)
@@ -111,6 +181,15 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M_GPU, reg, eta=0.1, numItermax=10,
 
 class OTDA_GPU(OTDA):
     def normalizeM(self, norm):
+        """ Apply normalization to the loss matrix
+        
+        
+        Parameters
+        ----------
+        norm : str
+            type of normalization from 'median','max','log','loglog'
+        
+        """
         if norm == "median":
             self.M_GPU.divide(float(np.median(self.M_GPU.asarray())))
         elif norm == "max":
