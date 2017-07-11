@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Domain adaptation with optimal transport and GPU
+Domain adaptation with optimal transport with GPU implementation
 """
 
 import numpy as np
