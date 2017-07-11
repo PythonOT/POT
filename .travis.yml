@@ -16,6 +16,10 @@ before_install:
 # command to install dependencies
 install:
   - pip install -r requirements.txt
+  - pip install flake8 pytest
   - python setup.py install
-# command to run tests
-script: python test/test_load_module.py -v
+# command to run tests + check syntax style
+script:
+  - python test/test_load_module.py -v
+  - flake8 .
+  - py.test ot test
