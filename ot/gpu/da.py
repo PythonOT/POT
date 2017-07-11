@@ -181,15 +181,6 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M_GPU, reg, eta=0.1, numItermax=10,
 
 class OTDA_GPU(OTDA):
     def normalizeM(self, norm):
-        """ Apply normalization to the loss matrix
-        
-        
-        Parameters
-        ----------
-        norm : str
-            type of normalization from 'median','max','log','loglog'
-        
-        """
         if norm == "median":
             self.M_GPU.divide(float(np.median(self.M_GPU.asarray())))
         elif norm == "max":
