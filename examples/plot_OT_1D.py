@@ -8,7 +8,7 @@
 """
 
 import numpy as np
-import matplotlib.pylab as plt
+import matplotlib.pylab as pl
 import ot
 from ot.datasets import get_1D_gauss as gauss
 
@@ -29,21 +29,21 @@ M /= M.max()
 
 #%% plot the distributions
 
-plt.figure(1)
-plt.plot(x, a, 'b', label='Source distribution')
-plt.plot(x, b, 'r', label='Target distribution')
-plt.legend()
+pl.figure(1, figsize=(6.4, 3))
+pl.plot(x, a, 'b', label='Source distribution')
+pl.plot(x, b, 'r', label='Target distribution')
+pl.legend()
 
 #%% plot distributions and loss matrix
 
-plt.figure(2, figsize=(5, 5))
+pl.figure(2, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
 
 #%% EMD
 
 G0 = ot.emd(a, b, M)
 
-plt.figure(3, figsize=(5, 5))
+pl.figure(3, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, G0, 'OT matrix G0')
 
 #%% Sinkhorn
@@ -51,7 +51,7 @@ ot.plot.plot1D_mat(a, b, G0, 'OT matrix G0')
 lambd = 1e-3
 Gs = ot.sinkhorn(a, b, M, lambd, verbose=True)
 
-plt.figure(4, figsize=(5, 5))
+pl.figure(4, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, Gs, 'OT matrix Sinkhorn')
 
-plt.show()
+pl.show()

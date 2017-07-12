@@ -31,7 +31,7 @@ M /= M.max()
 
 G0 = ot.emd(a, b, M)
 
-pl.figure(3)
+pl.figure(3, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, G0, 'OT matrix G0')
 
 #%% Example with Frobenius norm regularization
@@ -64,7 +64,7 @@ reg = 1e-3
 
 Ge = ot.optim.cg(a, b, M, reg, f, df, verbose=True)
 
-pl.figure(4)
+pl.figure(4, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, Ge, 'OT matrix Entrop. reg')
 
 #%% Example with Frobenius norm + entropic regularization with gcg
@@ -82,6 +82,6 @@ reg2 = 1e-1
 
 Gel2 = ot.optim.gcg(a, b, M, reg1, reg2, f, df, verbose=True)
 
-pl.figure(5)
+pl.figure(5, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, Gel2, 'OT entropic + matrix Frob. reg')
 pl.show()
