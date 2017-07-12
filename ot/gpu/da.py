@@ -167,7 +167,7 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M_GPU, reg, eta=0.1, numItermax=10,
             tmpC_GPU = cudamat.empty((Nfin, nbRow)).assign(0)
             transp_GPU.transpose().select_columns(indices_labels[i], tmpC_GPU)
             majs_GPU = tmpC_GPU.sum(axis=1).add(epsilon)
-            cudamat.pow(majs_GPU, (p-1))
+            cudamat.pow(majs_GPU, (p - 1))
             majs_GPU.mult(p)
 
             tmpC_GPU.assign(0)
