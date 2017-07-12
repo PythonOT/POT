@@ -22,7 +22,7 @@ x = np.arange(n, dtype=np.float64)
 # Gaussian distributions
 a = gauss(n, m=20, s=5)  # m= mean, s= std
 
-ls = range(20, 1000, 10)
+ls = np.arange(20, 1000, 10)
 nb = len(ls)
 b = np.zeros((n, nb))
 for i in range(nb):

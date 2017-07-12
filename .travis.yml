@@ -22,4 +22,4 @@ install:
 script:
   - python test/test_load_module.py -v
   - flake8 examples/ ot/ test/
-  - py.test ot test
+  # - py.test ot test
