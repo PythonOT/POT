@@ -3,3 +3,5 @@ scipy
 cython
 matplotlib
 sphinx-gallery
+autograd
+pymanopt
