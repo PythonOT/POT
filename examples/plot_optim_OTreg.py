@@ -36,6 +36,7 @@ ot.plot.plot1D_mat(a, b, G0, 'OT matrix G0')
 
 #%% Example with Frobenius norm regularization
 
+
 def f(G):
     return 0.5 * np.sum(G**2)
 

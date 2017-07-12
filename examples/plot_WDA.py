@@ -9,8 +9,7 @@ Wasserstein Discriminant Analysis
 
 import numpy as np
 import matplotlib.pylab as pl
-import ot
-from ot.datasets import get_1D_gauss as gauss
+
 from ot.dr import wda, fda
 
 

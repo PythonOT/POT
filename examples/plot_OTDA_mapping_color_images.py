@@ -36,6 +36,7 @@ pl.axis('off')
 pl.title('Image 2')
 pl.tight_layout()
 
+
 #%% Image conversion and dataset generation
 
 def im2mat(I):
@@ -78,7 +79,9 @@ pl.ylabel('Blue')
 pl.title('Image 2')
 pl.tight_layout()
 
+
 #%% domain adaptation between images
+
 def minmax(I):
     return np.clip(I, 0, 1)
 
