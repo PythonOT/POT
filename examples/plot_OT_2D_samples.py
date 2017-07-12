@@ -8,7 +8,7 @@
 """
 
 import numpy as np
-import matplotlib.pylab as plt
+import matplotlib.pylab as pl
 import ot
 
 #%% parameters and data generation
@@ -32,31 +32,31 @@ M /= M.max()
 
 #%% plot samples
 
-plt.figure(1)
-plt.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
-plt.plot(xt[:, 0], xt[:, 1], 'xr', label='Target samples')
-plt.legend(loc=0)
-plt.title('Source and target distributions')
+pl.figure(1)
+pl.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
+pl.plot(xt[:, 0], xt[:, 1], 'xr', label='Target samples')
+pl.legend(loc=0)
+pl.title('Source and target distributions')
 
-plt.figure(2)
-plt.imshow(M, interpolation='nearest')
-plt.title('Cost matrix M')
+pl.figure(2)
+pl.imshow(M, interpolation='nearest')
+pl.title('Cost matrix M')
 
 
 #%% EMD
 
 G0 = ot.emd(a, b, M)
 
-plt.figure(3)
-plt.imshow(G0, interpolation='nearest')
-plt.title('OT matrix G0')
+pl.figure(3)
+pl.imshow(G0, interpolation='nearest')
+pl.title('OT matrix G0')
 
-plt.figure(4)
+pl.figure(4)
 ot.plot.plot2D_samples_mat(xs, xt, G0, c=[.5, .5, 1])
-plt.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
-plt.plot(xt[:, 0], xt[:, 1], 'xr', label='Target samples')
-plt.legend(loc=0)
-plt.title('OT matrix with samples')
+pl.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
+pl.plot(xt[:, 0], xt[:, 1], 'xr', label='Target samples')
+pl.legend(loc=0)
+pl.title('OT matrix with samples')
 
 
 #%% sinkhorn
@@ -66,15 +66,15 @@ lambd = 5e-4
 
 Gs = ot.sinkhorn(a, b, M, lambd)
 
-plt.figure(5)
-plt.imshow(Gs, interpolation='nearest')
-plt.title('OT matrix sinkhorn')
+pl.figure(5)
+pl.imshow(Gs, interpolation='nearest')
+pl.title('OT matrix sinkhorn')
 
-plt.figure(6)
+pl.figure(6)
 ot.plot.plot2D_samples_mat(xs, xt, Gs, color=[.5, .5, 1])
-plt.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
-plt.plot(xt[:, 0], xt[:, 1], 'xr', label='Target samples')
-plt.legend(loc=0)
-plt.title('OT matrix Sinkhorn with samples')
+pl.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
+pl.plot(xt[:, 0], xt[:, 1], 'xr', label='Target samples')
+pl.legend(loc=0)
+pl.title('OT matrix Sinkhorn with samples')
 
-plt.show()
+pl.show()
