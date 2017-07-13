@@ -28,6 +28,12 @@
 #ifndef LEMON_NETWORK_SIMPLEX_SIMPLE_H
 #define LEMON_NETWORK_SIMPLEX_SIMPLE_H
 #define DEBUG_LVL 0
+
+#if DEBUG_LVL>0
+#include <iomanip>
+#endif
+
+
 #define EPSILON 10*2.2204460492503131e-016
 #define MAX_DEBUG_ITER 100000
 
@@ -220,7 +226,7 @@ namespace lemon {
         /// mixed order in the internal data structure.
         /// In special cases, it could lead to better overall performance,
         /// but it is usually slower. Therefore it is disabled by default.
-        NetworkSimplexSimple(const GR& graph, bool arc_mixing, int nbnodes, long long nb_arcs,double maxiters) :
+        NetworkSimplexSimple(const GR& graph, bool arc_mixing, int nbnodes, long long nb_arcs,int maxiters) :
         _graph(graph),  //_arc_id(graph),
         _arc_mixing(arc_mixing), _init_nb_nodes(nbnodes), _init_nb_arcs(nb_arcs),
         MAX(std::numeric_limits<Value>::max()),
@@ -278,7 +284,7 @@ namespace lemon {
 
     private:
 
-        double max_iter;
+        int max_iter;
         TEMPLATE_DIGRAPH_TYPEDEFS(GR);
 
         typedef std::vector<int> IntVector;
@@ -676,14 +682,12 @@ namespace lemon {
         /// \see resetParams(), reset()
         ProblemType run() {
 #if DEBUG_LVL>0
-            mexPrintf("OPTIMAL = %d\nINFEASIBLE = %d\nUNBOUNDED = %d\n",OPTIMAL,INFEASIBLE,UNBOUNDED);
-            mexEvalString("drawnow;");
+            std::cout << "OPTIMAL = " << OPTIMAL << "\nINFEASIBLE = " << INFEASIBLE << "nUNBOUNDED = " << UNBOUNDED << "\n";
 #endif
 
             if (!init()) return INFEASIBLE;
 #if DEBUG_LVL>0
-            mexPrintf("Init done, starting iterations\n");
-            mexEvalString("drawnow;");
+            std::cout << "Init done, starting iterations\n";
 #endif
             return start();
         }
@@ -1424,8 +1428,8 @@ namespace lemon {
             while (pivot.findEnteringArc()) {
                 if(++iter_number>=max_iter&&max_iter>0){
                     char errMess[1000];
-                  //  sprintf( errMess, "RESULT MIGHT BE INACURATE\nMax number of iteration reached, currently \%d. Sometimes iterations go on in cycle even though the solution has been reached, to check if it's the case here have a look at the minimal reduced cost. If it is very close to machine precision, you might actually have the correct solution, if not try setting the maximum number of iterations a bit higher",iter_number );
-                   // mexWarnMsgTxt(errMess);
+                    sprintf( errMess, "RESULT MIGHT BE INACURATE\nMax number of iteration reached, currently \%d. Sometimes iterations go on in cycle even though the solution has been reached, to check if it's the case here have a look at the minimal reduced cost. If it is very close to machine precision, you might actually have the correct solution, if not try setting the maximum number of iterations a bit higher\n",iter_number );
+                    std::cerr << errMess;
                     break;
                 }
 #if DEBUG_LVL>0
@@ -1440,12 +1444,13 @@ namespace lemon {
                     for (int i=0; i<_flow.size(); i++) {
                         sumFlow+=_state[i]*_flow[i];
                     }
-                    mexPrintf("Sum of the flow %.100f\n%d iterations, current cost=%.20f\nReduced cost=%.30f\nPrecision   =%.30f\n",sumFlow,niter, curCost,_state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -_pi[_target[in_arc]]), -EPSILON*(a));
-                    mexPrintf("Arc in = (%d,%d)\n",_node_id(_source[in_arc]),_node_id(_target[in_arc]));
-                    mexPrintf("Supplies = (%f,%f)\n",_supply[_source[in_arc]],_supply[_target[in_arc]]);
-
-                    mexPrintf("%.30f\n%.30f\n%.30f\n%.30f\n%",_cost[in_arc],_pi[_source[in_arc]],_pi[_target[in_arc]],a);
-                    mexEvalString("drawnow;");
+                    std::cout << "Sum of the flow " << std::setprecision(20) << sumFlow << "\n" << niter << " iterations, current cost=" << curCost << "\nReduced cost=" << _state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -_pi[_target[in_arc]]) << "\nPrecision = "<< -EPSILON*(a) << "\n";
+                    std::cout << "Arc in = (" << _node_id(_source[in_arc]) << ", " << _node_id(_target[in_arc]) <<")\n";
+                    std::cout << "Supplies = (" << _supply[_source[in_arc]] << ", " << _supply[_target[in_arc]] << ")\n";
+                    std::cout << _cost[in_arc] << "\n";
+                    std::cout << _pi[_source[in_arc]] << "\n";
+                    std::cout << _pi[_target[in_arc]] << "\n";
+                    std::cout << a << "\n";
                 }
 #endif
 
@@ -1459,11 +1464,11 @@ namespace lemon {
                 }
 #if DEBUG_LVL>0
                 else{
-                    mexPrintf("No change\n");
+                    std::cout << "No change\n";
                 }
 #endif
 #if DEBUG_LVL>1
-                mexPrintf("Arc in = (%d,%d)\n",_source[in_arc],_target[in_arc]);
+                std::cout << "Arc in = (" << _source[in_arc] << ", " << _target[in_arc] << ")\n";
 #endif
 
             }
@@ -1478,23 +1483,23 @@ namespace lemon {
                 for (int i=0; i<_flow.size(); i++) {
                     sumFlow+=_state[i]*_flow[i];
                 }
-                mexPrintf("Sum of the flow %.100f\n%d iterations, current cost=%.20f\nReduced cost=%.30f\nPrecision   =%.30f",sumFlow,niter, curCost,_state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -_pi[_target[in_arc]]), -EPSILON*(a));
-                mexPrintf("Arc in = (%d,%d)\n",_node_id(_source[in_arc]),_node_id(_target[in_arc]));
-                mexPrintf("Supplies = (%f,%f)\n",_supply[_source[in_arc]],_supply[_target[in_arc]]);
+            
+                std::cout << "Sum of the flow " << std::setprecision(20) << sumFlow << "\n" << niter << " iterations, current cost=" << curCost << "\nReduced cost=" << _state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -_pi[_target[in_arc]]) << "\nPrecision = "<< -EPSILON*(a) << "\n";
+            
+                std::cout << "Arc in = (" << _node_id(_source[in_arc]) << ", " << _node_id(_target[in_arc]) <<")\n";
+                std::cout << "Supplies = (" << _supply[_source[in_arc]] << ", " << _supply[_target[in_arc]] << ")\n";
 
-                mexEvalString("drawnow;");
 #endif
 
 #if DEBUG_LVL>1
-            double sumFlow=0;
+            sumFlow=0;
             for (int i=0; i<_flow.size(); i++) {
                 sumFlow+=_state[i]*_flow[i];
                 if (_state[i]==STATE_TREE) {
-                    mexPrintf("Non zero value at (%d,%d)\n",_node_num+1-_source[i],_node_num+1-_target[i]);
+                    std::cout << "Non zero value at (" << _node_num+1-_source[i] << ", " << _node_num+1-_target[i] << ")\n";
                 }
             }
-            mexPrintf("Sum of the flow %.100f\n%d iterations, current cost=%.20f\n",sumFlow,niter, totalCost());
-            mexEvalString("drawnow;");
+            std::cout << "Sum of the flow " << sumFlow << "\n"<< niter <<" iterations, current cost=" << totalCost() << "\n";
 #endif
             // Check feasibility
             for (int e = _search_arc_num; e != _all_arc_num; ++e) {
