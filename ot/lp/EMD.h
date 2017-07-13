@@ -24,6 +24,6 @@ using namespace lemon;
 typedef unsigned int node_id_type;
 
 
-void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *cost);
+void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *cost, int max_iter);
 
 #endif

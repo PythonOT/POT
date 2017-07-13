@@ -15,11 +15,10 @@
 #include "EMD.h"
 
 
-void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *cost)  {
+void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *cost, int max_iter)  {
 // beware M and C anre strored in row major C style!!!
   int n, m, i,cur;
   double  max;
-  int max_iter=10000;
 
     typedef FullBipartiteDigraph Digraph;
   DIGRAPH_TYPEDEFS(FullBipartiteDigraph);

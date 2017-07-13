@@ -12,13 +12,13 @@ cimport cython
 
 
 cdef extern from "EMD.h":
-    void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *cost)
+    void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *cost, int max_iter)
 
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M):
+def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M, int maxiter):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
         
@@ -66,13 +66,13 @@ def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mod
         b=np.ones((n2,))/n2
 
     # calling the function
-    EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data,<double*> &cost)
+    EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data,<double*> &cost, maxiter)
 
     return G
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd2_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M):
+def emd2_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M, int maxiter):
     """
         Solves the Earth Movers distance problem and returns the optimal transport loss
         
@@ -120,7 +120,7 @@ def emd2_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mo
         b=np.ones((n2,))/n2
 
     # calling the function
-    EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data,<double*> &cost)
+    EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data,<double*> &cost, maxiter)
     
     cost=0
     for i in range(n1):
