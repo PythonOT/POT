@@ -15,10 +15,10 @@
 #include "EMD.h"
 
 
-void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *cost, int max_iter)  {
+void EMD_wrap(int n1, int n2, double *X, double *Y,
+              double *D, double *G, double *cost, int max_iter)  {
 // beware M and C anre strored in row major C style!!!
   int n, m, i,cur;
-  double  max;
 
     typedef FullBipartiteDigraph Digraph;
   DIGRAPH_TYPEDEFS(FullBipartiteDigraph);
@@ -39,7 +39,6 @@ void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *
         }
     }
 
-
     // Define the graph
 
     std::vector<int> indI(n), indJ(m);
@@ -49,28 +48,23 @@ void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *
 
     // Set supply and demand, don't account for 0 values (faster)
 
-    max=0;
     cur=0;
     for (node_id_type i=0; i<n1; i++) {
         double val=*(X+i);
         if (val>0) {
             weights1[ di.nodeFromId(cur) ] = val;
-            max+=val;
             indI[cur++]=i;
         }
     }
 
     // Demand is actually negative supply...
 
-    max=0;
     cur=0;
     for (node_id_type i=0; i<n2; i++) {
         double val=*(Y+i);
         if (val>0) {
             weights2[ di.nodeFromId(cur) ] = -val;
             indJ[cur++]=i;
-
-            max-=val;
         }
     }
 
@@ -78,14 +72,10 @@ void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *
     net.supplyMap(&weights1[0], n, &weights2[0], m);
 
     // Set the cost of each edge
-    max=0;
     for (node_id_type i=0; i<n; i++) {
         for (node_id_type j=0; j<m; j++) {
             double val=*(D+indI[i]*n2+indJ[j]);
             net.setCost(di.arcFromId(i*m+j), val);
-            if (val>max) {
-                max=val;
-            }
         }
     }
 
