@@ -25,14 +25,14 @@ void EMD_wrap(int n1, int n2, double *X, double *Y,
 
   // Get the number of non zero coordinates for r and c
     n=0;
-    for (node_id_type i=0; i<n1; i++) {
+    for (int i=0; i<n1; i++) {
         double val=*(X+i);
         if (val>0) {
             n++;
         }
     }
     m=0;
-    for (node_id_type i=0; i<n2; i++) {
+    for (int i=0; i<n2; i++) {
         double val=*(Y+i);
         if (val>0) {
             m++;
@@ -49,10 +49,10 @@ void EMD_wrap(int n1, int n2, double *X, double *Y,
     // Set supply and demand, don't account for 0 values (faster)
 
     cur=0;
-    for (node_id_type i=0; i<n1; i++) {
+    for (int i=0; i<n1; i++) {
         double val=*(X+i);
         if (val>0) {
-            weights1[ di.nodeFromId(cur) ] = val;
+            weights1[ cur ] = val;
             indI[cur++]=i;
         }
     }
@@ -60,10 +60,10 @@ void EMD_wrap(int n1, int n2, double *X, double *Y,
     // Demand is actually negative supply...
 
     cur=0;
-    for (node_id_type i=0; i<n2; i++) {
+    for (int i=0; i<n2; i++) {
         double val=*(Y+i);
         if (val>0) {
-            weights2[ di.nodeFromId(cur) ] = -val;
+            weights2[ cur ] = -val;
             indJ[cur++]=i;
         }
     }
@@ -72,8 +72,8 @@ void EMD_wrap(int n1, int n2, double *X, double *Y,
     net.supplyMap(&weights1[0], n, &weights2[0], m);
 
     // Set the cost of each edge
-    for (node_id_type i=0; i<n; i++) {
-        for (node_id_type j=0; j<m; j++) {
+    for (int i=0; i<n; i++) {
+        for (int j=0; j<m; j++) {
             double val=*(D+indI[i]*n2+indJ[j]);
             net.setCost(di.arcFromId(i*m+j), val);
         }
