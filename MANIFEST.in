@@ -1,5 +1,6 @@
 graft ot/lp/
 include README.md
+include LICENSE
 include ot/lp/core.h
 include ot/lp/EMD.h
 include ot/lp/EMD_wrapper.cpp
