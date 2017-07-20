@@ -2,11 +2,13 @@
 """
 Various function that can be usefull
 """
+import multiprocessing
+from functools import reduce
+import time
+
 import numpy as np
 from scipy.spatial.distance import cdist
-import multiprocessing
 
-import time
 __time_tic_toc = time.time()
 
 

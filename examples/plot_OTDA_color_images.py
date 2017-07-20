@@ -48,6 +48,7 @@ def mat2im(X, shape):
     """Converts back a matrix to an image"""
     return X.reshape(shape)
 
+
 X1 = im2mat(I1)
 X2 = im2mat(I2)
 
@@ -101,6 +102,7 @@ X2te = da_entrop.predict(X2, -1)
 
 def minmax(I):
     return np.clip(I, 0, 1)
+
 
 I1t = minmax(mat2im(X1t, I1.shape))
 I2t = minmax(mat2im(X2t, I2.shape))

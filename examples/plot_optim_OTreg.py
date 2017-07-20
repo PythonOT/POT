@@ -44,6 +44,7 @@ def f(G):
 def df(G):
     return G
 
+
 reg = 1e-1
 
 Gl2 = ot.optim.cg(a, b, M, reg, f, df, verbose=True)
@@ -61,6 +62,7 @@ def f(G):
 def df(G):
     return np.log(G) + 1.
 
+
 reg = 1e-3
 
 Ge = ot.optim.cg(a, b, M, reg, f, df, verbose=True)
@@ -77,6 +79,7 @@ def f(G):
 
 def df(G):
     return G
+
 
 reg1 = 1e-3
 reg2 = 1e-1

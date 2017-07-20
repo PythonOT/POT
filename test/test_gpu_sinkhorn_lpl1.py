@@ -8,6 +8,7 @@ def describeRes(r):
     print("min:{:.3E}, max:{:.3E}, mean:{:.3E}, std:{:.3E}"
           .format(np.min(r), np.max(r), np.mean(r), np.std(r)))
 
+
 for n in [5000, 10000, 15000, 20000]:
     print(n)
     a = np.random.rand(n // 4, 100)

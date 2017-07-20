@@ -48,6 +48,7 @@ def mat2im(X, shape):
     """Converts back a matrix to an image"""
     return X.reshape(shape)
 
+
 X1 = im2mat(I1)
 X2 = im2mat(I2)
 
@@ -84,6 +85,7 @@ pl.tight_layout()
 
 def minmax(I):
     return np.clip(I, 0, 1)
+
 
 # LP problem
 da_emd = ot.da.OTDA()     # init class
