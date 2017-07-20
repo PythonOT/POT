@@ -132,6 +132,7 @@ The contributors to this library are:
 
 * [Rémi Flamary](http://remi.flamary.com/)
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
+* [Alexandre Gramfort](http://alexandre.gramfort.net/)
 * [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/)
 * [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/) (Mapping estimation)
 * [Léo Gautheron](https://github.com/aje) (GPU implementation)
@@ -142,6 +143,11 @@ This toolbox benefit a lot from open source research and we would like to thank 
 * [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) ( C++ code for EMD)
 * [Antoine Rolet](https://arolet.github.io/) ( Mex file for EMD )
 * [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
+
+
+## Contributions and code of conduct
+
+Every contribution is welcome and should respect the [contribution guidelines](CONTRIBUTING.md). Each member of the project is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## References
 
