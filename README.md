@@ -22,34 +22,36 @@ Some demonstrations (both in Python and Jupyter Notebook format) are available i
 
 ## Installation
 
-The Library has been tested on Linux and MacOSX. It requires a C++ compiler for using the EMD solver and rely on the following Python modules:
+The library has been tested on Linux, MacOSX and Windows. It requires a C++ compiler for using the EMD solver and relies on the following Python modules:
 
 - Numpy (>=1.11)
 - Scipy (>=0.17)
 - Cython (>=0.23)
 - Matplotlib (>=1.5)
 
+#### Pip installation
 
-Under debian based linux the dependencies can be installed with
+You can install the toolbox through PyPI with:
 ```
-sudo apt-get install python-numpy python-scipy python-matplotlib cython
+pip install POT
 ```
-
-To install the library, you can install it locally (after downloading it) on you machine using
+or get the very latest version by downloading it and then running:
 ```
 python setup.py install --user # for user install (no root)
 ```
 
-The toolbox is also available on PyPI with a possibly slightly older version. You can install it with:
+#### Anaconda installation with conda-forge
+
+If you use the Anaconda python distribution, POT is available in [conda-forge](https://conda-forge.org). To install it and the required dependencies:
 ```
-pip install POT
+conda install -c conda-forge pot
 ```
 
+#### Post installation check
 After a correct installation, you should be able to import the module without errors:
 ```python
 import ot
 ```
-
 Note that for easier access the module is name ot instead of pot.
 
 
