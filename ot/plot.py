@@ -4,7 +4,7 @@ Functions for plotting OT matrices
 
 
 import numpy as np
-import matplotlib.pylab as plt
+import matplotlib.pylab as pl
 from matplotlib import gridspec
 
 
@@ -31,24 +31,24 @@ def plot1D_mat(a, b, M, title=''):
     xa = np.arange(na)
     xb = np.arange(nb)
 
-    ax1 = plt.subplot(gs[0, 1:])
-    plt.plot(xb, b, 'r', label='Target distribution')
-    plt.yticks(())
-    plt.title(title)
+    ax1 = pl.subplot(gs[0, 1:])
+    pl.plot(xb, b, 'r', label='Target distribution')
+    pl.yticks(())
+    pl.title(title)
 
-    ax2 = plt.subplot(gs[1:, 0])
-    plt.plot(a, xa, 'b', label='Source distribution')
-    plt.gca().invert_xaxis()
-    plt.gca().invert_yaxis()
-    plt.xticks(())
+    ax2 = pl.subplot(gs[1:, 0])
+    pl.plot(a, xa, 'b', label='Source distribution')
+    pl.gca().invert_xaxis()
+    pl.gca().invert_yaxis()
+    pl.xticks(())
 
-    plt.subplot(gs[1:, 1:], sharex=ax1, sharey=ax2)
-    plt.imshow(M, interpolation='nearest')
-    plt.axis('off')
+    pl.subplot(gs[1:, 1:], sharex=ax1, sharey=ax2)
+    pl.imshow(M, interpolation='nearest')
+    pl.axis('off')
 
-    plt.xlim((0, nb))
-    plt.tight_layout()
-    plt.subplots_adjust(wspace=0., hspace=0.2)
+    pl.xlim((0, nb))
+    pl.tight_layout()
+    pl.subplots_adjust(wspace=0., hspace=0.2)
 
 
 def plot2D_samples_mat(xs, xt, G, thr=1e-8, **kwargs):
@@ -78,5 +78,5 @@ def plot2D_samples_mat(xs, xt, G, thr=1e-8, **kwargs):
     for i in range(xs.shape[0]):
         for j in range(xt.shape[0]):
             if G[i, j] / mx > thr:
-                plt.plot([xs[i, 0], xt[j, 0]], [xs[i, 1], xt[j, 1]],
-                         alpha=G[i, j] / mx, **kwargs)
+                pl.plot([xs[i, 0], xt[j, 0]], [xs[i, 1], xt[j, 1]],
+                        alpha=G[i, j] / mx, **kwargs)
