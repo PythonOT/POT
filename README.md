@@ -42,7 +42,7 @@ python setup.py install --user # for user install (no root)
 
 #### Anaconda installation with conda-forge
 
-If you use the Anaconda python distribution, POT is available in [conda-forge](conda-forge.github.io). To install it and the required dependencies:
+If you use the Anaconda python distribution, POT is available in [conda-forge](https://conda-forge.org). To install it and the required dependencies:
 ```
 conda install -c conda-forge pot
 ```
