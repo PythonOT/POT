@@ -121,11 +121,6 @@ def emd2_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mo
 
     # calling the function
     EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data,<double*> &cost, maxiter)
-    
-    cost=0
-    for i in range(n1):
-        for j in range(n2):
-            cost+=G[i,j]*M[i,j]
 
     return cost
 

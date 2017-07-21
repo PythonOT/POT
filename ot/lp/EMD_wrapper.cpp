@@ -93,14 +93,13 @@ void EMD_wrap(int n1, int n2, double *X, double *Y,
         }
     } else
     {
-        for (node_id_type i=0; i<n; i++)
-        {
-            for (node_id_type j=0; j<m; j++)
-            {
-                *(G+indI[i]*n2+indJ[j]) = net.flow(di.arcFromId(i*m+j));
-            }
-        };
         *cost = net.totalCost();
+        Arc a; di.first(a);
+        for (; a != INVALID; di.next(a)) {
+            int i = di.source(a);
+            int j = di.target(a);
+            *(G+indI[i]*n2+indJ[j-n]) = net.flow(a);
+        }
 
     };
 
