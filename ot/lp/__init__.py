@@ -11,7 +11,7 @@ import multiprocessing
 
 
 
-def emd(a, b, M, max_iter=-1):
+def emd(a, b, M, dual_variables=False, max_iter=-1):
     """Solves the Earth Movers distance problem and returns the OT matrix
 
 
@@ -80,7 +80,10 @@ def emd(a, b, M, max_iter=-1):
     if len(b) == 0:
         b = np.ones((M.shape[1], ), dtype=np.float64)/M.shape[1]
 
-    return emd_c(a, b, M, max_iter)
+    G, alpha, beta = emd_c(a, b, M, max_iter)
+    if dual_variables:
+        return G, alpha, beta
+    return G
 
 def emd2(a, b, M,processes=multiprocessing.cpu_count(), max_iter=-1):
     """Solves the Earth Movers distance problem and returns the loss 
@@ -151,12 +154,12 @@ def emd2(a, b, M,processes=multiprocessing.cpu_count(), max_iter=-1):
         b = np.ones((M.shape[1], ), dtype=np.float64)/M.shape[1]
         
     if len(b.shape)==1:
-        return emd2_c(a, b, M, max_iter)
+        return emd2_c(a, b, M, max_iter)[0]
     else:
         nb=b.shape[1]
         #res=[emd2_c(a,b[:,i].copy(),M) for i in range(nb)]
         def f(b):
-            return emd2_c(a,b,M, max_iter)
+            return emd2_c(a,b,M, max_iter)[0]
         res= parmap(f, [b[:,i] for i in range(nb)],processes)
         return np.array(res)
         

@@ -15,8 +15,8 @@
 #include "EMD.h"
 
 
-void EMD_wrap(int n1, int n2, double *X, double *Y,
-              double *D, double *G, double *cost, int max_iter)  {
+void EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
+                double* alpha, double* beta, double *cost, int max_iter)  {
 // beware M and C anre strored in row major C style!!!
   int n, m, i,cur;
 
@@ -99,6 +99,8 @@ void EMD_wrap(int n1, int n2, double *X, double *Y,
             int i = di.source(a);
             int j = di.target(a);
             *(G+indI[i]*n2+indJ[j-n]) = net.flow(a);
+            *(alpha + indI[i]) = net.potential(i);
+            *(beta + indJ[j-n]) = net.potential(j);
         }
 
     };
