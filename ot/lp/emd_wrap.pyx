@@ -57,7 +57,7 @@ def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mod
     cdef int n1= M.shape[0]
     cdef int n2= M.shape[1]
 
-    cdef float cost=0
+    cdef double cost=0
     cdef np.ndarray[double, ndim=2, mode="c"] G=np.zeros([n1, n2])
     cdef np.ndarray[double, ndim=1, mode="c"] alpha=np.zeros(n1)
     cdef np.ndarray[double, ndim=1, mode="c"] beta=np.zeros(n2)
@@ -116,7 +116,7 @@ def emd2_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mo
     cdef int n1= M.shape[0]
     cdef int n2= M.shape[1]
 
-    cdef float cost=0
+    cdef double cost=0
     cdef np.ndarray[double, ndim=2, mode="c"] G=np.zeros([n1, n2])
 
     cdef np.ndarray[double, ndim = 1, mode = "c"] alpha = np.zeros([n1])

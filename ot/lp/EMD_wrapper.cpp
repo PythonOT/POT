@@ -101,7 +101,7 @@ void EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
             double flow = net.flow(a);
             *cost += flow * (*(D+indI[i]*n2+indJ[j-n]));
             *(G+indI[i]*n2+indJ[j-n]) = flow;
-            *(alpha + indI[i]) = net.potential(i);
+            *(alpha + indI[i]) = -net.potential(i);
             *(beta + indJ[j-n]) = net.potential(j);
         }
 
