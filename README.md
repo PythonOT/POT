@@ -149,6 +149,16 @@ This toolbox benefit a lot from open source research and we would like to thank 
 
 Every contribution is welcome and should respect the [contribution guidelines](CONTRIBUTING.md). Each member of the project is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).
 
+## Support
+
+You can ask questions and join the development discussion:
+
+* On the [POT Slack channel](pot-toolbox.slack.com)
+* On the POT [mailing list](https://mail.python.org/mm3/mailman3/lists/pot.python.org/)
+
+
+You can also post bug reports and feature requests in Github issues. Make sure to read our [guidelines](CONTRIBUTING.md) first.
+
 ## References
 
 [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W. (2011, December). [Displacement interpolation using Lagrangian mass transport](https://people.csail.mit.edu/sparis/publi/2011/sigasia/Bonneel_11_Displacement_Interpolation.pdf). In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p. 158). ACM.

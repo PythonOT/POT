@@ -33,7 +33,10 @@ sremove :
 
 clean :
 	$(PYTHON) setup.py clean
-	
+
+pep8 :
+	flake8 examples/ ot/ test/
+
 test:
 	pytest
 
