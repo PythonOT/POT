@@ -12,22 +12,17 @@ except ImportError:
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
 def test_fda():
 
-    n = 100  # nb samples in source and target datasets
-    nz = 0.2
+    n = 90  # nb samples in source and target datasets
     np.random.seed(0)
 
     # generate circle dataset
-    t = np.random.rand(n) * 2 * np.pi
-    ys = np.floor((np.arange(n) * 1.0 / n * 3)) + 1
-    xs = np.concatenate(
-        (np.cos(t).reshape((-1, 1)), np.sin(t).reshape((-1, 1))), 1)
-    xs = xs * ys.reshape(-1, 1) + nz * np.random.randn(n, 2)
+    xs, ys = ot.datasets.get_data_classif('gaussrot', n)
 
     nbnoise = 8
 
     xs = np.hstack((xs, np.random.randn(n, nbnoise)))
 
-    p = 2
+    p = 1
 
     Pfda, projfda = ot.dr.fda(xs, ys, p)
 
