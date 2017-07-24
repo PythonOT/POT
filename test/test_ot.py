@@ -31,9 +31,11 @@ def test_emd_emd2():
 
     # check G is identity
     assert np.allclose(G, np.eye(n) / n)
+    # check constratints
+    assert np.allclose(u, G.sum(1))  # cf convergence sinkhorn
+    assert np.allclose(u, G.sum(0))  # cf convergence sinkhorn
 
     w = ot.emd2(u, u, M)
-
     # check loss=0
     assert np.allclose(w, 0)
 
