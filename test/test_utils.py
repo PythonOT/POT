@@ -15,9 +15,9 @@ def test_parmap():
 
     a = np.arange(n)
 
-    l1 = np.array(map(f, a))
+    l1 = list(map(f, a))
 
-    l2 = np.array(ot.utils.parmap(f, a))
+    l2 = list(ot.utils.parmap(f, a))
 
     assert np.allclose(l1, l2)
 
