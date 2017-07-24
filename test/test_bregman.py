@@ -33,18 +33,20 @@ def test_sinkhorn_empty():
 
     M = ot.dist(x, x)
 
-    G = ot.sinkhorn([], [], M, 1, stopThr=1e-10)
+    G, log = ot.sinkhorn([], [], M, 1, stopThr=1e-10, verbose=True, log=True)
     # check constratints
     assert np.allclose(u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
     assert np.allclose(u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
 
-    G = ot.sinkhorn([], [], M, 1, stopThr=1e-10, method='sinkhorn_stabilized')
+    G, log = ot.sinkhorn([], [], M, 1, stopThr=1e-10,
+                         method='sinkhorn_stabilized', verbose=True, log=True)
     # check constratints
     assert np.allclose(u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
     assert np.allclose(u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
 
-    G = ot.sinkhorn(
-        [], [], M, 1, stopThr=1e-10, method='sinkhorn_epsilon_scaling')
+    G, log = ot.sinkhorn(
+        [], [], M, 1, stopThr=1e-10, method='sinkhorn_epsilon_scaling',
+        verbose=True, log=True)
     # check constratints
     assert np.allclose(u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
     assert np.allclose(u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
