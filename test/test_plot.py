@@ -1,12 +1,13 @@
 
 
-import ot
 import numpy as np
-
-# import pytest
+import matplotlib
+matplotlib.use('Agg')
 
 
 def test_plot1D_mat():
+
+    import ot
 
     n = 100  # nb bins
 
@@ -25,6 +26,8 @@ def test_plot1D_mat():
 
 
 def test_plot2D_samples_mat():
+
+    import ot
 
     n = 50  # nb samples
 
