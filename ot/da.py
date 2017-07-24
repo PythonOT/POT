@@ -626,7 +626,7 @@ class OTDA(object):
         """Scikitlearn compatible. Direction is determined by 
         the existence of an a priori over the target distribution """
         
-        return self._transport(X) if self._xor(np.array([(X == self.Xini)]).all(),self.target_samples is None) else X
+        return self._transport(X) if self._xor(np.array([(X == self.xs)]).all(),self.target_samples is None) else X
         
     def _transport(self,X):
     
