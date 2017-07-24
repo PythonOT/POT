@@ -78,16 +78,12 @@ def test_bary():
 
     n = 100  # nb bins
 
-    # bin positions
-    x = np.arange(n, dtype=np.float64)
-
     # Gaussian distributions
     a1 = ot.datasets.get_1D_gauss(n, m=30, s=10)  # m= mean, s= std
     a2 = ot.datasets.get_1D_gauss(n, m=40, s=10)
 
     # creating matrix A containing all distributions
     A = np.vstack((a1, a2)).T
-    n_distributions = A.shape[1]
 
     # loss matrix + normalization
     M = ot.utils.dist0(n)
