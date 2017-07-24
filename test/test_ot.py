@@ -3,7 +3,7 @@
 import ot
 import numpy as np
 
-#import pytest
+# import pytest
 
 
 def test_doctest():
@@ -17,8 +17,28 @@ def test_doctest():
     doctest.testmod(ot.bregman, verbose=True)
 
 
+def test_emd_emd2():
+    # test emd
+    n = 100
+
+    x = np.random.randn(n, 2)
+    u = ot.utils.unif(n)
+
+    M = ot.dist(x, x)
+
+    G = ot.emd(u, u, M)
+
+    # check G is identity
+    assert np.allclose(G, np.eye(n) / n)
+
+    w = ot.emd2(u, u, M)
+
+    # check loss=0
+    assert np.allclose(w, 0)
+
+
 #@pytest.mark.skip(reason="Seems to be a conflict between pytest and multiprocessing")
-def test_emd_multi():
+def test_emd2_multi():
 
     from ot.datasets import get_1D_gauss as gauss
 
