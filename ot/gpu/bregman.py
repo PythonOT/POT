@@ -9,7 +9,7 @@ import cudamat
 
 def sinkhorn(a, b, M_GPU, reg, numItermax=1000, stopThr=1e-9, verbose=False,
                 log=False, returnAsGPU=False):
-    """
+    r"""
     Solve the entropic regularization optimal transport problem on GPU
 
     The function solves the following optimization problem:

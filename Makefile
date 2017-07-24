@@ -39,6 +39,9 @@ pep8 :
 
 test : FORCE pep8
 	python -m py.test -v test/
+	
+pytest : FORCE 
+	python -m py.test -v test/	
 
 uploadpypi :
 	#python setup.py register
