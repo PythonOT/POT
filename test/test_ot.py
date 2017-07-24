@@ -76,7 +76,7 @@ def test_emd2_multi():
     # Gaussian distributions
     a = gauss(n, m=20, s=5)  # m= mean, s= std
 
-    ls = np.arange(20, 1000, 10)
+    ls = np.arange(20, 1000, 20)
     nb = len(ls)
     b = np.zeros((n, nb))
     for i in range(nb):

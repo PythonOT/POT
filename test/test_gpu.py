@@ -48,7 +48,7 @@ def test_gpu_sinkhorn_lpl1():
         print("min:{:.3E}, max:{:.3E}, mean:{:.3E}, std:{:.3E}"
               .format(np.min(r), np.max(r), np.mean(r), np.std(r)))
 
-    for n in [50, 100, 500, 1000]:
+    for n in [50, 100, 500]:
         print(n)
         a = np.random.rand(n // 4, 100)
         labels_a = np.random.randint(10, size=(n // 4))
