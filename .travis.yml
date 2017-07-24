@@ -17,9 +17,10 @@ before_install:
 install:
   - pip install -r requirements.txt
   - pip install flake8 pytest
-  - python setup.py install
+  - pip install .
 # command to run tests + check syntax style
 script:
+  - python setup.py develop
   - flake8 examples/ ot/ test/
   - python -m py.test -v test/
   # - py.test ot test
