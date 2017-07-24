@@ -21,5 +21,5 @@ install:
 # command to run tests + check syntax style
 script:
   - flake8 examples/ ot/ test/
-  - python -m py.test -v
+  - python -m py.test -v test/
   # - py.test ot test

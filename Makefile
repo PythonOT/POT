@@ -38,7 +38,7 @@ pep8 :
 	flake8 examples/ ot/ test/
 
 test : FORCE pep8
-	python -m py.test -v
+	python -m py.test -v test/
 
 uploadpypi :
 	#python setup.py register
