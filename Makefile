@@ -31,22 +31,25 @@ sremove :
 	tr '\n' '\0' < files.txt | sudo xargs -0 rm -f --
 	rm files.txt
 
-clean :
+clean : FORCE
 	$(PYTHON) setup.py clean
 
 pep8 :
 	flake8 examples/ ot/ test/
 
-test:
-	pytest
+test : FORCE pep8
+	python -m py.test -v
 
-uploadpypi:
+uploadpypi :
 	#python setup.py register
 	python setup.py sdist upload -r pypi
 
-rdoc:
+rdoc :
 	pandoc --from=markdown --to=rst --output=docs/source/readme.rst README.md
 
 
 notebook :
 	ipython notebook --matplotlib=inline  --notebook-dir=notebooks/
+
+
+FORCE :
