@@ -9,7 +9,7 @@ import numpy as np
 def test_conditional_gradient():
 
     n = 100  # nb bins
-
+    np.random.seed(0)
     # bin positions
     x = np.arange(n, dtype=np.float64)
 
@@ -38,7 +38,7 @@ def test_conditional_gradient():
 def test_generalized_conditional_gradient():
 
     n = 100  # nb bins
-
+    np.random.seed(0)
     # bin positions
     x = np.arange(n, dtype=np.float64)
 
