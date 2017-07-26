@@ -3,6 +3,15 @@
 Domain adaptation with optimal transport with GPU implementation
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#         Nicolas Courty <ncourty@irisa.fr>
+#         Michael Perrot <michael.perrot@univ-st-etienne.fr>
+#         Leo Gautheron <https://github.com/aje> 
+#
+# License: MIT License
+
+
+
 import numpy as np
 from ..utils import unif
 from ..da import OTDA

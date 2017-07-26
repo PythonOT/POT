@@ -3,6 +3,10 @@
 Optimization algorithms for OT
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 import numpy as np
 from scipy.optimize.linesearch import scalar_search_armijo
 from .lp import emd

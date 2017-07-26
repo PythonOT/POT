@@ -2,6 +2,11 @@
 """
 Various function that can be usefull
 """
+
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 import multiprocessing
 from functools import reduce
 import time

@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Sep 11 08:42:08 2014
-
-@author: rflamary
+Cython linker with C solver
 """
+
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 import numpy as np
 cimport numpy as np
 

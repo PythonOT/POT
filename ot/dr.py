@@ -3,6 +3,10 @@
 Dimension reduction with optimal transport
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 from scipy import linalg
 import autograd.numpy as np
 from pymanopt.manifolds import Stiefel

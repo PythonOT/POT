@@ -4,6 +4,10 @@
 
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 
 # All submodules and packages
 from . import lp

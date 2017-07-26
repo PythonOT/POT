@@ -3,6 +3,11 @@
 Bregman projections for regularized OT
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#         Nicolas Courty <ncourty@irisa.fr>
+#
+# License: MIT License
+
 import numpy as np
 
 

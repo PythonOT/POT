@@ -3,6 +3,12 @@
 Domain adaptation with optimal transport
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#         Nicolas Courty <ncourty@irisa.fr>
+#         Michael Perrot <michael.perrot@univ-st-etienne.fr>
+#
+# License: MIT License
+
 import numpy as np
 from .bregman import sinkhorn
 from .lp import emd
