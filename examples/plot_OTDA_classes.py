@@ -6,6 +6,10 @@ OT for domain adaptation
 
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 import matplotlib.pylab as pl
 import ot
 

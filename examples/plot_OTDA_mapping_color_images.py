@@ -11,6 +11,10 @@ OT for domain adaptation with image color adaptation [6] with mapping estimation
 
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 import numpy as np
 from scipy import ndimage
 import matplotlib.pylab as pl

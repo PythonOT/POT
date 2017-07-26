@@ -8,8 +8,11 @@ Stole the figure idea from Fig. 1 and 2 in
 https://arxiv.org/pdf/1706.07650.pdf
 
 
-@author: rflamary
 """
+
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
 
 import numpy as np
 import matplotlib.pylab as pl
