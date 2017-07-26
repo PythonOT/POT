@@ -110,7 +110,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9, ver
         def sink():
             return sinkhorn_epsilon_scaling(
                 a, b, M, reg, numItermax=numItermax,
-                                            stopThr=stopThr, verbose=verbose, log=log, **kwargs)
+                stopThr=stopThr, verbose=verbose, log=log, **kwargs)
     else:
         print('Warning : unknown method using classic Sinkhorn Knopp')
 
@@ -219,7 +219,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9, ve
         def sink():
             return sinkhorn_epsilon_scaling(
                 a, b, M, reg, numItermax=numItermax,
-                                            stopThr=stopThr, verbose=verbose, log=log, **kwargs)
+                stopThr=stopThr, verbose=verbose, log=log, **kwargs)
     else:
         print('Warning : unknown method using classic Sinkhorn Knopp')
 

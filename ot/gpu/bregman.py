@@ -4,7 +4,7 @@ Bregman projections for regularized OT with GPU
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
-#         Leo Gautheron <https://github.com/aje> 
+#         Leo Gautheron <https://github.com/aje>
 #
 # License: MIT License
 
