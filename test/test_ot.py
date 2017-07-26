@@ -3,8 +3,6 @@ import numpy as np
 import ot
 
 
-# import pytest
-
 
 def test_doctest():
 
