@@ -3,22 +3,20 @@ import numpy as np
 import ot
 
 
-# import pytest
-
 
 def test_conditional_gradient():
 
-    n = 100  # nb bins
+    n_bins = 100  # nb bins
     np.random.seed(0)
     # bin positions
-    x = np.arange(n, dtype=np.float64)
+    x = np.arange(n_bins, dtype=np.float64)
 
     # Gaussian distributions
-    a = ot.datasets.get_1D_gauss(n, m=20, s=5)  # m= mean, s= std
-    b = ot.datasets.get_1D_gauss(n, m=60, s=10)
+    a = ot.datasets.get_1D_gauss(n_bins, m=20, s=5)  # m= mean, s= std
+    b = ot.datasets.get_1D_gauss(n_bins, m=60, s=10)
 
     # loss matrix
-    M = ot.dist(x.reshape((n, 1)), x.reshape((n, 1)))
+    M = ot.dist(x.reshape((n_bins, 1)), x.reshape((n_bins, 1)))
     M /= M.max()
 
     def f(G):
@@ -37,17 +35,17 @@ def test_conditional_gradient():
 
 def test_generalized_conditional_gradient():
 
-    n = 100  # nb bins
+    n_bins = 100  # nb bins
     np.random.seed(0)
     # bin positions
-    x = np.arange(n, dtype=np.float64)
+    x = np.arange(n_bins, dtype=np.float64)
 
     # Gaussian distributions
-    a = ot.datasets.get_1D_gauss(n, m=20, s=5)  # m= mean, s= std
-    b = ot.datasets.get_1D_gauss(n, m=60, s=10)
+    a = ot.datasets.get_1D_gauss(n_bins, m=20, s=5)  # m= mean, s= std
+    b = ot.datasets.get_1D_gauss(n_bins, m=60, s=10)
 
     # loss matrix
-    M = ot.dist(x.reshape((n, 1)), x.reshape((n, 1)))
+    M = ot.dist(x.reshape((n_bins, 1)), x.reshape((n_bins, 1)))
     M /= M.max()
 
     def f(G):
