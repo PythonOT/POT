@@ -29,7 +29,7 @@ def test_fda():
 
     projfda(xs)
 
-    assert np.allclose(np.sum(Pfda**2, 0), np.ones(p))
+    np.testing.assert_allclose(np.sum(Pfda**2, 0), np.ones(p))
 
 
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
@@ -51,4 +51,4 @@ def test_wda():
 
     projwda(xs)
 
-    assert np.allclose(np.sum(Pwda**2, 0), np.ones(p))
+    np.testing.assert_allclose(np.sum(Pwda**2, 0), np.ones(p))
