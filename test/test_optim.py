@@ -1,7 +1,7 @@
 
-
-import ot
 import numpy as np
+import ot
+
 
 # import pytest
 

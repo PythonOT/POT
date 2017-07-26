@@ -1,8 +1,9 @@
-import ot
+
 import numpy as np
+import ot
 import pytest
 
-try:  # test if cudamat installed
+try:  # test if autograd and pymanopt are installed
     import ot.dr
     nogo = False
 except ImportError:

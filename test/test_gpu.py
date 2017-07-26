@@ -1,5 +1,6 @@
-import ot
+
 import numpy as np
+import ot
 import time
 import pytest
 
