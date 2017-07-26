@@ -3,9 +3,6 @@
 import ot
 import numpy as np
 
-# import pytest
-
-
 def test_parmap():
 
     n = 100
