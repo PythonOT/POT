@@ -6,9 +6,10 @@ import ot
 # import pytest
 
 
-def test_OTDA():
+def test_otda():
 
-    n = 150  # nb bins
+    n = 150  # nb samples
+    np.random.seed(0)
 
     xs, ys = ot.datasets.get_data_classif('3gauss', n)
     xt, yt = ot.datasets.get_data_classif('3gauss2', n)
@@ -21,8 +22,8 @@ def test_OTDA():
     da_emd.interp()    # interpolation of source samples
     da_emd.predict(xs)    # interpolation of source samples
 
-    assert np.allclose(a, np.sum(da_emd.G, 1))
-    assert np.allclose(b, np.sum(da_emd.G, 0))
+    np.testing.assert_allclose(a, np.sum(da_emd.G, 1))
+    np.testing.assert_allclose(b, np.sum(da_emd.G, 0))
 
     # sinkhorn regularization
     lambd = 1e-1
@@ -31,8 +32,8 @@ def test_OTDA():
     da_entrop.interp()
     da_entrop.predict(xs)
 
-    assert np.allclose(a, np.sum(da_entrop.G, 1), rtol=1e-3, atol=1e-3)
-    assert np.allclose(b, np.sum(da_entrop.G, 0), rtol=1e-3, atol=1e-3)
+    np.testing.assert_allclose(a, np.sum(da_entrop.G, 1), rtol=1e-3, atol=1e-3)
+    np.testing.assert_allclose(b, np.sum(da_entrop.G, 0), rtol=1e-3, atol=1e-3)
 
     # non-convex Group lasso regularization
     reg = 1e-1
@@ -42,8 +43,8 @@ def test_OTDA():
     da_lpl1.interp()
     da_lpl1.predict(xs)
 
-    assert np.allclose(a, np.sum(da_lpl1.G, 1), rtol=1e-3, atol=1e-3)
-    assert np.allclose(b, np.sum(da_lpl1.G, 0), rtol=1e-3, atol=1e-3)
+    np.testing.assert_allclose(a, np.sum(da_lpl1.G, 1), rtol=1e-3, atol=1e-3)
+    np.testing.assert_allclose(b, np.sum(da_lpl1.G, 0), rtol=1e-3, atol=1e-3)
 
     # True Group lasso regularization
     reg = 1e-1
@@ -53,8 +54,8 @@ def test_OTDA():
     da_l1l2.interp()
     da_l1l2.predict(xs)
 
-    assert np.allclose(a, np.sum(da_l1l2.G, 1), rtol=1e-3, atol=1e-3)
-    assert np.allclose(b, np.sum(da_l1l2.G, 0), rtol=1e-3, atol=1e-3)
+    np.testing.assert_allclose(a, np.sum(da_l1l2.G, 1), rtol=1e-3, atol=1e-3)
+    np.testing.assert_allclose(b, np.sum(da_l1l2.G, 0), rtol=1e-3, atol=1e-3)
 
     # linear mapping
     da_emd = ot.da.OTDA_mapping_linear()     # init class
