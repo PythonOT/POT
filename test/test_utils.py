@@ -1,3 +1,8 @@
+"""Tests for module utils for timing and parallel computation """
+
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
 
 
 import ot

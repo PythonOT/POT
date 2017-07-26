@@ -1,4 +1,8 @@
+"""Tests for module plot for visualization """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
 
 import numpy as np
 import matplotlib

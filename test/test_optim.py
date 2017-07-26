@@ -1,3 +1,8 @@
+"""Tests for module optim fro OT optimization """
+
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
 
 import numpy as np
 import ot
