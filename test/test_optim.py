@@ -3,7 +3,6 @@ import numpy as np
 import ot
 
 
-
 def test_conditional_gradient():
 
     n_bins = 100  # nb bins
