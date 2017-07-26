@@ -13,15 +13,15 @@ except ImportError:
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
 def test_fda():
 
-    n = 90  # nb samples in source and target datasets
+    n_samples = 90  # nb samples in source and target datasets
     np.random.seed(0)
 
-    # generate circle dataset
-    xs, ys = ot.datasets.get_data_classif('gaussrot', n)
+    # generate gaussian dataset
+    xs, ys = ot.datasets.get_data_classif('gaussrot', n_samples)
 
-    nbnoise = 8
+    n_features_noise = 8
 
-    xs = np.hstack((xs, np.random.randn(n, nbnoise)))
+    xs = np.hstack((xs, np.random.randn(n_samples, n_features_noise)))
 
     p = 1
 
@@ -35,20 +35,15 @@ def test_fda():
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
 def test_wda():
 
-    n = 100  # nb samples in source and target datasets
-    nz = 0.2
+    n_samples = 100  # nb samples in source and target datasets
     np.random.seed(0)
 
-    # generate circle dataset
-    t = np.random.rand(n) * 2 * np.pi
-    ys = np.floor((np.arange(n) * 1.0 / n * 3)) + 1
-    xs = np.concatenate(
-        (np.cos(t).reshape((-1, 1)), np.sin(t).reshape((-1, 1))), 1)
-    xs = xs * ys.reshape(-1, 1) + nz * np.random.randn(n, 2)
+    # generate gaussian dataset
+    xs, ys = ot.datasets.get_data_classif('gaussrot', n_samples)
 
-    nbnoise = 8
+    n_features_noise = 8
 
-    xs = np.hstack((xs, np.random.randn(n, nbnoise)))
+    xs = np.hstack((xs, np.random.randn(n_samples, n_features_noise)))
 
     p = 2
 

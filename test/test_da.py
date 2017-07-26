@@ -3,18 +3,15 @@ import numpy as np
 import ot
 
 
-# import pytest
-
-
 def test_otda():
 
-    n = 150  # nb samples
+    n_samples = 150  # nb samples
     np.random.seed(0)
 
-    xs, ys = ot.datasets.get_data_classif('3gauss', n)
-    xt, yt = ot.datasets.get_data_classif('3gauss2', n)
+    xs, ys = ot.datasets.get_data_classif('3gauss', n_samples)
+    xt, yt = ot.datasets.get_data_classif('3gauss2', n_samples)
 
-    a, b = ot.unif(n), ot.unif(n)
+    a, b = ot.unif(n_samples), ot.unif(n_samples)
 
     # LP problem
     da_emd = ot.da.OTDA()     # init class
