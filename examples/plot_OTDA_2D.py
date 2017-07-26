@@ -6,6 +6,10 @@ OT for empirical distributions
 
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 import numpy as np
 import matplotlib.pylab as pl
 import ot

@@ -3,6 +3,12 @@
 Domain adaptation with optimal transport
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#         Nicolas Courty <ncourty@irisa.fr>
+#         Michael Perrot <michael.perrot@univ-st-etienne.fr>
+#
+# License: MIT License
+
 import numpy as np
 from .bregman import sinkhorn
 from .lp import emd
@@ -472,7 +478,7 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian', sigm
         Kp[:ns, :ns] = K
 
         # ls regu
-        #K0 = K1.T.dot(K1)+eta*I
+        # K0 = K1.T.dot(K1)+eta*I
         # Kreg=I
 
         # RKHS regul
@@ -484,7 +490,7 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian', sigm
         I = np.eye(ns)
 
         # ls regul
-        #K0 = K1.T.dot(K1)+eta*I
+        # K0 = K1.T.dot(K1)+eta*I
         # Kreg=I
 
         # proper kernel ridge

@@ -3,6 +3,10 @@
 Solvers for the original linear program OT problem
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 import numpy as np
 # import compiled emd
 from .emd_wrap import emd_c, emd2_c

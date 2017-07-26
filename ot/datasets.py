@@ -2,6 +2,10 @@
 Simple example datasets for OT
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 
 import numpy as np
 import scipy as sp

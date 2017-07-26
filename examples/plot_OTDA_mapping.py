@@ -9,6 +9,10 @@ OT mapping estimation for domain adaptation [8]
     Neural Information Processing Systems (NIPS), 2016.
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 import numpy as np
 import matplotlib.pylab as pl
 import ot

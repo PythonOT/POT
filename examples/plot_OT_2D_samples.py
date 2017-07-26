@@ -4,8 +4,11 @@
 2D Optimal transport between empirical distributions
 ====================================================
 
-@author: rflamary
 """
+
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
 
 import numpy as np
 import matplotlib.pylab as pl

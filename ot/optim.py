@@ -3,6 +3,10 @@
 Optimization algorithms for OT
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 import numpy as np
 from scipy.optimize.linesearch import scalar_search_armijo
 from .lp import emd
@@ -300,7 +304,7 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10, numInnerItermax=200,
         Mi = M + reg2 * df(G)
 
         # solve linear program with Sinkhorn
-        #Gc = sinkhorn_stabilized(a,b, Mi, reg1, numItermax = numInnerItermax)
+        # Gc = sinkhorn_stabilized(a,b, Mi, reg1, numItermax = numInnerItermax)
         Gc = sinkhorn(a, b, Mi, reg1, numItermax=numInnerItermax)
 
         deltaG = Gc - G

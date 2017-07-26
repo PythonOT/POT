@@ -9,6 +9,10 @@ Regularized discrete optimal transport.
 SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 import numpy as np
 from scipy import ndimage
 import matplotlib.pylab as pl

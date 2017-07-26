@@ -3,6 +3,11 @@
 Bregman projections for regularized OT
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#         Nicolas Courty <ncourty@irisa.fr>
+#
+# License: MIT License
+
 import numpy as np
 
 
@@ -103,8 +108,9 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9, ver
                                        stopThr=stopThr, verbose=verbose, log=log, **kwargs)
     elif method.lower() == 'sinkhorn_epsilon_scaling':
         def sink():
-            return sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=numItermax,
-                                            stopThr=stopThr, verbose=verbose, log=log, **kwargs)
+            return sinkhorn_epsilon_scaling(
+                a, b, M, reg, numItermax=numItermax,
+                stopThr=stopThr, verbose=verbose, log=log, **kwargs)
     else:
         print('Warning : unknown method using classic Sinkhorn Knopp')
 
@@ -211,8 +217,9 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9, ve
                                        stopThr=stopThr, verbose=verbose, log=log, **kwargs)
     elif method.lower() == 'sinkhorn_epsilon_scaling':
         def sink():
-            return sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=numItermax,
-                                            stopThr=stopThr, verbose=verbose, log=log, **kwargs)
+            return sinkhorn_epsilon_scaling(
+                a, b, M, reg, numItermax=numItermax,
+                stopThr=stopThr, verbose=verbose, log=log, **kwargs)
     else:
         print('Warning : unknown method using classic Sinkhorn Knopp')
 
@@ -588,7 +595,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9, wa
 
         cpt = cpt + 1
 
-    #print('err=',err,' cpt=',cpt)
+    # print('err=',err,' cpt=',cpt)
     if log:
         log['logu'] = alpha / reg + np.log(u)
         log['logv'] = beta / reg + np.log(v)
@@ -773,7 +780,7 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4, numInne
             loop = False
 
         cpt = cpt + 1
-    #print('err=',err,' cpt=',cpt)
+    # print('err=',err,' cpt=',cpt)
     if log:
         log['alpha'] = alpha
         log['beta'] = beta
@@ -960,16 +967,16 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000, stopThr=1e-3, verb
 
     """
 
-    #M = M/np.median(M)
+    # M = M/np.median(M)
     K = np.exp(-M / reg)
 
-    #M0 = M0/np.median(M0)
+    # M0 = M0/np.median(M0)
     K0 = np.exp(-M0 / reg0)
     old = h0
 
     err = 1
     cpt = 0
-    #log = {'niter':0, 'all_err':[]}
+    # log = {'niter':0, 'all_err':[]}
     if log:
         log = {'err': []}
 

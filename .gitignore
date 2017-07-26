@@ -100,3 +100,6 @@ ENV/
 
 # Mac stuff
 .DS_Store
+
+# coverage output folder
+cov_html/

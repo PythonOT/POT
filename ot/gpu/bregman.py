@@ -3,6 +3,11 @@
 Bregman projections for regularized OT with GPU
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#         Leo Gautheron <https://github.com/aje>
+#
+# License: MIT License
+
 import numpy as np
 import cudamat
 
