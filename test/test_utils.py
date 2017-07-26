@@ -22,7 +22,7 @@ def test_parmap():
 
     l2 = list(ot.utils.parmap(f, a))
 
-    assert np.allclose(l1, l2)
+    np.testing.assert_allclose(l1, l2)
 
 
 def test_tic_toc():
@@ -35,10 +35,10 @@ def test_tic_toc():
     t2 = ot.toq()
 
     # test timing
-    assert np.allclose(0.5, t, rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(0.5, t, rtol=1e-2, atol=1e-2)
 
     # test toc vs toq
-    assert np.allclose(t, t2, rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(t, t2, rtol=1e-2, atol=1e-2)
 
 
 def test_kernel():
@@ -50,7 +50,7 @@ def test_kernel():
     K = ot.utils.kernel(x, x)
 
     # gaussian kernel  has ones on the diagonal
-    assert np.allclose(np.diag(K), np.ones(n))
+    np.testing.assert_allclose(np.diag(K), np.ones(n))
 
 
 def test_unif():
@@ -59,7 +59,7 @@ def test_unif():
 
     u = ot.unif(n)
 
-    assert np.allclose(1, np.sum(u))
+    np.testing.assert_allclose(1, np.sum(u))
 
 
 def test_dist():
@@ -77,8 +77,8 @@ def test_dist():
     D3 = ot.dist(x)
 
     # dist shoul return squared euclidean
-    assert np.allclose(D, D2)
-    assert np.allclose(D, D3)
+    np.testing.assert_allclose(D, D2)
+    np.testing.assert_allclose(D, D3)
 
 
 def test_dist0():
@@ -87,7 +87,7 @@ def test_dist0():
     M = ot.utils.dist0(n, method='lin_square')
 
     # dist0 default to linear sampling with quadratic loss
-    assert np.allclose(M[0, -1], (n - 1) * (n - 1))
+    np.testing.assert_allclose(M[0, -1], (n - 1) * (n - 1))
 
 
 def test_dots():
@@ -102,7 +102,7 @@ def test_dots():
 
     X2 = A.dot(B.dot(C))
 
-    assert np.allclose(X1, X2)
+    np.testing.assert_allclose(X1, X2)
 
 
 def test_clean_zeros():
