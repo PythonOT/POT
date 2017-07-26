@@ -29,8 +29,8 @@ def test_conditional_gradient():
 
     G, log = ot.optim.cg(a, b, M, reg, f, df, verbose=True, log=True)
 
-    assert np.allclose(a, G.sum(1))
-    assert np.allclose(b, G.sum(0))
+    np.testing.assert_allclose(a, G.sum(1))
+    np.testing.assert_allclose(b, G.sum(0))
 
 
 def test_generalized_conditional_gradient():
@@ -59,5 +59,5 @@ def test_generalized_conditional_gradient():
 
     G, log = ot.optim.gcg(a, b, M, reg1, reg2, f, df, verbose=True, log=True)
 
-    assert np.allclose(a, G.sum(1), atol=1e-05)
-    assert np.allclose(b, G.sum(0), atol=1e-05)
+    np.testing.assert_allclose(a, G.sum(1), atol=1e-05)
+    np.testing.assert_allclose(b, G.sum(0), atol=1e-05)
