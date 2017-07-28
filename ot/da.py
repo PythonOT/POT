@@ -940,21 +940,23 @@ Questions:
 
 class BaseTransport(BaseEstimator):
 
-    def fit(self, Xs=None, ys=None, Xt=None, yt=None, method=None):
-        """fit: estimates the optimal coupling
-
-        Parameters:
-        -----------
-        - Xs: source samples, (ns samples, d features) numpy-like array
-        - ys: source labels
-        - Xt: target samples (nt samples, d features) numpy-like array
-        - yt: target labels
-        - method: algorithm to use to compute optimal coupling
-            (default: sinkhorn)
-
-        Returns:
-        --------
-        - self
+    def fit(self, Xs=None, ys=None, Xt=None, yt=None):
+        """Build a coupling matrix from source and target sets of samples
+        (Xs, ys) and (Xt, yt)
+        Parameters
+        ----------
+        Xs : array-like of shape = [n_source_samples, n_features]
+            The training input samples.
+        ys : array-like, shape = [n_source_samples]
+            The class labels
+        Xt : array-like of shape = [n_target_samples, n_features]
+            The training input samples.
+        yt : array-like, shape = [n_labeled_target_samples]
+            The class labels
+        Returns
+        -------
+        self : object
+            Returns self.
         """
 
         # pairwise distance
@@ -972,7 +974,7 @@ class BaseTransport(BaseEstimator):
             print("TODO: implement kernelized approach")
 
         # coupling estimation
-        if method == "sinkhorn":
+        if self.method == "sinkhorn":
             self.gamma_ = sinkhorn(
                 a=mu_s, b=mu_t, M=Cost, reg=self.reg_e,
                 numItermax=self.max_iter, stopThr=self.tol,
@@ -983,36 +985,43 @@ class BaseTransport(BaseEstimator):
         return self
 
     def fit_transform(self, Xs=None, ys=None, Xt=None, yt=None):
-        """fit_transform
-
-        Parameters:
-        -----------
-        - Xs: source samples, (ns samples, d features) numpy-like array
-        - ys: source labels
-        - Xt: target samples (nt samples, d features) numpy-like array
-        - yt: target labels
-
-        Returns:
-        --------
-        - transp_Xt
+        """Build a coupling matrix from source and target sets of samples
+        (Xs, ys) and (Xt, yt) and transports source samples Xs onto target
+        ones Xt
+        Parameters
+        ----------
+        Xs : array-like of shape = [n_source_samples, n_features]
+            The training input samples.
+        ys : array-like, shape = [n_source_samples]
+            The class labels
+        Xt : array-like of shape = [n_target_samples, n_features]
+            The training input samples.
+        yt : array-like, shape = [n_labeled_target_samples]
+            The class labels
+        Returns
+        -------
+        transp_Xs : array-like of shape = [n_source_samples, n_features]
+            The source samples samples.
         """
 
-        return self.fit(Xs, ys, Xt, yt, self.method).transform(Xs, ys, Xt, yt)
+        return self.fit(Xs, ys, Xt, yt).transform(Xs, ys, Xt, yt)
 
     def transform(self, Xs=None, ys=None, Xt=None, yt=None):
-        """transform: as a convention transports source samples
-        onto target samples
-
-        Parameters:
-        -----------
-        - Xs: source samples, (ns samples, d features) numpy-like array
-        - ys: source labels
-        - Xt: target samples (nt samples, d features) numpy-like array
-        - yt: target labels
-
-        Returns:
-        --------
-        - transp_Xt
+        """Transports source samples Xs onto target ones Xt
+        Parameters
+        ----------
+        Xs : array-like of shape = [n_source_samples, n_features]
+            The training input samples.
+        ys : array-like, shape = [n_source_samples]
+            The class labels
+        Xt : array-like of shape = [n_target_samples, n_features]
+            The training input samples.
+        yt : array-like, shape = [n_labeled_target_samples]
+            The class labels
+        Returns
+        -------
+        transp_Xs : array-like of shape = [n_source_samples, n_features]
+            The transport source samples.
         """
 
         if self.mapping == "barycentric":
@@ -1027,19 +1036,21 @@ class BaseTransport(BaseEstimator):
         return transp_Xs
 
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None):
-        """inverse_transform: as a convention transports target samples
-        onto source samples
-
-        Parameters:
-        -----------
-        - Xs: source samples, (ns samples, d features) numpy-like array
-        - ys: source labels
-        - Xt: target samples (nt samples, d features) numpy-like array
-        - yt: target labels
-
-        Returns:
-        --------
-        - transp_Xt
+        """Transports target samples Xt onto target samples Xs
+        Parameters
+        ----------
+        Xs : array-like of shape = [n_source_samples, n_features]
+            The training input samples.
+        ys : array-like, shape = [n_source_samples]
+            The class labels
+        Xt : array-like of shape = [n_target_samples, n_features]
+            The training input samples.
+        yt : array-like, shape = [n_labeled_target_samples]
+            The class labels
+        Returns
+        -------
+        transp_Xt : array-like of shape = [n_source_samples, n_features]
+            The transported target samples.
         """
 
         if self.mapping == "barycentric":
@@ -1057,22 +1068,48 @@ class BaseTransport(BaseEstimator):
 
 
 class SinkhornTransport(BaseTransport):
-    """SinkhornTransport: class wrapper for optimal transport based on
-    Sinkhorn's algorithm
+    """Domain Adapatation OT method based on Sinkhorn Algorithm
 
     Parameters
     ----------
-    - reg_e : parameter for entropic regularization
-    - mode: unsupervised (default) or semi supervised: controls whether
-        labels are taken into accout to construct the optimal coupling
-    - max_iter : maximum number of iterations
-    - tol : precision
-    - verbose : control verbosity
-    - log : control log
-
+    reg_e : float, optional (default=1)
+        Entropic regularization parameter
+    mode : string, optional (default="unsupervised")
+        The DA mode. If "unsupervised" no target labels are taken into account
+        to modify the cost matrix. If "semisupervised" the target labels
+        are taken into account to set coefficients of the pairwise distance
+        matrix to 0 for row and columns indices that correspond to source and
+        target samples which share the same labels.
+    max_iter : int, float, optional (default=1000)
+        The minimum number of iteration before stopping the optimization
+        algorithm if no it has not converged
+    tol : float, optional (default=10e-9)
+        The precision required to stop the optimization algorithm.
+    mapping : string, optional (default="barycentric")
+        The kind of mapping to apply to transport samples from a domain into
+        another one.
+        if "barycentric" only the samples used to estimate the coupling can
+        be transported from a domain to another one.
+    metric : string, optional (default="sqeuclidean")
+        The ground metric for the Wasserstein problem
+    distribution : string, optional (default="uniform")
+        The kind of distribution estimation to employ
+    verbose : int, optional (default=0)
+        Controls the verbosity of the optimization algorithm
+    log : int, optional (default=0)
+        Controls the logs of the optimization algorithm
     Attributes
     ----------
-    - gamma_: optimal coupling estimated by the fit function
+    gamma_ : the optimal coupling
+
+    References
+    ----------
+    .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
+           "Optimal Transport for Domain Adaptation," in IEEE Transactions
+           on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal
+           Transport, Advances in Neural Information Processing Systems (NIPS)
+           26, 2013
     """
 
     def __init__(self, reg_e=1., mode="unsupervised", max_iter=1000,
@@ -1090,24 +1127,25 @@ class SinkhornTransport(BaseTransport):
         self.method = "sinkhorn"
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
-        """fit
-
-        Parameters:
-        -----------
-        - Xs: source samples, (ns samples, d features) numpy-like array
-        - ys: source labels
-        - Xt: target samples (nt samples, d features) numpy-like array
-        - yt: target labels
-        - method: algorithm to use to compute optimal coupling
-            (default: sinkhorn)
-
-        Returns:
-        --------
-        - self
+        """Build a coupling matrix from source and target sets of samples
+        (Xs, ys) and (Xt, yt)
+        Parameters
+        ----------
+        Xs : array-like of shape = [n_source_samples, n_features]
+            The training input samples.
+        ys : array-like, shape = [n_source_samples]
+            The class labels
+        Xt : array-like of shape = [n_target_samples, n_features]
+            The training input samples.
+        yt : array-like, shape = [n_labeled_target_samples]
+            The class labels
+        Returns
+        -------
+        self : object
+            Returns self.
         """
 
-        return super(SinkhornTransport, self).fit(
-            Xs, ys, Xt, yt, method=self.method)
+        return super(SinkhornTransport, self).fit(Xs, ys, Xt, yt)
 
 
 if __name__ == "__main__":
