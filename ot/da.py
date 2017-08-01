@@ -1144,7 +1144,7 @@ class BaseTransport(BaseEstimator):
 
         if np.array_equal(self.Xs, Xs):
             # perform standard barycentric mapping
-            transp = self.gamma_ / np.sum(self.gamma_, 1)[:, None]
+            transp = self.Coupling_ / np.sum(self.Coupling_, 1)[:, None]
 
             # set nans to 0
             transp[~ np.isfinite(transp)] = 0
@@ -1179,7 +1179,7 @@ class BaseTransport(BaseEstimator):
 
         if np.array_equal(self.Xt, Xt):
             # perform standard barycentric mapping
-            transp_ = self.gamma_.T / np.sum(self.gamma_, 0)[:, None]
+            transp_ = self.Coupling_.T / np.sum(self.Coupling_, 0)[:, None]
 
             # set nans to 0
             transp_[~ np.isfinite(transp_)] = 0
@@ -1228,7 +1228,7 @@ class SinkhornTransport(BaseTransport):
         Controls the logs of the optimization algorithm
     Attributes
     ----------
-    gamma_ : the optimal coupling
+    Coupling_ : the optimal coupling
 
     References
     ----------
@@ -1254,7 +1254,6 @@ class SinkhornTransport(BaseTransport):
         self.log = log
         self.metric = metric
         self.distribution_estimation = distribution_estimation
-        self.method = "sinkhorn"
         self.out_of_sample_map = out_of_sample_map
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
@@ -1276,10 +1275,85 @@ class SinkhornTransport(BaseTransport):
             Returns self.
         """
 
-        self = super(SinkhornTransport, self).fit(Xs, ys, Xt, yt)
+        super(SinkhornTransport, self).fit(Xs, ys, Xt, yt)
 
         # coupling estimation
-        self.gamma_ = sinkhorn(
+        self.Coupling_ = sinkhorn(
             a=self.mu_s, b=self.mu_t, M=self.Cost, reg=self.reg_e,
             numItermax=self.max_iter, stopThr=self.tol,
             verbose=self.verbose, log=self.log)
+
+
+class EMDTransport(BaseTransport):
+    """Domain Adapatation OT method based on Earth Mover's Distance
+    Parameters
+    ----------
+    mode : string, optional (default="unsupervised")
+        The DA mode. If "unsupervised" no target labels are taken into account
+        to modify the cost matrix. If "semisupervised" the target labels
+        are taken into account to set coefficients of the pairwise distance
+        matrix to 0 for row and columns indices that correspond to source and
+        target samples which share the same labels.
+    mapping : string, optional (default="barycentric")
+        The kind of mapping to apply to transport samples from a domain into
+        another one.
+        if "barycentric" only the samples used to estimate the coupling can
+        be transported from a domain to another one.
+    metric : string, optional (default="sqeuclidean")
+        The ground metric for the Wasserstein problem
+    distribution : string, optional (default="uniform")
+        The kind of distribution estimation to employ
+    verbose : int, optional (default=0)
+        Controls the verbosity of the optimization algorithm
+    log : int, optional (default=0)
+        Controls the logs of the optimization algorithm
+    Attributes
+    ----------
+    Coupling_ : the optimal coupling
+
+    References
+    ----------
+    .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
+           "Optimal Transport for Domain Adaptation," in IEEE Transactions
+           on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+    """
+
+    def __init__(self, mode="unsupervised", verbose=False,
+                 log=False, metric="sqeuclidean",
+                 distribution_estimation=distribution_estimation_uniform,
+                 out_of_sample_map='ferradans'):
+
+        self.mode = mode
+        self.verbose = verbose
+        self.log = log
+        self.metric = metric
+        self.distribution_estimation = distribution_estimation
+        self.out_of_sample_map = out_of_sample_map
+
+    def fit(self, Xs, ys=None, Xt=None, yt=None):
+        """Build a coupling matrix from source and target sets of samples
+        (Xs, ys) and (Xt, yt)
+        Parameters
+        ----------
+        Xs : array-like of shape = [n_source_samples, n_features]
+            The training input samples.
+        ys : array-like, shape = [n_source_samples]
+            The class labels
+        Xt : array-like of shape = [n_target_samples, n_features]
+            The training input samples.
+        yt : array-like, shape = [n_labeled_target_samples]
+            The class labels
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
+        super(EMDTransport, self).fit(Xs, ys, Xt, yt)
+
+        # coupling estimation
+        self.Coupling_ = emd(
+            a=self.mu_s, b=self.mu_t, M=self.Cost,
+            # verbose=self.verbose,
+            # log=self.log
+        )
