@@ -63,12 +63,12 @@ def test_sinkhorn_lpl1_transport_class():
     assert_equal(transp_Xs.shape, Xs.shape)
 
     # test semi supervised mode
-    clf = ot.da.SinkhornTransport(mode="semisupervised")
-    clf.fit(Xs=Xs, Xt=Xt)
+    clf = ot.da.SinkhornLpl1Transport()
+    clf.fit(Xs=Xs, ys=ys, Xt=Xt)
     n_unsup = np.sum(clf.Cost)
 
     # test semi supervised mode
-    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf = ot.da.SinkhornLpl1Transport()
     clf.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
     assert_equal(clf.Cost.shape, ((Xs.shape[0], Xt.shape[0])))
     n_semisup = np.sum(clf.Cost)
@@ -126,12 +126,12 @@ def test_sinkhorn_l1l2_transport_class():
     assert_equal(transp_Xs.shape, Xs.shape)
 
     # test semi supervised mode
-    clf = ot.da.SinkhornTransport(mode="semisupervised")
-    clf.fit(Xs=Xs, Xt=Xt)
+    clf = ot.da.SinkhornL1l2Transport()
+    clf.fit(Xs=Xs, ys=ys, Xt=Xt)
     n_unsup = np.sum(clf.Cost)
 
     # test semi supervised mode
-    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf = ot.da.SinkhornL1l2Transport()
     clf.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
     assert_equal(clf.Cost.shape, ((Xs.shape[0], Xt.shape[0])))
     n_semisup = np.sum(clf.Cost)
@@ -189,12 +189,12 @@ def test_sinkhorn_transport_class():
     assert_equal(transp_Xs.shape, Xs.shape)
 
     # test semi supervised mode
-    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf = ot.da.SinkhornTransport()
     clf.fit(Xs=Xs, Xt=Xt)
     n_unsup = np.sum(clf.Cost)
 
     # test semi supervised mode
-    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf = ot.da.SinkhornTransport()
     clf.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
     assert_equal(clf.Cost.shape, ((Xs.shape[0], Xt.shape[0])))
     n_semisup = np.sum(clf.Cost)
@@ -252,12 +252,12 @@ def test_emd_transport_class():
     assert_equal(transp_Xs.shape, Xs.shape)
 
     # test semi supervised mode
-    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf = ot.da.EMDTransport()
     clf.fit(Xs=Xs, Xt=Xt)
     n_unsup = np.sum(clf.Cost)
 
     # test semi supervised mode
-    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf = ot.da.EMDTransport()
     clf.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
     assert_equal(clf.Cost.shape, ((Xs.shape[0], Xt.shape[0])))
     n_semisup = np.sum(clf.Cost)
