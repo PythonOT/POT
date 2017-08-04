@@ -62,6 +62,19 @@ def test_sinkhorn_lpl1_transport_class():
     transp_Xs = clf.fit_transform(Xs=Xs, ys=ys, Xt=Xt)
     assert_equal(transp_Xs.shape, Xs.shape)
 
+    # test semi supervised mode
+    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf.fit(Xs=Xs, Xt=Xt)
+    n_unsup = np.sum(clf.Cost)
+
+    # test semi supervised mode
+    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+    assert_equal(clf.Cost.shape, ((Xs.shape[0], Xt.shape[0])))
+    n_semisup = np.sum(clf.Cost)
+
+    assert n_unsup != n_semisup, "semisupervised mode not working"
+
 
 def test_sinkhorn_l1l2_transport_class():
     """test_sinkhorn_transport
@@ -111,6 +124,19 @@ def test_sinkhorn_l1l2_transport_class():
     # test fit_transform
     transp_Xs = clf.fit_transform(Xs=Xs, ys=ys, Xt=Xt)
     assert_equal(transp_Xs.shape, Xs.shape)
+
+    # test semi supervised mode
+    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf.fit(Xs=Xs, Xt=Xt)
+    n_unsup = np.sum(clf.Cost)
+
+    # test semi supervised mode
+    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+    assert_equal(clf.Cost.shape, ((Xs.shape[0], Xt.shape[0])))
+    n_semisup = np.sum(clf.Cost)
+
+    assert n_unsup != n_semisup, "semisupervised mode not working"
 
 
 def test_sinkhorn_transport_class():
@@ -162,6 +188,19 @@ def test_sinkhorn_transport_class():
     transp_Xs = clf.fit_transform(Xs=Xs, Xt=Xt)
     assert_equal(transp_Xs.shape, Xs.shape)
 
+    # test semi supervised mode
+    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf.fit(Xs=Xs, Xt=Xt)
+    n_unsup = np.sum(clf.Cost)
+
+    # test semi supervised mode
+    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+    assert_equal(clf.Cost.shape, ((Xs.shape[0], Xt.shape[0])))
+    n_semisup = np.sum(clf.Cost)
+
+    assert n_unsup != n_semisup, "semisupervised mode not working"
+
 
 def test_emd_transport_class():
     """test_sinkhorn_transport
@@ -211,6 +250,19 @@ def test_emd_transport_class():
     # test fit_transform
     transp_Xs = clf.fit_transform(Xs=Xs, Xt=Xt)
     assert_equal(transp_Xs.shape, Xs.shape)
+
+    # test semi supervised mode
+    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf.fit(Xs=Xs, Xt=Xt)
+    n_unsup = np.sum(clf.Cost)
+
+    # test semi supervised mode
+    clf = ot.da.SinkhornTransport(mode="semisupervised")
+    clf.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+    assert_equal(clf.Cost.shape, ((Xs.shape[0], Xt.shape[0])))
+    n_semisup = np.sum(clf.Cost)
+
+    assert n_unsup != n_semisup, "semisupervised mode not working"
 
 
 def test_otda():

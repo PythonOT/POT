@@ -1089,8 +1089,25 @@ class BaseTransport(BaseEstimator):
         self.Cost = dist(Xs, Xt, metric=self.metric)
 
         if self.mode == "semisupervised":
-            print("TODO: modify cost matrix accordingly")
-            pass
+
+            if (ys is not None) and (yt is not None):
+
+                # assumes labeled source samples occupy the first rows
+                # and labeled target samples occupy the first columns
+                classes = np.unique(ys)
+                for c in classes:
+                    ids = np.where(ys == c)
+                    idt = np.where(yt == c)
+
+                    # all the coefficients corresponding to a source sample
+                    # and a target sample with the same label gets a 0
+                    # transport cost
+                    for j in idt[0]:
+                        self.Cost[ids[0], j] = 0
+            else:
+                print("Warning: using unsupervised mode\
+                       \nto use semisupervised mode, please provide ys and yt")
+                pass
 
         # distribution estimation
         self.mu_s = self.distribution_estimation(Xs)
