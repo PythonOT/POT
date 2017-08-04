@@ -58,6 +58,10 @@ def test_sinkhorn_transport_class():
     # check that the oos method is not working and returns the input data
     assert_equal(transp_Xt_new, Xt_new)
 
+    # test fit_transform
+    transp_Xs = clf.fit_transform(Xs=Xs, Xt=Xt)
+    assert_equal(transp_Xs.shape, Xs.shape)
+
 
 def test_emd_transport_class():
     """test_sinkhorn_transport
@@ -103,6 +107,10 @@ def test_emd_transport_class():
 
     # check that the oos method is not working and returns the input data
     assert_equal(transp_Xt_new, Xt_new)
+
+    # test fit_transform
+    transp_Xs = clf.fit_transform(Xs=Xs, Xt=Xt)
+    assert_equal(transp_Xs.shape, Xs.shape)
 
 
 def test_otda():
@@ -165,8 +173,3 @@ def test_otda():
     da_emd = ot.da.OTDA_mapping_kernel()     # init class
     da_emd.fit(xs, xt, numItermax=10)       # fit distributions
     da_emd.predict(xs)    # interpolation of source samples
-
-
-if __name__ == "__main__":
-    test_sinkhorn_transport_class()
-    test_emd_transport_class()
