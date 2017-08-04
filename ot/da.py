@@ -1233,12 +1233,6 @@ class SinkhornTransport(BaseTransport):
     ----------
     reg_e : float, optional (default=1)
         Entropic regularization parameter
-    mode : string, optional (default="unsupervised")
-        The DA mode. If "unsupervised" no target labels are taken into account
-        to modify the cost matrix. If "semisupervised" the target labels
-        are taken into account to set coefficients of the pairwise distance
-        matrix to 0 for row and columns indices that correspond to source and
-        target samples which share the same labels.
     max_iter : int, float, optional (default=1000)
         The minimum number of iteration before stopping the optimization
         algorithm if no it has not converged
@@ -1324,12 +1318,6 @@ class EMDTransport(BaseTransport):
     """Domain Adapatation OT method based on Earth Mover's Distance
     Parameters
     ----------
-    mode : string, optional (default="unsupervised")
-        The DA mode. If "unsupervised" no target labels are taken into account
-        to modify the cost matrix. If "semisupervised" the target labels
-        are taken into account to set coefficients of the pairwise distance
-        matrix to 0 for row and columns indices that correspond to source and
-        target samples which share the same labels.
     mapping : string, optional (default="barycentric")
         The kind of mapping to apply to transport samples from a domain into
         another one.
@@ -1406,12 +1394,6 @@ class SinkhornLpl1Transport(BaseTransport):
         Entropic regularization parameter
     reg_cl : float, optional (default=0.1)
         Class regularization parameter
-    mode : string, optional (default="unsupervised")
-        The DA mode. If "unsupervised" no target labels are taken into account
-        to modify the cost matrix. If "semisupervised" the target labels
-        are taken into account to set coefficients of the pairwise distance
-        matrix to 0 for row and columns indices that correspond to source and
-        target samples which share the same labels.
     mapping : string, optional (default="barycentric")
         The kind of mapping to apply to transport samples from a domain into
         another one.
@@ -1510,12 +1492,6 @@ class SinkhornL1l2Transport(BaseTransport):
         Entropic regularization parameter
     reg_cl : float, optional (default=0.1)
         Class regularization parameter
-    mode : string, optional (default="unsupervised")
-        The DA mode. If "unsupervised" no target labels are taken into account
-        to modify the cost matrix. If "semisupervised" the target labels
-        are taken into account to set coefficients of the pairwise distance
-        matrix to 0 for row and columns indices that correspond to source and
-        target samples which share the same labels.
     mapping : string, optional (default="barycentric")
         The kind of mapping to apply to transport samples from a domain into
         another one.
@@ -1603,3 +1579,137 @@ class SinkhornL1l2Transport(BaseTransport):
             verbose=self.verbose, log=self.log)
 
         return self
+
+
+class MappingTransport(BaseEstimator):
+    """MappingTransport: DA methods that aims at jointly estimating a optimal
+    transport coupling and the associated mapping
+
+    Parameters
+    ----------
+    mu : float, optional (default=1)
+        Weight for the linear OT loss (>0)
+    eta : float, optional (default=0.001)
+        Regularization term for the linear mapping L (>0)
+    bias : bool, optional (default=False)
+        Estimate linear mapping with constant bias
+    metric : string, optional (default="sqeuclidean")
+        The ground metric for the Wasserstein problem
+    kernel : string, optional (default="linear")
+        The kernel to use either linear or gaussian
+    sigma : float, optional (default=1)
+        The gaussian kernel parameter
+    max_iter : int, optional (default=100)
+        Max number of BCD iterations
+    tol : float, optional (default=1e-5)
+        Stop threshold on relative loss decrease (>0)
+    max_inner_iter : int, optional (default=10)
+        Max number of iterations (inner CG solver)
+    inner_tol : float, optional (default=1e-6)
+        Stop threshold on error (inner CG solver) (>0)
+    verbose : bool, optional (default=False)
+        Print information along iterations
+    log : bool, optional (default=False)
+        record log if True
+
+    Attributes
+    ----------
+    Coupling_ : the optimal coupling
+    Mapping_ : the mapping associated
+
+    References
+    ----------
+
+    .. [8] M. Perrot, N. Courty, R. Flamary, A. Habrard,
+            "Mapping estimation for discrete optimal transport",
+            Neural Information Processing Systems (NIPS), 2016.
+
+    """
+
+    def __init__(self, mu=1, eta=0.001, bias=False, metric="sqeuclidean",
+                 kernel="linear", sigma=1, max_iter=100, tol=1e-5,
+                 max_inner_iter=10, inner_tol=1e-6, log=False, verbose=False):
+
+        self.metric = metric
+        self.mu = mu
+        self.eta = eta
+        self.bias = bias
+        self.kernel = kernel
+        self.sigma
+        self.max_iter = max_iter
+        self.tol = tol
+        self.max_inner_iter = max_inner_iter
+        self.inner_tol = inner_tol
+        self.log = log
+        self.verbose = verbose
+
+    def fit(self, Xs=None, ys=None, Xt=None, yt=None):
+        """Builds an optimal coupling and estimates the associated mapping
+        from source and target sets of samples (Xs, ys) and (Xt, yt)
+        Parameters
+        ----------
+        Xs : array-like of shape = (n_source_samples, n_features)
+            The training input samples.
+        ys : array-like, shape = (n_source_samples,)
+            The class labels
+        Xt : array-like of shape = (n_target_samples, n_features)
+            The training input samples.
+        yt : array-like, shape = (n_labeled_target_samples,)
+            The class labels
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
+        self.Xs = Xs
+        self.Xt = Xt
+
+        if self.kernel == "linear":
+            self.Coupling_, self.Mapping_ = joint_OT_mapping_linear(
+                Xs, Xt, mu=self.mu, eta=self.eta, bias=self.bias,
+                verbose=self.verbose, verbose2=self.verbose2,
+                numItermax=self.max_iter, numInnerItermax=self.max_inner_iter,
+                stopThr=self.tol, stopInnerThr=self.inner_tol, log=self.log)
+
+        elif self.kernel == "gaussian":
+            self.Coupling_, self.Mapping_ = joint_OT_mapping_kernel(
+                Xs, Xt, mu=self.mu, eta=self.eta, bias=self.bias,
+                sigma=self.sigma, verbose=self.verbose, verbose2=self.verbose,
+                numItermax=self.max_iter, numInnerItermax=self.max_inner_iter,
+                stopInnerThr=self.inner_tol, stopThr=self.tol, log=self.log)
+
+        return self
+
+    def transform(self, Xs):
+        """Transports source samples Xs onto target ones Xt
+        Parameters
+        ----------
+        Xs : array-like of shape = (n_source_samples, n_features)
+            The training input samples.
+
+        Returns
+        -------
+        transp_Xs : array-like of shape = (n_source_samples, n_features)
+            The transport source samples.
+        """
+
+        if np.array_equal(self.Xs, Xs):
+            # perform standard barycentric mapping
+            transp = self.Coupling_ / np.sum(self.Coupling_, 1)[:, None]
+
+            # set nans to 0
+            transp[~ np.isfinite(transp)] = 0
+
+            # compute transported samples
+            transp_Xs = np.dot(transp, self.Xt)
+        else:
+            if self.kernel == "gaussian":
+                K = kernel(Xs, self.Xs, method=self.kernel, sigma=self.sigma)
+            elif self.kernel == "linear":
+                K = Xs
+            if self.bias:
+                K = np.hstack((K, np.ones((Xs.shape[0], 1))))
+            transp_Xs = K.dot(self.Mapping_)
+
+        return transp_Xs
