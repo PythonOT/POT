@@ -1361,3 +1361,94 @@ class EMDTransport(BaseTransport):
         )
 
         return self
+
+
+class SinkhornLpl1Transport(BaseTransport):
+    """Domain Adapatation OT method based on sinkhorn algorithm +
+    LpL1 class regularization.
+
+    Parameters
+    ----------
+    mode : string, optional (default="unsupervised")
+        The DA mode. If "unsupervised" no target labels are taken into account
+        to modify the cost matrix. If "semisupervised" the target labels
+        are taken into account to set coefficients of the pairwise distance
+        matrix to 0 for row and columns indices that correspond to source and
+        target samples which share the same labels.
+    mapping : string, optional (default="barycentric")
+        The kind of mapping to apply to transport samples from a domain into
+        another one.
+        if "barycentric" only the samples used to estimate the coupling can
+        be transported from a domain to another one.
+    metric : string, optional (default="sqeuclidean")
+        The ground metric for the Wasserstein problem
+    distribution : string, optional (default="uniform")
+        The kind of distribution estimation to employ
+    verbose : int, optional (default=0)
+        Controls the verbosity of the optimization algorithm
+    log : int, optional (default=0)
+        Controls the logs of the optimization algorithm
+    Attributes
+    ----------
+    Coupling_ : the optimal coupling
+
+    References
+    ----------
+
+    .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
+       "Optimal Transport for Domain Adaptation," in IEEE
+       Transactions on Pattern Analysis and Machine Intelligence ,
+       vol.PP, no.99, pp.1-1
+    .. [2] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
+       Generalized conditional gradient: analysis of convergence
+       and applications. arXiv preprint arXiv:1510.06567.
+
+    """
+
+    def __init__(self, reg_e=1., reg_cl=0.1, mode="unsupervised",
+                 max_iter=10, max_inner_iter=200,
+                 tol=10e-9, verbose=False, log=False,
+                 metric="sqeuclidean",
+                 distribution_estimation=distribution_estimation_uniform,
+                 out_of_sample_map='ferradans'):
+
+        self.reg_e = reg_e
+        self.reg_cl = reg_cl
+        self.mode = mode
+        self.max_iter = max_iter
+        self.max_inner_iter = max_inner_iter
+        self.tol = tol
+        self.verbose = verbose
+        self.log = log
+        self.metric = metric
+        self.distribution_estimation = distribution_estimation
+        self.out_of_sample_map = out_of_sample_map
+
+    def fit(self, Xs, ys=None, Xt=None, yt=None):
+        """Build a coupling matrix from source and target sets of samples
+        (Xs, ys) and (Xt, yt)
+        Parameters
+        ----------
+        Xs : array-like of shape = [n_source_samples, n_features]
+            The training input samples.
+        ys : array-like, shape = [n_source_samples]
+            The class labels
+        Xt : array-like of shape = [n_target_samples, n_features]
+            The training input samples.
+        yt : array-like, shape = [n_labeled_target_samples]
+            The class labels
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
+        super(SinkhornLpl1Transport, self).fit(Xs, ys, Xt, yt)
+
+        self.Coupling_ = sinkhorn_lpl1_mm(
+            a=self.mu_s, labels_a=ys, b=self.mu_t, M=self.Cost,
+            reg=self.reg_e, eta=self.reg_cl, numItermax=self.max_iter,
+            numInnerItermax=self.max_inner_iter, stopInnerThr=self.tol,
+            verbose=self.verbose, log=self.log)
+
+        return self
