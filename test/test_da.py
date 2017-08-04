@@ -13,6 +13,56 @@ from ot.utils import unif
 np.random.seed(42)
 
 
+def test_sinkhorn_lpl1_transport_class():
+    """test_sinkhorn_transport
+    """
+
+    ns = 150
+    nt = 200
+
+    Xs, ys = get_data_classif('3gauss', ns)
+    Xt, yt = get_data_classif('3gauss2', nt)
+
+    clf = ot.da.SinkhornLpl1Transport()
+
+    # test its computed
+    clf.fit(Xs=Xs, ys=ys, Xt=Xt)
+
+    # test dimensions of coupling
+    assert_equal(clf.Cost.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert_equal(clf.Coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
+
+    # test margin constraints
+    mu_s = unif(ns)
+    mu_t = unif(nt)
+    assert_allclose(np.sum(clf.Coupling_, axis=0), mu_t, rtol=1e-3, atol=1e-3)
+    assert_allclose(np.sum(clf.Coupling_, axis=1), mu_s, rtol=1e-3, atol=1e-3)
+
+    # test transform
+    transp_Xs = clf.transform(Xs=Xs)
+    assert_equal(transp_Xs.shape, Xs.shape)
+
+    Xs_new, _ = get_data_classif('3gauss', ns + 1)
+    transp_Xs_new = clf.transform(Xs_new)
+
+    # check that the oos method is not working
+    assert_equal(transp_Xs_new, Xs_new)
+
+    # test inverse transform
+    transp_Xt = clf.inverse_transform(Xt=Xt)
+    assert_equal(transp_Xt.shape, Xt.shape)
+
+    Xt_new, _ = get_data_classif('3gauss2', nt + 1)
+    transp_Xt_new = clf.inverse_transform(Xt=Xt_new)
+
+    # check that the oos method is not working and returns the input data
+    assert_equal(transp_Xt_new, Xt_new)
+
+    # test fit_transform
+    transp_Xs = clf.fit_transform(Xs=Xs, ys=ys, Xt=Xt)
+    assert_equal(transp_Xs.shape, Xs.shape)
+
+
 def test_sinkhorn_transport_class():
     """test_sinkhorn_transport
     """
