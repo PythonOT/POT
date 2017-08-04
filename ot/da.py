@@ -1053,11 +1053,11 @@ def distribution_estimation_uniform(X):
 
     Parameters
     ----------
-    X : array-like of shape = [n_samples, n_features]
+    X : array-like of shape = (n_samples, n_features)
         The array of samples
     Returns
     -------
-    mu : array-like, shape = [n_samples,]
+    mu : array-like, shape = (n_samples,)
         The uniform distribution estimated from X
     """
 
@@ -1071,13 +1071,13 @@ class BaseTransport(BaseEstimator):
         (Xs, ys) and (Xt, yt)
         Parameters
         ----------
-        Xs : array-like of shape = [n_source_samples, n_features]
+        Xs : array-like of shape = (n_source_samples, n_features)
             The training input samples.
-        ys : array-like, shape = [n_source_samples]
+        ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = [n_target_samples, n_features]
+        Xt : array-like of shape = (n_target_samples, n_features)
             The training input samples.
-        yt : array-like, shape = [n_labeled_target_samples]
+        yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
         Returns
         -------
@@ -1122,17 +1122,17 @@ class BaseTransport(BaseEstimator):
         ones Xt
         Parameters
         ----------
-        Xs : array-like of shape = [n_source_samples, n_features]
+        Xs : array-like of shape = (n_source_samples, n_features)
             The training input samples.
-        ys : array-like, shape = [n_source_samples]
+        ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = [n_target_samples, n_features]
+        Xt : array-like of shape = (n_target_samples, n_features)
             The training input samples.
-        yt : array-like, shape = [n_labeled_target_samples]
+        yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
         Returns
         -------
-        transp_Xs : array-like of shape = [n_source_samples, n_features]
+        transp_Xs : array-like of shape = (n_source_samples, n_features)
             The source samples samples.
         """
 
@@ -1142,17 +1142,17 @@ class BaseTransport(BaseEstimator):
         """Transports source samples Xs onto target ones Xt
         Parameters
         ----------
-        Xs : array-like of shape = [n_source_samples, n_features]
+        Xs : array-like of shape = (n_source_samples, n_features)
             The training input samples.
-        ys : array-like, shape = [n_source_samples]
+        ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = [n_target_samples, n_features]
+        Xt : array-like of shape = (n_target_samples, n_features)
             The training input samples.
-        yt : array-like, shape = [n_labeled_target_samples]
+        yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
         Returns
         -------
-        transp_Xs : array-like of shape = [n_source_samples, n_features]
+        transp_Xs : array-like of shape = (n_source_samples, n_features)
             The transport source samples.
         """
 
@@ -1177,17 +1177,17 @@ class BaseTransport(BaseEstimator):
         """Transports target samples Xt onto target samples Xs
         Parameters
         ----------
-        Xs : array-like of shape = [n_source_samples, n_features]
+        Xs : array-like of shape = (n_source_samples, n_features)
             The training input samples.
-        ys : array-like, shape = [n_source_samples]
+        ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = [n_target_samples, n_features]
+        Xt : array-like of shape = (n_target_samples, n_features)
             The training input samples.
-        yt : array-like, shape = [n_labeled_target_samples]
+        yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
         Returns
         -------
-        transp_Xt : array-like of shape = [n_source_samples, n_features]
+        transp_Xt : array-like of shape = (n_source_samples, n_features)
             The transported target samples.
         """
 
@@ -1278,13 +1278,13 @@ class SinkhornTransport(BaseTransport):
         (Xs, ys) and (Xt, yt)
         Parameters
         ----------
-        Xs : array-like of shape = [n_source_samples, n_features]
+        Xs : array-like of shape = (n_source_samples, n_features)
             The training input samples.
-        ys : array-like, shape = [n_source_samples]
+        ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = [n_target_samples, n_features]
+        Xt : array-like of shape = (n_target_samples, n_features)
             The training input samples.
-        yt : array-like, shape = [n_labeled_target_samples]
+        yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
         Returns
         -------
@@ -1341,13 +1341,10 @@ class EMDTransport(BaseTransport):
            on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
     """
 
-    def __init__(self, verbose=False,
-                 log=False, metric="sqeuclidean",
+    def __init__(self, metric="sqeuclidean",
                  distribution_estimation=distribution_estimation_uniform,
                  out_of_sample_map='ferradans', limit_max=10):
 
-        self.verbose = verbose
-        self.log = log
         self.metric = metric
         self.limit_max = limit_max
         self.distribution_estimation = distribution_estimation
@@ -1358,13 +1355,13 @@ class EMDTransport(BaseTransport):
         (Xs, ys) and (Xt, yt)
         Parameters
         ----------
-        Xs : array-like of shape = [n_source_samples, n_features]
+        Xs : array-like of shape = (n_source_samples, n_features)
             The training input samples.
-        ys : array-like, shape = [n_source_samples]
+        ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = [n_target_samples, n_features]
+        Xt : array-like of shape = (n_target_samples, n_features)
             The training input samples.
-        yt : array-like, shape = [n_labeled_target_samples]
+        yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
         Returns
         -------
@@ -1377,8 +1374,6 @@ class EMDTransport(BaseTransport):
         # coupling estimation
         self.Coupling_ = emd(
             a=self.mu_s, b=self.mu_t, M=self.Cost,
-            # verbose=self.verbose,
-            # log=self.log
         )
 
         return self
@@ -1463,13 +1458,13 @@ class SinkhornLpl1Transport(BaseTransport):
         (Xs, ys) and (Xt, yt)
         Parameters
         ----------
-        Xs : array-like of shape = [n_source_samples, n_features]
+        Xs : array-like of shape = (n_source_samples, n_features)
             The training input samples.
-        ys : array-like, shape = [n_source_samples]
+        ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = [n_target_samples, n_features]
+        Xt : array-like of shape = (n_target_samples, n_features)
             The training input samples.
-        yt : array-like, shape = [n_labeled_target_samples]
+        yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
         Returns
         -------
@@ -1568,13 +1563,13 @@ class SinkhornL1l2Transport(BaseTransport):
         (Xs, ys) and (Xt, yt)
         Parameters
         ----------
-        Xs : array-like of shape = [n_source_samples, n_features]
+        Xs : array-like of shape = (n_source_samples, n_features)
             The training input samples.
-        ys : array-like, shape = [n_source_samples]
+        ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = [n_target_samples, n_features]
+        Xt : array-like of shape = (n_target_samples, n_features)
             The training input samples.
-        yt : array-like, shape = [n_labeled_target_samples]
+        yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
         Returns
         -------
