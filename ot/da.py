@@ -1283,6 +1283,8 @@ class SinkhornTransport(BaseTransport):
             numItermax=self.max_iter, stopThr=self.tol,
             verbose=self.verbose, log=self.log)
 
+        return self
+
 
 class EMDTransport(BaseTransport):
     """Domain Adapatation OT method based on Earth Mover's Distance
@@ -1357,3 +1359,5 @@ class EMDTransport(BaseTransport):
             # verbose=self.verbose,
             # log=self.log
         )
+
+        return self
