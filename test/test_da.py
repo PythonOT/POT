@@ -432,10 +432,11 @@ def test_otda():
     da_emd.predict(xs)    # interpolation of source samples
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
+    # test_otda()
     # test_sinkhorn_transport_class()
     # test_emd_transport_class()
     # test_sinkhorn_l1l2_transport_class()
     # test_sinkhorn_lpl1_transport_class()
-    test_mapping_transport_class()
+    # test_mapping_transport_class()
