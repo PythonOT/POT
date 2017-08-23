@@ -1665,8 +1665,14 @@ class MappingTransport(BaseEstimator):
 
     Attributes
     ----------
-    coupling_ : the optimal coupling
-    mapping_ : the mapping associated
+    coupling_ : array-like, shape (n_source_samples, n_features)
+        The optimal coupling
+    mapping_ : array-like, shape (n_features (+ 1), n_features)
+        (if bias) for kernel == linear
+        The associated mapping
+
+        array-like, shape (n_source_samples (+ 1), n_features)
+        (if bias) for kernel == gaussian
 
     References
     ----------
@@ -1679,20 +1685,22 @@ class MappingTransport(BaseEstimator):
 
     def __init__(self, mu=1, eta=0.001, bias=False, metric="sqeuclidean",
                  kernel="linear", sigma=1, max_iter=100, tol=1e-5,
-                 max_inner_iter=10, inner_tol=1e-6, log=False, verbose=False):
+                 max_inner_iter=10, inner_tol=1e-6, log=False, verbose=False,
+                 verbose2=False):
 
         self.metric = metric
         self.mu = mu
         self.eta = eta
         self.bias = bias
         self.kernel = kernel
-        self.sigma
+        self.sigma = sigma
         self.max_iter = max_iter
         self.tol = tol
         self.max_inner_iter = max_inner_iter
         self.inner_tol = inner_tol
         self.log = log
         self.verbose = verbose
+        self.verbose2 = verbose2
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
         """Builds an optimal coupling and estimates the associated mapping
@@ -1712,7 +1720,7 @@ class MappingTransport(BaseEstimator):
         Returns
         -------
         self : object
-            Returns self.
+            Returns self
         """
 
         self.Xs = Xs
