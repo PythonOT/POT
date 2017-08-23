@@ -967,11 +967,13 @@ class BaseEstimator(object):
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
+
         Parameters
         ----------
         deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
+
         Returns
         -------
         params : mapping of string to any
@@ -1002,10 +1004,12 @@ class BaseEstimator(object):
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
+
         The method works on simple estimators as well as on nested objects
         (such as pipelines). The latter have parameters of the form
         ``<component>__<parameter>`` so that it's possible to update each
         component of a nested object.
+
         Returns
         -------
         self
@@ -1053,11 +1057,12 @@ def distribution_estimation_uniform(X):
 
     Parameters
     ----------
-    X : array-like of shape = (n_samples, n_features)
+    X : array-like, shape (n_samples, n_features)
         The array of samples
+
     Returns
     -------
-    mu : array-like, shape = (n_samples,)
+    mu : array-like, shape (n_samples,)
         The uniform distribution estimated from X
     """
 
@@ -1069,16 +1074,18 @@ class BaseTransport(BaseEstimator):
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
         (Xs, ys) and (Xt, yt)
+
         Parameters
         ----------
-        Xs : array-like of shape = (n_source_samples, n_features)
+        Xs : array-like, shape (n_source_samples, n_features)
             The training input samples.
-        ys : array-like, shape = (n_source_samples,)
+        ys : array-like, shape (n_source_samples,)
             The class labels
-        Xt : array-like of shape = (n_target_samples, n_features)
+        Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
-        yt : array-like, shape = (n_labeled_target_samples,)
+        yt : array-like, shape (n_labeled_target_samples,)
             The class labels
+
         Returns
         -------
         self : object
@@ -1086,12 +1093,12 @@ class BaseTransport(BaseEstimator):
         """
 
         # pairwise distance
-        self.Cost = dist(Xs, Xt, metric=self.metric)
+        self.cost_ = dist(Xs, Xt, metric=self.metric)
 
         if (ys is not None) and (yt is not None):
 
             if self.limit_max != np.infty:
-                self.limit_max = self.limit_max * np.max(self.Cost)
+                self.limit_max = self.limit_max * np.max(self.cost_)
 
             # assumes labeled source samples occupy the first rows
             # and labeled target samples occupy the first columns
@@ -1104,7 +1111,7 @@ class BaseTransport(BaseEstimator):
                 # and a target sample :
                 # with different labels get a infinite
                 for j in idx_t[0]:
-                    self.Cost[idx_s[0], j] = self.limit_max
+                    self.cost_[idx_s[0], j] = self.limit_max
 
         # distribution estimation
         self.mu_s = self.distribution_estimation(Xs)
@@ -1120,19 +1127,21 @@ class BaseTransport(BaseEstimator):
         """Build a coupling matrix from source and target sets of samples
         (Xs, ys) and (Xt, yt) and transports source samples Xs onto target
         ones Xt
+
         Parameters
         ----------
-        Xs : array-like of shape = (n_source_samples, n_features)
+        Xs : array-like, shape (n_source_samples, n_features)
             The training input samples.
-        ys : array-like, shape = (n_source_samples,)
+        ys : array-like, shape (n_source_samples,)
             The class labels
-        Xt : array-like of shape = (n_target_samples, n_features)
+        Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
-        yt : array-like, shape = (n_labeled_target_samples,)
+        yt : array-like, shape (n_labeled_target_samples,)
             The class labels
+
         Returns
         -------
-        transp_Xs : array-like of shape = (n_source_samples, n_features)
+        transp_Xs : array-like, shape (n_source_samples, n_features)
             The source samples samples.
         """
 
@@ -1140,25 +1149,27 @@ class BaseTransport(BaseEstimator):
 
     def transform(self, Xs=None, ys=None, Xt=None, yt=None):
         """Transports source samples Xs onto target ones Xt
+
         Parameters
         ----------
-        Xs : array-like of shape = (n_source_samples, n_features)
+        Xs : array-like, shape (n_source_samples, n_features)
             The training input samples.
-        ys : array-like, shape = (n_source_samples,)
+        ys : array-like, shape (n_source_samples,)
             The class labels
-        Xt : array-like of shape = (n_target_samples, n_features)
+        Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
-        yt : array-like, shape = (n_labeled_target_samples,)
+        yt : array-like, shape (n_labeled_target_samples,)
             The class labels
+
         Returns
         -------
-        transp_Xs : array-like of shape = (n_source_samples, n_features)
+        transp_Xs : array-like, shape (n_source_samples, n_features)
             The transport source samples.
         """
 
         if np.array_equal(self.Xs, Xs):
             # perform standard barycentric mapping
-            transp = self.Coupling_ / np.sum(self.Coupling_, 1)[:, None]
+            transp = self.coupling_ / np.sum(self.coupling_, 1)[:, None]
 
             # set nans to 0
             transp[~ np.isfinite(transp)] = 0
@@ -1173,7 +1184,7 @@ class BaseTransport(BaseEstimator):
             idx = np.argmin(D0, axis=1)
 
             # transport the source samples
-            transp = self.Coupling_ / np.sum(self.Coupling_, 1)[:, None]
+            transp = self.coupling_ / np.sum(self.coupling_, 1)[:, None]
             transp[~ np.isfinite(transp)] = 0
             transp_Xs_ = np.dot(transp, self.Xt)
 
@@ -1184,25 +1195,27 @@ class BaseTransport(BaseEstimator):
 
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None):
         """Transports target samples Xt onto target samples Xs
+
         Parameters
         ----------
-        Xs : array-like of shape = (n_source_samples, n_features)
+        Xs : array-like, shape (n_source_samples, n_features)
             The training input samples.
         ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = (n_target_samples, n_features)
+        Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
+
         Returns
         -------
-        transp_Xt : array-like of shape = (n_source_samples, n_features)
+        transp_Xt : array-like, shape (n_source_samples, n_features)
             The transported target samples.
         """
 
         if np.array_equal(self.Xt, Xt):
             # perform standard barycentric mapping
-            transp_ = self.Coupling_.T / np.sum(self.Coupling_, 0)[:, None]
+            transp_ = self.coupling_.T / np.sum(self.coupling_, 0)[:, None]
 
             # set nans to 0
             transp_[~ np.isfinite(transp_)] = 0
@@ -1216,7 +1229,7 @@ class BaseTransport(BaseEstimator):
             idx = np.argmin(D0, axis=1)
 
             # transport the target samples
-            transp_ = self.Coupling_.T / np.sum(self.Coupling_, 0)[:, None]
+            transp_ = self.coupling_.T / np.sum(self.coupling_, 0)[:, None]
             transp_[~ np.isfinite(transp_)] = 0
             transp_Xt_ = np.dot(transp_, self.Xs)
 
@@ -1254,9 +1267,10 @@ class SinkhornTransport(BaseTransport):
     limit_max: float, optional (defaul=np.infty)
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit an infinite cost
+
     Attributes
     ----------
-    Coupling_ : the optimal coupling
+    coupling_ : the optimal coupling
 
     References
     ----------
@@ -1287,16 +1301,18 @@ class SinkhornTransport(BaseTransport):
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
         (Xs, ys) and (Xt, yt)
+
         Parameters
         ----------
-        Xs : array-like of shape = (n_source_samples, n_features)
+        Xs : array-like, shape (n_source_samples, n_features)
             The training input samples.
         ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = (n_target_samples, n_features)
+        Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
+
         Returns
         -------
         self : object
@@ -1306,8 +1322,8 @@ class SinkhornTransport(BaseTransport):
         super(SinkhornTransport, self).fit(Xs, ys, Xt, yt)
 
         # coupling estimation
-        self.Coupling_ = sinkhorn(
-            a=self.mu_s, b=self.mu_t, M=self.Cost, reg=self.reg_e,
+        self.coupling_ = sinkhorn(
+            a=self.mu_s, b=self.mu_t, M=self.cost_, reg=self.reg_e,
             numItermax=self.max_iter, stopThr=self.tol,
             verbose=self.verbose, log=self.log)
 
@@ -1316,6 +1332,7 @@ class SinkhornTransport(BaseTransport):
 
 class EMDTransport(BaseTransport):
     """Domain Adapatation OT method based on Earth Mover's Distance
+
     Parameters
     ----------
     mapping : string, optional (default="barycentric")
@@ -1335,9 +1352,10 @@ class EMDTransport(BaseTransport):
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit an infinite cost
         (10 times the maximum value of the cost matrix)
+
     Attributes
     ----------
-    Coupling_ : the optimal coupling
+    coupling_ : the optimal coupling
 
     References
     ----------
@@ -1358,16 +1376,18 @@ class EMDTransport(BaseTransport):
     def fit(self, Xs, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
         (Xs, ys) and (Xt, yt)
+
         Parameters
         ----------
-        Xs : array-like of shape = (n_source_samples, n_features)
+        Xs : array-like, shape (n_source_samples, n_features)
             The training input samples.
         ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = (n_target_samples, n_features)
+        Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
+
         Returns
         -------
         self : object
@@ -1377,8 +1397,8 @@ class EMDTransport(BaseTransport):
         super(EMDTransport, self).fit(Xs, ys, Xt, yt)
 
         # coupling estimation
-        self.Coupling_ = emd(
-            a=self.mu_s, b=self.mu_t, M=self.Cost,
+        self.coupling_ = emd(
+            a=self.mu_s, b=self.mu_t, M=self.cost_,
         )
 
         return self
@@ -1418,7 +1438,7 @@ class SinkhornLpl1Transport(BaseTransport):
 
     Attributes
     ----------
-    Coupling_ : the optimal coupling
+    coupling_ : the optimal coupling
 
     References
     ----------
@@ -1455,16 +1475,18 @@ class SinkhornLpl1Transport(BaseTransport):
     def fit(self, Xs, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
         (Xs, ys) and (Xt, yt)
+
         Parameters
         ----------
-        Xs : array-like of shape = (n_source_samples, n_features)
+        Xs : array-like, shape (n_source_samples, n_features)
             The training input samples.
         ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = (n_target_samples, n_features)
+        Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
+
         Returns
         -------
         self : object
@@ -1473,8 +1495,8 @@ class SinkhornLpl1Transport(BaseTransport):
 
         super(SinkhornLpl1Transport, self).fit(Xs, ys, Xt, yt)
 
-        self.Coupling_ = sinkhorn_lpl1_mm(
-            a=self.mu_s, labels_a=ys, b=self.mu_t, M=self.Cost,
+        self.coupling_ = sinkhorn_lpl1_mm(
+            a=self.mu_s, labels_a=ys, b=self.mu_t, M=self.cost_,
             reg=self.reg_e, eta=self.reg_cl, numItermax=self.max_iter,
             numInnerItermax=self.max_inner_iter, stopInnerThr=self.tol,
             verbose=self.verbose, log=self.log)
@@ -1517,7 +1539,7 @@ class SinkhornL1l2Transport(BaseTransport):
 
     Attributes
     ----------
-    Coupling_ : the optimal coupling
+    coupling_ : the optimal coupling
 
     References
     ----------
@@ -1554,16 +1576,18 @@ class SinkhornL1l2Transport(BaseTransport):
     def fit(self, Xs, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
         (Xs, ys) and (Xt, yt)
+
         Parameters
         ----------
-        Xs : array-like of shape = (n_source_samples, n_features)
+        Xs : array-like, shape (n_source_samples, n_features)
             The training input samples.
         ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = (n_target_samples, n_features)
+        Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
+
         Returns
         -------
         self : object
@@ -1572,8 +1596,8 @@ class SinkhornL1l2Transport(BaseTransport):
 
         super(SinkhornL1l2Transport, self).fit(Xs, ys, Xt, yt)
 
-        self.Coupling_ = sinkhorn_l1l2_gl(
-            a=self.mu_s, labels_a=ys, b=self.mu_t, M=self.Cost,
+        self.coupling_ = sinkhorn_l1l2_gl(
+            a=self.mu_s, labels_a=ys, b=self.mu_t, M=self.cost_,
             reg=self.reg_e, eta=self.reg_cl, numItermax=self.max_iter,
             numInnerItermax=self.max_inner_iter, stopInnerThr=self.tol,
             verbose=self.verbose, log=self.log)
@@ -1614,8 +1638,8 @@ class MappingTransport(BaseEstimator):
 
     Attributes
     ----------
-    Coupling_ : the optimal coupling
-    Mapping_ : the mapping associated
+    coupling_ : the optimal coupling
+    mapping_ : the mapping associated
 
     References
     ----------
@@ -1646,16 +1670,18 @@ class MappingTransport(BaseEstimator):
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
         """Builds an optimal coupling and estimates the associated mapping
         from source and target sets of samples (Xs, ys) and (Xt, yt)
+
         Parameters
         ----------
-        Xs : array-like of shape = (n_source_samples, n_features)
+        Xs : array-like, shape (n_source_samples, n_features)
             The training input samples.
         ys : array-like, shape = (n_source_samples,)
             The class labels
-        Xt : array-like of shape = (n_target_samples, n_features)
+        Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape = (n_labeled_target_samples,)
             The class labels
+
         Returns
         -------
         self : object
@@ -1666,14 +1692,14 @@ class MappingTransport(BaseEstimator):
         self.Xt = Xt
 
         if self.kernel == "linear":
-            self.Coupling_, self.Mapping_ = joint_OT_mapping_linear(
+            self.coupling_, self.mapping_ = joint_OT_mapping_linear(
                 Xs, Xt, mu=self.mu, eta=self.eta, bias=self.bias,
                 verbose=self.verbose, verbose2=self.verbose2,
                 numItermax=self.max_iter, numInnerItermax=self.max_inner_iter,
                 stopThr=self.tol, stopInnerThr=self.inner_tol, log=self.log)
 
         elif self.kernel == "gaussian":
-            self.Coupling_, self.Mapping_ = joint_OT_mapping_kernel(
+            self.coupling_, self.mapping_ = joint_OT_mapping_kernel(
                 Xs, Xt, mu=self.mu, eta=self.eta, bias=self.bias,
                 sigma=self.sigma, verbose=self.verbose, verbose2=self.verbose,
                 numItermax=self.max_iter, numInnerItermax=self.max_inner_iter,
@@ -1683,20 +1709,21 @@ class MappingTransport(BaseEstimator):
 
     def transform(self, Xs):
         """Transports source samples Xs onto target ones Xt
+
         Parameters
         ----------
-        Xs : array-like of shape = (n_source_samples, n_features)
+        Xs : array-like, shape (n_source_samples, n_features)
             The training input samples.
 
         Returns
         -------
-        transp_Xs : array-like of shape = (n_source_samples, n_features)
+        transp_Xs : array-like, shape (n_source_samples, n_features)
             The transport source samples.
         """
 
         if np.array_equal(self.Xs, Xs):
             # perform standard barycentric mapping
-            transp = self.Coupling_ / np.sum(self.Coupling_, 1)[:, None]
+            transp = self.coupling_ / np.sum(self.coupling_, 1)[:, None]
 
             # set nans to 0
             transp[~ np.isfinite(transp)] = 0
@@ -1710,6 +1737,6 @@ class MappingTransport(BaseEstimator):
                 K = Xs
             if self.bias:
                 K = np.hstack((K, np.ones((Xs.shape[0], 1))))
-            transp_Xs = K.dot(self.Mapping_)
+            transp_Xs = K.dot(self.mapping_)
 
         return transp_Xs
