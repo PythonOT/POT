@@ -10,12 +10,14 @@ Domain adaptation with optimal transport
 # License: MIT License
 
 import numpy as np
+import warnings
+
 from .bregman import sinkhorn
 from .lp import emd
 from .utils import unif, dist, kernel
 from .optim import cg
 from .optim import gcg
-import warnings
+from .deprecation import deprecated
 
 
 def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
@@ -632,6 +634,9 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
         return G, L
 
 
+@deprecated("The class OTDA is deprecated in 0.3.1 and will be "
+            "removed in 0.5"
+            "\n\tfor standard transport use class EMDTransport instead.")
 class OTDA(object):
 
     """Class for domain adaptation with optimal transport as proposed in [5]
@@ -758,10 +763,15 @@ class OTDA(object):
             self.M = np.log(1 + np.log(1 + self.M))
 
 
+@deprecated("The class OTDA_sinkhorn is deprecated in 0.3.1 and will be"
+            " removed in 0.5 \nUse class SinkhornTransport instead.")
 class OTDA_sinkhorn(OTDA):
 
     """Class for domain adaptation with optimal transport with entropic
-    regularization"""
+    regularization
+
+
+    """
 
     def fit(self, xs, xt, reg=1, ws=None, wt=None, norm=None, **kwargs):
         """Fit regularized domain adaptation between samples is xs and xt
@@ -783,6 +793,8 @@ class OTDA_sinkhorn(OTDA):
         self.computed = True
 
 
+@deprecated("The class OTDA_lpl1 is deprecated in 0.3.1 and will be"
+            " removed in 0.5 \nUse class SinkhornLpl1Transport instead.")
 class OTDA_lpl1(OTDA):
 
     """Class for domain adaptation with optimal transport with entropic and
@@ -810,6 +822,8 @@ class OTDA_lpl1(OTDA):
         self.computed = True
 
 
+@deprecated("The class OTDA_l1L2 is deprecated in 0.3.1 and will be"
+            " removed in 0.5 \nUse class SinkhornL1l2Transport instead.")
 class OTDA_l1l2(OTDA):
 
     """Class for domain adaptation with optimal transport with entropic
@@ -837,6 +851,8 @@ class OTDA_l1l2(OTDA):
         self.computed = True
 
 
+@deprecated("The class OTDA_mapping_linear is deprecated in 0.3.1 and will be"
+            " removed in 0.5 \nUse class MappingTransport instead.")
 class OTDA_mapping_linear(OTDA):
 
     """Class for optimal transport with joint linear mapping estimation as in
@@ -882,6 +898,8 @@ class OTDA_mapping_linear(OTDA):
             return None
 
 
+@deprecated("The class OTDA_mapping_kernel is deprecated in 0.3.1 and will be"
+            " removed in 0.5 \nUse class MappingTransport instead.")
 class OTDA_mapping_kernel(OTDA_mapping_linear):
 
     """Class for optimal transport with joint nonlinear mapping
