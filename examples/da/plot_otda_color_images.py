@@ -13,7 +13,7 @@ SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
 """
 
 # Authors: Remi Flamary <remi.flamary@unice.fr>
-#          Stanilslas Chambon <stan.chambon@gmail.com>
+#          Stanislas Chambon <stan.chambon@gmail.com>
 #
 # License: MIT License
 

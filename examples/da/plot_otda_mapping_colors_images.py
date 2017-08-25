@@ -14,7 +14,7 @@ OT for domain adaptation with image color adaptation [6] with mapping estimation
 """
 
 # Authors: Remi Flamary <remi.flamary@unice.fr>
-#          Stanilslas Chambon <stan.chambon@gmail.com>
+#          Stanislas Chambon <stan.chambon@gmail.com>
 #
 # License: MIT License
 
@@ -82,14 +82,14 @@ ot_mapping_linear = ot.da.MappingTransport(
     mu=1e0, eta=1e-8, bias=True, max_iter=20, verbose=True)
 ot_mapping_linear.fit(Xs=Xs, Xt=Xt)
 
-X1tl = ot_mapping_linear.transform(X1)
+X1tl = ot_mapping_linear.transform(Xs=X1)
 Image_mapping_linear = minmax(mat2im(X1tl, I1.shape))
 
 ot_mapping_gaussian = ot.da.MappingTransport(
     mu=1e0, eta=1e-2, sigma=1, bias=False, max_iter=10, verbose=True)
 ot_mapping_gaussian.fit(Xs=Xs, Xt=Xt)
 
-X1tn = ot_mapping_gaussian.transform(X1)  # use the estimated mapping
+X1tn = ot_mapping_gaussian.transform(Xs=X1)  # use the estimated mapping
 Image_mapping_gaussian = minmax(mat2im(X1tn, I1.shape))
 
 ##############################################################################

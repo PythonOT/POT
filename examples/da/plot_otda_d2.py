@@ -14,7 +14,7 @@ of what the transport methods are doing.
 """
 
 # Authors: Remi Flamary <remi.flamary@unice.fr>
-#          Stanilslas Chambon <stan.chambon@gmail.com>
+#          Stanislas Chambon <stan.chambon@gmail.com>
 #
 # License: MIT License
 
