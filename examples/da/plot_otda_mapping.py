@@ -14,7 +14,7 @@ a linear or a kernelized mapping as introduced in [8]
 """
 
 # Authors: Remi Flamary <remi.flamary@unice.fr>
-#          Stanilslas Chambon <stan.chambon@gmail.com>
+#          Stanislas Chambon <stan.chambon@gmail.com>
 #
 # License: MIT License
 
