@@ -43,11 +43,8 @@ def minmax(I):
 ##############################################################################
 
 # Loading images
-# I1 = ndimage.imread('../../data/ocean_day.jpg').astype(np.float64) / 256
-# I2 = ndimage.imread('../../data/ocean_sunset.jpg').astype(np.float64) / 256
-
-I1 = ndimage.imread('data/ocean_day.jpg').astype(np.float64) / 256
-I2 = ndimage.imread('data/ocean_sunset.jpg').astype(np.float64) / 256
+I1 = ndimage.imread('../../data/ocean_day.jpg').astype(np.float64) / 256
+I2 = ndimage.imread('../../data/ocean_sunset.jpg').astype(np.float64) / 256
 
 
 X1 = im2mat(I1)
