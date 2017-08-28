@@ -976,36 +976,41 @@ class BaseTransport(BaseEstimator):
             Returns self.
         """
 
-        # pairwise distance
-        self.cost_ = dist(Xs, Xt, metric=self.metric)
+        if Xs is not None and Xt is not None:
+            # pairwise distance
+            self.cost_ = dist(Xs, Xt, metric=self.metric)
 
-        if (ys is not None) and (yt is not None):
+            if (ys is not None) and (yt is not None):
 
-            if self.limit_max != np.infty:
-                self.limit_max = self.limit_max * np.max(self.cost_)
+                if self.limit_max != np.infty:
+                    self.limit_max = self.limit_max * np.max(self.cost_)
 
-            # assumes labeled source samples occupy the first rows
-            # and labeled target samples occupy the first columns
-            classes = np.unique(ys)
-            for c in classes:
-                idx_s = np.where((ys != c) & (ys != -1))
-                idx_t = np.where(yt == c)
+                # assumes labeled source samples occupy the first rows
+                # and labeled target samples occupy the first columns
+                classes = np.unique(ys)
+                for c in classes:
+                    idx_s = np.where((ys != c) & (ys != -1))
+                    idx_t = np.where(yt == c)
 
-                # all the coefficients corresponding to a source sample
-                # and a target sample :
-                # with different labels get a infinite
-                for j in idx_t[0]:
-                    self.cost_[idx_s[0], j] = self.limit_max
+                    # all the coefficients corresponding to a source sample
+                    # and a target sample :
+                    # with different labels get a infinite
+                    for j in idx_t[0]:
+                        self.cost_[idx_s[0], j] = self.limit_max
 
-        # distribution estimation
-        self.mu_s = self.distribution_estimation(Xs)
-        self.mu_t = self.distribution_estimation(Xt)
+            # distribution estimation
+            self.mu_s = self.distribution_estimation(Xs)
+            self.mu_t = self.distribution_estimation(Xt)
 
-        # store arrays of samples
-        self.Xs = Xs
-        self.Xt = Xt
+            # store arrays of samples
+            self.Xs = Xs
+            self.Xt = Xt
 
-        return self
+            return self
+        else:
+            print("POT-Warning")
+            print("Please provide both Xs and Xt arguments when calling")
+            print("fit method")
 
     def fit_transform(self, Xs=None, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
@@ -1053,42 +1058,47 @@ class BaseTransport(BaseEstimator):
             The transport source samples.
         """
 
-        if np.array_equal(self.Xs, Xs):
-            # perform standard barycentric mapping
-            transp = self.coupling_ / np.sum(self.coupling_, 1)[:, None]
-
-            # set nans to 0
-            transp[~ np.isfinite(transp)] = 0
-
-            # compute transported samples
-            transp_Xs = np.dot(transp, self.Xt)
-        else:
-            # perform out of sample mapping
-            indices = np.arange(Xs.shape[0])
-            batch_ind = [
-                indices[i:i + batch_size]
-                for i in range(0, len(indices), batch_size)]
-
-            transp_Xs = []
-            for bi in batch_ind:
-
-                # get the nearest neighbor in the source domain
-                D0 = dist(Xs[bi], self.Xs)
-                idx = np.argmin(D0, axis=1)
-
-                # transport the source samples
+        if Xs is not None:
+            if np.array_equal(self.Xs, Xs):
+                # perform standard barycentric mapping
                 transp = self.coupling_ / np.sum(self.coupling_, 1)[:, None]
+
+                # set nans to 0
                 transp[~ np.isfinite(transp)] = 0
-                transp_Xs_ = np.dot(transp, self.Xt)
 
-                # define the transported points
-                transp_Xs_ = transp_Xs_[idx, :] + Xs[bi] - self.Xs[idx, :]
+                # compute transported samples
+                transp_Xs = np.dot(transp, self.Xt)
+            else:
+                # perform out of sample mapping
+                indices = np.arange(Xs.shape[0])
+                batch_ind = [
+                    indices[i:i + batch_size]
+                    for i in range(0, len(indices), batch_size)]
 
-                transp_Xs.append(transp_Xs_)
+                transp_Xs = []
+                for bi in batch_ind:
 
-            transp_Xs = np.concatenate(transp_Xs, axis=0)
+                    # get the nearest neighbor in the source domain
+                    D0 = dist(Xs[bi], self.Xs)
+                    idx = np.argmin(D0, axis=1)
 
-        return transp_Xs
+                    # transport the source samples
+                    transp = self.coupling_ / np.sum(
+                        self.coupling_, 1)[:, None]
+                    transp[~ np.isfinite(transp)] = 0
+                    transp_Xs_ = np.dot(transp, self.Xt)
+
+                    # define the transported points
+                    transp_Xs_ = transp_Xs_[idx, :] + Xs[bi] - self.Xs[idx, :]
+
+                    transp_Xs.append(transp_Xs_)
+
+                transp_Xs = np.concatenate(transp_Xs, axis=0)
+
+            return transp_Xs
+        else:
+            print("POT-Warning")
+            print("Please provide Xs argument when calling transform method")
 
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None,
                           batch_size=128):
@@ -1113,41 +1123,46 @@ class BaseTransport(BaseEstimator):
             The transported target samples.
         """
 
-        if np.array_equal(self.Xt, Xt):
-            # perform standard barycentric mapping
-            transp_ = self.coupling_.T / np.sum(self.coupling_, 0)[:, None]
-
-            # set nans to 0
-            transp_[~ np.isfinite(transp_)] = 0
-
-            # compute transported samples
-            transp_Xt = np.dot(transp_, self.Xs)
-        else:
-            # perform out of sample mapping
-            indices = np.arange(Xt.shape[0])
-            batch_ind = [
-                indices[i:i + batch_size]
-                for i in range(0, len(indices), batch_size)]
-
-            transp_Xt = []
-            for bi in batch_ind:
-
-                D0 = dist(Xt[bi], self.Xt)
-                idx = np.argmin(D0, axis=1)
-
-                # transport the target samples
+        if Xt is not None:
+            if np.array_equal(self.Xt, Xt):
+                # perform standard barycentric mapping
                 transp_ = self.coupling_.T / np.sum(self.coupling_, 0)[:, None]
+
+                # set nans to 0
                 transp_[~ np.isfinite(transp_)] = 0
-                transp_Xt_ = np.dot(transp_, self.Xs)
 
-                # define the transported points
-                transp_Xt_ = transp_Xt_[idx, :] + Xt[bi] - self.Xt[idx, :]
+                # compute transported samples
+                transp_Xt = np.dot(transp_, self.Xs)
+            else:
+                # perform out of sample mapping
+                indices = np.arange(Xt.shape[0])
+                batch_ind = [
+                    indices[i:i + batch_size]
+                    for i in range(0, len(indices), batch_size)]
 
-                transp_Xt.append(transp_Xt_)
+                transp_Xt = []
+                for bi in batch_ind:
 
-            transp_Xt = np.concatenate(transp_Xt, axis=0)
+                    D0 = dist(Xt[bi], self.Xt)
+                    idx = np.argmin(D0, axis=1)
 
-        return transp_Xt
+                    # transport the target samples
+                    transp_ = self.coupling_.T / np.sum(
+                        self.coupling_, 0)[:, None]
+                    transp_[~ np.isfinite(transp_)] = 0
+                    transp_Xt_ = np.dot(transp_, self.Xs)
+
+                    # define the transported points
+                    transp_Xt_ = transp_Xt_[idx, :] + Xt[bi] - self.Xt[idx, :]
+
+                    transp_Xt.append(transp_Xt_)
+
+                transp_Xt = np.concatenate(transp_Xt, axis=0)
+
+            return transp_Xt
+        else:
+            print("POT-Warning")
+            print("Please provide Xt argument when calling inverse_transform")
 
 
 class SinkhornTransport(BaseTransport):
@@ -1413,15 +1428,20 @@ class SinkhornLpl1Transport(BaseTransport):
             Returns self.
         """
 
-        super(SinkhornLpl1Transport, self).fit(Xs, ys, Xt, yt)
+        if Xs is not None and Xt is not None and ys is not None:
 
-        self.coupling_ = sinkhorn_lpl1_mm(
-            a=self.mu_s, labels_a=ys, b=self.mu_t, M=self.cost_,
-            reg=self.reg_e, eta=self.reg_cl, numItermax=self.max_iter,
-            numInnerItermax=self.max_inner_iter, stopInnerThr=self.tol,
-            verbose=self.verbose)
+            super(SinkhornLpl1Transport, self).fit(Xs, ys, Xt, yt)
 
-        return self
+            self.coupling_ = sinkhorn_lpl1_mm(
+                a=self.mu_s, labels_a=ys, b=self.mu_t, M=self.cost_,
+                reg=self.reg_e, eta=self.reg_cl, numItermax=self.max_iter,
+                numInnerItermax=self.max_inner_iter, stopInnerThr=self.tol,
+                verbose=self.verbose)
+
+            return self
+        else:
+            print("POT-Warning")
+            print("Please provide both Xs, Xt, ys arguments to fit method")
 
 
 class SinkhornL1l2Transport(BaseTransport):
@@ -1517,22 +1537,27 @@ class SinkhornL1l2Transport(BaseTransport):
             Returns self.
         """
 
-        super(SinkhornL1l2Transport, self).fit(Xs, ys, Xt, yt)
+        if Xs is not None and Xt is not None and ys is not None:
 
-        returned_ = sinkhorn_l1l2_gl(
-            a=self.mu_s, labels_a=ys, b=self.mu_t, M=self.cost_,
-            reg=self.reg_e, eta=self.reg_cl, numItermax=self.max_iter,
-            numInnerItermax=self.max_inner_iter, stopInnerThr=self.tol,
-            verbose=self.verbose, log=self.log)
+            super(SinkhornL1l2Transport, self).fit(Xs, ys, Xt, yt)
 
-        # deal with the value of log
-        if self.log:
-            self.coupling_, self.log_ = returned_
+            returned_ = sinkhorn_l1l2_gl(
+                a=self.mu_s, labels_a=ys, b=self.mu_t, M=self.cost_,
+                reg=self.reg_e, eta=self.reg_cl, numItermax=self.max_iter,
+                numInnerItermax=self.max_inner_iter, stopInnerThr=self.tol,
+                verbose=self.verbose, log=self.log)
+
+            # deal with the value of log
+            if self.log:
+                self.coupling_, self.log_ = returned_
+            else:
+                self.coupling_ = returned_
+                self.log_ = dict()
+
+            return self
         else:
-            self.coupling_ = returned_
-            self.log_ = dict()
-
-        return self
+            print("POT-Warning")
+            print("Please, provide both Xs, Xt and ys argument to fit method")
 
 
 class MappingTransport(BaseEstimator):
