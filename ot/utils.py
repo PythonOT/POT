@@ -168,6 +168,27 @@ def parmap(f, X, nprocs=multiprocessing.cpu_count()):
     return [x for i, x in sorted(res)]
 
 
+def check_params(**kwargs):
+    """check_params: check whether some parameters are missing
+    """
+
+    missing_params = []
+    check = True
+
+    for param in kwargs:
+        if kwargs[param] is None:
+            missing_params.append(param)
+
+    if len(missing_params) > 0:
+        print("POT - Warning: following necessary parameters are missing")
+        for p in missing_params:
+            print("\n", p)
+
+        check = False
+
+    return check
+
+
 class deprecated(object):
     """Decorator to mark a function or class as deprecated.
 
