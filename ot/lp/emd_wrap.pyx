@@ -75,7 +75,7 @@ def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mod
     cdef int resultSolver = EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data,<double*> &cost, numItermax)
     if resultSolver != OPTIMAL:
         if resultSolver == INFEASIBLE:
-            print("Problem infeasible. Try to inscrease numItermax.")
+            print("Problem infeasible. Try to increase numItermax.")
         elif resultSolver == UNBOUNDED:
             print("Problem unbounded")
 
