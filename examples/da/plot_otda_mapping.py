@@ -23,7 +23,7 @@ import matplotlib.pylab as pl
 import ot
 
 
-np.random.seed(0)
+np.random.seed(42)
 
 ##############################################################################
 # generate
@@ -31,10 +31,11 @@ np.random.seed(0)
 
 n = 100  # nb samples in source and target datasets
 theta = 2 * np.pi / 20
-nz = 0.1
-Xs, ys = ot.datasets.get_data_classif('gaussrot', n, nz=nz)
-Xs_new, _ = ot.datasets.get_data_classif('gaussrot', n, nz=nz)
-Xt, yt = ot.datasets.get_data_classif('gaussrot', n, theta=theta, nz=nz)
+noise_level = 0.1
+Xs, ys = ot.datasets.get_data_classif('gaussrot', n, nz=noise_level)
+Xs_new, _ = ot.datasets.get_data_classif('gaussrot', n, nz=noise_level)
+Xt, yt = ot.datasets.get_data_classif(
+    'gaussrot', n, theta=theta, nz=noise_level)
 
 # one of the target mode changes its variance (no linear mapping)
 Xt[yt == 2] *= 3
@@ -46,8 +47,7 @@ ot_mapping_linear = ot.da.MappingTransport(
     kernel="linear", mu=1e0, eta=1e-8, bias=True,
     max_iter=20, verbose=True)
 
-ot_mapping_linear.fit(
-    Xs=Xs, Xt=Xt)
+ot_mapping_linear.fit(Xs=Xs, Xt=Xt)
 
 # for original source samples, transform applies barycentric mapping
 transp_Xs_linear = ot_mapping_linear.transform(Xs=Xs)

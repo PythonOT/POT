@@ -20,8 +20,9 @@ SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
 import numpy as np
 from scipy import ndimage
 import matplotlib.pylab as pl
-
 import ot
+
+np.random.seed(42)
 
 
 def im2mat(I):

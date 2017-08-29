@@ -15,8 +15,10 @@ approaches currently supported in POT.
 # License: MIT License
 
 import matplotlib.pylab as pl
+import numpy as np
 import ot
 
+np.random.seed(42)
 
 # number of source and target points to generate
 ns = 150
