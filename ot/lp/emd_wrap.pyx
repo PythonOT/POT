@@ -15,13 +15,14 @@ cimport cython
 
 
 cdef extern from "EMD.h":
-    void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *cost)
+    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *cost, int numItermax)
+    cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED
 
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M):
+def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M, int numItermax):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
         
@@ -48,6 +49,8 @@ def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mod
         target histogram
     M : (ns,nt) ndarray, float64
         loss matrix        
+    numItermax : int
+                 Maximum number of iterations made by the LP solver.
   
     
     Returns
@@ -69,13 +72,18 @@ def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mod
         b=np.ones((n2,))/n2
 
     # calling the function
-    EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data,<double*> &cost)
+    cdef int resultSolver = EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data,<double*> &cost, numItermax)
+    if resultSolver != OPTIMAL:
+        if resultSolver == INFEASIBLE:
+            print("Problem infeasible. Try to inscrease numItermax.")
+        elif resultSolver == UNBOUNDED:
+            print("Problem unbounded")
 
     return G
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd2_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M):
+def emd2_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M, int numItermax):
     """
         Solves the Earth Movers distance problem and returns the optimal transport loss
         
@@ -102,6 +110,8 @@ def emd2_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mo
         target histogram
     M : (ns,nt) ndarray, float64
         loss matrix        
+    numItermax : int
+                 Maximum number of iterations made by the LP solver.
   
     
     Returns
@@ -123,7 +133,12 @@ def emd2_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mo
         b=np.ones((n2,))/n2
 
     # calling the function
-    EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data,<double*> &cost)
+    cdef int resultSolver = EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data,<double*> &cost, numItermax)
+    if resultSolver != OPTIMAL:
+        if resultSolver == INFEASIBLE:
+            print("Problem infeasible. Try to inscrease numItermax.")
+        elif resultSolver == UNBOUNDED:
+            print("Problem unbounded")
     
     cost=0
     for i in range(n1):
