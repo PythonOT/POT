@@ -88,7 +88,7 @@ def emd(a, b, M, numItermax=10000):
 
     return emd_c(a, b, M, numItermax)
 
-def emd2(a, b, M, numItermax=10000, processes=multiprocessing.cpu_count()):
+def emd2(a, b, M, processes=multiprocessing.cpu_count(), numItermax=10000):
     """Solves the Earth Movers distance problem and returns the loss 
 
     .. math::
