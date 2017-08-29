@@ -15,7 +15,7 @@ import multiprocessing
 
 
 
-def emd(a, b, M):
+def emd(a, b, M, numItermax=10000):
     """Solves the Earth Movers distance problem and returns the OT matrix
 
 
@@ -40,6 +40,8 @@ def emd(a, b, M):
         Target histogram (uniform weigth if empty list)
     M : (ns,nt) ndarray, float64
         loss matrix
+    numItermax : int
+                 Maximum number of iterations made by the LP solver.
 
     Returns
     -------
@@ -84,9 +86,9 @@ def emd(a, b, M):
     if len(b) == 0:
         b = np.ones((M.shape[1], ), dtype=np.float64)/M.shape[1]
 
-    return emd_c(a, b, M)
+    return emd_c(a, b, M, numItermax)
 
-def emd2(a, b, M,processes=multiprocessing.cpu_count()):
+def emd2(a, b, M, numItermax=10000, processes=multiprocessing.cpu_count()):
     """Solves the Earth Movers distance problem and returns the loss 
 
     .. math::
@@ -110,6 +112,8 @@ def emd2(a, b, M,processes=multiprocessing.cpu_count()):
         Target histogram (uniform weigth if empty list)
     M : (ns,nt) ndarray, float64
         loss matrix
+    numItermax : int
+                 Maximum number of iterations made by the LP solver.
 
     Returns
     -------
@@ -155,12 +159,12 @@ def emd2(a, b, M,processes=multiprocessing.cpu_count()):
         b = np.ones((M.shape[1], ), dtype=np.float64)/M.shape[1]
         
     if len(b.shape)==1:
-        return emd2_c(a, b, M)
+        return emd2_c(a, b, M, numItermax)
     else:
         nb=b.shape[1]
-        #res=[emd2_c(a,b[:,i].copy(),M) for i in range(nb)]
+        #res=[emd2_c(a,b[:,i].copy(),M, numItermax) for i in range(nb)]
         def f(b):
-            return emd2_c(a,b,M)
+            return emd2_c(a,b,M, numItermax)
         res= parmap(f, [b[:,i] for i in range(nb)],processes)
         return np.array(res)
         

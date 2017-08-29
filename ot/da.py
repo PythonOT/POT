@@ -658,7 +658,7 @@ class OTDA(object):
         self.metric = metric
         self.computed = False
 
-    def fit(self, xs, xt, ws=None, wt=None, norm=None):
+    def fit(self, xs, xt, ws=None, wt=None, norm=None, numItermax=10000):
         """Fit domain adaptation between samples is xs and xt
         (with optional weights)"""
         self.xs = xs
@@ -674,7 +674,7 @@ class OTDA(object):
 
         self.M = dist(xs, xt, metric=self.metric)
         self.normalizeM(norm)
-        self.G = emd(ws, wt, self.M)
+        self.G = emd(ws, wt, self.M, numItermax)
         self.computed = True
 
     def interp(self, direction=1):

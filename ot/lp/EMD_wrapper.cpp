@@ -15,11 +15,10 @@
 #include "EMD.h"
 
 
-void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *cost)  {
+int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *cost, int numItermax)  {
 // beware M and C anre strored in row major C style!!!
   int n, m, i,cur;
   double  max;
-  int max_iter=10000;
 
     typedef FullBipartiteDigraph Digraph;
   DIGRAPH_TYPEDEFS(FullBipartiteDigraph);
@@ -46,7 +45,7 @@ void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *
     std::vector<int> indI(n), indJ(m);
     std::vector<double> weights1(n), weights2(m);
     Digraph di(n, m);
-    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, true, n+m, n*m,max_iter);
+    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, true, n+m, n*m, numItermax);
 
     // Set supply and demand, don't account for 0 values (faster)
 
@@ -116,5 +115,5 @@ void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *
     };
 
 
-
+    return ret;
 }
