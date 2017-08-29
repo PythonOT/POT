@@ -23,7 +23,7 @@ from scipy import ndimage
 import matplotlib.pylab as pl
 import ot
 
-np.random.seed(42)
+r = np.random.RandomState(42)
 
 
 def im2mat(I):
@@ -54,8 +54,8 @@ X2 = im2mat(I2)
 
 # training samples
 nb = 1000
-idx1 = np.random.randint(X1.shape[0], size=(nb,))
-idx2 = np.random.randint(X2.shape[0], size=(nb,))
+idx1 = r.randint(X1.shape[0], size=(nb,))
+idx2 = r.randint(X2.shape[0], size=(nb,))
 
 Xs = X1[idx1, :]
 Xt = X2[idx2, :]
@@ -91,6 +91,7 @@ ot_mapping_gaussian.fit(Xs=Xs, Xt=Xt)
 X1tn = ot_mapping_gaussian.transform(Xs=X1)  # use the estimated mapping
 Image_mapping_gaussian = minmax(mat2im(X1tn, I1.shape))
 
+
 ##############################################################################
 # plot original images
 ##############################################################################
@@ -106,6 +107,7 @@ pl.imshow(I2)
 pl.axis('off')
 pl.title('Image 2')
 pl.tight_layout()
+
 
 ##############################################################################
 # plot pixel values distribution
@@ -127,6 +129,7 @@ pl.xlabel('Red')
 pl.ylabel('Blue')
 pl.title('Image 2')
 pl.tight_layout()
+
 
 ##############################################################################
 # plot transformed images

@@ -19,10 +19,12 @@ of what the transport methods are doing.
 # License: MIT License
 
 import matplotlib.pylab as pl
-import numpy as np
 import ot
 
-np.random.seed(42)
+
+##############################################################################
+# generate data
+##############################################################################
 
 n_samples_source = 150
 n_samples_target = 150
@@ -33,7 +35,10 @@ Xt, yt = ot.datasets.get_data_classif('3gauss2', n_samples_target)
 # Cost matrix
 M = ot.dist(Xs, Xt, metric='sqeuclidean')
 
+
+##############################################################################
 # Instantiate the different transport algorithms and fit them
+##############################################################################
 
 # EMD Transport
 ot_emd = ot.da.EMDTransport()
@@ -51,6 +56,7 @@ ot_lpl1.fit(Xs=Xs, ys=ys, Xt=Xt)
 transp_Xs_emd = ot_emd.transform(Xs=Xs)
 transp_Xs_sinkhorn = ot_sinkhorn.transform(Xs=Xs)
 transp_Xs_lpl1 = ot_lpl1.transform(Xs=Xs)
+
 
 ##############################################################################
 # Fig 1 : plots source and target samples + matrix of pairwise distance
@@ -77,6 +83,7 @@ pl.xticks([])
 pl.yticks([])
 pl.title('Matrix of pairwise distances')
 pl.tight_layout()
+
 
 ##############################################################################
 # Fig 2 : plots optimal couplings for the different methods
@@ -126,6 +133,7 @@ pl.xticks([])
 pl.yticks([])
 pl.title('Main coupling coefficients\nSinkhornLpl1Transport')
 pl.tight_layout()
+
 
 ##############################################################################
 # Fig 3 : plot transported samples

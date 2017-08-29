@@ -15,19 +15,23 @@ approaches currently supported in POT.
 # License: MIT License
 
 import matplotlib.pylab as pl
-import numpy as np
 import ot
 
-np.random.seed(42)
 
-# number of source and target points to generate
-ns = 150
-nt = 150
+##############################################################################
+# generate data
+##############################################################################
 
-Xs, ys = ot.datasets.get_data_classif('3gauss', ns)
-Xt, yt = ot.datasets.get_data_classif('3gauss2', nt)
+n_source_samples = 150
+n_target_samples = 150
 
+Xs, ys = ot.datasets.get_data_classif('3gauss', n_source_samples)
+Xt, yt = ot.datasets.get_data_classif('3gauss2', n_target_samples)
+
+
+##############################################################################
 # Instantiate the different transport algorithms and fit them
+##############################################################################
 
 # EMD Transport
 ot_emd = ot.da.EMDTransport()
@@ -52,6 +56,7 @@ transp_Xs_sinkhorn = ot_sinkhorn.transform(Xs=Xs)
 transp_Xs_lpl1 = ot_lpl1.transform(Xs=Xs)
 transp_Xs_l1l2 = ot_l1l2.transform(Xs=Xs)
 
+
 ##############################################################################
 # Fig 1 : plots source and target samples
 ##############################################################################
@@ -71,6 +76,7 @@ pl.yticks([])
 pl.legend(loc=0)
 pl.title('Target samples')
 pl.tight_layout()
+
 
 ##############################################################################
 # Fig 2 : plot optimal couplings and transported samples
