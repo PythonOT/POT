@@ -22,7 +22,8 @@ from scipy import ndimage
 import matplotlib.pylab as pl
 import ot
 
-np.random.seed(42)
+
+r = np.random.RandomState(42)
 
 
 def im2mat(I):
@@ -39,6 +40,10 @@ def minmax(I):
     return np.clip(I, 0, 1)
 
 
+##############################################################################
+# generate data
+##############################################################################
+
 # Loading images
 I1 = ndimage.imread('../../data/ocean_day.jpg').astype(np.float64) / 256
 I2 = ndimage.imread('../../data/ocean_sunset.jpg').astype(np.float64) / 256
@@ -48,11 +53,16 @@ X2 = im2mat(I2)
 
 # training samples
 nb = 1000
-idx1 = np.random.randint(X1.shape[0], size=(nb,))
-idx2 = np.random.randint(X2.shape[0], size=(nb,))
+idx1 = r.randint(X1.shape[0], size=(nb,))
+idx2 = r.randint(X2.shape[0], size=(nb,))
 
 Xs = X1[idx1, :]
 Xt = X2[idx2, :]
+
+
+##############################################################################
+# Instantiate the different transport algorithms and fit them
+##############################################################################
 
 # EMDTransport
 ot_emd = ot.da.EMDTransport()
@@ -75,6 +85,7 @@ I2t = minmax(mat2im(transp_Xt_emd, I2.shape))
 I1te = minmax(mat2im(transp_Xs_sinkhorn, I1.shape))
 I2te = minmax(mat2im(transp_Xt_sinkhorn, I2.shape))
 
+
 ##############################################################################
 # plot original image
 ##############################################################################
@@ -90,6 +101,7 @@ pl.subplot(1, 2, 2)
 pl.imshow(I2)
 pl.axis('off')
 pl.title('Image 2')
+
 
 ##############################################################################
 # scatter plot of colors
@@ -111,6 +123,7 @@ pl.xlabel('Red')
 pl.ylabel('Blue')
 pl.title('Image 2')
 pl.tight_layout()
+
 
 ##############################################################################
 # plot new images
