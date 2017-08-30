@@ -10,3 +10,6 @@ make html
 # put comment again 
 sed -i "s/'sphinx\_gallery/#'sphinx\_gallery/" source/conf.py
 sed -i "s/#sys.modules.update/sys.modules.update/" source/conf.py
+
+
+
