@@ -3,7 +3,7 @@ POT Examples
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="@author: rflamary ">
+    <div class="sphx-glr-thumbcontainer" tooltip="">
 
 .. only:: html
 
@@ -20,26 +20,6 @@ POT Examples
    :hidden:
 
    /auto_examples/plot_OT_1D
-
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="@author: rflamary ">
-
-.. only:: html
-
-    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_WDA_thumb.png
-
-        :ref:`sphx_glr_auto_examples_plot_WDA.py`
-
-.. raw:: html
-
-    </div>
-
-
-.. toctree::
-   :hidden:
-
-   /auto_examples/plot_WDA
 
 .. raw:: html
 
@@ -63,7 +43,7 @@ POT Examples
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="@author: rflamary ">
+    <div class="sphx-glr-thumbcontainer" tooltip="">
 
 .. only:: html
 
@@ -83,7 +63,7 @@ POT Examples
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="@author: rflamary ">
+    <div class="sphx-glr-thumbcontainer" tooltip="">
 
 .. only:: html
 
@@ -103,33 +83,13 @@ POT Examples
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="[6] Ferradans, S., Papadakis, N., Peyre, G., & Aujol, J. F. (2014). Regularized discrete optima...">
-
-.. only:: html
-
-    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_OTDA_color_images_thumb.png
-
-        :ref:`sphx_glr_auto_examples_plot_OTDA_color_images.py`
-
-.. raw:: html
-
-    </div>
-
-
-.. toctree::
-   :hidden:
-
-   /auto_examples/plot_OTDA_color_images
-
-.. raw:: html
-
     <div class="sphx-glr-thumbcontainer" tooltip="">
 
 .. only:: html
 
-    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_OTDA_classes_thumb.png
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_WDA_thumb.png
 
-        :ref:`sphx_glr_auto_examples_plot_OTDA_classes.py`
+        :ref:`sphx_glr_auto_examples_plot_WDA.py`
 
 .. raw:: html
 
@@ -139,51 +99,31 @@ POT Examples
 .. toctree::
    :hidden:
 
-   /auto_examples/plot_OTDA_classes
+   /auto_examples/plot_WDA
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example presents a way of transferring colors between two image with Optimal Transport as ...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_otda_color_images_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_otda_color_images.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_otda_color_images
 
 .. raw:: html
 
     <div class="sphx-glr-thumbcontainer" tooltip="">
-
-.. only:: html
-
-    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_OTDA_2D_thumb.png
-
-        :ref:`sphx_glr_auto_examples_plot_OTDA_2D.py`
-
-.. raw:: html
-
-    </div>
-
-
-.. toctree::
-   :hidden:
-
-   /auto_examples/plot_OTDA_2D
-
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="Stole the figure idea from Fig. 1 and 2 in  https://arxiv.org/pdf/1706.07650.pdf">
-
-.. only:: html
-
-    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_OT_L1_vs_L2_thumb.png
-
-        :ref:`sphx_glr_auto_examples_plot_OT_L1_vs_L2.py`
-
-.. raw:: html
-
-    </div>
-
-
-.. toctree::
-   :hidden:
-
-   /auto_examples/plot_OT_L1_vs_L2
-
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip=" @author: rflamary ">
 
 .. only:: html
 
@@ -203,13 +143,33 @@ POT Examples
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="Stole the figure idea from Fig. 1 and 2 in https://arxiv.org/pdf/1706.07650.pdf">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_OT_L1_vs_L2_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_OT_L1_vs_L2.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_OT_L1_vs_L2
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="[6] Ferradans, S., Papadakis, N., Peyre, G., & Aujol, J. F. (2014). Regularized     discrete op...">
 
 .. only:: html
 
-    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_OTDA_mapping_color_images_thumb.png
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_otda_mapping_colors_images_thumb.png
 
-        :ref:`sphx_glr_auto_examples_plot_OTDA_mapping_color_images.py`
+        :ref:`sphx_glr_auto_examples_plot_otda_mapping_colors_images.py`
 
 .. raw:: html
 
@@ -219,17 +179,17 @@ POT Examples
 .. toctree::
    :hidden:
 
-   /auto_examples/plot_OTDA_mapping_color_images
+   /auto_examples/plot_otda_mapping_colors_images
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="[8] M. Perrot, N. Courty, R. Flamary, A. Habrard, "Mapping estimation for     discrete optimal ...">
+    <div class="sphx-glr-thumbcontainer" tooltip="This example presents how to use MappingTransport to estimate at the same time both the couplin...">
 
 .. only:: html
 
-    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_OTDA_mapping_thumb.png
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_otda_mapping_thumb.png
 
-        :ref:`sphx_glr_auto_examples_plot_OTDA_mapping.py`
+        :ref:`sphx_glr_auto_examples_plot_otda_mapping.py`
 
 .. raw:: html
 
@@ -239,7 +199,47 @@ POT Examples
 .. toctree::
    :hidden:
 
-   /auto_examples/plot_OTDA_mapping
+   /auto_examples/plot_otda_mapping
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example introduces a domain adaptation in a 2D setting and the 4 OTDA approaches currently...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_otda_classes_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_otda_classes.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_otda_classes
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example introduces a domain adaptation in a 2D setting. It explicits the problem of domain...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_otda_d2_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_otda_d2.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_otda_d2
 .. raw:: html
 
     <div style='clear:both'></div>

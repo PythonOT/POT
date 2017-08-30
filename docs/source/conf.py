@@ -261,7 +261,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'POT.tex', u'POT Python Optimal Transport library',
-     u'Rémi Flamary, Nicolas Courty', 'manual'),
+     author, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -305,7 +305,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'POT', u'POT Python Optimal Transport library Documentation',
-     author, 'POT', 'One line description of project.',
+     author, 'POT', 'Python Optimal Transport librar.',
      'Miscellaneous'),
 ]
 
@@ -326,7 +326,7 @@ texinfo_documents = [
 intersphinx_mapping = {'https://docs.python.org/': None}
 
 sphinx_gallery_conf = {
-    'examples_dirs': '../../examples',
+    'examples_dirs': ['../../examples','../../examples/da'],
     'gallery_dirs': 'auto_examples',
     'mod_example_dir': '../modules/generated/',
     'reference_url': {

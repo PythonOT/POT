@@ -187,6 +187,9 @@ The contributors to this library are:
 -  `Michael Perrot <http://perso.univ-st-etienne.fr/pem82055/>`__
    (Mapping estimation)
 -  `Léo Gautheron <https://github.com/aje>`__ (GPU implementation)
+-  `Nathalie
+   Gayraud <https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1>`__
+-  `Stanislas Chambon <https://slasnista.github.io/>`__
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
