@@ -14,7 +14,7 @@ from ..utils import parmap
 import multiprocessing
 
 
-def emd(a, b, M, max_iter=100000):
+def emd(a, b, M, numItermax=100000):
     """Solves the Earth Movers distance problem and returns the OT matrix
 
 
@@ -39,7 +39,7 @@ def emd(a, b, M, max_iter=100000):
         Target histogram (uniform weigth if empty list)
     M : (ns,nt) ndarray, float64
         loss matrix
-    max_iter : int, optional (default=100000)
+    numItermax : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
 
@@ -86,10 +86,10 @@ def emd(a, b, M, max_iter=100000):
     if len(b) == 0:
         b = np.ones((M.shape[1], ), dtype=np.float64)/M.shape[1]
 
-    return emd_c(a, b, M, max_iter)
+    return emd_c(a, b, M, numItermax)
 
 
-def emd2(a, b, M, processes=multiprocessing.cpu_count(), max_iter=100000):
+def emd2(a, b, M, processes=multiprocessing.cpu_count(), numItermax=100000):
     """Solves the Earth Movers distance problem and returns the loss
 
     .. math::
@@ -113,7 +113,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(), max_iter=100000):
         Target histogram (uniform weigth if empty list)
     M : (ns,nt) ndarray, float64
         loss matrix
-    max_iter : int, optional (default=100000)
+    numItermax : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
 
@@ -161,12 +161,12 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(), max_iter=100000):
         b = np.ones((M.shape[1], ), dtype=np.float64)/M.shape[1]
 
     if len(b.shape) == 1:
-        return emd2_c(a, b, M, max_iter)
+        return emd2_c(a, b, M, numItermax)
     else:
         nb = b.shape[1]
-        # res = [emd2_c(a, b[:, i].copy(), M, max_iter) for i in range(nb)]
+        # res = [emd2_c(a, b[:, i].copy(), M, numItermax) for i in range(nb)]
 
         def f(b):
-            return emd2_c(a, b, M, max_iter)
+            return emd2_c(a, b, M, numItermax)
         res = parmap(f, [b[:, i] for i in range(nb)], processes)
         return np.array(res)
