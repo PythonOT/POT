@@ -4,6 +4,7 @@
 # remove comment 
 sed -i "s/#'sphinx\_gallery/'sphinx\_gallery/" source/conf.py
 
+make html
 
 # put comment again 
 sed -i "s/'sphinx\_gallery/#'sphinx\_gallery/" source/conf.py
