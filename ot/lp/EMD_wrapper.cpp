@@ -15,7 +15,7 @@
 #include "EMD.h"
 
 
-int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *cost, int numItermax)  {
+int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *cost, int max_iter)  {
 // beware M and C anre strored in row major C style!!!
   int n, m, i,cur;
   double  max;
@@ -45,7 +45,7 @@ int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double *c
     std::vector<int> indI(n), indJ(m);
     std::vector<double> weights1(n), weights2(m);
     Digraph di(n, m);
-    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, true, n+m, n*m, numItermax);
+    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, true, n+m, n*m, max_iter);
 
     // Set supply and demand, don't account for 0 values (faster)
 
