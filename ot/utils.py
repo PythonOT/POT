@@ -134,6 +134,39 @@ def dist0(n, method='lin_square'):
     return res
 
 
+def cost_normalization(C, norm=None):
+    """ Apply normalization to the loss matrix
+
+
+    Parameters
+    ----------
+    C : np.array (n1, n2)
+        The cost matrix to normalize.
+    norm : str
+        type of normalization from 'median','max','log','loglog'. Any other
+        value do not normalize.
+
+
+    Returns
+    -------
+
+    C : np.array (n1, n2)
+        The input cost matrix normalized according to given norm.
+
+    """
+
+    if norm == "median":
+        C /= float(np.median(C))
+    elif norm == "max":
+        C /= float(np.max(C))
+    elif norm == "log":
+        C = np.log(1 + C)
+    elif norm == "loglog":
+        C = np.log(1 + np.log(1 + C))
+
+    return C
+
+
 def dots(*args):
     """ dots function for multiple matrix multiply """
     return reduce(np.dot, args)
