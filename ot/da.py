@@ -1387,7 +1387,7 @@ class EMDTransport(BaseTransport):
 
         # coupling estimation
         self.coupling_ = emd(
-            a=self.mu_s, b=self.mu_t, M=self.cost_, max_iter=self.max_iter
+            a=self.mu_s, b=self.mu_t, M=self.cost_, numItermax=self.max_iter
         )
 
         return self
