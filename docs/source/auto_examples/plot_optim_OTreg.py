@@ -12,6 +12,10 @@ import matplotlib.pylab as pl
 import ot
 
 
+##############################################################################
+# Generate data 
+##############################################################################
+
 #%% parameters
 
 n = 100  # nb bins
@@ -27,12 +31,20 @@ b = ot.datasets.get_1D_gauss(n, m=60, s=10)
 M = ot.dist(x.reshape((n, 1)), x.reshape((n, 1)))
 M /= M.max()
 
+##############################################################################
+# Solve EMD 
+##############################################################################
+
 #%% EMD
 
 G0 = ot.emd(a, b, M)
 
 pl.figure(3, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, G0, 'OT matrix G0')
+
+##############################################################################
+# Solve EMD with Frobenius norm regularization
+##############################################################################
 
 #%% Example with Frobenius norm regularization
 
@@ -52,6 +64,10 @@ Gl2 = ot.optim.cg(a, b, M, reg, f, df, verbose=True)
 pl.figure(3)
 ot.plot.plot1D_mat(a, b, Gl2, 'OT matrix Frob. reg')
 
+##############################################################################
+# Solve EMD with entropic regularization
+##############################################################################
+
 #%% Example with entropic regularization
 
 
@@ -70,8 +86,11 @@ Ge = ot.optim.cg(a, b, M, reg, f, df, verbose=True)
 pl.figure(4, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, Ge, 'OT matrix Entrop. reg')
 
-#%% Example with Frobenius norm + entropic regularization with gcg
+##############################################################################
+# Solve EMD with Frobenius norm + entropic regularization
+##############################################################################
 
+#%% Example with Frobenius norm + entropic regularization with gcg
 
 def f(G):
     return 0.5 * np.sum(G**2)

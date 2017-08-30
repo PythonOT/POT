@@ -11,24 +11,104 @@ Regularized OT with generic solver
 
 
 
+.. code-block:: python
 
-.. rst-class:: sphx-glr-horizontal
+
+    import numpy as np
+    import matplotlib.pylab as pl
+    import ot
 
 
-    *
 
-      .. image:: /auto_examples/images/sphx_glr_plot_optim_OTreg_003.png
-            :scale: 47
 
-    *
 
-      .. image:: /auto_examples/images/sphx_glr_plot_optim_OTreg_004.png
-            :scale: 47
 
-    *
 
-      .. image:: /auto_examples/images/sphx_glr_plot_optim_OTreg_005.png
-            :scale: 47
+
+Generate data 
+#############################################################################
+
+
+
+.. code-block:: python
+
+
+    #%% parameters
+
+    n = 100  # nb bins
+
+    # bin positions
+    x = np.arange(n, dtype=np.float64)
+
+    # Gaussian distributions
+    a = ot.datasets.get_1D_gauss(n, m=20, s=5)  # m= mean, s= std
+    b = ot.datasets.get_1D_gauss(n, m=60, s=10)
+
+    # loss matrix
+    M = ot.dist(x.reshape((n, 1)), x.reshape((n, 1)))
+    M /= M.max()
+
+
+
+
+
+
+
+Solve EMD 
+#############################################################################
+
+
+
+.. code-block:: python
+
+
+    #%% EMD
+
+    G0 = ot.emd(a, b, M)
+
+    pl.figure(3, figsize=(5, 5))
+    ot.plot.plot1D_mat(a, b, G0, 'OT matrix G0')
+
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_optim_OTreg_003.png
+    :align: center
+
+
+
+
+Solve EMD with Frobenius norm regularization
+#############################################################################
+
+
+
+.. code-block:: python
+
+
+    #%% Example with Frobenius norm regularization
+
+
+    def f(G):
+        return 0.5 * np.sum(G**2)
+
+
+    def df(G):
+        return G
+
+
+    reg = 1e-1
+
+    Gl2 = ot.optim.cg(a, b, M, reg, f, df, verbose=True)
+
+    pl.figure(3)
+    ot.plot.plot1D_mat(a, b, Gl2, 'OT matrix Frob. reg')
+
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_optim_OTreg_004.png
+    :align: center
 
 
 .. rst-class:: sphx-glr-script-out
@@ -258,6 +338,45 @@ Regularized OT with generic solver
     It.  |Loss        |Delta loss
     --------------------------------
       200|1.663543e-01|-8.737134e-08
+
+
+Solve EMD with entropic regularization
+#############################################################################
+
+
+
+.. code-block:: python
+
+
+    #%% Example with entropic regularization
+
+
+    def f(G):
+        return np.sum(G * np.log(G))
+
+
+    def df(G):
+        return np.log(G) + 1.
+
+
+    reg = 1e-3
+
+    Ge = ot.optim.cg(a, b, M, reg, f, df, verbose=True)
+
+    pl.figure(4, figsize=(5, 5))
+    ot.plot.plot1D_mat(a, b, Ge, 'OT matrix Entrop. reg')
+
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_optim_OTreg_006.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
     It.  |Loss        |Delta loss
     --------------------------------
         0|1.692289e-01|0.000000e+00
@@ -481,88 +600,17 @@ Regularized OT with generic solver
     It.  |Loss        |Delta loss
     --------------------------------
       200|1.607143e-01|-2.151971e-10
-    It.  |Loss        |Delta loss
-    --------------------------------
-        0|1.693084e-01|0.000000e+00
-        1|1.610121e-01|-5.152589e-02
-        2|1.609378e-01|-4.622297e-04
-        3|1.609284e-01|-5.830043e-05
-        4|1.609284e-01|-1.111580e-12
 
 
+Solve EMD with Frobenius norm + entropic regularization
+#############################################################################
 
-
-|
 
 
 .. code-block:: python
 
 
-    import numpy as np
-    import matplotlib.pylab as pl
-    import ot
-
-
-    #%% parameters
-
-    n = 100  # nb bins
-
-    # bin positions
-    x = np.arange(n, dtype=np.float64)
-
-    # Gaussian distributions
-    a = ot.datasets.get_1D_gauss(n, m=20, s=5)  # m= mean, s= std
-    b = ot.datasets.get_1D_gauss(n, m=60, s=10)
-
-    # loss matrix
-    M = ot.dist(x.reshape((n, 1)), x.reshape((n, 1)))
-    M /= M.max()
-
-    #%% EMD
-
-    G0 = ot.emd(a, b, M)
-
-    pl.figure(3, figsize=(5, 5))
-    ot.plot.plot1D_mat(a, b, G0, 'OT matrix G0')
-
-    #%% Example with Frobenius norm regularization
-
-
-    def f(G):
-        return 0.5 * np.sum(G**2)
-
-
-    def df(G):
-        return G
-
-
-    reg = 1e-1
-
-    Gl2 = ot.optim.cg(a, b, M, reg, f, df, verbose=True)
-
-    pl.figure(3)
-    ot.plot.plot1D_mat(a, b, Gl2, 'OT matrix Frob. reg')
-
-    #%% Example with entropic regularization
-
-
-    def f(G):
-        return np.sum(G * np.log(G))
-
-
-    def df(G):
-        return np.log(G) + 1.
-
-
-    reg = 1e-3
-
-    Ge = ot.optim.cg(a, b, M, reg, f, df, verbose=True)
-
-    pl.figure(4, figsize=(5, 5))
-    ot.plot.plot1D_mat(a, b, Ge, 'OT matrix Entrop. reg')
-
     #%% Example with Frobenius norm + entropic regularization with gcg
-
 
     def f(G):
         return 0.5 * np.sum(G**2)
@@ -581,7 +629,26 @@ Regularized OT with generic solver
     ot.plot.plot1D_mat(a, b, Gel2, 'OT entropic + matrix Frob. reg')
     pl.show()
 
-**Total running time of the script:** ( 0 minutes  2.720 seconds)
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_optim_OTreg_008.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    It.  |Loss        |Delta loss
+    --------------------------------
+        0|1.693084e-01|0.000000e+00
+        1|1.610121e-01|-5.152589e-02
+        2|1.609378e-01|-4.622297e-04
+        3|1.609284e-01|-5.830043e-05
+        4|1.609284e-01|-1.111580e-12
+
+
+**Total running time of the script:** ( 0 minutes  2.719 seconds)
 
 
 
