@@ -65,7 +65,7 @@ pl.title('OT matrix with samples')
 #%% sinkhorn
 
 # reg term
-lambd = 5e-4
+lambd = 1e-3
 
 Gs = ot.sinkhorn(a, b, M, lambd)
 
