@@ -32,18 +32,19 @@ that will be given by the output of the algorithm
 """
 
 
-def smacof_mds(C, dim, maxIter=3000, eps=1e-9):
+def smacof_mds(C, dim, max_iter=3000, eps=1e-9):
     """
     Returns an interpolated point cloud following the dissimilarity matrix C using SMACOF
     multidimensional scaling (MDS) in specific dimensionned target space
 
     Parameters
     ----------
-    C : np.ndarray(ns,ns)
+    C : ndarray, shape (ns, ns)
         dissimilarity matrix
-    dim : Integer
+    dim : int
           dimension of the targeted space
-    maxIter : Maximum number of iterations of the SMACOF algorithm for a single run
+    max_iter :  int
+        Maximum number of iterations of the SMACOF algorithm for a single run
 
     eps : relative tolerance w.r.t stress to declare converge
 
@@ -60,7 +61,7 @@ def smacof_mds(C, dim, maxIter=3000, eps=1e-9):
 
     mds = manifold.MDS(
         dim,
-        max_iter=3000,
+        max_iter=max_iter,
         eps=1e-9,
         dissimilarity='precomputed',
         n_init=1)
@@ -68,7 +69,7 @@ def smacof_mds(C, dim, maxIter=3000, eps=1e-9):
 
     nmds = manifold.MDS(
         2,
-        max_iter=3000,
+        max_iter=max_iter,
         eps=1e-9,
         dissimilarity="precomputed",
         random_state=seed,
