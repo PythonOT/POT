@@ -4,6 +4,14 @@
 1D Wasserstein barycenter demo
 ==============================
 
+This example illustrate the computation of regularized Wassersyein Barycenter 
+as proposed in [3].
+
+
+[3] Benamou, J. D., Carlier, G., Cuturi, M., Nenna, L., & Peyré, G. (2015). 
+Iterative Bregman projections for regularized transportation problems
+SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
+
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>

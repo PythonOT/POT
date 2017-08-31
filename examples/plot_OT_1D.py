@@ -4,6 +4,9 @@
 1D optimal transport
 ====================
 
+This example illustrate the computation of EMD and Sinkhorn transport plans 
+and their visualization.
+
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>

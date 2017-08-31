@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-====================================================================================
-OT for domain adaptation with image color adaptation [6] with mapping estimation [8]
-====================================================================================
+===============================================
+OT for color adaptation with mapping estimation 
+===============================================
+
+OT for domain adaptation with image color adaptation [6] with mapping 
+estimation [8].
 
 [6] Ferradans, S., Papadakis, N., Peyre, G., & Aujol, J. F. (2014). Regularized
     discrete optimal transport. SIAM Journal on Imaging Sciences, 7(3),
@@ -93,7 +96,7 @@ Image_mapping_gaussian = minmax(mat2im(X1tn, I1.shape))
 
 
 ##############################################################################
-# plot original images
+# Plot original images
 ##############################################################################
 
 pl.figure(1, figsize=(6.4, 3))
@@ -110,7 +113,7 @@ pl.tight_layout()
 
 
 ##############################################################################
-# plot pixel values distribution
+# Plot pixel values distribution
 ##############################################################################
 
 pl.figure(2, figsize=(6.4, 5))
@@ -132,7 +135,7 @@ pl.tight_layout()
 
 
 ##############################################################################
-# plot transformed images
+# Plot transformed images
 ##############################################################################
 
 pl.figure(2, figsize=(10, 5))

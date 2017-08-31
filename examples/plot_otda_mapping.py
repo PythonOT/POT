@@ -6,7 +6,7 @@ OT mapping estimation for domain adaptation [8]
 
 This example presents how to use MappingTransport to estimate at the same
 time both the coupling transport and approximate the transport map with either
-a linear or a kernelized mapping as introduced in [8]
+a linear or a kernelized mapping as introduced in [8].
 
 [8] M. Perrot, N. Courty, R. Flamary, A. Habrard,
     "Mapping estimation for discrete optimal transport",
@@ -43,6 +43,17 @@ Xt, yt = ot.datasets.get_data_classif(
 Xt[yt == 2] *= 3
 Xt = Xt + 4
 
+##############################################################################
+# plot data
+##############################################################################
+
+pl.figure(1, (10, 5))
+pl.clf()
+pl.scatter(Xs[:, 0], Xs[:, 1], c=ys, marker='+', label='Source samples')
+pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker='o', label='Target samples')
+pl.legend(loc=0)
+pl.title('Source and target distributions')
+
 
 ##############################################################################
 # Instantiate the different transport algorithms and fit them
@@ -76,19 +87,7 @@ transp_Xs_gaussian_new = ot_mapping_gaussian.transform(Xs=Xs_new)
 
 
 ##############################################################################
-# plot data
-##############################################################################
-
-pl.figure(1, (10, 5))
-pl.clf()
-pl.scatter(Xs[:, 0], Xs[:, 1], c=ys, marker='+', label='Source samples')
-pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker='o', label='Target samples')
-pl.legend(loc=0)
-pl.title('Source and target distributions')
-
-
-##############################################################################
-# plot transported samples
+# Plot transported samples
 ##############################################################################
 
 pl.figure(2)

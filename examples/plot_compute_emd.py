@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-====================
-1D optimal transport
-====================
+=================
+Plot multiple EMD
+=================
 
 """
 
@@ -15,6 +15,10 @@ import matplotlib.pylab as pl
 import ot
 from ot.datasets import get_1D_gauss as gauss
 
+
+##############################################################################
+# Generate data
+##############################################################################
 
 #%% parameters
 
@@ -40,6 +44,11 @@ M = ot.dist(x.reshape((n, 1)), x.reshape((n, 1)), 'euclidean')
 M /= M.max()
 M2 = ot.dist(x.reshape((n, 1)), x.reshape((n, 1)), 'sqeuclidean')
 M2 /= M2.max()
+
+##############################################################################
+# Plot data
+##############################################################################
+
 #%% plot the distributions
 
 pl.figure(1)
@@ -51,10 +60,15 @@ pl.plot(x, B, label='Target distributions')
 pl.title('Target distributions')
 pl.tight_layout()
 
+
+##############################################################################
+# Compute EMD for the different losses
+##############################################################################
+
 #%% Compute and plot distributions and loss matrix
 
 d_emd = ot.emd2(a, B, M)  # direct computation of EMD
-d_emd2 = ot.emd2(a, B, M2)  # direct computation of EMD with loss M3
+d_emd2 = ot.emd2(a, B, M2)  # direct computation of EMD with loss M2
 
 
 pl.figure(2)
@@ -62,6 +76,10 @@ pl.plot(d_emd, label='Euclidean EMD')
 pl.plot(d_emd2, label='Squared Euclidean EMD')
 pl.title('EMD distances')
 pl.legend()
+
+##############################################################################
+# Compute Sinkhorn for the different losses
+##############################################################################
 
 #%%
 reg = 1e-2

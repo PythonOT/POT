@@ -14,6 +14,10 @@ import numpy as np
 import matplotlib.pylab as pl
 import ot
 
+##############################################################################
+# Generate data
+##############################################################################
+
 #%% parameters and data generation
 
 n = 50  # nb samples
@@ -33,6 +37,10 @@ a, b = np.ones((n,)) / n, np.ones((n,)) / n  # uniform distribution on samples
 M = ot.dist(xs, xt)
 M /= M.max()
 
+##############################################################################
+# Plot data
+##############################################################################
+
 #%% plot samples
 
 pl.figure(1)
@@ -45,6 +53,9 @@ pl.figure(2)
 pl.imshow(M, interpolation='nearest')
 pl.title('Cost matrix M')
 
+##############################################################################
+# Compute EMD
+##############################################################################
 
 #%% EMD
 
@@ -61,6 +72,10 @@ pl.plot(xt[:, 0], xt[:, 1], 'xr', label='Target samples')
 pl.legend(loc=0)
 pl.title('OT matrix with samples')
 
+
+##############################################################################
+# Compute Sinkhorn
+##############################################################################
 
 #%% sinkhorn
 
