@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-====================
+==========================
 Gromov-Wasserstein example
-====================
+==========================
 This example is designed to show how to use the Gromov-Wassertsein distance
 computation in POT.
 """
@@ -14,14 +14,14 @@ computation in POT.
 
 import scipy as sp
 import numpy as np
+import matplotlib.pylab as pl
 
 import ot
-import matplotlib.pylab as pl
 
 
 """
 Sample two Gaussian distributions (2D and 3D)
-====================
+=============================================
 The Gromov-Wasserstein distance allows to compute distances with samples that do not belong to the same metric space.
 For demonstration purpose, we sample two Gaussian distributions in 2- and 3-dimensional spaces.
 """
@@ -42,7 +42,7 @@ xt = np.random.randn(n, 3).dot(P) + mu_t
 
 """
 Plotting the distributions
-====================
+==========================
 """
 fig = pl.figure()
 ax1 = fig.add_subplot(121)
@@ -54,7 +54,7 @@ pl.show()
 
 """
 Compute distance kernels, normalize them and then display
-====================
+=========================================================
 """
 
 C1 = sp.spatial.distance.cdist(xs, xs)
@@ -72,7 +72,7 @@ pl.show()
 
 """
 Compute Gromov-Wasserstein plans and distance
-====================
+=============================================
 """
 
 p = ot.unif(n)
