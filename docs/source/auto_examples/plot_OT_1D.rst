@@ -62,7 +62,7 @@ Generate data
 
 
 Plot distributions and loss matrix
-###################################
+##################################
 
 
 
@@ -168,7 +168,7 @@ Solve Sinkhorn
       110|1.527180e-10|
 
 
-**Total running time of the script:** ( 0 minutes  0.709 seconds)
+**Total running time of the script:** ( 0 minutes  0.680 seconds)
 
 
 
