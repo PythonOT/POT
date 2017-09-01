@@ -5,6 +5,8 @@ __pycache__/
 .spyproject
 
 # sphinx-gallery temp files
+docs/source/auto_examples/*.pickle
+docs/source/auto_examples/*.md5
 docs/auto_examples/
 docs/modules/
 
