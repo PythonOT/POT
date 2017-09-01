@@ -26,7 +26,7 @@ The Gromov-Wasserstein distance allows to compute distances with samples that do
 For demonstration purpose, we sample two Gaussian distributions in 2- and 3-dimensional spaces.
 """
 
-n = 30  # nb samples
+n_samples = 30  # nb samples
 
 mu_s = np.array([0, 0])
 cov_s = np.array([[1, 0], [0, 1]])
@@ -35,9 +35,9 @@ mu_t = np.array([4, 4, 4])
 cov_t = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
 
-xs = ot.datasets.get_2D_samples_gauss(n, mu_s, cov_s)
+xs = ot.datasets.get_2D_samples_gauss(n_samples, mu_s, cov_s)
 P = sp.linalg.sqrtm(cov_t)
-xt = np.random.randn(n, 3).dot(P) + mu_t
+xt = np.random.randn(n_samples, 3).dot(P) + mu_t
 
 
 """
@@ -75,8 +75,8 @@ Compute Gromov-Wasserstein plans and distance
 =============================================
 """
 
-p = ot.unif(n)
-q = ot.unif(n)
+p = ot.unif(n_samples)
+q = ot.unif(n_samples)
 
 gw = ot.gromov_wasserstein(C1, C2, p, q, 'square_loss', epsilon=5e-4)
 gw_dist = ot.gromov_wasserstein2(C1, C2, p, q, 'square_loss', epsilon=5e-4)

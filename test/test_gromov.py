@@ -10,18 +10,18 @@ import ot
 
 
 def test_gromov():
-    n = 50  # nb samples
+    n_samples = 50  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.get_2D_samples_gauss(n, mu_s, cov_s)
+    xs = ot.datasets.get_2D_samples_gauss(n_samples, mu_s, cov_s)
 
-    xt = [xs[n - (i + 1)] for i in range(n)]
+    xt = [xs[n_samples - (i + 1)] for i in range(n_samples)]
     xt = np.array(xt)
 
-    p = ot.unif(n)
-    q = ot.unif(n)
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
 
     C1 = ot.dist(xs, xs)
     C2 = ot.dist(xt, xt)
