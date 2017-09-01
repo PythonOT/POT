@@ -20,7 +20,7 @@ import os
 cache_file='cache_nbrun'
 
 path_doc='source/auto_examples/'
-path_nb='../../../notebooks/'
+path_nb='../notebooks/'
 
 def load_json(fname):
     try:
@@ -58,8 +58,9 @@ def to_update(fname,cache):
 def update(fname,cache):
     
     # jupyter nbconvert --to notebook --execute mynotebook.ipynb --output targte
-    print(' '.join(['jupyter','nbconvert','--to','notebook','--execute',path_doc+fname,'--output',path_nb+fname]))
-    subprocess.check_call(['jupyter','nbconvert','--to','notebook','--execute',path_doc+fname,'--output',path_nb+fname])
+    subprocess.check_call(['cp',path_doc+fname,path_nb])
+    print(' '.join(['jupyter','nbconvert','--to','notebook','--ExecutePreprocessor.timeout=600','--execute',path_nb+fname,'--inplace']))
+    subprocess.check_call(['jupyter','nbconvert','--to','notebook','--ExecutePreprocessor.timeout=600','--execute',path_nb+fname,'--inplace'])
     cache[fname]=md5(path_doc+fname)
     
 
@@ -74,11 +75,8 @@ for fname in lst_file:
     if to_update(fname,cache):
         print('Updating file: {}'.format(fname))
         update(fname,cache)
+        save_json(cache_file,cache)
 
 
 
 
-update(lst_file[0],cache)
-
-
-save_json(cache_file,cache)
