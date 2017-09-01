@@ -471,6 +471,6 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon, max_iter=1000, 
                         'It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(cpt, err))
 
-        cpt = cpt + 1
+        cpt += 1
 
     return C
