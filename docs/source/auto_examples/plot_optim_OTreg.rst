@@ -44,7 +44,7 @@ arXiv preprint arXiv:1510.06567.
 
 
 Generate data
-#############################################################################
+-------------
 
 
 
@@ -73,7 +73,7 @@ Generate data
 
 
 Solve EMD
-#############################################################################
+---------
 
 
 
@@ -97,7 +97,7 @@ Solve EMD
 
 
 Solve EMD with Frobenius norm regularization
-#############################################################################
+--------------------------------------------
 
 
 
@@ -359,7 +359,7 @@ Solve EMD with Frobenius norm regularization
 
 
 Solve EMD with entropic regularization
-#############################################################################
+--------------------------------------
 
 
 
@@ -621,7 +621,7 @@ Solve EMD with entropic regularization
 
 
 Solve EMD with Frobenius norm + entropic regularization
-#############################################################################
+-------------------------------------------------------
 
 
 
@@ -667,7 +667,7 @@ Solve EMD with Frobenius norm + entropic regularization
         4|1.609284e-01|-1.111407e-12
 
 
-**Total running time of the script:** ( 0 minutes  1.913 seconds)
+**Total running time of the script:** ( 0 minutes  1.809 seconds)
 
 
 

@@ -34,7 +34,7 @@ ground metrics and plot their values for diffeent distributions.
 
 
 Generate data
-#############################################################################
+-------------
 
 
 
@@ -73,7 +73,7 @@ Generate data
 
 
 Plot data
-#############################################################################
+---------
 
 
 
@@ -102,7 +102,7 @@ Plot data
 
 
 Compute EMD for the different losses
-#############################################################################
+------------------------------------
 
 
 
@@ -131,7 +131,7 @@ Compute EMD for the different losses
 
 
 Compute Sinkhorn for the different losses
-#############################################################################
+-----------------------------------------
 
 
 
@@ -162,7 +162,7 @@ Compute Sinkhorn for the different losses
 
 
 
-**Total running time of the script:** ( 0 minutes  0.471 seconds)
+**Total running time of the script:** ( 0 minutes  0.441 seconds)
 
 
 

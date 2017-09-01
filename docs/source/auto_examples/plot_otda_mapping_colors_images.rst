@@ -57,7 +57,7 @@ estimation [8].
 
 
 Generate data
-#############################################################################
+-------------
 
 
 
@@ -88,7 +88,7 @@ Generate data
 
 
 Domain adaptation for pixel distribution transfer
-#############################################################################
+-------------------------------------------------
 
 
 
@@ -168,7 +168,7 @@ Domain adaptation for pixel distribution transfer
 
 
 Plot original images
-#############################################################################
+--------------------
 
 
 
@@ -198,7 +198,7 @@ Plot original images
 
 
 Plot pixel values distribution
-#############################################################################
+------------------------------
 
 
 
@@ -233,7 +233,7 @@ Plot pixel values distribution
 
 
 Plot transformed images
-#############################################################################
+-----------------------
 
 
 
@@ -283,7 +283,7 @@ Plot transformed images
 
 
 
-**Total running time of the script:** ( 2 minutes  8.746 seconds)
+**Total running time of the script:** ( 2 minutes  5.213 seconds)
 
 
 

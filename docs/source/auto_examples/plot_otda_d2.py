@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-==============================
-OT for empirical distributions
-==============================
+===================================================
+OT for domain adaptation on empirical distributions
+===================================================
 
 This example introduces a domain adaptation in a 2D setting. It explicits
 the problem of domain adaptation and introduces some optimal transport
@@ -24,7 +24,7 @@ import ot
 
 ##############################################################################
 # generate data
-##############################################################################
+# -------------
 
 n_samples_source = 150
 n_samples_target = 150
@@ -38,7 +38,7 @@ M = ot.dist(Xs, Xt, metric='sqeuclidean')
 
 ##############################################################################
 # Instantiate the different transport algorithms and fit them
-##############################################################################
+# -----------------------------------------------------------
 
 # EMD Transport
 ot_emd = ot.da.EMDTransport()
@@ -60,7 +60,7 @@ transp_Xs_lpl1 = ot_lpl1.transform(Xs=Xs)
 
 ##############################################################################
 # Fig 1 : plots source and target samples + matrix of pairwise distance
-##############################################################################
+# ---------------------------------------------------------------------
 
 pl.figure(1, figsize=(10, 10))
 pl.subplot(2, 2, 1)
@@ -87,8 +87,7 @@ pl.tight_layout()
 
 ##############################################################################
 # Fig 2 : plots optimal couplings for the different methods
-##############################################################################
-
+# ---------------------------------------------------------
 pl.figure(2, figsize=(10, 6))
 
 pl.subplot(2, 3, 1)
@@ -137,7 +136,7 @@ pl.tight_layout()
 
 ##############################################################################
 # Fig 3 : plot transported samples
-##############################################################################
+# --------------------------------
 
 # display transported samples
 pl.figure(4, figsize=(10, 4))

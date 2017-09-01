@@ -39,7 +39,7 @@ SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
 
 
 Generate data
-#############################################################################
+-------------
 
 
 
@@ -72,7 +72,7 @@ Generate data
 
 
 Plot data
-#############################################################################
+---------
 
 
 
@@ -97,7 +97,7 @@ Plot data
 
 
 Barycenter computation
-#############################################################################
+----------------------
 
 
 
@@ -140,7 +140,7 @@ Barycenter computation
 
 
 Barycentric interpolation
-#############################################################################
+-------------------------
 
 
 
@@ -230,7 +230,7 @@ Barycentric interpolation
 
 
 
-**Total running time of the script:** ( 0 minutes  0.416 seconds)
+**Total running time of the script:** ( 0 minutes  0.431 seconds)
 
 
 

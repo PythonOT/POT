@@ -63,7 +63,7 @@ Generate data
 
 
 Plot distributions and loss matrix
-##################################
+----------------------------------
 
 
 
@@ -102,11 +102,12 @@ Plot distributions and loss matrix
 
 
 Solve EMD
-#############################################################################
+---------
 
 
 
 .. code-block:: python
+
 
 
     #%% EMD
@@ -126,11 +127,12 @@ Solve EMD
 
 
 Solve Sinkhorn
-#############################################################################
+--------------
 
 
 
 .. code-block:: python
+
 
 
     #%% Sinkhorn
@@ -169,7 +171,7 @@ Solve Sinkhorn
       110|1.527180e-10|
 
 
-**Total running time of the script:** ( 0 minutes  0.754 seconds)
+**Total running time of the script:** ( 0 minutes  0.748 seconds)
 
 
 

@@ -31,7 +31,7 @@ sum of diracs. The OT matrix is plotted with the samples.
 
 
 Generate data
-#############################################################################
+-------------
 
 
 
@@ -64,7 +64,7 @@ Generate data
 
 
 Plot data
-#############################################################################
+---------
 
 
 
@@ -103,7 +103,7 @@ Plot data
 
 
 Compute EMD
-#############################################################################
+-----------
 
 
 
@@ -146,7 +146,7 @@ Compute EMD
 
 
 Compute Sinkhorn
-#############################################################################
+----------------
 
 
 
@@ -191,7 +191,7 @@ Compute Sinkhorn
 
 
 
-**Total running time of the script:** ( 0 minutes  1.990 seconds)
+**Total running time of the script:** ( 0 minutes  1.743 seconds)
 
 
 

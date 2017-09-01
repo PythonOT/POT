@@ -54,7 +54,7 @@ SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
 
 
 Generate data
-#############################################################################
+-------------
 
 
 
@@ -84,7 +84,7 @@ Generate data
 
 
 Plot original image
-#############################################################################
+-------------------
 
 
 
@@ -114,7 +114,7 @@ Plot original image
 
 
 Scatter plot of colors
-#############################################################################
+----------------------
 
 
 
@@ -149,7 +149,7 @@ Scatter plot of colors
 
 
 Instantiate the different transport algorithms and fit them
-#############################################################################
+-----------------------------------------------------------
 
 
 
@@ -185,7 +185,7 @@ Instantiate the different transport algorithms and fit them
 
 
 Plot new images
-#############################################################################
+---------------
 
 
 
@@ -235,7 +235,7 @@ Plot new images
 
 
 
-**Total running time of the script:** ( 2 minutes  28.053 seconds)
+**Total running time of the script:** ( 2 minutes  24.561 seconds)
 
 
 

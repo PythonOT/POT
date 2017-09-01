@@ -34,7 +34,7 @@ https://arxiv.org/pdf/1706.07650.pdf
 
 
 Dataset 1 : uniform sampling
-#############################################################################
+----------------------------
 
 
 
@@ -108,7 +108,7 @@ Dataset 1 : uniform sampling
 
 
 Dataset 1 : Plot OT Matrices
-#############################################################################
+----------------------------
 
 
 
@@ -162,7 +162,7 @@ Dataset 1 : Plot OT Matrices
 
 
 Dataset 2 : Partial circle
-#############################################################################
+--------------------------
 
 
 
@@ -239,7 +239,7 @@ Dataset 2 : Partial circle
 
 
 Dataset 2 : Plot  OT Matrices
-#############################################################################
+-----------------------------
 
 
 
@@ -290,7 +290,7 @@ Dataset 2 : Plot  OT Matrices
 
 
 
-**Total running time of the script:** ( 0 minutes  1.218 seconds)
+**Total running time of the script:** ( 0 minutes  1.134 seconds)
 
 
 

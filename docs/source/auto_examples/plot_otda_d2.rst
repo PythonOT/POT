@@ -3,9 +3,9 @@
 .. _sphx_glr_auto_examples_plot_otda_d2.py:
 
 
-==============================
-OT for empirical distributions
-==============================
+===================================================
+OT for domain adaptation on empirical distributions
+===================================================
 
 This example introduces a domain adaptation in a 2D setting. It explicits
 the problem of domain adaptation and introduces some optimal transport
@@ -36,7 +36,7 @@ of what the transport methods are doing.
 
 
 generate data
-#############################################################################
+-------------
 
 
 
@@ -60,7 +60,7 @@ generate data
 
 
 Instantiate the different transport algorithms and fit them
-#############################################################################
+-----------------------------------------------------------
 
 
 
@@ -92,7 +92,7 @@ Instantiate the different transport algorithms and fit them
 
 
 Fig 1 : plots source and target samples + matrix of pairwise distance
-#############################################################################
+---------------------------------------------------------------------
 
 
 
@@ -132,12 +132,11 @@ Fig 1 : plots source and target samples + matrix of pairwise distance
 
 
 Fig 2 : plots optimal couplings for the different methods
-#############################################################################
+---------------------------------------------------------
 
 
 
 .. code-block:: python
-
 
     pl.figure(2, figsize=(10, 6))
 
@@ -195,7 +194,7 @@ Fig 2 : plots optimal couplings for the different methods
 
 
 Fig 3 : plot transported samples
-#############################################################################
+--------------------------------
 
 
 
@@ -243,7 +242,7 @@ Fig 3 : plot transported samples
 
 
 
-**Total running time of the script:** ( 0 minutes  32.275 seconds)
+**Total running time of the script:** ( 0 minutes  32.084 seconds)
 
 
 
