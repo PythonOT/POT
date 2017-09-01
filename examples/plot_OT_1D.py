@@ -4,7 +4,7 @@
 1D optimal transport
 ====================
 
-This example illustrates the computation of EMD and Sinkhorn transport plans 
+This example illustrates the computation of EMD and Sinkhorn transport plans
 and their visualization.
 
 """
@@ -20,7 +20,8 @@ from ot.datasets import get_1D_gauss as gauss
 
 ##############################################################################
 # Generate data
-##############################################################################
+# #############
+
 
 #%% parameters
 
@@ -40,7 +41,7 @@ M /= M.max()
 
 ##############################################################################
 # Plot distributions and loss matrix
-##############################################################################
+###################################
 
 #%% plot the distributions
 

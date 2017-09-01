@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 =====================================================
-OT for image color adaptation with mapping estimation 
+OT for image color adaptation with mapping estimation
 =====================================================
 
-OT for domain adaptation with image color adaptation [6] with mapping 
+OT for domain adaptation with image color adaptation [6] with mapping
 estimation [8].
 
 [6] Ferradans, S., Papadakis, N., Peyre, G., & Aujol, J. F. (2014). Regularized

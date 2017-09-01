@@ -7,7 +7,7 @@ Wasserstein Discriminant Analysis
 This example illustrate the use of WDA as proposed in [11].
 
 
-[11] Flamary, R., Cuturi, M., Courty, N., & Rakotomamonjy, A. (2016). 
+[11] Flamary, R., Cuturi, M., Courty, N., & Rakotomamonjy, A. (2016).
 Wasserstein Discriminant Analysis.
 
 """

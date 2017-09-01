@@ -7,7 +7,7 @@
 Plot multiple EMD
 =================
 
-Shows how to compute multiple EMD and Sinkhorn with two differnt 
+Shows how to compute multiple EMD and Sinkhorn with two differnt
 ground metrics and plot their values for diffeent distributions.
 
 
@@ -162,7 +162,7 @@ Compute Sinkhorn for the different losses
 
 
 
-**Total running time of the script:** ( 0 minutes  0.427 seconds)
+**Total running time of the script:** ( 0 minutes  0.471 seconds)
 
 
 

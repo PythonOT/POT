@@ -116,7 +116,6 @@ Dataset 1 : Plot OT Matrices
 
 
 
-
     #%% EMD
     G1 = ot.emd(a, b, M1)
     G2 = ot.emd(a, b, M2)
@@ -248,7 +247,6 @@ Dataset 2 : Plot  OT Matrices
 
 
 
-
     #%% EMD
     G1 = ot.emd(a, b, M1)
     G2 = ot.emd(a, b, M2)
@@ -292,7 +290,7 @@ Dataset 2 : Plot  OT Matrices
 
 
 
-**Total running time of the script:** ( 0 minutes  1.217 seconds)
+**Total running time of the script:** ( 0 minutes  1.218 seconds)
 
 
 

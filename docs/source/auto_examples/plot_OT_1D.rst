@@ -7,7 +7,7 @@
 1D optimal transport
 ====================
 
-This example illustrates the computation of EMD and Sinkhorn transport plans 
+This example illustrates the computation of EMD and Sinkhorn transport plans
 and their visualization.
 
 
@@ -32,11 +32,12 @@ and their visualization.
 
 
 Generate data
-##############
+#############
 
 
 
 .. code-block:: python
+
 
 
     #%% parameters
@@ -168,7 +169,7 @@ Solve Sinkhorn
       110|1.527180e-10|
 
 
-**Total running time of the script:** ( 0 minutes  0.680 seconds)
+**Total running time of the script:** ( 0 minutes  0.704 seconds)
 
 
 

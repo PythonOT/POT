@@ -3,13 +3,13 @@
 POT Examples
 ============
 
-This is a gallery of all the POT example files. 
+This is a gallery of all the POT example files.
 
 
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation of EMD and Sinkhorn transport plans  and their visuali...">
+    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation of EMD and Sinkhorn transport plans and their visualiz...">
 
 .. only:: html
 
@@ -69,7 +69,7 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to compute multiple EMD and Sinkhorn with two differnt  ground metrics and plot their...">
+    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to compute multiple EMD and Sinkhorn with two differnt ground metrics and plot their ...">
 
 .. only:: html
 
@@ -129,7 +129,7 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation of regularized Wassersyein Barycenter  as proposed in ...">
+    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation of regularized Wassersyein Barycenter as proposed in [...">
 
 .. only:: html
 
@@ -149,7 +149,7 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="OT for domain adaptation with image color adaptation [6] with mapping  estimation [8].">
+    <div class="sphx-glr-thumbcontainer" tooltip="OT for domain adaptation with image color adaptation [6] with mapping estimation [8].">
 
 .. only:: html
 
