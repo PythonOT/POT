@@ -17,7 +17,7 @@ def test_gromov():
 
     xs = ot.datasets.get_2D_samples_gauss(n_samples, mu_s, cov_s)
 
-    xt = [xs[n_samples - (i + 1)] for i in range(n_samples)]
+    xt = xs[::-1]
     xt = np.array(xt)
 
     p = ot.unif(n_samples)

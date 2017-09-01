@@ -45,19 +45,19 @@ def smacof_mds(C, dim, max_iter=3000, eps=1e-9):
           dimension of the targeted space
     max_iter :  int
         Maximum number of iterations of the SMACOF algorithm for a single run
-
-    eps : relative tolerance w.r.t stress to declare converge
+    eps : float
+        relative tolerance w.r.t stress to declare converge
 
 
     Returns
     -------
-    npos : R**dim ndarray
+    npos : ndarray, shape (R, dim)
            Embedded coordinates of the interpolated point cloud (defined with one isometry)
 
 
     """
 
-    seed = np.random.RandomState(seed=3)
+    rng = np.random.RandomState(seed=3)
 
     mds = manifold.MDS(
         dim,
@@ -72,7 +72,7 @@ def smacof_mds(C, dim, max_iter=3000, eps=1e-9):
         max_iter=max_iter,
         eps=1e-9,
         dissimilarity="precomputed",
-        random_state=seed,
+        random_state=rng,
         n_init=1)
     npos = nmds.fit_transform(C, init=pos)
 
@@ -132,23 +132,31 @@ lambdast = [[float(i) / 3, float(3 - i) / 3] for i in [1, 2]]
 
 Ct01 = [0 for i in range(2)]
 for i in range(2):
-    Ct01[i] = ot.gromov.gromov_barycenters(n_samples, [Cs[0], Cs[1]], [
-                                           ps[0], ps[1]], p, lambdast[i], 'square_loss', 5e-4, numItermax=100, stopThr=1e-3)
+    Ct01[i] = ot.gromov.gromov_barycenters(n_samples, [Cs[0], Cs[1]],
+                                           [ps[0], ps[1]
+                                            ], p, lambdast[i], 'square_loss', 5e-4,
+                                           max_iter=100, stopThr=1e-3)
 
 Ct02 = [0 for i in range(2)]
 for i in range(2):
-    Ct02[i] = ot.gromov.gromov_barycenters(n_samples, [Cs[0], Cs[2]], [
-                                           ps[0], ps[2]], p, lambdast[i], 'square_loss', 5e-4, numItermax=100, stopThr=1e-3)
+    Ct02[i] = ot.gromov.gromov_barycenters(n_samples, [Cs[0], Cs[2]],
+                                           [ps[0], ps[2]
+                                            ], p, lambdast[i], 'square_loss', 5e-4,
+                                           max_iter=100, stopThr=1e-3)
 
 Ct13 = [0 for i in range(2)]
 for i in range(2):
-    Ct13[i] = ot.gromov.gromov_barycenters(n_samples, [Cs[1], Cs[3]], [
-                                           ps[1], ps[3]], p, lambdast[i], 'square_loss', 5e-4, numItermax=100, stopThr=1e-3)
+    Ct13[i] = ot.gromov.gromov_barycenters(n_samples, [Cs[1], Cs[3]],
+                                           [ps[1], ps[3]
+                                            ], p, lambdast[i], 'square_loss', 5e-4,
+                                           max_iter=100, stopThr=1e-3)
 
 Ct23 = [0 for i in range(2)]
 for i in range(2):
-    Ct23[i] = ot.gromov.gromov_barycenters(n_samples, [Cs[2], Cs[3]], [
-                                           ps[2], ps[3]], p, lambdast[i], 'square_loss', 5e-4, numItermax=100, stopThr=1e-3)
+    Ct23[i] = ot.gromov.gromov_barycenters(n_samples, [Cs[2], Cs[3]],
+                                           [ps[2], ps[3]
+                                            ], p, lambdast[i], 'square_loss', 5e-4,
+                                           max_iter=100, stopThr=1e-3)
 
 """
 Visualization
