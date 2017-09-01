@@ -33,7 +33,7 @@ class Mock(MagicMock):
         return MagicMock()
 MOCK_MODULES = ['ot.lp.emd_wrap','autograd','pymanopt','cudamat','autograd.numpy','pymanopt.manifolds','pymanopt.solvers']
 # 'autograd.numpy','pymanopt.manifolds','pymanopt.solvers',
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+##sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 # !!!!
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -328,7 +328,7 @@ intersphinx_mapping = {'https://docs.python.org/': None}
 sphinx_gallery_conf = {
     'examples_dirs': ['../../examples','../../examples/da'],
     'gallery_dirs': 'auto_examples',
-    'mod_example_dir': '../modules/generated/',
+    'backreferences_dir': '../modules/generated/',
     'reference_url': {
         'numpy': 'http://docs.scipy.org/doc/numpy-1.9.1',
         'scipy': 'http://docs.scipy.org/doc/scipy-0.17.0/reference'}

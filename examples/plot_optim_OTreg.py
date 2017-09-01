@@ -4,8 +4,8 @@
 Regularized OT with generic solver
 ==================================
 
-This example illustrate the use of the generic solver for regularized OT with
-user designed regularization term. It uses Conditional gradient as in [6] and 
+Illustrates the use of the generic solver for regularized OT with
+user-designed regularization term. It uses Conditional gradient as in [6] and 
 generalized Conditional Gradient as proposed in [5][7].
 
 

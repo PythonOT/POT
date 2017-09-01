@@ -7,73 +7,13 @@
 Wasserstein Discriminant Analysis
 =================================
 
+This example illustrate the use of WDA as proposed in [11].
 
 
+[11] Flamary, R., Cuturi, M., Courty, N., & Rakotomamonjy, A. (2016). 
+Wasserstein Discriminant Analysis.
 
 
-.. rst-class:: sphx-glr-horizontal
-
-
-    *
-
-      .. image:: /auto_examples/images/sphx_glr_plot_WDA_001.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/images/sphx_glr_plot_WDA_002.png
-            :scale: 47
-
-
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Compiling cost function...
-    Computing gradient of cost function...
-     iter              cost val         grad. norm
-        1   +8.9741888001949222e-01 3.71269078e-01
-        2   +4.9103998133976140e-01 3.46687543e-01
-        3   +4.2142651893148553e-01 1.04789602e-01
-        4   +4.1573609749588841e-01 5.21726648e-02
-        5   +4.1486046805261961e-01 5.35335513e-02
-        6   +4.1315953904635105e-01 2.17803599e-02
-        7   +4.1313030162717523e-01 6.06901182e-02
-        8   +4.1301511591963386e-01 5.88598758e-02
-        9   +4.1258349404769817e-01 5.14307874e-02
-       10   +4.1139242901051226e-01 2.03198793e-02
-       11   +4.1113798965164017e-01 1.18944721e-02
-       12   +4.1103446820878486e-01 2.21783648e-02
-       13   +4.1076586830791861e-01 9.51495863e-03
-       14   +4.1036935287519144e-01 3.74973214e-02
-       15   +4.0958729714575060e-01 1.23810902e-02
-       16   +4.0898266309095005e-01 4.01999918e-02
-       17   +4.0816076944357715e-01 2.27240277e-02
-       18   +4.0788116701894767e-01 4.42815945e-02
-       19   +4.0695443744952403e-01 3.28464304e-02
-       20   +4.0293834480911150e-01 7.76000681e-02
-       21   +3.8488003705202750e-01 1.49378022e-01
-       22   +3.0767344927282614e-01 2.15432117e-01
-       23   +2.3849425361868334e-01 1.07942382e-01
-       24   +2.3845125762548214e-01 1.08953278e-01
-       25   +2.3828007730494005e-01 1.07934830e-01
-       26   +2.3760839060570119e-01 1.03822134e-01
-       27   +2.3514215179705886e-01 8.67263481e-02
-       28   +2.2978886197588613e-01 9.26609306e-03
-       29   +2.2972671019495342e-01 2.59476089e-03
-       30   +2.2972355865247496e-01 1.57205146e-03
-       31   +2.2972296662351968e-01 1.29300760e-03
-       32   +2.2972181557051569e-01 8.82375756e-05
-       33   +2.2972181277025336e-01 6.20536544e-05
-       34   +2.2972181023486152e-01 7.01884014e-06
-       35   +2.2972181020400181e-01 1.60415765e-06
-       36   +2.2972181020236590e-01 2.44290966e-07
-    Terminated - min grad norm reached after 36 iterations, 13.41 seconds.
-
-
-
-
-|
 
 
 .. code-block:: python
@@ -87,6 +27,20 @@ Wasserstein Discriminant Analysis
     import matplotlib.pylab as pl
 
     from ot.dr import wda, fda
+
+
+
+
+
+
+
+
+Generate data
+#############################################################################
+
+
+
+.. code-block:: python
 
 
     #%% parameters
@@ -112,6 +66,20 @@ Wasserstein Discriminant Analysis
     xs = np.hstack((xs, np.random.randn(n, nbnoise)))
     xt = np.hstack((xt, np.random.randn(n, nbnoise)))
 
+
+
+
+
+
+
+Plot data
+#############################################################################
+
+
+
+.. code-block:: python
+
+
     #%% plot samples
     pl.figure(1, figsize=(6.4, 3.5))
 
@@ -126,10 +94,41 @@ Wasserstein Discriminant Analysis
     pl.title('Other dimensions')
     pl.tight_layout()
 
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_WDA_001.png
+    :align: center
+
+
+
+
+Compute Fisher Discriminant Analysis
+#############################################################################
+
+
+
+.. code-block:: python
+
+
     #%% Compute FDA
     p = 2
 
     Pfda, projfda = fda(xs, ys, p)
+
+
+
+
+
+
+
+Compute Wasserstein Discriminant Analysis
+#############################################################################
+
+
+
+.. code-block:: python
+
 
     #%% Compute WDA
     p = 2
@@ -138,6 +137,45 @@ Wasserstein Discriminant Analysis
     maxiter = 100
 
     Pwda, projwda = wda(xs, ys, p, reg, k, maxiter=maxiter)
+
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Compiling cost function...
+    Computing gradient of cost function...
+     iter              cost val         grad. norm
+        1   +7.7038877420882157e-01 6.30647522e-01
+        2   +3.3969600919721271e-01 2.83791849e-01
+        3   +3.0014000762425608e-01 2.56139137e-01
+        4   +2.3397191702411621e-01 6.41134216e-02
+        5   +2.3107227220070231e-01 2.24837190e-02
+        6   +2.3072327156158298e-01 1.71334761e-03
+        7   +2.3072143589220098e-01 6.30059431e-04
+        8   +2.3072133109125159e-01 4.88673790e-04
+        9   +2.3072119579341774e-01 1.74129117e-04
+       10   +2.3072118662364521e-01 1.27046386e-04
+       11   +2.3072118228917746e-01 9.70877451e-05
+       12   +2.3072117734120351e-01 4.17292699e-05
+       13   +2.3072117623493599e-01 4.46062100e-06
+       14   +2.3072117622383431e-01 1.59801454e-06
+       15   +2.3072117622300498e-01 1.12117391e-06
+       16   +2.3072117622220378e-01 4.14581994e-08
+    Terminated - min grad norm reached after 16 iterations, 7.77 seconds.
+
+
+Plot 2D projections
+#############################################################################
+
+
+
+.. code-block:: python
+
 
     #%% plot samples
 
@@ -172,7 +210,15 @@ Wasserstein Discriminant Analysis
 
     pl.show()
 
-**Total running time of the script:** ( 0 minutes  19.853 seconds)
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_WDA_003.png
+    :align: center
+
+
+
+
+**Total running time of the script:** ( 0 minutes  8.568 seconds)
 
 
 
@@ -191,4 +237,4 @@ Wasserstein Discriminant Analysis
 
 .. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+    `Generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

@@ -4,7 +4,7 @@
 1D Wasserstein barycenter demo
 ==============================
 
-This example illustrate the computation of regularized Wassersyein Barycenter 
+This example illustrates the computation of regularized Wassersyein Barycenter 
 as proposed in [3].
 
 
@@ -25,6 +25,9 @@ import ot
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 from matplotlib.collections import PolyCollection
 
+##############################################################################
+# Generate data
+##############################################################################
 
 #%% parameters
 
@@ -45,6 +48,10 @@ n_distributions = A.shape[1]
 M = ot.utils.dist0(n)
 M /= M.max()
 
+##############################################################################
+# Plot data
+##############################################################################
+
 #%% plot the distributions
 
 pl.figure(1, figsize=(6.4, 3))
@@ -52,6 +59,10 @@ for i in range(n_distributions):
     pl.plot(x, A[:, i])
 pl.title('Distributions')
 pl.tight_layout()
+
+##############################################################################
+# Barycenter computation
+##############################################################################
 
 #%% barycenter computation
 
@@ -78,6 +89,10 @@ pl.plot(x, bary_wass, 'g', label='Wasserstein')
 pl.legend()
 pl.title('Barycenters')
 pl.tight_layout()
+
+##############################################################################
+# Barycentric interpolation
+##############################################################################
 
 #%% barycenter interpolation
 

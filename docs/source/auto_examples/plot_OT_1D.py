@@ -4,6 +4,9 @@
 1D optimal transport
 ====================
 
+This example illustrates the computation of EMD and Sinkhorn transport plans 
+and their visualization.
+
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -52,7 +55,7 @@ pl.figure(2, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
 
 ##############################################################################
-# Solve EMD 
+# Solve EMD
 ##############################################################################
 
 #%% EMD

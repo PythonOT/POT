@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-========================================================
-OT for domain adaptation with image color adaptation [6]
-========================================================
+=============================
+OT for image color adaptation
+=============================
 
 This example presents a way of transferring colors between two image
 with Optimal Transport as introduced in [6]
@@ -41,7 +41,7 @@ def minmax(I):
 
 
 ##############################################################################
-# generate data
+# Generate data
 ##############################################################################
 
 # Loading images
@@ -58,6 +58,45 @@ idx2 = r.randint(X2.shape[0], size=(nb,))
 
 Xs = X1[idx1, :]
 Xt = X2[idx2, :]
+
+
+##############################################################################
+# Plot original image
+##############################################################################
+
+pl.figure(1, figsize=(6.4, 3))
+
+pl.subplot(1, 2, 1)
+pl.imshow(I1)
+pl.axis('off')
+pl.title('Image 1')
+
+pl.subplot(1, 2, 2)
+pl.imshow(I2)
+pl.axis('off')
+pl.title('Image 2')
+
+
+##############################################################################
+# Scatter plot of colors
+##############################################################################
+
+pl.figure(2, figsize=(6.4, 3))
+
+pl.subplot(1, 2, 1)
+pl.scatter(Xs[:, 0], Xs[:, 2], c=Xs)
+pl.axis([0, 1, 0, 1])
+pl.xlabel('Red')
+pl.ylabel('Blue')
+pl.title('Image 1')
+
+pl.subplot(1, 2, 2)
+pl.scatter(Xt[:, 0], Xt[:, 2], c=Xt)
+pl.axis([0, 1, 0, 1])
+pl.xlabel('Red')
+pl.ylabel('Blue')
+pl.title('Image 2')
+pl.tight_layout()
 
 
 ##############################################################################
@@ -87,46 +126,7 @@ I2te = minmax(mat2im(transp_Xt_sinkhorn, I2.shape))
 
 
 ##############################################################################
-# plot original image
-##############################################################################
-
-pl.figure(1, figsize=(6.4, 3))
-
-pl.subplot(1, 2, 1)
-pl.imshow(I1)
-pl.axis('off')
-pl.title('Image 1')
-
-pl.subplot(1, 2, 2)
-pl.imshow(I2)
-pl.axis('off')
-pl.title('Image 2')
-
-
-##############################################################################
-# scatter plot of colors
-##############################################################################
-
-pl.figure(2, figsize=(6.4, 3))
-
-pl.subplot(1, 2, 1)
-pl.scatter(Xs[:, 0], Xs[:, 2], c=Xs)
-pl.axis([0, 1, 0, 1])
-pl.xlabel('Red')
-pl.ylabel('Blue')
-pl.title('Image 1')
-
-pl.subplot(1, 2, 2)
-pl.scatter(Xt[:, 0], Xt[:, 2], c=Xt)
-pl.axis([0, 1, 0, 1])
-pl.xlabel('Red')
-pl.ylabel('Blue')
-pl.title('Image 2')
-pl.tight_layout()
-
-
-##############################################################################
-# plot new images
+# Plot new images
 ##############################################################################
 
 pl.figure(3, figsize=(8, 4))

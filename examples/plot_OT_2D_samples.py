@@ -4,6 +4,9 @@
 2D Optimal transport between empirical distributions
 ====================================================
 
+Illustration of 2D optimal transport between discributions that are weighted
+sum of diracs. The OT matrix is plotted with the samples.
+
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>

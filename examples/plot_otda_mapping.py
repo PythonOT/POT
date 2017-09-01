@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-===============================================
-OT mapping estimation for domain adaptation [8]
-===============================================
+===========================================
+OT mapping estimation for domain adaptation
+===========================================
 
 This example presents how to use MappingTransport to estimate at the same
 time both the coupling transport and approximate the transport map with either
@@ -24,7 +24,7 @@ import ot
 
 
 ##############################################################################
-# generate data
+# Generate data
 ##############################################################################
 
 n_source_samples = 100
@@ -44,7 +44,7 @@ Xt[yt == 2] *= 3
 Xt = Xt + 4
 
 ##############################################################################
-# plot data
+# Plot data
 ##############################################################################
 
 pl.figure(1, (10, 5))
