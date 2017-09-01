@@ -20,7 +20,7 @@ from ot.datasets import get_1D_gauss as gauss
 
 ##############################################################################
 # Generate data
-# #############
+# -------------
 
 
 #%% parameters

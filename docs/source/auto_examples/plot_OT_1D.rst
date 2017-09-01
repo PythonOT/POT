@@ -32,7 +32,7 @@ and their visualization.
 
 
 Generate data
-#############
+-------------
 
 
 
@@ -169,7 +169,7 @@ Solve Sinkhorn
       110|1.527180e-10|
 
 
-**Total running time of the script:** ( 0 minutes  0.704 seconds)
+**Total running time of the script:** ( 0 minutes  0.754 seconds)
 
 
 
