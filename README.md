@@ -112,17 +112,17 @@ The examples folder contain several examples and use case for the library. The f
 
 Here is a list of the Python notebooks available [here](https://github.com/rflamary/POT/blob/master/notebooks/) if you want a quick look:
 
-* [1D optimal transport](https://github.com/rflamary/POT/blob/master/notebooks/Demo_1D_OT.ipynb)
-* [OT Ground Loss](https://github.com/rflamary/POT/blob/master/notebooks/Demo_Ground_Loss.ipynb)
-* [Multiple EMD computation](https://github.com/rflamary/POT/blob/master/notebooks/Demo_Compute_EMD.ipynb)
-* [2D optimal transport on empirical distributions](https://github.com/rflamary/POT/blob/master/notebooks/Demo_2D_OT_samples.ipynb)
-* [1D Wasserstein barycenter](https://github.com/rflamary/POT/blob/master/notebooks/Demo_1D_barycenter.ipynb)
-* [OT with user provided regularization](https://github.com/rflamary/POT/blob/master/notebooks/Demo_Optim_OTreg.ipynb)
-* [Domain adaptation with optimal transport](https://github.com/rflamary/POT/blob/master/notebooks/Demo_2D_OT_DomainAdaptation.ipynb)
-* [Color transfer in images](https://github.com/rflamary/POT/blob/master/notebooks/Demo_Image_ColorAdaptation.ipynb)
-* [OT mapping estimation for domain adaptation](https://github.com/rflamary/POT/blob/master/notebooks/Demo_2D_OTmapping_DomainAdaptation.ipynb)
-* [OT mapping estimation for color transfer in images](https://github.com/rflamary/POT/blob/master/notebooks/Demo_Image_ColorAdaptation_mapping.ipynb)
-* [Wasserstein Discriminant Analysis](https://github.com/rflamary/POT/blob/master/notebooks/Demo_Wasserstein_Discriminant_Analysis.ipynb)
+* [1D optimal transport](https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_1D.ipynb)
+* [OT Ground Loss](https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_L1_vs_L2.ipynb)
+* [Multiple EMD computation](https://github.com/rflamary/POT/blob/master/notebooks/plot_compute_emd.ipynb)
+* [2D optimal transport on empirical distributions](https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_2D_samples.ipynb)
+* [1D Wasserstein barycenter](https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_1D.ipynb)
+* [OT with user provided regularization](https://github.com/rflamary/POT/blob/master/notebooks/plot_optim_OTreg.ipynb)
+* [Domain adaptation with optimal transport](https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_d2.ipynb)
+* [Color transfer in images](https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_color_images.ipynb)
+* [OT mapping estimation for domain adaptation](https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_mapping.ipynb)
+* [OT mapping estimation for color transfer in images](https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_mapping_colors_images.ipynb)
+* [Wasserstein Discriminant Analysis](https://github.com/rflamary/POT/blob/master/notebooks/plot_WDA.ipynb)
 
 You can also see the notebooks with [Jupyter nbviewer](https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/notebooks/).
 
