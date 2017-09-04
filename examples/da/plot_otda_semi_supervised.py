@@ -32,9 +32,6 @@ n_samples_target = 150
 Xs, ys = ot.datasets.get_data_classif('3gauss', n_samples_source)
 Xt, yt = ot.datasets.get_data_classif('3gauss2', n_samples_target)
 
-# Cost matrix
-M = ot.dist(Xs, Xt, metric='sqeuclidean')
-
 
 ##############################################################################
 # Transport source samples onto target samples
@@ -54,6 +51,13 @@ transp_Xs_sinkhorn_semi = ot_sinkhorn_semi.transform(Xs=Xs)
 # matrix involved in the OT problem. The cost of transporting a source sample
 # of class A onto a target sample of class B != A is set to infinite, or a
 # very large value
+
+# note that in the present case we consider that all the target samples are
+# labeled. For daily applications, some target sample might not have labels,
+# in this case the element of yt corresponding to these samples should be
+# filled with -1.
+
+# Warning: we recall that -1 cannot be used as a class label
 
 
 ##############################################################################
@@ -91,6 +95,7 @@ pl.tight_layout()
 
 # the optimal coupling in the semi-supervised DA case will exhibit " shape
 # similar" to the cost matrix, (block diagonal matrix)
+
 
 ##############################################################################
 # Fig 2 : plots optimal couplings for the different methods
