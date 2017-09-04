@@ -989,7 +989,7 @@ class BaseTransport(BaseEstimator):
 
                 # assumes labeled source samples occupy the first rows
                 # and labeled target samples occupy the first columns
-                classes = np.unique(ys)
+                classes = [c for c in np.unique(ys) if c != -1]
                 for c in classes:
                     idx_s = np.where((ys != c) & (ys != -1))
                     idx_t = np.where(yt == c)
