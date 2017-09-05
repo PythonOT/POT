@@ -23,8 +23,12 @@
 using namespace lemon;
 typedef unsigned int node_id_type;
 
+enum ProblemType {
+    INFEASIBLE,
+    OPTIMAL,
+    UNBOUNDED
+};
 
-void EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G,
-              double* alpha, double* beta, double *cost, int max_iter);
+int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int max_iter);
 
 #endif

@@ -22,34 +22,36 @@ Some demonstrations (both in Python and Jupyter Notebook format) are available i
 
 ## Installation
 
-The Library has been tested on Linux and MacOSX. It requires a C++ compiler for using the EMD solver and rely on the following Python modules:
+The library has been tested on Linux, MacOSX and Windows. It requires a C++ compiler for using the EMD solver and relies on the following Python modules:
 
 - Numpy (>=1.11)
 - Scipy (>=0.17)
 - Cython (>=0.23)
 - Matplotlib (>=1.5)
 
+#### Pip installation
 
-Under debian based linux the dependencies can be installed with
+You can install the toolbox through PyPI with:
 ```
-sudo apt-get install python-numpy python-scipy python-matplotlib cython
+pip install POT
 ```
-
-To install the library, you can install it locally (after downloading it) on you machine using
+or get the very latest version by downloading it and then running:
 ```
 python setup.py install --user # for user install (no root)
 ```
 
-The toolbox is also available on PyPI with a possibly slightly older version. You can install it with:
+#### Anaconda installation with conda-forge
+
+If you use the Anaconda python distribution, POT is available in [conda-forge](https://conda-forge.org). To install it and the required dependencies:
 ```
-pip install POT
+conda install -c conda-forge pot
 ```
 
+#### Post installation check
 After a correct installation, you should be able to import the module without errors:
 ```python
 import ot
 ```
-
 Note that for easier access the module is name ot instead of pot.
 
 
@@ -130,9 +132,12 @@ The contributors to this library are:
 
 * [Rémi Flamary](http://remi.flamary.com/)
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
+* [Alexandre Gramfort](http://alexandre.gramfort.net/)
 * [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/)
 * [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/) (Mapping estimation)
 * [Léo Gautheron](https://github.com/aje) (GPU implementation)
+* [Nathalie Gayraud](https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1)
+* [Stanislas Chambon](https://slasnista.github.io/)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
@@ -140,6 +145,21 @@ This toolbox benefit a lot from open source research and we would like to thank 
 * [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) ( C++ code for EMD)
 * [Antoine Rolet](https://arolet.github.io/) ( Mex file for EMD )
 * [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
+
+
+## Contributions and code of conduct
+
+Every contribution is welcome and should respect the [contribution guidelines](CONTRIBUTING.md). Each member of the project is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).
+
+## Support
+
+You can ask questions and join the development discussion:
+
+* On the [POT Slack channel](https://pot-toolbox.slack.com)
+* On the POT [mailing list](https://mail.python.org/mm3/mailman3/lists/pot.python.org/)
+
+
+You can also post bug reports and feature requests in Github issues. Make sure to read our [guidelines](CONTRIBUTING.md) first.
 
 ## References
 

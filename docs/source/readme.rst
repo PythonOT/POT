@@ -28,8 +28,8 @@ available in the examples folder.
 Installation
 ------------
 
-The Library has been tested on Linux and MacOSX. It requires a C++
-compiler for using the EMD solver and rely on the following Python
+The library has been tested on Linux, MacOSX and Windows. It requires a
+C++ compiler for using the EMD solver and relies on the following Python
 modules:
 
 -  Numpy (>=1.11)
@@ -37,25 +37,34 @@ modules:
 -  Cython (>=0.23)
 -  Matplotlib (>=1.5)
 
-Under debian based linux the dependencies can be installed with
+Pip installation
+^^^^^^^^^^^^^^^^
+
+You can install the toolbox through PyPI with:
 
 ::
 
-    sudo apt-get install python-numpy python-scipy python-matplotlib cython
+    pip install POT
 
-To install the library, you can install it locally (after downloading
-it) on you machine using
+or get the very latest version by downloading it and then running:
 
 ::
 
     python setup.py install --user # for user install (no root)
 
-The toolbox is also available on PyPI with a possibly slightly older
-version. You can install it with:
+Anaconda installation with conda-forge
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you use the Anaconda python distribution, POT is available in
+`conda-forge <https://conda-forge.org>`__. To install it and the
+required dependencies:
 
 ::
 
-    pip install POT
+    conda install -c conda-forge pot
+
+Post installation check
+^^^^^^^^^^^^^^^^^^^^^^^
 
 After a correct installation, you should be able to import the module
 without errors:
@@ -109,6 +118,7 @@ Short examples
        # a,b are 1D histograms (sum to 1 and positive)
        # M is the ground cost matrix
        Wd=ot.emd2(a,b,M) # exact linear program
+       Wd_reg=ot.sinkhorn2(a,b,M,reg) # entropic regularized OT
        # if b is a matrix compute all distances to a and return a vector
 
 -  Compute OT matrix
@@ -117,8 +127,8 @@ Short examples
 
        # a,b are 1D histograms (sum to 1 and positive)
        # M is the ground cost matrix
-       Totp=ot.emd(a,b,M) # exact linear program
-       Totp_reg=ot.sinkhorn(a,b,M,reg) # entropic regularized OT
+       T=ot.emd(a,b,M) # exact linear program
+       T_reg=ot.sinkhorn(a,b,M,reg) # entropic regularized OT
 
 -  Compute Wasserstein barycenter
 
@@ -172,6 +182,7 @@ The contributors to this library are:
 
 -  `Rémi Flamary <http://remi.flamary.com/>`__
 -  `Nicolas Courty <http://people.irisa.fr/Nicolas.Courty/>`__
+-  `Alexandre Gramfort <http://alexandre.gramfort.net/>`__
 -  `Laetitia Chapel <http://people.irisa.fr/Laetitia.Chapel/>`__
 -  `Michael Perrot <http://perso.univ-st-etienne.fr/pem82055/>`__
    (Mapping estimation)
@@ -188,6 +199,25 @@ languages):
 -  `Antoine Rolet <https://arolet.github.io/>`__ ( Mex file for EMD )
 -  `Marco Cuturi <http://marcocuturi.net/>`__ (Sinkhorn Knopp in
    Matlab/Cuda)
+
+Contributions and code of conduct
+---------------------------------
+
+Every contribution is welcome and should respect the `contribution
+guidelines <CONTRIBUTING.md>`__. Each member of the project is expected
+to follow the `code of conduct <CODE_OF_CONDUCT.md>`__.
+
+Support
+-------
+
+You can ask questions and join the development discussion:
+
+-  On the `POT Slack channel <https://pot-toolbox.slack.com>`__
+-  On the POT `mailing
+   list <https://mail.python.org/mm3/mailman3/lists/pot.python.org/>`__
+
+You can also post bug reports and feature requests in Github issues.
+Make sure to read our `guidelines <CONTRIBUTING.md>`__ first.
 
 References
 ----------

@@ -97,3 +97,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Mac stuff
+.DS_Store
+
+# coverage output folder
+cov_html/
