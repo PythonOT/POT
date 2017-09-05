@@ -49,6 +49,7 @@
 #include <vector>
 #include <limits>
 #include <algorithm>
+#include <cstdio>
 #ifdef HASHMAP
 #include <hash_map>
 #else
