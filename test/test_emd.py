@@ -26,7 +26,6 @@ b=gauss(m,m=mean2,s=10)
 
 # loss matrix
 M=ot.dist(x.reshape((-1,1)), y.reshape((-1,1))) ** (1./2)
-print M[0,:]
 #M/=M.max()
 
 #%%
