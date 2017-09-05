@@ -168,6 +168,6 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(), numItermax=100000):
     # res = [emd2_c(a, b[:, i].copy(), M, numItermax) for i in range(nb)]
 
     def f(b):
-        return emd2_c(a,b,M, max_iter)[0]
+        return emd2_c(a,b,M, numItermax)[0]
     res= parmap(f, [b[:,i] for i in range(nb)],processes)
     return np.array(res)
