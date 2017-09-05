@@ -63,18 +63,24 @@ def test_sinkhorn_lpl1_transport_class():
     transp_Xs = clf.fit_transform(Xs=Xs, ys=ys, Xt=Xt)
     assert_equal(transp_Xs.shape, Xs.shape)
 
-    # test semi supervised mode
-    clf = ot.da.SinkhornLpl1Transport()
-    clf.fit(Xs=Xs, ys=ys, Xt=Xt)
-    n_unsup = np.sum(clf.cost_)
+    # test unsupervised vs semi-supervised mode
+    clf_unsup = ot.da.SinkhornTransport()
+    clf_unsup.fit(Xs=Xs, Xt=Xt)
+    n_unsup = np.sum(clf_unsup.cost_)
 
-    # test semi supervised mode
-    clf = ot.da.SinkhornLpl1Transport()
-    clf.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
-    assert_equal(clf.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
-    n_semisup = np.sum(clf.cost_)
+    clf_semi = ot.da.SinkhornTransport()
+    clf_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+    assert_equal(clf_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+    n_semisup = np.sum(clf_semi.cost_)
 
+    # check that the cost matrix norms are indeed different
     assert n_unsup != n_semisup, "semisupervised mode not working"
+
+    # check that the coupling forbids mass transport between labeled source
+    # and labeled target samples
+    mass_semi = np.sum(
+        clf_semi.coupling_[clf_semi.cost_ == clf_semi.limit_max])
+    assert mass_semi == 0, "semisupervised mode not working"
 
 
 def test_sinkhorn_l1l2_transport_class():
@@ -129,18 +135,24 @@ def test_sinkhorn_l1l2_transport_class():
     transp_Xs = clf.fit_transform(Xs=Xs, ys=ys, Xt=Xt)
     assert_equal(transp_Xs.shape, Xs.shape)
 
-    # test semi supervised mode
-    clf = ot.da.SinkhornL1l2Transport()
-    clf.fit(Xs=Xs, ys=ys, Xt=Xt)
-    n_unsup = np.sum(clf.cost_)
+    # test unsupervised vs semi-supervised mode
+    clf_unsup = ot.da.SinkhornTransport()
+    clf_unsup.fit(Xs=Xs, Xt=Xt)
+    n_unsup = np.sum(clf_unsup.cost_)
 
-    # test semi supervised mode
-    clf = ot.da.SinkhornL1l2Transport()
-    clf.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
-    assert_equal(clf.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
-    n_semisup = np.sum(clf.cost_)
+    clf_semi = ot.da.SinkhornTransport()
+    clf_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+    assert_equal(clf_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+    n_semisup = np.sum(clf_semi.cost_)
 
+    # check that the cost matrix norms are indeed different
     assert n_unsup != n_semisup, "semisupervised mode not working"
+
+    # check that the coupling forbids mass transport between labeled source
+    # and labeled target samples
+    mass_semi = np.sum(
+        clf_semi.coupling_[clf_semi.cost_ == clf_semi.limit_max])
+    assert mass_semi == 0, "semisupervised mode not working"
 
     # check everything runs well with log=True
     clf = ot.da.SinkhornL1l2Transport(log=True)
@@ -200,18 +212,24 @@ def test_sinkhorn_transport_class():
     transp_Xs = clf.fit_transform(Xs=Xs, Xt=Xt)
     assert_equal(transp_Xs.shape, Xs.shape)
 
-    # test semi supervised mode
-    clf = ot.da.SinkhornTransport()
-    clf.fit(Xs=Xs, Xt=Xt)
-    n_unsup = np.sum(clf.cost_)
+    # test unsupervised vs semi-supervised mode
+    clf_unsup = ot.da.SinkhornTransport()
+    clf_unsup.fit(Xs=Xs, Xt=Xt)
+    n_unsup = np.sum(clf_unsup.cost_)
 
-    # test semi supervised mode
-    clf = ot.da.SinkhornTransport()
-    clf.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
-    assert_equal(clf.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
-    n_semisup = np.sum(clf.cost_)
+    clf_semi = ot.da.SinkhornTransport()
+    clf_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+    assert_equal(clf_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+    n_semisup = np.sum(clf_semi.cost_)
 
+    # check that the cost matrix norms are indeed different
     assert n_unsup != n_semisup, "semisupervised mode not working"
+
+    # check that the coupling forbids mass transport between labeled source
+    # and labeled target samples
+    mass_semi = np.sum(
+        clf_semi.coupling_[clf_semi.cost_ == clf_semi.limit_max])
+    assert mass_semi == 0, "semisupervised mode not working"
 
     # check everything runs well with log=True
     clf = ot.da.SinkhornTransport(log=True)
@@ -270,18 +288,24 @@ def test_emd_transport_class():
     transp_Xs = clf.fit_transform(Xs=Xs, Xt=Xt)
     assert_equal(transp_Xs.shape, Xs.shape)
 
-    # test semi supervised mode
-    clf = ot.da.EMDTransport()
-    clf.fit(Xs=Xs, Xt=Xt)
-    n_unsup = np.sum(clf.cost_)
+    # test unsupervised vs semi-supervised mode
+    clf_unsup = ot.da.SinkhornTransport()
+    clf_unsup.fit(Xs=Xs, Xt=Xt)
+    n_unsup = np.sum(clf_unsup.cost_)
 
-    # test semi supervised mode
-    clf = ot.da.EMDTransport()
-    clf.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
-    assert_equal(clf.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
-    n_semisup = np.sum(clf.cost_)
+    clf_semi = ot.da.SinkhornTransport()
+    clf_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+    assert_equal(clf_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+    n_semisup = np.sum(clf_semi.cost_)
 
+    # check that the cost matrix norms are indeed different
     assert n_unsup != n_semisup, "semisupervised mode not working"
+
+    # check that the coupling forbids mass transport between labeled source
+    # and labeled target samples
+    mass_semi = np.sum(
+        clf_semi.coupling_[clf_semi.cost_ == clf_semi.limit_max])
+    assert mass_semi == 0, "semisupervised mode not working"
 
 
 def test_mapping_transport_class():
