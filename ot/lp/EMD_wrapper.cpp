@@ -18,8 +18,7 @@
 int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
                 double* alpha, double* beta, double *cost, int max_iter)  {
 // beware M and C anre strored in row major C style!!!
-  int n, m, i, cur;
-  double  max;
+    int n, m, i, cur;
 
     typedef FullBipartiteDigraph Digraph;
   DIGRAPH_TYPEDEFS(FullBipartiteDigraph);
