@@ -68,8 +68,6 @@ def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mod
     if not len(b):
         b=np.ones((n2,))/n2
 
-    print alpha.size
-    print beta.size
     # calling the function
     EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data,
                 <double*> alpha.data, <double*> beta.data, <double*> &cost, maxiter)
