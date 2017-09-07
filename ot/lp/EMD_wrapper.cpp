@@ -29,14 +29,18 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
         double val=*(X+i);
         if (val>0) {
             n++;
-        }
+        }else if(val<0){
+			return INFEASIBLE;
+		}
     }
     m=0;
     for (int i=0; i<n2; i++) {
         double val=*(Y+i);
         if (val>0) {
             m++;
-        }
+        }else if(val<0){
+			return INFEASIBLE;
+		}
     }
 
     // Define the graph
@@ -83,16 +87,7 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
     // Solve the problem with the network simplex algorithm
 
     int ret=net.run();
-    if (ret!=(int)net.OPTIMAL) {
-        if (ret==(int)net.INFEASIBLE) {
-            std::cout << "Infeasible problem";
-        }
-        if (ret==(int)net.UNBOUNDED)
-        {
-            std::cout << "Unbounded problem";
-        }
-    } else
-    {
+    if (ret==(int)net.OPTIMAL || ret==(int)net.MAX_ITER_REACHED) {
         *cost = 0;
         Arc a; di.first(a);
         for (; a != INVALID; di.next(a)) {
@@ -105,7 +100,7 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
             *(beta + indJ[j-n]) = net.potential(j);
         }
 
-    };
+    }
 
 
     return ret;

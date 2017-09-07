@@ -34,7 +34,8 @@
 #endif
 
 
-#define EPSILON 10*2.2204460492503131e-016
+#define EPSILON 2.2204460492503131e-15
+#define _EPSILON 1e-8
 #define MAX_DEBUG_ITER 100000
 
 
@@ -260,7 +261,9 @@ namespace lemon {
             /// The objective function of the problem is unbounded, i.e.
             /// there is a directed cycle having negative total cost and
             /// infinite upper bound.
-            UNBOUNDED
+            UNBOUNDED,
+			/// The maximum number of iteration has been reached
+			MAX_ITER_REACHED
         };
 
         /// \brief Constants for selecting the type of the supply constraints.
@@ -683,7 +686,7 @@ namespace lemon {
         /// \see resetParams(), reset()
         ProblemType run() {
 #if DEBUG_LVL>0
-            std::cout << "OPTIMAL = " << OPTIMAL << "\nINFEASIBLE = " << INFEASIBLE << "nUNBOUNDED = " << UNBOUNDED << "\n";
+            std::cout << "OPTIMAL = " << OPTIMAL << "\nINFEASIBLE = " << INFEASIBLE << "\nUNBOUNDED = " << UNBOUNDED << "\nMAX_ITER_REACHED" << MAX_ITER_REACHED\n";
 #endif
 
             if (!init()) return INFEASIBLE;
@@ -941,15 +944,15 @@ namespace lemon {
         // Initialize internal data structures
         bool init() {
             if (_node_num == 0) return false;
-            /*
+            
             // Check the sum of supply values
             _sum_supply = 0;
             for (int i = 0; i != _node_num; ++i) {
                 _sum_supply += _supply[i];
             }
-            if ( !((_stype == GEQ && _sum_supply <= _epsilon ) ||
-                   (_stype == LEQ && _sum_supply >= -_epsilon )) ) return false;
-            */
+            if ( fabs(_sum_supply) > _EPSILON ) return false;
+            
+			_sum_supply = 0;
 
             // Initialize artifical cost
             Cost ART_COST;
@@ -1416,13 +1419,11 @@ namespace lemon {
         ProblemType start() {
             PivotRuleImpl pivot(*this);
             double prevCost=-1;
+			ProblemType retVal = OPTIMAL;
 
             // Perform heuristic initial pivots
             if (!initialPivots()) return UNBOUNDED;
 
-#if DEBUG_LVL>0
-            int niter=0;
-#endif
             int iter_number=0;
             //pivot.setDantzig(true);
             // Execute the Network Simplex algorithm
@@ -1431,12 +1432,13 @@ namespace lemon {
                     char errMess[1000];
                     sprintf( errMess, "RESULT MIGHT BE INACURATE\nMax number of iteration reached, currently \%d. Sometimes iterations go on in cycle even though the solution has been reached, to check if it's the case here have a look at the minimal reduced cost. If it is very close to machine precision, you might actually have the correct solution, if not try setting the maximum number of iterations a bit higher\n",iter_number );
                     std::cerr << errMess;
+					retVal = MAX_ITER_REACHED;
                     break;
                 }
 #if DEBUG_LVL>0
-                if(niter>MAX_DEBUG_ITER)
+                if(iter_number>MAX_DEBUG_ITER)
                     break;
-                if(++niter%1000==0||niter%1000==1){
+                if(iter_number%1000==0||iter_number%1000==1){
                     double curCost=totalCost();
                     double sumFlow=0;
                     double a;
@@ -1445,7 +1447,7 @@ namespace lemon {
                     for (int i=0; i<_flow.size(); i++) {
                         sumFlow+=_state[i]*_flow[i];
                     }
-                    std::cout << "Sum of the flow " << std::setprecision(20) << sumFlow << "\n" << niter << " iterations, current cost=" << curCost << "\nReduced cost=" << _state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -_pi[_target[in_arc]]) << "\nPrecision = "<< -EPSILON*(a) << "\n";
+                    std::cout << "Sum of the flow " << std::setprecision(20) << sumFlow << "\n" << iter_number << " iterations, current cost=" << curCost << "\nReduced cost=" << _state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -_pi[_target[in_arc]]) << "\nPrecision = "<< -EPSILON*(a) << "\n";
                     std::cout << "Arc in = (" << _node_id(_source[in_arc]) << ", " << _node_id(_target[in_arc]) <<")\n";
                     std::cout << "Supplies = (" << _supply[_source[in_arc]] << ", " << _supply[_target[in_arc]] << ")\n";
                     std::cout << _cost[in_arc] << "\n";
@@ -1503,15 +1505,17 @@ namespace lemon {
             std::cout << "Sum of the flow " << sumFlow << "\n"<< niter <<" iterations, current cost=" << totalCost() << "\n";
 #endif
             // Check feasibility
-            for (int e = _search_arc_num; e != _all_arc_num; ++e) {
-                if (_flow[e] != 0){
-                    if (abs(_flow[e]) > EPSILON)
-                        return INFEASIBLE;
-                    else
-                        _flow[e]=0;
+			if( retVal == OPTIMAL){
+                for (int e = _search_arc_num; e != _all_arc_num; ++e) {
+                    if (_flow[e] != 0){
+                        if (abs(_flow[e]) > EPSILON)
+                            return INFEASIBLE;
+                        else
+                            _flow[e]=0;
 
+                    }
                 }
-            }
+			}
 
             // Shift potentials to meet the requirements of the GEQ/LEQ type
             // optimality conditions
@@ -1537,7 +1541,7 @@ namespace lemon {
                 }
             }
 
-            return OPTIMAL;
+            return retVal;
         }
 
     }; //class NetworkSimplexSimple

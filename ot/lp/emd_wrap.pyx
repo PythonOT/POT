@@ -7,6 +7,7 @@ Cython linker with C solver
 #
 # License: MIT License
 
+import warnings
 import numpy as np
 cimport numpy as np
 
@@ -15,14 +16,14 @@ cimport cython
 
 
 cdef extern from "EMD.h":
-    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int max_iter)
-    cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED
+    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int numItermax)
+    cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M, int max_iter):
+def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M, int numItermax):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
 
@@ -49,7 +50,7 @@ def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mod
         target histogram
     M : (ns,nt) ndarray, float64
         loss matrix
-    max_iter : int
+    numItermax : int
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
 
@@ -76,18 +77,20 @@ def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mod
         b=np.ones((n2,))/n2
 
     # calling the function
-    cdef int resultSolver = EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+    cdef int resultSolver = EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, numItermax)
     if resultSolver != OPTIMAL:
         if resultSolver == INFEASIBLE:
-            print("Problem infeasible. Try to increase numItermax.")
+            warnings.warn("Problem infeasible. Check that a and b are in the simplex")
         elif resultSolver == UNBOUNDED:
-            print("Problem unbounded")
+            warnings.warn("Problem unbounded")
+        elif resultSolver == MAX_ITER_REACHED:
+            warnings.warn("numItermax reached before optimality. Try to increase numItermax.")
 
     return G, alpha, beta
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd2_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M, int max_iter):
+def emd2_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M, int numItermax):
     """
         Solves the Earth Movers distance problem and returns the optimal transport loss
 
@@ -114,7 +117,7 @@ def emd2_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mo
         target histogram
     M : (ns,nt) ndarray, float64
         loss matrix
-    max_iter : int
+    numItermax : int
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
 
@@ -140,12 +143,14 @@ def emd2_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mo
     if not len(b):
         b=np.ones((n2,))/n2
     # calling the function
-    cdef int resultSolver = EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+    cdef int resultSolver = EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, numItermax)
     if resultSolver != OPTIMAL:
         if resultSolver == INFEASIBLE:
-            print("Problem infeasible. Try to inscrease numItermax.")
+            warnings.warn("Problem infeasible. Check that a and b are in the simplex")
         elif resultSolver == UNBOUNDED:
-            print("Problem unbounded")
+            warnings.warn("Problem unbounded")
+        elif resultSolver == MAX_ITER_REACHED:
+            warnings.warn("numItermax reached before optimality. Try to increase numItermax.")
 
     return cost, alpha, beta
 
