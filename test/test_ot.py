@@ -140,17 +140,17 @@ def test_warnings():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         print('Computing {} EMD '.format(1))
-        G = ot.emd(a, b, M, numItermax=1)
+        ot.emd(a, b, M, numItermax=1)
         assert "numItermax" in str(w[-1].message)
         assert len(w) == 1
         a[0] = 100
         print('Computing {} EMD '.format(2))
-        G = ot.emd(a, b, M)
+        ot.emd(a, b, M)
         assert "infeasible" in str(w[-1].message)
         assert len(w) == 2
         a[0] = -1
         print('Computing {} EMD '.format(2))
-        G = ot.emd(a, b, M)
+        ot.emd(a, b, M)
         assert "infeasible" in str(w[-1].message)
         assert len(w) == 3
 
