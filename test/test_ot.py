@@ -4,11 +4,12 @@
 #
 # License: MIT License
 
+import warnings
+
 import numpy as np
 
 import ot
 from ot.datasets import get_1D_gauss as gauss
-import warnings
 
 
 def test_doctest():
@@ -100,6 +101,21 @@ def test_emd2_multi():
 
     np.testing.assert_allclose(emd1, emdn)
 
+    # emd loss multipro proc with log
+    ot.tic()
+    emdn = ot.emd2(a, b, M, log=True)
+    ot.toc('multi proc : {} s')
+
+    for i in range(len(emdn)):
+        emd = emdn[i]
+        log = emd[1]
+        cost = emd[0]
+        check_duality_gap(a, b[:, i], M, log['G'], log['u'], log['v'], cost)
+        emdn[i] = cost
+
+    emdn = np.array(emdn)
+    np.testing.assert_allclose(emd1, emdn)
+
 
 def test_warnings():
     n = 100  # nb bins
@@ -119,32 +135,22 @@ def test_warnings():
 
     # loss matrix
     M = ot.dist(x.reshape((-1, 1)), y.reshape((-1, 1))) ** (1. / 2)
-    # M/=M.max()
-
-    # %%
 
     print('Computing {} EMD '.format(1))
     with warnings.catch_warnings(record=True) as w:
-        # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
-        # Trigger a warning.
         print('Computing {} EMD '.format(1))
         G = ot.emd(a, b, M, numItermax=1)
-        # Verify some things
         assert "numItermax" in str(w[-1].message)
         assert len(w) == 1
-        # Trigger a warning.
-        a[0]=100
+        a[0] = 100
         print('Computing {} EMD '.format(2))
         G = ot.emd(a, b, M)
-        # Verify some things
         assert "infeasible" in str(w[-1].message)
         assert len(w) == 2
-        # Trigger a warning.
-        a[0]=-1
+        a[0] = -1
         print('Computing {} EMD '.format(2))
         G = ot.emd(a, b, M)
-        # Verify some things
         assert "infeasible" in str(w[-1].message)
         assert len(w) == 3
 
@@ -167,9 +173,6 @@ def test_dual_variables():
 
     # loss matrix
     M = ot.dist(x.reshape((-1, 1)), y.reshape((-1, 1))) ** (1. / 2)
-    # M/=M.max()
-
-    # %%
 
     print('Computing {} EMD '.format(1))
 
@@ -178,26 +181,28 @@ def test_dual_variables():
     G, log = ot.emd(a, b, M, log=True)
     ot.toc('1 proc : {} s')
 
-    cost1 = (G * M).sum()
-    cost_dual = np.vdot(a, log['u']) + np.vdot(b, log['v'])
-
     ot.tic()
     G2 = ot.emd(b, a, np.ascontiguousarray(M.T))
     ot.toc('1 proc : {} s')
 
-    cost2 = (G2 * M.T).sum()
+    cost1 = (G * M).sum()
+    # Check symmetry
+    np.testing.assert_array_almost_equal(cost1, (M * G2.T).sum())
+    # Check with closed-form solution for gaussians
+    np.testing.assert_almost_equal(cost1, np.abs(mean1 - mean2))
 
     # Check that both cost computations are equivalent
     np.testing.assert_almost_equal(cost1, log['cost'])
+    check_duality_gap(a, b, M, G, log['u'], log['v'], log['cost'])
+
+
+def check_duality_gap(a, b, M, G, u, v, cost):
+    cost_dual = np.vdot(a, u) + np.vdot(b, v)
     # Check that dual and primal cost are equal
-    np.testing.assert_almost_equal(cost1, cost_dual)
-    # Check symmetry
-    np.testing.assert_almost_equal(cost1, cost2)
-    # Check with closed-form solution for gaussians
-    np.testing.assert_almost_equal(cost1, np.abs(mean1 - mean2))
+    np.testing.assert_almost_equal(cost_dual, cost)
 
     [ind1, ind2] = np.nonzero(G)
 
     # Check that reduced cost is zero on transport arcs
-    np.testing.assert_array_almost_equal((M - log['u'].reshape(-1, 1) - log['v'].reshape(1, -1))[ind1, ind2],
+    np.testing.assert_array_almost_equal((M - u.reshape(-1, 1) - v.reshape(1, -1))[ind1, ind2],
                                          np.zeros(ind1.size))
