@@ -95,13 +95,13 @@ def emd(a, b, M, num_iter_max=100000, log=False):
         b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
 
     G, cost, u, v, result_code = emd_c(a, b, M, num_iter_max)
-    resultCodeString = check_result(result_code)
+    result_code_string = check_result(result_code)
     if log:
         log = {}
         log['cost'] = cost
         log['u'] = u
         log['v'] = v
-        log['warning'] = resultCodeString
+        log['warning'] = result_code_string
         log['result_code'] = result_code
         return G, log
     return G
@@ -184,12 +184,12 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(), num_iter_max=100000, lo
     if log:
         def f(b):
             G, cost, u, v, resultCode = emd_c(a, b, M, num_iter_max)
-            resultCodeString = check_result(resultCode)
+            result_code_string = check_result(resultCode)
             log = {}
             log['G'] = G
             log['u'] = u
             log['v'] = v
-            log['warning'] = resultCodeString
+            log['warning'] = result_code_string
             log['result_code'] = resultCode
             return [cost, log]
     else:
