@@ -7,18 +7,31 @@ Cython linker with C solver
 #
 # License: MIT License
 
-import warnings
 import numpy as np
 cimport numpy as np
 
 cimport cython
 
+import warnings
 
 
 cdef extern from "EMD.h":
     int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int numItermax)
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
+
+def checkResult(resultCode):
+    if resultCode == OPTIMAL:
+        return None
+
+    if resultCode == INFEASIBLE:
+        message = "Problem infeasible. Check that a and b are in the simplex"
+    elif resultCode == UNBOUNDED:
+        message = "Problem unbounded"
+    elif resultCode == MAX_ITER_REACHED:
+        message = "numItermax reached before optimality. Try to increase numItermax."
+    warnings.warn(message)
+    return message
 
 
 @cython.boundscheck(False)
@@ -77,13 +90,6 @@ def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mod
         b=np.ones((n2,))/n2
 
     # calling the function
-    cdef int resultSolver = EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, numItermax)
-    if resultSolver != OPTIMAL:
-        if resultSolver == INFEASIBLE:
-            warnings.warn("Problem infeasible. Check that a and b are in the simplex")
-        elif resultSolver == UNBOUNDED:
-            warnings.warn("Problem unbounded")
-        elif resultSolver == MAX_ITER_REACHED:
-            warnings.warn("numItermax reached before optimality. Try to increase numItermax.")
+    cdef int resultCode = EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, numItermax)
 
-    return G, cost, alpha, beta
+    return G, cost, alpha, beta, resultCode
