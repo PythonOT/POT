@@ -201,7 +201,6 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(), max_iter=100000, log=Fa
     if len(b.shape) == 1:
         return f(b)
     nb = b.shape[1]
-    # res = [emd2_c(a, b[:, i].copy(), M, numItermax) for i in range(nb)]
 
     res = parmap(f, [b[:, i] for i in range(nb)], processes)
     return res

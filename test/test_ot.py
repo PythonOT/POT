@@ -141,7 +141,7 @@ def test_warnings():
         warnings.simplefilter("always")
         print('Computing {} EMD '.format(1))
         ot.emd(a, b, M, max_iter=1)
-        assert "numItermax" in str(w[-1].message)
+        assert "max_iter" in str(w[-1].message)
         assert len(w) == 1
         a[0] = 100
         print('Computing {} EMD '.format(2))
