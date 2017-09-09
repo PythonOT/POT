@@ -29,7 +29,7 @@ def check_result(result_code):
     elif result_code == UNBOUNDED:
         message = "Problem unbounded"
     elif result_code == MAX_ITER_REACHED:
-        message = "max_iter reached before optimality. Try to increase max_iter."
+        message = "num_iter_max reached before optimality. Try to increase num_iter_max."
     warnings.warn(message)
     return message
 
