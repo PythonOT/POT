@@ -20,15 +20,15 @@ cdef extern from "EMD.h":
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
 
-def checkResult(resultCode):
-    if resultCode == OPTIMAL:
+def check_result(result_code):
+    if result_code == OPTIMAL:
         return None
 
-    if resultCode == INFEASIBLE:
+    if result_code == INFEASIBLE:
         message = "Problem infeasible. Check that a and b are in the simplex"
-    elif resultCode == UNBOUNDED:
+    elif result_code == UNBOUNDED:
         message = "Problem unbounded"
-    elif resultCode == MAX_ITER_REACHED:
+    elif result_code == MAX_ITER_REACHED:
         message = "numItermax reached before optimality. Try to increase numItermax."
     warnings.warn(message)
     return message
@@ -36,7 +36,7 @@ def checkResult(resultCode):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mode="c"]  b,np.ndarray[double, ndim=2, mode="c"]  M, int numItermax):
+def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int num_iter_max):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
 
@@ -63,7 +63,7 @@ def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mod
         target histogram
     M : (ns,nt) ndarray, float64
         loss matrix
-    numItermax : int
+    num_iter_max : int
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
 
@@ -90,6 +90,6 @@ def emd_c( np.ndarray[double, ndim=1, mode="c"] a,np.ndarray[double, ndim=1, mod
         b=np.ones((n2,))/n2
 
     # calling the function
-    cdef int resultCode = EMD_wrap(n1,n2,<double*> a.data,<double*> b.data,<double*> M.data,<double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, numItermax)
+    cdef int result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, num_iter_max)
 
-    return G, cost, alpha, beta, resultCode
+    return G, cost, alpha, beta, result_code

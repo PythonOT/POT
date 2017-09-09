@@ -140,7 +140,7 @@ def test_warnings():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         print('Computing {} EMD '.format(1))
-        ot.emd(a, b, M, numItermax=1)
+        ot.emd(a, b, M, num_iter_max=1)
         assert "numItermax" in str(w[-1].message)
         assert len(w) == 1
         a[0] = 100
