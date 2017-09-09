@@ -131,7 +131,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(), num_iter_max=100000, lo
         Target histogram (uniform weigth if empty list)
     M : (ns,nt) ndarray, float64
         loss matrix
-    max_iter : int, optional (default=100000)
+    num_iter_max : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
 
