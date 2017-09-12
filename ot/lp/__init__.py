@@ -16,7 +16,7 @@ from .emd_wrap import emd_c, check_result
 from ..utils import parmap
 
 
-def emd(a, b, M, num_iter_max=100000, log=False):
+def emd(a, b, M, numItermax=100000, log=False):
     """Solves the Earth Movers distance problem and returns the OT matrix
 
 
@@ -41,7 +41,7 @@ def emd(a, b, M, num_iter_max=100000, log=False):
         Target histogram (uniform weigth if empty list)
     M : (ns,nt) ndarray, float64
         loss matrix
-    num_iter_max : int, optional (default=100000)
+    numItermax : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
     log: boolean, optional (default=False)
@@ -94,7 +94,7 @@ def emd(a, b, M, num_iter_max=100000, log=False):
     if len(b) == 0:
         b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
 
-    G, cost, u, v, result_code = emd_c(a, b, M, num_iter_max)
+    G, cost, u, v, result_code = emd_c(a, b, M, numItermax)
     result_code_string = check_result(result_code)
     if log:
         log = {}
@@ -107,7 +107,7 @@ def emd(a, b, M, num_iter_max=100000, log=False):
     return G
 
 
-def emd2(a, b, M, processes=multiprocessing.cpu_count(), num_iter_max=100000, log=False, return_matrix=False):
+def emd2(a, b, M, processes=multiprocessing.cpu_count(), numItermax=100000, log=False, return_matrix=False):
     """Solves the Earth Movers distance problem and returns the loss
 
     .. math::
@@ -131,7 +131,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(), num_iter_max=100000, lo
         Target histogram (uniform weigth if empty list)
     M : (ns,nt) ndarray, float64
         loss matrix
-    num_iter_max : int, optional (default=100000)
+    numItermax : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
     log: boolean, optional (default=False)
@@ -188,7 +188,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(), num_iter_max=100000, lo
 
     if log or return_matrix:
         def f(b):
-            G, cost, u, v, resultCode = emd_c(a, b, M, num_iter_max)
+            G, cost, u, v, resultCode = emd_c(a, b, M, numItermax)
             result_code_string = check_result(resultCode)
             log = {}
             if return_matrix:
@@ -200,7 +200,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(), num_iter_max=100000, lo
             return [cost, log]
     else:
         def f(b):
-            G, cost, u, v, result_code = emd_c(a, b, M, num_iter_max)
+            G, cost, u, v, result_code = emd_c(a, b, M, numItermax)
             check_result(result_code)
             return cost
 
