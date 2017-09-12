@@ -40,7 +40,6 @@ def tensor_square_loss(C1, C2, T):
     function as the loss function of Gromow-Wasserstein discrepancy.
 
     Where :
-
         C1 : Metric cost matrix in the source space
         C2 : Metric cost matrix in the target space
         T : A coupling between those two spaces
@@ -61,13 +60,10 @@ def tensor_square_loss(C1, C2, T):
     T : ndarray, shape (ns, nt)
          Coupling between source and target spaces
 
-
     Returns
     -------
     tens : ndarray, shape (ns, nt)
            \mathcal{L}(C1,C2) \otimes T tensor-matrix multiplication result
-
-
     """
 
     C1 = np.asarray(C1, dtype=np.float64)
@@ -119,7 +115,6 @@ def tensor_kl_loss(C1, C2, T):
     T :  ndarray, shape (ns, nt)
          Coupling between source and target spaces
 
-
     Returns
     -------
     tens : ndarray, shape (ns, nt)
@@ -127,7 +122,6 @@ def tensor_kl_loss(C1, C2, T):
 
     References
     ----------
-
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon, "Gromov-Wasserstein averaging of kernel and distance matrices."  International Conference on Machine Learning (ICML). 2016.
 
     """
@@ -159,7 +153,6 @@ def update_square_loss(p, lambdas, T, Cs):
     Updates C according to the L2 Loss kernel with the S Ts couplings
     calculated at each iteration
 
-
     Parameters
     ----------
     p  : ndarray, shape (N,)
@@ -174,8 +167,6 @@ def update_square_loss(p, lambdas, T, Cs):
     ----------
     C : ndarray, shape (nt,nt)
         updated C matrix
-
-
     """
     tmpsum = sum([lambdas[s] * np.dot(T[s].T, Cs[s]).dot(T[s]) for s in range(len(T))])
     ppt = np.outer(p, p)
@@ -202,8 +193,6 @@ def update_kl_loss(p, lambdas, T, Cs):
     ----------
     C : ndarray, shape (ns,ns)
         updated C matrix
-
-
     """
     tmpsum = sum([lambdas[s] * np.dot(T[s].T, Cs[s]).dot(T[s]) for s in range(len(T))])
     ppt = np.outer(p, p)
@@ -229,14 +218,12 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, max_iter=1000, tol=1e-9,
              \GW\geq 0
 
     Where :
-
         C1 : Metric cost matrix in the source space
         C2 : Metric cost matrix in the target space
         p  : distribution in the source space
         q  : distribution in the target space
         L  : loss function to account for the misfit between the similarity matrices
         H  : entropy
-
 
     Parameters
     ----------
@@ -261,13 +248,11 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, max_iter=1000, tol=1e-9,
     log : bool, optional
         record log if True
 
-
     Returns
     -------
     T : ndarray, shape (ns, nt)
         coupling between the two spaces that minimizes :
             \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}-\epsilon(H(T))
-
     """
 
     C1 = np.asarray(C1, dtype=np.float64)
@@ -322,16 +307,13 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon, max_iter=1000, tol=1e-9
     .. math::
         \GW_Dist = \min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}-\epsilon(H(T))
 
-
     Where :
-
         C1 : Metric cost matrix in the source space
         C2 : Metric cost matrix in the target space
         p  : distribution in the source space
         q  : distribution in the target space
         L  : loss function to account for the misfit between the similarity matrices
         H  : entropy
-
 
     Parameters
     ----------
@@ -360,7 +342,6 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon, max_iter=1000, tol=1e-9
     -------
     gw_dist : float
         Gromov-Wasserstein distance
-
     """
 
     if log:
@@ -428,7 +409,6 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon, max_iter=1000, 
     -------
     C : ndarray, shape (N, N)
         Similarity matrix in the barycenter space (permutated arbitrarily)
-
     """
 
     S = len(Cs)
