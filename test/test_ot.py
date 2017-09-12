@@ -103,7 +103,7 @@ def test_emd2_multi():
 
     # emd loss multipro proc with log
     ot.tic()
-    emdn = ot.emd2(a, b, M, log=True)
+    emdn = ot.emd2(a, b, M, log=True, return_matrix=True)
     ot.toc('multi proc : {} s')
 
     for i in range(len(emdn)):
@@ -140,8 +140,8 @@ def test_warnings():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         print('Computing {} EMD '.format(1))
-        ot.emd(a, b, M, num_iter_max=1)
-        assert "num_iter_max" in str(w[-1].message)
+        ot.emd(a, b, M, numItermax=1)
+        assert "numItermax" in str(w[-1].message)
         assert len(w) == 1
         a[0] = 100
         print('Computing {} EMD '.format(2))

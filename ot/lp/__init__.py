@@ -107,7 +107,7 @@ def emd(a, b, M, num_iter_max=100000, log=False):
     return G
 
 
-def emd2(a, b, M, processes=multiprocessing.cpu_count(), num_iter_max=100000, log=False):
+def emd2(a, b, M, processes=multiprocessing.cpu_count(), num_iter_max=100000, log=False, return_matrix=False):
     """Solves the Earth Movers distance problem and returns the loss
 
     .. math::
@@ -134,6 +134,11 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(), num_iter_max=100000, lo
     num_iter_max : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
+    log: boolean, optional (default=False)
+        If True, returns a dictionary containing the cost and dual
+        variables. Otherwise returns only the optimal transportation cost.
+    return_matrix: boolean, optional (default=False)
+        If True, returns the optimal transportation matrix in the log.
 
     Returns
     -------
@@ -181,12 +186,13 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(), num_iter_max=100000, lo
     if len(b) == 0:
         b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
 
-    if log:
+    if log or return_matrix:
         def f(b):
             G, cost, u, v, resultCode = emd_c(a, b, M, num_iter_max)
             result_code_string = check_result(resultCode)
             log = {}
-            log['G'] = G
+            if return_matrix:
+                log['G'] = G
             log['u'] = u
             log['v'] = v
             log['warning'] = result_code_string
