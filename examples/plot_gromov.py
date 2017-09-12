@@ -22,8 +22,9 @@ import ot
 """
 Sample two Gaussian distributions (2D and 3D)
 =============================================
-The Gromov-Wasserstein distance allows to compute distances with samples that do not belong to the same metric space.
-For demonstration purpose, we sample two Gaussian distributions in 2- and 3-dimensional spaces.
+The Gromov-Wasserstein distance allows to compute distances with samples that 
+do not belong to the same metric space. For demonstration purpose, we sample 
+two Gaussian distributions in 2- and 3-dimensional spaces.
 """
 
 n_samples = 30  # nb samples

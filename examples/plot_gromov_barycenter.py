@@ -48,13 +48,10 @@ def smacof_mds(C, dim, max_iter=3000, eps=1e-9):
     eps : float
         relative tolerance w.r.t stress to declare converge
 
-
     Returns
     -------
     npos : ndarray, shape (R, dim)
            Embedded coordinates of the interpolated point cloud (defined with one isometry)
-
-
     """
 
     rng = np.random.RandomState(seed=3)
@@ -91,12 +88,12 @@ def im2mat(I):
     return I.reshape((I.shape[0] * I.shape[1], I.shape[2]))
 
 
-square = spi.imread('../data/carre.png').astype(np.float64) / 256
-circle = spi.imread('../data/rond.png').astype(np.float64) / 256
-triangle = spi.imread('../data/triangle.png').astype(np.float64) / 256
-arrow = spi.imread('../data/coeur.png').astype(np.float64) / 256
+square = spi.imread('../data/square.png').astype(np.float64)[:,:,2] / 256
+cross = spi.imread('../data/cross.png').astype(np.float64)[:,:,2] / 256
+triangle = spi.imread('../data/triangle.png').astype(np.float64)[:,:,2] / 256
+star = spi.imread('../data/star.png').astype(np.float64)[:,:,2] / 256
 
-shapes = [square, circle, triangle, arrow]
+shapes = [square, cross, triangle, star]
 
 S = 4
 xs = [[] for i in range(S)]
