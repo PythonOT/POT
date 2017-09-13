@@ -138,12 +138,12 @@ The contributors to this library are:
 * [Léo Gautheron](https://github.com/aje) (GPU implementation)
 * [Nathalie Gayraud](https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1)
 * [Stanislas Chambon](https://slasnista.github.io/)
+* [Antoine Rolet](https://arolet.github.io/)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
 * [Gabriel Peyré](http://gpeyre.github.io/) (Wasserstein Barycenters in Matlab)
 * [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) ( C++ code for EMD)
-* [Antoine Rolet](https://arolet.github.io/) ( Mex file for EMD )
 * [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
 
 
