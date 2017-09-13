@@ -455,9 +455,9 @@ class SinkhornLpl1Transport(BaseTransport):
         self.xt_ = Xt
 
         self.coupling_ = sinkhorn_lpl1_mm(
-                a=self.mu_s, labels_a=ys, b=self.mu_t, M_GPU=self.cost_,
-                reg=self.reg_e, eta=self.reg_cl, numItermax=self.max_iter,
-                numInnerItermax=self.max_inner_iter, stopInnerThr=self.tol,
-                verbose=self.verbose)
+            a=self.mu_s, labels_a=ys, b=self.mu_t, M_GPU=self.cost_,
+            reg=self.reg_e, eta=self.reg_cl, numItermax=self.max_iter,
+            numInnerItermax=self.max_inner_iter, stopInnerThr=self.tol,
+            verbose=self.verbose)
 
         return self
