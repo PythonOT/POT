@@ -158,7 +158,7 @@ def update_square_loss(p, lambdas, T, Cs):
     Parameters
     ----------
     p  : ndarray, shape (N,)
-         weights in the targeted barycenter
+         masses in the targeted barycenter
     lambdas : list of float
               list of the S spaces' weights
     T : list of S np.ndarray(ns,N)
@@ -401,7 +401,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
          weights in the targeted barycenter
     lambdas : list of float
               list of the S spaces' weights
-    L :  tensor-matrix multiplication function based on specific loss function
+    loss_fun :  tensor-matrix multiplication function based on specific loss function
     update : function(p,lambdas,T,Cs) that updates C according to a specific Kernel
              with the S Ts couplings calculated at each iteration
     epsilon : float
