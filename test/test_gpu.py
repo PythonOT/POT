@@ -4,12 +4,13 @@
 #
 # License: MIT License
 
-import numpy as np
-import ot
 import time
-import pytest
 
-try:  # test if cudamat installed
+import numpy as np
+import pytest
+import ot
+
+try:  # test if cupy is installed
     import ot.gpu
     nogpu = False
 except ImportError:
@@ -30,13 +31,13 @@ def test_gpu_sinkhorn():
         a = rng.rand(n_samples // 4, 100)
         b = rng.rand(n_samples, 100)
         time1 = time.time()
-        transport = ot.da.OTDA_sinkhorn()
-        transport.fit(a, b)
-        G1 = transport.G
+        transport = ot.da.SinkhornTransport()
+        transport.fit(Xs=a, Xt=b)
+        G1 = transport.coupling_
         time2 = time.time()
-        transport = ot.gpu.da.OTDA_sinkhorn()
-        transport.fit(a, b)
-        G2 = transport.G
+        transport = ot.gpu.da.SinkhornTransport()
+        transport.fit(Xs=a, Xt=b)
+        G2 = transport.coupling_
         time3 = time.time()
         print("Normal sinkhorn, time: {:6.2f} sec ".format(time2 - time1))
         describe_res(G1)
@@ -55,19 +56,19 @@ def test_gpu_sinkhorn_lpl1():
         print("min:{:.3E}, max:{:.3E}, mean:{:.3E}, std:{:.3E}"
               .format(np.min(r), np.max(r), np.mean(r), np.std(r)))
 
-    for n_samples in [50, 100, 500]:
+    for n_samples in [50, 5000, 10000]:
         print(n_samples)
         a = rng.rand(n_samples // 4, 100)
         labels_a = np.random.randint(10, size=(n_samples // 4))
         b = rng.rand(n_samples, 100)
         time1 = time.time()
-        transport = ot.da.OTDA_lpl1()
-        transport.fit(a, labels_a, b)
-        G1 = transport.G
+        transport = ot.da.SinkhornLpl1Transport()
+        transport.fit(Xs=a, ys=labels_a, Xt=b)
+        G1 = transport.coupling_
         time2 = time.time()
-        transport = ot.gpu.da.OTDA_lpl1()
-        transport.fit(a, labels_a, b)
-        G2 = transport.G
+        transport = ot.gpu.da.SinkhornLpl1Transport()
+        transport.fit(Xs=a, ys=labels_a, Xt=b)
+        G2 = transport.coupling_
         time3 = time.time()
         print("Normal sinkhorn lpl1, time: {:6.2f} sec ".format(
             time2 - time1))

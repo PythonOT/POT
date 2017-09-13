@@ -12,7 +12,7 @@ It provides the following solvers:
 -  OT solver for the linear program/ Earth Movers Distance [1].
 -  Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2]
    and stabilized version [9][10] with optional GPU implementation
-   (required cudamat).
+   (required cupy).
 -  Bregman projections for Wasserstein barycenter [3] and unmixing [4].
 -  Optimal transport for domain adaptation with group lasso
    regularization [5]
@@ -88,13 +88,13 @@ below
 
        pip install pymanopt autograd
 
--  **ot.gpu** (GPU accelerated OT) depends on cudamat that have to be
+-  **ot.gpu** (GPU accelerated OT) depends on cupy that have to be
    installed with:
 
    ::
 
-       git clone https://github.com/cudamat/cudamat.git
-       cd cudamat
+       git clone https://github.com/cupy/cupy
+       cd cupy
        python setup.py install --user # for user install (no root)
 
 obviously you need CUDA installed and a compatible GPU.
