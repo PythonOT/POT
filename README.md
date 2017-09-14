@@ -16,7 +16,7 @@ It provides the following solvers:
 * Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
 * Joint OT matrix and mapping estimation [8].
 * Wasserstein Discriminant Analysis [11] (requires autograd + pymanopt).
-
+* Gromov-Wasserstein distances and barycenters [12]
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 
@@ -138,12 +138,12 @@ The contributors to this library are:
 * [Léo Gautheron](https://github.com/aje) (GPU implementation)
 * [Nathalie Gayraud](https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1)
 * [Stanislas Chambon](https://slasnista.github.io/)
+* [Antoine Rolet](https://arolet.github.io/)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
 * [Gabriel Peyré](http://gpeyre.github.io/) (Wasserstein Barycenters in Matlab)
 * [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) ( C++ code for EMD)
-* [Antoine Rolet](https://arolet.github.io/) ( Mex file for EMD )
 * [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
 
 
@@ -184,3 +184,5 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016). [Scaling algorithms for unbalanced transport problems](https://arxiv.org/pdf/1607.05816.pdf). arXiv preprint arXiv:1607.05816.
 
 [11] Flamary, R., Cuturi, M., Courty, N., & Rakotomamonjy, A. (2016). [Wasserstein Discriminant Analysis](https://arxiv.org/pdf/1608.08063.pdf). arXiv preprint arXiv:1608.08063.
+
+[12] Gabriel Peyré, Marco Cuturi, and Justin Solomon, [Gromov-Wasserstein averaging of kernel and distance matrices](http://proceedings.mlr.press/v48/peyre16.html)  International Conference on Machine Learning (ICML). 2016.
