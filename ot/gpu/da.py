@@ -169,9 +169,10 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M_GPU, reg, eta=0.1, numItermax=10,
         indices_labels.append(cp.asarray(idxc.reshape(1, -1)))
 
     W_GPU = cp.zeros(M_GPU.shape)
-
+    Mreg_GPU = cp.empty(M_GPU.shape)
     for cpt in range(numItermax):
-        Mreg_GPU = cp.add(M_GPU, cp.multiply(W_GPU, eta))
+        cp.multiply(W_GPU, eta, out=Mreg_GPU)
+        Mreg_GPU += M_GPU
         transp_GPU = sinkhorn_knopp(a, b, Mreg_GPU, reg,
                                     numItermax=numInnerItermax,
                                     stopThr=stopInnerThr, returnAsGPU=True)
