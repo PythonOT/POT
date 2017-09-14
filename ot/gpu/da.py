@@ -170,10 +170,6 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M_GPU, reg, eta=0.1, numItermax=10,
 
     W_GPU = cp.zeros(M_GPU.shape)
 
-    def describe_res(r):
-        print("min:{:.3E}, max:{:.3E}, mean:{:.3E}, std:{:.3E}"
-              .format(np.min(r), np.max(r), np.mean(r), np.std(r)))
-
     for cpt in range(numItermax):
         Mreg_GPU = cp.add(M_GPU, cp.multiply(W_GPU, eta))
         transp_GPU = sinkhorn_knopp(a, b, Mreg_GPU, reg,
