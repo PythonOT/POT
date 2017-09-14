@@ -21,6 +21,7 @@ It provides the following solvers:
 -  Joint OT matrix and mapping estimation [8].
 -  Wasserstein Discriminant Analysis [11] (requires autograd +
    pymanopt).
+-  Gromov-Wasserstein distances and barycenters [12]
 
 Some demonstrations (both in Python and Jupyter Notebook format) are
 available in the examples folder.
@@ -190,6 +191,7 @@ The contributors to this library are:
 -  `Nathalie
    Gayraud <https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1>`__
 -  `Stanislas Chambon <https://slasnista.github.io/>`__
+-  `Antoine Rolet <https://arolet.github.io/>`__
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
@@ -199,7 +201,6 @@ languages):
    in Matlab)
 -  `Nicolas Bonneel <http://liris.cnrs.fr/~nbonneel/>`__ ( C++ code for
    EMD)
--  `Antoine Rolet <https://arolet.github.io/>`__ ( Mex file for EMD )
 -  `Marco Cuturi <http://marcocuturi.net/>`__ (Sinkhorn Knopp in
    Matlab/Cuda)
 
@@ -279,6 +280,11 @@ arXiv:1607.05816.
 `Wasserstein Discriminant
 Analysis <https://arxiv.org/pdf/1608.08063.pdf>`__. arXiv preprint
 arXiv:1608.08063.
+
+[12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+`Gromov-Wasserstein averaging of kernel and distance
+matrices <http://proceedings.mlr.press/v48/peyre16.html>`__
+International Conference on Machine Learning (ICML). 2016.
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
