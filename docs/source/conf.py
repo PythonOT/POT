@@ -50,7 +50,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 #needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
+# extensions coming with Sphinx (named #'sphinx.ext.*') or your custom
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
@@ -62,7 +62,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-#    'sphinx_gallery.gen_gallery',
+    #'sphinx_gallery.gen_gallery',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -261,7 +261,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'POT.tex', u'POT Python Optimal Transport library',
-     u'Rémi Flamary, Nicolas Courty', 'manual'),
+     author, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -305,7 +305,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'POT', u'POT Python Optimal Transport library Documentation',
-     author, 'POT', 'One line description of project.',
+     author, 'POT', 'Python Optimal Transport librar.',
      'Miscellaneous'),
 ]
 
@@ -326,9 +326,9 @@ texinfo_documents = [
 intersphinx_mapping = {'https://docs.python.org/': None}
 
 sphinx_gallery_conf = {
-    'examples_dirs': '../../examples',
+    'examples_dirs': ['../../examples','../../examples/da'],
     'gallery_dirs': 'auto_examples',
-    'mod_example_dir': '../modules/generated/',
+    'backreferences_dir': '../modules/generated/',
     'reference_url': {
         'numpy': 'http://docs.scipy.org/doc/numpy-1.9.1',
         'scipy': 'http://docs.scipy.org/doc/scipy-0.17.0/reference'}

@@ -21,6 +21,7 @@ It provides the following solvers:
 -  Joint OT matrix and mapping estimation [8].
 -  Wasserstein Discriminant Analysis [11] (requires autograd +
    pymanopt).
+-  Gromov-Wasserstein distances and barycenters [12]
 
 Some demonstrations (both in Python and Jupyter Notebook format) are
 available in the examples folder.
@@ -150,27 +151,27 @@ Here is a list of the Python notebooks available
 want a quick look:
 
 -  `1D optimal
-   transport <https://github.com/rflamary/POT/blob/master/notebooks/Demo_1D_OT.ipynb>`__
+   transport <https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_1D.ipynb>`__
 -  `OT Ground
-   Loss <https://github.com/rflamary/POT/blob/master/notebooks/Demo_Ground_Loss.ipynb>`__
+   Loss <https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_L1_vs_L2.ipynb>`__
 -  `Multiple EMD
-   computation <https://github.com/rflamary/POT/blob/master/notebooks/Demo_Compute_EMD.ipynb>`__
+   computation <https://github.com/rflamary/POT/blob/master/notebooks/plot_compute_emd.ipynb>`__
 -  `2D optimal transport on empirical
-   distributions <https://github.com/rflamary/POT/blob/master/notebooks/Demo_2D_OT_samples.ipynb>`__
+   distributions <https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_2D_samples.ipynb>`__
 -  `1D Wasserstein
-   barycenter <https://github.com/rflamary/POT/blob/master/notebooks/Demo_1D_barycenter.ipynb>`__
+   barycenter <https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_1D.ipynb>`__
 -  `OT with user provided
-   regularization <https://github.com/rflamary/POT/blob/master/notebooks/Demo_Optim_OTreg.ipynb>`__
+   regularization <https://github.com/rflamary/POT/blob/master/notebooks/plot_optim_OTreg.ipynb>`__
 -  `Domain adaptation with optimal
-   transport <https://github.com/rflamary/POT/blob/master/notebooks/Demo_2D_OT_DomainAdaptation.ipynb>`__
+   transport <https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_d2.ipynb>`__
 -  `Color transfer in
-   images <https://github.com/rflamary/POT/blob/master/notebooks/Demo_Image_ColorAdaptation.ipynb>`__
+   images <https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_color_images.ipynb>`__
 -  `OT mapping estimation for domain
-   adaptation <https://github.com/rflamary/POT/blob/master/notebooks/Demo_2D_OTmapping_DomainAdaptation.ipynb>`__
+   adaptation <https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_mapping.ipynb>`__
 -  `OT mapping estimation for color transfer in
-   images <https://github.com/rflamary/POT/blob/master/notebooks/Demo_Image_ColorAdaptation_mapping.ipynb>`__
+   images <https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_mapping_colors_images.ipynb>`__
 -  `Wasserstein Discriminant
-   Analysis <https://github.com/rflamary/POT/blob/master/notebooks/Demo_Wasserstein_Discriminant_Analysis.ipynb>`__
+   Analysis <https://github.com/rflamary/POT/blob/master/notebooks/plot_WDA.ipynb>`__
 
 You can also see the notebooks with `Jupyter
 nbviewer <https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/notebooks/>`__.
@@ -187,6 +188,10 @@ The contributors to this library are:
 -  `Michael Perrot <http://perso.univ-st-etienne.fr/pem82055/>`__
    (Mapping estimation)
 -  `Léo Gautheron <https://github.com/aje>`__ (GPU implementation)
+-  `Nathalie
+   Gayraud <https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1>`__
+-  `Stanislas Chambon <https://slasnista.github.io/>`__
+-  `Antoine Rolet <https://arolet.github.io/>`__
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
@@ -196,7 +201,6 @@ languages):
    in Matlab)
 -  `Nicolas Bonneel <http://liris.cnrs.fr/~nbonneel/>`__ ( C++ code for
    EMD)
--  `Antoine Rolet <https://arolet.github.io/>`__ ( Mex file for EMD )
 -  `Marco Cuturi <http://marcocuturi.net/>`__ (Sinkhorn Knopp in
    Matlab/Cuda)
 
@@ -276,6 +280,11 @@ arXiv:1607.05816.
 `Wasserstein Discriminant
 Analysis <https://arxiv.org/pdf/1608.08063.pdf>`__. arXiv preprint
 arXiv:1608.08063.
+
+[12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+`Gromov-Wasserstein averaging of kernel and distance
+matrices <http://proceedings.mlr.press/v48/peyre16.html>`__
+International Conference on Machine Learning (ICML). 2016.
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT

@@ -1,0 +1,82 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+Convert sphinx gallery notebook from empty to image filled
+
+Created on Fri Sep  1 16:43:45 2017
+
+@author: rflamary
+"""
+
+import sys
+import json
+import glob
+import hashlib
+import subprocess
+
+import os
+
+cache_file='cache_nbrun'
+
+path_doc='source/auto_examples/'
+path_nb='../notebooks/'
+
+def load_json(fname):
+    try:
+        f=open(fname)
+        nb=json.load(f)
+        f.close()
+    except (OSError, IOError) :
+        nb={}
+    return nb
+
+def save_json(fname,nb):
+    f=open(fname,'w')
+    f.write(json.dumps(nb))
+    f.close()
+
+
+def md5(fname):
+    hash_md5 = hashlib.md5()
+    with open(fname, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
+
+def to_update(fname,cache):
+    if fname in cache:
+        if md5(path_doc+fname)==cache[fname]:
+            res=False
+        else:
+            res=True
+    else:
+        res=True
+    
+    return res
+
+def update(fname,cache):
+    
+    # jupyter nbconvert --to notebook --execute mynotebook.ipynb --output targte
+    subprocess.check_call(['cp',path_doc+fname,path_nb])
+    print(' '.join(['jupyter','nbconvert','--to','notebook','--ExecutePreprocessor.timeout=600','--execute',path_nb+fname,'--inplace']))
+    subprocess.check_call(['jupyter','nbconvert','--to','notebook','--ExecutePreprocessor.timeout=600','--execute',path_nb+fname,'--inplace'])
+    cache[fname]=md5(path_doc+fname)
+    
+
+
+cache=load_json(cache_file)
+
+lst_file=glob.glob(path_doc+'*.ipynb')
+
+lst_file=[os.path.basename(name) for name in lst_file]
+
+for fname in lst_file:
+    if to_update(fname,cache):
+        print('Updating file: {}'.format(fname))
+        update(fname,cache)
+        save_json(cache_file,cache)
+
+
+
+

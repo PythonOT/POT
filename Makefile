@@ -15,6 +15,9 @@ help :
 build :
 	$(PYTHON) setup.py build
 
+buildext :
+	$(PYTHON) setup.py build_ext --inplace
+
 install :
 	$(PYTHON) setup.py install --user
 

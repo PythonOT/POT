@@ -4,6 +4,9 @@
 1D optimal transport
 ====================
 
+This example illustrates the computation of EMD and Sinkhorn transport plans
+and their visualization.
+
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -14,6 +17,11 @@ import numpy as np
 import matplotlib.pylab as pl
 import ot
 from ot.datasets import get_1D_gauss as gauss
+
+##############################################################################
+# Generate data
+# -------------
+
 
 #%% parameters
 
@@ -30,6 +38,11 @@ b = gauss(n, m=60, s=10)
 M = ot.dist(x.reshape((n, 1)), x.reshape((n, 1)))
 M /= M.max()
 
+
+##############################################################################
+# Plot distributions and loss matrix
+# ----------------------------------
+
 #%% plot the distributions
 
 pl.figure(1, figsize=(6.4, 3))
@@ -42,12 +55,22 @@ pl.legend()
 pl.figure(2, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
 
+##############################################################################
+# Solve EMD
+# ---------
+
+
 #%% EMD
 
 G0 = ot.emd(a, b, M)
 
 pl.figure(3, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, G0, 'OT matrix G0')
+
+##############################################################################
+# Solve Sinkhorn
+# --------------
+
 
 #%% Sinkhorn
 
