@@ -1,9 +1,24 @@
 # POT Releases
 
 ## 0.4 Community edition
+*15 Sep 2017*
 
+This release contains a lot of contribution from new contributors.
+
+
+#### Features
+
+* Automatic notebooks and doc update (PR #27)
 * Add gromov Wasserstein solver and Gromov Barycenters (PR #23)
-* emd and emd2 can now return dual variables (PR #29) 
+* emd and emd2 can now return dual variables and have max_iter (PR #29 and PR #25) 
+* New domain adaptation classes compatible with scikit-learn (PR #22)
+* Proper tests with pytest on travis (PR #19)
+* PEP 8 tests (PR #13)
+
+#### Closed issues
+
+* emd convergence problem du to fixed max iterations (#24) 
+* Semi supervised DA error (#26)
 
 ## 0.3.1
 *11 Jul 2017*
