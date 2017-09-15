@@ -33,7 +33,7 @@ class Mock(MagicMock):
         return MagicMock()
 MOCK_MODULES = ['ot.lp.emd_wrap','autograd','pymanopt','cudamat','autograd.numpy','pymanopt.manifolds','pymanopt.solvers']
 # 'autograd.numpy','pymanopt.manifolds','pymanopt.solvers',
-#sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 # !!!!
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -62,7 +62,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    'sphinx_gallery.gen_gallery',
+    #'sphinx_gallery.gen_gallery',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
