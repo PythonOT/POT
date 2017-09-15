@@ -143,6 +143,7 @@ The contributors to this library are:
 * [Nathalie Gayraud](https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1)
 * [Stanislas Chambon](https://slasnista.github.io/)
 * [Antoine Rolet](https://arolet.github.io/)
+* Erwan Vautier (Gromov-Wasserstein)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
@@ -150,7 +151,16 @@ This toolbox benefit a lot from open source research and we would like to thank 
 * [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) ( C++ code for EMD)
 * [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
 
+## Using and citing the toolbox
 
+If you use this toolbox in your research and find it useful, please cite POT using the following bibtex reference:
+```
+@article{flamary2017pot,
+  title={POT Python Optimal Transport library},
+  author={Flamary, R{\'e}mi and Courty, Nicolas},
+  year={2017}
+}
+```
 ## Contributions and code of conduct
 
 Every contribution is welcome and should respect the [contribution guidelines](CONTRIBUTING.md). Each member of the project is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).
