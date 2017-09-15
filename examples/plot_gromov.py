@@ -3,6 +3,7 @@
 ==========================
 Gromov-Wasserstein example
 ==========================
+
 This example is designed to show how to use the Gromov-Wassertsein distance
 computation in POT.
 """
@@ -15,7 +16,7 @@ computation in POT.
 import scipy as sp
 import numpy as np
 import matplotlib.pylab as pl
-
+from mpl_toolkits.mplot3d import Axes3D  # noqa
 import ot
 
 
