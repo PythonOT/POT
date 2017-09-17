@@ -26,7 +26,7 @@ try:
    import pypandoc
    README = pypandoc.convert('README.md', 'rst')
 except (IOError, ImportError):
-   README = open(os.path.join(ROOT, 'README.md')).read()
+   README = open(os.path.join(ROOT, 'README.md'), encoding="utf-8").read()
 
 
 setup(name='POT',
