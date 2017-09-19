@@ -112,17 +112,21 @@ The examples folder contain several examples and use case for the library. The f
 
 Here is a list of the Python notebooks available [here](https://github.com/rflamary/POT/blob/master/notebooks/) if you want a quick look:
 
-* [1D optimal transport](https://github.com/rflamary/POT/blob/master/notebooks/Demo_1D_OT.ipynb)
-* [OT Ground Loss](https://github.com/rflamary/POT/blob/master/notebooks/Demo_Ground_Loss.ipynb)
-* [Multiple EMD computation](https://github.com/rflamary/POT/blob/master/notebooks/Demo_Compute_EMD.ipynb)
-* [2D optimal transport on empirical distributions](https://github.com/rflamary/POT/blob/master/notebooks/Demo_2D_OT_samples.ipynb)
-* [1D Wasserstein barycenter](https://github.com/rflamary/POT/blob/master/notebooks/Demo_1D_barycenter.ipynb)
-* [OT with user provided regularization](https://github.com/rflamary/POT/blob/master/notebooks/Demo_Optim_OTreg.ipynb)
-* [Domain adaptation with optimal transport](https://github.com/rflamary/POT/blob/master/notebooks/Demo_2D_OT_DomainAdaptation.ipynb)
-* [Color transfer in images](https://github.com/rflamary/POT/blob/master/notebooks/Demo_Image_ColorAdaptation.ipynb)
-* [OT mapping estimation for domain adaptation](https://github.com/rflamary/POT/blob/master/notebooks/Demo_2D_OTmapping_DomainAdaptation.ipynb)
-* [OT mapping estimation for color transfer in images](https://github.com/rflamary/POT/blob/master/notebooks/Demo_Image_ColorAdaptation_mapping.ipynb)
-* [Wasserstein Discriminant Analysis](https://github.com/rflamary/POT/blob/master/notebooks/Demo_Wasserstein_Discriminant_Analysis.ipynb)
+* [1D optimal transport](https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_1D.ipynb)
+* [OT Ground Loss](https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_L1_vs_L2.ipynb)
+* [Multiple EMD computation](https://github.com/rflamary/POT/blob/master/notebooks/plot_compute_emd.ipynb)
+* [2D optimal transport on empirical distributions](https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_2D_samples.ipynb)
+* [1D Wasserstein barycenter](https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_1D.ipynb)
+* [OT with user provided regularization](https://github.com/rflamary/POT/blob/master/notebooks/plot_optim_OTreg.ipynb)
+* [Domain adaptation with optimal transport](https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_d2.ipynb)
+* [Color transfer in images](https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_color_images.ipynb)
+* [OT mapping estimation for domain adaptation](https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_mapping.ipynb)
+* [OT mapping estimation for color transfer in images](https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_mapping_colors_images.ipynb)
+* [Wasserstein Discriminant Analysis](https://github.com/rflamary/POT/blob/master/notebooks/plot_WDA.ipynb)
+* [Gromov Wasserstein](https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov.ipynb)
+* [Gromov Wasserstein Barycenter](https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov_barycenter.ipynb)
+
+
 
 You can also see the notebooks with [Jupyter nbviewer](https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/notebooks/).
 
@@ -139,6 +143,7 @@ The contributors to this library are:
 * [Nathalie Gayraud](https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1)
 * [Stanislas Chambon](https://slasnista.github.io/)
 * [Antoine Rolet](https://arolet.github.io/)
+* Erwan Vautier (Gromov-Wasserstein)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
@@ -146,7 +151,16 @@ This toolbox benefit a lot from open source research and we would like to thank 
 * [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) ( C++ code for EMD)
 * [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
 
+## Using and citing the toolbox
 
+If you use this toolbox in your research and find it useful, please cite POT using the following bibtex reference:
+```
+@article{flamary2017pot,
+  title={POT Python Optimal Transport library},
+  author={Flamary, R{\'e}mi and Courty, Nicolas},
+  year={2017}
+}
+```
 ## Contributions and code of conduct
 
 Every contribution is welcome and should respect the [contribution guidelines](CONTRIBUTING.md). Each member of the project is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).

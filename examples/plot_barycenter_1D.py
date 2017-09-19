@@ -4,6 +4,14 @@
 1D Wasserstein barycenter demo
 ==============================
 
+This example illustrates the computation of regularized Wassersyein Barycenter
+as proposed in [3].
+
+
+[3] Benamou, J. D., Carlier, G., Cuturi, M., Nenna, L., & Peyré, G. (2015).
+Iterative Bregman projections for regularized transportation problems
+SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
+
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -17,6 +25,9 @@ import ot
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 from matplotlib.collections import PolyCollection
 
+##############################################################################
+# Generate data
+# -------------
 
 #%% parameters
 
@@ -37,6 +48,10 @@ n_distributions = A.shape[1]
 M = ot.utils.dist0(n)
 M /= M.max()
 
+##############################################################################
+# Plot data
+# ---------
+
 #%% plot the distributions
 
 pl.figure(1, figsize=(6.4, 3))
@@ -44,6 +59,10 @@ for i in range(n_distributions):
     pl.plot(x, A[:, i])
 pl.title('Distributions')
 pl.tight_layout()
+
+##############################################################################
+# Barycenter computation
+# ----------------------
 
 #%% barycenter computation
 
@@ -70,6 +89,10 @@ pl.plot(x, bary_wass, 'g', label='Wasserstein')
 pl.legend()
 pl.title('Barycenters')
 pl.tight_layout()
+
+##############################################################################
+# Barycentric interpolation
+# -------------------------
 
 #%% barycenter interpolation
 
