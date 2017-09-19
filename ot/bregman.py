@@ -9,6 +9,7 @@ Bregman projections for regularized OT
 # License: MIT License
 
 import numpy as np
+from .utils import get_array_module
 
 
 def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9, verbose=False, log=False, **kwargs):
@@ -308,15 +309,16 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
     ot.optim.cg : General regularized OT
 
     """
+    xp = get_array_module(a, b, M)
 
-    a = np.asarray(a, dtype=np.float64)
-    b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    a = xp.asarray(a, dtype=xp.float64)
+    b = xp.asarray(b, dtype=xp.float64)
+    M = xp.asarray(M, dtype=xp.float64)
 
     if len(a) == 0:
-        a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
+        a = xp.ones((M.shape[0],), dtype=xp.float64) / M.shape[0]
     if len(b) == 0:
-        b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
+        b = xp.ones((M.shape[1],), dtype=xp.float64) / M.shape[1]
 
     # init data
     Nini = len(a)
@@ -333,16 +335,16 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
     # we assume that no distances are null except those of the diagonal of
     # distances
     if nbb:
-        u = np.ones((Nini, nbb)) / Nini
-        v = np.ones((Nfin, nbb)) / Nfin
+        u = xp.ones((Nini, nbb)) / Nini
+        v = xp.ones((Nfin, nbb)) / Nfin
     else:
-        u = np.ones(Nini) / Nini
-        v = np.ones(Nfin) / Nfin
+        u = xp.ones(Nini) / Nini
+        v = xp.ones(Nfin) / Nfin
 
     # print(reg)
 
-    K = np.exp(-M / reg)
-    # print(np.min(K))
+    K = xp.exp(-M / reg)
+    # print(xp.min(K))
 
     Kp = (1 / a).reshape(-1, 1) * K
     cpt = 0
@@ -350,13 +352,13 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
     while (err > stopThr and cpt < numItermax):
         uprev = u
         vprev = v
-        KtransposeU = np.dot(K.T, u)
-        v = np.divide(b, KtransposeU)
-        u = 1. / np.dot(Kp, v)
+        KtransposeU = xp.dot(K.T, u)
+        v = xp.divide(b, KtransposeU)
+        u = 1. / xp.dot(Kp, v)
 
-        if (np.any(KtransposeU == 0) or
-                np.any(np.isnan(u)) or np.any(np.isnan(v)) or
-                np.any(np.isinf(u)) or np.any(np.isinf(v))):
+        if (xp.any(KtransposeU == 0) or
+                xp.any(xp.isnan(u)) or xp.any(xp.isnan(v)) or
+                xp.any(xp.isinf(u)) or xp.any(xp.isinf(v))):
             # we have reached the machine precision
             # come back to previous solution and quit loop
             print('Warning: numerical errors at iteration', cpt)
@@ -367,11 +369,11 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
             # we can speed up the process by checking for the error only all
             # the 10th iterations
             if nbb:
-                err = np.sum((u - uprev)**2) / np.sum((u)**2) + \
-                    np.sum((v - vprev)**2) / np.sum((v)**2)
+                err = xp.sum((u - uprev)**2) / xp.sum((u)**2) + \
+                    xp.sum((v - vprev)**2) / xp.sum((v)**2)
             else:
                 transp = u.reshape(-1, 1) * (K * v)
-                err = np.linalg.norm((np.sum(transp, axis=0) - b))**2
+                err = xp.linalg.norm((xp.sum(transp, axis=0) - b))**2
             if log:
                 log['err'].append(err)
 
@@ -386,9 +388,9 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
         log['v'] = v
 
     if nbb:  # return only loss
-        res = np.zeros((nbb))
+        res = xp.zeros((nbb))
         for i in range(nbb):
-            res[i] = np.sum(
+            res[i] = xp.sum(
                 u[:, i].reshape((-1, 1)) * K * v[:, i].reshape((1, -1)) * M)
         if log:
             return res, log

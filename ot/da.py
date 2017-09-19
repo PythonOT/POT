@@ -14,7 +14,7 @@ import numpy as np
 from .bregman import sinkhorn
 from .lp import emd
 from .utils import unif, dist, pairwiseEuclidean, kernel, cost_normalization
-from .utils import check_params, deprecated, BaseEstimator
+from .utils import check_params, deprecated, BaseEstimator, to_gpu
 from .optim import cg
 from .optim import gcg
 
@@ -984,7 +984,8 @@ class BaseTransport(BaseEstimator):
 
             # pairwise distance
             if self.metric == "sqeuclidean":
-                self.cost_ = pairwiseEuclidean(Xs, Xt, squared=True)
+                self.cost_ = pairwiseEuclidean(Xs, Xt, gpu=self.gpu,
+                                               squared=True)
             else:
                 self.cost_ = dist(Xs, Xt, metric=self.metric)
             self.cost_ = cost_normalization(self.cost_, self.norm)
@@ -1010,6 +1011,8 @@ class BaseTransport(BaseEstimator):
             # distribution estimation
             self.mu_s = self.distribution_estimation(Xs)
             self.mu_t = self.distribution_estimation(Xt)
+            if self.gpu:
+                self.mu_s, self.mu_t = to_gpu(self.mu_s, self.mu_t)
 
             # store arrays of samples
             self.xs_ = Xs
@@ -1235,7 +1238,7 @@ class SinkhornTransport(BaseTransport):
                  tol=10e-9, verbose=False, log=False,
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='ferradans', limit_max=np.infty):
+                 out_of_sample_map='ferradans', limit_max=np.infty, gpu=False):
 
         self.reg_e = reg_e
         self.max_iter = max_iter
@@ -1247,6 +1250,7 @@ class SinkhornTransport(BaseTransport):
         self.limit_max = limit_max
         self.distribution_estimation = distribution_estimation
         self.out_of_sample_map = out_of_sample_map
+        self.gpu = gpu
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
@@ -1335,7 +1339,7 @@ class EMDTransport(BaseTransport):
     def __init__(self, metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
                  out_of_sample_map='ferradans', limit_max=10,
-                 max_iter=100000):
+                 max_iter=100000, gpu=False):
 
         self.metric = metric
         self.norm = norm
@@ -1343,6 +1347,7 @@ class EMDTransport(BaseTransport):
         self.distribution_estimation = distribution_estimation
         self.out_of_sample_map = out_of_sample_map
         self.max_iter = max_iter
+        self.gpu = gpu
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
@@ -1435,7 +1440,7 @@ class SinkhornLpl1Transport(BaseTransport):
                  tol=10e-9, verbose=False,
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='ferradans', limit_max=np.infty):
+                 out_of_sample_map='ferradans', limit_max=np.infty, gpu=False):
 
         self.reg_e = reg_e
         self.reg_cl = reg_cl
@@ -1448,6 +1453,7 @@ class SinkhornLpl1Transport(BaseTransport):
         self.distribution_estimation = distribution_estimation
         self.out_of_sample_map = out_of_sample_map
         self.limit_max = limit_max
+        self.gpu = gpu
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
@@ -1549,7 +1555,7 @@ class SinkhornL1l2Transport(BaseTransport):
                  tol=10e-9, verbose=False, log=False,
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='ferradans', limit_max=10):
+                 out_of_sample_map='ferradans', limit_max=10, gpu=False):
 
         self.reg_e = reg_e
         self.reg_cl = reg_cl
@@ -1563,6 +1569,7 @@ class SinkhornL1l2Transport(BaseTransport):
         self.distribution_estimation = distribution_estimation
         self.out_of_sample_map = out_of_sample_map
         self.limit_max = limit_max
+        self.gpu = gpu
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
