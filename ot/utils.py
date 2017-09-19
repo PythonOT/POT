@@ -15,7 +15,10 @@ import numpy as np
 from scipy.spatial.distance import cdist
 import sys
 import warnings
-
+try:
+    import cupy as cp
+except ImportError:
+    cp = False
 
 __time_tic_toc = time.time()
 
@@ -74,8 +77,65 @@ def clean_zeros(a, b, M):
     return a2, b2, M2
 
 
+def pairwiseEuclidean(a, b, gpu=False, squared=False):
+    """
+    Compute the pairwise euclidean distance between matrices a and b.
+
+
+    Parameters
+    ----------
+    a : np.ndarray (n, f)
+        first matrix
+    b : np.ndarray (m, f)
+        second matrix
+    gpu : boolean, optional (default False)
+        if True and and the module cupy is available, the computation is done
+        on the GPU and the type of the matrix returned is cupy.ndarray.
+        Otherwise, compute on the CPU and returns np.ndarray.
+    squared : boolean, optional (default False)
+        if True, return squared euclidean distance matrix
+
+
+    Returns
+    -------
+    c : (n x m) np.ndarray or cupy.ndarray
+        pairwise euclidean distance distance matrix
+    """
+    # a is shape (n, f) and b shape (m, f). Return matrix c of shape (n, m).
+    # First compute in c_GPU the squared euclidean distance. And return its
+    # square root. At each cell [i,j] of c, we want to have
+    # sum{k in range(f)} ( (a[i,k] - b[j,k])^2 ). We know that
+    # (a-b)^2 = a^2 -2ab +b^2. Thus we want to have in each cell of c:
+    # sum{k in range(f)} ( a[i,k]^2 -2a[i,k]b[j,k] +b[j,k]^2).
+    if gpu:
+        a, b = to_gpu(a, b)
+    xp = get_array_module(a, b)
+
+    # Multiply a by b transpose to obtain in each cell [i,j] of c the
+    # value sum{k in range(f)} ( a[i,k]b[j,k] )
+    c = a.dot(b.T)
+    # multiply by -2 to have sum{k in range(f)} ( -2a[i,k]b[j,k] )
+    xp.multiply(c, -2, out=c)
+
+    # Compute the vectors of the sum of squared elements.
+    a = xp.power(a, 2).sum(axis=1)
+    b = xp.power(b, 2).sum(axis=1)
+
+    # Add the vectors in each columns (respectivly rows) of c.
+    # sum{k in range(f)} ( a[i,k]^2 -2a[i,k]b[j,k] )
+    c += a.reshape(-1, 1)
+    # sum{k in range(f)} ( a[i,k]^2 -2a[i,k]b[j,k] +b[j,k]^2)
+    c += b
+
+    if not squared:
+        xp.sqrt(c, out=c)
+
+    return c
+
+
 def dist(x1, x2=None, metric='sqeuclidean'):
-    """Compute distance between samples in x1 and x2 using function scipy.spatial.distance.cdist
+    """Compute distance between samples in x1 and x2 using function
+    scipy.spatial.distance.cdist
 
     Parameters
     ----------
@@ -85,10 +145,11 @@ def dist(x1, x2=None, metric='sqeuclidean'):
     x2 : np.array (n2,d), optional
         matrix with n2 samples of size d (if None then x2=x1)
     metric : str, fun, optional
-        name of the metric to be computed (full list in the doc of scipy),  If a string,
-        the distance function can be 'braycurtis', 'canberra', 'chebyshev', 'cityblock',
-        'correlation', 'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'kulsinski',
-        'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
+        name of the metric to be computed (full list in the doc of scipy),  If
+        a string, the distance function can be 'braycurtis', 'canberra',
+        'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice', 'euclidean',
+        'hamming', 'jaccard', 'kulsinski', 'mahalanobis', 'matching',
+        'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
         'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski', 'yule'.
 
 
@@ -220,6 +281,24 @@ def check_params(**kwargs):
         check = False
 
     return check
+
+
+def get_array_module(*args):
+    """ return the proper module (numpy of cupy) depending on where the input
+    array are (CPU or GPU)
+    """
+    if cp:
+        return cp.get_array_module(*args)
+    else:
+        return np
+
+
+def to_gpu(*args):
+    """ Upload numpy array to GPU if available and return them"""
+    if cp:
+        return (cp.asarray(x) for x in args)
+    else:
+        return args
 
 
 class deprecated(object):
