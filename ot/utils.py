@@ -89,7 +89,7 @@ def pairwiseEuclidean(a, b, gpu=False, squared=False):
     b : np.ndarray (m, f)
         second matrix
     gpu : boolean, optional (default False)
-        if True and and the module cupy is available, the computation is done
+        if True and the module cupy is available, the computation is done
         on the GPU and the type of the matrix returned is cupy.ndarray.
         Otherwise, compute on the CPU and returns np.ndarray.
     squared : boolean, optional (default False)
@@ -102,7 +102,7 @@ def pairwiseEuclidean(a, b, gpu=False, squared=False):
         pairwise euclidean distance distance matrix
     """
     # a is shape (n, f) and b shape (m, f). Return matrix c of shape (n, m).
-    # First compute in c_GPU the squared euclidean distance. And return its
+    # First compute in c the squared euclidean distance. And return its
     # square root. At each cell [i,j] of c, we want to have
     # sum{k in range(f)} ( (a[i,k] - b[j,k])^2 ). We know that
     # (a-b)^2 = a^2 -2ab +b^2. Thus we want to have in each cell of c:

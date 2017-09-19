@@ -13,7 +13,7 @@ import numpy as np
 
 from .bregman import sinkhorn
 from .lp import emd
-from .utils import unif, dist, kernel, cost_normalization
+from .utils import unif, dist, pairwiseEuclidean, kernel, cost_normalization
 from .utils import check_params, deprecated, BaseEstimator
 from .optim import cg
 from .optim import gcg
@@ -983,7 +983,10 @@ class BaseTransport(BaseEstimator):
         if check_params(Xs=Xs, Xt=Xt):
 
             # pairwise distance
-            self.cost_ = dist(Xs, Xt, metric=self.metric)
+            if self.metric == "sqeuclidean":
+                self.cost_ = pairwiseEuclidean(Xs, Xt, squared=True)
+            else:
+                self.cost_ = dist(Xs, Xt, metric=self.metric)
             self.cost_ = cost_normalization(self.cost_, self.norm)
 
             if (ys is not None) and (yt is not None):
