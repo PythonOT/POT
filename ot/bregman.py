@@ -345,6 +345,10 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
 
     K = xp.exp(-M / reg)
     # print(xp.min(K))
+    KtransposeU = xp.empty(v.shape)
+    tmp = xp.empty(K.shape)
+    tmp2 = xp.empty(b.shape)
+    ones = xp.ones(u.shape)
 
     Kp = (1 / a).reshape(-1, 1) * K
     cpt = 0
@@ -352,9 +356,10 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
     while (err > stopThr and cpt < numItermax):
         uprev = u
         vprev = v
-        KtransposeU = xp.dot(K.T, u)
-        v = xp.divide(b, KtransposeU)
-        u = 1. / xp.dot(Kp, v)
+        K.T.dot(u, out=KtransposeU)
+        xp.divide(b, KtransposeU, out=v)
+        Kp.dot(v, out=u)
+        xp.divide(ones, u, out=u)
 
         if (xp.any(KtransposeU == 0) or
                 xp.any(xp.isnan(u)) or xp.any(xp.isnan(v)) or
@@ -372,8 +377,11 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
                 err = xp.sum((u - uprev)**2) / xp.sum((u)**2) + \
                     xp.sum((v - vprev)**2) / xp.sum((v)**2)
             else:
-                transp = u.reshape(-1, 1) * (K * v)
-                err = xp.linalg.norm((xp.sum(transp, axis=0) - b))**2
+                xp.multiply(u.reshape(-1, 1), K, out=tmp)
+                xp.multiply(tmp, v.reshape(1, -1), out=tmp)
+                xp.sum(tmp, axis=0, out=tmp2)
+                tmp2 -= b
+                err = xp.linalg.norm(tmp2)**2
             if log:
                 log['err'].append(err)
 
