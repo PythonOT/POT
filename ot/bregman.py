@@ -344,8 +344,9 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
     # print(reg)
 
     K = xp.empty(M.shape)
-    xp.exp(M, out=K)
-    K /= -reg
+    xp.divide(M, -reg, out=K)
+    xp.exp(K, out=K)
+
     # print(xp.min(K))
     KtransposeU = xp.empty(v.shape)
     tmp = xp.empty(K.shape)
