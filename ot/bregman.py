@@ -309,16 +309,16 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
     ot.optim.cg : General regularized OT
 
     """
-    xp = get_array_module(a, b, M)
+    np = get_array_module(a, b, M)
 
-    a = xp.asarray(a, dtype=xp.float64)
-    b = xp.asarray(b, dtype=xp.float64)
-    M = xp.asarray(M, dtype=xp.float64)
+    a = np.asarray(a, dtype=np.float64)
+    b = np.asarray(b, dtype=np.float64)
+    M = np.asarray(M, dtype=np.float64)
 
     if len(a) == 0:
-        a = xp.ones((M.shape[0],), dtype=xp.float64) / M.shape[0]
+        a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
     if len(b) == 0:
-        b = xp.ones((M.shape[1],), dtype=xp.float64) / M.shape[1]
+        b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
 
     # init data
     Nini = len(a)
@@ -335,23 +335,23 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
     # we assume that no distances are null except those of the diagonal of
     # distances
     if nbb:
-        u = xp.ones((Nini, nbb)) / Nini
-        v = xp.ones((Nfin, nbb)) / Nfin
+        u = np.ones((Nini, nbb)) / Nini
+        v = np.ones((Nfin, nbb)) / Nfin
     else:
-        u = xp.ones(Nini) / Nini
-        v = xp.ones(Nfin) / Nfin
+        u = np.ones(Nini) / Nini
+        v = np.ones(Nfin) / Nfin
 
     # print(reg)
 
-    K = xp.empty(M.shape)
-    xp.divide(M, -reg, out=K)
-    xp.exp(K, out=K)
+    K = np.empty(M.shape)
+    np.divide(M, -reg, out=K)
+    np.exp(K, out=K)
 
     # print(xp.min(K))
-    KtransposeU = xp.empty(v.shape)
-    tmp = xp.empty(K.shape)
-    tmp2 = xp.empty(b.shape)
-    ones = xp.ones(u.shape)
+    KtransposeU = np.empty(v.shape)
+    tmp = np.empty(K.shape)
+    tmp2 = np.empty(b.shape)
+    ones = np.ones(u.shape)
 
     Kp = (1 / a).reshape(-1, 1) * K
     cpt = 0
@@ -360,13 +360,13 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
         uprev = u
         vprev = v
         K.T.dot(u, out=KtransposeU)
-        xp.divide(b, KtransposeU, out=v)
+        np.divide(b, KtransposeU, out=v)
         Kp.dot(v, out=u)
-        xp.divide(ones, u, out=u)
+        np.divide(ones, u, out=u)
 
-        if (xp.any(KtransposeU == 0) or
-                xp.any(xp.isnan(u)) or xp.any(xp.isnan(v)) or
-                xp.any(xp.isinf(u)) or xp.any(xp.isinf(v))):
+        if (np.any(KtransposeU == 0) or
+                np.any(np.isnan(u)) or np.any(np.isnan(v)) or
+                np.any(np.isinf(u)) or np.any(np.isinf(v))):
             # we have reached the machine precision
             # come back to previous solution and quit loop
             print('Warning: numerical errors at iteration', cpt)
@@ -377,14 +377,14 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
             # we can speed up the process by checking for the error only all
             # the 10th iterations
             if nbb:
-                err = xp.sum((u - uprev)**2) / xp.sum((u)**2) + \
-                    xp.sum((v - vprev)**2) / xp.sum((v)**2)
+                err = np.sum((u - uprev)**2) / np.sum((u)**2) + \
+                    np.sum((v - vprev)**2) / np.sum((v)**2)
             else:
-                xp.multiply(u.reshape(-1, 1), K, out=tmp)
-                xp.multiply(tmp, v.reshape(1, -1), out=tmp)
-                xp.sum(tmp, axis=0, out=tmp2)
+                np.multiply(u.reshape(-1, 1), K, out=tmp)
+                np.multiply(tmp, v.reshape(1, -1), out=tmp)
+                np.sum(tmp, axis=0, out=tmp2)
                 tmp2 -= b
-                err = xp.linalg.norm(tmp2)**2
+                err = np.linalg.norm(tmp2)**2
             if log:
                 log['err'].append(err)
 
@@ -399,9 +399,9 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
         log['v'] = v
 
     if nbb:  # return only loss
-        res = xp.zeros((nbb))
+        res = np.zeros((nbb))
         for i in range(nbb):
-            res[i] = xp.sum(
+            res[i] = np.sum(
                 u[:, i].reshape((-1, 1)) * K * v[:, i].reshape((1, -1)) * M)
         if log:
             return res, log

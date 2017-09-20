@@ -109,17 +109,17 @@ def pairwiseEuclidean(a, b, gpu=False, squared=False):
     # sum{k in range(f)} ( a[i,k]^2 -2a[i,k]b[j,k] +b[j,k]^2).
     if gpu:
         a, b = to_gpu(a, b)
-    xp = get_array_module(a, b)
+    np = get_array_module(a, b)
 
     # Multiply a by b transpose to obtain in each cell [i,j] of c the
     # value sum{k in range(f)} ( a[i,k]b[j,k] )
     c = a.dot(b.T)
     # multiply by -2 to have sum{k in range(f)} ( -2a[i,k]b[j,k] )
-    xp.multiply(c, -2, out=c)
+    np.multiply(c, -2, out=c)
 
     # Compute the vectors of the sum of squared elements.
-    a = xp.power(a, 2).sum(axis=1)
-    b = xp.power(b, 2).sum(axis=1)
+    a = np.power(a, 2).sum(axis=1)
+    b = np.power(b, 2).sum(axis=1)
 
     # Add the vectors in each columns (respectivly rows) of c.
     # sum{k in range(f)} ( a[i,k]^2 -2a[i,k]b[j,k] )
@@ -128,7 +128,7 @@ def pairwiseEuclidean(a, b, gpu=False, squared=False):
     c += b
 
     if not squared:
-        xp.sqrt(c, out=c)
+        np.sqrt(c, out=c)
 
     return c
 
