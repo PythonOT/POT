@@ -310,15 +310,14 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
 
     """
     np = get_array_module(a, b, M)
-
-    a = np.asarray(a, dtype=np.float64)
-    b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    a = np.asarray(a, dtype=M.dtype)
+    b = np.asarray(b, dtype=M.dtype)
+    M = np.asarray(M, dtype=M.dtype)
 
     if len(a) == 0:
-        a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
+        a = np.ones((M.shape[0],), dtype=M.dtype) / M.shape[0]
     if len(b) == 0:
-        b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
+        b = np.ones((M.shape[1],), dtype=M.dtype) / M.shape[1]
 
     # init data
     Nini = len(a)
@@ -335,23 +334,23 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
     # we assume that no distances are null except those of the diagonal of
     # distances
     if nbb:
-        u = np.ones((Nini, nbb)) / Nini
-        v = np.ones((Nfin, nbb)) / Nfin
+        u = np.ones((Nini, nbb), dtype=M.dtype) / Nini
+        v = np.ones((Nfin, nbb), dtype=M.dtype) / Nfin
     else:
-        u = np.ones(Nini) / Nini
-        v = np.ones(Nfin) / Nfin
+        u = np.ones(Nini, dtype=M.dtype) / Nini
+        v = np.ones(Nfin, dtype=M.dtype) / Nfin
 
     # print(reg)
 
-    K = np.empty(M.shape)
+    K = np.empty(M.shape, dtype=M.dtype)
     np.divide(M, -reg, out=K)
     np.exp(K, out=K)
 
     # print(xp.min(K))
-    KtransposeU = np.empty(v.shape)
-    tmp = np.empty(K.shape)
-    tmp2 = np.empty(b.shape)
-    ones = np.ones(u.shape)
+    KtransposeU = np.empty(v.shape, dtype=M.dtype)
+    tmp = np.empty(K.shape, dtype=M.dtype)
+    tmp2 = np.empty(b.shape, dtype=M.dtype)
+    ones = np.ones(u.shape, dtype=M.dtype)
 
     Kp = (1 / a).reshape(-1, 1) * K
     cpt = 0

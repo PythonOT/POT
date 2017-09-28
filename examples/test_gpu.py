@@ -43,7 +43,9 @@ def benchSinkhorn(a, b):
     np.testing.assert_allclose(g1, cp.asnumpy(g2), rtol=1e-5, atol=1e-5)
 
 
-a = np.random.rand(10000, 100)
-b = np.random.rand(10000, 100)
-benchDistance(a, b)
-benchSinkhorn(a, b)
+for tp in [np.float32, np.float64]:
+    print("Using " + str(tp))
+    a = np.random.rand(10000, 100).astype(tp)
+    b = np.random.rand(10000, 100).astype(tp)
+    benchDistance(a, b)
+    benchSinkhorn(a, b)
