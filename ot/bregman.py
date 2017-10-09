@@ -9,9 +9,10 @@ Bregman projections for regularized OT
 # License: MIT License
 
 import numpy as np
-from .utils import get_array_module
+from .utils import get_array_module, gpu_fun
 
 
+@gpu_fun(in_arrays=[0, 1, 2], out_arrays=[0])
 def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9, verbose=False, log=False, **kwargs):
     u"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
@@ -234,6 +235,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9, ve
     return sink()
 
 
+@gpu_fun(in_arrays=[0, 1, 2], out_arrays=[0])
 def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, log=False, **kwargs):
     """
     Solve the entropic regularization optimal transport problem and return the OT matrix

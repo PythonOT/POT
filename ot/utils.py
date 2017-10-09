@@ -77,7 +77,93 @@ def clean_zeros(a, b, M):
     return a2, b2, M2
 
 
-def pairwiseEuclidean(a, b, gpu=False, squared=False):
+class gpu_fun(object):
+    """Decorator to handle gpu upload and download
+    >>> @gpu()
+    ... def some_function(): pass
+    Parameters
+    ----------
+    extra : string
+          to be added to the deprecation messages
+    """
+
+    # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
+    # but with many changes.
+
+    def __init__(self, in_arrays=[], out_arrays=[]):
+        self.in_arrays = in_arrays
+        self.out_arrays = out_arrays
+
+    def __call__(self, obj):
+        """Call method
+        Parameters
+        ----------
+        obj : object
+        """
+        if isinstance(obj, type):
+            return self._decorate_class(obj)
+        else:
+            return self._decorate_fun(obj)
+
+    def _decorate_class(self, cls):
+        # TODO: we should probably reset __new__ for full generality
+        # init = cls.__init__
+        # def wrapped(*args, **kwargs):
+        #     warnings.warn(msg, category=DeprecationWarning)
+        #     return init(*args, **kwargs)
+        # cls.__init__ = wrapped
+        # wrapped.__name__ = '__init__'
+        # wrapped.__doc__ = self._update_doc(init.__doc__)
+        # wrapped.deprecated_original = init
+
+        return cls
+
+    def _decorate_fun(self, fun):
+        """Decorate function fun"""
+
+        def wrapped(*args, **kwargs):
+
+            if cp and 'gpu' in kwargs and kwargs['gpu']:
+                # convert args to gpu twhose index are in in_array
+                args = [to_gpu(arg) if i in self.in_arrays else arg
+                        for i, arg in enumerate(args)]
+
+            # clean kwargs
+            if 'gpu' in kwargs:
+                kwargs.pop('gpu')
+            if 'to_np' in kwargs and kwargs['to_np']:
+                to_np = True
+                kwargs.pop('to_np')
+            else:
+                to_np = False
+
+            ret = fun(*args, **kwargs)
+
+            if cp and to_np:
+                if type(ret) == tuple:
+                    ret = (cp.asnumpy(r) if i in self.out_arrays else r
+                           for i, r in enumerate(ret))
+                else:
+                    if 0 in self.out_arrays:
+                        ret = cp.asnumpy(ret)
+
+            return ret
+
+        wrapped.__name__ = fun.__name__
+        wrapped.__dict__ = fun.__dict__
+        wrapped.__doc__ = self._update_doc(fun.__doc__)
+
+        return wrapped
+
+    def _update_doc(self, olddoc):
+
+        # TODO!!!
+        newdoc = olddoc
+        return newdoc
+
+
+@gpu_fun([0, 1], [0])
+def pairwiseEuclidean(a, b, squared=False):
     """
     Compute the pairwise euclidean distance between matrices a and b.
 
@@ -107,8 +193,6 @@ def pairwiseEuclidean(a, b, gpu=False, squared=False):
     # sum{k in range(f)} ( (a[i,k] - b[j,k])^2 ). We know that
     # (a-b)^2 = a^2 -2ab +b^2. Thus we want to have in each cell of c:
     # sum{k in range(f)} ( a[i,k]^2 -2a[i,k]b[j,k] +b[j,k]^2).
-    if gpu:
-        a, b = to_gpu(a, b)
     np = get_array_module(a, b)
 
     # Multiply a by b transpose to obtain in each cell [i,j] of c the
@@ -294,11 +378,17 @@ def get_array_module(*args):
 
 
 def to_gpu(*args):
-    """ Upload numpy array to GPU if available and return them"""
+    """ Upload numpy arrays to GPU if available and return them"""
     if cp:
-        return (cp.asarray(x) for x in args)
+        if len(args) > 1:
+            return (cp.asarray(x) for x in args)
+        else:
+            return cp.asarray(args[0])
     else:
-        return args
+        if len(args) > 1:
+            return args
+        else:
+            return args[0]
 
 
 class deprecated(object):

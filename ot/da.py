@@ -11,7 +11,7 @@ Domain adaptation with optimal transport
 
 import numpy as np
 
-from .bregman import sinkhorn
+from .bregman import sinkhorn, sinkhorn_knopp
 from .lp import emd
 from .utils import unif, dist, pairwiseEuclidean, kernel, cost_normalization
 from .utils import check_params, deprecated, BaseEstimator, to_gpu
@@ -1280,10 +1280,16 @@ class SinkhornTransport(BaseTransport):
         super(SinkhornTransport, self).fit(Xs, ys, Xt, yt)
 
         # coupling estimation
+        """
         returned_ = sinkhorn(
             a=self.mu_s, b=self.mu_t, M=self.cost_, reg=self.reg_e,
             numItermax=self.max_iter, stopThr=self.tol,
             verbose=self.verbose, log=self.log)
+        """
+        returned_ = sinkhorn_knopp(
+            a=self.mu_s, b=self.mu_t, M=self.cost_, reg=self.reg_e,
+            numItermax=self.max_iter, stopThr=self.tol,
+            verbose=self.verbose, log=self.log, gpu=self.gpu)
 
         # deal with the value of log
         if self.log:
