@@ -5,11 +5,13 @@
 # License: MIT License
 
 import numpy as np
-import ot
+
+from ot.datasets import get_data_classif
+from ot.dr import fda, wda
 import pytest
 
 try:  # test if autograd and pymanopt are installed
-    import ot.dr
+    from ot.dr import fda, wda
     nogo = False
 except ImportError:
     nogo = True
@@ -22,7 +24,7 @@ def test_fda():
     np.random.seed(0)
 
     # generate gaussian dataset
-    xs, ys = ot.datasets.get_data_classif('gaussrot', n_samples)
+    xs, ys = get_data_classif('gaussrot', n_samples)
 
     n_features_noise = 8
 
@@ -30,7 +32,7 @@ def test_fda():
 
     p = 1
 
-    Pfda, projfda = ot.dr.fda(xs, ys, p)
+    Pfda, projfda = fda(xs, ys, p)
 
     projfda(xs)
 
@@ -44,7 +46,7 @@ def test_wda():
     np.random.seed(0)
 
     # generate gaussian dataset
-    xs, ys = ot.datasets.get_data_classif('gaussrot', n_samples)
+    xs, ys = get_data_classif('gaussrot', n_samples)
 
     n_features_noise = 8
 
@@ -52,7 +54,7 @@ def test_wda():
 
     p = 2
 
-    Pwda, projwda = ot.dr.wda(xs, ys, p, maxiter=10)
+    Pwda, projwda = wda(xs, ys, p, maxiter=10)
 
     projwda(xs)
 
