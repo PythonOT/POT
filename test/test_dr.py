@@ -7,7 +7,6 @@
 import numpy as np
 
 from ot.datasets import get_data_classif
-from ot.dr import fda, wda
 import pytest
 
 try:  # test if autograd and pymanopt are installed
