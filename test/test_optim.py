@@ -5,7 +5,10 @@
 # License: MIT License
 
 import numpy as np
-import ot
+
+from ot.datasets import get_1D_gauss
+from ot.utils import dist
+from ot.optim import cg, gcg
 
 
 def test_conditional_gradient():
@@ -16,11 +19,11 @@ def test_conditional_gradient():
     x = np.arange(n_bins, dtype=np.float64)
 
     # Gaussian distributions
-    a = ot.datasets.get_1D_gauss(n_bins, m=20, s=5)  # m= mean, s= std
-    b = ot.datasets.get_1D_gauss(n_bins, m=60, s=10)
+    a = get_1D_gauss(n_bins, m=20, s=5)  # m= mean, s= std
+    b = get_1D_gauss(n_bins, m=60, s=10)
 
     # loss matrix
-    M = ot.dist(x.reshape((n_bins, 1)), x.reshape((n_bins, 1)))
+    M = dist(x.reshape((n_bins, 1)), x.reshape((n_bins, 1)))
     M /= M.max()
 
     def f(G):
@@ -31,7 +34,7 @@ def test_conditional_gradient():
 
     reg = 1e-1
 
-    G, log = ot.optim.cg(a, b, M, reg, f, df, verbose=True, log=True)
+    G, log = cg(a, b, M, reg, f, df, verbose=True, log=True)
 
     np.testing.assert_allclose(a, G.sum(1))
     np.testing.assert_allclose(b, G.sum(0))
@@ -45,11 +48,11 @@ def test_generalized_conditional_gradient():
     x = np.arange(n_bins, dtype=np.float64)
 
     # Gaussian distributions
-    a = ot.datasets.get_1D_gauss(n_bins, m=20, s=5)  # m= mean, s= std
-    b = ot.datasets.get_1D_gauss(n_bins, m=60, s=10)
+    a = get_1D_gauss(n_bins, m=20, s=5)  # m= mean, s= std
+    b = get_1D_gauss(n_bins, m=60, s=10)
 
     # loss matrix
-    M = ot.dist(x.reshape((n_bins, 1)), x.reshape((n_bins, 1)))
+    M = dist(x.reshape((n_bins, 1)), x.reshape((n_bins, 1)))
     M /= M.max()
 
     def f(G):
@@ -61,7 +64,7 @@ def test_generalized_conditional_gradient():
     reg1 = 1e-3
     reg2 = 1e-1
 
-    G, log = ot.optim.gcg(a, b, M, reg1, reg2, f, df, verbose=True, log=True)
+    G, log = gcg(a, b, M, reg1, reg2, f, df, verbose=True, log=True)
 
     np.testing.assert_allclose(a, G.sum(1), atol=1e-05)
     np.testing.assert_allclose(b, G.sum(0), atol=1e-05)

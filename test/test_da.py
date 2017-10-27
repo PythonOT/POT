@@ -7,9 +7,17 @@
 import numpy as np
 from numpy.testing.utils import assert_allclose, assert_equal
 
-import ot
+# import ot
+from ot.da import (SinkhornTransport, SinkhornL1l2Transport,
+                   SinkhornLpl1Transport, EMDTransport,
+                   MappingTransport)
+
 from ot.datasets import get_data_classif
 from ot.utils import unif
+
+# deprecated otda classes
+from ot.da import (OTDA, OTDA_l1l2, OTDA_lpl1, OTDA_sinkhorn,
+                   OTDA_mapping_kernel, OTDA_mapping_linear)
 
 
 def test_sinkhorn_lpl1_transport_class():
@@ -22,7 +30,7 @@ def test_sinkhorn_lpl1_transport_class():
     Xs, ys = get_data_classif('3gauss', ns)
     Xt, yt = get_data_classif('3gauss2', nt)
 
-    otda = ot.da.SinkhornLpl1Transport()
+    otda = SinkhornLpl1Transport()
 
     # test its computed
     otda.fit(Xs=Xs, ys=ys, Xt=Xt)
@@ -66,11 +74,11 @@ def test_sinkhorn_lpl1_transport_class():
     assert_equal(transp_Xs.shape, Xs.shape)
 
     # test unsupervised vs semi-supervised mode
-    otda_unsup = ot.da.SinkhornLpl1Transport()
+    otda_unsup = SinkhornLpl1Transport()
     otda_unsup.fit(Xs=Xs, ys=ys, Xt=Xt)
     n_unsup = np.sum(otda_unsup.cost_)
 
-    otda_semi = ot.da.SinkhornLpl1Transport()
+    otda_semi = SinkhornLpl1Transport()
     otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
     assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
     n_semisup = np.sum(otda_semi.cost_)
@@ -95,7 +103,7 @@ def test_sinkhorn_l1l2_transport_class():
     Xs, ys = get_data_classif('3gauss', ns)
     Xt, yt = get_data_classif('3gauss2', nt)
 
-    otda = ot.da.SinkhornL1l2Transport()
+    otda = SinkhornL1l2Transport()
 
     # test its computed
     otda.fit(Xs=Xs, ys=ys, Xt=Xt)
@@ -140,11 +148,11 @@ def test_sinkhorn_l1l2_transport_class():
     assert_equal(transp_Xs.shape, Xs.shape)
 
     # test unsupervised vs semi-supervised mode
-    otda_unsup = ot.da.SinkhornL1l2Transport()
+    otda_unsup = SinkhornL1l2Transport()
     otda_unsup.fit(Xs=Xs, ys=ys, Xt=Xt)
     n_unsup = np.sum(otda_unsup.cost_)
 
-    otda_semi = ot.da.SinkhornL1l2Transport()
+    otda_semi = SinkhornL1l2Transport()
     otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
     assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
     n_semisup = np.sum(otda_semi.cost_)
@@ -161,7 +169,7 @@ def test_sinkhorn_l1l2_transport_class():
                     rtol=1e-9, atol=1e-9)
 
     # check everything runs well with log=True
-    otda = ot.da.SinkhornL1l2Transport(log=True)
+    otda = SinkhornL1l2Transport(log=True)
     otda.fit(Xs=Xs, ys=ys, Xt=Xt)
     assert len(otda.log_.keys()) != 0
 
@@ -176,7 +184,7 @@ def test_sinkhorn_transport_class():
     Xs, ys = get_data_classif('3gauss', ns)
     Xt, yt = get_data_classif('3gauss2', nt)
 
-    otda = ot.da.SinkhornTransport()
+    otda = SinkhornTransport()
 
     # test its computed
     otda.fit(Xs=Xs, Xt=Xt)
@@ -221,11 +229,11 @@ def test_sinkhorn_transport_class():
     assert_equal(transp_Xs.shape, Xs.shape)
 
     # test unsupervised vs semi-supervised mode
-    otda_unsup = ot.da.SinkhornTransport()
+    otda_unsup = SinkhornTransport()
     otda_unsup.fit(Xs=Xs, Xt=Xt)
     n_unsup = np.sum(otda_unsup.cost_)
 
-    otda_semi = ot.da.SinkhornTransport()
+    otda_semi = SinkhornTransport()
     otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
     assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
     n_semisup = np.sum(otda_semi.cost_)
@@ -240,7 +248,7 @@ def test_sinkhorn_transport_class():
     assert mass_semi == 0, "semisupervised mode not working"
 
     # check everything runs well with log=True
-    otda = ot.da.SinkhornTransport(log=True)
+    otda = SinkhornTransport(log=True)
     otda.fit(Xs=Xs, ys=ys, Xt=Xt)
     assert len(otda.log_.keys()) != 0
 
@@ -255,7 +263,7 @@ def test_emd_transport_class():
     Xs, ys = get_data_classif('3gauss', ns)
     Xt, yt = get_data_classif('3gauss2', nt)
 
-    otda = ot.da.EMDTransport()
+    otda = EMDTransport()
 
     # test its computed
     otda.fit(Xs=Xs, Xt=Xt)
@@ -299,11 +307,11 @@ def test_emd_transport_class():
     assert_equal(transp_Xs.shape, Xs.shape)
 
     # test unsupervised vs semi-supervised mode
-    otda_unsup = ot.da.EMDTransport()
+    otda_unsup = EMDTransport()
     otda_unsup.fit(Xs=Xs, ys=ys, Xt=Xt)
     n_unsup = np.sum(otda_unsup.cost_)
 
-    otda_semi = ot.da.EMDTransport()
+    otda_semi = EMDTransport()
     otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
     assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
     n_semisup = np.sum(otda_semi.cost_)
@@ -338,7 +346,7 @@ def test_mapping_transport_class():
     ##########################################################################
 
     # check computation and dimensions if bias == False
-    otda = ot.da.MappingTransport(kernel="linear", bias=False)
+    otda = MappingTransport(kernel="linear", bias=False)
     otda.fit(Xs=Xs, Xt=Xt)
     assert hasattr(otda, "coupling_")
     assert hasattr(otda, "mapping_")
@@ -365,7 +373,7 @@ def test_mapping_transport_class():
     assert_equal(transp_Xs_new.shape, Xs_new.shape)
 
     # check computation and dimensions if bias == True
-    otda = ot.da.MappingTransport(kernel="linear", bias=True)
+    otda = MappingTransport(kernel="linear", bias=True)
     otda.fit(Xs=Xs, Xt=Xt)
     assert_equal(otda.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
     assert_equal(otda.mapping_.shape, ((Xs.shape[1] + 1, Xt.shape[1])))
@@ -392,7 +400,7 @@ def test_mapping_transport_class():
     ##########################################################################
 
     # check computation and dimensions if bias == False
-    otda = ot.da.MappingTransport(kernel="gaussian", bias=False)
+    otda = MappingTransport(kernel="gaussian", bias=False)
     otda.fit(Xs=Xs, Xt=Xt)
 
     assert_equal(otda.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
@@ -416,7 +424,7 @@ def test_mapping_transport_class():
     assert_equal(transp_Xs_new.shape, Xs_new.shape)
 
     # check computation and dimensions if bias == True
-    otda = ot.da.MappingTransport(kernel="gaussian", bias=True)
+    otda = MappingTransport(kernel="gaussian", bias=True)
     otda.fit(Xs=Xs, Xt=Xt)
     assert_equal(otda.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
     assert_equal(otda.mapping_.shape, ((Xs.shape[0] + 1, Xt.shape[1])))
@@ -439,7 +447,7 @@ def test_mapping_transport_class():
     assert_equal(transp_Xs_new.shape, Xs_new.shape)
 
     # check everything runs well with log=True
-    otda = ot.da.MappingTransport(kernel="gaussian", log=True)
+    otda = MappingTransport(kernel="gaussian", log=True)
     otda.fit(Xs=Xs, Xt=Xt)
     assert len(otda.log_.keys()) != 0
 
@@ -449,13 +457,13 @@ def test_otda():
     n_samples = 150  # nb samples
     np.random.seed(0)
 
-    xs, ys = ot.datasets.get_data_classif('3gauss', n_samples)
-    xt, yt = ot.datasets.get_data_classif('3gauss2', n_samples)
+    xs, ys = get_data_classif('3gauss', n_samples)
+    xt, yt = get_data_classif('3gauss2', n_samples)
 
-    a, b = ot.unif(n_samples), ot.unif(n_samples)
+    a, b = unif(n_samples), unif(n_samples)
 
     # LP problem
-    da_emd = ot.da.OTDA()     # init class
+    da_emd = OTDA()     # init class
     da_emd.fit(xs, xt)       # fit distributions
     da_emd.interp()    # interpolation of source samples
     da_emd.predict(xs)    # interpolation of source samples
@@ -465,7 +473,7 @@ def test_otda():
 
     # sinkhorn regularization
     lambd = 1e-1
-    da_entrop = ot.da.OTDA_sinkhorn()
+    da_entrop = OTDA_sinkhorn()
     da_entrop.fit(xs, xt, reg=lambd)
     da_entrop.interp()
     da_entrop.predict(xs)
@@ -477,7 +485,7 @@ def test_otda():
     # non-convex Group lasso regularization
     reg = 1e-1
     eta = 1e0
-    da_lpl1 = ot.da.OTDA_lpl1()
+    da_lpl1 = OTDA_lpl1()
     da_lpl1.fit(xs, ys, xt, reg=reg, eta=eta)
     da_lpl1.interp()
     da_lpl1.predict(xs)
@@ -488,7 +496,7 @@ def test_otda():
     # True Group lasso regularization
     reg = 1e-1
     eta = 2e0
-    da_l1l2 = ot.da.OTDA_l1l2()
+    da_l1l2 = OTDA_l1l2()
     da_l1l2.fit(xs, ys, xt, reg=reg, eta=eta, numItermax=20, verbose=True)
     da_l1l2.interp()
     da_l1l2.predict(xs)
@@ -497,11 +505,11 @@ def test_otda():
     np.testing.assert_allclose(b, np.sum(da_l1l2.G, 0), rtol=1e-3, atol=1e-3)
 
     # linear mapping
-    da_emd = ot.da.OTDA_mapping_linear()     # init class
+    da_emd = OTDA_mapping_linear()     # init class
     da_emd.fit(xs, xt, numItermax=10)       # fit distributions
     da_emd.predict(xs)    # interpolation of source samples
 
     # nonlinear mapping
-    da_emd = ot.da.OTDA_mapping_kernel()     # init class
+    da_emd = OTDA_mapping_kernel()     # init class
     da_emd.fit(xs, xt, numItermax=10)       # fit distributions
     da_emd.predict(xs)    # interpolation of source samples

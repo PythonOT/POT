@@ -5,12 +5,14 @@
 # License: MIT License
 
 import numpy as np
-import ot
 import time
 import pytest
 
+from ot.da import OTDA_sinkhorn, OTDA_lpl1
+
 try:  # test if cudamat installed
-    import ot.gpu
+    from ot.gpu.da import OTDA_sinkhorn as OTDA_sinkhorn_gpu
+    from ot.gpu.da import OTDA_lpl1 as OTDA_lpl1_gpu
     nogpu = False
 except ImportError:
     nogpu = True
@@ -30,11 +32,11 @@ def test_gpu_sinkhorn():
         a = rng.rand(n_samples // 4, 100)
         b = rng.rand(n_samples, 100)
         time1 = time.time()
-        transport = ot.da.OTDA_sinkhorn()
+        transport = OTDA_sinkhorn()
         transport.fit(a, b)
         G1 = transport.G
         time2 = time.time()
-        transport = ot.gpu.da.OTDA_sinkhorn()
+        transport = OTDA_sinkhorn_gpu()
         transport.fit(a, b)
         G2 = transport.G
         time3 = time.time()
@@ -61,11 +63,11 @@ def test_gpu_sinkhorn_lpl1():
         labels_a = np.random.randint(10, size=(n_samples // 4))
         b = rng.rand(n_samples, 100)
         time1 = time.time()
-        transport = ot.da.OTDA_lpl1()
+        transport = OTDA_lpl1()
         transport.fit(a, labels_a, b)
         G1 = transport.G
         time2 = time.time()
-        transport = ot.gpu.da.OTDA_lpl1()
+        transport = OTDA_lpl1_gpu()
         transport.fit(a, labels_a, b)
         G2 = transport.G
         time3 = time.time()

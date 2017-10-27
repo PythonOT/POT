@@ -6,7 +6,10 @@
 # License: MIT License
 
 import numpy as np
-import ot
+
+from ot.datasets import get_2D_samples_gauss
+from ot.utils import unif, dist
+from ot.gromov import gromov_wasserstein
 
 
 def test_gromov():
@@ -15,20 +18,20 @@ def test_gromov():
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.get_2D_samples_gauss(n_samples, mu_s, cov_s)
+    xs = get_2D_samples_gauss(n_samples, mu_s, cov_s)
 
     xt = xs[::-1].copy()
 
-    p = ot.unif(n_samples)
-    q = ot.unif(n_samples)
+    p = unif(n_samples)
+    q = unif(n_samples)
 
-    C1 = ot.dist(xs, xs)
-    C2 = ot.dist(xt, xt)
+    C1 = dist(xs, xs)
+    C2 = dist(xt, xt)
 
     C1 /= C1.max()
     C2 /= C2.max()
 
-    G = ot.gromov_wasserstein(C1, C2, p, q, 'square_loss', epsilon=5e-4)
+    G = gromov_wasserstein(C1, C2, p, q, 'square_loss', epsilon=5e-4)
 
     # check constratints
     np.testing.assert_allclose(

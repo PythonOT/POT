@@ -5,21 +5,23 @@
 # License: MIT License
 
 import warnings
-
 import numpy as np
 
-import ot
+import doctest
+from ot.utils import unif, dist, tic, toc
 from ot.datasets import get_1D_gauss as gauss
+from ot.lp import emd, emd2
+from ot import lp
+from ot import bregman
 
 
 def test_doctest():
-    import doctest
 
     # test lp solver
-    doctest.testmod(ot.lp, verbose=True)
+    doctest.testmod(lp, verbose=True)
 
     # test bregman solver
-    doctest.testmod(ot.bregman, verbose=True)
+    doctest.testmod(bregman, verbose=True)
 
 
 def test_emd_emd2():
@@ -28,11 +30,11 @@ def test_emd_emd2():
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)
-    u = ot.utils.unif(n)
+    u = unif(n)
 
-    M = ot.dist(x, x)
+    M = dist(x, x)
 
-    G = ot.emd(u, u, M)
+    G = emd(u, u, M)
 
     # check G is identity
     np.testing.assert_allclose(G, np.eye(n) / n)
@@ -40,7 +42,7 @@ def test_emd_emd2():
     np.testing.assert_allclose(u, G.sum(1))  # cf convergence sinkhorn
     np.testing.assert_allclose(u, G.sum(0))  # cf convergence sinkhorn
 
-    w = ot.emd2(u, u, M)
+    w = emd2(u, u, M)
     # check loss=0
     np.testing.assert_allclose(w, 0)
 
@@ -51,11 +53,11 @@ def test_emd_empty():
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)
-    u = ot.utils.unif(n)
+    u = unif(n)
 
-    M = ot.dist(x, x)
+    M = dist(x, x)
 
-    G = ot.emd([], [], M)
+    G = emd([], [], M)
 
     # check G is identity
     np.testing.assert_allclose(G, np.eye(n) / n)
@@ -63,7 +65,7 @@ def test_emd_empty():
     np.testing.assert_allclose(u, G.sum(1))  # cf convergence sinkhorn
     np.testing.assert_allclose(u, G.sum(0))  # cf convergence sinkhorn
 
-    w = ot.emd2([], [], M)
+    w = emd2([], [], M)
     # check loss=0
     np.testing.assert_allclose(w, 0)
 
@@ -84,27 +86,27 @@ def test_emd2_multi():
         b[:, i] = gauss(n, m=ls[i], s=10)
 
     # loss matrix
-    M = ot.dist(x.reshape((n, 1)), x.reshape((n, 1)))
+    M = dist(x.reshape((n, 1)), x.reshape((n, 1)))
     # M/=M.max()
 
     print('Computing {} EMD '.format(nb))
 
     # emd loss 1 proc
-    ot.tic()
-    emd1 = ot.emd2(a, b, M, 1)
-    ot.toc('1 proc : {} s')
+    tic()
+    emd1 = emd2(a, b, M, 1)
+    toc('1 proc : {} s')
 
     # emd loss multipro proc
-    ot.tic()
-    emdn = ot.emd2(a, b, M)
-    ot.toc('multi proc : {} s')
+    tic()
+    emdn = emd2(a, b, M)
+    toc('multi proc : {} s')
 
     np.testing.assert_allclose(emd1, emdn)
 
     # emd loss multipro proc with log
-    ot.tic()
-    emdn = ot.emd2(a, b, M, log=True, return_matrix=True)
-    ot.toc('multi proc : {} s')
+    tic()
+    emdn = emd2(a, b, M, log=True, return_matrix=True)
+    toc('multi proc : {} s')
 
     for i in range(len(emdn)):
         emd = emdn[i]
@@ -134,23 +136,23 @@ def test_warnings():
     b = gauss(m, m=mean2, s=10)
 
     # loss matrix
-    M = ot.dist(x.reshape((-1, 1)), y.reshape((-1, 1))) ** (1. / 2)
+    M = dist(x.reshape((-1, 1)), y.reshape((-1, 1))) ** (1. / 2)
 
     print('Computing {} EMD '.format(1))
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         print('Computing {} EMD '.format(1))
-        ot.emd(a, b, M, numItermax=1)
+        emd(a, b, M, numItermax=1)
         assert "numItermax" in str(w[-1].message)
         assert len(w) == 1
         a[0] = 100
         print('Computing {} EMD '.format(2))
-        ot.emd(a, b, M)
+        emd(a, b, M)
         assert "infeasible" in str(w[-1].message)
         assert len(w) == 2
         a[0] = -1
         print('Computing {} EMD '.format(2))
-        ot.emd(a, b, M)
+        emd(a, b, M)
         assert "infeasible" in str(w[-1].message)
         assert len(w) == 3
 
@@ -172,18 +174,18 @@ def test_dual_variables():
     b = gauss(m, m=mean2, s=10)
 
     # loss matrix
-    M = ot.dist(x.reshape((-1, 1)), y.reshape((-1, 1))) ** (1. / 2)
+    M = dist(x.reshape((-1, 1)), y.reshape((-1, 1))) ** (1. / 2)
 
     print('Computing {} EMD '.format(1))
 
     # emd loss 1 proc
-    ot.tic()
-    G, log = ot.emd(a, b, M, log=True)
-    ot.toc('1 proc : {} s')
+    tic()
+    G, log = emd(a, b, M, log=True)
+    toc('1 proc : {} s')
 
-    ot.tic()
-    G2 = ot.emd(b, a, np.ascontiguousarray(M.T))
-    ot.toc('1 proc : {} s')
+    tic()
+    G2 = emd(b, a, np.ascontiguousarray(M.T))
+    toc('1 proc : {} s')
 
     cost1 = (G * M).sum()
     # Check symmetry
@@ -204,5 +206,6 @@ def check_duality_gap(a, b, M, G, u, v, cost):
     [ind1, ind2] = np.nonzero(G)
 
     # Check that reduced cost is zero on transport arcs
-    np.testing.assert_array_almost_equal((M - u.reshape(-1, 1) - v.reshape(1, -1))[ind1, ind2],
-                                         np.zeros(ind1.size))
+    np.testing.assert_array_almost_equal(
+        (M - u.reshape(-1, 1) - v.reshape(1, -1))[ind1, ind2],
+        np.zeros(ind1.size))
