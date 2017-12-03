@@ -120,7 +120,7 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
     # For each class, store the indexes of the class
     for c in classes:
         idxc, = np.where(labels_a == c)
-        indices_labels.append(np.asarray(idxc.reshape(1, -1)))
+        indices_labels.append(idxc)
 
     W = np.zeros(M.shape)
 
@@ -365,12 +365,14 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
 
     def loss(L, G):
         """Compute full loss"""
-        return np.sum((xs1.dot(L) - ns * G.dot(xt))**2) + mu * np.sum(G * M) + eta * np.sum(sel(L - I0)**2)
+        return (np.sum((xs1.dot(L) - ns * G.dot(xt))**2) +
+                mu * np.sum(G * M) + eta * np.sum(sel(L - I0)**2))
 
     def solve_L(G):
         """ solve L problem with fixed G (least square)"""
         xst = ns * G.dot(xt)
-        return np.linalg.solve(xstxs + eta * I, xs1.T.dot(xst) + eta * I0)
+        return np.linalg.solve(xstxs + eta * Identity,
+                               xs1.T.dot(xst) + eta * I0)
 
     def solve_G(L, G0):
         """Update G with CG algorithm"""
@@ -565,7 +567,8 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
 
     def loss(L, G):
         """Compute full loss"""
-        return np.sum((K1.dot(L) - ns * G.dot(xt))**2) + mu * np.sum(G * M) + eta * np.trace(L.T.dot(Kreg).dot(L))
+        return (np.sum((K1.dot(L) - ns * G.dot(xt))**2) +
+                mu * np.sum(G * M) + eta * np.trace(L.T.dot(Kreg).dot(L)))
 
     def solve_L_nobias(G):
         """ solve L problem with fixed G (least square)"""
