@@ -25,7 +25,7 @@ def benchDistance(a, b):
     print("pairwiseEuclidean GPU, time: {:6.2f} sec ".format(time4 - time3))
 
 
-def benchSinkhorn(a, b):
+def benchSinkhorn(a, labels_a, b):
     # Then compare computation time for computing optimal sinkhorn coupling
     ot1 = ot.da.SinkhornTransport(gpu=False)
     ot2 = ot.da.SinkhornTransport(gpu=True)
@@ -42,10 +42,27 @@ def benchSinkhorn(a, b):
     print("Sinkhorn GPU, time: {:6.2f} sec ".format(time3 - time2))
     np.testing.assert_allclose(g1, cp.asnumpy(g2), rtol=1e-5, atol=1e-5)
 
+    otlpl1 = ot.da.SinkhornLpl1Transport(gpu=False)
+    otlpl2 = ot.da.SinkhornLpl1Transport(gpu=True)
+    time1 = time.time()
+    otlpl1.fit(Xs=a, ys=labels_a, Xt=b)
+    g1 = otlpl1.coupling_
+    time2 = time.time()
+    otlpl2.fit(Xs=a, ys=labels_a, Xt=b)
+    g2 = otlpl2.coupling_
+    time3 = time.time()
+
+    print("Sinkhorn LpL1 CPU, time: {:6.2f} sec ".format(time2 - time1))
+    print("Sinkhorn LpL1 GPU, time: {:6.2f} sec ".format(time3 - time2))
+    np.testing.assert_allclose(g1, cp.asnumpy(g2), rtol=1e-5, atol=1e-5)
+
 
 for tp in [np.float32, np.float64]:
     print("Using " + str(tp))
-    a = np.random.rand(10000, 100).astype(tp)
-    b = np.random.rand(10000, 100).astype(tp)
+    n = 5000
+    d = 100
+    a = np.random.rand(n, d).astype(tp)
+    labels_a = (np.random.rand(n, 1) * 2).astype(int).ravel()
+    b = np.random.rand(n, d).astype(tp)
     benchDistance(a, b)
-    benchSinkhorn(a, b)
+    benchSinkhorn(a, labels_a, b)

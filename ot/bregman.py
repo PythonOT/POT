@@ -14,7 +14,7 @@ from .utils import get_array_module, gpu_fun
 
 @gpu_fun(in_arrays=[0, 1, 2], out_arrays=[0])
 def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9, verbose=False, log=False, **kwargs):
-    u"""
+    """
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
     The function solves the following optimization problem:
@@ -348,7 +348,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
     np.divide(M, -reg, out=K)
     np.exp(K, out=K)
 
-    # print(xp.min(K))
+    # print(np.min(K))
     KtransposeU = np.empty(v.shape, dtype=M.dtype)
     tmp = np.empty(K.shape, dtype=M.dtype)
     tmp2 = np.empty(b.shape, dtype=M.dtype)

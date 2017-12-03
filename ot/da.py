@@ -14,14 +14,16 @@ import numpy as np
 from .bregman import sinkhorn, sinkhorn_knopp
 from .lp import emd
 from .utils import unif, dist, pairwiseEuclidean, kernel, cost_normalization
-from .utils import check_params, deprecated, BaseEstimator, to_gpu
+from .utils import check_params, deprecated, BaseEstimator, to_gpu, gpu_fun
+from .utils import get_array_module
 from .optim import cg
 from .optim import gcg
 
 
+@gpu_fun(in_arrays=[0, 1, 2, 3], out_arrays=[0])
 def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
                      numInnerItermax=200, stopInnerThr=1e-9, verbose=False,
-                     log=False):
+                     log=False, **kwargs):
     """
     Solve the entropic regularization optimal transport problem with nonconvex
     group lasso regularization
@@ -104,14 +106,21 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
     ot.optim.cg : General regularized OT
 
     """
+    np = get_array_module(a, b, M)
     p = 0.5
     epsilon = 1e-3
 
     indices_labels = []
-    classes = np.unique(labels_a)
+
+    # Get unique labels. np.unique not used because it doesn't exist in cupy.
+    flt = labels_a.flatten()
+    flt.sort()
+    classes = flt[np.concatenate((np.array([True]), flt[1:] != flt[:-1]))]
+
+    # For each class, store the indexes of the class
     for c in classes:
         idxc, = np.where(labels_a == c)
-        indices_labels.append(idxc)
+        indices_labels.append(np.asarray(idxc.reshape(1, -1)))
 
     W = np.zeros(M.shape)
 
@@ -1011,8 +1020,6 @@ class BaseTransport(BaseEstimator):
             # distribution estimation
             self.mu_s = self.distribution_estimation(Xs)
             self.mu_t = self.distribution_estimation(Xt)
-            if self.gpu:
-                self.mu_s, self.mu_t = to_gpu(self.mu_s, self.mu_t)
 
             # store arrays of samples
             self.xs_ = Xs
@@ -1287,7 +1294,7 @@ class SinkhornTransport(BaseTransport):
             verbose=self.verbose, log=self.log)
         """
         returned_ = sinkhorn_knopp(
-            a=self.mu_s, b=self.mu_t, M=self.cost_, reg=self.reg_e,
+            self.mu_s, self.mu_t, self.cost_, reg=self.reg_e,
             numItermax=self.max_iter, stopThr=self.tol,
             verbose=self.verbose, log=self.log, gpu=self.gpu)
 
@@ -1492,10 +1499,10 @@ class SinkhornLpl1Transport(BaseTransport):
             super(SinkhornLpl1Transport, self).fit(Xs, ys, Xt, yt)
 
             self.coupling_ = sinkhorn_lpl1_mm(
-                a=self.mu_s, labels_a=ys, b=self.mu_t, M=self.cost_,
+                self.mu_s, ys, self.mu_t, self.cost_,
                 reg=self.reg_e, eta=self.reg_cl, numItermax=self.max_iter,
                 numInnerItermax=self.max_inner_iter, stopInnerThr=self.tol,
-                verbose=self.verbose)
+                verbose=self.verbose, gpu=self.gpu)
 
         return self
 

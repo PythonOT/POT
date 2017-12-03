@@ -83,8 +83,14 @@ class gpu_fun(object):
     ... def some_function(): pass
     Parameters
     ----------
-    extra : string
-          to be added to the deprecation messages
+    in_arrays : array of indexes of the parameters of some_function that must
+              be uploaded to the GPU
+    out_arrays: same but for the return and to download from gpu
+
+    Be carefull, the in_arrays indexes are from the parameters of the function
+    given in the *args. The parameters in **kwargs are not considered. So when
+    you call your function, the parameters given by name=value are not
+    considered in in_arrays and are thus not uploaded to the GPU.
     """
 
     # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
@@ -106,28 +112,16 @@ class gpu_fun(object):
             return self._decorate_fun(obj)
 
     def _decorate_class(self, cls):
-        # TODO: we should probably reset __new__ for full generality
-        # init = cls.__init__
-        # def wrapped(*args, **kwargs):
-        #     warnings.warn(msg, category=DeprecationWarning)
-        #     return init(*args, **kwargs)
-        # cls.__init__ = wrapped
-        # wrapped.__name__ = '__init__'
-        # wrapped.__doc__ = self._update_doc(init.__doc__)
-        # wrapped.deprecated_original = init
-
         return cls
 
     def _decorate_fun(self, fun):
         """Decorate function fun"""
 
         def wrapped(*args, **kwargs):
-
             if cp and 'gpu' in kwargs and kwargs['gpu']:
-                # convert args to gpu twhose index are in in_array
+                # convert args to gpu whose index are in in_arrays
                 args = [to_gpu(arg) if i in self.in_arrays else arg
                         for i, arg in enumerate(args)]
-
             # clean kwargs
             if 'gpu' in kwargs:
                 kwargs.pop('gpu')
