@@ -14,7 +14,7 @@ import numpy as np
 from .bregman import sinkhorn, sinkhorn_knopp
 from .lp import emd
 from .utils import unif, dist, pairwiseEuclidean, kernel, cost_normalization
-from .utils import check_params, deprecated, BaseEstimator, to_gpu, gpu_fun
+from .utils import check_params, deprecated, BaseEstimator, gpu_fun
 from .utils import get_array_module
 from .optim import cg
 from .optim import gcg
@@ -339,17 +339,17 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
     if bias:
         xs1 = np.hstack((xs, np.ones((ns, 1))))
         xstxs = xs1.T.dot(xs1)
-        I = np.eye(d + 1)
-        I[-1] = 0
-        I0 = I[:, :-1]
+        Identity = np.eye(d + 1)
+        Identity[-1] = 0
+        I0 = Identity[:, :-1]
 
         def sel(x):
             return x[:-1, :]
     else:
         xs1 = xs
         xstxs = xs1.T.dot(xs1)
-        I = np.eye(d)
-        I0 = I
+        Identity = np.eye(d)
+        I0 = Identity
 
         def sel(x):
             return x
@@ -529,8 +529,8 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
     K = kernel(xs, xs, method=kerneltype, sigma=sigma)
     if bias:
         K1 = np.hstack((K, np.ones((ns, 1))))
-        I = np.eye(ns + 1)
-        I[-1] = 0
+        Identity = np.eye(ns + 1)
+        Identity[-1] = 0
         Kp = np.eye(ns + 1)
         Kp[:ns, :ns] = K
 
@@ -544,14 +544,14 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
 
     else:
         K1 = K
-        I = np.eye(ns)
+        Identity = np.eye(ns)
 
         # ls regul
         # K0 = K1.T.dot(K1)+eta*I
         # Kreg=I
 
         # proper kernel ridge
-        K0 = K + eta * I
+        K0 = K + eta * Identity
         Kreg = K
 
     if log:
