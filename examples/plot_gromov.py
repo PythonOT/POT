@@ -78,16 +78,26 @@ pl.show()
 # Compute Gromov-Wasserstein plans and distance
 # ---------------------------------------------
 
-
+#%%
 p = ot.unif(n_samples)
 q = ot.unif(n_samples)
+ot.tic()
+gw = ot.gromov_wasserstein(C1, C2, p, q, 'square_loss', epsilon=5e-4,verbose=True)
+ot.toc()
+ot.tic()
+gw2,log2= ot.gromov.gromov_wasserstein0(C1, C2, p, q, 'square_loss', epsilon=5e-4,log=True,verbose=True)
+ot.toc()
 
-gw = ot.gromov_wasserstein(C1, C2, p, q, 'square_loss', epsilon=5e-4)
 gw_dist = ot.gromov_wasserstein2(C1, C2, p, q, 'square_loss', epsilon=5e-4)
+
+ot.tic()
+gw0,log0=ot.gromov.gw_lp(C1, C2, p, q, 'square_loss',log=True,verbose=True)
+ot.toc()
+
 
 print('Gromov-Wasserstein distances between the distribution: ' + str(gw_dist))
 
 pl.figure()
-pl.imshow(gw, cmap='jet')
+pl.imshow(gw2, cmap='jet')
 pl.colorbar()
 pl.show()
