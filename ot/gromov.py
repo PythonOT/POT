@@ -20,12 +20,12 @@ from .utils import dist
 from .optim import cg
 
 
-def init_matrix(C1,C2,T,p,q,loss_fun='square_loss'):
+def init_matrix(C1, C2, T, p, q, loss_fun='square_loss'):
     """ Return loss matrices and tensors for Gromov-Wasserstein fast computation
 
     Returns the value of \mathcal{L}(C1,C2) \otimes T with the selected loss
     function as the loss function of Gromow-Wasserstein discrepancy.
-    
+
     The matrices are computed as described in Proposition 1 in [12]
 
     Where :
@@ -56,18 +56,18 @@ def init_matrix(C1,C2,T,p,q,loss_fun='square_loss'):
     T :  ndarray, shape (ns, nt)
          Coupling between source and target spaces
     p : ndarray, shape (ns,)
-        
+
 
     Returns
     -------
-    
+
     constC : ndarray, shape (ns, nt)
            Constant C matrix in Eq. (6)
     hC1 : ndarray, shape (ns, ns)
-           h1(C1) matrix in Eq. (6)          
+           h1(C1) matrix in Eq. (6)
     hC2 : ndarray, shape (nt, nt)
            h2(C) matrix in Eq. (6)
-           
+
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
@@ -76,39 +76,45 @@ def init_matrix(C1,C2,T,p,q,loss_fun='square_loss'):
 
     """
 
-
     if loss_fun == 'square_loss':
         def f1(a):
-            return (a**2)/2
+            return (a**2) / 2
+
         def f2(b):
-            return (b**2)/2  
+            return (b**2) / 2
+
         def h1(a):
-            return a    
+            return a
+
         def h2(b):
             return b
     elif loss_fun == 'kl_loss':
         def f1(a):
-            return a * np.log(a + 1e-15) - a    
+            return a * np.log(a + 1e-15) - a
+
         def f2(b):
-            return b    
+            return b
+
         def h1(a):
-            return a    
+            return a
+
         def h2(b):
             return np.log(b + 1e-15)
 
-    constC1=np.dot(np.dot(f1(C1),p.reshape(-1,1)),
-                   np.ones(len(q)).reshape(1,-1))
-    constC2=np.dot(np.ones(len(p)).reshape(-1,1),
-                   np.dot(q.reshape(1,-1),f2(C2).T))
-    constC=constC1+constC2
+    constC1 = np.dot(np.dot(f1(C1), p.reshape(-1, 1)),
+                     np.ones(len(q)).reshape(1, -1))
+    constC2 = np.dot(np.ones(len(p)).reshape(-1, 1),
+                     np.dot(q.reshape(1, -1), f2(C2).T))
+    constC = constC1 + constC2
     hC1 = h1(C1)
     hC2 = h2(C2)
 
-    return constC,hC1,hC2
+    return constC, hC1, hC2
 
-def tensor_product(constC,hC1,hC2,T):
-    """ Return the tensor for Gromov-Wasserstein fast computation 
-    
+
+def tensor_product(constC, hC1, hC2, T):
+    """ Return the tensor for Gromov-Wasserstein fast computation
+
     The tensor is computed as described in Proposition 1 Eq. (6) in [12].
 
     Parameters
@@ -116,14 +122,14 @@ def tensor_product(constC,hC1,hC2,T):
     constC : ndarray, shape (ns, nt)
            Constant C matrix in Eq. (6)
     hC1 : ndarray, shape (ns, ns)
-           h1(C1) matrix in Eq. (6)          
+           h1(C1) matrix in Eq. (6)
     hC2 : ndarray, shape (nt, nt)
            h2(C) matrix in Eq. (6)
-        
+
 
     Returns
     -------
-    
+
     tens : ndarray, shape (ns, nt)
            \mathcal{L}(C1,C2) \otimes T tensor-matrix multiplication result
 
@@ -133,15 +139,16 @@ def tensor_product(constC,hC1,hC2,T):
     "Gromov-Wasserstein averaging of kernel and distance matrices."
     International Conference on Machine Learning (ICML). 2016.
 
-    """    
-    A=-np.dot(hC1, T).dot(hC2.T)
-    tens = constC+A
-    #tens -= tens.min()
+    """
+    A = -np.dot(hC1, T).dot(hC2.T)
+    tens = constC + A
+    # tens -= tens.min()
     return tens
 
-def gwloss(constC,hC1,hC2,T):
+
+def gwloss(constC, hC1, hC2, T):
     """ Return the Loss for Gromov-Wasserstein
-    
+
     The loss is computed as described in Proposition 1 Eq. (6) in [12].
 
     Parameters
@@ -149,15 +156,15 @@ def gwloss(constC,hC1,hC2,T):
     constC : ndarray, shape (ns, nt)
            Constant C matrix in Eq. (6)
     hC1 : ndarray, shape (ns, ns)
-           h1(C1) matrix in Eq. (6)          
+           h1(C1) matrix in Eq. (6)
     hC2 : ndarray, shape (nt, nt)
            h2(C) matrix in Eq. (6)
     T : ndarray, shape (ns, nt)
-           Current value of transport matrix T       
+           Current value of transport matrix T
 
     Returns
     -------
-    
+
     loss : float
            Gromov Wasserstein loss
 
@@ -166,16 +173,17 @@ def gwloss(constC,hC1,hC2,T):
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
     "Gromov-Wasserstein averaging of kernel and distance matrices."
     International Conference on Machine Learning (ICML). 2016.
-    
+
     """
 
-    tens=tensor_product(constC,hC1,hC2,T) 
-              
-    return np.sum(tens*T) 
+    tens = tensor_product(constC, hC1, hC2, T)
 
-def gwggrad(constC,hC1,hC2,T):
-    """ Return the gradient for Gromov-Wasserstein 
-    
+    return np.sum(tens * T)
+
+
+def gwggrad(constC, hC1, hC2, T):
+    """ Return the gradient for Gromov-Wasserstein
+
     The gradient is computed as described in Proposition 2 in [12].
 
     Parameters
@@ -183,15 +191,15 @@ def gwggrad(constC,hC1,hC2,T):
     constC : ndarray, shape (ns, nt)
            Constant C matrix in Eq. (6)
     hC1 : ndarray, shape (ns, ns)
-           h1(C1) matrix in Eq. (6)          
+           h1(C1) matrix in Eq. (6)
     hC2 : ndarray, shape (nt, nt)
            h2(C) matrix in Eq. (6)
     T : ndarray, shape (ns, nt)
-           Current value of transport matrix T       
+           Current value of transport matrix T
 
     Returns
     -------
-    
+
     grad : ndarray, shape (ns, nt)
            Gromov Wasserstein gradient
 
@@ -200,10 +208,10 @@ def gwggrad(constC,hC1,hC2,T):
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
     "Gromov-Wasserstein averaging of kernel and distance matrices."
     International Conference on Machine Learning (ICML). 2016.
-    
-    """          
-    return 2*tensor_product(constC,hC1,hC2,T) # [12] Prop. 2 misses a 2 factor 
 
+    """
+    return 2 * tensor_product(constC, hC1, hC2,
+                              T)  # [12] Prop. 2 misses a 2 factor
 
 
 def update_square_loss(p, lambdas, T, Cs):
@@ -261,7 +269,7 @@ def update_kl_loss(p, lambdas, T, Cs):
     return np.exp(np.divide(tmpsum, ppt))
 
 
-def gromov_wasserstein(C1,C2,p,q,loss_fun,log=False,**kwargs): 
+def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, **kwargs):
     """
     Returns the gromov-wasserstein transport between (C1,p) and (C2,q)
 
@@ -307,38 +315,40 @@ def gromov_wasserstein(C1,C2,p,q,loss_fun,log=False,**kwargs):
             \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
     log : dict
         convergence information and loss
-        
+
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
-        International Conference on Machine Learning (ICML). 2016.   
-     
-    .. [13] Mémoli, Facundo. Gromov–Wasserstein distances and the 
-        metric approach to object matching. Foundations of computational 
+        International Conference on Machine Learning (ICML). 2016.
+
+    .. [13] Mémoli, Facundo. Gromov–Wasserstein distances and the
+        metric approach to object matching. Foundations of computational
         mathematics 11.4 (2011): 417-487.
-    
+
     """
 
     T = np.eye(len(p), len(q))
 
-    constC,hC1,hC2=init_matrix(C1,C2,T,p,q,loss_fun)
-    
-    G0=p[:,None]*q[None,:]
-    
-    def f(G):
-        return gwloss(constC,hC1,hC2,G)
-    def df(G):
-        return gwggrad(constC,hC1,hC2,G)
-    
-    if log:
-        res,log=cg(p,q,0,1,f,df,G0,log=True,**kwargs)
-        log['gw_dist']=gwloss(constC,hC1,hC2,res)
-        return res,log
-    else:
-        return cg(p,q,0,1,f,df,G0,**kwargs)
+    constC, hC1, hC2 = init_matrix(C1, C2, T, p, q, loss_fun)
 
-def gromov_wasserstein2(C1,C2,p,q,loss_fun,log=False,**kwargs): 
+    G0 = p[:, None] * q[None, :]
+
+    def f(G):
+        return gwloss(constC, hC1, hC2, G)
+
+    def df(G):
+        return gwggrad(constC, hC1, hC2, G)
+
+    if log:
+        res, log = cg(p, q, 0, 1, f, df, G0, log=True, **kwargs)
+        log['gw_dist'] = gwloss(constC, hC1, hC2, res)
+        return res, log
+    else:
+        return cg(p, q, 0, 1, f, df, G0, **kwargs)
+
+
+def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, **kwargs):
     """
     Returns the gromov-wasserstein discrepancy between (C1,p) and (C2,q)
 
@@ -383,40 +393,41 @@ def gromov_wasserstein2(C1,C2,p,q,loss_fun,log=False,**kwargs):
         Gromov-Wasserstein distance
     log : dict
         convergence information and Coupling marix
-        
+
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
-        International Conference on Machine Learning (ICML). 2016.   
-     
-    .. [13] Mémoli, Facundo. Gromov–Wasserstein distances and the 
-        metric approach to object matching. Foundations of computational 
+        International Conference on Machine Learning (ICML). 2016.
+
+    .. [13] Mémoli, Facundo. Gromov–Wasserstein distances and the
+        metric approach to object matching. Foundations of computational
         mathematics 11.4 (2011): 417-487.
-    
+
     """
 
     T = np.eye(len(p), len(q))
 
-    constC,hC1,hC2=init_matrix(C1,C2,T,p,q,loss_fun)
-    
-    G0=p[:,None]*q[None,:]
-    
+    constC, hC1, hC2 = init_matrix(C1, C2, T, p, q, loss_fun)
+
+    G0 = p[:, None] * q[None, :]
+
     def f(G):
-        return gwloss(constC,hC1,hC2,G)
+        return gwloss(constC, hC1, hC2, G)
+
     def df(G):
-        return gwggrad(constC,hC1,hC2,G)
-    res,log=cg(p,q,0,1,f,df,G0,log=True,**kwargs)
-    log['gw_dist']=gwloss(constC,hC1,hC2,res)
-    log['T']=res
+        return gwggrad(constC, hC1, hC2, G)
+    res, log = cg(p, q, 0, 1, f, df, G0, log=True, **kwargs)
+    log['gw_dist'] = gwloss(constC, hC1, hC2, res)
+    log['T'] = res
     if log:
-        return log['gw_dist'],log
+        return log['gw_dist'], log
     else:
         return log['gw_dist']
 
 
 def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
-                       max_iter=1000, tol=1e-9, verbose=False, log=False):
+                                max_iter=1000, tol=1e-9, verbose=False, log=False):
     """
     Returns the gromov-wasserstein transport between (C1,p) and (C2,q)
 
@@ -469,34 +480,34 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
     T : ndarray, shape (ns, nt)
         coupling between the two spaces that minimizes :
             \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}-\epsilon(H(T))
-            
+
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
     "Gromov-Wasserstein averaging of kernel and distance matrices."
-    International Conference on Machine Learning (ICML). 2016.            
-            
+    International Conference on Machine Learning (ICML). 2016.
+
     """
 
     C1 = np.asarray(C1, dtype=np.float64)
     C2 = np.asarray(C2, dtype=np.float64)
 
     T = np.outer(p, q)  # Initialization
-    
-    constC,hC1,hC2=init_matrix(C1,C2,T,p,q,loss_fun)
+
+    constC, hC1, hC2 = init_matrix(C1, C2, T, p, q, loss_fun)
 
     cpt = 0
     err = 1
-    
+
     if log:
-        log={'err':[]}
+        log = {'err': []}
 
     while (err > tol and cpt < max_iter):
 
         Tprev = T
 
         # compute the gradient
-        tens=gwggrad(constC,hC1,hC2,T)
+        tens = gwggrad(constC, hC1, hC2, T)
 
         T = sinkhorn(p, q, tens, epsilon)
 
@@ -517,13 +528,14 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
         cpt += 1
 
     if log:
-        log['gw_dist']=gwloss(constC,hC1,hC2,T)
+        log['gw_dist'] = gwloss(constC, hC1, hC2, T)
         return T, log
     else:
         return T
 
+
 def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
-                        max_iter=1000, tol=1e-9, verbose=False, log=False):
+                                 max_iter=1000, tol=1e-9, verbose=False, log=False):
     """
     Returns the entropic gromov-wasserstein discrepancy between the two measured similarity matrices
 
@@ -569,20 +581,19 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
     -------
     gw_dist : float
         Gromov-Wasserstein distance
-        
+
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
     "Gromov-Wasserstein averaging of kernel and distance matrices."
-    International Conference on Machine Learning (ICML). 2016.     
-    
+    International Conference on Machine Learning (ICML). 2016.
+
     """
 
-
     gw, logv = entropic_gromov_wasserstein(
-            C1, C2, p, q, loss_fun, epsilon, max_iter, tol, verbose, log=True)
-    
-    log['T']=gw
+        C1, C2, p, q, loss_fun, epsilon, max_iter, tol, verbose, log=True)
+
+    log['T'] = gw
 
     if log:
         return logv['gw_dist'], logv
@@ -591,7 +602,7 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
 
 
 def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
-                       max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None):
+                                max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None):
     """
     Returns the gromov-wasserstein barycenters of S measured similarity matrices
 
@@ -640,13 +651,13 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
     -------
     C : ndarray, shape (N, N)
         Similarity matrix in the barycenter space (permutated arbitrarily)
-        
+
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
     "Gromov-Wasserstein averaging of kernel and distance matrices."
-    International Conference on Machine Learning (ICML). 2016.        
-        
+    International Conference on Machine Learning (ICML). 2016.
+
     """
 
     S = len(Cs)
@@ -671,7 +682,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
         Cprev = C
 
         T = [entropic_gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, epsilon,
-                                max_iter, 1e-5, verbose, log) for s in range(S)]
+                                         max_iter, 1e-5, verbose, log) for s in range(S)]
         if loss_fun == 'square_loss':
             C = update_square_loss(p, lambdas, T, Cs)
 
@@ -698,14 +709,14 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
     return C
 
 
-def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, 
+def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
                        max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None):
     """
     Returns the gromov-wasserstein barycenters of S measured similarity matrices
 
     (Cs)_{s=1}^{s=S}
 
-    The function solves the following optimization problem with block 
+    The function solves the following optimization problem with block
     coordinate descent:
 
     .. math::
@@ -747,13 +758,13 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
     -------
     C : ndarray, shape (N, N)
         Similarity matrix in the barycenter space (permutated arbitrarily)
-        
+
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
     "Gromov-Wasserstein averaging of kernel and distance matrices."
-    International Conference on Machine Learning (ICML). 2016.        
-        
+    International Conference on Machine Learning (ICML). 2016.
+
     """
 
     S = len(Cs)
@@ -777,7 +788,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
     while(err > tol and cpt < max_iter):
         Cprev = C
 
-        T = [gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, 
+        T = [gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun,
                                 numItermax=max_iter, stopThr=1e-5, verbose=verbose, log=log) for s in range(S)]
         if loss_fun == 'square_loss':
             C = update_square_loss(p, lambdas, T, Cs)

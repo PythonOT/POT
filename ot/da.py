@@ -933,6 +933,7 @@ def distribution_estimation_uniform(X):
 
 
 class BaseTransport(BaseEstimator):
+
     """Base class for OTDA objects
 
     Notes
@@ -1180,6 +1181,7 @@ class BaseTransport(BaseEstimator):
 
 
 class SinkhornTransport(BaseTransport):
+
     """Domain Adapatation OT method based on Sinkhorn Algorithm
 
     Parameters
@@ -1289,6 +1291,7 @@ class SinkhornTransport(BaseTransport):
 
 
 class EMDTransport(BaseTransport):
+
     """Domain Adapatation OT method based on Earth Mover's Distance
 
     Parameters
@@ -1377,6 +1380,7 @@ class EMDTransport(BaseTransport):
 
 
 class SinkhornLpl1Transport(BaseTransport):
+
     """Domain Adapatation OT method based on sinkhorn algorithm +
     LpL1 class regularization.
 
@@ -1486,6 +1490,7 @@ class SinkhornLpl1Transport(BaseTransport):
 
 
 class SinkhornL1l2Transport(BaseTransport):
+
     """Domain Adapatation OT method based on sinkhorn algorithm +
     l1l2 class regularization.
 
@@ -1608,6 +1613,7 @@ class SinkhornL1l2Transport(BaseTransport):
 
 
 class MappingTransport(BaseEstimator):
+
     """MappingTransport: DA methods that aims at jointly estimating a optimal
     transport coupling and the associated mapping
 
