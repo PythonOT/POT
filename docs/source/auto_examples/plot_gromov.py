@@ -19,7 +19,7 @@ import matplotlib.pylab as pl
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 import ot
 
-
+#############################################################################
 #
 # Sample two Gaussian distributions (2D and 3D)
 # ---------------------------------------------
@@ -42,7 +42,7 @@ xs = ot.datasets.get_2D_samples_gauss(n_samples, mu_s, cov_s)
 P = sp.linalg.sqrtm(cov_t)
 xt = np.random.randn(n_samples, 3).dot(P) + mu_t
 
-
+#############################################################################
 #
 # Plotting the distributions
 # --------------------------
@@ -55,7 +55,7 @@ ax2 = fig.add_subplot(122, projection='3d')
 ax2.scatter(xt[:, 0], xt[:, 1], xt[:, 2], color='r')
 pl.show()
 
-
+#############################################################################
 #
 # Compute distance kernels, normalize them and then display
 # ---------------------------------------------------------
@@ -74,6 +74,7 @@ pl.subplot(122)
 pl.imshow(C2)
 pl.show()
 
+#############################################################################
 #
 # Compute Gromov-Wasserstein plans and distance
 # ---------------------------------------------

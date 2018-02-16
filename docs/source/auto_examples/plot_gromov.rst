@@ -12,54 +12,6 @@ computation in POT.
 
 
 
-
-.. rst-class:: sphx-glr-horizontal
-
-
-    *
-
-      .. image:: /auto_examples/images/sphx_glr_plot_gromov_001.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/images/sphx_glr_plot_gromov_002.png
-            :scale: 47
-
-
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    It.  |Loss        |Delta loss
-    --------------------------------
-        0|4.042674e-02|0.000000e+00
-        1|2.432476e-02|-6.619583e-01
-        2|2.170023e-02|-1.209448e-01
-        3|1.941223e-02|-1.178640e-01
-        4|1.823606e-02|-6.449667e-02
-        5|1.446641e-02|-2.605800e-01
-        6|1.184011e-02|-2.218140e-01
-        7|1.173274e-02|-9.150805e-03
-        8|1.173127e-02|-1.253458e-04
-        9|1.173126e-02|-1.256842e-06
-       10|1.173126e-02|-1.256876e-08
-       11|1.173126e-02|-1.256885e-10
-    It.  |Err         
-    -------------------
-        0|7.034302e-02|
-       10|1.044218e-03|
-       20|5.426783e-08|
-       30|3.532029e-12|
-    Gromov-Wasserstein distances: 0.0117312557987
-    Entropic Gromov-Wasserstein distances: 0.0101639418389
-
-
-
-
-|
-
-
 .. code-block:: python
 
 
@@ -75,13 +27,22 @@ computation in POT.
     import ot
 
 
-    #
-    # Sample two Gaussian distributions (2D and 3D)
-    # ---------------------------------------------
-    #
-    # The Gromov-Wasserstein distance allows to compute distances with samples that
-    # do not belong to the same metric space. For demonstration purpose, we sample
-    # two Gaussian distributions in 2- and 3-dimensional spaces.
+
+
+
+
+
+Sample two Gaussian distributions (2D and 3D)
+---------------------------------------------
+
+The Gromov-Wasserstein distance allows to compute distances with samples that
+do not belong to the same metric space. For demonstration purpose, we sample
+two Gaussian distributions in 2- and 3-dimensional spaces.
+
+
+
+.. code-block:: python
+
 
 
     n_samples = 30  # nb samples
@@ -98,9 +59,18 @@ computation in POT.
     xt = np.random.randn(n_samples, 3).dot(P) + mu_t
 
 
-    #
-    # Plotting the distributions
-    # --------------------------
+
+
+
+
+
+Plotting the distributions
+--------------------------
+
+
+
+.. code-block:: python
+
 
 
     fig = pl.figure()
@@ -111,9 +81,21 @@ computation in POT.
     pl.show()
 
 
-    #
-    # Compute distance kernels, normalize them and then display
-    # ---------------------------------------------------------
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_gromov_001.png
+    :align: center
+
+
+
+
+Compute distance kernels, normalize them and then display
+---------------------------------------------------------
+
+
+
+.. code-block:: python
+
 
 
     C1 = sp.spatial.distance.cdist(xs, xs)
@@ -129,9 +111,22 @@ computation in POT.
     pl.imshow(C2)
     pl.show()
 
-    #
-    # Compute Gromov-Wasserstein plans and distance
-    # ---------------------------------------------
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_gromov_002.png
+    :align: center
+
+
+
+
+Compute Gromov-Wasserstein plans and distance
+---------------------------------------------
+
+
+
+.. code-block:: python
+
 
     p = ot.unif(n_samples)
     q = ot.unif(n_samples)
@@ -159,7 +154,40 @@ computation in POT.
 
     pl.show()
 
-**Total running time of the script:** ( 0 minutes  1.465 seconds)
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_gromov_003.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    It.  |Loss        |Delta loss
+    --------------------------------
+        0|4.517558e-02|0.000000e+00
+        1|2.563483e-02|-7.622736e-01
+        2|2.443903e-02|-4.892972e-02
+        3|2.231600e-02|-9.513496e-02
+        4|1.676188e-02|-3.313541e-01
+        5|1.464792e-02|-1.443180e-01
+        6|1.454315e-02|-7.204526e-03
+        7|1.454142e-02|-1.185811e-04
+        8|1.454141e-02|-1.190466e-06
+        9|1.454141e-02|-1.190512e-08
+       10|1.454141e-02|-1.190520e-10
+    It.  |Err         
+    -------------------
+        0|6.743761e-02|
+       10|5.477003e-04|
+       20|2.461503e-08|
+       30|1.205155e-11|
+    Gromov-Wasserstein distances: 0.014541405718693563
+    Entropic Gromov-Wasserstein distances: 0.015800739725237274
+
+
+**Total running time of the script:** ( 0 minutes  1.448 seconds)
 
 
 

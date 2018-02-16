@@ -49,6 +49,26 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="This example is designed to show how to use the Gromov-Wassertsein distance computation in POT....">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_gromov_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_gromov.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_gromov
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="Illustration of 2D optimal transport between discributions that are weighted sum of diracs. The...">
 
 .. only:: html
@@ -106,26 +126,6 @@ This is a gallery of all the POT example files.
    :hidden:
 
    /auto_examples/plot_WDA
-
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="This example is designed to show how to use the Gromov-Wassertsein distance computation in POT....">
-
-.. only:: html
-
-    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_gromov_thumb.png
-
-        :ref:`sphx_glr_auto_examples_plot_gromov.py`
-
-.. raw:: html
-
-    </div>
-
-
-.. toctree::
-   :hidden:
-
-   /auto_examples/plot_gromov
 
 .. raw:: html
 
