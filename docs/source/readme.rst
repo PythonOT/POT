@@ -172,6 +172,10 @@ want a quick look:
    images <https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_mapping_colors_images.ipynb>`__
 -  `Wasserstein Discriminant
    Analysis <https://github.com/rflamary/POT/blob/master/notebooks/plot_WDA.ipynb>`__
+-  `Gromov
+   Wasserstein <https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov.ipynb>`__
+-  `Gromov Wasserstein
+   Barycenter <https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov_barycenter.ipynb>`__
 
 You can also see the notebooks with `Jupyter
 nbviewer <https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/notebooks/>`__.
@@ -192,6 +196,7 @@ The contributors to this library are:
    Gayraud <https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1>`__
 -  `Stanislas Chambon <https://slasnista.github.io/>`__
 -  `Antoine Rolet <https://arolet.github.io/>`__
+-  Erwan Vautier (Gromov-Wasserstein)
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
@@ -203,6 +208,20 @@ languages):
    EMD)
 -  `Marco Cuturi <http://marcocuturi.net/>`__ (Sinkhorn Knopp in
    Matlab/Cuda)
+
+Using and citing the toolbox
+----------------------------
+
+If you use this toolbox in your research and find it useful, please cite
+POT using the following bibtex reference:
+
+::
+
+    @article{flamary2017pot,
+      title={POT Python Optimal Transport library},
+      author={Flamary, R{\'e}mi and Courty, Nicolas},
+      year={2017}
+    }
 
 Contributions and code of conduct
 ---------------------------------
@@ -285,6 +304,11 @@ arXiv:1608.08063.
 `Gromov-Wasserstein averaging of kernel and distance
 matrices <http://proceedings.mlr.press/v48/peyre16.html>`__
 International Conference on Machine Learning (ICML). 2016.
+
+[13] Mémoli, Facundo. `Gromov–Wasserstein distances and the metric
+approach to object
+matching <https://media.adelaide.edu.au/acvt/Publications/2011/2011-Gromov%E2%80%93Wasserstein%20Distances%20and%20the%20Metric%20Approach%20to%20Object%20Matching.pdf>`__.
+Foundations of computational mathematics 11.4 (2011): 417-487.
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
