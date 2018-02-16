@@ -33,5 +33,4 @@ __version__ = "0.4.0"
 
 __all__ = ["emd", "emd2", "sinkhorn", "sinkhorn2", "utils", 'datasets',
            'bregman', 'lp', 'plot', 'tic', 'toc', 'toq',
-           'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim', 
-           'gromov_wasserstein','gromov_wasserstein2']
+           'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim']

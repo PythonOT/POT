@@ -81,23 +81,26 @@ pl.show()
 #%%
 p = ot.unif(n_samples)
 q = ot.unif(n_samples)
-ot.tic()
-gw = ot.gromov_wasserstein(C1, C2, p, q, 'square_loss', epsilon=5e-4,verbose=True)
-ot.toc()
-ot.tic()
-gw2,log2= ot.gromov.gromov_wasserstein0(C1, C2, p, q, 'square_loss', epsilon=5e-4,log=True,verbose=True)
-ot.toc()
 
-gw_dist = ot.gromov_wasserstein2(C1, C2, p, q, 'square_loss', epsilon=5e-4)
+gw0,log0 = ot.gromov.gromov_wasserstein(C1, C2, p, q, 'square_loss', verbose=True,log=True)
 
-ot.tic()
-gw0,log0=ot.gromov.gw_lp(C1, C2, p, q, 'square_loss',log=True,verbose=True)
-ot.toc()
+gw,log= ot.gromov.entropic_gromov_wasserstein(C1, C2, p, q, 'square_loss', epsilon=5e-4,log=True,verbose=True)
 
 
-print('Gromov-Wasserstein distances between the distribution: ' + str(gw_dist))
+print('Gromov-Wasserstein distances: ' + str(log0['gw_dist']))
+print('Entropic Gromov-Wasserstein distances: ' + str(log['gw_dist']))
 
-pl.figure()
-pl.imshow(gw2, cmap='jet')
+
+pl.figure(1,(10,5))
+
+pl.subplot(1,2,1)
+pl.imshow(gw0, cmap='jet')
 pl.colorbar()
+pl.title('Gromov Wasserstein')
+
+pl.subplot(1,2,2)
+pl.imshow(gw0, cmap='jet')
+pl.colorbar()
+pl.title('Entropic Gromov Wasserstein')
+
 pl.show()
