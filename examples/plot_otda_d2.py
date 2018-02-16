@@ -20,7 +20,7 @@ of what the transport methods are doing.
 
 import matplotlib.pylab as pl
 import ot
-
+import ot.plot
 
 ##############################################################################
 # generate data
