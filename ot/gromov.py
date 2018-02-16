@@ -307,6 +307,8 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, **kwargs):
         Print information along iterations
     log : bool, optional
         record log if True
+    **kwargs : dict
+        parameters can be directly pased to the ot.optim.cg solver
 
     Returns
     -------
