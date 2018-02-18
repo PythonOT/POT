@@ -12,6 +12,7 @@ matplotlib.use('Agg')
 def test_plot1D_mat():
 
     import ot
+    import ot.plot
 
     n_bins = 100  # nb bins
 
@@ -32,6 +33,7 @@ def test_plot1D_mat():
 def test_plot2D_samples_mat():
 
     import ot
+    import ot.plot
 
     n_bins = 50  # nb samples
 
