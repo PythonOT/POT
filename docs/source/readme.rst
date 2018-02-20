@@ -1,7 +1,8 @@
 POT: Python Optimal Transport
 =============================
 
-|PyPI version| |Build Status| |Documentation Status|
+|PyPI version| |Build Status| |Documentation Status| |Anaconda Cloud|
+|License| |Anaconda downloads|
 
 This open source Python library provide several solvers for optimization
 problems related to Optimal Transport for signal, image processing and
@@ -172,6 +173,10 @@ want a quick look:
    images <https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_mapping_colors_images.ipynb>`__
 -  `Wasserstein Discriminant
    Analysis <https://github.com/rflamary/POT/blob/master/notebooks/plot_WDA.ipynb>`__
+-  `Gromov
+   Wasserstein <https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov.ipynb>`__
+-  `Gromov Wasserstein
+   Barycenter <https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov_barycenter.ipynb>`__
 
 You can also see the notebooks with `Jupyter
 nbviewer <https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/notebooks/>`__.
@@ -192,6 +197,7 @@ The contributors to this library are:
    Gayraud <https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1>`__
 -  `Stanislas Chambon <https://slasnista.github.io/>`__
 -  `Antoine Rolet <https://arolet.github.io/>`__
+-  Erwan Vautier (Gromov-Wasserstein)
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
@@ -203,6 +209,20 @@ languages):
    EMD)
 -  `Marco Cuturi <http://marcocuturi.net/>`__ (Sinkhorn Knopp in
    Matlab/Cuda)
+
+Using and citing the toolbox
+----------------------------
+
+If you use this toolbox in your research and find it useful, please cite
+POT using the following bibtex reference:
+
+::
+
+    @article{flamary2017pot,
+      title={POT Python Optimal Transport library},
+      author={Flamary, R{\'e}mi and Courty, Nicolas},
+      year={2017}
+    }
 
 Contributions and code of conduct
 ---------------------------------
@@ -292,3 +312,9 @@ International Conference on Machine Learning (ICML). 2016.
    :target: https://travis-ci.org/rflamary/POT
 .. |Documentation Status| image:: https://readthedocs.org/projects/pot/badge/?version=latest
    :target: http://pot.readthedocs.io/en/latest/?badge=latest
+.. |Anaconda Cloud| image:: https://anaconda.org/conda-forge/pot/badges/version.svg
+   :target: https://anaconda.org/conda-forge/pot
+.. |License| image:: https://anaconda.org/conda-forge/pot/badges/license.svg
+   :target: https://github.com/rflamary/POT/blob/master/LICENSE
+.. |Anaconda downloads| image:: https://anaconda.org/conda-forge/pot/badges/downloads.svg
+   :target: https://anaconda.org/conda-forge/pot
