@@ -306,6 +306,11 @@ arXiv:1608.08063.
 matrices <http://proceedings.mlr.press/v48/peyre16.html>`__
 International Conference on Machine Learning (ICML). 2016.
 
+[13] Mémoli, Facundo. `Gromov–Wasserstein distances and the metric
+approach to object
+matching <https://media.adelaide.edu.au/acvt/Publications/2011/2011-Gromov%E2%80%93Wasserstein%20Distances%20and%20the%20Metric%20Approach%20to%20Object%20Matching.pdf>`__.
+Foundations of computational mathematics 11.4 (2011): 417-487.
+
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
 .. |Build Status| image:: https://travis-ci.org/rflamary/POT.svg?branch=master

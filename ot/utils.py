@@ -223,6 +223,7 @@ def check_params(**kwargs):
 
 
 class deprecated(object):
+
     """Decorator to mark a function or class as deprecated.
 
     deprecated class from scikit-learn package
@@ -320,6 +321,7 @@ def _is_deprecated(func):
 
 
 class BaseEstimator(object):
+
     """Base class for most objects in POT
     adapted from sklearn BaseEstimator class
 

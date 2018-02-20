@@ -19,6 +19,7 @@ https://arxiv.org/pdf/1706.07650.pdf
 import numpy as np
 import matplotlib.pylab as pl
 import ot
+import ot.plot
 
 ##############################################################################
 # Dataset 1 : uniform sampling

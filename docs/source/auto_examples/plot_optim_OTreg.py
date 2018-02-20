@@ -28,7 +28,7 @@ arXiv preprint arXiv:1510.06567.
 import numpy as np
 import matplotlib.pylab as pl
 import ot
-
+import ot.plot
 
 ##############################################################################
 # Generate data

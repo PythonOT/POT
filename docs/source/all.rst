@@ -20,6 +20,13 @@ ot.bregman
 .. automodule:: ot.bregman
    :members:
 
+ot.gromov
+----------
+
+.. automodule:: ot.gromov
+   :members:
+
+
 ot.optim
 --------
 

@@ -188,6 +188,7 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M_GPU, reg, eta=0.1, numItermax=10,
 
 
 class OTDA_GPU(OTDA):
+
     def normalizeM(self, norm):
         if norm == "median":
             self.M_GPU.divide(float(np.median(self.M_GPU.asarray())))
@@ -204,6 +205,7 @@ class OTDA_GPU(OTDA):
 
 
 class OTDA_sinkhorn(OTDA_GPU):
+
     def fit(self, xs, xt, reg=1, ws=None, wt=None, norm=None, **kwargs):
         cudamat.init()
         xs = np.asarray(xs, dtype=np.float64)
@@ -228,6 +230,7 @@ class OTDA_sinkhorn(OTDA_GPU):
 
 
 class OTDA_lpl1(OTDA_GPU):
+
     def fit(self, xs, ys, xt, reg=1, eta=1, ws=None, wt=None, norm=None,
             **kwargs):
         cudamat.init()
