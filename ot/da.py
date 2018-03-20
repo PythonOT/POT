@@ -10,6 +10,7 @@ Domain adaptation with optimal transport
 # License: MIT License
 
 import numpy as np
+import scipy.linalg as linalg
 
 from .bregman import sinkhorn
 from .lp import emd
@@ -631,6 +632,41 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
         return G, L, log
     else:
         return G, L
+
+
+def OT_mapping_linear(xs, xt, reg=1e-6,ws=None,wt=None,log=False):
+    """ return OT linear operator between samples"""
+
+    d=xs.shape[1]    
+    
+    mxs=xs.mean(0,keepdims=True)
+    mxt=xt.mean(0,keepdims=True)
+
+    
+    if ws is None:
+        ws=np.ones((xs.shape[0],1))/xs.shape[0]
+    
+    if wt is None:
+        wt=np.ones((xt.shape[0],1))/xt.shape[0]    
+
+    Cs=(xs*ws).T.dot(xs)/ws.sum()+reg*np.eye(d)
+    Ct=(xt*wt).T.dot(xt)/wt.sum()+reg*np.eye(d)
+    
+    
+    Cs12=linalg.sqrtm(Cs)
+    Cs_12=linalg.inv(Cs12)
+        
+    M0=linalg.sqrtm(Cs12.dot(Ct.dot(Cs12)))
+        
+    A=Cs_12.dot(M0.dot(Cs_12)).T   
+    
+    b=mxt-mxs.dot(A)
+    
+    if log:
+        pass
+    else:
+        return A,b
+
 
 
 @deprecated("The class OTDA is deprecated in 0.3.1 and will be "
