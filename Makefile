@@ -1,6 +1,6 @@
 
 
-PYTHON=python
+PYTHON=python3
 
 help :
 	@echo "The following make targets are available:"
@@ -41,7 +41,7 @@ pep8 :
 	flake8 examples/ ot/ test/
 
 test : FORCE pep8
-	python3 -m pytest -v test/ --cov=ot --cov-report html:cov_html
+	$(PYTHON) -m pytest -v test/ --cov=ot --cov-report html:cov_html
 	
 pytest : FORCE 
 	python -m py.test -v test/ --cov=ot
