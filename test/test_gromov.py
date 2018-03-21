@@ -40,7 +40,7 @@ def test_gromov():
 
     G = log['T']
 
-    np.testing.assert_allclose(gw, 0, atol=1e-04, rtol=1e-4)
+    np.testing.assert_allclose(gw, 0, atol=1e-2, rtol=1e-2)
 
     # check constratints
     np.testing.assert_allclose(
