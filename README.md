@@ -206,3 +206,7 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon, [Gromov-Wasserstein averaging of kernel and distance matrices](http://proceedings.mlr.press/v48/peyre16.html)  International Conference on Machine Learning (ICML). 2016.
 
 [13] Mémoli, Facundo. [Gromov–Wasserstein distances and the metric approach to object matching](https://media.adelaide.edu.au/acvt/Publications/2011/2011-Gromov%E2%80%93Wasserstein%20Distances%20and%20the%20Metric%20Approach%20to%20Object%20Matching.pdf). Foundations of computational mathematics 11.4 (2011): 417-487.
+
+[14] Knott, M. and Smith, C. S. [On the optimal mapping of distributions](https://link.springer.com/article/10.1007/BF00934745), Journal of Optimization Theory and Applications Vol 43, 1984.
+
+[15] Peyré, G., & Cuturi, M. (2017). [Computational Optimal Transport](https://arxiv.org/pdf/1803.00567.pdf) , 2018.

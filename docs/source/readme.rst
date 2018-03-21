@@ -1,8 +1,8 @@
 POT: Python Optimal Transport
 =============================
 
-|PyPI version| |Build Status| |Documentation Status| |Anaconda Cloud|
-|License| |Anaconda downloads|
+|PyPI version| |Anaconda Cloud| |Build Status| |Documentation Status|
+|Anaconda downloads| |License|
 
 This open source Python library provide several solvers for optimization
 problems related to Optimal Transport for signal, image processing and
@@ -311,15 +311,22 @@ approach to object
 matching <https://media.adelaide.edu.au/acvt/Publications/2011/2011-Gromov%E2%80%93Wasserstein%20Distances%20and%20the%20Metric%20Approach%20to%20Object%20Matching.pdf>`__.
 Foundations of computational mathematics 11.4 (2011): 417-487.
 
+[14] Knott, M. and Smith, C. S. `On the optimal mapping of
+distributions <https://link.springer.com/article/10.1007/BF00934745>`__,
+Journal of Optimization Theory and Applications Vol 43, 1984.
+
+[15] Peyré, G., & Cuturi, M. (2017). `Computational Optimal
+Transport <https://arxiv.org/pdf/1803.00567.pdf>`__ , 2018.
+
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
+.. |Anaconda Cloud| image:: https://anaconda.org/conda-forge/pot/badges/version.svg
+   :target: https://anaconda.org/conda-forge/pot
 .. |Build Status| image:: https://travis-ci.org/rflamary/POT.svg?branch=master
    :target: https://travis-ci.org/rflamary/POT
 .. |Documentation Status| image:: https://readthedocs.org/projects/pot/badge/?version=latest
    :target: http://pot.readthedocs.io/en/latest/?badge=latest
-.. |Anaconda Cloud| image:: https://anaconda.org/conda-forge/pot/badges/version.svg
+.. |Anaconda downloads| image:: https://anaconda.org/conda-forge/pot/badges/downloads.svg
    :target: https://anaconda.org/conda-forge/pot
 .. |License| image:: https://anaconda.org/conda-forge/pot/badges/license.svg
    :target: https://github.com/rflamary/POT/blob/master/LICENSE
-.. |Anaconda downloads| image:: https://anaconda.org/conda-forge/pot/badges/downloads.svg
-   :target: https://anaconda.org/conda-forge/pot
