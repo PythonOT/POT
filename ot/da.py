@@ -692,8 +692,8 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
     .. [14] Knott, M. and Smith, C. S. "On the optimal mapping of
         distributions", Journal of Optimization Theory and Applications
         Vol 43, 1984
-        
-    .. [15]  Peyré, G., & Cuturi, M. (2017). "Computational Optimal 
+
+    .. [15]  Peyré, G., & Cuturi, M. (2017). "Computational Optimal
         Transport", 2018.
 
 
@@ -1293,7 +1293,7 @@ class LinearTransport(BaseTransport):
     The function estimate the optimal linear operator that align the two
     empirical distributions. This is equivalent to estimating the closed
     form mapping between two Gaussian distribution :math:`N(\mu_s,\Sigma_s)`
-    and :math:`N(\mu_t,\Sigma_t)` as proposed in [14] and discussed in 
+    and :math:`N(\mu_t,\Sigma_t)` as proposed in [14] and discussed in
     remark 2.29 in [15].
 
     The linear operator from source to target :math:`M`
@@ -1324,8 +1324,8 @@ class LinearTransport(BaseTransport):
     .. [14] Knott, M. and Smith, C. S. "On the optimal mapping of
         distributions", Journal of Optimization Theory and Applications
         Vol 43, 1984
-        
-    .. [15]  Peyré, G., & Cuturi, M. (2017). "Computational Optimal 
+
+    .. [15]  Peyré, G., & Cuturi, M. (2017). "Computational Optimal
         Transport", 2018.
 
     """
