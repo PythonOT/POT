@@ -444,6 +444,24 @@ def test_mapping_transport_class():
     assert len(otda.log_.keys()) != 0
 
 
+def test_linear_mapping():
+
+    ns = 150
+    nt = 200
+
+    Xs, ys = get_data_classif('3gauss', ns)
+    Xt, yt = get_data_classif('3gauss2', nt)
+
+    A, b = ot.da.OT_mapping_linear(Xs, Xt)
+
+    Xst = Xs.dot(A) + b
+
+    Ct = np.cov(Xt.T)
+    Cst = np.cov(Xst.T)
+
+    np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
+
+
 def test_otda():
 
     n_samples = 150  # nb samples

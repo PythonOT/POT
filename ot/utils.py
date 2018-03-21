@@ -316,7 +316,7 @@ def _is_deprecated(func):
         closures = []
     is_deprecated = ('deprecated' in ''.join([c.cell_contents
                                               for c in closures
-                     if isinstance(c.cell_contents, str)]))
+                                              if isinstance(c.cell_contents, str)]))
     return is_deprecated
 
 
