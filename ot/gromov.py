@@ -595,7 +595,7 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
     gw, logv = entropic_gromov_wasserstein(
         C1, C2, p, q, loss_fun, epsilon, max_iter, tol, verbose, log=True)
 
-    log['T'] = gw
+    logv['T'] = gw
 
     if log:
         return logv['gw_dist'], logv
