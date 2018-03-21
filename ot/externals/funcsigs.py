@@ -99,7 +99,7 @@ def signature(obj):
         partial_keywords = obj.keywords or {}
         try:
             ba = sig.bind_partial(*partial_args, **partial_keywords)
-        except TypeError as ex:
+        except TypeError:
             msg = 'partial object {0!r} has incorrect arguments'.format(obj)
             raise ValueError(msg)
 
