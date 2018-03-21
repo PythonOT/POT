@@ -40,7 +40,7 @@ def test_gromov():
 
     G = log['T']
 
-    np.testing.assert_allclose(gw, 0, atol=1e-2, rtol=1e-2)
+    np.testing.assert_allclose(gw, 0, atol=1e-1, rtol=1e-1)
 
     # check constratints
     np.testing.assert_allclose(
@@ -82,10 +82,37 @@ def test_entropic_gromov():
 
     G = log['T']
 
-    np.testing.assert_allclose(gw, 0, atol=1e-1, rtol=1e1)
+    np.testing.assert_allclose(gw, 0, atol=1e-1, rtol=1e-1)
 
     # check constratints
     np.testing.assert_allclose(
         p, G.sum(1), atol=1e-04)  # cf convergence gromov
     np.testing.assert_allclose(
         q, G.sum(0), atol=1e-04)  # cf convergence gromov
+
+
+def test_gromov_barycenter():
+
+    ns = 50
+    nt = 60
+
+    Xs, ys = ot.datasets.get_data_classif('3gauss', ns)
+    Xt, yt = ot.datasets.get_data_classif('3gauss2', nt)
+
+    C1 = ot.dist(Xs)
+    C2 = ot.dist(Xt)
+
+    n_samples = 3
+    Cb = ot.gromov.gromov_barycenters(n_samples, [C1, C2],
+                                      [ot.unif(ns), ot.unif(nt)
+                                       ], ot.unif(n_samples), [.5, .5],
+                                      'square_loss',  # 5e-4,
+                                      max_iter=100, tol=1e-3)
+    np.testing.assert_allclose(Cb.shape, (n_samples, n_samples))
+
+    Cb2 = ot.gromov.gromov_barycenters(n_samples, [C1, C2],
+                                       [ot.unif(ns), ot.unif(nt)
+                                        ], ot.unif(n_samples), [.5, .5],
+                                       'kl_loss',  # 5e-4,
+                                       max_iter=100, tol=1e-3)
+    np.testing.assert_allclose(Cb2.shape, (n_samples, n_samples))
