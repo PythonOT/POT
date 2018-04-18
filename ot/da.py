@@ -1332,11 +1332,11 @@ class EMDTransport(BaseTransport):
            on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
     """
 
-    def __init__(self, metric="sqeuclidean", norm=None,log=False,
+    def __init__(self, metric="sqeuclidean", norm=None, log=False,
                  distribution_estimation=distribution_estimation_uniform,
                  out_of_sample_map='ferradans', limit_max=10,
                  max_iter=100000):
-        
+
         self.metric = metric
         self.norm = norm
         self.log = log
@@ -1491,7 +1491,7 @@ class SinkhornLpl1Transport(BaseTransport):
                 a=self.mu_s, labels_a=ys, b=self.mu_t, M=self.cost_,
                 reg=self.reg_e, eta=self.reg_cl, numItermax=self.max_iter,
                 numInnerItermax=self.max_inner_iter, stopInnerThr=self.tol,
-                verbose=self.verbose,log=self.log)
+                verbose=self.verbose, log=self.log)
 
         # deal with the value of log
         if self.log:
