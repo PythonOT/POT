@@ -1438,7 +1438,7 @@ class SinkhornLpl1Transport(BaseTransport):
     """
 
     def __init__(self, reg_e=1., reg_cl=0.1,
-                 max_iter=10, max_inner_iter=200, lo=False,
+                 max_iter=10, max_inner_iter=200, log=False,
                  tol=10e-9, verbose=False,
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
