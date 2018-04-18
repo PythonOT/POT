@@ -1310,7 +1310,7 @@ class EMDTransport(BaseTransport):
         The kind of distribution estimation to employ
     verbose : int, optional (default=0)
         Controls the verbosity of the optimization algorithm
-    log : int, optional (default=0)
+    log : bool, optional (default=False)
         Controls the logs of the optimization algorithm
     limit_max: float, optional (default=10)
         Controls the semi supervised mode. Transport between labeled source
