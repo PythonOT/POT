@@ -8,7 +8,7 @@ Various function that can be usefull
 # License: MIT License
 
 import multiprocessing
-from functools import reduce,wraps
+from functools import reduce, wraps
 import time
 
 import numpy as np
@@ -16,7 +16,7 @@ from scipy.spatial.distance import cdist
 import sys
 import warnings
 
-from .externals.decorator import decorate
+#from .externals.decorator import decorate
 
 try:
     import cupy as cp
@@ -149,10 +149,9 @@ class gpu_fun(object):
                     if 0 in self.out_arrays:
                         ret = cp.asnumpy(ret)
 
-            return ret
-        
-        wrapped=decorate(fun,wrapped)
+            return ret  # noqa: F821
 
+        #wrapped = decorate(fun, _wrapped)
         wrapped.__name__ = fun.__name__
         wrapped.__dict__ = fun.__dict__
         wrapped.__doc__ = self._update_doc(fun.__doc__)

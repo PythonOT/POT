@@ -131,7 +131,10 @@ def test_gpu_fun():
     n = 100
 
     A = np.ones((n, n))
-    
+
+    A.sum()
+
+
 def test_cost_normalization():
 
     C = np.random.rand(10, 10)
