@@ -122,7 +122,8 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9, ver
     return sink()
 
 
-def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9, verbose=False, log=False, **kwargs):
+def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
+              stopThr=1e-9, verbose=False, log=False, **kwargs):
     u"""
     Solve the entropic regularization optimal transport problem and return the loss
 
@@ -417,7 +418,8 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False, l
             return u.reshape((-1, 1)) * K * v.reshape((1, -1))
 
 
-def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9, warmstart=None, verbose=False, print_period=20, log=False, **kwargs):
+def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
+                        warmstart=None, verbose=False, print_period=20, log=False, **kwargs):
     """
     Solve the entropic regularization OT problem with log stabilization
 
@@ -540,11 +542,13 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9, wa
 
     def get_K(alpha, beta):
         """log space computation"""
-        return np.exp(-(M - alpha.reshape((na, 1)) - beta.reshape((1, nb))) / reg)
+        return np.exp(-(M - alpha.reshape((na, 1)) -
+                        beta.reshape((1, nb))) / reg)
 
     def get_Gamma(alpha, beta, u, v):
         """log space gamma computation"""
-        return np.exp(-(M - alpha.reshape((na, 1)) - beta.reshape((1, nb))) / reg + np.log(u.reshape((na, 1))) + np.log(v.reshape((1, nb))))
+        return np.exp(-(M - alpha.reshape((na, 1)) - beta.reshape((1, nb))) /
+                      reg + np.log(u.reshape((na, 1))) + np.log(v.reshape((1, nb))))
 
     # print(np.min(K))
 
@@ -634,7 +638,8 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9, wa
             return get_Gamma(alpha, beta, u, v)
 
 
-def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4, numInnerItermax=100, tau=1e3, stopThr=1e-9, warmstart=None, verbose=False, print_period=10, log=False, **kwargs):
+def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4, numInnerItermax=100,
+                             tau=1e3, stopThr=1e-9, warmstart=None, verbose=False, print_period=10, log=False, **kwargs):
     """
     Solve the entropic regularization optimal transport problem with log
     stabilization and epsilon scaling.
@@ -753,7 +758,8 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4, numInne
 
     def get_K(alpha, beta):
         """log space computation"""
-        return np.exp(-(M - alpha.reshape((na, 1)) - beta.reshape((1, nb))) / reg)
+        return np.exp(-(M - alpha.reshape((na, 1)) -
+                        beta.reshape((1, nb))) / reg)
 
     # print(np.min(K))
     def get_reg(n):  # exponential decreasing
@@ -825,7 +831,8 @@ def projC(gamma, q):
     return np.multiply(gamma, q / np.maximum(np.sum(gamma, axis=0), 1e-10))
 
 
-def barycenter(A, M, reg, weights=None, numItermax=1000, stopThr=1e-4, verbose=False, log=False):
+def barycenter(A, M, reg, weights=None, numItermax=1000,
+               stopThr=1e-4, verbose=False, log=False):
     """Compute the entropic regularized wasserstein barycenter of distributions A
 
      The function solves the following optimization problem:
@@ -918,7 +925,8 @@ def barycenter(A, M, reg, weights=None, numItermax=1000, stopThr=1e-4, verbose=F
         return geometricBar(weights, UKv)
 
 
-def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000, stopThr=1e-3, verbose=False, log=False):
+def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
+          stopThr=1e-3, verbose=False, log=False):
     """
     Compute the unmixing of an observation with a given dictionary using Wasserstein distance
 
