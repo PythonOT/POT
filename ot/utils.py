@@ -135,7 +135,7 @@ class gpu_fun(object):
             ret = fun(*args, **kwargs)
 
             if cp and to_np:
-                if type(ret) == tuple:
+                if isinstance(ret, tuple):
                     ret = (cp.asnumpy(r) if i in self.out_arrays else r
                            for i, r in enumerate(ret))
                 else:
@@ -152,19 +152,18 @@ class gpu_fun(object):
 
     def _update_doc(self, olddoc):
 
-        tofind="""
+        tofind = """
 
     Returns
     -------"""
-        # TODO!!!
-        
-        newdoc="""
+
+        newdoc = """
     gpu : bool, optional
         compute on gpu if True
     to_np : bool, optional
-        convert back gpu array to numpy if True"""+tofind
-        
-        newdoc = olddoc.replace(tofind,newdoc)
+        convert back gpu array to numpy if True""" + tofind
+
+        newdoc = olddoc.replace(tofind, newdoc)
         return newdoc
 
 
@@ -490,7 +489,7 @@ def _is_deprecated(func):
         closures = []
     is_deprecated = ('deprecated' in ''.join([c.cell_contents
                                               for c in closures
-                     if isinstance(c.cell_contents, str)]))
+                                              if isinstance(c.cell_contents, str)]))
     return is_deprecated
 
 
