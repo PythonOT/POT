@@ -112,6 +112,7 @@ class gpu_fun(object):
             return self._decorate_fun(obj)
 
     def _decorate_class(self, cls):
+        print("Warning gpu class not implemented")
         return cls
 
     def _decorate_fun(self, fun):
@@ -151,8 +152,19 @@ class gpu_fun(object):
 
     def _update_doc(self, olddoc):
 
+        tofind="""
+
+    Returns
+    -------"""
         # TODO!!!
-        newdoc = olddoc
+        
+        newdoc="""
+    gpu : bool, optional
+        compute on gpu if True
+    to_np : bool, optional
+        convert back gpu array to numpy if True"""+tofind
+        
+        newdoc = olddoc.replace(tofind,newdoc)
         return newdoc
 
 
