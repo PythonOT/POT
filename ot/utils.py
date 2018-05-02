@@ -8,13 +8,16 @@ Various function that can be usefull
 # License: MIT License
 
 import multiprocessing
-from functools import reduce
+from functools import reduce,wraps
 import time
 
 import numpy as np
 from scipy.spatial.distance import cdist
 import sys
 import warnings
+
+from .externals.decorator import decorate
+
 try:
     import cupy as cp
 except ImportError:
@@ -117,7 +120,7 @@ class gpu_fun(object):
 
     def _decorate_fun(self, fun):
         """Decorate function fun"""
-
+        @wraps(fun)
         def wrapped(*args, **kwargs):
             if cp and 'gpu' in kwargs and kwargs['gpu']:
                 # convert args to gpu whose index are in in_arrays
@@ -143,6 +146,8 @@ class gpu_fun(object):
                         ret = cp.asnumpy(ret)
 
             return ret
+        
+        wrapped=decorate(fun,wrapped)
 
         wrapped.__name__ = fun.__name__
         wrapped.__dict__ = fun.__dict__

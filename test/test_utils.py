@@ -123,3 +123,10 @@ def test_clean_zeros():
 
     assert len(a) == n - nz
     assert len(b) == n - nz2
+
+
+def test_gpu_fun():
+
+    n = 100
+
+    A = np.ones((n, n))
