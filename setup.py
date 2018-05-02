@@ -18,21 +18,18 @@ __version__ = re.search(
 # The beautiful part is, I don't even need to check exceptions here.
 # If something messes up, let the build process fail noisy, BEFORE my release!
 
+# thanks Pipy for handling markdown now
 ROOT = os.path.abspath(os.path.dirname(__file__))
 
-
-# convert markdown readme to rst if pypandoc installed
-try:
-   import pypandoc
-   README = pypandoc.convert('README.md', 'rst')
-except (IOError, ImportError):
-   README = open(os.path.join(ROOT, 'README.md'), encoding="utf-8").read()
+with open(os.path.join(ROOT, 'README.md'), encoding="utf-8") as f:
+    README = f.read()
 
 
 setup(name='POT',
       version=__version__,
       description='Python Optimal Transport Library',
       long_description=README,
+       long_description_content_type='text/markdown', 
       author=u'Remi Flamary, Nicolas Courty',
       author_email='remi.flamary@gmail.com, ncourty@gmail.com',
       url='https://github.com/rflamary/POT',
@@ -59,5 +56,11 @@ setup(name='POT',
         'Operating System :: POSIX',
         'Programming Language :: Python',
         'Topic :: Utilities'
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ]
      )
