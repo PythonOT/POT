@@ -640,9 +640,9 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
                       wt=None, bias=True, log=False):
     """ return OT linear operator between samples
 
-    The function estimate the optimal linear operator that align the two
+    The function estimates the optimal linear operator that aligns the two
     empirical distributions. This is equivalent to estimating the closed
-    form mapping between two Gaussian distribution :math:`N(\mu_s,\Sigma_s)`
+    form mapping between two Gaussian distributions :math:`N(\mu_s,\Sigma_s)`
     and :math:`N(\mu_t,\Sigma_t)` as proposed in [14] and discussed in remark 2.29 in [15].
 
     The linear operator from source to target :math:`M`
@@ -665,7 +665,7 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
     xt : np.ndarray (nt,d)
         samples in the target domain
     reg : float,optional
-        regularization added to the daigonals of convariances (>0)
+        regularization added to the diagonals of convariances (>0)
     ws : np.ndarray (ns,1), optional
         weights for the source samples
     wt : np.ndarray (ns,1), optional
@@ -1290,9 +1290,9 @@ class BaseTransport(BaseEstimator):
 class LinearTransport(BaseTransport):
     """ OT linear operator between empirical distributions
 
-    The function estimate the optimal linear operator that align the two
+    The function estimates the optimal linear operator that aligns the two
     empirical distributions. This is equivalent to estimating the closed
-    form mapping between two Gaussian distribution :math:`N(\mu_s,\Sigma_s)`
+    form mapping between two Gaussian distributions :math:`N(\mu_s,\Sigma_s)`
     and :math:`N(\mu_t,\Sigma_t)` as proposed in [14] and discussed in
     remark 2.29 in [15].
 
