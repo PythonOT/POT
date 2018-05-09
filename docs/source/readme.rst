@@ -10,7 +10,8 @@ machine learning.
 
 It provides the following solvers:
 
--  OT solver for the linear program/ Earth Movers Distance [1].
+-  OT Network Flow solver for the linear program/ Earth Movers Distance
+   [1].
 -  Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2]
    and stabilized version [9][10] with optional GPU implementation
    (required cudamat).
@@ -19,10 +20,11 @@ It provides the following solvers:
    regularization [5]
 -  Conditional gradient [6] and Generalized conditional gradient for
    regularized OT [7].
--  Joint OT matrix and mapping estimation [8].
+-  Linear OT [14] and Joint OT matrix and mapping estimation [8].
 -  Wasserstein Discriminant Analysis [11] (requires autograd +
    pymanopt).
--  Gromov-Wasserstein distances and barycenters [12]
+-  Gromov-Wasserstein distances and barycenters ([13] and regularized
+   [12])
 
 Some demonstrations (both in Python and Jupyter Notebook format) are
 available in the examples folder.
@@ -315,8 +317,8 @@ Foundations of computational mathematics 11.4 (2011): 417-487.
 distributions <https://link.springer.com/article/10.1007/BF00934745>`__,
 Journal of Optimization Theory and Applications Vol 43, 1984.
 
-[15] Peyré, G., & Cuturi, M. (2017). `Computational Optimal
-Transport <https://arxiv.org/pdf/1803.00567.pdf>`__ , 2018.
+[15] Peyré, G., & Cuturi, M. (2018). `Computational Optimal
+Transport <https://arxiv.org/pdf/1803.00567.pdf>`__ .
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
