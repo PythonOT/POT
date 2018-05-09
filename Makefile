@@ -1,6 +1,6 @@
 
 
-PYTHON=python
+PYTHON=python3
 
 help :
 	@echo "The following make targets are available:"
@@ -41,14 +41,14 @@ pep8 :
 	flake8 examples/ ot/ test/
 
 test : FORCE pep8
-	python -m py.test -v test/ --cov=ot --cov-report html:cov_html
+	$(PYTHON) -m pytest -v test/ --cov=ot --cov-report html:cov_html
 	
 pytest : FORCE 
-	python -m py.test -v test/ --cov=ot
+	$(PYTHON) -m py.test -v test/ --cov=ot
 
 uploadpypi :
 	#python setup.py register
-	python setup.py sdist upload -r pypi
+	$(PYTHON) setup.py sdist upload -r pypi
 
 rdoc :
 	pandoc --from=markdown --to=rst --output=docs/source/readme.rst README.md
@@ -56,6 +56,11 @@ rdoc :
 
 notebook :
 	ipython notebook --matplotlib=inline  --notebook-dir=notebooks/
+	
+autopep8 :
+	autopep8 -ir test ot examples
 
+aautopep8 :
+	autopep8 -air test ot examples
 
 FORCE :

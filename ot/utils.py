@@ -15,7 +15,10 @@ import numpy as np
 from scipy.spatial.distance import cdist
 import sys
 import warnings
-
+try:
+    from inspect import signature
+except ImportError:
+    from .externals.funcsigs import signature
 
 __time_tic_toc = time.time()
 
@@ -316,7 +319,7 @@ def _is_deprecated(func):
         closures = []
     is_deprecated = ('deprecated' in ''.join([c.cell_contents
                                               for c in closures
-                     if isinstance(c.cell_contents, str)]))
+                                              if isinstance(c.cell_contents, str)]))
     return is_deprecated
 
 
@@ -335,10 +338,7 @@ class BaseEstimator(object):
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
-        try:
-            from inspect import signature
-        except ImportError:
-            from .externals.funcsigs import signature
+
         # fetch the constructor or the original constructor before
         # deprecation wrapping if any
         init = getattr(cls.__init__, 'deprecated_original', cls.__init__)

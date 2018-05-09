@@ -1,8 +1,8 @@
 POT: Python Optimal Transport
 =============================
 
-|PyPI version| |Build Status| |Documentation Status| |Anaconda Cloud|
-|License| |Anaconda downloads|
+|PyPI version| |Anaconda Cloud| |Build Status| |Documentation Status|
+|Anaconda downloads| |License|
 
 This open source Python library provide several solvers for optimization
 problems related to Optimal Transport for signal, image processing and
@@ -10,7 +10,8 @@ machine learning.
 
 It provides the following solvers:
 
--  OT solver for the linear program/ Earth Movers Distance [1].
+-  OT Network Flow solver for the linear program/ Earth Movers Distance
+   [1].
 -  Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2]
    and stabilized version [9][10] with optional GPU implementation
    (required cudamat).
@@ -19,10 +20,11 @@ It provides the following solvers:
    regularization [5]
 -  Conditional gradient [6] and Generalized conditional gradient for
    regularized OT [7].
--  Joint OT matrix and mapping estimation [8].
+-  Linear OT [14] and Joint OT matrix and mapping estimation [8].
 -  Wasserstein Discriminant Analysis [11] (requires autograd +
    pymanopt).
--  Gromov-Wasserstein distances and barycenters [12]
+-  Gromov-Wasserstein distances and barycenters ([13] and regularized
+   [12])
 
 Some demonstrations (both in Python and Jupyter Notebook format) are
 available in the examples folder.
@@ -281,10 +283,10 @@ conditional gradient: analysis of convergence and
 applications <https://arxiv.org/pdf/1510.06567.pdf>`__. arXiv preprint
 arXiv:1510.06567.
 
-[8] M. Perrot, N. Courty, R. Flamary, A. Habrard, `Mapping estimation
-for discrete optimal
+[8] M. Perrot, N. Courty, R. Flamary, A. Habrard (2016), `Mapping
+estimation for discrete optimal
 transport <http://remi.flamary.com/biblio/perrot2016mapping.pdf>`__,
-Neural Information Processing Systems (NIPS), 2016.
+Neural Information Processing Systems (NIPS).
 
 [9] Schmitzer, B. (2016). `Stabilized Sparse Scaling Algorithms for
 Entropy Regularized Transport
@@ -301,25 +303,32 @@ arXiv:1607.05816.
 Analysis <https://arxiv.org/pdf/1608.08063.pdf>`__. arXiv preprint
 arXiv:1608.08063.
 
-[12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+[12] Gabriel Peyré, Marco Cuturi, and Justin Solomon (2016),
 `Gromov-Wasserstein averaging of kernel and distance
 matrices <http://proceedings.mlr.press/v48/peyre16.html>`__
-International Conference on Machine Learning (ICML). 2016.
+International Conference on Machine Learning (ICML).
 
-[13] Mémoli, Facundo. `Gromov–Wasserstein distances and the metric
-approach to object
+[13] Mémoli, Facundo (2011). `Gromov–Wasserstein distances and the
+metric approach to object
 matching <https://media.adelaide.edu.au/acvt/Publications/2011/2011-Gromov%E2%80%93Wasserstein%20Distances%20and%20the%20Metric%20Approach%20to%20Object%20Matching.pdf>`__.
-Foundations of computational mathematics 11.4 (2011): 417-487.
+Foundations of computational mathematics 11.4 : 417-487.
+
+[14] Knott, M. and Smith, C. S. (1984).`On the optimal mapping of
+distributions <https://link.springer.com/article/10.1007/BF00934745>`__,
+Journal of Optimization Theory and Applications Vol 43.
+
+[15] Peyré, G., & Cuturi, M. (2018). `Computational Optimal
+Transport <https://arxiv.org/pdf/1803.00567.pdf>`__ .
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
+.. |Anaconda Cloud| image:: https://anaconda.org/conda-forge/pot/badges/version.svg
+   :target: https://anaconda.org/conda-forge/pot
 .. |Build Status| image:: https://travis-ci.org/rflamary/POT.svg?branch=master
    :target: https://travis-ci.org/rflamary/POT
 .. |Documentation Status| image:: https://readthedocs.org/projects/pot/badge/?version=latest
    :target: http://pot.readthedocs.io/en/latest/?badge=latest
-.. |Anaconda Cloud| image:: https://anaconda.org/conda-forge/pot/badges/version.svg
+.. |Anaconda downloads| image:: https://anaconda.org/conda-forge/pot/badges/downloads.svg
    :target: https://anaconda.org/conda-forge/pot
 .. |License| image:: https://anaconda.org/conda-forge/pot/badges/license.svg
    :target: https://github.com/rflamary/POT/blob/master/LICENSE
-.. |Anaconda downloads| image:: https://anaconda.org/conda-forge/pot/badges/downloads.svg
-   :target: https://anaconda.org/conda-forge/pot

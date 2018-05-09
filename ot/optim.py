@@ -15,7 +15,8 @@ from .bregman import sinkhorn
 # The corresponding scipy function does not work for matrices
 
 
-def line_search_armijo(f, xk, pk, gfk, old_fval, args=(), c1=1e-4, alpha0=0.99):
+def line_search_armijo(f, xk, pk, gfk, old_fval,
+                       args=(), c1=1e-4, alpha0=0.99):
     """
     Armijo linesearch function that works with matrices
 
@@ -71,7 +72,8 @@ def line_search_armijo(f, xk, pk, gfk, old_fval, args=(), c1=1e-4, alpha0=0.99):
     return alpha, fc[0], phi1
 
 
-def cg(a, b, M, reg, f, df, G0=None, numItermax=200, stopThr=1e-9, verbose=False, log=False):
+def cg(a, b, M, reg, f, df, G0=None, numItermax=200,
+       stopThr=1e-9, verbose=False, log=False):
     """
     Solve the general regularized OT problem with conditional gradient
 
@@ -202,7 +204,8 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, stopThr=1e-9, verbose=False
         return G
 
 
-def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10, numInnerItermax=200, stopThr=1e-9, verbose=False, log=False):
+def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
+        numInnerItermax=200, stopThr=1e-9, verbose=False, log=False):
     """
     Solve the general regularized OT problem with the generalized conditional gradient
 

@@ -595,7 +595,7 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
     gw, logv = entropic_gromov_wasserstein(
         C1, C2, p, q, loss_fun, epsilon, max_iter, tol, verbose, log=True)
 
-    log['T'] = gw
+    logv['T'] = gw
 
     if log:
         return logv['gw_dist'], logv
@@ -613,7 +613,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
     The function solves the following optimization problem:
 
     .. math::
-        C = argmin_C\in R^NxN \sum_s \lambda_s GW(C,Cs,p,ps)
+        C = argmin_C\in R^{NxN} \sum_s \lambda_s GW(C,Cs,p,ps)
 
 
     Where :
