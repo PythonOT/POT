@@ -6,7 +6,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     # e.g. brew install pyenv-virtualenv
     #brew update
     #brew install python
-    echo do othing
+    echo do nothing
 
 
 else
