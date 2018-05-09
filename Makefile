@@ -44,7 +44,7 @@ test : FORCE pep8
 	$(PYTHON) -m pytest -v test/ --cov=ot --cov-report html:cov_html
 	
 pytest : FORCE 
-	$(PYTHON) -m py.test -v test/ --cov=ot
+	$(PYTHON) -m pytest -v test/ --cov=ot
 
 uploadpypi :
 	#python setup.py register
