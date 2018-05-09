@@ -44,11 +44,11 @@ test : FORCE pep8
 	$(PYTHON) -m pytest -v test/ --cov=ot --cov-report html:cov_html
 	
 pytest : FORCE 
-	python -m py.test -v test/ --cov=ot
+	$(PYTHON) -m py.test -v test/ --cov=ot
 
 uploadpypi :
 	#python setup.py register
-	python setup.py sdist upload -r pypi
+	$(PYTHON) setup.py sdist upload -r pypi
 
 rdoc :
 	pandoc --from=markdown --to=rst --output=docs/source/readme.rst README.md
