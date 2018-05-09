@@ -5,3 +5,4 @@ matplotlib
 sphinx-gallery
 autograd
 pymanopt
+pytest
