@@ -1,10 +1,10 @@
 language: python
 matrix:
-    allow_failures:
-        - os: osx
+#    allow_failures:
+#        - os: osx
     include:
-        - os: osx
-          language: generic
+#        - os: osx
+#          language: generic
         - os: linux
           sudo: required
           python: 3.4
