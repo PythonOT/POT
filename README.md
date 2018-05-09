@@ -209,4 +209,4 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 
 [14] Knott, M. and Smith, C. S. [On the optimal mapping of distributions](https://link.springer.com/article/10.1007/BF00934745), Journal of Optimization Theory and Applications Vol 43, 1984.
 
-[15] Peyré, G., & Cuturi, M. (2017). [Computational Optimal Transport](https://arxiv.org/pdf/1803.00567.pdf) , 2018.
+[15] Peyré, G., & Cuturi, M. (2018). [Computational Optimal Transport](https://arxiv.org/pdf/1803.00567.pdf) .
