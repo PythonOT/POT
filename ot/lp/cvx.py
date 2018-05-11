@@ -13,7 +13,7 @@ import scipy.sparse as sps
 
 try:
     import cvxopt
-    from cvxopt import solvers, matrix, sparse, spmatrix
+    from cvxopt import solvers, matrix, spmatrix
 except ImportError:
     cvxopt = False
 
@@ -114,13 +114,15 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver='interior-po
     A_eq = sps.vstack((A_eq1, A_eq2))
     b_eq = np.concatenate((b_eq1, b_eq2))
 
-    if not cvxopt or solver in ['interior-point']:  # cvxopt not installed or simplex/interior point
+    if not cvxopt or solver in ['interior-point']:  
+        # cvxopt not installed or interior point
 
         if solver is None:
             solver = 'interior-point'
 
         options = {'sparse': True, 'disp': verbose}
-        sol = sp.optimize.linprog(c, A_eq=A_eq, b_eq=b_eq, method=solver, options=options)
+        sol = sp.optimize.linprog(c, A_eq=A_eq, b_eq=b_eq, method=solver, 
+                                  options=options)
         x = sol.x
         b = x[-n:]
 
@@ -129,7 +131,9 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver='interior-po
         h = np.zeros((n_distributions * n2 + n))
         G = -sps.eye(n_distributions * n2 + n)
 
-        sol = solvers.lp(matrix(c), scipy_sparse_to_spmatrix(G), matrix(h), A=scipy_sparse_to_spmatrix(A_eq), b=matrix(b_eq), solver=solver)
+        sol = solvers.lp(matrix(c), scipy_sparse_to_spmatrix(G), matrix(h), 
+                         A=scipy_sparse_to_spmatrix(A_eq), b=matrix(b_eq), 
+                         solver=solver)
 
         x = np.array(sol['x'])
         b = x[-n:].ravel()
