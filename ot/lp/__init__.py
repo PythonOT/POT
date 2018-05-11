@@ -11,9 +11,12 @@ import multiprocessing
 
 import numpy as np
 
+from .import cvx
+
 # import compiled emd
 from .emd_wrap import emd_c, check_result
 from ..utils import parmap
+from .cvx import barycenter
 
 
 def emd(a, b, M, numItermax=100000, log=False):

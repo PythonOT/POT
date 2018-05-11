@@ -38,8 +38,8 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver='interior-po
     - :math:`W_1(\cdot,\cdot)` is the Wasserstein distance (see ot.emd.sinkhorn)
     - :math:`\mathbf{a}_i` are training distributions in the columns of matrix :math:`\mathbf{A}`
 
-    The linear program is solved using the default cvxopt solver if installed.
-    If cvxopt is not installed it uses the lp solver from scipy.optimize.
+    The linear program is solved using the interior point solver from scipy.optimize.
+    If cvxopt solver if installed it can use cvxopt.
 
     Parameters
     ----------
