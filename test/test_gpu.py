@@ -76,4 +76,4 @@ def test_gpu_sinkhorn_lpl1():
             time3 - time2))
         describe_res(G2)
 
-        np.testing.assert_allclose(G1, G2, rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(G1, G2, rtol=1e-3, atol=1e-3)

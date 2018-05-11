@@ -10,7 +10,7 @@ import numpy as np
 
 import ot
 from ot.datasets import get_1D_gauss as gauss
-
+import pytest
 
 def test_doctest():
     import doctest
@@ -116,6 +116,39 @@ def test_emd2_multi():
     emdn = np.array(emdn)
     np.testing.assert_allclose(emd1, emdn)
 
+
+def test_lp_barycenter():
+
+    a1 = np.array([1.0, 0, 0])[:, None]
+    a2 = np.array([0, 0, 1.0])[:, None]
+
+    A = np.hstack((a1, a2))
+    M = np.array([[0, 1.0, 4.0], [1.0, 0, 1.0], [4.0, 1.0, 0]])
+
+    # obvious barycenter between two diracs
+    bary0 = np.array([0, 1.0, 0])
+
+    bary = ot.lp.barycenter(A, M, [.5, .5])
+
+    np.testing.assert_allclose(bary, bary0, rtol=1e-5, atol=1e-7)
+    np.testing.assert_allclose(bary.sum(), 1)
+
+@pytest.mark.skipif(not ot.lp.cvx.cvxopt, reason="No cvxopt available")
+def test_lp_barycenter_cvxopt():
+
+    a1 = np.array([1.0, 0, 0])[:, None]
+    a2 = np.array([0, 0, 1.0])[:, None]
+
+    A = np.hstack((a1, a2))
+    M = np.array([[0, 1.0, 4.0], [1.0, 0, 1.0], [4.0, 1.0, 0]])
+
+    # obvious barycenter between two diracs
+    bary0 = np.array([0, 1.0, 0])
+
+    bary = ot.lp.barycenter(A, M, [.5, .5],solver=None)
+
+    np.testing.assert_allclose(bary, bary0, rtol=1e-5, atol=1e-7)
+    np.testing.assert_allclose(bary.sum(), 1)
 
 def test_warnings():
     n = 100  # nb bins
