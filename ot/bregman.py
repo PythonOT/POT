@@ -845,7 +845,7 @@ def barycenter(A, M, reg, weights=None, numItermax=1000,
     reg : float
         Regularization term >0
     weights : np.ndarray (n,)
-        Weights of each histogram i_i on the simplex        
+        Weights of each histogram i_i on the simplex
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
