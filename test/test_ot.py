@@ -12,6 +12,7 @@ import ot
 from ot.datasets import get_1D_gauss as gauss
 import pytest
 
+
 def test_doctest():
     import doctest
 
@@ -133,6 +134,7 @@ def test_lp_barycenter():
     np.testing.assert_allclose(bary, bary0, rtol=1e-5, atol=1e-7)
     np.testing.assert_allclose(bary.sum(), 1)
 
+
 @pytest.mark.skipif(not ot.lp.cvx.cvxopt, reason="No cvxopt available")
 def test_lp_barycenter_cvxopt():
 
@@ -145,10 +147,11 @@ def test_lp_barycenter_cvxopt():
     # obvious barycenter between two diracs
     bary0 = np.array([0, 1.0, 0])
 
-    bary = ot.lp.barycenter(A, M, [.5, .5],solver=None)
+    bary = ot.lp.barycenter(A, M, [.5, .5], solver=None)
 
     np.testing.assert_allclose(bary, bary0, rtol=1e-5, atol=1e-7)
     np.testing.assert_allclose(bary.sum(), 1)
+
 
 def test_warnings():
     n = 100  # nb bins
