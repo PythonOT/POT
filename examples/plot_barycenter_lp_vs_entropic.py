@@ -278,7 +278,7 @@ for i in range(nbm):
     pl.xticks(())
     pl.yticks(())
 
-    pl.subplot(2, nbm, 1 + i)
+    pl.subplot(2, nbm, 1 + i + nbm)
 
     pl.plot(x, bary_l2, 'r', label='L2 (Euclidean)')
     pl.plot(x, bary_wass, 'g', label='Reg Wasserstein')
@@ -287,3 +287,6 @@ for i in range(nbm):
         pl.legend()
     if i == nbm2:
         pl.title('Barycenters')
+
+    pl.xticks(())
+    pl.yticks(())
