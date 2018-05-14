@@ -4,13 +4,18 @@
 1D Wasserstein barycenter comparison between exact LP and entropic regularization
 =================================================================================
 
-This example illustrates the computation of regularized Wassersyein Barycenter
-as proposed in [3].
+This example illustrates the computation of regularized Wasserstein Barycenter
+as proposed in [3] and exact LP barycenters using standard LP solver.
 
+It reproduces approximately Figure 3.1 and 3.2 from the following paper:
+Cuturi, M., & Peyré, G. (2016). A smoothed dual approach for variational
+Wasserstein problems. SIAM Journal on Imaging Sciences, 9(1), 320-343.
 
 [3] Benamou, J. D., Carlier, G., Cuturi, M., Nenna, L., & Peyré, G. (2015).
 Iterative Bregman projections for regularized transportation problems
 SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
+
+
 
 """
 
