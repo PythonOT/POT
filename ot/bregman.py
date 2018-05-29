@@ -839,13 +839,13 @@ def barycenter(A, M, reg, weights=None, numItermax=1000,
     Parameters
     ----------
     A : np.ndarray (d,n)
-        n training distributions of size d
+        n training distributions a_i of size d
     M : np.ndarray (d,d)
         loss matrix   for OT
     reg : float
         Regularization term >0
     weights : np.ndarray (n,)
-        Weights of each histogram i_i on the simplex
+        Weights of each histogram a_i on the simplex (barycentric coodinates)
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
