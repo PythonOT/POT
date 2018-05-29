@@ -58,9 +58,9 @@ notebook :
 	ipython notebook --matplotlib=inline  --notebook-dir=notebooks/
 	
 autopep8 :
-	autopep8 -ir test ot examples
+	autopep8 -ir test ot examples --jobs -1
 
 aautopep8 :
-	autopep8 -air test ot examples
+	autopep8 -air test ot examples --jobs -1
 
 FORCE :
