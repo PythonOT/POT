@@ -12,7 +12,7 @@ import scipy as sp
 from .utils import check_random_state, deprecated
 
 
-def get_1D_gauss(n, m, s):
+def make_1D_gauss(n, m, s):
     """return a 1D histogram for a gaussian distribution (n bins, mean m and std s)
 
     Parameters
@@ -35,6 +35,12 @@ def get_1D_gauss(n, m, s):
     x = np.arange(n, dtype=np.float64)
     h = np.exp(-(x - m)**2 / (2 * s**2))
     return h / h.sum()
+
+
+@deprecated()
+def get_1D_gauss(n, m, sigma, random_state=None):
+    """ Deprecated see  make_1D_gauss   """
+    return make_1D_gauss(n, m, sigma, random_state=None)
 
 
 def make_2D_samples_gauss(n, m, sigma, random_state=None):
