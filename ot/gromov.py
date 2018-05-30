@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Gromov-Wasserstein transport method
-===================================
 
 
 """
