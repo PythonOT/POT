@@ -9,7 +9,7 @@ Simple example datasets for OT
 
 import numpy as np
 import scipy as sp
-from .utils import check_random_state
+from .utils import check_random_state, deprecated
 
 
 def get_1D_gauss(n, m, s):
@@ -37,14 +37,14 @@ def get_1D_gauss(n, m, s):
     return h / h.sum()
 
 
-def get_2D_samples_gauss(n, m, sigma, random_state=None):
+def make_2D_samples_gauss(n, m, sigma, random_state=None):
     """return n samples drawn from 2D gaussian N(m,sigma)
 
     Parameters
     ----------
 
     n : int
-        number of bins in the histogram
+        number of samples to make
     m : np.array (2,)
         mean value of the gaussian distribution
     sigma : np.array (2,2)
@@ -73,7 +73,13 @@ def get_2D_samples_gauss(n, m, sigma, random_state=None):
     return res
 
 
-def get_data_classif(dataset, n, nz=.5, theta=0, random_state=None, **kwargs):
+@deprecated()
+def get_2D_samples_gauss(n, m, sigma, random_state=None):
+    """ Deprecated see  make_2D_samples_gauss   """
+    return make_2D_samples_gauss(n, m, sigma, random_state=None)
+
+
+def make_data_classif(dataset, n, nz=.5, theta=0, random_state=None, **kwargs):
     """ dataset generation for classification problems
 
     Parameters
@@ -152,3 +158,9 @@ def get_data_classif(dataset, n, nz=.5, theta=0, random_state=None, **kwargs):
         print("unknown dataset")
 
     return x, y.astype(int)
+
+
+@deprecated()
+def get_data_classif(dataset, n, nz=.5, theta=0, random_state=None, **kwargs):
+    """ Deprecated see  make_data_classif   """
+    return make_data_classif(dataset, n, nz=.5, theta=0, random_state=None, **kwargs)
