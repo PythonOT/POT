@@ -3,14 +3,20 @@
 .. _sphx_glr_auto_examples_plot_otda_linear_mapping.py:
 
 
-Created on Tue Mar 20 14:31:15 2018
+============================
+Linear OT mapping estimation
+============================
 
-@author: rflamary
+
 
 
 
 .. code-block:: python
 
+
+    # Author: Remi Flamary <remi.flamary@unice.fr>
+    #
+    # License: MIT License
 
     import numpy as np
     import pylab as pl
@@ -227,7 +233,7 @@ Plot transformed images
 
 
 
-**Total running time of the script:** ( 0 minutes  0.563 seconds)
+**Total running time of the script:** ( 0 minutes  0.635 seconds)
 
 
 

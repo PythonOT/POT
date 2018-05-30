@@ -109,7 +109,7 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="@author: rflamary ">
+    <div class="sphx-glr-thumbcontainer" tooltip=" ">
 
 .. only:: html
 
