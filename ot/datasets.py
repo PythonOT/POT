@@ -9,6 +9,7 @@ Simple example datasets for OT
 
 import numpy as np
 import scipy as sp
+from .utils import check_random_state
 
 
 def get_1D_gauss(n, m, s):
@@ -60,7 +61,7 @@ def get_2D_samples_gauss(n, m, sigma, random_state=None):
           n samples drawn from  N(m,sigma)
 
     """
-    
+
     generator = check_random_state(random_state)
     if np.isscalar(sigma):
         sigma = np.array([sigma, ])
@@ -98,9 +99,9 @@ def get_data_classif(dataset, n, nz=.5, theta=0, random_state=None, **kwargs):
           labels of the samples
 
     """
-    
+
     generator = check_random_state(random_state)
-    
+
     if dataset.lower() == '3gauss':
         y = np.floor((np.arange(n) * 1.0 / n * 3)) + 1
         x = np.zeros((n, 2))
@@ -140,8 +141,8 @@ def get_data_classif(dataset, n, nz=.5, theta=0, random_state=None, **kwargs):
         n2 = np.sum(y == 2)
         x = np.zeros((n, 2))
 
-        x[y == 1, :] = get_2D_samples_gauss(n1, m1, nz,random_state=generator)
-        x[y == 2, :] = get_2D_samples_gauss(n2, m2, nz,random_state=generator)
+        x[y == 1, :] = get_2D_samples_gauss(n1, m1, nz, random_state=generator)
+        x[y == 2, :] = get_2D_samples_gauss(n2, m2, nz, random_state=generator)
 
         x = x.dot(rot)
 
