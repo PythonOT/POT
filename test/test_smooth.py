@@ -4,17 +4,14 @@
 #
 # License: MIT License
 
-import warnings
-
 import numpy as np
 
 import ot
-from ot.datasets import get_1D_gauss as gauss
-import pytest
 
 
 def test_smooth_ot_dual():
-    # test sinkhorn
+
+    # get data
     n = 100
     rng = np.random.RandomState(0)
 
@@ -23,15 +20,22 @@ def test_smooth_ot_dual():
 
     M = ot.dist(x, x)
 
-    G = ot.smooth.smooth_ot_dual(u, u, M, 1, stopThr=1e-10)
+    Gl2 = ot.smooth.smooth_ot_dual(u, u, M, 1, reg_type='l2', stopThr=1e-10)
+
+    # check constratints
+    np.testing.assert_allclose(
+        u, Gl2.sum(1), atol=1e-05)  # cf convergence sinkhorn
+    np.testing.assert_allclose(
+        u, Gl2.sum(0), atol=1e-05)  # cf convergence sinkhorn
+
+    # kl regyularisation
+    G = ot.smooth.smooth_ot_dual(u, u, M, 1, reg_type='kl', stopThr=1e-10)
 
     # check constratints
     np.testing.assert_allclose(
         u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
     np.testing.assert_allclose(
-        u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn    
-    
-    
+        u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
+
     G2 = ot.sinkhorn(u, u, M, 1, stopThr=1e-10)
-    np.testing.assert_allclose( G, G2 , atol=1e-05)
-    
+    np.testing.assert_allclose(G, G2, atol=1e-05)
