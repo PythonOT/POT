@@ -20,7 +20,7 @@ def test_smooth_ot_dual():
 
     M = ot.dist(x, x)
 
-    with pytest.raises(NotImplementedError) as e_info:
+    with pytest.raises(NotImplementedError):
         Gl2, log = ot.smooth.smooth_ot_dual(u, u, M, 1, reg_type='none')
 
     Gl2, log = ot.smooth.smooth_ot_dual(u, u, M, 1, reg_type='l2', log=True, stopThr=1e-10)
@@ -55,7 +55,7 @@ def test_smooth_ot_semi_dual():
 
     M = ot.dist(x, x)
 
-    with pytest.raises(NotImplementedError) as e_info:
+    with pytest.raises(NotImplementedError):
         Gl2, log = ot.smooth.smooth_ot_semi_dual(u, u, M, 1, reg_type='none')
 
     Gl2, log = ot.smooth.smooth_ot_semi_dual(u, u, M, 1, reg_type='l2', log=True, stopThr=1e-10)
