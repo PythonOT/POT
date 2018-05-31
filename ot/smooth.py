@@ -580,10 +580,11 @@ def smooth_ot_semi_dual(a, b, M, reg, reg_type='l2', method="L-BFGS-B", stopThr=
         raise NotImplementedError('Unknown regularization')
 
     # solve dual
-    alpha, res = solve_semi_dual(a, b, M, regul, max_iter=numItermax, tol=stopThr)
+    alpha, res = solve_semi_dual(a, b, M, regul, max_iter=numItermax, 
+                                 tol=stopThr, verbose=verbose)
 
     # reconstruct transport matrix
-    G = get_plan_from_semi_dual(alpha, b, M, regul, verbose=verbose)
+    G = get_plan_from_semi_dual(alpha, b, M, regul)
 
     if log:
         log = {'alpha': alpha, 'res': res}
