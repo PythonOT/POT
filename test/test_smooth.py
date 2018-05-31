@@ -31,3 +31,7 @@ def test_smooth_ot_dual():
     np.testing.assert_allclose(
         u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn    
     
+    
+    G2 = ot.sinkhorn(u, u, M, 1, stopThr=1e-10)
+    np.testing.assert_allclose( G, G2 , atol=1e-05)
+    
