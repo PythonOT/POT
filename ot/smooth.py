@@ -22,7 +22,6 @@
 #OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 #THE POSSIBILITY OF SUCH DAMAGE.
 
-
 # Author: Mathieu Blondel
 #         Remi Flamary <remi.flamary@unice.fr>
 
@@ -33,8 +32,8 @@ Mathieu Blondel, Vivien Seguy, Antoine Rolet.
 In Proc. of AISTATS 2018.
 https://arxiv.org/abs/1710.06276
 
-[17] Blondel, M., Seguy, V., & Rolet, A. (2018). Smooth and Sparse Optimal 
-Transport. Proceedings of the Twenty-First International Conference on 
+[17] Blondel, M., Seguy, V., & Rolet, A. (2018). Smooth and Sparse Optimal
+Transport. Proceedings of the Twenty-First International Conference on
 Artificial Intelligence and Statistics (AISTATS).
 
 Original code from https://github.com/mblondel/smooth-ot/
@@ -410,7 +409,6 @@ def get_plan_from_semi_dual(alpha, b, C, regul):
 
 def smooth_ot_dual(a, b, M, reg, reg_type='l2', method="L-BFGS-B", stopThr=1e-9,
                    numItermax=500, log=False):
-    
 
     if reg_type.lower() in ['l2', 'squaredl2']:
         regul = SquaredL2(gamma=reg)
