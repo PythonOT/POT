@@ -15,6 +15,7 @@ It provides the following solvers:
 
 * OT Network Flow solver for the linear program/ Earth Movers Distance [1].
 * Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2] and stabilized version [9][10] with optional GPU implementation (requires cudamat).
+* Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularization [17].
 * Non regularized Wasserstein barycenters [16] with LP solver.
 * Bregman projections for Wasserstein barycenter [3] and unmixing [4].
 * Optimal transport for domain adaptation with group lasso regularization [5]
@@ -213,3 +214,5 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 [15] Peyré, G., & Cuturi, M. (2018). [Computational Optimal Transport](https://arxiv.org/pdf/1803.00567.pdf) .
 
 [16] Agueh, M., & Carlier, G. (2011). [Barycenters in the Wasserstein space](https://hal.archives-ouvertes.fr/hal-00637399/document). SIAM Journal on Mathematical Analysis, 43(2), 904-924.
+
+[17] Blondel, M., Seguy, V., & Rolet, A. (2018). [Smooth and Sparse Optimal Transport](https://arxiv.org/abs/1710.06276). Proceedings of the Twenty-First International Conference on Artificial Intelligence and Statistics (AISTATS).

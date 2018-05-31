@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-====================
-1D optimal transport
-====================
+===========================
+1D smooth optimal transport 
+===========================
 
 This example illustrates the computation of EMD, Sinkhorn and smooth OT plans
 and their visualization.
