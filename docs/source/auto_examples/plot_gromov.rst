@@ -54,7 +54,7 @@ two Gaussian distributions in 2- and 3-dimensional spaces.
     cov_t = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
 
-    xs = ot.datasets.get_2D_samples_gauss(n_samples, mu_s, cov_s)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s)
     P = sp.linalg.sqrtm(cov_t)
     xt = np.random.randn(n_samples, 3).dot(P) + mu_t
 
@@ -166,28 +166,28 @@ Compute Gromov-Wasserstein plans and distance
 
     It.  |Loss        |Delta loss
     --------------------------------
-        0|4.517558e-02|0.000000e+00
-        1|2.563483e-02|-7.622736e-01
-        2|2.443903e-02|-4.892972e-02
-        3|2.231600e-02|-9.513496e-02
-        4|1.676188e-02|-3.313541e-01
-        5|1.464792e-02|-1.443180e-01
-        6|1.454315e-02|-7.204526e-03
-        7|1.454142e-02|-1.185811e-04
-        8|1.454141e-02|-1.190466e-06
-        9|1.454141e-02|-1.190512e-08
-       10|1.454141e-02|-1.190520e-10
+        0|4.328711e-02|0.000000e+00
+        1|2.281369e-02|-8.974178e-01
+        2|1.843659e-02|-2.374139e-01
+        3|1.602820e-02|-1.502598e-01
+        4|1.353712e-02|-1.840179e-01
+        5|1.285687e-02|-5.290977e-02
+        6|1.284537e-02|-8.952931e-04
+        7|1.284525e-02|-8.989584e-06
+        8|1.284525e-02|-8.989950e-08
+        9|1.284525e-02|-8.989949e-10
     It.  |Err         
     -------------------
-        0|6.743761e-02|
-       10|5.477003e-04|
-       20|2.461503e-08|
-       30|1.205155e-11|
-    Gromov-Wasserstein distances: 0.014541405718693563
-    Entropic Gromov-Wasserstein distances: 0.015800739725237274
+        0|7.263293e-02|
+       10|1.737784e-02|
+       20|7.783978e-03|
+       30|3.399419e-07|
+       40|3.751207e-11|
+    Gromov-Wasserstein distances: 0.012845252089244688
+    Entropic Gromov-Wasserstein distances: 0.013543882352191079
 
 
-**Total running time of the script:** ( 0 minutes  1.448 seconds)
+**Total running time of the script:** ( 0 minutes  1.916 seconds)
 
 
 

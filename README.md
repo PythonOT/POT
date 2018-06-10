@@ -25,12 +25,23 @@ It provides the following solvers:
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 
+#### Using and citing the toolbox
+
+If you use this toolbox in your research and find it useful, please cite POT using the following bibtex reference:
+```
+@article{flamary2017pot,
+  title={POT Python Optimal Transport library},
+  author={Flamary, R{\'e}mi and Courty, Nicolas},
+  year={2017}
+}
+```
+
 ## Installation
 
 The library has been tested on Linux, MacOSX and Windows. It requires a C++ compiler for using the EMD solver and relies on the following Python modules:
 
 - Numpy (>=1.11)
-- Scipy (>=0.17)
+- Scipy (>=1.0)
 - Cython (>=0.23)
 - Matplotlib (>=1.5)
 
@@ -156,16 +167,7 @@ This toolbox benefit a lot from open source research and we would like to thank 
 * [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) ( C++ code for EMD)
 * [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
 
-## Using and citing the toolbox
 
-If you use this toolbox in your research and find it useful, please cite POT using the following bibtex reference:
-```
-@article{flamary2017pot,
-  title={POT Python Optimal Transport library},
-  author={Flamary, R{\'e}mi and Courty, Nicolas},
-  year={2017}
-}
-```
 ## Contributions and code of conduct
 
 Every contribution is welcome and should respect the [contribution guidelines](CONTRIBUTING.md). Each member of the project is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).

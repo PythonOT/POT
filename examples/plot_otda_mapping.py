@@ -32,11 +32,11 @@ n_target_samples = 100
 theta = 2 * np.pi / 20
 noise_level = 0.1
 
-Xs, ys = ot.datasets.get_data_classif(
+Xs, ys = ot.datasets.make_data_classif(
     'gaussrot', n_source_samples, nz=noise_level)
-Xs_new, _ = ot.datasets.get_data_classif(
+Xs_new, _ = ot.datasets.make_data_classif(
     'gaussrot', n_source_samples, nz=noise_level)
-Xt, yt = ot.datasets.get_data_classif(
+Xt, yt = ot.datasets.make_data_classif(
     'gaussrot', n_target_samples, theta=theta, nz=noise_level)
 
 # one of the target mode changes its variance (no linear mapping)

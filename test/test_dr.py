@@ -22,7 +22,7 @@ def test_fda():
     np.random.seed(0)
 
     # generate gaussian dataset
-    xs, ys = ot.datasets.get_data_classif('gaussrot', n_samples)
+    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples)
 
     n_features_noise = 8
 
@@ -44,7 +44,7 @@ def test_wda():
     np.random.seed(0)
 
     # generate gaussian dataset
-    xs, ys = ot.datasets.get_data_classif('gaussrot', n_samples)
+    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples)
 
     n_features_noise = 8
 
