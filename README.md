@@ -30,10 +30,11 @@ Some demonstrations (both in Python and Jupyter Notebook format) are available i
 
 If you use this toolbox in your research and find it useful, please cite POT using the following bibtex reference:
 ```
-@article{flamary2017pot,
-  title={POT Python Optimal Transport library},
-  author={Flamary, R{\'e}mi and Courty, Nicolas},
-  year={2017}
+@misc{flamary2017pot,
+title={POT Python Optimal Transport library},
+author={Flamary, R{'e}mi and Courty, Nicolas},
+url={https://github.com/rflamary/POT},
+year={2017}
 }
 ```
 
