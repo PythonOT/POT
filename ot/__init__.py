@@ -18,6 +18,8 @@ from . import utils
 from . import datasets
 from . import da
 from . import gromov
+from . import smooth
+
 
 # OT functions
 from .lp import emd, emd2
