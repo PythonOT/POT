@@ -24,7 +24,7 @@ and their visualization.
     import matplotlib.pylab as pl
     import ot
     import ot.plot
-    from ot.datasets import get_1D_gauss as gauss
+    from ot.datasets import make_1D_gauss as gauss
 
 
 
@@ -172,7 +172,7 @@ Solve Sinkhorn
       110|1.527180e-10|
 
 
-**Total running time of the script:** ( 0 minutes  1.061 seconds)
+**Total running time of the script:** ( 0 minutes  0.561 seconds)
 
 
 
