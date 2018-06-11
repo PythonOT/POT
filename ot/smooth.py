@@ -75,6 +75,13 @@ def projection_simplex(V, z=1, axis=None):
 
 
 class Regularization(object):
+    """Base class for Regularization objects
+
+        Notes
+        -----
+        This class is not intended for direct use but as aparent for true
+        regularizatiojn implementation.
+    """
 
     def __init__(self, gamma=1.0):
         """
