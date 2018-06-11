@@ -38,7 +38,7 @@ mu_t = np.array([4, 4, 4])
 cov_t = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
 
-xs = ot.datasets.get_2D_samples_gauss(n_samples, mu_s, cov_s)
+xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s)
 P = sp.linalg.sqrtm(cov_t)
 xt = np.random.randn(n_samples, 3).dot(P) + mu_t
 

@@ -16,8 +16,8 @@ def test_conditional_gradient():
     x = np.arange(n_bins, dtype=np.float64)
 
     # Gaussian distributions
-    a = ot.datasets.get_1D_gauss(n_bins, m=20, s=5)  # m= mean, s= std
-    b = ot.datasets.get_1D_gauss(n_bins, m=60, s=10)
+    a = ot.datasets.make_1D_gauss(n_bins, m=20, s=5)  # m= mean, s= std
+    b = ot.datasets.make_1D_gauss(n_bins, m=60, s=10)
 
     # loss matrix
     M = ot.dist(x.reshape((n_bins, 1)), x.reshape((n_bins, 1)))
@@ -45,8 +45,8 @@ def test_generalized_conditional_gradient():
     x = np.arange(n_bins, dtype=np.float64)
 
     # Gaussian distributions
-    a = ot.datasets.get_1D_gauss(n_bins, m=20, s=5)  # m= mean, s= std
-    b = ot.datasets.get_1D_gauss(n_bins, m=60, s=10)
+    a = ot.datasets.make_1D_gauss(n_bins, m=20, s=5)  # m= mean, s= std
+    b = ot.datasets.make_1D_gauss(n_bins, m=60, s=10)
 
     # loss matrix
     M = ot.dist(x.reshape((n_bins, 1)), x.reshape((n_bins, 1)))

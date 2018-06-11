@@ -25,8 +25,8 @@ import ot
 n_source_samples = 150
 n_target_samples = 150
 
-Xs, ys = ot.datasets.get_data_classif('3gauss', n_source_samples)
-Xt, yt = ot.datasets.get_data_classif('3gauss2', n_target_samples)
+Xs, ys = ot.datasets.make_data_classif('3gauss', n_source_samples)
+Xt, yt = ot.datasets.make_data_classif('3gauss2', n_target_samples)
 
 
 ##############################################################################
@@ -82,7 +82,7 @@ pl.tight_layout()
 # Fig 2 : plot optimal couplings and transported samples
 # ------------------------------------------------------
 
-param_img = {'interpolation': 'nearest', 'cmap': 'spectral'}
+param_img = {'interpolation': 'nearest'}
 
 pl.figure(2, figsize=(15, 8))
 pl.subplot(2, 4, 1)
