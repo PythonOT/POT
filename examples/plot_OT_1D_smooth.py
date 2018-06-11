@@ -17,7 +17,7 @@ import numpy as np
 import matplotlib.pylab as pl
 import ot
 import ot.plot
-from ot.datasets import get_1D_gauss as gauss
+from ot.datasets import make_1D_gauss as gauss
 
 ##############################################################################
 # Generate data
