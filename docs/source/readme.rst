@@ -14,7 +14,11 @@ It provides the following solvers:
    [1].
 -  Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2]
    and stabilized version [9][10] with optional GPU implementation
-   (required cudamat).
+   (requires cudamat).
+-  Smooth optimal transport solvers (dual and semi-dual) for KL and
+   squared L2 regularizations [17].
+-  Non regularized Wasserstein barycenters [16] with LP solver (only
+   small scale).
 -  Bregman projections for Wasserstein barycenter [3] and unmixing [4].
 -  Optimal transport for domain adaptation with group lasso
    regularization [5]
@@ -29,6 +33,21 @@ It provides the following solvers:
 Some demonstrations (both in Python and Jupyter Notebook format) are
 available in the examples folder.
 
+Using and citing the toolbox
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you use this toolbox in your research and find it useful, please cite
+POT using the following bibtex reference:
+
+::
+
+    @misc{flamary2017pot,
+    title={POT Python Optimal Transport library},
+    author={Flamary, R{'e}mi and Courty, Nicolas},
+    url={https://github.com/rflamary/POT},
+    year={2017}
+    }
+
 Installation
 ------------
 
@@ -37,7 +56,7 @@ C++ compiler for using the EMD solver and relies on the following Python
 modules:
 
 -  Numpy (>=1.11)
--  Scipy (>=0.17)
+-  Scipy (>=1.0)
 -  Cython (>=0.23)
 -  Matplotlib (>=1.5)
 
@@ -212,20 +231,6 @@ languages):
 -  `Marco Cuturi <http://marcocuturi.net/>`__ (Sinkhorn Knopp in
    Matlab/Cuda)
 
-Using and citing the toolbox
-----------------------------
-
-If you use this toolbox in your research and find it useful, please cite
-POT using the following bibtex reference:
-
-::
-
-    @article{flamary2017pot,
-      title={POT Python Optimal Transport library},
-      author={Flamary, R{\'e}mi and Courty, Nicolas},
-      year={2017}
-    }
-
 Contributions and code of conduct
 ---------------------------------
 
@@ -319,6 +324,15 @@ Journal of Optimization Theory and Applications Vol 43.
 
 [15] Peyré, G., & Cuturi, M. (2018). `Computational Optimal
 Transport <https://arxiv.org/pdf/1803.00567.pdf>`__ .
+
+[16] Agueh, M., & Carlier, G. (2011). `Barycenters in the Wasserstein
+space <https://hal.archives-ouvertes.fr/hal-00637399/document>`__. SIAM
+Journal on Mathematical Analysis, 43(2), 904-924.
+
+[17] Blondel, M., Seguy, V., & Rolet, A. (2018). `Smooth and Sparse
+Optimal Transport <https://arxiv.org/abs/1710.06276>`__. Proceedings of
+the Twenty-First International Conference on Artificial Intelligence and
+Statistics (AISTATS).
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
