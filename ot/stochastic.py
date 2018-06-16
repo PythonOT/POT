@@ -313,7 +313,6 @@ def c_transform_entropic(b, M, reg, v):
     '''
 
     n_source = np.shape(M)[0]
-    n_target = np.shape(M)[1]
     u = np.zeros(n_source)
     for i in range(n_source):
         r = M[i, :] - v
@@ -399,8 +398,6 @@ def transportation_matrix_entropic(a, b, M, reg, method, numItermax=10000,
                      Advances in Neural Information Processing Systems (2016),
                       arXiv preprint arxiv:1605.08527.
     '''
-    n_source = 7
-    n_target = 4
     if method.lower() == "sag":
         opt_v = sag_entropic_transport(a, b, M, reg, numItermax, lr)
     elif method.lower() == "asgd":
