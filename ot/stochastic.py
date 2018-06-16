@@ -407,6 +407,6 @@ def transportation_matrix_entropic(a, b, M, reg, method, numItermax=10000,
         return None
 
     opt_u = c_transform_entropic(b, M, reg, opt_v)
-    pi = (np.exp((opt_u[:, None] + opt_v[None, :] - M[:, :]) / reg)
-          * a[:, None] * b[None, :])
+    pi = (np.exp((opt_u[:, None] + opt_v[None, :] - M[:, :]) / reg) *
+          a[:, None] * b[None, :])
     return pi
