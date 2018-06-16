@@ -75,8 +75,8 @@ def coordinate_gradient(b, M, reg, v, i):
     '''
 
     r = M[i, :] - v
-    exp_v = np.exp(-r / reg) * b
-    khi = exp_v / (np.sum(exp_v))
+    exp_v = np.exp(-r/reg) * b
+    khi = exp_v/(np.sum(exp_v))
     return b - khi
 
 
@@ -161,7 +161,7 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=0.1):
         cur_coord_grad = a[i] * coordinate_gradient(b, M, reg, v, i)
         sum_stored_gradient += (cur_coord_grad - stored_gradient[i])
         stored_gradient[i] = cur_coord_grad
-        v += lr * (1. / n_source) * sum_stored_gradient
+        v += lr * (1./n_source) * sum_stored_gradient
     return v
 
 
@@ -243,8 +243,8 @@ def averaged_sgd_entropic_transport(b, M, reg, numItermax=300000, lr=1):
         k = cur_iter + 1
         i = np.random.randint(n_source)
         cur_coord_grad = coordinate_gradient(b, M, reg, cur_v, i)
-        cur_v += (lr / np.sqrt(k)) * cur_coord_grad
-        ave_v = (1. / k) * cur_v + (1 - 1. / k) * ave_v
+        cur_v += (lr/np.sqrt(k)) * cur_coord_grad
+        ave_v = (1./k) * cur_v + (1 - 1./k) * ave_v
     return ave_v
 
 
@@ -317,7 +317,7 @@ def c_transform_entropic(b, M, reg, v):
     u = np.zeros(n_source)
     for i in range(n_source):
         r = M[i, :] - v
-        exp_v = np.exp(-r / reg) * b
+        exp_v = np.exp(-r/reg) * b
         u[i] = - reg * np.log(np.sum(exp_v))
     return u
 
@@ -410,6 +410,6 @@ def transportation_matrix_entropic(a, b, M, reg, method, numItermax=10000,
         return None
 
     opt_u = c_transform_entropic(b, M, reg, opt_v)
-    pi = (np.exp((opt_u[:, None] + opt_v[None, :] - M[:, :]) / reg)
+    pi = (np.exp((opt_u[:, None] + opt_v[None, :] - M[:, :])/reg)
           * a[:, None] * b[None, :])
     return pi
