@@ -89,7 +89,6 @@ def test_sag_asgd_sinkhorn():
     n = 15
     reg = 1
     nb_iter = 300000
-    lr = 1
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)

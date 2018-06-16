@@ -53,7 +53,7 @@ M = ot.dist(X_source, Y_target)
 
 method = "SAG"
 sag_pi = ot.stochastic.transportation_matrix_entropic(a, b, M, reg, method,
-                                                   numItermax, lr)
+                                                      numItermax, lr)
 print(sag_pi)
 
 #############################################################################
@@ -90,7 +90,7 @@ M = ot.dist(X_source, Y_target)
 
 method = "ASGD"
 asgd_pi = ot.stochastic.transportation_matrix_entropic(a, b, M, reg, method,
-                                                    numItermax, lr)
+                                                       numItermax, lr)
 print(asgd_pi)
 
 #############################################################################
