@@ -33,6 +33,14 @@ ot.optim
 .. automodule:: ot.optim
    :members:
 
+
+ ot.stochastic
+ --------
+
+ .. automodule:: ot.stochastic
+    :members:
+
+
 ot.da
 --------
 

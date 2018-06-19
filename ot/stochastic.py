@@ -6,9 +6,9 @@ import numpy as np
 
 
 ##############################################################################
-# Optimization toolbox for SEMI - DUAL problem
+# Optimization toolbox for SEMI - DUAL problems
 ##############################################################################
-def coordinate_gradient(b, M, reg, beta, i):
+def coordinate_grad_semi_dual(b, M, reg, beta, i):
     '''
     Compute the coordinate gradient update for regularized discrete
         distributions for (i, :)
@@ -161,7 +161,8 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=0.1):
     sum_stored_gradient = np.zeros(n_target)
     for _ in range(numItermax):
         i = np.random.randint(n_source)
-        cur_coord_grad = a[i] * coordinate_gradient(b, M, reg, cur_beta, i)
+        cur_coord_grad = a[i] * coordinate_grad_semi_dual(b, M, reg,
+                                                          cur_beta, i)
         sum_stored_gradient += (cur_coord_grad - stored_gradient[i])
         stored_gradient[i] = cur_coord_grad
         cur_beta += lr * (1. / n_source) * sum_stored_gradient
@@ -245,7 +246,7 @@ def averaged_sgd_entropic_transport(b, M, reg, numItermax=300000, lr=1):
     for cur_iter in range(numItermax):
         k = cur_iter + 1
         i = np.random.randint(n_source)
-        cur_coord_grad = coordinate_gradient(b, M, reg, cur_beta, i)
+        cur_coord_grad = coordinate_grad_semi_dual(b, M, reg, cur_beta, i)
         cur_beta += (lr / np.sqrt(k)) * cur_coord_grad
         ave_beta = (1. / k) * cur_beta + (1 - 1. / k) * ave_beta
     return ave_beta
@@ -428,11 +429,12 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=0.1,
 
 
 ##############################################################################
-# Optimization toolbox for DUAL problem
+# Optimization toolbox for DUAL problems
 ##############################################################################
 
 
-def grad_dF_dalpha(M, reg, alpha, beta, batch_size, batch_alpha, batch_beta):
+def batch_grad_dual_alpha(M, reg, alpha, beta, batch_size, batch_alpha,
+                          batch_beta):
     '''
     Computes the partial gradient of F_\W_varepsilon
 
@@ -513,7 +515,8 @@ def grad_dF_dalpha(M, reg, alpha, beta, batch_size, batch_alpha, batch_beta):
     return grad_alpha
 
 
-def grad_dF_dbeta(M, reg, alpha, beta, batch_size, batch_alpha, batch_beta):
+def batch_grad_dual_beta(M, reg, alpha, beta, batch_size, batch_alpha,
+                         batch_beta):
     '''
     Computes the partial gradient of F_\W_varepsilon
 
@@ -676,11 +679,13 @@ def sgd_entropic_regularization(M, reg, batch_size, numItermax, lr,
             k = np.sqrt(cur_iter + 1)
             batch_alpha = np.random.choice(n_source, batch_size, replace=False)
             batch_beta = np.random.choice(n_target, batch_size, replace=False)
-            grad_F_alpha = grad_dF_dalpha(M, reg, cur_alpha, cur_beta,
-                                          batch_size, batch_alpha, batch_beta)
+            grad_F_alpha = batch_grad_dual_alpha(M, reg, cur_alpha, cur_beta,
+                                                 batch_size, batch_alpha,
+                                                 batch_beta)
             cur_alpha[batch_alpha] += (lr / k) * grad_F_alpha
-            grad_F_beta = grad_dF_dbeta(M, reg, cur_alpha, cur_beta,
-                                        batch_size, batch_alpha, batch_beta)
+            grad_F_beta = batch_grad_dual_beta(M, reg, cur_alpha, cur_beta,
+                                               batch_size, batch_alpha,
+                                               batch_beta)
             cur_beta[batch_beta] += (lr / k) * grad_F_beta
 
     else:
@@ -688,10 +693,12 @@ def sgd_entropic_regularization(M, reg, batch_size, numItermax, lr,
             k = np.sqrt(cur_iter + 1)
             batch_alpha = np.random.choice(n_source, batch_size, replace=False)
             batch_beta = np.random.choice(n_target, batch_size, replace=False)
-            grad_F_alpha = grad_dF_dalpha(M, reg, cur_alpha, cur_beta,
-                                          batch_size, batch_alpha, batch_beta)
-            grad_F_beta = grad_dF_dbeta(M, reg, cur_alpha, cur_beta,
-                                        batch_size, batch_alpha, batch_beta)
+            grad_F_alpha = batch_grad_dual_alpha(M, reg, cur_alpha, cur_beta,
+                                                 batch_size, batch_alpha,
+                                                 batch_beta)
+            grad_F_beta = batch_grad_dual_beta(M, reg, cur_alpha, cur_beta,
+                                               batch_size, batch_alpha,
+                                               batch_beta)
             cur_alpha[batch_alpha] += (lr / k) * grad_F_alpha
             cur_beta[batch_beta] += (lr / k) * grad_F_beta
 
