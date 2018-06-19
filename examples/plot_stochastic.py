@@ -136,6 +136,7 @@ pl.figure(4, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, sinkhorn_pi, 'OT matrix Sinkhorn')
 pl.show()
 
+
 #############################################################################
 # COMPUTE TRANSPORTATION MATRIX FOR DUAL PROBLEM
 #############################################################################

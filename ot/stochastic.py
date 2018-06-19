@@ -8,6 +8,8 @@ import numpy as np
 ##############################################################################
 # Optimization toolbox for SEMI - DUAL problems
 ##############################################################################
+
+
 def coordinate_grad_semi_dual(b, M, reg, beta, i):
     '''
     Compute the coordinate gradient update for regularized discrete

@@ -57,6 +57,7 @@ def test_stochastic_sag():
 # 2 identical discrete measures u defined on the same space with a
 # regularization term, a learning rate and a number of iteration
 
+
 def test_stochastic_asgd():
     # test asgd
     n = 15
@@ -134,9 +135,9 @@ def test_sag_asgd_sinkhorn():
 # 2 identical discrete measures u defined on the same space with a
 # regularization term, a batch_size and a number of iteration
 
+
 def test_stochastic_dual_sgd():
     # test sgd
-    print("SGD")
     n = 10
     reg = 1
     numItermax = 300000
@@ -157,6 +158,7 @@ def test_stochastic_dual_sgd():
     np.testing.assert_allclose(
         u, G.sum(0), atol=1e-02)  # cf convergence sgd
 
+
 #############################################################################
 #
 # TEST Convergence SGD toward Sinkhorn's solution
@@ -167,7 +169,6 @@ def test_stochastic_dual_sgd():
 
 def test_dual_sgd_sinkhorn():
     # test all dual algorithms
-    print("SGD vs Sinkhorn")
     n = 10
     reg = 1
     nb_iter = 300000
@@ -191,8 +192,3 @@ def test_dual_sgd_sinkhorn():
         zero, (G_sgd - G_sinkhorn).sum(0), atol=1e-02)  # cf convergence sgd
     np.testing.assert_allclose(
         G_sgd, G_sinkhorn, atol=1e-02)  # cf convergence sgd
-
-
-if __name__ == '__main__':
-    test_stochastic_dual_sgd()
-    test_dual_sgd_sinkhorn()
