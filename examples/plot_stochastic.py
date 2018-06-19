@@ -53,7 +53,7 @@ M = ot.dist(X_source, Y_target)
 
 method = "SAG"
 sag_pi = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method,
-                                             numItermax, lr)
+                                                numItermax, lr)
 print(sag_pi)
 
 #############################################################################
@@ -91,7 +91,7 @@ M = ot.dist(X_source, Y_target)
 
 method = "ASGD"
 asgd_pi, log = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method,
-                                                   numItermax, lr, log)
+                                                      numItermax, lr, log)
 print(log['alpha'], log['beta'])
 print(asgd_pi)
 
@@ -174,7 +174,7 @@ M = ot.dist(X_source, Y_target)
 # Call ot.solve_dual_entropic and plot the results.
 
 sgd_dual_pi, log = ot.stochastic.solve_dual_entropic(a, b, M, reg, batch_size,
-                                                  numItermax, lr, log)
+                                                     numItermax, lr, log)
 print(log['alpha'], log['beta'])
 print(sgd_dual_pi)
 

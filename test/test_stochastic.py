@@ -149,7 +149,7 @@ def test_stochastic_dual_sgd():
     M = ot.dist(x, x)
 
     G = ot.stochastic.solve_dual_entropic(u, u, M, reg, batch_size,
-                                       numItermax=numItermax)
+                                          numItermax=numItermax)
 
     # check constratints
     np.testing.assert_allclose(
@@ -180,7 +180,7 @@ def test_dual_sgd_sinkhorn():
     M = ot.dist(x, x)
 
     G_sgd = ot.stochastic.solve_dual_entropic(u, u, M, reg, batch_size,
-                                           numItermax=nb_iter)
+                                              numItermax=nb_iter)
 
     G_sinkhorn = ot.sinkhorn(u, u, M, reg)
 
