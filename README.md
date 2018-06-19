@@ -22,6 +22,7 @@ It provides the following solvers:
 * Linear OT [14] and Joint OT matrix and mapping estimation [8].
 * Wasserstein Discriminant Analysis [11] (requires autograd + pymanopt).
 * Gromov-Wasserstein distances and barycenters ([13] and regularized [12])
+* Stochastic Optimization for Large-scale Optimal Transport (semi-dual problem [18] and dual problem [19])
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 
@@ -149,6 +150,7 @@ The contributors to this library are:
 * [Stanislas Chambon](https://slasnista.github.io/)
 * [Antoine Rolet](https://arolet.github.io/)
 * Erwan Vautier (Gromov-Wasserstein)
+* [Kilian Fatras](https://kilianfatras.github.io/) (Stochastic optimization)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
@@ -213,3 +215,9 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 [15] Peyré, G., & Cuturi, M. (2018). [Computational Optimal Transport](https://arxiv.org/pdf/1803.00567.pdf) .
 
 [16] Agueh, M., & Carlier, G. (2011). [Barycenters in the Wasserstein space](https://hal.archives-ouvertes.fr/hal-00637399/document). SIAM Journal on Mathematical Analysis, 43(2), 904-924.
+
+[17] Blondel, M., Seguy, V., & Rolet, A. (2018). [Smooth and Sparse Optimal Transport](https://arxiv.org/pdf/1710.06276.pdf). Proceedings of the Twenty-First International Conference on Artificial Intelligence and Statistics (AISTATS).
+
+[18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) [Stochastic Optimization for Large-scale Optimal Transport](arXiv preprint arxiv:1605.08527). Advances in Neural Information Processing Systems (2016).
+
+[19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet, A.& Blondel, M. [Large-scale Optimal Transport and Mapping Estimation](https://arxiv.org/pdf/1711.02283.pdf). International Conference on Learning Representation (2018)
