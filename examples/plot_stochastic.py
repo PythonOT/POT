@@ -32,8 +32,7 @@ print("------------SEMI-DUAL PROBLEM------------")
 n_source = 7
 n_target = 4
 reg = 1
-numItermax = 10000
-lr = 0.1
+numItermax = 1000
 
 a = ot.utils.unif(n_source)
 b = ot.utils.unif(n_target)
@@ -53,7 +52,7 @@ M = ot.dist(X_source, Y_target)
 
 method = "SAG"
 sag_pi = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method,
-                                                numItermax, lr)
+                                                numItermax)
 print(sag_pi)
 
 #############################################################################
@@ -68,8 +67,7 @@ print(sag_pi)
 n_source = 7
 n_target = 4
 reg = 1
-numItermax = 100000
-lr = 1
+numItermax = 1000
 log = True
 
 a = ot.utils.unif(n_source)
@@ -91,7 +89,7 @@ M = ot.dist(X_source, Y_target)
 
 method = "ASGD"
 asgd_pi, log = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method,
-                                                      numItermax, lr, log)
+                                                      numItermax, log)
 print(log['alpha'], log['beta'])
 print(asgd_pi)
 

@@ -63,7 +63,6 @@ def test_stochastic_asgd():
     n = 15
     reg = 1
     numItermax = 300000
-    lr = 1
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)
@@ -72,8 +71,7 @@ def test_stochastic_asgd():
     M = ot.dist(x, x)
 
     G = ot.stochastic.solve_semi_dual_entropic(u, u, M, reg, "asgd",
-                                               numItermax=numItermax,
-                                               lr=lr)
+                                               numItermax=numItermax)
 
     # check constratints
     np.testing.assert_allclose(
@@ -95,7 +93,6 @@ def test_sag_asgd_sinkhorn():
     n = 15
     reg = 1
     nb_iter = 300000
-    lr = 1
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)
@@ -104,7 +101,7 @@ def test_sag_asgd_sinkhorn():
     M = ot.dist(x, x)
 
     G_asgd = ot.stochastic.solve_semi_dual_entropic(u, u, M, reg, "asgd",
-                                                    numItermax=nb_iter, lr=lr)
+                                                    numItermax=nb_iter)
     G_sag = ot.stochastic.solve_semi_dual_entropic(u, u, M, reg, "sag",
                                                    numItermax=nb_iter)
     G_sinkhorn = ot.sinkhorn(u, u, M, reg)
