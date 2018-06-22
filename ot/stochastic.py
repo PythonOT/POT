@@ -153,7 +153,7 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
     '''
 
     if lr is None:
-        lr = 1. / max(a/reg)
+        lr = 1. / max(a / reg)
     n_source = np.shape(M)[0]
     n_target = np.shape(M)[1]
     cur_beta = np.zeros(n_target)
@@ -238,7 +238,7 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
     '''
 
     if lr is None:
-        lr = 1. / max(a/reg)
+        lr = 1. / max(a / reg)
     n_source = np.shape(M)[0]
     n_target = np.shape(M)[1]
     cur_beta = np.zeros(n_target)
