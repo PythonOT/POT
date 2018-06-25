@@ -16,8 +16,9 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
         distributions for (i, :)
 
     The function computes the gradient of the semi dual problem:
+
     .. math::
-        \W_varepsilon(a, b) = \max_\v \sum_i (\sum_j v_j * b_j
+        \W_\varepsilon(a, b) = \max_\v \sum_i (\sum_j v_j * b_j
             - \reg log(\sum_j exp((v_j - M_{i,j})/reg) * b_j)) * a_i
 
     where :
@@ -89,6 +90,7 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
         optimal transport max problem
 
     The function solves the following optimization problem:
+
     .. math::
         \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
         s.t. \gamma 1 = a
@@ -175,6 +177,7 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
         optimal transport max problem
 
     The function solves the following optimization problem:
+
     .. math::
         \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
         s.t. \gamma 1 = a
@@ -258,6 +261,7 @@ def c_transform_entropic(b, M, reg, beta):
 
     The function computes the c_transform of a dual variable from the other
     dual variable:
+
     .. math::
         u = v^{c,reg} = -reg \sum_j exp((v - M)/reg) b_j
 
@@ -331,6 +335,7 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
         measures optimal transport max problem
 
     The function solves the following optimization problem:
+
     .. math::
         \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
         s.t. \gamma 1 = a
@@ -436,7 +441,8 @@ def batch_grad_dual_alpha(M, reg, alpha, beta, batch_size, batch_alpha,
     Computes the partial gradient of F_\W_varepsilon
 
     Compute the partial gradient of the dual problem:
-    ..Math:
+
+    ..math:
         \forall i in batch_alpha,
             grad_alpha_i = 1 * batch_size -
                     sum_{j in batch_beta} exp((alpha_i + beta_j - M_{i,j})/reg)
@@ -518,7 +524,8 @@ def batch_grad_dual_beta(M, reg, alpha, beta, batch_size, batch_alpha,
     Computes the partial gradient of F_\W_varepsilon
 
     Compute the partial gradient of the dual problem:
-    ..Math:
+
+    ..math:
         \forall j in batch_beta,
             grad_beta_j = 1 * batch_size -
                 sum_{i in batch_alpha} exp((alpha_i + beta_j - M_{i,j})/reg)
@@ -602,6 +609,7 @@ def sgd_entropic_regularization(M, reg, batch_size, numItermax, lr,
         optimal transport dual problem
 
     The function solves the following optimization problem:
+
     .. math::
         \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
         s.t. \gamma 1 = a
@@ -709,6 +717,7 @@ def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
         optimal transport dual problem
 
     The function solves the following optimization problem:
+
     .. math::
         \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
         s.t. \gamma 1 = a

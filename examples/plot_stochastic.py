@@ -15,6 +15,7 @@ algorithms for descrete and semicontinous measures from the POT library.
 import matplotlib.pylab as pl
 import numpy as np
 import ot
+import ot.plot
 
 
 #############################################################################
@@ -88,9 +89,9 @@ M = ot.dist(X_source, Y_target)
 # results.
 
 method = "ASGD"
-asgd_pi, log = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method,
-                                                      numItermax, log)
-print(log['alpha'], log['beta'])
+asgd_pi, log_asgd = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method,
+                                                           numItermax, log=log)
+print(log_asgd['alpha'], log_asgd['beta'])
 print(asgd_pi)
 
 #############################################################################
@@ -166,15 +167,16 @@ M = ot.dist(X_source, Y_target)
 
 #############################################################################
 #
-# Call the "SGD" dual method to find the transportation matrix in the semicontinous
-# case
+# Call the "SGD" dual method to find the transportation matrix in the
+# semicontinous case
 # ---------------------------------------------
 #
 # Call ot.solve_dual_entropic and plot the results.
 
-sgd_dual_pi, log = ot.stochastic.solve_dual_entropic(a, b, M, reg, batch_size,
-                                                     numItermax, lr, log)
-print(log['alpha'], log['beta'])
+sgd_dual_pi, log_sgd = ot.stochastic.solve_dual_entropic(a, b, M, reg,
+                                                         batch_size, numItermax,
+                                                         lr, log=log)
+print(log_sgd['alpha'], log_sgd['beta'])
 print(sgd_dual_pi)
 
 #############################################################################
