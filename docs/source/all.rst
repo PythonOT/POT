@@ -69,8 +69,8 @@ ot.plot
 .. automodule:: ot.plot
    :members:
 
- ot.stochastic
- -------
+ot.stochastic
+-------------
 
- .. automodule:: ot.stochastic
-    :members:
+.. automodule:: ot.stochastic
+   :members:
