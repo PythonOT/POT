@@ -20,6 +20,11 @@ ot.bregman
 .. automodule:: ot.bregman
    :members:
 
+ot.smooth
+-----
+.. automodule:: ot.smooth
+   :members:
+
 ot.gromov
 ----------
 
@@ -32,14 +37,6 @@ ot.optim
 
 .. automodule:: ot.optim
    :members:
-
-
- ot.stochastic
- --------
-
- .. automodule:: ot.stochastic
-    :members:
-
 
 ot.da
 --------
@@ -71,3 +68,9 @@ ot.plot
 
 .. automodule:: ot.plot
    :members:
+
+ ot.stochastic
+ -------
+
+ .. automodule:: ot.stochastic
+    :members:
