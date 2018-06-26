@@ -72,8 +72,8 @@ SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
     x = np.arange(n, dtype=np.float64)
 
     # Gaussian distributions
-    a1 = ot.datasets.get_1D_gauss(n, m=20, s=5)  # m= mean, s= std
-    a2 = ot.datasets.get_1D_gauss(n, m=60, s=8)
+    a1 = ot.datasets.make_1D_gauss(n, m=20, s=5)  # m= mean, s= std
+    a2 = ot.datasets.make_1D_gauss(n, m=60, s=8)
 
     # creating matrix A containing all distributions
     A = np.vstack((a1, a2)).T
@@ -194,7 +194,7 @@ SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
 
     pl.show()
 
-**Total running time of the script:** ( 0 minutes  0.636 seconds)
+**Total running time of the script:** ( 0 minutes  0.363 seconds)
 
 
 

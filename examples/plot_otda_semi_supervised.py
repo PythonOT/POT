@@ -29,8 +29,8 @@ import ot
 n_samples_source = 150
 n_samples_target = 150
 
-Xs, ys = ot.datasets.get_data_classif('3gauss', n_samples_source)
-Xt, yt = ot.datasets.get_data_classif('3gauss2', n_samples_target)
+Xs, ys = ot.datasets.make_data_classif('3gauss', n_samples_source)
+Xt, yt = ot.datasets.make_data_classif('3gauss2', n_samples_target)
 
 
 ##############################################################################

@@ -59,8 +59,8 @@ Generate data
     x = np.arange(n, dtype=np.float64)
 
     # Gaussian distributions
-    a = ot.datasets.get_1D_gauss(n, m=20, s=5)  # m= mean, s= std
-    b = ot.datasets.get_1D_gauss(n, m=60, s=10)
+    a = ot.datasets.make_1D_gauss(n, m=20, s=5)  # m= mean, s= std
+    b = ot.datasets.make_1D_gauss(n, m=60, s=10)
 
     # loss matrix
     M = ot.dist(x.reshape((n, 1)), x.reshape((n, 1)))
@@ -636,7 +636,7 @@ Solve EMD with Frobenius norm + entropic regularization
         4|1.609284e-01|-1.111407e-12
 
 
-**Total running time of the script:** ( 0 minutes  2.589 seconds)
+**Total running time of the script:** ( 0 minutes  1.990 seconds)
 
 
 

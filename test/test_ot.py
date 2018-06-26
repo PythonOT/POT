@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 
 import ot
-from ot.datasets import get_1D_gauss as gauss
+from ot.datasets import make_1D_gauss as gauss
 import pytest
 
 

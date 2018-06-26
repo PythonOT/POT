@@ -109,6 +109,26 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip=" ">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_otda_linear_mapping_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_otda_linear_mapping.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_otda_linear_mapping
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="This example illustrate the use of WDA as proposed in [11].">
 
 .. only:: html
@@ -286,6 +306,26 @@ This is a gallery of all the POT example files.
    :hidden:
 
    /auto_examples/plot_OT_L1_vs_L2
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation of regularized Wasserstein Barycenter as proposed in [...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_barycenter_lp_vs_entropic_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_barycenter_lp_vs_entropic.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_barycenter_lp_vs_entropic
 
 .. raw:: html
 

@@ -53,7 +53,7 @@ pl.clf()
 pl.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
 pl.plot(xt[:, 0], xt[:, 1], 'xr', label='Target samples')
 pl.axis('equal')
-pl.title('Source and traget distributions')
+pl.title('Source and target distributions')
 
 
 # Cost matrices
