@@ -19,7 +19,7 @@ from . import datasets
 from . import da
 from . import gromov
 from . import smooth
-
+from . import stochastic
 
 # OT functions
 from .lp import emd, emd2

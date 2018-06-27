@@ -25,6 +25,11 @@ ot.smooth
 .. automodule:: ot.smooth
    :members:
 
+ot.smooth
+-----
+.. automodule:: ot.smooth
+   :members:
+
 ot.gromov
 ----------
 
@@ -67,4 +72,10 @@ ot.plot
 -------
 
 .. automodule:: ot.plot
+   :members:
+
+ot.stochastic
+-------------
+
+.. automodule:: ot.stochastic
    :members:
