@@ -147,10 +147,7 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver='interior-po
         return b
 
 
-
-
-def free_support_barycenter(measures_locations, measures_weights, X_init, b_init, weights=None, numItermax=100, stopThr=1e-6, verbose=False):
-
+def free_support_barycenter(measures_locations, measures_weights, X_init, b, weights=None, numItermax=100, stopThr=1e-6, verbose=False):
     """
     Solves the free support (locations of the barycenters are optimized, not the weights) Wasserstein barycenter problem (i.e. the weighted Frechet mean for the 2-Wasserstein distance)
 
@@ -168,7 +165,7 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b_init
 
     X_init : (k,d) np.ndarray
         Initialization of the support locations (on k atoms) of the barycenter
-    b_init : (k,) np.ndarray
+    b : (k,) np.ndarray
         Initialization of the weights of the barycenter (non-negatives, sum to 1)
     weights : (k,) np.ndarray
         Initialization of the coefficients of the barycenter (non-negatives, sum to 1)
@@ -199,27 +196,27 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b_init
     iter_count = 0
 
     d = X_init.shape[1]
-    k = b_init.size
+    k = b.size
     N = len(measures_locations)
 
     if not weights:
-        weights = np.ones((N,))/N
+        weights = np.ones((N,)) / N
 
     X = X_init
 
-    displacement_square_norm = stopThr+1.
+    displacement_square_norm = stopThr + 1.
 
-    while ( displacement_square_norm > stopThr and iter_count < numItermax ):
+    while (displacement_square_norm > stopThr and iter_count < numItermax):
 
         T_sum = np.zeros((k, d))
 
         for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights, weights.tolist()):
 
             M_i = ot.dist(X, measure_locations_i)
-            T_i = ot.emd(b_init, measure_weights_i, M_i)
-            T_sum = T_sum + weight_i*np.reshape(1. / b_init, (-1, 1)) * np.matmul(T_i, measure_locations_i)
+            T_i = ot.emd(b, measure_weights_i, M_i)
+            T_sum = T_sum + weight_i * np.reshape(1. / b, (-1, 1)) * np.matmul(T_i, measure_locations_i)
 
-        displacement_square_norm = np.sum(np.square(X-T_sum))
+        displacement_square_norm = np.sum(np.square(X - T_sum))
         X = T_sum
 
         if verbose:
@@ -228,4 +225,3 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b_init
         iter_count += 1
 
     return X
-
