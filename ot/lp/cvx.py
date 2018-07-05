@@ -27,7 +27,7 @@ def scipy_sparse_to_spmatrix(A):
 
 
 def barycenter(A, M, weights=None, verbose=False, log=False, solver='interior-point'):
-    """Compute the entropic regularized wasserstein barycenter of distributions A
+    """Compute the Wasserstein barycenter of distributions A
 
      The function solves the following optimization problem [16]:
 
@@ -149,7 +149,7 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver='interior-po
 
 
 
-def free_support_barycenter(data_positions, data_weights, X_init, b_init, lamda, numItermax=100, stopThr=1e-5, verbose=False, log=False, **kwargs):
+def free_support_barycenter(measures_locations, measures_weights, X_init, b_init, weights=None, numItermax=100, stopThr=1e-6, verbose=False):
 
     """
     Solves the free support (locations of the barycenters are optimized, not the weights) Wasserstein barycenter problem (i.e. the weighted Frechet mean for the 2-Wasserstein distance)
@@ -170,7 +170,7 @@ def free_support_barycenter(data_positions, data_weights, X_init, b_init, lamda,
         Initialization of the support locations (on k atoms) of the barycenter
     b_init : (k,) np.ndarray
         Initialization of the weights of the barycenter (non-negatives, sum to 1)
-    lambda : (k,) np.ndarray
+    weights : (k,) np.ndarray
         Initialization of the coefficients of the barycenter (non-negatives, sum to 1)
 
     numItermax : int, optional
@@ -200,25 +200,30 @@ def free_support_barycenter(data_positions, data_weights, X_init, b_init, lamda,
 
     d = X_init.shape[1]
     k = b_init.size
-    N = len(data_positions)
+    N = len(measures_locations)
+
+    if not weights:
+        weights = np.ones((N,))/N
 
     X = X_init
 
-    displacement_square_norm = 1e3
+    displacement_square_norm = stopThr+1.
 
     while ( displacement_square_norm > stopThr and iter_count < numItermax ):
 
         T_sum = np.zeros((k, d))
 
-        for (data_positions_i, data_weights_i) in zip(data_positions, data_weights):
-            M_i = ot.dist(X, data_positions_i)
-            T_i = ot.emd(b_init, data_weights_i, M_i)
-            T_sum += np.reshape(1. / b_init, (-1, 1)) * np.matmul(T_i, data_positions_i)
+        for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights, weights.tolist()):
 
-        X_previous = X
-        X = T_sum / N
+            M_i = ot.dist(X, measure_locations_i)
+            T_i = ot.emd(b_init, measure_weights_i, M_i)
+            T_sum += np.reshape(1. / b_init, (-1, 1)) * np.matmul(T_i, measure_locations_i)
 
-        displacement_square_norm = np.sum(np.square(X-X_previous))
+        displacement_square_norm = np.sum(np.square(X-T_sum))
+        X = T_sum
+
+        if verbose:
+            print('iteration %d, displacement_square_norm=%f\n', iter_count, displacement_square_norm)
 
         iter_count += 1
 
