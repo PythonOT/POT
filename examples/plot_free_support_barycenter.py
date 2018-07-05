@@ -17,7 +17,6 @@ import numpy as np
 import matplotlib.pylab as pl
 import ot.plot
 
-
 ##############################################################################
 # Generate data
 # -------------
@@ -29,10 +28,10 @@ measures_weights = []
 
 for i in range(N):
 
-    n = np.rand.int(low=1, high=20)  # nb samples
+    n = np.random.randint(low=1, high=20)  # nb samples
 
     mu = np.random.normal(0., 1., (d,))
-    cov = np.random.normal(0., 1., (d,d))
+    cov = np.random.uniform(0., 1., (d,d))
 
     xs = ot.datasets.make_2D_samples_gauss(n, mu, cov)
     b = np.random.uniform(0., 1., n)
@@ -49,7 +48,7 @@ b_init = np.ones((k,)) / k
 ##############################################################################
 # Compute free support barycenter
 # -------------
-X = ot.lp.barycenter(measures_locations, measures_weights, X_init, b_init)
+X = ot.lp.cvx.free_support_barycenter(measures_locations, measures_weights, X_init, b_init)
 
 
 ##############################################################################
@@ -60,7 +59,7 @@ X = ot.lp.barycenter(measures_locations, measures_weights, X_init, b_init)
 
 pl.figure(1)
 for (xs, b) in zip(measures_locations, measures_weights):
-    pl.scatter(xs[:, 0], xs[:, 1], s=b, c=np.tile(np.rand(0. ,255., size=(3,)), (1,b.size(0))) , label='Data measures')
+    pl.scatter(xs[:, 0], xs[:, 1], s=b, c=np.tile(np.random.uniform(0. ,255., size=(3,)), (1,b.size(0))) , label='Data measures')
 pl.scatter(xs[:, 0], xs[:, 1], s=b, c='black' , label='2-Wasserstein barycenter')
 pl.legend(loc=0)
 pl.title('Data measures and their barycenter')

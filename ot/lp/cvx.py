@@ -217,7 +217,7 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b_init
 
             M_i = ot.dist(X, measure_locations_i)
             T_i = ot.emd(b_init, measure_weights_i, M_i)
-            T_sum += np.reshape(1. / b_init, (-1, 1)) * np.matmul(T_i, measure_locations_i)
+            T_sum = T_sum + weight_i*np.reshape(1. / b_init, (-1, 1)) * np.matmul(T_i, measure_locations_i)
 
         displacement_square_norm = np.sum(np.square(X-T_sum))
         X = T_sum
