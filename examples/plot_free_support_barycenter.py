@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 ====================================================
-2D Wasserstein barycenters between empirical distributions
+2D Wasserstein barycenters of distributions
 ====================================================
 
-Illustration of 2D Wasserstein barycenters between discributions that are weighted
+Illustration of 2D Wasserstein barycenters if discributions that are weighted
 sum of diracs.
 
 """
