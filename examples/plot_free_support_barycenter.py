@@ -48,9 +48,9 @@ for i in range(N):
 # Compute free support barycenter
 # -------------
 
-k = 10 # number of Diracs of the barycenter
-X_init = np.random.normal(0., 1., (k, d)) # initial Dirac locations
-b = np.ones((k,)) / k # weights of the barycenter (it will not be optimized, only the locations are optimized)
+k = 10  # number of Diracs of the barycenter
+X_init = np.random.normal(0., 1., (k, d))  # initial Dirac locations
+b = np.ones((k,)) / k  # weights of the barycenter (it will not be optimized, only the locations are optimized)
 
 X = ot.lp.free_support_barycenter(measures_locations, measures_weights, X_init, b)
 
