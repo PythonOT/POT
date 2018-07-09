@@ -278,7 +278,9 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
     X = X_init
 
+    log_dict = {}
     displacement_square_norms = []
+
     displacement_square_norm = stopThr + 1.
 
     while ( displacement_square_norm > stopThr and iter_count < numItermax ):
@@ -303,6 +305,7 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
         iter_count += 1
 
     if log:
-        return X, displacement_square_norms
+        log_dict['displacement_square_norms'] = displacement_square_norms
+        return X, log_dict
     else:
         return X
