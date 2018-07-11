@@ -344,8 +344,13 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
 
     # print(reg)
 
-    K = np.exp(-M / reg)
+    K = np.empty(M.shape, dtype=M.dtype)
+    np.divide(M, -reg, out=K)
+    np.exp(K, out=K)
+
     # print(np.min(K))
+    tmp = np.empty(K.shape, dtype=M.dtype)
+    tmp2 = np.empty(b.shape, dtype=M.dtype)
 
     Kp = (1 / a).reshape(-1, 1) * K
     cpt = 0
@@ -373,8 +378,11 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
                 err = np.sum((u - uprev)**2) / np.sum((u)**2) + \
                     np.sum((v - vprev)**2) / np.sum((v)**2)
             else:
-                transp = u.reshape(-1, 1) * (K * v)
-                err = np.linalg.norm((np.sum(transp, axis=0) - b))**2
+                np.multiply(u.reshape(-1, 1), K, out=tmp)
+                np.multiply(tmp, v.reshape(1, -1), out=tmp)
+                np.sum(tmp, axis=0, out=tmp2)
+                tmp2 -= b
+                err = np.linalg.norm(tmp2)**2
             if log:
                 log['err'].append(err)
 
