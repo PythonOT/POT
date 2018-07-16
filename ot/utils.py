@@ -76,6 +76,7 @@ def clean_zeros(a, b, M):
     b2 = b[b > 0]
     return a2, b2, M2
 
+
 def euclidean_distances(X, Y, squared=False):
     """
     Considering the rows of X (and Y=X) as vectors, compute the

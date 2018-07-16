@@ -344,6 +344,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
 
     # print(reg)
 
+    # Next 3 lines equivalent to K= np.exp(-M/reg), but faster to compute
     K = np.empty(M.shape, dtype=M.dtype)
     np.divide(M, -reg, out=K)
     np.exp(K, out=K)
