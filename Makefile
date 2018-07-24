@@ -1,6 +1,7 @@
 
 
 PYTHON=python3
+branch := $(git symbolic-ref --short -q HEAD)
 
 help :
 	@echo "The following make targets are available:"
