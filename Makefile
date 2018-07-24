@@ -59,12 +59,14 @@ notebook :
 	ipython notebook --matplotlib=inline  --notebook-dir=notebooks/
 	
 bench : 
+	@git stash  >/dev/null 2>&1
 	@echo 'Branch master'
-	git checkout master
+	@git checkout master >/dev/null 2>&1
 	python3 $(script)
 	@echo 'Branch $(branch)'
-	git checkout $(branch)
+	@git checkout $(branch) >/dev/null 2>&1
 	python3 $(script)
+	@git stash apply >/dev/null 2>&1
 	
 autopep8 :
 	autopep8 -ir test ot examples --jobs -1
