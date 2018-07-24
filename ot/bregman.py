@@ -396,10 +396,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
         log['v'] = v
 
     if nbb:  # return only loss
-        res = np.zeros((nbb))
-        for i in range(nbb):
-            res[i] = np.sum(
-                u[:, i].reshape((-1, 1)) * K * v[:, i].reshape((1, -1)) * M)
+        res = np.einsum('ik,ij,jk,ij->k', u, K, v, M)
         if log:
             return res, log
         else:
