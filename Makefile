@@ -1,7 +1,7 @@
 
 
 PYTHON=python3
-branch := $(git symbolic-ref --short -q HEAD)
+branch := $(eval git symbolic-ref --short -q HEAD)
 
 help :
 	@echo "The following make targets are available:"
@@ -58,7 +58,7 @@ rdoc :
 notebook :
 	ipython notebook --matplotlib=inline  --notebook-dir=notebooks/
 	
-bench :
+bench : FORCE
 	@echo 'Branch master'
 	git checkout master
 	#python3 $(script)
