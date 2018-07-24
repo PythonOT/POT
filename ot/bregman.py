@@ -362,7 +362,6 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
         KtransposeU = np.dot(K.T, u)
         v = np.divide(b, KtransposeU)
         u = 1. / np.dot(Kp, v)
-       
 
         if (np.any(KtransposeU == 0) or
                 np.any(np.isnan(u)) or np.any(np.isnan(v)) or
