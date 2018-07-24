@@ -61,10 +61,10 @@ notebook :
 bench : 
 	@echo 'Branch master'
 	git checkout master
-	#python3 $(script)
+	python3 $(script)
 	@echo 'Branch $(branch)'
 	git checkout $(branch)
-	#python3 $(script)
+	python3 $(script)
 	
 autopep8 :
 	autopep8 -ir test ot examples --jobs -1
