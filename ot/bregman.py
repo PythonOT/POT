@@ -359,7 +359,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
         uprev = u
         vprev = v
         if nbb:
-            KtransposeU = np.einsum('ij,i,k->jk',K,u)#np.dot(K.T, u)
+            KtransposeU = np.einsum('ij,ik->jk',K,u)#np.dot(K.T, u)
             v = np.divide(b, KtransposeU)
             u = 1. / np.einsum('ij,jk->ik',Kp,v)#np.dot(Kp, v)
         else:
