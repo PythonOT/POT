@@ -358,9 +358,14 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
     while (err > stopThr and cpt < numItermax):
         uprev = u
         vprev = v
-        KtransposeU = np.einsum('ij,i->j',K,u)#np.dot(K.T, u)
-        v = np.divide(b, KtransposeU)
-        u = 1. / np.einsum('ij,j->i',Kp,v)#np.dot(Kp, v)
+        if nbb:
+            KtransposeU = np.einsum('ij,i,k->jk',K,u)#np.dot(K.T, u)
+            v = np.divide(b, KtransposeU)
+            u = 1. / np.einsum('ij,jk->ik',Kp,v)#np.dot(Kp, v)
+        else:
+            KtransposeU = np.einsum('ij,i->j',K,u)#np.dot(K.T, u)
+            v = np.divide(b, KtransposeU)
+            u = 1. / np.einsum('ij,j->i',Kp,v)#np.dot(Kp, v)            
 
         if (np.any(KtransposeU == 0) or
                 np.any(np.isnan(u)) or np.any(np.isnan(v)) or
