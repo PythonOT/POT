@@ -195,6 +195,7 @@ def test_dual_sgd_sinkhorn():
     n = 30
     reg = 1
     batch_size = 30
+    zero = np.zeros(n)
 
     a = ot.datasets.make_1D_gauss(n, 15, 5)  # m= mean, s= std
     b = ot.datasets.make_1D_gauss(n, 15, 5)
