@@ -19,11 +19,6 @@ ot.bregman
 
 .. automodule:: ot.bregman
    :members:
-   
-ot.smooth
------
-.. automodule:: ot.smooth
-   :members:
 
 ot.smooth
 -----
