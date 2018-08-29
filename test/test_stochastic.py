@@ -137,8 +137,8 @@ def test_stochastic_dual_sgd():
     # test sgd
     n = 10
     reg = 1
-    numItermax = 300000
-    batch_size = 8
+    numItermax = 15000
+    batch_size = 10
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)
@@ -151,9 +151,9 @@ def test_stochastic_dual_sgd():
 
     # check constratints
     np.testing.assert_allclose(
-        u, G.sum(1), atol=1e-02)  # cf convergence sgd
+        u, G.sum(1), atol=1e-04)  # cf convergence sgd
     np.testing.assert_allclose(
-        u, G.sum(0), atol=1e-02)  # cf convergence sgd
+        u, G.sum(0), atol=1e-04)  # cf convergence sgd
 
 
 #############################################################################
@@ -168,10 +168,11 @@ def test_dual_sgd_sinkhorn():
     # test all dual algorithms
     n = 10
     reg = 1
-    nb_iter = 300000
-    batch_size = 8
+    nb_iter = 150000
+    batch_size = 10
     rng = np.random.RandomState(0)
 
+# Test uniform
     x = rng.randn(n, 2)
     u = ot.utils.unif(n)
     zero = np.zeros(n)
@@ -184,8 +185,36 @@ def test_dual_sgd_sinkhorn():
 
     # check constratints
     np.testing.assert_allclose(
-        zero, (G_sgd - G_sinkhorn).sum(1), atol=1e-02)  # cf convergence sgd
+        zero, (G_sgd - G_sinkhorn).sum(1), atol=1e-04)  # cf convergence sgd
     np.testing.assert_allclose(
-        zero, (G_sgd - G_sinkhorn).sum(0), atol=1e-02)  # cf convergence sgd
+        zero, (G_sgd - G_sinkhorn).sum(0), atol=1e-04)  # cf convergence sgd
     np.testing.assert_allclose(
-        G_sgd, G_sinkhorn, atol=1e-02)  # cf convergence sgd
+        G_sgd, G_sinkhorn, atol=1e-04)  # cf convergence sgd
+
+# Test gaussian
+    n = 30
+    n_source = n
+    n_target = n
+    reg = 1
+    numItermax = 150000
+    batch_size = 30
+
+    a = ot.datasets.get_1D_gauss(n_source, m=15, s=5)  # m= mean, s= std
+    b = ot.datasets.get_1D_gauss(n_target, m=15, s=5)
+    X_source = np.arange(n_source,dtype=np.float64)
+    Y_target = np.arange(n_target,dtype=np.float64)
+    M = ot.dist(X_source.reshape((n_source, 1)), Y_target.reshape((n_target, 1)))
+    M /= M.max()
+
+    G_sgd = ot.stochastic.solve_dual_entropic(a, b, M, reg, batch_size,
+                                              numItermax=nb_iter)
+
+    G_sinkhorn = ot.sinkhorn(a, b, M, reg)
+
+    # check constratints
+    np.testing.assert_allclose(
+        zero, (G_sgd - G_sinkhorn).sum(1), atol=1e-04)  # cf convergence sgd
+    np.testing.assert_allclose(
+        zero, (G_sgd - G_sinkhorn).sum(0), atol=1e-04)  # cf convergence sgd
+    np.testing.assert_allclose(
+        G_sgd, G_sinkhorn, atol=1e-04)  # cf convergence sgd
