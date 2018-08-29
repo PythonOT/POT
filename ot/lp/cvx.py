@@ -11,6 +11,7 @@ import numpy as np
 import scipy as sp
 import scipy.sparse as sps
 
+
 try:
     import cvxopt
     from cvxopt import solvers, matrix, spmatrix
@@ -26,7 +27,7 @@ def scipy_sparse_to_spmatrix(A):
 
 
 def barycenter(A, M, weights=None, verbose=False, log=False, solver='interior-point'):
-    """Compute the entropic regularized wasserstein barycenter of distributions A
+    """Compute the Wasserstein barycenter of distributions A
 
      The function solves the following optimization problem [16]:
 
