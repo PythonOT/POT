@@ -1,5 +1,32 @@
 # POT Releases
 
+
+## 0.5.0b 
+*Sep 2018*
+
+*This is a beta release and is still a work in progress*
+
+#### Features
+
+* Add non regularized Gromov-Wasserstein solver  (PR #41)
+* Linear OT mapping between empirical distributions and 90\% test coverage (PR #42)
+* Add log parameter in class EMDTransport and SinkhornLpL1Transport (PR #44)
+* Add Marddown format for Pipy (PR #45)
+* Test for Python 3.5 and 3.6 on Travis (PR #46)
+* Non regularized Wasserstein barycenter with scipy linear solver and/or cvxopt (PR #47)
+* Rename dataset functions to be more sklearn compliant (PR #49)
+* Smooth and sparse Optimal transport implementation with entropic and quadratic regularization (PR #50)
+* Stochastic OT in the dual and semi-dual (PR #52 and PR #62)
+* Free support barycenters (PR #56)
+* Speed-up Sinkhorn function (PR #57 and PR #58)
+
+#### Closed issues
+
+* Issue #35 : remove import plot from ot/__init__.py (See PR #41)
+* Issue #43 : Unusable parameter log for EMDTransport (See PR #44)
+* Issue #55 : UnicodeDecodeError: 'ascii' while installing with pip 
+
+
 ## 0.4 Community edition
 *15 Sep 2017*
 
