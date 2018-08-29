@@ -49,6 +49,46 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="Illustration of 2D Wasserstein barycenters if discributions that are weighted sum of diracs.">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_free_support_barycenter_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_free_support_barycenter.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_free_support_barycenter
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation of EMD, Sinkhorn and smooth OT plans and their visuali...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_OT_1D_smooth_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_OT_1D_smooth.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_OT_1D_smooth
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="This example is designed to show how to use the Gromov-Wassertsein distance computation in POT....">
 
 .. only:: html
@@ -146,6 +186,26 @@ This is a gallery of all the POT example files.
    :hidden:
 
    /auto_examples/plot_WDA
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example is designed to show how to use the stochatic optimization algorithms for descrete ...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_stochastic_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_stochastic.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_stochastic
 
 .. raw:: html
 
