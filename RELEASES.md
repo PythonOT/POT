@@ -6,6 +6,12 @@
 
 *This is a beta release and is still a work in progress*
 
+#### TODO
+
+[] Remove deprecated OTDA Classes (PR #48)
+[] Speedup Sinkhorn with einsum + bench (PR #58)
+[] Stochastic ot (PR #62)
+
 #### Features
 
 * Add non regularized Gromov-Wasserstein solver  (PR #41)
