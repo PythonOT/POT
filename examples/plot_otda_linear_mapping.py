@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Mar 20 14:31:15 2018
+============================
+Linear OT mapping estimation
+============================
 
-@author: rflamary
+
 """
+
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
 
 import numpy as np
 import pylab as pl

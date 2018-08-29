@@ -83,8 +83,8 @@ def test_bary():
     n_bins = 100  # nb bins
 
     # Gaussian distributions
-    a1 = ot.datasets.get_1D_gauss(n_bins, m=30, s=10)  # m= mean, s= std
-    a2 = ot.datasets.get_1D_gauss(n_bins, m=40, s=10)
+    a1 = ot.datasets.make_1D_gauss(n_bins, m=30, s=10)  # m= mean, s= std
+    a2 = ot.datasets.make_1D_gauss(n_bins, m=40, s=10)
 
     # creating matrix A containing all distributions
     A = np.vstack((a1, a2)).T
@@ -110,10 +110,10 @@ def test_unmix():
     n_bins = 50  # nb bins
 
     # Gaussian distributions
-    a1 = ot.datasets.get_1D_gauss(n_bins, m=20, s=10)  # m= mean, s= std
-    a2 = ot.datasets.get_1D_gauss(n_bins, m=40, s=10)
+    a1 = ot.datasets.make_1D_gauss(n_bins, m=20, s=10)  # m= mean, s= std
+    a2 = ot.datasets.make_1D_gauss(n_bins, m=40, s=10)
 
-    a = ot.datasets.get_1D_gauss(n_bins, m=30, s=10)
+    a = ot.datasets.make_1D_gauss(n_bins, m=30, s=10)
 
     # creating matrix A containing all distributions
     D = np.vstack((a1, a2)).T
