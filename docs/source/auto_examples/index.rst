@@ -229,26 +229,6 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="OT for domain adaptation with image color adaptation [6] with mapping estimation [8].">
-
-.. only:: html
-
-    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_otda_mapping_colors_images_thumb.png
-
-        :ref:`sphx_glr_auto_examples_plot_otda_mapping_colors_images.py`
-
-.. raw:: html
-
-    </div>
-
-
-.. toctree::
-   :hidden:
-
-   /auto_examples/plot_otda_mapping_colors_images
-
-.. raw:: html
-
     <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation of regularized Wassersyein Barycenter as proposed in [...">
 
 .. only:: html
@@ -266,6 +246,26 @@ This is a gallery of all the POT example files.
    :hidden:
 
    /auto_examples/plot_barycenter_1D
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="OT for domain adaptation with image color adaptation [6] with mapping estimation [8].">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_otda_mapping_colors_images_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_otda_mapping_colors_images.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_otda_mapping_colors_images
 
 .. raw:: html
 
