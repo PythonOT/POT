@@ -196,8 +196,8 @@ def test_dual_sgd_sinkhorn():
     reg = 1
     batch_size = 30
 
-    a = ot.datasets.get_1D_gauss(n, 15, 5)  # m= mean, s= std
-    b = ot.datasets.get_1D_gauss(n, 15, 5)
+    a = ot.datasets.make_1D_gauss(n, 15, 5)  # m= mean, s= std
+    b = ot.datasets.make_1D_gauss(n, 15, 5)
     X_source = np.arange(n, dtype=np.float64)
     Y_target = np.arange(n, dtype=np.float64)
     M = ot.dist(X_source.reshape((n, 1)), Y_target.reshape((n, 1)))
