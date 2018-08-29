@@ -18,8 +18,6 @@ from .emd_wrap import emd_c, check_result
 from ..utils import parmap
 from .cvx import barycenter
 
-__all__=['emd', 'emd2', 'barycenter', 'cvx']
-
 
 def emd(a, b, M, numItermax=100000, log=False):
     """Solves the Earth Movers distance problem and returns the OT matrix
