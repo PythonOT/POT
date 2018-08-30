@@ -17,7 +17,6 @@ It provides the following solvers:
 * Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2] and stabilized version [9][10] with optional GPU implementation (requires cudamat).
 * Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularizations [17].
 * Non regularized Wasserstein barycenters [16] with LP solver (only small scale).
-* Non regularized free support Wasserstein barycenters [20].
 * Bregman projections for Wasserstein barycenter [3] and unmixing [4].
 * Optimal transport for domain adaptation with group lasso regularization [5]
 * Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
@@ -25,6 +24,7 @@ It provides the following solvers:
 * Wasserstein Discriminant Analysis [11] (requires autograd + pymanopt).
 * Gromov-Wasserstein distances and barycenters ([13] and regularized [12])
 * Stochastic Optimization for Large-scale Optimal Transport (semi-dual problem [18] and dual problem [19])
+* Non regularized free support Wasserstein barycenters [20].
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 
@@ -164,7 +164,7 @@ The contributors to this library are:
 * [Stanislas Chambon](https://slasnista.github.io/)
 * [Antoine Rolet](https://arolet.github.io/)
 * Erwan Vautier (Gromov-Wasserstein)
-* [Kilian Fatras](https://kilianfatras.github.io/) (Stochastic optimization)
+* [Kilian Fatras](https://kilianfatras.github.io/)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
@@ -223,7 +223,7 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 
 [17] Blondel, M., Seguy, V., & Rolet, A. (2018). [Smooth and Sparse Optimal Transport](https://arxiv.org/abs/1710.06276). Proceedings of the Twenty-First International Conference on Artificial Intelligence and Statistics (AISTATS).
 
-[18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) [Stochastic Optimization for Large-scale Optimal Transport](arXiv preprint arxiv:1605.08527). Advances in Neural Information Processing Systems (2016).
+[18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) [Stochastic Optimization for Large-scale Optimal Transport](https://arxiv.org/abs/1605.08527). Advances in Neural Information Processing Systems (2016).
 
 [19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet, A.& Blondel, M. [Large-scale Optimal Transport and Mapping Estimation](https://arxiv.org/pdf/1711.02283.pdf). International Conference on Learning Representation (2018)
 
