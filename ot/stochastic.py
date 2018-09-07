@@ -435,8 +435,8 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
 ##############################################################################
 
 
-def batch_grad_dual_alpha(M, reg, alpha, beta, batch_size, batch_alpha,
-                          batch_beta):
+def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
+                    batch_beta):
     '''
     Computes the partial gradient of F_\W_varepsilon
 
@@ -444,104 +444,31 @@ def batch_grad_dual_alpha(M, reg, alpha, beta, batch_size, batch_alpha,
 
     ..math:
         \forall i in batch_alpha,
-            grad_alpha_i = 1 * batch_size -
-                    sum_{j in batch_beta} exp((alpha_i + beta_j - M_{i,j})/reg)
+            grad_alpha_i = alpha_i * batch_size/len(beta) -
+                sum_{j in batch_beta} exp((alpha_i + beta_j - M_{i,j})/reg)
+                    * a_i * b_j
 
-    where :
-    - M is the (ns,nt) metric cost matrix
-    - alpha, beta are dual variables in R^ixR^J
-    - reg is the regularization term
-    - batch_alpha and batch_beta are list of index
-
-    The algorithm used for solving the dual problem is the SGD algorithm
-    as proposed in [19]_ [alg.1]
-
-    Parameters
-    ----------
-
-    reg : float number,
-        Regularization term > 0
-    M : np.ndarray(ns, nt),
-        cost matrix
-    alpha : np.ndarray(ns,)
-        dual variable
-    beta : np.ndarray(nt,)
-        dual variable
-    batch_size : int number
-        size of the batch
-    batch_alpha : np.ndarray(bs,)
-        batch of index of alpha
-    batch_beta : np.ndarray(bs,)
-        batch of index of beta
-
-    Returns
-    -------
-
-    grad : np.ndarray(ns,)
-        partial grad F in alpha
-
-    Examples
-    --------
-
-    >>> n_source = 7
-    >>> n_target = 4
-    >>> reg = 1
-    >>> numItermax = 20000
-    >>> lr = 0.1
-    >>> batch_size = 3
-    >>> log = True
-    >>> a = ot.utils.unif(n_source)
-    >>> b = ot.utils.unif(n_target)
-    >>> rng = np.random.RandomState(0)
-    >>> X_source = rng.randn(n_source, 2)
-    >>> Y_target = rng.randn(n_target, 2)
-    >>> M = ot.dist(X_source, Y_target)
-    >>> sgd_dual_pi, log = stochastic.solve_dual_entropic(a, b, M, reg,
-                                                            batch_size,
-                                                            numItermax, lr, log)
-    >>> print(log['alpha'], log['beta'])
-    >>> print(sgd_dual_pi)
-
-    References
-    ----------
-
-    [Seguy et al., 2018] :
-                    International Conference on Learning Representation (2018),
-                      arXiv preprint arxiv:1711.02283.
-    '''
-
-    grad_alpha = np.zeros(batch_size)
-    grad_alpha[:] = batch_size
-    for j in batch_beta:
-        grad_alpha -= np.exp((alpha[batch_alpha] + beta[j] -
-                              M[batch_alpha, j]) / reg)
-    return grad_alpha
-
-
-def batch_grad_dual_beta(M, reg, alpha, beta, batch_size, batch_alpha,
-                         batch_beta):
-    '''
-    Computes the partial gradient of F_\W_varepsilon
-
-    Compute the partial gradient of the dual problem:
-
-    ..math:
-        \forall j in batch_beta,
-            grad_beta_j = 1 * batch_size -
+        \forall j in batch_alpha,
+            grad_beta_j = beta_j * batch_size/len(alpha) -
                 sum_{i in batch_alpha} exp((alpha_i + beta_j - M_{i,j})/reg)
-
+                    * a_i * b_j
     where :
     - M is the (ns,nt) metric cost matrix
     - alpha, beta are dual variables in R^ixR^J
     - reg is the regularization term
-    - batch_alpha and batch_beta are list of index
+    - batch_alpha and batch_beta are lists of index
+    - a and b are source and target weights (sum to 1)
+
 
     The algorithm used for solving the dual problem is the SGD algorithm
     as proposed in [19]_ [alg.1]
 
     Parameters
     ----------
-
+    a : np.ndarray(ns,),
+        source measure
+    b : np.ndarray(nt,),
+        target measure
     M : np.ndarray(ns, nt),
         cost matrix
     reg : float number,
@@ -561,7 +488,7 @@ def batch_grad_dual_beta(M, reg, alpha, beta, batch_size, batch_alpha,
     -------
 
     grad : np.ndarray(ns,)
-        partial grad F in beta
+        partial grad F
 
     Examples
     --------
@@ -591,19 +518,22 @@ def batch_grad_dual_beta(M, reg, alpha, beta, batch_size, batch_alpha,
     [Seguy et al., 2018] :
                     International Conference on Learning Representation (2018),
                       arXiv preprint arxiv:1711.02283.
-
     '''
 
-    grad_beta = np.zeros(batch_size)
-    grad_beta[:] = batch_size
-    for i in batch_alpha:
-        grad_beta -= np.exp((alpha[i] +
-                             beta[batch_beta] - M[i, batch_beta]) / reg)
-    return grad_beta
+    G = - (np.exp((alpha[batch_alpha, None] + beta[None, batch_beta] -
+                   M[batch_alpha, :][:, batch_beta]) / reg) *
+           a[batch_alpha, None] * b[None, batch_beta])
+    grad_beta = np.zeros(np.shape(M)[1])
+    grad_alpha = np.zeros(np.shape(M)[0])
+    grad_beta[batch_beta] = (b[batch_beta] * len(batch_alpha) / np.shape(M)[0] +
+                             G.sum(0))
+    grad_alpha[batch_alpha] = (a[batch_alpha] * len(batch_beta) /
+                               np.shape(M)[1] + G.sum(1))
+
+    return grad_alpha, grad_beta
 
 
-def sgd_entropic_regularization(M, reg, batch_size, numItermax, lr,
-                                alternate=True):
+def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
     '''
     Compute the sgd algorithm to solve the regularized discrete measures
         optimal transport dual problem
@@ -623,7 +553,10 @@ def sgd_entropic_regularization(M, reg, batch_size, numItermax, lr,
 
     Parameters
     ----------
-
+    a : np.ndarray(ns,),
+        source measure
+    b : np.ndarray(nt,),
+        target measure
     M : np.ndarray(ns, nt),
         cost matrix
     reg : float number,
@@ -634,8 +567,6 @@ def sgd_entropic_regularization(M, reg, batch_size, numItermax, lr,
         number of iteration
     lr : float number
         learning rate
-    alternate : bool, optional
-        alternating algorithm
 
     Returns
     -------
@@ -662,8 +593,8 @@ def sgd_entropic_regularization(M, reg, batch_size, numItermax, lr,
     >>> Y_target = rng.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
     >>> sgd_dual_pi, log = stochastic.solve_dual_entropic(a, b, M, reg,
-                                                            batch_size,
-                                                            numItermax, lr, log)
+                                                          batch_size,
+                                                          numItermax, lr, log)
     >>> print(log['alpha'], log['beta'])
     >>> print(sgd_dual_pi)
 
@@ -677,35 +608,17 @@ def sgd_entropic_regularization(M, reg, batch_size, numItermax, lr,
 
     n_source = np.shape(M)[0]
     n_target = np.shape(M)[1]
-    cur_alpha = np.random.randn(n_source)
-    cur_beta = np.random.randn(n_target)
-    if alternate:
-        for cur_iter in range(numItermax):
-            k = np.sqrt(cur_iter + 1)
-            batch_alpha = np.random.choice(n_source, batch_size, replace=False)
-            batch_beta = np.random.choice(n_target, batch_size, replace=False)
-            grad_F_alpha = batch_grad_dual_alpha(M, reg, cur_alpha, cur_beta,
-                                                 batch_size, batch_alpha,
-                                                 batch_beta)
-            cur_alpha[batch_alpha] += (lr / k) * grad_F_alpha
-            grad_F_beta = batch_grad_dual_beta(M, reg, cur_alpha, cur_beta,
-                                               batch_size, batch_alpha,
-                                               batch_beta)
-            cur_beta[batch_beta] += (lr / k) * grad_F_beta
-
-    else:
-        for cur_iter in range(numItermax):
-            k = np.sqrt(cur_iter + 1)
-            batch_alpha = np.random.choice(n_source, batch_size, replace=False)
-            batch_beta = np.random.choice(n_target, batch_size, replace=False)
-            grad_F_alpha = batch_grad_dual_alpha(M, reg, cur_alpha, cur_beta,
-                                                 batch_size, batch_alpha,
-                                                 batch_beta)
-            grad_F_beta = batch_grad_dual_beta(M, reg, cur_alpha, cur_beta,
-                                               batch_size, batch_alpha,
-                                               batch_beta)
-            cur_alpha[batch_alpha] += (lr / k) * grad_F_alpha
-            cur_beta[batch_beta] += (lr / k) * grad_F_beta
+    cur_alpha = np.zeros(n_source)
+    cur_beta = np.zeros(n_target)
+    for cur_iter in range(numItermax):
+        k = np.sqrt(cur_iter + 1)
+        batch_alpha = np.random.choice(n_source, batch_size, replace=False)
+        batch_beta = np.random.choice(n_target, batch_size, replace=False)
+        update_alpha, update_beta = batch_grad_dual(a, b, M, reg, cur_alpha,
+                                                    cur_beta, batch_size,
+                                                    batch_alpha, batch_beta)
+        cur_alpha += (lr / k) * update_alpha
+        cur_beta += (lr / k) * update_beta
 
     return cur_alpha, cur_beta
 
@@ -787,7 +700,7 @@ def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
                       arXiv preprint arxiv:1711.02283.
     '''
 
-    opt_alpha, opt_beta = sgd_entropic_regularization(M, reg, batch_size,
+    opt_alpha, opt_beta = sgd_entropic_regularization(a, b, M, reg, batch_size,
                                                       numItermax, lr)
     pi = (np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg) *
           a[:, None] * b[None, :])
