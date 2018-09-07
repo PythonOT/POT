@@ -920,8 +920,8 @@ def barycenter(A, M, reg, weights=None, numItermax=1000,
 
 
 def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000, stopThr=1e-9, verbose=False, log=False):
-    """Compute the entropic regularized wasserstein barycenter of distributions A
-       where A is a collection of 2D images. 
+    """Compute the entropic regularized wasserstein barycenter of distributions A 
+    where A is a collection of 2D images. 
 
      The function solves the following optimization problem:
 
@@ -966,8 +966,8 @@ def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000, stopThr=1
     ----------
 
     .. [21] Solomon, J., De Goes, F., Peyré, G., Cuturi, M., Butscher, A., Nguyen, A. & Guibas, L. (2015). 
-        Convolutional wasserstein distances: Efficient optimal transportation on geometric domains
-        ACM Transactions on Graphics (TOG), 34(4), 66 
+    Convolutional wasserstein distances: Efficient optimal transportation on geometric domains 
+    ACM Transactions on Graphics (TOG), 34(4), 66 
 
 
     """
@@ -993,7 +993,8 @@ def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000, stopThr=1
     [Y, X] = np.meshgrid(t, t)
     xi1 = np.exp(-(X - Y)**2 / reg)
 
-    def K(x): return np.dot(np.dot(xi1, x), xi1)
+    def K(x): 
+        return np.dot(np.dot(xi1, x), xi1)
 
     while (err > stopThr and cpt < numItermax):
 
