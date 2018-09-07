@@ -105,6 +105,30 @@ def test_bary():
     ot.bregman.barycenter(A, M, reg, log=True, verbose=True)
 
 
+def test_wassersteinbary():
+
+    size = 100  # size of a square image
+    a1 = np.random.randn(size, size)
+    a1 += a1.min()
+    a1 = a1 / np.sum(a1)
+    a2 = np.random.randn(size, size)
+    a2 += a2.min()
+    a2 = a2 / np.sum(a2)
+    # creating matrix A containing all distributions
+    A = np.zeros((2, 100, 100))
+    A[0, :, :] = a1
+    A[1, :, :] = a2
+
+    # wasserstein
+    reg = 1e-3
+    bary_wass = ot.bregman.convolutional_barycenter2d(A, reg)
+
+    np.testing.assert_allclose(1, np.sum(bary_wass))
+
+    # help in checking if log and verbose do not bug the function
+    ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
+
+
 def test_unmix():
 
     n_bins = 50  # nb bins
