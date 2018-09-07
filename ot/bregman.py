@@ -920,8 +920,8 @@ def barycenter(A, M, reg, weights=None, numItermax=1000,
 
 
 def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000, stopThr=1e-9, stabThr=1e-30, verbose=False, log=False):
-    """Compute the entropic regularized wasserstein barycenter of distributions A 
-    where A is a collection of 2D images. 
+    """Compute the entropic regularized wasserstein barycenter of distributions A
+    where A is a collection of 2D images.
 
      The function solves the following optimization problem:
 
@@ -949,7 +949,7 @@ def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000, stopThr=1
     stopThr : float, optional
         Stop threshol on error (>0)
     stabThr : float, optional
-        Stabilization threshold to avoid numerical precision issue 
+        Stabilization threshold to avoid numerical precision issue
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -967,9 +967,9 @@ def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000, stopThr=1
     References
     ----------
 
-    .. [21] Solomon, J., De Goes, F., Peyré, G., Cuturi, M., Butscher, A., Nguyen, A. & Guibas, L. (2015). 
-    Convolutional wasserstein distances: Efficient optimal transportation on geometric domains 
-    ACM Transactions on Graphics (TOG), 34(4), 66 
+    .. [21] Solomon, J., De Goes, F., Peyré, G., Cuturi, M., Butscher, A., Nguyen, A. & Guibas, L. (2015).
+    Convolutional wasserstein distances: Efficient optimal transportation on geometric domains
+    ACM Transactions on Graphics (TOG), 34(4), 66
 
 
     """
