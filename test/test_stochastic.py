@@ -32,7 +32,7 @@ def test_stochastic_sag():
     # test sag
     n = 15
     reg = 1
-    numItermax = 300000
+    numItermax = 30000
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)
@@ -62,7 +62,7 @@ def test_stochastic_asgd():
     # test asgd
     n = 15
     reg = 1
-    numItermax = 300000
+    numItermax = 100000
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)
@@ -92,7 +92,7 @@ def test_sag_asgd_sinkhorn():
     # test all algorithms
     n = 15
     reg = 1
-    nb_iter = 30000
+    nb_iter = 100000
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)
