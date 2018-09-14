@@ -92,7 +92,7 @@ def test_sag_asgd_sinkhorn():
     # test all algorithms
     n = 15
     reg = 1
-    nb_iter = 300000
+    nb_iter = 30000
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)
@@ -167,7 +167,7 @@ def test_dual_sgd_sinkhorn():
     # test all dual algorithms
     n = 10
     reg = 1
-    nb_iter = 150000
+    nb_iter = 15000
     batch_size = 10
     rng = np.random.RandomState(0)
 
