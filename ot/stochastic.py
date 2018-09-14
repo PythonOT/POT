@@ -617,8 +617,8 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
         update_alpha, update_beta = batch_grad_dual(a, b, M, reg, cur_alpha,
                                                     cur_beta, batch_size,
                                                     batch_alpha, batch_beta)
-        cur_alpha += (lr / k) * update_alpha
-        cur_beta += (lr / k) * update_beta
+        cur_alpha[batch_alpha] += (lr / k) * update_alpha[batch_alpha]
+        cur_beta[batch_beta] += (lr / k) * update_beta[batch_beta]
 
     return cur_alpha, cur_beta
 
