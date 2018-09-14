@@ -87,6 +87,6 @@ for i in range(nb_images):
             pl.axis('off')
         else:
             # call to barycenter computation
-            pl.imshow(ot.convolutional_barycenter2d(A, reg, weights), cmap=cm)
+            pl.imshow(ot.bregman.convolutional_barycenter2d(A, reg, weights), cmap=cm)
             pl.axis('off')
 pl.show()
