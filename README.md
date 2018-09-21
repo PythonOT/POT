@@ -80,7 +80,7 @@ Note that for easier access the module is name ot instead of pot.
 
 Some sub-modules require additional dependences which are discussed below
 
-* **ot.dr** (Wasserstein dimensionality rediuction) depends on autograd and pymanopt that can be installed with:
+* **ot.dr** (Wasserstein dimensionality reduction) depends on autograd and pymanopt that can be installed with:
 ```
 pip install pymanopt autograd
 ```
