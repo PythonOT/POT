@@ -520,7 +520,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log=
         log['u'] = u
         log['v'] = v
 
-    while i < numItermax and stopThr_val > stopThr:
+    for i in range(numItermax):
         i += 1
         i_1 = np.argmax(np.abs(viol))
         i_2 = np.argmax(np.abs(viol_2))
@@ -546,6 +546,11 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log=
             viol_2[i_2] = v[i_2] * K[:, i_2].dot(u) - b[i_2]
 
             #print('b',np.max(abs(aviol -viol)),np.max(abs(aviol_2 - viol_2)))
+
+        if stopThr_val <= stopThr:
+            break
+    else:
+        print('Warning: Algorithm did not converge')
 
     if log:
         log['u'] = u
