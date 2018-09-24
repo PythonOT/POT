@@ -536,7 +536,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log=
             G[i_1, :] = u[i_1] * K[i_1, :] * v
 
             viol[i_1] = u[i_1] * K[i_1, :].dot(v) - a[i_1]
-            viol_2 = viol_2 + (K[i_1, :].T * (u[i_1] - old_u) * v)
+            viol_2 += (K[i_1, :].T * (u[i_1] - old_u) * v)
 
         else:
             old_v = v[i_2]
@@ -544,7 +544,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log=
             G[:, i_2] = u * K[:, i_2] * v[i_2]
             #aviol = (G@one_m - a)
             #aviol_2 = (G.T@one_n - b)
-            viol = viol + (-old_v + v[i_2]) * K[:, i_2] * u
+            viol += (-old_v + v[i_2]) * K[:, i_2] * u
             viol_2[i_2] = v[i_2] * K[:, i_2].dot(u) - b[i_2]
 
             #print('b',np.max(abs(aviol -viol)),np.max(abs(aviol_2 - viol_2)))
