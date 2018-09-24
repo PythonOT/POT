@@ -12,7 +12,7 @@ Domain adaptation with optimal transport with GPU implementation
 
 
 import numpy as np
-from ..utils import unif
+#from ..utils import unif
 from .bregman import sinkhorn
 import cudamat
 
