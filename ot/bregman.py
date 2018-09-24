@@ -521,7 +521,6 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log=
         log['v'] = v
 
     for i in range(numItermax):
-        i += 1
         i_1 = np.argmax(np.abs(viol))
         i_2 = np.argmax(np.abs(viol_2))
         m_viol_1 = np.abs(viol[i_1])
