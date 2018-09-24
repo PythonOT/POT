@@ -71,12 +71,14 @@ def test_sinkhorn_variants():
     Ges = ot.sinkhorn(
         u, u, M, 1, method='sinkhorn_epsilon_scaling', stopThr=1e-10)
     Gerr = ot.sinkhorn(u, u, M, 1, method='do_not_exists', stopThr=1e-10)
+    G_green = ot.sinkhorn(u, u, M, 1, method='greenkhorn', stopThr=1e-10)
 
     # check values
     np.testing.assert_allclose(G0, Gs, atol=1e-05)
     np.testing.assert_allclose(G0, Ges, atol=1e-05)
     np.testing.assert_allclose(G0, Gerr)
-
+    np.testing.assert_allclose(G0, G_green, atol =  1e-32)
+    print(G0,G_green)
 
 def test_bary():
 
