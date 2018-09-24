@@ -77,8 +77,9 @@ def test_sinkhorn_variants():
     np.testing.assert_allclose(G0, Gs, atol=1e-05)
     np.testing.assert_allclose(G0, Ges, atol=1e-05)
     np.testing.assert_allclose(G0, Gerr)
-    np.testing.assert_allclose(G0, G_green, atol =  1e-32)
-    print(G0,G_green)
+    np.testing.assert_allclose(G0, G_green, atol=1e-5)
+    print(G0, G_green)
+
 
 def test_bary():
 
