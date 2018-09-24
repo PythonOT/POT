@@ -13,7 +13,6 @@ Domain adaptation with optimal transport with GPU implementation
 
 import numpy as np
 from ..utils import unif
-from ..da import OTDA
 from .bregman import sinkhorn
 import cudamat
 
@@ -185,71 +184,3 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M_GPU, reg, eta=0.1, numItermax=10,
         W_GPU = W_GPU.transpose()
 
     return transp_GPU.asarray()
-
-
-class OTDA_GPU(OTDA):
-
-    def normalizeM(self, norm):
-        if norm == "median":
-            self.M_GPU.divide(float(np.median(self.M_GPU.asarray())))
-        elif norm == "max":
-            self.M_GPU.divide(float(np.max(self.M_GPU.asarray())))
-        elif norm == "log":
-            self.M_GPU.add(1)
-            cudamat.log(self.M_GPU)
-        elif norm == "loglog":
-            self.M_GPU.add(1)
-            cudamat.log(self.M_GPU)
-            self.M_GPU.add(1)
-            cudamat.log(self.M_GPU)
-
-
-class OTDA_sinkhorn(OTDA_GPU):
-
-    def fit(self, xs, xt, reg=1, ws=None, wt=None, norm=None, **kwargs):
-        cudamat.init()
-        xs = np.asarray(xs, dtype=np.float64)
-        xt = np.asarray(xt, dtype=np.float64)
-
-        self.xs = xs
-        self.xt = xt
-
-        if wt is None:
-            wt = unif(xt.shape[0])
-        if ws is None:
-            ws = unif(xs.shape[0])
-
-        self.ws = ws
-        self.wt = wt
-
-        self.M_GPU = pairwiseEuclideanGPU(xs, xt, returnAsGPU=True,
-                                          squared=True)
-        self.normalizeM(norm)
-        self.G = sinkhorn(ws, wt, self.M_GPU, reg, **kwargs)
-        self.computed = True
-
-
-class OTDA_lpl1(OTDA_GPU):
-
-    def fit(self, xs, ys, xt, reg=1, eta=1, ws=None, wt=None, norm=None,
-            **kwargs):
-        cudamat.init()
-        xs = np.asarray(xs, dtype=np.float64)
-        xt = np.asarray(xt, dtype=np.float64)
-
-        self.xs = xs
-        self.xt = xt
-
-        if wt is None:
-            wt = unif(xt.shape[0])
-        if ws is None:
-            ws = unif(xs.shape[0])
-
-        self.ws = ws
-        self.wt = wt
-
-        self.M_GPU = pairwiseEuclideanGPU(xs, xt, returnAsGPU=True,
-                                          squared=True)
-        self.normalizeM(norm)
-        self.G = sinkhorn_lpl1_mm(ws, ys, wt, self.M_GPU, reg, eta, **kwargs)
-        self.computed = True

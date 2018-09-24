@@ -9,4 +9,9 @@ from .bregman import sinkhorn
 #
 # License: MIT License
 
+import warnings
+
+warnings.warn("the ot.gpu module is deprecated because cudamat in no longer maintained", DeprecationWarning,
+              stacklevel=2)
+
 __all__ = ["bregman", "da", "sinkhorn"]
