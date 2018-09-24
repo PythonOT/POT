@@ -6,11 +6,6 @@
 
 *This is a beta release and is still a work in progress*
 
-#### TODO
-
-[] Remove deprecated OTDA Classes (PR #48)
-[] Speedup Sinkhorn with einsum + bench (PR #58)
-[] Stochastic ot (PR #62)
 
 #### Features
 
@@ -25,6 +20,12 @@
 * Stochastic OT in the dual and semi-dual (PR #52 and PR #62)
 * Free support barycenters (PR #56)
 * Speed-up Sinkhorn function (PR #57 and PR #58)
+* Add convolutional Wassersein barycenters for 2D images (PR #64) 
+* Add Greedy Sinkhorn variant (Greenkhorn) (PR #66)
+
+#### Deprecation
+
+Deprecated OTDA Classes were removed for version 0.5 (PR #48), it has been a year and the deprecation message. 
 
 #### Closed issues
 

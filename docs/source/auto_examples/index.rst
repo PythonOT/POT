@@ -149,6 +149,26 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="This example is designed to illustrate how the Convolutional Wasserstein Barycenter function of...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_convolutional_barycenter_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_convolutional_barycenter.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_convolutional_barycenter
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip=" ">
 
 .. only:: html
