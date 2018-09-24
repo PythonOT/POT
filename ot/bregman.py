@@ -499,8 +499,6 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log=
 
     """
 
-    i = 0
-
     n = a.shape[0]
     m = b.shape[0]
 
