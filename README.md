@@ -14,7 +14,7 @@ This open source Python library provide several solvers for optimization problem
 It provides the following solvers:
 
 * OT Network Flow solver for the linear program/ Earth Movers Distance [1].
-* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2] and stabilized version [9][10] with optional GPU implementation (requires cudamat).
+* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2] and stabilized version [9][10] and greedy SInkhorn [21] with optional GPU implementation (requires cudamat).
 * Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularizations [17].
 * Non regularized Wasserstein barycenters [16] with LP solver (only small scale).
 * Bregman projections for Wasserstein barycenter [3] and unmixing [4].
