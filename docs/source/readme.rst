@@ -2,7 +2,7 @@ POT: Python Optimal Transport
 =============================
 
 |PyPI version| |Anaconda Cloud| |Build Status| |Documentation Status|
-|Anaconda downloads| |License|
+|Downloads| |Anaconda downloads| |License|
 
 This open source Python library provide several solvers for optimization
 problems related to Optimal Transport for signal, image processing and
@@ -13,14 +13,14 @@ It provides the following solvers:
 -  OT Network Flow solver for the linear program/ Earth Movers Distance
    [1].
 -  Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2]
-   and stabilized version [9][10] with optional GPU implementation
-   (requires cudamat).
+   and stabilized version [9][10] and greedy SInkhorn [22] with optional
+   GPU implementation (requires cudamat).
 -  Smooth optimal transport solvers (dual and semi-dual) for KL and
    squared L2 regularizations [17].
 -  Non regularized Wasserstein barycenters [16] with LP solver (only
    small scale).
--  Non regularized free support Wasserstein barycenters [20].
--  Bregman projections for Wasserstein barycenter [3] and unmixing [4].
+-  Bregman projections for Wasserstein barycenter [3], convolutional
+   barycenter [21] and unmixing [4].
 -  Optimal transport for domain adaptation with group lasso
    regularization [5]
 -  Conditional gradient [6] and Generalized conditional gradient for
@@ -32,6 +32,7 @@ It provides the following solvers:
    [12])
 -  Stochastic Optimization for Large-scale Optimal Transport (semi-dual
    problem [18] and dual problem [19])
+-  Non regularized free support Wasserstein barycenters [20].
 
 Some demonstrations (both in Python and Jupyter Notebook format) are
 available in the examples folder.
@@ -107,7 +108,7 @@ Dependencies
 Some sub-modules require additional dependences which are discussed
 below
 
--  **ot.dr** (Wasserstein dimensionality rediuction) depends on autograd
+-  **ot.dr** (Wasserstein dimensionality reduction) depends on autograd
    and pymanopt that can be installed with:
 
    ::
@@ -222,8 +223,9 @@ The contributors to this library are:
 -  `Stanislas Chambon <https://slasnista.github.io/>`__
 -  `Antoine Rolet <https://arolet.github.io/>`__
 -  Erwan Vautier (Gromov-Wasserstein)
--  `Kilian Fatras <https://kilianfatras.github.io/>`__ (Stochastic
-   optimization)
+-  `Kilian Fatras <https://kilianfatras.github.io/>`__
+-  `Alain
+   Rakotomamonjy <https://sites.google.com/site/alainrakotomamonjy/home>`__
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
@@ -341,7 +343,7 @@ Statistics (AISTATS).
 
 [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) `Stochastic
 Optimization for Large-scale Optimal
-Transport <arXiv%20preprint%20arxiv:1605.08527>`__. Advances in Neural
+Transport <https://arxiv.org/abs/1605.08527>`__. Advances in Neural
 Information Processing Systems (2016).
 
 [19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet,
@@ -353,6 +355,17 @@ Conference on Learning Representation (2018)
 Barycenters <http://proceedings.mlr.press/v32/cuturi14.html>`__.
 International Conference in Machine Learning
 
+[21] Solomon, J., De Goes, F., Peyré, G., Cuturi, M., Butscher, A.,
+Nguyen, A. & Guibas, L. (2015). `Convolutional wasserstein distances:
+Efficient optimal transportation on geometric
+domains <https://dl.acm.org/citation.cfm?id=2766963>`__. ACM
+Transactions on Graphics (TOG), 34(4), 66.
+
+[22] J. Altschuler, J.Weed, P. Rigollet, (2017) `Near-linear time
+approximation algorithms for optimal transport via Sinkhorn
+iteration <https://papers.nips.cc/paper/6792-near-linear-time-approximation-algorithms-for-optimal-transport-via-sinkhorn-iteration.pdf>`__,
+Advances in Neural Information Processing Systems (NIPS) 31
+
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
 .. |Anaconda Cloud| image:: https://anaconda.org/conda-forge/pot/badges/version.svg
@@ -361,6 +374,8 @@ International Conference in Machine Learning
    :target: https://travis-ci.org/rflamary/POT
 .. |Documentation Status| image:: https://readthedocs.org/projects/pot/badge/?version=latest
    :target: http://pot.readthedocs.io/en/latest/?badge=latest
+.. |Downloads| image:: https://pepy.tech/badge/pot
+   :target: https://pepy.tech/project/pot
 .. |Anaconda downloads| image:: https://anaconda.org/conda-forge/pot/badges/downloads.svg
    :target: https://anaconda.org/conda-forge/pot
 .. |License| image:: https://anaconda.org/conda-forge/pot/badges/license.svg
