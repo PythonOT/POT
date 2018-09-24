@@ -13,13 +13,14 @@ It provides the following solvers:
 -  OT Network Flow solver for the linear program/ Earth Movers Distance
    [1].
 -  Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2]
-   and stabilized version [9][10] with optional GPU implementation
-   (requires cudamat).
+   and stabilized version [9][10] and greedy SInkhorn [22] with optional
+   GPU implementation (requires cudamat).
 -  Smooth optimal transport solvers (dual and semi-dual) for KL and
    squared L2 regularizations [17].
 -  Non regularized Wasserstein barycenters [16] with LP solver (only
    small scale).
--  Bregman projections for Wasserstein barycenter [3] and unmixing [4].
+-  Bregman projections for Wasserstein barycenter [3], convolutional
+   barycenter [21] and unmixing [4].
 -  Optimal transport for domain adaptation with group lasso
    regularization [5]
 -  Conditional gradient [6] and Generalized conditional gradient for
@@ -29,6 +30,9 @@ It provides the following solvers:
    pymanopt).
 -  Gromov-Wasserstein distances and barycenters ([13] and regularized
    [12])
+-  Stochastic Optimization for Large-scale Optimal Transport (semi-dual
+   problem [18] and dual problem [19])
+-  Non regularized free support Wasserstein barycenters [20].
 
 Some demonstrations (both in Python and Jupyter Notebook format) are
 available in the examples folder.
@@ -219,6 +223,9 @@ The contributors to this library are:
 -  `Stanislas Chambon <https://slasnista.github.io/>`__
 -  `Antoine Rolet <https://arolet.github.io/>`__
 -  Erwan Vautier (Gromov-Wasserstein)
+-  `Kilian Fatras <https://kilianfatras.github.io/>`__
+-  `Alain
+   Rakotomamonjy <https://sites.google.com/site/alainrakotomamonjy/home>`__
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
@@ -333,6 +340,31 @@ Journal on Mathematical Analysis, 43(2), 904-924.
 Optimal Transport <https://arxiv.org/abs/1710.06276>`__. Proceedings of
 the Twenty-First International Conference on Artificial Intelligence and
 Statistics (AISTATS).
+
+[18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) `Stochastic
+Optimization for Large-scale Optimal
+Transport <https://arxiv.org/abs/1605.08527>`__. Advances in Neural
+Information Processing Systems (2016).
+
+[19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet,
+A.& Blondel, M. `Large-scale Optimal Transport and Mapping
+Estimation <https://arxiv.org/pdf/1711.02283.pdf>`__. International
+Conference on Learning Representation (2018)
+
+[20] Cuturi, M. and Doucet, A. (2014) `Fast Computation of Wasserstein
+Barycenters <http://proceedings.mlr.press/v32/cuturi14.html>`__.
+International Conference in Machine Learning
+
+[21] Solomon, J., De Goes, F., Peyré, G., Cuturi, M., Butscher, A.,
+Nguyen, A. & Guibas, L. (2015). `Convolutional wasserstein distances:
+Efficient optimal transportation on geometric
+domains <https://dl.acm.org/citation.cfm?id=2766963>`__. ACM
+Transactions on Graphics (TOG), 34(4), 66.
+
+[22] J. Altschuler, J.Weed, P. Rigollet, (2017) `Near-linear time
+approximation algorithms for optimal transport via Sinkhorn
+iteration <https://papers.nips.cc/paper/6792-near-linear-time-approximation-algorithms-for-optimal-transport-via-sinkhorn-iteration.pdf>`__,
+Advances in Neural Information Processing Systems (NIPS) 31
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
