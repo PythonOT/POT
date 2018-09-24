@@ -513,8 +513,6 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log=
     v = np.full(m, 1. / m)
     G = u[:, np.newaxis] * K * v[np.newaxis, :]
 
-    one_n = np.ones(n)
-    one_m = np.ones(m)
     viol = G.sum(1) - a
     viol_2 = G.sum(0) - b
     stopThr_val = 1
