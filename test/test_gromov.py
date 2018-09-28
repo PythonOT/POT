@@ -28,7 +28,7 @@ def test_gromov():
     C1 /= C1.max()
     C2 /= C2.max()
 
-    G = ot.gromov.gromov_wasserstein(C1, C2, p, q, 'square_loss')
+    G = ot.gromov.gromov_wasserstein(C1, C2, p, q, 'square_loss', verbose=True)
 
     # check constratints
     np.testing.assert_allclose(
@@ -69,7 +69,7 @@ def test_entropic_gromov():
     C2 /= C2.max()
 
     G = ot.gromov.entropic_gromov_wasserstein(
-        C1, C2, p, q, 'square_loss', epsilon=5e-4)
+        C1, C2, p, q, 'square_loss', epsilon=5e-4, verbose=True)
 
     # check constratints
     np.testing.assert_allclose(
@@ -107,7 +107,8 @@ def test_gromov_barycenter():
                                       [ot.unif(ns), ot.unif(nt)
                                        ], ot.unif(n_samples), [.5, .5],
                                       'square_loss',  # 5e-4,
-                                      max_iter=100, tol=1e-3)
+                                      max_iter=100, tol=1e-3,
+                                      verbose=True)
     np.testing.assert_allclose(Cb.shape, (n_samples, n_samples))
 
     Cb2 = ot.gromov.gromov_barycenters(n_samples, [C1, C2],
@@ -134,7 +135,8 @@ def test_gromov_entropic_barycenter():
                                                [ot.unif(ns), ot.unif(nt)
                                                 ], ot.unif(n_samples), [.5, .5],
                                                'square_loss', 2e-3,
-                                               max_iter=100, tol=1e-3)
+                                               max_iter=100, tol=1e-3,
+                                               verbose=True)
     np.testing.assert_allclose(Cb.shape, (n_samples, n_samples))
 
     Cb2 = ot.gromov.entropic_gromov_barycenters(n_samples, [C1, C2],

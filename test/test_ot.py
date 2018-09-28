@@ -70,7 +70,7 @@ def test_emd_empty():
 
 
 def test_emd2_multi():
-    n = 1000  # nb bins
+    n = 500  # nb bins
 
     # bin positions
     x = np.arange(n, dtype=np.float64)
@@ -78,7 +78,7 @@ def test_emd2_multi():
     # Gaussian distributions
     a = gauss(n, m=20, s=5)  # m= mean, s= std
 
-    ls = np.arange(20, 1000, 20)
+    ls = np.arange(20, 500, 20)
     nb = len(ls)
     b = np.zeros((n, nb))
     for i in range(nb):
@@ -207,11 +207,11 @@ def test_warnings():
 
 
 def test_dual_variables():
-    n = 5000  # nb bins
-    m = 6000  # nb bins
+    n = 500  # nb bins
+    m = 600  # nb bins
 
-    mean1 = 1000
-    mean2 = 1100
+    mean1 = 300
+    mean2 = 400
 
     # bin positions
     x = np.arange(n, dtype=np.float64)

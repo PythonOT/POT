@@ -12,7 +12,7 @@ import sys
 
 def test_parmap():
 
-    n = 100
+    n = 10
 
     def f(i):
         return 1.0 * i * i
