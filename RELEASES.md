@@ -1,10 +1,10 @@
 # POT Releases
 
 
-## 0.5.0b 
+## 0.5.0 Year 2
 *Sep 2018*
 
-*This is a beta release and is still a work in progress*
+POT is 2 years old! This release bring both numerous new features to the toolbox as listed below but also several 
 
 
 #### Features
@@ -12,7 +12,7 @@
 * Add non regularized Gromov-Wasserstein solver  (PR #41)
 * Linear OT mapping between empirical distributions and 90\% test coverage (PR #42)
 * Add log parameter in class EMDTransport and SinkhornLpL1Transport (PR #44)
-* Add Marddown format for Pipy (PR #45)
+* Add Markdown format for Pipy (PR #45)
 * Test for Python 3.5 and 3.6 on Travis (PR #46)
 * Non regularized Wasserstein barycenter with scipy linear solver and/or cvxopt (PR #47)
 * Rename dataset functions to be more sklearn compliant (PR #49)
@@ -22,10 +22,13 @@
 * Speed-up Sinkhorn function (PR #57 and PR #58)
 * Add convolutional Wassersein barycenters for 2D images (PR #64) 
 * Add Greedy Sinkhorn variant (Greenkhorn) (PR #66)
+* Big ot.gpu update with cupy implementation (instead of un-maintained cudamat) (PR #67)
 
 #### Deprecation
 
-Deprecated OTDA Classes were removed for version 0.5 (PR #48), it has been a year and the deprecation message. 
+Deprecated OTDA Classes were removed for version 0.5 (PR #48 and PR #67). The 
+deprecation messagehas been for a year here since 0.4 and it is time to pull 
+the plug.
 
 #### Closed issues
 

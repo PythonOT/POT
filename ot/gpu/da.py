@@ -133,7 +133,9 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
         # separated
         W = np.ones(M.shape)
         for (i, c) in enumerate(classes):
-<<<<<<< HEAD
+
+
+<< << << < HEAD
             (_, nbRow) = indices_labels[i].shape
             tmpC_GPU = cudamat.empty((Nfin, nbRow)).assign(0)
             transp_GPU.transpose().select_columns(indices_labels[i], tmpC_GPU)
