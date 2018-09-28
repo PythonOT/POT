@@ -14,7 +14,7 @@ This open source Python library provide several solvers for optimization problem
 It provides the following solvers:
 
 * OT Network Flow solver for the linear program/ Earth Movers Distance [1].
-* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2] and stabilized version [9][10] and greedy SInkhorn [22] with optional GPU implementation (requires cudamat).
+* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2] and stabilized version [9][10] and greedy SInkhorn [22] with optional GPU implementation (requires cupy).
 * Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularizations [17].
 * Non regularized Wasserstein barycenters [16] with LP solver (only small scale).
 * Bregman projections for Wasserstein barycenter [3], convolutional barycenter [21] and unmixing [4].
@@ -83,12 +83,8 @@ Some sub-modules require additional dependences which are discussed below
 ```
 pip install pymanopt autograd
 ```
-* **ot.gpu** (GPU accelerated OT) depends on cudamat that have to be installed with:
-```
-git clone https://github.com/cudamat/cudamat.git
-cd cudamat
-python setup.py install --user # for user install (no root)
-```
+* **ot.gpu** (GPU accelerated OT) depends on cupy that have to be installed following instructions on [this page](https://docs-cupy.chainer.org/en/stable/install.html).
+
 
 obviously you need CUDA installed and a compatible GPU.
 
