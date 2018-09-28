@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-
-This module implement GPU ilmplementation for several OT solvers and utility 
+This module provides GPU implementation for several OT solvers and utility 
 functions. The GPU backend in handled by `cupy 
 <https://cupy.chainer.org/>`_.
 
@@ -22,7 +21,7 @@ result of the function with parameter ``to_numpy=False``.
 from . import bregman
 from . import da
 from .bregman import sinkhorn
-from .da 
+from .da import sinkhorn_lpl1_mm
 
 from . import utils
 from .utils import dist, to_gpu, to_np
@@ -33,4 +32,5 @@ from .utils import dist, to_gpu, to_np
 #
 # License: MIT License
 
-__all__ = ["utils", "dist", "sinkhorn", 'bregman', 'da', 'to_gpu', 'to_np']
+__all__ = ["utils", "dist", "sinkhorn",
+           "sinkhorn_lpl1_mm", 'bregman', 'da', 'to_gpu', 'to_np']
