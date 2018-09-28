@@ -1,0 +1,6 @@
+[run]
+
+omit=
+	ot/externals/*
+	ot/externals/funcsigs.py	
+	ot/gpu/*
