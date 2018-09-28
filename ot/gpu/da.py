@@ -134,23 +134,6 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
         W = np.ones(M.shape)
         for (i, c) in enumerate(classes):
 
-
-<< << << < HEAD
-            (_, nbRow) = indices_labels[i].shape
-            tmpC_GPU = cudamat.empty((Nfin, nbRow)).assign(0)
-            transp_GPU.transpose().select_columns(indices_labels[i], tmpC_GPU)
-            majs_GPU = tmpC_GPU.sum(axis=1).add(epsilon)
-            cudamat.pow(majs_GPU, (p - 1))
-            majs_GPU.mult(p)
-
-            tmpC_GPU.assign(0)
-            tmpC_GPU.add_col_vec(majs_GPU)
-            W_GPU.set_selected_columns(indices_labels[i], tmpC_GPU)
-
-        W_GPU = W_GPU.transpose()
-
-    return transp_GPU.asarray()
-=======
             majs = np.sum(transp[indices_labels[i]], axis=0)
             majs = p * ((majs + epsilon)**(p - 1))
             W[indices_labels[i]] = majs
@@ -159,4 +142,3 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
         return utils.to_np(transp)
     else:
         return transp
->>>>>>> master
