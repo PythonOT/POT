@@ -16,7 +16,10 @@ from . import utils
 def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
                    verbose=False, log=False, to_numpy=True, **kwargs):
     """
-    Solve the entropic regularization optimal transport problem and return the OT matrix
+    Solve the entropic regularization optimal transport on GPU
+
+    If the input matrix are in numpy format, they will be uploaded to the
+    GPU first which can incur significant time overhead.
 
     The function solves the following optimization problem:
 
@@ -56,6 +59,8 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
         Print information along iterations
     log : bool, optional
         record log if True
+    to_numpy : boolean, optional (default True)
+        If true convert back the GPU array result to numpy format.
 
 
     Returns

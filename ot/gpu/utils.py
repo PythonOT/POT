@@ -16,19 +16,22 @@ import cupy as cp  # cp used for cupy specific operations
 def euclidean_distances(a, b, squared=False, to_numpy=True):
     """
     Compute the pairwise euclidean distance between matrices a and b.
-     Parameters
+
+    If the input matrix are in numpy format, they will be uploaded to the
+    GPU first which can incur significant time overhead.
+
+    Parameters
     ----------
     a : np.ndarray (n, f)
         first matrix
     b : np.ndarray (m, f)
         second matrix
-    gpu : boolean, optional (default False)
-        if True and the module cupy is available, the computation is done
-        on the GPU and the type of the matrix returned is cupy.ndarray.
-        Otherwise, compute on the CPU and returns np.ndarray.
+    to_numpy : boolean, optional (default True)
+        If true convert back the GPU array result to numpy format.
     squared : boolean, optional (default False)
         if True, return squared euclidean distance matrix
-     Returns
+
+    Returns
     -------
     c : (n x m) np.ndarray or cupy.ndarray
         pairwise euclidean distance distance matrix

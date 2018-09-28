@@ -48,6 +48,12 @@ ot.da
 
 .. automodule:: ot.da
   :members:
+  
+ot.gpu
+--------
+
+.. automodule:: ot.gpu
+  :members:
 
 ot.dr
 --------
