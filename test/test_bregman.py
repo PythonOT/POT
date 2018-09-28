@@ -108,7 +108,7 @@ def test_bary():
     ot.bregman.barycenter(A, M, reg, log=True, verbose=True)
 
 
-def test_wassersteinbary():
+def test_wasserstein_bary_2d():
 
     size = 100  # size of a square image
     a1 = np.random.randn(size, size)
