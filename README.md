@@ -14,10 +14,10 @@ This open source Python library provide several solvers for optimization problem
 It provides the following solvers:
 
 * OT Network Flow solver for the linear program/ Earth Movers Distance [1].
-* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2] and stabilized version [9][10] with optional GPU implementation (requires cupy).
+* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2] and stabilized version [9][10] and greedy SInkhorn [22] with optional GPU implementation (requires cupy).
 * Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularizations [17].
 * Non regularized Wasserstein barycenters [16] with LP solver (only small scale).
-* Bregman projections for Wasserstein barycenter [3] and unmixing [4].
+* Bregman projections for Wasserstein barycenter [3], convolutional barycenter [21] and unmixing [4].
 * Optimal transport for domain adaptation with group lasso regularization [5]
 * Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
 * Linear OT [14] and Joint OT matrix and mapping estimation [8].
@@ -161,6 +161,7 @@ The contributors to this library are:
 * [Antoine Rolet](https://arolet.github.io/)
 * Erwan Vautier (Gromov-Wasserstein)
 * [Kilian Fatras](https://kilianfatras.github.io/)
+* [Alain Rakotomamonjy](https://sites.google.com/site/alainrakotomamonjy/home)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
@@ -226,3 +227,5 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 [20] Cuturi, M. and Doucet, A. (2014) [Fast Computation of Wasserstein Barycenters](http://proceedings.mlr.press/v32/cuturi14.html). International Conference in Machine Learning
 
 [21] Solomon, J., De Goes, F., Peyré, G., Cuturi, M., Butscher, A., Nguyen, A. & Guibas, L. (2015). [Convolutional wasserstein distances: Efficient optimal transportation on geometric domains](https://dl.acm.org/citation.cfm?id=2766963). ACM Transactions on Graphics (TOG), 34(4), 66.
+
+[22] J. Altschuler, J.Weed, P. Rigollet, (2017) [Near-linear time approximation algorithms for optimal transport via Sinkhorn iteration](https://papers.nips.cc/paper/6792-near-linear-time-approximation-algorithms-for-optimal-transport-via-sinkhorn-iteration.pdf), Advances in Neural Information Processing Systems (NIPS) 31
