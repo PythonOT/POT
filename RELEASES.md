@@ -19,14 +19,15 @@ implementation of entropic OT.
 
 POT 0.5 also comes with a rewriting of ot.gpu using the cupy framework instead of 
 the unmaintained cudamat. Note that while we tried to keed changes to the 
-minimum, the OTDA classes were deprecated.
+minimum, the OTDA classes were deprecated. If you are happy with the cudamat 
+implementation, we recommend you stay with stable release 0.4 for now.
 
 The code quality has also improved with 92% code coverage in tests that is now 
 printed to the log in the Travis builds. The documentation has also been 
 greatly improved with new modules and examples/notebooks.
 
 This new release is so full of new stuff and corrections thanks to the old
-and new POT contributors (you can see the list in the readme).
+and new POT contributors (you can see the list in the [readme](https://github.com/rflamary/POT/blob/master/README.md)).
 
 #### Features
 
