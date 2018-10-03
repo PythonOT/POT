@@ -4,8 +4,29 @@
 ## 0.5.0 Year 2
 *Sep 2018*
 
-POT is 2 years old! This release bring both numerous new features to the toolbox as listed below but also several 
+POT is 2 years old! This release brings numerous new features to the 
+toolbox as listed below but also several bug correction.
 
+Among the new features, we can highlight a [non-regularized Gromov-Wasserstein 
+solver](https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov.ipynb), 
+a new [greedy variant of sinkhorn](https://pot.readthedocs.io/en/latest/all.html#ot.bregman.greenkhorn),  
+[non-regularized](https://pot.readthedocs.io/en/latest/all.html#ot.lp.barycenter), 
+[convolutional (2D)](https://github.com/rflamary/POT/blob/master/notebooks/plot_convolutional_barycenter.ipynb)
+and [free support](https://github.com/rflamary/POT/blob/master/notebooks/plot_free_support_barycenter.ipynb)
+ Wasserstein barycenters and [smooth](https://github.com/rflamary/POT/blob/prV0.5/notebooks/plot_OT_1D_smooth.ipynb) 
+ and [stochastic](https://pot.readthedocs.io/en/latest/all.html#ot.stochastic.sgd_entropic_regularization) 
+implementation of entropic OT.
+
+POT 0.5 also comes with a rewriting of ot.gpu using the cupy framework instead of 
+the unmaintained cudamat. Note that while we tried to keed changes to the 
+minimum, the OTDA classes were deprecated.
+
+The code quality has also improved with 92% code coverage in tests that is now 
+printed to the log in the Travis builds. The documentation has also been 
+greatly improved with new modules and examples/notebooks.
+
+This new release is so full of new stuff and corrections thanks to the old
+and new POT contributors (you can see the list in the readme).
 
 #### Features
 
@@ -26,9 +47,9 @@ POT is 2 years old! This release bring both numerous new features to the toolbox
 
 #### Deprecation
 
-Deprecated OTDA Classes were removed for version 0.5 (PR #48 and PR #67). The 
-deprecation messagehas been for a year here since 0.4 and it is time to pull 
-the plug.
+Deprecated OTDA Classes were removed from ot.da and ot.gpu for version 0.5 
+(PR #48 and PR #67). The deprecation message has been for a year here since 
+0.4 and it is time to pull the plug.
 
 #### Closed issues
 
