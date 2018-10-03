@@ -26,11 +26,11 @@ before_script: # configure a headless display to test plot generation
 # command to install dependencies
 install:
   - pip install -r requirements.txt
-  - pip install flake8 pytest
+  - pip install flake8 pytest pytest-cov
   - pip install .
 # command to run tests + check syntax style
 script:
   - python setup.py develop
   - flake8 examples/ ot/ test/
-  - python -m pytest -v test/
+  - python -m pytest -v test/ --cov=ot
   # - py.test ot test

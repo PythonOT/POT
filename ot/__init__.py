@@ -29,7 +29,7 @@ from .da import sinkhorn_lpl1_mm
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 __all__ = ["emd", "emd2", "sinkhorn", "sinkhorn2", "utils", 'datasets',
            'bregman', 'lp', 'tic', 'toc', 'toq', 'gromov',

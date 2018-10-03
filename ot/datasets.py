@@ -38,9 +38,9 @@ def make_1D_gauss(n, m, s):
 
 
 @deprecated()
-def get_1D_gauss(n, m, sigma, random_state=None):
+def get_1D_gauss(n, m, sigma):
     """ Deprecated see  make_1D_gauss   """
-    return make_1D_gauss(n, m, sigma, random_state=None)
+    return make_1D_gauss(n, m, sigma)
 
 
 def make_2D_samples_gauss(n, m, sigma, random_state=None):

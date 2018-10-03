@@ -118,12 +118,12 @@ def test_wasserstein_bary_2d():
     a2 += a2.min()
     a2 = a2 / np.sum(a2)
     # creating matrix A containing all distributions
-    A = np.zeros((2, 100, 100))
+    A = np.zeros((2, size, size))
     A[0, :, :] = a1
     A[1, :, :] = a2
 
     # wasserstein
-    reg = 1e-3
+    reg = 1e-2
     bary_wass = ot.bregman.convolutional_barycenter2d(A, reg)
 
     np.testing.assert_allclose(1, np.sum(bary_wass))

@@ -2,7 +2,7 @@ POT: Python Optimal Transport
 =============================
 
 |PyPI version| |Anaconda Cloud| |Build Status| |Documentation Status|
-|Anaconda downloads| |License|
+|Downloads| |Anaconda downloads| |License|
 
 This open source Python library provide several solvers for optimization
 problems related to Optimal Transport for signal, image processing and
@@ -108,7 +108,7 @@ Dependencies
 Some sub-modules require additional dependences which are discussed
 below
 
--  **ot.dr** (Wasserstein dimensionality rediuction) depends on autograd
+-  **ot.dr** (Wasserstein dimensionality reduction) depends on autograd
    and pymanopt that can be installed with:
 
    ::
@@ -374,6 +374,8 @@ Advances in Neural Information Processing Systems (NIPS) 31
    :target: https://travis-ci.org/rflamary/POT
 .. |Documentation Status| image:: https://readthedocs.org/projects/pot/badge/?version=latest
    :target: http://pot.readthedocs.io/en/latest/?badge=latest
+.. |Downloads| image:: https://pepy.tech/badge/pot
+   :target: https://pepy.tech/project/pot
 .. |Anaconda downloads| image:: https://anaconda.org/conda-forge/pot/badges/downloads.svg
    :target: https://anaconda.org/conda-forge/pot
 .. |License| image:: https://anaconda.org/conda-forge/pot/badges/license.svg

@@ -25,7 +25,7 @@ import ot
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 from matplotlib.collections import PolyCollection
 
-#
+##############################################################################
 # Generate data
 # -------------
 
@@ -48,7 +48,7 @@ n_distributions = A.shape[1]
 M = ot.utils.dist0(n)
 M /= M.max()
 
-#
+##############################################################################
 # Plot data
 # ---------
 
@@ -60,7 +60,7 @@ for i in range(n_distributions):
 pl.title('Distributions')
 pl.tight_layout()
 
-#
+##############################################################################
 # Barycenter computation
 # ----------------------
 
@@ -90,7 +90,7 @@ pl.legend()
 pl.title('Barycenters')
 pl.tight_layout()
 
-#
+##############################################################################
 # Barycentric interpolation
 # -------------------------
 
