@@ -55,7 +55,7 @@ setup(name='POT',
         'Operating System :: MacOS',
         'Operating System :: POSIX',
         'Programming Language :: Python',
-        'Topic :: Utilities'
+        'Topic :: Utilities',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
