@@ -39,7 +39,9 @@ setup(name='POT',
                  sources=["ot/lp/emd_wrap.pyx", "ot/lp/EMD_wrapper.cpp"], # the Cython source and
                                                         # additional C++ source files
                  language="c++",                        # generate and compile C++ code,
-                 include_dirs=[numpy.get_include(),os.path.join(ROOT,'ot/lp')])),
+                 include_dirs=[numpy.get_include(),os.path.join(ROOT,'ot/lp')],
+                 extra_compile_args=["-stdlib=libc++"]
+                 )),
       platforms=['linux','macosx','windows'],
       download_url='https://github.com/rflamary/POT/archive/{}.tar.gz'.format(__version__),
       license = 'MIT',
