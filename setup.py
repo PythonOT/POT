@@ -25,7 +25,7 @@ with open(os.path.join(ROOT, 'README.md'), encoding="utf-8") as f:
     README = f.read()
 
 # add platform dependant optional compilation argument
-opt_arg=["O3"]
+opt_arg=["-O3"]
 import platform
 if platform.system()=='Darwin':
   if platform.release()=='18.0.0':
