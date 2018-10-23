@@ -24,6 +24,12 @@ ROOT = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(ROOT, 'README.md'), encoding="utf-8") as f:
     README = f.read()
 
+# add platform dependant optional compilation argument
+opt_arg=["-O3"]
+import platform
+if platform.system()=='Darwin':
+  if platform.release()=='18.0.0':
+      opt_arg.append("-stdlib=libc++") # correspond to a compilation problem with Mojave and XCode 10
 
 setup(name='POT',
       version=__version__,
@@ -39,7 +45,9 @@ setup(name='POT',
                  sources=["ot/lp/emd_wrap.pyx", "ot/lp/EMD_wrapper.cpp"], # the Cython source and
                                                         # additional C++ source files
                  language="c++",                        # generate and compile C++ code,
-                 include_dirs=[numpy.get_include(),os.path.join(ROOT,'ot/lp')])),
+                 include_dirs=[numpy.get_include(),os.path.join(ROOT,'ot/lp')],
+                 extra_compile_args=opt_arg
+                 )),
       platforms=['linux','macosx','windows'],
       download_url='https://github.com/rflamary/POT/archive/{}.tar.gz'.format(__version__),
       license = 'MIT',
