@@ -418,8 +418,8 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
         return None
 
     opt_alpha = c_transform_entropic(b, M, reg, opt_beta)
-    pi = (np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg)
-          * a[:, None] * b[None, :])
+    pi = (np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg) *
+          a[:, None] * b[None, :])
 
     if log:
         log = {}
@@ -520,8 +520,8 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
                       arXiv preprint arxiv:1711.02283.
     '''
 
-    G = - (np.exp((alpha[batch_alpha, None] + beta[None, batch_beta]
-                   - M[batch_alpha, :][:, batch_beta]) / reg) *
+    G = - (np.exp((alpha[batch_alpha, None] + beta[None, batch_beta] -
+                   M[batch_alpha, :][:, batch_beta]) / reg) *
            a[batch_alpha, None] * b[None, batch_beta])
     grad_beta = np.zeros(np.shape(M)[1])
     grad_alpha = np.zeros(np.shape(M)[0])
@@ -702,8 +702,8 @@ def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
 
     opt_alpha, opt_beta = sgd_entropic_regularization(a, b, M, reg, batch_size,
                                                       numItermax, lr)
-    pi = (np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg)
-          * a[:, None] * b[None, :])
+    pi = (np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg) *
+          a[:, None] * b[None, :])
     if log:
         log = {}
         log['alpha'] = opt_alpha
