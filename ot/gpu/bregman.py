@@ -146,9 +146,9 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
         v = np.divide(b, KtransposeU)
         u = 1. / np.dot(Kp, v)
 
-        if (np.any(KtransposeU == 0) or
-                np.any(np.isnan(u)) or np.any(np.isnan(v)) or
-                np.any(np.isinf(u)) or np.any(np.isinf(v))):
+        if (np.any(KtransposeU == 0)
+                or np.any(np.isnan(u)) or np.any(np.isnan(v))
+                or np.any(np.isinf(u)) or np.any(np.isinf(v))):
             # we have reached the machine precision
             # come back to previous solution and quit loop
             print('Warning: numerical errors at iteration', cpt)

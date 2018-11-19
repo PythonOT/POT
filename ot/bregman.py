@@ -370,9 +370,9 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
         v = np.divide(b, KtransposeU)
         u = 1. / np.dot(Kp, v)
 
-        if (np.any(KtransposeU == 0) or
-                np.any(np.isnan(u)) or np.any(np.isnan(v)) or
-                np.any(np.isinf(u)) or np.any(np.isinf(v))):
+        if (np.any(KtransposeU == 0)
+                or np.any(np.isnan(u)) or np.any(np.isnan(v))
+                or np.any(np.isinf(u)) or np.any(np.isinf(v))):
             # we have reached the machine precision
             # come back to previous solution and quit loop
             print('Warning: numerical errors at iteration', cpt)
@@ -683,13 +683,13 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
 
     def get_K(alpha, beta):
         """log space computation"""
-        return np.exp(-(M - alpha.reshape((na, 1)) -
-                        beta.reshape((1, nb))) / reg)
+        return np.exp(-(M - alpha.reshape((na, 1))
+                        - beta.reshape((1, nb))) / reg)
 
     def get_Gamma(alpha, beta, u, v):
         """log space gamma computation"""
-        return np.exp(-(M - alpha.reshape((na, 1)) - beta.reshape((1, nb))) /
-                      reg + np.log(u.reshape((na, 1))) + np.log(v.reshape((1, nb))))
+        return np.exp(-(M - alpha.reshape((na, 1)) - beta.reshape((1, nb)))
+                      / reg + np.log(u.reshape((na, 1))) + np.log(v.reshape((1, nb))))
 
     # print(np.min(K))
 
@@ -899,8 +899,8 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4, numInne
 
     def get_K(alpha, beta):
         """log space computation"""
-        return np.exp(-(M - alpha.reshape((na, 1)) -
-                        beta.reshape((1, nb))) / reg)
+        return np.exp(-(M - alpha.reshape((na, 1))
+                        - beta.reshape((1, nb))) / reg)
 
     # print(np.min(K))
     def get_reg(n):  # exponential decreasing
