@@ -34,29 +34,14 @@ algorithms for descrete and semicontinous measures from the POT library.
 
 COMPUTE TRANSPORTATION MATRIX FOR SEMI-DUAL PROBLEM
 ############################################################################
+############################################################################
+ DISCRETE CASE:
 
+ Sample two discrete measures for the discrete case
+ ---------------------------------------------
 
-
-.. code-block:: python
-
-    print("------------SEMI-DUAL PROBLEM------------")
-
-
-
-
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    ------------SEMI-DUAL PROBLEM------------
-
-
-DISCRETE CASE
-Sample two discrete measures for the discrete case
----------------------------------------------
-
-Define 2 discrete measures a and b, the points where are defined the source
-and the target measures and finally the cost matrix c.
+ Define 2 discrete measures a and b, the points where are defined the source
+ and the target measures and finally the cost matrix c.
 
 
 
@@ -115,7 +100,8 @@ results.
      [4.15462212e-02 2.65987989e-02 7.23177216e-02 2.39440107e-03]]
 
 
-SEMICONTINOUS CASE
+SEMICONTINOUS CASE:
+
 Sample one general measure a, one discrete measures b for the semicontinous
 case
 ---------------------------------------------
@@ -174,15 +160,15 @@ results.
 
  Out::
 
-    [3.9018759  7.63059124 3.93260224 2.67274989 1.43888443 3.26904884
-     2.78748299] [-2.48511647 -2.43621119 -0.93585194  5.8571796 ]
-    [[2.56614773e-02 9.96758169e-02 1.75151781e-02 4.67049862e-06]
-     [1.21201047e-01 1.24433535e-02 1.28173754e-03 7.93100436e-03]
-     [3.58778167e-03 7.64232233e-02 6.28459924e-02 1.45441936e-07]
-     [2.63551754e-02 3.35577920e-02 8.25011211e-02 4.43054320e-04]
-     [9.24518246e-03 7.03074064e-04 1.00325744e-02 1.22876312e-01]
-     [2.03656325e-02 8.45420425e-04 1.73604569e-03 1.19910044e-01]
-     [4.17781688e-02 2.66463708e-02 7.18353075e-02 2.59729583e-03]]
+    [3.98220325 7.76235856 3.97645524 2.72051681 1.23219313 3.07696856
+     2.84476972] [-2.65544161 -2.50838395 -0.9397765   6.10360206]
+    [[2.34528761e-02 1.00491956e-01 1.89058354e-02 6.47543413e-06]
+     [1.16616747e-01 1.32074516e-02 1.45653361e-03 1.15764107e-02]
+     [3.16154850e-03 7.42892944e-02 6.54061055e-02 1.94426150e-07]
+     [2.33152216e-02 3.27486992e-02 8.61986263e-02 5.94595747e-04]
+     [6.34131496e-03 5.31975896e-04 8.12724003e-03 1.27856612e-01]
+     [1.41744829e-02 6.49096245e-04 1.42704389e-03 1.26606520e-01]
+     [3.73127657e-02 2.62526499e-02 7.57727161e-02 3.51901117e-03]]
 
 
 Compare the results with the Sinkhorn algorithm
@@ -288,30 +274,15 @@ Plot Sinkhorn results
 
 COMPUTE TRANSPORTATION MATRIX FOR DUAL PROBLEM
 ############################################################################
+############################################################################
+ SEMICONTINOUS CASE:
 
+ Sample one general measure a, one discrete measures b for the semicontinous
+ case
+ ---------------------------------------------
 
-
-.. code-block:: python
-
-    print("------------DUAL PROBLEM------------")
-
-
-
-
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    ------------DUAL PROBLEM------------
-
-
-SEMICONTINOUS CASE
-Sample one general measure a, one discrete measures b for the semicontinous
-case
----------------------------------------------
-
-Define one general measure a, one discrete measures b, the points where
-are defined the source and the target measures and finally the cost matrix c.
+ Define one general measure a, one discrete measures b, the points where
+ are defined the source and the target measures and finally the cost matrix c.
 
 
 
@@ -365,15 +336,15 @@ Call ot.solve_dual_entropic and plot the results.
 
  Out::
 
-    [ 1.29325617  5.0435082   1.30996326  0.05538236 -1.08113283  0.73711558
-      0.18086364] [0.08840343 0.17710082 1.68604226 8.37377551]
-    [[2.47763879e-02 1.00144623e-01 1.77492330e-02 4.25988443e-06]
-     [1.19568278e-01 1.27740478e-02 1.32714202e-03 7.39121816e-03]
-     [3.41581121e-03 7.57137404e-02 6.27992039e-02 1.30808430e-07]
-     [2.52245323e-02 3.34219732e-02 8.28754229e-02 4.00582912e-04]
-     [9.75329554e-03 7.71824343e-04 1.11085400e-02 1.22456628e-01]
-     [2.12304276e-02 9.17096580e-04 1.89946234e-03 1.18084973e-01]
-     [4.04179693e-02 2.68253041e-02 7.29410047e-02 2.37369404e-03]]
+    [0.92449986 2.75486107 1.07923806 0.02741145 0.61355413 1.81961594
+     0.12072562] [0.33831611 0.46806842 1.5640451  4.96947652]
+    [[2.20001105e-02 9.26497883e-02 1.08654588e-02 9.78995555e-08]
+     [1.55669974e-02 1.73279561e-03 1.19120878e-04 2.49058251e-05]
+     [3.48198483e-03 8.04151063e-02 4.41335396e-02 3.45115752e-09]
+     [3.14927954e-02 4.34760520e-02 7.13338154e-02 1.29442395e-05]
+     [6.81836550e-02 5.62182457e-03 5.35386584e-02 2.21568095e-02]
+     [8.04671052e-02 3.62163462e-03 4.96331605e-03 1.15837801e-02]
+     [4.88644009e-02 3.37903481e-02 6.07955004e-02 7.42743505e-05]]
 
 
 Compare the results with the Sinkhorn algorithm
@@ -448,7 +419,7 @@ Plot Sinkhorn results
 
 
 
-**Total running time of the script:** ( 0 minutes  22.857 seconds)
+**Total running time of the script:** ( 0 minutes  20.889 seconds)
 
 
 

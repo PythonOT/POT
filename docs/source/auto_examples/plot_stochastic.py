@@ -21,9 +21,9 @@ import ot.plot
 #############################################################################
 # COMPUTE TRANSPORTATION MATRIX FOR SEMI-DUAL PROBLEM
 #############################################################################
-print("------------SEMI-DUAL PROBLEM------------")
 #############################################################################
-# DISCRETE CASE
+# DISCRETE CASE:
+#
 # Sample two discrete measures for the discrete case
 # ---------------------------------------------
 #
@@ -57,7 +57,8 @@ sag_pi = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method,
 print(sag_pi)
 
 #############################################################################
-# SEMICONTINOUS CASE
+# SEMICONTINOUS CASE:
+#
 # Sample one general measure a, one discrete measures b for the semicontinous
 # case
 # ---------------------------------------------
@@ -139,9 +140,9 @@ pl.show()
 #############################################################################
 # COMPUTE TRANSPORTATION MATRIX FOR DUAL PROBLEM
 #############################################################################
-print("------------DUAL PROBLEM------------")
 #############################################################################
-# SEMICONTINOUS CASE
+# SEMICONTINOUS CASE:
+#
 # Sample one general measure a, one discrete measures b for the semicontinous
 # case
 # ---------------------------------------------
