@@ -229,7 +229,7 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="This example presents a way of transferring colors between two image with Optimal Transport as ...">
+    <div class="sphx-glr-thumbcontainer" tooltip="This example presents a way of transferring colors between two images with Optimal Transport as...">
 
 .. only:: html
 
