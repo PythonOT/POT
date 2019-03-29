@@ -10,6 +10,7 @@ sum of diracs. The OT matrix is plotted with the samples.
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
+#         Kilian Fatras <kilian.fatras@irisa.fr>
 #
 # License: MIT License
 
@@ -98,5 +99,30 @@ pl.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
 pl.plot(xt[:, 0], xt[:, 1], 'xr', label='Target samples')
 pl.legend(loc=0)
 pl.title('OT matrix Sinkhorn with samples')
+
+pl.show()
+
+
+##############################################################################
+# Emprirical Sinkhorn
+# ----------------
+
+#%% sinkhorn
+
+# reg term
+lambd = 1e-3
+
+Ges = ot.bregman.empirical_sinkhorn(xs, xt, lambd)
+
+pl.figure(7)
+pl.imshow(Ges, interpolation='nearest')
+pl.title('OT matrix empirical sinkhorn')
+
+pl.figure(8)
+ot.plot.plot2D_samples_mat(xs, xt, Ges, color=[.5, .5, 1])
+pl.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
+pl.plot(xt[:, 0], xt[:, 1], 'xr', label='Target samples')
+pl.legend(loc=0)
+pl.title('OT matrix Sinkhorn from samples')
 
 pl.show()
