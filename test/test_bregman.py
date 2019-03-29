@@ -233,7 +233,7 @@ def test_empirical_sinkhorn_divergence():
     M_s = ot.dist(X_s, X_s)
     M_t = ot.dist(X_t, X_t)
 
-    emp_sinkhorn_div = empirical_sinkhorn_divergence(X_s, X_t, 1)
+    emp_sinkhorn_div = ot.bregman.empirical_sinkhorn_divergence(X_s, X_t, 1)
     sinkhorn_div = (2 * ot.sinkhorn2(a, b, M, 1) - ot.sinkhorn2(a, a, M_s, 1) -
                     ot.sinkhorn2(b, b, M_t, 1))
 
