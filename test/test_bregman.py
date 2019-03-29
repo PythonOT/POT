@@ -195,13 +195,11 @@ def test_empirical_sinkhorn():
     n = 100
     a = ot.unif(n)
     b = ot.unif(n)
-    M = ot.dist(X_s, X_t)
-    M_e = ot.dist(X_s, X_t, metric='euclidean')
-
-    rng = np.random.RandomState(0)
 
     X_s = np.reshape(np.arange(n), (n, 1))
     X_t = np.reshape(np.arange(0, n), (n, 1))
+    M = ot.dist(X_s, X_t)
+    M_e = ot.dist(X_s, X_t, metric='euclidean')
 
     G_sqe = ot.bregman.empirical_sinkhorn(X_s, X_t, 1)
     sinkhorn_sqe = ot.sinkhorn(a, b, M, 1)
