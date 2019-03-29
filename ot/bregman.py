@@ -1375,9 +1375,9 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numI
     '''
 
     if a is None:
-        a = utils.unif(np.shape(X_s)[0])
+        a = ot.unif(np.shape(X_s)[0])
     if b is None:
-        b = utils.unif(np.shape(X_t)[0])
+        b = ot.unif(np.shape(X_t)[0])
 
     M = ot.dist(X_s, X_t, metric=metric)
 
@@ -1465,9 +1465,9 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
     '''
 
     if a is None:
-        a = utils.unif(np.shape(X_s)[0])
+        a = ot.unif(np.shape(X_s)[0])
     if b is None:
-        b = utils.unif(np.shape(X_t)[0])
+        b = ot.unif(np.shape(X_t)[0])
 
     M = ot.dist(X_s, X_t, metric=metric)
 
