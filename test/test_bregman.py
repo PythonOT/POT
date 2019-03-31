@@ -199,13 +199,13 @@ def test_empirical_sinkhorn():
     X_s = np.reshape(np.arange(n), (n, 1))
     X_t = np.reshape(np.arange(0, n), (n, 1))
     M = ot.dist(X_s, X_t)
-    M_e = ot.dist(X_s, X_t, metric='euclidean')
+    M_m = ot.dist(X_s, X_t, metric='minkowski')
 
     G_sqe = ot.bregman.empirical_sinkhorn(X_s, X_t, 1)
     sinkhorn_sqe = ot.sinkhorn(a, b, M, 1)
 
-    G_e = ot.bregman.empirical_sinkhorn(X_s, X_t, 1)
-    sinkhorn_e = ot.sinkhorn(a, b, M_e, 1)
+    G_m = ot.bregman.empirical_sinkhorn(X_s, X_t, 1, metric='minkowski')
+    sinkhorn_m = ot.sinkhorn(a, b, M_m, 1)
 
     loss_emp_sinkhorn = ot.bregman.empirical_sinkhorn2(X_s, X_t, 1)
     loss_sinkhorn = ot.sinkhorn2(a, b, M, 1)
@@ -216,9 +216,9 @@ def test_empirical_sinkhorn():
     np.testing.assert_allclose(
         sinkhorn_sqe.sum(0), G_sqe.sum(0), atol=1e-05)  # metric sqeuclidian
     np.testing.assert_allclose(
-        sinkhorn_e.sum(1), G_e.sum(1), atol=1e-05)  # metric euclidian
+        sinkhorn_m.sum(1), G_m.sum(1), atol=1e-05)  # metric euclidian
     np.testing.assert_allclose(
-        sinkhorn_e.sum(0), G_e.sum(0), atol=1e-05)  # metric euclidian
+        sinkhorn_m.sum(0), G_m.sum(0), atol=1e-05)  # metric euclidian
     np.testing.assert_allclose(loss_emp_sinkhorn, loss_sinkhorn, atol=1e-05)
 
 
