@@ -241,11 +241,13 @@ def test_empirical_sinkhorn_divergence():
     M_t = ot.dist(X_t, X_t)
 
     emp_sinkhorn_div = ot.bregman.empirical_sinkhorn_divergence(X_s, X_t, 1)
-    sinkhorn_div = (2 * ot.sinkhorn2(a, b, M, 1) - ot.sinkhorn2(a, a, M_s, 1) -
-                    ot.sinkhorn2(b, b, M_t, 1))
+    sinkhorn_div = (ot.sinkhorn2(a, b, M, 1) - 1 / 2 * ot.sinkhorn2(a, a, M_s, 1) - 1 / 2 * ot.sinkhorn2(b, b, M_t, 1))
 
     emp_sinkhorn_div_log, log_es = ot.bregman.empirical_sinkhorn_divergence(X_s, X_t, 0.1, log=True)
-    sinkhorn_div_log, log_s = ot.sinkhorn(a, b, M, 0.1, log=True)
+    sink_div_log, log_s = ot.sinkhorn2(a, b, M, 1)
+    sink_div_log_a, log_s_a = ot.sinkhorn2(a, a, M_s, 1)
+    sink_div_log_b, log_s_b = ot.sinkhorn2(b, b, M_t, 1)
+    sink_div_log = sink_div_log - 1 / 2 * (sink_div_log_a + sink_div_log_b)
 
     # check constratints
     np.testing.assert_allclose(
