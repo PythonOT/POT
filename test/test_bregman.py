@@ -253,4 +253,4 @@ def test_empirical_sinkhorn_divergence():
     np.testing.assert_allclose(
         emp_sinkhorn_div, sinkhorn_div, atol=1e-05)  # cf conv emp sinkhorn
     np.testing.assert_allclose(
-        emp_sinkhorn_div_log, sinkhorn_div_log, atol=1e-05)  # cf conv emp sinkhorn
+        emp_sinkhorn_div_log, sink_div_log, atol=1e-05)  # cf conv emp sinkhorn
