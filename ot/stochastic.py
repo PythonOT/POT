@@ -348,8 +348,11 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
 
     .. math::
         \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+
         s.t. \gamma 1 = a
+
              \gamma^T 1= b
+
              \gamma \geq 0
 
     Where :
