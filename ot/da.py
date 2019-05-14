@@ -645,7 +645,8 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
     The function estimates the optimal linear operator that aligns the two
     empirical distributions. This is equivalent to estimating the closed
     form mapping between two Gaussian distributions :math:`N(\mu_s,\Sigma_s)`
-    and :math:`N(\mu_t,\Sigma_t)` as proposed in [14] and discussed in remark 2.29 in [15].
+    and :math:`N(\mu_t,\Sigma_t)` as proposed in [14] and discussed in remark
+    2.29 in [15].
 
     The linear operator from source to target :math:`M`
 
@@ -1198,14 +1199,14 @@ class SinkhornTransport(BaseTransport):
     distribution_estimation : callable, optional (defaults to the uniform)
         The kind of distribution estimation to employ
     out_of_sample_map : string, optional (default="ferradans")
-        The kind of out of sample mapping to apply to transport samples 
-        from a domain into another one. Currently the only possible option is 
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
         "ferradans" which uses the method proposed in [6].
     limit_max: float, optional (defaul=np.infty)
         Controls the semi supervised mode. Transport between labeled source
-        and target samples of different classes will exhibit an cost defined 
+        and target samples of different classes will exhibit an cost defined
         by this variable
-    
+
     Attributes
     ----------
     coupling_ : array-like, shape (n_source_samples, n_target_samples)
@@ -1299,8 +1300,8 @@ class EMDTransport(BaseTransport):
     distribution_estimation : callable, optional (defaults to the uniform)
         The kind of distribution estimation to employ
     out_of_sample_map : string, optional (default="ferradans")
-        The kind of out of sample mapping to apply to transport samples 
-        from a domain into another one. Currently the only possible option is 
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
         "ferradans" which uses the method proposed in [6].
     limit_max: float, optional (default=10)
         Controls the semi supervised mode. Transport between labeled source
@@ -1405,8 +1406,8 @@ class SinkhornLpl1Transport(BaseTransport):
     distribution_estimation : callable, optional (defaults to the uniform)
         The kind of distribution estimation to employ
     out_of_sample_map : string, optional (default="ferradans")
-        The kind of out of sample mapping to apply to transport samples 
-        from a domain into another one. Currently the only possible option is 
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
         "ferradans" which uses the method proposed in [6].
     limit_max: float, optional (defaul=np.infty)
         Controls the semi supervised mode. Transport between labeled source
@@ -1526,8 +1527,8 @@ class SinkhornL1l2Transport(BaseTransport):
     distribution_estimation : callable, optional (defaults to the uniform)
         The kind of distribution estimation to employ
     out_of_sample_map : string, optional (default="ferradans")
-        The kind of out of sample mapping to apply to transport samples 
-        from a domain into another one. Currently the only possible option is 
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
         "ferradans" which uses the method proposed in [6].
     limit_max: float, optional (default=10)
         Controls the semi supervised mode. Transport between labeled source
