@@ -473,22 +473,24 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
         Weight for the linear OT loss (>0)
     eta : float, optional
         Regularization term  for the linear mapping L (>0)
-    bias : bool,optional
-        Estimate linear mapping with constant bias
     kerneltype : str,optional
         kernel used by calling function ot.utils.kernel (gaussian by default)
     sigma : float, optional
         Gaussian kernel bandwidth.
+    bias : bool,optional
+        Estimate linear mapping with constant bias
+    verbose : bool, optional
+        Print information along iterations
+    verbose2 : bool, optional
+        Print information along iterations
     numItermax : int, optional
         Max number of BCD iterations
-    stopThr : float, optional
-        Stop threshold on relative loss decrease (>0)
     numInnerItermax : int, optional
         Max number of iterations (inner CG solver)
     stopInnerThr : float, optional
         Stop threshold on error (inner CG solver) (>0)
-    verbose : bool, optional
-        Print information along iterations
+    stopThr : float, optional
+        Stop threshold on relative loss decrease (>0)
     log : bool, optional
         record log if True
 
@@ -643,7 +645,8 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
     The function estimates the optimal linear operator that aligns the two
     empirical distributions. This is equivalent to estimating the closed
     form mapping between two Gaussian distributions :math:`N(\mu_s,\Sigma_s)`
-    and :math:`N(\mu_t,\Sigma_t)` as proposed in [14] and discussed in remark 2.29 in [15].
+    and :math:`N(\mu_t,\Sigma_t)` as proposed in [14] and discussed in remark
+    2.29 in [15].
 
     The linear operator from source to target :math:`M`
 
@@ -1184,25 +1187,25 @@ class SinkhornTransport(BaseTransport):
         algorithm if no it has not converged
     tol : float, optional (default=10e-9)
         The precision required to stop the optimization algorithm.
-    mapping : string, optional (default="barycentric")
-        The kind of mapping to apply to transport samples from a domain into
-        another one.
-        if "barycentric" only the samples used to estimate the coupling can
-        be transported from a domain to another one.
+    verbose : bool, optional (default=False)
+        Controls the verbosity of the optimization algorithm
+    log : int, optional (default=False)
+        Controls the logs of the optimization algorithm
     metric : string, optional (default="sqeuclidean")
         The ground metric for the Wasserstein problem
     norm : string, optional (default=None)
         If given, normalize the ground metric to avoid numerical errors that
         can occur with large metric values.
-    distribution : string, optional (default="uniform")
+    distribution_estimation : callable, optional (defaults to the uniform)
         The kind of distribution estimation to employ
-    verbose : int, optional (default=0)
-        Controls the verbosity of the optimization algorithm
-    log : int, optional (default=0)
-        Controls the logs of the optimization algorithm
+    out_of_sample_map : string, optional (default="ferradans")
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
+        "ferradans" which uses the method proposed in [6].
     limit_max: float, optional (defaul=np.infty)
         Controls the semi supervised mode. Transport between labeled source
-        and target samples of different classes will exhibit an infinite cost
+        and target samples of different classes will exhibit an cost defined
+        by this variable
 
     Attributes
     ----------
@@ -1287,22 +1290,19 @@ class EMDTransport(BaseTransport):
 
     Parameters
     ----------
-    mapping : string, optional (default="barycentric")
-        The kind of mapping to apply to transport samples from a domain into
-        another one.
-        if "barycentric" only the samples used to estimate the coupling can
-        be transported from a domain to another one.
     metric : string, optional (default="sqeuclidean")
         The ground metric for the Wasserstein problem
     norm : string, optional (default=None)
         If given, normalize the ground metric to avoid numerical errors that
         can occur with large metric values.
-    distribution : string, optional (default="uniform")
-        The kind of distribution estimation to employ
-    verbose : int, optional (default=0)
-        Controls the verbosity of the optimization algorithm
-    log : int, optional (default=0)
+    log : int, optional (default=False)
         Controls the logs of the optimization algorithm
+    distribution_estimation : callable, optional (defaults to the uniform)
+        The kind of distribution estimation to employ
+    out_of_sample_map : string, optional (default="ferradans")
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
+        "ferradans" which uses the method proposed in [6].
     limit_max: float, optional (default=10)
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit an infinite cost
@@ -1387,28 +1387,32 @@ class SinkhornLpl1Transport(BaseTransport):
         Entropic regularization parameter
     reg_cl : float, optional (default=0.1)
         Class regularization parameter
-    mapping : string, optional (default="barycentric")
-        The kind of mapping to apply to transport samples from a domain into
-        another one.
-        if "barycentric" only the samples used to estimate the coupling can
-        be transported from a domain to another one.
-    metric : string, optional (default="sqeuclidean")
-        The ground metric for the Wasserstein problem
-    norm : string, optional (default=None)
-        If given, normalize the ground metric to avoid numerical errors that
-        can occur with large metric values.
-    distribution : string, optional (default="uniform")
-        The kind of distribution estimation to employ
     max_iter : int, float, optional (default=10)
         The minimum number of iteration before stopping the optimization
         algorithm if no it has not converged
     max_inner_iter : int, float, optional (default=200)
         The number of iteration in the inner loop
-    verbose : int, optional (default=0)
+    log : bool, optional (default=False)
+        Controls the logs of the optimization algorithm
+    tol : float, optional (default=10e-9)
+        Stop threshold on error (inner sinkhorn solver) (>0)
+    verbose : bool, optional (default=False)
         Controls the verbosity of the optimization algorithm
+    metric : string, optional (default="sqeuclidean")
+        The ground metric for the Wasserstein problem
+    norm : string, optional (default=None)
+        If given, normalize the ground metric to avoid numerical errors that
+        can occur with large metric values.
+    distribution_estimation : callable, optional (defaults to the uniform)
+        The kind of distribution estimation to employ
+    out_of_sample_map : string, optional (default="ferradans")
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
+        "ferradans" which uses the method proposed in [6].
     limit_max: float, optional (defaul=np.infty)
         Controls the semi supervised mode. Transport between labeled source
-        and target samples of different classes will exhibit an infinite cost
+        and target samples of different classes will exhibit a cost defined by
+        limit_max.
 
     Attributes
     ----------
@@ -1504,27 +1508,28 @@ class SinkhornL1l2Transport(BaseTransport):
         Entropic regularization parameter
     reg_cl : float, optional (default=0.1)
         Class regularization parameter
-    mapping : string, optional (default="barycentric")
-        The kind of mapping to apply to transport samples from a domain into
-        another one.
-        if "barycentric" only the samples used to estimate the coupling can
-        be transported from a domain to another one.
-    metric : string, optional (default="sqeuclidean")
-        The ground metric for the Wasserstein problem
-    norm : string, optional (default=None)
-        If given, normalize the ground metric to avoid numerical errors that
-        can occur with large metric values.
-    distribution : string, optional (default="uniform")
-        The kind of distribution estimation to employ
     max_iter : int, float, optional (default=10)
         The minimum number of iteration before stopping the optimization
         algorithm if no it has not converged
     max_inner_iter : int, float, optional (default=200)
         The number of iteration in the inner loop
-    verbose : int, optional (default=0)
+    tol : float, optional (default=10e-9)
+        Stop threshold on error (inner sinkhorn solver) (>0)
+    verbose : bool, optional (default=False)
         Controls the verbosity of the optimization algorithm
-    log : int, optional (default=0)
+    log : bool, optional (default=False)
         Controls the logs of the optimization algorithm
+    metric : string, optional (default="sqeuclidean")
+        The ground metric for the Wasserstein problem
+    norm : string, optional (default=None)
+        If given, normalize the ground metric to avoid numerical errors that
+        can occur with large metric values.
+    distribution_estimation : callable, optional (defaults to the uniform)
+        The kind of distribution estimation to employ
+    out_of_sample_map : string, optional (default="ferradans")
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
+        "ferradans" which uses the method proposed in [6].
     limit_max: float, optional (default=10)
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit an infinite cost
@@ -1646,10 +1651,12 @@ class MappingTransport(BaseEstimator):
         Max number of iterations (inner CG solver)
     inner_tol : float, optional (default=1e-6)
         Stop threshold on error (inner CG solver) (>0)
-    verbose : bool, optional (default=False)
-        Print information along iterations
     log : bool, optional (default=False)
         record log if True
+    verbose : bool, optional (default=False)
+        Print information along iterations
+    verbose2 : bool, optional (default=False)
+        Print information along iterations
 
     Attributes
     ----------
