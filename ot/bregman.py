@@ -5,6 +5,7 @@ Bregman projections for regularized OT
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Nicolas Courty <ncourty@irisa.fr>
+#         Kilian Fatras <kilian.fatras@irisa.fr>
 #         Titouan Vayer <titouan.vayer@irisa.fr>
 # License: MIT License
 

@@ -398,7 +398,7 @@ def fused_gromov_wasserstein(M,C1,C2,p,q,loss_fun='square_loss',alpha=0.5,amijo=
         log dictionary return only if log==True in parameters
     References
     ----------
-    .. [18] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
           and Courty Nicolas
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
@@ -921,7 +921,7 @@ def fgw_barycenters(N,Ys,Cs,ps,lambdas,alpha,fixed_structure=False,fixed_feature
         Ms : all distance matrices between the feature of the barycenter and the other features dist(X,Ys) shape (N,ns)
     References
     ----------
-    .. [18] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
           and Courty Nicolas
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
@@ -1077,7 +1077,7 @@ def update_feature_matrix(lambdas,Ys,Ts,p):
     
     References
     ----------
-    .. [18] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
           and Courty Nicolas
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.

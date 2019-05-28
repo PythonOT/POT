@@ -112,7 +112,7 @@ def do_linesearch(cost,G,deltaG,Mi,f_val,
              The value of the cost for the next iteration
     References
     ----------
-    .. [18] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
           and Courty Nicolas
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
