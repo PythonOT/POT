@@ -883,8 +883,9 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 
     return C
 
-def fgw_barycenters(N,Ys,Cs,ps,lambdas,alpha,fixed_structure=False,fixed_features=False,p=None,loss_fun='square_loss',
-                    max_iter=100, tol=1e-9,verbose=False,log=True,init_C=None,init_X=None):
+def fgw_barycenters(N,Ys,Cs,ps,lambdas,alpha,fixed_structure=False,fixed_features=False,
+                    p=None,loss_fun='square_loss',max_iter=100, tol=1e-9,
+                    verbose=False,log=True,init_C=None,init_X=None):
  
     """
     Compute the fgw barycenter as presented eq (5) in [3].
@@ -957,7 +958,7 @@ def fgw_barycenters(N,Ys,Cs,ps,lambdas,alpha,fixed_structure=False,fixed_feature
             X=np.zeros((N,d))
         else:
             X = init_X
-
+            
     T=[np.outer(p,q) for q in ps]
 
     # X is N,d
@@ -981,7 +982,7 @@ def fgw_barycenters(N,Ys,Cs,ps,lambdas,alpha,fixed_structure=False,fixed_feature
 
         if not fixed_features:
             Ys_temp=[y.T for y in Ys] 
-            X=update_feature_matrix(lambdas,Ys_temp,T,p)
+            X=update_feature_matrix(lambdas,Ys_temp,T,p).T
 
         # X must be N,d
         # Ys must be ns,d
@@ -1024,11 +1025,11 @@ def fgw_barycenters(N,Ys,Cs,ps,lambdas,alpha,fixed_structure=False,fixed_feature
             print('{:5d}|{:8e}|'.format(cpt, err_feature))
 
         cpt += 1
-    log_['T']=T # ce sont les matrices du barycentre de la target vers les Ys
+    log_['T']=T # from target to Ys
     log_['p']=p
-    log_['Ms']=Ms #Ms sont de tailles N,ns
+    log_['Ms']=Ms #Ms are N,ns
 
-    return X.T,C,log_
+    return X,C,log_
 
 
 def update_sructure_matrix(p, lambdas, T, Cs):
