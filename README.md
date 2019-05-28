@@ -4,6 +4,7 @@
 [![Anaconda Cloud](https://anaconda.org/conda-forge/pot/badges/version.svg)](https://anaconda.org/conda-forge/pot)
 [![Build Status](https://travis-ci.org/rflamary/POT.svg?branch=master)](https://travis-ci.org/rflamary/POT)
 [![Documentation Status](https://readthedocs.org/projects/pot/badge/?version=latest)](http://pot.readthedocs.io/en/latest/?badge=latest)
+[![Downloads](https://pepy.tech/badge/pot)](https://pepy.tech/project/pot)
 [![Anaconda downloads](https://anaconda.org/conda-forge/pot/badges/downloads.svg)](https://anaconda.org/conda-forge/pot)
 [![License](https://anaconda.org/conda-forge/pot/badges/license.svg)](https://github.com/rflamary/POT/blob/master/LICENSE)
 
@@ -14,15 +15,18 @@ This open source Python library provide several solvers for optimization problem
 It provides the following solvers:
 
 * OT Network Flow solver for the linear program/ Earth Movers Distance [1].
-* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2] and stabilized version [9][10] with optional GPU implementation (requires cudamat).
+* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2], stabilized version [9][10] and greedy Sinkhorn [22] with optional GPU implementation (requires cupy).
+* Sinkhorn divergence [23] and entropic regularization OT  from empirical data.
 * Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularizations [17].
 * Non regularized Wasserstein barycenters [16] with LP solver (only small scale).
-* Bregman projections for Wasserstein barycenter [3] and unmixing [4].
+* Bregman projections for Wasserstein barycenter [3], convolutional barycenter [21] and unmixing [4].
 * Optimal transport for domain adaptation with group lasso regularization [5]
 * Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
 * Linear OT [14] and Joint OT matrix and mapping estimation [8].
 * Wasserstein Discriminant Analysis [11] (requires autograd + pymanopt).
 * Gromov-Wasserstein distances and barycenters ([13] and regularized [12])
+* Stochastic Optimization for Large-scale Optimal Transport (semi-dual problem [18] and dual problem [19])
+* Non regularized free support Wasserstein barycenters [20].
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 
@@ -77,16 +81,12 @@ Note that for easier access the module is name ot instead of pot.
 
 Some sub-modules require additional dependences which are discussed below
 
-* **ot.dr** (Wasserstein dimensionality rediuction) depends on autograd and pymanopt that can be installed with:
+* **ot.dr** (Wasserstein dimensionality reduction) depends on autograd and pymanopt that can be installed with:
 ```
 pip install pymanopt autograd
 ```
-* **ot.gpu** (GPU accelerated OT) depends on cudamat that have to be installed with:
-```
-git clone https://github.com/cudamat/cudamat.git
-cd cudamat
-python setup.py install --user # for user install (no root)
-```
+* **ot.gpu** (GPU accelerated OT) depends on cupy that have to be installed following instructions on [this page](https://docs-cupy.chainer.org/en/stable/install.html).
+
 
 obviously you need CUDA installed and a compatible GPU.
 
@@ -162,6 +162,8 @@ The contributors to this library are:
 * [Stanislas Chambon](https://slasnista.github.io/)
 * [Antoine Rolet](https://arolet.github.io/)
 * Erwan Vautier (Gromov-Wasserstein)
+* [Kilian Fatras](https://kilianfatras.github.io/)
+* [Alain Rakotomamonjy](https://sites.google.com/site/alainrakotomamonjy/home)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 

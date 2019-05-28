@@ -7,6 +7,7 @@ Bregman projections for regularized OT
 #         Nicolas Courty <ncourty@irisa.fr>
 #         Kilian Fatras <kilian.fatras@irisa.fr>
 #         Titouan Vayer <titouan.vayer@irisa.fr>
+#
 # License: MIT License
 
 import numpy as np
