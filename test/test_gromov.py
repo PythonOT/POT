@@ -39,7 +39,7 @@ def test_gromov():
     np.testing.assert_allclose(
         q, G.sum(0), atol=1e-04)  # cf convergence gromov
 
-    Id = (1 / 1.0*n_samples) * np.eye(n_samples, n_samples)
+    Id = (1 / (1.0 * n_samples)) * np.eye(n_samples, n_samples)
 
     np.testing.assert_allclose(
         G, np.flipud(Id), atol=1e-04)
@@ -193,7 +193,7 @@ def test_fgw():
     np.testing.assert_allclose(
         q, G.sum(0), atol=1e-04)  # cf convergence fgw
 
-    Id = (1 / 1.0*n_samples) * np.eye(n_samples, n_samples)
+    Id = (1 / (1.0 * n_samples)) * np.eye(n_samples, n_samples)
 
     np.testing.assert_allclose(
         G, np.flipud(Id), atol=1e-04)  # cf convergence gromov
