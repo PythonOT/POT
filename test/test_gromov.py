@@ -13,7 +13,7 @@ import ot
 def test_gromov():
     np.random.seed(42)
 
-    n_samples = 50  # nb samples
+    n_samples = 50.0  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
@@ -161,7 +161,7 @@ def test_gromov_entropic_barycenter():
 def test_fgw():
     np.random.seed(42)
 
-    n_samples = 50  # nb samples
+    n_samples = 50.0  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
