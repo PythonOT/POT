@@ -13,7 +13,7 @@ import ot
 def test_gromov():
     np.random.seed(42)
 
-    n_samples = 50.0  # nb samples
+    n_samples = 50  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
@@ -39,7 +39,7 @@ def test_gromov():
     np.testing.assert_allclose(
         q, G.sum(0), atol=1e-04)  # cf convergence gromov
 
-    Id = (1 / n_samples) * np.eye(n_samples, n_samples)
+    Id = (1 / float(n_samples)) * np.eye(n_samples, n_samples)
 
     np.testing.assert_allclose(
         G, np.flipud(Id), atol=1e-04)
@@ -161,7 +161,7 @@ def test_gromov_entropic_barycenter():
 def test_fgw():
     np.random.seed(42)
 
-    n_samples = 50.0  # nb samples
+    n_samples = 50  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
@@ -193,7 +193,7 @@ def test_fgw():
     np.testing.assert_allclose(
         q, G.sum(0), atol=1e-04)  # cf convergence fgw
 
-    Id = (1 / n_samples) * np.eye(n_samples, n_samples)
+    Id = (1 / float(n_samples)) * np.eye(n_samples, n_samples)
 
     np.testing.assert_allclose(
         G, np.flipud(Id), atol=1e-04)  # cf convergence gromov
