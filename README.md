@@ -164,6 +164,7 @@ The contributors to this library are:
 * Erwan Vautier (Gromov-Wasserstein)
 * [Kilian Fatras](https://kilianfatras.github.io/)
 * [Alain Rakotomamonjy](https://sites.google.com/site/alainrakotomamonjy/home)
+* [Vayer Titouan](https://tvayer.github.io/)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
