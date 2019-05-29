@@ -73,7 +73,7 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
 
 
 def do_linesearch(cost, G, deltaG, Mi, f_val,
-                  amijo=False, C1=None, C2=None, reg=None, Gc=None, constC=None, M=None):
+                  amijo=True, C1=None, C2=None, reg=None, Gc=None, constC=None, M=None):
     """
     Solve the linesearch in the FW iterations
     Parameters

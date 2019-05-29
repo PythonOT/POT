@@ -348,7 +348,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, amijo=False, **kwargs)
         log['gw_dist'] = gwloss(constC, hC1, hC2, res)
         return res, log
     else:
-        return cg(p, q, 0, 1, f, df, G0, amijo=amijo, **kwargs)
+        return cg(p, q, 0, 1, f, df, G0, amijo=amijo, C1=C1, C2=C2, constC=constC, **kwargs)
 
 
 def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5, amijo=False, **kwargs):
