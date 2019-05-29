@@ -427,7 +427,7 @@ def solve_1d_linesearch_quad_funct(a, b, c):
     f1 = a + f0 + df0
 
     if a > 0:  # convex
-        minimum = min(1, max(0, np.divide(-b, 2 * a)))
+        minimum = min(1, max(0, np.divide(-b, 2.0 * a)))
         return minimum
     else:  # non convex
         if f0 > f1:
