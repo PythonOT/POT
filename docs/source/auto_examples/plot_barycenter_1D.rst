@@ -18,34 +18,6 @@ SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
 
 
 
-
-.. rst-class:: sphx-glr-horizontal
-
-
-    *
-
-      .. image:: /auto_examples/images/sphx_glr_plot_barycenter_1D_001.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/images/sphx_glr_plot_barycenter_1D_002.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/images/sphx_glr_plot_barycenter_1D_003.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/images/sphx_glr_plot_barycenter_1D_004.png
-            :scale: 47
-
-
-
-
-
 .. code-block:: python
 
 
@@ -60,9 +32,19 @@ SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
     from mpl_toolkits.mplot3d import Axes3D  # noqa
     from matplotlib.collections import PolyCollection
 
-    #
-    # Generate data
-    # -------------
+
+
+
+
+
+
+Generate data
+-------------
+
+
+
+.. code-block:: python
+
 
     #%% parameters
 
@@ -83,9 +65,19 @@ SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
     M = ot.utils.dist0(n)
     M /= M.max()
 
-    #
-    # Plot data
-    # ---------
+
+
+
+
+
+
+Plot data
+---------
+
+
+
+.. code-block:: python
+
 
     #%% plot the distributions
 
@@ -95,9 +87,22 @@ SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
     pl.title('Distributions')
     pl.tight_layout()
 
-    #
-    # Barycenter computation
-    # ----------------------
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_barycenter_1D_001.png
+    :align: center
+
+
+
+
+Barycenter computation
+----------------------
+
+
+
+.. code-block:: python
+
 
     #%% barycenter computation
 
@@ -125,9 +130,22 @@ SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
     pl.title('Barycenters')
     pl.tight_layout()
 
-    #
-    # Barycentric interpolation
-    # -------------------------
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_barycenter_1D_003.png
+    :align: center
+
+
+
+
+Barycentric interpolation
+-------------------------
+
+
+
+.. code-block:: python
+
 
     #%% barycenter interpolation
 
@@ -194,7 +212,25 @@ SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
 
     pl.show()
 
-**Total running time of the script:** ( 0 minutes  0.363 seconds)
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_examples/images/sphx_glr_plot_barycenter_1D_005.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/images/sphx_glr_plot_barycenter_1D_006.png
+            :scale: 47
+
+
+
+
+**Total running time of the script:** ( 0 minutes  0.413 seconds)
 
 
 

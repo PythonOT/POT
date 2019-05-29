@@ -17,7 +17,7 @@ GitHub, clone, and develop on a branch. Steps:
    a copy of the code under your GitHub user account. For more details on
    how to fork a repository see [this guide](https://help.github.com/articles/fork-a-repo/).
 
-2. Clone your fork of the scikit-learn repo from your GitHub account to your local disk:
+2. Clone your fork of the POT repo from your GitHub account to your local disk:
 
    ```bash
    $ git clone git@github.com:YourLogin/POT.git
@@ -84,7 +84,7 @@ following rules before you submit a pull request:
    example script in the ``examples/`` folder. Have a look at other
    examples for reference. Examples should demonstrate why the new
    functionality is useful in practice and, if possible, compare it
-   to other methods available in scikit-learn.
+   to other methods available in POT.
 
 -  Documentation and high-coverage tests are necessary for enhancements to be
    accepted. Bug-fixes or new features should be provided with 
@@ -145,7 +145,7 @@ following rules before submitting:
    See [Creating and highlighting code blocks](https://help.github.com/articles/creating-and-highlighting-code-blocks).
 
 -  Please include your operating system type and version number, as well
-   as your Python, scikit-learn, numpy, and scipy versions. This information
+   as your Python, POT, numpy, and scipy versions. This information
    can be found by running the following code snippet:
 
   ```python
@@ -165,8 +165,8 @@ following rules before submitting:
 New contributor tips
 --------------------
 
-A great way to start contributing to scikit-learn is to pick an item
-from the list of [Easy issues](https://github.com/scikit-learn/scikit-learn/issues?labels=Easy)
+A great way to start contributing to POT is to pick an item
+from the list of [Easy issues](https://github.com/rflamary/POT/issues?labels=Easy)
 in the issue tracker. Resolving these issues allow you to start
 contributing to the project without much prior knowledge. Your
 assistance in this area will be greatly appreciated by the more
@@ -201,4 +201,4 @@ method does to the data and a figure (coming from an example)
 illustrating it.
 
 
-This Contrubution guide is strongly inpired by the one of the [scikit-learn](https://github.com/scikit-learn/scikit-learn) team.
+This Contribution guide is strongly inpired by the one of the [scikit-learn](https://github.com/scikit-learn/scikit-learn) team.

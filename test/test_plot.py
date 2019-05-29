@@ -5,10 +5,18 @@
 # License: MIT License
 
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
+import pytest
 
 
+try:  # test if matplotlib is installed
+    import matplotlib
+    matplotlib.use('Agg')
+    nogo = False
+except ImportError:
+    nogo = True
+
+
+@pytest.mark.skipif(nogo, reason="Matplotlib not installed")
 def test_plot1D_mat():
 
     import ot
@@ -30,6 +38,7 @@ def test_plot1D_mat():
     ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
 
 
+@pytest.mark.skipif(nogo, reason="Matplotlib not installed")
 def test_plot2D_samples_mat():
 
     import ot

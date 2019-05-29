@@ -4,7 +4,7 @@
 OT for image color adaptation
 =============================
 
-This example presents a way of transferring colors between two image
+This example presents a way of transferring colors between two images
 with Optimal Transport as introduced in [6]
 
 [6] Ferradans, S., Papadakis, N., Peyre, G., & Aujol, J. F. (2014).
@@ -27,7 +27,7 @@ r = np.random.RandomState(42)
 
 
 def im2mat(I):
-    """Converts and image to matrix (one pixel per line)"""
+    """Converts an image to matrix (one pixel per line)"""
     return I.reshape((I.shape[0] * I.shape[1], I.shape[2]))
 
 
@@ -115,8 +115,8 @@ ot_sinkhorn.fit(Xs=Xs, Xt=Xt)
 transp_Xs_emd = ot_emd.transform(Xs=X1)
 transp_Xt_emd = ot_emd.inverse_transform(Xt=X2)
 
-transp_Xs_sinkhorn = ot_emd.transform(Xs=X1)
-transp_Xt_sinkhorn = ot_emd.inverse_transform(Xt=X2)
+transp_Xs_sinkhorn = ot_sinkhorn.transform(Xs=X1)
+transp_Xt_sinkhorn = ot_sinkhorn.inverse_transform(Xt=X2)
 
 I1t = minmax(mat2im(transp_Xs_emd, I1.shape))
 I2t = minmax(mat2im(transp_Xt_emd, I2.shape))

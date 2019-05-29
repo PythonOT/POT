@@ -19,7 +19,7 @@ ot.bregman
 
 .. automodule:: ot.bregman
    :members:
-   
+
 ot.smooth
 -----
 .. automodule:: ot.smooth
@@ -42,6 +42,12 @@ ot.da
 --------
 
 .. automodule:: ot.da
+  :members:
+  
+ot.gpu
+--------
+
+.. automodule:: ot.gpu
   :members:
 
 ot.dr
@@ -67,4 +73,10 @@ ot.plot
 -------
 
 .. automodule:: ot.plot
+   :members:
+
+ot.stochastic
+-------------
+
+.. automodule:: ot.stochastic
    :members:
