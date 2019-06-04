@@ -65,3 +65,9 @@ def test_generalized_conditional_gradient():
 
     np.testing.assert_allclose(a, G.sum(1), atol=1e-05)
     np.testing.assert_allclose(b, G.sum(0), atol=1e-05)
+
+
+def test_solve_1d_linesearch_quad_funct():
+    np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(1, -1, 0), 0.5)
+    np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(-1, 5, 0), 0)
+    np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(-1, 0.5, 0), 1)

@@ -487,3 +487,11 @@ class BaseEstimator(object):
                                      (key, self.__class__.__name__))
                 setattr(self, key, value)
         return self
+
+
+class UndefinedParameter(Exception):
+    """
+    Aim at raising an Exception when a undefined parameter is called
+
+    """
+    pass
