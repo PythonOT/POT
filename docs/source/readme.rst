@@ -12,9 +12,11 @@ It provides the following solvers:
 
 -  OT Network Flow solver for the linear program/ Earth Movers Distance
    [1].
--  Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2]
-   and stabilized version [9][10] and greedy SInkhorn [22] with optional
-   GPU implementation (requires cudamat).
+-  Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2],
+   stabilized version [9][10] and greedy Sinkhorn [22] with optional GPU
+   implementation (requires cupy).
+-  Sinkhorn divergence [23] and entropic regularization OT from
+   empirical data.
 -  Smooth optimal transport solvers (dual and semi-dual) for KL and
    squared L2 regularizations [17].
 -  Non regularized Wasserstein barycenters [16] with LP solver (only
@@ -115,14 +117,9 @@ below
 
        pip install pymanopt autograd
 
--  **ot.gpu** (GPU accelerated OT) depends on cudamat that have to be
-   installed with:
-
-   ::
-
-       git clone https://github.com/cudamat/cudamat.git
-       cd cudamat
-       python setup.py install --user # for user install (no root)
+-  **ot.gpu** (GPU accelerated OT) depends on cupy that have to be
+   installed following instructions on `this
+   page <https://docs-cupy.chainer.org/en/stable/install.html>`__.
 
 obviously you need CUDA installed and a compatible GPU.
 
@@ -226,6 +223,7 @@ The contributors to this library are:
 -  `Kilian Fatras <https://kilianfatras.github.io/>`__
 -  `Alain
    Rakotomamonjy <https://sites.google.com/site/alainrakotomamonjy/home>`__
+-  `Vayer Titouan <https://tvayer.github.io/>`__
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
@@ -365,6 +363,16 @@ Transactions on Graphics (TOG), 34(4), 66.
 approximation algorithms for optimal transport via Sinkhorn
 iteration <https://papers.nips.cc/paper/6792-near-linear-time-approximation-algorithms-for-optimal-transport-via-sinkhorn-iteration.pdf>`__,
 Advances in Neural Information Processing Systems (NIPS) 31
+
+[23] Aude, G., Peyré, G., Cuturi, M., `Learning Generative Models with
+Sinkhorn Divergences <https://arxiv.org/abs/1706.00292>`__, Proceedings
+of the Twenty-First International Conference on Artficial Intelligence
+and Statistics, (AISTATS) 21, 2018
+
+[24] Vayer, T., Chapel, L., Flamary, R., Tavenard, R. and Courty, N.
+(2019). `Optimal Transport for structured data with application on
+graphs <http://proceedings.mlr.press/v97/titouan19a.html>`__ Proceedings
+of the 36th International Conference on Machine Learning (ICML).
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
