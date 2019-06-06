@@ -1,6 +1,20 @@
-"""Python Optimal Transport toolbox
+"""
 
+This is the main module of the POT toolbox. It provides easy access to 
+a number of functions described below.
 
+### FAQ
+
+#### How to compute the Wasserstein distance ?
+
+.. warning::
+    The list of automatically imported sub-modules is as follows: 
+    :py:mod:`ot.lp`, :py:mod:`ot.bregman`, :py:mod:`ot.optim`
+    :py:mod:`ot.utils`, :py:mod:`ot.datasets`,
+    :py:mod:`ot.gromov`, :py:mod:`ot.smooth`
+    :py:mod:`ot.stochastic`    
+
+    The other sub-modules are not imported due to additional dependencies.
 
 """
 

@@ -41,15 +41,15 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
     where :
 
     - M is the (ns,nt) metric cost matrix
-    - :math:`\Omega_e` is the entropic regularization term
-        :math:`\Omega_e(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - :math:`\Omega_g` is the group lasso  regulaization term
+    - :math:`\Omega_e` is the entropic regularization term :math:`\Omega_e
+      (\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\Omega_g` is the group lasso  regularization term
       :math:`\Omega_g(\gamma)=\sum_{i,c} \|\gamma_{i,\mathcal{I}_c}\|^{1/2}_1`
       where  :math:`\mathcal{I}_c` are the index of samples from class c
       in the source domain.
     - a and b are source and target weights (sum to 1)
 
-    The algorithm used for solving the problem is the generalised conditional
+    The algorithm used for solving the problem is the generalized conditional
     gradient as proposed in  [5]_ [7]_
 
 
