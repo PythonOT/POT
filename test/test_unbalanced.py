@@ -9,7 +9,7 @@ import ot
 import pytest
 
 
-@pytest.mark.parametrize("metric", ["sinkhorn"])
+@pytest.mark.parametrize("method", ["sinkhorn"])
 def test_unbalanced_convergence(method):
     # test generalized sinkhorn for unbalanced OT
     n = 100
