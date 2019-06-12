@@ -66,9 +66,9 @@ ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
 
 #%% Sinkhorn
 
-lambd = 0.1
-alpha = 1.
-Gs = ot.unbalanced.sinkhorn_unbalanced(a, b, M, lambd, alpha, verbose=True)
+epsilon = 0.1  # entropy parameter
+alpha = 1.  # Unbalanced KL relaxation parameter
+Gs = ot.unbalanced.sinkhorn_unbalanced(a, b, M, epsilon, alpha, verbose=True)
 
 pl.figure(4, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, Gs, 'UOT matrix Sinkhorn')
