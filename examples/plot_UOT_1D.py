@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-====================
+===============================
 1D Unbalanced optimal transport
-====================
+===============================
 
 This example illustrates the computation of Unbalanced Optimal transport
 using a Kullback-Leibler relaxation.
@@ -53,7 +53,7 @@ pl.plot(x, a, 'b', label='Source distribution')
 pl.plot(x, b, 'r', label='Target distribution')
 pl.legend()
 
-#%% plot distributions and loss matrix
+# plot distributions and loss matrix
 
 pl.figure(2, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
@@ -64,7 +64,7 @@ ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
 # --------------
 
 
-#%% Sinkhorn
+# Sinkhorn
 
 epsilon = 0.1  # entropy parameter
 alpha = 1.  # Unbalanced KL relaxation parameter

@@ -27,7 +27,7 @@ from matplotlib.collections import PolyCollection
 # Generate data
 # -------------
 
-#%% parameters
+# parameters
 
 n = 100  # nb bins
 
@@ -53,7 +53,7 @@ M /= M.max()
 # Plot data
 # ---------
 
-#%% plot the distributions
+# plot the distributions
 
 pl.figure(1, figsize=(6.4, 3))
 for i in range(n_distributions):
@@ -65,7 +65,7 @@ pl.tight_layout()
 # Barycenter computation
 # ----------------------
 
-#%% non weighted barycenter computation
+# non weighted barycenter computation
 
 weight = 0.5  # 0<=weight<=1
 weights = np.array([1 - weight, weight])
@@ -97,7 +97,7 @@ pl.tight_layout()
 # Barycentric interpolation
 # -------------------------
 
-#%% barycenter interpolation
+# barycenter interpolation
 
 n_weight = 11
 weight_list = np.linspace(0, 1, n_weight)
@@ -114,7 +114,7 @@ for i in range(0, n_weight):
     B_wass[:, i] = ot.unbalanced.barycenter_unbalanced(A, M, reg, alpha, weights)
 
 
-#%% plot interpolation
+# plot interpolation
 
 pl.figure(3)
 

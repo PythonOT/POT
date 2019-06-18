@@ -87,7 +87,7 @@ def sinkhorn_unbalanced(a, b, M, reg, alpha, method='sinkhorn', numItermax=1000,
 
     .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016). Scaling algorithms for unbalanced transport problems. arXiv preprint arXiv:1607.05816.
 
-    .. [23] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. : Learning with a Wasserstein Loss,  Advances in Neural Information Processing Systems (NIPS) 2015
+    .. [25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. : Learning with a Wasserstein Loss,  Advances in Neural Information Processing Systems (NIPS) 2015
 
 
     See Also
@@ -196,7 +196,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, alpha, method='sinkhorn',
 
     .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016). Scaling algorithms for unbalanced transport problems. arXiv preprint arXiv:1607.05816.
 
-    .. [23] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. : Learning with a Wasserstein Loss,  Advances in Neural Information Processing Systems (NIPS) 2015
+    .. [25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. : Learning with a Wasserstein Loss,  Advances in Neural Information Processing Systems (NIPS) 2015
 
     See Also
     --------
@@ -299,7 +299,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, alpha, numItermax=1000,
 
     .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016). Scaling algorithms for unbalanced transport problems. arXiv preprint arXiv:1607.05816.
 
-    .. [23] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. : Learning with a Wasserstein Loss,  Advances in Neural Information Processing Systems (NIPS) 2015
+    .. [25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. : Learning with a Wasserstein Loss,  Advances in Neural Information Processing Systems (NIPS) 2015
 
     See Also
     --------
