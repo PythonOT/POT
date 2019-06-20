@@ -14,12 +14,12 @@ import numpy as np
 from .import cvx
 
 # import compiled emd
-from .emd_wrap import emd_c, check_result
+from .emd_wrap import emd_c, check_result, emd_1d_sorted
 from ..utils import parmap
 from .cvx import barycenter
 from ..utils import dist
 
-__all__=['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx']
+__all__=['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx', 'emd_1d_sorted']
 
 
 def emd(a, b, M, numItermax=100000, log=False):
@@ -94,7 +94,7 @@ def emd(a, b, M, numItermax=100000, log=False):
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64)
 
-    # if empty array given then use unifor distributions
+    # if empty array given then use uniform distributions
     if len(a) == 0:
         a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
     if len(b) == 0:
@@ -187,7 +187,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64)
 
-    # if empty array given then use unifor distributions
+    # if empty array given then use uniform distributions
     if len(a) == 0:
         a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
     if len(b) == 0:
@@ -309,3 +309,36 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
         return X, log_dict
     else:
         return X
+
+
+def emd_1d(a, b, x_a, x_b, metric='sqeuclidean', log=False):
+    """Solves the Earth Movers distance problem between 1d measures and returns
+    the OT matrix
+
+    """
+    assert x_a.shape[1] == x_b.shape[1] == 1, "emd_1d should only be used " + \
+            "with monodimensional data"
+
+    a = np.asarray(a, dtype=np.float64)
+    b = np.asarray(b, dtype=np.float64)
+
+    # if empty array given then use uniform distributions
+    if len(a) == 0:
+        a = np.ones((x_a.shape[0],), dtype=np.float64) / x_a.shape[0]
+    if len(b) == 0:
+        b = np.ones((x_b.shape[0],), dtype=np.float64) / x_b.shape[0]
+
+    perm_a = np.argsort(x_a.reshape((-1, )))
+    perm_b = np.argsort(x_b.reshape((-1, )))
+    inv_perm_a = np.argsort(perm_a)
+    inv_perm_b = np.argsort(perm_b)
+
+    M = dist(x_a[perm_a], x_b[perm_b], metric=metric)
+
+    G_sorted, cost = emd_1d_sorted(a, b, M)
+    G = G_sorted[inv_perm_a, :][:, inv_perm_b]
+    if log:
+        log = {}
+        log['cost'] = cost
+        return G, log
+    return G

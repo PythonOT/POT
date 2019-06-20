@@ -46,6 +46,32 @@ def test_emd_emd2():
     np.testing.assert_allclose(w, 0)
 
 
+def test_emd1d():
+    # test emd1d gives similar results as emd
+    n = 20
+    m = 30
+    u = np.random.randn(n, 1)
+    v = np.random.randn(m, 1)
+
+    M = ot.dist(u, v, metric='sqeuclidean')
+
+    G, log = ot.emd([], [], M, log=True)
+    wass = log["cost"]
+    G_1d, log = ot.emd_1d([], [], u, v, metric='sqeuclidean', log=True)
+    wass1d = log["cost"]
+
+    # check loss is similar
+    np.testing.assert_allclose(wass, wass1d)
+
+    # check G is similar
+    np.testing.assert_allclose(G, G_1d)
+
+    # check AssertionError is raised if called on non 1d arrays
+    u = np.random.randn(n, 2)
+    v = np.random.randn(m, 2)
+    np.testing.assert_raises(AssertionError, ot.emd_1d, [], [], u, v)
+
+
 def test_emd_empty():
     # test emd and emd2 for simple identity
     n = 100
