@@ -10,6 +10,8 @@ Cython linker with C solver
 import numpy as np
 cimport numpy as np
 
+from ..utils import dist
+
 cimport cython
 
 import warnings
@@ -99,7 +101,9 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
 @cython.wraparound(False)
 def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
                   np.ndarray[double, ndim=1, mode="c"] v_weights,
-                  np.ndarray[double, ndim=2, mode="c"] M):
+                  np.ndarray[double, ndim=2, mode="c"] u,
+                  np.ndarray[double, ndim=2, mode="c"] v,
+                  str metric='sqeuclidean'):
     r"""
     Roro's stuff
     """
@@ -112,17 +116,21 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
     cdef int j = 0
     cdef double w_j = v_weights[0]
 
+    cdef double m_ij = 0.
+
     cdef np.ndarray[double, ndim=2, mode="c"] G = np.zeros((n, m),
                                                            dtype=np.float64)
     while i < n and j < m:
+        m_ij = dist(u[i].reshape((1, 1)), v[j].reshape((1, 1)),
+                    metric=metric)[0, 0]
         if w_i < w_j or j == m - 1:
-            cost += M[i, j] * w_i
+            cost += m_ij * w_i
             G[i, j] = w_i
             i += 1
             w_j -= w_i
             w_i = u_weights[i]
         else:
-            cost += M[i, j] * w_j
+            cost += m_ij * w_j
             G[i, j] = w_j
             j += 1
             w_i -= w_j

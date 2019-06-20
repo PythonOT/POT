@@ -333,9 +333,8 @@ def emd_1d(a, b, x_a, x_b, metric='sqeuclidean', log=False):
     inv_perm_a = np.argsort(perm_a)
     inv_perm_b = np.argsort(perm_b)
 
-    M = dist(x_a[perm_a], x_b[perm_b], metric=metric)
-
-    G_sorted, cost = emd_1d_sorted(a, b, M)
+    G_sorted, cost = emd_1d_sorted(a, b, x_a[perm_a], x_b[perm_b],
+                                   metric=metric)
     G = G_sorted[inv_perm_a, :][:, inv_perm_b]
     if log:
         log = {}
