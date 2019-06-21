@@ -127,7 +127,7 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
         if metric == 'sqeuclidean':
             m_ij = (u[i] - v[j]) ** 2
         elif metric == 'cityblock' or metric == 'euclidean':
-            m_ij = np.abs(u[i] - v[j])
+            m_ij = abs(u[i] - v[j])
         else:
             m_ij = dist(u[i].reshape((1, 1)), v[j].reshape((1, 1)),
                         metric=metric)[0, 0]
