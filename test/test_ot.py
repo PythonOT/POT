@@ -59,10 +59,10 @@ def test_emd_1d_emd2_1d():
 
     G, log = ot.emd([], [], M, log=True)
     wass = log["cost"]
-    G_1d, log = ot.emd_1d([], [], u, v, metric='sqeuclidean', log=True)
+    G_1d, log = ot.emd_1d(u, v, [], [], metric='sqeuclidean', log=True)
     wass1d = log["cost"]
-    wass1d_emd2 = ot.emd2_1d([], [], u, v, metric='sqeuclidean', log=False)
-    wass1d_euc = ot.emd2_1d([], [], u, v, metric='euclidean', log=False)
+    wass1d_emd2 = ot.emd2_1d(u, v, [], [], metric='sqeuclidean', log=False)
+    wass1d_euc = ot.emd2_1d(u, v, [], [], metric='euclidean', log=False)
 
     # check loss is similar
     np.testing.assert_allclose(wass, wass1d)
@@ -82,7 +82,7 @@ def test_emd_1d_emd2_1d():
     # check AssertionError is raised if called on non 1d arrays
     u = np.random.randn(n, 2)
     v = np.random.randn(m, 2)
-    np.testing.assert_raises(AssertionError, ot.emd_1d, [], [], u, v)
+    np.testing.assert_raises(AssertionError, ot.emd_1d, u, v, [], [])
 
 
 def test_emd_empty():
