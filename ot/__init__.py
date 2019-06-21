@@ -22,7 +22,7 @@ from . import smooth
 from . import stochastic
 
 # OT functions
-from .lp import emd, emd2, emd_1d
+from .lp import emd, emd2, emd_1d, emd2_1d
 from .bregman import sinkhorn, sinkhorn2, barycenter
 from .da import sinkhorn_lpl1_mm
 
@@ -32,5 +32,5 @@ from .utils import dist, unif, tic, toc, toq
 __version__ = "0.5.1"
 
 __all__ = ["emd", "emd2", 'emd_1d', "sinkhorn", "sinkhorn2", "utils", 'datasets',
-           'bregman', 'lp', 'tic', 'toc', 'toq', 'gromov',
+           'bregman', 'lp', 'tic', 'toc', 'toq', 'gromov', 'emd_1d', 'emd2_1d',
            'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim']

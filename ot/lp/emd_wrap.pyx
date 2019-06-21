@@ -101,8 +101,8 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
 @cython.wraparound(False)
 def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
                   np.ndarray[double, ndim=1, mode="c"] v_weights,
-                  np.ndarray[double, ndim=2, mode="c"] u,
-                  np.ndarray[double, ndim=2, mode="c"] v,
+                  np.ndarray[double, ndim=1, mode="c"] u,
+                  np.ndarray[double, ndim=1, mode="c"] v,
                   str metric='sqeuclidean'):
     r"""
     Roro's stuff
@@ -118,21 +118,34 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
 
     cdef double m_ij = 0.
 
-    cdef np.ndarray[double, ndim=2, mode="c"] G = np.zeros((n, m),
+    cdef np.ndarray[double, ndim=1, mode="c"] G = np.zeros((n + m - 1, ),
                                                            dtype=np.float64)
+    cdef np.ndarray[long, ndim=2, mode="c"] indices = np.zeros((n + m - 1, 2),
+                                                              dtype=np.int)
+    cdef int cur_idx = 0
     while i < n and j < m:
-        m_ij = dist(u[i].reshape((1, 1)), v[j].reshape((1, 1)),
-                    metric=metric)[0, 0]
+        if metric == 'sqeuclidean':
+            m_ij = (u[i] - v[j]) ** 2
+        elif metric == 'cityblock' or metric == 'euclidean':
+            m_ij = np.abs(u[i] - v[j])
+        else:
+            m_ij = dist(u[i].reshape((1, 1)), v[j].reshape((1, 1)),
+                        metric=metric)[0, 0]
         if w_i < w_j or j == m - 1:
             cost += m_ij * w_i
-            G[i, j] = w_i
+            G[cur_idx] = w_i
+            indices[cur_idx, 0] = i
+            indices[cur_idx, 1] = j
             i += 1
             w_j -= w_i
             w_i = u_weights[i]
         else:
             cost += m_ij * w_j
-            G[i, j] = w_j
+            G[cur_idx] = w_j
+            indices[cur_idx, 0] = i
+            indices[cur_idx, 1] = j
             j += 1
             w_i -= w_j
             w_j = v_weights[j]
-    return G, cost
+        cur_idx += 1
+    return G[:cur_idx], indices[:cur_idx], cost
