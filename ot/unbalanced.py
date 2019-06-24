@@ -19,7 +19,7 @@ def sinkhorn_unbalanced(a, b, M, reg, alpha, method='sinkhorn', numItermax=1000,
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + alpha KL(\gamma 1, a) + alpha KL(\gamma^T 1, b)
+        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + \alpha KL(\gamma 1, a) + \alpha KL(\gamma^T 1, b)
 
         s.t.
              \gamma\geq 0
@@ -43,9 +43,9 @@ def sinkhorn_unbalanced(a, b, M, reg, alpha, method='sinkhorn', numItermax=1000,
     M : np.ndarray (ns, nt)
         loss matrix
     reg : float
-        Regularization term > 0
+        Entropy regularization term > 0
     alpha : float
-        Regulatization term > 0
+        Marginal relaxation term > 0
     method : str
         method used for the solver either 'sinkhorn',  'sinkhorn_stabilized' or
         'sinkhorn_epsilon_scaling', see those function for specific parameters
@@ -128,7 +128,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, alpha, method='sinkhorn',
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + alpha KL(\gamma 1, a) + alpha KL(\gamma^T 1, b)
+        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + \alpha KL(\gamma 1, a) + \alpha KL(\gamma^T 1, b)
 
         s.t.
              \gamma\geq 0
@@ -152,9 +152,9 @@ def sinkhorn_unbalanced2(a, b, M, reg, alpha, method='sinkhorn',
     M : np.ndarray (ns,nt)
         loss matrix
     reg : float
-        Regularization term > 0
-    alpha: float
-        Regularization term > 0
+        Entropy regularization term > 0
+    alpha : float
+        Marginal relaxation term > 0
     method : str
         method used for the solver either 'sinkhorn',  'sinkhorn_stabilized' or
         'sinkhorn_epsilon_scaling', see those function for specific parameters
@@ -239,7 +239,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, alpha, numItermax=1000,
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + alpha KL(\gamma 1, a) + alpha KL(\gamma^T 1, b)
+        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + \alpha KL(\gamma 1, a) + \alpha KL(\gamma^T 1, b)
 
         s.t.
              \gamma\geq 0
@@ -263,9 +263,9 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, alpha, numItermax=1000,
     M : np.ndarray (ns,nt)
         loss matrix
     reg : float
-        Regularization term > 0
-    alpha: float
-        Regularization term > 0
+        Entropy regularization term > 0
+    alpha : float
+        Marginal relaxation term > 0
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -410,7 +410,7 @@ def barycenter_unbalanced(A, M, reg, alpha, weights=None, numItermax=1000,
 
     where :
 
-    - :math:`W_{reg}(\cdot,\cdot)` is the unbalanced entropic regularized Wasserstein distance (see ot.unbalanced.sinkhorn_unbalanced)
+    - :math:`Wu_{reg}(\cdot,\cdot)` is the unbalanced entropic regularized Wasserstein distance (see ot.unbalanced.sinkhorn_unbalanced)
     - :math:`\mathbf{a}_i` are training distributions in the columns of matrix :math:`\mathbf{A}`
     - reg and :math:`\mathbf{M}` are respectively the regularization term and the cost matrix for OT
     - alpha is the marginal relaxation hyperparameter
@@ -423,9 +423,9 @@ def barycenter_unbalanced(A, M, reg, alpha, weights=None, numItermax=1000,
     M : np.ndarray (d,d)
         loss matrix   for OT
     reg : float
-        Regularization term > 0
+        Entropy regularization term > 0
     alpha : float
-        Regularization term > 0
+        Marginal relaxation term > 0
     weights : np.ndarray (n,)
         Weights of each histogram a_i on the simplex (barycentric coodinates)
     numItermax : int, optional

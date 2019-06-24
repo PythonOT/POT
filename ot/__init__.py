@@ -36,4 +36,4 @@ __version__ = "0.5.1"
 __all__ = ["emd", "emd2", "sinkhorn", "sinkhorn2", "utils", 'datasets',
            'bregman', 'lp', 'tic', 'toc', 'toq', 'gromov',
            'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim',
-           'sinkhorn_unbalanced']
+           'sinkhorn_unbalanced', "barycenter_unbalanced"]
