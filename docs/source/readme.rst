@@ -206,7 +206,12 @@ nbviewer <https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/notebooks
 Acknowledgements
 ----------------
 
-The contributors to this library are:
+This toolbox has been created and is maintained by
+
+-  `Rémi Flamary <http://remi.flamary.com/>`__
+-  `Nicolas Courty <http://people.irisa.fr/Nicolas.Courty/>`__
+
+The contributors to this library are
 
 -  `Rémi Flamary <http://remi.flamary.com/>`__
 -  `Nicolas Courty <http://people.irisa.fr/Nicolas.Courty/>`__

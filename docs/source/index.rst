@@ -13,7 +13,7 @@ Contents
    :maxdepth: 3
 
    self
-   howto
+   quickstart
    all
    auto_examples/index
 
