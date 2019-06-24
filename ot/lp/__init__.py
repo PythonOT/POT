@@ -343,7 +343,7 @@ def emd_1d(x_a, x_b, a, b, metric='sqeuclidean', dense=True, log=False):
     b : (nt,) ndarray, float64
         Target histogram (uniform weight if empty list)
     metric: str, optional (default='sqeuclidean')
-        Metric to be used. Only strings listed in ... are accepted.
+        Metric to be used. Only strings listed in :func:`ot.dist` are accepted.
         Due to implementation details, this function runs faster when
         `'sqeuclidean'`, `'cityblock'`,  or `'euclidean'` metrics are used.
     dense: boolean, optional (default=True)
@@ -454,7 +454,7 @@ def emd2_1d(x_a, x_b, a, b, metric='sqeuclidean', dense=True, log=False):
     b : (nt,) ndarray, float64
         Target histogram (uniform weight if empty list)
     metric: str, optional (default='sqeuclidean')
-        Metric to be used. Only strings listed in ... are accepted.
+        Metric to be used. Only strings listed in :func:`ot.dist` are accepted.
         Due to implementation details, this function runs faster when
         `'sqeuclidean'`, `'cityblock'`,  or `'euclidean'` metrics are used.
     dense: boolean, optional (default=True)
