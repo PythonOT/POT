@@ -11,6 +11,10 @@ to use for different problems related to optimal transport (OT).
 Optimal transport and Wasserstein distance
 ------------------------------------------
 
+
+Solving optimal transport
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 The optimal transport problem between discrete distributions is often expressed
 as
     .. math::
@@ -39,6 +43,8 @@ that will return the optimal transport matrix :math:`\gamma^*`:
     - :any:`auto_examples/plot_OT_1D` 
     - :any:`auto_examples/plot_OT_L1_vs_L2` 
 
+Computing Wasserstein distance
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The value of the OT solution is often more of interest that the OT matrix :
 
@@ -59,6 +65,13 @@ properties. It can computed from an already estimated OT matrix with
     # a,b are 1D histograms (sum to 1 and positive)
     # M is the ground cost matrix
     W=ot.emd2(a,b,M) # Wasserstein distance / EMD value
+
+
+.. hint::
+    Examples of use for :any:`ot.emd2` are available in the following examples:
+
+    - :any:`auto_examples/plot_compute_emd`
+ 
 
 .. note::
     In POT, most functions that solve OT or regularized OT problems have two
