@@ -19,7 +19,7 @@ def sinkhorn_unbalanced(a, b, M, reg, alpha, method='sinkhorn', numItermax=1000,
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + \alpha KL(\gamma 1, a) + \alpha KL(\gamma^T 1, b)
+        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + \\alpha KL(\gamma 1, a) + \\alpha KL(\gamma^T 1, b)
 
         s.t.
              \gamma\geq 0
@@ -128,7 +128,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, alpha, method='sinkhorn',
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + \alpha KL(\gamma 1, a) + \alpha KL(\gamma^T 1, b)
+        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + \\alpha KL(\gamma 1, a) + \\alpha KL(\gamma^T 1, b)
 
         s.t.
              \gamma\geq 0
@@ -239,7 +239,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, alpha, numItermax=1000,
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + \alpha KL(\gamma 1, a) + \alpha KL(\gamma^T 1, b)
+        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + \\alpha KL(\gamma 1, a) + \\alpha KL(\gamma^T 1, b)
 
         s.t.
              \gamma\geq 0

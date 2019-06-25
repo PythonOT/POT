@@ -357,7 +357,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
     Computes the FGW transport between two graphs see [24]
 
     .. math::
-        \gamma = arg\min_\gamma (1-\alpha)*<\gamma,M>_F + \alpha* \sum_{i,j,k,l}
+        \gamma = arg\min_\gamma (1-\\alpha)*<\gamma,M>_F + \\alpha* \sum_{i,j,k,l}
         L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
 
         s.t. \gamma 1 = p
@@ -440,7 +440,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
     Computes the FGW distance between two graphs see [24]
 
     .. math::
-        \min_\gamma (1-\alpha)*<\gamma,M>_F + \alpha* \sum_{i,j,k,l}
+        \min_\gamma (1-\\alpha)*<\gamma,M>_F + \\alpha* \sum_{i,j,k,l}
         L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
 
 
