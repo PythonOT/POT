@@ -20,10 +20,12 @@ from . import da
 from . import gromov
 from . import smooth
 from . import stochastic
+from . import unbalanced
 
 # OT functions
 from .lp import emd, emd2
 from .bregman import sinkhorn, sinkhorn2, barycenter
+from .unbalanced import sinkhorn_unbalanced, barycenter_unbalanced
 from .da import sinkhorn_lpl1_mm
 
 # utils functions
@@ -33,4 +35,5 @@ __version__ = "0.5.1"
 
 __all__ = ["emd", "emd2", "sinkhorn", "sinkhorn2", "utils", 'datasets',
            'bregman', 'lp', 'tic', 'toc', 'toq', 'gromov',
-           'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim']
+           'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim',
+           'sinkhorn_unbalanced', "barycenter_unbalanced"]

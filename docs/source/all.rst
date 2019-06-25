@@ -43,7 +43,7 @@ ot.da
 
 .. automodule:: ot.da
   :members:
-  
+
 ot.gpu
 --------
 
@@ -80,3 +80,9 @@ ot.stochastic
 
 .. automodule:: ot.stochastic
    :members:
+
+ot.unbalanced
+-------------
+
+.. automodule:: ot.unbalanced
+  :members:
