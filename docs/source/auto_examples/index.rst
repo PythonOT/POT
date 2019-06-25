@@ -109,26 +109,6 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Illustration of 2D optimal transport between discributions that are weighted sum of diracs. The...">
-
-.. only:: html
-
-    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_OT_2D_samples_thumb.png
-
-        :ref:`sphx_glr_auto_examples_plot_OT_2D_samples.py`
-
-.. raw:: html
-
-    </div>
-
-
-.. toctree::
-   :hidden:
-
-   /auto_examples/plot_OT_2D_samples
-
-.. raw:: html
-
     <div class="sphx-glr-thumbcontainer" tooltip="Shows how to compute multiple EMD and Sinkhorn with two differnt ground metrics and plot their ...">
 
 .. only:: html
@@ -206,6 +186,26 @@ This is a gallery of all the POT example files.
    :hidden:
 
    /auto_examples/plot_WDA
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Illustration of 2D optimal transport between discributions that are weighted sum of diracs. The...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_OT_2D_samples_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_OT_2D_samples.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_OT_2D_samples
 
 .. raw:: html
 
@@ -329,6 +329,26 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation of FGW for 1D measures[18].">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_fgw_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_fgw.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_fgw
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="This example introduces a domain adaptation in a 2D setting and the 4 OTDA approaches currently...">
 
 .. only:: html
@@ -406,6 +426,26 @@ This is a gallery of all the POT example files.
    :hidden:
 
    /auto_examples/plot_barycenter_lp_vs_entropic
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation barycenter of labeled graphs using FGW">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_barycenter_fgw_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_barycenter_fgw.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_barycenter_fgw
 
 .. raw:: html
 
