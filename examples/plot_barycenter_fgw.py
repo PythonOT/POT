@@ -166,7 +166,7 @@ Ys = [np.array([v for (k, v) in nx.get_node_attributes(x, 'attr_name').items()])
 lambdas = np.array([np.ones(len(Ys)) / len(Ys)]).ravel()
 sizebary = 15  # we choose a barycenter with 15 nodes
 
-A, C, log = fgw_barycenters(sizebary, Ys, Cs, ps, lambdas, alpha=0.95)
+A, C, log = fgw_barycenters(sizebary, Ys, Cs, ps, lambdas, alpha=0.95, log=True)
 
 ##############################################################################
 # Plot Barycenter
