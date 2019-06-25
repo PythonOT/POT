@@ -241,7 +241,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
     b = np.asarray(b, dtype=np.float64)
     if len(b.shape) < 2:
-        b = b.reshape((-1, 1))
+        b = b[:, None]
 
     return sink()
 
