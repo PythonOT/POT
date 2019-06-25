@@ -29,6 +29,26 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation of Unbalanced Optimal transport using a Kullback-Leibl...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_UOT_1D_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_UOT_1D.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_UOT_1D
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="Illustrates the use of the generic solver for regularized OT with user-designed regularization ...">
 
 .. only:: html
@@ -286,6 +306,26 @@ This is a gallery of all the POT example files.
    :hidden:
 
    /auto_examples/plot_otda_mapping_colors_images
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation of regularized Wassersyein Barycenter as proposed in [...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_UOT_barycenter_1D_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_UOT_barycenter_1D.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_UOT_barycenter_1D
 
 .. raw:: html
 
