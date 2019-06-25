@@ -359,7 +359,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
     .. math::
         \gamma = arg\min_\gamma (1-\alpha)*<\gamma,M>_F + \alpha* \sum_{i,j,k,l}
         L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
-        
+
         s.t. \gamma 1 = p
              \gamma^T 1= q
              \gamma\geq 0
@@ -414,7 +414,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
         and Courty Nicolas "Optimal Transport for structured data with
         application on graphs", International Conference on Machine Learning
         (ICML). 2019.
-        
+
     """
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
@@ -442,7 +442,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
     .. math::
         \min_\gamma (1-\alpha)*<\gamma,M>_F + \alpha* \sum_{i,j,k,l}
         L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
-        
+
 
         s.t. \gamma 1 = p
              \gamma^T 1= q
@@ -647,7 +647,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
     Returns
     -------
     T : ndarray, shape (ns, nt)
-        Optimal coupling between the two spaces 
+        Optimal coupling between the two spaces
 
     References
     ----------
@@ -1024,7 +1024,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         T : list of (N,ns) transport matrices
         Ms : all distance matrices between the feature of the barycenter and the
         other features dist(X,Ys) shape (N,ns)
-        
+
     References
     ----------
     .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
