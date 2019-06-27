@@ -156,11 +156,11 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
     cdef int cur_idx = 0
     while i < n and j < m:
         if metric == 'sqeuclidean':
-            m_ij = (u[i] - v[j]) ** 2
+            m_ij = (u[i] - v[j]) * (u[i] - v[j])
         elif metric == 'cityblock' or metric == 'euclidean':
-            m_ij = abs(u[i] - v[j])
+            m_ij = math.fabs(u[i] - v[j])
         elif metric == 'minkowski':
-            m_ij = math.pow(abs(u[i] - v[j]), p)
+            m_ij = math.pow(math.fabs(u[i] - v[j]), p)
         else:
             m_ij = dist(u[i].reshape((1, 1)), v[j].reshape((1, 1)),
                         metric=metric)[0, 0]

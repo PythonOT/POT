@@ -167,6 +167,7 @@ The contributors to this library are:
 * [Alain Rakotomamonjy](https://sites.google.com/site/alainrakotomamonjy/home)
 * [Vayer Titouan](https://tvayer.github.io/)
 * [Hicham Janati](https://hichamjanati.github.io/) (Unbalanced OT)
+* [Romain Tavenard](https://rtavenar.github.io/) (1d Wasserstein)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
