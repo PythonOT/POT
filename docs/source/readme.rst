@@ -35,6 +35,7 @@ It provides the following solvers:
 -  Stochastic Optimization for Large-scale Optimal Transport (semi-dual
    problem [18] and dual problem [19])
 -  Non regularized free support Wasserstein barycenters [20].
+-  Unbalanced OT with KL relaxation distance and barycenter [10, 25].
 
 Some demonstrations (both in Python and Jupyter Notebook format) are
 available in the examples folder.
@@ -68,6 +69,13 @@ modules:
 
 Pip installation
 ^^^^^^^^^^^^^^^^
+
+Note that due to a limitation of pip, ``cython`` and ``numpy`` need to
+be installed prior to installing POT. This can be done easily with
+
+::
+
+    pip install numpy cython
 
 You can install the toolbox through PyPI with:
 
@@ -229,6 +237,8 @@ The contributors to this library are
 -  `Alain
    Rakotomamonjy <https://sites.google.com/site/alainrakotomamonjy/home>`__
 -  `Vayer Titouan <https://tvayer.github.io/>`__
+-  `Hicham Janati <https://hichamjanati.github.io/>`__ (Unbalanced OT)
+-  `Romain Tavenard <https://rtavenar.github.io/>`__ (1d Wasserstein)
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
@@ -378,6 +388,10 @@ and Statistics, (AISTATS) 21, 2018
 (2019). `Optimal Transport for structured data with application on
 graphs <http://proceedings.mlr.press/v97/titouan19a.html>`__ Proceedings
 of the 36th International Conference on Machine Learning (ICML).
+
+[25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. (2019).
+`Learning with a Wasserstein Loss <http://cbcl.mit.edu/wasserstein/>`__
+Advances in Neural Information Processing Systems (NIPS).
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
