@@ -83,6 +83,29 @@ properties. It can computed from an already estimated OT matrix with
 Regularized Optimal Transport
 -----------------------------
 
+Recent developments have shown the interest of regularized OT both in terms of
+computational and statistical properties.
+
+We address in this section the regularized OT problem that can be expressed as
+
+.. math::
+    \gamma^* = arg\min_\gamma <\gamma,M>_F + reg*\Omega(\gamma)
+
+    s.t. \gamma 1 = a
+
+            \gamma^T 1= b
+
+            \gamma\geq 0
+where :
+
+- :math:`M\in\mathbb{R}_+^{m\times n}` is the metric cost matrix defining the cost to move mass from bin :math:`a_i` to bin :math:`b_j`.
+- :math:`a` and :math:`b` are histograms (positive, sum to 1) that represent the weights of each samples in the source an target distributions.
+- :math:`\Omega` is the regularization term.
+
+We disvuss in the following specific algorithms 
+
+
+
 Entropic regularized OT
 ^^^^^^^^^^^^^^^^^^^^^^^
 
