@@ -21,7 +21,7 @@ Solving optimal transport
 The optimal transport problem between discrete distributions is often expressed
 as
     .. math::
-        \gamma^* = arg\min_\gamma \sum_{i,j}\gamma_{i,j}M_{i,j}
+        \gamma^* = arg\min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j}
 
         s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
@@ -56,15 +56,12 @@ Computing Wasserstein distance
 The value of the OT solution is often more of interest that the OT matrix :
 
     .. math::
-        W(a,b)=\min_\gamma \sum_{i,j}\gamma_{i,j}M_{i,j}
+        OT(a,b)=\min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j}
 
         s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
 
-where :math:`W(a,b)` is the  `Wasserstein distance
-<https://en.wikipedia.org/wiki/Wasserstein_metric>`_ between distributions a and b
-It is a metrix that has nice statistical
-properties. It can computed from an already estimated OT matrix with
+It can computed from an already estimated OT matrix with
 :code:`np.sum(T*M)` or directly with the function :any:`ot.emd2`.
 
 .. code:: python
@@ -73,12 +70,57 @@ properties. It can computed from an already estimated OT matrix with
     # M is the ground cost matrix
     W=ot.emd2(a,b,M) # Wasserstein distance / EMD value
 
+Note that the well known  `Wasserstein distance
+<https://en.wikipedia.org/wiki/Wasserstein_metric>`_ between distributions a and
+b is defined as
+
+
+    .. math::
+
+        W_p(a,b)=(\min_\gamma \sum_{i,j}\gamma_{i,j}\|x_i-y_j\|_p)^\frac{1}{p}
+
+        s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
+
+This means that if you want to compute the :math:`W_2` you need to compute the
+square root of :any:`ot.emd2` when providing
+:code:`M=ot.dist(xs,xt)` that use the squared euclidean distance by default. Computing
+the :math:`W_1` wasserstein distance can be done directly with  :any:`ot.emd2`
+when providing :code:`M=ot.dist(xs,xt, metric='euclidean')` to use the euclidean
+distance.
+
+ 
 
 .. hint::
     Examples of use for :any:`ot.emd2` are available in the following examples:
 
     - :any:`auto_examples/plot_compute_emd`
  
+
+Special cases
+^^^^^^^^^^^^^
+
+Note that the OT problem and the corresponding Wasserstein distance can in some
+special cases be computed very efficiently. 
+
+For instance when the samples are in 1D, then the OT problem can be solved in
+:math:`O(n\log(n))` by using a simple sorting. In this case we provide the
+function :any:`ot.emd_1d` and   :any:`ot.emd2_1d` to return respectively the OT
+matrix and value. Note that since the solution is very sparse the :code:`sparse`
+parameter of :any:`ot.emd_1d` allows for solving and returning the solution for
+very large problems. Note that in order to computed directly the :math:`W_p`
+Wasserstein distance in 1D we provide the function :any:`ot.wasserstein_1d` that
+takes :code:`p` as a parameter. 
+
+Another specials for estimating OT and Monge mapping is between Gaussian
+distributions. In this case there exists a close form solution given in Remark
+2.29 in [15]_ and the Monge mapping is an affine function and can be
+also computed from the covariances and means of the source and target
+distributions. In this case when the finite sample dataset is supposed gaussian, we provide 
+:any:`ot.da.OT_mapping_linear` that returns the parameters for the Monge
+mapping.
+
+
+
 
 Regularized Optimal Transport
 -----------------------------
@@ -89,31 +131,53 @@ computational and statistical properties.
 We address in this section the regularized OT problem that can be expressed as
 
 .. math::
-    \gamma^* = arg\min_\gamma <\gamma,M>_F + reg*\Omega(\gamma)
+    \gamma^* = arg\min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j} + \lambda\Omega(\gamma)
 
-    s.t. \gamma 1 = a
+        s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
-            \gamma^T 1= b
 
-            \gamma\geq 0
 where :
 
 - :math:`M\in\mathbb{R}_+^{m\times n}` is the metric cost matrix defining the cost to move mass from bin :math:`a_i` to bin :math:`b_j`.
 - :math:`a` and :math:`b` are histograms (positive, sum to 1) that represent the weights of each samples in the source an target distributions.
 - :math:`\Omega` is the regularization term.
 
-We disvuss in the following specific algorithms 
-
+We discuss in the following specific algorithms that can be used depending on
+the regularization term.
 
 
 Entropic regularized OT
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+This is the most common regularization used for optimal transport. It has been
+proposed in the ML community by Marco Cuturi in his seminal paper [2]_. This
+regularization has the following expression
+
+.. math::
+    \Omega(\gamma)=\sum_{i,j}\gamma_{i,j}\log(\gamma_{i,j})
+
+
+The use of the regularization term above in the optimization problem has a very
+strong impact. First it makes the problem smooth which leads to new optimization
+procedures such as L-BFGS (see :any:`ot.smooth` ). Next it makes the problem
+strictly convex meaning that there will be a unique solution. Finally the
+solution of the resulting optimization problem can be expressed as:
+
+.. math::
+
+    \gamma_\lambda^*=\text{diag}(u)K\text{diag}(v)
+
+where :math:`u` and :math:`v` are vectors and :math:`K=\exp(-M/\lambda)` where
+the :math:`\exp` is taken component-wise.    
+
+
+
+
 
 Other regularization
 ^^^^^^^^^^^^^^^^^^^^
 
-Stochastic gradient decsent
+Stochastic gradient descent
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Wasserstein Barycenters
