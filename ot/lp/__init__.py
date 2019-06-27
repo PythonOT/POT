@@ -21,7 +21,7 @@ from .cvx import barycenter
 from ..utils import dist
 
 __all__=['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx',
-         'emd_1d', 'emd2_1d', 'wasserstein_1d', 'wasserstein2_1d']
+         'emd_1d', 'emd2_1d', 'wasserstein_1d']
 
 
 def emd(a, b, M, numItermax=100000, log=False):
@@ -529,9 +529,9 @@ def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     return cost
 
 
-def wasserstein_1d(x_a, x_b, a=None, b=None, p=1., dense=True, log=False):
+def wasserstein_1d(x_a, x_b, a=None, b=None, p=1.):
     """Solves the p-Wasserstein distance problem between 1d measures and returns
-    the OT matrix
+    the distance
 
 
     .. math::
@@ -560,22 +560,11 @@ def wasserstein_1d(x_a, x_b, a=None, b=None, p=1., dense=True, log=False):
         Target histogram (default is uniform weight)
     p: float, optional (default=1.0)
          The order of the p-Wasserstein distance to be computed
-    dense: boolean, optional (default=True)
-        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
-        Otherwise returns a sparse representation using scipy's `coo_matrix`
-        format. Due to implementation details, this function runs faster when
-        `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'` metrics
-        are used.
-    log: boolean, optional (default=False)
-        If True, returns a dictionary containing the cost.
-        Otherwise returns only the optimal transportation matrix.
 
     Returns
     -------
-    gamma: (ns, nt) ndarray
-        Optimal transportation matrix for the given parameters
-    log: dict
-        If input log is True, a dictionary containing the cost
+    dist: float
+        p-Wasserstein distance
 
 
     Examples
@@ -590,11 +579,9 @@ def wasserstein_1d(x_a, x_b, a=None, b=None, p=1., dense=True, log=False):
     >>> x_a = [2., 0.]
     >>> x_b = [0., 3.]
     >>> ot.wasserstein_1d(x_a, x_b, a, b)
-    array([[0. ,  0.5],
-           [0.5,  0. ]])
+    0.5
     >>> ot.wasserstein_1d(x_a, x_b)
-    array([[0. ,  0.5],
-           [0.5,  0. ]])
+    0.5
 
     References
     ----------
@@ -605,99 +592,7 @@ def wasserstein_1d(x_a, x_b, a=None, b=None, p=1., dense=True, log=False):
     See Also
     --------
     ot.lp.emd_1d : EMD for 1d distributions
-    ot.lp.wasserstein2_1d : Wasserstein for 1d distributions (returns the cost
-        instead of the transportation matrix)
     """
-    if log:
-        G, log = emd_1d(x_a=x_a, x_b=x_b, a=a, b=b, metric='minkowski', p=p,
-                        dense=dense, log=log)
-        log['cost'] = np.power(log['cost'], 1. / p)
-        return G, log
-    return emd_1d(x_a=x_a, x_b=x_b, a=a, b=b, metric='minkowski', p=p,
-                  dense=dense, log=log)
-
-
-def wasserstein2_1d(x_a, x_b, a=None, b=None, p=1., dense=True, log=False):
-    """Solves the p-Wasserstein distance problem between 1d measures and returns
-    the loss
-
-
-    .. math::
-        \gamma = arg\min_\gamma \left( \sum_i \sum_j \gamma_{ij}
-            |x_a[i] - x_b[j]|^p \\right)^{1/p}
-
-        s.t. \gamma 1 = a,
-             \gamma^T 1= b,
-             \gamma\geq 0
-    where :
-
-    - x_a and x_b are the samples
-    - a and b are the sample weights
-
-    Uses the algorithm detailed in [1]_
-
-    Parameters
-    ----------
-    x_a : (ns,) or (ns, 1) ndarray, float64
-        Source dirac locations (on the real line)
-    x_b : (nt,) or (ns, 1) ndarray, float64
-        Target dirac locations (on the real line)
-    a : (ns,) ndarray, float64, optional
-        Source histogram (default is uniform weight)
-    b : (nt,) ndarray, float64, optional
-        Target histogram (default is uniform weight)
-    p: float, optional (default=1.0)
-         The order of the p-Wasserstein distance to be computed
-    dense: boolean, optional (default=True)
-        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
-        Otherwise returns a sparse representation using scipy's `coo_matrix`
-        format. Only used if log is set to True. Due to implementation details,
-        this function runs faster when dense is set to False.
-    log: boolean, optional (default=False)
-        If True, returns a dictionary containing the transportation matrix.
-        Otherwise returns only the loss.
-
-    Returns
-    -------
-    loss: float
-        Cost associated to the optimal transportation
-    log: dict
-        If input log is True, a dictionary containing the Optimal transportation
-        matrix for the given parameters
-
-
-    Examples
-    --------
-
-    Simple example with obvious solution. The function wasserstein2_1d accepts
-    lists and performs automatic conversion to numpy arrays
-
-    >>> import ot
-    >>> a=[.5, .5]
-    >>> b=[.5, .5]
-    >>> x_a = [2., 0.]
-    >>> x_b = [0., 3.]
-    >>> ot.wasserstein2_1d(x_a, x_b, a, b)
-    0.5
-    >>> ot.wasserstein2_1d(x_a, x_b)
-    0.5
-
-    References
-    ----------
-
-    .. [1]  Peyré, G., & Cuturi, M. (2017). "Computational Optimal
-        Transport", 2018.
-
-    See Also
-    --------
-    ot.lp.emd2_1d : EMD for 1d distributions
-    ot.lp.wasserstein_1d : Wasserstein for 1d distributions (returns the
-        transportation matrix instead of the cost)
-    """
-    if log:
-        cost, log = emd2_1d(x_a=x_a, x_b=x_b, a=a, b=b, metric='minkowski', p=p,
-                            dense=dense, log=log)
-        cost = np.power(cost, 1. / p)
-        return cost, log
-    return np.power(emd2_1d(x_a=x_a, x_b=x_b, a=a, b=b, metric='minkowski', p=p,
-                            dense=dense, log=log), 1. /  p)
+    cost_emd = emd2_1d(x_a=x_a, x_b=x_b, a=a, b=b, metric='minkowski', p=p,
+                       dense=False, log=False)
+    return np.power(cost_emd, 1. / p)

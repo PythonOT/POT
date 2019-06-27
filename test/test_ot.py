@@ -98,14 +98,10 @@ def test_wass_1d():
     G, log = ot.emd([], [], M, log=True)
     wass = log["cost"]
 
-    G_1d, log = ot.wasserstein_1d(u, v, [], [], p=2., log=True)
-    wass1d = log["cost"]
+    wass1d = ot.wasserstein_1d(u, v, [], [], p=2.)
 
     # check loss is similar
     np.testing.assert_allclose(np.sqrt(wass), wass1d)
-
-    # check G is similar
-    np.testing.assert_allclose(G, G_1d)
 
 
 def test_emd_empty():
