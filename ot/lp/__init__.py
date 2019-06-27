@@ -10,16 +10,18 @@ Solvers for the original linear program OT problem
 import multiprocessing
 
 import numpy as np
+from scipy.sparse import coo_matrix
 
 from .import cvx
 
 # import compiled emd
-from .emd_wrap import emd_c, check_result
+from .emd_wrap import emd_c, check_result, emd_1d_sorted
 from ..utils import parmap
 from .cvx import barycenter
 from ..utils import dist
 
-__all__=['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx']
+__all__=['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx',
+         'emd_1d', 'emd2_1d', 'wasserstein_1d']
 
 
 def emd(a, b, M, numItermax=100000, log=False):
@@ -94,7 +96,7 @@ def emd(a, b, M, numItermax=100000, log=False):
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64)
 
-    # if empty array given then use unifor distributions
+    # if empty array given then use uniform distributions
     if len(a) == 0:
         a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
     if len(b) == 0:
@@ -187,7 +189,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64)
 
-    # if empty array given then use unifor distributions
+    # if empty array given then use uniform distributions
     if len(a) == 0:
         a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
     if len(b) == 0:
@@ -309,3 +311,288 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
         return X, log_dict
     else:
         return X
+
+
+def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
+           log=False):
+    """Solves the Earth Movers distance problem between 1d measures and returns
+    the OT matrix
+
+
+    .. math::
+        \gamma = arg\min_\gamma \sum_i \sum_j \gamma_{ij} d(x_a[i], x_b[j])
+
+        s.t. \gamma 1 = a,
+             \gamma^T 1= b,
+             \gamma\geq 0
+    where :
+
+    - d is the metric
+    - x_a and x_b are the samples
+    - a and b are the sample weights
+
+    When 'minkowski' is used as a metric, :math:`d(x, y) = |x - y|^p`.
+
+    Uses the algorithm detailed in [1]_
+
+    Parameters
+    ----------
+    x_a : (ns,) or (ns, 1) ndarray, float64
+        Source dirac locations (on the real line)
+    x_b : (nt,) or (ns, 1) ndarray, float64
+        Target dirac locations (on the real line)
+    a : (ns,) ndarray, float64, optional
+        Source histogram (default is uniform weight)
+    b : (nt,) ndarray, float64, optional
+        Target histogram (default is uniform weight)
+    metric: str, optional (default='sqeuclidean')
+        Metric to be used. Only strings listed in :func:`ot.dist` are accepted.
+        Due to implementation details, this function runs faster when
+        `'sqeuclidean'`, `'cityblock'`,  or `'euclidean'` metrics are used.
+    p: float, optional (default=1.0)
+         The p-norm to apply for if metric='minkowski'
+    dense: boolean, optional (default=True)
+        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
+        Otherwise returns a sparse representation using scipy's `coo_matrix`
+        format. Due to implementation details, this function runs faster when
+        `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'` metrics
+        are used.
+    log: boolean, optional (default=False)
+        If True, returns a dictionary containing the cost.
+        Otherwise returns only the optimal transportation matrix.
+
+    Returns
+    -------
+    gamma: (ns, nt) ndarray
+        Optimal transportation matrix for the given parameters
+    log: dict
+        If input log is True, a dictionary containing the cost
+
+
+    Examples
+    --------
+
+    Simple example with obvious solution. The function emd_1d accepts lists and
+    performs automatic conversion to numpy arrays
+
+    >>> import ot
+    >>> a=[.5, .5]
+    >>> b=[.5, .5]
+    >>> x_a = [2., 0.]
+    >>> x_b = [0., 3.]
+    >>> ot.emd_1d(x_a, x_b, a, b)
+    array([[0. ,  0.5],
+           [0.5,  0. ]])
+    >>> ot.emd_1d(x_a, x_b)
+    array([[0. ,  0.5],
+           [0.5,  0. ]])
+
+    References
+    ----------
+
+    .. [1]  Peyré, G., & Cuturi, M. (2017). "Computational Optimal
+        Transport", 2018.
+
+    See Also
+    --------
+    ot.lp.emd : EMD for multidimensional distributions
+    ot.lp.emd2_1d : EMD for 1d distributions (returns cost instead of the
+        transportation matrix)
+    """
+    a = np.asarray(a, dtype=np.float64)
+    b = np.asarray(b, dtype=np.float64)
+    x_a = np.asarray(x_a, dtype=np.float64)
+    x_b = np.asarray(x_b, dtype=np.float64)
+
+    assert (x_a.ndim == 1 or x_a.ndim == 2 and x_a.shape[1] == 1), \
+        "emd_1d should only be used with monodimensional data"
+    assert (x_b.ndim == 1 or x_b.ndim == 2 and x_b.shape[1] == 1), \
+        "emd_1d should only be used with monodimensional data"
+
+    # if empty array given then use uniform distributions
+    if a.ndim == 0 or len(a) == 0:
+        a = np.ones((x_a.shape[0],), dtype=np.float64) / x_a.shape[0]
+    if b.ndim == 0 or len(b) == 0:
+        b = np.ones((x_b.shape[0],), dtype=np.float64) / x_b.shape[0]
+
+    x_a_1d = x_a.reshape((-1, ))
+    x_b_1d = x_b.reshape((-1, ))
+    perm_a = np.argsort(x_a_1d)
+    perm_b = np.argsort(x_b_1d)
+
+    G_sorted, indices, cost = emd_1d_sorted(a, b,
+                                            x_a_1d[perm_a], x_b_1d[perm_b],
+                                            metric=metric, p=p)
+    G = coo_matrix((G_sorted, (perm_a[indices[:, 0]], perm_b[indices[:, 1]])),
+                   shape=(a.shape[0], b.shape[0]))
+    if dense:
+        G = G.toarray()
+    if log:
+        log = {'cost': cost}
+        return G, log
+    return G
+
+
+def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
+            log=False):
+    """Solves the Earth Movers distance problem between 1d measures and returns
+    the loss
+
+
+    .. math::
+        \gamma = arg\min_\gamma \sum_i \sum_j \gamma_{ij} d(x_a[i], x_b[j])
+
+        s.t. \gamma 1 = a,
+             \gamma^T 1= b,
+             \gamma\geq 0
+    where :
+
+    - d is the metric
+    - x_a and x_b are the samples
+    - a and b are the sample weights
+
+    When 'minkowski' is used as a metric, :math:`d(x, y) = |x - y|^p`.
+
+    Uses the algorithm detailed in [1]_
+
+    Parameters
+    ----------
+    x_a : (ns,) or (ns, 1) ndarray, float64
+        Source dirac locations (on the real line)
+    x_b : (nt,) or (ns, 1) ndarray, float64
+        Target dirac locations (on the real line)
+    a : (ns,) ndarray, float64, optional
+        Source histogram (default is uniform weight)
+    b : (nt,) ndarray, float64, optional
+        Target histogram (default is uniform weight)
+    metric: str, optional (default='sqeuclidean')
+        Metric to be used. Only strings listed in :func:`ot.dist` are accepted.
+        Due to implementation details, this function runs faster when
+        `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'` metrics
+        are used.
+    p: float, optional (default=1.0)
+         The p-norm to apply for if metric='minkowski'
+    dense: boolean, optional (default=True)
+        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
+        Otherwise returns a sparse representation using scipy's `coo_matrix`
+        format. Only used if log is set to True. Due to implementation details,
+        this function runs faster when dense is set to False.
+    log: boolean, optional (default=False)
+        If True, returns a dictionary containing the transportation matrix.
+        Otherwise returns only the loss.
+
+    Returns
+    -------
+    loss: float
+        Cost associated to the optimal transportation
+    log: dict
+        If input log is True, a dictionary containing the Optimal transportation
+        matrix for the given parameters
+
+
+    Examples
+    --------
+
+    Simple example with obvious solution. The function emd2_1d accepts lists and
+    performs automatic conversion to numpy arrays
+
+    >>> import ot
+    >>> a=[.5, .5]
+    >>> b=[.5, .5]
+    >>> x_a = [2., 0.]
+    >>> x_b = [0., 3.]
+    >>> ot.emd2_1d(x_a, x_b, a, b)
+    0.5
+    >>> ot.emd2_1d(x_a, x_b)
+    0.5
+
+    References
+    ----------
+
+    .. [1]  Peyré, G., & Cuturi, M. (2017). "Computational Optimal
+        Transport", 2018.
+
+    See Also
+    --------
+    ot.lp.emd2 : EMD for multidimensional distributions
+    ot.lp.emd_1d : EMD for 1d distributions (returns the transportation matrix
+        instead of the cost)
+    """
+    # If we do not return G (log==False), then we should not to cast it to dense
+    # (useless overhead)
+    G, log_emd = emd_1d(x_a=x_a, x_b=x_b, a=a, b=b, metric=metric, p=p,
+                        dense=dense and log, log=True)
+    cost = log_emd['cost']
+    if log:
+        log_emd = {'G': G}
+        return cost, log_emd
+    return cost
+
+
+def wasserstein_1d(x_a, x_b, a=None, b=None, p=1.):
+    """Solves the p-Wasserstein distance problem between 1d measures and returns
+    the distance
+
+
+    .. math::
+        \gamma = arg\min_\gamma \left( \sum_i \sum_j \gamma_{ij}
+            |x_a[i] - x_b[j]|^p \\right)^{1/p}
+
+        s.t. \gamma 1 = a,
+             \gamma^T 1= b,
+             \gamma\geq 0
+    where :
+
+    - x_a and x_b are the samples
+    - a and b are the sample weights
+
+    Uses the algorithm detailed in [1]_
+
+    Parameters
+    ----------
+    x_a : (ns,) or (ns, 1) ndarray, float64
+        Source dirac locations (on the real line)
+    x_b : (nt,) or (ns, 1) ndarray, float64
+        Target dirac locations (on the real line)
+    a : (ns,) ndarray, float64, optional
+        Source histogram (default is uniform weight)
+    b : (nt,) ndarray, float64, optional
+        Target histogram (default is uniform weight)
+    p: float, optional (default=1.0)
+         The order of the p-Wasserstein distance to be computed
+
+    Returns
+    -------
+    dist: float
+        p-Wasserstein distance
+
+
+    Examples
+    --------
+
+    Simple example with obvious solution. The function wasserstein_1d accepts
+    lists and performs automatic conversion to numpy arrays
+
+    >>> import ot
+    >>> a=[.5, .5]
+    >>> b=[.5, .5]
+    >>> x_a = [2., 0.]
+    >>> x_b = [0., 3.]
+    >>> ot.wasserstein_1d(x_a, x_b, a, b)
+    0.5
+    >>> ot.wasserstein_1d(x_a, x_b)
+    0.5
+
+    References
+    ----------
+
+    .. [1]  Peyré, G., & Cuturi, M. (2017). "Computational Optimal
+        Transport", 2018.
+
+    See Also
+    --------
+    ot.lp.emd_1d : EMD for 1d distributions
+    """
+    cost_emd = emd2_1d(x_a=x_a, x_b=x_b, a=a, b=b, metric='minkowski', p=p,
+                       dense=False, log=False)
+    return np.power(cost_emd, 1. / p)

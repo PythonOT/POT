@@ -7,6 +7,7 @@
 import warnings
 
 import numpy as np
+from scipy.stats import wasserstein_distance
 
 import ot
 from ot.datasets import make_1D_gauss as gauss
@@ -37,13 +38,70 @@ def test_emd_emd2():
 
     # check G is identity
     np.testing.assert_allclose(G, np.eye(n) / n)
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(u, G.sum(1))  # cf convergence sinkhorn
     np.testing.assert_allclose(u, G.sum(0))  # cf convergence sinkhorn
 
     w = ot.emd2(u, u, M)
     # check loss=0
     np.testing.assert_allclose(w, 0)
+
+
+def test_emd_1d_emd2_1d():
+    # test emd1d gives similar results as emd
+    n = 20
+    m = 30
+    rng = np.random.RandomState(0)
+    u = rng.randn(n, 1)
+    v = rng.randn(m, 1)
+
+    M = ot.dist(u, v, metric='sqeuclidean')
+
+    G, log = ot.emd([], [], M, log=True)
+    wass = log["cost"]
+    G_1d, log = ot.emd_1d(u, v, [], [], metric='sqeuclidean', log=True)
+    wass1d = log["cost"]
+    wass1d_emd2 = ot.emd2_1d(u, v, [], [], metric='sqeuclidean', log=False)
+    wass1d_euc = ot.emd2_1d(u, v, [], [], metric='euclidean', log=False)
+
+    # check loss is similar
+    np.testing.assert_allclose(wass, wass1d)
+    np.testing.assert_allclose(wass, wass1d_emd2)
+
+    # check loss is similar to scipy's implementation for Euclidean metric
+    wass_sp = wasserstein_distance(u.reshape((-1, )), v.reshape((-1, )))
+    np.testing.assert_allclose(wass_sp, wass1d_euc)
+
+    # check constraints
+    np.testing.assert_allclose(np.ones((n, )) / n, G.sum(1))
+    np.testing.assert_allclose(np.ones((m, )) / m, G.sum(0))
+
+    # check G is similar
+    np.testing.assert_allclose(G, G_1d)
+
+    # check AssertionError is raised if called on non 1d arrays
+    u = np.random.randn(n, 2)
+    v = np.random.randn(m, 2)
+    np.testing.assert_raises(AssertionError, ot.emd_1d, u, v, [], [])
+
+
+def test_wass_1d():
+    # test emd1d gives similar results as emd
+    n = 20
+    m = 30
+    rng = np.random.RandomState(0)
+    u = rng.randn(n, 1)
+    v = rng.randn(m, 1)
+
+    M = ot.dist(u, v, metric='sqeuclidean')
+
+    G, log = ot.emd([], [], M, log=True)
+    wass = log["cost"]
+
+    wass1d = ot.wasserstein_1d(u, v, [], [], p=2.)
+
+    # check loss is similar
+    np.testing.assert_allclose(np.sqrt(wass), wass1d)
 
 
 def test_emd_empty():
@@ -60,7 +118,7 @@ def test_emd_empty():
 
     # check G is identity
     np.testing.assert_allclose(G, np.eye(n) / n)
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(u, G.sum(1))  # cf convergence sinkhorn
     np.testing.assert_allclose(u, G.sum(0))  # cf convergence sinkhorn
 
