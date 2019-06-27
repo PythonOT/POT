@@ -85,6 +85,29 @@ def test_emd_1d_emd2_1d():
     np.testing.assert_raises(AssertionError, ot.emd_1d, u, v, [], [])
 
 
+def test_wass_1d():
+    # test emd1d gives similar results as emd
+    n = 20
+    m = 30
+    rng = np.random.RandomState(0)
+    u = rng.randn(n, 1)
+    v = rng.randn(m, 1)
+
+    M = ot.dist(u, v, metric='sqeuclidean')
+
+    G, log = ot.emd([], [], M, log=True)
+    wass = log["cost"]
+
+    G_1d, log = ot.wasserstein_1d(u, v, [], [], p=2., log=True)
+    wass1d = log["cost"]
+
+    # check loss is similar
+    np.testing.assert_allclose(np.sqrt(wass), wass1d)
+
+    # check G is similar
+    np.testing.assert_allclose(G, G_1d)
+
+
 def test_emd_empty():
     # test emd and emd2 for simple identity
     n = 100

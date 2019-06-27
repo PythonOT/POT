@@ -13,6 +13,7 @@ cimport numpy as np
 from ..utils import dist
 
 cimport cython
+cimport libc.math as math
 
 import warnings
 
@@ -159,7 +160,7 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
         elif metric == 'cityblock' or metric == 'euclidean':
             m_ij = abs(u[i] - v[j])
         elif metric == 'minkowski':
-            m_ij = abs(u[i] - v[j]) ** p
+            m_ij = math.pow(abs(u[i] - v[j]), p)
         else:
             m_ij = dist(u[i].reshape((1, 1)), v[j].reshape((1, 1)),
                         metric=metric)[0, 0]

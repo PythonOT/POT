@@ -530,13 +530,13 @@ def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
 
 
 def wasserstein_1d(x_a, x_b, a=None, b=None, p=1., dense=True, log=False):
-    """Solves the Wasserstein distance problem between 1d measures and returns
+    """Solves the p-Wasserstein distance problem between 1d measures and returns
     the OT matrix
 
 
     .. math::
-        \gamma = arg\min_\gamma \left(\sum_i \sum_j \gamma_{ij}
-            |x_a[i] - x_b[j]|^p \right)^{1/p}
+        \gamma = arg\min_\gamma \left( \sum_i \sum_j \gamma_{ij}
+            |x_a[i] - x_b[j]|^p \\right)^{1/p}
 
         s.t. \gamma 1 = a,
              \gamma^T 1= b,
@@ -617,15 +617,14 @@ def wasserstein_1d(x_a, x_b, a=None, b=None, p=1., dense=True, log=False):
                   dense=dense, log=log)
 
 
-def wasserstein2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1.,
-                    dense=True, log=False):
-    """Solves the Wasserstein distance problem between 1d measures and returns
+def wasserstein2_1d(x_a, x_b, a=None, b=None, p=1., dense=True, log=False):
+    """Solves the p-Wasserstein distance problem between 1d measures and returns
     the loss
 
 
     .. math::
         \gamma = arg\min_\gamma \left( \sum_i \sum_j \gamma_{ij}
-            |x_a[i] - x_b[j]|^p \right)^{1/p}
+            |x_a[i] - x_b[j]|^p \\right)^{1/p}
 
         s.t. \gamma 1 = a,
              \gamma^T 1= b,
