@@ -5,6 +5,9 @@ Quick start guide
 In the following we provide some pointers about which functions and classes 
 to use for different problems related to optimal transport (OT).
 
+This document is not a tutorial on numerical optimal transport. For this we strongly
+recommend to read the very nice book [15]_ . 
+
 
 Optimal transport and Wasserstein distance
 ------------------------------------------
@@ -20,10 +23,11 @@ Solving optimal transport
 
 The optimal transport problem between discrete distributions is often expressed
 as
-    .. math::
-        \gamma^* = arg\min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j}
 
-        s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
+.. math::
+    \gamma^* = arg\min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j}
+
+    s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
 where :
 
@@ -120,8 +124,6 @@ distributions. In this case when the finite sample dataset is supposed gaussian,
 mapping.
 
 
-
-
 Regularized Optimal Transport
 -----------------------------
 
@@ -146,6 +148,7 @@ We discuss in the following specific algorithms that can be used depending on
 the regularization term.
 
 
+
 Entropic regularized OT
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -168,23 +171,107 @@ solution of the resulting optimization problem can be expressed as:
     \gamma_\lambda^*=\text{diag}(u)K\text{diag}(v)
 
 where :math:`u` and :math:`v` are vectors and :math:`K=\exp(-M/\lambda)` where
-the :math:`\exp` is taken component-wise.    
+the :math:`\exp` is taken component-wise. In order to solve the optimization
+problem, on can use an alternative projection algorithm that can be very
+efficient for large values if regularization. 
+
+The main function is POT are  :any:`ot.sinkhorn` and
+:any:`ot.sinkhorn2` that return respectively the OT matrix and the value of the
+linear term. Note that the regularization parameter :math:`\lambda` in the
+equation above is given to those function with the parameter :code:`reg`.
+
+    >>> import ot
+    >>> a=[.5,.5]
+    >>> b=[.5,.5]
+    >>> M=[[0.,1.],[1.,0.]]
+    >>> ot.sinkhorn(a,b,M,1)
+    array([[ 0.36552929,  0.13447071],
+        [ 0.13447071,  0.36552929]])
 
 
 
+More details about the algorithm used is given in the following note.
 
+
+.. note::
+    The main function to solve entropic regularized OT is :any:`ot.sinkhorn`.
+    This function is a wrapper and the parameter :code:`method` help you select
+    the actual algorithm used to solve the problem:
+
+    + :code:`method='sinkhorn'` calls :any:`ot.bregman.sinkhorn_knopp`  the
+      classic algorithm [2]_.
+    + :code:`method='sinkhorn_stabilized'` calls :any:`ot.bregman.sinkhorn_stabilized`  the
+      log stabilized version of the algorithm [9]_.    
+    + :code:`method='sinkhorn_epsilon_scaling'` calls
+      :any:`ot.bregman.sinkhorn_epsilon_scaling`  the epsilon scaling version
+      of the algorithm [9]_.   
+    + :code:`method='greenkhorn'` calls :any:`ot.bregman.greenkhorn`  the
+      greedy sinkhorn verison of the algorithm [22]_.   
+
+    In addition to all those variants of sinkhorn, we have another
+    implementation solving the problem in the smooth dual or semi-dual in
+    :any:`ot.smooth`. This solver use the :any:`scipy.optimize.minimize`
+    function to solve the smooth problem with :code:`L-BFGS` algorithm. Tu use
+    this solver, use functions :any:`ot.smooth.smooth_ot_dual` or
+    :any:`ot.smooth.smooth_ot_semi_dual` with parameter :code:`reg_type='kl'` to
+    choose entropic/Kullbach Leibler regularization.
+
+.. hint::
+    Examples of use for :any:`ot.sinkhorn` are available in the following examples:
+
+    - :any:`auto_examples/plot_OT_2D_samples`
+    - :any:`auto_examples/plot_OT_1D` 
+    - :any:`auto_examples/plot_OT_1D_smooth`
+    - :any:`auto_examples/plot_stochastic`
+
+Finally note that we also provide in :any:`ot.stochastic` several implementation
+of stochastic solvers for entropic regularized OT [18]_ [19]_.  
 
 Other regularization
 ^^^^^^^^^^^^^^^^^^^^
 
-Stochastic gradient descent
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+While entropic OT is the most common and favored in practice, there exist other
+kind of regularization. We provide in POT two specific solvers for other
+regularization terms: namely quadratic regularization and group lasso
+regularization. But we also provide in :any:`ot.optim`  two generic solvers that allows solving any
+smooth regularization in practice. 
+
+The first general regularization term we can solve is the quadratic
+regularization of the form 
+
+.. math::
+    \Omega(\gamma)=\sum_{i,j} \gamma_{i,j}^2
+
+this regularization term has a similar effect to entropic regularization in
+densifying the OT matrix but it keeps some sort of sparsity that is lost with
+entropic regularization as soon as :math:`\lambda>0` [17]_. This problem cen be
+solved with POT using solvers from :any:`ot.smooth`, more specifically
+functions :any:`ot.smooth.smooth_ot_dual` or
+:any:`ot.smooth.smooth_ot_semi_dual` with parameter :code:`reg_type='l2'` to 
+choose the quadratic regularization.
+
+Another regularization that has been used in recent years is the group lasso
+regularization
+
+.. math::
+    \Omega(\gamma)=\sum_{j,G\in\mathcal{G}} \|\gamma_{G,j}\|_p^q
+
+where :math:`\mathcal{G}` contains non overlapping groups of lines in the OT
+matrix. This regularization proposed in [5]_ will promote sparsity at the group level and for
+instance will force target samples to get mass from a small number of groups.
+Note that the exact OT solution is already sparse so this regularization does
+not make sens if it is not combined with others such as entropic. 
+
+
+
+
+
 
 Wasserstein Barycenters
 -----------------------
 
 Monge mapping and Domain adaptation with Optimal transport
-----------------------------------------
+----------------------------------------------------------
 
 
 Other applications
@@ -207,7 +294,6 @@ FAQ
     the OT transport matrix. If you want to solve a regularized OT you can 
     use :py:mod:`ot.sinkhorn`.
 
-    
 
     Here is a simple use case:
 
@@ -222,7 +308,43 @@ FAQ
     :doc:`auto_examples/plot_OT_2D_samples`
     
 
-2. **Compute a Wasserstein distance**
+2. **pip install POT fails with error : ImportError: No module named Cython.Build**
+
+    As discussed shortly in the README file. POT requires to have :code:`numpy`
+    and :code:`cython` installed to build. This corner case is not yet handled
+    by :code:`pip` and for now you need to install both library prior to
+    installing POT.
+
+    Note that this problem do not occur when using conda-forge since the packages
+    there are pre-compiled. 
+
+    See `Issue #59 <https://github.com/rflamary/POT/issues/59>`__ for more
+    details.
+
+3. **Why is Sinkhorn slower than EMD ?**
+
+    This might come from the choice of the regularization term. The speed of
+    convergence of sinkhorn depends directly on this term [22]_ and when the
+    regularization gets very small the problem try and approximate the exact OT
+    which leads to slow convergence in addition to numerical problems. In other
+    words, for large regularization sinkhorn will be very fast to converge, for
+    small regularization (when you need an OT matrix close to the true OT), it
+    might be quicker to use the EMD solver.
+
+    Also note that the numpy implementation of the sinkhorn can use parallel
+    computation depending on the configuration of your system but very important
+    speedup can be obtained by using a GPU implementation since all operations
+    are matrix/vector products.
+
+4. **Using GPU fails with error:  module 'ot' has no attribute 'gpu'**
+
+    In order to limit import time and hard dependencies in POT. we do not import
+    some sub-modules automatically with :code:`import ot`. In order to use the
+    acceleration in :any:`ot.gpu` you need first to import is with
+    :code:`import ot.gpu`.  
+
+    See `Issue #85 <https://github.com/rflamary/POT/issues/85>`__ and :any:`ot.gpu`
+    for more details.
 
 
 References
