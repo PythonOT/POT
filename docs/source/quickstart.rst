@@ -210,7 +210,7 @@ More details about the algorithm used is given in the following note.
 
     In addition to all those variants of sinkhorn, we have another
     implementation solving the problem in the smooth dual or semi-dual in
-    :any:`ot.smooth`. This solver use the :any:`scipy.optimize.minimize`
+    :any:`ot.smooth`. This solver uses the :any:`scipy.optimize.minimize`
     function to solve the smooth problem with :code:`L-BFGS` algorithm. Tu use
     this solver, use functions :any:`ot.smooth.smooth_ot_dual` or
     :any:`ot.smooth.smooth_ot_semi_dual` with parameter :code:`reg_type='kl'` to
@@ -223,6 +223,13 @@ More details about the algorithm used is given in the following note.
     - :any:`auto_examples/plot_OT_1D` 
     - :any:`auto_examples/plot_OT_1D_smooth`
     - :any:`auto_examples/plot_stochastic`
+
+
+Recently [23]_ introduced the sinkhorn divergence that build from entropic
+regularization to compute fast and differentiable geometric diveregnce between
+empirical distributions.  
+
+
 
 Finally note that we also provide in :any:`ot.stochastic` several implementation
 of stochastic solvers for entropic regularized OT [18]_ [19]_.  
@@ -254,32 +261,49 @@ Another regularization that has been used in recent years is the group lasso
 regularization
 
 .. math::
-    \Omega(\gamma)=\sum_{j,G\in\mathcal{G}} \|\gamma_{G,j}\|_p^q
+    \Omega(\gamma)=\sum_{j,G\in\mathcal{G}} \|\gamma_{G,j}\|_q^p
 
 where :math:`\mathcal{G}` contains non overlapping groups of lines in the OT
 matrix. This regularization proposed in [5]_ will promote sparsity at the group level and for
 instance will force target samples to get mass from a small number of groups.
 Note that the exact OT solution is already sparse so this regularization does
-not make sens if it is not combined with others such as entropic. 
-
-
-
+not make sens if it is not combined with others such as entropic. Depending on
+the choice of :code:`p` and :code:`q`, the problem can be solved with different
+approaches.  When :code:`q=1` and :code:`p<1` the problem is non convex but can
+be solved using an efficient majoration minimization approach  with
+:any:`ot.sinkhorn_lpl1_mm`. When :code:`q=2` and :code:`p=1` we recover the
+convex gourp lasso and we provide a solver using generalized conditional
+gradient algorithm [7]_ in function
+:any:`ot.da.sinkhorn_l1l2_gl`.
 
 
 
 Wasserstein Barycenters
 -----------------------
 
-Monge mapping and Domain adaptation with Optimal transport
-----------------------------------------------------------
+
+
+
+Monge mapping and Domain adaptation
+-----------------------------------
 
 
 Other applications
 ------------------
 
+Wasserstein Discriminant Analysis
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+Gromov-Wasserstein
+^^^^^^^^^^^^^^^^^^
+
 
 GPU acceleration
 ----------------
+
+We provide several implementation of our OT solvers in :any:`ot.gpu`. Those
+implementation use the :code:`cupy` toolbox.   
 
 
 
