@@ -22,7 +22,7 @@ def test_gpu_old_doctests():
     M = [[0., 1.], [1., 0.]]
     G = ot.sinkhorn(a, b, M, 1)
     np.testing.assert_allclose(G, np.array([[0.36552929, 0.13447071],
-                                     [0.13447071, 0.36552929]]))
+                                            [0.13447071, 0.36552929]]))
 
 
 @pytest.mark.skipif(nogpu, reason="No GPU available")
