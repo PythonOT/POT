@@ -13,7 +13,7 @@ import numpy as np
 
 def sinkhorn_unbalanced(a, b, M, reg, alpha, method='sinkhorn', numItermax=1000,
                         stopThr=1e-9, verbose=False, log=False, **kwargs):
-    u"""
+    r"""
     Solve the unbalanced entropic regularization optimal transport problem and return the loss
 
     The function solves the following optimization problem:
@@ -75,7 +75,7 @@ def sinkhorn_unbalanced(a, b, M, reg, alpha, method='sinkhorn', numItermax=1000,
     >>> M=[[0., 1.], [1., 0.]]
     >>> ot.sinkhorn_unbalanced(a, b, M, 1, 1)
     array([[0.51122823, 0.18807035],
-          [0.18807035, 0.51122823]])
+           [0.18807035, 0.51122823]])
 
 
     References
@@ -122,7 +122,7 @@ def sinkhorn_unbalanced(a, b, M, reg, alpha, method='sinkhorn', numItermax=1000,
 def sinkhorn_unbalanced2(a, b, M, reg, alpha, method='sinkhorn',
                          numItermax=1000, stopThr=1e-9, verbose=False,
                          log=False, **kwargs):
-    u"""
+    r"""
     Solve the entropic regularization unbalanced optimal transport problem and return the loss
 
     The function solves the following optimization problem:
@@ -233,7 +233,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, alpha, method='sinkhorn',
 
 def sinkhorn_knopp_unbalanced(a, b, M, reg, alpha, numItermax=1000,
                               stopThr=1e-9, verbose=False, log=False, **kwargs):
-    """
+    r"""
     Solve the entropic regularization unbalanced optimal transport problem and return the loss
 
     The function solves the following optimization problem:
@@ -401,7 +401,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, alpha, numItermax=1000,
 
 def barycenter_unbalanced(A, M, reg, alpha, weights=None, numItermax=1000,
                           stopThr=1e-4, verbose=False, log=False):
-    """Compute the entropic regularized unbalanced wasserstein barycenter of distributions A
+    r"""Compute the entropic regularized unbalanced wasserstein barycenter of distributions A
 
      The function solves the following optimization problem:
 

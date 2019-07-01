@@ -25,7 +25,7 @@ __all__=['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx',
 
 
 def emd(a, b, M, numItermax=100000, log=False):
-    """Solves the Earth Movers distance problem and returns the OT matrix
+    r"""Solves the Earth Movers distance problem and returns the OT matrix
 
 
     .. math::
@@ -76,8 +76,8 @@ def emd(a, b, M, numItermax=100000, log=False):
     >>> b=[.5,.5]
     >>> M=[[0.,1.],[1.,0.]]
     >>> ot.emd(a,b,M)
-    array([[ 0.5,  0. ],
-           [ 0. ,  0.5]])
+    array([[0.5, 0. ],
+           [0. , 0.5]])
 
     References
     ----------
@@ -117,7 +117,7 @@ def emd(a, b, M, numItermax=100000, log=False):
 
 def emd2(a, b, M, processes=multiprocessing.cpu_count(),
          numItermax=100000, log=False, return_matrix=False):
-    """Solves the Earth Movers distance problem and returns the loss
+    r"""Solves the Earth Movers distance problem and returns the loss
 
     .. math::
         \gamma = arg\min_\gamma <\gamma,M>_F
@@ -315,7 +315,7 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
 def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
            log=False):
-    """Solves the Earth Movers distance problem between 1d measures and returns
+    r"""Solves the Earth Movers distance problem between 1d measures and returns
     the OT matrix
 
 
@@ -381,11 +381,11 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     >>> x_a = [2., 0.]
     >>> x_b = [0., 3.]
     >>> ot.emd_1d(x_a, x_b, a, b)
-    array([[0. ,  0.5],
-           [0.5,  0. ]])
+    array([[0. , 0.5],
+           [0.5, 0. ]])
     >>> ot.emd_1d(x_a, x_b)
-    array([[0. ,  0.5],
-           [0.5,  0. ]])
+    array([[0. , 0.5],
+           [0.5, 0. ]])
 
     References
     ----------
@@ -435,7 +435,7 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
 
 def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
             log=False):
-    """Solves the Earth Movers distance problem between 1d measures and returns
+    r"""Solves the Earth Movers distance problem between 1d measures and returns
     the loss
 
 
@@ -530,7 +530,7 @@ def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
 
 
 def wasserstein_1d(x_a, x_b, a=None, b=None, p=1.):
-    """Solves the p-Wasserstein distance problem between 1d measures and returns
+    r"""Solves the p-Wasserstein distance problem between 1d measures and returns
     the distance
 
 
