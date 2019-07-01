@@ -1360,10 +1360,9 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numI
     >>> reg = 0.1
     >>> X_s = np.reshape(np.arange(n_s), (n_s, 1))
     >>> X_t = np.reshape(np.arange(0, n_t), (n_t, 1))
-    >>> emp_sinkhorn = empirical_sinkhorn(X_s, X_t, reg, verbose=False)
-    >>> print(emp_sinkhorn)
-    >>> [[4.99977301e-01 2.26989344e-05]
-        [2.26989344e-05 4.99977301e-01]]
+    >>> empirical_sinkhorn(X_s, X_t, reg, verbose=False)  # doctest: +NORMALIZE_WHITESPACE
+    array([[4.99977301e-01,  2.26989344e-05],
+           [2.26989344e-05,  4.99977301e-01]])
 
 
     References
@@ -1451,9 +1450,8 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
     >>> reg = 0.1
     >>> X_s = np.reshape(np.arange(n_s), (n_s, 1))
     >>> X_t = np.reshape(np.arange(0, n_t), (n_t, 1))
-    >>> loss_sinkhorn = empirical_sinkhorn2(X_s, X_t, reg, verbose=False)
-    >>> print(loss_sinkhorn)
-    >>> [4.53978687e-05]
+    >>> empirical_sinkhorn2(X_s, X_t, reg, verbose=False)
+    array([4.53978687e-05])
 
 
     References
@@ -1560,9 +1558,8 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
     >>> reg = 0.1
     >>> X_s = np.reshape(np.arange(n_s), (n_s, 1))
     >>> X_t = np.reshape(np.arange(0, n_t), (n_t, 1))
-    >>> emp_sinkhorn_div = empirical_sinkhorn_divergence(X_s, X_t, reg)
-    >>> print(emp_sinkhorn_div)
-    >>> [2.99977435]
+    >>> empirical_sinkhorn_divergence(X_s, X_t, reg)
+    array([2.99977435])
 
 
     References

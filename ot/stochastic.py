@@ -11,7 +11,7 @@ import numpy as np
 
 
 def coordinate_grad_semi_dual(b, M, reg, beta, i):
-    '''
+    r'''
     Compute the coordinate gradient update for regularized discrete distributions for (i, :)
 
     The function computes the gradient of the semi dual problem:
@@ -51,7 +51,7 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
 
     Examples
     --------
-
+    >>> import ot
     >>> n_source = 7
     >>> n_target = 4
     >>> reg = 1
@@ -63,8 +63,7 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
     >>> Y_target = rng.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
     >>> method = "ASGD"
-    >>> asgd_pi = stochastic.solve_semi_dual_entropic(a, b, M, reg,
-                                                      method, numItermax)
+    >>> asgd_pi = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method, numItermax)
     >>> print(asgd_pi)
 
     References
@@ -84,7 +83,7 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
 
 
 def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
-    '''
+    r'''
     Compute the SAG algorithm to solve the regularized discrete measures
         optimal transport max problem
 
@@ -133,7 +132,7 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
 
     Examples
     --------
-
+    >>> import ot
     >>> n_source = 7
     >>> n_target = 4
     >>> reg = 1
@@ -145,8 +144,7 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
     >>> Y_target = rng.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
     >>> method = "ASGD"
-    >>> asgd_pi = stochastic.solve_semi_dual_entropic(a, b, M, reg,
-                                                      method, numItermax)
+    >>> asgd_pi = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method, numItermax)
     >>> print(asgd_pi)
 
     References
@@ -176,7 +174,7 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
 
 
 def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
-    '''
+    r'''
     Compute the ASGD algorithm to solve the regularized semi continous measures optimal transport max problem
 
     The function solves the following optimization problem:
@@ -223,7 +221,7 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
 
     Examples
     --------
-
+    >>> import ot
     >>> n_source = 7
     >>> n_target = 4
     >>> reg = 1
@@ -235,8 +233,7 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
     >>> Y_target = rng.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
     >>> method = "ASGD"
-    >>> asgd_pi = stochastic.solve_semi_dual_entropic(a, b, M, reg,
-                                                      method, numItermax)
+    >>> asgd_pi = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method, numItermax)
     >>> print(asgd_pi)
 
     References
@@ -264,7 +261,7 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
 
 
 def c_transform_entropic(b, M, reg, beta):
-    '''
+    r'''
     The goal is to recover u from the c-transform.
 
     The function computes the c_transform of a dual variable from the other
@@ -303,7 +300,7 @@ def c_transform_entropic(b, M, reg, beta):
 
     Examples
     --------
-
+    >>> import ot
     >>> n_source = 7
     >>> n_target = 4
     >>> reg = 1
@@ -315,8 +312,7 @@ def c_transform_entropic(b, M, reg, beta):
     >>> Y_target = rng.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
     >>> method = "ASGD"
-    >>> asgd_pi = stochastic.solve_semi_dual_entropic(a, b, M, reg,
-                                                      method, numItermax)
+    >>> asgd_pi = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method, numItermax)
     >>> print(asgd_pi)
 
     References
@@ -340,7 +336,7 @@ def c_transform_entropic(b, M, reg, beta):
 
 def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
                                 log=False):
-    '''
+    r'''
     Compute the transportation matrix to solve the regularized discrete
         measures optimal transport max problem
 
@@ -398,7 +394,7 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
 
     Examples
     --------
-
+    >>> import ot
     >>> n_source = 7
     >>> n_target = 4
     >>> reg = 1
@@ -410,8 +406,7 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
     >>> Y_target = rng.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
     >>> method = "ASGD"
-    >>> asgd_pi = stochastic.solve_semi_dual_entropic(a, b, M, reg,
-                                                      method, numItermax)
+    >>> asgd_pi = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method, numItermax)
     >>> print(asgd_pi)
 
     References
@@ -451,7 +446,7 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
 
 def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
                     batch_beta):
-    '''
+    r'''
     Computes the partial gradient of the dual optimal transport problem.
 
     For each (i,j) in a batch of coordinates, the partial gradients are :
@@ -506,7 +501,7 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
 
     Examples
     --------
-
+    >>> import ot
     >>> n_source = 7
     >>> n_target = 4
     >>> reg = 1
@@ -520,9 +515,7 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
     >>> X_source = rng.randn(n_source, 2)
     >>> Y_target = rng.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
-    >>> sgd_dual_pi, log = stochastic.solve_dual_entropic(a, b, M, reg,
-                                                            batch_size,
-                                                            numItermax, lr, log)
+    >>> sgd_dual_pi, log = ot.stochastic.solve_dual_entropic(a, b, M, reg, batch_size, numItermax, lr, log)
     >>> print(log['alpha'], log['beta'])
     >>> print(sgd_dual_pi)
 
@@ -548,7 +541,7 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
 
 
 def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
-    '''
+    r'''
     Compute the sgd algorithm to solve the regularized discrete measures
         optimal transport dual problem
 
@@ -597,7 +590,7 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
 
     Examples
     --------
-
+    >>> import ot
     >>> n_source = 7
     >>> n_target = 4
     >>> reg = 1
@@ -611,9 +604,7 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
     >>> X_source = rng.randn(n_source, 2)
     >>> Y_target = rng.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
-    >>> sgd_dual_pi, log = stochastic.solve_dual_entropic(a, b, M, reg,
-                                                          batch_size,
-                                                          numItermax, lr, log)
+    >>> sgd_dual_pi, log = ot.stochastic.solve_dual_entropic(a, b, M, reg, batch_size, numItermax, lr, log)
     >>> print(log['alpha'], log['beta'])
     >>> print(sgd_dual_pi)
 
@@ -644,7 +635,7 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
 
 def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
                         log=False):
-    '''
+    r'''
     Compute the transportation matrix to solve the regularized discrete measures
         optimal transport dual problem
 
@@ -695,7 +686,7 @@ def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
 
     Examples
     --------
-
+    >>> import ot
     >>> n_source = 7
     >>> n_target = 4
     >>> reg = 1
@@ -709,9 +700,7 @@ def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
     >>> X_source = rng.randn(n_source, 2)
     >>> Y_target = rng.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
-    >>> sgd_dual_pi, log = stochastic.solve_dual_entropic(a, b, M, reg,
-                                                            batch_size,
-                                                            numItermax, lr, log)
+    >>> sgd_dual_pi, log = ot.stochastic.solve_dual_entropic(a, b, M, reg, batch_size, numItermax, lr, log)
     >>> print(log['alpha'], log['beta'])
     >>> print(sgd_dual_pi)
 

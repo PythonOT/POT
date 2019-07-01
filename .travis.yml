@@ -32,5 +32,5 @@ install:
 script:
   - python setup.py develop
   - flake8 examples/ ot/ test/
-  - python -m pytest -v test/ ot/ --doctest-modules --cov=ot
+  - python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
   # - py.test ot test

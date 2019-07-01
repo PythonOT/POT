@@ -285,9 +285,9 @@ class deprecated(object):
     The optional extra argument will be appended to the deprecation message
     and the docstring. Note: to use this with the default value for extra, put
     in an empty of parentheses:
-    >>> from ot.deprecation import deprecated
-    >>> @deprecated()
-    ... def some_function(): pass
+    >>> from ot.deprecation import deprecated  # doctest: +SKIP
+    >>> @deprecated()  # doctest: +SKIP
+    ... def some_function(): pass  # doctest: +SKIP
 
     Parameters
     ----------
