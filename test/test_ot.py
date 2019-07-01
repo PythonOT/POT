@@ -14,16 +14,6 @@ from ot.datasets import make_1D_gauss as gauss
 import pytest
 
 
-def test_doctest():
-    import doctest
-
-    # test lp solver
-    doctest.testmod(ot.lp, verbose=True)
-
-    # test bregman solver
-    doctest.testmod(ot.bregman, verbose=True)
-
-
 def test_emd_emd2():
     # test emd and emd2 for simple identity
     n = 100
