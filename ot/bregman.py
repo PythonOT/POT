@@ -1559,7 +1559,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
     >>> X_s = np.reshape(np.arange(n_s), (n_s, 1))
     >>> X_t = np.reshape(np.arange(0, n_t), (n_t, 1))
     >>> empirical_sinkhorn_divergence(X_s, X_t, reg)
-    array([2.99977435])
+    array([1.49988718])
 
 
     References
