@@ -417,7 +417,7 @@ operators. We provide an implementation of this algorithm in function
 Barycenters with free support
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Estimating the Wassresein barycenter with free support but fixed weights
+Estimating the Wasserstein barycenter with free support but fixed weights
 corresponds to  solving the following optimization problem:
 
 .. math::
@@ -555,7 +555,7 @@ be in the Stiefel manifold. WDA can be solved in pot using function
 :any:`ot.dr.wda`. It requires to have installed :code:`pymanopt` and
 :code:`autograd` for manifold optimization and automatic differentiation
 respectively. Note that we also provide the Fisher discriminant estimator in
-:any:`ot.dr.wda` for easy comparison.
+:any:`ot.dr.fda` for easy comparison.
 
 .. warning::
     Note that due to the hard dependency on  :code:`pymanopt` and
@@ -585,17 +585,104 @@ problem:
 where KL is the Kullback-Leibler divergence. This formulation allwos for
 computing approximate mapping between distributions that do not have the same
 amount of mass. Interestingly the problem can be solved with a generalization of
-the Bregman projections algorithm [10]_.
+the Bregman projections algorithm [10]_. We provide a solver for unbalanced OT
+in :any:`ot.unbalanced` and more specifically  
+in function :any:`ot.sinkhorn_unbalanced`. A solver for unbalanced OT barycenter
+is available in :any:`ot.barycenter_unbalanced`.
+
+
+.. hint::
+
+    Examples of the use of :any:`ot.sinkhorn_unbalanced` and
+    :any:`ot.barycenter_unbalanced`  are available in:
+
+    - :any:`auto_examples/plot_UOT_1D`
+    - :any:`auto_examples/plot_UOT_barycenter_1D`
+
 
 Gromov-Wasserstein
 ^^^^^^^^^^^^^^^^^^
+
+Gromov Wasserstein (GW) is a generalization of OT to distributions that do not lie in
+the same space [13]_. In this case one cannot compute distance between samples
+from the two distributions. [13]_ proposed instead to realign the metric spaces
+by computing a transport between distance matrices. The Gromow Wasserstein
+alignement between two distributions can be expressed as the one minimizing:
+
+
+.. math::
+    GW = \min_\gamma \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*\gamma_{i,j}*\gamma_{k,l}
+
+    s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
+
+where ::math:`C1` is the distance matrix between samples in the source
+distribution and :math:`C2` the one between samples in the target,   :math:`L(C1_{i,k},C2_{j,l})` is a measure of similarity between
+:math:`C1_{i,k}` and :math:`C2_{j,l}` often chosen as
+:math:`L(C1_{i,k},C2_{j,l})=\|C1_{i,k}-C2_{j,l}\|^2`. The optimization problem
+above is a non-convex quadratic program but we provide a solver that finds a
+local minimum using conditional gradient in :any:`ot.gromov.gromov_wasserstein`.
+There also exist an entropic regularized variant of GW that has been proposed in
+[12]_ and we provide an implementation of their algorithm in
+:any:`ot.gromov.entropic_gromov_wasserstein`.
+
+Note that similarly to Wasserstein distance GW allows for the definition of GW
+barycenters that cen be expressed as
+
+.. math::
+    \min_{C\geq 0} \quad \sum_{k} w_k GW(C,Ck)
+
+where :math:`Ck` is the distance matrix between samples in distribution
+:math:`k`. Note that interestingly the barycenter is defined a a symmetric
+positive matrix. We provide a block coordinate optimization procedure in 
+:any:`ot.gromov.gromov_barycenters` and
+:any:`ot.gromov.entropic_gromov_barycenters` for non-regularized and regularized
+barycenters respectively.
+
+Finally note that recently a fusion between Wasserstein and GW, coined Fused
+Groimov-Wasserstein (FGW) has been proposed
+in [24]_. It allows to compute a similarity between objects that are only partly in
+the same space. As such it can be used to measure similarity between labeled
+graphs for instance and also provide computable barycenters.
+The implementations of FGW is provided in functions
+:any:`ot.gromov.fused_gromov_wasserstein` and :any:`ot.gromov.fgw_barycenters`.
+
+.. hint::
+
+    Examples of computation of GW, regularized G and FGW are provided in :
+
+    - :any:`auto_examples/plot_gromov`
+    - :any:`auto_examples/plot_fgw`   
+
+    Examples of GW, regularized GW and FGW barycenters are available in :
+
+    - :any:`auto_examples/plot_gromov_barycenter`
+    - :any:`auto_examples/plot_barycenter_fgw`   
 
 
 GPU acceleration
 ^^^^^^^^^^^^^^^^
 
 We provide several implementation of our OT solvers in :any:`ot.gpu`. Those
-implementation use the :code:`cupy` toolbox.   
+implementation use the :code:`cupy` toolbox that obviously need to be installed.   
+
+
+.. note::
+
+    Several implementations of POT functions (mainly those relying on linear
+    algebra) have been implemented in :any:`ot.gpu`. Here is a short list on the
+    main entries:
+
+    -  :any:`ot.gpu.dist` : computation of distance matrix
+    -  :any:`ot.gpu.sinkhorn` : computation of sinkhorn
+    -  :any:`ot.gpu.sinkhorn_lpl1_mm` : computation of sinkhorn + group lasso
+
+Note that while the :any:`ot.gpu` module has been designed to be compatible with
+POT,  calling its function with numpy array will incur a large overhead due to
+the memory copy of the array on GPU prior to computation and conversion of the
+array after computation. To avoid this overhead, we provide functions
+:any:`ot.gpu.to_gpu` and :any:`ot.gpu.to_np` that perform the conversion
+explicitly.
+
 
 .. warning::
     Note that due to the hard dependency on  :code:`cupy`, :any:`ot.gpu` is not
@@ -735,7 +822,7 @@ References
     matching <https://media.adelaide.edu.au/acvt/Publications/2011/2011-Gromov%E2%80%93Wasserstein%20Distances%20and%20the%20Metric%20Approach%20to%20Object%20Matching.pdf>`__.
     Foundations of computational mathematics 11.4 : 417-487.
 
-.. [14] Knott, M. and Smith, C. S. (1984).`On the optimal mapping of
+.. [14] Knott, M. and Smith, C. S. (1984). `On the optimal mapping of
     distributions <https://link.springer.com/article/10.1007/BF00934745>`__,
     Journal of Optimization Theory and Applications Vol 43.
 
