@@ -52,7 +52,7 @@ implemented in C from  [1]_. It has a complexity of :math:`O(n^3)` but the
 solver is quite efficient and uses sparsity of the solution.
 
 .. hint::
-    Examples of use for :any:`ot.emd` are available in the following examples:
+    Examples of use for :any:`ot.emd` are available in :
 
     - :any:`auto_examples/plot_OT_2D_samples`
     - :any:`auto_examples/plot_OT_1D` 
@@ -99,7 +99,7 @@ distance.
 
 
 .. hint::
-    Examples of use for :any:`ot.emd2` are available in the following examples:
+    An example of use for :any:`ot.emd2` is available in :
 
     - :any:`auto_examples/plot_compute_emd`
  
