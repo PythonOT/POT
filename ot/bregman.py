@@ -16,7 +16,7 @@ from .utils import unif, dist
 
 def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
              stopThr=1e-9, verbose=False, log=False, **kwargs):
-    u"""
+    r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
     The function solves the following optimization problem:
@@ -73,12 +73,12 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     --------
 
     >>> import ot
-    >>> a=[.5,.5]
-    >>> b=[.5,.5]
-    >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.sinkhorn(a,b,M,1)
-    array([[ 0.36552929,  0.13447071],
-           [ 0.13447071,  0.36552929]])
+    >>> a=[.5, .5]
+    >>> b=[.5, .5]
+    >>> M=[[0., 1.], [1., 0.]]
+    >>> ot.sinkhorn(a, b, M, 1)
+    array([[0.36552929, 0.13447071],
+           [0.13447071, 0.36552929]])
 
 
     References
@@ -131,7 +131,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
 def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
               stopThr=1e-9, verbose=False, log=False, **kwargs):
-    u"""
+    r"""
     Solve the entropic regularization optimal transport problem and return the loss
 
     The function solves the following optimization problem:
@@ -188,11 +188,11 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     --------
 
     >>> import ot
-    >>> a=[.5,.5]
-    >>> b=[.5,.5]
-    >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.sinkhorn2(a,b,M,1)
-    array([ 0.26894142])
+    >>> a=[.5, .5]
+    >>> b=[.5, .5]
+    >>> M=[[0., 1.], [1., 0.]]
+    >>> ot.sinkhorn2(a, b, M, 1)
+    array([0.26894142])
 
 
 
@@ -248,7 +248,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
 def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
                    stopThr=1e-9, verbose=False, log=False, **kwargs):
-    """
+    r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
     The function solves the following optimization problem:
@@ -302,12 +302,12 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
     --------
 
     >>> import ot
-    >>> a=[.5,.5]
-    >>> b=[.5,.5]
-    >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.sinkhorn(a,b,M,1)
-    array([[ 0.36552929,  0.13447071],
-           [ 0.13447071,  0.36552929]])
+    >>> a=[.5, .5]
+    >>> b=[.5, .5]
+    >>> M=[[0., 1.], [1., 0.]]
+    >>> ot.sinkhorn(a, b, M, 1)
+    array([[0.36552929, 0.13447071],
+           [0.13447071, 0.36552929]])
 
 
     References
@@ -422,7 +422,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
 
 
 def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log=False):
-    """
+    r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
     The algorithm used is based on the paper
@@ -481,12 +481,12 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log=
     --------
 
     >>> import ot
-    >>> a=[.5,.5]
-    >>> b=[.5,.5]
-    >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.bregman.greenkhorn(a,b,M,1)
-    array([[ 0.36552929,  0.13447071],
-           [ 0.13447071,  0.36552929]])
+    >>> a=[.5, .5]
+    >>> b=[.5, .5]
+    >>> M=[[0., 1.], [1., 0.]]
+    >>> ot.bregman.greenkhorn(a, b, M, 1)
+    array([[0.36552929, 0.13447071],
+           [0.13447071, 0.36552929]])
 
 
     References
@@ -576,7 +576,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log=
 
 def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
                         warmstart=None, verbose=False, print_period=20, log=False, **kwargs):
-    """
+    r"""
     Solve the entropic regularization OT problem with log stabilization
 
     The function solves the following optimization problem:
@@ -639,8 +639,8 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
     >>> b=[.5,.5]
     >>> M=[[0.,1.],[1.,0.]]
     >>> ot.bregman.sinkhorn_stabilized(a,b,M,1)
-    array([[ 0.36552929,  0.13447071],
-           [ 0.13447071,  0.36552929]])
+    array([[0.36552929, 0.13447071],
+           [0.13447071, 0.36552929]])
 
 
     References
@@ -796,7 +796,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
 
 def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4, numInnerItermax=100,
                              tau=1e3, stopThr=1e-9, warmstart=None, verbose=False, print_period=10, log=False, **kwargs):
-    """
+    r"""
     Solve the entropic regularization optimal transport problem with log
     stabilization and epsilon scaling.
 
@@ -862,12 +862,12 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4, numInne
     --------
 
     >>> import ot
-    >>> a=[.5,.5]
-    >>> b=[.5,.5]
-    >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.bregman.sinkhorn_epsilon_scaling(a,b,M,1)
-    array([[ 0.36552929,  0.13447071],
-           [ 0.13447071,  0.36552929]])
+    >>> a=[.5, .5]
+    >>> b=[.5, .5]
+    >>> M=[[0., 1.], [1., 0.]]
+    >>> ot.bregman.sinkhorn_epsilon_scaling(a, b, M, 1)
+    array([[0.36552929, 0.13447071],
+           [0.13447071, 0.36552929]])
 
 
     References
@@ -989,7 +989,7 @@ def projC(gamma, q):
 
 def barycenter(A, M, reg, weights=None, numItermax=1000,
                stopThr=1e-4, verbose=False, log=False):
-    """Compute the entropic regularized wasserstein barycenter of distributions A
+    r"""Compute the entropic regularized wasserstein barycenter of distributions A
 
      The function solves the following optimization problem:
 
@@ -1084,7 +1084,7 @@ def barycenter(A, M, reg, weights=None, numItermax=1000,
 
 
 def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000, stopThr=1e-9, stabThr=1e-30, verbose=False, log=False):
-    """Compute the entropic regularized wasserstein barycenter of distributions A
+    r"""Compute the entropic regularized wasserstein barycenter of distributions A
     where A is a collection of 2D images.
 
      The function solves the following optimization problem:
@@ -1195,7 +1195,7 @@ def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000, stopThr=1
 
 def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
           stopThr=1e-3, verbose=False, log=False):
-    """
+    r"""
     Compute the unmixing of an observation with a given dictionary using Wasserstein distance
 
     The function solve the following optimization problem:
@@ -1302,7 +1302,7 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
 
 
 def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numIterMax=10000, stopThr=1e-9, verbose=False, log=False, **kwargs):
-    '''
+    r'''
     Solve the entropic regularization optimal transport problem and return the
     OT matrix from empirical data
 
@@ -1360,10 +1360,9 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numI
     >>> reg = 0.1
     >>> X_s = np.reshape(np.arange(n_s), (n_s, 1))
     >>> X_t = np.reshape(np.arange(0, n_t), (n_t, 1))
-    >>> emp_sinkhorn = empirical_sinkhorn(X_s, X_t, reg, verbose=False)
-    >>> print(emp_sinkhorn)
-    >>> [[4.99977301e-01 2.26989344e-05]
-        [2.26989344e-05 4.99977301e-01]]
+    >>> empirical_sinkhorn(X_s, X_t, reg, verbose=False)  # doctest: +NORMALIZE_WHITESPACE
+    array([[4.99977301e-01,  2.26989344e-05],
+           [2.26989344e-05,  4.99977301e-01]])
 
 
     References
@@ -1392,7 +1391,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numI
 
 
 def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numIterMax=10000, stopThr=1e-9, verbose=False, log=False, **kwargs):
-    '''
+    r'''
     Solve the entropic regularization optimal transport problem from empirical
     data and return the OT loss
 
@@ -1451,9 +1450,8 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
     >>> reg = 0.1
     >>> X_s = np.reshape(np.arange(n_s), (n_s, 1))
     >>> X_t = np.reshape(np.arange(0, n_t), (n_t, 1))
-    >>> loss_sinkhorn = empirical_sinkhorn2(X_s, X_t, reg, verbose=False)
-    >>> print(loss_sinkhorn)
-    >>> [4.53978687e-05]
+    >>> empirical_sinkhorn2(X_s, X_t, reg, verbose=False)
+    array([4.53978687e-05])
 
 
     References
@@ -1482,7 +1480,7 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
 
 
 def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numIterMax=10000, stopThr=1e-9, verbose=False, log=False, **kwargs):
-    '''
+    r'''
     Compute the sinkhorn divergence loss from empirical data
 
     The function solves the following optimization problems and return the
@@ -1560,9 +1558,8 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
     >>> reg = 0.1
     >>> X_s = np.reshape(np.arange(n_s), (n_s, 1))
     >>> X_t = np.reshape(np.arange(0, n_t), (n_t, 1))
-    >>> emp_sinkhorn_div = empirical_sinkhorn_divergence(X_s, X_t, reg)
-    >>> print(emp_sinkhorn_div)
-    >>> [2.99977435]
+    >>> empirical_sinkhorn_divergence(X_s, X_t, reg)  # doctest: +ELLIPSIS
+    array([1.499...])
 
 
     References
