@@ -217,8 +217,6 @@ More details about the algorithm used is given in the following note.
     choose entropic/Kullbach Leibler regularization.
 
 
-
-
 Recently [23]_ introduced the sinkhorn divergence that build from entropic
 regularization to compute fast and differentiable geometric divergence between
 empirical distributions.  Note that we provide a function that compute directly
@@ -417,7 +415,27 @@ operators. We provide an implementation of this algorithm in function
 
 
 Barycenters with free support
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Estimating the Wassresein barycenter with free support but fixed weights
+corresponds to  solving the following optimization problem:
+
+.. math::
+    \min_\{x_i\} \quad \sum_{k} w_kW(\mu,\mu_k)
+
+    s.t. \quad \mu=\sum_{i=1}^n a_i\delta_{x_i}
+
+WE provide an alternating solver based on [20]_ in
+:any:`ot.lp.free_support_barycenter`. This function minimize the problem and
+return an optimal support :math:`\{x_i\}` for uniform or given weights
+:math:`a`.
+
+ .. hint::
+
+    Example of the fee support barycenter estimation is available
+    in the following example:
+
+    - :any:`auto_examples/plot_free_support_barycenter`
 
 
 
@@ -438,7 +456,7 @@ Gromov-Wasserstein
 
 
 GPU acceleration
-----------------
+^^^^^^^^^^^^^^^^
 
 We provide several implementation of our OT solvers in :any:`ot.gpu`. Those
 implementation use the :code:`cupy` toolbox.   
