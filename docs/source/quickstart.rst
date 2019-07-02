@@ -216,13 +216,7 @@ More details about the algorithm used is given in the following note.
     :any:`ot.smooth.smooth_ot_semi_dual` with parameter :code:`reg_type='kl'` to
     choose entropic/Kullbach Leibler regularization.
 
-.. hint::
-    Examples of use for :any:`ot.sinkhorn` are available in the following examples:
 
-    - :any:`auto_examples/plot_OT_2D_samples`
-    - :any:`auto_examples/plot_OT_1D` 
-    - :any:`auto_examples/plot_OT_1D_smooth`
-    - :any:`auto_examples/plot_stochastic`
 
 
 Recently [23]_ introduced the sinkhorn divergence that build from entropic
@@ -233,6 +227,15 @@ empirical distributions.
 
 Finally note that we also provide in :any:`ot.stochastic` several implementation
 of stochastic solvers for entropic regularized OT [18]_ [19]_.  
+
+.. hint::
+    Examples of use for :any:`ot.sinkhorn` are available in the following examples:
+
+    - :any:`auto_examples/plot_OT_2D_samples`
+    - :any:`auto_examples/plot_OT_1D` 
+    - :any:`auto_examples/plot_OT_1D_smooth`
+    - :any:`auto_examples/plot_stochastic`
+
 
 Other regularization
 ^^^^^^^^^^^^^^^^^^^^
@@ -335,9 +338,78 @@ relies on :any:`ot.sinkhorn` for its iterations.
     - :any:`auto_examples/plot_optim_OTreg` 
 
 
-
 Wasserstein Barycenters
 -----------------------
+
+A Wasserstein barycenter is a distribution that minimize its Wasserstein
+distance with respect to other distributions [16]_. It corresponds to minimizing the
+following problem by seaching a distribution :math:`\mu` 
+
+.. math::
+    \min_\mu \quad \sum_{k} w_kW(\mu,\mu_k)
+
+
+In practice we model a distribution with a finite number of support position:
+
+.. math::
+    \mu=\sum_{i=1}^n a_i\delta_{x_i}
+
+where :math:`a` is an histogram on the simplex and the :math:`\{x_i\}` are the
+position of the support. We can clearly see here that optimizing :math:`\mu` can
+be done by searching for optimal weights :math:`a` or optimal support
+:math:`\{x_i\}` (optimizing both is also an option).
+We provide in POT solvers to estimate a discrete
+Wasserstein barycenter in both cases.
+
+Barycenters with fixed support
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When optimizing a barycenter with a fixed support, the optimization problem can
+be expressed as
+
+
+.. math::
+    \min_a \quad \sum_{k} w_k W(a,b_k)
+
+where :math:`b_k` are also weights in the simplex. In the non-regularized case,
+the problem above is a classical linear program. In this case we propose a
+solver :any:`ot.lp.barycenter` that rely on generic LP solvers. By default the
+function uses :any:`scipy.optimize.linprog`, but more efficient LP solvers from
+cvxopt can be also used by changing parameter :code:`solver`. Note that these
+solver require to solve a very large linear program and can be very slow in
+practice. 
+
+Similarly to the OT problem, OT barycenters can be computed in the regularized
+case. When using entropic regularization the problem can be solved with a
+generalization of the sinkhorn algorithm based on bregman projections [3]_. This
+algorithm is provided in function :any:`ot.bregman.barycenter` also available as
+:any:`ot.barycenter`. In this case, the algorithm scales better to large
+distributions and rely only on matrix multiplications that can be performed in
+parallel.
+
+In addition to teh speedup brought by regularization, one can also greatly
+accelerate the estimation of Wasserstein barycenter when the support has a
+separable structure [21]_. In teh case of 2D images for instance one can replace
+the matrix vector production in teh bregman projections by convolution
+operators. We provide an implementation of this algorithm in function
+:any:`ot.bregman.convolutional_barycenter2d`.
+
+.. hint::
+    Example of Wasserstein (:any:`ot.lp.barycenter`) and regularized wassrestein
+    barycenter (:any:`ot.bregman.barycenter`) computation are available in the following examples:
+
+    - :any:`auto_examples/plot_barycenter_1D` 
+    - :any:`auto_examples/plot_barycenter_lp_vs_entropic` 
+
+    Example of convolutional barycenter (:any:`ot.bregman.convolutional_barycenter2d`) computation for 2D images is available
+    in the following example:
+
+    - :any:`auto_examples/plot_convolutional_barycenter`
+
+
+
+Barycenters with free support
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 
