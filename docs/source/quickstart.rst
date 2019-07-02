@@ -278,7 +278,7 @@ choose the quadratic regularization.
 Group Lasso regularization
 """"""""""""""""""""""""""
 
-Another regularization that has been used in recent years is the group lasso
+Another regularization that has been used in recent years [5]_  is the group lasso
 regularization
 
 .. math::
@@ -333,7 +333,7 @@ Another solver is proposed to solve the problem
         s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
 where :math:`\Omega_e` is the entropic regularization. In this case we use a
-generalized conditional gradient [7]_ implemented in :any:`ot.opim.gcg`  that does not linearize the entropic term and
+generalized conditional gradient [7]_ implemented in :any:`ot.optim.gcg`  that does not linearize the entropic term and
 relies on :any:`ot.sinkhorn` for its iterations. 
 
 .. hint::
@@ -421,11 +421,11 @@ Estimating the Wassresein barycenter with free support but fixed weights
 corresponds to  solving the following optimization problem:
 
 .. math::
-    \min_\{x_i\} \quad \sum_{k} w_kW(\mu,\mu_k)
+    \min_{\{x_i\}} \quad \sum_{k} w_kW(\mu,\mu_k)
 
     s.t. \quad \mu=\sum_{i=1}^n a_i\delta_{x_i}
 
-WE provide an alternating solver based on [20]_ in
+We provide an alternating solver based on [20]_ in
 :any:`ot.lp.free_support_barycenter`. This function minimize the problem and
 return an optimal support :math:`\{x_i\}` for uniform or given weights
 :math:`a`.
@@ -443,13 +443,149 @@ return an optimal support :math:`\{x_i\}` for uniform or given weights
 Monge mapping and Domain adaptation
 -----------------------------------
 
+The original transport problem investigated by Gaspard Monge  was seeking for a
+mapping function that maps (or transports) between a source and target
+distribution but that minimizes the transport loss. The existence and uniqueness of this
+optimal mapping is still an open problem in the general case but has been proven
+for smooth distributions by Brenier in his eponym `theorem
+<https://who.rocq.inria.fr/Jean-David.Benamou/demiheure.pdf>`__. We provide in
+:any:`ot.da` several solvers for Monge mapping estimation and domain adaptation. 
+
+Monge Mapping estimation
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+We now discuss several approaches that are implemented in POT to estimate or
+approximate a Monge mapping from finite distributions. 
+
+First note that when the source and target distributions are supposed to be Gaussian
+distributions, there exists a close form solution for the mapping and its an
+affine function [14]_ of the form :math:`T(x)=Ax+b` . In this case we provide the function
+:any:`ot.da.OT_mapping_linear` that return the operator :math:`A` and vector
+:math:`b`. Note that if the number of samples is too small there is a parameter
+:code:`reg` that provide a regularization for the covariance matrix estimation.
+
+For a more general mapping estimation we also provide the barycentric mapping
+proposed in [6]_ . It is implemented in the class :any:`ot.da.EMDTransport` and
+other transport based classes in :any:`ot.da` . Those classes are discussed more
+in the following but follow an interface similar to sklearn classes. Finally a
+method proposed in [8]_ that estimate a continuous mapping approximating the
+barycentric mapping is provided in :any:`ot.da.joint_OT_mapping_linear` for
+linear mapping and :any:`ot.da.joint_OT_mapping_kernel` for non linear mapping.
+
+ .. hint::
+
+    Example of the linear Monge mapping estimation is available
+    in the following example:
+
+    - :any:`auto_examples/plot_otda_linear_mapping`
+
+Domain adaptation classes
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The use of OT for domain adaptation (OTDA) has been first proposed in [5]_ that also
+introduced the group Lasso regularization. The main idea of OTDA is to estimate
+a mapping of the samples between source and target distributions which allows to
+transport labeled source samples onto the target distribution with no labels.
+
+We provide several classes based on :any:`ot.da.BaseTransport` that provide
+several OT and mapping estimations. The interface of those classes is similar to
+classifiers in sklearn toolbox. At initialization several parameters (for
+instance regularization parameter) can be set. Then one needs to estimate the
+mapping with function :any:`ot.da.BaseTransport.fit`. Finally one can map the
+samples from source to target with  :any:`ot.da.BaseTransport.transform` and
+from target to source with :any:`ot.da.BaseTransport.inverse_transform`. Here is
+an example for class :any:`ot.da.EMDTransport` 
+
+.. code::
+
+    ot_emd = ot.da.EMDTransport()
+    ot_emd.fit(Xs=Xs, Xt=Xt)
+
+    Mapped_Xs= ot_emd.transform(Xs=Xs)
+
+A list
+of the provided implementation is given in the following note.
+
+.. note::
+
+    Here is a list of the mapping classes inheriting from
+    :any:`ot.da.BaseTransport`
+    
+    * :any:`ot.da.EMDTransport` : Barycentric mapping with EMD transport
+    * :any:`ot.da.SinkhornTransport` : Barycentric mapping with Sinkhorn transport
+    * :any:`ot.da.SinkhornL1l2Transport` : Barycentric mapping with Sinkhorn +
+      group Lasso regularization [5]_
+    * :any:`ot.da.SinkhornLpl1Transport` : Barycentric mapping with Sinkhorn +
+      non convex group Lasso regularization [5]_      
+    * :any:`ot.da.LinearTransport` : Linear mapping estimation  between Gaussians
+      [14]_
+    * :any:`ot.da.MappingTransport` : Nonlinear mapping estimation [8]_ 
+
+.. hint::
+
+    Example of the use of OTDA classes are available in the following exmaples:
+
+    - :any:`auto_examples/plot_otda_color_images`
+    - :any:`auto_examples/plot_otda_mapping`
+    - :any:`auto_examples/plot_otda_mapping_colors_images`
+    - :any:`auto_examples/plot_otda_semi_supervised`
 
 Other applications
 ------------------
 
+We discuss in the following several implementations that has been used and
+proposed in the OT and machine learning community.
+
 Wasserstein Discriminant Analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Wasserstein Discriminant Analysis [11]_ is a generalization of `Fisher Linear Discriminant
+Analysis <https://en.wikipedia.org/wiki/Linear_discriminant_analysis>`__ that
+allows discrimination between classes that are not linearly separable. It
+consist in finding a linear projector optimizing the following criterion
+
+.. math::
+    P = \text{arg}\min_P \frac{\sum_i OT_e(\mu_i\#P,\mu_i\#P)}{\sum_{i,j\neq i}
+    OT_e(\mu_i\#P,\mu_j\#P)}
+    
+where :math:`\#` is the push-forward operator, :math:`OT_e` is the entropic OT
+loss  and :math:`\mu_i` is the
+distribution of samples from class :math:`i`.  :math:`P` is also constrained to
+be in the Stiefel manifold. WDA can be solved in pot using function
+:any:`ot.dr.wda`. It requires to have installed :code:`pymanopt` and
+:code:`autograd` for manifold optimization and automatic differentiation
+respectively. Note that we also provide the Fisher discriminant estimator in
+:any:`ot.dr.wda` for easy comparison.
+
+.. warning::
+    Note that due to the hard dependency on  :code:`pymanopt` and
+    :code:`autograd`, :any:`ot.dr` is not imported by default. If you want to
+    use it you have to specifically import it with :code:`import ot.dr` .
+
+.. hint::
+
+    An example of the use of WDA is available in the following example:
+
+    - :any:`auto_examples/plot_WDA`
+
+
+Unbalanced optimal transport
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Unbalanced OT is a relaxation of the original OT problem where the violation of
+the constraint on the marginals is added to the objective of the optimization
+problem:
+ 
+.. math::
+    \min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j} + reg\cdot\Omega(\gamma) + \alpha KL(\gamma 1, a) + \alpha KL(\gamma^T 1, b)
+
+    s.t. \quad  \gamma\geq 0
+
+
+where KL is the Kullback-Leibler divergence. This formulation allwos for
+computing approximate mapping between distributions that do not have the same
+amount of mass. Interestingly the problem can be solved with a generalization of
+the Bregman projections algorithm [10]_.
 
 Gromov-Wasserstein
 ^^^^^^^^^^^^^^^^^^
@@ -461,6 +597,10 @@ GPU acceleration
 We provide several implementation of our OT solvers in :any:`ot.gpu`. Those
 implementation use the :code:`cupy` toolbox.   
 
+.. warning::
+    Note that due to the hard dependency on  :code:`cupy`, :any:`ot.gpu` is not
+    imported by default. If you want to
+    use it you have to specifically import it with :code:`import ot.gpu` .
 
 
 FAQ

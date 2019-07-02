@@ -221,8 +221,6 @@ This toolbox has been created and is maintained by
 
 The contributors to this library are
 
--  `Rémi Flamary <http://remi.flamary.com/>`__
--  `Nicolas Courty <http://people.irisa.fr/Nicolas.Courty/>`__
 -  `Alexandre Gramfort <http://alexandre.gramfort.net/>`__
 -  `Laetitia Chapel <http://people.irisa.fr/Laetitia.Chapel/>`__
 -  `Michael Perrot <http://perso.univ-st-etienne.fr/pem82055/>`__
