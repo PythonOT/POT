@@ -243,6 +243,9 @@ regularization terms: namely quadratic regularization and group lasso
 regularization. But we also provide in :any:`ot.optim`  two generic solvers that allows solving any
 smooth regularization in practice. 
 
+Quadratic regularization
+""""""""""""""""""""""""
+
 The first general regularization term we can solve is the quadratic
 regularization of the form 
 
@@ -256,6 +259,17 @@ solved with POT using solvers from :any:`ot.smooth`, more specifically
 functions :any:`ot.smooth.smooth_ot_dual` or
 :any:`ot.smooth.smooth_ot_semi_dual` with parameter :code:`reg_type='l2'` to 
 choose the quadratic regularization.
+
+.. hint::
+    Examples of quadratic regularization are available in the following examples:
+
+    - :any:`auto_examples/plot_OT_1D_smooth`
+    - :any:`auto_examples/plot_optim_OTreg`
+
+
+
+Group Lasso regularization
+""""""""""""""""""""""""""
 
 Another regularization that has been used in recent years is the group lasso
 regularization
@@ -275,6 +289,50 @@ be solved using an efficient majoration minimization approach  with
 convex gourp lasso and we provide a solver using generalized conditional
 gradient algorithm [7]_ in function
 :any:`ot.da.sinkhorn_l1l2_gl`.
+
+.. hint::
+    Examples of group Lasso regularization are available in the following examples:
+
+    - :any:`auto_examples/plot_otda_classes` 
+    - :any:`auto_examples/plot_otda_d2`
+
+
+Generic solvers
+"""""""""""""""
+
+Finally we propose in POT generic solvers that can be used to solve any
+regularization as long as you can provide a function computing the
+regularization and a function computing its gradient.
+
+In order to solve 
+
+.. math::
+    \gamma^* = arg\min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j} + \lambda\Omega(\gamma)
+
+        s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
+
+you can use function :any:`ot.optim.cg` that will use a conditional gradient as
+proposed in [6]_ . you need to provide the regularization function as parameter
+``f`` and its gradient as parameter  ``df``. Note that the conditional gradient relies on
+iterative solving of a linearization of the problem using the exact
+:any:`ot.emd` so it can be  slow in practice. Still it always returns a
+transport matrix that does not violates the marginals.
+
+Another solver is proposed to solve the problem
+
+.. math::
+    \gamma^* = arg\min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j}+ \lambda_e\Omega_e(\gamma) + \lambda\Omega(\gamma)
+
+        s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
+
+where :math:`\Omega_e` is the entropic regularization. In this case we use a
+generalized conditional gradient [7]_ implemented in :any:`ot.opim.gcg`  that does not linearize the entropic term and
+relies on :any:`ot.sinkhorn` for its iterations. 
+
+.. hint::
+    Example of generic solvers are available in the following example:
+
+    - :any:`auto_examples/plot_optim_OTreg` 
 
 
 
