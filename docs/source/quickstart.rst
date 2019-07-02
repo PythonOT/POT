@@ -220,8 +220,14 @@ More details about the algorithm used is given in the following note.
 
 
 Recently [23]_ introduced the sinkhorn divergence that build from entropic
-regularization to compute fast and differentiable geometric diveregnce between
-empirical distributions.  
+regularization to compute fast and differentiable geometric divergence between
+empirical distributions.  Note that we provide a function that compute directly
+(with no need to pre compute the :code:`M` matrix)
+the sinkhorn divergence for empirical distributions in
+:any:`ot.bregman.empirical_sinkhorn_divergence`. Similarly one can compute the
+OT matrix and loss for empirical distributions with respectively
+:any:`ot.bregman.empirical_sinkhorn` and :any:`ot.bregman.empirical_sinkhorn2`.
+
 
 
 
@@ -389,19 +395,21 @@ parallel.
 
 In addition to teh speedup brought by regularization, one can also greatly
 accelerate the estimation of Wasserstein barycenter when the support has a
-separable structure [21]_. In teh case of 2D images for instance one can replace
+separable structure [21]_. In the case of 2D images for instance one can replace
 the matrix vector production in teh bregman projections by convolution
 operators. We provide an implementation of this algorithm in function
 :any:`ot.bregman.convolutional_barycenter2d`.
 
 .. hint::
-    Example of Wasserstein (:any:`ot.lp.barycenter`) and regularized wassrestein
+    Example of Wasserstein (:any:`ot.lp.barycenter`) and regularized Wasserstein
     barycenter (:any:`ot.bregman.barycenter`) computation are available in the following examples:
 
     - :any:`auto_examples/plot_barycenter_1D` 
     - :any:`auto_examples/plot_barycenter_lp_vs_entropic` 
 
-    Example of convolutional barycenter (:any:`ot.bregman.convolutional_barycenter2d`) computation for 2D images is available
+    Example of convolutional barycenter
+    (:any:`ot.bregman.convolutional_barycenter2d`) computation 
+    for 2D images is available
     in the following example:
 
     - :any:`auto_examples/plot_convolutional_barycenter`
