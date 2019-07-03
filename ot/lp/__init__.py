@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Solvers for the original linear program OT problem
+
+
+
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -39,26 +42,30 @@ def emd(a, b, M, numItermax=100000, log=False):
     - M is the metric cost matrix
     - a and b are the sample weights
 
+    .. warning::
+        Note that the M matrix needs to be a C-order numpy.array in float64 
+        format.
+
     Uses the algorithm proposed in [1]_
 
     Parameters
     ----------
-    a : (ns,) ndarray, float64
-        Source histogram (uniform weigth if empty list)
-    b : (nt,) ndarray, float64
-        Target histogram (uniform weigth if empty list)
-    M : (ns,nt) ndarray, float64
-        loss matrix
+    a : (ns,) numpy.ndarray, float64
+        Source histogram (uniform weight if empty list)
+    b : (nt,) numpy.ndarray, float64
+        Target histogram (uniform weight if empty list)
+    M : (ns,nt) numpy.ndarray, float64
+        Loss matrix (c-order array with type float64)
     numItermax : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
-    log: boolean, optional (default=False)
+    log: bool, optional (default=False)
         If True, returns a dictionary containing the cost and dual
         variables. Otherwise returns only the optimal transportation matrix.
 
     Returns
     -------
-    gamma: (ns x nt) ndarray
+    gamma: (ns x nt) numpy.ndarray
         Optimal transportation matrix for the given parameters
     log: dict
         If input log is true, a dictionary containing the cost and dual
@@ -130,16 +137,20 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     - M is the metric cost matrix
     - a and b are the sample weights
 
+    .. warning::
+        Note that the M matrix needs to be a C-order numpy.array in float64 
+        format.
+
     Uses the algorithm proposed in [1]_
 
     Parameters
     ----------
-    a : (ns,) ndarray, float64
-        Source histogram (uniform weigth if empty list)
-    b : (nt,) ndarray, float64
-        Target histogram (uniform weigth if empty list)
-    M : (ns,nt) ndarray, float64
-        loss matrix
+    a : (ns,) numpy.ndarray, float64
+        Source histogram (uniform weight if empty list)
+    b : (nt,) numpy.ndarray, float64
+        Target histogram (uniform weight if empty list)
+    M : (ns,nt) numpy.ndarray, float64
+        Loss matrix (c-order array with type float64)
     numItermax : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
@@ -153,7 +164,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     -------
     gamma: (ns x nt) ndarray
         Optimal transportation matrix for the given parameters
-    log: dict
+    log: dictnp
         If input log is true, a dictionary containing the cost and dual
         variables and exit status
 
@@ -233,9 +244,9 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
     Parameters
     ----------
-    measures_locations : list of (k_i,d) np.ndarray
+    measures_locations : list of (k_i,d) numpy.ndarray
         The discrete support of a measure supported on k_i locations of a d-dimensional space (k_i can be different for each element of the list)
-    measures_weights : list of (k_i,) np.ndarray
+    measures_weights : list of (k_i,) numpy.ndarray
         Numpy arrays where each numpy array has k_i non-negatives values summing to one representing the weights of each discrete input measure
 
     X_init : (k,d) np.ndarray
@@ -248,7 +259,7 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -533,14 +544,13 @@ def wasserstein_1d(x_a, x_b, a=None, b=None, p=1.):
     r"""Solves the p-Wasserstein distance problem between 1d measures and returns
     the distance
 
-
     .. math::
-        \gamma = arg\min_\gamma \left( \sum_i \sum_j \gamma_{ij}
-            |x_a[i] - x_b[j]|^p \\right)^{1/p}
+        \min_\gamma \left( \sum_i \sum_j \gamma_{ij} \|x_a[i] - x_b[j]\|^p \right)^{1/p}
 
         s.t. \gamma 1 = a,
              \gamma^T 1= b,
              \gamma\geq 0
+
     where :
 
     - x_a and x_b are the samples

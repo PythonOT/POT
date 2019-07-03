@@ -54,6 +54,12 @@ The library has been tested on Linux, MacOSX and Windows. It requires a C++ comp
 
 #### Pip installation
 
+Note that due to a limitation of pip, `cython` and `numpy` need to be installed
+prior to installing POT. This can be done easily with
+```
+pip install numpy cython
+```
+
 You can install the toolbox through PyPI with:
 ```
 pip install POT
@@ -62,6 +68,8 @@ or get the very latest version by downloading it and then running:
 ```
 python setup.py install --user # for user install (no root)
 ```
+
+
 
 #### Anaconda installation with conda-forge
 
@@ -151,7 +159,12 @@ You can also see the notebooks with [Jupyter nbviewer](https://nbviewer.jupyter.
 
 ## Acknowledgements
 
-The contributors to this library are:
+This toolbox has been created and is maintained by
+
+* [Rémi Flamary](http://remi.flamary.com/)
+* [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
+
+The contributors to this library are 
 
 * [Rémi Flamary](http://remi.flamary.com/)
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)

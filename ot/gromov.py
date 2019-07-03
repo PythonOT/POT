@@ -72,8 +72,8 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
-    "Gromov-Wasserstein averaging of kernel and distance matrices."
-    International Conference on Machine Learning (ICML). 2016.
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
 
     """
 
@@ -137,8 +137,8 @@ def tensor_product(constC, hC1, hC2, T):
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
-    "Gromov-Wasserstein averaging of kernel and distance matrices."
-    International Conference on Machine Learning (ICML). 2016.
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
 
     """
     A = -np.dot(hC1, T).dot(hC2.T)
@@ -172,8 +172,8 @@ def gwloss(constC, hC1, hC2, T):
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
-    "Gromov-Wasserstein averaging of kernel and distance matrices."
-    International Conference on Machine Learning (ICML). 2016.
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
 
     """
 
@@ -207,8 +207,8 @@ def gwggrad(constC, hC1, hC2, T):
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
-    "Gromov-Wasserstein averaging of kernel and distance matrices."
-    International Conference on Machine Learning (ICML). 2016.
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
 
     """
     return 2 * tensor_product(constC, hC1, hC2,
@@ -277,15 +277,15 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
     The function solves the following optimization problem:
 
     .. math::
-        \GW_Dist = \min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+        GW = \min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
 
     Where :
-        C1 : Metric cost matrix in the source space
-        C2 : Metric cost matrix in the target space
-        p  : distribution in the source space
-        q  : distribution in the target space
-        L  : loss function to account for the misfit between the similarity matrices
-        H  : entropy
+    - C1 : Metric cost matrix in the source space
+    - C2 : Metric cost matrix in the target space
+    - p  : distribution in the source space
+    - q  : distribution in the target space
+    - L  : loss function to account for the misfit between the similarity matrices
+    - H  : entropy
 
     Parameters
     ----------
@@ -312,7 +312,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
         If True the steps of the line-search is found via an armijo research. Else closed form is used.
         If there is convergence issues use False.
     **kwargs : dict
-        parameters can be directly pased to the ot.optim.cg solver
+        parameters can be directly passed to the ot.optim.cg solver
 
     Returns
     -------
@@ -355,25 +355,31 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
 def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5, armijo=False, log=False, **kwargs):
     """
     Computes the FGW transport between two graphs see [24]
+
     .. math::
-        \gamma = arg\min_\gamma (1-\alpha)*<\gamma,M>_F + alpha* \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+        \gamma = arg\min_\gamma (1-\\alpha)*<\gamma,M>_F + \\alpha* \sum_{i,j,k,l}
+        L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+
         s.t. \gamma 1 = p
              \gamma^T 1= q
              \gamma\geq 0
+
     where :
     - M is the (ns,nt) metric cost matrix
     - :math:`f` is the regularization term ( and df is its gradient)
     - a and b are source and target weights (sum to 1)
     - L is a loss function to account for the misfit between the similarity matrices
-    The algorithm used for solving the problem is conditional gradient as discussed in  [1]_
+
+    The algorithm used for solving the problem is conditional gradient as discussed in  [24]_
+
     Parameters
     ----------
     M  : ndarray, shape (ns, nt)
          Metric cost matrix between features across domains
     C1 : ndarray, shape (ns, ns)
-         Metric cost matrix respresentative of the structure in the source space
+         Metric cost matrix representative of the structure in the source space
     C2 : ndarray, shape (nt, nt)
-         Metric cost matrix espresentative of the structure in the target space
+         Metric cost matrix representative of the structure in the target space
     p :  ndarray, shape (ns,)
          distribution in the source space
     q :  ndarray, shape (nt,)
@@ -392,19 +398,23 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
         If True the steps of the line-search is found via an armijo research. Else closed form is used.
         If there is convergence issues use False.
     **kwargs : dict
-        parameters can be directly pased to the ot.optim.cg solver
+        parameters can be directly passed to the ot.optim.cg solver
+
     Returns
     -------
     gamma : (ns x nt) ndarray
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
+
+
     References
     ----------
     .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
-          and Courty Nicolas
-        "Optimal Transport for structured data with application on graphs"
-        International Conference on Machine Learning (ICML). 2019.
+        and Courty Nicolas "Optimal Transport for structured data with
+        application on graphs", International Conference on Machine Learning
+        (ICML). 2019.
+
     """
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
@@ -428,17 +438,23 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
 def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5, armijo=False, log=False, **kwargs):
     """
     Computes the FGW distance between two graphs see [24]
+
     .. math::
-        \gamma = arg\min_\gamma (1-\alpha)*<\gamma,M>_F + alpha* \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+        \min_\gamma (1-\\alpha)*<\gamma,M>_F + \\alpha* \sum_{i,j,k,l}
+        L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+
+
         s.t. \gamma 1 = p
              \gamma^T 1= q
              \gamma\geq 0
+
     where :
     - M is the (ns,nt) metric cost matrix
     - :math:`f` is the regularization term ( and df is its gradient)
     - a and b are source and target weights (sum to 1)
     - L is a loss function to account for the misfit between the similarity matrices
     The algorithm used for solving the problem is conditional gradient as discussed in  [1]_
+
     Parameters
     ----------
     M  : ndarray, shape (ns, nt)
@@ -466,16 +482,18 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
         If there is convergence issues use False.
     **kwargs : dict
         parameters can be directly pased to the ot.optim.cg solver
+
     Returns
     -------
     gamma : (ns x nt) ndarray
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
+
     References
     ----------
     .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
-          and Courty Nicolas
+        and Courty Nicolas
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
@@ -506,22 +524,22 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwarg
     The function solves the following optimization problem:
 
     .. math::
-        \GW_Dist = \min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+        GW = \min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
 
     Where :
-        C1 : Metric cost matrix in the source space
-        C2 : Metric cost matrix in the target space
-        p  : distribution in the source space
-        q  : distribution in the target space
-        L  : loss function to account for the misfit between the similarity matrices
-        H  : entropy
+    - C1 : Metric cost matrix in the source space
+    - C2 : Metric cost matrix in the target space
+    - p  : distribution in the source space
+    - q  : distribution in the target space
+    - L  : loss function to account for the misfit between the similarity matrices
+    - H  : entropy
 
     Parameters
     ----------
     C1 : ndarray, shape (ns, ns)
          Metric cost matrix in the source space
     C2 : ndarray, shape (nt, nt)
-         Metric costfr matrix in the target space
+         Metric cost matrix in the target space
     p :  ndarray, shape (ns,)
          distribution in the source space
     q :  ndarray, shape (nt,)
@@ -587,21 +605,21 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
     The function solves the following optimization problem:
 
     .. math::
-        \GW = arg\min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}-\epsilon(H(T))
+        GW = arg\min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}-\epsilon(H(T))
 
-        s.t. \GW 1 = p
+        s.t. T 1 = p
 
-             \GW^T 1= q
+             T^T 1= q
 
-             \GW\geq 0
+             T\geq 0
 
     Where :
-        C1 : Metric cost matrix in the source space
-        C2 : Metric cost matrix in the target space
-        p  : distribution in the source space
-        q  : distribution in the target space
-        L  : loss function to account for the misfit between the similarity matrices
-        H  : entropy
+    - C1 : Metric cost matrix in the source space
+    - C2 : Metric cost matrix in the target space
+    - p  : distribution in the source space
+    - q  : distribution in the target space
+    - L  : loss function to account for the misfit between the similarity matrices
+    - H  : entropy
 
     Parameters
     ----------
@@ -629,14 +647,13 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
     Returns
     -------
     T : ndarray, shape (ns, nt)
-        coupling between the two spaces that minimizes :
-            \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}-\epsilon(H(T))
+        Optimal coupling between the two spaces
 
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
-    "Gromov-Wasserstein averaging of kernel and distance matrices."
-    International Conference on Machine Learning (ICML). 2016.
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
 
     """
 
@@ -695,15 +712,15 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
     The function solves the following optimization problem:
 
     .. math::
-        \GW_Dist = \min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}-\epsilon(H(T))
+        GW = \min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}-\epsilon(H(T))
 
     Where :
-        C1 : Metric cost matrix in the source space
-        C2 : Metric cost matrix in the target space
-        p  : distribution in the source space
-        q  : distribution in the target space
-        L  : loss function to account for the misfit between the similarity matrices
-        H  : entropy
+    - C1 : Metric cost matrix in the source space
+    - C2 : Metric cost matrix in the target space
+    - p  : distribution in the source space
+    - q  : distribution in the target space
+    - L  : loss function to account for the misfit between the similarity matrices
+    - H  : entropy
 
     Parameters
     ----------
@@ -736,8 +753,8 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
-    "Gromov-Wasserstein averaging of kernel and distance matrices."
-    International Conference on Machine Learning (ICML). 2016.
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
 
     """
 
@@ -762,13 +779,13 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
     The function solves the following optimization problem:
 
     .. math::
-        C = argmin_C\in R^{NxN} \sum_s \lambda_s GW(C,Cs,p,ps)
+        C = argmin_{C\in R^{NxN}} \sum_s \lambda_s GW(C,C_s,p,p_s)
 
 
     Where :
 
-        Cs : metric cost matrix
-        ps  : distribution
+    - :math:`C_s` : metric cost matrix
+    - :math:`p_s`  : distribution
 
     Parameters
     ----------
@@ -806,8 +823,8 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
-    "Gromov-Wasserstein averaging of kernel and distance matrices."
-    International Conference on Machine Learning (ICML). 2016.
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
 
     """
 
@@ -876,8 +893,8 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 
     Where :
 
-        Cs : metric cost matrix
-        ps  : distribution
+    - Cs : metric cost matrix
+    - ps  : distribution
 
     Parameters
     ----------
@@ -913,8 +930,8 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
-    "Gromov-Wasserstein averaging of kernel and distance matrices."
-    International Conference on Machine Learning (ICML). 2016.
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
 
     """
 
@@ -972,6 +989,8 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
                     verbose=False, log=False, init_C=None, init_X=None):
     """
     Compute the fgw barycenter as presented eq (5) in [24].
+
+    Parameters
     ----------
     N : integer
         Desired number of samples of the target barycenter
@@ -993,8 +1012,9 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
               initialization for the barycenters' structure matrix. If not set random init
     init_X :  ndarray, shape (N,d), optional
               initialization for the barycenters' features. If not set random init
+
     Returns
-    ----------
+    -------
     X : ndarray, shape (N,d)
         Barycenters' features
     C : ndarray, shape (N,N)
@@ -1002,11 +1022,13 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
     log_: dictionary
         Only returned when log=True
         T : list of (N,ns) transport matrices
-        Ms : all distance matrices between the feature of the barycenter and the other features dist(X,Ys) shape (N,ns)
+        Ms : all distance matrices between the feature of the barycenter and the
+        other features dist(X,Ys) shape (N,ns)
+
     References
     ----------
     .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
-          and Courty Nicolas
+        and Courty Nicolas
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
@@ -1107,6 +1129,7 @@ def update_sructure_matrix(p, lambdas, T, Cs):
     """
     Updates C according to the L2 Loss kernel with the S Ts couplings
     calculated at each iteration
+
     Parameters
     ----------
     p  : ndarray, shape (N,)
@@ -1117,6 +1140,7 @@ def update_sructure_matrix(p, lambdas, T, Cs):
         the S Ts couplings calculated at each iteration
     Cs : list of S ndarray, shape(ns,ns)
          Metric cost matrices
+
     Returns
     ----------
     C : ndarray, shape (nt,nt)
@@ -1132,6 +1156,7 @@ def update_feature_matrix(lambdas, Ys, Ts, p):
     """
     Updates the feature with respect to the S Ts couplings. See "Solving the barycenter problem with Block Coordinate Descent (BCD)" in [24]
     calculated at each iteration
+
     Parameters
     ----------
     p  : ndarray, shape (N,)
@@ -1142,6 +1167,7 @@ def update_feature_matrix(lambdas, Ys, Ts, p):
         the S Ts couplings calculated at each iteration
     Ys : list of S ndarray, shape(d,ns)
          The features
+
     Returns
     ----------
     X : ndarray, shape (d,N)

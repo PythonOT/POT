@@ -58,13 +58,16 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     - M is the metric cost matrix
     - a and b are the sample weights
 
+    .. warning::
+        Note that the M matrix needs to be a C-order :py.cls:`numpy.array`
+
     Parameters
     ----------
-    a : (ns,) ndarray, float64
+    a : (ns,) numpy.ndarray, float64
         source histogram
-    b : (nt,) ndarray, float64
+    b : (nt,) numpy.ndarray, float64
         target histogram
-    M : (ns,nt) ndarray, float64
+    M : (ns,nt) numpy.ndarray, float64
         loss matrix
     max_iter : int
         The maximum number of iterations before stopping the optimization
@@ -73,7 +76,7 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
 
     Returns
     -------
-    gamma: (ns x nt) ndarray
+    gamma: (ns x nt) numpy.ndarray
         Optimal transportation matrix for the given parameters
 
     """

@@ -29,6 +29,26 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation of Unbalanced Optimal transport using a Kullback-Leibl...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_UOT_1D_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_UOT_1D.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_UOT_1D
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="Illustrates the use of the generic solver for regularized OT with user-designed regularization ...">
 
 .. only:: html
@@ -106,26 +126,6 @@ This is a gallery of all the POT example files.
    :hidden:
 
    /auto_examples/plot_gromov
-
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="Illustration of 2D optimal transport between discributions that are weighted sum of diracs. The...">
-
-.. only:: html
-
-    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_OT_2D_samples_thumb.png
-
-        :ref:`sphx_glr_auto_examples_plot_OT_2D_samples.py`
-
-.. raw:: html
-
-    </div>
-
-
-.. toctree::
-   :hidden:
-
-   /auto_examples/plot_OT_2D_samples
 
 .. raw:: html
 
@@ -209,6 +209,26 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="Illustration of 2D optimal transport between discributions that are weighted sum of diracs. The...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_OT_2D_samples_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_OT_2D_samples.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_OT_2D_samples
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="This example is designed to show how to use the stochatic optimization algorithms for descrete ...">
 
 .. only:: html
@@ -289,6 +309,26 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation of regularized Wassersyein Barycenter as proposed in [...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_UOT_barycenter_1D_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_UOT_barycenter_1D.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_UOT_barycenter_1D
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="This example presents how to use MappingTransport to estimate at the same time both the couplin...">
 
 .. only:: html
@@ -326,6 +366,26 @@ This is a gallery of all the POT example files.
    :hidden:
 
    /auto_examples/plot_otda_semi_supervised
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation of FGW for 1D measures[18].">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_fgw_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_fgw.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_fgw
 
 .. raw:: html
 
@@ -406,6 +466,26 @@ This is a gallery of all the POT example files.
    :hidden:
 
    /auto_examples/plot_barycenter_lp_vs_entropic
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example illustrates the computation barycenter of labeled graphs using FGW">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_barycenter_fgw_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_barycenter_fgw.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_barycenter_fgw
 
 .. raw:: html
 

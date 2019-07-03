@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 Dimension reduction with optimal transport
+
+
+.. warning::
+    Note that by default the module is not import in :mod:`ot`. In order to
+    use it you need to explicitely import :mod:`ot.dr`
+
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>

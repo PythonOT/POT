@@ -72,7 +72,8 @@ def test_emd_1d_emd2_1d():
     # check AssertionError is raised if called on non 1d arrays
     u = np.random.randn(n, 2)
     v = np.random.randn(m, 2)
-    np.testing.assert_raises(AssertionError, ot.emd_1d, u, v, [], [])
+    with pytest.raises(AssertionError):
+        ot.emd_1d(u, v, [], [])
 
 
 def test_wass_1d():
