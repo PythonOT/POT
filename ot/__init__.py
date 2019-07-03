@@ -10,7 +10,10 @@ a number of functions described below.
     :py:mod:`ot.gromov`, :py:mod:`ot.smooth`
     :py:mod:`ot.stochastic`    
 
-    The other sub-modules are not imported due to additional dependencies.
+    The following sub-modules are not imported due to additional dependencies:
+
+    - :any:`ot.dr` : depends on :code:`pymanopt` and :code:`autograd`.
+    - :any:`ot.gpu` : depends on :code:`cupy` and a CUDA GPU.
 
 """
 

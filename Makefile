@@ -42,10 +42,10 @@ pep8 :
 	flake8 examples/ ot/ test/
 
 test : FORCE pep8
-	$(PYTHON) -m pytest -v test/ --cov=ot --cov-report html:cov_html
+	$(PYTHON) -m pytest -v test/ --doctest-modules --ignore ot/gpu/  --cov=ot --cov-report html:cov_html
 	
 pytest : FORCE 
-	$(PYTHON) -m pytest -v test/ --cov=ot
+	$(PYTHON) -m pytest -v test/ --doctest-modules --ignore ot/gpu/  --cov=ot
 
 uploadpypi :
 	#python setup.py register
