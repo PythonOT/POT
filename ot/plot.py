@@ -1,5 +1,11 @@
 """
 Functions for plotting OT matrices
+
+.. warning::
+    Note that by default the module is not import in :mod:`ot`. In order to
+    use it you need to explicitely import :mod:`ot.plot`
+
+
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>

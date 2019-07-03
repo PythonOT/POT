@@ -544,14 +544,13 @@ def wasserstein_1d(x_a, x_b, a=None, b=None, p=1.):
     r"""Solves the p-Wasserstein distance problem between 1d measures and returns
     the distance
 
-
     .. math::
-        \gamma = arg\min_\gamma \left( \sum_i \sum_j \gamma_{ij}
-            |x_a[i] - x_b[j]|^p \\right)^{1/p}
+        \min_\gamma \left( \sum_i \sum_j \gamma_{ij} \|x_a[i] - x_b[j]\|^p \right)^{1/p}
 
         s.t. \gamma 1 = a,
              \gamma^T 1= b,
              \gamma\geq 0
+
     where :
 
     - x_a and x_b are the samples

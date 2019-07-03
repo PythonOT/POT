@@ -6,8 +6,8 @@ functions. The GPU backend in handled by `cupy
 <https://cupy.chainer.org/>`_.
 
 .. warning::
-    Note that by default the module is not import in :mod:`ot`. in order to 
-    use it you need to import :mod:`ot.gpu` .
+    Note that by default the module is not import in :mod:`ot`. In order to 
+    use it you need to explicitely import :mod:`ot.gpu` .
 
 By default, the functions in this module accept and return numpy arrays 
 in order to proide drop-in replacement for the other POT function but

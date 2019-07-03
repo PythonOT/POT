@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Various function that can be usefull
+Various useful functions
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
