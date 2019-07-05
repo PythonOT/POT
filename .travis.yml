@@ -21,12 +21,13 @@ matrix:
         - os: linux
           sudo: required
           python: 2.7
+        - name: "Python 3.7.3 on Windows"
+          os: windows           # Windows 10.0.17134 N/A Build 17134
+          language: shell       # 'language: python' is an error on Travis CI Windows
+          before_install: choco install python
+          env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
 before_install:
   - ./.travis/before_install.sh
-before_script: # configure a headless display to test plot generation
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
-  - sleep 3 # give xvfb some time to start
 # command to install dependencies
 install:
   - pip install -r requirements.txt
