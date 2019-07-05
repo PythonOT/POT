@@ -4,14 +4,19 @@
 ## 1.0.0 Out of beta
 *July 2019*
 
-This is the first official stable release of POT this means a jump to 1.0.0! 
+This is the first official stable release of POT and this means a jump to 1.0.0! 
 The library has been used in
 the wild for a while now and we have reached a state where a lot of fundamental
 OT solvers are available and tested. It has been quite stable in the last months
-but kept the beta flag in its Pypi classifiers until now.
+but kept the beta flag in its Pypi classifiers until now. 
+
+Note that this major
+release will be the last one supporting officially Python 2.7 (See
+https://python3statement.org/ for more reasons). For next release we will keep
+the travis tests for Python 2 but will make them non necessary for merge in 2020.
 
 The features are never complete in a toolbox designed for solving mathematical
-problems but with the new contributions we now implement algorithms and solvers 
+problems and research but with the new contributions we now implement algorithms and solvers 
 from 24 scientific papers (listed in the README.md file). New features include a
 direct implementation of the [empirical Sinkhorn divergence](https://pot.readthedocs.io/en/latest/all.html#ot.bregman.empirical_sinkhorn_divergence)
 , a new efficient (Cython implementation) solver for [EMD in 1D](https://pot.readthedocs.io/en/latest/all.html#ot.lp.emd_1d)
@@ -21,18 +26,27 @@ have implementations for [Unbalanced OT](https://github.com/rflamary/POT/blob/ma
 and a solver for [Unbalanced OT barycenters](https://github.com/rflamary/POT/blob/master/notebooks/plot_UOT_barycenter_1D.ipynb).
 A new variant of Gromov-Wasserstein divergence called [Fused
 Gromov-Wasserstein](https://pot.readthedocs.io/en/latest/all.html?highlight=fused_#ot.gromov.fused_gromov_wasserstein)
-with exemples of use on [tructured data](https://github.com/rflamary/POT/blob/master/notebooks/plot_fgw.ipynb) 
+ has been also contributed with exemples of use on [tructured data](https://github.com/rflamary/POT/blob/master/notebooks/plot_fgw.ipynb) 
 and computing [barycenters of labeld graphs](https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb).
 
 
-Finally a lot of work has been done on the documentation with several new
+A lot of work has been done on the documentation with several new
 examples corresponding to the new features and a lot of corrections for the
 docstrings. But the most visible change is a new 
 [quick start guide](https://pot.readthedocs.io/en/latest/quickstart.html) for
 POT that gives several pointers about which function or classes allow to solve a
 specific OT problem. When possible a link is provided to relevant examples.
 
-TODO contributors
+We will also provide with this release some pre-compiled Python wheels for Linux
+64bit on
+github and pip. This will simplify the install process that before requires a C
+compiler and numpy/cython already installed.
+
+Finally we would like to acknowledge and thank the numerous contributors of POT
+that has helped in the past build the foundation and are still contributing to
+bring new features and solvers to the library.
+
+
 
 #### Features
 
