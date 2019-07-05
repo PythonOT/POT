@@ -1,31 +1,32 @@
 dist: xenial   # required for Python >= 3.7
 language: python
 matrix:
-#    allow_failures:
-#        - os: osx
-    include:
-#        - os: osx
-#          language: generic
-        - os: linux
-          sudo: required
-          python: 3.4
-        - os: linux
-          sudo: required
-          python: 3.5
-        - os: linux
-          sudo: required
-          python: 3.6      
-        - os: linux
-          sudo: required
-          python: 3.7               
-        - os: linux
-          sudo: required
-          python: 2.7
-        - name: "Python 3.7.3 on Windows"
-          os: windows           # Windows 10.0.17134 N/A Build 17134
-          language: shell       # 'language: python' is an error on Travis CI Windows
-          before_install: choco install python
-          env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
+  allow_failures:
+      - os: osx
+      - os: windows
+  include:
+    - os: osx
+      language: generic
+    - os: linux
+      sudo: required
+      python: 3.4
+    - os: linux
+      sudo: required
+      python: 3.5
+    - os: linux
+      sudo: required
+      python: 3.6      
+    - os: linux
+      sudo: required
+      python: 3.7               
+    - os: linux
+      sudo: required
+      python: 2.7
+    - name: "Python 3.7.3 on Windows"
+      os: windows           # Windows 10.0.17134 N/A Build 17134
+      language: shell       # 'language: python' is an error on Travis CI Windows
+      before_install: choco install python
+      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
 before_install:
   - ./.travis/before_install.sh
 # command to install dependencies
