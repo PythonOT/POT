@@ -166,8 +166,6 @@ This toolbox has been created and is maintained by
 
 The contributors to this library are 
 
-* [Rémi Flamary](http://remi.flamary.com/)
-* [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
 * [Alexandre Gramfort](http://alexandre.gramfort.net/)
 * [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/)
 * [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/) (Mapping estimation)

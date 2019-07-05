@@ -2,7 +2,7 @@
 
 PYTHON=python3
 branch := $(shell git symbolic-ref --short -q HEAD)
-CIBW_BEFORE_BUILD="pip install numpy cython"
+
 
 
 help :
@@ -15,6 +15,7 @@ help :
 	@echo "    sremove - remove the package (system with sudo)"
 	@echo "    clean - remove any temporary files"
 	@echo "    notebook - launch ipython notebook"
+
 build :
 	$(PYTHON) setup.py build
 
@@ -49,13 +50,14 @@ test : FORCE pep8
 pytest : FORCE 
 	$(PYTHON) -m pytest -v test/ --doctest-modules --ignore ot/gpu/  --cov=ot
 
-uploadpypi :
-	#python setup.py register
-	$(PYTHON) setup.py sdist upload -r pypi
+release :
+	twine upload dist/*
+
+release_test :
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 rdoc :
 	pandoc --from=markdown --to=rst --output=docs/source/readme.rst README.md
-
 
 notebook :
 	ipython notebook --matplotlib=inline  --notebook-dir=notebooks/
@@ -76,7 +78,11 @@ autopep8 :
 aautopep8 :
 	autopep8 -air test ot examples --jobs -1
 	
-wheels:
-	cibuildwheel --platform linux --output-dir dist
+wheels :
+	CIBW_BEFORE_BUILD="pip install numpy cython" cibuildwheel --platform linux --output-dir dist
+
+dist : wheels
+	$(PYTHON) setup.py sdist
+
 
 FORCE :
