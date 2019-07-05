@@ -6,10 +6,8 @@ matrix:
       - os: windows
   include:
     - os: osx
-      language: generic
-    - os: linux
       sudo: required
-      python: 3.4
+      language: generic
     - os: linux
       sudo: required
       python: 3.5
