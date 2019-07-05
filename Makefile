@@ -2,6 +2,8 @@
 
 PYTHON=python3
 branch := $(shell git symbolic-ref --short -q HEAD)
+CIBW_BEFORE_BUILD="pip install numpy cython"
+
 
 help :
 	@echo "The following make targets are available:"
@@ -73,5 +75,8 @@ autopep8 :
 
 aautopep8 :
 	autopep8 -air test ot examples --jobs -1
+	
+wheels:
+	cibuildwheel --platform linux --output-dir dist
 
 FORCE :
