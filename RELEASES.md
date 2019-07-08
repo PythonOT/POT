@@ -26,7 +26,7 @@ have implementations for [Unbalanced OT](https://github.com/rflamary/POT/blob/ma
 and a solver for [Unbalanced OT barycenters](https://github.com/rflamary/POT/blob/master/notebooks/plot_UOT_barycenter_1D.ipynb).
 A new variant of Gromov-Wasserstein divergence called [Fused
 Gromov-Wasserstein](https://pot.readthedocs.io/en/latest/all.html?highlight=fused_#ot.gromov.fused_gromov_wasserstein)
- has been also contributed with exemples of use on [tructured data](https://github.com/rflamary/POT/blob/master/notebooks/plot_fgw.ipynb) 
+ has been also contributed with exemples of use on [structured data](https://github.com/rflamary/POT/blob/master/notebooks/plot_fgw.ipynb) 
 and computing [barycenters of labeld graphs](https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb).
 
 
@@ -34,12 +34,12 @@ A lot of work has been done on the documentation with several new
 examples corresponding to the new features and a lot of corrections for the
 docstrings. But the most visible change is a new 
 [quick start guide](https://pot.readthedocs.io/en/latest/quickstart.html) for
-POT that gives several pointers about which function or classes allow to solve a
+POT that gives several pointers about which function or classes allow to solve which
 specific OT problem. When possible a link is provided to relevant examples.
 
 We will also provide with this release some pre-compiled Python wheels for Linux
 64bit on
-github and pip. This will simplify the install process that before requires a C
+github and pip. This will simplify the install process that before required a C
 compiler and numpy/cython already installed.
 
 Finally we would like to acknowledge and thank the numerous contributors of POT
