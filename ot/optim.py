@@ -325,7 +325,7 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
 
     Returns
     -------
-    gamma : ndarray, shape (ns, nt) 
+    gamma : ndarray, shape (ns, nt)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters

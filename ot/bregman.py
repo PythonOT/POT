@@ -291,7 +291,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
 
     Returns
     -------
-    gamma : ndarray, shape (ns, nt) 
+    gamma : ndarray, shape (ns, nt)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -469,7 +469,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log=
 
     Returns
     -------
-    gamma : ndarray, shape (ns, nt) 
+    gamma : ndarray, shape (ns, nt)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -622,7 +622,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
 
     Returns
     -------
-    gamma : ndarray, shape (ns, nt) 
+    gamma : ndarray, shape (ns, nt)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -848,7 +848,7 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4, numInne
 
     Returns
     -------
-    gamma : ndarray, shape (ns, nt) 
+    gamma : ndarray, shape (ns, nt)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -1340,7 +1340,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numI
 
     Returns
     -------
-    gamma : ndarray, shape (ns, nt) 
+    gamma : ndarray, shape (ns, nt)
         Regularized optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -1430,7 +1430,7 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
 
     Returns
     -------
-    gamma : ndarray, shape (ns, nt) 
+    gamma : ndarray, shape (ns, nt)
         Regularized optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -1537,7 +1537,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     Returns
     -------
-    gamma : ndarray, shape (ns, nt) 
+    gamma : ndarray, shape (ns, nt)
         Regularized optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
