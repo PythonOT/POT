@@ -380,7 +380,8 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, alpha, numItermax=1000,
                     print(
                         '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(cpt, err))
-        cpt = cpt + 1
+        cpt += 1
+
     if log:
         log['u'] = u
         log['v'] = v

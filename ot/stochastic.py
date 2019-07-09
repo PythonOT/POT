@@ -38,22 +38,20 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
 
     Parameters
     ----------
-
-    b : np.ndarray(nt,)
-        target measure
-    M : np.ndarray(ns, nt)
-        cost matrix
-    reg : float nu
-        Regularization term > 0
-    v : np.ndarray(nt,)
-        dual variable
-    i : number int
-        picked number i
+    b : ndarray, shape (nt,)
+        Target measure.
+    M : ndarray, shape (ns, nt)
+        Cost matrix.
+    reg : float
+        Regularization term > 0.
+    v : ndarray, shape (nt,)
+        Dual variable.
+    i : int
+        Picked number i.
 
     Returns
     -------
-
-    coordinate gradient : np.ndarray(nt,)
+    coordinate gradient : ndarray, shape (nt,)
 
     Examples
     --------
@@ -78,14 +76,11 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
 
     References
     ----------
-
     [Genevay et al., 2016] :
-                    Stochastic Optimization for Large-scale Optimal Transport,
-                     Advances in Neural Information Processing Systems (2016),
-                      arXiv preprint arxiv:1605.08527.
-
+        Stochastic Optimization for Large-scale Optimal Transport,
+         Advances in Neural Information Processing Systems (2016),
+          arXiv preprint arxiv:1605.08527.
     '''
-
     r = M[i, :] - beta
     exp_beta = np.exp(-r / reg) * b
     khi = exp_beta / (np.sum(exp_beta))
@@ -121,24 +116,23 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
     Parameters
     ----------
 
-    a : np.ndarray(ns,),
-        source measure
-    b : np.ndarray(nt,),
-        target measure
-    M : np.ndarray(ns, nt),
-        cost matrix
-    reg : float number,
+    a : ndarray, shape (ns,),
+        Source measure.
+    b : ndarray, shape (nt,),
+        Target measure.
+    M : ndarray, shape (ns, nt),
+        Cost matrix.
+    reg : float
         Regularization term > 0
-    numItermax : int number
-        number of iteration
-    lr : float number
-        learning rate
+    numItermax : int
+        Number of iteration.
+    lr : float
+        Learning rate.
 
     Returns
     -------
-
-    v : np.ndarray(nt,)
-        dual variable
+    v : ndarray, shape (nt,)
+        Dual variable.
 
     Examples
     --------
@@ -213,23 +207,20 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
 
     Parameters
     ----------
-
-    b : np.ndarray(nt,)
+    b : ndarray, shape (nt,)
         target measure
-    M : np.ndarray(ns, nt)
+    M : ndarray, shape (ns, nt)
         cost matrix
-    reg : float number
+    reg : float
         Regularization term > 0
-    numItermax : int number
-        number of iteration
-    lr : float number
-        learning rate
-
+    numItermax : int
+        Number of iteration.
+    lr : float
+        Learning rate.
 
     Returns
     -------
-
-    ave_v : np.ndarray(nt,)
+    ave_v : ndarray, shape (nt,)
         dual variable
 
     Examples
@@ -256,9 +247,9 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
     ----------
 
     [Genevay et al., 2016] :
-                    Stochastic Optimization for Large-scale Optimal Transport,
-                     Advances in Neural Information Processing Systems (2016),
-                      arXiv preprint arxiv:1605.08527.
+        Stochastic Optimization for Large-scale Optimal Transport,
+         Advances in Neural Information Processing Systems (2016),
+          arXiv preprint arxiv:1605.08527.
     '''
 
     if lr is None:
@@ -298,21 +289,19 @@ def c_transform_entropic(b, M, reg, beta):
 
     Parameters
     ----------
-
-    b : np.ndarray(nt,)
-        target measure
-    M : np.ndarray(ns, nt)
-        cost matrix
+    b : ndarray, shape (nt,)
+        Target measure
+    M : ndarray, shape (ns, nt)
+        Cost matrix
     reg : float
-        regularization term > 0
-    v : np.ndarray(nt,)
-        dual variable
+        Regularization term > 0
+    v : ndarray, shape (nt,)
+        Dual variable.
 
     Returns
     -------
-
-    u : np.ndarray(ns,)
-        dual variable
+    u : ndarray, shape (ns,)
+        Dual variable.
 
     Examples
     --------
@@ -338,9 +327,9 @@ def c_transform_entropic(b, M, reg, beta):
     ----------
 
     [Genevay et al., 2016] :
-                    Stochastic Optimization for Large-scale Optimal Transport,
-                     Advances in Neural Information Processing Systems (2016),
-                      arXiv preprint arxiv:1605.08527.
+        Stochastic Optimization for Large-scale Optimal Transport,
+         Advances in Neural Information Processing Systems (2016),
+          arXiv preprint arxiv:1605.08527.
     '''
 
     n_source = np.shape(M)[0]
@@ -382,31 +371,30 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
     Parameters
     ----------
 
-    a : np.ndarray(ns,)
+    a : ndarray, shape (ns,)
         source measure
-    b : np.ndarray(nt,)
+    b : ndarray, shape (nt,)
         target measure
-    M : np.ndarray(ns, nt)
+    M : ndarray, shape (ns, nt)
         cost matrix
-    reg : float number
+    reg : float
         Regularization term > 0
     methode : str
         used method (SAG or ASGD)
-    numItermax : int number
+    numItermax : int
         number of iteration
-    lr : float number
+    lr : float
         learning rate
-    n_source : int number
+    n_source : int
         size of the source measure
-    n_target : int number
+    n_target : int
         size of the target measure
     log : bool, optional
         record log if True
 
     Returns
     -------
-
-    pi : np.ndarray(ns, nt)
+    pi : ndarray, shape (ns, nt)
         transportation matrix
     log : dict
         log dictionary return only if log==True in parameters
@@ -495,30 +483,28 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
 
     Parameters
     ----------
-
-    a : np.ndarray(ns,)
+    a : ndarray, shape (ns,)
         source measure
-    b : np.ndarray(nt,)
+    b : ndarray, shape (nt,)
         target measure
-    M : np.ndarray(ns, nt)
+    M : ndarray, shape (ns, nt)
         cost matrix
-    reg : float number
+    reg : float
         Regularization term > 0
-    alpha : np.ndarray(ns,)
+    alpha : ndarray, shape (ns,)
         dual variable
-    beta : np.ndarray(nt,)
+    beta : ndarray, shape (nt,)
         dual variable
-    batch_size : int number
+    batch_size : int
         size of the batch
-    batch_alpha : np.ndarray(bs,)
+    batch_alpha : ndarray, shape (bs,)
         batch of index of alpha
-    batch_beta : np.ndarray(bs,)
+    batch_beta : ndarray, shape (bs,)
         batch of index of beta
 
     Returns
     -------
-
-    grad : np.ndarray(ns,)
+    grad : ndarray, shape (ns,)
         partial grad F
 
     Examples
@@ -591,28 +577,26 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
 
     Parameters
     ----------
-
-    a : np.ndarray(ns,)
+    a : ndarray, shape (ns,)
         source measure
-    b : np.ndarray(nt,)
+    b : ndarray, shape (nt,)
         target measure
-    M : np.ndarray(ns, nt)
+    M : ndarray, shape (ns, nt)
         cost matrix
-    reg : float number
+    reg : float
         Regularization term > 0
-    batch_size : int number
+    batch_size : int
         size of the batch
-    numItermax : int number
+    numItermax : int
         number of iteration
-    lr : float number
+    lr : float
         learning rate
 
     Returns
     -------
-
-    alpha : np.ndarray(ns,)
+    alpha : ndarray, shape (ns,)
         dual variable
-    beta : np.ndarray(nt,)
+    beta : ndarray, shape (nt,)
         dual variable
 
     Examples
@@ -648,10 +632,9 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
 
     References
     ----------
-
     [Seguy et al., 2018] :
-                    International Conference on Learning Representation (2018),
-                      arXiv preprint arxiv:1711.02283.
+        International Conference on Learning Representation (2018),
+          arXiv preprint arxiv:1711.02283.
     '''
 
     n_source = np.shape(M)[0]
@@ -696,28 +679,26 @@ def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
 
     Parameters
     ----------
-
-    a : np.ndarray(ns,)
+    a : ndarray, shape (ns,)
         source measure
-    b : np.ndarray(nt,)
+    b : ndarray, shape (nt,)
         target measure
-    M : np.ndarray(ns, nt)
+    M : ndarray, shape (ns, nt)
         cost matrix
-    reg : float number
+    reg : float
         Regularization term > 0
-    batch_size : int number
+    batch_size : int
         size of the batch
-    numItermax : int number
+    numItermax : int
         number of iteration
-    lr : float number
+    lr : float
         learning rate
     log : bool, optional
         record log if True
 
     Returns
     -------
-
-    pi : np.ndarray(ns, nt)
+    pi : ndarray, shape (ns, nt)
         transportation matrix
     log : dict
         log dictionary return only if log==True in parameters
@@ -757,8 +738,8 @@ def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
     ----------
 
     [Seguy et al., 2018] :
-                    International Conference on Learning Representation (2018),
-                      arXiv preprint arxiv:1711.02283.
+        International Conference on Learning Representation (2018),
+          arXiv preprint arxiv:1711.02283.
     '''
 
     opt_alpha, opt_beta = sgd_entropic_regularization(a, b, M, reg, batch_size,
