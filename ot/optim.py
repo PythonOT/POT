@@ -26,14 +26,13 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
 
     Parameters
     ----------
-
-    f : function
+    f : callable
         loss function
-    xk : np.ndarray
+    xk : ndarray
         initial position
-    pk : np.ndarray
+    pk : ndarray
         descent direction
-    gfk : np.ndarray
+    gfk : ndarray
         gradient of f at xk
     old_fval : float
         loss value at xk
@@ -161,15 +160,15 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200,
 
     Parameters
     ----------
-    a : np.ndarray (ns,)
+    a : ndarray, shape (ns,)
         samples weights in the source domain
-    b : np.ndarray (nt,)
+    b : ndarray, shape (nt,)
         samples in the target domain
-    M : np.ndarray (ns,nt)
+    M : ndarray, shape (ns, nt)
         loss matrix
     reg : float
         Regularization term >0
-    G0 :  np.ndarray (ns,nt), optional
+    G0 :  ndarray, shape (ns,nt), optional
         initial guess (default is indep joint density)
     numItermax : int, optional
         Max number of iterations
@@ -299,17 +298,17 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
 
     Parameters
     ----------
-    a : np.ndarray (ns,)
+    a : ndarray, shape (ns,)
         samples weights in the source domain
-    b : np.ndarray (nt,)
+    b : ndarrayv (nt,)
         samples in the target domain
-    M : np.ndarray (ns,nt)
+    M : ndarray, shape (ns, nt)
         loss matrix
     reg1 : float
         Entropic Regularization term >0
     reg2 : float
         Second Regularization term >0
-    G0 :  np.ndarray (ns,nt), optional
+    G0 : ndarray, shape (ns, nt), optional
         initial guess (default is indep joint density)
     numItermax : int, optional
         Max number of iterations
@@ -326,15 +325,13 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
 
     Returns
     -------
-    gamma : (ns x nt) ndarray
+    gamma : ndarray, shape (ns, nt)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
 
-
     References
     ----------
-
     .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, "Optimal Transport for Domain Adaptation," in IEEE Transactions on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
     .. [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized conditional gradient: analysis of convergence and applications. arXiv preprint arXiv:1510.06567.
 
@@ -422,13 +419,12 @@ def solve_1d_linesearch_quad(a, b, c):
     Parameters
     ----------
     a,b,c : float
-            The coefficients of the quadratic function
+        The coefficients of the quadratic function
 
     Returns
     -------
     x : float
         The optimal value which leads to the minimal cost
-
     """
     f0 = c
     df0 = b

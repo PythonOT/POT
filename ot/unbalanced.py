@@ -395,7 +395,8 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, mu, numItermax=1000,
                     print(
                         '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(cpt, err))
-        cpt = cpt + 1
+        cpt += 1
+
     if log:
         log['logu'] = np.log(u + 1e-16)
         log['logv'] = np.log(v + 1e-16)
