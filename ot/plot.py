@@ -26,11 +26,11 @@ def plot1D_mat(a, b, M, title=''):
 
     Parameters
     ----------
-    a : np.array, shape (na,)
+    a : ndarray, shape (na,)
         Source distribution
-    b : np.array, shape (nb,)
+    b : ndarray, shape (nb,)
         Target distribution
-    M : np.array, shape (na,nb)
+    M : ndarray, shape (na, nb)
         Matrix to plot
     """
     na, nb = M.shape

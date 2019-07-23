@@ -1,9 +1,6 @@
-
 # -*- coding: utf-8 -*-
 """
 Gromov-Wasserstein transport method
-
-
 """
 
 # Author: Erwan Vautier <erwan.vautier@gmail.com>
@@ -22,7 +19,7 @@ from .optim import cg
 
 
 def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
-    """ Return loss matrices and tensors for Gromov-Wasserstein fast computation
+    """Return loss matrices and tensors for Gromov-Wasserstein fast computation
 
     Returns the value of \mathcal{L}(C1,C2) \otimes T with the selected loss
     function as the loss function of Gromow-Wasserstein discrepancy.
@@ -51,23 +48,21 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
     Parameters
     ----------
     C1 : ndarray, shape (ns, ns)
-         Metric cost matrix in the source space
+        Metric cost matrix in the source space
     C2 : ndarray, shape (nt, nt)
-         Metric costfr matrix in the target space
+        Metric costfr matrix in the target space
     T :  ndarray, shape (ns, nt)
-         Coupling between source and target spaces
+        Coupling between source and target spaces
     p : ndarray, shape (ns,)
-
 
     Returns
     -------
-
     constC : ndarray, shape (ns, nt)
-           Constant C matrix in Eq. (6)
+        Constant C matrix in Eq. (6)
     hC1 : ndarray, shape (ns, ns)
-           h1(C1) matrix in Eq. (6)
+        h1(C1) matrix in Eq. (6)
     hC2 : ndarray, shape (nt, nt)
-           h2(C) matrix in Eq. (6)
+        h2(C) matrix in Eq. (6)
 
     References
     ----------
@@ -114,25 +109,23 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
 
 
 def tensor_product(constC, hC1, hC2, T):
-    """ Return the tensor for Gromov-Wasserstein fast computation
+    """Return the tensor for Gromov-Wasserstein fast computation
 
     The tensor is computed as described in Proposition 1 Eq. (6) in [12].
 
     Parameters
     ----------
     constC : ndarray, shape (ns, nt)
-           Constant C matrix in Eq. (6)
+        Constant C matrix in Eq. (6)
     hC1 : ndarray, shape (ns, ns)
-           h1(C1) matrix in Eq. (6)
+        h1(C1) matrix in Eq. (6)
     hC2 : ndarray, shape (nt, nt)
-           h2(C) matrix in Eq. (6)
-
+        h2(C) matrix in Eq. (6)
 
     Returns
     -------
-
     tens : ndarray, shape (ns, nt)
-           \mathcal{L}(C1,C2) \otimes T tensor-matrix multiplication result
+        \mathcal{L}(C1,C2) \otimes T tensor-matrix multiplication result
 
     References
     ----------
@@ -148,26 +141,25 @@ def tensor_product(constC, hC1, hC2, T):
 
 
 def gwloss(constC, hC1, hC2, T):
-    """ Return the Loss for Gromov-Wasserstein
+    """Return the Loss for Gromov-Wasserstein
 
     The loss is computed as described in Proposition 1 Eq. (6) in [12].
 
     Parameters
     ----------
     constC : ndarray, shape (ns, nt)
-           Constant C matrix in Eq. (6)
+        Constant C matrix in Eq. (6)
     hC1 : ndarray, shape (ns, ns)
-           h1(C1) matrix in Eq. (6)
+        h1(C1) matrix in Eq. (6)
     hC2 : ndarray, shape (nt, nt)
-           h2(C) matrix in Eq. (6)
+        h2(C) matrix in Eq. (6)
     T : ndarray, shape (ns, nt)
-           Current value of transport matrix T
+        Current value of transport matrix T
 
     Returns
     -------
-
     loss : float
-           Gromov Wasserstein loss
+        Gromov Wasserstein loss
 
     References
     ----------
@@ -183,24 +175,23 @@ def gwloss(constC, hC1, hC2, T):
 
 
 def gwggrad(constC, hC1, hC2, T):
-    """ Return the gradient for Gromov-Wasserstein
+    """Return the gradient for Gromov-Wasserstein
 
     The gradient is computed as described in Proposition 2 in [12].
 
     Parameters
     ----------
     constC : ndarray, shape (ns, nt)
-           Constant C matrix in Eq. (6)
+        Constant C matrix in Eq. (6)
     hC1 : ndarray, shape (ns, ns)
-           h1(C1) matrix in Eq. (6)
+        h1(C1) matrix in Eq. (6)
     hC2 : ndarray, shape (nt, nt)
-           h2(C) matrix in Eq. (6)
+        h2(C) matrix in Eq. (6)
     T : ndarray, shape (ns, nt)
-           Current value of transport matrix T
+        Current value of transport matrix T
 
     Returns
     -------
-
     grad : ndarray, shape (ns, nt)
            Gromov Wasserstein gradient
 
@@ -222,19 +213,19 @@ def update_square_loss(p, lambdas, T, Cs):
 
     Parameters
     ----------
-    p  : ndarray, shape (N,)
-         masses in the targeted barycenter
+    p : ndarray, shape (N,)
+        Masses in the targeted barycenter.
     lambdas : list of float
-              list of the S spaces' weights
-    T : list of S np.ndarray(ns,N)
-        the S Ts couplings calculated at each iteration
+        List of the S spaces' weights.
+    T : list of S np.ndarray of shape (ns,N)
+        The S Ts couplings calculated at each iteration.
     Cs : list of S ndarray, shape(ns,ns)
-         Metric cost matrices
+        Metric cost matrices.
 
     Returns
     ----------
-    C : ndarray, shape (nt,nt)
-        updated C matrix
+    C : ndarray, shape (nt, nt)
+        Updated C matrix.
     """
     tmpsum = sum([lambdas[s] * np.dot(T[s].T, Cs[s]).dot(T[s])
                   for s in range(len(T))])
@@ -251,12 +242,12 @@ def update_kl_loss(p, lambdas, T, Cs):
     Parameters
     ----------
     p  : ndarray, shape (N,)
-         weights in the targeted barycenter
+        Weights in the targeted barycenter.
     lambdas : list of the S spaces' weights
-    T : list of S np.ndarray(ns,N)
-        the S Ts couplings calculated at each iteration
+    T : list of S np.ndarray of shape (ns,N)
+        The S Ts couplings calculated at each iteration.
     Cs : list of S ndarray, shape(ns,ns)
-         Metric cost matrices
+        Metric cost matrices.
 
     Returns
     ----------
@@ -290,14 +281,14 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
     Parameters
     ----------
     C1 : ndarray, shape (ns, ns)
-         Metric cost matrix in the source space
+        Metric cost matrix in the source space
     C2 : ndarray, shape (nt, nt)
-         Metric costfr matrix in the target space
-    p :  ndarray, shape (ns,)
-         distribution in the source space
-    q :  ndarray, shape (nt,)
-         distribution in the target space
-    loss_fun :  string
+        Metric costfr matrix in the target space
+    p : ndarray, shape (ns,)
+        Distribution in the source space
+    q : ndarray, shape (nt,)
+        Distribution in the target space
+    loss_fun : str
         loss function used for the solver either 'square_loss' or 'kl_loss'
 
     max_iter : int, optional
@@ -317,10 +308,10 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
     Returns
     -------
     T : ndarray, shape (ns, nt)
-        coupling between the two spaces that minimizes :
+        Doupling between the two spaces that minimizes:
             \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
     log : dict
-        convergence information and loss
+        Convergence information and loss.
 
     References
     ----------
@@ -374,18 +365,18 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
 
     Parameters
     ----------
-    M  : ndarray, shape (ns, nt)
-         Metric cost matrix between features across domains
+    M : ndarray, shape (ns, nt)
+        Metric cost matrix between features across domains
     C1 : ndarray, shape (ns, ns)
-         Metric cost matrix representative of the structure in the source space
+        Metric cost matrix representative of the structure in the source space
     C2 : ndarray, shape (nt, nt)
-         Metric cost matrix representative of the structure in the target space
-    p :  ndarray, shape (ns,)
-         distribution in the source space
-    q :  ndarray, shape (nt,)
-         distribution in the target space
-    loss_fun :  string,optional
-        loss function used for the solver
+        Metric cost matrix representative of the structure in the target space
+    p : ndarray, shape (ns,)
+        Distribution in the source space
+    q : ndarray, shape (nt,)
+        Distribution in the target space
+    loss_fun : str, optional
+        Loss function used for the solver
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -402,11 +393,10 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
 
     Returns
     -------
-    gamma : (ns x nt) ndarray
-        Optimal transportation matrix for the given parameters
+    gamma : ndarray, shape (ns, nt)
+        Optimal transportation matrix for the given parameters.
     log : dict
-        log dictionary return only if log==True in parameters
-
+        Log dictionary return only if log==True in parameters.
 
     References
     ----------
@@ -414,7 +404,6 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
         and Courty Nicolas "Optimal Transport for structured data with
         application on graphs", International Conference on Machine Learning
         (ICML). 2019.
-
     """
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
@@ -457,18 +446,18 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
 
     Parameters
     ----------
-    M  : ndarray, shape (ns, nt)
-         Metric cost matrix between features across domains
+    M : ndarray, shape (ns, nt)
+        Metric cost matrix between features across domains
     C1 : ndarray, shape (ns, ns)
-         Metric cost matrix respresentative of the structure in the source space
+        Metric cost matrix respresentative of the structure in the source space.
     C2 : ndarray, shape (nt, nt)
-         Metric cost matrix espresentative of the structure in the target space
+        Metric cost matrix espresentative of the structure in the target space.
     p :  ndarray, shape (ns,)
-         distribution in the source space
+        Distribution in the source space.
     q :  ndarray, shape (nt,)
-         distribution in the target space
-    loss_fun :  string,optional
-        loss function used for the solver
+        Distribution in the target space.
+    loss_fun : str, optional
+        Loss function used for the solver.
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -476,19 +465,19 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
-        record log if True
+        Record log if True.
     armijo : bool, optional
-        If True the steps of the line-search is found via an armijo research. Else closed form is used.
-        If there is convergence issues use False.
+        If True the steps of the line-search is found via an armijo research.
+        Else closed form is used. If there is convergence issues use False.
     **kwargs : dict
-        parameters can be directly pased to the ot.optim.cg solver
+        Parameters can be directly pased to the ot.optim.cg solver.
 
     Returns
     -------
-    gamma : (ns x nt) ndarray
-        Optimal transportation matrix for the given parameters
+    gamma : ndarray, shape (ns, nt)
+        Optimal transportation matrix for the given parameters.
     log : dict
-        log dictionary return only if log==True in parameters
+        Log dictionary return only if log==True in parameters.
 
     References
     ----------
@@ -537,16 +526,15 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwarg
     Parameters
     ----------
     C1 : ndarray, shape (ns, ns)
-         Metric cost matrix in the source space
+        Metric cost matrix in the source space
     C2 : ndarray, shape (nt, nt)
-         Metric cost matrix in the target space
-    p :  ndarray, shape (ns,)
-         distribution in the source space
+        Metric cost matrix in the target space
+    p : ndarray, shape (ns,)
+        Distribution in the source space.
     q :  ndarray, shape (nt,)
-         distribution in the target space
-    loss_fun :  string
+        Distribution in the target space.
+    loss_fun :  str
         loss function used for the solver either 'square_loss' or 'kl_loss'
-
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -558,6 +546,7 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwarg
     armijo : bool, optional
         If True the steps of the line-search is found via an armijo research. Else closed form is used.
         If there is convergence issues use False.
+
     Returns
     -------
     gw_dist : float
@@ -624,25 +613,25 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
     Parameters
     ----------
     C1 : ndarray, shape (ns, ns)
-         Metric cost matrix in the source space
+        Metric cost matrix in the source space
     C2 : ndarray, shape (nt, nt)
-         Metric costfr matrix in the target space
+        Metric costfr matrix in the target space
     p :  ndarray, shape (ns,)
-         distribution in the source space
+        Distribution in the source space
     q :  ndarray, shape (nt,)
-         distribution in the target space
+        Distribution in the target space
     loss_fun :  string
-        loss function used for the solver either 'square_loss' or 'kl_loss'
+        Loss function used for the solver either 'square_loss' or 'kl_loss'
     epsilon : float
         Regularization term >0
     max_iter : int, optional
-       Max number of iterations
+        Max number of iterations
     tol : float, optional
         Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
-        record log if True
+        Record log if True.
 
     Returns
     -------
@@ -725,15 +714,15 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
     Parameters
     ----------
     C1 : ndarray, shape (ns, ns)
-         Metric cost matrix in the source space
+        Metric cost matrix in the source space
     C2 : ndarray, shape (nt, nt)
-         Metric costfr matrix in the target space
+        Metric costfr matrix in the target space
     p :  ndarray, shape (ns,)
-         distribution in the source space
+        Distribution in the source space
     q :  ndarray, shape (nt,)
-         distribution in the target space
-    loss_fun :  string
-        loss function used for the solver either 'square_loss' or 'kl_loss'
+        Distribution in the target space
+    loss_fun : str
+        Loss function used for the solver either 'square_loss' or 'kl_loss'
     epsilon : float
         Regularization term >0
     max_iter : int, optional
@@ -743,7 +732,7 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
-        record log if True
+        Record log if True.
 
     Returns
     -------
@@ -757,7 +746,6 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
         International Conference on Machine Learning (ICML). 2016.
 
     """
-
     gw, logv = entropic_gromov_wasserstein(
         C1, C2, p, q, loss_fun, epsilon, max_iter, tol, verbose, log=True)
 
@@ -789,19 +777,21 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
 
     Parameters
     ----------
-    N  : Integer
-         Size of the targeted barycenter
-    Cs : list of S np.ndarray(ns,ns)
-         Metric cost matrices
-    ps : list of S np.ndarray(ns,)
-         sample weights in the S spaces
-    p  : ndarray, shape(N,)
-         weights in the targeted barycenter
+    N : int
+        Size of the targeted barycenter
+    Cs : list of S np.ndarray of shape (ns,ns)
+        Metric cost matrices
+    ps : list of S np.ndarray of shape (ns,)
+        Sample weights in the S spaces
+    p : ndarray, shape(N,)
+        Weights in the targeted barycenter
     lambdas : list of float
-              list of the S spaces' weights
-    loss_fun :  tensor-matrix multiplication function based on specific loss function
-    update : function(p,lambdas,T,Cs) that updates C according to a specific Kernel
-             with the S Ts couplings calculated at each iteration
+        List of the S spaces' weights.
+    loss_fun : callable
+        Tensor-matrix multiplication function based on specific loss function.
+    update : callable
+        function(p,lambdas,T,Cs) that updates C according to a specific Kernel
+        with the S Ts couplings calculated at each iteration
     epsilon : float
         Regularization term >0
     max_iter : int, optional
@@ -809,11 +799,11 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
     tol : float, optional
         Stop threshol on error (>0)
     verbose : bool, optional
-        Print information along iterations
+        Print information along iterations.
     log : bool, optional
-        record log if True
-    init_C : bool, ndarray, shape(N,N)
-             random initial value for the C matrix provided by user
+        Record log if True.
+    init_C : bool | ndarray, shape (N, N)
+        Random initial value for the C matrix provided by user.
 
     Returns
     -------
@@ -825,7 +815,6 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
-
     """
 
     S = len(Cs)
@@ -835,6 +824,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
 
     # Initialization of C : random SPD matrix (if not provided by user)
     if init_C is None:
+        # XXX use random state
         xalea = np.random.randn(N, 2)
         C = dist(xalea, xalea)
         C /= C.max()
@@ -846,7 +836,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
 
     error = []
 
-    while(err > tol and cpt < max_iter):
+    while (err > tol) and (cpt < max_iter):
         Cprev = C
 
         T = [entropic_gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, epsilon,
@@ -890,7 +880,6 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
     .. math::
         C = argmin_C\in R^NxN \sum_s \lambda_s GW(C,Cs,p,ps)
 
-
     Where :
 
     - Cs : metric cost matrix
@@ -898,29 +887,29 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 
     Parameters
     ----------
-    N  : Integer
-         Size of the targeted barycenter
-    Cs : list of S np.ndarray(ns,ns)
-         Metric cost matrices
-    ps : list of S np.ndarray(ns,)
-         sample weights in the S spaces
-    p  : ndarray, shape(N,)
-         weights in the targeted barycenter
+    N : int
+        Size of the targeted barycenter
+    Cs : list of S np.ndarray of shape (ns, ns)
+        Metric cost matrices
+    ps : list of S np.ndarray of shape (ns,)
+        Sample weights in the S spaces
+    p : ndarray, shape (N,)
+        Weights in the targeted barycenter
     lambdas : list of float
-              list of the S spaces' weights
+        List of the S spaces' weights
     loss_fun :  tensor-matrix multiplication function based on specific loss function
     update : function(p,lambdas,T,Cs) that updates C according to a specific Kernel
              with the S Ts couplings calculated at each iteration
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
-        Stop threshol on error (>0)
+        Stop threshol on error (>0).
     verbose : bool, optional
-        Print information along iterations
+        Print information along iterations.
     log : bool, optional
-        record log if True
-    init_C : bool, ndarray, shape(N,N)
-             random initial value for the C matrix provided by user
+        Record log if True.
+    init_C : bool | ndarray, shape(N,N)
+        Random initial value for the C matrix provided by user.
 
     Returns
     -------
@@ -934,7 +923,6 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
         International Conference on Machine Learning (ICML). 2016.
 
     """
-
     S = len(Cs)
 
     Cs = [np.asarray(Cs[s], dtype=np.float64) for s in range(S)]
@@ -942,6 +930,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 
     # Initialization of C : random SPD matrix (if not provided by user)
     if init_C is None:
+        # XXX : should use a random state and not use the global seed
         xalea = np.random.randn(N, 2)
         C = dist(xalea, xalea)
         C /= C.max()
@@ -987,8 +976,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_features=False,
                     p=None, loss_fun='square_loss', max_iter=100, tol=1e-9,
                     verbose=False, log=False, init_C=None, init_X=None):
-    """
-    Compute the fgw barycenter as presented eq (5) in [24].
+    """Compute the fgw barycenter as presented eq (5) in [24].
 
     Parameters
     ----------
@@ -997,30 +985,32 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
     Ys: list of ndarray, each element has shape (ns,d)
         Features of all samples
     Cs : list of ndarray, each element has shape (ns,ns)
-         Structure matrices of all samples
+        Structure matrices of all samples
     ps : list of ndarray, each element has shape (ns,)
-        masses of all samples
+        Masses of all samples.
     lambdas : list of float
-              list of the S spaces' weights
+        List of the S spaces' weights
     alpha : float
-            Alpha parameter for the fgw distance
-    fixed_structure :  bool
-                       Wether to fix the structure of the barycenter during the updates
-    fixed_features :  bool
-                       Wether to fix the feature of the barycenter during the updates
-    init_C :  ndarray, shape (N,N), optional
-              initialization for the barycenters' structure matrix. If not set random init
-    init_X :  ndarray, shape (N,d), optional
-              initialization for the barycenters' features. If not set random init
+        Alpha parameter for the fgw distance
+    fixed_structure : bool
+        Whether to fix the structure of the barycenter during the updates
+    fixed_features : bool
+        Whether to fix the feature of the barycenter during the updates
+    init_C : ndarray, shape (N,N), optional
+        Initialization for the barycenters' structure matrix. If not set
+        a random init is used.
+    init_X : ndarray, shape (N,d), optional
+        Initialization for the barycenters' features. If not set a
+        random init is used.
 
     Returns
     -------
-    X : ndarray, shape (N,d)
+    X : ndarray, shape (N, d)
         Barycenters' features
-    C : ndarray, shape (N,N)
+    C : ndarray, shape (N, N)
         Barycenters' structure matrix
-    log_: dictionary
-        Only returned when log=True
+    log_: dict
+        Only returned when log=True. It contains the keys:
         T : list of (N,ns) transport matrices
         Ms : all distance matrices between the feature of the barycenter and the
         other features dist(X,Ys) shape (N,ns)
@@ -1032,7 +1022,6 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
-
     S = len(Cs)
     d = Ys[0].shape[1]  # dimension on the node features
     if p is None:
@@ -1095,7 +1084,8 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
                 T_temp = [t.T for t in T]
                 C = update_sructure_matrix(p, lambdas, T_temp, Cs)
 
-        T = [fused_gromov_wasserstein((1 - alpha) * Ms[s], C, Cs[s], p, ps[s], loss_fun, alpha, numItermax=max_iter, stopThr=1e-5, verbose=verbose) for s in range(S)]
+        T = [fused_gromov_wasserstein((1 - alpha) * Ms[s], C, Cs[s], p, ps[s], loss_fun, alpha,
+                                      numItermax=max_iter, stopThr=1e-5, verbose=verbose) for s in range(S)]
 
         # T is N,ns
         err_feature = np.linalg.norm(X - Xprev.reshape(N, d))
@@ -1114,6 +1104,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
             print('{:5d}|{:8e}|'.format(cpt, err_feature))
 
         cpt += 1
+
     if log:
         log_['T'] = T  # from target to Ys
         log_['p'] = p
@@ -1126,25 +1117,25 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
 
 
 def update_sructure_matrix(p, lambdas, T, Cs):
-    """
-    Updates C according to the L2 Loss kernel with the S Ts couplings
-    calculated at each iteration
+    """Updates C according to the L2 Loss kernel with the S Ts couplings.
+
+    It is calculated at each iteration
 
     Parameters
     ----------
-    p  : ndarray, shape (N,)
-         masses in the targeted barycenter
+    p : ndarray, shape (N,)
+        Masses in the targeted barycenter.
     lambdas : list of float
-              list of the S spaces' weights
-    T : list of S np.ndarray(ns,N)
-        the S Ts couplings calculated at each iteration
-    Cs : list of S ndarray, shape(ns,ns)
-         Metric cost matrices
+        List of the S spaces' weights.
+    T : list of S ndarray of shape (ns, N)
+        The S Ts couplings calculated at each iteration.
+    Cs : list of S ndarray, shape (ns, ns)
+         Metric cost matrices.
 
     Returns
-    ----------
-    C : ndarray, shape (nt,nt)
-        updated C matrix
+    -------
+    C : ndarray, shape (nt, nt)
+        Updated C matrix.
     """
     tmpsum = sum([lambdas[s] * np.dot(T[s].T, Cs[s]).dot(T[s]) for s in range(len(T))])
     ppt = np.outer(p, p)
@@ -1153,24 +1144,26 @@ def update_sructure_matrix(p, lambdas, T, Cs):
 
 
 def update_feature_matrix(lambdas, Ys, Ts, p):
-    """
-    Updates the feature with respect to the S Ts couplings. See "Solving the barycenter problem with Block Coordinate Descent (BCD)" in [24]
-    calculated at each iteration
+    """Updates the feature with respect to the S Ts couplings.
+
+
+    See "Solving the barycenter problem with Block Coordinate Descent (BCD)"
+    in [24] calculated at each iteration
 
     Parameters
     ----------
-    p  : ndarray, shape (N,)
-         masses in the targeted barycenter
+    p : ndarray, shape (N,)
+        masses in the targeted barycenter
     lambdas : list of float
-              list of the S spaces' weights
+        List of the S spaces' weights
     Ts : list of S np.ndarray(ns,N)
         the S Ts couplings calculated at each iteration
     Ys : list of S ndarray, shape(d,ns)
-         The features
+        The features.
 
     Returns
-    ----------
-    X : ndarray, shape (d,N)
+    -------
+    X : ndarray, shape (d, N)
 
     References
     ----------
@@ -1179,9 +1172,8 @@ def update_feature_matrix(lambdas, Ys, Ts, p):
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
+    p = np.array(1. / p).reshape(-1,)
 
-    p = np.diag(np.array(1 / p).reshape(-1,))
-
-    tmpsum = sum([lambdas[s] * np.dot(Ys[s], Ts[s].T).dot(p) for s in range(len(Ts))])
+    tmpsum = sum([lambdas[s] * np.dot(Ys[s], Ts[s].T) * p[None, :] for s in range(len(Ts))])
 
     return tmpsum

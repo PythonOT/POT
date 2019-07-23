@@ -74,4 +74,7 @@ autopep8 :
 aautopep8 :
 	autopep8 -air test ot examples --jobs -1
 
+pydocstyle :
+	pydocstyle ot
+
 FORCE :
