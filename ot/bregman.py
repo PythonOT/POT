@@ -765,10 +765,14 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
 
         cpt = cpt + 1
 
-    # print('err=',err,' cpt=',cpt)
     if log:
-        log['logu'] = alpha / reg + np.log(u)
-        log['logv'] = beta / reg + np.log(v)
+        if nbb:
+            alpha = alpha[:, None]
+            beta = beta[:, None]
+        logu = alpha / reg + np.log(u)
+        logv = beta / reg + np.log(v)
+        log['logu'] = logu
+        log['logv'] = logv
         log['alpha'] = alpha + reg * np.log(u)
         log['beta'] = beta + reg * np.log(v)
         log['warmstart'] = (log['alpha'], log['beta'])
