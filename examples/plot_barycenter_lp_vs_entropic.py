@@ -102,7 +102,7 @@ pl.tight_layout()
 problems.append([A, [bary_l2, bary_wass, bary_wass2]])
 
 ##############################################################################
-# Dirac Data
+# Stair Data
 # ----------
 
 #%% parameters
@@ -167,6 +167,11 @@ pl.plot(x, bary_wass2, 'b', label='LP Wasserstein')
 pl.legend()
 pl.title('Barycenters')
 pl.tight_layout()
+
+
+##############################################################################
+# Dirac Data
+# ----------
 
 #%% parameters
 
