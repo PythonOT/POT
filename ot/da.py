@@ -1852,7 +1852,7 @@ class UnbalancedSinkhornTransport(BaseTransport):
     """
 
     def __init__(self, reg_e=1., reg_m=0.1, method='sinkhorn',
-                 max_iter=10, tol=10e-9, verbose=False, log=False,
+                 max_iter=10, tol=1e-9, verbose=False, log=False,
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
                  out_of_sample_map='ferradans', limit_max=10):

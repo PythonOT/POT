@@ -178,7 +178,9 @@ def cost_normalization(C, norm=None):
         The input cost matrix normalized according to given norm.
     """
 
-    if norm == "median":
+    if norm is None:
+        pass
+    elif norm == "median":
         C /= float(np.median(C))
     elif norm == "max":
         C /= float(np.max(C))

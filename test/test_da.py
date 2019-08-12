@@ -245,6 +245,79 @@ def test_sinkhorn_transport_class():
     assert len(otda.log_.keys()) != 0
 
 
+def test_unbalanced_sinkhorn_transport_class():
+    """test_sinkhorn_transport
+    """
+
+    ns = 150
+    nt = 200
+
+    Xs, ys = make_data_classif('3gauss', ns)
+    Xt, yt = make_data_classif('3gauss2', nt)
+
+    otda = ot.da.UnbalancedSinkhornTransport()
+
+    # test its computed
+    otda.fit(Xs=Xs, Xt=Xt)
+    assert hasattr(otda, "cost_")
+    assert hasattr(otda, "coupling_")
+    assert hasattr(otda, "log_")
+
+    # test dimensions of coupling
+    assert_equal(otda.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert_equal(otda.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
+
+    # test margin constraints
+    mu_s = unif(ns)
+    mu_t = unif(nt)
+    assert_allclose(
+        np.sum(otda.coupling_, axis=0), mu_t, rtol=1e-3, atol=1e-3)
+    assert_allclose(
+        np.sum(otda.coupling_, axis=1), mu_s, rtol=1e-3, atol=1e-3)
+
+    # test transform
+    transp_Xs = otda.transform(Xs=Xs)
+    assert_equal(transp_Xs.shape, Xs.shape)
+
+    Xs_new, _ = make_data_classif('3gauss', ns + 1)
+    transp_Xs_new = otda.transform(Xs_new)
+
+    # check that the oos method is working
+    assert_equal(transp_Xs_new.shape, Xs_new.shape)
+
+    # test inverse transform
+    transp_Xt = otda.inverse_transform(Xt=Xt)
+    assert_equal(transp_Xt.shape, Xt.shape)
+
+    Xt_new, _ = make_data_classif('3gauss2', nt + 1)
+    transp_Xt_new = otda.inverse_transform(Xt=Xt_new)
+
+    # check that the oos method is working
+    assert_equal(transp_Xt_new.shape, Xt_new.shape)
+
+    # test fit_transform
+    transp_Xs = otda.fit_transform(Xs=Xs, Xt=Xt)
+    assert_equal(transp_Xs.shape, Xs.shape)
+
+    # test unsupervised vs semi-supervised mode
+    otda_unsup = ot.da.SinkhornTransport()
+    otda_unsup.fit(Xs=Xs, Xt=Xt)
+    n_unsup = np.sum(otda_unsup.cost_)
+
+    otda_semi = ot.da.SinkhornTransport()
+    otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+    assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+    n_semisup = np.sum(otda_semi.cost_)
+
+    # check that the cost matrix norms are indeed different
+    assert n_unsup != n_semisup, "semisupervised mode not working"
+
+    # check everything runs well with log=True
+    otda = ot.da.SinkhornTransport(log=True)
+    otda.fit(Xs=Xs, ys=ys, Xt=Xt)
+    assert len(otda.log_.keys()) != 0
+
+
 def test_emd_transport_class():
     """test_sinkhorn_transport
     """
