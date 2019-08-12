@@ -267,14 +267,6 @@ def test_unbalanced_sinkhorn_transport_class():
     assert_equal(otda.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
     assert_equal(otda.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
 
-    # test margin constraints
-    mu_s = unif(ns)
-    mu_t = unif(nt)
-    assert_allclose(
-        np.sum(otda.coupling_, axis=0), mu_t, rtol=1e-3, atol=1e-3)
-    assert_allclose(
-        np.sum(otda.coupling_, axis=1), mu_s, rtol=1e-3, atol=1e-3)
-
     # test transform
     transp_Xs = otda.transform(Xs=Xs)
     assert_equal(transp_Xs.shape, Xs.shape)
