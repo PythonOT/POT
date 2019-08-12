@@ -189,7 +189,7 @@ def cost_normalization(C, norm=None):
     elif norm == "loglog":
         C = np.log1p(np.log1p(C))
     else:
-        raise ValueError(f'Norm {norm} is not a valid option. '
+        raise ValueError(f'Norm {norm} is not a valid option.\n'
                          f'Valid options are:\n'
                          f'median, max, log, loglog')
     return C
