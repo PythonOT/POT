@@ -364,7 +364,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, alpha, numItermax=1000,
                 or np.any(np.isinf(u)) or np.any(np.isinf(v))):
             # we have reached the machine precision
             # come back to previous solution and quit loop
-            warnings.warn('Numerical errors at iteration', cpt)
+            warnings.warn('Numerical errors at iteration %s' % cpt)
             u = uprev
             v = vprev
             break
