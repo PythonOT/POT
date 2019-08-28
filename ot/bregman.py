@@ -1534,11 +1534,11 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numI
     Examples
     --------
 
-    >>> n_a = 2
-    >>> n_b = 2
+    >>> n_samples_a = 2
+    >>> n_samples_b = 2
     >>> reg = 0.1
-    >>> X_s = np.reshape(np.arange(n_a), (dim_a, 1))
-    >>> X_t = np.reshape(np.arange(0, n_b), (dim_b, 1))
+    >>> X_s = np.reshape(np.arange(n_samples_a), (n_samples_a, 1))
+    >>> X_t = np.reshape(np.arange(0, n_samples_b), (n_samples_b, 1))
     >>> empirical_sinkhorn(X_s, X_t, reg, verbose=False)  # doctest: +NORMALIZE_WHITESPACE
     array([[4.99977301e-01,  2.26989344e-05],
            [2.26989344e-05,  4.99977301e-01]])
@@ -1624,8 +1624,8 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
     Examples
     --------
 
-    >>> n_a = 2
-    >>> n_b = 2
+    >>> n_samples_a = 2
+    >>> n_samples_b = 2
     >>> reg = 0.1
     >>> X_s = np.reshape(np.arange(n_samples_a), (n_samples_a, 1))
     >>> X_t = np.reshape(np.arange(0, n_samples_b), (n_samples_b, 1))
@@ -1730,8 +1730,8 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     Examples
     --------
-    >>> n_a = 2
-    >>> n_b = 4
+    >>> n_samples_a = 2
+    >>> n_samples_b = 4
     >>> reg = 0.1
     >>> X_s = np.reshape(np.arange(n_samples_a), (n_samples_a, 1))
     >>> X_t = np.reshape(np.arange(0, n_samples_b), (n_samples_b, 1))
