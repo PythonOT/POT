@@ -577,10 +577,10 @@ Unbalanced optimal transport
 
 Unbalanced OT is a relaxation of the entropy regularized OT problem where the violation of
 the constraint on the marginals is added to the objective of the optimization
-problem:
+problem. The unbalanced OT metric between two histograms a and b is defined as [25]_ [10]_:
 
 .. math::
-    \min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j} + reg\cdot\Omega(\gamma) + \alpha KL(\gamma 1, a) + \alpha KL(\gamma^T 1, b)
+    W_u(a, b) = \min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j} + reg\cdot\Omega(\gamma) + \alpha KL(\gamma 1, a) + \alpha KL(\gamma^T 1, b)
 
     s.t. \quad  \gamma\geq 0
 
@@ -596,26 +596,55 @@ that return respectively the OT matrix and the value of the
 linear term. Note that the regularization parameter :math:`\alpha` in the
 equation above is given to those functions with the parameter :code:`reg_m`.
 
-Similarly, Unbalanced OT barycenters can be computed using :any:`ot.barycenter_unbalanced`.
 
 .. note::
-    The main function to solve entropic regularized OT is :any:`ot.sinkhorn_unbalanced`.
+    The main function to solve entropic regularized UOT is :any:`ot.sinkhorn_unbalanced`.
     This function is a wrapper and the parameter :code:`method` help you select
     the actual algorithm used to solve the problem:
 
     + :code:`method='sinkhorn'` calls :any:`ot.unbalanced.sinkhorn_knopp_unbalanced`
-      the generalized Sinkhorn algorithm [10]_.
+      the generalized Sinkhorn algorithm [25]_ [10]_.
     + :code:`method='sinkhorn_stabilized'` calls :any:`ot.unbalanced.sinkhorn_stabilized_unbalanced`
       the log stabilized version of the algorithm [10]_.
 
 
 .. hint::
 
-    Examples of the use of :any:`ot.sinkhorn_unbalanced` and
-    :any:`ot.barycenter_unbalanced` are available in :
+    Examples of the use of :any:`ot.sinkhorn_unbalanced` are available in :
 
     - :any:`auto_examples/plot_UOT_1D`
-    - :any:`auto_examples/plot_UOT_barycenter_1D`
+
+
+Unbalanced Barycenters
+^^^^^^^^^^^^^^^^^^^^^^
+
+As with balanced distributions, we can define a barycenter of a set of
+histograms with different masses as a Fréchet Mean:
+
+    .. math::
+        \min_{\mu} \quad \sum_{k} w_kW_u(\mu,\mu_k)
+
+Where :math:`W_u` is the unbalanced Wasserstein metric defined above. This problem
+can also be solved using generalized version of Sinkhorn's algorithm and it is
+implemented the main function :any:`ot.barycenter_unbalanced`.
+
+
+.. note::
+    The main function to compute UOT barycenters is :any:`ot.barycenter_unbalanced`.
+    This function is a wrapper and the parameter :code:`method` help you select
+    the actual algorithm used to solve the problem:
+
+    + :code:`method='sinkhorn'` calls :any:`ot.unbalanced.barycenter_unbalanced_sinkhorn_unbalanced`
+      the generalized Sinkhorn algorithm [10]_.
+    + :code:`method='sinkhorn_stabilized'` calls :any:`ot.unbalanced.barycenter_unbalanced_stabilized`
+      the log stabilized version of the algorithm [10]_.
+
+
+.. hint::
+
+      Examples of the use of :any:`ot.barycenter_unbalanced` are available in :
+
+      - :any:`auto_examples/plot_UOT_barycenter_1D`
 
 
 Gromov-Wasserstein
@@ -890,3 +919,7 @@ References
     (2019). `Optimal Transport for structured data with application on
     graphs <http://proceedings.mlr.press/v97/titouan19a.html>`__ Proceedings
     of the 36th International Conference on Machine Learning (ICML).
+
+.. [25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. :
+    Learning with a Wasserstein Loss,  Advances in Neural Information
+    Processing Systems (NIPS) 2015
