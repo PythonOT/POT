@@ -65,7 +65,7 @@ from . import unbalanced
 # OT functions
 from .lp import emd, emd2, emd_1d, emd2_1d, wasserstein_1d
 from .bregman import sinkhorn, sinkhorn2, barycenter
-from .unbalanced import sinkhorn_unbalanced, barycenter_unbalanced
+from .unbalanced import sinkhorn_unbalanced, barycenter_unbalanced, sinkhorn_unbalanced2
 from .da import sinkhorn_lpl1_mm
 
 # utils functions
