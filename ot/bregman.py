@@ -33,7 +33,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
              \gamma\geq 0
     where :
 
-    - M is the (dim_a, n_b) metric cost matrix
+    - M is the (dim_a, dim_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - a and b are source and target weights (sum to 1)
 
@@ -47,7 +47,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     b : ndarray, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
         samples in the target domain, compute sinkhorn with multiple targets
         and fixed M if b is a matrix (return OT loss + dual variables in log)
-    M : ndarray, shape (dim_a, n_b)
+    M : ndarray, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
@@ -66,7 +66,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
     Returns
     -------
-    gamma : ndarray, shape (dim_a, n_b)
+    gamma : ndarray, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -105,21 +105,21 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     """
 
     if method.lower() == 'sinkhorn':
-        return _sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
-                               stopThr=stopThr, verbose=verbose, log=log,
-                               **kwargs)
+        return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
+                              stopThr=stopThr, verbose=verbose, log=log,
+                              **kwargs)
     elif method.lower() == 'greenkhorn':
-        return _greenkhorn(a, b, M, reg, numItermax=numItermax,
-                           stopThr=stopThr, verbose=verbose, log=log)
+        return greenkhorn(a, b, M, reg, numItermax=numItermax,
+                          stopThr=stopThr, verbose=verbose, log=log)
     elif method.lower() == 'sinkhorn_stabilized':
-        return _sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
-                                    stopThr=stopThr, verbose=verbose,
-                                    log=log, **kwargs)
+        return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
+                                   stopThr=stopThr, verbose=verbose,
+                                   log=log, **kwargs)
     elif method.lower() == 'sinkhorn_epsilon_scaling':
-        return _sinkhorn_epsilon_scaling(a, b, M, reg,
-                                         numItermax=numItermax,
-                                         stopThr=stopThr, verbose=verbose,
-                                         log=log, **kwargs)
+        return sinkhorn_epsilon_scaling(a, b, M, reg,
+                                        numItermax=numItermax,
+                                        stopThr=stopThr, verbose=verbose,
+                                        log=log, **kwargs)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
@@ -141,7 +141,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
              \gamma\geq 0
     where :
 
-    - M is the (dim_a, n_b) metric cost matrix
+    - M is the (dim_a, dim_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - a and b are source and target weights (sum to 1)
 
@@ -155,7 +155,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     b : ndarray, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
         samples in the target domain, compute sinkhorn with multiple targets
         and fixed M if b is a matrix (return OT loss + dual variables in log)
-    M : ndarray, shape (dim_a, n_b)
+    M : ndarray, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
@@ -173,8 +173,8 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
     Returns
     -------
-    W : (nt) ndarray or float
-        Optimal transportation matrix for the given parameters
+    W : (n_hists) ndarray or float
+        Optimal transportation loss for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
 
@@ -217,21 +217,23 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     if len(b.shape) < 2:
         b = b[:, None]
     if method.lower() == 'sinkhorn':
-        return _sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
-                               stopThr=stopThr, verbose=verbose, log=log, **kwargs)
+        return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
+                              stopThr=stopThr, verbose=verbose, log=log,
+                              **kwargs)
     elif method.lower() == 'sinkhorn_stabilized':
-        return _sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
-                                    stopThr=stopThr, verbose=verbose, log=log, **kwargs)
+        return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
+                                   stopThr=stopThr, verbose=verbose, log=log,
+                                   **kwargs)
     elif method.lower() == 'sinkhorn_epsilon_scaling':
-        return _sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=numItermax,
-                                         stopThr=stopThr, verbose=verbose,
-                                         log=log, **kwargs)
+        return sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=numItermax,
+                                        stopThr=stopThr, verbose=verbose,
+                                        log=log, **kwargs)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
 
-def _sinkhorn_knopp(a, b, M, reg, numItermax=1000,
-                    stopThr=1e-9, verbose=False, log=False, **kwargs):
+def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
+                   stopThr=1e-9, verbose=False, log=False, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -247,7 +249,7 @@ def _sinkhorn_knopp(a, b, M, reg, numItermax=1000,
              \gamma\geq 0
     where :
 
-    - M is the (dim_a, n_b) metric cost matrix
+    - M is the (dim_a, dim_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - a and b are source and target weights (sum to 1)
 
@@ -261,7 +263,7 @@ def _sinkhorn_knopp(a, b, M, reg, numItermax=1000,
     b : ndarray, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
         samples in the target domain, compute sinkhorn with multiple targets
         and fixed M if b is a matrix (return OT loss + dual variables in log)
-    M : ndarray, shape (dim_a, n_b)
+    M : ndarray, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
@@ -276,7 +278,7 @@ def _sinkhorn_knopp(a, b, M, reg, numItermax=1000,
 
     Returns
     -------
-    gamma : ndarray, shape (dim_a, n_b)
+    gamma : ndarray, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -403,7 +405,8 @@ def _sinkhorn_knopp(a, b, M, reg, numItermax=1000,
             return u.reshape((-1, 1)) * K * v.reshape((1, -1))
 
 
-def _greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log=False):
+def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
+               log=False):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -427,7 +430,7 @@ def _greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log
              \gamma\geq 0
     where :
 
-    - M is the (dim_a, n_b) metric cost matrix
+    - M is the (dim_a, dim_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - a and b are source and target weights (sum to 1)
 
@@ -440,7 +443,7 @@ def _greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log
     b : ndarray, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
         samples in the target domain, compute sinkhorn with multiple targets
         and fixed M if b is a matrix (return OT loss + dual variables in log)
-    M : ndarray, shape (dim_a, n_b)
+    M : ndarray, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
@@ -453,7 +456,7 @@ def _greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log
 
     Returns
     -------
-    gamma : ndarray, shape (dim_a, n_b)
+    gamma : ndarray, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -465,7 +468,7 @@ def _greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[0., 1.], [1., 0.]]
-    >>> ot.bregman._greenkhorn(a, b, M, 1)
+    >>> ot.bregman.greenkhorn(a, b, M, 1)
     array([[0.36552929, 0.13447071],
            [0.13447071, 0.36552929]])
 
@@ -555,9 +558,9 @@ def _greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False, log
         return G
 
 
-def _sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
-                         warmstart=None, verbose=False, print_period=20,
-                         log=False, **kwargs):
+def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
+                        warmstart=None, verbose=False, print_period=20,
+                        log=False, **kwargs):
     r"""
     Solve the entropic regularization OT problem with log stabilization
 
@@ -573,7 +576,7 @@ def _sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
              \gamma\geq 0
     where :
 
-    - M is the (dim_a, n_b) metric cost matrix
+    - M is the (dim_a, dim_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - a and b are source and target weights (sum to 1)
 
@@ -588,7 +591,7 @@ def _sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         samples weights in the source domain
     b : ndarray, shape (dim_b,)
         samples in the target domain
-    M : ndarray, shape (dim_a, n_b)
+    M : ndarray, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
@@ -607,7 +610,7 @@ def _sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
 
     Returns
     -------
-    gamma : ndarray, shape (dim_a, n_b)
+    gamma : ndarray, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -619,7 +622,7 @@ def _sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
     >>> a=[.5,.5]
     >>> b=[.5,.5]
     >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.bregman._sinkhorn_stabilized(a, b, M, 1)
+    >>> ot.bregman.sinkhorn_stabilized(a, b, M, 1)
     array([[0.36552929, 0.13447071],
            [0.13447071, 0.36552929]])
 
@@ -658,8 +661,8 @@ def _sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         n_hists = 0
 
     # init data
-    na = len(a)
-    nb = len(b)
+    dim_a = len(a)
+    dim_b = len(b)
 
     cpt = 0
     if log:
@@ -668,24 +671,25 @@ def _sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
     # we assume that no distances are null except those of the diagonal of
     # distances
     if warmstart is None:
-        alpha, beta = np.zeros(na), np.zeros(nb)
+        alpha, beta = np.zeros(dim_a), np.zeros(dim_b)
     else:
         alpha, beta = warmstart
 
     if n_hists:
-        u, v = np.ones((na, n_hists)) / na, np.ones((nb, n_hists)) / nb
+        u = np.ones((dim_a, n_hists)) / dim_a
+        v = np.ones((dim_b, n_hists)) / dim_b
     else:
-        u, v = np.ones(na) / na, np.ones(nb) / nb
+        u, v = np.ones(dim_a) / dim_a, np.ones(dim_b) / dim_b
 
     def get_K(alpha, beta):
         """log space computation"""
-        return np.exp(-(M - alpha.reshape((na, 1))
-                        - beta.reshape((1, nb))) / reg)
+        return np.exp(-(M - alpha.reshape((dim_a, 1))
+                        - beta.reshape((1, dim_b))) / reg)
 
     def get_Gamma(alpha, beta, u, v):
         """log space gamma computation"""
-        return np.exp(-(M - alpha.reshape((na, 1)) - beta.reshape((1, nb)))
-                      / reg + np.log(u.reshape((na, 1))) + np.log(v.reshape((1, nb))))
+        return np.exp(-(M - alpha.reshape((dim_a, 1)) - beta.reshape((1, dim_b)))
+                      / reg + np.log(u.reshape((dim_a, 1))) + np.log(v.reshape((1, dim_b))))
 
     # print(np.min(K))
 
@@ -711,9 +715,9 @@ def _sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
             else:
                 alpha, beta = alpha + reg * np.log(u), beta + reg * np.log(v)
                 if n_hists:
-                    u, v = np.ones((na, n_hists)) / na, np.ones((nb, n_hists)) / nb
+                    u, v = np.ones((dim_a, n_hists)) / dim_a, np.ones((dim_b, n_hists)) / dim_b
                 else:
-                    u, v = np.ones(na) / na, np.ones(nb) / nb
+                    u, v = np.ones(dim_a) / dim_a, np.ones(dim_b) / dim_b
             K = get_K(alpha, beta)
 
         if cpt % print_period == 0:
@@ -782,10 +786,10 @@ def _sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
             return get_Gamma(alpha, beta, u, v)
 
 
-def _sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
-                              numInnerItermax=100, tau=1e3, stopThr=1e-9,
-                              warmstart=None, verbose=False, print_period=10,
-                              log=False, **kwargs):
+def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
+                             numInnerItermax=100, tau=1e3, stopThr=1e-9,
+                             warmstart=None, verbose=False, print_period=10,
+                             log=False, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem with log
     stabilization and epsilon scaling.
@@ -802,7 +806,7 @@ def _sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
              \gamma\geq 0
     where :
 
-    - M is the (dim_a, n_b) metric cost matrix
+    - M is the (dim_a, dim_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - a and b are source and target weights (sum to 1)
 
@@ -817,7 +821,7 @@ def _sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
         samples weights in the source domain
     b : ndarray, shape (dim_b,)
         samples in the target domain
-    M : ndarray, shape (dim_a, n_b)
+    M : ndarray, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
@@ -840,7 +844,7 @@ def _sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
 
     Returns
     -------
-    gamma : ndarray, shape (dim_a, n_b)
+    gamma : ndarray, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -852,7 +856,7 @@ def _sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[0., 1.], [1., 0.]]
-    >>> ot.bregman._sinkhorn_epsilon_scaling(a, b, M, 1)
+    >>> ot.bregman.sinkhorn_epsilon_scaling(a, b, M, 1)
     array([[0.36552929, 0.13447071],
            [0.13447071, 0.36552929]])
 
@@ -915,8 +919,10 @@ def _sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
 
         regi = get_reg(cpt)
 
-        G, logi = _sinkhorn_stabilized(a, b, M, regi, numItermax=numInnerItermax, stopThr=1e-9, warmstart=(
-            alpha, beta), verbose=False, print_period=20, tau=tau, log=True)
+        G, logi = sinkhorn_stabilized(a, b, M, regi,
+                                      numItermax=numInnerItermax, stopThr=1e-9,
+                                      warmstart=(alpha, beta), verbose=False,
+                                      print_period=20, tau=tau, log=True)
 
         alpha = logi['alpha']
         beta = logi['beta']
@@ -1029,19 +1035,19 @@ def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
     """
 
     if method.lower() == 'sinkhorn':
-        return _barycenter(A, M, reg, numItermax=numItermax,
-                           stopThr=stopThr, verbose=verbose, log=log,
-                           **kwargs)
+        return barycenter_sinkhorn(A, M, reg, numItermax=numItermax,
+                                   stopThr=stopThr, verbose=verbose, log=log,
+                                   **kwargs)
     elif method.lower() == 'sinkhorn_stabilized':
-        return _barycenter_stabilized(A, M, reg, numItermax=numItermax,
-                                      stopThr=stopThr, verbose=verbose,
-                                      log=log, **kwargs)
+        return barycenter_stabilized(A, M, reg, numItermax=numItermax,
+                                     stopThr=stopThr, verbose=verbose,
+                                     log=log, **kwargs)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
 
-def _barycenter(A, M, reg, weights=None, numItermax=1000,
-                stopThr=1e-4, verbose=False, log=False):
+def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
+                        stopThr=1e-4, verbose=False, log=False):
     r"""Compute the entropic regularized wasserstein barycenter of distributions A
 
      The function solves the following optimization problem:
@@ -1134,8 +1140,8 @@ def _barycenter(A, M, reg, weights=None, numItermax=1000,
         return geometricBar(weights, UKv)
 
 
-def _barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
-                           stopThr=1e-4, verbose=False, log=False):
+def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
+                          stopThr=1e-4, verbose=False, log=False):
     r"""Compute the entropic regularized wasserstein barycenter of distributions A
         with stabilization.
 
@@ -1264,7 +1270,9 @@ def _barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
         return q
 
 
-def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000, stopThr=1e-9, stabThr=1e-30, verbose=False, log=False):
+def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
+                               stopThr=1e-9, stabThr=1e-30, verbose=False,
+                               log=False):
     r"""Compute the entropic regularized wasserstein barycenter of distributions A
     where A is a collection of 2D images.
 
@@ -1480,7 +1488,9 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
         return np.sum(K0, axis=1)
 
 
-def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numIterMax=10000, stopThr=1e-9, verbose=False, log=False, **kwargs):
+def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
+                       numIterMax=10000, stopThr=1e-9, verbose=False,
+                       log=False, **kwargs):
     r'''
     Solve the entropic regularization optimal transport problem and return the
     OT matrix from empirical data
@@ -1497,22 +1507,22 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numI
              \gamma\geq 0
     where :
 
-    - :math:`M` is the (dim_a, n_b) metric cost matrix
+    - :math:`M` is the (n_samples_a, n_samples_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - :math:`a` and :math:`b` are source and target weights (sum to 1)
 
 
     Parameters
     ----------
-    X_s : ndarray, shape (dim_a, d)
+    X_s : ndarray, shape (n_samples_a, dim)
         samples in the source domain
-    X_t : ndarray, shape (dim_b, d)
+    X_t : ndarray, shape (n_samples_b, dim)
         samples in the target domain
     reg : float
         Regularization term >0
-    a : ndarray, shape (dim_a,)
+    a : ndarray, shape (n_samples_a,)
         samples weights in the source domain
-    b : ndarray, shape (dim_b,)
+    b : ndarray, shape (n_samples_b,)
         samples weights in the target domain
     numItermax : int, optional
         Max number of iterations
@@ -1526,7 +1536,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numI
 
     Returns
     -------
-    gamma : ndarray, shape (dim_a, n_b)
+    gamma : ndarray, shape (n_samples_a, n_samples_b)
         Regularized optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -1587,7 +1597,7 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
              \gamma\geq 0
     where :
 
-    - :math:`M` is the (dim_a, n_b) metric cost matrix
+    - :math:`M` is the (n_samples_a, n_samples_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - :math:`a` and :math:`b` are source and target weights (sum to 1)
 
@@ -1596,7 +1606,7 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
     ----------
     X_s : ndarray, shape (n_samples_a, dim)
         samples in the source domain
-    X_t : ndarray, shape (n_samples_b, d)
+    X_t : ndarray, shape (n_samples_b, dim)
         samples in the target domain
     reg : float
         Regularization term >0
@@ -1695,7 +1705,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
              \gamma_b\geq 0
     where :
 
-    - :math:`M` (resp. :math:`M_a, M_b`) is the (dim_a, n_b) metric cost matrix (resp (dim_a, ns) and (dim_b, nt))
+    - :math:`M` (resp. :math:`M_a, M_b`) is the (n_samples_a, n_samples_b) metric cost matrix (resp (n_samples_a, n_samples_a) and (n_samples_b, n_samples_b))
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - :math:`a` and :math:`b` are source and target weights (sum to 1)
 
