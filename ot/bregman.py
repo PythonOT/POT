@@ -35,7 +35,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
     - M is the (dim_a, dim_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target weights (sum to 1)
+    - a and b are source and target weights (histograms, both sum to 1)
 
     The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling algorithm as proposed in [2]_
 
@@ -143,7 +143,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
     - M is the (dim_a, dim_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target weights (sum to 1)
+    - a and b are source and target weights (histograms, both sum to 1)
 
     The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling algorithm as proposed in [2]_
 
@@ -251,7 +251,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
 
     - M is the (dim_a, dim_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target weights (sum to 1)
+    - a and b are source and target weights (histograms, both sum to 1)
 
     The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling algorithm as proposed in [2]_
 
@@ -432,7 +432,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
 
     - M is the (dim_a, dim_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target weights (sum to 1)
+    - a and b are source and target weights (histograms, both sum to 1)
 
 
 
@@ -578,7 +578,8 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
 
     - M is the (dim_a, dim_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target weights (sum to 1)
+    - a and b are source and target weights (histograms, both sum to 1)
+
 
     The algorithm used for solving the problem is the Sinkhorn-Knopp matrix
     scaling algorithm as proposed in [2]_ but with the log stabilization
@@ -808,7 +809,8 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
 
     - M is the (dim_a, dim_b) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target weights (sum to 1)
+    - a and b are source and target weights (histograms, both sum to 1)
+
 
     The algorithm used for solving the problem is the Sinkhorn-Knopp matrix
     scaling algorithm as proposed in [2]_ but with the log stabilization
@@ -1229,7 +1231,6 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
         absorbing = False
         if (u > tau).any() or (v > tau).any():
             absorbing = True
-            print("YEAH absorbing")
             alpha = alpha + reg * np.log(np.max(u, 1))
             beta = beta + reg * np.log(np.max(v, 1))
             K = np.exp((alpha[:, None] + beta[None, :] -
@@ -1394,9 +1395,12 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
     where :
 
     - :math:`W_{M,reg}(\cdot,\cdot)` is the entropic regularized Wasserstein distance with M loss matrix (see ot.bregman.sinkhorn)
-    - :math:`\mathbf{a}` is an observed distribution,  :math:`\mathbf{h}_0` is aprior on unmixing
-    - reg and :math:`\mathbf{M}` are respectively the regularization term and the cost matrix for OT data fitting
-    - reg0 and :math:`\mathbf{M0}` are respectively the regularization term and the cost matrix for regularization
+    - :math: `\mathbf{D}` is a dictionary of `n_atoms` atoms of dimension `dim_a`, its expected shape is `(dim_a, n_atoms)`
+    - :math:`\mathbf{h}` is the estimated unmixing of dimension `n_atoms`
+    - :math:`\mathbf{a}` is an observed distribution of dimension `dim_a`
+    - :math:`\mathbf{h}_0` is a prior on `h` of dimension `dim_prior`
+    - reg and :math:`\mathbf{M}` are respectively the regularization term and the cost matrix (dim_a, dim_a) for OT data fitting
+    - reg0 and :math:`\mathbf{M0}` are respectively the regularization term and the cost matrix (dim_prior, n_atoms) regularization
     - :math:`\\alpha`weight data fitting and regularization
 
     The optimization problem is solved suing the algorithm described in [4]
@@ -1404,16 +1408,16 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
 
     Parameters
     ----------
-    a : ndarray, shape (n_observed)
-        observed distribution
-    D : ndarray, shape (dim, dim)
+    a : ndarray, shape (dim_a)
+        observed distribution (histogram, sums to 1)
+    D : ndarray, shape (dim_a, n_atoms)
         dictionary matrix
-    M : ndarray, shape (dim, dim)
+    M : ndarray, shape (dim_a, dim_a)
         loss matrix
-    M0 : ndarray, shape (n_observed, n_observed)
+    M0 : ndarray, shape (n_atoms, dim_prior)
         loss matrix
-    h0 : ndarray, shape (dim,)
-        prior on h
+    h0 : ndarray, shape (n_atoms,)
+        prior on the estimated unmixing h
     reg : float
         Regularization term >0 (Wasserstein data fitting)
     reg0 : float
@@ -1432,7 +1436,7 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
 
     Returns
     -------
-    a : ndarray, shape (dim,)
+    h : ndarray, shape (n_atoms,)
         Wasserstein barycenter
     log : dict
         log dictionary return only if log==True in parameters

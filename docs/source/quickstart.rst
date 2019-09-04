@@ -577,10 +577,10 @@ Unbalanced optimal transport
 
 Unbalanced OT is a relaxation of the entropy regularized OT problem where the violation of
 the constraint on the marginals is added to the objective of the optimization
-problem. The unbalanced OT metric between two histograms a and b is defined as [25]_ [10]_:
+problem. The unbalanced OT metric between two unbalanced histograms a and b is defined as [25]_ [10]_:
 
 .. math::
-    W_u(a, b) = \min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j} + reg\cdot\Omega(\gamma) + \alpha KL(\gamma 1, a) + \alpha KL(\gamma^T 1, b)
+    W_u(a, b) = \min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j} + reg\cdot\Omega(\gamma) + reg_m KL(\gamma 1, a) + reg_m KL(\gamma^T 1, b)
 
     s.t. \quad  \gamma\geq 0
 
@@ -593,13 +593,11 @@ in :any:`ot.unbalanced`. Computing the optimal transport
 plan or the transport cost is similar to the balanced case. The Sinkhorn-Knopp
 algorithm is implemented in :any:`ot.sinkhorn_unbalanced` and :any:`ot.sinkhorn_unbalanced2`
 that return respectively the OT matrix and the value of the
-linear term. Note that the regularization parameter :math:`\alpha` in the
-equation above is given to those functions with the parameter :code:`reg_m`.
-
+linear term.
 
 .. note::
     The main function to solve entropic regularized UOT is :any:`ot.sinkhorn_unbalanced`.
-    This function is a wrapper and the parameter :code:`method` help you select
+    This function is a wrapper and the parameter :code:`method` helps you select
     the actual algorithm used to solve the problem:
 
     + :code:`method='sinkhorn'` calls :any:`ot.unbalanced.sinkhorn_knopp_unbalanced`
