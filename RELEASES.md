@@ -1,17 +1,16 @@
 # POT Releases
 
 
-## 1.0.0 Out of beta
+## 0.6 Year 3
 *July 2019*
 
-This is the first official stable release of POT and this means a jump to 1.0.0! 
+This is the first official stable release of POT and this means a jump to 0.6! 
 The library has been used in
 the wild for a while now and we have reached a state where a lot of fundamental
 OT solvers are available and tested. It has been quite stable in the last months
 but kept the beta flag in its Pypi classifiers until now. 
 
-Note that this major
-release will be the last one supporting officially Python 2.7 (See
+Note that this release will be the last one supporting officially Python 2.7 (See
 https://python3statement.org/ for more reasons). For next release we will keep
 the travis tests for Python 2 but will make them non necessary for merge in 2020.
 
@@ -55,7 +54,7 @@ bring new features and solvers to the library.
 * Make doctest work on travis (PR #90)
 * Update documentation (PR #79, PR #84)
 * Solver for EMD in 1D (PR #89)
-* Solvers for regularized unbalanced OT (PR #87)
+* Solvers for regularized unbalanced OT (PR #87, PR#99)
 * Solver for Fused Gromov-Wasserstein (PR #86)
 * Add empirical Sinkhorn and empirical Sinkhorn divergences (PR #80)
 
