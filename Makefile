@@ -85,4 +85,7 @@ dist : wheels
 	$(PYTHON) setup.py sdist
 
 
+pydocstyle :
+	pydocstyle ot
+
 FORCE :

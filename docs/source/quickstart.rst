@@ -2,13 +2,13 @@
 Quick start guide
 =================
 
-In the following we provide some pointers about which functions and classes 
+In the following we provide some pointers about which functions and classes
 to use for different problems related to optimal transport (OT) and machine
 learning. We refer when we can to concrete examples in the documentation that
 are also available as notebooks on the POT Github.
 
 This document is not a tutorial on numerical optimal transport. For this we strongly
-recommend to read the very nice book [15]_ . 
+recommend to read the very nice book [15]_ .
 
 
 Optimal transport and Wasserstein distance
@@ -55,8 +55,8 @@ solver is quite efficient and uses sparsity of the solution.
     Examples of use for :any:`ot.emd` are available in :
 
     - :any:`auto_examples/plot_OT_2D_samples`
-    - :any:`auto_examples/plot_OT_1D` 
-    - :any:`auto_examples/plot_OT_L1_vs_L2` 
+    - :any:`auto_examples/plot_OT_1D`
+    - :any:`auto_examples/plot_OT_L1_vs_L2`
 
 
 Computing Wasserstein distance
@@ -102,13 +102,13 @@ distance.
     An example of use for :any:`ot.emd2` is available in :
 
     - :any:`auto_examples/plot_compute_emd`
- 
+
 
 Special cases
 ^^^^^^^^^^^^^
 
 Note that the OT problem and the corresponding Wasserstein distance can in some
-special cases be computed very efficiently. 
+special cases be computed very efficiently.
 
 For instance when the samples are in 1D, then the OT problem can be solved in
 :math:`O(n\log(n))` by using a simple sorting. In this case we provide the
@@ -117,13 +117,13 @@ matrix and value. Note that since the solution is very sparse the :code:`sparse`
 parameter of :any:`ot.emd_1d` allows for solving and returning the solution for
 very large problems. Note that in order to compute directly the :math:`W_p`
 Wasserstein distance in 1D we provide the function :any:`ot.wasserstein_1d` that
-takes :code:`p` as a parameter. 
+takes :code:`p` as a parameter.
 
 Another special case for estimating OT and Monge mapping is between Gaussian
 distributions. In this case there exists a close form solution given in Remark
 2.29 in [15]_ and the Monge mapping is an affine function and can be
 also computed from the covariances and means of the source and target
-distributions. In the case when the finite sample dataset is supposed gaussian, we provide 
+distributions. In the case when the finite sample dataset is supposed gaussian, we provide
 :any:`ot.da.OT_mapping_linear` that returns the parameters for the Monge
 mapping.
 
@@ -176,7 +176,7 @@ solution of the resulting optimization problem can be expressed as:
 where :math:`u` and :math:`v` are vectors and :math:`K=\exp(-M/\lambda)` where
 the :math:`\exp` is taken component-wise. In order to solve the optimization
 problem, on can use an alternative projection algorithm called Sinkhorn-Knopp that can be very
-efficient for large values if regularization. 
+efficient for large values if regularization.
 
 The Sinkhorn-Knopp algorithm is implemented in :any:`ot.sinkhorn` and
 :any:`ot.sinkhorn2` that return respectively the OT matrix and the value of the
@@ -201,12 +201,12 @@ More details about the algorithms used are given in the following note.
     + :code:`method='sinkhorn'` calls :any:`ot.bregman.sinkhorn_knopp`  the
       classic algorithm [2]_.
     + :code:`method='sinkhorn_stabilized'` calls :any:`ot.bregman.sinkhorn_stabilized`  the
-      log stabilized version of the algorithm [9]_.    
+      log stabilized version of the algorithm [9]_.
     + :code:`method='sinkhorn_epsilon_scaling'` calls
       :any:`ot.bregman.sinkhorn_epsilon_scaling`  the epsilon scaling version
-      of the algorithm [9]_.   
+      of the algorithm [9]_.
     + :code:`method='greenkhorn'` calls :any:`ot.bregman.greenkhorn`  the
-      greedy sinkhorn verison of the algorithm [22]_.   
+      greedy sinkhorn verison of the algorithm [22]_.
 
     In addition to all those variants of sinkhorn, we have another
     implementation solving the problem in the smooth dual or semi-dual in
@@ -236,7 +236,7 @@ of algorithms in [18]_ [19]_.
     Examples of use for :any:`ot.sinkhorn` are available in :
 
     - :any:`auto_examples/plot_OT_2D_samples`
-    - :any:`auto_examples/plot_OT_1D` 
+    - :any:`auto_examples/plot_OT_1D`
     - :any:`auto_examples/plot_OT_1D_smooth`
     - :any:`auto_examples/plot_stochastic`
 
@@ -248,13 +248,13 @@ While entropic OT is the most common and favored in practice, there exist other
 kind of regularization. We provide in POT two specific solvers for other
 regularization terms, namely quadratic regularization and group lasso
 regularization. But we also provide in :any:`ot.optim`  two generic solvers that allows solving any
-smooth regularization in practice. 
+smooth regularization in practice.
 
 Quadratic regularization
 """"""""""""""""""""""""
 
 The first general regularization term we can solve is the quadratic
-regularization of the form 
+regularization of the form
 
 .. math::
     \Omega(\gamma)=\sum_{i,j} \gamma_{i,j}^2
@@ -264,7 +264,7 @@ densifying the OT matrix but it keeps some sort of sparsity that is lost with
 entropic regularization as soon as :math:`\lambda>0` [17]_. This problem can be
 solved with POT using solvers from :any:`ot.smooth`, more specifically
 functions :any:`ot.smooth.smooth_ot_dual` or
-:any:`ot.smooth.smooth_ot_semi_dual` with parameter :code:`reg_type='l2'` to 
+:any:`ot.smooth.smooth_ot_semi_dual` with parameter :code:`reg_type='l2'` to
 choose the quadratic regularization.
 
 .. hint::
@@ -300,7 +300,7 @@ gradient algorithm [7]_ in function
 .. hint::
     Examples of group Lasso regularization are available in :
 
-    - :any:`auto_examples/plot_otda_classes` 
+    - :any:`auto_examples/plot_otda_classes`
     - :any:`auto_examples/plot_otda_d2`
 
 
@@ -311,7 +311,7 @@ Finally we propose in POT generic solvers that can be used to solve any
 regularization as long as you can provide a function computing the
 regularization and a function computing its gradient (or sub-gradient).
 
-In order to solve 
+In order to solve
 
 .. math::
     \gamma^* = arg\min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j} + \lambda\Omega(\gamma)
@@ -336,12 +336,12 @@ Another generic solver is proposed to solve the problem
 where :math:`\Omega_e` is the entropic regularization. In this case we use a
 generalized conditional gradient [7]_ implemented in :any:`ot.optim.gcg`  that
 does not linearize the entropic term but
-relies on :any:`ot.sinkhorn` for its iterations. 
+relies on :any:`ot.sinkhorn` for its iterations.
 
 .. hint::
     An example of generic solvers are available in :
 
-    - :any:`auto_examples/plot_optim_OTreg` 
+    - :any:`auto_examples/plot_optim_OTreg`
 
 
 Wasserstein Barycenters
@@ -382,7 +382,7 @@ solver :any:`ot.lp.barycenter` that rely on generic LP solvers. By default the
 function uses :any:`scipy.optimize.linprog`, but more efficient LP solvers from
 cvxopt can be also used by changing parameter :code:`solver`. Note that this problem
 requires to solve a very large linear program and can be very slow in
-practice. 
+practice.
 
 Similarly to the OT problem, OT barycenters can be computed in the regularized
 case. When using entropic regularization is used, the problem can be solved with a
@@ -403,11 +403,11 @@ operators. We provide an implementation of this algorithm in function
     Examples of Wasserstein (:any:`ot.lp.barycenter`) and regularized Wasserstein
     barycenter (:any:`ot.bregman.barycenter`) computation are available in :
 
-    - :any:`auto_examples/plot_barycenter_1D` 
-    - :any:`auto_examples/plot_barycenter_lp_vs_entropic` 
+    - :any:`auto_examples/plot_barycenter_1D`
+    - :any:`auto_examples/plot_barycenter_lp_vs_entropic`
 
     An example of convolutional barycenter
-    (:any:`ot.bregman.convolutional_barycenter2d`) computation 
+    (:any:`ot.bregman.convolutional_barycenter2d`) computation
     for 2D images is available
     in :
 
@@ -451,13 +451,13 @@ optimal mapping is still an open problem in the general case but has been proven
 for smooth distributions by Brenier in his eponym `theorem
 <https://who.rocq.inria.fr/Jean-David.Benamou/demiheure.pdf>`__. We provide in
 :any:`ot.da` several solvers for smooth Monge mapping estimation and domain
-adaptation from discrete distributions. 
+adaptation from discrete distributions.
 
 Monge Mapping estimation
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 We now discuss several approaches that are implemented in POT to estimate or
-approximate a Monge mapping from finite distributions. 
+approximate a Monge mapping from finite distributions.
 
 First note that when the source and target distributions are supposed to be Gaussian
 distributions, there exists a close form solution for the mapping and its an
@@ -513,16 +513,16 @@ A list of the provided implementation is given in the following note.
 
     Here is a list of the OT mapping classes inheriting from
     :any:`ot.da.BaseTransport`
-    
+
     * :any:`ot.da.EMDTransport` : Barycentric mapping with EMD transport
     * :any:`ot.da.SinkhornTransport` : Barycentric mapping with Sinkhorn transport
     * :any:`ot.da.SinkhornL1l2Transport` : Barycentric mapping with Sinkhorn +
       group Lasso regularization [5]_
     * :any:`ot.da.SinkhornLpl1Transport` : Barycentric mapping with Sinkhorn +
-      non convex group Lasso regularization [5]_      
+      non convex group Lasso regularization [5]_
     * :any:`ot.da.LinearTransport` : Linear mapping estimation  between Gaussians
       [14]_
-    * :any:`ot.da.MappingTransport` : Nonlinear mapping estimation [8]_ 
+    * :any:`ot.da.MappingTransport` : Nonlinear mapping estimation [8]_
 
 .. hint::
 
@@ -550,7 +550,7 @@ consist in finding a linear projector optimizing the following criterion
 .. math::
     P = \text{arg}\min_P \frac{\sum_i OT_e(\mu_i\#P,\mu_i\#P)}{\sum_{i,j\neq i}
     OT_e(\mu_i\#P,\mu_j\#P)}
-    
+
 where :math:`\#` is the push-forward operator, :math:`OT_e` is the entropic OT
 loss  and :math:`\mu_i` is the
 distribution of samples from class :math:`i`.  :math:`P` is also constrained to
@@ -575,12 +575,12 @@ respectively. Note that we also provide the Fisher discriminant estimator in
 Unbalanced optimal transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Unbalanced OT is a relaxation of the original OT problem where the violation of
+Unbalanced OT is a relaxation of the entropy regularized OT problem where the violation of
 the constraint on the marginals is added to the objective of the optimization
-problem:
- 
+problem. The unbalanced OT metric between two unbalanced histograms a and b is defined as [25]_ [10]_:
+
 .. math::
-    \min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j} + reg\cdot\Omega(\gamma) + \alpha KL(\gamma 1, a) + \alpha KL(\gamma^T 1, b)
+    W_u(a, b) = \min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j} + reg\cdot\Omega(\gamma) + reg_m KL(\gamma 1, a) + reg_m KL(\gamma^T 1, b)
 
     s.t. \quad  \gamma\geq 0
 
@@ -589,18 +589,60 @@ where KL is the Kullback-Leibler divergence. This formulation allows for
 computing approximate mapping between distributions that do not have the same
 amount of mass. Interestingly the problem can be solved with a generalization of
 the Bregman projections algorithm [10]_. We provide a solver for unbalanced OT
-in :any:`ot.unbalanced` and more specifically  
-in function :any:`ot.sinkhorn_unbalanced`. A solver for unbalanced OT barycenter
-is available in :any:`ot.barycenter_unbalanced`.
+in :any:`ot.unbalanced`. Computing the optimal transport
+plan or the transport cost is similar to the balanced case. The Sinkhorn-Knopp
+algorithm is implemented in :any:`ot.sinkhorn_unbalanced` and :any:`ot.sinkhorn_unbalanced2`
+that return respectively the OT matrix and the value of the
+linear term.
+
+.. note::
+    The main function to solve entropic regularized UOT is :any:`ot.sinkhorn_unbalanced`.
+    This function is a wrapper and the parameter :code:`method` helps you select
+    the actual algorithm used to solve the problem:
+
+    + :code:`method='sinkhorn'` calls :any:`ot.unbalanced.sinkhorn_knopp_unbalanced`
+      the generalized Sinkhorn algorithm [25]_ [10]_.
+    + :code:`method='sinkhorn_stabilized'` calls :any:`ot.unbalanced.sinkhorn_stabilized_unbalanced`
+      the log stabilized version of the algorithm [10]_.
 
 
 .. hint::
 
-    Examples of the use of :any:`ot.sinkhorn_unbalanced` and
-    :any:`ot.barycenter_unbalanced` are available in :
+    Examples of the use of :any:`ot.sinkhorn_unbalanced` are available in :
 
     - :any:`auto_examples/plot_UOT_1D`
-    - :any:`auto_examples/plot_UOT_barycenter_1D`
+
+
+Unbalanced Barycenters
+^^^^^^^^^^^^^^^^^^^^^^
+
+As with balanced distributions, we can define a barycenter of a set of
+histograms with different masses as a Fréchet Mean:
+
+    .. math::
+        \min_{\mu} \quad \sum_{k} w_kW_u(\mu,\mu_k)
+
+Where :math:`W_u` is the unbalanced Wasserstein metric defined above. This problem
+can also be solved using generalized version of Sinkhorn's algorithm and it is
+implemented the main function :any:`ot.barycenter_unbalanced`.
+
+
+.. note::
+    The main function to compute UOT barycenters is :any:`ot.barycenter_unbalanced`.
+    This function is a wrapper and the parameter :code:`method` help you select
+    the actual algorithm used to solve the problem:
+
+    + :code:`method='sinkhorn'` calls :any:`ot.unbalanced.barycenter_unbalanced_sinkhorn_unbalanced`
+      the generalized Sinkhorn algorithm [10]_.
+    + :code:`method='sinkhorn_stabilized'` calls :any:`ot.unbalanced.barycenter_unbalanced_stabilized`
+      the log stabilized version of the algorithm [10]_.
+
+
+.. hint::
+
+      Examples of the use of :any:`ot.barycenter_unbalanced` are available in :
+
+      - :any:`auto_examples/plot_UOT_barycenter_1D`
 
 
 Gromov-Wasserstein
@@ -636,7 +678,7 @@ barycenters that can be expressed as
 
 where :math:`Ck` is the distance matrix between samples in distribution
 :math:`k`. Note that interestingly the barycenter is defined as a symmetric
-positive matrix. We provide a block coordinate optimization procedure in 
+positive matrix. We provide a block coordinate optimization procedure in
 :any:`ot.gromov.gromov_barycenters` and
 :any:`ot.gromov.entropic_gromov_barycenters` for non-regularized and regularized
 barycenters respectively.
@@ -654,19 +696,19 @@ The implementations of FGW and FGW barycenter is provided in functions
     Examples of computation of GW, regularized G and FGW are available in :
 
     - :any:`auto_examples/plot_gromov`
-    - :any:`auto_examples/plot_fgw`   
+    - :any:`auto_examples/plot_fgw`
 
     Examples of GW, regularized GW and FGW barycenters are available in :
 
     - :any:`auto_examples/plot_gromov_barycenter`
-    - :any:`auto_examples/plot_barycenter_fgw`   
+    - :any:`auto_examples/plot_barycenter_fgw`
 
 
 GPU acceleration
 ^^^^^^^^^^^^^^^^
 
 We provide several implementation of our OT solvers in :any:`ot.gpu`. Those
-implementations use the :code:`cupy` toolbox that obviously need to be installed.   
+implementations use the :code:`cupy` toolbox that obviously need to be installed.
 
 
 .. note::
@@ -701,7 +743,7 @@ FAQ
 1. **How to solve a discrete optimal transport problem ?**
 
     The solver for discrete OT is the function :py:mod:`ot.emd` that returns
-    the OT transport matrix. If you want to solve a regularized OT you can 
+    the OT transport matrix. If you want to solve a regularized OT you can
     use :py:mod:`ot.sinkhorn`.
 
 
@@ -714,9 +756,9 @@ FAQ
        T=ot.emd(a,b,M) # exact linear program
        T_reg=ot.sinkhorn(a,b,M,reg) # entropic regularized OT
 
-    More detailed examples can be seen on this example: 
+    More detailed examples can be seen on this example:
     :doc:`auto_examples/plot_OT_2D_samples`
-    
+
 
 2. **pip install POT fails with error : ImportError: No module named Cython.Build**
 
@@ -726,7 +768,7 @@ FAQ
     installing POT.
 
     Note that this problem do not occur when using conda-forge since the packages
-    there are pre-compiled. 
+    there are pre-compiled.
 
     See `Issue #59 <https://github.com/rflamary/POT/issues/59>`__ for more
     details.
@@ -751,7 +793,7 @@ FAQ
     In order to limit import time and hard dependencies in POT. we do not import
     some sub-modules automatically with :code:`import ot`. In order to use the
     acceleration in :any:`ot.gpu` you need first to import is with
-    :code:`import ot.gpu`.  
+    :code:`import ot.gpu`.
 
     See `Issue #85 <https://github.com/rflamary/POT/issues/85>`__ and :any:`ot.gpu`
     for more details.
@@ -763,7 +805,7 @@ References
 .. [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W. (2011,
     December). `Displacement  nterpolation using Lagrangian mass transport
     <https://people.csail.mit.edu/sparis/publi/2011/sigasia/Bonneel_11_Displacement_Interpolation.pdf>`__.
-    In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p. 158). ACM. 
+    In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p. 158). ACM.
 
 .. [2] Cuturi, M. (2013). `Sinkhorn distances: Lightspeed computation of
     optimal transport <https://arxiv.org/pdf/1306.0895.pdf>`__. In Advances
@@ -875,3 +917,7 @@ References
     (2019). `Optimal Transport for structured data with application on
     graphs <http://proceedings.mlr.press/v97/titouan19a.html>`__ Proceedings
     of the 36th International Conference on Machine Learning (ICML).
+
+.. [25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. :
+    Learning with a Wasserstein Loss,  Advances in Neural Information
+    Processing Systems (NIPS) 2015
