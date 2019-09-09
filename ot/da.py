@@ -1902,7 +1902,7 @@ class UnbalancedSinkhornTransport(BaseTransport):
 
             returned_ = sinkhorn_unbalanced(
                 a=self.mu_s, b=self.mu_t, M=self.cost_,
-                reg=self.reg_e, alpha=self.reg_m, method=self.method,
+                reg=self.reg_e, reg_m=self.reg_m, method=self.method,
                 numItermax=self.max_iter, stopThr=self.tol,
                 verbose=self.verbose, log=self.log)
 
