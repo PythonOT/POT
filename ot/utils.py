@@ -210,23 +210,28 @@ def fun(f, q_in, q_out):
 
 
 def parmap(f, X, nprocs=multiprocessing.cpu_count()):
-    """ paralell map for multiprocessing """
-    q_in = multiprocessing.Queue(1)
-    q_out = multiprocessing.Queue()
+    """ paralell map for multiprocessing (only map on windows)"""
 
-    proc = [multiprocessing.Process(target=fun, args=(f, q_in, q_out))
-            for _ in range(nprocs)]
-    for p in proc:
-        p.daemon = True
-        p.start()
+    if not sys.platform.endswith('win32'):
 
-    sent = [q_in.put((i, x)) for i, x in enumerate(X)]
-    [q_in.put((None, None)) for _ in range(nprocs)]
-    res = [q_out.get() for _ in range(len(sent))]
+        q_in = multiprocessing.Queue(1)
+        q_out = multiprocessing.Queue()
 
-    [p.join() for p in proc]
+        proc = [multiprocessing.Process(target=fun, args=(f, q_in, q_out))
+                for _ in range(nprocs)]
+        for p in proc:
+            p.daemon = True
+            p.start()
 
-    return [x for i, x in sorted(res)]
+        sent = [q_in.put((i, x)) for i, x in enumerate(X)]
+        [q_in.put((None, None)) for _ in range(nprocs)]
+        res = [q_out.get() for _ in range(len(sent))]
+
+        [p.join() for p in proc]
+
+        return [x for i, x in sorted(res)]
+    else:
+        return list(map(f, X))
 
 
 def check_params(**kwargs):

@@ -5,4 +5,5 @@ matplotlib
 sphinx-gallery
 autograd
 pymanopt
+cvxopt
 pytest

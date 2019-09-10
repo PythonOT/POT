@@ -45,7 +45,7 @@ year={2017}
 
 ## Installation
 
-The library has been tested on Linux, MacOSX and Windows. It requires a C++ compiler for using the EMD solver and relies on the following Python modules:
+The library has been tested on Linux, MacOSX and Windows. It requires a C++ compiler for building/installing the EMD solver and relies on the following Python modules:
 
 - Numpy (>=1.11)
 - Scipy (>=1.0)
@@ -152,7 +152,8 @@ Here is a list of the Python notebooks available [here](https://github.com/rflam
 * [Wasserstein Discriminant Analysis](https://github.com/rflamary/POT/blob/master/notebooks/plot_WDA.ipynb)
 * [Gromov Wasserstein](https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov.ipynb)
 * [Gromov Wasserstein Barycenter](https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov_barycenter.ipynb)
-
+* [Fused Gromov Wasserstein](https://github.com/rflamary/POT/blob/master/notebooks/plot_fgw.ipynb)
+* [Fused Gromov Wasserstein Barycenter](https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb)
 
 
 You can also see the notebooks with [Jupyter nbviewer](https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/notebooks/).
@@ -166,8 +167,6 @@ This toolbox has been created and is maintained by
 
 The contributors to this library are 
 
-* [Rémi Flamary](http://remi.flamary.com/)
-* [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
 * [Alexandre Gramfort](http://alexandre.gramfort.net/)
 * [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/)
 * [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/) (Mapping estimation)
