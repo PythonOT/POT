@@ -1002,12 +1002,14 @@ def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
 
     if method.lower() == 'sinkhorn':
         return barycenter_unbalanced_sinkhorn(A, M, reg, reg_m,
+                                              weights=weights,
                                               numItermax=numItermax,
                                               stopThr=stopThr, verbose=verbose,
                                               log=log, **kwargs)
 
     elif method.lower() == 'sinkhorn_stabilized':
         return barycenter_unbalanced_stabilized(A, M, reg, reg_m,
+                                                weights=weights,
                                                 numItermax=numItermax,
                                                 stopThr=stopThr,
                                                 verbose=verbose,
@@ -1015,6 +1017,7 @@ def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
     elif method.lower() in ['sinkhorn_reg_scaling']:
         warnings.warn('Method not implemented yet. Using classic Sinkhorn Knopp')
         return barycenter_unbalanced(A, M, reg, reg_m,
+                                     weights=weights,
                                      numItermax=numItermax,
                                      stopThr=stopThr, verbose=verbose,
                                      log=log, **kwargs)
