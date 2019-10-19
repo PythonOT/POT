@@ -1037,11 +1037,13 @@ def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
     """
 
     if method.lower() == 'sinkhorn':
-        return barycenter_sinkhorn(A, M, reg, numItermax=numItermax,
+        return barycenter_sinkhorn(A, M, reg, weights=weights,
+                                   numItermax=numItermax,
                                    stopThr=stopThr, verbose=verbose, log=log,
                                    **kwargs)
     elif method.lower() == 'sinkhorn_stabilized':
-        return barycenter_stabilized(A, M, reg, numItermax=numItermax,
+        return barycenter_stabilized(A, M, reg, weights=weights,
+                                     numItermax=numItermax,
                                      stopThr=stopThr, verbose=verbose,
                                      log=log, **kwargs)
     else:
