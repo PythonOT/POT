@@ -12,9 +12,11 @@ It provides the following solvers:
 
 -  OT Network Flow solver for the linear program/ Earth Movers Distance
    [1].
--  Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2]
-   and stabilized version [9][10] and greedy SInkhorn [22] with optional
-   GPU implementation (requires cudamat).
+-  Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2],
+   stabilized version [9][10] and greedy Sinkhorn [22] with optional GPU
+   implementation (requires cupy).
+-  Sinkhorn divergence [23] and entropic regularization OT from
+   empirical data.
 -  Smooth optimal transport solvers (dual and semi-dual) for KL and
    squared L2 regularizations [17].
 -  Non regularized Wasserstein barycenters [16] with LP solver (only
@@ -33,6 +35,7 @@ It provides the following solvers:
 -  Stochastic Optimization for Large-scale Optimal Transport (semi-dual
    problem [18] and dual problem [19])
 -  Non regularized free support Wasserstein barycenters [20].
+-  Unbalanced OT with KL relaxation distance and barycenter [10, 25].
 
 Some demonstrations (both in Python and Jupyter Notebook format) are
 available in the examples folder.
@@ -66,6 +69,13 @@ modules:
 
 Pip installation
 ^^^^^^^^^^^^^^^^
+
+Note that due to a limitation of pip, ``cython`` and ``numpy`` need to
+be installed prior to installing POT. This can be done easily with
+
+::
+
+    pip install numpy cython
 
 You can install the toolbox through PyPI with:
 
@@ -115,14 +125,9 @@ below
 
        pip install pymanopt autograd
 
--  **ot.gpu** (GPU accelerated OT) depends on cudamat that have to be
-   installed with:
-
-   ::
-
-       git clone https://github.com/cudamat/cudamat.git
-       cd cudamat
-       python setup.py install --user # for user install (no root)
+-  **ot.gpu** (GPU accelerated OT) depends on cupy that have to be
+   installed following instructions on `this
+   page <https://docs-cupy.chainer.org/en/stable/install.html>`__.
 
 obviously you need CUDA installed and a compatible GPU.
 
@@ -209,10 +214,13 @@ nbviewer <https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/notebooks
 Acknowledgements
 ----------------
 
-The contributors to this library are:
+This toolbox has been created and is maintained by
 
 -  `Rémi Flamary <http://remi.flamary.com/>`__
 -  `Nicolas Courty <http://people.irisa.fr/Nicolas.Courty/>`__
+
+The contributors to this library are
+
 -  `Alexandre Gramfort <http://alexandre.gramfort.net/>`__
 -  `Laetitia Chapel <http://people.irisa.fr/Laetitia.Chapel/>`__
 -  `Michael Perrot <http://perso.univ-st-etienne.fr/pem82055/>`__
@@ -226,6 +234,9 @@ The contributors to this library are:
 -  `Kilian Fatras <https://kilianfatras.github.io/>`__
 -  `Alain
    Rakotomamonjy <https://sites.google.com/site/alainrakotomamonjy/home>`__
+-  `Vayer Titouan <https://tvayer.github.io/>`__
+-  `Hicham Janati <https://hichamjanati.github.io/>`__ (Unbalanced OT)
+-  `Romain Tavenard <https://rtavenar.github.io/>`__ (1d Wasserstein)
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
@@ -365,6 +376,20 @@ Transactions on Graphics (TOG), 34(4), 66.
 approximation algorithms for optimal transport via Sinkhorn
 iteration <https://papers.nips.cc/paper/6792-near-linear-time-approximation-algorithms-for-optimal-transport-via-sinkhorn-iteration.pdf>`__,
 Advances in Neural Information Processing Systems (NIPS) 31
+
+[23] Aude, G., Peyré, G., Cuturi, M., `Learning Generative Models with
+Sinkhorn Divergences <https://arxiv.org/abs/1706.00292>`__, Proceedings
+of the Twenty-First International Conference on Artficial Intelligence
+and Statistics, (AISTATS) 21, 2018
+
+[24] Vayer, T., Chapel, L., Flamary, R., Tavenard, R. and Courty, N.
+(2019). `Optimal Transport for structured data with application on
+graphs <http://proceedings.mlr.press/v97/titouan19a.html>`__ Proceedings
+of the 36th International Conference on Machine Learning (ICML).
+
+[25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. (2019).
+`Learning with a Wasserstein Loss <http://cbcl.mit.edu/wasserstein/>`__
+Advances in Neural Information Processing Systems (NIPS).
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT

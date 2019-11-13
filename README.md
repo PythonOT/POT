@@ -27,6 +27,7 @@ It provides the following solvers:
 * Gromov-Wasserstein distances and barycenters ([13] and regularized [12])
 * Stochastic Optimization for Large-scale Optimal Transport (semi-dual problem [18] and dual problem [19])
 * Non regularized free support Wasserstein barycenters [20].
+* Unbalanced OT with KL relaxation distance and barycenter [10, 25].
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 
@@ -44,7 +45,7 @@ year={2017}
 
 ## Installation
 
-The library has been tested on Linux, MacOSX and Windows. It requires a C++ compiler for using the EMD solver and relies on the following Python modules:
+The library has been tested on Linux, MacOSX and Windows. It requires a C++ compiler for building/installing the EMD solver and relies on the following Python modules:
 
 - Numpy (>=1.11)
 - Scipy (>=1.0)
@@ -52,6 +53,12 @@ The library has been tested on Linux, MacOSX and Windows. It requires a C++ comp
 - Matplotlib (>=1.5)
 
 #### Pip installation
+
+Note that due to a limitation of pip, `cython` and `numpy` need to be installed
+prior to installing POT. This can be done easily with
+```
+pip install numpy cython
+```
 
 You can install the toolbox through PyPI with:
 ```
@@ -61,6 +68,8 @@ or get the very latest version by downloading it and then running:
 ```
 python setup.py install --user # for user install (no root)
 ```
+
+
 
 #### Anaconda installation with conda-forge
 
@@ -143,17 +152,21 @@ Here is a list of the Python notebooks available [here](https://github.com/rflam
 * [Wasserstein Discriminant Analysis](https://github.com/rflamary/POT/blob/master/notebooks/plot_WDA.ipynb)
 * [Gromov Wasserstein](https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov.ipynb)
 * [Gromov Wasserstein Barycenter](https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov_barycenter.ipynb)
-
+* [Fused Gromov Wasserstein](https://github.com/rflamary/POT/blob/master/notebooks/plot_fgw.ipynb)
+* [Fused Gromov Wasserstein Barycenter](https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb)
 
 
 You can also see the notebooks with [Jupyter nbviewer](https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/notebooks/).
 
 ## Acknowledgements
 
-The contributors to this library are:
+This toolbox has been created and is maintained by
 
 * [Rémi Flamary](http://remi.flamary.com/)
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
+
+The contributors to this library are 
+
 * [Alexandre Gramfort](http://alexandre.gramfort.net/)
 * [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/)
 * [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/) (Mapping estimation)
@@ -165,6 +178,8 @@ The contributors to this library are:
 * [Kilian Fatras](https://kilianfatras.github.io/)
 * [Alain Rakotomamonjy](https://sites.google.com/site/alainrakotomamonjy/home)
 * [Vayer Titouan](https://tvayer.github.io/)
+* [Hicham Janati](https://hichamjanati.github.io/) (Unbalanced OT)
+* [Romain Tavenard](https://rtavenar.github.io/) (1d Wasserstein)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
@@ -236,3 +251,5 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 [23] Aude, G., Peyré, G., Cuturi, M., [Learning Generative Models with Sinkhorn Divergences](https://arxiv.org/abs/1706.00292), Proceedings of the Twenty-First International Conference on Artficial Intelligence and Statistics, (AISTATS) 21, 2018
 
 [24] Vayer, T., Chapel, L., Flamary, R., Tavenard, R. and Courty, N. (2019). [Optimal Transport for structured data with application on graphs](http://proceedings.mlr.press/v97/titouan19a.html) Proceedings of the 36th International Conference on Machine Learning (ICML).
+
+[25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. (2019). [Learning with a Wasserstein Loss](http://cbcl.mit.edu/wasserstein/)  Advances in Neural Information Processing Systems (NIPS).
