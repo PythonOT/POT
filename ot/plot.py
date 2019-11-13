@@ -1,5 +1,11 @@
 """
 Functions for plotting OT matrices
+
+.. warning::
+    Note that by default the module is not import in :mod:`ot`. In order to
+    use it you need to explicitely import :mod:`ot.plot`
+
+
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -20,11 +26,11 @@ def plot1D_mat(a, b, M, title=''):
 
     Parameters
     ----------
-    a : np.array, shape (na,)
+    a : ndarray, shape (na,)
         Source distribution
-    b : np.array, shape (nb,)
+    b : ndarray, shape (nb,)
         Target distribution
-    M : np.array, shape (na,nb)
+    M : ndarray, shape (na, nb)
         Matrix to plot
     """
     na, nb = M.shape
