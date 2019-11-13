@@ -43,10 +43,13 @@ def test_gromov():
         G, np.flipud(Id), atol=1e-04)
 
     gw, log = ot.gromov.gromov_wasserstein2(C1, C2, p, q, 'kl_loss', log=True)
+    gw_val = ot.gromov.gromov_wasserstein2(C1, C2, p, q, 'kl_loss', log=False)
 
     G = log['T']
 
-    np.testing.assert_allclose(gw, 0, atol=1e-1, rtol=1e-1)
+    np.testing.assert_allclose(gw, 0, atol=1e-1, rtol=1e-1) # cf gw value
+
+    np.testing.assert_allclose(gw, gw_val, atol=1e-1, rtol=1e-1) # cf log
 
     # check constratints
     np.testing.assert_allclose(
