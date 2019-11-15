@@ -134,7 +134,7 @@ def solve_linesearch(cost, G, deltaG, Mi, f_val,
     return alpha, fc, f_val
 
 
-def cg(a, b, M, reg, f, df, G0=None, numItermax=200,
+def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
        stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, **kwargs):
     """
     Solve the general regularized OT problem with conditional gradient
@@ -172,6 +172,8 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200,
         initial guess (default is indep joint density)
     numItermax : int, optional
         Max number of iterations
+    numItermaxEmd : int, optional
+        Max number of iterations for emd
     stopThr : float, optional
         Stop threshol on the relative variation (>0)
     stopThr2 : float, optional
@@ -238,7 +240,7 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200,
         Mi += Mi.min()
 
         # solve linear program
-        Gc = emd(a, b, Mi)
+        Gc = emd(a, b, Mi, numItermax=numItermaxEmd)
 
         deltaG = Gc - G
 
