@@ -139,7 +139,7 @@ int EMD_wrap_return_sparse(int n1, int n2, double *X, double *Y, double *D,
     if (ret==(int)net.OPTIMAL || ret==(int)net.MAX_ITER_REACHED) {
         *cost = 0;
         Arc a; di.first(a);
-        cur=0
+        cur=0;
         for (; a != INVALID; di.next(a)) {
             int i = di.source(a);
             int j = di.target(a);
