@@ -111,7 +111,7 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
         jG=np.zeros(nmax,dtype=np.int)
 
 
-        result_code = EMD_wrap_return_sparse(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <long*> iG.data, <long*> jG.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+        result_code = EMD_wrap_return_sparse(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <long*> iG.data, <long*> jG.data, <double*> Gv.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
 
 
         return Gv, iG, jG, cost, alpha, beta, result_code

@@ -118,6 +118,26 @@ def test_emd_empty():
     np.testing.assert_allclose(w, 0)
 
 
+def test_emd_sparse():
+
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    x2 = rng.randn(n, 2)
+    u = ot.utils.unif(n)
+
+    M = ot.dist(x, x2)
+
+    G = ot.emd([], [], M)
+
+    Gs = ot.emd([], [], M, sparse=True)
+
+    # check G is the same
+    np.testing.assert_allclose(G, Gs.todense())
+    # check constraints
+
+
 def test_emd2_multi():
     n = 500  # nb bins
 
