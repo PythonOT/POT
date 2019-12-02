@@ -132,9 +132,12 @@ def test_emd_sparse():
 
     Gs = ot.emd([], [], M, dense=False)
 
+    ws = ot.emd2([], [], M, dense=False)
+
     # check G is the same
     np.testing.assert_allclose(G, Gs.todense())
-    # check constraints
+    # check value
+    np.testing.assert_allclose(Gs.multiply(M).sum(), ws, rtol=1e-6)
 
 
 def test_emd2_multi():
