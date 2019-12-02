@@ -108,7 +108,7 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
 
 
 int EMD_wrap_return_sparse(int n1, int n2, double *X, double *Y, double *D, 
-                    int *iG, int *jG, double *G,
+                    long *iG, long *jG, double *G,
                     double* alpha, double* beta, double *cost, int maxIter)  {
     // beware M and C anre strored in row major C style!!!
      int n, m, i, cur;

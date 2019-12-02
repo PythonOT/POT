@@ -20,6 +20,9 @@ import warnings
 
 cdef extern from "EMD.h":
     int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int maxIter)
+    int EMD_wrap_return_sparse(int n1, int n2, double *X, double *Y, double *D, 
+                    long *iG, long *jG, double *G,
+                    double* alpha, double* beta, double *cost, int maxIter)
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
 
@@ -39,7 +42,7 @@ def check_result(result_code):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int max_iter):
+def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int max_iter, bint sparse):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
 
@@ -82,12 +85,18 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     """
     cdef int n1= M.shape[0]
     cdef int n2= M.shape[1]
+    cdef int nmax=n1+n2-1
+    cdef int result_code = 0
 
     cdef double cost=0
-    cdef np.ndarray[double, ndim=2, mode="c"] G=np.zeros([n1, n2])
     cdef np.ndarray[double, ndim=1, mode="c"] alpha=np.zeros(n1)
     cdef np.ndarray[double, ndim=1, mode="c"] beta=np.zeros(n2)
 
+    cdef np.ndarray[double, ndim=2, mode="c"] G=np.zeros([0, 0])
+
+    cdef np.ndarray[double, ndim=1, mode="c"] Gv=np.zeros(0)
+    cdef np.ndarray[long, ndim=1, mode="c"] iG=np.zeros(0,dtype=np.int)
+    cdef np.ndarray[long, ndim=1, mode="c"] jG=np.zeros(0,dtype=np.int)
 
     if not len(a):
         a=np.ones((n1,))/n1
@@ -95,10 +104,29 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     if not len(b):
         b=np.ones((n2,))/n2
 
-    # calling the function
-    cdef int result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+    if sparse:
 
-    return G, cost, alpha, beta, result_code
+        Gv=np.zeros(nmax)
+        iG=np.zeros(nmax,dtype=np.int)
+        jG=np.zeros(nmax,dtype=np.int)
+
+
+        result_code = EMD_wrap_return_sparse(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <long*> iG.data, <long*> jG.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+
+
+        return Gv, iG, jG, cost, alpha, beta, result_code
+
+
+    else:
+
+
+        G=np.zeros([n1, n2])
+
+
+        # calling the function
+        result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+
+        return G, cost, alpha, beta, result_code
 
 
 @cython.boundscheck(False)
