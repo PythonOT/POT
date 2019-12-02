@@ -172,8 +172,8 @@ def test_emd2_multi():
     ot.toc('multi proc : {} s')
 
     ot.tic()
-    emdn2 = ot.emd2(a, b, M, dense = False)
-    ot.toc('multi proc : {} s')   
+    emdn2 = ot.emd2(a, b, M, dense=False)
+    ot.toc('multi proc : {} s')
 
     np.testing.assert_allclose(emd1, emdn)
     np.testing.assert_allclose(emd1, emdn2, rtol=1e-6)
