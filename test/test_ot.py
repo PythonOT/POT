@@ -131,7 +131,7 @@ def test_emd_sparse():
 
     G = ot.emd([], [], M)
 
-    Gs = ot.emd([], [], M, sparse=True)
+    Gs = ot.emd([], [], M, dense=False)
 
     # check G is the same
     np.testing.assert_allclose(G, Gs.todense())

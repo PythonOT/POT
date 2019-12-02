@@ -27,7 +27,7 @@ __all__=['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx',
          'emd_1d', 'emd2_1d', 'wasserstein_1d']
 
 
-def emd(a, b, M, numItermax=100000, log=False, sparse=False):
+def emd(a, b, M, numItermax=100000, log=False, dense=True):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
 
@@ -62,6 +62,10 @@ def emd(a, b, M, numItermax=100000, log=False, sparse=False):
     log: bool, optional (default=False)
         If True, returns a dictionary containing the cost and dual
         variables. Otherwise returns only the optimal transportation matrix.
+    dense: boolean, optional (default=True)
+        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
+        Otherwise returns a sparse representation using scipy's `coo_matrix`
+        format.
 
     Returns
     -------
@@ -103,6 +107,8 @@ def emd(a, b, M, numItermax=100000, log=False, sparse=False):
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64)
 
+    sparse= not dense
+
     # if empty array given then use uniform distributions
     if len(a) == 0:
         a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
@@ -128,7 +134,7 @@ def emd(a, b, M, numItermax=100000, log=False, sparse=False):
 
 
 def emd2(a, b, M, processes=multiprocessing.cpu_count(),
-         numItermax=100000, log=False, sparse=False, return_matrix=False):
+         numItermax=100000, log=False, dense=True, return_matrix=False):
     r"""Solves the Earth Movers distance problem and returns the loss
 
     .. math::
@@ -166,6 +172,10 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
         variables. Otherwise returns only the optimal transportation cost.
     return_matrix: boolean, optional (default=False)
         If True, returns the optimal transportation matrix in the log.
+    dense: boolean, optional (default=True)
+        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
+        Otherwise returns a sparse representation using scipy's `coo_matrix`
+        format.       
 
     Returns
     -------
@@ -206,6 +216,8 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64)
+
+    sparse=not dense
 
     # problem with pikling Forks
     if sys.platform.endswith('win32'):

@@ -21,7 +21,7 @@ import warnings
 cdef extern from "EMD.h":
     int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int maxIter)
     int EMD_wrap_return_sparse(int n1, int n2, double *X, double *Y, double *D, 
-                    long *iG, long *jG, double *G,
+                    long *iG, long *jG, double *G, long * nG,
                     double* alpha, double* beta, double *cost, int maxIter)
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
@@ -75,7 +75,8 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     max_iter : int
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
-
+    sparse : bool
+        Returning a sparse transport matrix if set to True
 
     Returns
     -------
@@ -87,6 +88,7 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     cdef int n2= M.shape[1]
     cdef int nmax=n1+n2-1
     cdef int result_code = 0
+    cdef int nG=0
 
     cdef double cost=0
     cdef np.ndarray[double, ndim=1, mode="c"] alpha=np.zeros(n1)
@@ -111,10 +113,10 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
         jG=np.zeros(nmax,dtype=np.int)
 
 
-        result_code = EMD_wrap_return_sparse(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <long*> iG.data, <long*> jG.data, <double*> Gv.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+        result_code = EMD_wrap_return_sparse(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <long*> iG.data, <long*> jG.data, <double*> Gv.data, <long*> &nG, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
 
 
-        return Gv, iG, jG, cost, alpha, beta, result_code
+        return Gv[:nG], iG[:nG], jG[:nG], cost, alpha, beta, result_code
 
 
     else:
