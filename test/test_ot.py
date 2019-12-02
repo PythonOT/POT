@@ -125,7 +125,6 @@ def test_emd_sparse():
 
     x = rng.randn(n, 2)
     x2 = rng.randn(n, 2)
-    u = ot.utils.unif(n)
 
     M = ot.dist(x, x2)
 
