@@ -176,7 +176,7 @@ def test_emd2_multi():
     ot.toc('multi proc : {} s')   
 
     np.testing.assert_allclose(emd1, emdn)
-    np.testing.assert_allclose(emd1, emdn2)
+    np.testing.assert_allclose(emd1, emdn2, rtol=1e-6)
 
     # emd loss multipro proc with log
     ot.tic()
