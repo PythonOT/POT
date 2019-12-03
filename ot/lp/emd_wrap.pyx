@@ -23,6 +23,10 @@ cdef extern from "EMD.h":
     int EMD_wrap_return_sparse(int n1, int n2, double *X, double *Y, double *D, 
                     long *iG, long *jG, double *G, long * nG,
                     double* alpha, double* beta, double *cost, int maxIter)
+    int EMD_wrap_all_sparse(int n1, int n2, double *X, double *Y, 
+                    long *iD, long *jD, double *D, long  nD,
+                    long *iG, long *jG, double *G, long * nG,
+                    double* alpha, double* beta, double *cost, int maxIter)
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
 
