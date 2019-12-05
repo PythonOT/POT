@@ -441,10 +441,10 @@ def solve_semi_dual_entropic(a, b, M, reg, method, num_iter_max=10000, lr=None,
           a[:, None] * b[None, :])
 
     if log:
-        log = {}
-        log['alpha'] = opt_alpha
-        log['beta'] = opt_beta
-        return pi, log
+        log_stoc = {}
+        log_stoc['alpha'] = opt_alpha
+        log_stoc['beta'] = opt_beta
+        return pi, log_stoc
     else:
         return pi
 
@@ -747,9 +747,9 @@ def solve_dual_entropic(a, b, M, reg, batch_size, num_iter_max=10000, lr=1,
     pi = (np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg) *
           a[:, None] * b[None, :])
     if log:
-        log = {}
-        log['alpha'] = opt_alpha
-        log['beta'] = opt_beta
-        return pi, log
+        log_stoc = {}
+        log_stoc['alpha'] = opt_alpha
+        log_stoc['beta'] = opt_beta
+        return pi, log_stoc
     else:
         return pi
