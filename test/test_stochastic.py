@@ -30,15 +30,15 @@ import ot
 
 def test_stochastic_sag():
     # test sag
-    n = 15
+    n_samples = 15
     reg = 1
     num_iter_max = 30000
     rng = np.random.RandomState(0)
 
-    x = rng.randn(n, 2)
-    u = ot.utils.unif(n)
+    x_samples = rng.randn(n_samples, 2)
+    u = ot.utils.unif(n_samples)
 
-    M = ot.dist(x, x)
+    M = ot.dist(x_samples, x_samples)
 
     G = ot.stochastic.solve_semi_dual_entropic(u, u, M, reg, "sag",
                                                num_iter_max=num_iter_max)
@@ -60,15 +60,15 @@ def test_stochastic_sag():
 
 def test_stochastic_asgd():
     # test asgd
-    n = 15
+    n_samples = 15
     reg = 1
     num_iter_max = 100000
     rng = np.random.RandomState(0)
 
-    x = rng.randn(n, 2)
-    u = ot.utils.unif(n)
+    x_samples = rng.randn(n_samples, 2)
+    u = ot.utils.unif(n_samples)
 
-    M = ot.dist(x, x)
+    M = ot.dist(x_samples, x_samples)
 
     G = ot.stochastic.solve_semi_dual_entropic(u, u, M, reg, "asgd",
                                                num_iter_max=num_iter_max)
@@ -90,14 +90,14 @@ def test_stochastic_asgd():
 
 def test_sag_asgd_sinkhorn():
     # test all algorithms
-    n = 15
+    n_samples = 15
     reg = 1
     nb_iter = 100000
     rng = np.random.RandomState(0)
 
-    x = rng.randn(n, 2)
-    u = ot.utils.unif(n)
-    M = ot.dist(x, x)
+    x_samples = rng.randn(n_samples, 2)
+    u = ot.utils.unif(n_samples)
+    M = ot.dist(x_samples, x_samples)
 
     G_asgd = ot.stochastic.solve_semi_dual_entropic(u, u, M, reg, "asgd",
                                                     num_iter_max=nb_iter)
@@ -134,16 +134,16 @@ def test_sag_asgd_sinkhorn():
 
 def test_stochastic_dual_sgd():
     # test sgd
-    n = 10
+    n_samples = 10
     reg = 1
     num_iter_max = 15000
     batch_size = 10
     rng = np.random.RandomState(0)
 
-    x = rng.randn(n, 2)
-    u = ot.utils.unif(n)
+    x_samples = rng.randn(n_samples, 2)
+    u = ot.utils.unif(n_samples)
 
-    M = ot.dist(x, x)
+    M = ot.dist(x_samples, x_samples)
 
     G = ot.stochastic.solve_dual_entropic(u, u, M, reg, batch_size,
                                           num_iter_max=num_iter_max)
@@ -165,16 +165,16 @@ def test_stochastic_dual_sgd():
 
 def test_dual_sgd_sinkhorn():
     # test all dual algorithms
-    n = 10
+    n_samples = 10
     reg = 1
     nb_iter = 15000
     batch_size = 10
     rng = np.random.RandomState(0)
 
 # Test uniform
-    x = rng.randn(n, 2)
-    u = ot.utils.unif(n)
-    M = ot.dist(x, x)
+    x_samples = rng.randn(n_samples, 2)
+    u = ot.utils.unif(n_samples)
+    M = ot.dist(x_samples, x_samples)
 
     G_sgd = ot.stochastic.solve_dual_entropic(u, u, M, reg, batch_size,
                                               num_iter_max=nb_iter)
@@ -190,15 +190,15 @@ def test_dual_sgd_sinkhorn():
         G_sgd, G_sinkhorn, atol=1e-03)  # cf convergence sgd
 
 # Test gaussian
-    n = 30
+    n_samples = 30
     reg = 1
     batch_size = 30
 
-    a = ot.datasets.make_1D_gauss(n, 15, 5)  # m= mean, s= std
-    b = ot.datasets.make_1D_gauss(n, 15, 5)
-    X_source = np.arange(n, dtype=np.float64)
-    Y_target = np.arange(n, dtype=np.float64)
-    M = ot.dist(X_source.reshape((n, 1)), Y_target.reshape((n, 1)))
+    a = ot.datasets.make_1D_gauss(n_samples, 15, 5)  # m= mean, s= std
+    b = ot.datasets.make_1D_gauss(n_samples, 15, 5)
+    X_source = np.arange(n_samples, dtype=np.float64)
+    Y_target = np.arange(n_samples, dtype=np.float64)
+    M = ot.dist(X_source.reshape((n_samples, 1)), Y_target.reshape((n_samples, 1)))
     M /= M.max()
 
     G_sgd = ot.stochastic.solve_dual_entropic(a, b, M, reg, batch_size,
