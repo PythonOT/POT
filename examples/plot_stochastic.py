@@ -33,7 +33,7 @@ import ot.plot
 n_source = 7
 n_target = 4
 reg = 1
-numItermax = 1000
+num_iter_max = 1000
 
 a = ot.utils.unif(n_source)
 b = ot.utils.unif(n_target)
@@ -53,7 +53,7 @@ M = ot.dist(X_source, Y_target)
 
 method = "SAG"
 sag_pi = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method,
-                                                numItermax)
+                                                num_iter_max)
 print(sag_pi)
 
 #############################################################################
@@ -69,7 +69,7 @@ print(sag_pi)
 n_source = 7
 n_target = 4
 reg = 1
-numItermax = 1000
+num_iter_max = 1000
 log = True
 
 a = ot.utils.unif(n_source)
@@ -91,7 +91,7 @@ M = ot.dist(X_source, Y_target)
 
 method = "ASGD"
 asgd_pi, log_asgd = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method,
-                                                           numItermax, log=log)
+                                                           num_iter_max, log=log)
 print(log_asgd['alpha'], log_asgd['beta'])
 print(asgd_pi)
 
@@ -153,7 +153,7 @@ pl.show()
 n_source = 7
 n_target = 4
 reg = 1
-numItermax = 100000
+num_iter_max = 100000
 lr = 0.1
 batch_size = 3
 log = True
@@ -175,7 +175,7 @@ M = ot.dist(X_source, Y_target)
 # Call ot.solve_dual_entropic and plot the results.
 
 sgd_dual_pi, log_sgd = ot.stochastic.solve_dual_entropic(a, b, M, reg,
-                                                         batch_size, numItermax,
+                                                         batch_size, num_iter_max,
                                                          lr, log=log)
 print(log_sgd['alpha'], log_sgd['beta'])
 print(sgd_dual_pi)
