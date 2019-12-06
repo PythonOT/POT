@@ -16,6 +16,22 @@ import pytest
 
 def test_emd_emd2():
     # test emd and emd2 for simple identity
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples + 1)
+
+    M = ot.dist(x, x)
+
+    np.testing.assert_raises(AssertionError, emd, a, a, M)
+
+    np.testing.assert_raises(AssertionError, emd2, a, a, M)
+
+
+def test_emd_emd2():
+    # test emd and emd2 for simple identity
     n = 100
     rng = np.random.RandomState(0)
 
