@@ -14,7 +14,6 @@ from ot.datasets import make_1D_gauss as gauss
 import pytest
 
 
-
 def test_emd_dimension_mismatch():
     # test emd and emd2 for dimension mismatch
     n_samples = 100
