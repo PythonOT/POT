@@ -14,8 +14,9 @@ from ot.datasets import make_1D_gauss as gauss
 import pytest
 
 
+
 def test_emd_dimension_mismatch():
-    # test emd and emd2 for simple identity
+    # test emd and emd2 for dimension mismatch
     n_samples = 100
     n_features = 2
     rng = np.random.RandomState(0)
@@ -25,9 +26,9 @@ def test_emd_dimension_mismatch():
 
     M = ot.dist(x, x)
 
-    np.testing.assert_raises(AssertionError, emd, a, a, M)
+    np.testing.assert_raises(AssertionError, ot.emd, a, a, M)
 
-    np.testing.assert_raises(AssertionError, emd2, a, a, M)
+    np.testing.assert_raises(AssertionError, ot.emd2, a, a, M)
 
 
 def test_emd_emd2():
