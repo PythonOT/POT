@@ -359,6 +359,56 @@ class deprecated(object):
         return newdoc
 
 
+class deprecated_variable(object):
+    """Decorator to mark a variable name deprecated.
+
+    Issue a warning when the function is called/the class is instantiated with an old variable name.
+    The old and new arguments will be added to the deprecation message
+    and the docstring. Then the old variable will be replaced with the new one and 
+    will return the function with the correct variable.
+    >>> from ot.utils.deprecated_variable import deprecated_variable  # doctest: +SKIP
+    >>> @deprecated_variable({'old_arg':'arg'})  # doctest: +SKIP
+    ... def some_function(): pass  # doctest: +SKIP
+    Parameters
+    ----------
+    extra : str
+        To be added to the deprecation messages.
+    """
+
+    def __init__(self, dic_change=None):
+        """Class initialization
+        Parameters
+        ----------
+        dic_change : Considered changes dictionnary
+        """
+        self.dic_change = dic_change
+
+    def __call__(self, fun):
+        """Call method
+        Parameters
+        ----------
+        obj : function
+        """
+        msg_template = "Function parameter '{}' is deprecated and should be replaced by '{}' "
+
+        def wrapped(*args, **kwargs):
+            kwargs2 = dict()
+            for kw in kwargs:
+                if kw in self.dic_change:
+                    warnings.warn(msg_template.format(kw, self.dic_change[kw]), category=DeprecationWarning)
+                    kwargs2[self.dic_change[kw]] = kwargs[kw]
+
+                else:
+                    kwargs2[kw] = kwargs[kw]
+            return fun(*args, **kwargs2)
+
+        wrapped.__name__ = fun.__name__
+        wrapped.__dict__ = fun.__dict__
+        wrapped.__doc__ = fun.__doc__
+
+        return wrapped
+
+
 def _is_deprecated(func):
     """Helper to check if func is wraped by our deprecated decorator"""
     if sys.version_info < (3, 5):
