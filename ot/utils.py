@@ -367,7 +367,7 @@ class deprecated_variable(object):
     the deprecation message and the docstring. Then the old variable will
     be replaced with the new one and will return the function with the
     correct variable.
-    >>> from ot.utils.deprecated_variable import deprecated_variable
+    >>> from ot.utils import deprecated_variable
     >>> @deprecated_variable({'old_arg':'arg'})
     ... def some_function(): pass
 
