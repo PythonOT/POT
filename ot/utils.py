@@ -362,13 +362,15 @@ class deprecated(object):
 class deprecated_variable(object):
     """Decorator to mark a variable name deprecated.
 
-    Issue a warning when the function is called/the class is instantiated with an old variable name.
-    The old and new arguments will be added to the deprecation message
-    and the docstring. Then the old variable will be replaced with the new one and 
-    will return the function with the correct variable.
-    >>> from ot.utils.deprecated_variable import deprecated_variable  # doctest: +SKIP
-    >>> @deprecated_variable({'old_arg':'arg'})  # doctest: +SKIP
-    ... def some_function(): pass  # doctest: +SKIP
+    Issue a warning when the function is called/the class is instantiated 
+    with an old variable name. The old and new arguments will be added to 
+    the deprecation message and the docstring. Then the old variable will 
+    be replaced with the new one and will return the function with the 
+    correct variable. 
+    >>> from ot.utils.deprecated_variable import deprecated_variable 
+    >>> @deprecated_variable({'old_arg':'arg'}) 
+    ... def some_function(): pass 
+
     Parameters
     ----------
     extra : str
@@ -377,6 +379,7 @@ class deprecated_variable(object):
 
     def __init__(self, dic_change=None):
         """Class initialization
+
         Parameters
         ----------
         dic_change : Considered changes dictionnary
@@ -385,6 +388,7 @@ class deprecated_variable(object):
 
     def __call__(self, fun):
         """Call method
+
         Parameters
         ----------
         obj : function
