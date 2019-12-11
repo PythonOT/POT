@@ -126,7 +126,7 @@ def sag_entropic_transport(a, b, M, reg, maxiter=10000, lr=None):
     reg : float
         Regularization term > 0
     maxiter : int
-        Number of iteration.
+        Number of iterations.
     lr : float
         Learning rate.
 
@@ -216,7 +216,7 @@ def averaged_sgd_entropic_transport(a, b, M, reg, maxiter=300000, lr=None):
     reg : float
         Regularization term > 0
     maxiter : int
-        Number of iteration.
+        Number of iterations.
     lr : float
         Learning rate.
 
@@ -385,7 +385,7 @@ def solve_semi_dual_entropic(a, b, M, reg, method, maxiter=10000, lr=None,
     methode : str
         used method (SAG or ASGD)
     maxiter : int
-        number of iteration
+        number of iterations
     lr : float
         learning rate
     n_source : int
@@ -444,9 +444,7 @@ def solve_semi_dual_entropic(a, b, M, reg, method, maxiter=10000, lr=None,
           a[:, None] * b[None, :])
 
     if log:
-        log_stoc = {}
-        log_stoc['alpha'] = opt_alpha
-        log_stoc['beta'] = opt_beta
+        log_stoc = {'alpha': opt_alpha, 'beta': opt_beta}
         return pi, log_stoc
     else:
         return pi
@@ -592,7 +590,7 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, maxiter, lr):
     batch_size : int
         size of the batch
     maxiter : int
-        number of iteration
+        number of iterations
     lr : float
         learning rate
 
@@ -695,7 +693,7 @@ def solve_dual_entropic(a, b, M, reg, batch_size, maxiter=10000, lr=1,
     batch_size : int
         size of the batch
     maxiter : int
-        number of iteration
+        number of iterations
     lr : float
         learning rate
     log : bool, optional
@@ -752,9 +750,7 @@ def solve_dual_entropic(a, b, M, reg, batch_size, maxiter=10000, lr=1,
     pi = (np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg) *
           a[:, None] * b[None, :])
     if log:
-        log_stoc = {}
-        log_stoc['alpha'] = opt_alpha
-        log_stoc['beta'] = opt_beta
+        log_stoc = {'alpha': opt_alpha, 'beta': opt_beta}
         return pi, log_stoc
     else:
         return pi
