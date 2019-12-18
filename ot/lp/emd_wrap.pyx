@@ -46,7 +46,7 @@ def check_result(result_code):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int max_iter, bint sparse):
+def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int max_iter, bint dense):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
 
@@ -110,8 +110,19 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     if not len(b):
         b=np.ones((n2,))/n2
 
-    if sparse:
+    if dense:
+        # init OT matrix
+        G=np.zeros([n1, n2])
 
+        # calling the function
+        result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+
+        return G, cost, alpha, beta, result_code
+
+
+    else:
+        
+        # init sparse OT matrix
         Gv=np.zeros(nmax)
         iG=np.zeros(nmax,dtype=np.int)
         jG=np.zeros(nmax,dtype=np.int)
@@ -122,17 +133,6 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
 
         return Gv[:nG], iG[:nG], jG[:nG], cost, alpha, beta, result_code
 
-
-    else:
-
-
-        G=np.zeros([n1, n2])
-
-
-        # calling the function
-        result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
-
-        return G, cost, alpha, beta, result_code
 
 
 @cython.boundscheck(False)

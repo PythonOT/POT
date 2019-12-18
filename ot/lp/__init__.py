@@ -107,7 +107,6 @@ def emd(a, b, M, numItermax=100000, log=False, dense=True):
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64)
 
-    sparse= not dense
 
     # if empty array given then use uniform distributions
     if len(a) == 0:
@@ -115,11 +114,11 @@ def emd(a, b, M, numItermax=100000, log=False, dense=True):
     if len(b) == 0:
         b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
 
-    if sparse:
-        Gv, iG, jG, cost, u, v, result_code = emd_c(a, b, M, numItermax,sparse)
-        G = coo_matrix((Gv, (iG, jG)), shape=(a.shape[0], b.shape[0]))
+    if dense:
+        G, cost, u, v, result_code = emd_c(a, b, M, numItermax,dense)
     else:
-        G, cost, u, v, result_code = emd_c(a, b, M, numItermax,sparse)
+        Gv, iG, jG, cost, u, v, result_code = emd_c(a, b, M, numItermax,dense)
+        G = coo_matrix((Gv, (iG, jG)), shape=(a.shape[0], b.shape[0]))        
 
     result_code_string = check_result(result_code)
     if log:
@@ -217,8 +216,6 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64)
 
-    sparse=not dense
-
     # problem with pikling Forks
     if sys.platform.endswith('win32'):
         processes=1
@@ -231,12 +228,11 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
     if log or return_matrix:
         def f(b):
-
-            if sparse:
-                Gv, iG, jG, cost, u, v, result_code = emd_c(a, b, M, numItermax,sparse)
-                G = coo_matrix((Gv, (iG, jG)), shape=(a.shape[0], b.shape[0]))
+            if dense:
+                G, cost, u, v, result_code = emd_c(a, b, M, numItermax,dense)
             else:
-                G, cost, u, v, result_code = emd_c(a, b, M, numItermax,sparse)
+                Gv, iG, jG, cost, u, v, result_code = emd_c(a, b, M, numItermax,dense)
+                G = coo_matrix((Gv, (iG, jG)), shape=(a.shape[0], b.shape[0]))                
 
             result_code_string = check_result(result_code)
             log = {}
@@ -249,11 +245,13 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
             return [cost, log]
     else:
         def f(b):
-            if sparse:
-                Gv, iG, jG, cost, u, v, result_code = emd_c(a, b, M, numItermax,sparse)
-                G = coo_matrix((Gv, (iG, jG)), shape=(a.shape[0], b.shape[0]))
+            if dense:
+                G, cost, u, v, result_code = emd_c(a, b, M, numItermax,dense)
             else:
-                G, cost, u, v, result_code = emd_c(a, b, M, numItermax,sparse)
+                Gv, iG, jG, cost, u, v, result_code = emd_c(a, b, M, numItermax,dense)
+                G = coo_matrix((Gv, (iG, jG)), shape=(a.shape[0], b.shape[0]))                
+
+            result_code_string = check_result(result_code)
             check_result(result_code)
             return cost
 
