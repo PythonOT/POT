@@ -79,8 +79,8 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     max_iter : int
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
-    sparse : bool
-        Returning a sparse transport matrix if set to True
+    dense : bool
+        Return a sparse transport matrix if set to False
 
     Returns
     -------
