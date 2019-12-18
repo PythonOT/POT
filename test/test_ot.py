@@ -128,7 +128,7 @@ def test_emd_sparse():
 
     M = ot.dist(x, x2)
 
-    G = ot.emd([], [], M)
+    G = ot.emd([], [], M, dense=True)
 
     Gs = ot.emd([], [], M, dense=False)
 
