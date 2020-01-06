@@ -8,13 +8,15 @@ Bregman projections for regularized OT
 #         Kilian Fatras <kilian.fatras@irisa.fr>
 #         Titouan Vayer <titouan.vayer@irisa.fr>
 #         Hicham Janati <hicham.janati@inria.fr>
+#         Mokhtar Z. Alaya <mokhtarzahdi.alaya@gmail.com>
 #
 # License: MIT License
 
 import numpy as np
 import warnings
 from .utils import unif, dist
-
+import bottleneck
+from scipy.optimize import fmin_l_bfgs_b
 
 def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
              stopThr=1e-9, verbose=False, log=False, **kwargs):
@@ -1787,3 +1789,287 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
         sinkhorn_div = sinkhorn_loss_ab - 1 / 2 * (sinkhorn_loss_a + sinkhorn_loss_b)
         return max(0, sinkhorn_div)
+ 
+def screenkhorn(a, b, M, reg, ns_budget, nt_budget, uniform=True, restricted=True, verbose=False):
+
+    """"
+    Screening Sinkhorn Algorithm for Regularized Optimal Transport.
+
+    Parameters
+    ----------
+    a : `numpy.ndarray`, shape=(ns,)
+        samples weights in the source domain.
+
+    b : `numpy.ndarray`, shape=(nt,)
+        samples weights in the target domain.
+
+    M : `numpy.ndarray`, shape=(ns, nt)
+        Cost matrix.
+
+    reg : `float`
+        Level of the entropy regularisation.
+
+    ns_budget: `int`
+        Number budget of points to be keeped in the source domain.
+
+    nt_budget: `int`
+        Number budget of points to be keeped in the target domain.
+
+    uniform: `bool`, default=True
+        If `True`, a_i = 1. / ns and b_j = 1. / nt
+
+    restricted: `bool`, default=True
+         If `True`, a warm-start initialization for the  L-BFGS-B solver
+         using a restricted Sinkhorn algorithm with at most 5 iterations.
+
+    verbose: `bool`, default=False
+        If `True`, dispaly informations along iterations.
+
+    Returns
+    -------
+    Gsc : `numpy.ndarray`, shape=(ns, nt)
+        Screened optimal transportation matrix for the given parameters.
+
+    References:
+    -----------
+    .. [1] M. Z. Alaya, Maxime Bérar, Gilles Gasso, Alain Rakotomamonjy. Screening Sinkhorn Algorithm for Regularized
+    Optimal Transport, NeurIPS 2019.
+
+    """
+    a = np.asarray(a, dtype=np.float64)
+    b = np.asarray(b, dtype=np.float64)
+
+    # if the "autograd" package is needed for some experiments, we then have to change the instance of the cost matrix M
+    # from "ArrayBox"-type to "np.array"-type as follows:
+    if isinstance(M, np.ndarray) == False:
+        M = M._value
+
+    M = np.asarray(M, dtype=np.float64)
+    ns, nt = M.shape
+
+    # calculate the Gibbs kernel
+    K = np.empty_like(M)
+    np.divide(M, - reg, out=K)
+    np.exp(K, out=K)
+
+    def projection(u, epsilon):
+        u[np.where(u <= epsilon)] = epsilon
+        return u
+
+    # ----------------------------------------------------------------------------------------------------------------#
+    #                                          Step 1: Screening Pre-processing                                       #
+    # ----------------------------------------------------------------------------------------------------------------#
+
+    if ns_budget == ns and nt_budget == nt:
+        # full number of budget points (ns, nt) = (ns_budget, nt_budget)
+        I = list(range(ns))
+        J = list(range(nt))
+        epsilon = 0.0  
+        kappa = 1.0  
+
+        cst_u = 0.
+        cst_v = 0.
+
+        bounds_u = [(0.0, np.inf)] * ns
+        bounds_v = [(0.0, np.inf)] * nt
+        
+        a_I = a
+        b_J = b
+        K_min = K.min()
+        K_IJ = K
+        K_IJc = []
+        K_IcJ = []
+
+        vec_eps_IJc = np.zeros(nt)
+        vec_eps_IcJ = np.zeros(ns)
+
+    else:
+        # sum of rows and columns of K
+        K_sum_cols = K.sum(axis=1)
+        K_sum_rows = K.sum(axis=0)
+
+        if uniform:
+            if ns / ns_budget < 4:
+                aK_sort = np.sort(K_sum_cols)
+                epsilon_u_square = a[0] / aK_sort[ns_budget - 1]
+            else:
+                aK_sort = bottleneck.partition(K_sum_cols, ns_budget - 1)[ns_budget - 1]
+                epsilon_u_square = a[0] / aK_sort
+
+            if nt / ns_budget < 4:
+                bK_sort = np.sort(K_sum_rows)
+                epsilon_v_square = b[0] / bK_sort[ns_budget - 1]
+            else:
+                bK_sort = bottleneck.partition(K_sum_rows, nt_budget - 1)[nt_budget - 1]
+                epsilon_v_square = b[0] / bK_sort
+        else:
+            aK = a / K_sum_cols
+            bK = b / K_sum_rows
+
+            aK_sort = np.sort(aK)[::-1]
+            epsilon_u_square = aK_sort[ns_budget - 1]
+
+            bK_sort = np.sort(bK)[::-1]
+            epsilon_v_square = bK_sort[ns_budget - 1]
+
+        # active sets I and J (see Proposition .. in [1])
+        I = np.where(a >= epsilon_u_square * K_sum_cols)[0].tolist()
+        J = np.where(b >= epsilon_v_square * K_sum_rows)[0].tolist()
+
+        if len(I) != ns_budget:
+            if uniform:
+                aK = a / K_sum_cols
+                aK_sort = np.sort(aK)[::-1]
+            epsilon_u_square = aK_sort[ns_budget - 1:ns_budget + 1].mean()
+            I = np.where(a >= epsilon_u_square * K_sum_cols)[0].tolist()
+
+        if len(J) != nt_budget:
+            if uniform:
+                bK = b / K_sum_rows
+                bK_sort = np.sort(bK)[::-1]
+            epsilon_v_square = bK_sort[ns_budget - 1:ns_budget + 1].mean()
+            J = np.where(b >= epsilon_v_square * K_sum_rows)[0].tolist()
+
+        epsilon = (epsilon_u_square * epsilon_v_square) ** (1 / 4)
+        kappa = (epsilon_v_square / epsilon_u_square) ** (1 / 2)
+
+        if verbose:
+            print("Epsilon = %s\n" %epsilon)
+            print("Scaling factor = %s\n" %kappa)
+
+        if verbose:
+            print('|I_active| = %s \t |J_active| = %s ' %(len(I), len(J)))
+
+        # Ic, Jc: complementary of the active sets I and J
+        Ic = list(set(list(range(ns))) - set(I))
+        Jc = list(set(list(range(nt))) - set(J))
+
+        K_IJ = K[np.ix_(I, J)]
+        K_IcJ = K[np.ix_(Ic, J)]
+        K_IJc = K[np.ix_(I, Jc)]
+
+        K_min = K_IJ.min()
+        if K_min == 0:
+            K_min = np.finfo(float).tiny
+
+        # a_I, b_J, a_Ic, b_Jc
+        a_I = a[I]
+        b_J = b[J]
+        if not uniform:
+            a_I_min = a_I.min()
+            a_I_max = a_I.max()
+            b_J_max = b_J.max()
+            b_J_min = b_J.min()
+        else:
+            a_I_min = a_I[0]
+            a_I_max = a_I[0]
+            b_J_max = b_J[0]
+            b_J_min = b_J[0]
+
+        # box constraints in L-BFGS-B (see Proposition 1 in [1])
+        bounds_u = [(max(kappa * a_I_min / (epsilon * (nt - ns_budget) + ns_budget * (b_J_max / (
+                epsilon * ns * K_min))), epsilon / kappa), a_I_max / (epsilon * nt * K_min))] * ns_budget
+
+        bounds_v = [(max(b_J_min / (epsilon * (ns - ns_budget) + ns_budget * (a_I_max / (epsilon * nt * K_min))), \
+                         epsilon * kappa), b_J_max / (epsilon * ns * K_min))] * ns_budget
+
+        # pre-calculated constants for the objective
+        vec_eps_IJc = epsilon * kappa * (K_IJc * np.ones(nt - ns_budget).reshape((1, -1))).sum(axis=1)
+        vec_eps_IcJ = (epsilon / kappa) * (np.ones(ns - ns_budget).reshape((-1, 1)) * K_IcJ).sum(axis=0)
+
+    # initialisation
+    u0 = np.full(ns_budget, (1. / ns_budget) + epsilon / kappa)
+    v0 = np.full(nt_budget, (1. / nt_budget) + epsilon * kappa)
+
+    # pre-calculed constants for Restricted Sinkhorn (see Algorithm 2 in [1])
+    if restricted:
+        if ns_budget != ns or ns_budget != nt:
+            cst_u = kappa * epsilon * K_IJc.sum(axis=1)
+            cst_v = epsilon * K_IcJ.sum(axis=0) / kappa
+
+        cpt = 1
+        while (cpt < 5):  # 5 iterations
+            K_IJ_v = K_IJ.T @ u0 + cst_v
+            v0 = b_J / (kappa * K_IJ_v)
+            KIJ_u = K_IJ @ v0 + cst_u
+            u0 = (kappa * a_I) / KIJ_u
+            cpt += 1
+
+        u0 = projection(u0, epsilon / kappa)
+        v0 = projection(v0, epsilon * kappa)
+
+    else:
+        u0 = u0
+        v0 = v0
+
+    def restricted_sinkhorn(usc, vsc, max_iter=5):
+        """
+        Restricted Sinkhorn Algorithm as a warm-start initialized point for L-BFGS-B (see Algorithm 2 in [1]).
+        """
+        cpt = 1
+        while (cpt < max_iter):
+            K_IJ_v = K_IJ.T @ usc + cst_v
+            vsc = b_J / (kappa * K_IJ_v)
+            KIJ_u = K_IJ @ vsc + cst_u
+            usc = (kappa * a_I) / KIJ_u
+            cpt += 1
+
+        usc = projection(usc, epsilon / kappa)
+        vsc = projection(vsc, epsilon * kappa)
+
+        return usc, vsc
+
+    def screened_obj(usc, vsc):
+        part_IJ = usc @ K_IJ @ vsc - kappa * a_I @ np.log(usc) - (1. / kappa) * b_J @ np.log(vsc)
+        part_IJc = usc @ vec_eps_IJc
+        part_IcJ = vec_eps_IcJ @ vsc
+        psi_epsilon = part_IJ + part_IJc + part_IcJ
+        return psi_epsilon
+
+    def screened_grad(usc, vsc):
+        # gradients of Psi_epsilon w.r.t u and v
+        grad_u = K_IJ @ vsc + vec_eps_IJc - kappa * a_I / usc
+        grad_v = K_IJ.T @ usc + vec_eps_IcJ - (1. / kappa) * b_J / vsc
+        return grad_u, grad_v
+
+    def bfgspost(theta):
+
+        u = theta[:ns_budget]
+        v = theta[ns_budget:]
+        # objective
+        f = screened_obj(u, v)
+        # gradient
+        g_u, g_v = screened_grad(u, v)
+        g = np.hstack([g_u, g_v])
+        return f, g
+
+    #----------------------------------------------------------------------------------------------------------------#
+    #                                           Step 2: L-BFGS-B solver                                              #
+    #----------------------------------------------------------------------------------------------------------------#
+
+    u0, v0 = restricted_sinkhorn(u0, v0)
+    theta0 = np.hstack([u0, v0])
+    maxiter = 10000  # max number of iterations
+    maxfun = 10000  # max  number of function evaluations
+    pgtol = 1e-09  # final objective function accuracy
+
+    bounds = bounds_u + bounds_v  # constraint bounds
+    obj = lambda theta: bfgspost(theta)
+
+    theta, _, _ = fmin_l_bfgs_b(func=obj,
+                                x0=theta0,
+                                bounds=bounds,
+                                maxfun=maxfun,
+                                pgtol=pgtol,
+                                maxiter=maxiter)
+
+    usc = theta[:ns_budget]
+    vsc = theta[ns_budget:]
+
+    usc_full = np.full(ns, epsilon / kappa)
+    vsc_full = np.full(nt, epsilon * kappa)
+    usc_full[I] = usc
+    vsc_full[J] = vsc
+
+    Gsc = usc_full.reshape((-1, 1)) * K * vsc_full.reshape((1, -1))
+    return Gsc
