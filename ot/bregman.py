@@ -15,7 +15,6 @@ Bregman projections for regularized OT
 import numpy as np
 import warnings
 from .utils import unif, dist
-import bottleneck
 from scipy.optimize import fmin_l_bfgs_b
 
 def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
@@ -1893,6 +1892,7 @@ def screenkhorn(a, b, M, reg, ns_budget, nt_budget, uniform=True, restricted=Tru
                 aK_sort = np.sort(K_sum_cols)
                 epsilon_u_square = a[0] / aK_sort[ns_budget - 1]
             else:
+                import bottleneck
                 aK_sort = bottleneck.partition(K_sum_cols, ns_budget - 1)[ns_budget - 1]
                 epsilon_u_square = a[0] / aK_sort
 
@@ -1900,6 +1900,7 @@ def screenkhorn(a, b, M, reg, ns_budget, nt_budget, uniform=True, restricted=Tru
                 bK_sort = np.sort(K_sum_rows)
                 epsilon_v_square = b[0] / bK_sort[ns_budget - 1]
             else:
+                import bottleneck
                 bK_sort = bottleneck.partition(K_sum_rows, nt_budget - 1)[nt_budget - 1]
                 epsilon_v_square = b[0] / bK_sort
         else:
