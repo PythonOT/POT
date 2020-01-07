@@ -1885,8 +1885,8 @@ def screenkhorn(a, b, M, reg, ns_budget, nt_budget, uniform=True, restricted=Tru
 
     if ns_budget == ns and nt_budget == nt:
         # full number of budget points (ns, nt) = (ns_budget, nt_budget)
-        I = list(range(ns))
-        J = list(range(nt))
+        I = list(np.arange(ns)) 
+        J = list(np.arange(nt))
         epsilon = 0.0  
         kappa = 1.0  
 
@@ -1989,7 +1989,7 @@ def screenkhorn(a, b, M, reg, ns_budget, nt_budget, uniform=True, restricted=Tru
             b_J_max = b_J[0]
             b_J_min = b_J[0]
 
-        # box constraints in L-BFGS-B (see Proposition 1 in [1])
+        # box constraints in L-BFGS-B (see Proposition 1 in [26])
         bounds_u = [(max(kappa * a_I_min / (epsilon * (nt - ns_budget) + ns_budget * (b_J_max / (
                 epsilon * ns * K_min))), epsilon / kappa), a_I_max / (epsilon * nt * K_min))] * ns_budget
 
@@ -2004,7 +2004,7 @@ def screenkhorn(a, b, M, reg, ns_budget, nt_budget, uniform=True, restricted=Tru
     u0 = np.full(ns_budget, (1. / ns_budget) + epsilon / kappa)
     v0 = np.full(nt_budget, (1. / nt_budget) + epsilon * kappa)
 
-    # pre-calculed constants for Restricted Sinkhorn (see Algorithm 2 in [1])
+    # pre-calculed constants for Restricted Sinkhorn (see Algorithm 2 in [26])
     if restricted:
         if ns_budget != ns or ns_budget != nt:
             cst_u = kappa * epsilon * K_IJc.sum(axis=1)
@@ -2012,9 +2012,9 @@ def screenkhorn(a, b, M, reg, ns_budget, nt_budget, uniform=True, restricted=Tru
 
         cpt = 1
         while (cpt < 5):  # 5 iterations
-            K_IJ_v = K_IJ.T @ u0 + cst_v
+            K_IJ_v = np.dot(K_IJ.T, u0) + cst_v
             v0 = b_J / (kappa * K_IJ_v)
-            KIJ_u = K_IJ @ v0 + cst_u
+            KIJ_u = np.dot(K_IJ, v0) + cst_u
             u0 = (kappa * a_I) / KIJ_u
             cpt += 1
 
@@ -2031,9 +2031,9 @@ def screenkhorn(a, b, M, reg, ns_budget, nt_budget, uniform=True, restricted=Tru
         """
         cpt = 1
         while (cpt < max_iter):
-            K_IJ_v = K_IJ.T @ usc + cst_v
+            K_IJ_v = np.dot(K_IJ.T, usc) + cst_v
             vsc = b_J / (kappa * K_IJ_v)
-            KIJ_u = K_IJ @ vsc + cst_u
+            KIJ_u = np.dot(K_IJ, vsc) + cst_u
             usc = (kappa * a_I) / KIJ_u
             cpt += 1
 
@@ -2043,16 +2043,16 @@ def screenkhorn(a, b, M, reg, ns_budget, nt_budget, uniform=True, restricted=Tru
         return usc, vsc
 
     def screened_obj(usc, vsc):
-        part_IJ = usc @ K_IJ @ vsc - kappa * a_I @ np.log(usc) - (1. / kappa) * b_J @ np.log(vsc)
-        part_IJc = usc @ vec_eps_IJc
-        part_IcJ = vec_eps_IcJ @ vsc
+        part_IJ = np.dot(np.dot(usc, K_IJ), vsc) - kappa * np.dot(a_I, np.log(usc)) - (1. / kappa) * np.dot(b_J, np.log(vsc))
+        part_IJc = np.dot(usc, vec_eps_IJc)
+        part_IcJ = np.dot(vec_eps_IcJ, vsc)
         psi_epsilon = part_IJ + part_IJc + part_IcJ
         return psi_epsilon
 
     def screened_grad(usc, vsc):
         # gradients of Psi_epsilon w.r.t u and v
-        grad_u = K_IJ @ vsc + vec_eps_IJc - kappa * a_I / usc
-        grad_v = K_IJ.T @ usc + vec_eps_IcJ - (1. / kappa) * b_J / vsc
+        grad_u = np.dot(K_IJ, vsc) + vec_eps_IJc - kappa * a_I / usc
+        grad_v = np.dot(K_IJ.T, usc) + vec_eps_IcJ - (1. / kappa) * b_J / vsc
         return grad_u, grad_v
 
     def bfgspost(theta):
