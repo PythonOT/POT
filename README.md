@@ -28,6 +28,7 @@ It provides the following solvers:
 * Stochastic Optimization for Large-scale Optimal Transport (semi-dual problem [18] and dual problem [19])
 * Non regularized free support Wasserstein barycenters [20].
 * Unbalanced OT with KL relaxation distance and barycenter [10, 25].
+* Screening Sinkhorn Algorithm for OT [26].
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 
