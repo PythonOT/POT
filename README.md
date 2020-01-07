@@ -180,6 +180,7 @@ The contributors to this library are
 * [Vayer Titouan](https://tvayer.github.io/)
 * [Hicham Janati](https://hichamjanati.github.io/) (Unbalanced OT)
 * [Romain Tavenard](https://rtavenar.github.io/) (1d Wasserstein)
+* [Mokhtar Z. Alaya](http://mzalaya.github.io/) (Screenkhorn)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
@@ -252,4 +253,6 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 
 [24] Vayer, T., Chapel, L., Flamary, R., Tavenard, R. and Courty, N. (2019). [Optimal Transport for structured data with application on graphs](http://proceedings.mlr.press/v97/titouan19a.html) Proceedings of the 36th International Conference on Machine Learning (ICML).
 
-[25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. (2019). [Learning with a Wasserstein Loss](http://cbcl.mit.edu/wasserstein/)  Advances in Neural Information Processing Systems (NIPS).
+[25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. (2015). [Learning with a Wasserstein Loss](http://cbcl.mit.edu/wasserstein/)  Advances in Neural Information Processing Systems (NIPS).
+
+[26] Alaya M. Z., Bérar M., Gasso G., Rakotomamonjy A. (2019). Screening Sinkhorn Algorithm for Regularized Optimal Transport (https://papers.nips.cc/paper/9386-screening-sinkhorn-algorithm-for-regularized-optimal-transport) Advances in Neural Information Processing Systems (NIPS).
