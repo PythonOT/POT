@@ -1818,7 +1818,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, rest
         samples weights in the target domain
 
     M : `numpy.ndarray`, shape=(ns, nt)
-        Cost matrix.
+        Cost matrix
 
     reg : `float`
         Level of the entropy regularisation
@@ -2045,7 +2045,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, rest
 
     def restricted_sinkhorn(usc, vsc, max_iter=5):
         """
-        Restricted Sinkhorn Algorithm as a warm-start initialized point for L-BFGS-B (see Algorithm 2 in [1]).
+        Restricted Sinkhorn Algorithm as a warm-start initialized point for L-BFGS-B (see Algorithm 2 in [26])
         """
         cpt = 1
         while (cpt < max_iter):
