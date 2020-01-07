@@ -1867,12 +1867,6 @@ def screenkhorn(a, b, M, reg, ns_budget, nt_budget, uniform=True, restricted=Tru
       
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
-
-    # if the "autograd" package is needed for some experiments, we then have to change the instance of the cost matrix M
-    # from "ArrayBox"-type to "np.array"-type as follows:
-    if isinstance(M, np.ndarray) == False:
-        M = M._value
-
     M = np.asarray(M, dtype=np.float64)
     ns, nt = M.shape
 
@@ -1882,7 +1876,7 @@ def screenkhorn(a, b, M, reg, ns_budget, nt_budget, uniform=True, restricted=Tru
     np.exp(K, out=K)
 
     def projection(u, epsilon):
-        u[np.where(u <= epsilon)] = epsilon
+        u[u <= epsilon] = epsilon
         return u
 
     # ----------------------------------------------------------------------------------------------------------------#
