@@ -1982,8 +1982,8 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, rest
             print('|I_active| = %s \t |J_active| = %s ' %(len(I), len(J)))
 
         # Ic, Jc: complementary of the active sets I and J
-        Ic = list(set(list(range(ns))) - set(I))
-        Jc = list(set(list(range(nt))) - set(J))
+        Ic = list(set(np.arange(ns)) - set(I))
+        Jc = list(set(np.arange(nt)) - set(J))
 
         K_IJ = K[np.ix_(I, J)]
         K_IcJ = K[np.ix_(Ic, J)]
