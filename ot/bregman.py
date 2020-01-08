@@ -17,6 +17,7 @@ import warnings
 from .utils import unif, dist
 from scipy.optimize import fmin_l_bfgs_b
 
+
 def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
              stopThr=1e-9, verbose=False, log=False, **kwargs):
     r"""
@@ -1788,24 +1789,24 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
         sinkhorn_div = sinkhorn_loss_ab - 1 / 2 * (sinkhorn_loss_a + sinkhorn_loss_b)
         return max(0, sinkhorn_div)
- 
+
+
 def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, restricted=True,
                 maxiter=10000, maxfun=10000, pgtol=1e-09, verbose=False, log=False):
-
     """"
     Screening Sinkhorn Algorithm for Regularized Optimal Transport
-    
+
     The function solves an approximate dual of Sinkhorn divergence [2] which is written as the following optimization problem:
-    
+
     ..math::
       (u, v) = \argmin_{u, v} 1_{ns}.T B(u,v) 1_{nt} - <\kappa u, a> - <v/\kappa, b> 
-      
+
       where B(u,v) = \diag(e^u) K \diag(e^v), with K = e^{-M/reg} and 
-      
+
       s.t. e^{u_i} >= \epsilon / \kappa, for all i in {1, ..., ns}
-      
+
            e^{v_j} >= \epsilon \kappa, for all j in {1, ..., nt}
-           
+
       The parameters \kappa and \epsilon are determined w.r.t the couple number budget of points (ns_budget, nt_budget), see Equation (5) in [26] 
 
 
@@ -1837,31 +1838,31 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, rest
     restricted: `bool`, default=True
          If `True`, a warm-start initialization for the  L-BFGS-B solver
          using a restricted Sinkhorn algorithm with at most 5 iterations
-         
+
     maxiter : `int`, default=10000
       Maximum number of iterations in LBFGS solver
-        
+
     maxfun : `int`, default=10000
       Maximum  number of function evaluations in LBFGS solver 
-        
+
     pgtol : `float`, default=1e-09  
       Final objective function accuracy in LBFGS solver
 
     verbose: `bool`, default=False
         If `True`, dispaly informations along iterations
-        
+
     Dependency
     ----------
     To gain more efficiency, screenkhorn needs to call the "Bottleneck" package (https://pypi.org/project/Bottleneck/) in the screening pre-processing step. 
     If Bottleneck isn't installed, the following error message appears: 
     "Bottleneck module doesn't exist. Install it from https://pypi.org/project/Bottleneck/"
-   
-   
+
+
     Returns
     -------
     gamma : `numpy.ndarray`, shape=(ns, nt)
         Screened optimal transportation matrix for the given parameters
-    
+
     log : `dict`, default=False
       Log dictionary return only if log==True in parameters
 
@@ -1876,17 +1877,17 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, rest
         import bottleneck
     except ImportError as e:
         print("Bottleneck module doesn't exist. Install it from https://pypi.org/project/Bottleneck/")
-   
+
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64)
     ns, nt = M.shape
-    
-    # by default, we keep only 50% of the sapmle data points
+
+    # by default, we keep only 50% of the sample data points
     if ns_budget is None:
-        ns_budget = int(np.floor(0.5*ns))
+        ns_budget = int(np.floor(0.5 * ns))
     if nt_budget is None:
-        nt_budget = int(np.floor(0.5*ns))
+        nt_budget = int(np.floor(0.5 * nt))
 
     # calculate the Gibbs kernel
     K = np.empty_like(M)
@@ -1903,20 +1904,19 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, rest
 
     if ns_budget == ns and nt_budget == nt:
         # full number of budget points (ns, nt) = (ns_budget, nt_budget)
-        I = np.arange(ns) 
-        J = np.arange(nt)
-        epsilon = 0.0  
-        kappa = 1.0  
+        I = np.ones(ns, dtype=bool)
+        J = np.ones(nt, dtype=bool)
+        epsilon = 0.0
+        kappa = 1.0
 
         cst_u = 0.
         cst_v = 0.
 
         bounds_u = [(0.0, np.inf)] * ns
         bounds_v = [(0.0, np.inf)] * nt
-        
+
         a_I = a
         b_J = b
-        K_min = K.min()
         K_IJ = K
         K_IJc = []
         K_IcJ = []
@@ -1937,9 +1937,9 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, rest
                 aK_sort = bottleneck.partition(K_sum_cols, ns_budget - 1)[ns_budget - 1]
                 epsilon_u_square = a[0] / aK_sort
 
-            if nt / ns_budget < 4:
+            if nt / nt_budget < 4:
                 bK_sort = np.sort(K_sum_rows)
-                epsilon_v_square = b[0] / bK_sort[ns_budget - 1]
+                epsilon_v_square = b[0] / bK_sort[nt_budget - 1]
             else:
                 bK_sort = bottleneck.partition(K_sum_rows, nt_budget - 1)[nt_budget - 1]
                 epsilon_v_square = b[0] / bK_sort
@@ -1951,36 +1951,37 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, rest
             epsilon_u_square = aK_sort[ns_budget - 1]
 
             bK_sort = np.sort(bK)[::-1]
-            epsilon_v_square = bK_sort[ns_budget - 1]
+            epsilon_v_square = bK_sort[nt_budget - 1]
 
         # active sets I and J (see Lemma 1 in [26])
-        I = np.where(a >= epsilon_u_square * K_sum_cols)[0]
-        J = np.where(b >= epsilon_v_square * K_sum_rows)[0]
+        I = a >= epsilon_u_square * K_sum_cols
+        J = b >= epsilon_v_square * K_sum_rows
 
-        if len(I) != ns_budget:
+        if sum(I) != ns_budget:
             if uniform:
                 aK = a / K_sum_cols
                 aK_sort = np.sort(aK)[::-1]
             epsilon_u_square = aK_sort[ns_budget - 1:ns_budget + 1].mean()
-            I = np.where(a >= epsilon_u_square * K_sum_cols)[0]
+            I = a >= epsilon_u_square * K_sum_cols
 
-        if len(J) != nt_budget:
+        if sum(J) != nt_budget:
             if uniform:
                 bK = b / K_sum_rows
                 bK_sort = np.sort(bK)[::-1]
             epsilon_v_square = bK_sort[nt_budget - 1:nt_budget + 1].mean()
-            J = np.where(b >= epsilon_v_square * K_sum_rows)[0]
+            J = b >= epsilon_v_square * K_sum_rows
 
         epsilon = (epsilon_u_square * epsilon_v_square) ** (1 / 4)
         kappa = (epsilon_v_square / epsilon_u_square) ** (1 / 2)
-        
+
         if verbose:
-            print("Epsilon = %s\n" %epsilon)
-            print('|I_active| = %s \t |J_active| = %s ' %(len(I), len(J)))
+            print("epsilon = %s\n" % epsilon)
+            print("kappa= %s\n" % kappa)
+            print('|I_active| = %s \t |J_active| = %s ' % (sum(I), sum(J)))
 
         # Ic, Jc: complementary of the active sets I and J
-        Ic = np.arange(ns)[~np.isin(np.arange(ns), I)]
-        Jc = np.arange(nt)[~np.isin(np.arange(nt), J)]
+        Ic = ~I
+        Jc = ~J
 
         K_IJ = K[np.ix_(I, J)]
         K_IcJ = K[np.ix_(Ic, J)]
@@ -2005,23 +2006,23 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, rest
             b_J_min = b_J[0]
 
         # box constraints in L-BFGS-B (see Proposition 1 in [26])
-        bounds_u = [(max(kappa * a_I_min / (epsilon * (nt - ns_budget) + ns_budget * (b_J_max / (
-                epsilon * ns * K_min))), epsilon / kappa), a_I_max / (epsilon * nt * K_min))] * ns_budget
+        bounds_u = [(max(a_I_min / ((nt - nt_budget) * epsilon + nt_budget * (b_J_max / (
+            ns * epsilon * kappa * K_min))), epsilon / kappa), a_I_max / (nt * epsilon * K_min))] * ns_budget
 
-        bounds_v = [(max(b_J_min / (epsilon * (ns - ns_budget) + ns_budget * (a_I_max / (epsilon * nt * K_min))), \
-                         epsilon * kappa), b_J_max / (epsilon * ns * K_min))] * ns_budget
+        bounds_v = [(max(b_J_min / ((ns - ns_budget) * epsilon + ns_budget * (kappa * a_I_max / (nt * epsilon * K_min))),
+                         epsilon * kappa), b_J_max / (ns * epsilon * K_min))] * nt_budget
 
         # pre-calculated constants for the objective
-        vec_eps_IJc = epsilon * kappa * (K_IJc * np.ones(nt - ns_budget).reshape((1, -1))).sum(axis=1)
+        vec_eps_IJc = epsilon * kappa * (K_IJc * np.ones(nt - nt_budget).reshape((1, -1))).sum(axis=1)
         vec_eps_IcJ = (epsilon / kappa) * (np.ones(ns - ns_budget).reshape((-1, 1)) * K_IcJ).sum(axis=0)
 
     # initialisation
     u0 = np.full(ns_budget, (1. / ns_budget) + epsilon / kappa)
     v0 = np.full(nt_budget, (1. / nt_budget) + epsilon * kappa)
 
-    # pre-calculed constants for Restricted Sinkhorn (see Algorithm 2 in [26])
+    # pre-calculed constants for Restricted Sinkhorn (see Algorithm 1 in supplementary of [26])
     if restricted:
-        if ns_budget != ns or ns_budget != nt:
+        if ns_budget != ns or nt_budget != nt:
             cst_u = kappa * epsilon * K_IJc.sum(axis=1)
             cst_v = epsilon * K_IcJ.sum(axis=0) / kappa
 
@@ -2042,7 +2043,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, rest
 
     def restricted_sinkhorn(usc, vsc, max_iter=5):
         """
-        Restricted Sinkhorn Algorithm as a warm-start initialized point for L-BFGS-B (see Algorithm 2 in [26])
+        Restricted Sinkhorn Algorithm as a warm-start initialized point for L-BFGS-B (see Algorithm 1 in supplementary of [26])
         """
         cpt = 1
         while (cpt < max_iter):
@@ -2086,9 +2087,9 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, rest
 
     u0, v0 = restricted_sinkhorn(u0, v0)
     theta0 = np.hstack([u0, v0])
-  
+
     bounds = bounds_u + bounds_v  # constraint bounds
-    obj = lambda theta: bfgspost(theta)
+    def obj(theta): return bfgspost(theta)
 
     theta, _, _ = fmin_l_bfgs_b(func=obj,
                                 x0=theta0,
@@ -2104,14 +2105,14 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, rest
     vsc_full = np.full(nt, epsilon * kappa)
     usc_full[I] = usc
     vsc_full[J] = vsc
-    
+
     if log:
         log['u'] = usc_full
         log['v'] = vsc_full
-      
+
     gamma = usc_full[:, None] * K * vsc_full[None, :]
     gamma = gamma / gamma.sum()
-    
+
     if log:
         return gamma, log
     else:
