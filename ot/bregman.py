@@ -1833,7 +1833,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         If it is None then 50% of the target sample points will be keeped
 
     uniform : `bool`, default=False
-        If `True`, the source and target distribution are supposed to be uniform, namely a_i = 1 / ns and b_j = 1 / nt.
+        If `True`, the source and target distribution are supposed to be uniform, i.e., a_i = 1 / ns and b_j = 1 / nt
 
     restricted : `bool`, default=True
          If `True`, a warm-start initialization for the  L-BFGS-B solver
@@ -1848,8 +1848,9 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
     pgtol : `float`, default=1e-09
       Final objective function accuracy in LBFGS solver
 
-    verbose: `bool`, default=False
-        If `True`, dispaly informations along iterations
+    verbose : `bool`, default=False
+        If `True`, dispaly informations about the cardinals of the active sets and the paramerters kappa
+        and epsilon
 
     Dependency
     ----------
