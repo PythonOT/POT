@@ -1,41 +1,26 @@
-#!/usr/bin/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
+"""
+===============================
+1D Screened optimal transport
+===============================
 
-# In[ ]:
-
-
-from ot.bregman import screenkhorn
-from ot.datasets import make_1D_gauss as gauss
-import ot.plot
-import ot
-import matplotlib.pylab as pl
-import numpy as np
-get_ipython().run_line_magic('matplotlib', 'inline')
-
-
-#
-# # 1D Screened optimal transport
-#
-#
-# This example illustrates the computation of Screenkhorn: Screening Sinkhorn Algorithm for Optimal transport.
-#
-#
-
-# In[13]:
-
+This example illustrates the computation of Screenkhorn:
+Screening Sinkhorn Algorithm for Optimal transport.
+"""
 
 # Author: Mokhtar Z. Alaya <mokhtarzahdi.alaya@gmail.com>
 #
 # License: MIT License
 
+import numpy as np
+import matplotlib.pylab as pl
+import ot.plot
+from ot.datasets import make_1D_gauss as gauss
+from ot.bregman import screenkhorn
 
+##############################################################################
 # Generate data
 # -------------
-#
-#
-
-# In[14]:
-
 
 #%% parameters
 
@@ -52,14 +37,9 @@ b = gauss(n, m=60, s=10)
 M = ot.dist(x.reshape((n, 1)), x.reshape((n, 1)))
 M /= M.max()
 
-
+##############################################################################
 # Plot distributions and loss matrix
 # ----------------------------------
-#
-#
-
-# In[15]:
-
 
 #%% plot the distributions
 
@@ -73,14 +53,9 @@ pl.legend()
 pl.figure(2, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
 
-
+##############################################################################
 # Solve Screened Sinkhorn
-# --------------
-#
-#
-
-# In[21]:
-
+# -----------------------
 
 # Screenkhorn
 
@@ -90,9 +65,6 @@ nt_budget = 30  # budget number of points to be keeped in the target distributio
 
 Gsc = screenkhorn(a, b, M, lambd, ns_budget, nt_budget, uniform=False, restricted=True, verbose=True)
 pl.figure(4, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, Gs, 'OT matrix Screenkhorn')
+ot.plot.plot1D_mat(a, b, Gsc, 'OT matrix Screenkhorn')
 
 pl.show()
-
-
-# In[ ]:

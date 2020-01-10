@@ -1793,13 +1793,13 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
 def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, restricted=True,
                 maxiter=10000, maxfun=10000, pgtol=1e-09, verbose=False, log=False):
-    """"
+    r""""
     Screening Sinkhorn Algorithm for Regularized Optimal Transport
 
     The function solves an approximate dual of Sinkhorn divergence [2] which is written as the following optimization problem:
 
     ..math::
-      (u, v) = \argmin_{u, v} 1_{ns}.T B(u,v) 1_{nt} - <\kappa u, a> - <v/\kappa, b> 
+      (u, v) = \argmin_{u, v} 1_{ns}^\top B(u,v) 1_{nt} - <\kappa u, a> - <v/\kappa, b>
 
       where B(u,v) = \diag(e^u) K \diag(e^v), with K = e^{-M/reg} and 
 
@@ -1853,8 +1853,8 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
 
     Dependency
     ----------
-    To gain more efficiency, screenkhorn needs to call the "Bottleneck" package (https://pypi.org/project/Bottleneck/) in the screening pre-processing step. 
-    If Bottleneck isn't installed, the following error message appears: 
+    To gain more efficiency, screenkhorn needs to call the "Bottleneck" package (https://pypi.org/project/Bottleneck/)
+    in the screening pre-processing step. If Bottleneck isn't installed, the following error message appears:
     "Bottleneck module doesn't exist. Install it from https://pypi.org/project/Bottleneck/"
 
 
