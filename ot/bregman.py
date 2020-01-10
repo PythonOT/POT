@@ -1791,7 +1791,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
         return max(0, sinkhorn_div)
 
 
-def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, restricted=True,
+def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, restricted=True,
                 maxiter=10000, maxfun=10000, pgtol=1e-09, verbose=False, log=False):
     """"
     Screening Sinkhorn Algorithm for Regularized Optimal Transport
@@ -1824,18 +1824,18 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=True, rest
     reg : `float`
         Level of the entropy regularisation
 
-    ns_budget: `int`, deafult=None
+    ns_budget : `int`, deafult=None
         Number budget of points to be keeped in the source domain
         If it is None then 50% of the source sample points will be keeped
 
-    nt_budget: `int`, deafult=None
+    nt_budget : `int`, deafult=None
         Number budget of points to be keeped in the target domain
         If it is None then 50% of the target sample points will be keeped
 
-    uniform: `bool`, default=True
-        If `True`, a_i = 1. / ns and b_j = 1. / nt
+    uniform : `bool`, default=False
+        If `True`, the source and target distribution are supposed to be uniform, namely a_i = 1 / ns and b_j = 1 / nt.
 
-    restricted: `bool`, default=True
+    restricted : `bool`, default=True
          If `True`, a warm-start initialization for the  L-BFGS-B solver
          using a restricted Sinkhorn algorithm with at most 5 iterations
 

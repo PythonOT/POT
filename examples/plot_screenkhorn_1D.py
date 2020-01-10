@@ -4,16 +4,22 @@
 # In[ ]:
 
 
+from ot.bregman import screenkhorn
+from ot.datasets import make_1D_gauss as gauss
+import ot.plot
+import ot
+import matplotlib.pylab as pl
+import numpy as np
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 
-# 
+#
 # # 1D Screened optimal transport
-# 
-# 
+#
+#
 # This example illustrates the computation of Screenkhorn: Screening Sinkhorn Algorithm for Optimal transport.
-# 
-# 
+#
+#
 
 # In[13]:
 
@@ -22,18 +28,11 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 #
 # License: MIT License
 
-import numpy as np
-import matplotlib.pylab as pl
-import ot
-import ot.plot
-from ot.datasets import make_1D_gauss as gauss
-from ot.bregman import screenkhorn
-
 
 # Generate data
 # -------------
-# 
-# 
+#
+#
 
 # In[14]:
 
@@ -56,8 +55,8 @@ M /= M.max()
 
 # Plot distributions and loss matrix
 # ----------------------------------
-# 
-# 
+#
+#
 
 # In[15]:
 
@@ -77,17 +76,17 @@ ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
 
 # Solve Screened Sinkhorn
 # --------------
-# 
-# 
+#
+#
 
 # In[21]:
 
 
 # Screenkhorn
 
-lambd = 1e-2 # entropy parameter
-ns_budget = 30 # budget number of points to be keeped in the source distribution
-nt_budget = 30 # budget number of points to be keeped in the target distribution
+lambd = 1e-2  # entropy parameter
+ns_budget = 30  # budget number of points to be keeped in the source distribution
+nt_budget = 30  # budget number of points to be keeped in the target distribution
 
 Gsc = screenkhorn(a, b, M, lambd, ns_budget, nt_budget, uniform=False, restricted=True, verbose=True)
 pl.figure(4, figsize=(5, 5))
@@ -97,7 +96,3 @@ pl.show()
 
 
 # In[ ]:
-
-
-
-
