@@ -337,3 +337,14 @@ def test_implemented_methods():
         ot.bregman.sinkhorn(a, b, M, epsilon, method=method)
         with pytest.raises(ValueError):
             ot.bregman.sinkhorn2(a, b, M, epsilon, method=method)
+
+def test_screenkhorn():
+    # test screenkhorn
+    rng = np.random.RandomState(0)
+    n = 100
+    a = ot.unif(n)
+    b = ot.unif(n)
+
+    x = rng.randn(n, 2)
+    M = ot.dist(x, x)
+    G_screen = ot.bregman.screenkhorn(a, b, M, 1e-1)
