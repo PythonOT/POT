@@ -1799,15 +1799,15 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
     The function solves an approximate dual of Sinkhorn divergence [2] which is written as the following optimization problem:
 
     ..math::
-      (u, v) = \argmin_{u, v} 1_{ns}^\top B(u,v) 1_{nt} - <\kappa u, a> - <v/\kappa, b>
+      (u, v) = \argmin_{u, v} 1_{ns}^T B(u,v) 1_{nt} - <\kappa u, a> - <v/\kappa, b>
 
-      where B(u,v) = \diag(e^u) K \diag(e^v), with K = e^{-M/reg} and 
+      where B(u,v) = \diag(e^u) K \diag(e^v), with K = e^{-M/reg} and
 
-      s.t. e^{u_i} >= \epsilon / \kappa, for all i in {1, ..., ns}
+      s.t. e^{u_i} \geq \epsilon / \kappa, for all i \in {1, ..., ns}
 
-           e^{v_j} >= \epsilon \kappa, for all j in {1, ..., nt}
+           e^{v_j} \geq \epsilon \kappa, for all j \in {1, ..., nt}
 
-      The parameters \kappa and \epsilon are determined w.r.t the couple number budget of points (ns_budget, nt_budget), see Equation (5) in [26] 
+      The parameters \kappa and \epsilon are determined w.r.t the couple number budget of points (ns_budget, nt_budget), see Equation (5) in [26]
 
 
     Parameters
@@ -1843,9 +1843,9 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
       Maximum number of iterations in LBFGS solver
 
     maxfun : `int`, default=10000
-      Maximum  number of function evaluations in LBFGS solver 
+      Maximum  number of function evaluations in LBFGS solver
 
-    pgtol : `float`, default=1e-09  
+    pgtol : `float`, default=1e-09
       Final objective function accuracy in LBFGS solver
 
     verbose: `bool`, default=False
