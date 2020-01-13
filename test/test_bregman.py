@@ -347,4 +347,4 @@ def test_screenkhorn():
 
     x = rng.randn(n, 2)
     M = ot.dist(x, x)
-    G_screen = ot.bregman.screenkhorn(a, b, M, 1e-1)
+    G_screen = ot.bregman.screenkhorn(a, b, M, 1e-2, uniform=True, verbose=True)
