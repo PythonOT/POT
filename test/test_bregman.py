@@ -338,6 +338,7 @@ def test_implemented_methods():
         with pytest.raises(ValueError):
             ot.bregman.sinkhorn2(a, b, M, epsilon, method=method)
 
+
 def test_screenkhorn():
     # test screenkhorn
     rng = np.random.RandomState(0)
