@@ -350,4 +350,4 @@ def test_screenkhorn():
     G_screen = ot.bregman.screenkhorn(a, b, M, 1e-03, uniform=True, verbose=True)
     # check marginals
     np.testing.assert_allclose(G_sink.sum(0), G_screen.sum(0), atol=1e-02)
-    np.testing.assert_allclose(G_s.sum(1), G_screen.sum(1), atol=1e-02)
+    np.testing.assert_allclose(G_sink.sum(1), G_screen.sum(1), atol=1e-02)
