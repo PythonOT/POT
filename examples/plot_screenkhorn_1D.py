@@ -14,7 +14,6 @@ Screening Sinkhorn Algorithm for Optimal transport.
 
 import numpy as np
 import matplotlib.pylab as pl
-import time
 import ot.plot
 from ot.datasets import make_1D_gauss as gauss
 from ot.bregman import screenkhorn
@@ -59,28 +58,11 @@ ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
 # -----------------------
 
 # Screenkhorn
-lambd = 1e-03  # entropy parameter
+lambd = 2e-03  # entropy parameter
 ns_budget = 30  # budget number of points to be keeped in the source distribution
 nt_budget = 30  # budget number of points to be keeped in the target distribution
 
-tic = time.time()
 G_screen = screenkhorn(a, b, M, lambd, ns_budget, nt_budget, uniform=False, restricted=True, verbose=True)
-tac_screen = time.time() - tic
-
-# Sinkhorn
-tic = time.time()
-G_sink = ot.sinkhorn(a, b, M, lambd, verbose=False)
-tac_sink = time.time() - tic
-
-
 pl.figure(4, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, G_screen, 'OT matrix Screenkhorn')
-
 pl.show()
-
-##############################################################################
-# Time complexity
-# -----------------------
-print("Sinkhorn time complexity: %s\n" % tac_sink)
-print("Screenkhorn time complexity: %s\n" % tac_screen)
-print("Time_Sinkhorn / Time_Screenkhorn: %s\n" % (tac_sink / tac_screen))
