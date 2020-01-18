@@ -2117,6 +2117,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         log['v'] = vsc_full
         log['Isel'] = Isel
         log['Jsel'] = Jsel
+
     gamma = usc_full[:, None] * K * vsc_full[None, :]
     gamma = gamma / gamma.sum()
 

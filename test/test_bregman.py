@@ -348,7 +348,7 @@ def test_screenkhorn():
 
     x = rng.randn(n, 2)
     M = ot.dist(x, x)
-    G_sink = ot.sinkhorn(a, b, M, 1e-03)
-    G_screen = ot.bregman.screenkhorn(a, b, M, 1e-03, uniform=True, verbose=True)
-    np.testing.assert_allclose(G_sink.sum(0), G_screen.sum(0), atol=1e-02)
-    np.testing.assert_allclose(G_sink.sum(1), G_screen.sum(1), atol=1e-02)
+    G_s = ot.sinkhorn(a, b, M, 1e-03)
+    G_sc = ot.bregman.screenkhorn(a, b, M, 1e-03, uniform=True, verbose=True)
+    np.testing.assert_allclose(G_s.sum(0), G_sc.sum(0), atol=1e-02)
+    np.testing.assert_allclose(G_s.sum(1), G_sc.sum(1), atol=1e-02)
