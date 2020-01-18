@@ -1876,7 +1876,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
     # check if bottleneck module exists
     try:
         import bottleneck
-    except ImportError as e:
+    except ImportError:
         print("Bottleneck module doesn't exist. Install it from https://pypi.org/project/Bottleneck/")
 
     a = np.asarray(a, dtype=np.float64)
@@ -1905,8 +1905,8 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
 
     if ns_budget == ns and nt_budget == nt:
         # full number of budget points (ns, nt) = (ns_budget, nt_budget)
-        I = np.ones(ns, dtype=bool)
-        J = np.ones(nt, dtype=bool)
+        Isel = np.ones(ns, dtype=bool)
+        Jsel = np.ones(nt, dtype=bool)
         epsilon = 0.0
         kappa = 1.0
 
@@ -1955,46 +1955,48 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
             epsilon_v_square = bK_sort[nt_budget - 1]
 
         # active sets I and J (see Lemma 1 in [26])
-        I = a >= epsilon_u_square * K_sum_cols
-        J = b >= epsilon_v_square * K_sum_rows
+        Isel = a >= epsilon_u_square * K_sum_cols
+        Jsel = b >= epsilon_v_square * K_sum_rows
 
-        if sum(I) != ns_budget:
+        if sum(Isel) != ns_budget:
             if uniform:
                 aK = a / K_sum_cols
                 aK_sort = np.sort(aK)[::-1]
             epsilon_u_square = aK_sort[ns_budget - 1:ns_budget + 1].mean()
-            I = a >= epsilon_u_square * K_sum_cols
+            Isel = a >= epsilon_u_square * K_sum_cols
+            ns_budget = sum(Isel)
 
-        if sum(J) != nt_budget:
+        if sum(Jsel) != nt_budget:
             if uniform:
                 bK = b / K_sum_rows
                 bK_sort = np.sort(bK)[::-1]
             epsilon_v_square = bK_sort[nt_budget - 1:nt_budget + 1].mean()
-            J = b >= epsilon_v_square * K_sum_rows
+            Jsel = b >= epsilon_v_square * K_sum_rows
+            nt_budget = sum(Jsel)
 
         epsilon = (epsilon_u_square * epsilon_v_square) ** (1 / 4)
         kappa = (epsilon_v_square / epsilon_u_square) ** (1 / 2)
 
         if verbose:
             print("epsilon = %s\n" % epsilon)
-            print("kappa= %s\n" % kappa)
-            print('|I_active| = %s \t |J_active| = %s ' % (sum(I), sum(J)))
+            print("kappa = %s\n" % kappa)
+            print('Cardinality of selected points: |Isel| = %s \t |Jsel| = %s \n' % (sum(Isel), sum(Jsel)))
 
         # Ic, Jc: complementary of the active sets I and J
-        Ic = ~I
-        Jc = ~J
+        Ic = ~Isel
+        Jc = ~Jsel
 
-        K_IJ = K[np.ix_(I, J)]
-        K_IcJ = K[np.ix_(Ic, J)]
-        K_IJc = K[np.ix_(I, Jc)]
+        K_IJ = K[np.ix_(Isel, Jsel)]
+        K_IcJ = K[np.ix_(Ic, Jsel)]
+        K_IJc = K[np.ix_(Isel, Jc)]
 
         K_min = K_IJ.min()
         if K_min == 0:
             K_min = np.finfo(float).tiny
 
         # a_I, b_J, a_Ic, b_Jc
-        a_I = a[I]
-        b_J = b[J]
+        a_I = a[Isel]
+        b_J = b[Jsel]
         if not uniform:
             a_I_min = a_I.min()
             a_I_max = a_I.max()
@@ -2028,7 +2030,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
             cst_v = epsilon * K_IcJ.sum(axis=0) / kappa
 
         cpt = 1
-        while (cpt < 5):  # 5 iterations
+        while cpt < 5:  # 5 iterations
             K_IJ_v = np.dot(K_IJ.T, u0) + cst_v
             v0 = b_J / (kappa * K_IJ_v)
             KIJ_u = np.dot(K_IJ, v0) + cst_u
@@ -2047,7 +2049,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         Restricted Sinkhorn Algorithm as a warm-start initialized point for L-BFGS-B (see Algorithm 1 in supplementary of [26])
         """
         cpt = 1
-        while (cpt < max_iter):
+        while cpt < max_iter:
             K_IJ_v = np.dot(K_IJ.T, usc) + cst_v
             vsc = b_J / (kappa * K_IJ_v)
             KIJ_u = np.dot(K_IJ, vsc) + cst_u
@@ -2067,7 +2069,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         return psi_epsilon
 
     def screened_grad(usc, vsc):
-        # gradients of Psi_epsilon w.r.t u and v
+        # gradients of Psi_(kappa,epsilon) w.r.t u and v
         grad_u = np.dot(K_IJ, vsc) + vec_eps_IJc - kappa * a_I / usc
         grad_v = np.dot(K_IJ.T, usc) + vec_eps_IcJ - (1. / kappa) * b_J / vsc
         return grad_u, grad_v
@@ -2090,7 +2092,9 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
     theta0 = np.hstack([u0, v0])
 
     bounds = bounds_u + bounds_v  # constraint bounds
-    def obj(theta): return bfgspost(theta)
+
+    def obj(theta):
+        return bfgspost(theta)
 
     theta, _, _ = fmin_l_bfgs_b(func=obj,
                                 x0=theta0,
@@ -2104,13 +2108,15 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
 
     usc_full = np.full(ns, epsilon / kappa)
     vsc_full = np.full(nt, epsilon * kappa)
-    usc_full[I] = usc
-    vsc_full[J] = vsc
+    usc_full[Isel] = usc
+    vsc_full[Jsel] = vsc
 
     if log:
+        log = {}
         log['u'] = usc_full
         log['v'] = vsc_full
-
+        log['Isel'] = Isel
+        log['Jsel'] = Jsel
     gamma = usc_full[:, None] * K * vsc_full[None, :]
     gamma = gamma / gamma.sum()
 
