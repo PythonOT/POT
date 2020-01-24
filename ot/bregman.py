@@ -1877,7 +1877,8 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
     try:
         import bottleneck
     except ImportError:
-        print("Bottleneck module doesn't exist. Install it from https://pypi.org/project/Bottleneck/")
+        warnings.warn("Bottleneck module is not installed. Install it from https://pypi.org/project/Bottleneck/ for better performance.")
+        bottleneck = np
 
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
