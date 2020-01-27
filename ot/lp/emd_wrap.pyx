@@ -40,6 +40,8 @@ def check_result(result_code):
     return message
 
 
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int max_iter, bint dense):
