@@ -337,7 +337,10 @@ def test_dual_variables():
     # Check that both cost computations are equivalent
     np.testing.assert_almost_equal(cost1, log['cost'])
     check_duality_gap(a, b, M, G, log['u'], log['v'], log['cost'])
-
+    
+    viol=log['u'][:,None]+log['v'][None,:]-M
+    
+    assert viol.max()<1e-8
 
 def check_duality_gap(a, b, M, G, u, v, cost):
     cost_dual = np.vdot(a, u) + np.vdot(b, v)
