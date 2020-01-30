@@ -28,10 +28,10 @@ __all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx',
 
 
 def center_ot_dual(alpha0, beta0, a=None, b=None):
-    r"""Center dual OT potentials wrt theirs weights
+    r"""Center dual OT potentials w.r.t. theirs weights
 
     The main idea of this function is to find unique dual potentials
-    that ensure some kind of centering/fairness. It will help have
+    that ensure some kind of centering/fairness. The main idea is to find dual potentials that lead to the same final objective value for both source and targets (see below for more details). It will help having
     stability when multiple calling of the OT solver with small changes.
 
     Basically we add another constraint to the potential that will not
@@ -91,7 +91,15 @@ def center_ot_dual(alpha0, beta0, a=None, b=None):
 def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     r"""Estimate feasible values for 0-weighted dual potentials
 
-    The feasible values are computed efficiently bjt rather coarsely.
+    The feasible values are computed efficiently but rather coarsely.
+
+    .. warning::
+        This function is necessary because the C++ solver in emd_c
+        discards all samples in the distributions with 
+        zeros weights. This means that while the primal variable (transport 
+        matrix) is exact, the solver only returns feasible dual potentials
+        on the samples with weights different from zero. 
+
     First we compute the constraints violations:
 
     .. math::
@@ -113,11 +121,11 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
 
         \beta_j = \beta_j -v^b_j \quad \text{ if } b_j=0 \text{ and } v^b_j>0
 
-    In the end the dual potential are centred using function
+    In the end the dual potentials are centered using function
     :ref:`center_ot_dual`.
 
     Note that all those updates do not change the objective value of the
-    solution but provide dual potential that do not violate the constraints.
+    solution but provide dual potentials that do not violate the constraints.
 
     Parameters
     ----------
@@ -130,9 +138,9 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     beta0 : (nt,) numpy.ndarray, float64
         Target dual potential
     a : (ns,) numpy.ndarray, float64
-        Source histogram (uniform weight if empty list)
+        Source distribution (uniform weights if empty list)
     b : (nt,) numpy.ndarray, float64
-        Target histogram (uniform weight if empty list)
+        Target distribution (uniform weights if empty list)
     M : (ns,nt) numpy.ndarray, float64
         Loss matrix (c-order array with type float64)
 
@@ -150,11 +158,11 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     bsel = b != 0
 
     # compute dual constraints violation
-    Viol = alpha0[:, None] + beta0[None, :] - M
+    constraint_violation = alpha0[:, None] + beta0[None, :] - M
 
-    # Compute worst violation per line and columns
-    aviol = np.max(Viol, 1)
-    bviol = np.max(Viol, 0)
+    # Compute largest violation per line and columns
+    aviol = np.max(constraint_violation, 1)
+    bviol = np.max(constraint_violation, 0)
 
     # update corrects violation of
     alpha_up = -1 * ~asel * np.maximum(aviol, 0)

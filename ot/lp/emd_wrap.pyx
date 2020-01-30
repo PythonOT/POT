@@ -66,6 +66,12 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     .. warning::
         Note that the M matrix needs to be a C-order :py.cls:`numpy.array`
 
+    .. warning::
+        The C++ solver discards all samples in the distributions with 
+        zeros weights. This means that while the primal variable (transport 
+        matrix) is exact, the solver only returns feasible dual potentials
+        on the samples with weights different from zero. 
+
     Parameters
     ----------
     a : (ns,) numpy.ndarray, float64
