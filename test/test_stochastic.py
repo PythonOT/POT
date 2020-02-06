@@ -32,7 +32,7 @@ def test_stochastic_sag():
     # test sag
     n_samples = 15
     reg = 1
-    maxiter = 30000
+    max_iter = 30000
     rng = np.random.RandomState(0)
 
     X = rng.randn(n_samples, 2)
@@ -41,7 +41,7 @@ def test_stochastic_sag():
     M = ot.dist(X, X)
 
     G = ot.stochastic.solve_semi_dual_entropic(a, a, M, reg, "sag",
-                                               numItermax=maxiter)
+                                               max_iter=max_iter)
 
     # check constratints
     np.testing.assert_allclose(
@@ -51,7 +51,7 @@ def test_stochastic_sag():
 
     # new variable name
     Gamma_ent = ot.stochastic.solve_semi_dual_entropic(a, a, M, reg, "sag",
-                                                       maxiter=maxiter)
+                                                       max_iter=max_iter)
 
     # check constratints
     np.testing.assert_allclose(
@@ -72,7 +72,7 @@ def test_stochastic_asgd():
     # test asgd
     n_samples = 15
     reg = 1
-    maxiter = 100000
+    max_iter = 100000
     rng = np.random.RandomState(0)
 
     X = rng.randn(n_samples, 2)
@@ -81,7 +81,7 @@ def test_stochastic_asgd():
     M = ot.dist(X, X)
 
     G = ot.stochastic.solve_semi_dual_entropic(a, a, M, reg, "asgd",
-                                               numItermax=maxiter)
+                                               max_iter=max_iter)
 
     # check constratints
     np.testing.assert_allclose(
@@ -91,7 +91,7 @@ def test_stochastic_asgd():
 
     # new variable name
     Gamma_ent = ot.stochastic.solve_semi_dual_entropic(a, a, M, reg, "asgd",
-                                                       maxiter=maxiter)
+                                                       max_iter=max_iter)
 
     # check constratints
     np.testing.assert_allclose(
@@ -112,7 +112,7 @@ def test_sag_asgd_sinkhorn():
     # test all algorithms
     n_samples = 15
     reg = 1
-    maxiter = 100000
+    max_iter = 100000
     rng = np.random.RandomState(0)
 
     X = rng.randn(n_samples, 2)
@@ -120,9 +120,9 @@ def test_sag_asgd_sinkhorn():
     M = ot.dist(X, X)
 
     G_asgd = ot.stochastic.solve_semi_dual_entropic(a, a, M, reg, "asgd",
-                                                    numItermax=maxiter)
+                                                    max_iter=max_iter)
     G_sag = ot.stochastic.solve_semi_dual_entropic(a, a, M, reg, "sag",
-                                                   numItermax=maxiter)
+                                                   max_iter=max_iter)
     G_sinkhorn = ot.sinkhorn(a, a, M, reg)
 
     # check constratints
@@ -141,9 +141,9 @@ def test_sag_asgd_sinkhorn():
 
     # new variable name
     Gamma_ent_asgd = ot.stochastic.solve_semi_dual_entropic(a, a, M, reg, "asgd",
-                                                            maxiter=maxiter)
+                                                            max_iter=max_iter)
     Gamma_ent_sag = ot.stochastic.solve_semi_dual_entropic(a, a, M, reg, "sag",
-                                                           maxiter=maxiter)
+                                                           max_iter=max_iter)
     Gamma_ent_sinkhorn = ot.sinkhorn(a, a, M, reg)
 
     # check constratints
@@ -177,7 +177,7 @@ def test_stochastic_dual_sgd():
     # test sgd
     n_samples = 10
     reg = 1
-    maxiter = 15000
+    max_iter = 15000
     batch_size = 10
     rng = np.random.RandomState(0)
 
@@ -187,7 +187,7 @@ def test_stochastic_dual_sgd():
     M = ot.dist(X, X)
 
     G = ot.stochastic.solve_dual_entropic(a, a, M, reg, batch_size,
-                                          numItermax=maxiter)
+                                          max_iter=max_iter)
 
     # check constratints
     np.testing.assert_allclose(
@@ -197,7 +197,7 @@ def test_stochastic_dual_sgd():
 
     # new variable name
     Gamma_ent = ot.stochastic.solve_dual_entropic(a, a, M, reg, batch_size,
-                                                  maxiter=maxiter)
+                                                  max_iter=max_iter)
 
     # check constratints
     np.testing.assert_allclose(
@@ -218,7 +218,7 @@ def test_dual_sgd_sinkhorn():
     # test all dual algorithms
     n_samples = 10
     reg = 1
-    maxiter = 15000
+    max_iter = 15000
     batch_size = 10
     rng = np.random.RandomState(0)
 
@@ -228,7 +228,7 @@ def test_dual_sgd_sinkhorn():
     M = ot.dist(X, X)
 
     G_sgd = ot.stochastic.solve_dual_entropic(a, a, M, reg, batch_size,
-                                              numItermax=maxiter)
+                                              max_iter=max_iter)
 
     G_sinkhorn = ot.sinkhorn(a, a, M, reg)
 
@@ -242,7 +242,7 @@ def test_dual_sgd_sinkhorn():
 
     # new variable name
     Gamma_ent_sgd = ot.stochastic.solve_dual_entropic(a, a, M, reg, batch_size,
-                                                      maxiter=maxiter)
+                                                      max_iter=max_iter)
 
     Gamma_ent_sinkhorn = ot.sinkhorn(a, a, M, reg)
 
@@ -267,7 +267,7 @@ def test_dual_sgd_sinkhorn():
     M /= M.max()
 
     G_sgd = ot.stochastic.solve_dual_entropic(a, b, M, reg, batch_size,
-                                              numItermax=maxiter)
+                                              max_iter=max_iter)
 
     G_sinkhorn = ot.sinkhorn(a, b, M, reg)
 
@@ -281,7 +281,7 @@ def test_dual_sgd_sinkhorn():
 
     # new variable name
     Gamma_ent_sgd = ot.stochastic.solve_dual_entropic(a, b, M, reg, batch_size,
-                                                      maxiter=maxiter)
+                                                      max_iter=max_iter)
 
     Gamma_ent_sinkhorn = ot.sinkhorn(a, b, M, reg)
 

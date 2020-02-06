@@ -8,7 +8,7 @@ Various useful functions
 # License: MIT License
 
 import multiprocessing
-from functools import reduce
+from functools import reduce, wraps
 import time
 
 import numpy as np
@@ -394,7 +394,7 @@ class deprecated_variable(object):
         obj : function
         """
         msg_template = "Function parameter '{}' is deprecated and should be replaced by '{}' "
-
+        @wraps(fun)  # solve sphynx mask decorator bug
         def wrapped(*args, **kwargs):
             kwargs2 = dict()
             for kw in kwargs:

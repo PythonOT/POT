@@ -64,7 +64,7 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
     >>> X_source = np.random.randn(n_source, 2)
     >>> Y_target = np.random.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
-    >>> ot.stochastic.solve_semi_dual_entropic(a, b, M, reg=1, method="ASGD", maxiter=300000)
+    >>> ot.stochastic.solve_semi_dual_entropic(a, b, M, reg=1, method="ASGD", max_iter=300000)
     array([[2.53942342e-02, 9.98640673e-02, 1.75945647e-02, 4.27664307e-06],
            [1.21556999e-01, 1.26350515e-02, 1.30491795e-03, 7.36017394e-03],
            [3.54070702e-03, 7.63581358e-02, 6.29581672e-02, 1.32812798e-07],
@@ -87,27 +87,28 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
     return b - khi
 
 
-@deprecated_variable({'numItermax': 'maxiter'})
-def sag_entropic_transport(a, b, M, reg, maxiter=10000, lr=None):
+@deprecated_variable({'numItermax': 'max_iter'})
+def sag_entropic_transport(a, b, M, reg, max_iter=10000, lr=None):
     r'''
     Compute the SAG algorithm to solve the regularized discrete measures
-        optimal transport max problem
+    optimal transport max problem
 
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F 
+        + reg\cdot\Omega(OT_{\text{plan}})
 
-        s.t. \gamma 1 = a
+        s.t. OT_{\text{plan}} 1 = a
 
-             \gamma^T 1 = b
+             (OT_{\text{plan}})^T 1= b
 
-             \gamma \geq 0
+             OT_{\text{plan}} \geq 0
 
     Where :
 
     - M is the (ns,nt) metric cost matrix
-    - :math:`\Omega` is the entropic regularization term with :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\Omega` is the entropic regularization term with :math:`\Omega(OT_{\text{plan}})=\sum_{i,j} (OT_{\text{plan}})_{i,j}\log((OT_{\text{plan}})_{i,j})`
     - a and b are source and target weights (sum to 1)
 
     The algorithm used for solving the problem is the SAG algorithm
@@ -125,7 +126,7 @@ def sag_entropic_transport(a, b, M, reg, maxiter=10000, lr=None):
         Cost matrix.
     reg : float
         Regularization term > 0
-    maxiter : int
+    max_iter : int
         Number of iterations.
     lr : float
         Learning rate.
@@ -146,7 +147,7 @@ def sag_entropic_transport(a, b, M, reg, maxiter=10000, lr=None):
     >>> X_source = np.random.randn(n_source, 2)
     >>> Y_target = np.random.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
-    >>> ot.stochastic.solve_semi_dual_entropic(a, b, M, reg=1, method="ASGD", maxiter=300000)
+    >>> ot.stochastic.solve_semi_dual_entropic(a, b, M, reg=1, method="ASGD", max_iter=300000)
     array([[2.53942342e-02, 9.98640673e-02, 1.75945647e-02, 4.27664307e-06],
            [1.21556999e-01, 1.26350515e-02, 1.30491795e-03, 7.36017394e-03],
            [3.54070702e-03, 7.63581358e-02, 6.29581672e-02, 1.32812798e-07],
@@ -171,7 +172,7 @@ def sag_entropic_transport(a, b, M, reg, maxiter=10000, lr=None):
     cur_beta = np.zeros(n_target)
     stored_gradient = np.zeros((n_source, n_target))
     sum_stored_gradient = np.zeros(n_target)
-    for _ in range(maxiter):
+    for _ in range(max_iter):
         i = np.random.randint(n_source)
         cur_coord_grad = a[i] * coordinate_grad_semi_dual(b, M, reg,
                                                           cur_beta, i)
@@ -181,26 +182,27 @@ def sag_entropic_transport(a, b, M, reg, maxiter=10000, lr=None):
     return cur_beta
 
 
-@deprecated_variable({'numItermax': 'maxiter'})
-def averaged_sgd_entropic_transport(a, b, M, reg, maxiter=300000, lr=None):
+@deprecated_variable({'numItermax': 'max_iter'})
+def averaged_sgd_entropic_transport(a, b, M, reg, max_iter=300000, lr=None):
     r'''
     Compute the ASGD algorithm to solve the regularized semi continous measures optimal transport max problem
 
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F 
+        + reg\cdot\Omega(OT_{\text{plan}})
 
-        s.t. \gamma 1 = a
+        s.t. OT_{\text{plan}} 1 = a
 
-             \gamma^T 1= b
+             (OT_{\text{plan}})^T 1= b
 
-             \gamma \geq 0
+             OT_{\text{plan}} \geq 0
 
     Where :
 
     - M is the (ns,nt) metric cost matrix
-    - :math:`\Omega` is the entropic regularization term with :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\Omega` is the entropic regularization term with :math:`\Omega(OT_{\text{plan}})=\sum_{i,j} (OT_{\text{plan}})_{i,j}\log((OT_{\text{plan}})_{i,j})`
     - a and b are source and target weights (sum to 1)
 
     The algorithm used for solving the problem is the ASGD algorithm
@@ -215,7 +217,7 @@ def averaged_sgd_entropic_transport(a, b, M, reg, maxiter=300000, lr=None):
         cost matrix
     reg : float
         Regularization term > 0
-    maxiter : int
+    max_iter : int
         Number of iterations.
     lr : float
         Learning rate.
@@ -236,7 +238,7 @@ def averaged_sgd_entropic_transport(a, b, M, reg, maxiter=300000, lr=None):
     >>> X_source = np.random.randn(n_source, 2)
     >>> Y_target = np.random.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
-    >>> ot.stochastic.solve_semi_dual_entropic(a, b, M, reg=1, method="ASGD", maxiter=300000)
+    >>> ot.stochastic.solve_semi_dual_entropic(a, b, M, reg=1, method="ASGD", max_iter=300000)
     array([[2.53942342e-02, 9.98640673e-02, 1.75945647e-02, 4.27664307e-06],
            [1.21556999e-01, 1.26350515e-02, 1.30491795e-03, 7.36017394e-03],
            [3.54070702e-03, 7.63581358e-02, 6.29581672e-02, 1.32812798e-07],
@@ -260,7 +262,7 @@ def averaged_sgd_entropic_transport(a, b, M, reg, maxiter=300000, lr=None):
     n_target = np.shape(M)[1]
     cur_beta = np.zeros(n_target)
     ave_beta = np.zeros(n_target)
-    for cur_iter in range(maxiter):
+    for cur_iter in range(max_iter):
         k = cur_iter + 1
         i = np.random.randint(n_source)
         cur_coord_grad = coordinate_grad_semi_dual(b, M, reg, cur_beta, i)
@@ -282,7 +284,7 @@ def c_transform_entropic(b, M, reg, beta):
     Where :
 
     - M is the (ns,nt) metric cost matrix
-    - u, v are dual variables in R^IxR^J
+    - u, v are dual variables in :math:`\mathbb{R}^I \times \mathbb{R}^J`
     - reg is the regularization term
 
     It is used to recover an optimal u from optimal v solving the semi dual
@@ -316,7 +318,7 @@ def c_transform_entropic(b, M, reg, beta):
     >>> X_source = np.random.randn(n_source, 2)
     >>> Y_target = np.random.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
-    >>> ot.stochastic.solve_semi_dual_entropic(a, b, M, reg=1, method="ASGD", maxiter=300000)
+    >>> ot.stochastic.solve_semi_dual_entropic(a, b, M, reg=1, method="ASGD", max_iter=300000)
     array([[2.53942342e-02, 9.98640673e-02, 1.75945647e-02, 4.27664307e-06],
            [1.21556999e-01, 1.26350515e-02, 1.30491795e-03, 7.36017394e-03],
            [3.54070702e-03, 7.63581358e-02, 6.29581672e-02, 1.32812798e-07],
@@ -344,28 +346,29 @@ def c_transform_entropic(b, M, reg, beta):
     return alpha
 
 
-@deprecated_variable({'numItermax': 'maxiter'})
-def solve_semi_dual_entropic(a, b, M, reg, method, maxiter=10000, lr=None,
+@deprecated_variable({'numItermax': 'max_iter'})
+def solve_semi_dual_entropic(a, b, M, reg, method, max_iter=10000, lr=None,
                                 log=False):
     r'''
     Compute the transportation matrix to solve the regularized discrete
-        measures optimal transport max problem
+    measures optimal transport max problem
 
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F 
+        + reg\cdot\Omega(OT_{\text{plan}})
 
-        s.t. \gamma 1 = a
+        s.t. OT_{\text{plan}} 1 = a
 
-             \gamma^T 1= b
+             (OT_{\text{plan}})^T 1= b
 
-             \gamma \geq 0
+             OT_{\text{plan}} \geq 0
 
     Where :
 
     - M is the (ns,nt) metric cost matrix
-    - :math:`\Omega` is the entropic regularization term with :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\Omega` is the entropic regularization term with :math:`\Omega(OT_{\text{plan}})=\sum_{i,j} (OT_{\text{plan}})_{i,j}\log((OT_{\text{plan}})_{i,j})`
     - a and b are source and target weights (sum to 1)
     The algorithm used for solving the problem is the SAG or ASGD algorithms
     as proposed in [18]_
@@ -384,7 +387,7 @@ def solve_semi_dual_entropic(a, b, M, reg, method, maxiter=10000, lr=None,
         Regularization term > 0
     methode : str
         used method (SAG or ASGD)
-    maxiter : int
+    max_iter : int
         number of iterations
     lr : float
         learning rate
@@ -397,9 +400,9 @@ def solve_semi_dual_entropic(a, b, M, reg, method, maxiter=10000, lr=None,
 
     Returns
     -------
-    pi : ndarray, shape (ns, nt)
+    ot_plan : ndarray, shape (ns, nt)
         transportation matrix
-    log : dict
+    log_stoc : dict
         log dictionary return only if log==True in parameters
 
     Examples
@@ -413,7 +416,7 @@ def solve_semi_dual_entropic(a, b, M, reg, method, maxiter=10000, lr=None,
     >>> X_source = np.random.randn(n_source, 2)
     >>> Y_target = np.random.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
-    >>> ot.stochastic.solve_semi_dual_entropic(a, b, M, reg=1, method="ASGD", maxiter=300000)
+    >>> ot.stochastic.solve_semi_dual_entropic(a, b, M, reg=1, method="ASGD", max_iter=300000)
     array([[2.53942342e-02, 9.98640673e-02, 1.75945647e-02, 4.27664307e-06],
            [1.21556999e-01, 1.26350515e-02, 1.30491795e-03, 7.36017394e-03],
            [3.54070702e-03, 7.63581358e-02, 6.29581672e-02, 1.32812798e-07],
@@ -432,22 +435,22 @@ def solve_semi_dual_entropic(a, b, M, reg, method, maxiter=10000, lr=None,
     '''
 
     if method.lower() == "sag":
-        opt_beta = sag_entropic_transport(a, b, M, reg, maxiter, lr)
+        opt_beta = sag_entropic_transport(a, b, M, reg, max_iter, lr)
     elif method.lower() == "asgd":
-        opt_beta = averaged_sgd_entropic_transport(a, b, M, reg, maxiter, lr)
+        opt_beta = averaged_sgd_entropic_transport(a, b, M, reg, max_iter, lr)
     else:
         print("Please, select your method between SAG and ASGD")
         return None
 
     opt_alpha = c_transform_entropic(b, M, reg, opt_beta)
-    pi = (np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg) *
-          a[:, None] * b[None, :])
+    ot_plan = (np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg) *
+               a[:, None] * b[None, :])
 
     if log:
         log_stoc = {'alpha': opt_alpha, 'beta': opt_beta}
-        return pi, log_stoc
+        return ot_plan, log_stoc
     else:
-        return pi
+        return ot_plan
 
 
 ##############################################################################
@@ -519,13 +522,13 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
     >>> X_source = np.random.randn(n_source, 2)
     >>> Y_target = np.random.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
-    >>> sgd_dual_pi, log = ot.stochastic.solve_dual_entropic(a, b, M, reg=1, batch_size=3, maxiter=30000, lr=0.1, log=True)
+    >>> ot_plan, log = ot.stochastic.solve_dual_entropic(a, b, M, reg=1, batch_size=3, max_iter=30000, lr=0.1, log=True)
     >>> log['alpha']
     array([0.71759102, 1.57057384, 0.85576566, 0.1208211 , 0.59190466,
            1.197148  , 0.17805133])
     >>> log['beta']
     array([0.49741367, 0.57478564, 1.40075528, 2.75890102])
-    >>> sgd_dual_pi
+    >>> ot_plan
     array([[2.09730063e-02, 8.38169324e-02, 7.50365455e-03, 8.72731415e-09],
            [5.58432437e-03, 5.89881299e-04, 3.09558411e-05, 8.35469849e-07],
            [3.26489515e-03, 7.15536035e-02, 2.99778211e-02, 3.02601593e-10],
@@ -554,27 +557,28 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
     return grad_alpha, grad_beta
 
 
-@deprecated_variable({'numItermax': 'maxiter'})
-def sgd_entropic_regularization(a, b, M, reg, batch_size, maxiter, lr):
+@deprecated_variable({'numItermax': 'max_iter'})
+def sgd_entropic_regularization(a, b, M, reg, batch_size, max_iter, lr):
     r'''
     Compute the sgd algorithm to solve the regularized discrete measures
-        optimal transport dual problem
+    optimal transport dual problem
 
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F 
+        + reg\cdot\Omega(OT_{\text{plan}})
 
-        s.t. \gamma 1 = a
+        s.t. OT_{\text{plan}} 1 = a
 
-             \gamma^T 1= b
+             (OT_{\text{plan}})^T 1= b
 
-             \gamma \geq 0
+             OT_{\text{plan}} \geq 0
 
     Where :
 
     - M is the (ns,nt) metric cost matrix
-    - :math:`\Omega` is the entropic regularization term with :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\Omega` is the entropic regularization term with :math:`\Omega(OT_{\text{plan}})=\sum_{i,j} (OT_{\text{plan}})_{i,j}\log((OT_{\text{plan}})_{i,j})`
     - a and b are source and target weights (sum to 1)
 
     Parameters
@@ -589,7 +593,7 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, maxiter, lr):
         Regularization term > 0
     batch_size : int
         size of the batch
-    maxiter : int
+    max_iter : int
         number of iterations
     lr : float
         learning rate
@@ -607,7 +611,7 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, maxiter, lr):
     >>> n_source = 7
     >>> n_target = 4
     >>> reg = 1
-    >>> maxiter = 20000
+    >>> max_iter = 20000
     >>> lr = 0.1
     >>> batch_size = 3
     >>> log = True
@@ -617,13 +621,13 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, maxiter, lr):
     >>> X_source = rng.randn(n_source, 2)
     >>> Y_target = rng.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
-    >>> sgd_dual_pi, log = ot.stochastic.solve_dual_entropic(a, b, M, reg, batch_size, maxiter, lr, log)
+    >>> ot_plan, log = ot.stochastic.solve_dual_entropic(a, b, M, reg, batch_size, max_iter, lr, log)
     >>> log['alpha']
     array([0.64171798, 1.27932201, 0.78132257, 0.15638935, 0.54888354,
            1.03663469, 0.20595781])
     >>> log['beta']
     array([0.51207194, 0.58033189, 1.28922676, 2.26859736])
-    >>> sgd_dual_pi
+    >>> ot_plan
     array([[1.97276541e-02, 7.81248547e-02, 6.22136048e-03, 4.95442423e-09],
            [4.23494310e-03, 4.43286263e-04, 2.06927079e-05, 3.82389139e-07],
            [3.07542414e-03, 6.67897769e-02, 2.48904999e-02, 1.72030247e-10],
@@ -643,7 +647,7 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, maxiter, lr):
     n_target = np.shape(M)[1]
     cur_alpha = np.zeros(n_source)
     cur_beta = np.zeros(n_target)
-    for cur_iter in range(maxiter):
+    for cur_iter in range(max_iter):
         k = np.sqrt(cur_iter + 1)
         batch_alpha = np.random.choice(n_source, batch_size, replace=False)
         batch_beta = np.random.choice(n_target, batch_size, replace=False)
@@ -656,28 +660,29 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, maxiter, lr):
     return cur_alpha, cur_beta
 
 
-@deprecated_variable({'numItermax': 'maxiter'})
-def solve_dual_entropic(a, b, M, reg, batch_size, maxiter=10000, lr=1,
+@deprecated_variable({'numItermax': 'max_iter'})
+def solve_dual_entropic(a, b, M, reg, batch_size, max_iter=10000, lr=1,
                         log=False):
     r'''
     Compute the transportation matrix to solve the regularized discrete measures
-        optimal transport dual problem
+    optimal transport dual problem
 
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F 
+        + reg\cdot\Omega(OT_{\text{plan}})
 
-        s.t. \gamma 1 = a
+        s.t. OT_{\text{plan}} 1 = a
 
-             \gamma^T 1= b
+             (OT_{\text{plan}})^T 1= b
 
-             \gamma \geq 0
+             OT_{\text{plan}} \geq 0
 
     Where :
 
     - M is the (ns,nt) metric cost matrix
-    - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\Omega` is the entropic regularization term with :math:`\Omega(OT_{\text{plan}})=\sum_{i,j} (OT_{\text{plan}})_{i,j}\log((OT_{\text{plan}})_{i,j})`
     - a and b are source and target weights (sum to 1)
 
     Parameters
@@ -692,7 +697,7 @@ def solve_dual_entropic(a, b, M, reg, batch_size, maxiter=10000, lr=1,
         Regularization term > 0
     batch_size : int
         size of the batch
-    maxiter : int
+    max_iter : int
         number of iterations
     lr : float
         learning rate
@@ -701,9 +706,9 @@ def solve_dual_entropic(a, b, M, reg, batch_size, maxiter=10000, lr=1,
 
     Returns
     -------
-    pi : ndarray, shape (ns, nt)
+    ot_plan : ndarray, shape (ns, nt)
         transportation matrix
-    log : dict
+    log_stoc : dict
         log dictionary return only if log==True in parameters
 
     Examples
@@ -712,7 +717,7 @@ def solve_dual_entropic(a, b, M, reg, batch_size, maxiter=10000, lr=1,
     >>> n_source = 7
     >>> n_target = 4
     >>> reg = 1
-    >>> maxiter = 20000
+    >>> max_iter = 20000
     >>> lr = 0.1
     >>> batch_size = 3
     >>> log = True
@@ -722,13 +727,13 @@ def solve_dual_entropic(a, b, M, reg, batch_size, maxiter=10000, lr=1,
     >>> X_source = rng.randn(n_source, 2)
     >>> Y_target = rng.randn(n_target, 2)
     >>> M = ot.dist(X_source, Y_target)
-    >>> sgd_dual_pi, log = ot.stochastic.solve_dual_entropic(a, b, M, reg, batch_size, maxiter, lr, log)
+    >>> ot_plan, log = ot.stochastic.solve_dual_entropic(a, b, M, reg, batch_size, max_iter, lr, log)
     >>> log['alpha']
     array([0.64057733, 1.2683513 , 0.75610161, 0.16024284, 0.54926534,
            1.0514201 , 0.19958936])
     >>> log['beta']
     array([0.51372571, 0.58843489, 1.27993921, 2.24344807])
-    >>> sgd_dual_pi
+    >>> ot_plan
     array([[1.97377795e-02, 7.86706853e-02, 6.15682001e-03, 4.82586997e-09],
            [4.19566963e-03, 4.42016865e-04, 2.02777272e-05, 3.68823708e-07],
            [3.00379244e-03, 6.56562018e-02, 2.40462171e-02, 1.63579656e-10],
@@ -746,11 +751,11 @@ def solve_dual_entropic(a, b, M, reg, batch_size, maxiter=10000, lr=1,
     '''
 
     opt_alpha, opt_beta = sgd_entropic_regularization(a, b, M, reg, batch_size,
-                                                      maxiter, lr)
-    pi = (np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg) *
-          a[:, None] * b[None, :])
+                                                      max_iter, lr)
+    ot_plan = (np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg) *
+               a[:, None] * b[None, :])
     if log:
         log_stoc = {'alpha': opt_alpha, 'beta': opt_beta}
-        return pi, log_stoc
+        return ot_plan, log_stoc
     else:
-        return pi
+        return ot_plan
