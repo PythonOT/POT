@@ -356,7 +356,7 @@ def solve_semi_dual_entropic(a, b, M, reg, method, max_iter=10000, lr=None,
     The function solves the following optimization problem:
 
     .. math::
-        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F 
+        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F
         + reg\cdot\Omega(OT_{\text{plan}})
 
         s.t. OT_{\text{plan}} 1 = a
