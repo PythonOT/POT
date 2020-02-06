@@ -96,7 +96,7 @@ def sag_entropic_transport(a, b, M, reg, max_iter=10000, lr=None):
     The function solves the following optimization problem:
 
     .. math::
-        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F 
+        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F
         + reg\cdot\Omega(OT_{\text{plan}})
 
         s.t. OT_{\text{plan}} 1 = a
@@ -190,7 +190,7 @@ def averaged_sgd_entropic_transport(a, b, M, reg, max_iter=300000, lr=None):
     The function solves the following optimization problem:
 
     .. math::
-        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F 
+        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F
         + reg\cdot\Omega(OT_{\text{plan}})
 
         s.t. OT_{\text{plan}} 1 = a
@@ -566,7 +566,7 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, max_iter, lr):
     The function solves the following optimization problem:
 
     .. math::
-        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F 
+        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F
         + reg\cdot\Omega(OT_{\text{plan}})
 
         s.t. OT_{\text{plan}} 1 = a
@@ -670,7 +670,7 @@ def solve_dual_entropic(a, b, M, reg, batch_size, max_iter=10000, lr=1,
     The function solves the following optimization problem:
 
     .. math::
-        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F 
+        OT_{\text{plan}} = arg\min_{OT_{\text{plan}}} <OT_{\text{plan}},M>_F
         + reg\cdot\Omega(OT_{\text{plan}})
 
         s.t. OT_{\text{plan}} 1 = a
