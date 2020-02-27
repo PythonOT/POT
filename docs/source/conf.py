@@ -15,7 +15,10 @@
 import sys
 import os
 import re
-import sphinx_gallery
+try:
+    import sphinx_gallery
+except ImportError:
+    print("warning sphinx-gallery not installed")
 
 # !!!! allow readthedoc compilation
 try:
@@ -65,6 +68,8 @@ extensions = [
     #'sphinx_gallery.gen_gallery',
 ]
 
+napoleon_numpy_docstring = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -81,7 +86,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'POT Python Optimal Transport'
-copyright = u'2016-2018, Rémi Flamary, Nicolas Courty'
+copyright = u'2016-2019, Rémi Flamary, Nicolas Courty'
 author = u'Rémi Flamary, Nicolas Courty'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -323,7 +328,10 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
+                       'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+                       'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
+                       'matplotlib': ('http://matplotlib.sourceforge.net/', None)}
 
 sphinx_gallery_conf = {
     'examples_dirs': ['../../examples','../../examples/da'],

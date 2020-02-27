@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 Dimension reduction with optimal transport
+
+
+.. warning::
+    Note that by default the module is not import in :mod:`ot`. In order to
+    use it you need to explicitely import :mod:`ot.dr`
+
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -43,30 +49,25 @@ def split_classes(X, y):
 
 
 def fda(X, y, p=2, reg=1e-16):
-    """
-    Fisher Discriminant Analysis
-
+    """Fisher Discriminant Analysis
 
     Parameters
     ----------
-    X : numpy.ndarray (n,d)
-        Training samples
-    y : np.ndarray (n,)
-        labels for training samples
+    X : ndarray, shape (n, d)
+        Training samples.
+    y : ndarray, shape (n,)
+        Labels for training samples.
     p : int, optional
-        size of dimensionnality reduction
+        Size of dimensionnality reduction.
     reg : float, optional
         Regularization term >0 (ridge regularization)
 
-
     Returns
     -------
-    P : (d x p) ndarray
+    P : ndarray, shape (d, p)
         Optimal transportation matrix for the given parameters
-    proj : fun
+    proj : callable
         projection function including mean centering
-
-
     """
 
     mx = np.mean(X)
@@ -124,37 +125,33 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None):
 
     Parameters
     ----------
-    X : numpy.ndarray (n,d)
-        Training samples
-    y : np.ndarray (n,)
-        labels for training samples
+    X : ndarray, shape (n, d)
+        Training samples.
+    y : ndarray, shape (n,)
+        Labels for training samples.
     p : int, optional
-        size of dimensionnality reduction
+        Size of dimensionnality reduction.
     reg : float, optional
         Regularization term >0 (entropic regularization)
-    solver : str, optional
-        None for steepest decsent or 'TrustRegions' for trust regions algorithm
-        else shoudl be a pymanopt.solvers
-    P0 : numpy.ndarray (d,p)
-        Initial starting point for projection
+    solver : None | str, optional
+        None for steepest descent or 'TrustRegions' for trust regions algorithm
+        else should be a pymanopt.solvers
+    P0 : ndarray, shape (d, p)
+        Initial starting point for projection.
     verbose : int, optional
-        Print information along iterations
-
-
+        Print information along iterations.
 
     Returns
     -------
-    P : (d x p) ndarray
+    P : ndarray, shape (d, p)
         Optimal transportation matrix for the given parameters
-    proj : fun
-        projection function including mean centering
-
+    proj : callable
+        Projection function including mean centering.
 
     References
     ----------
-
-    .. [11] Flamary, R., Cuturi, M., Courty, N., & Rakotomamonjy, A. (2016). Wasserstein Discriminant Analysis. arXiv preprint arXiv:1608.08063.
-
+    .. [11] Flamary, R., Cuturi, M., Courty, N., & Rakotomamonjy, A. (2016).
+            Wasserstein Discriminant Analysis. arXiv preprint arXiv:1608.08063.
     """  # noqa
 
     mx = np.mean(X)

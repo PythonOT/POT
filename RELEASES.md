@@ -1,6 +1,74 @@
 # POT Releases
 
 
+## 0.6 Year 3
+*July 2019*
+
+This is the first official stable release of POT and this means a jump to 0.6! 
+The library has been used in
+the wild for a while now and we have reached a state where a lot of fundamental
+OT solvers are available and tested. It has been quite stable in the last months
+but kept the beta flag in its Pypi classifiers until now. 
+
+Note that this release will be the last one supporting officially Python 2.7 (See
+https://python3statement.org/ for more reasons). For next release we will keep
+the travis tests for Python 2 but will make them non necessary for merge in 2020.
+
+The features are never complete in a toolbox designed for solving mathematical
+problems and research but with the new contributions we now implement algorithms and solvers 
+from 24 scientific papers (listed in the README.md file). New features include a
+direct implementation of the [empirical Sinkhorn divergence](https://pot.readthedocs.io/en/latest/all.html#ot.bregman.empirical_sinkhorn_divergence)
+, a new efficient (Cython implementation) solver for [EMD in 1D](https://pot.readthedocs.io/en/latest/all.html#ot.lp.emd_1d)
+and corresponding [Wasserstein
+1D](https://pot.readthedocs.io/en/latest/all.html#ot.lp.wasserstein_1d). We now also
+have implementations for [Unbalanced OT](https://github.com/rflamary/POT/blob/master/notebooks/plot_UOT_1D.ipynb) 
+and a solver for [Unbalanced OT barycenters](https://github.com/rflamary/POT/blob/master/notebooks/plot_UOT_barycenter_1D.ipynb).
+A new variant of Gromov-Wasserstein divergence called [Fused
+Gromov-Wasserstein](https://pot.readthedocs.io/en/latest/all.html?highlight=fused_#ot.gromov.fused_gromov_wasserstein)
+ has been also contributed with exemples of use on [structured data](https://github.com/rflamary/POT/blob/master/notebooks/plot_fgw.ipynb) 
+and computing [barycenters of labeld graphs](https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb).
+
+
+A lot of work has been done on the documentation with several new
+examples corresponding to the new features and a lot of corrections for the
+docstrings. But the most visible change is a new 
+[quick start guide](https://pot.readthedocs.io/en/latest/quickstart.html) for
+POT that gives several pointers about which function or classes allow to solve which
+specific OT problem. When possible a link is provided to relevant examples.
+
+We will also provide with this release some pre-compiled Python wheels for Linux
+64bit on
+github and pip. This will simplify the install process that before required a C
+compiler and numpy/cython already installed.
+
+Finally we would like to acknowledge and thank the numerous contributors of POT
+that has helped in the past build the foundation and are still contributing to
+bring new features and solvers to the library.
+
+
+
+#### Features
+
+* Add compiled manylinux 64bits wheels to pip releases (PR #91)
+* Add quick start guide (PR #88)
+* Make doctest work on travis (PR #90)
+* Update documentation (PR #79, PR #84)
+* Solver for EMD in 1D (PR #89)
+* Solvers for regularized unbalanced OT (PR #87, PR#99)
+* Solver for Fused Gromov-Wasserstein (PR #86)
+* Add empirical Sinkhorn and empirical Sinkhorn divergences (PR #80)
+
+
+#### Closed issues
+
+- Issue #59 fail when using "pip install POT" (new details in doc+ hopefully
+  wheels)
+- Issue #85 Cannot run gpu modules
+- Issue #75 Greenkhorn do not return log (solved in PR #76)
+- Issue #82 Gromov-Wasserstein fails when the cost matrices are slightly different
+- Issue #72 Macosx build problem
+
+
 ## 0.5.0 Year 2
 *Sep 2018*
 

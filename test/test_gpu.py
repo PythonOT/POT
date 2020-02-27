@@ -16,6 +16,16 @@ except ImportError:
 
 
 @pytest.mark.skipif(nogpu, reason="No GPU available")
+def test_gpu_old_doctests():
+    a = [.5, .5]
+    b = [.5, .5]
+    M = [[0., 1.], [1., 0.]]
+    G = ot.sinkhorn(a, b, M, 1)
+    np.testing.assert_allclose(G, np.array([[0.36552929, 0.13447071],
+                                            [0.13447071, 0.36552929]]))
+
+
+@pytest.mark.skipif(nogpu, reason="No GPU available")
 def test_gpu_dist():
 
     rng = np.random.RandomState(0)
