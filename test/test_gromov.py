@@ -248,3 +248,45 @@ def test_fgw_barycenter():
                                      max_iter=100, tol=1e-3)
     np.testing.assert_allclose(C.shape, (n_samples, n_samples))
     np.testing.assert_allclose(X.shape, (n_samples, ys.shape[1]))
+
+
+def test_gromov_1d():
+    np.random.seed(42)
+    # Test cost for diag
+    u = np.array([1, 0, 4])
+    v = np.array([1, 4, 0])
+    cost_gw1D = ot.gromov.gromov_1d2(u, v)
+    T = ot.gromov.gromov_1d(u, v)
+
+    assert cost_gw1D == 0
+    assert ot.gromov.gromov_loss_1d(np.dot(u, 3 * T), v) == 0
+
+    # Test for anti diag
+    u = np.array([1, 0, 4])
+    v = np.array([-1, 2, 3])
+    cost_gw1D = ot.gromov.gromov_1d2(u, v)
+    T = ot.gromov.gromov_1d(u, v)
+
+    assert cost_gw1D == 0
+    assert ot.gromov.gromov_loss_1d(np.dot(u, 3 * T), v) == 0
+
+    # Test GW 1d better than GW POT
+    all_good = []
+    for n in range(3, 100):
+        ns = n
+        nt = n
+        xs_alea = np.random.randn(ns, 1)
+        xt_alea = np.random.randn(nt, 1)
+        T_1d, log_1d = ot.gromov.gromov_1d(xs_alea.ravel(), xt_alea.ravel(), log=True)
+
+        C1 = ot.dist(xs_alea, metric='sqeuclidean')
+        C2 = ot.dist(xt_alea, metric='sqeuclidean')
+        p = np.ones(C1.shape[0]) / C1.shape[0]
+        q = np.ones(C2.shape[0]) / C2.shape[0]
+        T_GW, log_GW = ot.gromov.gromov_wasserstein(C1, C2, p, q, 'square_loss', log=True)
+
+        all_good.append(log_1d['gw_dist'] - log_GW['gw_dist'])
+
+    all_good = np.array(all_good)
+
+    assert np.max(all_good[all_good >= 0]) <= 1e-14

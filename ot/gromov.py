@@ -307,7 +307,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
     Returns
     -------
     T : ndarray, shape (ns, nt)
-        Doupling between the two spaces that minimizes:
+        Coupling between the two spaces that minimizes:
             \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
     log : dict
         Convergence information and loss.
@@ -417,6 +417,152 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwarg
         return log_gw['gw_dist'], log_gw
     else:
         return log_gw['gw_dist']
+
+
+def gromov_1d(u, v, log=False):
+    """ Returns the Gromov-Wasserstein distance between 1d measures and
+    returns the OT matrix and the associated cost (eq (2) in [27])
+    Parameters
+    ----------
+    u : (ns,) ndarray, float64
+        Source dirac locations (on the real line)
+    v : (nt,) ndarray, float64
+        Target dirac locations (on the real line)
+    Returns
+    -------
+    T : ndarray, shape (ns, nt)
+        Optimal coupling between the two spaces that minimizes the Gromov-Wasserstein distance.
+    log : dict
+        Contains coupling and loss.
+    References
+    ----------
+    .. [27] Vayer Titouan, Flamary R{\'e}mi, Courty Nicolas, Tavenard Romain 
+        and Chapel Laetitia
+        "Sliced Gromov-Wasserstein"
+        Advances in Neural Information Processing Systems (NeurIPS). 2019.
+    """
+    assert u.shape[0] == v.shape[0]
+
+    log_gw = {}
+
+    idx_u = np.argsort(u, axis=0)
+    idx_v = np.argsort(v, axis=0)
+
+    u2 = u[idx_u]
+
+    v_asc = v[idx_v]
+    v_desc = v_asc[::-1]
+    l1 = gromov_loss_1d(u2, v_asc)
+    l2 = gromov_loss_1d(u2, v_desc)
+    cost = min(l1, l2)
+    log_gw['gw_dist'] = cost
+    if min(l1, l2) == l1:
+        T = np.eye(u.shape[0], u.shape[0]) / u.shape[0]
+        log_gw['T'] = T[idx_v][idx_u]
+    else:
+        T = np.fliplr(np.eye(u.shape[0], u.shape[0])) / u.shape[0]
+        log_gw['T'] = T[idx_u][idx_v]
+    if log:
+        return log_gw['T'], log_gw
+    else:
+        return log_gw['T']
+
+
+def gromov_1d2(u, v, log=False):
+    """ Returns the Gromov-Wasserstein distance between 1d measures and
+    returns the OT matrix and the associated cost (eq (2) in [27])
+    Parameters
+    ----------
+    u : (ns,) ndarray, float64
+        Source dirac locations (on the real line)
+    v : (nt,) ndarray, float64
+        Target dirac locations (on the real line)
+    Returns
+    -------
+    cost
+        cost associated to the optimal transportation
+    log : dict
+        Contains coupling and loss.
+    References
+    ----------
+    .. [27] Vayer Titouan, Flamary R{\'e}mi, Courty Nicolas, Tavenard Romain 
+        and Chapel Laetitia
+        "Sliced Gromov-Wasserstein"
+        Advances in Neural Information Processing Systems (NeurIPS). 2019.
+    """
+    assert u.shape[0] == v.shape[0]
+
+    log_gw = {}
+
+    idx_u = np.argsort(u, axis=0)
+    idx_v = np.argsort(v, axis=0)
+
+    u2 = u[idx_u]
+
+    v_asc = v[idx_v]
+    v_desc = v_asc[::-1]
+    l1 = gromov_loss_1d(u2, v_asc)
+    l2 = gromov_loss_1d(u2, v_desc)
+    cost = min(l1, l2)
+    log_gw['gw_dist'] = cost
+    if min(l1, l2) == l1:
+        T = np.eye(u.shape[0], u.shape[0]) / u.shape[0]
+        log_gw['T'] = T[idx_v][idx_u]
+    else:
+        T = np.fliplr(np.eye(u.shape[0], u.shape[0])) / u.shape[0]
+        log_gw['T'] = T[idx_u][idx_v]
+    if log:
+        return cost, log_gw
+    else:
+        return cost
+
+
+def gromov_loss_1d(u, v):
+    """ Returns the Gromov cost in O(n) between sorted 1d measures (see eq (3) in [27]).
+    Parameters
+    ----------
+    u : (ns,) ndarray, float64
+        Source dirac locations (on the real line)
+    v : (nt,) ndarray, float64
+        Target dirac locations (on the real line)
+    Returns
+    -------
+    cost
+        Gromov cost
+    References
+    ----------
+    .. [27] Vayer Titouan, Flamary R{\'e}mi, Courty Nicolas, Tavenard Romain 
+        and Chapel Laetitia
+        "Sliced Gromov-Wasserstein"
+        Advances in Neural Information Processing Systems (NeurIPS). 2019.
+    """
+    assert u.shape[0] == v.shape[0]
+
+    X = np.sum(u)
+    X2 = np.sum(u**2)
+    X3 = np.sum(u**3)
+    X4 = np.sum(u**4)
+
+    Y = np.sum(v)
+    Y2 = np.sum(v**2)
+    Y3 = np.sum(v**3)
+    Y4 = np.sum(v**4)
+
+    xxyy_ = np.sum((u**2) * (v**2))
+    xxy_ = np.sum((u**2) * (v))
+    xyy_ = np.sum((u) * (v**2))
+    xy_ = np.sum((u) * (v))
+
+    n = u.shape[0]
+
+    C2 = 2 * X2 * Y2 + 2 * (n * xxyy_ - 2 * Y * xxy_ - 2 * X * xyy_ + 2 * xy_**2)
+
+    power4_x = 2 * n * X4 - 8 * X3 * X + 6 * X2**2
+    power4_y = 2 * n * Y4 - 8 * Y3 * Y + 6 * Y2**2
+
+    cost = (1 / (n**2)) * (power4_x + power4_y - 2 * C2)
+
+    return cost
 
 
 def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5, armijo=False, log=False, **kwargs):
