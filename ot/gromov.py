@@ -436,8 +436,7 @@ def gromov_1d(u, v, log=False):
         Contains coupling and loss.
     References
     ----------
-    .. [27] Vayer Titouan, Flamary R{\'e}mi, Courty Nicolas, Tavenard Romain 
-        and Chapel Laetitia
+    .. [27] Vayer Titouan, Flamary R{\'e}mi, Courty Nicolas, Tavenard Romain and Chapel Laetitia
         "Sliced Gromov-Wasserstein"
         Advances in Neural Information Processing Systems (NeurIPS). 2019.
     """
@@ -485,8 +484,7 @@ def gromov_1d2(u, v, log=False):
         Contains coupling and loss.
     References
     ----------
-    .. [27] Vayer Titouan, Flamary R{\'e}mi, Courty Nicolas, Tavenard Romain 
-        and Chapel Laetitia
+    .. [27] Vayer Titouan, Flamary R{\'e}mi, Courty Nicolas, Tavenard Romain and Chapel Laetitia
         "Sliced Gromov-Wasserstein"
         Advances in Neural Information Processing Systems (NeurIPS). 2019.
     """
@@ -531,8 +529,7 @@ def gromov_loss_1d(u, v):
         Gromov cost
     References
     ----------
-    .. [27] Vayer Titouan, Flamary R{\'e}mi, Courty Nicolas, Tavenard Romain 
-        and Chapel Laetitia
+    .. [27] Vayer Titouan, Flamary R{\'e}mi, Courty Nicolas, Tavenard Romain and Chapel Laetitia
         "Sliced Gromov-Wasserstein"
         Advances in Neural Information Processing Systems (NeurIPS). 2019.
     """
