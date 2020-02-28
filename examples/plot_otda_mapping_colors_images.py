@@ -77,7 +77,7 @@ Image_emd = minmax(mat2im(transp_Xs_emd, I1.shape))
 # SinkhornTransport
 ot_sinkhorn = ot.da.SinkhornTransport(reg_e=1e-1)
 ot_sinkhorn.fit(Xs=Xs, Xt=Xt)
-transp_Xs_sinkhorn = ot_emd.transform(Xs=X1)
+transp_Xs_sinkhorn = ot_sinkhorn.transform(Xs=X1)
 Image_sinkhorn = minmax(mat2im(transp_Xs_sinkhorn, I1.shape))
 
 ot_mapping_linear = ot.da.MappingTransport(

@@ -59,6 +59,9 @@ coverage.xml
 *.mo
 *.pot
 
+# xml
+*.xml
+
 # Django stuff:
 *.log
 local_settings.py
@@ -103,3 +106,15 @@ ENV/
 
 # coverage output folder
 cov_html/
+
+docs/source/modules/generated/*
+docs/source/_build/*
+
+# local debug folder
+debug
+
+# vscode parameters
+.vscode
+
+# pytest cahche
+.pytest_cache

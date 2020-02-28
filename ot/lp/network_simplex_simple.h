@@ -686,7 +686,7 @@ namespace lemon {
         /// \see resetParams(), reset()
         ProblemType run() {
 #if DEBUG_LVL>0
-            std::cout << "OPTIMAL = " << OPTIMAL << "\nINFEASIBLE = " << INFEASIBLE << "\nUNBOUNDED = " << UNBOUNDED << "\nMAX_ITER_REACHED" << MAX_ITER_REACHED\n";
+            std::cout << "OPTIMAL = " << OPTIMAL << "\nINFEASIBLE = " << INFEASIBLE << "\nUNBOUNDED = " << UNBOUNDED << "\nMAX_ITER_REACHED" << MAX_ITER_REACHED << "\n" ;
 #endif
 
             if (!init()) return INFEASIBLE;

@@ -4,6 +4,7 @@ Optimization algorithms for OT
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
+#         Titouan Vayer <titouan.vayer@irisa.fr>
 #
 # License: MIT License
 
@@ -25,14 +26,13 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
 
     Parameters
     ----------
-
-    f : function
+    f : callable
         loss function
-    xk : np.ndarray
+    xk : ndarray
         initial position
-    pk : np.ndarray
+    pk : ndarray
         descent direction
-    gfk : np.ndarray
+    gfk : ndarray
         gradient of f at xk
     old_fval : float
         loss value at xk
@@ -72,8 +72,70 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
     return alpha, fc[0], phi1
 
 
-def cg(a, b, M, reg, f, df, G0=None, numItermax=200,
-       stopThr=1e-9, verbose=False, log=False):
+def solve_linesearch(cost, G, deltaG, Mi, f_val,
+                     armijo=True, C1=None, C2=None, reg=None, Gc=None, constC=None, M=None):
+    """
+    Solve the linesearch in the FW iterations
+    Parameters
+    ----------
+    cost : method
+        Cost in the FW for the linesearch
+    G : ndarray, shape(ns,nt)
+        The transport map at a given iteration of the FW
+    deltaG : ndarray (ns,nt)
+        Difference between the optimal map found by linearization in the FW algorithm and the value at a given iteration
+    Mi : ndarray (ns,nt)
+        Cost matrix of the linearized transport problem. Corresponds to the gradient of the cost
+    f_val :  float
+        Value of the cost at G
+    armijo : bool, optional
+            If True the steps of the line-search is found via an armijo research. Else closed form is used.
+            If there is convergence issues use False.
+    C1 : ndarray (ns,ns), optional
+        Structure matrix in the source domain. Only used and necessary when armijo=False
+    C2 : ndarray (nt,nt), optional
+        Structure matrix in the target domain. Only used and necessary when armijo=False
+    reg : float, optional
+          Regularization parameter. Only used and necessary when armijo=False
+    Gc : ndarray (ns,nt)
+        Optimal map found by linearization in the FW algorithm. Only used and necessary when armijo=False
+    constC : ndarray (ns,nt)
+             Constant for the gromov cost. See [24]. Only used and necessary when armijo=False
+    M : ndarray (ns,nt), optional
+        Cost matrix between the features. Only used and necessary when armijo=False
+    Returns
+    -------
+    alpha : float
+            The optimal step size of the FW
+    fc : int
+         nb of function call. Useless here
+    f_val :  float
+             The value of the cost for the next iteration
+    References
+    ----------
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
+          and Courty Nicolas
+        "Optimal Transport for structured data with application on graphs"
+        International Conference on Machine Learning (ICML). 2019.
+    """
+    if armijo:
+        alpha, fc, f_val = line_search_armijo(cost, G, deltaG, Mi, f_val)
+    else:  # requires symetric matrices
+        dot1 = np.dot(C1, deltaG)
+        dot12 = dot1.dot(C2)
+        a = -2 * reg * np.sum(dot12 * deltaG)
+        b = np.sum((M + reg * constC) * deltaG) - 2 * reg * (np.sum(dot12 * G) + np.sum(np.dot(C1, G).dot(C2) * deltaG))
+        c = cost(G)
+
+        alpha = solve_1d_linesearch_quad(a, b, c)
+        fc = None
+        f_val = cost(G + alpha * deltaG)
+
+    return alpha, fc, f_val
+
+
+def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
+       stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, **kwargs):
     """
     Solve the general regularized OT problem with conditional gradient
 
@@ -98,24 +160,30 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200,
 
     Parameters
     ----------
-    a : np.ndarray (ns,)
+    a : ndarray, shape (ns,)
         samples weights in the source domain
-    b : np.ndarray (nt,)
+    b : ndarray, shape (nt,)
         samples in the target domain
-    M : np.ndarray (ns,nt)
+    M : ndarray, shape (ns, nt)
         loss matrix
     reg : float
         Regularization term >0
-    G0 :  np.ndarray (ns,nt), optional
+    G0 :  ndarray, shape (ns,nt), optional
         initial guess (default is indep joint density)
     numItermax : int, optional
         Max number of iterations
+    numItermaxEmd : int, optional
+        Max number of iterations for emd
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshol on the relative variation (>0)
+    stopThr2 : float, optional
+        Stop threshol on the absolute variation (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
         record log if True
+    **kwargs : dict
+             Parameters for linesearch
 
     Returns
     -------
@@ -157,9 +225,9 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200,
     it = 0
 
     if verbose:
-        print('{:5s}|{:12s}|{:8s}'.format(
-            'It.', 'Loss', 'Delta loss') + '\n' + '-' * 32)
-        print('{:5d}|{:8e}|{:8e}'.format(it, f_val, 0))
+        print('{:5s}|{:12s}|{:8s}|{:8s}'.format(
+            'It.', 'Loss', 'Relative loss', 'Absolute loss') + '\n' + '-' * 48)
+        print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, f_val, 0, 0))
 
     while loop:
 
@@ -172,12 +240,12 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200,
         Mi += Mi.min()
 
         # solve linear program
-        Gc = emd(a, b, Mi)
+        Gc = emd(a, b, Mi, numItermax=numItermaxEmd)
 
         deltaG = Gc - G
 
         # line search
-        alpha, fc, f_val = line_search_armijo(cost, G, deltaG, Mi, f_val)
+        alpha, fc, f_val = solve_linesearch(cost, G, deltaG, Mi, f_val, reg=reg, M=M, Gc=Gc, **kwargs)
 
         G = G + alpha * deltaG
 
@@ -185,8 +253,9 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200,
         if it >= numItermax:
             loop = 0
 
-        delta_fval = (f_val - old_fval) / abs(f_val)
-        if abs(delta_fval) < stopThr:
+        abs_delta_fval = abs(f_val - old_fval)
+        relative_delta_fval = abs_delta_fval / abs(f_val)
+        if relative_delta_fval < stopThr or abs_delta_fval < stopThr2:
             loop = 0
 
         if log:
@@ -194,9 +263,9 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200,
 
         if verbose:
             if it % 20 == 0:
-                print('{:5s}|{:12s}|{:8s}'.format(
-                    'It.', 'Loss', 'Delta loss') + '\n' + '-' * 32)
-            print('{:5d}|{:8e}|{:8e}'.format(it, f_val, delta_fval))
+                print('{:5s}|{:12s}|{:8s}|{:8s}'.format(
+                    'It.', 'Loss', 'Relative loss', 'Absolute loss') + '\n' + '-' * 48)
+            print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, f_val, relative_delta_fval, abs_delta_fval))
 
     if log:
         return G, log
@@ -205,7 +274,7 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200,
 
 
 def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
-        numInnerItermax=200, stopThr=1e-9, verbose=False, log=False):
+        numInnerItermax=200, stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False):
     """
     Solve the general regularized OT problem with the generalized conditional gradient
 
@@ -231,24 +300,26 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
 
     Parameters
     ----------
-    a : np.ndarray (ns,)
+    a : ndarray, shape (ns,)
         samples weights in the source domain
-    b : np.ndarray (nt,)
+    b : ndarrayv (nt,)
         samples in the target domain
-    M : np.ndarray (ns,nt)
+    M : ndarray, shape (ns, nt)
         loss matrix
     reg1 : float
         Entropic Regularization term >0
     reg2 : float
         Second Regularization term >0
-    G0 :  np.ndarray (ns,nt), optional
+    G0 : ndarray, shape (ns, nt), optional
         initial guess (default is indep joint density)
     numItermax : int, optional
         Max number of iterations
     numInnerItermax : int, optional
         Max number of iterations of Sinkhorn
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshol on the relative variation (>0)
+    stopThr2 : float, optional
+        Stop threshol on the absolute variation (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -256,15 +327,13 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
 
     Returns
     -------
-    gamma : (ns x nt) ndarray
+    gamma : ndarray, shape (ns, nt)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
 
-
     References
     ----------
-
     .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, "Optimal Transport for Domain Adaptation," in IEEE Transactions on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
     .. [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized conditional gradient: analysis of convergence and applications. arXiv preprint arXiv:1510.06567.
 
@@ -294,9 +363,9 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
     it = 0
 
     if verbose:
-        print('{:5s}|{:12s}|{:8s}'.format(
-            'It.', 'Loss', 'Delta loss') + '\n' + '-' * 32)
-        print('{:5d}|{:8e}|{:8e}'.format(it, f_val, 0))
+        print('{:5s}|{:12s}|{:8s}|{:8s}'.format(
+            'It.', 'Loss', 'Relative loss', 'Absolute loss') + '\n' + '-' * 48)
+        print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, f_val, 0, 0))
 
     while loop:
 
@@ -322,8 +391,10 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
         if it >= numItermax:
             loop = 0
 
-        delta_fval = (f_val - old_fval) / abs(f_val)
-        if abs(delta_fval) < stopThr:
+        abs_delta_fval = abs(f_val - old_fval)
+        relative_delta_fval = abs_delta_fval / abs(f_val)
+
+        if relative_delta_fval < stopThr or abs_delta_fval < stopThr2:
             loop = 0
 
         if log:
@@ -331,11 +402,41 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
 
         if verbose:
             if it % 20 == 0:
-                print('{:5s}|{:12s}|{:8s}'.format(
-                    'It.', 'Loss', 'Delta loss') + '\n' + '-' * 32)
-            print('{:5d}|{:8e}|{:8e}'.format(it, f_val, delta_fval))
+                print('{:5s}|{:12s}|{:8s}|{:8s}'.format(
+                    'It.', 'Loss', 'Relative loss', 'Absolute loss') + '\n' + '-' * 48)
+            print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, f_val, relative_delta_fval, abs_delta_fval))
 
     if log:
         return G, log
     else:
         return G
+
+
+def solve_1d_linesearch_quad(a, b, c):
+    """
+    For any convex or non-convex 1d quadratic function f, solve on [0,1] the following problem:
+    .. math::
+        \argmin f(x)=a*x^{2}+b*x+c
+
+    Parameters
+    ----------
+    a,b,c : float
+        The coefficients of the quadratic function
+
+    Returns
+    -------
+    x : float
+        The optimal value which leads to the minimal cost
+    """
+    f0 = c
+    df0 = b
+    f1 = a + f0 + df0
+
+    if a > 0:  # convex
+        minimum = min(1, max(0, np.divide(-b, 2.0 * a)))
+        return minimum
+    else:  # non convex
+        if f0 > f1:
+            return 1
+        else:
+            return 0

@@ -6,6 +6,7 @@ Domain adaptation with optimal transport
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Nicolas Courty <ncourty@irisa.fr>
 #         Michael Perrot <michael.perrot@univ-st-etienne.fr>
+#         Nathalie Gayraud <nat.gayraud@gmail.com>
 #
 # License: MIT License
 
@@ -16,6 +17,7 @@ from .bregman import sinkhorn
 from .lp import emd
 from .utils import unif, dist, kernel, cost_normalization
 from .utils import check_params, BaseEstimator
+from .unbalanced import sinkhorn_unbalanced
 from .optim import cg
 from .optim import gcg
 
@@ -41,15 +43,15 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
     where :
 
     - M is the (ns,nt) metric cost matrix
-    - :math:`\Omega_e` is the entropic regularization term
-        :math:`\Omega_e(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - :math:`\Omega_g` is the group lasso  regulaization term
+    - :math:`\Omega_e` is the entropic regularization term :math:`\Omega_e
+      (\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\Omega_g` is the group lasso  regularization term
       :math:`\Omega_g(\gamma)=\sum_{i,c} \|\gamma_{i,\mathcal{I}_c}\|^{1/2}_1`
       where  :math:`\mathcal{I}_c` are the index of samples from class c
       in the source domain.
     - a and b are source and target weights (sum to 1)
 
-    The algorithm used for solving the problem is the generalised conditional
+    The algorithm used for solving the problem is the generalized conditional
     gradient as proposed in  [5]_ [7]_
 
 
@@ -473,22 +475,24 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
         Weight for the linear OT loss (>0)
     eta : float, optional
         Regularization term  for the linear mapping L (>0)
-    bias : bool,optional
-        Estimate linear mapping with constant bias
     kerneltype : str,optional
         kernel used by calling function ot.utils.kernel (gaussian by default)
     sigma : float, optional
         Gaussian kernel bandwidth.
+    bias : bool,optional
+        Estimate linear mapping with constant bias
+    verbose : bool, optional
+        Print information along iterations
+    verbose2 : bool, optional
+        Print information along iterations
     numItermax : int, optional
         Max number of BCD iterations
-    stopThr : float, optional
-        Stop threshold on relative loss decrease (>0)
     numInnerItermax : int, optional
         Max number of iterations (inner CG solver)
     stopInnerThr : float, optional
         Stop threshold on error (inner CG solver) (>0)
-    verbose : bool, optional
-        Print information along iterations
+    stopThr : float, optional
+        Stop threshold on relative loss decrease (>0)
     log : bool, optional
         record log if True
 
@@ -643,7 +647,8 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
     The function estimates the optimal linear operator that aligns the two
     empirical distributions. This is equivalent to estimating the closed
     form mapping between two Gaussian distributions :math:`N(\mu_s,\Sigma_s)`
-    and :math:`N(\mu_t,\Sigma_t)` as proposed in [14] and discussed in remark 2.29 in [15].
+    and :math:`N(\mu_t,\Sigma_t)` as proposed in [14] and discussed in remark
+    2.29 in [15].
 
     The linear operator from source to target :math:`M`
 
@@ -1184,25 +1189,25 @@ class SinkhornTransport(BaseTransport):
         algorithm if no it has not converged
     tol : float, optional (default=10e-9)
         The precision required to stop the optimization algorithm.
-    mapping : string, optional (default="barycentric")
-        The kind of mapping to apply to transport samples from a domain into
-        another one.
-        if "barycentric" only the samples used to estimate the coupling can
-        be transported from a domain to another one.
+    verbose : bool, optional (default=False)
+        Controls the verbosity of the optimization algorithm
+    log : int, optional (default=False)
+        Controls the logs of the optimization algorithm
     metric : string, optional (default="sqeuclidean")
         The ground metric for the Wasserstein problem
     norm : string, optional (default=None)
         If given, normalize the ground metric to avoid numerical errors that
         can occur with large metric values.
-    distribution : string, optional (default="uniform")
+    distribution_estimation : callable, optional (defaults to the uniform)
         The kind of distribution estimation to employ
-    verbose : int, optional (default=0)
-        Controls the verbosity of the optimization algorithm
-    log : int, optional (default=0)
-        Controls the logs of the optimization algorithm
+    out_of_sample_map : string, optional (default="ferradans")
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
+        "ferradans" which uses the method proposed in [6].
     limit_max: float, optional (defaul=np.infty)
         Controls the semi supervised mode. Transport between labeled source
-        and target samples of different classes will exhibit an infinite cost
+        and target samples of different classes will exhibit an cost defined
+        by this variable
 
     Attributes
     ----------
@@ -1287,22 +1292,19 @@ class EMDTransport(BaseTransport):
 
     Parameters
     ----------
-    mapping : string, optional (default="barycentric")
-        The kind of mapping to apply to transport samples from a domain into
-        another one.
-        if "barycentric" only the samples used to estimate the coupling can
-        be transported from a domain to another one.
     metric : string, optional (default="sqeuclidean")
         The ground metric for the Wasserstein problem
     norm : string, optional (default=None)
         If given, normalize the ground metric to avoid numerical errors that
         can occur with large metric values.
-    distribution : string, optional (default="uniform")
-        The kind of distribution estimation to employ
-    verbose : int, optional (default=0)
-        Controls the verbosity of the optimization algorithm
-    log : int, optional (default=0)
+    log : int, optional (default=False)
         Controls the logs of the optimization algorithm
+    distribution_estimation : callable, optional (defaults to the uniform)
+        The kind of distribution estimation to employ
+    out_of_sample_map : string, optional (default="ferradans")
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
+        "ferradans" which uses the method proposed in [6].
     limit_max: float, optional (default=10)
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit an infinite cost
@@ -1387,28 +1389,32 @@ class SinkhornLpl1Transport(BaseTransport):
         Entropic regularization parameter
     reg_cl : float, optional (default=0.1)
         Class regularization parameter
-    mapping : string, optional (default="barycentric")
-        The kind of mapping to apply to transport samples from a domain into
-        another one.
-        if "barycentric" only the samples used to estimate the coupling can
-        be transported from a domain to another one.
-    metric : string, optional (default="sqeuclidean")
-        The ground metric for the Wasserstein problem
-    norm : string, optional (default=None)
-        If given, normalize the ground metric to avoid numerical errors that
-        can occur with large metric values.
-    distribution : string, optional (default="uniform")
-        The kind of distribution estimation to employ
     max_iter : int, float, optional (default=10)
         The minimum number of iteration before stopping the optimization
         algorithm if no it has not converged
     max_inner_iter : int, float, optional (default=200)
         The number of iteration in the inner loop
-    verbose : int, optional (default=0)
+    log : bool, optional (default=False)
+        Controls the logs of the optimization algorithm
+    tol : float, optional (default=10e-9)
+        Stop threshold on error (inner sinkhorn solver) (>0)
+    verbose : bool, optional (default=False)
         Controls the verbosity of the optimization algorithm
+    metric : string, optional (default="sqeuclidean")
+        The ground metric for the Wasserstein problem
+    norm : string, optional (default=None)
+        If given, normalize the ground metric to avoid numerical errors that
+        can occur with large metric values.
+    distribution_estimation : callable, optional (defaults to the uniform)
+        The kind of distribution estimation to employ
+    out_of_sample_map : string, optional (default="ferradans")
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
+        "ferradans" which uses the method proposed in [6].
     limit_max: float, optional (defaul=np.infty)
         Controls the semi supervised mode. Transport between labeled source
-        and target samples of different classes will exhibit an infinite cost
+        and target samples of different classes will exhibit a cost defined by
+        limit_max.
 
     Attributes
     ----------
@@ -1504,27 +1510,28 @@ class SinkhornL1l2Transport(BaseTransport):
         Entropic regularization parameter
     reg_cl : float, optional (default=0.1)
         Class regularization parameter
-    mapping : string, optional (default="barycentric")
-        The kind of mapping to apply to transport samples from a domain into
-        another one.
-        if "barycentric" only the samples used to estimate the coupling can
-        be transported from a domain to another one.
-    metric : string, optional (default="sqeuclidean")
-        The ground metric for the Wasserstein problem
-    norm : string, optional (default=None)
-        If given, normalize the ground metric to avoid numerical errors that
-        can occur with large metric values.
-    distribution : string, optional (default="uniform")
-        The kind of distribution estimation to employ
     max_iter : int, float, optional (default=10)
         The minimum number of iteration before stopping the optimization
         algorithm if no it has not converged
     max_inner_iter : int, float, optional (default=200)
         The number of iteration in the inner loop
-    verbose : int, optional (default=0)
+    tol : float, optional (default=10e-9)
+        Stop threshold on error (inner sinkhorn solver) (>0)
+    verbose : bool, optional (default=False)
         Controls the verbosity of the optimization algorithm
-    log : int, optional (default=0)
+    log : bool, optional (default=False)
         Controls the logs of the optimization algorithm
+    metric : string, optional (default="sqeuclidean")
+        The ground metric for the Wasserstein problem
+    norm : string, optional (default=None)
+        If given, normalize the ground metric to avoid numerical errors that
+        can occur with large metric values.
+    distribution_estimation : callable, optional (defaults to the uniform)
+        The kind of distribution estimation to employ
+    out_of_sample_map : string, optional (default="ferradans")
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
+        "ferradans" which uses the method proposed in [6].
     limit_max: float, optional (default=10)
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit an infinite cost
@@ -1646,10 +1653,12 @@ class MappingTransport(BaseEstimator):
         Max number of iterations (inner CG solver)
     inner_tol : float, optional (default=1e-6)
         Stop threshold on error (inner CG solver) (>0)
-    verbose : bool, optional (default=False)
-        Print information along iterations
     log : bool, optional (default=False)
         record log if True
+    verbose : bool, optional (default=False)
+        Print information along iterations
+    verbose2 : bool, optional (default=False)
+        Print information along iterations
 
     Attributes
     ----------
@@ -1786,3 +1795,122 @@ class MappingTransport(BaseEstimator):
                 transp_Xs = K.dot(self.mapping_)
 
             return transp_Xs
+
+
+class UnbalancedSinkhornTransport(BaseTransport):
+
+    """Domain Adapatation unbalanced OT method based on sinkhorn algorithm
+
+    Parameters
+    ----------
+    reg_e : float, optional (default=1)
+        Entropic regularization parameter
+    reg_m : float, optional (default=0.1)
+        Mass regularization parameter
+    method : str
+        method used for the solver either 'sinkhorn',  'sinkhorn_stabilized' or
+        'sinkhorn_epsilon_scaling', see those function for specific parameters
+    max_iter : int, float, optional (default=10)
+        The minimum number of iteration before stopping the optimization
+        algorithm if no it has not converged
+    tol : float, optional (default=10e-9)
+        Stop threshold on error (inner sinkhorn solver) (>0)
+    verbose : bool, optional (default=False)
+        Controls the verbosity of the optimization algorithm
+    log : bool, optional (default=False)
+        Controls the logs of the optimization algorithm
+    metric : string, optional (default="sqeuclidean")
+        The ground metric for the Wasserstein problem
+    norm : string, optional (default=None)
+        If given, normalize the ground metric to avoid numerical errors that
+        can occur with large metric values.
+    distribution_estimation : callable, optional (defaults to the uniform)
+        The kind of distribution estimation to employ
+    out_of_sample_map : string, optional (default="ferradans")
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
+        "ferradans" which uses the method proposed in [6].
+    limit_max: float, optional (default=10)
+        Controls the semi supervised mode. Transport between labeled source
+        and target samples of different classes will exhibit an infinite cost
+        (10 times the maximum value of the cost matrix)
+
+    Attributes
+    ----------
+    coupling_ : array-like, shape (n_source_samples, n_target_samples)
+        The optimal coupling
+    log_ : dictionary
+        The dictionary of log, empty dic if parameter log is not True
+
+    References
+    ----------
+
+    .. [1] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016).
+    Scaling algorithms for unbalanced transport problems. arXiv preprint
+    arXiv:1607.05816.
+
+    """
+
+    def __init__(self, reg_e=1., reg_m=0.1, method='sinkhorn',
+                 max_iter=10, tol=1e-9, verbose=False, log=False,
+                 metric="sqeuclidean", norm=None,
+                 distribution_estimation=distribution_estimation_uniform,
+                 out_of_sample_map='ferradans', limit_max=10):
+
+        self.reg_e = reg_e
+        self.reg_m = reg_m
+        self.method = method
+        self.max_iter = max_iter
+        self.tol = tol
+        self.verbose = verbose
+        self.log = log
+        self.metric = metric
+        self.norm = norm
+        self.distribution_estimation = distribution_estimation
+        self.out_of_sample_map = out_of_sample_map
+        self.limit_max = limit_max
+
+    def fit(self, Xs, ys=None, Xt=None, yt=None):
+        """Build a coupling matrix from source and target sets of samples
+        (Xs, ys) and (Xt, yt)
+
+        Parameters
+        ----------
+        Xs : array-like, shape (n_source_samples, n_features)
+            The training input samples.
+        ys : array-like, shape (n_source_samples,)
+            The class labels
+        Xt : array-like, shape (n_target_samples, n_features)
+            The training input samples.
+        yt : array-like, shape (n_target_samples,)
+            The class labels. If some target samples are unlabeled, fill the
+            yt's elements with -1.
+
+            Warning: Note that, due to this convention -1 cannot be used as a
+            class label
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
+        # check the necessary inputs parameters are here
+        if check_params(Xs=Xs, Xt=Xt):
+
+            super(UnbalancedSinkhornTransport, self).fit(Xs, ys, Xt, yt)
+
+            returned_ = sinkhorn_unbalanced(
+                a=self.mu_s, b=self.mu_t, M=self.cost_,
+                reg=self.reg_e, reg_m=self.reg_m, method=self.method,
+                numItermax=self.max_iter, stopThr=self.tol,
+                verbose=self.verbose, log=self.log)
+
+            # deal with the value of log
+            if self.log:
+                self.coupling_, self.log_ = returned_
+            else:
+                self.coupling_ = returned_
+                self.log_ = dict()
+
+        return self

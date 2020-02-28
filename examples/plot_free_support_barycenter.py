@@ -62,7 +62,7 @@ X = ot.lp.free_support_barycenter(measures_locations, measures_weights, X_init, 
 pl.figure(1)
 for (x_i, b_i) in zip(measures_locations, measures_weights):
     color = np.random.randint(low=1, high=10 * N)
-    pl.scatter(x_i[:, 0], x_i[:, 1], s=b * 1000, label='input measure')
+    pl.scatter(x_i[:, 0], x_i[:, 1], s=b_i * 1000, label='input measure')
 pl.scatter(X[:, 0], X[:, 1], s=b * 1000, c='black', marker='^', label='2-Wasserstein barycenter')
 pl.title('Data measures and their barycenter')
 pl.legend(loc=0)

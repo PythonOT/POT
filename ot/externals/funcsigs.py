@@ -126,8 +126,8 @@ def signature(obj):
                 new_params[arg_name] = param.replace(default=arg_value,
                                                      _partial_kwarg=True)
 
-            elif (param.kind not in (_VAR_KEYWORD, _VAR_POSITIONAL) and
-                  not param._partial_kwarg):
+            elif (param.kind not in (_VAR_KEYWORD, _VAR_POSITIONAL)
+                  and not param._partial_kwarg):
                 new_params.pop(arg_name)
 
         return sig.replace(parameters=new_params.values())
@@ -333,11 +333,11 @@ class Parameter(object):
         raise TypeError(msg)
 
     def __eq__(self, other):
-        return (issubclass(other.__class__, Parameter) and
-                self._name == other._name and
-                self._kind == other._kind and
-                self._default == other._default and
-                self._annotation == other._annotation)
+        return (issubclass(other.__class__, Parameter)
+                and self._name == other._name
+                and self._kind == other._kind
+                and self._default == other._default
+                and self._annotation == other._annotation)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -372,8 +372,8 @@ class BoundArguments(object):
     def args(self):
         args = []
         for param_name, param in self._signature.parameters.items():
-            if (param.kind in (_VAR_KEYWORD, _KEYWORD_ONLY) or
-                    param._partial_kwarg):
+            if (param.kind in (_VAR_KEYWORD, _KEYWORD_ONLY)
+                    or param._partial_kwarg):
                 # Keyword arguments mapped by 'functools.partial'
                 # (Parameter._partial_kwarg is True) are mapped
                 # in 'BoundArguments.kwargs', along with VAR_KEYWORD &
@@ -402,8 +402,8 @@ class BoundArguments(object):
         kwargs_started = False
         for param_name, param in self._signature.parameters.items():
             if not kwargs_started:
-                if (param.kind in (_VAR_KEYWORD, _KEYWORD_ONLY) or
-                        param._partial_kwarg):
+                if (param.kind in (_VAR_KEYWORD, _KEYWORD_ONLY)
+                        or param._partial_kwarg):
                     kwargs_started = True
                 else:
                     if param_name not in self.arguments:
@@ -432,9 +432,9 @@ class BoundArguments(object):
         raise TypeError(msg)
 
     def __eq__(self, other):
-        return (issubclass(other.__class__, BoundArguments) and
-                self.signature == other.signature and
-                self.arguments == other.arguments)
+        return (issubclass(other.__class__, BoundArguments)
+                and self.signature == other.signature
+                and self.arguments == other.arguments)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -612,9 +612,9 @@ class Signature(object):
         raise TypeError(msg)
 
     def __eq__(self, other):
-        if (not issubclass(type(other), Signature) or
-            self.return_annotation != other.return_annotation or
-                len(self.parameters) != len(other.parameters)):
+        if (not issubclass(type(other), Signature)
+            or self.return_annotation != other.return_annotation
+                or len(self.parameters) != len(other.parameters)):
             return False
 
         other_positions = dict((param, idx)
@@ -635,8 +635,8 @@ class Signature(object):
                 except KeyError:
                     return False
                 else:
-                    if (idx != other_idx or
-                            param != other.parameters[param_name]):
+                    if (idx != other_idx
+                            or param != other.parameters[param_name]):
                         return False
 
         return True
@@ -688,8 +688,8 @@ class Signature(object):
                             raise TypeError(msg)
                         parameters_ex = (param,)
                         break
-                    elif (param.kind == _VAR_KEYWORD or
-                          param.default is not _empty):
+                    elif (param.kind == _VAR_KEYWORD
+                          or param.default is not _empty):
                         # That's fine too - we have a default value for this
                         # parameter.  So, lets start parsing `kwargs`, starting
                         # with the current parameter
@@ -755,8 +755,8 @@ class Signature(object):
                 # if it has a default value, or it is an '*args'-like
                 # parameter, left alone by the processing of positional
                 # arguments.
-                if (not partial and param.kind != _VAR_POSITIONAL and
-                        param.default is _empty):
+                if (not partial and param.kind != _VAR_POSITIONAL
+                        and param.default is _empty):
                     raise TypeError('{arg!r} parameter lacking default value'.
                                     format(arg=param_name))
 

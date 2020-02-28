@@ -70,17 +70,6 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
     log : dict
         log dictionary return only if log==True in parameters
 
-    Examples
-    --------
-
-    >>> import ot
-    >>> a=[.5,.5]
-    >>> b=[.5,.5]
-    >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.sinkhorn(a,b,M,1)
-    array([[ 0.36552929,  0.13447071],
-           [ 0.13447071,  0.36552929]])
-
 
     References
     ----------
