@@ -455,12 +455,13 @@ def gromov_1d(u, v, log=False):
     l2 = gromov_loss_1d(u2, v_desc)
     cost = min(l1, l2)
     log_gw['gw_dist'] = cost
-    if min(l1, l2) == l1:
-        T = np.eye(u.shape[0], u.shape[0]) / u.shape[0]
-        log_gw['T'] = T[idx_v][idx_u]
-    else:
-        T = np.fliplr(np.eye(u.shape[0], u.shape[0])) / u.shape[0]
-        log_gw['T'] = T[idx_u][idx_v]
+    T = np.zeros((u.shape[0], u.shape[0]))
+    if min(l1, l2) == l1:  # the identity is the optimal coupling
+        T[idx_u, idx_v] = 1 / u.shape[0]
+        log_gw['T'] = T
+    else:  # the anti identity is the optimal coupling
+        T[idx_u, idx_v[::-1]] = 1 / u.shape[0]
+        log_gw['T'] = T
     if log:
         return log_gw['T'], log_gw
     else:
@@ -503,12 +504,13 @@ def gromov_1d2(u, v, log=False):
     l2 = gromov_loss_1d(u2, v_desc)
     cost = min(l1, l2)
     log_gw['gw_dist'] = cost
-    if min(l1, l2) == l1:
-        T = np.eye(u.shape[0], u.shape[0]) / u.shape[0]
-        log_gw['T'] = T[idx_v][idx_u]
-    else:
-        T = np.fliplr(np.eye(u.shape[0], u.shape[0])) / u.shape[0]
-        log_gw['T'] = T[idx_u][idx_v]
+    T = np.zeros((u.shape[0], u.shape[0]))
+    if min(l1, l2) == l1:  # the identity is the optimal coupling
+        T[idx_u, idx_v] = 1 / u.shape[0]
+        log_gw['T'] = T
+    else:  # the anti identity is the optimal coupling
+        T[idx_u, idx_v[::-1]] = 1 / u.shape[0]
+        log_gw['T'] = T
     if log:
         return cost, log_gw
     else:

@@ -272,6 +272,7 @@ def test_gromov_1d():
 
     # Test GW 1d better than GW POT
     all_good = []
+    its_all_good_man = False
     for n in range(3, 100):
         ns = n
         nt = n
@@ -289,4 +290,33 @@ def test_gromov_1d():
 
     all_good = np.array(all_good)
 
-    assert np.max(all_good[all_good >= 0]) <= 1e-14
+    if len(all_good) == 0:
+        its_all_good_man = True
+    elif np.max(all_good[all_good >= 0]) <= 1e-14:
+        its_all_good_man = True
+
+    assert its_all_good_man
+
+    # Chek if the OT plan return by gromov_1d is the good one
+    all_good = []
+    its_all_good_man = False
+    for repeat in range(100):
+        ns = 5
+        nt = 5
+        xs_alea = np.random.randn(ns, 1)
+        xt_alea = np.random.randn(nt, 1)
+        T_1d, log_1d = ot.gromov.gromov_1d(xs_alea.ravel(), xt_alea.ravel(), log=True)
+
+        C1 = ot.dist(xs_alea, metric='sqeuclidean')
+        C2 = ot.dist(xt_alea, metric='sqeuclidean')
+        p = np.ones(C1.shape[0]) / C1.shape[0]
+        q = np.ones(C2.shape[0]) / C2.shape[0]
+
+        constC, hC1, hC2 = ot.gromov.init_matrix(C1, C2, p, q, 'square_loss')
+        d_1D = ot.gromov.gwloss(constC, hC1, hC2, T_1d)
+        d_true_1D = log_1d['gw_dist']
+
+        all_good.append(np.abs(d_1D - d_true_1D))
+
+    all_good = np.array(all_good)
+    assert np.all(all_good <= 1e-13)
