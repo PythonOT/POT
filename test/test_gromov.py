@@ -297,7 +297,6 @@ def test_gromov_1d():
 
     assert its_all_good_man
 
-    # Chek if the OT plan return by gromov_1d is the good one
     all_good = []
     its_all_good_man = False
     for repeat in range(100):
