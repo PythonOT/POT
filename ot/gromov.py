@@ -457,10 +457,10 @@ def gromov_1d(u, v, log=False):
     log_gw['gw_dist'] = cost
     T = np.zeros((u.shape[0], u.shape[0]))
     if min(l1, l2) == l1:  # the identity is the optimal coupling
-        T[idx_u, idx_v] = 1 / u.shape[0]
+        T[idx_u, idx_v] = 1. / u.shape[0]
         log_gw['T'] = T
     else:  # the anti identity is the optimal coupling
-        T[idx_u, idx_v[::-1]] = 1 / u.shape[0]
+        T[idx_u, idx_v[::-1]] = 1. / u.shape[0]
         log_gw['T'] = T
     if log:
         return log_gw['T'], log_gw
@@ -506,10 +506,10 @@ def gromov_1d2(u, v, log=False):
     log_gw['gw_dist'] = cost
     T = np.zeros((u.shape[0], u.shape[0]))
     if min(l1, l2) == l1:  # the identity is the optimal coupling
-        T[idx_u, idx_v] = 1 / u.shape[0]
+        T[idx_u, idx_v] = 1. / u.shape[0]
         log_gw['T'] = T
     else:  # the anti identity is the optimal coupling
-        T[idx_u, idx_v[::-1]] = 1 / u.shape[0]
+        T[idx_u, idx_v[::-1]] = 1. / u.shape[0]
         log_gw['T'] = T
     if log:
         return cost, log_gw
@@ -559,7 +559,7 @@ def gromov_loss_1d(u, v):
     power4_x = 2 * n * X4 - 8 * X3 * X + 6 * X2**2
     power4_y = 2 * n * Y4 - 8 * Y3 * Y + 6 * Y2**2
 
-    cost = (1 / (n**2)) * (power4_x + power4_y - 2 * C2)
+    cost = (1. / (n**2)) * (power4_x + power4_y - 2 * C2)
 
     return cost
 
