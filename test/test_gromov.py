@@ -256,19 +256,19 @@ def test_gromov_1d():
     u = np.array([1, 0, 4])
     v = np.array([1, 4, 0])
     cost_gw1D = ot.gromov.gromov_1d2(u, v)
-    T = ot.gromov.gromov_1d(u, v)
+    T = ot.gromov.gromov_1d(u, v, dense=False)
 
     assert cost_gw1D == 0
-    assert ot.gromov.gromov_loss_1d(np.dot(u, 3 * T), v) == 0
+    assert ot.gromov.gromov_loss_sorted_1d(np.dot(u, 3 * T), v) == 0
 
     # Test for anti diag
     u = np.array([1, 0, 4])
     v = np.array([-1, 2, 3])
     cost_gw1D = ot.gromov.gromov_1d2(u, v)
-    T = ot.gromov.gromov_1d(u, v)
+    T = ot.gromov.gromov_1d(u, v, dense=False)
 
     assert cost_gw1D == 0
-    assert ot.gromov.gromov_loss_1d(np.dot(u, 3 * T), v) == 0
+    assert ot.gromov.gromov_loss_sorted_1d(np.dot(u, 3 * T), v) == 0
 
     # Test GW 1d better than GW POT
     all_good = []
@@ -278,7 +278,7 @@ def test_gromov_1d():
         nt = n
         xs_alea = np.random.randn(ns, 1)
         xt_alea = np.random.randn(nt, 1)
-        T_1d, log_1d = ot.gromov.gromov_1d(xs_alea.ravel(), xt_alea.ravel(), log=True)
+        T_1d, log_1d = ot.gromov.gromov_1d(xs_alea.ravel(), xt_alea.ravel(), log=True, dense=False)
 
         C1 = ot.dist(xs_alea, metric='sqeuclidean')
         C2 = ot.dist(xt_alea, metric='sqeuclidean')
@@ -305,7 +305,7 @@ def test_gromov_1d():
         nt = 5
         xs_alea = np.random.randn(ns, 1)
         xt_alea = np.random.randn(nt, 1)
-        T_1d, log_1d = ot.gromov.gromov_1d(xs_alea.ravel(), xt_alea.ravel(), log=True)
+        T_1d, log_1d = ot.gromov.gromov_1d(xs_alea.ravel(), xt_alea.ravel(), log=True, dense=False)
 
         C1 = ot.dist(xs_alea, metric='sqeuclidean')
         C2 = ot.dist(xt_alea, metric='sqeuclidean')

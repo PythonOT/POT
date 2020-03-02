@@ -670,6 +670,12 @@ There also exists an entropic regularized variant of GW that has been proposed i
 [12]_ and we provide an implementation of their algorithm in
 :any:`ot.gromov.entropic_gromov_wasserstein`.
 
+Interestingly this optimization problem has a closed form expression for 1d distributions with the same number of atoms (akin to the Wasserstein distance). It was shown in [26]_ that minimizing: 
+
+.. math::
+    GW_1d = \min_\sigma \sum_{i,j=1}^{n} ((u_i-u_j)^2-(v_{\sigma(i)}-v_{\sigma(i))}^2)^2
+where :math:`\sigma` is a permutation can be done in :math:`O(n\log(n))` and solves the GW distance for 1d distributions. We provide the algorithmic solution in :any:`ot.gromov.gromov_1d`.
+
 Note that similarly to Wasserstein distance GW allows for the definition of GW
 barycenters that can be expressed as
 
@@ -921,3 +927,6 @@ References
 .. [25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. :
     Learning with a Wasserstein Loss,  Advances in Neural Information
     Processing Systems (NIPS) 2015
+
+.. [26] Vayer, T., Flamary, R., Courty, N., R., Tavenard and Chapel, L. 
+    (2019). 'Sliced Gromov-Wasserstein'<https://papers.nips.cc/paper/9615-sliced-gromov-wasserstein>'__ Advances in Neural Information Processing Systems 33 (NeurIPS).

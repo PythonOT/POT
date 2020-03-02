@@ -16,6 +16,7 @@ import numpy as np
 from .bregman import sinkhorn
 from .utils import dist, UndefinedParameter
 from .optim import cg
+from scipy.sparse import coo_matrix
 
 
 def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
@@ -419,9 +420,16 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwarg
         return log_gw['gw_dist']
 
 
-def gromov_1d(u, v, log=False):
-    """ Returns the Gromov-Wasserstein distance between 1d measures and
-    returns the OT matrix and the associated cost (eq (2) in [27])
+def gromov_1d(u, v, log=False, dense=True):
+    """ Returns the Gromov-Wasserstein coupling between 1d measures (eq (2) in [27])
+
+    The function solves the following optimization problem:
+
+    .. math::
+        GW_1d = \min_\sigma \sum_{i,j=1}^{n} ((u_i-u_j)^2-(v_{\sigma(i)}-v_{\sigma(i))}^2)^2
+    where :math:`\sigma` is a permutation. The solution can be found in :math:`O(n\log(n))` and solves the GW distance 
+    for 1d distributions with the same number of atoms.
+
     Parameters
     ----------
     u : (ns,) ndarray, float64
@@ -430,10 +438,14 @@ def gromov_1d(u, v, log=False):
         Target dirac locations (on the real line)
     Returns
     -------
-    T : ndarray, shape (ns, nt)
-        Optimal coupling between the two spaces that minimizes the Gromov-Wasserstein distance.
+    G : ndarray, shape (ns, nt)
+        Optimal coupling math:`\gamma` between the two spaces that minimizes the Gromov-Wasserstein distance.
     log : dict
         Contains coupling and loss.
+    dense: boolean, optional (default=True)
+        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
+        Otherwise returns a sparse representation using scipy's `coo_matrix`
+        format.
     References
     ----------
     .. [27] Vayer Titouan, Flamary R{\'e}mi, Courty Nicolas, Tavenard Romain and Chapel Laetitia
@@ -451,26 +463,33 @@ def gromov_1d(u, v, log=False):
 
     v_asc = v[idx_v]
     v_desc = v_asc[::-1]
-    l1 = gromov_loss_1d(u2, v_asc)
-    l2 = gromov_loss_1d(u2, v_desc)
+    l1 = gromov_loss_sorted_1d(u2, v_asc)
+    l2 = gromov_loss_sorted_1d(u2, v_desc)
     cost = min(l1, l2)
     log_gw['gw_dist'] = cost
-    T = np.zeros((u.shape[0], u.shape[0]))
     if min(l1, l2) == l1:  # the identity is the optimal coupling
-        T[idx_u, idx_v] = 1. / u.shape[0]
-        log_gw['T'] = T
+        G = coo_matrix((np.repeat(1. / u.shape[0], u.shape[0]), (idx_u, idx_v)))
     else:  # the anti identity is the optimal coupling
-        T[idx_u, idx_v[::-1]] = 1. / u.shape[0]
-        log_gw['T'] = T
+        G = coo_matrix((np.repeat(1. / u.shape[0], u.shape[0]), (idx_u, idx_v[::-1])))
+    if not dense:
+        G = G.toarray()
+    log_gw['G'] = G
     if log:
-        return log_gw['T'], log_gw
+        return log_gw['G'], log_gw
     else:
-        return log_gw['T']
+        return log_gw['G']
 
 
-def gromov_1d2(u, v, log=False):
-    """ Returns the Gromov-Wasserstein distance between 1d measures and
-    returns the OT matrix and the associated cost (eq (2) in [27])
+def gromov_1d2(u, v, log=False, dense=True):
+    """ Returns the Gromov-Wasserstein distance between 1d measures (eq (2) in [27])
+
+    The function solves the following optimization problem:
+
+    .. math::
+        GW_1d = \min_\sigma \sum_{i,j=1}^{n} ((u_i-u_j)^2-(v_{\sigma(i)}-v_{\sigma(i))}^2)^2
+    where :math:`\sigma` is a permutation. The solution can be found in :math:`O(n\log(n))` and solves the GW distance 
+    for 1d distributions with the same number of atoms.
+
     Parameters
     ----------
     u : (ns,) ndarray, float64
@@ -483,6 +502,10 @@ def gromov_1d2(u, v, log=False):
         cost associated to the optimal transportation
     log : dict
         Contains coupling and loss.
+    dense: boolean, optional (default=True)
+        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
+        Otherwise returns a sparse representation using scipy's `coo_matrix`
+        format.
     References
     ----------
     .. [27] Vayer Titouan, Flamary R{\'e}mi, Courty Nicolas, Tavenard Romain and Chapel Laetitia
@@ -500,31 +523,37 @@ def gromov_1d2(u, v, log=False):
 
     v_asc = v[idx_v]
     v_desc = v_asc[::-1]
-    l1 = gromov_loss_1d(u2, v_asc)
-    l2 = gromov_loss_1d(u2, v_desc)
+    l1 = gromov_loss_sorted_1d(u2, v_asc)
+    l2 = gromov_loss_sorted_1d(u2, v_desc)
     cost = min(l1, l2)
     log_gw['gw_dist'] = cost
-    T = np.zeros((u.shape[0], u.shape[0]))
     if min(l1, l2) == l1:  # the identity is the optimal coupling
-        T[idx_u, idx_v] = 1. / u.shape[0]
-        log_gw['T'] = T
+        G = coo_matrix((np.repeat(1. / u.shape[0], u.shape[0]), (idx_u, idx_v)))
     else:  # the anti identity is the optimal coupling
-        T[idx_u, idx_v[::-1]] = 1. / u.shape[0]
-        log_gw['T'] = T
+        G = coo_matrix((np.repeat(1. / u.shape[0], u.shape[0]), (idx_u, idx_v[::-1])))
+    if not dense:
+        G = G.toarray()
+    log_gw['G'] = G
     if log:
         return cost, log_gw
     else:
         return cost
 
 
-def gromov_loss_1d(u, v):
-    """ Returns the Gromov cost in O(n) between sorted 1d measures (see eq (3) in [27]).
+def gromov_loss_sorted_1d(u, v):
+    """ Returns the Gromov cost between sorted 1d measures (see eq (3) in [27]). 
+    It computes for :math:`u_1 \leq u_2 \leq ... \leq u_n` and :math:`v_1 \leq v_2 \leq ... \leq v_n`:
+
+    .. math::
+        \sum_{i,j=1}^{n} ((u_i-u_j)^2-(v_i-v_j^2)^2
+    in O(n)
+
     Parameters
     ----------
     u : (ns,) ndarray, float64
-        Source dirac locations (on the real line)
+        Sorted source dirac locations (on the real line)
     v : (nt,) ndarray, float64
-        Target dirac locations (on the real line)
+        Sorted target dirac locations (on the real line)
     Returns
     -------
     cost
