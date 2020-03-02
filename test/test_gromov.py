@@ -289,12 +289,10 @@ def test_gromov_1d():
         all_good.append(log_1d['gw_dist'] - log_GW['gw_dist'])
 
     all_good = np.array(all_good)
-
     if len(all_good) == 0:
         its_all_good_man = True
     elif np.max(all_good[all_good >= 0]) <= 1e-14:
         its_all_good_man = True
-
     assert its_all_good_man
 
     all_good = []
@@ -316,6 +314,5 @@ def test_gromov_1d():
         d_true_1D = log_1d['gw_dist']
 
         all_good.append(np.abs(d_1D - d_true_1D))
-
     all_good = np.array(all_good)
     assert np.all(all_good <= 1e-13)
