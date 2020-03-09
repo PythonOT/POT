@@ -433,8 +433,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
 
     where :
     - M is the (ns,nt) metric cost matrix
-    - :math:`f` is the regularization term ( and df is its gradient)
-    - a and b are source and target weights (sum to 1)
+    - p and q are source and target weights (sum to 1)
     - L is a loss function to account for the misfit between the similarity matrices
 
     The algorithm used for solving the problem is conditional gradient as discussed in  [24]_
@@ -453,17 +452,13 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
         Distribution in the target space
     loss_fun : str, optional
         Loss function used for the solver
-    max_iter : int, optional
-        Max number of iterations
-    tol : float, optional
-        Stop threshold on error (>0)
-    verbose : bool, optional
-        Print information along iterations
-    log : bool, optional
-        record log if True
+    alpha : float, optional
+        Trade-off parameter (0 < alpha < 1)
     armijo : bool, optional
         If True the steps of the line-search is found via an armijo research. Else closed form is used.
         If there is convergence issues use False.
+    log : bool, optional
+        record log if True
     **kwargs : dict
         parameters can be directly passed to the ot.optim.cg solver
 
@@ -515,8 +510,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
 
     where :
     - M is the (ns,nt) metric cost matrix
-    - :math:`f` is the regularization term ( and df is its gradient)
-    - a and b are source and target weights (sum to 1)
+    - p and q are source and target weights (sum to 1)
     - L is a loss function to account for the misfit between the similarity matrices
     The algorithm used for solving the problem is conditional gradient as discussed in  [1]_
 
@@ -534,17 +528,13 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
         Distribution in the target space.
     loss_fun : str, optional
         Loss function used for the solver.
-    max_iter : int, optional
-        Max number of iterations
-    tol : float, optional
-        Stop threshold on error (>0)
-    verbose : bool, optional
-        Print information along iterations
-    log : bool, optional
-        Record log if True.
+    alpha : float, optional
+        Trade-off parameter (0 < alpha < 1)
     armijo : bool, optional
         If True the steps of the line-search is found via an armijo research.
         Else closed form is used. If there is convergence issues use False.
+    log : bool, optional
+        Record log if True.
     **kwargs : dict
         Parameters can be directly pased to the ot.optim.cg solver.
 
@@ -994,6 +984,16 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         Whether to fix the structure of the barycenter during the updates
     fixed_features : bool
         Whether to fix the feature of the barycenter during the updates
+    loss_fun : str
+        Loss function used for the solver either 'square_loss' or 'kl_loss'
+    max_iter : int, optional
+        Max number of iterations        
+    tol : float, optional
+        Stop threshol on error (>0).
+    verbose : bool, optional
+        Print information along iterations.
+    log : bool, optional
+        Record log if True.        
     init_C : ndarray, shape (N,N), optional
         Initialization for the barycenters' structure matrix. If not set
         a random init is used.
