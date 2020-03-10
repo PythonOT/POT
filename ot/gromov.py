@@ -488,11 +488,11 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
         return gwggrad(constC, hC1, hC2, G)
 
     if log:
-        res, log = cg(p, q, (1-alpha) * M, alpha, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, log=True, **kwargs)
+        res, log = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, log=True, **kwargs)
         log['fgw_dist'] = log['loss'][::-1][0]
         return res, log
     else:
-        return cg(p, q, (1-alpha) * M, alpha, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, **kwargs)
+        return cg(p, q, (1 - alpha) * M, alpha, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, **kwargs)
 
 
 def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5, armijo=False, log=False, **kwargs):
@@ -563,7 +563,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
     def df(G):
         return gwggrad(constC, hC1, hC2, G)
 
-    res, log = cg(p, q, (1-alpha) * M, alpha, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, log=True, **kwargs)
+    res, log = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, log=True, **kwargs)
     if log:
         log['fgw_dist'] = log['loss'][::-1][0]
         log['T'] = res
@@ -987,13 +987,13 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
     loss_fun : str
         Loss function used for the solver either 'square_loss' or 'kl_loss'
     max_iter : int, optional
-        Max number of iterations        
+        Max number of iterations
     tol : float, optional
         Stop threshol on error (>0).
     verbose : bool, optional
         Print information along iterations.
     log : bool, optional
-        Record log if True.        
+        Record log if True.
     init_C : ndarray, shape (N,N), optional
         Initialization for the barycenters' structure matrix. If not set
         a random init is used.
