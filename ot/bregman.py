@@ -9,6 +9,7 @@ Bregman projections for regularized OT
 #         Titouan Vayer <titouan.vayer@irisa.fr>
 #         Hicham Janati <hicham.janati@inria.fr>
 #         Mokhtar Z. Alaya <mokhtarzahdi.alaya@gmail.com>
+#         Alexander Tong <alexander.tong@yale.edu>
 #
 # License: MIT License
 
@@ -1346,12 +1347,17 @@ def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
     err = 1
 
     # build the convolution operator
+    # this is equivalent to blurring on horizontal then vertical directions
     t = np.linspace(0, 1, A.shape[1])
     [Y, X] = np.meshgrid(t, t)
     xi1 = np.exp(-(X - Y)**2 / reg)
 
+    t = np.linspace(0, 1, A.shape[2])
+    [Y, X] = np.meshgrid(t, t)
+    xi2 = np.exp(-(X - Y)**2 / reg)
+
     def K(x):
-        return np.dot(np.dot(xi1, x), xi1)
+        return np.dot(np.dot(xi1, x), xi2)
 
     while (err > stopThr and cpt < numItermax):
 
