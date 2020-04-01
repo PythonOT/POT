@@ -1603,6 +1603,7 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
         # build the cost matrix and the Gibbs kernel
         M = dist(Xs[d], Xt, metric=metric)
         M = M / np.median(M)
+        dom['M'] = M
 
         K = np.empty(M.shape, dtype=M.dtype)
         np.divide(M, -reg, out=K)
