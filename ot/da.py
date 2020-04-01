@@ -14,7 +14,7 @@ Domain adaptation with optimal transport
 import numpy as np
 import scipy.linalg as linalg
 
-from .bregman import sinkhorn
+from .bregman import sinkhorn, jcpot_barycenter
 from .lp import emd
 from .utils import unif, dist, kernel, cost_normalization
 from .utils import check_params, BaseEstimator
@@ -1956,8 +1956,7 @@ class JCPOTTransport(BaseTransport):
 
     def __init__(self, reg_e=.1, max_iter=10,
                  tol=10e-9, verbose=False, log=False,
-                 metric="sqeuclidean", norm=None,
-                 distribution_estimation=distribution_estimation_uniform,
+                 metric="sqeuclidean",
                  out_of_sample_map='ferradans'):
 
         self.reg_e = reg_e

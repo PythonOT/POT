@@ -572,7 +572,6 @@ def test_jcpot_transport_class():
 
     # test its computed
     otda.fit(Xs=Xs, ys=ys, Xt=Xt)
-    print(otda.proportions_)
 
     assert hasattr(otda, "coupling_")
     assert hasattr(otda, "proportions_")
@@ -610,3 +609,6 @@ def test_jcpot_transport_class():
 
     # check that the oos method is working
     assert_equal(transp_Xs_new.shape, Xs_new.shape)
+
+
+test_jcpot_transport_class()
