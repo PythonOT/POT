@@ -511,7 +511,6 @@ def test_mapping_transport_class():
 
 
 def test_linear_mapping():
-
     ns = 150
     nt = 200
 
@@ -529,7 +528,6 @@ def test_linear_mapping():
 
 
 def test_linear_mapping_class():
-
     ns = 150
     nt = 200
 
@@ -568,7 +566,7 @@ def test_jcpot_transport_class():
     Xs = [Xs1, Xs2]
     ys = [ys1, ys2]
 
-    otda = ot.da.JCPOTTransport(reg_e=0.01, max_iter=1000, tol=1e-9, verbose=True, log = True)
+    otda = ot.da.JCPOTTransport(reg_e=0.01, max_iter=1000, tol=1e-9, verbose=True, log=True)
 
     # test its computed
     otda.fit(Xs=Xs, ys=ys, Xt=Xt)
@@ -592,7 +590,8 @@ def test_jcpot_transport_class():
         # test margin constraints w.r.t. modified source weights for each source domain
 
         assert_allclose(
-            np.dot(otda.log_['all_domains'][i]['D1'], np.sum(otda.coupling_[i], axis=1)), otda.proportions_, rtol=1e-3, atol=1e-3)
+            np.dot(otda.log_['all_domains'][i]['D1'], np.sum(otda.coupling_[i], axis=1)), otda.proportions_, rtol=1e-3,
+            atol=1e-3)
 
     # test transform
     transp_Xs = otda.transform(Xs=Xs)
