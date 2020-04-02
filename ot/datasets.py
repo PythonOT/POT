@@ -30,7 +30,7 @@ def make_1D_gauss(n, m, s):
         1D histogram for a gaussian distribution
     """
     x = np.arange(n, dtype=np.float64)
-    h = np.exp(-(x - m)**2 / (2 * s**2))
+    h = np.exp(-(x - m) ** 2 / (2 * s ** 2))
     return h / h.sum()
 
 
@@ -80,7 +80,7 @@ def get_2D_samples_gauss(n, m, sigma, random_state=None):
     return make_2D_samples_gauss(n, m, sigma, random_state=None)
 
 
-def make_data_classif(dataset, n, nz=.5, theta=0, p = .5, random_state=None, **kwargs):
+def make_data_classif(dataset, n, nz=.5, theta=0, p=.5, random_state=None, **kwargs):
     """Dataset generation for classification problems
 
     Parameters
