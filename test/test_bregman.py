@@ -351,3 +351,10 @@ def test_screenkhorn():
     # check marginals
     np.testing.assert_allclose(G_sink.sum(0), G_screen.sum(0), atol=1e-02)
     np.testing.assert_allclose(G_sink.sum(1), G_screen.sum(1), atol=1e-02)
+
+
+def test_convolutional_barycenter_non_square():
+    # test for image with height not equal width
+    A = np.ones((2, 2, 3)) / (2 * 3)
+    b = ot.bregman.convolutional_barycenter2d(A, 1e-03)
+    np.testing.assert_allclose(np.ones((2, 3)) / (2 * 3), b, atol=1e-02)
