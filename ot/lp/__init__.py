@@ -657,7 +657,7 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     perm_a = np.argsort(x_a_1d)
     perm_b = np.argsort(x_b_1d)
 
-    G_sorted, indices, cost = emd_1d_sorted(a[perm_a.flatten()], b[perm_b.flatten()],
+    G_sorted, indices, cost = emd_1d_sorted(a[perm_a], b[perm_b],
                                             x_a_1d[perm_a], x_b_1d[perm_b],
                                             metric=metric, p=p)
     G = coo_matrix((G_sorted, (perm_a[indices[:, 0]], perm_b[indices[:, 1]])),
