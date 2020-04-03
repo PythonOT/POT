@@ -361,7 +361,7 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
     def loss(L, G):
         """Compute full loss"""
         return np.sum((xs1.dot(L) - ns * G.dot(xt)) ** 2) + mu * \
-               np.sum(G * M) + eta * np.sum(sel(L - I0) ** 2)
+            np.sum(G * M) + eta * np.sum(sel(L - I0) ** 2)
 
     def solve_L(G):
         """ solve L problem with fixed G (least square)"""
@@ -565,7 +565,7 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
     def loss(L, G):
         """Compute full loss"""
         return np.sum((K1.dot(L) - ns * G.dot(xt)) ** 2) + mu * \
-               np.sum(G * M) + eta * np.trace(L.T.dot(Kreg).dot(L))
+            np.sum(G * M) + eta * np.trace(L.T.dot(Kreg).dot(L))
 
     def solve_L_nobias(G):
         """ solve L problem with fixed G (least square)"""
@@ -748,9 +748,9 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
         return A, b
 
 
-def emd_laplace(a, b, xs, xt, M, eta=1., alpha=0.5,
-                numItermax=1000, stopThr=1e-5, numInnerItermax=1000,
-                stopInnerThr=1e-6, log=False, verbose=False, **kwargs):
+def emd_laplace(a, b, xs, xt, M, sim, eta, alpha,
+                numItermax, stopThr, numInnerItermax,
+                stopInnerThr, log=False, verbose=False, **kwargs):
     r"""Solve the optimal transport problem (OT) with Laplacian regularization
 
     .. math::
@@ -825,16 +825,13 @@ def emd_laplace(a, b, xs, xt, M, eta=1., alpha=0.5,
     ot.optim.cg : General regularized OT
 
     """
-    if 'sim' not in kwargs:
-        kwargs['sim'] = 'knn'
-
-    if kwargs['sim'] == 'gauss':
+    if sim == 'gauss':
         if 'rbfparam' not in kwargs:
             kwargs['rbfparam'] = 1 / (2 * (np.mean(dist(xs, xs, 'sqeuclidean')) ** 2))
         sS = kernel(xs, xs, method=kwargs['sim'], sigma=kwargs['rbfparam'])
         sT = kernel(xt, xt, method=kwargs['sim'], sigma=kwargs['rbfparam'])
 
-    elif kwargs['sim'] == 'knn':
+    elif sim == 'knn':
         if 'nn' not in kwargs:
             kwargs['nn'] = 5
 
@@ -849,131 +846,16 @@ def emd_laplace(a, b, xs, xt, M, eta=1., alpha=0.5,
     lT = laplacian(sT)
 
     def f(G):
-        return alpha*np.trace(np.dot(xt.T, np.dot(G.T, np.dot(lS, np.dot(G, xt))))) \
-               + (1-alpha)*np.trace(np.dot(xs.T, np.dot(G, np.dot(lT, np.dot(G.T, xs)))))
+        return alpha * np.trace(np.dot(xt.T, np.dot(G.T, np.dot(lS, np.dot(G, xt))))) \
+            + (1 - alpha) * np.trace(np.dot(xs.T, np.dot(G, np.dot(lT, np.dot(G.T, xs)))))
 
     def df(G):
-        return alpha*np.dot(lS + lS.T, np.dot(G, np.dot(xt, xt.T)))\
-               +(1-alpha)*np.dot(xs, np.dot(xs.T, np.dot(G, lT + lT.T)))
+        return alpha * np.dot(lS + lS.T, np.dot(G, np.dot(xt, xt.T)))\
+            + (1 - alpha) * np.dot(xs, np.dot(xs.T, np.dot(G, lT + lT.T)))
 
     return cg(a, b, M, reg=eta, f=f, df=df, G0=None, numItermax=numItermax, numItermaxEmd=numInnerItermax,
               stopThr=stopThr, stopThr2=stopInnerThr, verbose=verbose, log=log)
 
-def sinkhorn_laplace(a, b, xs, xt, M, reg=.1, eta=1., alpha=0.5,
-                     numItermax=1000, stopThr=1e-5, numInnerItermax=1000,
-                     stopInnerThr=1e-6, log=False, verbose=False, **kwargs):
-    r"""Solve the entropic regularized optimal transport problem (OT) with Laplacian regularization
-
-    .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\Omega_e(\gamma) + eta\Omega_\alpha(\gamma)
-
-        s.t.\ \gamma 1 = a
-
-             \gamma^T 1= b
-
-             \gamma\geq 0
-
-    where:
-
-    - a and b are source and target weights (sum to 1)
-    - xs and xt are source and target samples
-    - M is the (ns,nt) metric cost matrix
-    - :math:`\Omega_e` is the entropic regularization term :math:`\Omega_e
-      (\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - :math:`\Omega_\alpha` is the Laplacian regularization term
-      :math:`\Omega_\alpha = (1-\alpha)/n_s^2\sum_{i,j}S^s_{i,j}\|T(\mathbf{x}^s_i)-T(\mathbf{x}^s_j)\|^2+\alpha/n_t^2\sum_{i,j}S^t_{i,j}^'\|T(\mathbf{x}^t_i)-T(\mathbf{x}^t_j)\|^2`
-      with :math:`S^s_{i,j}, S^t_{i,j}` denoting source and target similarity matrices and :math:`T(\cdot)` being a barycentric mapping
-
-    The algorithm used for solving the problem is the conditional gradient algorithm as proposed in [5].
-
-    Parameters
-    ----------
-    a : np.ndarray (ns,)
-        samples weights in the source domain
-    b : np.ndarray (nt,)
-        samples weights in the target domain
-    xs : np.ndarray (ns,d)
-        samples in the source domain
-    xt : np.ndarray (nt,d)
-        samples in the target domain
-    M : np.ndarray (ns,nt)
-        loss matrix
-    reg : float
-        Regularization term for entropic regularization >0
-    eta : float
-        Regularization term for Laplacian regularization
-    alpha : float
-        Regularization term  for source domain's importance in regularization
-    numItermax : int, optional
-        Max number of iterations
-    stopThr : float, optional
-        Stop threshold on error (inner sinkhorn solver) (>0)
-    numInnerItermax : int, optional
-        Max number of iterations (inner CG solver)
-    stopInnerThr : float, optional
-        Stop threshold on error (inner CG solver) (>0)
-    verbose : bool, optional
-        Print information along iterations
-    log : bool, optional
-        record log if True
-
-
-    Returns
-    -------
-    gamma : (ns x nt) ndarray
-        Optimal transportation matrix for the given parameters
-    log : dict
-        log dictionary return only if log==True in parameters
-
-
-    References
-    ----------
-
-    .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
-       "Optimal Transport for Domain Adaptation," in IEEE
-       Transactions on Pattern Analysis and Machine Intelligence ,
-       vol.PP, no.99, pp.1-1
-
-    See Also
-    --------
-    ot.lp.emd : Unregularized OT
-    ot.optim.cg : General regularized OT
-
-    """
-    if 'sim' not in kwargs:
-        kwargs['sim'] = 'knn'
-
-    if kwargs['sim'] == 'gauss':
-        if 'rbfparam' not in kwargs:
-            kwargs['rbfparam'] = 1 / (2 * (np.mean(dist(xs, xs, 'sqeuclidean')) ** 2))
-        sS = kernel(xs, xs, method=kwargs['sim'], sigma=kwargs['rbfparam'])
-        sT = kernel(xt, xt, method=kwargs['sim'], sigma=kwargs['rbfparam'])
-
-    elif kwargs['sim'] == 'knn':
-        if 'nn' not in kwargs:
-            kwargs['nn'] = 5
-
-        from sklearn.neighbors import kneighbors_graph
-
-        sS = kneighbors_graph(xs, kwargs['nn']).toarray()
-        sS = (sS + sS.T) / 2
-        sT = kneighbors_graph(xt, kwargs['nn']).toarray()
-        sT = (sT + sT.T) / 2
-
-    lS = laplacian(sS)
-    lT = laplacian(sT)
-
-    def f(G):
-        return alpha*np.trace(np.dot(xt.T, np.dot(G.T, np.dot(lS, np.dot(G, xt))))) \
-               + (1-alpha)*np.trace(np.dot(xs.T, np.dot(G, np.dot(lT, np.dot(G.T, xs)))))
-
-    def df(G):
-        return alpha*np.dot(lS + lS.T, np.dot(G, np.dot(xt, xt.T)))\
-               +(1-alpha)*np.dot(xs, np.dot(xs.T, np.dot(G, lT + lT.T)))
-
-    return gcg(a, b, M, reg, eta, f, df, G0=None, numItermax=numItermax, stopThr=stopThr,
-               numInnerItermax=numInnerItermax, stopThr2=stopInnerThr,
-               verbose=verbose, log=log)
 
 def distribution_estimation_uniform(X):
     """estimates a uniform distribution from an array of samples X
@@ -988,7 +870,6 @@ def distribution_estimation_uniform(X):
     mu : array-like, shape (n_samples,)
         The uniform distribution estimated from X
     """
-
 
     return unif(X.shape[0])
 
@@ -1015,7 +896,6 @@ class BaseTransport(BaseEstimator):
     transform method should always get as input a Xs parameter
     inverse_transform method should always get as input a Xt parameter
     """
-
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
@@ -1077,7 +957,6 @@ class BaseTransport(BaseEstimator):
 
         return self
 
-
     def fit_transform(self, Xs=None, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
         (Xs, ys) and (Xt, yt) and transports source samples Xs onto target
@@ -1105,7 +984,6 @@ class BaseTransport(BaseEstimator):
         """
 
         return self.fit(Xs, ys, Xt, yt).transform(Xs, ys, Xt, yt)
-
 
     def transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
         """Transports source samples Xs onto target ones Xt
@@ -1173,7 +1051,6 @@ class BaseTransport(BaseEstimator):
                 transp_Xs = np.concatenate(transp_Xs, axis=0)
 
             return transp_Xs
-
 
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None,
                           batch_size=128):
@@ -1287,14 +1164,12 @@ class LinearTransport(BaseTransport):
 
     """
 
-
     def __init__(self, reg=1e-8, bias=True, log=False,
                  distribution_estimation=distribution_estimation_uniform):
         self.bias = bias
         self.log = log
         self.reg = reg
         self.distribution_estimation = distribution_estimation
-
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
@@ -1343,7 +1218,6 @@ class LinearTransport(BaseTransport):
 
         return self
 
-
     def transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
         """Transports source samples Xs onto target ones Xt
 
@@ -1375,7 +1249,6 @@ class LinearTransport(BaseTransport):
             transp_Xs = Xs.dot(self.A_) + self.B_
 
             return transp_Xs
-
 
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None,
                           batch_size=128):
@@ -1461,7 +1334,6 @@ class SinkhornTransport(BaseTransport):
            26, 2013
     """
 
-
     def __init__(self, reg_e=1., max_iter=1000,
                  tol=10e-9, verbose=False, log=False,
                  metric="sqeuclidean", norm=None,
@@ -1477,7 +1349,6 @@ class SinkhornTransport(BaseTransport):
         self.limit_max = limit_max
         self.distribution_estimation = distribution_estimation
         self.out_of_sample_map = out_of_sample_map
-
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
@@ -1561,7 +1432,6 @@ class EMDTransport(BaseTransport):
            on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
     """
 
-
     def __init__(self, metric="sqeuclidean", norm=None, log=False,
                  distribution_estimation=distribution_estimation_uniform,
                  out_of_sample_map='ferradans', limit_max=10,
@@ -1573,7 +1443,6 @@ class EMDTransport(BaseTransport):
         self.distribution_estimation = distribution_estimation
         self.out_of_sample_map = out_of_sample_map
         self.max_iter = max_iter
-
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
@@ -1671,7 +1540,6 @@ class SinkhornLpl1Transport(BaseTransport):
 
     """
 
-
     def __init__(self, reg_e=1., reg_cl=0.1,
                  max_iter=10, max_inner_iter=200, log=False,
                  tol=10e-9, verbose=False,
@@ -1690,7 +1558,6 @@ class SinkhornLpl1Transport(BaseTransport):
         self.distribution_estimation = distribution_estimation
         self.out_of_sample_map = out_of_sample_map
         self.limit_max = limit_max
-
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
@@ -1751,6 +1618,8 @@ class EMDLaplaceTransport(BaseTransport):
     norm : string, optional (default=None)
         If given, normalize the ground metric to avoid numerical errors that
         can occur with large metric values.
+    similarity : string, optional (default="knn")
+        The similarity to use either knn or gaussian
     max_iter : int, optional (default=100)
         Max number of BCD iterations
     tol : float, optional (default=1e-5)
@@ -1780,10 +1649,9 @@ class EMDLaplaceTransport(BaseTransport):
            on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
     """
 
-
-    def __init__(self, reg_lap = 1., reg_src=1., alpha=0.5,
-                 metric="sqeuclidean", norm=None, max_iter=100, tol=1e-5,
-                 max_inner_iter=100000, inner_tol=1e-6, log=False, verbose=False,
+    def __init__(self, reg_lap=1., reg_src=1., alpha=0.5,
+                 metric="sqeuclidean", norm=None, similarity="knn", max_iter=100, tol=1e-9,
+                 max_inner_iter=100000, inner_tol=1e-9, log=False, verbose=False,
                  distribution_estimation=distribution_estimation_uniform,
                  out_of_sample_map='ferradans'):
         self.reg_lap = reg_lap
@@ -1791,6 +1659,7 @@ class EMDLaplaceTransport(BaseTransport):
         self.alpha = alpha
         self.metric = metric
         self.norm = norm
+        self.similarity = similarity
         self.max_iter = max_iter
         self.tol = tol
         self.max_inner_iter = max_inner_iter
@@ -1799,7 +1668,6 @@ class EMDLaplaceTransport(BaseTransport):
         self.verbose = verbose
         self.distribution_estimation = distribution_estimation
         self.out_of_sample_map = out_of_sample_map
-
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
@@ -1829,115 +1697,7 @@ class EMDLaplaceTransport(BaseTransport):
         super(EMDLaplaceTransport, self).fit(Xs, ys, Xt, yt)
 
         returned_ = emd_laplace(a=self.mu_s, b=self.mu_t, xs=self.xs_,
-                                xt=self.xt_, M=self.cost_, eta=self.reg_lap, alpha=self.reg_src,
-                                numItermax=self.max_iter, stopThr=self.tol, numInnerItermax=self.max_inner_iter,
-                                stopInnerThr=self.inner_tol, log=self.log, verbose=self.verbose)
-
-        # coupling estimation
-        if self.log:
-            self.coupling_, self.log_ = returned_
-        else:
-            self.coupling_ = returned_
-            self.log_ = dict()
-        return self
-
-class SinkhornLaplaceTransport(BaseTransport):
-
-    """Domain Adapatation OT method based on entropic regularized OT with Laplacian regularization
-
-    Parameters
-    ----------
-    reg_e : float, optional (default=1)
-        Entropic regularization parameter
-    reg_lap : float, optional (default=1)
-        Laplacian regularization parameter
-    reg_src : float, optional (default=0.5)
-        Source relative importance in regularization
-    metric : string, optional (default="sqeuclidean")
-        The ground metric for the Wasserstein problem
-    norm : string, optional (default=None)
-        If given, normalize the ground metric to avoid numerical errors that
-        can occur with large metric values.
-    max_iter : int, optional (default=100)
-        Max number of BCD iterations
-    tol : float, optional (default=1e-5)
-        Stop threshold on relative loss decrease (>0)
-    max_inner_iter : int, optional (default=10)
-        Max number of iterations (inner CG solver)
-    inner_tol : float, optional (default=1e-6)
-        Stop threshold on error (inner CG solver) (>0)
-    log : int, optional (default=False)
-        Controls the logs of the optimization algorithm
-    distribution_estimation : callable, optional (defaults to the uniform)
-        The kind of distribution estimation to employ
-    out_of_sample_map : string, optional (default="ferradans")
-        The kind of out of sample mapping to apply to transport samples
-        from a domain into another one. Currently the only possible option is
-        "ferradans" which uses the method proposed in [6].
-
-    Attributes
-    ----------
-    coupling_ : array-like, shape (n_source_samples, n_target_samples)
-        The optimal coupling
-
-    References
-    ----------
-    .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
-           "Optimal Transport for Domain Adaptation," in IEEE Transactions
-           on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
-    """
-
-
-    def __init__(self, reg_e=1., reg_lap=1., reg_src=0.5,
-                 metric="sqeuclidean", norm=None, max_iter=100, tol=1e-9,
-                 max_inner_iter=200, inner_tol=1e-6, log=False, verbose=False,
-                 distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='ferradans'):
-
-        self.reg_e = reg_e
-        self.reg_lap = reg_lap
-        self.reg_src = reg_src
-        self.metric = metric
-        self.norm = norm
-        self.max_iter = max_iter
-        self.tol = tol
-        self.max_inner_iter = max_inner_iter
-        self.inner_tol = inner_tol
-        self.log = log
-        self.verbose = verbose
-        self.distribution_estimation = distribution_estimation
-        self.out_of_sample_map = out_of_sample_map
-
-
-    def fit(self, Xs, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
-        (Xs, ys) and (Xt, yt)
-
-        Parameters
-        ----------
-        Xs : array-like, shape (n_source_samples, n_features)
-            The training input samples.
-        ys : array-like, shape (n_source_samples,)
-            The class labels
-        Xt : array-like, shape (n_target_samples, n_features)
-            The training input samples.
-        yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
-
-            Warning: Note that, due to this convention -1 cannot be used as a
-            class label
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-
-        super(SinkhornLaplaceTransport, self).fit(Xs, ys, Xt, yt)
-
-        returned_ = sinkhorn_laplace(a=self.mu_s, b=self.mu_t, xs=self.xs_,
-                                xt=self.xt_, M=self.cost_, reg=self.reg_e, eta=self.reg_lap, alpha=self.reg_src,
+                                xt=self.xt_, M=self.cost_, sim=self.similarity, eta=self.reg_lap, alpha=self.reg_src,
                                 numItermax=self.max_iter, stopThr=self.tol, numInnerItermax=self.max_inner_iter,
                                 stopInnerThr=self.inner_tol, log=self.log, verbose=self.verbose)
 
@@ -2008,7 +1768,6 @@ class SinkhornL1l2Transport(BaseTransport):
 
     """
 
-
     def __init__(self, reg_e=1., reg_cl=0.1,
                  max_iter=10, max_inner_iter=200,
                  tol=10e-9, verbose=False, log=False,
@@ -2027,7 +1786,6 @@ class SinkhornL1l2Transport(BaseTransport):
         self.distribution_estimation = distribution_estimation
         self.out_of_sample_map = out_of_sample_map
         self.limit_max = limit_max
-
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
@@ -2133,7 +1891,6 @@ class MappingTransport(BaseEstimator):
 
     """
 
-
     def __init__(self, mu=1, eta=0.001, bias=False, metric="sqeuclidean",
                  norm=None, kernel="linear", sigma=1, max_iter=100, tol=1e-5,
                  max_inner_iter=10, inner_tol=1e-6, log=False, verbose=False,
@@ -2152,7 +1909,6 @@ class MappingTransport(BaseEstimator):
         self.log = log
         self.verbose = verbose
         self.verbose2 = verbose2
-
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
         """Builds an optimal coupling and estimates the associated mapping
@@ -2210,7 +1966,6 @@ class MappingTransport(BaseEstimator):
                 self.log_ = dict()
 
         return self
-
 
     def transform(self, Xs):
         """Transports source samples Xs onto target ones Xt
@@ -2305,7 +2060,6 @@ class UnbalancedSinkhornTransport(BaseTransport):
 
     """
 
-
     def __init__(self, reg_e=1., reg_m=0.1, method='sinkhorn',
                  max_iter=10, tol=1e-9, verbose=False, log=False,
                  metric="sqeuclidean", norm=None,
@@ -2323,7 +2077,6 @@ class UnbalancedSinkhornTransport(BaseTransport):
         self.distribution_estimation = distribution_estimation
         self.out_of_sample_map = out_of_sample_map
         self.limit_max = limit_max
-
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
         """Build a coupling matrix from source and target sets of samples
@@ -2419,7 +2172,6 @@ class JCPOTTransport(BaseTransport):
 
     """
 
-
     def __init__(self, reg_e=.1, max_iter=10,
                  tol=10e-9, verbose=False, log=False,
                  metric="sqeuclidean",
@@ -2431,7 +2183,6 @@ class JCPOTTransport(BaseTransport):
         self.log = log
         self.metric = metric
         self.out_of_sample_map = out_of_sample_map
-
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
         """Building coupling matrices from a list of source and target sets of samples
@@ -2476,7 +2227,6 @@ class JCPOTTransport(BaseTransport):
                 self.log_ = dict()
 
         return self
-
 
     def transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
         """Transports source samples Xs onto target ones Xt

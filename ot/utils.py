@@ -48,6 +48,7 @@ def kernel(x1, x2, method='gaussian', sigma=1, **kwargs):
         K = np.exp(-dist(x1, x2) / (2 * sigma**2))
     return K
 
+
 def laplacian(x):
     """Compute Laplacian matrix"""
     L = np.diag(np.sum(x, axis=0)) - x
