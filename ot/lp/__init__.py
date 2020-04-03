@@ -16,7 +16,7 @@ from scipy.sparse import coo_matrix
 from .import cvx
 
 # import compiled emd
-#from .emd_wrap import emd_c, check_result, emd_1d_sorted
+from .emd_wrap import emd_c, check_result, emd_1d_sorted
 from ..utils import parmap
 from .cvx import barycenter
 from ..utils import dist
