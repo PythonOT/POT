@@ -589,7 +589,7 @@ def test_jcpot_transport_class():
         # test margin constraints w.r.t. modified source weights for each source domain
 
         assert_allclose(
-            np.dot(otda.log_['all_domains'][i]['D1'], np.sum(otda.coupling_[i], axis=1)), otda.proportions_, rtol=1e-3,
+            np.dot(otda.log_['D1'][i], np.sum(otda.coupling_[i], axis=1)), otda.proportions_, rtol=1e-3,
             atol=1e-3)
 
     # test transform
