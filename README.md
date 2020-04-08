@@ -29,7 +29,7 @@ It provides the following solvers:
 * Non regularized free support Wasserstein barycenters [20].
 * Unbalanced OT with KL relaxation distance and barycenter [10, 25].
 * Screening Sinkhorn Algorithm for OT [26].
-* JCPOT algorithm for multi-source target shift [27].
+* JCPOT algorithm for multi-source domain adaptation with target shift [27].
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 

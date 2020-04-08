@@ -565,7 +565,7 @@ def test_jcpot_transport_class():
     Xs = [Xs1, Xs2]
     ys = [ys1, ys2]
 
-    otda = ot.da.JCPOTTransport(reg_e=0.01, max_iter=1000, tol=1e-9, verbose=True, log=True)
+    otda = ot.da.JCPOTTransport(reg_e=1, max_iter=10000, tol=1e-9, verbose=True, log=True)
 
     # test its computed
     otda.fit(Xs=Xs, ys=ys, Xt=Xt)
