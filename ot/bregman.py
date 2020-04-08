@@ -1528,7 +1528,7 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
     The problem consist in solving a Wasserstein barycenter problem to estimate the proportions :math:`\mathbf{h}` in the target domain.
 
     The algorithm used for solving the problem is the Iterative Bregman projections algorithm
-    with two sets of marginal constraints related to the unknown vector :math:`\mathbf{h}` and uniform tarhet distribution.
+    with two sets of marginal constraints related to the unknown vector :math:`\mathbf{h}` and uniform target distribution.
 
     Parameters
     ----------
