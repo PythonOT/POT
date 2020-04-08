@@ -65,6 +65,14 @@ def test_sinkhorn_lpl1_transport_class():
     transp_Xs = otda.fit_transform(Xs=Xs, ys=ys, Xt=Xt)
     assert_equal(transp_Xs.shape, Xs.shape)
 
+    # check label propagation
+    transp_yt = otda.transform_labels(ys)
+    assert_equal(transp_yt.shape[0], yt.shape[0])
+
+    # check inverse label propagation
+    transp_ys = otda.inverse_transform_labels(yt)
+    assert_equal(transp_ys.shape[0], ys.shape[0])
+
     # test unsupervised vs semi-supervised mode
     otda_unsup = ot.da.SinkhornLpl1Transport()
     otda_unsup.fit(Xs=Xs, ys=ys, Xt=Xt)
@@ -128,6 +136,14 @@ def test_sinkhorn_l1l2_transport_class():
     # test inverse transform
     transp_Xt = otda.inverse_transform(Xt=Xt)
     assert_equal(transp_Xt.shape, Xt.shape)
+
+    # check label propagation
+    transp_yt = otda.transform_labels(ys)
+    assert_equal(transp_yt.shape[0], yt.shape[0])
+
+    # check inverse label propagation
+    transp_ys = otda.inverse_transform_labels(yt)
+    assert_equal(transp_ys.shape[0], ys.shape[0])
 
     Xt_new, _ = make_data_classif('3gauss2', nt + 1)
     transp_Xt_new = otda.inverse_transform(Xt=Xt_new)
@@ -210,6 +226,14 @@ def test_sinkhorn_transport_class():
     transp_Xt = otda.inverse_transform(Xt=Xt)
     assert_equal(transp_Xt.shape, Xt.shape)
 
+    # check label propagation
+    transp_yt = otda.transform_labels(ys)
+    assert_equal(transp_yt.shape[0], yt.shape[0])
+
+    # check inverse label propagation
+    transp_ys = otda.inverse_transform_labels(yt)
+    assert_equal(transp_ys.shape[0], ys.shape[0])
+
     Xt_new, _ = make_data_classif('3gauss2', nt + 1)
     transp_Xt_new = otda.inverse_transform(Xt=Xt_new)
 
@@ -270,6 +294,14 @@ def test_unbalanced_sinkhorn_transport_class():
     # test transform
     transp_Xs = otda.transform(Xs=Xs)
     assert_equal(transp_Xs.shape, Xs.shape)
+
+    # check label propagation
+    transp_yt = otda.transform_labels(ys)
+    assert_equal(transp_yt.shape[0], yt.shape[0])
+
+    # check inverse label propagation
+    transp_ys = otda.inverse_transform_labels(yt)
+    assert_equal(transp_ys.shape[0], ys.shape[0])
 
     Xs_new, _ = make_data_classif('3gauss', ns + 1)
     transp_Xs_new = otda.transform(Xs_new)
@@ -352,6 +384,14 @@ def test_emd_transport_class():
     # test inverse transform
     transp_Xt = otda.inverse_transform(Xt=Xt)
     assert_equal(transp_Xt.shape, Xt.shape)
+
+    # check label propagation
+    transp_yt = otda.transform_labels(ys)
+    assert_equal(transp_yt.shape[0], yt.shape[0])
+
+    # check inverse label propagation
+    transp_ys = otda.inverse_transform_labels(yt)
+    assert_equal(transp_ys.shape[0], ys.shape[0])
 
     Xt_new, _ = make_data_classif('3gauss2', nt + 1)
     transp_Xt_new = otda.inverse_transform(Xt=Xt_new)
@@ -602,6 +642,13 @@ def test_jcpot_transport_class():
     # check that the oos method is working
     assert_equal(transp_Xs_new.shape, Xs_new.shape)
 
+    # check label propagation
+    transp_yt = otda.transform_labels(ys)
+    assert_equal(transp_yt.shape[0], yt.shape[0])
+
+    # check inverse label propagation
+    transp_ys = otda.inverse_transform_labels(yt)
+    [assert_equal(x.shape, y.shape) for x, y in zip(transp_ys, ys)]
 
 def test_jcpot_barycenter():
     """test_jcpot_barycenter
