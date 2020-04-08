@@ -650,6 +650,7 @@ def test_jcpot_transport_class():
     transp_ys = otda.inverse_transform_labels(yt)
     [assert_equal(x.shape, y.shape) for x, y in zip(transp_ys, ys)]
 
+
 def test_jcpot_barycenter():
     """test_jcpot_barycenter
     """
