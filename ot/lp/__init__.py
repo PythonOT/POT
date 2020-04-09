@@ -12,16 +12,16 @@ Solvers for the original linear program OT problem
 
 import multiprocessing
 import sys
+
 import numpy as np
 from scipy.sparse import coo_matrix
 
-from .import cvx
-
+from . import cvx
+from .cvx import barycenter
 # import compiled emd
 from .emd_wrap import emd_c, check_result, emd_1d_sorted
-from ..utils import parmap
-from .cvx import barycenter
 from ..utils import dist
+from ..utils import parmap
 
 __all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx',
            'emd_1d', 'emd2_1d', 'wasserstein_1d']
@@ -458,7 +458,8 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     return res
 
 
-def free_support_barycenter(measures_locations, measures_weights, X_init, b=None, weights=None, numItermax=100, stopThr=1e-7, verbose=False, log=None):
+def free_support_barycenter(measures_locations, measures_weights, X_init, b=None, weights=None, numItermax=100,
+                            stopThr=1e-7, verbose=False, log=None):
     """
     Solves the free support (locations of the barycenters are optimized, not the weights) Wasserstein barycenter problem (i.e. the weighted Frechet mean for the 2-Wasserstein distance)
 
@@ -525,8 +526,8 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
         T_sum = np.zeros((k, d))
 
-        for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights, weights.tolist()):
-
+        for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights,
+                                                                      weights.tolist()):
             M_i = dist(X, measure_locations_i)
             T_i = emd(b, measure_weights_i, M_i)
             T_sum = T_sum + weight_i * np.reshape(1. / b, (-1, 1)) * np.matmul(T_i, measure_locations_i)
@@ -651,12 +652,12 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     if b.ndim == 0 or len(b) == 0:
         b = np.ones((x_b.shape[0],), dtype=np.float64) / x_b.shape[0]
 
-    x_a_1d = x_a.reshape((-1, ))
-    x_b_1d = x_b.reshape((-1, ))
+    x_a_1d = x_a.reshape((-1,))
+    x_b_1d = x_b.reshape((-1,))
     perm_a = np.argsort(x_a_1d)
     perm_b = np.argsort(x_b_1d)
 
-    G_sorted, indices, cost = emd_1d_sorted(a, b,
+    G_sorted, indices, cost = emd_1d_sorted(a[perm_a], b[perm_b],
                                             x_a_1d[perm_a], x_b_1d[perm_b],
                                             metric=metric, p=p)
     G = coo_matrix((G_sorted, (perm_a[indices[:, 0]], perm_b[indices[:, 1]])),

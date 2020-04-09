@@ -7,11 +7,11 @@
 import warnings
 
 import numpy as np
+import pytest
 from scipy.stats import wasserstein_distance
 
 import ot
 from ot.datasets import make_1D_gauss as gauss
-import pytest
 
 
 def test_emd_dimension_mismatch():
@@ -75,12 +75,12 @@ def test_emd_1d_emd2_1d():
     np.testing.assert_allclose(wass, wass1d_emd2)
 
     # check loss is similar to scipy's implementation for Euclidean metric
-    wass_sp = wasserstein_distance(u.reshape((-1, )), v.reshape((-1, )))
+    wass_sp = wasserstein_distance(u.reshape((-1,)), v.reshape((-1,)))
     np.testing.assert_allclose(wass_sp, wass1d_euc)
 
     # check constraints
-    np.testing.assert_allclose(np.ones((n, )) / n, G.sum(1))
-    np.testing.assert_allclose(np.ones((m, )) / m, G.sum(0))
+    np.testing.assert_allclose(np.ones((n,)) / n, G.sum(1))
+    np.testing.assert_allclose(np.ones((m,)) / m, G.sum(0))
 
     # check G is similar
     np.testing.assert_allclose(G, G_1d)
@@ -90,6 +90,42 @@ def test_emd_1d_emd2_1d():
     v = np.random.randn(m, 2)
     with pytest.raises(AssertionError):
         ot.emd_1d(u, v, [], [])
+
+
+def test_emd_1d_emd2_1d_with_weights():
+    # test emd1d gives similar results as emd
+    n = 20
+    m = 30
+    rng = np.random.RandomState(0)
+    u = rng.randn(n, 1)
+    v = rng.randn(m, 1)
+
+    w_u = rng.uniform(0., 1., n)
+    w_u = w_u / w_u.sum()
+
+    w_v = rng.uniform(0., 1., m)
+    w_v = w_v / w_v.sum()
+
+    M = ot.dist(u, v, metric='sqeuclidean')
+
+    G, log = ot.emd(w_u, w_v, M, log=True)
+    wass = log["cost"]
+    G_1d, log = ot.emd_1d(u, v, w_u, w_v, metric='sqeuclidean', log=True)
+    wass1d = log["cost"]
+    wass1d_emd2 = ot.emd2_1d(u, v, w_u, w_v, metric='sqeuclidean', log=False)
+    wass1d_euc = ot.emd2_1d(u, v, w_u, w_v, metric='euclidean', log=False)
+
+    # check loss is similar
+    np.testing.assert_allclose(wass, wass1d)
+    np.testing.assert_allclose(wass, wass1d_emd2)
+
+    # check loss is similar to scipy's implementation for Euclidean metric
+    wass_sp = wasserstein_distance(u.reshape((-1,)), v.reshape((-1,)), w_u, w_v)
+    np.testing.assert_allclose(wass_sp, wass1d_euc)
+
+    # check constraints
+    np.testing.assert_allclose(w_u, G.sum(1))
+    np.testing.assert_allclose(w_v, G.sum(0))
 
 
 def test_wass_1d():
@@ -135,7 +171,6 @@ def test_emd_empty():
 
 
 def test_emd_sparse():
-
     n = 100
     rng = np.random.RandomState(0)
 
@@ -211,7 +246,6 @@ def test_emd2_multi():
 
 
 def test_lp_barycenter():
-
     a1 = np.array([1.0, 0, 0])[:, None]
     a2 = np.array([0, 0, 1.0])[:, None]
 
@@ -228,7 +262,6 @@ def test_lp_barycenter():
 
 
 def test_free_support_barycenter():
-
     measures_locations = [np.array([-1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
     measures_weights = [np.array([1.]), np.array([1.])]
 
@@ -244,7 +277,6 @@ def test_free_support_barycenter():
 
 @pytest.mark.skipif(not ot.lp.cvx.cvxopt, reason="No cvxopt available")
 def test_lp_barycenter_cvxopt():
-
     a1 = np.array([1.0, 0, 0])[:, None]
     a2 = np.array([0, 0, 1.0])[:, None]
 

@@ -8,8 +8,14 @@ from Cython.Build import cythonize
 import numpy
 import re
 import os
+import sys
+import subprocess 
 
 here = path.abspath(path.dirname(__file__))
+
+
+os.environ["CC"] = "g++" 
+os.environ["CXX"] = "g++"
 
 # dirty but working
 __version__ = re.search(
@@ -24,12 +30,13 @@ ROOT = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(ROOT, 'README.md'), encoding="utf-8") as f:
     README = f.read()
 
-# add platform dependant optional compilation argument
 opt_arg=["-O3"]
-import platform
-if platform.system()=='Darwin':
-  if platform.release()=='18.0.0':
-      opt_arg.append("-stdlib=libc++") # correspond to a compilation problem with Mojave and XCode 10
+
+# add platform dependant optional compilation argument
+if sys.platform.startswith('darwin'):
+  opt_arg.append("-stdlib=libc++")
+  sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path'])
+  os.environ['CFLAGS'] = '-isysroot "{}"'.format(sdk_path.rstrip().decode("utf-8"))
 
 setup(name='POT',
       version=__version__,
