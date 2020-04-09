@@ -391,6 +391,14 @@ of the 36th International Conference on Machine Learning (ICML).
 `Learning with a Wasserstein Loss <http://cbcl.mit.edu/wasserstein/>`__
 Advances in Neural Information Processing Systems (NIPS).
 
+[26] Caffarelli, L. A., McCann, R. J. (2020). `Free boundaries in optimal transport and 
+Monge-Ampere obstacle problems <http://www.math.toronto.edu/~mccann/papers/annals2010.pdf>`__, 
+Annals of mathematics, 673-730.
+
+[27] Chapel, L., Alaya, M., Gasso, G. (2019). `Partial Gromov-Wasserstein with Applications 
+on Positive-Unlabeled Learning <https://arxiv.org/abs/2002.08276>`__. arXiv preprint
+arXiv:2002.08276.
+
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
 .. |Anaconda Cloud| image:: https://anaconda.org/conda-forge/pot/badges/version.svg
