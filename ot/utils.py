@@ -206,6 +206,28 @@ def dots(*args):
     return reduce(np.dot, args)
 
 
+def label_normalization(y, start=0):
+    """ Transform labels to start at a given value
+
+    Parameters
+    ----------
+    y : array-like, shape (n, )
+        The vector of labels to be normalized.
+    start : int
+        Desired value for the smallest label in y (default=0)
+
+    Returns
+    -------
+    y : array-like, shape (n1, )
+        The input vector of labels normalized according to given start value.
+    """
+
+    diff = np.min(np.unique(y)) - start
+    if diff != 0:
+        y -= diff
+    return y
+
+
 def fun(f, q_in, q_out):
     """ Utility function for parmap with no serializing problems """
     while True:
