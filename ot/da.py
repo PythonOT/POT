@@ -7,15 +7,16 @@ Domain adaptation with optimal transport
 #         Nicolas Courty <ncourty@irisa.fr>
 #         Michael Perrot <michael.perrot@univ-st-etienne.fr>
 #         Nathalie Gayraud <nat.gayraud@gmail.com>
+#         Ievgen Redko <ievgen.redko@univ-st-etienne.fr>
 #
 # License: MIT License
 
 import numpy as np
 import scipy.linalg as linalg
 
-from .bregman import sinkhorn
+from .bregman import sinkhorn, jcpot_barycenter
 from .lp import emd
-from .utils import unif, dist, kernel, cost_normalization
+from .utils import unif, dist, kernel, cost_normalization, label_normalization
 from .utils import check_params, BaseEstimator
 from .unbalanced import sinkhorn_unbalanced
 from .optim import cg
@@ -127,7 +128,7 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
         W = np.ones(M.shape)
         for (i, c) in enumerate(classes):
             majs = np.sum(transp[indices_labels[i]], axis=0)
-            majs = p * ((majs + epsilon)**(p - 1))
+            majs = p * ((majs + epsilon) ** (p - 1))
             W[indices_labels[i]] = majs
 
     return transp
@@ -359,8 +360,8 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
 
     def loss(L, G):
         """Compute full loss"""
-        return np.sum((xs1.dot(L) - ns * G.dot(xt))**2) + mu * \
-            np.sum(G * M) + eta * np.sum(sel(L - I0)**2)
+        return np.sum((xs1.dot(L) - ns * G.dot(xt)) ** 2) + mu * \
+            np.sum(G * M) + eta * np.sum(sel(L - I0) ** 2)
 
     def solve_L(G):
         """ solve L problem with fixed G (least square)"""
@@ -372,10 +373,11 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
         xsi = xs1.dot(L)
 
         def f(G):
-            return np.sum((xsi - ns * G.dot(xt))**2)
+            return np.sum((xsi - ns * G.dot(xt)) ** 2)
 
         def df(G):
             return -2 * ns * (xsi - ns * G.dot(xt)).dot(xt.T)
+
         G = cg(a, b, M, 1.0 / mu, f, df, G0=G0,
                numItermax=numInnerItermax, stopThr=stopInnerThr)
         return G
@@ -562,7 +564,7 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
 
     def loss(L, G):
         """Compute full loss"""
-        return np.sum((K1.dot(L) - ns * G.dot(xt))**2) + mu * \
+        return np.sum((K1.dot(L) - ns * G.dot(xt)) ** 2) + mu * \
             np.sum(G * M) + eta * np.trace(L.T.dot(Kreg).dot(L))
 
     def solve_L_nobias(G):
@@ -580,10 +582,11 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
         xsi = K1.dot(L)
 
         def f(G):
-            return np.sum((xsi - ns * G.dot(xt))**2)
+            return np.sum((xsi - ns * G.dot(xt)) ** 2)
 
         def df(G):
             return -2 * ns * (xsi - ns * G.dot(xt)).dot(xt.T)
+
         G = cg(a, b, M, 1.0 / mu, f, df, G0=G0,
                numItermax=numInnerItermax, stopThr=stopInnerThr)
         return G
@@ -783,6 +786,9 @@ class BaseTransport(BaseEstimator):
 
     transform method should always get as input a Xs parameter
     inverse_transform method should always get as input a Xt parameter
+
+    transform_labels method should always get as input a ys parameter
+    inverse_transform_labels method should always get as input a yt parameter
     """
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
@@ -921,7 +927,6 @@ class BaseTransport(BaseEstimator):
 
                 transp_Xs = []
                 for bi in batch_ind:
-
                     # get the nearest neighbor in the source domain
                     D0 = dist(Xs[bi], self.xs_)
                     idx = np.argmin(D0, axis=1)
@@ -940,6 +945,50 @@ class BaseTransport(BaseEstimator):
                 transp_Xs = np.concatenate(transp_Xs, axis=0)
 
             return transp_Xs
+
+    def transform_labels(self, ys=None):
+        """Propagate source labels ys to obtain estimated target labels as in [27]
+
+        Parameters
+        ----------
+        ys : array-like, shape (n_source_samples,)
+            The class labels
+
+        Returns
+        -------
+        transp_ys : array-like, shape (n_target_samples, nb_classes)
+            Estimated soft target labels.
+
+        References
+        ----------
+
+        .. [27] Ievgen Redko, Nicolas Courty, Rémi Flamary, Devis Tuia
+           "Optimal transport for multi-source domain adaptation under target shift",
+           International Conference on Artificial Intelligence and Statistics (AISTATS), 2019.
+
+        """
+
+        # check the necessary inputs parameters are here
+        if check_params(ys=ys):
+
+            ysTemp = label_normalization(np.copy(ys))
+            classes = np.unique(ysTemp)
+            n = len(classes)
+            D1 = np.zeros((n, len(ysTemp)))
+
+            # perform label propagation
+            transp = self.coupling_ / np.sum(self.coupling_, 1)[:, None]
+
+            # set nans to 0
+            transp[~ np.isfinite(transp)] = 0
+
+            for c in classes:
+                D1[int(c), ysTemp == c] = 1
+
+            # compute propagated labels
+            transp_ys = np.dot(D1, transp)
+
+            return transp_ys.T
 
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None,
                           batch_size=128):
@@ -990,7 +1039,6 @@ class BaseTransport(BaseEstimator):
 
                 transp_Xt = []
                 for bi in batch_ind:
-
                     D0 = dist(Xt[bi], self.xt_)
                     idx = np.argmin(D0, axis=1)
 
@@ -1009,8 +1057,44 @@ class BaseTransport(BaseEstimator):
 
             return transp_Xt
 
+    def inverse_transform_labels(self, yt=None):
+        """Propagate target labels yt to obtain estimated source labels ys
+
+        Parameters
+        ----------
+        yt : array-like, shape (n_target_samples,)
+
+        Returns
+        -------
+        transp_ys : array-like, shape (n_source_samples, nb_classes)
+            Estimated soft source labels.
+        """
+
+        # check the necessary inputs parameters are here
+        if check_params(yt=yt):
+
+            ytTemp = label_normalization(np.copy(yt))
+            classes = np.unique(ytTemp)
+            n = len(classes)
+            D1 = np.zeros((n, len(ytTemp)))
+
+            # perform label propagation
+            transp = self.coupling_ / np.sum(self.coupling_, 1)[:, None]
+
+            # set nans to 0
+            transp[~ np.isfinite(transp)] = 0
+
+            for c in classes:
+                D1[int(c), ytTemp == c] = 1
+
+            # compute propagated samples
+            transp_ys = np.dot(D1, transp.T)
+
+            return transp_ys.T
+
 
 class LinearTransport(BaseTransport):
+
     """ OT linear operator between empirical distributions
 
     The function estimates the optimal linear operator that aligns the two
@@ -1055,7 +1139,6 @@ class LinearTransport(BaseTransport):
 
     def __init__(self, reg=1e-8, bias=True, log=False,
                  distribution_estimation=distribution_estimation_uniform):
-
         self.bias = bias
         self.log = log
         self.reg = reg
@@ -1136,7 +1219,6 @@ class LinearTransport(BaseTransport):
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs):
-
             transp_Xs = Xs.dot(self.A_) + self.B_
 
             return transp_Xs
@@ -1170,7 +1252,6 @@ class LinearTransport(BaseTransport):
 
         # check the necessary inputs parameters are here
         if check_params(Xt=Xt):
-
             transp_Xt = Xt.dot(self.A1_) + self.B1_
 
             return transp_Xt
@@ -1231,7 +1312,6 @@ class SinkhornTransport(BaseTransport):
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
                  out_of_sample_map='ferradans', limit_max=np.infty):
-
         self.reg_e = reg_e
         self.max_iter = max_iter
         self.tol = tol
@@ -1329,7 +1409,6 @@ class EMDTransport(BaseTransport):
                  distribution_estimation=distribution_estimation_uniform,
                  out_of_sample_map='ferradans', limit_max=10,
                  max_iter=100000):
-
         self.metric = metric
         self.norm = norm
         self.log = log
@@ -1440,7 +1519,6 @@ class SinkhornLpl1Transport(BaseTransport):
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
                  out_of_sample_map='ferradans', limit_max=np.infty):
-
         self.reg_e = reg_e
         self.reg_cl = reg_cl
         self.max_iter = max_iter
@@ -1481,7 +1559,6 @@ class SinkhornLpl1Transport(BaseTransport):
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs, Xt=Xt, ys=ys):
-
             super(SinkhornLpl1Transport, self).fit(Xs, ys, Xt, yt)
 
             returned_ = sinkhorn_lpl1_mm(
@@ -1563,7 +1640,6 @@ class SinkhornL1l2Transport(BaseTransport):
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
                  out_of_sample_map='ferradans', limit_max=10):
-
         self.reg_e = reg_e
         self.reg_cl = reg_cl
         self.max_iter = max_iter
@@ -1685,7 +1761,6 @@ class MappingTransport(BaseEstimator):
                  norm=None, kernel="linear", sigma=1, max_iter=100, tol=1e-5,
                  max_inner_iter=10, inner_tol=1e-6, log=False, verbose=False,
                  verbose2=False):
-
         self.metric = metric
         self.norm = norm
         self.mu = mu
@@ -1856,7 +1931,6 @@ class UnbalancedSinkhornTransport(BaseTransport):
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
                  out_of_sample_map='ferradans', limit_max=10):
-
         self.reg_e = reg_e
         self.reg_m = reg_m
         self.method = method
@@ -1914,3 +1988,262 @@ class UnbalancedSinkhornTransport(BaseTransport):
                 self.log_ = dict()
 
         return self
+
+
+class JCPOTTransport(BaseTransport):
+
+    """Domain Adapatation OT method for multi-source target shift based on Wasserstein barycenter algorithm.
+
+    Parameters
+    ----------
+    reg_e : float, optional (default=1)
+        Entropic regularization parameter
+    max_iter : int, float, optional (default=10)
+        The minimum number of iteration before stopping the optimization
+        algorithm if no it has not converged
+    tol : float, optional (default=10e-9)
+        Stop threshold on error (inner sinkhorn solver) (>0)
+    verbose : bool, optional (default=False)
+        Controls the verbosity of the optimization algorithm
+    log : bool, optional (default=False)
+        Controls the logs of the optimization algorithm
+    metric : string, optional (default="sqeuclidean")
+        The ground metric for the Wasserstein problem
+    norm : string, optional (default=None)
+        If given, normalize the ground metric to avoid numerical errors that
+        can occur with large metric values.
+    distribution_estimation : callable, optional (defaults to the uniform)
+        The kind of distribution estimation to employ
+    out_of_sample_map : string, optional (default="ferradans")
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
+        "ferradans" which uses the method proposed in [6].
+
+    Attributes
+    ----------
+    coupling_ : list of array-like objects, shape K x (n_source_samples, n_target_samples)
+        A set of optimal couplings between each source domain and the target domain
+    proportions_ : array-like, shape (n_classes,)
+        Estimated class proportions in the target domain
+    log_ : dictionary
+        The dictionary of log, empty dic if parameter log is not True
+
+    References
+    ----------
+
+    .. [1] Ievgen Redko, Nicolas Courty, Rémi Flamary, Devis Tuia
+       "Optimal transport for multi-source domain adaptation under target shift",
+       International Conference on Artificial Intelligence and Statistics (AISTATS),
+       vol. 89, p.849-858, 2019.
+
+    """
+
+    def __init__(self, reg_e=.1, max_iter=10,
+                 tol=10e-9, verbose=False, log=False,
+                 metric="sqeuclidean",
+                 out_of_sample_map='ferradans'):
+        self.reg_e = reg_e
+        self.max_iter = max_iter
+        self.tol = tol
+        self.verbose = verbose
+        self.log = log
+        self.metric = metric
+        self.out_of_sample_map = out_of_sample_map
+
+    def fit(self, Xs, ys=None, Xt=None, yt=None):
+        """Building coupling matrices from a list of source and target sets of samples
+        (Xs, ys) and (Xt, yt)
+
+        Parameters
+        ----------
+        Xs : list of K array-like objects, shape K x (nk_source_samples, n_features)
+            A list of the training input samples.
+        ys : list of K array-like objects, shape K x (nk_source_samples,)
+            A list of the class labels
+        Xt : array-like, shape (n_target_samples, n_features)
+            The training input samples.
+        yt : array-like, shape (n_target_samples,)
+            The class labels. If some target samples are unlabeled, fill the
+            yt's elements with -1.
+
+            Warning: Note that, due to this convention -1 cannot be used as a
+            class label
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
+        # check the necessary inputs parameters are here
+        if check_params(Xs=Xs, Xt=Xt, ys=ys):
+
+            self.xs_ = Xs
+            self.xt_ = Xt
+
+            returned_ = jcpot_barycenter(Xs=Xs, Ys=ys, Xt=Xt, reg=self.reg_e,
+                                         metric=self.metric, distrinumItermax=self.max_iter, stopThr=self.tol,
+                                         verbose=self.verbose, log=True)
+
+            self.coupling_ = returned_[1]['gamma']
+
+            # deal with the value of log
+            if self.log:
+                self.proportions_, self.log_ = returned_
+            else:
+                self.proportions_ = returned_
+                self.log_ = dict()
+
+        return self
+
+    def transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
+        """Transports source samples Xs onto target ones Xt
+
+        Parameters
+        ----------
+        Xs : list of K array-like objects, shape K x (nk_source_samples, n_features)
+            A list of the training input samples.
+        ys : list of K array-like objects, shape K x (nk_source_samples,)
+            A list of the class labels
+        Xt : array-like, shape (n_target_samples, n_features)
+            The training input samples.
+        yt : array-like, shape (n_target_samples,)
+            The class labels. If some target samples are unlabeled, fill the
+            yt's elements with -1.
+
+            Warning: Note that, due to this convention -1 cannot be used as a
+            class label
+        batch_size : int, optional (default=128)
+            The batch size for out of sample inverse transform
+        """
+
+        transp_Xs = []
+
+        # check the necessary inputs parameters are here
+        if check_params(Xs=Xs):
+
+            if all([np.allclose(x, y) for x, y in zip(self.xs_, Xs)]):
+
+                # perform standard barycentric mapping for each source domain
+
+                for coupling in self.coupling_:
+                    transp = coupling / np.sum(coupling, 1)[:, None]
+
+                    # set nans to 0
+                    transp[~ np.isfinite(transp)] = 0
+
+                    # compute transported samples
+                    transp_Xs.append(np.dot(transp, self.xt_))
+            else:
+
+                # perform out of sample mapping
+                indices = np.arange(Xs.shape[0])
+                batch_ind = [
+                    indices[i:i + batch_size]
+                    for i in range(0, len(indices), batch_size)]
+
+                transp_Xs = []
+
+                for bi in batch_ind:
+                    transp_Xs_ = []
+
+                    # get the nearest neighbor in the sources domains
+                    xs = np.concatenate(self.xs_, axis=0)
+                    idx = np.argmin(dist(Xs[bi], xs), axis=1)
+
+                    # transport the source samples
+                    for coupling in self.coupling_:
+                        transp = coupling / np.sum(
+                            coupling, 1)[:, None]
+                        transp[~ np.isfinite(transp)] = 0
+                        transp_Xs_.append(np.dot(transp, self.xt_))
+
+                    transp_Xs_ = np.concatenate(transp_Xs_, axis=0)
+
+                    # define the transported points
+                    transp_Xs_ = transp_Xs_[idx, :] + Xs[bi] - xs[idx, :]
+                    transp_Xs.append(transp_Xs_)
+
+                transp_Xs = np.concatenate(transp_Xs, axis=0)
+
+            return transp_Xs
+
+    def transform_labels(self, ys=None):
+        """Propagate source labels ys to obtain target labels as in [27]
+
+        Parameters
+        ----------
+        ys : list of K array-like objects, shape K x (nk_source_samples,)
+            A list of the class labels
+
+        Returns
+        -------
+        yt : array-like, shape (n_target_samples, nb_classes)
+            Estimated soft target labels.
+        """
+
+        # check the necessary inputs parameters are here
+        if check_params(ys=ys):
+            yt = np.zeros((len(np.unique(np.concatenate(ys))), self.xt_.shape[0]))
+            for i in range(len(ys)):
+                ysTemp = label_normalization(np.copy(ys[i]))
+                classes = np.unique(ysTemp)
+                n = len(classes)
+                ns = len(ysTemp)
+
+                # perform label propagation
+                transp = self.coupling_[i] / np.sum(self.coupling_[i], 1)[:, None]
+
+                # set nans to 0
+                transp[~ np.isfinite(transp)] = 0
+
+                if self.log:
+                    D1 = self.log_['D1'][i]
+                else:
+                    D1 = np.zeros((n, ns))
+
+                    for c in classes:
+                        D1[int(c), ysTemp == c] = 1
+
+                # compute propagated labels
+                yt = yt + np.dot(D1, transp) / len(ys)
+
+            return yt.T
+
+    def inverse_transform_labels(self, yt=None):
+        """Propagate source labels ys to obtain target labels
+
+        Parameters
+        ----------
+        yt : array-like, shape (n_source_samples,)
+            The target class labels
+
+        Returns
+        -------
+        transp_ys : list of K array-like objects, shape K x (nk_source_samples, nb_classes)
+            A list of estimated soft source labels
+        """
+
+        # check the necessary inputs parameters are here
+        if check_params(yt=yt):
+            transp_ys = []
+            ytTemp = label_normalization(np.copy(yt))
+            classes = np.unique(ytTemp)
+            n = len(classes)
+            D1 = np.zeros((n, len(ytTemp)))
+
+            for c in classes:
+                D1[int(c), ytTemp == c] = 1
+
+            for i in range(len(self.xs_)):
+
+                # perform label propagation
+                transp = self.coupling_[i] / np.sum(self.coupling_[i], 1)[:, None]
+
+                # set nans to 0
+                transp[~ np.isfinite(transp)] = 0
+
+                # compute propagated labels
+                transp_ys.append(np.dot(D1, transp.T).T)
+
+            return transp_ys
