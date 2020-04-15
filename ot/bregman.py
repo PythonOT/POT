@@ -1553,8 +1553,6 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
 
     Returns
     -------
-    gamma : List of K (nsk x nt) ndarrays
-        Optimal transportation matrices for the given parameters for each pair of source and target domains
     h : (C,) ndarray
         proportion estimation in the target domain
     log : dict
@@ -1574,7 +1572,7 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
 
     # log dictionary
     if log:
-        log = {'niter': 0, 'err': [], 'M': [], 'D1': [], 'D2': []}
+        log = {'niter': 0, 'err': [], 'M': [], 'D1': [], 'D2': [], 'gamma': []}
 
     K = []
     M = []
@@ -1657,9 +1655,10 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
         log['M'] = M
         log['D1'] = D1
         log['D2'] = D2
-        return K, bary, log
+        log['gamma'] = K
+        return bary, log
     else:
-        return K, bary
+        return bary
 
 
 def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
