@@ -685,7 +685,7 @@ def test_jcpot_barycenter():
     Xs = [Xs1, Xs2]
     ys = [ys1, ys2]
 
-    _, prop, = ot.bregman.jcpot_barycenter(Xs, ys, Xt, reg=.5, metric='sqeuclidean',
+    prop = ot.bregman.jcpot_barycenter(Xs, ys, Xt, reg=.5, metric='sqeuclidean',
                                            numItermax=10000, stopThr=1e-9, verbose=False, log=False)
 
     np.testing.assert_allclose(prop, [1 - pt, pt], rtol=1e-3, atol=1e-3)
