@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-========================
-OT for domain adaptation
-========================
+======================================================
+OT with Laplacian regularization for domain adaptation
+======================================================
 
 This example introduces a domain adaptation in a 2D setting and OTDA
-approache with Laplacian regularization.
+approach with Laplacian regularization.
 
 """
 
