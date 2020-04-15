@@ -33,9 +33,9 @@ mu = np.array([0, 0])
 cov = np.array([[1, 0], [0, 2]])
 
 xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
-xs = np.append(xs, (np.random.rand(n_noise, 2)+1)*4).reshape((-1, 2))
+xs = np.append(xs, (np.random.rand(n_noise, 2) + 1) * 4).reshape((-1, 2))
 xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
-xt = np.append(xt, (np.random.rand(n_noise, 2)+1)*-3).reshape((-1, 2))
+xt = np.append(xt, (np.random.rand(n_noise, 2) + 1) * -3).reshape((-1, 2))
 
 M = sp.spatial.distance.cdist(xs, xt)
 
@@ -62,7 +62,7 @@ w, log = ot.partial.entropic_partial_wasserstein(p, q, M, reg=0.1, m=0.5,
                                                  log=True)
 
 print('Partial Wasserstein distance (m = 0.5): ' + str(log0['partial_w_dist']))
-print('Entropic partial Wasserstein distance (m = 0.5): ' + \
+print('Entropic partial Wasserstein distance (m = 0.5): ' +
       str(log['partial_w_dist']))
 
 pl.figure(1, (10, 5))
@@ -98,10 +98,10 @@ cov_t = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
 
 xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s)
-xs = np.concatenate((xs, ((np.random.rand(n_noise, 2)+1)*4)), axis=0)
+xs = np.concatenate((xs, ((np.random.rand(n_noise, 2) + 1) * 4)), axis=0)
 P = sp.linalg.sqrtm(cov_t)
 xt = np.random.randn(n_samples, 3).dot(P) + mu_t
-xt = np.concatenate((xt, ((np.random.rand(n_noise, 3)+1)*10)), axis=0)
+xt = np.concatenate((xt, ((np.random.rand(n_noise, 3) + 1) * 10)), axis=0)
 
 fig = pl.figure()
 ax1 = fig.add_subplot(121)
@@ -128,7 +128,7 @@ res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
                                                           m=m, log=True)
 
 print('Partial Wasserstein distance (m = 1): ' + str(log0['partial_gw_dist']))
-print('Entropic partial Wasserstein distance (m = 1): ' + \
+print('Entropic partial Wasserstein distance (m = 1): ' +
       str(log['partial_gw_dist']))
 
 pl.figure(1, (10, 5))
@@ -142,14 +142,14 @@ pl.title('Entropic partial Wasserstein')
 pl.show()
 
 print('-----m = 2/3')
-m = 2/3
+m = 2 / 3
 res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True)
 res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
                                                           m=m, log=True)
 
-print('Partial Wasserstein distance (m = 2/3): ' + \
+print('Partial Wasserstein distance (m = 2/3): ' +
       str(log0['partial_gw_dist']))
-print('Entropic partial Wasserstein distance (m = 2/3): ' + \
+print('Entropic partial Wasserstein distance (m = 2/3): ' +
       str(log['partial_gw_dist']))
 
 pl.figure(1, (10, 5))
