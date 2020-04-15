@@ -16,7 +16,7 @@ import scipy.linalg as linalg
 
 from .bregman import sinkhorn, jcpot_barycenter
 from .lp import emd
-from .utils import unif, dist, kernel, cost_normalization, label_normalization
+from .utils import unif, dist, kernel, cost_normalization, label_normalization, laplacian
 from .utils import check_params, BaseEstimator
 from .unbalanced import sinkhorn_unbalanced
 from .optim import cg
