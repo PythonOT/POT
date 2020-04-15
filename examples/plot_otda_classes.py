@@ -17,7 +17,6 @@ approaches currently supported in POT.
 import matplotlib.pylab as pl
 import ot
 
-
 ##############################################################################
 # Generate data
 # -------------
