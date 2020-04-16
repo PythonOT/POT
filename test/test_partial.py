@@ -93,10 +93,7 @@ def test_partial_gromov_wasserstein():
     m = 2 / 3
     res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C3, p, q, m=m,
                                                        log=True)
-    res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C3, p, q, 10,
-                                                              m=m, log=True)
     np.testing.assert_allclose(res0, 0, atol=1e-1, rtol=1e-1)
-    np.testing.assert_allclose(res, 0, atol=1e-1, rtol=1e-1)
 
     C1 = sp.spatial.distance.cdist(xs, xs)
     C2 = sp.spatial.distance.cdist(xt, xt)
@@ -123,8 +120,10 @@ def test_partial_gromov_wasserstein():
     m = 2 / 3
     res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m,
                                                        log=True)
-    res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
-                                                              m=m, log=True)
+    res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q,
+                                                              100, m=m,
+                                                              log=True)
+                                                              
     # check constratints
     np.testing.assert_equal(
         res0.sum(1) <= p, [True] * len(p))  # cf convergence wasserstein
