@@ -123,7 +123,7 @@ def test_partial_gromov_wasserstein():
     res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q,
                                                               100, m=m,
                                                               log=True)
-                                                        
+
     # check constratints
     np.testing.assert_equal(
         res0.sum(1) <= p, [True] * len(p))  # cf convergence wasserstein
