@@ -20,7 +20,7 @@ It provides the following solvers:
 * Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularizations [17].
 * Non regularized Wasserstein barycenters [16] with LP solver (only small scale).
 * Bregman projections for Wasserstein barycenter [3], convolutional barycenter [21] and unmixing [4].
-* Optimal transport for domain adaptation with group lasso regularization [5]
+* Optimal transport for domain adaptation with group lasso and Laplacian regularization [5]
 * Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
 * Linear OT [14] and Joint OT matrix and mapping estimation [8].
 * Wasserstein Discriminant Analysis [11] (requires autograd + pymanopt).
@@ -183,6 +183,7 @@ The contributors to this library are
 * [Hicham Janati](https://hichamjanati.github.io/) (Unbalanced OT)
 * [Romain Tavenard](https://rtavenar.github.io/) (1d Wasserstein)
 * [Mokhtar Z. Alaya](http://mzalaya.github.io/) (Screenkhorn)
+* [Ievgen Redko](https://ievred.github.io/) 
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
@@ -260,3 +261,5 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 [26] Alaya M. Z., Bérar M., Gasso G., Rakotomamonjy A. (2019). [Screening Sinkhorn Algorithm for Regularized Optimal Transport](https://papers.nips.cc/paper/9386-screening-sinkhorn-algorithm-for-regularized-optimal-transport), Advances in Neural Information Processing Systems 33 (NeurIPS).
 
 [27] Redko I., Courty N., Flamary R., Tuia D. (2019). [Optimal Transport for Multi-source Domain Adaptation under Target Shift](http://proceedings.mlr.press/v89/redko19a.html), Proceedings of the Twenty-Second International Conference on Artificial Intelligence and Statistics (AISTATS) 22, 2019.
+
+[28] Flamary R., Courty N., Tuia D., Rakotomamonjy A. (2014). [Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching](https://remi.flamary.com/biblio/flamary2014optlaplace.pdf), NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014. 

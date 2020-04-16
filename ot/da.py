@@ -818,6 +818,9 @@ def emd_laplace(a, b, xs, xt, M, sim, eta, alpha,
        "Optimal Transport for Domain Adaptation," in IEEE
        Transactions on Pattern Analysis and Machine Intelligence ,
        vol.PP, no.99, pp.1-1
+    .. [28] R. Flamary, N. Courty, D. Tuia, A. Rakotomamonjy,
+        "Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching,"
+         in NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
 
     See Also
     --------
@@ -1729,6 +1732,9 @@ class EMDLaplaceTransport(BaseTransport):
     .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
            "Optimal Transport for Domain Adaptation," in IEEE Transactions
            on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+    .. [2] R. Flamary, N. Courty, D. Tuia, A. Rakotomamonjy,
+        "Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching,"
+         in NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
     """
 
     def __init__(self, reg_lap=1., reg_src=1., alpha=0.5,
