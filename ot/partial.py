@@ -80,10 +80,10 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
     >>> M = [[0., 1.], [2., 3.]]
     >>> np.round(partial_wasserstein_lagrange(a,b,M), 2)
     array([[0.1, 0. ],
-       [0. , 0.1]])
+           [0. , 0.1]])
     >>> np.round(partial_wasserstein_lagrange(a,b,M,reg_m=2), 2)
     array([[0.1, 0. ],
-       [0. , 0. ]])
+           [0. , 0. ]])
 
     References
     ----------
@@ -199,10 +199,10 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     >>> M = [[0., 1.], [2., 3.]]
     >>> np.round(partial_wasserstein(a,b,M), 2)
     array([[0.1, 0. ],
-       [0. , 0.1]])
+           [0. , 0.1]])
     >>> np.round(partial_wasserstein(a,b,M,m=0.1), 2)
     array([[0.1, 0. ],
-       [0. , 0. ]])
+           [0. , 0. ]])
 
     References
     ----------
@@ -466,14 +466,14 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     >>> C2 = sp.spatial.distance.cdist(y, y)
     >>> np.round(partial_gromov_wasserstein(C1, C2, a, b),2)
     array([[0.  , 0.25, 0.  , 0.  ],
-       [0.25, 0.  , 0.  , 0.  ],
-       [0.  , 0.  , 0.25, 0.  ],
-       [0.  , 0.  , 0.  , 0.25]])
+           [0.25, 0.  , 0.  , 0.  ],
+           [0.  , 0.  , 0.25, 0.  ],
+           [0.  , 0.  , 0.  , 0.25]])
     >>> np.round(partial_gromov_wasserstein(C1, C2, a, b, m=0.25),2)
     array([[0.  , 0.  , 0.  , 0.  ],
-       [0.  , 0.  , 0.  , 0.  ],
-       [0.  , 0.  , 0.  , 0.  ],
-       [0.  , 0.  , 0.  , 0.25]])
+           [0.  , 0.  , 0.  , 0.  ],
+           [0.  , 0.  , 0.  , 0.  ],
+           [0.  , 0.  , 0.  , 0.25]])
 
     References
     ----------
@@ -711,8 +711,7 @@ def entropic_partial_wasserstein(a, b, M, reg, m=None, numItermax=1000,
     >>> M = [[0., 1.], [2., 3.]]
     >>> np.round(entropic_partial_wasserstein(a, b, M, 1, 0.1), 2)
     array([[0.06, 0.02],
-       [0.01, 0.  ]])
-
+           [0.01, 0.  ]])
 
     References
     ----------
@@ -849,15 +848,14 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
     >>> C2 = sp.spatial.distance.cdist(y, y)
     >>> np.round(entropic_partial_gromov_wasserstein(C1, C2, a, b,50), 2)
     array([[0.12, 0.13, 0.  , 0.  ],
-       [0.13, 0.12, 0.  , 0.  ],
-       [0.  , 0.  , 0.25, 0.  ],
-       [0.  , 0.  , 0.  , 0.25]])
-    >>> np.round(entropic_partial_gromov_wasserstein(C1, C2, a, b, 50, m=0.25)
-                 , 2)
+           [0.13, 0.12, 0.  , 0.  ],
+           [0.  , 0.  , 0.25, 0.  ],
+           [0.  , 0.  , 0.  , 0.25]])
+    >>> np.round(entropic_partial_gromov_wasserstein(C1, C2, a, b, 50, m=0.25), 2)
     array([[0.02, 0.03, 0.  , 0.03],
-       [0.03, 0.03, 0.  , 0.03],
-       [0.  , 0.  , 0.03, 0.  ],
-       [0.02, 0.02, 0.  , 0.03]])
+           [0.03, 0.03, 0.  , 0.03],
+           [0.  , 0.  , 0.03, 0.  ],
+           [0.02, 0.02, 0.  , 0.03]])
 
     Returns
     -------
