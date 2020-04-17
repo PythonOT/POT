@@ -209,7 +209,7 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     ..  [26] Caffarelli, L. A., & McCann, R. J. (2010) Free boundaries in
         optimal transport and Monge-Ampere obstacle problems. Annals of
         mathematics, 673-730.
-    ..  [27] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
+    ..  [28] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
         Wasserstein with Applications on Positive-Unlabeled Learning".
         arXiv preprint arXiv:2002.08276.
 
@@ -314,7 +314,7 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     ..  [26] Caffarelli, L. A., & McCann, R. J. (2010) Free boundaries in
         optimal transport and Monge-Ampere obstacle problems. Annals of
         mathematics, 673-730.
-    ..  [27] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
+    ..  [28] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
         Wasserstein with Applications on Positive-Unlabeled Learning".
         arXiv preprint arXiv:2002.08276.
     """
@@ -411,7 +411,7 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     - a and b are the sample weights
     - m is the amount of mass to be transported
 
-    The formulation of the problem has been proposed in [27]_
+    The formulation of the problem has been proposed in [28]_
 
 
     Parameters
@@ -477,7 +477,7 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
 
     References
     ----------
-    ..  [27] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
+    ..  [28] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
         Wasserstein with Applications on Positive-Unlabeled Learning".
         arXiv preprint arXiv:2002.08276.
 
@@ -570,7 +570,7 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     - a and b are the sample weights
     - m is the amount of mass to be transported
 
-    The formulation of the problem has been proposed in [27]_
+    The formulation of the problem has been proposed in [28]_
 
 
     Parameters
@@ -627,7 +627,7 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
 
     References
     ----------
-    ..  [27] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
+    ..  [28] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
         Wasserstein with Applications on Positive-Unlabeled Learning".
         arXiv preprint arXiv:2002.08276.
 
