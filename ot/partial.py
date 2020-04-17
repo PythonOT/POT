@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Partial OT
@@ -30,7 +29,9 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
              1^T \gamma^T 1 = m \leq \min\{\|a\|_1, \|b\|_1\}
 
 
-    or equivalently:
+    or equivalently (see Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X.
+    (2018). An interpolating distance between optimal transport and Fisher–Rao
+    metrics. Foundations of Computational Mathematics, 18(1), 1-44.)
 
     .. math::
         \gamma = \arg\min_\gamma <\gamma,M>_F  + \sqrt(\lambda/2)
@@ -47,7 +48,8 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
     - :math:`\lambda` is the lagragian cost. Tuning its value allows attaining
       a given mass to be transported m
 
-    The formulation of the problem has been proposed in [26]_
+    The formulation of the problem has been proposed in [28]_
+
 
     Parameters
     ----------
@@ -59,9 +61,17 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
         cost matrix for the quadratic cost
     reg_m : float, optional
         Lagragian cost
+    nb_dummies : int, optional, default:1
+        number of reservoir points to be added (to avoid numerical
+        instabilities, increase its value if an error is raised)
     log : bool, optional
         record log if True
 
+    .. warning::
+        When dealing with a large number of points, the EMD solver may face
+        some instabilities, especially when the mass associated to the dummy
+        point is large. To avoid them, increase the number of dummy points
+        (allows a smoother repartition of the mass over the points).
 
     Returns
     -------
@@ -88,7 +98,7 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
     References
     ----------
 
-    .. [26] Caffarelli, L. A., & McCann, R. J. (2010) Free boundaries in
+    .. [28] Caffarelli, L. A., & McCann, R. J. (2010) Free boundaries in
        optimal transport and Monge-Ampere obstacle problems. Annals of
        mathematics, 673-730.
 
@@ -182,6 +192,13 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
         record log if True
 
 
+    .. warning::
+        When dealing with a large number of points, the EMD solver may face
+        some instabilities, especially when the mass associated to the dummy
+        point is large. To avoid them, increase the number of dummy points
+        (allows a smoother repartition of the mass over the points).
+
+
     Returns
     -------
     :math:`gamma` : (dim_a x dim_b) ndarray
@@ -206,10 +223,10 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
 
     References
     ----------
-    ..  [26] Caffarelli, L. A., & McCann, R. J. (2010) Free boundaries in
+    ..  [28] Caffarelli, L. A., & McCann, R. J. (2010) Free boundaries in
         optimal transport and Monge-Ampere obstacle problems. Annals of
         mathematics, 673-730.
-    ..  [28] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
         Wasserstein with Applications on Positive-Unlabeled Learning".
         arXiv preprint arXiv:2002.08276.
 
@@ -289,6 +306,13 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
         record log if True
 
 
+    .. warning::
+        When dealing with a large number of points, the EMD solver may face
+        some instabilities, especially when the mass associated to the dummy
+        point is large. To avoid them, increase the number of dummy points
+        (allows a smoother repartition of the mass over the points).
+
+
     Returns
     -------
     :math:`gamma` : (dim_a x dim_b) ndarray
@@ -311,10 +335,10 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
 
     References
     ----------
-    ..  [26] Caffarelli, L. A., & McCann, R. J. (2010) Free boundaries in
+    ..  [28] Caffarelli, L. A., & McCann, R. J. (2010) Free boundaries in
         optimal transport and Monge-Ampere obstacle problems. Annals of
         mathematics, 673-730.
-    ..  [28] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
         Wasserstein with Applications on Positive-Unlabeled Learning".
         arXiv preprint arXiv:2002.08276.
     """
@@ -411,7 +435,7 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     - a and b are the sample weights
     - m is the amount of mass to be transported
 
-    The formulation of the problem has been proposed in [28]_
+    The formulation of the problem has been proposed in [29]_
 
 
     Parameters
@@ -435,13 +459,12 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
         (default: 1)
     numItermax : int, optional
         Max number of iterations
+    tol : float, optional
+        tolerance for stopping iterations
     log : bool, optional
         return log if True
     verbose : bool, optional
         Print information along iterations
-    armijo : bool, optional
-        If True the steps of the line-search is found via an armijo research. Else closed form is used.
-        If there is convergence issues use False.
     **kwargs : dict
         parameters can be directly passed to the emd solver
 
@@ -477,7 +500,7 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
 
     References
     ----------
-    ..  [28] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
         Wasserstein with Applications on Positive-Unlabeled Learning".
         arXiv preprint arXiv:2002.08276.
 
@@ -546,7 +569,7 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
 
 
 def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
-                                thres=0.75, numItermax=1000, tol=1e-7,
+                                thres=1, numItermax=1000, tol=1e-7,
                                 log=False, verbose=False, **kwargs):
     r"""
     Solves the partial optimal transport problem
@@ -570,7 +593,7 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     - a and b are the sample weights
     - m is the amount of mass to be transported
 
-    The formulation of the problem has been proposed in [28]_
+    The formulation of the problem has been proposed in [29]_
 
 
     Parameters
@@ -594,12 +617,21 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
         (default: 1)
     numItermax : int, optional
         Max number of iterations
+    tol : float, optional
+        tolerance for stopping iterations
     log : bool, optional
         return log if True
     verbose : bool, optional
         Print information along iterations
     **kwargs : dict
         parameters can be directly passed to the emd solver
+
+
+    .. warning::
+        When dealing with a large number of points, the EMD solver may face
+        some instabilities, especially when the mass associated to the dummy
+        point is large. To avoid them, increase the number of dummy points
+        (allows a smoother repartition of the mass over the points).
 
 
     Returns
@@ -627,7 +659,7 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
 
     References
     ----------
-    ..  [28] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
         Wasserstein with Applications on Positive-Unlabeled Learning".
         arXiv preprint arXiv:2002.08276.
 
@@ -831,6 +863,8 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
         Initialisation of the transportation matrix
     numItermax : int, optional
         Max number of iterations
+    tol : float, optional
+        Stop threshold on error (>0)
     log : bool, optional
         return log if True
     verbose : bool, optional
@@ -966,6 +1000,8 @@ def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
         Initialisation of the transportation matrix
     numItermax : int, optional
         Max number of iterations
+    tol : float, optional
+        Stop threshold on error (>0)
     log : bool, optional
         return log if True
     verbose : bool, optional

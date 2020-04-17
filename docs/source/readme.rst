@@ -36,6 +36,9 @@ It provides the following solvers:
    problem [18] and dual problem [19])
 -  Non regularized free support Wasserstein barycenters [20].
 -  Unbalanced OT with KL relaxation distance and barycenter [10, 25].
+-  Screening Sinkhorn Algorithm for OT [26].
+-  JCPOT algorithm for multi-source domain adaptation with target shift
+   [27].
 
 Some demonstrations (both in Python and Jupyter Notebook format) are
 available in the examples folder.
@@ -48,19 +51,19 @@ POT using the following bibtex reference:
 
 ::
 
-    @misc{flamary2017pot,
-    title={POT Python Optimal Transport library},
-    author={Flamary, R{'e}mi and Courty, Nicolas},
-    url={https://github.com/rflamary/POT},
-    year={2017}
-    }
+   @misc{flamary2017pot,
+   title={POT Python Optimal Transport library},
+   author={Flamary, R{'e}mi and Courty, Nicolas},
+   url={https://github.com/rflamary/POT},
+   year={2017}
+   }
 
 Installation
 ------------
 
 The library has been tested on Linux, MacOSX and Windows. It requires a
-C++ compiler for using the EMD solver and relies on the following Python
-modules:
+C++ compiler for building/installing the EMD solver and relies on the
+following Python modules:
 
 -  Numpy (>=1.11)
 -  Scipy (>=1.0)
@@ -75,19 +78,19 @@ be installed prior to installing POT. This can be done easily with
 
 ::
 
-    pip install numpy cython
+   pip install numpy cython
 
 You can install the toolbox through PyPI with:
 
 ::
 
-    pip install POT
+   pip install POT
 
 or get the very latest version by downloading it and then running:
 
 ::
 
-    python setup.py install --user # for user install (no root)
+   python setup.py install --user # for user install (no root)
 
 Anaconda installation with conda-forge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -98,7 +101,7 @@ required dependencies:
 
 ::
 
-    conda install -c conda-forge pot
+   conda install -c conda-forge pot
 
 Post installation check
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -108,7 +111,7 @@ without errors:
 
 .. code:: python
 
-    import ot
+   import ot
 
 Note that for easier access the module is name ot instead of pot.
 
@@ -121,9 +124,9 @@ below
 -  **ot.dr** (Wasserstein dimensionality reduction) depends on autograd
    and pymanopt that can be installed with:
 
-   ::
+::
 
-       pip install pymanopt autograd
+   pip install pymanopt autograd
 
 -  **ot.gpu** (GPU accelerated OT) depends on cupy that have to be
    installed following instructions on `this
@@ -139,36 +142,36 @@ Short examples
 
 -  Import the toolbox
 
-   .. code:: python
+.. code:: python
 
-       import ot
+   import ot
 
 -  Compute Wasserstein distances
 
-   .. code:: python
+.. code:: python
 
-       # a,b are 1D histograms (sum to 1 and positive)
-       # M is the ground cost matrix
-       Wd=ot.emd2(a,b,M) # exact linear program
-       Wd_reg=ot.sinkhorn2(a,b,M,reg) # entropic regularized OT
-       # if b is a matrix compute all distances to a and return a vector
+   # a,b are 1D histograms (sum to 1 and positive)
+   # M is the ground cost matrix
+   Wd=ot.emd2(a,b,M) # exact linear program
+   Wd_reg=ot.sinkhorn2(a,b,M,reg) # entropic regularized OT
+   # if b is a matrix compute all distances to a and return a vector
 
 -  Compute OT matrix
 
-   .. code:: python
+.. code:: python
 
-       # a,b are 1D histograms (sum to 1 and positive)
-       # M is the ground cost matrix
-       T=ot.emd(a,b,M) # exact linear program
-       T_reg=ot.sinkhorn(a,b,M,reg) # entropic regularized OT
+   # a,b are 1D histograms (sum to 1 and positive)
+   # M is the ground cost matrix
+   T=ot.emd(a,b,M) # exact linear program
+   T_reg=ot.sinkhorn(a,b,M,reg) # entropic regularized OT
 
 -  Compute Wasserstein barycenter
 
-   .. code:: python
+.. code:: python
 
-       # A is a n*d matrix containing d  1D histograms
-       # M is the ground cost matrix
-       ba=ot.barycenter(A,M,reg) # reg is regularization parameter
+   # A is a n*d matrix containing d  1D histograms
+   # M is the ground cost matrix
+   ba=ot.barycenter(A,M,reg) # reg is regularization parameter
 
 Examples and Notebooks
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -207,6 +210,10 @@ want a quick look:
    Wasserstein <https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov.ipynb>`__
 -  `Gromov Wasserstein
    Barycenter <https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov_barycenter.ipynb>`__
+-  `Fused Gromov
+   Wasserstein <https://github.com/rflamary/POT/blob/master/notebooks/plot_fgw.ipynb>`__
+-  `Fused Gromov Wasserstein
+   Barycenter <https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb>`__
 
 You can also see the notebooks with `Jupyter
 nbviewer <https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/notebooks/>`__.
@@ -237,6 +244,7 @@ The contributors to this library are
 -  `Vayer Titouan <https://tvayer.github.io/>`__
 -  `Hicham Janati <https://hichamjanati.github.io/>`__ (Unbalanced OT)
 -  `Romain Tavenard <https://rtavenar.github.io/>`__ (1d Wasserstein)
+-  `Mokhtar Z. Alaya <http://mzalaya.github.io/>`__ (Screenkhorn)
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
@@ -274,11 +282,11 @@ References
 [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W. (2011,
 December). `Displacement interpolation using Lagrangian mass
 transport <https://people.csail.mit.edu/sparis/publi/2011/sigasia/Bonneel_11_Displacement_Interpolation.pdf>`__.
-In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p. 158). ACM.
+In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p. 158). ACM.
 
 [2] Cuturi, M. (2013). `Sinkhorn distances: Lightspeed computation of
 optimal transport <https://arxiv.org/pdf/1306.0895.pdf>`__. In Advances
-in Neural Information Processing Systems (pp. 2292-2300).
+in Neural Information Processing Systems (pp. 2292-2300).
 
 [3] Benamou, J. D., Carlier, G., Cuturi, M., Nenna, L., & Peyré, G.
 (2015). `Iterative Bregman projections for regularized transportation
@@ -387,17 +395,29 @@ and Statistics, (AISTATS) 21, 2018
 graphs <http://proceedings.mlr.press/v97/titouan19a.html>`__ Proceedings
 of the 36th International Conference on Machine Learning (ICML).
 
-[25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. (2019).
+[25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. (2015).
 `Learning with a Wasserstein Loss <http://cbcl.mit.edu/wasserstein/>`__
 Advances in Neural Information Processing Systems (NIPS).
 
-[26] Caffarelli, L. A., McCann, R. J. (2020). `Free boundaries in optimal transport and 
-Monge-Ampere obstacle problems <http://www.math.toronto.edu/~mccann/papers/annals2010.pdf>`__, 
-Annals of mathematics, 673-730.
+[26] Alaya M. Z., Bérar M., Gasso G., Rakotomamonjy A. (2019).
+`Screening Sinkhorn Algorithm for Regularized Optimal
+Transport <https://papers.nips.cc/paper/9386-screening-sinkhorn-algorithm-for-regularized-optimal-transport>`__,
+Advances in Neural Information Processing Systems 33 (NeurIPS).
 
-[27] Chapel, L., Alaya, M., Gasso, G. (2019). `Partial Gromov-Wasserstein with Applications 
-on Positive-Unlabeled Learning <https://arxiv.org/abs/2002.08276>`__. arXiv preprint
-arXiv:2002.08276.
+[27] Redko I., Courty N., Flamary R., Tuia D. (2019). `Optimal Transport
+for Multi-source Domain Adaptation under Target
+Shift <http://proceedings.mlr.press/v89/redko19a.html>`__, Proceedings
+of the Twenty-Second International Conference on Artificial Intelligence
+and Statistics (AISTATS) 22, 2019.
+
+[28] Caffarelli, L. A., McCann, R. J. (2020). [Free boundaries in
+optimal transport and Monge-Ampere obstacle problems]
+(http://www.math.toronto.edu/~mccann/papers/annals2010.pdf), Annals of
+mathematics, 673-730.
+
+[29] Chapel, L., Alaya, M., Gasso, G. (2019). [Partial
+Gromov-Wasserstein with Applications on Positive-Unlabeled Learning"]
+(https://arxiv.org/abs/2002.08276), arXiv preprint arXiv:2002.08276.
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
