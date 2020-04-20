@@ -2,11 +2,11 @@
 
 [![PyPI version](https://badge.fury.io/py/POT.svg)](https://badge.fury.io/py/POT)
 [![Anaconda Cloud](https://anaconda.org/conda-forge/pot/badges/version.svg)](https://anaconda.org/conda-forge/pot)
-[![Build Status](https://travis-ci.org/rflamary/POT.svg?branch=master)](https://travis-ci.org/rflamary/POT)
+[![Build Status](https://travis-ci.org/rflamary/POT.svg?branch=master)](https://travis-ci.org/PythonOT/POT)
 [![Documentation Status](https://readthedocs.org/projects/pot/badge/?version=latest)](http://pot.readthedocs.io/en/latest/?badge=latest)
 [![Downloads](https://pepy.tech/badge/pot)](https://pepy.tech/project/pot)
 [![Anaconda downloads](https://anaconda.org/conda-forge/pot/badges/downloads.svg)](https://anaconda.org/conda-forge/pot)
-[![License](https://anaconda.org/conda-forge/pot/badges/license.svg)](https://github.com/rflamary/POT/blob/master/LICENSE)
+[![License](https://anaconda.org/conda-forge/pot/badges/license.svg)](https://github.com/PythonOT/POT/blob/master/LICENSE)
 
 
 
@@ -20,7 +20,7 @@ It provides the following solvers:
 * Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularizations [17].
 * Non regularized Wasserstein barycenters [16] with LP solver (only small scale).
 * Bregman projections for Wasserstein barycenter [3], convolutional barycenter [21] and unmixing [4].
-* Optimal transport for domain adaptation with group lasso regularization [5]
+* Optimal transport for domain adaptation with group lasso regularization and Laplacian regularization [5][30]
 * Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
 * Linear OT [14] and Joint OT matrix and mapping estimation [8].
 * Wasserstein Discriminant Analysis [11] (requires autograd + pymanopt).
@@ -140,26 +140,26 @@ ba=ot.barycenter(A,M,reg) # reg is regularization parameter
 The examples folder contain several examples and use case for the library. The full documentation is available on [Readthedocs](http://pot.readthedocs.io/).
 
 
-Here is a list of the Python notebooks available [here](https://github.com/rflamary/POT/blob/master/notebooks/) if you want a quick look:
+Here is a list of the Python notebooks available [here](https://github.com/PythonOT/POT/blob/master/notebooks/) if you want a quick look:
 
-* [1D optimal transport](https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_1D.ipynb)
-* [OT Ground Loss](https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_L1_vs_L2.ipynb)
-* [Multiple EMD computation](https://github.com/rflamary/POT/blob/master/notebooks/plot_compute_emd.ipynb)
-* [2D optimal transport on empirical distributions](https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_2D_samples.ipynb)
-* [1D Wasserstein barycenter](https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_1D.ipynb)
-* [OT with user provided regularization](https://github.com/rflamary/POT/blob/master/notebooks/plot_optim_OTreg.ipynb)
-* [Domain adaptation with optimal transport](https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_d2.ipynb)
-* [Color transfer in images](https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_color_images.ipynb)
-* [OT mapping estimation for domain adaptation](https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_mapping.ipynb)
-* [OT mapping estimation for color transfer in images](https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_mapping_colors_images.ipynb)
-* [Wasserstein Discriminant Analysis](https://github.com/rflamary/POT/blob/master/notebooks/plot_WDA.ipynb)
-* [Gromov Wasserstein](https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov.ipynb)
-* [Gromov Wasserstein Barycenter](https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov_barycenter.ipynb)
-* [Fused Gromov Wasserstein](https://github.com/rflamary/POT/blob/master/notebooks/plot_fgw.ipynb)
-* [Fused Gromov Wasserstein Barycenter](https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb)
+* [1D optimal transport](https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_1D.ipynb)
+* [OT Ground Loss](https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_L1_vs_L2.ipynb)
+* [Multiple EMD computation](https://github.com/PythonOT/POT/blob/master/notebooks/plot_compute_emd.ipynb)
+* [2D optimal transport on empirical distributions](https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_2D_samples.ipynb)
+* [1D Wasserstein barycenter](https://github.com/PythonOT/POT/blob/master/notebooks/plot_barycenter_1D.ipynb)
+* [OT with user provided regularization](https://github.com/PythonOT/POT/blob/master/notebooks/plot_optim_OTreg.ipynb)
+* [Domain adaptation with optimal transport](https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_d2.ipynb)
+* [Color transfer in images](https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_color_images.ipynb)
+* [OT mapping estimation for domain adaptation](https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_mapping.ipynb)
+* [OT mapping estimation for color transfer in images](https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_mapping_colors_images.ipynb)
+* [Wasserstein Discriminant Analysis](https://github.com/PythonOT/POT/blob/master/notebooks/plot_WDA.ipynb)
+* [Gromov Wasserstein](https://github.com/PythonOT/POT/blob/master/notebooks/plot_gromov.ipynb)
+* [Gromov Wasserstein Barycenter](https://github.com/PythonOT/POT/blob/master/notebooks/plot_gromov_barycenter.ipynb)
+* [Fused Gromov Wasserstein](https://github.com/PythonOT/POT/blob/master/notebooks/plot_fgw.ipynb)
+* [Fused Gromov Wasserstein Barycenter](https://github.com/PythonOT/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb)
 
 
-You can also see the notebooks with [Jupyter nbviewer](https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/notebooks/).
+You can also see the notebooks with [Jupyter nbviewer](https://nbviewer.jupyter.org/github/PythonOT/POT/tree/master/notebooks/).
 
 ## Acknowledgements
 
@@ -184,6 +184,7 @@ The contributors to this library are
 * [Hicham Janati](https://hichamjanati.github.io/) (Unbalanced OT)
 * [Romain Tavenard](https://rtavenar.github.io/) (1d Wasserstein)
 * [Mokhtar Z. Alaya](http://mzalaya.github.io/) (Screenkhorn)
+* [Ievgen Redko](https://ievred.github.io/)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
@@ -265,3 +266,5 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 [28] Caffarelli, L. A., McCann, R. J. (2020). [Free boundaries in optimal transport and Monge-Ampere obstacle problems](http://www.math.toronto.edu/~mccann/papers/annals2010.pdf), Annals of mathematics, 673-730.
 
 [29] Chapel, L., Alaya, M., Gasso, G. (2019). [Partial Gromov-Wasserstein with Applications on Positive-Unlabeled Learning](https://arxiv.org/abs/2002.08276), arXiv preprint arXiv:2002.08276.
+
+[30] Flamary R., Courty N., Tuia D., Rakotomamonjy A. (2014). [Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching](https://remi.flamary.com/biblio/flamary2014optlaplace.pdf), NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
