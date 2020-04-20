@@ -702,7 +702,7 @@ def entropic_partial_wasserstein(a, b, M, reg, m=None, numItermax=1000,
     - a and b are the sample weights
     - m is the amount of mass to be transported
 
-    The formulation of the problem has been proposed in [3]_
+    The formulation of the problem has been proposed in [3]_ (prop. 5)
 
 
     Parameters
@@ -843,7 +843,8 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
         :math:`\Omega=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - m is the amount of mass to be transported
 
-    The formulation of the problem has been proposed in [12].
+    The formulation of the GW problem has been proposed in [12]_ and the
+    partial GW in [29]_.
 
     Parameters
     ----------
@@ -903,6 +904,9 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
+        Wasserstein with Applications on Positive-Unlabeled Learning".
+        arXiv preprint arXiv:2002.08276.
 
     See Also
     --------
@@ -979,7 +983,8 @@ def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
         :math:`\Omega=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - m is the amount of mass to be transported
 
-    The formulation of the problem has been proposed in [12].
+    The formulation of the GW problem has been proposed in [12]_ and the
+    partial GW in [29]_.
 
 
     Parameters
@@ -1033,6 +1038,9 @@ def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
+        Wasserstein with Applications on Positive-Unlabeled Learning".
+        arXiv preprint arXiv:2002.08276.
     """
 
     partial_gw, log_gw = entropic_partial_gromov_wasserstein(C1, C2, p, q, reg,
