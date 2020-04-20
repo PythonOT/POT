@@ -789,7 +789,7 @@ def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, al
         Type of similarity ('knn' or 'gauss') used to construct the Laplacian.
     sim_param : int or float, optional
         Parameter (number of the nearest neighbors for sim='knn'
-        or bandwidth for sim='gauss' used to compute the Laplacian.
+        or bandwidth for sim='gauss') used to compute the Laplacian.
     reg : string
         Type of Laplacian regularization
     eta : float
