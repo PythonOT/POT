@@ -77,7 +77,7 @@ bary_l2 = A.dot(weights)
 reg = 1e-3
 alpha = 1.
 
-bary_wass = ot.unbalanced.barycenter_unbalanced(A, M, reg, alpha, weights)
+bary_wass = ot.unbalanced.barycenter_unbalanced(A, M, reg, alpha, weights=weights)
 
 pl.figure(2)
 pl.clf()
@@ -111,7 +111,7 @@ for i in range(0, n_weight):
     weight = weight_list[i]
     weights = np.array([1 - weight, weight])
     B_l2[:, i] = A.dot(weights)
-    B_wass[:, i] = ot.unbalanced.barycenter_unbalanced(A, M, reg, alpha, weights)
+    B_wass[:, i] = ot.unbalanced.barycenter_unbalanced(A, M, reg, alpha, weights=weights)
 
 
 # plot interpolation
