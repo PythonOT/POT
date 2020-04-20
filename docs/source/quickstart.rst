@@ -645,6 +645,53 @@ implemented the main function :any:`ot.barycenter_unbalanced`.
       - :any:`auto_examples/plot_UOT_barycenter_1D`
 
 
+Partial optimal transport
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Partial OT is a variant of the optimal transport problem when only a fixed amount of mass m
+is to be transported. The partial OT metric between two histograms a and b is defined as [28]_:
+
+.. math::
+    \gamma = \arg\min_\gamma <\gamma,M>_F
+
+    s.t.
+        \gamma\geq 0 \\
+        \gamma 1 \leq a\\
+        \gamma^T 1 \leq b\\
+        1^T \gamma^T 1 = m \leq \min\{\|a\|_1, \|b\|_1\}
+             
+
+Interestingly the problem can be casted into a regular OT problem by adding reservoir points
+in which the surplus mass is sent [29]_. We provide a solver for partial OT
+in :any:`ot.partial`. The exact resolution of the problem is computed in :any:`ot.partial.partial_wasserstein`
+and :any:`ot.partial.partial_wasserstein2` that return respectively the OT matrix and the value of the
+linear term. The entropic solution of the problem is computed in :any:`ot.partial.entropic_partial_wasserstein` 
+(see [3]_).
+
+The partial Gromov-Wasserstein formulation of the problem 
+
+.. math::
+    GW = \min_\gamma \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*\gamma_{i,j}*\gamma_{k,l}
+
+    s.t.
+        \gamma\geq 0 \\
+        \gamma 1 \leq a\\
+        \gamma^T 1 \leq b\\
+        1^T \gamma^T 1 = m \leq \min\{\|a\|_1, \|b\|_1\}
+
+is computed in :any:`ot.partial.partial_gromov_wasserstein` and in 
+:any:`ot.partial.entropic_partial_gromov_wasserstein` when considering the entropic 
+regularization of the problem.
+
+
+.. hint::
+
+    Examples of the use of :any:`ot.partial` are available in :
+
+    - :any:`auto_examples/plot_partial`
+
+
+
 Gromov-Wasserstein
 ^^^^^^^^^^^^^^^^^^
 
@@ -921,3 +968,20 @@ References
 .. [25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. :
     Learning with a Wasserstein Loss,  Advances in Neural Information
     Processing Systems (NIPS) 2015
+    
+.. [26] Alaya M. Z., Bérar M., Gasso G., Rakotomamonjy A. (2019). Screening Sinkhorn 
+	Algorithm for Regularized Optimal Transport <https://papers.nips.cc/paper/9386-screening-sinkhorn-algorithm-for-regularized-optimal-transport>, 
+	Advances in Neural Information Processing Systems 33 (NeurIPS).
+
+.. [27] Redko I., Courty N., Flamary R., Tuia D. (2019). Optimal Transport for Multi-source 
+	Domain Adaptation under Target Shift <http://proceedings.mlr.press/v89/redko19a.html>, 
+	Proceedings of the Twenty-Second International Conference on Artificial Intelligence 
+	and Statistics (AISTATS) 22, 2019.
+	
+.. [28] Caffarelli, L. A., McCann, R. J. (2020). Free boundaries in optimal transport and 
+	Monge-Ampere obstacle problems <http://www.math.toronto.edu/~mccann/papers/annals2010.pdf>, 
+	Annals of mathematics, 673-730.
+
+.. [29] Chapel, L., Alaya, M., Gasso, G. (2019). Partial Gromov-Wasserstein with 
+	Applications on Positive-Unlabeled Learning <https://arxiv.org/abs/2002.08276>, 
+	arXiv preprint arXiv:2002.08276.
