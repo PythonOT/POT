@@ -86,3 +86,9 @@ ot.unbalanced
 
 .. automodule:: ot.unbalanced
   :members:
+  
+ot.partial
+-------------
+
+.. automodule:: ot.partial
+  :members:
