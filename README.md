@@ -30,6 +30,7 @@ It provides the following solvers:
 * Unbalanced OT with KL relaxation distance and barycenter [10, 25].
 * Screening Sinkhorn Algorithm for OT [26].
 * JCPOT algorithm for multi-source domain adaptation with target shift [27].
+* Partial Wasserstein and Gromov-Wasserstein (exact [29] and entropic [3] formulations).
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 
