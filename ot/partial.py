@@ -66,6 +66,8 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
         instabilities, increase its value if an error is raised)
     log : bool, optional
         record log if True
+    **kwargs : dict
+        parameters can be directly passed to the emd solver
 
     .. warning::
         When dealing with a large number of points, the EMD solver may face
@@ -190,6 +192,8 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
         instabilities, increase its value if an error is raised)
     log : bool, optional
         record log if True
+    **kwargs : dict
+        parameters can be directly passed to the emd solver
 
 
     .. warning::
@@ -304,6 +308,8 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
         instabilities, increase its value if an error is raised)
     log : bool, optional
         record log if True
+    **kwargs : dict
+        parameters can be directly passed to the emd solver
 
 
     .. warning::
