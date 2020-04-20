@@ -20,7 +20,7 @@ It provides the following solvers:
 * Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularizations [17].
 * Non regularized Wasserstein barycenters [16] with LP solver (only small scale).
 * Bregman projections for Wasserstein barycenter [3], convolutional barycenter [21] and unmixing [4].
-* Optimal transport for domain adaptation with group lasso regularization [5]
+* Optimal transport for domain adaptation with group lasso regularization and Laplacian regularization [5][30]
 * Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
 * Linear OT [14] and Joint OT matrix and mapping estimation [8].
 * Wasserstein Discriminant Analysis [11] (requires autograd + pymanopt).
@@ -184,6 +184,7 @@ The contributors to this library are
 * [Hicham Janati](https://hichamjanati.github.io/) (Unbalanced OT)
 * [Romain Tavenard](https://rtavenar.github.io/) (1d Wasserstein)
 * [Mokhtar Z. Alaya](http://mzalaya.github.io/) (Screenkhorn)
+* [Ievgen Redko](https://ievred.github.io/)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
@@ -265,3 +266,5 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 [28] Caffarelli, L. A., McCann, R. J. (2020). [Free boundaries in optimal transport and Monge-Ampere obstacle problems](http://www.math.toronto.edu/~mccann/papers/annals2010.pdf), Annals of mathematics, 673-730.
 
 [29] Chapel, L., Alaya, M., Gasso, G. (2019). [Partial Gromov-Wasserstein with Applications on Positive-Unlabeled Learning](https://arxiv.org/abs/2002.08276), arXiv preprint arXiv:2002.08276.
+
+[30] Flamary R., Courty N., Tuia D., Rakotomamonjy A. (2014). [Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching](https://remi.flamary.com/biblio/flamary2014optlaplace.pdf), NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
