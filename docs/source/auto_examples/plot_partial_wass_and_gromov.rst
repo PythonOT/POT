@@ -9,9 +9,9 @@
     .. _sphx_glr_auto_examples_plot_partial_wass_and_gromov.py:
 
 
-==========================
+==================================================
 Partial Wasserstein and Gromov-Wasserstein example
-==========================
+==================================================
 
 This example is designed to show how to use the Partial (Gromov-)Wassertsein
 distance computation in POT.
@@ -90,8 +90,7 @@ spaces and add some random noise.
 
 
 
-Compute partial Wasserstein plans and distance,
-by transporting 50% of the mass
+Compute partial Wasserstein plans and distance
 ----------------------------------------------
 
 
@@ -132,9 +131,9 @@ by transporting 50% of the mass
 
  .. code-block:: none
 
-    Partial Wasserstein distance (m = 0.5): 0.29721185147886475
-    Entropic partial Wasserstein distance (m = 0.5): 0.31204119793315976
-    /home/rflamary/PYTHON/POT/examples/plot_partial_wass_and_gromov.py:77: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+    Partial Wasserstein distance (m = 0.5): 0.507323938973194
+    Entropic partial Wasserstein distance (m = 0.5): 0.5205305886057896
+    /home/rflamary/PYTHON/POT/examples/plot_partial_wass_and_gromov.py:76: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
       pl.show()
 
 
@@ -191,14 +190,13 @@ two Gaussian distributions in 2- and 3-dimensional spaces.
 
  .. code-block:: none
 
-    /home/rflamary/PYTHON/POT/examples/plot_partial_wass_and_gromov.py:113: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+    /home/rflamary/PYTHON/POT/examples/plot_partial_wass_and_gromov.py:112: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
       pl.show()
 
 
 
 
-Compute partial Gromov-Wasserstein plans and distance,
-by transporting 100% and 2/3 of the mass
+Compute partial Gromov-Wasserstein plans and distance
 -----------------------------------------------------
 
 
@@ -208,27 +206,27 @@ by transporting 100% and 2/3 of the mass
     C1 = sp.spatial.distance.cdist(xs, xs)
     C2 = sp.spatial.distance.cdist(xt, xt)
 
+    # transport 100% of the mass
     print('-----m = 1')
     m = 1
-    res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m,
-                                                       log=True)
+    res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True)
     res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
                                                               m=m, log=True)
 
-    print('Partial Wasserstein distance (m = 1): ' + str(log0['partial_gw_dist']))
-    print('Entropic partial Wasserstein distance (m = 1): ' +
-          str(log['partial_gw_dist']))
+    print('Wasserstein distance (m = 1): ' + str(log0['partial_gw_dist']))
+    print('Entropic Wasserstein distance (m = 1): ' + str(log['partial_gw_dist']))
 
     pl.figure(1, (10, 5))
     pl.title("mass to be transported m = 1")
     pl.subplot(1, 2, 1)
     pl.imshow(res0, cmap='jet')
-    pl.title('Partial Wasserstein')
+    pl.title('Wasserstein')
     pl.subplot(1, 2, 2)
     pl.imshow(res, cmap='jet')
-    pl.title('Entropic partial Wasserstein')
+    pl.title('Entropic Wasserstein')
     pl.show()
 
+    # transport 2/3 of the mass
     print('-----m = 2/3')
     m = 2 / 3
     res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True)
@@ -263,18 +261,18 @@ by transporting 100% and 2/3 of the mass
  .. code-block:: none
 
     -----m = 1
-    Partial Wasserstein distance (m = 1): 56.18870587756925
-    Entropic partial Wasserstein distance (m = 1): 57.63642536818668
-    /home/rflamary/PYTHON/POT/examples/plot_partial_wass_and_gromov.py:144: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+    Wasserstein distance (m = 1): 63.65368600872179
+    Entropic Wasserstein distance (m = 1): 65.23659085946916
+    /home/rflamary/PYTHON/POT/examples/plot_partial_wass_and_gromov.py:141: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
       pl.show()
     -----m = 2/3
-    Partial Wasserstein distance (m = 2/3): 0.18550643334550976
-    Entropic partial Wasserstein distance (m = 2/3): 1.0781947761552997
-    /home/rflamary/PYTHON/POT/examples/plot_partial_wass_and_gromov.py:159: MatplotlibDeprecationWarning: Adding an axes using the same arguments as a previous axes currently reuses the earlier instance.  In a future version, a new instance will always be created and returned.  Meanwhile, this warning can be suppressed, and the future behavior ensured, by passing a unique label to each axes instance.
+    Partial Wasserstein distance (m = 2/3): 0.23235485397666825
+    Entropic partial Wasserstein distance (m = 2/3): 1.4645434781619244
+    /home/rflamary/PYTHON/POT/examples/plot_partial_wass_and_gromov.py:157: MatplotlibDeprecationWarning: Adding an axes using the same arguments as a previous axes currently reuses the earlier instance.  In a future version, a new instance will always be created and returned.  Meanwhile, this warning can be suppressed, and the future behavior ensured, by passing a unique label to each axes instance.
       pl.subplot(1, 2, 1)
-    /home/rflamary/PYTHON/POT/examples/plot_partial_wass_and_gromov.py:162: MatplotlibDeprecationWarning: Adding an axes using the same arguments as a previous axes currently reuses the earlier instance.  In a future version, a new instance will always be created and returned.  Meanwhile, this warning can be suppressed, and the future behavior ensured, by passing a unique label to each axes instance.
+    /home/rflamary/PYTHON/POT/examples/plot_partial_wass_and_gromov.py:160: MatplotlibDeprecationWarning: Adding an axes using the same arguments as a previous axes currently reuses the earlier instance.  In a future version, a new instance will always be created and returned.  Meanwhile, this warning can be suppressed, and the future behavior ensured, by passing a unique label to each axes instance.
       pl.subplot(1, 2, 2)
-    /home/rflamary/PYTHON/POT/examples/plot_partial_wass_and_gromov.py:165: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+    /home/rflamary/PYTHON/POT/examples/plot_partial_wass_and_gromov.py:163: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
       pl.show()
 
 
@@ -283,7 +281,7 @@ by transporting 100% and 2/3 of the mass
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** ( 0 minutes  1.656 seconds)
+   **Total running time of the script:** ( 0 minutes  1.543 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_partial_wass_and_gromov.py:

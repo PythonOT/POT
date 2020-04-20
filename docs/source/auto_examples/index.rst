@@ -313,6 +313,26 @@ This is a gallery of all the POT example files.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="This example introduces a domain adaptation in a 2D setting and OTDA approach with Laplacian re...">
+
+.. only:: html
+
+ .. figure:: /auto_examples/images/thumb/sphx_glr_plot_otda_laplacian_thumb.png
+
+     :ref:`sphx_glr_auto_examples_plot_otda_laplacian.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_otda_laplacian
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="OT for domain adaptation with image color adaptation [6] with mapping estimation [8].">
 
 .. only:: html
