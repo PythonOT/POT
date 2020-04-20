@@ -45,7 +45,7 @@ setup(name='POT',
        long_description_content_type='text/markdown', 
       author=u'Remi Flamary, Nicolas Courty',
       author_email='remi.flamary@gmail.com, ncourty@gmail.com',
-      url='https://github.com/rflamary/POT',
+      url='https://github.com/PythonOT/POT',
       packages=find_packages(),
       ext_modules = cythonize(Extension(
                 "ot.lp.emd_wrap",                                # the extension name
@@ -56,7 +56,7 @@ setup(name='POT',
                  extra_compile_args=opt_arg
                  )),
       platforms=['linux','macosx','windows'],
-      download_url='https://github.com/rflamary/POT/archive/{}.tar.gz'.format(__version__),
+      download_url='https://github.com/PythonOT/POT/archive/{}.tar.gz'.format(__version__),
       license = 'MIT',
       scripts=[],
       data_files=[],
