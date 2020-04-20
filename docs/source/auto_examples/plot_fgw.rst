@@ -1,6 +1,12 @@
+.. only:: html
 
+    .. note::
+        :class: sphx-glr-download-link-note
 
-.. _sphx_glr_auto_examples_plot_fgw.py:
+        Click :ref:`here <sphx_glr_download_auto_examples_plot_fgw.py>`     to download the full example code
+    .. rst-class:: sphx-glr-example-title
+
+    .. _sphx_glr_auto_examples_plot_fgw.py:
 
 
 ==============================
@@ -16,8 +22,7 @@ This example illustrates the computation of FGW for 1D measures[18].
 
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     # Author: Titouan Vayer <titouan.vayer@irisa.fr>
@@ -35,16 +40,15 @@ This example illustrates the computation of FGW for 1D measures[18].
 
 
 
+
 Generate data
 ---------
 
+We create two 1D random measures
 
 
-.. code-block:: python
+.. code-block:: default
 
-
-    #%% parameters
-    # We create two 1D random measures
     n = 20  # number of points in the first distribution
     n2 = 30  # number of points in the second distribution
     sig = 1  # std of first distribution
@@ -70,15 +74,13 @@ Generate data
 
 
 
+
 Plot data
 ---------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-    #%% plot the distributions
 
     pl.close(10)
     pl.figure(10, (7, 7))
@@ -102,8 +104,18 @@ Plot data
 
 
 
-.. image:: /auto_examples/images/sphx_glr_plot_fgw_010.png
-    :align: center
+.. image:: /auto_examples/images/sphx_glr_plot_fgw_001.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/examples/plot_fgw.py:73: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
@@ -112,11 +124,8 @@ Create structure matrices and across-feature distance matrix
 ---------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-    #%% Structure matrices and across-features distance matrix
     C1 = ot.dist(xs)
     C2 = ot.dist(xt)
     M = ot.dist(ys, yt)
@@ -130,15 +139,13 @@ Create structure matrices and across-feature distance matrix
 
 
 
+
 Plot matrices
 ---------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-    #%%
     cmap = 'Reds'
     pl.close(10)
     pl.figure(10, (5, 5))
@@ -180,8 +187,18 @@ Plot matrices
 
 
 
-.. image:: /auto_examples/images/sphx_glr_plot_fgw_011.png
-    :align: center
+.. image:: /auto_examples/images/sphx_glr_plot_fgw_002.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/examples/plot_fgw.py:128: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
@@ -190,11 +207,8 @@ Compute FGW/GW
 ---------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-    #%% Computing FGW and GW
     alpha = 1e-3
 
     ot.tic()
@@ -210,15 +224,17 @@ Compute FGW/GW
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
+
+ .. code-block:: none
 
     It.  |Loss        |Relative loss|Absolute loss
     ------------------------------------------------
-        0|4.734462e+01|0.000000e+00|0.000000e+00
-        1|2.508258e+01|8.875498e-01|2.226204e+01
-        2|2.189329e+01|1.456747e-01|3.189297e+00
-        3|2.189329e+01|0.000000e+00|0.000000e+00
-    Elapsed time : 0.0016989707946777344 s
+        0|4.734412e+01|0.000000e+00|0.000000e+00
+        1|2.508254e+01|8.875326e-01|2.226158e+01
+        2|2.189327e+01|1.456740e-01|3.189279e+00
+        3|2.189327e+01|0.000000e+00|0.000000e+00
+    Elapsed time : 0.0023026466369628906 s
     It.  |Loss        |Relative loss|Absolute loss
     ------------------------------------------------
         0|4.683978e+04|0.000000e+00|0.000000e+00
@@ -227,15 +243,14 @@ Compute FGW/GW
         3|2.182948e+04|0.000000e+00|0.000000e+00
 
 
+
+
 Visualize transport matrices
 ---------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-    #%% visu OT matrix
     cmap = 'Blues'
     fs = 15
     pl.figure(2, (13, 5))
@@ -264,28 +279,45 @@ Visualize transport matrices
 
 
 
-.. image:: /auto_examples/images/sphx_glr_plot_fgw_004.png
-    :align: center
+.. image:: /auto_examples/images/sphx_glr_plot_fgw_003.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/examples/plot_fgw.py:173: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
 
-**Total running time of the script:** ( 0 minutes  1.468 seconds)
 
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  1.184 seconds)
+
+
+.. _sphx_glr_download_auto_examples_plot_fgw.py:
 
 
 .. only :: html
 
  .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
 
 
-  .. container:: sphx-glr-download
+
+  .. container:: sphx-glr-download sphx-glr-download-python
 
      :download:`Download Python source code: plot_fgw.py <plot_fgw.py>`
 
 
 
-  .. container:: sphx-glr-download
+  .. container:: sphx-glr-download sphx-glr-download-jupyter
 
      :download:`Download Jupyter notebook: plot_fgw.ipynb <plot_fgw.ipynb>`
 
@@ -294,4 +326,4 @@ Visualize transport matrices
 
  .. rst-class:: sphx-glr-signature
 
-    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.github.io>`_

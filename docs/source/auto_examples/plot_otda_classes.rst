@@ -1,6 +1,12 @@
+.. only:: html
 
+    .. note::
+        :class: sphx-glr-download-link-note
 
-.. _sphx_glr_auto_examples_plot_otda_classes.py:
+        Click :ref:`here <sphx_glr_download_auto_examples_plot_otda_classes.py>`     to download the full example code
+    .. rst-class:: sphx-glr-example-title
+
+    .. _sphx_glr_auto_examples_plot_otda_classes.py:
 
 
 ========================
@@ -12,8 +18,7 @@ approaches currently supported in POT.
 
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     # Authors: Remi Flamary <remi.flamary@unice.fr>
@@ -35,8 +40,7 @@ Generate data
 -------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     n_source_samples = 150
@@ -52,12 +56,12 @@ Generate data
 
 
 
+
 Instantiate the different transport algorithms and fit them
 -----------------------------------------------------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     # EMD Transport
@@ -90,41 +94,44 @@ Instantiate the different transport algorithms and fit them
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    It.  |Loss        |Delta loss
-    --------------------------------
-        0|9.566309e+00|0.000000e+00
-        1|2.169680e+00|-3.409088e+00
-        2|1.914989e+00|-1.329986e-01
-        3|1.860251e+00|-2.942498e-02
-        4|1.838073e+00|-1.206621e-02
-        5|1.827064e+00|-6.025122e-03
-        6|1.820899e+00|-3.386082e-03
-        7|1.817290e+00|-1.985705e-03
-        8|1.814644e+00|-1.458223e-03
-        9|1.812661e+00|-1.093816e-03
-       10|1.810239e+00|-1.338121e-03
-       11|1.809100e+00|-6.296940e-04
-       12|1.807939e+00|-6.420646e-04
-       13|1.806965e+00|-5.389118e-04
-       14|1.806822e+00|-7.889599e-05
-       15|1.806193e+00|-3.482356e-04
-       16|1.805735e+00|-2.536930e-04
-       17|1.805321e+00|-2.292667e-04
-       18|1.804389e+00|-5.170222e-04
-       19|1.803908e+00|-2.661907e-04
-    It.  |Loss        |Delta loss
-    --------------------------------
-       20|1.803696e+00|-1.178279e-04
+ .. code-block:: none
+
+    It.  |Loss        |Relative loss|Absolute loss
+    ------------------------------------------------
+        0|9.484039e+00|0.000000e+00|0.000000e+00
+        1|1.976107e+00|3.799355e+00|7.507932e+00
+        2|1.749871e+00|1.292876e-01|2.262365e-01
+        3|1.692667e+00|3.379504e-02|5.720374e-02
+        4|1.676256e+00|9.790077e-03|1.641068e-02
+        5|1.667458e+00|5.276422e-03|8.798212e-03
+        6|1.661775e+00|3.419693e-03|5.682762e-03
+        7|1.658009e+00|2.271789e-03|3.766646e-03
+        8|1.655167e+00|1.716870e-03|2.841707e-03
+        9|1.651825e+00|2.023380e-03|3.342270e-03
+       10|1.649431e+00|1.451076e-03|2.393450e-03
+       11|1.648649e+00|4.742894e-04|7.819369e-04
+       12|1.647901e+00|4.538219e-04|7.478538e-04
+       13|1.647356e+00|3.313134e-04|5.457909e-04
+       14|1.646923e+00|2.627246e-04|4.326871e-04
+       15|1.646038e+00|5.375014e-04|8.847478e-04
+       16|1.645629e+00|2.483240e-04|4.086492e-04
+       17|1.645616e+00|8.248172e-06|1.357332e-05
+       18|1.645377e+00|1.452648e-04|2.390153e-04
+       19|1.644745e+00|3.838976e-04|6.314139e-04
+    It.  |Loss        |Relative loss|Absolute loss
+    ------------------------------------------------
+       20|1.644164e+00|3.538439e-04|5.817773e-04
+
+
 
 
 Fig 1 : plots source and target samples
 ---------------------------------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     pl.figure(1, figsize=(10, 5))
@@ -148,7 +155,8 @@ Fig 1 : plots source and target samples
 
 
 .. image:: /auto_examples/images/sphx_glr_plot_otda_classes_001.png
-    :align: center
+    :class: sphx-glr-single-img
+
 
 
 
@@ -157,8 +165,7 @@ Fig 2 : plot optimal couplings and transported samples
 ------------------------------------------------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     param_img = {'interpolation': 'nearest'}
@@ -230,28 +237,45 @@ Fig 2 : plot optimal couplings and transported samples
 
 
 
-.. image:: /auto_examples/images/sphx_glr_plot_otda_classes_003.png
-    :align: center
+.. image:: /auto_examples/images/sphx_glr_plot_otda_classes_002.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/examples/plot_otda_classes.py:149: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
 
-**Total running time of the script:** ( 0 minutes  1.423 seconds)
 
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  2.083 seconds)
+
+
+.. _sphx_glr_download_auto_examples_plot_otda_classes.py:
 
 
 .. only :: html
 
  .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
 
 
-  .. container:: sphx-glr-download
+
+  .. container:: sphx-glr-download sphx-glr-download-python
 
      :download:`Download Python source code: plot_otda_classes.py <plot_otda_classes.py>`
 
 
 
-  .. container:: sphx-glr-download
+  .. container:: sphx-glr-download sphx-glr-download-jupyter
 
      :download:`Download Jupyter notebook: plot_otda_classes.ipynb <plot_otda_classes.ipynb>`
 
@@ -260,4 +284,4 @@ Fig 2 : plot optimal couplings and transported samples
 
  .. rst-class:: sphx-glr-signature
 
-    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.github.io>`_

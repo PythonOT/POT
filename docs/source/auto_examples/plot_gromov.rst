@@ -1,6 +1,12 @@
+.. only:: html
 
+    .. note::
+        :class: sphx-glr-download-link-note
 
-.. _sphx_glr_auto_examples_plot_gromov.py:
+        Click :ref:`here <sphx_glr_download_auto_examples_plot_gromov.py>`     to download the full example code
+    .. rst-class:: sphx-glr-example-title
+
+    .. _sphx_glr_auto_examples_plot_gromov.py:
 
 
 ==========================
@@ -11,8 +17,7 @@ This example is designed to show how to use the Gromov-Wassertsein distance
 computation in POT.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     # Author: Erwan Vautier <erwan.vautier@gmail.com>
@@ -32,6 +37,7 @@ computation in POT.
 
 
 
+
 Sample two Gaussian distributions (2D and 3D)
 ---------------------------------------------
 
@@ -40,8 +46,7 @@ do not belong to the same metric space. For demonstration purpose, we sample
 two Gaussian distributions in 2- and 3-dimensional spaces.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
 
@@ -64,12 +69,12 @@ two Gaussian distributions in 2- and 3-dimensional spaces.
 
 
 
+
 Plotting the distributions
 --------------------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
 
@@ -84,7 +89,17 @@ Plotting the distributions
 
 
 .. image:: /auto_examples/images/sphx_glr_plot_gromov_001.png
-    :align: center
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/examples/plot_gromov.py:56: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
@@ -93,8 +108,7 @@ Compute distance kernels, normalize them and then display
 ---------------------------------------------------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
 
@@ -115,7 +129,17 @@ Compute distance kernels, normalize them and then display
 
 
 .. image:: /auto_examples/images/sphx_glr_plot_gromov_002.png
-    :align: center
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/examples/plot_gromov.py:75: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
@@ -124,8 +148,7 @@ Compute Gromov-Wasserstein plans and distance
 ---------------------------------------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     p = ot.unif(n_samples)
@@ -157,52 +180,60 @@ Compute Gromov-Wasserstein plans and distance
 
 
 .. image:: /auto_examples/images/sphx_glr_plot_gromov_003.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    It.  |Loss        |Delta loss
-    --------------------------------
-        0|4.328711e-02|0.000000e+00
-        1|2.281369e-02|-8.974178e-01
-        2|1.843659e-02|-2.374139e-01
-        3|1.602820e-02|-1.502598e-01
-        4|1.353712e-02|-1.840179e-01
-        5|1.285687e-02|-5.290977e-02
-        6|1.284537e-02|-8.952931e-04
-        7|1.284525e-02|-8.989584e-06
-        8|1.284525e-02|-8.989950e-08
-        9|1.284525e-02|-8.989949e-10
+ .. code-block:: none
+
+    It.  |Loss        |Relative loss|Absolute loss
+    ------------------------------------------------
+        0|8.019265e-02|0.000000e+00|0.000000e+00
+        1|3.734805e-02|1.147171e+00|4.284460e-02
+        2|2.923853e-02|2.773572e-01|8.109516e-03
+        3|2.478957e-02|1.794691e-01|4.448961e-03
+        4|2.444720e-02|1.400444e-02|3.423693e-04
+        5|2.444720e-02|0.000000e+00|0.000000e+00
     It.  |Err         
     -------------------
-        0|7.263293e-02|
-       10|1.737784e-02|
-       20|7.783978e-03|
-       30|3.399419e-07|
-       40|3.751207e-11|
-    Gromov-Wasserstein distances: 0.012845252089244688
-    Entropic Gromov-Wasserstein distances: 0.013543882352191079
+        0|8.259147e-02|
+       10|6.113732e-04|
+       20|1.650651e-08|
+       30|5.671192e-12|
+    Gromov-Wasserstein distances: 0.024447198979060496
+    Entropic Gromov-Wasserstein distances: 0.02488439679981518
+    /home/rflamary/PYTHON/POT/examples/plot_gromov.py:106: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
-**Total running time of the script:** ( 0 minutes  1.916 seconds)
 
+
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  0.999 seconds)
+
+
+.. _sphx_glr_download_auto_examples_plot_gromov.py:
 
 
 .. only :: html
 
  .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
 
 
-  .. container:: sphx-glr-download
+
+  .. container:: sphx-glr-download sphx-glr-download-python
 
      :download:`Download Python source code: plot_gromov.py <plot_gromov.py>`
 
 
 
-  .. container:: sphx-glr-download
+  .. container:: sphx-glr-download sphx-glr-download-jupyter
 
      :download:`Download Jupyter notebook: plot_gromov.ipynb <plot_gromov.ipynb>`
 
@@ -211,4 +242,4 @@ Compute Gromov-Wasserstein plans and distance
 
  .. rst-class:: sphx-glr-signature
 
-    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.github.io>`_

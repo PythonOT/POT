@@ -1,6 +1,12 @@
+.. only:: html
 
+    .. note::
+        :class: sphx-glr-download-link-note
 
-.. _sphx_glr_auto_examples_plot_stochastic.py:
+        Click :ref:`here <sphx_glr_download_auto_examples_plot_stochastic.py>`     to download the full example code
+    .. rst-class:: sphx-glr-example-title
+
+    .. _sphx_glr_auto_examples_plot_stochastic.py:
 
 
 ==========================
@@ -12,8 +18,7 @@ algorithms for descrete and semicontinous measures from the POT library.
 
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     # Author: Kilian Fatras <kilian.fatras@gmail.com>
@@ -24,6 +29,7 @@ algorithms for descrete and semicontinous measures from the POT library.
     import numpy as np
     import ot
     import ot.plot
+
 
 
 
@@ -44,8 +50,7 @@ COMPUTE TRANSPORTATION MATRIX FOR SEMI-DUAL PROBLEM
  and the target measures and finally the cost matrix c.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     n_source = 7
@@ -67,6 +72,7 @@ COMPUTE TRANSPORTATION MATRIX FOR SEMI-DUAL PROBLEM
 
 
 
+
 Call the "SAG" method to find the transportation matrix in the discrete case
 ---------------------------------------------
 
@@ -74,8 +80,7 @@ Define the method "SAG", call ot.solve_semi_dual_entropic and plot the
 results.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     method = "SAG"
@@ -89,7 +94,9 @@ results.
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
+
+ .. code-block:: none
 
     [[2.55553509e-02 9.96395660e-02 1.76579142e-02 4.31178196e-06]
      [1.21640234e-01 1.25357448e-02 1.30225078e-03 7.37891338e-03]
@@ -98,6 +105,8 @@ results.
      [9.85500870e-03 7.52288517e-04 1.08262628e-02 1.21423583e-01]
      [2.16904253e-02 9.03825797e-04 1.87178503e-03 1.18391107e-01]
      [4.15462212e-02 2.65987989e-02 7.23177216e-02 2.39440107e-03]]
+
+
 
 
 SEMICONTINOUS CASE:
@@ -110,8 +119,7 @@ Define one general measure a, one discrete measures b, the points where
 are defined the source and the target measures and finally the cost matrix c.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     n_source = 7
@@ -134,6 +142,7 @@ are defined the source and the target measures and finally the cost matrix c.
 
 
 
+
 Call the "ASGD" method to find the transportation matrix in the semicontinous
 case
 ---------------------------------------------
@@ -142,8 +151,7 @@ Define the method "ASGD", call ot.solve_semi_dual_entropic and plot the
 results.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     method = "ASGD"
@@ -158,17 +166,21 @@ results.
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    [3.98220325 7.76235856 3.97645524 2.72051681 1.23219313 3.07696856
-     2.84476972] [-2.65544161 -2.50838395 -0.9397765   6.10360206]
-    [[2.34528761e-02 1.00491956e-01 1.89058354e-02 6.47543413e-06]
-     [1.16616747e-01 1.32074516e-02 1.45653361e-03 1.15764107e-02]
-     [3.16154850e-03 7.42892944e-02 6.54061055e-02 1.94426150e-07]
-     [2.33152216e-02 3.27486992e-02 8.61986263e-02 5.94595747e-04]
-     [6.34131496e-03 5.31975896e-04 8.12724003e-03 1.27856612e-01]
-     [1.41744829e-02 6.49096245e-04 1.42704389e-03 1.26606520e-01]
-     [3.73127657e-02 2.62526499e-02 7.57727161e-02 3.51901117e-03]]
+ .. code-block:: none
+
+    [3.89943264 7.64823414 3.9284189  2.67501041 1.42825446 3.26039819
+     2.79237712] [-2.50786905 -2.42684838 -0.93647774  5.87119517]
+    [[2.50229922e-02 1.00367920e-01 1.74615056e-02 4.72486104e-06]
+     [1.20583329e-01 1.27839737e-02 1.30373565e-03 8.18610462e-03]
+     [3.49243139e-03 7.68200813e-02 6.25444833e-02 1.46879008e-07]
+     [2.58205995e-02 3.39501207e-02 8.26360982e-02 4.50324517e-04]
+     [8.94164918e-03 7.02183713e-04 9.92028326e-03 1.23293027e-01]
+     [1.97360234e-02 8.46022708e-04 1.72001583e-03 1.20555081e-01]
+     [4.10386980e-02 2.70289873e-02 7.21425804e-02 2.64687723e-03]]
+
+
 
 
 Compare the results with the Sinkhorn algorithm
@@ -177,8 +189,7 @@ Compare the results with the Sinkhorn algorithm
 Call the Sinkhorn algorithm from POT
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     sinkhorn_pi = ot.sinkhorn(a, b, M, reg)
@@ -191,27 +202,29 @@ Call the Sinkhorn algorithm from POT
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    [[2.55535622e-02 9.96413843e-02 1.76578860e-02 4.31043335e-06]
-     [1.21640742e-01 1.25369034e-02 1.30234529e-03 7.37715259e-03]
-     [3.56096458e-03 7.61460101e-02 6.31500344e-02 1.33788624e-07]
-     [2.61499607e-02 3.34255577e-02 8.28741973e-02 4.07427179e-04]
-     [9.85698720e-03 7.52505948e-04 1.08291770e-02 1.21418473e-01]
-     [2.16947591e-02 9.04086158e-04 1.87228707e-03 1.18386011e-01]
-     [4.15442692e-02 2.65998963e-02 7.23192701e-02 2.39370724e-03]]
+ .. code-block:: none
+
+    [[2.55553508e-02 9.96395661e-02 1.76579142e-02 4.31178193e-06]
+     [1.21640234e-01 1.25357448e-02 1.30225079e-03 7.37891333e-03]
+     [3.56123974e-03 7.61451746e-02 6.31505947e-02 1.33831455e-07]
+     [2.61515201e-02 3.34246014e-02 8.28734709e-02 4.07550425e-04]
+     [9.85500876e-03 7.52288523e-04 1.08262629e-02 1.21423583e-01]
+     [2.16904255e-02 9.03825804e-04 1.87178504e-03 1.18391107e-01]
+     [4.15462212e-02 2.65987989e-02 7.23177217e-02 2.39440105e-03]]
+
+
 
 
 PLOT TRANSPORTATION MATRIX
 #############################################################################
 
-
 Plot SAG results
 ----------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     pl.figure(4, figsize=(5, 5))
@@ -222,8 +235,18 @@ Plot SAG results
 
 
 
-.. image:: /auto_examples/images/sphx_glr_plot_stochastic_004.png
-    :align: center
+.. image:: /auto_examples/images/sphx_glr_plot_stochastic_001.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/examples/plot_stochastic.py:119: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
@@ -232,8 +255,7 @@ Plot ASGD results
 -----------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     pl.figure(4, figsize=(5, 5))
@@ -244,8 +266,18 @@ Plot ASGD results
 
 
 
-.. image:: /auto_examples/images/sphx_glr_plot_stochastic_005.png
-    :align: center
+.. image:: /auto_examples/images/sphx_glr_plot_stochastic_002.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/examples/plot_stochastic.py:128: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
@@ -254,8 +286,7 @@ Plot Sinkhorn results
 ---------------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     pl.figure(4, figsize=(5, 5))
@@ -266,8 +297,18 @@ Plot Sinkhorn results
 
 
 
-.. image:: /auto_examples/images/sphx_glr_plot_stochastic_006.png
-    :align: center
+.. image:: /auto_examples/images/sphx_glr_plot_stochastic_003.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/examples/plot_stochastic.py:137: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
@@ -285,8 +326,7 @@ COMPUTE TRANSPORTATION MATRIX FOR DUAL PROBLEM
  are defined the source and the target measures and finally the cost matrix c.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     n_source = 7
@@ -311,6 +351,7 @@ COMPUTE TRANSPORTATION MATRIX FOR DUAL PROBLEM
 
 
 
+
 Call the "SGD" dual method to find the transportation matrix in the
 semicontinous case
 ---------------------------------------------
@@ -318,8 +359,7 @@ semicontinous case
 Call ot.solve_dual_entropic and plot the results.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     sgd_dual_pi, log_sgd = ot.stochastic.solve_dual_entropic(a, b, M, reg,
@@ -334,17 +374,21 @@ Call ot.solve_dual_entropic and plot the results.
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    [0.92449986 2.75486107 1.07923806 0.02741145 0.61355413 1.81961594
-     0.12072562] [0.33831611 0.46806842 1.5640451  4.96947652]
-    [[2.20001105e-02 9.26497883e-02 1.08654588e-02 9.78995555e-08]
-     [1.55669974e-02 1.73279561e-03 1.19120878e-04 2.49058251e-05]
-     [3.48198483e-03 8.04151063e-02 4.41335396e-02 3.45115752e-09]
-     [3.14927954e-02 4.34760520e-02 7.13338154e-02 1.29442395e-05]
-     [6.81836550e-02 5.62182457e-03 5.35386584e-02 2.21568095e-02]
-     [8.04671052e-02 3.62163462e-03 4.96331605e-03 1.15837801e-02]
-     [4.88644009e-02 3.37903481e-02 6.07955004e-02 7.42743505e-05]]
+ .. code-block:: none
+
+    [0.91421006 2.78075506 1.06828701 0.01979397 0.60914807 1.81887037
+     0.1152939 ] [0.33964624 0.47604281 1.57223631 4.93843308]
+    [[2.18038772e-02 9.24355133e-02 1.08426805e-02 9.39355366e-08]
+     [1.59966167e-02 1.79248770e-03 1.23251128e-04 2.47779034e-05]
+     [3.44864558e-03 8.01760930e-02 4.40119061e-02 3.30922887e-09]
+     [3.12954103e-02 4.34915712e-02 7.13747533e-02 1.24533534e-05]
+     [6.79742497e-02 5.64192090e-03 5.37416946e-02 2.13851205e-02]
+     [8.05141568e-02 3.64790957e-03 5.00040902e-03 1.12213345e-02]
+     [4.86643900e-02 3.38763749e-02 6.09634969e-02 7.16139950e-05]]
+
+
 
 
 Compare the results with the Sinkhorn algorithm
@@ -353,8 +397,7 @@ Compare the results with the Sinkhorn algorithm
 Call the Sinkhorn algorithm from POT
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     sinkhorn_pi = ot.sinkhorn(a, b, M, reg)
@@ -366,23 +409,26 @@ Call the Sinkhorn algorithm from POT
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    [[2.55535622e-02 9.96413843e-02 1.76578860e-02 4.31043335e-06]
-     [1.21640742e-01 1.25369034e-02 1.30234529e-03 7.37715259e-03]
-     [3.56096458e-03 7.61460101e-02 6.31500344e-02 1.33788624e-07]
-     [2.61499607e-02 3.34255577e-02 8.28741973e-02 4.07427179e-04]
-     [9.85698720e-03 7.52505948e-04 1.08291770e-02 1.21418473e-01]
-     [2.16947591e-02 9.04086158e-04 1.87228707e-03 1.18386011e-01]
-     [4.15442692e-02 2.65998963e-02 7.23192701e-02 2.39370724e-03]]
+ .. code-block:: none
+
+    [[2.55553508e-02 9.96395661e-02 1.76579142e-02 4.31178193e-06]
+     [1.21640234e-01 1.25357448e-02 1.30225079e-03 7.37891333e-03]
+     [3.56123974e-03 7.61451746e-02 6.31505947e-02 1.33831455e-07]
+     [2.61515201e-02 3.34246014e-02 8.28734709e-02 4.07550425e-04]
+     [9.85500876e-03 7.52288523e-04 1.08262629e-02 1.21423583e-01]
+     [2.16904255e-02 9.03825804e-04 1.87178504e-03 1.18391107e-01]
+     [4.15462212e-02 2.65987989e-02 7.23177217e-02 2.39440105e-03]]
+
+
 
 
 Plot  SGD results
 -----------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     pl.figure(4, figsize=(5, 5))
@@ -393,8 +439,18 @@ Plot  SGD results
 
 
 
-.. image:: /auto_examples/images/sphx_glr_plot_stochastic_007.png
-    :align: center
+.. image:: /auto_examples/images/sphx_glr_plot_stochastic_004.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/examples/plot_stochastic.py:199: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
@@ -403,8 +459,7 @@ Plot Sinkhorn results
 ---------------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     pl.figure(4, figsize=(5, 5))
@@ -413,28 +468,45 @@ Plot Sinkhorn results
 
 
 
-.. image:: /auto_examples/images/sphx_glr_plot_stochastic_008.png
-    :align: center
+.. image:: /auto_examples/images/sphx_glr_plot_stochastic_005.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/examples/plot_stochastic.py:208: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
 
-**Total running time of the script:** ( 0 minutes  20.889 seconds)
 
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  8.885 seconds)
+
+
+.. _sphx_glr_download_auto_examples_plot_stochastic.py:
 
 
 .. only :: html
 
  .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
 
 
-  .. container:: sphx-glr-download
+
+  .. container:: sphx-glr-download sphx-glr-download-python
 
      :download:`Download Python source code: plot_stochastic.py <plot_stochastic.py>`
 
 
 
-  .. container:: sphx-glr-download
+  .. container:: sphx-glr-download sphx-glr-download-jupyter
 
      :download:`Download Jupyter notebook: plot_stochastic.ipynb <plot_stochastic.ipynb>`
 
@@ -443,4 +515,4 @@ Plot Sinkhorn results
 
  .. rst-class:: sphx-glr-signature
 
-    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.github.io>`_
