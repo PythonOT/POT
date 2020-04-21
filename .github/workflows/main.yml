@@ -1,4 +1,13 @@
-on: [status]
+on:
+  push:
+    branches:
+      - '**'
+  create:
+    branches:
+      - 'master'
+    tags:
+      - '**'
+
 jobs:
   circleci_artifacts_redirector_job:
     runs-on: ubuntu-latest

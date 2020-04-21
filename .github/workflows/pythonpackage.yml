@@ -1,6 +1,14 @@
 name: Test Package
 
-on: [push]
+on:
+  push:
+    branches:
+      - '**'
+  create:
+    branches:
+      - 'master'
+    tags:
+      - '**'
 
 jobs:
   build:
