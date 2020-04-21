@@ -3,6 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/POT.svg)](https://badge.fury.io/py/POT)
 [![Anaconda Cloud](https://anaconda.org/conda-forge/pot/badges/version.svg)](https://anaconda.org/conda-forge/pot)
 [![Build Status](https://travis-ci.org/PythonOT/POT.svg?branch=master)](https://travis-ci.org/PythonOT/POT)
+[![Build Status](https://github.com/PythonOT/POT/workflows/Linux%7CWin%7CMacOS/badge.svg)](https://github.com/PythonOT/POT/actions)
 [![Codecov Status](https://codecov.io/gh/PythonOT/POT/branch/master/graph/badge.svg)](https://codecov.io/gh/PythonOT/POT)
 [![Documentation Status](https://readthedocs.org/projects/pot/badge/?version=latest)](http://pot.readthedocs.io/en/latest/?badge=latest)
 [![Downloads](https://pepy.tech/badge/pot)](https://pepy.tech/project/pot)
