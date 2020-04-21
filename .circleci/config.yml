@@ -103,24 +103,24 @@ jobs:
             name: Deploy docs
             command: |
               set -e;
-              # if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              git config --global user.email "circle@PythonOT.com";
-              git config --global user.name "Circle CI";
-              cd ~/PythonOT.github.io;
-              git checkout master
-              git remote -v
-              git fetch origin
-              git reset --hard origin/master
-              git clean -xdf
-              echo "Deploying dev docs for ${CIRCLE_BRANCH}.";
-              cp -a /tmp/build/html/* .;
-              touch .nojekyll;
-              git add -A;
-              git commit -m "CircleCI update of dev docs (${CIRCLE_BUILD_NUM}).";
-              git push origin master;
-              # else
-                # echo "No deployment (build: ${CIRCLE_BRANCH}).";
-              # fi
+              if [ "${CIRCLE_BRANCH}" == "master" ]; then
+                git config --global user.email "circle@PythonOT.com";
+                git config --global user.name "Circle CI";
+                cd ~/PythonOT.github.io;
+                git checkout master
+                git remote -v
+                git fetch origin
+                git reset --hard origin/master
+                git clean -xdf
+                echo "Deploying dev docs for ${CIRCLE_BRANCH}.";
+                cp -a /tmp/build/html/* .;
+                touch .nojekyll;
+                git add -A;
+                git commit -m "CircleCI update of dev docs (${CIRCLE_BUILD_NUM}).";
+                git push origin master;
+              else
+                echo "No deployment (build: ${CIRCLE_BRANCH}).";
+              fi
 
 workflows:
   version: 2
@@ -134,5 +134,4 @@ workflows:
           filters:
             branches:
               only:
-                # - master
-                - doc_ci_build
+                - master
