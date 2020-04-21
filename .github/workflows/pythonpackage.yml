@@ -11,7 +11,7 @@ on:
       - '**'
 
 jobs:
-  linux:
+  build:
 
     runs-on: ubuntu-latest
     strategy:
