@@ -1,14 +1,16 @@
 POT: Python Optimal Transport
 =============================
 
-|PyPI version| |Anaconda Cloud| |Build Status| |Documentation Status|
+|PyPI version| |Anaconda Cloud| |Build Status| |Codecov Status|
 |Downloads| |Anaconda downloads| |License|
 
 This open source Python library provide several solvers for optimization
 problems related to Optimal Transport for signal, image processing and
 machine learning.
 
-It provides the following solvers:
+Website and documentation: https://PythonOT.github.io/
+
+POT provides the following solvers:
 
 -  OT Network Flow solver for the linear program/ Earth Movers Distance
    [1].
@@ -24,7 +26,7 @@ It provides the following solvers:
 -  Bregman projections for Wasserstein barycenter [3], convolutional
    barycenter [21] and unmixing [4].
 -  Optimal transport for domain adaptation with group lasso
-   regularization [5]
+   regularization and Laplacian regularization [5][30]
 -  Conditional gradient [6] and Generalized conditional gradient for
    regularized OT [7].
 -  Linear OT [14] and Joint OT matrix and mapping estimation [8].
@@ -180,45 +182,45 @@ Examples and Notebooks
 
 The examples folder contain several examples and use case for the
 library. The full documentation is available on
-`Readthedocs <http://pot.readthedocs.io/>`__.
+https://PythonOT.github.io/.
 
 Here is a list of the Python notebooks available
-`here <https://github.com/rflamary/POT/blob/master/notebooks/>`__ if you
+`here <https://github.com/PythonOT/POT/blob/master/notebooks/>`__ if you
 want a quick look:
 
 -  `1D optimal
-   transport <https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_1D.ipynb>`__
+   transport <https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_1D.ipynb>`__
 -  `OT Ground
-   Loss <https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_L1_vs_L2.ipynb>`__
+   Loss <https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_L1_vs_L2.ipynb>`__
 -  `Multiple EMD
-   computation <https://github.com/rflamary/POT/blob/master/notebooks/plot_compute_emd.ipynb>`__
+   computation <https://github.com/PythonOT/POT/blob/master/notebooks/plot_compute_emd.ipynb>`__
 -  `2D optimal transport on empirical
-   distributions <https://github.com/rflamary/POT/blob/master/notebooks/plot_OT_2D_samples.ipynb>`__
+   distributions <https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_2D_samples.ipynb>`__
 -  `1D Wasserstein
-   barycenter <https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_1D.ipynb>`__
+   barycenter <https://github.com/PythonOT/POT/blob/master/notebooks/plot_barycenter_1D.ipynb>`__
 -  `OT with user provided
-   regularization <https://github.com/rflamary/POT/blob/master/notebooks/plot_optim_OTreg.ipynb>`__
+   regularization <https://github.com/PythonOT/POT/blob/master/notebooks/plot_optim_OTreg.ipynb>`__
 -  `Domain adaptation with optimal
-   transport <https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_d2.ipynb>`__
+   transport <https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_d2.ipynb>`__
 -  `Color transfer in
-   images <https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_color_images.ipynb>`__
+   images <https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_color_images.ipynb>`__
 -  `OT mapping estimation for domain
-   adaptation <https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_mapping.ipynb>`__
+   adaptation <https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_mapping.ipynb>`__
 -  `OT mapping estimation for color transfer in
-   images <https://github.com/rflamary/POT/blob/master/notebooks/plot_otda_mapping_colors_images.ipynb>`__
+   images <https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_mapping_colors_images.ipynb>`__
 -  `Wasserstein Discriminant
-   Analysis <https://github.com/rflamary/POT/blob/master/notebooks/plot_WDA.ipynb>`__
+   Analysis <https://github.com/PythonOT/POT/blob/master/notebooks/plot_WDA.ipynb>`__
 -  `Gromov
-   Wasserstein <https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov.ipynb>`__
+   Wasserstein <https://github.com/PythonOT/POT/blob/master/notebooks/plot_gromov.ipynb>`__
 -  `Gromov Wasserstein
-   Barycenter <https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov_barycenter.ipynb>`__
+   Barycenter <https://github.com/PythonOT/POT/blob/master/notebooks/plot_gromov_barycenter.ipynb>`__
 -  `Fused Gromov
-   Wasserstein <https://github.com/rflamary/POT/blob/master/notebooks/plot_fgw.ipynb>`__
+   Wasserstein <https://github.com/PythonOT/POT/blob/master/notebooks/plot_fgw.ipynb>`__
 -  `Fused Gromov Wasserstein
-   Barycenter <https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb>`__
+   Barycenter <https://github.com/PythonOT/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb>`__
 
 You can also see the notebooks with `Jupyter
-nbviewer <https://nbviewer.jupyter.org/github/rflamary/POT/tree/master/notebooks/>`__.
+nbviewer <https://nbviewer.jupyter.org/github/PythonOT/POT/tree/master/notebooks/>`__.
 
 Acknowledgements
 ----------------
@@ -247,6 +249,7 @@ The contributors to this library are
 -  `Hicham Janati <https://hichamjanati.github.io/>`__ (Unbalanced OT)
 -  `Romain Tavenard <https://rtavenar.github.io/>`__ (1d Wasserstein)
 -  `Mokhtar Z. Alaya <http://mzalaya.github.io/>`__ (Screenkhorn)
+-  `Ievgen Redko <https://ievred.github.io/>`__
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
@@ -422,17 +425,23 @@ Gromov-Wasserstein with Applications on Positive-Unlabeled
 Learning <https://arxiv.org/abs/2002.08276>`__, arXiv preprint
 arXiv:2002.08276.
 
+[30] Flamary R., Courty N., Tuia D., Rakotomamonjy A. (2014). `Optimal
+transport with Laplacian regularization: Applications to domain
+adaptation and shape
+matching <https://remi.flamary.com/biblio/flamary2014optlaplace.pdf>`__,
+NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
+
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
 .. |Anaconda Cloud| image:: https://anaconda.org/conda-forge/pot/badges/version.svg
    :target: https://anaconda.org/conda-forge/pot
-.. |Build Status| image:: https://travis-ci.org/rflamary/POT.svg?branch=master
-   :target: https://travis-ci.org/rflamary/POT
-.. |Documentation Status| image:: https://readthedocs.org/projects/pot/badge/?version=latest
-   :target: http://pot.readthedocs.io/en/latest/?badge=latest
+.. |Build Status| image:: https://travis-ci.org/PythonOT/POT.svg?branch=master
+   :target: https://travis-ci.org/PythonOT/POT
+.. |Codecov Status| image:: https://codecov.io/gh/PythonOT/POT/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/PythonOT/POT
 .. |Downloads| image:: https://pepy.tech/badge/pot
    :target: https://pepy.tech/project/pot
 .. |Anaconda downloads| image:: https://anaconda.org/conda-forge/pot/badges/downloads.svg
    :target: https://anaconda.org/conda-forge/pot
 .. |License| image:: https://anaconda.org/conda-forge/pot/badges/license.svg
-   :target: https://github.com/rflamary/POT/blob/master/LICENSE
+   :target: https://github.com/PythonOT/POT/blob/master/LICENSE
