@@ -34,7 +34,7 @@ before_install:
 install:
   - pip install -r requirements.txt
   - pip install -U "numpy>=1.14" scipy  # for numpy array formatting in doctests
-  - pip install flake8 pytest "pytest-cov<2.6"
+  - pip install flake8 pytest "pytest-cov<2.6" codecov
   - pip install -U "sklearn"
   - pip install .
 # command to run tests + check syntax style
@@ -45,3 +45,6 @@ script:
   - flake8 examples/ ot/ test/
   - python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
   # - py.test ot test
+after_script:
+  # Need to run from source dir to execute "git" commands
+  - codecov;
