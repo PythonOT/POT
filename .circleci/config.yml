@@ -129,10 +129,6 @@ workflows:
     jobs:
       - build_docs
       - deploy:
-          steps:
-            - add_ssh_keys:
-                fingerprints:
-                  - "ff:30:7b:ba:bd:5c:ec:27:49:12:11:cb:78:aa:c2:6e"
           requires:
             - build_docs
           filters:
