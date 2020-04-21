@@ -1,6 +1,12 @@
+.. only:: html
 
+    .. note::
+        :class: sphx-glr-download-link-note
 
-.. _sphx_glr_auto_examples_plot_OT_1D_smooth.py:
+        Click :ref:`here <sphx_glr_download_auto_examples_plot_OT_1D_smooth.py>`     to download the full example code
+    .. rst-class:: sphx-glr-example-title
+
+    .. _sphx_glr_auto_examples_plot_OT_1D_smooth.py:
 
 
 ===========================
@@ -12,8 +18,7 @@ and their visualization.
 
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -32,16 +37,13 @@ and their visualization.
 
 
 
+
 Generate data
 -------------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-
-    #%% parameters
 
     n = 100  # nb bins
 
@@ -63,22 +65,40 @@ Generate data
 
 
 
+
 Plot distributions and loss matrix
 ----------------------------------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-    #%% plot the distributions
 
     pl.figure(1, figsize=(6.4, 3))
     pl.plot(x, a, 'b', label='Source distribution')
     pl.plot(x, b, 'r', label='Target distribution')
     pl.legend()
 
-    #%% plot distributions and loss matrix
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_OT_1D_smooth_001.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+
+    <matplotlib.legend.Legend object at 0x7f4c738a51d0>
+
+
+
+
+.. code-block:: default
+
 
     pl.figure(2, figsize=(5, 5))
     ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
@@ -86,18 +106,9 @@ Plot distributions and loss matrix
 
 
 
-.. rst-class:: sphx-glr-horizontal
+.. image:: /auto_examples/images/sphx_glr_plot_OT_1D_smooth_002.png
+    :class: sphx-glr-single-img
 
-
-    *
-
-      .. image:: /auto_examples/images/sphx_glr_plot_OT_1D_smooth_001.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/images/sphx_glr_plot_OT_1D_smooth_002.png
-            :scale: 47
 
 
 
@@ -106,12 +117,8 @@ Solve EMD
 ---------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-
-    #%% EMD
 
     G0 = ot.emd(a, b, M)
 
@@ -121,8 +128,9 @@ Solve EMD
 
 
 
-.. image:: /auto_examples/images/sphx_glr_plot_OT_1D_smooth_005.png
-    :align: center
+.. image:: /auto_examples/images/sphx_glr_plot_OT_1D_smooth_003.png
+    :class: sphx-glr-single-img
+
 
 
 
@@ -131,12 +139,8 @@ Solve Sinkhorn
 --------------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-
-    #%% Sinkhorn
 
     lambd = 2e-3
     Gs = ot.sinkhorn(a, b, M, lambd, verbose=True)
@@ -149,34 +153,42 @@ Solve Sinkhorn
 
 
 
-.. image:: /auto_examples/images/sphx_glr_plot_OT_1D_smooth_007.png
-    :align: center
+.. image:: /auto_examples/images/sphx_glr_plot_OT_1D_smooth_004.png
+    :class: sphx-glr-single-img
 
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
+
+ .. code-block:: none
 
     It.  |Err         
     -------------------
-        0|7.958844e-02|
-       10|5.921715e-03|
-       20|1.238266e-04|
-       30|2.469780e-06|
-       40|4.919966e-08|
-       50|9.800197e-10|
+        0|2.821142e-01|
+       10|7.695268e-02|
+       20|1.112774e-02|
+       30|1.571553e-03|
+       40|2.218100e-04|
+       50|3.130527e-05|
+       60|4.418267e-06|
+       70|6.235716e-07|
+       80|8.800770e-08|
+       90|1.242095e-08|
+      100|1.753030e-09|
+      110|2.474136e-10|
+    /home/rflamary/PYTHON/POT/examples/plot_OT_1D_smooth.py:84: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
+
+
 
 
 Solve Smooth OT
 --------------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-
-    #%% Smooth OT with KL regularization
 
     lambd = 2e-3
     Gsm = ot.smooth.smooth_ot_dual(a, b, M, lambd, reg_type='kl')
@@ -187,7 +199,28 @@ Solve Smooth OT
     pl.show()
 
 
-    #%% Smooth OT with KL regularization
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_OT_1D_smooth_005.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/examples/plot_OT_1D_smooth.py:99: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
+
+
+
+
+
+.. code-block:: default
+
 
     lambd = 1e-1
     Gsm = ot.smooth.smooth_ot_dual(a, b, M, lambd, reg_type='l2')
@@ -199,38 +232,45 @@ Solve Smooth OT
 
 
 
-.. rst-class:: sphx-glr-horizontal
+.. image:: /auto_examples/images/sphx_glr_plot_OT_1D_smooth_006.png
+    :class: sphx-glr-single-img
 
 
-    *
+.. rst-class:: sphx-glr-script-out
 
-      .. image:: /auto_examples/images/sphx_glr_plot_OT_1D_smooth_009.png
-            :scale: 47
+ Out:
 
-    *
+ .. code-block:: none
 
-      .. image:: /auto_examples/images/sphx_glr_plot_OT_1D_smooth_010.png
-            :scale: 47
-
+    /home/rflamary/PYTHON/POT/examples/plot_OT_1D_smooth.py:110: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
-**Total running time of the script:** ( 0 minutes  1.053 seconds)
 
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  0.732 seconds)
+
+
+.. _sphx_glr_download_auto_examples_plot_OT_1D_smooth.py:
 
 
 .. only :: html
 
  .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
 
 
-  .. container:: sphx-glr-download
+
+  .. container:: sphx-glr-download sphx-glr-download-python
 
      :download:`Download Python source code: plot_OT_1D_smooth.py <plot_OT_1D_smooth.py>`
 
 
 
-  .. container:: sphx-glr-download
+  .. container:: sphx-glr-download sphx-glr-download-jupyter
 
      :download:`Download Jupyter notebook: plot_OT_1D_smooth.ipynb <plot_OT_1D_smooth.ipynb>`
 
@@ -239,4 +279,4 @@ Solve Smooth OT
 
  .. rst-class:: sphx-glr-signature
 
-    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.github.io>`_

@@ -1,6 +1,12 @@
+.. only:: html
 
+    .. note::
+        :class: sphx-glr-download-link-note
 
-.. _sphx_glr_auto_examples_plot_OT_2D_samples.py:
+        Click :ref:`here <sphx_glr_download_auto_examples_plot_OT_2D_samples.py>`     to download the full example code
+    .. rst-class:: sphx-glr-example-title
+
+    .. _sphx_glr_auto_examples_plot_OT_2D_samples.py:
 
 
 ====================================================
@@ -12,8 +18,7 @@ sum of diracs. The OT matrix is plotted with the samples.
 
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -32,15 +37,13 @@ sum of diracs. The OT matrix is plotted with the samples.
 
 
 
+
 Generate data
 -------------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-    #%% parameters and data generation
 
     n = 50  # nb samples
 
@@ -65,15 +68,13 @@ Generate data
 
 
 
+
 Plot data
 ---------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-    #%% plot samples
 
     pl.figure(1)
     pl.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
@@ -94,13 +95,22 @@ Plot data
     *
 
       .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_001.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_002.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+
+    Text(0.5, 1.0, 'Cost matrix M')
 
 
 
@@ -108,11 +118,8 @@ Compute EMD
 -----------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-    #%% EMD
 
     G0 = ot.emd(a, b, M)
 
@@ -136,14 +143,23 @@ Compute EMD
 
     *
 
-      .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_005.png
-            :scale: 47
+      .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_003.png
+            :class: sphx-glr-multi-img
 
     *
 
-      .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_006.png
-            :scale: 47
+      .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_004.png
+            :class: sphx-glr-multi-img
 
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+
+    Text(0.5, 1.0, 'OT matrix with samples')
 
 
 
@@ -151,11 +167,8 @@ Compute Sinkhorn
 ----------------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-    #%% sinkhorn
 
     # reg term
     lambd = 1e-3
@@ -184,13 +197,23 @@ Compute Sinkhorn
 
     *
 
-      .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_009.png
-            :scale: 47
+      .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_005.png
+            :class: sphx-glr-multi-img
 
     *
 
-      .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_010.png
-            :scale: 47
+      .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_006.png
+            :class: sphx-glr-multi-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/examples/plot_OT_2D_samples.py:103: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
@@ -199,11 +222,8 @@ Emprirical Sinkhorn
 ----------------
 
 
+.. code-block:: default
 
-.. code-block:: python
-
-
-    #%% sinkhorn
 
     # reg term
     lambd = 1e-3
@@ -230,38 +250,55 @@ Emprirical Sinkhorn
 
     *
 
-      .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_013.png
-            :scale: 47
+      .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_007.png
+            :class: sphx-glr-multi-img
 
     *
 
-      .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_014.png
-            :scale: 47
+      .. image:: /auto_examples/images/sphx_glr_plot_OT_2D_samples_008.png
+            :class: sphx-glr-multi-img
 
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/ot/bregman.py:363: RuntimeWarning: divide by zero encountered in true_divide
+      v = np.divide(b, KtransposeU)
     Warning: numerical errors at iteration 0
+    /home/rflamary/PYTHON/POT/ot/plot.py:90: RuntimeWarning: invalid value encountered in double_scalars
+      if G[i, j] / mx > thr:
+    /home/rflamary/PYTHON/POT/examples/plot_OT_2D_samples.py:128: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
-**Total running time of the script:** ( 0 minutes  2.616 seconds)
 
+
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  2.154 seconds)
+
+
+.. _sphx_glr_download_auto_examples_plot_OT_2D_samples.py:
 
 
 .. only :: html
 
  .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
 
 
-  .. container:: sphx-glr-download
+
+  .. container:: sphx-glr-download sphx-glr-download-python
 
      :download:`Download Python source code: plot_OT_2D_samples.py <plot_OT_2D_samples.py>`
 
 
 
-  .. container:: sphx-glr-download
+  .. container:: sphx-glr-download sphx-glr-download-jupyter
 
      :download:`Download Jupyter notebook: plot_OT_2D_samples.ipynb <plot_OT_2D_samples.ipynb>`
 
@@ -270,4 +307,4 @@ Emprirical Sinkhorn
 
  .. rst-class:: sphx-glr-signature
 
-    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.github.io>`_

@@ -1,6 +1,12 @@
+.. only:: html
 
+    .. note::
+        :class: sphx-glr-download-link-note
 
-.. _sphx_glr_auto_examples_plot_UOT_barycenter_1D.py:
+        Click :ref:`here <sphx_glr_download_auto_examples_plot_UOT_barycenter_1D.py>`     to download the full example code
+    .. rst-class:: sphx-glr-example-title
+
+    .. _sphx_glr_auto_examples_plot_UOT_barycenter_1D.py:
 
 
 ===========================================================
@@ -15,8 +21,7 @@ as proposed in [10] for Unbalanced inputs.
 
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     # Author: Hicham Janati <hicham.janati@inria.fr>
@@ -36,12 +41,12 @@ as proposed in [10] for Unbalanced inputs.
 
 
 
+
 Generate data
 -------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     # parameters
@@ -72,12 +77,12 @@ Generate data
 
 
 
+
 Plot data
 ---------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     # plot the distributions
@@ -92,7 +97,8 @@ Plot data
 
 
 .. image:: /auto_examples/images/sphx_glr_plot_UOT_barycenter_1D_001.png
-    :align: center
+    :class: sphx-glr-single-img
+
 
 
 
@@ -101,8 +107,7 @@ Barycenter computation
 ----------------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     # non weighted barycenter computation
@@ -117,7 +122,7 @@ Barycenter computation
     reg = 1e-3
     alpha = 1.
 
-    bary_wass = ot.unbalanced.barycenter_unbalanced(A, M, reg, alpha, weights)
+    bary_wass = ot.unbalanced.barycenter_unbalanced(A, M, reg, alpha, weights=weights)
 
     pl.figure(2)
     pl.clf()
@@ -136,8 +141,9 @@ Barycenter computation
 
 
 
-.. image:: /auto_examples/images/sphx_glr_plot_UOT_barycenter_1D_003.png
-    :align: center
+.. image:: /auto_examples/images/sphx_glr_plot_UOT_barycenter_1D_002.png
+    :class: sphx-glr-single-img
+
 
 
 
@@ -146,8 +152,7 @@ Barycentric interpolation
 -------------------------
 
 
-
-.. code-block:: python
+.. code-block:: default
 
 
     # barycenter interpolation
@@ -164,7 +169,7 @@ Barycentric interpolation
         weight = weight_list[i]
         weights = np.array([1 - weight, weight])
         B_l2[:, i] = A.dot(weights)
-        B_wass[:, i] = ot.unbalanced.barycenter_unbalanced(A, M, reg, alpha, weights)
+        B_wass[:, i] = ot.unbalanced.barycenter_unbalanced(A, M, reg, alpha, weights=weights)
 
 
     # plot interpolation
@@ -223,33 +228,66 @@ Barycentric interpolation
 
     *
 
-      .. image:: /auto_examples/images/sphx_glr_plot_UOT_barycenter_1D_005.png
-            :scale: 47
+      .. image:: /auto_examples/images/sphx_glr_plot_UOT_barycenter_1D_003.png
+            :class: sphx-glr-multi-img
 
     *
 
-      .. image:: /auto_examples/images/sphx_glr_plot_UOT_barycenter_1D_006.png
-            :scale: 47
+      .. image:: /auto_examples/images/sphx_glr_plot_UOT_barycenter_1D_004.png
+            :class: sphx-glr-multi-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    /home/rflamary/PYTHON/POT/ot/unbalanced.py:895: RuntimeWarning: overflow encountered in true_divide
+      u = (A / Kv) ** fi
+    /home/rflamary/PYTHON/POT/ot/unbalanced.py:900: RuntimeWarning: invalid value encountered in true_divide
+      v = (Q / Ktu) ** fi
+    /home/rflamary/PYTHON/POT/ot/unbalanced.py:907: UserWarning: Numerical errors at iteration 595
+      warnings.warn('Numerical errors at iteration %s' % i)
+    /home/rflamary/PYTHON/POT/ot/unbalanced.py:900: RuntimeWarning: overflow encountered in true_divide
+      v = (Q / Ktu) ** fi
+    /home/rflamary/PYTHON/POT/ot/unbalanced.py:907: UserWarning: Numerical errors at iteration 974
+      warnings.warn('Numerical errors at iteration %s' % i)
+    /home/rflamary/PYTHON/POT/ot/unbalanced.py:907: UserWarning: Numerical errors at iteration 615
+      warnings.warn('Numerical errors at iteration %s' % i)
+    /home/rflamary/PYTHON/POT/ot/unbalanced.py:907: UserWarning: Numerical errors at iteration 455
+      warnings.warn('Numerical errors at iteration %s' % i)
+    /home/rflamary/PYTHON/POT/ot/unbalanced.py:907: UserWarning: Numerical errors at iteration 361
+      warnings.warn('Numerical errors at iteration %s' % i)
+    /home/rflamary/PYTHON/POT/examples/plot_UOT_barycenter_1D.py:164: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+      pl.show()
 
 
 
 
-**Total running time of the script:** ( 0 minutes  0.344 seconds)
 
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  1.567 seconds)
+
+
+.. _sphx_glr_download_auto_examples_plot_UOT_barycenter_1D.py:
 
 
 .. only :: html
 
  .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
 
 
-  .. container:: sphx-glr-download
+
+  .. container:: sphx-glr-download sphx-glr-download-python
 
      :download:`Download Python source code: plot_UOT_barycenter_1D.py <plot_UOT_barycenter_1D.py>`
 
 
 
-  .. container:: sphx-glr-download
+  .. container:: sphx-glr-download sphx-glr-download-jupyter
 
      :download:`Download Jupyter notebook: plot_UOT_barycenter_1D.ipynb <plot_UOT_barycenter_1D.ipynb>`
 
@@ -258,4 +296,4 @@ Barycentric interpolation
 
  .. rst-class:: sphx-glr-signature
 
-    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.github.io>`_

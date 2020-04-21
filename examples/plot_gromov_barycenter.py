@@ -17,7 +17,6 @@ computation in POT.
 import numpy as np
 import scipy as sp
 
-import scipy.ndimage as spi
 import matplotlib.pylab as pl
 from sklearn import manifold
 from sklearn.decomposition import PCA
@@ -90,10 +89,10 @@ def im2mat(I):
     return I.reshape((I.shape[0] * I.shape[1], I.shape[2]))
 
 
-square = spi.imread('../data/square.png').astype(np.float64)[:, :, 2] / 256
-cross = spi.imread('../data/cross.png').astype(np.float64)[:, :, 2] / 256
-triangle = spi.imread('../data/triangle.png').astype(np.float64)[:, :, 2] / 256
-star = spi.imread('../data/star.png').astype(np.float64)[:, :, 2] / 256
+square = pl.imread('../data/square.png').astype(np.float64)[:, :, 2] / 256
+cross = pl.imread('../data/cross.png').astype(np.float64)[:, :, 2] / 256
+triangle = pl.imread('../data/triangle.png').astype(np.float64)[:, :, 2] / 256
+star = pl.imread('../data/star.png').astype(np.float64)[:, :, 2] / 256
 
 shapes = [square, cross, triangle, star]
 
