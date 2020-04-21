@@ -3,12 +3,10 @@ name: Test Package
 on:
   push:
     branches:
-      - '**'
-  create:
+      - master
+  pull_request:
     branches:
-      - 'master'
-    tags:
-      - '**'
+      - master
 
 jobs:
   linux:
