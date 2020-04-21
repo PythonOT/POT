@@ -47,8 +47,8 @@ jobs:
       run: |
         codecov
 
-  macos:
-    runs-on: macOS-latest
+  macos_win:
+    runs-on: [macOS-latest, windows-2019]
     strategy:
       max-parallel: 4
       matrix:
