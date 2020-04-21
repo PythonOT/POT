@@ -4,16 +4,18 @@
 [![Anaconda Cloud](https://anaconda.org/conda-forge/pot/badges/version.svg)](https://anaconda.org/conda-forge/pot)
 [![Build Status](https://travis-ci.org/PythonOT/POT.svg?branch=master)](https://travis-ci.org/PythonOT/POT)
 [![Codecov Status](https://codecov.io/gh/PythonOT/POT/branch/master/graph/badge.svg)](https://codecov.io/gh/PythonOT/POT)
-[![Documentation Status](https://readthedocs.org/projects/pot/badge/?version=latest)](http://pot.readthedocs.io/en/latest/?badge=latest)
 [![Downloads](https://pepy.tech/badge/pot)](https://pepy.tech/project/pot)
 [![Anaconda downloads](https://anaconda.org/conda-forge/pot/badges/downloads.svg)](https://anaconda.org/conda-forge/pot)
 [![License](https://anaconda.org/conda-forge/pot/badges/license.svg)](https://github.com/PythonOT/POT/blob/master/LICENSE)
 
 
+This open source Python library provide several solvers for optimization
+problems related to Optimal Transport for signal, image processing and machine
+learning.
 
-This open source Python library provide several solvers for optimization problems related to Optimal Transport for signal, image processing and machine learning.
+Website and documentation: [https://PythonOT.github.io/](https://PythonOT.github.io/)
 
-It provides the following solvers:
+POT provides the following solvers:
 
 * OT Network Flow solver for the linear program/ Earth Movers Distance [1].
 * Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2], stabilized version [9][10] and greedy Sinkhorn [22] with optional GPU implementation (requires cupy).
@@ -138,7 +140,7 @@ ba=ot.barycenter(A,M,reg) # reg is regularization parameter
 
 ### Examples and Notebooks
 
-The examples folder contain several examples and use case for the library. The full documentation is available on [Readthedocs](http://pot.readthedocs.io/).
+The examples folder contain several examples and use case for the library. The full documentation is available on [https://PythonOT.github.io/](https://PythonOT.github.io/).
 
 
 Here is a list of the Python notebooks available [here](https://github.com/PythonOT/POT/blob/master/notebooks/) if you want a quick look:
