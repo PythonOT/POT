@@ -58,6 +58,7 @@ release_test :
 
 rdoc :
 	pandoc --from=markdown --to=rst --output=docs/source/readme.rst README.md
+	sed -i 's,https://pythonot.github.io/auto_examples/,auto_examples/,g' docs/source/readme.rst 
 
 notebook :
 	ipython notebook --matplotlib=inline  --notebook-dir=notebooks/

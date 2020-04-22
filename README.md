@@ -16,36 +16,51 @@ learning.
 
 Website and documentation: [https://PythonOT.github.io/](https://PythonOT.github.io/)
 
-POT provides the following solvers:
+Source Code (MIT): [https://github.com/PythonOT/POT](https://github.com/PythonOT/POT)
 
-* OT Network Flow solver for the linear program/ Earth Movers Distance [1].
-* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2], stabilized version [9][10] and greedy Sinkhorn [22] with optional GPU implementation (requires cupy).
+POT provides the following generic OT solvers (links to examples):
+
+* [OT Network Simplex solver](https://pythonot.github.io/auto_examples/plot_OT_1D.html) for the linear program/ Earth Movers Distance [1] .
+* [Conditional gradient](https://pythonot.github.io/auto_examples/plot_optim_OTreg.html) [6] and [Generalized conditional gradient](https://pythonot.github.io/auto_examples/plot_optim_OTreg.html) for regularized OT [7].
+* Entropic regularization OT solver with [Sinkhorn Knopp Algorithm](https://pythonot.github.io/auto_examples/plot_OT_1D.html) [2] , stabilized version [9] [10], greedy Sinkhorn [22] and [Screening Sinkhorn [26] ](https://pythonot.github.io/auto_examples/plot_screenkhorn_1D.html) with optional GPU implementation (requires cupy).
+* Bregman projections for [Wasserstein barycenter](https://pythonot.github.io/auto_examples/plot_barycenter_lp_vs_entropic.html) [3], [convolutional barycenter](https://pythonot.github.io/auto_examples/plot_convolutional_barycenter.html) [21]  and unmixing [4].
 * Sinkhorn divergence [23] and entropic regularization OT  from empirical data.
-* Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularizations [17].
-* Non regularized Wasserstein barycenters [16] with LP solver (only small scale).
-* Bregman projections for Wasserstein barycenter [3], convolutional barycenter [21] and unmixing [4].
-* Optimal transport for domain adaptation with group lasso regularization and Laplacian regularization [5][30]
-* Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
-* Linear OT [14] and Joint OT matrix and mapping estimation [8].
-* Wasserstein Discriminant Analysis [11] (requires autograd + pymanopt).
-* Gromov-Wasserstein distances and barycenters ([13] and regularized [12])
-* Stochastic Optimization for Large-scale Optimal Transport (semi-dual problem [18] and dual problem [19])
-* Non regularized free support Wasserstein barycenters [20].
-* Unbalanced OT with KL relaxation distance and barycenter [10, 25].
-* Screening Sinkhorn Algorithm for OT [26].
-* JCPOT algorithm for multi-source domain adaptation with target shift [27].
-* Partial Wasserstein and Gromov-Wasserstein (exact [29] and entropic [3] formulations).
+* [Smooth optimal transport solvers](https://pythonot.github.io/auto_examples/plot_OT_1D_smooth.html) (dual and semi-dual) for KL and squared L2 regularizations [17].
+* Non regularized [Wasserstein barycenters [16] ](https://pythonot.github.io/auto_examples/plot_barycenter_lp_vs_entropic.html)) with LP solver (only small scale).
+* [Gromov-Wasserstein distances](https://pythonot.github.io/auto_examples/plot_gromov.html) and [GW barycenters](https://pythonot.github.io/auto_examples/plot_gromov_barycenter.html)  (exact [13] and regularized [12])
+ * [Fused-Gromov-Wasserstein distances solver](https://pythonot.github.io/auto_examples/plot_fgw.html#sphx-glr-auto-examples-plot-fgw-py) and [FGW barycenters](https://pythonot.github.io/auto_examples/plot_barycenter_fgw.html) [24]
+* [Stochastic solver](https://pythonot.github.io/auto_examples/plot_stochastic.html) for Large-scale Optimal Transport (semi-dual problem [18] and dual problem [19])
+* Non regularized [free support Wasserstein barycenters](https://pythonot.github.io/auto_examples/plot_free_support_barycenter.html) [20].
+* [Unbalanced OT](https://pythonot.github.io/auto_examples/plot_UOT_1D.html) with KL relaxation and [barycenter](https://pythonot.github.io/auto_examples/plot_UOT_barycenter_1D.html) [10, 25].
+* [Partial Wasserstein and Gromov-Wasserstein](https://pythonot.github.io/auto_examples/plot_partial_wass_and_gromov.html) (exact [29] and entropic [3]
+  formulations).
 
-Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
+POT provides the following Machine Learning related solvers:
+
+* [Optimal transport for domain
+  adaptation](https://pythonot.github.io/auto_examples/plot_otda_classes.html)
+  with [group lasso regularization](https://pythonot.github.io/auto_examples/plot_otda_classes.html),   [Laplacian regularization](https://pythonot.github.io/auto_examples/plot_otda_laplacian.html) [5] [30] and [semi
+  supervised setting](https://pythonot.github.io/auto_examples/plot_otda_semi_supervised.html).
+* [Linear OT mapping](https://pythonot.github.io/auto_examples/plot_otda_linear_mapping.html) [14] and [Joint OT mapping estimation](https://pythonot.github.io/auto_examples/plot_otda_mapping.html) [8].
+* [Wasserstein Discriminant Analysis](https://pythonot.github.io/auto_examples/plot_WDA.html) [11] (requires autograd + pymanopt).
+* [JCPOT algorithm for multi-source domain adaptation with target shift](https://pythonot.github.io/auto_examples/plot_otda_jcpot.html) [27].
+
+Some demonstrations  are available in the  [documentation](https://pythonot.github.io/auto_examples/index.html).
 
 #### Using and citing the toolbox
 
-If you use this toolbox in your research and find it useful, please cite POT using the following bibtex reference:
+If you use this toolbox in your research and find it useful, please cite POT
+using the following bibtex reference:
+```
+Rémi Flamary and Nicolas Courty, POT Python Optimal Transport library, Website: https://pythonot.github.io/, 2017
+```
+
+In Bibtex format:
 ```
 @misc{flamary2017pot,
 title={POT Python Optimal Transport library},
 author={Flamary, R{'e}mi and Courty, Nicolas},
-url={https://github.com/rflamary/POT},
+url={https://pythonot.github.io/},
 year={2017}
 }
 ```
@@ -136,34 +151,10 @@ T_reg=ot.sinkhorn(a,b,M,reg) # entropic regularized OT
 ba=ot.barycenter(A,M,reg) # reg is regularization parameter
 ```
 
-
-
-
 ### Examples and Notebooks
 
 The examples folder contain several examples and use case for the library. The full documentation is available on [https://PythonOT.github.io/](https://PythonOT.github.io/).
 
-
-Here is a list of the Python notebooks available [here](https://github.com/PythonOT/POT/blob/master/notebooks/) if you want a quick look:
-
-* [1D optimal transport](https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_1D.ipynb)
-* [OT Ground Loss](https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_L1_vs_L2.ipynb)
-* [Multiple EMD computation](https://github.com/PythonOT/POT/blob/master/notebooks/plot_compute_emd.ipynb)
-* [2D optimal transport on empirical distributions](https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_2D_samples.ipynb)
-* [1D Wasserstein barycenter](https://github.com/PythonOT/POT/blob/master/notebooks/plot_barycenter_1D.ipynb)
-* [OT with user provided regularization](https://github.com/PythonOT/POT/blob/master/notebooks/plot_optim_OTreg.ipynb)
-* [Domain adaptation with optimal transport](https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_d2.ipynb)
-* [Color transfer in images](https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_color_images.ipynb)
-* [OT mapping estimation for domain adaptation](https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_mapping.ipynb)
-* [OT mapping estimation for color transfer in images](https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_mapping_colors_images.ipynb)
-* [Wasserstein Discriminant Analysis](https://github.com/PythonOT/POT/blob/master/notebooks/plot_WDA.ipynb)
-* [Gromov Wasserstein](https://github.com/PythonOT/POT/blob/master/notebooks/plot_gromov.ipynb)
-* [Gromov Wasserstein Barycenter](https://github.com/PythonOT/POT/blob/master/notebooks/plot_gromov_barycenter.ipynb)
-* [Fused Gromov Wasserstein](https://github.com/PythonOT/POT/blob/master/notebooks/plot_fgw.ipynb)
-* [Fused Gromov Wasserstein Barycenter](https://github.com/PythonOT/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb)
-
-
-You can also see the notebooks with [Jupyter nbviewer](https://nbviewer.jupyter.org/github/PythonOT/POT/tree/master/notebooks/).
 
 ## Acknowledgements
 
@@ -174,21 +165,21 @@ This toolbox has been created and is maintained by
 
 The contributors to this library are 
 
-* [Alexandre Gramfort](http://alexandre.gramfort.net/)
-* [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/)
+* [Alexandre Gramfort](http://alexandre.gramfort.net/) (CI)
+* [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/) (Partial OT)
 * [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/) (Mapping estimation)
 * [Léo Gautheron](https://github.com/aje) (GPU implementation)
-* [Nathalie Gayraud](https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1)
-* [Stanislas Chambon](https://slasnista.github.io/)
-* [Antoine Rolet](https://arolet.github.io/)
+* [Nathalie Gayraud](https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1) (DA classes)
+* [Stanislas Chambon](https://slasnista.github.io/) (DA classes)
+* [Antoine Rolet](https://arolet.github.io/) (EMD solver debug)
 * Erwan Vautier (Gromov-Wasserstein)
-* [Kilian Fatras](https://kilianfatras.github.io/)
+* [Kilian Fatras](https://kilianfatras.github.io/) (Stochastic solvers)
 * [Alain Rakotomamonjy](https://sites.google.com/site/alainrakotomamonjy/home)
-* [Vayer Titouan](https://tvayer.github.io/)
+* [Vayer Titouan](https://tvayer.github.io/) (Gromov-Wasserstein -, Fused-Gromov-Wasserstein)
 * [Hicham Janati](https://hichamjanati.github.io/) (Unbalanced OT)
 * [Romain Tavenard](https://rtavenar.github.io/) (1d Wasserstein)
 * [Mokhtar Z. Alaya](http://mzalaya.github.io/) (Screenkhorn)
-* [Ievgen Redko](https://ievred.github.io/)
+* [Ievgen Redko](https://ievred.github.io/) (Laplacian DA, JCPOT)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
