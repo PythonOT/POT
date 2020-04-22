@@ -103,7 +103,7 @@ jobs:
             name: Deploy docs
             command: |
               set -e;
-              if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              if [ "${CIRCLE_BRANCH}" == "master_tmp" ]; then
                 git config --global user.email "circle@PythonOT.com";
                 git config --global user.name "Circle CI";
                 cd ~/PythonOT.github.io;
@@ -113,6 +113,7 @@ jobs:
                 git reset --hard origin/master
                 git clean -xdf
                 echo "Deploying dev docs for ${CIRCLE_BRANCH}.";
+                ls /tmp/build/html/*;
                 cp -a /tmp/build/html/* .;
                 touch .nojekyll;
                 git add -A;
@@ -134,4 +135,4 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - master_tmp
