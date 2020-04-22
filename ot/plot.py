@@ -78,9 +78,10 @@ def plot2D_samples_mat(xs, xt, G, thr=1e-8, **kwargs):
     thr : float, optional
         threshold above which the line is drawn
     **kwargs : dict
-        paameters given to the plot functions (default color is black if
+        parameters given to the plot functions (default color is black if
         nothing given)
     """
+
     if ('color' not in kwargs) and ('c' not in kwargs):
         kwargs['color'] = 'k'
     mx = G.max()

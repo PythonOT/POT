@@ -16,7 +16,7 @@ matrix:
       python: 3.7               
     - os: linux
       sudo: required
-      python: 2.7
+      python: 3.8
     # - os: osx
     #   sudo: required
     #   language: generic
@@ -33,8 +33,9 @@ before_install:
 # command to install dependencies
 install:
   - pip install -r requirements.txt
-  - pip install -U "numpy>=1.14" "scipy<1.3"  # for numpy array formatting in doctests + scipy version: otherwise, pymanopt fails, cf <https://github.com/pymanopt/pymanopt/issues/77>
-  - pip install flake8 pytest "pytest-cov<2.6"
+  - pip install -U "numpy>=1.14" scipy  # for numpy array formatting in doctests
+  - pip install flake8 pytest "pytest-cov<2.6" codecov
+  - pip install -U "sklearn"
   - pip install .
 # command to run tests + check syntax style
 services:
@@ -44,3 +45,6 @@ script:
   - flake8 examples/ ot/ test/
   - python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
   # - py.test ot test
+after_script:
+  # Need to run from source dir to execute "git" commands
+  - codecov;

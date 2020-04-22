@@ -49,6 +49,12 @@ def kernel(x1, x2, method='gaussian', sigma=1, **kwargs):
     return K
 
 
+def laplacian(x):
+    """Compute Laplacian matrix"""
+    L = np.diag(np.sum(x, axis=0)) - x
+    return L
+
+
 def unif(n):
     """ return a uniform histogram of length n (simplex)
 
@@ -198,6 +204,28 @@ def cost_normalization(C, norm=None):
 def dots(*args):
     """ dots function for multiple matrix multiply """
     return reduce(np.dot, args)
+
+
+def label_normalization(y, start=0):
+    """ Transform labels to start at a given value
+
+    Parameters
+    ----------
+    y : array-like, shape (n, )
+        The vector of labels to be normalized.
+    start : int
+        Desired value for the smallest label in y (default=0)
+
+    Returns
+    -------
+    y : array-like, shape (n1, )
+        The input vector of labels normalized according to given start value.
+    """
+
+    diff = np.min(np.unique(y)) - start
+    if diff != 0:
+        y -= diff
+    return y
 
 
 def fun(f, q_in, q_out):

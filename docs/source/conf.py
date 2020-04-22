@@ -34,9 +34,11 @@ class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
         return MagicMock()
-MOCK_MODULES = ['ot.lp.emd_wrap','autograd','pymanopt','cupy','autograd.numpy','pymanopt.manifolds','pymanopt.solvers']
+
+
+MOCK_MODULES = ['ot.lp.emd_wrap', 'autograd', 'pymanopt', 'cupy', 'autograd.numpy', 'pymanopt.manifolds', 'pymanopt.solvers']
 # 'autograd.numpy','pymanopt.manifolds','pymanopt.solvers',
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+#sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 # !!!!
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -65,7 +67,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    #'sphinx_gallery.gen_gallery',
+    'sphinx_gallery.gen_gallery',
 ]
 
 napoleon_numpy_docstring = True
@@ -248,17 +250,17 @@ htmlhelp_basename = 'POTdoc'
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
-# The paper size ('letterpaper' or 'a4paper').
-#'papersize': 'letterpaper',
+    # The paper size ('letterpaper' or 'a4paper').
+    #'papersize': 'letterpaper',
 
-# The font size ('10pt', '11pt' or '12pt').
-#'pointsize': '10pt',
+    # The font size ('10pt', '11pt' or '12pt').
+    #'pointsize': '10pt',
 
-# Additional stuff for the LaTeX preamble.
-#'preamble': '',
+    # Additional stuff for the LaTeX preamble.
+    #'preamble': '',
 
-# Latex figure (float) alignment
-#'figure_align': 'htbp',
+    # Latex figure (float) alignment
+    #'figure_align': 'htbp',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -334,7 +336,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'matplotlib': ('http://matplotlib.sourceforge.net/', None)}
 
 sphinx_gallery_conf = {
-    'examples_dirs': ['../../examples','../../examples/da'],
+    'examples_dirs': ['../../examples', '../../examples/da'],
     'gallery_dirs': 'auto_examples',
     'backreferences_dir': '../modules/generated/',
     'reference_url': {

@@ -18,7 +18,6 @@ SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
 # License: MIT License
 
 import numpy as np
-from scipy import ndimage
 import matplotlib.pylab as pl
 import ot
 
@@ -45,8 +44,8 @@ def minmax(I):
 # -------------
 
 # Loading images
-I1 = ndimage.imread('../data/ocean_day.jpg').astype(np.float64) / 256
-I2 = ndimage.imread('../data/ocean_sunset.jpg').astype(np.float64) / 256
+I1 = pl.imread('../data/ocean_day.jpg').astype(np.float64) / 256
+I2 = pl.imread('../data/ocean_sunset.jpg').astype(np.float64) / 256
 
 X1 = im2mat(I1)
 X2 = im2mat(I2)
