@@ -113,7 +113,6 @@ jobs:
                 git reset --hard origin/master
                 git clean -xdf
                 echo "Deploying dev docs for ${CIRCLE_BRANCH}.";
-                ls /tmp/build/html/*;
                 cp -a /tmp/build/html/* .;
                 touch .nojekyll;
                 git add -A;
