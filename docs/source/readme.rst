@@ -15,82 +15,82 @@ Source Code (MIT): https://github.com/PythonOT/POT
 POT provides the following generic OT solvers (links to examples):
 
 -  `OT Network Simplex
-   solver <https://pythonot.github.io/auto_examples/plot_OT_1D.html>`__
+   solver <auto_examples/plot_OT_1D.html>`__
    for the linear program/ Earth Movers Distance [1] .
 -  `Conditional
-   gradient <https://pythonot.github.io/auto_examples/plot_optim_OTreg.html>`__
+   gradient <auto_examples/plot_optim_OTreg.html>`__
    [6] and `Generalized conditional
-   gradient <https://pythonot.github.io/auto_examples/plot_optim_OTreg.html>`__
+   gradient <auto_examples/plot_optim_OTreg.html>`__
    for regularized OT [7].
 -  Entropic regularization OT solver with `Sinkhorn Knopp
-   Algorithm <https://pythonot.github.io/auto_examples/plot_OT_1D.html>`__
+   Algorithm <auto_examples/plot_OT_1D.html>`__
    [2] , stabilized version [9] [10], greedy Sinkhorn [22] and
    `Screening Sinkhorn
-   [26] <https://pythonot.github.io/auto_examples/plot_screenkhorn_1D.html>`__
+   [26] <auto_examples/plot_screenkhorn_1D.html>`__
    with optional GPU implementation (requires cupy).
 -  Bregman projections for `Wasserstein
-   barycenter <https://pythonot.github.io/auto_examples/plot_barycenter_lp_vs_entropic.html>`__
+   barycenter <auto_examples/plot_barycenter_lp_vs_entropic.html>`__
    [3], `convolutional
-   barycenter <https://pythonot.github.io/auto_examples/plot_convolutional_barycenter.html>`__
+   barycenter <auto_examples/plot_convolutional_barycenter.html>`__
    [21] and unmixing [4].
 -  Sinkhorn divergence [23] and entropic regularization OT from
    empirical data.
 -  `Smooth optimal transport
-   solvers <https://pythonot.github.io/auto_examples/plot_OT_1D_smooth.html>`__
+   solvers <auto_examples/plot_OT_1D_smooth.html>`__
    (dual and semi-dual) for KL and squared L2 regularizations [17].
 -  Non regularized `Wasserstein barycenters
-   [16] <https://pythonot.github.io/auto_examples/plot_barycenter_lp_vs_entropic.html>`__)
+   [16] <auto_examples/plot_barycenter_lp_vs_entropic.html>`__)
    with LP solver (only small scale).
 -  `Gromov-Wasserstein
-   distances <https://pythonot.github.io/auto_examples/plot_gromov.html>`__
+   distances <auto_examples/plot_gromov.html>`__
    and `GW
-   barycenters <https://pythonot.github.io/auto_examples/plot_gromov_barycenter.html>`__
+   barycenters <auto_examples/plot_gromov_barycenter.html>`__
    (exact [13] and regularized [12])
 -  `Fused-Gromov-Wasserstein distances
-   solver <https://pythonot.github.io/auto_examples/plot_fgw.html#sphx-glr-auto-examples-plot-fgw-py>`__
+   solver <auto_examples/plot_fgw.html#sphx-glr-auto-examples-plot-fgw-py>`__
    and `FGW
-   barycenters <https://pythonot.github.io/auto_examples/plot_barycenter_fgw.html>`__
+   barycenters <auto_examples/plot_barycenter_fgw.html>`__
    [24]
 -  `Stochastic
-   solver <https://pythonot.github.io/auto_examples/plot_stochastic.html>`__
+   solver <auto_examples/plot_stochastic.html>`__
    for Large-scale Optimal Transport (semi-dual problem [18] and dual
    problem [19])
 -  Non regularized `free support Wasserstein
-   barycenters <https://pythonot.github.io/auto_examples/plot_free_support_barycenter.html>`__
+   barycenters <auto_examples/plot_free_support_barycenter.html>`__
    [20].
 -  `Unbalanced
-   OT <https://pythonot.github.io/auto_examples/plot_UOT_1D.html>`__
+   OT <auto_examples/plot_UOT_1D.html>`__
    with KL relaxation and
-   `barycenter <https://pythonot.github.io/auto_examples/plot_UOT_barycenter_1D.html>`__
+   `barycenter <auto_examples/plot_UOT_barycenter_1D.html>`__
    [10, 25].
 -  `Partial Wasserstein and
-   Gromov-Wasserstein <https://pythonot.github.io/auto_examples/plot_partial_wass_and_gromov.html>`__
+   Gromov-Wasserstein <auto_examples/plot_partial_wass_and_gromov.html>`__
    (exact [29] and entropic [3] formulations).
 
 POT provides the following Machine Learning related solvers:
 
 -  `Optimal transport for domain
-   adaptation <https://pythonot.github.io/auto_examples/plot_otda_classes.html>`__
+   adaptation <auto_examples/plot_otda_classes.html>`__
    with `group lasso
-   regularization <https://pythonot.github.io/auto_examples/plot_otda_classes.html>`__,
+   regularization <auto_examples/plot_otda_classes.html>`__,
    `Laplacian
-   regularization <https://pythonot.github.io/auto_examples/plot_otda_laplacian.html>`__
+   regularization <auto_examples/plot_otda_laplacian.html>`__
    [5] [30] and `semi supervised
-   setting <https://pythonot.github.io/auto_examples/plot_otda_semi_supervised.html>`__.
+   setting <auto_examples/plot_otda_semi_supervised.html>`__.
 -  `Linear OT
-   mapping <https://pythonot.github.io/auto_examples/plot_otda_linear_mapping.html>`__
+   mapping <auto_examples/plot_otda_linear_mapping.html>`__
    [14] and `Joint OT mapping
-   estimation <https://pythonot.github.io/auto_examples/plot_otda_mapping.html>`__
+   estimation <auto_examples/plot_otda_mapping.html>`__
    [8].
 -  `Wasserstein Discriminant
-   Analysis <https://pythonot.github.io/auto_examples/plot_WDA.html>`__
+   Analysis <auto_examples/plot_WDA.html>`__
    [11] (requires autograd + pymanopt).
 -  `JCPOT algorithm for multi-source domain adaptation with target
-   shift <https://pythonot.github.io/auto_examples/plot_otda_jcpot.html>`__
+   shift <auto_examples/plot_otda_jcpot.html>`__
    [27].
 
 Some demonstrations are available in the
-`documentation <https://pythonot.github.io/auto_examples/index.html>`__.
+`documentation <auto_examples/index.html>`__.
 
 Using and citing the toolbox
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
