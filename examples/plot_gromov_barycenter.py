@@ -90,8 +90,8 @@ def im2mat(I):
 
 
 square = pl.imread('../data/square.png').astype(np.float64)[:, :, 2]
-cross = pl.imread('../data/cross.png').astype(np.float64)[:, :, 2] 
-triangle = pl.imread('../data/triangle.png').astype(np.float64)[:, :, 2] 
+cross = pl.imread('../data/cross.png').astype(np.float64)[:, :, 2]
+triangle = pl.imread('../data/triangle.png').astype(np.float64)[:, :, 2]
 star = pl.imread('../data/star.png').astype(np.float64)[:, :, 2]
 
 shapes = [square, cross, triangle, star]
