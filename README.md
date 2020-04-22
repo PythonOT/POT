@@ -16,27 +16,30 @@ learning.
 
 Website and documentation: [https://PythonOT.github.io/](https://PythonOT.github.io/)
 
-POT provides the following solvers:
-
+POT provides the following generic OT solvers:
 * OT Network Flow solver for the linear program/ Earth Movers Distance [1].
-* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2], stabilized version [9][10] and greedy Sinkhorn [22] with optional GPU implementation (requires cupy).
+* Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
+* Entropic regularization OT solver with Sinkhorn Knopp Algorithm [2],
+  stabilized version [9] [10], greedy Sinkhorn [22] and Screening Sinkhorn [26] with optional GPU
+  implementation (requires cupy).
+* Bregman projections for Wasserstein barycenter [3], convolutional barycenter [21] and unmixing [4].
 * Sinkhorn divergence [23] and entropic regularization OT  from empirical data.
 * Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularizations [17].
 * Non regularized Wasserstein barycenters [16] with LP solver (only small scale).
-* Bregman projections for Wasserstein barycenter [3], convolutional barycenter [21] and unmixing [4].
-* Optimal transport for domain adaptation with group lasso regularization and Laplacian regularization [5][30]
-* Conditional gradient [6] and Generalized conditional gradient for regularized OT [7].
-* Linear OT [14] and Joint OT matrix and mapping estimation [8].
-* Wasserstein Discriminant Analysis [11] (requires autograd + pymanopt).
 * Gromov-Wasserstein distances and barycenters ([13] and regularized [12])
 * Stochastic Optimization for Large-scale Optimal Transport (semi-dual problem [18] and dual problem [19])
 * Non regularized free support Wasserstein barycenters [20].
 * Unbalanced OT with KL relaxation distance and barycenter [10, 25].
-* Screening Sinkhorn Algorithm for OT [26].
-* JCPOT algorithm for multi-source domain adaptation with target shift [27].
-* Partial Wasserstein and Gromov-Wasserstein (exact [29] and entropic [3] formulations).
+* Partial Wasserstein and Gromov-Wasserstein (exact [29] and entropic [3]
+  formulations).
 
-Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
+POT provides the following Machine Learning related solvers:
+* Optimal transport for domain adaptation with group lasso regularization and   Laplacian regularization [5] [30].
+* Linear OT [14] and Joint OT matrix and mapping estimation [8].
+* Wasserstein Discriminant Analysis [11] (requires autograd + pymanopt).
+* JCPOT algorithm for multi-source domain adaptation with target shift [27].
+
+Some demonstrations  are available in the  [documentation](https://pythonot.github.io/auto_examples/index.html).
 
 #### Using and citing the toolbox
 
