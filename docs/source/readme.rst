@@ -1,8 +1,8 @@
 POT: Python Optimal Transport
 =============================
 
-|PyPI version| |Anaconda Cloud| |Build Status| |Codecov Status|
-|Downloads| |Anaconda downloads| |License|
+|PyPI version| |Anaconda Cloud| |Build Status| |Build Status| |Codecov
+Status| |Downloads| |Anaconda downloads| |License|
 
 This open source Python library provide several solvers for optimization
 problems related to Optimal Transport for signal, image processing and
@@ -184,44 +184,6 @@ The examples folder contain several examples and use case for the
 library. The full documentation is available on
 https://PythonOT.github.io/.
 
-Here is a list of the Python notebooks available
-`here <https://github.com/PythonOT/POT/blob/master/notebooks/>`__ if you
-want a quick look:
-
--  `1D optimal
-   transport <https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_1D.ipynb>`__
--  `OT Ground
-   Loss <https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_L1_vs_L2.ipynb>`__
--  `Multiple EMD
-   computation <https://github.com/PythonOT/POT/blob/master/notebooks/plot_compute_emd.ipynb>`__
--  `2D optimal transport on empirical
-   distributions <https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_2D_samples.ipynb>`__
--  `1D Wasserstein
-   barycenter <https://github.com/PythonOT/POT/blob/master/notebooks/plot_barycenter_1D.ipynb>`__
--  `OT with user provided
-   regularization <https://github.com/PythonOT/POT/blob/master/notebooks/plot_optim_OTreg.ipynb>`__
--  `Domain adaptation with optimal
-   transport <https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_d2.ipynb>`__
--  `Color transfer in
-   images <https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_color_images.ipynb>`__
--  `OT mapping estimation for domain
-   adaptation <https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_mapping.ipynb>`__
--  `OT mapping estimation for color transfer in
-   images <https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_mapping_colors_images.ipynb>`__
--  `Wasserstein Discriminant
-   Analysis <https://github.com/PythonOT/POT/blob/master/notebooks/plot_WDA.ipynb>`__
--  `Gromov
-   Wasserstein <https://github.com/PythonOT/POT/blob/master/notebooks/plot_gromov.ipynb>`__
--  `Gromov Wasserstein
-   Barycenter <https://github.com/PythonOT/POT/blob/master/notebooks/plot_gromov_barycenter.ipynb>`__
--  `Fused Gromov
-   Wasserstein <https://github.com/PythonOT/POT/blob/master/notebooks/plot_fgw.ipynb>`__
--  `Fused Gromov Wasserstein
-   Barycenter <https://github.com/PythonOT/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb>`__
-
-You can also see the notebooks with `Jupyter
-nbviewer <https://nbviewer.jupyter.org/github/PythonOT/POT/tree/master/notebooks/>`__.
-
 Acknowledgements
 ----------------
 
@@ -232,24 +194,28 @@ This toolbox has been created and is maintained by
 
 The contributors to this library are
 
--  `Alexandre Gramfort <http://alexandre.gramfort.net/>`__
+-  `Alexandre Gramfort <http://alexandre.gramfort.net/>`__ (CI)
 -  `Laetitia Chapel <http://people.irisa.fr/Laetitia.Chapel/>`__
+   (Partial OT)
 -  `Michael Perrot <http://perso.univ-st-etienne.fr/pem82055/>`__
    (Mapping estimation)
 -  `Léo Gautheron <https://github.com/aje>`__ (GPU implementation)
 -  `Nathalie
    Gayraud <https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1>`__
--  `Stanislas Chambon <https://slasnista.github.io/>`__
--  `Antoine Rolet <https://arolet.github.io/>`__
+   (DA classes)
+-  `Stanislas Chambon <https://slasnista.github.io/>`__ (DA classes)
+-  `Antoine Rolet <https://arolet.github.io/>`__ (EMD solver debug)
 -  Erwan Vautier (Gromov-Wasserstein)
--  `Kilian Fatras <https://kilianfatras.github.io/>`__
+-  `Kilian Fatras <https://kilianfatras.github.io/>`__ (Stochastic
+   solvers)
 -  `Alain
    Rakotomamonjy <https://sites.google.com/site/alainrakotomamonjy/home>`__
--  `Vayer Titouan <https://tvayer.github.io/>`__
+-  `Vayer Titouan <https://tvayer.github.io/>`__ (Gromov-Wasserstein -,
+   Fused-Gromov-Wasserstein)
 -  `Hicham Janati <https://hichamjanati.github.io/>`__ (Unbalanced OT)
 -  `Romain Tavenard <https://rtavenar.github.io/>`__ (1d Wasserstein)
 -  `Mokhtar Z. Alaya <http://mzalaya.github.io/>`__ (Screenkhorn)
--  `Ievgen Redko <https://ievred.github.io/>`__
+-  `Ievgen Redko <https://ievred.github.io/>`__ (Laplacian DA, JCPOT)
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
@@ -437,6 +403,8 @@ NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
    :target: https://anaconda.org/conda-forge/pot
 .. |Build Status| image:: https://travis-ci.org/PythonOT/POT.svg?branch=master
    :target: https://travis-ci.org/PythonOT/POT
+.. |Build Status| image:: https://github.com/PythonOT/POT/workflows/build/badge.svg
+   :target: https://github.com/PythonOT/POT/actions
 .. |Codecov Status| image:: https://codecov.io/gh/PythonOT/POT/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/PythonOT/POT
 .. |Downloads| image:: https://pepy.tech/badge/pot

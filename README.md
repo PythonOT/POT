@@ -136,34 +136,10 @@ T_reg=ot.sinkhorn(a,b,M,reg) # entropic regularized OT
 ba=ot.barycenter(A,M,reg) # reg is regularization parameter
 ```
 
-
-
-
 ### Examples and Notebooks
 
 The examples folder contain several examples and use case for the library. The full documentation is available on [https://PythonOT.github.io/](https://PythonOT.github.io/).
 
-
-Here is a list of the Python notebooks available [here](https://github.com/PythonOT/POT/blob/master/notebooks/) if you want a quick look:
-
-* [1D optimal transport](https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_1D.ipynb)
-* [OT Ground Loss](https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_L1_vs_L2.ipynb)
-* [Multiple EMD computation](https://github.com/PythonOT/POT/blob/master/notebooks/plot_compute_emd.ipynb)
-* [2D optimal transport on empirical distributions](https://github.com/PythonOT/POT/blob/master/notebooks/plot_OT_2D_samples.ipynb)
-* [1D Wasserstein barycenter](https://github.com/PythonOT/POT/blob/master/notebooks/plot_barycenter_1D.ipynb)
-* [OT with user provided regularization](https://github.com/PythonOT/POT/blob/master/notebooks/plot_optim_OTreg.ipynb)
-* [Domain adaptation with optimal transport](https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_d2.ipynb)
-* [Color transfer in images](https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_color_images.ipynb)
-* [OT mapping estimation for domain adaptation](https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_mapping.ipynb)
-* [OT mapping estimation for color transfer in images](https://github.com/PythonOT/POT/blob/master/notebooks/plot_otda_mapping_colors_images.ipynb)
-* [Wasserstein Discriminant Analysis](https://github.com/PythonOT/POT/blob/master/notebooks/plot_WDA.ipynb)
-* [Gromov Wasserstein](https://github.com/PythonOT/POT/blob/master/notebooks/plot_gromov.ipynb)
-* [Gromov Wasserstein Barycenter](https://github.com/PythonOT/POT/blob/master/notebooks/plot_gromov_barycenter.ipynb)
-* [Fused Gromov Wasserstein](https://github.com/PythonOT/POT/blob/master/notebooks/plot_fgw.ipynb)
-* [Fused Gromov Wasserstein Barycenter](https://github.com/PythonOT/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb)
-
-
-You can also see the notebooks with [Jupyter nbviewer](https://nbviewer.jupyter.org/github/PythonOT/POT/tree/master/notebooks/).
 
 ## Acknowledgements
 
@@ -174,21 +150,21 @@ This toolbox has been created and is maintained by
 
 The contributors to this library are 
 
-* [Alexandre Gramfort](http://alexandre.gramfort.net/)
-* [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/)
+* [Alexandre Gramfort](http://alexandre.gramfort.net/) (CI)
+* [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/) (Partial OT)
 * [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/) (Mapping estimation)
 * [Léo Gautheron](https://github.com/aje) (GPU implementation)
-* [Nathalie Gayraud](https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1)
-* [Stanislas Chambon](https://slasnista.github.io/)
-* [Antoine Rolet](https://arolet.github.io/)
+* [Nathalie Gayraud](https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1) (DA classes)
+* [Stanislas Chambon](https://slasnista.github.io/) (DA classes)
+* [Antoine Rolet](https://arolet.github.io/) (EMD solver debug)
 * Erwan Vautier (Gromov-Wasserstein)
-* [Kilian Fatras](https://kilianfatras.github.io/)
+* [Kilian Fatras](https://kilianfatras.github.io/) (Stochastic solvers)
 * [Alain Rakotomamonjy](https://sites.google.com/site/alainrakotomamonjy/home)
-* [Vayer Titouan](https://tvayer.github.io/)
+* [Vayer Titouan](https://tvayer.github.io/) (Gromov-Wasserstein -, Fused-Gromov-Wasserstein)
 * [Hicham Janati](https://hichamjanati.github.io/) (Unbalanced OT)
 * [Romain Tavenard](https://rtavenar.github.io/) (1d Wasserstein)
 * [Mokhtar Z. Alaya](http://mzalaya.github.io/) (Screenkhorn)
-* [Ievgen Redko](https://ievred.github.io/)
+* [Ievgen Redko](https://ievred.github.io/) (Laplacian DA, JCPOT)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
