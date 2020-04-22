@@ -13,7 +13,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8]
+        python-version: [3.8]
 
     steps:
     - uses: actions/checkout@v1
@@ -32,6 +32,8 @@ jobs:
         python -m pip install cibuildwheel==1.3.0
 
     - name: Build wheel
+      env:
+        CIBW_BEFORE_BUILD: "pip install numpy cython"
       run: |
         python -m cibuildwheel --output-dir wheelhouse
 
