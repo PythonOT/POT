@@ -38,10 +38,7 @@ def check_result(result_code):
         message = "numItermax reached before optimality. Try to increase numItermax."
     warnings.warn(message)
     return message
-
-
-
-
+ 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int max_iter, bint dense):
@@ -124,19 +121,15 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
         return G, cost, alpha, beta, result_code
 
 
-    else:
-        
+    else:       
         # init sparse OT matrix
         Gv=np.zeros(nmax)
         iG=np.zeros(nmax,dtype=np.int)
         jG=np.zeros(nmax,dtype=np.int)
 
-
         result_code = EMD_wrap_return_sparse(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <long*> iG.data, <long*> jG.data, <double*> Gv.data, <long*> &nG, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
 
-
-        return Gv[:nG], iG[:nG], jG[:nG], cost, alpha, beta, result_code
-
+        return Gv[:max(nG,nmax)], iG[:max(nG,nmax)], jG[:max(nG,nmax)], cost, alpha, beta, result_code
 
 
 @cython.boundscheck(False)

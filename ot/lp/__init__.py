@@ -432,6 +432,10 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
                 G, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
             else:
                 Gv, iG, jG, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
+                print('---')
+                print(len(Gv))
+                print(len(iG))
+                print(len(jG))
                 G = coo_matrix((Gv, (iG, jG)), shape=(a.shape[0], b.shape[0]))
 
             if center_dual:

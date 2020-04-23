@@ -875,7 +875,7 @@ namespace lemon {
              c += Number(it->second) * Number(_cost[it->first]);
              return c;*/
 
-            for (int i=0; i<_flow.size(); i++)
+            for (unsigned long i=0; i<_flow.size(); i++)
                 c += _flow[i] * Number(_cost[i]);
             return c;
 
@@ -1257,7 +1257,7 @@ namespace lemon {
                 u = w;
             }
             _pred[u_in] = in_arc;
-            _forward[u_in] = (u_in == _source[in_arc]);
+            _forward[u_in] = ((unsigned int)u_in == _source[in_arc]);
             _succ_num[u_in] = old_succ_num;
 
             // Set limits for updating _last_succ form v_in and v_out
@@ -1418,7 +1418,6 @@ namespace lemon {
         template <typename PivotRuleImpl>
         ProblemType start() {
             PivotRuleImpl pivot(*this);
-            double prevCost=-1;
 			ProblemType retVal = OPTIMAL;
 
             // Perform heuristic initial pivots
