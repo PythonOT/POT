@@ -89,7 +89,7 @@ pip install POT
 ```
 or get the very latest version by running:
 ```
-pip install git+https://github.com/PythonOT/POT.git # with --user for user install (no root)
+pip install -U https://github.com/PythonOT/POT/archive/master.zip # with --user for user install (no root)
 ```
 
 
