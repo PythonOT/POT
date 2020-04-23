@@ -50,9 +50,10 @@ Some demonstrations  are available in the  [documentation](https://pythonot.gith
 #### Using and citing the toolbox
 
 If you use this toolbox in your research and find it useful, please cite POT
-using the following bibtex reference:
+using the following reference:
 ```
-Rémi Flamary and Nicolas Courty, POT Python Optimal Transport library, Website: https://pythonot.github.io/, 2017
+Rémi Flamary and Nicolas Courty, POT Python Optimal Transport library, 
+Website: https://pythonot.github.io/, 2017
 ```
 
 In Bibtex format:
@@ -86,9 +87,9 @@ You can install the toolbox through PyPI with:
 ```
 pip install POT
 ```
-or get the very latest version by downloading it and then running:
+or get the very latest version by running:
 ```
-python setup.py install --user # for user install (no root)
+pip install -U https://github.com/PythonOT/POT/archive/master.zip # with --user for user install (no root)
 ```
 
 
@@ -165,7 +166,7 @@ This toolbox has been created and is maintained by
 
 The contributors to this library are 
 
-* [Alexandre Gramfort](http://alexandre.gramfort.net/) (CI)
+* [Alexandre Gramfort](http://alexandre.gramfort.net/) (CI, documentation)
 * [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/) (Partial OT)
 * [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/) (Mapping estimation)
 * [Léo Gautheron](https://github.com/aje) (GPU implementation)
