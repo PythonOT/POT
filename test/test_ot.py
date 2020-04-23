@@ -169,6 +169,7 @@ def test_emd_empty():
     # check loss=0
     np.testing.assert_allclose(w, 0)
 
+
 def test_emd2_multi():
     n = 500  # nb bins
 
