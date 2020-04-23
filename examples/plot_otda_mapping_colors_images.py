@@ -8,11 +8,9 @@ OT for domain adaptation with image color adaptation [6] with mapping
 estimation [8].
 
 [6] Ferradans, S., Papadakis, N., Peyre, G., & Aujol, J. F. (2014). Regularized
-    discrete optimal transport. SIAM Journal on Imaging Sciences, 7(3),
-    1853-1882.
+discrete optimal transport. SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
 [8] M. Perrot, N. Courty, R. Flamary, A. Habrard, "Mapping estimation for
-    discrete optimal transport", Neural Information Processing Systems (NIPS),
-    2016.
+discrete optimal transport", Neural Information Processing Systems (NIPS), 2016.
 
 """
 
