@@ -47,31 +47,31 @@ jobs:
       run: |
         codecov
 
-  # macos:
-  #   runs-on: macOS-latest
-  #   strategy:
-  #     max-parallel: 4
-  #     matrix:
-  #       python-version: [3.7]
+  macos:
+     runs-on: macOS-latest
+     strategy:
+       max-parallel: 4
+       matrix:
+         python-version: [3.7]
 
-  #   steps:
-  #   - uses: actions/checkout@v1
-  #   - name: Set up Python ${{ matrix.python-version }}
-  #     uses: actions/setup-python@v1
-  #     with:
-  #       python-version: ${{ matrix.python-version }}
-  #   - name: Install dependencies
-  #     run: |
-  #       python -m pip install --upgrade pip
-  #       pip install -r requirements.txt
-  #       pip install pytest "pytest-cov<2.6"
-  #       pip install -U "sklearn"
-  #   - name: Install POT
-  #     run: |
-  #       pip install -e .
-  #   - name: Run tests
-  #     run: |
-  #       python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
+     steps:
+     - uses: actions/checkout@v1
+     - name: Set up Python ${{ matrix.python-version }}
+       uses: actions/setup-python@v1
+       with:
+         python-version: ${{ matrix.python-version }}
+     - name: Install dependencies
+       run: |
+         python -m pip install --upgrade pip
+         pip install -r requirements.txt
+         pip install pytest "pytest-cov<2.6"
+         pip install -U "sklearn"
+     - name: Install POT
+       run: |
+         pip install -e .
+     - name: Run tests
+       run: |
+         python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
 
 
   windows:

@@ -172,7 +172,7 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     return center_ot_dual(alpha, beta, a, b)
 
 
-def emd(a, b, M, numItermax=100000, log=False, dense=True, center_dual=True):
+def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
 
@@ -207,10 +207,6 @@ def emd(a, b, M, numItermax=100000, log=False, dense=True, center_dual=True):
     log: bool, optional (default=False)
         If True, returns a dictionary containing the cost and dual
         variables. Otherwise returns only the optimal transportation matrix.
-    dense: boolean, optional (default=True)
-        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
-        Otherwise returns a sparse representation using scipy's `coo_matrix`
-        format.
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
         :ref:`center_ot_dual`.
@@ -267,25 +263,14 @@ def emd(a, b, M, numItermax=100000, log=False, dense=True, center_dual=True):
     asel = a != 0
     bsel = b != 0
 
-    if dense:
-        G, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
+    G, cost, u, v, result_code = emd_c(a, b, M, numItermax)
 
-        if center_dual:
-            u, v = center_ot_dual(u, v, a, b)
+    if center_dual:
+        u, v = center_ot_dual(u, v, a, b)
 
-        if np.any(~asel) or np.any(~bsel):
-            u, v = estimate_dual_null_weights(u, v, a, b, M)
-
-    else:
-        Gv, iG, jG, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
-        G = coo_matrix((Gv, (iG, jG)), shape=(a.shape[0], b.shape[0]))
-
-        if center_dual:
-            u, v = center_ot_dual(u, v, a, b)
-
-        if np.any(~asel) or np.any(~bsel):
-            u, v = estimate_dual_null_weights(u, v, a, b, M)
-
+    if np.any(~asel) or np.any(~bsel):
+        u, v = estimate_dual_null_weights(u, v, a, b, M)
+    
     result_code_string = check_result(result_code)
     if log:
         log = {}
@@ -299,7 +284,7 @@ def emd(a, b, M, numItermax=100000, log=False, dense=True, center_dual=True):
 
 
 def emd2(a, b, M, processes=multiprocessing.cpu_count(),
-         numItermax=100000, log=False, dense=True, return_matrix=False,
+         numItermax=100000, log=False, return_matrix=False,
          center_dual=True):
     r"""Solves the Earth Movers distance problem and returns the loss
 
@@ -404,11 +389,8 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     if log or return_matrix:
         def f(b):
             bsel = b != 0
-            if dense:
-                G, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
-            else:
-                Gv, iG, jG, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
-                G = coo_matrix((Gv, (iG, jG)), shape=(a.shape[0], b.shape[0]))
+            
+            G, cost, u, v, result_code = emd_c(a, b, M, numItermax)
 
             if center_dual:
                 u, v = center_ot_dual(u, v, a, b)
@@ -428,15 +410,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     else:
         def f(b):
             bsel = b != 0
-            if dense:
-                G, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
-            else:
-                Gv, iG, jG, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
-                print('---')
-                print(len(Gv))
-                print(len(iG))
-                print(len(jG))
-                G = coo_matrix((Gv, (iG, jG)), shape=(a.shape[0], b.shape[0]))
+            G, cost, u, v, result_code = emd_c(a, b, M, numItermax)
 
             if center_dual:
                 u, v = center_ot_dual(u, v, a, b)
@@ -444,7 +418,6 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
             if np.any(~asel) or np.any(~bsel):
                 u, v = estimate_dual_null_weights(u, v, a, b, M)
 
-            result_code_string = check_result(result_code)
             check_result(result_code)
             return cost
 
