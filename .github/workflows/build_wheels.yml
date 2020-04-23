@@ -2,9 +2,6 @@ name: Build dist and wheels
 
 on:
   release:
-  push:
-    branches:
-    - "wheels_multi"
 
 jobs:
   build_wheels:
@@ -12,8 +9,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-18.04, macos-latest, windows-latest]
-        # macosx-latest, windows-latest
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        # macos-latest, windows-latest
 
     steps:
     - uses: actions/checkout@v1
@@ -39,7 +36,7 @@ jobs:
 
     - name: Build wheel
       env:
-        CIBW_SKIP: "pp*-win* pp*-macosx*"
+        CIBW_SKIP: "pp*-win* pp*-macosx*" # remove pypy on mac and win (wrong version)
         CIBW_BEFORE_BUILD: "pip install numpy cython"
       run: |
         python -m cibuildwheel --output-dir wheelhouse
