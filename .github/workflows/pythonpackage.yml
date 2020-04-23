@@ -99,4 +99,3 @@ jobs:
     - name: Run tests
       run: |
         python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
-=ot
