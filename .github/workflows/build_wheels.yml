@@ -1,10 +1,7 @@
 name: Build dist and wheels
 
 on:
-  push:
-    branches:
-      - 'build_wheels'
-
+  release:
 
 jobs:
   build_wheels:
