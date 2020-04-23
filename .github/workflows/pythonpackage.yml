@@ -73,7 +73,6 @@ jobs:
        run: |
          python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
 
-
   windows:
     runs-on: windows-2019
     strategy:
