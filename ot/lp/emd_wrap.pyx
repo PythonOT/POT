@@ -20,9 +20,6 @@ import warnings
 
 cdef extern from "EMD.h":
     int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int maxIter)
-    int EMD_wrap_return_sparse(int n1, int n2, double *X, double *Y, double *D, 
-                    long *iG, long *jG, double *G, long * nG,
-                    double* alpha, double* beta, double *cost, int maxIter)
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
 
@@ -38,13 +35,10 @@ def check_result(result_code):
         message = "numItermax reached before optimality. Try to increase numItermax."
     warnings.warn(message)
     return message
-
-
-
-
+ 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int max_iter, bint dense):
+def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int max_iter):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
 
@@ -83,8 +77,6 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     max_iter : int
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
-    dense : bool
-        Return a sparse transport matrix if set to False
 
     Returns
     -------
@@ -114,29 +106,13 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     if not len(b):
         b=np.ones((n2,))/n2
 
-    if dense:
-        # init OT matrix
-        G=np.zeros([n1, n2])
+    # init OT matrix
+    G=np.zeros([n1, n2])
 
-        # calling the function
-        result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+    # calling the function
+    result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
 
-        return G, cost, alpha, beta, result_code
-
-
-    else:
-        
-        # init sparse OT matrix
-        Gv=np.zeros(nmax)
-        iG=np.zeros(nmax,dtype=np.int)
-        jG=np.zeros(nmax,dtype=np.int)
-
-
-        result_code = EMD_wrap_return_sparse(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <long*> iG.data, <long*> jG.data, <double*> Gv.data, <long*> &nG, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
-
-
-        return Gv[:nG], iG[:nG], jG[:nG], cost, alpha, beta, result_code
-
+    return G, cost, alpha, beta, result_code
 
 
 @cython.boundscheck(False)
