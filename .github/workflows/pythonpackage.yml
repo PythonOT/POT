@@ -47,6 +47,7 @@ jobs:
       run: |
         codecov
 
+
   macos:
      runs-on: macOS-latest
      strategy:
@@ -72,6 +73,7 @@ jobs:
      - name: Run tests
        run: |
          python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
+
 
   windows:
     runs-on: windows-2019
