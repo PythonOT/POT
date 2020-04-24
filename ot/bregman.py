@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Bregman projections for regularized OT
+Bregman projections solvers for entropic regularized OT
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>

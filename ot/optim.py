@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Optimization algorithms for OT
+Generic solvers for regularized OT
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
