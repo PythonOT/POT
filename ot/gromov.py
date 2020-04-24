@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Gromov-Wasserstein and Fused-Gromov-Wasserstein solvers 
+Gromov-Wasserstein and Fused-Gromov-Wasserstein solvers
 """
 
 # Author: Erwan Vautier <erwan.vautier@gmail.com>

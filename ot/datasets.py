@@ -1,5 +1,5 @@
 """
-Simple example datasets 
+Simple example datasets
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
