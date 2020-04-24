@@ -67,7 +67,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    'sphinx_gallery.gen_gallery',
+    #'sphinx_gallery.gen_gallery',
 ]
 
 napoleon_numpy_docstring = True
