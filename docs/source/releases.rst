@@ -1,8 +1,8 @@
 Releases
 ========
 
-0.6 Year 3
-----------
+0.6
+---
 
 *July 2019*
 
@@ -78,8 +78,8 @@ Closed issues
    slightly different
 -  Issue #72 Macosx build problem
 
-0.5.0 Year 2
-------------
+0.5.0
+-----
 
 *Sep 2018*
 
@@ -153,8 +153,8 @@ Closed issues
 -  Issue #43 : Unusable parameter log for EMDTransport (See PR #44)
 -  Issue #55 : UnicodeDecodeError: 'ascii' while installing with pip
 
-0.4 Community edition
----------------------
+0.4
+---
 
 *15 Sep 2017*
 
@@ -184,8 +184,8 @@ Closed issues
 
 -  Correct bug in emd on windows
 
-0.3 Summer release
-------------------
+0.3
+---
 
 *7 Jul 2017*
 
@@ -209,8 +209,8 @@ V0.2
 -  Efficient method emd2 returns only tarnsport (in paralell if several
    histograms given)
 
-V0.1.11 New years resolution
-----------------------------
+0.1.11
+------
 
 *5 Jan 2017*
 
@@ -218,29 +218,29 @@ V0.1.11 New years resolution
 -  Small efficiency tweak in sinkhorn
 -  Add simple tic() toc() functions for timing
 
-V0.1.10
--------
+0.1.10
+------
 
 *7 Nov 2016* \* numerical stabilization for sinkhorn (log domain and
 epsilon scaling)
 
-V0.1.9 DA classes and mapping
------------------------------
+0.1.9
+-----
 
 *4 Nov 2016*
 
 -  Update classes and examples for domain adaptation
 -  Joint OT matrix and mapping estimation
 
-V0.1.7
-------
+0.1.7
+-----
 
 *31 Oct 2016*
 
 -  Original Domain adaptation classes
 
-PyPI version 0.1.3
-------------------
+0.1.3
+-----
 
 -  pipy works
 

@@ -333,13 +333,14 @@ texinfo_documents = [
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy/', None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
-                       'matplotlib': ('http://matplotlib.sourceforge.net/', None)}
+                       'matplotlib': ('http://matplotlib.org/', None)}
 
 sphinx_gallery_conf = {
     'examples_dirs': ['../../examples', '../../examples/da'],
     'gallery_dirs': 'auto_examples',
     'backreferences_dir': '../modules/generated/',
-    'doc_module'          : ('ot'),
+	'inspect_global_variables'  : True,
+    'doc_module'          : ('ot','numpy','scipy','pylab'),
     'reference_url': {
 	'ot': None}
 }
