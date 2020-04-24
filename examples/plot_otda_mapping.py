@@ -18,6 +18,8 @@ a linear or a kernelized mapping as introduced in [8].
 #
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 2
+
 import numpy as np
 import matplotlib.pylab as pl
 import ot

@@ -19,6 +19,8 @@ discrete optimal transport", Neural Information Processing Systems (NIPS), 2016.
 #
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 3
+
 import numpy as np
 import matplotlib.pylab as pl
 import ot

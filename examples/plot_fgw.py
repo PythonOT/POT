@@ -17,6 +17,8 @@ This example illustrates the computation of FGW for 1D measures[18].
 #
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 3
+
 import matplotlib.pyplot as pl
 import numpy as np
 import ot

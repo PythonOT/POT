@@ -11,6 +11,8 @@ distance computation in POT.
 # Author: Laetitia Chapel <laetitia.chapel@irisa.fr>
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 2
+
 # necessary for 3d plot even if not used
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 import scipy as sp

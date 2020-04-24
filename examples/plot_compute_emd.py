@@ -14,6 +14,8 @@ ground metrics and plot their values for diffeent distributions.
 #
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 3
+
 import numpy as np
 import matplotlib.pylab as pl
 import ot

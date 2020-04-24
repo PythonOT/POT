@@ -21,6 +21,8 @@ SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
 #
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 4
+
 import numpy as np
 import matplotlib.pylab as pl
 import ot
