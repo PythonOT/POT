@@ -1438,8 +1438,8 @@ class SinkhornTransport(BaseTransport):
     .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal
            Transport, Advances in Neural Information Processing Systems (NIPS)
            26, 2013
-    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
-            Regularized discrete optimal transport. SIAM Journal on Imaging 
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
             Sciences, 7(3), 1853-1882.
     """
 
@@ -1539,8 +1539,8 @@ class EMDTransport(BaseTransport):
     .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
            "Optimal Transport for Domain Adaptation," in IEEE Transactions
            on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
-    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
-            Regularized discrete optimal transport. SIAM Journal on Imaging 
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
             Sciences, 7(3), 1853-1882.
     """
 
@@ -1649,8 +1649,8 @@ class SinkhornLpl1Transport(BaseTransport):
     .. [2] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
        Generalized conditional gradient: analysis of convergence
        and applications. arXiv preprint arXiv:1510.06567.
-    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
-            Regularized discrete optimal transport. SIAM Journal on Imaging 
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
             Sciences, 7(3), 1853-1882.
     """
 
@@ -1771,8 +1771,8 @@ class EMDLaplaceTransport(BaseTransport):
     .. [2] R. Flamary, N. Courty, D. Tuia, A. Rakotomamonjy,
         "Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching,"
          in NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
-    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
-            Regularized discrete optimal transport. SIAM Journal on Imaging 
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
             Sciences, 7(3), 1853-1882.
     """
 
@@ -1893,8 +1893,8 @@ class SinkhornL1l2Transport(BaseTransport):
     .. [2] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
        Generalized conditional gradient: analysis of convergence
        and applications. arXiv preprint arXiv:1510.06567.
-    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
-            Regularized discrete optimal transport. SIAM Journal on Imaging 
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
             Sciences, 7(3), 1853-1882.
     """
 
@@ -2187,8 +2187,8 @@ class UnbalancedSinkhornTransport(BaseTransport):
     .. [1] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016).
     Scaling algorithms for unbalanced transport problems. arXiv preprint
     arXiv:1607.05816.
-    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
-            Regularized discrete optimal transport. SIAM Journal on Imaging 
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
             Sciences, 7(3), 1853-1882.
     """
 
@@ -2302,8 +2302,8 @@ class JCPOTTransport(BaseTransport):
        International Conference on Artificial Intelligence and Statistics (AISTATS),
        vol. 89, p.849-858, 2019.
 
-    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
-            Regularized discrete optimal transport. SIAM Journal on Imaging 
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
             Sciences, 7(3), 1853-1882.
 
 
