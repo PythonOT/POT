@@ -75,8 +75,6 @@ def test_partial_wasserstein_lagrange():
     p = ot.unif(n_samples + n_noise)
     q = ot.unif(n_samples + n_noise)
 
-    m = 0.5
-
     w0, log0 = ot.partial.partial_wasserstein_lagrange(p, q, M, 1, log=True)
 
 
