@@ -35,7 +35,7 @@ def test_unbalanced_convergence(method):
                                                verbose=True)
     loss = ot.unbalanced.sinkhorn_unbalanced2(a, b, M, epsilon, reg_m,
                                               method=method,
-                                               verbose=True)
+                                              verbose=True)
     # check fixed point equations
     # in log-domain
     fi = reg_m / (reg_m + epsilon)

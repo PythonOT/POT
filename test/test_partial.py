@@ -9,6 +9,7 @@ import numpy as np
 import scipy as sp
 import ot
 
+
 def test_partial_wasserstein_lagrange():
 
     n_samples = 20  # nb samples (gaussian)
@@ -29,9 +30,7 @@ def test_partial_wasserstein_lagrange():
 
     m = 0.5
 
-    w0, log0 = ot.partial.partial_wasserstein_lagrange(p, q, M, 1, log=True)  
-
-    
+    w0, log0 = ot.partial.partial_wasserstein_lagrange(p, q, M, 1, log=True)
 
 
 def test_partial_wasserstein():

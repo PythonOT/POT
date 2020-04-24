@@ -71,7 +71,7 @@ def test_stochastic_asgd():
     M = ot.dist(x, x)
 
     G, log = ot.stochastic.solve_semi_dual_entropic(u, u, M, reg, "asgd",
-                                               numItermax=numItermax, log=True)
+                                                    numItermax=numItermax, log=True)
 
     # check constratints
     np.testing.assert_allclose(
@@ -146,7 +146,7 @@ def test_stochastic_dual_sgd():
     M = ot.dist(x, x)
 
     G, log = ot.stochastic.solve_dual_entropic(u, u, M, reg, batch_size,
-                                          numItermax=numItermax, log=True)
+                                               numItermax=numItermax, log=True)
 
     # check constratints
     np.testing.assert_allclose(
