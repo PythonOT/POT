@@ -1,8 +1,8 @@
 POT: Python Optimal Transport
 =============================
 
-|PyPI version| |Anaconda Cloud| |Build Status| |Build Status| |Codecov
-Status| |Downloads| |Anaconda downloads| |License|
+|PyPI version| |Anaconda Cloud| |Build Status| |Codecov Status|
+|Downloads| |Anaconda downloads| |License|
 
 This open source Python library provide several solvers for optimization
 problems related to Optimal Transport for signal, image processing and
@@ -96,11 +96,12 @@ Using and citing the toolbox
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you use this toolbox in your research and find it useful, please cite
-POT using the following bibtex reference:
+POT using the following reference:
 
 ::
 
-    Rémi Flamary and Nicolas Courty, POT Python Optimal Transport library, Website: https://pythonot.github.io/, 2017
+    Rémi Flamary and Nicolas Courty, POT Python Optimal Transport library, 
+    Website: https://pythonot.github.io/, 2017
 
 In Bibtex format:
 
@@ -141,11 +142,11 @@ You can install the toolbox through PyPI with:
 
     pip install POT
 
-or get the very latest version by downloading it and then running:
+or get the very latest version by running:
 
 ::
 
-    python setup.py install --user # for user install (no root)
+    pip install -U https://github.com/PythonOT/POT/archive/master.zip # with --user for user install (no root)
 
 Anaconda installation with conda-forge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -245,7 +246,8 @@ This toolbox has been created and is maintained by
 
 The contributors to this library are
 
--  `Alexandre Gramfort <http://alexandre.gramfort.net/>`__ (CI)
+-  `Alexandre Gramfort <http://alexandre.gramfort.net/>`__ (CI,
+   documentation)
 -  `Laetitia Chapel <http://people.irisa.fr/Laetitia.Chapel/>`__
    (Partial OT)
 -  `Michael Perrot <http://perso.univ-st-etienne.fr/pem82055/>`__
@@ -452,8 +454,6 @@ NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
    :target: https://badge.fury.io/py/POT
 .. |Anaconda Cloud| image:: https://anaconda.org/conda-forge/pot/badges/version.svg
    :target: https://anaconda.org/conda-forge/pot
-.. |Build Status| image:: https://travis-ci.org/PythonOT/POT.svg?branch=master
-   :target: https://travis-ci.org/PythonOT/POT
 .. |Build Status| image:: https://github.com/PythonOT/POT/workflows/build/badge.svg
    :target: https://github.com/PythonOT/POT/actions
 .. |Codecov Status| image:: https://codecov.io/gh/PythonOT/POT/branch/master/graph/badge.svg
