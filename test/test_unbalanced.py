@@ -31,9 +31,11 @@ def test_unbalanced_convergence(method):
     G, log = ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg=epsilon,
                                                reg_m=reg_m,
                                                method=method,
-                                               log=True)
+                                               log=True,
+                                               verbose=True)
     loss = ot.unbalanced.sinkhorn_unbalanced2(a, b, M, epsilon, reg_m,
-                                              method=method)
+                                              method=method,
+                                               verbose=True)
     # check fixed point equations
     # in log-domain
     fi = reg_m / (reg_m + epsilon)
@@ -73,7 +75,8 @@ def test_unbalanced_multiple_inputs(method):
     loss, log = ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg=epsilon,
                                                   reg_m=reg_m,
                                                   method=method,
-                                                  log=True)
+                                                  log=True,
+                                                  verbose=True)
     # check fixed point equations
     # in log-domain
     fi = reg_m / (reg_m + epsilon)

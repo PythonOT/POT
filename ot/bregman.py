@@ -909,11 +909,6 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
     else:
         alpha, beta = warmstart
 
-    def get_K(alpha, beta):
-        """log space computation"""
-        return np.exp(-(M - alpha.reshape((dim_a, 1))
-                        - beta.reshape((1, dim_b))) / reg)
-
     # print(np.min(K))
     def get_reg(n):  # exponential decreasing
         return (epsilon0 - reg) * np.exp(-n) + reg
