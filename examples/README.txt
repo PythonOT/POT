@@ -1,4 +1,4 @@
-POT Examples
-============
+Examples gallery
+================
 
 This is a gallery of all the POT example files.
