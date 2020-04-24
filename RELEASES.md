@@ -1,4 +1,4 @@
-# POT Releases
+# Releases
 
 
 ## 0.6 Year 3

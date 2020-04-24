@@ -59,7 +59,10 @@ release_test :
 rdoc :
 	pandoc --from=markdown --to=rst --output=docs/source/readme.rst README.md
 	sed -i 's,https://pythonot.github.io/auto_examples/,auto_examples/,g' docs/source/readme.rst 
-
+	pandoc --from=markdown --to=rst --output=docs/source/releases.rst RELEASES.md
+	sed -i 's,https://pot.readthedocs.io/en/latest/,,g' docs/source/releases.rst
+	sed -i 's,https://github.com/rflamary/POT/blob/master/notebooks/,auto_examples/,g' docs/source/releases.rst 
+	sed -i 's,.ipynb,.html/,g' docs/source/releases.rst 
 notebook :
 	ipython notebook --matplotlib=inline  --notebook-dir=notebooks/
 	
