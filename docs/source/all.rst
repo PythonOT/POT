@@ -1,4 +1,5 @@
 
+.. _sphx_glr_api_reference:
 
 API and modules
 ===============
@@ -92,3 +93,7 @@ ot.partial
 
 .. automodule:: ot.partial
   :members:
+
+.. autosummary::
+   :toctree: gen_modules/
+   :template: module.rst
