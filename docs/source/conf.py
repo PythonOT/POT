@@ -311,8 +311,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'POT', u'POT Python Optimal Transport library Documentation',
-     author, 'POT', 'Python Optimal Transport library',
+    (master_doc, 'POT', u'POT Python Optimal Transport',
+     author, 'POT', 'Python Optimal Transport',
      'Miscellaneous'),
 ]
 
@@ -339,7 +339,7 @@ sphinx_gallery_conf = {
     'examples_dirs': ['../../examples', '../../examples/da'],
     'gallery_dirs': 'auto_examples',
     'backreferences_dir': '../modules/generated/',
+    'doc_module'          : ('ot'),
     'reference_url': {
-        'numpy': 'http://docs.scipy.org/doc/numpy-1.9.1',
-        'scipy': 'http://docs.scipy.org/doc/scipy-0.17.0/reference'}
+	'ot': None}
 }

@@ -1,7 +1,9 @@
 # Releases
 
 
-## 0.6 Year 3
+
+
+## 0.6 
 *July 2019*
 
 This is the first official stable release of POT and this means a jump to 0.6! 
@@ -69,7 +71,7 @@ bring new features and solvers to the library.
 - Issue #72 Macosx build problem
 
 
-## 0.5.0 Year 2
+## 0.5.0 
 *Sep 2018*
 
 POT is 2 years old! This release brings numerous new features to the 
@@ -127,7 +129,7 @@ Deprecated OTDA Classes were removed from ot.da and ot.gpu for version 0.5
 * Issue #55 : UnicodeDecodeError: 'ascii' while installing with pip 
 
 
-## 0.4 Community edition
+## 0.4 
 *15 Sep 2017*
 
 This release contains a lot of contribution from new contributors.
@@ -152,7 +154,7 @@ This release contains a lot of contribution from new contributors.
 
 * Correct bug in emd on windows
 
-## 0.3 Summer release
+## 0.3 
 *7 Jul 2017*
 
 * emd* and sinkhorn* are now performed in parallel for multiple target distributions
@@ -173,7 +175,7 @@ This release contains a lot of contribution from new contributors.
 
 
 
-## V0.1.11 New years resolution
+## 0.1.11 
 *5 Jan 2017*
 
 * Add sphinx gallery for better documentation
@@ -181,24 +183,22 @@ This release contains a lot of contribution from new contributors.
 * Add simple tic() toc() functions for timing
 
 
-## V0.1.10 
+## 0.1.10 
 *7 Nov 2016*
 * numerical stabilization for sinkhorn (log domain and epsilon scaling)
 
-## V0.1.9 DA classes and mapping
+## 0.1.9
 *4 Nov 2016*
 
 * Update classes and examples for domain adaptation
 * Joint OT matrix and mapping estimation
 
-## V0.1.7
+## 0.1.7
 *31 Oct 2016*
 
 * Original Domain adaptation classes
 
-
-
-## PyPI version 0.1.3
+## 0.1.3
 
 * pipy works
 
