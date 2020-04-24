@@ -2,6 +2,9 @@ name: Build dist and wheels
 
 on:
   release:
+  push:
+    branches:
+      - "master"
 
 jobs:
   build_wheels:
