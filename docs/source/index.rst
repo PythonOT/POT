@@ -19,7 +19,8 @@ Contents
    releases
 
 .. include:: readme.rst
-    :start-line: 5
+   :start-line: 2
+
 
 
 Indices and tables
