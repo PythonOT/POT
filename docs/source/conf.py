@@ -71,6 +71,9 @@ extensions = [
     'sphinx_gallery.gen_gallery',
 ]
 
+autosummary_generate = True
+
+
 napoleon_numpy_docstring = True
 
 # Add any paths that contain templates here, relative to this directory.
