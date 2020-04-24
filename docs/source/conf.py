@@ -36,9 +36,9 @@ class Mock(MagicMock):
         return MagicMock()
 
 
-MOCK_MODULES = ['ot.lp.emd_wrap', 'autograd', 'pymanopt', 'cupy', 'autograd.numpy', 'pymanopt.manifolds', 'pymanopt.solvers']
+MOCK_MODULES = [ 'cupy']
 # 'autograd.numpy','pymanopt.manifolds','pymanopt.solvers',
-#sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 # !!!!
 
 # If extensions (or modules to document with autodoc) are in another directory,
