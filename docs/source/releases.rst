@@ -1,5 +1,5 @@
-POT Releases
-============
+Releases
+========
 
 0.6 Year 3
 ----------
@@ -28,15 +28,15 @@ divergence <all.html#ot.bregman.empirical_sinkhorn_divergence>`__
 corresponding `Wasserstein
 1D <all.html#ot.lp.wasserstein_1d>`__.
 We now also have implementations for `Unbalanced
-OT <auto_examples/plot_UOT_1D.html/>`__
+OT <auto_examples/plot_UOT_1D.html>`__
 and a solver for `Unbalanced OT
-barycenters <auto_examples/plot_UOT_barycenter_1D.html/>`__.
+barycenters <auto_examples/plot_UOT_barycenter_1D.html>`__.
 A new variant of Gromov-Wasserstein divergence called `Fused
 Gromov-Wasserstein <all.html?highlight=fused_#ot.gromov.fused_gromov_wasserstein>`__
 has been also contributed with exemples of use on `structured
-data <auto_examples/plot_fgw.html/>`__
+data <auto_examples/plot_fgw.html>`__
 and computing `barycenters of labeld
-graphs <auto_examples/plot_barycenter_fgw.html/>`__.
+graphs <auto_examples/plot_barycenter_fgw.html>`__.
 
 A lot of work has been done on the documentation with several new
 examples corresponding to the new features and a lot of corrections for
@@ -88,16 +88,16 @@ toolbox as listed below but also several bug correction.
 
 | Among the new features, we can highlight a `non-regularized
   Gromov-Wasserstein
-  solver <auto_examples/plot_gromov.html/>`__,
+  solver <auto_examples/plot_gromov.html>`__,
   a new `greedy variant of
   sinkhorn <all.html#ot.bregman.greenkhorn>`__,
 | `non-regularized <all.html#ot.lp.barycenter>`__,
   `convolutional
-  (2D) <auto_examples/plot_convolutional_barycenter.html/>`__
+  (2D) <auto_examples/plot_convolutional_barycenter.html>`__
   and `free
-  support <auto_examples/plot_free_support_barycenter.html/>`__
+  support <auto_examples/plot_free_support_barycenter.html>`__
   Wasserstein barycenters and
-  `smooth <https://github.com/rflamary/POT/blob/prV0.5/notebooks/plot_OT_1D_smooth.html/>`__
+  `smooth <https://github.com/rflamary/POT/blob/prV0.5/notebooks/plot_OT_1D_smooth.html>`__
   and
   `stochastic <all.html#ot.stochastic.sgd_entropic_regularization>`__
   implementation of entropic OT.
