@@ -1438,6 +1438,9 @@ class SinkhornTransport(BaseTransport):
     .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal
            Transport, Advances in Neural Information Processing Systems (NIPS)
            26, 2013
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
+            Regularized discrete optimal transport. SIAM Journal on Imaging 
+            Sciences, 7(3), 1853-1882.
     """
 
     def __init__(self, reg_e=1., max_iter=1000,
@@ -1536,6 +1539,9 @@ class EMDTransport(BaseTransport):
     .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
            "Optimal Transport for Domain Adaptation," in IEEE Transactions
            on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
+            Regularized discrete optimal transport. SIAM Journal on Imaging 
+            Sciences, 7(3), 1853-1882.
     """
 
     def __init__(self, metric="sqeuclidean", norm=None, log=False,
@@ -1643,7 +1649,9 @@ class SinkhornLpl1Transport(BaseTransport):
     .. [2] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
        Generalized conditional gradient: analysis of convergence
        and applications. arXiv preprint arXiv:1510.06567.
-
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
+            Regularized discrete optimal transport. SIAM Journal on Imaging 
+            Sciences, 7(3), 1853-1882.
     """
 
     def __init__(self, reg_e=1., reg_cl=0.1,
@@ -1763,6 +1771,9 @@ class EMDLaplaceTransport(BaseTransport):
     .. [2] R. Flamary, N. Courty, D. Tuia, A. Rakotomamonjy,
         "Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching,"
          in NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
+            Regularized discrete optimal transport. SIAM Journal on Imaging 
+            Sciences, 7(3), 1853-1882.
     """
 
     def __init__(self, reg_type='pos', reg_lap=1., reg_src=1., metric="sqeuclidean",
@@ -1882,7 +1893,9 @@ class SinkhornL1l2Transport(BaseTransport):
     .. [2] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
        Generalized conditional gradient: analysis of convergence
        and applications. arXiv preprint arXiv:1510.06567.
-
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
+            Regularized discrete optimal transport. SIAM Journal on Imaging 
+            Sciences, 7(3), 1853-1882.
     """
 
     def __init__(self, reg_e=1., reg_cl=0.1,
@@ -2174,7 +2187,9 @@ class UnbalancedSinkhornTransport(BaseTransport):
     .. [1] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016).
     Scaling algorithms for unbalanced transport problems. arXiv preprint
     arXiv:1607.05816.
-
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
+            Regularized discrete optimal transport. SIAM Journal on Imaging 
+            Sciences, 7(3), 1853-1882.
     """
 
     def __init__(self, reg_e=1., reg_m=0.1, method='sinkhorn',
@@ -2286,6 +2301,11 @@ class JCPOTTransport(BaseTransport):
        "Optimal transport for multi-source domain adaptation under target shift",
        International Conference on Artificial Intelligence and Statistics (AISTATS),
        vol. 89, p.849-858, 2019.
+
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). 
+            Regularized discrete optimal transport. SIAM Journal on Imaging 
+            Sciences, 7(3), 1853-1882.
+
 
     """
 
