@@ -37,11 +37,11 @@ POT provides the following generic OT solvers (links to examples):
 POT provides the following Machine Learning related solvers:
 
 * [Optimal transport for domain
-  adaptation](https://pythonot.github.io/auto_examples/plot_otda_classes.html)
+  adaptation](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_classes.html)
   with [group lasso regularization](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_classes.html),   [Laplacian regularization](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_laplacian.html) [5] [30] and [semi
   supervised setting](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_semi_supervised.html).
-* [Linear OT mapping](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_linear_mapping.html) [14] and [Joint OT mapping estimation](https://pythonot.github.io/auto_examples/plot_otda_mapping.html) [8].
-* [Wasserstein Discriminant Analysis](https://pythonot.github.io/auto_examples/domain-adaptation/plot_WDA.html) [11] (requires autograd + pymanopt).
+* [Linear OT mapping](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_linear_mapping.html) [14] and [Joint OT mapping estimation](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_mapping.html) [8].
+* [Wasserstein Discriminant Analysis](https://pythonot.github.io/auto_examples/others/plot_WDA.html) [11] (requires autograd + pymanopt).
 * [JCPOT algorithm for multi-source domain adaptation with target shift](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_jcpot.html) [27].
 
 Some other examples are available in the  [documentation](https://pythonot.github.io/auto_examples/index.html).

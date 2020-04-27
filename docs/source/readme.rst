@@ -70,7 +70,7 @@ POT provides the following generic OT solvers (links to examples):
 POT provides the following Machine Learning related solvers:
 
 -  `Optimal transport for domain
-   adaptation <auto_examples/plot_otda_classes.html>`__
+   adaptation <auto_examples/domain-adaptation/plot_otda_classes.html>`__
    with `group lasso
    regularization <auto_examples/domain-adaptation/plot_otda_classes.html>`__,
    `Laplacian
@@ -80,10 +80,10 @@ POT provides the following Machine Learning related solvers:
 -  `Linear OT
    mapping <auto_examples/domain-adaptation/plot_otda_linear_mapping.html>`__
    [14] and `Joint OT mapping
-   estimation <auto_examples/plot_otda_mapping.html>`__
+   estimation <auto_examples/domain-adaptation/plot_otda_mapping.html>`__
    [8].
 -  `Wasserstein Discriminant
-   Analysis <auto_examples/domain-adaptation/plot_WDA.html>`__
+   Analysis <auto_examples/others/plot_WDA.html>`__
    [11] (requires autograd + pymanopt).
 -  `JCPOT algorithm for multi-source domain adaptation with target
    shift <auto_examples/domain-adaptation/plot_otda_jcpot.html>`__
