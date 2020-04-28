@@ -26,10 +26,10 @@ import ot
 # The four distributions are constructed from 4 simple images
 
 
-f1 = 1 - pl.imread('../data/redcross.png')[:, :, 2]
-f2 = 1 - pl.imread('../data/duck.png')[:, :, 2]
-f3 = 1 - pl.imread('../data/heart.png')[:, :, 2]
-f4 = 1 - pl.imread('../data/tooth.png')[:, :, 2]
+f1 = 1 - pl.imread('../../data/redcross.png')[:, :, 2]
+f2 = 1 - pl.imread('../../data/duck.png')[:, :, 2]
+f3 = 1 - pl.imread('../../data/heart.png')[:, :, 2]
+f4 = 1 - pl.imread('../../data/tooth.png')[:, :, 2]
 
 A = []
 f1 = f1 / np.sum(f1)

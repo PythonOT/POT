@@ -14,6 +14,8 @@ sum of diracs. The OT matrix is plotted with the samples.
 #
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 4
+
 import numpy as np
 import matplotlib.pylab as pl
 import ot

@@ -10,15 +10,17 @@ Contents
 --------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    self
    quickstart
    all
    auto_examples/index
+   releases
 
 .. include:: readme.rst
-    :start-line: 5
+   :start-line: 2
+
 
 
 Indices and tables

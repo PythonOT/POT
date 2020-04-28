@@ -1,8 +1,8 @@
 POT: Python Optimal Transport
 =============================
 
-|PyPI version| |Anaconda Cloud| |Build Status| |Build Status| |Codecov
-Status| |Downloads| |Anaconda downloads| |License|
+|PyPI version| |Anaconda Cloud| |Build Status| |Codecov Status|
+|Downloads| |Anaconda downloads| |License|
 
 This open source Python library provide several solvers for optimization
 problems related to Optimal Transport for signal, image processing and
@@ -29,9 +29,9 @@ POT provides the following generic OT solvers (links to examples):
    [26] <auto_examples/plot_screenkhorn_1D.html>`__
    with optional GPU implementation (requires cupy).
 -  Bregman projections for `Wasserstein
-   barycenter <auto_examples/plot_barycenter_lp_vs_entropic.html>`__
+   barycenter <auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html>`__
    [3], `convolutional
-   barycenter <auto_examples/plot_convolutional_barycenter.html>`__
+   barycenter <auto_examples/barycenters/plot_convolutional_barycenter.html>`__
    [21] and unmixing [4].
 -  Sinkhorn divergence [23] and entropic regularization OT from
    empirical data.
@@ -39,68 +39,69 @@ POT provides the following generic OT solvers (links to examples):
    solvers <auto_examples/plot_OT_1D_smooth.html>`__
    (dual and semi-dual) for KL and squared L2 regularizations [17].
 -  Non regularized `Wasserstein barycenters
-   [16] <auto_examples/plot_barycenter_lp_vs_entropic.html>`__)
+   [16] <auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html>`__)
    with LP solver (only small scale).
 -  `Gromov-Wasserstein
-   distances <auto_examples/plot_gromov.html>`__
+   distances <auto_examples/gromov/plot_gromov.html>`__
    and `GW
-   barycenters <auto_examples/plot_gromov_barycenter.html>`__
+   barycenters <auto_examples/gromov/plot_gromov_barycenter.html>`__
    (exact [13] and regularized [12])
 -  `Fused-Gromov-Wasserstein distances
-   solver <auto_examples/plot_fgw.html#sphx-glr-auto-examples-plot-fgw-py>`__
+   solver <auto_examples/gromov/plot_fgw.html#sphx-glr-auto-examples-plot-fgw-py>`__
    and `FGW
-   barycenters <auto_examples/plot_barycenter_fgw.html>`__
+   barycenters <auto_examples/gromov/plot_barycenter_fgw.html>`__
    [24]
 -  `Stochastic
    solver <auto_examples/plot_stochastic.html>`__
    for Large-scale Optimal Transport (semi-dual problem [18] and dual
    problem [19])
 -  Non regularized `free support Wasserstein
-   barycenters <auto_examples/plot_free_support_barycenter.html>`__
+   barycenters <auto_examples/barycenters/plot_free_support_barycenter.html>`__
    [20].
 -  `Unbalanced
-   OT <auto_examples/plot_UOT_1D.html>`__
+   OT <auto_examples/unbalanced-partial/plot_UOT_1D.html>`__
    with KL relaxation and
-   `barycenter <auto_examples/plot_UOT_barycenter_1D.html>`__
+   `barycenter <auto_examples/unbalanced-partial/plot_UOT_barycenter_1D.html>`__
    [10, 25].
 -  `Partial Wasserstein and
-   Gromov-Wasserstein <auto_examples/plot_partial_wass_and_gromov.html>`__
+   Gromov-Wasserstein <auto_examples/unbalanced-partial/plot_partial_wass_and_gromov.html>`__
    (exact [29] and entropic [3] formulations).
 
 POT provides the following Machine Learning related solvers:
 
 -  `Optimal transport for domain
-   adaptation <auto_examples/plot_otda_classes.html>`__
+   adaptation <auto_examples/domain-adaptation/plot_otda_classes.html>`__
    with `group lasso
-   regularization <auto_examples/plot_otda_classes.html>`__,
+   regularization <auto_examples/domain-adaptation/plot_otda_classes.html>`__,
    `Laplacian
-   regularization <auto_examples/plot_otda_laplacian.html>`__
+   regularization <auto_examples/domain-adaptation/plot_otda_laplacian.html>`__
    [5] [30] and `semi supervised
-   setting <auto_examples/plot_otda_semi_supervised.html>`__.
+   setting <auto_examples/domain-adaptation/plot_otda_semi_supervised.html>`__.
 -  `Linear OT
-   mapping <auto_examples/plot_otda_linear_mapping.html>`__
+   mapping <auto_examples/domain-adaptation/plot_otda_linear_mapping.html>`__
    [14] and `Joint OT mapping
-   estimation <auto_examples/plot_otda_mapping.html>`__
+   estimation <auto_examples/domain-adaptation/plot_otda_mapping.html>`__
    [8].
 -  `Wasserstein Discriminant
-   Analysis <auto_examples/plot_WDA.html>`__
+   Analysis <auto_examples/others/plot_WDA.html>`__
    [11] (requires autograd + pymanopt).
 -  `JCPOT algorithm for multi-source domain adaptation with target
-   shift <auto_examples/plot_otda_jcpot.html>`__
+   shift <auto_examples/domain-adaptation/plot_otda_jcpot.html>`__
    [27].
 
-Some demonstrations are available in the
+Some other examples are available in the
 `documentation <auto_examples/index.html>`__.
 
 Using and citing the toolbox
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you use this toolbox in your research and find it useful, please cite
-POT using the following bibtex reference:
+POT using the following reference:
 
 ::
 
-    Rémi Flamary and Nicolas Courty, POT Python Optimal Transport library, Website: https://pythonot.github.io/, 2017
+    Rémi Flamary and Nicolas Courty, POT Python Optimal Transport library, 
+    Website: https://pythonot.github.io/, 2017
 
 In Bibtex format:
 
@@ -141,11 +142,11 @@ You can install the toolbox through PyPI with:
 
     pip install POT
 
-or get the very latest version by downloading it and then running:
+or get the very latest version by running:
 
 ::
 
-    python setup.py install --user # for user install (no root)
+    pip install -U https://github.com/PythonOT/POT/archive/master.zip # with --user for user install (no root)
 
 Anaconda installation with conda-forge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -232,7 +233,7 @@ Examples and Notebooks
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The examples folder contain several examples and use case for the
-library. The full documentation is available on
+library. The full documentation with examples and output is available on
 https://PythonOT.github.io/.
 
 Acknowledgements
@@ -245,7 +246,8 @@ This toolbox has been created and is maintained by
 
 The contributors to this library are
 
--  `Alexandre Gramfort <http://alexandre.gramfort.net/>`__ (CI)
+-  `Alexandre Gramfort <http://alexandre.gramfort.net/>`__ (CI,
+   documentation)
 -  `Laetitia Chapel <http://people.irisa.fr/Laetitia.Chapel/>`__
    (Partial OT)
 -  `Michael Perrot <http://perso.univ-st-etienne.fr/pem82055/>`__
@@ -452,8 +454,6 @@ NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
    :target: https://badge.fury.io/py/POT
 .. |Anaconda Cloud| image:: https://anaconda.org/conda-forge/pot/badges/version.svg
    :target: https://anaconda.org/conda-forge/pot
-.. |Build Status| image:: https://travis-ci.org/PythonOT/POT.svg?branch=master
-   :target: https://travis-ci.org/PythonOT/POT
 .. |Build Status| image:: https://github.com/PythonOT/POT/workflows/build/badge.svg
    :target: https://github.com/PythonOT/POT/actions
 .. |Codecov Status| image:: https://codecov.io/gh/PythonOT/POT/branch/master/graph/badge.svg

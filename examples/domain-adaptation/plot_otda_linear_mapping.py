@@ -12,6 +12,8 @@ Linear OT mapping estimation
 #
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 2
+
 import numpy as np
 import pylab as pl
 import ot
@@ -92,8 +94,8 @@ def minmax(I):
 
 
 # Loading images
-I1 = pl.imread('../data/ocean_day.jpg').astype(np.float64) / 256
-I2 = pl.imread('../data/ocean_sunset.jpg').astype(np.float64) / 256
+I1 = pl.imread('../../data/ocean_day.jpg').astype(np.float64) / 256
+I2 = pl.imread('../../data/ocean_sunset.jpg').astype(np.float64) / 256
 
 
 X1 = im2mat(I1)

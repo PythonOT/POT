@@ -180,7 +180,9 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
         \gamma = arg\min_\gamma <\gamma,M>_F
 
         s.t. \gamma 1 = a
+
              \gamma^T 1= b
+
              \gamma\geq 0
     where :
 
@@ -289,10 +291,12 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     r"""Solves the Earth Movers distance problem and returns the loss
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F
+        \min_\gamma <\gamma,M>_F
 
         s.t. \gamma 1 = a
+
              \gamma^T 1= b
+
              \gamma\geq 0
     where :
 

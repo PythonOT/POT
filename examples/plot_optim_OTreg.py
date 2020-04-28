@@ -24,6 +24,7 @@ arXiv preprint arXiv:1510.06567.
 
 
 """
+# sphinx_gallery_thumbnail_number = 4
 
 import numpy as np
 import matplotlib.pylab as pl

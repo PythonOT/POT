@@ -1,0 +1,4 @@
+
+
+Wasserstein barycenters
+-----------------------

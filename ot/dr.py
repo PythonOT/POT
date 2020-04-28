@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Dimension reduction with optimal transport
+Dimension reduction with OT
 
 
 .. warning::
-    Note that by default the module is not import in :mod:`ot`. In order to
+    Note that by default the module is not imported in :mod:`ot`. In order to
     use it you need to explicitely import :mod:`ot.dr`
 
 """

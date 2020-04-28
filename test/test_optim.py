@@ -38,7 +38,7 @@ def test_conditional_gradient():
 
 
 def test_conditional_gradient2():
-    n = 4000  # nb samples
+    n = 1000  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])

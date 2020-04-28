@@ -18,6 +18,8 @@ of what the transport methods are doing.
 #
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 2
+
 import matplotlib.pylab as pl
 import ot
 import ot.plot

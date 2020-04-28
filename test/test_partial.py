@@ -8,6 +8,74 @@
 import numpy as np
 import scipy as sp
 import ot
+import pytest
+
+
+def test_raise_errors():
+
+    n_samples = 20  # nb samples (gaussian)
+    n_noise = 20  # nb of samples (noise)
+
+    mu = np.array([0, 0])
+    cov = np.array([[1, 0], [0, 2]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
+    xs = np.append(xs, (np.random.rand(n_noise, 2) + 1) * 4).reshape((-1, 2))
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
+    xt = np.append(xt, (np.random.rand(n_noise, 2) + 1) * -3).reshape((-1, 2))
+
+    M = ot.dist(xs, xt)
+
+    p = ot.unif(n_samples + n_noise)
+    q = ot.unif(n_samples + n_noise)
+
+    with pytest.raises(ValueError):
+        ot.partial.partial_wasserstein_lagrange(p + 1, q, M, 1, log=True)
+
+    with pytest.raises(ValueError):
+        ot.partial.partial_wasserstein(p, q, M, m=2, log=True)
+
+    with pytest.raises(ValueError):
+        ot.partial.partial_wasserstein(p, q, M, m=-1, log=True)
+
+    with pytest.raises(ValueError):
+        ot.partial.entropic_partial_wasserstein(p, q, M, reg=1, m=2, log=True)
+
+    with pytest.raises(ValueError):
+        ot.partial.entropic_partial_wasserstein(p, q, M, reg=1, m=-1, log=True)
+
+    with pytest.raises(ValueError):
+        ot.partial.partial_gromov_wasserstein(M, M, p, q, m=2, log=True)
+
+    with pytest.raises(ValueError):
+        ot.partial.partial_gromov_wasserstein(M, M, p, q, m=-1, log=True)
+
+    with pytest.raises(ValueError):
+        ot.partial.entropic_partial_gromov_wasserstein(M, M, p, q, reg=1, m=2, log=True)
+
+    with pytest.raises(ValueError):
+        ot.partial.entropic_partial_gromov_wasserstein(M, M, p, q, reg=1, m=-1, log=True)
+
+
+def test_partial_wasserstein_lagrange():
+
+    n_samples = 20  # nb samples (gaussian)
+    n_noise = 20  # nb of samples (noise)
+
+    mu = np.array([0, 0])
+    cov = np.array([[1, 0], [0, 2]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
+    xs = np.append(xs, (np.random.rand(n_noise, 2) + 1) * 4).reshape((-1, 2))
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
+    xt = np.append(xt, (np.random.rand(n_noise, 2) + 1) * -3).reshape((-1, 2))
+
+    M = ot.dist(xs, xt)
+
+    p = ot.unif(n_samples + n_noise)
+    q = ot.unif(n_samples + n_noise)
+
+    w0, log0 = ot.partial.partial_wasserstein_lagrange(p, q, M, 1, log=True)
 
 
 def test_partial_wasserstein():
@@ -32,7 +100,7 @@ def test_partial_wasserstein():
 
     w0, log0 = ot.partial.partial_wasserstein(p, q, M, m=m, log=True)
     w, log = ot.partial.entropic_partial_wasserstein(p, q, M, reg=1, m=m,
-                                                     log=True)
+                                                     log=True, verbose=True)
 
     # check constratints
     np.testing.assert_equal(
@@ -92,7 +160,7 @@ def test_partial_gromov_wasserstein():
 
     m = 2 / 3
     res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C3, p, q, m=m,
-                                                       log=True)
+                                                       log=True, verbose=True)
     np.testing.assert_allclose(res0, 0, atol=1e-1, rtol=1e-1)
 
     C1 = sp.spatial.distance.cdist(xs, xs)

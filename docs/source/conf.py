@@ -36,9 +36,9 @@ class Mock(MagicMock):
         return MagicMock()
 
 
-MOCK_MODULES = ['ot.lp.emd_wrap', 'autograd', 'pymanopt', 'cupy', 'autograd.numpy', 'pymanopt.manifolds', 'pymanopt.solvers']
+MOCK_MODULES = [ 'cupy']
 # 'autograd.numpy','pymanopt.manifolds','pymanopt.solvers',
-#sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 # !!!!
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -59,6 +59,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
@@ -69,6 +70,9 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx_gallery.gen_gallery',
 ]
+
+autosummary_generate = True
+
 
 napoleon_numpy_docstring = True
 
@@ -88,7 +92,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'POT Python Optimal Transport'
-copyright = u'2016-2019, Rémi Flamary, Nicolas Courty'
+copyright = u'2016-2020, Rémi Flamary, Nicolas Courty'
 author = u'Rémi Flamary, Nicolas Courty'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -297,7 +301,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pot', u'POT Python Optimal Transport library Documentation',
+    (master_doc, 'pot', u'POT Python Optimal Transport',
      [author], 1)
 ]
 
@@ -311,8 +315,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'POT', u'POT Python Optimal Transport library Documentation',
-     author, 'POT', 'Python Optimal Transport librar.',
+    (master_doc, 'POT', u'POT Python Optimal Transport',
+     author, 'POT', 'Python Optimal Transport',
      'Miscellaneous'),
 ]
 
@@ -333,13 +337,14 @@ texinfo_documents = [
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy/', None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
-                       'matplotlib': ('http://matplotlib.sourceforge.net/', None)}
+                       'matplotlib': ('http://matplotlib.org/', None)}
 
 sphinx_gallery_conf = {
     'examples_dirs': ['../../examples', '../../examples/da'],
     'gallery_dirs': 'auto_examples',
-    'backreferences_dir': '../modules/generated/',
+    'backreferences_dir':  'gen_modules/backreferences',
+	'inspect_global_variables'  : True,
+    'doc_module'          : ('ot','numpy','scipy','pylab'),
     'reference_url': {
-        'numpy': 'http://docs.scipy.org/doc/numpy-1.9.1',
-        'scipy': 'http://docs.scipy.org/doc/scipy-0.17.0/reference'}
+	'ot': None}
 }
