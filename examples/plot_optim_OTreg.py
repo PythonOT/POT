@@ -6,7 +6,7 @@ Regularized OT with generic solver
 
 Illustrates the use of the generic solver for regularized OT with
 user-designed regularization term. It uses Conditional gradient as in [6] and
-generalized Conditional Gradient as proposed in [5][7].
+generalized Conditional Gradient as proposed in [5,7].
 
 
 [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, Optimal Transport for
@@ -14,8 +14,8 @@ Domain Adaptation, in IEEE Transactions on Pattern Analysis and Machine
 Intelligence , vol.PP, no.99, pp.1-1.
 
 [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
-Regularized discrete optimal transport. SIAM Journal on Imaging Sciences,
-7(3), 1853-1882.
+Regularized discrete optimal transport. SIAM Journal on Imaging
+Sciences, 7(3), 1853-1882.
 
 [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized
 conditional gradient: analysis of convergence and applications.

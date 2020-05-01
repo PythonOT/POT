@@ -4,8 +4,8 @@
 Plot multiple EMD
 =================
 
-Shows how to compute multiple EMD and Sinkhorn with two differnt
-ground metrics and plot their values for diffeent distributions.
+Shows how to compute multiple EMD and Sinkhorn with two different
+ground metrics and plot their values for different distributions.
 
 
 """

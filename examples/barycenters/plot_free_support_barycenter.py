@@ -4,7 +4,7 @@
 2D free support Wasserstein barycenters of distributions
 ====================================================
 
-Illustration of 2D Wasserstein barycenters if discributions that are weighted
+Illustration of 2D Wasserstein barycenters if distributions are weighted
 sum of diracs.
 
 """
@@ -21,7 +21,7 @@ import ot
 ##############################################################################
 # Generate data
 # -------------
-#%% parameters and data generation
+
 N = 3
 d = 2
 measures_locations = []
@@ -46,7 +46,7 @@ for i in range(N):
 
 ##############################################################################
 # Compute free support barycenter
-# -------------
+# -------------------------------
 
 k = 10  # number of Diracs of the barycenter
 X_init = np.random.normal(0., 1., (k, d))  # initial Dirac locations

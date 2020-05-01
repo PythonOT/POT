@@ -4,14 +4,15 @@
 Plot graphs' barycenter using FGW
 =================================
 
-This example illustrates the computation barycenter of labeled graphs using FGW
+This example illustrates the computation barycenter of labeled graphs using
+FGW [18].
 
 Requires networkx >=2
 
-.. [18] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
-      and Courty Nicolas
-    "Optimal Transport for structured data with application on graphs"
-    International Conference on Machine Learning (ICML). 2019.
+[18] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain
+and Courty Nicolas
+"Optimal Transport for structured data with application on graphs"
+International Conference on Machine Learning (ICML). 2019.
 
 """
 
