@@ -70,7 +70,7 @@ year={2017}
 The library has been tested on Linux, MacOSX and Windows. It requires a C++ compiler for building/installing the EMD solver and relies on the following Python modules:
 
 - Numpy (>=1.11)
-- Scipy (>=1.3)
+- Scipy (>=1.0)
 - Cython (>=0.23)
 - Matplotlib (>=1.5)
 
