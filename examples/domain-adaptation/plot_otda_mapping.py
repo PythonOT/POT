@@ -9,8 +9,8 @@ time both the coupling transport and approximate the transport map with either
 a linear or a kernelized mapping as introduced in [8].
 
 [8] M. Perrot, N. Courty, R. Flamary, A. Habrard,
-    "Mapping estimation for discrete optimal transport",
-    Neural Information Processing Systems (NIPS), 2016.
+"Mapping estimation for discrete optimal transport",
+Neural Information Processing Systems (NIPS), 2016.
 """
 
 # Authors: Remi Flamary <remi.flamary@unice.fr>

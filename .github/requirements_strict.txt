@@ -1,0 +1,7 @@
+numpy==1.16.*
+scipy==1.0.*
+cython==0.23.*
+matplotlib
+cvxopt
+scikit-learn
+pytest
