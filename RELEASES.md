@@ -5,7 +5,7 @@
 
 This is the new stable release for POT. We have a lot of changes in the documentation and several new features such as Partial OT, Unbalanced and Multi Sources OT Domain Adaptation and several bug fixes. One important change is that we have created a the GitHub organization [PythonOT](https://github.com/PythonOT) that now owns the main POT repository [https://github.com/PythonOT/POT](https://github.com/PythonOT/POT) and the repository for the new documentation hosted at [https://PythonOT.github.io/](https://PythonOT.github.io/).
 
-This is the first release where the Python 2.7 tests have been removed. Most of the toolbox should still work but this is the last release where we release Python 2.7 wheels. 
+This is the first release where the Python 2.7 tests have been removed. Most of the toolbox should still work but we do not offer support for Python 2.7 and will close related Issues. 
 
 A lot of changes have been done to the documentation that is now hosted on [https://PythonOT.github.io/](https://PythonOT.github.io/) instead of readthedocs. It was a hard choice but readthedocs did not allow us to run sphinx-gallery to update our beautiful examples and it was a huge amount of work to maintain it. The documentation is now automatically compiled and updated on merge. We also removed the notebooks from the repository for space reason and also because they are all available in the [example gallery](https://pythonot.github.io/auto_examples/index.html). Note that now the output of the documentation build for each commit in the PR is available to check that the doc builds correctly before merging which was not possible with readthedoc.
 
