@@ -4,12 +4,12 @@
 Plot Fused-gromov-Wasserstein
 ==============================
 
-This example illustrates the computation of FGW for 1D measures[18].
+This example illustrates the computation of FGW for 1D measures [18].
 
-.. [18] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
-      and Courty Nicolas
-    "Optimal Transport for structured data with application on graphs"
-    International Conference on Machine Learning (ICML). 2019.
+[18] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain
+and Courty Nicolas
+"Optimal Transport for structured data with application on graphs"
+International Conference on Machine Learning (ICML). 2019.
 
 """
 

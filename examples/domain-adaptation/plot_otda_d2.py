@@ -25,7 +25,7 @@ import ot
 import ot.plot
 
 ##############################################################################
-# generate data
+# Generate data
 # -------------
 
 n_samples_source = 150
