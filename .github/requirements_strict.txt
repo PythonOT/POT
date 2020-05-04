@@ -1,10 +1,7 @@
 numpy==1.11.*
 scipy==1.0.*
 cython==0.23.*
-matplotlib==1.5.*
-autograd
-pymanopt==0.2.4; python_version <'3'
-pymanopt; python_version >= '3'
+matplotlib
 cvxopt
 scikit-learn
 pytest
