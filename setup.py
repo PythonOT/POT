@@ -67,7 +67,7 @@ setup(name='POT',
       scripts=[],
       data_files=[],
       requires=["numpy", "scipy", "cython"],
-      install_requires=["numpy>=1.16", "scipy", "cython"],
+      install_requires=["numpy>=1.16", "scipy>=1.0", "cython>=0.23"],
       classifiers=[
           'Development Status :: 5 - Production/Stable',
           'Intended Audience :: Developers',
