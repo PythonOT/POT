@@ -327,10 +327,6 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
         variables. Otherwise returns only the optimal transportation cost.
     return_matrix: boolean, optional (default=False)
         If True, returns the optimal transportation matrix in the log.
-    dense: boolean, optional (default=True)
-        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
-        Otherwise returns a sparse representation using scipy's `coo_matrix`
-        format.
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
         :ref:`center_ot_dual`.

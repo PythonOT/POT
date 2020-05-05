@@ -33,6 +33,8 @@ from ot.dr import wda, fda
 n = 1000  # nb samples in source and target datasets
 nz = 0.2
 
+np.random.seed(1)
+
 # generate circle dataset
 t = np.random.rand(n) * 2 * np.pi
 ys = np.floor((np.arange(n) * 1.0 / n * 3)) + 1
@@ -88,7 +90,11 @@ reg = 1e0
 k = 10
 maxiter = 100
 
-Pwda, projwda = wda(xs, ys, p, reg, k, maxiter=maxiter)
+P0 = np.random.randn(xs.shape[1], p)
+
+P0 /= np.sqrt(np.sum(P0**2, 0, keepdims=True))
+
+Pwda, projwda = wda(xs, ys, p, reg, k, maxiter=maxiter, P0=P0)
 
 
 ##############################################################################

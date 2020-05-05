@@ -1,6 +1,6 @@
 # Releases
 
-## 0.7
+## 0.7.0
 *May 2020*
 
 This is the new stable release for POT. We made a lot of changes in the documentation and added several new features such as Partial OT, Unbalanced and Multi Sources OT Domain Adaptation and several bug fixes. One important change is that we have created the GitHub organization [PythonOT](https://github.com/PythonOT) that now owns the main POT repository [https://github.com/PythonOT/POT](https://github.com/PythonOT/POT) and the repository for the new documentation is now hosted at [https://PythonOT.github.io/](https://PythonOT.github.io/).
@@ -40,7 +40,7 @@ This release is also the moment to thank all the POT contributors (old and new) 
 - Log bugs for Gromov-Wassertein solver (Issue #107, fixed in PR #108)
 - Weight issues in barycenter function (PR #106)
 
-## 0.6 
+## 0.6.0 
 *July 2019*
 
 This is the first official stable release of POT and this means a jump to 0.6! 

@@ -121,7 +121,7 @@ The library has been tested on Linux, MacOSX and Windows. It requires a
 C++ compiler for building/installing the EMD solver and relies on the
 following Python modules:
 
--  Numpy (>=1.11)
+-  Numpy (>=1.16)
 -  Scipy (>=1.0)
 -  Cython (>=0.23)
 -  Matplotlib (>=1.5)
@@ -434,7 +434,7 @@ Shift <http://proceedings.mlr.press/v89/redko19a.html>`__, Proceedings
 of the Twenty-Second International Conference on Artificial Intelligence
 and Statistics (AISTATS) 22, 2019.
 
-[28] Caffarelli, L. A., McCann, R. J. (2020). `Free boundaries in
+[28] Caffarelli, L. A., McCann, R. J. (2010). `Free boundaries in
 optimal transport and Monge-Ampere obstacle
 problems <http://www.math.toronto.edu/~mccann/papers/annals2010.pdf>`__,
 Annals of mathematics, 673-730.

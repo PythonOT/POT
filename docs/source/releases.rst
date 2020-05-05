@@ -1,8 +1,89 @@
 Releases
 ========
 
-0.6
----
+0.7.0
+-----
+
+*May 2020*
+
+This is the new stable release for POT. We made a lot of changes in the
+documentation and added several new features such as Partial OT,
+Unbalanced and Multi Sources OT Domain Adaptation and several bug fixes.
+One important change is that we have created the GitHub organization
+`PythonOT <https://github.com/PythonOT>`__ that now owns the main POT
+repository https://github.com/PythonOT/POT and the repository for the
+new documentation is now hosted at https://PythonOT.github.io/.
+
+This is the first release where the Python 2.7 tests have been removed.
+Most of the toolbox should still work but we do not offer support for
+Python 2.7 and will close related Issues.
+
+A lot of changes have been done to the documentation that is now hosted
+on https://PythonOT.github.io/ instead of readthedocs. It was a hard
+choice but readthedocs did not allow us to run sphinx-gallery to update
+our beautiful examples and it was a huge amount of work to maintain. The
+documentation is now automatically compiled and updated on merge. We
+also removed the notebooks from the repository for space reason and also
+because they are all available in the `example
+gallery <auto_examples/index.html>`__. Note
+that now the output of the documentation build for each commit in the PR
+is available to check that the doc builds correctly before merging which
+was not possible with readthedocs.
+
+The CI framework has also been changed with a move from Travis to Github
+Action which allows to get faster tests on Windows, MacOS and Linux. We
+also now report our coverage on
+`Codecov.io <https://codecov.io/gh/PythonOT/POT>`__ and we have a
+reasonable 92% coverage. We also now generate wheels for a number of OS
+and Python versions at each merge in the master branch. They are
+available as outputs of this
+`action <https://github.com/PythonOT/POT/actions?query=workflow%3A%22Build+dist+and+wheels%22>`__.
+This will allow simpler multi-platform releases from now on.
+
+In terms of new features we now have `OTDA Classes for unbalanced
+OT <https://pythonot.github.io/gen_modules/ot.da.html#ot.da.UnbalancedSinkhornTransport>`__,
+a new Domain adaptation class form `multi domain problems
+(JCPOT) <auto_examples/domain-adaptation/plot_otda_jcpot.html#sphx-glr-auto-examples-domain-adaptation-plot-otda-jcpot-py>`__,
+and several solvers to solve the `Partial Optimal
+Transport <auto_examples/unbalanced-partial/plot_partial_wass_and_gromov.html#sphx-glr-auto-examples-unbalanced-partial-plot-partial-wass-and-gromov-py>`__
+problems.
+
+This release is also the moment to thank all the POT contributors (old
+and new) for helping making POT such a nice toolbox. A lot of changes
+(also in the API) are comming for the next versions.
+
+Features
+^^^^^^^^
+
+-  New documentation on https://PythonOT.github.io/ (PR #160, PR #143,
+   PR #144)
+-  Documentation build on CircleCI with sphinx-gallery (PR #145,PR #146,
+   #155)
+-  Run sphinx gallery in CI (PR #146)
+-  Remove notebooks from repo because available in doc (PR #156)
+-  Build wheels in CI (#157)
+-  Move from travis to GitHub Action for Windows, MacOS and Linux (PR
+   #148, PR #150)
+-  Partial Optimal Transport (PR#141 and PR #142)
+-  Laplace regularized OTDA (PR #140)
+-  Multi source DA with target shift (PR #137)
+-  Screenkhorn algorithm (PR #121)
+
+Closed issues
+^^^^^^^^^^^^^
+
+-  Bug in Unbalanced OT example (Issue #127)
+-  Clean Cython output when calling setup.py clean (Issue #122)
+-  Various Macosx compilation problems (Issue #113, Issue #118, PR#130)
+-  EMD dimension mismatch (Issue #114, Fixed in PR #116)
+-  2D barycenter bug for non square images (Issue #124, fixed in PR
+   #132)
+-  Bad value in EMD 1D (Issue #138, fixed in PR #139)
+-  Log bugs for Gromov-Wassertein solver (Issue #107, fixed in PR #108)
+-  Weight issues in barycenter function (PR #106)
+
+0.6.0
+-----
 
 *July 2019*
 
