@@ -203,4 +203,5 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
             w_i -= w_j
             w_j = v_weights[j]
         cur_idx += 1
+    cur_idx += 1
     return G[:cur_idx], indices[:cur_idx], cost
