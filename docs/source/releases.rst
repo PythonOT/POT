@@ -6,13 +6,13 @@ Releases
 
 *May 2020*
 
-This is the new stable release for POT. We have a lot of changes in the
-documentation and several new features such as Partial OT, Unbalanced
-and Multi Sources OT Domain Adaptation and several bug fixes. One
-important change is that we have created a the GitHub organization
+This is the new stable release for POT. We made a lot of changes in the
+documentation and added several new features such as Partial OT,
+Unbalanced and Multi Sources OT Domain Adaptation and several bug fixes.
+One important change is that we have created the GitHub organization
 `PythonOT <https://github.com/PythonOT>`__ that now owns the main POT
 repository https://github.com/PythonOT/POT and the repository for the
-new documentation hosted at https://PythonOT.github.io/.
+new documentation is now hosted at https://PythonOT.github.io/.
 
 This is the first release where the Python 2.7 tests have been removed.
 Most of the toolbox should still work but we do not offer support for
@@ -21,22 +21,22 @@ Python 2.7 and will close related Issues.
 A lot of changes have been done to the documentation that is now hosted
 on https://PythonOT.github.io/ instead of readthedocs. It was a hard
 choice but readthedocs did not allow us to run sphinx-gallery to update
-our beautiful examples and it was a huge amount of work to maintain it.
-The documentation is now automatically compiled and updated on merge. We
+our beautiful examples and it was a huge amount of work to maintain. The
+documentation is now automatically compiled and updated on merge. We
 also removed the notebooks from the repository for space reason and also
 because they are all available in the `example
 gallery <auto_examples/index.html>`__. Note
 that now the output of the documentation build for each commit in the PR
 is available to check that the doc builds correctly before merging which
-was not possible with readthedoc.
+was not possible with readthedocs.
 
 The CI framework has also been changed with a move from Travis to Github
-Action which allows us to get faster tests on Windows, MacOS and Linux.
-We also now report our coverage on
+Action which allows to get faster tests on Windows, MacOS and Linux. We
+also now report our coverage on
 `Codecov.io <https://codecov.io/gh/PythonOT/POT>`__ and we have a
 reasonable 92% coverage. We also now generate wheels for a number of OS
-and python versions at each merge in the master branch. They are
-available as artifacts of this
+and Python versions at each merge in the master branch. They are
+available as outputs of this
 `action <https://github.com/PythonOT/POT/actions?query=workflow%3A%22Build+dist+and+wheels%22>`__.
 This will allow simpler multi-platform releases from now on.
 
@@ -49,8 +49,8 @@ Transport <auto_examples/unbalanced-partial/plot_partial_wass_and_gromov.html#sp
 problems.
 
 This release is also the moment to thank all the POT contributors (old
-and new) for helping making POT such a nice to use toolbox. A lot of
-changes (also in the API) are comming for the next versions.
+and new) for helping making POT such a nice toolbox. A lot of changes
+(also in the API) are comming for the next versions.
 
 Features
 ^^^^^^^^
