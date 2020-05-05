@@ -33,7 +33,7 @@ from ot.dr import wda, fda
 n = 1000  # nb samples in source and target datasets
 nz = 0.2
 
-np.random.RandomState(1)
+np.random.seed(1)
 
 # generate circle dataset
 t = np.random.rand(n) * 2 * np.pi
