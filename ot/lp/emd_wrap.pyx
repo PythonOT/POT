@@ -19,10 +19,7 @@ import warnings
 
 
 cdef extern from "EMD.h":
-    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int maxIter)
-    int EMD_wrap_return_sparse(int n1, int n2, double *X, double *Y, double *D, 
-                    long *iG, long *jG, double *G, long * nG,
-                    double* alpha, double* beta, double *cost, int maxIter)
+    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int maxIter) nogil
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
 
@@ -38,13 +35,10 @@ def check_result(result_code):
         message = "numItermax reached before optimality. Try to increase numItermax."
     warnings.warn(message)
     return message
-
-
-
-
+ 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int max_iter, bint dense):
+def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int max_iter):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
 
@@ -83,8 +77,6 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     max_iter : int
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
-    dense : bool
-        Return a sparse transport matrix if set to False
 
     Returns
     -------
@@ -114,29 +106,14 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     if not len(b):
         b=np.ones((n2,))/n2
 
-    if dense:
-        # init OT matrix
-        G=np.zeros([n1, n2])
+    # init OT matrix
+    G=np.zeros([n1, n2])
 
-        # calling the function
+    # calling the function
+    with nogil:
         result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
 
-        return G, cost, alpha, beta, result_code
-
-
-    else:
-        
-        # init sparse OT matrix
-        Gv=np.zeros(nmax)
-        iG=np.zeros(nmax,dtype=np.int)
-        jG=np.zeros(nmax,dtype=np.int)
-
-
-        result_code = EMD_wrap_return_sparse(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <long*> iG.data, <long*> jG.data, <double*> Gv.data, <long*> &nG, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
-
-
-        return Gv[:nG], iG[:nG], jG[:nG], cost, alpha, beta, result_code
-
+    return G, cost, alpha, beta, result_code
 
 
 @cython.boundscheck(False)
@@ -180,12 +157,12 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
         cost associated to the optimal transportation
     """
     cdef double cost = 0.
-    cdef int n = u_weights.shape[0]
-    cdef int m = v_weights.shape[0]
+    cdef Py_ssize_t n = u_weights.shape[0]
+    cdef Py_ssize_t m = v_weights.shape[0]
 
-    cdef int i = 0
+    cdef Py_ssize_t i = 0
     cdef double w_i = u_weights[0]
-    cdef int j = 0
+    cdef Py_ssize_t j = 0
     cdef double w_j = v_weights[0]
 
     cdef double m_ij = 0.
@@ -194,8 +171,8 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
                                                            dtype=np.float64)
     cdef np.ndarray[long, ndim=2, mode="c"] indices = np.zeros((n + m - 1, 2),
                                                               dtype=np.int)
-    cdef int cur_idx = 0
-    while i < n and j < m:
+    cdef Py_ssize_t cur_idx = 0
+    while True:
         if metric == 'sqeuclidean':
             m_ij = (u[i] - v[j]) * (u[i] - v[j])
         elif metric == 'cityblock' or metric == 'euclidean':
@@ -211,6 +188,8 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
             indices[cur_idx, 0] = i
             indices[cur_idx, 1] = j
             i += 1
+            if i == n:
+                break
             w_j -= w_i
             w_i = u_weights[i]
         else:
@@ -219,7 +198,10 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
             indices[cur_idx, 0] = i
             indices[cur_idx, 1] = j
             j += 1
+            if j == m:
+                break
             w_i -= w_j
             w_j = v_weights[j]
         cur_idx += 1
+    cur_idx += 1
     return G[:cur_idx], indices[:cur_idx], cost

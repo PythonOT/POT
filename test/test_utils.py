@@ -36,10 +36,10 @@ def test_tic_toc():
     t2 = ot.toq()
 
     # test timing
-    np.testing.assert_allclose(0.5, t, rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(0.5, t, rtol=1e-1, atol=1e-1)
 
     # test toc vs toq
-    np.testing.assert_allclose(t, t2, rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(t, t2, rtol=1e-1, atol=1e-1)
 
 
 def test_kernel():

@@ -26,7 +26,9 @@
 #         Remi Flamary <remi.flamary@unice.fr>
 
 """
-Implementation of
+Smooth and Sparse Optimal Transport solvers (KL an L2 reg.)
+
+Implementation of :
 Smooth and Sparse Optimal Transport.
 Mathieu Blondel, Vivien Seguy, Antoine Rolet.
 In Proc. of AISTATS 2018.

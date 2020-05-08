@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Bregman projections for regularized OT
+Bregman projections solvers for entropic regularized OT
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -908,11 +908,6 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
         alpha, beta = np.zeros(dim_a), np.zeros(dim_b)
     else:
         alpha, beta = warmstart
-
-    def get_K(alpha, beta):
-        """log space computation"""
-        return np.exp(-(M - alpha.reshape((dim_a, 1))
-                        - beta.reshape((1, dim_b))) / reg)
 
     # print(np.min(K))
     def get_reg(n):  # exponential decreasing
