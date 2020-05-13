@@ -27,9 +27,9 @@ import ot
 r = np.random.RandomState(42)
 
 
-def im2mat(I):
+def im2mat(img):
     """Converts an image to matrix (one pixel per line)"""
-    return I.reshape((I.shape[0] * I.shape[1], I.shape[2]))
+    return img.reshape((img.shape[0] * img.shape[1], img.shape[2]))
 
 
 def mat2im(X, shape):
@@ -37,8 +37,8 @@ def mat2im(X, shape):
     return X.reshape(shape)
 
 
-def minmax(I):
-    return np.clip(I, 0, 1)
+def minmax(img):
+    return np.clip(img, 0, 1)
 
 
 ##############################################################################

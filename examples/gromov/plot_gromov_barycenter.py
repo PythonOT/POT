@@ -84,9 +84,9 @@ def smacof_mds(C, dim, max_iter=3000, eps=1e-9):
 # The four distributions are constructed from 4 simple images
 
 
-def im2mat(I):
+def im2mat(img):
     """Converts and image to matrix (one pixel per line)"""
-    return I.reshape((I.shape[0] * I.shape[1], I.shape[2]))
+    return img.reshape((img.shape[0] * img.shape[1], img.shape[2]))
 
 
 square = pl.imread('../../data/square.png').astype(np.float64)[:, :, 2]
