@@ -14,9 +14,6 @@ import subprocess
 here = path.abspath(path.dirname(__file__))
 
 
-os.environ["CC"] = "g++"
-os.environ["CXX"] = "g++"
-
 # dirty but working
 __version__ = re.search(
     r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',  # It excludes inline comment too
@@ -39,7 +36,9 @@ if 'clean' in sys.argv[1:]:
 
 
 # add platform dependant optional compilation argument
-if sys.platform.startswith('darwin'):
+if sys.platform.startswith('darwin') and not os.environ.get('POT_LEAVE_CC', ''):
+    os.environ["CC"] = "g++"
+    os.environ["CXX"] = "g++"
     opt_arg.append("-stdlib=libc++")
     sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path'])
     os.environ['CFLAGS'] = '-isysroot "{}"'.format(sdk_path.rstrip().decode("utf-8"))
