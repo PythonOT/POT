@@ -36,9 +36,7 @@ if 'clean' in sys.argv[1:]:
 
 
 # add platform dependant optional compilation argument
-if sys.platform.startswith('darwin') and not os.environ.get('POT_LEAVE_CC', ''):
-    os.environ["CC"] = "g++"
-    os.environ["CXX"] = "g++"
+if sys.platform.startswith('darwin'):
     opt_arg.append("-stdlib=libc++")
     sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path'])
     os.environ['CFLAGS'] = '-isysroot "{}"'.format(sdk_path.rstrip().decode("utf-8"))
