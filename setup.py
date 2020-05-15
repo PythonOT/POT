@@ -14,9 +14,6 @@ import subprocess
 here = path.abspath(path.dirname(__file__))
 
 
-os.environ["CC"] = "g++"
-os.environ["CXX"] = "g++"
-
 # dirty but working
 __version__ = re.search(
     r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',  # It excludes inline comment too
