@@ -24,7 +24,6 @@ ROOT = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(ROOT, 'README.md'), encoding="utf-8") as f:
     README = f.read()
 
-
 # clean cython output is clean is called
 if 'clean' in sys.argv[1:]:
     if os.path.isfile('ot/lp/emd_wrap.cpp'):
@@ -69,8 +68,10 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Environment :: Console',
         'Operating System :: OS Independent',
+        'Operating System :: Linux',
         'Operating System :: MacOS',
         'Operating System :: POSIX',
+        'Operating System :: Windows',
         'Programming Language :: Python',
         'Programming Language :: C++',
         'Programming Language :: C',
@@ -79,11 +80,10 @@ setup(
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Scientific/Engineering :: Mathematics',
         'Topic :: Scientific/Engineering :: Information Analysis',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ]
 )
