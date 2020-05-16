@@ -24,7 +24,6 @@ ROOT = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(ROOT, 'README.md'), encoding="utf-8") as f:
     README = f.read()
 
-opt_args = ["-O3"]
 
 # clean cython output is clean is called
 if 'clean' in sys.argv[1:]:
@@ -32,8 +31,9 @@ if 'clean' in sys.argv[1:]:
         os.remove('ot/lp/emd_wrap.cpp')
 
 # add platform dependant optional compilation argument
+compile_args = ["-O3"]
 if sys.platform.startswith('darwin'):
-    opt_args.append("-stdlib=libc++")
+    compile_args.append("-stdlib=libc++")
     sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path'])
     os.environ['CFLAGS'] = '-isysroot "{}"'.format(sdk_path.rstrip().decode("utf-8"))
 
@@ -52,7 +52,7 @@ setup(
         sources=["ot/lp/emd_wrap.pyx", "ot/lp/EMD_wrapper.cpp"],  # cython/c++ src files
         language="c++",
         include_dirs=[numpy.get_include(), os.path.join(ROOT, 'ot/lp')],
-        extra_compile_args=opt_args,
+        extra_compile_args=compile_args,
     )),
     platforms=['linux', 'macosx', 'windows'],
     download_url='https://github.com/PythonOT/POT/archive/{}.tar.gz'.format(__version__),
