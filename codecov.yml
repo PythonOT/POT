@@ -38,7 +38,6 @@ parsers:
 
 # https://docs.codecov.io/docs/ignoring-paths
 ignore:
-  - "ot/externals/"
   - "ot/gpu/"
 
 # https://docs.codecov.io/docs/pull-request-comments
