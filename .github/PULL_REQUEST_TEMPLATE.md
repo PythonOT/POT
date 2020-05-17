@@ -22,7 +22,7 @@
 <!--- If you're unsure about any of these, don't hesitate to ask. We're here to help! -->
 
 - [ ] The documentation is up-to-date with the changes I made.
-- [ ] I have read the [**CONTRIBUTING**](https://github.com/PythonOT/POT/blob/master/CONTRIBUTING.md) document.
+- [ ] I have read the [**CONTRIBUTING**](https://github.com/PythonOT/POT/blob/master/.github/CONTRIBUTING.md) document.
 - [ ] All tests passed, and additional code has been covered with new tests.
 
 <!--- In any case, don't hesitate to join and ask questions if you need on gitter (https://gitter.im/PythonOT/community) or slack (https://pot-toolbox.slack.com/). -->
