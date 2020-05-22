@@ -33,9 +33,10 @@ Minimal means having the shortest code but still preserving the bug. -->
 - Python version:
 - How was POT installed (source, `pip`, `conda`):
 - Build command you used (if compiling from source):
-- CUDA version:
-- GPU models and configuration:
-- Any other relevant information:
+- Only for GPU related bugs:
+    - CUDA version:
+    - GPU models and configuration:
+    - Any other relevant information:
 
 Output of the following code snippet:
 ```python
