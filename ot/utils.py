@@ -15,10 +15,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 import sys
 import warnings
-try:
-    from inspect import signature
-except ImportError:
-    from .externals.funcsigs import signature
+from inspect import signature
 
 __time_tic_toc = time.time()
 
