@@ -17,20 +17,22 @@ This example gives an introduction on how to use Optimal Transport in Python.
 # POT installation
 # ----------------
 #
-# + Install with pip:
-# ```bash
+# * Install with pip:
+# ``
 # pip install pot
-# ```
-# + Install with conda
-# ```bash
+# ``
+# * Install with conda
+# ``
 # conda install -c conda-forge pot
-# ```
+# ``
 
 ##############################################################################
 # POT Python Optimal Transport Toolbox
 # ------------------------------------
 #
 # Import the toolbox
+# ```````````````````
+#
 
 import numpy as np  # always need it
 import pylab as pl  # do the plots
@@ -39,8 +41,9 @@ import ot  # ot
 
 ##############################################################################
 # Getting help
+# `````````````
 #
-# Online  documentation : [https://pythonot.github.io/all.html]
+# Online  documentation : `<https://pythonot.github.io/all.html>`_
 #
 # Or inline help:
 #
@@ -56,16 +59,20 @@ help(ot.dist)
 # number of Bakeries to Cafés in a City (In this case Manhattan). We did a
 # quick google map search in Manhattan for bakeries and Cafés:
 #
-# ![bak.png](https://remi.flamary.com/cours/otml/bak.png)
+# .. image:: ../data/bak.png
+#     :align: center
+#     :alt: bakery-cafe-manhattan
+#     :width: 500px
+#     :height: 240px
 #
 # We extracted from this search their positions and generated fictional
 # production and sale number (that both sum to the same value).
 #
-# We have acess to the position of Bakeries ```bakery_pos``` and their
-# respective production ```bakery_prod``` which describe the source
+# We have acess to the position of Bakeries ``bakery_pos`` and their
+# respective production ``bakery_prod`` which describe the source
 # distribution. The Cafés where the croissants are sold are defiend also by
-# their position ```cafe_pos``` and ```cafe_prod```. For fun we also provide a
-# map ```Imap``` that will illustrate the position of these shops in the city.
+# their position ``cafe_pos`` and ``cafe_prod``. For fun we also provide a
+# map ``Imap`` that will illustrate the position of these shops in the city.
 #
 #
 # Now we load the data
@@ -109,7 +116,7 @@ pl.title('Manhattan Bakeries and Cafés')
 #
 # We compute the cost matrix between the bakeries and the cafés, this will be
 # the transport cost matrix. This can be done using the
-# [ot.dist](https://pythonot.github.io/all.html#ot.dist) that defaults to
+# `ot.dist <https://pythonot.github.io/all.html#ot.dist>`_ that defaults to
 # squared euclidean distance but can return other things such as cityblock
 # (or manhattan distance).
 #
@@ -142,20 +149,20 @@ pl.show()
 
 
 ##############################################################################
-# Solving the OT problem with [ot.emd](https://pythonot.github.io/all.html#ot.emd)
-# -------------
+# Solving the OT problem with `ot.emd <https://pythonot.github.io/all.html#ot.emd>`_
+# -----------------------------------------------------------------------------------
 
 ot_emd = ot.emd(bakery_prod, cafe_prod, C)
 
 # Transportation plan vizualization
-# ---------------------------------
+# `````````````````````````````````
 #
 # A good vizualization of the OT matrix in the 2D plane is to denote the
 # transportation of mass between a Bakery and a Café by a line. This can easily
-# be done with a double ```for``` loop.
+# be done with a double ``for`` loop.
 #
-# In order to make it more interpretable one can also use the ```alpha```
-# parameter of plot and set it to ```alpha=G[i,j]/G.max()```.
+# In order to make it more interpretable one can also use the ``alpha``
+# parameter of plot and set it to ``alpha=G[i,j]/G.max()``.
 
 # Plot the matrix and the map
 f = pl.figure(3, (13, 6), constrained_layout=True)
@@ -191,9 +198,9 @@ pl.show()
 #
 # The resulting wasserstein loss loss is of the form:
 #
-# $W=\sum_{i,j}\gamma_{i,j}C_{i,j}$
+# :math:`W=\sum_{i,j}\gamma_{i,j}C_{i,j}`
 #
-# where $\gamma$ is the optimal transport matrix.
+# where :math:`\gamma` is the optimal transport matrix.
 #
 
 W = np.sum(ot_emd * C)
@@ -206,13 +213,17 @@ print('Wasserstein loss = {0:.3f}'.format(W))
 # The Sinkhorn algorithm is very simple to code. You can implement it directly
 # using the following pseudo-code
 #
-# ![sinkhorn.png](attachment:sinkhorn.png)
+# .. image:: ../data/sinkhorn.png
+#     :align: center
+#     :alt: Sinkhorn algorithm
+#     :width: 400px
+#     :height: 240px
 #
 # An alternative is to use the POT toolbox with
-# [ot.sinkhorn](https://pythonot.github.io/all.html#ot.sinkhorn)
+# `ot.sinkhorn <https://pythonot.github.io/all.html#ot.sinkhorn>`_
 #
 # Be carefull to numerical problems. A good pre-processing for Sinkhorn is to
-# divide the cost matrix ```C```
+# divide the cost matrix ``C``
 #  by its maximum value.
 
 # Compute Sinkhorn transport matrix
