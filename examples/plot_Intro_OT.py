@@ -56,11 +56,11 @@ help(ot.dist)
 # number of Bakeries to Cafés in a City (In this case Manhattan). We did a
 # quick google map search in Manhattan for bakeries and Cafés:
 #
-# .. image:: ../data/bak.png
+# .. image:: images/bak.png
 #     :align: center
 #     :alt: bakery-cafe-manhattan
-#     :width: 500px
-#     :height: 240px
+#     :width: 600px
+#     :height: 280px
 #
 # We extracted from this search their positions and generated fictional
 # production and sale number (that both sum to the same value).
@@ -211,10 +211,10 @@ print('Wasserstein loss = {0:.3f}'.format(W))
 # The Sinkhorn algorithm is very simple to code. You can implement it directly
 # using the following pseudo-code
 #
-# .. image:: ../data/sinkhorn.png
+# .. image:: images/sinkhorn.png
 #     :align: center
 #     :alt: Sinkhorn algorithm
-#     :width: 400px
+#     :width: 440px
 #     :height: 240px
 #
 # An alternative is to use the POT toolbox with
