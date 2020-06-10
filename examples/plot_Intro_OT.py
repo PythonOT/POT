@@ -33,7 +33,6 @@ This example gives an introduction on how to use Optimal Transport in Python.
 # Import the toolbox
 
 import numpy as np  # always need it
-import scipy as sp  # often use it
 import pylab as pl  # do the plots
 
 import ot  # ot
@@ -102,7 +101,6 @@ pl.scatter(cafe_pos[:, 0], cafe_pos[:, 1], s=cafe_prod, c='b', ec='k', label='Ca
 pl.legend()
 pl.title('Manhattan Bakeries and Cafés')
 
-#%% Compute cost matrix
 
 ##############################################################################
 # Cost matrix
@@ -167,7 +165,7 @@ pl.imshow(Imap, interpolation='bilinear')  # plot the map
 for i in range(len(bakery_pos)):
     for j in range(len(cafe_pos)):
         pl.plot([bakery_pos[i, 0], cafe_pos[j, 0]], [bakery_pos[i, 1], cafe_pos[j, 1]],
-                '-k', lw=3.*ot_emd[i, j]/ot_emd.max())
+                '-k', lw=3. * ot_emd[i, j] / ot_emd.max())
 for i in range(len(cafe_pos)):
     pl.text(cafe_pos[i, 0], cafe_pos[i, 1], labels[i], color='b', fontsize=14,
             fontweight='bold', ha='center', va='center')
@@ -198,7 +196,7 @@ pl.show()
 # where $\gamma$ is the optimal transport matrix.
 #
 
-W = np.sum(ot_emd*C)
+W = np.sum(ot_emd * C)
 print('Wasserstein loss = {0:.3f}'.format(W))
 
 ##############################################################################
@@ -218,7 +216,7 @@ print('Wasserstein loss = {0:.3f}'.format(W))
 #  by its maximum value.
 
 # Compute Sinkhorn transport matrix
-ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=0.1, M=C/C.max())
+ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=0.1, M=C / C.max())
 
 # Plot the matrix and the map
 f = pl.figure(4, (13, 6), constrained_layout=True)
@@ -229,12 +227,12 @@ for i in range(len(bakery_pos)):
     for j in range(len(cafe_pos)):
         pl.plot([bakery_pos[i, 0], cafe_pos[j, 0]],
                 [bakery_pos[i, 1], cafe_pos[j, 1]],
-                '-k', lw=3.*ot_sinkhorn[i, j]/ot_sinkhorn.max())
+                '-k', lw=3. * ot_sinkhorn[i, j] / ot_sinkhorn.max())
 for i in range(len(cafe_pos)):
     pl.text(cafe_pos[i, 0], cafe_pos[i, 1], labels[i], color='b',
             fontsize=14, fontweight='bold', ha='center', va='center')
 for i in range(len(bakery_pos)):
-    pl.text(bakery_pos[i, 0], bakery_pos[i, 1], labels[i],  color='r',
+    pl.text(bakery_pos[i, 0], bakery_pos[i, 1], labels[i], color='r',
             fontsize=14, fontweight='bold', ha='center', va='center')
 pl.title('Manhattan Bakeries and Cafés')
 
@@ -249,6 +247,6 @@ pl.ylabel('Bakeries')
 pl.show()
 
 # Compute the Wasserstein loss for Sinkhorn, and compare with EMD
-W_sinkhorn = np.sum(ot_sinkhorn*C)
+W_sinkhorn = np.sum(ot_sinkhorn * C)
 print('Wasserstein loss (EMD) = {0:.3f}'.format(W))
 print('Wasserstein loss (Sink) = {0:.3f}'.format(W_sinkhorn))
