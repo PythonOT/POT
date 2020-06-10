@@ -14,21 +14,18 @@ This example gives an introduction on how to use Optimal Transport in Python.
 # sphinx_gallery_thumbnail_number = 1
 
 ##############################################################################
-# POT installation
-# ----------------
-#
-# * Install with pip:
-# ``
-# pip install pot
-# ``
-# * Install with conda
-# ``
-# conda install -c conda-forge pot
-# ``
-
-##############################################################################
 # POT Python Optimal Transport Toolbox
 # ------------------------------------
+#
+# POT installation
+# ```````````````````
+#
+# * Install with pip::
+#
+#     pip install pot
+# * Install with conda::
+#
+#     conda install -c conda-forge pot
 #
 # Import the toolbox
 # ```````````````````
@@ -198,7 +195,8 @@ pl.show()
 #
 # The resulting wasserstein loss loss is of the form:
 #
-# :math:`W=\sum_{i,j}\gamma_{i,j}C_{i,j}`
+# .. math::
+#     W=\sum_{i,j}\gamma_{i,j}C_{i,j}
 #
 # where :math:`\gamma` is the optimal transport matrix.
 #
@@ -223,8 +221,7 @@ print('Wasserstein loss = {0:.3f}'.format(W))
 # `ot.sinkhorn <https://pythonot.github.io/all.html#ot.sinkhorn>`_
 #
 # Be carefull to numerical problems. A good pre-processing for Sinkhorn is to
-# divide the cost matrix ``C``
-#  by its maximum value.
+# divide the cost matrix ``C`` by its maximum value.
 
 # Compute Sinkhorn transport matrix
 ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=0.1, M=C / C.max())
