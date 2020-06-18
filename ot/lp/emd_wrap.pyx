@@ -19,8 +19,9 @@ import warnings
 
 
 cdef extern from "EMD.h":
-    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int maxIter) nogil
-    cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
+    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G,
+                 double* alpha, double* beta, double *cost, int maxIter) nogil
+    cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED
 
 
 def check_result(result_code):
@@ -31,18 +32,18 @@ def check_result(result_code):
         message = "Problem infeasible. Check that a and b are in the simplex"
     elif result_code == UNBOUNDED:
         message = "Problem unbounded"
-    elif result_code == MAX_ITER_REACHED:
-        message = "numItermax reached before optimality. Try to increase numItermax."
     warnings.warn(message)
     return message
  
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int max_iter):
+def emd_c(np.ndarray[double, ndim=1, mode="c"] a,
+          np.ndarray[double, ndim=1, mode="c"] b,
+          np.ndarray[double, ndim=2, mode="c"] M,
+          int max_iter):
     """
-        Solves the Earth Movers distance problem and returns the optimal transport matrix
-
-        gamm=emd(a,b,M)
+    Solves the Earth Movers distance problem and returns the optimal
+    transport matrix :math:`gamma=emd(a,b,M)`.
 
     .. math::
         \gamma = arg\min_\gamma <\gamma,M>_F
@@ -82,7 +83,6 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     -------
     gamma: (ns x nt) numpy.ndarray
         Optimal transportation matrix for the given parameters
-
     """
     cdef int n1= M.shape[0]
     cdef int n2= M.shape[1]
@@ -109,10 +109,12 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     # init OT matrix
     G=np.zeros([n1, n2])
 
-    # calling the function
+    # solve lp, allowing multi-thread ops
     with nogil:
-        result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
-
+        result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data,
+                               <double*> M.data, <double*> G.data,
+                               <double*> alpha.data, <double*> beta.data,
+                               <double*> &cost, max_iter)
     return G, cost, alpha, beta, result_code
 
 
@@ -126,7 +128,7 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
                   double p=1.):
     r"""
     Solves the Earth Movers distance problem between sorted 1d measures and
-    returns the OT matrix and the associated cost
+    returns the OT matrix and the associated cost.
 
     Parameters
     ----------
@@ -144,7 +146,7 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
         `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'` metrics
         are used.
     p: float, optional (default=1.0)
-         The p-norm to apply for if metric='minkowski'
+        The p-norm to apply for if metric='minkowski'
 
     Returns
     -------
@@ -153,8 +155,8 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
     indices: (n, 2) ndarray, int64
         Indices of the values stored in gamma for the Optimal transportation
         matrix
-    cost
-        cost associated to the optimal transportation
+    cost: float
+        Cost associated to the optimal transportation
     """
     cdef double cost = 0.
     cdef Py_ssize_t n = u_weights.shape[0]
@@ -170,7 +172,7 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
     cdef np.ndarray[double, ndim=1, mode="c"] G = np.zeros((n + m - 1, ),
                                                            dtype=np.float64)
     cdef np.ndarray[long, ndim=2, mode="c"] indices = np.zeros((n + m - 1, 2),
-                                                              dtype=np.int)
+                                                               dtype=np.int)
     cdef Py_ssize_t cur_idx = 0
     while True:
         if metric == 'sqeuclidean':

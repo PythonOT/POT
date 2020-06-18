@@ -371,10 +371,6 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64)
 
-    # problem with pikling Forks
-    if sys.platform.endswith('win32'):
-        processes = 1
-
     # if empty array given then use uniform distributions
     if len(a) == 0:
         a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
@@ -421,16 +417,9 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
             check_result(result_code)
             return cost
 
-    if len(b.shape) == 1:
+    if b.shape[0] == 1:
         return f(b)
-    nb = b.shape[1]
-
-    if processes > 1:
-        res = parmap(f, [b[:, i] for i in range(nb)], processes)
-    else:
-        res = list(map(f, [b[:, i].copy() for i in range(nb)]))
-
-    return res
+    return list(map(f, [b[:, i].copy() for i in range(b.shape[1])]))
 
 
 def free_support_barycenter(measures_locations, measures_weights, X_init, b=None, weights=None, numItermax=100,

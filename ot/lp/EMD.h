@@ -16,22 +16,22 @@
 #ifndef EMD_H
 #define EMD_H
 
-#include <iostream>
 #include <vector>
 #include "network_simplex_simple.h"
 
 using namespace lemon;
-typedef unsigned int node_id_type;
+
+typedef int64_t arc_id_type; // handle (n1*n2+n1+n2) nodes (I64_MAX=3037000500^2)
+typedef double supply_type; // handle sum of supplies and demand (should be signed)
+typedef double cost_type; // handle number of arcs * maximum cost (should be signed)
 
 enum ProblemType {
     INFEASIBLE,
     OPTIMAL,
     UNBOUNDED,
-	MAX_ITER_REACHED
 };
 
-int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int maxIter);
+int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G,
+             double* alpha, double* beta, double *cost, int maxIter);
 
-
-
-#endif
+#endif // EMD_H
