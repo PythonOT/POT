@@ -97,9 +97,12 @@ if extra_preargs is not None:
                      if flag.startswith(('-L', '-Wl,-rpath', '-l'))]
 extra_postargs = get_openmp_flag(ccompiler)
 
-compile_args = (("-std=c++11 -Ofast -march=native -fno-signed-zeros "
-                 "-fno-trapping-math -funroll-loops").split()
-                + extra_preargs + extra_postargs)
+compile_args = ("-std=c++11 -Ofast -march=native -fno-signed-zeros "
+                "-fno-trapping-math -funroll-loops").split()
+if extra_preargs is not None:
+    compile_args += extra_preargs
+if extra_postargs is not None:
+    compile_args += extra_postargs
 
 setup(
     name='POT',
