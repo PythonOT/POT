@@ -3,6 +3,7 @@
 import os
 import re
 import subprocess
+import shutil
 import sys
 
 from distutils.command.clean import clean as Clean
