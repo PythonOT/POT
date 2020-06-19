@@ -93,21 +93,20 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # install miniconda silently, with default options
-        curl -fsSL "https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" -O ~/miniconda.sh
-        chmod +x ~/miniconda.sh
-        bash ~/miniconda.sh -b -p $HOME/miniconda
-        export PATH="$HOME/miniconda/bin:$PATH"
-        source ~/.bash_profile
-        # upgrade conda
-        conda update -y conda
-        # install python recipes
         pip install -r requirements.txt
         pip install pytest "pytest-cov<2.6"
         pip install -U "sklearn"
-        # install OpenMP-enabled C/C++ compilers
-        conda install -y "conda-forge::compilers>=1.0.4"
-        conda install -y conda-forge::llvm-openmp
+        # install OpenMP (via homebrew)
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+        brew install libomp
+        # env variables
+        export CC=/usr/bin/clang
+        export CXX=/usr/bin/clang++
+        export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+        export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+        export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+        export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
+        source ~./bash_profile
     - name: Install POT
       run: | # build in verbose mode (to check for the presence of the -fopenmp flag in the compiler commands) 
         pip install --verbose --no-build-isolation -e .
