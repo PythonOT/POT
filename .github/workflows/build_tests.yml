@@ -93,11 +93,22 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+      # install miniconda silently, with default options
+        curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O ~/miniconda.sh
+        bash ~/miniconda.sh -b -p $HOME/miniconda
+        export PATH="$HOME/miniconda/bin:$PATH"
+        source ~/.bash_profile
+      # upgrade conda
+        conda update -y conda
+      # install necessary python pkgs
         pip install -r requirements.txt
         pip install pytest "pytest-cov<2.6"
         pip install -U "sklearn"
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-        brew install libomp
+      # install OpenMP-enabled C/C++ compilers
+        conda install -y "conda-forge::compilers>=1.0.4"
+        conda install -y conda-forge::llvm-openmp
+      # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+      # brew install libomp
     - name: Install POT
       run: | # build in verbose mode (to check for the presence of the -fopenmp flag in the compiler commands) 
         pip install --verbose --no-build-isolation -e .
