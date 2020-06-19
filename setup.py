@@ -83,6 +83,11 @@ def get_openmp_flag(compiler):
         # export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
         # export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib
         #                          -L/usr/local/opt/libomp/lib -lomp"
+        os.environ["CPPFLAGS"] = "$CPPFLAGS -Xpreprocessor -fopenmp"
+        os.environ["CFLAGS"] = "$CFLAGS -I/usr/local/opt/libomp/include"
+        os.environ["CXXFLAGS"] = "$CXXFLAGS -I/usr/local/opt/libomp/include"
+        os.environ["LDFLAGS"] = ("$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib"
+                                 " -L/usr/local/opt/libomp/lib -lomp")
         return []
     # Default flag for GCC and clang:
     return ['-fopenmp']
