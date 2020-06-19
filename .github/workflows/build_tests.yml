@@ -100,8 +100,8 @@ jobs:
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
         brew install libomp
         # env variables, hacky (!!)
-        echo 'export CC=/usr/bin/clang' >> ~/.bash_profile
-        echo 'export CXX=/usr/bin/clang++' >> ~/.bash_profile
+        # echo 'export CC=/usr/bin/clang' >> ~/.bash_profile
+        # echo 'export CXX=/usr/bin/clang++' >> ~/.bash_profile
         echo 'export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"' >> ~/.bash_profile
         echo 'export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"' >> ~/.bash_profile
         echo 'export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"' >> ~/.bash_profile
