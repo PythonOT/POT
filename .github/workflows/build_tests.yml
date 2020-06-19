@@ -92,7 +92,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools
         pip install -r requirements.txt
         pip install pytest "pytest-cov<2.6"
         pip install -U "sklearn"
@@ -110,7 +110,7 @@ jobs:
         echo $CPPFLAGS
     - name: Install POT
       run: | # build in verbose mode (to check for the presence of the -fopenmp flag in the compiler commands) 
-        pip install --verbose --no-build-isolation -e .
+        pip install --verbose -e .
       # env: |
       #   CC: /usr/bin/clang
       #   CXX: /usr/bin/clang++
