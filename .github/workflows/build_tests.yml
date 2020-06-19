@@ -40,7 +40,7 @@ jobs:
         flake8 examples/ ot/ test/ --count --max-line-length=127 --statistics
     - name: Install POT
       run: |
-        pip install -e .
+        pip install --verbose --no-build-isolation -e .
     - name: Run tests
       run: |
         python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
@@ -107,6 +107,7 @@ jobs:
         echo 'export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"' >> ~/.bash_profile
         echo 'export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"' >> ~/.bash_profile
         source ~/.bash_profile
+        echo $CPPFLAGS
     - name: Install POT
       run: | # build in verbose mode (to check for the presence of the -fopenmp flag in the compiler commands) 
         pip install --verbose --no-build-isolation -e .
