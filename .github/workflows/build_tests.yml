@@ -101,13 +101,13 @@ jobs:
     - name: Install POT
       run: | # build in verbose mode (to check for the presence of the -fopenmp flag in the compiler commands) 
         pip install --verbose --no-build-isolation -e .
-      env: |
-        CC: /usr/bin/clang
-        CXX: /usr/bin/clang++
-        CPPFLAGS: "${{ CPPFLAGS }} -Xpreprocessor -fopenmp"
-        CFLAGS: "${{ CFLAGS }} -I/usr/local/opt/libomp/include"
-        CXXFLAGS: "${{ CXXFLAGS }} -I/usr/local/opt/libomp/include"
-        LDFLAGS: "${{ LDFLAGS }} -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
+      # env: |
+      #   CC: /usr/bin/clang
+      #   CXX: /usr/bin/clang++
+      #   CPPFLAGS: "${{ CPPFLAGS }} -Xpreprocessor -fopenmp"
+      #   CFLAGS: "${{ CFLAGS }} -I/usr/local/opt/libomp/include"
+      #   CXXFLAGS: "${{ CXXFLAGS }} -I/usr/local/opt/libomp/include"
+      #   LDFLAGS: "${{ LDFLAGS }} -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
     - name: Run tests
       run: |
         python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
