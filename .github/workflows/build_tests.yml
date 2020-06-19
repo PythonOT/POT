@@ -99,14 +99,15 @@ jobs:
         # install OpenMP (via homebrew)
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
         brew install libomp
-        # env variables
+        # env variables, hacky (!!)
         export CC=/usr/bin/clang
         export CXX=/usr/bin/clang++
         export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
         export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
         export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
         export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
-        ls -la ~/ # for debugging only, TODO: Remove
+        cat ~/.bashrc
+        cat ~/.bash_profile
         # source ~/.bashrc
     - name: Install POT
       run: | # build in verbose mode (to check for the presence of the -fopenmp flag in the compiler commands) 
