@@ -60,7 +60,9 @@ cmdclass = {'clean': CleanCommand}
 
 # Custom compile args to set OpenMP compile flags depending on OS/compiler
 def get_openmp_flag(compiler):
-    if hasattr(compiler, 'compiler'):
+    if hasattr(compiler, 'compiler_cxx'):
+        compiler = compiler.compiler_cxx[0]
+    elif hasattr(compiler, 'compiler'):
         compiler = compiler.compiler[0]
     else:
         compiler = compiler.__class__.__name__
@@ -83,11 +85,6 @@ def get_openmp_flag(compiler):
         # export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
         # export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib
         #                          -L/usr/local/opt/libomp/lib -lomp"
-        os.environ["CPPFLAGS"] = "$CPPFLAGS -Xpreprocessor -fopenmp"
-        os.environ["CFLAGS"] = "$CFLAGS -I/usr/local/opt/libomp/include"
-        os.environ["CXXFLAGS"] = "$CXXFLAGS -I/usr/local/opt/libomp/include"
-        os.environ["LDFLAGS"] = ("$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib"
-                                 " -L/usr/local/opt/libomp/lib -lomp")
         return []
     # Default flag for GCC and clang:
     return ['-fopenmp']
