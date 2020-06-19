@@ -106,6 +106,8 @@ jobs:
         export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
         export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
         export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
+        ls -la # for debugging only, TODO: Remove
+        # source ~/.bashrc
     - name: Install POT
       run: | # build in verbose mode (to check for the presence of the -fopenmp flag in the compiler commands) 
         pip install --verbose --no-build-isolation -e .
