@@ -101,9 +101,8 @@ jobs:
         pip install pytest "pytest-cov<2.6"
         pip install -U "sklearn"
         # env variables, hacky (!!)
-        # echo '' >> ~/.bashrc
-        # echo 'export CC=/usr/bin/clang' >> ~/.bashrc
-        # echo 'export CXX=/usr/bin/clang++' >> ~/.bashrc
+        export CC=/usr/bin/clang
+        export CXX=/usr/bin/clang++
         export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
         export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
         export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
