@@ -98,7 +98,7 @@ if extra_preargs is not None:
 extra_postargs = get_openmp_flag(ccompiler)
 
 compile_args = ("-std=c++11 -Ofast -march=native -fno-signed-zeros "
-                "-fno-trapping-math -funroll-loops -openmp").split()
+                "-fno-trapping-math -funroll-loops").split()
 if extra_preargs is not None:
     compile_args += extra_preargs
 if extra_postargs is not None:
