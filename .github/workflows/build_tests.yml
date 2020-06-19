@@ -108,7 +108,7 @@ jobs:
         echo 'export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"' >> ~/.bash_profile
         echo 'export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"' >> ~/.bash_profile
         source ~/.bash_profile
-        vim ~/.bash_profile
+        cat ~/.bash_profile
     - name: Test env vars
       run: |
         python -c "import os; print(os.getenv('LDFLAGS', None))"
