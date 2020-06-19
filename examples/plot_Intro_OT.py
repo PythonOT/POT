@@ -36,6 +36,8 @@ import pylab as pl  # do the plots
 
 import ot  # ot
 
+import time
+
 ##############################################################################
 # Getting help
 # `````````````
@@ -122,7 +124,7 @@ pl.title('Manhattan Bakeries and Cafés')
 C = ot.dist(bakery_pos, cafe_pos)
 
 labels = [str(i) for i in range(len(bakery_prod))]
-f = pl.figure(2, (13, 6), constrained_layout=True)
+f = pl.figure(2, (13, 6))
 pl.clf()
 pl.subplot(121)
 pl.imshow(Imap, interpolation='bilinear')  # plot the map
@@ -135,7 +137,7 @@ for i in range(len(bakery_pos)):
 pl.title('Manhattan Bakeries and Cafés')
 
 ax = pl.subplot(122)
-im = pl.imshow(C)
+im = pl.imshow(C, cmap="coolwarm")
 pl.title('Cost matrix')
 cbar = pl.colorbar(im, ax=ax, shrink=0.5, use_gridspec=True)
 cbar.ax.set_ylabel("cost", rotation=-90, va="bottom")
@@ -146,11 +148,24 @@ pl.show()
 
 
 ##############################################################################
+# The red cells in the matrix image show the bakeries and cafés that are
+# further away, and thus more costly to transport from to the other, while the
+# blue ones show those that are very close to each other, with respect to the
+# squared Euclidean distance. 
+
+
+##############################################################################
 # Solving the OT problem with `ot.emd <https://pythonot.github.io/all.html#ot.emd>`_
 # -----------------------------------------------------------------------------------
 
+start = time.time()
 ot_emd = ot.emd(bakery_prod, cafe_prod, C)
+time_emd = time.time() - start
 
+##############################################################################
+# The function returns the transport matrix, which we can then visualize (next section).
+
+##############################################################################
 # Transportation plan vizualization
 # `````````````````````````````````
 #
@@ -162,7 +177,7 @@ ot_emd = ot.emd(bakery_prod, cafe_prod, C)
 # parameter of plot and set it to ``alpha=G[i,j]/G.max()``.
 
 # Plot the matrix and the map
-f = pl.figure(3, (13, 6), constrained_layout=True)
+f = pl.figure(3, (13, 6))
 pl.clf()
 pl.subplot(121)
 pl.imshow(Imap, interpolation='bilinear')  # plot the map
@@ -188,6 +203,11 @@ pl.xlabel('Cafés')
 pl.ylabel('Bakeries')
 pl.show()
 
+##############################################################################
+# The transport matrix gives the number of croissants that can be transported
+# from each bakery to each café. We can see that several bakeries only need to
+# transport croissants to one or two cafés, the transport matrix being very
+# sparse.
 
 ##############################################################################
 # OT loss and dual variables
@@ -224,10 +244,10 @@ print('Wasserstein loss = {0:.3f}'.format(W))
 # divide the cost matrix ``C`` by its maximum value.
 
 # Compute Sinkhorn transport matrix
-ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=0.1, M=C / C.max())
+ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=0.1, M=C/C.max())
 
 # Plot the matrix and the map
-f = pl.figure(4, (13, 6), constrained_layout=True)
+f = pl.figure(4, (13, 6))
 pl.clf()
 pl.subplot(121)
 pl.imshow(Imap, interpolation='bilinear')  # plot the map
@@ -254,7 +274,46 @@ pl.xlabel('Cafés')
 pl.ylabel('Bakeries')
 pl.show()
 
-# Compute the Wasserstein loss for Sinkhorn, and compare with EMD
-W_sinkhorn = np.sum(ot_sinkhorn * C)
-print('Wasserstein loss (EMD) = {0:.3f}'.format(W))
-print('Wasserstein loss (Sink) = {0:.3f}'.format(W_sinkhorn))
+##############################################################################
+# We notice right away that the matrix is less sparse with Sinkhorn than it is
+# with EMD, each bakery delivering croissants to 3 to 5 cafés with that solution.
+#
+
+##############################################################################
+# Varying the regularization parameter in Sinkhorn
+# ````````````````````````````````````````````````
+#
+
+reg_parameter = np.logspace(-3, 0, 20)
+W_sinkhorn_reg = np.zeros((len(reg_parameter), ))
+time_sinkhorn_reg = np.zeros((len(reg_parameter), ))
+
+for j in range(len(reg_parameter)):
+    start = time.time()
+    ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=reg_parameter[j], M=C/C.max())
+    time_sinkhorn_reg[j] = time.time() - start
+
+    # Compute the Wasserstein loss for Sinkhorn, and compare with EMD
+    W_sinkhorn_reg[j] = np.sum(ot_sinkhorn * C)
+
+# Plot the matrix and the map
+f = pl.figure(5, (8, 4))
+pl.clf()
+pl.title("Comparison between Sinkhorn and EMD")
+
+pl.subplot(121)
+pl.plot(reg_parameter, W_sinkhorn_reg, 'o', label="Sinkhorn")
+XLim = pl.xlim()
+pl.plot(XLim, [W, W], '--k', label="EMD")
+pl.legend()
+pl.xlabel("reg")
+pl.ylabel("Wasserstein loss")
+
+pl.subplot(122)
+pl.plot(reg_parameter, time_sinkhorn_reg, 'o', label="Sinkhorn")
+XLim = pl.xlim()
+pl.plot(XLim, [time_emd, time_emd], '--k', label="EMD")
+pl.legend()
+pl.xlabel("reg")
+pl.ylabel("Computational time (s)")
+pl.tight_layout()
