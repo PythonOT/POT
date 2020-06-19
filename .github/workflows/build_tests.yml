@@ -105,8 +105,8 @@ jobs:
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
         brew install libomp
     - name: Install POT
-      run: |
-        pip install -e .
+      run: | # build in verbose mode (to check for the presence of the -fopenmp flag in the compiler commands) 
+        pip install --verbose --no-build-isolation -e .
       env: |
         CC: /usr/bin/clang
         CXX: /usr/bin/clang++
