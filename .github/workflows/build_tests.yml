@@ -101,14 +101,15 @@ jobs:
         pip install pytest "pytest-cov<2.6"
         pip install -U "sklearn"
         # env variables, hacky (!!)
-        # echo 'export CC=/usr/bin/clang' >> ~/.bash_profile
-        # echo 'export CXX=/usr/bin/clang++' >> ~/.bash_profile
-        echo 'export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"' >> ~/.bash_profile
-        echo 'export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"' >> ~/.bash_profile
-        echo 'export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"' >> ~/.bash_profile
-        echo 'export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"' >> ~/.bash_profile
-        source ~/.bash_profile
-        cat ~/.bash_profile
+        echo '' >> ~/.bashrc
+        # echo 'export CC=/usr/bin/clang' >> ~/.bashrc
+        # echo 'export CXX=/usr/bin/clang++' >> ~/.bashrc
+        echo 'export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"' >> ~/.bashrc
+        echo 'export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"' >> ~/.bashrc
+        echo 'export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"' >> ~/.bashrc
+        echo 'export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"' >> ~/.bashrc
+        source ~/.bashrc
+        cat ~/.bashrc
     - name: Test env vars
       run: |
         python -c "import os; print(os.getenv('LDFLAGS', None))"
