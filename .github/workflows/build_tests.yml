@@ -96,23 +96,23 @@ jobs:
         pip install -r requirements.txt
         pip install pytest "pytest-cov<2.6"
         pip install -U "sklearn"
-        # https://github.com/scikit-learn/scikit-learn/blob/master/doc/developers/advanced_installation.rst
-        # on macOS, install an OpenMP-enabled clang/llvm to set env vars for build
-        # this has to be done using conda since recipes aren't available on PyPI
-        # alternatively, macOS compilers (via homebrew)
+      # https://github.com/scikit-learn/scikit-learn/blob/master/doc/developers/advanced_installation.rst
+      # on macOS, install an OpenMP-enabled clang/llvm to set env vars for build
+      # this has to be done using conda since recipes aren't available on PyPI
+      # alternatively, macOS compilers (via homebrew)
         xcode-select --install
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
         brew install libomp
     - name: Install POT
       run: | # build in verbose mode (to check for the presence of the -fopenmp flag in the compiler commands) 
         pip install --verbose --no-build-isolation -e .
-      env: |
-        CC: /usr/bin/clang
-        CXX: /usr/bin/clang++
-        CPPFLAGS: "${{ CPPFLAGS }} -Xpreprocessor -fopenmp"
-        CFLAGS: "${{ CFLAGS }} -I/usr/local/opt/libomp/include"
-        CXXFLAGS: "${{ CXXFLAGS }} -I/usr/local/opt/libomp/include"
-        LDFLAGS: "${{ LDFLAGS }} -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
+      # env: |
+      #   CC: /usr/bin/clang
+      #   CXX: /usr/bin/clang++
+      #   CPPFLAGS: "${{ CPPFLAGS }} -Xpreprocessor -fopenmp"
+      #   CFLAGS: "${{ CFLAGS }} -I/usr/local/opt/libomp/include"
+      #   CXXFLAGS: "${{ CXXFLAGS }} -I/usr/local/opt/libomp/include"
+      #   LDFLAGS: "${{ LDFLAGS }} -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
     - name: Run tests
       run: |
         python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
