@@ -99,11 +99,6 @@ jobs:
      - name: Install POT
        run: |
          pip install -e .
-       env: |
-         CFLAGS: ${{ CFLAGS }} -I/usr/local/opt/libomp/include
-         CPPFLAGS: ${{ CPPFLAGS }} -Xpreprocessor -fopenmp
-         CXXFLAGS: ${{ CXXFLAGS }} -I/usr/local/opt/libomp/include
-         LDFLAGS: ${{ LDFLAGS }} -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp
      - name: Run tests
        run: |
          python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
