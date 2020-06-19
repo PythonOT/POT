@@ -96,11 +96,10 @@ jobs:
         pip install -r requirements.txt
         pip install pytest "pytest-cov<2.6"
         pip install -U "sklearn"
-      # https://github.com/scikit-learn/scikit-learn/blob/master/doc/developers/advanced_installation.rst
-      # on macOS, install an OpenMP-enabled clang/llvm to set env vars for build
-      # this has to be done using conda since recipes aren't available on PyPI
-      
-      # alternatively, macOS compilers (via homebrew)
+        # https://github.com/scikit-learn/scikit-learn/blob/master/doc/developers/advanced_installation.rst
+        # on macOS, install an OpenMP-enabled clang/llvm to set env vars for build
+        # this has to be done using conda since recipes aren't available on PyPI
+        # alternatively, macOS compilers (via homebrew)
         xcode-select --install
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
         brew install libomp
