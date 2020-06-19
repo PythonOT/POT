@@ -94,7 +94,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         # install miniconda silently, with default options
-        curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O ~/miniconda.sh
+        curl -fsSL "https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" -O ~/miniconda.sh
         chmod +x ~/miniconda.sh
         bash ~/miniconda.sh -b -p $HOME/miniconda
         export PATH="$HOME/miniconda/bin:$PATH"
