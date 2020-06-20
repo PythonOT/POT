@@ -106,6 +106,8 @@ if extra_preargs is not None:
 if extra_postargs is not None:
     compile_args += extra_postargs
 
+print(compile_args)
+
 setup(
     name='POT',
     version=__version__,
