@@ -105,10 +105,11 @@ jobs:
         # upgrade conda
         # conda update -n base -c defaults -y conda
         # install (necessary) recipes
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest "pytest-cov<2.6"
-        pip install -U "sklearn"
+        # python -m pip install --upgrade pip
+        # pip install -r requirements.txt
+        while read requirement; do conda install --yes $requirement; done < requirements.txt
+        conda install -y pytest-cov # hacky, might not be <2.6 
+        # pip install -U "sklearn"
         # install OpenMP-enabled C/C++ compilers
         conda install -y "conda-forge::compilers>=1.0.4"
         conda install -y conda-forge::llvm-openmp
@@ -148,6 +149,7 @@ jobs:
     #     # # cat ~/.bashrc
     - name: Test env vars
       run: |
+        source activate pot
         python -c "import os; print(os.getenv('LDFLAGS', None))"
     - name: Install POT
       run: |
