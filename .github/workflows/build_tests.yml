@@ -83,6 +83,7 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: [3.7]
+        env-name: pot
 
     steps:
     - uses: actions/checkout@v1
@@ -93,7 +94,7 @@ jobs:
     - name: Setup miniconda
       uses: goanpeca/setup-miniconda@v1
       with:
-        activate-environment: pot
+        activate-environment: ${{ matrix.env-name }}
         python-version: ${{ matrix.python-version }}
         channels: conda-forge,defaults
         allow-softlinks: true
@@ -102,14 +103,15 @@ jobs:
         use-only-tar-bz2: true
     - shell: bash -l {0}
       run: |
-        # upgrade conda
-        # conda update -n base -c defaults -y conda
+        # update conda
+        conda update -n base -c defaults -y conda
+        # activate env
+        source activate ${{ matrix.env-name }}
         # install (necessary) recipes
-        # python -m pip install --upgrade pip
-        # pip install -r requirements.txt
-        while read requirement; do conda install --yes $requirement; done < requirements.txt
-        conda install -y pytest-cov # hacky, might not be <2.6 
-        # pip install -U "sklearn"
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest "pytest-cov<2.6"
+        pip install -U "sklearn"
         # install OpenMP-enabled C/C++ compilers
         conda install -y "conda-forge::compilers>=1.0.4"
         conda install -y conda-forge::llvm-openmp
