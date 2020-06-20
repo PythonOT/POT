@@ -90,37 +90,6 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
-    # - name: Setup miniconda
-    #   uses: goanpeca/setup-miniconda@v1
-    #   with:
-    #     activate-environment: pot
-    #     python-version: ${{ matrix.python-version }}
-    #     channels: conda-forge
-    #     allow-softlinks: true
-    #     channel-priority: flexible
-    #     show-channel-urls: true
-    #     use-only-tar-bz2: true
-    # - shell: bash -l {0}
-    #   run: |
-    #     # update conda
-    #     conda update -n base -c defaults -y conda
-    #     # install (necessary) recipes
-    #     python -m pip install --upgrade pip
-    #     pip install -r requirements.txt
-    #     pip install pytest "pytest-cov<2.6"
-    #     pip install -U "sklearn"
-    #     # install OpenMP-enabled C/C++ compilers
-    #     conda install -y "conda-forge::compilers>=1.0.4"
-    #     conda install -y conda-forge::llvm-openmp
-    #     # check if correct recipes were installed
-    #     conda info
-    #     conda list
-    #     # debug if env vars are set
-    #     echo $CC
-    #     echo $CXX
-    #     echo $CFLAGS
-    #     echo $CXXFLAGS
-    #     echo $LDFLAGS
     - name: Install dependencies
       run: |
         # install (necessary) recipes
@@ -133,22 +102,12 @@ jobs:
         brew install libomp
     - name: Set environment variables
       run: |
-        echo '::set-env name=CC::/usr/bin/clang'
-        echo '::set-env name=CXX::/usr/bin/clang++'
+        # echo '::set-env name=CC::/usr/bin/clang'
+        # echo '::set-env name=CXX::/usr/bin/clang++'
         echo '::set-env name=CPPFLAGS::"$CPPFLAGS -Xpreprocessor -fopenmp"'
         echo '::set-env name=CFLAGS::"$CFLAGS -I/usr/local/opt/libomp/include"'
         echo '::set-env name=CXXFLAGS::"$CXXFLAGS -I/usr/local/opt/libomp/include"'
         echo '::set-env name=LDFLAGS::"$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"'
-        # # env variables, hacky (!!)
-        # export CC=/usr/bin/clang
-        # export CXX=/usr/bin/clang++
-        # export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-        # export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-        # export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-        # export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
-    - name: Test env vars
-      run: |
-        python -c "import os; print(os.getenv('LDFLAGS', None))"
     - name: Install POT
       run: |
         pip install --verbose -e .
