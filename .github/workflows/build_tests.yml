@@ -96,7 +96,8 @@ jobs:
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
         brew install libomp
         # install (necessary) recipes
-        pip install --upgrade pip setuptools
+        python -m pip install -U pip setuptools
+        pip install -U setuptools 
         pip install -r requirements.txt
         pip install pytest "pytest-cov<2.6"
         pip install -U "sklearn"
@@ -108,6 +109,10 @@ jobs:
         echo '::set-env name=CFLAGS::"$CFLAGS -I/usr/local/opt/libomp/include"'
         echo '::set-env name=CXXFLAGS::"$CXXFLAGS -I/usr/local/opt/libomp/include"'
         echo '::set-env name=LDFLAGS::"$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"'
+        echo $CPPFLAGS
+        echo $CFLAGS
+        echo $CXXFLAGS
+        echo $LDFLAGS
     - name: Install POT
       run: |
         pip install --verbose -e .
