@@ -103,7 +103,7 @@ jobs:
     - shell: bash -l {0}
       run: |
         # upgrade conda
-        conda update -y conda
+        # conda update -n base -c defaults -y conda
         # install (necessary) recipes
         python -m pip install --upgrade pip
         pip install -r requirements.txt
