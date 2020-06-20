@@ -106,8 +106,6 @@ if extra_preargs is not None:
 if extra_postargs is not None:
     compile_args += extra_postargs
 
-print(compile_args)
-
 setup(
     name='POT',
     version=__version__,
@@ -118,13 +116,16 @@ setup(
     author_email='remi.flamary@gmail.com, ncourty@gmail.com',
     url='https://github.com/PythonOT/POT',
     packages=find_packages(),
-    ext_modules=cythonize(Extension(
-        name="ot.lp.emd_wrap",
-        sources=["ot/lp/emd_wrap.pyx", "ot/lp/EMD_wrapper.cpp"], # cython/c++ src files
-        language="c++",
-        include_dirs=[numpy.get_include(), os.path.join(ROOT, 'ot/lp')],
-        extra_compile_args=compile_args,
-    )),
+    ext_modules=cythonize(
+        module_list=Extension(
+            name="ot.lp.emd_wrap",
+            sources=["ot/lp/emd_wrap.pyx", "ot/lp/EMD_wrapper.cpp"], # cython/c++ src files
+            language="c++",
+            include_dirs=[numpy.get_include(), os.path.join(ROOT, 'ot/lp')],
+            extra_compile_args=compile_args,
+        ),
+        compiler_directives={'language_level' : sys.version_info[0]}
+    ),
     platforms=['linux', 'macosx', 'windows'],
     download_url='https://github.com/PythonOT/POT/archive/{}.tar.gz'.format(__version__),
     license='MIT',
