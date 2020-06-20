@@ -86,17 +86,22 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+    # - name: Set up Python ${{ matrix.python-version }}
+    #   uses: actions/setup-python@v1
+    #   with:
+    #     python-version: ${{ matrix.python-version }}
+    - name: Setup miniconda
+      uses: goanpeca/setup-miniconda@v1
       with:
+        activate-environment: pot
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+        channels: conda-forge
+        allow-softlinks: true
+        channel-priority: flexible
+        show-channel-urls: true
+        use-only-tar-bz2: true
+    - shell: bash -l {0}
       run: |
-        # install miniconda silently, with default options
-        curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O ~/miniconda.sh
-        bash ~/miniconda.sh -b -p $HOME/miniconda
-        export PATH="$HOME/miniconda/bin:$PATH"
-        source ~/.bash_profile
         # upgrade conda
         conda update -y conda
         # install (necessary) recipes
@@ -107,19 +112,34 @@ jobs:
         # install OpenMP-enabled C/C++ compilers
         conda install -y "conda-forge::compilers>=1.0.4"
         conda install -y conda-forge::llvm-openmp
+        # check if correct recipes were installed
+        conda info
         conda list
-        # # install OpenMP (via homebrew)
-        # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-        # brew install libomp
-        # # env variables, hacky (!!)
-        # export CC=/usr/bin/clang
-        # export CXX=/usr/bin/clang++
-        # export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-        # export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-        # export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-        # export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
-        # # source ~/.bashrc
-        # # cat ~/.bashrc
+    # - name: Install dependencies
+    #   run: |
+    #     # upgrade conda
+    #     conda update -y conda
+    #     # install (necessary) recipes
+    #     python -m pip install --upgrade pip
+    #     pip install -r requirements.txt
+    #     pip install pytest "pytest-cov<2.6"
+    #     pip install -U "sklearn"
+    #     # install OpenMP-enabled C/C++ compilers
+    #     conda install -y "conda-forge::compilers>=1.0.4"
+    #     conda install -y conda-forge::llvm-openmp
+    #     conda list
+    #     # # install OpenMP (via homebrew)
+    #     # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+    #     # brew install libomp
+    #     # # env variables, hacky (!!)
+    #     # export CC=/usr/bin/clang
+    #     # export CXX=/usr/bin/clang++
+    #     # export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+    #     # export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+    #     # export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+    #     # export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
+    #     # # source ~/.bashrc
+    #     # # cat ~/.bashrc
     - name: Test env vars
       run: |
         python -c "import os; print(os.getenv('LDFLAGS', None))"
