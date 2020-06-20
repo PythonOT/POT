@@ -103,7 +103,7 @@ jobs:
     - name: Set environment variables
       run: |
         # echo '::set-env name=CC::/usr/bin/clang'
-        # echo '::set-env name=CXX::/usr/bin/clang++'
+        echo '::set-env name=CXX::/usr/bin/clang++'
         echo '::set-env name=CPPFLAGS::"$CPPFLAGS -Xpreprocessor -fopenmp"'
         echo '::set-env name=CFLAGS::"$CFLAGS -I/usr/local/opt/libomp/include"'
         echo '::set-env name=CXXFLAGS::"$CXXFLAGS -I/usr/local/opt/libomp/include"'
