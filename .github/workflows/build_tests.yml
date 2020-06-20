@@ -97,14 +97,12 @@ jobs:
         pip install -r requirements.txt
         pip install pytest "pytest-cov<2.6"
         pip install -U "sklearn"
-        pip install Cython --install-option="--no-cython-compile"
-        which cython
         # install OpenMP (via homebrew)
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
         brew install libomp
     - name: Set environment variables
       run: |
-        echo '::set-env name=CC::/usr/bin/clang'
+        echo '::set-env name=CC::/usr/bin/clang++' # hacky(!!) force c++ compiler
         echo '::set-env name=CXX::/usr/bin/clang++'
         echo '::set-env name=CPPFLAGS::"$CPPFLAGS -Xpreprocessor -fopenmp"'
         echo '::set-env name=CFLAGS::"$CFLAGS -I/usr/local/opt/libomp/include"'
