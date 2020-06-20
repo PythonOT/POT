@@ -95,7 +95,7 @@ jobs:
       with:
         activate-environment: pot
         python-version: ${{ matrix.python-version }}
-        channels: conda-forge
+        channels: conda-forge,defaults
         allow-softlinks: true
         channel-priority: flexible
         show-channel-urls: true
@@ -115,6 +115,12 @@ jobs:
         # check if correct recipes were installed
         conda info
         conda list
+        # debug if env vars are set
+        echo $CC
+        echo $CXX
+        echo $CFLAGS
+        echo $CXXFLAGS
+        echo $LDFLAGS
     # - name: Install dependencies
     #   run: |
     #     # upgrade conda
