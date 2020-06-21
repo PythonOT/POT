@@ -105,10 +105,10 @@ jobs:
       run: |
         echo '::set-env name=CC::/usr/bin/clang++' # hacky(!!) force c++ compiler
         echo '::set-env name=CXX::/usr/bin/clang++'
-        echo '::set-env name=CPPFLAGS::" -Xpreprocessor -fopenmp"'
-        echo '::set-env name=CFLAGS::" -I/usr/local/opt/libomp/include"'
-        echo '::set-env name=CXXFLAGS::" -I/usr/local/opt/libomp/include"'
-        echo '::set-env name=LDFLAGS::" -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"'
+        echo '::set-env name=CPPFLAGS::"-Xpreprocessor -fopenmp"'
+        echo '::set-env name=CFLAGS::"-I/usr/local/opt/libomp/include"'
+        echo '::set-env name=CXXFLAGS::"-I/usr/local/opt/libomp/include"'
+        echo '::set-env name=LDFLAGS::"-Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"'
     - name: Test env vars   
       run: |    
         echo $CPPFLAGS
