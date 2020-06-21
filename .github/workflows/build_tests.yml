@@ -103,8 +103,8 @@ jobs:
         pip install -U "sklearn"
     - name: Set environment variables
       run: |
-        echo '::set-env name=CC::/usr/bin/clang++' # hacky(!!) force c++ compiler
-        echo '::set-env name=CXX::/usr/bin/clang++'
+        echo '::set-env name=CC::/usr/bin/g++' # hacky(!!) force c++ compiler
+        echo '::set-env name=CXX::/usr/bin/g++'
         echo '::set-env name=CPPFLAGS::"-Xpreprocessor -fopenmp"'
         echo '::set-env name=CFLAGS::"-I/usr/local/opt/libomp/include"'
         echo '::set-env name=CXXFLAGS::"-I/usr/local/opt/libomp/include"'
