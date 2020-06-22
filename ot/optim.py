@@ -136,7 +136,7 @@ def solve_linesearch(cost, G, deltaG, Mi, f_val,
 
 def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
        stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, **kwargs):
-    """
+    r"""
     Solve the general regularized OT problem with conditional gradient
 
         The function solves the following optimization problem:
@@ -275,7 +275,7 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
 
 def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
         numInnerItermax=200, stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False):
-    """
+    r"""
     Solve the general regularized OT problem with the generalized conditional gradient
 
         The function solves the following optimization problem:
@@ -413,7 +413,7 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
 
 
 def solve_1d_linesearch_quad(a, b, c):
-    """
+    r"""
     For any convex or non-convex 1d quadratic function f, solve on [0,1] the following problem:
     .. math::
         \argmin f(x)=a*x^{2}+b*x+c
