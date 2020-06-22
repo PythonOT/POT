@@ -1116,7 +1116,7 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
     err = 1
 
     UKv = np.dot(K, np.divide(A.T, np.sum(K, axis=0)).T)
-    u = (geometricMean(UKv) / UKv.T).T
+    u = (geometricBar(weights, UKv) / UKv.T).T
 
     while (err > stopThr and cpt < numItermax):
         cpt = cpt + 1
