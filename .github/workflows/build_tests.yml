@@ -109,12 +109,6 @@ jobs:
         echo '::set-env name=CFLAGS::"-I/usr/local/opt/libomp/include"'
         echo '::set-env name=CXXFLAGS::"-I/usr/local/opt/libomp/include"'
         echo '::set-env name=LDFLAGS::"-Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"'
-    - name: Test env vars   
-      run: |    
-        echo $CPPFLAGS
-        echo $CFLAGS
-        echo $CXXFLAGS
-        echo $LDFLAGS
     - name: Install POT
       run: |
         pip install --verbose -e .
