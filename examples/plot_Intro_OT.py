@@ -151,7 +151,7 @@ pl.show()
 # The red cells in the matrix image show the bakeries and cafés that are
 # further away, and thus more costly to transport from to the other, while the
 # blue ones show those that are very close to each other, with respect to the
-# squared Euclidean distance. 
+# squared Euclidean distance.
 
 
 ##############################################################################
@@ -249,19 +249,19 @@ print('Wasserstein loss = {0:.3f}'.format(W))
 
 # Compute Sinkhorn transport matrix from algorithm
 reg = 0.1
-K = np.exp(-C/C.max()/reg)
+K = np.exp(-C / C.max() / reg)
 nit = 100
 u = np.ones((len(bakery_prod), ))
 for i in range(1, nit):
-    v = cafe_prod/np.dot(K.T, u)
-    u = bakery_prod/(np.dot(K, v))
+    v = cafe_prod / np.dot(K.T, u)
+    u = bakery_prod / (np.dot(K, v))
 ot_sink_algo = np.atleast_2d(u).T * (K * v.T)  # Equivalent to np.dot(np.diag(u), np.dot(K, np.diag(v)))
 
 # Compute Sinkhorn transport matrix with POT
-ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=reg, M=C/C.max())
+ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=reg, M=C / C.max())
 
 # Difference between the 2
-print(np.sum(np.power(ot_sink_algo-ot_sinkhorn, 2)))
+print(np.sum(np.power(ot_sink_algo - ot_sinkhorn, 2)))
 
 # Plot the matrix and the map
 f = pl.figure(4, (13, 6))
@@ -315,11 +315,11 @@ pl.clf()
 max_ot = 100  # plot all matrices with the same colorbar
 for k in range(len(reg_parameter)):
     start = time.time()
-    ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=reg_parameter[k], M=C/C.max())
+    ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=reg_parameter[k], M=C / C.max())
     time_sinkhorn_reg[k] = time.time() - start
 
     if k % 2 == 0 and k > 0:  # we only plot one out of 2
-        ax = pl.subplot(3, 3, k/2)
+        ax = pl.subplot(3, 3, k / 2)
         im = pl.imshow(ot_sinkhorn, vmin=0, vmax=max_ot)
         pl.title('reg={0:.2g}'.format(reg_parameter[k]))
         pl.xlabel('Cafés')
