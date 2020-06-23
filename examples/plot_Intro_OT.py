@@ -195,9 +195,11 @@ pl.title('Manhattan Bakeries and Cafés')
 
 ax = pl.subplot(122)
 im = pl.imshow(ot_emd)
+for i in range(len(bakery_prod)):
+    for j in range(len(cafe_prod)):
+        text = ax.text(j, i, '{0:g}'.format(ot_emd[i, j]),
+                       ha="center", va="center", color="w")
 pl.title('Transport matrix')
-cbar = f.colorbar(im, ax=ax, shrink=0.5, use_gridspec=True)
-cbar.ax.set_ylabel("transport", rotation=-90, va="bottom")
 
 pl.xlabel('Cafés')
 pl.ylabel('Bakeries')
@@ -237,14 +239,29 @@ print('Wasserstein loss = {0:.3f}'.format(W))
 #     :width: 440px
 #     :height: 240px
 #
+# In this algorithm, :math:`\oslash` corresponds to the element-wise division.
+#
 # An alternative is to use the POT toolbox with
 # `ot.sinkhorn <https://pythonot.github.io/all.html#ot.sinkhorn>`_
 #
 # Be carefull to numerical problems. A good pre-processing for Sinkhorn is to
 # divide the cost matrix ``C`` by its maximum value.
 
-# Compute Sinkhorn transport matrix
-ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=0.1, M=C/C.max())
+# Compute Sinkhorn transport matrix from algorithm
+reg = 0.1
+K = np.exp(-C/C.max()/reg)
+nit = 100
+u = np.ones((len(bakery_prod), ))
+for i in range(1, nit):
+    v = cafe_prod/np.dot(K.T, u)
+    u = bakery_prod/(np.dot(K, v))
+ot_sink_algo = np.atleast_2d(u).T * (K * v.T)  # Equivalent to np.dot(np.diag(u), np.dot(K, np.diag(v)))
+
+# Compute Sinkhorn transport matrix with POT
+ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=reg, M=C/C.max())
+
+# Difference between the 2
+print(np.sum(np.power(ot_sink_algo-ot_sinkhorn, 2)))
 
 # Plot the matrix and the map
 f = pl.figure(4, (13, 6))
@@ -266,18 +283,23 @@ pl.title('Manhattan Bakeries and Cafés')
 
 ax = pl.subplot(122)
 im = pl.imshow(ot_sinkhorn)
+for i in range(len(bakery_prod)):
+    for j in range(len(cafe_prod)):
+        text = ax.text(j, i, np.round(ot_sinkhorn[i, j], 1),
+                       ha="center", va="center", color="w")
 pl.title('Transport matrix')
-cbar = f.colorbar(im, ax=ax, shrink=0.5, use_gridspec=True)
-cbar.ax.set_ylabel("transport", rotation=-90, va="bottom")
 
 pl.xlabel('Cafés')
 pl.ylabel('Bakeries')
 pl.show()
 
+print(np.min(ot_sinkhorn))
+
 ##############################################################################
-# We notice right away that the matrix is less sparse with Sinkhorn than it is
-# with EMD, each bakery delivering croissants to 3 to 5 cafés with that solution.
-#
+# We notice right away that the matrix is not sparse at all with Sinkhorn,
+# each bakery delivering croissants to all 5 cafés with that solution. Also,
+# this solution gives a transport with fractions, which does not make sense
+# in the case of croissants. This was not the case with EMD.
 
 ##############################################################################
 # Varying the regularization parameter in Sinkhorn
@@ -288,16 +310,35 @@ reg_parameter = np.logspace(-3, 0, 20)
 W_sinkhorn_reg = np.zeros((len(reg_parameter), ))
 time_sinkhorn_reg = np.zeros((len(reg_parameter), ))
 
-for j in range(len(reg_parameter)):
+f = pl.figure(5, (8, 10))
+pl.clf()
+max_ot = 100  # plot all matrices with the same colorbar
+for k in range(len(reg_parameter)):
     start = time.time()
-    ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=reg_parameter[j], M=C/C.max())
-    time_sinkhorn_reg[j] = time.time() - start
+    ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=reg_parameter[k], M=C/C.max())
+    time_sinkhorn_reg[k] = time.time() - start
+
+    if k % 2 == 0 and k > 0:  # we only plot one out of 2
+        ax = pl.subplot(3, 3, k/2)
+        im = pl.imshow(ot_sinkhorn, vmin=0, vmax=max_ot)
+        pl.title('reg={0:.2g}'.format(reg_parameter[k]))
+        pl.xlabel('Cafés')
+        pl.ylabel('Bakeries')
 
     # Compute the Wasserstein loss for Sinkhorn, and compare with EMD
-    W_sinkhorn_reg[j] = np.sum(ot_sinkhorn * C)
+    W_sinkhorn_reg[k] = np.sum(ot_sinkhorn * C)
+pl.tight_layout()
+
+
+##############################################################################
+# This series of graph shows that the solution of Sinkhorn starts with something
+# very similar to EMD (although not sparse) for very small values of the
+# regularization parameter, and tends to a more uniform solution as the
+# regularization parameter increases.
+#
 
 # Plot the matrix and the map
-f = pl.figure(5, (8, 4))
+f = pl.figure(6, (8, 4))
 pl.clf()
 pl.title("Comparison between Sinkhorn and EMD")
 
@@ -317,3 +358,17 @@ pl.legend()
 pl.xlabel("reg")
 pl.ylabel("Computational time (s)")
 pl.tight_layout()
+
+##############################################################################
+# In these last graphs, we show the impact of the regularization parameter on
+# both the Wasserstein loss and the computational time. We can see that higher
+# values of ``reg`` leads to a much higher Wasserstein loss. On the contrary,
+# low values of ``reg`` result in higher computational time.
+#
+# The Wasserstein loss and computational time of EMD are displayed for
+# comparison. The Wasserstein loss of Sinkhorn can be a little lower than that
+# of EMD for low values of ``reg``, but it quickly gets much higher.
+# As for the computational time, it appears here that EMD very fast. But note
+# that it is mostly due to the low size of the problem studied here. For bigger
+# problems, Sinkhorn is usually faster.
+#
