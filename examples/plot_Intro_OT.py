@@ -224,7 +224,7 @@ pl.show()
 #
 
 W = np.sum(ot_emd * C)
-print('Wasserstein loss = {0:.3f}'.format(W))
+print('Wasserstein loss (EMD) = {0:.2f}'.format(W))
 
 ##############################################################################
 # Regularized OT with Sinkhorn
@@ -265,13 +265,13 @@ ot_sink_algo = np.atleast_2d(u).T * (K * v.T)  # Equivalent to np.dot(np.diag(u)
 ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=reg, M=C / C.max())
 
 # Difference between the 2
-print('Difference between algo and ot.sinkhorn = {0:.2d}'.format(np.sum(np.power(ot_sink_algo - ot_sinkhorn, 2))))
+print('Difference between algo and ot.sinkhorn = {0:.2g}'.format(np.sum(np.power(ot_sink_algo - ot_sinkhorn, 2))))
 
 ##############################################################################
 # Plot the matrix and the map
 # ```````````````````````````
 
-print('Min. of Sinkhorn\'s transport matrix = {0:g}'.format(np.min(ot_sinkhorn)))
+print('Min. of Sinkhorn\'s transport matrix = {0:.2g}'.format(np.min(ot_sinkhorn)))
 
 f = pl.figure(4, (13, 6))
 pl.clf()
