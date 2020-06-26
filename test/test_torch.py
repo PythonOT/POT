@@ -56,13 +56,14 @@ def test_ot_loss():
             x = torch.randn(n, 2, dtype=dtype, device=device)
             y = torch.randn(n, 2, dtype=dtype, device=device)
 
-            a=ot.torch.unif(n,dtype=dtype, device=device)
-            b=ot.torch.unif(n,dtype=dtype, device=device)
+            a = ot.torch.unif(n, dtype=dtype, device=device)
+            b = ot.torch.unif(n, dtype=dtype, device=device)
 
             for metric in lst_metrics:
 
                 M = ot.torch.dist(x, y, metric)
-                loss = ot.torch.ot_loss(a,b,M)
+                loss = ot.torch.ot_loss(a, b, M)
+
 
 @pytest.mark.skipif(nogo, reason="Missing pytorch")
 def test_ot_solve():
@@ -77,13 +78,13 @@ def test_ot_solve():
             x = torch.randn(n, 2, dtype=dtype, device=device)
             y = torch.randn(n, 2, dtype=dtype, device=device)
 
-            a=ot.torch.unif(n,dtype=dtype, device=device)
-            b=ot.torch.unif(n,dtype=dtype, device=device)
+            a = ot.torch.unif(n, dtype=dtype, device=device)
+            b = ot.torch.unif(n, dtype=dtype, device=device)
 
             for metric in lst_metrics:
 
                 M = ot.torch.dist(x, y, metric)
-                G = ot.torch.ot_solve(a,b,M)
+                G = ot.torch.ot_solve(a, b, M)
 
-                np.testing.assert_allclose(ot.unif(n), G.sum(1).cpu().numpy()) 
+                np.testing.assert_allclose(ot.unif(n), G.sum(1).cpu().numpy())
                 np.testing.assert_allclose(ot.unif(n), G.sum(0).cpu().numpy())  # cf convergence sinkhorn

@@ -9,7 +9,7 @@ import torch
 #
 # License: MIT License
 
-def unif(n,dtype=None,device=None,requires_grad=False):
+def unif(n, dtype=None, device=None, requires_grad=False):
     """ return a uniform histogram of length n (simplex)
 
     Parameters
@@ -27,7 +27,7 @@ def unif(n,dtype=None,device=None,requires_grad=False):
 
 
     """
-    return torch.ones(n,dtype=dtype,device=device,requires_grad=requires_grad) / n
+    return torch.ones(n, dtype=dtype, device=device, requires_grad=requires_grad) / n
 
 
 def dist(x1, x2, metric="sqeuclidean"):
