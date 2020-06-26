@@ -4,7 +4,6 @@
 #
 # License: MIT License
 
-import warnings
 import pytest
 import numpy as np
 
@@ -42,6 +41,9 @@ def test_dist():
 
                 M = ot.torch.dist(x, y, metric)
 
+                assert M.shape[0] == n
+                assert M.shape[1] == n
+
 
 @pytest.mark.skipif(nogo, reason="Missing pytorch")
 def test_ot_loss():
@@ -63,6 +65,8 @@ def test_ot_loss():
 
                 M = ot.torch.dist(x, y, metric)
                 loss = ot.torch.ot_loss(a, b, M)
+
+                assert float(loss) >= 0
 
 
 @pytest.mark.skipif(nogo, reason="Missing pytorch")
