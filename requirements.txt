@@ -7,4 +7,5 @@ pymanopt==0.2.4; python_version <'3'
 pymanopt; python_version >= '3'
 cvxopt
 scikit-learn
+torch
 pytest
