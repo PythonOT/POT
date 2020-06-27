@@ -103,8 +103,8 @@ compile_args = ("-std=c++11 -Ofast -march=native -fno-signed-zeros "
                 "-fno-trapping-math -funroll-loops").split()
 if extra_preargs is not None:
     compile_args += extra_preargs
-if extra_postargs is not None:
-    compile_args += extra_postargs
+# if extra_postargs is not None:
+#     compile_args += extra_postargs
 
 setup(
     name='POT',
@@ -123,7 +123,7 @@ setup(
             language="c++",
             include_dirs=[numpy.get_include(), os.path.join(ROOT, 'ot/lp')],
             extra_compile_args=compile_args,
-            extra_link_args=compile_args,
+            extra_link_args=extra_postargs,
         ),
         compiler_directives={'language_level' : sys.version_info[0]}
     ),
