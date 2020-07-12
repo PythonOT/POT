@@ -69,7 +69,7 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
     alpha, phi1 = scalar_search_armijo(
         phi, phi0, derphi0, c1=c1, alpha0=alpha0)
 
-    return min(1, alpha), fc[0], phi1
+    return min(1, alpha) if alpha is not None else 1, fc[0], phi1
 
 
 def solve_linesearch(cost, G, deltaG, Mi, f_val,
