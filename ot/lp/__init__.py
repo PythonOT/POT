@@ -443,18 +443,30 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
     - we do not optimize over the weights
     - we do not do line search for the locations updates, we use i.e. theta = 1 in [1] (Algorithm 2). This can be seen as a discrete implementation of the fixed-point algorithm of [2] proposed in the continuous setting.
 
+    Formally we solve the following problem:
+
+    .. math::
+        \min_X \sum_{i=1}^N w_i W_2^2(b, X, a_i, X_i)
+
+    where :
+
+    - :math:`w \in \mathbb{(0, 1)}^{N}`'s are the barycenter weights and sum to one
+    - the :math:`a_i \in \mathbb{R}^{k_i}` are the empirical measures weights and sum to one for each :math:`i`
+    - the :math:`X_i \in \mathbb{R}^{k_i, d}` are the empirical measures atoms locations
+    - :math:`b \in \mathbb{R}^{k}` is the desired weights vector of the barycenter
+
     Parameters
     ----------
-    measures_locations : list of (k_i,d) numpy.ndarray
+    measures_locations : list of N (k_i,d) numpy.ndarray
         The discrete support of a measure supported on k_i locations of a d-dimensional space (k_i can be different for each element of the list)
-    measures_weights : list of (k_i,) numpy.ndarray
+    measures_weights : list of N (k_i,) numpy.ndarray
         Numpy arrays where each numpy array has k_i non-negatives values summing to one representing the weights of each discrete input measure
 
     X_init : (k,d) np.ndarray
         Initialization of the support locations (on k atoms) of the barycenter
     b : (k,) np.ndarray
         Initialization of the weights of the barycenter (non-negatives, sum to 1)
-    weights : (k,) np.ndarray
+    weights : (N,) np.ndarray
         Initialization of the coefficients of the barycenter (non-negatives, sum to 1)
 
     numItermax : int, optional
