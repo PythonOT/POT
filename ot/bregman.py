@@ -14,22 +14,10 @@ Bregman projections solvers for entropic regularized OT
 #
 # License: MIT License
 
-import math
-import warnings
-
 import numpy as np
-from scipy.optimize import fmin_l_bfgs_b
-from scipy.special import logsumexp
-
+import warnings
 from .utils import unif, dist
-
-
-def log_matvec(matrix, u, out):
-    max_matrix = np.max(matrix)
-    max_u = np.max(u)
-    np.dot(np.exp(matrix - max_matrix), np.exp(u - max_u), out=out)
-    np.log(out, out=out)
-    out += max_matrix + max_u
+from scipy.optimize import fmin_l_bfgs_b
 
 
 def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
@@ -323,37 +311,24 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
     ot.optim.cg : General regularized OT
 
     """
+
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
-
     M = np.asarray(M, dtype=np.float64)
 
     if len(a) == 0:
-        a = np.ones((M.shape[0], 1), dtype=np.float64) / M.shape[0]
+        a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
     if len(b) == 0:
-        b = np.ones((M.shape[1], 1), dtype=np.float64) / M.shape[1]
+        b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
+
+    # init data
+    dim_a = len(a)
+    dim_b = len(b)
 
     if len(b.shape) > 1:
         n_hists = b.shape[1]
     else:
         n_hists = 0
-
-    if len(a.shape) == 1:
-        a = a[:, None]
-
-    if len(b.shape) == 1:
-        b = b[:, None]
-
-    log_threshold = math.log(stopThr)
-    is_logweight = kwargs.get('is_logweight', False)
-
-    if not is_logweight:
-        a = np.log(a)
-        b = np.log(b)
-
-    # init data
-    dim_a = len(a)
-    dim_b = len(b)
 
     if log:
         log = {'err': []}
@@ -361,30 +336,36 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
     # we assume that no distances are null except those of the diagonal of
     # distances
     if n_hists:
-        u = np.zeros((dim_a, n_hists)) - math.log(dim_a)
-        v = np.zeros((dim_b, n_hists)) - math.log(dim_b)
+        u = np.ones((dim_a, n_hists)) / dim_a
+        v = np.ones((dim_b, n_hists)) / dim_b
     else:
-        u = np.zeros((dim_a, 1)) - math.log(dim_a)
-        v = np.zeros((dim_b, 1)) - math.log(dim_b)
+        u = np.ones(dim_a) / dim_a
+        v = np.ones(dim_b) / dim_b
 
-    log_K = -M / reg
+    # print(reg)
 
-    log_Kp = -a.reshape(-1, 1) + log_K
-    log_K_T = log_K.T
+    # Next 3 lines equivalent to K= np.exp(-M/reg), but faster to compute
+    K = np.empty(M.shape, dtype=M.dtype)
+    np.divide(M, -reg, out=K)
+    np.exp(K, out=K)
+
+    # print(np.min(K))
+    tmp2 = np.empty(b.shape, dtype=M.dtype)
+
+    Kp = (1 / a).reshape(-1, 1) * K
     cpt = 0
-    log_err = 0.5 * log_threshold
-
-    while log_err > log_threshold and cpt < numItermax:
+    err = 1
+    while (err > stopThr and cpt < numItermax):
         uprev = u
         vprev = v
 
-        log_matvec(log_K_T, u, v)
-        v *= -1
-        v += b
-        log_matvec(log_Kp, v, u)
-        u *= -1
+        KtransposeU = np.dot(K.T, u)
+        v = np.divide(b, KtransposeU)
+        u = 1. / np.dot(Kp, v)
 
-        if np.any(~np.isfinite(u)) or np.any(~np.isfinite(v)):
+        if (np.any(KtransposeU == 0)
+                or np.any(np.isnan(u)) or np.any(np.isnan(v))
+                or np.any(np.isinf(u)) or np.any(np.isinf(v))):
             # we have reached the machine precision
             # come back to previous solution and quit loop
             print('Warning: numerical errors at iteration', cpt)
@@ -394,32 +375,27 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
         if cpt % 10 == 0:
             # we can speed up the process by checking for the error only all
             # the 10th iterations
-            temp2 = u + log_K + v.T
-            temp2 = logsumexp(temp2, axis=0, keepdims=True).T
-            # noinspection PyTypeChecker
-            log_err = 0.5 * np.sum(np.exp(2 * temp2) - np.exp(2 * b))  # violation of marginal
-            # would be more efficient with a check on stability of dual vectors
+            if n_hists:
+                np.einsum('ik,ij,jk->jk', u, K, v, out=tmp2)
+            else:
+                # compute right marginal tmp2= (diag(u)Kdiag(v))^T1
+                np.einsum('i,ij,j->j', u, K, v, out=tmp2)
+            err = np.linalg.norm(tmp2 - b)  # violation of marginal
             if log:
-                log['err'].append(math.exp(log_err))
+                log['err'].append(err)
 
             if verbose:
                 if cpt % 200 == 0:
                     print(
                         '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(cpt, np.exp(log_err)))
+                print('{:5d}|{:8e}|'.format(cpt, err))
         cpt = cpt + 1
     if log:
-        log['u'] = np.exp(u) if not is_logweight else u
-        log['v'] = np.exp(v) if not is_logweight else v
+        log['u'] = u
+        log['v'] = v
 
-    gamma = u + log_K + v.T
-    res = logsumexp(gamma, axis=(0, 1), b=M)
-    if not is_logweight:
-        gamma = np.exp(gamma)
-        res = np.exp(res)
-    if log:
-        log['cost'] = res
     if n_hists:  # return only loss
+        res = np.einsum('ik,ij,jk,ij->k', u, K, v, M)
         if log:
             return res, log
         else:
@@ -428,9 +404,9 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
     else:  # return OT matrix
 
         if log:
-            return gamma.squeeze(), log
+            return u.reshape((-1, 1)) * K * v.reshape((1, -1)), log
         else:
-            return gamma.squeeze()
+            return u.reshape((-1, 1)) * K * v.reshape((1, -1))
 
 
 def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
@@ -740,7 +716,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         if np.abs(u).max() > tau or np.abs(v).max() > tau:
             if n_hists:
                 alpha, beta = alpha + reg * \
-                              np.max(np.log(u), 1), beta + reg * np.max(np.log(v))
+                    np.max(np.log(u), 1), beta + reg * np.max(np.log(v))
             else:
                 alpha, beta = alpha + reg * np.log(u), beta + reg * np.log(v)
                 if n_hists:
@@ -2206,11 +2182,11 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
 
         # box constraints in L-BFGS-B (see Proposition 1 in [26])
         bounds_u = [(max(a_I_min / ((nt - nt_budget) * epsilon + nt_budget * (b_J_max / (
-                ns * epsilon * kappa * K_min))), epsilon / kappa), a_I_max / (nt * epsilon * K_min))] * ns_budget
+            ns * epsilon * kappa * K_min))), epsilon / kappa), a_I_max / (nt * epsilon * K_min))] * ns_budget
 
         bounds_v = [(
-            max(b_J_min / ((ns - ns_budget) * epsilon + ns_budget * (kappa * a_I_max / (nt * epsilon * K_min))),
-                epsilon * kappa), b_J_max / (ns * epsilon * K_min))] * nt_budget
+                    max(b_J_min / ((ns - ns_budget) * epsilon + ns_budget * (kappa * a_I_max / (nt * epsilon * K_min))),
+                        epsilon * kappa), b_J_max / (ns * epsilon * K_min))] * nt_budget
 
         # pre-calculated constants for the objective
         vec_eps_IJc = epsilon * kappa * (K_IJc * np.ones(nt - nt_budget).reshape((1, -1))).sum(axis=1)
