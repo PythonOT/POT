@@ -59,7 +59,7 @@ def sliced(X_s, X_t, a=None, b=None, n_projections=50, seed=None):
     >>> reg = 0.1
     >>> X = np.random.normal(0., 1., (n_samples_a, 5))
     >>> sliced(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
-    0.
+    0.0
 
     References
     ----------
