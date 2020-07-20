@@ -76,7 +76,8 @@ def sliced(X_s, X_t, a=None, b=None, n_projections=50, seed=None):
 
     if X_s.shape[1] != X_t.shape[1]:
         raise ValueError(
-            f"X_s and X_t must have the same number of dimensions {X_s.shape[1]} and {X_t.shape[1]} respectively given")
+            "X_s and X_t must have the same number of dimensions {} and {} respectively given".format(X_s.shape[1],
+                                                                                                      X_t.shape[1]))
 
     if a is None:
         a = np.full(n, 1 / n)
