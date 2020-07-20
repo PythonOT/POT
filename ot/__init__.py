@@ -39,6 +39,7 @@ from .lp import emd, emd2, emd_1d, emd2_1d, wasserstein_1d
 from .bregman import sinkhorn, sinkhorn2, barycenter
 from .unbalanced import sinkhorn_unbalanced, barycenter_unbalanced, sinkhorn_unbalanced2
 from .da import sinkhorn_lpl1_mm
+from .sliced import sliced
 
 # utils functions
 from .utils import dist, unif, tic, toc, toq
