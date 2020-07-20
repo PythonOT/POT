@@ -435,7 +435,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
 def free_support_barycenter(measures_locations, measures_weights, X_init, b=None, weights=None, numItermax=100,
                             stopThr=1e-7, verbose=False, log=None):
-    """
+    r"""
     Solves the free support (locations of the barycenters are optimized, not the weights) Wasserstein barycenter problem (i.e. the weighted Frechet mean for the 2-Wasserstein distance), formally:
 
     .. math::
