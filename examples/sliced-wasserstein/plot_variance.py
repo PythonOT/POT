@@ -16,8 +16,6 @@ This example illustrates the computation of the sliced Wasserstein Distance as p
 
 import matplotlib.pylab as pl
 import numpy as np
-# necessary for 3d plot even if not used
-from mpl_toolkits.mplot3d import Axes3D  # noqa
 
 import ot
 
