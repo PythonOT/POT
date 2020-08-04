@@ -27,6 +27,7 @@ API and modules
    stochastic
    unbalanced
    partial
+   sliced
 
 .. autosummary::
    :toctree: ../modules/generated/
