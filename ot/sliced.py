@@ -3,7 +3,7 @@ Sliced Wasserstein Distance.
 
 """
 
-# Author: Adrien Corenflos <adrien.corenflos@gmail.com>
+# Author: Adrien Corenflos <adrien.corenflos@aalto.fi>
 #
 # License: MIT License
 
@@ -11,15 +11,46 @@ Sliced Wasserstein Distance.
 import numpy as np
 
 
-def _random_projections(n_projections, dimension, random_state):
-    """Samples n_projections times dimension normal distributions"""
-    projections = random_state.normal(0., 1., [n_projections, dimension])
+def get_random_projections(n_projections, d, seed=None):
+    r"""
+    Generates n_projections samples from the uniform on the unit sphere of dimension d-1: :math:`\mathcal{U}(\mathcal{S}^{d-1})`
+
+    Parameters
+    ----------
+    n_projections : int
+        number of samples requested
+    d : int
+        dimension of the space
+    seed: int or RandomState, optional
+        Seed used for numpy random number generator
+
+    Returns
+    -------
+    out: ndarray, shape (n_projections, d)
+        The uniform unit vectors on the sphere
+
+    Examples
+    --------
+    >>> n_projections = 100
+    >>> d = 5
+    >>> projs = get_random_projections(n_projections, d)
+    >>> np.allclose(np.sum(np.square(projs), 1), 1.)  # doctest: +NORMALIZE_WHITESPACE
+    True
+
+    """
+
+    if not isinstance(seed, np.random.RandomState):
+        random_state = np.random.RandomState(seed)
+    else:
+        random_state = seed
+
+    projections = random_state.normal(0., 1., [n_projections, d])
     norm = np.linalg.norm(projections, ord=2, axis=1, keepdims=True)
     projections = projections / norm
     return projections
 
 
-def sliced(X_s, X_t, a=None, b=None, n_projections=50, seed=None):
+def sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, seed=None, log=False):
     r"""
     Computes a Monte-Carlo approximation of the 2-Sliced Wasserstein distance
     .. math::
@@ -36,14 +67,16 @@ def sliced(X_s, X_t, a=None, b=None, n_projections=50, seed=None):
         samples in the source domain
     X_t : ndarray, shape (n_samples_b, dim)
         samples in the target domain
-    a : ndarray, shape (n_samples_a,)
+    a : ndarray, shape (n_samples_a,), optional
         samples weights in the source domain
-    b : ndarray, shape (n_samples_b,)
+    b : ndarray, shape (n_samples_b,), optional
         samples weights in the target domain
-    n_projections : int
+    n_projections : int, optional
         Number of projections used for the Monte-Carlo approximation
-    seed: int or RandomState or None
+    seed: int or RandomState or None, optional
         Seed used for numpy random number generator
+    log: bool, optional
+        if True, sliced_wasserstein_distance returns the projections used and their associated EMD.
 
     Returns
     -------
@@ -58,13 +91,14 @@ def sliced(X_s, X_t, a=None, b=None, n_projections=50, seed=None):
     >>> n_samples_a = 20
     >>> reg = 0.1
     >>> X = np.random.normal(0., 1., (n_samples_a, 5))
-    >>> sliced(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
+    >>> sliced_wasserstein_distance(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
     0.0
 
     References
     ----------
 
-    .. [1] S. Kolouri et al., Generalized Sliced Wasserstein Distances, Advances in Neural Information Processing Systems (NIPS) 33, 2019
+    .. [31] Bonneel, Nicolas, et al. "Sliced and radon wasserstein barycenters of measures." Journal of Mathematical Imaging and Vision 51.1 (2015): 22-45
+    .. [32] S. Kolouri et al., Generalized Sliced Wasserstein Distances, Advances in Neural Information Processing Systems (NIPS) 33, 2019
     """
     from .lp import emd2_1d
 
@@ -86,15 +120,25 @@ def sliced(X_s, X_t, a=None, b=None, n_projections=50, seed=None):
 
     d = X_s.shape[1]
 
-    if not isinstance(seed, np.random.RandomState):
-        random_state = np.random.RandomState(seed)
-        projections = _random_projections(n_projections, d, random_state)
+    projections = get_random_projections(n_projections, d, seed)
+
+    X_s_projections = np.dot(projections, X_s.T)
+    X_t_projections = np.dot(projections, X_t.T)
+
+    if log:
+        projected_emd = []
     else:
-        projections = _random_projections(n_projections, d, seed)
+        projected_emd = None
 
     res = 0.
-    for projection in projections:
-        X_s_proj = X_s @ projection
-        X_t_proj = X_t @ projection
-        res += emd2_1d(X_s_proj, X_t_proj, a, b, log=False, dense=False)
-    return (res / n_projections) ** 0.5
+
+    for X_s_proj, X_t_proj in zip(X_s_projections, X_t_projections):
+        emd = emd2_1d(X_s_proj, X_t_proj, a, b, log=False, dense=False)
+        if projected_emd is not None:
+            projected_emd.append(emd)
+        res += emd
+
+    res = (res / n_projections) ** 0.5
+    if log:
+        return res, {"projections": projections.tolist(), "projected_emds": projected_emd}
+    return res
