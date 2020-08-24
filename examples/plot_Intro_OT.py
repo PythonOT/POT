@@ -365,7 +365,7 @@ pl.ylabel("Wasserstein loss")
 ##############################################################################
 # In this last graph, we show the impact of the regularization parameter on
 # the Wasserstein loss. We can see that higher
-# values of ``reg`` leads to a much higher Wasserstein loss. 
+# values of ``reg`` leads to a much higher Wasserstein loss.
 #
 # The Wasserstein loss of EMD is displayed for
 # comparison. The Wasserstein loss of Sinkhorn can be a little lower than that
