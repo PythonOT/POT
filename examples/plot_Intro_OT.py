@@ -351,11 +351,10 @@ pl.tight_layout()
 #
 
 # Plot the matrix and the map
-f = pl.figure(6, (8, 4))
+f = pl.figure(6, (4, 4))
 pl.clf()
 pl.title("Comparison between Sinkhorn and EMD")
 
-pl.subplot(121)
 pl.plot(reg_parameter, W_sinkhorn_reg, 'o', label="Sinkhorn")
 XLim = pl.xlim()
 pl.plot(XLim, [W, W], '--k', label="EMD")
@@ -363,25 +362,12 @@ pl.legend()
 pl.xlabel("reg")
 pl.ylabel("Wasserstein loss")
 
-pl.subplot(122)
-pl.plot(reg_parameter, time_sinkhorn_reg, 'o', label="Sinkhorn")
-XLim = pl.xlim()
-pl.plot(XLim, [time_emd, time_emd], '--k', label="EMD")
-pl.legend()
-pl.xlabel("reg")
-pl.ylabel("Computational time (s)")
-pl.tight_layout()
-
 ##############################################################################
-# In these last graphs, we show the impact of the regularization parameter on
-# both the Wasserstein loss and the computational time. We can see that higher
-# values of ``reg`` leads to a much higher Wasserstein loss. On the contrary,
-# low values of ``reg`` result in higher computational time.
+# In this last graph, we show the impact of the regularization parameter on
+# the Wasserstein loss. We can see that higher
+# values of ``reg`` leads to a much higher Wasserstein loss. 
 #
-# The Wasserstein loss and computational time of EMD are displayed for
+# The Wasserstein loss of EMD is displayed for
 # comparison. The Wasserstein loss of Sinkhorn can be a little lower than that
 # of EMD for low values of ``reg``, but it quickly gets much higher.
-# As for the computational time, it appears here that EMD very fast. But note
-# that it is mostly due to the low size of the problem studied here. For bigger
-# problems, Sinkhorn is usually faster.
 #
