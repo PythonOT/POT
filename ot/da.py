@@ -1111,7 +1111,7 @@ class BaseTransport(BaseEstimator):
             D1 = np.zeros((n, len(ysTemp)))
 
             # perform label propagation
-            transp = self.coupling_ / np.sum(self.coupling_, 1)[:, None]
+            transp = self.coupling_ / np.sum(self.coupling_, 0, keepdims=True)
 
             # set nans to 0
             transp[~ np.isfinite(transp)] = 0
