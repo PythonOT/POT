@@ -55,7 +55,7 @@ help(ot.dist)
 # ----------------
 #
 # We will solve the Bakery/Cafés problem of transporting croissants from a
-# number of Bakeries to Cafés in a City (In this case Manhattan). We did a
+# number of Bakeries to Cafés in a City (in this case Manhattan). We did a
 # quick google map search in Manhattan for bakeries and Cafés:
 #
 # .. image:: images/bak.png
@@ -69,8 +69,9 @@ help(ot.dist)
 #
 # We have acess to the position of Bakeries ``bakery_pos`` and their
 # respective production ``bakery_prod`` which describe the source
-# distribution. The Cafés where the croissants are sold are defiend also by
-# their position ``cafe_pos`` and ``cafe_prod``. For fun we also provide a
+# distribution. The Cafés where the croissants are sold are defined also by
+# their position ``cafe_pos`` and ``cafe_prod``, and describe the target
+# distribution. For fun we also provide a
 # map ``Imap`` that will illustrate the position of these shops in the city.
 #
 #
@@ -113,12 +114,11 @@ pl.title('Manhattan Bakeries and Cafés')
 # -----------
 #
 #
-# We compute the cost matrix between the bakeries and the cafés, this will be
-# the transport cost matrix. This can be done using the
-# `ot.dist <https://pythonot.github.io/all.html#ot.dist>`_ that defaults to
-# squared euclidean distance but can return other things such as cityblock
-# (or manhattan distance).
-#
+# We can now compute the cost matrix between the bakeries and the cafés, which
+# will be the transport cost matrix. This can be done using the
+# `ot.dist <https://pythonot.github.io/all.html#ot.dist>`_ function that
+# defaults to squared Euclidean distance but can return other things such as
+# cityblock (or Manhattan distance).
 #
 
 C = ot.dist(bakery_pos, cafe_pos)
@@ -144,14 +144,14 @@ cbar.ax.set_ylabel("cost", rotation=-90, va="bottom")
 
 pl.xlabel('Cafés')
 pl.ylabel('Bakeries')
-pl.show()
+pl.tight_layout()
 
 
 ##############################################################################
 # The red cells in the matrix image show the bakeries and cafés that are
-# further away, and thus more costly to transport from to the other, while the
-# blue ones show those that are very close to each other, with respect to the
-# squared Euclidean distance.
+# further away, and thus more costly to transport from one to the other, while
+# the blue ones show those that are very close to each other, with respect to
+# the squared Euclidean distance.
 
 
 ##############################################################################
@@ -203,11 +203,11 @@ pl.title('Transport matrix')
 
 pl.xlabel('Cafés')
 pl.ylabel('Bakeries')
-pl.show()
+pl.tight_layout()
 
 ##############################################################################
 # The transport matrix gives the number of croissants that can be transported
-# from each bakery to each café. We can see that several bakeries only need to
+# from each bakery to each café. We can see that the bakeries only need to
 # transport croissants to one or two cafés, the transport matrix being very
 # sparse.
 
@@ -244,7 +244,7 @@ print('Wasserstein loss (EMD) = {0:.2f}'.format(W))
 # An alternative is to use the POT toolbox with
 # `ot.sinkhorn <https://pythonot.github.io/all.html#ot.sinkhorn>`_
 #
-# Be carefull to numerical problems. A good pre-processing for Sinkhorn is to
+# Be careful of numerical problems. A good pre-processing for Sinkhorn is to
 # divide the cost matrix ``C`` by its maximum value.
 
 ##############################################################################
@@ -300,7 +300,7 @@ pl.title('Transport matrix')
 
 pl.xlabel('Cafés')
 pl.ylabel('Bakeries')
-pl.show()
+pl.tight_layout()
 
 
 ##############################################################################
@@ -326,8 +326,8 @@ for k in range(len(reg_parameter)):
     ot_sinkhorn = ot.sinkhorn(bakery_prod, cafe_prod, reg=reg_parameter[k], M=C / C.max())
     time_sinkhorn_reg[k] = time.time() - start
 
-    if k % 3 == 0 and k > 0:  # we only plot a few
-        ax = pl.subplot(1, 6, k / 3)
+    if k % 4 == 0 and k > 0:  # we only plot a few
+        ax = pl.subplot(1, 5, k / 4)
         im = pl.imshow(ot_sinkhorn, vmin=0, vmax=max_ot)
         pl.title('reg={0:.2g}'.format(reg_parameter[k]))
         pl.xlabel('Cafés')
