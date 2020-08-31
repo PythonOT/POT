@@ -267,5 +267,3 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 [30] Flamary R., Courty N., Tuia D., Rakotomamonjy A. (2014). [Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching](https://remi.flamary.com/biblio/flamary2014optlaplace.pdf), NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
 
 [31] Bonneel, Nicolas, et al. "Sliced and radon wasserstein barycenters of measures." Journal of Mathematical Imaging and Vision 51.1 (2015): 22-45
-
-[32] S. Kolouri et al., Generalized Sliced Wasserstein Distances, Advances in Neural Information Processing Systems (NIPS) 33, 2019

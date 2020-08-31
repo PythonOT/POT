@@ -53,6 +53,7 @@ def get_random_projections(n_projections, d, seed=None):
 def sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, seed=None, log=False):
     r"""
     Computes a Monte-Carlo approximation of the 2-Sliced Wasserstein distance
+
     .. math::
         \mathcal{SWD}_2(\mu, \nu) = \underset{\theta \sim \mathcal{U}(\mathbb{S}^{d-1})}{\mathbb{E}}[\mathcal{W}_2^2(\theta_\# \mu, \theta_\# \nu)]^{\frac{1}{2}}
 
@@ -98,7 +99,6 @@ def sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, seed
     ----------
 
     .. [31] Bonneel, Nicolas, et al. "Sliced and radon wasserstein barycenters of measures." Journal of Mathematical Imaging and Vision 51.1 (2015): 22-45
-    .. [32] S. Kolouri et al., Generalized Sliced Wasserstein Distances, Advances in Neural Information Processing Systems (NIPS) 33, 2019
     """
     from .lp import emd2_1d
 
@@ -126,19 +126,19 @@ def sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, seed
     X_t_projections = np.dot(projections, X_t.T)
 
     if log:
-        projected_emd = []
+        projected_emd = np.empty(n_projections)
     else:
         projected_emd = None
 
     res = 0.
 
-    for X_s_proj, X_t_proj in zip(X_s_projections, X_t_projections):
+    for i, (X_s_proj, X_t_proj) in enumerate(zip(X_s_projections, X_t_projections)):
         emd = emd2_1d(X_s_proj, X_t_proj, a, b, log=False, dense=False)
         if projected_emd is not None:
-            projected_emd.append(emd)
+            projected_emd[i] = emd
         res += emd
 
     res = (res / n_projections) ** 0.5
     if log:
-        return res, {"projections": projections.tolist(), "projected_emds": projected_emd}
+        return res, {"projections": projections, "projected_emds": projected_emd}
     return res
