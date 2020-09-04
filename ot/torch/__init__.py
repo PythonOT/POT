@@ -13,7 +13,7 @@ from . import utils
 from . import lp
 
 from .utils import dist, unif
-from .lp import ot_loss, ot_solve
+from .lp import ot_loss, ot_solve, OptimalTransportLossFunction
 
 __all__ = ['dist','unif','ot_loss',"ot_solve"]
 
