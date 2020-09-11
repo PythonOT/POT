@@ -697,6 +697,7 @@ def test_jcpot_barycenter():
 
     np.testing.assert_allclose(prop, [1 - pt, pt], rtol=1e-3, atol=1e-3)
 
+
 @pytest.mark.skipif(nosklearn, reason="No sklearn available")
 def test_emd_laplace_class():
     """test_emd_laplace_transport

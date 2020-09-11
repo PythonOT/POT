@@ -43,7 +43,7 @@ jobs:
 
   pep8:
     runs-on: ubuntu-latest
-     strategy:
+    strategy:
        max-parallel: 4
        matrix:
          python-version: [3.8]
