@@ -6,10 +6,17 @@
 
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
+import pytest
 
 import ot
 from ot.datasets import make_data_classif
 from ot.utils import unif
+
+try:  # test if cudamat installed
+    import sklearn
+    nosklearn = False
+except ImportError:
+    nosklearn = True
 
 
 def test_sinkhorn_lpl1_transport_class():
@@ -690,7 +697,7 @@ def test_jcpot_barycenter():
 
     np.testing.assert_allclose(prop, [1 - pt, pt], rtol=1e-3, atol=1e-3)
 
-
+@pytest.mark.skipif(nosklearn, reason="No sklearn available")
 def test_emd_laplace_class():
     """test_emd_laplace_transport
     """
