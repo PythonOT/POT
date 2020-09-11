@@ -13,7 +13,7 @@ from ot.datasets import make_data_classif
 from ot.utils import unif
 
 try:  # test if cudamat installed
-    import sklearn
+    import sklearn  # noqa: F401
     nosklearn = False
 except ImportError:
     nosklearn = True
