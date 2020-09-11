@@ -31,7 +31,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install flake8 pytest "pytest-cov<2.6" codecov
-        pip install -U "sklearn"
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -68,7 +67,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r .github/requirements_strict.txt
         pip install pytest
-        pip install -U "sklearn"
     - name: Install POT
       run: |
         pip install -e .
