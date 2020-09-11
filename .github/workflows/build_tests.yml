@@ -47,6 +47,7 @@ jobs:
        max-parallel: 4
        matrix:
          python-version: [3.8]
+
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python ${{ matrix.python-version }}
@@ -135,7 +136,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest "pytest-cov<2.6"
-        pip install -U "sklearn"
     - name: Install POT
       run: |
         pip install -e .
