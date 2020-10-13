@@ -4,13 +4,17 @@
 Partial Wasserstein and Gromov-Wasserstein example
 ==================================================
 
-This example is designed to show how to use the Partial (Gromov-)Wassertsein
+This example is designed to show how to use the Partial (Gromov-)Wasserstein
 distance computation in POT.
 """
 
 # Author: Laetitia Chapel <laetitia.chapel@irisa.fr>
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 2
+
+# necessary for 3d plot even if not used
+from mpl_toolkits.mplot3d import Axes3D  # noqa
 import scipy as sp
 import numpy as np
 import matplotlib.pylab as pl
@@ -123,7 +127,8 @@ print('-----m = 1')
 m = 1
 res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True)
 res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
-                                                          m=m, log=True)
+                                                          m=m, log=True,
+                                                          verbose=True)
 
 print('Wasserstein distance (m = 1): ' + str(log0['partial_gw_dist']))
 print('Entropic Wasserstein distance (m = 1): ' + str(log['partial_gw_dist']))
@@ -132,18 +137,20 @@ pl.figure(1, (10, 5))
 pl.title("mass to be transported m = 1")
 pl.subplot(1, 2, 1)
 pl.imshow(res0, cmap='jet')
-pl.title('Wasserstein')
+pl.title('Gromov-Wasserstein')
 pl.subplot(1, 2, 2)
 pl.imshow(res, cmap='jet')
-pl.title('Entropic Wasserstein')
+pl.title('Entropic Gromov-Wasserstein')
 pl.show()
 
 # transport 2/3 of the mass
 print('-----m = 2/3')
 m = 2 / 3
-res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True)
+res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True,
+                                                   verbose=True)
 res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
-                                                          m=m, log=True)
+                                                          m=m, log=True,
+                                                          verbose=True)
 
 print('Partial Wasserstein distance (m = 2/3): ' +
       str(log0['partial_gw_dist']))
@@ -154,8 +161,8 @@ pl.figure(1, (10, 5))
 pl.title("mass to be transported m = 2/3")
 pl.subplot(1, 2, 1)
 pl.imshow(res0, cmap='jet')
-pl.title('Partial Wasserstein')
+pl.title('Partial Gromov-Wasserstein')
 pl.subplot(1, 2, 2)
 pl.imshow(res, cmap='jet')
-pl.title('Entropic partial Wasserstein')
+pl.title('Entropic partial Gromov-Wasserstein')
 pl.show()
