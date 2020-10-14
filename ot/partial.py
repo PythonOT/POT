@@ -500,8 +500,8 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     >>> np.round(partial_gromov_wasserstein(C1, C2, a, b, m=0.25),2)
     array([[0.  , 0.  , 0.  , 0.  ],
            [0.  , 0.  , 0.  , 0.  ],
-           [0.  , 0.  , 0.  , 0.  ],
-           [0.  , 0.  , 0.  , 0.25]])
+           [0.  , 0.  , 0.25, 0.  ],
+           [0.  , 0.  , 0.  , 0.]])
 
     References
     ----------
@@ -899,13 +899,12 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
     >>> y = np.array([3,2,98,199]).reshape((-1,1))
     >>> C1 = sp.spatial.distance.cdist(x, x)
     >>> C2 = sp.spatial.distance.cdist(y, y)
-    >>> np.round(entropic_partial_gromov_wasserstein(C1, C2, a, b,50), 2)
+    >>> np.round(entropic_partial_gromov_wasserstein(C1, C2, a, b, 50), 2)
     array([[0.12, 0.13, 0.  , 0.  ],
            [0.13, 0.12, 0.  , 0.  ],
            [0.  , 0.  , 0.25, 0.  ],
            [0.  , 0.  , 0.  , 0.25]])
-    >>> np.round(entropic_partial_gromov_wasserstein(C1, C2, a, b, 50, m=0.25),
-                 2)
+    >>> np.round(entropic_partial_gromov_wasserstein(C1, C2, a, b, 50,0.25), 2)
     array([[0.02, 0.03, 0.  , 0.03],
            [0.03, 0.03, 0.  , 0.03],
            [0.  , 0.  , 0.03, 0.  ],
