@@ -501,7 +501,7 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     array([[0.  , 0.  , 0.  , 0.  ],
            [0.  , 0.  , 0.  , 0.  ],
            [0.  , 0.  , 0.25, 0.  ],
-           [0.  , 0.  , 0.  , 0.]])
+           [0.  , 0.  , 0.  , 0.  ]])
 
     References
     ----------
