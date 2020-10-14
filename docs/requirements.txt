@@ -1,0 +1,6 @@
+sphinx_gallery
+sphinx_rtd_theme
+numpydoc
+memory_profiler
+pillow
+networkx

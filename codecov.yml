@@ -1,0 +1,47 @@
+# Docs ref: https://docs.codecov.io/docs/codecovyml-reference
+# Validation check: $ curl --data-binary @codecov.yml https://codecov.io/validate
+
+
+codecov:
+  token: 057953e4-d263-41c0-913c-5d45c0371df9
+  bot: "codecov-io"
+  strict_yaml_branch: "yaml-config"
+  require_ci_to_pass: yes
+  notify:
+    wait_for_ci: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+  status:
+    project:
+      default:
+        base: auto    # target to compare against 
+        target: auto  # target "X%" coverage to hit on project
+        threshold: 1% # allow this much decrease from base
+        if_ci_failed: error
+    patch:
+      default:
+        base: auto      # target to compare against
+        target: 50%     # target "X%" coverage to hit on patch
+        # threshold: 50%  # allow this much decrease on patch
+    changes: false
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
+
+# https://docs.codecov.io/docs/ignoring-paths
+ignore:
+  - "ot/gpu/*"
+
+# https://docs.codecov.io/docs/pull-request-comments
+comment:
+  layout: header, diff, sunburst, uncovered
+  behavior: default
+  require_changes: true  # if true: only post the comment if coverage changes

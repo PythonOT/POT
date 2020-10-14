@@ -172,7 +172,7 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     return center_ot_dual(alpha, beta, a, b)
 
 
-def emd(a, b, M, numItermax=100000, log=False, dense=True, center_dual=True):
+def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
 
@@ -180,7 +180,9 @@ def emd(a, b, M, numItermax=100000, log=False, dense=True, center_dual=True):
         \gamma = arg\min_\gamma <\gamma,M>_F
 
         s.t. \gamma 1 = a
+
              \gamma^T 1= b
+
              \gamma\geq 0
     where :
 
@@ -207,10 +209,6 @@ def emd(a, b, M, numItermax=100000, log=False, dense=True, center_dual=True):
     log: bool, optional (default=False)
         If True, returns a dictionary containing the cost and dual
         variables. Otherwise returns only the optimal transportation matrix.
-    dense: boolean, optional (default=True)
-        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
-        Otherwise returns a sparse representation using scipy's `coo_matrix`
-        format.
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
         :ref:`center_ot_dual`.
@@ -267,24 +265,13 @@ def emd(a, b, M, numItermax=100000, log=False, dense=True, center_dual=True):
     asel = a != 0
     bsel = b != 0
 
-    if dense:
-        G, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
+    G, cost, u, v, result_code = emd_c(a, b, M, numItermax)
 
-        if center_dual:
-            u, v = center_ot_dual(u, v, a, b)
+    if center_dual:
+        u, v = center_ot_dual(u, v, a, b)
 
-        if np.any(~asel) or np.any(~bsel):
-            u, v = estimate_dual_null_weights(u, v, a, b, M)
-
-    else:
-        Gv, iG, jG, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
-        G = coo_matrix((Gv, (iG, jG)), shape=(a.shape[0], b.shape[0]))
-
-        if center_dual:
-            u, v = center_ot_dual(u, v, a, b)
-
-        if np.any(~asel) or np.any(~bsel):
-            u, v = estimate_dual_null_weights(u, v, a, b, M)
+    if np.any(~asel) or np.any(~bsel):
+        u, v = estimate_dual_null_weights(u, v, a, b, M)
 
     result_code_string = check_result(result_code)
     if log:
@@ -299,15 +286,17 @@ def emd(a, b, M, numItermax=100000, log=False, dense=True, center_dual=True):
 
 
 def emd2(a, b, M, processes=multiprocessing.cpu_count(),
-         numItermax=100000, log=False, dense=True, return_matrix=False,
+         numItermax=100000, log=False, return_matrix=False,
          center_dual=True):
     r"""Solves the Earth Movers distance problem and returns the loss
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F
+        \min_\gamma <\gamma,M>_F
 
         s.t. \gamma 1 = a
+
              \gamma^T 1= b
+
              \gamma\geq 0
     where :
 
@@ -338,10 +327,6 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
         variables. Otherwise returns only the optimal transportation cost.
     return_matrix: boolean, optional (default=False)
         If True, returns the optimal transportation matrix in the log.
-    dense: boolean, optional (default=True)
-        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
-        Otherwise returns a sparse representation using scipy's `coo_matrix`
-        format.
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
         :ref:`center_ot_dual`.
@@ -404,11 +389,8 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     if log or return_matrix:
         def f(b):
             bsel = b != 0
-            if dense:
-                G, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
-            else:
-                Gv, iG, jG, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
-                G = coo_matrix((Gv, (iG, jG)), shape=(a.shape[0], b.shape[0]))
+
+            G, cost, u, v, result_code = emd_c(a, b, M, numItermax)
 
             if center_dual:
                 u, v = center_ot_dual(u, v, a, b)
@@ -428,11 +410,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     else:
         def f(b):
             bsel = b != 0
-            if dense:
-                G, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
-            else:
-                Gv, iG, jG, cost, u, v, result_code = emd_c(a, b, M, numItermax, dense)
-                G = coo_matrix((Gv, (iG, jG)), shape=(a.shape[0], b.shape[0]))
+            G, cost, u, v, result_code = emd_c(a, b, M, numItermax)
 
             if center_dual:
                 u, v = center_ot_dual(u, v, a, b)
@@ -440,7 +418,6 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
             if np.any(~asel) or np.any(~bsel):
                 u, v = estimate_dual_null_weights(u, v, a, b, M)
 
-            result_code_string = check_result(result_code)
             check_result(result_code)
             return cost
 
@@ -458,26 +435,36 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
 def free_support_barycenter(measures_locations, measures_weights, X_init, b=None, weights=None, numItermax=100,
                             stopThr=1e-7, verbose=False, log=None):
-    """
-    Solves the free support (locations of the barycenters are optimized, not the weights) Wasserstein barycenter problem (i.e. the weighted Frechet mean for the 2-Wasserstein distance)
+    r"""
+    Solves the free support (locations of the barycenters are optimized, not the weights) Wasserstein barycenter problem (i.e. the weighted Frechet mean for the 2-Wasserstein distance), formally:
 
-    The function solves the Wasserstein barycenter problem when the barycenter measure is constrained to be supported on k atoms.
+    .. math::
+        \min_X \sum_{i=1}^N w_i W_2^2(b, X, a_i, X_i)
+
+    where :
+
+    - :math:`w \in \mathbb{(0, 1)}^{N}`'s are the barycenter weights and sum to one
+    - the :math:`a_i \in \mathbb{R}^{k_i}` are the empirical measures weights and sum to one for each :math:`i`
+    - the :math:`X_i \in \mathbb{R}^{k_i, d}` are the empirical measures atoms locations
+    - :math:`b \in \mathbb{R}^{k}` is the desired weights vector of the barycenter
+
     This problem is considered in [1] (Algorithm 2). There are two differences with the following codes:
+
     - we do not optimize over the weights
     - we do not do line search for the locations updates, we use i.e. theta = 1 in [1] (Algorithm 2). This can be seen as a discrete implementation of the fixed-point algorithm of [2] proposed in the continuous setting.
 
     Parameters
     ----------
-    measures_locations : list of (k_i,d) numpy.ndarray
+    measures_locations : list of N (k_i,d) numpy.ndarray
         The discrete support of a measure supported on k_i locations of a d-dimensional space (k_i can be different for each element of the list)
-    measures_weights : list of (k_i,) numpy.ndarray
+    measures_weights : list of N (k_i,) numpy.ndarray
         Numpy arrays where each numpy array has k_i non-negatives values summing to one representing the weights of each discrete input measure
 
     X_init : (k,d) np.ndarray
         Initialization of the support locations (on k atoms) of the barycenter
     b : (k,) np.ndarray
         Initialization of the weights of the barycenter (non-negatives, sum to 1)
-    weights : (k,) np.ndarray
+    weights : (N,) np.ndarray
         Initialization of the coefficients of the barycenter (non-negatives, sum to 1)
 
     numItermax : int, optional

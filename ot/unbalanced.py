@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Regularized Unbalanced OT
+Regularized Unbalanced OT solvers
 """
 
 # Author: Hicham Janati <hicham.janati@inria.fr>

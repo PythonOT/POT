@@ -1,5 +1,5 @@
 """
-Simple example datasets for OT
+Simple example datasets
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -147,8 +147,8 @@ def make_data_classif(dataset, n, nz=.5, theta=0, p=.5, random_state=None, **kwa
         n2 = np.sum(y == 2)
         x = np.zeros((n, 2))
 
-        x[y == 1, :] = get_2D_samples_gauss(n1, m1, nz, random_state=generator)
-        x[y == 2, :] = get_2D_samples_gauss(n2, m2, nz, random_state=generator)
+        x[y == 1, :] = make_2D_samples_gauss(n1, m1, nz, random_state=generator)
+        x[y == 2, :] = make_2D_samples_gauss(n2, m2, nz, random_state=generator)
 
         x = x.dot(rot)
 

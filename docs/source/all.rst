@@ -1,94 +1,36 @@
 
+.. _sphx_glr_api_reference:
 
-Python modules
-==============
+API and modules
+===============
 
-ot
---
+.. currentmodule:: ot
+
+
+:py:mod:`ot`:
+
+.. autosummary::
+   :toctree: gen_modules/
+   :template: module.rst
+
+   lp
+   bregman
+   smooth
+   gromov
+   optim
+   da
+   gpu
+   dr
+   utils
+   datasets
+   plot
+   stochastic
+   unbalanced
+   partial
+
+.. autosummary::
+   :toctree: ../modules/generated/
+   :template: module.rst
 
 .. automodule:: ot
    :members:
-
-ot.lp
------
-.. automodule:: ot.lp
-   :members:
-
-ot.bregman
-----------
-
-.. automodule:: ot.bregman
-   :members:
-
-ot.smooth
------
-.. automodule:: ot.smooth
-   :members:
-
-ot.gromov
-----------
-
-.. automodule:: ot.gromov
-   :members:
-
-
-ot.optim
---------
-
-.. automodule:: ot.optim
-   :members:
-
-ot.da
---------
-
-.. automodule:: ot.da
-  :members:
-
-ot.gpu
---------
-
-.. automodule:: ot.gpu
-  :members:
-
-ot.dr
---------
-
-.. automodule:: ot.dr
-  :members:
-
-
-ot.utils
---------
-
-.. automodule:: ot.utils
-   :members:
-
-ot.datasets
------------
-
-.. automodule:: ot.datasets
-   :members:
-
-ot.plot
--------
-
-.. automodule:: ot.plot
-   :members:
-
-ot.stochastic
--------------
-
-.. automodule:: ot.stochastic
-   :members:
-
-ot.unbalanced
--------------
-
-.. automodule:: ot.unbalanced
-  :members:
-  
-ot.partial
--------------
-
-.. automodule:: ot.partial
-  :members:

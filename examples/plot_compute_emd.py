@@ -4,8 +4,8 @@
 Plot multiple EMD
 =================
 
-Shows how to compute multiple EMD and Sinkhorn with two differnt
-ground metrics and plot their values for diffeent distributions.
+Shows how to compute multiple EMD and Sinkhorn with two different
+ground metrics and plot their values for different distributions.
 
 
 """
@@ -13,6 +13,8 @@ ground metrics and plot their values for diffeent distributions.
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #
 # License: MIT License
+
+# sphinx_gallery_thumbnail_number = 3
 
 import numpy as np
 import matplotlib.pylab as pl

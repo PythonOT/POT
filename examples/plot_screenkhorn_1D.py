@@ -4,8 +4,11 @@
 1D Screened optimal transport
 ===============================
 
-This example illustrates the computation of Screenkhorn:
-Screening Sinkhorn Algorithm for Optimal transport.
+This example illustrates the computation of Screenkhorn [26].
+
+[26] Alaya M. Z., Bérar M., Gasso G., Rakotomamonjy A. (2019).
+Screening Sinkhorn Algorithm for Regularized Optimal Transport,
+Advances in Neural Information Processing Systems 33 (NeurIPS).
 """
 
 # Author: Mokhtar Z. Alaya <mokhtarzahdi.alaya@gmail.com>

@@ -16,7 +16,7 @@ import scipy.linalg as linalg
 
 from .bregman import sinkhorn, jcpot_barycenter
 from .lp import emd
-from .utils import unif, dist, kernel, cost_normalization, label_normalization
+from .utils import unif, dist, kernel, cost_normalization, label_normalization, laplacian, dots
 from .utils import check_params, BaseEstimator
 from .unbalanced import sinkhorn_unbalanced
 from .optim import cg
@@ -748,6 +748,139 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
         return A, b
 
 
+def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, alpha=.5,
+                numItermax=100, stopThr=1e-9, numInnerItermax=100000,
+                stopInnerThr=1e-9, log=False, verbose=False):
+    r"""Solve the optimal transport problem (OT) with Laplacian regularization
+
+    .. math::
+        \gamma = arg\min_\gamma <\gamma,M>_F + eta\Omega_\alpha(\gamma)
+
+        s.t.\ \gamma 1 = a
+
+             \gamma^T 1= b
+
+             \gamma\geq 0
+
+    where:
+
+    - a and b are source and target weights (sum to 1)
+    - xs and xt are source and target samples
+    - M is the (ns,nt) metric cost matrix
+    - :math:`\Omega_\alpha` is the Laplacian regularization term
+      :math:`\Omega_\alpha = (1-\alpha)/n_s^2\sum_{i,j}S^s_{i,j}\|T(\mathbf{x}^s_i)-T(\mathbf{x}^s_j)\|^2+\alpha/n_t^2\sum_{i,j}S^t_{i,j}^'\|T(\mathbf{x}^t_i)-T(\mathbf{x}^t_j)\|^2`
+      with :math:`S^s_{i,j}, S^t_{i,j}` denoting source and target similarity matrices and :math:`T(\cdot)` being a barycentric mapping
+
+    The algorithm used for solving the problem is the conditional gradient algorithm as proposed in [5].
+
+    Parameters
+    ----------
+    a : np.ndarray (ns,)
+        samples weights in the source domain
+    b : np.ndarray (nt,)
+        samples weights in the target domain
+    xs : np.ndarray (ns,d)
+        samples in the source domain
+    xt : np.ndarray (nt,d)
+        samples in the target domain
+    M : np.ndarray (ns,nt)
+        loss matrix
+    sim : string, optional
+        Type of similarity ('knn' or 'gauss') used to construct the Laplacian.
+    sim_param : int or float, optional
+        Parameter (number of the nearest neighbors for sim='knn'
+        or bandwidth for sim='gauss') used to compute the Laplacian.
+    reg : string
+        Type of Laplacian regularization
+    eta : float
+        Regularization term for Laplacian regularization
+    alpha : float
+        Regularization term  for source domain's importance in regularization
+    numItermax : int, optional
+        Max number of iterations
+    stopThr : float, optional
+        Stop threshold on error (inner emd solver) (>0)
+    numInnerItermax : int, optional
+        Max number of iterations (inner CG solver)
+    stopInnerThr : float, optional
+        Stop threshold on error (inner CG solver) (>0)
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        record log if True
+
+    Returns
+    -------
+    gamma : (ns x nt) ndarray
+        Optimal transportation matrix for the given parameters
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    References
+    ----------
+
+    .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
+       "Optimal Transport for Domain Adaptation," in IEEE
+       Transactions on Pattern Analysis and Machine Intelligence ,
+       vol.PP, no.99, pp.1-1
+    .. [30] R. Flamary, N. Courty, D. Tuia, A. Rakotomamonjy,
+        "Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching,"
+         in NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
+
+    See Also
+    --------
+    ot.lp.emd : Unregularized OT
+    ot.optim.cg : General regularized OT
+
+    """
+    if not isinstance(sim_param, (int, float, type(None))):
+        raise ValueError(
+            'Similarity parameter should be an int or a float. Got {type} instead.'.format(type=type(sim_param).__name__))
+
+    if sim == 'gauss':
+        if sim_param is None:
+            sim_param = 1 / (2 * (np.mean(dist(xs, xs, 'sqeuclidean')) ** 2))
+        sS = kernel(xs, xs, method=sim, sigma=sim_param)
+        sT = kernel(xt, xt, method=sim, sigma=sim_param)
+
+    elif sim == 'knn':
+        if sim_param is None:
+            sim_param = 3
+
+        from sklearn.neighbors import kneighbors_graph
+
+        sS = kneighbors_graph(X=xs, n_neighbors=int(sim_param)).toarray()
+        sS = (sS + sS.T) / 2
+        sT = kneighbors_graph(xt, n_neighbors=int(sim_param)).toarray()
+        sT = (sT + sT.T) / 2
+    else:
+        raise ValueError('Unknown similarity type {sim}. Currently supported similarity types are "knn" and "gauss".'.format(sim=sim))
+
+    lS = laplacian(sS)
+    lT = laplacian(sT)
+
+    def f(G):
+        return alpha * np.trace(np.dot(xt.T, np.dot(G.T, np.dot(lS, np.dot(G, xt))))) \
+            + (1 - alpha) * np.trace(np.dot(xs.T, np.dot(G, np.dot(lT, np.dot(G.T, xs)))))
+
+    ls2 = lS + lS.T
+    lt2 = lT + lT.T
+    xt2 = np.dot(xt, xt.T)
+
+    if reg == 'disp':
+        Cs = -eta * alpha / xs.shape[0] * dots(ls2, xs, xt.T)
+        Ct = -eta * (1 - alpha) / xt.shape[0] * dots(xs, xt.T, lt2)
+        M = M + Cs + Ct
+
+    def df(G):
+        return alpha * np.dot(ls2, np.dot(G, xt2))\
+            + (1 - alpha) * np.dot(xs, np.dot(xs.T, np.dot(G, lt2)))
+
+    return cg(a, b, M, reg=eta, f=f, df=df, G0=None, numItermax=numItermax, numItermaxEmd=numInnerItermax,
+              stopThr=stopThr, stopThr2=stopInnerThr, verbose=verbose, log=log)
+
+
 def distribution_estimation_uniform(X):
     """estimates a uniform distribution from an array of samples X
 
@@ -775,7 +908,8 @@ class BaseTransport(BaseEstimator):
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
 
-    fit method should:
+    the fit method should:
+
     - estimate a cost matrix and store it in a `cost_` attribute
     - estimate a coupling matrix and store it in a `coupling_`
     attribute
@@ -800,7 +934,7 @@ class BaseTransport(BaseEstimator):
         Xs : array-like, shape (n_source_samples, n_features)
             The training input samples.
         ys : array-like, shape (n_source_samples,)
-            The class labels
+            The training class labels
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
@@ -861,7 +995,7 @@ class BaseTransport(BaseEstimator):
         Xs : array-like, shape (n_source_samples, n_features)
             The training input samples.
         ys : array-like, shape (n_source_samples,)
-            The class labels
+            The class labels for training samples
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
@@ -885,13 +1019,13 @@ class BaseTransport(BaseEstimator):
         Parameters
         ----------
         Xs : array-like, shape (n_source_samples, n_features)
-            The training input samples.
+            The source input samples.
         ys : array-like, shape (n_source_samples,)
-            The class labels
+            The class labels for source samples
         Xt : array-like, shape (n_target_samples, n_features)
-            The training input samples.
+            The target input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
+            The class labels for target. If some target samples are unlabeled, fill the
             yt's elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
@@ -952,7 +1086,7 @@ class BaseTransport(BaseEstimator):
         Parameters
         ----------
         ys : array-like, shape (n_source_samples,)
-            The class labels
+            The source class labels
 
         Returns
         -------
@@ -977,7 +1111,7 @@ class BaseTransport(BaseEstimator):
             D1 = np.zeros((n, len(ysTemp)))
 
             # perform label propagation
-            transp = self.coupling_ / np.sum(self.coupling_, 1)[:, None]
+            transp = self.coupling_ / np.sum(self.coupling_, 0, keepdims=True)
 
             # set nans to 0
             transp[~ np.isfinite(transp)] = 0
@@ -992,18 +1126,18 @@ class BaseTransport(BaseEstimator):
 
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None,
                           batch_size=128):
-        """Transports target samples Xt onto target samples Xs
+        """Transports target samples Xt onto source samples Xs
 
         Parameters
         ----------
         Xs : array-like, shape (n_source_samples, n_features)
-            The training input samples.
+            The source input samples.
         ys : array-like, shape (n_source_samples,)
-            The class labels
+            The source class labels
         Xt : array-like, shape (n_target_samples, n_features)
-            The training input samples.
+            The target input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
+            The target class labels. If some target samples are unlabeled, fill the
             yt's elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
@@ -1094,7 +1228,6 @@ class BaseTransport(BaseEstimator):
 
 
 class LinearTransport(BaseTransport):
-
     """ OT linear operator between empirical distributions
 
     The function estimates the optimal linear operator that aligns the two
@@ -1305,6 +1438,9 @@ class SinkhornTransport(BaseTransport):
     .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal
            Transport, Advances in Neural Information Processing Systems (NIPS)
            26, 2013
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
+            Sciences, 7(3), 1853-1882.
     """
 
     def __init__(self, reg_e=1., max_iter=1000,
@@ -1403,6 +1539,9 @@ class EMDTransport(BaseTransport):
     .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
            "Optimal Transport for Domain Adaptation," in IEEE Transactions
            on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
+            Sciences, 7(3), 1853-1882.
     """
 
     def __init__(self, metric="sqeuclidean", norm=None, log=False,
@@ -1510,7 +1649,9 @@ class SinkhornLpl1Transport(BaseTransport):
     .. [2] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
        Generalized conditional gradient: analysis of convergence
        and applications. arXiv preprint arXiv:1510.06567.
-
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
+            Sciences, 7(3), 1853-1882.
     """
 
     def __init__(self, reg_e=1., reg_cl=0.1,
@@ -1576,6 +1717,127 @@ class SinkhornLpl1Transport(BaseTransport):
         return self
 
 
+class EMDLaplaceTransport(BaseTransport):
+
+    """Domain Adapatation OT method based on Earth Mover's Distance with Laplacian regularization
+
+    Parameters
+    ----------
+    reg_type : string optional (default='pos')
+        Type of the regularization term: 'pos' and 'disp' for
+        regularization term defined in [2] and [6], respectively.
+    reg_lap : float, optional (default=1)
+        Laplacian regularization parameter
+    reg_src : float, optional (default=0.5)
+        Source relative importance in regularization
+    metric : string, optional (default="sqeuclidean")
+        The ground metric for the Wasserstein problem
+    norm : string, optional (default=None)
+        If given, normalize the ground metric to avoid numerical errors that
+        can occur with large metric values.
+    similarity : string, optional (default="knn")
+        The similarity to use either knn or gaussian
+    similarity_param : int or float, optional (default=None)
+        Parameter for the similarity: number of nearest neighbors or bandwidth
+        if similarity="knn" or "gaussian", respectively. If None is provided,
+        it is set to 3 or the average pairwise squared Euclidean distance, respectively.
+    max_iter : int, optional (default=100)
+        Max number of BCD iterations
+    tol : float, optional (default=1e-5)
+        Stop threshold on relative loss decrease (>0)
+    max_inner_iter : int, optional (default=10)
+        Max number of iterations (inner CG solver)
+    inner_tol : float, optional (default=1e-6)
+        Stop threshold on error (inner CG solver) (>0)
+    log : int, optional (default=False)
+        Controls the logs of the optimization algorithm
+    distribution_estimation : callable, optional (defaults to the uniform)
+        The kind of distribution estimation to employ
+    out_of_sample_map : string, optional (default="ferradans")
+        The kind of out of sample mapping to apply to transport samples
+        from a domain into another one. Currently the only possible option is
+        "ferradans" which uses the method proposed in [6].
+
+    Attributes
+    ----------
+    coupling_ : array-like, shape (n_source_samples, n_target_samples)
+        The optimal coupling
+
+    References
+    ----------
+    .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
+           "Optimal Transport for Domain Adaptation," in IEEE Transactions
+           on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+    .. [2] R. Flamary, N. Courty, D. Tuia, A. Rakotomamonjy,
+        "Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching,"
+         in NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
+            Sciences, 7(3), 1853-1882.
+    """
+
+    def __init__(self, reg_type='pos', reg_lap=1., reg_src=1., metric="sqeuclidean",
+                 norm=None, similarity="knn", similarity_param=None, max_iter=100, tol=1e-9,
+                 max_inner_iter=100000, inner_tol=1e-9, log=False, verbose=False,
+                 distribution_estimation=distribution_estimation_uniform,
+                 out_of_sample_map='ferradans'):
+        self.reg = reg_type
+        self.reg_lap = reg_lap
+        self.reg_src = reg_src
+        self.metric = metric
+        self.norm = norm
+        self.similarity = similarity
+        self.sim_param = similarity_param
+        self.max_iter = max_iter
+        self.tol = tol
+        self.max_inner_iter = max_inner_iter
+        self.inner_tol = inner_tol
+        self.log = log
+        self.verbose = verbose
+        self.distribution_estimation = distribution_estimation
+        self.out_of_sample_map = out_of_sample_map
+
+    def fit(self, Xs, ys=None, Xt=None, yt=None):
+        """Build a coupling matrix from source and target sets of samples
+        (Xs, ys) and (Xt, yt)
+
+        Parameters
+        ----------
+        Xs : array-like, shape (n_source_samples, n_features)
+            The training input samples.
+        ys : array-like, shape (n_source_samples,)
+            The class labels
+        Xt : array-like, shape (n_target_samples, n_features)
+            The training input samples.
+        yt : array-like, shape (n_target_samples,)
+            The class labels. If some target samples are unlabeled, fill the
+            yt's elements with -1.
+
+            Warning: Note that, due to this convention -1 cannot be used as a
+            class label
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
+        super(EMDLaplaceTransport, self).fit(Xs, ys, Xt, yt)
+
+        returned_ = emd_laplace(a=self.mu_s, b=self.mu_t, xs=self.xs_,
+                                xt=self.xt_, M=self.cost_, sim=self.similarity, sim_param=self.sim_param, reg=self.reg, eta=self.reg_lap,
+                                alpha=self.reg_src, numItermax=self.max_iter, stopThr=self.tol, numInnerItermax=self.max_inner_iter,
+                                stopInnerThr=self.inner_tol, log=self.log, verbose=self.verbose)
+
+        # coupling estimation
+        if self.log:
+            self.coupling_, self.log_ = returned_
+        else:
+            self.coupling_ = returned_
+            self.log_ = dict()
+        return self
+
+
 class SinkhornL1l2Transport(BaseTransport):
 
     """Domain Adapatation OT method based on sinkhorn algorithm +
@@ -1631,7 +1893,9 @@ class SinkhornL1l2Transport(BaseTransport):
     .. [2] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
        Generalized conditional gradient: analysis of convergence
        and applications. arXiv preprint arXiv:1510.06567.
-
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
+            Sciences, 7(3), 1853-1882.
     """
 
     def __init__(self, reg_e=1., reg_cl=0.1,
@@ -1923,7 +2187,9 @@ class UnbalancedSinkhornTransport(BaseTransport):
     .. [1] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016).
     Scaling algorithms for unbalanced transport problems. arXiv preprint
     arXiv:1607.05816.
-
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
+            Sciences, 7(3), 1853-1882.
     """
 
     def __init__(self, reg_e=1., reg_m=0.1, method='sinkhorn',
@@ -2035,6 +2301,11 @@ class JCPOTTransport(BaseTransport):
        "Optimal transport for multi-source domain adaptation under target shift",
        International Conference on Artificial Intelligence and Statistics (AISTATS),
        vol. 89, p.849-858, 2019.
+
+    .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+            Regularized discrete optimal transport. SIAM Journal on Imaging
+            Sciences, 7(3), 1853-1882.
+
 
     """
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Optimization algorithms for OT
+Generic solvers for regularized OT
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -69,6 +69,9 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
     alpha, phi1 = scalar_search_armijo(
         phi, phi0, derphi0, c1=c1, alpha0=alpha0)
 
+    # scalar_search_armijo can return alpha > 1
+    if alpha is not None:
+        alpha = min(1, alpha)
     return alpha, fc[0], phi1
 
 

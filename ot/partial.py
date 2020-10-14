@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Partial OT
+Partial OT solvers
 """
 
 # Author: Laetitia Chapel <laetitia.chapel@irisa.fr>

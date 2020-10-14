@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
+GPU implementation for several OT solvers and utility 
+functions. 
 
-This module provides GPU implementation for several OT solvers and utility 
-functions. The GPU backend in handled by `cupy 
+The GPU backend in handled by `cupy 
 <https://cupy.chainer.org/>`_.
 
 .. warning::

@@ -15,10 +15,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 import sys
 import warnings
-try:
-    from inspect import signature
-except ImportError:
-    from .externals.funcsigs import signature
+from inspect import signature
 
 __time_tic_toc = time.time()
 
@@ -47,6 +44,12 @@ def kernel(x1, x2, method='gaussian', sigma=1, **kwargs):
     if method.lower() in ['gaussian', 'gauss', 'rbf']:
         K = np.exp(-dist(x1, x2) / (2 * sigma**2))
     return K
+
+
+def laplacian(x):
+    """Compute Laplacian matrix"""
+    L = np.diag(np.sum(x, axis=0)) - x
+    return L
 
 
 def unif(n):

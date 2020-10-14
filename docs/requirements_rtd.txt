@@ -1,0 +1,14 @@
+sphinx_gallery
+numpydoc
+memory_profiler
+pillow
+networkx
+numpy
+scipy>=1.0
+cython
+matplotlib
+autograd
+pymanopt==0.2.4; python_version <'3'
+pymanopt; python_version >= '3'
+cvxopt
+scikit-learn
