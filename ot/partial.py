@@ -570,7 +570,7 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
         if a > 0:
             gamma = min(1, np.divide(-b, 2.0 * a))
         else:
-            if (a+b) < 0:
+            if (a + b) < 0:
                 gamma = 1
             else:
                 gamma = 0
