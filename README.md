@@ -29,6 +29,8 @@ It provides the following solvers:
 * Non regularized free support Wasserstein barycenters [20].
 * Unbalanced OT with KL relaxation distance and barycenter [10, 25].
 * Screening Sinkhorn Algorithm for OT [26].
+* JCPOT algorithm for multi-source domain adaptation with target shift [27].
+* Partial Wasserstein and Gromov-Wasserstein (exact [29] and entropic [3] formulations).
 
 Some demonstrations (both in Python and Jupyter Notebook format) are available in the examples folder.
 
@@ -257,3 +259,9 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 [25] Frogner C., Zhang C., Mobahi H., Araya-Polo M., Poggio T. (2015). [Learning with a Wasserstein Loss](http://cbcl.mit.edu/wasserstein/)  Advances in Neural Information Processing Systems (NIPS).
 
 [26] Alaya M. Z., Bérar M., Gasso G., Rakotomamonjy A. (2019). [Screening Sinkhorn Algorithm for Regularized Optimal Transport](https://papers.nips.cc/paper/9386-screening-sinkhorn-algorithm-for-regularized-optimal-transport), Advances in Neural Information Processing Systems 33 (NeurIPS).
+
+[27] Redko I., Courty N., Flamary R., Tuia D. (2019). [Optimal Transport for Multi-source Domain Adaptation under Target Shift](http://proceedings.mlr.press/v89/redko19a.html), Proceedings of the Twenty-Second International Conference on Artificial Intelligence and Statistics (AISTATS) 22, 2019.
+
+[28] Caffarelli, L. A., McCann, R. J. (2010). [Free boundaries in optimal transport and Monge-Ampere obstacle problems](http://www.math.toronto.edu/~mccann/papers/annals2010.pdf), Annals of mathematics, 673-730.
+
+[29] Chapel, L., Alaya, M., Gasso, G. (2020). [Partial Optimal Transport with Applications on Positive-Unlabeled Learning](https://arxiv.org/abs/2002.08276), Neural Information Processing Systems (NeurIPS), 2020.

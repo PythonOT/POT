@@ -28,6 +28,7 @@ a number of sub-modules and functions described below.
     - :any:`ot.plot` contains visualization functions
     - :any:`ot.stochastic` contains stochastic solvers for regularized OT.
     - :any:`ot.unbalanced` contains solvers for regularized unbalanced OT.
+    - :any:`ot.partial` contains solvers for partial OT.
 
 .. warning::
     The list of automatically imported sub-modules is as follows:
@@ -61,6 +62,7 @@ from . import gromov
 from . import smooth
 from . import stochastic
 from . import unbalanced
+from . import partial
 
 # OT functions
 from .lp import emd, emd2, emd_1d, emd2_1d, wasserstein_1d
