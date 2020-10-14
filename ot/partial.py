@@ -351,7 +351,6 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
 
     partial_gw, log_w = partial_wasserstein(a, b, M, m, nb_dummies, log=True,
                                             **kwargs)
-
     log_w['T'] = partial_gw
 
     if log:
