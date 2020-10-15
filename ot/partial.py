@@ -535,12 +535,12 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
 
     while (err > tol and cpt < numItermax):
 
-        Gprev = G0.copy()
+        Gprev = np.copy(G0)
 
         M = gwgrad_partial(C1, C2, G0)
         M_emd = np.zeros(dim_G_extended)
         M_emd[:len(p), :len(q)] = M
-        M_emd[-nb_dummies:, -nb_dummies:] = np.max(M) * 1e5
+        M_emd[-nb_dummies:, -nb_dummies:] = np.max(M) * 1e2
         M_emd = np.asarray(M_emd, dtype=np.float64)
 
         Gc, logemd = emd(p_extended, q_extended, M_emd, log=True, **kwargs)
@@ -563,20 +563,21 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
                                                  gwloss_partial(C1, C2, G0)))
 
         deltaG = G0 - Gprev
-        grad = gwgrad_partial(C1, C2, deltaG)
         a = gwloss_partial(C1, C2, deltaG)
-        b = 2 * np.sum(grad * Gprev)
-
-        if a > 0:
+        b = 2 * np.sum(M * deltaG)
+        if b > 0:  # due to numerical precision
+            gamma = 0
+            cpt = numItermax
+        elif a > 0:
             gamma = min(1, np.divide(-b, 2.0 * a))
         else:
             if (a + b) < 0:
                 gamma = 1
             else:
                 gamma = 0
+                cpt = numItermax
 
         G0 = Gprev + gamma * deltaG
-
         cpt += 1
 
     if log:
