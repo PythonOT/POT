@@ -51,10 +51,12 @@ def test_raise_errors():
         ot.partial.partial_gromov_wasserstein(M, M, p, q, m=-1, log=True)
 
     with pytest.raises(ValueError):
-        ot.partial.entropic_partial_gromov_wasserstein(M, M, p, q, reg=1, m=2, log=True)
+        ot.partial.entropic_partial_gromov_wasserstein(M, M, p, q, reg=1, m=2,
+                                                       log=True)
 
     with pytest.raises(ValueError):
-        ot.partial.entropic_partial_gromov_wasserstein(M, M, p, q, reg=1, m=-1, log=True)
+        ot.partial.entropic_partial_gromov_wasserstein(M, M, p, q, reg=1, m=-1,
+                                                       log=True)
 
 
 def test_partial_wasserstein_lagrange():
