@@ -1,4 +1,4 @@
 numpy
 scipy>=1.3
-cython>=0.29
+cython
 pytest
