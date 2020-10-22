@@ -426,7 +426,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     nb = b.shape[1]
 
     if processes > 1:
-        res = parmap(f, [b[:, i] for i in range(nb)], processes)
+        res = parmap(f, [b[:, i].copy() for i in range(nb)], processes)
     else:
         res = list(map(f, [b[:, i].copy() for i in range(nb)]))
 
