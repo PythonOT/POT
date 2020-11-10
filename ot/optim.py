@@ -431,7 +431,7 @@ def solve_1d_linesearch_quad(a, b, c):
     x : float
         The optimal value which leads to the minimal cost
     """
-    
+
     f0 = c
     df0 = b
     f1 = a + f0 + df0
