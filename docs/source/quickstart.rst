@@ -176,7 +176,7 @@ solution of the resulting optimization problem can be expressed as:
 where :math:`u` and :math:`v` are vectors and :math:`K=\exp(-M/\lambda)` where
 the :math:`\exp` is taken component-wise. In order to solve the optimization
 problem, on can use an alternative projection algorithm called Sinkhorn-Knopp that can be very
-efficient for large values if regularization.
+efficient for large values of regularization.
 
 The Sinkhorn-Knopp algorithm is implemented in :any:`ot.sinkhorn` and
 :any:`ot.sinkhorn2` that return respectively the OT matrix and the value of the

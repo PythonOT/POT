@@ -230,9 +230,9 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     ..  [28] Caffarelli, L. A., & McCann, R. J. (2010) Free boundaries in
         optimal transport and Monge-Ampere obstacle problems. Annals of
         mathematics, 673-730.
-    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
-        Wasserstein with Applications on Positive-Unlabeled Learning".
-        arXiv preprint arXiv:2002.08276.
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+        Transport with Applications on Positive-Unlabeled Learning".
+        NeurIPS.
 
     See Also
     --------
@@ -254,7 +254,7 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     b_extended = np.append(b, [(np.sum(a) - m) / nb_dummies] * nb_dummies)
     a_extended = np.append(a, [(np.sum(b) - m) / nb_dummies] * nb_dummies)
     M_extended = np.zeros((len(a_extended), len(b_extended)))
-    M_extended[-1, -1] = np.max(M) * 1e5
+    M_extended[-nb_dummies:, -nb_dummies:] = np.max(M) * 1e5
     M_extended[:len(a), :len(b)] = M
 
     gamma, log_emd = emd(a_extended, b_extended, M_extended, log=True,
@@ -344,14 +344,13 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     ..  [28] Caffarelli, L. A., & McCann, R. J. (2010) Free boundaries in
         optimal transport and Monge-Ampere obstacle problems. Annals of
         mathematics, 673-730.
-    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
-        Wasserstein with Applications on Positive-Unlabeled Learning".
-        arXiv preprint arXiv:2002.08276.
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+        Transport with Applications on Positive-Unlabeled Learning".
+        NeurIPS.
     """
 
     partial_gw, log_w = partial_wasserstein(a, b, M, m, nb_dummies, log=True,
                                             **kwargs)
-
     log_w['T'] = partial_gw
 
     if log:
@@ -501,14 +500,14 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     >>> np.round(partial_gromov_wasserstein(C1, C2, a, b, m=0.25),2)
     array([[0.  , 0.  , 0.  , 0.  ],
            [0.  , 0.  , 0.  , 0.  ],
-           [0.  , 0.  , 0.  , 0.  ],
-           [0.  , 0.  , 0.  , 0.25]])
+           [0.  , 0.  , 0.25, 0.  ],
+           [0.  , 0.  , 0.  , 0.  ]])
 
     References
     ----------
-    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
-        Wasserstein with Applications on Positive-Unlabeled Learning".
-        arXiv preprint arXiv:2002.08276.
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+        Transport with Applications on Positive-Unlabeled Learning".
+        NeurIPS.
 
     """
 
@@ -530,20 +529,18 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
 
     cpt = 0
     err = 1
-    eps = 1e-20
+
     if log:
         log = {'err': []}
 
     while (err > tol and cpt < numItermax):
 
-        Gprev = G0
+        Gprev = np.copy(G0)
 
         M = gwgrad_partial(C1, C2, G0)
-        M[M < eps] = np.quantile(M, thres)
-
         M_emd = np.zeros(dim_G_extended)
         M_emd[:len(p), :len(q)] = M
-        M_emd[-nb_dummies:, -nb_dummies:] = np.max(M) * 1e5
+        M_emd[-nb_dummies:, -nb_dummies:] = np.max(M) * 1e2
         M_emd = np.asarray(M_emd, dtype=np.float64)
 
         Gc, logemd = emd(p_extended, q_extended, M_emd, log=True, **kwargs)
@@ -565,6 +562,22 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
                 print('{:5d}|{:8e}|{:8e}'.format(cpt, err,
                                                  gwloss_partial(C1, C2, G0)))
 
+        deltaG = G0 - Gprev
+        a = gwloss_partial(C1, C2, deltaG)
+        b = 2 * np.sum(M * deltaG)
+        if b > 0:  # due to numerical precision
+            gamma = 0
+            cpt = numItermax
+        elif a > 0:
+            gamma = min(1, np.divide(-b, 2.0 * a))
+        else:
+            if (a + b) < 0:
+                gamma = 1
+            else:
+                gamma = 0
+                cpt = numItermax
+
+        G0 = Gprev + gamma * deltaG
         cpt += 1
 
     if log:
@@ -665,9 +678,9 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
 
     References
     ----------
-    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
-        Wasserstein with Applications on Positive-Unlabeled Learning".
-        arXiv preprint arXiv:2002.08276.
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+        Transport with Applications on Positive-Unlabeled Learning".
+        NeurIPS.
 
     """
 
@@ -887,12 +900,12 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
     >>> y = np.array([3,2,98,199]).reshape((-1,1))
     >>> C1 = sp.spatial.distance.cdist(x, x)
     >>> C2 = sp.spatial.distance.cdist(y, y)
-    >>> np.round(entropic_partial_gromov_wasserstein(C1, C2, a, b,50), 2)
+    >>> np.round(entropic_partial_gromov_wasserstein(C1, C2, a, b, 50), 2)
     array([[0.12, 0.13, 0.  , 0.  ],
            [0.13, 0.12, 0.  , 0.  ],
            [0.  , 0.  , 0.25, 0.  ],
            [0.  , 0.  , 0.  , 0.25]])
-    >>> np.round(entropic_partial_gromov_wasserstein(C1, C2, a, b, 50, m=0.25), 2)
+    >>> np.round(entropic_partial_gromov_wasserstein(C1, C2, a, b, 50,0.25), 2)
     array([[0.02, 0.03, 0.  , 0.03],
            [0.03, 0.03, 0.  , 0.03],
            [0.  , 0.  , 0.03, 0.  ],
@@ -910,9 +923,9 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
-    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
-        Wasserstein with Applications on Positive-Unlabeled Learning".
-        arXiv preprint arXiv:2002.08276.
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+        Transport with Applications on Positive-Unlabeled Learning".
+        NeurIPS.
 
     See Also
     --------
@@ -1044,9 +1057,9 @@ def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
-    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2019). "Partial Gromov-
-        Wasserstein with Applications on Positive-Unlabeled Learning".
-        arXiv preprint arXiv:2002.08276.
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+        Transport with Applications on Positive-Unlabeled Learning".
+        NeurIPS.
     """
 
     partial_gw, log_gw = entropic_partial_gromov_wasserstein(C1, C2, p, q, reg,
