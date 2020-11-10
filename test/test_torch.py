@@ -6,7 +6,7 @@
 
 import pytest
 import numpy as np
-
+import sys
 import ot
 
 try:  # test if autograd and pymanopt are installed
@@ -21,6 +21,9 @@ try:  # test if autograd and pymanopt are installed
         lst_devices.append('cuda')
 
 except ImportError:
+    nogo = True
+
+if sys.platform.startswith('win32'):
     nogo = True
 
 
