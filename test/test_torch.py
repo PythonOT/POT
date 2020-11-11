@@ -6,7 +6,6 @@
 
 import pytest
 import numpy as np
-import sys
 import ot
 
 try:  # test if torch is installed
