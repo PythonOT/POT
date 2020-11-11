@@ -20,6 +20,7 @@ API and modules
    optim
    da
    gpu
+   torch
    dr
    utils
    datasets
