@@ -20,10 +20,7 @@ try:  # test if autograd and pymanopt are installed
     if torch.cuda.is_available():
         lst_devices.append('cuda')
 
-except ImportError:
-    nogo = True
-
-if sys.platform.startswith('win32'):
+except (ImportError, OSError):
     nogo = True
 
 
