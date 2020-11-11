@@ -82,13 +82,13 @@ def test_ot_loss_grad():
     for dtype in lst_types:
         for device in lst_devices:
 
-            x = torch.randn(n, 2, dtype=dtype, device=device, requires_grad=True)
-            y = torch.randn(n, 2, dtype=dtype, device=device, requires_grad=True)
-
-            a = ot.torch.unif(n, dtype=dtype, device=device, requires_grad=True)
-            b = ot.torch.unif(n, dtype=dtype, device=device, requires_grad=True)
-
             for metric in lst_metrics:
+
+                x = torch.randn(n, 2, dtype=dtype, device=device, requires_grad=True)
+                y = torch.randn(n, 2, dtype=dtype, device=device, requires_grad=True)
+
+                a = ot.torch.unif(n, dtype=dtype, device=device, requires_grad=True)
+                b = ot.torch.unif(n, dtype=dtype, device=device, requires_grad=True)
 
                 M = ot.torch.dist(x, y, metric)
                 loss = ot.torch.ot_loss(a, b, M)
@@ -96,6 +96,9 @@ def test_ot_loss_grad():
                 loss.backward()
 
                 assert x.grad is not None
+                assert y.grad is not None
+                assert a.grad is not None
+                assert b.grad is not None
 
                 assert float(loss) >= 0
 
