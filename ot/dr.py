@@ -109,13 +109,13 @@ def fda(X, y, p=2, reg=1e-16):
 
 
 def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None):
-    """
+    r"""
     Wasserstein Discriminant Analysis [11]_
 
     The function solves the following optimization problem:
 
     .. math::
-        P = \\text{arg}\min_P \\frac{\\sum_i W(PX^i,PX^i)}{\\sum_{i,j\\neq i} W(PX^i,PX^j)}
+        P = \text{arg}\min_P \\frac{\sum_i W(PX^i,PX^i)}{\sum_{i,j\neq i} W(PX^i,PX^j)}
 
     where :
 

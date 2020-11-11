@@ -73,6 +73,34 @@ def test_ot_loss():
 
 
 @pytest.mark.skipif(nogo, reason="Missing pytorch")
+def test_ot_loss_grad():
+
+    n = 10
+
+    lst_metrics = ['sqeuclidean', 'euclidean', 'cityblock', 0, 0.5, 1, 2, 5]
+
+    for dtype in lst_types:
+        for device in lst_devices:
+
+            x = torch.randn(n, 2, dtype=dtype, device=device, requires_grad=True)
+            y = torch.randn(n, 2, dtype=dtype, device=device, requires_grad=True)
+
+            a = ot.torch.unif(n, dtype=dtype, device=device, requires_grad=True)
+            b = ot.torch.unif(n, dtype=dtype, device=device, requires_grad=True)
+
+            for metric in lst_metrics:
+
+                M = ot.torch.dist(x, y, metric)
+                loss = ot.torch.ot_loss(a, b, M)
+
+                loss.backward()
+
+                assert x.grad is not None
+
+                assert float(loss) >= 0
+
+
+@pytest.mark.skipif(nogo, reason="Missing pytorch")
 def test_ot_solve():
 
     n = 10
