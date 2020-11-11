@@ -6,7 +6,6 @@
 
 import pytest
 import numpy as np
-import sys
 import ot
 
 try:  # test if autograd and pymanopt are installed
@@ -20,7 +19,7 @@ try:  # test if autograd and pymanopt are installed
     if torch.cuda.is_available():
         lst_devices.append('cuda')
 
-except (ImportError, OSError):
+except BaseException:
     nogo = True
 
 
