@@ -10,18 +10,17 @@ import sys
 import ot
 
 try:  # test if torch is installed
-    if not sys.platform.endswith('win32'):  # and not windows
-        import ot.torch
-        import torch
-        nogo = False
 
-        lst_types = [torch.float32, torch.float64]
+    import ot.torch
+    import torch
+    nogo = False
 
-        lst_devices = ['cpu']
-        if torch.cuda.is_available():
-            lst_devices.append('cuda')
-    else:
-        nogo = True
+    lst_types = [torch.float32, torch.float64]
+
+    lst_devices = ['cpu']
+    if torch.cuda.is_available():
+        lst_devices.append('cuda')
+
 
 except BaseException:
     nogo = True
