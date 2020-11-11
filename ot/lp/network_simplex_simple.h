@@ -34,7 +34,8 @@
 #endif
 
 
-#define EPSILON 2.2204460492503131e-15
+//#define EPSILON 2.2204460492503131e-14
+#define EPSILON 1.1e-7
 #define _EPSILON 1e-8
 #define MAX_DEBUG_ITER 100000
 
