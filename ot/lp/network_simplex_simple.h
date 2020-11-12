@@ -34,8 +34,8 @@
 #endif
 
 
-//#define EPSILON 2.2204460492503131e-14
-#define EPSILON 1.1e-7
+#define EPSILON 2.2204460492503131e-15
+//#define EPSILON 1.1e-7
 #define _EPSILON 1e-8
 #define MAX_DEBUG_ITER 100000
 
@@ -1508,7 +1508,7 @@ namespace lemon {
 			if( retVal == OPTIMAL){
                 for (int e = _search_arc_num; e != _all_arc_num; ++e) {
                     if (_flow[e] != 0){
-                        if (abs(_flow[e]) > EPSILON)
+                        if (fabs(_flow[e]) > _EPSILON)
                             return INFEASIBLE;
                         else
                             _flow[e]=0;
