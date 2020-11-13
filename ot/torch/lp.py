@@ -43,17 +43,11 @@ class OptimalTransportLossFunction(Function):
     @staticmethod
     def backward(ctx, grad_output):
 
-        grad_a0, grad_b0, grad_M0 = ctx.saved_tensors
-        grad_a = grad_b = grad_M = None
+        grad_a, grad_b, grad_M = ctx.saved_tensors
 
-        if ctx.needs_input_grad[0]:
-            grad_a = grad_a0
-        if ctx.needs_input_grad[1]:
-            grad_b = grad_b0
-        if ctx.needs_input_grad[2]:
-            grad_M = grad_M0
+        print(grad_a)
 
-        return grad_a, grad_b, grad_M, None  # last one is param
+        return grad_a, grad_b, grad_M, None  # last one is parameter
 
 
 def ot_loss(a, b, M, num_iter_max=100000):

@@ -27,7 +27,7 @@ def unif(n, dtype=None, device=None, requires_grad=False):
 
 
     """
-    return torch.ones(n, dtype=dtype, device=device, requires_grad=requires_grad) / n
+    return torch.full((n,), 1.0 / n, dtype=dtype, device=device, requires_grad=requires_grad)
 
 
 def dist(x1, x2, metric="sqeuclidean"):
