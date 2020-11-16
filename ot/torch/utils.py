@@ -10,7 +10,7 @@ import torch
 # License: MIT License
 
 def unif(n, dtype=None, device=None, requires_grad=False):
-    """ return a uniform histogram of length n (simplex)
+    """ returns a uniform histogram of length n (simplex)
 
     Parameters
     ----------
@@ -68,3 +68,24 @@ def dist(x1, x2, metric="sqeuclidean"):
     else:
         raise ValueError("metric '{}' is not a valid option.\n".format(metric))
     return torch.cdist(x1, x2, p=p)
+
+
+def proj_simplex(v, z=1):
+    """Orthogonal projection on the simplex along axix 0 """
+    n = v.shape[0]
+    if v.ndimension() == 1:
+        d1 = 1
+        v = v[:, None]
+    else:
+        d1 = 0
+    u, indices = torch.sort(v, dim=0, descending=True)
+    cssv = torch.cumsum(u, dim=0) - z
+    ind = torch.arange(n, device=v.device)[:, None].type_as(v) + 1
+    cond = u - cssv / ind > 0
+    rho = cond.sum(0)
+    theta = cssv[rho - 1, range(v.shape[1])] / (rho)
+    w = torch.max(v - theta[None, :], torch.zeros_like(v))
+    if d1:
+        return w[:, 0]
+    else:
+        return w

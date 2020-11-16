@@ -71,6 +71,29 @@ def test_ot_loss():
 
 
 @pytest.mark.skipif(nogo, reason="Missing pytorch")
+def test_proj_simplex():
+
+    n = 10
+
+    for dtype in lst_types:
+        for device in lst_devices:
+
+            x = torch.randn(n, dtype=dtype, device=device)
+
+            xp = ot.torch.proj_simplex(x)
+
+            assert torch.all(xp >= 0)
+            assert torch.allclose(xp.sum(), torch.tensor(1.0, dtype=dtype, device=device))
+
+            x = torch.randn(n, 3, dtype=dtype, device=device)
+
+            xp = ot.torch.proj_simplex(x)
+
+            assert torch.all(xp >= 0)
+            assert torch.allclose(xp.sum(0), torch.ones(3, dtype=dtype, device=device))
+
+
+@pytest.mark.skipif(nogo, reason="Missing pytorch")
 def test_ot_loss_grad():
 
     n = 10
