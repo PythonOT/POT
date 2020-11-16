@@ -20,7 +20,6 @@ class OptimalTransportLossFunction(Function):
     @staticmethod
     # bias is an optional argument
     def forward(ctx, a, b, M, num_iter_max=100000):
-
         # convert to numpy
         a2 = a.detach().cpu().numpy().astype(np.float64)
         b2 = b.detach().cpu().numpy().astype(np.float64)
@@ -42,7 +41,6 @@ class OptimalTransportLossFunction(Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-
         grad_a, grad_b, grad_M = ctx.saved_tensors
 
         print(grad_a)
@@ -56,7 +54,6 @@ def ot_loss(a, b, M, num_iter_max=100000):
 
 
 def ot_solve(a, b, M, num_iter_max=100000, log=False):
-
     a2 = a.detach().cpu().numpy().astype(np.float64)
     b2 = b.detach().cpu().numpy().astype(np.float64)
     M2 = M.detach().cpu().numpy().astype(np.float64)
@@ -79,3 +76,64 @@ def ot_solve(a, b, M, num_iter_max=100000, log=False):
         G = emd(a2, b2, M2, log=False, numItermax=num_iter_max)
 
         return torch.from_numpy(G).type_as(M)
+
+
+def _emd_1d(w_x: torch.Tensor, w_y: torch.Tensor, x: torch.Tensor, y: torch.Tensor, p: int):
+    """EMD 1D vectorised along x and y first dimension"""
+    k = x.shape[0]  # type: int
+
+    n = x.shape[1]  # type: int
+    m = y.shape[1]  # type: int
+    w_x = w_x.repeat(k, 1)
+    w_y = w_y.repeat(k, 1)
+
+    sorted_x, idx_x = torch.sort(x, dim=1)
+    sorted_y, idx_y = torch.sort(y, dim=1)
+
+    sorted_w_x = torch.gather(w_x, 1, idx_x)  # type: torch.Tensor
+    sorted_w_y = torch.gather(w_y, 1, idx_y)  # type: torch.Tensor
+
+    sorted_w_x = torch.reshape(sorted_w_x, (-1,))
+    sorted_w_y = torch.reshape(sorted_w_y, (-1,))
+
+    finished = torch.zeros(k, dtype=torch.bool)
+    cost = torch.zeros(k, dtype=x.dtype)
+
+    i = torch.zeros(k, dtype=torch.int64)  # type: torch.Tensor
+    j = torch.zeros(k, dtype=torch.int64)  # type: torch.Tensor
+    max_i = torch.tensor(n - 1, dtype=torch.int64)
+    max_j = torch.tensor(m - 1, dtype=torch.int64)
+
+    w_i = sorted_w_x[0]  # type: torch.Tensor
+    w_j = sorted_w_y[0]  # type: torch.Tensor
+
+    while torch.any(~finished):
+        diff = torch.gather(sorted_x, 1, torch.reshape(i, (k, 1))) - torch.gather(sorted_y, 1, torch.reshape(j, (k, 1)))
+        m_ij = torch.reshape(torch.abs(diff ** p), (k,))
+
+        update_i = torch.logical_or(torch.lt(w_i, w_j), torch.eq(j, m - 1))
+
+        next_cost = torch.where(update_i, cost + m_ij * w_i, cost + m_ij * w_j)
+        next_i = torch.where(update_i, i + 1, i)
+        next_j = torch.where(update_i, j, j + 1)
+        next_w_i = torch.where(update_i, sorted_w_x[torch.minimum(next_i, max_i)], w_i - w_j)
+        next_w_j = torch.where(update_i, w_j - w_i, sorted_w_y[torch.minimum(next_j, max_j)])
+
+        cost = torch.where(finished, cost, next_cost)
+        i = torch.where(finished, i, next_i)
+        j = torch.where(finished, j, next_j)
+        w_i = torch.where(finished, w_i, next_w_i)
+        w_j = torch.where(finished, w_j, next_w_j)
+
+        finished = torch.logical_or(torch.eq(i, n), torch.eq(j, m))
+
+    return cost
+
+
+def emd_1d(w_x: torch.Tensor, w_y: torch.Tensor, x: torch.Tensor, y: torch.Tensor, p: int):
+    """EMD 1D"""
+    assert w_x.shape[-1] == x.shape[-1]
+    assert w_y.shape[-1] == y.shape[-1]
+    w_x = w_x / w_x.sum()
+    w_y = w_y / w_y.sum()
+    return _emd_1d(w_x, w_y, x, y, p)

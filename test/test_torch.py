@@ -12,6 +12,7 @@ try:  # test if torch is installed
 
     import ot.torch
     import torch
+
     nogo = False
 
     lst_types = [torch.float32, torch.float64]
@@ -27,7 +28,6 @@ except BaseException:
 
 @pytest.mark.skipif(nogo, reason="Missing pytorch")
 def test_dist():
-
     n = 200
 
     lst_metrics = ['sqeuclidean', 'euclidean', 'cityblock', 0, 0.5, 1, 2, 5]
@@ -39,7 +39,6 @@ def test_dist():
             y = torch.randn(n, 2, dtype=dtype, device=device)
 
             for metric in lst_metrics:
-
                 M = ot.torch.dist(x, y, metric)
 
                 assert M.shape[0] == n
@@ -48,7 +47,6 @@ def test_dist():
 
 @pytest.mark.skipif(nogo, reason="Missing pytorch")
 def test_ot_loss():
-
     n = 10
 
     lst_metrics = ['sqeuclidean', 'euclidean', 'cityblock', 0, 0.5, 1, 2, 5]
@@ -63,7 +61,6 @@ def test_ot_loss():
             b = ot.torch.unif(n, dtype=dtype, device=device)
 
             for metric in lst_metrics:
-
                 M = ot.torch.dist(x, y, metric)
                 loss = ot.torch.ot_loss(a, b, M)
 
@@ -72,12 +69,10 @@ def test_ot_loss():
 
 @pytest.mark.skipif(nogo, reason="Missing pytorch")
 def test_proj_simplex():
-
     n = 10
 
     for dtype in lst_types:
         for device in lst_devices:
-
             x = torch.randn(n, dtype=dtype, device=device)
 
             xp = ot.torch.proj_simplex(x)
@@ -95,7 +90,6 @@ def test_proj_simplex():
 
 @pytest.mark.skipif(nogo, reason="Missing pytorch")
 def test_ot_loss_grad():
-
     n = 10
 
     lst_metrics = ['sqeuclidean', 'euclidean', 'cityblock', 0, 0.5, 1, 2, 5]
@@ -104,7 +98,6 @@ def test_ot_loss_grad():
         for device in lst_devices:
 
             for metric in lst_metrics:
-
                 x = torch.randn(n, 2, dtype=dtype, device=device, requires_grad=True)
                 y = torch.randn(n, 2, dtype=dtype, device=device, requires_grad=True)
 
@@ -126,7 +119,6 @@ def test_ot_loss_grad():
 
 @pytest.mark.skipif(nogo, reason="Missing pytorch")
 def test_ot_solve():
-
     n = 10
 
     lst_metrics = ['sqeuclidean', 'euclidean', 'cityblock', 0, 0.5, 1, 2, 5]
@@ -141,9 +133,34 @@ def test_ot_solve():
             b = ot.torch.unif(n, dtype=dtype, device=device)
 
             for metric in lst_metrics:
-
                 M = ot.torch.dist(x, y, metric)
                 G = ot.torch.ot_solve(a, b, M)
 
                 np.testing.assert_allclose(ot.unif(n), G.sum(1).cpu().numpy())
                 np.testing.assert_allclose(ot.unif(n), G.sum(0).cpu().numpy())  # cf convergence sinkhorn
+
+
+@pytest.mark.skipif(nogo, reason="Missing pytorch")
+def test_emd1d():
+    torch.random.manual_seed(42)
+    n = 10
+    k = 5
+    ps = [1, 2, 3]
+
+    for dtype in lst_types:
+        for device in lst_devices:
+
+            x = torch.randn(k, n, dtype=dtype, device=device)
+            y = torch.randn(k, n, dtype=dtype, device=device)
+
+            a = ot.torch.unif(n, dtype=dtype, device=device)
+            b = ot.torch.unif(n, dtype=dtype, device=device)
+
+            for p in ps:
+                cpp_cost = np.zeros(k)
+                torch_cost = ot.torch.lp.emd_1d(a, b, x, y, p)
+                for i in range(k):
+                    cpp_cost[i] = ot.lp.emd2_1d(x[i].cpu().numpy(), y[i].cpu().numpy(), (a / a.sum()).cpu().numpy(),
+                                                (b / b.sum()).cpu().numpy(), "minkowski", p=p)
+
+                np.testing.assert_allclose(cpp_cost, torch_cost.cpu().numpy(), atol=1e-7)
