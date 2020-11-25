@@ -141,9 +141,11 @@ def test_ot_solve():
 
 
 @pytest.mark.skipif(nogo, reason="Missing pytorch")
-def test_emd1d():
+@pytest.mark.parametrize("random_weights", [True, False])
+def test_emd1d(random_weights):
     torch.random.manual_seed(42)
     n = 10
+    m = 15
     k = 5
     ps = [1, 2, 3]
 
@@ -151,16 +153,21 @@ def test_emd1d():
         for device in lst_devices:
 
             x = torch.randn(k, n, dtype=dtype, device=device)
-            y = torch.randn(k, n, dtype=dtype, device=device)
-
-            a = ot.torch.unif(n, dtype=dtype, device=device)
-            b = ot.torch.unif(n, dtype=dtype, device=device)
+            y = torch.randn(k, m, dtype=dtype, device=device)
+            if random_weights:
+                a = torch.rand(n, dtype=dtype, device=device)
+                b = torch.rand(m, dtype=dtype, device=device)
+                a = a / torch.sum(a)
+                b = b / torch.sum(b)
+                np_a = a.cpu().numpy()
+                np_b = b.cpu().numpy()
+            else:
+                a = b = np_a = np_b = None
 
             for p in ps:
-                cpp_cost = np.zeros(k)
-                torch_cost = ot.torch.lp.emd_1d(a, b, x, y, p)
+                cpu_cost = np.zeros(k)
+                torch_cost = ot.torch.lp.emd1D_loss(x, y, a, b, p)
                 for i in range(k):
-                    cpp_cost[i] = ot.lp.emd2_1d(x[i].cpu().numpy(), y[i].cpu().numpy(), (a / a.sum()).cpu().numpy(),
-                                                (b / b.sum()).cpu().numpy(), "minkowski", p=p)
+                    cpu_cost[i] = ot.lp.emd2_1d(x[i].cpu().numpy(), y[i].cpu().numpy(), np_a, np_b, "minkowski", p=p)
 
-                np.testing.assert_allclose(cpp_cost, torch_cost.cpu().numpy(), atol=1e-7)
+                np.testing.assert_allclose(cpu_cost, torch_cost.cpu().numpy(), atol=1e-6)

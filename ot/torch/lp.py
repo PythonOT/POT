@@ -6,6 +6,8 @@ import numpy as np
 import torch
 from torch.autograd import Function
 from .. import emd
+from torch.nn.functional import pad
+from .utils import quantile_function
 
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -78,62 +80,67 @@ def ot_solve(a, b, M, num_iter_max=100000, log=False):
         return torch.from_numpy(G).type_as(M)
 
 
-def _emd_1d(w_x: torch.Tensor, w_y: torch.Tensor, x: torch.Tensor, y: torch.Tensor, p: int):
-    """EMD 1D vectorised along x and y first dimension"""
-    k = x.shape[0]  # type: int
+def emd1D_loss(u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True):
+    r"""
+    Computes the 1 dimensional earth moving distance between two empirical distributions
+    ..math:
+        EMD &= \int_0^1 |cdf_u^{-1}(q)  cdf_v^{-1}(q)|^p dq
 
-    n = x.shape[1]  # type: int
-    m = y.shape[1]  # type: int
-    w_x = w_x.repeat(k, 1)
-    w_y = w_y.repeat(k, 1)
+    We do so in a vectorized way by first building the individual quantile functions then integrating them.
+    This has a theoretically higher complexity than the core OT implementation but behaves better with PyTorch
 
-    sorted_x, idx_x = torch.sort(x, dim=1)
-    sorted_y, idx_y = torch.sort(y, dim=1)
+    Parameters
+    ----------
+    u_values: torch.Tensor (..., n)
+        locations of the first empirical distribution
+    v_values: torch.Tensor (..., m)
+        locations of the second empirical distribution
+    u_weights: torch.Tensor (..., n), optional
+        weights of the first empirical distribution, if None then uniform weights are used
+    v_weights: torch.Tensor (..., n), optional
+        weights of the second empirical distribution, if None then uniform weights are used
+    p: int, optional
+        order of the ground metric used, default is 1
+    require_sort: bool, optional
+        Are the locations sorted along the last dimension already
 
-    sorted_w_x = torch.gather(w_x, 1, idx_x)  # type: torch.Tensor
-    sorted_w_y = torch.gather(w_y, 1, idx_y)  # type: torch.Tensor
+    Returns
+    -------
+    cost: torch.Tensor (...,)
+        the batched EMD
 
-    sorted_w_x = torch.reshape(sorted_w_x, (-1,))
-    sorted_w_y = torch.reshape(sorted_w_y, (-1,))
+    """
+    n = u_values.shape[-1]
+    m = v_values.shape[-1]
 
-    finished = torch.zeros(k, dtype=torch.bool)
-    cost = torch.zeros(k, dtype=x.dtype)
+    device = u_values.device
+    dtype = u_values.dtype
 
-    i = torch.zeros(k, dtype=torch.int64)  # type: torch.Tensor
-    j = torch.zeros(k, dtype=torch.int64)  # type: torch.Tensor
-    max_i = torch.tensor(n - 1, dtype=torch.int64)
-    max_j = torch.tensor(m - 1, dtype=torch.int64)
+    if u_weights is None:
+        u_weights = torch.full((n,), 1 / n, dtype=dtype, device=device)
 
-    w_i = sorted_w_x[0]  # type: torch.Tensor
-    w_j = sorted_w_y[0]  # type: torch.Tensor
+    if v_weights is None:
+        v_weights = torch.full((m,), 1 / m, dtype=dtype, device=device)
 
-    while torch.any(~finished):
-        diff = torch.gather(sorted_x, 1, torch.reshape(i, (k, 1))) - torch.gather(sorted_y, 1, torch.reshape(j, (k, 1)))
-        m_ij = torch.reshape(torch.abs(diff ** p), (k,))
+    if require_sort:
+        u_values, u_sorter = torch.sort(u_values, -1)
+        v_values, v_sorter = torch.sort(v_values, -1)
 
-        update_i = torch.logical_or(torch.lt(w_i, w_j), torch.eq(j, m - 1))
+        u_weights = u_weights[..., u_sorter]
+        v_weights = v_weights[..., v_sorter]
 
-        next_cost = torch.where(update_i, cost + m_ij * w_i, cost + m_ij * w_j)
-        next_i = torch.where(update_i, i + 1, i)
-        next_j = torch.where(update_i, j, j + 1)
-        next_w_i = torch.where(update_i, sorted_w_x[torch.minimum(next_i, max_i)], w_i - w_j)
-        next_w_j = torch.where(update_i, w_j - w_i, sorted_w_y[torch.minimum(next_j, max_j)])
+    u_cumweights = torch.cumsum(u_weights, -1)
+    v_cumweights = torch.cumsum(v_weights, -1)
 
-        cost = torch.where(finished, cost, next_cost)
-        i = torch.where(finished, i, next_i)
-        j = torch.where(finished, j, next_j)
-        w_i = torch.where(finished, w_i, next_w_i)
-        w_j = torch.where(finished, w_j, next_w_j)
+    qs, _ = torch.sort(torch.cat((u_cumweights, v_cumweights), -1), -1)
 
-        finished = torch.logical_or(torch.eq(i, n), torch.eq(j, m))
+    u_quantiles = quantile_function(qs, u_cumweights, u_values)
+    v_quantiles = quantile_function(qs, v_cumweights, v_values)
 
-    return cost
+    qs = pad(qs, (1, 0))
+    delta = qs[..., 1:] - qs[..., :-1]
+    diff_quantiles = torch.abs(u_quantiles - v_quantiles)
 
-
-def emd_1d(w_x: torch.Tensor, w_y: torch.Tensor, x: torch.Tensor, y: torch.Tensor, p: int):
-    """EMD 1D"""
-    assert w_x.shape[-1] == x.shape[-1]
-    assert w_y.shape[-1] == y.shape[-1]
-    w_x = w_x / w_x.sum()
-    w_y = w_y / w_y.sum()
-    return _emd_1d(w_x, w_y, x, y, p)
+    if p == 1:
+        return torch.sum(delta * torch.abs(diff_quantiles), dim=-1)
+    return torch.sum(delta * torch.pow(diff_quantiles, p), dim=-1)
