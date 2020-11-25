@@ -5,9 +5,9 @@
 import numpy as np
 import torch
 from torch.autograd import Function
-from .. import emd
+from ot import emd
 from torch.nn.functional import pad
-from .utils import quantile_function
+from ot.torch.utils import quantile_function
 
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -80,12 +80,13 @@ def ot_solve(a, b, M, num_iter_max=100000, log=False):
         return torch.from_numpy(G).type_as(M)
 
 
-def emd1D_loss(u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True):
+def ot_loss_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True):
     r"""
-    Computes the 1 dimensional earth moving distance between two empirical distributions
+    Computes the 1 dimensional OT loss [2] between two empirical distributions
     ..math:
-        EMD &= \int_0^1 |cdf_u^{-1}(q)  cdf_v^{-1}(q)|^p dq
+        ot_{loss} &= \int_0^1 |cdf_u^{-1}(q)  cdf_v^{-1}(q)|^p dq
 
+    It is formally the p-Wasserstein distance raised to the power p.
     We do so in a vectorized way by first building the individual quantile functions then integrating them.
     This has a theoretically higher complexity than the core OT implementation but behaves better with PyTorch
 
@@ -100,7 +101,7 @@ def emd1D_loss(u_values, v_values, u_weights=None, v_weights=None, p=1, require_
     v_weights: torch.Tensor (..., n), optional
         weights of the second empirical distribution, if None then uniform weights are used
     p: int, optional
-        order of the ground metric used, default is 1
+        order of the ground metric used, should be at least 1 (see [2, Chap. 2], default is 1
     require_sort: bool, optional
         Are the locations sorted along the last dimension already
 
@@ -109,7 +110,29 @@ def emd1D_loss(u_values, v_values, u_weights=None, v_weights=None, p=1, require_
     cost: torch.Tensor (...,)
         the batched EMD
 
+    Examples
+    --------
+    Simple example:
+    >>> import ot
+    >>> import torch
+    >>> np.random.seed(0)
+    >>> n_source = 7
+    >>> n_target = 100
+    >>> a = torch.tensor(ot.utils.unif(n_source), requires_grad=True)
+    >>> b = torch.tensor(ot.utils.unif(n_target))
+    >>> X_source = torch.tensor(np.random.randn(n_source,), requires_grad=True)
+    >>> Y_target = torch.tensor(np.random.randn(n_target,))
+    >>> loss = ot.torch.lp.ot_loss_1d(X_source, Y_target, a, b)
+    >>> torch.autograd.grad(loss, X_source)[0]
+    tensor([0.1429, 0.1429, 0.1429, 0.1229, 0.1429, 0.1429, 0.1429],
+           dtype=torch.float64)
+
+    References
+    ----------
+    .. [2] Cuturi, M. (2013). [Sinkhorn distances: Lightspeed computation of optimal transport](https://arxiv.org/pdf/1306.0895.pdf). In Advances in Neural Information Processing Systems (pp. 2292-2300).
+
     """
+    assert p >= 1, "The OT loss is only valid for p>=1, {p} was given".format(p=p)
     n = u_values.shape[-1]
     m = v_values.shape[-1]
 

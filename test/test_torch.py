@@ -142,7 +142,7 @@ def test_ot_solve():
 
 @pytest.mark.skipif(nogo, reason="Missing pytorch")
 @pytest.mark.parametrize("random_weights", [True, False])
-def test_emd1d(random_weights):
+def test_ot_loss_1d(random_weights):
     torch.random.manual_seed(42)
     n = 10
     m = 15
@@ -166,7 +166,7 @@ def test_emd1d(random_weights):
 
             for p in ps:
                 cpu_cost = np.zeros(k)
-                torch_cost = ot.torch.lp.emd1D_loss(x, y, a, b, p)
+                torch_cost = ot.torch.lp.ot_loss_1d(x, y, a, b, p)
                 for i in range(k):
                     cpu_cost[i] = ot.lp.emd2_1d(x[i].cpu().numpy(), y[i].cpu().numpy(), np_a, np_b, "minkowski", p=p)
 
