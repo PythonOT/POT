@@ -82,7 +82,7 @@ def ot_solve(a, b, M, num_iter_max=100000, log=False):
 
 def ot_loss_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True):
     r"""
-    Computes the 1 dimensional OT loss [2] between two empirical distributions
+    Computes the 1 dimensional OT loss [2] between two (batched) empirical distributions
     ..math:
         ot_{loss} &= \int_0^1 |cdf_u^{-1}(q)  cdf_v^{-1}(q)|^p dq
 
@@ -92,13 +92,13 @@ def ot_loss_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, require_
 
     Parameters
     ----------
-    u_values: torch.Tensor (..., n)
+    u_values: torch.Tensor (n, ...)
         locations of the first empirical distribution
-    v_values: torch.Tensor (..., m)
+    v_values: torch.Tensor (m, ...)
         locations of the second empirical distribution
-    u_weights: torch.Tensor (..., n), optional
+    u_weights: torch.Tensor (n, ...), optional
         weights of the first empirical distribution, if None then uniform weights are used
-    v_weights: torch.Tensor (..., n), optional
+    v_weights: torch.Tensor (m, ...), optional
         weights of the second empirical distribution, if None then uniform weights are used
     p: int, optional
         order of the ground metric used, should be at least 1 (see [2, Chap. 2], default is 1
@@ -133,37 +133,40 @@ def ot_loss_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, require_
 
     """
     assert p >= 1, "The OT loss is only valid for p>=1, {p} was given".format(p=p)
-    n = u_values.shape[-1]
-    m = v_values.shape[-1]
+    n = u_values.shape[0]
+    m = v_values.shape[0]
 
     device = u_values.device
     dtype = u_values.dtype
 
     if u_weights is None:
-        u_weights = torch.full((n,), 1 / n, dtype=dtype, device=device)
+        u_weights = torch.full_like(u_values, 1 / n, dtype=dtype, device=device)
+    else:
+        u_weights = torch.repeat_interleave(u_weights.unsqueeze(-1), u_values.shape[-1], -1)
 
     if v_weights is None:
-        v_weights = torch.full((m,), 1 / m, dtype=dtype, device=device)
+        v_weights = torch.full_like(v_values, 1 / m, dtype=dtype, device=device)
+    else:
+        v_weights = torch.repeat_interleave(v_weights.unsqueeze(-1), v_values.shape[-1], -1)
 
     if require_sort:
-        u_values, u_sorter = torch.sort(u_values, -1)
-        v_values, v_sorter = torch.sort(v_values, -1)
+        u_values, u_sorter = torch.sort(u_values, 0)
+        v_values, v_sorter = torch.sort(v_values, 0)
 
-        u_weights = u_weights[..., u_sorter]
-        v_weights = v_weights[..., v_sorter]
+        u_weights = torch.gather(u_weights, 0, u_sorter)
+        v_weights = torch.gather(v_weights, 0, v_sorter)
 
-    u_cumweights = torch.cumsum(u_weights, -1)
-    v_cumweights = torch.cumsum(v_weights, -1)
+    u_cumweights = torch.cumsum(u_weights, 0)
+    v_cumweights = torch.cumsum(v_weights, 0)
 
-    qs, _ = torch.sort(torch.cat((u_cumweights, v_cumweights), -1), -1)
-
+    qs, _ = torch.sort(torch.cat((u_cumweights, v_cumweights), 0), 0)
     u_quantiles = quantile_function(qs, u_cumweights, u_values)
     v_quantiles = quantile_function(qs, v_cumweights, v_values)
 
-    qs = pad(qs, (1, 0))
-    delta = qs[..., 1:] - qs[..., :-1]
+    qs = pad(qs, (qs.ndim - 1) * (0, 0) + (1, 0))
+    delta = qs[1:, ...] - qs[:-1, ...]
     diff_quantiles = torch.abs(u_quantiles - v_quantiles)
 
     if p == 1:
-        return torch.sum(delta * torch.abs(diff_quantiles), dim=-1)
-    return torch.sum(delta * torch.pow(diff_quantiles, p), dim=-1)
+        return torch.sum(delta * torch.abs(diff_quantiles), dim=0)
+    return torch.sum(delta * torch.pow(diff_quantiles, p), dim=0)

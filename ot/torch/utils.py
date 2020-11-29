@@ -99,9 +99,9 @@ def quantile_function(qs, cws, xs):
     ----------
     qs: torch.tensor (n,)
         Quantiles at which the quantile function is evaluated
-    cws: torch.tensor (..., m)
+    cws: torch.tensor (m, ...)
         cumulative weights of the 1D empirical distribution, if batched, must be similar to xs
-    xs: torch.tensor (..., m)
+    xs: torch.tensor (n, ...)
         locations of the 1D empirical distribution, batched against the `xs.ndim - 1` first dimensions
 
     Returns
@@ -109,6 +109,9 @@ def quantile_function(qs, cws, xs):
     q: torch.tensor (..., n)
         The quantiles of the distribution
     """
-    n = xs.shape[-1]
-    idx = torch.searchsorted(cws, qs)
-    return torch.gather(xs, -1, idx.clip(0, n - 1))
+    n = xs.shape[0]
+
+    cws = cws.T.contiguous()
+    qs = qs.T.contiguous()
+    idx = torch.searchsorted(cws, qs).T
+    return torch.gather(xs, 0, idx.clip(0, n - 1))
