@@ -141,12 +141,12 @@ def ot_loss_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, require_
 
     if u_weights is None:
         u_weights = torch.full_like(u_values, 1 / n, dtype=dtype, device=device)
-    else:
+    elif u_weights.ndim != u_values.ndim:
         u_weights = torch.repeat_interleave(u_weights.unsqueeze(-1), u_values.shape[-1], -1)
 
     if v_weights is None:
         v_weights = torch.full_like(v_values, 1 / m, dtype=dtype, device=device)
-    else:
+    elif v_weights.ndim != v_values.ndim:
         v_weights = torch.repeat_interleave(v_weights.unsqueeze(-1), v_values.shape[-1], -1)
 
     if require_sort:
