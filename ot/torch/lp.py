@@ -45,8 +45,6 @@ class OptimalTransportLossFunction(Function):
 
         grad_a, grad_b, grad_M = ctx.saved_tensors
 
-        print(grad_a)
-
         return grad_a, grad_b, grad_M, None  # last one is parameter
 
 
