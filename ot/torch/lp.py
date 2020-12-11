@@ -103,7 +103,8 @@ def ot_loss_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, require_
     p: int, optional
         order of the ground metric used, should be at least 1 (see [2, Chap. 2], default is 1
     require_sort: bool, optional
-        Are the locations sorted along the last dimension already
+        sort the distributions atoms locations, if False we will consider they have been sorted prior to being passed to
+        the function, default is True
 
     Returns
     -------
