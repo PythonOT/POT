@@ -7,8 +7,50 @@ to use for different problems related to optimal transport (OT) and machine
 learning. We refer when we can to concrete examples in the documentation that
 are also available as notebooks on the POT Github.
 
-This document is not a tutorial on numerical optimal transport. For this we strongly
-recommend to read the very nice book [15]_ .
+.. note::
+    For a  good introduction to numerical optimal transport we refer the reader to the book [15]_. more detailed introduction to OT and how it can be used in ML applications we refer the reader to the following `OTML tutorial <https://remi.flamary.com/cours/tuto_otml.html>`_.
+
+
+Why Optimal Transport ?
+-----------------------
+
+
+When to use OT
+^^^^^^^^^^^^^^
+
+Optimal Transport is a mathematical  problem introduced by Gaspard Monge in 1781 that aim at finding the most efficient way to move mass between distributions. The cots of moving a unit of mass between two position is called the ground cost and the objective is to minimize the overall cost of moving one mass distribution onto another one.
+
+
+
+There are usually two main aspects for which one would use OT in practical applications:
+
+- Measure similarity between distributions (Wasserstein distance).
+- Find correspondences between distributions (Monge mapping).
+
+In the first case, OT can be used to measure similarity between distributions (or datasets), in this case the Wasserstein distance (the optimal value of the problem) is used. In the second case one can be interested in the way the mass is moves between the distribution (the mapping) and can use it to transfer knowledge between distributions.
+
+
+Wasserstein distance between distributions
+""""""""""""""""""""""""""""""""""""""""""
+
+OT is often used to measure similarity between distributions even when they do not share the same support.  OT-based  Wasserstein  distance  compares  favorably  to  popular f-divergences including popular Kullback-Leibler, Jensen-Shannon divergences and Total Variation distance, when the support of the two distributions is disjoint. Even more interesting, for data science application one can compute meaningful sub-gradients of the Wasserstein distance even when the two support are very different. For these reasons became a very efficient tool for machine learning applications that need to measure and optimize similarity between empirical distributions.
+
+Examples where such approach is useful in machine learning (ML) are ubiquitous and include, for instance, such prominent tasks as training `Generative Adversarial Networks (GANs) <https://arxiv.org/pdf/1701.07875.pdf>`_ where OT was successfully used to overcome the vanishing gradient problem. It has also been used to find `discriminant <https://arxiv.org/pdf/1608.08063.pdf>`_ or `robust <https://arxiv.org/pdf/1901.08949.pdf>`_ subspaces for a dataset. The Wasserstein distance has also been used to measure `similarity between word embeddings of documents <http://proceedings.mlr.press/v37/kusnerb15.pdf>`_ or between `signals <https://www.math.ucdavis.edu/~saito/data/acha.read.s19/kolouri-etal_optimal-mass-transport.pdf>`_ or `spectra <https://arxiv.org/pdf/1609.09799.pdf>`_. 
+
+
+OT for mapping estimation
+"""""""""""""""""""""""""
+
+A very interesting aspect of OT problem is the OT mapping in itself. When compting optimal transport between discrete distributions one output is the OT matrix that will provide you with correspondences between the samples in each distributions. This correspondence is estimated with respect to the OT criterion and is found in a non-supervised way, which makes it very interesting on problems such as transfer learning of domain adaptation where the OT matrix can be used to transfer knowledge across datasets.
+
+When to use POT
+^^^^^^^^^^^^^^^
+
+
+
+
+
+
 
 
 Optimal transport and Wasserstein distance
@@ -195,7 +237,7 @@ More details about the algorithms used are given in the following note.
 
 .. note::
     The main function to solve entropic regularized OT is :any:`ot.sinkhorn`.
-    This function is a wrapper and the parameter :code:`method` help you select
+    This function is a wrapper and the parameter :code:`method` allows you to select
     the actual algorithm used to solve the problem:
 
     + :code:`method='sinkhorn'` calls :any:`ot.bregman.sinkhorn_knopp`  the
@@ -206,7 +248,9 @@ More details about the algorithms used are given in the following note.
       :any:`ot.bregman.sinkhorn_epsilon_scaling`  the epsilon scaling version
       of the algorithm [9]_.
     + :code:`method='greenkhorn'` calls :any:`ot.bregman.greenkhorn`  the
-      greedy sinkhorn verison of the algorithm [22]_.
+      greedy sinkhorn version of the algorithm [22]_.
+    + :code:`method='screenkhorn'` calls :any:`ot.bregman.screenkhorn`  the
+      screening sinkhorn version of the algorithm [25]_.
 
     In addition to all those variants of sinkhorn, we have another
     implementation solving the problem in the smooth dual or semi-dual in
@@ -215,6 +259,11 @@ More details about the algorithms used are given in the following note.
     this solver, use functions :any:`ot.smooth.smooth_ot_dual` or
     :any:`ot.smooth.smooth_ot_semi_dual` with parameter :code:`reg_type='kl'` to
     choose entropic/Kullbach Leibler regularization.
+
+    **Choosing a Sinkhorn solver**
+
+    By default and when using a regularization parameter that is not too small the default sinkhorn solver should be enough. If you need to use a small regularization to get sharper OT matrices, you should use the :any:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical errors. This last solver can be very slow in practice and might not even converge to a reasonable OT matrix in a finite time. This is why  :any:`ot.bregman.sinkhorn_epsilon_scaling` that relie on iterating the value of the regularization (and using warm start) sometimes leads to better solutions. Note that the greedy version of the sinkhorn :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening version of the sinkhorn :any:`ot.bregman.screenkhorn` aim a providing  a fast approximation of the Sinkhorn problem.
+
 
 
 Recently [23]_ introduced the sinkhorn divergence that build from entropic
