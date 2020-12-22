@@ -59,21 +59,21 @@ to transfer knowledge between distributions.
 Wasserstein distance between distributions
 """"""""""""""""""""""""""""""""""""""""""
 
-OT is often used to measure similarity between distributions even especially
+OT is often used to measure similarity between distributions, especially
 when they do not share the same support.  When the support between the
-distribution is disjoint OT-based Wasserstein  distances  compare  favorably  to
-popular f-divergences including popular Kullback-Leibler, Jensen-Shannon
-divergences and Total Variation distance. Even more interesting for data science
-applications, in this case,  one can compute meaningful sub-gradients of the
-Wasserstein distance. For these reasons became a very efficient tool for machine
-learning applications that need to measure and optimize similarity between
-empirical distributions.
+distributions is disjoint OT-based Wasserstein distances compare  favorably to
+popular f-divergences including the popular Kullback-Leibler, Jensen-Shannon
+divergences, and the Total Variation distance. What is particularly interesting
+for data science applications is that one can compute meaningful sub-gradients
+of the Wasserstein distance. For these reasons it became a very efficient tool
+for machine learning applications that need to measure and optimize similarity
+between empirical distributions.
 
 
-Examples where such approach is useful in machine learning (ML) are ubiquitous
-and include, for instance, such prominent tasks as training `Generative
-Adversarial Networks (GANs) <https://arxiv.org/pdf/1701.07875.pdf>`_ where OT
-was successfully used to overcome the vanishing gradient problem. It has also
+Numerous contributions make use of this an approach is the machine learning (ML)
+literature. For example OT was used for training `Generative
+Adversarial Networks (GANs) <https://arxiv.org/pdf/1701.07875.pdf>`_
+in order to overcome the vanishing gradient problem. It has also
 been used to find `discriminant <https://arxiv.org/pdf/1608.08063.pdf>`_ or
 `robust <https://arxiv.org/pdf/1901.08949.pdf>`_ subspaces for a dataset. The
 Wasserstein distance has also been used to measure `similarity between word
