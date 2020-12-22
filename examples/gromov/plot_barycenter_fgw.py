@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 =================================
-Plot graphs' barycenter using FGW
+Plot graphs barycenter using FGW
 =================================
 
 This example illustrates the computation barycenter of labeled graphs using
