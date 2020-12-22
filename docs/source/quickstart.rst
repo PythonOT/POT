@@ -8,7 +8,11 @@ learning. We refer when we can to concrete examples in the documentation that
 are also available as notebooks on the POT Github.
 
 .. note::
-    For a  good introduction to numerical optimal transport we refer the reader to the book [15]_. more detailed introduction to OT and how it can be used in ML applications we refer the reader to the following `OTML tutorial <https://remi.flamary.com/cours/tuto_otml.html>`_.
+    For a  good introduction to numerical optimal transport we refer the reader
+    to the book [15]_. more detailed introduction to OT and how it can be used
+    in ML applications we refer the reader to the following `OTML tutorial
+    <https://remi.flamary.com/cours/tuto_otml.html>`_.
+    
 
 
 Why Optimal Transport ?
@@ -18,52 +22,130 @@ Why Optimal Transport ?
 When to use OT
 ^^^^^^^^^^^^^^
 
-Optimal Transport (OT) is a mathematical  problem introduced by Gaspard Monge in 1781 that aim at finding the most efficient way to move mass between distributions. The cots of moving a unit of mass between two position is called the ground cost and the objective is to minimize the overall cost of moving one mass distribution onto another one. The optimization problem can be expressed for two distributions :math:`\mu_s` and :math:`\mu_t` as
+Optimal Transport (OT) is a mathematical  problem introduced by Gaspard Monge in
+1781 that aim at finding the most efficient way to move mass between
+distributions. The cots of moving a unit of mass between two position is called
+the ground cost and the objective is to minimize the overall cost of moving one
+mass distribution onto another one. The optimization problem can be expressed
+for two distributions :math:`\mu_s` and :math:`\mu_t` as
 
 .. math:: 
     \min_{m, m \# \mu_s = \mu_t} \int c(x,m(x))d\mu_s(x)
 
 Where :math:`c(\cdot,\cdot)` is the ground cost and the constraint :math:`m \# \mu_s = \mu_t`  ensures that  :math:`\mu_s` is completely transported to :math:`\mu_t`.
-This problem is particularly difficult to solve because of this constraint and has been replaced in practice (on discrete distributions) by a more easy to solve linear program by Kantorovitch wher the Monge mapping :math:`m` is replaced by a joint distribution (OT matrix expressed in the next section). 
+This problem is particularly difficult to solve because of this constraint and
+has been replaced in practice (on discrete distributions) by a more easy to
+solve linear program by Kantorovitch wher the Monge mapping :math:`m` is
+replaced by a joint distribution (OT matrix expressed in the next section). 
 
-From the optimization problem above we can see that there are two main aspects to the OT solution that can be used in practical applications:
 
-- The optimal value (Wasserstein distance) : Measures similarity between distributions.
-- The optimal mapping (Monge mapping, OT matrix) : Finds correspondences between distributions.
+From the optimization problem above we can see that there are two main aspects
+to the OT solution that can be used in practical applications:
 
-In the first case, OT can be used to measure similarity between distributions (or datasets), in this case the Wasserstein distance (the optimal value of the problem) is used. In the second case one can be interested in the way the mass is moves between the distribution (the mapping) and can use it to transfer knowledge between distributions.
+- The optimal value (Wasserstein distance) : Measures similarity between
+distributions.
+- The optimal mapping (Monge mapping, OT matrix) : Finds correspondences between
+distributions.
+
+
+In the first case, OT can be used to measure similarity between distributions
+(or datasets), in this case the Wasserstein distance (the optimal value of the
+problem) is used. In the second case one can be interested in the way the mass
+is moves between the distribution (the mapping) and can use it to transfer
+knowledge between distributions.
 
 
 Wasserstein distance between distributions
 """"""""""""""""""""""""""""""""""""""""""
 
-OT is often used to measure similarity between distributions even especially when they do not share the same support.  When the support between the distribution is disjoint OT-based Wasserstein  distances  compare  favorably  to  popular f-divergences including popular Kullback-Leibler, Jensen-Shannon divergences and Total Variation distance. Even more interesting for data science applications, in this case,  one can compute meaningful sub-gradients of the Wasserstein distance. For these reasons became a very efficient tool for machine learning applications that need to measure and optimize similarity between empirical distributions.
+OT is often used to measure similarity between distributions even especially
+when they do not share the same support.  When the support between the
+distribution is disjoint OT-based Wasserstein  distances  compare  favorably  to
+popular f-divergences including popular Kullback-Leibler, Jensen-Shannon
+divergences and Total Variation distance. Even more interesting for data science
+applications, in this case,  one can compute meaningful sub-gradients of the
+Wasserstein distance. For these reasons became a very efficient tool for machine
+learning applications that need to measure and optimize similarity between
+empirical distributions.
 
-Examples where such approach is useful in machine learning (ML) are ubiquitous and include, for instance, such prominent tasks as training `Generative Adversarial Networks (GANs) <https://arxiv.org/pdf/1701.07875.pdf>`_ where OT was successfully used to overcome the vanishing gradient problem. It has also been used to find `discriminant <https://arxiv.org/pdf/1608.08063.pdf>`_ or `robust <https://arxiv.org/pdf/1901.08949.pdf>`_ subspaces for a dataset. The Wasserstein distance has also been used to measure `similarity between word embeddings of documents <http://proceedings.mlr.press/v37/kusnerb15.pdf>`_ or between `signals <https://www.math.ucdavis.edu/~saito/data/acha.read.s19/kolouri-etal_optimal-mass-transport.pdf>`_ or `spectra <https://arxiv.org/pdf/1609.09799.pdf>`_. 
+
+Examples where such approach is useful in machine learning (ML) are ubiquitous
+and include, for instance, such prominent tasks as training `Generative
+Adversarial Networks (GANs) <https://arxiv.org/pdf/1701.07875.pdf>`_ where OT
+was successfully used to overcome the vanishing gradient problem. It has also
+been used to find `discriminant <https://arxiv.org/pdf/1608.08063.pdf>`_ or
+`robust <https://arxiv.org/pdf/1901.08949.pdf>`_ subspaces for a dataset. The
+Wasserstein distance has also been used to measure `similarity between word
+embeddings of documents <http://proceedings.mlr.press/v37/kusnerb15.pdf>`_ or
+between `signals
+<https://www.math.ucdavis.edu/~saito/data/acha.read.s19/kolouri-etal_optimal-mass-transport.pdf>`_
+or `spectra <https://arxiv.org/pdf/1609.09799.pdf>`_. 
+
 
 
 OT for mapping estimation
 """""""""""""""""""""""""
 
-A very interesting aspect of OT problem is the OT mapping in itself. When compting optimal transport between discrete distributions one output is the OT matrix that will provide you with correspondences between the samples in each distributions. 
+A very interesting aspect of OT problem is the OT mapping in itself. When
+compting optimal transport between discrete distributions one output is the OT
+matrix that will provide you with correspondences between the samples in each
+distributions. 
+
 
 This correspondence is estimated with respect to the OT criterion and is found in a non-supervised way, which makes it very interesting on problems of transfer between datasets. It has been used  to perform `color transfer between images <https://arxiv.org/pdf/1307.5551.pdf>`_ or in the context of 
-`domain adaptation <https://arxiv.org/pdf/1507.00504.pdf>`_. More recent applications include the use of extension of OT (Gromov-Wasserstein) to find correspondences between languages in `word embeddings <https://arxiv.org/pdf/1809.00013.pdf>`_.
+`domain adaptation <https://arxiv.org/pdf/1507.00504.pdf>`_. More recent
+applications include the use of extension of OT (Gromov-Wasserstein) to find
+correspondences between languages in `word embeddings
+<https://arxiv.org/pdf/1809.00013.pdf>`_.
+
 
 When to use POT
 ^^^^^^^^^^^^^^^
 
 
-The main objective of POT is to provide OT solvers for the quick developing area of OT with machine learning application. To this end we implement a number rof solvers that have been proposed in research papers in order to promote both reproducible research and novel developments.
+The main objective of POT is to provide OT solvers for the quick developing area
+of OT with machine learning application. To this end we implement a number rof
+solvers that have been proposed in research papers in order to promote both
+reproducible research and novel developments.
 
-One very important aspect of POT is  its ability to be easily extended. For instance we provide  a very generic OT solver :any:`ot.optim.cg` that can solve OT problems with any smooth/continuous regularization term making it particularly practical for research purpose. Note that this generic solver has been used to solve both gLaplacian regularization OT and Gromov Wasserstein.
 
-Finally POT is originally designed to solve OT problems with Numpy interface and is not yet compatible with Pytorch API. We are currently working on a torch submodule that will provide OT solvers and losses for the most common deep learning configurations but it is not yet ready for release.
+One very important aspect of POT is  its ability to be easily extended. For
+instance we provide  a very generic OT solver :any:`ot.optim.cg` that can solve
+OT problems with any smooth/continuous regularization term making it
+particularly practical for research purpose. Note that this generic solver has
+been used to solve both gLaplacian regularization OT and Gromov Wasserstein.
+
+
+Finally POT is originally designed to solve OT problems with Numpy interface and
+is not yet compatible with Pytorch API. We are currently working on a torch
+submodule that will provide OT solvers and losses for the most common deep
+learning configurations but it is not yet ready for release.
+
 
 When not to use POT
 """""""""""""""""""
 
-While POT has to the best of our knowledge one of the most efficient exact OT solvers, it has not been designed to handle large scale OT problems. For instance the memory cost for an OT porblem is always 
+While POT has to the best of our knowledge one of the most efficient exact OT
+solvers, it has not been designed to handle large scale OT problems. For
+instance the memory cost for an OT problem is always :math:`\mathcal{O}(n^2)` in
+memory because the cost matrix has to be computed. The exact solver in of time
+complexity :math:`\mathcal{O}(n^3\log(n))` and the Sinkhorn solver has been
+proven to be nearly :math:`\mathcal{O}(n^2)` which is still too complex for very
+large scale solvers.
+
+
+If you need to solve OT with large number of samples, we recommend to use
+entropic regularization and memory efficient implementation of Sinkhorn as
+proposed in `GeomLoss <https://www.kernel-operations.io/geomloss/>`_. This
+implementation is compatible with Pytorch and can handle large number of
+samples. Another approach to estimate the Wasserstein distance for very large
+number of sample is to use the trick from `Wasserstein GAN
+<https://arxiv.org/pdf/1701.07875.pdf>`_ that solve the problem
+in the dual with neural network estimating the dual variable. Note that in this
+case you are only solving an approximation of the Wasserstein distance because
+the Lipschitz 1 constraint on the dual cannot be enforced exactly (approximated
+through filter thresholding or regularization).
+
 
 
 
@@ -277,7 +359,19 @@ More details about the algorithms used are given in the following note.
 
     **Choosing a Sinkhorn solver**
 
-    By default and when using a regularization parameter that is not too small the default sinkhorn solver should be enough. If you need to use a small regularization to get sharper OT matrices, you should use the :any:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical errors. This last solver can be very slow in practice and might not even converge to a reasonable OT matrix in a finite time. This is why  :any:`ot.bregman.sinkhorn_epsilon_scaling` that relie on iterating the value of the regularization (and using warm start) sometimes leads to better solutions. Note that the greedy version of the sinkhorn :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening version of the sinkhorn :any:`ot.bregman.screenkhorn` aim a providing  a fast approximation of the Sinkhorn problem.
+    By default and when using a regularization parameter that is not too small
+    the default sinkhorn solver should be enough. If you need to use a small
+    regularization to get sharper OT matrices, you should use the
+    :any:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical
+    errors. This last solver can be very slow in practice and might not even
+    converge to a reasonable OT matrix in a finite time. This is why
+    :any:`ot.bregman.sinkhorn_epsilon_scaling` that relie on iterating the value
+    of the regularization (and using warm start) sometimes leads to better
+    solutions. Note that the greedy version of the sinkhorn
+    :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
+    version of the sinkhorn :any:`ot.bregman.screenkhorn` aim a providing  a
+    fast approximation of the Sinkhorn problem.
+    
 
 
 
