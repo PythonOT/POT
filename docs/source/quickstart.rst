@@ -351,7 +351,7 @@ More details about the algorithms used are given in the following note.
     + :code:`method='greenkhorn'` calls :any:`ot.bregman.greenkhorn`  the
       greedy sinkhorn version of the algorithm [22]_.
     + :code:`method='screenkhorn'` calls :any:`ot.bregman.screenkhorn`  the
-      screening sinkhorn version of the algorithm [25]_.
+      screening sinkhorn version of the algorithm [26]_.
 
     In addition to all those variants of sinkhorn, we have another
     implementation solving the problem in the smooth dual or semi-dual in
@@ -1025,11 +1025,6 @@ References
     problems <https://arxiv.org/pdf/1412.5154.pdf>`__. SIAM Journal on
     Scientific Computing, 37(2), A1111-A1138.
 
-.. [4] S. Nakhostin, N. Courty, R. Flamary, D. Tuia, T. Corpetti,
-    `Supervised planetary unmixing with optimal
-    transport <https://hal.archives-ouvertes.fr/hal-01377236/document>`__,
-    Whorkshop on Hyperspectral Image and Signal Processing : Evolution in
-    Remote Sensing (WHISPERS), 2016.
 
 .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, `Optimal Transport
     for Domain Adaptation <https://arxiv.org/pdf/1507.00504.pdf>`__, in IEEE
@@ -1135,10 +1130,6 @@ References
 	Algorithm for Regularized Optimal Transport <https://papers.nips.cc/paper/9386-screening-sinkhorn-algorithm-for-regularized-optimal-transport>, 
 	Advances in Neural Information Processing Systems 33 (NeurIPS).
 
-.. [27] Redko I., Courty N., Flamary R., Tuia D. (2019). Optimal Transport for Multi-source 
-	Domain Adaptation under Target Shift <http://proceedings.mlr.press/v89/redko19a.html>, 
-	Proceedings of the Twenty-Second International Conference on Artificial Intelligence 
-	and Statistics (AISTATS) 22, 2019.
 	
 .. [28] Caffarelli, L. A., McCann, R. J. (2020). Free boundaries in optimal transport and 
 	Monge-Ampere obstacle problems <http://www.math.toronto.edu/~mccann/papers/annals2010.pdf>, 
