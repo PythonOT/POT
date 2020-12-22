@@ -18,14 +18,18 @@ Why Optimal Transport ?
 When to use OT
 ^^^^^^^^^^^^^^
 
-Optimal Transport is a mathematical  problem introduced by Gaspard Monge in 1781 that aim at finding the most efficient way to move mass between distributions. The cots of moving a unit of mass between two position is called the ground cost and the objective is to minimize the overall cost of moving one mass distribution onto another one.
+Optimal Transport (OT) is a mathematical  problem introduced by Gaspard Monge in 1781 that aim at finding the most efficient way to move mass between distributions. The cots of moving a unit of mass between two position is called the ground cost and the objective is to minimize the overall cost of moving one mass distribution onto another one. The optimization problem can be expressed for two distributions :math:`\mu_s` and :math:`\mu_t` as
 
+.. math:: 
+    \min_{m, m \# \mu_s = \mu_t} \int c(x,m(x))d\mu_s(x)
 
+Where :math:`c(\cdot,\cdot)` is the ground cost and the constraint :math:`m \# \mu_s = \mu_t`  ensures that  :math:`\mu_s` is completely transported to :math:`\mu_t`.
+This problem is particularly difficult to solve because of this constraint and has been replaced in practice (on discrete distributions) by a more easy to solve linear program by Kantorovitch wher the Monge mapping :math:`m` is replaced by a joint distribution (OT matrix expressed in the next section). 
 
-There are usually two main aspects for which one would use OT in practical applications:
+From the optimization problem above we can see that there are two main aspects to the OT solution that can be used in practical applications:
 
-- Measure similarity between distributions (Wasserstein distance).
-- Find correspondences between distributions (Monge mapping).
+- The optimal value (Wasserstein distance) : Measures similarity between distributions.
+- The optimal mapping (Monge mapping, OT matrix) : Finds correspondences between distributions.
 
 In the first case, OT can be used to measure similarity between distributions (or datasets), in this case the Wasserstein distance (the optimal value of the problem) is used. In the second case one can be interested in the way the mass is moves between the distribution (the mapping) and can use it to transfer knowledge between distributions.
 
@@ -33,7 +37,7 @@ In the first case, OT can be used to measure similarity between distributions (o
 Wasserstein distance between distributions
 """"""""""""""""""""""""""""""""""""""""""
 
-OT is often used to measure similarity between distributions even when they do not share the same support.  OT-based  Wasserstein  distance  compares  favorably  to  popular f-divergences including popular Kullback-Leibler, Jensen-Shannon divergences and Total Variation distance, when the support of the two distributions is disjoint. Even more interesting, for data science application one can compute meaningful sub-gradients of the Wasserstein distance even when the two support are very different. For these reasons became a very efficient tool for machine learning applications that need to measure and optimize similarity between empirical distributions.
+OT is often used to measure similarity between distributions even especially when they do not share the same support.  When the support between the distribution is disjoint OT-based Wasserstein  distances  compare  favorably  to  popular f-divergences including popular Kullback-Leibler, Jensen-Shannon divergences and Total Variation distance. Even more interesting for data science applications, in this case,  one can compute meaningful sub-gradients of the Wasserstein distance. For these reasons became a very efficient tool for machine learning applications that need to measure and optimize similarity between empirical distributions.
 
 Examples where such approach is useful in machine learning (ML) are ubiquitous and include, for instance, such prominent tasks as training `Generative Adversarial Networks (GANs) <https://arxiv.org/pdf/1701.07875.pdf>`_ where OT was successfully used to overcome the vanishing gradient problem. It has also been used to find `discriminant <https://arxiv.org/pdf/1608.08063.pdf>`_ or `robust <https://arxiv.org/pdf/1901.08949.pdf>`_ subspaces for a dataset. The Wasserstein distance has also been used to measure `similarity between word embeddings of documents <http://proceedings.mlr.press/v37/kusnerb15.pdf>`_ or between `signals <https://www.math.ucdavis.edu/~saito/data/acha.read.s19/kolouri-etal_optimal-mass-transport.pdf>`_ or `spectra <https://arxiv.org/pdf/1609.09799.pdf>`_. 
 
@@ -41,14 +45,25 @@ Examples where such approach is useful in machine learning (ML) are ubiquitous a
 OT for mapping estimation
 """""""""""""""""""""""""
 
-A very interesting aspect of OT problem is the OT mapping in itself. When compting optimal transport between discrete distributions one output is the OT matrix that will provide you with correspondences between the samples in each distributions. This correspondence is estimated with respect to the OT criterion and is found in a non-supervised way, which makes it very interesting on problems such as transfer learning of domain adaptation where the OT matrix can be used to transfer knowledge across datasets.
+A very interesting aspect of OT problem is the OT mapping in itself. When compting optimal transport between discrete distributions one output is the OT matrix that will provide you with correspondences between the samples in each distributions. 
+
+This correspondence is estimated with respect to the OT criterion and is found in a non-supervised way, which makes it very interesting on problems of transfer between datasets. It has been used  to perform `color transfer between images <https://arxiv.org/pdf/1307.5551.pdf>`_ or in the context of 
+`domain adaptation <https://arxiv.org/pdf/1507.00504.pdf>`_. More recent applications include the use of extension of OT (Gromov-Wasserstein) to find correspondences between languages in `word embeddings <https://arxiv.org/pdf/1809.00013.pdf>`_.
 
 When to use POT
 ^^^^^^^^^^^^^^^
 
 
+The main objective of POT is to provide OT solvers for the quick developing area of OT with machine learning application. To this end we implement a number rof solvers that have been proposed in research papers in order to promote both reproducible research and novel developments.
 
+One very important aspect of POT is  its ability to be easily extended. For instance we provide  a very generic OT solver :any:`ot.optim.cg` that can solve OT problems with any smooth/continuous regularization term making it particularly practical for research purpose. Note that this generic solver has been used to solve both gLaplacian regularization OT and Gromov Wasserstein.
 
+Finally POT is originally designed to solve OT problems with Numpy interface and is not yet compatible with Pytorch API. We are currently working on a torch submodule that will provide OT solvers and losses for the most common deep learning configurations but it is not yet ready for release.
+
+When not to use POT
+"""""""""""""""""""
+
+While POT has to the best of our knowledge one of the most efficient exact OT solvers, it has not been designed to handle large scale OT problems. For instance the memory cost for an OT porblem is always 
 
 
 
