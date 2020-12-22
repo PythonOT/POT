@@ -42,10 +42,8 @@ replaced by a joint distribution (OT matrix expressed in the next section).
 From the optimization problem above we can see that there are two main aspects
 to the OT solution that can be used in practical applications:
 
-- The optimal value (Wasserstein distance) : Measures similarity between
-distributions.
-- The optimal mapping (Monge mapping, OT matrix) : Finds correspondences between
-distributions.
+- The optimal value (Wasserstein distance) : Measures similarity between distributions.
+- The optimal mapping (Monge mapping, OT matrix) : Finds correspondences between distributions.
 
 
 In the first case, OT can be used to measure similarity between distributions
@@ -144,7 +142,10 @@ number of sample is to use the trick from `Wasserstein GAN
 in the dual with neural network estimating the dual variable. Note that in this
 case you are only solving an approximation of the Wasserstein distance because
 the Lipschitz 1 constraint on the dual cannot be enforced exactly (approximated
-through filter thresholding or regularization).
+through filter thresholding or regularization). Finally note that in order to
+avoid  solving large scale OT problems, a number of recent approached minimized
+the expected Wasserstein distance on minibtaches that is different from the
+Wasserstein but has better computational and `statistical properties <https://arxiv.org/pdf/1910.04091.pdf>`_.
 
 
 
