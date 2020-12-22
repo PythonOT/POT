@@ -26,7 +26,7 @@ from ot.gromov import gromov_wasserstein, fused_gromov_wasserstein
 
 ##############################################################################
 # Generate data
-# ---------
+# -------------
 
 #%% parameters
 # We create two 1D random measures
@@ -76,7 +76,7 @@ pl.show()
 
 ##############################################################################
 # Create structure matrices and across-feature distance matrix
-# ---------
+# ------------------------------------------------------------
 
 #%% Structure matrices and across-features distance matrix
 C1 = ot.dist(xs)
@@ -88,7 +88,7 @@ Got = ot.emd([], [], M)
 
 ##############################################################################
 # Plot matrices
-# ---------
+# -------------
 
 #%%
 cmap = 'Reds'
@@ -131,7 +131,7 @@ pl.show()
 
 ##############################################################################
 # Compute FGW/GW
-# ---------
+# --------------
 
 #%% Computing FGW and GW
 alpha = 1e-3
@@ -145,7 +145,7 @@ Gg, log = gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', verbose=True,
 
 ##############################################################################
 # Visualize transport matrices
-# ---------
+# ----------------------------
 
 #%% visu OT matrix
 cmap = 'Blues'

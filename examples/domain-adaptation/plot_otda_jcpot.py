@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-========================
+================================
 OT for multi-source target shift
-========================
+================================
 
 This example introduces a target shift problem with two 2D source and 1 target domain.
 

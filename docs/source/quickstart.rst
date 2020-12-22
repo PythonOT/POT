@@ -89,11 +89,11 @@ as
 
     s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
-where :
+where:
 
-- :math:`M\in\mathbb{R}_+^{m\times n}` is the metric cost matrix defining the cost to move mass from bin :math:`a_i` to bin :math:`b_j`.
-- :math:`a` and :math:`b` are histograms on the simplex (positive, sum to 1) that represent the
-weights of each samples in the source an target distributions.
+  - :math:`M\in\mathbb{R}_+^{m\times n}` is the metric cost matrix defining the cost to move mass from bin :math:`a_i` to bin :math:`b_j`.
+
+  - :math:`a` and :math:`b` are histograms on the simplex (positive, sum to 1) that represent the weights of each samples in the source an target distributions.
 
 Solving the linear program above can be done using the function :any:`ot.emd`
 that will return the optimal transport matrix :math:`\gamma^*`:
@@ -364,8 +364,8 @@ gradient algorithm [7]_ in function
 .. hint::
     Examples of group Lasso regularization are available in :
 
-    - :any:`auto_examples/plot_otda_classes`
-    - :any:`auto_examples/plot_otda_d2`
+    - :any:`auto_examples/domain-adaptation/plot_otda_classes`
+    - :any:`auto_examples/domain-adaptation/plot_otda_d2`
 
 
 Generic solvers
@@ -467,15 +467,15 @@ operators. We provide an implementation of this algorithm in function
     Examples of Wasserstein (:any:`ot.lp.barycenter`) and regularized Wasserstein
     barycenter (:any:`ot.bregman.barycenter`) computation are available in :
 
-    - :any:`auto_examples/plot_barycenter_1D`
-    - :any:`auto_examples/plot_barycenter_lp_vs_entropic`
+    - :any:`auto_examples/barycenters/plot_barycenter_1D`
+    - :any:`auto_examples/barycenters/plot_barycenter_lp_vs_entropic`
 
     An example of convolutional barycenter
     (:any:`ot.bregman.convolutional_barycenter2d`) computation
     for 2D images is available
     in :
 
-    - :any:`auto_examples/plot_convolutional_barycenter`
+    - :any:`auto_examples/barycenters/plot_convolutional_barycenter`
 
 
 
@@ -500,7 +500,7 @@ return a locally optimal support :math:`\{x_i\}` for uniform or given weights
     An example of the free support barycenter estimation is available
     in :
 
-    - :any:`auto_examples/plot_free_support_barycenter`
+    - :any:`auto_examples/barycenters/plot_free_support_barycenter`
 
 
 
@@ -543,7 +543,7 @@ linear mapping and :any:`ot.da.joint_OT_mapping_kernel` for non linear mapping.
     An example of the linear Monge mapping estimation is available
     in :
 
-    - :any:`auto_examples/plot_otda_linear_mapping`
+    - :any:`auto_examples/domain-adaptation/plot_otda_linear_mapping`
 
 Domain adaptation classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -592,10 +592,10 @@ A list of the provided implementation is given in the following note.
 
     Example of the use of OTDA classes are available in :
 
-    - :any:`auto_examples/plot_otda_color_images`
-    - :any:`auto_examples/plot_otda_mapping`
-    - :any:`auto_examples/plot_otda_mapping_colors_images`
-    - :any:`auto_examples/plot_otda_semi_supervised`
+    - :any:`auto_examples/domain-adaptation/plot_otda_color_images`
+    - :any:`auto_examples/domain-adaptation/plot_otda_mapping`
+    - :any:`auto_examples/domain-adaptation/plot_otda_mapping_colors_images`
+    - :any:`auto_examples/domain-adaptation/plot_otda_semi_supervised`
 
 Other applications
 ------------------
@@ -633,7 +633,7 @@ respectively. Note that we also provide the Fisher discriminant estimator in
 
     An example of the use of WDA is available in :
 
-    - :any:`auto_examples/plot_WDA`
+    - :any:`auto_examples/others/plot_WDA`
 
 
 Unbalanced optimal transport
@@ -674,7 +674,7 @@ linear term.
 
     Examples of the use of :any:`ot.sinkhorn_unbalanced` are available in :
 
-    - :any:`auto_examples/plot_UOT_1D`
+    - :any:`auto_examples/unbalanced-partial/plot_UOT_1D`
 
 
 Unbalanced Barycenters
@@ -706,7 +706,7 @@ implemented the main function :any:`ot.barycenter_unbalanced`.
 
       Examples of the use of :any:`ot.barycenter_unbalanced` are available in :
 
-      - :any:`auto_examples/plot_UOT_barycenter_1D`
+      - :any:`auto_examples/unbalanced-partial/plot_UOT_barycenter_1D`
 
 
 Partial optimal transport
@@ -752,7 +752,7 @@ regularization of the problem.
 
     Examples of the use of :any:`ot.partial` are available in :
 
-    - :any:`auto_examples/plot_partial`
+    - :any:`auto_examples/unbalanced-partial/plot_partial`
 
 
 
@@ -806,13 +806,13 @@ The implementations of FGW and FGW barycenter is provided in functions
 
     Examples of computation of GW, regularized G and FGW are available in :
 
-    - :any:`auto_examples/plot_gromov`
-    - :any:`auto_examples/plot_fgw`
+    - :any:`auto_examples/gromov/plot_gromov`
+    - :any:`auto_examples/gromov/plot_fgw`
 
     Examples of GW, regularized GW and FGW barycenters are available in :
 
-    - :any:`auto_examples/plot_gromov_barycenter`
-    - :any:`auto_examples/plot_barycenter_fgw`
+    - :any:`auto_examples/gromov/plot_gromov_barycenter`
+    - :any:`auto_examples/gromov/plot_barycenter_fgw`
 
 
 GPU acceleration
