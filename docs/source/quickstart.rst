@@ -40,7 +40,7 @@ This problem is particularly difficult to solve because of this constraint and
 has been replaced in practice (on discrete distributions) by a
 linear program easier to solve. It corresponds to the Kantorovitch formulation
 where the Monge mapping :math:`m` is replaced by a joint distribution
-(OT matrix expressed in the next section). 
+(OT matrix expressed in the next section) (see :ref:`kantorovitch_solve`). 
 
 From the optimization problem above we can see that there are two main aspects
 to the OT solution that can be used in practical applications:
@@ -88,15 +88,18 @@ OT for mapping estimation
 """""""""""""""""""""""""
 
 A very interesting aspect of OT problem is the OT mapping in itself. When
-compting optimal transport between discrete distributions one output is the OT
+computing optimal transport between discrete distributions one output is the OT
 matrix that will provide you with correspondences between the samples in each
-distributions. 
+distributions.
 
 
-This correspondence is estimated with respect to the OT criterion and is found in a non-supervised way, which makes it very interesting on problems of transfer between datasets. It has been used  to perform `color transfer between images <https://arxiv.org/pdf/1307.5551.pdf>`_ or in the context of 
-`domain adaptation <https://arxiv.org/pdf/1507.00504.pdf>`_. More recent
-applications include the use of extension of OT (Gromov-Wasserstein) to find
-correspondences between languages in `word embeddings
+This correspondence is estimated with respect to the OT criterion and is found
+in a non-supervised way, which makes it very interesting on problems of transfer
+between datasets. It has been used to perform
+`color transfer between images <https://arxiv.org/pdf/1307.5551.pdf>`_ or in
+the context of `domain adaptation <https://arxiv.org/pdf/1507.00504.pdf>`_.
+More recent applications include the use of extension of OT (Gromov-Wasserstein)
+to find correspondences between languages in `word embeddings
 <https://arxiv.org/pdf/1809.00013.pdf>`_.
 
 
@@ -104,23 +107,26 @@ When to use POT
 ^^^^^^^^^^^^^^^
 
 
-The main objective of POT is to provide OT solvers for the quick developing area
-of OT with machine learning application. To this end we implement a number rof
-solvers that have been proposed in research papers in order to promote both
-reproducible research and novel developments.
+The main objective of POT is to provide OT solvers for the rapidly growing area
+of OT in the context of machine learning. To this end we implement a number of
+solvers that have been proposed in research papers. Doing so we aim to promote
+reproducible research and foster novel developments.
 
 
-One very important aspect of POT is  its ability to be easily extended. For
-instance we provide  a very generic OT solver :any:`ot.optim.cg` that can solve
+One very important aspect of POT is its ability to be easily extended. For
+instance we provide a very generic OT solver :any:`ot.optim.cg` that can solve
 OT problems with any smooth/continuous regularization term making it
 particularly practical for research purpose. Note that this generic solver has
-been used to solve both gLaplacian regularization OT and Gromov Wasserstein.
+been used to solve both graph Laplacian regularization OT and Gromov
+Wasserstein [30]_.
 
 
-Finally POT is originally designed to solve OT problems with Numpy interface and
-is not yet compatible with Pytorch API. We are currently working on a torch
-submodule that will provide OT solvers and losses for the most common deep
-learning configurations but it is not yet ready for release.
+.. note::
+
+    POT is originally designed to solve OT problems with Numpy interface and
+    is not yet compatible with Pytorch API. We are currently working on a torch
+    submodule that will provide OT solvers and losses for the most common deep
+    learning configurations.
 
 
 When not to use POT
@@ -141,16 +147,15 @@ proposed in `GeomLoss <https://www.kernel-operations.io/geomloss/>`_. This
 implementation is compatible with Pytorch and can handle large number of
 samples. Another approach to estimate the Wasserstein distance for very large
 number of sample is to use the trick from `Wasserstein GAN
-<https://arxiv.org/pdf/1701.07875.pdf>`_ that solve the problem
-in the dual with neural network estimating the dual variable. Note that in this
+<https://arxiv.org/pdf/1701.07875.pdf>`_ that solves the problem
+in the dual with a neural network estimating the dual variable. Note that in this
 case you are only solving an approximation of the Wasserstein distance because
-the Lipschitz 1 constraint on the dual cannot be enforced exactly (approximated
+the 1-Lipschitz constraint on the dual cannot be enforced exactly (approximated
 through filter thresholding or regularization). Finally note that in order to
-avoid  solving large scale OT problems, a number of recent approached minimized
+avoid solving large scale OT problems, a number of recent approached minimized
 the expected Wasserstein distance on minibtaches that is different from the
-Wasserstein but has better computational and `statistical properties <https://arxiv.org/pdf/1910.04091.pdf>`_.
-
-
+Wasserstein but has better computational and
+`statistical properties <https://arxiv.org/pdf/1910.04091.pdf>`_.
 
 
 
@@ -158,11 +163,14 @@ Optimal transport and Wasserstein distance
 ------------------------------------------
 
 .. note::
+
     In POT, most functions that solve OT or regularized OT problems have two
     versions that return the OT matrix or the value of the optimal solution. For
-    instance :any:`ot.emd` return the OT matrix and :any:`ot.emd2` return the
+    instance :any:`ot.emd` returns the OT matrix and :any:`ot.emd2` returns the
     Wassertsein distance. This approach has been implemented in practice for all
-    solvers that return an OT matrix (even Gromov-Wasserstsein)
+    solvers that return an OT matrix (even Gromov-Wasserstsein).
+
+.. _kantorovitch_solve:
 
 Solving optimal transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -171,7 +179,7 @@ The optimal transport problem between discrete distributions is often expressed
 as
 
 .. math::
-    \gamma^* = arg\min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j}
+    \gamma^* = arg\min_{\gamma \in \mathbb{R}_+^{m\times n}} \quad \sum_{i,j}\gamma_{i,j}M_{i,j}
 
     s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
@@ -186,15 +194,16 @@ that will return the optimal transport matrix :math:`\gamma^*`:
 
 .. code:: python
 
-    # a,b are 1D histograms (sum to 1 and positive)
+    # a and b are 1D histograms (sum to 1 and positive)
     # M is the ground cost matrix
-    T=ot.emd(a,b,M) # exact linear program
+    T = ot.emd(a, b, M)  # exact linear program
 
-The method implemented for solving the OT problem is the network simplex, it is
-implemented in C from  [1]_. It has a complexity of :math:`O(n^3)` but the
+The method implemented for solving the OT problem is the network simplex. It is
+implemented in C from [1]_. It has a complexity of :math:`O(n^3)` but the
 solver is quite efficient and uses sparsity of the solution.
 
 .. hint::
+
     Examples of use for :any:`ot.emd` are available in :
 
     - :any:`auto_examples/plot_OT_2D_samples`
@@ -205,10 +214,11 @@ solver is quite efficient and uses sparsity of the solution.
 Computing Wasserstein distance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The value of the OT solution is often more of interest than the OT matrix :
+The value of the OT solution is often more interesting than the OT matrix:
 
 .. math::
-    OT(a,b)=\min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j}
+
+    OT(a,b) = \min_{\gamma \in \mathbb{R}_+^{m\times n}} \quad \sum_{i,j}\gamma_{i,j}M_{i,j}
 
     s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
@@ -218,9 +228,9 @@ It can computed from an already estimated OT matrix with
 
 .. code:: python
 
-    # a,b are 1D histograms (sum to 1 and positive)
+    # a and b are 1D histograms (sum to 1 and positive)
     # M is the ground cost matrix
-    W=ot.emd2(a,b,M) # Wasserstein distance / EMD value
+    W = ot.emd2(a, b, M)  # Wasserstein distance / EMD value
 
 Note that the well known  `Wasserstein distance
 <https://en.wikipedia.org/wiki/Wasserstein_metric>`_ between distributions a and
@@ -229,19 +239,19 @@ b is defined as
 
     .. math::
 
-        W_p(a,b)=(\min_\gamma \sum_{i,j}\gamma_{i,j}\|x_i-y_j\|_p)^\frac{1}{p}
+        W_p(a,b)=(\min_{\gamma \in \mathbb{R}_+^{m\times n}} \sum_{i,j}\gamma_{i,j}\|x_i-y_j\|_p)^\frac{1}{p}
 
         s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
 This means that if you want to compute the :math:`W_2` you need to compute the
 square root of :any:`ot.emd2` when providing
-:code:`M=ot.dist(xs,xt)` that use the squared euclidean distance by default. Computing
-the :math:`W_1` wasserstein distance can be done directly with  :any:`ot.emd2`
-when providing :code:`M=ot.dist(xs,xt, metric='euclidean')` to use the euclidean
+:code:`M = ot.dist(xs, xt)`, that uses the squared euclidean distance by default. Computing
+the :math:`W_1` Wasserstein distance can be done directly with :any:`ot.emd2`
+when providing :code:`M = ot.dist(xs, xt, metric='euclidean')` to use the Euclidean
 distance.
 
-
 .. hint::
+
     An example of use for :any:`ot.emd2` is available in :
 
     - :any:`auto_examples/plot_compute_emd`
@@ -266,9 +276,9 @@ Another special case for estimating OT and Monge mapping is between Gaussian
 distributions. In this case there exists a close form solution given in Remark
 2.29 in [15]_ and the Monge mapping is an affine function and can be
 also computed from the covariances and means of the source and target
-distributions. In the case when the finite sample dataset is supposed gaussian, we provide
-:any:`ot.da.OT_mapping_linear` that returns the parameters for the Monge
-mapping.
+distributions. In the case when the finite sample dataset is supposed Gaussian,
+we provide :any:`ot.da.OT_mapping_linear` that returns the parameters for the
+Monge mapping.
 
 
 Regularized Optimal Transport
@@ -279,7 +289,7 @@ computational and statistical properties.
 We address in this section the regularized OT problems that can be expressed as
 
 .. math::
-    \gamma^* = arg\min_\gamma \quad \sum_{i,j}\gamma_{i,j}M_{i,j} + \lambda\Omega(\gamma)
+    \gamma^* = arg\min_{\gamma \in \mathbb{R}_+^{m\times n}} \quad \sum_{i,j}\gamma_{i,j}M_{i,j} + \lambda\Omega(\gamma)
 
         s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
@@ -318,8 +328,8 @@ solution of the resulting optimization problem can be expressed as:
 
 where :math:`u` and :math:`v` are vectors and :math:`K=\exp(-M/\lambda)` where
 the :math:`\exp` is taken component-wise. In order to solve the optimization
-problem, on can use an alternative projection algorithm called Sinkhorn-Knopp that can be very
-efficient for large values of regularization.
+problem, one can use an alternative projection algorithm called Sinkhorn-Knopp
+that can be very efficient for large values of regularization.
 
 The Sinkhorn-Knopp algorithm is implemented in :any:`ot.sinkhorn` and
 :any:`ot.sinkhorn2` that return respectively the OT matrix and the value of the
@@ -327,10 +337,10 @@ linear term. Note that the regularization parameter :math:`\lambda` in the
 equation above is given to those functions with the parameter :code:`reg`.
 
     >>> import ot
-    >>> a=[.5,.5]
-    >>> b=[.5,.5]
-    >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.sinkhorn(a,b,M,1)
+    >>> a = [.5, .5]
+    >>> b = [.5, .5]
+    >>> M = [[0., 1.], [1., 0.]]
+    >>> ot.sinkhorn(a, b, M, 1)
     array([[ 0.36552929,  0.13447071],
         [ 0.13447071,  0.36552929]])
 
@@ -1147,3 +1157,7 @@ References
 .. [29] Chapel, L., Alaya, M., Gasso, G. (2019). Partial Gromov-Wasserstein with 
 	Applications on Positive-Unlabeled Learning <https://arxiv.org/abs/2002.08276>, 
 	arXiv preprint arXiv:2002.08276.
+
+.. [30] Flamary, Rémi, et al. "Optimal transport with Laplacian regularization:
+    Applications to domain adaptation and shape matching." NIPS Workshop on Optimal
+    Transport and Machine Learning OTML. 2014.
