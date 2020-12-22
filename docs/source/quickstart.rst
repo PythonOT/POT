@@ -8,8 +8,10 @@ learning. We refer when we can to concrete examples in the documentation that
 are also available as notebooks on the POT Github.
 
 .. note::
+
     For a  good introduction to numerical optimal transport we refer the reader
-    to the book [15]_. more detailed introduction to OT and how it can be used
+    to `the book <https://arxiv.org/pdf/1803.00567.pdf>`_ by Peyré and Cuturi
+    [15]_. For more detailed introduction to OT and how it can be used
     in ML applications we refer the reader to the following `OTML tutorial
     <https://remi.flamary.com/cours/tuto_otml.html>`_.
     
@@ -24,33 +26,34 @@ When to use OT
 
 Optimal Transport (OT) is a mathematical  problem introduced by Gaspard Monge in
 1781 that aim at finding the most efficient way to move mass between
-distributions. The cots of moving a unit of mass between two position is called
+distributions. The cost of moving a unit of mass between two positions is called
 the ground cost and the objective is to minimize the overall cost of moving one
 mass distribution onto another one. The optimization problem can be expressed
 for two distributions :math:`\mu_s` and :math:`\mu_t` as
 
 .. math:: 
-    \min_{m, m \# \mu_s = \mu_t} \int c(x,m(x))d\mu_s(x)
+    \min_{m, m \# \mu_s = \mu_t} \int c(x,m(x))d\mu_s(x) ,
 
-Where :math:`c(\cdot,\cdot)` is the ground cost and the constraint :math:`m \# \mu_s = \mu_t`  ensures that  :math:`\mu_s` is completely transported to :math:`\mu_t`.
+where :math:`c(\cdot,\cdot)` is the ground cost and the constraint
+:math:`m \# \mu_s = \mu_t`  ensures that  :math:`\mu_s` is completely transported to :math:`\mu_t`.
 This problem is particularly difficult to solve because of this constraint and
-has been replaced in practice (on discrete distributions) by a more easy to
-solve linear program by Kantorovitch wher the Monge mapping :math:`m` is
-replaced by a joint distribution (OT matrix expressed in the next section). 
-
+has been replaced in practice (on discrete distributions) by a
+linear program easier to solve. It corresponds to the Kantorovitch formulation
+where the Monge mapping :math:`m` is replaced by a joint distribution
+(OT matrix expressed in the next section). 
 
 From the optimization problem above we can see that there are two main aspects
 to the OT solution that can be used in practical applications:
 
-- The optimal value (Wasserstein distance) : Measures similarity between distributions.
-- The optimal mapping (Monge mapping, OT matrix) : Finds correspondences between distributions.
+- The optimal value (Wasserstein distance): Measures similarity between distributions.
+- The optimal mapping (Monge mapping, OT matrix): Finds correspondences between distributions.
 
 
 In the first case, OT can be used to measure similarity between distributions
 (or datasets), in this case the Wasserstein distance (the optimal value of the
 problem) is used. In the second case one can be interested in the way the mass
-is moves between the distribution (the mapping) and can use it to transfer
-knowledge between distributions.
+is moved between the distributions (the mapping). This mapping can then be used
+to transfer knowledge between distributions.
 
 
 Wasserstein distance between distributions
