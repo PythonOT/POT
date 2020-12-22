@@ -540,7 +540,7 @@ be expressed as
 
 where :math:`b_k` are also weights in the simplex. In the non-regularized case,
 the problem above is a classical linear program. In this case we propose a
-solver :any:`ot.lp.barycenter` that rely on generic LP solvers. By default the
+solver :meth:`ot.lp.barycenter` that rely on generic LP solvers. By default the
 function uses :any:`scipy.optimize.linprog`, but more efficient LP solvers from
 cvxopt can be also used by changing parameter :code:`solver`. Note that this problem
 requires to solve a very large linear program and can be very slow in
@@ -562,7 +562,7 @@ operators. We provide an implementation of this algorithm in function
 :any:`ot.bregman.convolutional_barycenter2d`.
 
 .. hint::
-    Examples of Wasserstein (:any:`ot.lp.barycenter`) and regularized Wasserstein
+    Examples of Wasserstein (:meth:`ot.lp.barycenter`) and regularized Wasserstein
     barycenter (:any:`ot.bregman.barycenter`) computation are available in :
 
     - :any:`auto_examples/barycenters/plot_barycenter_1D`
@@ -794,7 +794,7 @@ implemented the main function :any:`ot.barycenter_unbalanced`.
     This function is a wrapper and the parameter :code:`method` help you select
     the actual algorithm used to solve the problem:
 
-    + :code:`method='sinkhorn'` calls :any:`ot.unbalanced.barycenter_unbalanced_sinkhorn_unbalanced`
+    + :code:`method='sinkhorn'` calls :meth:`ot.unbalanced.barycenter_unbalanced_sinkhorn_unbalanced`
       the generalized Sinkhorn algorithm [10]_.
     + :code:`method='sinkhorn_stabilized'` calls :any:`ot.unbalanced.barycenter_unbalanced_stabilized`
       the log stabilized version of the algorithm [10]_.
@@ -850,7 +850,7 @@ regularization of the problem.
 
     Examples of the use of :any:`ot.partial` are available in :
 
-    - :any:`auto_examples/unbalanced-partial/plot_partial`
+    - :any:`auto_examples/unbalanced-partial/plot_partial_wass_and_gromov`
 
 
 
@@ -926,15 +926,15 @@ implementations use the :code:`cupy` toolbox that obviously need to be installed
     algebra) have been implemented in :any:`ot.gpu`. Here is a short list on the
     main entries:
 
-    -  :any:`ot.gpu.dist` : computation of distance matrix
-    -  :any:`ot.gpu.sinkhorn` : computation of sinkhorn
-    -  :any:`ot.gpu.sinkhorn_lpl1_mm` : computation of sinkhorn + group lasso
+    -  :meth:`ot.gpu.dist` : computation of distance matrix
+    -  :meth:`ot.gpu.sinkhorn` : computation of sinkhorn
+    -  :meth:`ot.gpu.sinkhorn_lpl1_mm` : computation of sinkhorn + group lasso
 
 Note that while the :any:`ot.gpu` module has been designed to be compatible with
 POT,  calling its function with :any:`numpy`  arrays will incur a large overhead due to
 the memory copy of the array on GPU prior to computation and conversion of the
 array after computation. To avoid this overhead, we provide functions
-:any:`ot.gpu.to_gpu` and :any:`ot.gpu.to_np` that perform the conversion
+:meth:`ot.gpu.to_gpu` and :meth:`ot.gpu.to_np` that perform the conversion
 explicitly.
 
 
