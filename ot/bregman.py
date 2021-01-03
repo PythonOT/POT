@@ -342,7 +342,6 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
         u = np.ones(dim_a) / dim_a
         v = np.ones(dim_b) / dim_b
 
-
     # Next 3 lines equivalent to K= np.exp(-M/reg), but faster to compute
     K = np.empty(M.shape, dtype=M.dtype)
     np.divide(M, -reg, out=K)
@@ -659,12 +658,12 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
 
     # test if multiple target
-    if len(b.shape) > 1: 
+    if len(b.shape) > 1:
         n_hists = b.shape[1]
         a = a[:, np.newaxis]
     else:
         n_hists = 0
-    
+
     # init data
     dim_a = len(a)
     dim_b = len(b)
@@ -692,7 +691,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
                         - beta.reshape((1, dim_b))) / reg)
 
     def get_Gamma(alpha, beta, u, v):
-        """log space gamma computation"""   
+        """log space gamma computation"""
         return np.exp(-(M - alpha.reshape((dim_a, 1)) - beta.reshape((1, dim_b)))
                       / reg + np.log(u.reshape((dim_a, 1))) + np.log(v.reshape((1, dim_b))))
 
@@ -925,12 +924,11 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
         # b.flatten() is here for the case when 'sinkhorn_epsilon_scaling' has been called
         # from sinkhorn2. In this casen b is a 2D array of size [..,1] and 'sinkhorn_stabilized'
         # does not return a valid coupling, but rather transport cost.
-        # This is a patch to issue #221 
+        # This is a patch to issue #221
         G, logi = sinkhorn_stabilized(a, b.flatten(), M, regi,
                                       numItermax=numInnerItermax, stopThr=1e-9,
                                       warmstart=(alpha, beta), verbose=False,
                                       print_period=20, tau=tau, log=True)
-        
 
         alpha = logi['alpha']
         beta = logi['beta']
