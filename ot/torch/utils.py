@@ -58,7 +58,7 @@ def dist(x1, x2, metric="sqeuclidean"):
     if x2 is None:
         x2 = x1
     if metric == "sqeuclidean":
-        return torch.cdist(x1, x2, p=2)**2
+        return torch.cdist(x1, x2, p=2) ** 2
     elif metric == "euclidean":
         p = 2
     elif metric == "cityblock":
@@ -89,3 +89,29 @@ def proj_simplex(v, z=1):
         return w[:, 0]
     else:
         return w
+
+
+def quantile_function(qs, cws, xs):
+    # type: (torch.Tensor, torch.Tensor, torch.Tensor) -> torch.Tensor
+    r""" Computes the quantile function of an empirical distribution
+
+    Parameters
+    ----------
+    qs: torch.tensor (n,)
+        Quantiles at which the quantile function is evaluated
+    cws: torch.tensor (m, ...)
+        cumulative weights of the 1D empirical distribution, if batched, must be similar to xs
+    xs: torch.tensor (n, ...)
+        locations of the 1D empirical distribution, batched against the `xs.ndim - 1` first dimensions
+
+    Returns
+    -------
+    q: torch.tensor (..., n)
+        The quantiles of the distribution
+    """
+    n = xs.shape[0]
+
+    cws = cws.T.contiguous()
+    qs = qs.T.contiguous()
+    idx = torch.searchsorted(cws, qs).T
+    return torch.gather(xs, 0, idx.clip(0, n - 1))
