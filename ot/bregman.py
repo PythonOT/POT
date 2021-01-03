@@ -342,14 +342,12 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
         u = np.ones(dim_a) / dim_a
         v = np.ones(dim_b) / dim_b
 
-    # print(reg)
 
     # Next 3 lines equivalent to K= np.exp(-M/reg), but faster to compute
     K = np.empty(M.shape, dtype=M.dtype)
     np.divide(M, -reg, out=K)
     np.exp(K, out=K)
 
-    # print(np.min(K))
     tmp2 = np.empty(b.shape, dtype=M.dtype)
 
     Kp = (1 / a).reshape(-1, 1) * K
@@ -563,7 +561,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
 
 
 def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
-                        warmstart=None, verbose=False, print_period=20,
+                        warmstart=None, verbose=True, print_period=20,
                         log=False, **kwargs):
     r"""
     Solve the entropic regularization OT problem with log stabilization
@@ -602,7 +600,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         Regularization term >0
     tau : float
         thershold for max value in u or v for log scaling
-    warmstart : tible of vectors
+    warmstart : table of vectors
         if given then sarting values for alpha an beta log scalings
     numItermax : int, optional
         Max number of iterations
@@ -610,6 +608,8 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         Stop threshol on error (>0)
     verbose : bool, optional
         Print information along iterations
+    print_period : int, optional
+        Print information every print_period iterations
     log : bool, optional
         record log if True
 
@@ -659,12 +659,12 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
 
     # test if multiple target
-    if len(b.shape) > 1:
+    if len(b.shape) > 1: 
         n_hists = b.shape[1]
         a = a[:, np.newaxis]
     else:
         n_hists = 0
-
+    
     # init data
     dim_a = len(a)
     dim_b = len(b)
@@ -692,13 +692,14 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
                         - beta.reshape((1, dim_b))) / reg)
 
     def get_Gamma(alpha, beta, u, v):
-        """log space gamma computation"""
+        """log space gamma computation"""   
         return np.exp(-(M - alpha.reshape((dim_a, 1)) - beta.reshape((1, dim_b)))
                       / reg + np.log(u.reshape((dim_a, 1))) + np.log(v.reshape((1, dim_b))))
 
     # print(np.min(K))
 
     K = get_K(alpha, beta)
+
     transp = K
     loop = 1
     cpt = 0
@@ -727,7 +728,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
 
         if cpt % print_period == 0:
             # we can speed up the process by checking for the error only all
-            # the 10th iterations
+            # the print_period iterations
             if n_hists:
                 err_u = abs(u - uprev).max()
                 err_u /= max(abs(u).max(), abs(uprev).max(), 1.)
@@ -845,6 +846,8 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
         Stop threshol on error (>0)
     verbose : bool, optional
         Print information along iterations
+    print_period : int, optional
+        Print information every print_period iterations
     log : bool, optional
         record log if True
 
@@ -919,11 +922,15 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
     while loop:
 
         regi = get_reg(cpt)
-
-        G, logi = sinkhorn_stabilized(a, b, M, regi,
+        # b.flatten() is here for the case when 'sinkhorn_epsilon_scaling' has been called
+        # from sinkhorn2. In this casen b is a 2D array of size [..,1] and 'sinkhorn_stabilized'
+        # does not return a valid coupling, but rather transport cost.
+        # This is a patch to issue #221 
+        G, logi = sinkhorn_stabilized(a, b.flatten(), M, regi,
                                       numItermax=numInnerItermax, stopThr=1e-9,
                                       warmstart=(alpha, beta), verbose=False,
                                       print_period=20, tau=tau, log=True)
+        
 
         alpha = logi['alpha']
         beta = logi['beta']
@@ -933,7 +940,7 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
 
         if cpt % (print_period) == 0:  # spsion nearly converged
             # we can speed up the process by checking for the error only all
-            # the 10th iterations
+            # the print_period th iterations
             transp = G
             err = np.linalg.norm(
                 (np.sum(transp, axis=0) - b)) ** 2 + np.linalg.norm((np.sum(transp, axis=1) - a)) ** 2
