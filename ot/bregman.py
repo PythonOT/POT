@@ -214,7 +214,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     ot.bregman.sinkhorn_knopp : Classic Sinkhorn [2]
     ot.bregman.greenkhorn : Greenkhorn [21]
     ot.bregman.sinkhorn_stabilized: Stabilized sinkhorn [9][10]
-    ot.bregman.sinkhorn_epsilon_scaling: Sinkhorn with epslilon scaling [9][10]
+    ot.bregman.sinkhorn_epsilon_scaling: Sinkhorn with epsilon scaling [9][10]
 
     """
     b = np.asarray(b, dtype=np.float64)
@@ -892,6 +892,12 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
     if len(b) == 0:
         b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
 
+    # if b has 2 dimensions, should return a value
+    if len(b.shape) > 1:
+        output_value = True
+    else:
+        output_value = False
+
     # init data
     dim_a = len(a)
     dim_b = len(b)
@@ -960,9 +966,23 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
         log['alpha'] = alpha
         log['beta'] = beta
         log['warmstart'] = (log['alpha'], log['beta'])
-        return G, log
+        if output_value:
+            output = sinkhorn_stabilized(a, b, M, regi,
+                                         numItermax=numInnerItermax, stopThr=1e-9,
+                                         warmstart=(alpha, beta), verbose=False,
+                                         print_period=20, tau=tau, log=False)
+            return output, log
+        else:
+            return G, log
     else:
-        return G
+        if output_value:
+            output = sinkhorn_stabilized(a, b, M, regi,
+                                         numItermax=numInnerItermax, stopThr=1e-9,
+                                         warmstart=(alpha, beta), verbose=False,
+                                         print_period=20, tau=tau, log=False)
+            return output
+        else:
+            return G
 
 
 def geometricBar(weights, alldistribT):
