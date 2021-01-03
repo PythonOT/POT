@@ -561,7 +561,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
 
 
 def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
-                        warmstart=None, verbose=True, print_period=20,
+                        warmstart=None, verbose=False, print_period=20,
                         log=False, **kwargs):
     r"""
     Solve the entropic regularization OT problem with log stabilization
