@@ -308,7 +308,8 @@ def test_stabilized_vs_sinkhorn_multidim():
 
 def test_implemented_methods():
     IMPLEMENTED_METHODS = ['sinkhorn', 'sinkhorn_stabilized']
-    ONLY_1D_methods = ['greenkhorn', 'sinkhorn_epsilon_scaling']
+    ONLY_1D_methods = ['greenkhorn']
+    NO_BARYCENTER_METHODS = ['sinkhorn_epsilon_scaling']
     NOT_VALID_TOKENS = ['foo']
     # test generalized sinkhorn for unbalanced OT barycenter
     n = 3
@@ -332,6 +333,9 @@ def test_implemented_methods():
             ot.bregman.sinkhorn(a, b, M, epsilon, method=method)
             ot.bregman.sinkhorn2(a, b, M, epsilon, method=method)
             ot.bregman.barycenter(A, M, reg=epsilon, method=method)
+    for method in NO_BARYCENTER_METHODS:
+        ot.bregman.sinkhorn(a, b, M, epsilon, method=method)
+        ot.bregman.sinkhorn2(a, b, M, epsilon, method=method)
     for method in ONLY_1D_methods:
         ot.bregman.sinkhorn(a, b, M, epsilon, method=method)
         with pytest.raises(ValueError):
