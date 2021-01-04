@@ -2,17 +2,17 @@
 
 """
 
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#         Adrien Corenflos <adrien.corenflos@gmail.com>
+#
+# License: MIT License
+
 import numpy as np
 import torch
 from torch.autograd import Function
 from ot import emd
 from torch.nn.functional import pad
 from ot.torch.utils import quantile_function
-
-
-# Author: Remi Flamary <remi.flamary@unice.fr>
-#
-# License: MIT License
 
 
 # Inherit from Function
@@ -130,10 +130,14 @@ def ot_loss_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, require_
 
     References
     ----------
-    .. [2] Cuturi, M. (2013). [Sinkhorn distances: Lightspeed computation of optimal transport](https://arxiv.org/pdf/1306.0895.pdf). In Advances in Neural Information Processing Systems (pp. 2292-2300).
+    .. [15] Peyré, G., & Cuturi, M. (2018). [Computational Optimal Transport](https://arxiv.org/pdf/1803.00567.pdf).
 
     """
     assert p >= 1, "The OT loss is only valid for p>=1, {p} was given".format(p=p)
+
+    u_values = torch.as_tensor(u_values)
+    v_values = torch.as_tensor(v_values)
+
     n = u_values.shape[0]
     m = v_values.shape[0]
 

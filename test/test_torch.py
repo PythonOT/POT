@@ -168,6 +168,7 @@ def test_ot_loss_1d(random_weights, batch_size):
                 same_dist_cost = ot.torch.lp.ot_loss_1d(x, x, a, a, p)
                 assert np.allclose(same_dist_cost.cpu().numpy(), 0., atol=1e-5)
                 torch_cost = ot.torch.lp.ot_loss_1d(x, y, a, b, p)
+                assert torch_cost.device == x.device
 
                 if batch_size:
                     cpu_cost = np.zeros((batch_size, k))
@@ -208,9 +209,6 @@ def test_ot_loss_1d_grad():
                 torch.autograd.gradcheck(lambda *inp: ot.torch.lp.ot_loss_1d(*inp, p=p), (x, y, a, b), eps=1e-3,
                                          atol=1e-2, raise_exception=True)
 
-                res_equal = ot.torch.lp.ot_loss_1d(x, x, a, a, p=p).sum()
-                print(torch.autograd.grad(res_equal, (x, a)))
-
 
 @pytest.mark.filterwarnings("error")
 def test_quantile():
@@ -224,3 +222,50 @@ def test_quantile():
     res = ot.torch.utils.quantile_function(qs, cws, xs)
     assert np.all(res.cpu().numpy() <= xs.max(0, keepdim=True)[0].cpu().numpy())
     assert np.all(res.cpu().numpy() >= xs.min(0, keepdim=True)[0].cpu().numpy())
+
+
+### SLICED
+
+def test_get_random_projections():
+    seeds = [0, 1, 2]
+    for device in lst_devices:
+        torch_device = torch.device(device)
+        for seed in seeds:
+            for dtype in lst_types:
+                gen = torch.Generator(torch_device)
+                gen = gen.manual_seed(seed)
+                projections_gen = ot.torch.sliced.get_random_projections(n_projections=50, d=15, seed=gen, dtype=dtype)
+                assert projections_gen.dtype == dtype
+                assert projections_gen.device.type == device
+
+                projections_seed = ot.torch.sliced.get_random_projections(n_projections=50, d=15, seed=seed,
+                                                                          device=torch_device, dtype=dtype)
+                assert projections_seed.dtype == dtype
+                assert projections_seed.device.type == device
+
+                torch.manual_seed(seed)
+                projections_global = ot.torch.sliced.get_random_projections(n_projections=50, d=15, dtype=dtype,
+                                                                            device=torch_device)
+                assert projections_global.dtype == dtype
+                assert projections_global.device.type == device
+
+                np.testing.assert_almost_equal(projections_gen.cpu().numpy(), projections_seed.cpu().numpy())
+                np.testing.assert_almost_equal(projections_global.cpu().numpy(), projections_seed.cpu().numpy())
+
+
+def test_sliced_different_dists():
+    n_projs = 100
+    n = 100
+    m = 50
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    u = rng.uniform(0, 1, n)
+    u /= u.sum()
+    y = rng.randn(m, 2)
+    v = rng.uniform(0, 1, m)
+    v /= v.sum()
+
+    ot_res = ot.sliced_wasserstein_distance(x, y, u, v, n_projections=n_projs, seed=42)
+    torch_res = ot.torch.sliced.ot_loss_sliced(x, y, u, v, p=2, n_projections=n_projs, seed=42)
+    np.testing.assert_almost_equal(torch_res, ot_res, decimal=2)

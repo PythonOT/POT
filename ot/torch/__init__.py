@@ -11,9 +11,9 @@ This module contains several implementations of OT solvers that can be used with
 
 from . import utils
 from . import lp
+from . import sliced
 
 from .utils import dist, unif, proj_simplex
 from .lp import ot_loss, ot_solve, OptimalTransportLossFunction
 
 __all__ = ['dist', 'unif', 'proj_simplex', 'ot_loss', "ot_solve"]
-
