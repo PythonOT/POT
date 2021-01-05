@@ -224,8 +224,6 @@ def test_quantile():
     assert np.all(res.cpu().numpy() >= xs.min(0, keepdim=True)[0].cpu().numpy())
 
 
-### SLICED
-
 def test_get_random_projections():
     seeds = [0, 1, 2]
     for device in lst_devices:

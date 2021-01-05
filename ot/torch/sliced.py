@@ -6,9 +6,7 @@ Sliced Wasserstein Distance.
 # Author: Adrien Corenflos <adrien.corenflos@aalto.fi>
 #
 # License: MIT License
-import warnings
 
-import numpy as np
 import torch
 
 
@@ -36,6 +34,7 @@ def get_random_projections(n_projections, d, seed=None, device=None, dtype=None)
 
     Examples
     --------
+    >>>     >>> import numpy as np
     >>> n_projections = 100
     >>> d = 5
     >>> projs = get_random_projections(n_projections, d)
@@ -96,6 +95,7 @@ def ot_loss_sliced(X_s, X_t, a=None, b=None, p=1, n_projections=50, seed=None):
     --------
     Simple example:
     >>> import ot
+    >>> import numpy as np
     >>> import torch
     >>> np.random.seed(0)
     >>> n_source = 7
