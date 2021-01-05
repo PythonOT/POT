@@ -136,7 +136,6 @@ def ot_loss_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, require_
     u_values = torch.as_tensor(u_values)
     v_values = torch.as_tensor(v_values)
 
-
     n = u_values.shape[0]
     m = v_values.shape[0]
 
