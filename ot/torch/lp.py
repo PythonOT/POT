@@ -45,8 +45,6 @@ class OptimalTransportLossFunction(Function):
     def backward(ctx, grad_output):
         grad_a, grad_b, grad_M = ctx.saved_tensors
 
-        print(grad_a)
-
         return grad_a, grad_b, grad_M, None  # last one is parameter
 
 
@@ -137,6 +135,7 @@ def ot_loss_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, require_
 
     u_values = torch.as_tensor(u_values)
     v_values = torch.as_tensor(v_values)
+
 
     n = u_values.shape[0]
     m = v_values.shape[0]

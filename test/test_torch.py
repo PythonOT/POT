@@ -1,6 +1,7 @@
 """Tests for main module ot """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
+#         Adrien Corenflos <adrien.corenflos@gmail.com>
 #
 # License: MIT License
 
@@ -168,7 +169,6 @@ def test_ot_loss_1d(random_weights, batch_size):
                 same_dist_cost = ot.torch.lp.ot_loss_1d(x, x, a, a, p)
                 assert np.allclose(same_dist_cost.cpu().numpy(), 0., atol=1e-5)
                 torch_cost = ot.torch.lp.ot_loss_1d(x, y, a, b, p)
-                assert torch_cost.device == x.device
 
                 if batch_size:
                     cpu_cost = np.zeros((batch_size, k))
