@@ -272,7 +272,7 @@ def test_get_random_projections(seed):
 @pytest.mark.parametrize("np_seed", [0, 1, 2])
 @pytest.mark.parametrize("torch_seed", [42, 66])
 def test_sliced_different_dists(np_seed, torch_seed):
-    n_projs = 100
+    n_projs = 1000
     n = 100
     m = 50
     rng = np.random.RandomState(np_seed)
@@ -286,19 +286,21 @@ def test_sliced_different_dists(np_seed, torch_seed):
 
     ot_res = ot.sliced_wasserstein_distance(x, y, u, v, n_projections=n_projs, seed=torch_seed)
     torch_res = ot.torch.sliced.ot_loss_sliced(x, y, u, v, p=2, n_projections=n_projs, seed=torch_seed)
-    np.testing.assert_almost_equal(torch_res, ot_res, decimal=5)
+    np.testing.assert_allclose(torch_res, ot_res, atol=1e-2, rtol=1e-2)
+
+    for p in range(3):
+        torch_res_eq = ot.torch.sliced.ot_loss_sliced(x, x, u, u, p=2, n_projections=n_projs, seed=torch_seed)
+        np.testing.assert_allclose(torch_res_eq, 0., atol=1e-6)
 
 
 @pytest.mark.parametrize("p", [1, 2, 3])
 @pytest.mark.parametrize("data_seed", [42, 66])
 @pytest.mark.parametrize("op_seed", [123, 1234])
-def test_sliced_grad(p, data_seed, op_seed):
-    device = "cpu"
-    # scatter does not have a deterministic implementation for GPU,
-    # so the test fails on GPU for lack of gradient determinism.
-    n_projs = 100
-    n = 30
-    m = 50
+@pytest.mark.parametrize("device", lst_devices)
+def test_sliced_grad(p, data_seed, op_seed, device):
+    n_projs = 10
+    n = 10
+    m = 15
     k = 3
     rng = np.random.RandomState(data_seed)
     np_x = rng.normal(size=(n, k))
@@ -313,9 +315,13 @@ def test_sliced_grad(p, data_seed, op_seed):
 
     a = torch.tensor(np_a, dtype=dtype, device=device, requires_grad=True)
     b = torch.tensor(np_b, dtype=dtype, device=device, requires_grad=True)
-    gen = torch.Generator(device=device)
     torch.autograd.gradcheck(
         lambda X, Y, u, v: ot.torch.ot_loss_sliced(X, Y, u / u.sum(), v / v.sum(), p=p, n_projections=n_projs,
-                                                   seed=gen.manual_seed(op_seed)),
-        (x, y, a, b), eps=1e-6,
-        atol=1e-2, raise_exception=True)
+                                                   seed=op_seed),
+        (x, y, a, b), eps=1e-5, atol=1e-3, rtol=1e-3, raise_exception=True,
+        nondet_tol=1e-7)  # the scatter operations are non deterministic on CUDA, so we can't ask for exact determinism
+
+    val_null = ot.torch.ot_loss_sliced(x, x, a / a.sum(), a / a.sum(), p, n_projs, op_seed)
+    grads = torch.autograd.grad(val_null, (x, a))
+    for grad in grads:
+        np.testing.assert_allclose(grad.cpu().detach(), 0., atol=1e-6)
