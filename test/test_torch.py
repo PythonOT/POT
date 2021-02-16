@@ -10,7 +10,6 @@ import pytest
 
 import ot
 
-lst_devices = []
 try:  # test if torch is installed
 
     import ot.torch
@@ -290,20 +289,22 @@ def test_sliced_different_dists(np_seed, torch_seed):
     np.testing.assert_almost_equal(torch_res, ot_res, decimal=5)
 
 
-@pytest.mark.parametrize("p", [1, 2, 3, 4])
+@pytest.mark.parametrize("p", [1, 2, 3])
 @pytest.mark.parametrize("data_seed", [42, 66])
 @pytest.mark.parametrize("op_seed", [123, 1234])
-@pytest.mark.parametrize("device", lst_devices)
-def test_sliced_grad(p, data_seed, op_seed, device):
+def test_sliced_grad(p, data_seed, op_seed):
+    device = "cpu"
+    # scatter does not have a deterministic implementation for GPU,
+    # so the test fails on GPU for lack of gradient determinism.
     n_projs = 100
-    n = 3
+    n = 30
     m = 50
     k = 3
     rng = np.random.RandomState(data_seed)
     np_x = rng.normal(size=(n, k))
-    np_y = rng.normal(size=(n, k))
+    np_y = rng.normal(size=(m, k))
     np_a = rng.uniform(size=(n,))
-    np_b = rng.normal(size=(n,))
+    np_b = rng.normal(size=(m,))
 
     torch.random.manual_seed(data_seed)
     dtype = torch.float64
