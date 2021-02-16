@@ -49,7 +49,6 @@ def get_random_projections(n_projections, d, seed=None, device=None, dtype=None)
     elif seed is not None:
         gen = torch.Generator(device)
         gen = gen.manual_seed(seed)
-        device = gen.device
     else:
         gen = None
 
@@ -93,7 +92,7 @@ def ot_loss_sliced(X_s, X_t, a=None, b=None, p=1, n_projections=50, seed=None):
 
     Examples
     --------
-    Simple example:
+
     >>> import ot
     >>> import numpy as np
     >>> import torch

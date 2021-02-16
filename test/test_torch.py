@@ -5,10 +5,12 @@
 #
 # License: MIT License
 
-import pytest
 import numpy as np
+import pytest
+
 import ot
 
+lst_devices = []
 try:  # test if torch is installed
 
     import ot.torch
@@ -197,23 +199,26 @@ def test_ot_loss_1d_grad():
     k = 5
     ps = [1, 2, 3]
 
-    for dtype in lst_types:
-        for device in lst_devices:
-            x = torch.randn(n, k, dtype=dtype, device=device, requires_grad=True)
-            y = torch.randn(m, k, dtype=dtype, device=device, requires_grad=True)
+    dtype = torch.float64
+    for device in lst_devices:
+        x = torch.randn(n, k, dtype=dtype, device=device, requires_grad=True)
+        y = torch.randn(m, k, dtype=dtype, device=device, requires_grad=True)
 
-            a = torch.rand(n, dtype=dtype, device=device, requires_grad=True)
-            b = torch.rand(m, dtype=dtype, device=device, requires_grad=True)
+        a = torch.rand(n, dtype=dtype, device=device, requires_grad=True)
+        a = a / a.sum()
+        b = torch.rand(m, dtype=dtype, device=device, requires_grad=True)
+        b = b / b.sum()
 
-            for p in ps:
-                torch.autograd.gradcheck(lambda *inp: ot.torch.lp.ot_loss_1d(*inp, p=p), (x, y, a, b), eps=1e-3,
-                                         atol=1e-2, raise_exception=True)
+        for p in ps:
+            torch.autograd.gradcheck(lambda *inp: ot.torch.lp.ot_loss_1d(*inp, p=p), (x, y, a, b), eps=1e-3,
+                                     atol=1e-2, raise_exception=True)
 
 
-@pytest.mark.filterwarnings("error")
-def test_quantile():
-    torch.random.manual_seed(42)
-    dims = (100, 5, 3)
+@pytest.mark.parametrize("seed", [42, 43, 44])
+@pytest.mark.parametrize("k", [3, 5, 20])
+def test_quantile(seed, k):
+    torch.random.manual_seed(seed)
+    dims = (100, 5, k)
     cws = torch.rand(*dims)
     cws = cws / cws.sum(0, keepdim=True)
     cws = torch.cumsum(cws, 0)
@@ -224,38 +229,54 @@ def test_quantile():
     assert np.all(res.cpu().numpy() >= xs.min(0, keepdim=True)[0].cpu().numpy())
 
 
-def test_get_random_projections():
-    seeds = [0, 1, 2]
+def test_quantile_duplicates():
+    seed = 31415
+    torch.random.manual_seed(seed)
+    dims = (100, 5, 3)
+    cws = torch.rand(*dims)
+    cws[6:12] = cws[5:6]
+    cws = cws / cws.sum(0, keepdim=True)
+    cws = torch.cumsum(cws, 0)
+    qs, _ = torch.sort(torch.rand(*dims), dim=0)
+    xs = torch.randn(*dims)
+    res = ot.torch.utils.quantile_function(qs, cws, xs)
+    assert np.all(res.cpu().numpy() <= xs.max(0, keepdim=True)[0].cpu().numpy())
+    assert np.all(res.cpu().numpy() >= xs.min(0, keepdim=True)[0].cpu().numpy())
+
+
+@pytest.mark.parametrize("seed", [0, 1, 2])
+def test_get_random_projections(seed):
     for device in lst_devices:
         torch_device = torch.device(device)
-        for seed in seeds:
-            for dtype in lst_types:
-                gen = torch.Generator(torch_device)
-                gen = gen.manual_seed(seed)
-                projections_gen = ot.torch.sliced.get_random_projections(n_projections=50, d=15, seed=gen, dtype=dtype)
-                assert projections_gen.dtype == dtype
-                assert projections_gen.device.type == device
+        for dtype in lst_types:
+            gen = torch.Generator(torch_device)
+            gen = gen.manual_seed(seed)
+            projections_gen = ot.torch.sliced.get_random_projections(n_projections=50, d=15, seed=gen, dtype=dtype)
+            assert projections_gen.dtype == dtype
+            assert projections_gen.device.type == device
 
-                projections_seed = ot.torch.sliced.get_random_projections(n_projections=50, d=15, seed=seed,
-                                                                          device=torch_device, dtype=dtype)
-                assert projections_seed.dtype == dtype
-                assert projections_seed.device.type == device
+            projections_seed = ot.torch.sliced.get_random_projections(n_projections=50, d=15, seed=seed,
+                                                                      device=torch_device, dtype=dtype)
+            assert projections_seed.dtype == dtype
+            assert projections_seed.device.type == device
 
-                torch.manual_seed(seed)
-                projections_global = ot.torch.sliced.get_random_projections(n_projections=50, d=15, dtype=dtype,
-                                                                            device=torch_device)
-                assert projections_global.dtype == dtype
-                assert projections_global.device.type == device
+            torch.manual_seed(seed)
+            projections_global = ot.torch.sliced.get_random_projections(n_projections=50, d=15, dtype=dtype,
+                                                                        device=torch_device)
+            assert projections_global.dtype == dtype
+            assert projections_global.device.type == device
 
-                np.testing.assert_almost_equal(projections_gen.cpu().numpy(), projections_seed.cpu().numpy())
-                np.testing.assert_almost_equal(projections_global.cpu().numpy(), projections_seed.cpu().numpy())
+            np.testing.assert_almost_equal(projections_gen.cpu().numpy(), projections_seed.cpu().numpy())
+            np.testing.assert_almost_equal(projections_global.cpu().numpy(), projections_seed.cpu().numpy())
 
 
-def test_sliced_different_dists():
+@pytest.mark.parametrize("np_seed", [0, 1, 2])
+@pytest.mark.parametrize("torch_seed", [42, 66])
+def test_sliced_different_dists(np_seed, torch_seed):
     n_projs = 100
     n = 100
     m = 50
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(np_seed)
 
     x = rng.randn(n, 2)
     u = rng.uniform(0, 1, n)
@@ -264,6 +285,36 @@ def test_sliced_different_dists():
     v = rng.uniform(0, 1, m)
     v /= v.sum()
 
-    ot_res = ot.sliced_wasserstein_distance(x, y, u, v, n_projections=n_projs, seed=42)
-    torch_res = ot.torch.sliced.ot_loss_sliced(x, y, u, v, p=2, n_projections=n_projs, seed=42)
-    np.testing.assert_almost_equal(torch_res, ot_res, decimal=2)
+    ot_res = ot.sliced_wasserstein_distance(x, y, u, v, n_projections=n_projs, seed=torch_seed)
+    torch_res = ot.torch.sliced.ot_loss_sliced(x, y, u, v, p=2, n_projections=n_projs, seed=torch_seed)
+    np.testing.assert_almost_equal(torch_res, ot_res, decimal=5)
+
+
+@pytest.mark.parametrize("p", [1, 2, 3, 4])
+@pytest.mark.parametrize("data_seed", [42, 66])
+@pytest.mark.parametrize("op_seed", [123, 1234])
+@pytest.mark.parametrize("device", lst_devices)
+def test_sliced_grad(p, data_seed, op_seed, device):
+    n_projs = 100
+    n = 3
+    m = 50
+    k = 3
+    rng = np.random.RandomState(data_seed)
+    np_x = rng.normal(size=(n, k))
+    np_y = rng.normal(size=(n, k))
+    np_a = rng.uniform(size=(n,))
+    np_b = rng.normal(size=(n,))
+
+    torch.random.manual_seed(data_seed)
+    dtype = torch.float64
+    x = torch.tensor(np_x, dtype=dtype, device=device, requires_grad=True)
+    y = torch.tensor(np_y, dtype=dtype, device=device, requires_grad=True)
+
+    a = torch.tensor(np_a, dtype=dtype, device=device, requires_grad=True)
+    b = torch.tensor(np_b, dtype=dtype, device=device, requires_grad=True)
+    gen = torch.Generator(device=device)
+    torch.autograd.gradcheck(
+        lambda X, Y, u, v: ot.torch.ot_loss_sliced(X, Y, u / u.sum(), v / v.sum(), p=p, n_projections=n_projs,
+                                                   seed=gen.manual_seed(op_seed)),
+        (x, y, a, b), eps=1e-6,
+        atol=1e-2, raise_exception=True)
