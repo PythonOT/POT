@@ -208,8 +208,11 @@ def test_ot_loss_1d_grad():
         b = torch.rand(m, dtype=dtype, device=device, requires_grad=True)
         b = b / b.sum()
 
+        def fun_to_test(i, j, k, l):
+            return ot.torch.lp.ot_loss_1d(i, j, k / k.sum(), l / l.sum(), p=p)
+
         for p in ps:
-            torch.autograd.gradcheck(lambda *inp: ot.torch.lp.ot_loss_1d(*inp, p=p), (x, y, a, b), eps=1e-3,
+            torch.autograd.gradcheck(fun_to_test, (x, y, a, b), eps=1e-5,
                                      atol=1e-2, raise_exception=True)
 
 
@@ -286,7 +289,7 @@ def test_sliced_different_dists(np_seed, torch_seed):
 
     ot_res = ot.sliced_wasserstein_distance(x, y, u, v, n_projections=n_projs, seed=torch_seed)
     torch_res = ot.torch.sliced.ot_loss_sliced(x, y, u, v, p=2, n_projections=n_projs, seed=torch_seed)
-    np.testing.assert_allclose(torch_res, ot_res, atol=1e-2, rtol=1e-2)
+    np.testing.assert_allclose(torch_res, ot_res ** 2, atol=1e-2, rtol=1e-2)
 
     for p in range(3):
         torch_res_eq = ot.torch.sliced.ot_loss_sliced(x, x, u, u, p=2, n_projections=n_projs, seed=torch_seed)
@@ -296,32 +299,32 @@ def test_sliced_different_dists(np_seed, torch_seed):
 @pytest.mark.parametrize("p", [1, 2, 3])
 @pytest.mark.parametrize("data_seed", [42, 66])
 @pytest.mark.parametrize("op_seed", [123, 1234])
-@pytest.mark.parametrize("device", lst_devices)
-def test_sliced_grad(p, data_seed, op_seed, device):
-    n_projs = 10
-    n = 10
-    m = 15
-    k = 3
-    rng = np.random.RandomState(data_seed)
-    np_x = rng.normal(size=(n, k))
-    np_y = rng.normal(size=(m, k))
-    np_a = rng.uniform(size=(n,))
-    np_b = rng.normal(size=(m,))
+def test_sliced_grad(p, data_seed, op_seed):
+    for device in lst_devices:
+        n_projs = 10
+        n = 10
+        m = 15
+        k = 3
+        rng = np.random.RandomState(data_seed)
+        np_x = rng.normal(size=(n, k))
+        np_y = rng.normal(size=(m, k))
+        np_a = rng.uniform(size=(n,))
+        np_b = rng.normal(size=(m,))
 
-    torch.random.manual_seed(data_seed)
-    dtype = torch.float64
-    x = torch.tensor(np_x, dtype=dtype, device=device, requires_grad=True)
-    y = torch.tensor(np_y, dtype=dtype, device=device, requires_grad=True)
+        torch.random.manual_seed(data_seed)
+        dtype = torch.float64
+        x = torch.tensor(np_x, dtype=dtype, device=device, requires_grad=True)
+        y = torch.tensor(np_y, dtype=dtype, device=device, requires_grad=True)
 
-    a = torch.tensor(np_a, dtype=dtype, device=device, requires_grad=True)
-    b = torch.tensor(np_b, dtype=dtype, device=device, requires_grad=True)
-    torch.autograd.gradcheck(
-        lambda X, Y, u, v: ot.torch.ot_loss_sliced(X, Y, u / u.sum(), v / v.sum(), p=p, n_projections=n_projs,
-                                                   seed=op_seed),
-        (x, y, a, b), eps=1e-5, atol=1e-3, rtol=1e-3, raise_exception=True,
-        nondet_tol=1e-7)  # the scatter operations are non deterministic on CUDA, so we can't ask for exact determinism
+        a = torch.tensor(np_a, dtype=dtype, device=device, requires_grad=True)
+        b = torch.tensor(np_b, dtype=dtype, device=device, requires_grad=True)
+        torch.autograd.gradcheck(
+            lambda X, Y, u, v: ot.torch.ot_loss_sliced(X, Y, u / u.sum(), v / v.sum(), p=p, n_projections=n_projs,
+                                                       seed=op_seed),
+            (x, y, a, b), eps=1e-5, atol=1e-3, rtol=1e-3, raise_exception=True,
+            nondet_tol=1e-7)  # the scatter operations are non deterministic on CUDA, so we can't ask for exact determinism
 
-    val_null = ot.torch.ot_loss_sliced(x, x, a / a.sum(), a / a.sum(), p, n_projs, op_seed)
-    grads = torch.autograd.grad(val_null, (x, a))
-    for grad in grads:
-        np.testing.assert_allclose(grad.cpu().detach(), 0., atol=1e-6)
+        val_null = ot.torch.ot_loss_sliced(x, x, a / a.sum(), a / a.sum(), p, n_projs, op_seed)
+        grads = torch.autograd.grad(val_null, (x, a))
+        for grad in grads:
+            np.testing.assert_allclose(grad.cpu().detach(), 0., atol=1e-6)

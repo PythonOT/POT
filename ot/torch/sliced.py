@@ -148,5 +148,4 @@ def ot_loss_sliced(X_s, X_t, a=None, b=None, p=1, n_projections=50, seed=None):
     X_t_projections = torch.matmul(X_t, projections)
 
     projected_losses = ot_loss_1d(X_s_projections, X_t_projections, a, b, p, True)
-    res = torch.pow(projected_losses.mean() + 1e-6, 1. / p) - math.pow(10, -6 / p)
-    return res
+    return projected_losses.mean()
