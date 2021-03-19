@@ -131,12 +131,12 @@ def ot_loss_sliced(X_s, X_t, a=None, b=None, p=1, n_projections=50, seed=None):
                                                                                                       X_t.shape[1]))
 
     if a is None:
-        a = torch.full(n, 1 / n, device=device, dtype=dtype)
+        a = torch.full((n,), 1 / n, device=device, dtype=dtype)
     else:
         a = torch.as_tensor(a)
 
     if b is None:
-        b = torch.full(m, 1 / m, device=device, dtype=dtype)
+        b = torch.full((m,), 1 / m, device=device, dtype=dtype)
     else:
         b = torch.as_tensor(b)
 
@@ -148,5 +148,4 @@ def ot_loss_sliced(X_s, X_t, a=None, b=None, p=1, n_projections=50, seed=None):
     X_t_projections = torch.matmul(X_t, projections)
 
     projected_losses = ot_loss_1d(X_s_projections, X_t_projections, a, b, p, True)
-    res = torch.pow(projected_losses.mean() + 1e-6, 1. / p) - math.pow(10, -6 / p)
-    return res
+    return projected_losses.mean()
