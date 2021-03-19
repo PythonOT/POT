@@ -35,7 +35,7 @@ def get_random_projections(n_projections, d, seed=None, device=None, dtype=None)
 
     Examples
     --------
-    >>>     >>> import numpy as np
+    >>> import numpy as np
     >>> n_projections = 100
     >>> d = 5
     >>> projs = get_random_projections(n_projections, d)
