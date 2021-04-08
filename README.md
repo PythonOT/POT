@@ -8,7 +8,6 @@
 [![Anaconda downloads](https://anaconda.org/conda-forge/pot/badges/downloads.svg)](https://anaconda.org/conda-forge/pot)
 [![License](https://anaconda.org/conda-forge/pot/badges/license.svg)](https://github.com/PythonOT/POT/blob/master/LICENSE)
 
-
 This open source Python library provide several solvers for optimization
 problems related to Optimal Transport for signal, image processing and machine
 learning.
@@ -51,13 +50,15 @@ Some other examples are available in the  [documentation](https://pythonot.githu
 
 If you use this toolbox in your research and find it useful, please cite POT
 using the following reference from our [JMLR paper](https://jmlr.org/papers/v22/20-451.html):
-```
-Rémi Flamary, Nicolas Courty, Alexandre Gramfort, Mokhtar Z. Alaya, Aurélie Boisbunon, Stanislas Chambon, Laetitia Chapel, Adrien Corenflos, Kilian Fatras, Nemo Fournier, Léo Gautheron, Nathalie T.H. Gayraud, Hicham Janati, Alain Rakotomamonjy, Ievgen Redko, Antoine Rolet, Antony Schutz, Vivien Seguy, Danica J. Sutherland, Romain Tavenard, Alexander Tong, Titouan Vayer;, POT Python Optimal Transport library, Journal of Machine Learning Research, 22(78):1−8, 2021.
-Website: https://pythonot.github.io/
-```
+
+    Rémi Flamary, Nicolas Courty, Alexandre Gramfort, Mokhtar Z. Alaya, Aurélie Boisbunon, Stanislas Chambon, Laetitia Chapel, Adrien Corenflos, Kilian Fatras, Nemo Fournier, Léo Gautheron, Nathalie T.H. Gayraud, Hicham Janati, Alain Rakotomamonjy, Ievgen Redko, Antoine Rolet, Antony Schutz, Vivien Seguy, Danica J. Sutherland, Romain Tavenard, Alexander Tong, Titouan Vayer,
+    POT Python Optimal Transport library,
+    Journal of Machine Learning Research, 22(78):1−8, 2021.
+    Website: https://pythonot.github.io/
 
 In Bibtex format:
-```
+
+```bibtex
 @article{flamary2021pot,
   author  = {R{\'e}mi Flamary and Nicolas Courty and Alexandre Gramfort and Mokhtar Z. Alaya and Aur{\'e}lie Boisbunon and Stanislas Chambon and Laetitia Chapel and Adrien Corenflos and Kilian Fatras and Nemo Fournier and L{\'e}o Gautheron and Nathalie T.H. Gayraud and Hicham Janati and Alain Rakotomamonjy and Ievgen Redko and Antoine Rolet and Antony Schutz and Vivien Seguy and Danica J. Sutherland and Romain Tavenard and Alexander Tong and Titouan Vayer},
   title   = {POT: Python Optimal Transport},
@@ -83,33 +84,38 @@ The library has been tested on Linux, MacOSX and Windows. It requires a C++ comp
 
 Note that due to a limitation of pip, `cython` and `numpy` need to be installed
 prior to installing POT. This can be done easily with
-```
+
+```console
 pip install numpy cython
 ```
 
 You can install the toolbox through PyPI with:
-```
+
+```console
 pip install POT
 ```
+
 or get the very latest version by running:
-```
+
+```console
 pip install -U https://github.com/PythonOT/POT/archive/master.zip # with --user for user install (no root)
 ```
-
-
 
 #### Anaconda installation with conda-forge
 
 If you use the Anaconda python distribution, POT is available in [conda-forge](https://conda-forge.org). To install it and the required dependencies:
-```
+
+```console
 conda install -c conda-forge pot
 ```
 
 #### Post installation check
 After a correct installation, you should be able to import the module without errors:
+
 ```python
 import ot
 ```
+
 Note that for easier access the module is name ot instead of pot.
 
 
@@ -118,42 +124,48 @@ Note that for easier access the module is name ot instead of pot.
 Some sub-modules require additional dependences which are discussed below
 
 * **ot.dr** (Wasserstein dimensionality reduction) depends on autograd and pymanopt that can be installed with:
-```
+
+```shell
 pip install pymanopt autograd
 ```
-* **ot.gpu** (GPU accelerated OT) depends on cupy that have to be installed following instructions on [this page](https://docs-cupy.chainer.org/en/stable/install.html).
 
-
-obviously you need CUDA installed and a compatible GPU.
+* **ot.gpu** (GPU accelerated OT) depends on cupy that have to be installed following instructions on [this page](https://docs-cupy.chainer.org/en/stable/install.html). Obviously you will need CUDA installed and a compatible GPU.
 
 ## Examples
 
 ### Short examples
 
 * Import the toolbox
+
 ```python
 import ot
 ```
+
 * Compute Wasserstein distances
+
 ```python
 # a,b are 1D histograms (sum to 1 and positive)
 # M is the ground cost matrix
-Wd=ot.emd2(a,b,M) # exact linear program
-Wd_reg=ot.sinkhorn2(a,b,M,reg) # entropic regularized OT
+Wd = ot.emd2(a, b, M) # exact linear program
+Wd_reg = ot.sinkhorn2(a, b, M, reg) # entropic regularized OT
 # if b is a matrix compute all distances to a and return a vector
 ```
+
 * Compute OT matrix
+
 ```python
 # a,b are 1D histograms (sum to 1 and positive)
 # M is the ground cost matrix
-T=ot.emd(a,b,M) # exact linear program
-T_reg=ot.sinkhorn(a,b,M,reg) # entropic regularized OT
+T = ot.emd(a, b, M) # exact linear program
+T_reg = ot.sinkhorn(a, b, M, reg) # entropic regularized OT
 ```
+
 * Compute Wasserstein barycenter
+
 ```python
 # A is a n*d matrix containing d  1D histograms
 # M is the ground cost matrix
-ba=ot.barycenter(A,M,reg) # reg is regularization parameter
+ba = ot.barycenter(A, M, reg) # reg is regularization parameter
 ```
 
 ### Examples and Notebooks
@@ -192,7 +204,6 @@ This toolbox benefit a lot from open source research and we would like to thank 
 * [Gabriel Peyré](http://gpeyre.github.io/) (Wasserstein Barycenters in Matlab)
 * [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) ( C++ code for EMD)
 * [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
-
 
 ## Contributions and code of conduct
 
