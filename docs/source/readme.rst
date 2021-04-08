@@ -66,6 +66,9 @@ POT provides the following generic OT solvers (links to examples):
 -  `Partial Wasserstein and
    Gromov-Wasserstein <auto_examples/unbalanced-partial/plot_partial_wass_and_gromov.html>`__
    (exact [29] and entropic [3] formulations).
+-  `Sliced
+   Wasserstein <auto_examples/sliced-wasserstein/plot_variance.html>`__
+   [31, 32].
 
 POT provides the following Machine Learning related solvers:
 
@@ -96,22 +99,27 @@ Using and citing the toolbox
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you use this toolbox in your research and find it useful, please cite
-POT using the following reference:
+POT using the following reference from our `JMLR
+paper <https://jmlr.org/papers/v22/20-451.html>`__:
 
 ::
 
-    Rémi Flamary and Nicolas Courty, POT Python Optimal Transport library, 
-    Website: https://pythonot.github.io/, 2017
+    Rémi Flamary, Nicolas Courty, Alexandre Gramfort, Mokhtar Z. Alaya, Aurélie Boisbunon, Stanislas Chambon, Laetitia Chapel, Adrien Corenflos, Kilian Fatras, Nemo Fournier, Léo Gautheron, Nathalie T.H. Gayraud, Hicham Janati, Alain Rakotomamonjy, Ievgen Redko, Antoine Rolet, Antony Schutz, Vivien Seguy, Danica J. Sutherland, Romain Tavenard, Alexander Tong, Titouan Vayer;, POT Python Optimal Transport library, Journal of Machine Learning Research, 22(78):1−8, 2021.
+    Website: https://pythonot.github.io/
 
 In Bibtex format:
 
 ::
 
-    @misc{flamary2017pot,
-    title={POT Python Optimal Transport library},
-    author={Flamary, R{'e}mi and Courty, Nicolas},
-    url={https://pythonot.github.io/},
-    year={2017}
+    @article{flamary2021pot,
+      author  = {R{\'e}mi Flamary and Nicolas Courty and Alexandre Gramfort and Mokhtar Z. Alaya and Aur{\'e}lie Boisbunon and Stanislas Chambon and Laetitia Chapel and Adrien Corenflos and Kilian Fatras and Nemo Fournier and L{\'e}o Gautheron and Nathalie T.H. Gayraud and Hicham Janati and Alain Rakotomamonjy and Ievgen Redko and Antoine Rolet and Antony Schutz and Vivien Seguy and Danica J. Sutherland and Romain Tavenard and Alexander Tong and Titouan Vayer},
+      title   = {POT: Python Optimal Transport},
+      journal = {Journal of Machine Learning Research},
+      year    = {2021},
+      volume  = {22},
+      number  = {78},
+      pages   = {1-8},
+      url     = {http://jmlr.org/papers/v22/20-451.html}
     }
 
 Installation
@@ -269,6 +277,8 @@ The contributors to this library are
 -  `Romain Tavenard <https://rtavenar.github.io/>`__ (1d Wasserstein)
 -  `Mokhtar Z. Alaya <http://mzalaya.github.io/>`__ (Screenkhorn)
 -  `Ievgen Redko <https://ievred.github.io/>`__ (Laplacian DA, JCPOT)
+-  `Adrien Corenflos <https://adriencorenflos.github.io/>`__ (Sliced
+   Wasserstein Distance)
 
 This toolbox benefit a lot from open source research and we would like
 to thank the following persons for providing some code (in various
@@ -285,20 +295,21 @@ Contributions and code of conduct
 ---------------------------------
 
 Every contribution is welcome and should respect the `contribution
-guidelines <CONTRIBUTING.md>`__. Each member of the project is expected
-to follow the `code of conduct <CODE_OF_CONDUCT.md>`__.
+guidelines <.github/CONTRIBUTING.md>`__. Each member of the project is
+expected to follow the `code of conduct <.github/CODE_OF_CONDUCT.md>`__.
 
 Support
 -------
 
 You can ask questions and join the development discussion:
 
--  On the `POT Slack channel <https://pot-toolbox.slack.com>`__
+-  On the POT `slack channel <https://pot-toolbox.slack.com>`__
+-  On the POT `gitter channel <https://gitter.im/PythonOT/community>`__
 -  On the POT `mailing
    list <https://mail.python.org/mm3/mailman3/lists/pot.python.org/>`__
 
 You can also post bug reports and feature requests in Github issues.
-Make sure to read our `guidelines <CONTRIBUTING.md>`__ first.
+Make sure to read our `guidelines <.github/CONTRIBUTING.md>`__ first.
 
 References
 ----------
@@ -439,10 +450,10 @@ optimal transport and Monge-Ampere obstacle
 problems <http://www.math.toronto.edu/~mccann/papers/annals2010.pdf>`__,
 Annals of mathematics, 673-730.
 
-[29] Chapel, L., Alaya, M., Gasso, G. (2019). `Partial
-Gromov-Wasserstein with Applications on Positive-Unlabeled
-Learning <https://arxiv.org/abs/2002.08276>`__, arXiv preprint
-arXiv:2002.08276.
+[29] Chapel, L., Alaya, M., Gasso, G. (2020). `Partial Optimal Transport
+with Applications on Positive-Unlabeled
+Learning <https://arxiv.org/abs/2002.08276>`__, Advances in Neural
+Information Processing Systems (NeurIPS), 2020.
 
 [30] Flamary R., Courty N., Tuia D., Rakotomamonjy A. (2014). `Optimal
 transport with Laplacian regularization: Applications to domain
@@ -450,11 +461,16 @@ adaptation and shape
 matching <https://remi.flamary.com/biblio/flamary2014optlaplace.pdf>`__,
 NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
 
+[31] Bonneel, Nicolas, et al. `Sliced and radon wasserstein barycenters
+of
+measures <https://perso.liris.cnrs.fr/nicolas.bonneel/WassersteinSliced-JMIV.pdf>`__,
+Journal of Mathematical Imaging and Vision 51.1 (2015): 22-45
+
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
 .. |Anaconda Cloud| image:: https://anaconda.org/conda-forge/pot/badges/version.svg
    :target: https://anaconda.org/conda-forge/pot
-.. |Build Status| image:: https://github.com/PythonOT/POT/workflows/build/badge.svg
+.. |Build Status| image:: https://github.com/PythonOT/POT/workflows/build/badge.svg?branch=master&event=push
    :target: https://github.com/PythonOT/POT/actions
 .. |Codecov Status| image:: https://codecov.io/gh/PythonOT/POT/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/PythonOT/POT
