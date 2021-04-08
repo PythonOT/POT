@@ -286,6 +286,8 @@ languages):
 
 -  `Gabriel Peyré <http://gpeyre.github.io/>`__ (Wasserstein Barycenters
    in Matlab)
+-  `Mathieu Blondel <https://mblondel.org/>`__ (original implementation
+   smooth OT)
 -  `Nicolas Bonneel <http://liris.cnrs.fr/~nbonneel/>`__ ( C++ code for
    EMD)
 -  `Marco Cuturi <http://marcocuturi.net/>`__ (Sinkhorn Knopp in

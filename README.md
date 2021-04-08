@@ -190,6 +190,7 @@ The contributors to this library are
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
 * [Gabriel Peyré](http://gpeyre.github.io/) (Wasserstein Barycenters in Matlab)
+* [Mathieu Blondel](https://mblondel.org/) (original implementation smooth OT)
 * [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) ( C++ code for EMD)
 * [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
 
