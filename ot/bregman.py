@@ -69,6 +69,21 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     log : bool, optional
         record log if True
 
+    **Choosing a Sinkhorn solver**
+
+    By default and when using a regularization parameter that is not too small
+    the default sinkhorn solver should be enough. If you need to use a small
+    regularization to get sharper OT matrices, you should use the
+    :any:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical
+    errors. This last solver can be very slow in practice and might not even
+    converge to a reasonable OT matrix in a finite time. This is why
+    :any:`ot.bregman.sinkhorn_epsilon_scaling` that relie on iterating the value
+    of the regularization (and using warm start) sometimes leads to better
+    solutions. Note that the greedy version of the sinkhorn
+    :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
+    version of the sinkhorn :any:`ot.bregman.screenkhorn` aim a providing  a
+    fast approximation of the Sinkhorn problem.
+
 
     Returns
     -------
@@ -175,6 +190,21 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
         Print information along iterations
     log : bool, optional
         record log if True
+
+    **Choosing a Sinkhorn solver**
+
+    By default and when using a regularization parameter that is not too small
+    the default sinkhorn solver should be enough. If you need to use a small
+    regularization to get sharper OT matrices, you should use the
+    :any:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical
+    errors. This last solver can be very slow in practice and might not even
+    converge to a reasonable OT matrix in a finite time. This is why
+    :any:`ot.bregman.sinkhorn_epsilon_scaling` that relie on iterating the value
+    of the regularization (and using warm start) sometimes leads to better
+    solutions. Note that the greedy version of the sinkhorn
+    :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
+    version of the sinkhorn :any:`ot.bregman.screenkhorn` aim a providing  a
+    fast approximation of the Sinkhorn problem.
 
     Returns
     -------

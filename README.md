@@ -50,19 +50,23 @@ Some other examples are available in the  [documentation](https://pythonot.githu
 #### Using and citing the toolbox
 
 If you use this toolbox in your research and find it useful, please cite POT
-using the following reference:
+using the following reference from our [JMLR paper](https://jmlr.org/papers/v22/20-451.html):
 ```
-Rémi Flamary and Nicolas Courty, POT Python Optimal Transport library, 
-Website: https://pythonot.github.io/, 2017
+Rémi Flamary, Nicolas Courty, Alexandre Gramfort, Mokhtar Z. Alaya, Aurélie Boisbunon, Stanislas Chambon, Laetitia Chapel, Adrien Corenflos, Kilian Fatras, Nemo Fournier, Léo Gautheron, Nathalie T.H. Gayraud, Hicham Janati, Alain Rakotomamonjy, Ievgen Redko, Antoine Rolet, Antony Schutz, Vivien Seguy, Danica J. Sutherland, Romain Tavenard, Alexander Tong, Titouan Vayer;, POT Python Optimal Transport library, Journal of Machine Learning Research, 22(78):1−8, 2021.
+Website: https://pythonot.github.io/
 ```
 
 In Bibtex format:
 ```
-@misc{flamary2017pot,
-title={POT Python Optimal Transport library},
-author={Flamary, R{'e}mi and Courty, Nicolas},
-url={https://pythonot.github.io/},
-year={2017}
+@article{flamary2021pot,
+  author  = {R{\'e}mi Flamary and Nicolas Courty and Alexandre Gramfort and Mokhtar Z. Alaya and Aur{\'e}lie Boisbunon and Stanislas Chambon and Laetitia Chapel and Adrien Corenflos and Kilian Fatras and Nemo Fournier and L{\'e}o Gautheron and Nathalie T.H. Gayraud and Hicham Janati and Alain Rakotomamonjy and Ievgen Redko and Antoine Rolet and Antony Schutz and Vivien Seguy and Danica J. Sutherland and Romain Tavenard and Alexander Tong and Titouan Vayer},
+  title   = {POT: Python Optimal Transport},
+  journal = {Journal of Machine Learning Research},
+  year    = {2021},
+  volume  = {22},
+  number  = {78},
+  pages   = {1-8},
+  url     = {http://jmlr.org/papers/v22/20-451.html}
 }
 ```
 
@@ -186,6 +190,7 @@ The contributors to this library are
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
 * [Gabriel Peyré](http://gpeyre.github.io/) (Wasserstein Barycenters in Matlab)
+* [Mathieu Blondel](https://mblondel.org/) (original implementation smooth OT)
 * [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) ( C++ code for EMD)
 * [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
 
