@@ -742,8 +742,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         # remove numerical problems and store them in K
         if np.abs(u).max() > tau or np.abs(v).max() > tau:
             if n_hists:
-                alpha, beta = alpha + reg * \
-                              np.max(np.log(u), 1), beta + reg * np.max(np.log(v))
+                alpha, beta = alpha + reg * np.max(np.log(u), 1), beta + reg * np.max(np.log(v))
             else:
                 alpha, beta = alpha + reg * np.log(u), beta + reg * np.log(v)
                 if n_hists:
@@ -2210,7 +2209,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
 
         # box constraints in L-BFGS-B (see Proposition 1 in [26])
         bounds_u = [(max(a_I_min / ((nt - nt_budget) * epsilon + nt_budget * (b_J_max / (
-                ns * epsilon * kappa * K_min))), epsilon / kappa), a_I_max / (nt * epsilon * K_min))] * ns_budget
+                    ns * epsilon * kappa * K_min))), epsilon / kappa), a_I_max / (nt * epsilon * K_min))] * ns_budget
 
         bounds_v = [(
             max(b_J_min / ((ns - ns_budget) * epsilon + ns_budget * (kappa * a_I_max / (nt * epsilon * K_min))),
