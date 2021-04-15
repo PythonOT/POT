@@ -38,10 +38,10 @@ jobs:
         choco install vcpython27 -f -y
 
     - name: Set up QEMU
-        if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v1
-        with:
-          platforms: all
+      if: runner.os == 'Linux'
+      uses: docker/setup-qemu-action@v1
+      with:
+        platforms: all
 
     - name: Build wheel
       env:
