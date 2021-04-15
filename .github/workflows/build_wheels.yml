@@ -13,7 +13,7 @@ jobs:
     if: "contains(github.event.head_commit.message, 'build wheels') || github.event.head_commit.branch == 'master' "
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-11, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v1
