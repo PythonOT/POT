@@ -39,10 +39,17 @@ jobs:
       run: |
         choco install vcpython27 -f -y
 
+    - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: all
+
     - name: Build wheel
       env:
         CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp*" # remove pypy on mac and win (wrong version)
         CIBW_BEFORE_BUILD: "pip install numpy cython"
+        CIBW_ARCHS_LINUX: auto aarch64 
       run: |
         python -m cibuildwheel --output-dir wheelhouse
 
