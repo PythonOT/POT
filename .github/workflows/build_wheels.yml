@@ -4,12 +4,14 @@ on:
   release:
   push:
     branches:
-      - "master"
+      - "*"
 
 jobs:
   build_wheels:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    if: "contains(github.event.head_commit.message, 'build wheels') ||
+    github.event.branch == 'master' "
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
