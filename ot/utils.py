@@ -237,7 +237,7 @@ def fun(f, q_in, q_out):
 def parmap(f, X, nprocs=multiprocessing.cpu_count()):
     """ paralell map for multiprocessing (only map on windows)"""
 
-    if not sys.platform.endswith('win32'):
+    if not sys.platform.endswith('win32') and not sys.platform.endswith('darwin'):
 
         q_in = multiprocessing.Queue(1)
         q_out = multiprocessing.Queue()

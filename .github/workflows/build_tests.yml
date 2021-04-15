@@ -3,8 +3,6 @@ name: build
 on:
   push:
 
-  pull_request:
-
   create:
     branches:
       - 'master'
@@ -18,7 +16,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8]
+        python-version: [ 3.6, 3.7, 3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v1
@@ -93,11 +91,11 @@ jobs:
 
 
   macos:
-     runs-on: macOS-latest
+     runs-on: macos-latest
      strategy:
        max-parallel: 4
        matrix:
-         python-version: [3.7]
+         python-version: [3.7, 3.8, 3.9]
 
      steps:
      - uses: actions/checkout@v1
@@ -118,12 +116,13 @@ jobs:
          python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
 
 
+
   windows:
     runs-on: windows-2019
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.7]
+        python-version: [3.7, 3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v1
