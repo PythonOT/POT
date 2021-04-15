@@ -43,7 +43,7 @@ jobs:
       with:
         platforms: all
 
-    - name: Build wheel
+    - name: Build wheels
       env:
         CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp*" # remove pypy on mac and win (wrong version)
         CIBW_BEFORE_BUILD: "pip install numpy cython"
