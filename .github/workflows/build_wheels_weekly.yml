@@ -1,4 +1,4 @@
-name: Build dist and wheels
+name: Weekly build wheels
 
 on:
   schedule:
