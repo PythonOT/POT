@@ -1,8 +1,8 @@
-name: build
+name: Build and test
 
 on:
+  workflow_dispatch:
   push:
-
   create:
     branches:
       - 'master'
@@ -118,7 +118,6 @@ jobs:
      - name: Run tests
        run: |
          python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
-
 
 
   windows:

@@ -1,6 +1,7 @@
-name: Build dist and wheels
+name: Build wheels
 
 on:
+  workflow_dispatch:
   release:
   push:
     branches:
