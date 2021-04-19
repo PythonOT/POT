@@ -3,6 +3,8 @@ name: Build and test
 on:
   workflow_dispatch:
   push:
+    branches:
+      - '**'  
   create:
     branches:
       - 'master'
