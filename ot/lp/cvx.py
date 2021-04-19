@@ -27,7 +27,7 @@ def scipy_sparse_to_spmatrix(A):
 
 
 def barycenter(A, M, weights=None, verbose=False, log=False, solver='interior-point'):
-    """Compute the Wasserstein barycenter of distributions A
+    r"""Compute the Wasserstein barycenter of distributions A
 
      The function solves the following optimization problem [16]:
 
@@ -74,7 +74,6 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver='interior-po
     ----------
 
     .. [16] Agueh, M., & Carlier, G. (2011). Barycenters in the Wasserstein space. SIAM Journal on Mathematical Analysis, 43(2), 904-924.
-
 
 
     """

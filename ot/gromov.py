@@ -19,7 +19,7 @@ from .optim import cg
 
 
 def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
-    """Return loss matrices and tensors for Gromov-Wasserstein fast computation
+    r"""Return loss matrices and tensors for Gromov-Wasserstein fast computation
 
     Returns the value of \mathcal{L}(C1,C2) \otimes T with the selected loss
     function as the loss function of Gromow-Wasserstein discrepancy.
@@ -109,7 +109,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
 
 
 def tensor_product(constC, hC1, hC2, T):
-    """Return the tensor for Gromov-Wasserstein fast computation
+    r"""Return the tensor for Gromov-Wasserstein fast computation
 
     The tensor is computed as described in Proposition 1 Eq. (6) in [12].
 
@@ -262,7 +262,7 @@ def update_kl_loss(p, lambdas, T, Cs):
 
 
 def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs):
-    """
+    r"""
     Returns the gromov-wasserstein transport between (C1,p) and (C2,q)
 
     The function solves the following optimization problem:
@@ -343,7 +343,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
 
 
 def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs):
-    """
+    r"""
     Returns the gromov-wasserstein discrepancy between (C1,p) and (C2,q)
 
     The function solves the following optimization problem:
@@ -420,7 +420,7 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwarg
 
 
 def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5, armijo=False, log=False, **kwargs):
-    """
+    r"""
     Computes the FGW transport between two graphs see [24]
 
     .. math::
@@ -496,7 +496,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
 
 
 def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5, armijo=False, log=False, **kwargs):
-    """
+    r"""
     Computes the FGW distance between two graphs see [24]
 
     .. math::
@@ -574,7 +574,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
 
 def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
                                 max_iter=1000, tol=1e-9, verbose=False, log=False):
-    """
+    r"""
     Returns the gromov-wasserstein transport between (C1,p) and (C2,q)
 
     (C1,p) and (C2,q)
@@ -681,7 +681,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
 
 def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
                                  max_iter=1000, tol=1e-9, verbose=False, log=False):
-    """
+    r"""
     Returns the entropic gromov-wasserstein discrepancy between the two measured similarity matrices
 
     (C1,p) and (C2,q)
@@ -747,7 +747,7 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
 
 def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
                                 max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None):
-    """
+    r"""
     Returns the gromov-wasserstein barycenters of S measured similarity matrices
 
     (Cs)_{s=1}^{s=S}
@@ -857,7 +857,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
 
 def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
                        max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None):
-    """
+    r"""
     Returns the gromov-wasserstein barycenters of S measured similarity matrices
 
     (Cs)_{s=1}^{s=S}
