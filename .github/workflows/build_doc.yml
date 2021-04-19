@@ -1,0 +1,26 @@
+name: Build doc
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - 'master'  
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    # Standard drop-in approach that should work for most people.
+
+    - uses: ammaraskar/sphinx-action@master
+      with:
+        docs-folder: "docs/"
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: Documentation
+        path: docs/_build/html/*      
