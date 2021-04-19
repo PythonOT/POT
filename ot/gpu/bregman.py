@@ -15,7 +15,7 @@ from . import utils
 
 def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
                    verbose=False, log=False, to_numpy=True, **kwargs):
-    """
+    r"""
     Solve the entropic regularization optimal transport on GPU
 
     If the input matrix are in numpy format, they will be uploaded to the

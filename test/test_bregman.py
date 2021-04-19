@@ -320,8 +320,9 @@ def test_implemented_methods():
     # make dists unbalanced
     b = ot.utils.unif(n)
     A = rng.rand(n, 2)
+    A /= A.sum(0,keepdims=True)
     M = ot.dist(x, x)
-    epsilon = 1.
+    epsilon = 1.0
 
     for method in IMPLEMENTED_METHODS:
         ot.bregman.sinkhorn(a, b, M, epsilon, method=method)
