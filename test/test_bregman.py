@@ -320,7 +320,7 @@ def test_implemented_methods():
     # make dists unbalanced
     b = ot.utils.unif(n)
     A = rng.rand(n, 2)
-    A /= A.sum(0,keepdims=True)
+    A /= A.sum(0, keepdims=True)
     M = ot.dist(x, x)
     epsilon = 1.0
 
