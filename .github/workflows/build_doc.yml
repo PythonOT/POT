@@ -39,9 +39,10 @@ jobs:
     - name: make html
       run: |
         cd docs;
-        make html-noplot;
+        make html;
 
     - uses: actions/upload-artifact@v1
       with:
         name: Documentation
         path: docs/build/html/
+
