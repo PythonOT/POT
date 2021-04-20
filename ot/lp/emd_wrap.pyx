@@ -97,8 +97,6 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     cdef np.ndarray[double, ndim=2, mode="c"] G=np.zeros([0, 0])
 
     cdef np.ndarray[double, ndim=1, mode="c"] Gv=np.zeros(0)
-    cdef np.ndarray[long, ndim=1, mode="c"] iG=np.zeros(0,dtype=np.int)
-    cdef np.ndarray[long, ndim=1, mode="c"] jG=np.zeros(0,dtype=np.int)
 
     if not len(a):
         a=np.ones((n1,))/n1
@@ -170,7 +168,7 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
     cdef np.ndarray[double, ndim=1, mode="c"] G = np.zeros((n + m - 1, ),
                                                            dtype=np.float64)
     cdef np.ndarray[long, ndim=2, mode="c"] indices = np.zeros((n + m - 1, 2),
-                                                              dtype=np.int)
+                                                              dtype=np.int64)
     cdef Py_ssize_t cur_idx = 0
     while True:
         if metric == 'sqeuclidean':
