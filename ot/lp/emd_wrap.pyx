@@ -167,7 +167,7 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
 
     cdef np.ndarray[double, ndim=1, mode="c"] G = np.zeros((n + m - 1, ),
                                                            dtype=np.float64)
-    cdef np.ndarray[long log, ndim=2, mode="c"] indices = np.zeros((n + m - 1, 2),
+    cdef np.ndarray[long long, ndim=2, mode="c"] indices = np.zeros((n + m - 1, 2),
                                                               dtype=np.int64)
     cdef Py_ssize_t cur_idx = 0
     while True:
