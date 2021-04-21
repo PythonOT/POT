@@ -3,9 +3,11 @@ name: Tests
 on:
   workflow_dispatch:
   pull_request:
+    branches:
+      - 'master'    
   push:
     branches:
-      - '**'  
+      - 'master'  
   create:
     branches:
       - 'master'
