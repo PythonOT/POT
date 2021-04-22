@@ -45,7 +45,7 @@ from .sliced import sliced_wasserstein_distance
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.7.0"
+__version__ = "0.8.0dev"
 
 __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'datasets', 'bregman', 'lp', 'tic', 'toc', 'toq', 'gromov',
