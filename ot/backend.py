@@ -130,13 +130,13 @@ class NumpyBackend(Backend):
             return np.full(shape, fill_value, dtype=type_as.dtype)
 
     def sum(self, a, axis=None, keepdims=False):
-        return np.sum(a, axis, keepdims)
+        return np.sum(a, axis, keepdims=keepdims)
 
     def max(self, a, axis=None, keepdims=False):
-        return np.max(a, axis, keepdims)
+        return np.max(a, axis, keepdims=keepdims)
 
     def min(self, a, axis=None, keepdims=False):
-        return np.min(a, axis, keepdims)
+        return np.min(a, axis, keepdims=keepdims)
 
     def dot(self, a, b):
         return np.dot(a, b)
@@ -184,13 +184,22 @@ class TorchBackend(Backend):
             return torch.full(shape, fill_value, dtype=type_as.dtype, device=type_as.device)
 
     def sum(self, a, axis=None, keepdims=False):
-        return torch.sum(a, axis, keepdims)
+        if axis is None:
+            return torch.sum(a)
+        else:
+            return torch.sum(a, axis, keepdim=keepdims)
 
     def max(self, a, axis=None, keepdims=False):
-        return torch.max(a, axis, keepdims)
+        if axis is None:
+            return torch.max(a)
+        else:
+            return torch.max(a, axis, keepdim=keepdims)
 
     def min(self, a, axis=None, keepdims=False):
-        return torch.min(a, axis, keepdims)
+        if axis is None:
+            return torch.min(a)
+        else:
+            return torch.min(a, axis, keepdim=keepdims)
 
     def dot(self, a, b):
         if len(a.shape) == len(b.shape) == 1:
