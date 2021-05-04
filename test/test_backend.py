@@ -110,6 +110,33 @@ def test_func_backends():
         A = nx.full((10, 3), 3.14, type_as=Mb)
         lst_b.append(nx.to_numpy(A))
 
+        A = nx.sum(Mb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.max(Mb)
+        lst_b.append(nx.to_numpy(A))        
+
+        A = nx.min(Mb)
+        lst_b.append(nx.to_numpy(A))  
+
+        A = nx.abs(Mb)
+        lst_b.append(nx.to_numpy(A))  
+
+        A = nx.log(A)
+        lst_b.append(nx.to_numpy(A))  
+
+        A = nx.exp(Mb)
+        lst_b.append(nx.to_numpy(A))      
+
+        A = nx.dot(vb, vb)   
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.dot(Mb, vb)   
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.dot(Mb, Mb.T)   
+        lst_b.append(nx.to_numpy(A))
+
         lst_tot.append(lst_b)
 
     lst_np = lst_tot[0]
