@@ -168,7 +168,7 @@ class JaxBackend(Backend):
     __type__ = jax_type
 
     def to_numpy(self, a):
-        return a
+        return np.array(a)
 
     def from_numpy(self, a, type_as=None):
         if type_as is None:
