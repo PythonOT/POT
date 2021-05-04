@@ -24,13 +24,14 @@ except ImportError:
     jax = False
     jax_type = None
 
+
 def get_backend_list():
     """ returns the list of available backends)"""
     lst = [NumpyBackend(), ]
 
     if torch:
         lst.append(TorchBackend())
-    
+
     if jax:
         lst.append(JaxBackend())
 
@@ -159,7 +160,6 @@ class NumpyBackend(Backend):
 
     def log(self, a):
         return np.log(a)
-
 
 
 class JaxBackend(Backend):
