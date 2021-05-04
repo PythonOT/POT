@@ -172,9 +172,9 @@ class JaxBackend(Backend):
 
     def from_numpy(self, a, type_as=None):
         if type_as is None:
-            return a
+            return jnp.array(a)
         else:
-            return a.astype(type_as.dtype)
+            return jnp.array(a).astype(type_as.dtype)
 
     def zeros(self, shape, type_as=None):
         if type_as is None:
