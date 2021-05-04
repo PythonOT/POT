@@ -16,6 +16,7 @@ except ImportError:
     torch = False
     torch_type = None
 
+
 def get_backend_list():
     """ returns the list of available backends)"""
     lst = [NumpyBackend(), ]
