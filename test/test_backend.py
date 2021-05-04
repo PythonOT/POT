@@ -65,14 +65,56 @@ def test_convert_between_backends():
     A = np.zeros((3, 2))
     B = np.zeros((3, 1))
 
-    for b in get_backend_list()[1:]:
+    for nx in get_backend_list()[1:]:
 
-        A2 = b.from_numpy(A)
-        B2 = b.from_numpy(B)
+        A2 = nx.from_numpy(A)
+        B2 = nx.from_numpy(B)
 
-        nx = get_backend(A2, B2)
+        assert isinstance(A2, nx.__type__)
+        assert isinstance(B2, nx.__type__)
 
-        assert nx.__name__ == b.__name__
+        nx2 = get_backend(A2, B2)
 
-        assert_array_almost_equal_nulp(b.to_numpy(A2), A)
-        assert_array_almost_equal_nulp(b.to_numpy(B2), B)
+        assert nx2.__name__ == nx.__name__
+
+        assert_array_almost_equal_nulp(nx.to_numpy(A2), A)
+        assert_array_almost_equal_nulp(nx.to_numpy(B2), B)
+
+
+def test_func_backends():
+
+    rnd = np.random.RandomState(0)
+    M = rnd.randn(10, 3)
+    v = rnd.randn(3)
+
+    lst_tot = []
+
+    for nx in get_backend_list():
+
+        print('Backend: ', nx.__name__)
+
+        lst_b = []
+
+        Mb = nx.from_numpy(M)
+        vb = nx.from_numpy(v)
+
+        A = nx.zeros((10, 3))
+        A = nx.zeros((10, 3), type_as=Mb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.ones((10, 3))
+        A = nx.ones((10, 3), type_as=Mb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.full((10, 3), 3.14)
+        A = nx.full((10, 3), 3.14, type_as=Mb)
+        lst_b.append(nx.to_numpy(A))
+
+        lst_tot.append(lst_b)
+
+    lst_np = lst_tot[0]
+    for lst_b in lst_tot[1:]:
+
+        for a1, a2 in zip(lst_np, lst_b):
+
+            assert_array_almost_equal_nulp(a1, a2)

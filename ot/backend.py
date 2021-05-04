@@ -55,7 +55,8 @@ def to_numpy(*lst):
 
 class Backend():
 
-    __name__ = 'defautl'
+    __name__ = None
+    __type__ = None
 
     # convert from and to numpy
     def to_numpy(self, a):
@@ -98,6 +99,7 @@ class Backend():
 class NumpyBackend(Backend):
 
     __name__ = 'numpy'
+    __type__ = np.ndarray
 
     def to_numpy(self, a):
         return a
@@ -151,6 +153,7 @@ class NumpyBackend(Backend):
 class TorchBackend(Backend):
 
     __name__ = 'torch'
+    __type__ = torch.Tensor
 
     def to_numpy(self, a):
         return a.cpu().numpy()
