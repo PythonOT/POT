@@ -16,6 +16,13 @@ except ImportError:
     torch = False
     torch_type = None
 
+try:
+    import jax
+    import jax.numpy as jnp
+    jax_type = jax.numpy.ndarray
+except ImportError:
+    jax = False
+    jax_type = None
 
 def get_backend_list():
     """ returns the list of available backends)"""
@@ -23,6 +30,9 @@ def get_backend_list():
 
     if torch:
         lst.append(TorchBackend())
+    
+    if jax:
+        lst.append(JaxBackend())
 
     return lst
 
@@ -41,9 +51,9 @@ def get_backend(*args):
     if isinstance(args[0], np.ndarray):
         return NumpyBackend()
     elif torch and isinstance(args[0], torch_type):
-        return torch
-    #elif isinstance(args[0], jax.numpy.ndarray):
-    #    return jax.numpy
+        return TorchBackend()
+    elif isinstance(args[0], jax_type):
+        return JaxBackend()
     else:
         raise ValueError("Unknown type of non implemented backend.")
 
@@ -149,6 +159,61 @@ class NumpyBackend(Backend):
 
     def log(self, a):
         return np.log(a)
+
+
+
+class JaxBackend(Backend):
+
+    __name__ = 'jax'
+    __type__ = jax_type
+
+    def to_numpy(self, a):
+        return a
+
+    def from_numpy(self, a, type_as=None):
+        if type_as is None:
+            return a
+        else:
+            return a.astype(type_as.dtype)
+
+    def zeros(self, shape, type_as=None):
+        if type_as is None:
+            return jnp.zeros(shape)
+        else:
+            return jnp.zeros(shape, dtype=type_as.dtype)
+
+    def ones(self, shape, type_as=None):
+        if type_as is None:
+            return jnp.ones(shape)
+        else:
+            return jnp.ones(shape, dtype=type_as.dtype)
+
+    def full(self, shape, fill_value, type_as=None):
+        if type_as is None:
+            return jnp.full(shape, fill_value)
+        else:
+            return jnp.full(shape, fill_value, dtype=type_as.dtype)
+
+    def sum(self, a, axis=None, keepdims=False):
+        return jnp.sum(a, axis, keepdims=keepdims)
+
+    def max(self, a, axis=None, keepdims=False):
+        return jnp.max(a, axis, keepdims=keepdims)
+
+    def min(self, a, axis=None, keepdims=False):
+        return jnp.min(a, axis, keepdims=keepdims)
+
+    def dot(self, a, b):
+        return jnp.dot(a, b)
+
+    def abs(self, a):
+        return jnp.abs(a)
+
+    def exp(self, a):
+        return jnp.exp(a)
+
+    def log(self, a):
+        return jnp.log(a)
 
 
 class TorchBackend(Backend):
