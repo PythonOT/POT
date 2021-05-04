@@ -8,13 +8,13 @@ Multi-lib backend for POT
 # License: MIT License
 
 import numpy as np
-import scipy.spatial
 
 try:
     import torch
+    torch_type = torch.Tensor
 except ImportError:
     torch = False
-
+    torch_type = None
 
 def get_backend_list():
     """ returns the list of available backends)"""
@@ -39,7 +39,7 @@ def get_backend(*args):
         raise ValueError("All array should be from the same type/backend. Current types are : {}".format(args))
     if isinstance(args[0], np.ndarray):
         return NumpyBackend()
-    elif torch and isinstance(args[0], torch.Tensor):
+    elif torch and isinstance(args[0], torch_type):
         return torch
     #elif isinstance(args[0], jax.numpy.ndarray):
     #    return jax.numpy
@@ -153,7 +153,7 @@ class NumpyBackend(Backend):
 class TorchBackend(Backend):
 
     __name__ = 'torch'
-    __type__ = torch.Tensor
+    __type__ = torch_type
 
     def to_numpy(self, a):
         return a.cpu().numpy()
