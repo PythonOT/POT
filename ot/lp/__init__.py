@@ -20,6 +20,7 @@ from .cvx import barycenter
 from .emd_wrap import emd_c, check_result, emd_1d_sorted
 from ..utils import dist
 from ..utils import parmap
+from ..backend import get_backend
 
 __all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx',
            'emd_1d', 'emd2_1d', 'wasserstein_1d']
@@ -249,6 +250,23 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     ot.bregman.sinkhorn : Entropic regularized OT
     ot.optim.cg : General regularized OT"""
 
+    # convert to numpy if list
+    if type(a)==list:
+        a=np.array(a)
+    if type(b)==list:
+        b=np.array(b)   
+    if type(M)==list:
+        M=np.array(M)
+
+    a0, b0, M0 = a, b, M
+    nx =  get_backend(M0, a0, b0)
+    
+    # convert to numpy
+    M = nx.to_numpy(M)
+    a = nx.to_numpy(a)
+    b = nx.to_numpy(b)
+    
+    # ensure float64
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64)
@@ -261,6 +279,10 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
 
     assert (a.shape[0] == M.shape[0] and b.shape[0] == M.shape[1]), \
         "Dimension mismatch, check dimensions of M with a and b"
+
+    # ensure that same mass
+    np.testing.assert_almost_equal(a.sum(0),b.sum(0),err_msg='a and b vector must have the same sum')
+    b=b*a.sum()/b.sum()
 
     asel = a != 0
     bsel = b != 0
@@ -277,12 +299,12 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     if log:
         log = {}
         log['cost'] = cost
-        log['u'] = u
-        log['v'] = v
+        log['u'] = nx.from_numpy(u)
+        log['v'] = nx.from_numpy(v)
         log['warning'] = result_code_string
         log['result_code'] = result_code
-        return G, log
-    return G
+        return nx.from_numpy(G), log
+    return nx.from_numpy(G)
 
 
 def emd2(a, b, M, processes=multiprocessing.cpu_count(),
@@ -636,6 +658,10 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         a = np.ones((x_a.shape[0],), dtype=np.float64) / x_a.shape[0]
     if b.ndim == 0 or len(b) == 0:
         b = np.ones((x_b.shape[0],), dtype=np.float64) / x_b.shape[0]
+
+    # ensure that same mass
+    np.testing.assert_almost_equal(a.sum(0),b.sum(0),err_msg='a and b vector must have the same sum')
+    b=b*a.sum()/b.sum()
 
     x_a_1d = x_a.reshape((-1,))
     x_b_1d = x_b.reshape((-1,))

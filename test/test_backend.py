@@ -113,10 +113,19 @@ def test_func_backends():
         A = nx.sum(Mb)
         lst_b.append(nx.to_numpy(A))
 
+        A = nx.sum(Mb, axis=1, keepdims=True)
+        lst_b.append(nx.to_numpy(A))
+
         A = nx.max(Mb)
         lst_b.append(nx.to_numpy(A))
 
+        A = nx.max(Mb, axis=1, keepdims=True)
+        lst_b.append(nx.to_numpy(A))
+
         A = nx.min(Mb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.min(Mb, axis=1, keepdims=True)
         lst_b.append(nx.to_numpy(A))
 
         A = nx.abs(Mb)

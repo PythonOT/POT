@@ -48,7 +48,7 @@ def get_backend(*args):
         raise ValueError(" The function takes at least one parameter")
     # check all same type
     if not len(set(type(a) for a in args)) == 1:
-        raise ValueError("All array should be from the same type/backend. Current types are : {}".format(args))
+        raise ValueError("All array should be from the same type/backend. Current types are : {}".format([type(a) for a in args]))
     if isinstance(args[0], np.ndarray):
         return NumpyBackend()
     elif torch and isinstance(args[0], torch_type):
@@ -258,13 +258,13 @@ class TorchBackend(Backend):
         if axis is None:
             return torch.max(a)
         else:
-            return torch.max(a, axis, keepdim=keepdims)
+            return torch.max(a, axis, keepdim=keepdims)[0]
 
     def min(self, a, axis=None, keepdims=False):
         if axis is None:
             return torch.min(a)
         else:
-            return torch.min(a, axis, keepdim=keepdims)
+            return torch.min(a, axis, keepdim=keepdims)[0]
 
     def dot(self, a, b):
         if len(a.shape) == len(b.shape) == 1:

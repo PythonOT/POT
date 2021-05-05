@@ -12,9 +12,10 @@ from scipy.stats import wasserstein_distance
 
 import ot
 from ot.datasets import make_1D_gauss as gauss
+from ot.backend import get_backend_list
 
 
-def test_emd_dimension_mismatch():
+def test_emd_dimension_and_mass_mismatch():
     # test emd and emd2 for dimension mismatch
     n_samples = 100
     n_features = 2
@@ -28,6 +29,34 @@ def test_emd_dimension_mismatch():
     np.testing.assert_raises(AssertionError, ot.emd, a, a, M)
 
     np.testing.assert_raises(AssertionError, ot.emd2, a, a, M)
+
+    b = a.copy()
+    a[0] = 100
+    np.testing.assert_raises(AssertionError, ot.emd, a, b, M)
+
+
+def test_emd_backends():
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    G = ot.emd(a, a, M)
+
+    for nx in get_backend_list()[:]:
+
+        ab = nx.from_numpy(a)
+        Mb = nx.from_numpy(M)
+
+        Gb = ot.emd(ab, ab, Mb)
+
+        np.allclose(G,nx.to_numpy(Gb))
+
 
 
 def test_emd_emd2():
@@ -83,7 +112,7 @@ def test_emd_1d_emd2_1d():
     np.testing.assert_allclose(np.ones((m,)) / m, G.sum(0))
 
     # check G is similar
-    np.testing.assert_allclose(G, G_1d)
+    np.testing.assert_allclose(G, G_1d, atol=1e-15)
 
     # check AssertionError is raised if called on non 1d arrays
     u = np.random.randn(n, 2)
@@ -292,16 +321,6 @@ def test_warnings():
         ot.emd(a, b, M, numItermax=1)
         assert "numItermax" in str(w[-1].message)
         #assert len(w) == 1
-        a[0] = 100
-        print('Computing {} EMD '.format(2))
-        ot.emd(a, b, M)
-        assert "infeasible" in str(w[-1].message)
-        #assert len(w) == 2
-        a[0] = -1
-        print('Computing {} EMD '.format(2))
-        ot.emd(a, b, M)
-        assert "infeasible" in str(w[-1].message)
-        #assert len(w) == 3
 
 
 def test_dual_variables():
