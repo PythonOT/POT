@@ -59,10 +59,13 @@ def get_backend(*args):
         raise ValueError("Unknown type of non implemented backend.")
 
 
-def to_numpy(*lst):
+def to_numpy(*args):
     """returns numpy arrays from any compatible backend"""
 
-    return (get_backend(a).to_numpy(a) for a in lst)
+    if len(args)==1:
+        return get_backend(args[0]).to_numpy(args[0])
+    else:
+        return [get_backend(a).to_numpy(a) for a in args]
 
 
 class Backend():

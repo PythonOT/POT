@@ -299,12 +299,12 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     if log:
         log = {}
         log['cost'] = cost
-        log['u'] = nx.from_numpy(u)
-        log['v'] = nx.from_numpy(v)
+        log['u'] = nx.from_numpy(u, type_as=a0)
+        log['v'] = nx.from_numpy(v, type_as=b0)
         log['warning'] = result_code_string
         log['result_code'] = result_code
-        return nx.from_numpy(G), log
-    return nx.from_numpy(G)
+        return nx.from_numpy(G, type_as=M0), log
+    return nx.from_numpy(G, type_as=M0)
 
 
 def emd2(a, b, M, processes=multiprocessing.cpu_count(),

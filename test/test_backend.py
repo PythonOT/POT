@@ -13,7 +13,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal_nulp
 
-from ot.backend import get_backend, get_backend_list
+from ot.backend import get_backend, get_backend_list, to_numpy
 
 
 def test_get_backend_list():
@@ -22,6 +22,18 @@ def test_get_backend_list():
 
     assert len(lst) > 0
     assert isinstance(lst[0], ot.backend.NumpyBackend)
+
+def test_to_numpy():
+
+    for nx in get_backend_list():
+
+        v= nx.zeros(10)
+        M = nx.ones((10,10))
+
+        v2 = to_numpy(v)
+        assert type(v2) == np.ndarray
+
+        v2, M2 = to_numpy(v, M)
 
 
 def test_get_backend():
@@ -79,6 +91,41 @@ def test_convert_between_backends():
 
         assert_array_almost_equal_nulp(nx.to_numpy(A2), A)
         assert_array_almost_equal_nulp(nx.to_numpy(B2), B)
+
+def test_empty_backend():
+
+    rnd = np.random.RandomState(0)
+    M = rnd.randn(10, 3)
+    v = rnd.randn(3)
+
+    nx = ot.backend.Backend()
+
+    with pytest.raises(NotImplementedError):
+        Mb = nx.from_numpy(M)
+
+    with pytest.raises(NotImplementedError):
+        A = nx.zeros((10, 3))
+    with pytest.raises(NotImplementedError):
+        A = nx.ones((10, 3))
+    with pytest.raises(NotImplementedError):
+        A = nx.full((10, 3), 3.14)
+    with pytest.raises(NotImplementedError):
+        A = nx.sum(M)
+    with pytest.raises(NotImplementedError):
+        A = nx.max(M)
+    with pytest.raises(NotImplementedError):
+        A = nx.min(M)
+    with pytest.raises(NotImplementedError):
+        A = nx.abs(M)
+    with pytest.raises(NotImplementedError):
+        A = nx.log(M)
+    with pytest.raises(NotImplementedError):
+        A = nx.exp(M)
+    with pytest.raises(NotImplementedError):
+        A = nx.dot(v, v)
+
+
+
 
 
 def test_func_backends():
