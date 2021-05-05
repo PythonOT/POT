@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 import ot
+from ot.backend import get_backend_list
 
 
 def test_sinkhorn():
@@ -28,6 +29,29 @@ def test_sinkhorn():
         u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
     np.testing.assert_allclose(
         u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
+
+
+def test_sinkhorn_backends():
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    G = ot.sinkhorn(a, a, M, 1)
+
+    for nx in get_backend_list()[:]:
+
+        ab = nx.from_numpy(a)
+        Mb = nx.from_numpy(M)
+
+        Gb = ot.sinkhorn(ab, ab, Mb, 1)
+
+        np.allclose(G, nx.to_numpy(Gb))
 
 
 def test_sinkhorn_empty():

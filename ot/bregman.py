@@ -20,6 +20,7 @@ import numpy as np
 from scipy.optimize import fmin_l_bfgs_b
 
 from ot.utils import unif, dist
+from .backend import get_backend
 
 
 def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
@@ -339,14 +340,19 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
 
     """
 
-    a = np.asarray(a, dtype=np.float64)
-    b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    if isinstance(a, list):
+        a = np.array(a)
+    if isinstance(b, list):
+        b = np.array(b)
+    if isinstance(M, list):
+        M = np.array(M)
+
+    nx = get_backend(M, a, b)
 
     if len(a) == 0:
-        a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
+        a = nx.full((M.shape[0],), 1.0 / M.shape[0], type_as=M)
     if len(b) == 0:
-        b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
+        b = nx.full((M.shape[1],), 1.0 / M.shape[1], type_as=M)
 
     # init data
     dim_a = len(a)
@@ -363,21 +369,22 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
     # we assume that no distances are null except those of the diagonal of
     # distances
     if n_hists:
-        u = np.ones((dim_a, n_hists)) / dim_a
-        v = np.ones((dim_b, n_hists)) / dim_b
+        u = nx.ones((dim_a, n_hists), type_as=M) / dim_a
+        v = nx.ones((dim_b, n_hists), type_as=M) / dim_b
     else:
-        u = np.ones(dim_a) / dim_a
-        v = np.ones(dim_b) / dim_b
+        u = nx.ones(dim_a, type_as=M) / dim_a
+        v = nx.ones(dim_b, type_as=M) / dim_b
 
     # print(reg)
 
     # Next 3 lines equivalent to K= np.exp(-M/reg), but faster to compute
-    K = np.empty(M.shape, dtype=M.dtype)
-    np.divide(M, -reg, out=K)
-    np.exp(K, out=K)
+    #K = np.empty(M.shape, dtype=M.dtype)
+    #np.divide(M, -reg, out=K)
+    #np.exp(K, out=K)
+    K = nx.exp(M / (-reg))
 
     # print(np.min(K))
-    tmp2 = np.empty(b.shape, dtype=M.dtype)
+    #tmp2 = np.empty(b.shape, dtype=M.dtype)
 
     Kp = (1 / a).reshape(-1, 1) * K
     cpt = 0
@@ -386,13 +393,13 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
         uprev = u
         vprev = v
 
-        KtransposeU = np.dot(K.T, u)
-        v = np.divide(b, KtransposeU)
-        u = 1. / np.dot(Kp, v)
+        KtransposeU = nx.dot(K.T, u)
+        v = b / KtransposeU
+        u = 1. / nx.dot(Kp, v)
 
-        if (np.any(KtransposeU == 0)
-                or np.any(np.isnan(u)) or np.any(np.isnan(v))
-                or np.any(np.isinf(u)) or np.any(np.isinf(v))):
+        if (nx.any(KtransposeU == 0)
+                or nx.any(nx.isnan(u)) or nx.any(nx.isnan(v))
+                or nx.any(nx.isinf(u)) or nx.any(nx.isinf(v))):
             # we have reached the machine precision
             # come back to previous solution and quit loop
             print('Warning: numerical errors at iteration', cpt)
@@ -403,11 +410,11 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
             # we can speed up the process by checking for the error only all
             # the 10th iterations
             if n_hists:
-                np.einsum('ik,ij,jk->jk', u, K, v, out=tmp2)
+                tmp2 = nx.einsum('ik,ij,jk->jk', u, K, v)
             else:
                 # compute right marginal tmp2= (diag(u)Kdiag(v))^T1
-                np.einsum('i,ij,j->j', u, K, v, out=tmp2)
-            err = np.linalg.norm(tmp2 - b)  # violation of marginal
+                tmp2 = nx.einsum('i,ij,j->j', u, K, v)
+            err = nx.norm(tmp2 - b)  # violation of marginal
             if log:
                 log['err'].append(err)
 
@@ -422,7 +429,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
         log['v'] = v
 
     if n_hists:  # return only loss
-        res = np.einsum('ik,ij,jk,ij->k', u, K, v, M)
+        res = nx.einsum('ik,ij,jk,ij->k', u, K, v, M)
         if log:
             return res, log
         else:

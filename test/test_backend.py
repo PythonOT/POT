@@ -124,6 +124,16 @@ def test_empty_backend():
         nx.exp(M)
     with pytest.raises(NotImplementedError):
         nx.dot(v, v)
+    with pytest.raises(NotImplementedError):
+        nx.exp(M)
+    with pytest.raises(NotImplementedError):
+        nx.any(M)
+    with pytest.raises(NotImplementedError):
+        nx.isnan(M)
+    with pytest.raises(NotImplementedError):
+        nx.isinf(M)
+    with pytest.raises(NotImplementedError):
+        nx.einsum('ij->i', M)
 
 
 def test_func_backends():
@@ -189,6 +199,24 @@ def test_func_backends():
         lst_b.append(nx.to_numpy(A))
 
         A = nx.dot(Mb, Mb.T)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.norm(vb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.any(vb > 0)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.isnan(vb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.isinf(vb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.einsum('ij->i', Mb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.einsum('ij,j->i', Mb, vb)
         lst_b.append(nx.to_numpy(A))
 
         lst_tot.append(lst_b)

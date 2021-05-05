@@ -110,6 +110,21 @@ class Backend():
     def log(self, a):
         raise NotImplementedError()
 
+    def norm(self, a):
+        raise NotImplementedError()
+
+    def any(self, a):
+        raise NotImplementedError()
+
+    def isnan(self, a):
+        raise NotImplementedError()
+
+    def isinf(self, a):
+        raise NotImplementedError()
+
+    def einsum(self, subscripts, *operands):
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
 
@@ -164,6 +179,21 @@ class NumpyBackend(Backend):
     def log(self, a):
         return np.log(a)
 
+    def norm(self, a):
+        return np.sqrt(np.sum(np.square(a)))
+
+    def any(self, a):
+        return np.any(a)
+
+    def isnan(self, a):
+        return np.isnan(a)
+
+    def isinf(self, a):
+        return np.isinf(a)
+
+    def einsum(self, subscripts, *operands):
+        return np.einsum(subscripts, *operands)
+
 
 class JaxBackend(Backend):
 
@@ -217,6 +247,21 @@ class JaxBackend(Backend):
 
     def log(self, a):
         return jnp.log(a)
+
+    def norm(self, a):
+        return jnp.sqrt(jnp.sum(jnp.square(a)))
+
+    def any(self, a):
+        return jnp.any(a)
+
+    def isnan(self, a):
+        return jnp.isnan(a)
+
+    def isinf(self, a):
+        return jnp.isinf(a)
+
+    def einsum(self, subscripts, *operands):
+        return jnp.einsum(subscripts, *operands)
 
 
 class TorchBackend(Backend):
@@ -285,3 +330,18 @@ class TorchBackend(Backend):
 
     def log(self, a):
         return torch.log(a)
+
+    def norm(self, a):
+        return torch.sqrt(torch.sum(torch.square(a)))
+
+    def any(self, a):
+        return torch.any(a)
+
+    def isnan(self, a):
+        return torch.isnan(a)
+
+    def isinf(self, a):
+        return torch.isinf(a)
+
+    def einsum(self, subscripts, *operands):
+        return torch.einsum(subscripts, *operands)
