@@ -103,28 +103,27 @@ def test_empty_backend():
     nx = ot.backend.Backend()
 
     with pytest.raises(NotImplementedError):
-        Mb = nx.from_numpy(M)
-
+        nx.from_numpy(M)
     with pytest.raises(NotImplementedError):
-        A = nx.zeros((10, 3))
+        nx.zeros((10, 3))
     with pytest.raises(NotImplementedError):
-        A = nx.ones((10, 3))
+        nx.ones((10, 3))
     with pytest.raises(NotImplementedError):
-        A = nx.full((10, 3), 3.14)
+        nx.full((10, 3), 3.14)
     with pytest.raises(NotImplementedError):
-        A = nx.sum(M)
+        nx.sum(M)
     with pytest.raises(NotImplementedError):
-        A = nx.max(M)
+        nx.max(M)
     with pytest.raises(NotImplementedError):
-        A = nx.min(M)
+        nx.min(M)
     with pytest.raises(NotImplementedError):
-        A = nx.abs(M)
+        nx.abs(M)
     with pytest.raises(NotImplementedError):
-        A = nx.log(M)
+        nx.log(M)
     with pytest.raises(NotImplementedError):
-        A = nx.exp(M)
+        nx.exp(M)
     with pytest.raises(NotImplementedError):
-        A = nx.dot(v, v)
+        nx.dot(v, v)
 
 
 def test_func_backends():
