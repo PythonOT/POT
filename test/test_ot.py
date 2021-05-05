@@ -55,8 +55,7 @@ def test_emd_backends():
 
         Gb = ot.emd(ab, ab, Mb)
 
-        np.allclose(G,nx.to_numpy(Gb))
-
+        np.allclose(G, nx.to_numpy(Gb))
 
 
 def test_emd_emd2():
