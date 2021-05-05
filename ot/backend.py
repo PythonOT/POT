@@ -62,7 +62,7 @@ def get_backend(*args):
 def to_numpy(*args):
     """returns numpy arrays from any compatible backend"""
 
-    if len(args)==1:
+    if len(args) == 1:
         return get_backend(args[0]).to_numpy(args[0])
     else:
         return [get_backend(a).to_numpy(a) for a in args]

@@ -23,15 +23,16 @@ def test_get_backend_list():
     assert len(lst) > 0
     assert isinstance(lst[0], ot.backend.NumpyBackend)
 
+
 def test_to_numpy():
 
     for nx in get_backend_list():
 
-        v= nx.zeros(10)
-        M = nx.ones((10,10))
+        v = nx.zeros(10)
+        M = nx.ones((10, 10))
 
         v2 = to_numpy(v)
-        assert type(v2) == np.ndarray
+        assert isinstance(v2, np.ndarray)
 
         v2, M2 = to_numpy(v, M)
 
@@ -92,6 +93,7 @@ def test_convert_between_backends():
         assert_array_almost_equal_nulp(nx.to_numpy(A2), A)
         assert_array_almost_equal_nulp(nx.to_numpy(B2), B)
 
+
 def test_empty_backend():
 
     rnd = np.random.RandomState(0)
@@ -123,9 +125,6 @@ def test_empty_backend():
         A = nx.exp(M)
     with pytest.raises(NotImplementedError):
         A = nx.dot(v, v)
-
-
-
 
 
 def test_func_backends():
