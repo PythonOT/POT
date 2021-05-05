@@ -54,6 +54,29 @@ def test_sinkhorn_backends():
         np.allclose(G, nx.to_numpy(Gb))
 
 
+def test_sinkhorn2_backends():
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    G = ot.sinkhorn(a, a, M, 1)
+
+    for nx in get_backend_list()[:]:
+
+        ab = nx.from_numpy(a)
+        Mb = nx.from_numpy(M)
+
+        Gb = ot.sinkhorn2(ab, ab, Mb, 1)
+
+        np.allclose(G, nx.to_numpy(Gb))
+
+
 def test_sinkhorn_empty():
     # test sinkhorn
     n = 100

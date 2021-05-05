@@ -248,7 +248,8 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     ot.bregman.sinkhorn_stabilized: Stabilized sinkhorn [9][10]
 
     """
-    b = np.asarray(b, dtype=np.float64)
+    if isinstance(b, list):
+        b = np.array(b)
     if len(b.shape) < 2:
         b = b[:, None]
 
