@@ -119,6 +119,8 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.full((10, 3), 3.14)
     with pytest.raises(NotImplementedError):
+        nx.eye((10, 3))
+    with pytest.raises(NotImplementedError):
         nx.sum(M)
     with pytest.raises(NotImplementedError):
         nx.max(M)
@@ -185,6 +187,10 @@ def test_func_backends(backend):
 
         A = nx.full((10, 3), 3.14)
         A = nx.full((10, 3), 3.14, type_as=Mb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.eye(10, 3)
+        A = nx.eye(10, 3, type_as=Mb)
         lst_b.append(nx.to_numpy(A))
 
         A = nx.sum(Mb)

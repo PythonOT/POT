@@ -99,6 +99,9 @@ class Backend():
     def full(self, shape, fill_value, type_as=None):
         raise NotImplementedError()
 
+    def eye(self, N, M=None, type_as=None):
+        raise NotImplementedError()
+
     def sum(self, a, axis=None, keepdims=False):
         raise NotImplementedError()
 
@@ -182,6 +185,12 @@ class NumpyBackend(Backend):
             return np.full(shape, fill_value)
         else:
             return np.full(shape, fill_value, dtype=type_as.dtype)
+
+    def eye(self, N, M=None, type_as=None):
+        if type_as is None:
+            return np.eye(N, M)
+        else:
+            return np.eye(N, M, dtype=type_as.dtype)
 
     def sum(self, a, axis=None, keepdims=False):
         return np.sum(a, axis, keepdims=keepdims)
@@ -273,6 +282,12 @@ class JaxBackend(Backend):
             return jnp.full(shape, fill_value)
         else:
             return jnp.full(shape, fill_value, dtype=type_as.dtype)
+
+    def eye(self, N, M=None, type_as=None):
+        if type_as is None:
+            return jnp.eye(N, M)
+        else:
+            return jnp.eye(N, M, dtype=type_as.dtype)
 
     def sum(self, a, axis=None, keepdims=False):
         return jnp.sum(a, axis, keepdims=keepdims)
@@ -367,6 +382,14 @@ class TorchBackend(Backend):
             return torch.full(shape, fill_value)
         else:
             return torch.full(shape, fill_value, dtype=type_as.dtype, device=type_as.device)
+
+    def eye(self, N, M=None, type_as=None):
+        if M is None:
+            M = N
+        if type_as is None:
+            return torch.eye(N, m=M)
+        else:
+            return torch.eye(N, m=M, dtype=type_as.dtype, device=type_as.device)
 
     def sum(self, a, axis=None, keepdims=False):
         if axis is None:

@@ -98,8 +98,8 @@ def euclidean_distances(X, Y, squared=False):
 
     nx = get_backend(X, Y)
 
-    a2 = nx.sum(np.square(X), 1)
-    b2 = nx.sum(np.square(Y), 1)
+    a2 = nx.einsum('ij,ij->i', X, X)
+    b2 = nx.einsum('ij,ij->i', Y, Y)
 
     c = -2 * nx.dot(X, Y.T)
     c += a2[:, None]
@@ -109,6 +109,9 @@ def euclidean_distances(X, Y, squared=False):
 
     if not squared:
         c = nx.sqrt(c)
+
+    if X is Y:
+        c[nx.eye(X.shape[0], type_as=X) > 0] = 0
 
     return c
 
