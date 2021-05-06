@@ -25,6 +25,8 @@ result of the function with parameter ``to_numpy=False``.
 #
 # License: MIT License
 
+import warnings
+
 from . import bregman
 from . import da
 from .bregman import sinkhorn
@@ -34,7 +36,7 @@ from . import utils
 from .utils import dist, to_gpu, to_np
 
 
-
+warnings.warn('This module will be deprecated in the next minor release of POT', category=DeprecationWarning)
 
 
 __all__ = ["utils", "dist", "sinkhorn",
