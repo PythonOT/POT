@@ -141,7 +141,7 @@ class NumpyBackend(Backend):
     def from_numpy(self, a, type_as=None):
         if type_as is None:
             return a
-        elif type(a) == float:
+        elif isinstance(a, float):
             return a
         else:
             return a.astype(type_as.dtype)

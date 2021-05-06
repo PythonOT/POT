@@ -58,6 +58,29 @@ def test_emd_backends():
         np.allclose(G, nx.to_numpy(Gb))
 
 
+def test_emd2_backends():
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    val = ot.emd2(a, a, M)
+
+    for nx in get_backend_list()[:]:
+
+        ab = nx.from_numpy(a)
+        Mb = nx.from_numpy(M)
+
+        valb = ot.emd2(ab, ab, Mb)
+
+        np.allclose(val, nx.to_numpy(valb))
+
+
 def test_emd_emd2():
     # test emd and emd2 for simple identity
     n = 100
