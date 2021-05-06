@@ -389,12 +389,27 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     ot.bregman.sinkhorn : Entropic regularized OT
     ot.optim.cg : General regularized OT"""
 
+    if type(a)==list:
+        a=np.array(a)
+    if type(b)==list:
+        b=np.array(b)   
+    if type(M)==list:
+        M=np.array(M)
+
+    a0, b0, M0 = a, b, M
+    nx =  get_backend(M0, a0, b0)
+    
+    # convert to numpy
+    M = nx.to_numpy(M)
+    a = nx.to_numpy(a)
+    b = nx.to_numpy(b)
+
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64)
 
     # problem with pikling Forks
-    if sys.platform.endswith('win32'):
+    if sys.platform.endswith('win32') or not nx.__name__ == 'numpy':
         processes = 1
 
     # if empty array given then use uniform distributions
@@ -422,12 +437,14 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
             result_code_string = check_result(result_code)
             log = {}
+            G = nx.from_numpy(G, type_as=M0)
             if return_matrix:
                 log['G'] = G
-            log['u'] = u
-            log['v'] = v
+            log['u'] = nx.from_numpy(u, type_as=a0)
+            log['v'] = nx.from_numpy(v, type_as=b0)
             log['warning'] = result_code_string
             log['result_code'] = result_code
+            cost = nx.set_gradients(nx.from_numpy(cost, type_as=M0),(a0,b0, M0),(log['u'],log['v'],G))
             return [cost, log]
     else:
         def f(b):
@@ -439,6 +456,9 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
             if np.any(~asel) or np.any(~bsel):
                 u, v = estimate_dual_null_weights(u, v, a, b, M)
+
+            G = nx.from_numpy(G, type_as=M0)
+            cost = nx.set_gradients(nx.from_numpy(cost, type_as=M0),(a0,b0, M0),(nx.from_numpy(u, type_as=a0),nx.from_numpy(v, type_as=b0),G))
 
             check_result(result_code)
             return cost

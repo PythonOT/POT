@@ -105,6 +105,10 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.from_numpy(M)
     with pytest.raises(NotImplementedError):
+        nx.to_numpy(M)
+    with pytest.raises(NotImplementedError):
+        nx.set_gradients(0, 0, 0)
+    with pytest.raises(NotImplementedError):
         nx.zeros((10, 3))
     with pytest.raises(NotImplementedError):
         nx.ones((10, 3))
@@ -125,6 +129,8 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.dot(v, v)
     with pytest.raises(NotImplementedError):
+        nx.norm(M)
+    with pytest.raises(NotImplementedError):
         nx.exp(M)
     with pytest.raises(NotImplementedError):
         nx.any(M)
@@ -141,6 +147,7 @@ def test_func_backends():
     rnd = np.random.RandomState(0)
     M = rnd.randn(10, 3)
     v = rnd.randn(3)
+    val = np.array([1.0])
 
     lst_tot = []
 
@@ -152,6 +159,10 @@ def test_func_backends():
 
         Mb = nx.from_numpy(M)
         vb = nx.from_numpy(v)
+        val = nx.from_numpy(val)
+
+        A = nx.set_gradients(val, v, v)
+        lst_b.append(nx.to_numpy(A))
 
         A = nx.zeros((10, 3))
         A = nx.zeros((10, 3), type_as=Mb)
@@ -227,3 +238,26 @@ def test_func_backends():
         for a1, a2 in zip(lst_np, lst_b):
 
             assert np.allclose(a1, a2)
+
+
+def test_gradients_backends():
+
+    rnd = np.random.RandomState(0)
+    v = rnd.randn(10)
+    c = rnd.randn(1)
+
+    if torch:
+
+        nx = ot.backend.TorchBackend()
+
+        v2 = torch.tensor(v, requires_grad=True)
+        c2 = torch.tensor(c, requires_grad=True)
+
+        val = c2 * torch.sum(v2 * v2)
+
+        val2 = nx.set_gradients(val, (v2, c2), (v2, c2))
+
+        val2.backward()
+
+        assert torch.equal(v2.grad, v2)
+        assert torch.equal(c2.grad, c2)

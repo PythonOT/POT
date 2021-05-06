@@ -80,6 +80,10 @@ class Backend():
     def from_numpy(self, a, type_as=None):
         raise NotImplementedError()
 
+    def set_gradients(self, val, inputs, grads):
+        """ define the gradients for the value val wrt the inputs """
+        raise NotImplementedError()
+
     def zeros(self, shape, type_as=None):
         raise NotImplementedError()
 
@@ -137,8 +141,14 @@ class NumpyBackend(Backend):
     def from_numpy(self, a, type_as=None):
         if type_as is None:
             return a
+        elif type(a) == float:
+            return a
         else:
             return a.astype(type_as.dtype)
+
+    def set_gradients(self, val, inputs, grads):
+        # no gradients for numpy
+        return val
 
     def zeros(self, shape, type_as=None):
         if type_as is None:
@@ -209,6 +219,10 @@ class JaxBackend(Backend):
         else:
             return jnp.array(a).astype(type_as.dtype)
 
+    def set_gradients(self, val, inputs, grads):
+        # no gradients for numpy
+        return val
+
     def zeros(self, shape, type_as=None):
         if type_as is None:
             return jnp.zeros(shape)
@@ -277,6 +291,23 @@ class TorchBackend(Backend):
             return torch.from_numpy(a)
         else:
             return torch.as_tensor(a, dtype=type_as.dtype, device=type_as.device)
+
+    def set_gradients(self, val, inputs, grads):
+        from torch.autograd import Function
+
+        class ValFunction(Function):
+            @staticmethod
+            # bias is an optional argument
+            def forward(ctx, *inputs):
+                # convert to numpy
+                return val
+
+            @staticmethod
+            def backward(ctx, grad_output):
+
+                return grads
+
+        return ValFunction.apply(*inputs)
 
     def zeros(self, shape, type_as=None):
         if type_as is None:
