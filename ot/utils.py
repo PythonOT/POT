@@ -110,8 +110,8 @@ def euclidean_distances(X, Y, squared=False):
     if not squared:
         c = nx.sqrt(c)
 
-    if X is Y and nx.__name__ not in ['jax']:
-        c[nx.eye(X.shape[0], type_as=X) > 0] = 0
+    if X is Y:
+        c = c * (1 - nx.eye(X.shape[0], type_as=c))
 
     return c
 
