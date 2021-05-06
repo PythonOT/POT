@@ -10,7 +10,7 @@ import pytest
 
 import ot
 from ot.backend import get_backend_list
-
+from ot.backend import torch
 
 backend_list = get_backend_list()
 
@@ -76,6 +76,32 @@ def test_sinkhorn2_backends(nx):
     Gb = ot.sinkhorn2(ab, ab, Mb, 1)
 
     np.allclose(G, nx.to_numpy(Gb))
+
+
+def test_sinkhorn2_gradients():
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    if torch:
+
+        a1 = torch.tensor(a, requires_grad=True)
+        b1 = torch.tensor(a, requires_grad=True)
+        M1 = torch.tensor(M, requires_grad=True)
+
+        val = ot.sinkhorn2(a1, b1, M1, 1)
+
+        val.backward()
+
+        assert a1.shape == a1.grad.shape
+        assert b1.shape == b1.grad.shape
+        assert M1.shape == M1.grad.shape
 
 
 def test_sinkhorn_empty():
