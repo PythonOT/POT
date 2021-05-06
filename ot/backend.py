@@ -230,7 +230,6 @@ class JaxBackend(Backend):
 
         f.defjvps(*grads)
 
-
         return f(*inputs)
 
     def zeros(self, shape, type_as=None):
