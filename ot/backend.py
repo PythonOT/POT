@@ -14,7 +14,7 @@ try:
     torch_type = torch.Tensor
 except ImportError:
     torch = False
-    torch_type = None
+    torch_type = float
 
 try:
     import jax
@@ -22,7 +22,7 @@ try:
     jax_type = jax.numpy.ndarray
 except ImportError:
     jax = False
-    jax_type = None
+    jax_type = float
 
 
 def get_backend_list():
@@ -47,11 +47,14 @@ def get_backend(*args):
     if not len(args) > 0:
         raise ValueError(" The function takes at least one parameter")
     # check all same type
-    if not len(set(type(a) for a in args)) == 1:
-        raise ValueError("All array should be from the same type/backend. Current types are : {}".format([type(a) for a in args]))
+
     if isinstance(args[0], np.ndarray):
+        if not len(set(type(a) for a in args)) == 1:
+            raise ValueError("All array should be from the same type/backend. Current types are : {}".format([type(a) for a in args]))
         return NumpyBackend()
     elif torch and isinstance(args[0], torch_type):
+        if not len(set(type(a) for a in args)) == 1:
+            raise ValueError("All array should be from the same type/backend. Current types are : {}".format([type(a) for a in args]))
         return TorchBackend()
     elif isinstance(args[0], jax_type):
         return JaxBackend()
