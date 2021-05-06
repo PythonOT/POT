@@ -16,6 +16,7 @@ from scipy.spatial.distance import cdist
 import sys
 import warnings
 from inspect import signature
+from .backend import get_backend
 
 __time_tic_toc = time.time()
 
@@ -94,22 +95,26 @@ def euclidean_distances(X, Y, squared=False):
     -------
     distances : {array}, shape (n_samples_1, n_samples_2)
     """
-    XX = np.einsum('ij,ij->i', X, X)[:, np.newaxis]
-    YY = np.einsum('ij,ij->i', Y, Y)[np.newaxis, :]
-    distances = np.dot(X, Y.T)
-    distances *= -2
-    distances += XX
-    distances += YY
-    np.maximum(distances, 0, out=distances)
-    if X is Y:
-        # Ensure that distances between vectors and themselves are set to 0.0.
-        # This may not be the case due to floating point rounding errors.
-        distances.flat[::distances.shape[0] + 1] = 0.0
-    return distances if squared else np.sqrt(distances, out=distances)
+
+    nx = get_backend(X, Y)
+
+    a2 = nx.sum(np.square(X), 1)
+    b2 = nx.sum(np.square(Y), 1)
+
+    c = -2 * nx.dot(X, Y.T)
+    c += a2[:, None]
+    c += b2[None, :]
+
+    c = nx.maximum(c, 0)
+
+    if not squared:
+        c = nx.sqrt(c)
+
+    return c
 
 
 def dist(x1, x2=None, metric='sqeuclidean'):
-    """Compute distance between samples in x1 and x2 using function scipy.spatial.distance.cdist
+    """Compute distance between samples in x1 and x2
 
     Parameters
     ----------
@@ -119,10 +124,11 @@ def dist(x1, x2=None, metric='sqeuclidean'):
     x2 : array, shape (n2,d), optional
         matrix with n2 samples of size d (if None then x2=x1)
     metric : str | callable, optional
-        Name of the metric to be computed (full list in the doc of scipy),  If a string,
-        the distance function can be 'braycurtis', 'canberra', 'chebyshev', 'cityblock',
-        'correlation', 'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'kulsinski',
-        'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
+        'sqeuclidean' or 'euclidean' on all backends. On numpy the function also
+        accepts  from the scipy.spatial.distance.cdist function : 'braycurtis',
+        'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
+        'euclidean', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
+        'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
         'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski', 'yule'.
 
 
@@ -137,7 +143,13 @@ def dist(x1, x2=None, metric='sqeuclidean'):
         x2 = x1
     if metric == "sqeuclidean":
         return euclidean_distances(x1, x2, squared=True)
-    return cdist(x1, x2, metric=metric)
+    elif metric == "euclidean":
+        return euclidean_distances(x1, x2, squared=False)
+    else:
+        if not get_backend(x1, x2).__name__ == 'numpy':
+            raise NotImplementedError()
+        else:
+            return cdist(x1, x2, metric=metric)
 
 
 def dist0(n, method='lin_square'):

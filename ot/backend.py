@@ -108,6 +108,12 @@ class Backend():
     def min(self, a, axis=None, keepdims=False):
         raise NotImplementedError()
 
+    def maximum(self, a, b):
+        raise NotImplementedError()
+
+    def minimum(self, a, b):
+        raise NotImplementedError()
+
     def dot(self, a, b):
         raise NotImplementedError()
 
@@ -118,6 +124,9 @@ class Backend():
         raise NotImplementedError()
 
     def log(self, a):
+        raise NotImplementedError()
+
+    def sqrt(self, a):
         raise NotImplementedError()
 
     def norm(self, a):
@@ -183,6 +192,12 @@ class NumpyBackend(Backend):
     def min(self, a, axis=None, keepdims=False):
         return np.min(a, axis, keepdims=keepdims)
 
+    def maximum(self, a, b):
+        return np.maximum(a, b)
+
+    def minimum(self, a, b):
+        return np.minimum(a, b)
+
     def dot(self, a, b):
         return np.dot(a, b)
 
@@ -194,6 +209,9 @@ class NumpyBackend(Backend):
 
     def log(self, a):
         return np.log(a)
+
+    def sqrt(self, a):
+        return np.sqrt(a)
 
     def norm(self, a):
         return np.sqrt(np.sum(np.square(a)))
@@ -265,6 +283,12 @@ class JaxBackend(Backend):
     def min(self, a, axis=None, keepdims=False):
         return jnp.min(a, axis, keepdims=keepdims)
 
+    def maximum(self, a, b):
+        return jnp.maximum(a, b)
+
+    def minimum(self, a, b):
+        return jnp.minimum(a, b)
+
     def dot(self, a, b):
         return jnp.dot(a, b)
 
@@ -276,6 +300,9 @@ class JaxBackend(Backend):
 
     def log(self, a):
         return jnp.log(a)
+
+    def sqrt(self, a):
+        return jnp.sqrt(a)
 
     def norm(self, a):
         return jnp.sqrt(jnp.sum(jnp.square(a)))
@@ -359,6 +386,20 @@ class TorchBackend(Backend):
         else:
             return torch.min(a, axis, keepdim=keepdims)[0]
 
+    def maximum(self, a, b):
+        if isinstance(a, int) or isinstance(a, float):
+            a = torch.tensor([float(a)], dtype=b.dtype, device=b.device)
+        if isinstance(b, int) or isinstance(b, float):
+            b = torch.tensor([float(b)], dtype=a.dtype, device=a.device)
+        return torch.maximum(a, b)
+
+    def minimum(self, a, b):
+        if isinstance(a, int) or isinstance(a, float):
+            a = torch.tensor([float(a)], dtype=b.dtype, device=b.device)
+        if isinstance(b, int) or isinstance(b, float):
+            b = torch.tensor([float(b)], dtype=a.dtype, device=a.device)
+        return torch.minimum(a, b)
+
     def dot(self, a, b):
         if len(a.shape) == len(b.shape) == 1:
             return torch.dot(a, b)
@@ -375,6 +416,9 @@ class TorchBackend(Backend):
 
     def log(self, a):
         return torch.log(a)
+
+    def sqrt(self, a):
+        return torch.sqrt(a)
 
     def norm(self, a):
         return torch.sqrt(torch.sum(torch.square(a)))

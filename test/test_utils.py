@@ -4,10 +4,14 @@
 #
 # License: MIT License
 
-
+import pytest
 import ot
 import numpy as np
 import sys
+
+from ot.backend import get_backend_list
+
+backend_list = get_backend_list()
 
 
 def test_parmap():
@@ -78,8 +82,25 @@ def test_dist():
     D3 = ot.dist(x)
 
     # dist shoul return squared euclidean
-    np.testing.assert_allclose(D, D2)
-    np.testing.assert_allclose(D, D3)
+    np.testing.assert_allclose(D, D2, atol=1e-14)
+    np.testing.assert_allclose(D, D3, atol=1e-14)
+
+
+@pytest.mark.parametrize('nx', backend_list)
+def test_dist_backends(nx):
+
+    n = 100
+    x = np.random.randn(n, 2)
+    x1 = nx.from_numpy(x)
+
+    lst_metric = ['euclidean', 'sqeuclidean']
+
+    for metric in lst_metric:
+
+        D = ot.dist(x, x, metric=metric)
+        D1 = ot.dist(x1, x1, metric=metric)
+
+        np.testing.assert_allclose(D, nx.to_numpy(D1), atol=1e-14)
 
 
 def test_dist0():

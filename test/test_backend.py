@@ -125,11 +125,17 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.min(M)
     with pytest.raises(NotImplementedError):
+        nx.maximum(v, v)
+    with pytest.raises(NotImplementedError):
+        nx.minimum(v, v)
+    with pytest.raises(NotImplementedError):
         nx.abs(M)
     with pytest.raises(NotImplementedError):
         nx.log(M)
     with pytest.raises(NotImplementedError):
         nx.exp(M)
+    with pytest.raises(NotImplementedError):
+        nx.sqrt(M)
     with pytest.raises(NotImplementedError):
         nx.dot(v, v)
     with pytest.raises(NotImplementedError):
@@ -199,6 +205,12 @@ def test_func_backends(backend):
         A = nx.min(Mb, axis=1, keepdims=True)
         lst_b.append(nx.to_numpy(A))
 
+        A = nx.maximum(vb, 0)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.minimum(vb, 0)
+        lst_b.append(nx.to_numpy(A))
+
         A = nx.abs(Mb)
         lst_b.append(nx.to_numpy(A))
 
@@ -206,6 +218,9 @@ def test_func_backends(backend):
         lst_b.append(nx.to_numpy(A))
 
         A = nx.exp(Mb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.sqrt(nx.abs(Mb))
         lst_b.append(nx.to_numpy(A))
 
         A = nx.dot(vb, vb)
