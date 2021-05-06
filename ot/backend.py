@@ -221,7 +221,17 @@ class JaxBackend(Backend):
 
     def set_gradients(self, val, inputs, grads):
         # no gradients for numpy
-        return val
+
+        from jax import custom_jvp
+
+        @custom_jvp
+        def f(*inputs):
+            return val
+
+        f.defjvps(*grads)
+
+
+        return f(*inputs)
 
     def zeros(self, shape, type_as=None):
         if type_as is None:
@@ -295,16 +305,15 @@ class TorchBackend(Backend):
     def set_gradients(self, val, inputs, grads):
         from torch.autograd import Function
 
+        # define a function that takes inputs and return val
         class ValFunction(Function):
             @staticmethod
-            # bias is an optional argument
             def forward(ctx, *inputs):
-                # convert to numpy
                 return val
 
             @staticmethod
             def backward(ctx, grad_output):
-
+                # the gradients are grad
                 return grads
 
         return ValFunction.apply(*inputs)
