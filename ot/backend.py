@@ -284,7 +284,7 @@ class TorchBackend(Backend):
     __type__ = torch_type
 
     def to_numpy(self, a):
-        return a.cpu().numpy()
+        return a.cpu().detach().numpy()
 
     def from_numpy(self, a, type_as=None):
         if type_as is None:
