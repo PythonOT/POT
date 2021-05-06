@@ -9,7 +9,6 @@ import warnings
 import numpy as np
 import pytest
 from scipy.stats import wasserstein_distance
-import pytest
 
 import ot
 from ot.datasets import make_1D_gauss as gauss
