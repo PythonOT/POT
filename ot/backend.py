@@ -76,6 +76,9 @@ class Backend():
     __name__ = None
     __type__ = None
 
+    def __str__(self):
+        return self.__name__
+
     # convert from and to numpy
     def to_numpy(self, a):
         raise NotImplementedError()
@@ -223,17 +226,17 @@ class JaxBackend(Backend):
             return jnp.array(a).astype(type_as.dtype)
 
     def set_gradients(self, val, inputs, grads):
-        # no gradients for numpy
+        # no gradients for jax because it is functional
 
-        from jax import custom_jvp
+        # does not work
+        # from jax import custom_jvp
+        # @custom_jvp
+        # def f(*inputs):
+        #     return val
+        # f.defjvps(*grads)
+        # return f(*inputs)
 
-        @custom_jvp
-        def f(*inputs):
-            return val
-
-        f.defjvps(*grads)
-
-        return f(*inputs)
+        return val
 
     def zeros(self, shape, type_as=None):
         if type_as is None:

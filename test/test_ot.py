@@ -9,10 +9,13 @@ import warnings
 import numpy as np
 import pytest
 from scipy.stats import wasserstein_distance
+import pytest
 
 import ot
 from ot.datasets import make_1D_gauss as gauss
 from ot.backend import get_backend_list
+
+backend_list = get_backend_list()
 
 
 def test_emd_dimension_and_mass_mismatch():
@@ -35,7 +38,8 @@ def test_emd_dimension_and_mass_mismatch():
     np.testing.assert_raises(AssertionError, ot.emd, a, b, M)
 
 
-def test_emd_backends():
+@pytest.mark.parametrize('nx', backend_list)
+def test_emd_backends(nx):
     n_samples = 100
     n_features = 2
     rng = np.random.RandomState(0)
@@ -48,17 +52,16 @@ def test_emd_backends():
 
     G = ot.emd(a, a, M)
 
-    for nx in get_backend_list()[:]:
+    ab = nx.from_numpy(a)
+    Mb = nx.from_numpy(M)
 
-        ab = nx.from_numpy(a)
-        Mb = nx.from_numpy(M)
+    Gb = ot.emd(ab, ab, Mb)
 
-        Gb = ot.emd(ab, ab, Mb)
-
-        np.allclose(G, nx.to_numpy(Gb))
+    np.allclose(G, nx.to_numpy(Gb))
 
 
-def test_emd2_backends():
+@pytest.mark.parametrize('nx', backend_list)
+def test_emd2_backends(nx):
     n_samples = 100
     n_features = 2
     rng = np.random.RandomState(0)
@@ -71,14 +74,12 @@ def test_emd2_backends():
 
     val = ot.emd2(a, a, M)
 
-    for nx in get_backend_list()[:]:
+    ab = nx.from_numpy(a)
+    Mb = nx.from_numpy(M)
 
-        ab = nx.from_numpy(a)
-        Mb = nx.from_numpy(M)
+    valb = ot.emd2(ab, ab, Mb)
 
-        valb = ot.emd2(ab, ab, Mb)
-
-        np.allclose(val, nx.to_numpy(valb))
+    np.allclose(val, nx.to_numpy(valb))
 
 
 def test_emd_emd2():

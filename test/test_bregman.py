@@ -12,6 +12,9 @@ import ot
 from ot.backend import get_backend_list
 
 
+backend_list = get_backend_list()
+
+
 def test_sinkhorn():
     # test sinkhorn
     n = 100
@@ -31,7 +34,8 @@ def test_sinkhorn():
         u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
 
 
-def test_sinkhorn_backends():
+@pytest.mark.parametrize('nx', backend_list)
+def test_sinkhorn_backends(nx):
     n_samples = 100
     n_features = 2
     rng = np.random.RandomState(0)
@@ -44,17 +48,16 @@ def test_sinkhorn_backends():
 
     G = ot.sinkhorn(a, a, M, 1)
 
-    for nx in get_backend_list()[:]:
+    ab = nx.from_numpy(a)
+    Mb = nx.from_numpy(M)
 
-        ab = nx.from_numpy(a)
-        Mb = nx.from_numpy(M)
+    Gb = ot.sinkhorn(ab, ab, Mb, 1)
 
-        Gb = ot.sinkhorn(ab, ab, Mb, 1)
-
-        np.allclose(G, nx.to_numpy(Gb))
+    np.allclose(G, nx.to_numpy(Gb))
 
 
-def test_sinkhorn2_backends():
+@pytest.mark.parametrize('nx', backend_list)
+def test_sinkhorn2_backends(nx):
     n_samples = 100
     n_features = 2
     rng = np.random.RandomState(0)
@@ -67,14 +70,12 @@ def test_sinkhorn2_backends():
 
     G = ot.sinkhorn(a, a, M, 1)
 
-    for nx in get_backend_list()[:]:
+    ab = nx.from_numpy(a)
+    Mb = nx.from_numpy(M)
 
-        ab = nx.from_numpy(a)
-        Mb = nx.from_numpy(M)
+    Gb = ot.sinkhorn2(ab, ab, Mb, 1)
 
-        Gb = ot.sinkhorn2(ab, ab, Mb, 1)
-
-        np.allclose(G, nx.to_numpy(Gb))
+    np.allclose(G, nx.to_numpy(Gb))
 
 
 def test_sinkhorn_empty():

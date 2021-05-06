@@ -16,6 +16,9 @@ from numpy.testing import assert_array_almost_equal_nulp
 from ot.backend import get_backend, get_backend_list, to_numpy
 
 
+backend_list = get_backend_list()
+
+
 def test_get_backend_list():
 
     lst = get_backend_list()
@@ -73,7 +76,8 @@ def test_get_backend():
             get_backend(A, B2)
 
 
-def test_convert_between_backends():
+@pytest.mark.parametrize('nx', backend_list)
+def test_convert_between_backends(nx):
 
     A = np.zeros((3, 2))
     B = np.zeros((3, 1))
@@ -142,7 +146,8 @@ def test_empty_backend():
         nx.einsum('ij->i', M)
 
 
-def test_func_backends():
+@pytest.mark.parametrize('backend', backend_list)
+def test_func_backends(backend):
 
     rnd = np.random.RandomState(0)
     M = rnd.randn(10, 3)
@@ -151,7 +156,7 @@ def test_func_backends():
 
     lst_tot = []
 
-    for nx in get_backend_list():
+    for nx in [ot.backend.NumpyBackend(), backend]:
 
         print('Backend: ', nx.__name__)
 
@@ -233,11 +238,10 @@ def test_func_backends():
         lst_tot.append(lst_b)
 
     lst_np = lst_tot[0]
-    for lst_b in lst_tot[1:]:
+    lst_b = lst_tot[1]
 
-        for a1, a2 in zip(lst_np, lst_b):
-
-            assert np.allclose(a1, a2)
+    for a1, a2 in zip(lst_np, lst_b):
+        assert np.allclose(a1, a2)
 
 
 def test_gradients_backends():
