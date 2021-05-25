@@ -30,7 +30,7 @@ if 'clean' in sys.argv[1:]:
         os.remove('ot/lp/emd_wrap.cpp')
 
 # add platform dependant optional compilation argument
-compile_args = ["-Xpreprocessor", "-O3", "-fopenmp", "-lomp"]
+compile_args = ["-O3", "-fopenmp"]
 if sys.platform.startswith('darwin'):
     compile_args.append("-stdlib=libc++")
     sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path'])
@@ -52,7 +52,7 @@ setup(
         language="c++",
         include_dirs=[numpy.get_include(), os.path.join(ROOT, 'ot/lp')],
         extra_compile_args=compile_args,
-        extra_link_args=["-Xpreprocessor", "-fopenmp", "-lomp"]
+        extra_link_args=["-fopenmp"]
     )),
     platforms=['linux', 'macosx', 'windows'],
     download_url='https://github.com/PythonOT/POT/archive/{}.tar.gz'.format(__version__),
