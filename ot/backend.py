@@ -79,10 +79,10 @@ class Backend():
     def __str__(self):
         return self.__name__
 
-    # convert from and to numpy
+    # convert to numpy
     def to_numpy(self, a):
         raise NotImplementedError()
-
+    # convert from numpy 
     def from_numpy(self, a, type_as=None):
         raise NotImplementedError()
 
