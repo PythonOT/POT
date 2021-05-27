@@ -212,7 +212,7 @@ def test_func_backends(backend):
         A = nx.sum(Mb, axis=1, keepdims=True)
         lst_b.append(nx.to_numpy(A))
 
-        A = nx.cumsum(Mb,[10])
+        A = nx.cumsum(Mb,0)
         lst_b.append(nx.to_numpy(A))
 
         A = nx.max(Mb)
