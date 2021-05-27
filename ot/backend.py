@@ -98,7 +98,7 @@ class Backend():
     def ones(self, shape, type_as=None):
         raise NotImplementedError()
 
-    def arange(self, start=0, stop, step=1, type_as=None):
+    def arange(self, stop, start=0, step=1, type_as=None):
         raise NotImplementedError()
 
     def full(self, shape, fill_value, type_as=None):
@@ -194,7 +194,7 @@ class NumpyBackend(Backend):
         else:
             return np.ones(shape, dtype=type_as.dtype)
     
-    def arange(self, start=0, stop, step=1, type_as=None):
+    def arange(self,stop, start=0, step=1, type_as=None):
         return np.arange(start,stop,step)
 
     def full(self, shape, fill_value, type_as=None):
@@ -302,7 +302,7 @@ class JaxBackend(Backend):
         else:
             return jnp.ones(shape, dtype=type_as.dtype)
     
-    def arange(self, start=0, stop, step=1, type_as=None):
+    def arange(self, stop, start=0, step=1, type_as=None):
         return jnp.arange(start,stop,step)
 
     def full(self, shape, fill_value, type_as=None):
@@ -413,7 +413,7 @@ class TorchBackend(Backend):
         else:
             return torch.ones(shape, dtype=type_as.dtype, device=type_as.device)
 
-    def arange(self, start=0, stop, step=1, type_as=None):
+    def arange(self, stop, start=0, step=1, type_as=None):
         if type_as is None:
             return torch.arange(start,stop,step)
         else:
