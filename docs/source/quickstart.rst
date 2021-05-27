@@ -20,7 +20,7 @@ are also available as notebooks on the POT Github.
     Since version 0.8, POT provides a backend to automatically solve some OT
     problems independently from the toolbox used by the user (numpy/torch/jax).
     We provide a discussion about which functions are compatible in section
-    :ref:` _backends` 
+    :ref:`_backends` 
 
 
 Why Optimal Transport ?
@@ -992,9 +992,9 @@ output will be differentiable with respect to the input of the function.
 List of compatible Backends
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Numpy (all functions and solvers)
-- Pytorch (all outputs differentiable w.r.t. inputs)
-- Jax (Some functions are differentiable some require a wrapper)
+- :ref:`Numpy <https://numpy.org/>`(all functions and solvers)
+- :ref:`Pytorch <https://pytorch.org/>` (all outputs differentiable w.r.t. inputs)
+- :ref:`Jax <https://github.com/google/jax>` (Some functions are differentiable some require a wrapper)
 
 List of compatible functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
