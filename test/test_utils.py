@@ -23,11 +23,15 @@ def proj_simplex(nx):
 
     proj = proj_simplex(x1)
     # all porjections should sum to 1
-    np.testing.assert_allclose(np.sum(nx.to_numpy(proj), axis=1)), np.ones(2), atol = 1e-5)
+    l1 = np.sum(nx.to_numpy(proj), axis=1)
+    l2 = np.ones(2)
+    np.testing.assert_allclose(l1,l2, atol = 1e-5)
     proj=proj_simplex(x1, 3)
     # all porjections should sum to 3
-    np.testing.assert_allclose(np.sum(nx.to_numpy(proj), axis=1)), 3 * np.ones(2), atol=1e-5)
-
+    l1 = np.sum(nx.to_numpy(proj), axis=1)
+    l2 = 3*np.ones(2)
+    np.testing.assert_allclose(l1,l2, atol = 1e-5)
+    
 def test_parmap():
 
     n=10
