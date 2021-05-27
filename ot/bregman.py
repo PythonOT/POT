@@ -44,17 +44,20 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - a and b are source and target weights (histograms, both sum to 1)
 
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends.
+
     The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling algorithm as proposed in [2]_
 
 
     Parameters
     ----------
-    a : ndarray, shape (dim_a,)
+    a : array-like, shape (dim_a,)
         samples weights in the source domain
-    b : ndarray, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
+    b : array-like, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
         samples in the target domain, compute sinkhorn with multiple targets
         and fixed M if b is a matrix (return OT loss + dual variables in log)
-    M : ndarray, shape (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
@@ -88,7 +91,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
     Returns
     -------
-    gamma : ndarray, shape (dim_a, dim_b)
+    gamma : array-like, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -167,17 +170,20 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - a and b are source and target weights (histograms, both sum to 1)
 
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends.
+
     The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling algorithm as proposed in [2]_
 
 
     Parameters
     ----------
-    a : ndarray, shape (dim_a,)
+    a : array-like, shape (dim_a,)
         samples weights in the source domain
-    b : ndarray, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
+    b : array-like, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
         samples in the target domain, compute sinkhorn with multiple targets
         and fixed M if b is a matrix (return OT loss + dual variables in log)
-    M : ndarray, shape (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
@@ -209,7 +215,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
     Returns
     -------
-    W : (n_hists) ndarray
+    W : (n_hists) float/array-like
         Optimal transportation loss for the given parameters
     log : dict
         log dictionary return only if log==True in parameters

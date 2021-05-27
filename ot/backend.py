@@ -265,9 +265,10 @@ class NumpyBackend(Backend):
 
     def argsort(self, a, axis=None):
         return np.argsort(a, axis)
-    
+
     def flip(self, a, axis=None):
         return np.flip(a, axis)
+
 
 class JaxBackend(Backend):
 
@@ -379,6 +380,7 @@ class JaxBackend(Backend):
 
     def flip(self, a, axis=None):
         return jnp.flip(a, axis)
+
 
 class TorchBackend(Backend):
 
@@ -535,4 +537,4 @@ class TorchBackend(Backend):
         if axis is None:
             return torch.flip(a)
         else:
-            return torch.flip(a,dims=axis)
+            return torch.flip(a, dims=axis)

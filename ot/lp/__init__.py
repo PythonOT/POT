@@ -177,8 +177,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
 
-    .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F
+    .. math:: \gamma = arg\min_\gamma <\gamma,M>_F
 
         s.t. \gamma 1 = a
 
@@ -190,37 +189,41 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     - M is the metric cost matrix
     - a and b are the sample weights
 
-    .. warning::
-        Note that the M matrix needs to be a C-order numpy.array in float64
-        format.
+    .. warning:: Note that the M matrix in numpy needs to be a C-order
+        numpy.array in float64 format. It will be converted if not in this
+        format
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. 
 
     Uses the algorithm proposed in [1]_
 
     Parameters
     ----------
-    a : (ns,) numpy.ndarray, float64
+    a : (ns,) array-like, float 
         Source histogram (uniform weight if empty list)
-    b : (nt,) numpy.ndarray, float64
-        Target histogram (uniform weight if empty list)
-    M : (ns,nt) numpy.ndarray, float64
-        Loss matrix (c-order array with type float64)
-    numItermax : int, optional (default=100000)
+    b : (nt,) array-like, float 
+        Target histogram (uniform weight if empty list) 
+    M : (ns,nt) array-like, float 
+        Loss matrix (c-order array in numpy with type float64) 
+    numItermax : int, optional (default=100000) 
         The maximum number of iterations before stopping the optimization
-        algorithm if it has not converged.
-    log: bool, optional (default=False)
-        If True, returns a dictionary containing the cost and dual
-        variables. Otherwise returns only the optimal transportation matrix.
+        algorithm if it has not converged. 
+    log: bool, optional (default=False) 
+        If True, returns a dictionary containing the cost and dual variables. 
+        Otherwise returns only the optimal transportation matrix. 
     center_dual: boolean, optional (default=True)
-        If True, centers the dual potential using function
+        If True, centers the dual potential using function 
         :ref:`center_ot_dual`.
 
     Returns
     -------
-    gamma: (ns x nt) numpy.ndarray
-        Optimal transportation matrix for the given parameters
-    log: dict
-        If input log is true, a dictionary containing the cost and dual
-        variables and exit status
+    gamma: (ns x nt) array-like 
+        Optimal transportation matrix for the given
+        parameters 
+    log: dict, optional
+        If input log is true, a dictionary containing the
+        cost and dual variables and exit status
 
 
     Examples
@@ -229,26 +232,20 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     Simple example with obvious solution. The function emd accepts lists and
     perform automatic conversion to numpy arrays
 
-    >>> import ot
-    >>> a=[.5,.5]
-    >>> b=[.5,.5]
-    >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.emd(a,b,M)
-    array([[0.5, 0. ],
-           [0. , 0.5]])
+    >>> import ot a=[.5,.5] b=[.5,.5] M=[[0.,1.],[1.,0.]] ot.emd(a,b,M)
+    >>> array([[0.5, 0. ], [0. , 0.5]])
 
     References
     ----------
 
-    .. [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W.
-        (2011, December).  Displacement interpolation using Lagrangian mass
-        transport. In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p.
-        158). ACM.
+    .. [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W. (2011,
+        December).  Displacement interpolation using Lagrangian mass transport.
+        In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p. 158). ACM.
 
     See Also
     --------
-    ot.bregman.sinkhorn : Entropic regularized OT
-    ot.optim.cg : General regularized OT"""
+    ot.bregman.sinkhorn : Entropic regularized OT ot.optim.cg : General
+    regularized OT"""
 
     # convert to numpy if list
     if type(a)==list:
@@ -269,7 +266,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     # ensure float64
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    M = np.asarray(M, dtype=np.float64, order='C')
 
     # if empty array given then use uniform distributions
     if len(a) == 0:
@@ -325,20 +322,19 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     - M is the metric cost matrix
     - a and b are the sample weights
 
-    .. warning::
-        Note that the M matrix needs to be a C-order numpy.array in float64
-        format.
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends.
 
     Uses the algorithm proposed in [1]_
 
     Parameters
     ----------
-    a : (ns,) numpy.ndarray, float64
+    a : (ns,) array-like, float64
         Source histogram (uniform weight if empty list)
-    b : (nt,) numpy.ndarray, float64
+    b : (nt,) array-like, float64
         Target histogram (uniform weight if empty list)
-    M : (ns,nt) numpy.ndarray, float64
-        Loss matrix (c-order array with type float64)
+    M : (ns,nt) array-like, float64
+        Loss matrix (for numpy c-order array with type float64)
     processes : int, optional (default=nb cpu)
         Nb of processes used for multiple emd computation (not used on windows)
     numItermax : int, optional (default=100000)
@@ -355,9 +351,9 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
     Returns
     -------
-    W: float
+    W: float, array-like
         Optimal transportation loss for the given parameters
-    log: dictnp
+    log: dict
         If input log is true, a dictionary containing dual
         variables and exit status
 
@@ -406,7 +402,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    M = np.asarray(M, dtype=np.float64, order= 'C')
 
     # problem with pikling Forks
     if sys.platform.endswith('win32') or not nx.__name__ == 'numpy':
