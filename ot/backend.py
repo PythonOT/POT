@@ -161,6 +161,9 @@ class Backend():
     def argsort(self, a, axis=None):
         raise NotImplementedError()
 
+    def flip(self, a, axis=None):
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
 
@@ -262,7 +265,9 @@ class NumpyBackend(Backend):
 
     def argsort(self, a, axis=None):
         return np.argsort(a, axis)
-
+    
+    def flip(self, a, axis=None):
+        return np.flip(a, axis)
 
 class JaxBackend(Backend):
 
@@ -372,6 +377,8 @@ class JaxBackend(Backend):
     def argsort(self, a, axis=None):
         return jnp.argsort(a, axis)
 
+    def flip(self, a, axis=None):
+        return jnp.flip(a, axis)
 
 class TorchBackend(Backend):
 
@@ -523,3 +530,9 @@ class TorchBackend(Backend):
         else:
             sorted, indices = torch.sort(a, dim=axis)
             return indices
+
+    def flip(self, a, axis=None):
+        if axis is None:
+            return torch.flip(a)
+        else:
+            return torch.flip(a,dims=axis)

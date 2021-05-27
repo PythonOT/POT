@@ -68,7 +68,7 @@ def proj_simplex(v, z=1):
     # sort u in ascending order
     u = nx.sort(v, axis=0)
     # take the descending order
-    u = u[::-1, :]
+    u = nx.flip(u,0)
     cssv = nx.cumsum(u, axis=0) - z
     ind = nx.arange(n, type_as=v)[:, None] + 1
     cond = u - cssv / ind > 0
