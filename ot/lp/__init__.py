@@ -345,7 +345,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
     log: boolean, optional (default=False)
-        If True, returns a dictionary containing the cost and dual
+        If True, returns a dictionary containing dual
         variables. Otherwise returns only the optimal transportation cost.
     return_matrix: boolean, optional (default=False)
         If True, returns the optimal transportation matrix in the log.
@@ -355,10 +355,10 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
     Returns
     -------
-    gamma: (ns x nt) ndarray
-        Optimal transportation matrix for the given parameters
+    W: float
+        Optimal transportation loss for the given parameters
     log: dictnp
-        If input log is true, a dictionary containing the cost and dual
+        If input log is true, a dictionary containing dual
         variables and exit status
 
 
