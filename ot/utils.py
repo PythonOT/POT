@@ -57,7 +57,7 @@ def laplacian(x):
 
 def proj_simplex(v, z=1):
     """Orthogonal projection on the simplex along axis 0 """
-    nx = get_backend(v)s
+    nx = get_backend(v)
     n = v.shape[0]
     if v.ndimension() == 1:
         d1 = 1
