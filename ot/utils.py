@@ -42,8 +42,11 @@ def toq():
 
 def kernel(x1, x2, method='gaussian', sigma=1, **kwargs):
     """Compute kernel matrix"""
+
+    nx = get_backend(x1, x2)
+
     if method.lower() in ['gaussian', 'gauss', 'rbf']:
-        K = np.exp(-dist(x1, x2) / (2 * sigma**2))
+        K = nx.exp(-dist(x1, x2) / (2 * sigma**2))
     return K
 
 
@@ -52,6 +55,29 @@ def laplacian(x):
     L = np.diag(np.sum(x, axis=0)) - x
     return L
 
+def proj_simplex(v, z=1):
+    """Orthogonal projection on the simplex along axis 0 """
+    nx = get_backend(v)s
+    n = v.shape[0]
+    if v.ndimension() == 1:
+        d1 = 1
+        v = v[:, None]
+    else:
+        d1 = 0
+    # sort u in ascending order
+    u = nx.sort(v, axis=0)
+    # take the descending order
+    u = u[::-1,:]
+    cssv = nx.cumsum(u, axis=0) - z
+    ind = nx.arange(n, type_as=v)[:, None] + 1
+    cond = u - cssv / ind > 0
+    rho = nx.sum(cond,0)
+    theta = cssv[rho - 1, range(v.shape[1])] / (rho)
+    w = nx.maximum(v - theta[None, :], nx.zeros(v,type_as=v))
+    if d1:
+        return w[:, 0]
+    else:
+        return w 
 
 def unif(n):
     """ return a uniform histogram of length n (simplex)
