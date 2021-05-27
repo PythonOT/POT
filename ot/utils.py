@@ -55,6 +55,7 @@ def laplacian(x):
     L = np.diag(np.sum(x, axis=0)) - x
     return L
 
+
 def proj_simplex(v, z=1):
     """Orthogonal projection on the simplex along axis 0 """
     nx = get_backend(v)
@@ -67,17 +68,18 @@ def proj_simplex(v, z=1):
     # sort u in ascending order
     u = nx.sort(v, axis=0)
     # take the descending order
-    u = u[::-1,:]
+    u = u[::-1, :]
     cssv = nx.cumsum(u, axis=0) - z
     ind = nx.arange(n, type_as=v)[:, None] + 1
     cond = u - cssv / ind > 0
-    rho = nx.sum(cond,0)
+    rho = nx.sum(cond, 0)
     theta = cssv[rho - 1, range(v.shape[1])] / (rho)
-    w = nx.maximum(v - theta[None, :], nx.zeros(v.shape,type_as=v))
+    w = nx.maximum(v - theta[None, :], nx.zeros(v.shape, type_as=v))
     if d1:
         return w[:, 0]
     else:
-        return w 
+        return w
+
 
 def unif(n):
     """ return a uniform histogram of length n (simplex)

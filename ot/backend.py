@@ -4,7 +4,7 @@ Multi-lib backend for POT
 """
 
 # Author: Remi Flamary <remi.flamary@polytechnique.edu>
-#         Nicolas Courty <ncourty@irisa.fr> 
+#         Nicolas Courty <ncourty@irisa.fr>
 #
 # License: MIT License
 
@@ -84,7 +84,7 @@ class Backend():
     def to_numpy(self, a):
         raise NotImplementedError()
 
-    # convert from numpy 
+    # convert from numpy
     def from_numpy(self, a, type_as=None):
         raise NotImplementedError()
 
@@ -193,9 +193,9 @@ class NumpyBackend(Backend):
             return np.ones(shape)
         else:
             return np.ones(shape, dtype=type_as.dtype)
-    
-    def arange(self,stop, start=0, step=1, type_as=None):
-        return np.arange(start,stop,step)
+
+    def arange(self, stop, start=0, step=1, type_as=None):
+        return np.arange(start, stop, step)
 
     def full(self, shape, fill_value, type_as=None):
         if type_as is None:
@@ -213,7 +213,7 @@ class NumpyBackend(Backend):
         return np.sum(a, axis, keepdims=keepdims)
 
     def cumsum(self, a, axis=None):
-        return np.cumsum(a,axis)
+        return np.cumsum(a, axis)
 
     def max(self, a, axis=None, keepdims=False):
         return np.max(a, axis, keepdims=keepdims)
@@ -258,10 +258,11 @@ class NumpyBackend(Backend):
         return np.einsum(subscripts, *operands)
 
     def sort(self, a, axis=None):
-        return np.sort(a,axis)
+        return np.sort(a, axis)
 
     def argsort(self, a, axis=None):
-        return np.argsort(a,axis)
+        return np.argsort(a, axis)
+
 
 class JaxBackend(Backend):
 
@@ -301,9 +302,9 @@ class JaxBackend(Backend):
             return jnp.ones(shape)
         else:
             return jnp.ones(shape, dtype=type_as.dtype)
-    
+
     def arange(self, stop, start=0, step=1, type_as=None):
-        return jnp.arange(start,stop,step)
+        return jnp.arange(start, stop, step)
 
     def full(self, shape, fill_value, type_as=None):
         if type_as is None:
@@ -366,10 +367,11 @@ class JaxBackend(Backend):
         return jnp.einsum(subscripts, *operands)
 
     def sort(self, a, axis=None):
-        return jnp.sort(a,axis)
+        return jnp.sort(a, axis)
 
     def argsort(self, a, axis=None):
-        return jnp.argsort(a,axis)
+        return jnp.argsort(a, axis)
+
 
 class TorchBackend(Backend):
 
@@ -415,9 +417,9 @@ class TorchBackend(Backend):
 
     def arange(self, stop, start=0, step=1, type_as=None):
         if type_as is None:
-            return torch.arange(start,stop,step)
+            return torch.arange(start, stop, step)
         else:
-            return torch.arange(start,stop,step, device=type_as.device)
+            return torch.arange(start, stop, step, device=type_as.device)
 
     def full(self, shape, fill_value, type_as=None):
         if type_as is None:
@@ -505,21 +507,19 @@ class TorchBackend(Backend):
 
     def einsum(self, subscripts, *operands):
         return torch.einsum(subscripts, *operands)
-    
+
     def sort(self, a, axis=None):
         if axis is None:
-            sorted,indices = torch.sort(a)
+            sorted, indices = torch.sort(a)
             return sorted
         else:
-            sorted,indices = torch.sort(a,dim=axis)
+            sorted, indices = torch.sort(a, dim=axis)
             return sorted
 
     def argsort(self, a, axis=None):
         if axis is None:
-            sorted,indices = torch.sort(a)
+            sorted, indices = torch.sort(a)
             return indices
         else:
-            sorted,indices = torch.sort(a,dim=axis)
+            sorted, indices = torch.sort(a, dim=axis)
             return indices
-
-    
