@@ -238,7 +238,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     >>> M=[[0.,1.],[1.,0.]]
     >>> ot.emd(a, b, M)
     array([[0.5, 0. ], 
-          [0. , 0.5]])
+           [0. , 0.5]])
 
     References
     ----------
