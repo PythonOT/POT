@@ -73,7 +73,7 @@ def proj_simplex(v, z=1):
     cond = u - cssv / ind > 0
     rho = nx.sum(cond,0)
     theta = cssv[rho - 1, range(v.shape[1])] / (rho)
-    w = nx.maximum(v - theta[None, :], nx.zeros(v,type_as=v))
+    w = nx.maximum(v - theta[None, :], nx.zeros(v.shapes,type_as=v))
     if d1:
         return w[:, 0]
     else:
