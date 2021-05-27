@@ -232,8 +232,12 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     Simple example with obvious solution. The function emd accepts lists and
     perform automatic conversion to numpy arrays
 
-    >>> import ot a=[.5,.5] b=[.5,.5] M=[[0.,1.],[1.,0.]] ot.emd(a,b,M)
-    >>> array([[0.5, 0. ], [0. , 0.5]])
+    >>> import ot
+    >>> a=[.5,.5]
+    >>> b=[.5,.5]
+    >>> M=[[0.,1.],[1.,0.]]
+    >>> ot.emd(a, b, M)
+    array([[0.5, 0. ], [0. , 0.5]])
 
     References
     ----------
