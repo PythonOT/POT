@@ -117,11 +117,15 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.ones((10, 3))
     with pytest.raises(NotImplementedError):
+        nx.arange(10, 1, 2)
+    with pytest.raises(NotImplementedError):
         nx.full((10, 3), 3.14)
     with pytest.raises(NotImplementedError):
         nx.eye((10, 3))
     with pytest.raises(NotImplementedError):
         nx.sum(M)
+    with pytest.raises(NotImplementedError):
+        nx.cumsum(M)
     with pytest.raises(NotImplementedError):
         nx.max(M)
     with pytest.raises(NotImplementedError):
@@ -152,6 +156,12 @@ def test_empty_backend():
         nx.isinf(M)
     with pytest.raises(NotImplementedError):
         nx.einsum('ij->i', M)
+    with pytest.raises(NotImplementedError):
+        nx.sort(M)
+    with pytest.raises(NotImplementedError):
+        nx.argsort(M)
+    with pytest.raises(NotImplementedError):
+        nx.flip(M)
 
 
 @pytest.mark.parametrize('backend', backend_list)
@@ -185,6 +195,9 @@ def test_func_backends(backend):
         A = nx.ones((10, 3), type_as=Mb)
         lst_b.append(nx.to_numpy(A))
 
+        A = nx.arange(10, 1, 2)
+        lst_b.append(nx.to_numpy(A))
+
         A = nx.full((10, 3), 3.14)
         A = nx.full((10, 3), 3.14, type_as=Mb)
         lst_b.append(nx.to_numpy(A))
@@ -194,6 +207,9 @@ def test_func_backends(backend):
         lst_b.append(nx.to_numpy(A))
 
         A = nx.sum(Mb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.cumsum(Mb)
         lst_b.append(nx.to_numpy(A))
 
         A = nx.sum(Mb, axis=1, keepdims=True)
@@ -254,6 +270,18 @@ def test_func_backends(backend):
         lst_b.append(nx.to_numpy(A))
 
         A = nx.einsum('ij,j->i', Mb, vb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.sort(Mb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.argsort(Mb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.flip(Mb)
+        lst_b.append(nx.to_numpy(A))
+
+        A = nx.einsum('ij->i', Mb)
         lst_b.append(nx.to_numpy(A))
 
         lst_tot.append(lst_b)

@@ -14,18 +14,32 @@ from ot.backend import get_backend_list
 backend_list = get_backend_list()
 
 
+@pytest.mark.parametrize('nx', backend_list)
+def proj_simplex(nx):
+    n = 10
+    rng = np.random.RandomState(0)
+    x = rng.randn(n, 2)
+    x1 = nx.from_numpy(x)
+
+    proj = proj_simplex(x1)
+    # all porjections should sum to 1
+    np.testing.assert_allclose(np.sum(nx.to_numpy(proj), axis=1)), np.ones(2), atol = 1e-5)
+    proj=proj_simplex(x1, 3)
+    # all porjections should sum to 3
+    np.testing.assert_allclose(np.sum(nx.to_numpy(proj), axis=1)), 3 * np.ones(2), atol=1e-5)
+
 def test_parmap():
 
-    n = 10
+    n=10
 
     def f(i):
         return 1.0 * i * i
 
-    a = np.arange(n)
+    a=np.arange(n)
 
-    l1 = list(map(f, a))
+    l1=list(map(f, a))
 
-    l2 = list(ot.utils.parmap(f, a))
+    l2=list(ot.utils.parmap(f, a))
 
     np.testing.assert_allclose(l1, l2)
 
@@ -36,8 +50,8 @@ def test_tic_toc():
 
     ot.tic()
     time.sleep(0.5)
-    t = ot.toc()
-    t2 = ot.toq()
+    t=ot.toc()
+    t2=ot.toq()
 
     # test timing
     np.testing.assert_allclose(0.5, t, rtol=1e-1, atol=1e-1)
@@ -48,11 +62,11 @@ def test_tic_toc():
 
 def test_kernel():
 
-    n = 100
-    rng = np.random.RandomState(0)
-    x = rng.randn(n, 2)
+    n=100
+    rng=np.random.RandomState(0)
+    x=rng.randn(n, 2)
 
-    K = ot.utils.kernel(x, x)
+    K=ot.utils.kernel(x, x)
 
     # gaussian kernel  has ones on the diagonal
     np.testing.assert_allclose(np.diag(K), np.ones(n))
@@ -60,47 +74,47 @@ def test_kernel():
 
 def test_unif():
 
-    n = 100
+    n=100
 
-    u = ot.unif(n)
+    u=ot.unif(n)
 
     np.testing.assert_allclose(1, np.sum(u))
 
 
 def test_dist():
 
-    n = 100
+    n=100
 
-    rng = np.random.RandomState(0)
-    x = rng.randn(n, 2)
+    rng=np.random.RandomState(0)
+    x=rng.randn(n, 2)
 
-    D = np.zeros((n, n))
+    D=np.zeros((n, n))
     for i in range(n):
         for j in range(n):
-            D[i, j] = np.sum(np.square(x[i, :] - x[j, :]))
+            D[i, j]=np.sum(np.square(x[i, :] - x[j, :]))
 
-    D2 = ot.dist(x, x)
-    D3 = ot.dist(x)
+    D2=ot.dist(x, x)
+    D3=ot.dist(x)
 
     # dist shoul return squared euclidean
     np.testing.assert_allclose(D, D2, atol=1e-14)
     np.testing.assert_allclose(D, D3, atol=1e-14)
 
 
-@pytest.mark.parametrize('nx', backend_list)
+@ pytest.mark.parametrize('nx', backend_list)
 def test_dist_backends(nx):
 
-    n = 100
-    rng = np.random.RandomState(0)
-    x = rng.randn(n, 2)
-    x1 = nx.from_numpy(x)
+    n=100
+    rng=np.random.RandomState(0)
+    x=rng.randn(n, 2)
+    x1=nx.from_numpy(x)
 
-    lst_metric = ['euclidean', 'sqeuclidean']
+    lst_metric=['euclidean', 'sqeuclidean']
 
     for metric in lst_metric:
 
-        D = ot.dist(x, x, metric=metric)
-        D1 = ot.dist(x1, x1, metric=metric)
+        D=ot.dist(x, x, metric=metric)
+        D1=ot.dist(x1, x1, metric=metric)
 
         # low atol because jax forces float32
         np.testing.assert_allclose(D, nx.to_numpy(D1), atol=1e-5)
@@ -108,8 +122,8 @@ def test_dist_backends(nx):
 
 def test_dist0():
 
-    n = 100
-    M = ot.utils.dist0(n, method='lin_square')
+    n=100
+    M=ot.utils.dist0(n, method='lin_square')
 
     # dist0 default to linear sampling with quadratic loss
     np.testing.assert_allclose(M[0, -1], (n - 1) * (n - 1))
@@ -117,36 +131,36 @@ def test_dist0():
 
 def test_dots():
 
-    n1, n2, n3, n4 = 100, 50, 200, 100
+    n1, n2, n3, n4=100, 50, 200, 100
 
-    rng = np.random.RandomState(0)
+    rng=np.random.RandomState(0)
 
-    A = rng.randn(n1, n2)
-    B = rng.randn(n2, n3)
-    C = rng.randn(n3, n4)
+    A=rng.randn(n1, n2)
+    B=rng.randn(n2, n3)
+    C=rng.randn(n3, n4)
 
-    X1 = ot.utils.dots(A, B, C)
+    X1=ot.utils.dots(A, B, C)
 
-    X2 = A.dot(B.dot(C))
+    X2=A.dot(B.dot(C))
 
     np.testing.assert_allclose(X1, X2)
 
 
 def test_clean_zeros():
 
-    n = 100
-    nz = 50
-    nz2 = 20
-    u1 = ot.unif(n)
-    u1[:nz] = 0
-    u1 = u1 / u1.sum()
-    u2 = ot.unif(n)
-    u2[:nz2] = 0
-    u2 = u2 / u2.sum()
+    n=100
+    nz=50
+    nz2=20
+    u1=ot.unif(n)
+    u1[:nz]=0
+    u1=u1 / u1.sum()
+    u2=ot.unif(n)
+    u2[:nz2]=0
+    u2=u2 / u2.sum()
 
-    M = ot.utils.dist0(n)
+    M=ot.utils.dist0(n)
 
-    a, b, M2 = ot.utils.clean_zeros(u1, u2, M)
+    a, b, M2=ot.utils.clean_zeros(u1, u2, M)
 
     assert len(a) == n - nz
     assert len(b) == n - nz2
@@ -154,44 +168,44 @@ def test_clean_zeros():
 
 def test_cost_normalization():
 
-    C = np.random.rand(10, 10)
+    C=np.random.rand(10, 10)
 
     # does nothing
-    M0 = ot.utils.cost_normalization(C)
+    M0=ot.utils.cost_normalization(C)
     np.testing.assert_allclose(C, M0)
 
-    M = ot.utils.cost_normalization(C, 'median')
+    M=ot.utils.cost_normalization(C, 'median')
     np.testing.assert_allclose(np.median(M), 1)
 
-    M = ot.utils.cost_normalization(C, 'max')
+    M=ot.utils.cost_normalization(C, 'max')
     np.testing.assert_allclose(M.max(), 1)
 
-    M = ot.utils.cost_normalization(C, 'log')
+    M=ot.utils.cost_normalization(C, 'log')
     np.testing.assert_allclose(M.max(), np.log(1 + C).max())
 
-    M = ot.utils.cost_normalization(C, 'loglog')
+    M=ot.utils.cost_normalization(C, 'loglog')
     np.testing.assert_allclose(M.max(), np.log(1 + np.log(1 + C)).max())
 
 
 def test_check_params():
 
-    res1 = ot.utils.check_params(first='OK', second=20)
+    res1=ot.utils.check_params(first='OK', second=20)
     assert res1 is True
 
-    res0 = ot.utils.check_params(first='OK', second=None)
+    res0=ot.utils.check_params(first='OK', second=None)
     assert res0 is False
 
 
 def test_deprecated_func():
 
-    @ot.utils.deprecated('deprecated text for fun')
+    @ ot.utils.deprecated('deprecated text for fun')
     def fun():
         pass
 
     def fun2():
         pass
 
-    @ot.utils.deprecated('deprecated text for class')
+    @ ot.utils.deprecated('deprecated text for class')
     class Class():
         pass
 
@@ -209,20 +223,20 @@ def test_BaseEstimator():
 
         def __init__(self, first='spam', second='eggs'):
 
-            self.first = first
-            self.second = second
+            self.first=first
+            self.second=second
 
-    cl = Class()
+    cl=Class()
 
-    names = cl._get_param_names()
+    names=cl._get_param_names()
     assert 'first' in names
     assert 'second' in names
 
-    params = cl.get_params()
+    params=cl.get_params()
     assert 'first' in params
     assert 'second' in params
 
-    params['first'] = 'spam again'
+    params['first']='spam again'
     cl.set_params(**params)
 
     assert cl.first == 'spam again'

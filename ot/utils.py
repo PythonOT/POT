@@ -57,7 +57,32 @@ def laplacian(x):
 
 
 def proj_simplex(v, z=1):
-    """Orthogonal projection on the simplex along axis 0 """
+    """ compute the closest point (orthogonal projection) on the
+    generalized (n-1)-simplex of a vector v wrt. to the Euclidean
+    distance, thus solving:
+    .. math::
+        \mathcal{P}(w) \in arg\min_\gamma || \gamma - v ||_2
+
+        s.t. \gamma^T 1= z
+
+             \gamma\geq 0
+
+    If v is a 2d array, compute all the projections wrt. axis 0
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends.
+
+    Parameters
+    ----------
+    v : {array-like}, shape (n, d)
+    z : int, optional
+        'size' of the simplex (each vectors sum to z, 1 by default)
+
+    Returns
+    -------
+    h : ndarray, shape (n,d)
+        Array of projections on the simplex
+    """
     nx = get_backend(v)
     n = v.shape[0]
     if v.ndim == 1:
