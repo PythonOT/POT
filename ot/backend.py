@@ -535,6 +535,6 @@ class TorchBackend(Backend):
 
     def flip(self, a, axis=None):
         if axis is None:
-            return torch.flip(a,dims=0)
+            return torch.flip(a,dims=[0])
         else:
             return torch.flip(a, dims=axis)
