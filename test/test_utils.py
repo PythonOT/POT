@@ -15,7 +15,7 @@ backend_list = get_backend_list()
 
 
 @pytest.mark.parametrize('nx', backend_list)
-def proj_simplex(nx):
+def test_proj_simplex(nx):
     n = 10
     rng = np.random.RandomState(0)
     x = rng.randn(n, 2)
