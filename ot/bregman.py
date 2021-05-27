@@ -47,7 +47,23 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends.
 
-    The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling algorithm as proposed in [2]_
+    The algorithm used for solving the problem is the Sinkhorn-Knopp matrix
+    scaling algorithm as proposed in [2]_
+
+    **Choosing a Sinkhorn solver**
+
+    By default and when using a regularization parameter that is not too small
+    the default sinkhorn solver should be enough. If you need to use a small
+    regularization to get sharper OT matrices, you should use the
+    :any:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical
+    errors. This last solver can be very slow in practice and might not even
+    converge to a reasonable OT matrix in a finite time. This is why
+    :any:`ot.bregman.sinkhorn_epsilon_scaling` that relies on iterating the value
+    of the regularization (and using warm start) sometimes leads to better
+    solutions. Note that the greedy version of the sinkhorn
+    :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
+    version of the sinkhorn :any:`ot.bregman.screenkhorn` aim a providing  a
+    fast approximation of the Sinkhorn problem.
 
 
     Parameters
@@ -72,22 +88,6 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
         Print information along iterations
     log : bool, optional
         record log if True
-
-    **Choosing a Sinkhorn solver**
-
-    By default and when using a regularization parameter that is not too small
-    the default sinkhorn solver should be enough. If you need to use a small
-    regularization to get sharper OT matrices, you should use the
-    :any:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical
-    errors. This last solver can be very slow in practice and might not even
-    converge to a reasonable OT matrix in a finite time. This is why
-    :any:`ot.bregman.sinkhorn_epsilon_scaling` that relie on iterating the value
-    of the regularization (and using warm start) sometimes leads to better
-    solutions. Note that the greedy version of the sinkhorn
-    :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
-    version of the sinkhorn :any:`ot.bregman.screenkhorn` aim a providing  a
-    fast approximation of the Sinkhorn problem.
-
 
     Returns
     -------
@@ -176,6 +176,21 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling algorithm as proposed in [2]_
 
 
+    **Choosing a Sinkhorn solver**
+
+    By default and when using a regularization parameter that is not too small
+    the default sinkhorn solver should be enough. If you need to use a small
+    regularization to get sharper OT matrices, you should use the
+    :any:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical
+    errors. This last solver can be very slow in practice and might not even
+    converge to a reasonable OT matrix in a finite time. This is why
+    :any:`ot.bregman.sinkhorn_epsilon_scaling` that relies on iterating the value
+    of the regularization (and using warm start) sometimes leads to better
+    solutions. Note that the greedy version of the sinkhorn
+    :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
+    version of the sinkhorn :any:`ot.bregman.screenkhorn` aim a providing  a
+    fast approximation of the Sinkhorn problem.
+
     Parameters
     ----------
     a : array-like, shape (dim_a,)
@@ -198,27 +213,13 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     log : bool, optional
         record log if True
 
-    **Choosing a Sinkhorn solver**
-
-    By default and when using a regularization parameter that is not too small
-    the default sinkhorn solver should be enough. If you need to use a small
-    regularization to get sharper OT matrices, you should use the
-    :any:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical
-    errors. This last solver can be very slow in practice and might not even
-    converge to a reasonable OT matrix in a finite time. This is why
-    :any:`ot.bregman.sinkhorn_epsilon_scaling` that relie on iterating the value
-    of the regularization (and using warm start) sometimes leads to better
-    solutions. Note that the greedy version of the sinkhorn
-    :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
-    version of the sinkhorn :any:`ot.bregman.screenkhorn` aim a providing  a
-    fast approximation of the Sinkhorn problem.
-
     Returns
     -------
     W : (n_hists) float/array-like
         Optimal transportation loss for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
+
 
     Examples
     --------

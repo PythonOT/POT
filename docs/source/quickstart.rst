@@ -20,7 +20,7 @@ are also available as notebooks on the POT Github.
     Since version 0.8, POT provides a backend to automatically solve some OT
     problems independently from the toolbox used by the user (numpy/torch/jax).
     We provide a discussion about which functions are compatible in section
-    :ref:`_backends` 
+    `Backend section <#solving-ot-with-multiple-backends>`_ .
 
 
 Why Optimal Transport ?
@@ -927,6 +927,13 @@ The implementations of FGW and FGW barycenter is provided in functions
 GPU acceleration
 ^^^^^^^^^^^^^^^^
 
+.. warning::
+
+    The :any:`ot.gpu` has been deprecated since the release 0.8 of POT and
+    should not be used. The GPU implementation (in Pytorch for instance) can be
+    used with the novel backends using the compatible functions from POT.
+
+
 We provide several implementation of our OT solvers in :any:`ot.gpu`. Those
 implementations use the :code:`cupy` toolbox that obviously need to be installed.
 
@@ -955,10 +962,10 @@ explicitly.
     use it you have to specifically import it with :code:`import ot.gpu` .
 
 
-Solving OT with Multiple backends (numpy/torch/jax)
----------------------------------------------------
+Solving OT with Multiple backends
+---------------------------------
 
-.. _backends:
+.. _backends_section:
 
 Since version 0.8, POT provides a backend that allows to code solvers
 independent from the type of the input arrays. The idea is to provide the user
@@ -992,9 +999,9 @@ output will be differentiable with respect to the input of the function.
 List of compatible Backends
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- :ref:`Numpy <https://numpy.org/>`(all functions and solvers)
-- :ref:`Pytorch <https://pytorch.org/>` (all outputs differentiable w.r.t. inputs)
-- :ref:`Jax <https://github.com/google/jax>` (Some functions are differentiable some require a wrapper)
+- `Numpy <https://numpy.org/>`_ (all functions and solvers)
+- `Pytorch <https://pytorch.org/>`_ (all outputs differentiable w.r.t. inputs)
+- `Jax <https://github.com/google/jax>`_ (Some functions are differentiable some require a wrapper)
 
 List of compatible functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

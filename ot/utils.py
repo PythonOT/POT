@@ -113,12 +113,17 @@ def euclidean_distances(X, Y, squared=False):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends.
+
     Parameters
     ----------
     X : {array-like}, shape (n_samples_1, n_features)
     Y : {array-like}, shape (n_samples_2, n_features)
     squared : boolean, optional
         Return squared Euclidean distances.
+
     Returns
     -------
     distances : {array}, shape (n_samples_1, n_samples_2)
@@ -147,12 +152,15 @@ def euclidean_distances(X, Y, squared=False):
 def dist(x1, x2=None, metric='sqeuclidean'):
     """Compute distance between samples in x1 and x2
 
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends.
+
     Parameters
     ----------
 
-    x1 : ndarray, shape (n1,d)
+    x1 : array-like, shape (n1,d)
         matrix with n1 samples of size d
-    x2 : array, shape (n2,d), optional
+    x2 : array-like, shape (n2,d), optional
         matrix with n2 samples of size d (if None then x2=x1)
     metric : str | callable, optional
         'sqeuclidean' or 'euclidean' on all backends. On numpy the function also
@@ -166,7 +174,7 @@ def dist(x1, x2=None, metric='sqeuclidean'):
     Returns
     -------
 
-    M : np.array (n1,n2)
+    M : array-like (n1,n2)
         distance matrix computed with given metric
 
     """
