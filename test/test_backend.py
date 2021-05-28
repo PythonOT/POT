@@ -325,7 +325,7 @@ def test_func_backends(backend):
     for a1, a2, name in zip(lst_np, lst_b, lst_name):
         if not np.allclose(a1, a2):
             print('Assert fail on: ', name)
-        assert np.allclose(a1, a2)
+        assert np.allclose(a1, a2, atol=1e-7)
 
 
 def test_gradients_backends():

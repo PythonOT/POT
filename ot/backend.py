@@ -452,7 +452,7 @@ class TorchBackend(Backend):
 
     def cumsum(self, a, axis=None):
         if axis is None:
-            return torch.cumsum(a, 0)
+            return torch.cumsum(a.flatten(), 0)
         else:
             return torch.cumsum(a, axis)
 
