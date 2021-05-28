@@ -155,7 +155,7 @@ class Backend():
     def einsum(self, subscripts, *operands):
         raise NotImplementedError()
 
-    def sort(self, a, axis=None):
+    def sort(self, a, axis=-1):
         raise NotImplementedError()
 
     def argsort(self, a, axis=None):
@@ -260,10 +260,10 @@ class NumpyBackend(Backend):
     def einsum(self, subscripts, *operands):
         return np.einsum(subscripts, *operands)
 
-    def sort(self, a, axis=None):
+    def sort(self, a, axis=-1):
         return np.sort(a, axis)
 
-    def argsort(self, a, axis=None):
+    def argsort(self, a, axis=-1):
         return np.argsort(a, axis)
 
     def flip(self, a, axis=None):
@@ -372,10 +372,10 @@ class JaxBackend(Backend):
     def einsum(self, subscripts, *operands):
         return jnp.einsum(subscripts, *operands)
 
-    def sort(self, a, axis=None):
+    def sort(self, a, axis=-1):
         return jnp.sort(a, axis)
 
-    def argsort(self, a, axis=None):
+    def argsort(self, a, axis=-1):
         return jnp.argsort(a, axis)
 
     def flip(self, a, axis=None):
@@ -517,24 +517,18 @@ class TorchBackend(Backend):
     def einsum(self, subscripts, *operands):
         return torch.einsum(subscripts, *operands)
 
-    def sort(self, a, axis=None):
-        if axis is None:
-            sorted, indices = torch.sort(a)
-            return sorted
-        else:
-            sorted, indices = torch.sort(a, dim=axis)
-            return sorted
+    def sort(self, a, axis=-1):
+        sorted0, indices = torch.sort(a, dim=axis)
+        return sorted0
 
-    def argsort(self, a, axis=None):
-        if axis is None:
-            sorted, indices = torch.sort(a)
-            return indices
-        else:
-            sorted, indices = torch.sort(a, dim=axis)
-            return indices
+    def argsort(self, a, axis=-1):
+        sorted, indices = torch.sort(a, dim=axis)
+        return indices
 
     def flip(self, a, axis=None):
         if axis is None:
-            return torch.flip(a, dims=[0])
+            return torch.flip(a, tuple(i for i in range(len(a.shape))))
+        if isinstance(axis, int):
+            return torch.flip(a, (axis,))
         else:
             return torch.flip(a, dims=axis)

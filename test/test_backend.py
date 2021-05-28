@@ -179,6 +179,7 @@ def test_func_backends(backend):
         print('Backend: ', nx.__name__)
 
         lst_b = []
+        lst_name = []
 
         Mb = nx.from_numpy(M)
         vb = nx.from_numpy(v)
@@ -186,110 +187,144 @@ def test_func_backends(backend):
 
         A = nx.set_gradients(val, v, v)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('set_gradients')
 
         A = nx.zeros((10, 3))
         A = nx.zeros((10, 3), type_as=Mb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('zeros')
 
         A = nx.ones((10, 3))
         A = nx.ones((10, 3), type_as=Mb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('ones')
 
         A = nx.arange(10, 1, 2)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('arange')
 
         A = nx.full((10, 3), 3.14)
         A = nx.full((10, 3), 3.14, type_as=Mb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('full')
 
         A = nx.eye(10, 3)
         A = nx.eye(10, 3, type_as=Mb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('eye')
 
         A = nx.sum(Mb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('sum')
 
         A = nx.sum(Mb, axis=1, keepdims=True)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('sum(axis)')
 
         A = nx.cumsum(Mb, 0)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('cumsum(axis)')
 
         A = nx.max(Mb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('max')
 
         A = nx.max(Mb, axis=1, keepdims=True)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('max(axis)')
 
         A = nx.min(Mb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('min')
 
         A = nx.min(Mb, axis=1, keepdims=True)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('min(axis)')
 
         A = nx.maximum(vb, 0)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('maximum')
 
         A = nx.minimum(vb, 0)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('minimum')
 
         A = nx.abs(Mb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('abs')
 
         A = nx.log(A)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('log')
 
         A = nx.exp(Mb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('exp')
 
         A = nx.sqrt(nx.abs(Mb))
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('sqrt')
 
         A = nx.dot(vb, vb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('dot(v,v)')
 
         A = nx.dot(Mb, vb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('dot(M,v)')
 
         A = nx.dot(Mb, Mb.T)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('dot(M,M)')
 
         A = nx.norm(vb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('norm')
 
         A = nx.any(vb > 0)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('any')
 
         A = nx.isnan(vb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('isnan')
 
         A = nx.isinf(vb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('isinf')
 
         A = nx.einsum('ij->i', Mb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('einsum(ij->i)')
 
         A = nx.einsum('ij,j->i', Mb, vb)
         lst_b.append(nx.to_numpy(A))
-
-        A = nx.sort(Mb)
-        lst_b.append(nx.to_numpy(A))
-
-        A = nx.argsort(Mb)
-        lst_b.append(nx.to_numpy(A))
-
-        A = nx.flip(Mb)
-        lst_b.append(nx.to_numpy(A))
+        lst_name.append('nx.einsum(ij,j->i)')
 
         A = nx.einsum('ij->i', Mb)
         lst_b.append(nx.to_numpy(A))
+        lst_name.append('nx.einsum(ij->i)')
+
+        A = nx.sort(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('sort')
+
+        A = nx.argsort(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('argsort')
+
+        A = nx.flip(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('flip')
 
         lst_tot.append(lst_b)
 
     lst_np = lst_tot[0]
     lst_b = lst_tot[1]
 
-    for a1, a2 in zip(lst_np, lst_b):
+    for a1, a2, name in zip(lst_np, lst_b, lst_name):
+        if not np.allclose(a1, a2):
+            print('Assert fail on: ', name)
         assert np.allclose(a1, a2)
 
 

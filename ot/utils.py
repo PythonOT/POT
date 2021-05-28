@@ -57,7 +57,7 @@ def laplacian(x):
 
 
 def proj_simplex(v, z=1):
-    """ compute the closest point (orthogonal projection) on the
+    r""" compute the closest point (orthogonal projection) on the
     generalized (n-1)-simplex of a vector v wrt. to the Euclidean
     distance, thus solving:
     .. math::
@@ -94,7 +94,7 @@ def proj_simplex(v, z=1):
     # sort u in ascending order
     u = nx.sort(v, axis=0)
     # take the descending order
-    u = nx.flip(u, [0])
+    u = nx.flip(u, 0)
     cssv = nx.cumsum(u, axis=0) - z
     ind = nx.arange(n, type_as=v)[:, None] + 1
     cond = u - cssv / ind > 0
