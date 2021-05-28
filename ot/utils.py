@@ -85,6 +85,7 @@ def proj_simplex(v, z=1):
     """
     nx = get_backend(v)
     n = v.shape[0]
+    d = v.shape[1]
     if v.ndim == 1:
         d1 = 1
         v = v[:, None]
@@ -98,7 +99,7 @@ def proj_simplex(v, z=1):
     ind = nx.arange(n, type_as=v)[:, None] + 1
     cond = u - cssv / ind > 0
     rho = nx.sum(cond, 0)
-    theta = cssv[rho - 1, range(v.shape[1])] / (rho)
+    theta = cssv[rho - 1, :d] / rho
     w = nx.maximum(v - theta[None, :], nx.zeros(v.shape, type_as=v))
     if d1:
         return w[:, 0]
