@@ -6,7 +6,7 @@
 
 import ot
 import ot.backend
-from ot.backend import torch
+from ot.backend import torch, jax
 
 import pytest
 
@@ -27,17 +27,17 @@ def test_get_backend_list():
     assert isinstance(lst[0], ot.backend.NumpyBackend)
 
 
-def test_to_numpy():
+@pytest.mark.parametrize('nx', backend_list)
+def test_to_numpy(nx):
 
-    for nx in get_backend_list():
+    v = nx.zeros(10)
+    M = nx.ones((10, 10))
 
-        v = nx.zeros(10)
-        M = nx.ones((10, 10))
+    v2 = to_numpy(v)
+    assert isinstance(v2, np.ndarray)
 
-        v2 = to_numpy(v)
-        assert isinstance(v2, np.ndarray)
-
-        v2, M2 = to_numpy(v, M)
+    v2, M2 = to_numpy(v, M)
+    assert isinstance(M2, np.ndarray)
 
 
 def test_get_backend():
@@ -70,6 +70,21 @@ def test_get_backend():
 
         nx = get_backend(A2, B2)
         assert nx.__name__ == 'torch'
+
+        # test not unique types in input
+        with pytest.raises(ValueError):
+            get_backend(A, B2)
+
+    if jax:
+
+        A2 = jax.numpy.array(A)
+        B2 = jax.numpy.array(B)
+
+        nx = get_backend(A2)
+        assert nx.__name__ == 'jax'
+
+        nx = get_backend(A2, B2)
+        assert nx.__name__ == 'jax'
 
         # test not unique types in input
         with pytest.raises(ValueError):

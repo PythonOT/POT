@@ -19,7 +19,7 @@ import warnings
 import numpy as np
 from scipy.optimize import fmin_l_bfgs_b
 
-from ot.utils import unif, dist
+from ot.utils import unif, dist, list_to_array
 from .backend import get_backend
 
 
@@ -255,8 +255,8 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     ot.bregman.sinkhorn_stabilized: Stabilized sinkhorn [9][10]
 
     """
-    if isinstance(b, list):
-        b = np.array(b)
+
+    b = list_to_array(b)
     if len(b.shape) < 2:
         b = b[:, None]
 
@@ -348,12 +348,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
 
     """
 
-    if isinstance(a, list):
-        a = np.array(a)
-    if isinstance(b, list):
-        b = np.array(b)
-    if isinstance(M, list):
-        M = np.array(M)
+    a, b, M = list_to_array(a, b, M)
 
     nx = get_backend(M, a, b)
 
@@ -383,16 +378,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
         u = nx.ones(dim_a, type_as=M) / dim_a
         v = nx.ones(dim_b, type_as=M) / dim_b
 
-    # print(reg)
-
-    # Next 3 lines equivalent to K= np.exp(-M/reg), but faster to compute
-    #K = np.empty(M.shape, dtype=M.dtype)
-    #np.divide(M, -reg, out=K)
-    #np.exp(K, out=K)
     K = nx.exp(M / (-reg))
-
-    # print(np.min(K))
-    #tmp2 = np.empty(b.shape, dtype=M.dtype)
 
     Kp = (1 / a).reshape(-1, 1) * K
     cpt = 0

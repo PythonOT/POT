@@ -18,7 +18,7 @@ from . import cvx
 from .cvx import barycenter
 # import compiled emd
 from .emd_wrap import emd_c, check_result, emd_1d_sorted
-from ..utils import dist
+from ..utils import dist, list_to_array
 from ..utils import parmap
 from ..backend import get_backend
 
@@ -253,12 +253,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     regularized OT"""
 
     # convert to numpy if list
-    if type(a)==list:
-        a=np.array(a)
-    if type(b)==list:
-        b=np.array(b)   
-    if type(M)==list:
-        M=np.array(M)
+    a, b, M  = list_to_array(a, b, M)
 
     a0, b0, M0 = a, b, M
     nx =  get_backend(M0, a0, b0)
@@ -283,7 +278,8 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
         "Dimension mismatch, check dimensions of M with a and b"
 
     # ensure that same mass
-    np.testing.assert_almost_equal(a.sum(0),b.sum(0),err_msg='a and b vector must have the same sum')
+    np.testing.assert_almost_equal(a.sum(0), 
+        b.sum(0), err_msg='a and b vector must have the same sum')
     b=b*a.sum()/b.sum()
 
     asel = a != 0
@@ -390,12 +386,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     ot.bregman.sinkhorn : Entropic regularized OT
     ot.optim.cg : General regularized OT"""
 
-    if type(a)==list:
-        a=np.array(a)
-    if type(b)==list:
-        b=np.array(b)   
-    if type(M)==list:
-        M=np.array(M)
+    a, b, M  = list_to_array(a, b, M)
 
     a0, b0, M0 = a, b, M
     nx =  get_backend(M0, a0, b0)
@@ -445,7 +436,8 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
             log['v'] = nx.from_numpy(v, type_as=b0)
             log['warning'] = result_code_string
             log['result_code'] = result_code
-            cost = nx.set_gradients(nx.from_numpy(cost, type_as=M0),(a0,b0, M0),(log['u'],log['v'],G))
+            cost = nx.set_gradients(nx.from_numpy(cost, type_as=M0), 
+                   (a0,b0, M0), (log['u'], log['v'], G))
             return [cost, log]
     else:
         def f(b):
@@ -459,7 +451,9 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
                 u, v = estimate_dual_null_weights(u, v, a, b, M)
 
             G = nx.from_numpy(G, type_as=M0)
-            cost = nx.set_gradients(nx.from_numpy(cost, type_as=M0),(a0,b0, M0),(nx.from_numpy(u, type_as=a0),nx.from_numpy(v, type_as=b0),G))
+            cost = nx.set_gradients(nx.from_numpy(cost, type_as=M0),
+                   (a0,b0, M0), (nx.from_numpy(u, type_as=a0),
+                    nx.from_numpy(v, type_as=b0),G))
 
             check_result(result_code)
             return cost
