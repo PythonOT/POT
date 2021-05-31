@@ -200,7 +200,7 @@ def dist(x1, x2=None, metric='sqeuclidean'):
     Returns
     -------
 
-    M : array-like (n1,n2)
+    M : array-like, shape (n1, n2)
         distance matrix computed with given metric
 
     """
