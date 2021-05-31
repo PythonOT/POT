@@ -969,7 +969,7 @@ Solving OT with Multiple backends
 
 Since version 0.8, POT provides a backend that allows to code solvers
 independently from the type of the input arrays. The idea is to provide the user
-with a toolbox that works seamlessly and returns a solution for instance as a
+with a package that works seamlessly and returns a solution for instance as a
 Pytorch tensors when the function has Pytorch tensors as input. 
 
 
