@@ -210,7 +210,7 @@ def test_deprecated_func():
     def fun2():
         pass
 
-    @ ot.utils.deprecated('deprecated text for class')
+    @ot.utils.deprecated('deprecated text for class')
     class Class():
         pass
 
