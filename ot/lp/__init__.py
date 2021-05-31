@@ -218,7 +218,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
 
     Returns
     -------
-    gamma: (ns x nt) array-like 
+    gamma: array-like, shape (ns, nt) 
         Optimal transportation matrix for the given
         parameters 
     log: dict, optional
