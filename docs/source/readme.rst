@@ -232,7 +232,7 @@ Short examples
 
 .. code:: python
 
-    # a,b are 1D histograms (sum to 1 and positive)
+    # a and b are 1D histograms (sum to 1 and positive)
     # M is the ground cost matrix
     T = ot.emd(a, b, M) # exact linear program
     T_reg = ot.sinkhorn(a, b, M, reg) # entropic regularized OT
