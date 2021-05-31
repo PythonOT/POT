@@ -203,7 +203,7 @@ def test_check_params():
 
 def test_deprecated_func():
 
-    @ ot.utils.deprecated('deprecated text for fun')
+    @ot.utils.deprecated('deprecated text for fun')
     def fun():
         pass
 
