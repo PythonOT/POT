@@ -989,7 +989,7 @@ For instance when executing the following code
     w = ot.emd2(a, b, M)  # Wasserstein computation
 
 the functions  :any:`ot.emd` and :any:`ot.emd2` can take inputs of the type
-:any:`numpy.array` :any:`torch.tensor` or  :any:`jax.numpy.array`. The output of
+:any:`numpy.array`, :any:`torch.tensor` or  :any:`jax.numpy.array`. The output of
 the function will be the same type as the inputs and on the same device. When
 possible all computations are done on the same device and also when possible the
 output will be differentiable with respect to the input of the function.
