@@ -56,6 +56,10 @@ def laplacian(x):
     return L
 
 
+def check_numpy_array(a):
+    """check that the array is in numpy formet or convert to it"""
+
+
 def proj_simplex(v, z=1):
     r""" compute the closest point (orthogonal projection) on the
     generalized (n-1)-simplex of a vector v wrt. to the Euclidean

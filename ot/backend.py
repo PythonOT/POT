@@ -25,6 +25,8 @@ except ImportError:
     jax = False
     jax_type = float
 
+str_type_error = "All array should be from the same type/backend. Current types are : {}"
+
 
 def get_backend_list():
     """ returns the list of available backends)"""
@@ -51,11 +53,11 @@ def get_backend(*args):
 
     if isinstance(args[0], np.ndarray):
         if not len(set(type(a) for a in args)) == 1:
-            raise ValueError("All array should be from the same type/backend. Current types are : {}".format([type(a) for a in args]))
+            raise ValueError(str_type_error.format([type(a) for a in args]))
         return NumpyBackend()
     elif torch and isinstance(args[0], torch_type):
         if not len(set(type(a) for a in args)) == 1:
-            raise ValueError("All array should be from the same type/backend. Current types are : {}".format([type(a) for a in args]))
+            raise ValueError(str_type_error.format([type(a) for a in args]))
         return TorchBackend()
     elif isinstance(args[0], jax_type):
         return JaxBackend()

@@ -82,20 +82,18 @@ def test_convert_between_backends(nx):
     A = np.zeros((3, 2))
     B = np.zeros((3, 1))
 
-    for nx in get_backend_list()[1:]:
+    A2 = nx.from_numpy(A)
+    B2 = nx.from_numpy(B)
 
-        A2 = nx.from_numpy(A)
-        B2 = nx.from_numpy(B)
+    assert isinstance(A2, nx.__type__)
+    assert isinstance(B2, nx.__type__)
 
-        assert isinstance(A2, nx.__type__)
-        assert isinstance(B2, nx.__type__)
+    nx2 = get_backend(A2, B2)
 
-        nx2 = get_backend(A2, B2)
+    assert nx2.__name__ == nx.__name__
 
-        assert nx2.__name__ == nx.__name__
-
-        assert_array_almost_equal_nulp(nx.to_numpy(A2), A)
-        assert_array_almost_equal_nulp(nx.to_numpy(B2), B)
+    assert_array_almost_equal_nulp(nx.to_numpy(A2), A)
+    assert_array_almost_equal_nulp(nx.to_numpy(B2), B)
 
 
 def test_empty_backend():

@@ -40,7 +40,7 @@ jobs:
         pip install -e .
     - name: Run tests
       run: |
-        python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
+        python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot --color=yes
     - name: Upload codecov
       run: |
         codecov
