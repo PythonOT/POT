@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 =================================
-Wasserstein unmixing with Pytorch
+Wasserstein unmixing with PyTorch
 =================================
 
 In this example we estimate mixing parameters from distributions that minimize
-the Wassersytein distance. In other words we suppose that a target
+the Wasserstein distance. In other words we suppose that a target
 distribution :math:`\mu^t` can be expressed as a weighted sum of source
 distributions :math:`\mu^s_k` with the following model:
 
@@ -20,11 +20,11 @@ distance between the model and the observed :math:`\mu^t` with respect to
 the vector. This leads to the following optimization problem:
 
 .. math::
-    \min_{\mathbf{w}\in\Delta_K`} \quad W(\mu^t,\sum_{k=1}^K w_k\mu^s_k)
+    \min_{\mathbf{w}\in\Delta_K} \quad W \left(\mu^t,\sum_{k=1}^K w_k\mu^s_k\right)
 
-This minimization is done in this example with a  simple projected gradient
-descent in Pytorch. We use the automatic backend of POT that allows us to
-compute teh Wasserstein distance with :any:`ot.emd2` with
+This minimization is done in this example with a simple projected gradient
+descent in PyTorch. We use the automatic backend of POT that allows us to
+compute the Wasserstein distance with :any:`ot.emd2` with
 differentiable losses.
 
 """
@@ -33,7 +33,7 @@ differentiable losses.
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 2
 
 import numpy as np
 import matplotlib.pylab as pl
@@ -95,7 +95,7 @@ pl.legend()
 # ------------------------------------------------------
 
 
-#%% barycenter optimiation with gradient decent
+#%% Weights optimization with gradient descent
 
 # convert numpy arrays to torch tensors
 H2 = torch.tensor(H)
@@ -111,12 +111,10 @@ lr = 2e-3  # learning rate
 niter = 500  # number of iterations
 losses = []  # loss along the iterations
 
-# loss for the minimal wasrsetsien estimator
-
-
+# loss for the minimal Wasserstein estimator
 def get_loss(w):
     a = torch.mv(H2, w)  # distribution reweighting
-    return ot.emd2(a, b, M2)  # squared Wassersein 2
+    return ot.emd2(a, b, M2)  # squared Wasserstein 2
 
 
 for i in range(niter):
@@ -155,7 +153,7 @@ pl.figure(3)
 # compute source weights
 ws = H.dot(we)
 
-pl.scatter(xt[:, 0], xt[:, 1], label='Target distribution', alpha=0.5)
-pl.scatter(xs[:, 0], xs[:, 1], color='C3', s=ws * 20 * ns, label='Reweighted source distribution', alpha=0.5)
+pl.scatter(xt[:, 0], xt[:, 1], label='Target $\mu^t$', alpha=0.5)
+pl.scatter(xs[:, 0], xs[:, 1], color='C3', s=ws * 20 * ns, label='weighted source \sum_{k} w_k\mu^s_k', alpha=0.5)
 pl.title('Target and reweighted source distributions')
 pl.legend()
