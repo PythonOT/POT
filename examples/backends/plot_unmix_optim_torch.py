@@ -156,6 +156,6 @@ pl.figure(3)
 ws = H.dot(we)
 
 pl.scatter(xt[:, 0], xt[:, 1], label='Target $\mu^t$', alpha=0.5)
-pl.scatter(xs[:, 0], xs[:, 1], color='C3', s=ws * 20 * ns, label='weighted source \sum_{k} w_k\mu^s_k', alpha=0.5)
+pl.scatter(xs[:, 0], xs[:, 1], color='C3', s=ws * 20 * ns, label='Weighted sources $\sum_{k} w_k\mu^s_k$', alpha=0.5)
 pl.title('Target and reweighted source distributions')
 pl.legend()
