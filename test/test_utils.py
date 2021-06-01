@@ -18,18 +18,31 @@ backend_list = get_backend_list()
 def test_proj_simplex(nx):
     n = 10
     rng = np.random.RandomState(0)
+
+    # test on matrix when projection is done on axis 0
     x = rng.randn(n, 2)
     x1 = nx.from_numpy(x)
 
+    # all projections should sum to 1
     proj = ot.utils.proj_simplex(x1)
-    # all porjections should sum to 1
     l1 = np.sum(nx.to_numpy(proj), axis=0)
     l2 = np.ones(2)
     np.testing.assert_allclose(l1, l2, atol=1e-5)
+
+    # all projections should sum to 3
     proj = ot.utils.proj_simplex(x1, 3)
-    # all porjections should sum to 3
     l1 = np.sum(nx.to_numpy(proj), axis=0)
     l2 = 3 * np.ones(2)
+    np.testing.assert_allclose(l1, l2, atol=1e-5)
+
+    # tets on vector
+    x = rng.randn(n)
+    x1 = nx.from_numpy(x)
+
+    # all projections should sum to 1
+    proj = ot.utils.proj_simplex(x1)
+    l1 = np.sum(nx.to_numpy(proj), axis=0)
+    l2 = np.ones(2)
     np.testing.assert_allclose(l1, l2, atol=1e-5)
 
 

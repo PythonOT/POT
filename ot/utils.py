@@ -93,12 +93,13 @@ def proj_simplex(v, z=1):
     """
     nx = get_backend(v)
     n = v.shape[0]
-    d = v.shape[1]
     if v.ndim == 1:
         d1 = 1
         v = v[:, None]
     else:
         d1 = 0
+    d = v.shape[1]
+
     # sort u in ascending order
     u = nx.sort(v, axis=0)
     # take the descending order
