@@ -5,25 +5,25 @@ Wasserstein unmixing with Pytorch
 =================================
 
 In this example we estimate mixing parameters from distributions that minimize
-the Wassersytein distance. In other words we suppose that a target 
-distribution :math:`\mu^t` can be expressed as a weighted sum of source 
+the Wassersytein distance. In other words we suppose that a target
+distribution :math:`\mu^t` can be expressed as a weighted sum of source
 distributions :math:`\mu^s_k` with the following model:
 
-.. math:: 
+.. math::
     \mu^t = \sum_{k=1}^K w_k\mu^s_k
-    
-where :math:`\mathbf{w}` is a vector of size :math:`K` and belongs in the 
+
+where :math:`\mathbf{w}` is a vector of size :math:`K` and belongs in the
 distribution simplex :math:`\Delta_K`.
 
-In order to estimate this weight vector we propose to optimize the Wasserstein 
-distance between the model and the observed :math:`\mu^t` with respect to 
+In order to estimate this weight vector we propose to optimize the Wasserstein
+distance between the model and the observed :math:`\mu^t` with respect to
 the vector. This leads to the following optimization problem:
-    
-.. math:: 
+
+.. math::
     \min_{\mathbf{w}\in\Delta_K`} \quad W(\mu^t,\sum_{k=1}^K w_k\mu^s_k)
 
-This minimization is done in this example with a  simple projected gradient 
-descent in Pytorch. We use the automatic backend of POT that allows us to 
+This minimization is done in this example with a  simple projected gradient
+descent in Pytorch. We use the automatic backend of POT that allows us to
 compute teh Wasserstein distance with :any:`ot.emd2` with
 differentiable losses.
 
@@ -112,9 +112,12 @@ niter = 500  # number of iterations
 losses = []  # loss along the iterations
 
 # loss for the minimal wasrsetsien estimator
+
+
 def get_loss(w):
     a = torch.mv(H2, w)  # distribution reweighting
-    return ot.emd2(a, b, M2) # squared Wassersein 2 
+    return ot.emd2(a, b, M2)  # squared Wassersein 2
+
 
 for i in range(niter):
 
@@ -124,11 +127,11 @@ for i in range(niter):
     loss.backward()
 
     with torch.no_grad():
-        w -= lr * w.grad # gradient step
+        w -= lr * w.grad  # gradient step
         w[:] = ot.utils.proj_simplex(w)  # projection on the simplex
 
     w.grad.zero_()
-    
+
 
 ##############################################################################
 # Estimated weights and convergence of the objective
