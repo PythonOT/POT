@@ -1,0 +1,198 @@
+# -*- coding: utf-8 -*-
+r"""
+========================================
+Wasserstein 2 Minibatch GAN with PyTorch
+========================================
+
+In this example we train a Wassertsein GAN using Wasserstein 2 on minibatches
+as a distribution fitting term.
+
+We want to train a generator :math:`G_\theta` that generates realistic
+data from random noise drawn form a Gaussian :math:`\mu_n` distribution so
+that the data is indistinguishable from true data in the data distribution
+:math:`\mu_d`. To this end we want to optimize the parameters :math:`\theta`
+of the generator with the following optimization problem:
+
+.. math::
+     \min_{\theta} W(\mu_d,G_\theta#\mu_n)
+
+
+In practice we do not have access to the full distribution :math:`\mu_d` but
+samples and we cannot compute the Wasserstein disqtance for lare dataset. So
+we will optimize the expectation of the Wasserstein distance over minibatches
+at each iterations as proposed in [Genevay2018]. Optimizing the Minibatches
+of the Wassretsein disatnce has been studied in
+
+
+[Genevay2018] Genevay, Aude, Gabriel Peyré, and Marco Cuturi. "Learning generative models
+with sinkhorn divergences." International Conference on Artificial Intelligence
+and Statistics. PMLR, 2018.
+
+[Fatras2019] Fatras, K., Zine, Y., Flamary, R., Gribonval, R., & Courty, N.
+(2020, June). Learning with minibatch Wasserstein: asymptotic and gradient
+properties. In the 23nd International Conference on Artificial Intelligence
+and Statistics (Vol. 108).
+
+"""
+
+# Author: Remi Flamary <remi.flamary@polytechnique.edu>
+#
+# License: MIT License
+
+# sphinx_gallery_thumbnail_number = 2
+
+
+from torch import nn
+import numpy as np
+import matplotlib.pylab as pl
+import ot
+import torch
+
+
+##############################################################################
+# Data generation
+# -------------
+
+#%% Data generation
+torch.manual_seed(1)
+ncirc = 6
+sig = 0.1
+n = 100
+d = 2
+p = 2
+
+
+def get_data(n):
+    c = torch.rand(size=(n, 1))
+    angle = c * 2 * np.pi
+    x = torch.cat((torch.cos(angle), torch.sin(angle)), 1)
+    x += torch.randn(n, 2) * sig
+    return x
+
+
+##############################################################################
+# Plot data
+# ---------
+
+#%% plot the distributions
+x = get_data(500)
+pl.figure(1)
+pl.scatter(x[:, 0], x[:, 1], label='Data samples from $\mu_d$', alpha=0.5)
+pl.title('Data distribution')
+pl.legend()
+
+
+##############################################################################
+# Generator Model
+# ---------------
+
+#%% define the MLP model
+
+
+class Generator(torch.nn.Module):
+    def __init__(self):
+        super(Generator, self).__init__()
+        self.fc1 = nn.Linear(p, 200)
+        self.fc2 = nn.Linear(200, 500)
+        self.fc3 = nn.Linear(500, d)
+        self.relu = torch.nn.ReLU()  # instead of Heaviside step fn
+
+    def forward(self, x):
+        output = self.fc1(x)
+        output = self.relu(output)  # instead of Heaviside step fn
+        output = self.fc2(output)
+        output = self.relu(output)
+        output = self.fc3(output)
+        return output
+
+##############################################################################
+# Training the model
+# ------------------
+
+
+#%%
+G = Generator()
+optimizer = torch.optim.RMSprop(G.parameters(), lr=0.001)
+
+# number of iteration and size of the batches
+niter = 500
+size_batch = 500
+
+# generate statis samples to see their trajectory along training
+nvisu = 100
+xnvisu = torch.randn(nvisu, 2)
+xvisu = torch.zeros(niter, nvisu, 2)
+
+ab = torch.ones(size_batch) / size_batch
+losses = []
+
+
+for i in range(niter):
+
+    # generate noise samples
+    xn = torch.randn(size_batch, 2)
+
+    # generate data samples
+    xd = get_data(size_batch)
+
+    # generate sample along iterations
+    xvisu[i, :, :] = G(xnvisu).detach()
+
+    # generate smaples and compte distance matrix
+    xg = G(xn)
+    M = ot.dist(xg, xd)
+
+    loss = ot.emd2(ab, ab, M)
+    losses.append(float(loss.detach()))
+
+    #print(losses[-1])
+
+    loss.backward()
+    optimizer.step()
+
+    del M
+
+pl.figure(2)
+pl.semilogy(losses)
+pl.grid()
+pl.title('Wasserstein distance')
+pl.xlabel("Iterations")
+
+
+##############################################################################
+# Plot trajectories of generated samples along iterations
+# -------------------------------------------------------
+
+
+#%%
+
+pl.figure(3, (10, 10))
+
+ivisu = [0, 10, 50, 100, 150, 200, 300, 400, 499]
+
+for i in range(9):
+    pl.subplot(3, 3, i + 1)
+    pl.scatter(xd[:, 0], xd[:, 1], label='Data samples from $\mu_d$', alpha=0.1)
+    pl.scatter(xvisu[ivisu[i], :, 0], xvisu[ivisu[i], :, 1], label='Data samples from $G\#\mu_n$', alpha=0.5)
+    pl.xticks(())
+    pl.yticks(())
+    pl.title('Iter. {}'.format(ivisu[i]))
+    if i == 0:
+        pl.legend()
+
+##############################################################################
+# Generate and vizualize data
+# ---------------------------
+
+
+#%%
+size_batch = 500
+xd = get_data(size_batch)
+xn = torch.randn(size_batch, 2)
+x = G(xn).detach().numpy()
+
+pl.figure(4)
+pl.scatter(xd[:, 0], xd[:, 1], label='Data samples from $\mu_d$', alpha=0.5)
+pl.scatter(x[:, 0], x[:, 1], label='Data samples from $G\#\mu_n$', alpha=0.5)
+pl.title('Sources and Target distributions')
+pl.legend()

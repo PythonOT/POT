@@ -403,16 +403,22 @@ class TorchBackend(Backend):
 
         # define a function that takes inputs and return val
         class ValFunction(Function):
+
             @staticmethod
-            def forward(ctx, *inputs):
+            def forward(ctx, val, grads, *inputs):
+                ctx.grads = grads
                 return val
 
             @staticmethod
             def backward(ctx, grad_output):
                 # the gradients are grad
-                return grads
+                return (None, None) + ctx.grads
 
-        return ValFunction.apply(*inputs)
+        Func = ValFunction()
+
+        res = Func.apply(val, grads, *inputs)
+
+        return res
 
     def zeros(self, shape, type_as=None):
         if type_as is None:
