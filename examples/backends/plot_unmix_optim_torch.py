@@ -112,6 +112,8 @@ niter = 500  # number of iterations
 losses = []  # loss along the iterations
 
 # loss for the minimal Wasserstein estimator
+
+
 def get_loss(w):
     a = torch.mv(H2, w)  # distribution reweighting
     return ot.emd2(a, b, M2)  # squared Wasserstein 2
