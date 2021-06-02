@@ -4,7 +4,7 @@ r"""
 Wasserstein 2 Minibatch GAN with PyTorch
 ========================================
 
-In this example we train a Wassertsein GAN using Wasserstein 2 on minibatches
+In this example we train a Wasserstein GAN using Wasserstein 2 on minibatches
 as a distribution fitting term.
 
 We want to train a generator :math:`G_\theta` that generates realistic
@@ -19,13 +19,13 @@ optimization problem:
 
 
 In practice we do not have access to the full distribution :math:`\mu_d` but
-samples and we cannot compute the Wasserstein disqtance for lare dataset.
-[Arjovsky2017] proposed to approximate the dual potential of Wassrestein 1
+samples and we cannot compute the Wasserstein distance for lare dataset.
+[Arjovsky2017] proposed to approximate the dual potential of Wasserstein 1
 with a neural network recovering an optimization problem similar to GAN.
 In this example
 we will optimize the expectation of the Wasserstein distance over minibatches
 at each iterations as proposed in [Genevay2018]. Optimizing the Minibatches
-of the Wassretsein distance  has been studied in[Fatras2019].
+of the Wasserstein distance  has been studied in[Fatras2019].
 
 [Arjovsky2017] Arjovsky, M., Chintala, S., & Bottou, L. (2017, July).
 Wasserstein generative adversarial networks. In International conference
@@ -51,36 +51,31 @@ and Statistics (Vol. 108).
 
 from torch import nn
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as pl
 import ot
 import torch
 
-
-##############################################################################
-# Data generation
+# %% Data generation
 # ---------------
 
 torch.manual_seed(1)
-ncirc = 6
-sig = 0.1
-n = 100
-d = 2
-p = 2
+sigma = 0.1
+n_dims = 2
+n_features = 2
 
 
 def get_data(n):
     c = torch.rand(size=(n, 1))
     angle = c * 2 * np.pi
     x = torch.cat((torch.cos(angle), torch.sin(angle)), 1)
-    x += torch.randn(n, 2) * sig
+    x += torch.randn(n, 2) * sigma
     return x
 
 
 ##############################################################################
 # Plot data
 # ---------
-
-#%% plot the distributions
+# %% plot the distributions
 x = get_data(500)
 pl.figure(1)
 pl.scatter(x[:, 0], x[:, 1], label='Data samples from $\mu_d$', alpha=0.5)
@@ -91,16 +86,15 @@ pl.legend()
 ##############################################################################
 # Generator Model
 # ---------------
-
-#%% define the MLP model
+# %% define the MLP model
 
 
 class Generator(torch.nn.Module):
     def __init__(self):
         super(Generator, self).__init__()
-        self.fc1 = nn.Linear(p, 200)
+        self.fc1 = nn.Linear(n_features, 200)
         self.fc2 = nn.Linear(200, 500)
-        self.fc3 = nn.Linear(500, d)
+        self.fc3 = nn.Linear(500, n_dims)
         self.relu = torch.nn.ReLU()  # instead of Heaviside step fn
 
     def forward(self, x):
@@ -114,9 +108,9 @@ class Generator(torch.nn.Module):
 ##############################################################################
 # Training the model
 # ------------------
+# %%
 
 
-#%%
 G = Generator()
 optimizer = torch.optim.RMSprop(G.parameters(), lr=0.001)
 
@@ -126,8 +120,8 @@ size_batch = 500
 
 # generate statis samples to see their trajectory along training
 nvisu = 100
-xnvisu = torch.randn(nvisu, 2)
-xvisu = torch.zeros(niter, nvisu, 2)
+xnvisu = torch.randn(nvisu, n_features)
+xvisu = torch.zeros(niter, nvisu, n_dims)
 
 ab = torch.ones(size_batch) / size_batch
 losses = []
@@ -136,7 +130,7 @@ losses = []
 for i in range(niter):
 
     # generate noise samples
-    xn = torch.randn(size_batch, 2)
+    xn = torch.randn(size_batch, n_features)
 
     # generate data samples
     xd = get_data(size_batch)
@@ -166,12 +160,9 @@ pl.title('Wasserstein distance')
 pl.xlabel("Iterations")
 
 
-##############################################################################
-# Plot trajectories of generated samples along iterations
-# -------------------------------------------------------
+# %% Plot trajectories of generated samples along iterations
+# ----------------------------------------------------------
 
-
-#%%
 
 pl.figure(3, (10, 10))
 
@@ -188,11 +179,9 @@ for i in range(9):
         pl.legend()
 
 ##############################################################################
-# Generate and vizualize data
+# Generate and visualize data
 # ---------------------------
-
-
-#%%
+# %%
 size_batch = 500
 xd = get_data(size_batch)
 xn = torch.randn(size_batch, 2)
