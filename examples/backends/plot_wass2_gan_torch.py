@@ -55,7 +55,8 @@ import matplotlib.pyplot as pl
 import ot
 import torch
 
-# %% Data generation
+# %%
+# Data generation
 # ---------------
 
 torch.manual_seed(1)
@@ -72,9 +73,10 @@ def get_data(n):
     return x
 
 
-##############################################################################
+# %%
 # Plot data
 # ---------
+
 # %% plot the distributions
 x = get_data(500)
 pl.figure(1)
@@ -83,12 +85,11 @@ pl.title('Data distribution')
 pl.legend()
 
 
-##############################################################################
+# %%
 # Generator Model
 # ---------------
-# %% define the MLP model
 
-
+# define the MLP model
 class Generator(torch.nn.Module):
     def __init__(self):
         super(Generator, self).__init__()
@@ -105,10 +106,9 @@ class Generator(torch.nn.Module):
         output = self.fc3(output)
         return output
 
-##############################################################################
+# %%
 # Training the model
 # ------------------
-# %%
 
 
 G = Generator()
@@ -160,8 +160,9 @@ pl.title('Wasserstein distance')
 pl.xlabel("Iterations")
 
 
-# %% Plot trajectories of generated samples along iterations
-# ----------------------------------------------------------
+# %%
+# Plot trajectories of generated samples along iterations
+# -------------------------------------------------------
 
 
 pl.figure(3, (10, 10))
@@ -178,10 +179,10 @@ for i in range(9):
     if i == 0:
         pl.legend()
 
-##############################################################################
+# %%
 # Generate and visualize data
 # ---------------------------
-# %%
+
 size_batch = 500
 xd = get_data(size_batch)
 xn = torch.randn(size_batch, 2)
