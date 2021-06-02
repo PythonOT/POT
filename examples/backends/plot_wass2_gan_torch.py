@@ -48,12 +48,12 @@ and Statistics (Vol. 108).
 
 # sphinx_gallery_thumbnail_number = 3
 
-
-from torch import nn
 import numpy as np
 import matplotlib.pyplot as pl
-import ot
 import torch
+from torch import nn
+import ot
+
 
 # %%
 # Data generation
@@ -65,11 +65,11 @@ n_dims = 2
 n_features = 2
 
 
-def get_data(n):
-    c = torch.rand(size=(n, 1))
+def get_data(n_samples):
+    c = torch.rand(size=(n_samples, 1))
     angle = c * 2 * np.pi
     x = torch.cat((torch.cos(angle), torch.sin(angle)), 1)
-    x += torch.randn(n, 2) * sigma
+    x += torch.randn(n_samples, 2) * sigma
     return x
 
 
