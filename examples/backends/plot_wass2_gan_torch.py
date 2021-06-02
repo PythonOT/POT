@@ -77,7 +77,7 @@ def get_data(n):
 # Plot data
 # ---------
 
-# %% plot the distributions
+# plot the distributions
 x = get_data(500)
 pl.figure(1)
 pl.scatter(x[:, 0], x[:, 1], label='Data samples from $\mu_d$', alpha=0.5)
@@ -115,19 +115,19 @@ G = Generator()
 optimizer = torch.optim.RMSprop(G.parameters(), lr=0.001)
 
 # number of iteration and size of the batches
-niter = 500
+n_iter = 500
 size_batch = 500
 
 # generate statis samples to see their trajectory along training
-nvisu = 100
-xnvisu = torch.randn(nvisu, n_features)
-xvisu = torch.zeros(niter, nvisu, n_dims)
+n_visu = 100
+xnvisu = torch.randn(n_visu, n_features)
+xvisu = torch.zeros(n_iter, n_visu, n_dims)
 
 ab = torch.ones(size_batch) / size_batch
 losses = []
 
 
-for i in range(niter):
+for i in range(n_iter):
 
     # generate noise samples
     xn = torch.randn(size_batch, n_features)
