@@ -51,16 +51,15 @@ and Statistics (Vol. 108).
 
 from torch import nn
 import numpy as np
-import matplotlib.pylab as pl
+import matplotlib.pyplot as plt
 import ot
 import torch
 
 
 ##############################################################################
 # Data generation
-# -------------
+# ---------------
 
-#%% Data generation
 torch.manual_seed(1)
 ncirc = 6
 sig = 0.1
