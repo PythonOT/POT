@@ -10,19 +10,26 @@ as a distribution fitting term.
 We want to train a generator :math:`G_\theta` that generates realistic
 data from random noise drawn form a Gaussian :math:`\mu_n` distribution so
 that the data is indistinguishable from true data in the data distribution
-:math:`\mu_d`. To this end we want to optimize the parameters :math:`\theta`
-of the generator with the following optimization problem:
+:math:`\mu_d`. To this end Wasserstein GAN [Arjovsky2017] aim at optimizing
+the parameters :math:`\theta` of the generator with the following
+optimization problem:
 
 .. math::
      \min_{\theta} W(\mu_d,G_\theta#\mu_n)
 
 
 In practice we do not have access to the full distribution :math:`\mu_d` but
-samples and we cannot compute the Wasserstein disqtance for lare dataset. So
+samples and we cannot compute the Wasserstein disqtance for lare dataset.
+[Arjovsky2017] proposed to approximate the dual potential of Wassrestein 1
+with a neural network recovering an optimization problem similar to GAN.
+In this example
 we will optimize the expectation of the Wasserstein distance over minibatches
 at each iterations as proposed in [Genevay2018]. Optimizing the Minibatches
-of the Wassretsein disatnce has been studied in
+of the Wassretsein distance  has been studied in[Fatras2019].
 
+[Arjovsky2017] Arjovsky, M., Chintala, S., & Bottou, L. (2017, July).
+Wasserstein generative adversarial networks. In International conference
+on machine learning (pp. 214-223). PMLR.
 
 [Genevay2018] Genevay, Aude, Gabriel Peyré, and Marco Cuturi. "Learning generative models
 with sinkhorn divergences." International Conference on Artificial Intelligence
@@ -145,7 +152,8 @@ for i in range(niter):
     loss = ot.emd2(ab, ab, M)
     losses.append(float(loss.detach()))
 
-    #print(losses[-1])
+    if i % 10 == 0:
+        print("Iter: {:3d}, loss={}".format(i, losses[-1]))
 
     loss.backward()
     optimizer.step()
