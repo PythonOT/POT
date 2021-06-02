@@ -389,19 +389,12 @@ class TorchBackend(Backend):
     __name__ = 'torch'
     __type__ = torch_type
 
-    def to_numpy(self, a):
-        return a.cpu().detach().numpy()
+    def __init__(self):
 
-    def from_numpy(self, a, type_as=None):
-        if type_as is None:
-            return torch.from_numpy(a)
-        else:
-            return torch.as_tensor(a, dtype=type_as.dtype, device=type_as.device)
-
-    def set_gradients(self, val, inputs, grads):
         from torch.autograd import Function
 
-        # define a function that takes inputs and return val
+        # define a function that takes inputs val and grads
+        # ad returns a val tensor with proper gradients
         class ValFunction(Function):
 
             @staticmethod
@@ -414,7 +407,20 @@ class TorchBackend(Backend):
                 # the gradients are grad
                 return (None, None) + ctx.grads
 
-        Func = ValFunction()
+        self.ValFunction = ValFunction
+
+    def to_numpy(self, a):
+        return a.cpu().detach().numpy()
+
+    def from_numpy(self, a, type_as=None):
+        if type_as is None:
+            return torch.from_numpy(a)
+        else:
+            return torch.as_tensor(a, dtype=type_as.dtype, device=type_as.device)
+
+    def set_gradients(self, val, inputs, grads):
+
+        Func = self.ValFunction()
 
         res = Func.apply(val, grads, *inputs)
 

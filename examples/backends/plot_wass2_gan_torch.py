@@ -15,7 +15,7 @@ the parameters :math:`\theta` of the generator with the following
 optimization problem:
 
 .. math::
-     \min_{\theta} W(\mu_d,G_\theta#\mu_n)
+     \min_{\theta} W(\mu_d,G_\theta\#\mu_n)
 
 
 In practice we do not have access to the full distribution :math:`\mu_d` but
@@ -46,7 +46,7 @@ and Statistics (Vol. 108).
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 2
+# sphinx_gallery_thumbnail_number = 3
 
 
 from torch import nn
