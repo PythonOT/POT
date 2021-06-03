@@ -179,10 +179,10 @@ class Backend():
         raise NotImplementedError()
 
     def concatenate(arrays, axis=0):
-       raise NotImplementedError()
+        raise NotImplementedError()
 
     def zero_pad(a, pad_with):
-       raise NotImplementedError()
+        raise NotImplementedError()
 
 
 class NumpyBackend(Backend):
@@ -307,10 +307,10 @@ class NumpyBackend(Backend):
         return np.take_along_axis(arr, indices, axis)
 
     def concatenate(arrays, axis=0):
-       return np.concatenate(arrays, axis)
+        return np.concatenate(arrays, axis)
 
     def zero_pad(a, pad_with):
-       return np.pad(a, pad_with)
+        return np.pad(a, pad_with)
 
 
 class JaxBackend(Backend):
@@ -442,10 +442,10 @@ class JaxBackend(Backend):
         return jnp.take_along_axis(arr, indices, axis)
 
     def concatenate(arrays, axis=0):
-       return jnp.concatenate(arrays, axis)
+        return jnp.concatenate(arrays, axis)
 
     def zero_pad(a, pad_with):
-       return jnp.pad(a, pad_with)
+        return jnp.pad(a, pad_with)
 
 
 class TorchBackend(Backend):
@@ -591,10 +591,10 @@ class TorchBackend(Backend):
         sorted, indices = torch.sort(a, dim=axis)
         return indices
 
-   def searchsorted(self, a, v, side='left'):
+    def searchsorted(self, a, v, side='left'):
         right = (side is not 'left')
         return torch.searchsorted(a, v, right=right)
-    
+
     def flip(self, a, axis=None):
         if axis is None:
             return torch.flip(a, tuple(i for i in range(len(a.shape))))
@@ -613,12 +613,12 @@ class TorchBackend(Backend):
         return torch.gather(arr, axis, indices)
 
     def concatenate(arrays, axis=0):
-        return torch.cat(arrays,dim=axis)
+        return torch.cat(arrays, dim=axis)
 
     def zero_pad(a, pad_with):
         from torch.nn.functional import pad
         # pad_with is an array of ndim tuples indicating how many 0 before and after
-        # we need to add. We first need to make it compliant with torch syntax, that 
+        # we need to add. We first need to make it compliant with torch syntax, that
         # starts with the last dim, then second last, etc.
         how_pad = tuple(element for tupl in a[::-1] for element in tupl)
-        return pad(a,how_pad)
+        return pad(a, how_pad)
