@@ -163,8 +163,26 @@ class Backend():
     def argsort(self, a, axis=None):
         raise NotImplementedError()
 
+    def searchsorted(self, a, v, side='left'):
+        raise NotImplementedError()
+
     def flip(self, a, axis=None):
         raise NotImplementedError()
+
+    def clip(self, a, a_min, a_max):
+        raise NotImplementedError()
+
+    def repeat(self, a, repeats, axis=None):
+        raise NotImplementedError()
+
+    def take_along_axis(self, arr, indices, axis):
+        raise NotImplementedError()
+
+    def concatenate(arrays, axis=0):
+       raise NotImplementedError()
+
+    def zero_pad(a, pad_with):
+       raise NotImplementedError()
 
 
 class NumpyBackend(Backend):
@@ -268,8 +286,31 @@ class NumpyBackend(Backend):
     def argsort(self, a, axis=-1):
         return np.argsort(a, axis)
 
+    def searchsorted(self, a, v, side='left'):
+        if a.ndim == 1:
+            return np.searchsorted(a, v, side)
+        else:
+            # this is a not very efficient way to make numpy
+            # searchsorted work on 2d arrays
+            return np.array([np.searchsorted(a[i, :], v[i, :], side) for i in range(a.shape[0])])
+
     def flip(self, a, axis=None):
         return np.flip(a, axis)
+
+    def clip(self, a, a_min, a_max):
+        return np.clip(a, a_min, a_max)
+
+    def repeat(self, a, repeats, axis=None):
+        return np.repeat(a, repeats, axis)
+
+    def take_along_axis(self, arr, indices, axis):
+        return np.take_along_axis(arr, indices, axis)
+
+    def concatenate(arrays, axis=0):
+       return np.concatenate(arrays, axis)
+
+    def zero_pad(a, pad_with):
+       return np.pad(a, pad_with)
 
 
 class JaxBackend(Backend):
@@ -380,8 +421,31 @@ class JaxBackend(Backend):
     def argsort(self, a, axis=-1):
         return jnp.argsort(a, axis)
 
+    def searchsorted(self, a, v, side='left'):
+        if a.ndim == 1:
+            return jnp.searchsorted(a, v, side)
+        else:
+            # this is a not very efficient way to make jax numpy
+            # searchsorted work on 2d arrays
+            return jnp.array([jnp.searchsorted(a[i, :], v[i, :], side) for i in range(a.shape[0])])
+
     def flip(self, a, axis=None):
         return jnp.flip(a, axis)
+
+    def clip(self, a, a_min, a_max):
+        return jnp.clip(a, a_min, a_max)
+
+    def repeat(self, a, repeats, axis=None):
+        return jnp.repeat(a, repeats, axis)
+
+    def take_along_axis(self, arr, indices, axis):
+        return jnp.take_along_axis(arr, indices, axis)
+
+    def concatenate(arrays, axis=0):
+       return jnp.concatenate(arrays, axis)
+
+    def zero_pad(a, pad_with):
+       return jnp.pad(a, pad_with)
 
 
 class TorchBackend(Backend):
@@ -527,6 +591,10 @@ class TorchBackend(Backend):
         sorted, indices = torch.sort(a, dim=axis)
         return indices
 
+   def searchsorted(self, a, v, side='left'):
+        right = (side is not 'left')
+        return torch.searchsorted(a, v, right=right)
+    
     def flip(self, a, axis=None):
         if axis is None:
             return torch.flip(a, tuple(i for i in range(len(a.shape))))
@@ -534,3 +602,23 @@ class TorchBackend(Backend):
             return torch.flip(a, (axis,))
         else:
             return torch.flip(a, dims=axis)
+
+    def clip(self, a, a_min, a_max):
+        return torch.clip(a, a_min, a_max)
+
+    def repeat(self, a, repeats, axis=None):
+        return torch.repeat_interleave(a, repeats, dim=axis)
+
+    def take_along_axis(self, arr, indices, axis):
+        return torch.gather(arr, axis, indices)
+
+    def concatenate(arrays, axis=0):
+        return torch.cat(arrays,dim=axis)
+
+    def zero_pad(a, pad_with):
+        from torch.nn.functional import pad
+        # pad_with is an array of ndim tuples indicating how many 0 before and after
+        # we need to add. We first need to make it compliant with torch syntax, that 
+        # starts with the last dim, then second last, etc.
+        how_pad = tuple(element for tupl in a[::-1] for element in tupl)
+        return pad(a,how_pad)
