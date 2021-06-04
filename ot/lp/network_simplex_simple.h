@@ -1530,7 +1530,9 @@ namespace lemon {
 						updateTreeStructure();
 						updatePotential();
 					}
-				} else break;
+				} else {
+					return MAX_ITER_REACHED;
+				}
 			}
 
 			// Check feasibility
