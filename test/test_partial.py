@@ -129,9 +129,9 @@ def test_partial_wasserstein():
 
     # check constratints
     np.testing.assert_equal(
-        G.sum(1) <= p, [True] * len(p))  # cf convergence wasserstein
+        G.sum(1) - p <= 1e-5, [True] * len(p))  # cf convergence wasserstein
     np.testing.assert_equal(
-        G.sum(0) <= q, [True] * len(q))  # cf convergence wasserstein
+        G.sum(0) - q <= 1e-5, [True] * len(q))  # cf convergence wasserstein
     np.testing.assert_allclose(
         np.sum(G), m, atol=1e-04)
 
