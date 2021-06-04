@@ -142,6 +142,9 @@ class Backend():
     def sqrt(self, a):
         raise NotImplementedError()
 
+    def power(self, a, exponents):
+        raise NotImplementedError()
+
     def norm(self, a):
         raise NotImplementedError()
 
@@ -178,10 +181,10 @@ class Backend():
     def take_along_axis(self, arr, indices, axis):
         raise NotImplementedError()
 
-    def concatenate(arrays, axis=0):
+    def concatenate(self, arrays, axis=0):
         raise NotImplementedError()
 
-    def zero_pad(a, pad_with):
+    def zero_pad(self, a, pad_with):
         raise NotImplementedError()
 
 
@@ -265,6 +268,9 @@ class NumpyBackend(Backend):
     def sqrt(self, a):
         return np.sqrt(a)
 
+    def power(self, a, exponents):
+        return np.power(a, exponents)
+
     def norm(self, a):
         return np.sqrt(np.sum(np.square(a)))
 
@@ -306,10 +312,10 @@ class NumpyBackend(Backend):
     def take_along_axis(self, arr, indices, axis):
         return np.take_along_axis(arr, indices, axis)
 
-    def concatenate(arrays, axis=0):
+    def concatenate(self, arrays, axis=0):
         return np.concatenate(arrays, axis)
 
-    def zero_pad(a, pad_with):
+    def zero_pad(self, a, pad_with):
         return np.pad(a, pad_with)
 
 
@@ -400,6 +406,9 @@ class JaxBackend(Backend):
     def sqrt(self, a):
         return jnp.sqrt(a)
 
+    def power(self, a, exponents):
+        return jnp.power(a, exponents)
+
     def norm(self, a):
         return jnp.sqrt(jnp.sum(jnp.square(a)))
 
@@ -441,10 +450,10 @@ class JaxBackend(Backend):
     def take_along_axis(self, arr, indices, axis):
         return jnp.take_along_axis(arr, indices, axis)
 
-    def concatenate(arrays, axis=0):
+    def concatenate(self, arrays, axis=0):
         return jnp.concatenate(arrays, axis)
 
-    def zero_pad(a, pad_with):
+    def zero_pad(self, a, pad_with):
         return jnp.pad(a, pad_with)
 
 
@@ -568,6 +577,9 @@ class TorchBackend(Backend):
     def sqrt(self, a):
         return torch.sqrt(a)
 
+    def power(self, a, exponents):
+        return torch.pow(a, exponents)
+
     def norm(self, a):
         return torch.sqrt(torch.sum(torch.square(a)))
 
@@ -612,13 +624,13 @@ class TorchBackend(Backend):
     def take_along_axis(self, arr, indices, axis):
         return torch.gather(arr, axis, indices)
 
-    def concatenate(arrays, axis=0):
+    def concatenate(self, arrays, axis=0):
         return torch.cat(arrays, dim=axis)
 
-    def zero_pad(a, pad_with):
+    def zero_pad(self, a, pad_with):
         from torch.nn.functional import pad
         # pad_with is an array of ndim tuples indicating how many 0 before and after
         # we need to add. We first need to make it compliant with torch syntax, that
         # starts with the last dim, then second last, etc.
-        how_pad = tuple(element for tupl in a[::-1] for element in tupl)
+        how_pad = tuple(element for tupl in pad_with[::-1] for element in tupl)
         return pad(a, how_pad)
