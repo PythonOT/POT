@@ -163,6 +163,8 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.norm(M)
     with pytest.raises(NotImplementedError):
+        nx.exp(M)
+    with pytest.raises(NotImplementedError):
         nx.any(M)
     with pytest.raises(NotImplementedError):
         nx.isnan(M)
@@ -207,9 +209,11 @@ def test_func_backends(backend):
 
         Mb = nx.from_numpy(M)
         vb = nx.from_numpy(v)
-        valb = nx.from_numpy(val)
 
-        A = nx.set_gradients(valb, v, v)
+        val = nx.from_numpy(val)
+
+        A = nx.set_gradients(val, v, v)
+
         lst_b.append(nx.to_numpy(A))
         lst_name.append('set_gradients')
 
