@@ -13,7 +13,6 @@ from ot.sliced import get_random_projections
 from ot.sliced import emd1D
 
 from ot.backend import get_backend_list
-from ot.backend import torch
 
 backend_list = get_backend_list()
 
