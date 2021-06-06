@@ -13,7 +13,6 @@ from ot.backend import get_backend
 
 
 def quantile_function(qs, cws, xs):
-    # type: (torch.Tensor, torch.Tensor, torch.Tensor) -> torch.Tensor
     r""" Computes the quantile function of an empirical distribution
 
     Parameters
