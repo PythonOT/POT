@@ -144,7 +144,7 @@ class Backend():
 
     def power(self, a, exponents):
         raise NotImplementedError()
-      
+
     def norm(self, a):
         raise NotImplementedError()
 
@@ -186,6 +186,7 @@ class Backend():
 
     def zero_pad(self, a, pad_with):
         raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
 
@@ -407,7 +408,7 @@ class JaxBackend(Backend):
 
     def power(self, a, exponents):
         return jnp.power(a, exponents)
-    
+
     def norm(self, a):
         return jnp.sqrt(jnp.sum(jnp.square(a)))
 
@@ -454,6 +455,7 @@ class JaxBackend(Backend):
 
     def zero_pad(self, a, pad_with):
         return jnp.pad(a, pad_with)
+
 
 class TorchBackend(Backend):
 
