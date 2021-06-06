@@ -80,7 +80,7 @@ def emd1D(u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=
     >>> from scipy.stats import wasserstein_distance
     >>> import ot
     >>> import torch
-    >>> from ot.sliced import emd1D_nx
+    >>> from ot.sliced import emd1D
     >>> np.random.seed(0)
     >>> num=1000
     >>> x = torch.linspace(0,5,num)
