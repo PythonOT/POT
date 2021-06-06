@@ -41,7 +41,7 @@ def quantile_function(qs, cws, xs):
         cws = cws.T
         qs = qs.T
     idx = nx.searchsorted(cws, qs).T
-    return nx.take_along_axis(xs, np.clip(idx, 0, n - 1), axis=0)
+    return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0)
 
 
 def emd1D(u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True):
