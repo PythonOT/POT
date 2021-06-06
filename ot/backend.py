@@ -614,7 +614,7 @@ class TorchBackend(Backend):
         return indices
 
     def searchsorted(self, a, v, side='left'):
-        right = (side is not 'left')
+        right = (side != 'left')
         return torch.searchsorted(a, v, right=right)
 
     def flip(self, a, axis=None):
