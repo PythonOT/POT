@@ -362,7 +362,7 @@ def test_func_backends(backend):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('repeat')
 
-        A = nx.take_along_axis(vb, nx.from_numpy(nx.arange(3)), -1)
+        A = nx.take_along_axis(vb, nx.arange(3), -1)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('take_along_axis')
 
