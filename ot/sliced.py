@@ -87,13 +87,11 @@ def emd1D(u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=
     >>> rho_u /= torch.sum(rho_u)
     >>> rho_v = torch.abs(torch.randn(num))
     >>> rho_v /= torch.sum(rho_v)
-    >>> print(emd1D(x, x, rho_u, rho_v, p=1))
-    >>> print(emd1D(x.numpy(), x.numpy(), rho_u.numpy(), rho_v.numpy(), p=1))
-    >>> print('for comparison')
-    >>> print(wasserstein_distance(x.numpy(),x.numpy(),rho_u.numpy(),rho_v.numpy()))
+    >>> emd1D(x, x, rho_u, rho_v, p=1)
+    >>> emd1D(x.numpy(), x.numpy(), rho_u.numpy(), rho_v.numpy(), p=1)
+    >>> wasserstein_distance(x.numpy(),x.numpy(),rho_u.numpy(),rho_v.numpy())
     tensor(0.0410)
     0.04097907
-    Scipy Wasserstein_distance:
     0.04097760462819538
 
     References

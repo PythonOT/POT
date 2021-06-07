@@ -120,4 +120,4 @@ def test_emd1D(nx):
     X = np.stack((np.linspace(0, 5, n), np.linspace(0, 5, n) * 10), -1)
     Xb = nx.from_numpy(X)
     res = emd1D(Xb, Xb, rho_ub, rho_vb, p=2)
-    np.testing.assert_almost_equal(100 * res[0], res[1])
+    np.testing.assert_almost_equal(100 * res[0], res[1], decimal=4)
