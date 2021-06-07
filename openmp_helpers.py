@@ -57,7 +57,7 @@ def check_openmp_support():
     extra_postargs = get_openmp_flag
 
     try:
-        output, extra_postargs = compile_test_program(code,
+        output = compile_test_program(code,
                                       extra_preargs=extra_preargs,
                                       extra_postargs=extra_postargs)
 
@@ -74,4 +74,4 @@ def check_openmp_support():
 
     except (CompileError, LinkError, subprocess.CalledProcessError):
         openmp_supported = False
-    return openmp_supported, extra_postargs
+    return openmp_supported
