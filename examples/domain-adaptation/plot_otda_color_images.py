@@ -53,7 +53,7 @@ X1 = im2mat(I1)
 X2 = im2mat(I2)
 
 # training samples
-nb = 1000
+nb = 500
 idx1 = r.randint(X1.shape[0], size=(nb,))
 idx2 = r.randint(X2.shape[0], size=(nb,))
 

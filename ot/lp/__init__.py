@@ -18,8 +18,9 @@ from . import cvx
 from .cvx import barycenter
 # import compiled emd
 from .emd_wrap import emd_c, check_result, emd_1d_sorted
-from ..utils import dist
+from ..utils import dist, list_to_array
 from ..utils import parmap
+from ..backend import get_backend
 
 __all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx',
            'emd_1d', 'emd2_1d', 'wasserstein_1d']
@@ -176,8 +177,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
 
-    .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F
+    .. math:: \gamma = arg\min_\gamma <\gamma,M>_F
 
         s.t. \gamma 1 = a
 
@@ -189,37 +189,41 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     - M is the metric cost matrix
     - a and b are the sample weights
 
-    .. warning::
-        Note that the M matrix needs to be a C-order numpy.array in float64
-        format.
+    .. warning:: Note that the M matrix in numpy needs to be a C-order
+        numpy.array in float64 format. It will be converted if not in this
+        format
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. 
 
     Uses the algorithm proposed in [1]_
 
     Parameters
     ----------
-    a : (ns,) numpy.ndarray, float64
+    a : (ns,) array-like, float 
         Source histogram (uniform weight if empty list)
-    b : (nt,) numpy.ndarray, float64
-        Target histogram (uniform weight if empty list)
-    M : (ns,nt) numpy.ndarray, float64
-        Loss matrix (c-order array with type float64)
-    numItermax : int, optional (default=100000)
+    b : (nt,) array-like, float 
+        Target histogram (uniform weight if empty list) 
+    M : (ns,nt) array-like, float 
+        Loss matrix (c-order array in numpy with type float64) 
+    numItermax : int, optional (default=100000) 
         The maximum number of iterations before stopping the optimization
-        algorithm if it has not converged.
-    log: bool, optional (default=False)
-        If True, returns a dictionary containing the cost and dual
-        variables. Otherwise returns only the optimal transportation matrix.
+        algorithm if it has not converged. 
+    log: bool, optional (default=False) 
+        If True, returns a dictionary containing the cost and dual variables. 
+        Otherwise returns only the optimal transportation matrix. 
     center_dual: boolean, optional (default=True)
-        If True, centers the dual potential using function
+        If True, centers the dual potential using function 
         :ref:`center_ot_dual`.
 
     Returns
     -------
-    gamma: (ns x nt) numpy.ndarray
-        Optimal transportation matrix for the given parameters
-    log: dict
-        If input log is true, a dictionary containing the cost and dual
-        variables and exit status
+    gamma: array-like, shape (ns, nt) 
+        Optimal transportation matrix for the given
+        parameters 
+    log: dict, optional
+        If input log is true, a dictionary containing the
+        cost and dual variables and exit status
 
 
     Examples
@@ -232,26 +236,37 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     >>> a=[.5,.5]
     >>> b=[.5,.5]
     >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.emd(a,b,M)
+    >>> ot.emd(a, b, M)
     array([[0.5, 0. ],
            [0. , 0.5]])
 
     References
     ----------
 
-    .. [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W.
-        (2011, December).  Displacement interpolation using Lagrangian mass
-        transport. In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p.
-        158). ACM.
+    .. [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W. (2011,
+        December).  Displacement interpolation using Lagrangian mass transport.
+        In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p. 158). ACM.
 
     See Also
     --------
-    ot.bregman.sinkhorn : Entropic regularized OT
-    ot.optim.cg : General regularized OT"""
+    ot.bregman.sinkhorn : Entropic regularized OT ot.optim.cg : General
+    regularized OT"""
 
+    # convert to numpy if list
+    a, b, M  = list_to_array(a, b, M)
+
+    a0, b0, M0 = a, b, M
+    nx =  get_backend(M0, a0, b0)
+    
+    # convert to numpy
+    M = nx.to_numpy(M)
+    a = nx.to_numpy(a)
+    b = nx.to_numpy(b)
+    
+    # ensure float64
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    M = np.asarray(M, dtype=np.float64, order='C')
 
     # if empty array given then use uniform distributions
     if len(a) == 0:
@@ -261,6 +276,11 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
 
     assert (a.shape[0] == M.shape[0] and b.shape[0] == M.shape[1]), \
         "Dimension mismatch, check dimensions of M with a and b"
+
+    # ensure that same mass
+    np.testing.assert_almost_equal(a.sum(0), 
+        b.sum(0), err_msg='a and b vector must have the same sum')
+    b=b*a.sum()/b.sum()
 
     asel = a != 0
     bsel = b != 0
@@ -277,12 +297,12 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     if log:
         log = {}
         log['cost'] = cost
-        log['u'] = u
-        log['v'] = v
+        log['u'] = nx.from_numpy(u, type_as=a0)
+        log['v'] = nx.from_numpy(v, type_as=b0)
         log['warning'] = result_code_string
         log['result_code'] = result_code
-        return G, log
-    return G
+        return nx.from_numpy(G, type_as=M0), log
+    return nx.from_numpy(G, type_as=M0)
 
 
 def emd2(a, b, M, processes=multiprocessing.cpu_count(),
@@ -303,27 +323,26 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     - M is the metric cost matrix
     - a and b are the sample weights
 
-    .. warning::
-        Note that the M matrix needs to be a C-order numpy.array in float64
-        format.
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends.
 
     Uses the algorithm proposed in [1]_
 
     Parameters
     ----------
-    a : (ns,) numpy.ndarray, float64
+    a : (ns,) array-like, float64
         Source histogram (uniform weight if empty list)
-    b : (nt,) numpy.ndarray, float64
+    b : (nt,) array-like, float64
         Target histogram (uniform weight if empty list)
-    M : (ns,nt) numpy.ndarray, float64
-        Loss matrix (c-order array with type float64)
+    M : (ns,nt) array-like, float64
+        Loss matrix (for numpy c-order array with type float64)
     processes : int, optional (default=nb cpu)
         Nb of processes used for multiple emd computation (not used on windows)
     numItermax : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
     log: boolean, optional (default=False)
-        If True, returns a dictionary containing the cost and dual
+        If True, returns a dictionary containing dual
         variables. Otherwise returns only the optimal transportation cost.
     return_matrix: boolean, optional (default=False)
         If True, returns the optimal transportation matrix in the log.
@@ -333,10 +352,10 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
     Returns
     -------
-    gamma: (ns x nt) ndarray
-        Optimal transportation matrix for the given parameters
-    log: dictnp
-        If input log is true, a dictionary containing the cost and dual
+    W: float, array-like
+        Optimal transportation loss for the given parameters
+    log: dict
+        If input log is true, a dictionary containing dual
         variables and exit status
 
 
@@ -367,12 +386,22 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     ot.bregman.sinkhorn : Entropic regularized OT
     ot.optim.cg : General regularized OT"""
 
+    a, b, M  = list_to_array(a, b, M)
+
+    a0, b0, M0 = a, b, M
+    nx =  get_backend(M0, a0, b0)
+    
+    # convert to numpy
+    M = nx.to_numpy(M)
+    a = nx.to_numpy(a)
+    b = nx.to_numpy(b)
+
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    M = np.asarray(M, dtype=np.float64, order= 'C')
 
     # problem with pikling Forks
-    if sys.platform.endswith('win32'):
+    if sys.platform.endswith('win32') or not nx.__name__ == 'numpy':
         processes = 1
 
     # if empty array given then use uniform distributions
@@ -400,12 +429,15 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
             result_code_string = check_result(result_code)
             log = {}
+            G = nx.from_numpy(G, type_as=M0)
             if return_matrix:
                 log['G'] = G
-            log['u'] = u
-            log['v'] = v
+            log['u'] = nx.from_numpy(u, type_as=a0)
+            log['v'] = nx.from_numpy(v, type_as=b0)
             log['warning'] = result_code_string
             log['result_code'] = result_code
+            cost = nx.set_gradients(nx.from_numpy(cost, type_as=M0), 
+                   (a0,b0, M0), (log['u'], log['v'], G))
             return [cost, log]
     else:
         def f(b):
@@ -417,6 +449,11 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
             if np.any(~asel) or np.any(~bsel):
                 u, v = estimate_dual_null_weights(u, v, a, b, M)
+
+            G = nx.from_numpy(G, type_as=M0)
+            cost = nx.set_gradients(nx.from_numpy(cost, type_as=M0),
+                   (a0,b0, M0), (nx.from_numpy(u, type_as=a0),
+                    nx.from_numpy(v, type_as=b0),G))
 
             check_result(result_code)
             return cost
@@ -636,6 +673,10 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         a = np.ones((x_a.shape[0],), dtype=np.float64) / x_a.shape[0]
     if b.ndim == 0 or len(b) == 0:
         b = np.ones((x_b.shape[0],), dtype=np.float64) / x_b.shape[0]
+
+    # ensure that same mass
+    np.testing.assert_almost_equal(a.sum(0),b.sum(0),err_msg='a and b vector must have the same sum')
+    b=b*a.sum()/b.sum()
 
     x_a_1d = x_a.reshape((-1,))
     x_b_1d = x_b.reshape((-1,))
