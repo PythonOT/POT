@@ -73,27 +73,6 @@ def emd1D(u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=
     cost: float/array-like, shape (...)
         the batched EMD
 
-    Examples
-    --------
-    Simple example:
-    >>> from scipy.stats import wasserstein_distance
-    >>> import ot
-    >>> import torch
-    >>> from ot.sliced import emd1D
-    >>> np.random.seed(0)
-    >>> num=1000
-    >>> x = torch.linspace(0,5,num)
-    >>> rho_u = torch.abs(torch.randn(num))
-    >>> rho_u /= torch.sum(rho_u)
-    >>> rho_v = torch.abs(torch.randn(num))
-    >>> rho_v /= torch.sum(rho_v)
-    >>> emd1D(x, x, rho_u, rho_v, p=1)
-    >>> emd1D(x.numpy(), x.numpy(), rho_u.numpy(), rho_v.numpy(), p=1)
-    >>> wasserstein_distance(x.numpy(),x.numpy(),rho_u.numpy(),rho_v.numpy())
-    tensor(0.0410)
-    0.04097907
-    0.04097760462819538
-
     References
     ----------
     .. [15] Peyré, G., & Cuturi, M. (2018). [Computational Optimal Transport](https://arxiv.org/pdf/1803.00567.pdf)
