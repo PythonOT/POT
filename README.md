@@ -116,7 +116,7 @@ After a correct installation, you should be able to import the module without er
 import ot
 ```
 
-Note that for easier access the module is name ot instead of pot.
+Note that for easier access the module is named ot instead of pot.
 
 
 ### Dependencies
