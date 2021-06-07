@@ -11,6 +11,7 @@ from setuptools.extension import Extension
 import numpy
 from Cython.Build import cythonize
 
+from openmp_helpers import check_openmp_support
 
 # dirty but working
 __version__ = re.search(
@@ -29,8 +30,20 @@ if 'clean' in sys.argv[1:]:
     if os.path.isfile('ot/lp/emd_wrap.cpp'):
         os.remove('ot/lp/emd_wrap.cpp')
 
+
+
 # add platform dependant optional compilation argument
-compile_args = ["-O3", "-fopenmp"]
+openmp_supported = check_openmp_support()
+compile_args = ["-O3"]
+link_args = []
+
+if openmp_supported:
+    flags = ["-fopenmp", "-DOMP"]
+    if sys.platform.startswith("darwin"):
+        flags.append("-Xclang")
+    compile_args += flags
+    link_args += flags
+
 if sys.platform.startswith('darwin'):
     compile_args.append("-stdlib=libc++")
     sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path'])
@@ -52,7 +65,7 @@ setup(
         language="c++",
         include_dirs=[numpy.get_include(), os.path.join(ROOT, 'ot/lp')],
         extra_compile_args=compile_args,
-        extra_link_args=["-fopenmp"]
+        extra_link_args=link_args
     )),
     platforms=['linux', 'macosx', 'windows'],
     download_url='https://github.com/PythonOT/POT/archive/{}.tar.gz'.format(__version__),

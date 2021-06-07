@@ -54,7 +54,11 @@
 #endif
 //#include "core.h"
 //#include "lmath.h"
+
+#ifdef OMP
 #include <omp.h>
+#endif
+
 #include <cmath>
 
 
@@ -63,6 +67,7 @@
 
 #define INVALIDNODE -1
 #define INVALID (-1)
+
 
 namespace lemon {
 
@@ -468,7 +473,12 @@ namespace lemon {
 			bool findEnteringArc() {
 				Cost min_val = 0;
 
+#ifdef OMP
 				ArcsType N = omp_get_max_threads();
+#else
+				ArcsType N = 1;
+#endif
+
 				std::vector<Cost> minArray(N, 0);
 				std::vector<ArcsType> arcId(N);
 				ArcsType bs = (ArcsType)ceil(_block_size / (double)N);
@@ -479,7 +489,11 @@ namespace lemon {
 					ArcsType j;
 #pragma omp parallel
 					{
+#ifdef OMP
 						int t = omp_get_thread_num();
+#else
+						int t = 0;
+#endif
 
 #pragma omp for schedule(static, bs) lastprivate(e)
 						for (j = 0; j < std::min(i + _block_size, _search_arc_num) - i; j++) {
