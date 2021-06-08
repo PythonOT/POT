@@ -209,7 +209,7 @@ pl.ylim((-1.5, 1.5))
 pl.title('Iter. {}'.format(ivisu[i]))
 
 
-ani = animation.FuncAnimation(pl.gcf(), _update_plot, n_iter, interval=10, repeat_delay=2000)
+ani = animation.FuncAnimation(pl.gcf(), _update_plot, n_iter, interval=100, repeat_delay=2000)
 
 # %%
 # Generate and visualize data
