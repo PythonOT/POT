@@ -50,6 +50,7 @@ and Statistics (Vol. 108).
 
 import numpy as np
 import matplotlib.pyplot as pl
+import matplotlib.animation as animation
 import torch
 from torch import nn
 import ot
@@ -112,7 +113,7 @@ class Generator(torch.nn.Module):
 
 
 G = Generator()
-optimizer = torch.optim.RMSprop(G.parameters(), lr=0.001)
+optimizer = torch.optim.RMSprop(G.parameters(), lr=0.001, alpha=0.5)
 
 # number of iteration and size of the batches
 n_iter = 200  # set to 200 for doc build but 1000 is better ;)
@@ -179,16 +180,47 @@ for i in range(9):
     if i == 0:
         pl.legend()
 
+ # %%
+# Animate trajectories of generated samples along iteration
+# -------------------------------------------------------
+
+pl.figure(5)
+
+
+def _update_plot(i):
+    pl.clf()
+    pl.scatter(xd[:, 0], xd[:, 1], label='Data samples from $\mu_d$', alpha=0.1)
+    pl.scatter(xvisu[i, :, 0], xvisu[i, :, 1], label='Data samples from $G\#\mu_n$', alpha=0.5)
+    pl.xticks(())
+    pl.yticks(())
+    pl.xlim((-1.5, 1.5))
+    pl.ylim((-1.5, 1.5))
+    pl.title('Iter. {}'.format(i))
+    return 1
+
+
+i = 0
+pl.scatter(xd[:, 0], xd[:, 1], label='Data samples from $\mu_d$', alpha=0.1)
+pl.scatter(xvisu[i, :, 0], xvisu[i, :, 1], label='Data samples from $G\#\mu_n$', alpha=0.5)
+pl.xticks(())
+pl.yticks(())
+pl.xlim((-1.5, 1.5))
+pl.ylim((-1.5, 1.5))
+pl.title('Iter. {}'.format(ivisu[i]))
+
+
+ani = animation.FuncAnimation(pl.gcf(), _update_plot, n_iter, interval=10, repeat_delay=2000)
+
 # %%
 # Generate and visualize data
 # ---------------------------
 
-size_batch = 200
+size_batch = 500
 xd = get_data(size_batch)
 xn = torch.randn(size_batch, 2)
 x = G(xn).detach().numpy()
 
-pl.figure(4)
+pl.figure(5)
 pl.scatter(xd[:, 0], xd[:, 1], label='Data samples from $\mu_d$', alpha=0.5)
 pl.scatter(x[:, 0], x[:, 1], label='Data samples from $G\#\mu_n$', alpha=0.5)
 pl.title('Sources and Target distributions')
