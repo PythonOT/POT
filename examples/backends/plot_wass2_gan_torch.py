@@ -115,7 +115,7 @@ G = Generator()
 optimizer = torch.optim.RMSprop(G.parameters(), lr=0.001)
 
 # number of iteration and size of the batches
-n_iter = 500
+n_iter = 200 # set to 200 for doc buld but 1000 is better ;)
 size_batch = 500
 
 # generate statis samples to see their trajectory along training
@@ -167,7 +167,7 @@ pl.xlabel("Iterations")
 
 pl.figure(3, (10, 10))
 
-ivisu = [0, 10, 50, 100, 150, 200, 300, 400, 499]
+ivisu = [0, 10, 25, 50, 75, 125, 15, 175, 199]
 
 for i in range(9):
     pl.subplot(3, 3, i + 1)
@@ -183,7 +183,7 @@ for i in range(9):
 # Generate and visualize data
 # ---------------------------
 
-size_batch = 500
+size_batch = 200
 xd = get_data(size_batch)
 xn = torch.randn(size_batch, 2)
 x = G(xn).detach().numpy()
