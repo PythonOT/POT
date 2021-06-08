@@ -113,7 +113,7 @@ class Generator(torch.nn.Module):
 
 
 G = Generator()
-optimizer = torch.optim.RMSprop(G.parameters(), lr=0.001, alpha=0.5)
+optimizer = torch.optim.RMSprop(G.parameters(), lr=0.00019, eps=1e-5)
 
 # number of iteration and size of the batches
 n_iter = 200  # set to 200 for doc build but 1000 is better ;)
@@ -184,7 +184,7 @@ for i in range(9):
 # Animate trajectories of generated samples along iteration
 # -------------------------------------------------------
 
-pl.figure(5)
+pl.figure(4, (8, 8))
 
 
 def _update_plot(i):
