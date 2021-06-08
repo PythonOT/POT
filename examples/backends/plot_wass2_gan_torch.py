@@ -115,7 +115,7 @@ G = Generator()
 optimizer = torch.optim.RMSprop(G.parameters(), lr=0.001)
 
 # number of iteration and size of the batches
-n_iter = 200 # set to 200 for doc buld but 1000 is better ;)
+n_iter = 200  # set to 200 for doc build but 1000 is better ;)
 size_batch = 500
 
 # generate statis samples to see their trajectory along training
