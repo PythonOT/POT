@@ -180,7 +180,7 @@ for i in range(9):
     if i == 0:
         pl.legend()
 
- # %%
+# %%
 # Animate trajectories of generated samples along iteration
 # -------------------------------------------------------
 
