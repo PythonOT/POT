@@ -1,0 +1,523 @@
+[D 10:26:07.684 LabApp] Searching ['/gpfsdswork/projects/idris/sos/ssos023/Projects/POT/POT', '/gpfs7kw/linkhome/idris/genidr/ssos023/.jupyter', '/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter', '/usr/local/etc/jupyter', '/etc/jupyter'] for config files
+[D 10:26:07.685 LabApp] Looking for jupyter_config in /etc/jupyter
+[D 10:26:07.685 LabApp] Looking for jupyter_config in /usr/local/etc/jupyter
+[D 10:26:07.685 LabApp] Looking for jupyter_config in /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter
+[D 10:26:07.685 LabApp] Looking for jupyter_config in /gpfs7kw/linkhome/idris/genidr/ssos023/.jupyter
+[D 10:26:07.685 LabApp] Looking for jupyter_config in /gpfsdswork/projects/idris/sos/ssos023/Projects/POT/POT
+[D 10:26:07.686 LabApp] Looking for jupyter_notebook_config in /etc/jupyter
+[D 10:26:07.686 LabApp] Looking for jupyter_notebook_config in /usr/local/etc/jupyter
+[D 10:26:07.686 LabApp] Looking for jupyter_notebook_config in /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter
+[D 10:26:07.686 LabApp] Loaded config file: /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/jupyter_notebook_config.json
+[D 10:26:07.686 LabApp] Looking for jupyter_notebook_config in /gpfs7kw/linkhome/idris/genidr/ssos023/.jupyter
+[D 10:26:07.687 LabApp] Loaded config file: /gpfs7kw/linkhome/idris/genidr/ssos023/.jupyter/jupyter_notebook_config.py
+[D 10:26:07.687 LabApp] Loaded config file: /gpfs7kw/linkhome/idris/genidr/ssos023/.jupyter/jupyter_notebook_config.json
+[D 10:26:07.687 LabApp] Looking for jupyter_notebook_config in /gpfsdswork/projects/idris/sos/ssos023/Projects/POT/POT
+[D 10:26:07.691 LabApp] Paths used for configuration of jupyter_notebook_config: 
+    	/etc/jupyter/jupyter_notebook_config.json
+[D 10:26:07.692 LabApp] Paths used for configuration of jupyter_notebook_config: 
+    	/usr/local/etc/jupyter/jupyter_notebook_config.json
+[D 10:26:07.692 LabApp] Paths used for configuration of jupyter_notebook_config: 
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/jupyter_notebook_config.d/ipyparallel-serverextension.json
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/jupyter_notebook_config.d/jupyterlab.json
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/jupyter_notebook_config.json
+[D 10:26:07.693 LabApp] Paths used for configuration of jupyter_notebook_config: 
+    	/gpfs7kw/linkhome/idris/genidr/ssos023/.jupyter/jupyter_notebook_config.json
+[I 10:26:07.911 LabApp] Loading IPython parallel extension
+[I 10:26:10.107 LabApp] jupyter_tensorboard extension loaded.
+[I 10:26:10.119 LabApp] JupyterLab extension loaded from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/jupyterlab
+[I 10:26:10.119 LabApp] JupyterLab application directory is /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/lab
+[D 10:26:10.119 LabApp] NodeJS was not found. Yarn user configuration is ignored.
+[I 10:26:10.122 LabApp] Serving notebooks from local directory: /gpfswork/idris/sos/ssos023
+[I 10:26:10.122 LabApp] Jupyter Notebook 6.2.0 is running at:
+[I 10:26:10.122 LabApp] https://jean-zay2:8007/jean-zay2_8007/
+[I 10:26:10.122 LabApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[I 10:26:24.660 LabApp] 302 GET /jean-zay2_8007/ (10.148.0.38) 0.580000ms
+[I 10:26:24.751 LabApp] 302 GET /jean-zay2_8007/lab? (10.148.0.38) 0.690000ms
+[D 10:26:24.790 LabApp] Using contents: services/contents
+[D 10:26:24.810 LabApp] Path base/images/favicon.ico served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/base/images/favicon.ico
+[D 10:26:24.810 LabApp] Path components/jquery-ui/themes/smoothness/jquery-ui.min.css served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/components/jquery-ui/themes/smoothness/jquery-ui.min.css
+[D 10:26:24.813 LabApp] Path components/jquery-typeahead/dist/jquery.typeahead.min.css served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/components/jquery-typeahead/dist/jquery.typeahead.min.css
+[D 10:26:24.813 LabApp] Path style/style.min.css served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/style/style.min.css
+[D 10:26:24.814 LabApp] Path auth/css/override.css served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/auth/css/override.css
+[D 10:26:24.814 LabApp] Path components/es6-promise/promise.min.js served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/components/es6-promise/promise.min.js
+[D 10:26:24.814 LabApp] Path components/react/react.production.min.js served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/components/react/react.production.min.js
+[D 10:26:24.814 LabApp] Path components/react/react-dom.production.min.js served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/components/react/react-dom.production.min.js
+[D 10:26:24.815 LabApp] Path components/create-react-class/index.js served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/components/create-react-class/index.js
+[D 10:26:24.815 LabApp] Path components/requirejs/require.js served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/components/requirejs/require.js
+[D 10:26:24.815 LabApp] Path base/images/logo.png served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/base/images/logo.png
+[D 10:26:24.816 LabApp] 200 GET /jean-zay2_8007/login?next=%2Fjean-zay2_8007%2Flab%3F (10.148.0.38) 26.740000ms
+[D 10:26:24.936 LabApp] 200 GET /jean-zay2_8007/static/components/jquery-ui/themes/smoothness/jquery-ui.min.css?v=fb45616eef2c454960f91fcd2a04efeda84cfacccf0c5d741ba2793dc1dbd6d3ab01aaae6485222945774c7d7a9a2e9fb87e0d8ef1ea96893aa6906147a371bb (10.148.0.38) 1.230000ms
+[D 10:26:24.941 LabApp] 200 GET /jean-zay2_8007/static/components/jquery-typeahead/dist/jquery.typeahead.min.css?v=5edf53bf6bb9c3b1ddafd8594825a7e2ed621f19423e569c985162742f63911c09eba2c529f8fb47aebf27fafdfe287d563347f58c1126b278189a18871b6a9a (10.148.0.38) 0.800000ms
+[D 10:26:25.017 LabApp] 200 GET /jean-zay2_8007/static/components/react/react.production.min.js?v=9a0aaf84a316c8bedd6c2ff7d5b5e0a13f8f84ec02442346cba0b842c6c81a6bf6176e64f3675c2ebf357cb5bb048e0b527bd39377c95681d22468da3d5de735 (10.148.0.38) 1.010000ms
+[D 10:26:25.035 LabApp] Path custom.css served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/custom/custom.css
+[D 10:26:25.035 LabApp] 200 GET /jean-zay2_8007/custom/custom.css (10.148.0.38) 1.540000ms
+[D 10:26:25.038 LabApp] 200 GET /jean-zay2_8007/static/auth/css/override.css?v=7d24c52c4d63c7ed3ca286c051f232acd6a5ee3ed2aa32f56bea22ef20a2e3d184a638aad5602a39e8d5ef9a66ed93fdbaf80cf979948a947bab117618bd6486 (10.148.0.38) 2.410000ms
+[D 10:26:25.040 LabApp] 200 GET /jean-zay2_8007/static/components/react/react-dom.production.min.js?v=6fc58c1c4736868ff84f57bd8b85f2bdb985993a9392718f3b4af4bfa10fb4efba2b4ddd68644bd2a8daf0619a3844944c9c43f8528364a1aa6fc01ec1b8ae84 (10.148.0.38) 1.240000ms
+[D 10:26:25.041 LabApp] 200 GET /jean-zay2_8007/static/components/es6-promise/promise.min.js?v=bea335d74136a63ae1b5130f5ac9a50c6256a5f435e6e09fef599491a84d834a8b0f011ca3eaaca3b4ab6a2da2d3e1191567a2f171e60da1d10e5b9d52f84184 (10.148.0.38) 0.890000ms
+[D 10:26:25.041 LabApp] 200 GET /jean-zay2_8007/static/style/style.min.css?v=56dfd556850eb17b7998c6828467598a322b41593edc758739c66cb2c3fea98f23d0dd8bf8b9b0f5d67bb976a50e4c34f789fe640cbb440fa089e1bf5ec170bd (10.148.0.38) 23.560000ms
+[D 10:26:25.061 LabApp] 200 GET /jean-zay2_8007/static/components/create-react-class/index.js?v=894ad57246e682b4cfbe7cd5e408dcd6b38d06af4de4f3425991e2676fdc2ef1732cbd19903104198878ae77de12a1996de3e7da3a467fb226bdda8f4618faec (10.148.0.38) 1.010000ms
+[D 10:26:25.091 LabApp] 200 GET /jean-zay2_8007/static/components/requirejs/require.js?v=d37b48bb2137faa0ab98157e240c084dd5b1b5e74911723aa1d1f04c928c2a03dedf922d049e4815f7e5a369faa2e6b6a1000aae958b7953b5cc60411154f593 (10.148.0.38) 1.060000ms
+[D 10:26:25.220 LabApp] 200 GET /jean-zay2_8007/static/base/images/logo.png?v=a2a176ee3cee251ffddf5fa21fe8e43727a9e5f87a06f9c91ad7b776d9e9d3d5e0159c16cc188a3965e00375fb4bc336c16067c688f5040c0c2d4bfdb852a9e4 (10.148.0.38) 0.960000ms
+[D 10:26:25.307 LabApp] Path auth/js/main.min.js served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/auth/js/main.min.js
+[D 10:26:25.308 LabApp] 200 GET /jean-zay2_8007/static/auth/js/main.min.js?v=20210602102607 (10.148.0.38) 1.420000ms
+[D 10:26:25.416 LabApp] 200 GET /jean-zay2_8007/static/base/images/favicon.ico?v=50afa725b5de8b00030139d09b38620224d4e7dba47c07ef0e86d4643f30c9bfe6bb7e1a4a1c561aa32834480909a4b6fe7cd1e17f7159330b6b5914bf45a880 (10.148.0.38) 1.040000ms
+[I 10:26:27.117 LabApp] 302 POST /jean-zay2_8007/login?next=%2Fjean-zay2_8007%2Flab%3F (10.148.0.38) 1.060000ms
+[D 10:26:27.234 LabApp] Using contents: services/contents
+[D 10:26:27.237 LabApp] 200 GET /jean-zay2_8007/lab? (10.148.0.38) 4.150000ms
+[D 10:26:27.336 LabApp] Path main.9d149f332c4f39c492ea.js served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/lab/static/main.9d149f332c4f39c492ea.js
+[D 10:26:27.344 LabApp] 200 GET /jean-zay2_8007/static/lab/main.9d149f332c4f39c492ea.js (10.148.0.38) 7.570000ms
+[D 10:26:27.347 LabApp] Path vendors~main.9513ba13c799488e7a2b.js served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/lab/static/vendors~main.9513ba13c799488e7a2b.js
+[D 10:26:27.915 LabApp] 200 GET /jean-zay2_8007/static/lab/vendors~main.9513ba13c799488e7a2b.js (10.148.0.38) 567.660000ms
+[D 10:26:28.655 LabApp] 200 GET /jean-zay2_8007/static/base/images/favicon.ico (10.148.0.38) 1.120000ms
+[D 10:26:28.839 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622388811 (10.148.0.38) 1.490000ms
+[D 10:26:28.843 LabApp] Found kernel xpython in /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/kernels
+[D 10:26:28.844 LabApp] Found kernel python3 in /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/kernels
+[D 10:26:28.846 LabApp] 200 GET /jean-zay2_8007/api/kernelspecs?1622622388812 (10.148.0.38) 4.280000ms
+[D 10:26:28.848 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622388813 (10.148.0.38) 0.680000ms
+[D 10:26:28.886 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/?1622622388821 (10.148.0.38) 35.780000ms
+[D 10:26:28.917 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622388884 (10.148.0.38) 0.710000ms
+[D 10:26:28.929 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622388901 (10.148.0.38) 0.820000ms
+[D 10:26:28.931 LabApp] Found kernel xpython in /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/kernels
+[D 10:26:28.931 LabApp] Found kernel python3 in /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/kernels
+[D 10:26:28.932 LabApp] 200 GET /jean-zay2_8007/api/kernelspecs?1622622388902 (10.148.0.38) 1.920000ms
+[D 10:26:29.126 LabApp] 200 GET /jean-zay2_8007/metrics?1622622389101 (10.148.0.38) 2.790000ms
+[D 10:26:29.169 LabApp] NodeJS was not found. Yarn user configuration is ignored.
+[W 10:26:29.170 LabApp] Could not determine jupyterlab build status without nodejs
+[D 10:26:29.170 LabApp] 200 GET /jean-zay2_8007/lab/api/build?1622622389145 (10.148.0.38) 2.660000ms
+[D 10:26:29.182 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622389156 (10.148.0.38) 0.680000ms
+[W 10:26:29.571 LabApp] Config option `template_path` not recognized by `ExporterCollapsibleHeadings`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[D 10:26:29.637 LabApp] Paths used for configuration of notebook: 
+    	/etc/jupyter/nbconfig/notebook.json
+[D 10:26:29.637 LabApp] Paths used for configuration of notebook: 
+    	/usr/local/etc/jupyter/nbconfig/notebook.json
+[D 10:26:29.638 LabApp] Paths used for configuration of notebook: 
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/nbconfig/notebook.d/widgetsnbextension.json
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/nbconfig/notebook.json
+[D 10:26:29.638 LabApp] Paths used for configuration of notebook: 
+    	/gpfs7kw/linkhome/idris/genidr/ssos023/.jupyter/nbconfig/notebook.json
+[W 10:26:29.654 LabApp] Config option `template_path` not recognized by `ExporterCollapsibleHeadings`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[D 10:26:29.660 LabApp] Paths used for configuration of notebook: 
+    	/etc/jupyter/nbconfig/notebook.json
+[D 10:26:29.661 LabApp] Paths used for configuration of notebook: 
+    	/usr/local/etc/jupyter/nbconfig/notebook.json
+[D 10:26:29.661 LabApp] Paths used for configuration of notebook: 
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/nbconfig/notebook.d/widgetsnbextension.json
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/nbconfig/notebook.json
+[D 10:26:29.662 LabApp] Paths used for configuration of notebook: 
+    	/gpfs7kw/linkhome/idris/genidr/ssos023/.jupyter/nbconfig/notebook.json
+[W 10:26:29.717 LabApp] Config option `template_path` not recognized by `TocExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:29.723 LabApp] Config option `template_path` not recognized by `TocExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:29.746 LabApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:29.756 LabApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:29.775 LabApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:29.785 LabApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:29.825 LabApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:29.830 LabApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.004 LabApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.011 LabApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.102 LabApp] Config option `template_path` not recognized by `ExporterCollapsibleHeadings`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[D 10:26:30.107 LabApp] Paths used for configuration of notebook: 
+    	/etc/jupyter/nbconfig/notebook.json
+[D 10:26:30.108 LabApp] Paths used for configuration of notebook: 
+    	/usr/local/etc/jupyter/nbconfig/notebook.json
+[D 10:26:30.108 LabApp] Paths used for configuration of notebook: 
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/nbconfig/notebook.d/widgetsnbextension.json
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/nbconfig/notebook.json
+[D 10:26:30.109 LabApp] Paths used for configuration of notebook: 
+    	/gpfs7kw/linkhome/idris/genidr/ssos023/.jupyter/nbconfig/notebook.json
+[W 10:26:30.158 LabApp] Config option `template_path` not recognized by `TocExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.173 LabApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.193 LabApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.227 LabApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.365 LabApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[D 10:26:30.386 LabApp] 200 GET /jean-zay2_8007/api/nbconvert?1622622389172 (10.148.0.38) 1192.790000ms
+[W 10:26:30.520 LabApp] Config option `template_path` not recognized by `ExporterCollapsibleHeadings`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[D 10:26:30.526 LabApp] Paths used for configuration of notebook: 
+    	/etc/jupyter/nbconfig/notebook.json
+[D 10:26:30.527 LabApp] Paths used for configuration of notebook: 
+    	/usr/local/etc/jupyter/nbconfig/notebook.json
+[D 10:26:30.527 LabApp] Paths used for configuration of notebook: 
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/nbconfig/notebook.d/widgetsnbextension.json
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/nbconfig/notebook.json
+[D 10:26:30.528 LabApp] Paths used for configuration of notebook: 
+    	/gpfs7kw/linkhome/idris/genidr/ssos023/.jupyter/nbconfig/notebook.json
+[W 10:26:30.529 LabApp] Config option `template_path` not recognized by `ExporterCollapsibleHeadings`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[D 10:26:30.534 LabApp] Paths used for configuration of notebook: 
+    	/etc/jupyter/nbconfig/notebook.json
+[D 10:26:30.535 LabApp] Paths used for configuration of notebook: 
+    	/usr/local/etc/jupyter/nbconfig/notebook.json
+[D 10:26:30.535 LabApp] Paths used for configuration of notebook: 
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/nbconfig/notebook.d/widgetsnbextension.json
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/nbconfig/notebook.json
+[D 10:26:30.536 LabApp] Paths used for configuration of notebook: 
+    	/gpfs7kw/linkhome/idris/genidr/ssos023/.jupyter/nbconfig/notebook.json
+[W 10:26:30.590 LabApp] Config option `template_path` not recognized by `TocExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.596 LabApp] Config option `template_path` not recognized by `TocExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.611 LabApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.621 LabApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.640 LabApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.650 LabApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.690 LabApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.695 LabApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.869 LabApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.875 LabApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:30.966 LabApp] Config option `template_path` not recognized by `ExporterCollapsibleHeadings`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[D 10:26:30.972 LabApp] Paths used for configuration of notebook: 
+    	/etc/jupyter/nbconfig/notebook.json
+[D 10:26:30.973 LabApp] Paths used for configuration of notebook: 
+    	/usr/local/etc/jupyter/nbconfig/notebook.json
+[D 10:26:30.973 LabApp] Paths used for configuration of notebook: 
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/nbconfig/notebook.d/widgetsnbextension.json
+    	/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/etc/jupyter/nbconfig/notebook.json
+[D 10:26:30.974 LabApp] Paths used for configuration of notebook: 
+    	/gpfs7kw/linkhome/idris/genidr/ssos023/.jupyter/nbconfig/notebook.json
+[W 10:26:31.022 LabApp] Config option `template_path` not recognized by `TocExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:31.038 LabApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:31.057 LabApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:31.091 LabApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:26:31.230 LabApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[D 10:26:31.251 LabApp] 200 GET /jean-zay2_8007/api/nbconvert?1622622389205 (10.148.0.38) 854.830000ms
+[D 10:26:31.253 LabApp] 200 GET /jean-zay2_8007/api/contents/?content=1&1622622389239 (10.148.0.38) 855.990000ms
+[D 10:26:31.254 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389258 (10.148.0.38) 856.880000ms
+[D 10:26:31.255 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389258 (10.148.0.38) 857.620000ms
+[D 10:26:31.257 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389260 (10.148.0.38) 1.330000ms
+[D 10:26:31.260 LabApp] Path @jupyterlab/theme-light-extension/index.css served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/lab/themes/@jupyterlab/theme-light-extension/index.css
+[D 10:26:31.262 LabApp] 200 GET /jean-zay2_8007/lab/api/themes/@jupyterlab/theme-light-extension/index.css (10.148.0.38) 2.320000ms
+[D 10:26:31.487 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389261 (10.148.0.38) 2.260000ms
+[D 10:26:31.488 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389261 (10.148.0.38) 2.840000ms
+[D 10:26:31.489 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389262 (10.148.0.38) 3.500000ms
+[D 10:26:31.490 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389262 (10.148.0.38) 4.160000ms
+[D 10:26:31.492 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389263 (10.148.0.38) 1.380000ms
+[D 10:26:31.493 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389264 (10.148.0.38) 1.170000ms
+[D 10:26:31.533 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389264 (10.148.0.38) 3.040000ms
+[D 10:26:31.534 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389266 (10.148.0.38) 3.630000ms
+[D 10:26:31.536 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389266 (10.148.0.38) 1.230000ms
+[D 10:26:31.537 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389265 (10.148.0.38) 1.260000ms
+[D 10:26:31.539 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389268 (10.148.0.38) 1.160000ms
+[D 10:26:31.543 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389267 (10.148.0.38) 1.130000ms
+[D 10:26:31.604 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389267 (10.148.0.38) 1.240000ms
+[D 10:26:31.606 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389270 (10.148.0.38) 1.800000ms
+[D 10:26:31.607 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389269 (10.148.0.38) 2.390000ms
+[D 10:26:31.608 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389270 (10.148.0.38) 3.010000ms
+[D 10:26:31.610 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389269 (10.148.0.38) 1.590000ms
+[D 10:26:31.613 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389260 (10.148.0.38) 1.140000ms
+[D 10:26:31.686 LabApp] 200 GET /jean-zay2_8007/lab/api/workspaces/lab?1622622389311 (10.148.0.38) 18.320000ms
+[D 10:26:31.690 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622389289 (10.148.0.38) 0.700000ms
+[D 10:26:31.692 LabApp] 200 GET /jean-zay2_8007/lab/api/settings/@jupyterlab/docmanager-extension:plugin?1622622389283 (10.148.0.38) 1.220000ms
+[D 10:26:31.722 LabApp] 200 GET /jean-zay2_8007/metrics?1622622391694 (10.148.0.38) 3.910000ms
+[D 10:26:31.748 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT?1622622391713 (10.148.0.38) 4.810000ms
+[D 10:26:31.753 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test.ipynb?content=0&1622622391715 (10.148.0.38) 0.940000ms
+[D 10:26:31.755 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test-Copy1.ipynb?content=0&1622622391717 (10.148.0.38) 0.770000ms
+[D 10:26:31.756 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test.py?content=0&1622622391719 (10.148.0.38) 0.770000ms
+[D 10:26:31.802 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT?content=1&1622622391771 (10.148.0.38) 5.050000ms
+[D 10:26:31.916 LabApp] Path components/MathJax/MathJax.js served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/components/MathJax/MathJax.js
+[D 10:26:31.917 LabApp] 200 GET /jean-zay2_8007/static/components/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML-full,Safe&amp;delayStartupUntil=configured (10.148.0.38) 1.650000ms
+[D 10:26:31.938 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622391914 (10.148.0.38) 0.910000ms
+[D 10:26:32.132 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test-Copy1.ipynb?type=notebook&content=1&1622622392013 (10.148.0.38) 93.920000ms
+[D 10:26:32.138 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test.py?format=text&type=file&content=1&1622622392013 (10.148.0.38) 1.480000ms
+[D 10:26:32.179 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test.ipynb?type=notebook&content=1&1622622392014 (10.148.0.38) 41.000000ms
+[D 10:26:32.180 LabApp] Path components/MathJax/config/TeX-AMS-MML_HTMLorMML-full.js served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/components/MathJax/config/TeX-AMS-MML_HTMLorMML-full.js
+[D 10:26:32.207 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT?content=1&1622622392056 (10.148.0.38) 4.880000ms
+[D 10:26:32.208 LabApp] 200 GET /jean-zay2_8007/static/components/MathJax/config/TeX-AMS-MML_HTMLorMML-full.js?V=2.7.9 (10.148.0.38) 28.440000ms
+[D 10:26:32.302 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test-Copy1.ipynb/checkpoints?1622622392258 (10.148.0.38) 19.990000ms
+[D 10:26:32.306 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test-Copy1.ipynb/checkpoints?1622622392259 (10.148.0.38) 0.990000ms
+[D 10:26:32.307 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test-Copy1.ipynb/checkpoints?1622622392266 (10.148.0.38) 0.830000ms
+[D 10:26:32.337 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test.py/checkpoints?1622622392290 (10.148.0.38) 22.980000ms
+[D 10:26:32.343 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test.py/checkpoints?1622622392291 (10.148.0.38) 1.040000ms
+[D 10:26:32.344 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test.py/checkpoints?1622622392293 (10.148.0.38) 0.880000ms
+[D 10:26:32.465 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test.ipynb/checkpoints?1622622392439 (10.148.0.38) 1.600000ms
+[D 10:26:32.469 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test.ipynb/checkpoints?1622622392440 (10.148.0.38) 1.000000ms
+[D 10:26:32.595 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT_test.ipynb/checkpoints?1622622392538 (10.148.0.38) 1.110000ms
+[D 10:26:32.668 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622392645 (10.148.0.38) 1.390000ms
+[D 10:26:32.704 LabApp] Path components/MathJax/config/Safe.js served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/components/MathJax/config/Safe.js
+[D 10:26:32.705 LabApp] 200 GET /jean-zay2_8007/static/components/MathJax/config/Safe.js?V=2.7.9 (10.148.0.38) 1.030000ms
+[D 10:26:32.807 LabApp] Starting kernel: ['/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/bin/python', '-m', 'ipykernel_launcher', '-f', '/gpfs7kw/linkhome/idris/genidr/ssos023/.local/share/jupyter/runtime/kernel-1fb5701a-d98c-47e2-80a7-ac0d212a69fa.json']
+[D 10:26:32.815 LabApp] Connecting to: tcp://127.0.0.1:52887
+[D 10:26:32.816 LabApp] Connecting to: tcp://127.0.0.1:37979
+[I 10:26:32.817 LabApp] Kernel started: 1fb5701a-d98c-47e2-80a7-ac0d212a69fa, name: python3
+[D 10:26:32.817 LabApp] Kernel args: {'kernel_name': 'python3', 'cwd': '/gpfswork/idris/sos/ssos023/Projects/POT'}
+[D 10:26:32.821 LabApp] 201 POST /jean-zay2_8007/api/sessions?1622622392692 (10.148.0.38) 105.530000ms
+[D 10:26:32.826 LabApp] Starting kernel: ['/gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/bin/python', '-m', 'ipykernel_launcher', '-f', '/gpfs7kw/linkhome/idris/genidr/ssos023/.local/share/jupyter/runtime/kernel-e6af565c-caa8-48f7-8439-9d24558233cc.json']
+[D 10:26:32.836 LabApp] Connecting to: tcp://127.0.0.1:53913
+[D 10:26:32.836 LabApp] Connecting to: tcp://127.0.0.1:58603
+[I 10:26:32.837 LabApp] Kernel started: e6af565c-caa8-48f7-8439-9d24558233cc, name: python3
+[D 10:26:32.837 LabApp] Kernel args: {'kernel_name': 'python3', 'cwd': '/gpfswork/idris/sos/ssos023/Projects/POT'}
+[D 10:26:32.841 LabApp] 201 POST /jean-zay2_8007/api/sessions?1622622392695 (10.148.0.38) 18.700000ms
+[D 10:26:32.842 LabApp] Path components/MathJax/extensions/Safe.js served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/components/MathJax/extensions/Safe.js
+[D 10:26:32.946 LabApp] 200 GET /jean-zay2_8007/static/components/MathJax/extensions/Safe.js?V=2.7.9 (10.148.0.38) 104.940000ms
+[D 10:26:32.994 LabApp] Initializing websocket connection /jean-zay2_8007/api/kernels/1fb5701a-d98c-47e2-80a7-ac0d212a69fa/channels
+[D 10:26:32.995 LabApp] Requesting kernel info from 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:26:32.995 LabApp] Connecting to: tcp://127.0.0.1:36399
+[D 10:26:33.093 LabApp] Path components/MathJax/jax/output/HTML-CSS/fonts/STIX-Web/fontdata.js served from /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/lib/python3.7/site-packages/notebook/static/components/MathJax/jax/output/HTML-CSS/fonts/STIX-Web/fontdata.js
+[D 10:26:33.104 LabApp] 200 GET /jean-zay2_8007/static/components/MathJax/jax/output/HTML-CSS/fonts/STIX-Web/fontdata.js?V=2.7.9 (10.148.0.38) 11.200000ms
+[D 10:26:33.943 LabApp] activity on e6af565c-caa8-48f7-8439-9d24558233cc: status (starting)
+[D 10:26:33.961 LabApp] activity on 1fb5701a-d98c-47e2-80a7-ac0d212a69fa: status (starting)
+[D 10:26:33.962 LabApp] activity on 1fb5701a-d98c-47e2-80a7-ac0d212a69fa: status (busy)
+[D 10:26:33.963 LabApp] activity on 1fb5701a-d98c-47e2-80a7-ac0d212a69fa: status (idle)
+[D 10:26:33.963 LabApp] Received kernel info: {'status': 'ok', 'protocol_version': '5.3', 'implementation': 'ipython', 'implementation_version': '7.21.0', 'language_info': {'name': 'python', 'version': '3.7.10', 'mimetype': 'text/x-python', 'codemirror_mode': {'name': 'ipython', 'version': 3}, 'pygments_lexer': 'ipython3', 'nbconvert_exporter': 'python', 'file_extension': '.py'}, 'banner': "Python 3.7.10 (default, Feb 26 2021, 18:47:35) \nType 'copyright', 'credits' or 'license' for more information\nIPython 7.21.0 -- An enhanced Interactive Python. Type '?' for help.\n", 'help_links': [{'text': 'Python Reference', 'url': 'https://docs.python.org/3.7'}, {'text': 'IPython Reference', 'url': 'https://ipython.org/documentation.html'}, {'text': 'NumPy Reference', 'url': 'https://docs.scipy.org/doc/numpy/reference/'}, {'text': 'SciPy Reference', 'url': 'https://docs.scipy.org/doc/scipy/reference/'}, {'text': 'Matplotlib Reference', 'url': 'https://matplotlib.org/contents.html'}, {'text': 'SymPy Reference', 'url': 'http://docs.sympy.org/latest/index.html'}, {'text': 'pandas Reference', 'url': 'https://pandas.pydata.org/pandas-docs/stable/'}]}
+[D 10:26:33.964 LabApp] 101 GET /jean-zay2_8007/api/kernels/1fb5701a-d98c-47e2-80a7-ac0d212a69fa/channels?session_id=e5608f5f-2b6b-4cf7-b7f3-1eddad31fdb6 (10.148.0.38) 970.460000ms
+[D 10:26:33.964 LabApp] Opening websocket /jean-zay2_8007/api/kernels/1fb5701a-d98c-47e2-80a7-ac0d212a69fa/channels
+[D 10:26:33.964 LabApp] Getting buffer for 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:26:33.965 LabApp] Connecting to: tcp://127.0.0.1:37979
+[D 10:26:33.965 LabApp] Connecting to: tcp://127.0.0.1:36399
+[D 10:26:33.965 LabApp] Connecting to: tcp://127.0.0.1:52887
+[D 10:26:33.965 LabApp] Connecting to: tcp://127.0.0.1:43133
+[D 10:26:33.965 LabApp] Connecting to: tcp://127.0.0.1:36399
+[D 10:26:33.966 LabApp] Nudge: attempt 1 on kernel 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:26:33.967 LabApp] activity on 1fb5701a-d98c-47e2-80a7-ac0d212a69fa: status (busy)
+[D 10:26:33.968 LabApp] activity on 1fb5701a-d98c-47e2-80a7-ac0d212a69fa: status (idle)
+[D 10:26:33.968 LabApp] Nudge: IOPub received: 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:26:33.968 LabApp] Nudge: resolving iopub future: 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:26:33.968 LabApp] Nudge: shell info reply received: 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:26:33.968 LabApp] Nudge: resolving shell future: 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:26:34.091 LabApp] activity on 1fb5701a-d98c-47e2-80a7-ac0d212a69fa: status (busy)
+[D 10:26:34.091 LabApp] activity on 1fb5701a-d98c-47e2-80a7-ac0d212a69fa: status (idle)
+[D 10:26:34.150 LabApp] Initializing websocket connection /jean-zay2_8007/api/kernels/1fb5701a-d98c-47e2-80a7-ac0d212a69fa/channels
+[D 10:26:34.151 LabApp] 101 GET /jean-zay2_8007/api/kernels/1fb5701a-d98c-47e2-80a7-ac0d212a69fa/channels?session_id=789e12f5-eaa3-4696-a434-e36fc5f6c472 (10.148.0.38) 1.870000ms
+[D 10:26:34.152 LabApp] Opening websocket /jean-zay2_8007/api/kernels/1fb5701a-d98c-47e2-80a7-ac0d212a69fa/channels
+[D 10:26:34.152 LabApp] Getting buffer for 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:26:34.152 LabApp] Connecting to: tcp://127.0.0.1:37979
+[D 10:26:34.152 LabApp] Connecting to: tcp://127.0.0.1:36399
+[D 10:26:34.152 LabApp] Connecting to: tcp://127.0.0.1:52887
+[D 10:26:34.152 LabApp] Connecting to: tcp://127.0.0.1:43133
+[D 10:26:34.152 LabApp] Connecting to: tcp://127.0.0.1:36399
+[D 10:26:34.153 LabApp] Nudge: attempt 1 on kernel 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:26:34.155 LabApp] activity on 1fb5701a-d98c-47e2-80a7-ac0d212a69fa: status (busy)
+[D 10:26:34.155 LabApp] activity on 1fb5701a-d98c-47e2-80a7-ac0d212a69fa: status (idle)
+[D 10:26:34.156 LabApp] Nudge: IOPub received: 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:26:34.156 LabApp] Nudge: resolving iopub future: 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:26:34.156 LabApp] Nudge: shell info reply received: 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:26:34.156 LabApp] Nudge: resolving shell future: 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:26:34.222 LabApp] activity on 1fb5701a-d98c-47e2-80a7-ac0d212a69fa: status (busy)
+[D 10:26:34.222 LabApp] activity on 1fb5701a-d98c-47e2-80a7-ac0d212a69fa: status (idle)
+[D 10:26:34.251 LabApp] Websocket closed 1fb5701a-d98c-47e2-80a7-ac0d212a69fa:789e12f5-eaa3-4696-a434-e36fc5f6c472
+[D 10:26:34.284 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622394259 (10.148.0.38) 1.030000ms
+[D 10:26:34.285 LabApp] Initializing websocket connection /jean-zay2_8007/api/kernels/e6af565c-caa8-48f7-8439-9d24558233cc/channels
+[D 10:26:34.286 LabApp] Requesting kernel info from e6af565c-caa8-48f7-8439-9d24558233cc
+[D 10:26:34.286 LabApp] Connecting to: tcp://127.0.0.1:32925
+[D 10:26:34.288 LabApp] activity on e6af565c-caa8-48f7-8439-9d24558233cc: status (busy)
+[D 10:26:34.289 LabApp] activity on e6af565c-caa8-48f7-8439-9d24558233cc: status (idle)
+[D 10:26:34.289 LabApp] Received kernel info: {'status': 'ok', 'protocol_version': '5.3', 'implementation': 'ipython', 'implementation_version': '7.21.0', 'language_info': {'name': 'python', 'version': '3.7.10', 'mimetype': 'text/x-python', 'codemirror_mode': {'name': 'ipython', 'version': 3}, 'pygments_lexer': 'ipython3', 'nbconvert_exporter': 'python', 'file_extension': '.py'}, 'banner': "Python 3.7.10 (default, Feb 26 2021, 18:47:35) \nType 'copyright', 'credits' or 'license' for more information\nIPython 7.21.0 -- An enhanced Interactive Python. Type '?' for help.\n", 'help_links': [{'text': 'Python Reference', 'url': 'https://docs.python.org/3.7'}, {'text': 'IPython Reference', 'url': 'https://ipython.org/documentation.html'}, {'text': 'NumPy Reference', 'url': 'https://docs.scipy.org/doc/numpy/reference/'}, {'text': 'SciPy Reference', 'url': 'https://docs.scipy.org/doc/scipy/reference/'}, {'text': 'Matplotlib Reference', 'url': 'https://matplotlib.org/contents.html'}, {'text': 'SymPy Reference', 'url': 'http://docs.sympy.org/latest/index.html'}, {'text': 'pandas Reference', 'url': 'https://pandas.pydata.org/pandas-docs/stable/'}]}
+[D 10:26:34.290 LabApp] 101 GET /jean-zay2_8007/api/kernels/e6af565c-caa8-48f7-8439-9d24558233cc/channels?session_id=c5c0daab-0630-4e9d-b7eb-7d5dd9f7f6e4 (10.148.0.38) 5.220000ms
+[D 10:26:34.290 LabApp] Opening websocket /jean-zay2_8007/api/kernels/e6af565c-caa8-48f7-8439-9d24558233cc/channels
+[D 10:26:34.290 LabApp] Getting buffer for e6af565c-caa8-48f7-8439-9d24558233cc
+[D 10:26:34.290 LabApp] Connecting to: tcp://127.0.0.1:58603
+[D 10:26:34.290 LabApp] Connecting to: tcp://127.0.0.1:32925
+[D 10:26:34.291 LabApp] Connecting to: tcp://127.0.0.1:53913
+[D 10:26:34.291 LabApp] Connecting to: tcp://127.0.0.1:57395
+[D 10:26:34.291 LabApp] Connecting to: tcp://127.0.0.1:32925
+[D 10:26:34.291 LabApp] Nudge: attempt 1 on kernel e6af565c-caa8-48f7-8439-9d24558233cc
+[D 10:26:34.293 LabApp] activity on e6af565c-caa8-48f7-8439-9d24558233cc: status (busy)
+[D 10:26:34.293 LabApp] activity on e6af565c-caa8-48f7-8439-9d24558233cc: status (idle)
+[D 10:26:34.293 LabApp] Nudge: IOPub received: e6af565c-caa8-48f7-8439-9d24558233cc
+[D 10:26:34.293 LabApp] Nudge: resolving iopub future: e6af565c-caa8-48f7-8439-9d24558233cc
+[D 10:26:34.294 LabApp] Nudge: shell info reply received: e6af565c-caa8-48f7-8439-9d24558233cc
+[D 10:26:34.294 LabApp] Nudge: resolving shell future: e6af565c-caa8-48f7-8439-9d24558233cc
+[D 10:26:34.365 LabApp] activity on e6af565c-caa8-48f7-8439-9d24558233cc: status (busy)
+[D 10:26:34.366 LabApp] activity on e6af565c-caa8-48f7-8439-9d24558233cc: status (idle)
+[D 10:26:34.418 LabApp] Initializing websocket connection /jean-zay2_8007/api/kernels/e6af565c-caa8-48f7-8439-9d24558233cc/channels
+[D 10:26:34.420 LabApp] 101 GET /jean-zay2_8007/api/kernels/e6af565c-caa8-48f7-8439-9d24558233cc/channels?session_id=d9162d5f-c9ff-4981-9614-6f3a58ce8778 (10.148.0.38) 1.710000ms
+[D 10:26:34.420 LabApp] Opening websocket /jean-zay2_8007/api/kernels/e6af565c-caa8-48f7-8439-9d24558233cc/channels
+[D 10:26:34.420 LabApp] Getting buffer for e6af565c-caa8-48f7-8439-9d24558233cc
+[D 10:26:34.420 LabApp] Connecting to: tcp://127.0.0.1:58603
+[D 10:26:34.420 LabApp] Connecting to: tcp://127.0.0.1:32925
+[D 10:26:34.421 LabApp] Connecting to: tcp://127.0.0.1:53913
+[D 10:26:34.421 LabApp] Connecting to: tcp://127.0.0.1:57395
+[D 10:26:34.421 LabApp] Connecting to: tcp://127.0.0.1:32925
+[D 10:26:34.421 LabApp] Nudge: attempt 1 on kernel e6af565c-caa8-48f7-8439-9d24558233cc
+[D 10:26:34.423 LabApp] activity on e6af565c-caa8-48f7-8439-9d24558233cc: status (busy)
+[D 10:26:34.424 LabApp] Nudge: IOPub received: e6af565c-caa8-48f7-8439-9d24558233cc
+[D 10:26:34.424 LabApp] Nudge: resolving iopub future: e6af565c-caa8-48f7-8439-9d24558233cc
+[D 10:26:34.424 LabApp] Nudge: shell info reply received: e6af565c-caa8-48f7-8439-9d24558233cc
+[D 10:26:34.424 LabApp] Nudge: resolving shell future: e6af565c-caa8-48f7-8439-9d24558233cc
+[D 10:26:34.425 LabApp] activity on e6af565c-caa8-48f7-8439-9d24558233cc: status (idle)
+[D 10:26:34.489 LabApp] activity on e6af565c-caa8-48f7-8439-9d24558233cc: status (busy)
+[D 10:26:34.489 LabApp] activity on e6af565c-caa8-48f7-8439-9d24558233cc: status (idle)
+[D 10:26:37.420 LabApp] 200 GET /jean-zay2_8007/metrics?1622622397390 (10.148.0.38) 5.190000ms
+[D 10:26:39.135 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622399108 (10.148.0.38) 0.680000ms
+[D 10:26:39.209 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622399157 (10.148.0.38) 0.760000ms
+[D 10:26:42.649 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT?content=1&1622622402616 (10.148.0.38) 5.200000ms
+[D 10:26:44.337 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622404306 (10.148.0.38) 1.110000ms
+[D 10:26:49.187 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622409160 (10.148.0.38) 0.720000ms
+[D 10:26:49.285 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622409191 (10.148.0.38) 0.730000ms
+[D 10:26:51.961 LabApp] 200 GET /jean-zay2_8007/metrics?1622622411928 (10.148.0.38) 4.710000ms
+[D 10:26:52.747 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT?content=1&1622622412715 (10.148.0.38) 5.000000ms
+[D 10:26:54.389 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622414360 (10.148.0.38) 0.970000ms
+[D 10:26:59.188 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622419159 (10.148.0.38) 0.760000ms
+[D 10:26:59.326 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622419300 (10.148.0.38) 0.730000ms
+[D 10:27:02.876 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT?content=1&1622622422834 (10.148.0.38) 5.100000ms
+[D 10:27:04.480 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622424450 (10.148.0.38) 1.590000ms
+[D 10:27:09.183 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622429159 (10.148.0.38) 0.710000ms
+[D 10:27:09.387 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622429359 (10.148.0.38) 0.750000ms
+[D 10:27:11.518 LabApp] 200 GET /jean-zay2_8007/metrics?1622622431487 (10.148.0.38) 4.640000ms
+[D 10:27:12.993 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT?content=1&1622622432942 (10.148.0.38) 5.110000ms
+[D 10:27:14.569 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622434545 (10.148.0.38) 0.940000ms
+[D 10:27:19.186 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622439159 (10.148.0.38) 0.800000ms
+[D 10:27:19.435 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622439407 (10.148.0.38) 0.720000ms
+[D 10:27:23.083 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT?content=1&1622622443055 (10.148.0.38) 5.100000ms
+[D 10:27:24.650 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622444619 (10.148.0.38) 0.990000ms
+[D 10:27:25.262 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT?content=1&1622622445230 (10.148.0.38) 4.970000ms
+[D 10:27:26.351 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects?content=1&1622622446323 (10.148.0.38) 1.770000ms
+[D 10:27:27.024 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622446997 (10.148.0.38) 1.710000ms
+[D 10:27:28.064 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT?content=1&1622622448036 (10.148.0.38) 4.950000ms
+[D 10:27:28.657 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622448630 (10.148.0.38) 1.190000ms
+[D 10:27:29.186 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622449159 (10.148.0.38) 0.680000ms
+[D 10:27:29.502 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622449469 (10.148.0.38) 0.740000ms
+[D 10:27:30.133 LabApp] Found kernel xpython in /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/kernels
+[D 10:27:30.133 LabApp] Found kernel python3 in /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/kernels
+[D 10:27:30.135 LabApp] 200 GET /jean-zay2_8007/api/kernelspecs?1622622450108 (10.148.0.38) 2.580000ms
+[D 10:27:33.159 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT?content=1&1622622453130 (10.148.0.38) 5.150000ms
+[D 10:27:34.724 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622454699 (10.148.0.38) 1.030000ms
+[D 10:27:37.509 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT?content=1&1622622457480 (10.148.0.38) 5.450000ms
+[D 10:27:38.076 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622458047 (10.148.0.38) 1.260000ms
+[D 10:27:39.186 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622459160 (10.148.0.38) 0.690000ms
+[D 10:27:39.581 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622459554 (10.148.0.38) 0.750000ms
+[D 10:27:40.627 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot?content=1&1622622460593 (10.148.0.38) 7.290000ms
+[D 10:27:41.173 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622461149 (10.148.0.38) 1.200000ms
+[D 10:27:41.648 LabApp] 200 GET /jean-zay2_8007/metrics?1622622461618 (10.148.0.38) 4.950000ms
+[D 10:27:43.265 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot?content=1&1622622463233 (10.148.0.38) 4.910000ms
+[D 10:27:44.781 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622464751 (10.148.0.38) 1.340000ms
+[D 10:27:49.186 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622469160 (10.148.0.38) 0.880000ms
+[D 10:27:49.661 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622469636 (10.148.0.38) 0.920000ms
+[D 10:27:53.373 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot?content=1&1622622473340 (10.148.0.38) 4.940000ms
+[D 10:27:54.845 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622474816 (10.148.0.38) 1.230000ms
+[D 10:27:59.192 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622479160 (10.148.0.38) 0.990000ms
+[D 10:27:59.702 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622479676 (10.148.0.38) 0.880000ms
+[D 10:28:03.476 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot?content=1&1622622483444 (10.148.0.38) 4.920000ms
+[D 10:28:04.906 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622484882 (10.148.0.38) 1.220000ms
+[D 10:28:06.454 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622486412 (10.148.0.38) 18.070000ms
+[D 10:28:07.028 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622487001 (10.148.0.38) 1.180000ms
+[D 10:28:09.185 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622489161 (10.148.0.38) 0.700000ms
+[D 10:28:09.772 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622489743 (10.148.0.38) 0.740000ms
+[D 10:28:15.031 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622494926 (10.148.0.38) 1.210000ms
+[D 10:28:16.200 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/emd_wrap.cpp?format=text&type=file&content=1&1622622496155 (10.148.0.38) 21.540000ms
+[D 10:28:16.293 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622496173 (10.148.0.38) 1.040000ms
+[D 10:28:16.330 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622496204 (10.148.0.38) 3.120000ms
+[D 10:28:16.562 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/emd_wrap.cpp/checkpoints?1622622496382 (10.148.0.38) 155.120000ms
+[D 10:28:16.566 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/emd_wrap.cpp/checkpoints?1622622496383 (10.148.0.38) 0.950000ms
+[D 10:28:16.567 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/emd_wrap.cpp/checkpoints?1622622496385 (10.148.0.38) 0.740000ms
+[D 10:28:16.761 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622496706 (10.148.0.38) 1.180000ms
+[D 10:28:16.785 LabApp] 201 POST /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/emd_wrap.cpp/checkpoints?1622622496752 (10.148.0.38) 2.360000ms
+[D 10:28:17.738 LabApp] 200 GET /jean-zay2_8007/metrics?1622622497704 (10.148.0.38) 5.080000ms
+[D 10:28:19.191 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622499166 (10.148.0.38) 0.690000ms
+[D 10:28:19.843 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622499820 (10.148.0.38) 0.570000ms
+[D 10:28:25.199 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622505086 (10.148.0.38) 0.930000ms
+[D 10:28:26.427 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622506399 (10.148.0.38) 2.880000ms
+[D 10:28:29.192 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622509167 (10.148.0.38) 0.550000ms
+[D 10:28:29.932 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622509910 (10.148.0.38) 0.520000ms
+[D 10:28:31.194 LabApp] 200 GET /jean-zay2_8007/metrics?1622622511169 (10.148.0.38) 4.530000ms
+[D 10:28:31.291 LabApp] Found kernel xpython in /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/kernels
+[D 10:28:31.292 LabApp] Found kernel python3 in /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/kernels
+[D 10:28:31.293 LabApp] 200 GET /jean-zay2_8007/api/kernelspecs?1622622511209 (10.148.0.38) 1.730000ms
+[D 10:28:34.375 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622514350 (10.148.0.38) 0.990000ms
+[D 10:28:35.300 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622515276 (10.148.0.38) 0.930000ms
+[D 10:28:36.050 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/network_simplex_simple.h?format=text&type=file&content=1&1622622515992 (10.148.0.38) 22.970000ms
+[D 10:28:36.053 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622516013 (10.148.0.38) 0.780000ms
+[D 10:28:36.119 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622516032 (10.148.0.38) 2.730000ms
+[D 10:28:36.197 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/network_simplex_simple.h/checkpoints?1622622516145 (10.148.0.38) 0.760000ms
+[D 10:28:36.198 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/network_simplex_simple.h/checkpoints?1622622516146 (10.148.0.38) 0.720000ms
+[D 10:28:36.208 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/network_simplex_simple.h/checkpoints?1622622516149 (10.148.0.38) 0.710000ms
+[D 10:28:36.257 LabApp] 201 POST /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/network_simplex_simple.h/checkpoints?1622622516228 (10.148.0.38) 1.490000ms
+[D 10:28:36.562 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622516535 (10.148.0.38) 0.900000ms
+[D 10:28:39.193 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622519167 (10.148.0.38) 0.700000ms
+[D 10:28:40.008 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622519980 (10.148.0.38) 0.660000ms
+[D 10:28:41.969 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622521941 (10.148.0.38) 3.030000ms
+[D 10:28:43.537 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622523509 (10.148.0.38) 1.120000ms
+[D 10:28:45.369 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622525342 (10.148.0.38) 0.970000ms
+[D 10:28:46.145 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/full_bipartitegraph.h?format=text&type=file&content=1&1622622526117 (10.148.0.38) 1.650000ms
+[D 10:28:46.253 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/full_bipartitegraph.h/checkpoints?1622622526230 (10.148.0.38) 0.820000ms
+[D 10:28:46.257 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622526137 (10.148.0.38) 0.780000ms
+[D 10:28:46.265 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622526157 (10.148.0.38) 2.780000ms
+[D 10:28:46.296 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/full_bipartitegraph.h/checkpoints?1622622526231 (10.148.0.38) 0.720000ms
+[D 10:28:46.300 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/full_bipartitegraph.h/checkpoints?1622622526233 (10.148.0.38) 0.720000ms
+[D 10:28:46.335 LabApp] 201 POST /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/full_bipartitegraph.h/checkpoints?1622622526309 (10.148.0.38) 1.390000ms
+[D 10:28:46.687 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622526660 (10.148.0.38) 0.890000ms
+[D 10:28:49.193 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622529168 (10.148.0.38) 0.700000ms
+[D 10:28:49.877 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622529853 (10.148.0.38) 1.090000ms
+[D 10:28:50.097 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622530071 (10.148.0.38) 0.630000ms
+[D 10:28:55.512 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622535437 (10.148.0.38) 0.970000ms
+[D 10:28:56.253 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/core.h?format=text&type=file&content=1&1622622536214 (10.148.0.38) 1.410000ms
+[D 10:28:56.349 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622536257 (10.148.0.38) 2.800000ms
+[D 10:28:56.362 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622536237 (10.148.0.38) 0.730000ms
+[D 10:28:56.398 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/core.h/checkpoints?1622622536349 (10.148.0.38) 0.740000ms
+[D 10:28:56.406 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/core.h/checkpoints?1622622536350 (10.148.0.38) 0.710000ms
+[D 10:28:56.447 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/core.h/checkpoints?1622622536352 (10.148.0.38) 0.720000ms
+[D 10:28:56.462 LabApp] 201 POST /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/core.h/checkpoints?1622622536430 (10.148.0.38) 1.330000ms
+[D 10:28:56.787 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622536759 (10.148.0.38) 1.880000ms
+[D 10:28:59.196 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622539168 (10.148.0.38) 0.700000ms
+[D 10:29:00.163 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622540140 (10.148.0.38) 0.700000ms
+[D 10:29:01.315 LabApp] 200 GET /jean-zay2_8007/metrics?1622622541286 (10.148.0.38) 4.900000ms
+[D 10:29:05.593 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622545567 (10.148.0.38) 0.970000ms
+[D 10:29:06.414 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622546383 (10.148.0.38) 3.140000ms
+[D 10:29:06.697 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622546673 (10.148.0.38) 1.000000ms
+[D 10:29:09.014 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622548991 (10.148.0.38) 1.090000ms
+[D 10:29:09.191 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622549168 (10.148.0.38) 0.650000ms
+[D 10:32:16.372 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622736245 (10.148.0.38) 0.960000ms
+[D 10:32:17.271 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622737245 (10.148.0.38) 3.010000ms
+[D 10:32:17.409 LabApp] 200 GET /jean-zay2_8007/metrics?1622622737248 (10.148.0.38) 4.900000ms
+[D 10:32:17.666 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/network_simplex_simple.h?format=text&type=file&content=1&1622622737634 (10.148.0.38) 1.750000ms
+[D 10:32:17.704 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622737646 (10.148.0.38) 1.020000ms
+[D 10:32:17.784 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622737664 (10.148.0.38) 4.820000ms
+[D 10:32:17.811 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/network_simplex_simple.h/checkpoints?1622622737787 (10.148.0.38) 1.320000ms
+[D 10:32:17.845 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/network_simplex_simple.h/checkpoints?1622622737788 (10.148.0.38) 1.270000ms
+[D 10:32:17.851 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/network_simplex_simple.h/checkpoints?1622622737790 (10.148.0.38) 1.210000ms
+[D 10:32:18.190 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622738165 (10.148.0.38) 1.050000ms
+[D 10:32:20.172 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/full_bipartitegraph.h?format=text&type=file&content=1&1622622740133 (10.148.0.38) 1.280000ms
+[D 10:32:20.185 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622740156 (10.148.0.38) 0.780000ms
+[D 10:32:20.200 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622740174 (10.148.0.38) 2.730000ms
+[D 10:32:20.280 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/full_bipartitegraph.h/checkpoints?1622622740252 (10.148.0.38) 0.770000ms
+[D 10:32:20.282 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/full_bipartitegraph.h/checkpoints?1622622740253 (10.148.0.38) 0.750000ms
+[D 10:32:20.294 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/full_bipartitegraph.h/checkpoints?1622622740255 (10.148.0.38) 0.760000ms
+[D 10:32:20.295 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622740268 (10.148.0.38) 0.500000ms
+[D 10:32:20.702 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622740676 (10.148.0.38) 0.860000ms
+[D 10:32:21.275 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622741248 (10.148.0.38) 0.550000ms
+[D 10:32:23.142 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622743099 (10.148.0.38) 0.880000ms
+[D 10:32:24.941 LabApp] 200 GET /jean-zay2_8007/metrics?1622622744913 (10.148.0.38) 5.020000ms
+[D 10:32:26.473 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622746449 (10.148.0.38) 0.800000ms
+[D 10:32:30.290 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622750264 (10.148.0.38) 2.980000ms
+[D 10:32:30.339 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622750267 (10.148.0.38) 0.530000ms
+[D 10:32:31.326 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622751303 (10.148.0.38) 0.750000ms
+[D 10:32:33.264 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/full_bipartitegraph.h?format=text&type=file&content=1&1622622753146 (10.148.0.38) 1.440000ms
+[D 10:32:33.265 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622753172 (10.148.0.38) 0.830000ms
+[D 10:32:33.403 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/full_bipartitegraph.h/checkpoints?1622622753365 (10.148.0.38) 0.810000ms
+[D 10:32:33.422 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/full_bipartitegraph.h/checkpoints?1622622753365 (10.148.0.38) 0.760000ms
+[D 10:32:33.532 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622753190 (10.148.0.38) 2.780000ms
+[D 10:32:33.552 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/full_bipartitegraph.h/checkpoints?1622622753367 (10.148.0.38) 0.750000ms
+[D 10:32:33.716 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622753691 (10.148.0.38) 0.940000ms
+[D 10:32:35.691 LabApp] 200 GET /jean-zay2_8007/metrics?1622622755663 (10.148.0.38) 4.870000ms
+[D 10:32:36.256 LabApp] Found kernel xpython in /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/kernels
+[D 10:32:36.257 LabApp] Found kernel python3 in /gpfslocalsup/pub/anaconda-py3/2020.02/envs/pytorch-gpu-1.8.0/share/jupyter/kernels
+[D 10:32:36.258 LabApp] 200 GET /jean-zay2_8007/api/kernelspecs?1622622756225 (10.148.0.38) 1.960000ms
+[D 10:32:36.565 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622756542 (10.148.0.38) 0.790000ms
+[D 10:32:40.293 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622760267 (10.148.0.38) 0.730000ms
+[D 10:32:41.361 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622761339 (10.148.0.38) 0.610000ms
+[D 10:32:42.905 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/network_simplex_simple.h?format=text&type=file&content=1&1622622762874 (10.148.0.38) 1.650000ms
+[D 10:32:42.966 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622762883 (10.148.0.38) 0.810000ms
+[D 10:32:42.975 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622762901 (10.148.0.38) 2.810000ms
+[D 10:32:43.035 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/network_simplex_simple.h/checkpoints?1622622763009 (10.148.0.38) 0.810000ms
+[D 10:32:43.036 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/network_simplex_simple.h/checkpoints?1622622763010 (10.148.0.38) 0.750000ms
+[D 10:32:43.041 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp/network_simplex_simple.h/checkpoints?1622622763013 (10.148.0.38) 0.750000ms
+[D 10:32:43.430 LabApp] 204 PUT /jean-zay2_8007/lab/api/workspaces/lab?1622622763403 (10.148.0.38) 0.970000ms
+[D 10:32:46.614 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622766589 (10.148.0.38) 0.900000ms
+[D 10:32:47.986 LabApp] 200 GET /jean-zay2_8007/metrics?1622622767959 (10.148.0.38) 4.660000ms
+[D 10:32:50.291 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622770268 (10.148.0.38) 0.630000ms
+[D 10:32:51.452 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622771425 (10.148.0.38) 0.580000ms
+[D 10:32:53.016 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622772988 (10.148.0.38) 2.930000ms
+[D 10:32:56.676 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622776650 (10.148.0.38) 1.030000ms
+[D 10:33:00.295 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622780269 (10.148.0.38) 0.690000ms
+[D 10:33:01.545 LabApp] 200 GET /jean-zay2_8007/api/terminals?1622622781521 (10.148.0.38) 0.580000ms
+[D 10:33:03.079 LabApp] 200 GET /jean-zay2_8007/api/contents/Projects/POT/POT/ot/lp?content=1&1622622783054 (10.148.0.38) 3.080000ms
+[D 10:33:06.771 LabApp] 200 GET /jean-zay2_8007/api/sessions?1622622786741 (10.148.0.38) 1.020000ms
+[D 10:33:10.291 LabApp] 200 GET /jean-zay2_8007/api/tensorboard?1622622790269 (10.148.0.38) 0.670000ms
+[W 10:38:33.966 LabApp] WebSocket ping timeout after 119989 ms.
+[W 10:38:34.291 LabApp] WebSocket ping timeout after 119984 ms.
+[W 10:38:34.421 LabApp] WebSocket ping timeout after 119976 ms.
+[D 10:38:38.968 LabApp] Websocket closed 1fb5701a-d98c-47e2-80a7-ac0d212a69fa:e5608f5f-2b6b-4cf7-b7f3-1eddad31fdb6
+[I 10:38:38.968 LabApp] Starting buffering for 1fb5701a-d98c-47e2-80a7-ac0d212a69fa:e5608f5f-2b6b-4cf7-b7f3-1eddad31fdb6
+[D 10:38:38.968 LabApp] Clearing buffer for 1fb5701a-d98c-47e2-80a7-ac0d212a69fa
+[D 10:38:39.292 LabApp] Websocket closed e6af565c-caa8-48f7-8439-9d24558233cc:c5c0daab-0630-4e9d-b7eb-7d5dd9f7f6e4
+[D 10:38:39.422 LabApp] Websocket closed e6af565c-caa8-48f7-8439-9d24558233cc:d9162d5f-c9ff-4981-9614-6f3a58ce8778
+[I 10:38:39.422 LabApp] Starting buffering for e6af565c-caa8-48f7-8439-9d24558233cc:d9162d5f-c9ff-4981-9614-6f3a58ce8778
+[D 10:38:39.422 LabApp] Clearing buffer for e6af565c-caa8-48f7-8439-9d24558233cc
+[IPKernelApp] WARNING | Parent appears to have exited, shutting down.
+[IPKernelApp] WARNING | Parent appears to have exited, shutting down.
