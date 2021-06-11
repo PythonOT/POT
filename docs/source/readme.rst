@@ -26,8 +26,7 @@ POT provides the following generic OT solvers (links to examples):
    Algorithm <auto_examples/plot_OT_1D.html>`__
    [2] , stabilized version [9] [10], greedy Sinkhorn [22] and
    `Screening Sinkhorn
-   [26] <auto_examples/plot_screenkhorn_1D.html>`__
-   with optional GPU implementation (requires cupy).
+   [26] <auto_examples/plot_screenkhorn_1D.html>`__.
 -  Bregman projections for `Wasserstein
    barycenter <auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html>`__
    [3], `convolutional
@@ -69,6 +68,11 @@ POT provides the following generic OT solvers (links to examples):
 -  `Sliced
    Wasserstein <auto_examples/sliced-wasserstein/plot_variance.html>`__
    [31, 32].
+-  `Several
+   backends <https://pythonot.github.io/quickstart.html#solving-ot-with-multiple-backends>`__
+   for easy use of POT with
+   `Pytorch <https://pytorch.org/>`__/`jax <https://github.com/google/jax>`__/`Numpy <https://numpy.org/>`__
+   arrays.
 
 POT provides the following Machine Learning related solvers:
 
@@ -104,12 +108,14 @@ paper <https://jmlr.org/papers/v22/20-451.html>`__:
 
 ::
 
-    Rémi Flamary, Nicolas Courty, Alexandre Gramfort, Mokhtar Z. Alaya, Aurélie Boisbunon, Stanislas Chambon, Laetitia Chapel, Adrien Corenflos, Kilian Fatras, Nemo Fournier, Léo Gautheron, Nathalie T.H. Gayraud, Hicham Janati, Alain Rakotomamonjy, Ievgen Redko, Antoine Rolet, Antony Schutz, Vivien Seguy, Danica J. Sutherland, Romain Tavenard, Alexander Tong, Titouan Vayer;, POT Python Optimal Transport library, Journal of Machine Learning Research, 22(78):1−8, 2021.
+    Rémi Flamary, Nicolas Courty, Alexandre Gramfort, Mokhtar Z. Alaya, Aurélie Boisbunon, Stanislas Chambon, Laetitia Chapel, Adrien Corenflos, Kilian Fatras, Nemo Fournier, Léo Gautheron, Nathalie T.H. Gayraud, Hicham Janati, Alain Rakotomamonjy, Ievgen Redko, Antoine Rolet, Antony Schutz, Vivien Seguy, Danica J. Sutherland, Romain Tavenard, Alexander Tong, Titouan Vayer,
+    POT Python Optimal Transport library,
+    Journal of Machine Learning Research, 22(78):1−8, 2021.
     Website: https://pythonot.github.io/
 
 In Bibtex format:
 
-::
+.. code:: bibtex
 
     @article{flamary2021pot,
       author  = {R{\'e}mi Flamary and Nicolas Courty and Alexandre Gramfort and Mokhtar Z. Alaya and Aur{\'e}lie Boisbunon and Stanislas Chambon and Laetitia Chapel and Adrien Corenflos and Kilian Fatras and Nemo Fournier and L{\'e}o Gautheron and Nathalie T.H. Gayraud and Hicham Janati and Alain Rakotomamonjy and Ievgen Redko and Antoine Rolet and Antony Schutz and Vivien Seguy and Danica J. Sutherland and Romain Tavenard and Alexander Tong and Titouan Vayer},
@@ -131,8 +137,8 @@ following Python modules:
 
 -  Numpy (>=1.16)
 -  Scipy (>=1.0)
--  Cython (>=0.23)
--  Matplotlib (>=1.5)
+-  Cython (>=0.23) (build only, not necessary when installing wheels
+   from pip or conda)
 
 Pip installation
 ^^^^^^^^^^^^^^^^
@@ -140,19 +146,19 @@ Pip installation
 Note that due to a limitation of pip, ``cython`` and ``numpy`` need to
 be installed prior to installing POT. This can be done easily with
 
-::
+.. code:: console
 
     pip install numpy cython
 
 You can install the toolbox through PyPI with:
 
-::
+.. code:: console
 
     pip install POT
 
 or get the very latest version by running:
 
-::
+.. code:: console
 
     pip install -U https://github.com/PythonOT/POT/archive/master.zip # with --user for user install (no root)
 
@@ -163,7 +169,7 @@ If you use the Anaconda python distribution, POT is available in
 `conda-forge <https://conda-forge.org>`__. To install it and the
 required dependencies:
 
-::
+.. code:: console
 
     conda install -c conda-forge pot
 
@@ -188,15 +194,17 @@ below
 -  **ot.dr** (Wasserstein dimensionality reduction) depends on autograd
    and pymanopt that can be installed with:
 
-   ::
+.. code:: shell
 
-       pip install pymanopt autograd
+    pip install pymanopt autograd
 
 -  **ot.gpu** (GPU accelerated OT) depends on cupy that have to be
    installed following instructions on `this
    page <https://docs-cupy.chainer.org/en/stable/install.html>`__.
-
-obviously you need CUDA installed and a compatible GPU.
+   Obviously you will need CUDA installed and a compatible GPU. Note
+   that this module is deprecated since version 0.8 and will be deleted
+   in the future. GPU is now handled automatically through the backends
+   and several solver already can run on GPU using the Pytorch backend.
 
 Examples
 --------
@@ -206,36 +214,36 @@ Short examples
 
 -  Import the toolbox
 
-   .. code:: python
+.. code:: python
 
-       import ot
+    import ot
 
 -  Compute Wasserstein distances
 
-   .. code:: python
+.. code:: python
 
-       # a,b are 1D histograms (sum to 1 and positive)
-       # M is the ground cost matrix
-       Wd=ot.emd2(a,b,M) # exact linear program
-       Wd_reg=ot.sinkhorn2(a,b,M,reg) # entropic regularized OT
-       # if b is a matrix compute all distances to a and return a vector
+    # a and b are 1D histograms (sum to 1 and positive)
+    # M is the ground cost matrix
+    Wd = ot.emd2(a, b, M) # exact linear program
+    Wd_reg = ot.sinkhorn2(a, b, M, reg) # entropic regularized OT
+    # if b is a matrix compute all distances to a and return a vector
 
 -  Compute OT matrix
 
-   .. code:: python
+.. code:: python
 
-       # a,b are 1D histograms (sum to 1 and positive)
-       # M is the ground cost matrix
-       T=ot.emd(a,b,M) # exact linear program
-       T_reg=ot.sinkhorn(a,b,M,reg) # entropic regularized OT
+    # a and b are 1D histograms (sum to 1 and positive)
+    # M is the ground cost matrix
+    T = ot.emd(a, b, M) # exact linear program
+    T_reg = ot.sinkhorn(a, b, M, reg) # entropic regularized OT
 
 -  Compute Wasserstein barycenter
 
-   .. code:: python
+.. code:: python
 
-       # A is a n*d matrix containing d  1D histograms
-       # M is the ground cost matrix
-       ba=ot.barycenter(A,M,reg) # reg is regularization parameter
+    # A is a n*d matrix containing d  1D histograms
+    # M is the ground cost matrix
+    ba = ot.barycenter(A, M, reg) # reg is regularization parameter
 
 Examples and Notebooks
 ~~~~~~~~~~~~~~~~~~~~~~

@@ -337,7 +337,8 @@ texinfo_documents = [
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy/', None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
-                       'matplotlib': ('http://matplotlib.org/', None)}
+                       'matplotlib': ('http://matplotlib.org/', None),
+                       'torch': ('https://pytorch.org/docs/stable/', None)}
 
 sphinx_gallery_conf = {
     'examples_dirs': ['../../examples', '../../examples/da'],
@@ -345,6 +346,7 @@ sphinx_gallery_conf = {
     'backreferences_dir':  'gen_modules/backreferences',
 	'inspect_global_variables'  : True,
     'doc_module'          : ('ot','numpy','scipy','pylab'),
+    'matplotlib_animations': True,
     'reference_url': {
 	'ot': None}
 }

@@ -33,6 +33,7 @@ from . import smooth
 from . import stochastic
 from . import unbalanced
 from . import partial
+from . import backend
 
 # OT functions
 from .lp import emd, emd2, emd_1d, emd2_1d, wasserstein_1d
