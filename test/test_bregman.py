@@ -301,7 +301,7 @@ def test_empirical_sinkhorn():
     M = ot.dist(X_s, X_t)
     M_m = ot.dist(X_s, X_t, metric='minkowski')
 
-    G_sqe = ot.bregman.empirical_sinkhorn(X_s, X_t, 1, )
+    G_sqe = ot.bregman.empirical_sinkhorn(X_s, X_t, 1)
     sinkhorn_sqe = ot.sinkhorn(a, b, M, 1)
 
     G_log, log_es = ot.bregman.empirical_sinkhorn(X_s, X_t, 0.1, log=True)
