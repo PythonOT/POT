@@ -2,6 +2,7 @@
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Kilian Fatras <kilian.fatras@irisa.fr>
+#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
 # License: MIT License
 
@@ -341,11 +342,11 @@ def test_lazy_empirical_sinkhorn():
     M = ot.dist(X_s, X_t)
     M_m = ot.dist(X_s, X_t, metric='minkowski')
 
-    f, g = ot.bregman.empirical_sinkhorn(X_s, X_t, 1, numIterMax=numIterMax, isLazy=True, batchSize=(1, 1))
+    f, g = ot.bregman.empirical_sinkhorn(X_s, X_t, 1, numIterMax=numIterMax, isLazy=True, batchSize=(1, 1), verbose=True)
     G_sqe = np.exp(f[:, None] + g[None, :] - M / 1)
     sinkhorn_sqe = ot.sinkhorn(a, b, M, 1)
 
-    f, g, log_es = ot.bregman.empirical_sinkhorn(X_s, X_t, 0.1, log=True, numIterMax=numIterMax, isLazy=True, batchSize=1)
+    f, g, log_es = ot.bregman.empirical_sinkhorn(X_s, X_t, 0.1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
     G_log = np.exp(f[:, None] + g[None, :] - M / 0.1)
     sinkhorn_log, log_s = ot.sinkhorn(a, b, M, 0.1, log=True)
 
@@ -353,7 +354,7 @@ def test_lazy_empirical_sinkhorn():
     G_m = np.exp(f[:, None] + g[None, :] - M_m / 1)
     sinkhorn_m = ot.sinkhorn(a, b, M_m, 1)
 
-    loss_emp_sinkhorn = ot.bregman.empirical_sinkhorn2(X_s, X_t, 1, numIterMax=numIterMax, isLazy=True, batchSize=1)
+    loss_emp_sinkhorn, log = ot.bregman.empirical_sinkhorn2(X_s, X_t, 1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
     loss_sinkhorn = ot.sinkhorn2(a, b, M, 1)
 
     # check constratints

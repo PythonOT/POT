@@ -11,6 +11,7 @@ Bregman projections solvers for entropic regularized OT
 #         Mokhtar Z. Alaya <mokhtarzahdi.alaya@gmail.com>
 #         Alexander Tong <alexander.tong@yale.edu>
 #         Ievgen Redko <ievgen.redko@univ-st-etienne.fr>
+#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
 # License: MIT License
 
@@ -1728,7 +1729,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         If True, then only calculate the cost matrix by block and return the dual potentials only (to save memory)
         If False, calculate full cost matrix and return outputs of sinkhorn function.
     batchSize: int or tuple of 2 int, optional
-        Size of the batcheses used to compute the sinkhorn update without memory overhead. 
+        Size of the batcheses used to compute the sinkhorn update without memory overhead.
         When a tuple is provided it sets the size of the left/right batches.
     verbose : bool, optional
         Print information along iterations
@@ -1879,7 +1880,7 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
         If True, then only calculate the cost matrix by block and return the dual potentials only (to save memory)
         If False, calculate full cost matrix and return outputs of sinkhorn function.
     batchSize: int or tuple of 2 int, optional
-        Size of the batcheses used to compute the sinkhorn update without memory overhead. 
+        Size of the batcheses used to compute the sinkhorn update without memory overhead.
         When a tuple is provided it sets the size of the left/right batches.
     verbose : bool, optional
         Print information along iterations
