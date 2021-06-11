@@ -1933,7 +1933,7 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
 
     else:
         if isinstance(batchSize, int):
-            bs = batchSize, batchSize
+            bs = batchSize
         elif isinstance(batchSize, tuple) and len(batchSize) == 2:
             bs = batchSize[0]
         else:
