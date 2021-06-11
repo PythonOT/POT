@@ -231,7 +231,7 @@ namespace lemon {
 		/// mixed order in the internal data structure.
 		/// In special cases, it could lead to better overall performance,
 		/// but it is usually slower. Therefore it is disabled by default.
-		NetworkSimplexSimple(const GR& graph, bool arc_mixing, int nbnodes, ArcsType nb_arcs, size_t maxiters = 0) :
+		NetworkSimplexSimple(const GR& graph, bool arc_mixing, int nbnodes, ArcsType nb_arcs, size_t maxiters = 0, int numThreads = -1) :
 			_graph(graph),  //_arc_id(graph),
 			_arc_mixing(arc_mixing), _init_nb_nodes(nbnodes), _init_nb_arcs(nb_arcs),
 			MAX(std::numeric_limits<Value>::max()),
@@ -241,6 +241,7 @@ namespace lemon {
 			// Reset data structures
 			reset();
 			max_iter = maxiters;
+			num_threads = numThreads;
 		}
 
 		/// The type of the flow amounts, capacity bounds and supply values
@@ -249,7 +250,6 @@ namespace lemon {
 		typedef C Cost;
 
 	public:
-
 		/// \brief Problem type constants for the \c run() function.
 		///
 		/// Enum type containing the problem type constants that can be
@@ -291,6 +291,8 @@ namespace lemon {
 
 	private:
 		size_t max_iter;
+		int num_threads;
+		
 		TEMPLATE_DIGRAPH_TYPEDEFS(GR);
 
 		typedef std::vector<int> IntVector;
@@ -311,9 +313,8 @@ namespace lemon {
 		typedef std::vector<signed char> StateVector;
 		// Note: vector<signed char> is used instead of vector<ArcState> for
 		// efficiency reasons
-
+	
 	private:
-
 		// Data related to the underlying digraph
 		const GR &_graph;
 		int _node_num;
@@ -474,7 +475,12 @@ namespace lemon {
 				Cost min_val = 0;
 
 #ifdef OMP
-				ArcsType N = omp_get_max_threads();
+				ArcsType N;
+				if (_ns.num_threads == -1) {
+					N = (ArcsType) omp_get_max_threads();
+				} else {
+					N = 1;
+				}
 #else
 				ArcsType N = 1;
 #endif

@@ -17,6 +17,7 @@ import sys
 import warnings
 from inspect import signature
 from .backend import get_backend
+import concurrent.futures
 
 __time_tic_toc = time.time()
 
@@ -322,9 +323,12 @@ def fun(f, q_in, q_out):
 
 def parmap(f, X, nprocs=multiprocessing.cpu_count()):
     """ paralell map for multiprocessing (only map on windows)"""
-
     if not sys.platform.endswith('win32') and not sys.platform.endswith('darwin'):
-
+        with concurrent.futures.ThreadPoolExecutor(max_workers=nprocs) as executor:
+            L = list(executor.map(f, X))
+        assert len(L) == len(X)
+        return L
+        raise AssertionError("AAAAAAAAHHHHHHHHHHH")
         q_in = multiprocessing.Queue(1)
         q_out = multiprocessing.Queue()
 

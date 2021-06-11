@@ -43,6 +43,8 @@ if openmp_supported:
         flags.append("-Xclang")
     compile_args += flags
     link_args += flags
+else:
+    raise AssertionError('OPENMP NOT SUPPORTED')
 
 if sys.platform.startswith('darwin'):
     compile_args.append("-stdlib=libc++")

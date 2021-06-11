@@ -19,7 +19,7 @@ import warnings
 
 
 cdef extern from "EMD.h":
-    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int maxIter) nogil
+    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int maxIter, int numTheads) nogil
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
 
@@ -38,7 +38,7 @@ def check_result(result_code):
  
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int max_iter):
+def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, int max_iter, int numThreads):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
 
@@ -77,6 +77,9 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     max_iter : int
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
+    numThreads: int or "auto", optional (default="auto")
+        If compiled with OpenMP, chooses the number of threads to parallelize.
+        "auto" selects the highest number possible.
 
     Returns
     -------
@@ -109,7 +112,7 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
 
     # calling the function
     with nogil:
-        result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+        result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter, numThreads)
 
     return G, cost, alpha, beta, result_code
 

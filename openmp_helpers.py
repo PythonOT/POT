@@ -16,6 +16,10 @@ from pre_build_helpers import compile_test_program
 
 
 def get_openmp_flag(compiler):
+#    flags = ['-fopenmp', '-DOMP']
+#    if sys.platform.startswith('darwin'):
+#        flags.append("-Xclang")
+#    return flags
     if hasattr(compiler, 'compiler'):
         compiler = compiler.compiler[0]
     else:
