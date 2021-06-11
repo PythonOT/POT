@@ -1685,7 +1685,7 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
 
 
 def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
-                       numIterMax=10000, stopThr=1e-9, lazyEvaluation=False, numMaxEntries=1e8, verbose=False,
+                       numIterMax=10000, stopThr=1e-9, isLazy=False, batchSize=100, verbose=False,
                        log=False, **kwargs):
     r'''
     Solve the entropic regularization optimal transport problem and return the
@@ -1724,11 +1724,11 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         Max number of iterations
     stopThr : float, optional
         Stop threshol on error (>0)
-    lazyEvaluation: boolean, optional
+    isLazy: boolean, optional
         If True, then only calculate the cost matrix by block and return the dual vectors
         If False, calculate full cost matrix and return outputs of sinkhorn function.
-    numMaxEntries: int, optional
-        Maximum number of entries in the coupling, when lazyEvaluation=True
+    batchSize: int or tuple of 2 int, optional
+        Shape of the block of cost matrix, when isLazy=True
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -1770,7 +1770,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     if b is None:
         b = unif(nt)
 
-    if not lazyEvaluation:
+    if not isLazy:
         M = dist(X_s, X_t, metric=metric)
 
         if log:
@@ -1787,7 +1787,13 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         log_a, log_b = np.log(a), np.log(b)
         f, g = np.zeros(ns), np.zeros(nt)
 
-        bs, bt = min(int(numMaxEntries / nt), ns), min(int(numMaxEntries / ns), nt) # batch size
+        if isinstance(batchSize, int):
+            bs, bt = batchSize, batchSize
+        elif isinstance(batchSize, tuple) and len(batchSize) == 2:
+            bs, bt = batchSize[0], batchSize[1]
+        else:
+            raise ValueError("Batch size must be in integer or a tuple of two integers")
+
         range_s, range_t = range(0, ns, bs), range(0, nt, bt)
 
         lse_f = np.zeros(ns)
@@ -1796,26 +1802,26 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         for i_ot in range(numIterMax):
 
             for i in range_s:
-                M = dist(X_s[i:i+bs,:], X_t, metric=metric)
-                lse_f[i:i+bs] = logsumexp(g[None,:] - M / reg, axis=1)
+                M = dist(X_s[i:i + bs, :], X_t, metric=metric)
+                lse_f[i:i + bs] = logsumexp(g[None, :] - M / reg, axis=1)
             f = log_a - lse_f
 
             for j in range_t:
-                M = dist(X_s, X_t[j:j+bt,:], metric=metric)
-                lse_g[j:j+bt] = logsumexp(f[:,None] - M / reg, axis=0)
+                M = dist(X_s, X_t[j:j + bt, :], metric=metric)
+                lse_g[j:j + bt] = logsumexp(f[:, None] - M / reg, axis=0)
             g = log_b - lse_g
 
             if (i_ot + 1) % 10 == 0:
                 m1 = np.zeros_like(a)
                 for i in range_s:
-                    M = dist(X_s[i:i+bs,:], X_t, metric=metric)
-                    m1[i:i+bs] = np.exp(f[i:i+bs,None] + g[None,:] - M / reg).sum(1)
+                    M = dist(X_s[i:i + bs, :], X_t, metric=metric)
+                    m1[i:i + bs] = np.exp(f[i:i + bs, None] + g[None, :] - M / reg).sum(1)
                 err = np.abs(m1 - a).sum()
                 if log:
                     log_err.append(err)
 
-                if verbose and (i_ot+1) % 100 == 0:
-                    print("Error in marginal at iteration {} = {}".format(i_ot+1, err))
+                if verbose and (i_ot + 1) % 100 == 0:
+                    print("Error in marginal at iteration {} = {}".format(i_ot + 1, err))
 
                 if err <= stopThr:
                     break
@@ -1825,8 +1831,9 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         else:
             return (f, g)
 
+
 def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numIterMax=10000, stopThr=1e-9,
-                        lazyEvaluation=False, numMaxEntries=1e8, verbose=False, log=False, **kwargs):
+                        isLazy=False, batchSize=100, verbose=False, log=False, **kwargs):
     r'''
     Solve the entropic regularization optimal transport problem from empirical
     data and return the OT loss
@@ -1865,11 +1872,11 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
         Max number of iterations
     stopThr : float, optional
         Stop threshol on error (>0)
-    lazyEvaluation: boolean, optional
+    isLazy: boolean, optional
         If True, then only calculate the cost matrix by block and return the dual vectors
         If False, calculate full cost matrix and return outputs of sinkhorn function.
-    numMaxEntries: int, optional
-        Maximum number of entries in the coupling, when lazyEvaluation=True        
+    batchSize: int or tuple of 2 int, optional
+        Shape of the block of cost matrix, when isLazy=True
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -1912,39 +1919,46 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
     if b is None:
         b = unif(nt)
 
-    if not lazyEvaluation:
+    if not isLazy:
         M = dist(X_s, X_t, metric=metric)
 
         if log:
             sinkhorn_loss, log = sinkhorn2(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr, verbose=verbose, log=log,
-                                        **kwargs)
+                                           **kwargs)
             return sinkhorn_loss, log
         else:
             sinkhorn_loss = sinkhorn2(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr, verbose=verbose, log=log,
-                                    **kwargs)
+                                      **kwargs)
             return sinkhorn_loss
-    
+
     else:
-        bs = min(int(numMaxEntries / nt), ns) # batch size
+        if isinstance(batchSize, int):
+            bs = batchSize, batchSize
+        elif isinstance(batchSize, tuple) and len(batchSize) == 2:
+            bs = batchSize[0]
+        else:
+            raise ValueError("Batch size must be in integer or a tuple of two integers")
+
         range_s = range(0, ns, bs)
 
         if log:
-            f, g, log_error = empirical_sinkhorn(X_s, X_t, reg, a, b, metric, numIterMax=numIterMax, stopThr=stopThr, \
-                                    lazyEvaluation=lazyEvaluation, numMaxEntries=numMaxEntries, verbose=verbose, log=log)
+            f, g, log_error = empirical_sinkhorn(X_s, X_t, reg, a, b, metric, numIterMax=numIterMax, stopThr=stopThr,
+                                                 isLazy=isLazy, batchSize=batchSize, verbose=verbose, log=log)
         else:
-            f, g = empirical_sinkhorn(X_s, X_t, reg, a, b, metric, numIterMax=numIterMax, stopThr=stopThr, \
-                                    lazyEvaluation=lazyEvaluation, numMaxEntries=numMaxEntries, verbose=verbose, log=log)
+            f, g = empirical_sinkhorn(X_s, X_t, reg, a, b, metric, numIterMax=numIterMax, stopThr=stopThr,
+                                      isLazy=isLazy, batchSize=batchSize, verbose=verbose, log=log)
 
         loss = 0
         for i in range_s:
-            M_block = dist(X_s[i:i+bs,:], X_t, metric=metric)
-            pi_block = np.exp(f[i:i+bs,None] + g[None,:] - M_block / reg)
+            M_block = dist(X_s[i:i + bs, :], X_t, metric=metric)
+            pi_block = np.exp(f[i:i + bs, None] + g[None, :] - M_block / reg)
             loss += np.sum(M_block * pi_block)
 
         if log:
             return loss, log_error
         else:
             return loss
+
 
 def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numIterMax=10000, stopThr=1e-9,
                                   verbose=False, log=False, **kwargs):
