@@ -44,7 +44,7 @@ if openmp_supported:
     compile_args += flags
     link_args += flags
 else:
-    raise AssertionError('OPENMP NOT SUPPORTED')
+    raise AssertionError("OpenMP not supported")
 
 if sys.platform.startswith('darwin'):
     compile_args.append("-stdlib=libc++")
