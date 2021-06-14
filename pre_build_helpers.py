@@ -47,7 +47,6 @@ def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
     if callable(extra_postargs):
         extra_postargs = extra_postargs(ccompiler)
 
-
     start_dir = os.path.abspath('.')
 
     with tempfile.TemporaryDirectory() as tmp_dir:
