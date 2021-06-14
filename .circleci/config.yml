@@ -73,6 +73,7 @@ jobs:
             command: |
               cd docs;
               make html;
+            no_output_timeout: 30m
 
         # Save the outputs
         - store_artifacts:
