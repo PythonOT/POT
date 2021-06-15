@@ -330,10 +330,7 @@ def parmap(f, X, nprocs="default"):
                 nprocs = len(os.sched_getaffinity(0))
             else:
                 nprocs = multiprocessing.cpu_count()
-        elif isinstance(nprocs, int) and nprocs > 0:
-            pass
-        else:
-            raise ValueError('nprocs must either be a strictly positive integer or "default"')
+        assert isinstance(nprocs, int) and nprocs > 0
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=nprocs) as executor:
             L = list(executor.map(f, X))

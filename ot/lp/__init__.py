@@ -318,7 +318,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads="max
     return nx.from_numpy(G, type_as=M0)
 
 
-def emd2(a, b, M, processes=len(os.sched_getaffinity(0)),
+def emd2(a, b, M, processes="default",
          numItermax=100000, log=False, return_matrix=False,
          center_dual=True, numThreads="max"):
     r"""Solves the Earth Movers distance problem and returns the loss
@@ -419,6 +419,13 @@ def emd2(a, b, M, processes=len(os.sched_getaffinity(0)),
     # problem with pikling Forks
     if sys.platform.endswith('win32') or not nx.__name__ == 'numpy':
         processes = 1
+    
+    if processes == "default":
+        if sys.platform.endswith("linux"):
+            processes = os.sched_getaffinity(0)
+        else:
+            processes = multiprocessing.cpu_count()
+    assert isinstance(processes, int) and processes > 0
 
     # if empty array given then use uniform distributions
     if len(a) == 0:
