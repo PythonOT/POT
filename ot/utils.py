@@ -18,6 +18,7 @@ import warnings
 from inspect import signature
 from .backend import get_backend
 import concurrent.futures
+import multiprocessing
 
 __time_tic_toc = time.time()
 
@@ -321,9 +322,19 @@ def fun(f, q_in, q_out):
         q_out.put((i, f(x)))
 
 
-def parmap(f, X, nprocs=len(os.sched_getaffinity(0))):
+def parmap(f, X, nprocs="default"):
     """ paralell map for multiprocessing (only map on windows)"""
     if not sys.platform.endswith('win32') and not sys.platform.endswith('darwin'):
+        if nprocs == "default":
+            if sys.platform.startswith("linux"):
+                nprocs = len(os.sched_getaffinity(0))
+            else:
+                nprocs = multiprocessing.cpu_count()
+        elif isinstance(nprocs, int) and nprocs > 0:
+            pass
+        else:
+            raise ValueError('nprocs must either be a strictly positive integer or "default"')
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=nprocs) as executor:
             L = list(executor.map(f, X))
         return L
