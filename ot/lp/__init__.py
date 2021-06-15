@@ -27,10 +27,10 @@ __all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx',
            'emd_1d', 'emd2_1d', 'wasserstein_1d']
 
 def check_number_threads(numThreads):
-    if (numThreads is None) or (isinstance(numThreads, str) and numThreads.lower() == 'auto'):
+    if (numThreads is None) or (isinstance(numThreads, str) and numThreads.lower() == 'max'):
         return -1
     if (not isinstance(numThreads, int)) or numThreads < 1:
-        raise ValueError('numThreads should either be "auto" or a strictly positive integer')
+        raise ValueError('numThreads should either be "max" or a strictly positive integer')
     return numThreads
 
 
@@ -181,7 +181,7 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     return center_ot_dual(alpha, beta, a, b)
 
 
-def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads = "auto"):
+def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads="max"):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
 
@@ -223,9 +223,9 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads = "a
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function 
         :ref:`center_ot_dual`.
-    numThreads: int or "auto", optional (default="auto")
+    numThreads: int or "max", optional (default="max")
         If compiled with OpenMP, chooses the number of threads to parallelize.
-        "auto" selects the highest number possible.
+        "max" selects the highest number possible.
 
     Returns
     -------
@@ -320,7 +320,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads = "a
 
 def emd2(a, b, M, processes=len(os.sched_getaffinity(0)),
          numItermax=100000, log=False, return_matrix=False,
-         center_dual=True, numThreads="auto"):
+         center_dual=True, numThreads="max"):
     r"""Solves the Earth Movers distance problem and returns the loss
 
     .. math::
@@ -362,9 +362,9 @@ def emd2(a, b, M, processes=len(os.sched_getaffinity(0)),
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
         :ref:`center_ot_dual`.
-    numThreads: int or "auto", optional (default="auto")
+    numThreads: int or "max", optional (default="max")
         If compiled with OpenMP, chooses the number of threads to parallelize.
-        "auto" selects the highest number possible.
+        "max" selects the highest number possible.
 
     Returns
     -------
@@ -480,7 +480,6 @@ def emd2(a, b, M, processes=len(os.sched_getaffinity(0)),
         return f(b)
     nb = b.shape[1]
 
-    print('juste avant parmap')
     if processes > 1:
         res = parmap(f, [b[:, i].copy() for i in range(nb)], processes)
     else:
@@ -490,7 +489,7 @@ def emd2(a, b, M, processes=len(os.sched_getaffinity(0)),
 
 
 def free_support_barycenter(measures_locations, measures_weights, X_init, b=None, weights=None, numItermax=100,
-                            stopThr=1e-7, verbose=False, log=None, numThreads="auto"):
+                            stopThr=1e-7, verbose=False, log=None, numThreads="max"):
     r"""
     Solves the free support (locations of the barycenters are optimized, not the weights) Wasserstein barycenter problem (i.e. the weighted Frechet mean for the 2-Wasserstein distance), formally:
 
@@ -531,9 +530,9 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
         Print information along iterations
     log : bool, optional
         record log if True
-    numThreads: int or "auto", optional (default="auto")
+    numThreads: int or "max", optional (default="max")
         If compiled with OpenMP, chooses the number of threads to parallelize.
-        "auto" selects the highest number possible.
+        "max" selects the highest number possible.
 
 
     Returns
