@@ -422,7 +422,7 @@ def emd2(a, b, M, processes="default",
     
     if processes == "default":
         if sys.platform.endswith("linux"):
-            processes = os.sched_getaffinity(0)
+            processes = len(os.sched_getaffinity(0))
         else:
             processes = multiprocessing.cpu_count()
     assert isinstance(processes, int) and processes > 0
