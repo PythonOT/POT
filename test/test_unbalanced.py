@@ -115,7 +115,8 @@ def test_stabilized_vs_sinkhorn():
     G, log = ot.unbalanced.sinkhorn_unbalanced2(a, b, M, reg=epsilon,
                                                 method="sinkhorn_stabilized",
                                                 reg_m=reg_m,
-                                                log=True)
+                                                log=True,
+                                                verbose=True)
     G2, log2 = ot.unbalanced.sinkhorn_unbalanced2(a, b, M, epsilon, reg_m,
                                                   method="sinkhorn", log=True)
 
@@ -138,7 +139,7 @@ def test_unbalanced_barycenter(method):
     reg_m = 1.
 
     q, log = barycenter_unbalanced(A, M, reg=epsilon, reg_m=reg_m,
-                                   method=method, log=True)
+                                   method=method, log=True, verbose=True)
     # check fixed point equations
     fi = reg_m / (reg_m + epsilon)
     logA = np.log(A + 1e-16)
@@ -173,6 +174,7 @@ def test_barycenter_stabilized_vs_sinkhorn():
                                          reg_m=reg_m, log=True,
                                          tau=100,
                                          method="sinkhorn_stabilized",
+                                         verbose=True
                                          )
     q, log = barycenter_unbalanced(A, M, reg=epsilon, reg_m=reg_m,
                                    method="sinkhorn",

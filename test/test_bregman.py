@@ -293,7 +293,7 @@ def test_unmix():
 
 def test_empirical_sinkhorn():
     # test sinkhorn
-    n = 100
+    n = 10
     a = ot.unif(n)
     b = ot.unif(n)
 
@@ -332,7 +332,7 @@ def test_empirical_sinkhorn():
 
 def test_lazy_empirical_sinkhorn():
     # test sinkhorn
-    n = 100
+    n = 10
     a = ot.unif(n)
     b = ot.unif(n)
     numIterMax = 1000
@@ -342,7 +342,7 @@ def test_lazy_empirical_sinkhorn():
     M = ot.dist(X_s, X_t)
     M_m = ot.dist(X_s, X_t, metric='minkowski')
 
-    f, g = ot.bregman.empirical_sinkhorn(X_s, X_t, 1, numIterMax=numIterMax, isLazy=True, batchSize=(1, 1), verbose=True)
+    f, g = ot.bregman.empirical_sinkhorn(X_s, X_t, 1, numIterMax=numIterMax, isLazy=True, batchSize=(1, 3), verbose=True)
     G_sqe = np.exp(f[:, None] + g[None, :] - M / 1)
     sinkhorn_sqe = ot.sinkhorn(a, b, M, 1)
 
@@ -458,6 +458,7 @@ def test_implemented_methods():
             ot.bregman.sinkhorn2(a, b, M, epsilon, method=method)
 
 
+@pytest.mark.filterwarnings("ignore:Bottleneck")
 def test_screenkhorn():
     # test screenkhorn
     rng = np.random.RandomState(0)
