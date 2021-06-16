@@ -184,6 +184,33 @@ def test_barycenter_stabilized_vs_sinkhorn():
         q, qstable, atol=1e-05)
 
 
+def test_wrong_method():
+
+    n = 10
+    rng = np.random.RandomState(42)
+
+    x = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+
+    # make dists unbalanced
+    b = ot.utils.unif(n) * 1.5
+
+    M = ot.dist(x, x)
+    epsilon = 1.
+    reg_m = 1.
+
+    with pytest.raises(ValueError):
+        ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg=epsilon,
+                                          reg_m=reg_m,
+                                          method='badmethod',
+                                          log=True,
+                                          verbose=True)
+    with pytest.raises(ValueError):
+        ot.unbalanced.sinkhorn_unbalanced2(a, b, M, epsilon, reg_m,
+                                           method='badmethod',
+                                           verbose=True)
+
+
 def test_implemented_methods():
     IMPLEMENTED_METHODS = ['sinkhorn', 'sinkhorn_stabilized']
     TO_BE_IMPLEMENTED_METHODS = ['sinkhorn_reg_scaling']

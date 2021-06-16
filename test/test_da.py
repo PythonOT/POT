@@ -448,8 +448,8 @@ def test_mapping_transport_class():
     """test_mapping_transport
     """
 
-    ns = 40
-    nt = 60
+    ns = 20
+    nt = 30
 
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)

@@ -95,7 +95,7 @@ jobs:
         pip install -e .
     - name: Run tests
       run: |
-        python -m --durations=20 pytest -v test/ ot/ --ignore ot/gpu/ --color=yes
+        python -m pytest --durations=20 -v test/ ot/ --ignore ot/gpu/ --color=yes
 
 
   macos:
