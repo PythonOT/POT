@@ -122,7 +122,7 @@ jobs:
          pip install -e .
      - name: Run tests
        run: |
-         python -m pytest -durations=20  -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot --color=yes
+         python -m pytest --durations=20  -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot --color=yes
 
 
   windows:
@@ -150,4 +150,4 @@ jobs:
         python -m pip install -e .
     - name: Run tests
       run: |
-        python -m pytest -durations=20  -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot --color=yes
+        python -m pytest --durations=20  -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot --color=yes
