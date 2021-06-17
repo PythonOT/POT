@@ -40,7 +40,7 @@ jobs:
         pip install -e .
     - name: Run tests
       run: |
-        python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot --color=yes
+        python -m pytest --durations=20 -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot --color=yes
     - name: Upload codecov
       run: |
         codecov
@@ -95,7 +95,7 @@ jobs:
         pip install -e .
     - name: Run tests
       run: |
-        python -m pytest -v test/ ot/ --ignore ot/gpu/
+        python -m pytest --durations=20 -v test/ ot/ --ignore ot/gpu/ --color=yes
 
 
   macos:
@@ -122,7 +122,7 @@ jobs:
          pip install -e .
      - name: Run tests
        run: |
-         python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
+         python -m pytest --durations=20  -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot --color=yes
 
 
   windows:
@@ -150,4 +150,4 @@ jobs:
         python -m pip install -e .
     - name: Run tests
       run: |
-        python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
+        python -m pytest --durations=20  -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot --color=yes
