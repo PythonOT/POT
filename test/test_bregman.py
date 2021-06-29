@@ -2,6 +2,7 @@
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Kilian Fatras <kilian.fatras@irisa.fr>
+#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
 # License: MIT License
 
@@ -292,7 +293,7 @@ def test_unmix():
 
 def test_empirical_sinkhorn():
     # test sinkhorn
-    n = 100
+    n = 10
     a = ot.unif(n)
     b = ot.unif(n)
 
@@ -311,6 +312,49 @@ def test_empirical_sinkhorn():
     sinkhorn_m = ot.sinkhorn(a, b, M_m, 1)
 
     loss_emp_sinkhorn = ot.bregman.empirical_sinkhorn2(X_s, X_t, 1)
+    loss_sinkhorn = ot.sinkhorn2(a, b, M, 1)
+
+    # check constratints
+    np.testing.assert_allclose(
+        sinkhorn_sqe.sum(1), G_sqe.sum(1), atol=1e-05)  # metric sqeuclidian
+    np.testing.assert_allclose(
+        sinkhorn_sqe.sum(0), G_sqe.sum(0), atol=1e-05)  # metric sqeuclidian
+    np.testing.assert_allclose(
+        sinkhorn_log.sum(1), G_log.sum(1), atol=1e-05)  # log
+    np.testing.assert_allclose(
+        sinkhorn_log.sum(0), G_log.sum(0), atol=1e-05)  # log
+    np.testing.assert_allclose(
+        sinkhorn_m.sum(1), G_m.sum(1), atol=1e-05)  # metric euclidian
+    np.testing.assert_allclose(
+        sinkhorn_m.sum(0), G_m.sum(0), atol=1e-05)  # metric euclidian
+    np.testing.assert_allclose(loss_emp_sinkhorn, loss_sinkhorn, atol=1e-05)
+
+
+def test_lazy_empirical_sinkhorn():
+    # test sinkhorn
+    n = 10
+    a = ot.unif(n)
+    b = ot.unif(n)
+    numIterMax = 1000
+
+    X_s = np.reshape(np.arange(n), (n, 1))
+    X_t = np.reshape(np.arange(0, n), (n, 1))
+    M = ot.dist(X_s, X_t)
+    M_m = ot.dist(X_s, X_t, metric='minkowski')
+
+    f, g = ot.bregman.empirical_sinkhorn(X_s, X_t, 1, numIterMax=numIterMax, isLazy=True, batchSize=(1, 3), verbose=True)
+    G_sqe = np.exp(f[:, None] + g[None, :] - M / 1)
+    sinkhorn_sqe = ot.sinkhorn(a, b, M, 1)
+
+    f, g, log_es = ot.bregman.empirical_sinkhorn(X_s, X_t, 0.1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
+    G_log = np.exp(f[:, None] + g[None, :] - M / 0.1)
+    sinkhorn_log, log_s = ot.sinkhorn(a, b, M, 0.1, log=True)
+
+    f, g = ot.bregman.empirical_sinkhorn(X_s, X_t, 1, metric='minkowski', numIterMax=numIterMax, isLazy=True, batchSize=1)
+    G_m = np.exp(f[:, None] + g[None, :] - M_m / 1)
+    sinkhorn_m = ot.sinkhorn(a, b, M_m, 1)
+
+    loss_emp_sinkhorn, log = ot.bregman.empirical_sinkhorn2(X_s, X_t, 1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
     loss_sinkhorn = ot.sinkhorn2(a, b, M, 1)
 
     # check constratints
@@ -414,6 +458,7 @@ def test_implemented_methods():
             ot.bregman.sinkhorn2(a, b, M, epsilon, method=method)
 
 
+@pytest.mark.filterwarnings("ignore:Bottleneck")
 def test_screenkhorn():
     # test screenkhorn
     rng = np.random.RandomState(0)
