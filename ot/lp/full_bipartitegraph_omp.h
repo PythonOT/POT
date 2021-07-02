@@ -231,4 +231,4 @@ namespace lemon_omp {
 
 
 
-} //namespace lemon
+} //namespace lemon_omp

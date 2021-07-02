@@ -473,7 +473,6 @@ namespace lemon {
             }
             // Find next entering arc
             bool findEnteringArc() {
-                printf("THIS IS THE OPPOSITE OF OPENMP");
                 Cost c, min = 0;
                 int e;
                 int cnt = _block_size;

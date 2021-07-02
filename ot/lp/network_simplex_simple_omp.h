@@ -488,7 +488,6 @@ namespace lemon_omp {
 
 			ArcsType N;
 #ifdef OMP
-            printf("THIS IS OPENMP\n");
 			if (_ns.num_threads > 0 && _ns.num_threads<=omp_get_max_threads()){
 				N = _ns.num_threads;
 			} else if (_ns.num_threads = -1 || _ns.num_threads>omp_get_max_threads()) {
@@ -1693,4 +1692,4 @@ namespace lemon_omp {
 
 	   ///@}
 
-} //namespace lemon
+} //namespace lemon_omp
