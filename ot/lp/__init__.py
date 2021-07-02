@@ -318,7 +318,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads="max
     return nx.from_numpy(G, type_as=M0)
 
 
-def emd2(a, b, M, processes="default",
+def emd2(a, b, M, processes=1,
          numItermax=100000, log=False, return_matrix=False,
          center_dual=True, numThreads="max"):
     r"""Solves the Earth Movers distance problem and returns the loss
@@ -349,8 +349,8 @@ def emd2(a, b, M, processes="default",
         Target histogram (uniform weight if empty list)
     M : (ns,nt) array-like, float64
         Loss matrix (for numpy c-order array with type float64)
-    processes : int, optional (default=nb cpu)
-        Nb of processes used for multiple emd computation (not used on windows)
+    processes : int, optional (default=1)
+        Nb of processes used for multiple emd computation (deprecated)
     numItermax : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
@@ -416,17 +416,6 @@ def emd2(a, b, M, processes="default",
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64, order= 'C')
 
-    # problem with pikling Forks
-    if sys.platform.endswith('win32') or not nx.__name__ == 'numpy':
-        processes = 1
-    
-    if processes == "default":
-        if sys.platform.endswith("linux"):
-            processes = len(os.sched_getaffinity(0))
-        else:
-            processes = multiprocessing.cpu_count()
-    assert isinstance(processes, int) and processes > 0
-
     # if empty array given then use uniform distributions
     if len(a) == 0:
         a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
@@ -488,9 +477,8 @@ def emd2(a, b, M, processes="default",
     nb = b.shape[1]
 
     if processes > 1:
-        res = parmap(f, [b[:, i].copy() for i in range(nb)], processes)
-    else:
-        res = list(map(f, [b[:, i].copy() for i in range(nb)]))
+        print("POT - Warning: the 'processes' parameter has been deprecated. Multiprocessing should be done outside of POT.")
+    res = list(map(f, [b[:, i].copy() for i in range(nb)]))
 
     return res
 

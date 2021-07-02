@@ -7,7 +7,6 @@ Various useful functions
 #
 # License: MIT License
 
-import os
 from functools import reduce
 import time
 
@@ -17,8 +16,6 @@ import sys
 import warnings
 from inspect import signature
 from .backend import get_backend
-import concurrent.futures
-import multiprocessing
 
 __time_tic_toc = time.time()
 
@@ -313,31 +310,11 @@ def label_normalization(y, start=0):
     return y
 
 
-def fun(f, q_in, q_out):
-    """ Utility function for parmap with no serializing problems """
-    while True:
-        i, x = q_in.get()
-        if i is None:
-            break
-        q_out.put((i, f(x)))
-
-
 def parmap(f, X, nprocs="default"):
-    """ paralell map for multiprocessing (only map on windows)"""
-    if not sys.platform.endswith('win32') and not sys.platform.endswith('darwin'):
-        if nprocs == "default":
-            if sys.platform.startswith("linux"):
-                nprocs = len(os.sched_getaffinity(0))
-            else:
-                nprocs = multiprocessing.cpu_count()
-        assert isinstance(nprocs, int) and nprocs > 0
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=nprocs) as executor:
-            L = list(executor.map(f, X))
-        return L
-
-    else:
-        return list(map(f, X))
+    """ paralell map for multiprocessing.
+    The function has been deprecated and only performs a regular map.
+    """
+    return list(map(f, X))
 
 
 def check_params(**kwargs):
