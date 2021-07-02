@@ -10,7 +10,7 @@ from setuptools.extension import Extension
 
 import numpy
 from Cython.Build import cythonize
-from openmp_helpers import check_openmp_support
+from ot.helpers.openmp_helpers import check_openmp_support
 
 # dirty but working
 __version__ = re.search(
