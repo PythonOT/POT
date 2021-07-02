@@ -18,9 +18,7 @@
 
 #include <iostream>
 #include <vector>
-#include "network_simplex_simple.h"
 
-using namespace lemon;
 typedef unsigned int node_id_type;
 
 enum ProblemType {
@@ -30,7 +28,8 @@ enum ProblemType {
     MAX_ITER_REACHED
 };
 
-int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int maxIter, int numThreads);
+int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int maxIter);
+int EMD_wrap_omp(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, int maxIter, int numThreads);
 
 
 
