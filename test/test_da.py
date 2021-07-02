@@ -106,8 +106,8 @@ def test_sinkhorn_l1l2_transport_class():
     """test_sinkhorn_transport
     """
 
-    ns = 150
-    nt = 200
+    ns = 50
+    nt = 100
 
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)
@@ -448,8 +448,8 @@ def test_mapping_transport_class():
     """test_mapping_transport
     """
 
-    ns = 60
-    nt = 120
+    ns = 20
+    nt = 30
 
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)

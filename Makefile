@@ -45,10 +45,10 @@ pep8 :
 	flake8 examples/ ot/ test/
 
 test : FORCE pep8
-	$(PYTHON) -m pytest -v test/ --doctest-modules --ignore ot/gpu/  
+	$(PYTHON) -m pytest --durations=20 -v test/ --doctest-modules --ignore ot/gpu/  
 	
 pytest : FORCE 
-	$(PYTHON) -m pytest -v test/ --doctest-modules --ignore ot/gpu/  
+	$(PYTHON) -m pytest --durations=20 -v test/ --doctest-modules --ignore ot/gpu/  
 
 release :
 	twine upload dist/*
