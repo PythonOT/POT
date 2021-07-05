@@ -73,4 +73,5 @@ def check_openmp_support():
 
     except (CompileError, LinkError, subprocess.CalledProcessError):
         openmp_supported = False
+        flags = None
     return openmp_supported, flags
