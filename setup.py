@@ -11,7 +11,7 @@ from setuptools.extension import Extension
 import numpy
 from Cython.Build import cythonize
 
-sys.path.append("ot/helpers")
+sys.path.append(os.path.join("ot", "helpers"))
 from openmp_helpers import check_openmp_support
 
 # dirty but working
