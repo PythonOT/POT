@@ -32,12 +32,12 @@ if 'clean' in sys.argv[1:]:
         os.remove('ot/lp/emd_wrap.cpp')
 
 # add platform dependant optional compilation argument
-openmp_supported, openmp_flags = check_openmp_support()
+openmp_supported = check_openmp_support()
 compile_args = ["-O3"]
 link_args = []
 
 if openmp_supported:
-    flags = openmp_flags + ["-DOMP"]
+    flags = ["-fopenmp", "-DOMP"]
     if sys.platform.startswith("darwin"):
         flags.append("-Xclang")
     compile_args += flags

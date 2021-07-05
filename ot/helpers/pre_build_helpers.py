@@ -84,4 +84,4 @@ def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
         finally:
             os.chdir(start_dir)
 
-    return output, extra_postargs
+    return output
