@@ -181,7 +181,7 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     return center_ot_dual(alpha, beta, a, b)
 
 
-def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads="max"):
+def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
 
@@ -223,7 +223,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads="max
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function 
         :ref:`center_ot_dual`.
-    numThreads: int or "max", optional (default="max")
+    numThreads: int or "max", optional (default=1)
         If compiled with OpenMP, chooses the number of threads to parallelize.
         "max" selects the highest number possible.
 
@@ -320,7 +320,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads="max
 
 def emd2(a, b, M, processes=1,
          numItermax=100000, log=False, return_matrix=False,
-         center_dual=True, numThreads="max"):
+         center_dual=True, numThreads=1):
     r"""Solves the Earth Movers distance problem and returns the loss
 
     .. math::
@@ -362,7 +362,7 @@ def emd2(a, b, M, processes=1,
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
         :ref:`center_ot_dual`.
-    numThreads: int or "max", optional (default="max")
+    numThreads: int or "max", optional (default=1)
         If compiled with OpenMP, chooses the number of threads to parallelize.
         "max" selects the highest number possible.
 
