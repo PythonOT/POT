@@ -34,7 +34,6 @@ from . import stochastic
 from . import unbalanced
 from . import partial
 from . import backend
-from . import helpers
 
 # OT functions
 from .lp import emd, emd2, emd_1d, emd2_1d, wasserstein_1d

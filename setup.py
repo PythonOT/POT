@@ -11,7 +11,8 @@ from setuptools.extension import Extension
 import numpy
 from Cython.Build import cythonize
 
-from ot.helpers.openmp_helpers import check_openmp_support
+sys.path.append("ot/helpers")
+from openmp_helpers import check_openmp_support
 
 # dirty but working
 __version__ = re.search(
