@@ -82,13 +82,6 @@ The library has been tested on Linux, MacOSX and Windows. It requires a C++ comp
 
 #### Pip installation
 
-Note that due to a limitation of pip, `cython` and `numpy` need to be installed
-prior to installing POT. This can be done easily with
-
-```console
-pip install numpy cython
-```
-
 You can install the toolbox through PyPI with:
 
 ```console
