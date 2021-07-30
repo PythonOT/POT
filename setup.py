@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 
+from distutils.sysconfig import get_python_inc
 from setuptools import find_packages, setup, Extension
 
 # dirty but working
@@ -48,6 +49,9 @@ setup(
             sources=["ot/lp/emd_wrap.pyx",
                      "ot/lp/EMD_wrapper.cpp"],  # cython/c++ src files
             language="c++",
+            include_dirs=[
+                os.path.join(get_python_inc(plat_specific=1), "numpy")
+            ],
             extra_compile_args=compile_args,
         )
     ],
