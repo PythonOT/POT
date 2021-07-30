@@ -5,7 +5,7 @@ import re
 import subprocess
 import sys
 
-from distutils.sysconfig import get_python_inc
+from distutils.sysconfig import get_python_lib
 from setuptools import find_packages, setup, Extension
 
 # dirty but working
@@ -33,6 +33,9 @@ if sys.platform.startswith('darwin'):
     os.environ['CFLAGS'] = '-isysroot "{}"'.format(
         sdk_path.rstrip().decode("utf-8"))
 
+numpy_include_dir = os.path.join(get_python_lib(plat_specific=True), "numpy",
+                                 "core", "include")
+
 setup(
     name='POT',
     version=__version__,
@@ -49,9 +52,7 @@ setup(
             sources=["ot/lp/emd_wrap.pyx",
                      "ot/lp/EMD_wrapper.cpp"],  # cython/c++ src files
             language="c++",
-            include_dirs=[
-                os.path.join(get_python_inc(plat_specific=1), "numpy")
-            ],
+            include_dirs=[numpy_include_dir],
             extra_compile_args=compile_args,
         )
     ],
