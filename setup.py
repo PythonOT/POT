@@ -5,12 +5,7 @@ import re
 import subprocess
 import sys
 
-from setuptools import find_packages, setup
-from setuptools.extension import Extension
-
-import numpy
-from Cython.Build import cythonize
-
+from setuptools import find_packages, setup, Extension
 
 # dirty but working
 __version__ = re.search(
@@ -34,7 +29,8 @@ compile_args = ["-O3"]
 if sys.platform.startswith('darwin'):
     compile_args.append("-stdlib=libc++")
     sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path'])
-    os.environ['CFLAGS'] = '-isysroot "{}"'.format(sdk_path.rstrip().decode("utf-8"))
+    os.environ['CFLAGS'] = '-isysroot "{}"'.format(
+        sdk_path.rstrip().decode("utf-8"))
 
 setup(
     name='POT',
@@ -46,15 +42,18 @@ setup(
     author_email='remi.flamary@gmail.com, ncourty@gmail.com',
     url='https://github.com/PythonOT/POT',
     packages=find_packages(),
-    ext_modules=cythonize(Extension(
-        name="ot.lp.emd_wrap",
-        sources=["ot/lp/emd_wrap.pyx", "ot/lp/EMD_wrapper.cpp"],  # cython/c++ src files
-        language="c++",
-        include_dirs=[numpy.get_include(), os.path.join(ROOT, 'ot/lp')],
-        extra_compile_args=compile_args,
-    )),
+    ext_modules=[
+        Extension(
+            name="ot.lp.emd_wrap",
+            sources=["ot/lp/emd_wrap.pyx",
+                     "ot/lp/EMD_wrapper.cpp"],  # cython/c++ src files
+            language="c++",
+            extra_compile_args=compile_args,
+        )
+    ],
     platforms=['linux', 'macosx', 'windows'],
-    download_url='https://github.com/PythonOT/POT/archive/{}.tar.gz'.format(__version__),
+    download_url='https://github.com/PythonOT/POT/archive/{}.tar.gz'.format(
+        __version__),
     license='MIT',
     scripts=[],
     data_files=[],
@@ -85,5 +84,4 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
-    ]
-)
+    ])
