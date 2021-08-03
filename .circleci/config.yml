@@ -50,10 +50,9 @@ jobs:
             name: Get Python running
             command: |
               python -m pip install --user --upgrade --progress-bar off pip
-              python -m pip install --user --upgrade --progress-bar off -r requirements.txt
+              python -m pip install --user -e .
               python -m pip install --user --upgrade --progress-bar off -r docs/requirements.txt
               python -m pip install --user --upgrade --progress-bar off ipython "https://api.github.com/repos/sphinx-gallery/sphinx-gallery/zipball/master" memory_profiler
-              python -m pip install --user -e .
 
         - save_cache:
             key: pip-cache
