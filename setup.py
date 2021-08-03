@@ -5,8 +5,9 @@ import re
 import subprocess
 import sys
 
-from distutils.sysconfig import get_python_lib
 from setuptools import find_packages, setup, Extension
+
+import numpy
 
 # dirty but working
 __version__ = re.search(
@@ -33,9 +34,6 @@ if sys.platform.startswith('darwin'):
     os.environ['CFLAGS'] = '-isysroot "{}"'.format(
         sdk_path.rstrip().decode("utf-8"))
 
-numpy_include_dir = os.path.join(get_python_lib(plat_specific=True), "numpy",
-                                 "core", "include")
-
 setup(
     name='POT',
     version=__version__,
@@ -52,7 +50,7 @@ setup(
             sources=["ot/lp/emd_wrap.pyx",
                      "ot/lp/EMD_wrapper.cpp"],  # cython/c++ src files
             language="c++",
-            include_dirs=[numpy_include_dir],
+            include_dirs=[numpy.get_include()],
             extra_compile_args=compile_args,
         )
     ],
@@ -62,7 +60,6 @@ setup(
     license='MIT',
     scripts=[],
     data_files=[],
-    setup_requires=["numpy>=1.16", "cython>=0.23"],
     install_requires=["numpy>=1.16", "scipy>=1.0"],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
