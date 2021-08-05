@@ -59,27 +59,28 @@ def test_wda():
 
     np.testing.assert_allclose(np.sum(Pwda**2, 0), np.ones(p))
 
-
-def fragmented_hypercube(n, d, dim):
-    assert dim <= d
-    assert dim >= 1
-    assert dim == int(dim)
-
-    a = (1. / n) * np.ones(n)
-    b = (1. / n) * np.ones(n)
-
-    # First measure : uniform on the hypercube
-    X = np.random.uniform(-1, 1, size=(n, d))
-
-    # Second measure : fragmentation
-    Y = X + 2 * np.sign(X) * np.array(dim * [1] + (d - dim) * [0])
-    return a, b, X, Y
-
+@pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
 def test_prw():
     d = 100  # Dimension
     n = 100  # Number samples
     k = 3  # Subspace dimension
     dim = 3
+
+    def fragmented_hypercube(n, d, dim):
+        assert dim <= d
+        assert dim >= 1
+        assert dim == int(dim)
+
+        a = (1. / n) * np.ones(n)
+        b = (1. / n) * np.ones(n)
+
+        # First measure : uniform on the hypercube
+        X = np.random.uniform(-1, 1, size=(n, d))
+
+        # Second measure : fragmentation
+        Y = X + 2 * np.sign(X) * np.array(dim * [1] + (d - dim) * [0])
+        return a, b, X, Y
+
     a, b, X, Y = fragmented_hypercube(n, d, dim)
 
     tau = 0.002

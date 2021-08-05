@@ -201,12 +201,6 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None):
     return Popt, proj
 
 
-def Vpi(X, Y, a, b, pi):
-    # Return the second order matrix of the displacements: sum_ij { (pi)_ij (X_i-Y_j)(X_i-Y_j)^T }.
-    A = X.T.dot(pi).dot(Y)
-    return X.T.dot(np.diag(a)).dot(X) + Y.T.dot(np.diag(np.sum(pi, 0))).dot(Y) - A - A.T
-
-
 def prw(X, Y, a, b, tau, U0 = None,  reg=0.1, k=2, stopThr=1e-3, maxiter=100, verbose=0):
     r"""
     Projection Robust Wasserstein Distance _[12],[13]
@@ -276,6 +270,11 @@ def prw(X, Y, a, b, tau, U0 = None,  reg=0.1, k=2, stopThr=1e-3, maxiter=100, ve
     else:
         U = U0
 
+    def Vpi(X, Y, a, b, pi):
+        # Return the second order matrix of the displacements: sum_ij { (pi)_ij (X_i-Y_j)(X_i-Y_j)^T }.
+        A = X.T.dot(pi).dot(Y)
+        return X.T.dot(np.diag(a)).dot(X) + Y.T.dot(np.diag(np.sum(pi, 0))).dot(Y) - A - A.T
+
     err = 1
     iter = 0
 
@@ -308,10 +307,11 @@ def prw(X, Y, a, b, tau, U0 = None,  reg=0.1, k=2, stopThr=1e-3, maxiter=100, ve
         grad_norm = np.linalg.norm(xi)
         err = max(reg*grad_norm, np.linalg.norm(np.sum(pi, 0) - b, 1))
 
+        f_val = np.trace(U.T.dot(V.dot(U)))
+        if verbose:
+            print('RBCD Iteration: ', iter, ' error', err, '\t fval: ', f_val)
+
         iter = iter + 1
 
-    f_val = np.trace(U.T.dot(V.dot(U)))
-    if verbose:
-        print('RBCD Iteration: ', iter, ' error', err, '\t fval: ', f_val)
 
     return pi, U
