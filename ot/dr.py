@@ -201,7 +201,7 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None):
     return Popt, proj
 
 
-def prw(X, Y, a, b, tau, U0 = None,  reg=0.1, k=2, stopThr=1e-3, maxiter=100, verbose=0):
+def prw(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopThr=1e-3, maxiter=100, verbose=0):
     r"""
     Projection Robust Wasserstein Distance _[12],[13]
 
@@ -302,16 +302,15 @@ def prw(X, Y, a, b, tau, U0 = None,  reg=0.1, k=2, stopThr=1e-3, maxiter=100, ve
         G = 2 / reg * V.dot(U)
         GTU = G.T.dot(U)
         xi = G - U.dot(GTU + GTU.T) / 2  # Riemannian gradient
-        U, _ = np.linalg.qr(U + tau * xi) # Retraction by QR decomposition
+        U, _ = np.linalg.qr(U + tau * xi)  # Retraction by QR decomposition
 
         grad_norm = np.linalg.norm(xi)
-        err = max(reg*grad_norm, np.linalg.norm(np.sum(pi, 0) - b, 1))
+        err = max(reg * grad_norm, np.linalg.norm(np.sum(pi, 0) - b, 1))
 
         f_val = np.trace(U.T.dot(V.dot(U)))
         if verbose:
             print('RBCD Iteration: ', iter, ' error', err, '\t fval: ', f_val)
 
         iter = iter + 1
-
 
     return pi, U

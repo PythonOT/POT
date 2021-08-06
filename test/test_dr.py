@@ -59,6 +59,7 @@ def test_wda():
 
     np.testing.assert_allclose(np.sum(Pwda**2, 0), np.ones(p))
 
+
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
 def test_prw():
     d = 100  # Dimension
