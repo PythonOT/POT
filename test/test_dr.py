@@ -79,7 +79,8 @@ def test_prw():
         X = np.random.uniform(-1, 1, size=(n, d))
 
         # Second measure : fragmentation
-        Y = X + 2 * np.sign(X) * np.array(dim * [1] + (d - dim) * [0])
+        tmp_y = np.random.uniform(-1, 1, size=(n, d))
+        Y = tmp_y + 2 * np.sign(tmp_y) * np.array(dim * [1] + (d - dim) * [0])
         return a, b, X, Y
 
     a, b, X, Y = fragmented_hypercube(n, d, dim)
@@ -93,4 +94,3 @@ def test_prw():
     U0, _ = np.linalg.qr(U0)
 
     pi, U = ot.dr.projection_robust_wasserstein(X, Y, a, b, tau, U0=U0, reg=reg, k=k, maxiter=1000, verbose=1)
-
