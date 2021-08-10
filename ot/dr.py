@@ -201,9 +201,9 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None):
     return Popt, proj
 
 
-def prw(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopThr=1e-3, maxiter=100, verbose=0):
+def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopThr=1e-3, maxiter=100, verbose=0):
     r"""
-    Projection Robust Wasserstein Distance _[12],[13]
+    Projection Robust Wasserstein Distance [32]
 
     The function solves the following optimization problem:
 
@@ -220,9 +220,9 @@ def prw(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopThr=1e-3, maxiter=100, verbo
         Samples from measure \mu
     Y : ndarray, shape (n, d)
         Samples from measure \nu
-    a : ndarray, shape (n, 1)
+    a : ndarray, shape (n, )
         weights for measure \mu
-    b : ndarray, shape (n, 1)
+    b : ndarray, shape (n, )
         weights for measure \nu
     tau : float
         stepsize for Riemannian Gradient Descent
@@ -233,7 +233,7 @@ def prw(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopThr=1e-3, maxiter=100, verbo
     k : int
         Subspace dimension
     stopThr : float, optional
-        Accuracy
+        Stop threshold on error (>0)
     verbose : int, optional
         Print information along iterations.
 
@@ -246,9 +246,7 @@ def prw(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopThr=1e-3, maxiter=100, verbo
 
     References
     ----------
-    .. [12] Paty, F. & Cuturi, M. (2019).
-            Subspace Robust Wasserstein Distance, ICML
-    .. [13] Huang, M. , Ma S. & Lai L. (2021).
+    .. [32] Huang, M. , Ma S. & Lai L. (2021).
             A Riemannian Block Coordinate Descent Method for Computing 
             the Projection Robust Wasserstein Distance, ICML.
     """  # noqa

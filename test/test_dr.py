@@ -87,4 +87,10 @@ def test_prw():
     tau = 0.002
     reg = 0.2
 
-    pi, U = ot.dr.prw(X, Y, a, b, tau, reg=reg, k=k, maxiter=1000, verbose=1)
+    pi, U = ot.dr.projection_robust_wasserstein(X, Y, a, b, tau, reg=reg, k=k, maxiter=1000, verbose=1)
+
+    U0 = np.random.randn(d, k)
+    U0, _ = np.linalg.qr(U0)
+
+    pi, U = ot.dr.projection_robust_wasserstein(X, Y, a, b, tau, U0=U0, reg=reg, k=k, maxiter=1000, verbose=1)
+
