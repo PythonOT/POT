@@ -208,7 +208,7 @@ def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopTh
     The function solves the following optimization problem:
 
     .. math::
-        \max_{U \in St(d, k)} \min_{\pi \in \Pi(\mu,\nu)} \sum_{i,j} \pi_{i,j}*||U^T(x_i - y_j)||^2 - reg * H(\pi)
+        \max_{U \in St(d, k)} \min_{\pi \in \Pi(\mu,\nu)} \sum_{i,j} \pi_{i,j} \|U^T(x_i - y_j)\|^2 - reg * H(\pi)
     
     - :math:`U` is a linear projection operator in the Stiefel(d, k) manifold
     - :math:`H(\pi)` is entropy regularizer
