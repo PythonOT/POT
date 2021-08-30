@@ -64,14 +64,15 @@ def recast_ot_as_lasso(a, b, C):
     >>> H, y, c = ot.regpath.recast_ot_as_lasso(a, b, C)
     >>> H.toarray()
     array([[1., 1., 0., 0., 0., 0.],
-        [0., 0., 1., 1., 0., 0.],
-        [0., 0., 0., 0., 1., 1.],
-        [1., 0., 1., 0., 1., 0.],
-        [0., 1., 0., 1., 0., 1.]])
+           [0., 0., 1., 1., 0., 0.],
+           [0., 0., 0., 0., 1., 1.],
+           [1., 0., 1., 0., 1., 0.],
+           [0., 1., 0., 1., 0., 1.]])
     >>> y
     array([0.2, 0.3, 0.5, 0.1, 0.9])
     >>> c
     array([16., 25., 28., 16., 40., 36.])
+
     References
     ----------
     [Chapel et al., 2021]:
@@ -150,11 +151,11 @@ def recast_semi_relaxed_as_lasso(a, b, C):
     >>> Hr,Hc,c = ot.regpath.recast_semi_relaxed_as_lasso(a, b, C)
     >>> Hr.toarray()
     array([[1., 1., 0., 0., 0., 0.],
-        [0., 0., 1., 1., 0., 0.],
-        [0., 0., 0., 0., 1., 1.]])
+           [0., 0., 1., 1., 0., 0.],
+           [0., 0., 0., 0., 1., 1.]])
     >>> Hc.toarray()
     array([[1., 0., 1., 0., 1., 0.],
-        [0., 1., 0., 1., 0., 1.]])
+           [0., 1., 0., 1., 0., 1.]])
     >>> c
     array([16., 25., 28., 16., 40., 36.])
     """
@@ -496,8 +497,9 @@ def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
     >>> t, _, _ = ot.regpath.fully_relaxed_path(a, b, C, 1e-4)
     >>> t
     array([1.99958333e-01, 0.00000000e+00, 0.00000000e+00, 3.88888889e-05,
-        4.99938889e-01, 0.00000000e+00, 0.00000000e+00, 3.88888889e-05,
-        2.99958333e-01])
+           4.99938889e-01, 0.00000000e+00, 0.00000000e+00, 3.88888889e-05,
+           2.99958333e-01])
+
     References
     ----------
     [Chapel et al., 2021]:
@@ -627,8 +629,9 @@ def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
     >>> t, _, _ = ot.regpath.semi_relaxed_path(a, b, C, 1e-4)
     >>> t
     array([1.99980556e-01, 0.00000000e+00, 0.00000000e+00, 1.94444444e-05,
-        4.99980556e-01, 0.00000000e+00, 0.00000000e+00, 1.94444444e-05,
-        3.00000000e-01])
+           4.99980556e-01, 0.00000000e+00, 0.00000000e+00, 1.94444444e-05,
+           3.00000000e-01])
+
     References
     ----------
     [Chapel et al., 2021]:
@@ -793,13 +796,13 @@ def compute_transport_plan(gamma, gamma_list, Pi_list):
     >>> C /= C.max()
     >>> a = np.array([0.2, 0.5, 0.3])
     >>> b = np.array([0.2, 0.5, 0.3])
-    >>> t, pi_list, gamma_list = \
-    >>>     ot.regpath.regularization_path(a, b, C, reg=1e-4)
+    >>> t, pi_list, g_list = ot.regpath.regularization_path(a, b, C, reg=1e-4)
     >>> gamma = 1
-    >>> t2 = ot.regpath.compute_transport_plan(gamma, gamma_list, pi_list)
+    >>> t2 = ot.regpath.compute_transport_plan(gamma, g_list, pi_list)
     >>> t2
     array([0.        , 0.        , 0.        , 0.19722222, 0.05555556,
-       0.        , 0.        , 0.24722222, 0.        ])
+           0.        , 0.        , 0.24722222, 0.        ])
+
     References
     ----------
     [Chapel et al., 2021]:

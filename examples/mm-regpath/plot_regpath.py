@@ -63,10 +63,10 @@ pl.show()
 
 #%%
 final_gamma = 1e-8
-t, t_list, gamma_list = ot.regpath(a, b, M, reg=final_gamma,
-                                   semi_relaxed=False)
-t2, t_list2, gamma_list2 = ot.regpath(a, b, M, reg=final_gamma,
-                                      semi_relaxed=True)
+t, t_list, g_list = ot.regpath.regularization_path(a, b, M, reg=final_gamma,
+                                                   semi_relaxed=False)
+t2, t_list2, g_list2 = ot.regpath.regularization_path(a, b, M, reg=final_gamma,
+                                                      semi_relaxed=True)
 
 
 ##############################################################################
@@ -78,7 +78,7 @@ t2, t_list2, gamma_list2 = ot.regpath(a, b, M, reg=final_gamma,
 pl.figure(2)
 selected_gamma = [2e-1, 1e-1, 5e-2, 1e-3]
 for p in range(4):
-    tp = ot.regpath.compute_transport_plan(selected_gamma[p], gamma_list,
+    tp = ot.regpath.compute_transport_plan(selected_gamma[p], g_list,
                                            t_list)
     P = tp.reshape((n, n))
     pl.subplot(2, 2, p + 1)
@@ -96,7 +96,8 @@ for p in range(4):
     pl.scatter(xt[:, 0], xt[:, 1], c='C1', s=P.sum(0).ravel()*(1+p)*2,
                label='Re-weighted target', alpha=1)
     pl.plot([], [], color='C2', alpha=0.8, label='OT plan')
-    pl.title(r'$\ell_2$ UOT $\gamma$={}'.format(selected_gamma[p]), fontsize=11)
+    pl.title(r'$\ell_2$ UOT $\gamma$={}'.format(selected_gamma[p]),
+             fontsize=11)
     if p < 2:
         pl.xticks(())
 pl.show()
@@ -111,7 +112,7 @@ pl.show()
 pl.figure(3)
 selected_gamma = [10, 1, 1e-1, 1e-2]
 for p in range(4):
-    tp = ot.regpath.compute_transport_plan(selected_gamma[p], gamma_list2,
+    tp = ot.regpath.compute_transport_plan(selected_gamma[p], g_list2,
                                            t_list2)
     P = tp.reshape((n, n))
     pl.subplot(2, 2, p + 1)
@@ -127,7 +128,7 @@ for p in range(4):
     pl.scatter(xs[:, 0], xs[:, 1], c='C0', s=P.sum(1).ravel()*2*(1+p),
                label='Source marginal', alpha=1)
     pl.plot([], [], color='C2', alpha=0.8, label='OT plan')
-    pl.title(r'Semi-relaxed $\ell_2$ UOT $\gamma$={}'.format(selected_gamma[p]),
+    pl.title(r'Semi-relaxed $l_2$ UOT $\gamma$={}'.format(selected_gamma[p]),
              fontsize=11)
     if p < 2:
         pl.xticks(())
