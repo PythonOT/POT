@@ -73,6 +73,7 @@ jobs:
             command: |
               cd docs;
               make html;
+            no_output_timeout: 30m
 
         # Save the outputs
         - store_artifacts:
@@ -83,7 +84,47 @@ jobs:
             paths:
               - html
 
-    deploy:
+    deploy_master:
+      docker:
+        - image: circleci/python:3.6-jessie
+      steps:
+        - attach_workspace:
+            at: /tmp/build
+        - run:
+            name: Fetch docs
+            command: |
+              set -e
+              mkdir -p ~/.ssh
+              echo -e "Host *\nStrictHostKeyChecking no" > ~/.ssh/config
+              chmod og= ~/.ssh/config
+              if [ ! -d ~/PythonOT.github.io ]; then
+                git clone git@github.com:/PythonOT/PythonOT.github.io.git ~/PythonOT.github.io --depth=1
+              fi
+        - run:
+            name: Deploy docs
+            command: |
+              set -e;
+              if [ "${CIRCLE_BRANCH}" == "master" ]; then
+                git config --global user.email "circle@PythonOT.com";
+                git config --global user.name "Circle CI";
+                cd ~/PythonOT.github.io;
+                git checkout master
+                git remote -v
+                git fetch origin
+                git reset --hard origin/master
+                git clean -xdf
+                echo "Deploying dev docs for ${CIRCLE_BRANCH}.";
+                cd master
+                cp -a /tmp/build/html/* .;
+                touch .nojekyll;
+                git add -A;
+                git commit -m "CircleCI update of dev docs (${CIRCLE_BUILD_NUM}).";
+                git push origin master;
+              else
+                echo "No deployment (build: ${CIRCLE_BRANCH}).";
+              fi
+
+    deploy_tag:
       docker:
         - image: circleci/python:3.6-jessie
       steps:
@@ -122,16 +163,24 @@ jobs:
                 echo "No deployment (build: ${CIRCLE_BRANCH}).";
               fi
 
+
 workflows:
   version: 2
 
   default:
+
     jobs:
       - build_docs
-      - deploy:
+      - deploy_master:
           requires:
             - build_docs
           filters:
             branches:
               only:
                 - master
+      - deploy_tag:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /[0-9]+(\.[0-9]+)*$/

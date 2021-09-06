@@ -69,6 +69,9 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
     alpha, phi1 = scalar_search_armijo(
         phi, phi0, derphi0, c1=c1, alpha0=alpha0)
 
+    # scalar_search_armijo can return alpha > 1
+    if alpha is not None:
+        alpha = min(1, alpha)
     return alpha, fc[0], phi1
 
 
@@ -136,7 +139,7 @@ def solve_linesearch(cost, G, deltaG, Mi, f_val,
 
 def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
        stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, **kwargs):
-    """
+    r"""
     Solve the general regularized OT problem with conditional gradient
 
         The function solves the following optimization problem:
@@ -275,7 +278,7 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
 
 def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
         numInnerItermax=200, stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False):
-    """
+    r"""
     Solve the general regularized OT problem with the generalized conditional gradient
 
         The function solves the following optimization problem:

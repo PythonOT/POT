@@ -37,8 +37,8 @@ def test_conditional_gradient():
     np.testing.assert_allclose(b, G.sum(0))
 
 
-def test_conditional_gradient2():
-    n = 1000  # nb samples
+def test_conditional_gradient_itermax():
+    n = 100  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
@@ -63,7 +63,7 @@ def test_conditional_gradient2():
 
     reg = 1e-1
 
-    G, log = ot.optim.cg(a, b, M, reg, f, df, numItermaxEmd=200000,
+    G, log = ot.optim.cg(a, b, M, reg, f, df, numItermaxEmd=10000,
                          verbose=True, log=True)
 
     np.testing.assert_allclose(a, G.sum(1))
@@ -104,3 +104,13 @@ def test_solve_1d_linesearch_quad_funct():
     np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(1, -1, 0), 0.5)
     np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(-1, 5, 0), 0)
     np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(-1, 0.5, 0), 1)
+
+
+def test_line_search_armijo():
+    xk = np.array([[0.25, 0.25], [0.25, 0.25]])
+    pk = np.array([[-0.25, 0.25], [0.25, -0.25]])
+    gfk = np.array([[23.04273441, 23.0449082], [23.04273441, 23.0449082]])
+    old_fval = -123
+    # Should not throw an exception and return None for alpha
+    alpha, _, _ = ot.optim.line_search_armijo(lambda x: 1, xk, pk, gfk, old_fval)
+    assert alpha is None

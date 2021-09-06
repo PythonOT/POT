@@ -2,12 +2,11 @@
 
 [![PyPI version](https://badge.fury.io/py/POT.svg)](https://badge.fury.io/py/POT)
 [![Anaconda Cloud](https://anaconda.org/conda-forge/pot/badges/version.svg)](https://anaconda.org/conda-forge/pot)
-[![Build Status](https://github.com/PythonOT/POT/workflows/build/badge.svg)](https://github.com/PythonOT/POT/actions)
+[![Build Status](https://github.com/PythonOT/POT/workflows/build/badge.svg?branch=master&event=push)](https://github.com/PythonOT/POT/actions)
 [![Codecov Status](https://codecov.io/gh/PythonOT/POT/branch/master/graph/badge.svg)](https://codecov.io/gh/PythonOT/POT)
 [![Downloads](https://pepy.tech/badge/pot)](https://pepy.tech/project/pot)
 [![Anaconda downloads](https://anaconda.org/conda-forge/pot/badges/downloads.svg)](https://anaconda.org/conda-forge/pot)
 [![License](https://anaconda.org/conda-forge/pot/badges/license.svg)](https://github.com/PythonOT/POT/blob/master/LICENSE)
-
 
 This open source Python library provide several solvers for optimization
 problems related to Optimal Transport for signal, image processing and machine
@@ -21,7 +20,7 @@ POT provides the following generic OT solvers (links to examples):
 
 * [OT Network Simplex solver](https://pythonot.github.io/auto_examples/plot_OT_1D.html) for the linear program/ Earth Movers Distance [1] .
 * [Conditional gradient](https://pythonot.github.io/auto_examples/plot_optim_OTreg.html) [6] and [Generalized conditional gradient](https://pythonot.github.io/auto_examples/plot_optim_OTreg.html) for regularized OT [7].
-* Entropic regularization OT solver with [Sinkhorn Knopp Algorithm](https://pythonot.github.io/auto_examples/plot_OT_1D.html) [2] , stabilized version [9] [10], greedy Sinkhorn [22] and [Screening Sinkhorn [26] ](https://pythonot.github.io/auto_examples/plot_screenkhorn_1D.html) with optional GPU implementation (requires cupy).
+* Entropic regularization OT solver with [Sinkhorn Knopp Algorithm](https://pythonot.github.io/auto_examples/plot_OT_1D.html) [2] , stabilized version [9] [10], greedy Sinkhorn [22] and [Screening Sinkhorn [26] ](https://pythonot.github.io/auto_examples/plot_screenkhorn_1D.html).
 * Bregman projections for [Wasserstein barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html) [3], [convolutional barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_convolutional_barycenter.html) [21]  and unmixing [4].
 * Sinkhorn divergence [23] and entropic regularization OT  from empirical data.
 * [Smooth optimal transport solvers](https://pythonot.github.io/auto_examples/plot_OT_1D_smooth.html) (dual and semi-dual) for KL and squared L2 regularizations [17].
@@ -33,6 +32,8 @@ POT provides the following generic OT solvers (links to examples):
 * [Unbalanced OT](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_UOT_1D.html) with KL relaxation and [barycenter](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_UOT_barycenter_1D.html) [10, 25].
 * [Partial Wasserstein and Gromov-Wasserstein](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_partial_wass_and_gromov.html) (exact [29] and entropic [3]
   formulations).
+* [Sliced Wasserstein](https://pythonot.github.io/auto_examples/sliced-wasserstein/plot_variance.html) [31, 32].
+* [Several backends](https://pythonot.github.io/quickstart.html#solving-ot-with-multiple-backends) for easy use of POT with  [Pytorch](https://pytorch.org/)/[jax](https://github.com/google/jax)/[Numpy](https://numpy.org/) arrays.
 
 POT provides the following Machine Learning related solvers:
 
@@ -49,19 +50,25 @@ Some other examples are available in the  [documentation](https://pythonot.githu
 #### Using and citing the toolbox
 
 If you use this toolbox in your research and find it useful, please cite POT
-using the following reference:
-```
-Rémi Flamary and Nicolas Courty, POT Python Optimal Transport library, 
-Website: https://pythonot.github.io/, 2017
-```
+using the following reference from our [JMLR paper](https://jmlr.org/papers/v22/20-451.html):
+
+    Rémi Flamary, Nicolas Courty, Alexandre Gramfort, Mokhtar Z. Alaya, Aurélie Boisbunon, Stanislas Chambon, Laetitia Chapel, Adrien Corenflos, Kilian Fatras, Nemo Fournier, Léo Gautheron, Nathalie T.H. Gayraud, Hicham Janati, Alain Rakotomamonjy, Ievgen Redko, Antoine Rolet, Antony Schutz, Vivien Seguy, Danica J. Sutherland, Romain Tavenard, Alexander Tong, Titouan Vayer,
+    POT Python Optimal Transport library,
+    Journal of Machine Learning Research, 22(78):1−8, 2021.
+    Website: https://pythonot.github.io/
 
 In Bibtex format:
-```
-@misc{flamary2017pot,
-title={POT Python Optimal Transport library},
-author={Flamary, R{'e}mi and Courty, Nicolas},
-url={https://pythonot.github.io/},
-year={2017}
+
+```bibtex
+@article{flamary2021pot,
+  author  = {R{\'e}mi Flamary and Nicolas Courty and Alexandre Gramfort and Mokhtar Z. Alaya and Aur{\'e}lie Boisbunon and Stanislas Chambon and Laetitia Chapel and Adrien Corenflos and Kilian Fatras and Nemo Fournier and L{\'e}o Gautheron and Nathalie T.H. Gayraud and Hicham Janati and Alain Rakotomamonjy and Ievgen Redko and Antoine Rolet and Antony Schutz and Vivien Seguy and Danica J. Sutherland and Romain Tavenard and Alexander Tong and Titouan Vayer},
+  title   = {POT: Python Optimal Transport},
+  journal = {Journal of Machine Learning Research},
+  year    = {2021},
+  volume  = {22},
+  number  = {78},
+  pages   = {1-8},
+  url     = {http://jmlr.org/papers/v22/20-451.html}
 }
 ```
 
@@ -71,41 +78,45 @@ The library has been tested on Linux, MacOSX and Windows. It requires a C++ comp
 
 - Numpy (>=1.16)
 - Scipy (>=1.0)
-- Cython (>=0.23)
-- Matplotlib (>=1.5)
+- Cython (>=0.23) (build only, not necessary when installing wheels from pip or conda)
 
 #### Pip installation
 
 Note that due to a limitation of pip, `cython` and `numpy` need to be installed
 prior to installing POT. This can be done easily with
-```
+
+```console
 pip install numpy cython
 ```
 
 You can install the toolbox through PyPI with:
-```
+
+```console
 pip install POT
 ```
+
 or get the very latest version by running:
-```
+
+```console
 pip install -U https://github.com/PythonOT/POT/archive/master.zip # with --user for user install (no root)
 ```
-
-
 
 #### Anaconda installation with conda-forge
 
 If you use the Anaconda python distribution, POT is available in [conda-forge](https://conda-forge.org). To install it and the required dependencies:
-```
+
+```console
 conda install -c conda-forge pot
 ```
 
 #### Post installation check
 After a correct installation, you should be able to import the module without errors:
+
 ```python
 import ot
 ```
-Note that for easier access the module is name ot instead of pot.
+
+Note that for easier access the module is named `ot` instead of `pot`.
 
 
 ### Dependencies
@@ -113,42 +124,48 @@ Note that for easier access the module is name ot instead of pot.
 Some sub-modules require additional dependences which are discussed below
 
 * **ot.dr** (Wasserstein dimensionality reduction) depends on autograd and pymanopt that can be installed with:
-```
+
+```shell
 pip install pymanopt autograd
 ```
-* **ot.gpu** (GPU accelerated OT) depends on cupy that have to be installed following instructions on [this page](https://docs-cupy.chainer.org/en/stable/install.html).
 
-
-obviously you need CUDA installed and a compatible GPU.
+* **ot.gpu** (GPU accelerated OT) depends on cupy that have to be installed following instructions on [this page](https://docs-cupy.chainer.org/en/stable/install.html). Obviously you will need CUDA installed and a compatible GPU. Note that this module is deprecated since version 0.8 and will be deleted in the future. GPU is now handled automatically through the backends and several solver already can run on GPU using the Pytorch backend.
 
 ## Examples
 
 ### Short examples
 
 * Import the toolbox
+
 ```python
 import ot
 ```
+
 * Compute Wasserstein distances
+
 ```python
 # a,b are 1D histograms (sum to 1 and positive)
 # M is the ground cost matrix
-Wd=ot.emd2(a,b,M) # exact linear program
-Wd_reg=ot.sinkhorn2(a,b,M,reg) # entropic regularized OT
+Wd = ot.emd2(a, b, M) # exact linear program
+Wd_reg = ot.sinkhorn2(a, b, M, reg) # entropic regularized OT
 # if b is a matrix compute all distances to a and return a vector
 ```
+
 * Compute OT matrix
+
 ```python
 # a,b are 1D histograms (sum to 1 and positive)
 # M is the ground cost matrix
-T=ot.emd(a,b,M) # exact linear program
-T_reg=ot.sinkhorn(a,b,M,reg) # entropic regularized OT
+T = ot.emd(a, b, M) # exact linear program
+T_reg = ot.sinkhorn(a, b, M, reg) # entropic regularized OT
 ```
+
 * Compute Wasserstein barycenter
+
 ```python
 # A is a n*d matrix containing d  1D histograms
 # M is the ground cost matrix
-ba=ot.barycenter(A,M,reg) # reg is regularization parameter
+ba = ot.barycenter(A, M, reg) # reg is regularization parameter
 ```
 
 ### Examples and Notebooks
@@ -180,27 +197,28 @@ The contributors to this library are
 * [Romain Tavenard](https://rtavenar.github.io/) (1d Wasserstein)
 * [Mokhtar Z. Alaya](http://mzalaya.github.io/) (Screenkhorn)
 * [Ievgen Redko](https://ievred.github.io/) (Laplacian DA, JCPOT)
+* [Adrien Corenflos](https://adriencorenflos.github.io/) (Sliced Wasserstein Distance)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
 * [Gabriel Peyré](http://gpeyre.github.io/) (Wasserstein Barycenters in Matlab)
+* [Mathieu Blondel](https://mblondel.org/) (original implementation smooth OT)
 * [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) ( C++ code for EMD)
 * [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
 
-
 ## Contributions and code of conduct
 
-Every contribution is welcome and should respect the [contribution guidelines](CONTRIBUTING.md). Each member of the project is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).
+Every contribution is welcome and should respect the [contribution guidelines](.github/CONTRIBUTING.md). Each member of the project is expected to follow the [code of conduct](.github/CODE_OF_CONDUCT.md).
 
 ## Support
 
 You can ask questions and join the development discussion:
 
-* On the [POT Slack channel](https://pot-toolbox.slack.com)
+* On the POT [slack channel](https://pot-toolbox.slack.com)
+* On the POT [gitter channel](https://gitter.im/PythonOT/community)
 * On the POT [mailing list](https://mail.python.org/mm3/mailman3/lists/pot.python.org/)
 
-
-You can also post bug reports and feature requests in Github issues. Make sure to read our [guidelines](CONTRIBUTING.md) first.
+You can also post bug reports and feature requests in Github issues. Make sure to read our [guidelines](.github/CONTRIBUTING.md) first.
 
 ## References
 
@@ -260,6 +278,8 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 
 [28] Caffarelli, L. A., McCann, R. J. (2010). [Free boundaries in optimal transport and Monge-Ampere obstacle problems](http://www.math.toronto.edu/~mccann/papers/annals2010.pdf), Annals of mathematics, 673-730.
 
-[29] Chapel, L., Alaya, M., Gasso, G. (2019). [Partial Gromov-Wasserstein with Applications on Positive-Unlabeled Learning](https://arxiv.org/abs/2002.08276), arXiv preprint arXiv:2002.08276.
+[29] Chapel, L., Alaya, M., Gasso, G. (2020). [Partial Optimal Transport with Applications on Positive-Unlabeled Learning](https://arxiv.org/abs/2002.08276), Advances in Neural Information Processing Systems (NeurIPS), 2020.
 
 [30] Flamary R., Courty N., Tuia D., Rakotomamonjy A. (2014). [Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching](https://remi.flamary.com/biblio/flamary2014optlaplace.pdf), NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
+
+[31] Bonneel, Nicolas, et al. [Sliced and radon wasserstein barycenters of measures](https://perso.liris.cnrs.fr/nicolas.bonneel/WassersteinSliced-JMIV.pdf), Journal of Mathematical Imaging and Vision 51.1 (2015): 22-45

@@ -11,13 +11,18 @@ Bregman projections solvers for entropic regularized OT
 #         Mokhtar Z. Alaya <mokhtarzahdi.alaya@gmail.com>
 #         Alexander Tong <alexander.tong@yale.edu>
 #         Ievgen Redko <ievgen.redko@univ-st-etienne.fr>
+#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
 # License: MIT License
 
-import numpy as np
 import warnings
-from .utils import unif, dist
+
+import numpy as np
 from scipy.optimize import fmin_l_bfgs_b
+from scipy.special import logsumexp
+
+from ot.utils import unif, dist, list_to_array
+from .backend import get_backend
 
 
 def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
@@ -41,17 +46,36 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - a and b are source and target weights (histograms, both sum to 1)
 
-    The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling algorithm as proposed in [2]_
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends.
+
+    The algorithm used for solving the problem is the Sinkhorn-Knopp matrix
+    scaling algorithm as proposed in [2]_
+
+    **Choosing a Sinkhorn solver**
+
+    By default and when using a regularization parameter that is not too small
+    the default sinkhorn solver should be enough. If you need to use a small
+    regularization to get sharper OT matrices, you should use the
+    :any:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical
+    errors. This last solver can be very slow in practice and might not even
+    converge to a reasonable OT matrix in a finite time. This is why
+    :any:`ot.bregman.sinkhorn_epsilon_scaling` that relies on iterating the value
+    of the regularization (and using warm start) sometimes leads to better
+    solutions. Note that the greedy version of the sinkhorn
+    :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
+    version of the sinkhorn :any:`ot.bregman.screenkhorn` aim a providing  a
+    fast approximation of the Sinkhorn problem.
 
 
     Parameters
     ----------
-    a : ndarray, shape (dim_a,)
+    a : array-like, shape (dim_a,)
         samples weights in the source domain
-    b : ndarray, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
+    b : array-like, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
         samples in the target domain, compute sinkhorn with multiple targets
         and fixed M if b is a matrix (return OT loss + dual variables in log)
-    M : ndarray, shape (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
@@ -67,10 +91,9 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     log : bool, optional
         record log if True
 
-
     Returns
     -------
-    gamma : ndarray, shape (dim_a, dim_b)
+    gamma : array-like, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -149,23 +172,40 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - a and b are source and target weights (histograms, both sum to 1)
 
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends.
+
     The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling algorithm as proposed in [2]_
 
 
+    **Choosing a Sinkhorn solver**
+
+    By default and when using a regularization parameter that is not too small
+    the default sinkhorn solver should be enough. If you need to use a small
+    regularization to get sharper OT matrices, you should use the
+    :any:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical
+    errors. This last solver can be very slow in practice and might not even
+    converge to a reasonable OT matrix in a finite time. This is why
+    :any:`ot.bregman.sinkhorn_epsilon_scaling` that relies on iterating the value
+    of the regularization (and using warm start) sometimes leads to better
+    solutions. Note that the greedy version of the sinkhorn
+    :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
+    version of the sinkhorn :any:`ot.bregman.screenkhorn` aim a providing  a
+    fast approximation of the Sinkhorn problem.
+
     Parameters
     ----------
-    a : ndarray, shape (dim_a,)
+    a : array-like, shape (dim_a,)
         samples weights in the source domain
-    b : ndarray, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
+    b : array-like, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
         samples in the target domain, compute sinkhorn with multiple targets
         and fixed M if b is a matrix (return OT loss + dual variables in log)
-    M : ndarray, shape (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
     method : str
-        method used for the solver either 'sinkhorn',  'sinkhorn_stabilized' or
-        'sinkhorn_epsilon_scaling', see those function for specific parameters
+        method used for the solver either 'sinkhorn',  'sinkhorn_stabilized', see those function for specific parameters
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -177,10 +217,11 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
     Returns
     -------
-    W : (n_hists) ndarray or float
+    W : (n_hists) float/array-like
         Optimal transportation loss for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
+
 
     Examples
     --------
@@ -214,12 +255,13 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     ot.bregman.sinkhorn_knopp : Classic Sinkhorn [2]
     ot.bregman.greenkhorn : Greenkhorn [21]
     ot.bregman.sinkhorn_stabilized: Stabilized sinkhorn [9][10]
-    ot.bregman.sinkhorn_epsilon_scaling: Sinkhorn with epslilon scaling [9][10]
 
     """
-    b = np.asarray(b, dtype=np.float64)
+
+    b = list_to_array(b)
     if len(b.shape) < 2:
         b = b[:, None]
+
     if method.lower() == 'sinkhorn':
         return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
                               stopThr=stopThr, verbose=verbose, log=log,
@@ -228,10 +270,6 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
         return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
                                    stopThr=stopThr, verbose=verbose, log=log,
                                    **kwargs)
-    elif method.lower() == 'sinkhorn_epsilon_scaling':
-        return sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=numItermax,
-                                        stopThr=stopThr, verbose=verbose,
-                                        log=log, **kwargs)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
@@ -312,14 +350,14 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
 
     """
 
-    a = np.asarray(a, dtype=np.float64)
-    b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    a, b, M = list_to_array(a, b, M)
+
+    nx = get_backend(M, a, b)
 
     if len(a) == 0:
-        a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
+        a = nx.full((M.shape[0],), 1.0 / M.shape[0], type_as=M)
     if len(b) == 0:
-        b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
+        b = nx.full((M.shape[1],), 1.0 / M.shape[1], type_as=M)
 
     # init data
     dim_a = len(a)
@@ -336,21 +374,13 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
     # we assume that no distances are null except those of the diagonal of
     # distances
     if n_hists:
-        u = np.ones((dim_a, n_hists)) / dim_a
-        v = np.ones((dim_b, n_hists)) / dim_b
+        u = nx.ones((dim_a, n_hists), type_as=M) / dim_a
+        v = nx.ones((dim_b, n_hists), type_as=M) / dim_b
     else:
-        u = np.ones(dim_a) / dim_a
-        v = np.ones(dim_b) / dim_b
+        u = nx.ones(dim_a, type_as=M) / dim_a
+        v = nx.ones(dim_b, type_as=M) / dim_b
 
-    # print(reg)
-
-    # Next 3 lines equivalent to K= np.exp(-M/reg), but faster to compute
-    K = np.empty(M.shape, dtype=M.dtype)
-    np.divide(M, -reg, out=K)
-    np.exp(K, out=K)
-
-    # print(np.min(K))
-    tmp2 = np.empty(b.shape, dtype=M.dtype)
+    K = nx.exp(M / (-reg))
 
     Kp = (1 / a).reshape(-1, 1) * K
     cpt = 0
@@ -359,13 +389,13 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
         uprev = u
         vprev = v
 
-        KtransposeU = np.dot(K.T, u)
-        v = np.divide(b, KtransposeU)
-        u = 1. / np.dot(Kp, v)
+        KtransposeU = nx.dot(K.T, u)
+        v = b / KtransposeU
+        u = 1. / nx.dot(Kp, v)
 
-        if (np.any(KtransposeU == 0)
-                or np.any(np.isnan(u)) or np.any(np.isnan(v))
-                or np.any(np.isinf(u)) or np.any(np.isinf(v))):
+        if (nx.any(KtransposeU == 0)
+                or nx.any(nx.isnan(u)) or nx.any(nx.isnan(v))
+                or nx.any(nx.isinf(u)) or nx.any(nx.isinf(v))):
             # we have reached the machine precision
             # come back to previous solution and quit loop
             print('Warning: numerical errors at iteration', cpt)
@@ -376,11 +406,11 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
             # we can speed up the process by checking for the error only all
             # the 10th iterations
             if n_hists:
-                np.einsum('ik,ij,jk->jk', u, K, v, out=tmp2)
+                tmp2 = nx.einsum('ik,ij,jk->jk', u, K, v)
             else:
                 # compute right marginal tmp2= (diag(u)Kdiag(v))^T1
-                np.einsum('i,ij,j->j', u, K, v, out=tmp2)
-            err = np.linalg.norm(tmp2 - b)  # violation of marginal
+                tmp2 = nx.einsum('i,ij,j->j', u, K, v)
+            err = nx.norm(tmp2 - b)  # violation of marginal
             if log:
                 log['err'].append(err)
 
@@ -395,7 +425,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
         log['v'] = v
 
     if n_hists:  # return only loss
-        res = np.einsum('ik,ij,jk,ij->k', u, K, v, M)
+        res = nx.einsum('ik,ij,jk,ij->k', u, K, v, M)
         if log:
             return res, log
         else:
@@ -715,8 +745,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         # remove numerical problems and store them in K
         if np.abs(u).max() > tau or np.abs(v).max() > tau:
             if n_hists:
-                alpha, beta = alpha + reg * \
-                    np.max(np.log(u), 1), beta + reg * np.max(np.log(v))
+                alpha, beta = alpha + reg * np.max(np.log(u), 1), beta + reg * np.max(np.log(v))
             else:
                 alpha, beta = alpha + reg * np.log(u), beta + reg * np.log(v)
                 if n_hists:
@@ -1657,7 +1686,7 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
 
 
 def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
-                       numIterMax=10000, stopThr=1e-9, verbose=False,
+                       numIterMax=10000, stopThr=1e-9, isLazy=False, batchSize=100, verbose=False,
                        log=False, **kwargs):
     r'''
     Solve the entropic regularization optimal transport problem and return the
@@ -1696,6 +1725,12 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         Max number of iterations
     stopThr : float, optional
         Stop threshol on error (>0)
+    isLazy: boolean, optional
+        If True, then only calculate the cost matrix by block and return the dual potentials only (to save memory)
+        If False, calculate full cost matrix and return outputs of sinkhorn function.
+    batchSize: int or tuple of 2 int, optional
+        Size of the batcheses used to compute the sinkhorn update without memory overhead.
+        When a tuple is provided it sets the size of the left/right batches.
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -1717,7 +1752,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     >>> reg = 0.1
     >>> X_s = np.reshape(np.arange(n_samples_a), (n_samples_a, 1))
     >>> X_t = np.reshape(np.arange(0, n_samples_b), (n_samples_b, 1))
-    >>> empirical_sinkhorn(X_s, X_t, reg, verbose=False)  # doctest: +NORMALIZE_WHITESPACE
+    >>> empirical_sinkhorn(X_s, X_t, reg=reg, verbose=False)  # doctest: +NORMALIZE_WHITESPACE
     array([[4.99977301e-01,  2.26989344e-05],
            [2.26989344e-05,  4.99977301e-01]])
 
@@ -1731,24 +1766,78 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
 
     .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016). Scaling algorithms for unbalanced transport problems. arXiv preprint arXiv:1607.05816.
     '''
-
+    ns, nt = X_s.shape[0], X_t.shape[0]
     if a is None:
-        a = unif(np.shape(X_s)[0])
+        a = unif(ns)
     if b is None:
-        b = unif(np.shape(X_t)[0])
+        b = unif(nt)
 
-    M = dist(X_s, X_t, metric=metric)
+    if isLazy:
+        if log:
+            dict_log = {"err": []}
 
-    if log:
-        pi, log = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr, verbose=verbose, log=True, **kwargs)
-        return pi, log
+        log_a, log_b = np.log(a), np.log(b)
+        f, g = np.zeros(ns), np.zeros(nt)
+
+        if isinstance(batchSize, int):
+            bs, bt = batchSize, batchSize
+        elif isinstance(batchSize, tuple) and len(batchSize) == 2:
+            bs, bt = batchSize[0], batchSize[1]
+        else:
+            raise ValueError("Batch size must be in integer or a tuple of two integers")
+
+        range_s, range_t = range(0, ns, bs), range(0, nt, bt)
+
+        lse_f = np.zeros(ns)
+        lse_g = np.zeros(nt)
+
+        for i_ot in range(numIterMax):
+
+            for i in range_s:
+                M = dist(X_s[i:i + bs, :], X_t, metric=metric)
+                lse_f[i:i + bs] = logsumexp(g[None, :] - M / reg, axis=1)
+            f = log_a - lse_f
+
+            for j in range_t:
+                M = dist(X_s, X_t[j:j + bt, :], metric=metric)
+                lse_g[j:j + bt] = logsumexp(f[:, None] - M / reg, axis=0)
+            g = log_b - lse_g
+
+            if (i_ot + 1) % 10 == 0:
+                m1 = np.zeros_like(a)
+                for i in range_s:
+                    M = dist(X_s[i:i + bs, :], X_t, metric=metric)
+                    m1[i:i + bs] = np.exp(f[i:i + bs, None] + g[None, :] - M / reg).sum(1)
+                err = np.abs(m1 - a).sum()
+                if log:
+                    dict_log["err"].append(err)
+
+                if verbose and (i_ot + 1) % 100 == 0:
+                    print("Error in marginal at iteration {} = {}".format(i_ot + 1, err))
+
+                if err <= stopThr:
+                    break
+
+        if log:
+            dict_log["u"] = f
+            dict_log["v"] = g
+            return (f, g, dict_log)
+        else:
+            return (f, g)
+
     else:
-        pi = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr, verbose=verbose, log=False, **kwargs)
-        return pi
+        M = dist(X_s, X_t, metric=metric)
+
+        if log:
+            pi, log = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr, verbose=verbose, log=True, **kwargs)
+            return pi, log
+        else:
+            pi = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr, verbose=verbose, log=False, **kwargs)
+            return pi
 
 
 def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numIterMax=10000, stopThr=1e-9,
-                        verbose=False, log=False, **kwargs):
+                        isLazy=False, batchSize=100, verbose=False, log=False, **kwargs):
     r'''
     Solve the entropic regularization optimal transport problem from empirical
     data and return the OT loss
@@ -1787,6 +1876,12 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
         Max number of iterations
     stopThr : float, optional
         Stop threshol on error (>0)
+    isLazy: boolean, optional
+        If True, then only calculate the cost matrix by block and return the dual potentials only (to save memory)
+        If False, calculate full cost matrix and return outputs of sinkhorn function.
+    batchSize: int or tuple of 2 int, optional
+        Size of the batcheses used to compute the sinkhorn update without memory overhead.
+        When a tuple is provided it sets the size of the left/right batches.
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -1795,8 +1890,8 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
 
     Returns
     -------
-    gamma : ndarray, shape (n_samples_a, n_samples_b)
-        Regularized optimal transportation matrix for the given parameters
+    W : (n_hists) ndarray or float
+        Optimal transportation loss for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
 
@@ -1808,8 +1903,9 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
     >>> reg = 0.1
     >>> X_s = np.reshape(np.arange(n_samples_a), (n_samples_a, 1))
     >>> X_t = np.reshape(np.arange(0, n_samples_b), (n_samples_b, 1))
-    >>> empirical_sinkhorn2(X_s, X_t, reg, verbose=False)
-    array([4.53978687e-05])
+    >>> b = np.full((n_samples_b, 3), 1/n_samples_b)
+    >>> empirical_sinkhorn2(X_s, X_t, b=b, reg=reg, verbose=False)
+    array([4.53978687e-05, 4.53978687e-05, 4.53978687e-05])
 
 
     References
@@ -1822,21 +1918,45 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
     .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016). Scaling algorithms for unbalanced transport problems. arXiv preprint arXiv:1607.05816.
     '''
 
+    ns, nt = X_s.shape[0], X_t.shape[0]
     if a is None:
-        a = unif(np.shape(X_s)[0])
+        a = unif(ns)
     if b is None:
-        b = unif(np.shape(X_t)[0])
+        b = unif(nt)
 
-    M = dist(X_s, X_t, metric=metric)
+    if isLazy:
+        if log:
+            f, g, dict_log = empirical_sinkhorn(X_s, X_t, reg, a, b, metric, numIterMax=numIterMax, stopThr=stopThr,
+                                                isLazy=isLazy, batchSize=batchSize, verbose=verbose, log=log)
+        else:
+            f, g = empirical_sinkhorn(X_s, X_t, reg, a, b, metric, numIterMax=numIterMax, stopThr=stopThr,
+                                      isLazy=isLazy, batchSize=batchSize, verbose=verbose, log=log)
 
-    if log:
-        sinkhorn_loss, log = sinkhorn2(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr, verbose=verbose, log=log,
-                                       **kwargs)
-        return sinkhorn_loss, log
+        bs = batchSize if isinstance(batchSize, int) else batchSize[0]
+        range_s = range(0, ns, bs)
+
+        loss = 0
+        for i in range_s:
+            M_block = dist(X_s[i:i + bs, :], X_t, metric=metric)
+            pi_block = np.exp(f[i:i + bs, None] + g[None, :] - M_block / reg)
+            loss += np.sum(M_block * pi_block)
+
+        if log:
+            return loss, dict_log
+        else:
+            return loss
+
     else:
-        sinkhorn_loss = sinkhorn2(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr, verbose=verbose, log=log,
-                                  **kwargs)
-        return sinkhorn_loss
+        M = dist(X_s, X_t, metric=metric)
+
+        if log:
+            sinkhorn_loss, log = sinkhorn2(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr, verbose=verbose, log=log,
+                                           **kwargs)
+            return sinkhorn_loss, log
+        else:
+            sinkhorn_loss = sinkhorn2(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr, verbose=verbose, log=log,
+                                      **kwargs)
+            return sinkhorn_loss
 
 
 def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', numIterMax=10000, stopThr=1e-9,
@@ -1905,8 +2025,8 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     Returns
     -------
-    gamma : ndarray, shape (n_samples_a, n_samples_b)
-        Regularized optimal transportation matrix for the given parameters
+    W : (1,) ndarray
+        Optimal transportation symmetrized loss for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
 
@@ -1929,13 +2049,13 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
         sinkhorn_loss_ab, log_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric, numIterMax=numIterMax,
                                                        stopThr=1e-9, verbose=verbose, log=log, **kwargs)
 
-        sinkhorn_loss_a, log_a = empirical_sinkhorn2(X_s, X_s, reg, a, b, metric=metric, numIterMax=numIterMax,
+        sinkhorn_loss_a, log_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric, numIterMax=numIterMax,
                                                      stopThr=1e-9, verbose=verbose, log=log, **kwargs)
 
-        sinkhorn_loss_b, log_b = empirical_sinkhorn2(X_t, X_t, reg, a, b, metric=metric, numIterMax=numIterMax,
+        sinkhorn_loss_b, log_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric, numIterMax=numIterMax,
                                                      stopThr=1e-9, verbose=verbose, log=log, **kwargs)
 
-        sinkhorn_div = sinkhorn_loss_ab - 1 / 2 * (sinkhorn_loss_a + sinkhorn_loss_b)
+        sinkhorn_div = sinkhorn_loss_ab - 0.5 * (sinkhorn_loss_a + sinkhorn_loss_b)
 
         log = {}
         log['sinkhorn_loss_ab'] = sinkhorn_loss_ab
@@ -1951,13 +2071,13 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
         sinkhorn_loss_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric, numIterMax=numIterMax, stopThr=1e-9,
                                                verbose=verbose, log=log, **kwargs)
 
-        sinkhorn_loss_a = empirical_sinkhorn2(X_s, X_s, reg, a, b, metric=metric, numIterMax=numIterMax, stopThr=1e-9,
+        sinkhorn_loss_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric, numIterMax=numIterMax, stopThr=1e-9,
                                               verbose=verbose, log=log, **kwargs)
 
-        sinkhorn_loss_b = empirical_sinkhorn2(X_t, X_t, reg, a, b, metric=metric, numIterMax=numIterMax, stopThr=1e-9,
+        sinkhorn_loss_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric, numIterMax=numIterMax, stopThr=1e-9,
                                               verbose=verbose, log=log, **kwargs)
 
-        sinkhorn_div = sinkhorn_loss_ab - 1 / 2 * (sinkhorn_loss_a + sinkhorn_loss_b)
+        sinkhorn_div = sinkhorn_loss_ab - 0.5 * (sinkhorn_loss_a + sinkhorn_loss_b)
         return max(0, sinkhorn_div)
 
 
@@ -2182,11 +2302,11 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
 
         # box constraints in L-BFGS-B (see Proposition 1 in [26])
         bounds_u = [(max(a_I_min / ((nt - nt_budget) * epsilon + nt_budget * (b_J_max / (
-            ns * epsilon * kappa * K_min))), epsilon / kappa), a_I_max / (nt * epsilon * K_min))] * ns_budget
+                    ns * epsilon * kappa * K_min))), epsilon / kappa), a_I_max / (nt * epsilon * K_min))] * ns_budget
 
         bounds_v = [(
-                    max(b_J_min / ((ns - ns_budget) * epsilon + ns_budget * (kappa * a_I_max / (nt * epsilon * K_min))),
-                        epsilon * kappa), b_J_max / (ns * epsilon * K_min))] * nt_budget
+            max(b_J_min / ((ns - ns_budget) * epsilon + ns_budget * (kappa * a_I_max / (nt * epsilon * K_min))),
+                epsilon * kappa), b_J_max / (ns * epsilon * K_min))] * nt_budget
 
         # pre-calculated constants for the objective
         vec_eps_IJc = epsilon * kappa * (K_IJc * np.ones(nt - nt_budget).reshape((1, -1))).sum(axis=1)

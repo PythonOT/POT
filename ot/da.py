@@ -26,7 +26,7 @@ from .optim import gcg
 def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
                      numInnerItermax=200, stopInnerThr=1e-9, verbose=False,
                      log=False):
-    """
+    r"""
     Solve the entropic regularization optimal transport problem with nonconvex
     group lasso regularization
 
@@ -137,7 +137,7 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
 def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
                      numInnerItermax=200, stopInnerThr=1e-9, verbose=False,
                      log=False):
-    """
+    r"""
     Solve the entropic regularization optimal transport problem with group
     lasso regularization
 
@@ -245,7 +245,7 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
                             verbose2=False, numItermax=100, numInnerItermax=10,
                             stopInnerThr=1e-6, stopThr=1e-5, log=False,
                             **kwargs):
-    """Joint OT and linear mapping estimation as proposed in [8]
+    r"""Joint OT and linear mapping estimation as proposed in [8]
 
     The function solves the following optimization problem:
 
@@ -434,7 +434,7 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
                             numItermax=100, numInnerItermax=10,
                             stopInnerThr=1e-6, stopThr=1e-5, log=False,
                             **kwargs):
-    """Joint OT and nonlinear mapping estimation with kernels as proposed in [8]
+    r"""Joint OT and nonlinear mapping estimation with kernels as proposed in [8]
 
     The function solves the following optimization problem:
 
@@ -645,7 +645,7 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
 
 def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
                       wt=None, bias=True, log=False):
-    """ return OT linear operator between samples
+    r""" return OT linear operator between samples
 
     The function estimates the optimal linear operator that aligns the two
     empirical distributions. This is equivalent to estimating the closed
@@ -1111,7 +1111,7 @@ class BaseTransport(BaseEstimator):
             D1 = np.zeros((n, len(ysTemp)))
 
             # perform label propagation
-            transp = self.coupling_ / np.sum(self.coupling_, 1)[:, None]
+            transp = self.coupling_ / np.sum(self.coupling_, 0, keepdims=True)
 
             # set nans to 0
             transp[~ np.isfinite(transp)] = 0
@@ -1228,7 +1228,7 @@ class BaseTransport(BaseEstimator):
 
 
 class LinearTransport(BaseTransport):
-    """ OT linear operator between empirical distributions
+    r""" OT linear operator between empirical distributions
 
     The function estimates the optimal linear operator that aligns the two
     empirical distributions. This is equivalent to estimating the closed

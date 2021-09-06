@@ -2,12 +2,18 @@
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Kilian Fatras <kilian.fatras@irisa.fr>
+#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
 # License: MIT License
 
 import numpy as np
-import ot
 import pytest
+
+import ot
+from ot.backend import get_backend_list
+from ot.backend import torch
+
+backend_list = get_backend_list()
 
 
 def test_sinkhorn():
@@ -27,6 +33,76 @@ def test_sinkhorn():
         u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
     np.testing.assert_allclose(
         u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
+
+
+@pytest.mark.parametrize('nx', backend_list)
+def test_sinkhorn_backends(nx):
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    G = ot.sinkhorn(a, a, M, 1)
+
+    ab = nx.from_numpy(a)
+    Mb = nx.from_numpy(M)
+
+    Gb = ot.sinkhorn(ab, ab, Mb, 1)
+
+    np.allclose(G, nx.to_numpy(Gb))
+
+
+@pytest.mark.parametrize('nx', backend_list)
+def test_sinkhorn2_backends(nx):
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    G = ot.sinkhorn(a, a, M, 1)
+
+    ab = nx.from_numpy(a)
+    Mb = nx.from_numpy(M)
+
+    Gb = ot.sinkhorn2(ab, ab, Mb, 1)
+
+    np.allclose(G, nx.to_numpy(Gb))
+
+
+def test_sinkhorn2_gradients():
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    if torch:
+
+        a1 = torch.tensor(a, requires_grad=True)
+        b1 = torch.tensor(a, requires_grad=True)
+        M1 = torch.tensor(M, requires_grad=True)
+
+        val = ot.sinkhorn2(a1, b1, M1, 1)
+
+        val.backward()
+
+        assert a1.shape == a1.grad.shape
+        assert b1.shape == b1.grad.shape
+        assert M1.shape == M1.grad.shape
 
 
 def test_sinkhorn_empty():
@@ -217,7 +293,7 @@ def test_unmix():
 
 def test_empirical_sinkhorn():
     # test sinkhorn
-    n = 100
+    n = 10
     a = ot.unif(n)
     b = ot.unif(n)
 
@@ -254,10 +330,54 @@ def test_empirical_sinkhorn():
     np.testing.assert_allclose(loss_emp_sinkhorn, loss_sinkhorn, atol=1e-05)
 
 
+def test_lazy_empirical_sinkhorn():
+    # test sinkhorn
+    n = 10
+    a = ot.unif(n)
+    b = ot.unif(n)
+    numIterMax = 1000
+
+    X_s = np.reshape(np.arange(n), (n, 1))
+    X_t = np.reshape(np.arange(0, n), (n, 1))
+    M = ot.dist(X_s, X_t)
+    M_m = ot.dist(X_s, X_t, metric='minkowski')
+
+    f, g = ot.bregman.empirical_sinkhorn(X_s, X_t, 1, numIterMax=numIterMax, isLazy=True, batchSize=(1, 3), verbose=True)
+    G_sqe = np.exp(f[:, None] + g[None, :] - M / 1)
+    sinkhorn_sqe = ot.sinkhorn(a, b, M, 1)
+
+    f, g, log_es = ot.bregman.empirical_sinkhorn(X_s, X_t, 0.1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
+    G_log = np.exp(f[:, None] + g[None, :] - M / 0.1)
+    sinkhorn_log, log_s = ot.sinkhorn(a, b, M, 0.1, log=True)
+
+    f, g = ot.bregman.empirical_sinkhorn(X_s, X_t, 1, metric='minkowski', numIterMax=numIterMax, isLazy=True, batchSize=1)
+    G_m = np.exp(f[:, None] + g[None, :] - M_m / 1)
+    sinkhorn_m = ot.sinkhorn(a, b, M_m, 1)
+
+    loss_emp_sinkhorn, log = ot.bregman.empirical_sinkhorn2(X_s, X_t, 1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
+    loss_sinkhorn = ot.sinkhorn2(a, b, M, 1)
+
+    # check constratints
+    np.testing.assert_allclose(
+        sinkhorn_sqe.sum(1), G_sqe.sum(1), atol=1e-05)  # metric sqeuclidian
+    np.testing.assert_allclose(
+        sinkhorn_sqe.sum(0), G_sqe.sum(0), atol=1e-05)  # metric sqeuclidian
+    np.testing.assert_allclose(
+        sinkhorn_log.sum(1), G_log.sum(1), atol=1e-05)  # log
+    np.testing.assert_allclose(
+        sinkhorn_log.sum(0), G_log.sum(0), atol=1e-05)  # log
+    np.testing.assert_allclose(
+        sinkhorn_m.sum(1), G_m.sum(1), atol=1e-05)  # metric euclidian
+    np.testing.assert_allclose(
+        sinkhorn_m.sum(0), G_m.sum(0), atol=1e-05)  # metric euclidian
+    np.testing.assert_allclose(loss_emp_sinkhorn, loss_sinkhorn, atol=1e-05)
+
+
 def test_empirical_sinkhorn_divergence():
     # Test sinkhorn divergence
     n = 10
-    a = ot.unif(n)
+    a = np.linspace(1, n, n)
+    a /= a.sum()
     b = ot.unif(n)
     X_s = np.reshape(np.arange(n), (n, 1))
     X_t = np.reshape(np.arange(0, n * 2, 2), (n, 1))
@@ -265,16 +385,15 @@ def test_empirical_sinkhorn_divergence():
     M_s = ot.dist(X_s, X_s)
     M_t = ot.dist(X_t, X_t)
 
-    emp_sinkhorn_div = ot.bregman.empirical_sinkhorn_divergence(X_s, X_t, 1)
+    emp_sinkhorn_div = ot.bregman.empirical_sinkhorn_divergence(X_s, X_t, 1, a=a, b=b)
     sinkhorn_div = (ot.sinkhorn2(a, b, M, 1) - 1 / 2 * ot.sinkhorn2(a, a, M_s, 1) - 1 / 2 * ot.sinkhorn2(b, b, M_t, 1))
 
-    emp_sinkhorn_div_log, log_es = ot.bregman.empirical_sinkhorn_divergence(X_s, X_t, 1, log=True)
+    emp_sinkhorn_div_log, log_es = ot.bregman.empirical_sinkhorn_divergence(X_s, X_t, 1, a=a, b=b, log=True)
     sink_div_log_ab, log_s_ab = ot.sinkhorn2(a, b, M, 1, log=True)
     sink_div_log_a, log_s_a = ot.sinkhorn2(a, a, M_s, 1, log=True)
     sink_div_log_b, log_s_b = ot.sinkhorn2(b, b, M_t, 1, log=True)
     sink_div_log = sink_div_log_ab - 1 / 2 * (sink_div_log_a + sink_div_log_b)
-
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(
         emp_sinkhorn_div, sinkhorn_div, atol=1e-05)  # cf conv emp sinkhorn
     np.testing.assert_allclose(
@@ -320,8 +439,9 @@ def test_implemented_methods():
     # make dists unbalanced
     b = ot.utils.unif(n)
     A = rng.rand(n, 2)
+    A /= A.sum(0, keepdims=True)
     M = ot.dist(x, x)
-    epsilon = 1.
+    epsilon = 1.0
 
     for method in IMPLEMENTED_METHODS:
         ot.bregman.sinkhorn(a, b, M, epsilon, method=method)
@@ -338,6 +458,7 @@ def test_implemented_methods():
             ot.bregman.sinkhorn2(a, b, M, epsilon, method=method)
 
 
+@pytest.mark.filterwarnings("ignore:Bottleneck")
 def test_screenkhorn():
     # test screenkhorn
     rng = np.random.RandomState(0)

@@ -51,10 +51,12 @@ def test_raise_errors():
         ot.partial.partial_gromov_wasserstein(M, M, p, q, m=-1, log=True)
 
     with pytest.raises(ValueError):
-        ot.partial.entropic_partial_gromov_wasserstein(M, M, p, q, reg=1, m=2, log=True)
+        ot.partial.entropic_partial_gromov_wasserstein(M, M, p, q, reg=1, m=2,
+                                                       log=True)
 
     with pytest.raises(ValueError):
-        ot.partial.entropic_partial_gromov_wasserstein(M, M, p, q, reg=1, m=-1, log=True)
+        ot.partial.entropic_partial_gromov_wasserstein(M, M, p, q, reg=1, m=-1,
+                                                       log=True)
 
 
 def test_partial_wasserstein_lagrange():
@@ -127,9 +129,9 @@ def test_partial_wasserstein():
 
     # check constratints
     np.testing.assert_equal(
-        G.sum(1) <= p, [True] * len(p))  # cf convergence wasserstein
+        G.sum(1) - p <= 1e-5, [True] * len(p))  # cf convergence wasserstein
     np.testing.assert_equal(
-        G.sum(0) <= q, [True] * len(q))  # cf convergence wasserstein
+        G.sum(0) - q <= 1e-5, [True] * len(q))  # cf convergence wasserstein
     np.testing.assert_allclose(
         np.sum(G), m, atol=1e-04)
 

@@ -92,7 +92,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'POT Python Optimal Transport'
-copyright = u'2016-2020, Rémi Flamary, Nicolas Courty'
+copyright = u'2016-2021, Rémi Flamary, Nicolas Courty'
 author = u'Rémi Flamary, Nicolas Courty'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -162,7 +162,7 @@ html_theme = 'sphinx_rtd_theme'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
@@ -337,7 +337,8 @@ texinfo_documents = [
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy/', None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
-                       'matplotlib': ('http://matplotlib.org/', None)}
+                       'matplotlib': ('http://matplotlib.org/', None),
+                       'torch': ('https://pytorch.org/docs/stable/', None)}
 
 sphinx_gallery_conf = {
     'examples_dirs': ['../../examples', '../../examples/da'],
@@ -345,6 +346,7 @@ sphinx_gallery_conf = {
     'backreferences_dir':  'gen_modules/backreferences',
 	'inspect_global_variables'  : True,
     'doc_module'          : ('ot','numpy','scipy','pylab'),
+    'matplotlib_animations': True,
     'reference_url': {
 	'ot': None}
 }
