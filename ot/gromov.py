@@ -631,7 +631,7 @@ def GW_distance_estimation(C1, C2, p, q, loss_fun, T, number_sample=[-1, -1], st
     if number_sample[0] < 0:
         if issparse(T):
             # If T is sparse, it probably mean that PoGroW was used, thus the number of sample is reduced
-            number_sample[0] = min(int(5*(len(p) * np.log(len(p))) ** 0.5), len(p))
+            number_sample[0] = min(int(5 * (len(p) * np.log(len(p))) ** 0.5), len(p))
         else:
             number_sample[0] = len(p)
     else:
@@ -854,7 +854,7 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
     continue_loop = 0
 
     # The gradient of GW is more complex if the two matrices are not symmetric.
-    C_are_symmetric = np.all(np.abs(C1-C1.T) < 1e-5) and np.all(np.abs(C2-C2.T) < 1e-5)
+    C_are_symmetric = np.all(np.abs(C1 - C1.T) < 1e-5) and np.all(np.abs(C2 - C2.T) < 1e-5)
 
     for cpt in range(max_iter):
         index0 = np.random.choice(len(p), size=nb_samples[0], p=p, replace=False)
