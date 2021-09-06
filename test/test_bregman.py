@@ -28,7 +28,7 @@ def test_sinkhorn():
 
     G = ot.sinkhorn(u, u, M, 1, stopThr=1e-10)
 
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(
         u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
     np.testing.assert_allclose(
