@@ -9,6 +9,7 @@ Multi-lib backend for POT
 # License: MIT License
 
 import numpy as np
+import scipy.special as scipy
 
 try:
     import torch
@@ -20,6 +21,7 @@ except ImportError:
 try:
     import jax
     import jax.numpy as jnp
+    import jax.scipy.special as jscipy
     jax_type = jax.numpy.ndarray
 except ImportError:
     jax = False
@@ -166,6 +168,33 @@ class Backend():
     def flip(self, a, axis=None):
         raise NotImplementedError()
 
+    def argmax(self, a, axis=None):
+        raise NotImplementedError()
+
+    def mean(self, a, axis=None):
+        raise NotImplementedError()
+
+    def std(self, a, axis=None):
+        raise NotImplementedError()
+
+    def linspace(self, start, stop, num):
+        raise NotImplementedError()
+
+    def meshgrid(self, a, b):
+        raise NotImplementedError()
+
+    def diag(self, a, k=0):
+        raise NotImplementedError()
+
+    def unique(self, a):
+        raise NotImplementedError()
+
+    def concatenate(self, list_a, axis=0):
+        raise NotImplementedError()
+
+    def logsumexp(self, a, axis=None):
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
 
@@ -270,6 +299,33 @@ class NumpyBackend(Backend):
 
     def flip(self, a, axis=None):
         return np.flip(a, axis)
+
+    def argmax(self, a, axis=None):
+        return np.argmax(a, axis=axis)
+
+    def mean(self, a, axis=None):
+        return np.mean(a, axis=axis)
+
+    def std(self, a, axis=None):
+        return np.std(a, axis=axis)
+
+    def linspace(self, start, stop, num):
+        return np.linspace(start, stop, num)
+
+    def meshgrid(self, a, b):
+        return np.meshgrid(a, b)
+
+    def diag(self, a, k=0):
+        return np.diag(a, k)
+
+    def unique(self, a):
+        return np.unique(a)
+
+    def concatenate(self, list_a, axis=0):
+        return np.concatenate(list_a, axis=axis)
+
+    def logsumexp(self, a, axis=None):
+        return scipy.logsumexp(a, axis=axis)
 
 
 class JaxBackend(Backend):
@@ -382,6 +438,33 @@ class JaxBackend(Backend):
 
     def flip(self, a, axis=None):
         return jnp.flip(a, axis)
+
+    def argmax(self, a, axis=None):
+        return jnp.argmax(a, axis=axis)
+
+    def mean(self, a, axis=None):
+        return jnp.mean(a, axis=axis)
+
+    def std(self, a, axis=None):
+        return jnp.std(a, axis=axis)
+
+    def linspace(self, start, stop, num):
+        return jnp.linspace(start, stop, num)
+
+    def meshgrid(self, a, b):
+        return jnp.meshgrid(a, b)
+
+    def diag(self, a, k=0):
+        return jnp.diag(a, k)
+
+    def unique(self, a):
+        return jnp.unique(a)
+
+    def concatenate(self, list_a, axis=0):
+        return jnp.concatenate(list_a, axis=axis)
+
+    def logsumexp(self, a, axis=None):
+        return jscipy.logsumexp(a, axis=axis)
 
 
 class TorchBackend(Backend):
@@ -497,12 +580,7 @@ class TorchBackend(Backend):
         return torch.minimum(a, b)
 
     def dot(self, a, b):
-        if len(a.shape) == len(b.shape) == 1:
-            return torch.dot(a, b)
-        elif len(a.shape) == 2 and len(b.shape) == 1:
-            return torch.mv(a, b)
-        else:
-            return torch.mm(a, b)
+        return torch.matmul(a, b)
 
     def abs(self, a):
         return torch.abs(a)
@@ -546,3 +624,40 @@ class TorchBackend(Backend):
             return torch.flip(a, (axis,))
         else:
             return torch.flip(a, dims=axis)
+
+    def argmax(self, a, axis=None):
+        return torch.argmax(a, dim=axis)
+
+    def mean(self, a, axis=None):
+        if axis is not None:
+            return torch.mean(a, dim=axis)
+        else:
+            return torch.mean(a)
+
+    def std(self, a, axis=None):
+        if axis is not None:
+            return torch.std(a, dim=axis, unbiased=False)
+        else:
+            return torch.std(a, unbiased=False)
+
+    def linspace(self, start, stop, num):
+        return torch.linspace(start, stop, num, dtype=torch.float64)
+
+    def meshgrid(self, a, b):
+        X, Y = torch.meshgrid(a, b)
+        return X.T, Y.T
+
+    def diag(self, a, k=0):
+        return torch.diag(a, diagonal=k)
+
+    def unique(self, a):
+        return torch.unique(a)
+
+    def concatenate(self, list_a, axis=0):
+        return torch.cat(list_a, dim=axis)
+
+    def logsumexp(self, a, axis=None):
+        if axis is not None:
+            return torch.logsumexp(a, dim=axis)
+        else:
+            return torch.logsumexp(a, dim=tuple(range(len(a.shape))))
