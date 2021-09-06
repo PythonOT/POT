@@ -19,7 +19,6 @@ import warnings
 
 import numpy as np
 from scipy.optimize import fmin_l_bfgs_b
-from scipy.special import logsumexp
 
 from ot.utils import unif, dist, list_to_array
 from .backend import get_backend
@@ -300,12 +299,12 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
 
     Parameters
     ----------
-    a : ndarray, shape (dim_a,)
+    a : array-like, shape (dim_a,)
         samples weights in the source domain
-    b : ndarray, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
+    b : array-like, shape (dim_b,) or array-like, shape (dim_b, n_hists)
         samples in the target domain, compute sinkhorn with multiple targets
         and fixed M if b is a matrix (return OT loss + dual variables in log)
-    M : ndarray, shape (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
@@ -320,7 +319,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
 
     Returns
     -------
-    gamma : ndarray, shape (dim_a, dim_b)
+    gamma : array-like, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -388,7 +387,6 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
     while (err > stopThr and cpt < numItermax):
         uprev = u
         vprev = v
-
         KtransposeU = nx.dot(K.T, u)
         v = b / KtransposeU
         u = 1. / nx.dot(Kp, v)
@@ -472,12 +470,12 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
 
     Parameters
     ----------
-    a : ndarray, shape (dim_a,)
+    a : array-like, shape (dim_a,)
         samples weights in the source domain
-    b : ndarray, shape (dim_b,) or ndarray, shape (dim_b, n_hists)
+    b : array-like, shape (dim_b,) or array-like, shape (dim_b, n_hists)
         samples in the target domain, compute sinkhorn with multiple targets
         and fixed M if b is a matrix (return OT loss + dual variables in log)
-    M : ndarray, shape (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
@@ -490,7 +488,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
 
     Returns
     -------
-    gamma : ndarray, shape (dim_a, dim_b)
+    gamma : array-like, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -521,29 +519,26 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
 
     """
 
-    a = np.asarray(a, dtype=np.float64)
-    b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    a, b, M = list_to_array(a, b, M)
+
+    nx = get_backend(M, a, b)
 
     if len(a) == 0:
-        a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
+        a = nx.ones((M.shape[0],), type_as=M) / M.shape[0]
     if len(b) == 0:
-        b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
+        b = nx.ones((M.shape[1],), type_as=M) / M.shape[1]
 
     dim_a = a.shape[0]
     dim_b = b.shape[0]
 
-    # Next 3 lines equivalent to K= np.exp(-M/reg), but faster to compute
-    K = np.empty_like(M)
-    np.divide(M, -reg, out=K)
-    np.exp(K, out=K)
+    K = nx.exp(-M / reg)
 
-    u = np.full(dim_a, 1. / dim_a)
-    v = np.full(dim_b, 1. / dim_b)
-    G = u[:, np.newaxis] * K * v[np.newaxis, :]
+    u = nx.full((dim_a,), 1. / dim_a, type_as=K)
+    v = nx.full((dim_b,), 1. / dim_b, type_as=K)
+    G = u[:, None] * K * v[None, :]
 
-    viol = G.sum(1) - a
-    viol_2 = G.sum(0) - b
+    viol = nx.sum(G, axis=1) - a
+    viol_2 = nx.sum(G, axis=0) - b
     stopThr_val = 1
 
     if log:
@@ -552,29 +547,29 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
         log['v'] = v
 
     for i in range(numItermax):
-        i_1 = np.argmax(np.abs(viol))
-        i_2 = np.argmax(np.abs(viol_2))
-        m_viol_1 = np.abs(viol[i_1])
-        m_viol_2 = np.abs(viol_2[i_2])
-        stopThr_val = np.maximum(m_viol_1, m_viol_2)
+        i_1 = nx.argmax(nx.abs(viol))
+        i_2 = nx.argmax(nx.abs(viol_2))
+        m_viol_1 = nx.abs(viol[i_1])
+        m_viol_2 = nx.abs(viol_2[i_2])
+        stopThr_val = nx.maximum(m_viol_1, m_viol_2)
 
         if m_viol_1 > m_viol_2:
             old_u = u[i_1]
-            u[i_1] = a[i_1] / (K[i_1, :].dot(v))
-            G[i_1, :] = u[i_1] * K[i_1, :] * v
+            new_u = a[i_1] / (K[i_1, :].dot(v))
+            G[i_1, :] = new_u * K[i_1, :] * v
 
-            viol[i_1] = u[i_1] * K[i_1, :].dot(v) - a[i_1]
-            viol_2 += (K[i_1, :].T * (u[i_1] - old_u) * v)
-
+            viol[i_1] = new_u * K[i_1, :].dot(v) - a[i_1]
+            viol_2 += (K[i_1, :].T * (new_u - old_u) * v)
+            u[i_1] = new_u
         else:
             old_v = v[i_2]
-            v[i_2] = b[i_2] / (K[:, i_2].T.dot(u))
-            G[:, i_2] = u * K[:, i_2] * v[i_2]
+            new_v = b[i_2] / (K[:, i_2].T.dot(u))
+            G[:, i_2] = u * K[:, i_2] * new_v
             # aviol = (G@one_m - a)
             # aviol_2 = (G.T@one_n - b)
-            viol += (-old_v + v[i_2]) * K[:, i_2] * u
-            viol_2[i_2] = v[i_2] * K[:, i_2].dot(u) - b[i_2]
-
+            viol += (-old_v + new_v) * K[:, i_2] * u
+            viol_2[i_2] = new_v * K[:, i_2].dot(u) - b[i_2]
+            v[i_2] = new_v
             # print('b',np.max(abs(aviol -viol)),np.max(abs(aviol_2 - viol_2)))
 
         if stopThr_val <= stopThr:
@@ -622,11 +617,11 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
 
     Parameters
     ----------
-    a : ndarray, shape (dim_a,)
+    a : array-like, shape (dim_a,)
         samples weights in the source domain
-    b : ndarray, shape (dim_b,)
+    b : array-like, shape (dim_b,)
         samples in the target domain
-    M : ndarray, shape (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
@@ -645,7 +640,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
 
     Returns
     -------
-    gamma : ndarray, shape (dim_a, dim_b)
+    gamma : array-like, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -679,19 +674,19 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
 
     """
 
-    a = np.asarray(a, dtype=np.float64)
-    b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    a, b, M = list_to_array(a, b, M)
+
+    nx = get_backend(M, a, b)
 
     if len(a) == 0:
-        a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
+        a = nx.ones((M.shape[0],), type_as=M) / M.shape[0]
     if len(b) == 0:
-        b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
+        b = nx.ones((M.shape[1],), type_as=M) / M.shape[1]
 
     # test if multiple target
     if len(b.shape) > 1:
         n_hists = b.shape[1]
-        a = a[:, np.newaxis]
+        a = a[:, None]
     else:
         n_hists = 0
 
@@ -706,25 +701,25 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
     # we assume that no distances are null except those of the diagonal of
     # distances
     if warmstart is None:
-        alpha, beta = np.zeros(dim_a), np.zeros(dim_b)
+        alpha, beta = nx.zeros(dim_a, type_as=M), nx.zeros(dim_b, type_as=M)
     else:
         alpha, beta = warmstart
 
     if n_hists:
-        u = np.ones((dim_a, n_hists)) / dim_a
-        v = np.ones((dim_b, n_hists)) / dim_b
+        u = nx.ones((dim_a, n_hists), type_as=M) / dim_a
+        v = nx.ones((dim_b, n_hists), type_as=M) / dim_b
     else:
-        u, v = np.ones(dim_a) / dim_a, np.ones(dim_b) / dim_b
+        u, v = nx.ones(dim_a, type_as=M) / dim_a, nx.ones(dim_b, type_as=M) / dim_b
 
     def get_K(alpha, beta):
         """log space computation"""
-        return np.exp(-(M - alpha.reshape((dim_a, 1))
+        return nx.exp(-(M - alpha.reshape((dim_a, 1))
                         - beta.reshape((1, dim_b))) / reg)
 
     def get_Gamma(alpha, beta, u, v):
         """log space gamma computation"""
-        return np.exp(-(M - alpha.reshape((dim_a, 1)) - beta.reshape((1, dim_b)))
-                      / reg + np.log(u.reshape((dim_a, 1))) + np.log(v.reshape((1, dim_b))))
+        return nx.exp(-(M - alpha.reshape((dim_a, 1)) - beta.reshape((1, dim_b)))
+                      / reg + nx.log(u.reshape((dim_a, 1))) + nx.log(v.reshape((1, dim_b))))
 
     # print(np.min(K))
 
@@ -739,33 +734,35 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         vprev = v
 
         # sinkhorn update
-        v = b / (np.dot(K.T, u) + 1e-16)
-        u = a / (np.dot(K, v) + 1e-16)
+        v = b / (nx.dot(K.T, u) + 1e-16)
+        u = a / (nx.dot(K, v) + 1e-16)
 
         # remove numerical problems and store them in K
-        if np.abs(u).max() > tau or np.abs(v).max() > tau:
+        if nx.max(nx.abs(u)) > tau or nx.max(nx.abs(v)) > tau:
             if n_hists:
-                alpha, beta = alpha + reg * np.max(np.log(u), 1), beta + reg * np.max(np.log(v))
+                alpha, beta = alpha + reg * nx.max(nx.log(u), 1), beta + reg * nx.max(np.log(v))
             else:
-                alpha, beta = alpha + reg * np.log(u), beta + reg * np.log(v)
+                alpha, beta = alpha + reg * nx.log(u), beta + reg * nx.log(v)
                 if n_hists:
-                    u, v = np.ones((dim_a, n_hists)) / dim_a, np.ones((dim_b, n_hists)) / dim_b
+                    u = nx.ones((dim_a, n_hists), type_as=M) / dim_a
+                    v = nx.ones((dim_b, n_hists), type_as=M) / dim_b
                 else:
-                    u, v = np.ones(dim_a) / dim_a, np.ones(dim_b) / dim_b
+                    u = nx.ones(dim_a, type_as=M) / dim_a
+                    v = nx.ones(dim_b, type_as=M) / dim_b
             K = get_K(alpha, beta)
 
         if cpt % print_period == 0:
             # we can speed up the process by checking for the error only all
             # the 10th iterations
             if n_hists:
-                err_u = abs(u - uprev).max()
-                err_u /= max(abs(u).max(), abs(uprev).max(), 1.)
-                err_v = abs(v - vprev).max()
-                err_v /= max(abs(v).max(), abs(vprev).max(), 1.)
+                err_u = nx.max(nx.abs(u - uprev))
+                err_u /= max(nx.max(nx.abs(u)), nx.max(nx.abs(uprev)), 1.0)
+                err_v = nx.max(nx.abs(v - vprev))
+                err_v /= max(nx.max(nx.abs(v)), nx.max(nx.abs(vprev)), 1.0)
                 err = 0.5 * (err_u + err_v)
             else:
                 transp = get_Gamma(alpha, beta, u, v)
-                err = np.linalg.norm((np.sum(transp, axis=0) - b))
+                err = nx.norm(nx.sum(transp, axis=0) - b)
             if log:
                 log['err'].append(err)
 
@@ -781,7 +778,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         if cpt >= numItermax:
             loop = False
 
-        if np.any(np.isnan(u)) or np.any(np.isnan(v)):
+        if nx.any(nx.isnan(u)) or nx.any(nx.isnan(v)):
             # we have reached the machine precision
             # come back to previous solution and quit loop
             print('Warning: numerical errors at iteration', cpt)
@@ -795,26 +792,26 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         if n_hists:
             alpha = alpha[:, None]
             beta = beta[:, None]
-        logu = alpha / reg + np.log(u)
-        logv = beta / reg + np.log(v)
+        logu = alpha / reg + nx.log(u)
+        logv = beta / reg + nx.log(v)
         log['logu'] = logu
         log['logv'] = logv
-        log['alpha'] = alpha + reg * np.log(u)
-        log['beta'] = beta + reg * np.log(v)
+        log['alpha'] = alpha + reg * nx.log(u)
+        log['beta'] = beta + reg * nx.log(v)
         log['warmstart'] = (log['alpha'], log['beta'])
         if n_hists:
-            res = np.zeros((n_hists))
+            res = nx.zeros((n_hists,), type_as=M)
             for i in range(n_hists):
-                res[i] = np.sum(get_Gamma(alpha, beta, u[:, i], v[:, i]) * M)
+                res[i] = nx.sum(get_Gamma(alpha, beta, u[:, i], v[:, i]) * M)
             return res, log
 
         else:
             return get_Gamma(alpha, beta, u, v), log
     else:
         if n_hists:
-            res = np.zeros((n_hists))
+            res = nx.zeros((n_hists,), type_as=M)
             for i in range(n_hists):
-                res[i] = np.sum(get_Gamma(alpha, beta, u[:, i], v[:, i]) * M)
+                res[i] = nx.sum(get_Gamma(alpha, beta, u[:, i], v[:, i]) * M)
             return res
         else:
             return get_Gamma(alpha, beta, u, v)
@@ -852,16 +849,16 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
 
     Parameters
     ----------
-    a : ndarray, shape (dim_a,)
+    a : array-like, shape (dim_a,)
         samples weights in the source domain
-    b : ndarray, shape (dim_b,)
+    b : array-like, shape (dim_b,)
         samples in the target domain
-    M : ndarray, shape (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Regularization term >0
     tau : float
-        thershold for max value in u or v for log scaling
+        threshold for max value in u or v for log scaling
     warmstart : tuple of vectors
         if given then sarting values for alpha an beta log scalings
     numItermax : int, optional
@@ -879,7 +876,7 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
 
     Returns
     -------
-    gamma : ndarray, shape (dim_a, dim_b)
+    gamma : array-like, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -910,14 +907,14 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
 
     """
 
-    a = np.asarray(a, dtype=np.float64)
-    b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    a, b, M = list_to_array(a, b, M)
+
+    nx = get_backend(M, a, b)
 
     if len(a) == 0:
-        a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
+        a = nx.ones((M.shape[0],), type_as=M) / M.shape[0]
     if len(b) == 0:
-        b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
+        b = nx.ones((M.shape[1],), type_as=M) / M.shape[1]
 
     # init data
     dim_a = len(a)
@@ -934,7 +931,7 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
     # we assume that no distances are null except those of the diagonal of
     # distances
     if warmstart is None:
-        alpha, beta = np.zeros(dim_a), np.zeros(dim_b)
+        alpha, beta = nx.zeros(dim_a, type_as=M), nx.zeros(dim_b, type_as=M)
     else:
         alpha, beta = warmstart
 
@@ -964,15 +961,13 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
             # we can speed up the process by checking for the error only all
             # the 10th iterations
             transp = G
-            err = np.linalg.norm(
-                (np.sum(transp, axis=0) - b)) ** 2 + np.linalg.norm((np.sum(transp, axis=1) - a)) ** 2
+            err = nx.norm(nx.sum(transp, axis=0) - b) ** 2 + nx.norm(nx.sum(transp, axis=1) - a) ** 2
             if log:
                 log['err'].append(err)
 
             if verbose:
                 if cpt % (print_period * 10) == 0:
-                    print(
-                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                    print('{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(cpt, err))
 
         if err <= stopThr and cpt > numItermin:
@@ -991,23 +986,31 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
 
 def geometricBar(weights, alldistribT):
     """return the weighted geometric mean of distributions"""
+    weights, alldistribT = list_to_array(weights, alldistribT)
+    nx = get_backend(weights, alldistribT)
     assert (len(weights) == alldistribT.shape[1])
-    return np.exp(np.dot(np.log(alldistribT), weights.T))
+    return nx.exp(nx.dot(nx.log(alldistribT), weights.T))
 
 
 def geometricMean(alldistribT):
     """return the  geometric mean of distributions"""
-    return np.exp(np.mean(np.log(alldistribT), axis=1))
+    alldistribT = list_to_array(alldistribT)
+    nx = get_backend(alldistribT)
+    return nx.exp(nx.mean(nx.log(alldistribT), axis=1))
 
 
 def projR(gamma, p):
     """return the KL projection on the row constrints """
-    return np.multiply(gamma.T, p / np.maximum(np.sum(gamma, axis=1), 1e-10)).T
+    gamma, p = list_to_array(gamma, p)
+    nx = get_backend(gamma, p)
+    return (gamma.T * p / nx.maximum(nx.sum(gamma, axis=1), 1e-10)).T
 
 
 def projC(gamma, q):
     """return the KL projection on the column constrints """
-    return np.multiply(gamma, q / np.maximum(np.sum(gamma, axis=0), 1e-10))
+    gamma, q = list_to_array(gamma, q)
+    nx = get_backend(gamma, q)
+    return gamma * q / nx.maximum(nx.sum(gamma, axis=0), 1e-10)
 
 
 def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
@@ -1029,15 +1032,15 @@ def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
 
     Parameters
     ----------
-    A : ndarray, shape (dim, n_hists)
+    A : array-like, shape (dim, n_hists)
         n_hists training distributions a_i of size dim
-    M : ndarray, shape (dim, dim)
+    M : array-like, shape (dim, dim)
         loss matrix for OT
     reg : float
         Regularization term > 0
     method : str (optional)
         method used for the solver either 'sinkhorn' or 'sinkhorn_stabilized'
-    weights : ndarray, shape (n_hists,)
+    weights : array-like, shape (n_hists,)
         Weights of each histogram a_i on the simplex (barycentric coodinates)
     numItermax : int, optional
         Max number of iterations
@@ -1051,7 +1054,7 @@ def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
 
     Returns
     -------
-    a : (dim,) ndarray
+    a : (dim,) array-like
         Wasserstein barycenter
     log : dict
         log dictionary return only if log==True in parameters
@@ -1097,13 +1100,13 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
 
     Parameters
     ----------
-    A : ndarray, shape (dim, n_hists)
+    A : array-like, shape (dim, n_hists)
         n_hists training distributions a_i of size dim
-    M : ndarray, shape (dim, dim)
+    M : array-like, shape (dim, dim)
         loss matrix for OT
     reg : float
         Regularization term > 0
-    weights : ndarray, shape (n_hists,)
+    weights : array-like, shape (n_hists,)
         Weights of each histogram a_i on the simplex (barycentric coodinates)
     numItermax : int, optional
         Max number of iterations
@@ -1117,7 +1120,7 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
 
     Returns
     -------
-    a : (dim,) ndarray
+    a : (dim,) array-like
         Wasserstein barycenter
     log : dict
         log dictionary return only if log==True in parameters
@@ -1130,8 +1133,12 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
 
     """
 
+    A, M = list_to_array(A, M)
+
+    nx = get_backend(A, M)
+
     if weights is None:
-        weights = np.ones(A.shape[1]) / A.shape[1]
+        weights = nx.ones((A.shape[1],), type_as=A) / A.shape[1]
     else:
         assert (len(weights) == A.shape[1])
 
@@ -1139,21 +1146,22 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
         log = {'err': []}
 
     # M = M/np.median(M) # suggested by G. Peyre
-    K = np.exp(-M / reg)
+    K = nx.exp(-M / reg)
 
     cpt = 0
     err = 1
 
-    UKv = np.dot(K, np.divide(A.T, np.sum(K, axis=0)).T)
+    UKv = nx.dot(K, (A.T / nx.sum(K, axis=0)).T)
+
     u = (geometricMean(UKv) / UKv.T).T
 
     while (err > stopThr and cpt < numItermax):
         cpt = cpt + 1
-        UKv = u * np.dot(K, np.divide(A, np.dot(K, u)))
+        UKv = u * nx.dot(K, A / nx.dot(K, u))
         u = (u.T * geometricBar(weights, UKv)).T / UKv
 
         if cpt % 10 == 1:
-            err = np.sum(np.std(UKv, axis=1))
+            err = nx.sum(nx.std(UKv, axis=1))
 
             # log and verbose print
             if log:
@@ -1192,15 +1200,15 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
 
     Parameters
     ----------
-    A : ndarray, shape (dim, n_hists)
+    A : array-like, shape (dim, n_hists)
         n_hists training distributions a_i of size dim
-    M : ndarray, shape (dim, dim)
+    M : array-like, shape (dim, dim)
         loss matrix for OT
     reg : float
         Regularization term > 0
     tau : float
         thershold for max value in u or v for log scaling
-    weights : ndarray, shape (n_hists,)
+    weights : array-like, shape (n_hists,)
         Weights of each histogram a_i on the simplex (barycentric coodinates)
     numItermax : int, optional
         Max number of iterations
@@ -1214,7 +1222,7 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
 
     Returns
     -------
-    a : (dim,) ndarray
+    a : (dim,) array-like
         Wasserstein barycenter
     log : dict
         log dictionary return only if log==True in parameters
@@ -1227,49 +1235,48 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
 
     """
 
+    A, M = list_to_array(A, M)
+
+    nx = get_backend(A, M)
+
     dim, n_hists = A.shape
     if weights is None:
-        weights = np.ones(n_hists) / n_hists
+        weights = nx.ones((n_hists,), type_as=M) / n_hists
     else:
         assert (len(weights) == A.shape[1])
 
     if log:
         log = {'err': []}
 
-    u = np.ones((dim, n_hists)) / dim
-    v = np.ones((dim, n_hists)) / dim
+    u = nx.ones((dim, n_hists), type_as=M) / dim
+    v = nx.ones((dim, n_hists), type_as=M) / dim
 
-    # print(reg)
-    # Next 3 lines equivalent to K= np.exp(-M/reg), but faster to compute
-    K = np.empty(M.shape, dtype=M.dtype)
-    np.divide(M, -reg, out=K)
-    np.exp(K, out=K)
+    K = nx.exp(-M / reg)
 
     cpt = 0
     err = 1.
-    alpha = np.zeros(dim)
-    beta = np.zeros(dim)
-    q = np.ones(dim) / dim
+    alpha = nx.zeros((dim,), type_as=M)
+    beta = nx.zeros((dim,), type_as=M)
+    q = nx.ones((dim,), type_as=M) / dim
     while (err > stopThr and cpt < numItermax):
         qprev = q
-        Kv = K.dot(v)
+        Kv = nx.dot(K, v)
         u = A / (Kv + 1e-16)
-        Ktu = K.T.dot(u)
+        Ktu = nx.dot(K.T, u)
         q = geometricBar(weights, Ktu)
         Q = q[:, None]
         v = Q / (Ktu + 1e-16)
         absorbing = False
-        if (u > tau).any() or (v > tau).any():
+        if nx.any(u > tau) or nx.any(v > tau):
             absorbing = True
-            alpha = alpha + reg * np.log(np.max(u, 1))
-            beta = beta + reg * np.log(np.max(v, 1))
-            K = np.exp((alpha[:, None] + beta[None, :] -
-                        M) / reg)
-            v = np.ones_like(v)
-        Kv = K.dot(v)
-        if (np.any(Ktu == 0.)
-                or np.any(np.isnan(u)) or np.any(np.isnan(v))
-                or np.any(np.isinf(u)) or np.any(np.isinf(v))):
+            alpha += reg * nx.log(nx.max(u, 1))
+            beta += reg * nx.log(nx.max(v, 1))
+            K = nx.exp((alpha[:, None] + beta[None, :] - M) / reg)
+            v = nx.ones(tuple(v.shape), type_as=v)
+        Kv = nx.dot(K, v)
+        if (nx.any(Ktu == 0.)
+                or nx.any(nx.isnan(u)) or nx.any(nx.isnan(v))
+                or nx.any(nx.isinf(u)) or nx.any(nx.isinf(v))):
             # we have reached the machine precision
             # come back to previous solution and quit loop
             warnings.warn('Numerical errors at iteration %s' % cpt)
@@ -1278,7 +1285,7 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
         if (cpt % 10 == 0 and not absorbing) or cpt == 0:
             # we can speed up the process by checking for the error only all
             # the 10th iterations
-            err = abs(u * Kv - A).max()
+            err = nx.max(nx.abs(u * Kv - A))
             if log:
                 log['err'].append(err)
             if verbose:
@@ -1322,11 +1329,11 @@ def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
 
     Parameters
     ----------
-    A : ndarray, shape (n_hists, width, height)
+    A : array-like, shape (n_hists, width, height)
         n distributions (2D images) of size width x height
     reg : float
         Regularization term >0
-    weights : ndarray, shape (n_hists,)
+    weights : array-like, shape (n_hists,)
         Weights of each image on the simplex (barycentric coodinates)
     numItermax : int, optional
         Max number of iterations
@@ -1341,7 +1348,7 @@ def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
 
     Returns
     -------
-    a : ndarray, shape (width, height)
+    a : array-like, shape (width, height)
         2D Wasserstein barycenter
     log : dict
         log dictionary return only if log==True in parameters
@@ -1356,49 +1363,52 @@ def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
 
     """
 
+    A = list_to_array(A)
+
+    nx = get_backend(A)
+
     if weights is None:
-        weights = np.ones(A.shape[0]) / A.shape[0]
+        weights = nx.ones((A.shape[0],), type_as=A) / A.shape[0]
     else:
         assert (len(weights) == A.shape[0])
 
     if log:
         log = {'err': []}
 
-    b = np.zeros_like(A[0, :, :])
-    U = np.ones_like(A)
-    KV = np.ones_like(A)
+    b = nx.zeros(A.shape[1:], type_as=A)
+    U = nx.ones(A.shape, type_as=A)
+    KV = nx.ones(A.shape, type_as=A)
 
     cpt = 0
     err = 1
 
     # build the convolution operator
     # this is equivalent to blurring on horizontal then vertical directions
-    t = np.linspace(0, 1, A.shape[1])
-    [Y, X] = np.meshgrid(t, t)
-    xi1 = np.exp(-(X - Y) ** 2 / reg)
+    t = nx.linspace(0, 1, A.shape[1])
+    [Y, X] = nx.meshgrid(t, t)
+    xi1 = nx.exp(-(X - Y) ** 2 / reg)
 
-    t = np.linspace(0, 1, A.shape[2])
-    [Y, X] = np.meshgrid(t, t)
-    xi2 = np.exp(-(X - Y) ** 2 / reg)
+    t = nx.linspace(0, 1, A.shape[2])
+    [Y, X] = nx.meshgrid(t, t)
+    xi2 = nx.exp(-(X - Y) ** 2 / reg)
 
     def K(x):
-        return np.dot(np.dot(xi1, x), xi2)
+        return nx.dot(nx.dot(xi1, x), xi2)
 
     while (err > stopThr and cpt < numItermax):
 
         bold = b
         cpt = cpt + 1
 
-        b = np.zeros_like(A[0, :, :])
+        b = nx.zeros(A.shape[1:], type_as=A)
         for r in range(A.shape[0]):
-            KV[r, :, :] = K(A[r, :, :] / np.maximum(stabThr, K(U[r, :, :])))
-            b += weights[r] * np.log(np.maximum(stabThr, U[r, :, :] * KV[r, :, :]))
-        b = np.exp(b)
+            KV[r, :, :] = K(A[r, :, :] / nx.maximum(stabThr, K(U[r, :, :])))
+            b += weights[r] * nx.log(nx.maximum(stabThr, U[r, :, :] * KV[r, :, :]))
+        b = nx.exp(b)
         for r in range(A.shape[0]):
-            U[r, :, :] = b / np.maximum(stabThr, KV[r, :, :])
-
+            U[r, :, :] = b / nx.maximum(stabThr, KV[r, :, :])
         if cpt % 10 == 1:
-            err = np.sum(np.abs(bold - b))
+            err = nx.sum(nx.abs(bold - b))
             # log and verbose print
             if log:
                 log['err'].append(err)
@@ -1443,15 +1453,15 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
 
     Parameters
     ----------
-    a : ndarray, shape (dim_a)
+    a : array-like, shape (dim_a)
         observed distribution (histogram, sums to 1)
-    D : ndarray, shape (dim_a, n_atoms)
+    D : array-like, shape (dim_a, n_atoms)
         dictionary matrix
-    M : ndarray, shape (dim_a, dim_a)
+    M : array-like, shape (dim_a, dim_a)
         loss matrix
-    M0 : ndarray, shape (n_atoms, dim_prior)
+    M0 : array-like, shape (n_atoms, dim_prior)
         loss matrix
-    h0 : ndarray, shape (n_atoms,)
+    h0 : array-like, shape (n_atoms,)
         prior on the estimated unmixing h
     reg : float
         Regularization term >0 (Wasserstein data fitting)
@@ -1471,7 +1481,7 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
 
     Returns
     -------
-    h : ndarray, shape (n_atoms,)
+    h : array-like, shape (n_atoms,)
         Wasserstein barycenter
     log : dict
         log dictionary return only if log==True in parameters
@@ -1483,11 +1493,15 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
 
     """
 
+    a, D, M, M0, h0 = list_to_array(a, D, M, M0, h0)
+
+    nx = get_backend(a, D, M, M0, h0)
+
     # M = M/np.median(M)
-    K = np.exp(-M / reg)
+    K = nx.exp(-M / reg)
 
     # M0 = M0/np.median(M0)
-    K0 = np.exp(-M0 / reg0)
+    K0 = nx.exp(-M0 / reg0)
     old = h0
 
     err = 1
@@ -1499,16 +1513,16 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
     while (err > stopThr and cpt < numItermax):
         K = projC(K, a)
         K0 = projC(K0, h0)
-        new = np.sum(K0, axis=1)
+        new = nx.sum(K0, axis=1)
         # we recombine the current selection from dictionnary
-        inv_new = np.dot(D, new)
-        other = np.sum(K, axis=1)
+        inv_new = nx.dot(D, new)
+        other = nx.sum(K, axis=1)
         # geometric interpolation
-        delta = np.exp(alpha * np.log(other) + (1 - alpha) * np.log(inv_new))
+        delta = nx.exp(alpha * nx.log(other) + (1 - alpha) * nx.log(inv_new))
         K = projR(K, delta)
-        K0 = np.dot(np.diag(np.dot(D.T, delta / inv_new)), K0)
+        K0 = nx.dot(nx.diag(nx.dot(D.T, delta / inv_new)), K0)
 
-        err = np.linalg.norm(np.sum(K0, axis=1) - old)
+        err = nx.norm(nx.sum(K0, axis=1) - old)
         old = new
         if log:
             log['err'].append(err)
@@ -1522,9 +1536,9 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
 
     if log:
         log['niter'] = cpt
-        return np.sum(K0, axis=1), log
+        return nx.sum(K0, axis=1), log
     else:
-        return np.sum(K0, axis=1)
+        return nx.sum(K0, axis=1)
 
 
 def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
@@ -1556,11 +1570,11 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
 
     Parameters
     ----------
-    Xs : list of K np.ndarray(nsk,d)
+    Xs : list of K array-like(nsk,d)
         features of all source domains' samples
-    Ys : list of K np.ndarray(nsk,)
+    Ys : list of K array-like(nsk,)
         labels of all source domains' samples
-    Xt : np.ndarray (nt,d)
+    Xt : array-like (nt,d)
         samples in the target domain
     reg : float
         Regularization term > 0
@@ -1577,7 +1591,7 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
 
     Returns
     -------
-    h : (C,) ndarray
+    h : (C,) array-like
         proportion estimation in the target domain
     log : dict
         log dictionary return only if log==True in parameters
@@ -1591,7 +1605,14 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
        International Conference on Artificial Intelligence and Statistics (AISTATS), 2019.
 
     '''
-    nbclasses = len(np.unique(Ys[0]))
+
+    Xs = list_to_array(*Xs)
+    Ys = list_to_array(*Ys)
+    Xt = list_to_array(Xt)
+
+    nx = get_backend(*Xs, *Ys, Xt)
+
+    nbclasses = len(nx.unique(Ys[0]))
     nbdomains = len(Xs)
 
     # log dictionary
@@ -1608,19 +1629,19 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
         dom = {}
         nsk = Xs[d].shape[0]  # get number of elements for this domain
         dom['nbelem'] = nsk
-        classes = np.unique(Ys[d])  # get number of classes for this domain
+        classes = nx.unique(Ys[d])  # get number of classes for this domain
 
         # format classes to start from 0 for convenience
-        if np.min(classes) != 0:
-            Ys[d] = Ys[d] - np.min(classes)
-            classes = np.unique(Ys[d])
+        if nx.min(classes) != 0:
+            Ys[d] -= nx.min(classes)
+            classes = nx.unique(Ys[d])
 
         # build the corresponding D_1 and D_2 matrices
-        Dtmp1 = np.zeros((nbclasses, nsk))
-        Dtmp2 = np.zeros((nbclasses, nsk))
+        Dtmp1 = nx.zeros((nbclasses, nsk), type_as=Xs[0])
+        Dtmp2 = nx.zeros((nbclasses, nsk), type_as=Xs[0])
 
         for c in classes:
-            nbelemperclass = np.sum(Ys[d] == c)
+            nbelemperclass = nx.sum(Ys[d] == c)
             if nbelemperclass != 0:
                 Dtmp1[int(c), Ys[d] == c] = 1.
                 Dtmp2[int(c), Ys[d] == c] = 1. / (nbelemperclass)
@@ -1631,36 +1652,34 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
         Mtmp = dist(Xs[d], Xt, metric=metric)
         M.append(Mtmp)
 
-        Ktmp = np.empty(Mtmp.shape, dtype=Mtmp.dtype)
-        np.divide(Mtmp, -reg, out=Ktmp)
-        np.exp(Ktmp, out=Ktmp)
+        Ktmp = nx.exp(-Mtmp / reg)
         K.append(Ktmp)
 
     # uniform target distribution
-    a = unif(np.shape(Xt)[0])
+    a = nx.from_numpy(unif(np.shape(Xt)[0]))
 
     cpt = 0  # iterations count
     err = 1
-    old_bary = np.ones((nbclasses))
+    old_bary = nx.ones((nbclasses,), type_as=Xs[0])
 
     while (err > stopThr and cpt < numItermax):
 
-        bary = np.zeros((nbclasses))
+        bary = nx.zeros((nbclasses,), type_as=Xs[0])
 
         # update coupling matrices for marginal constraints w.r.t. uniform target distribution
         for d in range(nbdomains):
             K[d] = projC(K[d], a)
-            other = np.sum(K[d], axis=1)
-            bary = bary + np.log(np.dot(D1[d], other)) / nbdomains
+            other = nx.sum(K[d], axis=1)
+            bary += nx.log(nx.dot(D1[d], other)) / nbdomains
 
-        bary = np.exp(bary)
+        bary = nx.exp(bary)
 
         # update coupling matrices for marginal constraints w.r.t. unknown proportions based on [Prop 4., 27]
         for d in range(nbdomains):
-            new = np.dot(D2[d].T, bary)
+            new = nx.dot(D2[d].T, bary)
             K[d] = projR(K[d], new)
 
-        err = np.linalg.norm(bary - old_bary)
+        err = nx.norm(bary - old_bary)
         cpt = cpt + 1
         old_bary = bary
 
@@ -1672,7 +1691,7 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
                 print('{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(cpt, err))
 
-    bary = bary / np.sum(bary)
+    bary = bary / nx.sum(bary)
 
     if log:
         log['niter'] = cpt
@@ -1711,15 +1730,15 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
 
     Parameters
     ----------
-    X_s : ndarray, shape (n_samples_a, dim)
+    X_s : array-like, shape (n_samples_a, dim)
         samples in the source domain
-    X_t : ndarray, shape (n_samples_b, dim)
+    X_t : array-like, shape (n_samples_b, dim)
         samples in the target domain
     reg : float
         Regularization term >0
-    a : ndarray, shape (n_samples_a,)
+    a : array-like, shape (n_samples_a,)
         samples weights in the source domain
-    b : ndarray, shape (n_samples_b,)
+    b : array-like, shape (n_samples_b,)
         samples weights in the target domain
     numItermax : int, optional
         Max number of iterations
@@ -1739,7 +1758,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
 
     Returns
     -------
-    gamma : ndarray, shape (n_samples_a, n_samples_b)
+    gamma : array-like, shape (n_samples_a, n_samples_b)
         Regularized optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -1766,18 +1785,23 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
 
     .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016). Scaling algorithms for unbalanced transport problems. arXiv preprint arXiv:1607.05816.
     '''
+
+    X_s, X_t = list_to_array(X_s, X_t)
+
+    nx = get_backend(X_s, X_t)
+
     ns, nt = X_s.shape[0], X_t.shape[0]
     if a is None:
-        a = unif(ns)
+        a = nx.from_numpy(unif(ns))
     if b is None:
-        b = unif(nt)
+        b = nx.from_numpy(unif(nt))
 
     if isLazy:
         if log:
             dict_log = {"err": []}
 
-        log_a, log_b = np.log(a), np.log(b)
-        f, g = np.zeros(ns), np.zeros(nt)
+        log_a, log_b = nx.log(a), nx.log(b)
+        f, g = nx.zeros((ns,), type_as=a), nx.zeros((nt,), type_as=a)
 
         if isinstance(batchSize, int):
             bs, bt = batchSize, batchSize
@@ -1788,27 +1812,33 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
 
         range_s, range_t = range(0, ns, bs), range(0, nt, bt)
 
-        lse_f = np.zeros(ns)
-        lse_g = np.zeros(nt)
+        lse_f = nx.zeros((ns,), type_as=a)
+        lse_g = nx.zeros((nt,), type_as=a)
+
+        X_s_np = nx.to_numpy(X_s)
+        X_t_np = nx.to_numpy(X_t)
 
         for i_ot in range(numIterMax):
 
             for i in range_s:
-                M = dist(X_s[i:i + bs, :], X_t, metric=metric)
-                lse_f[i:i + bs] = logsumexp(g[None, :] - M / reg, axis=1)
+                M = dist(X_s_np[i:i + bs, :], X_t_np, metric=metric)
+                M = nx.from_numpy(M, type_as=a)
+                lse_f[i:i + bs] = nx.logsumexp(g[None, :] - M / reg, axis=1)
             f = log_a - lse_f
 
             for j in range_t:
-                M = dist(X_s, X_t[j:j + bt, :], metric=metric)
-                lse_g[j:j + bt] = logsumexp(f[:, None] - M / reg, axis=0)
+                M = dist(X_s_np, X_t_np[j:j + bt, :], metric=metric)
+                M = nx.from_numpy(M, type_as=a)
+                lse_g[j:j + bt] = nx.logsumexp(f[:, None] - M / reg, axis=0)
             g = log_b - lse_g
 
             if (i_ot + 1) % 10 == 0:
-                m1 = np.zeros_like(a)
+                m1 = nx.zeros(a.shape, type_as=a)
                 for i in range_s:
-                    M = dist(X_s[i:i + bs, :], X_t, metric=metric)
-                    m1[i:i + bs] = np.exp(f[i:i + bs, None] + g[None, :] - M / reg).sum(1)
-                err = np.abs(m1 - a).sum()
+                    M = dist(X_s_np[i:i + bs, :], X_t_np, metric=metric)
+                    M = nx.from_numpy(M, type_as=a)
+                    m1[i:i + bs] = nx.sum(nx.exp(f[i:i + bs, None] + g[None, :] - M / reg), axis=1)
+                err = nx.sum(nx.abs(m1 - a))
                 if log:
                     dict_log["err"].append(err)
 
@@ -1826,8 +1856,8 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
             return (f, g)
 
     else:
-        M = dist(X_s, X_t, metric=metric)
-
+        M = dist(nx.to_numpy(X_s), nx.to_numpy(X_t), metric=metric)
+        M = nx.from_numpy(M, type_as=a)
         if log:
             pi, log = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr, verbose=verbose, log=True, **kwargs)
             return pi, log
@@ -1862,15 +1892,15 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
 
     Parameters
     ----------
-    X_s : ndarray, shape (n_samples_a, dim)
+    X_s : array-like, shape (n_samples_a, dim)
         samples in the source domain
-    X_t : ndarray, shape (n_samples_b, dim)
+    X_t : array-like, shape (n_samples_b, dim)
         samples in the target domain
     reg : float
         Regularization term >0
-    a : ndarray, shape (n_samples_a,)
+    a : array-like, shape (n_samples_a,)
         samples weights in the source domain
-    b : ndarray, shape (n_samples_b,)
+    b : array-like, shape (n_samples_b,)
         samples weights in the target domain
     numItermax : int, optional
         Max number of iterations
@@ -1890,7 +1920,7 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
 
     Returns
     -------
-    W : (n_hists) ndarray or float
+    W : (n_hists) array-like or float
         Optimal transportation loss for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -1918,11 +1948,15 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
     .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016). Scaling algorithms for unbalanced transport problems. arXiv preprint arXiv:1607.05816.
     '''
 
+    X_s, X_t = list_to_array(X_s, X_t)
+
+    nx = get_backend(X_s, X_t)
+
     ns, nt = X_s.shape[0], X_t.shape[0]
     if a is None:
-        a = unif(ns)
+        a = nx.from_numpy(unif(ns))
     if b is None:
-        b = unif(nt)
+        b = nx.from_numpy(unif(nt))
 
     if isLazy:
         if log:
@@ -1936,10 +1970,15 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
         range_s = range(0, ns, bs)
 
         loss = 0
+
+        X_s_np = nx.to_numpy(X_s)
+        X_t_np = nx.to_numpy(X_t)
+
         for i in range_s:
-            M_block = dist(X_s[i:i + bs, :], X_t, metric=metric)
-            pi_block = np.exp(f[i:i + bs, None] + g[None, :] - M_block / reg)
-            loss += np.sum(M_block * pi_block)
+            M_block = dist(X_s_np[i:i + bs, :], X_t_np, metric=metric)
+            M_block = nx.from_numpy(M_block, type_as=a)
+            pi_block = nx.exp(f[i:i + bs, None] + g[None, :] - M_block / reg)
+            loss += nx.sum(M_block * pi_block)
 
         if log:
             return loss, dict_log
@@ -1947,7 +1986,8 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
             return loss
 
     else:
-        M = dist(X_s, X_t, metric=metric)
+        M = dist(nx.to_numpy(X_s), nx.to_numpy(X_t), metric=metric)
+        M = nx.from_numpy(M, type_as=a)
 
         if log:
             sinkhorn_loss, log = sinkhorn2(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr, verbose=verbose, log=log,
@@ -2004,15 +2044,15 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     Parameters
     ----------
-    X_s : ndarray, shape (n_samples_a, dim)
+    X_s : array-like, shape (n_samples_a, dim)
         samples in the source domain
-    X_t : ndarray, shape (n_samples_b, dim)
+    X_t : array-like, shape (n_samples_b, dim)
         samples in the target domain
     reg : float
         Regularization term >0
-    a : ndarray, shape (n_samples_a,)
+    a : array-like, shape (n_samples_a,)
         samples weights in the source domain
-    b : ndarray, shape (n_samples_b,)
+    b : array-like, shape (n_samples_b,)
         samples weights in the target domain
     numItermax : int, optional
         Max number of iterations
@@ -2025,7 +2065,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     Returns
     -------
-    W : (1,) ndarray
+    W : (1,) array-like
         Optimal transportation symmetrized loss for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -2102,23 +2142,23 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
 
     Parameters
     ----------
-    a : `numpy.ndarray`, shape=(ns,)
+    a : array-like, shape=(ns,)
         samples weights in the source domain
 
-    b : `numpy.ndarray`, shape=(nt,)
+    b : array-like, shape=(nt,)
         samples weights in the target domain
 
-    M : `numpy.ndarray`, shape=(ns, nt)
+    M : array-like, shape=(ns, nt)
         Cost matrix
 
     reg : `float`
         Level of the entropy regularisation
 
-    ns_budget : `int`, deafult=None
+    ns_budget : `int`, default=None
         Number budget of points to be keeped in the source domain
         If it is None then 50% of the source sample points will be keeped
 
-    nt_budget : `int`, deafult=None
+    nt_budget : `int`, default=None
         Number budget of points to be keeped in the target domain
         If it is None then 50% of the target sample points will be keeped
 
@@ -2151,7 +2191,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
 
     Returns
     -------
-    gamma : `numpy.ndarray`, shape=(ns, nt)
+    gamma : array-like, shape=(ns, nt)
         Screened optimal transportation matrix for the given parameters
 
     log : `dict`, default=False
@@ -2171,9 +2211,10 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
             "Bottleneck module is not installed. Install it from https://pypi.org/project/Bottleneck/ for better performance.")
         bottleneck = np
 
-    a = np.asarray(a, dtype=np.float64)
-    b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    a, b, M = list_to_array(a, b, M)
+
+    nx = get_backend(M, a, b)
+
     ns, nt = M.shape
 
     # by default, we keep only 50% of the sample data points
@@ -2183,9 +2224,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         nt_budget = int(np.floor(0.5 * nt))
 
     # calculate the Gibbs kernel
-    K = np.empty_like(M)
-    np.divide(M, -reg, out=K)
-    np.exp(K, out=K)
+    K = nx.exp(-M / reg)
 
     def projection(u, epsilon):
         u[u <= epsilon] = epsilon
@@ -2197,8 +2236,8 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
 
     if ns_budget == ns and nt_budget == nt:
         # full number of budget points (ns, nt) = (ns_budget, nt_budget)
-        Isel = np.ones(ns, dtype=bool)
-        Jsel = np.ones(nt, dtype=bool)
+        Isel = nx.from_numpy(np.ones(ns, dtype=bool))
+        Jsel = nx.from_numpy(np.ones(nt, dtype=bool))
         epsilon = 0.0
         kappa = 1.0
 
@@ -2214,57 +2253,61 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         K_IJc = []
         K_IcJ = []
 
-        vec_eps_IJc = np.zeros(nt)
-        vec_eps_IcJ = np.zeros(ns)
+        vec_eps_IJc = nx.zeros((nt,), type_as=M)
+        vec_eps_IcJ = nx.zeros((ns,), type_as=M)
 
     else:
         # sum of rows and columns of K
-        K_sum_cols = K.sum(axis=1)
-        K_sum_rows = K.sum(axis=0)
+        K_sum_cols = nx.sum(K, axis=1)
+        K_sum_rows = nx.sum(K, axis=0)
 
         if uniform:
             if ns / ns_budget < 4:
-                aK_sort = np.sort(K_sum_cols)
+                aK_sort = nx.sort(K_sum_cols)
                 epsilon_u_square = a[0] / aK_sort[ns_budget - 1]
             else:
-                aK_sort = bottleneck.partition(K_sum_cols, ns_budget - 1)[ns_budget - 1]
+                aK_sort = nx.from_numpy(
+                    bottleneck.partition(nx.to_numpy(K_sum_cols), ns_budget - 1)[ns_budget - 1]
+                )
                 epsilon_u_square = a[0] / aK_sort
 
             if nt / nt_budget < 4:
-                bK_sort = np.sort(K_sum_rows)
+                bK_sort = nx.sort(K_sum_rows)
                 epsilon_v_square = b[0] / bK_sort[nt_budget - 1]
             else:
-                bK_sort = bottleneck.partition(K_sum_rows, nt_budget - 1)[nt_budget - 1]
+                bK_sort = nx.from_numpy(
+                    bottleneck.partition(nx.to_numpy(K_sum_rows), nt_budget - 1)[nt_budget - 1]
+                )
                 epsilon_v_square = b[0] / bK_sort
         else:
             aK = a / K_sum_cols
             bK = b / K_sum_rows
 
-            aK_sort = np.sort(aK)[::-1]
+            aK_sort = nx.flip(nx.sort(aK), axis=0)
             epsilon_u_square = aK_sort[ns_budget - 1]
 
-            bK_sort = np.sort(bK)[::-1]
+            bK_sort = nx.flip(nx.sort(bK), axis=0)
             epsilon_v_square = bK_sort[nt_budget - 1]
 
         # active sets I and J (see Lemma 1 in [26])
         Isel = a >= epsilon_u_square * K_sum_cols
         Jsel = b >= epsilon_v_square * K_sum_rows
 
-        if sum(Isel) != ns_budget:
+        if nx.sum(Isel) != ns_budget:
             if uniform:
                 aK = a / K_sum_cols
-                aK_sort = np.sort(aK)[::-1]
-            epsilon_u_square = aK_sort[ns_budget - 1:ns_budget + 1].mean()
+                aK_sort = nx.flip(nx.sort(aK), axis=0)
+            epsilon_u_square = nx.mean(aK_sort[ns_budget - 1:ns_budget + 1])
             Isel = a >= epsilon_u_square * K_sum_cols
-            ns_budget = sum(Isel)
+            ns_budget = nx.sum(Isel)
 
-        if sum(Jsel) != nt_budget:
+        if nx.sum(Jsel) != nt_budget:
             if uniform:
                 bK = b / K_sum_rows
-                bK_sort = np.sort(bK)[::-1]
-            epsilon_v_square = bK_sort[nt_budget - 1:nt_budget + 1].mean()
+                bK_sort = nx.flip(nx.sort(bK), axis=0)
+            epsilon_v_square = nx.mean(bK_sort[nt_budget - 1:nt_budget + 1])
             Jsel = b >= epsilon_v_square * K_sum_rows
-            nt_budget = sum(Jsel)
+            nt_budget = nx.sum(Jsel)
 
         epsilon = (epsilon_u_square * epsilon_v_square) ** (1 / 4)
         kappa = (epsilon_v_square / epsilon_u_square) ** (1 / 2)
@@ -2282,7 +2325,8 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         K_IcJ = K[np.ix_(Ic, Jsel)]
         K_IJc = K[np.ix_(Isel, Jc)]
 
-        K_min = K_IJ.min()
+        #K_min = K_IJ.min()
+        K_min = nx.min(K_IJ)
         if K_min == 0:
             K_min = np.finfo(float).tiny
 
@@ -2290,10 +2334,10 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         a_I = a[Isel]
         b_J = b[Jsel]
         if not uniform:
-            a_I_min = a_I.min()
-            a_I_max = a_I.max()
-            b_J_max = b_J.max()
-            b_J_min = b_J.min()
+            a_I_min = nx.min(a_I)
+            a_I_max = nx.max(a_I)
+            b_J_max = nx.max(b_J)
+            b_J_min = nx.min(b_J)
         else:
             a_I_min = a_I[0]
             a_I_max = a_I[0]
@@ -2309,24 +2353,30 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
                 epsilon * kappa), b_J_max / (ns * epsilon * K_min))] * nt_budget
 
         # pre-calculated constants for the objective
-        vec_eps_IJc = epsilon * kappa * (K_IJc * np.ones(nt - nt_budget).reshape((1, -1))).sum(axis=1)
-        vec_eps_IcJ = (epsilon / kappa) * (np.ones(ns - ns_budget).reshape((-1, 1)) * K_IcJ).sum(axis=0)
+        vec_eps_IJc = epsilon * kappa * nx.sum(
+            K_IJc * nx.ones((nt - nt_budget,), type_as=M)[None, :],
+            axis=1
+        )
+        vec_eps_IcJ = (epsilon / kappa) * nx.sum(
+            nx.ones((ns - ns_budget,), type_as=M)[:, None] * K_IcJ,
+            axis=0
+        )
 
     # initialisation
-    u0 = np.full(ns_budget, (1. / ns_budget) + epsilon / kappa)
-    v0 = np.full(nt_budget, (1. / nt_budget) + epsilon * kappa)
+    u0 = nx.full((ns_budget,), 1. / ns_budget + epsilon / kappa, type_as=M)
+    v0 = nx.full((nt_budget,), 1. / nt_budget + epsilon * kappa, type_as=M)
 
     # pre-calculed constants for Restricted Sinkhorn (see Algorithm 1 in supplementary of [26])
     if restricted:
         if ns_budget != ns or nt_budget != nt:
-            cst_u = kappa * epsilon * K_IJc.sum(axis=1)
-            cst_v = epsilon * K_IcJ.sum(axis=0) / kappa
+            cst_u = kappa * epsilon * nx.sum(K_IJc, axis=1)
+            cst_v = epsilon * nx.sum(K_IcJ, axis=0) / kappa
 
         cpt = 1
         while cpt < 5:  # 5 iterations
-            K_IJ_v = np.dot(K_IJ.T, u0) + cst_v
+            K_IJ_v = nx.dot(K_IJ.T, u0) + cst_v
             v0 = b_J / (kappa * K_IJ_v)
-            KIJ_u = np.dot(K_IJ, v0) + cst_u
+            KIJ_u = nx.dot(K_IJ, v0) + cst_u
             u0 = (kappa * a_I) / KIJ_u
             cpt += 1
 
@@ -2343,9 +2393,9 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         """
         cpt = 1
         while cpt < max_iter:
-            K_IJ_v = np.dot(K_IJ.T, usc) + cst_v
+            K_IJ_v = nx.dot(K_IJ.T, usc) + cst_v
             vsc = b_J / (kappa * K_IJ_v)
-            KIJ_u = np.dot(K_IJ, vsc) + cst_u
+            KIJ_u = nx.dot(K_IJ, vsc) + cst_u
             usc = (kappa * a_I) / KIJ_u
             cpt += 1
 
@@ -2355,17 +2405,20 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         return usc, vsc
 
     def screened_obj(usc, vsc):
-        part_IJ = np.dot(np.dot(usc, K_IJ), vsc) - kappa * np.dot(a_I, np.log(usc)) - (1. / kappa) * np.dot(b_J,
-                                                                                                            np.log(vsc))
-        part_IJc = np.dot(usc, vec_eps_IJc)
-        part_IcJ = np.dot(vec_eps_IcJ, vsc)
+        part_IJ = (
+            nx.dot(nx.dot(usc, K_IJ), vsc)
+            - kappa * nx.dot(a_I, nx.log(usc))
+            - (1. / kappa) * nx.dot(b_J, nx.log(vsc))
+        )
+        part_IJc = nx.dot(usc, vec_eps_IJc)
+        part_IcJ = nx.dot(vec_eps_IcJ, vsc)
         psi_epsilon = part_IJ + part_IJc + part_IcJ
         return psi_epsilon
 
     def screened_grad(usc, vsc):
         # gradients of Psi_(kappa,epsilon) w.r.t u and v
-        grad_u = np.dot(K_IJ, vsc) + vec_eps_IJc - kappa * a_I / usc
-        grad_v = np.dot(K_IJ.T, usc) + vec_eps_IcJ - (1. / kappa) * b_J / vsc
+        grad_u = nx.dot(K_IJ, vsc) + vec_eps_IJc - kappa * a_I / usc
+        grad_v = nx.dot(K_IJ.T, usc) + vec_eps_IcJ - (1. / kappa) * b_J / vsc
         return grad_u, grad_v
 
     def bfgspost(theta):
@@ -2375,7 +2428,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         f = screened_obj(u, v)
         # gradient
         g_u, g_v = screened_grad(u, v)
-        g = np.hstack([g_u, g_v])
+        g = nx.concatenate([g_u, g_v], axis=0)
         return f, g
 
     # ----------------------------------------------------------------------------------------------------------------#
@@ -2383,25 +2436,26 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
     # ----------------------------------------------------------------------------------------------------------------#
 
     u0, v0 = restricted_sinkhorn(u0, v0)
-    theta0 = np.hstack([u0, v0])
+    theta0 = nx.concatenate([u0, v0], axis=0)
 
     bounds = bounds_u + bounds_v  # constraint bounds
 
     def obj(theta):
-        return bfgspost(theta)
+        return bfgspost(nx.from_numpy(theta))
 
     theta, _, _ = fmin_l_bfgs_b(func=obj,
-                                x0=theta0,
+                                x0=nx.to_numpy(theta0),
                                 bounds=bounds,
                                 maxfun=maxfun,
                                 pgtol=pgtol,
                                 maxiter=maxiter)
+    theta = nx.from_numpy(theta)
 
     usc = theta[:ns_budget]
     vsc = theta[ns_budget:]
 
-    usc_full = np.full(ns, epsilon / kappa)
-    vsc_full = np.full(nt, epsilon * kappa)
+    usc_full = nx.full((ns,), epsilon / kappa, type_as=M)
+    vsc_full = nx.full((nt,), epsilon * kappa, type_as=M)
     usc_full[Isel] = usc
     vsc_full[Jsel] = vsc
 
@@ -2413,7 +2467,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         log['Jsel'] = Jsel
 
     gamma = usc_full[:, None] * K * vsc_full[None, :]
-    gamma = gamma / gamma.sum()
+    gamma = gamma / nx.sum(gamma)
 
     if log:
         return gamma, log

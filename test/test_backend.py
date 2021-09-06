@@ -330,6 +330,62 @@ def test_func_backends(backend):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('flip')
 
+        A = nx.argmax(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('argmax')
+
+        A = nx.argmax(Mb, axis=1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('argmax(axis)')
+
+        A = nx.mean(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('mean')
+
+        A = nx.mean(Mb, axis=1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('mean(axis)')
+
+        A = nx.std(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('std')
+
+        A = nx.std(Mb, axis=1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('std(axis)')
+
+        A = nx.linspace(0, 1, 50)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('linspace')
+
+        X, Y = nx.meshgrid(vb, vb)
+        lst_b.append(np.stack([nx.to_numpy(X), nx.to_numpy(Y)]))
+        lst_name.append('meshgrid')
+
+        A = nx.diag(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('diag2D')
+
+        A = nx.diag(vb, 1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('diag1D')
+
+        A = nx.unique(nx.from_numpy(np.stack([M, M])))
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('unique')
+
+        A = nx.concatenate([Mb, Mb], axis=1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('concatenate')
+
+        A = nx.logsumexp(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('logsumexp')
+
+        A = nx.logsumexp(Mb, axis=1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('logsumexp(axis)')
+
         lst_tot.append(lst_b)
 
     lst_np = lst_tot[0]
