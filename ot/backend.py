@@ -634,14 +634,20 @@ class TorchBackend(Backend):
             a = torch.tensor([float(a)], dtype=b.dtype, device=b.device)
         if isinstance(b, int) or isinstance(b, float):
             b = torch.tensor([float(b)], dtype=a.dtype, device=a.device)
-        return torch.maximum(a, b)
+        if torch.__version__ >= '1.7.0':
+            return torch.maximum(a, b)
+        else:
+            return torch.max(torch.stack(torch.broadcast_tensors(a, b)), axis=0)[0]
 
     def minimum(self, a, b):
         if isinstance(a, int) or isinstance(a, float):
             a = torch.tensor([float(a)], dtype=b.dtype, device=b.device)
         if isinstance(b, int) or isinstance(b, float):
             b = torch.tensor([float(b)], dtype=a.dtype, device=a.device)
-        return torch.minimum(a, b)
+        if torch.__version__ >= '1.7.0':
+            return torch.minimum(a, b)
+        else:
+            return torch.min(torch.stack(torch.broadcast_tensors(a, b)), axis=0)[0]
 
     def dot(self, a, b):
         return torch.matmul(a, b)
@@ -697,7 +703,7 @@ class TorchBackend(Backend):
             return torch.flip(a, dims=axis)
 
     def clip(self, a, a_min, a_max):
-        return torch.clip(a, a_min, a_max)
+        return torch.clamp(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
         return torch.repeat_interleave(a, repeats, dim=axis)
