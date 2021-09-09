@@ -125,9 +125,8 @@ def test_pointwise_gromov():
     def loss(x, y):
         return np.abs(x - y)
 
-    np.random.seed(42)
     G, log = ot.gromov.pointwise_gromov_wasserstein(
-        C1, C2, p, q, loss, max_iter=100, log=True)
+        C1, C2, p, q, loss, max_iter=100, log=True, verbose=True, random_state=42)
 
     # check constraints
     np.testing.assert_allclose(
@@ -138,12 +137,11 @@ def test_pointwise_gromov():
     assert log['gw_dist_estimated'] == 0.0
     assert log['gw_dist_std'] == 0.0
 
-    np.random.seed(42)
     G, log = ot.gromov.pointwise_gromov_wasserstein(
-        C1, C2, p, q, loss, max_iter=100, alpha=0.1, log=True)
+        C1, C2, p, q, loss, max_iter=100, alpha=0.1, log=True, verbose=True, random_state=42)
 
-    assert log['gw_dist_estimated'] == 0.15115630200400282
-    assert log['gw_dist_std'] == 0.0016271189171144765
+    assert log['gw_dist_estimated'] == 0.10342276348494964
+    assert log['gw_dist_std'] == 0.0015952535464736394
 
 
 def test_sampled_gromov():
@@ -168,9 +166,8 @@ def test_sampled_gromov():
     def loss(x, y):
         return np.abs(x - y)
 
-    np.random.seed(42)
     G, log = ot.gromov.sampled_gromov_wasserstein(
-        C1, C2, p, q, loss, max_iter=100, epsilon=1, log=True)
+        C1, C2, p, q, loss, max_iter=100, epsilon=1, log=True, verbose=True, random_state=42)
 
     # check constraints
     np.testing.assert_allclose(
