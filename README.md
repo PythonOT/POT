@@ -198,6 +198,7 @@ The contributors to this library are
 * [Mokhtar Z. Alaya](http://mzalaya.github.io/) (Screenkhorn)
 * [Ievgen Redko](https://ievred.github.io/) (Laplacian DA, JCPOT)
 * [Adrien Corenflos](https://adriencorenflos.github.io/) (Sliced Wasserstein Distance)
+* [Minhui Huang](https://mhhuang95.github.io) (Projection Robust Wasserstein Distance)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
@@ -283,3 +284,5 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 [30] Flamary R., Courty N., Tuia D., Rakotomamonjy A. (2014). [Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching](https://remi.flamary.com/biblio/flamary2014optlaplace.pdf), NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
 
 [31] Bonneel, Nicolas, et al. [Sliced and radon wasserstein barycenters of measures](https://perso.liris.cnrs.fr/nicolas.bonneel/WassersteinSliced-JMIV.pdf), Journal of Mathematical Imaging and Vision 51.1 (2015): 22-45
+
+[32] Huang, M., Ma S., Lai, L. (2021). [A Riemannian Block Coordinate Descent Method for Computing the Projection Robust Wasserstein Distance](http://proceedings.mlr.press/v139/huang21e.html), Proceedings of the 38th International Conference on Machine Learning (ICML).
