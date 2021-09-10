@@ -2429,7 +2429,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         # gradient
         g_u, g_v = screened_grad(u, v)
         g = nx.concatenate([g_u, g_v], axis=0)
-        return f, g
+        return nx.to_numpy(f), nx.to_numpy(g)
 
     # ----------------------------------------------------------------------------------------------------------------#
     #                                           Step 2: L-BFGS-B solver                                              #
@@ -2441,10 +2441,10 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
     bounds = bounds_u + bounds_v  # constraint bounds
 
     def obj(theta):
-        return bfgspost(nx.from_numpy(theta))
+        return bfgspost(nx.from_numpy(theta, type_as=M))
 
     theta, _, _ = fmin_l_bfgs_b(func=obj,
-                                x0=nx.to_numpy(theta0),
+                                x0=theta0,
                                 bounds=bounds,
                                 maxfun=maxfun,
                                 pgtol=pgtol,
