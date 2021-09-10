@@ -15,6 +15,8 @@ from pre_build_helpers import compile_test_program
 
 
 def get_openmp_flag(compiler):
+    """Get openmp flags for a given compiler"""
+
     if hasattr(compiler, 'compiler'):
         compiler = compiler.compiler[0]
     else:
