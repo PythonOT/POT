@@ -144,6 +144,9 @@ class Backend():
     def sqrt(self, a):
         raise NotImplementedError()
 
+    def power(self, a, exponents):
+        raise NotImplementedError()
+
     def norm(self, a):
         raise NotImplementedError()
 
@@ -165,7 +168,25 @@ class Backend():
     def argsort(self, a, axis=None):
         raise NotImplementedError()
 
+    def searchsorted(self, a, v, side='left'):
+        raise NotImplementedError()
+
     def flip(self, a, axis=None):
+        raise NotImplementedError()
+
+    def clip(self, a, a_min, a_max):
+        raise NotImplementedError()
+
+    def repeat(self, a, repeats, axis=None):
+        raise NotImplementedError()
+
+    def take_along_axis(self, arr, indices, axis):
+        raise NotImplementedError()
+
+    def concatenate(self, arrays, axis=0):
+        raise NotImplementedError()
+
+    def zero_pad(self, a, pad_with):
         raise NotImplementedError()
 
     def argmax(self, a, axis=None):
@@ -187,9 +208,6 @@ class Backend():
         raise NotImplementedError()
 
     def unique(self, a):
-        raise NotImplementedError()
-
-    def concatenate(self, list_a, axis=0):
         raise NotImplementedError()
 
     def logsumexp(self, a, axis=None):
@@ -276,6 +294,9 @@ class NumpyBackend(Backend):
     def sqrt(self, a):
         return np.sqrt(a)
 
+    def power(self, a, exponents):
+        return np.power(a, exponents)
+
     def norm(self, a):
         return np.sqrt(np.sum(np.square(a)))
 
@@ -297,8 +318,31 @@ class NumpyBackend(Backend):
     def argsort(self, a, axis=-1):
         return np.argsort(a, axis)
 
+    def searchsorted(self, a, v, side='left'):
+        if a.ndim == 1:
+            return np.searchsorted(a, v, side)
+        else:
+            # this is a not very efficient way to make numpy
+            # searchsorted work on 2d arrays
+            return np.array([np.searchsorted(a[i, :], v[i, :], side) for i in range(a.shape[0])])
+
     def flip(self, a, axis=None):
         return np.flip(a, axis)
+
+    def clip(self, a, a_min, a_max):
+        return np.clip(a, a_min, a_max)
+
+    def repeat(self, a, repeats, axis=None):
+        return np.repeat(a, repeats, axis)
+
+    def take_along_axis(self, arr, indices, axis):
+        return np.take_along_axis(arr, indices, axis)
+
+    def concatenate(self, arrays, axis=0):
+        return np.concatenate(arrays, axis)
+
+    def zero_pad(self, a, pad_with):
+        return np.pad(a, pad_with)
 
     def argmax(self, a, axis=None):
         return np.argmax(a, axis=axis)
@@ -320,9 +364,6 @@ class NumpyBackend(Backend):
 
     def unique(self, a):
         return np.unique(a)
-
-    def concatenate(self, list_a, axis=0):
-        return np.concatenate(list_a, axis=axis)
 
     def logsumexp(self, a, axis=None):
         return scipy.logsumexp(a, axis=axis)
@@ -415,6 +456,9 @@ class JaxBackend(Backend):
     def sqrt(self, a):
         return jnp.sqrt(a)
 
+    def power(self, a, exponents):
+        return jnp.power(a, exponents)
+
     def norm(self, a):
         return jnp.sqrt(jnp.sum(jnp.square(a)))
 
@@ -436,8 +480,31 @@ class JaxBackend(Backend):
     def argsort(self, a, axis=-1):
         return jnp.argsort(a, axis)
 
+    def searchsorted(self, a, v, side='left'):
+        if a.ndim == 1:
+            return jnp.searchsorted(a, v, side)
+        else:
+            # this is a not very efficient way to make jax numpy
+            # searchsorted work on 2d arrays
+            return jnp.array([jnp.searchsorted(a[i, :], v[i, :], side) for i in range(a.shape[0])])
+
     def flip(self, a, axis=None):
         return jnp.flip(a, axis)
+
+    def clip(self, a, a_min, a_max):
+        return jnp.clip(a, a_min, a_max)
+
+    def repeat(self, a, repeats, axis=None):
+        return jnp.repeat(a, repeats, axis)
+
+    def take_along_axis(self, arr, indices, axis):
+        return jnp.take_along_axis(arr, indices, axis)
+
+    def concatenate(self, arrays, axis=0):
+        return jnp.concatenate(arrays, axis)
+
+    def zero_pad(self, a, pad_with):
+        return jnp.pad(a, pad_with)
 
     def argmax(self, a, axis=None):
         return jnp.argmax(a, axis=axis)
@@ -459,9 +526,6 @@ class JaxBackend(Backend):
 
     def unique(self, a):
         return jnp.unique(a)
-
-    def concatenate(self, list_a, axis=0):
-        return jnp.concatenate(list_a, axis=axis)
 
     def logsumexp(self, a, axis=None):
         return jscipy.logsumexp(a, axis=axis)
@@ -570,14 +634,20 @@ class TorchBackend(Backend):
             a = torch.tensor([float(a)], dtype=b.dtype, device=b.device)
         if isinstance(b, int) or isinstance(b, float):
             b = torch.tensor([float(b)], dtype=a.dtype, device=a.device)
-        return torch.maximum(a, b)
+        if torch.__version__ >= '1.7.0':
+            return torch.maximum(a, b)
+        else:
+            return torch.max(torch.stack(torch.broadcast_tensors(a, b)), axis=0)[0]
 
     def minimum(self, a, b):
         if isinstance(a, int) or isinstance(a, float):
             a = torch.tensor([float(a)], dtype=b.dtype, device=b.device)
         if isinstance(b, int) or isinstance(b, float):
             b = torch.tensor([float(b)], dtype=a.dtype, device=a.device)
-        return torch.minimum(a, b)
+        if torch.__version__ >= '1.7.0':
+            return torch.minimum(a, b)
+        else:
+            return torch.min(torch.stack(torch.broadcast_tensors(a, b)), axis=0)[0]
 
     def dot(self, a, b):
         return torch.matmul(a, b)
@@ -593,6 +663,9 @@ class TorchBackend(Backend):
 
     def sqrt(self, a):
         return torch.sqrt(a)
+
+    def power(self, a, exponents):
+        return torch.pow(a, exponents)
 
     def norm(self, a):
         return torch.sqrt(torch.sum(torch.square(a)))
@@ -617,6 +690,10 @@ class TorchBackend(Backend):
         sorted, indices = torch.sort(a, dim=axis)
         return indices
 
+    def searchsorted(self, a, v, side='left'):
+        right = (side != 'left')
+        return torch.searchsorted(a, v, right=right)
+
     def flip(self, a, axis=None):
         if axis is None:
             return torch.flip(a, tuple(i for i in range(len(a.shape))))
@@ -624,6 +701,26 @@ class TorchBackend(Backend):
             return torch.flip(a, (axis,))
         else:
             return torch.flip(a, dims=axis)
+
+    def clip(self, a, a_min, a_max):
+        return torch.clamp(a, a_min, a_max)
+
+    def repeat(self, a, repeats, axis=None):
+        return torch.repeat_interleave(a, repeats, dim=axis)
+
+    def take_along_axis(self, arr, indices, axis):
+        return torch.gather(arr, axis, indices)
+
+    def concatenate(self, arrays, axis=0):
+        return torch.cat(arrays, dim=axis)
+
+    def zero_pad(self, a, pad_with):
+        from torch.nn.functional import pad
+        # pad_with is an array of ndim tuples indicating how many 0 before and after
+        # we need to add. We first need to make it compliant with torch syntax, that
+        # starts with the last dim, then second last, etc.
+        how_pad = tuple(element for tupl in pad_with[::-1] for element in tupl)
+        return pad(a, how_pad)
 
     def argmax(self, a, axis=None):
         return torch.argmax(a, dim=axis)
@@ -652,9 +749,6 @@ class TorchBackend(Backend):
 
     def unique(self, a):
         return torch.unique(a)
-
-    def concatenate(self, list_a, axis=0):
-        return torch.cat(list_a, dim=axis)
 
     def logsumexp(self, a, axis=None):
         if axis is not None:
