@@ -1,4 +1,4 @@
-"""Tests for backend module """
+"""Tests for helpers functions """
 
 # Author: Remi Flamary <remi.flamary@polytechnique.edu>
 #
