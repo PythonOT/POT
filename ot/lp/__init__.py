@@ -27,6 +27,18 @@ __all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx',
            'emd_1d', 'emd2_1d', 'wasserstein_1d']
 
 def check_number_threads(numThreads):
+    """Checks whether or not the requested number of threads has a valid value.
+
+    Parameters
+    ----------
+    numThreads : int or str
+        The requested number of threads, should either be a strictly positive integer or "max" or None
+
+    Returns
+    -------
+    numThreads : int
+        Corrected number of threads
+    """
     if (numThreads is None) or (isinstance(numThreads, str) and numThreads.lower() == 'max'):
         return -1
     if (not isinstance(numThreads, int)) or numThreads < 1:
@@ -35,7 +47,7 @@ def check_number_threads(numThreads):
 
 
 def center_ot_dual(alpha0, beta0, a=None, b=None):
-    r"""Center dual OT potentials w.r.t. theirs weights
+    r"""Center dual OT potentials w.r.t. their weights
 
     The main idea of this function is to find unique dual potentials
     that ensure some kind of centering/fairness. The main idea is to find dual potentials that lead to the same final objective value for both source and targets (see below for more details). It will help having
@@ -223,7 +235,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function 
         :ref:`center_ot_dual`.
-    numThreads: int or "max", optional (default=1)
+    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
         If compiled with OpenMP, chooses the number of threads to parallelize.
         "max" selects the highest number possible.
 
@@ -362,7 +374,7 @@ def emd2(a, b, M, processes=1,
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
         :ref:`center_ot_dual`.
-    numThreads: int or "max", optional (default=1)
+    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
         If compiled with OpenMP, chooses the number of threads to parallelize.
         "max" selects the highest number possible.
 
@@ -406,7 +418,7 @@ def emd2(a, b, M, processes=1,
 
     a0, b0, M0 = a, b, M
     nx =  get_backend(M0, a0, b0)
-    
+
     # convert to numpy
     M = nx.to_numpy(M)
     a = nx.to_numpy(a)
@@ -484,7 +496,7 @@ def emd2(a, b, M, processes=1,
 
 
 def free_support_barycenter(measures_locations, measures_weights, X_init, b=None, weights=None, numItermax=100,
-                            stopThr=1e-7, verbose=False, log=None, numThreads="max"):
+                            stopThr=1e-7, verbose=False, log=None, numThreads=1):
     r"""
     Solves the free support (locations of the barycenters are optimized, not the weights) Wasserstein barycenter problem (i.e. the weighted Frechet mean for the 2-Wasserstein distance), formally:
 
@@ -525,7 +537,7 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
         Print information along iterations
     log : bool, optional
         record log if True
-    numThreads: int or "max", optional (default="max")
+    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
         If compiled with OpenMP, chooses the number of threads to parallelize.
         "max" selects the highest number possible.
 
