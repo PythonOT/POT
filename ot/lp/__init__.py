@@ -257,12 +257,12 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
 
     a0, b0, M0 = a, b, M
     nx =  get_backend(M0, a0, b0)
-    
+
     # convert to numpy
     M = nx.to_numpy(M)
     a = nx.to_numpy(a)
     b = nx.to_numpy(b)
-    
+
     # ensure float64
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
@@ -390,7 +390,7 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
     a0, b0, M0 = a, b, M
     nx =  get_backend(M0, a0, b0)
-    
+
     # convert to numpy
     M = nx.to_numpy(M)
     a = nx.to_numpy(a)

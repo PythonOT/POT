@@ -12,6 +12,8 @@ import numpy as np
 from scipy.optimize.linesearch import scalar_search_armijo
 from .lp import emd
 from .bregman import sinkhorn
+from ot.utils import list_to_array
+from .backend import get_backend
 
 # The corresponding scipy function does not work for matrices
 
@@ -53,7 +55,13 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
         loss value at step alpha
 
     """
-    xk = np.atleast_1d(xk)
+
+    xk, pk, gfk = list_to_array(xk, pk, gfk)
+    nx = get_backend(xk, pk, gfk)
+
+    if len(xk.shape) == 0:
+        xk = nx.reshape(xk, (-1,))
+
     fc = [0]
 
     def phi(alpha1):
@@ -65,7 +73,7 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
     else:
         phi0 = old_fval
 
-    derphi0 = np.sum(pk * gfk)  # Quickfix for matrices
+    derphi0 = nx.sum(pk * gfk)  # Quickfix for matrices
     alpha, phi1 = scalar_search_armijo(
         phi, phi0, derphi0, c1=c1, alpha0=alpha0)
 
@@ -124,10 +132,12 @@ def solve_linesearch(cost, G, deltaG, Mi, f_val,
     if armijo:
         alpha, fc, f_val = line_search_armijo(cost, G, deltaG, Mi, f_val)
     else:  # requires symetric matrices
-        dot1 = np.dot(C1, deltaG)
-        dot12 = dot1.dot(C2)
-        a = -2 * reg * np.sum(dot12 * deltaG)
-        b = np.sum((M + reg * constC) * deltaG) - 2 * reg * (np.sum(dot12 * G) + np.sum(np.dot(C1, G).dot(C2) * deltaG))
+        G, deltaG, C1, C2, constC, M = list_to_array(G, deltaG, C1, C2, constC, M)
+        nx = get_backend(G, deltaG, C1, C2, constC, M)
+
+        dot = nx.dot(nx.dot(C1, deltaG), C2)
+        a = -2 * reg * nx.sum(dot * deltaG)
+        b = nx.sum((M + reg * constC) * deltaG) - 2 * reg * (nx.sum(dot * G) + nx.sum(nx.dot(nx.dot(C1, G), C2) * deltaG))
         c = cost(G)
 
         alpha = solve_1d_linesearch_quad(a, b, c)
@@ -207,6 +217,8 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
     ot.bregman.sinkhorn : Entropic regularized optimal transport
 
     """
+    a, b, M, G0 = list_to_array(a, b, M, G0)
+    nx = get_backend(a, b, M)
 
     loop = 1
 
@@ -214,12 +226,12 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
         log = {'loss': []}
 
     if G0 is None:
-        G = np.outer(a, b)
+        G = nx.outer(a, b)
     else:
         G = G0
 
     def cost(G):
-        return np.sum(M * G) + reg * f(G)
+        return nx.sum(M * G) + reg * f(G)
 
     f_val = cost(G)
     if log:
@@ -240,7 +252,7 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
         # problem linearization
         Mi = M + reg * df(G)
         # set M positive
-        Mi += Mi.min()
+        Mi += nx.min(Mi)
 
         # solve linear program
         Gc = emd(a, b, Mi, numItermax=numItermaxEmd)
@@ -345,6 +357,8 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
     ot.optim.cg : conditional gradient
 
     """
+    a, b, M, G0 = list_to_array(a, b, M, G0)
+    nx = get_backend(a, b, M)
 
     loop = 1
 
@@ -352,12 +366,12 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
         log = {'loss': []}
 
     if G0 is None:
-        G = np.outer(a, b)
+        G = nx.outer(a, b)
     else:
         G = G0
 
     def cost(G):
-        return np.sum(M * G) + reg1 * np.sum(G * np.log(G)) + reg2 * f(G)
+        return nx.sum(M * G) + reg1 * nx.sum(G * nx.log(G)) + reg2 * f(G)
 
     f_val = cost(G)
     if log:
@@ -385,7 +399,7 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
         deltaG = Gc - G
 
         # line search
-        dcost = Mi + reg1 * (1 + np.log(G))  # ??
+        dcost = Mi + reg1 * (1 + nx.log(G))  # ??
         alpha, fc, f_val = line_search_armijo(cost, G, deltaG, dcost, f_val)
 
         G = G + alpha * deltaG

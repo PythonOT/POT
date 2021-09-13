@@ -175,6 +175,8 @@ def test_empty_backend():
         nx.argsort(M)
     with pytest.raises(NotImplementedError):
         nx.flip(M)
+    with pytest.raises(NotImplementedError):
+        nx.outer(v, v)
 
 
 @pytest.mark.parametrize('backend', backend_list)
@@ -329,6 +331,10 @@ def test_func_backends(backend):
         A = nx.flip(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('flip')
+
+        A = nx.outer(vb, vb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('outer')
 
         lst_tot.append(lst_b)
 
