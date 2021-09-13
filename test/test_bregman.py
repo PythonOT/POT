@@ -137,7 +137,7 @@ def test_sinkhorn_empty():
     ot.sinkhorn([], [], M, 1, method='greenkhorn', stopThr=1e-10, log=True)
 
 
-@pytest.mark.parametrize("nx", backend_list)
+@pytest.mark.parametrize("nx", [nx for nx in backend_list if nx.__name__ != "jax"])
 def test_sinkhorn_variants(nx):
     # test sinkhorn
     n = 100
@@ -563,7 +563,7 @@ def test_implemented_methods():
             ot.bregman.sinkhorn2(a, b, M, epsilon, method=method)
 
 
-@pytest.mark.parametrize("nx", backend_list)
+@pytest.mark.parametrize("nx", [nx for nx in backend_list if nx.__name__ != "jax"])
 @pytest.mark.filterwarnings("ignore:Bottleneck")
 def test_screenkhorn(nx):
     # test screenkhorn

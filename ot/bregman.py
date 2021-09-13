@@ -522,6 +522,8 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
     a, b, M = list_to_array(a, b, M)
 
     nx = get_backend(M, a, b)
+    if nx.__name__ == "jax":
+        raise TypeError("JAX arrays have been received. Greenkhorn is not compatible with JAX")
 
     if len(a) == 0:
         a = nx.ones((M.shape[0],), type_as=M) / M.shape[0]
@@ -540,7 +542,6 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
     viol = nx.sum(G, axis=1) - a
     viol_2 = nx.sum(G, axis=0) - b
     stopThr_val = 1
-
     if log:
         log = dict()
         log['u'] = u
@@ -800,18 +801,20 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         log['beta'] = beta + reg * nx.log(v)
         log['warmstart'] = (log['alpha'], log['beta'])
         if n_hists:
-            res = nx.zeros((n_hists,), type_as=M)
-            for i in range(n_hists):
-                res[i] = nx.sum(get_Gamma(alpha, beta, u[:, i], v[:, i]) * M)
+            res = nx.stack([
+                nx.sum(get_Gamma(alpha, beta, u[:, i], v[:, i]) * M)
+                for i in range(n_hists)
+            ])
             return res, log
 
         else:
             return get_Gamma(alpha, beta, u, v), log
     else:
         if n_hists:
-            res = nx.zeros((n_hists,), type_as=M)
-            for i in range(n_hists):
-                res[i] = nx.sum(get_Gamma(alpha, beta, u[:, i], v[:, i]) * M)
+            res = nx.stack([
+                nx.sum(get_Gamma(alpha, beta, u[:, i], v[:, i]) * M)
+                for i in range(n_hists)
+            ])
             return res
         else:
             return get_Gamma(alpha, beta, u, v)
@@ -1401,12 +1404,18 @@ def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
         cpt = cpt + 1
 
         b = nx.zeros(A.shape[1:], type_as=A)
+        KV_cols = []
         for r in range(A.shape[0]):
-            KV[r, :, :] = K(A[r, :, :] / nx.maximum(stabThr, K(U[r, :, :])))
-            b += weights[r] * nx.log(nx.maximum(stabThr, U[r, :, :] * KV[r, :, :]))
+            KV_col_r = K(A[r, :, :] / nx.maximum(stabThr, K(U[r, :, :])))
+            b += weights[r] * nx.log(nx.maximum(stabThr, U[r, :, :] * KV_col_r))
+            KV_cols.append(KV_col_r)
+        KV = nx.stack(KV_cols)
         b = nx.exp(b)
-        for r in range(A.shape[0]):
-            U[r, :, :] = b / nx.maximum(stabThr, KV[r, :, :])
+
+        U = nx.stack([
+            b / nx.maximum(stabThr, KV[r, :, :])
+            for r in range(A.shape[0])
+        ])
         if cpt % 10 == 1:
             err = nx.sum(nx.abs(bold - b))
             # log and verbose print
@@ -1820,24 +1829,35 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
 
         for i_ot in range(numIterMax):
 
+            lse_f_cols = []
             for i in range_s:
                 M = dist(X_s_np[i:i + bs, :], X_t_np, metric=metric)
                 M = nx.from_numpy(M, type_as=a)
-                lse_f[i:i + bs] = nx.logsumexp(g[None, :] - M / reg, axis=1)
+                lse_f_cols.append(
+                    nx.logsumexp(g[None, :] - M / reg, axis=1)
+                )
+            lse_f = nx.concatenate(lse_f_cols, axis=0)
             f = log_a - lse_f
 
+            lse_g_cols = []
             for j in range_t:
                 M = dist(X_s_np, X_t_np[j:j + bt, :], metric=metric)
                 M = nx.from_numpy(M, type_as=a)
-                lse_g[j:j + bt] = nx.logsumexp(f[:, None] - M / reg, axis=0)
+                lse_g_cols.append(
+                    nx.logsumexp(f[:, None] - M / reg, axis=0)
+                )
+            lse_g = nx.concatenate(lse_g_cols, axis=0)
             g = log_b - lse_g
 
             if (i_ot + 1) % 10 == 0:
-                m1 = nx.zeros(a.shape, type_as=a)
+                m1_cols = []
                 for i in range_s:
                     M = dist(X_s_np[i:i + bs, :], X_t_np, metric=metric)
                     M = nx.from_numpy(M, type_as=a)
-                    m1[i:i + bs] = nx.sum(nx.exp(f[i:i + bs, None] + g[None, :] - M / reg), axis=1)
+                    m1_cols.append(
+                        nx.sum(nx.exp(f[i:i + bs, None] + g[None, :] - M / reg), axis=1)
+                    )
+                m1 = nx.concatenate(m1_cols, axis=0)
                 err = nx.sum(nx.abs(m1 - a))
                 if log:
                     dict_log["err"].append(err)
@@ -2214,6 +2234,8 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
     a, b, M = list_to_array(a, b, M)
 
     nx = get_backend(M, a, b)
+    if nx.__name__ == "jax":
+        raise TypeError("JAX arrays have been received but screenkhorn is not compatible with JAX.")
 
     ns, nt = M.shape
 

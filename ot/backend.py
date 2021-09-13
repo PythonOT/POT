@@ -23,6 +23,8 @@ try:
     import jax.numpy as jnp
     import jax.scipy.special as jscipy
     jax_type = jax.numpy.ndarray
+    from jax.config import config
+    config.update("jax_enable_x64", True)
 except ImportError:
     jax = False
     jax_type = float
@@ -213,6 +215,9 @@ class Backend():
     def logsumexp(self, a, axis=None):
         raise NotImplementedError()
 
+    def stack(self, arrays, axis=0):
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
 
@@ -367,6 +372,9 @@ class NumpyBackend(Backend):
 
     def logsumexp(self, a, axis=None):
         return scipy.logsumexp(a, axis=axis)
+
+    def stack(self, arrays, axis=0):
+        return np.stack(arrays, axis)
 
 
 class JaxBackend(Backend):
@@ -529,6 +537,9 @@ class JaxBackend(Backend):
 
     def logsumexp(self, a, axis=None):
         return jscipy.logsumexp(a, axis=axis)
+
+    def stack(self, arrays, axis=0):
+        return jnp.stack(arrays, axis)
 
 
 class TorchBackend(Backend):
@@ -755,3 +766,6 @@ class TorchBackend(Backend):
             return torch.logsumexp(a, dim=axis)
         else:
             return torch.logsumexp(a, dim=tuple(range(len(a.shape))))
+
+    def stack(self, arrays, axis=0):
+        return torch.stack(arrays, dim=axis)

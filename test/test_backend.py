@@ -206,6 +206,8 @@ def test_empty_backend():
         nx.unique([M, M])
     with pytest.raises(NotImplementedError):
         nx.logsumexp(M)
+    with pytest.raises(NotImplementedError):
+        nx.stack([M, M])
 
 
 @pytest.mark.parametrize('backend', backend_list)
@@ -425,6 +427,10 @@ def test_func_backends(backend):
         A = nx.logsumexp(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('logsumexp')
+
+        A = nx.stack([Mb, Mb])
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('stack')
 
         lst_tot.append(lst_b)
 
