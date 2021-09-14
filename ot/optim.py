@@ -133,7 +133,10 @@ def solve_linesearch(cost, G, deltaG, Mi, f_val,
         alpha, fc, f_val = line_search_armijo(cost, G, deltaG, Mi, f_val)
     else:  # requires symetric matrices
         G, deltaG, C1, C2, constC, M = list_to_array(G, deltaG, C1, C2, constC, M)
-        nx = get_backend(G, deltaG, C1, C2, constC, M)
+        if isinstance(M, int) or isinstance(M, float):
+            nx = get_backend(G, deltaG, C1, C2, constC)
+        else:
+            nx = get_backend(G, deltaG, C1, C2, constC, M)
 
         dot = nx.dot(nx.dot(C1, deltaG), C2)
         a = -2 * reg * nx.sum(dot * deltaG)
@@ -218,7 +221,10 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
 
     """
     a, b, M, G0 = list_to_array(a, b, M, G0)
-    nx = get_backend(a, b, M)
+    if isinstance(M, int) or isinstance(M, float):
+        nx = get_backend(a, b)
+    else:
+        nx = get_backend(a, b, M)
 
     loop = 1
 
