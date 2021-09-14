@@ -30,11 +30,11 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
     ----------
     f : callable
         loss function
-    xk : ndarray
+    xk : array-like
         initial position
-    pk : ndarray
+    pk : array-like
         descent direction
-    gfk : ndarray
+    gfk : array-like
         gradient of f at xk
     old_fval : float
         loss value at xk
@@ -91,28 +91,28 @@ def solve_linesearch(cost, G, deltaG, Mi, f_val,
     ----------
     cost : method
         Cost in the FW for the linesearch
-    G : ndarray, shape(ns,nt)
+    G : array-like, shape(ns,nt)
         The transport map at a given iteration of the FW
-    deltaG : ndarray (ns,nt)
+    deltaG : array-like (ns,nt)
         Difference between the optimal map found by linearization in the FW algorithm and the value at a given iteration
-    Mi : ndarray (ns,nt)
+    Mi : array-like (ns,nt)
         Cost matrix of the linearized transport problem. Corresponds to the gradient of the cost
     f_val :  float
         Value of the cost at G
     armijo : bool, optional
             If True the steps of the line-search is found via an armijo research. Else closed form is used.
             If there is convergence issues use False.
-    C1 : ndarray (ns,ns), optional
+    C1 : array-like (ns,ns), optional
         Structure matrix in the source domain. Only used and necessary when armijo=False
-    C2 : ndarray (nt,nt), optional
+    C2 : array-like (nt,nt), optional
         Structure matrix in the target domain. Only used and necessary when armijo=False
     reg : float, optional
           Regularization parameter. Only used and necessary when armijo=False
-    Gc : ndarray (ns,nt)
+    Gc : array-like (ns,nt)
         Optimal map found by linearization in the FW algorithm. Only used and necessary when armijo=False
-    constC : ndarray (ns,nt)
+    constC : array-like (ns,nt)
              Constant for the gromov cost. See [24]. Only used and necessary when armijo=False
-    M : ndarray (ns,nt), optional
+    M : array-like (ns,nt), optional
         Cost matrix between the features. Only used and necessary when armijo=False
     Returns
     -------
@@ -176,15 +176,15 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
 
     Parameters
     ----------
-    a : ndarray, shape (ns,)
+    a : array-like, shape (ns,)
         samples weights in the source domain
-    b : ndarray, shape (nt,)
+    b : array-like, shape (nt,)
         samples in the target domain
-    M : ndarray, shape (ns, nt)
+    M : array-like, shape (ns, nt)
         loss matrix
     reg : float
         Regularization term >0
-    G0 :  ndarray, shape (ns,nt), optional
+    G0 :  array-like, shape (ns,nt), optional
         initial guess (default is indep joint density)
     numItermax : int, optional
         Max number of iterations
@@ -321,17 +321,17 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
 
     Parameters
     ----------
-    a : ndarray, shape (ns,)
+    a : array-like, shape (ns,)
         samples weights in the source domain
-    b : ndarrayv (nt,)
+    b : array-like, (nt,)
         samples in the target domain
-    M : ndarray, shape (ns, nt)
+    M : array-like, shape (ns, nt)
         loss matrix
     reg1 : float
         Entropic Regularization term >0
     reg2 : float
         Second Regularization term >0
-    G0 : ndarray, shape (ns, nt), optional
+    G0 : array-like, shape (ns, nt), optional
         initial guess (default is indep joint density)
     numItermax : int, optional
         Max number of iterations
