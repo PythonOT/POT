@@ -23,15 +23,19 @@ def get_openmp_flag(compiler):
         compiler = compiler.__class__.__name__
 
     if sys.platform == "win32" and ('icc' in compiler or 'icl' in compiler):
-        return ['/Qopenmp']
+        omp_flag = ['/Qopenmp']
     elif sys.platform == "win32":
-        return ['/openmp']
+        omp_flag = ['/openmp']
     elif sys.platform in ("darwin", "linux") and "icc" in compiler:
-        return ['-qopenmp']
+        omp_flag = ['-qopenmp']
     elif sys.platform == "darwin" and 'openmp' in os.getenv('CPPFLAGS', ''):
-        return []
-    # Default flag for GCC and clang:
-    return ['-fopenmp']
+        omp_flag = []
+    else:
+        # Default flag for GCC and clang:
+        omp_flag = ['-fopenmp']
+    if sys.platform.startswith("darwin"):
+        omp_flag.append("-Xclang")
+    return omp_flag
 
 
 def check_openmp_support():
@@ -58,9 +62,9 @@ def check_openmp_support():
     extra_postargs = get_openmp_flag
 
     try:
-        output = compile_test_program(code,
-                                      extra_preargs=extra_preargs,
-                                      extra_postargs=extra_postargs)
+        output, compile_flags = compile_test_program(code,
+                                                    extra_preargs=extra_preargs,
+                                                    extra_postargs=extra_postargs)
 
         if output and 'nthreads=' in output[0]:
             nthreads = int(output[0].strip().split('=')[1])
@@ -75,4 +79,5 @@ def check_openmp_support():
 
     except (CompileError, LinkError, subprocess.CalledProcessError):
         openmp_supported = False
-    return openmp_supported
+        compile_flags = []
+    return openmp_supported, compile_flags

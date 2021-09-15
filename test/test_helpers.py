@@ -20,7 +20,7 @@ def test_helpers():
     get_openmp_flag(compiler)
 
     s = '#include <stdio.h>\n#include <stdlib.h>\n\nint main(void) {\n\tprintf("Hello world!\\n");\n\treturn 0;\n}'
-    output = compile_test_program(s)
+    output, _ = compile_test_program(s)
     assert len(output) == 1 and "Hello world!" == output[0]
 
     check_openmp_support()
