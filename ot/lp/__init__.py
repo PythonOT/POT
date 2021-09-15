@@ -14,6 +14,7 @@ import sys
 
 import numpy as np
 from scipy.sparse import coo_matrix
+import warnings
 
 from . import cvx
 from .cvx import barycenter
@@ -489,7 +490,10 @@ def emd2(a, b, M, processes=1,
     nb = b.shape[1]
 
     if processes > 1:
-        print("POT - Warning: the 'processes' parameter has been deprecated. Multiprocessing should be done outside of POT.")
+        warnings.warn(
+            "The 'processes' parameter has been deprecated. "
+            "Multiprocessing should be done outside of POT."
+        )
     res = list(map(f, [b[:, i].copy() for i in range(nb)]))
 
     return res
