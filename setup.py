@@ -40,7 +40,8 @@ if openmp_supported:
     #flags = ["-fopenmp", "-DOMP"]
     #if sys.platform.startswith("darwin"):
         #flags.append("-Xclang")
-    compile_args += flags + ["/DOMP" if sys.platform == 'win32' else "-DOMP"]
+    flags += ["/DOMP" if sys.platform == 'win32' else "-DOMP"]
+    compile_args += flags
     link_args += flags
 
 if sys.platform.startswith('darwin'):

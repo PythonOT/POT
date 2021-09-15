@@ -23,4 +23,5 @@ def test_helpers():
     output, _ = compile_test_program(s)
     assert len(output) == 1 and "Hello world!" == output[0]
 
-    check_openmp_support()
+    openmp_supported, _ = check_openmp_support()
+    assert openmp_supported
