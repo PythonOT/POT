@@ -506,7 +506,7 @@ namespace lemon_omp {
 				for (ArcsType i = 0; i < _search_arc_num; i += _block_size) {
 
 					ArcsType e;
-					ArcsType j;
+					int j;
 #pragma omp parallel
 					{
 #ifdef OMP
