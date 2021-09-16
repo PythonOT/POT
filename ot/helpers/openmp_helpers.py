@@ -33,8 +33,8 @@ def get_openmp_flag(compiler):
     else:
         # Default flag for GCC and clang:
         omp_flag = ['-fopenmp']
-    if sys.platform.startswith("darwin"):
-        omp_flag.append("-Xclang")
+        if sys.platform.startswith("darwin"):
+            omp_flag += ["-Xpreprocessor", "-lomp"]
     return omp_flag
 
 
