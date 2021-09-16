@@ -1492,7 +1492,7 @@ namespace lemon_omp {
 					arc_vector.resize(demand_nodes.size());
 					// Find the min. cost incomming arc for each demand node
 #pragma omp parallel for
-					for (ArcsType i = 0; i < ArcsType(demand_nodes.size()); ++i) {
+					for (int i = 0; i < demand_nodes.size(); ++i) {
 						Node v = demand_nodes[i];
 						Cost min_cost = std::numeric_limits<Cost>::max();
 						Arc min_arc = INVALID;
