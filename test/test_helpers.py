@@ -21,7 +21,6 @@ def test_helpers():
 
     s = '#include <stdio.h>\n#include <stdlib.h>\n\nint main(void) {\n\tprintf("Hello world!\\n");\n\treturn 0;\n}'
     output, _ = compile_test_program(s)
-    assert len(output) == 1 and "Hello world!" == output[0]
+    assert len(output) == 1 and output[0] == "Hello world!"
 
-    openmp_supported, _ = check_openmp_support()
-    assert openmp_supported
+    check_openmp_support()

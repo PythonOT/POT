@@ -33,14 +33,10 @@ if 'clean' in sys.argv[1:]:
 
 # add platform dependant optional compilation argument
 openmp_supported, flags = check_openmp_support()
-compile_args = ["-O3"]
+compile_args = ["/O2" if sys.platform == "win32" else "-O3"]
 link_args = []
 
 if openmp_supported:
-    #flags = ["-fopenmp", "-DOMP"]
-    #if sys.platform.startswith("darwin"):
-        #flags.append("-Xclang")
-    print(sys.platform)
     compile_args += flags + ["/DOMP" if sys.platform == 'win32' else "-DOMP"]
     link_args += flags
 

@@ -1,4 +1,4 @@
-"""Helpers to check build environment before actual build of scikit-learn"""
+"""Helpers to check build environment before actual build of POT"""
 
 import os
 import sys
@@ -14,7 +14,7 @@ from numpy.distutils.command.config_compiler import config_cc
 
 
 def _get_compiler():
-    """Get a compiler equivalent to the one that will be used to build sklearn
+    """Get a compiler equivalent to the one that will be used to build POT
     Handles compiler specified as follows:
         - python setup.py build_ext --compiler=<compiler>
         - CC=<compiler> python setup.py build_ext
