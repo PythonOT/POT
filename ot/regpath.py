@@ -329,9 +329,9 @@ def compute_next_removal(phi, delta, current_gamma):
         Unbalanced optimal transport through non-negative penalized
         linear regression.
     """
-    l = phi / (delta - 1e-16)
-    l[l >= (1-1e-8)*current_gamma] = 0
-    return np.max(l), np.argmax(l)
+    r_candidate = phi / (delta - 1e-16)
+    r_candidate[r_candidate >= (1 - 1e-8) * current_gamma] = 0
+    return np.max(r_candidate), np.argmax(r_candidate)
 
 
 def complement_schur(M_current, b, d, id_pop):
@@ -391,20 +391,20 @@ def complement_schur(M_current, b, d, id_pop):
         M_del = np.delete(M_current, id_pop, 0)
         a = M_del[:, id_pop]
         M_del = np.delete(M_del, id_pop, 1)
-        M = M_del - np.outer(a, b)/M_current[id_pop, id_pop]
+        M = M_del - np.outer(a, b) / M_current[id_pop, id_pop]
     else:
         n = b.shape[0] + 1
         if np.shape(b)[0] == 0:
-            M = np.array([[1/2]])
+            M = np.array([[0.5]])
         else:
             X = M_current.dot(b)
             s = d - b.T.dot(X)
             M = np.zeros((n, n))
-            M[:-1, :-1] = M_current + X.dot(X.T)/s
+            M[:-1, :-1] = M_current + X.dot(X.T) / s
             X_ravel = X.ravel()
-            M[-1, :-1] = -X_ravel/s
-            M[:-1, -1] = -X_ravel/s
-            M[-1, -1] = 1/s
+            M[-1, :-1] = -X_ravel / s
+            M[:-1, -1] = -X_ravel / s
+            M[-1, -1] = 1 / s
     return M
 
 
@@ -516,10 +516,10 @@ def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
     n_iter = 1
 
     # initialization
-    M0 = Hty/c
+    M0 = Hty / c
     gamma_list = [np.max(M0)]
     active_index = [np.argmax(M0)]
-    t_list = [np.zeros((n*m,))]
+    t_list = [np.zeros((n * m,))]
     H_inv = np.array([[]])
     add_col = np.array([])
     id_pop = -1
@@ -566,8 +566,8 @@ def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
 
     # correct the last solution and gamma
     if len(t_list) > 1:
-        t_final = t_list[-2] + (t_list[-1] - t_list[-2]) \
-                  * (reg - gamma_list[-2]) / (gamma_list[-1] - gamma_list[-2])
+        t_final = (t_list[-2] + (t_list[-1] - t_list[-2]) *
+                   (reg - gamma_list[-2]) / (gamma_list[-1] - gamma_list[-2]))
         t_list[-1] = t_final
         gamma_list[-1] = reg
     else:
@@ -579,7 +579,8 @@ def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
 
 def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
                       itmax=50000):
-    r"""This function gives the regularization path of semi-relaxed l2-UOT problem
+    r"""This function gives the regularization path of semi-relaxed
+    l2-UOT problem
 
     The problem to optimize is the Lasso reformulation of the l2-penalized UOT:
     .. math::
@@ -708,8 +709,8 @@ def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
 
     # correct the last solution and gamma
     if len(t_list) > 1:
-        t_final = t_list[-2] + (t_list[-1] - t_list[-2]) \
-                  * (reg - gamma_list[-2]) / (gamma_list[-1] - gamma_list[-2])
+        t_final = (t_list[-2] + (t_list[-1] - t_list[-2]) *
+                   (reg - gamma_list[-2]) / (gamma_list[-1] - gamma_list[-2]))
         t_list[-1] = t_final
         gamma_list[-1] = reg
     else:
@@ -763,8 +764,8 @@ def regularization_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
 
 
 def compute_transport_plan(gamma, gamma_list, Pi_list):
-    r""" Given the regularization path, this function computes the transport plan
-    for any value of gamma by the piecewise linearity of the path
+    r""" Given the regularization path, this function computes the transport
+    plan for any value of gamma by the piecewise linearity of the path
 
     .. math::
         t(\gamma) = \phi(\gamma) - \gamma \delta(\gamma)
@@ -818,9 +819,9 @@ def compute_transport_plan(gamma, gamma_list, Pi_list):
     else:
         idx = np.where(gamma <= np.array(gamma_list))[0][-1]
         gamma_k0 = gamma_list[idx]
-        gamma_k1 = gamma_list[idx+1]
+        gamma_k1 = gamma_list[idx + 1]
         pi_k0 = Pi_list[idx]
-        pi_k1 = Pi_list[idx+1]
+        pi_k1 = Pi_list[idx + 1]
         Pi = pi_k0 + (pi_k1 - pi_k0) * (gamma - gamma_k0) \
             / (gamma_k1 - gamma_k0)
     return Pi

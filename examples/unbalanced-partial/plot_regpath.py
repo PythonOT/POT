@@ -88,12 +88,12 @@ for p in range(4):
         for j in range(n):
             if P[i, j] > 0:
                 pl.plot([xs[i, 0], xt[j, 0]], [xs[i, 1], xt[j, 1]], color='C2',
-                        alpha=P[i, j]*0.3)
+                        alpha=P[i, j] * 0.3)
     pl.scatter(xs[:, 0], xs[:, 1], c='C0', alpha=0.2)
     pl.scatter(xt[:, 0], xt[:, 1], c='C1', alpha=0.2)
-    pl.scatter(xs[:, 0], xs[:, 1], c='C0', s=P.sum(1).ravel()*(1+p)*2,
+    pl.scatter(xs[:, 0], xs[:, 1], c='C0', s=P.sum(1).ravel() * (1 + p) * 2,
                label='Re-weighted source', alpha=1)
-    pl.scatter(xt[:, 0], xt[:, 1], c='C1', s=P.sum(0).ravel()*(1+p)*2,
+    pl.scatter(xt[:, 0], xt[:, 1], c='C1', s=P.sum(0).ravel() * (1 + p) * 2,
                label='Re-weighted target', alpha=1)
     pl.plot([], [], color='C2', alpha=0.8, label='OT plan')
     pl.title(r'$\ell_2$ UOT $\gamma$={}'.format(selected_gamma[p]),
@@ -122,10 +122,10 @@ for p in range(4):
         for j in range(n):
             if P[i, j] > 0:
                 pl.plot([xs[i, 0], xt[j, 0]], [xs[i, 1], xt[j, 1]], color='C2',
-                        alpha=P[i, j]*0.3)
+                        alpha=P[i, j] * 0.3)
     pl.scatter(xs[:, 0], xs[:, 1], c='C0', alpha=0.2)
     pl.scatter(xt[:, 0], xt[:, 1], c='C1', alpha=1, label='Target marginal')
-    pl.scatter(xs[:, 0], xs[:, 1], c='C0', s=P.sum(1).ravel()*2*(1+p),
+    pl.scatter(xs[:, 0], xs[:, 1], c='C0', s=P.sum(1).ravel() * 2 * (1 + p),
                label='Source marginal', alpha=1)
     pl.plot([], [], color='C2', alpha=0.8, label='OT plan')
     pl.title(r'Semi-relaxed $l_2$ UOT $\gamma$={}'.format(selected_gamma[p]),
