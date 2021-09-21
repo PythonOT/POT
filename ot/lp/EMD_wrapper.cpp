@@ -152,7 +152,7 @@ int EMD_wrap_omp(int n1, int n2, double *X, double *Y, double *D, double *G,
     std::vector<int> indI(n), indJ(m);
     std::vector<double> weights1(n), weights2(m);
     Digraph di(n, m);
-    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, true, n+m, n*m, maxIter);
+    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, true, n+m, n*m, maxIter, numThreads);
 
     // Set supply and demand, don't account for 0 values (faster)
 

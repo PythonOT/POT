@@ -83,6 +83,7 @@
 
 namespace lemon_omp {
 
+    int64_t max_threads = -1;
 
 	template <typename T>
 	class ProxyObject;
@@ -253,7 +254,21 @@ namespace lemon_omp {
 			// Reset data structures
 			reset();
 			max_iter = maxiters;
-			num_threads = numThreads;
+#ifdef OMP
+            if (max_threads < 0) {
+                max_threads = omp_get_max_threads();
+            }
+            if (numThreads > 0 && numThreads<=max_threads){
+                num_threads = numThreads;
+            } else if (numThreads == -1 || numThreads>max_threads) {
+                num_threads = max_threads;
+            } else {
+                num_threads = 1;
+            }
+            omp_set_num_threads(num_threads);
+#else
+            num_threads = 1;
+#endif
 		}
 
 		/// The type of the flow amounts, capacity bounds and supply values
@@ -486,18 +501,7 @@ namespace lemon_omp {
 			bool findEnteringArc() {
 				Cost min_val = 0;
 
-			ArcsType N;
-#ifdef OMP
-			if (_ns.num_threads > 0 && _ns.num_threads<=omp_get_max_threads()){
-				N = _ns.num_threads;
-			} else if (_ns.num_threads = -1 || _ns.num_threads>omp_get_max_threads()) {
-				N = omp_get_max_threads();
-			} else {
-				N = 1;
-			}
-#else
-				N = 1;
-#endif
+                ArcsType N = _ns.num_threads;
 
 				std::vector<Cost> minArray(N, 0);
 				std::vector<ArcsType> arcId(N);
