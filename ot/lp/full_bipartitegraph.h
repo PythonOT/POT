@@ -136,7 +136,7 @@ namespace lemon {
   ///
   /// \brief A directed full graph class.
   ///
-  /// FullBipartiteDigraph is a simple and fast implmenetation of directed full
+  /// FullBipartiteDigraph is a simple and fast implementation of directed full
   /// (complete) graphs. It contains an arc from each node to each node
   /// (including a loop for each node), therefore the number of arcs
   /// is the square of the number of nodes.
