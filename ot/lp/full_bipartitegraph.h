@@ -42,47 +42,47 @@ namespace lemon {
     typedef FullBipartiteDigraphBase Digraph;
 
     //class Node;
-	typedef int64_t Node;
+	typedef int Node;
     //class Arc;
-	typedef long long Arc;
+	typedef int64_t Arc;
 
   protected:
 
-    int64_t _node_num;
-    long long _arc_num;
+    int _node_num;
+    int64_t _arc_num;
 	
     FullBipartiteDigraphBase() {}
 
-    void construct(int64_t n1, int64_t n2) { _node_num = n1+n2; _arc_num = n1 * n2; _n1=n1; _n2=n2;}
+    void construct(int n1, int n2) { _node_num = n1+n2; _arc_num = (int64_t)n1 * (int64_t)n2; _n1=n1; _n2=n2;}
 
   public:
 
-	int64_t _n1, _n2;
+	int _n1, _n2;
 
 
-    Node operator()(int64_t ix) const { return Node(ix); }
-    static int64_t index(const Node& node) { return node; }
+    Node operator()(int ix) const { return Node(ix); }
+    static int index(const Node& node) { return node; }
 
     Arc arc(const Node& s, const Node& t) const {
 		if (s<_n1 && t>=_n1)
-			return Arc(s * _n2 + (t-_n1) );
+            return Arc((int64_t)s * (int64_t)_n2 + (int64_t)(t-_n1) );
 		else
 			return Arc(-1);
     }
 
-    int64_t nodeNum() const { return _node_num; }
-    long long arcNum() const { return _arc_num; }
+    int nodeNum() const { return _node_num; }
+    int64_t arcNum() const { return _arc_num; }
 
-    int64_t maxNodeId() const { return _node_num - 1; }
-    long long maxArcId() const { return _arc_num - 1; }
+    int maxNodeId() const { return _node_num - 1; }
+    int64_t maxArcId() const { return _arc_num - 1; }
 
     Node source(Arc arc) const { return arc / _n2; }
     Node target(Arc arc) const { return (arc % _n2) + _n1; }
 
-    static int64_t id(Node node) { return node; }
-    static long long id(Arc arc) { return arc; }
+    static int id(Node node) { return node; }
+    static int64_t id(Arc arc) { return arc; }
 
-    static Node nodeFromId(int64_t id) { return Node(id);}
+    static Node nodeFromId(int id) { return Node(id);}
     static Arc arcFromId(int64_t id) { return Arc(id);}
 
 
@@ -172,7 +172,7 @@ namespace lemon {
     ///
     /// Constructor.
     /// \param n The number of the nodes.
-    FullBipartiteDigraph(int64_t n1, int64_t n2) { construct(n1, n2); }
+    FullBipartiteDigraph(int n1, int n2) { construct(n1, n2); }
 
 
     /// \brief Returns the node with the given index.
@@ -182,7 +182,7 @@ namespace lemon {
     /// the range <tt>[0..nodeNum()-1]</tt>.
     /// The index of a node is the same as its ID.
     /// \sa index()
-    Node operator()(int64_t ix) const { return Parent::operator()(ix); }
+    Node operator()(int ix) const { return Parent::operator()(ix); }
 
     /// \brief Returns the index of the given node.
     ///
@@ -191,7 +191,7 @@ namespace lemon {
     /// the range <tt>[0..nodeNum()-1]</tt>.
     /// The index of a node is the same as its ID.
     /// \sa operator()()
-    static int64_t index(const Node& node) { return Parent::index(node); }
+    static int index(const Node& node) { return Parent::index(node); }
 
     /// \brief Returns the arc connecting the given nodes.
     ///
@@ -201,9 +201,9 @@ namespace lemon {
     }*/
 
     /// \brief Number of nodes.
-    int64_t nodeNum() const { return Parent::nodeNum(); }
+    int nodeNum() const { return Parent::nodeNum(); }
     /// \brief Number of arcs.
-    long long arcNum() const { return Parent::arcNum(); }
+    int64_t arcNum() const { return Parent::arcNum(); }
   };
 
 
