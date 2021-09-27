@@ -250,7 +250,7 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
         # line search
         alpha, fc, f_val = solve_linesearch(cost, G, deltaG, Mi, f_val, reg=reg, M=M, Gc=Gc, **kwargs)
         if alpha is None:
-           alpha = 0.0
+            alpha = 0.0
 
         G = G + alpha * deltaG
 
