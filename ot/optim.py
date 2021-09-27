@@ -178,9 +178,9 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
     numItermaxEmd : int, optional
         Max number of iterations for emd
     stopThr : float, optional
-        Stop threshol on the relative variation (>0)
+        Stop threshold on the relative variation (>0)
     stopThr2 : float, optional
-        Stop threshol on the absolute variation (>0)
+        Stop threshold on the absolute variation (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -249,6 +249,8 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
 
         # line search
         alpha, fc, f_val = solve_linesearch(cost, G, deltaG, Mi, f_val, reg=reg, M=M, Gc=Gc, **kwargs)
+        if alpha is None:
+           alpha = 0.0
 
         G = G + alpha * deltaG
 
@@ -320,9 +322,9 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
     numInnerItermax : int, optional
         Max number of iterations of Sinkhorn
     stopThr : float, optional
-        Stop threshol on the relative variation (>0)
+        Stop threshold on the relative variation (>0)
     stopThr2 : float, optional
-        Stop threshol on the absolute variation (>0)
+        Stop threshold on the absolute variation (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
