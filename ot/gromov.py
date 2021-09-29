@@ -16,6 +16,10 @@ import numpy as np
 from .bregman import sinkhorn
 from .utils import dist, UndefinedParameter
 from .optim import cg
+from .lp import emd_1d, emd
+from .utils import check_random_state
+
+from scipy.sparse import issparse
 
 
 def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
@@ -570,6 +574,378 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
         return log['fgw_dist'], log
     else:
         return log['fgw_dist']
+
+
+def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
+                           nb_samples_p=None, nb_samples_q=None, std=True, random_state=None):
+    r"""
+        Returns an approximation of the gromov-wasserstein cost between (C1,p) and (C2,q)
+        with a fixed transport plan T.
+
+        The function gives an unbiased approximation of the following equation:
+
+        .. math::
+            GW = \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+
+        Where :
+
+        - C1 : Metric cost matrix in the source space
+        - C2 : Metric cost matrix in the target space
+        - L  : Loss function to account for the misfit between the similarity matrices
+        - T  : Matrix with marginal p and q
+
+        Parameters
+        ----------
+        C1 : ndarray, shape (ns, ns)
+            Metric cost matrix in the source space
+        C2 : ndarray, shape (nt, nt)
+            Metric costfr matrix in the target space
+        p :  ndarray, shape (ns,)
+            Distribution in the source space
+        q :  ndarray, shape (nt,)
+            Distribution in the target space
+        loss_fun :  function: \mathcal{R} \times \mathcal{R} \shortarrow \mathcal{R}
+            Loss function used for the distance, the transport plan does not depend on the loss function
+        T : csr or ndarray, shape (ns, nt)
+            Transport plan matrix, either a sparse csr matrix or
+        nb_samples_p : int, optional
+            nb_samples_p is the number of samples (without replacement) along the first dimension of T.
+        nb_samples_q : int, optional
+            nb_samples_q is the number of samples along the second dimension of T, for each sample along the first.
+        std : bool, optional
+            Standard deviation associated with the prediction of the gromov-wasserstein cost.
+        random_state : int or RandomState instance, optional
+            Fix the seed for to allow reproducibility
+
+        Returns
+        -------
+         : float
+            Gromov-wasserstein cost
+
+        References
+        ----------
+        .. [14] Kerdoncuff, Tanguy, Emonet, Rémi, Sebban, Marc
+            "Sampled Gromov Wasserstein."
+            Machine Learning Journal (MLJ). 2021.
+
+        """
+    generator = check_random_state(random_state)
+
+    len_p = len(p)
+    len_q = len(q)
+
+    # It is always better to sample from the biggest distribution first.
+    if len_p < len_q:
+        p, q = q, p
+        len_p, len_q = len_q, len_p
+        C1, C2 = C2, C1
+        T = T.T
+
+    if nb_samples_p is None:
+        if issparse(T):
+            # If T is sparse, it probably mean that PoGroW was used, thus the number of sample is reduced
+            nb_samples_p = min(int(5 * (len_p * np.log(len_p)) ** 0.5), len_p)
+        else:
+            nb_samples_p = len_p
+    else:
+        # The number of sample along the first dimension is without replacement.
+        nb_samples_p = min(nb_samples_p, len_p)
+    if nb_samples_q is None:
+        nb_samples_q = 1
+    if std:
+        nb_samples_q = max(2, nb_samples_q)
+
+    index_k = np.zeros((nb_samples_p, nb_samples_q), dtype=int)
+    index_l = np.zeros((nb_samples_p, nb_samples_q), dtype=int)
+    list_value_sample = np.zeros((nb_samples_p, nb_samples_p, nb_samples_q))
+
+    index_i = generator.choice(len_p, size=nb_samples_p, p=p, replace=False)
+    index_j = generator.choice(len_p, size=nb_samples_p, p=p, replace=False)
+
+    for i in range(nb_samples_p):
+        if issparse(T):
+            T_indexi = T[index_i[i], :].toarray()[0]
+            T_indexj = T[index_j[i], :].toarray()[0]
+        else:
+            T_indexi = T[index_i[i], :]
+            T_indexj = T[index_j[i], :]
+        # For each of the row sampled, the column is sampled.
+        index_k[i] = generator.choice(len_q, size=nb_samples_q, p=T_indexi / T_indexi.sum(), replace=True)
+        index_l[i] = generator.choice(len_q, size=nb_samples_q, p=T_indexj / T_indexj.sum(), replace=True)
+
+    for n in range(nb_samples_q):
+        list_value_sample[:, :, n] = loss_fun(C1[np.ix_(index_i, index_j)], C2[np.ix_(index_k[:, n], index_l[:, n])])
+
+    if std:
+        std_value = np.sum(np.std(list_value_sample, axis=2) ** 2) ** 0.5
+        return np.mean(list_value_sample), std_value / (nb_samples_p * nb_samples_p)
+    else:
+        return np.mean(list_value_sample)
+
+
+def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
+                                 alpha=1, max_iter=100, threshold_plan=0, log=False, verbose=False, random_state=None):
+    r"""
+        Returns the gromov-wasserstein transport between (C1,p) and (C2,q) using a stochastic Frank-Wolfe.
+        This method as a O(max_iter \times PN^2) time complexity with P the number of Sinkhorn iterations.
+
+        The function solves the following optimization problem:
+
+        .. math::
+            GW = arg\min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+
+            s.t. T 1 = p
+
+                 T^T 1= q
+
+                 T\geq 0
+
+        Where :
+
+        - C1 : Metric cost matrix in the source space
+        - C2 : Metric cost matrix in the target space
+        - p  : distribution in the source space
+        - q  : distribution in the target space
+        - L  : loss function to account for the misfit between the similarity matrices
+
+        Parameters
+        ----------
+        C1 : ndarray, shape (ns, ns)
+            Metric cost matrix in the source space
+        C2 : ndarray, shape (nt, nt)
+            Metric costfr matrix in the target space
+        p :  ndarray, shape (ns,)
+            Distribution in the source space
+        q :  ndarray, shape (nt,)
+            Distribution in the target space
+        loss_fun :  function: \mathcal{R} \times \mathcal{R} \shortarrow \mathcal{R}
+            Loss function used for the distance, the transport plan does not depend on the loss function
+        alpha : float
+            Step of the Frank-Wolfe algorithm, should be between 0 and 1
+        max_iter : int, optional
+            Max number of iterations
+        threshold_plan : float, optional
+            Deleting very small value in the transport plan. If above zero, it violate the marginal constraints.
+        verbose : bool, optional
+            Print information along iterations
+        log : bool, optional
+            Gives the distance estimated and the standard deviation
+        random_state : int or RandomState instance, optional
+            Fix the seed for to allow reproducibility
+
+        Returns
+        -------
+        T : ndarray, shape (ns, nt)
+            Optimal coupling between the two spaces
+
+        References
+        ----------
+        .. [14] Kerdoncuff, Tanguy, Emonet, Rémi, Sebban, Marc
+            "Sampled Gromov Wasserstein."
+            Machine Learning Journal (MLJ). 2021.
+
+        """
+    C1 = np.asarray(C1, dtype=np.float64)
+    C2 = np.asarray(C2, dtype=np.float64)
+    p = np.asarray(p, dtype=np.float64)
+    q = np.asarray(q, dtype=np.float64)
+    len_p = len(p)
+    len_q = len(q)
+
+    generator = check_random_state(random_state)
+
+    index = np.zeros(2, dtype=int)
+
+    # Initialize with default marginal
+    index[0] = generator.choice(len_p, size=1, p=p)
+    index[1] = generator.choice(len_q, size=1, p=q)
+    T = emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False).tocsr()
+
+    best_gw_dist_estimated = np.inf
+    for cpt in range(max_iter):
+        index[0] = generator.choice(len_p, size=1, p=p)
+        T_index0 = T[index[0], :].toarray()[0]
+        index[1] = generator.choice(len_q, size=1, p=T_index0 / T_index0.sum())
+
+        if alpha == 1:
+            T = emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False).tocsr()
+        else:
+            new_T = emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False).tocsr()
+            T = (1 - alpha) * T + alpha * new_T
+            # To limit the number of non 0, the values bellow the threshold are set to 0.
+            T.data[T.data < threshold_plan] = 0
+            T.eliminate_zeros()
+
+        if cpt % 10 == 0 or cpt == (max_iter - 1):
+            gw_dist_estimated = GW_distance_estimation(C1=C1, C2=C2, loss_fun=loss_fun,
+                                                       p=p, q=q, T=T, std=False, random_state=generator)
+
+            if gw_dist_estimated < best_gw_dist_estimated:
+                best_gw_dist_estimated = gw_dist_estimated
+                best_T = T.copy()
+
+            if verbose:
+                if cpt % 200 == 0:
+                    print('{:5s}|{:12s}'.format('It.', 'Best gw estimated') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(cpt, best_gw_dist_estimated))
+
+    if log:
+        log = {}
+        log["gw_dist_estimated"], log["gw_dist_std"] = GW_distance_estimation(C1=C1, C2=C2, loss_fun=loss_fun,
+                                                                              p=p, q=q, T=best_T,
+                                                                              random_state=generator)
+        return best_T, log
+    return best_T
+
+
+def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
+                               nb_samples_grad=100, epsilon=1, max_iter=500, log=False, verbose=False,
+                               random_state=None):
+    r"""
+        Returns the gromov-wasserstein transport between (C1,p) and (C2,q) using a 1-stochastic Frank-Wolfe.
+        This method as a O(max_iter \times Nlog(N)) time complexity by relying on the 1D Optimal Transport solver.
+
+        The function solves the following optimization problem:
+
+        .. math::
+            GW = arg\min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+
+            s.t. T 1 = p
+
+                 T^T 1= q
+
+                 T\geq 0
+
+        Where :
+
+        - C1 : Metric cost matrix in the source space
+        - C2 : Metric cost matrix in the target space
+        - p  : distribution in the source space
+        - q  : distribution in the target space
+        - L  : loss function to account for the misfit between the similarity matrices
+
+        Parameters
+        ----------
+        C1 : ndarray, shape (ns, ns)
+            Metric cost matrix in the source space
+        C2 : ndarray, shape (nt, nt)
+            Metric costfr matrix in the target space
+        p :  ndarray, shape (ns,)
+            Distribution in the source space
+        q :  ndarray, shape (nt,)
+            Distribution in the target space
+        loss_fun :  function: \mathcal{R} \times \mathcal{R} \shortarrow \mathcal{R}
+            Loss function used for the distance, the transport plan does not depend on the loss function
+        nb_samples_grad : int
+            Number of samples to approximate the gradient
+        epsilon : float
+            Weight of the Kullback-Leiber regularization
+        max_iter : int, optional
+            Max number of iterations
+        verbose : bool, optional
+            Print information along iterations
+        log : bool, optional
+            Gives the distance estimated and the standard deviation
+        random_state : int or RandomState instance, optional
+            Fix the seed for to allow reproducibility
+
+        Returns
+        -------
+        T : ndarray, shape (ns, nt)
+            Optimal coupling between the two spaces
+
+        References
+        ----------
+        .. [14] Kerdoncuff, Tanguy, Emonet, Rémi, Sebban, Marc
+            "Sampled Gromov Wasserstein."
+            Machine Learning Journal (MLJ). 2021.
+
+        """
+    C1 = np.asarray(C1, dtype=np.float64)
+    C2 = np.asarray(C2, dtype=np.float64)
+    p = np.asarray(p, dtype=np.float64)
+    q = np.asarray(q, dtype=np.float64)
+    len_p = len(p)
+    len_q = len(q)
+
+    generator = check_random_state(random_state)
+
+    # The most natural way to define nb_sample is with a simple integer.
+    if isinstance(nb_samples_grad, int):
+        if nb_samples_grad > len_p:
+            # As the sampling along the first dimension is done without replacement, the rest is reported to the second
+            # dimension.
+            nb_samples_grad_p, nb_samples_grad_q = len_p, nb_samples_grad // len_p
+        else:
+            nb_samples_grad_p, nb_samples_grad_q = nb_samples_grad, 1
+    else:
+        nb_samples_grad_p, nb_samples_grad_q = nb_samples_grad
+    T = np.outer(p, q)
+    # continue_loop allows to stop the loop if there is several successive small modification of T.
+    continue_loop = 0
+
+    # The gradient of GW is more complex if the two matrices are not symmetric.
+    C_are_symmetric = np.allclose(C1, C1.T, rtol=1e-10, atol=1e-10) and np.allclose(C2, C2.T, rtol=1e-10, atol=1e-10)
+
+    for cpt in range(max_iter):
+        index0 = generator.choice(len_p, size=nb_samples_grad_p, p=p, replace=False)
+        Lik = 0
+        for i, index0_i in enumerate(index0):
+            index1 = generator.choice(len_q,
+                                      size=nb_samples_grad_q,
+                                      p=T[index0_i, :] / T[index0_i, :].sum(),
+                                      replace=False)
+            # If the matrices C are not symmetric, the gradient has 2 terms, thus the term is chosen randomly.
+            if (not C_are_symmetric) and generator.rand(1) > 0.5:
+                Lik += np.mean(loss_fun(np.expand_dims(C1[:, np.repeat(index0[i], nb_samples_grad_q)], 1),
+                                        np.expand_dims(C2[:, index1], 0)),
+                               axis=2)
+            else:
+                Lik += np.mean(loss_fun(np.expand_dims(C1[np.repeat(index0[i], nb_samples_grad_q), :], 2),
+                                        np.expand_dims(C2[index1, :], 1)),
+                               axis=0)
+
+        max_Lik = np.max(Lik)
+        if max_Lik == 0:
+            continue
+        # This division by the max is here to facilitate the choice of epsilon.
+        Lik /= max_Lik
+
+        if epsilon > 0:
+            # Set to infinity all the numbers bellow exp(-200) to avoid log of 0.
+            log_T = np.log(np.clip(T, np.exp(-200), 1))
+            log_T[log_T == -200] = -np.inf
+            Lik = Lik - epsilon * log_T
+
+            try:
+                new_T = sinkhorn(a=p, b=q, M=Lik, reg=epsilon)
+            except (RuntimeWarning, UserWarning):
+                print("Warning catched in Sinkhorn: Return last stable T")
+                break
+        else:
+            new_T = emd(a=p, b=q, M=Lik)
+
+        change_T = ((T - new_T) ** 2).mean()
+        if change_T <= 10e-20:
+            continue_loop += 1
+            if continue_loop > 100:  # Number max of low modifications of T
+                T = new_T.copy()
+                break
+        else:
+            continue_loop = 0
+
+        if verbose and cpt % 10 == 0:
+            if cpt % 200 == 0:
+                print('{:5s}|{:12s}'.format('It.', '||T_n - T_{n+1}||') + '\n' + '-' * 19)
+            print('{:5d}|{:8e}|'.format(cpt, change_T))
+        T = new_T.copy()
+
+    if log:
+        log = {}
+        log["gw_dist_estimated"], log["gw_dist_std"] = GW_distance_estimation(C1=C1, C2=C2, loss_fun=loss_fun,
+                                                                              p=p, q=q, T=T, random_state=generator)
+        return T, log
+    return T
 
 
 def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
