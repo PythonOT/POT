@@ -154,7 +154,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
                 # compute right marginal tmp2= (diag(u)Kdiag(v))^T1
                 tmp2 = np.sum(u[:, None] * K * v[None, :], 0)
                 #tmp2=np.einsum('i,ij,j->j', u, K, v)
-                err = np.linalg.norm(tmp2 - b) # violation of marginal
+                err = np.linalg.norm(tmp2 - b)  # violation of marginal
             if log:
                 log['err'].append(err)
 
