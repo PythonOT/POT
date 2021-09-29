@@ -148,8 +148,10 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
             # we can speed up the process by checking for the error only all
             # the 10th iterations
             if nbb:
-                err = np.sum((u - uprev)**2) / np.sum((u)**2) + \
-                    np.sum((v - vprev)**2) / np.sum((v)**2)
+                err = np.sqrt(
+                    np.sum((u - uprev)**2) / np.sum((u)**2)
+                    + np.sum((v - vprev)**2) / np.sum((v)**2)
+                )
             else:
                 # compute right marginal tmp2= (diag(u)Kdiag(v))^T1
                 tmp2 = np.sum(u[:, None] * K * v[None, :], 0)
