@@ -120,7 +120,7 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
     labels_a2 = cp.asnumpy(labels_a)
     classes = npp.unique(labels_a2)
     for c in classes:
-        idxc, = utils.to_gpu(npp.where(labels_a2 == c))
+        idxc = utils.to_gpu(*npp.where(labels_a2 == c))
         indices_labels.append(idxc)
 
     W = np.zeros(M.shape)

@@ -160,3 +160,28 @@ def test_line_search_armijo(nx):
     assert a == anp
     assert b == bnp
     assert alpha is None
+
+    # check line search armijo
+    def f(x):
+        return np.sum((x - 5.0) ** 2)
+
+    def grad(x):
+        return 2 * (x - 5.0)
+
+    xk = np.array([[[-5.0, -5.0]]])
+    pk = np.array([[[100.0, 100.0]]])
+    gfk = grad(xk)
+    old_fval = f(xk)
+
+    # chech the case where the optimum is on the direction
+    alpha, _, _ = ot.optim.line_search_armijo(f, xk, pk, gfk, old_fval)
+    np.testing.assert_allclose(alpha, 0.1)
+
+    # check the case where the direction is not far enough
+    pk = np.array([[[3.0, 3.0]]])
+    alpha, _, _ = ot.optim.line_search_armijo(f, xk, pk, gfk, old_fval, alpha0=1.0)
+    np.testing.assert_allclose(alpha, 1.0)
+
+    # check the case where the checking the wrong direction
+    alpha, _, _ = ot.optim.line_search_armijo(f, xk, -pk, gfk, old_fval)
+    assert alpha <= 0
