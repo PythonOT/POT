@@ -311,7 +311,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
