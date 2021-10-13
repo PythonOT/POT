@@ -23,8 +23,6 @@ try:
     import jax.numpy as jnp
     import jax.scipy.special as jscipy
     jax_type = jax.numpy.ndarray
-    from jax.config import config
-    config.update("jax_enable_x64", True)
 except ImportError:
     jax = False
     jax_type = float
