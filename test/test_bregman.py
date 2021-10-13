@@ -10,10 +10,7 @@ import numpy as np
 import pytest
 
 import ot
-from ot.backend import get_backend_list
 from ot.backend import torch
-
-backend_list = get_backend_list()
 
 
 def test_sinkhorn():
@@ -35,7 +32,6 @@ def test_sinkhorn():
         u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
 
 
-@pytest.mark.parametrize('nx', backend_list, indirect=True)
 def test_sinkhorn_backends(nx):
     n_samples = 100
     n_features = 2
@@ -57,7 +53,6 @@ def test_sinkhorn_backends(nx):
     np.allclose(G, nx.to_numpy(Gb))
 
 
-@pytest.mark.parametrize('nx', backend_list, indirect=True)
 def test_sinkhorn2_backends(nx):
     n_samples = 100
     n_features = 2
@@ -137,7 +132,7 @@ def test_sinkhorn_empty():
     ot.sinkhorn([], [], M, 1, method='greenkhorn', stopThr=1e-10, log=True)
 
 
-@pytest.mark.parametrize("nx", [nx for nx in backend_list if nx.__name__ != "jax"], indirect=True)
+@pytest.skip_backend("jax")
 def test_sinkhorn_variants(nx):
     # test sinkhorn
     n = 100
@@ -189,7 +184,6 @@ def test_sinkhorn_variants_log():
     print(G0, G_green)
 
 
-@pytest.mark.parametrize("nx", backend_list, indirect=True)
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
 def test_barycenter(nx, method):
     n_bins = 100  # nb bins
@@ -224,7 +218,6 @@ def test_barycenter(nx, method):
     ot.bregman.barycenter(Ab, Mb, reg, log=True, verbose=True)
 
 
-@pytest.mark.parametrize("nx", backend_list, indirect=True)
 def test_barycenter_stabilization(nx):
     n_bins = 100  # nb bins
 
@@ -261,7 +254,6 @@ def test_barycenter_stabilization(nx):
     np.testing.assert_allclose(bar, bar_np)
 
 
-@pytest.mark.parametrize("nx", backend_list, indirect=True)
 def test_wasserstein_bary_2d(nx):
     size = 100  # size of a square image
     a1 = np.random.randn(size, size)
@@ -289,7 +281,6 @@ def test_wasserstein_bary_2d(nx):
     ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
 
 
-@pytest.mark.parametrize("nx", backend_list, indirect=True)
 def test_unmix(nx):
     n_bins = 50  # nb bins
 
@@ -329,7 +320,6 @@ def test_unmix(nx):
                      1, alpha=0.01, log=True, verbose=True)
 
 
-@pytest.mark.parametrize("nx", backend_list, indirect=True)
 def test_empirical_sinkhorn(nx):
     # test sinkhorn
     n = 10
@@ -386,7 +376,6 @@ def test_empirical_sinkhorn(nx):
     np.testing.assert_allclose(loss_emp_sinkhorn, loss_sinkhorn, atol=1e-05)
 
 
-@pytest.mark.parametrize("nx", backend_list, indirect=True)
 def test_lazy_empirical_sinkhorn(nx):
     # test sinkhorn
     n = 10
@@ -450,7 +439,6 @@ def test_lazy_empirical_sinkhorn(nx):
     np.testing.assert_allclose(loss_emp_sinkhorn, loss_sinkhorn, atol=1e-05)
 
 
-@pytest.mark.parametrize("nx", backend_list, indirect=True)
 def test_empirical_sinkhorn_divergence(nx):
     # Test sinkhorn divergence
     n = 10
@@ -501,7 +489,6 @@ def test_empirical_sinkhorn_divergence(nx):
         emp_sinkhorn_div_log, sink_div_log, atol=1e-05)  # cf conv emp sinkhorn
 
 
-@pytest.mark.parametrize("nx", backend_list, indirect=True)
 def test_stabilized_vs_sinkhorn_multidim(nx):
     # test if stable version matches sinkhorn
     # for multidimensional inputs
@@ -569,7 +556,7 @@ def test_implemented_methods():
             ot.bregman.sinkhorn2(a, b, M, epsilon, method=method)
 
 
-@pytest.mark.parametrize("nx", [nx for nx in backend_list if nx.__name__ != "jax"], indirect=True)
+@pytest.skip_backend("jax")
 @pytest.mark.filterwarnings("ignore:Bottleneck")
 def test_screenkhorn(nx):
     # test screenkhorn
@@ -597,7 +584,6 @@ def test_screenkhorn(nx):
     np.testing.assert_allclose(G_sink.sum(1), G_screen.sum(1), atol=1e-02)
 
 
-@pytest.mark.parametrize("nx", backend_list, indirect=True)
 def test_convolutional_barycenter_non_square(nx):
     # test for image with height not equal width
     A = np.ones((2, 2, 3)) / (2 * 3)
