@@ -116,20 +116,20 @@ def test_sinkhorn_empty():
     M = ot.dist(x, x)
 
     G, log = ot.sinkhorn([], [], M, 1, stopThr=1e-10, verbose=True, log=True)
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(u, G.sum(1), atol=1e-05)
     np.testing.assert_allclose(u, G.sum(0), atol=1e-05)
 
     G, log = ot.sinkhorn([], [], M, 1, stopThr=1e-10,
                          method='sinkhorn_stabilized', verbose=True, log=True)
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(u, G.sum(1), atol=1e-05)
     np.testing.assert_allclose(u, G.sum(0), atol=1e-05)
 
     G, log = ot.sinkhorn(
         [], [], M, 1, stopThr=1e-10, method='sinkhorn_epsilon_scaling',
         verbose=True, log=True)
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(u, G.sum(1), atol=1e-05)
     np.testing.assert_allclose(u, G.sum(0), atol=1e-05)
 
@@ -208,17 +208,20 @@ def test_barycenter(nx, method):
     alpha = 0.5  # 0<=alpha<=1
     weights = np.array([1 - alpha, alpha])
 
-    A = nx.from_numpy(A)
-    M = nx.from_numpy(M)
-    weights = nx.from_numpy(weights)
+    Ab = nx.from_numpy(A)
+    Mb = nx.from_numpy(M)
+    weightsb = nx.from_numpy(weights)
 
     # wasserstein
     reg = 1e-2
-    bary_wass, log = ot.bregman.barycenter(A, M, reg, weights, method=method, log=True)
+    bary_wass_np, log = ot.bregman.barycenter(A, M, reg, weights, method=method, log=True)
+    bary_wass, _ = ot.bregman.barycenter(Ab, Mb, reg, weightsb, method=method, log=True)
+    bary_wass = nx.to_numpy(bary_wass)
 
-    np.testing.assert_allclose(1, np.sum(nx.to_numpy(bary_wass)))
+    np.testing.assert_allclose(1, np.sum(bary_wass))
+    np.testing.assert_allclose(bary_wass, bary_wass_np)
 
-    ot.bregman.barycenter(A, M, reg, log=True, verbose=True)
+    ot.bregman.barycenter(Ab, Mb, reg, log=True, verbose=True)
 
 
 @pytest.mark.parametrize("nx", backend_list)
@@ -276,9 +279,11 @@ def test_wasserstein_bary_2d(nx):
 
     # wasserstein
     reg = 1e-2
+    bary_wass_np = ot.bregman.convolutional_barycenter2d(A, reg)
     bary_wass = nx.to_numpy(ot.bregman.convolutional_barycenter2d(Ab, reg))
 
     np.testing.assert_allclose(1, np.sum(bary_wass))
+    np.testing.assert_allclose(bary_wass, bary_wass_np)
 
     # help in checking if log and verbose do not bug the function
     ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
@@ -313,11 +318,12 @@ def test_unmix(nx):
 
     # wasserstein
     reg = 1e-3
-    um = ot.bregman.unmix(ab, Db, Mb, M0b, h0b, reg, 1, alpha=0.01, )
-    um = nx.to_numpy(um)
+    um_np = ot.bregman.unmix(a, D, M, M0, h0, reg, 1, alpha=0.01)
+    um = nx.to_numpy(ot.bregman.unmix(ab, Db, Mb, M0b, h0b, reg, 1, alpha=0.01))
 
     np.testing.assert_allclose(1, np.sum(um), rtol=1e-03, atol=1e-03)
     np.testing.assert_allclose([0.5, 0.5], um, rtol=1e-03, atol=1e-03)
+    np.testing.assert_allclose(um, um_np)
 
     ot.bregman.unmix(ab, Db, Mb, M0b, h0b, reg,
                      1, alpha=0.01, log=True, verbose=True)
@@ -586,8 +592,7 @@ def test_screenkhorn(nx):
     # screenkhorn
     G_screen = nx.to_numpy(ot.bregman.screenkhorn(ab, bb, Mb, 1e-03, uniform=True, verbose=True))
     # check marginals
-    np.testing.assert_allclose(G_sink.sum(0), G_sink_np.sum(0), atol=1e-02)
-    np.testing.assert_allclose(G_sink.sum(1), G_sink_np.sum(1), atol=1e-02)
+    np.testing.assert_allclose(G_sink_np, G_sink)
     np.testing.assert_allclose(G_sink.sum(0), G_screen.sum(0), atol=1e-02)
     np.testing.assert_allclose(G_sink.sum(1), G_screen.sum(1), atol=1e-02)
 
@@ -596,6 +601,11 @@ def test_screenkhorn(nx):
 def test_convolutional_barycenter_non_square(nx):
     # test for image with height not equal width
     A = np.ones((2, 2, 3)) / (2 * 3)
-    b = nx.to_numpy(ot.bregman.convolutional_barycenter2d(nx.from_numpy(A), 1e-03))
+    Ab = nx.from_numpy(A)
+
+    b_np = ot.bregman.convolutional_barycenter2d(A, 1e-03)
+    b = nx.to_numpy(ot.bregman.convolutional_barycenter2d(Ab, 1e-03))
+
     np.testing.assert_allclose(np.ones((2, 3)) / (2 * 3), b, atol=1e-02)
     np.testing.assert_allclose(np.ones((2, 3)) / (2 * 3), b, atol=1e-02)
+    np.testing.assert_allclose(b, b_np)
