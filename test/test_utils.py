@@ -4,7 +4,6 @@
 #
 # License: MIT License
 
-import pytest
 import ot
 import numpy as np
 import sys
