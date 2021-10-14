@@ -16,9 +16,6 @@ from numpy.testing import assert_array_almost_equal_nulp
 from ot.backend import get_backend, get_backend_list, to_numpy
 
 
-backend_list = get_backend_list()
-
-
 def test_get_backend_list():
 
     lst = get_backend_list()
@@ -27,7 +24,6 @@ def test_get_backend_list():
     assert isinstance(lst[0], ot.backend.NumpyBackend)
 
 
-@pytest.mark.parametrize('nx', backend_list)
 def test_to_numpy(nx):
 
     v = nx.zeros(10)
@@ -91,7 +87,6 @@ def test_get_backend():
             get_backend(A, B2)
 
 
-@pytest.mark.parametrize('nx', backend_list)
 def test_convert_between_backends(nx):
 
     A = np.zeros((3, 2))
@@ -179,8 +174,7 @@ def test_empty_backend():
         nx.outer(v, v)
 
 
-@pytest.mark.parametrize('backend', backend_list)
-def test_func_backends(backend):
+def test_func_backends(nx):
 
     rnd = np.random.RandomState(0)
     M = rnd.randn(10, 3)
@@ -189,7 +183,7 @@ def test_func_backends(backend):
 
     lst_tot = []
 
-    for nx in [ot.backend.NumpyBackend(), backend]:
+    for nx in [ot.backend.NumpyBackend(), nx]:
 
         print('Backend: ', nx.__name__)
 

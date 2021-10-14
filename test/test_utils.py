@@ -9,12 +9,7 @@ import ot
 import numpy as np
 import sys
 
-from ot.backend import get_backend_list
 
-backend_list = get_backend_list()
-
-
-@pytest.mark.parametrize('nx', backend_list)
 def test_proj_simplex(nx):
     n = 10
     rng = np.random.RandomState(0)
@@ -119,7 +114,6 @@ def test_dist():
     np.testing.assert_allclose(D, D3, atol=1e-14)
 
 
-@ pytest.mark.parametrize('nx', backend_list)
 def test_dist_backends(nx):
 
     n = 100

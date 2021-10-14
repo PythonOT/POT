@@ -7,12 +7,8 @@
 import pytest
 import numpy as np
 import ot
-from ot.backend import get_backend_list
-
-backend_list = get_backend_list()
 
 
-@pytest.mark.parametrize("nx", backend_list)
 def test_conditional_gradient(nx):
 
     n_bins = 100  # nb bins
@@ -52,7 +48,6 @@ def test_conditional_gradient(nx):
     np.testing.assert_allclose(b, Gb.sum(0))
 
 
-@pytest.mark.parametrize("nx", backend_list)
 def test_conditional_gradient_itermax(nx):
     n = 100  # nb samples
 
@@ -97,7 +92,6 @@ def test_conditional_gradient_itermax(nx):
     np.testing.assert_allclose(b, Gb.sum(0))
 
 
-@pytest.mark.parametrize("nx", backend_list)
 def test_generalized_conditional_gradient(nx):
 
     n_bins = 100  # nb bins
@@ -144,7 +138,6 @@ def test_solve_1d_linesearch_quad_funct():
     np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(-1, 0.5, 0), 1)
 
 
-@pytest.mark.parametrize("nx", backend_list)
 def test_line_search_armijo(nx):
     xk = np.array([[0.25, 0.25], [0.25, 0.25]])
     pk = np.array([[-0.25, 0.25], [0.25, -0.25]])
