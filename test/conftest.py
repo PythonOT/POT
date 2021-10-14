@@ -27,23 +27,19 @@ def nx(request):
         config.update("jax_enable_x64", False)
 
 
-def skip_backend(backend_to_skip, /, *, reason=None):
+def skip_arg(arg, value, reason=None, getter=lambda x: x):
+    if reason is None:
+        reason = f"Param {arg} should be skipped for value {value}"
     def wrapper(function):
         @functools.wraps(function)
         def wrapped(*args, **kwargs):
-            if "nx" not in kwargs.keys():
-                raise TypeError("Cannot call the skip_backend decorator if the backend is not called")
-            else:
-                current_backend = kwargs["nx"].__name__
-                if current_backend == backend_to_skip:
-                    nonlocal reason
-                    if reason is None:
-                        reason = f"{current_backend} not supported for this function"
-                    pytest.skip(reason)
-                return function(*args, **kwargs)
+            if arg in kwargs.keys() and getter(kwargs[arg]) == value:
+                pytest.skip(reason)
+            return function(*args, **kwargs)
         return wrapped
     return wrapper
 
 
 def pytest_configure(config):
-    pytest.skip_backend = skip_backend
+    pytest.skip_arg = skip_arg
+    pytest.skip_backend = functools.partial(skip_arg, "nx", getter=str)
