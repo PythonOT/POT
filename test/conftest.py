@@ -30,13 +30,17 @@ def nx(request):
 def skip_arg(arg, value, reason=None, getter=lambda x: x):
     if reason is None:
         reason = f"Param {arg} should be skipped for value {value}"
+
     def wrapper(function):
+
         @functools.wraps(function)
         def wrapped(*args, **kwargs):
             if arg in kwargs.keys() and getter(kwargs[arg]) == value:
                 pytest.skip(reason)
             return function(*args, **kwargs)
+
         return wrapped
+
     return wrapper
 
 

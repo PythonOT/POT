@@ -340,39 +340,31 @@ def test_empirical_sinkhorn(nx):
 
     G_sqe = nx.to_numpy(ot.bregman.empirical_sinkhorn(X_sb, X_tb, 1))
     sinkhorn_sqe = nx.to_numpy(ot.sinkhorn(ab, bb, Mb, 1))
-    sinkhorn_sqe_np = ot.sinkhorn(a, b, M, 1)
 
     G_log, log_es = ot.bregman.empirical_sinkhorn(X_sb, X_tb, 0.1, log=True)
     G_log = nx.to_numpy(G_log)
     sinkhorn_log, log_s = ot.sinkhorn(ab, bb, Mb, 0.1, log=True)
     sinkhorn_log = nx.to_numpy(sinkhorn_log)
-    sinkhorn_log_np, log_s = ot.sinkhorn(a, b, M, 0.1, log=True)
 
     G_m = nx.to_numpy(ot.bregman.empirical_sinkhorn(X_sb, X_tb, 1, metric='minkowski'))
     sinkhorn_m = nx.to_numpy(ot.sinkhorn(ab, bb, M_mb, 1))
-    sinkhorn_m_np = ot.sinkhorn(a, b, M_m, 1)
 
     loss_emp_sinkhorn = nx.to_numpy(ot.bregman.empirical_sinkhorn2(X_sb, X_tb, 1))
     loss_sinkhorn = nx.to_numpy(ot.sinkhorn2(ab, bb, Mb, 1))
-    loss_sinkhorn_np = ot.sinkhorn2(a, b, M, 1)
 
     # check constratints
-    np.testing.assert_allclose(sinkhorn_sqe, sinkhorn_sqe_np, atol=1e-05)
     np.testing.assert_allclose(
         sinkhorn_sqe.sum(1), G_sqe.sum(1), atol=1e-05)  # metric sqeuclidian
     np.testing.assert_allclose(
         sinkhorn_sqe.sum(0), G_sqe.sum(0), atol=1e-05)  # metric sqeuclidian
-    np.testing.assert_allclose(sinkhorn_log, sinkhorn_log_np, atol=1e-05)
     np.testing.assert_allclose(
         sinkhorn_log.sum(1), G_log.sum(1), atol=1e-05)  # log
     np.testing.assert_allclose(
         sinkhorn_log.sum(0), G_log.sum(0), atol=1e-05)  # log
-    np.testing.assert_allclose(sinkhorn_m, sinkhorn_m_np, atol=1e-05)
     np.testing.assert_allclose(
         sinkhorn_m.sum(1), G_m.sum(1), atol=1e-05)  # metric euclidian
     np.testing.assert_allclose(
         sinkhorn_m.sum(0), G_m.sum(0), atol=1e-05)  # metric euclidian
-    np.testing.assert_allclose(loss_sinkhorn, loss_sinkhorn_np, atol=1e-05)
     np.testing.assert_allclose(loss_emp_sinkhorn, loss_sinkhorn, atol=1e-05)
 
 
@@ -399,43 +391,35 @@ def test_lazy_empirical_sinkhorn(nx):
     f, g = nx.to_numpy(f), nx.to_numpy(g)
     G_sqe = np.exp(f[:, None] + g[None, :] - M / 1)
     sinkhorn_sqe = nx.to_numpy(ot.sinkhorn(ab, bb, Mb, 1))
-    sinkhorn_sqe_np = ot.sinkhorn(a, b, M, 1)
 
     f, g, log_es = ot.bregman.empirical_sinkhorn(X_sb, X_tb, 0.1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
     f, g = nx.to_numpy(f), nx.to_numpy(g)
     G_log = np.exp(f[:, None] + g[None, :] - M / 0.1)
     sinkhorn_log, log_s = ot.sinkhorn(ab, bb, Mb, 0.1, log=True)
     sinkhorn_log = nx.to_numpy(sinkhorn_log)
-    sinkhorn_log_np, log_s_np = ot.sinkhorn(a, b, M, 0.1, log=True)
 
     f, g = ot.bregman.empirical_sinkhorn(X_sb, X_tb, 1, metric='minkowski', numIterMax=numIterMax, isLazy=True, batchSize=1)
     f, g = nx.to_numpy(f), nx.to_numpy(g)
     G_m = np.exp(f[:, None] + g[None, :] - M_m / 1)
     sinkhorn_m = nx.to_numpy(ot.sinkhorn(ab, bb, M_mb, 1))
-    sinkhorn_m_np = ot.sinkhorn(a, b, M_m, 1)
 
     loss_emp_sinkhorn, log = ot.bregman.empirical_sinkhorn2(X_sb, X_tb, 1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
     loss_emp_sinkhorn = nx.to_numpy(loss_emp_sinkhorn)
     loss_sinkhorn = nx.to_numpy(ot.sinkhorn2(ab, bb, Mb, 1))
-    loss_sinkhorn_np = ot.sinkhorn2(a, b, M, 1)
 
     # check constratints
-    np.testing.assert_allclose(sinkhorn_sqe, sinkhorn_sqe_np, atol=1e-05)
     np.testing.assert_allclose(
         sinkhorn_sqe.sum(1), G_sqe.sum(1), atol=1e-05)  # metric sqeuclidian
     np.testing.assert_allclose(
         sinkhorn_sqe.sum(0), G_sqe.sum(0), atol=1e-05)  # metric sqeuclidian
-    np.testing.assert_allclose(sinkhorn_log, sinkhorn_log_np, atol=1e-05)
     np.testing.assert_allclose(
         sinkhorn_log.sum(1), G_log.sum(1), atol=1e-05)  # log
     np.testing.assert_allclose(
         sinkhorn_log.sum(0), G_log.sum(0), atol=1e-05)  # log
-    np.testing.assert_allclose(sinkhorn_m, sinkhorn_m_np, atol=1e-05)
     np.testing.assert_allclose(
         sinkhorn_m.sum(1), G_m.sum(1), atol=1e-05)  # metric euclidian
     np.testing.assert_allclose(
         sinkhorn_m.sum(0), G_m.sum(0), atol=1e-05)  # metric euclidian
-    np.testing.assert_allclose(loss_sinkhorn, loss_sinkhorn_np, atol=1e-05)
     np.testing.assert_allclose(loss_emp_sinkhorn, loss_sinkhorn, atol=1e-05)
 
 
@@ -467,26 +451,12 @@ def test_empirical_sinkhorn_divergence(nx):
     )
     emp_sinkhorn_div_np = ot.bregman.empirical_sinkhorn_divergence(X_s, X_t, 1, a=a, b=b)
 
-    emp_sinkhorn_div_log, log_es = ot.bregman.empirical_sinkhorn_divergence(
-        X_sb, X_tb, 1, a=ab, b=bb, log=True
-    )
-    emp_sinkhorn_div_log = nx.to_numpy(emp_sinkhorn_div_log)
-    sink_div_log_ab, log_s_ab = ot.sinkhorn2(ab, bb, Mb, 1, log=True)
-    sink_div_log_a, log_s_a = ot.sinkhorn2(ab, ab, M_sb, 1, log=True)
-    sink_div_log_b, log_s_b = ot.sinkhorn2(bb, bb, M_tb, 1, log=True)
-    sink_div_log = sink_div_log_ab - 1 / 2 * (sink_div_log_a + sink_div_log_b)
-    sink_div_log = nx.to_numpy(sink_div_log)
-    sink_div_log_np = (
-        ot.sinkhorn2(a, b, M, 1)
-        - (1 / 2) * (ot.sinkhorn2(a, a, M_s, 1) + ot.sinkhorn2(b, b, M_t, 1))
-    )
     # check constraints
     np.testing.assert_allclose(emp_sinkhorn_div, emp_sinkhorn_div_np, atol=1e-05)
     np.testing.assert_allclose(
         emp_sinkhorn_div, sinkhorn_div, atol=1e-05)  # cf conv emp sinkhorn
-    np.testing.assert_allclose(sink_div_log, sink_div_log_np, atol=1e-05)
-    np.testing.assert_allclose(
-        emp_sinkhorn_div_log, sink_div_log, atol=1e-05)  # cf conv emp sinkhorn
+
+    ot.bregman.empirical_sinkhorn_divergence(X_sb, X_tb, 1, a=ab, b=bb, log=True)
 
 
 def test_stabilized_vs_sinkhorn_multidim(nx):
