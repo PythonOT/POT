@@ -52,14 +52,12 @@ def get_backend(*args):
     if not len(args) > 0:
         raise ValueError(" The function takes at least one parameter")
     # check all same type
+    if not len(set(type(a) for a in args)) == 1:
+        raise ValueError(str_type_error.format([type(a) for a in args]))
 
     if isinstance(args[0], np.ndarray):
-        if not len(set(type(a) for a in args)) == 1:
-            raise ValueError(str_type_error.format([type(a) for a in args]))
         return NumpyBackend()
-    elif torch and isinstance(args[0], torch_type):
-        if not len(set(type(a) for a in args)) == 1:
-            raise ValueError(str_type_error.format([type(a) for a in args]))
+    elif isinstance(args[0], torch_type):
         return TorchBackend()
     elif isinstance(args[0], jax_type):
         return JaxBackend()
