@@ -87,6 +87,7 @@ def solve_linesearch(cost, G, deltaG, Mi, f_val,
                      armijo=True, C1=None, C2=None, reg=None, Gc=None, constC=None, M=None):
     """
     Solve the linesearch in the FW iterations
+
     Parameters
     ----------
     cost : method
@@ -97,31 +98,33 @@ def solve_linesearch(cost, G, deltaG, Mi, f_val,
         Difference between the optimal map found by linearization in the FW algorithm and the value at a given iteration
     Mi : array-like (ns,nt)
         Cost matrix of the linearized transport problem. Corresponds to the gradient of the cost
-    f_val :  float
+    f_val : float
         Value of the cost at G
     armijo : bool, optional
-            If True the steps of the line-search is found via an armijo research. Else closed form is used.
-            If there is convergence issues use False.
+        If True the steps of the line-search is found via an armijo research. Else closed form is used.
+        If there is convergence issues use False.
     C1 : array-like (ns,ns), optional
         Structure matrix in the source domain. Only used and necessary when armijo=False
     C2 : array-like (nt,nt), optional
         Structure matrix in the target domain. Only used and necessary when armijo=False
     reg : float, optional
-          Regularization parameter. Only used and necessary when armijo=False
+        Regularization parameter. Only used and necessary when armijo=False
     Gc : array-like (ns,nt)
         Optimal map found by linearization in the FW algorithm. Only used and necessary when armijo=False
     constC : array-like (ns,nt)
-             Constant for the gromov cost. See [24]. Only used and necessary when armijo=False
+        Constant for the gromov cost. See [24]. Only used and necessary when armijo=False
     M : array-like (ns,nt), optional
         Cost matrix between the features. Only used and necessary when armijo=False
+
     Returns
     -------
     alpha : float
-            The optimal step size of the FW
+        The optimal step size of the FW
     fc : int
-         nb of function call. Useless here
-    f_val :  float
-             The value of the cost for the next iteration
+        nb of function call. Useless here
+    f_val : float
+        The value of the cost for the next iteration
+
     References
     ----------
     .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
@@ -168,10 +171,10 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
     where :
 
     - M is the (ns,nt) metric cost matrix
-    - :math:`f` is the regularization term ( and df is its gradient)
+    - :math:`f` is the regularization term (and df is its gradient)
     - a and b are source and target weights (sum to 1)
 
-    The algorithm used for solving the problem is conditional gradient as discussed in  [1]_
+    The algorithm used for solving the problem is conditional gradient as discussed in [1]_
 
 
     Parameters
@@ -439,9 +442,11 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
 
 def solve_1d_linesearch_quad(a, b, c):
     """
-    For any convex or non-convex 1d quadratic function f, solve on [0,1] the following problem:
+    For any convex or non-convex 1d quadratic function f, solve the following problem:
+
     .. math::
-        \argmin f(x)=a*x^{2}+b*x+c
+
+        arg\min_{0 \leq x \leq 1} f(x) = ax^{2} + bx + c
 
     Parameters
     ----------
