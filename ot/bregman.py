@@ -1443,21 +1443,22 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
     The function solve the following optimization problem:
 
     .. math::
+
        \mathbf{h} = arg\min_\mathbf{h}  (1- \\alpha) W_{M,reg}(\mathbf{a},\mathbf{Dh})+\\alpha W_{M0,reg0}(\mathbf{h}_0,\mathbf{h})
 
 
     where :
 
     - :math:`W_{M,reg}(\cdot,\cdot)` is the entropic regularized Wasserstein distance with M loss matrix (see ot.bregman.sinkhorn)
-    - :math: `\mathbf{D}` is a dictionary of `n_atoms` atoms of dimension `dim_a`, its expected shape is `(dim_a, n_atoms)`
+    - :math:`\mathbf{D}` is a dictionary of `n_atoms` atoms of dimension `dim_a`, its expected shape is `(dim_a, n_atoms)`
     - :math:`\mathbf{h}` is the estimated unmixing of dimension `n_atoms`
     - :math:`\mathbf{a}` is an observed distribution of dimension `dim_a`
     - :math:`\mathbf{h}_0` is a prior on `h` of dimension `dim_prior`
     - reg and :math:`\mathbf{M}` are respectively the regularization term and the cost matrix (dim_a, dim_a) for OT data fitting
     - reg0 and :math:`\mathbf{M0}` are respectively the regularization term and the cost matrix (dim_prior, n_atoms) regularization
-    - :math:`\\alpha`weight data fitting and regularization
+    - :math:`\\alpha` weight data fitting and regularization
 
-    The optimization problem is solved suing the algorithm described in [4]
+    The optimization problem is solved suing the algorithm described in [4]_
 
 
     Parameters
