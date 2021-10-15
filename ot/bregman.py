@@ -2175,12 +2175,12 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         Level of the entropy regularisation
 
     ns_budget : `int`, default=None
-        Number budget of points to be keeped in the source domain
-        If it is None then 50% of the source sample points will be keeped
+        Number budget of points to be kept in the source domain
+        If it is None then 50% of the source sample points will be kept
 
     nt_budget : `int`, default=None
-        Number budget of points to be keeped in the target domain
-        If it is None then 50% of the target sample points will be keeped
+        Number budget of points to be kept in the target domain
+        If it is None then 50% of the target sample points will be kept
 
     uniform : `bool`, default=False
         If `True`, the source and target distribution are supposed to be uniform, i.e., a_i = 1 / ns and b_j = 1 / nt
