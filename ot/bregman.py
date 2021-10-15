@@ -84,7 +84,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -208,7 +208,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -482,7 +482,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     log : bool, optional
         record log if True
 
@@ -633,7 +633,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -871,7 +871,7 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
     epsilon0 : int, optional
         first epsilon regularization value (then exponential decrease to reg)
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -1048,7 +1048,7 @@ def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -1114,7 +1114,7 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -1216,7 +1216,7 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -1341,7 +1341,7 @@ def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (> 0)
+        Stop threshold on error (> 0)
     stabThr : float, optional
         Stabilization threshold to avoid numerical precision issue
     verbose : bool, optional
@@ -1481,7 +1481,7 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -1752,7 +1752,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     isLazy: boolean, optional
         If True, then only calculate the cost matrix by block and return the dual potentials only (to save memory)
         If False, calculate full cost matrix and return outputs of sinkhorn function.
@@ -1925,7 +1925,7 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     isLazy: boolean, optional
         If True, then only calculate the cost matrix by block and return the dual potentials only (to save memory)
         If False, calculate full cost matrix and return outputs of sinkhorn function.
@@ -2077,7 +2077,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional

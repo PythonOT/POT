@@ -25,7 +25,7 @@ def test_smooth_ot_dual():
 
     Gl2, log = ot.smooth.smooth_ot_dual(u, u, M, 1, reg_type='l2', log=True, stopThr=1e-10)
 
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(
         u, Gl2.sum(1), atol=1e-05)  # cf convergence sinkhorn
     np.testing.assert_allclose(
@@ -34,7 +34,7 @@ def test_smooth_ot_dual():
     # kl regyularisation
     G = ot.smooth.smooth_ot_dual(u, u, M, 1, reg_type='kl', stopThr=1e-10)
 
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(
         u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
     np.testing.assert_allclose(
@@ -60,7 +60,7 @@ def test_smooth_ot_semi_dual():
 
     Gl2, log = ot.smooth.smooth_ot_semi_dual(u, u, M, 1, reg_type='l2', log=True, stopThr=1e-10)
 
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(
         u, Gl2.sum(1), atol=1e-05)  # cf convergence sinkhorn
     np.testing.assert_allclose(
@@ -69,7 +69,7 @@ def test_smooth_ot_semi_dual():
     # kl regyularisation
     G = ot.smooth.smooth_ot_semi_dual(u, u, M, 1, reg_type='kl', stopThr=1e-10)
 
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(
         u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
     np.testing.assert_allclose(

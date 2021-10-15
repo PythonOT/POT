@@ -25,7 +25,7 @@ def test_sinkhorn():
 
     G = ot.sinkhorn(u, u, M, 1, stopThr=1e-10)
 
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(
         u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
     np.testing.assert_allclose(
@@ -352,7 +352,7 @@ def test_empirical_sinkhorn(nx):
     loss_emp_sinkhorn = nx.to_numpy(ot.bregman.empirical_sinkhorn2(X_sb, X_tb, 1))
     loss_sinkhorn = nx.to_numpy(ot.sinkhorn2(ab, bb, Mb, 1))
 
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(
         sinkhorn_sqe.sum(1), G_sqe.sum(1), atol=1e-05)  # metric sqeuclidian
     np.testing.assert_allclose(
@@ -407,7 +407,7 @@ def test_lazy_empirical_sinkhorn(nx):
     loss_emp_sinkhorn = nx.to_numpy(loss_emp_sinkhorn)
     loss_sinkhorn = nx.to_numpy(ot.sinkhorn2(ab, bb, Mb, 1))
 
-    # check constratints
+    # check constraints
     np.testing.assert_allclose(
         sinkhorn_sqe.sum(1), G_sqe.sum(1), atol=1e-05)  # metric sqeuclidian
     np.testing.assert_allclose(
