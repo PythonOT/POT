@@ -167,6 +167,10 @@ class Backend():
         raise NotImplementedError()
 
     def outer(self, a, b):
+        r"""
+        Computes the outer product between two vectors.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.outer.html
+        """
         raise NotImplementedError()
 
 
