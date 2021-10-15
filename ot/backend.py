@@ -84,10 +84,12 @@ class Backend():
 
     # convert to numpy
     def to_numpy(self, a):
+        """Returns the numpy version of a tensor"""
         raise NotImplementedError()
 
     # convert from numpy
     def from_numpy(self, a, type_as=None):
+        """Creates a tensor cloning a numpy array, with the given precision (defaulting to input's precision) and the given device (in case of GPUs)"""
         raise NotImplementedError()
 
     def set_gradients(self, val, inputs, grads):
@@ -95,123 +97,283 @@ class Backend():
         raise NotImplementedError()
 
     def zeros(self, shape, type_as=None):
+        r"""
+        Creates a tensor full of zeros.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.zeros.html
+        """
         raise NotImplementedError()
 
     def ones(self, shape, type_as=None):
+        r"""
+        Creates a tensor full of ones.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.ones.html
+        """
         raise NotImplementedError()
 
     def arange(self, stop, start=0, step=1, type_as=None):
+        r"""
+        Returns evenly spaced values within a given interval.
+        Numpy equivalent: <https://numpy.org/doc/stable/reference/generated/numpy.arange.html
+        """
         raise NotImplementedError()
 
     def full(self, shape, fill_value, type_as=None):
+        r"""
+        Creates a tensor with given shape, filled with given value.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.full.html
+        """
         raise NotImplementedError()
 
     def eye(self, N, M=None, type_as=None):
+        r"""
+        Creates the identity matrix of given size.
+        Numpy equivalent: https://numpy.org/devdocs/reference/generated/numpy.eye.html
+        """
         raise NotImplementedError()
 
     def sum(self, a, axis=None, keepdims=False):
+        r"""
+        Sums tensor elements over given dimensions.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.sum.html
+        """
         raise NotImplementedError()
 
     def cumsum(self, a, axis=None):
+        r"""
+        Returns the cumulative sum of tensor elements over given dimensions.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.cumsum.html
+        """
         raise NotImplementedError()
 
     def max(self, a, axis=None, keepdims=False):
+        r"""
+        Returns the maximum of an array or maximum along given dimensions.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.amax.html
+        """
         raise NotImplementedError()
 
     def min(self, a, axis=None, keepdims=False):
+        r"""
+        Returns the maximum of an array or maximum along given dimensions.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.amin.html
+        """
         raise NotImplementedError()
 
     def maximum(self, a, b):
+        r"""
+        Returns element-wise maximum of array elements.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.maximum.html
+        """
         raise NotImplementedError()
 
     def minimum(self, a, b):
+        r"""
+        Returns element-wise minimum of array elements.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.minimum.html
+        """
         raise NotImplementedError()
 
     def dot(self, a, b):
+        r"""
+        Returns the dot product of two tensors.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.dot.html
+        """
         raise NotImplementedError()
 
     def abs(self, a):
+        r"""
+        Computes the absolute value element-wise.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.absolute.html
+        """
         raise NotImplementedError()
 
     def exp(self, a):
+        r"""
+        Computes the exponential value element-wise.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.exp.html
+        """
         raise NotImplementedError()
 
     def log(self, a):
+        r"""
+        Computes the natural logarithm, element-wise.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.log.html
+        """
         raise NotImplementedError()
 
     def sqrt(self, a):
+        r"""
+        Returns the non-ngeative square root of a tensor, element-wise.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html
+        """
         raise NotImplementedError()
 
     def power(self, a, exponents):
+        r"""
+        First tensor elements raised to powers from second tensor, element-wise.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html
+        """
         raise NotImplementedError()
 
     def norm(self, a):
+        r"""
+        Computes the matrix frobenius norm.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.linalg.norm.html
+        """
         raise NotImplementedError()
 
     def any(self, a):
+        r"""
+        Tests whether any tensor element along given dimensions evaluates to True.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.any.html
+        """
         raise NotImplementedError()
 
     def isnan(self, a):
+        r"""
+        Tests element-wise for NaN and returns result as a boolean tensor.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.isnan.html
+        """
         raise NotImplementedError()
 
     def isinf(self, a):
+        r"""
+        Tests element-wise for positive or negative infinity and returns result as a boolean tensor.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.isinf.html
+        """
         raise NotImplementedError()
 
     def einsum(self, subscripts, *operands):
+        r"""
+        Evaluates the Einstein summation convention on the operands.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.einsum.html
+        """
         raise NotImplementedError()
 
     def sort(self, a, axis=-1):
+        r"""
+        Returns a sorted copy of a tensor.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.sort.html
+        """
         raise NotImplementedError()
 
     def argsort(self, a, axis=None):
+        r"""
+        Returns the indices that would sort a tensor.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.argsort.html
+        """
         raise NotImplementedError()
 
     def searchsorted(self, a, v, side='left'):
+        r"""
+        Finds indices where elements should be inserted to maintain order in given tensor.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.searchsorted.html
+        """
         raise NotImplementedError()
 
     def flip(self, a, axis=None):
+        r"""
+        Reverses the order of elements in a tensor along given dimensions.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.flip.html
+        """
         raise NotImplementedError()
 
     def clip(self, a, a_min, a_max):
+        """
+        Limits the values in a tensor.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.clip.html
+        """
         raise NotImplementedError()
 
     def repeat(self, a, repeats, axis=None):
+        r"""
+        Repeats elements of a tensor.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.repeat.html
+        """
         raise NotImplementedError()
 
     def take_along_axis(self, arr, indices, axis):
+        r"""
+        Gathers elements of a tensor along given dimensions.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.take_along_axis.html
+        """
         raise NotImplementedError()
 
     def concatenate(self, arrays, axis=0):
+        r"""
+        Joins a sequence of tensors along an existing dimension.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.concatenate.html
+        """
         raise NotImplementedError()
 
-    def zero_pad(self, a, pad_with):
+    def zero_pad(self, a, pad_width):
+        r"""
+        Pads a tensor.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.pad.html
+        """
         raise NotImplementedError()
 
     def argmax(self, a, axis=None):
+        r"""
+        Returns the indices of the maximum values of a tensor along given dimensions.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.argmax.html
+        """
         raise NotImplementedError()
 
     def mean(self, a, axis=None):
+        r"""
+        Computes the arithmetic mean of a tensor along given dimensions.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.mean.html
+        """
         raise NotImplementedError()
 
     def std(self, a, axis=None):
+        r"""
+        Computes the standard deviation of a tensor along given dimensions.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.std.html
+        """
         raise NotImplementedError()
 
     def linspace(self, start, stop, num):
+        r"""
+        Returns a specified number of evenly spaced values over a given interval.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.linspace.html
+        """
         raise NotImplementedError()
 
     def meshgrid(self, a, b):
+        r"""
+        Returns coordinate matrices from coordinate vectors (Numpy convention).
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.meshgrid.html
+        """
         raise NotImplementedError()
 
     def diag(self, a, k=0):
+        r"""
+        Extracts or constructs a diagonal tensor.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.diag.html
+        """
         raise NotImplementedError()
 
     def unique(self, a):
+        r"""
+        Finds unique elements of given tensor.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.unique.html
+        """
         raise NotImplementedError()
 
     def logsumexp(self, a, axis=None):
+        r"""
+        Computes the log of the sum of exponentials of input elements.
+        Numpy equivalent: https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.logsumexp.html
+        """
         raise NotImplementedError()
 
     def stack(self, arrays, axis=0):
+        r"""
+        Joins a sequence of tensors along a new dimension.
+        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.stack.html
+        """
         raise NotImplementedError()
 
 
@@ -342,8 +504,8 @@ class NumpyBackend(Backend):
     def concatenate(self, arrays, axis=0):
         return np.concatenate(arrays, axis)
 
-    def zero_pad(self, a, pad_with):
-        return np.pad(a, pad_with)
+    def zero_pad(self, a, pad_width):
+        return np.pad(a, pad_width)
 
     def argmax(self, a, axis=None):
         return np.argmax(a, axis=axis)
@@ -507,8 +669,8 @@ class JaxBackend(Backend):
     def concatenate(self, arrays, axis=0):
         return jnp.concatenate(arrays, axis)
 
-    def zero_pad(self, a, pad_with):
-        return jnp.pad(a, pad_with)
+    def zero_pad(self, a, pad_width):
+        return jnp.pad(a, pad_width)
 
     def argmax(self, a, axis=None):
         return jnp.argmax(a, axis=axis)
@@ -721,12 +883,12 @@ class TorchBackend(Backend):
     def concatenate(self, arrays, axis=0):
         return torch.cat(arrays, dim=axis)
 
-    def zero_pad(self, a, pad_with):
+    def zero_pad(self, a, pad_width):
         from torch.nn.functional import pad
-        # pad_with is an array of ndim tuples indicating how many 0 before and after
+        # pad_width is an array of ndim tuples indicating how many 0 before and after
         # we need to add. We first need to make it compliant with torch syntax, that
         # starts with the last dim, then second last, etc.
-        how_pad = tuple(element for tupl in pad_with[::-1] for element in tupl)
+        how_pad = tuple(element for tupl in pad_width[::-1] for element in tupl)
         return pad(a, how_pad)
 
     def argmax(self, a, axis=None):
