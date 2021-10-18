@@ -23,7 +23,7 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
     """
     Armijo linesearch function that works with matrices
 
-    find an approximate minimum of f(xk+alpha*pk) that satifies the
+    Find an approximate minimum of :math:`f(x_k + \\alpha \cdot p_k)` that satisfies the
     armijo conditions.
 
     Parameters
@@ -35,13 +35,13 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
     pk : array-like
         descent direction
     gfk : array-like
-        gradient of f at xk
+        gradient of `f` at :math:`x_k`
     old_fval : float
-        loss value at xk
+        loss value at :math:`x_k`
     args : tuple, optional
-        arguments given to f
+        arguments given to `f`
     c1 : float, optional
-        c1 const in armijo rule (>0)
+        :math:`c_1` const in armijo rule (>0)
     alpha0 : float, optional
         initial step (>0)
 
@@ -99,7 +99,7 @@ def solve_linesearch(cost, G, deltaG, Mi, f_val,
     Mi : array-like (ns,nt)
         Cost matrix of the linearized transport problem. Corresponds to the gradient of the cost
     f_val : float
-        Value of the cost at G
+        Value of the cost at `G`
     armijo : bool, optional
         If True the steps of the line-search is found via an armijo research. Else closed form is used.
         If there is convergence issues use False.
@@ -112,7 +112,7 @@ def solve_linesearch(cost, G, deltaG, Mi, f_val,
     Gc : array-like (ns,nt)
         Optimal map found by linearization in the FW algorithm. Only used and necessary when armijo=False
     constC : array-like (ns,nt)
-        Constant for the gromov cost. See [24]. Only used and necessary when armijo=False
+        Constant for the gromov cost. See :ref:`[24] <references-solve-linesearch>`. Only used and necessary when armijo=False
     M : array-like (ns,nt), optional
         Cost matrix between the features. Only used and necessary when armijo=False
 
@@ -125,10 +125,11 @@ def solve_linesearch(cost, G, deltaG, Mi, f_val,
     f_val : float
         The value of the cost for the next iteration
 
+
+    .. _references-solve-linesearch:
     References
     ----------
-    .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
-          and Courty Nicolas
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain and Courty Nicolas
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
@@ -161,20 +162,20 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
         The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg*f(\gamma)
+        \gamma = arg\min_\gamma <\gamma,M>_F + \mathrm{reg} \cdot f(\gamma)
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma 1 = a
 
              \gamma^T 1= b
 
              \gamma\geq 0
     where :
 
-    - M is the (ns,nt) metric cost matrix
-    - :math:`f` is the regularization term (and df is its gradient)
-    - a and b are source and target weights (sum to 1)
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
+    - :math:`f` is the regularization term (and `df` is its gradient)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
-    The algorithm used for solving the problem is conditional gradient as discussed in [1]_
+    The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[1] <references-cg>`
 
 
     Parameters
@@ -212,6 +213,7 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
         log dictionary return only if log==True in parameters
 
 
+    .. _references-cg:
     References
     ----------
 
@@ -307,21 +309,21 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
         The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg1\cdot\Omega(\gamma) + reg2\cdot f(\gamma)
+        \gamma = arg\min_\gamma <\gamma,M>_F + \mathrm{reg_1}\cdot\Omega(\gamma) + \mathrm{reg_2}\cdot f(\gamma)
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma 1 = a
 
              \gamma^T 1= b
 
              \gamma\geq 0
     where :
 
-    - M is the (ns,nt) metric cost matrix
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - :math:`f` is the regularization term ( and df is its gradient)
-    - a and b are source and target weights (sum to 1)
+    - :math:`f` is the regularization term (and `df` is its gradient)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
-    The algorithm used for solving the problem is the generalized conditional gradient as discussed in  [5,7]_
+    The algorithm used for solving the problem is the generalized conditional gradient as discussed in :ref:`[5, 7] <references-gcg>`
 
 
     Parameters
@@ -358,9 +360,13 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
     log : dict
         log dictionary return only if log==True in parameters
 
+
+    .. _references-gcg:
     References
     ----------
+
     .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, "Optimal Transport for Domain Adaptation," in IEEE Transactions on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+
     .. [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized conditional gradient: analysis of convergence and applications. arXiv preprint arXiv:1510.06567.
 
     See Also
@@ -442,7 +448,7 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
 
 def solve_1d_linesearch_quad(a, b, c):
     """
-    For any convex or non-convex 1d quadratic function f, solve the following problem:
+    For any convex or non-convex 1d quadratic function `f`, solve the following problem:
 
     .. math::
 
