@@ -107,7 +107,9 @@ class Backend():
         r"""
         Creates a tensor full of zeros.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.zeros.html
+        This function follow the api from :any:`numpy.zeros`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.zeros.html
         """
         raise NotImplementedError()
 
@@ -115,7 +117,9 @@ class Backend():
         r"""
         Creates a tensor full of ones.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.ones.html
+        This function follow the api from :any:`numpy.ones`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.ones.html
         """
         raise NotImplementedError()
 
@@ -123,7 +127,9 @@ class Backend():
         r"""
         Returns evenly spaced values within a given interval.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.arange.html
+        This function follow the api from :any:`numpy.arange`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.arange.html
         """
         raise NotImplementedError()
 
@@ -131,7 +137,9 @@ class Backend():
         r"""
         Creates a tensor with given shape, filled with given value.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.full.html
+        This function follow the api from :any:`numpy.full`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.full.html
         """
         raise NotImplementedError()
 
@@ -139,7 +147,9 @@ class Backend():
         r"""
         Creates the identity matrix of given size.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.eye.html
+        This function follow the api from :any:`numpy.eye`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.eye.html
         """
         raise NotImplementedError()
 
@@ -147,7 +157,9 @@ class Backend():
         r"""
         Sums tensor elements over given dimensions.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.sum.html
+        This function follow the api from :any:`numpy.sum`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.sum.html
         """
         raise NotImplementedError()
 
@@ -155,7 +167,9 @@ class Backend():
         r"""
         Returns the cumulative sum of tensor elements over given dimensions.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.cumsum.html
+        This function follow the api from :any:`numpy.cumsum`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.cumsum.html
         """
         raise NotImplementedError()
 
@@ -163,7 +177,9 @@ class Backend():
         r"""
         Returns the maximum of an array or maximum along given dimensions.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.amax.html
+        This function follow the api from :any:`numpy.amax`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.amax.html
         """
         raise NotImplementedError()
 
@@ -171,7 +187,9 @@ class Backend():
         r"""
         Returns the maximum of an array or maximum along given dimensions.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.amin.html
+        This function follow the api from :any:`numpy.amin`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.amin.html
         """
         raise NotImplementedError()
 
@@ -179,7 +197,9 @@ class Backend():
         r"""
         Returns element-wise maximum of array elements.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.maximum.html
+        This function follow the api from :any:`numpy.maximum`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.maximum.html
         """
         raise NotImplementedError()
 
@@ -187,7 +207,9 @@ class Backend():
         r"""
         Returns element-wise minimum of array elements.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.minimum.html
+        This function follow the api from :any:`numpy.minimum`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.minimum.html
         """
         raise NotImplementedError()
 
@@ -195,7 +217,9 @@ class Backend():
         r"""
         Returns the dot product of two tensors.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.dot.html
+        This function follow the api from :any:`numpy.dot`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.dot.html
         """
         raise NotImplementedError()
 
@@ -203,7 +227,9 @@ class Backend():
         r"""
         Computes the absolute value element-wise.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.absolute.html
+        This function follow the api from :any:`numpy.absolute`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.absolute.html
         """
         raise NotImplementedError()
 
@@ -211,7 +237,9 @@ class Backend():
         r"""
         Computes the exponential value element-wise.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.exp.html
+        This function follow the api from :any:`numpy.exp`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.exp.html
         """
         raise NotImplementedError()
 
@@ -219,7 +247,9 @@ class Backend():
         r"""
         Computes the natural logarithm, element-wise.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.log.html
+        This function follow the api from :any:`numpy.log`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.log.html
         """
         raise NotImplementedError()
 
@@ -227,7 +257,9 @@ class Backend():
         r"""
         Returns the non-ngeative square root of a tensor, element-wise.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html
+        This function follow the api from :any:`numpy.sqrt`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html
         """
         raise NotImplementedError()
 
@@ -235,7 +267,9 @@ class Backend():
         r"""
         First tensor elements raised to powers from second tensor, element-wise.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html
+        This function follow the api from :any:`numpy.power`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.power.html
         """
         raise NotImplementedError()
 
@@ -243,7 +277,9 @@ class Backend():
         r"""
         Computes the matrix frobenius norm.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.linalg.norm.html
+        This function follow the api from :any:`numpy.linalg.norm`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.norm.html
         """
         raise NotImplementedError()
 
@@ -251,7 +287,9 @@ class Backend():
         r"""
         Tests whether any tensor element along given dimensions evaluates to True.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.any.html
+        This function follow the api from :any:`numpy.any`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.any.html
         """
         raise NotImplementedError()
 
@@ -259,7 +297,9 @@ class Backend():
         r"""
         Tests element-wise for NaN and returns result as a boolean tensor.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.isnan.html
+        This function follow the api from :any:`numpy.isnan`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.isnan.html
         """
         raise NotImplementedError()
 
@@ -267,7 +307,9 @@ class Backend():
         r"""
         Tests element-wise for positive or negative infinity and returns result as a boolean tensor.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.isinf.html
+        This function follow the api from :any:`numpy.isinf`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.isinf.html
         """
         raise NotImplementedError()
 
@@ -275,7 +317,9 @@ class Backend():
         r"""
         Evaluates the Einstein summation convention on the operands.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.einsum.html
+        This function follow the api from :any:`numpy.einsum`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.einsum.html
         """
         raise NotImplementedError()
 
@@ -283,7 +327,9 @@ class Backend():
         r"""
         Returns a sorted copy of a tensor.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.sort.html
+        This function follow the api from :any:`numpy.sort`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.sort.html
         """
         raise NotImplementedError()
 
@@ -291,7 +337,9 @@ class Backend():
         r"""
         Returns the indices that would sort a tensor.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.argsort.html
+        This function follow the api from :any:`numpy.argsort`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.argsort.html
         """
         raise NotImplementedError()
 
@@ -299,7 +347,9 @@ class Backend():
         r"""
         Finds indices where elements should be inserted to maintain order in given tensor.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.searchsorted.html
+        This function follow the api from :any:`numpy.searchsorted`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.searchsorted.html
         """
         raise NotImplementedError()
 
@@ -307,7 +357,9 @@ class Backend():
         r"""
         Reverses the order of elements in a tensor along given dimensions.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.flip.html
+        This function follow the api from :any:`numpy.flip`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.flip.html
         """
         raise NotImplementedError()
 
@@ -315,7 +367,9 @@ class Backend():
         """
         Limits the values in a tensor.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.clip.html
+        This function follow the api from :any:`numpy.clip`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.clip.html
         """
         raise NotImplementedError()
 
@@ -323,7 +377,9 @@ class Backend():
         r"""
         Repeats elements of a tensor.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.repeat.html
+        This function follow the api from :any:`numpy.repeat`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.repeat.html
         """
         raise NotImplementedError()
 
@@ -331,7 +387,9 @@ class Backend():
         r"""
         Gathers elements of a tensor along given dimensions.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.take_along_axis.html
+        This function follow the api from :any:`numpy.take_along_axis`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.take_along_axis.html
         """
         raise NotImplementedError()
 
@@ -339,7 +397,9 @@ class Backend():
         r"""
         Joins a sequence of tensors along an existing dimension.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.concatenate.html
+        This function follow the api from :any:`numpy.concatenate`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.concatenate.html
         """
         raise NotImplementedError()
 
@@ -347,7 +407,9 @@ class Backend():
         r"""
         Pads a tensor.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.pad.html
+        This function follow the api from :any:`numpy.pad`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.pad.html
         """
         raise NotImplementedError()
 
@@ -355,7 +417,9 @@ class Backend():
         r"""
         Returns the indices of the maximum values of a tensor along given dimensions.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.argmax.html
+        This function follow the api from :any:`numpy.argmax`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.argmax.html
         """
         raise NotImplementedError()
 
@@ -363,7 +427,9 @@ class Backend():
         r"""
         Computes the arithmetic mean of a tensor along given dimensions.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.mean.html
+        This function follow the api from :any:`numpy.mean`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.mean.html
         """
         raise NotImplementedError()
 
@@ -371,7 +437,9 @@ class Backend():
         r"""
         Computes the standard deviation of a tensor along given dimensions.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.std.html
+        This function follow the api from :any:`numpy.std`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.std.html
         """
         raise NotImplementedError()
 
@@ -379,7 +447,9 @@ class Backend():
         r"""
         Returns a specified number of evenly spaced values over a given interval.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.linspace.html
+        This function follow the api from :any:`numpy.linspace`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.linspace.html
         """
         raise NotImplementedError()
 
@@ -387,7 +457,9 @@ class Backend():
         r"""
         Returns coordinate matrices from coordinate vectors (Numpy convention).
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.meshgrid.html
+        This function follow the api from :any:`numpy.meshgrid`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.meshgrid.html
         """
         raise NotImplementedError()
 
@@ -395,7 +467,9 @@ class Backend():
         r"""
         Extracts or constructs a diagonal tensor.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.diag.html
+        This function follow the api from :any:`numpy.diag`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.diag.html
         """
         raise NotImplementedError()
 
@@ -403,7 +477,9 @@ class Backend():
         r"""
         Finds unique elements of given tensor.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.unique.html
+        This function follow the api from :any:`numpy.unique`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.unique.html
         """
         raise NotImplementedError()
 
@@ -411,7 +487,9 @@ class Backend():
         r"""
         Computes the log of the sum of exponentials of input elements.
 
-        Numpy equivalent: https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.logsumexp.html
+        This function follow the api from :any:`scipy.special.logsumexp`
+
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.logsumexp.html
         """
         raise NotImplementedError()
 
@@ -419,7 +497,9 @@ class Backend():
         r"""
         Joins a sequence of tensors along a new dimension.
 
-        Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.stack.html
+        This function follow the api from :any:`numpy.stack`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.stack.html
         """
         raise NotImplementedError()
 
@@ -436,11 +516,9 @@ class NumpyBackend(Backend):
     __type__ = np.ndarray
 
     def to_numpy(self, a):
-        """:meta private:"""
         return a
 
     def from_numpy(self, a, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return a
         elif isinstance(a, float):
@@ -449,121 +527,94 @@ class NumpyBackend(Backend):
             return a.astype(type_as.dtype)
 
     def set_gradients(self, val, inputs, grads):
-        """:meta private:
-        No gradients for numpy
-        """
+        # No gradients for numpy
         return val
 
     def zeros(self, shape, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return np.zeros(shape)
         else:
             return np.zeros(shape, dtype=type_as.dtype)
 
     def ones(self, shape, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return np.ones(shape)
         else:
             return np.ones(shape, dtype=type_as.dtype)
 
     def arange(self, stop, start=0, step=1, type_as=None):
-        """:meta private:"""
         return np.arange(start, stop, step)
 
     def full(self, shape, fill_value, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return np.full(shape, fill_value)
         else:
             return np.full(shape, fill_value, dtype=type_as.dtype)
 
     def eye(self, N, M=None, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return np.eye(N, M)
         else:
             return np.eye(N, M, dtype=type_as.dtype)
 
     def sum(self, a, axis=None, keepdims=False):
-        """:meta private:"""
         return np.sum(a, axis, keepdims=keepdims)
 
     def cumsum(self, a, axis=None):
-        """:meta private:"""
         return np.cumsum(a, axis)
 
     def max(self, a, axis=None, keepdims=False):
-        """:meta private:"""
         return np.max(a, axis, keepdims=keepdims)
 
     def min(self, a, axis=None, keepdims=False):
-        """:meta private:"""
         return np.min(a, axis, keepdims=keepdims)
 
     def maximum(self, a, b):
-        """:meta private:"""
         return np.maximum(a, b)
 
     def minimum(self, a, b):
-        """:meta private:"""
         return np.minimum(a, b)
 
     def dot(self, a, b):
-        """:meta private:"""
         return np.dot(a, b)
 
     def abs(self, a):
-        """:meta private:"""
         return np.abs(a)
 
     def exp(self, a):
-        """:meta private:"""
         return np.exp(a)
 
     def log(self, a):
-        """:meta private:"""
         return np.log(a)
 
     def sqrt(self, a):
-        """:meta private:"""
         return np.sqrt(a)
 
     def power(self, a, exponents):
-        """:meta private:"""
         return np.power(a, exponents)
 
     def norm(self, a):
-        """:meta private:"""
         return np.sqrt(np.sum(np.square(a)))
 
     def any(self, a):
-        """:meta private:"""
         return np.any(a)
 
     def isnan(self, a):
-        """:meta private:"""
         return np.isnan(a)
 
     def isinf(self, a):
-        """:meta private:"""
         return np.isinf(a)
 
     def einsum(self, subscripts, *operands):
-        """:meta private:"""
         return np.einsum(subscripts, *operands)
 
     def sort(self, a, axis=-1):
-        """:meta private:"""
         return np.sort(a, axis)
 
     def argsort(self, a, axis=-1):
-        """:meta private:"""
         return np.argsort(a, axis)
 
     def searchsorted(self, a, v, side='left'):
-        """:meta private:"""
         if a.ndim == 1:
             return np.searchsorted(a, v, side)
         else:
@@ -572,63 +623,48 @@ class NumpyBackend(Backend):
             return np.array([np.searchsorted(a[i, :], v[i, :], side) for i in range(a.shape[0])])
 
     def flip(self, a, axis=None):
-        """:meta private:"""
         return np.flip(a, axis)
 
     def clip(self, a, a_min, a_max):
-        """:meta private:"""
         return np.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
-        """:meta private:"""
         return np.repeat(a, repeats, axis)
 
     def take_along_axis(self, arr, indices, axis):
-        """:meta private:"""
         return np.take_along_axis(arr, indices, axis)
 
     def concatenate(self, arrays, axis=0):
-        """:meta private:"""
         return np.concatenate(arrays, axis)
 
     def zero_pad(self, a, pad_width):
-        """:meta private:"""
         return np.pad(a, pad_width)
 
     def argmax(self, a, axis=None):
-        """:meta private:"""
         return np.argmax(a, axis=axis)
 
     def mean(self, a, axis=None):
-        """:meta private:"""
         return np.mean(a, axis=axis)
 
     def std(self, a, axis=None):
-        """:meta private:"""
         return np.std(a, axis=axis)
 
     def linspace(self, start, stop, num):
-        """:meta private:"""
         return np.linspace(start, stop, num)
 
     def meshgrid(self, a, b):
-        """:meta private:"""
         return np.meshgrid(a, b)
 
     def diag(self, a, k=0):
-        """:meta private:"""
         return np.diag(a, k)
 
     def unique(self, a):
-        """:meta private:"""
         return np.unique(a)
 
     def logsumexp(self, a, axis=None):
-        """:meta private:"""
         return scipy.logsumexp(a, axis=axis)
 
     def stack(self, arrays, axis=0):
-        """:meta private:"""
         return np.stack(arrays, axis)
 
 
@@ -644,18 +680,15 @@ class JaxBackend(Backend):
     __type__ = jax_type
 
     def to_numpy(self, a):
-        """:meta private:"""
         return np.array(a)
 
     def from_numpy(self, a, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return jnp.array(a)
         else:
             return jnp.array(a).astype(type_as.dtype)
 
     def set_gradients(self, val, inputs, grads):
-        """:meta private:"""
         # no gradients for jax because it is functional
 
         # does not work
@@ -669,115 +702,90 @@ class JaxBackend(Backend):
         return val
 
     def zeros(self, shape, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return jnp.zeros(shape)
         else:
             return jnp.zeros(shape, dtype=type_as.dtype)
 
     def ones(self, shape, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return jnp.ones(shape)
         else:
             return jnp.ones(shape, dtype=type_as.dtype)
 
     def arange(self, stop, start=0, step=1, type_as=None):
-        """:meta private:"""
         return jnp.arange(start, stop, step)
 
     def full(self, shape, fill_value, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return jnp.full(shape, fill_value)
         else:
             return jnp.full(shape, fill_value, dtype=type_as.dtype)
 
     def eye(self, N, M=None, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return jnp.eye(N, M)
         else:
             return jnp.eye(N, M, dtype=type_as.dtype)
 
     def sum(self, a, axis=None, keepdims=False):
-        """:meta private:"""
         return jnp.sum(a, axis, keepdims=keepdims)
 
     def cumsum(self, a, axis=None):
-        """:meta private:"""
         return jnp.cumsum(a, axis)
 
     def max(self, a, axis=None, keepdims=False):
-        """:meta private:"""
         return jnp.max(a, axis, keepdims=keepdims)
 
     def min(self, a, axis=None, keepdims=False):
-        """:meta private:"""
         return jnp.min(a, axis, keepdims=keepdims)
 
     def maximum(self, a, b):
-        """:meta private:"""
         return jnp.maximum(a, b)
 
     def minimum(self, a, b):
-        """:meta private:"""
         return jnp.minimum(a, b)
 
     def dot(self, a, b):
-        """:meta private:"""
         return jnp.dot(a, b)
 
     def abs(self, a):
-        """:meta private:"""
         return jnp.abs(a)
 
     def exp(self, a):
-        """:meta private:"""
         return jnp.exp(a)
 
     def log(self, a):
-        """:meta private:"""
         return jnp.log(a)
 
     def sqrt(self, a):
-        """:meta private:"""
         return jnp.sqrt(a)
 
     def power(self, a, exponents):
-        """:meta private:"""
         return jnp.power(a, exponents)
 
     def norm(self, a):
-        """:meta private:"""
         return jnp.sqrt(jnp.sum(jnp.square(a)))
 
     def any(self, a):
-        """:meta private:"""
         return jnp.any(a)
 
     def isnan(self, a):
-        """:meta private:"""
         return jnp.isnan(a)
 
     def isinf(self, a):
-        """:meta private:"""
         return jnp.isinf(a)
 
     def einsum(self, subscripts, *operands):
-        """:meta private:"""
         return jnp.einsum(subscripts, *operands)
 
     def sort(self, a, axis=-1):
-        """:meta private:"""
         return jnp.sort(a, axis)
 
     def argsort(self, a, axis=-1):
-        """:meta private:"""
         return jnp.argsort(a, axis)
 
     def searchsorted(self, a, v, side='left'):
-        """:meta private:"""
         if a.ndim == 1:
             return jnp.searchsorted(a, v, side)
         else:
@@ -786,63 +794,48 @@ class JaxBackend(Backend):
             return jnp.array([jnp.searchsorted(a[i, :], v[i, :], side) for i in range(a.shape[0])])
 
     def flip(self, a, axis=None):
-        """:meta private:"""
         return jnp.flip(a, axis)
 
     def clip(self, a, a_min, a_max):
-        """:meta private:"""
         return jnp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
-        """:meta private:"""
         return jnp.repeat(a, repeats, axis)
 
     def take_along_axis(self, arr, indices, axis):
-        """:meta private:"""
         return jnp.take_along_axis(arr, indices, axis)
 
     def concatenate(self, arrays, axis=0):
-        """:meta private:"""
         return jnp.concatenate(arrays, axis)
 
     def zero_pad(self, a, pad_width):
-        """:meta private:"""
         return jnp.pad(a, pad_width)
 
     def argmax(self, a, axis=None):
-        """:meta private:"""
         return jnp.argmax(a, axis=axis)
 
     def mean(self, a, axis=None):
-        """:meta private:"""
         return jnp.mean(a, axis=axis)
 
     def std(self, a, axis=None):
-        """:meta private:"""
         return jnp.std(a, axis=axis)
 
     def linspace(self, start, stop, num):
-        """:meta private:"""
         return jnp.linspace(start, stop, num)
 
     def meshgrid(self, a, b):
-        """:meta private:"""
         return jnp.meshgrid(a, b)
 
     def diag(self, a, k=0):
-        """:meta private:"""
         return jnp.diag(a, k)
 
     def unique(self, a):
-        """:meta private:"""
         return jnp.unique(a)
 
     def logsumexp(self, a, axis=None):
-        """:meta private:"""
         return jscipy.logsumexp(a, axis=axis)
 
     def stack(self, arrays, axis=0):
-        """:meta private:"""
         return jnp.stack(arrays, axis)
 
 
@@ -858,7 +851,6 @@ class TorchBackend(Backend):
     __type__ = torch_type
 
     def __init__(self):
-        """:meta private:"""
 
         from torch.autograd import Function
 
@@ -879,18 +871,15 @@ class TorchBackend(Backend):
         self.ValFunction = ValFunction
 
     def to_numpy(self, a):
-        """:meta private:"""
         return a.cpu().detach().numpy()
 
     def from_numpy(self, a, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return torch.from_numpy(a)
         else:
             return torch.as_tensor(a, dtype=type_as.dtype, device=type_as.device)
 
     def set_gradients(self, val, inputs, grads):
-        """:meta private:"""
 
         Func = self.ValFunction()
 
@@ -899,35 +888,30 @@ class TorchBackend(Backend):
         return res
 
     def zeros(self, shape, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return torch.zeros(shape)
         else:
             return torch.zeros(shape, dtype=type_as.dtype, device=type_as.device)
 
     def ones(self, shape, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return torch.ones(shape)
         else:
             return torch.ones(shape, dtype=type_as.dtype, device=type_as.device)
 
     def arange(self, stop, start=0, step=1, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return torch.arange(start, stop, step)
         else:
             return torch.arange(start, stop, step, device=type_as.device)
 
     def full(self, shape, fill_value, type_as=None):
-        """:meta private:"""
         if type_as is None:
             return torch.full(shape, fill_value)
         else:
             return torch.full(shape, fill_value, dtype=type_as.dtype, device=type_as.device)
 
     def eye(self, N, M=None, type_as=None):
-        """:meta private:"""
         if M is None:
             M = N
         if type_as is None:
@@ -936,35 +920,30 @@ class TorchBackend(Backend):
             return torch.eye(N, m=M, dtype=type_as.dtype, device=type_as.device)
 
     def sum(self, a, axis=None, keepdims=False):
-        """:meta private:"""
         if axis is None:
             return torch.sum(a)
         else:
             return torch.sum(a, axis, keepdim=keepdims)
 
     def cumsum(self, a, axis=None):
-        """:meta private:"""
         if axis is None:
             return torch.cumsum(a.flatten(), 0)
         else:
             return torch.cumsum(a, axis)
 
     def max(self, a, axis=None, keepdims=False):
-        """:meta private:"""
         if axis is None:
             return torch.max(a)
         else:
             return torch.max(a, axis, keepdim=keepdims)[0]
 
     def min(self, a, axis=None, keepdims=False):
-        """:meta private:"""
         if axis is None:
             return torch.min(a)
         else:
             return torch.min(a, axis, keepdim=keepdims)[0]
 
     def maximum(self, a, b):
-        """:meta private:"""
         if isinstance(a, int) or isinstance(a, float):
             a = torch.tensor([float(a)], dtype=b.dtype, device=b.device)
         if isinstance(b, int) or isinstance(b, float):
@@ -975,7 +954,6 @@ class TorchBackend(Backend):
             return torch.max(torch.stack(torch.broadcast_tensors(a, b)), axis=0)[0]
 
     def minimum(self, a, b):
-        """:meta private:"""
         if isinstance(a, int) or isinstance(a, float):
             a = torch.tensor([float(a)], dtype=b.dtype, device=b.device)
         if isinstance(b, int) or isinstance(b, float):
@@ -986,66 +964,51 @@ class TorchBackend(Backend):
             return torch.min(torch.stack(torch.broadcast_tensors(a, b)), axis=0)[0]
 
     def dot(self, a, b):
-        """:meta private:"""
         return torch.matmul(a, b)
 
     def abs(self, a):
-        """:meta private:"""
         return torch.abs(a)
 
     def exp(self, a):
-        """:meta private:"""
         return torch.exp(a)
 
     def log(self, a):
-        """:meta private:"""
         return torch.log(a)
 
     def sqrt(self, a):
-        """:meta private:"""
         return torch.sqrt(a)
 
     def power(self, a, exponents):
-        """:meta private:"""
         return torch.pow(a, exponents)
 
     def norm(self, a):
-        """:meta private:"""
         return torch.sqrt(torch.sum(torch.square(a)))
 
     def any(self, a):
-        """:meta private:"""
         return torch.any(a)
 
     def isnan(self, a):
-        """:meta private:"""
         return torch.isnan(a)
 
     def isinf(self, a):
-        """:meta private:"""
         return torch.isinf(a)
 
     def einsum(self, subscripts, *operands):
-        """:meta private:"""
         return torch.einsum(subscripts, *operands)
 
     def sort(self, a, axis=-1):
-        """:meta private:"""
         sorted0, indices = torch.sort(a, dim=axis)
         return sorted0
 
     def argsort(self, a, axis=-1):
-        """:meta private:"""
         sorted, indices = torch.sort(a, dim=axis)
         return indices
 
     def searchsorted(self, a, v, side='left'):
-        """:meta private:"""
         right = (side != 'left')
         return torch.searchsorted(a, v, right=right)
 
     def flip(self, a, axis=None):
-        """:meta private:"""
         if axis is None:
             return torch.flip(a, tuple(i for i in range(len(a.shape))))
         if isinstance(axis, int):
@@ -1054,23 +1017,18 @@ class TorchBackend(Backend):
             return torch.flip(a, dims=axis)
 
     def clip(self, a, a_min, a_max):
-        """:meta private:"""
         return torch.clamp(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
-        """:meta private:"""
         return torch.repeat_interleave(a, repeats, dim=axis)
 
     def take_along_axis(self, arr, indices, axis):
-        """:meta private:"""
         return torch.gather(arr, axis, indices)
 
     def concatenate(self, arrays, axis=0):
-        """:meta private:"""
         return torch.cat(arrays, dim=axis)
 
     def zero_pad(self, a, pad_width):
-        """:meta private:"""
         from torch.nn.functional import pad
         # pad_width is an array of ndim tuples indicating how many 0 before and after
         # we need to add. We first need to make it compliant with torch syntax, that
@@ -1079,47 +1037,38 @@ class TorchBackend(Backend):
         return pad(a, how_pad)
 
     def argmax(self, a, axis=None):
-        """:meta private:"""
         return torch.argmax(a, dim=axis)
 
     def mean(self, a, axis=None):
-        """:meta private:"""
         if axis is not None:
             return torch.mean(a, dim=axis)
         else:
             return torch.mean(a)
 
     def std(self, a, axis=None):
-        """:meta private:"""
         if axis is not None:
             return torch.std(a, dim=axis, unbiased=False)
         else:
             return torch.std(a, unbiased=False)
 
     def linspace(self, start, stop, num):
-        """:meta private:"""
         return torch.linspace(start, stop, num, dtype=torch.float64)
 
     def meshgrid(self, a, b):
-        """:meta private:"""
         X, Y = torch.meshgrid(a, b)
         return X.T, Y.T
 
     def diag(self, a, k=0):
-        """:meta private:"""
         return torch.diag(a, diagonal=k)
 
     def unique(self, a):
-        """:meta private:"""
         return torch.unique(a)
 
     def logsumexp(self, a, axis=None):
-        """:meta private:"""
         if axis is not None:
             return torch.logsumexp(a, dim=axis)
         else:
             return torch.logsumexp(a, dim=tuple(range(len(a.shape))))
 
     def stack(self, arrays, axis=0):
-        """:meta private:"""
         return torch.stack(arrays, dim=axis)
