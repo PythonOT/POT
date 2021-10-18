@@ -457,7 +457,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
              \gamma\geq 0
     where :
 
-    - M is the (`dim_a`, `dim_b`) metric cost matrix
+    - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (histograms, both sum to 1)
 
@@ -1557,7 +1557,7 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
 
 def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
                      stopThr=1e-6, verbose=False, log=False, **kwargs):
-    r'''Joint OT and proportion estimation for multi-source target shift as proposed in :ref:`[27] <article27-jcpot-bary>`
+    r'''Joint OT and proportion estimation for multi-source target shift as proposed in :ref:`[27] <references-jcpot-barycenter>`
 
     The function solves the following optimization problem:
 
@@ -1572,10 +1572,10 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
 
     - :math:`\lambda_k` is the weight of `k`-th source domain
     - :math:`W_{reg}(\cdot,\cdot)` is the entropic regularized Wasserstein distance (see :py:func:`ot.bregman.sinkhorn`)
-    - :math:`\mathbf{D}_2^{(k)}` is a matrix of weights related to `k`-th source domain defined as in [p. 5, :ref:`27 <references-jcpot-barycenter>`], its expected shape is `(n_k, C)` where `n_k` is the number of elements in the `k`-th source domain and `C` is the number of classes
+    - :math:`\mathbf{D}_2^{(k)}` is a matrix of weights related to `k`-th source domain defined as in [p. 5, :ref:`27 <references-jcpot-barycenter>`], its expected shape is :math:`(n_k, C)` where :math:`n_k` is the number of elements in the `k`-th source domain and `C` is the number of classes
     - :math:`\mathbf{h}` is a vector of estimated proportions in the target domain of size `C`
     - :math:`\mathbf{a}` is a uniform vector of weights in the target domain of size `n`
-    - :math:`\mathbf{D}_1^{(k)}` is a matrix of class assignments defined as in [p. 5, :ref:`27 <references-jcpot-barycenter>`], its expected shape is `(n_k, C)`
+    - :math:`\mathbf{D}_1^{(k)}` is a matrix of class assignments defined as in [p. 5, :ref:`27 <references-jcpot-barycenter>`], its expected shape is :math:`(n_k, C)`
 
     The problem consist in solving a Wasserstein barycenter problem to estimate the proportions :math:`\mathbf{h}` in the target domain.
 
@@ -1738,9 +1738,9 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
              \gamma\geq 0
     where :
 
-    - :math:`M` is the (`n_samples_a`, `n_samples_b`) metric cost matrix
+    - :math:`\mathbf{M}` is the (`n_samples_a`, `n_samples_b`) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - :math:`a` and :math:`b` are source and target weights (sum to 1)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
 
     Parameters
@@ -1910,9 +1910,9 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
              \gamma\geq 0
     where :
 
-    - :math:`M` is the (`n_samples_a`, `n_samples_b`) metric cost matrix
+    - :math:`\mathbf{M}` is the (`n_samples_a`, `n_samples_b`) metric cost matrix
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - :math:`a` and :math:`b` are source and target weights (sum to 1)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
 
     Parameters
@@ -2061,9 +2061,9 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
              \gamma_b\geq 0
     where :
 
-    - :math:`M` (resp. :math:`M_a, M_b`) is the (`n_samples_a`, `n_samples_b`) metric cost matrix (resp (`n_samples_a, n_samples_a`) and (`n_samples_b`, `n_samples_b`))
+    - :math:`\mathbf{M}` (resp. :math:`\mathbf{M_a}`, :math:`\mathbf{M_b}`) is the (`n_samples_a`, `n_samples_b`) metric cost matrix (resp (`n_samples_a, n_samples_a`) and (`n_samples_b`, `n_samples_b`))
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - :math:`a` and :math:`b` are source and target weights (sum to 1)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
 
     Parameters
