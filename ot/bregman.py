@@ -174,7 +174,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends.
 
-    The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[2] <references-sinkhorn2>` 
+    The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[2] <references-sinkhorn2>`
 
 
     **Choosing a Sinkhorn solver**
