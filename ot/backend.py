@@ -169,6 +169,7 @@ class Backend():
     def outer(self, a, b):
         r"""
         Computes the outer product between two vectors.
+
         Numpy equivalent: https://numpy.org/doc/stable/reference/generated/numpy.outer.html
         """
         raise NotImplementedError()
@@ -279,6 +280,7 @@ class NumpyBackend(Backend):
         return np.flip(a, axis)
 
     def outer(self, a, b):
+        """:meta private:"""
         return np.outer(a, b)
 
 
@@ -394,6 +396,7 @@ class JaxBackend(Backend):
         return jnp.flip(a, axis)
 
     def outer(self, a, b):
+        """:meta private:"""
         return jnp.outer(a, b)
 
 
@@ -561,4 +564,5 @@ class TorchBackend(Backend):
             return torch.flip(a, dims=axis)
 
     def outer(self, a, b):
+        """:meta private:"""
         return torch.outer(a, b)
