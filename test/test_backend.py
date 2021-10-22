@@ -447,7 +447,8 @@ def test_gradients_backends():
 
     rnd = np.random.RandomState(0)
     v = rnd.randn(10)
-    c = rnd.randn(1)
+    c = rnd.randn()
+    e = rnd.randn()
 
     if torch:
 
@@ -464,3 +465,15 @@ def test_gradients_backends():
 
         assert torch.equal(v2.grad, v2)
         assert torch.equal(c2.grad, c2)
+
+    if jax:
+        nx = ot.backend.JaxBackend()
+        with jax.checking_leaks():
+            def fun(a, b, d):
+                val = b * nx.sum(a ** 4) + d
+                return nx.set_gradients(val, (a, b, d), (a, b, 2 * d))
+            grad_val = jax.grad(fun, argnums=(0, 1, 2))(v, c, e)
+
+        np.testing.assert_almost_equal(fun(v, c, e), c * np.sum(v ** 4) + e, decimal=4)
+        np.testing.assert_allclose(grad_val[0], v, atol=1e-4)
+        np.testing.assert_allclose(grad_val[2], 2 * e, atol=1e-4)
