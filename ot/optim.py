@@ -57,7 +57,7 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
     """
 
     xk, pk, gfk = list_to_array(xk, pk, gfk)
-    nx = get_backend(xk, pk, gfk)
+    nx = get_backend(xk, pk)
 
     if len(xk.shape) == 0:
         xk = nx.reshape(xk, (-1,))

@@ -205,6 +205,8 @@ def test_empty_backend():
         nx.logsumexp(M)
     with pytest.raises(NotImplementedError):
         nx.stack([M, M])
+    with pytest.raises(NotImplementedError):
+        nx.reshape(M, (5, 3, 2))
 
 
 def test_func_backends(nx):
@@ -431,6 +433,10 @@ def test_func_backends(nx):
         A = nx.stack([Mb, Mb])
         lst_b.append(nx.to_numpy(A))
         lst_name.append('stack')
+
+        A = nx.reshape(Mb, (5, 3, 2))
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('reshape')
 
         lst_tot.append(lst_b)
 
