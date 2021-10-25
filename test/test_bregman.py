@@ -328,10 +328,10 @@ def test_empirical_sinkhorn(nx):
     a = ot.unif(n)
     b = ot.unif(n)
 
-    X_s = np.reshape(np.arange(n), (n, 1))
-    X_t = np.reshape(np.arange(0, n), (n, 1))
+    X_s = np.reshape(1.0 * np.arange(n), (n, 1))
+    X_t = np.reshape(1.0 * np.arange(0, n), (n, 1))
     M = ot.dist(X_s, X_t)
-    M_m = ot.dist(X_s, X_t, metric='minkowski')
+    M_m = ot.dist(X_s, X_t, metric='euclidean')
 
     ab = nx.from_numpy(a)
     bb = nx.from_numpy(b)
@@ -348,7 +348,7 @@ def test_empirical_sinkhorn(nx):
     sinkhorn_log, log_s = ot.sinkhorn(ab, bb, Mb, 0.1, log=True)
     sinkhorn_log = nx.to_numpy(sinkhorn_log)
 
-    G_m = nx.to_numpy(ot.bregman.empirical_sinkhorn(X_sb, X_tb, 1, metric='minkowski'))
+    G_m = nx.to_numpy(ot.bregman.empirical_sinkhorn(X_sb, X_tb, 1, metric='euclidean'))
     sinkhorn_m = nx.to_numpy(ot.sinkhorn(ab, bb, M_mb, 1))
 
     loss_emp_sinkhorn = nx.to_numpy(ot.bregman.empirical_sinkhorn2(X_sb, X_tb, 1))

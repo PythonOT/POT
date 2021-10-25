@@ -596,8 +596,8 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
 
     if n_hists:  # return only loss
         res = nx.sum(nx.exp(get_logT(M, u, v)) * M, (0, 1))
-        if n_hists==1:
-            res=res[0]
+        if n_hists == 1:
+            res = res[0]
         if log:
             return res, log
         else:
@@ -2054,8 +2054,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
             return (f, g)
 
     else:
-        M = dist(nx.to_numpy(X_s), nx.to_numpy(X_t), metric=metric)
-        M = nx.from_numpy(M, type_as=a)
+        M = dist(X_s, X_t, metric=metric)
         if log:
             pi, log = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr, verbose=verbose, log=True, **kwargs)
             return pi, log
