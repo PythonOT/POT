@@ -1072,7 +1072,7 @@ class TorchBackend(Backend):
 
     def clip(self, a, a_min, a_max):
         return torch.clamp(a, a_min, a_max)
-    
+
     def repeat(self, a, repeats, axis=None):
         return torch.repeat_interleave(a, repeats, dim=axis)
 
