@@ -58,7 +58,7 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -186,7 +186,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -300,7 +300,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (> 0)
+        Stop threshold on error (> 0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -482,7 +482,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -691,7 +691,7 @@ def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (> 0)
+        Stop threshold on error (> 0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -841,7 +841,7 @@ def barycenter_unbalanced_sinkhorn(A, M, reg, reg_m, weights=None,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (> 0)
+        Stop threshold on error (> 0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -971,7 +971,7 @@ def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (> 0)
+        Stop threshold on error (> 0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
