@@ -147,7 +147,7 @@ def test_sinkhorn_variants(nx):
     Mb = nx.from_numpy(M)
 
     G = ot.sinkhorn(u, u, M, 1, method='sinkhorn', stopThr=1e-10)
-    Gl = ot.sinkhorn(u, u, M, 1, method='sinkhorn_log', stopThr=1e-10)
+    Gl = nx.to_numpy(ot.sinkhorn(ub, ub, Mb, 1, method='sinkhorn_log', stopThr=1e-10))
     G0 = nx.to_numpy(ot.sinkhorn(ub, ub, Mb, 1, method='sinkhorn', stopThr=1e-10))
     Gs = nx.to_numpy(ot.sinkhorn(ub, ub, Mb, 1, method='sinkhorn_stabilized', stopThr=1e-10))
     Ges = nx.to_numpy(ot.sinkhorn(
@@ -174,6 +174,7 @@ def test_sinkhorn_variants_log():
     M = ot.dist(x, x)
 
     G0, log0 = ot.sinkhorn(u, u, M, 1, method='sinkhorn', stopThr=1e-10, log=True)
+    Gl, logl = ot.sinkhorn(u, u, M, 1, method='sinkhorn_log', stopThr=1e-10, log=True)
     Gs, logs = ot.sinkhorn(u, u, M, 1, method='sinkhorn_stabilized', stopThr=1e-10, log=True)
     Ges, loges = ot.sinkhorn(
         u, u, M, 1, method='sinkhorn_epsilon_scaling', stopThr=1e-10, log=True)
@@ -181,6 +182,7 @@ def test_sinkhorn_variants_log():
 
     # check values
     np.testing.assert_allclose(G0, Gs, atol=1e-05)
+    np.testing.assert_allclose(G0, Gl, atol=1e-05)
     np.testing.assert_allclose(G0, Ges, atol=1e-05)
     np.testing.assert_allclose(G0, G_green, atol=1e-5)
     print(G0, G_green)

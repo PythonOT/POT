@@ -24,7 +24,7 @@ from ot.utils import unif, dist, list_to_array
 from .backend import get_backend
 
 
-def sinkhorn(a, b, M, reg, method='sinkhorn_log', numItermax=1000,
+def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
              stopThr=1e-9, verbose=False, log=False, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
@@ -154,7 +154,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn_log', numItermax=1000,
         raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn2(a, b, M, reg, method='sinkhorn_log', numItermax=1000,
+def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
               stopThr=1e-9, verbose=False, log=False, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the loss
@@ -595,7 +595,7 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
         log['v'] = nx.exp(v / reg)
 
     if n_hists:  # return only loss
-        res = nx.sum(nx.exp(get_logT(M, u, v)) * M, (0, 1))
+        res = nx.sum(nx.exp(get_logT(M, u, v)) * M[:, :, None], (0, 1))
         if n_hists == 1:
             res = res[0]
         if log:
