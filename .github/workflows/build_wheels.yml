@@ -3,6 +3,7 @@ name: Build wheels
 on:
   workflow_dispatch:
   release:
+  pull_request:
   push:
     branches:
       - "*"

@@ -1,6 +1,39 @@
 Releases
 ========
 
+0.8.0dev
+--------
+
+This new stable release introduce several important features.
+
+New features
+^^^^^^^^^^^^
+
+-  Backends for running POT in numpy/torch
+-  New examples for backends
+-  Implementation of sliced Wasserstein distance (Issue #202, PR #203)
+-  Add minimal build to CI and perform pep8 test separately (PR #210)
+-  Add "Why OT" discussion to the documentation (PR #220)
+-  New introductory example to discrete OT in the documentation (PR
+   #191)
+-  Add templates for Issues/PR on Github (PR#181)
+
+Closed issues
+^^^^^^^^^^^^^
+
+-  Bug in Partial OT solver dummy points (PR #215)
+-  Bug when Armijo linesearch bigger than 1 (Issue #184, #198, PR #189,
+   #199)
+-  Bug Barycenter Sinkhorn (Issue 134, PR #195)
+-  Infeasible solution in exact OT (Issues #126,#93, PR #217)
+-  Doc for SUpport Barycenters (Issue #200, PR #201)
+-  Fix labels transport in BaseTransport (Issue #207, PR #208)
+-  Bug in ``emd_1d``, non respected bounds (Issue #169, PR #170)
+-  Removed Python 2.7 support and update codecov file (PR #178)
+-  Cleanup code for new version of ``flake8`` (PR #176)
+-  Fixed requirements in ``setup.py`` (PR #174)
+-  Removed specific MacOS flags (PR #175)
+
 0.7.0
 -----
 
@@ -103,8 +136,8 @@ mathematical problems and research but with the new contributions we now
 implement algorithms and solvers from 24 scientific papers (listed in
 the README.md file). New features include a direct implementation of the
 `empirical Sinkhorn
-divergence <all.html#ot.bregman.empirical_sinkhorn_divergence>`__
-, a new efficient (Cython implementation) solver for `EMD in
+divergence <all.html#ot.bregman.empirical_sinkhorn_divergence>`__,
+a new efficient (Cython implementation) solver for `EMD in
 1D <all.html#ot.lp.emd_1d>`__ and
 corresponding `Wasserstein
 1D <all.html#ot.lp.wasserstein_1d>`__.

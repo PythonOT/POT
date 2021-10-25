@@ -7,13 +7,36 @@ This new stable release introduce several important features.
 
 #### New features
 
-- New backends
+- Backend for running POT in numpy/torch (PR #249)
+- Backend implementation of most functions in `ot.bregman` (PR #TODO)
 - New examples for backends
-- 
+- Two up-to-date documentations [for stable
+  release](https://PythonOT.github.io/) and for [master branch](https://pythonot.github.io/master/).
+- Building wheels on ARM for Raspberry PI and smartphones (PR #238)
+- Update build wheels to new version and new pythons (PR #236, #253)
+- Implementation of sliced Wasserstein distance (Issue #202, PR #203)
+- Add minimal build to CI and perform pep8 test separately (PR #210)
+- Add "Why OT" discussion to the documentation (PR #220)
+- New introductory example to discrete OT in the documentation (PR #191)
+- Add templates for Issues/PR on Github (PR#181)
 
 #### Closed issues
 
-- tests
+- Debug Memory leak in GAN example (#254)
+- Quicker GAN example for CircleCI build (PR #258)
+- Better formatting in Readme (PR #234)
+- Debug CI tests (PR #240, #241, #242)
+- Bug in Partial OT solver dummy points (PR #215)
+- Bug when Armijo linesearch bigger than 1 (Issue #184, #198, PR #189, #199)
+- Bug Barycenter Sinkhorn (Issue 134, PR #195)
+- Infeasible solution in exact OT (Issues #126,#93, PR #217)
+- Doc for SUpport Barycenters (Issue #200, PR #201)
+- Fix labels transport in BaseTransport (Issue #207, PR #208)
+- Bug in `emd_1d`, non respected bounds (Issue #169, PR #170)
+- Removed Python 2.7 support and update codecov file (PR #178)
+- Cleanup code for new version of `flake8` (PR #176)
+- Fixed requirements in `setup.py` (PR #174)
+- Removed specific MacOS flags (PR #175)
 
 
 ## 0.7.0
@@ -81,6 +104,8 @@ are comming for the next versions.
 
 #### Closed issues
 
+- Add JMLR paper to teh readme ad Mathieu Blondel to the Acknoledgments (PR
+  #231, #232)
 - Bug in Unbalanced OT example (Issue #127)
 - Clean Cython output when calling setup.py clean (Issue #122)
 - Various Macosx compilation problems (Issue #113, Issue #118, PR#130)
