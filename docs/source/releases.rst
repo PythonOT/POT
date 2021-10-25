@@ -1,18 +1,31 @@
 Releases
 ========
 
-0.8.0dev
---------
+0.8.0
+-----
 
 This new stable release introduce several important features.
 
 New features
 ^^^^^^^^^^^^
 
--  Backends for running POT in numpy/torch
--  New examples for backends
+-  OpenMP support for exact OT solvers (PR #260)
+-  Backend for running POT in numpy/torch + exact solver (PR #249)
+-  Backend implementation of most functions in ``ot.bregman`` (PR #280)
+-  Backend implementation of most functions in ``ot.optim`` (PR #282)
+-  Implementation of regularization path for L2 Unbalanced OT (PR #274)
+-  Implementation of Projection Robust Wasserstein (PR #267)
+-  Implementation of Sampled Gromov Wasserstein and Pointwise Gromov
+   Wasserstein (PR #275)
+-  Lazy implementation in log space for sinkhorn on samples (PR #259)
+-  Two up-to-date documentations `for stable
+   release <https://PythonOT.github.io/>`__ and for `master
+   branch <https://pythonot.github.io/master/>`__.
+-  Building wheels on ARM for Raspberry PI and smartphones (PR #238)
+-  Update build wheels to new version and new pythons (PR #236, #253)
 -  Implementation of sliced Wasserstein distance (Issue #202, PR #203)
 -  Add minimal build to CI and perform pep8 test separately (PR #210)
+-  Speedup of tests and return run time (PR #262)
 -  Add "Why OT" discussion to the documentation (PR #220)
 -  New introductory example to discrete OT in the documentation (PR
    #191)
@@ -21,9 +34,15 @@ New features
 Closed issues
 ^^^^^^^^^^^^^
 
+-  Debug Memory leak in GAN example (#254)
+-  DEbug GPU bug (Issue #284, #287, PR #288)
+-  set\_gradients method for JAX backend (PR #278)
+-  Quicker GAN example for CircleCI build (PR #258)
+-  Better formatting in Readme (PR #234)
+-  Debug CI tests (PR #240, #241, #242)
 -  Bug in Partial OT solver dummy points (PR #215)
--  Bug when Armijo linesearch bigger than 1 (Issue #184, #198, PR #189,
-   #199)
+-  Bug when Armijo linesearch (Issue #184, #198, #281, PR #189, #199,
+   #286)
 -  Bug Barycenter Sinkhorn (Issue 134, PR #195)
 -  Infeasible solution in exact OT (Issues #126,#93, PR #217)
 -  Doc for SUpport Barycenters (Issue #200, PR #201)
@@ -105,6 +124,8 @@ Features
 Closed issues
 ^^^^^^^^^^^^^
 
+-  Add JMLR paper to teh readme ad Mathieu Blondel to the Acknoledgments
+   (PR #231, #232)
 -  Bug in Unbalanced OT example (Issue #127)
 -  Clean Cython output when calling setup.py clean (Issue #122)
 -  Various Macosx compilation problems (Issue #113, Issue #118, PR#130)
