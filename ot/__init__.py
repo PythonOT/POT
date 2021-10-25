@@ -34,6 +34,7 @@ from . import stochastic
 from . import unbalanced
 from . import partial
 from . import backend
+from . import regpath
 
 # OT functions
 from .lp import emd, emd2, emd_1d, emd2_1d, wasserstein_1d
@@ -54,4 +55,4 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim',
            'sinkhorn_unbalanced', 'barycenter_unbalanced',
            'sinkhorn_unbalanced2', 'sliced_wasserstein_distance',
-           'smooth', 'stochastic', 'unbalanced', 'partial']
+           'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath']
