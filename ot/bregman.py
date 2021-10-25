@@ -24,7 +24,7 @@ from ot.utils import unif, dist, list_to_array
 from .backend import get_backend
 
 
-def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
+def sinkhorn(a, b, M, reg, method='sinkhorn_log', numItermax=1000,
              stopThr=1e-9, verbose=False, log=False, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
@@ -134,6 +134,10 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
         return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
                               stopThr=stopThr, verbose=verbose, log=log,
                               **kwargs)
+    elif method.lower() == 'sinkhorn_log':
+        return sinkhorn_log(a, b, M, reg, numItermax=numItermax,
+                            stopThr=stopThr, verbose=verbose, log=log,
+                            **kwargs)
     elif method.lower() == 'greenkhorn':
         return greenkhorn(a, b, M, reg, numItermax=numItermax,
                           stopThr=stopThr, verbose=verbose, log=log)
@@ -150,7 +154,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
         raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
+def sinkhorn2(a, b, M, reg, method='sinkhorn_log', numItermax=1000,
               stopThr=1e-9, verbose=False, log=False, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the loss
@@ -265,6 +269,10 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
         return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
                               stopThr=stopThr, verbose=verbose, log=log,
                               **kwargs)
+    elif method.lower() == 'sinkhorn_log':
+        return sinkhorn_log(a, b, M, reg, numItermax=numItermax,
+                            stopThr=stopThr, verbose=verbose, log=log,
+                            **kwargs)
     elif method.lower() == 'sinkhorn_stabilized':
         return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
                                    stopThr=stopThr, verbose=verbose, log=log,
@@ -436,6 +444,171 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
             return u.reshape((-1, 1)) * K * v.reshape((1, -1)), log
         else:
             return u.reshape((-1, 1)) * K * v.reshape((1, -1))
+
+
+def sinkhorn_log(a, b, M, reg, numItermax=1000,
+                 stopThr=1e-9, verbose=False, log=False, **kwargs):
+    r"""
+    Solve the entropic regularization optimal transport problem in log space
+    and return the OT matrix
+
+    The function solves the following optimization problem:
+
+    .. math::
+        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+
+        s.t. \gamma 1 = a
+
+             \gamma^T 1= b
+
+             \gamma\geq 0
+    where :
+
+    - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
+    - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (histograms, both sum to 1)
+
+    The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[2] <references-sinkhorn-knopp>`
+
+
+    Parameters
+    ----------
+    a : array-like, shape (dim_a,)
+        samples weights in the source domain
+    b : array-like, shape (dim_b,) or array-like, shape (dim_b, n_hists)
+        samples in the target domain, compute sinkhorn with multiple targets
+        and fixed :math:`\mathbf{M}` if :math:`\mathbf{b}` is a matrix (return OT loss + dual variables in log)
+    M : array-like, shape (dim_a, dim_b)
+        loss matrix
+    reg : float
+        Regularization term >0
+    numItermax : int, optional
+        Max number of iterations
+    stopThr : float, optional
+        Stop threshold on error (>0)
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        record log if True
+
+    Returns
+    -------
+    gamma : array-like, shape (dim_a, dim_b)
+        Optimal transportation matrix for the given parameters
+    log : dict
+        log dictionary return only if log==True in parameters
+
+    Examples
+    --------
+
+    >>> import ot
+    >>> a=[.5, .5]
+    >>> b=[.5, .5]
+    >>> M=[[0., 1.], [1., 0.]]
+    >>> ot.sinkhorn(a, b, M, 1)
+    array([[0.36552929, 0.13447071],
+           [0.13447071, 0.36552929]])
+
+
+    .. _references-sinkhorn-log:
+    References
+    ----------
+
+    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal Transport, Advances in Neural Information Processing Systems (NIPS) 26, 2013
+
+
+    See Also
+    --------
+    ot.lp.emd : Unregularized OT
+    ot.optim.cg : General regularized OT
+
+    """
+
+    a, b, M = list_to_array(a, b, M)
+
+    nx = get_backend(M, a, b)
+
+    if len(a) == 0:
+        a = nx.full((M.shape[0],), 1.0 / M.shape[0], type_as=M)
+    if len(b) == 0:
+        b = nx.full((M.shape[1],), 1.0 / M.shape[1], type_as=M)
+
+    # init data
+    dim_a = len(a)
+    dim_b = len(b)
+
+    if len(b.shape) > 1:
+        n_hists = b.shape[1]
+    else:
+        n_hists = 0
+
+    if log:
+        log = {'err': []}
+
+    # we assume that no distances are null except those of the diagonal of
+    # distances
+    if n_hists:
+        u = nx.zeros((dim_a, 1, n_hists), type_as=M) / dim_a
+        v = nx.zeros((dim_b, 1, n_hists), type_as=M) / dim_b
+    else:
+        u = nx.zeros(dim_a, type_as=M) / dim_a
+        v = nx.zeros(dim_b, type_as=M) / dim_b
+
+    def get_logT(M, u, v):
+        if n_hists:
+            return (M - u - v) / (-reg)
+        else:
+            return (M - u[:, None] - v[None, :]) / (-reg)
+    loga = nx.log(a)
+    logb = nx.log(b)
+
+    cpt = 0
+    err = 1
+    while (err > stopThr and cpt < numItermax):
+
+        u = reg * (loga - nx.logsumexp(get_logT(M, u, v), 1)) + u
+        v = reg * (logb - nx.logsumexp(get_logT(M, u, v), 0)) + v
+
+        if cpt % 10 == 0:
+            # we can speed up the process by checking for the error only all
+            # the 10th iterations
+            if n_hists:
+                tmp2 = nx.sum(nx.exp(get_logT(M, u, v)), 1, keepdims=True)
+            else:
+                # compute right marginal tmp2= (diag(u)Kdiag(v))^T1
+                tmp2 = nx.sum(nx.exp(get_logT(M, u, v)), 1)
+            err = nx.norm(tmp2 - b)  # violation of marginal
+            if log:
+                log['err'].append(err)
+
+            if verbose:
+                if cpt % 200 == 0:
+                    print(
+                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(cpt, err))
+        cpt = cpt + 1
+
+    if log:
+        log['log_u'] = u
+        log['log_v'] = v
+        log['u'] = nx.exp(u / reg)
+        log['v'] = nx.exp(v / reg)
+
+    if n_hists:  # return only loss
+        res = nx.sum(nx.exp(get_logT(M, u, v)) * M, (0, 1))
+        if n_hists==1:
+            res=res[0]
+        if log:
+            return res, log
+        else:
+            return res
+
+    else:  # return OT matrix
+
+        if log:
+            return nx.exp(get_logT(M, u, v)), log
+        else:
+            return nx.exp(get_logT(M, u, v))
 
 
 def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
