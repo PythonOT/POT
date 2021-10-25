@@ -114,7 +114,7 @@ def emd1D(u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=
     qs = nx.sort(nx.concatenate((u_cumweights, v_cumweights), 0), 0)
     u_quantiles = quantile_function(qs, u_cumweights, u_values)
     v_quantiles = quantile_function(qs, v_cumweights, v_values)
-    qs = nx.zero_pad(qs, pad_with=[(1, 0)] + (qs.ndim - 1) * [(0, 0)])
+    qs = nx.zero_pad(qs, pad_width=[(1, 0)] + (qs.ndim - 1) * [(0, 0)])
     delta = qs[1:, ...] - qs[:-1, ...]
     diff_quantiles = nx.abs(u_quantiles - v_quantiles)
 
