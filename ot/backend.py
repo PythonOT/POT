@@ -2,7 +2,7 @@
 """
 Multi-lib backend for POT
 
-The goal is to write code which agnostic to the backend behind it. Whether you're using Numpy, PyTorch,
+The goal is to write backend-agnostic code. Whether you're using Numpy, PyTorch,
 or Jax, POT code should work nonetheless.
 To achieve that, POT provides backend classes which implements functions in their respective backend
 imitating Numpy API. As a convention, we use nx instead of np to refer to the backend.
