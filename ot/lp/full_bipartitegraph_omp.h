@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include "core.h"
 #include <cstdint>
 
 ///\ingroup graphs
@@ -33,7 +32,30 @@
 ///\brief FullBipartiteDigraph and FullBipartiteGraph classes.
 
 
-namespace lemon {
+namespace lemon_omp {
+
+	///This \c \#define creates convenient type definitions for the following
+	///types of \c Digraph: \c Node,  \c NodeIt, \c Arc, \c ArcIt, \c InArcIt,
+	///\c OutArcIt, \c BoolNodeMap, \c IntNodeMap, \c DoubleNodeMap,
+	///\c BoolArcMap, \c IntArcMap, \c DoubleArcMap.
+	///
+	///\note If the graph type is a dependent type, ie. the graph type depend
+	///on a template parameter, then use \c TEMPLATE_DIGRAPH_TYPEDEFS()
+	///macro.
+#define DIGRAPH_TYPEDEFS(Digraph)                                       \
+  typedef Digraph::Node Node;                                           \
+  typedef Digraph::Arc Arc;                                             \
+
+
+	///Create convenience typedefs for the digraph types and iterators
+
+	///\see DIGRAPH_TYPEDEFS
+	///
+	///\note Use this macro, if the graph type is a dependent type,
+	///ie. the graph type depend on a template parameter.
+#define TEMPLATE_DIGRAPH_TYPEDEFS(Digraph)                              \
+  typedef typename Digraph::Node Node;                                  \
+  typedef typename Digraph::Arc Arc;                                    \
 
 
   class FullBipartiteDigraphBase {
@@ -49,7 +71,7 @@ namespace lemon {
   protected:
 
     int _node_num;
-    int64_t _arc_num;
+	int64_t _arc_num;
 	
     FullBipartiteDigraphBase() {}
 
@@ -65,16 +87,16 @@ namespace lemon {
 
     Arc arc(const Node& s, const Node& t) const {
 		if (s<_n1 && t>=_n1)
-            return Arc((int64_t)s * (int64_t)_n2 + (int64_t)(t-_n1) );
+			return Arc((int64_t)s * (int64_t)_n2 + (int64_t)(t-_n1) );
 		else
 			return Arc(-1);
     }
 
     int nodeNum() const { return _node_num; }
-    int64_t arcNum() const { return _arc_num; }
+	int64_t arcNum() const { return _arc_num; }
 
     int maxNodeId() const { return _node_num - 1; }
-    int64_t maxArcId() const { return _arc_num - 1; }
+	int64_t maxArcId() const { return _arc_num - 1; }
 
     Node source(Arc arc) const { return arc / _n2; }
     Node target(Arc arc) const { return (arc % _n2) + _n1; }
@@ -136,7 +158,7 @@ namespace lemon {
   ///
   /// \brief A directed full graph class.
   ///
-  /// FullBipartiteDigraph is a simple and fast implementation of directed full
+  /// FullBipartiteDigraph is a simple and fast implmenetation of directed full
   /// (complete) graphs. It contains an arc from each node to each node
   /// (including a loop for each node), therefore the number of arcs
   /// is the square of the number of nodes.
@@ -203,10 +225,10 @@ namespace lemon {
     /// \brief Number of nodes.
     int nodeNum() const { return Parent::nodeNum(); }
     /// \brief Number of arcs.
-    int64_t arcNum() const { return Parent::arcNum(); }
+	int64_t arcNum() const { return Parent::arcNum(); }
   };
 
 
 
 
-} //namespace lemon
+} //namespace lemon_omp

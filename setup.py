@@ -11,6 +11,8 @@ from setuptools.extension import Extension
 import numpy
 from Cython.Build import cythonize
 
+sys.path.append(os.path.join("ot", "helpers"))
+from openmp_helpers import check_openmp_support
 
 # dirty but working
 __version__ = re.search(
@@ -30,7 +32,14 @@ if 'clean' in sys.argv[1:]:
         os.remove('ot/lp/emd_wrap.cpp')
 
 # add platform dependant optional compilation argument
-compile_args = ["-O3"]
+openmp_supported, flags = check_openmp_support()
+compile_args = ["/O2" if sys.platform == "win32" else "-O3"]
+link_args = []
+
+if openmp_supported:
+    compile_args += flags + ["/DOMP" if sys.platform == 'win32' else "-DOMP"]
+    link_args += flags
+
 if sys.platform.startswith('darwin'):
     compile_args.append("-stdlib=libc++")
     sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path'])
@@ -52,6 +61,7 @@ setup(
         language="c++",
         include_dirs=[numpy.get_include(), os.path.join(ROOT, 'ot/lp')],
         extra_compile_args=compile_args,
+        extra_link_args=link_args
     )),
     platforms=['linux', 'macosx', 'windows'],
     download_url='https://github.com/PythonOT/POT/archive/{}.tar.gz'.format(__version__),
@@ -81,9 +91,9 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics',
         'Topic :: Scientific/Engineering :: Information Analysis',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ]
 )
