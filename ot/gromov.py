@@ -1161,7 +1161,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations.
     log : bool, optional
@@ -1267,7 +1267,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
-        Stop threshol on error (>0).
+        Stop threshold on error (>0).
     verbose : bool, optional
         Print information along iterations.
     log : bool, optional
@@ -1365,7 +1365,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
-        Stop threshol on error (>0).
+        Stop threshold on error (>0).
     verbose : bool, optional
         Print information along iterations.
     log : bool, optional
