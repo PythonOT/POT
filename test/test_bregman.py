@@ -380,7 +380,7 @@ def test_lazy_empirical_sinkhorn(nx):
     X_s = np.reshape(np.arange(n), (n, 1))
     X_t = np.reshape(np.arange(0, n), (n, 1))
     M = ot.dist(X_s, X_t)
-    M_m = ot.dist(X_s, X_t, metric='minkowski')
+    M_m = ot.dist(X_s, X_t, metric='euclidean')
 
     ab = nx.from_numpy(a)
     bb = nx.from_numpy(b)
@@ -400,7 +400,7 @@ def test_lazy_empirical_sinkhorn(nx):
     sinkhorn_log, log_s = ot.sinkhorn(ab, bb, Mb, 0.1, log=True)
     sinkhorn_log = nx.to_numpy(sinkhorn_log)
 
-    f, g = ot.bregman.empirical_sinkhorn(X_sb, X_tb, 1, metric='minkowski', numIterMax=numIterMax, isLazy=True, batchSize=1)
+    f, g = ot.bregman.empirical_sinkhorn(X_sb, X_tb, 1, metric='euclidean', numIterMax=numIterMax, isLazy=True, batchSize=1)
     f, g = nx.to_numpy(f), nx.to_numpy(g)
     G_m = np.exp(f[:, None] + g[None, :] - M_m / 1)
     sinkhorn_m = nx.to_numpy(ot.sinkhorn(ab, bb, M_mb, 1))
