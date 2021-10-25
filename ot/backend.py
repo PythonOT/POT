@@ -288,10 +288,7 @@ class Backend():
         See: https://numpy.org/doc/stable/reference/generated/numpy.power.html
         """
         raise NotImplementedError()
-
-    def power(self, a, exponents):
-        raise NotImplementedError()
-
+        
     def norm(self, a):
         r"""
         Computes the matrix frobenius norm.
@@ -370,9 +367,6 @@ class Backend():
 
         See: https://numpy.org/doc/stable/reference/generated/numpy.searchsorted.html
         """
-        raise NotImplementedError()
-
-    def searchsorted(self, a, v, side='left'):
         raise NotImplementedError()
 
     def flip(self, a, axis=None):
