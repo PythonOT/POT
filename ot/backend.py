@@ -288,7 +288,7 @@ class Backend():
         See: https://numpy.org/doc/stable/reference/generated/numpy.power.html
         """
         raise NotImplementedError()
-        
+
     def norm(self, a):
         r"""
         Computes the matrix frobenius norm.
