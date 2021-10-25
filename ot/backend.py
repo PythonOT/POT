@@ -1,6 +1,22 @@
 # -*- coding: utf-8 -*-
 """
 Multi-lib backend for POT
+
+The goal is to write code which agnostic to the backend behind it. Whether you're using Numpy, PyTorch,
+or Jax, POT code should work nonetheless.
+To achieve that, POT provides backend classes which implements functions in their respective backend
+imitating Numpy API. As a convention, we use nx instead of np to refer to the backend.
+
+Examples
+--------
+
+>>> from ot.utils import list_to_array
+>>> from ot.backend import get_backend
+>>> def f(a, b):  # the function does not know which backend to use
+...     a, b = list_to_array(a, b)  # if a list in given, make it an array
+...     nx = get_backend(a, b)  # infer the backend from the arguments
+...     c = nx.dot(a, b)  # now use the backend to do any calculation
+...     return c
 """
 
 # Author: Remi Flamary <remi.flamary@polytechnique.edu>
@@ -620,7 +636,10 @@ class NumpyBackend(Backend):
         else:
             # this is a not very efficient way to make numpy
             # searchsorted work on 2d arrays
-            return np.array([np.searchsorted(a[i, :], v[i, :], side) for i in range(a.shape[0])])
+            ret = np.empty(v.shape, dtype=int)
+            for i in range(a.shape[0]):
+                ret[i, :] = np.searchsorted(a[i, :], v[i, :], side)
+            return ret
 
     def flip(self, a, axis=None):
         return np.flip(a, axis)
