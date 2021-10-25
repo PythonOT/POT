@@ -700,7 +700,6 @@ class NumpyBackend(Backend):
         return np.stack(arrays, axis)
 
 
-
 class JaxBackend(Backend):
     """
     JAX implementation of the backend
@@ -1054,7 +1053,7 @@ class TorchBackend(Backend):
 
     def outer(self, a, b):
         return torch.outer(a, b)
-      
+
     def clip(self, a, a_min, a_max):
         return torch.clamp(a, a_min, a_max)
 
@@ -1111,4 +1110,3 @@ class TorchBackend(Backend):
 
     def stack(self, arrays, axis=0):
         return torch.stack(arrays, dim=axis)
-
