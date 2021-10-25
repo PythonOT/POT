@@ -17,9 +17,6 @@ from numpy.testing import assert_array_almost_equal_nulp
 from ot.backend import get_backend, get_backend_list, to_numpy
 
 
-backend_list = get_backend_list()
-
-
 def test_get_backend_list():
 
     lst = get_backend_list()
@@ -28,7 +25,6 @@ def test_get_backend_list():
     assert isinstance(lst[0], ot.backend.NumpyBackend)
 
 
-@pytest.mark.parametrize('nx', backend_list)
 def test_to_numpy(nx):
 
     v = nx.zeros(10)
@@ -92,7 +88,6 @@ def test_get_backend():
             get_backend(A, B2)
 
 
-@pytest.mark.parametrize('nx', backend_list)
 def test_convert_between_backends(nx):
 
     A = np.zeros((3, 2))
@@ -181,6 +176,8 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.flip(M)
     with pytest.raises(NotImplementedError):
+        nx.outer(v, v)
+    with pytest.raises(NotImplementedError):
         nx.clip(M, -1, 1)
     with pytest.raises(NotImplementedError):
         nx.repeat(M, 0, 1)
@@ -208,10 +205,11 @@ def test_empty_backend():
         nx.logsumexp(M)
     with pytest.raises(NotImplementedError):
         nx.stack([M, M])
+    with pytest.raises(NotImplementedError):
+        nx.reshape(M, (5, 3, 2))
 
 
-@pytest.mark.parametrize('backend', backend_list)
-def test_func_backends(backend):
+def test_func_backends(nx):
 
     rnd = np.random.RandomState(0)
     M = rnd.randn(10, 3)
@@ -220,7 +218,7 @@ def test_func_backends(backend):
 
     lst_tot = []
 
-    for nx in [ot.backend.NumpyBackend(), backend]:
+    for nx in [ot.backend.NumpyBackend(), nx]:
 
         print('Backend: ', nx.__name__)
 
@@ -371,6 +369,10 @@ def test_func_backends(backend):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('flip')
 
+        A = nx.outer(vb, vb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('outer')
+
         A = nx.clip(vb, 0, 1)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('clip')
@@ -431,6 +433,10 @@ def test_func_backends(backend):
         A = nx.stack([Mb, Mb])
         lst_b.append(nx.to_numpy(A))
         lst_name.append('stack')
+
+        A = nx.reshape(Mb, (5, 3, 2))
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('reshape')
 
         lst_tot.append(lst_b)
 
