@@ -181,6 +181,8 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.flip(M)
     with pytest.raises(NotImplementedError):
+        nx.clip(M, -1, 1)
+    with pytest.raises(NotImplementedError):
         nx.repeat(M, 0, 1)
     with pytest.raises(NotImplementedError):
         nx.take_along_axis(M, v, 0)
@@ -188,6 +190,24 @@ def test_empty_backend():
         nx.concatenate([v, v])
     with pytest.raises(NotImplementedError):
         nx.zero_pad(M, v)
+    with pytest.raises(NotImplementedError):
+        nx.argmax(M)
+    with pytest.raises(NotImplementedError):
+        nx.mean(M)
+    with pytest.raises(NotImplementedError):
+        nx.std(M)
+    with pytest.raises(NotImplementedError):
+        nx.linspace(0, 1, 50)
+    with pytest.raises(NotImplementedError):
+        nx.meshgrid(v, v)
+    with pytest.raises(NotImplementedError):
+        nx.diag(M)
+    with pytest.raises(NotImplementedError):
+        nx.unique([M, M])
+    with pytest.raises(NotImplementedError):
+        nx.logsumexp(M)
+    with pytest.raises(NotImplementedError):
+        nx.stack([M, M])
 
 
 @pytest.mark.parametrize('backend', backend_list)
@@ -374,6 +394,46 @@ def test_func_backends(backend):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('zero_pad')
 
+        A = nx.argmax(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('argmax')
+
+        A = nx.mean(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('mean')
+
+        A = nx.std(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('std')
+
+        A = nx.linspace(0, 1, 50)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('linspace')
+
+        X, Y = nx.meshgrid(vb, vb)
+        lst_b.append(np.stack([nx.to_numpy(X), nx.to_numpy(Y)]))
+        lst_name.append('meshgrid')
+
+        A = nx.diag(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('diag2D')
+
+        A = nx.diag(vb, 1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('diag1D')
+
+        A = nx.unique(nx.from_numpy(np.stack([M, M])))
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('unique')
+
+        A = nx.logsumexp(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('logsumexp')
+
+        A = nx.stack([Mb, Mb])
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('stack')
+
         lst_tot.append(lst_b)
 
     lst_np = lst_tot[0]
@@ -389,7 +449,8 @@ def test_gradients_backends():
 
     rnd = np.random.RandomState(0)
     v = rnd.randn(10)
-    c = rnd.randn(1)
+    c = rnd.randn()
+    e = rnd.randn()
 
     if torch:
 
@@ -406,3 +467,15 @@ def test_gradients_backends():
 
         assert torch.equal(v2.grad, v2)
         assert torch.equal(c2.grad, c2)
+
+    if jax:
+        nx = ot.backend.JaxBackend()
+        with jax.checking_leaks():
+            def fun(a, b, d):
+                val = b * nx.sum(a ** 4) + d
+                return nx.set_gradients(val, (a, b, d), (a, b, 2 * d))
+            grad_val = jax.grad(fun, argnums=(0, 1, 2))(v, c, e)
+
+        np.testing.assert_almost_equal(fun(v, c, e), c * np.sum(v ** 4) + e, decimal=4)
+        np.testing.assert_allclose(grad_val[0], v, atol=1e-4)
+        np.testing.assert_allclose(grad_val[2], 2 * e, atol=1e-4)
