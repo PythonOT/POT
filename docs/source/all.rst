@@ -14,6 +14,7 @@ API and modules
    :template: module.rst
 
    lp
+   backend
    bregman
    smooth
    gromov
