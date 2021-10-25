@@ -10,6 +10,7 @@ This new stable release introduce several important features.
 - Backend for running POT in numpy/torch (PR #249)
 - Backend implementation of most functions in `ot.bregman` (PR #TODO)
 - New examples for backends
+- Lazy implementation in log space for sinkhorn on samples (PR #259)
 - Two up-to-date documentations [for stable
   release](https://PythonOT.github.io/) and for [master branch](https://pythonot.github.io/master/).
 - Building wheels on ARM for Raspberry PI and smartphones (PR #238)
