@@ -708,16 +708,16 @@ class JaxBackend(Backend):
             return jnp.array(a).astype(type_as.dtype)
 
     def set_gradients(self, val, inputs, grads):
-        # no gradients for jax because it is functional
+        from jax.flatten_util import ravel_pytree
+        val, = jax.lax.stop_gradient((val,))
 
-        # does not work
-        # from jax import custom_jvp
-        # @custom_jvp
-        # def f(*inputs):
-        #     return val
-        # f.defjvps(*grads)
-        # return f(*inputs)
+        ravelled_inputs, _ = ravel_pytree(inputs)
+        ravelled_grads, _ = ravel_pytree(grads)
 
+        aux = jnp.sum(ravelled_inputs * ravelled_grads) / 2
+        aux = aux - jax.lax.stop_gradient(aux)
+
+        val, = jax.tree_map(lambda z: z + aux, (val,))
         return val
 
     def zeros(self, shape, type_as=None):
