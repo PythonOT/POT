@@ -12,9 +12,7 @@ from scipy.stats import wasserstein_distance
 
 import ot
 from ot.datasets import make_1D_gauss as gauss
-from ot.backend import get_backend_list, torch
-
-backend_list = get_backend_list()
+from ot.backend import torch
 
 
 def test_emd_dimension_and_mass_mismatch():
@@ -37,7 +35,6 @@ def test_emd_dimension_and_mass_mismatch():
     np.testing.assert_raises(AssertionError, ot.emd, a, b, M)
 
 
-@pytest.mark.parametrize('nx', backend_list)
 def test_emd_backends(nx):
     n_samples = 100
     n_features = 2
@@ -59,7 +56,6 @@ def test_emd_backends(nx):
     np.allclose(G, nx.to_numpy(Gb))
 
 
-@pytest.mark.parametrize('nx', backend_list)
 def test_emd2_backends(nx):
     n_samples = 100
     n_features = 2
