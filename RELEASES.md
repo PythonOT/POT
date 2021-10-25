@@ -5,6 +5,12 @@
 
 This new stable release introduce several important features.
 
+For this release we want to thank the [IDRIS](http://www.idris.fr/), in
+particular  Nathan Cassereau
+and Kamel Guerda from the AI support team for their support to the development
+of the backend and OpenMP implementations. 
+
+
 #### New features
 
 - OpenMP support for exact OT solvers (PR #260)
