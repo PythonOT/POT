@@ -383,7 +383,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
     K = nx.exp(M / (-reg))
 
     Kp = (1 / a).reshape(-1, 1) * K
-    
+
     err = 1
     for ii in range(numItermax):
         uprev = u
@@ -420,7 +420,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
                     print(
                         '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(ii, err))
-        
+
     if log:
         log['u'] = u
         log['v'] = v
@@ -694,7 +694,6 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
     dim_a = len(a)
     dim_b = len(b)
 
-    
     if log:
         log = {'err': []}
 
@@ -721,10 +720,8 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         return nx.exp(-(M - alpha.reshape((dim_a, 1)) - beta.reshape((1, dim_b)))
                       / reg + nx.log(u.reshape((dim_a, 1))) + nx.log(v.reshape((1, dim_b))))
 
-    # print(np.min(K))
-
     K = get_K(alpha, beta)
-    transp = K    
+    transp = K
     err = 1
     for ii in range(numItermax):
 
@@ -949,7 +946,6 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
         if err <= stopThr and ii > numItermin:
             break
 
-    # print('err=',err,' ii=',ii)
     if log:
         log['alpha'] = alpha
         log['beta'] = beta
@@ -957,6 +953,7 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
         return G, log
     else:
         return G
+
 
 def geometricBar(weights, alldistribT):
     """return the weighted geometric mean of distributions"""
@@ -1131,7 +1128,6 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
     # M = M/np.median(M) # suggested by G. Peyre
     K = nx.exp(-M / reg)
 
-    
     err = 1
 
     UKv = nx.dot(K, (A.T / nx.sum(K, axis=0)).T)
@@ -1139,7 +1135,7 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
     u = (geometricMean(UKv) / UKv.T).T
 
     for ii in range(numItermax):
-        
+
         UKv = u * nx.dot(K, A / nx.dot(K, u))
         u = (u.T * geometricBar(weights, UKv)).T / UKv
 
@@ -1163,7 +1159,6 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
         return geometricBar(weights, UKv), log
     else:
         return geometricBar(weights, UKv)
-
 
 
 def barycenter_sinkhorn_debiased(A, M, reg, weights=None, numItermax=1000,
@@ -1268,7 +1263,6 @@ def barycenter_sinkhorn_debiased(A, M, reg, weights=None, numItermax=1000,
         return bar
 
 
-
 def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
                           stopThr=1e-4, verbose=False, log=False):
     r"""Compute the entropic regularized wasserstein barycenter of distributions A with stabilization.
@@ -1342,7 +1336,6 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
 
     K = nx.exp(-M / reg)
 
-    
     err = 1.
     alpha = nx.zeros((dim,), type_as=M)
     beta = nx.zeros((dim,), type_as=M)
@@ -1666,7 +1659,6 @@ def convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
     [Y, X] = nx.meshgrid(t, t)
     K2 = nx.exp(-(X - Y) ** 2 / reg)
 
-
     def convol_imgs(imgs):
         kx = nx.einsum("...ij,kjl->kil", K1, imgs)
         kxy = nx.einsum("...ij,klj->kli", K2, kx)
@@ -1693,7 +1685,7 @@ def convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
                 if ii % 200 == 0:
                     print('{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(ii, err))
-            
+
             # debiased Sinkhorn does not converge monotonically
             # guarantee a few iterations are done before stopping
             if err < stopThr and ii > 20:
@@ -1705,7 +1697,6 @@ def convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
         return bar, log
     else:
         return bar
-
 
 
 def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
@@ -1963,7 +1954,7 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
             K[d] = projR(K[d], new)
 
         err = nx.norm(bary - old_bary)
-        
+
         old_bary = bary
 
         if log:

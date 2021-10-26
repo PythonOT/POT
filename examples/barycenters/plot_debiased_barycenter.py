@@ -23,9 +23,6 @@ import numpy as np
 import matplotlib.pylab as plt
 import ot
 from ot.bregman import barycenter, convolutional_barycenter2d
-# necessary for 3d plot even if not used
-from mpl_toolkits.mplot3d import Axes3D  # noqa
-from matplotlib.collections import PolyCollection
 
 ##############################################################################
 # Debiased barycenter of 1D Gaussians
@@ -78,8 +75,6 @@ plt.show()
 ##############################################################################
 # Debiased barycenter of 2D images
 # ---------------------------------
-
-
 
 f1 = 1 - plt.imread('../../data/redcross.png')[:, :, 2]
 f2 = 1 - plt.imread('../../data/tooth.png')[:, :, 2]
