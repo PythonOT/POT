@@ -111,6 +111,8 @@ def test_dist():
 
     D4 = ot.dist(x, x, metric='minkowski', p=0.5)
 
+    assert D[0, 1] == D[1, 0]
+
     # dist shoul return squared euclidean
     np.testing.assert_allclose(D, D2, atol=1e-14)
     np.testing.assert_allclose(D, D3, atol=1e-14)
@@ -228,6 +230,7 @@ def test_deprecated_func():
 
     with pytest.warns(DeprecationWarning):
         cl = Class()
+        print(cl)
 
     if sys.version_info < (3, 5):
         print('Not tested')
