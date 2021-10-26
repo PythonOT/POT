@@ -212,6 +212,35 @@ def test_sinkhorn_variants_multi_b(nx):
     np.testing.assert_allclose(G0, Gs, atol=1e-05)
 
 
+@pytest.skip_backend("jax")
+def test_sinkhorn2_variants_multi_b(nx):
+    # test sinkhorn
+    n = 50
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    u = ot.utils.unif(n)
+
+    b = rng.rand(n, 3)
+    b = b / np.sum(b, 0, keepdims=True)
+
+    M = ot.dist(x, x)
+
+    ub = nx.from_numpy(u)
+    bb = nx.from_numpy(b)
+    Mb = nx.from_numpy(M)
+
+    G = ot.sinkhorn2(u, b, M, 1, method='sinkhorn', stopThr=1e-10)
+    Gl = nx.to_numpy(ot.sinkhorn2(ub, bb, Mb, 1, method='sinkhorn_log', stopThr=1e-10))
+    G0 = nx.to_numpy(ot.sinkhorn2(ub, bb, Mb, 1, method='sinkhorn', stopThr=1e-10))
+    Gs = nx.to_numpy(ot.sinkhorn2(ub, bb, Mb, 1, method='sinkhorn_stabilized', stopThr=1e-10))
+
+    # check values
+    np.testing.assert_allclose(G, G0, atol=1e-05)
+    np.testing.assert_allclose(G, Gl, atol=1e-05)
+    np.testing.assert_allclose(G0, Gs, atol=1e-05)
+
+
 def test_sinkhorn_variants_log():
     # test sinkhorn
     n = 50
