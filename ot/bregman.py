@@ -875,6 +875,7 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
     >>> ot.bregman.sinkhorn_epsilon_scaling(a, b, M, 1)
     array([[0.36552929, 0.13447071],
            [0.13447071, 0.36552929]])
+
     .. _references-sinkhorn-epsilon-scaling:
     References
     ----------
