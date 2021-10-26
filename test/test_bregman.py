@@ -50,7 +50,7 @@ def test_sinkhorn_multi_b():
     loss = [ot.sinkhorn2(u, b[:, k], M, .1, stopThr=1e-10) for k in range(3)]
     # check constraints
     np.testing.assert_allclose(
-        loss0, loss, atol=1e-05)  # cf convergence sinkhorn
+        loss0, loss, atol=1e-06)  # cf convergence sinkhorn
 
 
 def test_sinkhorn_backends(nx):

@@ -261,7 +261,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
     """
 
-    b = list_to_array(b)
+    M, a, b = list_to_array(M, a, b)
     nx = get_backend(M, a, b)
 
     if len(b.shape) < 2:
