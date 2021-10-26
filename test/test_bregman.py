@@ -184,7 +184,7 @@ def test_sinkhorn_variants_log():
     print(G0, G_green)
 
 
-@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized", "debiased"])
 def test_barycenter(nx, method):
     n_bins = 100  # nb bins
 
@@ -254,7 +254,8 @@ def test_barycenter_stabilization(nx):
     np.testing.assert_allclose(bar, bar_np)
 
 
-def test_wasserstein_bary_2d(nx):
+@pytest.mark.parametrize("method", ["sinkhorn", "debiased"])
+def test_wasserstein_bary_2d(nx, method):
     size = 100  # size of a square image
     a1 = np.random.randn(size, size)
     a1 += a1.min()
@@ -271,11 +272,11 @@ def test_wasserstein_bary_2d(nx):
 
     # wasserstein
     reg = 1e-2
-    bary_wass_np = ot.bregman.convolutional_barycenter2d(A, reg)
-    bary_wass = nx.to_numpy(ot.bregman.convolutional_barycenter2d(Ab, reg))
+    bary_wass_np = ot.bregman.convolutional_barycenter2d(A, reg, method=method)
+    bary_wass = nx.to_numpy(ot.bregman.convolutional_barycenter2d(Ab, reg, method=method))
 
-    np.testing.assert_allclose(1, np.sum(bary_wass))
-    np.testing.assert_allclose(bary_wass, bary_wass_np)
+    np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
+    np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
 
     # help in checking if log and verbose do not bug the function
     ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
