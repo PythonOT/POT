@@ -32,6 +32,27 @@ def test_sinkhorn():
         u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
 
 
+def test_sinkhorn_multi_b():
+    # test sinkhorn
+    n = 10
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    u = ot.utils.unif(n)
+
+    b = rng.rand(n, 3)
+    b = b / np.sum(b, 0, keepdims=True)
+
+    M = ot.dist(x, x)
+
+    loss0, log = ot.sinkhorn(u, b, M, .1, stopThr=1e-10, log=True)
+
+    loss = [ot.sinkhorn2(u, b[:, k], M, .1, stopThr=1e-10) for k in range(3)]
+    # check constraints
+    np.testing.assert_allclose(
+        loss0, loss, atol=1e-05)  # cf convergence sinkhorn
+
+
 def test_sinkhorn_backends(nx):
     n_samples = 100
     n_features = 2

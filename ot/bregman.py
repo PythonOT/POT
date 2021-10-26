@@ -24,7 +24,7 @@ from ot.utils import unif, dist, list_to_array
 from .backend import get_backend
 
 
-def sinkhorn(a, b, M, reg, method='sinkhorn_log', numItermax=1000,
+def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
              stopThr=1e-9, verbose=False, log=False, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
@@ -262,23 +262,44 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     """
 
     b = list_to_array(b)
-    if len(b.shape) < 2:
-        b = b[:, None]
+    nx = get_backend(M, a, b)
 
-    if method.lower() == 'sinkhorn':
-        return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
-                              stopThr=stopThr, verbose=verbose, log=log,
-                              **kwargs)
-    elif method.lower() == 'sinkhorn_log':
-        return sinkhorn_log(a, b, M, reg, numItermax=numItermax,
-                            stopThr=stopThr, verbose=verbose, log=log,
-                            **kwargs)
-    elif method.lower() == 'sinkhorn_stabilized':
-        return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
-                                   stopThr=stopThr, verbose=verbose, log=log,
-                                   **kwargs)
+    if len(b.shape) < 2:
+        if method.lower() == 'sinkhorn':
+            res = sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
+                                 stopThr=stopThr, verbose=verbose, log=log,
+                                 **kwargs)
+        elif method.lower() == 'sinkhorn_log':
+            res = sinkhorn_log(a, b, M, reg, numItermax=numItermax,
+                               stopThr=stopThr, verbose=verbose, log=log,
+                               **kwargs)
+        elif method.lower() == 'sinkhorn_stabilized':
+            res = sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
+                                      stopThr=stopThr, verbose=verbose, log=log,
+                                      **kwargs)
+        else:
+            raise ValueError("Unknown method '%s'." % method)
+        if log:
+            return nx.sum(M * res[0]), res[1]
+        else:
+            return nx.sum(M * res)
+
     else:
-        raise ValueError("Unknown method '%s'." % method)
+
+        if method.lower() == 'sinkhorn':
+            return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
+                                  stopThr=stopThr, verbose=verbose, log=log,
+                                  **kwargs)
+        elif method.lower() == 'sinkhorn_log':
+            return sinkhorn_log(a, b, M, reg, numItermax=numItermax,
+                                stopThr=stopThr, verbose=verbose, log=log,
+                                **kwargs)
+        elif method.lower() == 'sinkhorn_stabilized':
+            return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
+                                       stopThr=stopThr, verbose=verbose, log=log,
+                                       **kwargs)
+        else:
+            raise ValueError("Unknown method '%s'." % method)
 
 
 def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
@@ -369,7 +390,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
 
     # init data
     dim_a = len(a)
-    dim_b = len(b)
+    dim_b = b.shape[0]
 
     if len(b.shape) > 1:
         n_hists = b.shape[1]
@@ -535,80 +556,95 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
 
     # init data
     dim_a = len(a)
-    dim_b = len(b)
+    dim_b = b.shape[0]
 
     if len(b.shape) > 1:
         n_hists = b.shape[1]
     else:
         n_hists = 0
 
-    if log:
-        log = {'err': []}
+    if n_hists:  # we do not want to use tensors sor we do a loop
 
-    # we assume that no distances are null except those of the diagonal of
-    # distances
-    if n_hists:
-        u = nx.zeros((dim_a, 1, n_hists), type_as=M) / dim_a
-        v = nx.zeros((dim_b, 1, n_hists), type_as=M) / dim_b
-    else:
-        u = nx.zeros(dim_a, type_as=M) / dim_a
-        v = nx.zeros(dim_b, type_as=M) / dim_b
+        lst_loss = []
+        lst_u = []
+        lst_v = []
 
-    def get_logT(M, u, v):
-        if n_hists:
-            return (M - u - v) / (-reg)
-        else:
-            return (M - u[:, None] - v[None, :]) / (-reg)
-    loga = nx.log(a)
-    logb = nx.log(b)
+        for k in range(n_hists):
+            res = sinkhorn_log(a, b[:, k], M, reg, numItermax=numItermax,
+                               stopThr=stopThr, verbose=verbose, log=log, **kwargs)
 
-    cpt = 0
-    err = 1
-    while (err > stopThr and cpt < numItermax):
-
-        u = reg * (loga - nx.logsumexp(get_logT(M, u, v), 1)) + u
-        v = reg * (logb - nx.logsumexp(get_logT(M, u, v), 0)) + v
-
-        if cpt % 10 == 0:
-            # we can speed up the process by checking for the error only all
-            # the 10th iterations
-            if n_hists:
-                tmp2 = nx.sum(nx.exp(get_logT(M, u, v)), 1, keepdims=True)
-            else:
-                # compute right marginal tmp2= (diag(u)Kdiag(v))^T1
-                tmp2 = nx.sum(nx.exp(get_logT(M, u, v)), 1)
-            err = nx.norm(tmp2 - b)  # violation of marginal
             if log:
-                log['err'].append(err)
-
-            if verbose:
-                if cpt % 200 == 0:
-                    print(
-                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(cpt, err))
-        cpt = cpt + 1
-
-    if log:
-        log['log_u'] = u
-        log['log_v'] = v
-        log['u'] = nx.exp(u / reg)
-        log['v'] = nx.exp(v / reg)
-
-    if n_hists:  # return only loss
-        res = nx.sum(nx.exp(get_logT(M, u, v)) * M[:, :, None], (0, 1))
-        if n_hists == 1:
-            res = res[0]
+                lst_loss.append(nx.sum(M * res[0]))
+                lst_u.append(res[1]['log_u'])
+                lst_v.append(res[1]['log_v'])
+            else:
+                lst_loss.append(nx.sum(M * res))
+        res = nx.stack(lst_loss)
         if log:
+            log = {'log_u': nx.stack(lst_u, 1),
+                   'log_v': nx.stack(lst_v, 1), }
+            log['u'] = nx.exp(log['log_u'])
+            log['v'] = nx.exp(log['log_v'])
             return res, log
         else:
             return res
 
-    else:  # return OT matrix
+    else:
 
         if log:
-            return nx.exp(get_logT(M, u, v)), log
+            log = {'err': []}
+
+        Mr = M / (-reg)
+
+        # we assume that no distances are null except those of the diagonal of
+        # distances
+
+        u = nx.zeros(dim_a, type_as=M)
+        v = nx.zeros(dim_b, type_as=M)
+
+        def get_logT(u, v):
+            if n_hists:
+                return Mr[:, :, None] + u + v
+            else:
+                return Mr + u[:, None] + v[None, :]
+
+        loga = nx.log(a)
+        logb = nx.log(b)
+
+        cpt = 0
+        err = 1
+        while (err > stopThr and cpt < numItermax):
+
+            v = logb - nx.logsumexp(Mr + u[:, None], 0)
+            u = loga - nx.logsumexp(Mr + v[None, :], 1)
+
+            if cpt % 10 == 0:
+                # we can speed up the process by checking for the error only all
+                # the 10th iterations
+
+                # compute right marginal tmp2= (diag(u)Kdiag(v))^T1
+                tmp2 = nx.sum(nx.exp(get_logT(u, v)), 0)
+                err = nx.norm(tmp2 - b)  # violation of marginal
+                if log:
+                    log['err'].append(err)
+
+                if verbose:
+                    if cpt % 200 == 0:
+                        print(
+                            '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                    print('{:5d}|{:8e}|'.format(cpt, err))
+            cpt = cpt + 1
+
+        if log:
+            log['log_u'] = u
+            log['log_v'] = v
+            log['u'] = nx.exp(u)
+            log['v'] = nx.exp(v)
+
+            return nx.exp(get_logT(u, v)), log
+
         else:
-            return nx.exp(get_logT(M, u, v))
+            return nx.exp(get_logT(u, v))
 
 
 def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,

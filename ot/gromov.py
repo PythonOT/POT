@@ -1030,7 +1030,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
         # compute the gradient
         tens = gwggrad(constC, hC1, hC2, T)
 
-        T = sinkhorn(p, q, tens, epsilon)
+        T = sinkhorn(p, q, tens, epsilon, method='sinkhorn')
 
         if cpt % 10 == 0:
             # we can speed up the process by checking for the error only all
@@ -1204,7 +1204,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
         Cprev = C
 
         T = [entropic_gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, epsilon,
-                                         max_iter, 1e-5, verbose, log) for s in range(S)]
+                                         max_iter, 1e-4, verbose, log) for s in range(S)]
         if loss_fun == 'square_loss':
             C = update_square_loss(p, lambdas, T, Cs)
 
