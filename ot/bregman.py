@@ -56,7 +56,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     By default and when using a regularization parameter that is not too small
     the default sinkhorn solver should be enough. If you need to use a small
     regularization to get sharper OT matrices, you should use the
-    :py:func:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical
+    :py:func:`ot.bregman.sinkhorn_log` solver that will avoid numerical
     errors. This last solver can be very slow in practice and might not even
     converge to a reasonable OT matrix in a finite time. This is why
     :py:func:`ot.bregman.sinkhorn_epsilon_scaling` that relies on iterating the value
@@ -64,7 +64,9 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     solutions. Note that the greedy version of the sinkhorn
     :py:func:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
     version of the sinkhorn :py:func:`ot.bregman.screenkhorn` aim at providing  a
-    fast approximation of the Sinkhorn problem.
+    fast approximation of the Sinkhorn problem. For use of GPU and gradient
+    computation we strongly reconmend the :any:`ot.bregman.sinkhorn_log` solver
+    that will no need to check for numerical problems.
 
 
     Parameters
@@ -186,7 +188,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     By default and when using a regularization parameter that is not too small
     the default sinkhorn solver should be enough. If you need to use a small
     regularization to get sharper OT matrices, you should use the
-    :any:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical
+    :any:`ot.bregman.sinkhorn_log` solver that will avoid numerical
     errors. This last solver can be very slow in practice and might not even
     converge to a reasonable OT matrix in a finite time. This is why
     :any:`ot.bregman.sinkhorn_epsilon_scaling` that relies on iterating the value
@@ -194,7 +196,9 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     solutions. Note that the greedy version of the sinkhorn
     :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
     version of the sinkhorn :any:`ot.bregman.screenkhorn` aim a providing  a
-    fast approximation of the Sinkhorn problem.
+    fast approximation of the Sinkhorn problem. For use of GPU and gradient
+    computation we strongly reconmend the :any:`ot.bregman.sinkhorn_log` solver
+    that will no need to check for numerical problems.
 
     Parameters
     ----------

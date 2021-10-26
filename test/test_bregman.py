@@ -186,7 +186,7 @@ def test_sinkhorn_variants(nx):
 @pytest.skip_backend("jax")
 def test_sinkhorn_variants_multi_b(nx):
     # test sinkhorn
-    n = 100
+    n = 50
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)
@@ -214,7 +214,7 @@ def test_sinkhorn_variants_multi_b(nx):
 
 def test_sinkhorn_variants_log():
     # test sinkhorn
-    n = 100
+    n = 50
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)
@@ -234,7 +234,27 @@ def test_sinkhorn_variants_log():
     np.testing.assert_allclose(G0, Gl, atol=1e-05)
     np.testing.assert_allclose(G0, Ges, atol=1e-05)
     np.testing.assert_allclose(G0, G_green, atol=1e-5)
-    print(G0, G_green)
+
+
+def test_sinkhorn_variants_log_multib():
+    # test sinkhorn
+    n = 50
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    u = ot.utils.unif(n)
+    b = rng.rand(n, 3)
+    b = b / np.sum(b, 0, keepdims=True)
+
+    M = ot.dist(x, x)
+
+    G0, log0 = ot.sinkhorn(u, b, M, 1, method='sinkhorn', stopThr=1e-10, log=True)
+    Gl, logl = ot.sinkhorn(u, b, M, 1, method='sinkhorn_log', stopThr=1e-10, log=True)
+    Gs, logs = ot.sinkhorn(u, b, M, 1, method='sinkhorn_stabilized', stopThr=1e-10, log=True)
+
+    # check values
+    np.testing.assert_allclose(G0, Gs, atol=1e-05)
+    np.testing.assert_allclose(G0, Gl, atol=1e-05)
 
 
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
