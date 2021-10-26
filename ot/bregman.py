@@ -234,7 +234,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     >>> b=[.5, .5]
     >>> M=[[0., 1.], [1., 0.]]
     >>> ot.sinkhorn2(a, b, M, 1)
-    array([0.26894142])
+    0.26894142136999516
 
 
     .. _references-sinkhorn2:
@@ -2310,7 +2310,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
     >>> X_s = np.reshape(np.arange(n_samples_a), (n_samples_a, 1))
     >>> X_t = np.reshape(np.arange(0, n_samples_b), (n_samples_b, 1))
     >>> empirical_sinkhorn_divergence(X_s, X_t, reg)  # doctest: +ELLIPSIS
-    array([1.499...])
+    1.49988717604905
 
 
     References
