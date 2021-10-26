@@ -111,7 +111,7 @@ def test_dist():
 
     D4 = ot.dist(x, x, metric='minkowski', p=0.5)
 
-    assert D[0, 1] == D[1, 0]
+    assert D4[0, 1] == D4[1, 0]
 
     # dist shoul return squared euclidean
     np.testing.assert_allclose(D, D2, atol=1e-14)
