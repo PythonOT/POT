@@ -24,7 +24,7 @@ from ot.utils import unif, dist, list_to_array
 from .backend import get_backend
 
 
-def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
+def sinkhorn(a, b, M, reg, method='sinkhorn_log', numItermax=1000,
              stopThr=1e-9, verbose=False, log=False, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
