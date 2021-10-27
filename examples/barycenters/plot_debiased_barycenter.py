@@ -18,6 +18,8 @@ as proposed in [28].
 # License: MIT License
 
 # sphinx_gallery_thumbnail_number = 4
+import os
+from pathlib import Path
 
 import numpy as np
 import matplotlib.pylab as plt
@@ -57,7 +59,6 @@ epsilons = [5e-3, 1e-2, 5e-2]
 
 bars = [barycenter(A, M, reg, weights, method="sinkhorn") for reg in epsilons]
 bars_debiased = [barycenter(A, M, reg, weights, method="debiased") for reg in epsilons]
-
 labels = ["Sinkhorn barycenter", "Debiased barycenter"]
 colors = ["indianred", "gold"]
 
@@ -75,10 +76,10 @@ plt.show()
 ##############################################################################
 # Debiased barycenter of 2D images
 # ---------------------------------
-
-f1 = 1 - plt.imread('../../data/redcross.png')[:, :, 2]
-f2 = 1 - plt.imread('../../data/tooth.png')[:, :, 2]
-f3 = 1 - plt.imread('../../data/duck.png')[:, :, 2]
+data_path = os.path.join(Path(__file__).parent.parent.parent, 'data')
+f1 = 1 - plt.imread(os.path.join(data_path, 'redcross.png'))[:, :, 2]
+f2 = 1 - plt.imread(os.path.join(data_path, 'tooth.png'))[:, :, 2]
+f3 = 1 - plt.imread(os.path.join(data_path, 'duck.png'))[:, :, 2]
 
 A = []
 f1 = f1 / np.sum(f1)
@@ -97,6 +98,7 @@ A = np.array(A)
 f, axes = plt.subplots(1, 3, figsize=(12, 4))
 for ax, img in zip(axes, A):
     ax.imshow(img, cmap="Greys")
+    ax.axis("off")
 plt.show()
 
 
