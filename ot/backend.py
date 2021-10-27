@@ -541,16 +541,6 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def _get_dtype(self, dtype_str):
-        r"""Converts the string into the backend-dependent dtype accordingly."""
-        raise NotImplementedError()
-
-    def cast(self, *args, dtype):
-        r"""
-        Casts a list of arrays with the given type on the given device.
-        """
-        raise NotImplementedError()
-
     def issparse(self, a):
         r"""
         Checks whether or not the input tensor is a sparse tensor.
@@ -814,18 +804,6 @@ class NumpyBackend(Backend):
     def reshape(self, a, shape):
         return np.reshape(a, shape)
 
-    def _get_dtype(self, dtype_str):
-        dtypes = {
-            "float64": np.float64
-        }
-        return dtypes.get(dtype_str)
-
-    def cast(self, *args, dtype=None):
-        if dtype is not None:
-            dtype = self._get_dtype(dtype)
-            args = [array.astype(dtype) for array in args]
-        return args[0] if len(args) == 1 else args
-
     def issparse(self, a):
         return issparse(a)
 
@@ -1037,18 +1015,6 @@ class JaxBackend(Backend):
 
     def reshape(self, a, shape):
         return jnp.reshape(a, shape)
-
-    def _get_dtype(self, dtype_str):
-        dtypes = {
-            "float64": jnp.float64
-        }
-        return dtypes.get(dtype_str)
-
-    def cast(self, *args, dtype=None):
-        if dtype is not None:
-            dtype = self._get_dtype(dtype)
-            args = [array.astype(dtype) for array in args]
-        return args[0] if len(args) == 1 else args
 
     def issparse(self, a):
         # Currently, JAX does not support sparse matrices
@@ -1329,18 +1295,6 @@ class TorchBackend(Backend):
 
     def reshape(self, a, shape):
         return torch.reshape(a, shape)
-
-    def _get_dtype(self, dtype_str):
-        dtypes = {
-            "float64": torch.float64
-        }
-        return dtypes.get(dtype_str)
-
-    def cast(self, *args, dtype=None):
-        if dtype is not None:
-            dtype = self._get_dtype(dtype)
-            args = [array.type(dtype) for array in args]
-        return args[0] if len(args) == 1 else args
 
     def issparse(self, a):
         return a.is_sparse

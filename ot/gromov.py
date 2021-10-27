@@ -794,7 +794,6 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
         """
     C1, C2, p, q = list_to_array(C1, C2, p, q)
     nx = get_backend(C1, C2, p, q)
-    C1, C2, p, q = nx.cast(C1, C2, p, q, dtype="float64")
 
     len_p = p.shape[0]
     len_q = q.shape[0]
@@ -917,7 +916,6 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
     """
     C1, C2, p, q = list_to_array(C1, C2, p, q)
     nx = get_backend(C1, C2, p, q)
-    C1, C2, p, q = nx.cast(C1, C2, p, q, dtype="float64")
 
     len_p = p.shape[0]
     len_q = q.shape[0]
@@ -1069,7 +1067,6 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
     """
     C1, C2, p, q = list_to_array(C1, C2, p, q)
     nx = get_backend(C1, C2, p, q)
-    C1, C2 = nx.cast(C1, C2, dtype='float64')
 
     T = nx.outer(p, q)
 
@@ -1245,9 +1242,6 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
 
     S = len(Cs)
 
-    Cs = nx.cast(*Cs, dtype="float64")
-    lambdas = nx.cast(lambdas, dtype="float64")
-
     # Initialization of C : random SPD matrix (if not provided by user)
     if init_C is None:
         # XXX use random state
@@ -1356,9 +1350,6 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
     nx = get_backend(*Cs, *ps, p)
 
     S = len(Cs)
-
-    Cs = nx.cast(*Cs, dtype="float64")
-    lambdas = nx.cast(lambdas, dtype="float64")
 
     # Initialization of C : random SPD matrix (if not provided by user)
     if init_C is None:
@@ -1476,11 +1467,6 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
     if p is None:
         p = nx.ones(N, type_as=Cs[0]) / N
 
-    Cs = nx.cast(*Cs, dtype="float64")
-    Ys = nx.cast(*Ys, dtype="float64")
-
-    lambdas = nx.cast(lambdas, dtype="float64")
-
     if fixed_structure:
         if init_C is None:
             raise UndefinedParameter('If C is fixed it must be initialized')
@@ -1507,7 +1493,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
 
     T = [nx.outer(p, q) for q in ps]
 
-    Ms = nx.cast(*[dist(X, Ys[s]) for s in range(len(Ys))], dtype="float64")
+    Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
 
     cpt = 0
     err_feature = 1
@@ -1527,7 +1513,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
             Ys_temp = [y.T for y in Ys]
             X = update_feature_matrix(lambdas, Ys_temp, T, p).T
 
-        Ms = nx.cast(*[dist(X, Ys[s]) for s in range(len(Ys))], dtype="float64")
+        Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
 
         if not fixed_structure:
             if loss_fun == 'square_loss':
