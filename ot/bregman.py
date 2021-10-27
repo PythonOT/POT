@@ -1852,8 +1852,6 @@ def _convolutional_barycenter2d_sinkhorn(A, reg, weights=None, numItermax=10000,
     A. & Guibas, L. (2015).     Convolutional wasserstein distances: Efficient
     optimal transportation on geometric domains. ACM Transactions on Graphics
     (TOG), 34(4), 66
-
-
     """
 
     A = list_to_array(A)
@@ -2124,7 +2122,6 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
     .. [4] S. Nakhostin, N. Courty, R. Flamary, D. Tuia, T. Corpetti, Supervised planetary
     unmixing with optimal transport, Whorkshop on Hyperspectral Image and Signal Processing :
     Evolution in Remote Sensing (WHISPERS), 2016.
-
     """
 
     a, D, M, M0, h0 = list_to_array(a, D, M, M0, h0)
@@ -2248,7 +2245,6 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
     .. [27] Ievgen Redko, Nicolas Courty, Rémi Flamary, Devis Tuia
        "Optimal transport for multi-source domain adaptation under target shift",
        International Conference on Artificial Intelligence and Statistics (AISTATS), 2019.
-
     '''
 
     Xs = list_to_array(*Xs)

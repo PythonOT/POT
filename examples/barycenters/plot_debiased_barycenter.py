@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-==============================
+=================================
 Debiased Sinkhorn barycenter demo
-==============================
+=================================
 
 This example illustrates the computation of the debiased Sinkhorn barycenter
-as proposed in [28].
+as proposed in [28]_.
 
 
-[28] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th
- International Conference on Machine Learning, PMLR 119:4692-4701, 2020
-
+.. [28] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th
+        International Conference on Machine Learning, PMLR 119:4692-4701, 2020
 """
 
 # Author: Hicham Janati <hicham.janati100@gmail.com>
@@ -22,7 +21,8 @@ import os
 from pathlib import Path
 
 import numpy as np
-import matplotlib.pylab as plt
+import matplotlib.pyplot as plt
+
 import ot
 from ot.bregman import barycenter, convolutional_barycenter2d
 
@@ -81,24 +81,20 @@ f1 = 1 - plt.imread(os.path.join(data_path, 'redcross.png'))[:, :, 2]
 f2 = 1 - plt.imread(os.path.join(data_path, 'tooth.png'))[:, :, 2]
 f3 = 1 - plt.imread(os.path.join(data_path, 'duck.png'))[:, :, 2]
 
-A = []
 f1 = f1 / np.sum(f1)
 f2 = f2 / np.sum(f2)
 f3 = f3 / np.sum(f3)
 
-A.append(f1)
-A.append(f2)
-A.append(f3)
-
-A = np.array(A)
+A = np.array([f1, f2, f3])
 
 ##############################################################################
 # Display the input images
 
-f, axes = plt.subplots(1, 3, figsize=(12, 4))
+fig, axes = plt.subplots(1, 3, figsize=(7, 4))
 for ax, img in zip(axes, A):
     ax.imshow(img, cmap="Greys")
     ax.axis("off")
+fig.tight_layout()
 plt.show()
 
 
@@ -117,7 +113,7 @@ for eps in epsilons:
 
 titles = ["Sinkhorn", "Debiased"]
 all_bars = [bars_sinkhorn, bars_debiased]
-f, axes = plt.subplots(2, 3, figsize=(12, 8))
+fig, axes = plt.subplots(2, 3, figsize=(8, 6))
 for jj, (method, ax_row, bars) in enumerate(zip(titles, axes, all_bars)):
     for ii, (ax, img, eps) in enumerate(zip(ax_row, bars, epsilons)):
         ax.imshow(img, cmap="Greys")
@@ -131,4 +127,5 @@ for jj, (method, ax_row, bars) in enumerate(zip(titles, axes, all_bars)):
         ax.spines['left'].set_visible(False)
         if ii == 0:
             ax.set_ylabel(method, fontsize=15)
+fig.tight_layout()
 plt.show()
