@@ -207,6 +207,8 @@ def test_empty_backend():
         nx.stack([M, M])
     with pytest.raises(NotImplementedError):
         nx.reshape(M, (5, 3, 2))
+    with pytest.raises(NotImplementedError):
+        nx.issparse(M)
 
 
 def test_func_backends(nx):
@@ -437,6 +439,10 @@ def test_func_backends(nx):
         A = nx.reshape(Mb, (5, 3, 2))
         lst_b.append(nx.to_numpy(A))
         lst_name.append('reshape')
+
+        A = nx.issparse(Mb)
+        lst_b.append(A)
+        lst_name.append('issparse')
 
         lst_tot.append(lst_b)
 

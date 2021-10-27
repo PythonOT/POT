@@ -14,12 +14,11 @@ import numpy as np
 
 
 from .bregman import sinkhorn
-from .utils import dist, UndefinedParameter
+from .utils import dist, UndefinedParameter, list_to_array
 from .optim import cg
 from .lp import emd_1d, emd
 from .utils import check_random_state
-
-from scipy.sparse import issparse
+from .backend import get_backend
 
 
 def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
@@ -75,6 +74,8 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
         International Conference on Machine Learning (ICML). 2016.
 
     """
+    C1, C2, p, q = list_to_array(C1, C2, p, q)
+    nx = get_backend(C1, C2, p, q)
 
     if loss_fun == 'square_loss':
         def f1(a):
@@ -90,7 +91,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
             return 2 * b
     elif loss_fun == 'kl_loss':
         def f1(a):
-            return a * np.log(a + 1e-15) - a
+            return a * nx.log(a + 1e-15) - a
 
         def f2(b):
             return b
@@ -99,12 +100,16 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
             return a
 
         def h2(b):
-            return np.log(b + 1e-15)
+            return nx.log(b + 1e-15)
 
-    constC1 = np.dot(np.dot(f1(C1), p.reshape(-1, 1)),
-                     np.ones(len(q)).reshape(1, -1))
-    constC2 = np.dot(np.ones(len(p)).reshape(-1, 1),
-                     np.dot(q.reshape(1, -1), f2(C2).T))
+    constC1 = nx.dot(
+        nx.dot(f1(C1), nx.reshape(p, (-1, 1))),
+        nx.ones((1, len(q)), type_as=q)
+    )
+    constC2 = nx.dot(
+        nx.ones((len(p), 1), type_as=p),
+        nx.dot(nx.reshape(q, (1, -1)), f2(C2).T)
+    )
     constC = constC1 + constC2
     hC1 = h1(C1)
     hC2 = h2(C2)
@@ -138,7 +143,12 @@ def tensor_product(constC, hC1, hC2, T):
         International Conference on Machine Learning (ICML). 2016.
 
     """
-    A = -np.dot(hC1, T).dot(hC2.T)
+    constC, hC1, hC2, T = list_to_array(constC, hC1, hC2, T)
+    nx = get_backend(constC, hC1, hC2, T)
+
+    A = - nx.dot(
+        nx.dot(hC1, T), hC2.T
+    )
     tens = constC + A
     # tens -= tens.min()
     return tens
@@ -175,7 +185,10 @@ def gwloss(constC, hC1, hC2, T):
 
     tens = tensor_product(constC, hC1, hC2, T)
 
-    return np.sum(tens * T)
+    tens, T = list_to_array(tens, T)
+    nx = get_backend(tens, T)
+
+    return nx.sum(tens * T)
 
 
 def gwggrad(constC, hC1, hC2, T):
@@ -231,11 +244,18 @@ def update_square_loss(p, lambdas, T, Cs):
     C : ndarray, shape (nt, nt)
         Updated C matrix.
     """
-    tmpsum = sum([lambdas[s] * np.dot(T[s].T, Cs[s]).dot(T[s])
-                  for s in range(len(T))])
-    ppt = np.outer(p, p)
+    T, p, Cs = list_to_array(T, p, Cs)
+    nx = get_backend(p, T, Cs)
 
-    return np.divide(tmpsum, ppt)
+    tmpsum = sum([
+        lambdas[s] * nx.dot(
+            nx.dot(T[s].T, Cs[s]),
+            T[s]
+        ) for s in range(len(T))
+    ])
+    ppt = nx.outer(p, p)
+
+    return tmpsum / ppt
 
 
 def update_kl_loss(p, lambdas, T, Cs):
@@ -258,11 +278,18 @@ def update_kl_loss(p, lambdas, T, Cs):
     C : ndarray, shape (ns,ns)
         updated C matrix
     """
-    tmpsum = sum([lambdas[s] * np.dot(T[s].T, Cs[s]).dot(T[s])
-                  for s in range(len(T))])
-    ppt = np.outer(p, p)
+    p, T, Cs = list_to_array(p, T, Cs)
+    nx = get_backend(p, T, Cs)
 
-    return np.exp(np.divide(tmpsum, ppt))
+    tmpsum = sum([
+        lambdas[s] * nx.dot(
+            nx.dot(T[s].T, Cs[s]),
+            T[s]
+        ) for s in range(len(T))
+    ])
+    ppt = nx.outer(p, p)
+
+    return nx.exp(tmpsum / ppt)
 
 
 def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs):
@@ -327,6 +354,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
         mathematics 11.4 (2011): 417-487.
 
     """
+    p, q = list_to_array(p, q)
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
@@ -404,6 +432,7 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwarg
         mathematics 11.4 (2011): 417-487.
 
     """
+    p, q = list_to_array(p, q)
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
@@ -480,6 +509,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
         application on graphs", International Conference on Machine Learning
         (ICML). 2019.
     """
+    p, q = list_to_array(p, q)
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
@@ -556,6 +586,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
+    p, q = list_to_array(p, q)
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
@@ -579,60 +610,63 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
 def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
                            nb_samples_p=None, nb_samples_q=None, std=True, random_state=None):
     r"""
-        Returns an approximation of the gromov-wasserstein cost between (C1,p) and (C2,q)
-        with a fixed transport plan T.
+    Returns an approximation of the gromov-wasserstein cost between (C1,p) and (C2,q)
+    with a fixed transport plan T.
 
-        The function gives an unbiased approximation of the following equation:
+    The function gives an unbiased approximation of the following equation:
 
-        .. math::
-            GW = \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+    .. math::
+        GW = \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
 
-        Where :
+    Where :
 
-        - C1 : Metric cost matrix in the source space
-        - C2 : Metric cost matrix in the target space
-        - L  : Loss function to account for the misfit between the similarity matrices
-        - T  : Matrix with marginal p and q
+    - C1 : Metric cost matrix in the source space
+    - C2 : Metric cost matrix in the target space
+    - L  : Loss function to account for the misfit between the similarity matrices
+    - T  : Matrix with marginal p and q
 
-        Parameters
-        ----------
-        C1 : ndarray, shape (ns, ns)
-            Metric cost matrix in the source space
-        C2 : ndarray, shape (nt, nt)
-            Metric costfr matrix in the target space
-        p :  ndarray, shape (ns,)
-            Distribution in the source space
-        q :  ndarray, shape (nt,)
-            Distribution in the target space
-        loss_fun :  function: \mathcal{R} \times \mathcal{R} \shortarrow \mathcal{R}
-            Loss function used for the distance, the transport plan does not depend on the loss function
-        T : csr or ndarray, shape (ns, nt)
-            Transport plan matrix, either a sparse csr matrix or
-        nb_samples_p : int, optional
-            nb_samples_p is the number of samples (without replacement) along the first dimension of T.
-        nb_samples_q : int, optional
-            nb_samples_q is the number of samples along the second dimension of T, for each sample along the first.
-        std : bool, optional
-            Standard deviation associated with the prediction of the gromov-wasserstein cost.
-        random_state : int or RandomState instance, optional
-            Fix the seed for to allow reproducibility
+    Parameters
+    ----------
+    C1 : ndarray, shape (ns, ns)
+        Metric cost matrix in the source space
+    C2 : ndarray, shape (nt, nt)
+        Metric costfr matrix in the target space
+    p :  ndarray, shape (ns,)
+        Distribution in the source space
+    q :  ndarray, shape (nt,)
+        Distribution in the target space
+    loss_fun :  function: \mathcal{R} \times \mathcal{R} \shortarrow \mathcal{R}
+        Loss function used for the distance, the transport plan does not depend on the loss function
+    T : csr or ndarray, shape (ns, nt)
+        Transport plan matrix, either a sparse csr matrix or
+    nb_samples_p : int, optional
+        nb_samples_p is the number of samples (without replacement) along the first dimension of T.
+    nb_samples_q : int, optional
+        nb_samples_q is the number of samples along the second dimension of T, for each sample along the first.
+    std : bool, optional
+        Standard deviation associated with the prediction of the gromov-wasserstein cost.
+    random_state : int or RandomState instance, optional
+        Fix the seed for to allow reproducibility
 
-        Returns
-        -------
-         : float
-            Gromov-wasserstein cost
+    Returns
+    -------
+    : float
+        Gromov-wasserstein cost
 
-        References
-        ----------
-        .. [14] Kerdoncuff, Tanguy, Emonet, Rémi, Sebban, Marc
-            "Sampled Gromov Wasserstein."
-            Machine Learning Journal (MLJ). 2021.
+    References
+    ----------
+    .. [14] Kerdoncuff, Tanguy, Emonet, Rémi, Sebban, Marc
+        "Sampled Gromov Wasserstein."
+        Machine Learning Journal (MLJ). 2021.
 
-        """
+    """
+    C1, C2, p, q = list_to_array(C1, C2, p, q)
+    nx = get_backend(C1, C2, p, q)
+
     generator = check_random_state(random_state)
 
-    len_p = len(p)
-    len_q = len(q)
+    len_p = p.shape[0]
+    len_q = q.shape[0]
 
     # It is always better to sample from the biggest distribution first.
     if len_p < len_q:
@@ -642,7 +676,7 @@ def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
         T = T.T
 
     if nb_samples_p is None:
-        if issparse(T):
+        if nx.issparse(T):
             # If T is sparse, it probably mean that PoGroW was used, thus the number of sample is reduced
             nb_samples_p = min(int(5 * (len_p * np.log(len_p)) ** 0.5), len_p)
         else:
@@ -657,30 +691,43 @@ def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
 
     index_k = np.zeros((nb_samples_p, nb_samples_q), dtype=int)
     index_l = np.zeros((nb_samples_p, nb_samples_q), dtype=int)
-    list_value_sample = np.zeros((nb_samples_p, nb_samples_p, nb_samples_q))
 
     index_i = generator.choice(len_p, size=nb_samples_p, p=p, replace=False)
     index_j = generator.choice(len_p, size=nb_samples_p, p=p, replace=False)
 
     for i in range(nb_samples_p):
-        if issparse(T):
-            T_indexi = T[index_i[i], :].toarray()[0]
-            T_indexj = T[index_j[i], :].toarray()[0]
+        if nx.issparse(T):
+            T_indexi = nx.toarray(T[index_i[i], :])[0]
+            T_indexj = nx.toarray(T[index_j[i], :])[0]
         else:
             T_indexi = T[index_i[i], :]
             T_indexj = T[index_j[i], :]
         # For each of the row sampled, the column is sampled.
-        index_k[i] = generator.choice(len_q, size=nb_samples_q, p=T_indexi / T_indexi.sum(), replace=True)
-        index_l[i] = generator.choice(len_q, size=nb_samples_q, p=T_indexj / T_indexj.sum(), replace=True)
+        index_k[i] = generator.choice(
+            len_q,
+            size=nb_samples_q,
+            p=nx.to_numpy(T_indexi / nx.sum(T_indexi)),
+            replace=True
+        )
+        index_l[i] = generator.choice(
+            len_q,
+            size=nb_samples_q,
+            p=nx.to_numpy(T_indexj / nx.sum(T_indexj)),
+            replace=True
+        )
 
-    for n in range(nb_samples_q):
-        list_value_sample[:, :, n] = loss_fun(C1[np.ix_(index_i, index_j)], C2[np.ix_(index_k[:, n], index_l[:, n])])
+    list_value_sample = nx.stack([
+        loss_fun(
+            C1[np.ix_(index_i, index_j)],
+            C2[np.ix_(index_k[:, n], index_l[:, n])]
+        ) for n in range(nb_samples_q)
+    ], axis=2)
 
     if std:
-        std_value = np.sum(np.std(list_value_sample, axis=2) ** 2) ** 0.5
-        return np.mean(list_value_sample), std_value / (nb_samples_p * nb_samples_p)
+        std_value = nx.sum(nx.std(list_value_sample, axis=2) ** 2) ** 0.5
+        return nx.mean(list_value_sample), std_value / (nb_samples_p * nb_samples_p)
     else:
-        return np.mean(list_value_sample)
+        return nx.mean(list_value_sample)
 
 
 def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
@@ -745,20 +792,20 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
             Machine Learning Journal (MLJ). 2021.
 
         """
-    C1 = np.asarray(C1, dtype=np.float64)
-    C2 = np.asarray(C2, dtype=np.float64)
-    p = np.asarray(p, dtype=np.float64)
-    q = np.asarray(q, dtype=np.float64)
-    len_p = len(p)
-    len_q = len(q)
+    C1, C2, p, q = list_to_array(C1, C2, p, q)
+    nx = get_backend(C1, C2, p, q)
+    C1, C2, p, q = nx.cast(C1, C2, p, q, dtype=nx.dtypes["float64"], type_as=C1)
+
+    len_p = p.shape[0]
+    len_q = q.shape[0]
 
     generator = check_random_state(random_state)
 
     index = np.zeros(2, dtype=int)
 
     # Initialize with default marginal
-    index[0] = generator.choice(len_p, size=1, p=p)
-    index[1] = generator.choice(len_q, size=1, p=q)
+    index[0] = generator.choice(len_p, size=1, p=nx.to_numpy(p))
+    index[1] = generator.choice(len_q, size=1, p=nx.to_numpy(q))
     T = emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False).tocsr()
 
     best_gw_dist_estimated = np.inf
@@ -768,21 +815,27 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
         index[1] = generator.choice(len_q, size=1, p=T_index0 / T_index0.sum())
 
         if alpha == 1:
-            T = emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False).tocsr()
+            T = nx.tocsr(
+                emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False)
+            )
         else:
-            new_T = emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False).tocsr()
+            new_T = nx.tocsr(
+                emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False)
+            )
             T = (1 - alpha) * T + alpha * new_T
-            # To limit the number of non 0, the values bellow the threshold are set to 0.
-            T.data[T.data < threshold_plan] = 0
-            T.eliminate_zeros()
+            # To limit the number of non 0, the values below the threshold are set to 0.
+            T.data = nx.where(T.data < threshold_plan, 0, T.data)
+            T = nx.eliminate_zeros(T)
 
         if cpt % 10 == 0 or cpt == (max_iter - 1):
-            gw_dist_estimated = GW_distance_estimation(C1=C1, C2=C2, loss_fun=loss_fun,
-                                                       p=p, q=q, T=T, std=False, random_state=generator)
+            gw_dist_estimated = GW_distance_estimation(
+                C1=C1, C2=C2, loss_fun=loss_fun,
+                p=p, q=q, T=T, std=False, random_state=generator
+            )
 
             if gw_dist_estimated < best_gw_dist_estimated:
                 best_gw_dist_estimated = gw_dist_estimated
-                best_T = T.copy()
+                best_T = nx.copy(T)
 
             if verbose:
                 if cpt % 200 == 0:
@@ -791,9 +844,10 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
 
     if log:
         log = {}
-        log["gw_dist_estimated"], log["gw_dist_std"] = GW_distance_estimation(C1=C1, C2=C2, loss_fun=loss_fun,
-                                                                              p=p, q=q, T=best_T,
-                                                                              random_state=generator)
+        log["gw_dist_estimated"], log["gw_dist_std"] = GW_distance_estimation(
+            C1=C1, C2=C2, loss_fun=loss_fun,
+            p=p, q=q, T=best_T, random_state=generator
+        )
         return best_T, log
     return best_T
 
@@ -802,71 +856,71 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
                                nb_samples_grad=100, epsilon=1, max_iter=500, log=False, verbose=False,
                                random_state=None):
     r"""
-        Returns the gromov-wasserstein transport between (C1,p) and (C2,q) using a 1-stochastic Frank-Wolfe.
-        This method as a O(max_iter \times Nlog(N)) time complexity by relying on the 1D Optimal Transport solver.
+    Returns the gromov-wasserstein transport between (C1,p) and (C2,q) using a 1-stochastic Frank-Wolfe.
+    This method as a O(max_iter \times Nlog(N)) time complexity by relying on the 1D Optimal Transport solver.
 
-        The function solves the following optimization problem:
+    The function solves the following optimization problem:
 
-        .. math::
-            GW = arg\min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+    .. math::
+        GW = arg\min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
 
-            s.t. T 1 = p
+        s.t. T 1 = p
 
-                 T^T 1= q
+                T^T 1= q
 
-                 T\geq 0
+                T\geq 0
 
-        Where :
+    Where :
 
-        - C1 : Metric cost matrix in the source space
-        - C2 : Metric cost matrix in the target space
-        - p  : distribution in the source space
-        - q  : distribution in the target space
-        - L  : loss function to account for the misfit between the similarity matrices
+    - C1 : Metric cost matrix in the source space
+    - C2 : Metric cost matrix in the target space
+    - p  : distribution in the source space
+    - q  : distribution in the target space
+    - L  : loss function to account for the misfit between the similarity matrices
 
-        Parameters
-        ----------
-        C1 : ndarray, shape (ns, ns)
-            Metric cost matrix in the source space
-        C2 : ndarray, shape (nt, nt)
-            Metric costfr matrix in the target space
-        p :  ndarray, shape (ns,)
-            Distribution in the source space
-        q :  ndarray, shape (nt,)
-            Distribution in the target space
-        loss_fun :  function: \mathcal{R} \times \mathcal{R} \shortarrow \mathcal{R}
-            Loss function used for the distance, the transport plan does not depend on the loss function
-        nb_samples_grad : int
-            Number of samples to approximate the gradient
-        epsilon : float
-            Weight of the Kullback-Leiber regularization
-        max_iter : int, optional
-            Max number of iterations
-        verbose : bool, optional
-            Print information along iterations
-        log : bool, optional
-            Gives the distance estimated and the standard deviation
-        random_state : int or RandomState instance, optional
-            Fix the seed for to allow reproducibility
+    Parameters
+    ----------
+    C1 : ndarray, shape (ns, ns)
+        Metric cost matrix in the source space
+    C2 : ndarray, shape (nt, nt)
+        Metric costfr matrix in the target space
+    p :  ndarray, shape (ns,)
+        Distribution in the source space
+    q :  ndarray, shape (nt,)
+        Distribution in the target space
+    loss_fun :  function: \mathcal{R} \times \mathcal{R} \shortarrow \mathcal{R}
+        Loss function used for the distance, the transport plan does not depend on the loss function
+    nb_samples_grad : int
+        Number of samples to approximate the gradient
+    epsilon : float
+        Weight of the Kullback-Leiber regularization
+    max_iter : int, optional
+        Max number of iterations
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        Gives the distance estimated and the standard deviation
+    random_state : int or RandomState instance, optional
+        Fix the seed for to allow reproducibility
 
-        Returns
-        -------
-        T : ndarray, shape (ns, nt)
-            Optimal coupling between the two spaces
+    Returns
+    -------
+    T : ndarray, shape (ns, nt)
+        Optimal coupling between the two spaces
 
-        References
-        ----------
-        .. [14] Kerdoncuff, Tanguy, Emonet, Rémi, Sebban, Marc
-            "Sampled Gromov Wasserstein."
-            Machine Learning Journal (MLJ). 2021.
+    References
+    ----------
+    .. [14] Kerdoncuff, Tanguy, Emonet, Rémi, Sebban, Marc
+        "Sampled Gromov Wasserstein."
+        Machine Learning Journal (MLJ). 2021.
 
-        """
-    C1 = np.asarray(C1, dtype=np.float64)
-    C2 = np.asarray(C2, dtype=np.float64)
-    p = np.asarray(p, dtype=np.float64)
-    q = np.asarray(q, dtype=np.float64)
-    len_p = len(p)
-    len_q = len(q)
+    """
+    C1, C2, p, q = list_to_array(C1, C2, p, q)
+    nx = get_backend(C1, C2, p, q)
+    C1, C2, p, q = nx.cast(C1, C2, p, q, dtype=nx.dtypes["float64"], type_as=C1)
+
+    len_p = p.shape[0]
+    len_q = q.shape[0]
 
     generator = check_random_state(random_state)
 
@@ -880,12 +934,12 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
             nb_samples_grad_p, nb_samples_grad_q = nb_samples_grad, 1
     else:
         nb_samples_grad_p, nb_samples_grad_q = nb_samples_grad
-    T = np.outer(p, q)
+    T = nx.outer(p, q)
     # continue_loop allows to stop the loop if there is several successive small modification of T.
     continue_loop = 0
 
     # The gradient of GW is more complex if the two matrices are not symmetric.
-    C_are_symmetric = np.allclose(C1, C1.T, rtol=1e-10, atol=1e-10) and np.allclose(C2, C2.T, rtol=1e-10, atol=1e-10)
+    C_are_symmetric = nx.allclose(C1, C1.T, rtol=1e-10, atol=1e-10) and nx.allclose(C2, C2.T, rtol=1e-10, atol=1e-10)
 
     for cpt in range(max_iter):
         index0 = generator.choice(len_p, size=nb_samples_grad_p, p=p, replace=False)
@@ -893,19 +947,21 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
         for i, index0_i in enumerate(index0):
             index1 = generator.choice(len_q,
                                       size=nb_samples_grad_q,
-                                      p=T[index0_i, :] / T[index0_i, :].sum(),
+                                      p=T[index0_i, :] / nx.sum(T[index0_i, :]),
                                       replace=False)
             # If the matrices C are not symmetric, the gradient has 2 terms, thus the term is chosen randomly.
             if (not C_are_symmetric) and generator.rand(1) > 0.5:
-                Lik += np.mean(loss_fun(np.expand_dims(C1[:, np.repeat(index0[i], nb_samples_grad_q)], 1),
-                                        np.expand_dims(C2[:, index1], 0)),
-                               axis=2)
+                Lik += nx.mean(loss_fun(
+                    nx.expand_dims(C1[:, nx.repeat(index0[i], nb_samples_grad_q)], 1),
+                    nx.expand_dims(C2[:, index1], 0)
+                ), axis=2)
             else:
-                Lik += np.mean(loss_fun(np.expand_dims(C1[np.repeat(index0[i], nb_samples_grad_q), :], 2),
-                                        np.expand_dims(C2[index1, :], 1)),
-                               axis=0)
+                Lik += nx.mean(loss_fun(
+                    nx.expand_dims(C1[nx.repeat(index0[i], nb_samples_grad_q), :], 2),
+                    nx.expand_dims(C2[index1, :], 1)
+                ), axis=0)
 
-        max_Lik = np.max(Lik)
+        max_Lik = nx.max(Lik)
         if max_Lik == 0:
             continue
         # This division by the max is here to facilitate the choice of epsilon.
@@ -913,8 +969,8 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
 
         if epsilon > 0:
             # Set to infinity all the numbers bellow exp(-200) to avoid log of 0.
-            log_T = np.log(np.clip(T, np.exp(-200), 1))
-            log_T[log_T == -200] = -np.inf
+            log_T = nx.log(nx.clip(T, np.exp(-200), 1))
+            log_T = nx.where(log_T == -200, -np.inf, log_T)
             Lik = Lik - epsilon * log_T
 
             try:
@@ -925,11 +981,11 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
         else:
             new_T = emd(a=p, b=q, M=Lik)
 
-        change_T = ((T - new_T) ** 2).mean()
+        change_T = nx.mean((T - new_T) ** 2)
         if change_T <= 10e-20:
             continue_loop += 1
             if continue_loop > 100:  # Number max of low modifications of T
-                T = new_T.copy()
+                T = nx.copy(new_T)
                 break
         else:
             continue_loop = 0
@@ -938,12 +994,14 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
             if cpt % 200 == 0:
                 print('{:5s}|{:12s}'.format('It.', '||T_n - T_{n+1}||') + '\n' + '-' * 19)
             print('{:5d}|{:8e}|'.format(cpt, change_T))
-        T = new_T.copy()
+        T = nx.copy(new_T)
 
     if log:
         log = {}
-        log["gw_dist_estimated"], log["gw_dist_std"] = GW_distance_estimation(C1=C1, C2=C2, loss_fun=loss_fun,
-                                                                              p=p, q=q, T=T, random_state=generator)
+        log["gw_dist_estimated"], log["gw_dist_std"] = GW_distance_estimation(
+            C1=C1, C2=C2, loss_fun=loss_fun,
+            p=p, q=q, T=T, random_state=generator
+        )
         return T, log
     return T
 
@@ -1009,11 +1067,11 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
         International Conference on Machine Learning (ICML). 2016.
 
     """
+    C1, C2, p, q = list_to_array(C1, C2, p, q)
+    nx = get_backend(C1, C2, p, q)
+    C1, C2 = nx.cast(C1, C2, dtype=nx.dtypes['float64'], type_as=C1)
 
-    C1 = np.asarray(C1, dtype=np.float64)
-    C2 = np.asarray(C2, dtype=np.float64)
-
-    T = np.outer(p, q)  # Initialization
+    T = nx.outer(p, q)
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
@@ -1035,7 +1093,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
         if cpt % 10 == 0:
             # we can speed up the process by checking for the error only all
             # the 10th iterations
-            err = np.linalg.norm(T - Tprev)
+            err = nx.norm(T - Tprev)
 
             if log:
                 log['err'].append(err)
@@ -1180,11 +1238,15 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
     """
+    Cs = list_to_array(*Cs)
+    ps = list_to_array(*ps)
+    p, lambdas = list_to_array(p, lambdas)
+    nx = get_backend(*Cs, *ps, p)
 
     S = len(Cs)
 
-    Cs = [np.asarray(Cs[s], dtype=np.float64) for s in range(S)]
-    lambdas = np.asarray(lambdas, dtype=np.float64)
+    Cs = nx.cast(*Cs, dtype=nx.dtypes["float64"], type_as=p)
+    lambdas = nx.cast(lambdas, dtype=nx.dtypes["float64"], type_as=p)
 
     # Initialization of C : random SPD matrix (if not provided by user)
     if init_C is None:
@@ -1192,6 +1254,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
         xalea = np.random.randn(N, 2)
         C = dist(xalea, xalea)
         C /= C.max()
+        C = nx.from_numpy(C, type_as=p)
     else:
         C = init_C
 
@@ -1214,7 +1277,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
         if cpt % 10 == 0:
             # we can speed up the process by checking for the error only all
             # the 10th iterations
-            err = np.linalg.norm(C - Cprev)
+            err = nx.norm(C - Cprev)
             error.append(err)
 
             if log:
@@ -1287,10 +1350,15 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
         International Conference on Machine Learning (ICML). 2016.
 
     """
+    Cs = list_to_array(*Cs)
+    ps = list_to_array(*ps)
+    p, lambdas = list_to_array(p, lambdas)
+    nx = get_backend(*Cs, *ps, p)
+
     S = len(Cs)
 
-    Cs = [np.asarray(Cs[s], dtype=np.float64) for s in range(S)]
-    lambdas = np.asarray(lambdas, dtype=np.float64)
+    Cs = nx.cast(*Cs, dtype=nx.dtypes["float64"], type_as=p)
+    lambdas = nx.cast(lambdas, dtype=nx.dtypes["float64"], type_as=p)
 
     # Initialization of C : random SPD matrix (if not provided by user)
     if init_C is None:
@@ -1298,6 +1366,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
         xalea = np.random.randn(N, 2)
         C = dist(xalea, xalea)
         C /= C.max()
+        C = nx.from_numpy(C, type_as=p)
     else:
         C = init_C
 
@@ -1320,7 +1389,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
         if cpt % 10 == 0:
             # we can speed up the process by checking for the error only all
             # the 10th iterations
-            err = np.linalg.norm(C - Cprev)
+            err = nx.norm(C - Cprev)
             error.append(err)
 
             if log:
@@ -1396,15 +1465,21 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
+    Cs = list_to_array(*Cs)
+    ps = list_to_array(*ps)
+    Ys = list_to_array(*Ys)
+    p, lambdas = list_to_array(p, lambdas)
+    nx = get_backend(*Cs, *Ys, *ps, p)
+
     S = len(Cs)
     d = Ys[0].shape[1]  # dimension on the node features
     if p is None:
-        p = np.ones(N) / N
+        p = nx.ones(N, type_as=Cs[0]) / N
 
-    Cs = [np.asarray(Cs[s], dtype=np.float64) for s in range(S)]
-    Ys = [np.asarray(Ys[s], dtype=np.float64) for s in range(S)]
+    Cs = nx.cast(*Cs, dtype=nx.dtypes["float64"], type_as=Cs[0])
+    Ys = nx.cast(*Ys, dtype=nx.dtypes["float64"], type_as=Ys[0])
 
-    lambdas = np.asarray(lambdas, dtype=np.float64)
+    lambdas = nx.cast(lambdas, dtype=nx.dtypes["float64"], type_as=ps[0])
 
     if fixed_structure:
         if init_C is None:
@@ -1415,6 +1490,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         if init_C is None:
             xalea = np.random.randn(N, 2)
             C = dist(xalea, xalea)
+            C = nx.from_numpy(C, type_as=ps[0])
         else:
             C = init_C
 
@@ -1425,13 +1501,17 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
             X = init_X
     else:
         if init_X is None:
-            X = np.zeros((N, d))
+            X = nx.zeros((N, d), type_as=ps[0])
         else:
             X = init_X
 
-    T = [np.outer(p, q) for q in ps]
+    T = [nx.outer(p, q) for q in ps]
 
-    Ms = [np.asarray(dist(X, Ys[s]), dtype=np.float64) for s in range(len(Ys))]  # Ms is N,ns
+    Ms = nx.cast(
+        *[dist(X, Ys[s]) for s in range(len(Ys))],
+        dtype=nx.dtypes["float64"],
+        type_as=ps[0]
+    )
 
     cpt = 0
     err_feature = 1
@@ -1451,19 +1531,23 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
             Ys_temp = [y.T for y in Ys]
             X = update_feature_matrix(lambdas, Ys_temp, T, p).T
 
-        Ms = [np.asarray(dist(X, Ys[s]), dtype=np.float64) for s in range(len(Ys))]
+        Ms = nx.cast(
+            *[dist(X, Ys[s]) for s in range(len(Ys))],
+            dtype=nx.dtypes["float64"],
+            type_as=ps[0]
+        )
 
         if not fixed_structure:
             if loss_fun == 'square_loss':
                 T_temp = [t.T for t in T]
-                C = update_sructure_matrix(p, lambdas, T_temp, Cs)
+                C = update_structure_matrix(p, lambdas, T_temp, Cs)
 
         T = [fused_gromov_wasserstein(Ms[s], C, Cs[s], p, ps[s], loss_fun, alpha,
                                       numItermax=max_iter, stopThr=1e-5, verbose=verbose) for s in range(S)]
 
         # T is N,ns
-        err_feature = np.linalg.norm(X - Xprev.reshape(N, d))
-        err_structure = np.linalg.norm(C - Cprev)
+        err_feature = nx.norm(X - nx.reshape(Xprev, (N, d)))
+        err_structure = nx.norm(C - Cprev)
 
         if log:
             log_['err_feature'].append(err_feature)
@@ -1490,7 +1574,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         return X, C
 
 
-def update_sructure_matrix(p, lambdas, T, Cs):
+def update_structure_matrix(p, lambdas, T, Cs):
     """Updates C according to the L2 Loss kernel with the S Ts couplings.
 
     It is calculated at each iteration
@@ -1511,10 +1595,19 @@ def update_sructure_matrix(p, lambdas, T, Cs):
     C : ndarray, shape (nt, nt)
         Updated C matrix.
     """
-    tmpsum = sum([lambdas[s] * np.dot(T[s].T, Cs[s]).dot(T[s]) for s in range(len(T))])
-    ppt = np.outer(p, p)
+    p, lambdas = list_to_array(p, lambdas)
+    T = list_to_array(*T)
+    Cs = list_to_array(*Cs)
+    nx = get_backend(*Cs, *T, p, lambdas)
 
-    return np.divide(tmpsum, ppt)
+    tmpsum = sum([
+        lambdas[s] * nx.dot(
+            nx.dot(T[s].T, Cs[s]),
+            T[s]
+        ) for s in range(len(T))
+    ])
+    ppt = nx.outer(p, p)
+    return tmpsum / ppt
 
 
 def update_feature_matrix(lambdas, Ys, Ts, p):
@@ -1546,8 +1639,14 @@ def update_feature_matrix(lambdas, Ys, Ts, p):
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
-    p = np.array(1. / p).reshape(-1,)
+    p, lambdas = list_to_array(p, lambdas)
+    Ts = list_to_array(*Ts)
+    Ys = list_to_array(*Ys)
+    nx = get_backend(*Ys, *Ts, p, lambdas)
 
-    tmpsum = sum([lambdas[s] * np.dot(Ys[s], Ts[s].T) * p[None, :] for s in range(len(Ts))])
-
+    p = 1. / p
+    tmpsum = sum([
+        lambdas[s] * nx.dot(Ys[s], Ts[s].T) * p[None, :]
+        for s in range(len(Ts))
+    ])
     return tmpsum
