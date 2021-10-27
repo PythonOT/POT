@@ -738,7 +738,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         # remove numerical problems and store them in K
         if nx.max(nx.abs(u)) > tau or nx.max(nx.abs(v)) > tau:
             if n_hists:
-                alpha, beta = alpha + reg * nx.max(nx.log(u), 1), beta + reg * nx.max(np.log(v))
+                alpha, beta = alpha + reg * nx.max(nx.log(u), 1), beta + reg * nx.max(nx.log(v))
             else:
                 alpha, beta = alpha + reg * nx.log(u), beta + reg * nx.log(v)
                 if n_hists:
@@ -1306,8 +1306,8 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
                       "Or a larger absorption threshold `tau`.")
     if log:
         log['niter'] = cpt
-        log['logu'] = np.log(u + 1e-16)
-        log['logv'] = np.log(v + 1e-16)
+        log['logu'] = nx.log(u + 1e-16)
+        log['logv'] = nx.log(v + 1e-16)
         return q, log
     else:
         return q
@@ -1671,7 +1671,7 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
         K.append(Ktmp)
 
     # uniform target distribution
-    a = nx.from_numpy(unif(np.shape(Xt)[0]))
+    a = nx.from_numpy(unif(Xt.shape[0]))
 
     cpt = 0  # iterations count
     err = 1
@@ -2363,7 +2363,6 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
         K_IcJ = K[np.ix_(Ic, Jsel)]
         K_IJc = K[np.ix_(Isel, Jc)]
 
-        #K_min = K_IJ.min()
         K_min = nx.min(K_IJ)
         if K_min == 0:
             K_min = np.finfo(float).tiny
