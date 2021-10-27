@@ -706,13 +706,13 @@ def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
         index_k[i] = generator.choice(
             len_q,
             size=nb_samples_q,
-            p=nx.to_numpy(T_indexi / nx.sum(T_indexi)),
+            p=T_indexi / nx.sum(T_indexi),
             replace=True
         )
         index_l[i] = generator.choice(
             len_q,
             size=nb_samples_q,
-            p=nx.to_numpy(T_indexj / nx.sum(T_indexj)),
+            p=T_indexj / nx.sum(T_indexj),
             replace=True
         )
 
@@ -794,7 +794,7 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
         """
     C1, C2, p, q = list_to_array(C1, C2, p, q)
     nx = get_backend(C1, C2, p, q)
-    C1, C2, p, q = nx.cast(C1, C2, p, q, dtype=nx.dtypes["float64"], type_as=C1)
+    C1, C2, p, q = nx.cast(C1, C2, p, q, dtype="float64")
 
     len_p = p.shape[0]
     len_q = q.shape[0]
@@ -804,8 +804,8 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
     index = np.zeros(2, dtype=int)
 
     # Initialize with default marginal
-    index[0] = generator.choice(len_p, size=1, p=nx.to_numpy(p))
-    index[1] = generator.choice(len_q, size=1, p=nx.to_numpy(q))
+    index[0] = generator.choice(len_p, size=1, p=p)
+    index[1] = generator.choice(len_q, size=1, p=q)
     T = emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False).tocsr()
 
     best_gw_dist_estimated = np.inf
@@ -917,7 +917,7 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
     """
     C1, C2, p, q = list_to_array(C1, C2, p, q)
     nx = get_backend(C1, C2, p, q)
-    C1, C2, p, q = nx.cast(C1, C2, p, q, dtype=nx.dtypes["float64"], type_as=C1)
+    C1, C2, p, q = nx.cast(C1, C2, p, q, dtype="float64")
 
     len_p = p.shape[0]
     len_q = q.shape[0]
@@ -1069,7 +1069,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
     """
     C1, C2, p, q = list_to_array(C1, C2, p, q)
     nx = get_backend(C1, C2, p, q)
-    C1, C2 = nx.cast(C1, C2, dtype=nx.dtypes['float64'], type_as=C1)
+    C1, C2 = nx.cast(C1, C2, dtype='float64')
 
     T = nx.outer(p, q)
 
@@ -1245,8 +1245,8 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
 
     S = len(Cs)
 
-    Cs = nx.cast(*Cs, dtype=nx.dtypes["float64"], type_as=p)
-    lambdas = nx.cast(lambdas, dtype=nx.dtypes["float64"], type_as=p)
+    Cs = nx.cast(*Cs, dtype="float64")
+    lambdas = nx.cast(lambdas, dtype="float64")
 
     # Initialization of C : random SPD matrix (if not provided by user)
     if init_C is None:
@@ -1357,8 +1357,8 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 
     S = len(Cs)
 
-    Cs = nx.cast(*Cs, dtype=nx.dtypes["float64"], type_as=p)
-    lambdas = nx.cast(lambdas, dtype=nx.dtypes["float64"], type_as=p)
+    Cs = nx.cast(*Cs, dtype="float64")
+    lambdas = nx.cast(lambdas, dtype="float64")
 
     # Initialization of C : random SPD matrix (if not provided by user)
     if init_C is None:
@@ -1476,10 +1476,10 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
     if p is None:
         p = nx.ones(N, type_as=Cs[0]) / N
 
-    Cs = nx.cast(*Cs, dtype=nx.dtypes["float64"], type_as=Cs[0])
-    Ys = nx.cast(*Ys, dtype=nx.dtypes["float64"], type_as=Ys[0])
+    Cs = nx.cast(*Cs, dtype="float64")
+    Ys = nx.cast(*Ys, dtype="float64")
 
-    lambdas = nx.cast(lambdas, dtype=nx.dtypes["float64"], type_as=ps[0])
+    lambdas = nx.cast(lambdas, dtype="float64")
 
     if fixed_structure:
         if init_C is None:
@@ -1507,11 +1507,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
 
     T = [nx.outer(p, q) for q in ps]
 
-    Ms = nx.cast(
-        *[dist(X, Ys[s]) for s in range(len(Ys))],
-        dtype=nx.dtypes["float64"],
-        type_as=ps[0]
-    )
+    Ms = nx.cast(*[dist(X, Ys[s]) for s in range(len(Ys))], dtype="float64")
 
     cpt = 0
     err_feature = 1
@@ -1531,11 +1527,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
             Ys_temp = [y.T for y in Ys]
             X = update_feature_matrix(lambdas, Ys_temp, T, p).T
 
-        Ms = nx.cast(
-            *[dist(X, Ys[s]) for s in range(len(Ys))],
-            dtype=nx.dtypes["float64"],
-            type_as=ps[0]
-        )
+        Ms = nx.cast(*[dist(X, Ys[s]) for s in range(len(Ys))], dtype="float64")
 
         if not fixed_structure:
             if loss_fun == 'square_loss':

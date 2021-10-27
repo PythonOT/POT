@@ -27,8 +27,6 @@ Examples
 import numpy as np
 import scipy.special as scipy
 from scipy.sparse import issparse, coo_matrix
-import functools
-from inspect import Parameter, signature
 import warnings
 
 try:
@@ -94,48 +92,6 @@ def to_numpy(*args):
         return [get_backend(a).to_numpy(a) for a in args]
 
 
-def multi_arg(method):
-    r"""
-    Wraps a method and allows to call it multiple time with each given argument.
-
-    Examples
-    --------
-    >>> a = np.array([1, 2])
-    >>> b = np.array([3, 4])
-    >>> @multi_arg
-    ... def double(x):
-    ...     return x
-    >>> c = double(a)
-    >>> c, d = double(a, b)
-    """
-    @functools.wraps(method)
-    def wrapped(self, *args, **kwargs):
-        if len(args) == 1:
-            return method(self, args[0], **kwargs)
-        else:
-            return [method(self, arg, **kwargs) for arg in args]
-    return wrapped
-
-
-def type_as(method):
-    r"""
-    Using this decorator on a backend's method allows the method to support a shortcut parameter
-    (`type_as`) which sets both `dtype` and `device`.
-    """
-    @functools.wraps(method)
-    def wrapper(*args, type_as=None, dtype=None, device=None, **kwargs):
-        _dtype = dtype or getattr(type_as, "dtype", None)
-        _device = device or getattr(type_as, "device", None)
-        return method(*args, dtype=_dtype, device=_device, **kwargs)
-
-    sig = signature(method)
-    wrapper.__signature__ = sig.replace(parameters=[
-        *sig.parameters.values(),
-        Parameter(name="type_as", kind=Parameter.KEYWORD_ONLY, default=None)
-    ])
-    return wrapper
-
-
 class Backend():
     """
     Backend abstract class.
@@ -152,21 +108,13 @@ class Backend():
     def __str__(self):
         return self.__name__
 
-    @multi_arg
-    @type_as
-    def cast(self, a, dtype=None, device=None):
-        r"""
-        Casts a list of arrays with the given type on the given device.
-        """
-        return self.from_numpy(a, dtype=dtype, device=device)
-
     # convert to numpy
     def to_numpy(self, a):
         """Returns the numpy version of a tensor"""
         raise NotImplementedError()
 
     # convert from numpy
-    def from_numpy(self, a, dtype=None, device=None, type_as=None):
+    def from_numpy(self, a, type_as=None):
         """Creates a tensor cloning a numpy array, with the given precision (defaulting to input's precision) and the given device (in case of GPUs)"""
         raise NotImplementedError()
 
@@ -174,7 +122,7 @@ class Backend():
         """Define the gradients for the value val wrt the inputs """
         raise NotImplementedError()
 
-    def zeros(self, shape, dtype=None, device=None, type_as=None):
+    def zeros(self, shape, type_as=None):
         r"""
         Creates a tensor full of zeros.
 
@@ -184,7 +132,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def ones(self, shape, dtype=None, device=None, type_as=None):
+    def ones(self, shape, type_as=None):
         r"""
         Creates a tensor full of ones.
 
@@ -194,7 +142,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def arange(self, stop, start=0, step=1, dtype=None, device=None, type_as=None):
+    def arange(self, stop, start=0, step=1, type_as=None):
         r"""
         Returns evenly spaced values within a given interval.
 
@@ -204,7 +152,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def full(self, shape, fill_value, dtype=None, device=None, type_as=None):
+    def full(self, shape, fill_value, type_as=None):
         r"""
         Creates a tensor with given shape, filled with given value.
 
@@ -214,7 +162,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def eye(self, N, M=None, dtype=None, device=None, type_as=None):
+    def eye(self, N, M=None, type_as=None):
         r"""
         Creates the identity matrix of given size.
 
@@ -594,6 +542,12 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def cast(self, *args, dtype):
+        r"""
+        Casts a list of arrays with the given type on the given device.
+        """
+        raise NotImplementedError()
+
     def issparse(self, a):
         r"""
         Checks whether or not the input tensor is a sparse tensor.
@@ -604,7 +558,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def coo_matrix(self, data, rows, cols, shape=None, dtype=None, device=None, type_as=None):
+    def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         r"""
         Creates a sparse tensor in COOrdinate format.
 
@@ -699,41 +653,47 @@ class NumpyBackend(Backend):
         "float64": np.float64
     }
 
-    @multi_arg
     def to_numpy(self, a):
         return a
 
-    @multi_arg
-    @type_as
-    def from_numpy(self, a, dtype=None, device=None):
-        if dtype is None or isinstance(a, float):
+    def from_numpy(self, a, type_as=None):
+        if type_as is None:
+            return a
+        elif isinstance(a, float):
             return a
         else:
-            return a.astype(dtype)
+            return a.astype(type_as.dtype)
 
     def set_gradients(self, val, inputs, grads):
         # No gradients for numpy
         return val
 
-    @type_as
-    def zeros(self, shape, dtype=None, device=None):
-        return np.zeros(shape, dtype=dtype)
+    def zeros(self, shape, type_as=None):
+        if type_as is None:
+            return np.zeros(shape)
+        else:
+            return np.zeros(shape, dtype=type_as.dtype)
 
-    @type_as
-    def ones(self, shape, dtype=None, device=None):
-        return np.ones(shape, dtype=dtype)
+    def ones(self, shape, type_as=None):
+        if type_as is None:
+            return np.ones(shape)
+        else:
+            return np.ones(shape, dtype=type_as.dtype)
 
-    @type_as
-    def arange(self, stop, start=0, step=1, dtype=None, device=None):
-        return np.arange(start, stop, step, dtype=dtype)
+    def arange(self, stop, start=0, step=1, type_as=None):
+        return np.arange(start, stop, step)
 
-    @type_as
-    def full(self, shape, fill_value, dtype=None, device=None):
-        return np.full(shape, fill_value, dtype=dtype)
+    def full(self, shape, fill_value, type_as=None):
+        if type_as is None:
+            return np.full(shape, fill_value)
+        else:
+            return np.full(shape, fill_value, dtype=type_as.dtype)
 
-    @type_as
-    def eye(self, N, M=None, dtype=None, device=None):
-        return np.eye(N, M, dtype=dtype)
+    def eye(self, N, M=None, type_as=None):
+        if type_as is None:
+            return np.eye(N, M)
+        else:
+            return np.eye(N, M, dtype=type_as.dtype)
 
     def sum(self, a, axis=None, keepdims=False):
         return np.sum(a, axis, keepdims=keepdims)
@@ -854,12 +814,20 @@ class NumpyBackend(Backend):
     def reshape(self, a, shape):
         return np.reshape(a, shape)
 
+    def cast(self, *args, dtype=None):
+        if dtype is not None:
+            dtype = self.dtypes[dtype]
+            args = [array.astype(dtype) for array in args]
+        return args[0] if len(args) == 1 else args
+
     def issparse(self, a):
         return issparse(a)
 
-    @type_as
-    def coo_matrix(self, data, rows, cols, shape=None, dtype=None, device=None):
-        return coo_matrix((data, (rows, cols)), shape=shape, dtype=dtype)
+    def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
+        if type_as is None:
+            return coo_matrix((data, (rows, cols)), shape=shape)
+        else:
+            return coo_matrix((data, (rows, cols)), shape=shape, dtype=type_as.dtype)
 
     def tocsr(self, a):
         if self.issparse(a):
@@ -902,17 +870,14 @@ class JaxBackend(Backend):
         "float64": jnp.float64
     }
 
-    @multi_arg
     def to_numpy(self, a):
         return np.array(a)
 
-    @multi_arg
-    @type_as
-    def from_numpy(self, a, dtype=None, device=None):
-        if dtype is None:
+    def from_numpy(self, a, type_as=None):
+        if type_as is None:
             return jnp.array(a)
         else:
-            return jnp.array(a).astype(dtype)
+            return jnp.array(a).astype(type_as.dtype)
 
     def set_gradients(self, val, inputs, grads):
         from jax.flatten_util import ravel_pytree
@@ -927,25 +892,32 @@ class JaxBackend(Backend):
         val, = jax.tree_map(lambda z: z + aux, (val,))
         return val
 
-    @type_as
-    def zeros(self, shape, dtype=None, device=None):
-        return jnp.zeros(shape, dtype=dtype)
+    def zeros(self, shape, type_as=None):
+        if type_as is None:
+            return jnp.zeros(shape)
+        else:
+            return jnp.zeros(shape, dtype=type_as.dtype)
 
-    @type_as
-    def ones(self, shape, dtype=None, device=None):
-        return jnp.ones(shape, dtype=dtype)
+    def ones(self, shape, type_as=None):
+        if type_as is None:
+            return jnp.ones(shape)
+        else:
+            return jnp.ones(shape, dtype=type_as.dtype)
 
-    @type_as
-    def arange(self, stop, start=0, step=1, dtype=None, device=None):
-        return jnp.arange(start, stop, step, dtype=dtype)
+    def arange(self, stop, start=0, step=1, type_as=None):
+        return jnp.arange(start, stop, step)
 
-    @type_as
-    def full(self, shape, fill_value, dtype=None, device=None):
-        return jnp.full(shape, fill_value, dtype=dtype)
+    def full(self, shape, fill_value, type_as=None):
+        if type_as is None:
+            return jnp.full(shape, fill_value)
+        else:
+            return jnp.full(shape, fill_value, dtype=type_as.dtype)
 
-    @type_as
-    def eye(self, N, M=None, dtype=None, device=None):
-        return jnp.eye(N, M, dtype=dtype)
+    def eye(self, N, M=None, type_as=None):
+        if type_as is None:
+            return jnp.eye(N, M)
+        else:
+            return jnp.eye(N, M, dtype=type_as.dtype)
 
     def sum(self, a, axis=None, keepdims=False):
         return jnp.sum(a, axis, keepdims=keepdims)
@@ -1063,18 +1035,23 @@ class JaxBackend(Backend):
     def reshape(self, a, shape):
         return jnp.reshape(a, shape)
 
+    def cast(self, *args, dtype=None):
+        if dtype is not None:
+            dtype = self.dtypes[dtype]
+            args = [array.astype(dtype) for array in args]
+        return args[0] if len(args) == 1 else args
+
     def issparse(self, a):
         # Currently, JAX does not support sparse matrices
         return False
 
-    @type_as
-    def coo_matrix(self, data, rows, cols, shape=None, dtype=None, device=None):
+    def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         # Currently, JAX does not support sparse matrices
         warnings.warn("JAX does not support sparse matrices, converting to dense")
         data = self.to_numpy(data)
         rows = self.to_numpy(rows)
         cols = self.to_numpy(cols)
-        coo_matrix = NumpyBackend.coo_matrix(..., data, rows, cols, shape=shape, dtype=dtype, device=device)
+        coo_matrix = NumpyBackend.coo_matrix(..., data, rows, cols, shape=shape, type_as=type_as)
         matrix = NumpyBackend.toarray(..., coo_matrix)
         return self.from_numpy(matrix)
 
@@ -1138,17 +1115,14 @@ class TorchBackend(Backend):
 
         self.ValFunction = ValFunction
 
-    @multi_arg
     def to_numpy(self, a):
         return a.cpu().detach().numpy()
 
-    @multi_arg
-    @type_as
-    def from_numpy(self, a, dtype=None, device=None):
-        if dtype is None and device is None:
+    def from_numpy(self, a, type_as=None):
+        if type_as is None:
             return torch.from_numpy(a)
         else:
-            return torch.as_tensor(a, dtype=dtype, device=device)
+            return torch.as_tensor(a, dtype=type_as.dtype, device=type_as.device)
 
     def set_gradients(self, val, inputs, grads):
 
@@ -1158,27 +1132,37 @@ class TorchBackend(Backend):
 
         return res
 
-    @type_as
-    def zeros(self, shape, dtype=None, device=None):
-        return torch.zeros(shape, dtype=dtype, device=device)
+    def zeros(self, shape, type_as=None):
+        if type_as is None:
+            return torch.zeros(shape)
+        else:
+            return torch.zeros(shape, dtype=type_as.dtype, device=type_as.device)
 
-    @type_as
-    def ones(self, shape, dtype=None, device=None):
-        return torch.ones(shape, dtype=dtype, device=device)
+    def ones(self, shape, type_as=None):
+        if type_as is None:
+            return torch.ones(shape)
+        else:
+            return torch.ones(shape, dtype=type_as.dtype, device=type_as.device)
 
-    @type_as
-    def arange(self, stop, start=0, step=1, dtype=None, device=None):
-        return torch.arange(start, stop, step, dtype=dtype, device=device)
+    def arange(self, stop, start=0, step=1, type_as=None):
+        if type_as is None:
+            return torch.arange(start, stop, step)
+        else:
+            return torch.arange(start, stop, step, device=type_as.device)
 
-    @type_as
-    def full(self, shape, fill_value, dtype=None, device=None):
-        return torch.full(shape, fill_value, dtype=dtype, device=device)
+    def full(self, shape, fill_value, type_as=None):
+        if type_as is None:
+            return torch.full(shape, fill_value)
+        else:
+            return torch.full(shape, fill_value, dtype=type_as.dtype, device=type_as.device)
 
-    @type_as
-    def eye(self, N, M=None, dtype=None, device=None):
+    def eye(self, N, M=None, type_as=None):
         if M is None:
             M = N
-        return torch.eye(N, m=M, dtype=dtype, device=device)
+        if type_as is None:
+            return torch.eye(N, m=M)
+        else:
+            return torch.eye(N, m=M, dtype=type_as.dtype, device=type_as.device)
 
     def sum(self, a, axis=None, keepdims=False):
         if axis is None:
@@ -1340,12 +1324,20 @@ class TorchBackend(Backend):
     def reshape(self, a, shape):
         return torch.reshape(a, shape)
 
+    def cast(self, *args, dtype=None):
+        if dtype is not None:
+            dtype = self.dtypes[dtype]
+            args = [array.type(dtype) for array in args]
+        return args[0] if len(args) == 1 else args
+
     def issparse(self, a):
         return a.is_sparse
 
-    @type_as
-    def coo_matrix(self, data, rows, cols, shape=None, dtype=None, device=None):
-        return torch.sparse_coo_tensor((rows, cols), data, shape, dtype=dtype, device=device)
+    def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
+        if type_as is None:
+            return torch.sparse_coo_tensor((rows, cols), data, shape)
+        else:
+            return torch.sparse_coo_tensor((rows, cols), data, shape, dtype=type_as.dtype, device=type_as.device)
 
     def tocsr(self, a):
         if self.issparse(a):
