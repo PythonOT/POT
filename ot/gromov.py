@@ -244,8 +244,10 @@ def update_square_loss(p, lambdas, T, Cs):
     C : ndarray, shape (nt, nt)
         Updated C matrix.
     """
-    T, p, Cs = list_to_array(T, p, Cs)
-    nx = get_backend(p, T, Cs)
+    T = list_to_array(*T)
+    Cs = list_to_array(*Cs)
+    p = list_to_array(p)
+    nx = get_backend(p, *T, *Cs)
 
     tmpsum = sum([
         lambdas[s] * nx.dot(
@@ -278,8 +280,10 @@ def update_kl_loss(p, lambdas, T, Cs):
     C : ndarray, shape (ns,ns)
         updated C matrix
     """
-    p, T, Cs = list_to_array(p, T, Cs)
-    nx = get_backend(p, T, Cs)
+    Cs = list_to_array(*Cs)
+    T = list_to_array(*T)
+    p = list_to_array(p)
+    nx = get_backend(p, *T, *Cs)
 
     tmpsum = sum([
         lambdas[s] * nx.dot(
@@ -1237,7 +1241,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
     """
     Cs = list_to_array(*Cs)
     ps = list_to_array(*ps)
-    p, lambdas = list_to_array(p, lambdas)
+    p = list_to_array(p)
     nx = get_backend(*Cs, *ps, p)
 
     S = len(Cs)
@@ -1346,7 +1350,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
     """
     Cs = list_to_array(*Cs)
     ps = list_to_array(*ps)
-    p, lambdas = list_to_array(p, lambdas)
+    p = list_to_array(p)
     nx = get_backend(*Cs, *ps, p)
 
     S = len(Cs)
@@ -1459,7 +1463,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
     Cs = list_to_array(*Cs)
     ps = list_to_array(*ps)
     Ys = list_to_array(*Ys)
-    p, lambdas = list_to_array(p, lambdas)
+    p = list_to_array(p)
     nx = get_backend(*Cs, *Ys, *ps)
 
     S = len(Cs)
@@ -1573,10 +1577,10 @@ def update_structure_matrix(p, lambdas, T, Cs):
     C : ndarray, shape (nt, nt)
         Updated C matrix.
     """
-    p, lambdas = list_to_array(p, lambdas)
+    p = list_to_array(p)
     T = list_to_array(*T)
     Cs = list_to_array(*Cs)
-    nx = get_backend(*Cs, *T, p, lambdas)
+    nx = get_backend(*Cs, *T, p)
 
     tmpsum = sum([
         lambdas[s] * nx.dot(
@@ -1617,10 +1621,10 @@ def update_feature_matrix(lambdas, Ys, Ts, p):
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
-    p, lambdas = list_to_array(p, lambdas)
+    p = list_to_array(p)
     Ts = list_to_array(*Ts)
     Ys = list_to_array(*Ys)
-    nx = get_backend(*Ys, *Ts, p, lambdas)
+    nx = get_backend(*Ys, *Ts, p)
 
     p = 1. / p
     tmpsum = sum([
