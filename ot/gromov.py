@@ -1460,7 +1460,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
     ps = list_to_array(*ps)
     Ys = list_to_array(*Ys)
     p, lambdas = list_to_array(p, lambdas)
-    nx = get_backend(*Cs, *Ys, *ps, p)
+    nx = get_backend(*Cs, *Ys, *ps)
 
     S = len(Cs)
     d = Ys[0].shape[1]  # dimension on the node features
