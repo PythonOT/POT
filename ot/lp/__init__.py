@@ -700,9 +700,9 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         "emd_1d should only be used with monodimensional data"
 
     # if empty array given then use uniform distributions
-    if a.ndim == 0 or len(a) == 0:
+    if a is None or a.ndim == 0 or len(a) == 0:
         a = nx.ones((x_a.shape[0],), type_as=x_a) / x_a.shape[0]
-    if b.ndim == 0 or len(b) == 0:
+    if b is None or b.ndim == 0 or len(b) == 0:
         b = nx.ones((x_b.shape[0],), type_as=x_b) / x_b.shape[0]
     a, b, x_a, x_b = nx.cast(a, b, x_a, x_b, dtype="float64")
 
