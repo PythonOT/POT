@@ -26,7 +26,7 @@ Examples
 
 import numpy as np
 import scipy.special as scipy
-from scipy.sparse import issparse, coo_matrix
+from scipy.sparse import issparse, coo_matrix, csr_matrix
 
 try:
     import torch
@@ -540,16 +540,6 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def issparse(self, a):
-        r"""
-        Checks whether or not the input tensor is a sparse tensor.
-
-        This function follows the api from :any:`scipy.sparse.issparse`
-
-        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.issparse.html
-        """
-        raise NotImplementedError()
-
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         r"""
         Creates a sparse tensor in COOrdinate format.
@@ -557,6 +547,16 @@ class Backend():
         This function follows the api from :any:`scipy.sparse.coo_matrix`
 
         See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html
+        """
+        raise NotImplementedError()
+
+    def issparse(self, a):
+        r"""
+        Checks whether or not the input tensor is a sparse tensor.
+
+        This function follows the api from :any:`scipy.sparse.issparse`
+
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.issparse.html
         """
         raise NotImplementedError()
 
@@ -793,20 +793,20 @@ class NumpyBackend(Backend):
     def reshape(self, a, shape):
         return np.reshape(a, shape)
 
-    def issparse(self, a):
-        return issparse(a)
-
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         if type_as is None:
             return coo_matrix((data, (rows, cols)), shape=shape)
         else:
             return coo_matrix((data, (rows, cols)), shape=shape, dtype=type_as.dtype)
 
+    def issparse(self, a):
+        return issparse(a)
+
     def tocsr(self, a):
         if self.issparse(a):
             return a.tocsr()
         else:
-            return a
+            return csr_matrix(a)
 
     def eliminate_zeros(self, a):
         if self.issparse(a):
@@ -814,7 +814,10 @@ class NumpyBackend(Backend):
         return a
 
     def todense(self, a):
-        return a.toarray()
+        if self.issparse(a):
+            return a.toarray()
+        else:
+            return a
 
     def where(self, condition, x, y):
         return np.where(condition, x, y)
@@ -1002,18 +1005,19 @@ class JaxBackend(Backend):
     def reshape(self, a, shape):
         return jnp.reshape(a, shape)
 
-    def issparse(self, a):
-        # Currently, JAX does not support sparse matrices
-        return False
-
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         # Currently, JAX does not support sparse matrices
         data = self.to_numpy(data)
         rows = self.to_numpy(rows)
         cols = self.to_numpy(cols)
-        coo_matrix = NumpyBackend.coo_matrix(..., data, rows, cols, shape=shape, type_as=type_as)
-        matrix = NumpyBackend.todense(..., coo_matrix)
+        nx = NumpyBackend()
+        coo_matrix = nx.coo_matrix(data, rows, cols, shape=shape, type_as=type_as)
+        matrix = nx.todense(coo_matrix)
         return self.from_numpy(matrix)
+
+    def issparse(self, a):
+        # Currently, JAX does not support sparse matrices
+        return False
 
     def tocsr(self, a):
         # Currently, JAX does not support sparse matrices
@@ -1147,7 +1151,7 @@ class TorchBackend(Backend):
             a = torch.tensor([float(a)], dtype=b.dtype, device=b.device)
         if isinstance(b, int) or isinstance(b, float):
             b = torch.tensor([float(b)], dtype=a.dtype, device=a.device)
-        if torch.__version__ >= '1.7.0':
+        if hasattr(torch, "maximum"):
             return torch.maximum(a, b)
         else:
             return torch.max(torch.stack(torch.broadcast_tensors(a, b)), axis=0)[0]
@@ -1157,7 +1161,7 @@ class TorchBackend(Backend):
             a = torch.tensor([float(a)], dtype=b.dtype, device=b.device)
         if isinstance(b, int) or isinstance(b, float):
             b = torch.tensor([float(b)], dtype=a.dtype, device=a.device)
-        if torch.__version__ >= '1.7.0':
+        if hasattr(torch, "minimum"):
             return torch.minimum(a, b)
         else:
             return torch.min(torch.stack(torch.broadcast_tensors(a, b)), axis=0)[0]
@@ -1278,32 +1282,44 @@ class TorchBackend(Backend):
     def reshape(self, a, shape):
         return torch.reshape(a, shape)
 
-    def issparse(self, a):
-        return a.is_sparse
-
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
+        if type(data) == self.__type__:
+            data = self.to_numpy(data)
+        if type(rows) == self.__type__:
+            rows = self.to_numpy(rows)
+        if type(cols) == self.__type__:
+            cols = self.to_numpy(cols)
+
         if type_as is None:
-            return torch.sparse_coo_tensor((rows, cols), data, shape)
+            return torch.sparse_coo_tensor((rows, cols), data, size=shape)
         else:
-            return torch.sparse_coo_tensor((rows, cols), data, shape, dtype=type_as.dtype, device=type_as.device)
+            return torch.sparse_coo_tensor((rows, cols), data, size=shape, dtype=type_as.dtype, device=type_as.device)
+
+    def issparse(self, a):
+        return a.is_sparse or a.is_sparse_csr
 
     def tocsr(self, a):
-        if self.issparse(a):
+        if hasattr(a, "to_sparse_csr"):  # PyTorch/1.10
             return a.to_sparse_csr()
-        else:
-            return a
+        elif hasattr(a, "_to_sparse_csr"):  # PyTorch/1.9
+            return a._to_sparse_csr()
+        else:  # Older versions do not support CSR matrices
+            return self.todense(a)
 
     def eliminate_zeros(self, a):
         if self.issparse(a):
             mask = a._values().nonzero()
             nv = a._values().index_select(0, mask.view(-1))
             ni = a._indices().index_select(1, mask.view(-1))
-            ni = self.to_numpy(ni)
             return self.coo_matrix(nv, ni[0], ni[1], shape=a.shape, type_as=a)
-        return a
+        else:
+            return a
 
     def todense(self, a):
-        return a.to_dense()
+        if self.issparse(a):
+            return a.to_dense()
+        else:
+            return a
 
     def where(self, condition, x, y):
         return torch.where(condition, x, y)

@@ -208,7 +208,21 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.reshape(M, (5, 3, 2))
     with pytest.raises(NotImplementedError):
+        nx.coo_matrix(M, M, M)
+    with pytest.raises(NotImplementedError):
         nx.issparse(M)
+    with pytest.raises(NotImplementedError):
+        nx.tocsr(M)
+    with pytest.raises(NotImplementedError):
+        nx.eliminate_zeros(M)
+    with pytest.raises(NotImplementedError):
+        nx.todense(M)
+    with pytest.raises(NotImplementedError):
+        nx.where(M, M, M)
+    with pytest.raises(NotImplementedError):
+        nx.copy(M)
+    with pytest.raises(NotImplementedError):
+        nx.allclose(M, M)
 
 
 def test_func_backends(nx):
@@ -217,6 +231,11 @@ def test_func_backends(nx):
     M = rnd.randn(10, 3)
     v = rnd.randn(3)
     val = np.array([1.0])
+
+    # Sparse tensors test
+    sp_row = np.array([0, 3, 1, 0, 3])
+    sp_col = np.array([0, 3, 1, 2, 2])
+    sp_data = np.array([4, 5, 7, 9, 0])
 
     lst_tot = []
 
@@ -230,6 +249,10 @@ def test_func_backends(nx):
         Mb = nx.from_numpy(M)
         vb = nx.from_numpy(v)
         val = nx.from_numpy(val)
+
+        sp_rowb = nx.from_numpy(sp_row)
+        sp_colb = nx.from_numpy(sp_col)
+        sp_datab = nx.from_numpy(sp_data)
 
         A = nx.set_gradients(val, v, v)
         lst_b.append(nx.to_numpy(A))
@@ -440,9 +463,31 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('reshape')
 
-        A = nx.issparse(Mb)
-        lst_b.append(A)
-        lst_name.append('issparse')
+        sp_Mb = nx.coo_matrix(sp_datab, sp_rowb, sp_colb, shape=(4, 4))
+        lst_b.append(nx.to_numpy(nx.todense(sp_Mb)))
+        lst_name.append('coo_matrix')
+
+        assert not nx.issparse(Mb), 'Assert fail on: issparse (expected False)'
+        assert nx.issparse(sp_Mb) or nx.__name__ == "jax", 'Assert fail on: issparse (expected True)'
+
+        A = nx.tocsr(sp_Mb)
+        lst_b.append(nx.to_numpy(nx.todense(A)))
+        lst_name.append('tocsr')
+
+        A = nx.eliminate_zeros(sp_Mb)
+        lst_b.append(nx.to_numpy(nx.todense(A)))
+        lst_name.append('eliminate_zeros')
+
+        A = nx.where(Mb >= nx.stack([nx.linspace(0, 1, 10)] * 3, axis=1), Mb, 0.0)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('where')
+
+        A = nx.copy(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('copy')
+
+        assert nx.allclose(Mb, Mb), 'Assert fail on: allclose (expected True)'
+        assert not nx.allclose(2 * Mb, Mb), 'Assert fail on: allclose (expected False)'
 
         lst_tot.append(lst_b)
 
