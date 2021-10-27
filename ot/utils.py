@@ -183,7 +183,7 @@ def euclidean_distances(X, Y, squared=False):
     return c
 
 
-def dist(x1, x2=None, metric='sqeuclidean'):
+def dist(x1, x2=None, metric='sqeuclidean', p=2):
     """Compute distance between samples in x1 and x2
 
     .. note:: This function is backend-compatible and will work on arrays
@@ -222,7 +222,7 @@ def dist(x1, x2=None, metric='sqeuclidean'):
         if not get_backend(x1, x2).__name__ == 'numpy':
             raise NotImplementedError()
         else:
-            return cdist(x1, x2, metric=metric)
+            return cdist(x1, x2, metric=metric, p=p)
 
 
 def dist0(n, method='lin_square'):
