@@ -1296,7 +1296,7 @@ class TorchBackend(Backend):
             return torch.sparse_coo_tensor((rows, cols), data, size=shape, dtype=type_as.dtype, device=type_as.device)
 
     def issparse(self, a):
-        return a.is_sparse or a.is_sparse_csr
+        return getattr(a, "is_sparse", False) or getattr(a, "is_sparse_csr", False)
 
     def tocsr(self, a):
         if hasattr(a, "to_sparse_csr"):  # PyTorch/1.10
