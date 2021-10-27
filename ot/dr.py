@@ -209,11 +209,11 @@ def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopTh
 
     .. math::
         \max_{U \in St(d, k)} \min_{\pi \in \Pi(\mu,\nu)} \sum_{i,j} \pi_{i,j} \|U^T(x_i - y_j)\|^2 - reg * H(\pi)
-    
+
     - :math:`U` is a linear projection operator in the Stiefel(d, k) manifold
     - :math:`H(\pi)` is entropy regularizer
     - :math:`x_i`, :math:`y_j` are samples of measures \mu and \nu respectively
-    
+
     Parameters
     ----------
     X : ndarray, shape (n, d)
