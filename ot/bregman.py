@@ -1322,20 +1322,25 @@ def _barycenter_sinkhorn_debiased(A, M, reg, weights=None, numItermax=1000,
 
     u = (geometricMean(UKv) / UKv.T).T
     c = nx.ones(A.shape[0], type_as=A)
+    bar = nx.ones(A.shape[0], type_as=A)
+
     for ii in range(numItermax):
+        bold = bar
         UKv = nx.dot(K, A / nx.dot(K, u))
         bar = c * geometricBar(weights, UKv)
         u = bar[:, None] / UKv
         c = (c * bar / nx.dot(K, c)) ** 0.5
 
-        if ii % 10 == 1:
-            err = nx.sum(nx.std(UKv, axis=1))
+        if ii % 10 == 9:
+            err = abs(bar - bold).max() / max(bar.max(), 1.)
 
             # log and verbose print
             if log:
                 log['err'].append(err)
 
-            if err < stopThr:
+            # debiased Sinkhorn does not converge monotonically
+            # guarantee a few iterations are done before stopping
+            if err < stopThr and ii > 20:
                 break
             if verbose:
                 if ii % 200 == 0:
