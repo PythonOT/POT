@@ -9,8 +9,8 @@ import sys
 
 sys.path.append(os.path.join("ot", "helpers"))
 
-from openmp_helpers import get_openmp_flag, check_openmp_support # noqa
-from pre_build_helpers import _get_compiler, compile_test_program # noqa
+from openmp_helpers import get_openmp_flag, check_openmp_support  # noqa
+from pre_build_helpers import _get_compiler, compile_test_program  # noqa
 
 
 def test_helpers():

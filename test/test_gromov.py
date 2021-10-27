@@ -180,8 +180,8 @@ def test_sampled_gromov():
 
 
 def test_gromov_barycenter():
-    ns = 50
-    nt = 60
+    ns = 10
+    nt = 20
 
     Xs, ys = ot.datasets.make_data_classif('3gauss', ns, random_state=42)
     Xt, yt = ot.datasets.make_data_classif('3gauss2', nt, random_state=42)
@@ -208,8 +208,8 @@ def test_gromov_barycenter():
 
 @pytest.mark.filterwarnings("ignore:divide")
 def test_gromov_entropic_barycenter():
-    ns = 20
-    nt = 30
+    ns = 10
+    nt = 20
 
     Xs, ys = ot.datasets.make_data_classif('3gauss', ns, random_state=42)
     Xt, yt = ot.datasets.make_data_classif('3gauss2', nt, random_state=42)
@@ -222,7 +222,7 @@ def test_gromov_entropic_barycenter():
                                                [ot.unif(ns), ot.unif(nt)
                                                 ], ot.unif(n_samples), [.5, .5],
                                                'square_loss', 1e-3,
-                                               max_iter=50, tol=1e-5,
+                                               max_iter=50, tol=1e-3,
                                                verbose=True)
     np.testing.assert_allclose(Cb.shape, (n_samples, n_samples))
 
