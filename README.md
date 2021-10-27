@@ -79,7 +79,7 @@ The library has been tested on Linux, MacOSX and Windows. It requires a C++ comp
 
 - Numpy (>=1.16)
 - Scipy (>=1.0)
-- Cython (>=0.23) (build only, not necessary when installing wheels from pip or conda)
+- Cython (>=0.23) (build only, not necessary when installing from pip or conda)
 
 #### Pip installation
 
