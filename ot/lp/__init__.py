@@ -735,6 +735,8 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     )
     if dense:
         G = nx.todense(G)
+    elif str(nx) == "jax":
+        warnings.warn("JAX does not support sparse matrices, converting to dense")
     if log:
         log = {'cost': cost}
         return G, log

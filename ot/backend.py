@@ -27,7 +27,6 @@ Examples
 import numpy as np
 import scipy.special as scipy
 from scipy.sparse import issparse, coo_matrix
-import warnings
 
 try:
     import torch
@@ -1009,7 +1008,6 @@ class JaxBackend(Backend):
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         # Currently, JAX does not support sparse matrices
-        warnings.warn("JAX does not support sparse matrices, converting to dense")
         data = self.to_numpy(data)
         rows = self.to_numpy(rows)
         cols = self.to_numpy(cols)
