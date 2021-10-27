@@ -17,6 +17,7 @@ of the backend and OpenMP implementations.
 - Backend for running POT in numpy/torch + exact solver (PR #249)
 - Backend implementation of most functions in `ot.bregman` (PR #280)
 - Backend implementation of most functions in `ot.optim` (PR #282)
+- Implementation of sinkhorn in log space with `method='sinkhorn_log'` (PR #290)
 - Implementation of regularization path for L2 Unbalanced OT (PR #274)
 - Implementation of Projection Robust Wasserstein (PR #267)
 - Implementation of Sampled Gromov Wasserstein and Pointwise Gromov Wasserstein
