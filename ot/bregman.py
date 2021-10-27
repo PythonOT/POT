@@ -56,7 +56,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     By default and when using a regularization parameter that is not too small
     the default sinkhorn solver should be enough. If you need to use a small
     regularization to get sharper OT matrices, you should use the
-    :py:func:`ot.bregman.sinkhorn_log` solver that will avoid numerical
+    :py:func:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical
     errors. This last solver can be very slow in practice and might not even
     converge to a reasonable OT matrix in a finite time. This is why
     :py:func:`ot.bregman.sinkhorn_epsilon_scaling` that relies on iterating the value
@@ -65,8 +65,9 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     :py:func:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
     version of the sinkhorn :py:func:`ot.bregman.screenkhorn` aim at providing  a
     fast approximation of the Sinkhorn problem. For use of GPU and gradient
-    computation we strongly reconmend the :any:`ot.bregman.sinkhorn_log` solver
-    that will no need to check for numerical problems.
+    computation with small number of iterations we strongly recommend the
+    :any:`ot.bregman.sinkhorn_log` solver that will no need to check for
+    numerical problems.
 
 
     Parameters
@@ -81,8 +82,9 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     reg : float
         Regularization term >0
     method : str
-        method used for the solver either 'sinkhorn', 'greenkhorn', 'sinkhorn_stabilized' or
-        'sinkhorn_epsilon_scaling', see those function for specific parameters
+        method used for the solver either 'sinkhorn','sinkhorn_log',
+        'greenkhorn', 'sinkhorn_stabilized' or 'sinkhorn_epsilon_scaling', see
+        those function for specific parameters
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -120,6 +122,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
     .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016). Scaling algorithms for unbalanced transport problems. arXiv preprint arXiv:1607.05816.
 
+    .. [34] Feydy, J., Séjourné, T., Vialard, F. X., Amari, S. I., Trouvé, A., & Peyré, G. (2019, April). Interpolating between optimal transport and MMD using Sinkhorn divergences. In The 22nd International Conference on Artificial Intelligence and Statistics (pp. 2681-2690). PMLR.
 
 
     See Also
@@ -197,8 +200,9 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
     version of the sinkhorn :any:`ot.bregman.screenkhorn` aim a providing  a
     fast approximation of the Sinkhorn problem. For use of GPU and gradient
-    computation we strongly reconmend the :any:`ot.bregman.sinkhorn_log` solver
-    that will no need to check for numerical problems.
+    computation with small number of iterations we strongly recommend the
+    :any:`ot.bregman.sinkhorn_log` solver that will no need to check for
+    numerical problems.
 
     Parameters
     ----------
@@ -212,7 +216,8 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     reg : float
         Regularization term >0
     method : str
-        method used for the solver either 'sinkhorn', 'sinkhorn_stabilized', see those function for specific parameters
+        method used for the solver either 'sinkhorn','sinkhorn_log',
+        'sinkhorn_stabilized', see those function for specific parameters
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -251,7 +256,11 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
     .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016). Scaling algorithms for unbalanced transport problems. arXiv preprint arXiv:1607.05816.
 
-    .. [21] Altschuler J., Weed J., Rigollet P. : Near-linear time approximation algorithms for optimal transport via Sinkhorn iteration, Advances in Neural Information Processing Systems (NIPS) 31, 2017
+    .. [21] Altschuler J., Weed J., Rigollet P. : Near-linear time approximation
+    algorithms for optimal transport via Sinkhorn iteration, Advances in Neural
+    Information Processing Systems (NIPS) 31, 2017
+
+    .. [34] Feydy, J., Séjourné, T., Vialard, F. X., Amari, S. I., Trouvé, A., & Peyré, G. (2019, April). Interpolating between optimal transport and MMD using Sinkhorn divergences. In The 22nd International Conference on Artificial Intelligence and Statistics (pp. 2681-2690). PMLR.
 
 
 
@@ -493,7 +502,9 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (histograms, both sum to 1)
 
-    The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[2] <references-sinkhorn-knopp>`
+    The algorithm used for solving the problem is the Sinkhorn-Knopp matrix
+    scaling algorithm  :ref:`[2] <references-sinkhorn-knopp>` with the
+    implementation from :ref:`[34] <references-sinkhorn-knopp>`
 
 
     Parameters
@@ -539,7 +550,10 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
     References
     ----------
 
-    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal Transport, Advances in Neural Information Processing Systems (NIPS) 26, 2013
+    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal
+    Transport, Advances in Neural Information Processing Systems (NIPS) 26, 2013
+
+    .. [34] Feydy, J., Séjourné, T., Vialard, F. X., Amari, S. I., Trouvé, A., & Peyré, G. (2019, April). Interpolating between optimal transport and MMD using Sinkhorn divergences. In The 22nd International Conference on Artificial Intelligence and Statistics (pp. 2681-2690). PMLR.
 
 
     See Also

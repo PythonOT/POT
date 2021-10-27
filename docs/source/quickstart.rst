@@ -358,6 +358,11 @@ More details about the algorithms used are given in the following note.
 
     + :code:`method='sinkhorn'` calls :any:`ot.bregman.sinkhorn_knopp`  the
       classic algorithm [2]_.
+    + :code:`method='sinkhorn_log'` calls :any:`ot.bregman.sinkhorn_log`  the
+      sinkhorn algorithm in log space [2]_ that is more stable but can be
+      slower in numpy since `logsumexp` is not implmemented in parallel. 
+      It is the recommended solver for applications that requires
+      differentiability with a  small number of iterations.
     + :code:`method='sinkhorn_stabilized'` calls :any:`ot.bregman.sinkhorn_stabilized`  the
       log stabilized version of the algorithm [9]_.
     + :code:`method='sinkhorn_epsilon_scaling'` calls
@@ -389,7 +394,10 @@ More details about the algorithms used are given in the following note.
     solutions. Note that the greedy version of the Sinkhorn
     :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
     version of the Sinkhorn :any:`ot.bregman.screenkhorn` aim a providing a
-    fast approximation of the Sinkhorn problem.
+    fast approximation of the Sinkhorn problem. For use of GPU and gradient
+    computation with small number of iterations we strongly recommend the 
+    :any:`ot.bregman.sinkhorn_log` solver that will no need to check for 
+    numerical problems.
 
 
 
