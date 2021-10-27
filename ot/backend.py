@@ -1283,12 +1283,13 @@ class TorchBackend(Backend):
         return torch.reshape(a, shape)
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
-        if type(data) == self.__type__:
-            data = self.to_numpy(data)
-        if type(rows) == self.__type__:
-            rows = self.to_numpy(rows)
-        if type(cols) == self.__type__:
-            cols = self.to_numpy(cols)
+        #if type(data) == self.__type__:
+        #    data = self.to_numpy(data)
+        #if type(rows) == self.__type__:
+        #    rows = self.to_numpy(rows)
+        #if type(cols) == self.__type__:
+        #    cols = self.to_numpy(cols)
+        print(torch.__version__)
 
         if type_as is None:
             return torch.sparse_coo_tensor((rows, cols), data, size=shape)
