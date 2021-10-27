@@ -734,7 +734,7 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         type_as=x_a
     )
     if dense:
-        G = nx.toarray(G)
+        G = nx.todense(G)
     if log:
         log = {'cost': cost}
         return G, log

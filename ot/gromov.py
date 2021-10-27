@@ -697,8 +697,8 @@ def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
 
     for i in range(nb_samples_p):
         if nx.issparse(T):
-            T_indexi = nx.toarray(T[index_i[i], :])[0]
-            T_indexj = nx.toarray(T[index_j[i], :])[0]
+            T_indexi = nx.todense(T[index_i[i], :])[0]
+            T_indexj = nx.todense(T[index_j[i], :])[0]
         else:
             T_indexi = T[index_i[i], :]
             T_indexj = T[index_j[i], :]
@@ -810,7 +810,7 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
     best_gw_dist_estimated = np.inf
     for cpt in range(max_iter):
         index[0] = generator.choice(len_p, size=1, p=p)
-        T_index0 = T[index[0], :].toarray()[0]
+        T_index0 = nx.todense(T[index[0], :])[0]
         index[1] = generator.choice(len_q, size=1, p=T_index0 / T_index0.sum())
 
         if alpha == 1:
@@ -950,13 +950,13 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
             # If the matrices C are not symmetric, the gradient has 2 terms, thus the term is chosen randomly.
             if (not C_are_symmetric) and generator.rand(1) > 0.5:
                 Lik += nx.mean(loss_fun(
-                    nx.expand_dims(C1[:, nx.repeat(index0[i], nb_samples_grad_q)], 1),
-                    nx.expand_dims(C2[:, index1], 0)
+                    C1[:, nx.repeat(index0[i], nb_samples_grad_q)][:, None, :],
+                    C2[:, index1][None, :, :]
                 ), axis=2)
             else:
                 Lik += nx.mean(loss_fun(
-                    nx.expand_dims(C1[nx.repeat(index0[i], nb_samples_grad_q), :], 2),
-                    nx.expand_dims(C2[index1, :], 1)
+                    C1[nx.repeat(index0[i], nb_samples_grad_q), :][:, :, None],
+                    C2[index1, :][:, None, :]
                 ), axis=0)
 
         max_Lik = nx.max(Lik)

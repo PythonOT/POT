@@ -581,7 +581,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def toarray(self, a):
+    def todense(self, a):
         r"""
         Converts a sparse tensor to a dense tensor.
 
@@ -618,16 +618,6 @@ class Backend():
         This function follows the api from :any:`numpy.allclose`
 
         See: https://numpy.org/doc/stable/reference/generated/numpy.allclose.html
-        """
-        raise NotImplementedError()
-
-    def expand_dims(self, a, axis):
-        r"""
-        Expands the shape of a tensor.
-
-        This function follows the api from :any:`numpy.expand_dims`
-
-        See: https://numpy.org/doc/stable/reference/generated/numpy.expand_dims.html
         """
         raise NotImplementedError()
 
@@ -824,7 +814,7 @@ class NumpyBackend(Backend):
             a.eliminate_zeros()
         return a
 
-    def toarray(self, a):
+    def todense(self, a):
         return a.toarray()
 
     def where(self, condition, x, y):
@@ -835,9 +825,6 @@ class NumpyBackend(Backend):
 
     def allclose(self, a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         return np.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
-
-    def expand_dims(self, a, axis):
-        return np.expand_dims(a, axis)
 
 
 class JaxBackend(Backend):
@@ -1027,7 +1014,7 @@ class JaxBackend(Backend):
         rows = self.to_numpy(rows)
         cols = self.to_numpy(cols)
         coo_matrix = NumpyBackend.coo_matrix(..., data, rows, cols, shape=shape, type_as=type_as)
-        matrix = NumpyBackend.toarray(..., coo_matrix)
+        matrix = NumpyBackend.todense(..., coo_matrix)
         return self.from_numpy(matrix)
 
     def tocsr(self, a):
@@ -1038,7 +1025,7 @@ class JaxBackend(Backend):
         # Currently, JAX does not support sparse matrices
         return a
 
-    def toarray(self, a):
+    def todense(self, a):
         # Currently, JAX does not support sparse matrices
         return a
 
@@ -1051,9 +1038,6 @@ class JaxBackend(Backend):
 
     def allclose(self, a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         return jnp.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
-
-    def expand_dims(self, a, axis):
-        return jnp.expand_dims(a, axis)
 
 
 class TorchBackend(Backend):
@@ -1320,7 +1304,7 @@ class TorchBackend(Backend):
             return self.coo_matrix(nv, ni[0], ni[1], shape=a.shape, type_as=a)
         return a
 
-    def toarray(self, a):
+    def todense(self, a):
         return a.to_dense()
 
     def where(self, condition, x, y):
@@ -1331,12 +1315,3 @@ class TorchBackend(Backend):
 
     def allclose(self, a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         return torch.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
-
-    def expand_dims(self, a, axis):
-        if isinstance(axis, int):
-            return torch.unsqueeze(a, axis)
-        else:
-            axis = sorted(axis)
-            while axis:
-                a = torch.unsqueeze(a, axis.pop(0))
-            return a
