@@ -103,7 +103,6 @@ class Backend():
 
     __name__ = None
     __type__ = None
-    dtypes = dict()
 
     def __str__(self):
         return self.__name__
@@ -542,6 +541,10 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def _get_dtype(self, dtype_str):
+        r"""Converts the string into the backend-dependent dtype accordingly."""
+        raise NotImplementedError()
+
     def cast(self, *args, dtype):
         r"""
         Casts a list of arrays with the given type on the given device.
@@ -649,9 +652,6 @@ class NumpyBackend(Backend):
 
     __name__ = 'numpy'
     __type__ = np.ndarray
-    dtypes = {
-        "float64": np.float64
-    }
 
     def to_numpy(self, a):
         return a
@@ -814,9 +814,15 @@ class NumpyBackend(Backend):
     def reshape(self, a, shape):
         return np.reshape(a, shape)
 
+    def _get_dtype(self, dtype_str):
+        dtypes = {
+            "float64": np.float64
+        }
+        return dtypes.get(dtype_str)
+
     def cast(self, *args, dtype=None):
         if dtype is not None:
-            dtype = self.dtypes[dtype]
+            dtype = self._get_dtype(dtype)
             args = [array.astype(dtype) for array in args]
         return args[0] if len(args) == 1 else args
 
@@ -866,9 +872,6 @@ class JaxBackend(Backend):
 
     __name__ = 'jax'
     __type__ = jax_type
-    dtypes = {
-        "float64": jnp.float64
-    }
 
     def to_numpy(self, a):
         return np.array(a)
@@ -1035,9 +1038,15 @@ class JaxBackend(Backend):
     def reshape(self, a, shape):
         return jnp.reshape(a, shape)
 
+    def _get_dtype(self, dtype_str):
+        dtypes = {
+            "float64": jnp.float64
+        }
+        return dtypes.get(dtype_str)
+
     def cast(self, *args, dtype=None):
         if dtype is not None:
-            dtype = self.dtypes[dtype]
+            dtype = self._get_dtype(dtype)
             args = [array.astype(dtype) for array in args]
         return args[0] if len(args) == 1 else args
 
@@ -1091,9 +1100,6 @@ class TorchBackend(Backend):
 
     __name__ = 'torch'
     __type__ = torch_type
-    dtypes = {
-        "float64": torch.float64
-    }
 
     def __init__(self):
 
@@ -1324,9 +1330,15 @@ class TorchBackend(Backend):
     def reshape(self, a, shape):
         return torch.reshape(a, shape)
 
+    def _get_dtype(self, dtype_str):
+        dtypes = {
+            "float64": torch.float64
+        }
+        return dtypes.get(dtype_str)
+
     def cast(self, *args, dtype=None):
         if dtype is not None:
-            dtype = self.dtypes[dtype]
+            dtype = self._get_dtype(dtype)
             args = [array.type(dtype) for array in args]
         return args[0] if len(args) == 1 else args
 
