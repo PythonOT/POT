@@ -20,7 +20,7 @@ from .backend import get_backend
 
 def line_search_armijo(f, xk, pk, gfk, old_fval,
                        args=(), c1=1e-4, alpha0=0.99):
-    """
+    r"""
     Armijo linesearch function that works with matrices
 
     Find an approximate minimum of :math:`f(x_k + \\alpha \cdot p_k)` that satisfies the
@@ -447,7 +447,7 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
 
 
 def solve_1d_linesearch_quad(a, b, c):
-    """
+    r"""
     For any convex or non-convex 1d quadratic function `f`, solve the following problem:
 
     .. math::
