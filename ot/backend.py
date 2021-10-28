@@ -570,9 +570,9 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def eliminate_zeros(self, a):
+    def eliminate_zeros(self, a, threshold=0.):
         r"""
-        Removes zero entries from the sparse tensor.
+        Removes entries smaller than the given threshold from the sparse tensor.
 
         This function follows the api from :any:`scipy.sparse.csr_matrix.eliminate_zeros`
 
@@ -808,7 +808,12 @@ class NumpyBackend(Backend):
         else:
             return csr_matrix(a)
 
-    def eliminate_zeros(self, a):
+    def eliminate_zeros(self, a, threshold=0.):
+        if threshold > 0:
+            if self.issparse(a):
+                a.data[self.abs(a.data) < threshold] = 0
+            else:
+                a[self.abs(a) < threshold] = 0
         if self.issparse(a):
             a.eliminate_zeros()
         return a
@@ -1023,8 +1028,14 @@ class JaxBackend(Backend):
         # Currently, JAX does not support sparse matrices
         return a
 
-    def eliminate_zeros(self, a):
+    def eliminate_zeros(self, a, threshold=0.):
         # Currently, JAX does not support sparse matrices
+        if threshold > 0:
+            return self.where(
+                self.abs(a) < threshold,
+                self.zeros((1,), type_as=a),
+                a
+            )
         return a
 
     def todense(self, a):
@@ -1295,20 +1306,23 @@ class TorchBackend(Backend):
         return getattr(a, "is_sparse", False) or getattr(a, "is_sparse_csr", False)
 
     def tocsr(self, a):
-        if hasattr(a, "to_sparse_csr"):  # PyTorch/1.10
-            return a.to_sparse_csr()
-        elif hasattr(a, "_to_sparse_csr"):  # PyTorch/1.9
-            return a._to_sparse_csr()
-        else:  # Older versions do not support CSR matrices
-            return self.todense(a)
+        # Versions older than 1.9 do not support CSR tensors. PyTorch 1.9 and 1.10 offer a very limited support
+        return self.todense(a)
 
-    def eliminate_zeros(self, a):
+    def eliminate_zeros(self, a, threshold=0.):
         if self.issparse(a):
-            mask = a._values().nonzero()
+            if threshold > 0:
+                mask = self.abs(a) < threshold
+                mask = ~mask
+                mask = mask.nonzero()
+            else:
+                mask = a._values().nonzero()
             nv = a._values().index_select(0, mask.view(-1))
             ni = a._indices().index_select(1, mask.view(-1))
             return self.coo_matrix(nv, ni[0], ni[1], shape=a.shape, type_as=a)
         else:
+            if threshold is not None and threshold > 0:
+                a[self.abs(a) < threshold] = 0
             return a
 
     def todense(self, a):

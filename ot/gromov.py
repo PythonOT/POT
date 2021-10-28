@@ -701,8 +701,8 @@ def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
 
     for i in range(nb_samples_p):
         if nx.issparse(T):
-            T_indexi = nx.todense(T[index_i[i], :])[0]
-            T_indexj = nx.todense(T[index_j[i], :])[0]
+            T_indexi = nx.reshape(nx.todense(T[index_i[i], :]), (-1,))
+            T_indexj = nx.reshape(nx.todense(T[index_j[i], :]), (-1,))
         else:
             T_indexi = T[index_i[i], :]
             T_indexj = T[index_j[i], :]
@@ -809,12 +809,12 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
     # Initialize with default marginal
     index[0] = generator.choice(len_p, size=1, p=p)
     index[1] = generator.choice(len_q, size=1, p=q)
-    T = emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False).tocsr()
+    T = nx.tocsr(emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False))
 
     best_gw_dist_estimated = np.inf
     for cpt in range(max_iter):
         index[0] = generator.choice(len_p, size=1, p=p)
-        T_index0 = nx.todense(T[index[0], :])[0]
+        T_index0 = nx.reshape(nx.todense(T[index[0], :]), (-1,))
         index[1] = generator.choice(len_q, size=1, p=T_index0 / T_index0.sum())
 
         if alpha == 1:
@@ -827,8 +827,7 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
             )
             T = (1 - alpha) * T + alpha * new_T
             # To limit the number of non 0, the values below the threshold are set to 0.
-            T.data = nx.where(T.data < threshold_plan, 0, T.data)
-            T = nx.eliminate_zeros(T)
+            T = nx.eliminate_zeros(T, threshold=threshold_plan)
 
         if cpt % 10 == 0 or cpt == (max_iter - 1):
             gw_dist_estimated = GW_distance_estimation(
@@ -954,12 +953,12 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
             # If the matrices C are not symmetric, the gradient has 2 terms, thus the term is chosen randomly.
             if (not C_are_symmetric) and generator.rand(1) > 0.5:
                 Lik += nx.mean(loss_fun(
-                    C1[:, nx.repeat(index0[i], nb_samples_grad_q)][:, None, :],
+                    C1[:, nx.full((nb_samples_grad_q,), index0[i])][:, None, :],
                     C2[:, index1][None, :, :]
                 ), axis=2)
             else:
                 Lik += nx.mean(loss_fun(
-                    C1[nx.repeat(index0[i], nb_samples_grad_q), :][:, :, None],
+                    C1[nx.full((nb_samples_grad_q,), index0[i]), :][:, :, None],
                     C2[index1, :][:, None, :]
                 ), axis=0)
 
@@ -970,7 +969,7 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
         Lik /= max_Lik
 
         if epsilon > 0:
-            # Set to infinity all the numbers bellow exp(-200) to avoid log of 0.
+            # Set to infinity all the numbers below exp(-200) to avoid log of 0.
             log_T = nx.log(nx.clip(T, np.exp(-200), 1))
             log_T = nx.where(log_T == -200, -np.inf, log_T)
             Lik = Lik - epsilon * log_T
@@ -1478,6 +1477,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
             C = init_C
     else:
         if init_C is None:
+            # XXX : replace it with random state
             xalea = np.random.randn(N, 2)
             C = dist(xalea, xalea)
             C = nx.from_numpy(C, type_as=ps[0])
