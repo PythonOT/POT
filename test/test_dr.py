@@ -61,6 +61,31 @@ def test_wda():
 
 
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
+def test_wda_normalized():
+
+    n_samples = 100  # nb samples in source and target datasets
+    np.random.seed(0)
+
+    # generate gaussian dataset
+    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples)
+
+    n_features_noise = 8
+
+    xs = np.hstack((xs, np.random.randn(n_samples, n_features_noise)))
+
+    p = 2
+
+    P0 = np.random.randn(10, p)
+    P0 /= P0.sum(0, keepdims=True)
+
+    Pwda, projwda = ot.dr.wda(xs, ys, p, maxiter=10, P0=P0, normalize=True)
+
+    projwda(xs)
+
+    np.testing.assert_allclose(np.sum(Pwda**2, 0), np.ones(p))
+
+
+@pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
 def test_prw():
     d = 100  # Dimension
     n = 100  # Number samples
