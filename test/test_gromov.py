@@ -194,8 +194,8 @@ def test_pointwise_gromov(nx):
 def test_sampled_gromov(nx):
     n_samples = 50  # nb samples
 
-    mu_s = np.array([0, 0])
-    cov_s = np.array([[1, 0], [0, 1]])
+    mu_s = np.array([0, 0], dtype=np.float64)
+    cov_s = np.array([[1, 0], [0, 1]], dtype=np.float64)
 
     xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=42)
 

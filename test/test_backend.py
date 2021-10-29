@@ -464,6 +464,7 @@ def test_func_backends(nx):
         lst_name.append('reshape')
 
         sp_Mb = nx.coo_matrix(sp_datab, sp_rowb, sp_colb, shape=(4, 4))
+        nx.todense(Mb)
         lst_b.append(nx.to_numpy(nx.todense(sp_Mb)))
         lst_name.append('coo_matrix')
 
@@ -474,9 +475,13 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(nx.todense(A)))
         lst_name.append('tocsr')
 
+        A = nx.eliminate_zeros(nx.copy(sp_datab), threshold=5.)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('eliminate_zeros (dense)')
+
         A = nx.eliminate_zeros(sp_Mb)
         lst_b.append(nx.to_numpy(nx.todense(A)))
-        lst_name.append('eliminate_zeros')
+        lst_name.append('eliminate_zeros (sparse)')
 
         A = nx.where(Mb >= nx.stack([nx.linspace(0, 1, 10)] * 3, axis=1), Mb, 0.0)
         lst_b.append(nx.to_numpy(A))

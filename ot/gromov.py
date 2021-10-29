@@ -953,12 +953,14 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
             # If the matrices C are not symmetric, the gradient has 2 terms, thus the term is chosen randomly.
             if (not C_are_symmetric) and generator.rand(1) > 0.5:
                 Lik += nx.mean(loss_fun(
-                    C1[:, nx.full((nb_samples_grad_q,), index0[i], type_as=C1)][:, None, :],
+                    #C1[:, nx.full((nb_samples_grad_q,), index0[i], type_as=C1)][:, None, :],
+                    C1[:, [index0[i]] * nb_samples_grad_q][:, None, :],
                     C2[:, index1][None, :, :]
                 ), axis=2)
             else:
                 Lik += nx.mean(loss_fun(
-                    C1[nx.full((nb_samples_grad_q,), index0[i], type_as=C1), :][:, :, None],
+                    #C1[nx.full((nb_samples_grad_q,), index0[i], type_as=C1), :][:, :, None],
+                    C1[[index0[i]] * nb_samples_grad_q, :][:, :, None],
                     C2[index1, :][:, None, :]
                 ), axis=0)
 
