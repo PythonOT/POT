@@ -350,4 +350,3 @@ def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         log_emd = {'G': G}
         return cost, log_emd
     return cost
-
