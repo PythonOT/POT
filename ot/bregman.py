@@ -488,7 +488,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
                       "increase the number of iterations `numItermax` "
                       "or the regularization parameter `reg`.")
     if log:
-        log['n_iter'] = ii
+        log['niter'] = ii
         log['u'] = u
         log['v'] = v
 
@@ -639,7 +639,7 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
         if log:
             log = {'err': []}
 
-        Mr = M / (-reg)
+        Mr = - M / reg
 
         # we assume that no distances are null except those of the diagonal of
         # distances
@@ -656,14 +656,13 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
         loga = nx.log(a)
         logb = nx.log(b)
 
-        cpt = 0
         err = 1
-        while (err > stopThr and cpt < numItermax):
+        for ii in range(numItermax):
 
             v = logb - nx.logsumexp(Mr + u[:, None], 0)
             u = loga - nx.logsumexp(Mr + v[None, :], 1)
 
-            if cpt % 10 == 0:
+            if ii % 10 == 0:
                 # we can speed up the process by checking for the error only all
                 # the 10th iterations
 
@@ -674,13 +673,19 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
                     log['err'].append(err)
 
                 if verbose:
-                    if cpt % 200 == 0:
+                    if ii % 200 == 0:
                         print(
                             '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
-                    print('{:5d}|{:8e}|'.format(cpt, err))
-            cpt = cpt + 1
+                    print('{:5d}|{:8e}|'.format(ii, err))
+                if err < stopThr:
+                    break
+        else:
+            warnings.warn("Sinkhorn did not converge. You might want to "
+                          "increase the number of iterations `numItermax` "
+                          "or the regularization parameter `reg`.")
 
         if log:
+            log['niter'] = ii
             log['log_u'] = u
             log['log_v'] = v
             log['u'] = nx.exp(u)
@@ -1240,7 +1245,7 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
         log['alpha'] = alpha
         log['beta'] = beta
         log['warmstart'] = (log['alpha'], log['beta'])
-        log['n_iter'] = ii
+        log['niter'] = ii
         return G, log
     else:
         return G
@@ -1288,9 +1293,7 @@ def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
 
     - :math:`OT_{reg}(\cdot,\cdot)` is the entropic regularized Wasserstein
     distance (see :py:func:`ot.bregman.sinkhorn`)
-    if `method` is `sinkhorn` or `sinkhorn_stabilized`. If `method`is `debiased`,
-    :math:`OT_{reg}(\cdot,\cdot)` is the entropic
-    sinkhorn divergence (see :py:func:`ot.bregman.empirical_sinkhorn_divergence`)
+    if `method` is `sinkhorn` or `sinkhorn_stabilized` or `sinkhorn_log`.
     - :math:`\mathbf{a}_i` are training distributions in the columns of matrix
     :math:`\mathbf{A}`
     - `reg` and :math:`\mathbf{M}` are respectively the regularization term and
@@ -1308,7 +1311,7 @@ def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
     reg : float
         Regularization term > 0
     method : str (optional)
-        method used for the solver either 'sinkhorn' or 'sinkhorn_stabilized' or 'debiased'
+        method used for the solver either 'sinkhorn' or 'sinkhorn_stabilized' or 'sinkhorn_log'
     weights : array-like, shape (n_hists,)
         Weights of each histogram :math:`a_i` on the simplex (barycentric coodinates)
     numItermax : int, optional
@@ -1349,11 +1352,11 @@ def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
                                      numItermax=numItermax,
                                      stopThr=stopThr, verbose=verbose,
                                      log=log, **kwargs)
-    elif method.lower() == 'debiased':
-        return _barycenter_sinkhorn_debiased(A, M, reg, weights=weights,
-                                             numItermax=numItermax,
-                                             stopThr=stopThr, verbose=verbose,
-                                             log=log, **kwargs)
+    elif method.lower() == 'sinkhorn_log':
+        return _barycenter_sinkhorn_log(A, M, reg, weights=weights,
+                                        numItermax=numItermax,
+                                        stopThr=stopThr, verbose=verbose,
+                                        log=log, **kwargs)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
@@ -1467,119 +1470,61 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
         return geometricBar(weights, UKv)
 
 
-def _barycenter_sinkhorn_debiased(A, M, reg, weights=None, numItermax=1000,
-                                  stopThr=1e-4, verbose=False, log=False):
-    r"""Compute the entropic regularized wasserstein barycenter of distributions A
-
-     The function solves the following optimization problem:
-
-    .. math::
-       \mathbf{a} = arg\min_\mathbf{a} \sum_i W_{reg}(\mathbf{a},\mathbf{a}_i)
-
-    where :
-
-    - :math:`W_{reg}(\cdot,\cdot)` is the entropic regularized Wasserstein
-    distance (see :py:func:`ot.bregman.sinkhorn`)
-    - :math:`\mathbf{a}_i` are training distributions in the columns of matrix
-    :math:`\mathbf{A}`
-    - `reg` and :math:`\mathbf{M}` are respectively the regularization term
-    and the cost matrix for OT
-
-    The algorithm used for solving the problem is the Sinkhorn-Knopp matrix
-    scaling algorithm as proposed in :ref:`[3] <references-barycenter-sinkhorn>`
-
-    Parameters
-    ----------
-    A : array-like, shape (dim, n_hists)
-        `n_hists` training distributions :math:`a_i` of size `dim`
-    M : array-like, shape (dim, dim)
-        loss matrix for OT
-    reg : float
-        Regularization term > 0
-    weights : array-like, shape (n_hists,)
-        Weights of each histogram :math:`a_i` on the simplex (barycentric coodinates)
-    numItermax : int, optional
-        Max number of iterations
-    stopThr : float, optional
-        Stop threshold on error (>0)
-    verbose : bool, optional
-        Print information along iterations
-    log : bool, optional
-        record log if True
-
-
-    Returns
-    -------
-    a : (dim,) array-like
-        Wasserstein barycenter
-    log : dict
-        log dictionary return only if log==True in parameters
-
-
-    .. _references-barycenter-sinkhorn:
-    References
-    ----------
-
-    .. [3] Benamou, J. D., Carlier, G., Cuturi, M., Nenna, L., & Peyré, G. (2015).
-    Iterative Bregman projections for regularized transportation problems.
-    SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
-
+def _barycenter_sinkhorn_log(A, M, reg, weights=None, numItermax=1000,
+                             stopThr=1e-4, verbose=False, log=False):
+    r"""Compute the entropic wasserstein barycenter in log-domain
     """
 
     A, M = list_to_array(A, M)
+    dim, n_hists = A.shape
 
     nx = get_backend(A, M)
 
     if weights is None:
-        weights = nx.ones((A.shape[1],), type_as=A) / A.shape[1]
+        weights = nx.ones(n_hists, type_as=A) / n_hists
     else:
         assert (len(weights) == A.shape[1])
 
     if log:
         log = {'err': []}
 
-    K = nx.exp(-M / reg)
-
+    M = - M / reg
+    logA = nx.log(A + 1e-15)
+    log_KU, G = nx.zeros((2, *logA.shape), type_as=A)
     err = 1
-
-    UKv = nx.dot(K, (A.T / nx.sum(K, axis=0)).T)
-
-    u = (geometricMean(UKv) / UKv.T).T
-    c = nx.ones(A.shape[0], type_as=A)
-    bar = nx.ones(A.shape[0], type_as=A)
-
     for ii in range(numItermax):
-        bold = bar
-        UKv = nx.dot(K, A / nx.dot(K, u))
-        bar = c * geometricBar(weights, UKv)
-        u = bar[:, None] / UKv
-        c = (c * bar / nx.dot(K, c)) ** 0.5
+        log_bar = nx.zeros(dim, type_as=A)
+        for k in range(n_hists):
+            f = logA[:, k] - nx.logsumexp(M + G[None, :, k], axis=1)
+            log_KU[:, k] = nx.logsumexp(M + f[:, None], axis=0)
+            log_bar += weights[k] * log_KU[:, k]
 
-        if ii % 10 == 9:
-            err = abs(bar - bold).max() / max(bar.max(), 1.)
+        if ii % 10 == 1:
+            err = nx.exp(G + log_KU).std(axis=1).sum()
 
             # log and verbose print
             if log:
                 log['err'].append(err)
 
-            # debiased Sinkhorn does not converge monotonically
-            # guarantee a few iterations are done before stopping
-            if err < stopThr and ii > 20:
+            if err < stopThr:
                 break
             if verbose:
                 if ii % 200 == 0:
                     print(
                         '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(ii, err))
+
+        G = log_bar[:, None] - log_KU
+
     else:
         warnings.warn("Sinkhorn did not converge. You might want to "
                       "increase the number of iterations `numItermax` "
                       "or the regularization parameter `reg`.")
     if log:
         log['niter'] = ii
-        return bar, log
+        return nx.exp(log_bar), log
     else:
-        return bar
+        return nx.exp(log_bar)
 
 
 def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
@@ -1697,13 +1642,15 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
             if log:
                 log['err'].append(err)
             if err < stopThr:
+                break
+            if verbose:
                 if ii % 50 == 0:
                     print(
                         '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(ii, err))
 
     else:
-        warnings.warn("Stabilized Unbalanced Sinkhorn did not converge." +
+        warnings.warn("Stabilized Sinkhorn did not converge." +
                       "Try a larger entropy `reg`" +
                       "Or a larger absorption threshold `tau`.")
     if log:
@@ -1715,6 +1662,199 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
         return q
 
 
+def barycenter_debiased(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
+                        stopThr=1e-4, verbose=False, log=False, **kwargs):
+    r"""Compute the debiased Sinkhorn barycenter of distributions A
+
+     The function solves the following optimization problem:
+
+    .. math::
+       \mathbf{a} = arg\min_\mathbf{a} \sum_i S_{reg}(\mathbf{a},\mathbf{a}_i)
+
+    where :
+
+    - :math:`S_{reg}(\cdot,\cdot)` is the debiased Sinkhorn divergence
+    (see :py:func:`ot.bregman.emirical_sinkhorn_divergence`)
+    - :math:`\mathbf{a}_i` are training distributions in the columns of matrix
+    :math:`\mathbf{A}`
+    - `reg` and :math:`\mathbf{M}` are respectively the regularization term and
+    the cost matrix for OT
+
+    The algorithm used for solving the problem is the debiased Sinkhorn
+    algorithm as proposed in :ref:`[28] <references-sinkhorn-debiased>`
+
+    Parameters
+    ----------
+    A : array-like, shape (dim, n_hists)
+        `n_hists` training distributions :math:`a_i` of size `dim`
+    M : array-like, shape (dim, dim)
+        loss matrix for OT
+    reg : float
+        Regularization term > 0
+    method : str (optional)
+        method used for the solver either 'sinkhorn' or 'sinkhorn_log'
+    weights : array-like, shape (n_hists,)
+        Weights of each histogram :math:`a_i` on the simplex (barycentric coodinates)
+    numItermax : int, optional
+        Max number of iterations
+    stopThr : float, optional
+        Stop threshold on error (>0)
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    a : (dim,) array-like
+        Wasserstein barycenter
+    log : dict
+        log dictionary return only if log==True in parameters
+
+     .. _references-sinkhorn-debiased:
+     References
+     ----------
+
+     .. [28] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th International
+     Conference on Machine Learning, PMLR 119:4692-4701, 2020
+    """
+
+    if method.lower() == 'sinkhorn':
+        return _barycenter_debiased(A, M, reg, weights=weights,
+                                    numItermax=numItermax,
+                                    stopThr=stopThr, verbose=verbose, log=log,
+                                    **kwargs)
+    elif method.lower() == 'sinkhorn_log':
+        return _barycenter_debiased_log(A, M, reg, weights=weights,
+                                        numItermax=numItermax,
+                                        stopThr=stopThr, verbose=verbose,
+                                        log=log, **kwargs)
+    else:
+        raise ValueError("Unknown method '%s'." % method)
+
+
+def _barycenter_debiased(A, M, reg, weights=None, numItermax=1000,
+                         stopThr=1e-4, verbose=False, log=False):
+    r"""Compute the debiased sinkhorn barycenter of distributions A.
+    """
+
+    A, M = list_to_array(A, M)
+
+    nx = get_backend(A, M)
+
+    if weights is None:
+        weights = nx.ones((A.shape[1],), type_as=A) / A.shape[1]
+    else:
+        assert (len(weights) == A.shape[1])
+
+    if log:
+        log = {'err': []}
+
+    K = nx.exp(-M / reg)
+
+    err = 1
+
+    UKv = nx.dot(K, (A.T / nx.sum(K, axis=0)).T)
+
+    u = (geometricMean(UKv) / UKv.T).T
+    c = nx.ones(A.shape[0], type_as=A)
+    bar = nx.ones(A.shape[0], type_as=A)
+
+    for ii in range(numItermax):
+        bold = bar
+        UKv = nx.dot(K, A / nx.dot(K, u))
+        bar = c * geometricBar(weights, UKv)
+        u = bar[:, None] / UKv
+        c = (c * bar / nx.dot(K, c)) ** 0.5
+
+        if ii % 10 == 9:
+            err = abs(bar - bold).max() / max(bar.max(), 1.)
+
+            # log and verbose print
+            if log:
+                log['err'].append(err)
+
+            # debiased Sinkhorn does not converge monotonically
+            # guarantee a few iterations are done before stopping
+            if err < stopThr and ii > 20:
+                break
+            if verbose:
+                if ii % 200 == 0:
+                    print(
+                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(ii, err))
+    else:
+        warnings.warn("Sinkhorn did not converge. You might want to "
+                      "increase the number of iterations `numItermax` "
+                      "or the regularization parameter `reg`.")
+    if log:
+        log['niter'] = ii
+        return bar, log
+    else:
+        return bar
+
+
+def _barycenter_debiased_log(A, M, reg, weights=None, numItermax=1000,
+                             stopThr=1e-4, verbose=False, log=False):
+    r"""Compute the debiased sinkhorn barycenter in log domain.
+     """
+
+    A, M = list_to_array(A, M)
+    dim, n_hists = A.shape
+
+    nx = get_backend(A, M)
+
+    if weights is None:
+        weights = nx.ones(n_hists, type_as=A) / n_hists
+    else:
+        assert (len(weights) == A.shape[1])
+
+    if log:
+        log = {'err': []}
+
+    M = - M / reg
+    logA = nx.log(A + 1e-15)
+    log_KU, G = nx.zeros((2, *logA.shape), type_as=A)
+    c = nx.zeros(dim, type_as=A)
+    err = 1
+    for ii in range(numItermax):
+        log_bar = nx.zeros(dim, type_as=A)
+        for k in range(n_hists):
+            f = logA[:, k] - nx.logsumexp(M + G[None, :, k], axis=1)
+            log_KU[:, k] = nx.logsumexp(M + f[:, None], axis=0)
+            log_bar += weights[k] * log_KU[:, k]
+        log_bar += c
+        if ii % 10 == 1:
+            err = nx.exp(G + log_KU).std(axis=1).sum()
+
+            # log and verbose print
+            if log:
+                log['err'].append(err)
+
+            if err < stopThr and ii > 20:
+                break
+            if verbose:
+                if ii % 200 == 0:
+                    print(
+                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(ii, err))
+
+        G = log_bar[:, None] - log_KU
+        for _ in range(10):
+            c = 0.5 * (c + log_bar - nx.logsumexp(M + c[:, None], axis=0))
+
+    else:
+        warnings.warn("Sinkhorn did not converge. You might want to "
+                      "increase the number of iterations `numItermax` "
+                      "or the regularization parameter `reg`.")
+    if log:
+        log['niter'] = ii
+        return nx.exp(log_bar), log
+    else:
+        return nx.exp(log_bar)
+
+
 def convolutional_barycenter2d(A, reg, weights=None, method="sinkhorn", numItermax=10000,
                                stopThr=1e-5, verbose=False, log=False, **kwargs):
     r"""Compute the entropic regularized wasserstein barycenter of distributions A
@@ -1723,15 +1863,12 @@ def convolutional_barycenter2d(A, reg, weights=None, method="sinkhorn", numIterm
      The function solves the following optimization problem:
 
     .. math::
-       \mathbf{a} = arg\min_\mathbf{a} \sum_i OT_{reg}(\mathbf{a},\mathbf{a}_i)
+       \mathbf{a} = arg\min_\mathbf{a} \sum_i W_{reg}(\mathbf{a},\mathbf{a}_i)
 
     where :
 
-    - :math:`OT_{reg}(\cdot,\cdot)` is the entropic regularized Wasserstein
+    - :math:`W_{reg}(\cdot,\cdot)` is the entropic regularized Wasserstein
     distance (see :py:func:`ot.bregman.sinkhorn`)
-    if `method` is `sinkhorn` or `sinkhorn_stabilized`. If `method`is `debiased`,
-    :math:`OT_{reg}(\cdot,\cdot)` is the entropic
-    sinkhorn divergence (see :py:func:`ot.bregman.empirical_sinkhorn_divergence`)
     - :math:`\mathbf{a}_i` are training distributions (2D images) in the mast two dimensions
     of matrix :math:`\mathbf{A}`
     - `reg` is the regularization strength scalar value
@@ -1748,7 +1885,7 @@ def convolutional_barycenter2d(A, reg, weights=None, method="sinkhorn", numIterm
     weights : array-like, shape (n_hists,)
         Weights of each image on the simplex (barycentric coodinates)
     method : string, optional
-        method used for the solver either 'sinkhorn' or 'debiased'
+        method used for the solver either 'sinkhorn' or 'sinkhorn_log'
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -1781,77 +1918,25 @@ def convolutional_barycenter2d(A, reg, weights=None, method="sinkhorn", numIterm
     """
 
     if method.lower() == 'sinkhorn':
-        return _convolutional_barycenter2d_sinkhorn(A, reg, weights=weights,
-                                                    numItermax=numItermax,
-                                                    stopThr=stopThr, verbose=verbose,
-                                                    log=log,
-                                                    **kwargs)
-    elif method.lower() == 'debiased':
-        return _convolutional_barycenter2d_debiased(A, reg, weights=weights,
-                                                    numItermax=numItermax,
-                                                    stopThr=stopThr, verbose=verbose,
-                                                    log=log, **kwargs)
+        return _convolutional_barycenter2d(A, reg, weights=weights,
+                                           numItermax=numItermax,
+                                           stopThr=stopThr, verbose=verbose,
+                                           log=log,
+                                           **kwargs)
+    elif method.lower() == 'sinkhorn_log':
+        return _convolutional_barycenter2d_log(A, reg, weights=weights,
+                                               numItermax=numItermax,
+                                               stopThr=stopThr, verbose=verbose,
+                                               log=log, **kwargs)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
 
-def _convolutional_barycenter2d_sinkhorn(A, reg, weights=None, numItermax=10000,
-                                         stopThr=1e-9, stabThr=1e-30, verbose=False,
-                                         log=False):
+def _convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
+                                stopThr=1e-9, stabThr=1e-30, verbose=False,
+                                log=False):
     r"""Compute the entropic regularized wasserstein barycenter of distributions A
     where A is a collection of 2D images.
-
-     The function solves the following optimization problem:
-
-    .. math::
-       \mathbf{a} = arg\min_\mathbf{a} \sum_i W_{reg}(\mathbf{a},\mathbf{a}_i)
-
-    where :
-
-    - :math:`W_{reg}(\cdot,\cdot)` is the entropic regularized Wasserstein distance
-    (see :py:func:`ot.bregman.sinkhorn`)
-    - :math:`\mathbf{a}_i` are training distributions (2D images) in the mast two
-    dimensions of matrix :math:`\mathbf{A}`
-    - `reg` is the regularization strength scalar value
-
-    The algorithm used for solving the problem is the Sinkhorn-Knopp matrix scaling
-    algorithm as proposed in :ref:`[21] <references-convolutional-barycenter-2d>`
-
-    Parameters
-    ----------
-    A : array-like, shape (n_hists, width, height)
-        `n` distributions (2D images) of size `width` x `height`
-    reg : float
-        Regularization term >0
-    weights : array-like, shape (n_hists,)
-        Weights of each image on the simplex (barycentric coodinates)
-    numItermax : int, optional
-        Max number of iterations
-    stopThr : float, optional
-        Stop threshold on error (> 0)
-    stabThr : float, optional
-        Stabilization threshold to avoid numerical precision issue
-    verbose : bool, optional
-        Print information along iterations
-    log : bool, optional
-        record log if True
-
-    Returns
-    -------
-    a : array-like, shape (width, height)
-        2D Wasserstein barycenter
-    log : dict
-        log dictionary return only if log==True in parameters
-
-
-    .. _references-convolutional-barycenter-2d:
-    References
-    ----------
-
-    .. [21] Solomon, J., De Goes, F., Peyré, G., Cuturi, M., Butscher, A., Nguyen,
-    A. & Guibas, L. (2015).     Convolutional wasserstein distances: Efficient
-    optimal transportation on geometric domains. ACM Transactions on Graphics
-    (TOG), 34(4), 66
     """
 
     A = list_to_array(A)
@@ -1887,16 +1972,15 @@ def _convolutional_barycenter2d_sinkhorn(A, reg, weights=None, numItermax=10000,
         kxy = nx.einsum("...ij,klj->kli", K2, kx)
         return kxy
 
-    KV = convol_imgs(V)
+    KU = convol_imgs(U)
     for ii in range(numItermax):
-        bold = bar
+        V = bar[None] / KU
+        KV = convol_imgs(V)
         U = A / KV
         KU = convol_imgs(U)
         bar = nx.exp((weights[:, None, None] * nx.log(KU + stabThr)).sum(axis=0))
-        V = bar[None] / KU
-        KV = convol_imgs(V)
         if ii % 10 == 9:
-            err = abs(bold - bar).max() / max(1., bar.max())
+            err = (V * KU).std(axis=0).sum()
             # log and verbose print
             if log:
                 log['err'].append(err)
@@ -1907,6 +1991,7 @@ def _convolutional_barycenter2d_sinkhorn(A, reg, weights=None, numItermax=10000,
                 print('{:5d}|{:8e}|'.format(ii, err))
             if err < stopThr:
                 break
+
     else:
         warnings.warn("Convolutional Sinkhorn did not converge. "
                       "Try a larger number of iterations `numItermax` "
@@ -1919,9 +2004,80 @@ def _convolutional_barycenter2d_sinkhorn(A, reg, weights=None, numItermax=10000,
         return bar
 
 
-def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
-                                         stopThr=1e-4, stabThr=1e-15, verbose=False,
-                                         log=False):
+def _convolutional_barycenter2d_log(A, reg, weights=None, numItermax=10000,
+                                    stopThr=1e-4, stabThr=1e-30, verbose=False,
+                                    log=False):
+    r"""Compute the entropic regularized wasserstein barycenter of distributions A
+    where A is a collection of 2D images in log-domain.
+    """
+
+    A = list_to_array(A)
+
+    nx = get_backend(A)
+
+    n_hists, width, height = A.shape
+
+    if weights is None:
+        weights = nx.ones((n_hists,), type_as=A) / n_hists
+    else:
+        assert (len(weights) == n_hists)
+
+    if log:
+        log = {'err': []}
+
+    err = 1
+    # build the convolution operator
+    # this is equivalent to blurring on horizontal then vertical directions
+    t = nx.linspace(0, 1, width)
+    [Y, X] = nx.meshgrid(t, t)
+    M1 = - (X - Y) ** 2 / reg
+
+    t = nx.linspace(0, 1, height)
+    [Y, X] = nx.meshgrid(t, t)
+    M2 = - (X - Y) ** 2 / reg
+
+    def convol_img(log_img):
+        log_img = nx.logsumexp(M1[:, :, None] + log_img[None], axis=1)
+        log_img = nx.logsumexp(M2[:, :, None] + log_img.T[None], axis=1).T
+        return log_img
+
+    logA = nx.log(A + stabThr)
+    log_KU, G, F = nx.zeros((3, *logA.shape), type_as=A)
+    err = 1
+    for ii in range(numItermax):
+        log_bar = nx.zeros((width, height), type_as=A)
+        for k in range(n_hists):
+            f = logA[k] - convol_img(G[k])
+            log_KU[k] = convol_img(f)
+            log_bar += weights[k] * log_KU[k]
+
+        if ii % 10 == 9:
+            err = nx.exp(G + log_KU).std(axis=0).sum()
+            # log and verbose print
+            if log:
+                log['err'].append(err)
+
+            if verbose:
+                if ii % 200 == 0:
+                    print('{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(ii, err))
+            if err < stopThr:
+                break
+        G = log_bar[None, :, :] - log_KU
+
+    else:
+        warnings.warn("Convolutional Sinkhorn did not converge. "
+                      "Try a larger number of iterations `numItermax` "
+                      "or a larger entropy `reg`.")
+    if log:
+        log['niter'] = ii
+        return nx.exp(log_bar), log
+    else:
+        return nx.exp(log_bar)
+
+
+def convolutional_barycenter2d_debiased(A, reg, weights=None, method="sinkhorn", numItermax=10000,
+                                        stopThr=1e-5, verbose=False, log=False, **kwargs):
     r"""Compute the debiased sinkhorn barycenter of distributions A
     where A is a collection of 2D images.
 
@@ -1949,6 +2105,8 @@ def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
         Regularization term >0
     weights : array-like, shape (n_hists,)
         Weights of each image on the simplex (barycentric coodinates)
+    method : string, optional
+        method used for the solver either 'sinkhorn' or 'sinkhorn_log'
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -1976,20 +2134,42 @@ def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
     Conference on Machine Learning, PMLR 119:4692-4701, 2020
     """
 
+    if method.lower() == 'sinkhorn':
+        return _convolutional_barycenter2d_debiased(A, reg, weights=weights,
+                                                    numItermax=numItermax,
+                                                    stopThr=stopThr, verbose=verbose,
+                                                    log=log,
+                                                    **kwargs)
+    elif method.lower() == 'sinkhorn_log':
+        return _convolutional_barycenter2d_debiased_log(A, reg, weights=weights,
+                                                        numItermax=numItermax,
+                                                        stopThr=stopThr, verbose=verbose,
+                                                        log=log, **kwargs)
+    else:
+        raise ValueError("Unknown method '%s'." % method)
+
+
+def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
+                                         stopThr=1e-4, stabThr=1e-15, verbose=False,
+                                         log=False):
+    r"""Compute the debiased barycenter of 2D images via sinkhorn convolutions.
+    """
+
     A = list_to_array(A)
+    n_hists, width, height = A.shape
 
     nx = get_backend(A)
 
     if weights is None:
-        weights = nx.ones((A.shape[0],), type_as=A) / A.shape[0]
+        weights = nx.ones((n_hists,), type_as=A) / n_hists
     else:
-        assert (len(weights) == A.shape[0])
+        assert (len(weights) == n_hists)
 
     if log:
         log = {'err': []}
 
-    bar = nx.ones(A.shape[1:], type_as=A)
-    bar /= bar.sum()
+    bar = nx.ones((width, height), type_as=A)
+    bar /= width * height
     U = nx.ones(A.shape, type_as=A)
     V = nx.ones(A.shape, type_as=A)
     c = nx.ones(A.shape[1:], type_as=A)
@@ -1997,11 +2177,11 @@ def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
 
     # build the convolution operator
     # this is equivalent to blurring on horizontal then vertical directions
-    t = nx.linspace(0, 1, A.shape[1])
+    t = nx.linspace(0, 1, width)
     [Y, X] = nx.meshgrid(t, t)
     K1 = nx.exp(-(X - Y) ** 2 / reg)
 
-    t = nx.linspace(0, 1, A.shape[2])
+    t = nx.linspace(0, 1, height)
     [Y, X] = nx.meshgrid(t, t)
     K2 = nx.exp(-(X - Y) ** 2 / reg)
 
@@ -2010,19 +2190,19 @@ def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
         kxy = nx.einsum("...ij,klj->kli", K2, kx)
         return kxy
 
-    KV = convol_imgs(V)
+    KU = convol_imgs(U)
     for ii in range(numItermax):
-        bold = bar
+        V = bar[None] / KU
+        KV = convol_imgs(V)
         U = A / KV
         KU = convol_imgs(U)
         bar = c * nx.exp((weights[:, None, None] * nx.log(KU + stabThr)).sum(axis=0))
-        V = bar[None] / KU
-        KV = convol_imgs(V)
+
         for _ in range(10):
             c = (c * bar / convol_imgs(c[None]).squeeze()) ** 0.5
 
         if ii % 10 == 9:
-            err = abs(bold - bar).max() / max(1., bar.max())
+            err = (V * KU).std(axis=0).sum()
             # log and verbose print
             if log:
                 log['err'].append(err)
@@ -2046,6 +2226,79 @@ def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
         return bar, log
     else:
         return bar
+
+
+def _convolutional_barycenter2d_debiased_log(A, reg, weights=None, numItermax=10000,
+                                             stopThr=1e-4, stabThr=1e-30, verbose=False,
+                                             log=False):
+    r"""Compute the debiased barycenter of 2D images in log-domain.
+     """
+
+    A = list_to_array(A)
+    n_hists, width, height = A.shape
+    nx = get_backend(A)
+
+    if weights is None:
+        weights = nx.ones((n_hists,), type_as=A) / n_hists
+    else:
+        assert (len(weights) == A.shape[0])
+
+    if log:
+        log = {'err': []}
+
+    err = 1
+    # build the convolution operator
+    # this is equivalent to blurring on horizontal then vertical directions
+    t = nx.linspace(0, 1, width)
+    [Y, X] = nx.meshgrid(t, t)
+    M1 = - (X - Y) ** 2 / reg
+
+    t = nx.linspace(0, 1, height)
+    [Y, X] = nx.meshgrid(t, t)
+    M2 = - (X - Y) ** 2 / reg
+
+    def convol_img(log_img):
+        log_img = nx.logsumexp(M1[:, :, None] + log_img[None], axis=1)
+        log_img = nx.logsumexp(M2[:, :, None] + log_img.T[None], axis=1).T
+        return log_img
+
+    logA = nx.log(A + stabThr)
+    log_bar, c = nx.zeros((2, width, height), type_as=A)
+    log_KU, G, F = nx.zeros((3, *logA.shape), type_as=A)
+    err = 1
+    for ii in range(numItermax):
+        log_bar = nx.zeros((width, height), type_as=A)
+        for k in range(n_hists):
+            f = logA[k] - convol_img(G[k])
+            log_KU[k] = convol_img(f)
+            log_bar += weights[k] * log_KU[k]
+        log_bar += c
+        for _ in range(10):
+            c = 0.5 * (c + log_bar - convol_img(c))
+
+        if ii % 10 == 9:
+            err = nx.exp(G + log_KU).std(axis=0).sum()
+            # log and verbose print
+            if log:
+                log['err'].append(err)
+
+            if verbose:
+                if ii % 200 == 0:
+                    print('{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(ii, err))
+            if err < stopThr and ii > 20:
+                break
+        G = log_bar[None, :, :] - log_KU
+
+    else:
+        warnings.warn("Convolutional Sinkhorn did not converge. "
+                      "Try a larger number of iterations `numItermax` "
+                      "or a larger entropy `reg`.")
+    if log:
+        log['niter'] = ii
+        return nx.exp(log_bar), log
+    else:
+        return nx.exp(log_bar)
 
 
 def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
