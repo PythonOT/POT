@@ -1898,7 +1898,7 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
         K.append(Ktmp)
 
     # uniform target distribution
-    a = nx.from_numpy(unif(Xt.shape[0]))
+    a = nx.from_numpy(unif(Xt.shape[0]), type_as=Xs[0])
 
     cpt = 0  # iterations count
     err = 1
@@ -2033,9 +2033,9 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
 
     ns, nt = X_s.shape[0], X_t.shape[0]
     if a is None:
-        a = nx.from_numpy(unif(ns))
+        a = nx.from_numpy(unif(ns), type_as=X_s)
     if b is None:
-        b = nx.from_numpy(unif(nt))
+        b = nx.from_numpy(unif(nt), type_as=X_s)
 
     if isLazy:
         if log:
@@ -2204,9 +2204,9 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
 
     ns, nt = X_s.shape[0], X_t.shape[0]
     if a is None:
-        a = nx.from_numpy(unif(ns))
+        a = nx.from_numpy(unif(ns), type_as=X_s)
     if b is None:
-        b = nx.from_numpy(unif(nt))
+        b = nx.from_numpy(unif(nt), type_as=X_s)
 
     if isLazy:
         if log:
@@ -2531,7 +2531,8 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
                 epsilon_u_square = a[0] / aK_sort[ns_budget - 1]
             else:
                 aK_sort = nx.from_numpy(
-                    bottleneck.partition(nx.to_numpy(K_sum_cols), ns_budget - 1)[ns_budget - 1]
+                    bottleneck.partition(nx.to_numpy(K_sum_cols), ns_budget - 1)[ns_budget - 1],
+                    type_as=M
                 )
                 epsilon_u_square = a[0] / aK_sort
 
@@ -2540,7 +2541,8 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
                 epsilon_v_square = b[0] / bK_sort[nt_budget - 1]
             else:
                 bK_sort = nx.from_numpy(
-                    bottleneck.partition(nx.to_numpy(K_sum_rows), nt_budget - 1)[nt_budget - 1]
+                    bottleneck.partition(nx.to_numpy(K_sum_rows), nt_budget - 1)[nt_budget - 1],
+                    type_as=M
                 )
                 epsilon_v_square = b[0] / bK_sort
         else:
@@ -2591,7 +2593,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
 
         K_min = nx.min(K_IJ)
         if K_min == 0:
-            K_min = np.finfo(float).tiny
+            K_min = float(np.finfo(float).tiny)
 
         # a_I, b_J, a_Ic, b_Jc
         a_I = a[Isel]
@@ -2712,7 +2714,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
                                 maxfun=maxfun,
                                 pgtol=pgtol,
                                 maxiter=maxiter)
-    theta = nx.from_numpy(theta)
+    theta = nx.from_numpy(theta, type_as=M)
 
     usc = theta[:ns_budget]
     vsc = theta[ns_budget:]
