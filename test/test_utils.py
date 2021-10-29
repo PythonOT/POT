@@ -4,17 +4,12 @@
 #
 # License: MIT License
 
-import pytest
 import ot
 import numpy as np
 import sys
-
-from ot.backend import get_backend_list
-
-backend_list = get_backend_list()
+import pytest
 
 
-@pytest.mark.parametrize('nx', backend_list)
 def test_proj_simplex(nx):
     n = 10
     rng = np.random.RandomState(0)
@@ -114,12 +109,15 @@ def test_dist():
     D2 = ot.dist(x, x)
     D3 = ot.dist(x)
 
+    D4 = ot.dist(x, x, metric='minkowski', p=0.5)
+
+    assert D4[0, 1] == D4[1, 0]
+
     # dist shoul return squared euclidean
     np.testing.assert_allclose(D, D2, atol=1e-14)
     np.testing.assert_allclose(D, D3, atol=1e-14)
 
 
-@ pytest.mark.parametrize('nx', backend_list)
 def test_dist_backends(nx):
 
     n = 100
@@ -227,6 +225,13 @@ def test_deprecated_func():
     class Class():
         pass
 
+    with pytest.warns(DeprecationWarning):
+        fun()
+
+    with pytest.warns(DeprecationWarning):
+        cl = Class()
+        print(cl)
+
     if sys.version_info < (3, 5):
         print('Not tested')
     else:
@@ -256,5 +261,8 @@ def test_BaseEstimator():
 
     params['first'] = 'spam again'
     cl.set_params(**params)
+
+    with pytest.raises(ValueError):
+        cl.set_params(bibi=10)
 
     assert cl.first == 'spam again'
