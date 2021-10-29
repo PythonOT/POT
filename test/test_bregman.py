@@ -286,7 +286,7 @@ def test_sinkhorn_variants_log_multib():
     np.testing.assert_allclose(G0, Gl, atol=1e-05)
 
 
-@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized", "debiased"])
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_log"])
 def test_barycenter(nx, method):
     n_bins = 100  # nb bins
 
@@ -317,7 +317,41 @@ def test_barycenter(nx, method):
     np.testing.assert_allclose(1, np.sum(bary_wass))
     np.testing.assert_allclose(bary_wass, bary_wass_np)
 
-    ot.bregman.barycenter(Ab, Mb, reg, log=True, verbose=True)
+    ot.bregman.barycenter(Ab, Mb, reg, log=True)
+
+
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
+def test_barycenter_debiased(nx, method):
+    n_bins = 100  # nb bins
+
+    # Gaussian distributions
+    a1 = ot.datasets.make_1D_gauss(n_bins, m=30, s=10)  # m= mean, s= std
+    a2 = ot.datasets.make_1D_gauss(n_bins, m=40, s=10)
+
+    # creating matrix A containing all distributions
+    A = np.vstack((a1, a2)).T
+
+    # loss matrix + normalization
+    M = ot.utils.dist0(n_bins)
+    M /= M.max()
+
+    alpha = 0.5  # 0<=alpha<=1
+    weights = np.array([1 - alpha, alpha])
+
+    Ab = nx.from_numpy(A)
+    Mb = nx.from_numpy(M)
+    weightsb = nx.from_numpy(weights)
+
+    # wasserstein
+    reg = 1e-2
+    bary_wass_np = ot.bregman.barycenter_debiased(A, M, reg, weights, method=method)
+    bary_wass, _ = ot.bregman.barycenter_debiased(Ab, Mb, reg, weightsb, method=method, log=True)
+    bary_wass = nx.to_numpy(bary_wass)
+
+    np.testing.assert_allclose(1, np.sum(bary_wass), atol=1e-3)
+    np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-5)
+
+    ot.bregman.barycenter_debiased(Ab, Mb, reg, log=True, verbose=False)
 
 
 def test_barycenter_stabilization(nx):
@@ -356,13 +390,13 @@ def test_barycenter_stabilization(nx):
     np.testing.assert_allclose(bar, bar_np)
 
 
-@pytest.mark.parametrize("method", ["sinkhorn", "debiased"])
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
 def test_wasserstein_bary_2d(nx, method):
-    size = 100  # size of a square image
-    a1 = np.random.randn(size, size)
+    size = 20  # size of a square image
+    a1 = np.random.rand(size, size)
     a1 += a1.min()
     a1 = a1 / np.sum(a1)
-    a2 = np.random.randn(size, size)
+    a2 = np.random.rand(size, size)
     a2 += a2.min()
     a2 = a2 / np.sum(a2)
     # creating matrix A containing all distributions
@@ -376,6 +410,34 @@ def test_wasserstein_bary_2d(nx, method):
     reg = 1e-2
     bary_wass_np = ot.bregman.convolutional_barycenter2d(A, reg, method=method)
     bary_wass = nx.to_numpy(ot.bregman.convolutional_barycenter2d(Ab, reg, method=method))
+
+    np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
+    np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
+
+    # help in checking if log and verbose do not bug the function
+    # ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
+
+
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
+def test_wasserstein_bary_2d_debiased(nx, method):
+    size = 20  # size of a square image
+    a1 = np.random.rand(size, size)
+    a1 += a1.min()
+    a1 = a1 / np.sum(a1)
+    a2 = np.random.rand(size, size)
+    a2 += a2.min()
+    a2 = a2 / np.sum(a2)
+    # creating matrix A containing all distributions
+    A = np.zeros((2, size, size))
+    A[0, :, :] = a1
+    A[1, :, :] = a2
+
+    Ab = nx.from_numpy(A)
+
+    # wasserstein
+    reg = 1e-2
+    bary_wass_np = ot.bregman.convolutional_barycenter2d_debiased(A, reg, method=method)
+    bary_wass = nx.to_numpy(ot.bregman.convolutional_barycenter2d_debiased(Ab, reg, method=method))
 
     np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
     np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
