@@ -53,7 +53,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
     C1 : ndarray, shape (ns, ns)
         Metric cost matrix in the source space
     C2 : ndarray, shape (nt, nt)
-        Metric costfr matrix in the target space
+        Metric cost matrix in the target space
     T :  ndarray, shape (ns, nt)
         Coupling between source and target spaces
     p : ndarray, shape (ns,)
@@ -69,7 +69,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
 
     References
     ----------
-    .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
@@ -138,7 +138,7 @@ def tensor_product(constC, hC1, hC2, T):
 
     References
     ----------
-    .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
@@ -177,7 +177,7 @@ def gwloss(constC, hC1, hC2, T):
 
     References
     ----------
-    .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
@@ -214,7 +214,7 @@ def gwggrad(constC, hC1, hC2, T):
 
     References
     ----------
-    .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
@@ -317,7 +317,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
     C1 : ndarray, shape (ns, ns)
         Metric cost matrix in the source space
     C2 : ndarray, shape (nt, nt)
-        Metric costfr matrix in the target space
+        Metric cost matrix in the target space
     p : ndarray, shape (ns,)
         Distribution in the source space
     q : ndarray, shape (nt,)
@@ -349,7 +349,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
 
     References
     ----------
-    .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
@@ -427,7 +427,7 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwarg
 
     References
     ----------
-    .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
@@ -458,42 +458,45 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwarg
 
 def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5, armijo=False, log=False, **kwargs):
     r"""
-    Computes the FGW transport between two graphs see [24]
+    Computes the FGW transport between two graphs (see :ref:`[24] <references-fused-gromov-wasserstein>`)
 
     .. math::
-        \gamma = arg\min_\gamma (1-\\alpha)*<\gamma,M>_F + \\alpha* \sum_{i,j,k,l}
-        L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+        \gamma = \mathop{\arg \min}_\gamma (1 - \alpha) <\gamma, \mathbf{M}>_F + \alpha \sum_{i,j,k,l}
+        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \gamma 1 = p
-             \gamma^T 1= q
-             \gamma\geq 0
+        s.t. \ \mathbf{\gamma} \mathbf{1} = \mathbf{p}
+
+             \mathbf{\gamma}^T \mathbf{1} = \mathbf{q}
+
+             \mathbf{\gamma} \geq 0
 
     where :
-    - M is the (ns,nt) metric cost matrix
-    - p and q are source and target weights (sum to 1)
-    - L is a loss function to account for the misfit between the similarity matrices
 
-    The algorithm used for solving the problem is conditional gradient as discussed in  [24]_
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
+    - :math:`\mathbf{p}` and :math:`\mathbf{q}` are source and target weights (sum to 1)
+    - `L` is a loss function to account for the misfit between the similarity matrices
+
+    The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[24] <references-fused-gromov-wasserstein>`
 
     Parameters
     ----------
-    M : ndarray, shape (ns, nt)
+    M : array-like, shape (ns, nt)
         Metric cost matrix between features across domains
-    C1 : ndarray, shape (ns, ns)
+    C1 : array-like, shape (ns, ns)
         Metric cost matrix representative of the structure in the source space
-    C2 : ndarray, shape (nt, nt)
+    C2 : array-like, shape (nt, nt)
         Metric cost matrix representative of the structure in the target space
-    p : ndarray, shape (ns,)
+    p : array-like, shape (ns,)
         Distribution in the source space
-    q : ndarray, shape (nt,)
+    q : array-like, shape (nt,)
         Distribution in the target space
     loss_fun : str, optional
         Loss function used for the solver
     alpha : float, optional
         Trade-off parameter (0 < alpha < 1)
     armijo : bool, optional
-        If True the steps of the line-search is found via an armijo research. Else closed form is used.
-        If there is convergence issues use False.
+        If True the step of the line-search is found via an armijo research. Else closed form is used.
+        If there are convergence issues use False.
     log : bool, optional
         record log if True
     **kwargs : dict
@@ -501,14 +504,16 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
 
     Returns
     -------
-    gamma : ndarray, shape (ns, nt)
+    gamma : array-like, shape (`ns`, `nt`)
         Optimal transportation matrix for the given parameters.
     log : dict
         Log dictionary return only if log==True in parameters.
 
+
+    .. _references-fused-gromov-wasserstein:
     References
     ----------
-    .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain
         and Courty Nicolas "Optimal Transport for structured data with
         application on graphs", International Conference on Machine Learning
         (ICML). 2019.
@@ -535,57 +540,62 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
 
 def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5, armijo=False, log=False, **kwargs):
     r"""
-    Computes the FGW distance between two graphs see [24]
+    Computes the FGW distance between two graphs see (see :ref:`[24] <references-fused-gromov-wasserstein2>`)
 
     .. math::
-        \min_\gamma (1-\\alpha)*<\gamma,M>_F + \\alpha* \sum_{i,j,k,l}
-        L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+        \min_\gamma (1 - \alpha) <\gamma, \mathbf{M}>_F + \alpha \sum_{i,j,k,l}
+        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
+        s.t. \ \mathbf{\gamma} \mathbf{1} = \mathbf{p}
 
-        s.t. \gamma 1 = p
-             \gamma^T 1= q
-             \gamma\geq 0
+             \mathbf{\gamma}^T \mathbf{1} = \mathbf{q}
+
+             \mathbf{\gamma} \geq 0
 
     where :
-    - M is the (ns,nt) metric cost matrix
-    - p and q are source and target weights (sum to 1)
-    - L is a loss function to account for the misfit between the similarity matrices
-    The algorithm used for solving the problem is conditional gradient as discussed in  [1]_
+
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
+    - :math:`\mathbf{p}` and :math:`\mathbf{q}` are source and target weights (sum to 1)
+    - `L` is a loss function to account for the misfit between the similarity matrices
+
+    The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[24] <references-fused-gromov-wasserstein2>`
 
     Parameters
     ----------
-    M : ndarray, shape (ns, nt)
+    M : array-like, shape (ns, nt)
         Metric cost matrix between features across domains
-    C1 : ndarray, shape (ns, ns)
+    C1 : array-like, shape (ns, ns)
         Metric cost matrix respresentative of the structure in the source space.
-    C2 : ndarray, shape (nt, nt)
+    C2 : array-like, shape (nt, nt)
         Metric cost matrix espresentative of the structure in the target space.
-    p :  ndarray, shape (ns,)
+    p :  array-like, shape (ns,)
         Distribution in the source space.
-    q :  ndarray, shape (nt,)
+    q :  array-like, shape (nt,)
         Distribution in the target space.
     loss_fun : str, optional
         Loss function used for the solver.
     alpha : float, optional
         Trade-off parameter (0 < alpha < 1)
     armijo : bool, optional
-        If True the steps of the line-search is found via an armijo research.
-        Else closed form is used. If there is convergence issues use False.
+        If True the step of the line-search is found via an armijo research.
+        Else closed form is used. If there are convergence issues use False.
     log : bool, optional
         Record log if True.
     **kwargs : dict
-        Parameters can be directly pased to the ot.optim.cg solver.
+        Parameters can be directly passed to the ot.optim.cg solver.
 
     Returns
     -------
-    gamma : ndarray, shape (ns, nt)
+    gamma : array-like, shape (ns, nt)
         Optimal transportation matrix for the given parameters.
     log : dict
         Log dictionary return only if log==True in parameters.
 
+
+    .. _references-fused-gromov-wasserstein2:
     References
     ----------
-    .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain
         and Courty Nicolas
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
@@ -614,41 +624,42 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
 def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
                            nb_samples_p=None, nb_samples_q=None, std=True, random_state=None):
     r"""
-    Returns an approximation of the gromov-wasserstein cost between (C1,p) and (C2,q)
-    with a fixed transport plan T.
+    Returns an approximation of the gromov-wasserstein cost between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
+    with a fixed transport plan :math:`\mathbf{T}`.
 
     The function gives an unbiased approximation of the following equation:
 
     .. math::
-        GW = \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+
+        GW = \sum_{i,j,k,l} L(\mathbf{C_{1}}_{i,k}, \mathbf{C_{2}}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
     Where :
 
-    - C1 : Metric cost matrix in the source space
-    - C2 : Metric cost matrix in the target space
-    - L  : Loss function to account for the misfit between the similarity matrices
-    - T  : Matrix with marginal p and q
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - `L` : Loss function to account for the misfit between the similarity matrices
+    - :math:`\mathbf{T}`: Matrix with marginal :math:`\mathbf{p}` and :math:`\mathbf{q}`
 
     Parameters
     ----------
-    C1 : ndarray, shape (ns, ns)
+    C1 : array-like, shape (ns, ns)
         Metric cost matrix in the source space
-    C2 : ndarray, shape (nt, nt)
-        Metric costfr matrix in the target space
-    p :  ndarray, shape (ns,)
+    C2 : array-like, shape (nt, nt)
+        Metric cost matrix in the target space
+    p :  array-like, shape (ns,)
         Distribution in the source space
-    q :  ndarray, shape (nt,)
+    q :  array-like, shape (nt,)
         Distribution in the target space
-    loss_fun :  function: \mathcal{R} \times \mathcal{R} \shortarrow \mathcal{R}
+    loss_fun :  function: :math:`\mathcal{R} \times \mathcal{R} \mapsto \mathcal{R}`
         Loss function used for the distance, the transport plan does not depend on the loss function
-    T : csr or ndarray, shape (ns, nt)
-        Transport plan matrix, either a sparse csr matrix or
+    T : csr or array-like, shape (ns, nt)
+        Transport plan matrix, either a sparse csr or a dense matrix
     nb_samples_p : int, optional
-        nb_samples_p is the number of samples (without replacement) along the first dimension of T.
+        `nb_samples_p` is the number of samples (without replacement) along the first dimension of :math:`\mathbf{T}`
     nb_samples_q : int, optional
-        nb_samples_q is the number of samples along the second dimension of T, for each sample along the first.
+        `nb_samples_q` is the number of samples along the second dimension of :math:`\mathbf{T}`, for each sample along the first
     std : bool, optional
-        Standard deviation associated with the prediction of the gromov-wasserstein cost.
+        Standard deviation associated with the prediction of the gromov-wasserstein cost
     random_state : int or RandomState instance, optional
         Fix the seed for reproducibility
 
@@ -764,7 +775,7 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
         C1 : ndarray, shape (ns, ns)
             Metric cost matrix in the source space
         C2 : ndarray, shape (nt, nt)
-            Metric costfr matrix in the target space
+            Metric cost matrix in the target space
         p :  ndarray, shape (ns,)
             Distribution in the source space
         q :  ndarray, shape (nt,)
@@ -885,7 +896,7 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
     C1 : ndarray, shape (ns, ns)
         Metric cost matrix in the source space
     C2 : ndarray, shape (nt, nt)
-        Metric costfr matrix in the target space
+        Metric cost matrix in the target space
     p :  ndarray, shape (ns,)
         Distribution in the source space
     q :  ndarray, shape (nt,)
@@ -953,13 +964,11 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
             # If the matrices C are not symmetric, the gradient has 2 terms, thus the term is chosen randomly.
             if (not C_are_symmetric) and generator.rand(1) > 0.5:
                 Lik += nx.mean(loss_fun(
-                    #C1[:, nx.full((nb_samples_grad_q,), index0[i], type_as=C1)][:, None, :],
                     C1[:, [index0[i]] * nb_samples_grad_q][:, None, :],
                     C2[:, index1][None, :, :]
                 ), axis=2)
             else:
                 Lik += nx.mean(loss_fun(
-                    #C1[nx.full((nb_samples_grad_q,), index0[i], type_as=C1), :][:, :, None],
                     C1[[index0[i]] * nb_samples_grad_q, :][:, :, None],
                     C2[index1, :][:, None, :]
                 ), axis=0)
@@ -1012,38 +1021,37 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
 def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
                                 max_iter=1000, tol=1e-9, verbose=False, log=False):
     r"""
-    Returns the gromov-wasserstein transport between (C1,p) and (C2,q)
-
-    (C1,p) and (C2,q)
+    Returns the gromov-wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
 
     The function solves the following optimization problem:
 
     .. math::
-        GW = arg\min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}-\epsilon(H(T))
+        \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
 
-        s.t. T 1 = p
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{p}
 
-             T^T 1= q
+             \mathbf{T}^T \mathbf{1} = \mathbf{q}
 
-             T\geq 0
+             \mathbf{T} \geq 0
 
     Where :
-    - C1 : Metric cost matrix in the source space
-    - C2 : Metric cost matrix in the target space
-    - p  : distribution in the source space
-    - q  : distribution in the target space
-    - L  : loss function to account for the misfit between the similarity matrices
-    - H  : entropy
+
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity matrices
+    - `H`: entropy
 
     Parameters
     ----------
-    C1 : ndarray, shape (ns, ns)
+    C1 : array-like, shape (ns, ns)
         Metric cost matrix in the source space
-    C2 : ndarray, shape (nt, nt)
-        Metric costfr matrix in the target space
-    p :  ndarray, shape (ns,)
+    C2 : array-like, shape (nt, nt)
+        Metric cost matrix in the target space
+    p :  array-like, shape (ns,)
         Distribution in the source space
-    q :  ndarray, shape (nt,)
+    q :  array-like, shape (nt,)
         Distribution in the target space
     loss_fun :  string
         Loss function used for the solver either 'square_loss' or 'kl_loss'
@@ -1060,12 +1068,12 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
 
     Returns
     -------
-    T : ndarray, shape (ns, nt)
+    T : array-like, shape (`ns`, `nt`)
         Optimal coupling between the two spaces
 
     References
     ----------
-    .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
@@ -1118,32 +1126,31 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
 def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
                                  max_iter=1000, tol=1e-9, verbose=False, log=False):
     r"""
-    Returns the entropic gromov-wasserstein discrepancy between the two measured similarity matrices
-
-    (C1,p) and (C2,q)
+    Returns the entropic gromov-wasserstein discrepancy between the two measured similarity matrices :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
 
     The function solves the following optimization problem:
 
     .. math::
-        GW = \min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}-\epsilon(H(T))
+        GW = \min_\mathbf{T} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
 
     Where :
-    - C1 : Metric cost matrix in the source space
-    - C2 : Metric cost matrix in the target space
-    - p  : distribution in the source space
-    - q  : distribution in the target space
-    - L  : loss function to account for the misfit between the similarity matrices
-    - H  : entropy
+
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity matrices
+    - `H`: entropy
 
     Parameters
     ----------
-    C1 : ndarray, shape (ns, ns)
+    C1 : array-like, shape (ns, ns)
         Metric cost matrix in the source space
-    C2 : ndarray, shape (nt, nt)
-        Metric costfr matrix in the target space
-    p :  ndarray, shape (ns,)
+    C2 : array-like, shape (nt, nt)
+        Metric cost matrix in the target space
+    p :  array-like, shape (ns,)
         Distribution in the source space
-    q :  ndarray, shape (nt,)
+    q :  array-like, shape (nt,)
         Distribution in the target space
     loss_fun : str
         Loss function used for the solver either 'square_loss' or 'kl_loss'
@@ -1165,7 +1172,7 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
 
     References
     ----------
-    .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
@@ -1184,38 +1191,37 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
 def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
                                 max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None, random_state=None):
     r"""
-    Returns the gromov-wasserstein barycenters of S measured similarity matrices
-
-    (Cs)_{s=1}^{s=S}
+    Returns the gromov-wasserstein barycenters of `S` measured similarity matrices :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
 
     The function solves the following optimization problem:
 
     .. math::
-        C = argmin_{C\in R^{NxN}} \sum_s \lambda_s GW(C,C_s,p,p_s)
 
+        \mathbf{C} = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{NxN}} \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
 
     Where :
 
-    - :math:`C_s` : metric cost matrix
-    - :math:`p_s`  : distribution
+    - :math:`\mathbf{C}_s`: metric cost matrix
+    - :math:`\mathbf{p}_s`: distribution
 
     Parameters
     ----------
     N : int
         Size of the targeted barycenter
-    Cs : list of S np.ndarray of shape (ns,ns)
+    Cs : list of S array-like of shape (ns,ns)
         Metric cost matrices
-    ps : list of S np.ndarray of shape (ns,)
-        Sample weights in the S spaces
-    p : ndarray, shape(N,)
+    ps : list of S array-like of shape (ns,)
+        Sample weights in the `S` spaces
+    p : array-like, shape(N,)
         Weights in the targeted barycenter
     lambdas : list of float
-        List of the S spaces' weights.
+        List of the `S` spaces' weights.
     loss_fun : callable
         Tensor-matrix multiplication function based on specific loss function.
     update : callable
-        function(p,lambdas,T,Cs) that updates C according to a specific Kernel
-        with the S Ts couplings calculated at each iteration
+        function(:math:`\mathbf{p}`, lambdas, :math:`\mathbf{T}`, :math:`\mathbf{Cs}`) that updates
+        :math:`\mathbf{C}` according to a specific Kernel with the `S` :math:`\mathbf{T}_s` couplings
+        calculated at each iteration
     epsilon : float
         Regularization term >0
     max_iter : int, optional
@@ -1226,19 +1232,19 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
         Print information along iterations.
     log : bool, optional
         Record log if True.
-    init_C : bool | ndarray, shape (N, N)
-        Random initial value for the C matrix provided by user.
+    init_C : bool | array-like, shape (N, N)
+        Random initial value for the :math:`\mathbf{C}` matrix provided by user.
     random_state : int or RandomState instance, optional
         Fix the seed for reproducibility
 
     Returns
     -------
-    C : ndarray, shape (N, N)
+    C : array-like, shape (`N`, `N`)
         Similarity matrix in the barycenter space (permutated arbitrarily)
 
     References
     ----------
-    .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
     """
@@ -1298,36 +1304,37 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
 def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
                        max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None, random_state=None):
     r"""
-    Returns the gromov-wasserstein barycenters of S measured similarity matrices
+    Returns the gromov-wasserstein barycenters of `S` measured similarity matrices :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
 
-    (Cs)_{s=1}^{s=S}
-
-    The function solves the following optimization problem with block
-    coordinate descent:
+    The function solves the following optimization problem with block coordinate descent:
 
     .. math::
-        C = argmin_C\in R^NxN \sum_s \lambda_s GW(C,Cs,p,ps)
+
+        \mathbf{C} = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
 
     Where :
 
-    - Cs : metric cost matrix
-    - ps  : distribution
+    - :math:`\mathbf{C}_s`: metric cost matrix
+    - :math:`\mathbf{p}_s`: distribution
 
     Parameters
     ----------
     N : int
         Size of the targeted barycenter
-    Cs : list of S np.ndarray of shape (ns, ns)
+    Cs : list of S array-like of shape (ns, ns)
         Metric cost matrices
-    ps : list of S np.ndarray of shape (ns,)
-        Sample weights in the S spaces
-    p : ndarray, shape (N,)
+    ps : list of S array-like of shape (ns,)
+        Sample weights in the `S` spaces
+    p : array-like, shape (N,)
         Weights in the targeted barycenter
     lambdas : list of float
-        List of the S spaces' weights
-    loss_fun :  tensor-matrix multiplication function based on specific loss function
-    update : function(p,lambdas,T,Cs) that updates C according to a specific Kernel
-             with the S Ts couplings calculated at each iteration
+        List of the `S` spaces' weights
+    loss_fun : callable
+        tensor-matrix multiplication function based on specific loss function
+    update : callable
+        function(:math:`\mathbf{p}`, lambdas, :math:`\mathbf{T}`, :math:`\mathbf{Cs}`) that updates
+        :math:`\mathbf{C}` according to a specific Kernel with the `S` :math:`\mathbf{T}_s` couplings
+        calculated at each iteration
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -1336,19 +1343,19 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
         Print information along iterations.
     log : bool, optional
         Record log if True.
-    init_C : bool | ndarray, shape(N,N)
-        Random initial value for the C matrix provided by user.
+    init_C : bool | array-like, shape(N,N)
+        Random initial value for the :math:`\mathbf{C}` matrix provided by user.
     random_state : int or RandomState instance, optional
         Fix the seed for reproducibility
 
     Returns
     -------
-    C : ndarray, shape (N, N)
+    C : array-like, shape (N, N)
         Similarity matrix in the barycenter space (permutated arbitrarily)
 
     References
     ----------
-    .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
@@ -1409,20 +1416,20 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_features=False,
                     p=None, loss_fun='square_loss', max_iter=100, tol=1e-9,
                     verbose=False, log=False, init_C=None, init_X=None, random_state=None):
-    """Compute the fgw barycenter as presented eq (5) in [24].
+    """Compute the fgw barycenter as presented eq (5) in :ref:`[24] <references-fgw-barycenters>`
 
     Parameters
     ----------
-    N : integer
+    N : int
         Desired number of samples of the target barycenter
-    Ys: list of ndarray, each element has shape (ns,d)
+    Ys: list of array-like, each element has shape (ns,d)
         Features of all samples
-    Cs : list of ndarray, each element has shape (ns,ns)
+    Cs : list of array-like, each element has shape (ns,ns)
         Structure matrices of all samples
-    ps : list of ndarray, each element has shape (ns,)
+    ps : list of array-like, each element has shape (ns,)
         Masses of all samples.
     lambdas : list of float
-        List of the S spaces' weights
+        List of the `S` spaces' weights
     alpha : float
         Alpha parameter for the fgw distance
     fixed_structure : bool
@@ -1439,10 +1446,10 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         Print information along iterations.
     log : bool, optional
         Record log if True.
-    init_C : ndarray, shape (N,N), optional
+    init_C : array-like, shape (N,N), optional
         Initialization for the barycenters' structure matrix. If not set
         a random init is used.
-    init_X : ndarray, shape (N,d), optional
+    init_X : array-like, shape (N,d), optional
         Initialization for the barycenters' features. If not set a
         random init is used.
     random_state : int or RandomState instance, optional
@@ -1450,16 +1457,18 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
 
     Returns
     -------
-    X : ndarray, shape (N, d)
+    X : array-like, shape (N, d)
         Barycenters' features
-    C : ndarray, shape (N, N)
+    C : array-like, shape (N, N)
         Barycenters' structure matrix
-    log_: dict
+    log : dict
         Only returned when log=True. It contains the keys:
-        T : list of (N,ns) transport matrices
-        Ms : all distance matrices between the feature of the barycenter and the
-        other features dist(X,Ys) shape (N,ns)
 
+        - :math:`\mathbf{T}`: list of (`N`, `ns`) transport matrices
+        - :math:`(\mathbf{M}_s)_s`: all distance matrices between the feature of the barycenter and the other features :math:`(dist(\mathbf{X}, \mathbf{Y}_s))_s` shape (`N`, `ns`)
+
+
+    .. _references-fgw-barycenters:
     References
     ----------
     .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain

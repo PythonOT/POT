@@ -1263,7 +1263,7 @@ def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
     Parameters
     ----------
     A : array-like, shape (dim, n_hists)
-        `n_hists` training distributions :math:`a_i` of size `dim`
+        `n_hists` training distributions :math:`\mathbf{a}_i` of size `dim`
     M : array-like, shape (dim, dim)
         loss matrix for OT
     reg : float
@@ -1271,7 +1271,7 @@ def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
     method : str (optional)
         method used for the solver either 'sinkhorn' or 'sinkhorn_stabilized'
     weights : array-like, shape (n_hists,)
-        Weights of each histogram :math:`a_i` on the simplex (barycentric coodinates)
+        Weights of each histogram :math:`\mathbf{a}_i` on the simplex (barycentric coodinates)
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -1332,13 +1332,13 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
     Parameters
     ----------
     A : array-like, shape (dim, n_hists)
-        `n_hists` training distributions :math:`a_i` of size `dim`
+        `n_hists` training distributions :math:`\mathbf{a}_i` of size `dim`
     M : array-like, shape (dim, dim)
         loss matrix for OT
     reg : float
         Regularization term > 0
     weights : array-like, shape (n_hists,)
-        Weights of each histogram :math:`a_i` on the simplex (barycentric coodinates)
+        Weights of each histogram :math:`\mathbf{a}_i` on the simplex (barycentric coodinates)
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -1432,7 +1432,7 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
     Parameters
     ----------
     A : array-like, shape (dim, n_hists)
-        `n_hists` training distributions :math:`a_i` of size `dim`
+        `n_hists` training distributions :math:`\mathbf{a}_i` of size `dim`
     M : array-like, shape (dim, dim)
         loss matrix for OT
     reg : float
@@ -1440,7 +1440,7 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
     tau : float
         threshold for max value in :math:`\mathbf{u}` or :math:`\mathbf{v}` for log scaling
     weights : array-like, shape (n_hists,)
-        Weights of each histogram :math:`a_i` on the simplex (barycentric coodinates)
+        Weights of each histogram :math:`\mathbf{a}_i` on the simplex (barycentric coodinates)
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
