@@ -109,7 +109,7 @@ def test_dist():
     D2 = ot.dist(x, x)
     D3 = ot.dist(x)
 
-    D4 = ot.dist(x, x, metric='minkowski', p=0.5)
+    D4 = ot.dist(x, x, metric='minkowski', p=2)
 
     assert D4[0, 1] == D4[1, 0]
 

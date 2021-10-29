@@ -201,25 +201,6 @@ def test_emd_1d_emd2_1d_with_weights():
     np.testing.assert_allclose(w_v, G.sum(0))
 
 
-def test_wass_1d():
-    # test emd1d gives similar results as emd
-    n = 20
-    m = 30
-    rng = np.random.RandomState(0)
-    u = rng.randn(n, 1)
-    v = rng.randn(m, 1)
-
-    M = ot.dist(u, v, metric='sqeuclidean')
-
-    G, log = ot.emd([], [], M, log=True)
-    wass = log["cost"]
-
-    wass1d = ot.wasserstein_1d(u, v, [], [], p=2.)
-
-    # check loss is similar
-    np.testing.assert_allclose(np.sqrt(wass), wass1d)
-
-
 def test_emd_empty():
     # test emd and emd2 for simple identity
     n = 100

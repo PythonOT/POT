@@ -3,7 +3,8 @@ r"""
 Wasserstein 1D with PyTorch
 =================================
 
-In this small example, we consider the following minization problem
+In this small example, we consider the following minization problem:
+
 .. math::
   \mu^* = \min_\mu W(\mu,\nu)
 
@@ -23,8 +24,8 @@ import numpy as np
 import matplotlib.pylab as pl
 import matplotlib as mpl
 import torch
-import ot
-from ot.sliced import emd1D
+
+from ot.lp import wasserstein_1d
 from ot.datasets import make_1D_gauss as gauss
 from ot.utils import proj_simplex
 
@@ -69,7 +70,7 @@ pl.plot(x, b, 'r', label='Target distribution')
 
 for i in range(nb_iter_max):
     # Compute the Wasserstein 1D with torch backend
-    loss = emd1D(x_torch, x_torch, a_torch, b_torch, p=2)
+    loss = wasserstein_1d(x_torch, x_torch, a_torch, b_torch, p=2)
     # record the corresponding loss value
     loss_iter.append(loss.clone().detach().cpu().numpy())
     loss.backward()
@@ -95,6 +96,9 @@ pl.plot(range(nb_iter_max), loss_iter, lw=3)
 pl.title('Evolution of the loss along iterations', fontsize=16)
 pl.show()
 
+##############################################################################
+#  Wasserstein barycenter
+# ---------
 r"""
 =================================
 1D Wasserstein barycenter with PyTorch
@@ -130,7 +134,7 @@ t = 0.5
 
 for i in range(nb_iter_max):
     # Compute the Wasserstein 1D with torch backend
-    loss = (1 - t) * emd1D(x_torch, x_torch, a_torch, bary_torch, p=2) + t * emd1D(x_torch, x_torch, b_torch, bary_torch, p=2)
+    loss = (1 - t) * wasserstein_1d(x_torch, x_torch, a_torch, bary_torch, p=2) + t * wasserstein_1d(x_torch, x_torch, b_torch, bary_torch, p=2)
     # record the corresponding loss value
     loss_iter.append(loss.clone().detach().cpu().numpy())
     loss.backward()
