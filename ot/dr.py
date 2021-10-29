@@ -108,7 +108,7 @@ def fda(X, y, p=2, reg=1e-16):
     return Popt, proj
 
 
-def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None):
+def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None, normalize = False):
     r"""
     Wasserstein Discriminant Analysis [11]_
 
@@ -138,6 +138,8 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None):
         else should be a pymanopt.solvers
     P0 : ndarray, shape (d, p)
         Initial starting point for projection.
+    normalize : bool, optional
+        Normalise the Wasserstaiun distane by the average distance on P0 (default : False)
     verbose : int, optional
         Print information along iterations.
 
@@ -164,7 +166,7 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None):
     wc = [np.ones((x.shape[0]), dtype=np.float32) / x.shape[0] for x in xc]
     
     # pre-compute reg_c,c'
-    if P0 is not None:
+    if P0 is not None and normalize:
         regmean = np.zeros((len(xc), len(xc)))
         for i, xi in enumerate(xc):
             xi = np.dot(xi, P0)
@@ -172,6 +174,8 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None):
                 xj = np.dot(xj, P0)
                 M = dist(xi, xj)
                 regmean[i,j] = np.sum(M)/(len(xi)*len(xj))
+    else:
+        regmean = np.ones((len(xc), len(xc)))
 
     def cost(P):
         # wda loss
@@ -183,7 +187,7 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None):
             for j, xj in enumerate(xc[i:]):
                 xj = np.dot(xj, P)
                 M = dist(xi, xj)
-                G = sinkhorn(wc[i], wc[j + i], M, reg/regmean[i,j], k)
+                G = sinkhorn(wc[i], wc[j + i], M, reg*regmean[i,j], k)
                 if j == 0:
                     loss_w += np.sum(G * M)
                 else:
