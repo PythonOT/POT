@@ -188,7 +188,7 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None, no
             for j, xj in enumerate(xc[i:]):
                 xj = np.dot(xj, P)
                 M = dist(xi, xj)
-                G = sinkhorn(wc[i], wc[j + i], M, reg * regmean[i,j], k)
+                G = sinkhorn(wc[i], wc[j + i], M, reg * regmean[i, j], k)
                 if j == 0:
                     loss_w += np.sum(G * M)
                 else:
