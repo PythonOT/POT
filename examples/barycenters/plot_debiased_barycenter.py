@@ -24,7 +24,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import ot
-from ot.bregman import barycenter, convolutional_barycenter2d
+from ot.bregman import (barycenter, barycenter_debiased,
+                        convolutional_barycenter2d,
+                        convolutional_barycenter2d_debiased)
 
 ##############################################################################
 # Debiased barycenter of 1D Gaussians
@@ -57,8 +59,8 @@ weights = np.array([1 - alpha, alpha])
 epsilons = [5e-3, 1e-2, 5e-2]
 
 
-bars = [barycenter(A, M, reg, weights, method="sinkhorn") for reg in epsilons]
-bars_debiased = [barycenter(A, M, reg, weights, method="debiased") for reg in epsilons]
+bars = [barycenter(A, M, reg, weights) for reg in epsilons]
+bars_debiased = [barycenter_debiased(A, M, reg, weights) for reg in epsilons]
 labels = ["Sinkhorn barycenter", "Debiased barycenter"]
 colors = ["indianred", "gold"]
 
@@ -106,8 +108,8 @@ plt.show()
 bars_sinkhorn, bars_debiased = [], []
 epsilons = [5e-3, 7e-3, 1e-2]
 for eps in epsilons:
-    bar = convolutional_barycenter2d(A, eps, method="sinkhorn")
-    bar_debiased = convolutional_barycenter2d(A, eps, method="debiased")
+    bar = convolutional_barycenter2d(A, eps)
+    bar_debiased = convolutional_barycenter2d_debiased(A, eps)
     bars_sinkhorn.append(bar)
     bars_debiased.append(bar_debiased)
 
