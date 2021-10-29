@@ -650,7 +650,7 @@ def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
     std : bool, optional
         Standard deviation associated with the prediction of the gromov-wasserstein cost.
     random_state : int or RandomState instance, optional
-        Fix the seed for to allow reproducibility
+        Fix the seed for reproducibility
 
     Returns
     -------
@@ -782,7 +782,7 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
         log : bool, optional
             Gives the distance estimated and the standard deviation
         random_state : int or RandomState instance, optional
-            Fix the seed for to allow reproducibility
+            Fix the seed for reproducibility
 
         Returns
         -------
@@ -903,7 +903,7 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
     log : bool, optional
         Gives the distance estimated and the standard deviation
     random_state : int or RandomState instance, optional
-        Fix the seed for to allow reproducibility
+        Fix the seed for reproducibility
 
     Returns
     -------
@@ -1180,7 +1180,7 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
 
 
 def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
-                                max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None):
+                                max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None, random_state=None):
     r"""
     Returns the gromov-wasserstein barycenters of S measured similarity matrices
 
@@ -1226,6 +1226,8 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
         Record log if True.
     init_C : bool | ndarray, shape (N, N)
         Random initial value for the C matrix provided by user.
+    random_state : int or RandomState instance, optional
+        Fix the seed for reproducibility
 
     Returns
     -------
@@ -1247,8 +1249,8 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
 
     # Initialization of C : random SPD matrix (if not provided by user)
     if init_C is None:
-        # XXX use random state
-        xalea = np.random.randn(N, 2)
+        generator = check_random_state(random_state)
+        xalea = generator.randn(N, 2)
         C = dist(xalea, xalea)
         C /= C.max()
         C = nx.from_numpy(C, type_as=p)
@@ -1292,7 +1294,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
 
 
 def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
-                       max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None):
+                       max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None, random_state=None):
     r"""
     Returns the gromov-wasserstein barycenters of S measured similarity matrices
 
@@ -1334,6 +1336,8 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
         Record log if True.
     init_C : bool | ndarray, shape(N,N)
         Random initial value for the C matrix provided by user.
+    random_state : int or RandomState instance, optional
+        Fix the seed for reproducibility
 
     Returns
     -------
@@ -1356,8 +1360,8 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 
     # Initialization of C : random SPD matrix (if not provided by user)
     if init_C is None:
-        # XXX : should use a random state and not use the global seed
-        xalea = np.random.randn(N, 2)
+        generator = check_random_state(random_state)
+        xalea = generator.randn(N, 2)
         C = dist(xalea, xalea)
         C /= C.max()
         C = nx.from_numpy(C, type_as=p)
@@ -1402,7 +1406,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 
 def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_features=False,
                     p=None, loss_fun='square_loss', max_iter=100, tol=1e-9,
-                    verbose=False, log=False, init_C=None, init_X=None):
+                    verbose=False, log=False, init_C=None, init_X=None, random_state=None):
     """Compute the fgw barycenter as presented eq (5) in [24].
 
     Parameters
@@ -1439,6 +1443,8 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
     init_X : ndarray, shape (N,d), optional
         Initialization for the barycenters' features. If not set a
         random init is used.
+    random_state : int or RandomState instance, optional
+        Fix the seed for reproducibility
 
     Returns
     -------
@@ -1477,8 +1483,8 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
             C = init_C
     else:
         if init_C is None:
-            # XXX : replace it with random state
-            xalea = np.random.randn(N, 2)
+            generator = check_random_state(random_state)
+            xalea = generator.randn(N, 2)
             C = dist(xalea, xalea)
             C = nx.from_numpy(C, type_as=ps[0])
         else:
@@ -1530,7 +1536,6 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         # T is N,ns
         err_feature = nx.norm(X - nx.reshape(Xprev, (N, d)))
         err_structure = nx.norm(C - Cprev)
-
         if log:
             log_['err_feature'].append(err_feature)
             log_['err_structure'].append(err_structure)

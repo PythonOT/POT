@@ -258,16 +258,26 @@ def test_gromov_barycenter(nx):
     p2b = nx.from_numpy(p2)
     pb = nx.from_numpy(p)
 
-    Cbb = ot.gromov.gromov_barycenters(
-        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'square_loss', max_iter=100, tol=1e-3, verbose=True
+    Cb = ot.gromov.gromov_barycenters(
+        n_samples, [C1, C2], [p1, p2], p, [.5, .5],
+        'square_loss', max_iter=100, tol=1e-3, verbose=True, random_state=42
     )
+    Cbb = nx.to_numpy(ot.gromov.gromov_barycenters(
+        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
+        'square_loss', max_iter=100, tol=1e-3, verbose=True, random_state=42
+    ))
+    np.testing.assert_allclose(Cb, Cbb, atol=1e-06)
     np.testing.assert_allclose(Cbb.shape, (n_samples, n_samples))
 
-    Cb2b = ot.gromov.gromov_barycenters(
-        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'kl_loss', max_iter=100, tol=1e-3
+    Cb2 = ot.gromov.gromov_barycenters(
+        n_samples, [C1, C2], [p1, p2], p, [.5, .5],
+        'kl_loss', max_iter=100, tol=1e-3, random_state=42
     )
+    Cb2b = nx.to_numpy(ot.gromov.gromov_barycenters(
+        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
+        'kl_loss', max_iter=100, tol=1e-3, random_state=42
+    ))
+    np.testing.assert_allclose(Cb2, Cb2b, atol=1e-06)
     np.testing.assert_allclose(Cb2b.shape, (n_samples, n_samples))
 
 
@@ -292,21 +302,30 @@ def test_gromov_entropic_barycenter(nx):
     p2b = nx.from_numpy(p2)
     pb = nx.from_numpy(p)
 
-    Cbb = ot.gromov.entropic_gromov_barycenters(
-        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'square_loss', 1e-3, max_iter=50, tol=1e-3, verbose=True
+    Cb = ot.gromov.entropic_gromov_barycenters(
+        n_samples, [C1, C2], [p1, p2], p, [.5, .5],
+        'square_loss', 1e-3, max_iter=50, tol=1e-3, verbose=True, random_state=42
     )
+    Cbb = nx.to_numpy(ot.gromov.entropic_gromov_barycenters(
+        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
+        'square_loss', 1e-3, max_iter=50, tol=1e-3, verbose=True, random_state=42
+    ))
+    np.testing.assert_allclose(Cb, Cbb, atol=1e-06)
     np.testing.assert_allclose(Cbb.shape, (n_samples, n_samples))
 
-    Cb2b = ot.gromov.entropic_gromov_barycenters(
-        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'kl_loss', 1e-3, max_iter=100, tol=1e-3
+    Cb2 = ot.gromov.entropic_gromov_barycenters(
+        n_samples, [C1, C2], [p1, p2], p, [.5, .5],
+        'kl_loss', 1e-3, max_iter=100, tol=1e-3, random_state=42
     )
+    Cb2b = nx.to_numpy(ot.gromov.entropic_gromov_barycenters(
+        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
+        'kl_loss', 1e-3, max_iter=100, tol=1e-3, random_state=42
+    ))
+    np.testing.assert_allclose(Cb2, Cb2b, atol=1e-06)
     np.testing.assert_allclose(Cb2b.shape, (n_samples, n_samples))
 
 
 def test_fgw(nx):
-
     n_samples = 50  # nb samples
 
     mu_s = np.array([0, 0])
@@ -398,10 +417,8 @@ def test_fgw_barycenter(nx):
 
     Xb, Cb = ot.gromov.fgw_barycenters(
         n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5, fixed_structure=False,
-        fixed_features=False, p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3
+        fixed_features=False, p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3, random_state=12345
     )
-    np.testing.assert_allclose(Cb.shape, (n_samples, n_samples))
-    np.testing.assert_allclose(Xb.shape, (n_samples, ys.shape[1]))
 
     xalea = np.random.randn(n_samples, 2)
     init_C = ot.dist(xalea, xalea)
@@ -412,6 +429,7 @@ def test_fgw_barycenter(nx):
         alpha=0.5, fixed_structure=True, init_C=init_Cb, fixed_features=False,
         p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3
     )
+    Xb, Cb = nx.to_numpy(Xb), nx.to_numpy(Cb)
     np.testing.assert_allclose(Cb.shape, (n_samples, n_samples))
     np.testing.assert_allclose(Xb.shape, (n_samples, ys.shape[1]))
 
@@ -421,7 +439,8 @@ def test_fgw_barycenter(nx):
     Xb, Cb, logb = ot.gromov.fgw_barycenters(
         n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
         fixed_structure=False, fixed_features=True, init_X=init_Xb,
-        p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3, log=True
+        p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3, log=True, random_state=98765
     )
+    Xb, Cb = nx.to_numpy(Xb), nx.to_numpy(Cb)
     np.testing.assert_allclose(Cb.shape, (n_samples, n_samples))
     np.testing.assert_allclose(Xb.shape, (n_samples, ys.shape[1]))
