@@ -1497,7 +1497,7 @@ def _barycenter_sinkhorn_log(A, M, reg, weights=None, numItermax=1000,
         for k in range(n_hists):
             f = logA[:, k] - nx.logsumexp(M + G[None, :, k], axis=1)
             log_KU[:, k] = nx.logsumexp(M + f[:, None], axis=0)
-            log_bar += weights[k] * log_KU[:, k]
+            log_bar = log_bar + weights[k] * log_KU[:, k]
 
         if ii % 10 == 1:
             err = nx.exp(G + log_KU).std(axis=1).sum()
@@ -2049,7 +2049,7 @@ def _convolutional_barycenter2d_log(A, reg, weights=None, numItermax=10000,
         for k in range(n_hists):
             f = logA[k] - convol_img(G[k])
             log_KU[k] = convol_img(f)
-            log_bar += weights[k] * log_KU[k]
+            log_bar = log_bar + weights[k] * log_KU[k]
 
         if ii % 10 == 9:
             err = nx.exp(G + log_KU).std(axis=0).sum()
@@ -2271,7 +2271,7 @@ def _convolutional_barycenter2d_debiased_log(A, reg, weights=None, numItermax=10
         for k in range(n_hists):
             f = logA[k] - convol_img(G[k])
             log_KU[k] = convol_img(f)
-            log_bar += weights[k] * log_KU[k]
+            log_bar = log_bar + weights[k] * log_KU[k]
         log_bar += c
         for _ in range(10):
             c = 0.5 * (c + log_bar - convol_img(c))
