@@ -80,7 +80,7 @@ jobs:
 
     - name: Build wheels
       env:
-        CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp*" # remove pypy on mac and win (wrong version)
+        CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp* cp*musl*" # remove pypy on mac and win (wrong version)
         CIBW_BEFORE_BUILD: "pip install numpy cython"
         CIBW_ARCHS_LINUX: auto aarch64 # force aarch64 with QEMU
         CIBW_ARCHS_MACOS: x86_64 universal2 arm64
