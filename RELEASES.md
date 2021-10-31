@@ -3,10 +3,50 @@
 
 ## 0.8.0
 
-This new stable release introduce several important features.
+This new stable release introduces several important features. 
 
-For this release we want to thank the [IDRIS](http://www.idris.fr/), in
-particular  Nathan Cassereau
+First we now have
+an OpenMP compatible exact ot solver in `ot.emd`. The OpenMP version is used
+when the parameter `numThreads` is greater than one and can lead to nice
+speedups on multi-core machines. 
+
+Second whe have introduced a backend mechanism
+that allows to use standard POT function seamlessly on Numpy, Pytorch and Jax
+arrays. Other backends are coming but right now POT can be used seamlessly for
+training neural networks in Pytorch. Notably we propose the first differentiable
+computation of the exact OT loss with `ot.emd2` (can be differentiated w.r.t.
+both cost matrix and sample weights), but also for the classical Sinkhorn loss
+with `ot.sinkhorn2`, the Wasserstein distance in 1D with `ot.wasserstein_1d`,
+sliced Wasserstein with  `ot.TODO` and Gromov-Wasserstein with `ot.TODO`.
+Examples of how this new feature can be used are now available in the
+documentation where the Pytorch backend is used to estimate a [minimal
+Wasserstein
+estimator](https://PythonOT.github.io/auto_examples/backends/plot_unmix_optim_torch.html),
+a [Generative Network (GAN)](https://PythonOT.github.io/auto_examples/backends/plot_wass2_gan_torch.html) or to TODO.
+ As a
+result of this new feature,
+ the old `ot.gpu` submodule is now deprecated since GPU
+implementations can be done using GPU arrays on the torch backends.
+
+Other novel features include implementation for [Sampled Gromov Wasserstein and
+Pointwise Gromov
+Wasserstein](https://PythonOT.github.io/auto_examples/gromov/plot_gromov.html#compute-gw-with-a-scalable-stochastic-method-with-any-loss-function),
+Sinkhorn in log space with `method='sinkhorn_log'`, [Projection Robust
+Wasserstein](https://PythonOT.github.io/gen_modules/ot.dr.html?highlight=robust#ot.dr.projection_robust_wasserstein),
+TODO
+
+
+Finally POT was accepted for publication in the Journal of Machine Learning
+Research (JMLR) open source software track and we ask the POT user to cite [this
+paper](https://www.jmlr.org/papers/v22/20-451.html) from now on. The documentation has been improved in particular by adding a
+"Why OT?" section to the quick start guide and several new examples illustrating
+the new features. The documentation now has two version : the stable version
+corresponding to the last release ans the master version that corresponds to the
+current master branch on GitHub.
+
+
+As usual, we want to thank all the POT contributors. But for this release we
+thank in particular  the [IDRIS](http://www.idris.fr/) and Nathan Cassereau
 and Kamel Guerda from the AI support team for their support to the development
 of the backend and OpenMP implementations. 
 
@@ -102,7 +142,7 @@ problems.
 
 This release is also the moment to thank all the POT contributors (old and new)
 for helping making POT such a nice toolbox. A lot of changes (also in the API)
-are comming for the next versions. 
+are coming for the next versions. 
 
 
 #### Features

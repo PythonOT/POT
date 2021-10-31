@@ -24,7 +24,7 @@ POT provides the following generic OT solvers (links to examples):
    for regularized OT [7].
 -  Entropic regularization OT solver with `Sinkhorn Knopp
    Algorithm <auto_examples/plot_OT_1D.html>`__
-   [2] , stabilized version [9] [10], greedy Sinkhorn [22] and
+   [2] , stabilized version [9] [10] [34], greedy Sinkhorn [22] and
    `Screening Sinkhorn
    [26] <auto_examples/plot_screenkhorn_1D.html>`__.
 -  Bregman projections for `Wasserstein
@@ -140,18 +140,11 @@ following Python modules:
 
 -  Numpy (>=1.16)
 -  Scipy (>=1.0)
--  Cython (>=0.23) (build only, not necessary when installing wheels
-   from pip or conda)
+-  Cython (>=0.23) (build only, not necessary when installing from pip
+   or conda)
 
 Pip installation
 ^^^^^^^^^^^^^^^^
-
-Note that due to a limitation of pip, ``cython`` and ``numpy`` need to
-be installed prior to installing POT. This can be done easily with
-
-.. code:: console
-
-    pip install numpy cython
 
 You can install the toolbox through PyPI with:
 
@@ -493,6 +486,11 @@ Proceedings of the 38th International Conference on Machine Learning
 [33] Kerdoncuff T., Emonet R., Marc S. `Sampled Gromov
 Wasserstein <https://hal.archives-ouvertes.fr/hal-03232509/document>`__,
 Machine Learning Journal (MJL), 2021
+
+[34] Feydy, J., Séjourné, T., Vialard, F. X., Amari, S. I., Trouvé, A.,
+& Peyré, G. (2019, April). Interpolating between optimal transport and
+MMD using Sinkhorn divergences. In The 22nd International Conference on
+Artificial Intelligence and Statistics (pp. 2681-2690). PMLR.
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
