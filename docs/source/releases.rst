@@ -10,23 +10,28 @@ First we now have an OpenMP compatible exact ot solver in ``ot.emd``.
 The OpenMP version is used when the parameter ``numThreads`` is greater
 than one and can lead to nice speedups on multi-core machines.
 
-Second whe have introduced a backend mechanism that allows to use
-standard POT function seamlessly on Numpy, Pytorch and Jax arrays. Other
-backends are coming but right now POT can be used seamlessly for
-training neural networks in Pytorch. Notably we propose the first
-differentiable computation of the exact OT loss with ``ot.emd2`` (can be
-differentiated w.r.t. both cost matrix and sample weights), but also for
-the classical Sinkhorn loss with ``ot.sinkhorn2``, the Wasserstein
-distance in 1D with ``ot.wasserstein_1d``, sliced Wasserstein with
-``ot.TODO`` and Gromov-Wasserstein with ``ot.TODO``. Examples of how
-this new feature can be used are now available in the documentation
-where the Pytorch backend is used to estimate a `minimal Wasserstein
-estimator <https://PythonOT.github.io/auto_examples/backends/plot_unmix_optim_torch.html>`__,
-a `Generative Network
-(GAN) <https://PythonOT.github.io/auto_examples/backends/plot_wass2_gan_torch.html>`__
-or to TODO. As a result of this new feature, the old ``ot.gpu``
-submodule is now deprecated since GPU implementations can be done using
-GPU arrays on the torch backends.
+| Second whe have introduced a backend mechanism that allows to use
+  standard POT function seamlessly on Numpy, Pytorch and Jax arrays.
+  Other backends are coming but right now POT can be used seamlessly for
+  training neural networks in Pytorch. Notably we propose the first
+  differentiable computation of the exact OT loss with ``ot.emd2`` (can
+  be differentiated w.r.t. both cost matrix and sample weights), but
+  also for the classical Sinkhorn loss with ``ot.sinkhorn2``, the
+  Wasserstein distance in 1D with ``ot.wasserstein_1d``, sliced
+  Wasserstein with ``ot.TODO`` and Gromov-Wasserstein with ``ot.TODO``.
+  Examples of how this new feature can be used are now available in the
+  documentation where the Pytorch backend is used to estimate a `minimal
+  Wasserstein
+  estimator <https://PythonOT.github.io/auto_examples/backends/plot_unmix_optim_torch.html>`__,
+  a `Generative Network
+  (GAN) <https://PythonOT.github.io/auto_examples/backends/plot_wass2_gan_torch.html>`__
+  or to TODO. Note that the Jax backend is still in early development
+  and quite slow at the moment, we strongly recommend to use the `OTT
+  toolbox <https://github.com/google-research/ott>`__ for Jax users when
+  possible.
+| As a result of this new feature, the old ``ot.gpu`` submodule is now
+  deprecated since GPU implementations can be done using GPU arrays on
+  the torch backends.
 
 Other novel features include implementation for `Sampled Gromov
 Wasserstein and Pointwise Gromov
@@ -34,6 +39,12 @@ Wasserstein <https://PythonOT.github.io/auto_examples/gromov/plot_gromov.html#co
 Sinkhorn in log space with ``method='sinkhorn_log'``, `Projection Robust
 Wasserstein <https://PythonOT.github.io/gen_modules/ot.dr.html?highlight=robust#ot.dr.projection_robust_wasserstein>`__,
 TODO
+
+This release will also simplify the installation process. We have now a
+``pyproject.toml`` that defines the build dependency and POT should now
+build even when cython is not installed yet. Also we now provide
+pe-compiled wheels for linux ``aarch64`` that is used on Raspberry PI
+and android phones and for MacOS on ARM processors.
 
 Finally POT was accepted for publication in the Journal of Machine
 Learning Research (JMLR) open source software track and we ask the POT
@@ -45,10 +56,11 @@ the new features. The documentation now has two version : the stable
 version corresponding to the last release ans the master version that
 corresponds to the current master branch on GitHub.
 
-As usual, we want to thank all the POT contributors. But for this
-release we thank in particular the `IDRIS <http://www.idris.fr/>`__ and
-Nathan Cassereau and Kamel Guerda from the AI support team for their
-support to the development of the backend and OpenMP implementations.
+As usual, we want to thank all the POT contributors (now 37 people have
+contributed to the toolbox). But for this release we thank in particular
+Nathan Cassereau and Kamel Guerda from the AI support team at
+`IDRIS <http://www.idris.fr/>`__ for their support to the development of
+the backend and OpenMP implementations.
 
 New features
 ^^^^^^^^^^^^
