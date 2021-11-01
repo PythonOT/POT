@@ -968,7 +968,7 @@ class TorchBackend(Backend):
     __name__ = 'torch'
     __type__ = torch_type
 
-    rng__ = torch.Generator()
+    rng_ = torch.Generator()
 
     def __init__(self):
 
@@ -1205,12 +1205,12 @@ class TorchBackend(Backend):
 
     def rand(self, *size, type_as=None):
         if type_as is not None:
-            return torch.rand(*size, generator=self.rng_, dtype=type_as.dtype, device=type_as.device)
+            return torch.rand(size=size, generator=self.rng_, dtype=type_as.dtype, device=type_as.device)
         else:
-            return torch.rand(*size, generator=self.rng_)
+            return torch.rand(size=size, generator=self.rng_)
 
     def randn(self, *size, type_as=None):
         if type_as is not None:
-            return torch.randn(*size, dtype=type_as.dtype, generator=self.rng_, device=type_as.device)
+            return torch.randn(size=size, dtype=type_as.dtype, generator=self.rng_, device=type_as.device)
         else:
-            return torch.randn(*size, generator=self.rng_)
+            return torch.randn(size=size, generator=self.rng_)
