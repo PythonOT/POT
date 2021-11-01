@@ -1010,12 +1010,16 @@ class TorchBackend(Backend):
         return res
 
     def zeros(self, shape, type_as=None):
+        if isinstance(shape, int):
+            shape = (shape,)
         if type_as is None:
             return torch.zeros(shape)
         else:
             return torch.zeros(shape, dtype=type_as.dtype, device=type_as.device)
 
     def ones(self, shape, type_as=None):
+        if isinstance(shape, int):
+            shape = (shape,)
         if type_as is None:
             return torch.ones(shape)
         else:
@@ -1028,6 +1032,8 @@ class TorchBackend(Backend):
             return torch.arange(start, stop, step, device=type_as.device)
 
     def full(self, shape, fill_value, type_as=None):
+        if isinstance(shape, int):
+            shape = (shape,)
         if type_as is None:
             return torch.full(shape, fill_value)
         else:

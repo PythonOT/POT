@@ -41,6 +41,36 @@ def test_sliced_bad_shapes():
         _ = ot.sliced_wasserstein_distance(x, y, u, u, 10, seed=rng)
 
 
+def test_sliced_backend(nx):
+
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    y = rng.randn(2 * n, 2)
+
+    P = rng.randn(2, 20)
+    P = P / np.sqrt((P**2).sum(0, keepdims=True))
+
+    n_projections = 20
+
+    xb = nx.from_numpy(x)
+    yb = nx.from_numpy(y)
+    Pb = nx.from_numpy(P)
+
+    val0 = ot.sliced_wasserstein_distance(x, y, projections=P)
+
+    val = ot.sliced_wasserstein_distance(xb, yb, n_projections=n_projections, seed=0)
+    val2 = ot.sliced_wasserstein_distance(xb, yb, n_projections=n_projections, seed=0)
+
+    assert val > 0
+    assert val == val2
+
+    valb = nx.to_numpy(ot.sliced_wasserstein_distance(xb, yb, projections=Pb))
+
+    assert np.allclose(val0, valb)
+
+
 def test_sliced_log():
     n = 100
     rng = np.random.RandomState(0)
