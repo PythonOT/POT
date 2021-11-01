@@ -48,14 +48,17 @@ def quantile_function(qs, cws, xs):
 
 def wasserstein_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True):
     """
-    Computes the 1 dimensional OT loss [15] between two (batched) empirical distributions
-    ..math:
-        ot_{loss} &= \int_0^1 |cdf_u^{-1}(q)  cdf_v^{-1}(q)|^p dq
+    Computes the 1 dimensional OT loss [15] between two (batched) empirical
+    distributions
+
+    .. math:
+        OT_{loss} = \int_0^1 |cdf_u^{-1}(q)  cdf_v^{-1}(q)|^p dq
 
     It is formally the p-Wasserstein distance raised to the power p.
     We do so in a vectorized way by first building the individual quantile functions then integrating them.
 
-    This function should be preferred to `emd_1d` whenever the backend is different to numpy, and when gradients over
+    This function should be preferred to `emd_1d` whenever the backend is
+    different to numpy, and when gradients over
     either sample positions or weights are required.
 
     Parameters

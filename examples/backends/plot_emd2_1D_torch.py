@@ -13,10 +13,11 @@ by a projected gradient descent method, where the gradient is computed
 by pyTorch automatic differentiation. The projection on the simplex
 ensures that the iterate will remain on the probability simplex.
 
-This example illustrates both `emd2_1D` function and backend use within
+This example illustrates both `wasserstein_1d` function and backend use within
 the POT framework.
 """
 # Author: Nicolas Courty <ncourty@irisa.fr>
+#         Rémi Flamary <remi.flamary@polytechnique.edu>
 #
 # License: MIT License
 
@@ -46,18 +47,13 @@ b = gauss(n, m=60, s=10)
 a = a / a.sum()
 b = b / b.sum()
 
-# display
-pl.figure(1, figsize=(8, 4))
-pl.plot(x, a, c=blue, label='Source distribution')
-pl.plot(x, b, c=red, label='Target distribution')
-pl.legend()
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # use pyTorch for our data
-x_torch = torch.from_numpy(x).to(device=device)
-a_torch = torch.from_numpy(a).to(device=device).requires_grad_(True)
-b_torch = torch.from_numpy(b).to(device=device)
+x_torch = torch.tensor(x).to(device=device)
+a_torch = torch.tensor(a).to(device=device).requires_grad_(True)
+b_torch = torch.tensor(b).to(device=device)
 
 lr = 1e-6
 nb_iter_max = 800
@@ -91,37 +87,33 @@ pl.legend()
 pl.title('Distribution along the iterations of the projected gradient descent')
 pl.show()
 
-pl.figure()
+pl.figure(2)
 pl.plot(range(nb_iter_max), loss_iter, lw=3)
 pl.title('Evolution of the loss along iterations', fontsize=16)
 pl.show()
 
-##############################################################################
-#  Wasserstein barycenter
+# %%
+# Wasserstein barycenter
 # ---------
-r"""
-=================================
-1D Wasserstein barycenter with PyTorch
-=================================
-In this example, we consider the following Wasserstein barycenter problem
-$$ \eta^* = \min_\eta\;\;\; (1-t)W(\mu,\eta) + tW(\eta,\nu)$$
-where :math:`\mu` and :math:`\nu` are reference 1D measures, and :math:`t`
-is a parameter :math:`\in [0,1]`. The problem is handled by a project gradient
-descent method, where the gradient is computed by pyTorch automatic differentiation.
-The projection on the simplex ensures that the iterate will remain on the
-probability simplex.
+# In this example, we consider the following Wasserstein barycenter problem
+# $$ \eta^* = \min_\eta\;\;\; (1-t)W(\mu,\eta) + tW(\eta,\nu)$$
+# where :math:`\mu` and :math:`\nu` are reference 1D measures, and :math:`t`
+# is a parameter :math:`\in [0,1]`. The problem is handled by a project gradient
+# descent method, where the gradient is computed by pyTorch automatic differentiation.
+# The projection on the simplex ensures that the iterate will remain on the
+# probability simplex.
 
-This example illustrates both `emd2_1D` function and backend use within the
-POT framework.
-"""
+# This example illustrates both `wasserstein_1d` function and backend use within the
+# POT framework.
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # use pyTorch for our data
-x_torch = torch.from_numpy(x).to(device=device)
-a_torch = torch.from_numpy(a).to(device=device)
-b_torch = torch.from_numpy(b).to(device=device)
-bary_torch = torch.from_numpy(a).to(device=device).requires_grad_(True)
+x_torch = torch.tensor(x).to(device=device)
+a_torch = torch.tensor(a).to(device=device)
+b_torch = torch.tensor(b).to(device=device)
+bary_torch = torch.tensor((a + b).copy() / 2).to(device=device).requires_grad_(True)
 
 
 lr = 1e-6
@@ -134,7 +126,7 @@ t = 0.5
 
 for i in range(nb_iter_max):
     # Compute the Wasserstein 1D with torch backend
-    loss = (1 - t) * wasserstein_1d(x_torch, x_torch, a_torch, bary_torch, p=2) + t * wasserstein_1d(x_torch, x_torch, b_torch, bary_torch, p=2)
+    loss = (1 - t) * wasserstein_1d(x_torch, x_torch, a_torch.detach(), bary_torch, p=2) + t * wasserstein_1d(x_torch, x_torch, b_torch, bary_torch, p=2)
     # record the corresponding loss value
     loss_iter.append(loss.clone().detach().cpu().numpy())
     loss.backward()
@@ -146,7 +138,7 @@ for i in range(nb_iter_max):
         bary_torch.grad.zero_()
         bary_torch.data = proj_simplex(bary_torch)  # projection onto the simplex
 
-pl.figure(1, figsize=(8, 4))
+pl.figure(3, figsize=(8, 4))
 pl.plot(x, a, 'b', label='Source distribution')
 pl.plot(x, b, 'r', label='Target distribution')
 pl.plot(x, bary_torch.clone().detach().cpu().numpy(), c='green', label='W barycenter')
@@ -154,7 +146,7 @@ pl.legend()
 pl.title('Wasserstein barycenter computed by gradient descent')
 pl.show()
 
-pl.figure()
+pl.figure(4)
 pl.plot(range(nb_iter_max), loss_iter, lw=3)
 pl.title('Evolution of the loss along iterations', fontsize=16)
 pl.show()
