@@ -1863,7 +1863,7 @@ def _barycenter_debiased_log(A, M, reg, weights=None, numItermax=1000,
 
 
 def convolutional_barycenter2d(A, reg, weights=None, method="sinkhorn", numItermax=10000,
-                               stopThr=1e-5, verbose=False, log=False, **kwargs):
+                               stopThr=1e-4, verbose=False, log=False, **kwargs):
     r"""Compute the entropic regularized wasserstein barycenter of distributions A
     where A is a collection of 2D images.
 
@@ -2087,7 +2087,7 @@ def _convolutional_barycenter2d_log(A, reg, weights=None, numItermax=10000,
 
 
 def convolutional_barycenter2d_debiased(A, reg, weights=None, method="sinkhorn", numItermax=10000,
-                                        stopThr=1e-5, verbose=False, log=False, **kwargs):
+                                        stopThr=1e-4, verbose=False, log=False, **kwargs):
     r"""Compute the debiased sinkhorn barycenter of distributions A
     where A is a collection of 2D images.
 
