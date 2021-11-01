@@ -42,7 +42,7 @@ from .bregman import sinkhorn, sinkhorn2, barycenter
 from .unbalanced import (sinkhorn_unbalanced, barycenter_unbalanced,
                          sinkhorn_unbalanced2)
 from .da import sinkhorn_lpl1_mm
-from .sliced import sliced_wasserstein_distance
+from .sliced import sliced_wasserstein_distance, max_sliced_wasserstein_distance
 
 # utils functions
 from .utils import dist, unif, tic, toc, toq
@@ -55,4 +55,5 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim',
            'sinkhorn_unbalanced', 'barycenter_unbalanced',
            'sinkhorn_unbalanced2', 'sliced_wasserstein_distance',
+           'max_sliced_wasserstein_distance',
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath']
