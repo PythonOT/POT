@@ -15,7 +15,7 @@ from ot.sliced import get_random_projections
 def test_get_random_projections():
     rng = np.random.RandomState(0)
     projections = get_random_projections(1000, 50, rng)
-    np.testing.assert_almost_equal(np.sum(projections ** 2, 1), 1.)
+    np.testing.assert_almost_equal(np.sum(projections ** 2, 0), 1.)
 
 
 def test_sliced_same_dist():
@@ -54,7 +54,7 @@ def test_sliced_log():
     projections = log["projections"]
     projected_emds = log["projected_emds"]
 
-    assert len(projections) == len(projected_emds) == 10
+    assert projections.shape[1] == len(projected_emds) == 10
     for emd in projected_emds:
         assert emd > 0
 
