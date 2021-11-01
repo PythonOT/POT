@@ -1,6 +1,6 @@
 r"""
 =================================
-Slice Wasserstein barycenter and gradient flow with PyTorch
+Sliced Wasserstein barycenter and gradient flow with PyTorch
 =================================
 
 
