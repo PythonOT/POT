@@ -49,7 +49,7 @@ def test_sliced_log():
     y = rng.randn(n, 4)
     u = ot.utils.unif(n)
 
-    res, log = ot.sliced_wasserstein_distance(x, y, u, u, 10, seed=rng, log=True)
+    res, log = ot.sliced_wasserstein_distance(x, y, u, u, 10, p=1, seed=rng, log=True)
     assert len(log) == 2
     projections = log["projections"]
     projected_emds = log["projected_emds"]
