@@ -940,7 +940,7 @@ class JaxBackend(Backend):
 
     def seed(self, seed=None):
         if seed is not None:
-            self.rng_ = jax.random.seed(seed)
+            self.rng_ = jax.random.PRNGKey(seed)
 
     def rand(self, *size, type_as=None):
         self.rng_, subkey = jax.random.split(self.rng_)
@@ -968,9 +968,11 @@ class TorchBackend(Backend):
     __name__ = 'torch'
     __type__ = torch_type
 
-    rng_ = torch.Generator()
+    rng_ = None
 
     def __init__(self):
+
+        self.rng_ = torch.Generator()
 
         from torch.autograd import Function
 
