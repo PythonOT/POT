@@ -84,7 +84,7 @@ def wasserstein_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, requ
 
     References
     ----------
-    .. [15] Peyré, G., & Cuturi, M. (2018). [Computational Optimal Transport](https://arxiv.org/pdf/1803.00567.pdf)
+    .. [15] Peyré, G., & Cuturi, M. (2018). Computational Optimal Transport.
 
     """
 
@@ -212,8 +212,7 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     References
     ----------
 
-    .. [1]  Peyré, G., & Cuturi, M. (2017). "Computational Optimal
-        Transport", 2018.
+    .. [15] Peyré, G., & Cuturi, M. (2018). Computational Optimal Transport.
 
     See Also
     --------
@@ -238,7 +237,8 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         b = np.ones((x_b.shape[0],), dtype=np.float64) / x_b.shape[0]
 
     # ensure that same mass
-    np.testing.assert_almost_equal(a.sum(0), b.sum(0), err_msg='a and b vector must have the same sum')
+    np.testing.assert_almost_equal(a.sum(0), b.sum(0),
+                                   err_msg='a and b vector must have the same sum')
     b = b * a.sum() / b.sum()
 
     x_a_1d = x_a.reshape((-1,))

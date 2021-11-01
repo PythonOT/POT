@@ -51,7 +51,7 @@ __version__ = "0.8.0dev"
 
 __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'datasets', 'bregman', 'lp', 'tic', 'toc', 'toq', 'gromov',
-           'emd_1d', 'emd2_1d', 'wasserstein_1d',
+           'emd2_1d', 'wasserstein_1d', 'backend',
            'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim',
            'sinkhorn_unbalanced', 'barycenter_unbalanced',
            'sinkhorn_unbalanced2', 'sliced_wasserstein_distance',
