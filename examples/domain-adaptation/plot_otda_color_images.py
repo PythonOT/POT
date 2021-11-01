@@ -49,7 +49,9 @@ def minmax(img):
 # -------------
 
 # Loading images
-data_path = os.path.join(Path(__file__).parent.parent.parent, 'data')
+this_file = os.path.realpath('__file__')
+data_path = os.path.join(Path(this_file).parent.parent.parent, 'data')
+
 I1 = plt.imread(os.path.join(data_path, 'ocean_day.jpg')).astype(np.float64) / 256
 I2 = plt.imread(os.path.join(data_path, 'ocean_sunset.jpg')).astype(np.float64) / 256
 

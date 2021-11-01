@@ -91,7 +91,8 @@ def im2mat(img):
     return img.reshape((img.shape[0] * img.shape[1], img.shape[2]))
 
 
-data_path = os.path.join(Path(__file__).parent.parent.parent, 'data')
+this_file = os.path.realpath('__file__')
+data_path = os.path.join(Path(this_file).parent.parent.parent, 'data')
 
 square = plt.imread(os.path.join(data_path, 'square.png')).astype(np.float64)[:, :, 2]
 cross = plt.imread(os.path.join(data_path, 'cross.png')).astype(np.float64)[:, :, 2]

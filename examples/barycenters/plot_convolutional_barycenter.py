@@ -26,7 +26,8 @@ import ot
 #
 # The four distributions are constructed from 4 simple images
 
-data_path = os.path.join(Path(__file__).parent.parent.parent, 'data')
+this_file = os.path.realpath('__file__')
+data_path = os.path.join(Path(this_file).parent.parent.parent, 'data')
 
 f1 = 1 - plt.imread(os.path.join(data_path, 'redcross.png'))[:, :, 2]
 f2 = 1 - plt.imread(os.path.join(data_path, 'tooth.png'))[:, :, 2]
