@@ -1480,6 +1480,10 @@ def _barycenter_sinkhorn_log(A, M, reg, weights=None, numItermax=1000,
 
     nx = get_backend(A, M)
 
+    if nx.__name__ == "jax":
+        raise NotImplementedError("Log-domain functions are not yet implemented"
+                                  " for Jax. Use numpy or torch arrays instead.")
+
     if weights is None:
         weights = nx.ones(n_hists, type_as=A) / n_hists
     else:
@@ -1804,6 +1808,9 @@ def _barycenter_debiased_log(A, M, reg, weights=None, numItermax=1000,
     dim, n_hists = A.shape
 
     nx = get_backend(A, M)
+    if nx.__name__ == "jax":
+        raise NotImplementedError("Log-domain functions are not yet implemented"
+                                  " for Jax. Use numpy or torch arrays instead.")
 
     if weights is None:
         weights = nx.ones(n_hists, type_as=A) / n_hists
@@ -2014,6 +2021,9 @@ def _convolutional_barycenter2d_log(A, reg, weights=None, numItermax=10000,
     A = list_to_array(A)
 
     nx = get_backend(A)
+    if nx.__name__ == "jax":
+        raise NotImplementedError("Log-domain functions are not yet implemented"
+                                  " for Jax. Use numpy or torch arrays instead.")
 
     n_hists, width, height = A.shape
 
@@ -2237,7 +2247,9 @@ def _convolutional_barycenter2d_debiased_log(A, reg, weights=None, numItermax=10
     A = list_to_array(A)
     n_hists, width, height = A.shape
     nx = get_backend(A)
-
+    if nx.__name__ == "jax":
+        raise NotImplementedError("Log-domain functions are not yet implemented"
+                                  " for Jax. Use numpy or torch arrays instead.")
     if weights is None:
         weights = nx.ones((n_hists,), type_as=A) / n_hists
     else:
