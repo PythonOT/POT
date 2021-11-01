@@ -460,12 +460,15 @@ def test_func_backends(nx):
 def test_random_backends(nx):
 
     tmp_u = nx.rand()
+
+    assert tmp_u < 1
+
     tmp_n = nx.randn()
 
     nx.seed(0)
     M1 = nx.to_numpy(nx.rand(5, 2))
     nx.seed(0)
-    M2 = nx.to_numpy(nx.rand(5, 2, type_as=tmp_u))
+    M2 = nx.to_numpy(nx.rand(5, 2, type_as=tmp_n))
 
     assert np.all(M1 >= 0)
     assert np.all(M1 < 1)

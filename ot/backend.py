@@ -771,7 +771,7 @@ class JaxBackend(Backend):
     rng_ = None
 
     def __init__(self):
-        rng_ = jax.random.PRNGKey(42)
+        self.rng_ = jax.random.PRNGKey(42)
 
     def to_numpy(self, a):
         return np.array(a)
@@ -943,14 +943,14 @@ class JaxBackend(Backend):
             self.rng_ = jax.random.seed(seed)
 
     def rand(self, *size, type_as=None):
-        self.rng_, subkey = random.split(self.rng_)
+        self.rng_, subkey = jax.random.split(self.rng_)
         if type_as is not None:
             return jax.random.uniform(subkey, shape=size, dtype=type_as.dtype)
         else:
             return jax.random.uniform(subkey, shape=size)
 
     def randn(self, *size, type_as=None):
-        self.rng_, subkey = random.split(self.rng_)
+        self.rng_, subkey = jax.random.split(self.rng_)
         if type_as is not None:
             return jax.random.normal(subkey, shape=size, dtype=type_as.dtype)
         else:
