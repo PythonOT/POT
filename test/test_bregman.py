@@ -68,9 +68,9 @@ def test_sinkhorn_backends(nx):
     G = ot.sinkhorn(a, a, M, 1)
 
     ab = nx.from_numpy(a)
-    Mb = nx.from_numpy(M)
+    M_nx = nx.from_numpy(M)
 
-    Gb = ot.sinkhorn(ab, ab, Mb, 1)
+    Gb = ot.sinkhorn(ab, ab, M_nx, 1)
 
     np.allclose(G, nx.to_numpy(Gb))
 
@@ -89,9 +89,9 @@ def test_sinkhorn2_backends(nx):
     G = ot.sinkhorn(a, a, M, 1)
 
     ab = nx.from_numpy(a)
-    Mb = nx.from_numpy(M)
+    M_nx = nx.from_numpy(M)
 
-    Gb = ot.sinkhorn2(ab, ab, Mb, 1)
+    Gb = ot.sinkhorn2(ab, ab, M_nx, 1)
 
     np.allclose(G, nx.to_numpy(Gb))
 
@@ -166,15 +166,15 @@ def test_sinkhorn_variants(nx):
     M = ot.dist(x, x)
 
     ub = nx.from_numpy(u)
-    Mb = nx.from_numpy(M)
+    M_nx = nx.from_numpy(M)
 
     G = ot.sinkhorn(u, u, M, 1, method='sinkhorn', stopThr=1e-10)
-    Gl = nx.to_numpy(ot.sinkhorn(ub, ub, Mb, 1, method='sinkhorn_log', stopThr=1e-10))
-    G0 = nx.to_numpy(ot.sinkhorn(ub, ub, Mb, 1, method='sinkhorn', stopThr=1e-10))
-    Gs = nx.to_numpy(ot.sinkhorn(ub, ub, Mb, 1, method='sinkhorn_stabilized', stopThr=1e-10))
+    Gl = nx.to_numpy(ot.sinkhorn(ub, ub, M_nx, 1, method='sinkhorn_log', stopThr=1e-10))
+    G0 = nx.to_numpy(ot.sinkhorn(ub, ub, M_nx, 1, method='sinkhorn', stopThr=1e-10))
+    Gs = nx.to_numpy(ot.sinkhorn(ub, ub, M_nx, 1, method='sinkhorn_stabilized', stopThr=1e-10))
     Ges = nx.to_numpy(ot.sinkhorn(
-        ub, ub, Mb, 1, method='sinkhorn_epsilon_scaling', stopThr=1e-10))
-    G_green = nx.to_numpy(ot.sinkhorn(ub, ub, Mb, 1, method='greenkhorn', stopThr=1e-10))
+        ub, ub, M_nx, 1, method='sinkhorn_epsilon_scaling', stopThr=1e-10))
+    G_green = nx.to_numpy(ot.sinkhorn(ub, ub, M_nx, 1, method='greenkhorn', stopThr=1e-10))
 
     # check values
     np.testing.assert_allclose(G, G0, atol=1e-05)
@@ -200,12 +200,12 @@ def test_sinkhorn_variants_multi_b(nx):
 
     ub = nx.from_numpy(u)
     bb = nx.from_numpy(b)
-    Mb = nx.from_numpy(M)
+    M_nx = nx.from_numpy(M)
 
     G = ot.sinkhorn(u, b, M, 1, method='sinkhorn', stopThr=1e-10)
-    Gl = nx.to_numpy(ot.sinkhorn(ub, bb, Mb, 1, method='sinkhorn_log', stopThr=1e-10))
-    G0 = nx.to_numpy(ot.sinkhorn(ub, bb, Mb, 1, method='sinkhorn', stopThr=1e-10))
-    Gs = nx.to_numpy(ot.sinkhorn(ub, bb, Mb, 1, method='sinkhorn_stabilized', stopThr=1e-10))
+    Gl = nx.to_numpy(ot.sinkhorn(ub, bb, M_nx, 1, method='sinkhorn_log', stopThr=1e-10))
+    G0 = nx.to_numpy(ot.sinkhorn(ub, bb, M_nx, 1, method='sinkhorn', stopThr=1e-10))
+    Gs = nx.to_numpy(ot.sinkhorn(ub, bb, M_nx, 1, method='sinkhorn_stabilized', stopThr=1e-10))
 
     # check values
     np.testing.assert_allclose(G, G0, atol=1e-05)
@@ -229,12 +229,12 @@ def test_sinkhorn2_variants_multi_b(nx):
 
     ub = nx.from_numpy(u)
     bb = nx.from_numpy(b)
-    Mb = nx.from_numpy(M)
+    M_nx = nx.from_numpy(M)
 
     G = ot.sinkhorn2(u, b, M, 1, method='sinkhorn', stopThr=1e-10)
-    Gl = nx.to_numpy(ot.sinkhorn2(ub, bb, Mb, 1, method='sinkhorn_log', stopThr=1e-10))
-    G0 = nx.to_numpy(ot.sinkhorn2(ub, bb, Mb, 1, method='sinkhorn', stopThr=1e-10))
-    Gs = nx.to_numpy(ot.sinkhorn2(ub, bb, Mb, 1, method='sinkhorn_stabilized', stopThr=1e-10))
+    Gl = nx.to_numpy(ot.sinkhorn2(ub, bb, M_nx, 1, method='sinkhorn_log', stopThr=1e-10))
+    G0 = nx.to_numpy(ot.sinkhorn2(ub, bb, M_nx, 1, method='sinkhorn', stopThr=1e-10))
+    Gs = nx.to_numpy(ot.sinkhorn2(ub, bb, M_nx, 1, method='sinkhorn_stabilized', stopThr=1e-10))
 
     # check values
     np.testing.assert_allclose(G, G0, atol=1e-05)
@@ -305,24 +305,24 @@ def test_barycenter(nx, method):
     alpha = 0.5  # 0<=alpha<=1
     weights = np.array([1 - alpha, alpha])
 
-    Ab = nx.from_numpy(A)
-    Mb = nx.from_numpy(M)
-    weightsb = nx.from_numpy(weights)
+    A_nx = nx.from_numpy(A)
+    M_nx = nx.from_numpy(M)
+    weights_nx = nx.from_numpy(weights)
     reg = 1e-2
 
     if nx.__name__ == "jax" and method == "sinkhorn_log":
         with pytest.raises(NotImplementedError):
-            ot.bregman.barycenter(A, M, reg, weights, method=method)
+            ot.bregman.barycenter(A_nx, M_nx, reg, weights, method=method)
     else:
         # wasserstein
         bary_wass_np = ot.bregman.barycenter(A, M, reg, weights, method=method)
-        bary_wass, _ = ot.bregman.barycenter(Ab, Mb, reg, weightsb, method=method, log=True)
+        bary_wass, _ = ot.bregman.barycenter(A_nx, M_nx, reg, weights_nx, method=method, log=True)
         bary_wass = nx.to_numpy(bary_wass)
 
         np.testing.assert_allclose(1, np.sum(bary_wass))
         np.testing.assert_allclose(bary_wass, bary_wass_np)
 
-        ot.bregman.barycenter(Ab, Mb, reg, log=True)
+        ot.bregman.barycenter(A_nx, M_nx, reg, log=True)
 
 
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
@@ -343,24 +343,24 @@ def test_barycenter_debiased(nx, method):
     alpha = 0.5  # 0<=alpha<=1
     weights = np.array([1 - alpha, alpha])
 
-    Ab = nx.from_numpy(A)
-    Mb = nx.from_numpy(M)
-    weightsb = nx.from_numpy(weights)
+    A_nx = nx.from_numpy(A)
+    M_nx = nx.from_numpy(M)
+    weights_nx = nx.from_numpy(weights)
 
     # wasserstein
     reg = 1e-2
     if nx.__name__ == "jax" and method == "sinkhorn_log":
         with pytest.raises(NotImplementedError):
-            ot.bregman.barycenter_debiased(A, M, reg, weights, method=method)
+            ot.bregman.barycenter_debiased(A_nx, M_nx, reg, weights, method=method)
     else:
         bary_wass_np = ot.bregman.barycenter_debiased(A, M, reg, weights, method=method)
-        bary_wass, _ = ot.bregman.barycenter_debiased(Ab, Mb, reg, weightsb, method=method, log=True)
+        bary_wass, _ = ot.bregman.barycenter_debiased(A_nx, M_nx, reg, weights_nx, method=method, log=True)
         bary_wass = nx.to_numpy(bary_wass)
 
         np.testing.assert_allclose(1, np.sum(bary_wass), atol=1e-3)
         np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-5)
 
-        ot.bregman.barycenter_debiased(Ab, Mb, reg, log=True, verbose=False)
+        ot.bregman.barycenter_debiased(A_nx, M_nx, reg, log=True, verbose=False)
 
 
 def test_barycenter_stabilization(nx):
@@ -380,19 +380,19 @@ def test_barycenter_stabilization(nx):
     alpha = 0.5  # 0<=alpha<=1
     weights = np.array([1 - alpha, alpha])
 
-    Ab = nx.from_numpy(A)
-    Mb = nx.from_numpy(M)
+    A_nx = nx.from_numpy(A)
+    M_nx = nx.from_numpy(M)
     weights_b = nx.from_numpy(weights)
 
     # wasserstein
     reg = 1e-2
     bar_np = ot.bregman.barycenter(A, M, reg, weights, method="sinkhorn", stopThr=1e-8, verbose=True)
     bar_stable = nx.to_numpy(ot.bregman.barycenter(
-        Ab, Mb, reg, weights_b, method="sinkhorn_stabilized",
+        A_nx, M_nx, reg, weights_b, method="sinkhorn_stabilized",
         stopThr=1e-8, verbose=True
     ))
     bar = nx.to_numpy(ot.bregman.barycenter(
-        Ab, Mb, reg, weights_b, method="sinkhorn",
+        A_nx, M_nx, reg, weights_b, method="sinkhorn",
         stopThr=1e-8, verbose=True
     ))
     np.testing.assert_allclose(bar, bar_stable)
@@ -413,16 +413,16 @@ def test_wasserstein_bary_2d(nx, method):
     A[0, :, :] = a1
     A[1, :, :] = a2
 
-    Ab = nx.from_numpy(A)
+    A_nx = nx.from_numpy(A)
 
     # wasserstein
     reg = 1e-2
     if nx.__name__ == "jax" and method == "sinkhorn_log":
         with pytest.raises(NotImplementedError):
-            ot.bregman.convolutional_barycenter2d(A, reg, method=method)
+            ot.bregman.convolutional_barycenter2d(A_nx, reg, method=method)
     else:
         bary_wass_np = ot.bregman.convolutional_barycenter2d(A, reg, method=method)
-        bary_wass = nx.to_numpy(ot.bregman.convolutional_barycenter2d(Ab, reg, method=method))
+        bary_wass = nx.to_numpy(ot.bregman.convolutional_barycenter2d(A_nx, reg, method=method))
 
         np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
         np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
@@ -445,16 +445,16 @@ def test_wasserstein_bary_2d_debiased(nx, method):
     A[0, :, :] = a1
     A[1, :, :] = a2
 
-    Ab = nx.from_numpy(A)
+    A_nx = nx.from_numpy(A)
 
     # wasserstein
     reg = 1e-2
     if nx.__name__ == "jax" and method == "sinkhorn_log":
         with pytest.raises(NotImplementedError):
-            ot.bregman.convolutional_barycenter2d_debiased(A, reg, method=method)
+            ot.bregman.convolutional_barycenter2d_debiased(A_nx, reg, method=method)
     else:
         bary_wass_np = ot.bregman.convolutional_barycenter2d_debiased(A, reg, method=method)
-        bary_wass = nx.to_numpy(ot.bregman.convolutional_barycenter2d_debiased(Ab, reg, method=method))
+        bary_wass = nx.to_numpy(ot.bregman.convolutional_barycenter2d_debiased(A_nx, reg, method=method))
 
         np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
         np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
@@ -485,20 +485,20 @@ def test_unmix(nx):
 
     ab = nx.from_numpy(a)
     Db = nx.from_numpy(D)
-    Mb = nx.from_numpy(M)
+    M_nx = nx.from_numpy(M)
     M0b = nx.from_numpy(M0)
     h0b = nx.from_numpy(h0)
 
     # wasserstein
     reg = 1e-3
     um_np = ot.bregman.unmix(a, D, M, M0, h0, reg, 1, alpha=0.01)
-    um = nx.to_numpy(ot.bregman.unmix(ab, Db, Mb, M0b, h0b, reg, 1, alpha=0.01))
+    um = nx.to_numpy(ot.bregman.unmix(ab, Db, M_nx, M0b, h0b, reg, 1, alpha=0.01))
 
     np.testing.assert_allclose(1, np.sum(um), rtol=1e-03, atol=1e-03)
     np.testing.assert_allclose([0.5, 0.5], um, rtol=1e-03, atol=1e-03)
     np.testing.assert_allclose(um, um_np)
 
-    ot.bregman.unmix(ab, Db, Mb, M0b, h0b, reg,
+    ot.bregman.unmix(ab, Db, M_nx, M0b, h0b, reg,
                      1, alpha=0.01, log=True, verbose=True)
 
 
@@ -517,22 +517,22 @@ def test_empirical_sinkhorn(nx):
     bb = nx.from_numpy(b)
     X_sb = nx.from_numpy(X_s)
     X_tb = nx.from_numpy(X_t)
-    Mb = nx.from_numpy(M, type_as=ab)
+    M_nx = nx.from_numpy(M, type_as=ab)
     M_mb = nx.from_numpy(M_m, type_as=ab)
 
     G_sqe = nx.to_numpy(ot.bregman.empirical_sinkhorn(X_sb, X_tb, 1))
-    sinkhorn_sqe = nx.to_numpy(ot.sinkhorn(ab, bb, Mb, 1))
+    sinkhorn_sqe = nx.to_numpy(ot.sinkhorn(ab, bb, M_nx, 1))
 
     G_log, log_es = ot.bregman.empirical_sinkhorn(X_sb, X_tb, 0.1, log=True)
     G_log = nx.to_numpy(G_log)
-    sinkhorn_log, log_s = ot.sinkhorn(ab, bb, Mb, 0.1, log=True)
+    sinkhorn_log, log_s = ot.sinkhorn(ab, bb, M_nx, 0.1, log=True)
     sinkhorn_log = nx.to_numpy(sinkhorn_log)
 
     G_m = nx.to_numpy(ot.bregman.empirical_sinkhorn(X_sb, X_tb, 1, metric='euclidean'))
     sinkhorn_m = nx.to_numpy(ot.sinkhorn(ab, bb, M_mb, 1))
 
     loss_emp_sinkhorn = nx.to_numpy(ot.bregman.empirical_sinkhorn2(X_sb, X_tb, 1))
-    loss_sinkhorn = nx.to_numpy(ot.sinkhorn2(ab, bb, Mb, 1))
+    loss_sinkhorn = nx.to_numpy(ot.sinkhorn2(ab, bb, M_nx, 1))
 
     # check constraints
     np.testing.assert_allclose(
@@ -566,18 +566,18 @@ def test_lazy_empirical_sinkhorn(nx):
     bb = nx.from_numpy(b)
     X_sb = nx.from_numpy(X_s)
     X_tb = nx.from_numpy(X_t)
-    Mb = nx.from_numpy(M, type_as=ab)
+    M_nx = nx.from_numpy(M, type_as=ab)
     M_mb = nx.from_numpy(M_m, type_as=ab)
 
     f, g = ot.bregman.empirical_sinkhorn(X_sb, X_tb, 1, numIterMax=numIterMax, isLazy=True, batchSize=(1, 3), verbose=True)
     f, g = nx.to_numpy(f), nx.to_numpy(g)
     G_sqe = np.exp(f[:, None] + g[None, :] - M / 1)
-    sinkhorn_sqe = nx.to_numpy(ot.sinkhorn(ab, bb, Mb, 1))
+    sinkhorn_sqe = nx.to_numpy(ot.sinkhorn(ab, bb, M_nx, 1))
 
     f, g, log_es = ot.bregman.empirical_sinkhorn(X_sb, X_tb, 0.1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
     f, g = nx.to_numpy(f), nx.to_numpy(g)
     G_log = np.exp(f[:, None] + g[None, :] - M / 0.1)
-    sinkhorn_log, log_s = ot.sinkhorn(ab, bb, Mb, 0.1, log=True)
+    sinkhorn_log, log_s = ot.sinkhorn(ab, bb, M_nx, 0.1, log=True)
     sinkhorn_log = nx.to_numpy(sinkhorn_log)
 
     f, g = ot.bregman.empirical_sinkhorn(X_sb, X_tb, 1, metric='euclidean', numIterMax=numIterMax, isLazy=True, batchSize=1)
@@ -587,7 +587,7 @@ def test_lazy_empirical_sinkhorn(nx):
 
     loss_emp_sinkhorn, log = ot.bregman.empirical_sinkhorn2(X_sb, X_tb, 1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
     loss_emp_sinkhorn = nx.to_numpy(loss_emp_sinkhorn)
-    loss_sinkhorn = nx.to_numpy(ot.sinkhorn2(ab, bb, Mb, 1))
+    loss_sinkhorn = nx.to_numpy(ot.sinkhorn2(ab, bb, M_nx, 1))
 
     # check constraints
     np.testing.assert_allclose(
@@ -621,13 +621,13 @@ def test_empirical_sinkhorn_divergence(nx):
     bb = nx.from_numpy(b)
     X_sb = nx.from_numpy(X_s)
     X_tb = nx.from_numpy(X_t)
-    Mb = nx.from_numpy(M, type_as=ab)
+    M_nx = nx.from_numpy(M, type_as=ab)
     M_sb = nx.from_numpy(M_s, type_as=ab)
     M_tb = nx.from_numpy(M_t, type_as=ab)
 
     emp_sinkhorn_div = nx.to_numpy(ot.bregman.empirical_sinkhorn_divergence(X_sb, X_tb, 1, a=ab, b=bb))
     sinkhorn_div = nx.to_numpy(
-        ot.sinkhorn2(ab, bb, Mb, 1)
+        ot.sinkhorn2(ab, bb, M_nx, 1)
         - 1 / 2 * ot.sinkhorn2(ab, ab, M_sb, 1)
         - 1 / 2 * ot.sinkhorn2(bb, bb, M_tb, 1)
     )
@@ -660,14 +660,14 @@ def test_stabilized_vs_sinkhorn_multidim(nx):
 
     ab = nx.from_numpy(a)
     bb = nx.from_numpy(b)
-    Mb = nx.from_numpy(M, type_as=ab)
+    M_nx = nx.from_numpy(M, type_as=ab)
 
     G_np, _ = ot.bregman.sinkhorn(a, b, M, reg=epsilon, method="sinkhorn", log=True)
-    G, log = ot.bregman.sinkhorn(ab, bb, Mb, reg=epsilon,
+    G, log = ot.bregman.sinkhorn(ab, bb, M_nx, reg=epsilon,
                                  method="sinkhorn_stabilized",
                                  log=True)
     G = nx.to_numpy(G)
-    G2, log2 = ot.bregman.sinkhorn(ab, bb, Mb, epsilon,
+    G2, log2 = ot.bregman.sinkhorn(ab, bb, M_nx, epsilon,
                                    method="sinkhorn", log=True)
     G2 = nx.to_numpy(G2)
 
@@ -722,14 +722,14 @@ def test_screenkhorn(nx):
 
     ab = nx.from_numpy(a)
     bb = nx.from_numpy(b)
-    Mb = nx.from_numpy(M, type_as=ab)
+    M_nx = nx.from_numpy(M, type_as=ab)
 
     # np sinkhorn
     G_sink_np = ot.sinkhorn(a, b, M, 1e-03)
     # sinkhorn
-    G_sink = nx.to_numpy(ot.sinkhorn(ab, bb, Mb, 1e-03))
+    G_sink = nx.to_numpy(ot.sinkhorn(ab, bb, M_nx, 1e-03))
     # screenkhorn
-    G_screen = nx.to_numpy(ot.bregman.screenkhorn(ab, bb, Mb, 1e-03, uniform=True, verbose=True))
+    G_screen = nx.to_numpy(ot.bregman.screenkhorn(ab, bb, M_nx, 1e-03, uniform=True, verbose=True))
     # check marginals
     np.testing.assert_allclose(G_sink_np, G_sink)
     np.testing.assert_allclose(G_sink.sum(0), G_screen.sum(0), atol=1e-02)
@@ -739,10 +739,10 @@ def test_screenkhorn(nx):
 def test_convolutional_barycenter_non_square(nx):
     # test for image with height not equal width
     A = np.ones((2, 2, 3)) / (2 * 3)
-    Ab = nx.from_numpy(A)
+    A_nx = nx.from_numpy(A)
 
     b_np = ot.bregman.convolutional_barycenter2d(A, 1e-03)
-    b = nx.to_numpy(ot.bregman.convolutional_barycenter2d(Ab, 1e-03))
+    b = nx.to_numpy(ot.bregman.convolutional_barycenter2d(A_nx, 1e-03))
 
     np.testing.assert_allclose(np.ones((2, 3)) / (2 * 3), b, atol=1e-02)
     np.testing.assert_allclose(np.ones((2, 3)) / (2 * 3), b, atol=1e-02)
