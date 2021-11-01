@@ -7,6 +7,7 @@
 # License: MIT License
 
 import numpy as np
+from numpy.testing import assert_raises
 import pytest
 
 import ot
@@ -307,17 +308,21 @@ def test_barycenter(nx, method):
     Ab = nx.from_numpy(A)
     Mb = nx.from_numpy(M)
     weightsb = nx.from_numpy(weights)
-
-    # wasserstein
     reg = 1e-2
-    bary_wass_np, log = ot.bregman.barycenter(A, M, reg, weights, method=method, log=True)
-    bary_wass, _ = ot.bregman.barycenter(Ab, Mb, reg, weightsb, method=method, log=True)
-    bary_wass = nx.to_numpy(bary_wass)
 
-    np.testing.assert_allclose(1, np.sum(bary_wass))
-    np.testing.assert_allclose(bary_wass, bary_wass_np)
+    if nx.__name__ == "jax" and method == "sinkhorn_log":
+        with pytest.raises(NotImplementedError):
+            ot.bregman.barycenter(A, M, reg, weights, method=method)
+    else:
+        # wasserstein
+        bary_wass_np = ot.bregman.barycenter(A, M, reg, weights, method=method)
+        bary_wass, _ = ot.bregman.barycenter(Ab, Mb, reg, weightsb, method=method, log=True)
+        bary_wass = nx.to_numpy(bary_wass)
 
-    ot.bregman.barycenter(Ab, Mb, reg, log=True)
+        np.testing.assert_allclose(1, np.sum(bary_wass))
+        np.testing.assert_allclose(bary_wass, bary_wass_np)
+
+        ot.bregman.barycenter(Ab, Mb, reg, log=True)
 
 
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
@@ -344,14 +349,18 @@ def test_barycenter_debiased(nx, method):
 
     # wasserstein
     reg = 1e-2
-    bary_wass_np = ot.bregman.barycenter_debiased(A, M, reg, weights, method=method)
-    bary_wass, _ = ot.bregman.barycenter_debiased(Ab, Mb, reg, weightsb, method=method, log=True)
-    bary_wass = nx.to_numpy(bary_wass)
+    if nx.__name__ == "jax" and method == "sinkhorn_log":
+        with pytest.raises(NotImplementedError):
+            ot.bregman.barycenter_debiased(A, M, reg, weights, method=method)
+    else:
+        bary_wass_np = ot.bregman.barycenter_debiased(A, M, reg, weights, method=method)
+        bary_wass, _ = ot.bregman.barycenter_debiased(Ab, Mb, reg, weightsb, method=method, log=True)
+        bary_wass = nx.to_numpy(bary_wass)
 
-    np.testing.assert_allclose(1, np.sum(bary_wass), atol=1e-3)
-    np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-5)
+        np.testing.assert_allclose(1, np.sum(bary_wass), atol=1e-3)
+        np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-5)
 
-    ot.bregman.barycenter_debiased(Ab, Mb, reg, log=True, verbose=False)
+        ot.bregman.barycenter_debiased(Ab, Mb, reg, log=True, verbose=False)
 
 
 def test_barycenter_stabilization(nx):
@@ -408,14 +417,18 @@ def test_wasserstein_bary_2d(nx, method):
 
     # wasserstein
     reg = 1e-2
-    bary_wass_np = ot.bregman.convolutional_barycenter2d(A, reg, method=method)
-    bary_wass = nx.to_numpy(ot.bregman.convolutional_barycenter2d(Ab, reg, method=method))
+    if nx.__name__ == "jax" and method == "sinkhorn_log":
+        with pytest.raises(NotImplementedError):
+            ot.bregman.convolutional_barycenter2d(A, reg, method=method)
+    else:
+        bary_wass_np = ot.bregman.convolutional_barycenter2d(A, reg, method=method)
+        bary_wass = nx.to_numpy(ot.bregman.convolutional_barycenter2d(Ab, reg, method=method))
 
-    np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
-    np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
+        np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
+        np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
 
-    # help in checking if log and verbose do not bug the function
-    # ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
+        # help in checking if log and verbose do not bug the function
+        ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
 
 
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
@@ -436,14 +449,18 @@ def test_wasserstein_bary_2d_debiased(nx, method):
 
     # wasserstein
     reg = 1e-2
-    bary_wass_np = ot.bregman.convolutional_barycenter2d_debiased(A, reg, method=method)
-    bary_wass = nx.to_numpy(ot.bregman.convolutional_barycenter2d_debiased(Ab, reg, method=method))
+    if nx.__name__ == "jax" and method == "sinkhorn_log":
+        with pytest.raises(NotImplementedError):
+            ot.bregman.convolutional_barycenter2d_debiased(A, reg, method=method)
+    else:
+        bary_wass_np = ot.bregman.convolutional_barycenter2d_debiased(A, reg, method=method)
+        bary_wass = nx.to_numpy(ot.bregman.convolutional_barycenter2d_debiased(Ab, reg, method=method))
 
-    np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
-    np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
+        np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
+        np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
 
-    # help in checking if log and verbose do not bug the function
-    ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
+        # help in checking if log and verbose do not bug the function
+        ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
 
 
 def test_unmix(nx):
