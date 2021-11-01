@@ -47,7 +47,7 @@ def quantile_function(qs, cws, xs):
 
 
 def wasserstein_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True):
-    """
+    r"""
     Computes the 1 dimensional OT loss [15] between two (batched) empirical
     distributions
 

@@ -8,9 +8,11 @@
 import numpy as np
 import pytest
 
+import ot
 from ot.lp import wasserstein_1d
 
 from ot.backend import get_backend_list
+from scipy.stats import wasserstein_distance
 
 backend_list = get_backend_list()
 

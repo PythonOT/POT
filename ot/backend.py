@@ -102,6 +102,8 @@ class Backend():
     __name__ = None
     __type__ = None
 
+    rng_ = None
+
     def __str__(self):
         return self.__name__
 
@@ -539,6 +541,36 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def seed(self, seed=None):
+        r"""
+        Sets the seed for the random generator.
+
+        This function follows the api from :any:`numpy.random.seed`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.random.seed.html
+        """
+        raise NotImplementedError()
+
+    def rand(self, *size, type_as=None):
+        r"""
+        Generate uniform random numbers.
+
+        This function follows the api from :any:`numpy.random.rand`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.random.rand.html
+        """
+        raise NotImplementedError()
+
+    def randn(self, *size, type_as=None):
+        r"""
+        Generate normal Gaussian random numbers.
+
+        This function follows the api from :any:`numpy.random.rand`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.random.rand.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -550,6 +582,8 @@ class NumpyBackend(Backend):
 
     __name__ = 'numpy'
     __type__ = np.ndarray
+
+    rng_ = np.random.RandomState()
 
     def to_numpy(self, a):
         return a
@@ -712,6 +746,16 @@ class NumpyBackend(Backend):
     def reshape(self, a, shape):
         return np.reshape(a, shape)
 
+    def seed(self, seed=None):
+        if seed is not None:
+            self.rng_.seed(seed)
+
+    def rand(self, *size, type_as=None):
+        return self.rng_.rand(*size)
+
+    def randn(self, *size, type_as=None):
+        return self.rng_.randn(*size)
+
 
 class JaxBackend(Backend):
     """
@@ -723,6 +767,11 @@ class JaxBackend(Backend):
 
     __name__ = 'jax'
     __type__ = jax_type
+
+    rng_ = None
+
+    def __init__(self):
+        rng_ = jax.random.PRNGKey(42)
 
     def to_numpy(self, a):
         return np.array(a)
@@ -889,6 +938,24 @@ class JaxBackend(Backend):
     def reshape(self, a, shape):
         return jnp.reshape(a, shape)
 
+    def seed(self, seed=None):
+        if seed is not None:
+            self.rng_ = jax.random.seed(seed)
+
+    def rand(self, *size, type_as=None):
+        self.rng_, subkey = random.split(self.rng_)
+        if type_as is not None:
+            return jax.random.uniform(subkey, shape=size, dtype=type_as.dtype)
+        else:
+            return jax.random.uniform(subkey, shape=size)
+
+    def randn(self, *size, type_as=None):
+        self.rng_, subkey = random.split(self.rng_)
+        if type_as is not None:
+            return jax.random.normal(subkey, shape=size, dtype=type_as.dtype)
+        else:
+            return jax.random.normal(subkey, shape=size)
+
 
 class TorchBackend(Backend):
     """
@@ -900,6 +967,8 @@ class TorchBackend(Backend):
 
     __name__ = 'torch'
     __type__ = torch_type
+
+    rng__ = torch.Generator()
 
     def __init__(self):
 
@@ -1129,3 +1198,19 @@ class TorchBackend(Backend):
 
     def reshape(self, a, shape):
         return torch.reshape(a, shape)
+
+    def seed(self, seed=None):
+        if seed is not None:
+            self.rng_.manual_seed(seed)
+
+    def rand(self, *size, type_as=None):
+        if type_as is not None:
+            return torch.rand(*size, generator=self.rng_, dtype=type_as.dtype, device=type_as.device)
+        else:
+            return torch.rand(*size, generator=self.rng_)
+
+    def randn(self, *size, type_as=None):
+        if type_as is not None:
+            return torch.randn(*size, dtype=type_as.dtype, generator=self.rng_, device=type_as.device)
+        else:
+            return torch.randn(*size, generator=self.rng_)

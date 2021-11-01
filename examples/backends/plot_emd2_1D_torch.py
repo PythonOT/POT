@@ -96,13 +96,13 @@ pl.show()
 # Wasserstein barycenter
 # ---------
 # In this example, we consider the following Wasserstein barycenter problem
-# $$ \eta^* = \min_\eta\;\;\; (1-t)W(\mu,\eta) + tW(\eta,\nu)$$
-# where :math:`\mu` and :math:`\nu` are reference 1D measures, and :math:`t`
+# $$ \\eta^* = \\min_\\eta\;\;\; (1-t)W(\\mu,\\eta) + tW(\\eta,\\nu)$$
+# where :math:`\\mu` and :math:`\\nu` are reference 1D measures, and :math:`t`
 # is a parameter :math:`\in [0,1]`. The problem is handled by a project gradient
 # descent method, where the gradient is computed by pyTorch automatic differentiation.
 # The projection on the simplex ensures that the iterate will remain on the
 # probability simplex.
-
+#
 # This example illustrates both `wasserstein_1d` function and backend use within the
 # POT framework.
 
