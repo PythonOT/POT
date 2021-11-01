@@ -53,7 +53,8 @@ def get_random_projections(d, n_projections, seed=None, backend=None, type_as=No
     if isinstance(seed, np.random.RandomState) and str(nx) == 'numpy':
         projections = seed.randn(d, n_projections)
     else:
-        nx.seed(seed)
+        if seed is not None:
+            nx.seed(seed)
         projections = nx.randn(d, n_projections, type_as=type_as)
 
     projections = projections / nx.sqrt(nx.sum(projections**2, 0, keepdims=True))

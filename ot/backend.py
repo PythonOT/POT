@@ -973,6 +973,7 @@ class TorchBackend(Backend):
     def __init__(self):
 
         self.rng_ = torch.Generator()
+        self.rng_.seed()
 
         from torch.autograd import Function
 
@@ -1208,8 +1209,12 @@ class TorchBackend(Backend):
         return torch.reshape(a, shape)
 
     def seed(self, seed=None):
-        if seed is not None:
+        if isinstance(seed, int):
             self.rng_.manual_seed(seed)
+        elif isinstance(seed, torch.Generator):
+            self.rng_ = seed
+        else:
+            raise ValueError("Non compatible seed : {}".format(seed))
 
     def rand(self, *size, type_as=None):
         if type_as is not None:
