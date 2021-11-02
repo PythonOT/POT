@@ -477,8 +477,8 @@ def test_lazy_empirical_sinkhorn(nx):
     b = ot.unif(n)
     numIterMax = 1000
 
-    X_s = np.reshape(np.arange(n), (n, 1))
-    X_t = np.reshape(np.arange(0, n), (n, 1))
+    X_s = np.reshape(np.arange(n, dtype=np.float64), (n, 1))
+    X_t = np.reshape(np.arange(0, n, dtype=np.float64), (n, 1))
     M = ot.dist(X_s, X_t)
     M_m = ot.dist(X_s, X_t, metric='euclidean')
 
