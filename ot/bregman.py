@@ -503,8 +503,8 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (histograms, both sum to 1)
 
     The algorithm used for solving the problem is the Sinkhorn-Knopp matrix
-    scaling algorithm  :ref:`[2] <references-sinkhorn-knopp>` with the
-    implementation from :ref:`[34] <references-sinkhorn-knopp>`
+    scaling algorithm  :ref:`[2] <references-sinkhorn-log>` with the
+    implementation from :ref:`[34] <references-sinkhorn-log>`
 
 
     Parameters
@@ -550,8 +550,7 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
     References
     ----------
 
-    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal
-    Transport, Advances in Neural Information Processing Systems (NIPS) 26, 2013
+    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal Transport, Advances in Neural Information Processing Systems (NIPS) 26, 2013
 
     .. [34] Feydy, J., Séjourné, T., Vialard, F. X., Amari, S. I., Trouvé, A., & Peyré, G. (2019, April). Interpolating between optimal transport and MMD using Sinkhorn divergences. In The 22nd International Conference on Artificial Intelligence and Statistics (pp. 2681-2690). PMLR.
 
