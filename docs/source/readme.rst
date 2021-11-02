@@ -24,7 +24,7 @@ POT provides the following generic OT solvers (links to examples):
    for regularized OT [7].
 -  Entropic regularization OT solver with `Sinkhorn Knopp
    Algorithm <auto_examples/plot_OT_1D.html>`__
-   [2] , stabilized version [9] [10], greedy Sinkhorn [22] and
+   [2] , stabilized version [9] [10] [34], greedy Sinkhorn [22] and
    `Screening Sinkhorn
    [26] <auto_examples/plot_screenkhorn_1D.html>`__.
 -  Bregman projections for `Wasserstein
@@ -54,6 +54,9 @@ POT provides the following generic OT solvers (links to examples):
    solver <auto_examples/plot_stochastic.html>`__
    for Large-scale Optimal Transport (semi-dual problem [18] and dual
    problem [19])
+-  `Stochastic solver of Gromov
+   Wasserstein <auto_examples/gromov/plot_gromov.html>`__
+   for large-scale problem with any loss functions [33]
 -  Non regularized `free support Wasserstein
    barycenters <auto_examples/barycenters/plot_free_support_barycenter.html>`__
    [20].
@@ -137,18 +140,11 @@ following Python modules:
 
 -  Numpy (>=1.16)
 -  Scipy (>=1.0)
--  Cython (>=0.23) (build only, not necessary when installing wheels
-   from pip or conda)
+-  Cython (>=0.23) (build only, not necessary when installing from pip
+   or conda)
 
 Pip installation
 ^^^^^^^^^^^^^^^^
-
-Note that due to a limitation of pip, ``cython`` and ``numpy`` need to
-be installed prior to installing POT. This can be done easily with
-
-.. code:: console
-
-    pip install numpy cython
 
 You can install the toolbox through PyPI with:
 
@@ -183,7 +179,8 @@ without errors:
 
     import ot
 
-Note that for easier access the module is name ot instead of pot.
+Note that for easier access the module is named ``ot`` instead of
+``pot``.
 
 Dependencies
 ~~~~~~~~~~~~
@@ -222,7 +219,7 @@ Short examples
 
 .. code:: python
 
-    # a and b are 1D histograms (sum to 1 and positive)
+    # a,b are 1D histograms (sum to 1 and positive)
     # M is the ground cost matrix
     Wd = ot.emd2(a, b, M) # exact linear program
     Wd_reg = ot.sinkhorn2(a, b, M, reg) # entropic regularized OT
@@ -232,7 +229,7 @@ Short examples
 
 .. code:: python
 
-    # a and b are 1D histograms (sum to 1 and positive)
+    # a,b are 1D histograms (sum to 1 and positive)
     # M is the ground cost matrix
     T = ot.emd(a, b, M) # exact linear program
     T_reg = ot.sinkhorn(a, b, M, reg) # entropic regularized OT
@@ -286,6 +283,10 @@ The contributors to this library are
 -  `Mokhtar Z. Alaya <http://mzalaya.github.io/>`__ (Screenkhorn)
 -  `Ievgen Redko <https://ievred.github.io/>`__ (Laplacian DA, JCPOT)
 -  `Adrien Corenflos <https://adriencorenflos.github.io/>`__ (Sliced
+   Wasserstein Distance)
+-  `Tanguy Kerdoncuff <https://hv0nnus.github.io/>`__ (Sampled Gromov
+   Wasserstein)
+-  `Minhui Huang <https://mhhuang95.github.io>`__ (Projection Robust
    Wasserstein Distance)
 
 This toolbox benefit a lot from open source research and we would like
@@ -475,6 +476,30 @@ NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
 of
 measures <https://perso.liris.cnrs.fr/nicolas.bonneel/WassersteinSliced-JMIV.pdf>`__,
 Journal of Mathematical Imaging and Vision 51.1 (2015): 22-45
+
+[32] Huang, M., Ma S., Lai, L. (2021). `A Riemannian Block Coordinate
+Descent Method for Computing the Projection Robust Wasserstein
+Distance <http://proceedings.mlr.press/v139/huang21e.html>`__,
+Proceedings of the 38th International Conference on Machine Learning
+(ICML).
+
+[33] Kerdoncuff T., Emonet R., Marc S. `Sampled Gromov
+Wasserstein <https://hal.archives-ouvertes.fr/hal-03232509/document>`__,
+Machine Learning Journal (MJL), 2021
+
+[34] Feydy, J., Séjourné, T., Vialard, F. X., Amari, S. I., Trouvé, A.,
+& Peyré, G. (2019, April). `Interpolating between optimal transport and
+MMD using Sinkhorn
+divergences <http://proceedings.mlr.press/v89/feydy19a/feydy19a.pdf>`__.
+In The 22nd International Conference on Artificial Intelligence and
+Statistics (pp. 2681-2690). PMLR.
+
+[35] Deshpande, I., Hu, Y. T., Sun, R., Pyrros, A., Siddiqui, N.,
+Koyejo, S., ... & Schwing, A. G. (2019). `Max-sliced wasserstein
+distance and its use for
+gans <https://openaccess.thecvf.com/content_CVPR_2019/papers/Deshpande_Max-Sliced_Wasserstein_Distance_and_Its_Use_for_GANs_CVPR_2019_paper.pdf>`__.
+In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
+Recognition (pp. 10648-10656).
 
 .. |PyPI version| image:: https://badge.fury.io/py/POT.svg
    :target: https://badge.fury.io/py/POT
