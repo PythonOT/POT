@@ -3,6 +3,24 @@ r"""
 Sliced Wasserstein barycenter and gradient flow with PyTorch
 =================================
 
+In this exemple we use the pytorch backend to optimize the sliced Wasserstein 
+loss between two empirical distributions [31]. 
+
+In the first example one we perform a 
+gradient flow on the support of a distribution that minimize the sliced 
+Wassersein distance as poposed in [36].
+
+In the second exemple we optimize with a gradient descent the sliced 
+Wasserstein barycenter between two distributions as in [31].
+
+[31] Bonneel, Nicolas, et al. "Sliced and radon wasserstein barycenters of 
+measures." Journal of Mathematical Imaging and Vision 51.1 (2015): 22-45
+
+[36] Liutkus, A., Simsekli, U., Majewski, S., Durmus, A., & Stöter, F. R. 
+(2019, May). Sliced-Wasserstein flows: Nonparametric generative modeling 
+via optimal transport and diffusions. In International Conference on 
+Machine Learning (pp. 4104-4113). PMLR.
+
 
 """
 # Author: Rémi Flamary <remi.flamary@polytechnique.edu>
@@ -101,7 +119,7 @@ def _update_plot(i):
 ani = animation.FuncAnimation(pl.gcf(), _update_plot, nb_iter_max, interval=100, repeat_delay=2000)
 
 # %%
-# Compute the Sliced Wasserstein
+# Compute the Sliced Wasserstein Barycenter
 #
 x1_torch = torch.tensor(x1).to(device=device)
 x3_torch = torch.tensor(x3).to(device=device)
