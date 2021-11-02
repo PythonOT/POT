@@ -32,13 +32,13 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg}\cdot\Omega(\gamma)
 
-        s.t. \ \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} &= \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} &= \mathbf{b}
 
-             \gamma\geq 0
+             \gamma &\geq 0
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
@@ -167,13 +167,13 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        W = \min_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg}\cdot\Omega(\gamma)
 
-        s.t. \ \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} &= \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} &= \mathbf{b}
 
-             \gamma\geq 0
+             \gamma &\geq 0
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
@@ -323,13 +323,13 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg}\cdot\Omega(\gamma)
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} &= \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} &= \mathbf{b}
 
-             \gamma\geq 0
+             \gamma &\geq 0
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
@@ -489,13 +489,13 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg}\cdot\Omega(\gamma)
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} &= \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} &= \mathbf{b}
 
-             \gamma\geq 0
+             \gamma &\geq 0
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
@@ -550,8 +550,7 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
     References
     ----------
 
-    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal
-    Transport, Advances in Neural Information Processing Systems (NIPS) 26, 2013
+    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal Transport, Advances in Neural Information Processing Systems (NIPS) 26, 2013
 
     .. [34] Feydy, J., Séjourné, T., Vialard, F. X., Amari, S. I., Trouvé, A., & Peyré, G. (2019, April). Interpolating between optimal transport and MMD using Sinkhorn divergences. In The 22nd International Conference on Artificial Intelligence and Statistics (pp. 2681-2690). PMLR.
 
@@ -675,13 +674,13 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg}\cdot\Omega(\gamma)
 
-        s.t. \ \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} &= \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} &= \mathbf{b}
 
-             \gamma\geq 0
+             \gamma &\geq 0
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
@@ -820,13 +819,13 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg}\cdot\Omega(\gamma)
 
-        s.t. \ \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} &= \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} &= \mathbf{b}
 
-             \gamma\geq 0
+             \gamma &\geq 0
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
@@ -1055,13 +1054,13 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg}\cdot\Omega(\gamma)
 
-        s.t. \ \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} &= \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} &= \mathbf{b}
 
-             \gamma\geq 0
+             \gamma &\geq 0
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
@@ -1245,12 +1244,12 @@ def projC(gamma, q):
 
 def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
                stopThr=1e-4, verbose=False, log=False, **kwargs):
-    r"""Compute the entropic regularized wasserstein barycenter of distributions A
+    r"""Compute the entropic regularized wasserstein barycenter of distributions :math:`\mathbf{A}`
 
      The function solves the following optimization problem:
 
     .. math::
-       \mathbf{a} = arg\min_\mathbf{a} \sum_i W_{reg}(\mathbf{a},\mathbf{a}_i)
+       \mathbf{a} = \mathop{\arg \min}_\mathbf{a} \sum_i W_{reg}(\mathbf{a},\mathbf{a}_i)
 
     where :
 
@@ -1314,12 +1313,12 @@ def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
 
 def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
                         stopThr=1e-4, verbose=False, log=False):
-    r"""Compute the entropic regularized wasserstein barycenter of distributions A
+    r"""Compute the entropic regularized wasserstein barycenter of distributions :math:`\mathbf{A}`
 
      The function solves the following optimization problem:
 
     .. math::
-       \mathbf{a} = arg\min_\mathbf{a} \sum_i W_{reg}(\mathbf{a},\mathbf{a}_i)
+       \mathbf{a} = \mathop{\arg \min}_\mathbf{a} \sum_i W_{reg}(\mathbf{a},\mathbf{a}_i)
 
     where :
 
@@ -1414,12 +1413,12 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
 
 def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
                           stopThr=1e-4, verbose=False, log=False):
-    r"""Compute the entropic regularized wasserstein barycenter of distributions A with stabilization.
+    r"""Compute the entropic regularized wasserstein barycenter of distributions :math:`\mathbf{A}` with stabilization.
 
      The function solves the following optimization problem:
 
     .. math::
-       \mathbf{a} = arg\min_\mathbf{a} \sum_i W_{reg}(\mathbf{a},\mathbf{a}_i)
+       \mathbf{a} = \mathop{\arg \min}_\mathbf{a} \sum_i W_{reg}(\mathbf{a},\mathbf{a}_i)
 
     where :
 
@@ -1543,13 +1542,13 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
 def convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
                                stopThr=1e-9, stabThr=1e-30, verbose=False,
                                log=False):
-    r"""Compute the entropic regularized wasserstein barycenter of distributions A
-    where A is a collection of 2D images.
+    r"""Compute the entropic regularized wasserstein barycenter of distributions :math:`\mathbf{A}`
+    where :math:`\mathbf{A}` is a collection of 2D images.
 
      The function solves the following optimization problem:
 
     .. math::
-       \mathbf{a} = arg\min_\mathbf{a} \sum_i W_{reg}(\mathbf{a},\mathbf{a}_i)
+       \mathbf{a} = \mathop{\arg \min}_\mathbf{a} \sum_i W_{reg}(\mathbf{a},\mathbf{a}_i)
 
     where :
 
@@ -1673,12 +1672,12 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
 
     .. math::
 
-       \mathbf{h} = arg\min_\mathbf{h} (1- \alpha)  W_{M,reg}(\mathbf{a},\mathbf{Dh})+\alpha W_{M_0,reg_0}(\mathbf{h}_0,\mathbf{h})
+       \mathbf{h} = \mathop{\arg \min}_\mathbf{h} (1- \alpha)  W_{\mathbf{M}, \mathrm{reg}}(\mathbf{a},\mathbf{Dh})+\alpha W_{\mathbf{M_0},\mathrm{reg}_0}(\mathbf{h}_0,\mathbf{h})
 
 
     where :
 
-    - :math:`W_{M,reg}(\cdot,\cdot)` is the entropic regularized Wasserstein distance with M loss matrix (see :py:func:`ot.bregman.sinkhorn`)
+    - :math:`W_{M,reg}(\cdot,\cdot)` is the entropic regularized Wasserstein distance with :math:`\mathbf{M}` loss matrix (see :py:func:`ot.bregman.sinkhorn`)
     - :math:`\mathbf{D}` is a dictionary of `n_atoms` atoms of dimension `dim_a`, its expected shape is `(dim_a, n_atoms)`
     - :math:`\mathbf{h}` is the estimated unmixing of dimension `n_atoms`
     - :math:`\mathbf{a}` is an observed distribution of dimension `dim_a`
@@ -1790,7 +1789,7 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
 
     .. math::
 
-        \mathbf{h} = arg\min_{\mathbf{h}}\quad \sum_{k=1}^{K} \lambda_k
+        \mathbf{h} = \mathop{\arg \min}_{\mathbf{h}} \sum_{k=1}^{K} \lambda_k
                     W_{reg}((\mathbf{D}_2^{(k)} \mathbf{h})^T, \mathbf{a})
 
         s.t. \ \forall k, \mathbf{D}_1^{(k)} \gamma_k \mathbf{1}_n= \mathbf{h}
@@ -1956,13 +1955,13 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg} \cdot\Omega(\gamma)
 
-        s.t. \ \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} &= a
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} &= b
 
-             \gamma\geq 0
+             \gamma &\geq 0
     where :
 
     - :math:`\mathbf{M}` is the (`n_samples_a`, `n_samples_b`) metric cost matrix
@@ -2127,13 +2126,13 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', num
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        W = \min_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg} \cdot\Omega(\gamma)
 
-        s.t. \ \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} &= a
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} &= b
 
-             \gamma\geq 0
+             \gamma &\geq 0
     where :
 
     - :math:`\mathbf{M}` is the (`n_samples_a`, `n_samples_b`) metric cost matrix
@@ -2259,32 +2258,32 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     .. math::
 
-        W &= \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        W &= \min_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg} \cdot\Omega(\gamma)
 
-        W_a &= \min_{\gamma_a} <\gamma_a,M_a>_F + reg\cdot\Omega(\gamma_a)
+        W_a &= \min_{\gamma_a} <\gamma_a, \mathbf{M_a}>_F + \mathrm{reg} \cdot\Omega(\gamma_a)
 
-        W_b &= \min_{\gamma_b} <\gamma_b,M_b>_F + reg\cdot\Omega(\gamma_b)
+        W_b &= \min_{\gamma_b} <\gamma_b, \mathbf{M_b}>_F + \mathrm{reg} \cdot\Omega(\gamma_b)
 
         S &= W - \frac{W_a + W_b}{2}
 
     .. math::
-        s.t. \ \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} &= a
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} &= b
 
-             \gamma\geq 0
+             \gamma &\geq 0
 
-             \gamma_a 1 = a
+             \gamma_a \mathbf{1} &= \mathbf{a}
 
-             \gamma_a^T 1= a
+             \gamma_a^T \mathbf{1} &= \mathbf{a}
 
-             \gamma_a\geq 0
+             \gamma_a &\geq 0
 
-             \gamma_b 1 = b
+             \gamma_b \mathbf{1} &= \mathbf{b}
 
-             \gamma_b^T 1= b
+             \gamma_b^T \mathbf{1} &= \mathbf{b}
 
-             \gamma_b\geq 0
+             \gamma_b &\geq 0
     where :
 
     - :math:`\mathbf{M}` (resp. :math:`\mathbf{M_a}`, :math:`\mathbf{M_b}`) is the (`n_samples_a`, `n_samples_b`) metric cost matrix (resp (`n_samples_a, n_samples_a`) and (`n_samples_b`, `n_samples_b`))
@@ -2380,19 +2379,19 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
 
     .. math::
 
-        (u, v) = arg\min_{u, v} 1_{ns}^T B(u,v) 1_{nt} - <\kappa u, a> - <v/\kappa, b>
+        (\mathbf{u}, \mathbf{v}) = \mathop{\arg \min}_{\mathbf{u}, \mathbf{v}} \mathbf{1}_{ns}^T \mathbf{B}(\mathbf{u}, \mathbf{v}) \mathbf{1}_{nt} - <\kappa \mathbf{u}, \mathbf{a}> - <\mathbf{v} / \kappa, \mathbf{b}>
 
     where:
 
     .. math::
 
-        B(u,v) = \mathrm{diag}(e^u) K \mathrm{diag}(e^v) \text{, with } K = e^{-M/reg} \text{ and}
+        \mathbf{B}(\mathbf{u}, \mathbf{v}) = \mathrm{diag}(e^\mathbf{u}) \mathbf{K} \mathrm{diag}(e^\mathbf{v}) \text{, with } \mathbf{K} = e^{-\mathbf{M} / \mathrm{reg}} \text{ and}
 
     .. math::
 
-        s.t. \ e^{u_i} \geq \epsilon / \kappa, \forall i \in \{1, \ldots, ns\}
+        s.t. \ e^{u_i} &\geq \epsilon / \kappa, \forall i \in \{1, \ldots, ns\}
 
-             e^{v_j} \geq \epsilon \kappa, \forall j \in \{1, \ldots, nt\}
+             e^{v_j} &\geq \epsilon \kappa, \forall j \in \{1, \ldots, nt\}
 
     The parameters `kappa` and `epsilon` are determined w.r.t the couple number budget of points (`ns_budget`, `nt_budget`), see Equation (5) in :ref:`[26] <references-screenkhorn>`
 

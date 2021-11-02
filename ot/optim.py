@@ -23,7 +23,7 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
     r"""
     Armijo linesearch function that works with matrices
 
-    Find an approximate minimum of :math:`f(x_k + \\alpha \cdot p_k)` that satisfies the
+    Find an approximate minimum of :math:`f(x_k + \alpha \cdot p_k)` that satisfies the
     armijo conditions.
 
     Parameters
@@ -129,7 +129,7 @@ def solve_linesearch(cost, G, deltaG, Mi, f_val,
     .. _references-solve-linesearch:
     References
     ----------
-    .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain and Courty Nicolas
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain and Courty Nicolas
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
@@ -162,13 +162,13 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
         The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + \mathrm{reg} \cdot f(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg} \cdot f(\gamma)
 
-        s.t. \ \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} &= \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} &= \mathbf{b}
 
-             \gamma\geq 0
+             \gamma &\geq 0
     where :
 
     - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
@@ -309,13 +309,13 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
         The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + \mathrm{reg_1}\cdot\Omega(\gamma) + \mathrm{reg_2}\cdot f(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg_1}\cdot\Omega(\gamma) + \mathrm{reg_2}\cdot f(\gamma)
 
-        s.t. \ \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} &= \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} &= \mathbf{b}
 
-             \gamma\geq 0
+             \gamma &\geq 0
     where :
 
     - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
@@ -452,7 +452,7 @@ def solve_1d_linesearch_quad(a, b, c):
 
     .. math::
 
-        arg\min_{0 \leq x \leq 1} f(x) = ax^{2} + bx + c
+        \mathop{\arg \min}_{0 \leq x \leq 1} f(x) = ax^{2} + bx + c
 
     Parameters
     ----------
