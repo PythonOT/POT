@@ -10,7 +10,6 @@ from itertools import product
 
 import numpy as np
 import pytest
-from torch._C import Value
 
 import ot
 from ot.backend import torch
