@@ -65,21 +65,21 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
 
     Parameters
     ----------
-    C1 : ndarray, shape (ns, ns)
+    C1 : array-like, shape (ns, ns)
         Metric cost matrix in the source space
-    C2 : ndarray, shape (nt, nt)
+    C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    T :  ndarray, shape (ns, nt)
+    T :  array-like, shape (ns, nt)
         Coupling between source and target spaces
-    p : ndarray, shape (ns,)
+    p : array-like, shape (ns,)
 
     Returns
     -------
-    constC : ndarray, shape (ns, nt)
+    constC : array-like, shape (ns, nt)
         Constant :math:`\mathbf{C}` matrix in Eq. (6)
-    hC1 : ndarray, shape (ns, ns)
+    hC1 : array-like, shape (ns, ns)
         :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
-    hC2 : ndarray, shape (nt, nt)
+    hC2 : array-like, shape (nt, nt)
         :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
 
 
@@ -141,16 +141,16 @@ def tensor_product(constC, hC1, hC2, T):
 
     Parameters
     ----------
-    constC : ndarray, shape (ns, nt)
+    constC : array-like, shape (ns, nt)
         Constant :math:`\mathbf{C}` matrix in Eq. (6)
-    hC1 : ndarray, shape (ns, ns)
+    hC1 : array-like, shape (ns, ns)
         :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
-    hC2 : ndarray, shape (nt, nt)
+    hC2 : array-like, shape (nt, nt)
         :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
 
     Returns
     -------
-    tens : ndarray, shape (ns, nt)
+    tens : array-like, shape (`ns`, `nt`)
         :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2}) \otimes \mathbf{T}` tensor-matrix multiplication result
 
 
@@ -180,13 +180,13 @@ def gwloss(constC, hC1, hC2, T):
 
     Parameters
     ----------
-    constC : ndarray, shape (ns, nt)
+    constC : array-like, shape (ns, nt)
         Constant :math:`\mathbf{C}` matrix in Eq. (6)
-    hC1 : ndarray, shape (ns, ns)
+    hC1 : array-like, shape (ns, ns)
         :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
-    hC2 : ndarray, shape (nt, nt)
+    hC2 : array-like, shape (nt, nt)
         :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
-    T : ndarray, shape (ns, nt)
+    T : array-like, shape (ns, nt)
         Current value of transport matrix :math:`\mathbf{T}`
 
     Returns
@@ -219,18 +219,18 @@ def gwggrad(constC, hC1, hC2, T):
 
     Parameters
     ----------
-    constC : ndarray, shape (ns, nt)
+    constC : array-like, shape (ns, nt)
         Constant :math:`\mathbf{C}` matrix in Eq. (6)
-    hC1 : ndarray, shape (ns, ns)
+    hC1 : array-like, shape (ns, ns)
         :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
-    hC2 : ndarray, shape (nt, nt)
+    hC2 : array-like, shape (nt, nt)
         :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
-    T : ndarray, shape (ns, nt)
+    T : array-like, shape (ns, nt)
         Current value of transport matrix :math:`\mathbf{T}`
 
     Returns
     -------
-    grad : ndarray, shape (ns, nt)
+    grad : array-like, shape (`ns`, `nt`)
            Gromov Wasserstein gradient
 
 
@@ -253,18 +253,18 @@ def update_square_loss(p, lambdas, T, Cs):
 
     Parameters
     ----------
-    p : ndarray, shape (N,)
+    p : array-like, shape (N,)
         Masses in the targeted barycenter.
     lambdas : list of float
         List of the `S` spaces' weights.
-    T : list of S np.ndarray of shape (ns,N)
+    T : list of S array-like of shape (ns,N)
         The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
-    Cs : list of S ndarray, shape(ns,ns)
+    Cs : list of S array-like, shape(ns,ns)
         Metric cost matrices.
 
     Returns
     ----------
-    C : ndarray, shape (nt, nt)
+    C : array-like, shape (`nt`, `nt`)
         Updated :math:`\mathbf{C}` matrix.
     """
     T = list_to_array(*T)
@@ -290,18 +290,18 @@ def update_kl_loss(p, lambdas, T, Cs):
 
     Parameters
     ----------
-    p  : ndarray, shape (N,)
+    p  : array-like, shape (N,)
         Weights in the targeted barycenter.
     lambdas : list of float
         List of the `S` spaces' weights
-    T : list of S np.ndarray of shape (ns,N)
+    T : list of S array-like of shape (ns,N)
         The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
-    Cs : list of S ndarray, shape(ns,ns)
+    Cs : list of S array-like, shape(ns,ns)
         Metric cost matrices.
 
     Returns
     ----------
-    C : ndarray, shape (ns,ns)
+    C : array-like, shape (`ns`, `ns`)
         updated :math:`\mathbf{C}` matrix
     """
     Cs = list_to_array(*Cs)
@@ -339,13 +339,13 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
 
     Parameters
     ----------
-    C1 : ndarray, shape (ns, ns)
+    C1 : array-like, shape (ns, ns)
         Metric cost matrix in the source space
-    C2 : ndarray, shape (nt, nt)
+    C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    p : ndarray, shape (ns,)
+    p : array-like, shape (ns,)
         Distribution in the source space
-    q : ndarray, shape (nt,)
+    q : array-like, shape (nt,)
         Distribution in the target space
     loss_fun : str
         loss function used for the solver either 'square_loss' or 'kl_loss'
@@ -365,7 +365,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
 
     Returns
     -------
-    T : ndarray, shape (ns, nt)
+    T : array-like, shape (`ns`, `nt`)
         Coupling between the two spaces that minimizes:
 
             :math:`\sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}`
@@ -422,13 +422,13 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwarg
 
     Parameters
     ----------
-    C1 : ndarray, shape (ns, ns)
+    C1 : array-like, shape (ns, ns)
         Metric cost matrix in the source space
-    C2 : ndarray, shape (nt, nt)
+    C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    p : ndarray, shape (ns,)
+    p : array-like, shape (ns,)
         Distribution in the source space.
-    q :  ndarray, shape (nt,)
+    q :  array-like, shape (nt,)
         Distribution in the target space.
     loss_fun :  str
         loss function used for the solver either 'square_loss' or 'kl_loss'
@@ -798,13 +798,13 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
 
     Parameters
     ----------
-    C1 : ndarray, shape (ns, ns)
+    C1 : array-like, shape (ns, ns)
         Metric cost matrix in the source space
-    C2 : ndarray, shape (nt, nt)
+    C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    p :  ndarray, shape (ns,)
+    p :  array-like, shape (ns,)
         Distribution in the source space
-    q :  ndarray, shape (nt,)
+    q :  array-like, shape (nt,)
         Distribution in the target space
     loss_fun :  function: :math:`\mathbb{R} \times \mathbb{R} \mapsto \mathbb{R}`
         Loss function used for the distance, the transport plan does not depend on the loss function
@@ -823,7 +823,7 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
 
     Returns
     -------
-    T : ndarray, shape (ns, nt)
+    T : array-like, shape (`ns`, `nt`)
         Optimal coupling between the two spaces
 
     References
@@ -919,13 +919,13 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
 
     Parameters
     ----------
-    C1 : ndarray, shape (ns, ns)
+    C1 : array-like, shape (ns, ns)
         Metric cost matrix in the source space
-    C2 : ndarray, shape (nt, nt)
+    C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    p :  ndarray, shape (ns,)
+    p :  array-like, shape (ns,)
         Distribution in the source space
-    q :  ndarray, shape (nt,)
+    q :  array-like, shape (nt,)
         Distribution in the target space
     loss_fun :  function: :math:`\mathbb{R} \times \mathbb{R} \mapsto \mathbb{R}`
         Loss function used for the distance, the transport plan does not depend on the loss function
@@ -944,7 +944,7 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
 
     Returns
     -------
-    T : ndarray, shape (ns, nt)
+    T : array-like, shape (`ns`, `nt`)
         Optimal coupling between the two spaces
 
     References
@@ -1376,7 +1376,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 
     Returns
     -------
-    C : array-like, shape (N, N)
+    C : array-like, shape (`N`, `N`)
         Similarity matrix in the barycenter space (permutated arbitrarily)
 
     References
@@ -1483,9 +1483,9 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
 
     Returns
     -------
-    X : array-like, shape (N, d)
+    X : array-like, shape (`N`, `d`)
         Barycenters' features
-    C : array-like, shape (N, N)
+    C : array-like, shape (`N`, `N`)
         Barycenters' structure matrix
     log : dict
         Only returned when log=True. It contains the keys:
@@ -1605,18 +1605,18 @@ def update_structure_matrix(p, lambdas, T, Cs):
 
     Parameters
     ----------
-    p : ndarray, shape (N,)
+    p : array-like, shape (N,)
         Masses in the targeted barycenter.
     lambdas : list of float
         List of the `S` spaces' weights.
-    T : list of S ndarray of shape (ns, N)
+    T : list of S array-like of shape (ns, N)
         The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
-    Cs : list of S ndarray, shape (ns, ns)
+    Cs : list of S array-like, shape (ns, ns)
         Metric cost matrices.
 
     Returns
     -------
-    C : ndarray, shape (nt, nt)
+    C : array-like, shape (`nt`, `nt`)
         Updated :math:`\mathbf{C}` matrix.
     """
     p = list_to_array(p)
@@ -1643,18 +1643,18 @@ def update_feature_matrix(lambdas, Ys, Ts, p):
 
     Parameters
     ----------
-    p : ndarray, shape (N,)
+    p : array-like, shape (N,)
         masses in the targeted barycenter
     lambdas : list of float
         List of the `S` spaces' weights
-    Ts : list of S np.ndarray(ns,N)
+    Ts : list of S array-like, shape (ns,N)
         The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration
-    Ys : list of S ndarray, shape(d,ns)
+    Ys : list of S array-like, shape (d,ns)
         The features.
 
     Returns
     -------
-    X : ndarray, shape (d, N)
+    X : array-like, shape (`d`, `N`)
 
 
     .. _references-update-feature-matrix:
