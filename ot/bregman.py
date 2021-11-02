@@ -7,7 +7,7 @@ Bregman projections solvers for entropic regularized OT
 #         Nicolas Courty <ncourty@irisa.fr>
 #         Kilian Fatras <kilian.fatras@irisa.fr>
 #         Titouan Vayer <titouan.vayer@irisa.fr>
-#         Hicham Janati <hicham.janati@inria.fr>
+#         Hicham Janati <hicham.janati100@gmail.com>
 #         Mokhtar Z. Alaya <mokhtarzahdi.alaya@gmail.com>
 #         Alexander Tong <alexander.tong@yale.edu>
 #         Ievgen Redko <ievgen.redko@univ-st-etienne.fr>
@@ -25,7 +25,8 @@ from .backend import get_backend
 
 
 def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
-             stopThr=1e-9, verbose=False, log=False, **kwargs):
+             stopThr=1e-9, verbose=False, log=False, warn=True,
+             **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -97,6 +98,8 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
     Returns
     -------
@@ -152,29 +155,34 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
     if method.lower() == 'sinkhorn':
         return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
                               stopThr=stopThr, verbose=verbose, log=log,
+                              warn=warn,
                               **kwargs)
     elif method.lower() == 'sinkhorn_log':
         return sinkhorn_log(a, b, M, reg, numItermax=numItermax,
                             stopThr=stopThr, verbose=verbose, log=log,
+                            warn=warn,
                             **kwargs)
     elif method.lower() == 'greenkhorn':
         return greenkhorn(a, b, M, reg, numItermax=numItermax,
-                          stopThr=stopThr, verbose=verbose, log=log)
+                          stopThr=stopThr, verbose=verbose, log=log,
+                          warn=warn)
     elif method.lower() == 'sinkhorn_stabilized':
         return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
                                    stopThr=stopThr, verbose=verbose,
-                                   log=log, **kwargs)
+                                   log=log, warn=warn,
+                                   **kwargs)
     elif method.lower() == 'sinkhorn_epsilon_scaling':
         return sinkhorn_epsilon_scaling(a, b, M, reg,
                                         numItermax=numItermax,
                                         stopThr=stopThr, verbose=verbose,
-                                        log=log, **kwargs)
+                                        log=log, warn=warn,
+                                        **kwargs)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
 
 def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
-              stopThr=1e-9, verbose=False, log=False, **kwargs):
+              stopThr=1e-9, verbose=False, log=False, warn=False, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the loss
 
@@ -245,6 +253,8 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
     Returns
     -------
@@ -343,8 +353,9 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
             raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
-                   stopThr=1e-9, verbose=False, log=False, **kwargs):
+def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
+                   verbose=False, log=False, warn=True,
+                   **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -390,6 +401,8 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
     Returns
     -------
@@ -497,9 +510,10 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
                         '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(ii, err))
     else:
-        warnings.warn("Sinkhorn did not converge. You might want to "
-                      "increase the number of iterations `numItermax` "
-                      "or the regularization parameter `reg`.")
+        if warn:
+            warnings.warn("Sinkhorn did not converge. You might want to "
+                          "increase the number of iterations `numItermax` "
+                          "or the regularization parameter `reg`.")
     if log:
         log['niter'] = ii
         log['u'] = u
@@ -520,8 +534,8 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000,
             return u.reshape((-1, 1)) * K * v.reshape((1, -1))
 
 
-def sinkhorn_log(a, b, M, reg, numItermax=1000,
-                 stopThr=1e-9, verbose=False, log=False, **kwargs):
+def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
+                 log=False, warn=True, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem in log space
     and return the OT matrix
@@ -566,6 +580,8 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
     Returns
     -------
@@ -698,9 +714,10 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
                 if err < stopThr:
                     break
         else:
-            warnings.warn("Sinkhorn did not converge. You might want to "
-                          "increase the number of iterations `numItermax` "
-                          "or the regularization parameter `reg`.")
+            if warn:
+                warnings.warn("Sinkhorn did not converge. You might want to "
+                              "increase the number of iterations `numItermax` "
+                              "or the regularization parameter `reg`.")
 
         if log:
             log['niter'] = ii
@@ -716,7 +733,7 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000,
 
 
 def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
-               log=False):
+               log=False, warn=True):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -761,6 +778,8 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
         Stop threshold on error (>0)
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
     Returns
     -------
@@ -859,9 +878,10 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
         if stopThr_val <= stopThr:
             break
     else:
-        warnings.warn("Sinkhorn did not converge. You might want to "
-                      "increase the number of iterations `numItermax` "
-                      "or the regularization parameter `reg`.")
+        if warn:
+            warnings.warn("Sinkhorn did not converge. You might want to "
+                          "increase the number of iterations `numItermax` "
+                          "or the regularization parameter `reg`.")
 
     if log:
         log["n_iter"] = ii
@@ -876,7 +896,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
 
 def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
                         warmstart=None, verbose=False, print_period=20,
-                        log=False, **kwargs):
+                        log=False, warn=True, **kwargs):
     r"""
     Solve the entropic regularization OT problem with log stabilization
 
@@ -929,6 +949,8 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
     Returns
     -------
@@ -1081,9 +1103,10 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
             v = vprev
             break
     else:
-        warnings.warn("Sinkhorn did not converge. You might want to "
-                      "increase the number of iterations `numItermax` "
-                      "or the regularization parameter `reg`.")
+        if warn:
+            warnings.warn("Sinkhorn did not converge. You might want to "
+                          "increase the number of iterations `numItermax` "
+                          "or the regularization parameter `reg`.")
     if log:
         if n_hists:
             alpha = alpha[:, None]
@@ -1119,7 +1142,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
 def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
                              numInnerItermax=100, tau=1e3, stopThr=1e-9,
                              warmstart=None, verbose=False, print_period=10,
-                             log=False, **kwargs):
+                             log=False, warn=True, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem with log
     stabilization and epsilon scaling.
@@ -1171,6 +1194,9 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
+
     Returns
     -------
     gamma : array-like, shape (dim_a, dim_b)
@@ -1266,9 +1292,10 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
         if err <= stopThr and ii > numItermin:
             break
     else:
-        warnings.warn("Sinkhorn did not converge. You might want to "
-                      "increase the number of iterations `numItermax` "
-                      "or the regularization parameter `reg`.")
+        if warn:
+            warnings.warn("Sinkhorn did not converge. You might want to "
+                          "increase the number of iterations `numItermax` "
+                          "or the regularization parameter `reg`.")
     if log:
         log['alpha'] = alpha
         log['beta'] = beta
@@ -1309,7 +1336,7 @@ def projC(gamma, q):
 
 
 def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
-               stopThr=1e-4, verbose=False, log=False, **kwargs):
+               stopThr=1e-4, verbose=False, log=False, warn=True, **kwargs):
     r"""Compute the entropic regularized wasserstein barycenter of distributions :math:`\mathbf{A}`
 
      The function solves the following optimization problem:
@@ -1350,6 +1377,8 @@ def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
 
     Returns
@@ -1374,23 +1403,24 @@ def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
         return barycenter_sinkhorn(A, M, reg, weights=weights,
                                    numItermax=numItermax,
                                    stopThr=stopThr, verbose=verbose, log=log,
+                                   warn=warn,
                                    **kwargs)
     elif method.lower() == 'sinkhorn_stabilized':
         return barycenter_stabilized(A, M, reg, weights=weights,
                                      numItermax=numItermax,
                                      stopThr=stopThr, verbose=verbose,
-                                     log=log, **kwargs)
+                                     log=log, warn=warn, **kwargs)
     elif method.lower() == 'sinkhorn_log':
         return _barycenter_sinkhorn_log(A, M, reg, weights=weights,
                                         numItermax=numItermax,
                                         stopThr=stopThr, verbose=verbose,
-                                        log=log, **kwargs)
+                                        log=log, warn=warn, **kwargs)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
 
 def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
-                        stopThr=1e-4, verbose=False, log=False):
+                        stopThr=1e-4, verbose=False, log=False, warn=True):
     r"""Compute the entropic regularized wasserstein barycenter of distributions :math:`\mathbf{A}`
 
      The function solves the following optimization problem:
@@ -1428,6 +1458,8 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
 
     Returns
@@ -1488,9 +1520,10 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
                         '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(ii, err))
     else:
-        warnings.warn("Sinkhorn did not converge. You might want to "
-                      "increase the number of iterations `numItermax` "
-                      "or the regularization parameter `reg`.")
+        if warn:
+            warnings.warn("Sinkhorn did not converge. You might want to "
+                          "increase the number of iterations `numItermax` "
+                          "or the regularization parameter `reg`.")
     if log:
         log['niter'] = ii
         return geometricBar(weights, UKv), log
@@ -1499,7 +1532,7 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
 
 
 def _barycenter_sinkhorn_log(A, M, reg, weights=None, numItermax=1000,
-                             stopThr=1e-4, verbose=False, log=False):
+                             stopThr=1e-4, verbose=False, log=False, warn=True):
     r"""Compute the entropic wasserstein barycenter in log-domain
     """
 
@@ -1549,9 +1582,10 @@ def _barycenter_sinkhorn_log(A, M, reg, weights=None, numItermax=1000,
         G = log_bar[:, None] - log_KU
 
     else:
-        warnings.warn("Sinkhorn did not converge. You might want to "
-                      "increase the number of iterations `numItermax` "
-                      "or the regularization parameter `reg`.")
+        if warn:
+            warnings.warn("Sinkhorn did not converge. You might want to "
+                          "increase the number of iterations `numItermax` "
+                          "or the regularization parameter `reg`.")
     if log:
         log['niter'] = ii
         return nx.exp(log_bar), log
@@ -1560,7 +1594,7 @@ def _barycenter_sinkhorn_log(A, M, reg, weights=None, numItermax=1000,
 
 
 def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
-                          stopThr=1e-4, verbose=False, log=False):
+                          stopThr=1e-4, verbose=False, log=False, warn=True):
     r"""Compute the entropic regularized wasserstein barycenter of distributions :math:`\mathbf{A}` with stabilization.
 
      The function solves the following optimization problem:
@@ -1601,6 +1635,8 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
 
     Returns
@@ -1682,9 +1718,10 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
                 print('{:5d}|{:8e}|'.format(ii, err))
 
     else:
-        warnings.warn("Stabilized Sinkhorn did not converge." +
-                      "Try a larger entropy `reg`" +
-                      "Or a larger absorption threshold `tau`.")
+        if warn:
+            warnings.warn("Stabilized Sinkhorn did not converge." +
+                          "Try a larger entropy `reg`" +
+                          "Or a larger absorption threshold `tau`.")
     if log:
         log['niter'] = ii
         log['logu'] = np.log(u + 1e-16)
@@ -1695,7 +1732,7 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
 
 
 def barycenter_debiased(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
-                        stopThr=1e-4, verbose=False, log=False, **kwargs):
+                        stopThr=1e-4, verbose=False, log=False, warn=True, **kwargs):
     r"""Compute the debiased Sinkhorn barycenter of distributions A
 
      The function solves the following optimization problem:
@@ -1713,7 +1750,7 @@ def barycenter_debiased(A, M, reg, weights=None, method="sinkhorn", numItermax=1
     the cost matrix for OT
 
     The algorithm used for solving the problem is the debiased Sinkhorn
-    algorithm as proposed in :ref:`[28] <references-sinkhorn-debiased>`
+    algorithm as proposed in :ref:`[35] <references-sinkhorn-debiased>`
 
     Parameters
     ----------
@@ -1735,6 +1772,9 @@ def barycenter_debiased(A, M, reg, weights=None, method="sinkhorn", numItermax=1
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
+
 
 
     Returns
@@ -1748,7 +1788,7 @@ def barycenter_debiased(A, M, reg, weights=None, method="sinkhorn", numItermax=1
      References
      ----------
 
-     .. [28] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th International
+     .. [35] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th International
      Conference on Machine Learning, PMLR 119:4692-4701, 2020
     """
 
@@ -1756,18 +1796,18 @@ def barycenter_debiased(A, M, reg, weights=None, method="sinkhorn", numItermax=1
         return _barycenter_debiased(A, M, reg, weights=weights,
                                     numItermax=numItermax,
                                     stopThr=stopThr, verbose=verbose, log=log,
-                                    **kwargs)
+                                    warn=warn, **kwargs)
     elif method.lower() == 'sinkhorn_log':
         return _barycenter_debiased_log(A, M, reg, weights=weights,
                                         numItermax=numItermax,
                                         stopThr=stopThr, verbose=verbose,
-                                        log=log, **kwargs)
+                                        log=log, warn=warn, **kwargs)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
 
 def _barycenter_debiased(A, M, reg, weights=None, numItermax=1000,
-                         stopThr=1e-4, verbose=False, log=False):
+                         stopThr=1e-4, verbose=False, log=False, warn=True):
     r"""Compute the debiased sinkhorn barycenter of distributions A.
     """
 
@@ -1817,9 +1857,10 @@ def _barycenter_debiased(A, M, reg, weights=None, numItermax=1000,
                         '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(ii, err))
     else:
-        warnings.warn("Sinkhorn did not converge. You might want to "
-                      "increase the number of iterations `numItermax` "
-                      "or the regularization parameter `reg`.")
+        if warn:
+            warnings.warn("Sinkhorn did not converge. You might want to "
+                          "increase the number of iterations `numItermax` "
+                          "or the regularization parameter `reg`.")
     if log:
         log['niter'] = ii
         return bar, log
@@ -1828,7 +1869,8 @@ def _barycenter_debiased(A, M, reg, weights=None, numItermax=1000,
 
 
 def _barycenter_debiased_log(A, M, reg, weights=None, numItermax=1000,
-                             stopThr=1e-4, verbose=False, log=False):
+                             stopThr=1e-4, verbose=False, log=False,
+                             warn=True):
     r"""Compute the debiased sinkhorn barycenter in log domain.
      """
 
@@ -1880,9 +1922,10 @@ def _barycenter_debiased_log(A, M, reg, weights=None, numItermax=1000,
             c = 0.5 * (c + log_bar - nx.logsumexp(M + c[:, None], axis=0))
 
     else:
-        warnings.warn("Sinkhorn did not converge. You might want to "
-                      "increase the number of iterations `numItermax` "
-                      "or the regularization parameter `reg`.")
+        if warn:
+            warnings.warn("Sinkhorn did not converge. You might want to "
+                          "increase the number of iterations `numItermax` "
+                          "or the regularization parameter `reg`.")
     if log:
         log['niter'] = ii
         return nx.exp(log_bar), log
@@ -1891,7 +1934,8 @@ def _barycenter_debiased_log(A, M, reg, weights=None, numItermax=1000,
 
 
 def convolutional_barycenter2d(A, reg, weights=None, method="sinkhorn", numItermax=10000,
-                               stopThr=1e-4, verbose=False, log=False, **kwargs):
+                               stopThr=1e-4, verbose=False, log=False,
+                               warn=True, **kwargs):
     r"""Compute the entropic regularized wasserstein barycenter of distributions A
     where A is a collection of 2D images.
 
@@ -1931,6 +1975,8 @@ def convolutional_barycenter2d(A, reg, weights=None, method="sinkhorn", numIterm
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
     Returns
     -------
@@ -1949,7 +1995,7 @@ def convolutional_barycenter2d(A, reg, weights=None, method="sinkhorn", numIterm
         Efficient optimal transportation on geometric domains. ACM Transactions
         on Graphics (TOG), 34(4), 66
 
-    .. [28] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th
+    .. [35] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th
         International Conference on Machine Learning, PMLR 119:4692-4701, 2020
     """
 
@@ -1957,20 +2003,21 @@ def convolutional_barycenter2d(A, reg, weights=None, method="sinkhorn", numIterm
         return _convolutional_barycenter2d(A, reg, weights=weights,
                                            numItermax=numItermax,
                                            stopThr=stopThr, verbose=verbose,
-                                           log=log,
+                                           log=log, warn=warn,
                                            **kwargs)
     elif method.lower() == 'sinkhorn_log':
         return _convolutional_barycenter2d_log(A, reg, weights=weights,
                                                numItermax=numItermax,
                                                stopThr=stopThr, verbose=verbose,
-                                               log=log, **kwargs)
+                                               log=log, warn=warn,
+                                               **kwargs)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
 
 def _convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
                                 stopThr=1e-9, stabThr=1e-30, verbose=False,
-                                log=False):
+                                log=False, warn=True):
     r"""Compute the entropic regularized wasserstein barycenter of distributions A
     where A is a collection of 2D images.
     """
@@ -2029,9 +2076,10 @@ def _convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
                 break
 
     else:
-        warnings.warn("Convolutional Sinkhorn did not converge. "
-                      "Try a larger number of iterations `numItermax` "
-                      "or a larger entropy `reg`.")
+        if warn:
+            warnings.warn("Convolutional Sinkhorn did not converge. "
+                          "Try a larger number of iterations `numItermax` "
+                          "or a larger entropy `reg`.")
     if log:
         log['niter'] = ii
         log['U'] = U
@@ -2042,7 +2090,7 @@ def _convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
 
 def _convolutional_barycenter2d_log(A, reg, weights=None, numItermax=10000,
                                     stopThr=1e-4, stabThr=1e-30, verbose=False,
-                                    log=False):
+                                    log=False, warn=True):
     r"""Compute the entropic regularized wasserstein barycenter of distributions A
     where A is a collection of 2D images in log-domain.
     """
@@ -2105,9 +2153,10 @@ def _convolutional_barycenter2d_log(A, reg, weights=None, numItermax=10000,
         G = log_bar[None, :, :] - log_KU
 
     else:
-        warnings.warn("Convolutional Sinkhorn did not converge. "
-                      "Try a larger number of iterations `numItermax` "
-                      "or a larger entropy `reg`.")
+        if warn:
+            warnings.warn("Convolutional Sinkhorn did not converge. "
+                          "Try a larger number of iterations `numItermax` "
+                          "or a larger entropy `reg`.")
     if log:
         log['niter'] = ii
         return nx.exp(log_bar), log
@@ -2115,8 +2164,10 @@ def _convolutional_barycenter2d_log(A, reg, weights=None, numItermax=10000,
         return nx.exp(log_bar)
 
 
-def convolutional_barycenter2d_debiased(A, reg, weights=None, method="sinkhorn", numItermax=10000,
-                                        stopThr=1e-4, verbose=False, log=False, **kwargs):
+def convolutional_barycenter2d_debiased(A, reg, weights=None, method="sinkhorn",
+                                        numItermax=10000, stopThr=1e-4,
+                                        verbose=False, log=False, warn=True,
+                                        **kwargs):
     r"""Compute the debiased sinkhorn barycenter of distributions A
     where A is a collection of 2D images.
 
@@ -2134,7 +2185,7 @@ def convolutional_barycenter2d_debiased(A, reg, weights=None, method="sinkhorn",
     - `reg` is the regularization strength scalar value
 
     The algorithm used for solving the problem is the debiased Sinkhorn scaling
-    algorithm as proposed in :ref:`[28] <references-sinkhorn-debiased>`
+    algorithm as proposed in :ref:`[35] <references-sinkhorn-debiased>`
 
     Parameters
     ----------
@@ -2156,6 +2207,9 @@ def convolutional_barycenter2d_debiased(A, reg, weights=None, method="sinkhorn",
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
+
 
     Returns
     -------
@@ -2169,7 +2223,7 @@ def convolutional_barycenter2d_debiased(A, reg, weights=None, method="sinkhorn",
     References
     ----------
 
-    .. [28] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th International
+    .. [35] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th International
         Conference on Machine Learning, PMLR 119:4692-4701, 2020
     """
 
@@ -2177,20 +2231,21 @@ def convolutional_barycenter2d_debiased(A, reg, weights=None, method="sinkhorn",
         return _convolutional_barycenter2d_debiased(A, reg, weights=weights,
                                                     numItermax=numItermax,
                                                     stopThr=stopThr, verbose=verbose,
-                                                    log=log,
+                                                    log=log, warn=warn,
                                                     **kwargs)
     elif method.lower() == 'sinkhorn_log':
         return _convolutional_barycenter2d_debiased_log(A, reg, weights=weights,
                                                         numItermax=numItermax,
                                                         stopThr=stopThr, verbose=verbose,
-                                                        log=log, **kwargs)
+                                                        log=log, warn=warn,
+                                                        **kwargs)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
 
 def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
                                          stopThr=1e-4, stabThr=1e-15, verbose=False,
-                                         log=False):
+                                         log=False, warn=True):
     r"""Compute the debiased barycenter of 2D images via sinkhorn convolutions.
     """
 
@@ -2256,9 +2311,10 @@ def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
             if err < stopThr and ii > 20:
                 break
     else:
-        warnings.warn("Sinkhorn did not converge. You might want to "
-                      "increase the number of iterations `numItermax` "
-                      "or the regularization parameter `reg`.")
+        if warn:
+            warnings.warn("Sinkhorn did not converge. You might want to "
+                          "increase the number of iterations `numItermax` "
+                          "or the regularization parameter `reg`.")
     if log:
         log['niter'] = ii
         log['U'] = U
@@ -2269,7 +2325,7 @@ def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
 
 def _convolutional_barycenter2d_debiased_log(A, reg, weights=None, numItermax=10000,
                                              stopThr=1e-4, stabThr=1e-30, verbose=False,
-                                             log=False):
+                                             log=False, warn=True):
     r"""Compute the debiased barycenter of 2D images in log-domain.
      """
 
@@ -2332,9 +2388,10 @@ def _convolutional_barycenter2d_debiased_log(A, reg, weights=None, numItermax=10
         G = log_bar[None, :, :] - log_KU
 
     else:
-        warnings.warn("Convolutional Sinkhorn did not converge. "
-                      "Try a larger number of iterations `numItermax` "
-                      "or a larger entropy `reg`.")
+        if warn:
+            warnings.warn("Convolutional Sinkhorn did not converge. "
+                          "Try a larger number of iterations `numItermax` "
+                          "or a larger entropy `reg`.")
     if log:
         log['niter'] = ii
         return nx.exp(log_bar), log
@@ -2343,7 +2400,7 @@ def _convolutional_barycenter2d_debiased_log(A, reg, weights=None, numItermax=10
 
 
 def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
-          stopThr=1e-3, verbose=False, log=False):
+          stopThr=1e-3, verbose=False, log=False, warn=True):
     r"""
     Compute the unmixing of an observation with a given dictionary using Wasserstein distance
 
@@ -2399,7 +2456,8 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
         Print information along iterations
     log : bool, optional
         record log if True
-
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
     Returns
     -------
@@ -2459,9 +2517,10 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
         if err < stopThr:
             break
     else:
-        warnings.warn("Unmixing algorithm did not converge. You might want to "
-                      "increase the number of iterations `numItermax` "
-                      "or the regularization parameter `reg`.")
+        if warn:
+            warnings.warn("Unmixing algorithm did not converge. You might want to "
+                          "increase the number of iterations `numItermax` "
+                          "or the regularization parameter `reg`.")
     if log:
         log['niter'] = ii
         return nx.sum(K0, axis=1), log
@@ -2470,7 +2529,7 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
 
 
 def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
-                     stopThr=1e-6, verbose=False, log=False, **kwargs):
+                     stopThr=1e-6, verbose=False, log=False, warn=True, **kwargs):
     r'''Joint OT and proportion estimation for multi-source target shift as
     proposed in :ref:`[27] <references-jcpot-barycenter>`
 
@@ -2520,10 +2579,12 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
         Max number of iterations
     stopThr : float, optional
         Stop threshold on relative change in the barycenter (>0)
-    log : bool, optional
-        record log if True
     verbose : bool, optional (default=False)
         Controls the verbosity of the optimization algorithm
+    log : bool, optional
+        record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
     Returns
     -------
@@ -2628,9 +2689,10 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
                 print('{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(ii, err))
     else:
-        warnings.warn("Algorithm did not converge. You might want to "
-                      "increase the number of iterations `numItermax` "
-                      "or the regularization parameter `reg`.")
+        if warn:
+            warnings.warn("Algorithm did not converge. You might want to "
+                          "increase the number of iterations `numItermax` "
+                          "or the regularization parameter `reg`.")
     bary = bary / nx.sum(bary)
 
     if log:
@@ -2646,7 +2708,7 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
 
 def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
                        numIterMax=10000, stopThr=1e-9, isLazy=False, batchSize=100, verbose=False,
-                       log=False, **kwargs):
+                       log=False, warn=True, **kwargs):
     r'''
     Solve the entropic regularization optimal transport problem and return the
     OT matrix from empirical data
@@ -2696,6 +2758,8 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
 
     Returns
@@ -2804,9 +2868,10 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
                 if err <= stopThr:
                     break
         else:
-            warnings.warn("Sinkhorn did not converge. You might want to "
-                          "increase the number of iterations `numItermax` "
-                          "or the regularization parameter `reg`.")
+            if warn:
+                warnings.warn("Sinkhorn did not converge. You might want to "
+                              "increase the number of iterations `numItermax` "
+                              "or the regularization parameter `reg`.")
         if log:
             dict_log["u"] = f
             dict_log["v"] = g
@@ -2828,7 +2893,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
 
 def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
                         numIterMax=10000, stopThr=1e-9, isLazy=False,
-                        batchSize=100, verbose=False, log=False, **kwargs):
+                        batchSize=100, verbose=False, log=False, warn=True, **kwargs):
     r'''
     Solve the entropic regularization optimal transport problem from empirical
     data and return the OT loss
@@ -2879,6 +2944,8 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
 
     Returns
@@ -2934,12 +3001,14 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
                                                 stopThr=stopThr,
                                                 isLazy=isLazy,
                                                 batchSize=batchSize,
-                                                verbose=verbose, log=log)
+                                                verbose=verbose, log=log,
+                                                warn=warn)
         else:
             f, g = empirical_sinkhorn(X_s, X_t, reg, a, b, metric,
                                       numIterMax=numIterMax, stopThr=stopThr,
                                       isLazy=isLazy, batchSize=batchSize,
-                                      verbose=verbose, log=log)
+                                      verbose=verbose, log=log,
+                                      warn=warn)
 
         bs = batchSize if isinstance(batchSize, int) else batchSize[0]
         range_s = range(0, ns, bs)
@@ -2967,18 +3036,19 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         if log:
             sinkhorn_loss, log = sinkhorn2(a, b, M, reg, numItermax=numIterMax,
                                            stopThr=stopThr, verbose=verbose, log=log,
-                                           **kwargs)
+                                           warn=warn, **kwargs)
             return sinkhorn_loss, log
         else:
             sinkhorn_loss = sinkhorn2(a, b, M, reg, numItermax=numIterMax,
                                       stopThr=stopThr, verbose=verbose, log=log,
-                                      **kwargs)
+                                      warn=warn, **kwargs)
             return sinkhorn_loss
 
 
 def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
                                   numIterMax=10000, stopThr=1e-9,
-                                  verbose=False, log=False, **kwargs):
+                                  verbose=False, log=False, warn=True,
+                                  **kwargs):
     r'''
     Compute the sinkhorn divergence loss from empirical data
 
@@ -3043,6 +3113,8 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
         Print information along iterations
     log : bool, optional
         record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
 
     Returns
     -------
@@ -3073,17 +3145,17 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
         sinkhorn_loss_ab, log_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
                                                        numIterMax=numIterMax,
                                                        stopThr=1e-9, verbose=verbose,
-                                                       log=log, **kwargs)
+                                                       log=log, warn=warn, **kwargs)
 
         sinkhorn_loss_a, log_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric,
                                                      numIterMax=numIterMax,
                                                      stopThr=1e-9, verbose=verbose,
-                                                     log=log, **kwargs)
+                                                     log=log, warn=warn, **kwargs)
 
         sinkhorn_loss_b, log_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric,
                                                      numIterMax=numIterMax,
                                                      stopThr=1e-9, verbose=verbose,
-                                                     log=log, **kwargs)
+                                                     log=log, warn=warn, **kwargs)
 
         sinkhorn_div = sinkhorn_loss_ab - 0.5 * (sinkhorn_loss_a + sinkhorn_loss_b)
 
@@ -3100,22 +3172,26 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
     else:
         sinkhorn_loss_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
                                                numIterMax=numIterMax, stopThr=1e-9,
-                                               verbose=verbose, log=log, **kwargs)
+                                               verbose=verbose, log=log,
+                                               warn=warn, **kwargs)
 
         sinkhorn_loss_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric,
                                               numIterMax=numIterMax, stopThr=1e-9,
-                                              verbose=verbose, log=log, **kwargs)
+                                              verbose=verbose, log=log,
+                                              warn=warn, **kwargs)
 
         sinkhorn_loss_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric,
                                               numIterMax=numIterMax, stopThr=1e-9,
-                                              verbose=verbose, log=log, **kwargs)
+                                              verbose=verbose, log=log,
+                                              warn=warn, **kwargs)
 
         sinkhorn_div = sinkhorn_loss_ab - 0.5 * (sinkhorn_loss_a + sinkhorn_loss_b)
         return max(0, sinkhorn_div)
 
 
-def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, restricted=True,
-                maxiter=10000, maxfun=10000, pgtol=1e-09, verbose=False, log=False):
+def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
+                restricted=True, maxiter=10000, maxfun=10000, pgtol=1e-09,
+                verbose=False, log=False):
     r"""
     Screening Sinkhorn Algorithm for Regularized Optimal Transport
 
@@ -3145,47 +3221,35 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
 
     Parameters
     ----------
-    a : array-like, shape=(ns,)
+    a: array-like, shape=(ns,)
         samples weights in the source domain
-
-    b : array-like, shape=(nt,)
+    b: array-like, shape=(nt,)
         samples weights in the target domain
-
-    M : array-like, shape=(ns, nt)
+    M: array-like, shape=(ns, nt)
         Cost matrix
-
-    reg : `float`
+    reg: `float`
         Level of the entropy regularisation
-
-    ns_budget : `int`, default=None
+    ns_budget: `int`, default=None
         Number budget of points to be kept in the source domain.
         If it is None then 50% of the source sample points will be kept
-
-    nt_budget : `int`, default=None
+    nt_budget: `int`, default=None
         Number budget of points to be kept in the target domain.
         If it is None then 50% of the target sample points will be kept
-
-    uniform : `bool`, default=False
+    uniform: `bool`, default=False
         If `True`, the source and target distribution are supposed to be uniform,
         i.e., :math:`a_i = 1 / ns` and :math:`b_j = 1 / nt`
-
     restricted : `bool`, default=True
          If `True`, a warm-start initialization for the  L-BFGS-B solver
          using a restricted Sinkhorn algorithm with at most 5 iterations
-
-    maxiter : `int`, default=10000
+    maxiter: `int`, default=10000
       Maximum number of iterations in LBFGS solver
-
-    maxfun : `int`, default=10000
+    maxfun: `int`, default=10000
       Maximum number of function evaluations in LBFGS solver
-
-    pgtol : `float`, default=1e-09
+    pgtol: `float`, default=1e-09
       Final objective function accuracy in LBFGS solver
-
-    verbose : `bool`, default=False
+    verbose: `bool`, default=False
         If `True`, display informations about the cardinals of the active sets
         and the parameters kappa and epsilon
-
 
     Dependency
     ----------
