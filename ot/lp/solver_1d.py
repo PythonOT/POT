@@ -9,7 +9,7 @@ Exact solvers for the 1D Wasserstein distance using cvxopt
 # License: MIT License
 
 import numpy as np
-from scipy.sparse import coo_matrix
+import warnings
 
 from .emd_wrap import emd_1d_sorted
 from ..backend import get_backend
@@ -131,6 +131,7 @@ def wasserstein_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, requ
     if p == 1:
         return nx.sum(delta * nx.abs(diff_quantiles), axis=0)
     return nx.sum(delta * nx.power(diff_quantiles, p), axis=0)
+
 
 def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
            log=False):

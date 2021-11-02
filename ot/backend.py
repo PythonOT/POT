@@ -542,7 +542,6 @@ class Backend():
         """
         raise NotImplementedError()
 
-
     def seed(self, seed=None):
         r"""
         Sets the seed for the random generator.
@@ -877,6 +876,7 @@ class NumpyBackend(Backend):
 
     def allclose(self, a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         return np.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
+
 
 class JaxBackend(Backend):
     """
@@ -1437,4 +1437,3 @@ class TorchBackend(Backend):
 
     def allclose(self, a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         return torch.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
-
