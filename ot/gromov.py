@@ -24,29 +24,44 @@ from .backend import get_backend
 def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
     r"""Return loss matrices and tensors for Gromov-Wasserstein fast computation
 
-    Returns the value of \mathcal{L}(C1,C2) \otimes T with the selected loss
-    function as the loss function of Gromow-Wasserstein discrepancy.
+    Returns the value of :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2}) \otimes \mathbf{T}` with the
+    selected loss function as the loss function of Gromow-Wasserstein discrepancy.
 
-    The matrices are computed as described in Proposition 1 in [12]
+    The matrices are computed as described in Proposition 1 in :ref:`[12] <references-init-matrix>`
 
     Where :
-        * C1 : Metric cost matrix in the source space
-        * C2 : Metric cost matrix in the target space
-        * T : A coupling between those two spaces
 
-    The square-loss function L(a,b)=|a-b|^2 is read as :
-        L(a,b) = f1(a)+f2(b)-h1(a)*h2(b) with :
-            * f1(a)=(a^2)
-            * f2(b)=(b^2)
-            * h1(a)=a
-            * h2(b)=2*b
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{T}`: A coupling between those two spaces
 
-    The kl-loss function L(a,b)=a*log(a/b)-a+b is read as :
-        L(a,b) = f1(a)+f2(b)-h1(a)*h2(b) with :
-            * f1(a)=a*log(a)-a
-            * f2(b)=b
-            * h1(a)=a
-            * h2(b)=log(b)
+    The square-loss function :math:`L(a, b) = |a - b|^2` is read as :
+
+    .. math::
+
+        L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)
+
+        \mathrm{with} \ f_1(a) &= a^2
+
+                        f_2(b) &= b^2
+
+                        h_1(a) &= a
+
+                        h_2(b) &= 2b
+
+    The kl-loss function :math:`L(a, b) = a \log\left(\frac{a}{b}\right) - a + b` is read as :
+
+    .. math::
+
+        L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)
+
+        \mathrm{with} \ f_1(a) &= a \log(a) - a
+
+                        f_2(b) &= b
+
+                        h_1(a) &= a
+
+                        h_2(b) &= \log(b)
 
     Parameters
     ----------
@@ -61,12 +76,14 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
     Returns
     -------
     constC : ndarray, shape (ns, nt)
-        Constant C matrix in Eq. (6)
+        Constant :math:`\mathbf{C}` matrix in Eq. (6)
     hC1 : ndarray, shape (ns, ns)
-        h1(C1) matrix in Eq. (6)
+        :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
     hC2 : ndarray, shape (nt, nt)
-        h2(C) matrix in Eq. (6)
+        :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
 
+
+    .. _references-init-matrix:
     References
     ----------
     .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
@@ -120,22 +137,24 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
 def tensor_product(constC, hC1, hC2, T):
     r"""Return the tensor for Gromov-Wasserstein fast computation
 
-    The tensor is computed as described in Proposition 1 Eq. (6) in [12].
+    The tensor is computed as described in Proposition 1 Eq. (6) in :ref:`[12] <references-tensor-product>`
 
     Parameters
     ----------
     constC : ndarray, shape (ns, nt)
-        Constant C matrix in Eq. (6)
+        Constant :math:`\mathbf{C}` matrix in Eq. (6)
     hC1 : ndarray, shape (ns, ns)
-        h1(C1) matrix in Eq. (6)
+        :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
     hC2 : ndarray, shape (nt, nt)
-        h2(C) matrix in Eq. (6)
+        :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
 
     Returns
     -------
     tens : ndarray, shape (ns, nt)
-        \mathcal{L}(C1,C2) \otimes T tensor-matrix multiplication result
+        :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2}) \otimes \mathbf{T}` tensor-matrix multiplication result
 
+
+    .. _references-tensor-product:
     References
     ----------
     .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
@@ -157,24 +176,26 @@ def tensor_product(constC, hC1, hC2, T):
 def gwloss(constC, hC1, hC2, T):
     """Return the Loss for Gromov-Wasserstein
 
-    The loss is computed as described in Proposition 1 Eq. (6) in [12].
+    The loss is computed as described in Proposition 1 Eq. (6) in :ref:`[12] <references-gwloss>`
 
     Parameters
     ----------
     constC : ndarray, shape (ns, nt)
-        Constant C matrix in Eq. (6)
+        Constant :math:`\mathbf{C}` matrix in Eq. (6)
     hC1 : ndarray, shape (ns, ns)
-        h1(C1) matrix in Eq. (6)
+        :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
     hC2 : ndarray, shape (nt, nt)
-        h2(C) matrix in Eq. (6)
+        :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
     T : ndarray, shape (ns, nt)
-        Current value of transport matrix T
+        Current value of transport matrix :math:`\mathbf{T}`
 
     Returns
     -------
     loss : float
         Gromov Wasserstein loss
 
+
+    .. _references-gwloss:
     References
     ----------
     .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
@@ -194,24 +215,26 @@ def gwloss(constC, hC1, hC2, T):
 def gwggrad(constC, hC1, hC2, T):
     """Return the gradient for Gromov-Wasserstein
 
-    The gradient is computed as described in Proposition 2 in [12].
+    The gradient is computed as described in Proposition 2 in :ref:`[12] <references-gwggrad>`
 
     Parameters
     ----------
     constC : ndarray, shape (ns, nt)
-        Constant C matrix in Eq. (6)
+        Constant :math:`\mathbf{C}` matrix in Eq. (6)
     hC1 : ndarray, shape (ns, ns)
-        h1(C1) matrix in Eq. (6)
+        :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
     hC2 : ndarray, shape (nt, nt)
-        h2(C) matrix in Eq. (6)
+        :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
     T : ndarray, shape (ns, nt)
-        Current value of transport matrix T
+        Current value of transport matrix :math:`\mathbf{T}`
 
     Returns
     -------
     grad : ndarray, shape (ns, nt)
            Gromov Wasserstein gradient
 
+
+    .. _references-gwggrad:
     References
     ----------
     .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
@@ -225,24 +248,24 @@ def gwggrad(constC, hC1, hC2, T):
 
 def update_square_loss(p, lambdas, T, Cs):
     """
-    Updates C according to the L2 Loss kernel with the S Ts couplings
-    calculated at each iteration
+    Updates :math:`\mathbf{C}` according to the L2 Loss kernel with the `S` :math:`\mathbf{T}_s`
+    couplings calculated at each iteration
 
     Parameters
     ----------
     p : ndarray, shape (N,)
         Masses in the targeted barycenter.
     lambdas : list of float
-        List of the S spaces' weights.
+        List of the `S` spaces' weights.
     T : list of S np.ndarray of shape (ns,N)
-        The S Ts couplings calculated at each iteration.
+        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
     Cs : list of S ndarray, shape(ns,ns)
         Metric cost matrices.
 
     Returns
     ----------
     C : ndarray, shape (nt, nt)
-        Updated C matrix.
+        Updated :math:`\mathbf{C}` matrix.
     """
     T = list_to_array(*T)
     Cs = list_to_array(*Cs)
@@ -262,23 +285,24 @@ def update_square_loss(p, lambdas, T, Cs):
 
 def update_kl_loss(p, lambdas, T, Cs):
     """
-    Updates C according to the KL Loss kernel with the S Ts couplings calculated at each iteration
+    Updates :math:`\mathbf{C}` according to the KL Loss kernel with the `S` :math:`\mathbf{T}_s` couplings calculated at each iteration
 
 
     Parameters
     ----------
     p  : ndarray, shape (N,)
         Weights in the targeted barycenter.
-    lambdas : list of the S spaces' weights
+    lambdas : list of float
+        List of the `S` spaces' weights
     T : list of S np.ndarray of shape (ns,N)
-        The S Ts couplings calculated at each iteration.
+        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
     Cs : list of S ndarray, shape(ns,ns)
         Metric cost matrices.
 
     Returns
     ----------
     C : ndarray, shape (ns,ns)
-        updated C matrix
+        updated :math:`\mathbf{C}` matrix
     """
     Cs = list_to_array(*Cs)
     T = list_to_array(*T)
@@ -298,19 +322,20 @@ def update_kl_loss(p, lambdas, T, Cs):
 
 def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs):
     r"""
-    Returns the gromov-wasserstein transport between (C1,p) and (C2,q)
+    Returns the gromov-wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
 
     The function solves the following optimization problem:
 
     .. math::
-        GW = \min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+        \mathbf{GW} = \mathop{\arg \min}_\mathbf{T} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
     Where :
-    - C1 : Metric cost matrix in the source space
-    - C2 : Metric cost matrix in the target space
-    - p  : distribution in the source space
-    - q  : distribution in the target space
-    - L  : loss function to account for the misfit between the similarity matrices
+
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity matrices
 
     Parameters
     ----------
@@ -324,7 +349,6 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
         Distribution in the target space
     loss_fun : str
         loss function used for the solver either 'square_loss' or 'kl_loss'
-
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -334,16 +358,17 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
     log : bool, optional
         record log if True
     armijo : bool, optional
-        If True the steps of the line-search is found via an armijo research. Else closed form is used.
-        If there is convergence issues use False.
+        If True the step of the line-search is found via an armijo research. Else closed form is used.
+        If there are convergence issues use False.
     **kwargs : dict
         parameters can be directly passed to the ot.optim.cg solver
 
     Returns
     -------
     T : ndarray, shape (ns, nt)
-        Doupling between the two spaces that minimizes:
-            \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+        Coupling between the two spaces that minimizes:
+
+            :math:`\sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}`
     log : dict
         Convergence information and loss.
 
@@ -380,19 +405,20 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
 
 def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs):
     r"""
-    Returns the gromov-wasserstein discrepancy between (C1,p) and (C2,q)
+    Returns the gromov-wasserstein discrepancy between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
 
     The function solves the following optimization problem:
 
     .. math::
-        GW = \min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+        GW = \min_\mathbf{T} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
     Where :
-    - C1 : Metric cost matrix in the source space
-    - C2 : Metric cost matrix in the target space
-    - p  : distribution in the source space
-    - q  : distribution in the target space
-    - L  : loss function to account for the misfit between the similarity matrices
+
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity matrices
 
     Parameters
     ----------
@@ -415,8 +441,8 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwarg
     log : bool, optional
         record log if True
     armijo : bool, optional
-        If True the steps of the line-search is found via an armijo research. Else closed form is used.
-        If there is convergence issues use False.
+        If True the step of the line-search is found via an armijo research. Else closed form is used.
+        If there are convergence issues use False.
 
     Returns
     -------
@@ -464,11 +490,11 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
         \gamma = \mathop{\arg \min}_\gamma (1 - \alpha) <\gamma, \mathbf{M}>_F + \alpha \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} = \mathbf{p}
+        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma}^T \mathbf{1} = \mathbf{q}
+             \mathbf{\gamma}^T \mathbf{1} &= \mathbf{q}
 
-             \mathbf{\gamma} \geq 0
+             \mathbf{\gamma} &\geq 0
 
     where :
 
@@ -546,11 +572,11 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
         \min_\gamma (1 - \alpha) <\gamma, \mathbf{M}>_F + \alpha \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} = \mathbf{p}
+        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma}^T \mathbf{1} = \mathbf{q}
+             \mathbf{\gamma}^T \mathbf{1} &= \mathbf{q}
 
-             \mathbf{\gamma} \geq 0
+             \mathbf{\gamma} &\geq 0
 
     where :
 
@@ -650,7 +676,7 @@ def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
         Distribution in the source space
     q :  array-like, shape (nt,)
         Distribution in the target space
-    loss_fun :  function: :math:`\mathcal{R} \times \mathcal{R} \mapsto \mathcal{R}`
+    loss_fun :  function: :math:`\mathbb{R} \times \mathbb{R} \mapsto \mathbb{R}`
         Loss function used for the distance, the transport plan does not depend on the loss function
     T : csr or array-like, shape (ns, nt)
         Transport plan matrix, either a sparse csr or a dense matrix
@@ -748,65 +774,65 @@ def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
 def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
                                  alpha=1, max_iter=100, threshold_plan=0, log=False, verbose=False, random_state=None):
     r"""
-        Returns the gromov-wasserstein transport between (C1,p) and (C2,q) using a stochastic Frank-Wolfe.
-        This method as a O(max_iter \times PN^2) time complexity with P the number of Sinkhorn iterations.
+    Returns the gromov-wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})` using a stochastic Frank-Wolfe.
+    This method has a :math:`\mathcal{O}(\mathrm{max\_iter} \times PN^2)` time complexity with `P` the number of Sinkhorn iterations.
 
-        The function solves the following optimization problem:
+    The function solves the following optimization problem:
 
-        .. math::
-            GW = arg\min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+    .. math::
+        \mathbf{GW} = \mathop{\arg \min}_\mathbf{T} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-            s.t. T 1 = p
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-                 T^T 1= q
+                \mathbf{T}^T \mathbf{1} &= \mathbf{q}
 
-                 T\geq 0
+                \mathbf{T} &\geq 0
 
-        Where :
+    Where :
 
-        - C1 : Metric cost matrix in the source space
-        - C2 : Metric cost matrix in the target space
-        - p  : distribution in the source space
-        - q  : distribution in the target space
-        - L  : loss function to account for the misfit between the similarity matrices
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity matrices
 
-        Parameters
-        ----------
-        C1 : ndarray, shape (ns, ns)
-            Metric cost matrix in the source space
-        C2 : ndarray, shape (nt, nt)
-            Metric cost matrix in the target space
-        p :  ndarray, shape (ns,)
-            Distribution in the source space
-        q :  ndarray, shape (nt,)
-            Distribution in the target space
-        loss_fun :  function: \mathcal{R} \times \mathcal{R} \shortarrow \mathcal{R}
-            Loss function used for the distance, the transport plan does not depend on the loss function
-        alpha : float
-            Step of the Frank-Wolfe algorithm, should be between 0 and 1
-        max_iter : int, optional
-            Max number of iterations
-        threshold_plan : float, optional
-            Deleting very small value in the transport plan. If above zero, it violate the marginal constraints.
-        verbose : bool, optional
-            Print information along iterations
-        log : bool, optional
-            Gives the distance estimated and the standard deviation
-        random_state : int or RandomState instance, optional
-            Fix the seed for reproducibility
+    Parameters
+    ----------
+    C1 : ndarray, shape (ns, ns)
+        Metric cost matrix in the source space
+    C2 : ndarray, shape (nt, nt)
+        Metric cost matrix in the target space
+    p :  ndarray, shape (ns,)
+        Distribution in the source space
+    q :  ndarray, shape (nt,)
+        Distribution in the target space
+    loss_fun :  function: :math:`\mathbb{R} \times \mathbb{R} \mapsto \mathbb{R}`
+        Loss function used for the distance, the transport plan does not depend on the loss function
+    alpha : float
+        Step of the Frank-Wolfe algorithm, should be between 0 and 1
+    max_iter : int, optional
+        Max number of iterations
+    threshold_plan : float, optional
+        Deleting very small values in the transport plan. If above zero, it violates the marginal constraints.
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        Gives the distance estimated and the standard deviation
+    random_state : int or RandomState instance, optional
+        Fix the seed for reproducibility
 
-        Returns
-        -------
-        T : ndarray, shape (ns, nt)
-            Optimal coupling between the two spaces
+    Returns
+    -------
+    T : ndarray, shape (ns, nt)
+        Optimal coupling between the two spaces
 
-        References
-        ----------
-        .. [14] Kerdoncuff, Tanguy, Emonet, Rémi, Sebban, Marc
-            "Sampled Gromov Wasserstein."
-            Machine Learning Journal (MLJ). 2021.
+    References
+    ----------
+    .. [14] Kerdoncuff, Tanguy, Emonet, Rémi, Sebban, Marc
+        "Sampled Gromov Wasserstein."
+        Machine Learning Journal (MLJ). 2021.
 
-        """
+    """
     C1, C2, p, q = list_to_array(C1, C2, p, q)
     nx = get_backend(C1, C2, p, q)
 
@@ -869,27 +895,27 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
                                nb_samples_grad=100, epsilon=1, max_iter=500, log=False, verbose=False,
                                random_state=None):
     r"""
-    Returns the gromov-wasserstein transport between (C1,p) and (C2,q) using a 1-stochastic Frank-Wolfe.
-    This method as a O(max_iter \times Nlog(N)) time complexity by relying on the 1D Optimal Transport solver.
+    Returns the gromov-wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})` using a 1-stochastic Frank-Wolfe.
+    This method as a :math:`\mathcal{O}(\mathrm{max\_iter} \times N \log(N))` time complexity by relying on the 1D Optimal Transport solver.
 
     The function solves the following optimization problem:
 
     .. math::
-        GW = arg\min_T \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})*T_{i,j}*T_{k,l}
+        \mathbf{GW} = \mathop{\arg \min}_\mathbf{T} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. T 1 = p
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-                T^T 1= q
+                \mathbf{T}^T \mathbf{1} &= \mathbf{q}
 
-                T\geq 0
+                \mathbf{T} &\geq 0
 
     Where :
 
-    - C1 : Metric cost matrix in the source space
-    - C2 : Metric cost matrix in the target space
-    - p  : distribution in the source space
-    - q  : distribution in the target space
-    - L  : loss function to account for the misfit between the similarity matrices
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity matrices
 
     Parameters
     ----------
@@ -901,12 +927,12 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
         Distribution in the source space
     q :  ndarray, shape (nt,)
         Distribution in the target space
-    loss_fun :  function: \mathcal{R} \times \mathcal{R} \shortarrow \mathcal{R}
+    loss_fun :  function: :math:`\mathbb{R} \times \mathbb{R} \mapsto \mathbb{R}`
         Loss function used for the distance, the transport plan does not depend on the loss function
     nb_samples_grad : int
         Number of samples to approximate the gradient
     epsilon : float
-        Weight of the Kullback-Leiber regularization
+        Weight of the Kullback-Leibler regularization
     max_iter : int, optional
         Max number of iterations
     verbose : bool, optional
@@ -1028,11 +1054,11 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
     .. math::
         \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
 
-        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{T}^T \mathbf{1} = \mathbf{q}
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
 
-             \mathbf{T} \geq 0
+             \mathbf{T} &\geq 0
 
     Where :
 
@@ -1197,7 +1223,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
 
     .. math::
 
-        \mathbf{C} = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{NxN}} \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
+        \mathbf{C} = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
 
     Where :
 
@@ -1471,7 +1497,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
     .. _references-fgw-barycenters:
     References
     ----------
-    .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain
         and Courty Nicolas
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
@@ -1573,7 +1599,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
 
 
 def update_structure_matrix(p, lambdas, T, Cs):
-    """Updates C according to the L2 Loss kernel with the S Ts couplings.
+    """Updates :math:`\mathbf{C}` according to the L2 Loss kernel with the `S` :math:`\mathbf{T}_s` couplings.
 
     It is calculated at each iteration
 
@@ -1582,16 +1608,16 @@ def update_structure_matrix(p, lambdas, T, Cs):
     p : ndarray, shape (N,)
         Masses in the targeted barycenter.
     lambdas : list of float
-        List of the S spaces' weights.
+        List of the `S` spaces' weights.
     T : list of S ndarray of shape (ns, N)
-        The S Ts couplings calculated at each iteration.
+        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
     Cs : list of S ndarray, shape (ns, ns)
-         Metric cost matrices.
+        Metric cost matrices.
 
     Returns
     -------
     C : ndarray, shape (nt, nt)
-        Updated C matrix.
+        Updated :math:`\mathbf{C}` matrix.
     """
     p = list_to_array(p)
     T = list_to_array(*T)
@@ -1609,20 +1635,20 @@ def update_structure_matrix(p, lambdas, T, Cs):
 
 
 def update_feature_matrix(lambdas, Ys, Ts, p):
-    """Updates the feature with respect to the S Ts couplings.
+    """Updates the feature with respect to the `S` :math:`\mathbf{T}_s` couplings.
 
 
     See "Solving the barycenter problem with Block Coordinate Descent (BCD)"
-    in [24] calculated at each iteration
+    in :ref:`[24] <references-update-feature-matrix>` calculated at each iteration
 
     Parameters
     ----------
     p : ndarray, shape (N,)
         masses in the targeted barycenter
     lambdas : list of float
-        List of the S spaces' weights
+        List of the `S` spaces' weights
     Ts : list of S np.ndarray(ns,N)
-        the S Ts couplings calculated at each iteration
+        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration
     Ys : list of S ndarray, shape(d,ns)
         The features.
 
@@ -1630,10 +1656,11 @@ def update_feature_matrix(lambdas, Ys, Ts, p):
     -------
     X : ndarray, shape (d, N)
 
+
+    .. _references-update-feature-matrix:
     References
     ----------
-    .. [24] Vayer Titouan, Chapel Laetitia, Flamary R{\'e}mi, Tavenard Romain
-          and Courty Nicolas
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain and Courty Nicolas
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
