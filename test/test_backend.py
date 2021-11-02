@@ -208,6 +208,11 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.reshape(M, (5, 3, 2))
     with pytest.raises(NotImplementedError):
+        nx.seed(42)
+    with pytest.raises(NotImplementedError):
+        nx.rand()
+    with pytest.raises(NotImplementedError):
+        nx.randn()
         nx.coo_matrix(M, M, M)
     with pytest.raises(NotImplementedError):
         nx.issparse(M)
@@ -248,6 +253,7 @@ def test_func_backends(nx):
 
         Mb = nx.from_numpy(M)
         vb = nx.from_numpy(v)
+
         val = nx.from_numpy(val)
 
         sp_rowb = nx.from_numpy(sp_row)
@@ -255,6 +261,7 @@ def test_func_backends(nx):
         sp_datab = nx.from_numpy(sp_data)
 
         A = nx.set_gradients(val, v, v)
+
         lst_b.append(nx.to_numpy(A))
         lst_name.append('set_gradients')
 
@@ -503,6 +510,35 @@ def test_func_backends(nx):
         if not np.allclose(a1, a2):
             print('Assert fail on: ', name)
         assert np.allclose(a1, a2, atol=1e-7)
+
+
+def test_random_backends(nx):
+
+    tmp_u = nx.rand()
+
+    assert tmp_u < 1
+
+    tmp_n = nx.randn()
+
+    nx.seed(0)
+    M1 = nx.to_numpy(nx.rand(5, 2))
+    nx.seed(0)
+    M2 = nx.to_numpy(nx.rand(5, 2, type_as=tmp_n))
+
+    assert np.all(M1 >= 0)
+    assert np.all(M1 < 1)
+    assert M1.shape == (5, 2)
+    assert np.allclose(M1, M2)
+
+    nx.seed(0)
+    M1 = nx.to_numpy(nx.randn(5, 2))
+    nx.seed(0)
+    M2 = nx.to_numpy(nx.randn(5, 2, type_as=tmp_u))
+
+    nx.seed(42)
+    v1 = nx.randn()
+    v2 = nx.randn()
+    assert v1 != v2
 
 
 def test_gradients_backends():
