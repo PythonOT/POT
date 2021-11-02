@@ -6,6 +6,8 @@
 #
 # License: MIT License
 
+from itertools import product
+
 import numpy as np
 import pytest
 
@@ -13,7 +15,8 @@ import ot
 from ot.backend import torch
 
 
-def test_sinkhorn():
+@pytest.mark.parametrize("verbose, warn", product([True, False], [True, False]))
+def test_sinkhorn(verbose, warn):
     # test sinkhorn
     n = 100
     rng = np.random.RandomState(0)
@@ -23,7 +26,7 @@ def test_sinkhorn():
 
     M = ot.dist(x, x)
 
-    G = ot.sinkhorn(u, u, M, 1, stopThr=1e-10)
+    G = ot.sinkhorn(u, u, M, 1, stopThr=1e-10, verbose=verbose, warn=warn)
 
     # check constraints
     np.testing.assert_allclose(
@@ -31,8 +34,29 @@ def test_sinkhorn():
     np.testing.assert_allclose(
         u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
 
+    with pytest.warns(UserWarning):
+        ot.sinkhorn(u, u, M, 1, stopThr=0, numItermax=1)
 
-def test_sinkhorn_multi_b():
+
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized",
+                                    "sinkhorn_log"])
+def test_convergence_warning(method):
+    # test sinkhorn
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    u = ot.utils.unif(n)
+    M = ot.dist(x, x)
+
+    with pytest.warns(UserWarning):
+        ot.sinkhorn(u, u, M, 1., method=method, stopThr=0, numItermax=1)
+    with pytest.warns(UserWarning):
+        ot.sinkhorn2(u, u, M, 1, method=method, stopThr=0, numItermax=1)
+
+
+@pytest.mark.parametrize("verbose, warn", product([True, False], [True, False]))
+def test_sinkhorn_multi_b(verbose, warn):
     # test sinkhorn
     n = 10
     rng = np.random.RandomState(0)
@@ -47,7 +71,7 @@ def test_sinkhorn_multi_b():
 
     loss0, log = ot.sinkhorn(u, b, M, .1, stopThr=1e-10, log=True)
 
-    loss = [ot.sinkhorn2(u, b[:, k], M, .1, stopThr=1e-10) for k in range(3)]
+    loss = [ot.sinkhorn2(u, b[:, k], M, .1, stopThr=1e-10, verbose=verbose, warn=warn) for k in range(3)]
     # check constraints
     np.testing.assert_allclose(
         loss0, loss, atol=1e-06)  # cf convergence sinkhorn
@@ -255,7 +279,7 @@ def test_sinkhorn_variants_log():
     Gl, logl = ot.sinkhorn(u, u, M, 1, method='sinkhorn_log', stopThr=1e-10, log=True)
     Gs, logs = ot.sinkhorn(u, u, M, 1, method='sinkhorn_stabilized', stopThr=1e-10, log=True)
     Ges, loges = ot.sinkhorn(
-        u, u, M, 1, method='sinkhorn_epsilon_scaling', stopThr=1e-10, log=True)
+        u, u, M, 1, method='sinkhorn_epsilon_scaling', stopThr=1e-10, log=True,)
     G_green, loggreen = ot.sinkhorn(u, u, M, 1, method='greenkhorn', stopThr=1e-10, log=True)
 
     # check values
@@ -265,7 +289,8 @@ def test_sinkhorn_variants_log():
     np.testing.assert_allclose(G0, G_green, atol=1e-5)
 
 
-def test_sinkhorn_variants_log_multib():
+@pytest.mark.parametrize("verbose, warn", product([True, False], [True, False]))
+def test_sinkhorn_variants_log_multib(verbose, warn):
     # test sinkhorn
     n = 50
     rng = np.random.RandomState(0)
@@ -278,16 +303,20 @@ def test_sinkhorn_variants_log_multib():
     M = ot.dist(x, x)
 
     G0, log0 = ot.sinkhorn(u, b, M, 1, method='sinkhorn', stopThr=1e-10, log=True)
-    Gl, logl = ot.sinkhorn(u, b, M, 1, method='sinkhorn_log', stopThr=1e-10, log=True)
-    Gs, logs = ot.sinkhorn(u, b, M, 1, method='sinkhorn_stabilized', stopThr=1e-10, log=True)
+    Gl, logl = ot.sinkhorn(u, b, M, 1, method='sinkhorn_log', stopThr=1e-10, log=True,
+                           verbose=verbose, warn=warn)
+    Gs, logs = ot.sinkhorn(u, b, M, 1, method='sinkhorn_stabilized', stopThr=1e-10, log=True,
+                           verbose=verbose, warn=warn)
 
     # check values
     np.testing.assert_allclose(G0, Gs, atol=1e-05)
     np.testing.assert_allclose(G0, Gl, atol=1e-05)
 
 
-@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_log"])
-def test_barycenter(nx, method):
+@pytest.mark.parametrize("method, verbose, warn",
+                         product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_log"],
+                                 [True, False], [True, False]))
+def test_barycenter(nx, method, verbose, warn):
     n_bins = 100  # nb bins
 
     # Gaussian distributions
@@ -314,7 +343,7 @@ def test_barycenter(nx, method):
             ot.bregman.barycenter(A_nx, M_nx, reg, weights, method=method)
     else:
         # wasserstein
-        bary_wass_np = ot.bregman.barycenter(A, M, reg, weights, method=method)
+        bary_wass_np = ot.bregman.barycenter(A, M, reg, weights, method=method, verbose=verbose, warn=warn)
         bary_wass, _ = ot.bregman.barycenter(A_nx, M_nx, reg, weights_nx, method=method, log=True)
         bary_wass = nx.to_numpy(bary_wass)
 
@@ -324,8 +353,10 @@ def test_barycenter(nx, method):
         ot.bregman.barycenter(A_nx, M_nx, reg, log=True)
 
 
-@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
-def test_barycenter_debiased(nx, method):
+@pytest.mark.parametrize("method, verbose, warn",
+                         product(["sinkhorn", "sinkhorn_log"],
+                                 [True, False], [True, False]))
+def test_barycenter_debiased(nx, method, verbose, warn):
     n_bins = 100  # nb bins
 
     # Gaussian distributions
@@ -352,7 +383,8 @@ def test_barycenter_debiased(nx, method):
         with pytest.raises(NotImplementedError):
             ot.bregman.barycenter_debiased(A_nx, M_nx, reg, weights, method=method)
     else:
-        bary_wass_np = ot.bregman.barycenter_debiased(A, M, reg, weights, method=method)
+        bary_wass_np = ot.bregman.barycenter_debiased(A, M, reg, weights, method=method,
+                                                      verbose=verbose, warn=warn)
         bary_wass, _ = ot.bregman.barycenter_debiased(A_nx, M_nx, reg, weights_nx, method=method, log=True)
         bary_wass = nx.to_numpy(bary_wass)
 
@@ -360,6 +392,30 @@ def test_barycenter_debiased(nx, method):
         np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-5)
 
         ot.bregman.barycenter_debiased(A_nx, M_nx, reg, log=True, verbose=False)
+
+
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
+def test_convergence_warning_barycenters(method):
+    n_bins = 100  # nb bins
+
+    # Gaussian distributions
+    a1 = ot.datasets.make_1D_gauss(n_bins, m=30, s=10)  # m= mean, s= std
+    a2 = ot.datasets.make_1D_gauss(n_bins, m=40, s=10)
+
+    # creating matrix A containing all distributions
+    A = np.vstack((a1, a2)).T
+
+    # loss matrix + normalization
+    M = ot.utils.dist0(n_bins)
+    M /= M.max()
+
+    alpha = 0.5  # 0<=alpha<=1
+    weights = np.array([1 - alpha, alpha])
+    reg = 0.1
+    with pytest.warns(UserWarning):
+        ot.bregman.barycenter_debiased(A, M, reg, weights, method=method, numItermax=1)
+    with pytest.warns(UserWarning):
+        ot.bregman.barycenter(A, M, reg, weights, method=method, numItermax=1)
 
 
 def test_barycenter_stabilization(nx):
