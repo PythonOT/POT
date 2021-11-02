@@ -39,6 +39,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000,
              \gamma^T \mathbf{1} &= \mathbf{b}
 
              \gamma &\geq 0
+
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
@@ -174,6 +175,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
              \gamma^T \mathbf{1} &= \mathbf{b}
 
              \gamma &\geq 0
+
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
@@ -2379,7 +2381,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False, res
 
     .. math::
 
-        (\mathbf{u}, \mathbf{v}) = \mathop{\arg \min}_{\mathbf{u}, \mathbf{v}} \mathbf{1}_{ns}^T \mathbf{B}(\mathbf{u}, \mathbf{v}) \mathbf{1}_{nt} - <\kappa \mathbf{u}, \mathbf{a}> - <\mathbf{v} / \kappa, \mathbf{b}>
+        (\mathbf{u}, \mathbf{v}) = \mathop{\arg \min}_{\mathbf{u}, \mathbf{v}} \ \mathbf{1}_{ns}^T \mathbf{B}(\mathbf{u}, \mathbf{v}) \mathbf{1}_{nt} - <\kappa \mathbf{u}, \mathbf{a}> - <\mathbf{v} / \kappa, \mathbf{b}>
 
     where:
 

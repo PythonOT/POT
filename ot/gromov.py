@@ -896,7 +896,7 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
                                random_state=None):
     r"""
     Returns the gromov-wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})` using a 1-stochastic Frank-Wolfe.
-    This method as a :math:`\mathcal{O}(\mathrm{max\_iter} \times N \log(N))` time complexity by relying on the 1D Optimal Transport solver.
+    This method has a :math:`\mathcal{O}(\mathrm{max\_iter} \times N \log(N))` time complexity by relying on the 1D Optimal Transport solver.
 
     The function solves the following optimization problem:
 
