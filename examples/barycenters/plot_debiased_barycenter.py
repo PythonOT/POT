@@ -5,10 +5,10 @@ Debiased Sinkhorn barycenter demo
 =================================
 
 This example illustrates the computation of the debiased Sinkhorn barycenter
-as proposed in [35]_.
+as proposed in [37]_.
 
 
-.. [35] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th
+.. [37] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th
         International Conference on Machine Learning, PMLR 119:4692-4701, 2020
 """
 
@@ -16,7 +16,6 @@ as proposed in [35]_.
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 4
 import os
 from pathlib import Path
 

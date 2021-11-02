@@ -1750,7 +1750,7 @@ def barycenter_debiased(A, M, reg, weights=None, method="sinkhorn", numItermax=1
     the cost matrix for OT
 
     The algorithm used for solving the problem is the debiased Sinkhorn
-    algorithm as proposed in :ref:`[35] <references-sinkhorn-debiased>`
+    algorithm as proposed in :ref:`[37] <references-sinkhorn-debiased>`
 
     Parameters
     ----------
@@ -1788,7 +1788,7 @@ def barycenter_debiased(A, M, reg, weights=None, method="sinkhorn", numItermax=1
      References
      ----------
 
-     .. [35] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th International
+     .. [37] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th International
      Conference on Machine Learning, PMLR 119:4692-4701, 2020
     """
 
@@ -1995,7 +1995,7 @@ def convolutional_barycenter2d(A, reg, weights=None, method="sinkhorn", numIterm
         Efficient optimal transportation on geometric domains. ACM Transactions
         on Graphics (TOG), 34(4), 66
 
-    .. [35] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th
+    .. [37] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th
         International Conference on Machine Learning, PMLR 119:4692-4701, 2020
     """
 
@@ -2185,7 +2185,7 @@ def convolutional_barycenter2d_debiased(A, reg, weights=None, method="sinkhorn",
     - `reg` is the regularization strength scalar value
 
     The algorithm used for solving the problem is the debiased Sinkhorn scaling
-    algorithm as proposed in :ref:`[35] <references-sinkhorn-debiased>`
+    algorithm as proposed in :ref:`[37] <references-sinkhorn-debiased>`
 
     Parameters
     ----------
@@ -2223,7 +2223,7 @@ def convolutional_barycenter2d_debiased(A, reg, weights=None, method="sinkhorn",
     References
     ----------
 
-    .. [35] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th International
+    .. [37] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th International
         Conference on Machine Learning, PMLR 119:4692-4701, 2020
     """
 
