@@ -18,22 +18,25 @@ import numpy as np
 
 def coordinate_grad_semi_dual(b, M, reg, beta, i):
     r'''
-    Compute the coordinate gradient update for regularized discrete distributions for (i, :)
+    Compute the coordinate gradient update for regularized discrete distributions for :math:`(i, :)`
 
     The function computes the gradient of the semi dual problem:
 
     .. math::
-        \max_v \sum_i (\sum_j v_j * b_j - reg * log(\sum_j exp((v_j - M_{i,j})/reg) * b_j)) * a_i
+        \max_\mathbf{v} \ \sum_i \mathbf{a}_i \left[ \sum_j \mathbf{v}_j \mathbf{b}_j - \mathrm{reg}
+        \cdot \log \left( \sum_j \mathbf{b}_j
+        \exp \left( \frac{\mathbf{v}_j - \mathbf{M}_{i,j}}{\mathrm{reg}}
+        \right) \right) \right]
 
     Where :
 
-    - M is the (ns,nt) metric cost matrix
-    - v is a dual variable in R^J
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
+    - :math:`\mathbf{v}` is a dual variable in :math:`\mathbb{R}^{nt}`
     - reg is the regularization term
-    - a and b are source and target weights (sum to 1)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
     The algorithm used for solving the problem is the ASGD & SAG algorithms
-    as proposed in [18]_ [alg.1 & alg.2]
+    as proposed in :ref:`[18] <references-coordinate-grad-semi-dual>` [alg.1 & alg.2]
 
 
     Parameters
@@ -47,7 +50,7 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
     v : ndarray, shape (nt,)
         Dual variable.
     i : int
-        Picked number i.
+        Picked number `i`.
 
     Returns
     -------
@@ -74,12 +77,10 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
            [4.14237512e-02, 2.67487857e-02, 7.23016955e-02, 2.38291052e-03]])
 
 
+    .. _references-coordinate-grad-semi-dual:
     References
     ----------
-    [Genevay et al., 2016] :
-        Stochastic Optimization for Large-scale Optimal Transport,
-         Advances in Neural Information Processing Systems (2016),
-          arXiv preprint arxiv:1605.08527.
+    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
     '''
     r = M[i, :] - beta
     exp_beta = np.exp(-r / reg) * b
@@ -88,29 +89,28 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
 
 
 def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
-    r'''
-    Compute the SAG algorithm to solve the regularized discrete measures
-        optimal transport max problem
+    r"""
+    Compute the SAG algorithm to solve the regularized discrete measures optimal transport max problem
 
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg} \cdot\Omega(\gamma)
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
-             \gamma^T 1 = b
+             \gamma^T \mathbf{1} = \mathbf{b}
 
              \gamma \geq 0
 
     Where :
 
-    - M is the (ns,nt) metric cost matrix
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
     - :math:`\Omega` is the entropic regularization term with :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target weights (sum to 1)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
     The algorithm used for solving the problem is the SAG algorithm
-    as proposed in [18]_ [alg.1]
+    as proposed in :ref:`[18] <references-sag-entropic-transport>` [alg.1]
 
 
     Parameters
@@ -131,7 +131,7 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
 
     Returns
     -------
-    v : ndarray, shape (nt,)
+    v : ndarray, shape (`nt`,)
         Dual variable.
 
     Examples
@@ -154,14 +154,12 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
            [2.17218856e-02, 9.12931802e-04, 1.87962526e-03, 1.18342700e-01],
            [4.14237512e-02, 2.67487857e-02, 7.23016955e-02, 2.38291052e-03]])
 
+
+    .. _references-sag-entropic-transport:
     References
     ----------
-
-    [Genevay et al., 2016] :
-                    Stochastic Optimization for Large-scale Optimal Transport,
-                     Advances in Neural Information Processing Systems (2016),
-                      arXiv preprint arxiv:1605.08527.
-    '''
+    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
+    """
 
     if lr is None:
         lr = 1. / max(a / reg)
@@ -187,22 +185,22 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg}\cdot\Omega(\gamma)
 
-        s.t. \gamma 1 = a
+        s.t. \gamma \mathbf{1} = \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} = \mathbf{b}
 
              \gamma \geq 0
 
     Where :
 
-    - M is the (ns,nt) metric cost matrix
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
     - :math:`\Omega` is the entropic regularization term with :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target weights (sum to 1)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
     The algorithm used for solving the problem is the ASGD algorithm
-    as proposed in [18]_ [alg.2]
+    as proposed in :ref:`[18] <references-averaged-sgd-entropic-transport>` [alg.2]
 
 
     Parameters
@@ -220,7 +218,7 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
 
     Returns
     -------
-    ave_v : ndarray, shape (nt,)
+    ave_v : ndarray, shape (`nt`,)
         dual variable
 
     Examples
@@ -243,13 +241,11 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
            [2.17218856e-02, 9.12931802e-04, 1.87962526e-03, 1.18342700e-01],
            [4.14237512e-02, 2.67487857e-02, 7.23016955e-02, 2.38291052e-03]])
 
+
+    .. _references-averaged-sgd-entropic-transport:
     References
     ----------
-
-    [Genevay et al., 2016] :
-        Stochastic Optimization for Large-scale Optimal Transport,
-         Advances in Neural Information Processing Systems (2016),
-          arXiv preprint arxiv:1605.08527.
+    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
     '''
 
     if lr is None:
@@ -271,20 +267,21 @@ def c_transform_entropic(b, M, reg, beta):
     r'''
     The goal is to recover u from the c-transform.
 
-    The function computes the c_transform of a dual variable from the other
+    The function computes the c-transform of a dual variable from the other
     dual variable:
 
     .. math::
-        u = v^{c,reg} = -reg \sum_j exp((v - M)/reg) b_j
+        \mathbf{u} = \mathbf{v}^{c,reg} = - \mathrm{reg} \sum_j \mathbf{b}_j
+        \exp\left( \frac{\mathbf{v} - \mathbf{M}}{\mathrm{reg}} \right)
 
     Where :
 
-    - M is the (ns,nt) metric cost matrix
-    - u, v are dual variables in R^IxR^J
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
+    - :math:`\mathbf{u}`, :math:`\mathbf{v}` are dual variables in :math:`\mathbb{R}^{ns} \times \mathbb{R}^{nt}`
     - reg is the regularization term
 
     It is used to recover an optimal u from optimal v solving the semi dual
-    problem, see Proposition 2.1 of [18]_
+    problem, see Proposition 2.1 of :ref:`[18] <references-c-transform-entropic>`
 
 
     Parameters
@@ -300,7 +297,7 @@ def c_transform_entropic(b, M, reg, beta):
 
     Returns
     -------
-    u : ndarray, shape (ns,)
+    u : ndarray, shape (`ns`,)
         Dual variable.
 
     Examples
@@ -323,13 +320,11 @@ def c_transform_entropic(b, M, reg, beta):
            [2.17218856e-02, 9.12931802e-04, 1.87962526e-03, 1.18342700e-01],
            [4.14237512e-02, 2.67487857e-02, 7.23016955e-02, 2.38291052e-03]])
 
+
+    .. _references-c-transform-entropic:
     References
     ----------
-
-    [Genevay et al., 2016] :
-        Stochastic Optimization for Large-scale Optimal Transport,
-         Advances in Neural Information Processing Systems (2016),
-          arXiv preprint arxiv:1605.08527.
+    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
     '''
 
     n_source = np.shape(M)[0]
@@ -345,27 +340,27 @@ def c_transform_entropic(b, M, reg, beta):
 def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
                                 log=False):
     r'''
-    Compute the transportation matrix to solve the regularized discrete
-        measures optimal transport max problem
+    Compute the transportation matrix to solve the regularized discrete measures optimal transport max problem
 
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg} \cdot\Omega(\gamma)
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} = \mathbf{b}
 
              \gamma \geq 0
 
     Where :
 
-    - M is the (ns,nt) metric cost matrix
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
     - :math:`\Omega` is the entropic regularization term with :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target weights (sum to 1)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
+
     The algorithm used for solving the problem is the SAG or ASGD algorithms
-    as proposed in [18]_
+    as proposed in :ref:`[18] <references-solve-semi-dual-entropic>`
 
 
     Parameters
@@ -419,13 +414,11 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
            [2.17218856e-02, 9.12931802e-04, 1.87962526e-03, 1.18342700e-01],
            [4.14237512e-02, 2.67487857e-02, 7.23016955e-02, 2.38291052e-03]])
 
+
+    .. _references-solve-semi-dual-entropic:
     References
     ----------
-
-    [Genevay et al., 2016] :
-                    Stochastic Optimization for Large-scale Optimal Transport,
-                     Advances in Neural Information Processing Systems (2016),
-                      arXiv preprint arxiv:1605.08527.
+    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
     '''
 
     if method.lower() == "sag":
@@ -459,26 +452,30 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
     r'''
     Computes the partial gradient of the dual optimal transport problem.
 
-    For each (i,j) in a batch of coordinates, the partial gradients are :
+    For each :math:`(i,j)` in a batch of coordinates, the partial gradients are :
 
     .. math::
-        \partial_{u_i} F = u_i * b_s/l_{v} - \sum_{j \in B_v} exp((u_i + v_j - M_{i,j})/reg) * a_i * b_j
+        \partial_{\mathbf{u}_i} F = \frac{b_s}{l_v} \mathbf{u}_i -
+        \sum_{j \in B_v} \mathbf{a}_i \mathbf{b}_j
+        \exp\left( \frac{\mathbf{u}_i + \mathbf{v}_j - \mathbf{M}_{i,j}}{\mathrm{reg}} \right)
 
-        \partial_{v_j} F = v_j * b_s/l_{u} - \sum_{i \in B_u} exp((u_i + v_j - M_{i,j})/reg) * a_i * b_j
+        \partial_{\mathbf{v}_j} F = \frac{b_s}{l_u} \mathbf{v}_j -
+        \sum_{i \in B_u} \mathbf{a}_i \mathbf{b}_j
+        \exp\left( \frac{\mathbf{u}_i + \mathbf{v}_j - \mathbf{M}_{i,j}}{\mathrm{reg}} \right)
 
     Where :
 
-    - M is the (ns,nt) metric cost matrix
-    - u, v are dual variables in R^ixR^J
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
+    - :math:`\mathbf{u}`, :math:`\mathbf{v}` are dual variables in :math:`\mathbb{R}^{ns} \times \mathbb{R}^{nt}`
     - reg is the regularization term
     - :math:`B_u` and :math:`B_v` are lists of index
-    - :math:`b_s` is the size of the batchs :math:`B_u` and :math:`B_v`
-    - :math:`l_u` and :math:`l_v` are the lenghts of :math:`B_u` and :math:`B_v`
-    - a and b are source and target weights (sum to 1)
+    - :math:`b_s` is the size of the batches :math:`B_u` and :math:`B_v`
+    - :math:`l_u` and :math:`l_v` are the lengths of :math:`B_u` and :math:`B_v`
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
 
     The algorithm used for solving the dual problem is the SGD algorithm
-    as proposed in [19]_ [alg.1]
+    as proposed in :ref:`[19] <references-batch-grad-dual>` [alg.1]
 
 
     Parameters
@@ -504,7 +501,7 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
 
     Returns
     -------
-    grad : ndarray, shape (ns,)
+    grad : ndarray, shape (`ns`,)
         partial grad F
 
     Examples
@@ -533,12 +530,11 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
            [5.06266486e-02, 2.16230494e-03, 2.26215141e-03, 6.81514609e-04],
            [6.06713990e-02, 3.98139808e-02, 5.46829338e-02, 8.62371424e-06]])
 
+
+    .. _references-batch-grad-dual:
     References
     ----------
-
-    [Seguy et al., 2018] :
-                    International Conference on Learning Representation (2018),
-                      arXiv preprint arxiv:1711.02283.
+    .. [19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet, A.& Blondel, M. Large-scale Optimal Transport and Mapping Estimation. International Conference on Learning Representation (2018)
     '''
     G = - (np.exp((alpha[batch_alpha, None] + beta[None, batch_beta] -
                    M[batch_alpha, :][:, batch_beta]) / reg) *
@@ -555,25 +551,24 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
 
 def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
     r'''
-    Compute the sgd algorithm to solve the regularized discrete measures
-        optimal transport dual problem
+    Compute the sgd algorithm to solve the regularized discrete measures optimal transport dual problem
 
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg} \cdot\Omega(\gamma)
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} = \mathbf{b}
 
              \gamma \geq 0
 
     Where :
 
-    - M is the (ns,nt) metric cost matrix
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
     - :math:`\Omega` is the entropic regularization term with :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target weights (sum to 1)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
     Parameters
     ----------
@@ -632,9 +627,7 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
 
     References
     ----------
-    [Seguy et al., 2018] :
-        International Conference on Learning Representation (2018),
-          arXiv preprint arxiv:1711.02283.
+    .. [19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet, A.& Blondel, M. Large-scale Optimal Transport and Mapping Estimation. International Conference on Learning Representation (2018)
     '''
 
     n_source = np.shape(M)[0]
@@ -657,25 +650,24 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
 def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
                         log=False):
     r'''
-    Compute the transportation matrix to solve the regularized discrete measures
-        optimal transport dual problem
+    Compute the transportation matrix to solve the regularized discrete measures optimal transport dual problem
 
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg} \cdot\Omega(\gamma)
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} = \mathbf{b}
 
              \gamma \geq 0
 
     Where :
 
-    - M is the (ns,nt) metric cost matrix
-    - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target weights (sum to 1)
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
+    - :math:`\Omega` is the entropic regularization term with :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
     Parameters
     ----------
@@ -736,10 +728,7 @@ def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
 
     References
     ----------
-
-    [Seguy et al., 2018] :
-        International Conference on Learning Representation (2018),
-          arXiv preprint arxiv:1711.02283.
+    .. [19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet, A.& Blondel, M. Large-scale Optimal Transport and Mapping Estimation. International Conference on Learning Representation (2018)
     '''
 
     opt_alpha, opt_beta = sgd_entropic_regularization(a, b, M, reg, batch_size,
