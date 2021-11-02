@@ -63,7 +63,7 @@ res = np.empty((n_seed, 25))
 # %% Compute statistics
 for seed in range(n_seed):
     for i, n_projections in enumerate(n_projections_arr):
-        res[seed, i] = ot.sliced_wasserstein_distance(xs, xt, a, b, n_projections, seed)
+        res[seed, i] = ot.sliced_wasserstein_distance(xs, xt, a, b, n_projections, seed=seed)
 
 res_mean = np.mean(res, axis=0)
 res_std = np.std(res, axis=0)
