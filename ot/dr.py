@@ -116,7 +116,7 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None, no
     The function solves the following optimization problem:
 
     .. math::
-        \mathbf{P} = \mathop{\arg \min}_\mathbf{P} \frac{\sum_i W(P \mathbf{X}^i, P \mathbf{X}^i)}{\sum_{i, j \neq i} W(P \mathbf{X}^i, P \mathbf{X}^j)}
+        \mathbf{P} = \mathop{\arg \min}_\mathbf{P} \frac{\sum\limits_i W(P \mathbf{X}^i, P \mathbf{X}^i)}{\sum\limits_{i, j \neq i} W(P \mathbf{X}^i, P \mathbf{X}^j)}
 
     where :
 
