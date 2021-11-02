@@ -18,7 +18,7 @@ SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 1
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -51,18 +51,6 @@ M = ot.utils.dist0(n)
 M /= M.max()
 
 ##############################################################################
-# Plot data
-# ---------
-
-#%% plot the distributions
-
-# plt.figure(1, figsize=(6.4, 3))
-# for i in range(n_distributions):
-#     plt.plot(x, A[:, i])
-# plt.title('Distributions')
-# plt.tight_layout()
-
-##############################################################################
 # Barycenter computation
 # ----------------------
 
@@ -78,7 +66,7 @@ bary_l2 = A.dot(weights)
 reg = 1e-3
 bary_wass = ot.bregman.barycenter(A, M, reg, weights)
 
-f, (ax1, ax2) = plt.subplots(2, 1, tight_layout=True)
+f, (ax1, ax2) = plt.subplots(2, 1, tight_layout=True, num=1)
 ax1.plot(x, A, color="black")
 ax1.set_title('Distributions')
 
@@ -109,7 +97,7 @@ for i in range(n_alpha):
     B_wass[:, i] = ot.bregman.barycenter(A, M, reg, weights)
 
 #%% plot interpolation
-plt.figure()
+plt.figure(2)
 
 cmap = plt.cm.get_cmap('viridis')
 verts = []
@@ -132,7 +120,7 @@ ax.set_zlim3d(0, B_l2.max() * 1.01)
 plt.title('Barycenter interpolation with l2')
 plt.tight_layout()
 
-plt.figure(4)
+plt.figure(3)
 cmap = plt.cm.get_cmap('viridis')
 verts = []
 zs = alpha_list

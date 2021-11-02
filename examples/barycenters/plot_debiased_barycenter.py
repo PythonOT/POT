@@ -15,6 +15,7 @@ as proposed in [37]_.
 # Author: Hicham Janati <hicham.janati100@gmail.com>
 #
 # License: MIT License
+# sphinx_gallery_thumbnail_number = 3
 
 import os
 from pathlib import Path
@@ -63,7 +64,8 @@ bars_debiased = [barycenter_debiased(A, M, reg, weights) for reg in epsilons]
 labels = ["Sinkhorn barycenter", "Debiased barycenter"]
 colors = ["indianred", "gold"]
 
-f, axes = plt.subplots(1, len(epsilons), tight_layout=True, sharey=True, figsize=(12, 4))
+f, axes = plt.subplots(1, len(epsilons), tight_layout=True, sharey=True,
+                       figsize=(12, 4), num=1)
 for ax, eps, bar, bar_debiased in zip(axes, epsilons, bars, bars_debiased):
     ax.plot(A[:, 0], color="k", ls="--", label="Input data", alpha=0.3)
     ax.plot(A[:, 1], color="k", ls="--", alpha=0.3)
@@ -79,20 +81,16 @@ plt.show()
 # ---------------------------------
 this_file = os.path.realpath('__file__')
 data_path = os.path.join(Path(this_file).parent.parent.parent, 'data')
-f1 = 1 - plt.imread(os.path.join(data_path, 'redcross.png'))[:, :, 2]
-f2 = 1 - plt.imread(os.path.join(data_path, 'tooth.png'))[:, :, 2]
-f3 = 1 - plt.imread(os.path.join(data_path, 'duck.png'))[:, :, 2]
+f1 = 1 - plt.imread(os.path.join(data_path, 'heart.png'))[:, :, 2]
+f2 = 1 - plt.imread(os.path.join(data_path, 'duck.png'))[:, :, 2]
 
-f1 = f1 / np.sum(f1)
-f2 = f2 / np.sum(f2)
-f3 = f3 / np.sum(f3)
-
-A = np.array([f1, f2, f3])
+A = np.asarray([f1, f2]) + 1e-2
+A /= A.sum(axis=(1, 2))[:, None, None]
 
 ##############################################################################
 # Display the input images
 
-fig, axes = plt.subplots(1, 3, figsize=(7, 4))
+fig, axes = plt.subplots(1, 2, figsize=(7, 4), num=2)
 for ax, img in zip(axes, A):
     ax.imshow(img, cmap="Greys")
     ax.axis("off")
@@ -109,13 +107,13 @@ bars_sinkhorn, bars_debiased = [], []
 epsilons = [5e-3, 7e-3, 1e-2]
 for eps in epsilons:
     bar = convolutional_barycenter2d(A, eps)
-    bar_debiased = convolutional_barycenter2d_debiased(A, eps)
+    bar_debiased, log = convolutional_barycenter2d_debiased(A, eps, log=True)
     bars_sinkhorn.append(bar)
     bars_debiased.append(bar_debiased)
 
 titles = ["Sinkhorn", "Debiased"]
 all_bars = [bars_sinkhorn, bars_debiased]
-fig, axes = plt.subplots(2, 3, figsize=(8, 6))
+fig, axes = plt.subplots(2, 3, figsize=(8, 6), num=3)
 for jj, (method, ax_row, bars) in enumerate(zip(titles, axes, all_bars)):
     for ii, (ax, img, eps) in enumerate(zip(ax_row, bars, epsilons)):
         ax.imshow(img, cmap="Greys")

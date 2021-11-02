@@ -2165,7 +2165,7 @@ def _convolutional_barycenter2d_log(A, reg, weights=None, numItermax=10000,
 
 
 def convolutional_barycenter2d_debiased(A, reg, weights=None, method="sinkhorn",
-                                        numItermax=10000, stopThr=1e-4,
+                                        numItermax=10000, stopThr=1e-3,
                                         verbose=False, log=False, warn=True,
                                         **kwargs):
     r"""Compute the debiased sinkhorn barycenter of distributions A
@@ -2244,7 +2244,7 @@ def convolutional_barycenter2d_debiased(A, reg, weights=None, method="sinkhorn",
 
 
 def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
-                                         stopThr=1e-4, stabThr=1e-15, verbose=False,
+                                         stopThr=1e-3, stabThr=1e-15, verbose=False,
                                          log=False, warn=True):
     r"""Compute the debiased barycenter of 2D images via sinkhorn convolutions.
     """
@@ -2324,7 +2324,7 @@ def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
 
 
 def _convolutional_barycenter2d_debiased_log(A, reg, weights=None, numItermax=10000,
-                                             stopThr=1e-4, stabThr=1e-30, verbose=False,
+                                             stopThr=1e-3, stabThr=1e-30, verbose=False,
                                              log=False, warn=True):
     r"""Compute the debiased barycenter of 2D images in log-domain.
      """
