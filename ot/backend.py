@@ -103,6 +103,8 @@ class Backend():
     __name__ = None
     __type__ = None
 
+    rng_ = None
+
     def __str__(self):
         return self.__name__
 
@@ -540,6 +542,36 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def seed(self, seed=None):
+        r"""
+        Sets the seed for the random generator.
+
+        This function follows the api from :any:`numpy.random.seed`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.random.seed.html
+        """
+        raise NotImplementedError()
+
+    def rand(self, *size, type_as=None):
+        r"""
+        Generate uniform random numbers.
+
+        This function follows the api from :any:`numpy.random.rand`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.random.rand.html
+        """
+        raise NotImplementedError()
+
+    def randn(self, *size, type_as=None):
+        r"""
+        Generate normal Gaussian random numbers.
+
+        This function follows the api from :any:`numpy.random.rand`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.random.rand.html
+        """
+        raise NotImplementedError()
+
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         r"""
         Creates a sparse tensor in COOrdinate format.
@@ -631,6 +663,8 @@ class NumpyBackend(Backend):
 
     __name__ = 'numpy'
     __type__ = np.ndarray
+
+    rng_ = np.random.RandomState()
 
     def to_numpy(self, a):
         return a
@@ -793,6 +827,16 @@ class NumpyBackend(Backend):
     def reshape(self, a, shape):
         return np.reshape(a, shape)
 
+    def seed(self, seed=None):
+        if seed is not None:
+            self.rng_.seed(seed)
+
+    def rand(self, *size, type_as=None):
+        return self.rng_.rand(*size)
+
+    def randn(self, *size, type_as=None):
+        return self.rng_.randn(*size)
+
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         if type_as is None:
             return coo_matrix((data, (rows, cols)), shape=shape)
@@ -844,6 +888,11 @@ class JaxBackend(Backend):
 
     __name__ = 'jax'
     __type__ = jax_type
+
+    rng_ = None
+
+    def __init__(self):
+        self.rng_ = jax.random.PRNGKey(42)
 
     def to_numpy(self, a):
         return np.array(a)
@@ -1010,6 +1059,24 @@ class JaxBackend(Backend):
     def reshape(self, a, shape):
         return jnp.reshape(a, shape)
 
+    def seed(self, seed=None):
+        if seed is not None:
+            self.rng_ = jax.random.PRNGKey(seed)
+
+    def rand(self, *size, type_as=None):
+        self.rng_, subkey = jax.random.split(self.rng_)
+        if type_as is not None:
+            return jax.random.uniform(subkey, shape=size, dtype=type_as.dtype)
+        else:
+            return jax.random.uniform(subkey, shape=size)
+
+    def randn(self, *size, type_as=None):
+        self.rng_, subkey = jax.random.split(self.rng_)
+        if type_as is not None:
+            return jax.random.normal(subkey, shape=size, dtype=type_as.dtype)
+        else:
+            return jax.random.normal(subkey, shape=size)
+
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         # Currently, JAX does not support sparse matrices
         data = self.to_numpy(data)
@@ -1064,7 +1131,12 @@ class TorchBackend(Backend):
     __name__ = 'torch'
     __type__ = torch_type
 
+    rng_ = None
+
     def __init__(self):
+
+        self.rng_ = torch.Generator()
+        self.rng_.seed()
 
         from torch.autograd import Function
 
@@ -1102,12 +1174,16 @@ class TorchBackend(Backend):
         return res
 
     def zeros(self, shape, type_as=None):
+        if isinstance(shape, int):
+            shape = (shape,)
         if type_as is None:
             return torch.zeros(shape)
         else:
             return torch.zeros(shape, dtype=type_as.dtype, device=type_as.device)
 
     def ones(self, shape, type_as=None):
+        if isinstance(shape, int):
+            shape = (shape,)
         if type_as is None:
             return torch.ones(shape)
         else:
@@ -1120,6 +1196,8 @@ class TorchBackend(Backend):
             return torch.arange(start, stop, step, device=type_as.device)
 
     def full(self, shape, fill_value, type_as=None):
+        if isinstance(shape, int):
+            shape = (shape,)
         if type_as is None:
             return torch.full(shape, fill_value)
         else:
@@ -1292,6 +1370,26 @@ class TorchBackend(Backend):
 
     def reshape(self, a, shape):
         return torch.reshape(a, shape)
+
+    def seed(self, seed=None):
+        if isinstance(seed, int):
+            self.rng_.manual_seed(seed)
+        elif isinstance(seed, torch.Generator):
+            self.rng_ = seed
+        else:
+            raise ValueError("Non compatible seed : {}".format(seed))
+
+    def rand(self, *size, type_as=None):
+        if type_as is not None:
+            return torch.rand(size=size, generator=self.rng_, dtype=type_as.dtype, device=type_as.device)
+        else:
+            return torch.rand(size=size, generator=self.rng_)
+
+    def randn(self, *size, type_as=None):
+        if type_as is not None:
+            return torch.randn(size=size, dtype=type_as.dtype, generator=self.rng_, device=type_as.device)
+        else:
+            return torch.randn(size=size, generator=self.rng_)
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         if type_as is None:
