@@ -486,7 +486,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
                 or nx.any(nx.isinf(u)) or nx.any(nx.isinf(v))):
             # we have reached the machine precision
             # come back to previous solution and quit loop
-            print('Warning: numerical errors at iteration', ii)
+            warnings.warn('Warning: numerical errors at iteration %d' % ii)
             u = uprev
             v = vprev
             break
@@ -1052,8 +1052,8 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         vprev = v
 
         # sinkhorn update
-        v = b / (nx.dot(K.T, u) + 1e-16)
-        u = a / (nx.dot(K, v) + 1e-16)
+        v = b / (nx.dot(K.T, u))
+        u = a / (nx.dot(K, v))
 
         # remove numerical problems and store them in K
         if nx.max(nx.abs(u)) > tau or nx.max(nx.abs(v)) > tau:
@@ -1084,8 +1084,6 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
             if log:
                 log['err'].append(err)
 
-            if err < stopThr:
-                break
             if verbose:
                 if ii % (print_period * 20) == 0:
                     print(
@@ -1098,7 +1096,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         if nx.any(nx.isnan(u)) or nx.any(nx.isnan(v)):
             # we have reached the machine precision
             # come back to previous solution and quit loop
-            warnings.warn('Numerical errors at iteration', ii)
+            warnings.warn('Numerical errors at iteration %d' % ii)
             u = uprev
             v = vprev
             break
@@ -1682,11 +1680,11 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
     for ii in range(numItermax):
         qprev = q
         Kv = nx.dot(K, v)
-        u = A / (Kv + 1e-16)
+        u = A / Kv
         Ktu = nx.dot(K.T, u)
         q = geometricBar(weights, Ktu)
         Q = q[:, None]
-        v = Q / (Ktu + 1e-16)
+        v = Q / Ktu
         absorbing = False
         if nx.any(u > tau) or nx.any(v > tau):
             absorbing = True

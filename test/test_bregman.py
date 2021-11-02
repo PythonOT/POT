@@ -10,6 +10,7 @@ from itertools import product
 
 import numpy as np
 import pytest
+from torch._C import Value
 
 import ot
 from ot.backend import torch
@@ -39,24 +40,87 @@ def test_sinkhorn(verbose, warn):
 
 
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized",
+                                    "sinkhorn_epsilon_scaling",
+                                    "greenkhorn",
                                     "sinkhorn_log"])
 def test_convergence_warning(method):
     # test sinkhorn
     n = 100
-    rng = np.random.RandomState(0)
-
-    x = rng.randn(n, 2)
-    u = ot.utils.unif(n)
-    M = ot.dist(x, x)
+    a1 = ot.datasets.make_1D_gauss(n, m=30, s=10)
+    a2 = ot.datasets.make_1D_gauss(n, m=40, s=10)
+    A = np.asarray([a1, a2]).T
+    M = ot.utils.dist0(n)
 
     with pytest.warns(UserWarning):
-        ot.sinkhorn(u, u, M, 1., method=method, stopThr=0, numItermax=1)
+        ot.sinkhorn(a1, a2, M, 1., method=method, stopThr=0, numItermax=1)
+
+    if method in ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_log"]:
+        with pytest.warns(UserWarning):
+            ot.barycenter(A, M, 1, method=method, stopThr=0, numItermax=1)
+        with pytest.warns(UserWarning):
+            ot.sinkhorn2(a1, a2, M, 1, method=method, stopThr=0, numItermax=1)
+
+
+def test_not_impemented_method():
+    # test sinkhorn
+    w = 10
+    n = w ** 2
+    rng = np.random.RandomState(42)
+    A_img = rng.rand(2, w, w)
+    A_flat = A_img.reshape(n, 2)
+    a1, a2 = A_flat.T
+    M_flat = ot.utils.dist0(n)
+    not_implemented = "new_method"
+    reg = 0.01
+    with pytest.raises(ValueError):
+        ot.sinkhorn(a1, a2, M_flat, reg, method=not_implemented)
+    with pytest.raises(ValueError):
+        ot.sinkhorn2(a1, a2, M_flat, reg, method=not_implemented)
+    with pytest.raises(ValueError):
+        ot.barycenter(A_flat, M_flat, reg, method=not_implemented)
+    with pytest.raises(ValueError):
+        ot.bregman.barycenter_debiased(A_flat, M_flat, reg,
+                                       method=not_implemented)
+    with pytest.raises(ValueError):
+        ot.bregman.convolutional_barycenter2d(A_img, reg,
+                                              method=not_implemented)
+    with pytest.raises(ValueError):
+        ot.bregman.convolutional_barycenter2d_debiased(A_img, reg,
+                                                       method=not_implemented)
+
+
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
+def test_nan_warning(method):
+    # test sinkhorn
+    n = 100
+    a1 = ot.datasets.make_1D_gauss(n, m=30, s=10)
+    a2 = ot.datasets.make_1D_gauss(n, m=40, s=10)
+
+    M = ot.utils.dist0(n)
+    reg = 0
     with pytest.warns(UserWarning):
-        ot.sinkhorn2(u, u, M, 1, method=method, stopThr=0, numItermax=1)
+        # warn set to False to avoid catching a convergence warning instead
+        ot.sinkhorn(a1, a2, M, reg, method=method, warn=False)
 
 
-@pytest.mark.parametrize("verbose, warn", product([True, False], [True, False]))
-def test_sinkhorn_multi_b(verbose, warn):
+def test_sinkhorn_stabilization():
+    # test sinkhorn
+    n = 100
+    a1 = ot.datasets.make_1D_gauss(n, m=30, s=10)
+    a2 = ot.datasets.make_1D_gauss(n, m=40, s=10)
+    M = ot.utils.dist0(n)
+    reg = 1e-5
+    loss1 = ot.sinkhorn2(a1, a2, M, reg, method="sinkhorn_log")
+    loss2 = ot.sinkhorn2(a1, a2, M, reg, tau=1, method="sinkhorn_stabilized")
+    np.testing.assert_allclose(
+        loss1, loss2, atol=1e-06)  # cf convergence sinkhorn
+
+
+@pytest.mark.parametrize("method, verbose, warn",
+                         product(["sinkhorn", "sinkhorn_stabilized",
+                                  "sinkhorn_log"],
+                                 [True, False], [True, False]))
+def test_sinkhorn_multi_b(method, verbose, warn):
     # test sinkhorn
     n = 10
     rng = np.random.RandomState(0)
@@ -69,12 +133,14 @@ def test_sinkhorn_multi_b(verbose, warn):
 
     M = ot.dist(x, x)
 
-    loss0, log = ot.sinkhorn(u, b, M, .1, stopThr=1e-10, log=True)
+    loss0, log = ot.sinkhorn(u, b, M, .1, method=method, stopThr=1e-10,
+                             log=True)
 
-    loss = [ot.sinkhorn2(u, b[:, k], M, .1, stopThr=1e-10, verbose=verbose, warn=warn) for k in range(3)]
+    loss = [ot.sinkhorn2(u, b[:, k], M, .1, method=method, stopThr=1e-10,
+                         verbose=verbose, warn=warn) for k in range(3)]
     # check constraints
     np.testing.assert_allclose(
-        loss0, loss, atol=1e-06)  # cf convergence sinkhorn
+        loss0, loss, atol=1e-4)  # cf convergence sinkhorn
 
 
 def test_sinkhorn_backends(nx):
@@ -154,6 +220,12 @@ def test_sinkhorn_empty():
     u = ot.utils.unif(n)
 
     M = ot.dist(x, x)
+
+    G, log = ot.sinkhorn([], [], M, 1, stopThr=1e-10, method="sinkhorn_log",
+                         verbose=True, log=True)
+    # check constraints
+    np.testing.assert_allclose(u, G.sum(1), atol=1e-05)
+    np.testing.assert_allclose(u, G.sum(0), atol=1e-05)
 
     G, log = ot.sinkhorn([], [], M, 1, stopThr=1e-10, verbose=True, log=True)
     # check constraints
@@ -396,7 +468,8 @@ def test_barycenter_debiased(nx, method, verbose, warn):
 
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
 def test_convergence_warning_barycenters(method):
-    n_bins = 100  # nb bins
+    w = 10
+    n_bins = w ** 2  # nb bins
 
     # Gaussian distributions
     a1 = ot.datasets.make_1D_gauss(n_bins, m=30, s=10)  # m= mean, s= std
@@ -404,6 +477,8 @@ def test_convergence_warning_barycenters(method):
 
     # creating matrix A containing all distributions
     A = np.vstack((a1, a2)).T
+    A_img = A.reshape(2, w, w)
+    A_img /= A_img.sum((1, 2))[:, None, None]
 
     # loss matrix + normalization
     M = ot.utils.dist0(n_bins)
@@ -416,6 +491,12 @@ def test_convergence_warning_barycenters(method):
         ot.bregman.barycenter_debiased(A, M, reg, weights, method=method, numItermax=1)
     with pytest.warns(UserWarning):
         ot.bregman.barycenter(A, M, reg, weights, method=method, numItermax=1)
+    with pytest.warns(UserWarning):
+        ot.bregman.convolutional_barycenter2d(A_img, reg, weights,
+                                              method=method, numItermax=1)
+    with pytest.warns(UserWarning):
+        ot.bregman.convolutional_barycenter2d_debiased(A_img, reg, weights,
+                                                       method=method, numItermax=1)
 
 
 def test_barycenter_stabilization(nx):
