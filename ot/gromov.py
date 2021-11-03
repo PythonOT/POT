@@ -644,7 +644,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
 
     The algorithm used for solving the problem is conditional gradient as
     discussed in :ref:`[24] <references-fused-gromov-wasserstein2>`
-    
+
     Note that when using backends, this loss function is differentiable wrt the
     marices and weights for quadratic loss using the gradients from [38]_.
 
@@ -733,7 +733,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
     if log:
         return fgw_dist, log_fgw
     else:
-        return fgw
+        return fgw_dist
 
 
 def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
