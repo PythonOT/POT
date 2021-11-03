@@ -593,9 +593,9 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
     M : array-like, shape (ns, nt)
         Metric cost matrix between features across domains
     C1 : array-like, shape (ns, ns)
-        Metric cost matrix respresentative of the structure in the source space.
+        Metric cost matrix representative of the structure in the source space.
     C2 : array-like, shape (nt, nt)
-        Metric cost matrix espresentative of the structure in the target space.
+        Metric cost matrix representative of the structure in the target space.
     p :  array-like, shape (ns,)
         Distribution in the source space.
     q :  array-like, shape (nt,)
