@@ -310,7 +310,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     ot.optim.cg : General regularized OT
     ot.bregman.sinkhorn_knopp : Classic Sinkhorn :ref:`[2] <references-sinkhorn2>`
     ot.bregman.greenkhorn : Greenkhorn :ref:`[21] <references-sinkhorn2>`
-    ot.bregman.sinkhorn_stabilized: Stabilized sinkhorn 
+    ot.bregman.sinkhorn_stabilized: Stabilized sinkhorn
         :ref:`[9] <references-sinkhorn2>` :ref:`[10] <references-sinkhorn2>`
     """
 
