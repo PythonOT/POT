@@ -116,7 +116,8 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None, no
     The function solves the following optimization problem:
 
     .. math::
-        \mathbf{P} = \mathop{\arg \min}_\mathbf{P} \frac{\sum\limits_i W(P \mathbf{X}^i, P \mathbf{X}^i)}{\sum\limits_{i, j \neq i} W(P \mathbf{X}^i, P \mathbf{X}^j)}
+        \mathbf{P} = \mathop{\arg \min}_\mathbf{P} \quad
+        \frac{\sum\limits_i W(P \mathbf{X}^i, P \mathbf{X}^i)}{\sum\limits_{i, j \neq i} W(P \mathbf{X}^i, P \mathbf{X}^j)}
 
     where :
 
@@ -224,7 +225,7 @@ def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopTh
     The function solves the following optimization problem:
 
     .. math::
-        \max_{U \in St(d, k)} \ \min_{\pi \in \Pi(\mu,\nu)} \ \sum_{i,j} \pi_{i,j}
+        \max_{U \in St(d, k)} \ \min_{\pi \in \Pi(\mu,\nu)} \quad \sum_{i,j} \pi_{i,j}
         \|U^T(\mathbf{x}_i - \mathbf{y}_j)\|^2 - \mathrm{reg} \cdot H(\pi)
 
     - :math:`U` is a linear projection operator in the Stiefel(`d`, `k`) manifold

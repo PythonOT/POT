@@ -20,7 +20,7 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
     The function considers the following problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, (\mathbf{M} - \lambda) \rangle_F
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, (\mathbf{M} - \lambda) \rangle_F
 
     .. math::
         s.t. \ \gamma \mathbf{1} &\leq \mathbf{a}
@@ -37,7 +37,7 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
     metrics. Foundations of Computational Mathematics, 18(1), 1-44.)
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F  +
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F  +
         \sqrt{\frac{\lambda}{2} (\|\gamma \mathbf{1} - \mathbf{a}\|_1 + \|\gamma^T \mathbf{1} - \mathbf{b}\|_1)}
 
         s.t. \ \gamma \geq 0
@@ -166,7 +166,7 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     The function considers the following problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F
 
     .. math::
         s.t. \ \gamma \mathbf{1} &\leq \mathbf{a}
@@ -285,7 +285,7 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     The function considers the following problem:
 
     .. math::
-        \gamma = \min_\gamma \ \langle \gamma, \mathbf{M} \rangle_F
+        \gamma = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F
 
     .. math::
         s.t. \ \gamma \mathbf{1} &\leq \mathbf{a}
@@ -437,7 +437,7 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     The function considers the following problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F
 
     .. math::
         s.t. \ \gamma \mathbf{1} &\leq \mathbf{a}
@@ -614,7 +614,7 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     The function considers the following problem:
 
     .. math::
-        GW = \min_\gamma \ \langle \gamma, \mathbf{M} \rangle_F
+        GW = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F
 
     .. math::
         s.t. \ \gamma \mathbf{1} &\leq \mathbf{a}
@@ -728,7 +728,7 @@ def entropic_partial_wasserstein(a, b, M, reg, m=None, numItermax=1000,
     The function considers the following problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg} \cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg} \cdot\Omega(\gamma)
 
         s.t. \gamma \mathbf{1} &\leq \mathbf{a} \\
              \gamma^T \mathbf{1} &\leq \mathbf{b} \\
@@ -866,8 +866,9 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_{\gamma} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})\cdot
-            \gamma_{i,j}\cdot\gamma_{k,l} + \mathrm{reg} \cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_{\gamma} \quad \sum_{i,j,k,l}
+        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})\cdot
+        \gamma_{i,j}\cdot\gamma_{k,l} + \mathrm{reg} \cdot\Omega(\gamma)
 
     .. math::
         s.t. \ \gamma &\geq 0
@@ -1009,7 +1010,7 @@ def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
     The function solves the following optimization problem:
 
     .. math::
-        GW = \min_{\gamma} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})\cdot
+        GW = \min_{\gamma} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})\cdot
             \gamma_{i,j}\cdot\gamma_{k,l} + \mathrm{reg} \cdot\Omega(\gamma)
 
     .. math::

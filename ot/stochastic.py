@@ -95,7 +95,8 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg} \cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot\Omega(\gamma)
 
         s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
@@ -185,7 +186,8 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg}\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg}\cdot\Omega(\gamma)
 
         s.t. \gamma \mathbf{1} = \mathbf{a}
 
@@ -345,7 +347,8 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg} \cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot\Omega(\gamma)
 
         s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
@@ -556,7 +559,8 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg} \cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot\Omega(\gamma)
 
         s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
@@ -655,7 +659,8 @@ def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \ \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg} \cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot\Omega(\gamma)
 
         s.t. \ \gamma \mathbf{1} = \mathbf{a}
 

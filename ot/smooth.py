@@ -50,7 +50,7 @@ def projection_simplex(V, z=1, axis=None):
     r""" Projection of :math:`\mathbf{V}` onto the simplex, scaled by `z`
 
     .. math::
-        P\left(\mathbf{V}, z\right) = \mathop{\arg \min}_{\substack{\mathbf{y} >= 0 \\ \sum_i \mathbf{y}_i = z}} \|\mathbf{y} - \mathbf{V}\|^2
+        P\left(\mathbf{V}, z\right) = \mathop{\arg \min}_{\substack{\mathbf{y} >= 0 \\ \sum_i \mathbf{y}_i = z}} \quad \|\mathbf{y} - \mathbf{V}\|^2
 
     Parameters
     ----------
