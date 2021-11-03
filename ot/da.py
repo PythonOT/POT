@@ -2089,7 +2089,7 @@ class MappingTransport(BaseEstimator):
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
         """Builds an optimal coupling and estimates the associated mapping
-        from source and target sets of samples 
+        from source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
