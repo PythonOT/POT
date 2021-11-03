@@ -430,7 +430,11 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=
     - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
     - :math:`\mathbf{p}`: distribution in the source space
     - :math:`\mathbf{q}`: distribution in the target space
-    - `L`: loss function to account for the misfit between the similarity matrices
+    - `L`: loss function to account for the misfit between the similarity
+      matrices
+
+    Note that when using backends, this loss function is differentiable wrt the
+    marices and weights for quadratic loss using the gradients from [38]_.
 
     Parameters
     ----------
@@ -472,6 +476,10 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=
     .. [13] Mémoli, Facundo. Gromov–Wasserstein distances and the
         metric approach to object matching. Foundations of computational
         mathematics 11.4 (2011): 417-487.
+
+    .. [38] C. Vincent-Cuaz, T. Vayer, R. Flamary, M. Corneli, N. Courty, Online
+        Graph Dictionary Learning, International Conference on Machine Learning
+        (ICML), 2021.
 
     """
     p, q = list_to_array(p, q)
@@ -581,6 +589,15 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
     """
     p, q = list_to_array(p, q)
 
+    p0, q0, C10, C20, M0 = p, q, C1, C2, M
+    nx = get_backend(p0, q0, C10, C20, M0)
+
+    p = nx.to_numpy(p)
+    q = nx.to_numpy(q)
+    C1 = nx.to_numpy(C10)
+    C2 = nx.to_numpy(C20)
+    M = nx.to_numpy(M0)
+
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
     G0 = p[:, None] * q[None, :]
@@ -593,10 +610,16 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
 
     if log:
         res, log = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, log=True, **kwargs)
-        log['fgw_dist'] = log['loss'][::-1][0]
-        return res, log
+
+        fgw_dist = nx.from_numpy(log['loss'][-1], type_as=C10)
+
+        log['fgw_dist'] = fgw_dist
+        log['u'] = nx.from_numpy(log['u'], type_as=C10)
+        log['v'] = nx.from_numpy(log['v'], type_as=C10)
+        return nx.from_numpy(res, type_as=C10), log
+
     else:
-        return cg(p, q, (1 - alpha) * M, alpha, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, **kwargs)
+        return nx.from_numpy(cg(p, q, (1 - alpha) * M, alpha, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, **kwargs), type_as=C10)
 
 
 def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5, armijo=False, log=False, **kwargs):
@@ -619,7 +642,11 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
     - :math:`\mathbf{p}` and :math:`\mathbf{q}` are source and target weights (sum to 1)
     - `L` is a loss function to account for the misfit between the similarity matrices
 
-    The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[24] <references-fused-gromov-wasserstein2>`
+    The algorithm used for solving the problem is conditional gradient as
+    discussed in :ref:`[24] <references-fused-gromov-wasserstein2>`
+    
+    Note that when using backends, this loss function is differentiable wrt the
+    marices and weights for quadratic loss using the gradients from [38]_.
 
     Parameters
     ----------
@@ -660,8 +687,21 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
         and Courty Nicolas
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
+
+    .. [38] C. Vincent-Cuaz, T. Vayer, R. Flamary, M. Corneli, N. Courty, Online
+        Graph Dictionary Learning, International Conference on Machine Learning
+        (ICML), 2021.
     """
     p, q = list_to_array(p, q)
+
+    p0, q0, C10, C20, M0 = p, q, C1, C2, M
+    nx = get_backend(p0, q0, C10, C20, M0)
+
+    p = nx.to_numpy(p)
+    q = nx.to_numpy(q)
+    C1 = nx.to_numpy(C10)
+    C2 = nx.to_numpy(C20)
+    M = nx.to_numpy(M0)
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
@@ -673,13 +713,27 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
     def df(G):
         return gwggrad(constC, hC1, hC2, G)
 
-    res, log = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, log=True, **kwargs)
+    T, log_fgw = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, log=True, **kwargs)
+
+    fgw_dist = nx.from_numpy(log_fgw['loss'][-1], type_as=C10)
+
+    T0 = nx.from_numpy(T, type_as=C10)
+
+    log_fgw['fgw_dist'] = fgw_dist
+    log_fgw['u'] = nx.from_numpy(log_fgw['u'], type_as=C10)
+    log_fgw['v'] = nx.from_numpy(log_fgw['v'], type_as=C10)
+    log_fgw['T'] = T0
+
+    if loss_fun == 'square_loss':
+        gC1 = nx.from_numpy(2 * C1 * (p[:, None] * p[None, :]) - 2 * T.dot(C2).dot(T.T))
+        gC2 = nx.from_numpy(2 * C2 * (q[:, None] * q[None, :]) - 2 * T.T.dot(C1).dot(T))
+        fgw_dist = nx.set_gradients(fgw_dist, (p0, q0, C10, C20, M0),
+                                    (log_fgw['u'], log_fgw['v'], alpha * gC1, alpha * gC2, (1 - alpha) * T0))
+
     if log:
-        log['fgw_dist'] = log['loss'][::-1][0]
-        log['T'] = res
-        return log['fgw_dist'], log
+        return fgw_dist, log_fgw
     else:
-        return log['fgw_dist']
+        return fgw
 
 
 def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
