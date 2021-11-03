@@ -174,7 +174,7 @@ def tensor_product(constC, hC1, hC2, T):
 
 
 def gwloss(constC, hC1, hC2, T):
-    """Return the Loss for Gromov-Wasserstein
+    r"""Return the Loss for Gromov-Wasserstein
 
     The loss is computed as described in Proposition 1 Eq. (6) in :ref:`[12] <references-gwloss>`
 
@@ -213,7 +213,7 @@ def gwloss(constC, hC1, hC2, T):
 
 
 def gwggrad(constC, hC1, hC2, T):
-    """Return the gradient for Gromov-Wasserstein
+    r"""Return the gradient for Gromov-Wasserstein
 
     The gradient is computed as described in Proposition 2 in :ref:`[12] <references-gwggrad>`
 
@@ -247,7 +247,7 @@ def gwggrad(constC, hC1, hC2, T):
 
 
 def update_square_loss(p, lambdas, T, Cs):
-    """
+    r"""
     Updates :math:`\mathbf{C}` according to the L2 Loss kernel with the `S` :math:`\mathbf{T}_s`
     couplings calculated at each iteration
 
@@ -284,7 +284,7 @@ def update_square_loss(p, lambdas, T, Cs):
 
 
 def update_kl_loss(p, lambdas, T, Cs):
-    """
+    r"""
     Updates :math:`\mathbf{C}` according to the KL Loss kernel with the `S` :math:`\mathbf{T}_s` couplings calculated at each iteration
 
 
@@ -385,6 +385,14 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
     """
     p, q = list_to_array(p, q)
 
+    p0, q0, C10, C20 = p, q, C1, C2
+    nx = get_backend(p0, q0, C10, C20)
+
+    p = nx.to_numpy(p)
+    q = nx.to_numpy(q)
+    C1 = nx.to_numpy(C10)
+    C2 = nx.to_numpy(C20)
+
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
     G0 = p[:, None] * q[None, :]
@@ -397,10 +405,12 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs
 
     if log:
         res, log = cg(p, q, 0, 1, f, df, G0, log=True, armijo=armijo, C1=C1, C2=C2, constC=constC, **kwargs)
-        log['gw_dist'] = gwloss(constC, hC1, hC2, res)
-        return res, log
+        log['gw_dist'] = nx.from_numpy(gwloss(constC, hC1, hC2, res), type_as=C10)
+        log['u'] = nx.from_numpy(log['u'], type_as=C10)
+        log['v'] = nx.from_numpy(log['v'], type_as=C10)
+        return nx.from_numpy(res, type_as=C10), log
     else:
-        return cg(p, q, 0, 1, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, **kwargs)
+        return nx.from_numpy(cg(p, q, 0, 1, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, log=False, **kwargs), type_as=C10)
 
 
 def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwargs):
@@ -464,6 +474,14 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwarg
     """
     p, q = list_to_array(p, q)
 
+    p0, q0, C10, C20 = p, q, C1, C2
+    nx = get_backend(p0, q0, C10, C20)
+
+    p = nx.to_numpy(p)
+    q = nx.to_numpy(q)
+    C1 = nx.to_numpy(C10)
+    C2 = nx.to_numpy(C20)
+
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
     G0 = p[:, None] * q[None, :]
@@ -473,13 +491,28 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun, log=False, armijo=False, **kwarg
 
     def df(G):
         return gwggrad(constC, hC1, hC2, G)
-    res, log_gw = cg(p, q, 0, 1, f, df, G0, log=True, armijo=armijo, C1=C1, C2=C2, constC=constC, **kwargs)
-    log_gw['gw_dist'] = gwloss(constC, hC1, hC2, res)
-    log_gw['T'] = res
+
+    T, log_gw = cg(p, q, 0, 1, f, df, G0, log=True, armijo=armijo, C1=C1, C2=C2, constC=constC, **kwargs)
+
+    T0 = nx.from_numpy(T, type_as=C10)
+
+    log_gw['gw_dist'] = nx.from_numpy(gwloss(constC, hC1, hC2, T), type_as=C10)
+    log_gw['u'] = nx.from_numpy(log_gw['u'], type_as=C10)
+    log_gw['v'] = nx.from_numpy(log_gw['v'], type_as=C10)
+    log_gw['T'] = T0
+
+    gw = log_gw['gw_dist']
+
+    if loss_fun == 'square_loss':
+        gC1 = nx.from_numpy(2 * C1 * (p[:, None] * p[None, :]) - 2 * T.dot(C2).dot(T.T))
+        gC2 = nx.from_numpy(2 * C2 * (q[:, None] * q[None, :]) - 2 * T.T.dot(C1).dot(T))
+        gw = nx.set_gradients(gw, (p0, q0, C10, C20),
+                              (log['u'], log['v'], gC1, gC2))
+
     if log:
-        return log_gw['gw_dist'], log_gw
+        return gw, log_gw
     else:
-        return log_gw['gw_dist']
+        return gw
 
 
 def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5, armijo=False, log=False, **kwargs):
@@ -1442,7 +1475,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_features=False,
                     p=None, loss_fun='square_loss', max_iter=100, tol=1e-9,
                     verbose=False, log=False, init_C=None, init_X=None, random_state=None):
-    """Compute the fgw barycenter as presented eq (5) in :ref:`[24] <references-fgw-barycenters>`
+    r"""Compute the fgw barycenter as presented eq (5) in :ref:`[24] <references-fgw-barycenters>`
 
     Parameters
     ----------
@@ -1599,7 +1632,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
 
 
 def update_structure_matrix(p, lambdas, T, Cs):
-    """Updates :math:`\mathbf{C}` according to the L2 Loss kernel with the `S` :math:`\mathbf{T}_s` couplings.
+    r"""Updates :math:`\mathbf{C}` according to the L2 Loss kernel with the `S` :math:`\mathbf{T}_s` couplings.
 
     It is calculated at each iteration
 
@@ -1635,7 +1668,7 @@ def update_structure_matrix(p, lambdas, T, Cs):
 
 
 def update_feature_matrix(lambdas, Ys, Ts, p):
-    """Updates the feature with respect to the `S` :math:`\mathbf{T}_s` couplings.
+    r"""Updates the feature with respect to the `S` :math:`\mathbf{T}_s` couplings.
 
 
     See "Solving the barycenter problem with Block Coordinate Descent (BCD)"
