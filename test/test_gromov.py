@@ -426,7 +426,7 @@ def test_fgw(nx):
         q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
 
 
-def test_gromov2_gradients():
+def test_fgw2_gradients():
     n_samples = 50  # nb samples
 
     mu_s = np.array([0, 0])
