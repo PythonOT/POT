@@ -20,13 +20,16 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
     The function considers the following problem:
 
     .. math::
-        \gamma = \arg\min_\gamma <\gamma,(M-\lambda)>_F
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, (\mathbf{M} - \lambda) \rangle_F
 
-        s.t.
-             \gamma\geq 0 \\
-             \gamma 1 \leq a\\
-             \gamma^T 1 \leq b\\
-             1^T \gamma^T 1 = m \leq \min\{\|a\|_1, \|b\|_1\}
+    .. math::
+        s.t. \ \gamma \mathbf{1} &\leq \mathbf{a}
+
+             \gamma^T \mathbf{1} &\leq \mathbf{b}
+
+             \gamma &\geq 0
+
+             \mathbf{1}^T \gamma^T \mathbf{1} = m &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\}
 
 
     or equivalently (see Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X.
@@ -34,33 +37,32 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
     metrics. Foundations of Computational Mathematics, 18(1), 1-44.)
 
     .. math::
-        \gamma = \arg\min_\gamma <\gamma,M>_F  + \sqrt(\lambda/2)
-        (\|\gamma 1 - a\|_1 + \|\gamma^T 1 - b\|_1)
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F  +
+        \sqrt{\frac{\lambda}{2} (\|\gamma \mathbf{1} - \mathbf{a}\|_1 + \|\gamma^T \mathbf{1} - \mathbf{b}\|_1)}
 
-        s.t.
-             \gamma\geq 0 \\
+        s.t. \ \gamma \geq 0
 
 
     where :
 
-    - M is the metric cost matrix
-    - a and b are source and target unbalanced distributions
-    - :math:`\lambda` is the lagragian cost. Tuning its value allows attaining
-      a given mass to be transported m
+    - :math:`\mathbf{M}` is the metric cost matrix
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
+    - :math:`\lambda` is the lagrangian cost. Tuning its value allows attaining
+      a given mass to be transported `m`
 
-    The formulation of the problem has been proposed in [28]_
+    The formulation of the problem has been proposed in :ref:`[28] <references-partial-wasserstein-lagrange>`
 
 
     Parameters
     ----------
     a : np.ndarray (dim_a,)
-        Unnormalized histogram of dimension dim_a
+        Unnormalized histogram of dimension `dim_a`
     b : np.ndarray (dim_b,)
-        Unnormalized histograms of dimension dim_b
+        Unnormalized histograms of dimension `dim_b`
     M : np.ndarray (dim_a, dim_b)
         cost matrix for the quadratic cost
     reg_m : float, optional
-        Lagragian cost
+        Lagrangian cost
     nb_dummies : int, optional, default:1
         number of reservoir points to be added (to avoid numerical
         instabilities, increase its value if an error is raised)
@@ -68,6 +70,7 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
         record log if True
     **kwargs : dict
         parameters can be directly passed to the emd solver
+
 
     .. warning::
         When dealing with a large number of points, the EMD solver may face
@@ -77,7 +80,7 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
 
     Returns
     -------
-    gamma : (dim_a x dim_b) ndarray
+    gamma : (dim_a, dim_b) ndarray
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`
@@ -97,9 +100,10 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
     array([[0.1, 0. ],
            [0. , 0. ]])
 
+
+    .. _references-partial-wasserstein-lagrange:
     References
     ----------
-
     .. [28] Caffarelli, L. A., & McCann, R. J. (2010) Free boundaries in
        optimal transport and Monge-Ampere obstacle problems. Annals of
        mathematics, 673-730.
@@ -162,27 +166,30 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     The function considers the following problem:
 
     .. math::
-        \gamma = \arg\min_\gamma <\gamma,M>_F
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F
 
-        s.t.
-             \gamma\geq 0 \\
-             \gamma 1 \leq a\\
-             \gamma^T 1 \leq b\\
-             1^T \gamma^T 1 = m \leq \min\{\|a\|_1, \|b\|_1\}
+    .. math::
+        s.t. \ \gamma \mathbf{1} &\leq \mathbf{a}
+
+             \gamma^T \mathbf{1} &\leq \mathbf{b}
+
+             \gamma &\geq 0
+
+             \mathbf{1}^T \gamma^T \mathbf{1} = m &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\}
 
 
     where :
 
-    - M is the metric cost matrix
-    - a and b are source and target unbalanced distributions
-    - m is the amount of mass to be transported
+    - :math:`\mathbf{M}` is the metric cost matrix
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
+    - `m` is the amount of mass to be transported
 
     Parameters
     ----------
     a : np.ndarray (dim_a,)
-        Unnormalized histogram of dimension dim_a
+        Unnormalized histogram of dimension `dim_a`
     b : np.ndarray (dim_b,)
-        Unnormalized histograms of dimension dim_b
+        Unnormalized histograms of dimension `dim_b`
     M : np.ndarray (dim_a, dim_b)
         cost matrix for the quadratic cost
     m : float, optional
@@ -205,7 +212,7 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
 
     Returns
     -------
-    :math:`gamma` : (dim_a x dim_b) ndarray
+    gamma : (dim_a, dim_b) ndarray
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`
@@ -278,27 +285,30 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     The function considers the following problem:
 
     .. math::
-        \gamma = \arg\min_\gamma <\gamma,M>_F
+        \gamma = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F
 
-        s.t.
-             \gamma\geq 0 \\
-             \gamma 1 \leq a\\
-             \gamma^T 1 \leq b\\
-             1^T \gamma^T 1 = m \leq \min\{\|a\|_1, \|b\|_1\}
+    .. math::
+        s.t. \ \gamma \mathbf{1} &\leq \mathbf{a}
+
+             \gamma^T \mathbf{1} &\leq \mathbf{b}
+
+             \gamma &\geq 0
+
+             \mathbf{1}^T \gamma^T \mathbf{1} = m &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\}
 
 
     where :
 
-    - M is the metric cost matrix
-    - a and b are source and target unbalanced distributions
-    - m is the amount of mass to be transported
+    - :math:`\mathbf{M}` is the metric cost matrix
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
+    - `m` is the amount of mass to be transported
 
     Parameters
     ----------
     a : np.ndarray (dim_a,)
-        Unnormalized histogram of dimension dim_a
+        Unnormalized histogram of dimension `dim_a`
     b : np.ndarray (dim_b,)
-        Unnormalized histograms of dimension dim_b
+        Unnormalized histograms of dimension `dim_b`
     M : np.ndarray (dim_a, dim_b)
         cost matrix for the quadratic cost
     m : float, optional
@@ -321,8 +331,8 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
 
     Returns
     -------
-    :math:`gamma` : (dim_a x dim_b) ndarray
-        Optimal transportation matrix for the given parameters
+    GW: float
+        partial GW discrepancy
     log : dict
         log dictionary returned only if `log` is `True`
 
@@ -360,8 +370,8 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
 
 
 def gwgrad_partial(C1, C2, T):
-    """Compute the GW gradient. Note: we can not use the trick in [12]_  as
-    the marginals may not sum to 1.
+    """Compute the GW gradient. Note: we can not use the trick in :ref:`[12] <references-gwgrad-partial>`
+    as the marginals may not sum to 1.
 
     Parameters
     ----------
@@ -379,6 +389,8 @@ def gwgrad_partial(C1, C2, T):
     numpy.array of shape (n_p+nb_dummies, n_u)
         gradient
 
+
+    .. _references-gwgrad-partial:
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
@@ -425,22 +437,25 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     The function considers the following problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F
 
-        s.t. \gamma 1 \leq a \\
-             \gamma^T 1 \leq b \\
-             \gamma\geq 0 \\
-             1^T \gamma^T 1 = m \leq \min\{\|a\|_1, \|b\|_1\} \\
+    .. math::
+        s.t. \ \gamma \mathbf{1} &\leq \mathbf{a}
+
+             \gamma^T \mathbf{1} &\leq \mathbf{b}
+
+             \gamma &\geq 0
+
+             \mathbf{1}^T \gamma^T \mathbf{1} = m &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\}
 
     where :
 
-    - M is the metric cost matrix
-    - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)
-        =\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are the sample weights
-    - m is the amount of mass to be transported
+    - :math:`\mathbf{M}` is the metric cost matrix
+    - :math:`\Omega` is the entropic regularization term, :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are the sample weights
+    - `m` is the amount of mass to be transported
 
-    The formulation of the problem has been proposed in [29]_
+    The formulation of the problem has been proposed in :ref:`[29] <references-partial-gromov-wasserstein>`
 
 
     Parameters
@@ -454,7 +469,7 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     q : ndarray, shape (nt,)
         Distribution in the target space
     m : float, optional
-        Amount of mass to be transported (default: min (|p|_1, |q|_1))
+        Amount of mass to be transported (default: :math:`\min\{\|\mathbf{p}\|_1, \|\mathbf{q}\|_1\}`)
     nb_dummies : int, optional
         Number of dummy points to add (avoid instabilities in the EMD solver)
     G0 : ndarray, shape (ns, nt), optional
@@ -476,7 +491,7 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
 
     Returns
     -------
-    gamma : (dim_a x dim_b) ndarray
+    gamma : (dim_a, dim_b) ndarray
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`
@@ -503,6 +518,8 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
            [0.  , 0.  , 0.25, 0.  ],
            [0.  , 0.  , 0.  , 0.  ]])
 
+
+    .. _references-partial-gromov-wasserstein:
     References
     ----------
     ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
@@ -597,22 +614,25 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     The function considers the following problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F
+        GW = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F
 
-        s.t. \gamma 1 \leq a \\
-             \gamma^T 1 \leq b \\
-             \gamma\geq 0 \\
-             1^T \gamma^T 1 = m \leq \min\{\|a\|_1, \|b\|_1\} \\
+    .. math::
+        s.t. \ \gamma \mathbf{1} &\leq \mathbf{a}
+
+             \gamma^T \mathbf{1} &\leq \mathbf{b}
+
+             \gamma &\geq 0
+
+             \mathbf{1}^T \gamma^T \mathbf{1} = m &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\}
 
     where :
 
-    - M is the metric cost matrix
-    - :math:`\Omega`  is the entropic regularization term
-        :math:`\Omega=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are the sample weights
-    - m is the amount of mass to be transported
+    - :math:`\mathbf{M}` is the metric cost matrix
+    - :math:`\Omega` is the entropic regularization term, :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are the sample weights
+    - `m` is the amount of mass to be transported
 
-    The formulation of the problem has been proposed in [29]_
+    The formulation of the problem has been proposed in :ref:`[29] <references-partial-gromov-wasserstein2>`
 
 
     Parameters
@@ -626,7 +646,7 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     q : ndarray, shape (nt,)
         Distribution in the target space
     m : float, optional
-        Amount of mass to be transported (default: min (|p|_1, |q|_1))
+        Amount of mass to be transported (default: :math:`\min\{\|\mathbf{p}\|_1, \|\mathbf{q}\|_1\}`)
     nb_dummies : int, optional
         Number of dummy points to add (avoid instabilities in the EMD solver)
     G0 : ndarray, shape (ns, nt), optional
@@ -655,7 +675,7 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
 
     Returns
     -------
-    partial_gw_dist : (dim_a x dim_b) ndarray
+    partial_gw_dist : float
         partial GW discrepancy
     log : dict
         log dictionary returned only if `log` is `True`
@@ -676,6 +696,8 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     >>> np.round(partial_gromov_wasserstein2(C1, C2, a, b, m=0.25),2)
     0.0
 
+
+    .. _references-partial-gromov-wasserstein2:
     References
     ----------
     ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
@@ -706,30 +728,29 @@ def entropic_partial_wasserstein(a, b, M, reg, m=None, numItermax=1000,
     The function considers the following problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg} \cdot\Omega(\gamma)
 
-        s.t. \gamma 1 \leq a \\
-             \gamma^T 1 \leq b \\
-             \gamma\geq 0 \\
-             1^T \gamma^T 1 = m \leq \min\{\|a\|_1, \|b\|_1\} \\
+        s.t. \gamma \mathbf{1} &\leq \mathbf{a} \\
+             \gamma^T \mathbf{1} &\leq \mathbf{b} \\
+             \gamma &\geq 0 \\
+             \mathbf{1}^T \gamma^T \mathbf{1} = m &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\} \\
 
     where :
 
-    - M is the metric cost matrix
-    - :math:`\Omega`  is the entropic regularization term
-        :math:`\Omega=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are the sample weights
-    - m is the amount of mass to be transported
+    - :math:`\mathbf{M}` is the metric cost matrix
+    - :math:`\Omega`  is the entropic regularization term, :math:`\Omega=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are the sample weights
+    - `m` is the amount of mass to be transported
 
-    The formulation of the problem has been proposed in [3]_ (prop. 5)
+    The formulation of the problem has been proposed in :ref:`[3] <references-entropic-partial-wasserstein>` (prop. 5)
 
 
     Parameters
     ----------
     a : np.ndarray (dim_a,)
-        Unnormalized histogram of dimension dim_a
+        Unnormalized histogram of dimension `dim_a`
     b : np.ndarray (dim_b,)
-        Unnormalized histograms of dimension dim_b
+        Unnormalized histograms of dimension `dim_b`
     M : np.ndarray (dim_a, dim_b)
         cost matrix
     reg : float
@@ -748,7 +769,7 @@ def entropic_partial_wasserstein(a, b, M, reg, m=None, numItermax=1000,
 
     Returns
     -------
-    gamma : (dim_a x dim_b) ndarray
+    gamma : (dim_a, dim_b) ndarray
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`
@@ -764,6 +785,8 @@ def entropic_partial_wasserstein(a, b, M, reg, m=None, numItermax=1000,
     array([[0.06, 0.02],
            [0.01, 0.  ]])
 
+
+    .. _references-entropic-partial-wasserstein:
     References
     ----------
     .. [3] Benamou, J. D., Carlier, G., Cuturi, M., Nenna, L., & Peyré, G.
@@ -838,32 +861,34 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
                                         numItermax=1000, tol=1e-7, log=False,
                                         verbose=False):
     r"""
-    Returns the partial Gromov-Wasserstein transport between (C1,p) and (C2,q)
+    Returns the partial Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
 
     The function solves the following optimization problem:
 
     .. math::
-        GW = \arg\min_{\gamma} \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})\cdot
-            \gamma_{i,j}\cdot\gamma_{k,l} + reg\cdot\Omega(\gamma)
+        \gamma = \mathop{\arg \min}_{\gamma} \quad \sum_{i,j,k,l}
+        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})\cdot
+        \gamma_{i,j}\cdot\gamma_{k,l} + \mathrm{reg} \cdot\Omega(\gamma)
 
-        s.t.
-             \gamma\geq 0 \\
-             \gamma 1 \leq a\\
-             \gamma^T 1 \leq b\\
-             1^T \gamma^T 1 = m \leq \min\{\|a\|_1, \|b\|_1\}
+    .. math::
+        s.t. \ \gamma &\geq 0
+
+             \gamma \mathbf{1} &\leq \mathbf{a}
+
+             \gamma^T \mathbf{1} &\leq \mathbf{b}
+
+             \mathbf{1}^T \gamma^T \mathbf{1} = m &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\}
 
     where :
 
-    - C1 is the metric cost matrix in the source space
-    - C2 is the metric cost matrix in the target space
-    - p and q are the sample weights
-    - L  : quadratic loss function
-    - :math:`\Omega`  is the entropic regularization term
-        :math:`\Omega=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - m is the amount of mass to be transported
+    - :math:`\mathbf{C_1}` is the metric cost matrix in the source space
+    - :math:`\mathbf{C_2}` is the metric cost matrix in the target space
+    - :math:`\mathbf{p}` and :math:`\mathbf{q}` are the sample weights
+    - `L`: quadratic loss function
+    - :math:`\Omega` is the entropic regularization term, :math:`\Omega=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - `m` is the amount of mass to be transported
 
-    The formulation of the GW problem has been proposed in [12]_ and the
-    partial GW in [29]_.
+    The formulation of the GW problem has been proposed in :ref:`[12] <references-entropic-partial-gromov-wassertein>` and the partial GW in :ref:`[29] <references-entropic-partial-gromov-wassertein>`
 
     Parameters
     ----------
@@ -878,7 +903,7 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
     reg: float
         entropic regularization parameter
     m : float, optional
-        Amount of mass to be transported (default: min (|p|_1, |q|_1))
+        Amount of mass to be transported (default: :math:`\min\{\|\mathbf{p}\|_1, \|\mathbf{q}\|_1\}`)
     G0 : ndarray, shape (ns, nt), optional
         Initialisation of the transportation matrix
     numItermax : int, optional
@@ -913,17 +938,20 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
 
     Returns
     -------
-    :math: `gamma` : (dim_a x dim_b) ndarray
+    :math: `gamma` : (dim_a, dim_b) ndarray
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`
 
+
+    .. _references-entropic-partial-gromov-wassertein:
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
-    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+
+    .. [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
         Transport with Applications on Positive-Unlabeled Learning".
         NeurIPS.
 
@@ -977,33 +1005,33 @@ def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
                                          numItermax=1000, tol=1e-7, log=False,
                                          verbose=False):
     r"""
-    Returns the partial Gromov-Wasserstein discrepancy between (C1,p) and
-    (C2,q)
+    Returns the partial Gromov-Wasserstein discrepancy between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
 
     The function solves the following optimization problem:
 
     .. math::
-        GW = \arg\min_{\gamma} \sum_{i,j,k,l} L(C1_{i,k},C2_{j,l})\cdot
-            \gamma_{i,j}\cdot\gamma_{k,l} + reg\cdot\Omega(\gamma)
+        GW = \min_{\gamma} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})\cdot
+            \gamma_{i,j}\cdot\gamma_{k,l} + \mathrm{reg} \cdot\Omega(\gamma)
 
-        s.t.
-             \gamma\geq 0 \\
-             \gamma 1 \leq a\\
-             \gamma^T 1 \leq b\\
-             1^T \gamma^T 1 = m \leq \min\{\|a\|_1, \|b\|_1\}
+    .. math::
+        s.t. \ \gamma &\geq 0
+
+             \gamma \mathbf{1} &\leq \mathbf{a}
+
+             \gamma^T \mathbf{1} &\leq \mathbf{b}
+
+             \mathbf{1}^T \gamma^T \mathbf{1} = m &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\}
 
     where :
 
-    - C1 is the metric cost matrix in the source space
-    - C2 is the metric cost matrix in the target space
-    - p and q are the sample weights
-    - L  : quadratic loss function
-    - :math:`\Omega`  is the entropic regularization term
-        :math:`\Omega=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - m is the amount of mass to be transported
+    - :math:`\mathbf{C_1}` is the metric cost matrix in the source space
+    - :math:`\mathbf{C_2}` is the metric cost matrix in the target space
+    - :math:`\mathbf{p}` and :math:`\mathbf{q}` are the sample weights
+    - `L` : quadratic loss function
+    - :math:`\Omega` is the entropic regularization term, :math:`\Omega=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - `m` is the amount of mass to be transported
 
-    The formulation of the GW problem has been proposed in [12]_ and the
-    partial GW in [29]_.
+    The formulation of the GW problem has been proposed in :ref:`[12] <references-entropic-partial-gromov-wassertein2>` and the partial GW in :ref:`[29] <references-entropic-partial-gromov-wassertein2>`
 
 
     Parameters
@@ -1019,7 +1047,7 @@ def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
     reg: float
         entropic regularization parameter
     m : float, optional
-        Amount of mass to be transported (default: min (|p|_1, |q|_1))
+        Amount of mass to be transported (default: :math:`\min\{\|\mathbf{p}\|_1, \|\mathbf{q}\|_1\}`)
     G0 : ndarray, shape (ns, nt), optional
         Initialisation of the transportation matrix
     numItermax : int, optional
@@ -1052,11 +1080,14 @@ def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
     >>> np.round(entropic_partial_gromov_wasserstein2(C1, C2, a, b,50), 2)
     1.87
 
+
+    .. _references-entropic-partial-gromov-wassertein2:
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
+
     ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
         Transport with Applications on Positive-Unlabeled Learning".
         NeurIPS.
