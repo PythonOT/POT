@@ -18,10 +18,10 @@ SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 1
 
 import numpy as np
-import matplotlib.pylab as pl
+import matplotlib.pyplot as plt
 import ot
 # necessary for 3d plot even if not used
 from mpl_toolkits.mplot3d import Axes3D  # noqa
@@ -51,18 +51,6 @@ M = ot.utils.dist0(n)
 M /= M.max()
 
 ##############################################################################
-# Plot data
-# ---------
-
-#%% plot the distributions
-
-pl.figure(1, figsize=(6.4, 3))
-for i in range(n_distributions):
-    pl.plot(x, A[:, i])
-pl.title('Distributions')
-pl.tight_layout()
-
-##############################################################################
 # Barycenter computation
 # ----------------------
 
@@ -78,24 +66,20 @@ bary_l2 = A.dot(weights)
 reg = 1e-3
 bary_wass = ot.bregman.barycenter(A, M, reg, weights)
 
-pl.figure(2)
-pl.clf()
-pl.subplot(2, 1, 1)
-for i in range(n_distributions):
-    pl.plot(x, A[:, i])
-pl.title('Distributions')
+f, (ax1, ax2) = plt.subplots(2, 1, tight_layout=True, num=1)
+ax1.plot(x, A, color="black")
+ax1.set_title('Distributions')
 
-pl.subplot(2, 1, 2)
-pl.plot(x, bary_l2, 'r', label='l2')
-pl.plot(x, bary_wass, 'g', label='Wasserstein')
-pl.legend()
-pl.title('Barycenters')
-pl.tight_layout()
+ax2.plot(x, bary_l2, 'r', label='l2')
+ax2.plot(x, bary_wass, 'g', label='Wasserstein')
+ax2.set_title('Barycenters')
+
+plt.legend()
+plt.show()
 
 ##############################################################################
 # Barycentric interpolation
 # -------------------------
-
 #%% barycenter interpolation
 
 n_alpha = 11
@@ -106,24 +90,23 @@ B_l2 = np.zeros((n, n_alpha))
 
 B_wass = np.copy(B_l2)
 
-for i in range(0, n_alpha):
+for i in range(n_alpha):
     alpha = alpha_list[i]
     weights = np.array([1 - alpha, alpha])
     B_l2[:, i] = A.dot(weights)
     B_wass[:, i] = ot.bregman.barycenter(A, M, reg, weights)
 
 #%% plot interpolation
+plt.figure(2)
 
-pl.figure(3)
-
-cmap = pl.cm.get_cmap('viridis')
+cmap = plt.cm.get_cmap('viridis')
 verts = []
 zs = alpha_list
 for i, z in enumerate(zs):
     ys = B_l2[:, i]
     verts.append(list(zip(x, ys)))
 
-ax = pl.gcf().gca(projection='3d')
+ax = plt.gcf().gca(projection='3d')
 
 poly = PolyCollection(verts, facecolors=[cmap(a) for a in alpha_list])
 poly.set_alpha(0.7)
@@ -134,18 +117,18 @@ ax.set_ylabel('$\\alpha$')
 ax.set_ylim3d(0, 1)
 ax.set_zlabel('')
 ax.set_zlim3d(0, B_l2.max() * 1.01)
-pl.title('Barycenter interpolation with l2')
-pl.tight_layout()
+plt.title('Barycenter interpolation with l2')
+plt.tight_layout()
 
-pl.figure(4)
-cmap = pl.cm.get_cmap('viridis')
+plt.figure(3)
+cmap = plt.cm.get_cmap('viridis')
 verts = []
 zs = alpha_list
 for i, z in enumerate(zs):
     ys = B_wass[:, i]
     verts.append(list(zip(x, ys)))
 
-ax = pl.gcf().gca(projection='3d')
+ax = plt.gcf().gca(projection='3d')
 
 poly = PolyCollection(verts, facecolors=[cmap(a) for a in alpha_list])
 poly.set_alpha(0.7)
@@ -156,7 +139,7 @@ ax.set_ylabel('$\\alpha$')
 ax.set_ylim3d(0, 1)
 ax.set_zlabel('')
 ax.set_zlim3d(0, B_l2.max() * 1.01)
-pl.title('Barycenter interpolation with Wasserstein')
-pl.tight_layout()
+plt.title('Barycenter interpolation with Wasserstein')
+plt.tight_layout()
 
-pl.show()
+plt.show()
