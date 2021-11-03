@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 =================================================================================
-1D Wasserstein barycenter comparison between exact LP and entropic regularization
+1D Wasserstein barycenter: exact LP vs entropic regularization
 =================================================================================
 
 This example illustrates the computation of regularized Wasserstein Barycenter

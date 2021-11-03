@@ -22,7 +22,8 @@ POT provides the following generic OT solvers (links to examples):
 * [Conditional gradient](https://pythonot.github.io/auto_examples/plot_optim_OTreg.html) [6] and [Generalized conditional gradient](https://pythonot.github.io/auto_examples/plot_optim_OTreg.html) for regularized OT [7].
 * Entropic regularization OT solver with [Sinkhorn Knopp Algorithm](https://pythonot.github.io/auto_examples/plot_OT_1D.html) [2] , stabilized version [9] [10] [34], greedy Sinkhorn [22] and [Screening Sinkhorn [26] ](https://pythonot.github.io/auto_examples/plot_screenkhorn_1D.html).
 * Bregman projections for [Wasserstein barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html) [3], [convolutional barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_convolutional_barycenter.html) [21]  and unmixing [4].
-* Sinkhorn divergence [23] and entropic regularization OT  from empirical data.
+* Sinkhorn divergence [23] and entropic regularization OT from empirical data.
+* Debiased Sinkhorn barycenters [Sinkhorn divergence barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_debiased_barycenter.html) [37]
 * [Smooth optimal transport solvers](https://pythonot.github.io/auto_examples/plot_OT_1D_smooth.html) (dual and semi-dual) for KL and squared L2 regularizations [17].
 * Non regularized [Wasserstein barycenters [16] ](https://pythonot.github.io/auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html)) with LP solver (only small scale).
 * [Gromov-Wasserstein distances](https://pythonot.github.io/auto_examples/gromov/plot_gromov.html) and [GW barycenters](https://pythonot.github.io/auto_examples/gromov/plot_gromov_barycenter.html)  (exact [13] and regularized [12])
@@ -188,7 +189,7 @@ The contributors to this library are
 * [Kilian Fatras](https://kilianfatras.github.io/) (Stochastic solvers)
 * [Alain Rakotomamonjy](https://sites.google.com/site/alainrakotomamonjy/home)
 * [Vayer Titouan](https://tvayer.github.io/) (Gromov-Wasserstein -, Fused-Gromov-Wasserstein)
-* [Hicham Janati](https://hichamjanati.github.io/) (Unbalanced OT)
+* [Hicham Janati](https://hichamjanati.github.io/) (Unbalanced OT, Debiased barycenters)
 * [Romain Tavenard](https://rtavenar.github.io/) (1d Wasserstein)
 * [Mokhtar Z. Alaya](http://mzalaya.github.io/) (Screenkhorn)
 * [Ievgen Redko](https://ievred.github.io/) (Laplacian DA, JCPOT)
@@ -293,3 +294,6 @@ You can also post bug reports and feature requests in Github issues. Make sure t
 (2019, May). [Sliced-Wasserstein flows: Nonparametric generative modeling 
 via optimal transport and diffusions](http://proceedings.mlr.press/v97/liutkus19a/liutkus19a.pdf). In International Conference on 
 Machine Learning (pp. 4104-4113). PMLR.
+
+[37] Janati, H., Cuturi, M., Gramfort, A. Proceedings of the 37th International
+Conference on Machine Learning, PMLR 119:4692-4701, 2020
