@@ -74,6 +74,40 @@ def test_gromov(nx):
         q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
 
 
+def test_gromov2_gradients():
+    n_samples = 50  # nb samples
+
+    mu_s = np.array([0, 0])
+    cov_s = np.array([[1, 0], [0, 1]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
+
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=5)
+
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+
+    C1 /= C1.max()
+    C2 /= C2.max()
+
+    if torch:
+
+        a1 = torch.tensor(a, requires_grad=True)
+        b1 = torch.tensor(a, requires_grad=True)
+        M1 = torch.tensor(M, requires_grad=True)
+
+        val = ot.emd2(a1, b1, M1)
+
+        val.backward()
+
+        assert a1.shape == a1.grad.shape
+        assert b1.shape == b1.grad.shape
+        assert M1.shape == M1.grad.shape
+
+
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 def test_entropic_gromov(nx):
     n_samples = 50  # nb samples
