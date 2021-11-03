@@ -2424,7 +2424,7 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
     where :
 
     - :math:`W_{M,reg}(\cdot,\cdot)` is the entropic regularized Wasserstein distance
-      with M loss matrix (see :py:func:`ot.bregman.sinkhorn`)
+      with :math:`\mathbf{M}` loss matrix (see :py:func:`ot.bregman.sinkhorn`)
     - :math:`\mathbf{D}` is a dictionary of `n_atoms` atoms of dimension `dim_a`,
       its expected shape is `(dim_a, n_atoms)`
     - :math:`\mathbf{h}` is the estimated unmixing of dimension `n_atoms`
