@@ -9,6 +9,7 @@
 import numpy as np
 import ot
 from ot.backend import NumpyBackend
+from ot.backend import torch
 
 import pytest
 
@@ -95,17 +96,19 @@ def test_gromov2_gradients():
 
     if torch:
 
-        a1 = torch.tensor(a, requires_grad=True)
-        b1 = torch.tensor(a, requires_grad=True)
-        M1 = torch.tensor(M, requires_grad=True)
+        p1 = torch.tensor(p, requires_grad=True)
+        q1 = torch.tensor(q, requires_grad=True)
+        C11 = torch.tensor(C1, requires_grad=True)
+        C12 = torch.tensor(C2, requires_grad=True)
 
-        val = ot.emd2(a1, b1, M1)
+        val = ot.gromov_wasserstein2(C11, C12, p1, q1)
 
         val.backward()
 
-        assert a1.shape == a1.grad.shape
-        assert b1.shape == b1.grad.shape
-        assert M1.shape == M1.grad.shape
+        assert q1.shape == q1.grad.shape
+        assert p1.shape == p1.grad.shape
+        assert C11.shape == C11.grad.shape
+        assert C12.shape == C12.grad.shape
 
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
