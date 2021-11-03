@@ -327,7 +327,8 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=F
     The function solves the following optimization problem:
 
     .. math::
-        \mathbf{GW} = \mathop{\arg \min}_\mathbf{T} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        \mathbf{GW} = \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
+        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
     Where :
 
@@ -420,7 +421,8 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=
     The function solves the following optimization problem:
 
     .. math::
-        GW = \min_\mathbf{T} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        GW = \min_\mathbf{T} \quad \sum_{i,j,k,l}
+        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
     Where :
 
@@ -520,8 +522,8 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
     Computes the FGW transport between two graphs (see :ref:`[24] <references-fused-gromov-wasserstein>`)
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma (1 - \alpha) <\gamma, \mathbf{M}>_F + \alpha \sum_{i,j,k,l}
-        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        \gamma = \mathop{\arg \min}_\gamma \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
 
@@ -602,7 +604,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
     Computes the FGW distance between two graphs see (see :ref:`[24] <references-fused-gromov-wasserstein2>`)
 
     .. math::
-        \min_\gamma (1 - \alpha) <\gamma, \mathbf{M}>_F + \alpha \sum_{i,j,k,l}
+        \min_\gamma \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F + \alpha \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
@@ -624,9 +626,9 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
     M : array-like, shape (ns, nt)
         Metric cost matrix between features across domains
     C1 : array-like, shape (ns, ns)
-        Metric cost matrix respresentative of the structure in the source space.
+        Metric cost matrix representative of the structure in the source space.
     C2 : array-like, shape (nt, nt)
-        Metric cost matrix espresentative of the structure in the target space.
+        Metric cost matrix representative of the structure in the target space.
     p :  array-like, shape (ns,)
         Distribution in the source space.
     q :  array-like, shape (nt,)
@@ -645,8 +647,8 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
 
     Returns
     -------
-    gamma : array-like, shape (ns, nt)
-        Optimal transportation matrix for the given parameters.
+    fgw-distance : float
+        Fused gromov wasserstein distance for the given parameters.
     log : dict
         Log dictionary return only if log==True in parameters.
 
@@ -813,7 +815,8 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
     The function solves the following optimization problem:
 
     .. math::
-        \mathbf{GW} = \mathop{\arg \min}_\mathbf{T} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        \mathbf{GW} = \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
+        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -934,7 +937,8 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
     The function solves the following optimization problem:
 
     .. math::
-        \mathbf{GW} = \mathop{\arg \min}_\mathbf{T} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        \mathbf{GW} = \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
+        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -1085,7 +1089,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
     The function solves the following optimization problem:
 
     .. math::
-        \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
+        \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -1190,7 +1194,8 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
     The function solves the following optimization problem:
 
     .. math::
-        GW = \min_\mathbf{T} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
+        GW = \min_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})
+        \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
 
     Where :
 
@@ -1256,7 +1261,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
 
     .. math::
 
-        \mathbf{C} = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
+        \mathbf{C} = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
 
     Where :
 
@@ -1369,7 +1374,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 
     .. math::
 
-        \mathbf{C} = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
+        \mathbf{C} = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
 
     Where :
 
