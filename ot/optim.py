@@ -267,7 +267,7 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
         Mi += nx.min(Mi)
 
         # solve linear program
-        Gc = emd(a, b, Mi, numItermax=numItermaxEmd)
+        Gc, logemd = emd(a, b, Mi, numItermax=numItermaxEmd, log=True)
 
         deltaG = Gc - G
 
@@ -297,6 +297,7 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
             print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, f_val, relative_delta_fval, abs_delta_fval))
 
     if log:
+        log.update(logemd)
         return G, log
     else:
         return G
