@@ -2,6 +2,7 @@
 
 
 ## 0.8.0
+*November 2021*
 
 This new stable release introduces several important features. 
 
@@ -10,22 +11,24 @@ an OpenMP compatible exact ot solver in `ot.emd`. The OpenMP version is used
 when the parameter `numThreads` is greater than one and can lead to nice
 speedups on multi-core machines. 
 
-Second whe have introduced a backend mechanism that allows to use standard POT
+Second we have introduced a backend mechanism that allows to use standard POT
 function seamlessly on Numpy, Pytorch and Jax arrays. Other backends are coming
 but right now POT can be used seamlessly for training neural networks in
 Pytorch. Notably we propose the first differentiable computation of the exact OT
 loss with `ot.emd2` (can be differentiated w.r.t. both cost matrix and sample
 weights), but also for the classical Sinkhorn loss with `ot.sinkhorn2`, the
 Wasserstein distance in 1D with `ot.wasserstein_1d`, sliced Wasserstein with
-`ot.TODO` and Gromov-Wasserstein with `ot.TODO`. Examples of how this new
-feature can be used are now available in the documentation where the Pytorch
-backend is used to estimate a [minimal Wasserstein
+`ot.TODO` and Gromov-Wasserstein with `ot.gromov_wasserstein2`. Examples of how
+this new feature can be used are now available in the documentation where the
+Pytorch backend is used to estimate a [minimal Wasserstein
 estimator](https://PythonOT.github.io/auto_examples/backends/plot_unmix_optim_torch.html),
 a [Generative Network
-(GAN)](https://PythonOT.github.io/auto_examples/backends/plot_wass2_gan_torch.html)
-or to TODO. Note that the Jax backend is still in early development and quite
-slow at the moment, we strongly recommend to use the [OTT
-toolbox](https://github.com/google-research/ott) for Jax users when possible.  
+(GAN)](https://PythonOT.github.io/auto_examples/backends/plot_wass2_gan_torch.html),
+for a  [sliced Wasserstein gradient
+flow](https://PythonOT.github.io/auto_examples/backends/plot_sliced_wass_grad_flow_pytorch.html)
+and [optimizing the Gromov-Wassersein distance](). Note that the Jax backend is still in early development and quite
+slow at the moment, we strongly recommend for Jax users to use the [OTT
+toolbox](https://github.com/google-research/ott)  when possible.  
  As a result of this new feature,
  the old `ot.gpu` submodule is now deprecated since GPU
 implementations can be done using GPU arrays on the torch backends.
@@ -35,7 +38,7 @@ Pointwise Gromov
 Wasserstein](https://PythonOT.github.io/auto_examples/gromov/plot_gromov.html#compute-gw-with-a-scalable-stochastic-method-with-any-loss-function),
 Sinkhorn in log space with `method='sinkhorn_log'`, [Projection Robust
 Wasserstein](https://PythonOT.github.io/gen_modules/ot.dr.html?highlight=robust#ot.dr.projection_robust_wasserstein),
-TODO
+ans [deviased Sinkorn barycenters](https://PythonOT.github.ioauto_examples/barycenters/plot_debiased_barycenter.html).
 
 This release will also simplify the installation process. We have now a
 `pyproject.toml` that defines the build dependency and POT should now build even
@@ -45,11 +48,12 @@ ARM processors.
 
 
 Finally POT was accepted for publication in the Journal of Machine Learning
-Research (JMLR) open source software track and we ask the POT user to cite [this
+Research (JMLR) open source software track and we ask the POT users to cite [this
 paper](https://www.jmlr.org/papers/v22/20-451.html) from now on. The documentation has been improved in particular by adding a
 "Why OT?" section to the quick start guide and several new examples illustrating
-the new features. The documentation now has two version : the stable version
-corresponding to the last release ans the master version that corresponds to the
+the new features. The documentation now has two version : the stable version 
+[https://pythonot.github.io/](https://pythonot.github.io/)
+corresponding to the last release and the master version [https://pythonot.github.io/master](https://pythonot.github.io/master) that corresponds to the
 current master branch on GitHub.
 
 
@@ -66,12 +70,15 @@ backend and OpenMP implementations.
 - Backend for running POT in numpy/torch + exact solver (PR #249)
 - Backend implementation of most functions in `ot.bregman` (PR #280)
 - Backend implementation of most functions in `ot.optim` (PR #282)
-- Implementation of sinkhorn in log space with `method='sinkhorn_log'` (PR #290)
+- Backend implementation of most functions in `ot.gromov` (PR #294)
+- Implementation of Sinkhorn in log space with `method='sinkhorn_log'` (PR #290)
 - Implementation of regularization path for L2 Unbalanced OT (PR #274)
 - Implementation of Projection Robust Wasserstein (PR #267)
+- Implementation of Debiased Sinkhorn Barycenters (PR #291)
 - Implementation of Sampled Gromov Wasserstein and Pointwise Gromov Wasserstein
   (PR #275)
 - Lazy implementation in log space for sinkhorn on samples (PR #259)
+- Documentation cleanup (PR #298)
 - Two up-to-date documentations [for stable
   release](https://PythonOT.github.io/) and for [master branch](https://pythonot.github.io/master/).
 - Building wheels on ARM for Raspberry PI and smartphones (PR #238)

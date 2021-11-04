@@ -94,7 +94,7 @@ pl.axis("off")
 
 
 # %%
-# Optimizing the weights of a simple template C0=eye(3) to fit Graph 1
+# Optimizing GW w.r.t. the weights on a template structure
 # ------------------------------------------------
 # The adajacency matrix C1 is block diagonal with 3 blocks. We want to
 # optimize the weights of a simple template C0=eye(3) and see if we can
