@@ -235,8 +235,8 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
 
     # ensure that same mass
     np.testing.assert_almost_equal(
-        nx.sum(a, axis=0),
-        nx.sum(b, axis=0),
+        nx.to_numpy(nx.sum(a, axis=0)),
+        nx.to_numpy(nx.sum(b, axis=0)),
         err_msg='a and b vector must have the same sum'
     )
     b = b * nx.sum(a) / nx.sum(b)
@@ -247,10 +247,10 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     perm_b = nx.argsort(x_b_1d)
 
     G_sorted, indices, cost = emd_1d_sorted(
-        nx.to_numpy(a[perm_a]),
-        nx.to_numpy(b[perm_b]),
-        nx.to_numpy(x_a_1d[perm_a]),
-        nx.to_numpy(x_b_1d[perm_b]),
+        nx.to_numpy(a[perm_a]).astype(np.float64),
+        nx.to_numpy(b[perm_b]).astype(np.float64),
+        nx.to_numpy(x_a_1d[perm_a]).astype(np.float64),
+        nx.to_numpy(x_b_1d[perm_b]).astype(np.float64),
         metric=metric, p=p
     )
 
@@ -266,7 +266,7 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     elif str(nx) == "jax":
         warnings.warn("JAX does not support sparse matrices, converting to dense")
     if log:
-        log = {'cost': cost}
+        log = {'cost': nx.from_numpy(cost, type_as=x_a)}
         return G, log
     return G
 
