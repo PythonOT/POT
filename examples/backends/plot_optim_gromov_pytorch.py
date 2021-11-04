@@ -4,18 +4,22 @@ Optimizing the Gromov-Wasserstein distance with PyTorch
 =================================
 
 In this exemple we use the pytorch backend to optimize the  Gromov-Wasserstein
-(GW) loss between two empirical distributions.
+(GW) loss between two graphs expressed as empirical distribution.
 
-In the first example one we perform a
-gradient flow on the support of a distribution that minimize the sliced
-Wassersein distance as poposed in [36].
+In the first example we optimize the weights on the node of a simple template 
+graph so that it minimizes the GW with a given Stochastic Block Model graph. 
+We can see that this actually recovers the proportion of classes in the SBM
+and allows for an accurate clustering of the nodes using the GW optimal plan.
 
-In the second exemple we optimize with a gradient descent the sliced
-Wasserstein barycenter between two distributions as in [31].
+In a second example we optimize simultaneously the weights and the sructure of
+the template graph which allows us to perform graph compression and to recover 
+other properties of the SBM.
 
-TODO citations
+The backend actually uses the gradients expressed in [38] to optimize the 
+weights.
 
-
+[38] C. Vincent-Cuaz, T. Vayer, R. Flamary, M. Corneli, N. Courty, Online Graph 
+Dictionary Learning, International Conference on Machine Learning (ICML), 2021.
 
 """
 # Author: Rémi Flamary <remi.flamary@polytechnique.edu>
@@ -25,12 +29,10 @@ TODO citations
 from sklearn.manifold import MDS
 import numpy as np
 import matplotlib.pylab as pl
-import matplotlib as mpl
 import torch
 
 import ot
 from ot.gromov import gromov_wasserstein2
-from ot.utils import proj_simplex
 
 # %%
 # Graph generation
@@ -92,7 +94,7 @@ pl.axis("off")
 # %%
 # Optimizing the weights of a simple template C0=eye(3) to fit Graph 1
 # ------------------------------------------------
-# The adajacency matrix C1 is block diagonal witrh 3 blocks. We want to
+# The adajacency matrix C1 is block diagonal with 3 blocks. We want to
 # optimize the weights of a simple template C0=eye(3) and see if we can
 # recover the proportion of classes from the SBM (up to a permutation).
 
@@ -146,7 +148,7 @@ print("True proportions : ", ratio)
 
 # %%
 # It is clear that the optimization has converged and that we recover the
-# ratio of the different classes in the SBM graph
+# ratio of the different classes in the SBM graph up to a permutation.
 
 
 # %%
@@ -157,8 +159,8 @@ print("True proportions : ", ratio)
 # the original graph using by the index of the noe in the template receiving
 # the most mass.
 #
-# We show here the result of such a clustering when using uniform wieghts on
-# the template C0 and when using the optimal weights previously
+# We show here the result of such a clustering when using uniform weights on
+# the template C0 and when using the optimal weights previously estimated.
 
 
 T_unif = ot.gromov_wasserstein(C1, C0, ot.unif(n), ot.unif(3))
@@ -186,7 +188,7 @@ pl.axis("off")
 # Now we  optimize both the weights and structure of a small graph that
 # minimize the GW distance wrt our data graph. This can be seen as graph
 # compression but can also recover important properties of an SBM such
-# as its class proportion but also its atrux of probabilitu of links between
+# as its class proportion but also its matrix of probability of links between
 # classes
 
 
