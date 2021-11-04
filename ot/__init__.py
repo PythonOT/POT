@@ -58,5 +58,6 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim',
            'sinkhorn_unbalanced', 'barycenter_unbalanced',
            'sinkhorn_unbalanced2', 'sliced_wasserstein_distance',
-           'max_sliced_wasserstein_distance',
+           'gromov_wasserstein', 'gromov_wasserstein2', 'gromov_barycenters', 'fused_gromov_wasserstein', 'fused_gromov_wasserstein2',
+            'max_sliced_wasserstein_distance',
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath']

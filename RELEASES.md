@@ -18,7 +18,7 @@ Pytorch. Notably we propose the first differentiable computation of the exact OT
 loss with `ot.emd2` (can be differentiated w.r.t. both cost matrix and sample
 weights), but also for the classical Sinkhorn loss with `ot.sinkhorn2`, the
 Wasserstein distance in 1D with `ot.wasserstein_1d`, sliced Wasserstein with
-`ot.TODO` and Gromov-Wasserstein with `ot.gromov_wasserstein2`. Examples of how
+`ot.sliced_wasserstein_distance` and Gromov-Wasserstein with `ot.gromov_wasserstein2`. Examples of how
 this new feature can be used are now available in the documentation where the
 Pytorch backend is used to estimate a [minimal Wasserstein
 estimator](https://PythonOT.github.io/auto_examples/backends/plot_unmix_optim_torch.html),
@@ -26,7 +26,7 @@ a [Generative Network
 (GAN)](https://PythonOT.github.io/auto_examples/backends/plot_wass2_gan_torch.html),
 for a  [sliced Wasserstein gradient
 flow](https://PythonOT.github.io/auto_examples/backends/plot_sliced_wass_grad_flow_pytorch.html)
-and [optimizing the Gromov-Wassersein distance](). Note that the Jax backend is still in early development and quite
+and [optimizing the Gromov-Wassersein distance](https://PythonOT.github.io/auto_examples/backends/plot_optim_gromov_pytorch.html). Note that the Jax backend is still in early development and quite
 slow at the moment, we strongly recommend for Jax users to use the [OTT
 toolbox](https://github.com/google-research/ott)  when possible.  
  As a result of this new feature,
@@ -70,13 +70,14 @@ backend and OpenMP implementations.
 - Backend for running POT in numpy/torch + exact solver (PR #249)
 - Backend implementation of most functions in `ot.bregman` (PR #280)
 - Backend implementation of most functions in `ot.optim` (PR #282)
-- Backend implementation of most functions in `ot.gromov` (PR #294)
+- Backend implementation of most functions in `ot.gromov` (PR #294, PR #302)
 - Implementation of Sinkhorn in log space with `method='sinkhorn_log'` (PR #290)
 - Implementation of regularization path for L2 Unbalanced OT (PR #274)
 - Implementation of Projection Robust Wasserstein (PR #267)
 - Implementation of Debiased Sinkhorn Barycenters (PR #291)
 - Implementation of Sampled Gromov Wasserstein and Pointwise Gromov Wasserstein
   (PR #275)
+- Add `pyproject.toml` and build POT without installing cython first (PR #293)
 - Lazy implementation in log space for sinkhorn on samples (PR #259)
 - Documentation cleanup (PR #298)
 - Two up-to-date documentations [for stable
@@ -106,6 +107,7 @@ backend and OpenMP implementations.
 - Fix labels transport in BaseTransport (Issue #207, PR #208)
 - Bug in `emd_1d`, non respected bounds (Issue #169, PR #170)
 - Removed Python 2.7 support and update codecov file (PR #178)
+- Add normalization for WDA and test it (PR #172, #296)
 - Cleanup code for new version of `flake8` (PR #176)
 - Fixed requirements in `setup.py` (PR #174)
 - Removed specific MacOS flags (PR #175)
