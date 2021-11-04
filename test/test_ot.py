@@ -98,7 +98,7 @@ def test_emd_emd2_types_devices(nx):
         w = ot.emd2(ab, ab, Mb)
 
         assert Gb.dtype == Mb.dtype
-        if not str(nx)=='numpy':
+        if not str(nx) == 'numpy':
             assert w.dtype == Mb.dtype
 
 
