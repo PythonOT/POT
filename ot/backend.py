@@ -47,15 +47,12 @@ except ImportError:
 str_type_error = "All array should be from the same type/backend. Current types are : {}"
 
 
-def get_backend_list(test_GPU=False):
+def get_backend_list():
     """Returns the list of available backends"""
     lst = [NumpyBackend(), ]
 
     if torch:
         lst.append(TorchBackend())
-        if test_GPU and torch.cuda.is_available():
-            # TODO: auto activate test_gpu if a GPU is present on the machine
-            lst.append(_TorchBackendGPU())
 
     if jax:
         lst.append(JaxBackend())
@@ -1440,20 +1437,3 @@ class TorchBackend(Backend):
 
     def allclose(self, a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         return torch.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
-
-
-class _TorchBackendGPU(TorchBackend):
-    r"""
-    This class allows to test the torch backend on GPUs. By wrapping the standard from_numpy method, this backend places the tensor on a GPU by default, which allow to make the test without significant changes in the code of the test itself.
-    """
-
-    __name__ = TorchBackend().__name__ + ".gpu"
-
-    def __str__(self):
-        return super().__name__
-
-    def from_numpy(self, a, type_as=None):
-        tensor = super().from_numpy(a, type_as=type_as)
-        if type_as is None:
-            tensor = tensor.cuda()
-        return tensor
