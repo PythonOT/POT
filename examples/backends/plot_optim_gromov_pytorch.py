@@ -26,6 +26,8 @@ Dictionary Learning, International Conference on Machine Learning (ICML), 2021.
 #
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 3
+
 from sklearn.manifold import MDS
 import numpy as np
 import matplotlib.pylab as pl
