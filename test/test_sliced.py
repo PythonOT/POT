@@ -139,6 +139,29 @@ def test_sliced_backend(nx):
     assert np.allclose(val0, valb)
 
 
+def test_sliced_backend_type_devices(nx):
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    y = rng.randn(2 * n, 2)
+
+    P = rng.randn(2, 20)
+    P = P / np.sqrt((P**2).sum(0, keepdims=True))
+
+    for tp in nx.__type_list__:
+        print(tp.dtype)
+
+        xb = nx.from_numpy(x, type_as=tp)
+        yb = nx.from_numpy(y, type_as=tp)
+        Pb = nx.from_numpy(P, type_as=tp)
+
+        valb = ot.sliced_wasserstein_distance(xb, yb, projections=Pb)
+
+        if str(nx) != 'numpy':
+            assert nx.dtype_device(valb) == nx.dtype_device(xb)
+
+
 def test_max_sliced_backend(nx):
 
     n = 100
@@ -167,3 +190,26 @@ def test_max_sliced_backend(nx):
     valb = nx.to_numpy(ot.max_sliced_wasserstein_distance(xb, yb, projections=Pb))
 
     assert np.allclose(val0, valb)
+
+
+def test_max_sliced_backend_type_devices(nx):
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    y = rng.randn(2 * n, 2)
+
+    P = rng.randn(2, 20)
+    P = P / np.sqrt((P**2).sum(0, keepdims=True))
+
+    for tp in nx.__type_list__:
+        print(tp.dtype)
+
+        xb = nx.from_numpy(x, type_as=tp)
+        yb = nx.from_numpy(y, type_as=tp)
+        Pb = nx.from_numpy(P, type_as=tp)
+
+        valb = ot.max_sliced_wasserstein_distance(xb, yb, projections=Pb)
+
+        if str(nx) != 'numpy':
+            assert nx.dtype_device(valb) == nx.dtype_device(xb)

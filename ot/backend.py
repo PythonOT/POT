@@ -653,6 +653,12 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def dtype_device(self, a):
+        r"""
+        Returns the dtype and the device of the given tensor.
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -879,6 +885,9 @@ class NumpyBackend(Backend):
 
     def allclose(self, a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         return np.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
+
+    def dtype_device(self, a):
+        return a.dtype, "cpu"
 
 
 class JaxBackend(Backend):
@@ -1126,6 +1135,9 @@ class JaxBackend(Backend):
 
     def allclose(self, a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         return jnp.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
+
+    def dtype_device(self, a):
+        return a.dtype, a.device_buffer.device()
 
 
 class TorchBackend(Backend):
@@ -1455,3 +1467,6 @@ class TorchBackend(Backend):
 
     def allclose(self, a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         return torch.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
+
+    def dtype_device(self, a):
+        return a.dtype, a.device
