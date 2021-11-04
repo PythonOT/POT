@@ -102,6 +102,7 @@ class Backend():
 
     __name__ = None
     __type__ = None
+    __type_list__ = None
 
     rng_ = None
 
@@ -663,6 +664,8 @@ class NumpyBackend(Backend):
 
     __name__ = 'numpy'
     __type__ = np.ndarray
+    __type_list__ = [np.array(1,dtype=np.float32),
+                     np.array(1,dtype=np.float64)]
 
     rng_ = np.random.RandomState()
 
@@ -888,11 +891,15 @@ class JaxBackend(Backend):
 
     __name__ = 'jax'
     __type__ = jax_type
+    __type_list__ = None
 
     rng_ = None
 
     def __init__(self):
         self.rng_ = jax.random.PRNGKey(42)
+
+        self.__type_list__= [jnp.array(1,dtype=np.float32),
+                     jnp.array(1,dtype=np.float64)]
 
     def to_numpy(self, a):
         return np.array(a)
@@ -1130,6 +1137,7 @@ class TorchBackend(Backend):
 
     __name__ = 'torch'
     __type__ = torch_type
+    __type_list__ = None
 
     rng_ = None
 
@@ -1137,6 +1145,13 @@ class TorchBackend(Backend):
 
         self.rng_ = torch.Generator()
         self.rng_.seed()
+
+        self.__type_list__ = [torch.tensor(1,dtype=torch.float32),
+                              torch.tensor(1,dtype=torch.float64)]
+
+        if torch.cuda.is_available():
+            self.__type_list_.append(torch.tensor(1,dtype=torch.float32, device='cuda'))
+            self.__type_list_.append(torch.tensor(1,dtype=torch.float64, device='cuda'))
 
         from torch.autograd import Function
 

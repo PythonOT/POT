@@ -77,6 +77,31 @@ def test_emd2_backends(nx):
     np.allclose(val, nx.to_numpy(valb))
 
 
+def test_emd_emd2_types_devices(nx):
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    for tp in nx.__type_list__:
+
+        ab = nx.from_numpy(a, type_as=tp)
+        Mb = nx.from_numpy(M, type_as=tp)
+
+        Gb = ot.emd(ab, ab, Mb)
+
+        w = ot.emd2(ab, ab, Mb)
+
+        assert Gb.dtype == Mb.dtype
+        if not str(nx)=='numpy':
+            assert w.dtype == Mb.dtype
+
+
 def test_emd2_gradients():
     n_samples = 100
     n_features = 2
