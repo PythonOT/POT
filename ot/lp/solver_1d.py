@@ -235,8 +235,8 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
 
     # ensure that same mass
     np.testing.assert_almost_equal(
-        nx.sum(a, axis=0),
-        nx.sum(b, axis=0),
+        nx.to_numpy(nx.sum(a, axis=0)),
+        nx.to_numpy(nx.sum(b, axis=0)),
         err_msg='a and b vector must have the same sum'
     )
     b = b * nx.sum(a) / nx.sum(b)
