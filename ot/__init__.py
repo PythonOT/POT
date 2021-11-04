@@ -44,6 +44,8 @@ from .unbalanced import (sinkhorn_unbalanced, barycenter_unbalanced,
                          sinkhorn_unbalanced2)
 from .da import sinkhorn_lpl1_mm
 from .sliced import sliced_wasserstein_distance, max_sliced_wasserstein_distance
+from .gromov import (gromov_wasserstein, gromov_wasserstein2,
+                        gromov_barycenters, fused_gromov_wasserstein, fused_gromov_wasserstein2)
 
 # utils functions
 from .utils import dist, unif, tic, toc, toq
