@@ -162,7 +162,8 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
         The function solves the following optimization problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg} \cdot f(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot f(\gamma)
 
         s.t. \ \gamma \mathbf{1} &= \mathbf{a}
 
@@ -266,7 +267,7 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
         Mi += nx.min(Mi)
 
         # solve linear program
-        Gc = emd(a, b, Mi, numItermax=numItermaxEmd)
+        Gc, logemd = emd(a, b, Mi, numItermax=numItermaxEmd, log=True)
 
         deltaG = Gc - G
 
@@ -296,6 +297,7 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
             print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, f_val, relative_delta_fval, abs_delta_fval))
 
     if log:
+        log.update(logemd)
         return G, log
     else:
         return G
@@ -309,7 +311,8 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
         The function solves the following optimization problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma <\gamma, \mathbf{M}>_F + \mathrm{reg_1}\cdot\Omega(\gamma) + \mathrm{reg_2}\cdot f(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg_1}\cdot\Omega(\gamma) + \mathrm{reg_2}\cdot f(\gamma)
 
         s.t. \ \gamma \mathbf{1} &= \mathbf{a}
 
@@ -452,7 +455,7 @@ def solve_1d_linesearch_quad(a, b, c):
 
     .. math::
 
-        \mathop{\arg \min}_{0 \leq x \leq 1} f(x) = ax^{2} + bx + c
+        \mathop{\arg \min}_{0 \leq x \leq 1} \quad f(x) = ax^{2} + bx + c
 
     Parameters
     ----------
