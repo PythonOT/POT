@@ -678,7 +678,7 @@ class NumpyBackend(Backend):
         elif isinstance(a, float):
             return a
         else:
-            return jax.device-put(a.astype(type_as.dtype),type_as.device_buffer.device())
+            return jax.device_put(a.astype(type_as.dtype),type_as.device_buffer.device())
 
     def set_gradients(self, val, inputs, grads):
         # No gradients for numpy
