@@ -124,7 +124,7 @@ def min_weight_gw(C1, C2, a2, nb_iter_max=100, lr=1e-2):
         loss_iter.append(loss.clone().detach().cpu().numpy())
         loss.backward()
 
-        print("{:03d} | {}".format(i, loss_iter[-1]))
+        #print("{:03d} | {}".format(i, loss_iter[-1]))
 
         # performs a step of projected gradient descent
         with torch.no_grad():
@@ -217,7 +217,7 @@ def graph_compession_gw(nb_nodes, C2, a2, nb_iter_max=100, lr=1e-2):
         loss_iter.append(loss.clone().detach().cpu().numpy())
         loss.backward()
 
-        print("{:03d} | {}".format(i, loss_iter[-1]))
+        #print("{:03d} | {}".format(i, loss_iter[-1]))
 
         # performs a step of projected gradient descent
         with torch.no_grad():
