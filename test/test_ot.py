@@ -153,7 +153,6 @@ def test_emd_emd2():
     np.testing.assert_allclose(w, 0)
 
 
-
 def test_emd_empty():
     # test emd and emd2 for simple identity
     n = 100
