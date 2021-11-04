@@ -90,6 +90,8 @@ def test_emd_emd2_types_devices(nx):
 
     for tp in nx.__type_list__:
 
+        print(tp.dtype)
+
         ab = nx.from_numpy(a, type_as=tp)
         Mb = nx.from_numpy(M, type_as=tp)
 

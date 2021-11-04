@@ -1150,8 +1150,8 @@ class TorchBackend(Backend):
                               torch.tensor(1, dtype=torch.float64)]
 
         if torch.cuda.is_available():
-            self.__type_list_.append(torch.tensor(1, dtype=torch.float32, device='cuda'))
-            self.__type_list_.append(torch.tensor(1, dtype=torch.float64, device='cuda'))
+            self.__type_list__.append(torch.tensor(1, dtype=torch.float32, device='cuda'))
+            self.__type_list__.append(torch.tensor(1, dtype=torch.float64, device='cuda'))
 
         from torch.autograd import Function
 
