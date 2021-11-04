@@ -899,10 +899,8 @@ class JaxBackend(Backend):
         self.rng_ = jax.random.PRNGKey(42)
 
         for d in jax.devices():
-            self.__type_list__ = [jax.device_put(jnp.array(1, dtype=np.float32),d),
-                              jax.device_put(jnp.array(1, dtype=np.float64),d)]
-
-        
+            self.__type_list__ = [jax.device_put(jnp.array(1, dtype=np.float32), d),
+                                  jax.device_put(jnp.array(1, dtype=np.float64), d)]
 
     def to_numpy(self, a):
         return np.array(a)
@@ -911,7 +909,7 @@ class JaxBackend(Backend):
         if type_as is None:
             return jnp.array(a)
         else:
-            return jax.device_put(jnp.array(a).astype(type_as.dtype),type_as.device_buffer.device())
+            return jax.device_put(jnp.array(a).astype(type_as.dtype), type_as.device_buffer.device())
 
     def set_gradients(self, val, inputs, grads):
         from jax.flatten_util import ravel_pytree
@@ -1178,6 +1176,8 @@ class TorchBackend(Backend):
         return a.cpu().detach().numpy()
 
     def from_numpy(self, a, type_as=None):
+        if isinstance(a, float):
+            a = np.array(a)
         if type_as is None:
             return torch.from_numpy(a)
         else:

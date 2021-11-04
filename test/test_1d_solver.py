@@ -83,3 +83,29 @@ def test_wasserstein_1d(nx):
     Xb = nx.from_numpy(X)
     res = wasserstein_1d(Xb, Xb, rho_ub, rho_vb, p=2)
     np.testing.assert_almost_equal(100 * res[0], res[1], decimal=4)
+
+
+@pytest.mark.parametrize('nx', backend_list)
+def test_wasserstein_1d_type_devices(nx):
+
+    rng = np.random.RandomState(0)
+
+    n = 10
+    x = np.linspace(0, 5, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+    rho_v = np.abs(rng.randn(n))
+    rho_v /= rho_v.sum()
+
+    for tp in nx.__type_list__:
+
+        print(tp.dtype)
+
+        xb = nx.from_numpy(x, type_as=tp)
+        rho_ub = nx.from_numpy(rho_u, type_as=tp)
+        rho_vb = nx.from_numpy(rho_v, type_as=tp)
+
+        res = wasserstein_1d(xb, xb, rho_ub, rho_vb, p=1)
+
+        if not str(nx) == 'numpy':
+            assert res.dtype == xb.dtype

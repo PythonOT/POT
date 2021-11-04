@@ -192,6 +192,34 @@ def test_emd_1d_emd2_1d():
         ot.emd_1d(u, v, [], [])
 
 
+def test_emd1d_type_devices(nx):
+
+    rng = np.random.RandomState(0)
+
+    n = 10
+    x = np.linspace(0, 5, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+    rho_v = np.abs(rng.randn(n))
+    rho_v /= rho_v.sum()
+
+    for tp in nx.__type_list__:
+
+        print(tp.dtype)
+
+        xb = nx.from_numpy(x, type_as=tp)
+        rho_ub = nx.from_numpy(rho_u, type_as=tp)
+        rho_vb = nx.from_numpy(rho_v, type_as=tp)
+
+        emd = ot.emd_1d(xb, xb, rho_ub, rho_vb)
+
+        emd2 = ot.emd2_1d(xb, xb, rho_ub, rho_vb)
+
+        assert emd.dtype == xb.dtype
+        if not str(nx) == 'numpy':
+            assert emd2.dtype == xb.dtype
+
+
 def test_emd_empty():
     # test emd and emd2 for simple identity
     n = 100
