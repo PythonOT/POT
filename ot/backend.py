@@ -1444,14 +1444,10 @@ class TorchBackend(Backend):
 
 class _TorchBackendGPU(TorchBackend):
     r"""
-    This class allows to test the torch backend on GPUs. By wrapping the standard from_numpy method,
-    this backend places the tensor on a GPU by default, which allow to make the test without
-    significant changes in the code of the test itself.
+    This class allows to test the torch backend on GPUs. By wrapping the standard from_numpy method, this backend places the tensor on a GPU by default, which allow to make the test without significant changes in the code of the test itself.
     """
 
-    @property
-    def __name__(self):
-        return super().__name__ + ".gpu"
+    __name__ = TorchBackend().__name__ + ".gpu"
 
     def __str__(self):
         return super().__name__
