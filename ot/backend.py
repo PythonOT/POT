@@ -678,7 +678,7 @@ class NumpyBackend(Backend):
         elif isinstance(a, float):
             return a
         else:
-            return jax.device_put(a.astype(type_as.dtype),type_as.device_buffer.device())
+            return a.astype(type_as.dtype)
 
     def set_gradients(self, val, inputs, grads):
         # No gradients for numpy
@@ -900,7 +900,7 @@ class JaxBackend(Backend):
 
         for d in jax.devices():
             self.__type_list__ = [jax.device_put(jnp.array(1, dtype=np.float32),d),
-                              jax.device_put(jnp.array(1, dtype=np.float64))]
+                              jax.device_put(jnp.array(1, dtype=np.float64),d)]
 
         
 
@@ -911,7 +911,7 @@ class JaxBackend(Backend):
         if type_as is None:
             return jnp.array(a)
         else:
-            return jnp.array(a).astype(type_as.dtype)
+            return jax.device_put(jnp.array(a).astype(type_as.dtype),type_as.device_buffer.device())
 
     def set_gradients(self, val, inputs, grads):
         from jax.flatten_util import ravel_pytree
