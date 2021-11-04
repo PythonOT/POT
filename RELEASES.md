@@ -26,8 +26,7 @@ a [Generative Network
 or to TODO. Note that the Jax backend is still in early development and quite
 slow at the moment, we strongly recommend to use the [OTT
 toolbox](https://github.com/google-research/ott) for Jax users when possible.  
- As a
-result of this new feature,
+ As a result of this new feature,
  the old `ot.gpu` submodule is now deprecated since GPU
 implementations can be done using GPU arrays on the torch backends.
 

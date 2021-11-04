@@ -5,7 +5,8 @@
     :py:mod:`ot.lp`, :py:mod:`ot.bregman`, :py:mod:`ot.optim`
     :py:mod:`ot.utils`, :py:mod:`ot.datasets`,
     :py:mod:`ot.gromov`, :py:mod:`ot.smooth`
-    :py:mod:`ot.stochastic`
+    :py:mod:`ot.stochastic`, :py:mod:`ot.partial`, :py:mod:`ot.regpath`
+    , :py:mod:`ot.unbalanced`.
 
     The following sub-modules are not imported due to additional dependencies:
 
