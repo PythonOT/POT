@@ -12,7 +12,6 @@ import pytest
 import ot
 from ot.datasets import make_1D_gauss as gauss
 from ot.backend import torch
-from scipy.stats import wasserstein_distance
 
 
 def test_emd_dimension_and_mass_mismatch():
