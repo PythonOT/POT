@@ -678,7 +678,7 @@ class NumpyBackend(Backend):
         elif isinstance(a, float):
             return a
         else:
-            return a.astype(type_as.dtype)
+            return jax.put_device(a.astype(type_as.dtype),type_as.device_buffer.device())
 
     def set_gradients(self, val, inputs, grads):
         # No gradients for numpy
@@ -898,8 +898,11 @@ class JaxBackend(Backend):
     def __init__(self):
         self.rng_ = jax.random.PRNGKey(42)
 
-        self.__type_list__ = [jnp.array(1, dtype=np.float32),
-                              jnp.array(1, dtype=np.float64)]
+        for d in jax.devices():
+            self.__type_list__ = [jax.device_put(jnp.array(1, dtype=np.float32),d),
+                              jax.device_put(jnp.array(1, dtype=np.float64))]
+
+        
 
     def to_numpy(self, a):
         return np.array(a)
