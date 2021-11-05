@@ -97,8 +97,7 @@ def test_wasserstein_1d_type_devices(nx):
     rho_v /= rho_v.sum()
 
     for tp in nx.__type_list__:
-
-        print(tp.dtype)
+        print(nx.dtype_device(tp))
 
         xb = nx.from_numpy(x, type_as=tp)
         rho_ub = nx.from_numpy(rho_u, type_as=tp)
@@ -160,8 +159,7 @@ def test_emd1d_type_devices(nx):
     rho_v /= rho_v.sum()
 
     for tp in nx.__type_list__:
-
-        print(tp.dtype)
+        print(nx.dtype_device(tp))
 
         xb = nx.from_numpy(x, type_as=tp)
         rho_ub = nx.from_numpy(rho_u, type_as=tp)

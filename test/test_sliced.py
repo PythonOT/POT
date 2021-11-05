@@ -202,7 +202,7 @@ def test_max_sliced_backend_type_devices(nx):
     P = P / np.sqrt((P**2).sum(0, keepdims=True))
 
     for tp in nx.__type_list__:
-        print(tp.dtype)
+        print(nx.dtype_device(tp))
 
         xb = nx.from_numpy(x, type_as=tp)
         yb = nx.from_numpy(y, type_as=tp)
