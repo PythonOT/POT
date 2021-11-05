@@ -78,6 +78,8 @@ New features
 -  Backend implementation of most functions in ``ot.optim`` (PR #282)
 -  Backend implementation of most functions in ``ot.gromov`` (PR #294,
    PR #302)
+-  Test for arrays of different type and device (CPU/GPU) (PR #304,
+   #303)
 -  Implementation of Sinkhorn in log space with
    ``method='sinkhorn_log'`` (PR #290)
 -  Implementation of regularization path for L2 Unbalanced OT (PR #274)
