@@ -150,7 +150,7 @@ def test_sliced_backend_type_devices(nx):
     P = P / np.sqrt((P**2).sum(0, keepdims=True))
 
     for tp in nx.__type_list__:
-        print(tp.dtype)
+        print(nx.dtype_device(tp))
 
         xb = nx.from_numpy(x, type_as=tp)
         yb = nx.from_numpy(y, type_as=tp)
@@ -158,8 +158,7 @@ def test_sliced_backend_type_devices(nx):
 
         valb = ot.sliced_wasserstein_distance(xb, yb, projections=Pb)
 
-        if str(nx) != 'numpy':
-            assert nx.dtype_device(valb) == nx.dtype_device(xb)
+        nx.assert_same_dtype_device(xb, valb)
 
 
 def test_max_sliced_backend(nx):
@@ -211,5 +210,4 @@ def test_max_sliced_backend_type_devices(nx):
 
         valb = ot.max_sliced_wasserstein_distance(xb, yb, projections=Pb)
 
-        if str(nx) != 'numpy':
-            assert nx.dtype_device(valb) == nx.dtype_device(xb)
+        nx.assert_same_dtype_device(xb, valb)
