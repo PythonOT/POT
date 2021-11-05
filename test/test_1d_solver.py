@@ -85,7 +85,6 @@ def test_wasserstein_1d(nx):
     np.testing.assert_almost_equal(100 * res[0], res[1], decimal=4)
 
 
-@pytest.mark.parametrize('nx', backend_list)
 def test_wasserstein_1d_type_devices(nx):
 
     rng = np.random.RandomState(0)
@@ -107,8 +106,7 @@ def test_wasserstein_1d_type_devices(nx):
 
         res = wasserstein_1d(xb, xb, rho_ub, rho_vb, p=1)
 
-        if not str(nx) == 'numpy':
-            assert res.dtype == xb.dtype
+        nx.assert_same_dtype_device(xb, res)
 
 
 def test_emd_1d_emd2_1d():
@@ -170,9 +168,7 @@ def test_emd1d_type_devices(nx):
         rho_vb = nx.from_numpy(rho_v, type_as=tp)
 
         emd = ot.emd_1d(xb, xb, rho_ub, rho_vb)
-
         emd2 = ot.emd2_1d(xb, xb, rho_ub, rho_vb)
 
-        assert emd.dtype == xb.dtype
-        if not str(nx) == 'numpy':
-            assert emd2.dtype == xb.dtype
+        nx.assert_same_dtype_device(xb, emd)
+        nx.assert_same_dtype_device(xb, emd2)
