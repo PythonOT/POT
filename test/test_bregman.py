@@ -279,6 +279,48 @@ def test_sinkhorn_variants(nx):
 
 
 @pytest.skip_backend("jax")
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized",
+                                    "sinkhorn_epsilon_scaling",
+                                    "greenkhorn",
+                                    "sinkhorn_log"])
+def test_sinkhorn_variants_dtype_device(nx, method):
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    u = ot.utils.unif(n)
+
+    M = ot.dist(x, x)
+
+    for tp in nx.__type_list__:
+        ub = nx.from_numpy(u, type_as=tp)
+        Mb = nx.from_numpy(M, type_as=tp)
+
+        Gb = ot.sinkhorn(ub, ub, Mb, 1, method=method, stopThr=1e-10)
+
+        nx.assert_same_dtype_device(Mb, Gb)
+
+
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_log"])
+def test_sinkhorn2_variants_dtype_device(nx, method):
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    u = ot.utils.unif(n)
+
+    M = ot.dist(x, x)
+
+    for tp in nx.__type_list__:
+        ub = nx.from_numpy(u, type_as=tp)
+        Mb = nx.from_numpy(M, type_as=tp)
+
+        lossb = ot.sinkhorn2(ub, ub, Mb, 1, method=method, stopThr=1e-10)
+
+        nx.assert_same_dtype_device(Mb, lossb)
+
+
+@pytest.skip_backend("jax")
 def test_sinkhorn_variants_multi_b(nx):
     # test sinkhorn
     n = 50
