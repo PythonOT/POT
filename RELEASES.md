@@ -1,19 +1,167 @@
 # Releases
 
+
+## 0.8.0
+*November 2021*
+
+This new stable release introduces several important features. 
+
+First we now have
+an OpenMP compatible exact ot solver in `ot.emd`. The OpenMP version is used
+when the parameter `numThreads` is greater than one and can lead to nice
+speedups on multi-core machines. 
+
+Second we have introduced a backend mechanism that allows to use standard POT
+function seamlessly on Numpy, Pytorch and Jax arrays. Other backends are coming
+but right now POT can be used seamlessly for training neural networks in
+Pytorch. Notably we propose the first differentiable computation of the exact OT
+loss with `ot.emd2` (can be differentiated w.r.t. both cost matrix and sample
+weights), but also for the classical Sinkhorn loss with `ot.sinkhorn2`, the
+Wasserstein distance in 1D with `ot.wasserstein_1d`, sliced Wasserstein with
+`ot.sliced_wasserstein_distance` and Gromov-Wasserstein with `ot.gromov_wasserstein2`. Examples of how
+this new feature can be used are now available in the documentation where the
+Pytorch backend is used to estimate a [minimal Wasserstein
+estimator](https://PythonOT.github.io/auto_examples/backends/plot_unmix_optim_torch.html),
+a [Generative Network
+(GAN)](https://PythonOT.github.io/auto_examples/backends/plot_wass2_gan_torch.html),
+for a  [sliced Wasserstein gradient
+flow](https://PythonOT.github.io/auto_examples/backends/plot_sliced_wass_grad_flow_pytorch.html)
+and [optimizing the Gromov-Wassersein distance](https://PythonOT.github.io/auto_examples/backends/plot_optim_gromov_pytorch.html). Note that the Jax backend is still in early development and quite
+slow at the moment, we strongly recommend for Jax users to use the [OTT
+toolbox](https://github.com/google-research/ott)  when possible.  
+ As a result of this new feature,
+ the old `ot.gpu` submodule is now deprecated since GPU
+implementations can be done using GPU arrays on the torch backends.
+
+Other novel features include implementation for [Sampled Gromov Wasserstein and
+Pointwise Gromov
+Wasserstein](https://PythonOT.github.io/auto_examples/gromov/plot_gromov.html#compute-gw-with-a-scalable-stochastic-method-with-any-loss-function),
+Sinkhorn in log space with `method='sinkhorn_log'`, [Projection Robust
+Wasserstein](https://PythonOT.github.io/gen_modules/ot.dr.html?highlight=robust#ot.dr.projection_robust_wasserstein),
+ans [deviased Sinkorn barycenters](https://PythonOT.github.ioauto_examples/barycenters/plot_debiased_barycenter.html).
+
+This release will also simplify the installation process. We have now a
+`pyproject.toml` that defines the build dependency and POT should now build even
+when cython is not installed yet. Also we now provide pe-compiled wheels for
+linux `aarch64` that is used on Raspberry PI and android phones and for MacOS on
+ARM processors.
+
+
+Finally POT was accepted for publication in the Journal of Machine Learning
+Research (JMLR) open source software track and we ask the POT users to cite [this
+paper](https://www.jmlr.org/papers/v22/20-451.html) from now on. The documentation has been improved in particular by adding a
+"Why OT?" section to the quick start guide and several new examples illustrating
+the new features. The documentation now has two version : the stable version 
+[https://pythonot.github.io/](https://pythonot.github.io/)
+corresponding to the last release and the master version [https://pythonot.github.io/master](https://pythonot.github.io/master) that corresponds to the
+current master branch on GitHub.
+
+
+As usual, we want to thank all the POT contributors (now 37 people have
+contributed to the toolbox). But for this release we thank in particular Nathan
+Cassereau and Kamel Guerda from the AI support team at
+[IDRIS](http://www.idris.fr/) for their support to the development of the
+backend and OpenMP implementations. 
+
+
+#### New features
+
+- OpenMP support for exact OT solvers (PR #260)
+- Backend for running POT in numpy/torch + exact solver (PR #249)
+- Backend implementation of most functions in `ot.bregman` (PR #280)
+- Backend implementation of most functions in `ot.optim` (PR #282)
+- Backend implementation of most functions in `ot.gromov` (PR #294, PR #302)
+- Test for arrays of different type and device (CPU/GPU) (PR #304, #303)
+- Implementation of Sinkhorn in log space with `method='sinkhorn_log'` (PR #290)
+- Implementation of regularization path for L2 Unbalanced OT (PR #274)
+- Implementation of Projection Robust Wasserstein (PR #267)
+- Implementation of Debiased Sinkhorn Barycenters (PR #291)
+- Implementation of Sampled Gromov Wasserstein and Pointwise Gromov Wasserstein
+  (PR #275)
+- Add `pyproject.toml` and build POT without installing cython first (PR #293)
+- Lazy implementation in log space for sinkhorn on samples (PR #259)
+- Documentation cleanup (PR #298)
+- Two up-to-date documentations [for stable
+  release](https://PythonOT.github.io/) and for [master branch](https://pythonot.github.io/master/).
+- Building wheels on ARM for Raspberry PI and smartphones (PR #238)
+- Update build wheels to new version and new pythons (PR #236, #253)
+- Implementation of sliced Wasserstein distance (Issue #202, PR #203)
+- Add minimal build to CI and perform pep8 test separately (PR #210)
+- Speedup of tests and return run time (PR #262)
+- Add "Why OT" discussion to the documentation (PR #220)
+- New introductory example to discrete OT in the documentation (PR #191)
+- Add templates for Issues/PR on Github (PR#181)
+
+#### Closed issues
+
+- Debug Memory leak in GAN example (#254)
+- DEbug GPU bug (Issue #284, #287, PR #288)
+- set_gradients method for JAX backend (PR #278)
+- Quicker GAN example for CircleCI build (PR #258)
+- Better formatting in Readme (PR #234)
+- Debug CI tests (PR #240, #241, #242)
+- Bug in Partial OT solver dummy points (PR #215)
+- Bug when Armijo linesearch  (Issue #184, #198, #281, PR #189, #199, #286)
+- Bug Barycenter Sinkhorn (Issue 134, PR #195)
+- Infeasible solution in exact OT (Issues #126,#93, PR #217)
+- Doc for SUpport Barycenters (Issue #200, PR #201)
+- Fix labels transport in BaseTransport (Issue #207, PR #208)
+- Bug in `emd_1d`, non respected bounds (Issue #169, PR #170)
+- Removed Python 2.7 support and update codecov file (PR #178)
+- Add normalization for WDA and test it (PR #172, #296)
+- Cleanup code for new version of `flake8` (PR #176)
+- Fixed requirements in `setup.py` (PR #174)
+- Removed specific MacOS flags (PR #175)
+
+
 ## 0.7.0
 *May 2020*
 
-This is the new stable release for POT. We made a lot of changes in the documentation and added several new features such as Partial OT, Unbalanced and Multi Sources OT Domain Adaptation and several bug fixes. One important change is that we have created the GitHub organization [PythonOT](https://github.com/PythonOT) that now owns the main POT repository [https://github.com/PythonOT/POT](https://github.com/PythonOT/POT) and the repository for the new documentation is now hosted at [https://PythonOT.github.io/](https://PythonOT.github.io/).
+This is the new stable release for POT. We made a lot of changes in the
+documentation and added several new features such as Partial OT, Unbalanced and
+Multi Sources OT Domain Adaptation and several bug fixes. One important change
+is that we have created the GitHub organization
+[PythonOT](https://github.com/PythonOT) that now owns the main POT repository
+[https://github.com/PythonOT/POT](https://github.com/PythonOT/POT) and the
+repository for the new documentation is now hosted at
+[https://PythonOT.github.io/](https://PythonOT.github.io/).
 
-This is the first release where the Python 2.7 tests have been removed. Most of the toolbox should still work but we do not offer support for Python 2.7 and will close related Issues. 
+This is the first release where the Python 2.7 tests have been removed. Most of
+the toolbox should still work but we do not offer support for Python 2.7 and
+will close related Issues. 
 
-A lot of changes have been done to the documentation that is now hosted on [https://PythonOT.github.io/](https://PythonOT.github.io/) instead of readthedocs. It was a hard choice but readthedocs did not allow us to run sphinx-gallery to update our beautiful examples and it was a huge amount of work to maintain. The documentation is now automatically compiled and updated on merge. We also removed the notebooks from the repository for space reason and also because they are all available in the [example gallery](https://pythonot.github.io/auto_examples/index.html). Note that now the output of the documentation build for each commit in the PR is available to check that the doc builds correctly before merging which was not possible with readthedocs.
+A lot of changes have been done to the documentation that is now hosted on
+[https://PythonOT.github.io/](https://PythonOT.github.io/) instead of
+readthedocs. It was a hard choice but readthedocs did not allow us to run
+sphinx-gallery to update our beautiful examples and it was a huge amount of work
+to maintain. The documentation is now automatically compiled and updated on
+merge. We also removed the notebooks from the repository for space reason and
+also because they are all available in the [example
+gallery](https://pythonot.github.io/auto_examples/index.html). Note that now the
+output of the documentation build for each commit in the PR is available to
+check that the doc builds correctly before merging which was not possible with
+readthedocs.
 
-The CI framework has also been changed with a move from Travis to Github Action which allows to get faster tests on Windows, MacOS and Linux. We also now report our coverage on [Codecov.io](https://codecov.io/gh/PythonOT/POT) and we have a reasonable 92% coverage. We also now generate wheels for a number of OS and Python versions at each merge in the master branch. They are available as outputs of this [action](https://github.com/PythonOT/POT/actions?query=workflow%3A%22Build+dist+and+wheels%22). This will allow simpler multi-platform releases from now on.
+The CI framework has also been changed with a move from Travis to Github Action
+which allows to get faster tests on Windows, MacOS and Linux. We also now report
+our coverage on [Codecov.io](https://codecov.io/gh/PythonOT/POT) and we have a
+reasonable 92% coverage. We also now generate wheels for a number of OS and
+Python versions at each merge in the master branch. They are available as
+outputs of this
+[action](https://github.com/PythonOT/POT/actions?query=workflow%3A%22Build+dist+and+wheels%22).
+This will allow simpler multi-platform releases from now on.
 
-In terms of new features we now have [OTDA Classes for unbalanced OT](https://pythonot.github.io/gen_modules/ot.da.html#ot.da.UnbalancedSinkhornTransport), a new Domain adaptation class form [multi domain problems (JCPOT)](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_jcpot.html#sphx-glr-auto-examples-domain-adaptation-plot-otda-jcpot-py), and several solvers to solve the [Partial Optimal Transport](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_partial_wass_and_gromov.html#sphx-glr-auto-examples-unbalanced-partial-plot-partial-wass-and-gromov-py) problems.
+In terms of new features we now have [OTDA Classes for unbalanced
+OT](https://pythonot.github.io/gen_modules/ot.da.html#ot.da.UnbalancedSinkhornTransport),
+a new Domain adaptation class form [multi domain problems
+(JCPOT)](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_jcpot.html#sphx-glr-auto-examples-domain-adaptation-plot-otda-jcpot-py),
+and several solvers to solve the [Partial Optimal
+Transport](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_partial_wass_and_gromov.html#sphx-glr-auto-examples-unbalanced-partial-plot-partial-wass-and-gromov-py)
+problems.
 
-This release is also the moment to thank all the POT contributors (old and new) for helping making POT such a nice toolbox. A lot of changes (also in the API) are comming for the next versions. 
+This release is also the moment to thank all the POT contributors (old and new)
+for helping making POT such a nice toolbox. A lot of changes (also in the API)
+are coming for the next versions. 
 
 
 #### Features
@@ -31,6 +179,8 @@ This release is also the moment to thank all the POT contributors (old and new) 
 
 #### Closed issues
 
+- Add JMLR paper to teh readme ad Mathieu Blondel to the Acknoledgments (PR
+  #231, #232)
 - Bug in Unbalanced OT example (Issue #127)
 - Clean Cython output when calling setup.py clean (Issue #122)
 - Various Macosx compilation problems (Issue #113, Issue #118, PR#130)
@@ -54,18 +204,24 @@ https://python3statement.org/ for more reasons). For next release we will keep
 the travis tests for Python 2 but will make them non necessary for merge in 2020.
 
 The features are never complete in a toolbox designed for solving mathematical
-problems and research but with the new contributions we now implement algorithms and solvers 
-from 24 scientific papers (listed in the README.md file). New features include a
-direct implementation of the [empirical Sinkhorn divergence](https://pot.readthedocs.io/en/latest/all.html#ot.bregman.empirical_sinkhorn_divergence)
-, a new efficient (Cython implementation) solver for [EMD in 1D](https://pot.readthedocs.io/en/latest/all.html#ot.lp.emd_1d)
-and corresponding [Wasserstein
-1D](https://pot.readthedocs.io/en/latest/all.html#ot.lp.wasserstein_1d). We now also
-have implementations for [Unbalanced OT](https://github.com/rflamary/POT/blob/master/notebooks/plot_UOT_1D.ipynb) 
-and a solver for [Unbalanced OT barycenters](https://github.com/rflamary/POT/blob/master/notebooks/plot_UOT_barycenter_1D.ipynb).
+problems and research but with the new contributions we now implement algorithms
+and solvers from 24 scientific papers (listed in the README.md file). New
+features include a direct implementation of the [empirical Sinkhorn
+divergence](https://pot.readthedocs.io/en/latest/all.html#ot.bregman.empirical_sinkhorn_divergence),
+a new efficient (Cython implementation) solver for [EMD in
+1D](https://pot.readthedocs.io/en/latest/all.html#ot.lp.emd_1d) and
+corresponding [Wasserstein
+1D](https://pot.readthedocs.io/en/latest/all.html#ot.lp.wasserstein_1d). We now
+also have implementations for [Unbalanced
+OT](https://github.com/rflamary/POT/blob/master/notebooks/plot_UOT_1D.ipynb) and
+a solver for [Unbalanced OT
+barycenters](https://github.com/rflamary/POT/blob/master/notebooks/plot_UOT_barycenter_1D.ipynb).
 A new variant of Gromov-Wasserstein divergence called [Fused
 Gromov-Wasserstein](https://pot.readthedocs.io/en/latest/all.html?highlight=fused_#ot.gromov.fused_gromov_wasserstein)
- has been also contributed with exemples of use on [structured data](https://github.com/rflamary/POT/blob/master/notebooks/plot_fgw.ipynb) 
-and computing [barycenters of labeld graphs](https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb).
+has been also contributed with exemples of use on [structured
+data](https://github.com/rflamary/POT/blob/master/notebooks/plot_fgw.ipynb) and
+computing [barycenters of labeld
+graphs](https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb).
 
 
 A lot of work has been done on the documentation with several new
