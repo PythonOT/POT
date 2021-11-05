@@ -24,6 +24,20 @@ def nx(request):
 
 
 def skip_arg(arg, value, reason=None, getter=lambda x: x):
+    if isinstance(arg, tuple) or isinstance(arg, list):
+        n = len(arg)
+    else:
+        arg = (arg, )
+        n = 1
+    if n != 1 and (isinstance(value, tuple) or isinstance(value, list)):
+        pass
+    else:
+        value = (value, )
+    if isinstance(getter, tuple) or isinstance(value, list):
+        pass
+    else:
+        getter = [getter] * n
+
     if reason is None:
         reason = f"Param {arg} should be skipped for value {value}"
 
@@ -31,7 +45,10 @@ def skip_arg(arg, value, reason=None, getter=lambda x: x):
 
         @functools.wraps(function)
         def wrapped(*args, **kwargs):
-            if arg in kwargs.keys() and getter(kwargs[arg]) == value:
+            if all(
+                arg[i] in kwargs.keys() and getter[i](kwargs[arg[i]]) == value[i]
+                for i in range(n)
+            ):
                 pytest.skip(reason)
             return function(*args, **kwargs)
 

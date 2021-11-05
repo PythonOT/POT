@@ -278,16 +278,16 @@ def test_sinkhorn_variants(nx):
     np.testing.assert_allclose(G0, G_green, atol=1e-5)
 
 
-@pytest.skip_backend("jax")
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized",
                                     "sinkhorn_epsilon_scaling",
                                     "greenkhorn",
                                     "sinkhorn_log"])
+@pytest.skip_arg(("nx", "method"), ("jax", "sinkhorn_epsilon_scaling"), reason="jax does not support sinkhorn_epsilon_scaling", getter=str)
+@pytest.skip_arg(("nx", "method"), ("jax", "greenkhorn"), reason="jax does not support greenkhorn", getter=str)
 def test_sinkhorn_variants_dtype_device(nx, method):
     n = 100
-    rng = np.random.RandomState(0)
 
-    x = rng.randn(n, 2)
+    x = np.random.randn(n, 2)
     u = ot.utils.unif(n)
 
     M = ot.dist(x, x)
@@ -306,9 +306,8 @@ def test_sinkhorn_variants_dtype_device(nx, method):
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_log"])
 def test_sinkhorn2_variants_dtype_device(nx, method):
     n = 100
-    rng = np.random.RandomState(0)
 
-    x = rng.randn(n, 2)
+    x = np.random.randn(n, 2)
     u = ot.utils.unif(n)
 
     M = ot.dist(x, x)
