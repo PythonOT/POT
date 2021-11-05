@@ -88,8 +88,7 @@ def test_emd_emd2_types_devices(nx):
     M = ot.dist(x, y)
 
     for tp in nx.__type_list__:
-
-        print(tp.dtype)
+        print(nx.dtype_device(tp))
 
         ab = nx.from_numpy(a, type_as=tp)
         Mb = nx.from_numpy(M, type_as=tp)
@@ -98,9 +97,8 @@ def test_emd_emd2_types_devices(nx):
 
         w = ot.emd2(ab, ab, Mb)
 
-        assert Gb.dtype == Mb.dtype
-        if not str(nx) == 'numpy':
-            assert w.dtype == Mb.dtype
+        nx.assert_same_dtype_device(Mb, Gb)
+        nx.assert_same_dtype_device(Mb, w)
 
 
 def test_emd2_gradients():
