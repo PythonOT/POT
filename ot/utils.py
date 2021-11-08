@@ -182,7 +182,7 @@ def euclidean_distances(X, Y, squared=False):
     return c
 
 
-def dist(x1, x2=None, metric='sqeuclidean', p=2):
+def dist(x1, x2=None, metric='sqeuclidean', p=2, w=None):
     r"""Compute distance between samples in :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}`
 
     .. note:: This function is backend-compatible and will work on arrays
@@ -202,6 +202,10 @@ def dist(x1, x2=None, metric='sqeuclidean', p=2):
         'euclidean', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
         'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
         'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski', 'yule'.
+    p : float, optional
+        p-norm for the Minkowski and the Weighted Minkowski metrics. Default value is 2.
+    w : array-like, rank 1
+        Weights for the weighted metrics.
 
 
     Returns
@@ -222,8 +226,8 @@ def dist(x1, x2=None, metric='sqeuclidean', p=2):
             raise NotImplementedError()
         else:
             if metric.endswith("minkowski"):
-                return cdist(x1, x2, metric=metric, p=p)
-            return cdist(x1, x2, metric=metric)
+                return cdist(x1, x2, metric=metric, p=p, w=w)
+            return cdist(x1, x2, metric=metric, w=w)
 
 
 def dist0(n, method='lin_square'):
