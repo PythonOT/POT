@@ -221,7 +221,9 @@ def dist(x1, x2=None, metric='sqeuclidean', p=2):
         if not get_backend(x1, x2).__name__ == 'numpy':
             raise NotImplementedError()
         else:
-            return cdist(x1, x2, metric=metric, p=p)
+            if metric.endswith("minkowski"):
+                return cdist(x1, x2, metric=metric, p=p)
+            return cdist(x1, x2, metric=metric)
 
 
 def dist0(n, method='lin_square'):
