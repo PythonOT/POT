@@ -117,6 +117,22 @@ def test_dist():
     np.testing.assert_allclose(D, D2, atol=1e-14)
     np.testing.assert_allclose(D, D3, atol=1e-14)
 
+    # tests that every metric runs correctly
+    metrics = [
+        'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
+        'euclidean', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
+        'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
+        'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski', 'yule'
+    ]
+
+    for metric in metrics:
+        print(metric)
+        ot.dist(x, x, metric=metric, p=3, w=np.random.random((2, )))
+
+    # weighted minkowski but with no weights
+    with pytest.raises(ValueError):
+        ot.dist(x, x, metric="wminkowski")
+
 
 def test_dist_backends(nx):
 
