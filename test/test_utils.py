@@ -118,7 +118,7 @@ def test_dist():
     np.testing.assert_allclose(D, D3, atol=1e-14)
 
     # tests that every metric runs correctly
-    metrics_w = [ 
+    metrics_w = [
         'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
         'euclidean', 'hamming', 'jaccard', 'kulsinski',
         'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
@@ -126,7 +126,7 @@ def test_dist():
     ]  # those that support weights
     metrics = ['mahalanobis', 'seuclidean']  # do not support weights depending on scipy's version
 
-    for metric in metrics_w: 
+    for metric in metrics_w:
         print(metric)
         ot.dist(x, x, metric=metric, p=3, w=np.random.random((2, )))
     for metric in metrics:
