@@ -126,6 +126,7 @@ def test_emd2_gradients():
         assert b1.shape == b1.grad.shape
         assert M1.shape == M1.grad.shape
 
+        # Testing for bug #309, checking for scaling of gradient
         a2 = torch.tensor(a, requires_grad=True)
         b2 = torch.tensor(a, requires_grad=True)
         M2 = torch.tensor(M, requires_grad=True)
