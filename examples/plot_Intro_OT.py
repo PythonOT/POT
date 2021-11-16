@@ -327,7 +327,7 @@ for k in range(len(reg_parameter)):
     time_sinkhorn_reg[k] = time.time() - start
 
     if k % 4 == 0 and k > 0:  # we only plot a few
-        ax = pl.subplot(1, 5, k / 4)
+        ax = pl.subplot(1, 5, k // 4)
         im = pl.imshow(ot_sinkhorn, vmin=0, vmax=max_ot)
         pl.title('reg={0:.2g}'.format(reg_parameter[k]))
         pl.xlabel('Cafés')
