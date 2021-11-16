@@ -1203,7 +1203,7 @@ class TorchBackend(Backend):
             @staticmethod
             def backward(ctx, grad_output):
                 # the gradients are grad
-                return (None, None) + ctx.grads
+                return (None, None) + tuple(g * grad_output for g in ctx.grads)
 
         self.ValFunction = ValFunction
 
