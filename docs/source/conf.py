@@ -69,7 +69,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
     'sphinx_gallery.gen_gallery',
-    'm2r2',
+    'm2r2'
 ]
 
 autosummary_generate = True
