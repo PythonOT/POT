@@ -206,7 +206,7 @@ This toolbox benefit a lot from open source research and we would like to thank 
 
 ## Contributions and code of conduct
 
-Every contribution is welcome and should respect the [contribution guidelines](contributing.html). Each member of the project is expected to follow the [code of conduct](code_of_conduct.html).
+Every contribution is welcome and should respect the [contribution guidelines](.github/contributing.html). Each member of the project is expected to follow the [code of conduct](code_of_conduct.html).
 
 ## Support
 
