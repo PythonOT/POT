@@ -275,6 +275,7 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
         alpha, fc, f_val = solve_linesearch(cost, G, deltaG, Mi, f_val, reg=reg, M=M, Gc=Gc, **kwargs)
         if alpha is None:
             alpha = 0.0
+            break
 
         G = G + alpha * deltaG
 
@@ -421,6 +422,10 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
         # line search
         dcost = Mi + reg1 * (1 + nx.log(G))  # ??
         alpha, fc, f_val = line_search_armijo(cost, G, deltaG, dcost, f_val)
+
+        if alpha is None:
+            alpha = 0.0
+            break
 
         G = G + alpha * deltaG
 
