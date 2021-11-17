@@ -312,8 +312,8 @@ Contributions and code of conduct
 ---------------------------------
 
 Every contribution is welcome and should respect the `contribution
-guidelines <.github/CONTRIBUTING.md>`__. Each member of the project is
-expected to follow the `code of conduct <.github/CODE_OF_CONDUCT.md>`__.
+guidelines <contributing.html>`__. Each member of the project is
+expected to follow the `code of conduct <code_of_conduct.html>`__.
 
 Support
 -------
@@ -326,7 +326,7 @@ You can ask questions and join the development discussion:
    list <https://mail.python.org/mm3/mailman3/lists/pot.python.org/>`__
 
 You can also post bug reports and feature requests in Github issues.
-Make sure to read our `guidelines <.github/CONTRIBUTING.md>`__ first.
+Make sure to read our `guidelines <contributing.html>`__ first.
 
 References
 ----------
