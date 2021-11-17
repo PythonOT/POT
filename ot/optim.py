@@ -45,7 +45,11 @@ def line_search_armijo(
     c1 : float, optional
         :math:`c_1` const in armijo rule (>0)
     alpha0 : float, optional
-        initial step (>0)
+        initial step (>0),
+    alpha_min : float, optional
+        minimum value for alpha
+    alpha_max : float, optional
+        maximum value for alpha
 
     Returns
     -------
@@ -121,6 +125,10 @@ def solve_linesearch(
         Constant for the gromov cost. See :ref:`[24] <references-solve-linesearch>`. Only used and necessary when armijo=False
     M : array-like (ns,nt), optional
         Cost matrix between the features. Only used and necessary when armijo=False
+    alpha_min : float, optional
+        Minimum value for alpha
+    alpha_max : float, optional
+        Maximum value for alpha
 
     Returns
     -------
