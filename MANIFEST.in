@@ -6,4 +6,6 @@ include ot/lp/EMD.h
 include ot/lp/EMD_wrapper.cpp
 include ot/lp/emd_wrap.pyx
 include ot/lp/full_bipartitegraph.h
+include ot/lp/full_bipartitegraph_omp.h
 include ot/lp/network_simplex_simple.h
+include ot/lp/network_simplex_simple_omp.h

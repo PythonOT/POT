@@ -12,7 +12,6 @@ import pytest
 import ot
 from ot.datasets import make_1D_gauss as gauss
 from ot.backend import torch
-from scipy.stats import wasserstein_distance
 
 
 def test_emd_dimension_and_mass_mismatch():
@@ -77,6 +76,31 @@ def test_emd2_backends(nx):
     np.allclose(val, nx.to_numpy(valb))
 
 
+def test_emd_emd2_types_devices(nx):
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    for tp in nx.__type_list__:
+        print(nx.dtype_device(tp))
+
+        ab = nx.from_numpy(a, type_as=tp)
+        Mb = nx.from_numpy(M, type_as=tp)
+
+        Gb = ot.emd(ab, ab, Mb)
+
+        w = ot.emd2(ab, ab, Mb)
+
+        nx.assert_same_dtype_device(Mb, Gb)
+        nx.assert_same_dtype_device(Mb, w)
+
+
 def test_emd2_gradients():
     n_samples = 100
     n_features = 2
@@ -102,6 +126,22 @@ def test_emd2_gradients():
         assert b1.shape == b1.grad.shape
         assert M1.shape == M1.grad.shape
 
+        # Testing for bug #309, checking for scaling of gradient
+        a2 = torch.tensor(a, requires_grad=True)
+        b2 = torch.tensor(a, requires_grad=True)
+        M2 = torch.tensor(M, requires_grad=True)
+
+        val = 10.0 * ot.emd2(a2, b2, M2)
+
+        val.backward()
+
+        assert np.allclose(10.0 * a1.grad.cpu().detach().numpy(),
+                           a2.grad.cpu().detach().numpy())
+        assert np.allclose(10.0 * b1.grad.cpu().detach().numpy(),
+                           b2.grad.cpu().detach().numpy())
+        assert np.allclose(10.0 * M1.grad.cpu().detach().numpy(),
+                           M2.grad.cpu().detach().numpy())
+
 
 def test_emd_emd2():
     # test emd and emd2 for simple identity
@@ -124,45 +164,6 @@ def test_emd_emd2():
     w = ot.emd2(u, u, M)
     # check loss=0
     np.testing.assert_allclose(w, 0)
-
-
-def test_emd_1d_emd2_1d():
-    # test emd1d gives similar results as emd
-    n = 20
-    m = 30
-    rng = np.random.RandomState(0)
-    u = rng.randn(n, 1)
-    v = rng.randn(m, 1)
-
-    M = ot.dist(u, v, metric='sqeuclidean')
-
-    G, log = ot.emd([], [], M, log=True)
-    wass = log["cost"]
-    G_1d, log = ot.emd_1d(u, v, [], [], metric='sqeuclidean', log=True)
-    wass1d = log["cost"]
-    wass1d_emd2 = ot.emd2_1d(u, v, [], [], metric='sqeuclidean', log=False)
-    wass1d_euc = ot.emd2_1d(u, v, [], [], metric='euclidean', log=False)
-
-    # check loss is similar
-    np.testing.assert_allclose(wass, wass1d)
-    np.testing.assert_allclose(wass, wass1d_emd2)
-
-    # check loss is similar to scipy's implementation for Euclidean metric
-    wass_sp = wasserstein_distance(u.reshape((-1,)), v.reshape((-1,)))
-    np.testing.assert_allclose(wass_sp, wass1d_euc)
-
-    # check constraints
-    np.testing.assert_allclose(np.ones((n,)) / n, G.sum(1))
-    np.testing.assert_allclose(np.ones((m,)) / m, G.sum(0))
-
-    # check G is similar
-    np.testing.assert_allclose(G, G_1d, atol=1e-15)
-
-    # check AssertionError is raised if called on non 1d arrays
-    u = np.random.randn(n, 2)
-    v = np.random.randn(m, 2)
-    with pytest.raises(AssertionError):
-        ot.emd_1d(u, v, [], [])
 
 
 def test_emd_empty():

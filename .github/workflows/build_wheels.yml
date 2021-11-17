@@ -3,6 +3,7 @@ name: Build wheels
 on:
   workflow_dispatch:
   release:
+  pull_request:
   push:
     branches:
       - "*"
@@ -31,7 +32,7 @@ jobs:
 
     - name: Install cibuildwheel
       run: |
-        python -m pip install cibuildwheel==1.10.0
+        python -m pip install cibuildwheel==2.2.2
 
     - name: Build wheels
       env:
@@ -69,12 +70,7 @@ jobs:
 
     - name: Install cibuildwheel
       run: |
-        python -m pip install cibuildwheel==1.10.0
-
-    - name: Install Visual C++ for Python 2.7
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        choco install vcpython27 -f -y
+        python -m pip install cibuildwheel==2.2.2
 
     - name: Set up QEMU
       if: runner.os == 'Linux'
@@ -84,9 +80,10 @@ jobs:
 
     - name: Build wheels
       env:
-        CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp*" # remove pypy on mac and win (wrong version)
+        CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp* cp*musl*" # remove pypy on mac and win (wrong version)
         CIBW_BEFORE_BUILD: "pip install numpy cython"
         CIBW_ARCHS_LINUX: auto aarch64 # force aarch64 with QEMU
+        CIBW_ARCHS_MACOS: x86_64 universal2 arm64
       run: |
         python -m cibuildwheel --output-dir wheelhouse
 

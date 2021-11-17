@@ -7,7 +7,13 @@ The GPU backend in handled by `cupy
 <https://cupy.chainer.org/>`_.
 
 .. warning::
-    Note that by default the module is not import in :mod:`ot`. In order to 
+    This module is now deprecated and will be removed in future releases. POT
+    now privides a backend mechanism that allows for solving prolem on GPU wth
+    the pytorch backend.
+    
+
+.. warning::
+    Note that by default the module is not imported in :mod:`ot`. In order to 
     use it you need to explicitely import :mod:`ot.gpu` .
 
 By default, the functions in this module accept and return numpy arrays 
@@ -36,7 +42,7 @@ from . import utils
 from .utils import dist, to_gpu, to_np
 
 
-warnings.warn('This module will be deprecated in the next minor release of POT', category=DeprecationWarning)
+warnings.warn('This module is deprecated and will be removed in the next minor release of POT', category=DeprecationWarning)
 
 
 __all__ = ["utils", "dist", "sinkhorn",

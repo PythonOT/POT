@@ -9,6 +9,7 @@
 import numpy as np
 import ot
 from ot.backend import NumpyBackend
+from ot.backend import torch
 
 import pytest
 
@@ -74,6 +75,77 @@ def test_gromov(nx):
         q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
 
 
+def test_gromov_dtype_device(nx):
+    # setup
+    n_samples = 50  # nb samples
+
+    mu_s = np.array([0, 0])
+    cov_s = np.array([[1, 0], [0, 1]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
+
+    xt = xs[::-1].copy()
+
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+
+    C1 /= C1.max()
+    C2 /= C2.max()
+
+    for tp in nx.__type_list__:
+        print(nx.dtype_device(tp))
+
+        C1b = nx.from_numpy(C1, type_as=tp)
+        C2b = nx.from_numpy(C2, type_as=tp)
+        pb = nx.from_numpy(p, type_as=tp)
+        qb = nx.from_numpy(q, type_as=tp)
+
+        Gb = ot.gromov.gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', verbose=True)
+        gw_valb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', log=False)
+
+        nx.assert_same_dtype_device(C1b, Gb)
+        nx.assert_same_dtype_device(C1b, gw_valb)
+
+
+def test_gromov2_gradients():
+    n_samples = 50  # nb samples
+
+    mu_s = np.array([0, 0])
+    cov_s = np.array([[1, 0], [0, 1]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
+
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=5)
+
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+
+    C1 /= C1.max()
+    C2 /= C2.max()
+
+    if torch:
+
+        p1 = torch.tensor(p, requires_grad=True)
+        q1 = torch.tensor(q, requires_grad=True)
+        C11 = torch.tensor(C1, requires_grad=True)
+        C12 = torch.tensor(C2, requires_grad=True)
+
+        val = ot.gromov_wasserstein2(C11, C12, p1, q1)
+
+        val.backward()
+
+        assert q1.shape == q1.grad.shape
+        assert p1.shape == p1.grad.shape
+        assert C11.shape == C11.grad.shape
+        assert C12.shape == C12.grad.shape
+
+
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 def test_entropic_gromov(nx):
     n_samples = 50  # nb samples
@@ -129,6 +201,46 @@ def test_entropic_gromov(nx):
         p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
     np.testing.assert_allclose(
         q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+
+
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
+def test_entropic_gromov_dtype_device(nx):
+    # setup
+    n_samples = 50  # nb samples
+
+    mu_s = np.array([0, 0])
+    cov_s = np.array([[1, 0], [0, 1]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=42)
+
+    xt = xs[::-1].copy()
+
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+
+    C1 /= C1.max()
+    C2 /= C2.max()
+
+    for tp in nx.__type_list__:
+        print(nx.dtype_device(tp))
+
+        C1b = nx.from_numpy(C1, type_as=tp)
+        C2b = nx.from_numpy(C2, type_as=tp)
+        pb = nx.from_numpy(p, type_as=tp)
+        qb = nx.from_numpy(q, type_as=tp)
+
+        Gb = ot.gromov.entropic_gromov_wasserstein(
+            C1b, C2b, pb, qb, 'square_loss', epsilon=5e-4, verbose=True
+        )
+        gw_valb = ot.gromov.entropic_gromov_wasserstein2(
+            C1b, C2b, pb, qb, 'square_loss', epsilon=5e-4, verbose=True
+        )
+
+        nx.assert_same_dtype_device(C1b, Gb)
+        nx.assert_same_dtype_device(C1b, gw_valb)
 
 
 def test_pointwise_gromov(nx):
@@ -387,6 +499,45 @@ def test_fgw(nx):
         p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
     np.testing.assert_allclose(
         q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+
+
+def test_fgw2_gradients():
+    n_samples = 50  # nb samples
+
+    mu_s = np.array([0, 0])
+    cov_s = np.array([[1, 0], [0, 1]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
+
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=5)
+
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+    M = ot.dist(xs, xt)
+
+    C1 /= C1.max()
+    C2 /= C2.max()
+
+    if torch:
+
+        p1 = torch.tensor(p, requires_grad=True)
+        q1 = torch.tensor(q, requires_grad=True)
+        C11 = torch.tensor(C1, requires_grad=True)
+        C12 = torch.tensor(C2, requires_grad=True)
+        M1 = torch.tensor(M, requires_grad=True)
+
+        val = ot.fused_gromov_wasserstein2(M1, C11, C12, p1, q1)
+
+        val.backward()
+
+        assert q1.shape == q1.grad.shape
+        assert p1.shape == p1.grad.shape
+        assert C11.shape == C11.grad.shape
+        assert C12.shape == C12.grad.shape
+        assert M1.shape == M1.grad.shape
 
 
 def test_fgw_barycenter(nx):
