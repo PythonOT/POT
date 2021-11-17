@@ -17,8 +17,8 @@ Contents
    all
    auto_examples/index
    releases
-   .github/contributing
-   Code of Conduct <.github/code_of_conduct>
+   contributing
+   Code of Conduct <code_of_conduct>
 
 .. mdinclude:: ../../README.md
    :start-line: 2
