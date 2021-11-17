@@ -77,10 +77,12 @@ def line_search_armijo(f, xk, pk, gfk, old_fval,
     alpha, phi1 = scalar_search_armijo(
         phi, phi0, derphi0, c1=c1, alpha0=alpha0)
 
-    # scalar_search_armijo can return alpha > 1
-    if alpha is not None:
+    if alpha is None:
+        return 0., fc[0], phi0
+    else:
+        # scalar_search_armijo can return alpha > 1
         alpha = min(1, alpha)
-    return alpha, fc[0], phi1
+        return alpha, fc[0], phi1
 
 
 def solve_linesearch(cost, G, deltaG, Mi, f_val,
@@ -273,8 +275,6 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
 
         # line search
         alpha, fc, f_val = solve_linesearch(cost, G, deltaG, Mi, f_val, reg=reg, M=M, Gc=Gc, **kwargs)
-        if alpha is None:
-            alpha = 0.0
 
         G = G + alpha * deltaG
 

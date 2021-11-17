@@ -142,7 +142,7 @@ def test_line_search_armijo(nx):
     pk = np.array([[-0.25, 0.25], [0.25, -0.25]])
     gfk = np.array([[23.04273441, 23.0449082], [23.04273441, 23.0449082]])
     old_fval = -123
-    # Should not throw an exception and return None for alpha
+    # Should not throw an exception and return 0. for alpha
     alpha, a, b = ot.optim.line_search_armijo(
         lambda x: 1, nx.from_numpy(xk), nx.from_numpy(pk), nx.from_numpy(gfk), old_fval
     )
@@ -151,7 +151,7 @@ def test_line_search_armijo(nx):
     )
     assert a == anp
     assert b == bnp
-    assert alpha is None
+    assert alpha == 0.
 
     # check line search armijo
     def f(x):
