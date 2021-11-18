@@ -20,8 +20,7 @@ Contents
    contributing
    Code of Conduct <code_of_conduct>
 
-.. mdinclude:: ../../README.md
-   :start-line: 2
+.. include:: readme.rst
 
 
 
