@@ -3,6 +3,7 @@ numpydoc
 memory_profiler
 pillow
 networkx
+m2r2
 numpy
 scipy>=1.0
 cython

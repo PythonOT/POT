@@ -206,7 +206,7 @@ This toolbox benefit a lot from open source research and we would like to thank 
 
 ## Contributions and code of conduct
 
-Every contribution is welcome and should respect the [contribution guidelines](.github/CONTRIBUTING.md). Each member of the project is expected to follow the [code of conduct](.github/CODE_OF_CONDUCT.md).
+Every contribution is welcome and should respect the [contribution guidelines](https://pythonot.github.io/contributing.html). Each member of the project is expected to follow the [code of conduct](https://pythonot.github.io/code_of_conduct.html).
 
 ## Support
 
@@ -216,7 +216,7 @@ You can ask questions and join the development discussion:
 * On the POT [gitter channel](https://gitter.im/PythonOT/community)
 * On the POT [mailing list](https://mail.python.org/mm3/mailman3/lists/pot.python.org/)
 
-You can also post bug reports and feature requests in Github issues. Make sure to read our [guidelines](.github/CONTRIBUTING.md) first.
+You can also post bug reports and feature requests in Github issues. Make sure to read our [guidelines](https://pythonot.github.io/contributing.html) first.
 
 ## References
 

@@ -17,8 +17,10 @@ Contents
    all
    auto_examples/index
    releases
+   contributing
+   Code of Conduct <code_of_conduct>
 
-.. include:: readme.rst
+.. mdinclude:: ../../README.md
    :start-line: 2
 
 
