@@ -1524,7 +1524,7 @@ class CupyBackend(Backend):
     """
 
     __name__ = 'cupy'
-    __type__ = cp.ndarray
+    __type__ = cp_type
     __type_list__ = [cp.array(1, dtype=cp.float32),
                      cp.array(1, dtype=cp.float64)]
 
@@ -1692,7 +1692,7 @@ class CupyBackend(Backend):
         return cp.unique(a)
 
     def logsumexp(self, a, axis=None):
-        # Taken from 
+        # Taken from
         # https://github.com/scipy/scipy/blob/v1.7.1/scipy/special/_logsumexp.py#L7-L127
         a_max = cp.amax(a, axis=axis, keepdims=True)
 
