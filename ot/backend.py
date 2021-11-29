@@ -44,6 +44,13 @@ except ImportError:
     jax = False
     jax_type = float
 
+try:
+    import tensorflow as tf
+    tf_type = tf.Tensor
+except ImportError:
+    tf = False
+    tf_type = float
+
 str_type_error = "All array should be from the same type/backend. Current types are : {}"
 
 
@@ -56,6 +63,9 @@ def get_backend_list():
 
     if jax:
         lst.append(JaxBackend())
+
+    if tf:
+        lst.append(TensorflowBackend())
 
     return lst
 
@@ -78,6 +88,8 @@ def get_backend(*args):
         return TorchBackend()
     elif isinstance(args[0], jax_type):
         return JaxBackend()
+    elif isinstance(args[0], tf_type):
+        return TensorflowBackend()
     else:
         raise ValueError("Unknown type of non implemented backend.")
 
@@ -665,6 +677,15 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def T(self, a):
+        r"""
+        Returns the transpose of a tensor.
+
+        This function follows the api from :any:`numpy.ndarray.T`.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.ndarray.T.html
+        """
+
 
 class NumpyBackend(Backend):
     """
@@ -901,6 +922,9 @@ class NumpyBackend(Backend):
     def assert_same_dtype_device(self, a, b):
         # numpy has implicit type conversion so we automatically validate the test
         pass
+
+    def T(self, a):
+        return a.T
 
 
 class JaxBackend(Backend):
@@ -1161,6 +1185,9 @@ class JaxBackend(Backend):
 
         assert a_dtype == b_dtype, "Dtype discrepancy"
         assert a_device == b_device, f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
+
+    def T(self, a):
+        return a.T
 
 
 class TorchBackend(Backend):
@@ -1500,3 +1527,271 @@ class TorchBackend(Backend):
 
         assert a_dtype == b_dtype, "Dtype discrepancy"
         assert a_device == b_device, f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
+
+    def T(self, a):
+        return a.T
+
+
+class TensorflowBackend(Backend):
+
+    __name__ = "tf"
+    __type__ = tf_type
+    __type_list__ = None
+
+    rng_ = None
+
+    def __init__(self):
+        self.rng_ = tf.random.Generator.from_non_deterministic_state()
+
+        self.__type_list__ = [
+            tf.convert_to_tensor([1], dtype=tf.float32),
+            tf.convert_to_tensor([1], dtype=tf.float64)
+        ]
+
+    def to_numpy(self, a):
+        return a.numpy()
+
+    def from_numpy(self, a, type_as=None):
+        if type_as is None:
+            return tf.convert_to_tensor(a)
+        else:
+            return tf.convert_to_tensor(a, dtype=type_as.dtype)
+
+    def set_gradients(self, val, inputs, grads):
+        @tf.custom_gradient
+        def tmp(input):
+            def grad(upstream):
+                return grads
+            return val, grad
+        return tmp(inputs)
+
+    def zeros(self, shape, type_as=None):
+        if type_as is None:
+            return tf.zeros(shape)
+        else:
+            return tf.zeros(shape, dtype=type_as.dtype)
+
+    def ones(self, shape, type_as=None):
+        if type_as is None:
+            return tf.ones(shape)
+        else:
+            return tf.ones(shape, dtype=type_as.dtype)
+
+    def arange(self, stop, start=0, step=1, type_as=None):
+        return tf.range(start=start, limit=stop, delta=step)
+
+    def full(self, shape, fill_value, type_as=None):
+        if type_as is None:
+            return tf.fill(shape, fill_value)
+        else:
+            return tf.cast(tf.fill(shape, fill_value), dtype=type_as.dtype)
+
+    def eye(self, N, M=None, type_as=None):
+        if M is None:
+            M = N
+        if type_as is None:
+            return tf.eye(N, M)
+        else:
+            return tf.eye(N, M, dtype=type_as.dtype)
+
+    def sum(self, a, axis=None, keepdims=False):
+        if axis is None:
+            return tf.math.reduce_sum(a)
+        else:
+            return tf.math.reduce_sum(a, axis=axis, keepdims=keepdims)
+
+    def cumsum(self, a, axis=None):
+        if axis is None:
+            return tf.math.cumsum(tf.reshape(a, [-1]), axis=0)
+        else:
+            return tf.math.cumsum(a, axis=axis)
+
+    def max(self, a, axis=None, keepdims=False):
+        if axis is None:
+            return tf.math.reduce_max(a)
+        else:
+            return tf.math.reduce_max(a, axis=axis, keepdims=keepdims)
+
+    def min(self, a, axis=None, keepdims=False):
+        if axis is None:
+            return tf.math.reduce_min(a)
+        else:
+            return tf.math.reduce_min(a, axis=axis, keepdims=keepdims)
+
+    def maximum(self, a, b):
+        if isinstance(a, int) or isinstance(a, float):
+            a = tf.constant([float(a)], dtype=b.dtype)
+        if isinstance(b, int) or isinstance(b, float):
+            b = tf.constant([float(b)], dtype=a.dtype)
+        return tf.math.maximum(a, b)
+
+    def minimum(self, a, b):
+        if isinstance(a, int) or isinstance(a, float):
+            a = tf.constant([float(a)], dtype=b.dtype)
+        if isinstance(b, int) or isinstance(b, float):
+            b = tf.constant([float(b)], dtype=a.dtype)
+        return tf.math.minimum(a, b)
+
+    def dot(self, a, b):
+        if len(b.shape) == 1:
+            if len(a.shape) == 1:
+                # inner product
+                return tf.reduce_sum(tf.multiply(a, b))
+            else:
+                # matrix vector
+                return tf.linalg.matvec(a, b)
+        else:
+            if len(a.shape) == 1:
+                return self.T(tf.linalg.matvec(self.t(b), self.T(a)))
+            else:
+                return tf.matmul(a, b)
+
+    def abs(self, a):
+        return tf.math.abs(a)
+
+    def exp(self, a):
+        return tf.math.exp(a)
+
+    def log(self, a):
+        return tf.math.log(a)
+
+    def sqrt(self, a):
+        return tf.math.sqrt(a)
+
+    def power(self, a, exponents):
+        return tf.math.pow(a, exponents)
+
+    def norm(self, a):
+        return tf.norm(a, ord=2)
+
+    def any(self, a):
+        return tf.math.reduce_any(a)
+
+    def isnan(self, a):
+        return tf.math.is_nan(a)
+
+    def isinf(self, a):
+        return tf.math.is_inf(a)
+
+    def einsum(self, subscripts, *operands):
+        return tf.einsum(subscripts, *operands)
+
+    def sort(self, a, axis=-1):
+        return tf.sort(a, axis=axis)
+
+    def argsort(self, a, axis=-1):
+        return tf.argsort(a, axis=axis)
+
+    def searchsorted(self, a, v, side='left'):
+        return tf.searchsorted(a, v, side=side)
+
+    def flip(self, a, axis=None):
+        if axis is None:
+            return tf.reverse(a, tuple(i for i in range(len(a.shape))))
+        if isinstance(axis, int):
+            return tf.reverse(a, (axis,))
+        else:
+            return tf.reverse(a, axis=axis)
+
+    def outer(self, a, b):
+        return tf.einsum('i,j->ij', a, b)
+
+    def clip(self, a, a_min, a_max):
+        return tf.clip_by_value(a, a_min, a_max)
+
+    def repeat(self, a, repeats, axis=None):
+        return tf.repeat(a, repeats, axis=axis)
+
+    def take_along_axis(self, arr, indices, axis):
+        return tf.gather(arr, indices, axis=axis)
+
+    def concatenate(self, arrays, axis=0):
+        return tf.concat(arrays, axis=axis)
+
+    def zero_pad(self, a, pad_with):
+        return tf.pad(a, pad_with)
+
+    def argmax(self, a, axis=None):
+        if axis is None:
+            return tf.argmax(tf.reshape(a, [-1]))
+        else:
+            return tf.argmax(a, axis=axis)
+
+    def mean(self, a, axis=None):
+        return tf.math.reduce_mean(a, axis=axis)
+
+    def std(self, a, axis=None):
+        return tf.math.reduce_std(a, axis=axis)
+
+    def linspace(self, start, stop, num):
+        return tf.linspace(start, stop, num)
+
+    def meshgrid(self, a, b):
+        return tf.meshgrid(a, b)
+
+    def diag(self, a, k=0):
+        if len(a.shape) == 1:
+            return tf.linalg.diag(a, k=k)
+        else:
+            return tf.linalg.diag_part(a, k=k)
+
+    def unique(self, a):
+        return tf.sort(tf.unique(tf.reshape(a, [-1]))[0])
+
+    def logsumexp(self, a, axis=None):
+        return tf.math.reduce_logsumexp(a, axis=axis)
+
+    def stack(self, arrays, axis=0):
+        return tf.stack(arrays, axis=axis)
+
+    def reshape(self, a, shape):
+        return tf.reshape(a, shape)
+
+    def seed(self, seed=None):
+        if isinstance(seed, int):
+            self.rng_ = tf.random.Generator.from_seed(1234)
+        elif isinstance(seed, tf.random.Generator):
+            self.rng_ = seed
+        elif seed is None:
+            self.rng_ = tf.random.Generator.from_non_deterministic_state()
+        else:
+            raise ValueError("Non compatible seed : {}".format(seed))
+
+    def rand(self, *size, type_as=None):
+        raise NotImplementedError()
+    
+    def randn(self, *size, type_as=None):
+        raise NotImplementedError()
+
+    def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
+        raise NotImplementedError()
+    
+    def issparse(self, a):
+        raise NotImplementedError()
+    
+    def tocsr(self, a):
+        raise NotImplementedError()
+
+    def eliminate_zeros(self, a, threshold=0.):
+        raise NotImplementedError()
+
+    def todense(self, a):
+        raise NotImplementedError()
+
+    def where(self, condition, x, y):
+        raise NotImplementedError()
+
+    def copy(self, a):
+        raise NotImplementedError()
+    
+    def allclose(self, a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
+        raise NotImplementedError()
+    
+    def dtype_device(self, a):
+        raise NotImplementedError()
+
+    def assert_same_dtype_device(self, a, b):
+        raise NotImplementedError()
+
+    def T(self, a):
+        return tf.transpose(a)
