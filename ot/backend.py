@@ -1525,10 +1525,17 @@ class CupyBackend(Backend):
 
     __name__ = 'cupy'
     __type__ = cp_type
-    __type_list__ = [cp.array(1, dtype=cp.float32),
-                     cp.array(1, dtype=cp.float64)]
+    __type_list__ = None
 
-    rng_ = cp.random.RandomState()
+    rng_ = None
+
+    def __init__(self):
+        self.rng_ = cp.random.RandomState()
+
+        self.__type_list__ = [
+            cp.array(1, dtype=cp.float32),
+            cp.array(1, dtype=cp.float64)
+        ]
 
     def to_numpy(self, a):
         return cp.asnumpy(a)
