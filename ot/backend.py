@@ -1515,7 +1515,7 @@ class TorchBackend(Backend):
         assert a_device == b_device, f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
 
 
-class CupyBackend(Backend):
+class CupyBackend(Backend):  # pragma: no cover
     """
     CuPy implementation of the backend
 
