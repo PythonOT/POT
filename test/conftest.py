@@ -5,13 +5,17 @@
 # License: MIT License
 
 import pytest
-from ot.backend import jax
+from ot.backend import jax, tf
 from ot.backend import get_backend_list
 import functools
 
 if jax:
     from jax.config import config
     config.update("jax_enable_x64", True)
+
+if tf:
+    from tensorflow.python.ops.numpy_ops import np_config
+    np_config.enable_numpy_behavior()
 
 backend_list = get_backend_list()
 

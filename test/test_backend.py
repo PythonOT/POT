@@ -244,6 +244,8 @@ def test_empty_backend():
         nx.allclose(M, M)
     with pytest.raises(NotImplementedError):
         nx.T(M)
+    with pytest.raises(NotImplementedError):
+        nx.squeeze(M)
 
 
 def test_func_backends(nx):
@@ -369,7 +371,7 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('dot(M,v)')
 
-        A = nx.dot(Mb, nx.T(Mb))
+        A = nx.dot(Mb, Mb.T)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('dot(M,M)')
 
@@ -492,7 +494,7 @@ def test_func_backends(nx):
         lst_name.append('coo_matrix')
 
         assert not nx.issparse(Mb), 'Assert fail on: issparse (expected False)'
-        assert nx.issparse(sp_Mb) or nx.__name__ == "jax", 'Assert fail on: issparse (expected True)'
+        assert nx.issparse(sp_Mb) or nx.__name__ in ("jax", "tf"), 'Assert fail on: issparse (expected True)'
 
         A = nx.tocsr(sp_Mb)
         lst_b.append(nx.to_numpy(nx.todense(A)))
@@ -520,6 +522,9 @@ def test_func_backends(nx):
         A = nx.T(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('transpose')
+
+        A = nx.squeeze(nx.zeros((3, 1, 4, 1)))
+        assert tuple(A.shape) == (3, 4), 'Assert fail on: squeeze'
 
         lst_tot.append(lst_b)
 

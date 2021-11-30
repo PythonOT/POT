@@ -27,6 +27,7 @@ Examples
 import numpy as np
 import scipy.special as scipy
 from scipy.sparse import issparse, coo_matrix, csr_matrix
+import warnings
 
 try:
     import torch
@@ -46,6 +47,7 @@ except ImportError:
 
 try:
     import tensorflow as tf
+    import tensorflow.experimental.numpy as tnp
     tf_type = tf.Tensor
 except ImportError:
     tf = False
@@ -62,7 +64,8 @@ def get_backend_list():
         lst.append(TorchBackend())
 
     if jax:
-        lst.append(JaxBackend())
+        pass
+        # lst.append(JaxBackend())
 
     if tf:
         lst.append(TensorflowBackend())
@@ -687,6 +690,16 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def squeeze(self, a, axis=None):
+        r"""
+        Remove axes of length one from a.
+
+        This function follows the api from :any:`numpy.squeeze`.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.squeeze.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -926,6 +939,9 @@ class NumpyBackend(Backend):
 
     def T(self, a):
         return a.T
+
+    def squeeze(self, a, axis=None):
+        return np.squeeze(a, axis=axis)
 
 
 class JaxBackend(Backend):
@@ -1189,6 +1205,9 @@ class JaxBackend(Backend):
 
     def T(self, a):
         return a.T
+
+    def squeeze(self, a, axis=None):
+        return jnp.squeeze(a, axis=axis)
 
 
 class TorchBackend(Backend):
@@ -1532,6 +1551,9 @@ class TorchBackend(Backend):
     def T(self, a):
         return a.T
 
+    def squeeze(self, a, axis=None):
+        return torch.squeeze(a, dim=axis)
+
 
 class TensorflowBackend(Backend):
 
@@ -1549,20 +1571,31 @@ class TensorflowBackend(Backend):
             tf.convert_to_tensor([1], dtype=tf.float64)
         ]
 
-    def _constant(self, val, type_as=None):
-        if type_as is None:
-            return tf.constant(val)
-        else:
-            return tf.cast(tf.constant(val), dtype=type_as.dtype)
+        tmp = self.randn(15, 10)
+        try:
+            tmp.reshape((150, 1))
+        except AttributeError:
+            warnings.warn(
+                "To use TensorflowBackend, you need to activate the tensorflow "
+                "numpy API. You can activate it by running: \n"
+                "from tensorflow.python.ops.numpy_ops import np_config\n"
+                "np_config.enable_numpy_behavior()"
+            )
 
     def to_numpy(self, a):
         return a.numpy()
 
     def from_numpy(self, a, type_as=None):
-        if type_as is None:
-            return tf.convert_to_tensor(a)
+        if not isinstance(a, self.__type__):
+            if type_as is None:
+                return tf.convert_to_tensor(a)
+            else:
+                return tf.convert_to_tensor(a, dtype=type_as.dtype)
         else:
-            return tf.convert_to_tensor(a, dtype=type_as.dtype)
+            if type_as is None:
+                return a
+            else:
+                return tf.cast(a, dtype=type_as.dtype)
 
     def set_gradients(self, val, inputs, grads):
         @tf.custom_gradient
@@ -1574,173 +1607,141 @@ class TensorflowBackend(Backend):
 
     def zeros(self, shape, type_as=None):
         if type_as is None:
-            return tf.zeros(shape)
+            return tnp.zeros(shape)
         else:
-            return tf.zeros(shape, dtype=type_as.dtype)
+            return tnp.zeros(shape, dtype=type_as.dtype)
 
     def ones(self, shape, type_as=None):
         if type_as is None:
-            return tf.ones(shape)
+            return tnp.ones(shape)
         else:
-            return tf.ones(shape, dtype=type_as.dtype)
+            return tnp.ones(shape, dtype=type_as.dtype)
 
     def arange(self, stop, start=0, step=1, type_as=None):
-        return tf.range(start=start, limit=stop, delta=step)
+        return tnp.arange(start, stop, step)
 
     def full(self, shape, fill_value, type_as=None):
         if type_as is None:
-            return tf.fill(shape, fill_value)
+            return tnp.full(shape, fill_value)
         else:
-            return tf.cast(tf.fill(shape, fill_value), dtype=type_as.dtype)
+            return tnp.full(shape, fill_value, dtype=type_as.dtype)
 
     def eye(self, N, M=None, type_as=None):
-        if M is None:
-            M = N
         if type_as is None:
-            return tf.eye(N, M)
+            return tnp.eye(N, M)
         else:
-            return tf.eye(N, M, dtype=type_as.dtype)
+            return tnp.eye(N, M, dtype=type_as.dtype)
 
     def sum(self, a, axis=None, keepdims=False):
-        if axis is None:
-            return tf.math.reduce_sum(a)
-        else:
-            return tf.math.reduce_sum(a, axis=axis, keepdims=keepdims)
+        return tnp.sum(a, axis, keepdims=keepdims)
 
     def cumsum(self, a, axis=None):
-        if axis is None:
-            return tf.math.cumsum(tf.reshape(a, [-1]), axis=0)
-        else:
-            return tf.math.cumsum(a, axis=axis)
+        return tnp.cumsum(a, axis)
 
     def max(self, a, axis=None, keepdims=False):
-        if axis is None:
-            return tf.math.reduce_max(a)
-        else:
-            return tf.math.reduce_max(a, axis=axis, keepdims=keepdims)
+        return tnp.max(a, axis, keepdims=keepdims)
 
     def min(self, a, axis=None, keepdims=False):
-        if axis is None:
-            return tf.math.reduce_min(a)
-        else:
-            return tf.math.reduce_min(a, axis=axis, keepdims=keepdims)
+        return tnp.min(a, axis, keepdims=keepdims)
 
     def maximum(self, a, b):
-        if isinstance(a, int) or isinstance(a, float):
-            a = tf.constant([float(a)], dtype=b.dtype)
-        if isinstance(b, int) or isinstance(b, float):
-            b = tf.constant([float(b)], dtype=a.dtype)
-        return tf.math.maximum(a, b)
+        return tnp.maximum(a, b)
 
     def minimum(self, a, b):
-        if isinstance(a, int) or isinstance(a, float):
-            a = tf.constant([float(a)], dtype=b.dtype)
-        if isinstance(b, int) or isinstance(b, float):
-            b = tf.constant([float(b)], dtype=a.dtype)
-        return tf.math.minimum(a, b)
+        return tnp.minimum(a, b)
 
     def dot(self, a, b):
-        if len(b.shape) == 1:
-            if len(a.shape) == 1:
-                # inner product
-                return tf.reduce_sum(tf.multiply(a, b))
-            else:
-                # matrix vector
-                return tf.linalg.matvec(a, b)
-        else:
-            if len(a.shape) == 1:
-                return self.T(tf.linalg.matvec(self.T(b), self.T(a)))
-            else:
-                return tf.matmul(a, b)
+        return tnp.dot(a, b)
+        # if len(b.shape) == 1:
+        #     if len(a.shape) == 1:
+        #         # inner product
+        #         return tf.reduce_sum(tf.multiply(a, b))
+        #     else:
+        #         # matrix vector
+        #         return tf.linalg.matvec(a, b)
+        # else:
+        #     if len(a.shape) == 1:
+        #         return self.T(tf.linalg.matvec(self.T(b), self.T(a)))
+        #     else:
+        #         return tf.matmul(a, b)
 
     def abs(self, a):
-        return tf.math.abs(a)
+        return tnp.abs(a)
 
     def exp(self, a):
-        return tf.math.exp(a)
+        return tnp.exp(a)
 
     def log(self, a):
-        return tf.math.log(a)
+        return tnp.log(a)
 
     def sqrt(self, a):
-        return tf.math.sqrt(a)
+        return tnp.sqrt(a)
 
     def power(self, a, exponents):
-        return tf.math.pow(a, exponents)
+        return tnp.power(a, exponents)
 
     def norm(self, a):
-        return tf.norm(a, ord=2)
+        return tnp.sqrt(tnp.sum(tnp.square(a)))
 
     def any(self, a):
-        return tf.math.reduce_any(a)
+        return tnp.any(a)
 
     def isnan(self, a):
-        return tf.math.is_nan(a)
+        return tnp.isnan(a)
 
     def isinf(self, a):
-        return tf.math.is_inf(a)
+        return tnp.isinf(a)
 
     def einsum(self, subscripts, *operands):
-        return tf.einsum(subscripts, *operands)
+        return tnp.einsum(subscripts, *operands)
 
     def sort(self, a, axis=-1):
-        return tf.sort(a, axis=axis)
+        return tnp.sort(a, axis)
 
     def argsort(self, a, axis=-1):
-        return tf.argsort(a, axis=axis)
+        return tnp.argsort(a, axis)
 
     def searchsorted(self, a, v, side='left'):
         return tf.searchsorted(a, v, side=side)
 
     def flip(self, a, axis=None):
-        if axis is None:
-            return tf.reverse(a, tuple(i for i in range(len(a.shape))))
-        if isinstance(axis, int):
-            return tf.reverse(a, (axis,))
-        else:
-            return tf.reverse(a, axis=axis)
+        return tnp.flip(a, axis)
 
     def outer(self, a, b):
-        return tf.einsum('i,j->ij', a, b)
+        return tnp.outer(a, b)
 
     def clip(self, a, a_min, a_max):
-        return tf.clip_by_value(a, a_min, a_max)
+        return tnp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
-        return tf.repeat(a, repeats, axis=axis)
+        return tnp.repeat(a, repeats, axis)
 
     def take_along_axis(self, arr, indices, axis):
-        return tf.gather(arr, indices, axis=axis)
+        return tnp.take_along_axis(arr, indices, axis)
 
     def concatenate(self, arrays, axis=0):
-        return tf.concat(arrays, axis=axis)
+        return tnp.concatenate(arrays, axis)
 
-    def zero_pad(self, a, pad_with):
-        return tf.pad(a, pad_with)
+    def zero_pad(self, a, pad_width):
+        return tnp.pad(a, pad_width, mode="constant")
 
     def argmax(self, a, axis=None):
-        if axis is None:
-            return tf.argmax(tf.reshape(a, [-1]))
-        else:
-            return tf.argmax(a, axis=axis)
+        return tnp.argmax(a, axis=axis)
 
     def mean(self, a, axis=None):
-        return tf.math.reduce_mean(a, axis=axis)
+        return tnp.mean(a, axis=axis)
 
     def std(self, a, axis=None):
-        return tf.math.reduce_std(a, axis=axis)
+        return tnp.std(a, axis=axis)
 
     def linspace(self, start, stop, num):
-        return tf.linspace(start, stop, num)
+        return tnp.linspace(start, stop, num)
 
     def meshgrid(self, a, b):
-        return tf.meshgrid(a, b)
+        return tnp.meshgrid(a, b)
 
     def diag(self, a, k=0):
-        if len(a.shape) == 1:
-            return tf.linalg.diag(a, k=k)
-        else:
-            return tf.linalg.diag_part(a, k=k)
+        return tnp.diag(a, k)
 
     def unique(self, a):
         return tf.sort(tf.unique(tf.reshape(a, [-1]))[0])
@@ -1749,10 +1750,10 @@ class TensorflowBackend(Backend):
         return tf.math.reduce_logsumexp(a, axis=axis)
 
     def stack(self, arrays, axis=0):
-        return tf.stack(arrays, axis=axis)
+        return tnp.stack(arrays, axis)
 
     def reshape(self, a, shape):
-        return tf.reshape(a, shape)
+        return tnp.reshape(a, shape)
 
     def seed(self, seed=None):
         if isinstance(seed, int):
@@ -1790,37 +1791,37 @@ class TensorflowBackend(Backend):
                 self._convert_to_index_for_coo(rows),
                 self._convert_to_index_for_coo(cols)
             )
+        if type_as is not None:
+            data = self.from_numpy(data, type_as=type_as)
+
         sparse_tensor = tf.sparse.SparseTensor(
-            indices=self.T(self.stack([rows, cols])),
+            indices=tnp.stack([rows, cols]).T,
+            # indices=tf.cast(self.T(self.stack([rows, cols])), dtype=tf.int64),
             values=data,
             dense_shape=shape
         )
-        if type_as is not None:
-            sparse_tensor = self.from_numpy(sparse_tensor)
-        return sparse_tensor
+        # if type_as is not None:
+        #     sparse_tensor = self.from_numpy(sparse_tensor, type_as=type_as)
+        # SparseTensor are not subscriptable so we use dense tensors
+        return self.todense(sparse_tensor)
 
     def issparse(self, a):
         return isinstance(a, tf.sparse.SparseTensor)
 
     def tocsr(self, a):
-        return tf.sparse.reorder(a)
+        return a
 
     def eliminate_zeros(self, a, threshold=0.):
-        threshold = self._constant(threshold, type_as=a)
         if self.issparse(a):
             values = a.values
             if threshold > 0:
                 mask = self.abs(values) <= threshold
             else:
-                mask = values == self._constant(0., type_as=a)
+                mask = values == 0
             return tf.sparse.retain(a, ~mask)
         else:
             if threshold > 0:
-                a = tf.where(
-                    self.abs(a) <= threshold,
-                    self._constant(0., type_as=a),
-                    a
-                )
+                a = tnp.where(self.abs(a) > threshold, a, 0.)
             return a
 
     def todense(self, a):
@@ -1830,18 +1831,18 @@ class TensorflowBackend(Backend):
             return a
 
     def where(self, condition, x, y):
-        return tf.where(condition, x, y)
+        return tnp.where(condition, x, y)
 
     def copy(self, a):
         return tf.identity(a)
 
     def allclose(self, a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
-        return tf.experimental.numpy.allclose(
+        return tnp.allclose(
             a, b, rtol=rtol, atol=atol, equal_nan=equal_nan
         )
 
     def dtype_device(self, a):
-        return a.dtype, a.device.split("device")[1]
+        return a.dtype, a.device.split("device:")[1]
 
     def assert_same_dtype_device(self, a, b):
         a_dtype, a_device = self.dtype_device(a)
@@ -1851,4 +1852,7 @@ class TensorflowBackend(Backend):
         assert a_device == b_device, f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
 
     def T(self, a):
-        return tf.transpose(a)
+        return a.T
+
+    def squeeze(self, a, axis=None):
+        return tnp.squeeze(a, axis=axis)
