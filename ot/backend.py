@@ -1552,7 +1552,10 @@ class TorchBackend(Backend):
         return a.T
 
     def squeeze(self, a, axis=None):
-        return torch.squeeze(a, dim=axis)
+        if axis is None:
+            return torch.squeeze(a)
+        else:
+            return torch.squeeze(a, dim=axis)
 
 
 class TensorflowBackend(Backend):
