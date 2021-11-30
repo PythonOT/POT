@@ -685,6 +685,7 @@ class Backend():
 
         See: https://numpy.org/doc/stable/reference/generated/numpy.ndarray.T.html
         """
+        raise NotImplementedError()
 
 
 class NumpyBackend(Backend):
@@ -1541,12 +1542,18 @@ class TensorflowBackend(Backend):
     rng_ = None
 
     def __init__(self):
-        self.rng_ = tf.random.Generator.from_non_deterministic_state()
+        self.seed(None)
 
         self.__type_list__ = [
             tf.convert_to_tensor([1], dtype=tf.float32),
             tf.convert_to_tensor([1], dtype=tf.float64)
         ]
+
+    def _constant(self, val, type_as=None):
+        if type_as is None:
+            return tf.constant(val)
+        else:
+            return tf.cast(tf.constant(val), dtype=type_as.dtype)
 
     def to_numpy(self, a):
         return a.numpy()
@@ -1642,7 +1649,7 @@ class TensorflowBackend(Backend):
                 return tf.linalg.matvec(a, b)
         else:
             if len(a.shape) == 1:
-                return self.T(tf.linalg.matvec(self.t(b), self.T(a)))
+                return self.T(tf.linalg.matvec(self.T(b), self.T(a)))
             else:
                 return tf.matmul(a, b)
 
@@ -1749,7 +1756,7 @@ class TensorflowBackend(Backend):
 
     def seed(self, seed=None):
         if isinstance(seed, int):
-            self.rng_ = tf.random.Generator.from_seed(1234)
+            self.rng_ = tf.random.Generator.from_seed(seed)
         elif isinstance(seed, tf.random.Generator):
             self.rng_ = seed
         elif seed is None:
@@ -1758,40 +1765,90 @@ class TensorflowBackend(Backend):
             raise ValueError("Non compatible seed : {}".format(seed))
 
     def rand(self, *size, type_as=None):
-        raise NotImplementedError()
-    
+        if type_as is None:
+            return self.rng_.uniform(size, minval=0., maxval=1.)
+        else:
+            return self.rng_.uniform(
+                size, minval=0., maxval=1., dtype=type_as.dtype
+            )
+
     def randn(self, *size, type_as=None):
-        raise NotImplementedError()
+        if type_as is None:
+            return self.rng_.normal(size)
+        else:
+            return self.rng_.normal(size, dtype=type_as.dtype)
+
+    def _convert_to_index_for_coo(self, tensor):
+        if isinstance(tensor, self.__type__):
+            return int(self.max(tensor)) + 1
+        else:
+            return int(np.max(tensor)) + 1
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
-        raise NotImplementedError()
-    
+        if shape is None:
+            shape = (
+                self._convert_to_index_for_coo(rows),
+                self._convert_to_index_for_coo(cols)
+            )
+        sparse_tensor = tf.sparse.SparseTensor(
+            indices=self.T(self.stack([rows, cols])),
+            values=data,
+            dense_shape=shape
+        )
+        if type_as is not None:
+            sparse_tensor = self.from_numpy(sparse_tensor)
+        return sparse_tensor
+
     def issparse(self, a):
-        raise NotImplementedError()
-    
+        return isinstance(a, tf.sparse.SparseTensor)
+
     def tocsr(self, a):
-        raise NotImplementedError()
+        return tf.sparse.reorder(a)
 
     def eliminate_zeros(self, a, threshold=0.):
-        raise NotImplementedError()
+        threshold = self._constant(threshold, type_as=a)
+        if self.issparse(a):
+            values = a.values
+            if threshold > 0:
+                mask = self.abs(values) <= threshold
+            else:
+                mask = values == self._constant(0., type_as=a)
+            return tf.sparse.retain(a, ~mask)
+        else:
+            if threshold > 0:
+                a = tf.where(
+                    self.abs(a) <= threshold,
+                    self._constant(0., type_as=a),
+                    a
+                )
+            return a
 
     def todense(self, a):
-        raise NotImplementedError()
+        if self.issparse(a):
+            return tf.sparse.to_dense(tf.sparse.reorder(a))
+        else:
+            return a
 
     def where(self, condition, x, y):
-        raise NotImplementedError()
+        return tf.where(condition, x, y)
 
     def copy(self, a):
-        raise NotImplementedError()
-    
+        return tf.identity(a)
+
     def allclose(self, a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
-        raise NotImplementedError()
-    
+        return tf.experimental.numpy.allclose(
+            a, b, rtol=rtol, atol=atol, equal_nan=equal_nan
+        )
+
     def dtype_device(self, a):
-        raise NotImplementedError()
+        return a.dtype, a.device.split("device")[1]
 
     def assert_same_dtype_device(self, a, b):
-        raise NotImplementedError()
+        a_dtype, a_device = self.dtype_device(a)
+        b_dtype, b_device = self.dtype_device(b)
+
+        assert a_dtype == b_dtype, "Dtype discrepancy"
+        assert a_device == b_device, f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
 
     def T(self, a):
         return tf.transpose(a)
