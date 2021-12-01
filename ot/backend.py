@@ -3,7 +3,7 @@
 Multi-lib backend for POT
 
 The goal is to write backend-agnostic code. Whether you're using Numpy, PyTorch,
-or Jax, POT code should work nonetheless.
+Jax, or Tensorflow, POT code should work nonetheless.
 To achieve that, POT provides backend classes which implements functions in their respective backend
 imitating Numpy API. As a convention, we use nx instead of np to refer to the backend.
 
@@ -108,7 +108,8 @@ def to_numpy(*args):
 class Backend():
     """
     Backend abstract class.
-    Implementations: :py:class:`JaxBackend`, :py:class:`NumpyBackend`, :py:class:`TorchBackend`
+    Implementations: :py:class:`JaxBackend`, :py:class:`NumpyBackend`, :py:class:`TorchBackend`,
+    :py:class:`TensorflowBackend`
 
     - The `__name__` class attribute refers to the name of the backend.
     - The `__type__` class attribute refers to the data structure used by the backend.
