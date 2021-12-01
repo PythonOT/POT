@@ -181,6 +181,8 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, maxiter=100, verbose=0, P0=None, no
     else:
         regmean = np.ones((len(xc), len(xc)))
 
+
+    @pymanopt.function.Autograd
     def cost(P):
         # wda loss
         loss_b = 0
