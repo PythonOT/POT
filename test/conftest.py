@@ -28,16 +28,16 @@ def nx(request):
 
 
 def skip_arg(arg, value, reason=None, getter=lambda x: x):
-    if isinstance(arg, tuple) or isinstance(arg, list):
+    if isinstance(arg, (tuple, list)):
         n = len(arg)
     else:
         arg = (arg, )
         n = 1
-    if n != 1 and (isinstance(value, tuple) or isinstance(value, list)):
+    if n != 1 and isinstance(value, (tuple, list)):
         pass
     else:
         value = (value, )
-    if isinstance(getter, tuple) or isinstance(value, list):
+    if isinstance(getter, (tuple, list)):
         pass
     else:
         getter = [getter] * n

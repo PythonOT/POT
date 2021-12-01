@@ -147,6 +147,7 @@ def test_gromov2_gradients():
 
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
+@pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_entropic_gromov(nx):
     n_samples = 50  # nb samples
 
@@ -204,6 +205,7 @@ def test_entropic_gromov(nx):
 
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
+@pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_entropic_gromov_dtype_device(nx):
     # setup
     n_samples = 50  # nb samples
@@ -302,6 +304,7 @@ def test_pointwise_gromov(nx):
     np.testing.assert_allclose(logb['gw_dist_std'], 0.0015952535464736394, atol=1e-8)
 
 
+@pytest.skip_backend("tf", reason="test very slow with tf backend")
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 def test_sampled_gromov(nx):
     n_samples = 50  # nb samples

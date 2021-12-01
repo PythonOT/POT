@@ -64,8 +64,7 @@ def get_backend_list():
         lst.append(TorchBackend())
 
     if jax:
-        pass
-        # lst.append(JaxBackend())
+        lst.append(JaxBackend())
 
     if tf:
         lst.append(TensorflowBackend())
@@ -1654,19 +1653,18 @@ class TensorflowBackend(Backend):
         return tnp.minimum(a, b)
 
     def dot(self, a, b):
-        return tnp.dot(a, b)
-        # if len(b.shape) == 1:
-        #     if len(a.shape) == 1:
-        #         # inner product
-        #         return tf.reduce_sum(tf.multiply(a, b))
-        #     else:
-        #         # matrix vector
-        #         return tf.linalg.matvec(a, b)
-        # else:
-        #     if len(a.shape) == 1:
-        #         return self.T(tf.linalg.matvec(self.T(b), self.T(a)))
-        #     else:
-        #         return tf.matmul(a, b)
+        if len(b.shape) == 1:
+            if len(a.shape) == 1:
+                # inner product
+                return tf.reduce_sum(tf.multiply(a, b))
+            else:
+                # matrix vector
+                return tf.linalg.matvec(a, b)
+        else:
+            if len(a.shape) == 1:
+                return tf.linalg.matvec(b.T, a.T).T
+            else:
+                return tf.matmul(a, b)
 
     def abs(self, a):
         return tnp.abs(a)
@@ -1684,7 +1682,7 @@ class TensorflowBackend(Backend):
         return tnp.power(a, exponents)
 
     def norm(self, a):
-        return tnp.sqrt(tnp.sum(tnp.square(a)))
+        return tf.math.reduce_euclidean_norm(a)
 
     def any(self, a):
         return tnp.any(a)
