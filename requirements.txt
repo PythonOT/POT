@@ -4,7 +4,7 @@ cython
 matplotlib
 autograd
 pymanopt==0.2.4; python_version <'3'
-git+https://github.com/pymanopt/pymanopt; python_version >= '3'
+pymanopt==0.2.6rc1; python_version >= '3'
 cvxopt
 scikit-learn
 torch
