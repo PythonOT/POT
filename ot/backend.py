@@ -1869,7 +1869,7 @@ class TensorflowBackend(Backend):
     __type_list__ = None
 
     rng_ = None
-    
+
     def __init__(self):
         self.seed(None)
 

@@ -7,7 +7,6 @@
 
 import ot
 import ot.backend
-
 from ot.backend import torch, jax, cp, tf
 
 import pytest
