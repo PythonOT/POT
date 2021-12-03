@@ -196,6 +196,7 @@ The contributors to this library are
 * [Adrien Corenflos](https://adriencorenflos.github.io/) (Sliced Wasserstein Distance)
 * [Tanguy Kerdoncuff](https://hv0nnus.github.io/) (Sampled Gromov Wasserstein)
 * [Minhui Huang](https://mhhuang95.github.io) (Projection Robust Wasserstein Distance)
+* [Nathan Cassereau](https://github.com/ncassereau-idris) (Backends)
 
 This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
 
