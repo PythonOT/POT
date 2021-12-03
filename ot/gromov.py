@@ -1368,6 +1368,8 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
     -------
     C : array-like, shape (`N`, `N`)
         Similarity matrix in the barycenter space (permutated arbitrarily)
+    log : dict
+        Log dictionary of error during iterations. Return only if `log=True` in parameters.
 
     References
     ----------
@@ -1479,6 +1481,8 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
     -------
     C : array-like, shape (`N`, `N`)
         Similarity matrix in the barycenter space (permutated arbitrarily)
+    log : dict
+        Log dictionary of error during iterations. Return only if `log=True` in parameters.
 
     References
     ----------

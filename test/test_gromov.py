@@ -385,6 +385,20 @@ def test_gromov_barycenter(nx):
     np.testing.assert_allclose(Cb, Cbb, atol=1e-06)
     np.testing.assert_allclose(Cbb.shape, (n_samples, n_samples))
 
+    # test of gromov_barycenters with `log` on
+    Cb_, err_ = ot.gromov.gromov_barycenters(
+        n_samples, [C1, C2], [p1, p2], p, [.5, .5],
+        'square_loss', max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+    )
+    Cbb_, errb_ = ot.gromov.gromov_barycenters(
+        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
+        'square_loss', max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+    )
+    Cbb_ = nx.to_numpy(Cbb_)
+    np.testing.assert_allclose(Cb_, Cbb_, atol=1e-06)
+    np.testing.assert_array_almost_equal(err_['err'], errb_['err'])
+    np.testing.assert_allclose(Cbb_.shape, (n_samples, n_samples))
+
     Cb2 = ot.gromov.gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5],
         'kl_loss', max_iter=100, tol=1e-3, random_state=42
@@ -395,6 +409,20 @@ def test_gromov_barycenter(nx):
     ))
     np.testing.assert_allclose(Cb2, Cb2b, atol=1e-06)
     np.testing.assert_allclose(Cb2b.shape, (n_samples, n_samples))
+
+    # test of gromov_barycenters with `log` on
+    Cb2_, err2_ = ot.gromov.gromov_barycenters(
+        n_samples, [C1, C2], [p1, p2], p, [.5, .5],
+        'kl_loss', max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+    )
+    Cb2b_, err2b_ = ot.gromov.gromov_barycenters(
+        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
+        'kl_loss', max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+    )
+    Cb2b_ = nx.to_numpy(Cb2b_)
+    np.testing.assert_allclose(Cb2_, Cb2b_, atol=1e-06)
+    np.testing.assert_array_almost_equal(err2_['err'], err2_['err'])
+    np.testing.assert_allclose(Cb2b_.shape, (n_samples, n_samples))
 
 
 @pytest.mark.filterwarnings("ignore:divide")
@@ -429,6 +457,20 @@ def test_gromov_entropic_barycenter(nx):
     np.testing.assert_allclose(Cb, Cbb, atol=1e-06)
     np.testing.assert_allclose(Cbb.shape, (n_samples, n_samples))
 
+    # test of entropic_gromov_barycenters with `log` on
+    Cb_, err_ = ot.gromov.entropic_gromov_barycenters(
+        n_samples, [C1, C2], [p1, p2], p, [.5, .5],
+        'square_loss', 1e-3, max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+    )
+    Cbb_, errb_ = ot.gromov.entropic_gromov_barycenters(
+        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
+        'square_loss', 1e-3, max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+    )
+    Cbb_ = nx.to_numpy(Cbb_)
+    np.testing.assert_allclose(Cb_, Cbb_, atol=1e-06)
+    np.testing.assert_array_almost_equal(err_['err'], errb_['err'])
+    np.testing.assert_allclose(Cbb_.shape, (n_samples, n_samples))
+
     Cb2 = ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5],
         'kl_loss', 1e-3, max_iter=100, tol=1e-3, random_state=42
@@ -439,6 +481,20 @@ def test_gromov_entropic_barycenter(nx):
     ))
     np.testing.assert_allclose(Cb2, Cb2b, atol=1e-06)
     np.testing.assert_allclose(Cb2b.shape, (n_samples, n_samples))
+
+    # test of entropic_gromov_barycenters with `log` on
+    Cb2_, err2_ = ot.gromov.entropic_gromov_barycenters(
+        n_samples, [C1, C2], [p1, p2], p, [.5, .5],
+        'kl_loss', 1e-3, max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+    )
+    Cb2b_, err2b_ = ot.gromov.entropic_gromov_barycenters(
+        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
+        'kl_loss', 1e-3, max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+    )
+    Cb2b_ = nx.to_numpy(Cb2b_)
+    np.testing.assert_allclose(Cb2_, Cb2b_, atol=1e-06)
+    np.testing.assert_array_almost_equal(err2_['err'], err2_['err'])
+    np.testing.assert_allclose(Cb2b_.shape, (n_samples, n_samples))
 
 
 def test_fgw(nx):
