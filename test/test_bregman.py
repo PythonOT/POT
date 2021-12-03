@@ -888,6 +888,7 @@ def test_implemented_methods():
             ot.bregman.sinkhorn2(a, b, M, epsilon, method=method)
 
 
+@pytest.skip_backend("cupy")
 @pytest.skip_backend("jax")
 @pytest.mark.filterwarnings("ignore:Bottleneck")
 def test_screenkhorn(nx):

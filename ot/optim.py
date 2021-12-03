@@ -88,7 +88,7 @@ def line_search_armijo(
     else:
         if alpha_min is not None or alpha_max is not None:
             alpha = np.clip(alpha, alpha_min, alpha_max)
-        return alpha, fc[0], phi1
+        return float(alpha), fc[0], phi1
 
 
 def solve_linesearch(
