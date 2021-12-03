@@ -894,6 +894,7 @@ def test_implemented_methods():
 
 
 @pytest.skip_backend('tf')
+@pytest.skip_backend("cupy")
 @pytest.skip_backend("jax")
 @pytest.mark.filterwarnings("ignore:Bottleneck")
 def test_screenkhorn(nx):
