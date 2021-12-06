@@ -3,6 +3,7 @@ numpydoc
 memory_profiler
 pillow
 networkx
+mistune==0.8.4
 m2r2
 numpy
 scipy>=1.0
