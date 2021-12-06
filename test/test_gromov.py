@@ -9,7 +9,7 @@
 import numpy as np
 import ot
 from ot.backend import NumpyBackend
-from ot.backend import torch
+from ot.backend import torch, tf
 
 import pytest
 
@@ -111,6 +111,46 @@ def test_gromov_dtype_device(nx):
 
         nx.assert_same_dtype_device(C1b, Gb)
         nx.assert_same_dtype_device(C1b, gw_valb)
+
+
+@pytest.mark.skipif(not tf, reason="tf not installed")
+def test_gromov_device_tf():
+    nx = ot.backend.TensorflowBackend()
+    n_samples = 50  # nb samples
+    mu_s = np.array([0, 0])
+    cov_s = np.array([[1, 0], [0, 1]])
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
+    xt = xs[::-1].copy()
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+    C1 /= C1.max()
+    C2 /= C2.max()
+
+    # Check that everything stays on the CPU
+    with tf.device("/CPU:0"):
+        C1b = nx.from_numpy(C1)
+        C2b = nx.from_numpy(C2)
+        pb = nx.from_numpy(p)
+        qb = nx.from_numpy(q)
+        Gb = ot.gromov.gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', verbose=True)
+        gw_valb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', log=False)
+        nx.assert_same_dtype_device(C1b, Gb)
+        nx.assert_same_dtype_device(C1b, gw_valb)
+
+    if len(tf.config.list_physical_devices('GPU')) > 0:
+        # Check that everything happens on the GPU
+        C1b = nx.from_numpy(C1)
+        C2b = nx.from_numpy(C2)
+        pb = nx.from_numpy(p)
+        qb = nx.from_numpy(q)
+        Gb = ot.gromov.gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', verbose=True)
+        gw_valb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', log=False)
+        nx.assert_same_dtype_device(C1b, Gb)
+        nx.assert_same_dtype_device(C1b, gw_valb)
+        assert nx.dtype_device(Gb)[1].startswith("GPU")
+
 
 
 def test_gromov2_gradients():

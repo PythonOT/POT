@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 import ot
-from ot.backend import torch
+from ot.backend import torch, tf
 
 
 @pytest.mark.parametrize("verbose, warn", product([True, False], [True, False]))
@@ -324,6 +324,35 @@ def test_sinkhorn2_variants_dtype_device(nx, method):
         lossb = ot.sinkhorn2(ub, ub, Mb, 1, method=method, stopThr=1e-10)
 
         nx.assert_same_dtype_device(Mb, lossb)
+
+
+@pytest.mark.skipif(not tf, reason="tf not installed")
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_log"])
+def test_sinkhorn2_variants_dtype_device(method):
+    nx = ot.backend.TensorflowBackend()
+    n = 100
+    x = np.random.randn(n, 2)
+    u = ot.utils.unif(n)
+    M = ot.dist(x, x)
+
+    # Check that everything stays on the CPU
+    with tf.device("/CPU:0"):
+        ub = nx.from_numpy(u)
+        Mb = nx.from_numpy(M)
+        Gb = ot.sinkhorn(ub, ub, Mb, 1, method=method, stopThr=1e-10)
+        lossb = ot.sinkhorn2(ub, ub, Mb, 1, method=method, stopThr=1e-10)
+        nx.assert_same_dtype_device(Mb, Gb)
+        nx.assert_same_dtype_device(Mb, lossb)
+
+    if len(tf.config.list_physical_devices('GPU')) > 0:
+        # Check that everything happens on the GPU
+        ub = nx.from_numpy(u)
+        Mb = nx.from_numpy(M)
+        Gb = ot.sinkhorn(ub, ub, Mb, 1, method=method, stopThr=1e-10)
+        lossb = ot.sinkhorn2(ub, ub, Mb, 1, method=method, stopThr=1e-10)
+        nx.assert_same_dtype_device(Mb, Gb)
+        nx.assert_same_dtype_device(Mb, lossb)
+        assert nx.dtype_device(Gb)[1].startswith("GPU")
 
 
 @pytest.skip_backend('tf')
