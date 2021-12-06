@@ -328,7 +328,7 @@ def test_sinkhorn2_variants_dtype_device(nx, method):
 
 @pytest.mark.skipif(not tf, reason="tf not installed")
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_log"])
-def test_sinkhorn2_variants_dtype_device(method):
+def test_sinkhorn2_variants_device_tf(method):
     nx = ot.backend.TensorflowBackend()
     n = 100
     x = np.random.randn(n, 2)

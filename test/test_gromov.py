@@ -152,7 +152,6 @@ def test_gromov_device_tf():
         assert nx.dtype_device(Gb)[1].startswith("GPU")
 
 
-
 def test_gromov2_gradients():
     n_samples = 50  # nb samples
 
