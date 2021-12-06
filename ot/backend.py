@@ -694,16 +694,6 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def T(self, a):
-        r"""
-        Returns the transpose of a tensor.
-
-        This function follows the api from :any:`numpy.ndarray.T`.
-
-        See: https://numpy.org/doc/stable/reference/generated/numpy.ndarray.T.html
-        """
-        raise NotImplementedError()
-
     def squeeze(self, a, axis=None):
         r"""
         Remove axes of length one from a.
@@ -950,9 +940,6 @@ class NumpyBackend(Backend):
     def assert_same_dtype_device(self, a, b):
         # numpy has implicit type conversion so we automatically validate the test
         pass
-
-    def T(self, a):
-        return a.T
 
     def squeeze(self, a, axis=None):
         return np.squeeze(a, axis=axis)
@@ -1216,9 +1203,6 @@ class JaxBackend(Backend):
 
         assert a_dtype == b_dtype, "Dtype discrepancy"
         assert a_device == b_device, f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
-
-    def T(self, a):
-        return a.T
 
     def squeeze(self, a, axis=None):
         return jnp.squeeze(a, axis=axis)
@@ -1562,9 +1546,6 @@ class TorchBackend(Backend):
         assert a_dtype == b_dtype, "Dtype discrepancy"
         assert a_device == b_device, f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
 
-    def T(self, a):
-        return a.T
-
     def squeeze(self, a, axis=None):
         if axis is None:
             return torch.squeeze(a)
@@ -1854,9 +1835,6 @@ class CupyBackend(Backend):  # pragma: no cover
         # cupy has implicit type conversion so
         # we automatically validate the test for type
         assert a_device == b_device, f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
-
-    def T(self, a):
-        return a.T
 
     def squeeze(self, a, axis=None):
         return cp.squeeze(a, axis=axis)
@@ -2155,9 +2133,6 @@ class TensorflowBackend(Backend):
 
         assert a_dtype == b_dtype, "Dtype discrepancy"
         assert a_device == b_device, f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
-
-    def T(self, a):
-        return a.T
 
     def squeeze(self, a, axis=None):
         return tnp.squeeze(a, axis=axis)

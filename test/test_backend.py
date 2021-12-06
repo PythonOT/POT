@@ -257,8 +257,6 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.allclose(M, M)
     with pytest.raises(NotImplementedError):
-        nx.T(M)
-    with pytest.raises(NotImplementedError):
         nx.squeeze(M)
 
 
@@ -533,10 +531,6 @@ def test_func_backends(nx):
 
         assert nx.allclose(Mb, Mb), 'Assert fail on: allclose (expected True)'
         assert not nx.allclose(2 * Mb, Mb), 'Assert fail on: allclose (expected False)'
-
-        A = nx.T(Mb)
-        lst_b.append(nx.to_numpy(A))
-        lst_name.append('transpose')
 
         A = nx.squeeze(nx.zeros((3, 1, 4, 1)))
         assert tuple(A.shape) == (3, 4), 'Assert fail on: squeeze'
