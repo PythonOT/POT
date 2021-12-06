@@ -28,6 +28,7 @@ import numpy as np
 import scipy.special as scipy
 from scipy.sparse import issparse, coo_matrix, csr_matrix
 import warnings
+import time
 
 try:
     import torch
@@ -944,6 +945,19 @@ class NumpyBackend(Backend):
     def squeeze(self, a, axis=None):
         return np.squeeze(a, axis=axis)
 
+    def _bench(self, callable, *args, n_runs=1):
+        results = dict()
+        for type_as in self.__type_list__:
+            args = [self.from_numpy(arg, type_as=type_as) for arg in args]
+            callable(*args)
+            t0 = time.perf_counter()
+            for _ in range(n_runs):
+                callable(*args)
+            t1 = time.perf_counter()
+            key = ("Numpy", "CPU", type_as.itemsize * 8)
+            results[key] = (t1 - t0) / n_runs
+        return results
+
 
 class JaxBackend(Backend):
     """
@@ -1206,6 +1220,21 @@ class JaxBackend(Backend):
 
     def squeeze(self, a, axis=None):
         return jnp.squeeze(a, axis=axis)
+
+    def _bench(self, callable, *args, n_runs=1):
+        results = dict()
+        for type_as in self.__type_list__:
+            args = [self.from_numpy(arg, type_as=type_as) for arg in args]
+            callable(*args)
+            t0 = time.perf_counter()
+            for _ in range(n_runs):
+                callable(*args)
+            t1 = time.perf_counter()
+            device = "CPU" if "cpu" in str(type_as.device_buffer.device()) else "GPU"
+            bitsize = type_as.dtype.itemsize * 8
+            key = ("Jax", device, bitsize)
+            results[key] = (t1 - t0) / n_runs
+        return results
 
 
 class TorchBackend(Backend):
@@ -1552,6 +1581,21 @@ class TorchBackend(Backend):
         else:
             return torch.squeeze(a, dim=axis)
 
+    def _bench(self, callable, *args, n_runs=1):
+        results = dict()
+        for type_as in self.__type_list__:
+            args = [self.from_numpy(arg, type_as=type_as) for arg in args]
+            callable(*args)
+            t0 = time.perf_counter()
+            for _ in range(n_runs):
+                callable(*args)
+            t1 = time.perf_counter()
+            device = "CPU" if "cpu" in str(type_as.device) else "GPU"
+            bitsize = torch.finfo(type_as.dtype).bits
+            key = ("Pytorch", device, bitsize)
+            results[key] = (t1 - t0) / n_runs
+        return results
+
 
 class CupyBackend(Backend):  # pragma: no cover
     """
@@ -1838,6 +1882,19 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def squeeze(self, a, axis=None):
         return cp.squeeze(a, axis=axis)
+
+    def _bench(self, callable, *args, n_runs=1):
+        results = dict()
+        for type_as in self.__type_list__:
+            args = [self.from_numpy(arg, type_as=type_as) for arg in args]
+            callable(*args)
+            t0 = time.perf_counter()
+            for _ in range(n_runs):
+                callable(*args)
+            t1 = time.perf_counter()
+            key = ("Cupy", "GPU", type_as.itemsize * 8)
+            results[key] = (t1 - t0) / n_runs
+        return results
 
 
 class TensorflowBackend(Backend):
@@ -2136,3 +2193,28 @@ class TensorflowBackend(Backend):
 
     def squeeze(self, a, axis=None):
         return tnp.squeeze(a, axis=axis)
+
+    def _bench(self, callable, *args, n_runs=1):
+        results = dict()
+        with tf.device("/CPU:0"):
+            for type_as in self.__type_list__:
+                args = [self.from_numpy(arg, type_as=type_as) for arg in args]
+                callable(*args)
+                t0 = time.perf_counter()
+                for _ in range(n_runs):
+                    callable(*args)
+                t1 = time.perf_counter()
+                key = ("Tensorflow", "CPU", type_as.dtype.size * 8)
+                results[key] = (t1 - t0) / n_runs
+        
+        if len(tf.config.list_physical_devices('GPU')) > 0:
+            for type_as in self.__type_list__:
+                args = [self.from_numpy(arg, type_as=type_as) for arg in args]
+                callable(*args)
+                t0 = time.perf_counter()
+                for _ in range(n_runs):
+                    callable(*args)
+                t1 = time.perf_counter()
+                key = ("Tensorflow", "GPU", type_as.dtype.size * 8)
+                results[key] = (t1 - t0) / n_runs
+        return results
