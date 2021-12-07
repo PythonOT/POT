@@ -83,12 +83,10 @@ def convert_to_html_table(results, param_name, main_title=None, comments=None):
         # make results rows
         for key in keys:
             subdict = results[key]
-            subkeys = get_keys(subdict)
             string += f'<tr><td align="center">{key}</td>'
-            for subkey in subkeys:
-                name, device, size = subkey
-                if size == bitsize:
-                    string += f'<td align="center">{subdict[subkey]:.4f}</td>'
+            for device, name in devices_names:
+                subkey = (name, device, bitsize)
+                string += f'<td align="center">{subdict[subkey]:.4f}</td>'
             string += "</tr>\n"
 
     string += "</table>"
