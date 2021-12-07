@@ -17,6 +17,13 @@ Examples
 ...     nx = get_backend(a, b)  # infer the backend from the arguments
 ...     c = nx.dot(a, b)  # now use the backend to do any calculation
 ...     return c
+
+
+.. note::
+Tensorflow only works with the numpy API. To activate it, please run the following:
+
+>>> from tensorflow.python.ops.numpy_ops import np_config
+>>> np_config.enable_numpy_behavior()
 """
 
 # Author: Remi Flamary <remi.flamary@polytechnique.edu>
@@ -1628,16 +1635,24 @@ class TorchBackend(Backend):
         for type_as in self.__type_list__:
             inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
             callable(*inputs)
-            torch.cuda.synchronize()
-            start = torch.cuda.Event(enable_timing=True)
-            end = torch.cuda.Event(enable_timing=True)
-            start.record()
+            if self.prettier_device(type_as) == "GPU":
+                torch.cuda.synchronize()
+                start = torch.cuda.Event(enable_timing=True)
+                end = torch.cuda.Event(enable_timing=True)
+                start.record()
+            else:
+                start = time.perf_counter()
             for _ in range(n_runs):
                 callable(*inputs)
-            end.record()
-            torch.cuda.synchronize()
+            if self.prettier_device(type_as) == "GPU":    
+                end.record()
+                torch.cuda.synchronize()
+                duration = start.elapsed_time(end) / 1000.
+            else:
+                end = time.perf_counter()
+                duration = end - start
             key = ("Pytorch", self.prettier_device(type_as), self.bitsize(type_as))
-            results[key] = start.elapsed_time(end) / 1000. / n_runs
+            results[key] = duration / n_runs
         return results
 
 
