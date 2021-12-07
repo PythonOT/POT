@@ -50,6 +50,7 @@ try:
     import jax
     import jax.numpy as jnp
     import jax.scipy.special as jscipy
+    from jax.lib import xla_bridge
     jax_type = jax.numpy.ndarray
 except ImportError:
     jax = False
@@ -1011,7 +1012,10 @@ class JaxBackend(Backend):
         self.rng_ = jax.random.PRNGKey(42)
 
         self.__type_list__ = []
-        for d in jax.devices("cpu") + jax.devices("gpu"):
+        available_devices = jax.devices("cpu")
+        if xla_bridge.get_backend().platform == "gpu":
+            available_devices += jax.devices("gpu")
+        for d in available_devices:
             self.__type_list__ += [
                 jax.device_put(jnp.array(1, dtype=jnp.float32), d),
                 jax.device_put(jnp.array(1, dtype=jnp.float64), d)
