@@ -980,7 +980,6 @@ class NumpyBackend(Backend):
             t1 = time.perf_counter()
             key = ("Numpy", self.prettier_device(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
-            del inputs
         return results
 
 
@@ -1254,16 +1253,21 @@ class JaxBackend(Backend):
 
     def _bench(self, callable, *args, n_runs=1):
         results = dict()
+        @jax.jit
+        def add_one(M):
+            return M + 1
         for type_as in self.__type_list__:
             inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
             callable(*inputs)
             t0 = time.perf_counter()
             for _ in range(n_runs):
-                callable(*inputs)
+                # We are technically doing more calculations but adding one
+                # is expected to be very quick and allows us to access the
+                # block_until_ready method to measure asynchronous calculations
+                add_one(callable(*inputs)).block_until_ready()
             t1 = time.perf_counter()
             key = ("Jax", self.prettier_device(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
-            del inputs
         return results
 
 
@@ -1622,13 +1626,16 @@ class TorchBackend(Backend):
         for type_as in self.__type_list__:
             inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
             callable(*inputs)
-            t0 = time.perf_counter()
+            torch.cuda.synchronize()
+            start = torch.cuda.Event(enable_timing=True)
+            end = torch.cuda.Event(enable_timing=True)
+            start.record()
             for _ in range(n_runs):
                 callable(*inputs)
-            t1 = time.perf_counter()
+            end.record()
+            torch.cuda.synchronize()
             key = ("Pytorch", self.prettier_device(type_as), self.bitsize(type_as))
-            results[key] = (t1 - t0) / n_runs
-            del inputs
+            results[key] = start.elapsed_time(end) / 1000. / n_runs
         return results
 
 
@@ -1928,14 +1935,18 @@ class CupyBackend(Backend):  # pragma: no cover
         results = dict()
         for type_as in self.__type_list__:
             inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
+            start_gpu = cp.cuda.Event()
+            end_gpu = cp.cuda.Event()
             callable(*inputs)
-            t0 = time.perf_counter()
+            start_gpu.synchronize()
+            start_gpu.record()
             for _ in range(n_runs):
                 callable(*inputs)
-            t1 = time.perf_counter()
+            end_gpu.record()
+            end_gpu.synchronize()
             key = ("Cupy", self.prettier_device(type_as), self.bitsize(type_as))
-            results[key] = (t1 - t0) / n_runs
-            del inputs
+            t_gpu = cp.cuda.get_elapsed_time(start_gpu, end_gpu) / 1000.
+            results[key] = t_gpu / n_runs
         return results
 
 
@@ -2263,6 +2274,5 @@ class TensorflowBackend(Backend):
                         self.bitsize(type_as)
                     )
                     results[key] = (t1 - t0) / n_runs
-                    del inputs
 
         return results
