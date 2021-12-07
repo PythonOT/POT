@@ -980,6 +980,7 @@ class NumpyBackend(Backend):
             t1 = time.perf_counter()
             key = ("Numpy", self.prettier_device(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
+            del inputs
         return results
 
 
@@ -1262,6 +1263,7 @@ class JaxBackend(Backend):
             t1 = time.perf_counter()
             key = ("Jax", self.prettier_device(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
+            del inputs
         return results
 
 
@@ -1626,6 +1628,7 @@ class TorchBackend(Backend):
             t1 = time.perf_counter()
             key = ("Pytorch", self.prettier_device(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
+            del inputs
         return results
 
 
@@ -1932,6 +1935,7 @@ class CupyBackend(Backend):  # pragma: no cover
             t1 = time.perf_counter()
             key = ("Cupy", self.prettier_device(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
+            del inputs
         return results
 
 
@@ -2259,5 +2263,6 @@ class TensorflowBackend(Backend):
                         self.bitsize(type_as)
                     )
                     results[key] = (t1 - t0) / n_runs
+                    del inputs
 
         return results

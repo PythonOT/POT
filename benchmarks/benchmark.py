@@ -37,7 +37,7 @@ def get_keys(d):
     return sorted(list(d.keys()))
 
 
-def convert_to_html_table(results, param_name, comments=None):
+def convert_to_html_table(results, param_name, main_title=None, comments=None):
     string = "<table>\n"
     keys = get_keys(results)
     subkeys = get_keys(results[keys[0]])
@@ -50,7 +50,13 @@ def convert_to_html_table(results, param_name, comments=None):
     gpus_cols = list(devices).count("GPU") / n_bitsizes
     assert cpus_cols + gpus_cols == len(devices_names)
 
+    if main_title is not None:
+        string += f'<tr><th align="center" colspan="{length}">{str(main_title)}</th></tr>\n'
+
     for i, bitsize in enumerate(sorted(list(set(bitsizes)))):
+
+        if i != 0:
+            string += f'<tr><td colspan="{length}">&nbsp;</td></tr>\n'
 
         # make bitsize header
         text = f"{bitsize} bits"
@@ -60,7 +66,8 @@ def convert_to_html_table(results, param_name, comments=None):
                 text += str(comments[i])
             else:
                 text += str(comments)
-        string += f'<tr><th align="center" colspan="{length}">{text}</th></tr>\n'
+        string += f'<tr><th align="center">Bitsize</th>'
+        string += f'<th align="center" colspan="{length - 1}">{text}</th></tr>\n'
 
         # make device header
         string += f'<tr><th align="center">Devices</th>'

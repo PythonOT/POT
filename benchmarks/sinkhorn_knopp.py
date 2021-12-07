@@ -23,16 +23,18 @@ def setup(n_samples):
 
 
 if __name__ == "__main__":
+    n_runs = 100
+    param_list = [50]#100, 500]#, 1000, 2000, 5000, 10000]
+
     setup_backends()
     results = exec_bench(
         setup=setup,
         tested_function=lambda *args: ot.bregman.sinkhorn(*args, reg=1, stopThr=1e-7),
-        param_list=[50, 100, 500, 1000], #, 2000, 5000, 10000],
-        n_runs=10
+        param_list=param_list,
+        n_runs=n_runs
     )
-
     print(convert_to_html_table(
         results, 
         param_name="Sample size",
-        comments="Sinkhorn Knopp"
+        main_title=f"Sinkhorn Knopp - Averaged on {n_runs} runs"
     ))
