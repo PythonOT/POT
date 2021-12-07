@@ -1010,9 +1010,12 @@ class JaxBackend(Backend):
     def __init__(self):
         self.rng_ = jax.random.PRNGKey(42)
 
-        for d in jax.devices():
-            self.__type_list__ = [jax.device_put(jnp.array(1, dtype=jnp.float32), d),
-                                  jax.device_put(jnp.array(1, dtype=jnp.float64), d)]
+        self.__type_list__ = []
+        for d in jax.devices("cpu") + jax.devices("gpu"):
+            self.__type_list__ += [
+                jax.device_put(jnp.array(1, dtype=jnp.float32), d),
+                jax.device_put(jnp.array(1, dtype=jnp.float64), d)
+            ]
 
     def to_numpy(self, a):
         return np.array(a)
