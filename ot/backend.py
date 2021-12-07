@@ -720,7 +720,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def prettier_device(self, type_as):
+    def device_type(self, type_as):
         r"""
         Returns CPU or GPU depending on the device where the given tensor is located.
         """
@@ -975,7 +975,7 @@ class NumpyBackend(Backend):
     def bitsize(self, type_as):
         return type_as.itemsize * 8
 
-    def prettier_device(self, type_as):
+    def device_type(self, type_as):
         return "CPU"
 
     def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
@@ -988,7 +988,7 @@ class NumpyBackend(Backend):
             for _ in range(n_runs):
                 callable(*inputs)
             t1 = time.perf_counter()
-            key = ("Numpy", self.prettier_device(type_as), self.bitsize(type_as))
+            key = ("Numpy", self.device_type(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
         return results
 
@@ -1258,8 +1258,8 @@ class JaxBackend(Backend):
     def bitsize(self, type_as):
         return type_as.dtype.itemsize * 8
 
-    def prettier_device(self, type_as):
-        return "CPU" if "cpu" in str(type_as.device_buffer.device()) else "GPU"
+    def device_type(self, type_as):
+        return self.dtype_device(type_as)[1].platform.upper()
 
     def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
         results = dict()
@@ -1279,7 +1279,7 @@ class JaxBackend(Backend):
                 # block_until_ready method to measure asynchronous calculations
                 add_one(callable(*inputs)).block_until_ready()
             t1 = time.perf_counter()
-            key = ("Jax", self.prettier_device(type_as), self.bitsize(type_as))
+            key = ("Jax", self.device_type(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
         return results
 
@@ -1631,7 +1631,7 @@ class TorchBackend(Backend):
     def bitsize(self, type_as):
         return torch.finfo(type_as.dtype).bits
 
-    def prettier_device(self, type_as):
+    def device_type(self, type_as):
         return "CPU" if "cpu" in str(type_as.device) else "GPU"
 
     def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
@@ -1640,7 +1640,7 @@ class TorchBackend(Backend):
             inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
             for _ in range(warmup_runs):
                 callable(*inputs)
-            if self.prettier_device(type_as) == "GPU":  # pragma: no cover
+            if self.device_type(type_as) == "GPU":  # pragma: no cover
                 torch.cuda.synchronize()
                 start = torch.cuda.Event(enable_timing=True)
                 end = torch.cuda.Event(enable_timing=True)
@@ -1649,14 +1649,14 @@ class TorchBackend(Backend):
                 start = time.perf_counter()
             for _ in range(n_runs):
                 callable(*inputs)
-            if self.prettier_device(type_as) == "GPU":  # pragma: no cover
+            if self.device_type(type_as) == "GPU":  # pragma: no cover
                 end.record()
                 torch.cuda.synchronize()
                 duration = start.elapsed_time(end) / 1000.
             else:
                 end = time.perf_counter()
                 duration = end - start
-            key = ("Pytorch", self.prettier_device(type_as), self.bitsize(type_as))
+            key = ("Pytorch", self.device_type(type_as), self.bitsize(type_as))
             results[key] = duration / n_runs
         return results
 
@@ -1950,7 +1950,7 @@ class CupyBackend(Backend):  # pragma: no cover
     def bitsize(self, type_as):
         return type_as.itemsize * 8
 
-    def prettier_device(self, type_as):
+    def device_type(self, type_as):
         return "GPU"
 
     def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
@@ -1967,7 +1967,7 @@ class CupyBackend(Backend):  # pragma: no cover
                 callable(*inputs)
             end_gpu.record()
             end_gpu.synchronize()
-            key = ("Cupy", self.prettier_device(type_as), self.bitsize(type_as))
+            key = ("Cupy", self.device_type(type_as), self.bitsize(type_as))
             t_gpu = cp.cuda.get_elapsed_time(start_gpu, end_gpu) / 1000.
             results[key] = t_gpu / n_runs
         return results
@@ -2273,7 +2273,7 @@ class TensorflowBackend(Backend):
     def bitsize(self, type_as):
         return type_as.dtype.size * 8
 
-    def prettier_device(self, type_as):
+    def device_type(self, type_as):
         return "CPU" if "CPU" in type_as.device else "GPU"
 
     def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
@@ -2294,7 +2294,7 @@ class TensorflowBackend(Backend):
                     t1 = time.perf_counter()
                     key = (
                         "Tensorflow",
-                        self.prettier_device(inputs[0]),
+                        self.device_type(inputs[0]),
                         self.bitsize(type_as)
                     )
                     results[key] = (t1 - t0) / n_runs

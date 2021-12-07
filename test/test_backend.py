@@ -261,7 +261,7 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.bitsize(M)
     with pytest.raises(NotImplementedError):
-        nx.prettier_device(M)
+        nx.device_type(M)
     with pytest.raises(NotImplementedError):
         nx._bench(lambda x: x, M, n_runs=1)
 
@@ -545,7 +545,7 @@ def test_func_backends(nx):
         lst_b.append(float(A))
         lst_name.append("bitsize")
 
-        A = nx.prettier_device(Mb)
+        A = nx.device_type(Mb)
         assert A in ("CPU", "GPU")
 
         nx._bench(lambda x: x, M, n_runs=1)
