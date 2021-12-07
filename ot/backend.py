@@ -85,7 +85,7 @@ def get_backend_list():
     if jax:
         lst.append(JaxBackend())
 
-    if cp:
+    if cp:  # pragma: no cover
         lst.append(CupyBackend())
 
     if tf:
@@ -112,7 +112,7 @@ def get_backend(*args):
         return TorchBackend()
     elif isinstance(args[0], jax_type):
         return JaxBackend()
-    elif isinstance(args[0], cp_type):
+    elif isinstance(args[0], cp_type):  # pragma: no cover
         return CupyBackend()
     elif isinstance(args[0], tf_type):
         return TensorflowBackend()
@@ -1637,7 +1637,7 @@ class TorchBackend(Backend):
         for type_as in self.__type_list__:
             inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
             callable(*inputs)
-            if self.prettier_device(type_as) == "GPU":
+            if self.prettier_device(type_as) == "GPU":  # pragma: no cover
                 torch.cuda.synchronize()
                 start = torch.cuda.Event(enable_timing=True)
                 end = torch.cuda.Event(enable_timing=True)
@@ -1646,7 +1646,7 @@ class TorchBackend(Backend):
                 start = time.perf_counter()
             for _ in range(n_runs):
                 callable(*inputs)
-            if self.prettier_device(type_as) == "GPU":
+            if self.prettier_device(type_as) == "GPU":  # pragma: no cover
                 end.record()
                 torch.cuda.synchronize()
                 duration = start.elapsed_time(end) / 1000.
@@ -2275,7 +2275,7 @@ class TensorflowBackend(Backend):
     def _bench(self, callable, *args, n_runs=1):
         results = dict()
         device_contexts = [tf.device("/CPU:0")]
-        if len(tf.config.list_physical_devices('GPU')) > 0:
+        if len(tf.config.list_physical_devices('GPU')) > 0:  # pragma: no cover
             device_contexts.append(tf.device("/GPU:0"))
 
         for device_context in device_contexts:
