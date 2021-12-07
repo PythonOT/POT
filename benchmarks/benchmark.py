@@ -71,7 +71,7 @@ def convert_to_html_table(results, param_name, main_title=None, comments=None):
         string += f'<th align="center" colspan="{length - 1}">{text}</th></tr>\n'
 
         # make device header
-        string += f'<tr><th align="center">Devices</th>'
+        string += f'<tr><th align="center">Device</th>'
         string += f'<th align="center" colspan="{cpus_cols}"">CPU</th>'
         string += f'<th align="center" colspan="{gpus_cols}">GPU</tr>\n'
 
