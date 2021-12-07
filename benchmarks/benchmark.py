@@ -15,7 +15,7 @@ def setup_backends():
         np_config.enable_numpy_behavior()
 
 
-def exec_bench(setup, tested_function, param_list, n_runs):
+def exec_bench(setup, tested_function, param_list, n_runs, warmup_runs):
     backend_list = get_backend_list()
     results = dict()
     for param in param_list:
@@ -26,7 +26,8 @@ def exec_bench(setup, tested_function, param_list, n_runs):
             results_nx = nx._bench(
                 tested_function,
                 *inputs,
-                n_runs=n_runs
+                n_runs=n_runs,
+                warmup_runs=warmup_runs
             )
             L.update(results_nx)
         results[param] = L

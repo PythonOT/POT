@@ -726,7 +726,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def _bench(self, callable, *args, n_runs=1):
+    def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
         r"""
         Executes a benchmark of the given callable with the given arguments.
         """
@@ -978,11 +978,12 @@ class NumpyBackend(Backend):
     def prettier_device(self, type_as):
         return "CPU"
 
-    def _bench(self, callable, *args, n_runs=1):
+    def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
         results = dict()
         for type_as in self.__type_list__:
             inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
-            callable(*inputs)
+            for _ in range(warmup_runs):
+                callable(*inputs)
             t0 = time.perf_counter()
             for _ in range(n_runs):
                 callable(*inputs)
@@ -1260,7 +1261,7 @@ class JaxBackend(Backend):
     def prettier_device(self, type_as):
         return "CPU" if "cpu" in str(type_as.device_buffer.device()) else "GPU"
 
-    def _bench(self, callable, *args, n_runs=1):
+    def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
         results = dict()
 
         @jax.jit
@@ -1269,7 +1270,8 @@ class JaxBackend(Backend):
 
         for type_as in self.__type_list__:
             inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
-            callable(*inputs)
+            for _ in range(warmup_runs):
+                add_one(callable(*inputs)).block_until_ready()
             t0 = time.perf_counter()
             for _ in range(n_runs):
                 # We are technically doing more calculations but adding one
@@ -1632,11 +1634,12 @@ class TorchBackend(Backend):
     def prettier_device(self, type_as):
         return "CPU" if "cpu" in str(type_as.device) else "GPU"
 
-    def _bench(self, callable, *args, n_runs=1):
+    def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
         results = dict()
         for type_as in self.__type_list__:
             inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
-            callable(*inputs)
+            for _ in range(warmup_runs):
+                callable(*inputs)
             if self.prettier_device(type_as) == "GPU":  # pragma: no cover
                 torch.cuda.synchronize()
                 start = torch.cuda.Event(enable_timing=True)
@@ -1950,13 +1953,14 @@ class CupyBackend(Backend):  # pragma: no cover
     def prettier_device(self, type_as):
         return "GPU"
 
-    def _bench(self, callable, *args, n_runs=1):
+    def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
         results = dict()
         for type_as in self.__type_list__:
             inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
             start_gpu = cp.cuda.Event()
             end_gpu = cp.cuda.Event()
-            callable(*inputs)
+            for _ in range(warmup_runs):
+                callable(*inputs)
             start_gpu.synchronize()
             start_gpu.record()
             for _ in range(n_runs):
@@ -2272,7 +2276,7 @@ class TensorflowBackend(Backend):
     def prettier_device(self, type_as):
         return "CPU" if "CPU" in type_as.device else "GPU"
 
-    def _bench(self, callable, *args, n_runs=1):
+    def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
         results = dict()
         device_contexts = [tf.device("/CPU:0")]
         if len(tf.config.list_physical_devices('GPU')) > 0:  # pragma: no cover
@@ -2282,7 +2286,8 @@ class TensorflowBackend(Backend):
             with device_context:
                 for type_as in self.__type_list__:
                     inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
-                    callable(*inputs)
+                    for _ in range(warmup_runs):
+                        callable(*inputs)
                     t0 = time.perf_counter()
                     for _ in range(n_runs):
                         callable(*inputs)

@@ -22,6 +22,7 @@ def setup(n_samples):
 
 if __name__ == "__main__":
     n_runs = 100
+    warmup_runs = 10
     param_list = [50, 100, 500]  # 1000, 2000, 5000, 10000]
 
     setup_backends()
@@ -29,7 +30,8 @@ if __name__ == "__main__":
         setup=setup,
         tested_function=lambda a, M: ot.emd(a, a, M),
         param_list=param_list,
-        n_runs=n_runs
+        n_runs=n_runs,
+        warmup_runs=warmup_runs
     )
     print(convert_to_html_table(
         results, 
