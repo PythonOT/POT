@@ -624,3 +624,17 @@ def test_gradients_backends():
         np.testing.assert_almost_equal(fun(v, c, e), c * np.sum(v ** 4) + e, decimal=4)
         np.testing.assert_allclose(grad_val[0], v, atol=1e-4)
         np.testing.assert_allclose(grad_val[2], 2 * e, atol=1e-4)
+
+    if tf:
+        nx = ot.backend.TensorflowBackend()
+        w = tf.Variable(tf.random.normal((3, 2)), name='w')
+        b = tf.Variable(tf.random.normal((2,), dtype=tf.float32), name='b')
+        x = tf.random.normal((1, 3), dtype=tf.float32)
+
+        with tf.GradientTape() as tape:
+            y = x @ w + b
+            loss = tf.reduce_mean(y ** 2)
+            manipulated_loss = nx.set_gradients(loss, (w, b), (w, b))
+            [dl_dw, dl_db] = tape.gradient(manipulated_loss, [w, b])
+            assert nx.allclose(dl_dw, w)
+            assert nx.allclose(dl_db, b)
