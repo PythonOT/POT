@@ -19,11 +19,11 @@ Examples
 ...     return c
 
 
-.. note::
-Tensorflow only works with the numpy API. To activate it, please run the following:
+.. warning::
+    Tensorflow only works with the Numpy API. To activate it, please run the following:
 
->>> from tensorflow.python.ops.numpy_ops import np_config
->>> np_config.enable_numpy_behavior()
+    >>> from tensorflow.python.ops.numpy_ops import np_config
+    >>> np_config.enable_numpy_behavior()
 """
 
 # Author: Remi Flamary <remi.flamary@polytechnique.edu>
