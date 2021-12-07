@@ -195,8 +195,8 @@ reg =0.01
 alpha = 0.5 # trade-off parameter between structure and feature information of Fused Gromov-Wasserstein
 
 Cdictionary_learned,Ydictionary_learned, log=fused_gromov_wasserstein_dictionary_learning(dataset, dataset_features,ps,D, nt,q,alpha,
-                                                                epochs=20,batch_size=4,learning_rate_C=0.01, learning_rate_Y=0.01, reg=reg,
-                                                                projection='nonnegative_symmetric',use_log=True,use_adam_optimizer=True,verbose=True)
+                                                                epochs=20,batch_size=16,learning_rate_C=0.01, learning_rate_Y=0.01, reg=reg,
+                                                                projection='nonnegative_symmetric',use_log=True,use_adam_optimizer=False,verbose=True)
 #visualize loss evolution
 pl.figure(2,(5,5))
 pl.clf()

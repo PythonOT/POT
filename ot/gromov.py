@@ -1856,6 +1856,16 @@ def gromov_wasserstein_dictionary_learning(Cs, ps,D, nt,q,epochs=15,batch_size=1
     Cs = [nx.to_numpy(C) for C in Cs0]    
     ps = [nx.to_numpy(p) for p in ps0]
     q= nx.to_numpy(q0)
+    # Initialize randomly structures of dictionary atoms by sampling existing values
+    dataset_size = len(Cs)
+    min_C, max_C= np.inf, -np.inf
+    batch_idx = np.random.choice(range(dataset_size), size=min(50,dataset_size),replace=False)    
+    for idx in batch_idx:
+        min_localC = np.min(Cs[idx])
+        max_localC = np.max(Cs[idx])
+        min_C = min(min_C,min_localC)
+        max_C = max(max_C,max_localC)
+        
     # Initialize dictionary atoms
     Cdictionary = np.random.uniform(low= 0., high=1., size= (D,nt,nt))
     if projection in ['nonnegative_symmetric','symmetric']:
@@ -1867,7 +1877,6 @@ def gromov_wasserstein_dictionary_learning(Cs, ps,D, nt,q,epochs=15,batch_size=1
     const_q = q[:,None]*q[None,:]
     Cdictionary_best_state = Cdictionary.copy()
     loss_best_state = np.inf
-    dataset_size = len(Cs)
     iter_by_epoch= dataset_size//batch_size +1
     for epoch in range(epochs):
         cumulated_loss_over_epoch = 0.
@@ -2112,7 +2121,8 @@ def _cg_gromov_wasserstein_unmixing(C,Cdictionary,Cembedded,w,const_q,T,starting
         count+=1
             
     return w, Cembedded,current_loss
-from tqdm import tqdm 
+
+
 def fused_gromov_wasserstein_dictionary_learning(Cs,Ys, ps,D, nt,q,alpha, epochs,batch_size ,learning_rate_C, learning_rate_Y, reg=0.,projection='nonnegative_symmetric',use_log=True,
                                            tol_outer=10**(-6),tol_inner = 10**(-6),max_iter_outer=20,max_iter_inner=200,use_adam_optimizer=True,**kwargs):
     r"""
@@ -2205,17 +2215,26 @@ def fused_gromov_wasserstein_dictionary_learning(Cs,Ys, ps,D, nt,q,alpha, epochs
     q= nx.to_numpy(q0)
     d= Ys[0].shape[-1]
     dataset_size = len(Cs)
-    # Initialize randomly structures of dictionary atoms > 
-    Cdictionary = np.random.uniform(low= 0., high=1., size= (D,nt,nt))
+    # Initialize randomly structures/features of dictionary atoms by sampling existing values
+    min_C, max_C= np.inf, -np.inf
+    min_Y, max_Y= np.inf, -np.inf
+    batch_idx = np.random.choice(range(dataset_size), size=min(50,dataset_size),replace=False)    
+    for idx in batch_idx:
+        min_localC = np.min(Cs[idx])
+        max_localC = np.max(Cs[idx])
+        min_localY = np.min(Ys[idx])
+        max_localY = np.max(Ys[idx])
+        min_C = min(min_C,min_localC)
+        max_C = max(max_C,max_localC)
+        min_Y = min(min_Y,min_localY)
+        max_Y = max(max_Y,max_localY)
+        
+    Ydictionary = np.random.uniform(low=min_Y,high=max_Y,size=(D,nt,d))
+    Cdictionary = np.random.uniform(low=min_C,high=max_C,size=(D,nt,nt))
     if projection in ['nonnegative_symmetric','symmetric']:
         Cdictionary = 0.5* (Cdictionary + Cdictionary.transpose((0,2,1)))  
-    # Initialize by random sampling features of dictionary atoms
-    Ydictionary = np.zeros((D,nt,d))
-    for atom_idx in range(D):
-        for n in range(nt):
-            sample_idx = np.random.choice(range(dataset_size))
-            point_idx = np.random.choice(range(Cs[sample_idx].shape[0]))
-            Ydictionary[atom_idx,n,:] = Ys[sample_idx][point_idx]
+    if projection =='nonnegative_symmetric':
+        Cdictionary[Cdictionary<0.]=0.
     if use_adam_optimizer:
         adam_moments_C = _initialize_adam_optimizer(Cdictionary)
         adam_moments_Y = _initialize_adam_optimizer(Ydictionary)
@@ -2237,14 +2256,11 @@ def fused_gromov_wasserstein_dictionary_learning(Cs,Ys, ps,D, nt,q,alpha, epochs
             Cs_embedded = np.zeros((batch_size,nt,nt))
             Ys_embedded = np.zeros((batch_size,nt,d))
             Ts = [None]*batch_size
-            for batch_idx,C_idx in tqdm(enumerate(batch)):
+            for batch_idx,C_idx in enumerate(batch):
                 #BCD solver for Gromov-Wassersteisn linear unmixing used independently on each structure of the sampled batch
                 unmixings[batch_idx],Cs_embedded[batch_idx],Ys_embedded[batch_idx], Ts[batch_idx],current_loss=fused_gromov_wasserstein_linear_unmixing(Cs[C_idx],Ys[C_idx],Cdictionary,Ydictionary,ps[C_idx],q,alpha,reg=reg,tol_outer=tol_outer,tol_inner = tol_inner,max_iter_outer=max_iter_outer,max_iter_inner=max_iter_inner)
                 cumulated_loss_over_batch+=current_loss
             cumulated_loss_over_epoch+=cumulated_loss_over_batch
-            print('unmixings: ', unmixings)
-            print('Cs_embedded: ', Cs_embedded)
-            print('Ys_embedded: ', Ys_embedded)
             if use_log:
                 log['loss_batches'].append(cumulated_loss_over_batch)
             # Stochastic projected gradient step over dictionary atoms
@@ -2258,9 +2274,7 @@ def fused_gromov_wasserstein_dictionary_learning(Cs,Ys, ps,D, nt,q,alpha, epochs
                 grad_Ydictionary += (1-alpha)*unmixings[batch_idx][:,None,None]*shared_term_features[None,:,:]
             grad_Cdictionary*=2/batch_size
             grad_Ydictionary*=2/batch_size
-            print('grad Cdictionary (unique):', np.unique(grad_Cdictionary,return_counts=True))
-            print('grad Ydictionary (unique):', np.unique(grad_Ydictionary,return_counts=True))
-
+            
             if use_adam_optimizer:
                 Cdictionary,adam_moments_C = _adam_stochastic_updates(Cdictionary, grad_Cdictionary, learning_rate_C,adam_moments_C)
                 Ydictionary,adam_moments_Y = _adam_stochastic_updates(Ydictionary, grad_Ydictionary, learning_rate_Y,adam_moments_Y)
@@ -2393,7 +2407,7 @@ def fused_gromov_wasserstein_linear_unmixing(C,Y,Cdictionary,Ydictionary,p,q,alp
         else: # handle numerical issues around 0
             convergence_criterion = abs(previous_loss - current_loss)/10**(-12)
         outer_count+=1
-        print('--------- BCD : outer_count:%s / current_loss = %s / convergence_criterion=%s'%(outer_count, current_loss,convergence_criterion))
+        #print('--------- BCD : outer_count:%s / current_loss = %s / convergence_criterion=%s'%(outer_count, current_loss,convergence_criterion))
         
     return nx.from_numpy(w),nx.from_numpy(Cembedded),nx.from_numpy(Yembedded), nx.from_numpy(T),nx.from_numpy(current_loss)
 
