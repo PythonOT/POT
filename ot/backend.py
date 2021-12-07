@@ -1644,7 +1644,7 @@ class TorchBackend(Backend):
                 start = time.perf_counter()
             for _ in range(n_runs):
                 callable(*inputs)
-            if self.prettier_device(type_as) == "GPU":    
+            if self.prettier_device(type_as) == "GPU":
                 end.record()
                 torch.cuda.synchronize()
                 duration = start.elapsed_time(end) / 1000.
