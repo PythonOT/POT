@@ -22,6 +22,7 @@ def exec_bench(setup, tested_function, param_list, n_runs):
         L = dict()
         inputs = setup(param)
         for nx in backend_list:
+            print(param, nx)
             results_nx = nx._bench(
                 tested_function,
                 *inputs,
@@ -36,23 +37,43 @@ def get_keys(d):
     return sorted(list(d.keys()))
 
 
-def convert_to_html_table(results, param_name):
+def convert_to_html_table(results, param_name, comments=None):
     string = "<table>\n"
     keys = get_keys(results)
-    print(results[keys[0]].keys())
     subkeys = get_keys(results[keys[0]])
     names, devices, bitsizes = zip(*subkeys)
 
-    names = sorted(list(set(zip(names, devices))))
-    length = len(names) + 1
+    devices_names = sorted(list(set(zip(devices, names))))
+    length = len(devices_names) + 1
+    n_bitsizes = len(set(bitsizes))
+    cpus_cols = list(devices).count("CPU") / n_bitsizes
+    gpus_cols = list(devices).count("GPU") / n_bitsizes
+    assert cpus_cols + gpus_cols == len(devices_names)
 
-    for bitsize in sorted(list(set(bitsizes))):
-        string += f'<tr><th align="center" colspan="{length}">{bitsize} bits</td></tr>\n'
-        string += f'<tr><th align="center">{param_name}</td>'
-        for name, device in names:
-            string += f'<th align="center">{name} {device}</td>'
+    for i, bitsize in enumerate(sorted(list(set(bitsizes)))):
+
+        # make bitsize header
+        text = f"{bitsize} bits"
+        if comments is not None:
+            text += " - "
+            if isinstance(comments, (tuple, list)) and len(comments) == n_bitsizes:
+                text += str(comments[i])
+            else:
+                text += str(comments)
+        string += f'<tr><th align="center" colspan="{length}">{text}</th></tr>\n'
+
+        # make device header
+        string += f'<tr><th align="center">Devices</th>'
+        string += f'<th align="center" colspan="{cpus_cols}"">CPU</th>'
+        string += f'<th align="center" colspan="{gpus_cols}">GPU</tr>\n'
+
+        # make param_name / backend header
+        string += f'<tr><th align="center">{param_name}</th>'
+        for device, name in devices_names:
+            string += f'<th align="center">{name}</th>'
         string += "</tr>\n"
 
+        # make results rows
         for key in keys:
             subdict = results[key]
             subkeys = get_keys(subdict)

@@ -31,4 +31,8 @@ if __name__ == "__main__":
         n_runs=10
     )
 
-    print(convert_to_html_table(results, param_name="Sample size"))
+    print(convert_to_html_table(
+        results, 
+        param_name="Sample size",
+        comments="Sinkhorn Knopp"
+    ))
