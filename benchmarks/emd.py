@@ -11,15 +11,13 @@ from .benchmark import (
 
 
 def setup(n_samples):
-    rng = np.random.RandomState(123456789)
-    a = rng.rand(n_samples // 4, 100)
-    b = rng.rand(n_samples, 100)
+    rng = np.random.RandomState(789465132)
+    x = rng.randn(n_samples, 2)
+    y = rng.randn(n_samples, 2)
 
-    wa = ot.unif(n_samples // 4)
-    wb = ot.unif(n_samples)
-
-    M = ot.dist(a.copy(), b.copy())
-    return wa, wb, M
+    a = ot.utils.unif(n_samples)
+    M = ot.dist(x, y)
+    return a, M
 
 
 if __name__ == "__main__":
@@ -29,12 +27,12 @@ if __name__ == "__main__":
     setup_backends()
     results = exec_bench(
         setup=setup,
-        tested_function=lambda *args: ot.bregman.sinkhorn(*args, reg=1, stopThr=1e-7),
+        tested_function=lambda a, M: ot.emd(a, a, M),
         param_list=param_list,
         n_runs=n_runs
     )
     print(convert_to_html_table(
         results, 
         param_name="Sample size",
-        main_title=f"Sinkhorn Knopp - Averaged on {n_runs} runs"
+        main_title=f"EMD - Averaged on {n_runs} runs"
     ))
