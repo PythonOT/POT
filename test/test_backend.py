@@ -258,6 +258,12 @@ def test_empty_backend():
         nx.allclose(M, M)
     with pytest.raises(NotImplementedError):
         nx.squeeze(M)
+    with pytest.raises(NotImplementedError):
+        nx.bitsize(M)
+    with pytest.raises(NotImplementedError):
+        nx.prettier_device(M)
+    with pytest.raises(NotImplementedError):
+        nx._bench(lambda x: x, M, n_runs=1)
 
 
 def test_func_backends(nx):
@@ -534,6 +540,15 @@ def test_func_backends(nx):
 
         A = nx.squeeze(nx.zeros((3, 1, 4, 1)))
         assert tuple(A.shape) == (3, 4), 'Assert fail on: squeeze'
+
+        A = nx.bitsize(Mb)
+        lst_b.append(float(A))
+        lst_name.append("bitsize")
+
+        A = nx.prettier_device(Mb)
+        assert A in ("CPU", "GPU")
+
+        nx._bench(lambda x: x, M, n_runs=1)
 
         lst_tot.append(lst_b)
 

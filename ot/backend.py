@@ -705,6 +705,24 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def bitsize(self, type_as):
+        r"""
+        Gives the number of bits used by the data type of the given tensor.
+        """
+        raise NotImplementedError()
+
+    def prettier_device(self, type_as):
+        r"""
+        Returns CPU or GPU depending on the device where the given tensor is located.
+        """
+        raise NotImplementedError()
+
+    def _bench(self, callable, *args, n_runs=1):
+        r"""
+        Executes a benchmark of the given callable with the given arguments.
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -945,16 +963,22 @@ class NumpyBackend(Backend):
     def squeeze(self, a, axis=None):
         return np.squeeze(a, axis=axis)
 
+    def bitsize(self, type_as):
+        return type_as.itemsize * 8
+
+    def prettier_device(self, type_as):
+        return "CPU"
+
     def _bench(self, callable, *args, n_runs=1):
         results = dict()
         for type_as in self.__type_list__:
-            args = [self.from_numpy(arg, type_as=type_as) for arg in args]
-            callable(*args)
+            inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
+            callable(*inputs)
             t0 = time.perf_counter()
             for _ in range(n_runs):
-                callable(*args)
+                callable(*inputs)
             t1 = time.perf_counter()
-            key = ("Numpy", "CPU", type_as.itemsize * 8)
+            key = ("Numpy", self.prettier_device(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
         return results
 
@@ -1221,18 +1245,22 @@ class JaxBackend(Backend):
     def squeeze(self, a, axis=None):
         return jnp.squeeze(a, axis=axis)
 
+    def bitsize(self, type_as):
+        return type_as.dtype.itemsize * 8
+
+    def prettier_device(self, type_as):
+        return "CPU" if "cpu" in str(type_as.device_buffer.device()) else "GPU"
+
     def _bench(self, callable, *args, n_runs=1):
         results = dict()
         for type_as in self.__type_list__:
-            args = [self.from_numpy(arg, type_as=type_as) for arg in args]
-            callable(*args)
+            inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
+            callable(*inputs)
             t0 = time.perf_counter()
             for _ in range(n_runs):
-                callable(*args)
+                callable(*inputs)
             t1 = time.perf_counter()
-            device = "CPU" if "cpu" in str(type_as.device_buffer.device()) else "GPU"
-            bitsize = type_as.dtype.itemsize * 8
-            key = ("Jax", device, bitsize)
+            key = ("Jax", self.prettier_device(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
         return results
 
@@ -1581,18 +1609,22 @@ class TorchBackend(Backend):
         else:
             return torch.squeeze(a, dim=axis)
 
+    def bitsize(self, type_as):
+        return torch.finfo(type_as.dtype).bits
+
+    def prettier_device(self, type_as):
+        return "CPU" if "cpu" in str(type_as.device) else "GPU"
+
     def _bench(self, callable, *args, n_runs=1):
         results = dict()
         for type_as in self.__type_list__:
-            args = [self.from_numpy(arg, type_as=type_as) for arg in args]
-            callable(*args)
+            inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
+            callable(*inputs)
             t0 = time.perf_counter()
             for _ in range(n_runs):
-                callable(*args)
+                callable(*inputs)
             t1 = time.perf_counter()
-            device = "CPU" if "cpu" in str(type_as.device) else "GPU"
-            bitsize = torch.finfo(type_as.dtype).bits
-            key = ("Pytorch", device, bitsize)
+            key = ("Pytorch", self.prettier_device(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
         return results
 
@@ -1883,16 +1915,22 @@ class CupyBackend(Backend):  # pragma: no cover
     def squeeze(self, a, axis=None):
         return cp.squeeze(a, axis=axis)
 
+    def bitsize(self, type_as):
+        return type_as.itemsize * 8
+
+    def prettier_device(self, type_as):
+        return "GPU"
+
     def _bench(self, callable, *args, n_runs=1):
         results = dict()
         for type_as in self.__type_list__:
-            args = [self.from_numpy(arg, type_as=type_as) for arg in args]
-            callable(*args)
+            inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
+            callable(*inputs)
             t0 = time.perf_counter()
             for _ in range(n_runs):
-                callable(*args)
+                callable(*inputs)
             t1 = time.perf_counter()
-            key = ("Cupy", "GPU", type_as.itemsize * 8)
+            key = ("Cupy", self.prettier_device(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
         return results
 
@@ -2194,27 +2232,32 @@ class TensorflowBackend(Backend):
     def squeeze(self, a, axis=None):
         return tnp.squeeze(a, axis=axis)
 
+    def bitsize(self, type_as):
+        return type_as.dtype.size * 8
+
+    def prettier_device(self, type_as):
+        return "CPU" if "CPU" in type_as.device else "GPU"
+
     def _bench(self, callable, *args, n_runs=1):
         results = dict()
-        with tf.device("/CPU:0"):
-            for type_as in self.__type_list__:
-                args = [self.from_numpy(arg, type_as=type_as) for arg in args]
-                callable(*args)
-                t0 = time.perf_counter()
-                for _ in range(n_runs):
-                    callable(*args)
-                t1 = time.perf_counter()
-                key = ("Tensorflow", "CPU", type_as.dtype.size * 8)
-                results[key] = (t1 - t0) / n_runs
-        
+        device_contexts = [tf.device("/CPU:0")]
         if len(tf.config.list_physical_devices('GPU')) > 0:
-            for type_as in self.__type_list__:
-                args = [self.from_numpy(arg, type_as=type_as) for arg in args]
-                callable(*args)
-                t0 = time.perf_counter()
-                for _ in range(n_runs):
-                    callable(*args)
-                t1 = time.perf_counter()
-                key = ("Tensorflow", "GPU", type_as.dtype.size * 8)
-                results[key] = (t1 - t0) / n_runs
+            device_contexts.append(tf.device("/GPU:0"))
+
+        for device_context in device_contexts:
+            with device_context:
+                for type_as in self.__type_list__:
+                    inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
+                    callable(*inputs)
+                    t0 = time.perf_counter()
+                    for _ in range(n_runs):
+                        callable(*inputs)
+                    t1 = time.perf_counter()
+                    key = (
+                        "Tensorflow",
+                        self.prettier_device(inputs[0]),
+                        self.bitsize(type_as)
+                    )
+                    results[key] = (t1 - t0) / n_runs
+
         return results
