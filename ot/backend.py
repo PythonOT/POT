@@ -1253,9 +1253,11 @@ class JaxBackend(Backend):
 
     def _bench(self, callable, *args, n_runs=1):
         results = dict()
+
         @jax.jit
         def add_one(M):
             return M + 1
+
         for type_as in self.__type_list__:
             inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
             callable(*inputs)
