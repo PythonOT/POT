@@ -18,7 +18,6 @@ Examples
 ...     c = nx.dot(a, b)  # now use the backend to do any calculation
 ...     return c
 
-
 .. warning::
     Tensorflow only works with the Numpy API. To activate it, please run the following:
 
@@ -26,6 +25,60 @@ Examples
 
         from tensorflow.python.ops.numpy_ops import np_config
         np_config.enable_numpy_behavior()
+
+Performance
+--------
+
+- CPU: Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz
+- GPU: Tesla V100-SXM2-32GB
+- Date of the benchmark: December 8th, 2021
+- Commit of benchmark: PR #316, https://github.com/PythonOT/POT/pull/316
+
+.. raw:: html
+
+    <style>
+    #perftable {
+        width: 100%;
+        margin-bottom: 1em;
+    }
+
+    #perftable table{
+        border-collapse: collapse;
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    #perftable th, #perftable td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        font-size: smaller;
+    }
+    </style>
+
+    <div id="perftable">
+    <table>
+    <tr><th align="center" colspan="8">Sinkhorn Knopp - Averaged on 100 runs</th></tr>
+    <tr><th align="center">Bitsize</th><th align="center" colspan="7">32 bits</th></tr>
+    <tr><th align="center">Device</th><th align="center" colspan="3.0"">CPU</th><th align="center" colspan="4.0">GPU</tr>
+    <tr><th align="center">Sample size</th><th align="center">Numpy</th><th align="center">Pytorch</th><th align="center">Tensorflow</th><th align="center">Cupy</th><th align="center">Jax</th><th align="center">Pytorch</th><th align="center">Tensorflow</th></tr>
+    <tr><td align="center">50</td><td align="center">0.0008</td><td align="center">0.0022</td><td align="center">0.0151</td><td align="center">0.0095</td><td align="center">0.0193</td><td align="center">0.0051</td><td align="center">0.0293</td></tr>
+    <tr><td align="center">100</td><td align="center">0.0005</td><td align="center">0.0013</td><td align="center">0.0097</td><td align="center">0.0057</td><td align="center">0.0115</td><td align="center">0.0029</td><td align="center">0.0173</td></tr>
+    <tr><td align="center">500</td><td align="center">0.0009</td><td align="center">0.0016</td><td align="center">0.0110</td><td align="center">0.0058</td><td align="center">0.0115</td><td align="center">0.0029</td><td align="center">0.0166</td></tr>
+    <tr><td align="center">1000</td><td align="center">0.0021</td><td align="center">0.0021</td><td align="center">0.0145</td><td align="center">0.0056</td><td align="center">0.0118</td><td align="center">0.0029</td><td align="center">0.0168</td></tr>
+    <tr><td align="center">2000</td><td align="center">0.0069</td><td align="center">0.0043</td><td align="center">0.0278</td><td align="center">0.0059</td><td align="center">0.0118</td><td align="center">0.0030</td><td align="center">0.0165</td></tr>
+    <tr><td align="center">5000</td><td align="center">0.0707</td><td align="center">0.0314</td><td align="center">0.1395</td><td align="center">0.0074</td><td align="center">0.0125</td><td align="center">0.0035</td><td align="center">0.0198</td></tr>
+    <tr><td colspan="8">&nbsp;</td></tr>
+    <tr><th align="center">Bitsize</th><th align="center" colspan="7">64 bits</th></tr>
+    <tr><th align="center">Device</th><th align="center" colspan="3.0"">CPU</th><th align="center" colspan="4.0">GPU</tr>
+    <tr><th align="center">Sample size</th><th align="center">Numpy</th><th align="center">Pytorch</th><th align="center">Tensorflow</th><th align="center">Cupy</th><th align="center">Jax</th><th align="center">Pytorch</th><th align="center">Tensorflow</th></tr>
+    <tr><td align="center">50</td><td align="center">0.0008</td><td align="center">0.0020</td><td align="center">0.0154</td><td align="center">0.0093</td><td align="center">0.0191</td><td align="center">0.0051</td><td align="center">0.0328</td></tr>
+    <tr><td align="center">100</td><td align="center">0.0005</td><td align="center">0.0013</td><td align="center">0.0094</td><td align="center">0.0056</td><td align="center">0.0114</td><td align="center">0.0029</td><td align="center">0.0169</td></tr>
+    <tr><td align="center">500</td><td align="center">0.0013</td><td align="center">0.0017</td><td align="center">0.0120</td><td align="center">0.0059</td><td align="center">0.0116</td><td align="center">0.0029</td><td align="center">0.0168</td></tr>
+    <tr><td align="center">1000</td><td align="center">0.0034</td><td align="center">0.0027</td><td align="center">0.0177</td><td align="center">0.0058</td><td align="center">0.0118</td><td align="center">0.0029</td><td align="center">0.0167</td></tr>
+    <tr><td align="center">2000</td><td align="center">0.0146</td><td align="center">0.0075</td><td align="center">0.0436</td><td align="center">0.0059</td><td align="center">0.0120</td><td align="center">0.0029</td><td align="center">0.0165</td></tr>
+    <tr><td align="center">5000</td><td align="center">0.1467</td><td align="center">0.0568</td><td align="center">0.2468</td><td align="center">0.0077</td><td align="center">0.0146</td><td align="center">0.0045</td><td align="center">0.0204</td></tr>
+    </table>
+    </div>
 """
 
 # Author: Remi Flamary <remi.flamary@polytechnique.edu>
