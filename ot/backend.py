@@ -1338,7 +1338,8 @@ class JaxBackend(Backend):
                 # We are technically doing more calculations but adding one
                 # is expected to be very quick and allows us to access the
                 # block_until_ready method to measure asynchronous calculations
-                add_one(callable(*inputs)).block_until_ready()
+                a = callable(*inputs)
+            add_one(a).block_until_ready()
             t1 = time.perf_counter()
             key = ("Jax", self.device_type(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
