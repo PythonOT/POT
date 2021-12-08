@@ -1688,7 +1688,7 @@ class TorchBackend(Backend):
         return torch.finfo(type_as.dtype).bits
 
     def device_type(self, type_as):
-        return "CPU" if "cpu" in str(type_as.device) else "GPU"
+        return type_as.device.type.replace("cuda", "gpu").upper()
 
     def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
         results = dict()
@@ -2337,7 +2337,7 @@ class TensorflowBackend(Backend):
         return type_as.dtype.size * 8
 
     def device_type(self, type_as):
-        return "CPU" if "CPU" in type_as.device else "GPU"
+        return self.dtype_device(type_as)[1].split(":")[0]
 
     def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
         results = dict()
