@@ -25,7 +25,7 @@ def setup(n_samples):
 if __name__ == "__main__":
     n_runs = 100
     warmup_runs = 10
-    param_list = [50, 100, 500]  # 1000, 2000, 5000, 10000]
+    param_list = [50, 100, 500, 1000, 2000, 5000]
 
     setup_backends()
     results = exec_bench(

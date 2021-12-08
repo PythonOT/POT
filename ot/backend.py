@@ -1012,7 +1012,8 @@ class JaxBackend(Backend):
         self.rng_ = jax.random.PRNGKey(42)
 
         self.__type_list__ = []
-        available_devices = jax.devices("cpu")
+        # available_devices = jax.devices("cpu")
+        available_devices = []
         if xla_bridge.get_backend().platform == "gpu":
             available_devices += jax.devices("gpu")
         for d in available_devices:
@@ -1665,6 +1666,8 @@ class TorchBackend(Backend):
                 duration = end - start
             key = ("Pytorch", self.device_type(type_as), self.bitsize(type_as))
             results[key] = duration / n_runs
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         return results
 
 
@@ -1961,6 +1964,9 @@ class CupyBackend(Backend):  # pragma: no cover
         return "GPU"
 
     def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
+        mempool = cp.get_default_memory_pool()
+        pinned_mempool = cp.get_default_pinned_memory_pool()
+
         results = dict()
         for type_as in self.__type_list__:
             inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
@@ -1977,6 +1983,8 @@ class CupyBackend(Backend):  # pragma: no cover
             key = ("Cupy", self.device_type(type_as), self.bitsize(type_as))
             t_gpu = cp.cuda.get_elapsed_time(start_gpu, end_gpu) / 1000.
             results[key] = t_gpu / n_runs
+        mempool.free_all_blocks()
+        pinned_mempool.free_all_blocks()
         return results
 
 
@@ -2297,7 +2305,8 @@ class TensorflowBackend(Backend):
                         callable(*inputs)
                     t0 = time.perf_counter()
                     for _ in range(n_runs):
-                        callable(*inputs)
+                        res = callable(*inputs)
+                    _ = res.numpy()
                     t1 = time.perf_counter()
                     key = (
                         "Tensorflow",

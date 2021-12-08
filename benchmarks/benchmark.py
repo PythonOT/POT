@@ -1,8 +1,8 @@
 # /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import numpy as np
 from ot.backend import get_backend_list, jax, tf
+import gc
 
 
 def setup_backends():
@@ -17,44 +17,56 @@ def setup_backends():
 
 def exec_bench(setup, tested_function, param_list, n_runs, warmup_runs):
     backend_list = get_backend_list()
+    for i, nx in enumerate(backend_list):
+        if nx.__name__ == "tf" and i < len(backend_list) - 1:
+            # Tensorflow should be the last one to be benchmarked because
+            # as far as I'm aware, there is no way to force it to release
+            # GPU memory. Hence, if any other backend is benchmarked after
+            # Tensorflow and requires the usage of a GPU, it will not have the
+            # full memory available and you may have a GPU Out Of Memory error
+            # even though your GPU can technically hold your tensors in memory.
+            backend_list.pop(i)
+            backend_list.append(nx)
+            break
+
+    inputs = [setup(param) for param in param_list]
     results = dict()
-    for param in param_list:
-        L = dict()
-        inputs = setup(param)
-        for nx in backend_list:
-            print(param, nx)
+    for nx in backend_list:
+        for i in range(len(param_list)):
+            print(nx, param_list[i])
+            args = inputs[i]
             results_nx = nx._bench(
                 tested_function,
-                *inputs,
+                *args,
                 n_runs=n_runs,
                 warmup_runs=warmup_runs
             )
-            L.update(results_nx)
-        results[param] = L
+            gc.collect()
+            results_nx_with_param_in_key = dict()
+            for key in results_nx:
+                new_key = (param_list[i], *key)
+                results_nx_with_param_in_key[new_key] = results_nx[key]
+            results.update(results_nx_with_param_in_key)
     return results
-
-
-def get_keys(d):
-    return sorted(list(d.keys()))
 
 
 def convert_to_html_table(results, param_name, main_title=None, comments=None):
     string = "<table>\n"
-    keys = get_keys(results)
-    subkeys = get_keys(results[keys[0]])
-    names, devices, bitsizes = zip(*subkeys)
+    keys = list(results.keys())
+    params, names, devices, bitsizes = zip(*keys)
 
     devices_names = sorted(list(set(zip(devices, names))))
+    params = sorted(list(set(params)))
+    bitsizes = sorted(list(set(bitsizes)))
     length = len(devices_names) + 1
-    n_bitsizes = len(set(bitsizes))
-    cpus_cols = list(devices).count("CPU") / n_bitsizes
-    gpus_cols = list(devices).count("GPU") / n_bitsizes
+    cpus_cols = list(devices).count("CPU") / len(bitsizes) / len(params)
+    gpus_cols = list(devices).count("GPU") / len(bitsizes) / len(params)
     assert cpus_cols + gpus_cols == len(devices_names)
 
     if main_title is not None:
         string += f'<tr><th align="center" colspan="{length}">{str(main_title)}</th></tr>\n'
 
-    for i, bitsize in enumerate(sorted(list(set(bitsizes)))):
+    for i, bitsize in enumerate(bitsizes):
 
         if i != 0:
             string += f'<tr><td colspan="{length}">&nbsp;</td></tr>\n'
@@ -63,7 +75,7 @@ def convert_to_html_table(results, param_name, main_title=None, comments=None):
         text = f"{bitsize} bits"
         if comments is not None:
             text += " - "
-            if isinstance(comments, (tuple, list)) and len(comments) == n_bitsizes:
+            if isinstance(comments, (tuple, list)) and len(comments) == len(bitsizes):
                 text += str(comments[i])
             else:
                 text += str(comments)
@@ -82,12 +94,11 @@ def convert_to_html_table(results, param_name, main_title=None, comments=None):
         string += "</tr>\n"
 
         # make results rows
-        for key in keys:
-            subdict = results[key]
-            string += f'<tr><td align="center">{key}</td>'
+        for param in params:
+            string += f'<tr><td align="center">{param}</td>'
             for device, name in devices_names:
-                subkey = (name, device, bitsize)
-                string += f'<td align="center">{subdict[subkey]:.4f}</td>'
+                key = (param, name, device, bitsize)
+                string += f'<td align="center">{results[key]:.4f}</td>'
             string += "</tr>\n"
 
     string += "</table>"
