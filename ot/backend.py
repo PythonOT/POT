@@ -1325,21 +1325,15 @@ class JaxBackend(Backend):
     def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
         results = dict()
 
-        @jax.jit
-        def add_one(M):
-            return M + 1
-
         for type_as in self.__type_list__:
             inputs = [self.from_numpy(arg, type_as=type_as) for arg in args]
             for _ in range(warmup_runs):
-                add_one(callable(*inputs)).block_until_ready()
+                a = callable(*inputs)
+            a.block_until_ready()
             t0 = time.perf_counter()
             for _ in range(n_runs):
-                # We are technically doing more calculations but adding one
-                # is expected to be very quick and allows us to access the
-                # block_until_ready method to measure asynchronous calculations
                 a = callable(*inputs)
-            add_one(a).block_until_ready()
+            a.block_until_ready()
             t1 = time.perf_counter()
             key = ("Jax", self.device_type(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
