@@ -45,8 +45,9 @@ from .unbalanced import (sinkhorn_unbalanced, barycenter_unbalanced,
 from .da import sinkhorn_lpl1_mm
 from .sliced import sliced_wasserstein_distance, max_sliced_wasserstein_distance
 from .gromov import (gromov_wasserstein, gromov_wasserstein2,
-                        gromov_barycenters, fused_gromov_wasserstein, fused_gromov_wasserstein2,
-                        gromov_wasserstein_linear_unmixing)
+                     gromov_barycenters, fused_gromov_wasserstein, fused_gromov_wasserstein2,
+                     gromov_wasserstein_dictionary_learning, gromov_wasserstein_linear_unmixing,
+                     fused_gromov_wasserstein_dictionary_learning, fused_gromov_wasserstein_linear_unmixing)
 
 # utils functions
 from .utils import dist, unif, tic, toc, toq
@@ -60,5 +61,6 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'sinkhorn_unbalanced', 'barycenter_unbalanced',
            'sinkhorn_unbalanced2', 'sliced_wasserstein_distance',
            'gromov_wasserstein', 'gromov_wasserstein2', 'gromov_barycenters', 'fused_gromov_wasserstein', 'fused_gromov_wasserstein2',
-            'max_sliced_wasserstein_distance',
+           'gromov_wasserstein_dictionary_learning', 'gromov_wasserstein_linear_unmixing', 'fused_gromov_wasserstein_dictionary_learning', 'fused_gromov_wasserstein_linear_unmixing',
+           'max_sliced_wasserstein_distance',
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath']
