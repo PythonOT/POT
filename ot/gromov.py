@@ -832,8 +832,12 @@ def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
     index_k = np.zeros((nb_samples_p, nb_samples_q), dtype=int)
     index_l = np.zeros((nb_samples_p, nb_samples_q), dtype=int)
 
-    index_i = generator.choice(len_p, size=nb_samples_p, p=p, replace=False)
-    index_j = generator.choice(len_p, size=nb_samples_p, p=p, replace=False)
+    index_i = generator.choice(
+        len_p, size=nb_samples_p, p=nx.to_numpy(p), replace=False
+    )
+    index_j = generator.choice(
+        len_p, size=nb_samples_p, p=nx.to_numpy(p), replace=False
+    )
 
     for i in range(nb_samples_p):
         if nx.issparse(T):
@@ -846,13 +850,13 @@ def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
         index_k[i] = generator.choice(
             len_q,
             size=nb_samples_q,
-            p=T_indexi / nx.sum(T_indexi),
+            p=nx.to_numpy(T_indexi / nx.sum(T_indexi)),
             replace=True
         )
         index_l[i] = generator.choice(
             len_q,
             size=nb_samples_q,
-            p=T_indexj / nx.sum(T_indexj),
+            p=nx.to_numpy(T_indexj / nx.sum(T_indexj)),
             replace=True
         )
 
@@ -944,15 +948,17 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
     index = np.zeros(2, dtype=int)
 
     # Initialize with default marginal
-    index[0] = generator.choice(len_p, size=1, p=p)
-    index[1] = generator.choice(len_q, size=1, p=q)
+    index[0] = generator.choice(len_p, size=1, p=nx.to_numpy(p))
+    index[1] = generator.choice(len_q, size=1, p=nx.to_numpy(q))
     T = nx.tocsr(emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False))
 
     best_gw_dist_estimated = np.inf
     for cpt in range(max_iter):
-        index[0] = generator.choice(len_p, size=1, p=p)
+        index[0] = generator.choice(len_p, size=1, p=nx.to_numpy(p))
         T_index0 = nx.reshape(nx.todense(T[index[0], :]), (-1,))
-        index[1] = generator.choice(len_q, size=1, p=T_index0 / T_index0.sum())
+        index[1] = generator.choice(
+            len_q, size=1, p=nx.to_numpy(T_index0 / T_index0.sum())
+        )
 
         if alpha == 1:
             T = nx.tocsr(
@@ -1081,13 +1087,16 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
     C_are_symmetric = nx.allclose(C1, C1.T, rtol=1e-10, atol=1e-10) and nx.allclose(C2, C2.T, rtol=1e-10, atol=1e-10)
 
     for cpt in range(max_iter):
-        index0 = generator.choice(len_p, size=nb_samples_grad_p, p=p, replace=False)
+        index0 = generator.choice(
+            len_p, size=nb_samples_grad_p, p=nx.to_numpy(p), replace=False
+        )
         Lik = 0
         for i, index0_i in enumerate(index0):
-            index1 = generator.choice(len_q,
-                                      size=nb_samples_grad_q,
-                                      p=T[index0_i, :] / nx.sum(T[index0_i, :]),
-                                      replace=False)
+            index1 = generator.choice(
+                len_q, size=nb_samples_grad_q,
+                p=nx.to_numpy(T[index0_i, :] / nx.sum(T[index0_i, :])),
+                replace=False
+            )
             # If the matrices C are not symmetric, the gradient has 2 terms, thus the term is chosen randomly.
             if (not C_are_symmetric) and generator.rand(1) > 0.5:
                 Lik += nx.mean(loss_fun(
@@ -1369,6 +1378,8 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
     -------
     C : array-like, shape (`N`, `N`)
         Similarity matrix in the barycenter space (permutated arbitrarily)
+    log : dict
+        Log dictionary of error during iterations. Return only if `log=True` in parameters.
 
     References
     ----------
@@ -1402,7 +1413,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
         Cprev = C
 
         T = [entropic_gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, epsilon,
-                                         max_iter, 1e-4, verbose, log) for s in range(S)]
+                                         max_iter, 1e-4, verbose, log=False) for s in range(S)]
         if loss_fun == 'square_loss':
             C = update_square_loss(p, lambdas, T, Cs)
 
@@ -1415,9 +1426,6 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
             err = nx.norm(C - Cprev)
             error.append(err)
 
-            if log:
-                log['err'].append(err)
-
             if verbose:
                 if cpt % 200 == 0:
                     print('{:5s}|{:12s}'.format(
@@ -1426,7 +1434,10 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
 
         cpt += 1
 
-    return C
+    if log:
+        return C, {"err": error}
+    else:
+        return C
 
 
 def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
@@ -1480,6 +1491,8 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
     -------
     C : array-like, shape (`N`, `N`)
         Similarity matrix in the barycenter space (permutated arbitrarily)
+    log : dict
+        Log dictionary of error during iterations. Return only if `log=True` in parameters.
 
     References
     ----------
@@ -1514,7 +1527,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
         Cprev = C
 
         T = [gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun,
-                                numItermax=max_iter, stopThr=1e-5, verbose=verbose, log=log) for s in range(S)]
+                                numItermax=max_iter, stopThr=1e-5, verbose=verbose, log=False) for s in range(S)]
         if loss_fun == 'square_loss':
             C = update_square_loss(p, lambdas, T, Cs)
 
@@ -1527,9 +1540,6 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
             err = nx.norm(C - Cprev)
             error.append(err)
 
-            if log:
-                log['err'].append(err)
-
             if verbose:
                 if cpt % 200 == 0:
                     print('{:5s}|{:12s}'.format(
@@ -1538,7 +1548,10 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 
         cpt += 1
 
-    return C
+    if log:
+        return C, {"err": error}
+    else:
+        return C
 
 
 def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_features=False,
