@@ -1,5 +1,4 @@
 """
-
 .. warning::
     The list of automatically imported sub-modules is as follows:
     :py:mod:`ot.lp`, :py:mod:`ot.bregman`, :py:mod:`ot.optim`
@@ -7,13 +6,10 @@
     :py:mod:`ot.gromov`, :py:mod:`ot.smooth`
     :py:mod:`ot.stochastic`, :py:mod:`ot.partial`, :py:mod:`ot.regpath`
     , :py:mod:`ot.unbalanced`.
-
     The following sub-modules are not imported due to additional dependencies:
-
     - :any:`ot.dr` : depends on :code:`pymanopt` and :code:`autograd`.
     - :any:`ot.gpu` : depends on :code:`cupy` and a CUDA GPU.
     - :any:`ot.plot` : depends on :code:`matplotlib`
-
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
@@ -45,9 +41,7 @@ from .unbalanced import (sinkhorn_unbalanced, barycenter_unbalanced,
 from .da import sinkhorn_lpl1_mm
 from .sliced import sliced_wasserstein_distance, max_sliced_wasserstein_distance
 from .gromov import (gromov_wasserstein, gromov_wasserstein2,
-                     gromov_barycenters, fused_gromov_wasserstein, fused_gromov_wasserstein2,
-                     gromov_wasserstein_dictionary_learning, gromov_wasserstein_linear_unmixing,
-                     fused_gromov_wasserstein_dictionary_learning, fused_gromov_wasserstein_linear_unmixing)
+                        gromov_barycenters, fused_gromov_wasserstein, fused_gromov_wasserstein2)
 
 # utils functions
 from .utils import dist, unif, tic, toc, toq
@@ -61,6 +55,5 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'sinkhorn_unbalanced', 'barycenter_unbalanced',
            'sinkhorn_unbalanced2', 'sliced_wasserstein_distance',
            'gromov_wasserstein', 'gromov_wasserstein2', 'gromov_barycenters', 'fused_gromov_wasserstein', 'fused_gromov_wasserstein2',
-           'gromov_wasserstein_dictionary_learning', 'gromov_wasserstein_linear_unmixing', 'fused_gromov_wasserstein_dictionary_learning', 'fused_gromov_wasserstein_linear_unmixing',
-           'max_sliced_wasserstein_distance',
+            'max_sliced_wasserstein_distance',
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath']

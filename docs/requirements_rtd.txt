@@ -3,7 +3,7 @@ numpydoc
 memory_profiler
 pillow
 networkx
-m2r2
+myst-parser
 numpy
 scipy>=1.0
 cython

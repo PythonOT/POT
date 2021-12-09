@@ -7,7 +7,7 @@
 
 import ot
 import ot.backend
-from ot.backend import torch, jax
+from ot.backend import torch, jax, cp, tf
 
 import pytest
 
@@ -82,6 +82,34 @@ def test_get_backend():
 
         nx = get_backend(A2, B2)
         assert nx.__name__ == 'jax'
+
+        # test not unique types in input
+        with pytest.raises(ValueError):
+            get_backend(A, B2)
+
+    if cp:
+        A2 = cp.asarray(A)
+        B2 = cp.asarray(B)
+
+        nx = get_backend(A2)
+        assert nx.__name__ == 'cupy'
+
+        nx = get_backend(A2, B2)
+        assert nx.__name__ == 'cupy'
+
+        # test not unique types in input
+        with pytest.raises(ValueError):
+            get_backend(A, B2)
+
+    if tf:
+        A2 = tf.convert_to_tensor(A)
+        B2 = tf.convert_to_tensor(B)
+
+        nx = get_backend(A2)
+        assert nx.__name__ == 'tf'
+
+        nx = get_backend(A2, B2)
+        assert nx.__name__ == 'tf'
 
         # test not unique types in input
         with pytest.raises(ValueError):
@@ -228,6 +256,14 @@ def test_empty_backend():
         nx.copy(M)
     with pytest.raises(NotImplementedError):
         nx.allclose(M, M)
+    with pytest.raises(NotImplementedError):
+        nx.squeeze(M)
+    with pytest.raises(NotImplementedError):
+        nx.bitsize(M)
+    with pytest.raises(NotImplementedError):
+        nx.device_type(M)
+    with pytest.raises(NotImplementedError):
+        nx._bench(lambda x: x, M, n_runs=1)
 
 
 def test_func_backends(nx):
@@ -240,7 +276,7 @@ def test_func_backends(nx):
     # Sparse tensors test
     sp_row = np.array([0, 3, 1, 0, 3])
     sp_col = np.array([0, 3, 1, 2, 2])
-    sp_data = np.array([4, 5, 7, 9, 0])
+    sp_data = np.array([4, 5, 7, 9, 0], dtype=np.float64)
 
     lst_tot = []
 
@@ -393,7 +429,8 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('argsort')
 
-        A = nx.searchsorted(Mb, Mb, 'right')
+        tmp = nx.sort(Mb)
+        A = nx.searchsorted(tmp, tmp, 'right')
         lst_b.append(nx.to_numpy(A))
         lst_name.append('searchsorted')
 
@@ -476,7 +513,7 @@ def test_func_backends(nx):
         lst_name.append('coo_matrix')
 
         assert not nx.issparse(Mb), 'Assert fail on: issparse (expected False)'
-        assert nx.issparse(sp_Mb) or nx.__name__ == "jax", 'Assert fail on: issparse (expected True)'
+        assert nx.issparse(sp_Mb) or nx.__name__ in ("jax", "tf"), 'Assert fail on: issparse (expected True)'
 
         A = nx.tocsr(sp_Mb)
         lst_b.append(nx.to_numpy(nx.todense(A)))
@@ -500,6 +537,18 @@ def test_func_backends(nx):
 
         assert nx.allclose(Mb, Mb), 'Assert fail on: allclose (expected True)'
         assert not nx.allclose(2 * Mb, Mb), 'Assert fail on: allclose (expected False)'
+
+        A = nx.squeeze(nx.zeros((3, 1, 4, 1)))
+        assert tuple(A.shape) == (3, 4), 'Assert fail on: squeeze'
+
+        A = nx.bitsize(Mb)
+        lst_b.append(float(A))
+        lst_name.append("bitsize")
+
+        A = nx.device_type(Mb)
+        assert A in ("CPU", "GPU")
+
+        nx._bench(lambda x: x, M, n_runs=1)
 
         lst_tot.append(lst_b)
 
@@ -575,3 +624,17 @@ def test_gradients_backends():
         np.testing.assert_almost_equal(fun(v, c, e), c * np.sum(v ** 4) + e, decimal=4)
         np.testing.assert_allclose(grad_val[0], v, atol=1e-4)
         np.testing.assert_allclose(grad_val[2], 2 * e, atol=1e-4)
+
+    if tf:
+        nx = ot.backend.TensorflowBackend()
+        w = tf.Variable(tf.random.normal((3, 2)), name='w')
+        b = tf.Variable(tf.random.normal((2,), dtype=tf.float32), name='b')
+        x = tf.random.normal((1, 3), dtype=tf.float32)
+
+        with tf.GradientTape() as tape:
+            y = x @ w + b
+            loss = tf.reduce_mean(y ** 2)
+            manipulated_loss = nx.set_gradients(loss, (w, b), (w, b))
+            [dl_dw, dl_db] = tape.gradient(manipulated_loss, [w, b])
+            assert nx.allclose(dl_dw, w)
+            assert nx.allclose(dl_db, b)

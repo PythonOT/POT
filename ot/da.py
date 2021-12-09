@@ -906,7 +906,7 @@ def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, al
 
 
 def distribution_estimation_uniform(X):
-    """estimates a uniform distribution from an array of samples :math:`\mathbf{X}`
+    r"""estimates a uniform distribution from an array of samples :math:`\mathbf{X}`
 
     Parameters
     ----------
@@ -950,7 +950,7 @@ class BaseTransport(BaseEstimator):
     """
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
+        r"""Build a coupling matrix from source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
@@ -1010,7 +1010,7 @@ class BaseTransport(BaseEstimator):
         return self
 
     def fit_transform(self, Xs=None, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
+        r"""Build a coupling matrix from source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
         and transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
 
@@ -1038,7 +1038,7 @@ class BaseTransport(BaseEstimator):
         return self.fit(Xs, ys, Xt, yt).transform(Xs, ys, Xt, yt)
 
     def transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
-        """Transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
+        r"""Transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
 
         Parameters
         ----------
@@ -1105,7 +1105,7 @@ class BaseTransport(BaseEstimator):
             return transp_Xs
 
     def transform_labels(self, ys=None):
-        """Propagate source labels :math:`\mathbf{y_s}` to obtain estimated target labels as in
+        r"""Propagate source labels :math:`\mathbf{y_s}` to obtain estimated target labels as in
         :ref:`[27] <references-basetransport-transform-labels>`.
 
         Parameters
@@ -1152,7 +1152,7 @@ class BaseTransport(BaseEstimator):
 
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None,
                           batch_size=128):
-        """Transports target samples :math:`\mathbf{X_t}` onto source samples :math:`\mathbf{X_s}`
+        r"""Transports target samples :math:`\mathbf{X_t}` onto source samples :math:`\mathbf{X_s}`
 
         Parameters
         ----------
@@ -1218,7 +1218,7 @@ class BaseTransport(BaseEstimator):
             return transp_Xt
 
     def inverse_transform_labels(self, yt=None):
-        """Propagate target labels :math:`\mathbf{y_t}` to obtain estimated source labels
+        r"""Propagate target labels :math:`\mathbf{y_t}` to obtain estimated source labels
         :math:`\mathbf{y_s}`
 
         Parameters
@@ -1307,7 +1307,7 @@ class LinearTransport(BaseTransport):
         self.distribution_estimation = distribution_estimation
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
+        r"""Build a coupling matrix from source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
@@ -1354,7 +1354,7 @@ class LinearTransport(BaseTransport):
         return self
 
     def transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
-        """Transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
+        r"""Transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
 
         Parameters
         ----------
@@ -1387,7 +1387,7 @@ class LinearTransport(BaseTransport):
 
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None,
                           batch_size=128):
-        """Transports target samples :math:`\mathbf{X_t}` onto source samples :math:`\mathbf{X_s}`
+        r"""Transports target samples :math:`\mathbf{X_t}` onto source samples :math:`\mathbf{X_s}`
 
         Parameters
         ----------
@@ -1493,7 +1493,7 @@ class SinkhornTransport(BaseTransport):
         self.out_of_sample_map = out_of_sample_map
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
+        r"""Build a coupling matrix from source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
@@ -1592,7 +1592,7 @@ class EMDTransport(BaseTransport):
         self.max_iter = max_iter
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
+        r"""Build a coupling matrix from source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
@@ -1711,7 +1711,7 @@ class SinkhornLpl1Transport(BaseTransport):
         self.limit_max = limit_max
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
+        r"""Build a coupling matrix from source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
@@ -1839,7 +1839,7 @@ class EMDLaplaceTransport(BaseTransport):
         self.out_of_sample_map = out_of_sample_map
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
+        r"""Build a coupling matrix from source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
@@ -1962,7 +1962,7 @@ class SinkhornL1l2Transport(BaseTransport):
         self.limit_max = limit_max
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
+        r"""Build a coupling matrix from source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
@@ -2088,7 +2088,7 @@ class MappingTransport(BaseEstimator):
         self.verbose2 = verbose2
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
-        """Builds an optimal coupling and estimates the associated mapping
+        r"""Builds an optimal coupling and estimates the associated mapping
         from source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
@@ -2146,7 +2146,7 @@ class MappingTransport(BaseEstimator):
         return self
 
     def transform(self, Xs):
-        """Transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
+        r"""Transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
 
         Parameters
         ----------
@@ -2261,7 +2261,7 @@ class UnbalancedSinkhornTransport(BaseTransport):
         self.limit_max = limit_max
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
+        r"""Build a coupling matrix from source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
@@ -2373,7 +2373,7 @@ class JCPOTTransport(BaseTransport):
         self.out_of_sample_map = out_of_sample_map
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
-        """Building coupling matrices from a list of source and target sets of samples
+        r"""Building coupling matrices from a list of source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
@@ -2419,7 +2419,7 @@ class JCPOTTransport(BaseTransport):
         return self
 
     def transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
-        """Transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
+        r"""Transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
 
         Parameters
         ----------
@@ -2491,7 +2491,7 @@ class JCPOTTransport(BaseTransport):
             return transp_Xs
 
     def transform_labels(self, ys=None):
-        """Propagate source labels :math:`\mathbf{y_s}` to obtain target labels as in
+        r"""Propagate source labels :math:`\mathbf{y_s}` to obtain target labels as in
         :ref:`[27] <references-jcpottransport-transform-labels>`
 
         Parameters
@@ -2542,7 +2542,7 @@ class JCPOTTransport(BaseTransport):
             return yt.T
 
     def inverse_transform_labels(self, yt=None):
-        """Propagate target labels :math:`\mathbf{y_t}` to obtain estimated source labels
+        r"""Propagate target labels :math:`\mathbf{y_t}` to obtain estimated source labels
         :math:`\mathbf{y_s}`
 
         Parameters
