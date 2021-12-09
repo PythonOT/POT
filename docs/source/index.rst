@@ -17,12 +17,11 @@ Contents
    all
    auto_examples/index
    releases
-   contributing
-   Code of Conduct <code_of_conduct>
+   .github/CONTRIBUTING
+   .github/CODE_OF_CONDUCT
 
-.. mdinclude:: ../../README.md
-   :start-line: 2
-
+.. include:: ../../README.md
+   :parser: myst_parser.sphinx_
 
 
 Indices and tables
