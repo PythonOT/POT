@@ -947,7 +947,7 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
         index[0] = generator.choice(len_p, size=1, p=nx.to_numpy(p))
         T_index0 = nx.reshape(nx.todense(T[index[0], :]), (-1,))
         index[1] = generator.choice(
-            len_q, size=1, p=nx.to_numpy(T_index0 / T_index0.sum())
+            len_q, size=1, p=nx.to_numpy(T_index0 / nx.sum(T_index0))
         )
 
         if alpha == 1:

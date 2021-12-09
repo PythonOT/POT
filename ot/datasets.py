@@ -41,7 +41,7 @@ def get_1D_gauss(n, m, sigma):
 
 
 def make_2D_samples_gauss(n, m, sigma, random_state=None):
-    """Return `n` samples drawn from 2D gaussian :math:`\mathcal{N}(m, \sigma)`
+    r"""Return `n` samples drawn from 2D gaussian :math:`\mathcal{N}(m, \sigma)`
 
     Parameters
     ----------
