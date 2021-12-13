@@ -2011,7 +2011,7 @@ def gromov_wasserstein_linear_unmixing(C, Cdictionary, p, q, reg=0., tol_outer=1
     T = p[:, None] * q[None, :]
     D = len(Cdictionary)
     w = unif(D)
-    Cembedded = np.sum(w[:, None, None]*Cdictionary, axis=0)
+    Cembedded = np.sum(w[:, None, None] * Cdictionary, axis=0)
     const_q = q[:, None] * q[None, :]
     # Trackers for BCD convergence
     convergence_criterion = np.inf
@@ -2109,7 +2109,7 @@ def _cg_gromov_wasserstein_unmixing(C, Cdictionary, Cembedded, w, const_q, T, st
             a -= reg * np.sum((x - w)**2)
             b -= 2 * reg * np.sum(w * (x - w))
         if a > 0:
-            gamma = min(1, max(0, -b/(2 * a)))
+            gamma = min(1, max(0, - b / (2 * a)))
         elif a + b < 0:
             gamma = 1
         else:
@@ -2277,7 +2277,7 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, ps, D, nt, q, alpha, ep
                 shared_term_structures = Cs_embedded[batch_idx] * const_q - (Cs[C_idx].dot(Ts[batch_idx])).T.dot(Ts[batch_idx])
                 shared_term_features = diag_q.dot(Ys_embedded[batch_idx]) - Ts[batch_idx].T.dot(Ys[C_idx])
                 grad_Cdictionary += alpha * unmixings[batch_idx][:, None, None] * shared_term_structures[None, :, :]
-                grad_Ydictionary += (1 - alpha) * unmixings[batch_idx][:, None, None]*shared_term_features[None, :, :]
+                grad_Ydictionary += (1 - alpha) * unmixings[batch_idx][:, None, None] * shared_term_features[None, :, :]
             grad_Cdictionary *= 2 / batch_size
             grad_Ydictionary *= 2 / batch_size
 
