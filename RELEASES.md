@@ -1,6 +1,34 @@
 # Releases
 
 
+## 0.8.1
+*December 2021*
+
+This release fixes several bugs and introduce two new backends: Cupy
+and Tensorflow. Note that teh tensorflow backend will work only when tensorflow
+has enabled the Numpy behavior (that's for transpose that is not by default in
+tensorflow). We also introduce a simple benchmark on CPU GPU for te sinkhorn
+solver that will be provided in teh documentation.
+
+As always we want to that the contributors who helped mak POT better (and bug free).
+
+#### New features
+
+* New benchmark for sinkhorn solver on CPU/GPU and between backends (PR #316)
+* New tensorflow backend (PR #316)
+- New Cupy backend (PR #315)
+- Documentation always up-to-date with README, RELEASES, CONTRIBUTING and
+  CODE_OF_CONDUCT files (PR #316, PR #322).
+
+#### Closed issues
+
+- Fix bug  in `ot.dist` function when non euclidean distance (Issue #305, PR #306)
+- Fix gradient scaling for functions using `nx.set_gradients` (Issue #309, PR
+  #310)
+- Fix bug in generalized Conditional gradient solver and SinkhornL1L2 (Issue
+  #311, PR #313)
+- Fiw log in gromov_barycenters (Issue #317, PR #3018)
+
 ## 0.8.0
 *November 2021*
 
