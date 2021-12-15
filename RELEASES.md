@@ -14,8 +14,8 @@ As always we want to that the contributors who helped mak POT better (and bug fr
 
 #### New features
 
-* New benchmark for sinkhorn solver on CPU/GPU and between backends (PR #316)
-* New tensorflow backend (PR #316)
+- New benchmark for sinkhorn solver on CPU/GPU and between backends (PR #316)
+- New tensorflow backend (PR #316)
 - New Cupy backend (PR #315)
 - Documentation always up-to-date with README, RELEASES, CONTRIBUTING and
   CODE_OF_CONDUCT files (PR #316, PR #322).
@@ -27,7 +27,7 @@ As always we want to that the contributors who helped mak POT better (and bug fr
   #310)
 - Fix bug in generalized Conditional gradient solver and SinkhornL1L2 (Issue
   #311, PR #313)
-- Fiw log in gromov_barycenters (Issue #317, PR #3018)
+- Fix log error in `gromov_barycenters` (Issue #317, PR #3018)
 
 ## 0.8.0
 *November 2021*
