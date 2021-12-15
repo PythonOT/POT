@@ -1,7 +1,7 @@
 # Releases
 
 
-## 0.8.1
+## 0.8.1dev
 *December 2021*
 
 This release fixes several bugs and introduce two new backends: Cupy
