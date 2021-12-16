@@ -106,8 +106,10 @@ jobs:
                 echo "Deploying dev docs for ${CIRCLE_BRANCH}.";
                 cd master
                 cp -a /tmp/build/html/* .;
+                cp -a /tmp/build/html/.github .github;
                 touch .nojekyll;
                 git add -A;
+                git add master/.github/*.html;
                 git commit -m "CircleCI update of dev docs (${CIRCLE_BUILD_NUM}).";
                 git push origin master;
               else
