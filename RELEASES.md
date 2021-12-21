@@ -1,16 +1,18 @@
 # Releases
 
 
-## 0.8.1dev
+## 0.8.1
 *December 2021*
 
-This release fixes several bugs and introduce two new backends: Cupy
-and Tensorflow. Note that teh tensorflow backend will work only when tensorflow
-has enabled the Numpy behavior (that's for transpose that is not by default in
-tensorflow). We also introduce a simple benchmark on CPU GPU for te sinkhorn
-solver that will be provided in teh documentation.
+This release fixes several bugs and introduces two new backends: Cupy
+and Tensorflow. Note that the tensorflow backend will work only when tensorflow
+has enabled the Numpy behavior (for transpose that is not by default in
+tensorflow). We also introduce a simple benchmark on CPU GPU for the sinkhorn
+solver that will be provided in the
+[backend](https://pythonot.github.io/gen_modules/ot.backend.html) documentation.
 
-As always we want to that the contributors who helped mak POT better (and bug free).
+
+As always we want to that the contributors who helped make POT better (and bug free).
 
 #### New features
 
