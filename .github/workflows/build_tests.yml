@@ -131,6 +131,7 @@ jobs:
     - name: Update pip
       run : |
         python -m pip install --upgrade pip setuptools
+        python -m pip install cython
     - name: Install POT
       run: |
         python -m pip install -e .
