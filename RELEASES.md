@@ -11,6 +11,11 @@ tensorflow). We also introduce a simple benchmark on CPU GPU for the sinkhorn
 solver that will be provided in the
 [backend](https://pythonot.github.io/gen_modules/ot.backend.html) documentation.
 
+This release also brings a few changes in dependencies and compatibility. First
+we removed tests for Python 3.6 that will not be updated in the future.
+Also note that POT now depends on Numpy (>= 1.20) because a recent change in ABI is making the
+wheels non-compatible with older numpy versions. If you really need an older
+numpy POT will work with no problems but you will need to build it from source.
 
 As always we want to that the contributors who helped make POT better (and bug free).
 
@@ -24,6 +29,7 @@ As always we want to that the contributors who helped make POT better (and bug f
 
 #### Closed issues
 
+- Fix bug in older Numpy ABI (<1.20) (Issue #308, PR #326)
 - Fix bug  in `ot.dist` function when non euclidean distance (Issue #305, PR #306)
 - Fix gradient scaling for functions using `nx.set_gradients` (Issue #309, PR
   #310)
