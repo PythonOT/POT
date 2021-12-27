@@ -170,8 +170,11 @@ workflows:
               only:
                 - master
       - deploy_tag:
+          requires:
+            - build_docs
           filters:
             branches:
-              ignore: /.*/
+              only:
+                - master
             tags:
               only: /[0-9]+(\.[0-9]+)*$/
