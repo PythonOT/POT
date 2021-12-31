@@ -1,10 +1,10 @@
 # Releases
 
 
-## 0.8.2
+## 0.8.1.0
 *December 2021*
 
-This is a bug fix release that will remove the `benchmark` module form the
+This is a bug fix release that will remove the `benchmarks` module form the
 installation and correct the documentation generation.
 
 #### Closed issues
