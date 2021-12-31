@@ -54,7 +54,7 @@ setup(
     author=u'Remi Flamary, Nicolas Courty',
     author_email='remi.flamary@gmail.com, ncourty@gmail.com',
     url='https://github.com/PythonOT/POT',
-    packages=find_packages(),
+    packages=find_packages(exclude=["benchmarks"]),
     ext_modules=cythonize(Extension(
         name="ot.lp.emd_wrap",
         sources=["ot/lp/emd_wrap.pyx", "ot/lp/EMD_wrapper.cpp"],  # cython/c++ src files
