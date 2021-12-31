@@ -10,6 +10,8 @@ installation and correct the documentation generation.
 #### Closed issues
 
 - Bug in documentation generation (tag VS master push, PR #332)
+- Remove installation of the benchmarks in global namespace (Issue #331, PR #333)
+
 
 ## 0.8.1
 *December 2021*

@@ -161,7 +161,10 @@ workflows:
   default:
 
     jobs:
-      - build_docs
+      - build_docs:
+          filters:
+            tags:
+              only: /[0-9]+(\.[0-9]+)*$/  
       - deploy_master:
           requires:
             - build_docs
@@ -173,5 +176,7 @@ workflows:
           requires:
             - build_docs
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /[0-9]+(\.[0-9]+)*$/
