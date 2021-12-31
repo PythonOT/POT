@@ -1,6 +1,16 @@
 # Releases
 
 
+## 0.8.2
+*December 2021*
+
+This is a bug fix release that will remove the `benchmark` module form the
+installation and correct the documentation generation.
+
+#### Closed issues
+
+- Bug in documentation generation (tag VS master push, PR #332)
+
 ## 0.8.1
 *December 2021*
 
