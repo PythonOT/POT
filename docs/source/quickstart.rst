@@ -418,7 +418,7 @@ of algorithms in [18]_ [19]_.
     :add-heading: Examples of use for :any:`ot.sinkhorn`
     :heading-level: "
 
-.. minigallery:: ot.sinkhorn
+.. minigallery:: ot.sinkhorn2
     :add-heading: Examples of use for :any:`ot.sinkhorn2`
     :heading-level: "
 
