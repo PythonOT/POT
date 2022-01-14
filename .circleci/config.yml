@@ -106,10 +106,10 @@ jobs:
                 echo "Deploying dev docs for ${CIRCLE_BRANCH}.";
                 cd master
                 cp -a /tmp/build/html/* .;
-                cp -a /tmp/build/html/.github .github;
+                cp -a /tmp/build/html/.github/* .github/;
                 touch .nojekyll;
                 git add -A;
-                git add -f .github/*.html ;
+                git add -f .github/* ;
                 git commit -m "CircleCI update of dev docs (${CIRCLE_BUILD_NUM}).";
                 git push origin master;
               else
@@ -146,10 +146,10 @@ jobs:
               git clean -xdf
               echo "Deploying dev docs for ${CIRCLE_BRANCH}.";
               cp -a /tmp/build/html/* .;
-              cp -a /tmp/build/html/.github .github;
+              cp -a /tmp/build/html/.github/* .github/;
               touch .nojekyll;
               git add -A;
-              git add -f .github/*.html ;
+              git add -f .github/* ;
               git commit -m "CircleCI update of dev docs (${CIRCLE_BUILD_NUM}).";
               git push origin master;
 
