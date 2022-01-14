@@ -207,13 +207,12 @@ The method implemented for solving the OT problem is the network simplex. It is
 implemented in C from [1]_. It has a complexity of :math:`O(n^3)` but the
 solver is quite efficient and uses sparsity of the solution.
 
-.. hint::
 
-    Examples of use for :any:`ot.emd` are available in :
 
-    - :any:`auto_examples/plot_OT_2D_samples`
-    - :any:`auto_examples/plot_OT_1D`
-    - :any:`auto_examples/plot_OT_L1_vs_L2`
+.. minigallery:: ot.emd
+    :add-heading: Examples of use for :any:`ot.emd`
+    :heading-level: "
+
 
 
 Computing Wasserstein distance
@@ -255,11 +254,9 @@ the :math:`W_1` Wasserstein distance can be done directly with :any:`ot.emd2`
 when providing :code:`M = ot.dist(xs, xt, metric='euclidean')` to use the Euclidean
 distance.
 
-.. hint::
-
-    An example of use for :any:`ot.emd2` is available in :
-
-    - :any:`auto_examples/plot_compute_emd`
+.. minigallery:: ot.emd2
+    :add-heading: Examples of use for :any:`ot.emd2`
+    :heading-level: "
 
 
 Special cases
@@ -416,17 +413,18 @@ of stochastic solvers for entropic regularized OT [18]_ [19]_.  Those pure Pytho
 implementations are not optimized for speed but provide a robust implementation
 of algorithms in [18]_ [19]_.
 
-.. hint::
-    Examples of use for :any:`ot.sinkhorn` are available in :
 
-    - :any:`auto_examples/plot_OT_2D_samples`
-    - :any:`auto_examples/plot_OT_1D`
-    - :any:`auto_examples/plot_OT_1D_smooth`
-    - :any:`auto_examples/plot_stochastic`
+.. minigallery:: ot.sinkhorn
+    :add-heading: Examples of use for :any:`ot.sinkhorn`
+    :heading-level: "
+
+.. minigallery:: ot.sinkhorn2
+    :add-heading: Examples of use for :any:`ot.sinkhorn2`
+    :heading-level: "
 
 
-Other regularization
-^^^^^^^^^^^^^^^^^^^^
+Other regularizations
+^^^^^^^^^^^^^^^^^^^^^
 
 While entropic OT is the most common and favored in practice, there exists other
 kinds of regularizations. We provide in POT two specific solvers for other
@@ -451,12 +449,9 @@ functions :any:`ot.smooth.smooth_ot_dual` or
 :any:`ot.smooth.smooth_ot_semi_dual` with parameter :code:`reg_type='l2'` to
 choose the quadratic regularization.
 
-.. hint::
-    Examples of quadratic regularization are available in :
-
-    - :any:`auto_examples/plot_OT_1D_smooth`
-    - :any:`auto_examples/plot_optim_OTreg`
-
+.. minigallery:: ot.smooth.smooth_ot_dual ot.smooth.smooth_ot_semi_dual ot.optim.cg
+    :add-heading: Examples of use of quadratic regularization
+    :heading-level: "
 
 
 Group Lasso regularization
@@ -480,11 +475,9 @@ be solved using an efficient majoration minimization approach with
 convex group lasso and we provide a solver using generalized conditional
 gradient algorithm [7]_ in function :any:`ot.da.sinkhorn_l1l2_gl`.
 
-.. hint::
-    Examples of group Lasso regularization are available in:
-
-    - :any:`auto_examples/domain-adaptation/plot_otda_classes`
-    - :any:`auto_examples/domain-adaptation/plot_otda_d2`
+.. minigallery::  ot.da.SinkhornLpl1Transport  ot.da.SinkhornL1l2Transport ot.da.sinkhorn_l1l2_gl ot.da.sinkhorn_lpl1_mm
+    :add-heading: Examples of group Lasso regularization
+    :heading-level: "
 
 
 Generic solvers
@@ -520,10 +513,9 @@ generalized conditional gradient [7]_ implemented in :any:`ot.optim.gcg`  that
 does not linearize the entropic term but
 relies on :any:`ot.sinkhorn` for its iterations.
 
-.. hint::
-    An example of generic solvers are available in :
-
-    - :any:`auto_examples/plot_optim_OTreg`
+.. minigallery:: ot.optim.cg ot.optim.gcg
+    :add-heading: Examples of the generic solvers
+    :heading-level: "
 
 
 Wasserstein Barycenters
@@ -581,19 +573,15 @@ the matrix vector production in the Bregman projections by convolution
 operators. We provide an implementation of this algorithm in function
 :any:`ot.bregman.convolutional_barycenter2d`.
 
-.. hint::
-    Examples of Wasserstein (:meth:`ot.lp.barycenter`) and regularized Wasserstein
-    barycenter (:any:`ot.bregman.barycenter`) computation are available in :
 
-    - :any:`auto_examples/barycenters/plot_barycenter_1D`
-    - :any:`auto_examples/barycenters/plot_barycenter_lp_vs_entropic`
 
-    An example of convolutional barycenter
-    (:any:`ot.bregman.convolutional_barycenter2d`) computation
-    for 2D images is available
-    in :
+.. minigallery:: ot.lp.barycenter ot.bregman.barycenter ot.barycenter
+    :add-heading: Examples of Wasserstein and regularized Wasserstein barycenters
+    :heading-level: "
 
-    - :any:`auto_examples/barycenters/plot_convolutional_barycenter`
+.. minigallery:: ot.bregman.convolutional_barycenter2d
+    :add-heading:  An example of convolutional barycenter (:any:`ot.bregman.convolutional_barycenter2d`) computation
+    :heading-level: "
 
 
 
@@ -613,13 +601,9 @@ We provide a solver based on [20]_ in
 return a locally optimal support :math:`\{x_i\}` for uniform or given weights
 :math:`a`.
 
- .. hint::
-
-    An example of the free support barycenter estimation is available
-    in :
-
-    - :any:`auto_examples/barycenters/plot_free_support_barycenter`
-
+.. minigallery:: ot.lp.free_support_barycenter
+    :add-heading: Examples of free support barycenter estimation
+    :heading-level: "
 
 
 
@@ -656,12 +640,10 @@ method proposed in [8]_ that estimates a continuous mapping approximating the
 barycentric mapping is provided in :any:`ot.da.joint_OT_mapping_linear` for
 linear mapping and :any:`ot.da.joint_OT_mapping_kernel` for non-linear mapping.
 
- .. hint::
+.. minigallery:: ot.da.joint_OT_mapping_linear ot.da.joint_OT_mapping_linear ot.da.OT_mapping_linear
+    :add-heading: Examples of Monge mapping estimation
+    :heading-level: "
 
-    An example of the linear Monge mapping estimation is available
-    in :
-
-    - :any:`auto_examples/domain-adaptation/plot_otda_linear_mapping`
 
 Domain adaptation classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -704,14 +686,11 @@ A list of the provided implementation is given in the following note.
       [14]_
     * :any:`ot.da.MappingTransport`: Nonlinear mapping estimation [8]_
 
-.. hint::
 
-    Examples of the use of OTDA classes are available in:
+.. minigallery:: ot.da.SinkhornTransport ot.da.LinearTransport 
+    :add-heading: Examples of the use of OTDA classes
+    :heading-level: "
 
-    - :any:`auto_examples/domain-adaptation/plot_otda_color_images`
-    - :any:`auto_examples/domain-adaptation/plot_otda_mapping`
-    - :any:`auto_examples/domain-adaptation/plot_otda_mapping_colors_images`
-    - :any:`auto_examples/domain-adaptation/plot_otda_semi_supervised`
 
 Other applications
 ------------------
@@ -746,11 +725,10 @@ respectively. Note that we also provide the Fisher discriminant estimator in
     :code:`autograd`, :any:`ot.dr` is not imported by default. If you want to
     use it you have to specifically import it with :code:`import ot.dr` .
 
-.. hint::
+.. minigallery:: ot.dr.wda
+    :add-heading: Examples of the use of WDA
+    :heading-level: "
 
-    An example of the use of WDA is available in :
-
-    - :any:`auto_examples/others/plot_WDA`
 
 
 Unbalanced optimal transport
@@ -787,11 +765,9 @@ linear term.
       the log stabilized version of the algorithm [10]_.
 
 
-.. hint::
-
-    Examples of the use of :any:`ot.sinkhorn_unbalanced` are available in :
-
-    - :any:`auto_examples/unbalanced-partial/plot_UOT_1D`
+.. minigallery:: ot.sinkhorn_unbalanced ot.sinkhorn_unbalanced2  ot.unbalanced.sinkhorn_unbalanced
+    :add-heading: Examples of Unbalanced OT
+    :heading-level: "
 
 
 Unbalanced Barycenters
@@ -819,11 +795,10 @@ implemented the main function :any:`ot.barycenter_unbalanced`.
       the log stabilized version of the algorithm [10]_.
 
 
-.. hint::
+.. minigallery:: ot.barycenter_unbalanced  ot.unbalanced.barycenter_unbalanced
+    :add-heading: Examples of Unbalanced OT barycenters
+    :heading-level: "
 
-      Examples of the use of :any:`ot.barycenter_unbalanced` are available in :
-
-      - :any:`auto_examples/unbalanced-partial/plot_UOT_barycenter_1D`
 
 
 Partial optimal transport
@@ -865,11 +840,10 @@ is computed in :any:`ot.partial.partial_gromov_wasserstein` and in
 regularization of the problem.
 
 
-.. hint::
+.. minigallery:: ot.partial.partial_wasserstein ot.partial.partial_gromov_wasserstein
+    :add-heading: Examples of Partial OT
+    :heading-level: "
 
-    Examples of the use of :any:`ot.partial` are available in:
-
-    - :any:`auto_examples/unbalanced-partial/plot_partial_wass_and_gromov`
 
 
 
@@ -898,6 +872,12 @@ There also exists an entropic regularized variant of GW that has been proposed i
 [12]_ and we provide an implementation of their algorithm in
 :any:`ot.gromov.entropic_gromov_wasserstein`.
 
+
+.. minigallery:: ot.gromov.gromov_wasserstein ot.gromov.entropic_gromov_wasserstein  ot.gromov.fused_gromov_wasserstein ot.gromov.gromov_wasserstein2    
+    :add-heading: Examples of computation of GW, regularized G and FGW
+    :heading-level: "
+
+
 Note that similarly to Wasserstein distance GW allows for the definition of GW
 barycenters that can be expressed as
 
@@ -919,59 +899,15 @@ graphs for instance and also provide computable barycenters.
 The implementations of FGW and FGW barycenter is provided in functions
 :any:`ot.gromov.fused_gromov_wasserstein` and :any:`ot.gromov.fgw_barycenters`.
 
-.. hint::
 
-    Examples of computation of GW, regularized G and FGW are available in:
-
-    - :any:`auto_examples/gromov/plot_gromov`
-    - :any:`auto_examples/gromov/plot_fgw`
-
-    Examples of GW, regularized GW and FGW barycenters are available in:
-
-    - :any:`auto_examples/gromov/plot_gromov_barycenter`
-    - :any:`auto_examples/gromov/plot_barycenter_fgw`
+.. minigallery:: ot.gromov.gromov_barycenters ot.gromov.fgw_barycenters   
+    :add-heading: Examples of GW, regularized G and FGW barycenters
+    :heading-level: "
 
 
-GPU acceleration
-^^^^^^^^^^^^^^^^
 
-.. warning::
-
-    The :any:`ot.gpu` has been deprecated since the release 0.8 of POT and
-    should not be used. The GPU implementation (in Pytorch for instance) can be
-    used with the novel backends using the compatible functions from POT.
-
-
-We provide several implementation of our OT solvers in :any:`ot.gpu`. Those
-implementations use the :code:`cupy` toolbox that obviously need to be installed.
-
-
-.. note::
-
-    Several implementations of POT functions (mainly those relying on linear
-    algebra) have been implemented in :any:`ot.gpu`. Here is a short list on the
-    main entries:
-
-    -  :meth:`ot.gpu.dist`: computation of distance matrix
-    -  :meth:`ot.gpu.sinkhorn`: computation of sinkhorn
-    -  :meth:`ot.gpu.sinkhorn_lpl1_mm`: computation of sinkhorn + group lasso
-
-Note that while the :any:`ot.gpu` module has been designed to be compatible with
-POT, calling its function with :any:`numpy`  arrays will incur a large overhead due to
-the memory copy of the array on GPU prior to computation and conversion of the
-array after computation. To avoid this overhead, we provide functions
-:meth:`ot.gpu.to_gpu` and :meth:`ot.gpu.to_np` that perform the conversion
-explicitly.
-
-.. warning::
-
-    Note that due to the hard dependency on :code:`cupy`, :any:`ot.gpu` is not
-    imported by default. If you want to
-    use it you have to specifically import it with :code:`import ot.gpu` .
-
-
-Solving OT with Multiple backends
----------------------------------
+Solving OT with Multiple backends on CPU/GPU
+--------------------------------------------
 
 .. _backends_section:
 
@@ -1002,7 +938,21 @@ the function will be the same type as the inputs and on the same device. When
 possible all computations are done on the same device and also when possible the
 output will be differentiable with respect to the input of the function.
 
+GPU acceleration
+^^^^^^^^^^^^^^^^
 
+The backends provide automatic computations/compatibility on GPU for most of the
+POT functions.
+Note that all solvers relying on the exact OT solver en C++ will need to solve the
+problem on CPU which can incur some memory copy overhead and be far from optimal
+when all other computations are done on GPU. They will still work on array on
+GPU since the copy is done automatically.
+
+Some of the functions that rely on the exact C++ solver are:
+
+- :any:`ot.emd`, :any:`ot.emd2`
+- :any:`ot.gromov_wasserstein`, :any:`ot.gromov_wasserstein2`
+- :any:`ot.optim.cg`
 
 List of compatible Backends
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1010,18 +960,21 @@ List of compatible Backends
 - `Numpy <https://numpy.org/>`_ (all functions and solvers)
 - `Pytorch <https://pytorch.org/>`_ (all outputs differentiable w.r.t. inputs)
 - `Jax <https://github.com/google/jax>`_ (Some functions are differentiable some require a wrapper)
+- `Tensorflow <https://www.tensorflow.org/>`_ (all outputs differentiable w.r.t. inputs)
+- `Cupy <https://cupy.dev/>`_ (no differentiation, GPU only)
 
-List of compatible functions
+
+List of compatible modules
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This list will get longer for new releases and will hopefully disappear when POT
 become fully implemented with the backend.
 
-- :any:`ot.emd`
-- :any:`ot.emd2`
-- :any:`ot.sinkhorn`
-- :any:`ot.sinkhorn2`
-- :any:`ot.dist`
+- :any:`ot.bregman`
+- :any:`ot.gromov` (some functions use CPU only solvers with copy overhead)
+- :any:`ot.optim` (some functions use CPU only solvers with copy overhead)
+- :any:`ot.sliced`
+- :any:`ot.utils` (partial)
 
 
 FAQ

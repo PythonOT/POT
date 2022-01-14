@@ -50,7 +50,7 @@ from .gromov import (gromov_wasserstein, gromov_wasserstein2,
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.8.1.0"
+__version__ = "0.8.2dev"
 
 __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'datasets', 'bregman', 'lp', 'tic', 'toc', 'toq', 'gromov',

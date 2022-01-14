@@ -1,5 +1,10 @@
 # Releases
 
+## 0.8.2dev Development
+
+#### New features
+
+- Better list of related examples in quick start guide with `minigallery` (PR #334)
 
 ## 0.8.1.0
 *December 2021*

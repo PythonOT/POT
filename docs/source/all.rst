@@ -20,7 +20,6 @@ API and modules
    gromov
    optim
    da
-   gpu
    dr
    utils
    datasets
