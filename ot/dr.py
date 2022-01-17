@@ -30,16 +30,25 @@ def dist(x1, x2):
     return x1p2.reshape((-1, 1)) + x2p2.reshape((1, -1)) - 2 * np.dot(x1, x2.T)
 
 
-def sinkhorn(w1, w2, M, reg, k):
-    r"""Sinkhorn algorithm with fixed number of iteration (autograd)
+def logsumexp(M, axis):
+    r"""Log-sum-exp reduction compatible with autograd (no numpy implementation)
     """
-    K = np.exp(-M / reg)
-    ui = np.ones((M.shape[0],))
-    vi = np.ones((M.shape[1],))
+    amax = np.amax(M, axis=axis, keepdims=True)
+    return np.log(np.sum(np.exp(M - amax), axis=axis)) + np.squeeze(amax, axis=axis)
+
+
+def sinkhorn(w1, w2, M, reg, k):
+    r"""Sinkhorn algorithm in log-domain with fixed number of iteration (autograd)
+    """
+    Mr = -M / reg
+    ui = np.zeros((M.shape[0],))
+    vi = np.zeros((M.shape[1],))
+    log_w1 = np.log(w1)
+    log_w2 = np.log(w2)
     for i in range(k):
-        vi = w2 / (np.dot(K.T, ui))
-        ui = w1 / (np.dot(K, vi))
-    G = ui.reshape((M.shape[0], 1)) * K * vi.reshape((1, M.shape[1]))
+        vi = log_w2 - logsumexp(Mr + ui[:, None], 0)
+        ui = log_w1 - logsumexp(Mr + vi[None, :], 1)
+    G = np.exp(ui[:, None] + Mr + vi[None, :])
     return G
 
 
