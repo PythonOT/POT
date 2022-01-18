@@ -8,7 +8,7 @@
 
 #### Closed issues
 
-- Bug in instantiating an `autograd` function (`ValFunction`, Issue #337, PR #337)
+- Bug in instantiating an `autograd` function (`ValFunction`, Issue #337, PR #338)
 
 ## 0.8.1.0
 *December 2021*
