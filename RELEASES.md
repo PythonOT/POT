@@ -6,6 +6,10 @@
 
 - Better list of related examples in quick start guide with `minigallery` (PR #334)
 
+#### Closed issues
+
+- Bug in instantiating an `autograd` function (`ValFunction`, Issue #337, PR #337)
+
 ## 0.8.1.0
 *December 2021*
 
