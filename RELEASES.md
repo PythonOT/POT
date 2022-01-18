@@ -5,6 +5,8 @@
 #### New features
 
 - Better list of related examples in quick start guide with `minigallery` (PR #334)
+- Use log-domain Sinkhorn implementation in WDA to support smaller values
+  of the regularization parameter (PR #336)
 
 ## 0.8.1.0
 *December 2021*

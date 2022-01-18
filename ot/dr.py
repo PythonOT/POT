@@ -11,6 +11,7 @@ Dimension reduction with OT
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Minhui Huang <mhhuang@ucdavis.edu>
+#         Jakub Zadrozny <jakub.r.zadrozny@gmail.com>
 #
 # License: MIT License
 
