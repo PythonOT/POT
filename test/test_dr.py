@@ -75,7 +75,7 @@ def test_wda_low_reg():
 
     p = 2
 
-    Pwda, projwda = ot.dr.wda(xs, ys, p, reg=0.01, maxiter=10)
+    Pwda, projwda = ot.dr.wda(xs, ys, p, reg=0.01, maxiter=10, sinkhorn_method='sinkhorn_log')
 
     projwda(xs)
 
