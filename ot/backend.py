@@ -1397,7 +1397,7 @@ class TorchBackend(Backend):
 
     def set_gradients(self, val, inputs, grads):
 
-        Func = self.ValFunction()
+        Func = self.ValFunction
 
         res = Func.apply(val, grads, *inputs)
 

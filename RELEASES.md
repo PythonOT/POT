@@ -8,6 +8,10 @@
 - Use log-domain Sinkhorn implementation in WDA to support smaller values
   of the regularization parameter (PR #336)
 
+#### Closed issues
+
+- Bug in instantiating an `autograd` function (`ValFunction`, Issue #337, PR #338)
+
 ## 0.8.1.0
 *December 2021*
 
