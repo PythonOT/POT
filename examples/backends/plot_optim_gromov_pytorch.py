@@ -3,15 +3,15 @@ r"""
 Optimizing the Gromov-Wasserstein distance with PyTorch
 =================================
 
-In this exemple we use the pytorch backend to optimize the  Gromov-Wasserstein
+In this example, we use the pytorch backend to optimize the Gromov-Wasserstein
 (GW) loss between two graphs expressed as empirical distribution.
 
-In the first example we optimize the weights on the node of a simple template
+In the first part, we optimize the weights on the node of a simple template
 graph so that it minimizes the GW with a given Stochastic Block Model graph.
 We can see that this actually recovers the proportion of classes in the SBM
 and allows for an accurate clustering of the nodes using the GW optimal plan.
 
-In a second example we optimize simultaneously the weights and the sructure of
+In the second part, we optimize simultaneously the weights and the sructure of
 the template graph which allows us to perform graph compression and to recover
 other properties of the SBM.
 
@@ -186,8 +186,7 @@ pl.axis("off")
 # %%
 # Graph compression with GW
 # -------------------------
-
-# Now we  optimize both the weights and structure of a small graph that
+# Now we optimize both the weights and structure of a small graph that
 # minimize the GW distance wrt our data graph. This can be seen as graph
 # compression but can also recover important properties of an SBM such
 # as its class proportion but also its matrix of probability of links between

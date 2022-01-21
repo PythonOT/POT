@@ -54,7 +54,7 @@ setup(
     author=u'Remi Flamary, Nicolas Courty',
     author_email='remi.flamary@gmail.com, ncourty@gmail.com',
     url='https://github.com/PythonOT/POT',
-    packages=find_packages(),
+    packages=find_packages(exclude=["benchmarks"]),
     ext_modules=cythonize(Extension(
         name="ot.lp.emd_wrap",
         sources=["ot/lp/emd_wrap.pyx", "ot/lp/EMD_wrapper.cpp"],  # cython/c++ src files
@@ -68,8 +68,8 @@ setup(
     license='MIT',
     scripts=[],
     data_files=[],
-    setup_requires=["numpy>=1.16", "cython>=0.23"],
-    install_requires=["numpy>=1.16", "scipy>=1.0"],
+    setup_requires=["numpy>=1.20", "cython>=0.23"],
+    install_requires=["numpy>=1.20", "scipy>=1.0"],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
@@ -95,5 +95,6 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ]
 )

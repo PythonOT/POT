@@ -1,16 +1,46 @@
 # Releases
 
+## 0.8.2dev Development
 
-## 0.8.1dev
+#### New features
+
+- Better list of related examples in quick start guide with `minigallery` (PR #334)
+- Add optional log-domain Sinkhorn implementation in WDA to support smaller values
+  of the regularization parameter (PR #336)
+
+#### Closed issues
+
+- Bug in instantiating an `autograd` function (`ValFunction`, Issue #337, PR #338)
+
+## 0.8.1.0
 *December 2021*
 
-This release fixes several bugs and introduce two new backends: Cupy
-and Tensorflow. Note that teh tensorflow backend will work only when tensorflow
-has enabled the Numpy behavior (that's for transpose that is not by default in
-tensorflow). We also introduce a simple benchmark on CPU GPU for te sinkhorn
-solver that will be provided in teh documentation.
+This is a bug fix release that will remove the `benchmarks` module form the
+installation and correct the documentation generation.
 
-As always we want to that the contributors who helped mak POT better (and bug free).
+#### Closed issues
+
+- Bug in documentation generation (tag VS master push, PR #332)
+- Remove installation of the benchmarks in global namespace (Issue #331, PR #333)
+
+
+## 0.8.1
+*December 2021*
+
+This release fixes several bugs and introduces two new backends: Cupy
+and Tensorflow. Note that the tensorflow backend will work only when tensorflow
+has enabled the Numpy behavior (for transpose that is not by default in
+tensorflow). We also introduce a simple benchmark on CPU GPU for the sinkhorn
+solver that will be provided in the
+[backend](https://pythonot.github.io/gen_modules/ot.backend.html) documentation.
+
+This release also brings a few changes in dependencies and compatibility. First
+we removed tests for Python 3.6 that will not be updated in the future.
+Also note that POT now depends on Numpy (>= 1.20) because a recent change in ABI is making the
+wheels non-compatible with older numpy versions. If you really need an older
+numpy POT will work with no problems but you will need to build it from source.
+
+As always we want to that the contributors who helped make POT better (and bug free).
 
 #### New features
 
@@ -22,6 +52,7 @@ As always we want to that the contributors who helped mak POT better (and bug fr
 
 #### Closed issues
 
+- Fix bug in older Numpy ABI (<1.20) (Issue #308, PR #326)
 - Fix bug  in `ot.dist` function when non euclidean distance (Issue #305, PR #306)
 - Fix gradient scaling for functions using `nx.set_gradients` (Issue #309, PR
   #310)
