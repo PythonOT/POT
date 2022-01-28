@@ -308,9 +308,6 @@ def test_free_support_barycenter_backends(nx):
     measures_weights = [np.array([1.]), np.array([1.])]
     X_init = np.array([-12.]).reshape((1, 1))
 
-    # obvious barycenter location between two diracs
-    bar_locations = np.array([0.]).reshape((1, 1))
-
     X = ot.lp.free_support_barycenter(measures_locations, measures_weights, X_init)
 
     measures_locations2 = [nx.from_numpy(x) for x in measures_locations]
