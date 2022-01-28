@@ -577,15 +577,17 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
     """
 
+    nx = get_backend(*measures_locations,*measures_weights,X_init)
+
     iter_count = 0
 
     N = len(measures_locations)
     k = X_init.shape[0]
     d = X_init.shape[1]
     if b is None:
-        b = np.ones((k,)) / k
+        b = nx.ones((k,),type_as=X_init) / k
     if weights is None:
-        weights = np.ones((N,)) / N
+        weights = nx.ones((N,),type_as=X_init) / N
 
     X = X_init
 
@@ -596,15 +598,15 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
     while (displacement_square_norm > stopThr and iter_count < numItermax):
 
-        T_sum = np.zeros((k, d))
+        T_sum = nx.zeros((k, d),type_as=X_init)
+        
 
-        for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights,
-                                                                      weights.tolist()):
+        for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights,  weights):
             M_i = dist(X, measure_locations_i)
             T_i = emd(b, measure_weights_i, M_i, numThreads=numThreads)
-            T_sum = T_sum + weight_i * np.reshape(1. / b, (-1, 1)) * np.matmul(T_i, measure_locations_i)
+            T_sum = T_sum + weight_i * 1. / b[:,None] * nx.dot(T_i, measure_locations_i)
 
-        displacement_square_norm = np.sum(np.square(T_sum - X))
+        displacement_square_norm = nx.sum((T_sum - X)**2)
         if log:
             displacement_square_norms.append(displacement_square_norm)
 

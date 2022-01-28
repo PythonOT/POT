@@ -28,6 +28,7 @@ API and modules
    unbalanced
    partial
    sliced
+   regpath
 
 .. autosummary::
    :toctree: ../modules/generated/
