@@ -4,9 +4,10 @@
 
 #### New features
 
-- Better list of related examples in quick start guide with `minigallery` (PR #334)
+- Better list of related examples in quick start guide with `minigallery` (PR #334).
 - Add optional log-domain Sinkhorn implementation in WDA to support smaller values
-  of the regularization parameter (PR #336)
+  of the regularization parameter (PR #336).
+- Add weak OT solver (PR #341)
 
 #### Closed issues
 

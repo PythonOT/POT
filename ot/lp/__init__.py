@@ -26,6 +26,8 @@ from ..utils import dist, list_to_array
 from ..utils import parmap
 from ..backend import get_backend
 
+
+
 __all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx', ' emd_1d_sorted',
            'emd_1d', 'emd2_1d', 'wasserstein_1d']
 
@@ -620,3 +622,4 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
         return X, log_dict
     else:
         return X
+

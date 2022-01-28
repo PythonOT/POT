@@ -28,6 +28,7 @@ API and modules
    unbalanced
    partial
    sliced
+   weak
 
 .. autosummary::
    :toctree: ../modules/generated/
