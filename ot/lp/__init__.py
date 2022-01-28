@@ -535,18 +535,18 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
     Parameters
     ----------
-    measures_locations : list of N (k_i,d) numpy.ndarray
+    measures_locations : list of N (k_i,d) array-like
         The discrete support of a measure supported on :math:`k_i` locations of a `d`-dimensional space
         (:math:`k_i` can be different for each element of the list)
-    measures_weights : list of N (k_i,) numpy.ndarray
+    measures_weights : list of N (k_i,) array-like
         Numpy arrays where each numpy array has :math:`k_i` non-negatives values summing to one
         representing the weights of each discrete input measure
 
-    X_init : (k,d) np.ndarray
+    X_init : (k,d) array-like
         Initialization of the support locations (on `k` atoms) of the barycenter
-    b : (k,) np.ndarray
+    b : (k,) array-like
         Initialization of the weights of the barycenter (non-negatives, sum to 1)
-    weights : (N,) np.ndarray
+    weights : (N,) array-like
         Initialization of the coefficients of the barycenter (non-negatives, sum to 1)
 
     numItermax : int, optional
@@ -564,7 +564,7 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
     Returns
     -------
-    X : (k,d) np.ndarray
+    X : (k,d) array-like
         Support locations (on k atoms) of the barycenter
 
 
