@@ -301,9 +301,10 @@ def test_free_support_barycenter():
 
     np.testing.assert_allclose(X, bar_locations, rtol=1e-5, atol=1e-7)
 
+
 def test_free_support_barycenter_backends(nx):
 
-    measures_locations = [ np.array([-1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
+    measures_locations = [np.array([-1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
     measures_weights = [np.array([1.]), np.array([1.])]
     X_init = np.array([-12.]).reshape((1, 1))
 
@@ -311,14 +312,12 @@ def test_free_support_barycenter_backends(nx):
     bar_locations = np.array([0.]).reshape((1, 1))
 
     X = ot.lp.free_support_barycenter(measures_locations, measures_weights, X_init)
-    
 
     measures_locations2 = [nx.from_numpy(x) for x in measures_locations]
     measures_weights2 = [nx.from_numpy(x) for x in measures_weights]
     X_init2 = nx.from_numpy(X_init)
 
     X2 = ot.lp.free_support_barycenter(measures_locations2, measures_weights2, X_init2)
-
 
     np.testing.assert_allclose(X, nx.to_numpy(X2))
 
