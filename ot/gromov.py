@@ -400,6 +400,10 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=F
         G0 = p[:, None] * q[None, :]
     else:
         G0 = nx.to_numpy(G0)
+        # Check marginals of G0
+        np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-04)
+        np.testing.assert_allclose(G0.sum(axis=0), q, atol=1e-04)
+
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
     def f(G):
@@ -418,7 +422,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=F
         return nx.from_numpy(cg(p, q, 0, 1, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, log=False, **kwargs), type_as=C10)
 
 
-def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=False, **kwargs):
+def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=False, G0=None, **kwargs):
     r"""
     Returns the gromov-wasserstein discrepancy between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
 
@@ -498,7 +502,13 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
-    G0 = p[:, None] * q[None, :]
+    if G0 is None:
+        G0 = p[:, None] * q[None, :]
+    else:
+        G0 = nx.to_numpy(G0)
+        # Check marginals of G0
+        np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-04)
+        np.testing.assert_allclose(G0.sum(axis=0), q, atol=1e-04)
 
     def f(G):
         return gwloss(constC, hC1, hC2, G)
@@ -608,6 +618,9 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
         G0 = p[:, None] * q[None, :]
     else:
         G0 = nx.to_numpy(G0)
+        # Check marginals of G0
+        np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-04)
+        np.testing.assert_allclose(G0.sum(axis=0), q, atol=1e-04)
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
@@ -1788,7 +1801,7 @@ def update_feature_matrix(lambdas, Ys, Ts, p):
     return tmpsum
 
 
-def gromov_wasserstein_dictionary_learning(Cs, ps, D, nt, q, epochs=15, batch_size=16, learning_rate=0.01, reg=0., projection='nonnegative_symmetric', use_log=True,
+def gromov_wasserstein_dictionary_learning(Cs, ps, D, nt, q, epochs, batch_size, learning_rate, Cdictionary=None, reg=0., projection='nonnegative_symmetric', use_log=True,
                                            tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False, **kwargs):
     r"""
     Infer Gromov-Wasserstein linear dictionary \{ (\mathbf{Cdictionary[d]}, q) \}_{d \in [D]}  from the list of structures \{ (\mathbf{Cs},\mathbf{ps}) \}_s
@@ -1825,6 +1838,10 @@ def gromov_wasserstein_dictionary_learning(Cs, ps, D, nt, q, epochs=15, batch_si
         batch size for each stochastic gradient update of the dictionary
     learning_rate: float
         learning rate used for the stochastic gradient descent
+    Cdictionary: list of D array-like with shape (nt, nt), optional. Default is None.
+        Used to initialize the dictionary.
+        If set to None, the dictionary will be initialized randomly.
+        Else Cdictionary must have shape (D, nt, nt) i.e match provided shape features.
     reg : float, optional. Default is 0.
         Coefficient of the negative quadratic regularization used to promote sparsity of w. The default is 0.
     projection: str , optional. Default is 'nonnegative_symmetric'
@@ -1859,26 +1876,33 @@ def gromov_wasserstein_dictionary_learning(Cs, ps, D, nt, q, epochs=15, batch_si
             "Online Graph Dictionary Learning"
             International Conference on Machine Learning (ICML). 2021.
     """
-    Cs, ps, q = list_to_array(Cs, ps, q)
-    Cs0, ps0, q0 = Cs, ps, q
-    nx = get_backend(Cs0, ps0, q0)
+
+    if Cdictionary is None:
+        Cs, ps, q = list_to_array(Cs, ps, q)
+        Cs0, ps0, q0 = Cs, ps, q
+        nx = get_backend(Cs0, ps0, q0)
+    else:
+        Cs, ps, Cdictionary, q = list_to_array(Cs, ps, Cdictionary, q)
+        Cs0, ps0, Cdictionary0, q0 = Cs, ps, Cdictionary, q
+        nx = get_backend(Cs0, ps0, Cdictionary0, q0)
+
     Cs = [nx.to_numpy(C) for C in Cs0]
     ps = [nx.to_numpy(p) for p in ps0]
     q = nx.to_numpy(q0)
-    # Initialize randomly structures of dictionary atoms by sampling existing values
     dataset_size = len(Cs)
-    min_C, max_C = np.inf, -np.inf
-    batch_idx = np.random.choice(range(dataset_size), size=min(50, dataset_size), replace=False)
-    for idx in batch_idx:
-        min_localC = np.min(Cs[idx])
-        max_localC = np.max(Cs[idx])
-        min_C = min(min_C, min_localC)
-        max_C = max(max_C, max_localC)
+    if Cdictionary is None:
+        # Initialize randomly structures of dictionary atoms based on samples
+        dataset_means = [C.mean() for C in Cs]
+        # Initialize dictionary atoms
+        Cdictionary = np.random.normal(loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(D, nt, nt))
+    else:
+        Cdictionary = nx.to_numpy(Cdictionary0)
+        np.testing.assert_allclose(Cdictionary.shape, (D, nt, nt))
 
-    # Initialize dictionary atoms
-    Cdictionary = np.random.uniform(low=0., high=1., size=(D, nt, nt))
-    if projection in ['nonnegative_symmetric', 'symmetric']:
+    if 'symmetric' in projection:
         Cdictionary = 0.5 * (Cdictionary + Cdictionary.transpose((0, 2, 1)))
+    if 'nonnegative' in projection:
+        Cdictionary[Cdictionary < 0.] = 0
     if use_adam_optimizer:
         adam_moments = _initialize_adam_optimizer(Cdictionary)
 
@@ -2128,8 +2152,9 @@ def _cg_gromov_wasserstein_unmixing(C, Cdictionary, Cembedded, w, const_q, T, st
     return w, Cembedded, current_loss
 
 
-def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, ps, D, nt, q, alpha, epochs, batch_size, learning_rate_C, learning_rate_Y, reg=0., projection='nonnegative_symmetric', use_log=True,
-                                                 tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, **kwargs):
+def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, ps, D, nt, q, alpha, epochs, batch_size, learning_rate_C, learning_rate_Y,
+                                                 Cdictionary=None, Ydictionary=None, reg=0., projection='nonnegative_symmetric', use_log=False,
+                                                 tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False, **kwargs):
     r"""
     Infer Fused Gromov-Wasserstein linear dictionary \{ (\mathbf{Cdictionary[d]}, \mathbf{Ydictionary[d]}, q) \}_{d \in [D]}  from the list of structures \{ (\mathbf{Cs}, \mathbf{Ys},\mathbf{ps}) \}_s
 
@@ -2174,6 +2199,14 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, ps, D, nt, q, alpha, ep
         learning rate used for the stochastic gradient descent of structures
     learning_rate_Y: float
         learning rate used for the stochastic gradient descent of features
+    Cdictionary: list of D array-like with shape (nt, nt), optional. Default is None.
+        Used to initialize the dictionary structures.
+        If set to None, the dictionary will be initialized randomly.
+        Else Cdictionary must have shape (D, nt, nt) i.e match provided shape features.
+    Ydictionary: list of D array-like with shape (nt, d), optional. Default is None.
+        Used to initialize the dictionary features.
+        If set to None, the dictionary features will be initialized randomly.
+        Else Ydictionary must have shape (D, nt, d) where d is the features dimension of inputs Ys and also match provided shape features.
     reg : float, optional. Default is 0.
         Coefficient of the negative quadratic regularization used to promote sparsity of w. The default is 0.
     projection: str , optional. Default is 'nonnegative_symmetric'
@@ -2193,6 +2226,8 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, ps, D, nt, q, alpha, ep
         Maximum number of iterations for the BCD.
     max_iter_outer : int, optional. Default is 200.
         Maximum number of iterations for the Conjugate Gradient.
+    verbose : bool, optional. Default is False.
+
     Returns
     -------
 
@@ -2211,31 +2246,45 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, ps, D, nt, q, alpha, ep
             "Online Graph Dictionary Learning"
             International Conference on Machine Learning (ICML). 2021.
     """
-    Cs, Ys, ps, q = list_to_array(Cs, Ys, ps, q)
-    Cs0, Ys0, ps0, q0 = Cs, Ys, ps, q
-    nx = get_backend(Cs0, Ys0, ps0, q0)
+    if Cdictionary is None:
+        if Ydictionary is None:
+            Cs, Ys, ps, q = list_to_array(Cs, Ys, ps, q)
+            Cs0, Ys0, ps0, q0 = Cs, Ys, ps, q
+            nx = get_backend(Cs0, Ys0, ps0, q0)
+        else:
+            Cs, Ys, ps, Ydictionary, q = list_to_array(Cs, Ys, ps, Ydictionary, q)
+            Cs0, Ys0, ps0, Ydictionary0, q0 = Cs, Ys, ps, Ydictionary, q
+            nx = get_backend(Cs0, Ys0, ps0, Ydictionary0, q0)
+    else:
+        if Ydictionary is None:
+            Cs, Ys, ps, Cdictionary, q = list_to_array(Cs, Ys, ps, Cdictionary, q)
+            Cs0, Ys0, ps0, Cdictionary0, q0 = Cs, Ys, ps, Cdictionary, q
+            nx = get_backend(Cs0, Ys0, ps0, Cdictionary0, q0)
+        else:
+            Cs, Ys, ps, Cdictionary, Ydictionary, q = list_to_array(Cs, Ys, ps, Cdictionary, Ydictionary, q)
+            Cs0, Ys0, ps0, Cdictionary0, Ydictionary0, q0 = Cs, Ys, ps, Cdictionary, Ydictionary, q
+            nx = get_backend(Cs0, Ys0, ps0, Cdictionary0, Ydictionary0, q0)
     Cs = [nx.to_numpy(C) for C in Cs0]
     Ys = [nx.to_numpy(Y) for Y in Ys0]
     ps = [nx.to_numpy(p) for p in ps0]
     q = nx.to_numpy(q0)
     d = Ys[0].shape[-1]
     dataset_size = len(Cs)
-    # Initialize randomly structures/features of dictionary atoms by sampling existing values
-    min_C, max_C = np.inf, -np.inf
-    min_Y, max_Y = np.inf, -np.inf
-    batch_idx = np.random.choice(range(dataset_size), size=min(50, dataset_size), replace=False)
-    for idx in batch_idx:
-        min_localC = np.min(Cs[idx])
-        max_localC = np.max(Cs[idx])
-        min_localY = np.min(Ys[idx])
-        max_localY = np.max(Ys[idx])
-        min_C = min(min_C, min_localC)
-        max_C = max(max_C, max_localC)
-        min_Y = min(min_Y, min_localY)
-        max_Y = max(max_Y, max_localY)
 
-    Ydictionary = np.random.uniform(low=min_Y, high=max_Y, size=(D, nt, d))
-    Cdictionary = np.random.uniform(low=min_C, high=max_C, size=(D, nt, nt))
+    if Cdictionary is None:
+        dataset_structure_means = [C.mean() for C in Cs]
+        Cdictionary = np.random.normal(loc=np.mean(dataset_structure_means), scale=np.std(dataset_structure_means), size=(D, nt, nt))
+    else:
+        Cdictionary = nx.to_numpy(Cdictionary0)
+        np.testing.assert_allclose(Cdictionary.shape, (D, nt, nt))
+
+    if Ydictionary is None:
+        dataset_feature_means = np.stack([F.mean(axis=0) for F in Ys])
+        Ydictionary = np.random.normal(loc=dataset_feature_means.mean(axis=0), scale=dataset_feature_means.std(axis=0), size=(D, nt, d))
+    else:
+        Ydictionary = nx.to_numpy(Ydictionary0)
+        np.testing.assert_allclose(Ydictionary.shape, (D, nt, d))
+
     if projection in ['nonnegative_symmetric', 'symmetric']:
         Cdictionary = 0.5 * (Cdictionary + Cdictionary.transpose((0, 2, 1)))
     if projection == 'nonnegative_symmetric':
@@ -2288,9 +2337,9 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, ps, D, nt, q, alpha, ep
                 Cdictionary -= learning_rate_C * grad_Cdictionary
                 Ydictionary -= learning_rate_Y * grad_Ydictionary
 
-            if projection in ['symmetric', 'nonnegative_symmetric']:
+            if 'symmetric' in projection:
                 Cdictionary = 0.5 * (Cdictionary + Cdictionary.transpose((0, 2, 1)))
-            if projection == 'nonnegative_symmetric':
+            if 'nonnegative' in projection:
                 Cdictionary[Cdictionary < 0] = 0
         if use_log:
             log['loss_epochs'].append(cumulated_loss_over_epoch)
@@ -2298,7 +2347,8 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, ps, D, nt, q, alpha, ep
             loss_best_state = cumulated_loss_over_epoch
             Cdictionary_best_state = Cdictionary.copy()
             Ydictionary_best_state = Ydictionary.copy()
-        print('--- epoch: ', epoch, ' cumulated reconstruction error: ', cumulated_loss_over_epoch)
+        if verbose:
+            print('--- epoch: ', epoch, ' cumulated reconstruction error: ', cumulated_loss_over_epoch)
     return nx.from_numpy(Cdictionary_best_state), nx.from_numpy(Ydictionary_best_state), log
 
 
