@@ -9,11 +9,11 @@ sum of diracs. The OT matrix is plotted with the samples.
 
 """
 
-# Author: Remi Flamary <remi.flamary@unice.fr>
+# Author: Remi Flamary <remi.flamary@polytechnique.edu>
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 3
 
 import numpy as np
 import matplotlib.pylab as pl
@@ -66,36 +66,33 @@ G0 = ot.emd(a, b, M)
 
 #%% Weak OT
 
-Gweak = ot.weak_optimal_transport(xs,xt,a,b)
+Gweak = ot.weak_optimal_transport(xs, xt, a, b)
 
 
 ##############################################################################
 # Plot weak OT and exact OT solutions
 # --------------------------------------
 
-pl.figure(2,(8,5))
+pl.figure(2, (8, 5))
 
-pl.subplot(1,2,1)
+pl.subplot(1, 2, 1)
 pl.imshow(G0, interpolation='nearest')
 pl.title('OT matrix')
 
-pl.subplot(1,2,2)
+pl.subplot(1, 2, 2)
 pl.imshow(Gweak, interpolation='nearest')
 pl.title('Weak OT matrix')
 
-pl.figure(3,(5,5))
+pl.figure(3, (8, 5))
 
+pl.subplot(1, 2, 1)
 ot.plot.plot2D_samples_mat(xs, xt, G0, c=[.5, .5, 1])
 pl.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
 pl.plot(xt[:, 0], xt[:, 1], 'xr', label='Target samples')
-pl.legend(loc=0)
 pl.title('OT matrix with samples')
 
-pl.figure(4,(5,5))
-
+pl.subplot(1, 2, 2)
 ot.plot.plot2D_samples_mat(xs, xt, Gweak, c=[.5, .5, 1])
 pl.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
 pl.plot(xt[:, 0], xt[:, 1], 'xr', label='Target samples')
-pl.legend(loc=0)
 pl.title('Weak OT matrix with samples')
-
