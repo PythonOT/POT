@@ -940,8 +940,6 @@ def test_screenkhorn(nx):
     bb = nx.from_numpy(b)
     M_nx = nx.from_numpy(M, type_as=ab)
 
-    # np sinkhorn
-    G_sink_np = ot.sinkhorn(a, b, M, 1e-1)
     # sinkhorn
     G_sink = nx.to_numpy(ot.sinkhorn(ab, bb, M_nx, 1e-1))
     # screenkhorn
