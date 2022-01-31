@@ -17,14 +17,14 @@ def test_weak_ot():
     xt = rng.randn(n, 2)
     u = ot.utils.unif(n)
 
-    G = ot.weak_optimal_transport(xs, xt, u, u)
+    G, log = ot.weak_optimal_transport(xs, xt, u, u, log=True)
 
     # check constraints
     np.testing.assert_allclose(u, G.sum(1))
     np.testing.assert_allclose(u, G.sum(0))
 
     # chaeck that identity is recovered
-    G = ot.weak_optimal_transport(xs, xs, u, u, G0=np.eye(n) / n)
+    G = ot.weak_optimal_transport(xs, xs, G0=np.eye(n) / n)
 
     # check G is identity
     np.testing.assert_allclose(G, np.eye(n) / n)
