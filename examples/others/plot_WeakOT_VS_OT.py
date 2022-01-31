@@ -13,7 +13,7 @@ sum of diracs. The OT matrix is plotted with the samples.
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 3
+# sphinx_gallery_thumbnail_number = 4
 
 import numpy as np
 import matplotlib.pylab as pl
@@ -73,7 +73,7 @@ Gweak = ot.weak_optimal_transport(xs, xt, a, b)
 # Plot weak OT and exact OT solutions
 # --------------------------------------
 
-pl.figure(2, (8, 5))
+pl.figure(3, (8, 5))
 
 pl.subplot(1, 2, 1)
 pl.imshow(G0, interpolation='nearest')
@@ -83,7 +83,7 @@ pl.subplot(1, 2, 2)
 pl.imshow(Gweak, interpolation='nearest')
 pl.title('Weak OT matrix')
 
-pl.figure(3, (8, 5))
+pl.figure(4, (8, 5))
 
 pl.subplot(1, 2, 1)
 ot.plot.plot2D_samples_mat(xs, xt, G0, c=[.5, .5, 1])
