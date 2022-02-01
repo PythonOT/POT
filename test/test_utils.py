@@ -122,7 +122,7 @@ def test_dist():
         'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
         'euclidean', 'hamming', 'jaccard', 'kulsinski',
         'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-        'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski', 'yule'
+        'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule'
     ]  # those that support weights
     metrics = ['mahalanobis', 'seuclidean']  # do not support weights depending on scipy's version
 

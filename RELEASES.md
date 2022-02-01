@@ -1,5 +1,6 @@
 # Releases
 
+
 ## 0.8.2dev Development
 
 #### New features
@@ -7,10 +8,12 @@
 - Better list of related examples in quick start guide with `minigallery` (PR #334)
 - Add optional log-domain Sinkhorn implementation in WDA to support smaller values
   of the regularization parameter (PR #336)
+- Backend implementation for `ot.lp.free_support_barycenter` (PR #340)
 
 #### Closed issues
 
-- Bug in instantiating an `autograd` function (`ValFunction`, Issue #337, PR #338)
+- Bug in instantiating an `autograd` function (`ValFunction`, Issue #337, PR
+  #338)
 
 ## 0.8.1.0
 *December 2021*
