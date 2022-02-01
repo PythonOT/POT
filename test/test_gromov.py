@@ -579,12 +579,6 @@ def test_fgw(nx):
     qb = nx.from_numpy(q)
     G0b = nx.from_numpy(G0)
 
-    # check constraints of initial transport plan
-    np.testing.assert_allclose(
-        p, G0b.sum(1), atol=1e-04)  # cf convergence gromov
-    np.testing.assert_allclose(
-        q, G0b.sum(0), atol=1e-04)  # cf convergence gromov
-
     G, log = ot.gromov.fused_gromov_wasserstein(M, C1, C2, p, q, 'square_loss', alpha=0.5, G0=G0, log=True)
     Gb, logb = ot.gromov.fused_gromov_wasserstein(Mb, C1b, C2b, pb, qb, 'square_loss', alpha=0.5, G0=G0b, log=True)
     Gb = nx.to_numpy(Gb)
