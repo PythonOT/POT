@@ -26,6 +26,8 @@ from ..utils import dist, list_to_array
 from ..utils import parmap
 from ..backend import get_backend
 
+
+
 __all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx', ' emd_1d_sorted',
            'emd_1d', 'emd2_1d', 'wasserstein_1d']
 
@@ -220,7 +222,8 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
         format
 
     .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends.
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
 
     Uses the algorithm proposed in :ref:`[1] <references-emd>`.
 
@@ -358,7 +361,8 @@ def emd2(a, b, M, processes=1,
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are the sample weights
 
     .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends.
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
 
     Uses the algorithm proposed in :ref:`[1] <references-emd2>`.
 
@@ -535,18 +539,18 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
     Parameters
     ----------
-    measures_locations : list of N (k_i,d) numpy.ndarray
+    measures_locations : list of N (k_i,d) array-like
         The discrete support of a measure supported on :math:`k_i` locations of a `d`-dimensional space
         (:math:`k_i` can be different for each element of the list)
-    measures_weights : list of N (k_i,) numpy.ndarray
+    measures_weights : list of N (k_i,) array-like
         Numpy arrays where each numpy array has :math:`k_i` non-negatives values summing to one
         representing the weights of each discrete input measure
 
-    X_init : (k,d) np.ndarray
+    X_init : (k,d) array-like
         Initialization of the support locations (on `k` atoms) of the barycenter
-    b : (k,) np.ndarray
+    b : (k,) array-like
         Initialization of the weights of the barycenter (non-negatives, sum to 1)
-    weights : (N,) np.ndarray
+    weights : (N,) array-like
         Initialization of the coefficients of the barycenter (non-negatives, sum to 1)
 
     numItermax : int, optional
@@ -564,7 +568,7 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
     Returns
     -------
-    X : (k,d) np.ndarray
+    X : (k,d) array-like
         Support locations (on k atoms) of the barycenter
 
 
@@ -577,15 +581,17 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
     """
 
+    nx = get_backend(*measures_locations,*measures_weights,X_init)
+
     iter_count = 0
 
     N = len(measures_locations)
     k = X_init.shape[0]
     d = X_init.shape[1]
     if b is None:
-        b = np.ones((k,)) / k
+        b = nx.ones((k,),type_as=X_init) / k
     if weights is None:
-        weights = np.ones((N,)) / N
+        weights = nx.ones((N,),type_as=X_init) / N
 
     X = X_init
 
@@ -596,15 +602,15 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
     while (displacement_square_norm > stopThr and iter_count < numItermax):
 
-        T_sum = np.zeros((k, d))
+        T_sum = nx.zeros((k, d),type_as=X_init)
+        
 
-        for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights,
-                                                                      weights.tolist()):
+        for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights,  weights):
             M_i = dist(X, measure_locations_i)
             T_i = emd(b, measure_weights_i, M_i, numThreads=numThreads)
-            T_sum = T_sum + weight_i * np.reshape(1. / b, (-1, 1)) * np.matmul(T_i, measure_locations_i)
+            T_sum = T_sum + weight_i * 1. / b[:,None] * nx.dot(T_i, measure_locations_i)
 
-        displacement_square_norm = np.sum(np.square(T_sum - X))
+        displacement_square_norm = nx.sum((T_sum - X)**2)
         if log:
             displacement_square_norms.append(displacement_square_norm)
 
@@ -620,3 +626,4 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
         return X, log_dict
     else:
         return X
+

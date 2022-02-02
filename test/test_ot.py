@@ -232,7 +232,7 @@ def test_emd2_multi():
     # Gaussian distributions
     a = gauss(n, m=20, s=5)  # m= mean, s= std
 
-    ls = np.arange(20, 500, 20)
+    ls = np.arange(20, 500, 100)
     nb = len(ls)
     b = np.zeros((n, nb))
     for i in range(nb):
@@ -300,6 +300,23 @@ def test_free_support_barycenter():
     X = ot.lp.free_support_barycenter(measures_locations, measures_weights, X_init)
 
     np.testing.assert_allclose(X, bar_locations, rtol=1e-5, atol=1e-7)
+
+
+def test_free_support_barycenter_backends(nx):
+
+    measures_locations = [np.array([-1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
+    measures_weights = [np.array([1.]), np.array([1.])]
+    X_init = np.array([-12.]).reshape((1, 1))
+
+    X = ot.lp.free_support_barycenter(measures_locations, measures_weights, X_init)
+
+    measures_locations2 = [nx.from_numpy(x) for x in measures_locations]
+    measures_weights2 = [nx.from_numpy(x) for x in measures_weights]
+    X_init2 = nx.from_numpy(X_init)
+
+    X2 = ot.lp.free_support_barycenter(measures_locations2, measures_weights2, X_init2)
+
+    np.testing.assert_allclose(X, nx.to_numpy(X2))
 
 
 @pytest.mark.skipif(not ot.lp.cvx.cvxopt, reason="No cvxopt available")
