@@ -14,10 +14,11 @@ Domain adaptation with optimal transport
 import numpy as np
 import scipy.linalg as linalg
 
+from .backend import get_backend
 from .bregman import sinkhorn, jcpot_barycenter
 from .lp import emd
 from .utils import unif, dist, kernel, cost_normalization, label_normalization, laplacian, dots
-from .utils import check_params, BaseEstimator
+from .utils import list_to_array, check_params, BaseEstimator
 from .unbalanced import sinkhorn_unbalanced
 from .optim import cg
 from .optim import gcg
@@ -60,13 +61,13 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
 
     Parameters
     ----------
-    a : np.ndarray (ns,)
+    a : array-like (ns,)
         samples weights in the source domain
-    labels_a : np.ndarray (ns,)
+    labels_a : array-like (ns,)
         labels of samples in the source domain
-    b : np.ndarray (nt,)
+    b : array-like (nt,)
         samples weights in the target domain
-    M : np.ndarray (ns,nt)
+    M : array-like (ns,nt)
         loss matrix
     reg : float
         Regularization term for entropic regularization >0
@@ -86,7 +87,7 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
 
     Returns
     -------
-    gamma : (ns, nt) ndarray
+    gamma : (ns, nt) array-like
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -111,26 +112,28 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
     ot.optim.cg : General regularized OT
 
     """
+    a, labels_a, b, M = list_to_array(a, labels_a, b, M)
+    nx = get_backend(a, labels_a, b, M)
+
     p = 0.5
     epsilon = 1e-3
 
     indices_labels = []
-    classes = np.unique(labels_a)
+    classes = nx.unique(labels_a)
     for c in classes:
-        idxc, = np.where(labels_a == c)
+        idxc, = nx.where(labels_a == c)
         indices_labels.append(idxc)
 
-    W = np.zeros(M.shape)
-
+    W = nx.zeros(M.shape, type_as=M)
     for cpt in range(numItermax):
         Mreg = M + eta * W
         transp = sinkhorn(a, b, Mreg, reg, numItermax=numInnerItermax,
                           stopThr=stopInnerThr)
         # the transport has been computed. Check if classes are really
         # separated
-        W = np.ones(M.shape)
+        W = nx.ones(M.shape, type_as=M)
         for (i, c) in enumerate(classes):
-            majs = np.sum(transp[indices_labels[i]], axis=0)
+            majs = nx.sum(transp[indices_labels[i]], axis=0)
             majs = p * ((majs + epsilon) ** (p - 1))
             W[indices_labels[i]] = majs
 
@@ -174,13 +177,13 @@ def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
 
     Parameters
     ----------
-    a : np.ndarray (ns,)
+    a : array-like (ns,)
         samples weights in the source domain
-    labels_a : np.ndarray (ns,)
+    labels_a : array-like (ns,)
         labels of samples in the source domain
-    b : np.ndarray (nt,)
+    b : array-like (nt,)
         samples in the target domain
-    M : np.ndarray (ns,nt)
+    M : array-like (ns,nt)
         loss matrix
     reg : float
         Regularization term for entropic regularization >0
@@ -200,7 +203,7 @@ def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
 
     Returns
     -------
-    gamma : (ns, nt) ndarray
+    gamma : (ns, nt) array-like
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -222,22 +225,25 @@ def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
     ot.optim.gcg : Generalized conditional gradient for OT problems
 
     """
-    lstlab = np.unique(labels_a)
+    a, labels_a, b, M = list_to_array(a, labels_a, b, M)
+    nx = get_backend(a, labels_a, b, M)
+
+    lstlab = nx.unique(labels_a)
 
     def f(G):
         res = 0
         for i in range(G.shape[1]):
             for lab in lstlab:
                 temp = G[labels_a == lab, i]
-                res += np.linalg.norm(temp)
+                res += nx.norm(temp)
         return res
 
     def df(G):
-        W = np.zeros(G.shape)
+        W = nx.zeros(G.shape, type_as=G)
         for i in range(G.shape[1]):
             for lab in lstlab:
                 temp = G[labels_a == lab, i]
-                n = np.linalg.norm(temp)
+                n = nx.norm(temp)
                 if n:
                     W[labels_a == lab, i] = temp / n
         return W
@@ -289,9 +295,9 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
 
     Parameters
     ----------
-    xs : np.ndarray (ns,d)
+    xs : array-like (ns,d)
         samples in the source domain
-    xt : np.ndarray (nt,d)
+    xt : array-like (nt,d)
         samples in the target domain
     mu : float,optional
         Weight for the linear OT loss (>0)
@@ -315,9 +321,9 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
 
     Returns
     -------
-    gamma : (ns, nt) ndarray
+    gamma : (ns, nt) array-like
         Optimal transportation matrix for the given parameters
-    L : (d, d) ndarray
+    L : (d, d) array-like
         Linear mapping matrix ((:math:`d+1`, `d`) if bias)
     log : dict
         log dictionary return only if log==True in parameters
@@ -336,13 +342,15 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
     ot.optim.cg : General regularized OT
 
     """
+    xs, xt = list_to_array(xs, xt)
+    nx = get_backend(xs, xt)
 
     ns, nt, d = xs.shape[0], xt.shape[0], xt.shape[1]
 
     if bias:
-        xs1 = np.hstack((xs, np.ones((ns, 1))))
-        xstxs = xs1.T.dot(xs1)
-        Id = np.eye(d + 1)
+        xs1 = nx.concatenate((xs, nx.ones((ns, 1), type_as=xs)), axis=1)
+        xstxs = nx.dot(xs1.T, xs1)
+        Id = nx.eye(d + 1, type_as=xs)
         Id[-1] = 0
         I0 = Id[:, :-1]
 
@@ -350,8 +358,8 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
             return x[:-1, :]
     else:
         xs1 = xs
-        xstxs = xs1.T.dot(xs1)
-        Id = np.eye(d)
+        xstxs = nx.dot(xs1.T, xs1)
+        Id = nx.eye(d, type_as=xs)
         I0 = Id
 
         def sel(x):
@@ -368,23 +376,26 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
 
     def loss(L, G):
         """Compute full loss"""
-        return np.sum((xs1.dot(L) - ns * G.dot(xt)) ** 2) + mu * \
-            np.sum(G * M) + eta * np.sum(sel(L - I0) ** 2)
+        return (
+            nx.sum((nx.dot(xs1, L) - ns * nx.dot(G, xt)) ** 2)
+            + mu * nx.sum(G * M)
+            + eta * nx.sum(sel(L - I0) ** 2)
+        )
 
     def solve_L(G):
         """ solve L problem with fixed G (least square)"""
-        xst = ns * G.dot(xt)
-        return np.linalg.solve(xstxs + eta * Id, xs1.T.dot(xst) + eta * I0)
+        xst = ns * nx.dot(G, xt)
+        return nx.solve(xstxs + eta * Id, nx.dot(xs1.T, xst) + eta * I0)
 
     def solve_G(L, G0):
         """Update G with CG algorithm"""
-        xsi = xs1.dot(L)
+        xsi = nx.dot(xs1, L)
 
         def f(G):
-            return np.sum((xsi - ns * G.dot(xt)) ** 2)
+            return nx.sum((xsi - ns * nx.dot(G, xt)) ** 2)
 
         def df(G):
-            return -2 * ns * (xsi - ns * G.dot(xt)).dot(xt.T)
+            return -2 * ns * nx.dot(xsi - ns * nx.dot(G, xt), xt.T)
 
         G = cg(a, b, M, 1.0 / mu, f, df, G0=G0,
                numItermax=numInnerItermax, stopThr=stopInnerThr)
@@ -481,9 +492,9 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
 
     Parameters
     ----------
-    xs : np.ndarray (ns,d)
+    xs : array-like (ns,d)
         samples in the source domain
-    xt : np.ndarray (nt,d)
+    xt : array-like (nt,d)
         samples in the target domain
     mu : float,optional
         Weight for the linear OT loss (>0)
@@ -513,9 +524,9 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
 
     Returns
     -------
-    gamma : (ns, nt) ndarray
+    gamma : (ns, nt) array-like
         Optimal transportation matrix for the given parameters
-    L : (ns, d) ndarray
+    L : (ns, d) array-like
         Nonlinear mapping matrix ((:math:`n_s+1`, `d`) if bias)
     log : dict
         log dictionary return only if log==True in parameters
@@ -534,15 +545,17 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
     ot.optim.cg : General regularized OT
 
     """
+    xs, xt = list_to_array(xs, xt)
+    nx = get_backend(xs, xt)
 
     ns, nt = xs.shape[0], xt.shape[0]
 
     K = kernel(xs, xs, method=kerneltype, sigma=sigma)
     if bias:
-        K1 = np.hstack((K, np.ones((ns, 1))))
-        Id = np.eye(ns + 1)
+        K1 = nx.concatenate((K, nx.ones((ns, 1), type_as=xs)), axis=1)
+        Id = nx.eye(ns + 1, type_as=xs)
         Id[-1] = 0
-        Kp = np.eye(ns + 1)
+        Kp = nx.eye(ns + 1, type_as=xs)
         Kp[:ns, :ns] = K
 
         # ls regu
@@ -550,12 +563,12 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
         # Kreg=I
 
         # RKHS regul
-        K0 = K1.T.dot(K1) + eta * Kp
+        K0 = nx.dot(K1.T, K1) + eta * Kp
         Kreg = Kp
 
     else:
         K1 = K
-        Id = np.eye(ns)
+        Id = nx.eye(ns, type_as=xs)
 
         # ls regul
         # K0 = K1.T.dot(K1)+eta*I
@@ -576,28 +589,31 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
 
     def loss(L, G):
         """Compute full loss"""
-        return np.sum((K1.dot(L) - ns * G.dot(xt)) ** 2) + mu * \
-            np.sum(G * M) + eta * np.trace(L.T.dot(Kreg).dot(L))
+        return (
+            nx.sum((nx.dot(K1, L) - ns * nx.dot(G, xt)) ** 2)
+            + mu * nx.sum(G * M)
+            + eta * nx.trace(L.T.dot(Kreg).dot(L))
+        )
 
     def solve_L_nobias(G):
         """ solve L problem with fixed G (least square)"""
-        xst = ns * G.dot(xt)
-        return np.linalg.solve(K0, xst)
+        xst = ns * nx.dot(G, xt)
+        return nx.solve(K0, xst)
 
     def solve_L_bias(G):
         """ solve L problem with fixed G (least square)"""
-        xst = ns * G.dot(xt)
-        return np.linalg.solve(K0, K1.T.dot(xst))
+        xst = ns * nx.dot(G, xt)
+        return nx.solve(K0, nx.dot(K1.T, xst))
 
     def solve_G(L, G0):
         """Update G with CG algorithm"""
-        xsi = K1.dot(L)
+        xsi = nx.dot(K1, L)
 
         def f(G):
-            return np.sum((xsi - ns * G.dot(xt)) ** 2)
+            return nx.sum((xsi - ns * nx.dot(G, xt)) ** 2)
 
         def df(G):
-            return -2 * ns * (xsi - ns * G.dot(xt)).dot(xt.T)
+            return -2 * ns * nx.dot(xsi - ns * nx.dot(G, xt), xt.T)
 
         G = cg(a, b, M, 1.0 / mu, f, df, G0=G0,
                numItermax=numInnerItermax, stopThr=stopInnerThr)

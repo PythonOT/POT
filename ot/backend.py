@@ -786,6 +786,26 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def solve(self, a, b):
+        r"""
+        Solves a linear matrix equation, or system of linear scalar equations.
+
+        This function follows the api from :any:`numpy.linalg.solve`.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.solve.html
+        """
+        raise NotImplementedError()
+
+    def trace(self, a):
+        r"""
+        Returns the sum along diagonals of the array.
+
+        This function follows the api from :any:`numpy.trace`.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.trace.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -1004,8 +1024,11 @@ class NumpyBackend(Backend):
         else:
             return a
 
-    def where(self, condition, x, y):
-        return np.where(condition, x, y)
+    def where(self, condition, x=None, y=None):
+        if x is None and y is None:
+            return np.where(condition)
+        else:
+            return np.where(condition, x, y)
 
     def copy(self, a):
         return a.copy()
@@ -1045,6 +1068,13 @@ class NumpyBackend(Backend):
             key = ("Numpy", self.device_type(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
         return results
+
+    def solve(self, a, b):
+        print(a.shape, b.shape)
+        return np.linalg.solve(a, b)
+
+    def trace(self, a):
+        return np.trace(a)
 
 
 class JaxBackend(Backend):
@@ -1293,8 +1323,11 @@ class JaxBackend(Backend):
         # Currently, JAX does not support sparse matrices
         return a
 
-    def where(self, condition, x, y):
-        return jnp.where(condition, x, y)
+    def where(self, condition, x=None, y=None):
+        if x is None and y is None:
+            return jnp.where(condition)
+        else:
+            return jnp.where(condition, x, y)
 
     def copy(self, a):
         # No need to copy, JAX arrays are immutable
@@ -1338,6 +1371,12 @@ class JaxBackend(Backend):
             key = ("Jax", self.device_type(type_as), self.bitsize(type_as))
             results[key] = (t1 - t0) / n_runs
         return results
+
+    def solve(self, a, b):
+        return jnp.linalg.solve(a, b)
+
+    def trace(self, a):
+        return jnp.trace(a)
 
 
 class TorchBackend(Backend):
@@ -1659,8 +1698,11 @@ class TorchBackend(Backend):
         else:
             return a
 
-    def where(self, condition, x, y):
-        return torch.where(condition, x, y)
+    def where(self, condition, x=None, y=None):
+        if x is None and y is None:
+            return torch.where(condition)
+        else:
+            return torch.where(condition, x, y)
 
     def copy(self, a):
         return torch.clone(a)
@@ -1717,6 +1759,12 @@ class TorchBackend(Backend):
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         return results
+
+    def solve(self, a, b):
+        return torch.linalg.solve(a, b)
+
+    def trace(self, a):
+        return torch.trace(a)
 
 
 class CupyBackend(Backend):  # pragma: no cover
@@ -1982,8 +2030,11 @@ class CupyBackend(Backend):  # pragma: no cover
         else:
             return a
 
-    def where(self, condition, x, y):
-        return cp.where(condition, x, y)
+    def where(self, condition, x=None, y=None):
+        if x is None and y is None:
+            return cp.where(condition)
+        else:
+            return cp.where(condition, x, y)
 
     def copy(self, a):
         return a.copy()
@@ -2034,6 +2085,12 @@ class CupyBackend(Backend):  # pragma: no cover
         mempool.free_all_blocks()
         pinned_mempool.free_all_blocks()
         return results
+
+    def solve(self, a, b):
+        return cp.linalg.solve(a, b)
+
+    def trace(self, a):
+        return cp.trace(a)
 
 
 class TensorflowBackend(Backend):
@@ -2309,8 +2366,11 @@ class TensorflowBackend(Backend):
         else:
             return a
 
-    def where(self, condition, x, y):
-        return tnp.where(condition, x, y)
+    def where(self, condition, x=None, y=None):
+        if x is None and y is None:
+            return tnp.where(condition)
+        else:
+            return tnp.where(condition, x, y)
 
     def copy(self, a):
         return tf.identity(a)
@@ -2364,3 +2424,9 @@ class TensorflowBackend(Backend):
                     results[key] = (t1 - t0) / n_runs
 
         return results
+
+    def solve(self, a, b):
+        return tf.linalg.solve(a, b)
+
+    def trace(self, a):
+        return tf.linalg.trace(a)

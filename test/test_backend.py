@@ -264,12 +264,17 @@ def test_empty_backend():
         nx.device_type(M)
     with pytest.raises(NotImplementedError):
         nx._bench(lambda x: x, M, n_runs=1)
+    with pytest.raises(NotImplementedError):
+        nx.solve(M, v)
+    with pytest.raises(NotImplementedError):
+        nx.trace(M)
 
 
 def test_func_backends(nx):
 
     rnd = np.random.RandomState(0)
     M = rnd.randn(10, 3)
+    SquareM = rnd.randn(10, 10)
     v = rnd.randn(3)
     val = np.array([1.0])
 
@@ -288,6 +293,7 @@ def test_func_backends(nx):
         lst_name = []
 
         Mb = nx.from_numpy(M)
+        SquareMb = nx.from_numpy(SquareM)
         vb = nx.from_numpy(v)
 
         val = nx.from_numpy(val)
@@ -549,6 +555,14 @@ def test_func_backends(nx):
         assert A in ("CPU", "GPU")
 
         nx._bench(lambda x: x, M, n_runs=1)
+
+        A = nx.solve(SquareMb, Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('solve')
+
+        A = nx.trace(SquareMb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('trace')
 
         lst_tot.append(lst_b)
 
