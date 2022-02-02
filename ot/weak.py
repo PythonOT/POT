@@ -33,7 +33,8 @@ def weak_optimal_transport(Xa, Xb, a=None, b=None, verbose=False, log=False, G0=
 
 
     .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends.
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
 
     Uses the conditional gradient algorithm to solve the problem proposed
     in :ref:`[39] <references-weak>`.

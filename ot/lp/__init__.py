@@ -222,7 +222,8 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
         format
 
     .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends.
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
 
     Uses the algorithm proposed in :ref:`[1] <references-emd>`.
 
@@ -360,7 +361,8 @@ def emd2(a, b, M, processes=1,
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are the sample weights
 
     .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends.
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
 
     Uses the algorithm proposed in :ref:`[1] <references-emd2>`.
 
