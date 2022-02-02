@@ -14,7 +14,7 @@ __all__ = ['weak_optimal_transport']
 
 
 def weak_optimal_transport(Xa, Xb, a=None, b=None, verbose=False, log=False, G0=None, **kwargs):
-    r"""Solves the weak optimal transport problem betwen two empirical distributions
+    r"""Solves the weak optimal transport problem between two empirical distributions
 
 
     .. math::
@@ -91,11 +91,11 @@ def weak_optimal_transport(Xa, Xb, a=None, b=None, verbose=False, log=False, G0=
     Xb2 = nx.to_numpy(Xb)
 
     if a is None:
-        a2 = nx.ones((Xa.shape[0]), type_as=Xa) / Xa.shape[0]
+        a2 = np.ones((Xa.shape[0])) / Xa.shape[0]
     else:
         a2 = nx.to_numpy(a)
     if b is None:
-        b2 = nx.ones((Xb.shape[0]), type_as=Xb) / Xb.shape[0]
+        b2 = np.ones((Xb.shape[0])) / Xb.shape[0]
     else:
         b2 = nx.to_numpy(b)
 
@@ -117,7 +117,7 @@ def weak_optimal_transport(Xa, Xb, a=None, b=None, verbose=False, log=False, G0=
     if log:
         res, log = cg(a2, b2, 0, 1, f, df, T0, log=log, verbose=verbose, **kwargs)
         log['u'] = nx.from_numpy(log['u'], type_as=Xa)
-        log['v'] = nx.from_numpy(log['v'], type_as=Xa)
+        log['v'] = nx.from_numpy(log['v'], type_as=Xb)
         return nx.from_numpy(res, type_as=Xa), log
     else:
         return nx.from_numpy(cg(a2, b2, 0, 1, f, df, T0, log=log, verbose=verbose, **kwargs), type_as=Xa)

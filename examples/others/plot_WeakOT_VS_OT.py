@@ -37,7 +37,7 @@ cov_t = np.array([[1, -.8], [-.8, 1]])
 xs = ot.datasets.make_2D_samples_gauss(n, mu_s, cov_s)
 xt = ot.datasets.make_2D_samples_gauss(n, mu_t, cov_t)
 
-a, b = np.ones((n,)) / n, np.ones((n,)) / n  # uniform distribution on samples
+a, b = ot.unif(n), ot.unif(n)  # uniform distribution on samples
 
 # loss matrix
 M = ot.dist(xs, xt)
