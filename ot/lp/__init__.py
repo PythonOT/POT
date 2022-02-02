@@ -26,6 +26,8 @@ from ..utils import dist, list_to_array
 from ..utils import parmap
 from ..backend import get_backend
 
+
+
 __all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx', ' emd_1d_sorted',
            'emd_1d', 'emd2_1d', 'wasserstein_1d']
 
@@ -220,7 +222,8 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
         format
 
     .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends.
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
 
     Uses the algorithm proposed in :ref:`[1] <references-emd>`.
 
@@ -358,7 +361,8 @@ def emd2(a, b, M, processes=1,
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are the sample weights
 
     .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends.
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
 
     Uses the algorithm proposed in :ref:`[1] <references-emd2>`.
 
@@ -622,3 +626,4 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
         return X, log_dict
     else:
         return X
+

@@ -116,7 +116,7 @@ def proj_simplex(v, z=1):
         return w
 
 
-def unif(n):
+def unif(n, type_as=None):
     r"""
     Return a uniform histogram of length `n` (simplex).
 
@@ -124,13 +124,19 @@ def unif(n):
     ----------
     n : int
         number of bins in the histogram
+    type_as : array_like
+        array of the same type of the expected output (numpy/pytorch/jax)
 
     Returns
     -------
-    h : np.array (`n`,)
+    h : array_like (`n`,)
         histogram of length `n` such that :math:`\forall i, \mathbf{h}_i = \frac{1}{n}`
     """
-    return np.ones((n,)) / n
+    if type_as is None:
+        return np.ones((n,)) / n
+    else:
+        nx = get_backend(type_as)
+        return nx.ones((n,)) / n
 
 
 def clean_zeros(a, b, M):

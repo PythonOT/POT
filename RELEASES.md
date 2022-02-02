@@ -5,10 +5,12 @@
 
 #### New features
 
-- Better list of related examples in quick start guide with `minigallery` (PR #334)
+- Better list of related examples in quick start guide with `minigallery` (PR #334).
 - Add optional log-domain Sinkhorn implementation in WDA to support smaller values
-  of the regularization parameter (PR #336)
-- Backend implementation for `ot.lp.free_support_barycenter` (PR #340)
+  of the regularization parameter (PR #336).
+- Backend implementation for `ot.lp.free_support_barycenter` (PR #340).
+- Add weak OT solver + example  (PR #341).
+
 
 #### Closed issues
 
