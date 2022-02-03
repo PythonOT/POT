@@ -62,12 +62,12 @@ def test_tic_toc():
     import time
 
     ot.tic()
-    time.sleep(0.5)
+    time.sleep(0.1)
     t = ot.toc()
     t2 = ot.toq()
 
     # test timing
-    np.testing.assert_allclose(0.5, t, rtol=1e-1, atol=1e-1)
+    np.testing.assert_allclose(0.1, t, rtol=1e-1, atol=1e-1)
 
     # test toc vs toq
     np.testing.assert_allclose(t, t2, rtol=1e-1, atol=1e-1)
@@ -94,9 +94,21 @@ def test_unif():
     np.testing.assert_allclose(1, np.sum(u))
 
 
-def test_dist():
+def test_unif_backend(nx):
 
     n = 100
+
+    for tp in nx.__type_list__:
+        print(nx.dtype_device(tp))
+
+        u = ot.unif(n, type_as=tp)
+
+        np.testing.assert_allclose(1, np.sum(nx.to_numpy(u)), atol=1e-6)
+
+
+def test_dist():
+
+    n = 10
 
     rng = np.random.RandomState(0)
     x = rng.randn(n, 2)

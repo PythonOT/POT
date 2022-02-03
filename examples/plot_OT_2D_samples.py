@@ -42,7 +42,6 @@ a, b = np.ones((n,)) / n, np.ones((n,)) / n  # uniform distribution on samples
 
 # loss matrix
 M = ot.dist(xs, xt)
-M /= M.max()
 
 ##############################################################################
 # Plot data
@@ -87,7 +86,7 @@ pl.title('OT matrix with samples')
 #%% sinkhorn
 
 # reg term
-lambd = 1e-3
+lambd = 1e-1
 
 Gs = ot.sinkhorn(a, b, M, lambd)
 
@@ -112,7 +111,7 @@ pl.show()
 #%% sinkhorn
 
 # reg term
-lambd = 1e-3
+lambd = 1e-1
 
 Ges = ot.bregman.empirical_sinkhorn(xs, xt, lambd)
 
