@@ -268,6 +268,10 @@ def test_empty_backend():
         nx.solve(M, v)
     with pytest.raises(NotImplementedError):
         nx.trace(M)
+    with pytest.raises(NotImplementedError):
+        nx.inv(M)
+    with pytest.raises(NotImplementedError):
+        nx.sqrtm(M)
 
 
 def test_func_backends(nx):
@@ -564,15 +568,23 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('trace')
 
+        A = nx.inv(SquareMb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('matrix inverse')
+
+        A = nx.sqrtm(SquareMb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("matrix square root")
+
         lst_tot.append(lst_b)
 
     lst_np = lst_tot[0]
     lst_b = lst_tot[1]
 
     for a1, a2, name in zip(lst_np, lst_b, lst_name):
-        if not np.allclose(a1, a2):
-            print('Assert fail on: ', name)
-        assert np.allclose(a1, a2, atol=1e-7)
+        np.testing.assert_allclose(
+            a2, a1, atol=1e-7, err_msg=f'ASSERT FAILED ON: {name}'
+        )
 
 
 def test_random_backends(nx):

@@ -87,7 +87,9 @@ Performance
 # License: MIT License
 
 import numpy as np
-import scipy.special as scipy
+import scipy
+import scipy.linalg
+import scipy.special as special
 from scipy.sparse import issparse, coo_matrix, csr_matrix
 import warnings
 import time
@@ -102,7 +104,7 @@ except ImportError:
 try:
     import jax
     import jax.numpy as jnp
-    import jax.scipy.special as jscipy
+    import jax.scipy.special as jspecial
     from jax.lib import xla_bridge
     jax_type = jax.numpy.ndarray
 except ImportError:
@@ -806,6 +808,26 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def inv(self, a):
+        r"""
+        Computes the inverse of a matrix.
+
+        This function follows the api from :any:`scipy.linalg.inv`.
+
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.inv.html
+        """
+        raise NotImplementedError()
+
+    def sqrtm(self, a):
+        r"""
+        Computes the matrix square root.
+
+        This function follows the api from :any:`scipy.linalg.sqrtm`.
+
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.sqrtm.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -975,7 +997,7 @@ class NumpyBackend(Backend):
         return np.unique(a)
 
     def logsumexp(self, a, axis=None):
-        return scipy.logsumexp(a, axis=axis)
+        return special.logsumexp(a, axis=axis)
 
     def stack(self, arrays, axis=0):
         return np.stack(arrays, axis)
@@ -1070,11 +1092,16 @@ class NumpyBackend(Backend):
         return results
 
     def solve(self, a, b):
-        print(a.shape, b.shape)
         return np.linalg.solve(a, b)
 
     def trace(self, a):
         return np.trace(a)
+
+    def inv(self, a):
+        return scipy.linalg.inv(a)
+
+    def sqrtm(self, a):
+        return scipy.linalg.sqrtm(a)
 
 
 class JaxBackend(Backend):
@@ -1265,7 +1292,7 @@ class JaxBackend(Backend):
         return jnp.unique(a)
 
     def logsumexp(self, a, axis=None):
-        return jscipy.logsumexp(a, axis=axis)
+        return jspecial.logsumexp(a, axis=axis)
 
     def stack(self, arrays, axis=0):
         return jnp.stack(arrays, axis)
@@ -1377,6 +1404,13 @@ class JaxBackend(Backend):
 
     def trace(self, a):
         return jnp.trace(a)
+
+    def inv(self, a):
+        return jnp.linalg.inv(a)
+
+    def sqrtm(self, a):
+        L, V = jnp.linalg.eig(a)
+        return V @ jnp.diag(jnp.sqrt(L)) @ self.inv(V)
 
 
 class TorchBackend(Backend):
@@ -1766,6 +1800,13 @@ class TorchBackend(Backend):
     def trace(self, a):
         return torch.trace(a)
 
+    def inv(self, a):
+        return torch.linalg.inv(a)
+
+    def sqrtm(self, a):
+        L, V = torch.linalg.eig(a)
+        return V @ torch.diag(torch.sqrt(L)) @ self.inv(V)
+
 
 class CupyBackend(Backend):  # pragma: no cover
     """
@@ -2091,6 +2132,17 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def trace(self, a):
         return cp.trace(a)
+
+    def inv(self, a):
+        return cp.linalg.inv(a)
+
+    def sqrtm(self, a):
+        # Cupy does not provide any equivalent for either the square root matrix,
+        # or the eigen decomposition. Falling back to numpy.
+        a_np = self.to_numpy(a)
+        res_np = NumpyBackend().sqrtm(a_np)
+        with cp.cuda.Device(a.device):
+            return self.from_numpy(res_np)
 
 
 class TensorflowBackend(Backend):
@@ -2430,3 +2482,10 @@ class TensorflowBackend(Backend):
 
     def trace(self, a):
         return tf.linalg.trace(a)
+
+    def inv(self, a):
+        return tf.linalg.inv(a)
+
+    def sqrtm(self, a):
+        L, V = tf.linalg.eig(a)
+        return V @ self.diag(self.sqrt(L)) @ self.inv(V)
