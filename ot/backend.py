@@ -1804,7 +1804,8 @@ class TorchBackend(Backend):
         return torch.linalg.inv(a)
 
     def sqrtm(self, a):
-        L, V = torch.linalg.eig(a)
+        eig = getattr(torch.linalg, "eig", torch.eig)
+        L, V = eig(a)
         return V @ torch.diag(torch.sqrt(L)) @ self.inv(V)
 
 
