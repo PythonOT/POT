@@ -362,7 +362,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=F
     armijo : bool, optional
         If True the step of the line-search is found via an armijo research. Else closed form is used.
         If there are convergence issues use False.
-    G0: array-like, shape (ns,nt), optimal
+    G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
     **kwargs : dict
@@ -471,7 +471,7 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=
     armijo : bool, optional
         If True the step of the line-search is found via an armijo research. Else closed form is used.
         If there are convergence issues use False.
-    G0: array-like, shape (ns,nt), optimal
+    G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
 
@@ -590,7 +590,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
     armijo : bool, optional
         If True the step of the line-search is found via an armijo research. Else closed form is used.
         If there are convergence issues use False.
-    G0: array-like, shape (ns,nt), optimal
+    G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
     log : bool, optional
@@ -699,7 +699,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
     armijo : bool, optional
         If True the step of the line-search is found via an armijo research.
         Else closed form is used. If there are convergence issues use False.
-    G0: array-like, shape (ns,nt), optimal
+    G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
     log : bool, optional
@@ -1827,21 +1827,25 @@ def update_feature_matrix(lambdas, Ys, Ts, p):
     return tmpsum
 
 
-def gromov_wasserstein_dictionary_learning(Cs, ps, D, nt, q, epochs, batch_size, learning_rate, Cdictionary_init=None, reg=0., projection='nonnegative_symmetric', use_log=True,
-                                           tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False, **kwargs):
+def gromov_wasserstein_dictionary_learning(Cs, ps, D, nt, q, epochs=20, batch_size=32, learning_rate=1., Cdict_init=None, reg=0., projection='nonnegative_symmetric', use_log=True,
+                                           tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False, **kwargs):
     r"""
-    Infer Gromov-Wasserstein linear dictionary \{ (\mathbf{Cdictionary[d]}, q) \}_{d \in [D]}  from the list of structures \{ (\mathbf{Cs},\mathbf{ps}) \}_s
+    Infer Gromov-Wasserstein linear dictionary :math:`\{ (\mathbf{Cdict[d]}, q) \}_{d \in [D]}`  from the list of structures :math:`\{ (\mathbf{C_s},\mathbf{p_s}) \}_s`
 
     .. math::
-        \min_{Cdictionary} \min_{ \{w_s\}_{s <= S}} \sum_{s=1}^S  GW_2(\mathbf{C_s}, \sum_{d=1}^D w_{s,d}*\mathbf{Cdictionary[d]}, \mathbf{p_s}, \mathbf{q}) - reg* \| \mathbf{w_s}  \|_2^2
-        s.t. \mathbf{w_s}^\top \mathbf{1}_D = 1
-             \mathbf{w_s} \geq 0
+        \min_{\mathbf{Cdict}, \{\mathbf{w_s} \}_{s \leq S}} \sum_{s=1}^S  GW_2(\mathbf{C_s}, \sum_{d=1}^D w_{s,d}\mathbf{Cdict[d]}, \mathbf{p_s}, \mathbf{q}) - reg\| \mathbf{w_s}  \|_2^2
 
-    where :
-    - Cs is a list of (Ns,Ns) pairwise similarity matrix of variable size.
-    - Cdictionary is a list of (Nt,Nt) pairwise similarity matrix
-    - ps is a list of source distribution matching respectively the matrices Cs
-    - q is the target distribution assigned to each structure in the embedding space
+    such that, :math:`\forall s \leq S` :
+
+        - :math:`\mathbf{w_s}^\top \mathbf{1}_D = 1`
+        - :math:`\mathbf{w_s} \geq \mathbf{0}_D`
+
+    Where :
+
+    - :math:`\forall s \leq S, \mathbf{C_s}` is a (ns,ns) pairwise similarity matrix of variable size ns.
+    - :math:`\mathbf{Cdict}` is a (D, nt, nt) tensor of D pairwise similarity matrix of fixed size nt.
+    - :math:`\forall s \leq S, \mathbf{p_s}` is the source distribution corresponding to :math:`\mathbf{C_s}`
+    - :math:`\mathbf{q}` is the target distribution assigned to every structures in the embedding space.
     - reg is the regularization coefficient.
 
     The stochastic algorithm used for estimating the graph dictionary atoms as proposed in [38]
@@ -1858,43 +1862,45 @@ def gromov_wasserstein_dictionary_learning(Cs, ps, D, nt, q, epochs, batch_size,
         Number of samples within each dictionary atoms
     q : array-like, shape (nt,)
         Distribution in the embedding space whose structure will be learned.
-    epochs: int
-        number of epochs used to learn the dictionary
-    batch_size: int
-        batch size for each stochastic gradient update of the dictionary
-    learning_rate: float
-        learning rate used for the stochastic gradient descent
-    Cdictionary_init: list of D array-like with shape (nt, nt), optional. Default is None.
+    epochs: int, optional
+        Number of epochs used to learn the dictionary. Default is 32.
+    batch_size: int, optional
+        Batch size for each stochastic gradient update of the dictionary. Set to the dataset size if the provided batch_size is higher than the dataset size. Default is 32.
+    learning_rate: float, optional
+        Learning rate used for the stochastic gradient descent. Default is 1.
+    Cdict_init: list of D array-like with shape (nt, nt), optional
         Used to initialize the dictionary.
-        If set to None, the dictionary will be initialized randomly.
-        Else Cdictionary must have shape (D, nt, nt) i.e match provided shape features.
-    reg : float, optional. Default is 0.
+        If set to None (Default), the dictionary will be initialized randomly.
+        Else Cdict must have shape (D, nt, nt) i.e match provided shape features.
+    reg : float, optional
         Coefficient of the negative quadratic regularization used to promote sparsity of w. The default is 0.
-    projection: str , optional. Default is 'nonnegative_symmetric'
-        If projection in ['nonnegative_symmetric','symmetric'], the corresponding projection will be performed at each stochastic gradient update
-        Else the set of atoms is R^{nt \time nt}.
-        Set to project the graph atoms. Default is the set of nonnegative symmetric matrices for fitting adjacency matrix of undirected graphs.
-    log: bool, optimal. Default is False.
-        If set to True, losses evolution by batches and epochs are tracked.
-    use_adam_optimizer: bool, optional. Default is True.
+    projection: str , optional
+        If 'nonnegative' and/or 'symmetric' is in projection, the corresponding projection will be performed at each stochastic update of the dictionary
+        Else the set of atoms is :math:`R^{nt * nt}`. Default is 'nonnegative_symmetric'
+    log: bool, optional
+        If set to True, losses evolution by batches and epochs are tracked. Default is False.
+    use_adam_optimizer: bool, optional
         If set to True, adam optimizer with default settings is used as adaptative learning rate strategy.
-        Else perform SGD with fixed learning rate.
-    tol_outer : float, optional. Default is 10**(-6).
-        Solver precision for the BCD algorithm.
-    tol_inner : float, optional. Default is 10**(-6).
-        Solver precision for the Conjugate Gradient algorithm used to get optimal w at a fixed transport.
-    max_iter_outer : int, optional. Default is 20.
-        Maximum number of iterations for the BCD.
-    max_iter_outer : int, optional. Default is 200.
-        Maximum number of iterations for the Conjugate Gradient.
+        Else perform SGD with fixed learning rate. Default is True.
+    tol_outer : float, optional
+        Solver precision for the BCD algorithm, measured by absolute relative error on consecutive losses. Default is :math:`10^{-5}`.
+    tol_inner : float, optional
+        Solver precision for the Conjugate Gradient algorithm used to get optimal w at a fixed transport, measured by absolute relative error on consecutive losses. Default is :math:`10^{-5}`.
+    max_iter_outer : int, optional
+        Maximum number of iterations for the BCD. Default is 20.
+    max_iter_inner : int, optional
+        Maximum number of iterations for the Conjugate Gradient. Default is 200.
+    verbose : bool, optional
+        Print the reconstruction loss every epoch. Default is False.
+
     Returns
     -------
 
-    Cdictionary_best_state : D array-like, shape (D,nt,nt)
-        Metric/Graph cost matrices composing the dictionary on which to embed C.
+    Cdict_best_state : D array-like, shape (D,nt,nt)
+        Metric/Graph cost matrices composing the dictionary.
         The dictionary leading to the best loss over an epoch is saved and returned.
     log: dict
-        If use_log is True, contains loss evolutions by batches and epoches.
+        If use_log is True, contains loss evolutions by batches and epochs.
     References
     -------
 
@@ -1908,38 +1914,40 @@ def gromov_wasserstein_dictionary_learning(Cs, ps, D, nt, q, epochs, batch_size,
     q = list_to_array(q)
     Cs0, ps0, q0 = Cs, ps, q
 
-    if Cdictionary_init is None:
+    if Cdict_init is None:
         nx = get_backend(*Cs0, *ps0, q0)
     else:
-        Cdictionary_init = list_to_array(Cdictionary_init)
-        Cdictionary0_init = Cdictionary_init
-        nx = get_backend(*Cs0, *ps0, Cdictionary0_init, q0)
+        Cdict_init = list_to_array(Cdict_init)
+        Cdict_init0 = Cdict_init
+        nx = get_backend(*Cs0, *ps0, Cdict_init0, q0)
 
     Cs = [nx.to_numpy(C) for C in Cs0]
     ps = [nx.to_numpy(p) for p in ps0]
     q = nx.to_numpy(q0)
     dataset_size = len(Cs)
-    if Cdictionary_init is None:
+    if Cdict_init is None:
         # Initialize randomly structures of dictionary atoms based on samples
         dataset_means = [C.mean() for C in Cs]
         # Initialize dictionary atoms
-        Cdictionary = np.random.normal(loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(D, nt, nt))
+        Cdict = np.random.normal(loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(D, nt, nt))
     else:
-        Cdictionary = nx.to_numpy(Cdictionary0_init).copy()
-        np.testing.assert_allclose(Cdictionary.shape, (D, nt, nt))
+        Cdict = nx.to_numpy(Cdict_init0).copy()
+        np.testing.assert_allclose(Cdict.shape, (D, nt, nt))
 
     if 'symmetric' in projection:
-        Cdictionary = 0.5 * (Cdictionary + Cdictionary.transpose((0, 2, 1)))
+        Cdict = 0.5 * (Cdict + Cdict.transpose((0, 2, 1)))
     if 'nonnegative' in projection:
-        Cdictionary[Cdictionary < 0.] = 0
+        Cdict[Cdict < 0.] = 0
     if use_adam_optimizer:
-        adam_moments = _initialize_adam_optimizer(Cdictionary)
+        adam_moments = _initialize_adam_optimizer(Cdict)
 
     log = {'loss_batches': [], 'loss_epochs': []}
     const_q = q[:, None] * q[None, :]
-    Cdictionary_best_state = Cdictionary.copy()
+    Cdict_best_state = Cdict.copy()
     loss_best_state = np.inf
-    iter_by_epoch = dataset_size // batch_size + 1
+    if batch_size > dataset_size:
+        batch_size = dataset_size
+    iter_by_epoch = dataset_size // batch_size + int((dataset_size % batch_size) > 0)
     for epoch in range(epochs):
         cumulated_loss_over_epoch = 0.
         for _ in range(iter_by_epoch):
@@ -1951,34 +1959,34 @@ def gromov_wasserstein_dictionary_learning(Cs, ps, D, nt, q, epochs, batch_size,
             Ts = [None] * batch_size
             for batch_idx, C_idx in enumerate(batch):
                 # BCD solver for Gromov-Wassersteisn linear unmixing used independently on each structure of the sampled batch
-                unmixings[batch_idx], Cs_embedded[batch_idx], Ts[batch_idx], current_loss = gromov_wasserstein_linear_unmixing(Cs[C_idx], Cdictionary, ps[C_idx], q, reg=reg, tol_outer=tol_outer, tol_inner=tol_inner, max_iter_outer=max_iter_outer, max_iter_inner=max_iter_inner)
+                unmixings[batch_idx], Cs_embedded[batch_idx], Ts[batch_idx], current_loss = gromov_wasserstein_linear_unmixing(Cs[C_idx], Cdict, ps[C_idx], q, reg=reg, tol_outer=tol_outer, tol_inner=tol_inner, max_iter_outer=max_iter_outer, max_iter_inner=max_iter_inner)
                 cumulated_loss_over_batch += current_loss
             cumulated_loss_over_epoch += cumulated_loss_over_batch
 
             if use_log:
                 log['loss_batches'].append(cumulated_loss_over_batch)
             # Stochastic projected gradient step over dictionary atoms
-            grad_Cdictionary = np.zeros_like(Cdictionary)
+            grad_Cdict = np.zeros_like(Cdict)
             for batch_idx, C_idx in enumerate(batch):
                 shared_term_structures = Cs_embedded[batch_idx] * const_q - (Cs[C_idx].dot(Ts[batch_idx])).T.dot(Ts[batch_idx])
-                grad_Cdictionary += unmixings[batch_idx][:, None, None] * shared_term_structures[None, :, :]
-            grad_Cdictionary *= 2 / batch_size
+                grad_Cdict += unmixings[batch_idx][:, None, None] * shared_term_structures[None, :, :]
+            grad_Cdict *= 2 / batch_size
             if use_adam_optimizer:
-                Cdictionary, adam_moments = _adam_stochastic_updates(Cdictionary, grad_Cdictionary, learning_rate, adam_moments)
+                Cdict, adam_moments = _adam_stochastic_updates(Cdict, grad_Cdict, learning_rate, adam_moments)
             else:
-                Cdictionary -= learning_rate * grad_Cdictionary
+                Cdict -= learning_rate * grad_Cdict
             if 'symmetric' in projection:
-                Cdictionary = 0.5 * (Cdictionary + Cdictionary.transpose((0, 2, 1)))
+                Cdict = 0.5 * (Cdict + Cdict.transpose((0, 2, 1)))
             if 'nonnegative' in projection:
-                Cdictionary[Cdictionary < 0.] = 0.
+                Cdict[Cdict < 0.] = 0.
         if use_log:
             log['loss_epochs'].append(cumulated_loss_over_epoch)
         if loss_best_state > cumulated_loss_over_epoch:
             loss_best_state = cumulated_loss_over_epoch
-            Cdictionary_best_state = Cdictionary.copy()
+            Cdict_best_state = Cdict.copy()
         if verbose:
             print('--- epoch =', epoch, ' cumulated reconstruction error: ', cumulated_loss_over_epoch)
-    return nx.from_numpy(Cdictionary_best_state), log
+    return nx.from_numpy(Cdict_best_state), log
 
 
 def _initialize_adam_optimizer(variable):
@@ -1999,19 +2007,23 @@ def _adam_stochastic_updates(variable, grad, learning_rate, adam_moments, beta_1
     return variable, adam_moments
 
 
-def gromov_wasserstein_linear_unmixing(C, Cdictionary, p, q, reg=0., tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200, **kwargs):
+def gromov_wasserstein_linear_unmixing(C, Cdict, p, q, reg=0., tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, **kwargs):
     r"""
-    Returns the Gromov-Wasserstein linear unmixing of $(\mathbf{C},\mathbf{p}) onto the set of dictionary structures \{ \mathbf{Cdictionary[d]} \}_{d \in [D]}
+    Returns the Gromov-Wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{p})` onto the dictionary :math:`\{ (\mathbf{Cdict[d]}, \mathbf{q}) \}_{d \in [D]}`.
 
     .. math::
-        \min_w  GW_2(\mathbf{C}, \sum_{d=1}^D w_d*\mathbf{Cdictionary[d]}, \mathbf{p}, \mathbf{q}) - reg* \| \mathbf{w}  \|_2^2
-        s.t. \mathbf{w}^\top \mathbf{1}_D = 1
-             \mathbf{w} \geq 0
+        \min_{ \mathbf{w}}  GW_2(\mathbf{C}, \sum_{d=1}^D w_d\mathbf{Cdict[d]}, \mathbf{p}, \mathbf{q}) - reg \| \mathbf{w}  \|_2^2
 
-    where :
-    - C is the (Ns,Ns) pairwise similarity matrix
-    - Cdictionary is a list of (Nt,Nt) pairwise similarity matrix
-    - p and q are source and target weights (sum to 1).
+    such that:
+
+        - :math:`\mathbf{w}^\top \mathbf{1}_D = 1`
+        - :math:`\mathbf{w} \geq \mathbf{0}_D`
+
+    Where :
+
+    - :math:`\mathbf{C}` is the (ns,ns) pairwise similarity matrix.
+    - :math:`\mathbf{Cdict}` is a (D, nt, nt) tensor of D pairwise similarity matrices of size nt.
+    - :math:`\mathbf{p}` and :math:`\mathbf{q}` are source and target weights.
     - reg is the regularization coefficient.
 
     The algorithm used for solving the problem is a Block Coordinate Descent as discussed in [38], algorithm 1.
@@ -2020,31 +2032,31 @@ def gromov_wasserstein_linear_unmixing(C, Cdictionary, p, q, reg=0., tol_outer=1
     ----------
     C : array-like, shape (ns, ns)
         Metric/Graph cost matrix.
-    Cdictionary : D array-like, shape (D,nt,nt)
+    Cdict : D array-like, shape (D,nt,nt)
         Metric/Graph cost matrices composing the dictionary on which to embed C.
     p : array-like, shape (ns,)
         Distribution in the source space C.
     q : array-like, shape (nt,)
         Distribution in the space depicted by the dictionary.
-    reg : float, optional
-        Coefficient of the negative quadratic regularization used to promote sparsity of w. The default is 0.
+    reg : float, optional.
+        Coefficient of the negative quadratic regularization used to promote sparsity of w. Default is 0.
     tol_outer : float, optional
-        Solver precision for the BCD algorithm. The default is 10**(-5).
+        Solver precision for the BCD algorithm.
     tol_inner : float, optional
-        Solver precision for the Conjugate Gradient algorithm used to get optimal w at a fixed transport. The default is 10**(-5).
+        Solver precision for the Conjugate Gradient algorithm used to get optimal w at a fixed transport. Default is :math:`10^{-5}`.
     max_iter_outer : int, optional
-        Maximum number of iterations for the BCD. The default is 20.
-    max_iter_outer : int, optional
-        Maximum number of iterations for the Conjugate Gradient. The default is 200.
+        Maximum number of iterations for the BCD. Default is 20.
+    max_iter_inner : int, optional
+        Maximum number of iterations for the Conjugate Gradient. Default is 200.
 
     Returns
     -------
     w: array-like, shape (D,)
-        gromov-wasserstein linear unmixing of (C,p) onto the span of the dictionary.
+        gromov-wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{p})` onto the span of the dictionary.
     Cembedded: array-like, shape (nt,nt)
-        embedded structure of (C,p) onto the dictionary, \sum_d w[d]*Cdictionary[d].
-    T: array-like (Ns,N)
-        Gromov-Wasserstein transport plan between (C,p) and (\sum_d w[d]*Cdictionary[d],q).
+        embedded structure of :math:`(\mathbf{C},\mathbf{p})` onto the dictionary, :math:`\sum_d w_d\mathbf{Cdict[d]}`.
+    T: array-like (ns, nt)
+        Gromov-Wasserstein transport plan between :math:`(\mathbf{C},\mathbf{p})` and :math:`(\sum_d w_d\mathbf{Cdict[d]}, \mathbf{q})`
     current_loss: float
         reconstruction error
     References
@@ -2054,17 +2066,18 @@ def gromov_wasserstein_linear_unmixing(C, Cdictionary, p, q, reg=0., tol_outer=1
             "Online Graph Dictionary Learning"
             International Conference on Machine Learning (ICML). 2021.
     """
-    C, Cdictionary, p, q = list_to_array(C, Cdictionary, p, q)
-    C0, Cdictionary0, p0, q0 = C, Cdictionary, p, q
-    nx = get_backend(C0, Cdictionary0, p0, q0)
+    C, Cdict, p, q = list_to_array(C, Cdict, p, q)
+    C0, Cdict0, p0, q0 = C, Cdict, p, q
+    nx = get_backend(C0, Cdict0, p0, q0)
     C = nx.to_numpy(C0)
-    Cdictionary = nx.to_numpy(Cdictionary0)
+    Cdict = nx.to_numpy(Cdict0)
     p = nx.to_numpy(p0)
     q = nx.to_numpy(q0)
     T = p[:, None] * q[None, :]
-    D = len(Cdictionary)
+    D = len(Cdict)
+    # Initialize uniformly the unmixing w
     w = unif(D)
-    Cembedded = np.sum(w[:, None, None] * Cdictionary, axis=0)
+    Cembedded = np.sum(w[:, None, None] * Cdict, axis=0)
     const_q = q[:, None] * q[None, :]
     # Trackers for BCD convergence
     convergence_criterion = np.inf
@@ -2078,7 +2091,7 @@ def gromov_wasserstein_linear_unmixing(C, Cdictionary, p, q, reg=0., tol_outer=1
         if reg != 0:
             current_loss -= reg * np.sum(w**2)
         # 2. Solve linear unmixing problem over w with a fixed transport plan T
-        w, Cembedded, current_loss = _cg_gromov_wasserstein_unmixing(C=C, Cdictionary=Cdictionary, Cembedded=Cembedded, w=w, const_q=const_q, T=T,
+        w, Cembedded, current_loss = _cg_gromov_wasserstein_unmixing(C=C, Cdict=Cdict, Cembedded=Cembedded, w=w, const_q=const_q, T=T,
                                                                      starting_loss=current_loss, reg=reg, tol=tol_inner, max_iter=max_iter_inner, **kwargs)
         if previous_loss != 0:
             convergence_criterion = abs(previous_loss - current_loss) / abs(previous_loss)
@@ -2089,24 +2102,27 @@ def gromov_wasserstein_linear_unmixing(C, Cdictionary, p, q, reg=0., tol_outer=1
     return nx.from_numpy(w), nx.from_numpy(Cembedded), nx.from_numpy(T), nx.from_numpy(current_loss)
 
 
-def _cg_gromov_wasserstein_unmixing(C, Cdictionary, Cembedded, w, const_q, T, starting_loss, reg=0., tol=10**(-6), max_iter=200, **kwargs):
+def _cg_gromov_wasserstein_unmixing(C, Cdict, Cembedded, w, const_q, T, starting_loss, reg=0., tol=10**(-5), max_iter=200, **kwargs):
     r"""
     Returns for a fixed admissible transport plan,
-    the linear unmixing w minimizing the Gromov-Wasserstein cost between (C,p) and (\sum_w w[k]*Catoms[k], q)
+    the linear unmixing w minimizing the Gromov-Wasserstein cost between :math:`(\mathbf{C},\mathbf{p})` and :math:`(\sum_d w[d]*\mathbf{Cdict[d]}, \mathbf{q})`
 
     .. math::
-        \min_w  \sum_{ijkl} (C_{i,j} - \sum_{d=1}^D w_d*Cdictionary[d]_{k,l} )^2 T_{i,k}T_{j,l} - reg* \| \mathbf{w}  \|_2^2
-        s.t. \mathbf{w}^\top \mathbf{1}_D = 1
-             w \geq 0
+        \min_{\mathbf{w}}  \sum_{ijkl} (C_{i,j} - \sum_{d=1}^D w_d*Cdict[d]_{k,l} )^2 T_{i,k}T_{j,l} - reg* \| \mathbf{w}  \|_2^2
 
 
-    where :
+    Such that:
 
-    - C is the (ns,ns) pairwise similarity matrix
-    - Cdictionary is a list of D (nt,nt) pairwise similarity matrix
-    - p and q are source and target weights (sum to 1).
-    - w is the linear unmixing of (C,p) onto (\sum_{d=1}^D w[d] Cdictionary[d])
-    - T is the optimal transport plan conditioned by the current state of w
+        - :math:`\mathbf{w}^\top \mathbf{1}_D = 1`
+        - :math:`\mathbf{w} \geq \mathbf{0}_D`
+
+    Where :
+
+    - :math:`\mathbf{C}` is the (ns,ns) pairwise similarity matrix.
+    - :math:`\mathbf{Cdict}` is a (D, nt, nt) tensor of D pairwise similarity matrices of nt points.
+    - :math:`\mathbf{p}` and :math:`\mathbf{q}` are source and target weights.
+    - :math:`\mathbf{w}` is the linear unmixing of :math:`(\mathbf{C}, \mathbf{p})` onto :math:`(\sum_d w_d \mathbf{Cdict[d]}, \mathbf{q})`.
+    - :math:`\mathbf{T}` is the optimal transport plan conditioned by the current state of :math:`\mathbf{w}`.
     - reg is the regularization coefficient.
 
     The algorithm used for solving the problem is a Conditional Gradient Descent as discussed in [38]
@@ -2116,27 +2132,26 @@ def _cg_gromov_wasserstein_unmixing(C, Cdictionary, Cembedded, w, const_q, T, st
 
     C : array-like, shape (ns, ns)
         Metric/Graph cost matrix.
-    Cdictionary : list of D array-like, shape (nt,nt)
+    Cdict : list of D array-like, shape (nt,nt)
         Metric/Graph cost matrices composing the dictionary on which to embed C.
         Each matrix in the dictionary must have the same size (nt,nt).
     Cembedded: array-like, shape (nt,nt)
-        Embedded structure (\sum_{d=1}^D w[d]*Cdictionary[d],q) of C onto the dictionary
-    w: array-like, shape (n_D,)
-        Linear unmixing of C onto Cdictionary
+        Embedded structure :math:`(\sum_d w[d]*Cdict[d],q)` of :math:`(\mathbf{C},\mathbf{p})` onto the dictionary. Used to avoid redundant computations.
+    w: array-like, shape (D,)
+        Linear unmixing of the input structure onto the dictionary
     const_q: array-like, shape (nt,nt)
-        product matrix qq^\top where q is the target space distribution.
+        product matrix :math:`\mathbf{q}\mathbf{q}^\top` where q is the target space distribution. Used to avoid redundant computations.
     T: array-like, shape (ns,nt)
-        fixed transport plan between C and its model
+        fixed transport plan between the input structure and its representation in the dictionary.
     p : array-like, shape (ns,)
-        Distribution in the source space C.
+        Distribution in the source space.
     q : array-like, shape (nt,)
         Distribution in the embedding space depicted by the dictionary.
 
-
     Returns
     -------
-    w: ndarray (K,)
-        linear unmixing of (C,p) onto the span of \{ (Catoms[k],q) \} given OT corresponding to init_w
+    w: ndarray (D,)
+        optimal unmixing of :math:`(\mathbf{C},\mathbf{p})` onto the dictionary span given OT starting from previously optimal unmixing.
     """
     convergence_criterion = np.inf
     current_loss = starting_loss
@@ -2145,14 +2160,14 @@ def _cg_gromov_wasserstein_unmixing(C, Cdictionary, Cembedded, w, const_q, T, st
     while (convergence_criterion > tol) and (count < max_iter):
         previous_loss = current_loss
         # 1) Compute gradient at current point w
-        grad_w = 2 * np.sum(Cdictionary * (Cembedded[None, :, :] * const_q[None, :, :] - const_TCT[None, :, :]), axis=(1, 2))
+        grad_w = 2 * np.sum(Cdict * (Cembedded[None, :, :] * const_q[None, :, :] - const_TCT[None, :, :]), axis=(1, 2))
         grad_w -= 2 * reg * w
         # 2) Conditional gradient direction finding: x= \argmin_x x^T.grad_w
         min_ = np.min(grad_w)
         x = (grad_w == min_).astype(np.float64)
         x /= np.sum(x)
         # 3) Line-search step: solve \argmin_{\gamma \in [0,1]} a*gamma^2 + b*gamma + c
-        Cembedded_x = np.sum(x[:, None, None] * Cdictionary, axis=0)
+        Cembedded_x = np.sum(x[:, None, None] * Cdict, axis=0)
         Cembedded_diff = Cembedded_x - Cembedded
         trace_diffx = np.sum(Cembedded_diff * Cembedded_x * const_q)
         trace_diffw = np.sum(Cembedded_diff * Cembedded * const_q)
@@ -2181,26 +2196,32 @@ def _cg_gromov_wasserstein_unmixing(C, Cdictionary, Cembedded, w, const_q, T, st
     return w, Cembedded, current_loss
 
 
-def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, ps, D, nt, q, alpha, epochs, batch_size, learning_rate_C, learning_rate_Y,
-                                                 Cdictionary_init=None, Ydictionary_init=None, reg=0., projection='nonnegative_symmetric', use_log=False,
-                                                 tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False, **kwargs):
+def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, ps, D, nt, q, alpha, epochs=20, batch_size=32, learning_rate_C=1., learning_rate_Y=1.,
+                                                 Cdict_init=None, Ydict_init=None, reg=0., projection='nonnegative_symmetric', use_log=False,
+                                                 tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False, **kwargs):
     r"""
-    Infer Fused Gromov-Wasserstein linear dictionary \{ (\mathbf{Cdictionary[d]}, \mathbf{Ydictionary[d]}, q) \}_{d \in [D]}  from the list of structures \{ (\mathbf{Cs}, \mathbf{Ys},\mathbf{ps}) \}_s
+    Infer Fused Gromov-Wasserstein linear dictionary :math:`\{ (\mathbf{Cdict[d]}, \mathbf{Ydict[d]}, \mathbf{q}) \}_{d \in [D]}`  from the list of S attributed structures :math:`\{ (\mathbf{C_s}, \mathbf{Y_s},\mathbf{p_s}) \}_s`
 
     .. math::
-        \min_{Cdictionary,Ydictionary} \min_{ \{w_s\}_{s <= S}} \sum_{s=1}^S  FGW_{2,\alpha}(\mathbf{C_s}, \mathbf{Y_s}, \sum_{d=1}^D w_{s,d}*\mathbf{Cdictionary[d]},\sum_{d=1}^D w_{s,d}*\mathbf{Ydictionary[d]}, \mathbf{p_s}, \mathbf{q}) - reg* \| \mathbf{w_s}  \|_2^2
-        s.t. \mathbf{w_s}^\top \mathbf{1}_D = 1
-             \mathbf{w_s} \geq 0
+        \min_{\mathbf{Cdict},\mathbf{Ydict}, \{\mathbf{w_s}\}_{s}} \sum_{s=1}^S  FGW_{2,\alpha}(\mathbf{C_s}, \mathbf{Y_s}, \sum_{d=1}^D w_{s,d}\mathbf{Cdict[d]},\sum_{d=1}^D w_{s,d}\mathbf{Ydict[d]}, \mathbf{p_s}, \mathbf{q}) \\ - reg\| \mathbf{w_s}  \|_2^2
 
-    where :
-    - Cs is a list of (Ns,Ns) pairwise similarity matrix of variable size Ns.
-    - Ys is a list of (Ns,d) feature matrix of variable size Ns.
-    - Cdictionary is a list of (Nt,Nt) pairwise similarity matrices
-    - Ydictionary is a list of (Nt,d) feature matrices
-    - ps is a list of source distribution matching respectively the matrices Cs
-    - q is the target distribution assigned to each structure in the embedding space
-    - alpha is the trade-off parameter of Fused Gromov-Wasserstein
+
+    Such that :math:`\forall s \leq S` :
+
+    - :math:`\mathbf{w_s}^\top \mathbf{1}_D = 1`
+    - :math:`\mathbf{w_s} \geq \mathbf{0}_D`
+
+    Where :
+
+    - :math:`\forall s \leq S, \mathbf{C_s}` is a (ns,ns) pairwise similarity matrix of variable size ns.
+    - :math:`\forall s \leq S, \mathbf{Y_s}` is a (ns,d) features matrix of variable size ns and fixed dimension d.
+    - :math:`\mathbf{Cdict}` is a (D, nt, nt) tensor of D pairwise similarity matrix of fixed size nt.
+    - :math:`\mathbf{Ydict}` is a (D, nt, d) tensor of D features matrix of fixed size nt and fixed dimension d.
+    - :math:`\forall s \leq S, \mathbf{p_s}` is the source distribution corresponding to :math:`\mathbf{C_s}`
+    - :math:`\mathbf{q}` is the target distribution assigned to every structures in the embedding space.
+    - :math:`\alpha` is the trade-off parameter of Fused Gromov-Wasserstein
     - reg is the regularization coefficient.
+
 
     The stochastic algorithm used for estimating the attributed graph dictionary atoms as proposed in [38]
 
@@ -2218,53 +2239,53 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, ps, D, nt, q, alpha, ep
         Number of samples within each dictionary atoms
     q : array-like, shape (nt,)
         Distribution in the embedding space whose structure will be learned.
-    alpha : float,
+    alpha : float
         Trade-off parameter of Fused Gromov-Wasserstein
-    epochs: int
-        number of epochs used to learn the dictionary
-    batch_size: int
-        batch size for each stochastic gradient update of the dictionary
-    learning_rate_C: float
-        learning rate used for the stochastic gradient descent of structures
-    learning_rate_Y: float
-        learning rate used for the stochastic gradient descent of features
-    Cdictionary_init: list of D array-like with shape (nt, nt), optional. Default is None.
-        Used to initialize the dictionary structures.
-        If set to None, the dictionary will be initialized randomly.
-        Else Cdictionary must have shape (D, nt, nt) i.e match provided shape features.
-    Ydictionary_init: list of D array-like with shape (nt, d), optional. Default is None.
-        Used to initialize the dictionary features.
+    epochs: int, optional
+        Number of epochs used to learn the dictionary. Default is 32.
+    batch_size: int, optional
+        Batch size for each stochastic gradient update of the dictionary. Set to the dataset size if the provided batch_size is higher than the dataset size. Default is 32.
+    learning_rate_C: float, optional
+        Learning rate used for the stochastic gradient descent on Cdict. Default is 1.
+    learning_rate_Y: float, optional
+        Learning rate used for the stochastic gradient descent on Ydict. Default is 1.
+    Cdict_init: list of D array-like with shape (nt, nt), optional
+        Used to initialize the dictionary structures Cdict.
+        If set to None (Default), the dictionary will be initialized randomly.
+        Else Cdict must have shape (D, nt, nt) i.e match provided shape features.
+    Ydict_init: list of D array-like with shape (nt, d), optional
+        Used to initialize the dictionary features Ydict.
         If set to None, the dictionary features will be initialized randomly.
-        Else Ydictionary must have shape (D, nt, d) where d is the features dimension of inputs Ys and also match provided shape features.
-    reg : float, optional. Default is 0.
+        Else Ydict must have shape (D, nt, d) where d is the features dimension of inputs Ys and also match provided shape features.
+    reg : float, optional
         Coefficient of the negative quadratic regularization used to promote sparsity of w. The default is 0.
-    projection: str , optional. Default is 'nonnegative_symmetric'
-        If projection in ['nonnegative_symmetric','symmetric'], the corresponding projection will be performed at each stochastic gradient update
-        Else the set of atoms is R^{nt \time nt}.
-        Set to project the graph atoms. Default is the set of nonnegative symmetric matrices for fitting adjacency matrix of undirected graphs.
-    log: bool, optimal. Default is False.
-        If set to True, losses evolution by batches and epochs are tracked.
-    use_adam_optimizer: bool, optional. Default is True.
+    projection: str, optional
+        If 'nonnegative' and/or 'symmetric' is in projection, the corresponding projection will be performed at each stochastic update of the dictionary
+        Else the set of atoms is :math:`R^{nt * nt}`. Default is 'nonnegative_symmetric'
+    log: bool, optional
+        If set to True, losses evolution by batches and epochs are tracked. Default is False.
+    use_adam_optimizer: bool, optional
         If set to True, adam optimizer with default settings is used as adaptative learning rate strategy.
-        Else perform SGD with fixed learning rate.
-    tol_outer : float, optional. Default is 10**(-6).
-        Solver precision for the BCD algorithm.
-    tol_inner : float, optional. Default is 10**(-6).
-        Solver precision for the Conjugate Gradient algorithm used to get optimal w at a fixed transport.
-    max_iter_outer : int, optional. Default is 20.
-        Maximum number of iterations for the BCD.
-    max_iter_outer : int, optional. Default is 200.
-        Maximum number of iterations for the Conjugate Gradient.
-    verbose : bool, optional. Default is False.
+        Else perform SGD with fixed learning rate. Default is True.
+    tol_outer : float, optional
+        Solver precision for the BCD algorithm, measured by absolute relative error on consecutive losses. Default is :math:`10^{-5}`.
+    tol_inner : float, optional
+        Solver precision for the Conjugate Gradient algorithm used to get optimal w at a fixed transport, measured by absolute relative error on consecutive losses. Default is :math:`10^{-5}`.
+    max_iter_outer : int, optional
+        Maximum number of iterations for the BCD. Default is 20.
+    max_iter_inner : int, optional
+        Maximum number of iterations for the Conjugate Gradient. Default is 200.
+    verbose : bool, optional
+        Print the reconstruction loss every epoch. Default is False.
 
     Returns
     -------
 
-    Cdictionary_best_state : D array-like, shape (D,nt,nt)
-        Metric/Graph cost matrices composing the dictionary on which to embed (C_s,Y_s).
+    Cdict_best_state : D array-like, shape (D,nt,nt)
+        Metric/Graph cost matrices composing the dictionary.
         The dictionary leading to the best loss over an epoch is saved and returned.
-    Ydictionary_best_state : D array-like, shape (D,nt,d)
-        Feature matrices composing the dictionary on which to embed (C_s,Y_s).
+    Ydict_best_state : D array-like, shape (D,nt,d)
+        Feature matrices composing the dictionary.
         The dictionary leading to the best loss over an epoch is saved and returned.
     log: dict
         If use_log is True, contains loss evolutions by batches and epoches.
@@ -2281,22 +2302,23 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, ps, D, nt, q, alpha, ep
     q = list_to_array(q)
     Cs0, Ys0, ps0, q0 = Cs, Ys, ps, q
 
-    if Cdictionary_init is None:
-        if Ydictionary_init is None:
+    if Cdict_init is None:
+        if Ydict_init is None:
             nx = get_backend(*Cs0, *Ys0, *ps0, q0)
         else:
-            Ydictionary_init = list_to_array(Ydictionary_init)
-            Ydictionary0_init = Ydictionary_init
-            nx = get_backend(*Cs0, *Ys0, *ps0, Ydictionary0_init, q0)
+            Ydict_init = list_to_array(Ydict_init)
+            Ydict_init0 = Ydict_init
+            nx = get_backend(*Cs0, *Ys0, *ps0, Ydict_init0, q0)
     else:
-        if Ydictionary_init is None:
-            Cdictionary_init = list_to_array(Cdictionary_init)
-            Cdictionary0_init = Cdictionary_init
-            nx = get_backend(*Cs0, *Ys0, *ps0, Cdictionary0_init, q0)
+        if Ydict_init is None:
+            Cdict_init = list_to_array(Cdict_init)
+            Cdict_init0 = Cdict_init
+            nx = get_backend(*Cs0, *Ys0, *ps0, Cdict_init0, q0)
         else:
-            Cdictionary_init, Ydictionary_init = list_to_array(Cdictionary_init, Ydictionary_init)
-            Cdictionary0_init, Ydictionary0_init = Cdictionary_init, Ydictionary_init
-            nx = get_backend(*Cs0, *Ys0, *ps0, Cdictionary0_init, Ydictionary0_init, q0)
+            Cdict_init, Ydict_init = list_to_array(Cdict_init, Ydict_init)
+            Cdict_init0, Ydict_init0 = Cdict_init, Ydict_init
+            nx = get_backend(*Cs0, *Ys0, *ps0, Cdict_init0, Ydict_init0, q0)
+
     Cs = [nx.to_numpy(C) for C in Cs0]
     Ys = [nx.to_numpy(Y) for Y in Ys0]
     ps = [nx.to_numpy(p) for p in ps0]
@@ -2304,101 +2326,113 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, ps, D, nt, q, alpha, ep
     d = Ys[0].shape[-1]
     dataset_size = len(Cs)
 
-    if Cdictionary_init is None:
+    # Initialization of the dictionary
+    if Cdict_init is None:
         dataset_structure_means = [C.mean() for C in Cs]
-        Cdictionary = np.random.normal(loc=np.mean(dataset_structure_means), scale=np.std(dataset_structure_means), size=(D, nt, nt))
+        Cdict = np.random.normal(loc=np.mean(dataset_structure_means), scale=np.std(dataset_structure_means), size=(D, nt, nt))
     else:
-        Cdictionary = nx.to_numpy(Cdictionary0_init).copy()
-        np.testing.assert_allclose(Cdictionary.shape, (D, nt, nt))
-    if Ydictionary_init is None:
+        Cdict = nx.to_numpy(Cdict_init0).copy()
+        np.testing.assert_allclose(Cdict.shape, (D, nt, nt))
+    if Ydict_init is None:
         dataset_feature_means = np.stack([F.mean(axis=0) for F in Ys])
-        Ydictionary = np.random.normal(loc=dataset_feature_means.mean(axis=0), scale=dataset_feature_means.std(axis=0), size=(D, nt, d))
+        Ydict = np.random.normal(loc=dataset_feature_means.mean(axis=0), scale=dataset_feature_means.std(axis=0), size=(D, nt, d))
     else:
-        Ydictionary = nx.to_numpy(Ydictionary0_init).copy()
-        np.testing.assert_allclose(Ydictionary.shape, (D, nt, d))
+        Ydict = nx.to_numpy(Ydict_init0).copy()
+        np.testing.assert_allclose(Ydict.shape, (D, nt, d))
     if 'symmetric' in projection:
-        Cdictionary = 0.5 * (Cdictionary + Cdictionary.transpose((0, 2, 1)))
+        Cdict = 0.5 * (Cdict + Cdict.transpose((0, 2, 1)))
     if 'nonnegative' in projection:
-        Cdictionary[Cdictionary < 0.] = 0.
+        Cdict[Cdict < 0.] = 0.
     if use_adam_optimizer:
-        adam_moments_C = _initialize_adam_optimizer(Cdictionary)
-        adam_moments_Y = _initialize_adam_optimizer(Ydictionary)
+        adam_moments_C = _initialize_adam_optimizer(Cdict)
+        adam_moments_Y = _initialize_adam_optimizer(Ydict)
 
     log = {'loss_batches': [], 'loss_epochs': []}
     const_q = q[:, None] * q[None, :]
     diag_q = np.diag(q)
-    Cdictionary_best_state = Cdictionary.copy()
-    Ydictionary_best_state = Ydictionary.copy()
+    Cdict_best_state = Cdict.copy()
+    Ydict_best_state = Ydict.copy()
     loss_best_state = np.inf
-    iter_by_epoch = dataset_size // batch_size + 1
+    if batch_size > dataset_size:
+        batch_size = dataset_size
+    iter_by_epoch = dataset_size // batch_size + int((dataset_size % batch_size) > 0)
+
     for epoch in range(epochs):
         cumulated_loss_over_epoch = 0.
 
         for _ in range(iter_by_epoch):
+
+            # Batch iterations
             batch = np.random.choice(range(dataset_size), size=batch_size, replace=False)
             cumulated_loss_over_batch = 0.
             unmixings = np.zeros((batch_size, D))
             Cs_embedded = np.zeros((batch_size, nt, nt))
             Ys_embedded = np.zeros((batch_size, nt, d))
             Ts = [None] * batch_size
+
             for batch_idx, C_idx in enumerate(batch):
                 # BCD solver for Gromov-Wassersteisn linear unmixing used independently on each structure of the sampled batch
-                unmixings[batch_idx], Cs_embedded[batch_idx], Ys_embedded[batch_idx], Ts[batch_idx], current_loss = fused_gromov_wasserstein_linear_unmixing(Cs[C_idx], Ys[C_idx], Cdictionary, Ydictionary, ps[C_idx], q, alpha, reg=reg,
+                unmixings[batch_idx], Cs_embedded[batch_idx], Ys_embedded[batch_idx], Ts[batch_idx], current_loss = fused_gromov_wasserstein_linear_unmixing(Cs[C_idx], Ys[C_idx], Cdict, Ydict, ps[C_idx], q, alpha, reg=reg,
                                                                                                                                                              tol_outer=tol_outer, tol_inner=tol_inner, max_iter_outer=max_iter_outer, max_iter_inner=max_iter_inner)
                 cumulated_loss_over_batch += current_loss
             cumulated_loss_over_epoch += cumulated_loss_over_batch
             if use_log:
                 log['loss_batches'].append(cumulated_loss_over_batch)
             # Stochastic projected gradient step over dictionary atoms
-            grad_Cdictionary = np.zeros_like(Cdictionary)
-            grad_Ydictionary = np.zeros_like(Ydictionary)
+            grad_Cdict = np.zeros_like(Cdict)
+            grad_Ydict = np.zeros_like(Ydict)
 
             for batch_idx, C_idx in enumerate(batch):
                 shared_term_structures = Cs_embedded[batch_idx] * const_q - (Cs[C_idx].dot(Ts[batch_idx])).T.dot(Ts[batch_idx])
                 shared_term_features = diag_q.dot(Ys_embedded[batch_idx]) - Ts[batch_idx].T.dot(Ys[C_idx])
-                grad_Cdictionary += alpha * unmixings[batch_idx][:, None, None] * shared_term_structures[None, :, :]
-                grad_Ydictionary += (1 - alpha) * unmixings[batch_idx][:, None, None] * shared_term_features[None, :, :]
-            grad_Cdictionary *= 2 / batch_size
-            grad_Ydictionary *= 2 / batch_size
+                grad_Cdict += alpha * unmixings[batch_idx][:, None, None] * shared_term_structures[None, :, :]
+                grad_Ydict += (1 - alpha) * unmixings[batch_idx][:, None, None] * shared_term_features[None, :, :]
+            grad_Cdict *= 2 / batch_size
+            grad_Ydict *= 2 / batch_size
 
             if use_adam_optimizer:
-                Cdictionary, adam_moments_C = _adam_stochastic_updates(Cdictionary, grad_Cdictionary, learning_rate_C, adam_moments_C)
-                Ydictionary, adam_moments_Y = _adam_stochastic_updates(Ydictionary, grad_Ydictionary, learning_rate_Y, adam_moments_Y)
+                Cdict, adam_moments_C = _adam_stochastic_updates(Cdict, grad_Cdict, learning_rate_C, adam_moments_C)
+                Ydict, adam_moments_Y = _adam_stochastic_updates(Ydict, grad_Ydict, learning_rate_Y, adam_moments_Y)
             else:
-                Cdictionary -= learning_rate_C * grad_Cdictionary
-                Ydictionary -= learning_rate_Y * grad_Ydictionary
+                Cdict -= learning_rate_C * grad_Cdict
+                Ydict -= learning_rate_Y * grad_Ydict
 
             if 'symmetric' in projection:
-                Cdictionary = 0.5 * (Cdictionary + Cdictionary.transpose((0, 2, 1)))
+                Cdict = 0.5 * (Cdict + Cdict.transpose((0, 2, 1)))
             if 'nonnegative' in projection:
-                Cdictionary[Cdictionary < 0.] = 0.
+                Cdict[Cdict < 0.] = 0.
         if use_log:
             log['loss_epochs'].append(cumulated_loss_over_epoch)
         if loss_best_state > cumulated_loss_over_epoch:
             loss_best_state = cumulated_loss_over_epoch
-            Cdictionary_best_state = Cdictionary.copy()
-            Ydictionary_best_state = Ydictionary.copy()
+            Cdict_best_state = Cdict.copy()
+            Ydict_best_state = Ydict.copy()
         if verbose:
             print('--- epoch: ', epoch, ' cumulated reconstruction error: ', cumulated_loss_over_epoch)
-    return nx.from_numpy(Cdictionary_best_state), nx.from_numpy(Ydictionary_best_state), log
+    return nx.from_numpy(Cdict_best_state), nx.from_numpy(Ydict_best_state), log
 
 
-def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdictionary, Ydictionary, p, q, alpha, reg=0., tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200, **kwargs):
+def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict, Ydict, p, q, alpha, reg=0., tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, **kwargs):
     r"""
-    Returns the Fused Gromov-Wasserstein linear unmixing of $(\mathbf{C},\mathbf{Y},\mathbf{p}) onto the set of attributed dictionary atoms \{ (\mathbf{Cdictionary[d]},\mathbf{Ydictionary[d]}) \}_{d \in [D]}
+    Returns the Fused Gromov-Wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{Y},\mathbf{p})` onto the attributed dictionary atoms :math:`\{ (\mathbf{Cdict[d]},\mathbf{Ydict[d]}, \mathbf{q}) \}_{d \in [D]}`
 
     .. math::
-        \min_w  FGW_{2,\alpha}(\mathbf{C},\mathbf{Y}, \sum_{d=1}^D w_d*\mathbf{Cdictionary[d]},\sum_{d=1}^D w_d*\mathbf{Ydictionary[d]}, \mathbf{p}, \mathbf{q}) - reg* \| \mathbf{w}  \|_2^2
-        s.t. \mathbf{w}^\top \mathbf{1}_D = 1
-             \mathbf{w} \geq 0
+        \min_{\mathbf{w}}  FGW_{2,\alpha}(\mathbf{C},\mathbf{Y}, \sum_{d=1}^D w_d\mathbf{Cdict[d]},\sum_{d=1}^D w_d\mathbf{Ydict[d]}, \mathbf{p}, \mathbf{q}) - reg \| \mathbf{w}  \|_2^2
 
-    where :
-    - C is the (Ns,Ns) pairwise similarity matrix
-    - Y is the (Ns,d) feature matrix
-    - Cdictionary is a list of (Nt,Nt) pairwise similarity matrix
-    - Ydictionary is a list of (Nt,d) feature matrix
-    - p and q are source and target weights (sum to 1).
-    - alpha is the trade-off parameter of Fused Gromov-Wasserstein
+    such that, :math:`\forall s \leq S` :
+
+        - :math:`\mathbf{w_s}^\top \mathbf{1}_D = 1`
+        - :math:`\mathbf{w_s} \geq \mathbf{0}_D`
+
+    Where :
+
+    - :math:`\mathbf{C}` is a (ns,ns) pairwise similarity matrix of variable size ns.
+    - :math:`\mathbf{Y}` is a (ns,d) features matrix of variable size ns and fixed dimension d.
+    - :math:`\mathbf{Cdict}` is a (D, nt, nt) tensor of D pairwise similarity matrix of fixed size nt.
+    - :math:`\mathbf{Ydict}` is a (D, nt, d) tensor of D features matrix of fixed size nt and fixed dimension d.
+    - :math:`\mathbf{p}` is the source distribution corresponding to :math:`\mathbf{C_s}`
+    - :math:`\mathbf{q}` is the target distribution assigned to every structures in the embedding space.
+    - :math:`\alpha` is the trade-off parameter of Fused Gromov-Wasserstein
     - reg is the regularization coefficient.
 
     The algorithm used for solving the problem is a Block Coordinate Descent as discussed in [38], algorithm 6.
@@ -2409,12 +2443,12 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdictionary, Ydictionary, p, 
         Metric/Graph cost matrix.
     Y : array-like, shape (ns, d)
         Feature matrix.
-    Cdictionary : D array-like, shape (D,nt,nt)
+    Cdict : D array-like, shape (D,nt,nt)
         Metric/Graph cost matrices composing the dictionary on which to embed (C,Y).
-    Ydictionary : D array-like, shape (D,nt,d)
+    Ydict : D array-like, shape (D,nt,d)
         Feature matrices composing the dictionary on which to embed (C,Y).
     p : array-like, shape (ns,)
-        Distribution in the source space C.
+        Distribution in the source space (C,Y).
     q : array-like, shape (nt,)
         Distribution in the space depicted by the dictionary.
     alpha: float,
@@ -2422,24 +2456,24 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdictionary, Ydictionary, p, 
     reg : float, optional
         Coefficient of the negative quadratic regularization used to promote sparsity of w. The default is 0.
     tol_outer : float, optional
-        Solver precision for the BCD algorithm. The default is 10**(-5).
+        Solver precision for the BCD algorithm.
     tol_inner : float, optional
-        Solver precision for the Conjugate Gradient algorithm used to get optimal w at a fixed transport. The default is 10**(-5).
+        Solver precision for the Conjugate Gradient algorithm used to get optimal w at a fixed transport. Default is :math:`10^{-5}`.
     max_iter_outer : int, optional
-        Maximum number of iterations for the BCD. The default is 20.
-    max_iter_outer : int, optional
-        Maximum number of iterations for the Conjugate Gradient. The default is 200.
+        Maximum number of iterations for the BCD. Default is 20.
+    max_iter_inner : int, optional
+        Maximum number of iterations for the Conjugate Gradient. Default is 200.
 
     Returns
     -------
     w: array-like, shape (D,)
         fused gromov-wasserstein linear unmixing of (C,Y,p) onto the span of the dictionary.
     Cembedded: array-like, shape (nt,nt)
-        embedded structure matrix of (C,Y,p) onto the dictionary, \sum_d w[d]*Cdictionary[d].
+        embedded structure of :math:`(\mathbf{C},\mathbf{Y}, \mathbf{p})` onto the dictionary, :math:`\sum_d w_d\mathbf{Cdict[d]}`.
     Yembedded: array-like, shape (nt,d)
-        embedded feature matrix of (C,Y,p) onto the dictionary, \sum_d w[d]*Ydictionary[d].
-    T: array-like (Ns,N)
-        Gromov-Wasserstein transport plan between (C,p) and (\sum_d w[d]*Cdictionary[d],q).
+        embedded features of :math:`(\mathbf{C},\mathbf{Y}, \mathbf{p})` onto the dictionary, :math:`\sum_d w_d\mathbf{Ydict[d]}`.
+    T: array-like (ns,nt)
+        Fused Gromov-Wasserstein transport plan between :math:`(\mathbf{C},\mathbf{p})` and :math:`(\sum_d w_d\mathbf{Cdict[d]}, \sum_d w_d\mathbf{Ydict[d]},\mathbf{q})`.
     current_loss: float
         reconstruction error
     References
@@ -2449,24 +2483,24 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdictionary, Ydictionary, p, 
             "Online Graph Dictionary Learning"
             International Conference on Machine Learning (ICML). 2021.
     """
-    C, Y, Cdictionary, Ydictionary, p, q = list_to_array(C, Y, Cdictionary, Ydictionary, p, q)
-    C0, Y0, Cdictionary0, Ydictionary0, p0, q0 = C, Y, Cdictionary, Ydictionary, p, q
-    nx = get_backend(C0, Y0, Cdictionary0, Ydictionary0, p0, q0)
+    C, Y, Cdict, Ydict, p, q = list_to_array(C, Y, Cdict, Ydict, p, q)
+    C0, Y0, Cdict0, Ydict0, p0, q0 = C, Y, Cdict, Ydict, p, q
+    nx = get_backend(C0, Y0, Cdict0, Ydict0, p0, q0)
     C = nx.to_numpy(C0)
     Y = nx.to_numpy(Y0)
-    Cdictionary = nx.to_numpy(Cdictionary0)
-    Ydictionary = nx.to_numpy(Ydictionary0)
+    Cdict = nx.to_numpy(Cdict0)
+    Ydict = nx.to_numpy(Ydict0)
     p = nx.to_numpy(p0)
     q = nx.to_numpy(q0)
     T = p[:, None] * q[None, :]
-    D = len(Cdictionary)
+    D = len(Cdict)
     d = Y.shape[-1]
     w = unif(D)
     ns = C.shape[-1]
-    nt = Cdictionary.shape[-1]
+    nt = Cdict.shape[-1]
     # modeling (C,Y)
-    Cembedded = np.sum(w[:, None, None] * Cdictionary, axis=0)
-    Yembedded = np.sum(w[:, None, None] * Ydictionary, axis=0)
+    Cembedded = np.sum(w[:, None, None] * Cdict, axis=0)
+    Yembedded = np.sum(w[:, None, None] * Ydict, axis=0)
     # constants depending on q
     const_q = q[:, None] * q[None, :]
     diag_q = np.diag(q)
@@ -2485,7 +2519,7 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdictionary, Ydictionary, p, 
         if reg != 0:
             current_loss -= reg * np.sum(w**2)
         # 2. Solve linear unmixing problem over w with a fixed transport plan T
-        w, Cembedded, Yembedded, current_loss = _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdictionary, Ydictionary, Cembedded, Yembedded, w,
+        w, Cembedded, Yembedded, current_loss = _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdict, Ydict, Cembedded, Yembedded, w,
                                                                                       T, p, q, const_q, diag_q, current_loss, alpha, reg,
                                                                                       tol=tol_inner, max_iter=max_iter_inner, **kwargs)
         if previous_loss != 0:
@@ -2500,23 +2534,26 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdictionary, Ydictionary, p, 
 def _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdictionary, Ydictionary, Cembedded, Yembedded, w, T, p, q, const_q, diag_q, starting_loss, alpha, reg=0., tol=10**(-6), max_iter=200, **kwargs):
     r"""
     Returns for a fixed admissible transport plan,
-    the linear unmixing w minimizing the Fused Gromov-Wasserstein cost between (C,Y,p) and (\sum_d w[d]*Cdictionary[d],\sum_d w[d]*Ydictionary[d], q)
+    the optimal linear unmixing :math:`\mathbf{w}` minimizing the Fused Gromov-Wasserstein cost between :math:`(\mathbf{C},\mathbf{Y},\mathbf{p})` and :math:`(\sum_d w_d \mathbf{Cdict[d]},\sum_d w_d*\mathbf{Ydict[d]}, \mathbf{q})`
 
     .. math::
-        \min_w  \alpha  \sum_{ijkl} (C_{i,j} - \sum_{d=1}^D w_d*Cdictionary[d]_{k,l} )^2 T_{i,k}T_{j,l} + (1-\alpha) \sum_{ij} \| Y_i - \sum_d w[d] Ydictionary[d]_j \|_2^2 T_{ij}- reg* \| \mathbf{w}  \|_2^2
-        s.t. \mathbf{w}^\top \mathbf{1}_D = 1
-             \mathbf{w} \geq 0
+        \min_{\mathbf{w}}  \alpha  \sum_{ijkl} (C_{i,j} - \sum_{d=1}^D w_d Cdict[d]_{k,l} )^2 T_{i,k}T_{j,l} \\+ (1-\alpha) \sum_{ij} \| \mathbf{Y_i} - \sum_d w_d \mathbf{Ydict[d]_j} \|_2^2 T_{ij}- reg \| \mathbf{w}  \|_2^2
 
-    where :
+    Such that :
 
-    - C is the (ns,ns) pairwise similarity matrix
-    - F is the (ns,d) feature matrix
-    - Cdictionary is a list of D (nt,nt) pairwise similarity matrices
-    - Ydictionary is a list of D (nt,d) feature matrices
-    - p and q are source and target weights (sum to 1).
-    - w is the linear unmixing of (C,Y,p) onto (\sum_{d=1}^D w[d] Cdictionary[d],\sum_{d=1}^D w[d] Ydictionary[d])
-    - T is the optimal transport plan conditioned by the current state of w
-    - alpha is the trade-off parameter of Fused Gromov-Wasserstein
+        - :math:`\mathbf{w}^\top \mathbf{1}_D = 1`
+        - :math:`\mathbf{w} \geq \mathbf{0}_D`
+
+    Where :
+
+    - :math:`\mathbf{C}` is a (ns,ns) pairwise similarity matrix of variable size ns.
+    - :math:`\mathbf{Y}` is a (ns,d) features matrix of variable size ns and fixed dimension d.
+    - :math:`\mathbf{Cdict}` is a (D, nt, nt) tensor of D pairwise similarity matrix of fixed size nt.
+    - :math:`\mathbf{Ydict}` is a (D, nt, d) tensor of D features matrix of fixed size nt and fixed dimension d.
+    - :math:`\mathbf{p}` is the source distribution corresponding to :math:`\mathbf{C_s}`
+    - :math:`\mathbf{q}` is the target distribution assigned to every structures in the embedding space.
+    - :math:`\mathbf{T}` is the optimal transport plan conditioned by the previous state of :math:`\mathbf{w}`
+    - :math:`\alpha` is the trade-off parameter of Fused Gromov-Wasserstein
     - reg is the regularization coefficient.
 
     The algorithm used for solving the problem is a Conditional Gradient Descent as discussed in [38], algorithm 7.
@@ -2528,22 +2565,22 @@ def _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdictionary, Ydictionary, Cembed
         Metric/Graph cost matrix.
     Y : array-like, shape (ns, d)
         Feature matrix.
-    Cdictionary : list of D array-like, shape (nt,nt)
+    Cdict : list of D array-like, shape (nt,nt)
         Metric/Graph cost matrices composing the dictionary on which to embed (C,Y).
         Each matrix in the dictionary must have the same size (nt,nt).
-    Ydictionary : list of D array-like, shape (nt,d)
+    Ydict : list of D array-like, shape (nt,d)
         Feature matrices composing the dictionary on which to embed (C,Y).
         Each matrix in the dictionary must have the same size (nt,d).
     Cembedded: array-like, shape (nt,nt)
-        Embedded structure \sum_{d=1}^D w[d]*Cdictionary[d] of (C,Y) onto the dictionary
+        Embedded structure of (C,Y) onto the dictionary
     Yembedded: array-like, shape (nt,d)
-        Embedded features \sum_{d=1}^D w[d]*Ydictionary[d],q) of (C,Y) onto the dictionary
+        Embedded features of (C,Y) onto the dictionary
     w: array-like, shape (n_D,)
-        Linear unmixing of C onto Cdictionary
+        Linear unmixing of (C,Y) onto (Cdict,Ydict)
     const_q: array-like, shape (nt,nt)
-        product matrix qq^\top where q is the target space distribution.
+        product matrix :math:`\mathbf{qq}^\top` where :math:`\mathbf{q}` is the target space distribution.
     diag_q: array-like, shape (nt,nt)
-        diagonal matrix diag(q) where q is the target space distribution.
+        diagonal matrix with values of q on the diagonal.
     T: array-like, shape (ns,nt)
         fixed transport plan between (C,Y) and its model
     p : array-like, shape (ns,)
@@ -2557,8 +2594,8 @@ def _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdictionary, Ydictionary, Cembed
 
     Returns
     -------
-    w: ndarray (K,)
-        linear unmixing of (C,p) onto the span of \{ (Catoms[k],q) \} given OT corresponding to init_w
+    w: ndarray (D,)
+        linear unmixing of :math:`(\mathbf{C},\mathbf{Y},\mathbf{p})` onto the span of :math:`(Cdict,Ydict)` given OT corresponding to previous unmixing.
     """
     convergence_criterion = np.inf
     current_loss = starting_loss

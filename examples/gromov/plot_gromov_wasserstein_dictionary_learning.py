@@ -93,9 +93,9 @@ D = 3
 nt = 6
 q = ot.unif(nt)
 reg = 0.01
-Cdictionary_learned, log = gromov_wasserstein_dictionary_learning(dataset, ps, D, nt, q,
-                                                                  epochs=15, batch_size=16, learning_rate=0.01, reg=reg,
-                                                                  projection='nonnegative_symmetric', use_log=True, use_adam_optimizer=True, verbose=True)
+Cdict_learned, log = gromov_wasserstein_dictionary_learning(dataset, ps, D, nt, q,
+                                                            epochs=15, batch_size=16, learning_rate=0.1, reg=reg,
+                                                            projection='nonnegative_symmetric', use_log=True, use_adam_optimizer=True, verbose=True)
 # visualize loss evolution
 pl.figure(2, (5, 5))
 pl.clf()
@@ -109,7 +109,7 @@ pl.show()
 pl.figure(3, (15, 10))
 pl.clf()
 pl.suptitle('Learned Gromov-Wasserstein dictionary atoms')
-for idx_atom, atom in enumerate(Cdictionary_learned):
+for idx_atom, atom in enumerate(Cdict_learned):
     scaled_atom = (atom - atom.min()) / (atom.max() - atom.min())
     x = MDS(dissimilarity='precomputed', random_state=0).fit_transform(1 - scaled_atom)
     pl.subplot(2, D, idx_atom + 1)
@@ -127,7 +127,7 @@ unmixings = []
 reconstruction_errors = []
 for C in dataset:
     p = ot.unif(C.shape[0])
-    unmixing, Cembedded, OT, reconstruction_error = gromov_wasserstein_linear_unmixing(C, Cdictionary_learned, p, q, reg=reg,
+    unmixing, Cembedded, OT, reconstruction_error = gromov_wasserstein_linear_unmixing(C, Cdict_learned, p, q, reg=reg,
                                                                                        tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200)
     unmixings.append(unmixing)
     reconstruction_errors.append(reconstruction_error)
@@ -193,9 +193,9 @@ q = ot.unif(nt)
 reg = 0.01
 alpha = 0.5  # trade-off parameter between structure and feature information of Fused Gromov-Wasserstein
 
-Cdictionary_learned, Ydictionary_learned, log = fused_gromov_wasserstein_dictionary_learning(dataset, dataset_features, ps, D, nt, q, alpha,
-                                                                                             epochs=20, batch_size=16, learning_rate_C=0.1, learning_rate_Y=0.1, reg=reg,
-                                                                                             projection='nonnegative_symmetric', use_log=True, use_adam_optimizer=False, verbose=True)
+Cdict_learned, Ydict_learned, log = fused_gromov_wasserstein_dictionary_learning(dataset, dataset_features, ps, D, nt, q, alpha,
+                                                                                epochs=20, batch_size=16, learning_rate_C=0.1, learning_rate_Y=0.1, reg=reg,
+                                                                                projection='nonnegative_symmetric', use_log=True, use_adam_optimizer=False, verbose=True)
 # visualize loss evolution
 pl.figure(6, (5, 5))
 pl.clf()
@@ -209,9 +209,9 @@ pl.show()
 pl.figure(7, (15, 10))
 pl.clf()
 pl.suptitle('Learned Graph Dictionary')
-for idx_atom, atom in enumerate(Cdictionary_learned):
+for idx_atom, atom in enumerate(Cdict_learned):
     scaled_atom = (atom - atom.min()) / (atom.max() - atom.min())
-    F = Ydictionary_learned[idx_atom]
+    F = Ydict_learned[idx_atom]
     colors = []
     colors = ['C0' if F[i, 0] < 0.5 else 'C1' for i in range(F.shape[0])]
     x = MDS(dissimilarity='precomputed', random_state=0).fit_transform(1 - scaled_atom)
@@ -232,7 +232,7 @@ for i in range(len(dataset)):
     C = dataset[i]
     Y = dataset_features[i]
     p = ot.unif(C.shape[0])
-    unmixing, Cembedded, Yembedded, OT, reconstruction_error = fused_gromov_wasserstein_linear_unmixing(C, Y, Cdictionary_learned, Ydictionary_learned, p, q, alpha=alpha,
+    unmixing, Cembedded, Yembedded, OT, reconstruction_error = fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict_learned, Ydict_learned, p, q, alpha=alpha,
                                                                                                         reg=reg, tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=30, max_iter_inner=300)
     unmixings.append(unmixing)
     reconstruction_errors.append(reconstruction_error)
