@@ -1804,8 +1804,53 @@ class TorchBackend(Backend):
         return torch.linalg.inv(a)
 
     def sqrtm(self, a):
-        eig = getattr(torch.linalg, "eig", torch.eig)
-        L, V = eig(a)
+        if hasattr(torch.linalg, "eig"):
+            L, V = torch.linalg.eig(a)
+        else:
+            # Eigen decomposition in pytorch 1.8.1 and older did not give
+            # eigenvalues in a complex form and did not give true eigenvectors,
+            # only a tensor which has the information to make eigenvectors.
+            # See: https://pytorch.org/docs/1.8.1/generated/torch.eig.html
+            # In order to avoid an odd storage offset error, eigenvalues (and
+            # their corresponding columns in the given tensor) are reordered
+            # such that complex eigenvalues are put first, and real eigenvalues
+            # are appended behind.
+
+            # V is not a true eigenvector tensor here
+            L, V = torch.eig(a, eigenvectors=True)
+
+            # Reordering eigenvalues
+            real_eigen_indices, = torch.where(
+                torch.isclose(L[:, 1], self.zeros(L[:, 1].shape, type_as=L[:, 1]))
+            )
+            real_eigen_indices = list(real_eigen_indices.numpy())
+            reorder_indices = [
+                i for i in range(L.shape[0])
+                if i not in real_eigen_indices
+            ] + real_eigen_indices
+            L = L[reorder_indices]
+            V = V[:, reorder_indices]
+
+            # Now making the true eigenvector tensor
+            tensor_0 = self.from_numpy(0, type_as=L)
+            L = torch.view_as_complex(L)
+            i = 0
+            correct_eigenvectors = self.zeros([*V.shape, 2], type_as=V)
+            while i < L.shape[0]:
+                im = L[i].imag
+                if not torch.allclose(im, tensor_0):  # eigenvalue is complex
+                    correct_eigenvectors[:, i:i + 2, :] = (
+                        V[:, None, i:i + 2]
+                        .expand(V.shape[0], 2, 2)
+                    )
+                    correct_eigenvectors[:, i + 1, 1] *= -1  # conjugate
+                    i += 2
+                else:  # eigenvalue is real
+                    correct_eigenvectors[:, i, :] = torch.stack(
+                        [V[:, i], self.zeros(V.shape[0], type_as=V)], dim=-1
+                    )
+                    i += 1
+            V = torch.view_as_complex(correct_eigenvectors)
         return V @ torch.diag(torch.sqrt(L)) @ self.inv(V)
 
 
