@@ -339,6 +339,10 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=F
     - :math:`\mathbf{q}`: distribution in the target space
     - `L`: loss function to account for the misfit between the similarity matrices
 
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
+
     Parameters
     ----------
     C1 : array-like, shape (ns, ns)
@@ -447,6 +451,10 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=
 
     Note that when using backends, this loss function is differentiable wrt the
     marices and weights for quadratic loss using the gradients from [38]_.
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
 
     Parameters
     ----------
@@ -569,6 +577,10 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
     - :math:`\mathbf{p}` and :math:`\mathbf{q}` are source and target weights (sum to 1)
     - `L` is a loss function to account for the misfit between the similarity matrices
 
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
+
     The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[24] <references-fused-gromov-wasserstein>`
 
     Parameters
@@ -676,6 +688,10 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
 
     The algorithm used for solving the problem is conditional gradient as
     discussed in :ref:`[24] <references-fused-gromov-wasserstein2>`
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
 
     Note that when using backends, this loss function is differentiable wrt the
     marices and weights for quadratic loss using the gradients from [38]_.

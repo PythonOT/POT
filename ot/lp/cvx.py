@@ -11,7 +11,6 @@ import numpy as np
 import scipy as sp
 import scipy.sparse as sps
 
-
 try:
     import cvxopt
     from cvxopt import solvers, matrix, spmatrix
