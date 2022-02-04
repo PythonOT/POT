@@ -592,7 +592,7 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
         return (
             nx.sum((nx.dot(K1, L) - ns * nx.dot(G, xt)) ** 2)
             + mu * nx.sum(G * M)
-            + eta * nx.trace(L.T.dot(Kreg).dot(L))
+            + eta * nx.trace(nx.dot(nx.dot(L.T, Kreg), L))
         )
 
     def solve_L_nobias(G):
@@ -697,15 +697,15 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
 
     Parameters
     ----------
-    xs : np.ndarray (ns,d)
+    xs : array-like (ns,d)
         samples in the source domain
-    xt : np.ndarray (nt,d)
+    xt : array-like (nt,d)
         samples in the target domain
     reg : float,optional
         regularization added to the diagonals of covariances (>0)
-    ws : np.ndarray (ns,1), optional
+    ws : array-like (ns,1), optional
         weights for the source samples
-    wt : np.ndarray (ns,1), optional
+    wt : array-like (ns,1), optional
         weights for the target samples
     bias: boolean, optional
         estimate bias :math:`\mathbf{b}` else :math:`\mathbf{b} = 0` (default:True)
@@ -715,9 +715,9 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
 
     Returns
     -------
-    A : (d, d) ndarray
+    A : (d, d) array-like
         Linear operator
-    b : (1, d) ndarray
+    b : (1, d) array-like
         bias
     log : dict
         log dictionary return only if log==True in parameters
@@ -735,36 +735,38 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
 
 
     """
+    xs, xt = list_to_array(xs, xt)
+    nx = get_backend(xs, xt)
 
     d = xs.shape[1]
 
     if bias:
-        mxs = xs.mean(0, keepdims=True)
-        mxt = xt.mean(0, keepdims=True)
+        mxs = nx.mean(xs, axis=0)[None, :]
+        mxt = nx.mean(xt, axis=0)[None, :]
 
         xs = xs - mxs
         xt = xt - mxt
     else:
-        mxs = np.zeros((1, d))
-        mxt = np.zeros((1, d))
+        mxs = nx.zeros((1, d), type_as=xs)
+        mxt = nx.zeros((1, d), type_as=xs)
 
     if ws is None:
-        ws = np.ones((xs.shape[0], 1)) / xs.shape[0]
+        ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
 
     if wt is None:
-        wt = np.ones((xt.shape[0], 1)) / xt.shape[0]
+        wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
 
-    Cs = (xs * ws).T.dot(xs) / ws.sum() + reg * np.eye(d)
-    Ct = (xt * wt).T.dot(xt) / wt.sum() + reg * np.eye(d)
+    Cs = nx.dot((xs * ws).T, xs) / ws.sum() + reg * nx.eye(d, type_as=xs)
+    Ct = nx.dot((xt * wt).T, xt) / wt.sum() + reg * nx.eye(d, type_as=xt)
 
-    Cs12 = linalg.sqrtm(Cs)
-    Cs_12 = linalg.inv(Cs12)
+    Cs12 = nx.sqrtm(Cs)
+    Cs_12 = nx.inv(Cs12)
 
-    M0 = linalg.sqrtm(Cs12.dot(Ct.dot(Cs12)))
+    M0 = nx.sqrtm(nx.dot(Cs12, nx.dot(Ct,Cs12)))
 
-    A = Cs_12.dot(M0.dot(Cs_12))
+    A = nx.dot(Cs_12, nx.dot(M0, Cs_12))
 
-    b = mxt - mxs.dot(A)
+    b = mxt - nx.dot(mxs, A)
 
     if log:
         log = {}
@@ -814,15 +816,15 @@ def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, al
 
     Parameters
     ----------
-    a : np.ndarray (ns,)
+    a : array-like (ns,)
         samples weights in the source domain
-    b : np.ndarray (nt,)
+    b : array-like (nt,)
         samples weights in the target domain
-    xs : np.ndarray (ns,d)
+    xs : array-like (ns,d)
         samples in the source domain
-    xt : np.ndarray (nt,d)
+    xt : array-like (nt,d)
         samples in the target domain
-    M : np.ndarray (ns,nt)
+    M : array-like (ns,nt)
         loss matrix
     sim : string, optional
         Type of similarity ('knn' or 'gauss') used to construct the Laplacian.
@@ -850,7 +852,7 @@ def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, al
 
     Returns
     -------
-    gamma : (ns, nt) ndarray
+    gamma : (ns, nt) array-like
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
@@ -878,9 +880,12 @@ def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, al
         raise ValueError(
             'Similarity parameter should be an int or a float. Got {type} instead.'.format(type=type(sim_param).__name__))
 
+    a, b, xs, xt, M = list_to_array(a, b, xs, xt, M)
+    nx = get_backend(a, b, xs, xt, M)
+
     if sim == 'gauss':
         if sim_param is None:
-            sim_param = 1 / (2 * (np.mean(dist(xs, xs, 'sqeuclidean')) ** 2))
+            sim_param = 1 / (2 * (nx.mean(dist(xs, xs, 'sqeuclidean')) ** 2))
         sS = kernel(xs, xs, method=sim, sigma=sim_param)
         sT = kernel(xt, xt, method=sim, sigma=sim_param)
 
@@ -890,9 +895,13 @@ def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, al
 
         from sklearn.neighbors import kneighbors_graph
 
-        sS = kneighbors_graph(X=xs, n_neighbors=int(sim_param)).toarray()
+        sS = nx.from_numpy(kneighbors_graph(
+            X=nx.to_numpy(xs), n_neighbors=int(sim_param)
+        ).toarray(), type_as=xs)
         sS = (sS + sS.T) / 2
-        sT = kneighbors_graph(xt, n_neighbors=int(sim_param)).toarray()
+        sT = nx.from_numpy(kneighbors_graph(
+            X=nx.to_numpy(xt), n_neighbors=int(sim_param)
+        ).toarray(), type_as=xt)
         sT = (sT + sT.T) / 2
     else:
         raise ValueError('Unknown similarity type {sim}. Currently supported similarity types are "knn" and "gauss".'.format(sim=sim))
@@ -901,12 +910,14 @@ def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, al
     lT = laplacian(sT)
 
     def f(G):
-        return alpha * np.trace(np.dot(xt.T, np.dot(G.T, np.dot(lS, np.dot(G, xt))))) \
-            + (1 - alpha) * np.trace(np.dot(xs.T, np.dot(G, np.dot(lT, np.dot(G.T, xs)))))
+        return (
+            alpha * nx.trace(dots(xt.T, G.T, lS, G, xt))
+            + (1 - alpha) * nx.trace(dots(xs.T, G, lT, G.T, xs))
+        )
 
     ls2 = lS + lS.T
     lt2 = lT + lT.T
-    xt2 = np.dot(xt, xt.T)
+    xt2 = nx.dot(xt, xt.T)
 
     if reg == 'disp':
         Cs = -eta * alpha / xs.shape[0] * dots(ls2, xs, xt.T)
@@ -914,8 +925,10 @@ def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, al
         M = M + Cs + Ct
 
     def df(G):
-        return alpha * np.dot(ls2, np.dot(G, xt2))\
-            + (1 - alpha) * np.dot(xs, np.dot(xs.T, np.dot(G, lt2)))
+        return (
+            alpha * dots(ls2, G, xt2)
+            + (1 - alpha) * dots(xs, xs.T, G, lt2)
+        )
 
     return cg(a, b, M, reg=eta, f=f, df=df, G0=None, numItermax=numItermax, numItermaxEmd=numInnerItermax,
               stopThr=stopThr, stopThr2=stopInnerThr, verbose=verbose, log=log)

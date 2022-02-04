@@ -51,7 +51,8 @@ def kernel(x1, x2, method='gaussian', sigma=1, **kwargs):
 
 def laplacian(x):
     r"""Compute Laplacian matrix"""
-    L = np.diag(np.sum(x, axis=0)) - x
+    nx = get_backend(x)
+    L = nx.diag(nx.sum(x, axis=0)) - x
     return L
 
 
@@ -296,7 +297,8 @@ def cost_normalization(C, norm=None):
 
 def dots(*args):
     r""" dots function for multiple matrix multiply """
-    return reduce(np.dot, args)
+    nx = get_backend(*args)
+    return reduce(nx.dot, args)
 
 
 def label_normalization(y, start=0):
