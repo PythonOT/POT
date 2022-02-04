@@ -93,7 +93,6 @@ import scipy.special as special
 from scipy.sparse import issparse, coo_matrix, csr_matrix
 import warnings
 import time
-from functools import reduce
 
 try:
     import torch
