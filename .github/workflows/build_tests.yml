@@ -1,10 +1,13 @@
-name: build
+name: Tests
 
 on:
-  push:
-
+  workflow_dispatch:
   pull_request:
-
+    branches:
+      - 'master'    
+  push:
+    branches:
+      - 'master'  
   create:
     branches:
       - 'master'
@@ -15,10 +18,11 @@ jobs:
   linux:
 
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'no ci')"
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8]
+        python-version: ["3.7", "3.8", "3.9"]
 
     steps:
     - uses: actions/checkout@v1
@@ -26,63 +30,66 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install POT
+      run: |
+        pip install -e .
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install flake8 pytest "pytest-cov<2.6" codecov
-        pip install -U "sklearn"
+        pip install pytest "pytest-cov<2.6" codecov
+    - name: Run tests
+      run: |
+        python -m pytest --durations=20 -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot --color=yes
+    - name: Upload codecov
+      run: |
+        codecov
+  pep8:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'no pep8')"
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 examples/ ot/ test/ --count --max-line-length=127 --statistics
-    - name: Install POT
-      run: |
-        pip install -e .
-    - name: Run tests
-      run: |
-        python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
-    - name: Upload codecov
-      run: |
-        codecov
-
-
   linux-minimal-deps:
 
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.6]
-
+    if: "!contains(github.event.head_commit.message, 'no ci')"
     steps:
     - uses: actions/checkout@v1
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 
       uses: actions/setup-python@v1
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.9
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r .github/requirements_strict.txt
         pip install pytest
-        pip install -U "sklearn"
     - name: Install POT
       run: |
         pip install -e .
     - name: Run tests
       run: |
-        python -m pytest -v test/ ot/ --ignore ot/gpu/
-
-
+        python -m pytest --durations=20 -v test/ ot/ --ignore ot/gpu/ --color=yes
   macos:
-     runs-on: macOS-latest
+     runs-on: macos-latest
+     if: "!contains(github.event.head_commit.message, 'no ci')"
      strategy:
        max-parallel: 4
        matrix:
-         python-version: [3.7]
+         python-version: ["3.7", "3.8", "3.9"]
 
      steps:
      - uses: actions/checkout@v1
@@ -90,26 +97,24 @@ jobs:
        uses: actions/setup-python@v1
        with:
          python-version: ${{ matrix.python-version }}
+     - name: Install POT
+       run: |
+         pip install -e .
      - name: Install dependencies
        run: |
          python -m pip install --upgrade pip
          pip install -r requirements.txt
          pip install pytest "pytest-cov<2.6"
-         pip install -U "sklearn"
-     - name: Install POT
-       run: |
-         pip install -e .
      - name: Run tests
        run: |
-         python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
-
-
+         python -m pytest --durations=20  -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot --color=yes
   windows:
-    runs-on: windows-2019
+    runs-on: windows-latest
+    if: "!contains(github.event.head_commit.message, 'no ci')"
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.7]
+        python-version: ["3.7", "3.8", "3.9"]
 
     steps:
     - uses: actions/checkout@v1
@@ -117,15 +122,32 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    - name: RC.exe
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest "pytest-cov<2.6"
-        pip install -U "sklearn"
+        function Invoke-VSDevEnvironment {
+        $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+            $installationPath = & $vswhere -prerelease -legacy -latest -property installationPath
+            $Command = Join-Path $installationPath "Common7\Tools\vsdevcmd.bat"
+          & "${env:COMSPEC}" /s /c "`"$Command`" -no_logo && set" | Foreach-Object {
+                if ($_ -match '^([^=]+)=(.*)') {
+                    [System.Environment]::SetEnvironmentVariable($matches[1], $matches[2])
+                }
+            }
+        }
+        Invoke-VSDevEnvironment
+        Get-Command rc.exe | Format-Table -AutoSize
+    - name: Update pip
+      run : |
+        python -m pip install --upgrade pip setuptools
+        python -m pip install cython
     - name: Install POT
       run: |
-        pip install -e .
+        python -m pip install -e .
+    - name: Install dependencies
+      run: |
+        python -m pip install -r .github/requirements_test_windows.txt
+        python -m pip install torch==1.8.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
+        python -m pip install pytest "pytest-cov<2.6"
     - name: Run tests
       run: |
-        python -m pytest -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot
+        python -m pytest --durations=20  -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot --color=yes
