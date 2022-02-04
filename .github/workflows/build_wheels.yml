@@ -34,7 +34,7 @@ jobs:
         python -m pip install cibuildwheel==2.2.2
     - name: Build wheels
       env:
-        CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp* cp36*" # remove pypy on mac and win (wrong version)
+        CIBW_SKIP: "pp*-win* pp*-macosx* pp* cp36*" # remove pypy on mac and win (wrong version)
         CIBW_BEFORE_BUILD: "pip install numpy cython"
       run: |
         python -m cibuildwheel --output-dir wheelhouse
