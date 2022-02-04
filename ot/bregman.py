@@ -2525,8 +2525,7 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
         # geometric interpolation
         delta = nx.exp(alpha * nx.log(other) + (1 - alpha) * nx.log(inv_new))
         K = projR(K, delta)
-        K0 = nx.dot(nx.diag(nx.dot(D.T, delta / inv_new)), K0)
-
+        K0 = nx.dot(D.T, delta / inv_new)[:, None] * K0
         err = nx.norm(nx.sum(K0, axis=1) - old)
         old = new
         if log:
