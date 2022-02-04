@@ -592,7 +592,7 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
         return (
             nx.sum((nx.dot(K1, L) - ns * nx.dot(G, xt)) ** 2)
             + mu * nx.sum(G * M)
-            + eta * nx.trace(nx.dot(nx.dot(L.T, Kreg), L))
+            + eta * nx.trace(dots(L.T, Kreg, L))
         )
 
     def solve_L_nobias(G):
@@ -762,9 +762,9 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
     Cs12 = nx.sqrtm(Cs)
     Cs_12 = nx.inv(Cs12)
 
-    M0 = nx.sqrtm(nx.dot(Cs12, nx.dot(Ct,Cs12)))
+    M0 = nx.sqrtm(dots(Cs12, Ct, Cs12))
 
-    A = nx.dot(Cs_12, nx.dot(M0, Cs_12))
+    A = dots(Cs_12, M0, Cs_12)
 
     b = mxt - nx.dot(mxs, A)
 
