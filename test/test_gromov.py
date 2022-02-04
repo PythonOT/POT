@@ -54,8 +54,8 @@ def test_gromov(nx):
 
     np.testing.assert_allclose(Gb, np.flipud(Id), atol=1e-04)
 
-    gw, log = ot.gromov.gromov_wasserstein2(C1, C2, p, q, 'kl_loss', G0=G0, log=True)
-    gwb, logb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', G0=G0b, log=True)
+    gw, log = ot.gromov.gromov_wasserstein2(C1, C2, p, q, 'kl_loss', log=True)
+    gwb, logb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', log=True)
     gwb = nx.to_numpy(gwb)
 
     gw_val = ot.gromov.gromov_wasserstein2(C1, C2, p, q, 'kl_loss', G0=G0, log=False)
@@ -152,8 +152,8 @@ def test_gromov_device_tf():
         pb = nx.from_numpy(p)
         qb = nx.from_numpy(q)
         G0b = nx.from_numpy(G0b)
-        Gb = ot.gromov.gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', G0=G0b, verbose=True)
-        gw_valb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', G0=G0b, log=False)
+        Gb = ot.gromov.gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', verbose=True)
+        gw_valb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', log=False)
         nx.assert_same_dtype_device(C1b, Gb)
         nx.assert_same_dtype_device(C1b, gw_valb)
         assert nx.dtype_device(Gb)[1].startswith("GPU")
@@ -595,8 +595,8 @@ def test_fgw(nx):
     np.testing.assert_allclose(
         Gb, np.flipud(Id), atol=1e-04)  # cf convergence gromov
 
-    fgw, log = ot.gromov.fused_gromov_wasserstein2(M, C1, C2, p, q, 'square_loss', alpha=0.5, G0=G0, log=True)
-    fgwb, logb = ot.gromov.fused_gromov_wasserstein2(Mb, C1b, C2b, pb, qb, 'square_loss', alpha=0.5, G0=G0b, log=True)
+    fgw, log = ot.gromov.fused_gromov_wasserstein2(M, C1, C2, p, q, 'square_loss', alpha=0.5, log=True)
+    fgwb, logb = ot.gromov.fused_gromov_wasserstein2(Mb, C1b, C2b, pb, qb, 'square_loss', alpha=0.5, log=True)
     fgwb = nx.to_numpy(fgwb)
 
     G = log['T']
@@ -726,22 +726,22 @@ def test_gromov_wasserstein_linear_unmixing(nx):
     pb = nx.from_numpy(p)
     tol = 10**(-5)
     unmixing1, C1_emb, OT, reconstruction1 = ot.gromov.gromov_wasserstein_linear_unmixing(
-        C1, Cdict, p, p, reg=0.,
+        C1, Cdict, reg=0., p=p, q=p,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
     )
 
     unmixing1b, C1b_emb, OTb, reconstruction1b = ot.gromov.gromov_wasserstein_linear_unmixing(
-        C1b, Cdictb, pb, pb, reg=0.,
+        C1b, Cdictb, reg=0., p=None, q=None,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
     )
 
     unmixing2, C2_emb, OT, reconstruction2 = ot.gromov.gromov_wasserstein_linear_unmixing(
-        C2, Cdict, p, p, reg=0.,
+        C2, Cdict, reg=0., p=None, q=None,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
     )
 
     unmixing2b, C2b_emb, OTb, reconstruction2b = ot.gromov.gromov_wasserstein_linear_unmixing(
-        C2b, Cdictb, pb, pb, reg=0.,
+        C2b, Cdictb, reg=0., p=pb, q=pb,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
     )
 
@@ -758,6 +758,7 @@ def test_gromov_wasserstein_linear_unmixing(nx):
 
 
 def test_gromov_wasserstein_dictionary_learning(nx):
+
     # create dataset composed from 2 structures which are repeated 5 times
     shape = 10
     n_samples = 10
@@ -783,7 +784,9 @@ def test_gromov_wasserstein_dictionary_learning(nx):
     psb = [nx.from_numpy(p) for p in ps]
     qb = nx.from_numpy(q)
     Cdict_initb = nx.from_numpy(Cdict_init)
-    # Compute initial reconstruction of samples on this random dictionary without backend
+
+    # Test: compare reconstruction error using initial dictionary and dictionary learned using this initialization
+    # > Compute initial reconstruction of samples on this random dictionary without backend
     use_adam_optimizer = True
     verbose = False
     tol = 10**(-5)
@@ -791,39 +794,40 @@ def test_gromov_wasserstein_dictionary_learning(nx):
     initial_total_reconstruction = 0
     for i in range(n_samples):
         _, _, _, reconstruction = ot.gromov.gromov_wasserstein_linear_unmixing(
-            Cs[i], Cdict_init, ps[i], q, reg=0.,
+            Cs[i], Cdict_init, p=ps[i], q=q, reg=0.,
             tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
         )
         initial_total_reconstruction += reconstruction
 
+    # > Learn the dictionary using this init
     Cdict, log = ot.gromov.gromov_wasserstein_dictionary_learning(
-        Cs, ps, D=n_atoms, nt=shape, q=q, Cdict_init=Cdict_init,
+        Cs, D=n_atoms, nt=shape, ps=ps, q=q, Cdict_init=Cdict_init,
         epochs=5, batch_size=n_samples, learning_rate=1., reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
         projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
     )
-    # Compute reconstruction of samples on learned dictionary without backend
+    # > Compute reconstruction of samples on learned dictionary without backend
     total_reconstruction = 0
     for i in range(n_samples):
         _, _, _, reconstruction = ot.gromov.gromov_wasserstein_linear_unmixing(
-            Cs[i], Cdict, ps[i], q, reg=0.,
+            Cs[i], Cdict, p=None, q=None, reg=0.,
             tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
         )
         total_reconstruction += reconstruction
 
     np.testing.assert_array_less(total_reconstruction, initial_total_reconstruction)
 
-    # Perform same experiments after going through backend
+    # Test: Perform same experiments after going through backend
     initial_total_reconstruction_b = 0
     for i in range(n_samples):
         _, _, _, reconstruction = ot.gromov.gromov_wasserstein_linear_unmixing(
-            Csb[i], Cdict_initb, psb[i], qb, reg=0.,
+            Csb[i], Cdict_initb, p=psb[i], q=qb, reg=0.,
             tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
         )
         initial_total_reconstruction_b += reconstruction
 
     Cdictb, log = ot.gromov.gromov_wasserstein_dictionary_learning(
-        Csb, psb, D=n_atoms, nt=shape, q=qb, Cdict_init=Cdict_initb,
+        Csb, D=n_atoms, nt=shape, ps=None, q=None, Cdict_init=Cdict_initb,
         epochs=5, batch_size=n_samples, learning_rate=1., reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
         projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
@@ -832,7 +836,7 @@ def test_gromov_wasserstein_dictionary_learning(nx):
     total_reconstruction_b = 0
     for i in range(n_samples):
         _, _, _, reconstruction = ot.gromov.gromov_wasserstein_linear_unmixing(
-            Csb[i], Cdictb, psb[i], qb, reg=0.,
+            Csb[i], Cdictb, p=psb[i], q=qb, reg=0.,
             tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
         )
         total_reconstruction_b += reconstruction
@@ -842,38 +846,39 @@ def test_gromov_wasserstein_dictionary_learning(nx):
     np.testing.assert_allclose(total_reconstruction_b, total_reconstruction, atol=1e-05)
     np.testing.assert_allclose(Cdict, nx.to_numpy(Cdictb), atol=1e-03)
 
-    # Perform similar experiment without providing the initial dictionary being an optional input
+    # Test: Perform same comparison without providing the initial dictionary being an optional input
+    #       knowing than the initialization scheme is the same than implemented to set the benchmarked initialization.
     np.random.seed(0)
     Cdict_bis, log = ot.gromov.gromov_wasserstein_dictionary_learning(
-        Cs, ps, D=n_atoms, nt=shape, q=q, Cdict_init=None,
+        Cs, D=n_atoms, nt=shape, ps=None, q=None, Cdict_init=None,
         epochs=5, batch_size=n_samples, learning_rate=1., reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
         projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
     )
-    # Compute reconstruction of samples on learned dictionary
+    # > Compute reconstruction of samples on learned dictionary
     total_reconstruction_bis = 0
     for i in range(n_samples):
         _, _, _, reconstruction = ot.gromov.gromov_wasserstein_linear_unmixing(
-            Cs[i], Cdict_bis, ps[i], q, reg=0.,
+            Cs[i], Cdict_bis, p=ps[i], q=q, reg=0.,
             tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
         )
         total_reconstruction_bis += reconstruction
 
     np.testing.assert_allclose(total_reconstruction_bis, total_reconstruction, atol=1e-05)
 
-    # Same after going through backend
+    # Test: Same after going through backend
     np.random.seed(0)
     Cdictb_bis, log = ot.gromov.gromov_wasserstein_dictionary_learning(
-        Csb, psb, D=n_atoms, nt=shape, q=qb, Cdict_init=None,
+        Csb, D=n_atoms, nt=shape, ps=psb, q=qb, Cdict_init=None,
         epochs=5, batch_size=n_samples, learning_rate=1., reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
         projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
     )
-    # Compute reconstruction of samples on learned dictionary
+    # > Compute reconstruction of samples on learned dictionary
     total_reconstruction_b_bis = 0
     for i in range(n_samples):
         _, _, _, reconstruction = ot.gromov.gromov_wasserstein_linear_unmixing(
-            Csb[i], Cdictb_bis, psb[i], qb, reg=0.,
+            Csb[i], Cdictb_bis, p=None, q=None, reg=0.,
             tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
         )
         total_reconstruction_b_bis += reconstruction
@@ -881,10 +886,53 @@ def test_gromov_wasserstein_dictionary_learning(nx):
     np.testing.assert_allclose(total_reconstruction_b_bis, total_reconstruction_b, atol=1e-05)
     np.testing.assert_allclose(Cdict_bis, nx.to_numpy(Cdictb_bis), atol=1e-03)
 
+    # Test: Perform same comparison without providing the initial dictionary being an optional input
+    #       and testing other optimization settings untested until now.
+    use_adam_optimizer = False
+    verbose = True
+    use_log = True
+
+    np.random.seed(0)
+    Cdict_bis2, log = ot.gromov.gromov_wasserstein_dictionary_learning(
+        Cs, D=n_atoms, nt=shape, ps=ps, q=q, Cdict_init=None,
+        epochs=5, batch_size=n_samples, learning_rate=10., reg=0.,
+        tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
+        projection=projection, use_log=use_log, use_adam_optimizer=use_adam_optimizer, verbose=verbose
+    )
+    # > Compute reconstruction of samples on learned dictionary
+    total_reconstruction_bis2 = 0
+    for i in range(n_samples):
+        _, _, _, reconstruction = ot.gromov.gromov_wasserstein_linear_unmixing(
+            Cs[i], Cdict_bis2, p=ps[i], q=q, reg=0.,
+            tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
+        )
+        total_reconstruction_bis2 += reconstruction
+
+    np.testing.assert_array_less(total_reconstruction_bis2, initial_total_reconstruction)
+
+    # Test: Same after going through backend
+    np.random.seed(0)
+    Cdictb_bis2, log = ot.gromov.gromov_wasserstein_dictionary_learning(
+        Csb, D=n_atoms, nt=shape, ps=psb, q=qb, Cdict_init=None,
+        epochs=5, batch_size=n_samples, learning_rate=10., reg=0.,
+        tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
+        projection=projection, use_log=use_log, use_adam_optimizer=use_adam_optimizer, verbose=verbose
+    )
+    # > Compute reconstruction of samples on learned dictionary
+    total_reconstruction_b_bis2 = 0
+    for i in range(n_samples):
+        _, _, _, reconstruction = ot.gromov.gromov_wasserstein_linear_unmixing(
+            Csb[i], Cdictb_bis2, p=psb[i], q=qb, reg=0.,
+            tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
+        )
+        total_reconstruction_b_bis2 += reconstruction
+
+    np.testing.assert_allclose(total_reconstruction_b_bis2, total_reconstruction_bis2, atol=1e-05)
+
 
 def test_fused_gromov_wasserstein_linear_unmixing(nx):
-    n = 10
 
+    n = 10
     X1, y1 = ot.datasets.make_data_classif('3gauss', n, random_state=42)
     X2, y2 = ot.datasets.make_data_classif('3gauss2', n, random_state=42)
     F, y = ot.datasets.make_data_classif('3gauss', n, random_state=42)
@@ -903,22 +951,22 @@ def test_fused_gromov_wasserstein_linear_unmixing(nx):
     pb = nx.from_numpy(p)
 
     unmixing1, C1_emb, Y1_emb, OT, reconstruction1 = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-        C1, F, Cdict, Ydict, p, p, alpha=0.5, reg=0.,
+        C1, F, Cdict, Ydict, p=p, q=p, alpha=0.5, reg=0.,
         tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200
     )
 
     unmixing1b, C1b_emb, Y1b_emb, OTb, reconstruction1b = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-        C1b, Fb, Cdictb, Ydictb, pb, pb, alpha=0.5, reg=0.,
+        C1b, Fb, Cdictb, Ydictb, p=None, q=None, alpha=0.5, reg=0.,
         tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200
     )
 
     unmixing2, C2_emb, Y2_emb, OT, reconstruction2 = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-        C2, F, Cdict, Ydict, p, p, alpha=0.5, reg=0.,
+        C2, F, Cdict, Ydict, p=None, q=None, alpha=0.5, reg=0.,
         tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200
     )
 
     unmixing2b, C2b_emb, Y2b_emb, OTb, reconstruction2b = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-        C2b, Fb, Cdictb, Ydictb, pb, pb, alpha=0.5, reg=0.,
+        C2b, Fb, Cdictb, Ydictb, p=pb, q=pb, alpha=0.5, reg=0.,
         tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200
     )
 
@@ -937,6 +985,7 @@ def test_fused_gromov_wasserstein_linear_unmixing(nx):
 
 
 def test_fused_gromov_wasserstein_dictionary_learning(nx):
+
     # create dataset composed from 2 structures which are repeated 5 times
     shape = 10
     n_samples = 10
@@ -952,6 +1001,7 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
     Ys = [F.copy() for _ in range(n_samples)]
     ps = [ot.unif(shape) for _ in range(n_samples)]
     q = ot.unif(shape)
+
     # Provide initialization for the graph dictionary of shape (n_atoms, shape, shape)
     # following the same procedure than implemented in gromov_wasserstein_dictionary_learning.
     dataset_structure_means = [C.mean() for C in Cs]
@@ -962,13 +1012,15 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
         Cdict_init[Cdict_init < 0.] = 0.
     dataset_feature_means = np.stack([Y.mean(axis=0) for Y in Ys])
     Ydict_init = np.random.normal(loc=dataset_feature_means.mean(axis=0), scale=dataset_feature_means.std(axis=0), size=(n_atoms, shape, 2))
+
     Csb = [nx.from_numpy(C) for C in Cs]
     Ysb = [nx.from_numpy(Y) for Y in Ys]
     psb = [nx.from_numpy(p) for p in ps]
     qb = nx.from_numpy(q)
     Cdict_initb = nx.from_numpy(Cdict_init)
     Ydict_initb = nx.from_numpy(Ydict_init)
-    # Compute initial reconstruction of samples on this random dictionary
+
+    # Test: Compute initial reconstruction of samples on this random dictionary
     alpha = 0.5
     use_adam_optimizer = True
     verbose = False
@@ -976,91 +1028,138 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
     initial_total_reconstruction = 0
     for i in range(n_samples):
         _, _, _, _, reconstruction = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-            Cs[i], Ys[i], Cdict_init, Ydict_init, ps[i], q,
+            Cs[i], Ys[i], Cdict_init, Ydict_init, p=ps[i], q=q,
             alpha=alpha, reg=0., tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
         )
         initial_total_reconstruction += reconstruction
+
+    # > Learn a dictionary using this given initialization and check that the reconstruction loss
+    # on the learned dictionary is lower than the one using its initialization.
     Cdict, Ydict, log = ot.gromov.fused_gromov_wasserstein_dictionary_learning(
-        Cs, Ys, ps, D=n_atoms, nt=shape, q=q, Cdict_init=Cdict_init, Ydict_init=Ydict_init,
+        Cs, Ys, D=n_atoms, nt=shape, ps=ps, q=q, Cdict_init=Cdict_init, Ydict_init=Ydict_init,
         epochs=5, batch_size=n_samples, learning_rate_C=1., learning_rate_Y=1., alpha=alpha, reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
         projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
     )
-    # Compute reconstruction of samples on learned dictionary
+    # > Compute reconstruction of samples on learned dictionary
     total_reconstruction = 0
     for i in range(n_samples):
         _, _, _, _, reconstruction = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-            Cs[i], Ys[i], Cdict, Ydict, ps[i], q, alpha=alpha, reg=0.,
+            Cs[i], Ys[i], Cdict, Ydict, p=None, q=None, alpha=alpha, reg=0.,
             tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
         )
         total_reconstruction += reconstruction
-
+    # Compare both
     np.testing.assert_array_less(total_reconstruction, initial_total_reconstruction)
 
-    # Perform same experiments after going through backend
+    # Test: Perform same experiments after going through backend
     initial_total_reconstruction_b = 0
     for i in range(n_samples):
         _, _, _, _, reconstruction = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-            Csb[i], Ysb[i], Cdict_initb, Ydict_initb, psb[i], qb, alpha=alpha, reg=0.,
+            Csb[i], Ysb[i], Cdict_initb, Ydict_initb, p=psb[i], q=qb, alpha=alpha, reg=0.,
             tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
         )
         initial_total_reconstruction_b += reconstruction
 
     Cdictb, Ydictb, log = ot.gromov.fused_gromov_wasserstein_dictionary_learning(
-        Csb, Ysb, psb, D=n_atoms, nt=shape, q=qb, Cdict_init=Cdict_initb, Ydict_init=Ydict_initb,
+        Csb, Ysb, D=n_atoms, nt=shape, ps=None, q=None, Cdict_init=Cdict_initb, Ydict_init=Ydict_initb,
         epochs=5, batch_size=n_samples, learning_rate_C=1., learning_rate_Y=1., alpha=alpha, reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
         projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
     )
-    # Compute reconstruction of samples on learned dictionary
+    # > Compute reconstruction of samples on learned dictionary
     total_reconstruction_b = 0
     for i in range(n_samples):
         _, _, _, _, reconstruction = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-            Csb[i], Ysb[i], Cdictb, Ydictb, psb[i], qb, alpha=alpha, reg=0.,
+            Csb[i], Ysb[i], Cdictb, Ydictb, p=psb[i], q=qb, alpha=alpha, reg=0.,
             tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
         )
         total_reconstruction_b += reconstruction
 
     np.testing.assert_array_less(total_reconstruction_b, initial_total_reconstruction_b)
     np.testing.assert_allclose(total_reconstruction_b, total_reconstruction, atol=1e-05)
-    np.testing.assert_allclose(total_reconstruction_b, total_reconstruction, atol=1e-05)
     np.testing.assert_allclose(Cdict, nx.to_numpy(Cdictb), atol=1e-03)
     np.testing.assert_allclose(Ydict, nx.to_numpy(Ydictb), atol=1e-03)
 
-    # Perform similar experiment without providing the initial dictionary being an optional input
+    # Test: Perform similar experiment without providing the initial dictionary being an optional input
     np.random.seed(0)
     Cdict_bis, Ydict_bis, log = ot.gromov.fused_gromov_wasserstein_dictionary_learning(
-        Cs, Ys, ps, D=n_atoms, nt=shape, q=q, Cdict_init=None, Ydict_init=None,
+        Cs, Ys, D=n_atoms, nt=shape, ps=None, q=None, Cdict_init=None, Ydict_init=None,
         epochs=5, batch_size=n_samples, learning_rate_C=1., learning_rate_Y=1., alpha=alpha, reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
         projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
     )
-    # Compute reconstruction of samples on learned dictionary
+    # > Compute reconstruction of samples on learned dictionary
     total_reconstruction_bis = 0
     for i in range(n_samples):
         _, _, _, _, reconstruction = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-            Cs[i], Ys[i], Cdict_bis, Ydict_bis, ps[i], q, alpha=alpha, reg=0.,
+            Cs[i], Ys[i], Cdict_bis, Ydict_bis, p=ps[i], q=q, alpha=alpha, reg=0.,
             tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
         )
         total_reconstruction_bis += reconstruction
 
     np.testing.assert_allclose(total_reconstruction_bis, total_reconstruction, atol=1e-05)
 
-    # Same after going through backend
+    # > Same after going through backend
     np.random.seed(0)
     Cdictb_bis, Ydictb_bis, log = ot.gromov.fused_gromov_wasserstein_dictionary_learning(
-        Csb, Ysb, psb, D=n_atoms, nt=shape, q=qb, Cdict_init=None, Ydict_init=None,
+        Csb, Ysb, D=n_atoms, nt=shape, ps=None, q=None, Cdict_init=None, Ydict_init=None,
         epochs=5, batch_size=n_samples, learning_rate_C=1., learning_rate_Y=1., alpha=alpha, reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
         projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
     )
 
-    # Compute reconstruction of samples on learned dictionary
+    # > Compute reconstruction of samples on learned dictionary
     total_reconstruction_b_bis = 0
     for i in range(n_samples):
         _, _, _, _, reconstruction = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-            Csb[i], Ysb[i], Cdictb_bis, Ydictb_bis, psb[i], qb, alpha=alpha, reg=0.,
+            Csb[i], Ysb[i], Cdictb_bis, Ydictb_bis, p=psb[i], q=qb, alpha=alpha, reg=0.,
             tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
         )
         total_reconstruction_b_bis += reconstruction
     np.testing.assert_allclose(total_reconstruction_b_bis, total_reconstruction_b, atol=1e-05)
+
+    # Test: without using adam optimizer, with log and verbose set to True
+    use_adam_optimizer = False
+    verbose = True
+    use_log = True
+
+    # > Perform similar experiment without providing the initial dictionary being an optional input
+    np.random.seed(0)
+    Cdict_bis2, Ydict_bis2, log = ot.gromov.fused_gromov_wasserstein_dictionary_learning(
+        Cs, Ys, D=n_atoms, nt=shape, ps=ps, q=q, Cdict_init=None, Ydict_init=None,
+        epochs=5, batch_size=n_samples, learning_rate_C=10., learning_rate_Y=10., alpha=alpha, reg=0.,
+        tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
+        projection=projection, use_log=use_log, use_adam_optimizer=use_adam_optimizer, verbose=verbose
+    )
+    # > Compute reconstruction of samples on learned dictionary
+    total_reconstruction_bis2 = 0
+    for i in range(n_samples):
+        _, _, _, _, reconstruction = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
+            Cs[i], Ys[i], Cdict_bis2, Ydict_bis2, p=ps[i], q=q, alpha=alpha, reg=0.,
+            tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
+        )
+        total_reconstruction_bis2 += reconstruction
+
+    np.testing.assert_array_less(total_reconstruction_bis2, initial_total_reconstruction)
+
+    # > Same after going through backend
+    np.random.seed(0)
+    Cdictb_bis2, Ydictb_bis2, log = ot.gromov.fused_gromov_wasserstein_dictionary_learning(
+        Csb, Ysb, D=n_atoms, nt=shape, ps=None, q=None, Cdict_init=None, Ydict_init=None,
+        epochs=5, batch_size=n_samples, learning_rate_C=10., learning_rate_Y=10., alpha=alpha, reg=0.,
+        tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
+        projection=projection, use_log=use_log, use_adam_optimizer=use_adam_optimizer, verbose=verbose
+    )
+
+    # > Compute reconstruction of samples on learned dictionary
+    total_reconstruction_b_bis2 = 0
+    for i in range(n_samples):
+        _, _, _, _, reconstruction = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
+            Csb[i], Ysb[i], Cdictb_bis2, Ydictb_bis2, p=None, q=None, alpha=alpha, reg=0.,
+            tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
+        )
+        total_reconstruction_b_bis2 += reconstruction
+
+    # > Compare results with/without backend
+    np.testing.assert_allclose(total_reconstruction_bis2, total_reconstruction_b_bis2, atol=1e-05)
