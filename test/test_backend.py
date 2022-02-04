@@ -572,7 +572,7 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('matrix inverse')
 
-        A = nx.sqrtm(SquareMb)
+        A = nx.sqrtm(SquareMb.T @ SquareMb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("matrix square root")
 

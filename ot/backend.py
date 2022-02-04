@@ -1410,7 +1410,7 @@ class JaxBackend(Backend):
 
     def sqrtm(self, a):
         L, V = jnp.linalg.eigh(a)
-        return V @ jnp.diag(jnp.sqrt(L)) @ V.T
+        return (V * jnp.sqrt(L)[None, :]) @ V.T
 
 
 class TorchBackend(Backend):
@@ -1805,7 +1805,7 @@ class TorchBackend(Backend):
 
     def sqrtm(self, a):
         L, V = torch.linalg.eigh(a)
-        return V @ torch.diag(torch.sqrt(L)) @ V.T
+        return (V * torch.sqrt(L)[None, :]) @ V.T
 
 
 class CupyBackend(Backend):  # pragma: no cover
@@ -2138,7 +2138,7 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
-        return V @ self.diag(self.sqrt(L)) @ V.T
+        return (V * self.sqrt(L)[None, :]) @ V.T
 
 
 class TensorflowBackend(Backend):
