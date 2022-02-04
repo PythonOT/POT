@@ -1977,7 +1977,7 @@ def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, e
                 unmixings[batch_idx], Cs_embedded[batch_idx], Ts[batch_idx], current_loss = gromov_wasserstein_linear_unmixing(
                     Cs[C_idx], Cdict, reg=reg, p=ps[C_idx], q=q, tol_outer=tol_outer, tol_inner=tol_inner,
                     max_iter_outer=max_iter_outer, max_iter_inner=max_iter_inner
-                    )
+                )
                 cumulated_loss_over_batch += current_loss
             cumulated_loss_over_epoch += cumulated_loss_over_batch
 
@@ -2129,7 +2129,7 @@ def gromov_wasserstein_linear_unmixing(C, Cdict, reg=0., p=None, q=None, tol_out
         w, Cembedded, current_loss = _cg_gromov_wasserstein_unmixing(
             C=C, Cdict=Cdict, Cembedded=Cembedded, w=w, const_q=const_q, T=T,
             starting_loss=current_loss, reg=reg, tol=tol_inner, max_iter=max_iter_inner, **kwargs
-            )
+        )
 
         if previous_loss != 0:
             convergence_criterion = abs(previous_loss - current_loss) / abs(previous_loss)
@@ -2460,7 +2460,7 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
                 unmixings[batch_idx], Cs_embedded[batch_idx], Ys_embedded[batch_idx], Ts[batch_idx], current_loss = fused_gromov_wasserstein_linear_unmixing(
                     Cs[C_idx], Ys[C_idx], Cdict, Ydict, alpha, reg=reg, p=ps[C_idx], q=q,
                     tol_outer=tol_outer, tol_inner=tol_inner, max_iter_outer=max_iter_outer, max_iter_inner=max_iter_inner
-                    )
+                )
                 cumulated_loss_over_batch += current_loss
             cumulated_loss_over_epoch += cumulated_loss_over_batch
             if use_log:

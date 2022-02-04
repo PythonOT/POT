@@ -109,7 +109,7 @@ pl.show()
 # =============================================================================
 # Infer the gromov-wasserstein dictionary from the dataset
 # =============================================================================
-
+np.random.seed(0)
 ps = [ot.unif(C.shape[0]) for C in dataset]
 
 D = 3  # 3 atoms in the dictionary
@@ -119,10 +119,10 @@ q = ot.unif(nt)
 reg = 0.001  # regularization coefficient to promote sparsity of unmixings {w_s}
 
 Cdict_learned, log = gromov_wasserstein_dictionary_learning(
-    dataset, ps, D, nt, q, epochs=20, batch_size=16,
+    Cs=dataset, D=D, nt=nt, ps=ps, q=q, epochs=20, batch_size=16,
     learning_rate=0.01, reg=reg, projection='nonnegative_symmetric',
     use_log=True, use_adam_optimizer=True, verbose=True
-    )
+)
 # visualize loss evolution over epochs
 pl.figure(2, (5, 5))
 pl.clf()
@@ -156,10 +156,10 @@ reconstruction_errors = []
 for C in dataset:
     p = ot.unif(C.shape[0])
     unmixing, Cembedded, OT, reconstruction_error = gromov_wasserstein_linear_unmixing(
-        C, Cdict_learned, p, q, reg=reg,
+        C, Cdict_learned, p=p, q=q, reg=reg,
         tol_outer=10**(-6), tol_inner=10**(-6),
         max_iter_outer=20, max_iter_inner=200
-        )
+    )
     unmixings.append(unmixing)
     reconstruction_errors.append(reconstruction_error)
 unmixings = np.array(unmixings)
@@ -245,10 +245,10 @@ reg = 0.001
 alpha = 0.5  # trade-off parameter between structure and feature information of Fused Gromov-Wasserstein
 
 Cdict_learned, Ydict_learned, log = fused_gromov_wasserstein_dictionary_learning(
-    dataset, dataset_features, ps, D, nt, q, alpha,
+    Cs=dataset, Ys=dataset_features, D=D, nt=nt, ps=ps, q=q, alpha=alpha,
     epochs=20, batch_size=16, learning_rate_C=0.1, learning_rate_Y=0.1, reg=reg,
     projection='nonnegative_symmetric', use_log=True, use_adam_optimizer=True, verbose=True
-    )
+)
 # visualize loss evolution
 pl.figure(6, (5, 5))
 pl.clf()
@@ -288,8 +288,10 @@ for i in range(len(dataset)):
     C = dataset[i]
     Y = dataset_features[i]
     p = ot.unif(C.shape[0])
-    unmixing, Cembedded, Yembedded, OT, reconstruction_error = fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict_learned, Ydict_learned, p, q, alpha=alpha,
-                                                                                                        reg=reg, tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=30, max_iter_inner=300)
+    unmixing, Cembedded, Yembedded, OT, reconstruction_error = fused_gromov_wasserstein_linear_unmixing(
+        C, Y, Cdict_learned, Ydict_learned, p=p, q=q, alpha=alpha,
+        reg=reg, tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=30, max_iter_inner=300
+    )
     unmixings.append(unmixing)
     reconstruction_errors.append(reconstruction_error)
 unmixings = np.array(unmixings)
