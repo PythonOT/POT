@@ -72,7 +72,6 @@ jobs:
       env:
         CIBW_SKIP: "pp*-win* pp*-macosx* pp* cp*musl* cp36*" # remove pypy on mac and win (wrong version)
         CIBW_BEFORE_BUILD: "pip install numpy cython"
-        CIBW_ARCHS_MACOS: x86_64 universal2 arm64
       run: |
         python -m cibuildwheel --output-dir wheelhouse
     - uses: actions/upload-artifact@v1
