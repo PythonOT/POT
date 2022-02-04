@@ -92,7 +92,6 @@ pip install -U https://github.com/PythonOT/POT/archive/master.zip # with --user 
 ```
 
 
-
 #### Anaconda installation with conda-forge
 
 If you use the Anaconda python distribution, POT is available in [conda-forge](https://conda-forge.org). To install it and the required dependencies:
