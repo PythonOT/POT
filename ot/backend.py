@@ -185,6 +185,13 @@ def to_numpy(*args):
         return [get_backend(a).to_numpy(a) for a in args]
 
 
+def from_numpy(nx, *args):
+    if len(args) == 1:
+        return nx.from_numpy(args[0])
+    else:
+        return [nx.from_numpy(a) for a in args]
+
+
 class Backend():
     """
     Backend abstract class.
