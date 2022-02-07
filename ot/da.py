@@ -367,7 +367,8 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
     if log:
         log = {'err': []}
 
-    a, b = unif(ns), unif(nt)
+    a = nx.from_numpy(unif(ns), type_as=xs)
+    b = nx.from_numpy(unif(nt), type_as=xt)
     M = dist(xs, xt) * ns
     G = emd(a, b, M)
 
@@ -580,7 +581,8 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
     if log:
         log = {'err': []}
 
-    a, b = unif(ns), unif(nt)
+    a = nx.from_numpy(unif(ns), type_as=xs)
+    b = nx.from_numpy(unif(nt), type_as=xt)
     M = dist(xs, xt) * ns
     G = emd(a, b, M)
 
@@ -1165,7 +1167,7 @@ class BaseTransport(BaseEstimator):
             ysTemp = label_normalization(nx.copy(ys))
             classes = nx.unique(ysTemp)
             n = len(classes)
-            D1 = np.zeros((n, len(ysTemp)))
+            D1 = nx.zeros((n, len(ysTemp)), type_as=self.coupling_)
 
             # perform label propagation
             transp = self.coupling_ / nx.sum(self.coupling_, axis=0)[None, :]
@@ -1175,7 +1177,6 @@ class BaseTransport(BaseEstimator):
 
             for c in classes:
                 D1[int(c), ysTemp == c] = 1
-            D1 = nx.from_numpy(D1, type_as=ys)
 
             # compute propagated labels
             transp_ys = nx.dot(D1, transp)
@@ -1271,7 +1272,7 @@ class BaseTransport(BaseEstimator):
             ytTemp = label_normalization(nx.copy(yt))
             classes = nx.unique(ytTemp)
             n = len(classes)
-            D1 = np.zeros((n, len(ytTemp)))
+            D1 = nx.zeros((n, len(ytTemp)), type_as=self.coupling_)
 
             # perform label propagation
             transp = self.coupling_ / nx.sum(self.coupling_, 1)[:, None]
@@ -1281,7 +1282,6 @@ class BaseTransport(BaseEstimator):
 
             for c in classes:
                 D1[int(c), ytTemp == c] = 1
-            D1 = nx.from_numpy(D1, type_as=yt)
 
             # compute propagated samples
             transp_ys = nx.dot(D1, transp.T)
@@ -2578,11 +2578,10 @@ class JCPOTTransport(BaseTransport):
                 if self.log:
                     D1 = self.log_['D1'][i]
                 else:
-                    D1 = np.zeros((n, ns))
+                    D1 = nx.zeros((n, ns), type_as=transp)
 
                     for c in classes:
                         D1[int(c), ysTemp == c] = 1
-                    D1 = nx.from_numpy(D1, type_as=ys[0])
 
                 # compute propagated labels
                 yt = yt + nx.dot(D1, transp) / len(ys)
@@ -2611,11 +2610,10 @@ class JCPOTTransport(BaseTransport):
             ytTemp = label_normalization(nx.copy(yt))
             classes = nx.unique(ytTemp)
             n = len(classes)
-            D1 = np.zeros((n, len(ytTemp)))
+            D1 = nx.zeros((n, len(ytTemp)), type_as=self.coupling_[0])
 
             for c in classes:
                 D1[int(c), ytTemp == c] = 1
-            D1 = nx.from_numpy(D1, type_as=yt)
 
             for i in range(len(self.xs_)):
 
