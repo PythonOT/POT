@@ -8,7 +8,6 @@ Regularized Unbalanced OT solvers
 
 from __future__ import division
 import warnings
-import numpy as np
 
 from .backend import get_backend
 from .utils import list_to_array
@@ -640,12 +639,12 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
         log['logu'] = logu
         log['logv'] = logv
     if n_hists:  # return only loss
-        res = nx.logsumexp((
+        res = nx.logsumexp(
             nx.log(M + 1e-100)[:, :, None]
             + logu[:, None, :]
             + logv[None, :, :]
-            - M[:, :, None] / reg
-            ), axis=(0, 1)
+            - M[:, :, None] / reg,
+            axis=(0, 1)
         )
         res = nx.exp(res)
         if log:

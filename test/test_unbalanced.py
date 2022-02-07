@@ -120,15 +120,15 @@ def test_stabilized_vs_sinkhorn(nx):
 
     ab, bb, Mb = from_numpy(nx, a, b, M)
 
-    G, _ = ot.unbalanced.sinkhorn_unbalanced2(ab, bb, Mb, reg=epsilon,
-                                                method="sinkhorn_stabilized",
-                                                reg_m=reg_m,
-                                                log=True,
-                                                verbose=True)
-    G2, _ = ot.unbalanced.sinkhorn_unbalanced2(ab, bb, Mb, epsilon, reg_m,
-                                                  method="sinkhorn", log=True)
-    G2_np, _ = ot.unbalanced.sinkhorn_unbalanced2(a, b, M, epsilon, reg_m,
-                                                  method="sinkhorn", log=True)
+    G, _ = ot.unbalanced.sinkhorn_unbalanced2(
+        ab, bb, Mb, epsilon, reg_m, method="sinkhorn_stabilized", log=True
+    )
+    G2, _ = ot.unbalanced.sinkhorn_unbalanced2(
+        ab, bb, Mb, epsilon, reg_m, method="sinkhorn", log=True
+    )
+    G2_np, _ = ot.unbalanced.sinkhorn_unbalanced2(
+        a, b, M, epsilon, reg_m, method="sinkhorn", log=True
+    )
     G = nx.to_numpy(G)
     G2 = nx.to_numpy(G2)
 
@@ -153,8 +153,9 @@ def test_unbalanced_barycenter(nx, method):
 
     A, M = from_numpy(nx, A, M)
 
-    q, log = barycenter_unbalanced(A, M, reg=epsilon, reg_m=reg_m,
-                                   method=method, log=True, verbose=True)
+    q, log = barycenter_unbalanced(
+        A, M, reg=epsilon, reg_m=reg_m, method=method, log=True, verbose=True
+    )
     # check fixed point equations
     fi = reg_m / (reg_m + epsilon)
     logA = np.log(A + 1e-16)
@@ -187,18 +188,16 @@ def test_barycenter_stabilized_vs_sinkhorn(nx):
 
     Ab, Mb = from_numpy(nx, A, M)
 
-    qstable, _ = barycenter_unbalanced(Ab, Mb, reg=epsilon,
-                                         reg_m=reg_m, log=True,
-                                         tau=100,
-                                         method="sinkhorn_stabilized",
-                                         verbose=True
-                                         )
-    q, _ = barycenter_unbalanced(Ab, Mb, reg=epsilon, reg_m=reg_m,
-                                   method="sinkhorn",
-                                   log=True)
-    q_np, _ = barycenter_unbalanced(A, M, reg=epsilon, reg_m=reg_m,
-                                   method="sinkhorn",
-                                   log=True)
+    qstable, _ = barycenter_unbalanced(
+        Ab, Mb, reg=epsilon, reg_m=reg_m, log=True, tau=100,
+        method="sinkhorn_stabilized", verbose=True
+    )
+    q, _ = barycenter_unbalanced(
+        Ab, Mb, reg=epsilon, reg_m=reg_m, method="sinkhorn", log=True
+    )
+    q_np, _ = barycenter_unbalanced(
+        A, M, reg=epsilon, reg_m=reg_m, method="sinkhorn", log=True
+    )
 
     np.testing.assert_allclose(q, qstable, atol=1e-05)
     np.testing.assert_allclose(q, q_np, atol=1e-05)
@@ -222,15 +221,14 @@ def test_wrong_method(nx):
     a, b, M = from_numpy(nx, a, b, M)
 
     with pytest.raises(ValueError):
-        ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg=epsilon,
-                                          reg_m=reg_m,
-                                          method='badmethod',
-                                          log=True,
-                                          verbose=True)
+        ot.unbalanced.sinkhorn_unbalanced(
+            a, b, M, reg=epsilon, reg_m=reg_m, method='badmethod',
+            log=True, verbose=True
+        )
     with pytest.raises(ValueError):
-        ot.unbalanced.sinkhorn_unbalanced2(a, b, M, epsilon, reg_m,
-                                           method='badmethod',
-                                           verbose=True)
+        ot.unbalanced.sinkhorn_unbalanced2(
+            a, b, M, epsilon, reg_m, method='badmethod', verbose=True
+        )
 
 
 def test_implemented_methods(nx):
