@@ -1653,7 +1653,11 @@ class TorchBackend(Backend):
         return torch.linspace(start, stop, num, dtype=torch.float64)
 
     def meshgrid(self, a, b):
-        return torch.meshgrid(a, b, indexing="xy")
+        try:
+            return torch.meshgrid(a, b, indexing="xy")
+        except TypeError:
+            X, Y = torch.meshgrid(a, b)
+            return X.T, Y.T
 
     def diag(self, a, k=0):
         return torch.diag(a, diagonal=k)
