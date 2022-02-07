@@ -239,6 +239,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     ot.unbalanced.sinkhorn_reg_scaling: Unbalanced Sinkhorn with epslilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced2>`
 
     """
+    b = list_to_array(b)
     if len(b.shape) < 2:
         b = b[:, None]
 
