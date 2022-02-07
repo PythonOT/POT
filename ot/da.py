@@ -14,7 +14,7 @@ Domain adaptation with optimal transport
 import numpy as np
 import scipy.linalg as linalg
 
-from .backend import get_backend
+from .backend import get_backend, Backend
 from .bregman import sinkhorn, jcpot_barycenter
 from .lp import emd
 from .utils import unif, dist, kernel, cost_normalization, label_normalization, laplacian, dots
@@ -756,8 +756,8 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
     if wt is None:
         wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
 
-    Cs = nx.dot((xs * ws).T, xs) / ws.sum() + reg * nx.eye(d, type_as=xs)
-    Ct = nx.dot((xt * wt).T, xt) / wt.sum() + reg * nx.eye(d, type_as=xt)
+    Cs = nx.dot((xs * ws).T, xs) / nx.sum(ws) + reg * nx.eye(d, type_as=xs)
+    Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt) + reg * nx.eye(d, type_as=xt)
 
     Cs12 = nx.sqrtm(Cs)
     Cs_12 = nx.inv(Cs12)
@@ -978,6 +978,8 @@ class BaseTransport(BaseEstimator):
     `inverse_transform_labels` method should always get as input a `yt` parameter
     """
 
+    nx: Backend = None
+
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
         r"""Build a coupling matrix from source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
@@ -1002,6 +1004,10 @@ class BaseTransport(BaseEstimator):
         self : object
             Returns self.
         """
+        nx = get_backend(
+            *[input_ for input_ in [Xs, ys, Xt, yt] if input_ is not None]
+        )
+        self.nx = nx
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs, Xt=Xt):
@@ -1013,14 +1019,14 @@ class BaseTransport(BaseEstimator):
             if (ys is not None) and (yt is not None):
 
                 if self.limit_max != np.infty:
-                    self.limit_max = self.limit_max * np.max(self.cost_)
+                    self.limit_max = self.limit_max * nx.max(self.cost_)
 
                 # assumes labeled source samples occupy the first rows
                 # and labeled target samples occupy the first columns
-                classes = [c for c in np.unique(ys) if c != -1]
+                classes = [c for c in nx.unique(ys) if c != -1]
                 for c in classes:
-                    idx_s = np.where((ys != c) & (ys != -1))
-                    idx_t = np.where(yt == c)
+                    idx_s = nx.where((ys != c) & (ys != -1))
+                    idx_t = nx.where(yt == c)
 
                     # all the coefficients corresponding to a source sample
                     # and a target sample :
@@ -1091,23 +1097,24 @@ class BaseTransport(BaseEstimator):
         transp_Xs : array-like, shape (n_source_samples, n_features)
             The transport source samples.
         """
+        nx = self.nx
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs):
 
-            if np.array_equal(self.xs_, Xs):
+            if nx.array_equal(self.xs_, Xs):
 
                 # perform standard barycentric mapping
-                transp = self.coupling_ / np.sum(self.coupling_, 1)[:, None]
+                transp = self.coupling_ / nx.sum(self.coupling_, axis=1)[:, None]
 
                 # set nans to 0
-                transp[~ np.isfinite(transp)] = 0
+                transp[~ nx.isfinite(transp)] = 0
 
                 # compute transported samples
-                transp_Xs = np.dot(transp, self.xt_)
+                transp_Xs = nx.dot(transp, self.xt_)
             else:
                 # perform out of sample mapping
-                indices = np.arange(Xs.shape[0])
+                indices = nx.arange(Xs.shape[0])
                 batch_ind = [
                     indices[i:i + batch_size]
                     for i in range(0, len(indices), batch_size)]
@@ -1116,20 +1123,20 @@ class BaseTransport(BaseEstimator):
                 for bi in batch_ind:
                     # get the nearest neighbor in the source domain
                     D0 = dist(Xs[bi], self.xs_)
-                    idx = np.argmin(D0, axis=1)
+                    idx = nx.argmin(D0, axis=1)
 
                     # transport the source samples
-                    transp = self.coupling_ / np.sum(
-                        self.coupling_, 1)[:, None]
-                    transp[~ np.isfinite(transp)] = 0
-                    transp_Xs_ = np.dot(transp, self.xt_)
+                    transp = self.coupling_ / nx.sum(
+                        self.coupling_, axis=1)[:, None]
+                    transp[~ nx.isfinite(transp)] = 0
+                    transp_Xs_ = nx.dot(transp, self.xt_)
 
                     # define the transported points
                     transp_Xs_ = transp_Xs_[idx, :] + Xs[bi] - self.xs_[idx, :]
 
                     transp_Xs.append(transp_Xs_)
 
-                transp_Xs = np.concatenate(transp_Xs, axis=0)
+                transp_Xs = nx.concatenate(transp_Xs, axis=0)
 
             return transp_Xs
 
@@ -1156,26 +1163,28 @@ class BaseTransport(BaseEstimator):
            International Conference on Artificial Intelligence and Statistics (AISTATS), 2019.
 
         """
+        nx = self.nx
 
         # check the necessary inputs parameters are here
         if check_params(ys=ys):
 
-            ysTemp = label_normalization(np.copy(ys))
-            classes = np.unique(ysTemp)
+            ysTemp = label_normalization(nx.copy(ys))
+            classes = nx.unique(ysTemp)
             n = len(classes)
             D1 = np.zeros((n, len(ysTemp)))
 
             # perform label propagation
-            transp = self.coupling_ / np.sum(self.coupling_, 0, keepdims=True)
+            transp = self.coupling_ / nx.sum(self.coupling_, axis=0)[None, :]
 
             # set nans to 0
-            transp[~ np.isfinite(transp)] = 0
+            transp[~ nx.isfinite(transp)] = 0
 
             for c in classes:
                 D1[int(c), ysTemp == c] = 1
+            D1 = nx.from_numpy(D1, type_as=ys)
 
             # compute propagated labels
-            transp_ys = np.dot(D1, transp)
+            transp_ys = nx.dot(D1, transp)
 
             return transp_ys.T
 
@@ -1205,23 +1214,24 @@ class BaseTransport(BaseEstimator):
         transp_Xt : array-like, shape (n_source_samples, n_features)
             The transported target samples.
         """
+        nx = self.nx
 
         # check the necessary inputs parameters are here
         if check_params(Xt=Xt):
 
-            if np.array_equal(self.xt_, Xt):
+            if nx.array_equal(self.xt_, Xt):
 
                 # perform standard barycentric mapping
-                transp_ = self.coupling_.T / np.sum(self.coupling_, 0)[:, None]
+                transp_ = self.coupling_.T / nx.sum(self.coupling_, 0)[:, None]
 
                 # set nans to 0
-                transp_[~ np.isfinite(transp_)] = 0
+                transp_[~ nx.isfinite(transp_)] = 0
 
                 # compute transported samples
-                transp_Xt = np.dot(transp_, self.xs_)
+                transp_Xt = nx.dot(transp_, self.xs_)
             else:
                 # perform out of sample mapping
-                indices = np.arange(Xt.shape[0])
+                indices = nx.arange(Xt.shape[0])
                 batch_ind = [
                     indices[i:i + batch_size]
                     for i in range(0, len(indices), batch_size)]
@@ -1229,20 +1239,20 @@ class BaseTransport(BaseEstimator):
                 transp_Xt = []
                 for bi in batch_ind:
                     D0 = dist(Xt[bi], self.xt_)
-                    idx = np.argmin(D0, axis=1)
+                    idx = nx.argmin(D0, axis=1)
 
                     # transport the target samples
-                    transp_ = self.coupling_.T / np.sum(
+                    transp_ = self.coupling_.T / nx.sum(
                         self.coupling_, 0)[:, None]
-                    transp_[~ np.isfinite(transp_)] = 0
-                    transp_Xt_ = np.dot(transp_, self.xs_)
+                    transp_[~ nx.isfinite(transp_)] = 0
+                    transp_Xt_ = nx.dot(transp_, self.xs_)
 
                     # define the transported points
                     transp_Xt_ = transp_Xt_[idx, :] + Xt[bi] - self.xt_[idx, :]
 
                     transp_Xt.append(transp_Xt_)
 
-                transp_Xt = np.concatenate(transp_Xt, axis=0)
+                transp_Xt = nx.concatenate(transp_Xt, axis=0)
 
             return transp_Xt
 
@@ -1259,26 +1269,28 @@ class BaseTransport(BaseEstimator):
         transp_ys : array-like, shape (n_source_samples, nb_classes)
             Estimated soft source labels.
         """
+        nx = self.nx
 
         # check the necessary inputs parameters are here
         if check_params(yt=yt):
 
-            ytTemp = label_normalization(np.copy(yt))
-            classes = np.unique(ytTemp)
+            ytTemp = label_normalization(nx.copy(yt))
+            classes = nx.unique(ytTemp)
             n = len(classes)
             D1 = np.zeros((n, len(ytTemp)))
 
             # perform label propagation
-            transp = self.coupling_ / np.sum(self.coupling_, 1)[:, None]
+            transp = self.coupling_ / nx.sum(self.coupling_, 1)[:, None]
 
             # set nans to 0
-            transp[~ np.isfinite(transp)] = 0
+            transp[~ nx.isfinite(transp)] = 0
 
             for c in classes:
                 D1[int(c), ytTemp == c] = 1
+            D1 = nx.from_numpy(D1, type_as=yt)
 
             # compute propagated samples
-            transp_ys = np.dot(D1, transp.T)
+            transp_ys = nx.dot(D1, transp.T)
 
             return transp_ys.T
 

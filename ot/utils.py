@@ -316,8 +316,9 @@ def label_normalization(y, start=0):
     y : array-like, shape (`n1`, )
         The input vector of labels normalized according to given start value.
     """
+    nx = get_backend(y)
 
-    diff = np.min(np.unique(y)) - start
+    diff = nx.min(nx.unique(y)) - start
     if diff != 0:
         y -= diff
     return y
