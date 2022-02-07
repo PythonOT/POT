@@ -538,6 +538,16 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def argmin(self, a, axis=None):
+        r"""
+        Returns the indices of the minimum values of a tensor along given dimensions.
+
+        This function follows the api from :any:`numpy.argmin`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.argmin.html
+        """
+        raise NotImplementedError()
+
     def mean(self, a, axis=None):
         r"""
         Computes the arithmetic mean of a tensor along given dimensions.
@@ -828,6 +838,26 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def isfinite(self, a):
+        r"""
+        Tests element-wise for finiteness (not infinity and not Not a Number).
+
+        This function follows the api from :any:`numpy.isfinite`.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.isfinite.html
+        """
+        raise NotImplementedError()
+
+    def array_equal(self, a, b):
+        r"""
+        True if two arrays have the same shape and elements, False otherwise.
+
+        This function follows the api from :any:`numpy.array_equal`.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.array_equal.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -978,6 +1008,9 @@ class NumpyBackend(Backend):
     def argmax(self, a, axis=None):
         return np.argmax(a, axis=axis)
 
+    def argmin(self, a, axis=None):
+        return np.argmin(a, axis=axis)
+
     def mean(self, a, axis=None):
         return np.mean(a, axis=axis)
 
@@ -1102,6 +1135,12 @@ class NumpyBackend(Backend):
 
     def sqrtm(self, a):
         return scipy.linalg.sqrtm(a)
+
+    def isfinite(self, a):
+        return np.isfinite(a)
+
+    def array_equal(self, a, b):
+        return np.array_equal(a, b)
 
 
 class JaxBackend(Backend):
@@ -1273,6 +1312,9 @@ class JaxBackend(Backend):
     def argmax(self, a, axis=None):
         return jnp.argmax(a, axis=axis)
 
+    def argmin(self, a, axis=None):
+        return jnp.argmin(a, axis=axis)
+
     def mean(self, a, axis=None):
         return jnp.mean(a, axis=axis)
 
@@ -1411,6 +1453,12 @@ class JaxBackend(Backend):
     def sqrtm(self, a):
         L, V = jnp.linalg.eigh(a)
         return (V * jnp.sqrt(L)[None, :]) @ V.T
+
+    def isfinite(self, a):
+        return jnp.isfinite(a)
+
+    def array_equal(self, a, b):
+        return jnp.array_equal(a, b)
 
 
 class TorchBackend(Backend):
@@ -1637,6 +1685,9 @@ class TorchBackend(Backend):
     def argmax(self, a, axis=None):
         return torch.argmax(a, dim=axis)
 
+    def argmin(self, a, axis=None):
+        return torch.argmin(a, dim=axis)
+
     def mean(self, a, axis=None):
         if axis is not None:
             return torch.mean(a, dim=axis)
@@ -1810,6 +1861,12 @@ class TorchBackend(Backend):
         L, V = torch.linalg.eigh(a)
         return (V * torch.sqrt(L)[None, :]) @ V.T
 
+    def isfinite(self, a):
+        return torch.isfinite(a)
+
+    def array_equal(self, a, b):
+        return torch.equal(a, b)
+
 
 class CupyBackend(Backend):  # pragma: no cover
     """
@@ -1975,6 +2032,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def argmax(self, a, axis=None):
         return cp.argmax(a, axis=axis)
+
+    def argmin(self, a, axis=None):
+        return cp.argmin(a, axis=axis)
 
     def mean(self, a, axis=None):
         return cp.mean(a, axis=axis)
@@ -2142,6 +2202,12 @@ class CupyBackend(Backend):  # pragma: no cover
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
         return (V * self.sqrt(L)[None, :]) @ V.T
+
+    def isfinite(self, a):
+        return cp.isfinite(a)
+
+    def array_equal(self, a, b):
+        return cp.array_equal(a, b)
 
 
 class TensorflowBackend(Backend):
@@ -2316,6 +2382,9 @@ class TensorflowBackend(Backend):
     def argmax(self, a, axis=None):
         return tnp.argmax(a, axis=axis)
 
+    def argmin(self, a, axis=None):
+        return tnp.argmin(a, axis=axis)
+
     def mean(self, a, axis=None):
         return tnp.mean(a, axis=axis)
 
@@ -2487,3 +2556,9 @@ class TensorflowBackend(Backend):
 
     def sqrtm(self, a):
         return tf.linalg.sqrtm(a)
+
+    def isfinite(self, a):
+        return tnp.isfinite(a)
+
+    def array_equal(self, a, b):
+        return tnp.array_equal(a, b)

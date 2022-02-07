@@ -218,6 +218,8 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.argmax(M)
     with pytest.raises(NotImplementedError):
+        nx.argmin(M)
+    with pytest.raises(NotImplementedError):
         nx.mean(M)
     with pytest.raises(NotImplementedError):
         nx.std(M)
@@ -272,6 +274,10 @@ def test_empty_backend():
         nx.inv(M)
     with pytest.raises(NotImplementedError):
         nx.sqrtm(M)
+    with pytest.raises(NotImplementedError):
+        nx.isfinite(M)
+    with pytest.raises(NotImplementedError):
+        nx.array_equal(M, M)
 
 
 def test_func_backends(nx):
@@ -477,6 +483,10 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('argmax')
 
+        A = nx.argmin(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('argmin')
+
         A = nx.mean(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('mean')
@@ -575,6 +585,17 @@ def test_func_backends(nx):
         A = nx.sqrtm(SquareMb.T @ SquareMb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("matrix square root")
+
+        A = nx.concatenate([vb, nx.from_numpy(np.array([np.inf, np.nan]))], axis=0)
+        A = nx.isfinite(A)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("isfinite")
+
+        assert not nx.array_equal(Mb, vb), "array_equal (shape)"
+        assert nx.array_equal(Mb, Mb), "array_equal (elements) - expected true"
+        assert not nx.array_equal(
+            Mb, Mb + nx.eye(*list(Mb.shape))
+        ), "array_equal (elements) - expected false"
 
         lst_tot.append(lst_b)
 
