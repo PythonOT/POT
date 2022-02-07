@@ -12,9 +12,8 @@ Domain adaptation with optimal transport
 # License: MIT License
 
 import numpy as np
-import scipy.linalg as linalg
 
-from .backend import get_backend, Backend
+from .backend import get_backend
 from .bregman import sinkhorn, jcpot_barycenter
 from .lp import emd
 from .utils import unif, dist, kernel, cost_normalization, label_normalization, laplacian, dots
@@ -977,15 +976,6 @@ class BaseTransport(BaseEstimator):
 
     `inverse_transform_labels` method should always get as input a `yt` parameter
     """
-
-    nx: Backend = None
-
-    def _get_backend(self, *arrays):
-        nx = get_backend(
-            *[input_ for input_ in arrays if input_ is not None]
-        )
-        self.nx = nx
-        return nx
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
         r"""Build a coupling matrix from source and target sets of samples
@@ -2160,6 +2150,7 @@ class MappingTransport(BaseEstimator):
         self : object
             Returns self
         """
+        self._get_backend(Xs, ys, Xt, yt)
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs, Xt=Xt):
@@ -2206,19 +2197,20 @@ class MappingTransport(BaseEstimator):
         transp_Xs : array-like, shape (n_source_samples, n_features)
             The transport source samples.
         """
+        nx = self.nx
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs):
 
-            if np.array_equal(self.xs_, Xs):
+            if nx.array_equal(self.xs_, Xs):
                 # perform standard barycentric mapping
-                transp = self.coupling_ / np.sum(self.coupling_, 1)[:, None]
+                transp = self.coupling_ / nx.sum(self.coupling_, 1)[:, None]
 
                 # set nans to 0
-                transp[~ np.isfinite(transp)] = 0
+                transp[~ nx.isfinite(transp)] = 0
 
                 # compute transported samples
-                transp_Xs = np.dot(transp, self.xt_)
+                transp_Xs = nx.dot(transp, self.xt_)
             else:
                 if self.kernel == "gaussian":
                     K = kernel(Xs, self.xs_, method=self.kernel,
@@ -2226,8 +2218,10 @@ class MappingTransport(BaseEstimator):
                 elif self.kernel == "linear":
                     K = Xs
                 if self.bias:
-                    K = np.hstack((K, np.ones((Xs.shape[0], 1))))
-                transp_Xs = K.dot(self.mapping_)
+                    K = nx.concatenate(
+                        [K, nx.ones((Xs.shape[0], 1), type_as=K)], axis=1
+                    )
+                transp_Xs = nx.dot(K, self.mapping_)
 
             return transp_Xs
 
@@ -2444,6 +2438,7 @@ class JCPOTTransport(BaseTransport):
         self : object
             Returns self.
         """
+        self._get_backend(*Xs, *ys, Xt, yt)
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs, Xt=Xt, ys=ys):
@@ -2486,28 +2481,29 @@ class JCPOTTransport(BaseTransport):
         batch_size : int, optional (default=128)
             The batch size for out of sample inverse transform
         """
+        nx = self.nx
 
         transp_Xs = []
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs):
 
-            if all([np.allclose(x, y) for x, y in zip(self.xs_, Xs)]):
+            if all([nx.allclose(x, y) for x, y in zip(self.xs_, Xs)]):
 
                 # perform standard barycentric mapping for each source domain
 
                 for coupling in self.coupling_:
-                    transp = coupling / np.sum(coupling, 1)[:, None]
+                    transp = coupling / nx.sum(coupling, 1)[:, None]
 
                     # set nans to 0
-                    transp[~ np.isfinite(transp)] = 0
+                    transp[~ nx.isfinite(transp)] = 0
 
                     # compute transported samples
-                    transp_Xs.append(np.dot(transp, self.xt_))
+                    transp_Xs.append(nx.dot(transp, self.xt_))
             else:
 
                 # perform out of sample mapping
-                indices = np.arange(Xs.shape[0])
+                indices = nx.arange(Xs.shape[0])
                 batch_ind = [
                     indices[i:i + batch_size]
                     for i in range(0, len(indices), batch_size)]
@@ -2518,23 +2514,22 @@ class JCPOTTransport(BaseTransport):
                     transp_Xs_ = []
 
                     # get the nearest neighbor in the sources domains
-                    xs = np.concatenate(self.xs_, axis=0)
-                    idx = np.argmin(dist(Xs[bi], xs), axis=1)
+                    xs = nx.concatenate(self.xs_, axis=0)
+                    idx = nx.argmin(dist(Xs[bi], xs), axis=1)
 
                     # transport the source samples
                     for coupling in self.coupling_:
-                        transp = coupling / np.sum(
-                            coupling, 1)[:, None]
-                        transp[~ np.isfinite(transp)] = 0
-                        transp_Xs_.append(np.dot(transp, self.xt_))
+                        transp = coupling / nx.sum(coupling, 1)[:, None]
+                        transp[~ nx.isfinite(transp)] = 0
+                        transp_Xs_.append(nx.dot(transp, self.xt_))
 
-                    transp_Xs_ = np.concatenate(transp_Xs_, axis=0)
+                    transp_Xs_ = nx.concatenate(transp_Xs_, axis=0)
 
                     # define the transported points
                     transp_Xs_ = transp_Xs_[idx, :] + Xs[bi] - xs[idx, :]
                     transp_Xs.append(transp_Xs_)
 
-                transp_Xs = np.concatenate(transp_Xs, axis=0)
+                transp_Xs = nx.concatenate(transp_Xs, axis=0)
 
             return transp_Xs
 
@@ -2560,21 +2555,25 @@ class JCPOTTransport(BaseTransport):
            "Optimal transport for multi-source domain adaptation under target shift",
            International Conference on Artificial Intelligence and Statistics (AISTATS), 2019.
         """
+        nx = self.nx
 
         # check the necessary inputs parameters are here
         if check_params(ys=ys):
-            yt = np.zeros((len(np.unique(np.concatenate(ys))), self.xt_.shape[0]))
+            yt = nx.zeros(
+                (len(nx.unique(nx.concatenate(ys))), self.xt_.shape[0]),
+                type_as=ys[0]
+            )
             for i in range(len(ys)):
-                ysTemp = label_normalization(np.copy(ys[i]))
-                classes = np.unique(ysTemp)
+                ysTemp = label_normalization(nx.copy(ys[i]))
+                classes = nx.unique(ysTemp)
                 n = len(classes)
                 ns = len(ysTemp)
 
                 # perform label propagation
-                transp = self.coupling_[i] / np.sum(self.coupling_[i], 1)[:, None]
+                transp = self.coupling_[i] / nx.sum(self.coupling_[i], 1)[:, None]
 
                 # set nans to 0
-                transp[~ np.isfinite(transp)] = 0
+                transp[~ nx.isfinite(transp)] = 0
 
                 if self.log:
                     D1 = self.log_['D1'][i]
@@ -2583,9 +2582,10 @@ class JCPOTTransport(BaseTransport):
 
                     for c in classes:
                         D1[int(c), ysTemp == c] = 1
+                    D1 = nx.from_numpy(D1, type_as=ys[0])
 
                 # compute propagated labels
-                yt = yt + np.dot(D1, transp) / len(ys)
+                yt = yt + nx.dot(D1, transp) / len(ys)
 
             return yt.T
 
@@ -2603,27 +2603,29 @@ class JCPOTTransport(BaseTransport):
         transp_ys : list of K array-like objects, shape K x (nk_source_samples, nb_classes)
             A list of estimated soft source labels
         """
+        nx = self.nx
 
         # check the necessary inputs parameters are here
         if check_params(yt=yt):
             transp_ys = []
-            ytTemp = label_normalization(np.copy(yt))
-            classes = np.unique(ytTemp)
+            ytTemp = label_normalization(nx.copy(yt))
+            classes = nx.unique(ytTemp)
             n = len(classes)
             D1 = np.zeros((n, len(ytTemp)))
 
             for c in classes:
                 D1[int(c), ytTemp == c] = 1
+            D1 = nx.from_numpy(D1, type_as=yt)
 
             for i in range(len(self.xs_)):
 
                 # perform label propagation
-                transp = self.coupling_[i] / np.sum(self.coupling_[i], 1)[:, None]
+                transp = self.coupling_[i] / nx.sum(self.coupling_[i], 1)[:, None]
 
                 # set nans to 0
-                transp[~ np.isfinite(transp)] = 0
+                transp[~ nx.isfinite(transp)] = 0
 
                 # compute propagated labels
-                transp_ys.append(np.dot(D1, transp.T).T)
+                transp_ys.append(nx.dot(D1, transp.T).T)
 
             return transp_ys

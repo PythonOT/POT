@@ -15,7 +15,7 @@ from scipy.spatial.distance import cdist
 import sys
 import warnings
 from inspect import signature
-from .backend import get_backend
+from .backend import get_backend, Backend
 
 __time_tic_toc = time.time()
 
@@ -484,6 +484,15 @@ class BaseEstimator(object):
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
     """
+
+    nx: Backend = None
+
+    def _get_backend(self, *arrays):
+        nx = get_backend(
+            *[input_ for input_ in arrays if input_ is not None]
+        )
+        self.nx = nx
+        return nx
 
     @classmethod
     def _get_param_names(cls):
