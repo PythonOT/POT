@@ -2655,16 +2655,16 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
             classes = nx.unique(Ys[d])
 
         # build the corresponding D_1 and D_2 matrices
-        Dtmp1 = nx.zeros((nbclasses, nsk), type_as=Xs[0])
-        Dtmp2 = nx.zeros((nbclasses, nsk), type_as=Xs[0])
+        Dtmp1 = np.zeros((nbclasses, nsk))
+        Dtmp2 = np.zeros((nbclasses, nsk))
 
         for c in classes:
             nbelemperclass = nx.sum(Ys[d] == c)
             if nbelemperclass != 0:
                 Dtmp1[int(c), Ys[d] == c] = 1.
                 Dtmp2[int(c), Ys[d] == c] = 1. / (nbelemperclass)
-        D1.append(Dtmp1)
-        D2.append(Dtmp2)
+        D1.append(nx.from_numpy(Dtmp1, type_as=Xs[0]))
+        D2.append(nx.from_numpy(Dtmp2, type_as=Xs[0]))
 
         # build the cost matrix and the Gibbs kernel
         Mtmp = dist(Xs[d], Xt, metric=metric)

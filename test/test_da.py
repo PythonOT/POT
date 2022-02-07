@@ -678,7 +678,7 @@ def test_jcpot_transport_class():
     [assert_equal(x.shape[1], len(np.unique(y))) for x, y in zip(transp_ys, ys)]
 
 
-def test_jcpot_barycenter():
+def test_jcpot_barycenter(nx):
     """test_jcpot_barycenter
     """
 
@@ -697,13 +697,19 @@ def test_jcpot_barycenter():
     Xs2, ys2 = make_data_classif('2gauss_prop', ns2, nz=sigma, p=ps2)
     Xt, yt = make_data_classif('2gauss_prop', nt, nz=sigma, p=pt)
 
-    Xs = [Xs1, Xs2]
-    ys = [ys1, ys2]
+    Xs1b = nx.from_numpy(Xs1)
+    ys1b = nx.from_numpy(ys1)
+    Xs2b = nx.from_numpy(Xs2)
+    ys2b = nx.from_numpy(ys2)
+    Xtb = nx.from_numpy(Xt)
 
-    prop = ot.bregman.jcpot_barycenter(Xs, ys, Xt, reg=.5, metric='sqeuclidean',
+    Xsb = [Xs1b, Xs2b]
+    ysb = [ys1b, ys2b]
+
+    prop = ot.bregman.jcpot_barycenter(Xsb, ysb, Xtb, reg=.5, metric='sqeuclidean',
                                        numItermax=10000, stopThr=1e-9, verbose=False, log=False)
 
-    np.testing.assert_allclose(prop, [1 - pt, pt], rtol=1e-3, atol=1e-3)
+    np.testing.assert_allclose(nx.to_numpy(prop), [1 - pt, pt], rtol=1e-3, atol=1e-3)
 
 
 @pytest.mark.skipif(nosklearn, reason="No sklearn available")
