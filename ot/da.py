@@ -948,7 +948,7 @@ def distribution_estimation_uniform(X):
         The uniform distribution estimated from :math:`\mathbf{X}`
     """
 
-    return unif(X.shape[0])
+    return unif(X.shape[0], type_as=X)
 
 
 class BaseTransport(BaseEstimator):
@@ -980,6 +980,13 @@ class BaseTransport(BaseEstimator):
 
     nx: Backend = None
 
+    def _get_backend(self, *arrays):
+        nx = get_backend(
+            *[input_ for input_ in arrays if input_ is not None]
+        )
+        self.nx = nx
+        return nx
+
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
         r"""Build a coupling matrix from source and target sets of samples
         :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
@@ -1004,10 +1011,7 @@ class BaseTransport(BaseEstimator):
         self : object
             Returns self.
         """
-        nx = get_backend(
-            *[input_ for input_ in [Xs, ys, Xt, yt] if input_ is not None]
-        )
-        self.nx = nx
+        nx = self._get_backend(Xs, ys, Xt, yt)
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs, Xt=Xt):
@@ -1371,14 +1375,15 @@ class LinearTransport(BaseTransport):
         self : object
             Returns self.
         """
+        nx = self._get_backend(Xs, ys, Xt, yt)
 
         self.mu_s = self.distribution_estimation(Xs)
         self.mu_t = self.distribution_estimation(Xt)
 
         # coupling estimation
         returned_ = OT_mapping_linear(Xs, Xt, reg=self.reg,
-                                      ws=self.mu_s.reshape((-1, 1)),
-                                      wt=self.mu_t.reshape((-1, 1)),
+                                      ws=nx.reshape(self.mu_s, (-1, 1)),
+                                      wt=nx.reshape(self.mu_t, (-1, 1)),
                                       bias=self.bias, log=self.log)
 
         # deal with the value of log
@@ -1389,8 +1394,8 @@ class LinearTransport(BaseTransport):
             self.log_ = dict()
 
         # re compute inverse mapping
-        self.A1_ = linalg.inv(self.A_)
-        self.B1_ = -self.B_.dot(self.A1_)
+        self.A1_ = nx.inv(self.A_)
+        self.B1_ = -nx.dot(self.B_, self.A1_)
 
         return self
 
@@ -1419,10 +1424,11 @@ class LinearTransport(BaseTransport):
         transp_Xs : array-like, shape (n_source_samples, n_features)
             The transport source samples.
         """
+        nx = self.nx
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs):
-            transp_Xs = Xs.dot(self.A_) + self.B_
+            transp_Xs = nx.dot(Xs, self.A_) + self.B_
 
             return transp_Xs
 
@@ -1452,10 +1458,11 @@ class LinearTransport(BaseTransport):
         transp_Xt : array-like, shape (n_source_samples, n_features)
             The transported target samples.
         """
+        nx = self.nx
 
         # check the necessary inputs parameters are here
         if check_params(Xt=Xt):
-            transp_Xt = Xt.dot(self.A1_) + self.B1_
+            transp_Xt = nx.dot(Xt, self.A1_) + self.B1_
 
             return transp_Xt
 

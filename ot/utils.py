@@ -137,7 +137,7 @@ def unif(n, type_as=None):
         return np.ones((n,)) / n
     else:
         nx = get_backend(type_as)
-        return nx.ones((n,)) / n
+        return nx.ones((n,), type_as=type_as) / n
 
 
 def clean_zeros(a, b, M):
