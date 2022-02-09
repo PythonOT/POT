@@ -973,7 +973,7 @@ def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
         Entropy regularization term > 0
     reg_m: float
         Marginal relaxation term > 0
-    weights : np.ndarray (n_hists,) optional
+    weights : array-like (n_hists,) optional
         Weight of each distribution (barycentric coodinates)
         If None, uniform weights are used.
     numItermax : int, optional
@@ -988,7 +988,7 @@ def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
 
     Returns
     -------
-    a : (dim,) ndarray
+    a : (dim,) array-like
         Unbalanced Wasserstein barycenter
     log : dict
         log dictionary return only if log==True in parameters
