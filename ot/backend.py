@@ -1196,6 +1196,8 @@ class JaxBackend(Backend):
         return jax.device_put(a, type_as.device_buffer.device())
 
     def from_numpy(self, a, type_as=None):
+        if isinstance(a, float):
+            a = np.array(a)
         if type_as is None:
             return jnp.array(a)
         else:
@@ -1916,6 +1918,8 @@ class CupyBackend(Backend):  # pragma: no cover
         return cp.asnumpy(a)
 
     def from_numpy(self, a, type_as=None):
+        if isinstance(a, float):
+            a = np.array(a)
         if type_as is None:
             return cp.asarray(a)
         else:
@@ -2266,6 +2270,8 @@ class TensorflowBackend(Backend):
         return a.numpy()
 
     def from_numpy(self, a, type_as=None):
+        if isinstance(a, float):
+            a = np.array(a)
         if not isinstance(a, self.__type__):
             if type_as is None:
                 return tf.convert_to_tensor(a)
