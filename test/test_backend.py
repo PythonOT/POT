@@ -597,6 +597,9 @@ def test_func_backends(nx):
             Mb, Mb + nx.eye(*list(Mb.shape))
         ), "array_equal (elements) - expected false"
 
+        assert nx.is_floating_point(Mb), "is_floating_point - expected true"
+        assert not nx.is_floating_point(nx.where(Mb)), "is_floating_point - expected false"
+
         lst_tot.append(lst_b)
 
     lst_np = lst_tot[0]

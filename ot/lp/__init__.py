@@ -330,6 +330,14 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
         u, v = estimate_dual_null_weights(u, v, a, b, M)
 
     result_code_string = check_result(result_code)
+    if not nx.is_floating_point(M0):
+        warnings.warn(
+            "EMD loss matrix consists of integer. The transport plan will be "
+            "casted accordingly, possibly resulting in a loss of precision. "
+            "If this behaviour is unwanted, please make sure your loss matrix "
+            "consists of floating point elements.",
+            stacklevel=2
+        )
     if log:
         log = {}
         log['cost'] = cost
@@ -470,6 +478,14 @@ def emd2(a, b, M, processes=1,
 
             result_code_string = check_result(result_code)
             log = {}
+            if not nx.is_floating_point(M0):
+                warnings.warn(
+                    "EMD loss matrix consists of integer. The transport plan will be "
+                    "casted accordingly, possibly resulting in a loss of precision. "
+                    "If this behaviour is unwanted, please make sure your loss matrix "
+                    "consists of floating point elements.",
+                    stacklevel=2
+                )
             G = nx.from_numpy(G, type_as=M0)
             if return_matrix:
                 log['G'] = G
@@ -491,6 +507,14 @@ def emd2(a, b, M, processes=1,
             if np.any(~asel) or np.any(~bsel):
                 u, v = estimate_dual_null_weights(u, v, a, b, M)
 
+            if not nx.is_floating_point(M0):
+                warnings.warn(
+                    "EMD loss matrix consists of integer. The transport plan will be "
+                    "casted accordingly, possibly resulting in a loss of precision. "
+                    "If this behaviour is unwanted, please make sure your loss matrix "
+                    "consists of floating point elements.",
+                    stacklevel=2
+                )
             G = nx.from_numpy(G, type_as=M0)
             cost = nx.set_gradients(nx.from_numpy(cost, type_as=M0),
                                     (a0, b0, M0), (nx.from_numpy(u, type_as=a0),
