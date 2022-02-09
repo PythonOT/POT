@@ -225,6 +225,11 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
 
+    .. note:: This function will cast the computed transport plan to the data type
+        of the provided loss matrix. Casting to an integer tensor might result in
+        a loss of precision. If this behaviour is unwanted, please make sure to
+        provide a floating point loss matrix.
+
     Uses the algorithm proposed in :ref:`[1] <references-emd>`.
 
     Parameters
@@ -371,6 +376,12 @@ def emd2(a, b, M, processes=1,
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
+
+    .. note:: This function will cast the computed transport plan and
+        transportation loss to the data type of the provided loss matrix.
+        Casting to an integer tensor might result in a loss of precision.
+        If this behaviour is unwanted, please make sure to provide a
+        floating point loss matrix.
 
     Uses the algorithm proposed in :ref:`[1] <references-emd2>`.
 
