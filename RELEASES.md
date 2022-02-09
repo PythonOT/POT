@@ -10,7 +10,7 @@
   of the regularization parameter (PR #336).
 - Backend implementation for `ot.lp.free_support_barycenter` (PR #340).
 - Add weak OT solver + example  (PR #341).
-- Add backend support for Domain Adaptation (PR #343).
+- Add backend support for Domain Adaptation and Unbalanced solvers (PR #343).
 
 
 #### Closed issues
