@@ -9,11 +9,15 @@ Generic solvers for regularized OT
 # License: MIT License
 
 import numpy as np
-from scipy.optimize.linesearch import scalar_search_armijo
 from .lp import emd
 from .bregman import sinkhorn
-from ot.utils import list_to_array
+from .utils import list_to_array
 from .backend import get_backend
+
+try:
+    from scipy.optimize import scalar_search_armijo
+except ImportError:
+    from scipy.optimize.linesearch import scalar_search_armijo
 
 # The corresponding scipy function does not work for matrices
 
