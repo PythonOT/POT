@@ -9,16 +9,18 @@ Generic solvers for regularized OT
 # License: MIT License
 
 import numpy as np
+import warnings
 from .lp import emd
 from .bregman import sinkhorn
 from .utils import list_to_array
 from .backend import get_backend
 
-import scipy.optimize
-if hasattr(scipy.optimize, "scalar_search_armijo"):
-    from scipy.optimize import scalar_search_armijo
-else:
-    from scipy.optimize.linesearch import scalar_search_armijo
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    try:
+        from scipy.optimize import scalar_search_armijo
+    except ImportError:
+        from scipy.optimize.linesearch import scalar_search_armijo
 
 # The corresponding scipy function does not work for matrices
 
