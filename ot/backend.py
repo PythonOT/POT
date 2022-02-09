@@ -221,6 +221,15 @@ class Backend():
         """Creates a tensor cloning a numpy array, with the given precision (defaulting to input's precision) and the given device (in case of GPUs)"""
         raise NotImplementedError()
 
+    def _warn_tensor_float_to_int_conversion(self):
+        warnings.warn(
+            "Tensor conversion from float to int detected. "
+            "It might result in unwanted loss of precision. "
+            "To avoid such behaviour, make sure your inputs are "
+            "correctly typed, POT will try to keep the given type.",
+            stacklevel=3
+        )
+
     def set_gradients(self, val, inputs, grads):
         """Define the gradients for the value val wrt the inputs """
         raise NotImplementedError()
@@ -890,6 +899,8 @@ class NumpyBackend(Backend):
         elif isinstance(a, float):
             return a
         else:
+            if a.dtype.kind == "f" and type_as.dtype.kind == "i":
+                self._warn_tensor_float_to_int_conversion()
             return a.astype(type_as.dtype)
 
     def set_gradients(self, val, inputs, grads):
@@ -1188,6 +1199,8 @@ class JaxBackend(Backend):
         if type_as is None:
             return jnp.array(a)
         else:
+            if a.dtype.kind == "f" and type_as.dtype.kind == "i":
+                self._warn_tensor_float_to_int_conversion()
             return self._change_device(jnp.array(a).astype(type_as.dtype), type_as)
 
     def set_gradients(self, val, inputs, grads):
@@ -1521,6 +1534,8 @@ class TorchBackend(Backend):
         if type_as is None:
             return torch.from_numpy(a)
         else:
+            if a.dtype.kind == "f" and not type_as.dtype.is_floating_point:
+                self._warn_tensor_float_to_int_conversion()
             return torch.as_tensor(a, dtype=type_as.dtype, device=type_as.device)
 
     def set_gradients(self, val, inputs, grads):
@@ -1904,6 +1919,8 @@ class CupyBackend(Backend):  # pragma: no cover
         if type_as is None:
             return cp.asarray(a)
         else:
+            if a.dtype.kind == "f" and type_as.dtype.kind == "i":
+                self._warn_tensor_float_to_int_conversion()
             with cp.cuda.Device(type_as.device):
                 return cp.asarray(a, dtype=type_as.dtype)
 
@@ -2241,7 +2258,8 @@ class TensorflowBackend(Backend):
                 "To use TensorflowBackend, you need to activate the tensorflow "
                 "numpy API. You can activate it by running: \n"
                 "from tensorflow.python.ops.numpy_ops import np_config\n"
-                "np_config.enable_numpy_behavior()"
+                "np_config.enable_numpy_behavior()",
+                stacklevel=2
             )
 
     def to_numpy(self, a):
@@ -2252,11 +2270,15 @@ class TensorflowBackend(Backend):
             if type_as is None:
                 return tf.convert_to_tensor(a)
             else:
+                if a.dtype.kind == "f" and type_as.dtype.is_integer:
+                    self._warn_tensor_float_to_int_conversion()
                 return tf.convert_to_tensor(a, dtype=type_as.dtype)
         else:
             if type_as is None:
                 return a
             else:
+                if a.dtype.is_floating and type_as.dtype.is_integer:
+                    self._warn_tensor_float_to_int_conversion()
                 return tf.cast(a, dtype=type_as.dtype)
 
     def set_gradients(self, val, inputs, grads):
