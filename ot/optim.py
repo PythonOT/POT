@@ -14,9 +14,10 @@ from .bregman import sinkhorn
 from .utils import list_to_array
 from .backend import get_backend
 
-try:
+import scipy.optimize
+if hasattr(scipy.optimize, "scalar_search_armijo"):
     from scipy.optimize import scalar_search_armijo
-except ImportError:
+else:
     from scipy.optimize.linesearch import scalar_search_armijo
 
 # The corresponding scipy function does not work for matrices
