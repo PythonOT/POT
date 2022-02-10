@@ -52,14 +52,16 @@ from networkx.generators.community import stochastic_block_model as sbm
 
 np.random.seed(42)
 
-N = 150  # number of graphs in the dataset
-clusters = [1, 2, 3]  # for every quantity of clusters, 50 graphs following SBM will be generated with variable connectivity matrix
+N = 60  # number of graphs in the dataset
+# For every number of clusters, we generate SBM with variable connectivity matrices
+clusters = [1, 2, 3]
+Nc = N // len(clusters)  # number of graphs by cluster
 nlabels = len(clusters)
 dataset = []
 labels = []
 
 for n_cluster in clusters:
-    for i in range(N // len(clusters)):
+    for i in range(Nc):
         n_nodes = int(np.random.uniform(low=25, high=50))
         p_inter = np.random.uniform(low=0.1, high=0.2)
         p_intra = np.random.uniform(low=0.8, high=0.9)
@@ -94,7 +96,7 @@ pl.figure(1, (15, 10))
 pl.clf()
 pl.suptitle('Samples from the graph dataset')
 for idx_c, c in enumerate(clusters):
-    C = dataset[(c - 1) * 50]  # sample with c clusters
+    C = dataset[(c - 1) * Nc]  # sample with c clusters
     # get 2d position for nodes
     x = MDS(dissimilarity='precomputed', random_state=0).fit_transform(1 - C)
     pl.subplot(2, nlabels, c)
@@ -118,11 +120,11 @@ D = 3  # 3 atoms in the dictionary
 nt = 6  # of 6 nodes each
 
 q = ot.unif(nt)
-reg = 0.001  # regularization coefficient to promote sparsity of unmixings {w_s}
+reg = 0.01  # regularization coefficient to promote sparsity of unmixings {w_s}
 
-Cdict_learned, log = gromov_wasserstein_dictionary_learning(
-    Cs=dataset, D=D, nt=nt, ps=ps, q=q, epochs=20, batch_size=16,
-    learning_rate=0.01, reg=reg, projection='nonnegative_symmetric',
+Cdict_GW, log = gromov_wasserstein_dictionary_learning(
+    Cs=dataset, D=D, nt=nt, ps=ps, q=q, epochs=10, batch_size=16,
+    learning_rate=0.1, reg=reg, projection='nonnegative_symmetric',
     use_log=True, use_adam_optimizer=True, verbose=True
 )
 # visualize loss evolution over epochs
@@ -139,7 +141,7 @@ pl.show()
 pl.figure(3, (15, 10))
 pl.clf()
 pl.suptitle('Learned Gromov-Wasserstein dictionary atoms')
-for idx_atom, atom in enumerate(Cdict_learned):
+for idx_atom, atom in enumerate(Cdict_GW):
     scaled_atom = (atom - atom.min()) / (atom.max() - atom.min())
     x = MDS(dissimilarity='precomputed', random_state=0).fit_transform(1 - scaled_atom)
     pl.subplot(2, D, idx_atom + 1)
@@ -158,7 +160,7 @@ reconstruction_errors = []
 for C in dataset:
     p = ot.unif(C.shape[0])
     unmixing, Cembedded, OT, reconstruction_error = gromov_wasserstein_linear_unmixing(
-        C, Cdict_learned, p=p, q=q, reg=reg,
+        C, Cdict_GW, p=p, q=q, reg=reg,
         tol_outer=10**(-6), tol_inner=10**(-6),
         max_iter_outer=20, max_iter_inner=200
     )
@@ -181,11 +183,11 @@ extremities = np.stack([x, y, z])
 pl.figure(4, (5, 5))
 pl.title('Embedding space')
 for cluster in range(nlabels):
-    start, end = 50 * cluster, 50 * (cluster + 1)
+    start, end = Nc * cluster, Nc * (cluster + 1)
     if cluster == 0:
-        pl.scatter(unmixings2D[start:end, 0], unmixings2D[start:end, 1], c='C' + str(cluster), marker='o', s=5., label='1 cluster')
+        pl.scatter(unmixings2D[start:end, 0], unmixings2D[start:end, 1], c='C' + str(cluster), marker='o', s=10., label='1 cluster')
     else:
-        pl.scatter(unmixings2D[start:end, 0], unmixings2D[start:end, 1], c='C' + str(cluster), marker='o', s=5., label='%s clusters' % (cluster + 1))
+        pl.scatter(unmixings2D[start:end, 0], unmixings2D[start:end, 1], c='C' + str(cluster), marker='o', s=10., label='%s clusters' % (cluster + 1))
 pl.scatter(extremities[:, 0], extremities[:, 1], c='black', marker='x', s=50., label='atoms')
 pl.plot([x[0], y[0]], [x[1], y[1]], color='black', linewidth=2.)
 pl.plot([x[0], z[0]], [x[1], z[1]], color='black', linewidth=2.)
@@ -208,9 +210,9 @@ for i in range(len(dataset)):
     n = dataset[i].shape[0]
     F = np.ones((n, 1))
 
-    if i < 50:  # graph with 1 cluster
+    if i < Nc:  # graph with 1 cluster
         dataset_features.append(0 * F)
-    elif i < 100:  # graph with 2 clusters
+    elif i < 2 * Nc:  # graph with 2 clusters
         dataset_features.append(1 * F)
     else:  # graph with 3 clusters
         dataset_features.append(2 * F)
@@ -219,8 +221,8 @@ pl.figure(5, (15, 10))
 pl.clf()
 pl.suptitle('Samples from the attributed graph dataset')
 for idx_c, c in enumerate(clusters):
-    C = dataset[(c - 1) * 50]  # sample with c clusters
-    F = dataset_features[(c - 1) * 50]
+    C = dataset[(c - 1) * Nc]  # sample with c clusters
+    F = dataset_features[(c - 1) * Nc]
     colors = ['C' + str(int(F[i, 0])) for i in range(F.shape[0])]
     # get 2d position for nodes
     x = MDS(dissimilarity='precomputed', random_state=0).fit_transform(1 - C)
@@ -243,12 +245,13 @@ ps = [ot.unif(C.shape[0]) for C in dataset]
 D = 3  # 6 atoms instead of 3
 nt = 6
 q = ot.unif(nt)
-reg = 0.001
+reg = 0.01
 alpha = 0.5  # trade-off parameter between structure and feature information of Fused Gromov-Wasserstein
 
-Cdict_learned, Ydict_learned, log = fused_gromov_wasserstein_dictionary_learning(
+
+Cdict_FGW, Ydict_FGW, log = fused_gromov_wasserstein_dictionary_learning(
     Cs=dataset, Ys=dataset_features, D=D, nt=nt, ps=ps, q=q, alpha=alpha,
-    epochs=20, batch_size=16, learning_rate_C=0.1, learning_rate_Y=0.1, reg=reg,
+    epochs=0, batch_size=16, learning_rate_C=0.1, learning_rate_Y=0.1, reg=reg,
     projection='nonnegative_symmetric', use_log=True, use_adam_optimizer=True, verbose=True
 )
 # visualize loss evolution
@@ -264,18 +267,17 @@ pl.show()
 pl.figure(7, (15, 10))
 pl.clf()
 pl.suptitle('Learned Graph Dictionary')
-max_features = Ydict_learned.max()
-min_features = Ydict_learned.min()
+max_features = Ydict_FGW.max()
+min_features = Ydict_FGW.min()
 
-for idx_atom, atom in enumerate(Cdict_learned):
-    scaled_atom = (atom - atom.min()) / (atom.max() - atom.min())
-    F = Ydict_learned[idx_atom]
-    scaled_F = 2 * (F - min_features) / (max_features - min_features)
+for idx_atom, (Catom, Fatom) in enumerate(zip(Cdict_FGW, Ydict_FGW)):
+    scaled_atom = (Catom - Catom.min()) / (Catom.max() - Catom.min())
+    scaled_F = 2 * (Fatom - min_features) / (max_features - min_features)
     colors = ['C%s' % int(i) for i in np.round(scaled_F)]
     x = MDS(dissimilarity='precomputed', random_state=0).fit_transform(1 - scaled_atom)
     pl.subplot(2, D, idx_atom + 1)
     pl.title('(attributed graph) atom ' + str(idx_atom + 1))
-    plot_graph(x, (atom / atom.max())**2, binary=False, color=colors)
+    plot_graph(x, (Catom / Catom.max())**2, binary=False, color=colors)
     pl.axis("off")
     pl.subplot(2, D, D + idx_atom + 1)
     pl.title('(matrix) atom ' + str(idx_atom + 1))
@@ -291,7 +293,7 @@ for i in range(len(dataset)):
     Y = dataset_features[i]
     p = ot.unif(C.shape[0])
     unmixing, Cembedded, Yembedded, OT, reconstruction_error = fused_gromov_wasserstein_linear_unmixing(
-        C, Y, Cdict_learned, Ydict_learned, p=p, q=q, alpha=alpha,
+        C, Y, Cdict_FGW, Ydict_FGW, p=p, q=q, alpha=alpha,
         reg=reg, tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=30, max_iter_inner=300
     )
     unmixings.append(unmixing)
@@ -312,7 +314,7 @@ extremities = np.stack([x, y, z])
 pl.figure(8, (5, 5))
 pl.title('Embedding space')
 for cluster in range(nlabels):
-    start, end = 50 * cluster, 50 * (cluster + 1)
+    start, end = Nc * cluster, Nc * (cluster + 1)
     if cluster == 0:
         pl.scatter(unmixings2D[start:end, 0], unmixings2D[start:end, 1], c='C' + str(cluster), marker='o', s=30., label='1 cluster')
     else:
