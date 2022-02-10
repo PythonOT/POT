@@ -1846,10 +1846,10 @@ def update_feature_matrix(lambdas, Ys, Ts, p):
 def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, epochs=20, batch_size=32, learning_rate=1., Cdict_init=None, projection='nonnegative_symmetric', use_log=True,
                                            tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False, **kwargs):
     r"""
-    Infer Gromov-Wasserstein linear dictionary :math:`\{ (\mathbf{Cdict[d]}, q) \}_{d \in [D]}`  from the list of structures :math:`\{ (\mathbf{C_s},\mathbf{p_s}) \}_s`
+    Infer Gromov-Wasserstein linear dictionary :math:`\{ (\mathbf{C_{dict}[d]}, q) \}_{d \in [D]}`  from the list of structures :math:`\{ (\mathbf{C_s},\mathbf{p_s}) \}_s`
 
     .. math::
-        \min_{\mathbf{Cdict}, \{\mathbf{w_s} \}_{s \leq S}} \sum_{s=1}^S  GW_2(\mathbf{C_s}, \sum_{d=1}^D w_{s,d}\mathbf{Cdict[d]}, \mathbf{p_s}, \mathbf{q}) - reg\| \mathbf{w_s}  \|_2^2
+        \min_{\mathbf{C_{dict}}, \{\mathbf{w_s} \}_{s \leq S}} \sum_{s=1}^S  GW_2(\mathbf{C_s}, \sum_{d=1}^D w_{s,d}\mathbf{C_{dict}[d]}, \mathbf{p_s}, \mathbf{q}) - reg\| \mathbf{w_s}  \|_2^2
 
     such that, :math:`\forall s \leq S` :
 
@@ -1859,7 +1859,7 @@ def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, e
     Where :
 
     - :math:`\forall s \leq S, \mathbf{C_s}` is a (ns,ns) pairwise similarity matrix of variable size ns.
-    - :math:`\mathbf{Cdict}` is a (D, nt, nt) tensor of D pairwise similarity matrix of fixed size nt.
+    - :math:`\mathbf{C_{dict}}` is a (D, nt, nt) tensor of D pairwise similarity matrix of fixed size nt.
     - :math:`\forall s \leq S, \mathbf{p_s}` is the source distribution corresponding to :math:`\mathbf{C_s}`
     - :math:`\mathbf{q}` is the target distribution assigned to every structures in the embedding space.
     - reg is the regularization coefficient.
@@ -2034,10 +2034,10 @@ def _adam_stochastic_updates(variable, grad, learning_rate, adam_moments, beta_1
 
 def gromov_wasserstein_linear_unmixing(C, Cdict, reg=0., p=None, q=None, tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, **kwargs):
     r"""
-    Returns the Gromov-Wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{p})` onto the dictionary :math:`\{ (\mathbf{Cdict[d]}, \mathbf{q}) \}_{d \in [D]}`.
+    Returns the Gromov-Wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{p})` onto the dictionary :math:`\{ (\mathbf{C_{dict}[d]}, \mathbf{q}) \}_{d \in [D]}`.
 
     .. math::
-        \min_{ \mathbf{w}}  GW_2(\mathbf{C}, \sum_{d=1}^D w_d\mathbf{Cdict[d]}, \mathbf{p}, \mathbf{q}) - reg \| \mathbf{w}  \|_2^2
+        \min_{ \mathbf{w}}  GW_2(\mathbf{C}, \sum_{d=1}^D w_d\mathbf{C_{dict}[d]}, \mathbf{p}, \mathbf{q}) - reg \| \mathbf{w}  \|_2^2
 
     such that:
 
@@ -2047,7 +2047,7 @@ def gromov_wasserstein_linear_unmixing(C, Cdict, reg=0., p=None, q=None, tol_out
     Where :
 
     - :math:`\mathbf{C}` is the (ns,ns) pairwise similarity matrix.
-    - :math:`\mathbf{Cdict}` is a (D, nt, nt) tensor of D pairwise similarity matrices of size nt.
+    - :math:`\mathbf{C_{dict}}` is a (D, nt, nt) tensor of D pairwise similarity matrices of size nt.
     - :math:`\mathbf{p}` and :math:`\mathbf{q}` are source and target weights.
     - reg is the regularization coefficient.
 
@@ -2079,9 +2079,9 @@ def gromov_wasserstein_linear_unmixing(C, Cdict, reg=0., p=None, q=None, tol_out
     w: array-like, shape (D,)
         gromov-wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{p})` onto the span of the dictionary.
     Cembedded: array-like, shape (nt,nt)
-        embedded structure of :math:`(\mathbf{C},\mathbf{p})` onto the dictionary, :math:`\sum_d w_d\mathbf{Cdict[d]}`.
+        embedded structure of :math:`(\mathbf{C},\mathbf{p})` onto the dictionary, :math:`\sum_d w_d\mathbf{C_{dict}[d]}`.
     T: array-like (ns, nt)
-        Gromov-Wasserstein transport plan between :math:`(\mathbf{C},\mathbf{p})` and :math:`(\sum_d w_d\mathbf{Cdict[d]}, \mathbf{q})`
+        Gromov-Wasserstein transport plan between :math:`(\mathbf{C},\mathbf{p})` and :math:`(\sum_d w_d\mathbf{C_{dict}[d]}, \mathbf{q})`
     current_loss: float
         reconstruction error
     References
@@ -2143,10 +2143,10 @@ def gromov_wasserstein_linear_unmixing(C, Cdict, reg=0., p=None, q=None, tol_out
 def _cg_gromov_wasserstein_unmixing(C, Cdict, Cembedded, w, const_q, T, starting_loss, reg=0., tol=10**(-5), max_iter=200, **kwargs):
     r"""
     Returns for a fixed admissible transport plan,
-    the linear unmixing w minimizing the Gromov-Wasserstein cost between :math:`(\mathbf{C},\mathbf{p})` and :math:`(\sum_d w[d]*\mathbf{Cdict[d]}, \mathbf{q})`
+    the linear unmixing w minimizing the Gromov-Wasserstein cost between :math:`(\mathbf{C},\mathbf{p})` and :math:`(\sum_d w[d]*\mathbf{C_{dict}[d]}, \mathbf{q})`
 
     .. math::
-        \min_{\mathbf{w}}  \sum_{ijkl} (C_{i,j} - \sum_{d=1}^D w_d*Cdict[d]_{k,l} )^2 T_{i,k}T_{j,l} - reg* \| \mathbf{w}  \|_2^2
+        \min_{\mathbf{w}}  \sum_{ijkl} (C_{i,j} - \sum_{d=1}^D w_d*C_{dict}[d]_{k,l} )^2 T_{i,k}T_{j,l} - reg* \| \mathbf{w}  \|_2^2
 
 
     Such that:
@@ -2157,7 +2157,7 @@ def _cg_gromov_wasserstein_unmixing(C, Cdict, Cembedded, w, const_q, T, starting
     Where :
 
     - :math:`\mathbf{C}` is the (ns,ns) pairwise similarity matrix.
-    - :math:`\mathbf{Cdict}` is a (D, nt, nt) tensor of D pairwise similarity matrices of nt points.
+    - :math:`\mathbf{C_{dict}}` is a (D, nt, nt) tensor of D pairwise similarity matrices of nt points.
     - :math:`\mathbf{p}` and :math:`\mathbf{q}` are source and target weights.
     - :math:`\mathbf{w}` is the linear unmixing of :math:`(\mathbf{C}, \mathbf{p})` onto :math:`(\sum_d w_d \mathbf{Cdict[d]}, \mathbf{q})`.
     - :math:`\mathbf{T}` is the optimal transport plan conditioned by the current state of :math:`\mathbf{w}`.
@@ -2231,7 +2231,7 @@ def _linesearch_gromov_wasserstein_unmixing(w, grad_w, x, Cdict, Cembedded, cons
     r"""
     Compute optimal steps for the line search problem of Gromov-Wasserstein linear unmixing
     .. math::
-        \min_{\gamma \in [0,1]}  \sum_{ijkl} (C_{i,j} - \sum_{d=1}^D z_d(\gamma)Cdict[d]_{k,l} )^2 T_{i,k}T_{j,l} - reg\| \mathbf{z}(\gamma)  \|_2^2
+        \min_{\gamma \in [0,1]}  \sum_{ijkl} (C_{i,j} - \sum_{d=1}^D z_d(\gamma)C_{dict}[d]_{k,l} )^2 T_{i,k}T_{j,l} - reg\| \mathbf{z}(\gamma)  \|_2^2
 
 
     Such that:
@@ -2295,10 +2295,10 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
                                                  Cdict_init=None, Ydict_init=None, projection='nonnegative_symmetric', use_log=False,
                                                  tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False, **kwargs):
     r"""
-    Infer Fused Gromov-Wasserstein linear dictionary :math:`\{ (\mathbf{Cdict[d]}, \mathbf{Ydict[d]}, \mathbf{q}) \}_{d \in [D]}`  from the list of S attributed structures :math:`\{ (\mathbf{C_s}, \mathbf{Y_s},\mathbf{p_s}) \}_s`
+    Infer Fused Gromov-Wasserstein linear dictionary :math:`\{ (\mathbf{C_{dict}[d]}, \mathbf{Y_{dict}[d]}, \mathbf{q}) \}_{d \in [D]}`  from the list of S attributed structures :math:`\{ (\mathbf{C_s}, \mathbf{Y_s},\mathbf{p_s}) \}_s`
 
     .. math::
-        \min_{\mathbf{Cdict},\mathbf{Ydict}, \{\mathbf{w_s}\}_{s}} \sum_{s=1}^S  FGW_{2,\alpha}(\mathbf{C_s}, \mathbf{Y_s}, \sum_{d=1}^D w_{s,d}\mathbf{Cdict[d]},\sum_{d=1}^D w_{s,d}\mathbf{Ydict[d]}, \mathbf{p_s}, \mathbf{q}) \\ - reg\| \mathbf{w_s}  \|_2^2
+        \min_{\mathbf{C_{dict}},\mathbf{Y_{dict}}, \{\mathbf{w_s}\}_{s}} \sum_{s=1}^S  FGW_{2,\alpha}(\mathbf{C_s}, \mathbf{Y_s}, \sum_{d=1}^D w_{s,d}\mathbf{C_{dict}[d]},\sum_{d=1}^D w_{s,d}\mathbf{Y_{dict}[d]}, \mathbf{p_s}, \mathbf{q}) \\ - reg\| \mathbf{w_s}  \|_2^2
 
 
     Such that :math:`\forall s \leq S` :
@@ -2310,8 +2310,8 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
 
     - :math:`\forall s \leq S, \mathbf{C_s}` is a (ns,ns) pairwise similarity matrix of variable size ns.
     - :math:`\forall s \leq S, \mathbf{Y_s}` is a (ns,d) features matrix of variable size ns and fixed dimension d.
-    - :math:`\mathbf{Cdict}` is a (D, nt, nt) tensor of D pairwise similarity matrix of fixed size nt.
-    - :math:`\mathbf{Ydict}` is a (D, nt, d) tensor of D features matrix of fixed size nt and fixed dimension d.
+    - :math:`\mathbf{C_{dict}}` is a (D, nt, nt) tensor of D pairwise similarity matrix of fixed size nt.
+    - :math:`\mathbf{Y_{dict}}` is a (D, nt, d) tensor of D features matrix of fixed size nt and fixed dimension d.
     - :math:`\forall s \leq S, \mathbf{p_s}` is the source distribution corresponding to :math:`\mathbf{C_s}`
     - :math:`\mathbf{q}` is the target distribution assigned to every structures in the embedding space.
     - :math:`\alpha` is the trade-off parameter of Fused Gromov-Wasserstein
@@ -2504,10 +2504,10 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
 
 def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict, Ydict, alpha, reg=0., p=None, q=None, tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, **kwargs):
     r"""
-    Returns the Fused Gromov-Wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{Y},\mathbf{p})` onto the attributed dictionary atoms :math:`\{ (\mathbf{Cdict[d]},\mathbf{Ydict[d]}, \mathbf{q}) \}_{d \in [D]}`
+    Returns the Fused Gromov-Wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{Y},\mathbf{p})` onto the attributed dictionary atoms :math:`\{ (\mathbf{C_{dict}[d]},\mathbf{Y_{dict}[d]}, \mathbf{q}) \}_{d \in [D]}`
 
     .. math::
-        \min_{\mathbf{w}}  FGW_{2,\alpha}(\mathbf{C},\mathbf{Y}, \sum_{d=1}^D w_d\mathbf{Cdict[d]},\sum_{d=1}^D w_d\mathbf{Ydict[d]}, \mathbf{p}, \mathbf{q}) - reg \| \mathbf{w}  \|_2^2
+        \min_{\mathbf{w}}  FGW_{2,\alpha}(\mathbf{C},\mathbf{Y}, \sum_{d=1}^D w_d\mathbf{C_{dict}[d]},\sum_{d=1}^D w_d\mathbf{Y_{dict}[d]}, \mathbf{p}, \mathbf{q}) - reg \| \mathbf{w}  \|_2^2
 
     such that, :math:`\forall s \leq S` :
 
@@ -2518,8 +2518,8 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict, Ydict, alpha, reg=0., 
 
     - :math:`\mathbf{C}` is a (ns,ns) pairwise similarity matrix of variable size ns.
     - :math:`\mathbf{Y}` is a (ns,d) features matrix of variable size ns and fixed dimension d.
-    - :math:`\mathbf{Cdict}` is a (D, nt, nt) tensor of D pairwise similarity matrix of fixed size nt.
-    - :math:`\mathbf{Ydict}` is a (D, nt, d) tensor of D features matrix of fixed size nt and fixed dimension d.
+    - :math:`\mathbf{C_{dict}}` is a (D, nt, nt) tensor of D pairwise similarity matrix of fixed size nt.
+    - :math:`\mathbf{Y_{dict}}` is a (D, nt, d) tensor of D features matrix of fixed size nt and fixed dimension d.
     - :math:`\mathbf{p}` is the source distribution corresponding to :math:`\mathbf{C_s}`
     - :math:`\mathbf{q}` is the target distribution assigned to every structures in the embedding space.
     - :math:`\alpha` is the trade-off parameter of Fused Gromov-Wasserstein
@@ -2559,11 +2559,11 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict, Ydict, alpha, reg=0., 
     w: array-like, shape (D,)
         fused gromov-wasserstein linear unmixing of (C,Y,p) onto the span of the dictionary.
     Cembedded: array-like, shape (nt,nt)
-        embedded structure of :math:`(\mathbf{C},\mathbf{Y}, \mathbf{p})` onto the dictionary, :math:`\sum_d w_d\mathbf{Cdict[d]}`.
+        embedded structure of :math:`(\mathbf{C},\mathbf{Y}, \mathbf{p})` onto the dictionary, :math:`\sum_d w_d\mathbf{C_{dict}[d]}`.
     Yembedded: array-like, shape (nt,d)
-        embedded features of :math:`(\mathbf{C},\mathbf{Y}, \mathbf{p})` onto the dictionary, :math:`\sum_d w_d\mathbf{Ydict[d]}`.
+        embedded features of :math:`(\mathbf{C},\mathbf{Y}, \mathbf{p})` onto the dictionary, :math:`\sum_d w_d\mathbf{Y_{dict}[d]}`.
     T: array-like (ns,nt)
-        Fused Gromov-Wasserstein transport plan between :math:`(\mathbf{C},\mathbf{p})` and :math:`(\sum_d w_d\mathbf{Cdict[d]}, \sum_d w_d\mathbf{Ydict[d]},\mathbf{q})`.
+        Fused Gromov-Wasserstein transport plan between :math:`(\mathbf{C},\mathbf{p})` and :math:`(\sum_d w_d\mathbf{C_{dict}[d]}, \sum_d w_d\mathbf{Y_{dict}[d]},\mathbf{q})`.
     current_loss: float
         reconstruction error
     References
@@ -2636,10 +2636,10 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict, Ydict, alpha, reg=0., 
 def _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdict, Ydict, Cembedded, Yembedded, w, T, p, q, const_q, diag_q, starting_loss, alpha, reg, tol=10**(-6), max_iter=200, **kwargs):
     r"""
     Returns for a fixed admissible transport plan,
-    the optimal linear unmixing :math:`\mathbf{w}` minimizing the Fused Gromov-Wasserstein cost between :math:`(\mathbf{C},\mathbf{Y},\mathbf{p})` and :math:`(\sum_d w_d \mathbf{Cdict[d]},\sum_d w_d*\mathbf{Ydict[d]}, \mathbf{q})`
+    the optimal linear unmixing :math:`\mathbf{w}` minimizing the Fused Gromov-Wasserstein cost between :math:`(\mathbf{C},\mathbf{Y},\mathbf{p})` and :math:`(\sum_d w_d \mathbf{C_{dict}[d]},\sum_d w_d*\mathbf{Y_{dict}[d]}, \mathbf{q})`
 
     .. math::
-        \min_{\mathbf{w}}  \alpha  \sum_{ijkl} (C_{i,j} - \sum_{d=1}^D w_d Cdict[d]_{k,l} )^2 T_{i,k}T_{j,l} \\+ (1-\alpha) \sum_{ij} \| \mathbf{Y_i} - \sum_d w_d \mathbf{Ydict[d]_j} \|_2^2 T_{ij}- reg \| \mathbf{w}  \|_2^2
+        \min_{\mathbf{w}}  \alpha  \sum_{ijkl} (C_{i,j} - \sum_{d=1}^D w_d C_{dict}[d]_{k,l} )^2 T_{i,k}T_{j,l} \\+ (1-\alpha) \sum_{ij} \| \mathbf{Y_i} - \sum_d w_d \mathbf{Y_{dict}[d]_j} \|_2^2 T_{ij}- reg \| \mathbf{w}  \|_2^2
 
     Such that :
 
@@ -2650,8 +2650,8 @@ def _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdict, Ydict, Cembedded, Yembedd
 
     - :math:`\mathbf{C}` is a (ns,ns) pairwise similarity matrix of variable size ns.
     - :math:`\mathbf{Y}` is a (ns,d) features matrix of variable size ns and fixed dimension d.
-    - :math:`\mathbf{Cdict}` is a (D, nt, nt) tensor of D pairwise similarity matrix of fixed size nt.
-    - :math:`\mathbf{Ydict}` is a (D, nt, d) tensor of D features matrix of fixed size nt and fixed dimension d.
+    - :math:`\mathbf{C_{dict}}` is a (D, nt, nt) tensor of D pairwise similarity matrix of fixed size nt.
+    - :math:`\mathbf{Y_{dict}}` is a (D, nt, d) tensor of D features matrix of fixed size nt and fixed dimension d.
     - :math:`\mathbf{p}` is the source distribution corresponding to :math:`\mathbf{C_s}`
     - :math:`\mathbf{q}` is the target distribution assigned to every structures in the embedding space.
     - :math:`\mathbf{T}` is the optimal transport plan conditioned by the previous state of :math:`\mathbf{w}`
@@ -2697,7 +2697,7 @@ def _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdict, Ydict, Cembedded, Yembedd
     Returns
     -------
     w: ndarray (D,)
-        linear unmixing of :math:`(\mathbf{C},\mathbf{Y},\mathbf{p})` onto the span of :math:`(Cdict,Ydict)` given OT corresponding to previous unmixing.
+        linear unmixing of :math:`(\mathbf{C},\mathbf{Y},\mathbf{p})` onto the span of :math:`(C_{dict},Y_{dict})` given OT corresponding to previous unmixing.
     """
     convergence_criterion = np.inf
     current_loss = starting_loss
@@ -2743,7 +2743,7 @@ def _linesearch_fused_gromov_wasserstein_unmixing(w, grad_w, x, Y, Cdict, Ydict,
     r"""
     Compute optimal steps for the line search problem of Fused Gromov-Wasserstein linear unmixing
     .. math::
-        \min_{\gamma \in [0,1]}  \alpha \sum_{ijkl} (C_{i,j} - \sum_{d=1}^D z_d(\gamma)Cdict[d]_{k,l} )^2 T_{i,k}T_{j,l} \\ + (1-\alpha) \sum_{ij} \| \mathbf{Y_i} - \sum_d z_d(\gamma) \mathbf{Ydict[d]_j} \|_2^2 - reg\| \mathbf{z}(\gamma)  \|_2^2
+        \min_{\gamma \in [0,1]}  \alpha \sum_{ijkl} (C_{i,j} - \sum_{d=1}^D z_d(\gamma)C_{dict}[d]_{k,l} )^2 T_{i,k}T_{j,l} \\ + (1-\alpha) \sum_{ij} \| \mathbf{Y_i} - \sum_d z_d(\gamma) \mathbf{Y_{dict}[d]_j} \|_2^2 - reg\| \mathbf{z}(\gamma)  \|_2^2
 
 
     Such that :

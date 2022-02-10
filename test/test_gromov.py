@@ -595,8 +595,8 @@ def test_fgw(nx):
     np.testing.assert_allclose(
         Gb, np.flipud(Id), atol=1e-04)  # cf convergence gromov
 
-    fgw, log = ot.gromov.fused_gromov_wasserstein2(M, C1, C2, p, q, 'square_loss', alpha=0.5, log=True)
-    fgwb, logb = ot.gromov.fused_gromov_wasserstein2(Mb, C1b, C2b, pb, qb, 'square_loss', alpha=0.5, log=True)
+    fgw, log = ot.gromov.fused_gromov_wasserstein2(M, C1, C2, p, q, 'square_loss', G0=None, alpha=0.5, log=True)
+    fgwb, logb = ot.gromov.fused_gromov_wasserstein2(Mb, C1b, C2b, pb, qb, 'square_loss', G0=G0b, alpha=0.5, log=True)
     fgwb = nx.to_numpy(fgwb)
 
     G = log['T']
@@ -725,23 +725,59 @@ def test_gromov_wasserstein_linear_unmixing(nx):
     Cdictb = nx.from_numpy(Cdict)
     pb = nx.from_numpy(p)
     tol = 10**(-5)
+    # Tests without regularization
+    reg = 0.
     unmixing1, C1_emb, OT, reconstruction1 = ot.gromov.gromov_wasserstein_linear_unmixing(
-        C1, Cdict, reg=0., p=p, q=p,
+        C1, Cdict, reg=reg, p=p, q=p,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
     )
 
     unmixing1b, C1b_emb, OTb, reconstruction1b = ot.gromov.gromov_wasserstein_linear_unmixing(
-        C1b, Cdictb, reg=0., p=None, q=None,
+        C1b, Cdictb, reg=reg, p=None, q=None,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
     )
 
     unmixing2, C2_emb, OT, reconstruction2 = ot.gromov.gromov_wasserstein_linear_unmixing(
-        C2, Cdict, reg=0., p=None, q=None,
+        C2, Cdict, reg=reg, p=None, q=None,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
     )
 
     unmixing2b, C2b_emb, OTb, reconstruction2b = ot.gromov.gromov_wasserstein_linear_unmixing(
-        C2b, Cdictb, reg=0., p=pb, q=pb,
+        C2b, Cdictb, reg=reg, p=pb, q=pb,
+        tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
+    )
+
+    np.testing.assert_allclose(unmixing1, nx.to_numpy(unmixing1b), atol=1e-06)
+    np.testing.assert_allclose(unmixing1, [1., 0.], atol=1e-01)
+    np.testing.assert_allclose(unmixing2, nx.to_numpy(unmixing2b), atol=1e-06)
+    np.testing.assert_allclose(unmixing2, [0., 1.], atol=1e-01)
+    np.testing.assert_allclose(C1_emb, nx.to_numpy(C1b_emb), atol=1e-06)
+    np.testing.assert_allclose(C2_emb, nx.to_numpy(C2b_emb), atol=1e-06)
+    np.testing.assert_allclose(reconstruction1, reconstruction1b, atol=1e-06)
+    np.testing.assert_allclose(reconstruction2, reconstruction2b, atol=1e-06)
+    np.testing.assert_allclose(C1b_emb.shape, (n, n))
+    np.testing.assert_allclose(C2b_emb.shape, (n, n))
+
+    # Tests with regularization
+
+    reg = 0.001
+    unmixing1, C1_emb, OT, reconstruction1 = ot.gromov.gromov_wasserstein_linear_unmixing(
+        C1, Cdict, reg=reg, p=p, q=p,
+        tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
+    )
+
+    unmixing1b, C1b_emb, OTb, reconstruction1b = ot.gromov.gromov_wasserstein_linear_unmixing(
+        C1b, Cdictb, reg=reg, p=None, q=None,
+        tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
+    )
+
+    unmixing2, C2_emb, OT, reconstruction2 = ot.gromov.gromov_wasserstein_linear_unmixing(
+        C2, Cdict, reg=reg, p=None, q=None,
+        tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
+    )
+
+    unmixing2b, C2b_emb, OTb, reconstruction2b = ot.gromov.gromov_wasserstein_linear_unmixing(
+        C2b, Cdictb, reg=reg, p=pb, q=pb,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
     )
 
@@ -802,7 +838,7 @@ def test_gromov_wasserstein_dictionary_learning(nx):
     # > Learn the dictionary using this init
     Cdict, log = ot.gromov.gromov_wasserstein_dictionary_learning(
         Cs, D=n_atoms, nt=shape, ps=ps, q=q, Cdict_init=Cdict_init,
-        epochs=5, batch_size=n_samples, learning_rate=1., reg=0.,
+        epochs=5, batch_size=2 * n_samples, learning_rate=1., reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
         projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
     )
@@ -949,24 +985,62 @@ def test_fused_gromov_wasserstein_linear_unmixing(nx):
     Cdictb = nx.from_numpy(Cdict)
     Ydictb = nx.from_numpy(Ydict)
     pb = nx.from_numpy(p)
+    # Tests without regularization
+    reg = 0.
 
     unmixing1, C1_emb, Y1_emb, OT, reconstruction1 = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-        C1, F, Cdict, Ydict, p=p, q=p, alpha=0.5, reg=0.,
+        C1, F, Cdict, Ydict, p=p, q=p, alpha=0.5, reg=reg,
         tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200
     )
 
     unmixing1b, C1b_emb, Y1b_emb, OTb, reconstruction1b = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-        C1b, Fb, Cdictb, Ydictb, p=None, q=None, alpha=0.5, reg=0.,
+        C1b, Fb, Cdictb, Ydictb, p=None, q=None, alpha=0.5, reg=reg,
         tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200
     )
 
     unmixing2, C2_emb, Y2_emb, OT, reconstruction2 = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-        C2, F, Cdict, Ydict, p=None, q=None, alpha=0.5, reg=0.,
+        C2, F, Cdict, Ydict, p=None, q=None, alpha=0.5, reg=reg,
         tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200
     )
 
     unmixing2b, C2b_emb, Y2b_emb, OTb, reconstruction2b = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
-        C2b, Fb, Cdictb, Ydictb, p=pb, q=pb, alpha=0.5, reg=0.,
+        C2b, Fb, Cdictb, Ydictb, p=pb, q=pb, alpha=0.5, reg=reg,
+        tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200
+    )
+
+    np.testing.assert_allclose(unmixing1, nx.to_numpy(unmixing1b), atol=1e-06)
+    np.testing.assert_allclose(unmixing1, [1., 0.], atol=1e-01)
+    np.testing.assert_allclose(unmixing2, nx.to_numpy(unmixing2b), atol=1e-06)
+    np.testing.assert_allclose(unmixing2, [0., 1.], atol=1e-01)
+    np.testing.assert_allclose(C1_emb, nx.to_numpy(C1b_emb), atol=1e-03)
+    np.testing.assert_allclose(C2_emb, nx.to_numpy(C2b_emb), atol=1e-03)
+    np.testing.assert_allclose(Y1_emb, nx.to_numpy(Y1b_emb), atol=1e-03)
+    np.testing.assert_allclose(Y2_emb, nx.to_numpy(Y2b_emb), atol=1e-03)
+    np.testing.assert_allclose(reconstruction1, reconstruction1b, atol=1e-06)
+    np.testing.assert_allclose(reconstruction2, reconstruction2b, atol=1e-06)
+    np.testing.assert_allclose(C1b_emb.shape, (n, n))
+    np.testing.assert_allclose(C2b_emb.shape, (n, n))
+
+    # Tests with regularization
+    reg = 0.001
+
+    unmixing1, C1_emb, Y1_emb, OT, reconstruction1 = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
+        C1, F, Cdict, Ydict, p=p, q=p, alpha=0.5, reg=reg,
+        tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200
+    )
+
+    unmixing1b, C1b_emb, Y1b_emb, OTb, reconstruction1b = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
+        C1b, Fb, Cdictb, Ydictb, p=None, q=None, alpha=0.5, reg=reg,
+        tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200
+    )
+
+    unmixing2, C2_emb, Y2_emb, OT, reconstruction2 = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
+        C2, F, Cdict, Ydict, p=None, q=None, alpha=0.5, reg=reg,
+        tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200
+    )
+
+    unmixing2b, C2b_emb, Y2b_emb, OTb, reconstruction2b = ot.gromov.fused_gromov_wasserstein_linear_unmixing(
+        C2b, Fb, Cdictb, Ydictb, p=pb, q=pb, alpha=0.5, reg=reg,
         tol_outer=10**(-6), tol_inner=10**(-6), max_iter_outer=20, max_iter_inner=200
     )
 
@@ -1063,7 +1137,7 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
 
     Cdictb, Ydictb, log = ot.gromov.fused_gromov_wasserstein_dictionary_learning(
         Csb, Ysb, D=n_atoms, nt=shape, ps=None, q=None, Cdict_init=Cdict_initb, Ydict_init=Ydict_initb,
-        epochs=5, batch_size=n_samples, learning_rate_C=1., learning_rate_Y=1., alpha=alpha, reg=0.,
+        epochs=5, batch_size=2 * n_samples, learning_rate_C=1., learning_rate_Y=1., alpha=alpha, reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200,
         projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
     )
