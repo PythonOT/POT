@@ -3,6 +3,7 @@
 # Author: Erwan Vautier <erwan.vautier@gmail.com>
 #         Nicolas Courty <ncourty@irisa.fr>
 #         Titouan Vayer <titouan.vayer@irisa.fr>
+#         Cédric Vincent-Cuaz <cedric.vincent-cuaz@inria.fr>
 #
 # License: MIT License
 
