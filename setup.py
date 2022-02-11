@@ -68,7 +68,7 @@ setup(
     license='MIT',
     scripts=[],
     data_files=[],
-    setup_requires=["numpy>=1.20", "cython>=0.23"],
+    setup_requires=["oldest-supported-numpy", "cython>=0.23"],
     install_requires=["numpy>=1.20", "scipy>=1.0"],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
