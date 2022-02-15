@@ -1,5 +1,4 @@
 """
-
 .. warning::
     The list of automatically imported sub-modules is as follows:
     :py:mod:`ot.lp`, :py:mod:`ot.bregman`, :py:mod:`ot.optim`
@@ -7,13 +6,10 @@
     :py:mod:`ot.gromov`, :py:mod:`ot.smooth`
     :py:mod:`ot.stochastic`, :py:mod:`ot.partial`, :py:mod:`ot.regpath`
     , :py:mod:`ot.unbalanced`.
-
     The following sub-modules are not imported due to additional dependencies:
-
     - :any:`ot.dr` : depends on :code:`pymanopt` and :code:`autograd`.
     - :any:`ot.gpu` : depends on :code:`cupy` and a CUDA GPU.
     - :any:`ot.plot` : depends on :code:`matplotlib`
-
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>

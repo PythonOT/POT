@@ -11,7 +11,7 @@
 - Backend implementation for `ot.lp.free_support_barycenter` (PR #340).
 - Add weak OT solver + example  (PR #341).
 - Add backend support for Domain Adaptation and Unbalanced solvers (PR #343).
-
+- Add (F)GW linear dictionary learning solvers + example  (PR #319)
 
 #### Closed issues
 
