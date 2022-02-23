@@ -18,6 +18,7 @@
 - Bug in instantiating an `autograd` function (`ValFunction`, Issue #337, PR
   #338)
 - Make POT ABI compatible with old and new numpy (Issue #346, PR #349)
+- Warning when feeding integer cost matrix to EMD solver resulting in an integer transport plan (Issue #345, PR #343)
 
 ## 0.8.1.0
 *December 2021*
