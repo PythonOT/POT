@@ -1002,7 +1002,7 @@ FAQ
 
 2. **pip install POT fails with error : ImportError: No module named Cython.Build**
 
-    As discussed shortly in the README file. POT requires to have :code:`numpy`
+    As discussed shortly in the README file. POT<0.8 requires to have :code:`numpy`
     and :code:`cython` installed to build. This corner case is not yet handled
     by :code:`pip` and for now you need to install both library prior to
     installing POT.
