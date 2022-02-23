@@ -12,12 +12,13 @@
 - Add weak OT solver + example  (PR #341).
 - Add backend support for Domain Adaptation and Unbalanced solvers (PR #343).
 - Add (F)GW linear dictionary learning solvers + example  (PR #319)
+- Add links to related PR and Issues in the doc release page (PR #350)
 
 #### Closed issues
 
-- Bug in instantiating an `autograd` function (`ValFunction`, Issue #337, PR
-  #338)
-- Make POT ABI compatible with old and new numpy (Issue #346, PR #349)
+- Fix bug in instantiating an `autograd` function `ValFunction` (Issue #337, 
+  PR #338)
+- Fix POT ABI compatibility with old and new numpy (Issue #346, PR #349)
 - Warning when feeding integer cost matrix to EMD solver resulting in an integer transport plan (Issue #345, PR #343)
 
 ## 0.8.1.0
@@ -62,10 +63,10 @@ As always we want to that the contributors who helped make POT better (and bug f
 
 - Fix bug in older Numpy ABI (<1.20) (Issue #308, PR #326)
 - Fix bug  in `ot.dist` function when non euclidean distance (Issue #305, PR #306)
-- Fix gradient scaling for functions using `nx.set_gradients` (Issue #309, PR
-  #310)
-- Fix bug in generalized Conditional gradient solver and SinkhornL1L2 (Issue
-  #311, PR #313)
+- Fix gradient scaling for functions using `nx.set_gradients` (Issue #309, 
+  PR #310)
+- Fix bug in generalized Conditional gradient solver and SinkhornL1L2 
+  (Issue #311, PR #313)
 - Fix log error in `gromov_barycenters` (Issue #317, PR #3018)
 
 ## 0.8.0
