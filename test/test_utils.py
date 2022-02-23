@@ -67,6 +67,8 @@ def test_tic_toc():
     t2 = ot.toq()
 
     # test timing
+    # np.testing.assert_allclose(0.1, t, rtol=1e-1, atol=1e-1)
+    # very slow macos github action equality not possible
     assert t > 0.09
 
     # test toc vs toq

@@ -17,6 +17,7 @@
 
 - Bug in instantiating an `autograd` function (`ValFunction`, Issue #337, PR
   #338)
+- Make POT ABI compatible with old and new numpy (Issue #346, PR #349)
 
 ## 0.8.1.0
 *December 2021*
