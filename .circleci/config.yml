@@ -57,6 +57,11 @@ jobs:
                which python
                python -c "import ot"
 
+        - run:
+            name: Correct link in release file
+            command: |
+              sed -i -r 's/PR #([[:digit:]]*)/\[PR #\1\]\(https:\/\/github.com\/PythonOT\/POT\/pull\/\1\)/' RELEASES.md
+              sed -i -r 's/Issue #([[:digit:]]*)/\[Issue #\1\]\(https:\/\/github.com\/PythonOT\/POT\/issues\/\1\)/' RELEASES.md
         # Build docs
         - run:
             name: make html
