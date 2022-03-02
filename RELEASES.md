@@ -20,6 +20,9 @@
   PR #338)
 - Fix POT ABI compatibility with old and new numpy (Issue #346, PR #349)
 - Warning when feeding integer cost matrix to EMD solver resulting in an integer transport plan (Issue #345, PR #343)
+- Fix bug where gromov_wasserstein2 does not perform backpropagation with CUDA
+  tensors (Issue #351, PR #352)
+
 
 ## 0.8.1.0
 *December 2021*
