@@ -18,6 +18,9 @@
 - Fix bug in instantiating an `autograd` function `ValFunction` (Issue #337, 
   PR #338)
 - Fix POT ABI compatibility with old and new numpy (Issue #346, PR #349)
+- Fix bug where gromov_wasserstein2 does not perform backpropagation with CUDA
+  tensors (Issue #351, PR #352)
+
 
 ## 0.8.1.0
 *December 2021*
