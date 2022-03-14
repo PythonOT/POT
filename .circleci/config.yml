@@ -4,7 +4,8 @@ version: 2
 jobs:
     build_docs:
       docker:
-        - image: circleci/python:3.7-stretch
+        - image: cimg/python:3.9
+      resource_class: medium
       steps:
         - checkout
         - run:
@@ -23,7 +24,7 @@ jobs:
               echo ${CI_PULL_REQUEST//*pull\//} | tee merge.txt
               if [[ $(cat merge.txt) != "" ]]; then
                 echo "Merging $(cat merge.txt)";
-                git remote add upstream git://github.com/PythonOT/POT.git;
+                git remote add upstream https://github.com/PythonOT/POT.git;
                 git pull --ff-only upstream "refs/pull/$(cat merge.txt)/merge";
                 git fetch upstream master;
               fi
@@ -35,25 +36,14 @@ jobs:
               - pip-cache
 
         - run:
-            name: Spin up Xvfb
-            command: |
-              /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render -noreset;
-
-        # https://github.com/ContinuumIO/anaconda-issues/issues/9190#issuecomment-386508136
-        # https://github.com/golemfactory/golem/issues/1019
-        - run:
-            name: Fix libgcc_s.so.1 pthread_cancel bug
-            command: |
-              sudo apt-get install qt5-default
-
-        - run:
             name: Get Python running
             command: |
               python -m pip install --user --upgrade --progress-bar off pip
-              python -m pip install --user --upgrade --progress-bar off -r requirements.txt
+              python -m pip install --user -e .
+              python -m pip install --user --upgrade --no-cache-dir --progress-bar off -r requirements.txt 
               python -m pip install --user --upgrade --progress-bar off -r docs/requirements.txt
               python -m pip install --user --upgrade --progress-bar off ipython "https://api.github.com/repos/sphinx-gallery/sphinx-gallery/zipball/master" memory_profiler
-              python -m pip install --user -e .
+              
 
         - save_cache:
             key: pip-cache
@@ -67,12 +57,18 @@ jobs:
                which python
                python -c "import ot"
 
+        - run:
+            name: Correct link in release file
+            command: |
+              sed -i -r 's/PR #([[:digit:]]*)/\[PR #\1\]\(https:\/\/github.com\/PythonOT\/POT\/pull\/\1\)/' RELEASES.md
+              sed -i -r 's/Issue #([[:digit:]]*)/\[Issue #\1\]\(https:\/\/github.com\/PythonOT\/POT\/issues\/\1\)/' RELEASES.md
         # Build docs
         - run:
             name: make html
             command: |
               cd docs;
               make html;
+            no_output_timeout: 30m
 
         # Save the outputs
         - store_artifacts:
@@ -83,7 +79,7 @@ jobs:
             paths:
               - html
 
-    deploy:
+    deploy_master:
       docker:
         - image: circleci/python:3.6-jessie
       steps:
@@ -113,25 +109,79 @@ jobs:
                 git reset --hard origin/master
                 git clean -xdf
                 echo "Deploying dev docs for ${CIRCLE_BRANCH}.";
+                cd master
                 cp -a /tmp/build/html/* .;
+                cp -a /tmp/build/html/.github/* .github/;
                 touch .nojekyll;
                 git add -A;
+                git add -f .github/* ;
                 git commit -m "CircleCI update of dev docs (${CIRCLE_BUILD_NUM}).";
                 git push origin master;
               else
                 echo "No deployment (build: ${CIRCLE_BRANCH}).";
               fi
 
+    deploy_tag:
+      docker:
+        - image: circleci/python:3.6-jessie
+      steps:
+        - attach_workspace:
+            at: /tmp/build
+        - run:
+            name: Fetch docs
+            command: |
+              set -e
+              mkdir -p ~/.ssh
+              echo -e "Host *\nStrictHostKeyChecking no" > ~/.ssh/config
+              chmod og= ~/.ssh/config
+              if [ ! -d ~/PythonOT.github.io ]; then
+                git clone git@github.com:/PythonOT/PythonOT.github.io.git ~/PythonOT.github.io --depth=1
+              fi
+        - run:
+            name: Deploy docs
+            command: |
+              set -e;
+              git config --global user.email "circle@PythonOT.com";
+              git config --global user.name "Circle CI";
+              cd ~/PythonOT.github.io;
+              git checkout master
+              git remote -v
+              git fetch origin
+              git reset --hard origin/master
+              git clean -xdf
+              echo "Deploying dev docs for ${CIRCLE_BRANCH}.";
+              cp -a /tmp/build/html/* .;
+              cp -a /tmp/build/html/.github/* .github/;
+              touch .nojekyll;
+              git add -A;
+              git add -f .github/* ;
+              git commit -m "CircleCI update of dev docs (${CIRCLE_BUILD_NUM}).";
+              git push origin master;
+
+
+
 workflows:
   version: 2
 
   default:
+
     jobs:
-      - build_docs
-      - deploy:
+      - build_docs:
+          filters:
+            tags:
+              only: /[0-9]+(\.[0-9]+)*$/  
+      - deploy_master:
           requires:
             - build_docs
           filters:
             branches:
               only:
                 - master
+      - deploy_tag:
+          requires:
+            - build_docs
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /[0-9]+(\.[0-9]+)*$/

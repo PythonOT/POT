@@ -17,10 +17,11 @@ Contents
    all
    auto_examples/index
    releases
+   .github/CONTRIBUTING
+   .github/CODE_OF_CONDUCT
 
-.. include:: readme.rst
-   :start-line: 2
-
+.. include:: ../../README.md
+   :parser: myst_parser.sphinx_
 
 
 Indices and tables

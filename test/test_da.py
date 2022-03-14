@@ -106,8 +106,8 @@ def test_sinkhorn_l1l2_transport_class():
     """test_sinkhorn_transport
     """
 
-    ns = 150
-    nt = 200
+    ns = 50
+    nt = 100
 
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)
@@ -448,8 +448,8 @@ def test_mapping_transport_class():
     """test_mapping_transport
     """
 
-    ns = 60
-    nt = 120
+    ns = 20
+    nt = 30
 
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)
@@ -564,6 +564,14 @@ def test_mapping_transport_class():
     otda = ot.da.MappingTransport(kernel="gaussian", log=True)
     otda.fit(Xs=Xs, Xt=Xt)
     assert len(otda.log_.keys()) != 0
+
+    # check that it does not crash when derphi is very close to 0
+    np.random.seed(39)
+    Xs, ys = make_data_classif('3gauss', ns)
+    Xt, yt = make_data_classif('3gauss2', nt)
+    otda = ot.da.MappingTransport(kernel="gaussian", bias=False)
+    otda.fit(Xs=Xs, Xt=Xt)
+    np.random.seed(None)
 
 
 def test_linear_mapping():

@@ -4,3 +4,4 @@ numpydoc
 memory_profiler
 pillow
 networkx
+myst-parser

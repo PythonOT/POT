@@ -14,12 +14,12 @@ API and modules
    :template: module.rst
 
    lp
+   backend
    bregman
    smooth
    gromov
    optim
    da
-   gpu
    dr
    utils
    datasets
@@ -28,6 +28,7 @@ API and modules
    unbalanced
    partial
    sliced
+   weak
 
 .. autosummary::
    :toctree: ../modules/generated/

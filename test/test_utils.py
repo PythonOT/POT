@@ -4,10 +4,41 @@
 #
 # License: MIT License
 
-
 import ot
 import numpy as np
 import sys
+import pytest
+
+
+def test_proj_simplex(nx):
+    n = 10
+    rng = np.random.RandomState(0)
+
+    # test on matrix when projection is done on axis 0
+    x = rng.randn(n, 2)
+    x1 = nx.from_numpy(x)
+
+    # all projections should sum to 1
+    proj = ot.utils.proj_simplex(x1)
+    l1 = np.sum(nx.to_numpy(proj), axis=0)
+    l2 = np.ones(2)
+    np.testing.assert_allclose(l1, l2, atol=1e-5)
+
+    # all projections should sum to 3
+    proj = ot.utils.proj_simplex(x1, 3)
+    l1 = np.sum(nx.to_numpy(proj), axis=0)
+    l2 = 3 * np.ones(2)
+    np.testing.assert_allclose(l1, l2, atol=1e-5)
+
+    # tets on vector
+    x = rng.randn(n)
+    x1 = nx.from_numpy(x)
+
+    # all projections should sum to 1
+    proj = ot.utils.proj_simplex(x1)
+    l1 = np.sum(nx.to_numpy(proj), axis=0)
+    l2 = np.ones(2)
+    np.testing.assert_allclose(l1, l2, atol=1e-5)
 
 
 def test_parmap():
@@ -31,12 +62,14 @@ def test_tic_toc():
     import time
 
     ot.tic()
-    time.sleep(0.5)
+    time.sleep(0.1)
     t = ot.toc()
     t2 = ot.toq()
 
     # test timing
-    np.testing.assert_allclose(0.5, t, rtol=1e-1, atol=1e-1)
+    # np.testing.assert_allclose(0.1, t, rtol=1e-1, atol=1e-1)
+    # very slow macos github action equality not possible
+    assert t > 0.09
 
     # test toc vs toq
     np.testing.assert_allclose(t, t2, rtol=1e-1, atol=1e-1)
@@ -45,8 +78,8 @@ def test_tic_toc():
 def test_kernel():
 
     n = 100
-
-    x = np.random.randn(n, 2)
+    rng = np.random.RandomState(0)
+    x = rng.randn(n, 2)
 
     K = ot.utils.kernel(x, x)
 
@@ -63,11 +96,24 @@ def test_unif():
     np.testing.assert_allclose(1, np.sum(u))
 
 
-def test_dist():
+def test_unif_backend(nx):
 
     n = 100
 
-    x = np.random.randn(n, 2)
+    for tp in nx.__type_list__:
+        print(nx.dtype_device(tp))
+
+        u = ot.unif(n, type_as=tp)
+
+        np.testing.assert_allclose(1, np.sum(nx.to_numpy(u)), atol=1e-6)
+
+
+def test_dist():
+
+    n = 10
+
+    rng = np.random.RandomState(0)
+    x = rng.randn(n, 2)
 
     D = np.zeros((n, n))
     for i in range(n):
@@ -77,9 +123,51 @@ def test_dist():
     D2 = ot.dist(x, x)
     D3 = ot.dist(x)
 
+    D4 = ot.dist(x, x, metric='minkowski', p=2)
+
+    assert D4[0, 1] == D4[1, 0]
+
     # dist shoul return squared euclidean
-    np.testing.assert_allclose(D, D2)
-    np.testing.assert_allclose(D, D3)
+    np.testing.assert_allclose(D, D2, atol=1e-14)
+    np.testing.assert_allclose(D, D3, atol=1e-14)
+
+    # tests that every metric runs correctly
+    metrics_w = [
+        'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
+        'euclidean', 'hamming', 'jaccard', 'kulsinski',
+        'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
+        'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule'
+    ]  # those that support weights
+    metrics = ['mahalanobis', 'seuclidean']  # do not support weights depending on scipy's version
+
+    for metric in metrics_w:
+        print(metric)
+        ot.dist(x, x, metric=metric, p=3, w=np.random.random((2, )))
+    for metric in metrics:
+        print(metric)
+        ot.dist(x, x, metric=metric, p=3)
+
+    # weighted minkowski but with no weights
+    with pytest.raises(ValueError):
+        ot.dist(x, x, metric="wminkowski")
+
+
+def test_dist_backends(nx):
+
+    n = 100
+    rng = np.random.RandomState(0)
+    x = rng.randn(n, 2)
+    x1 = nx.from_numpy(x)
+
+    lst_metric = ['euclidean', 'sqeuclidean']
+
+    for metric in lst_metric:
+
+        D = ot.dist(x, x, metric=metric)
+        D1 = ot.dist(x1, x1, metric=metric)
+
+        # low atol because jax forces float32
+        np.testing.assert_allclose(D, nx.to_numpy(D1), atol=1e-5)
 
 
 def test_dist0():
@@ -95,9 +183,11 @@ def test_dots():
 
     n1, n2, n3, n4 = 100, 50, 200, 100
 
-    A = np.random.randn(n1, n2)
-    B = np.random.randn(n2, n3)
-    C = np.random.randn(n3, n4)
+    rng = np.random.RandomState(0)
+
+    A = rng.randn(n1, n2)
+    B = rng.randn(n2, n3)
+    C = rng.randn(n3, n4)
 
     X1 = ot.utils.dots(A, B, C)
 
@@ -169,6 +259,13 @@ def test_deprecated_func():
     class Class():
         pass
 
+    with pytest.warns(DeprecationWarning):
+        fun()
+
+    with pytest.warns(DeprecationWarning):
+        cl = Class()
+        print(cl)
+
     if sys.version_info < (3, 5):
         print('Not tested')
     else:
@@ -198,5 +295,8 @@ def test_BaseEstimator():
 
     params['first'] = 'spam again'
     cl.set_params(**params)
+
+    with pytest.raises(ValueError):
+        cl.set_params(bibi=10)
 
     assert cl.first == 'spam again'

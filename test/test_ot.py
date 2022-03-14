@@ -8,13 +8,13 @@ import warnings
 
 import numpy as np
 import pytest
-from scipy.stats import wasserstein_distance
 
 import ot
 from ot.datasets import make_1D_gauss as gauss
+from ot.backend import torch, tf
 
 
-def test_emd_dimension_mismatch():
+def test_emd_dimension_and_mass_mismatch():
     # test emd and emd2 for dimension mismatch
     n_samples = 100
     n_features = 2
@@ -28,6 +28,153 @@ def test_emd_dimension_mismatch():
     np.testing.assert_raises(AssertionError, ot.emd, a, a, M)
 
     np.testing.assert_raises(AssertionError, ot.emd2, a, a, M)
+
+    b = a.copy()
+    a[0] = 100
+    np.testing.assert_raises(AssertionError, ot.emd, a, b, M)
+
+
+def test_emd_backends(nx):
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    G = ot.emd(a, a, M)
+
+    ab = nx.from_numpy(a)
+    Mb = nx.from_numpy(M)
+
+    Gb = ot.emd(ab, ab, Mb)
+
+    np.allclose(G, nx.to_numpy(Gb))
+
+
+def test_emd2_backends(nx):
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    val = ot.emd2(a, a, M)
+
+    ab = nx.from_numpy(a)
+    Mb = nx.from_numpy(M)
+
+    valb = ot.emd2(ab, ab, Mb)
+
+    np.allclose(val, nx.to_numpy(valb))
+
+
+def test_emd_emd2_types_devices(nx):
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    for tp in nx.__type_list__:
+        print(nx.dtype_device(tp))
+
+        ab = nx.from_numpy(a, type_as=tp)
+        Mb = nx.from_numpy(M, type_as=tp)
+
+        Gb = ot.emd(ab, ab, Mb)
+
+        w = ot.emd2(ab, ab, Mb)
+
+        nx.assert_same_dtype_device(Mb, Gb)
+        nx.assert_same_dtype_device(Mb, w)
+
+
+@pytest.mark.skipif(not tf, reason="tf not installed")
+def test_emd_emd2_devices_tf():
+    if not tf:
+        return
+    nx = ot.backend.TensorflowBackend()
+
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+    M = ot.dist(x, y)
+
+    # Check that everything stays on the CPU
+    with tf.device("/CPU:0"):
+        ab = nx.from_numpy(a)
+        Mb = nx.from_numpy(M)
+        Gb = ot.emd(ab, ab, Mb)
+        w = ot.emd2(ab, ab, Mb)
+        nx.assert_same_dtype_device(Mb, Gb)
+        nx.assert_same_dtype_device(Mb, w)
+
+    if len(tf.config.list_physical_devices('GPU')) > 0:
+        # Check that everything happens on the GPU
+        ab = nx.from_numpy(a)
+        Mb = nx.from_numpy(M)
+        Gb = ot.emd(ab, ab, Mb)
+        w = ot.emd2(ab, ab, Mb)
+        nx.assert_same_dtype_device(Mb, Gb)
+        nx.assert_same_dtype_device(Mb, w)
+        assert nx.dtype_device(Gb)[1].startswith("GPU")
+
+
+def test_emd2_gradients():
+    n_samples = 100
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    if torch:
+
+        a1 = torch.tensor(a, requires_grad=True)
+        b1 = torch.tensor(a, requires_grad=True)
+        M1 = torch.tensor(M, requires_grad=True)
+
+        val = ot.emd2(a1, b1, M1)
+
+        val.backward()
+
+        assert a1.shape == a1.grad.shape
+        assert b1.shape == b1.grad.shape
+        assert M1.shape == M1.grad.shape
+
+        # Testing for bug #309, checking for scaling of gradient
+        a2 = torch.tensor(a, requires_grad=True)
+        b2 = torch.tensor(a, requires_grad=True)
+        M2 = torch.tensor(M, requires_grad=True)
+
+        val = 10.0 * ot.emd2(a2, b2, M2)
+
+        val.backward()
+
+        assert np.allclose(10.0 * a1.grad.cpu().detach().numpy(),
+                           a2.grad.cpu().detach().numpy())
+        assert np.allclose(10.0 * b1.grad.cpu().detach().numpy(),
+                           b2.grad.cpu().detach().numpy())
+        assert np.allclose(10.0 * M1.grad.cpu().detach().numpy(),
+                           M2.grad.cpu().detach().numpy())
 
 
 def test_emd_emd2():
@@ -51,100 +198,6 @@ def test_emd_emd2():
     w = ot.emd2(u, u, M)
     # check loss=0
     np.testing.assert_allclose(w, 0)
-
-
-def test_emd_1d_emd2_1d():
-    # test emd1d gives similar results as emd
-    n = 20
-    m = 30
-    rng = np.random.RandomState(0)
-    u = rng.randn(n, 1)
-    v = rng.randn(m, 1)
-
-    M = ot.dist(u, v, metric='sqeuclidean')
-
-    G, log = ot.emd([], [], M, log=True)
-    wass = log["cost"]
-    G_1d, log = ot.emd_1d(u, v, [], [], metric='sqeuclidean', log=True)
-    wass1d = log["cost"]
-    wass1d_emd2 = ot.emd2_1d(u, v, [], [], metric='sqeuclidean', log=False)
-    wass1d_euc = ot.emd2_1d(u, v, [], [], metric='euclidean', log=False)
-
-    # check loss is similar
-    np.testing.assert_allclose(wass, wass1d)
-    np.testing.assert_allclose(wass, wass1d_emd2)
-
-    # check loss is similar to scipy's implementation for Euclidean metric
-    wass_sp = wasserstein_distance(u.reshape((-1,)), v.reshape((-1,)))
-    np.testing.assert_allclose(wass_sp, wass1d_euc)
-
-    # check constraints
-    np.testing.assert_allclose(np.ones((n,)) / n, G.sum(1))
-    np.testing.assert_allclose(np.ones((m,)) / m, G.sum(0))
-
-    # check G is similar
-    np.testing.assert_allclose(G, G_1d)
-
-    # check AssertionError is raised if called on non 1d arrays
-    u = np.random.randn(n, 2)
-    v = np.random.randn(m, 2)
-    with pytest.raises(AssertionError):
-        ot.emd_1d(u, v, [], [])
-
-
-def test_emd_1d_emd2_1d_with_weights():
-    # test emd1d gives similar results as emd
-    n = 20
-    m = 30
-    rng = np.random.RandomState(0)
-    u = rng.randn(n, 1)
-    v = rng.randn(m, 1)
-
-    w_u = rng.uniform(0., 1., n)
-    w_u = w_u / w_u.sum()
-
-    w_v = rng.uniform(0., 1., m)
-    w_v = w_v / w_v.sum()
-
-    M = ot.dist(u, v, metric='sqeuclidean')
-
-    G, log = ot.emd(w_u, w_v, M, log=True)
-    wass = log["cost"]
-    G_1d, log = ot.emd_1d(u, v, w_u, w_v, metric='sqeuclidean', log=True)
-    wass1d = log["cost"]
-    wass1d_emd2 = ot.emd2_1d(u, v, w_u, w_v, metric='sqeuclidean', log=False)
-    wass1d_euc = ot.emd2_1d(u, v, w_u, w_v, metric='euclidean', log=False)
-
-    # check loss is similar
-    np.testing.assert_allclose(wass, wass1d)
-    np.testing.assert_allclose(wass, wass1d_emd2)
-
-    # check loss is similar to scipy's implementation for Euclidean metric
-    wass_sp = wasserstein_distance(u.reshape((-1,)), v.reshape((-1,)), w_u, w_v)
-    np.testing.assert_allclose(wass_sp, wass1d_euc)
-
-    # check constraints
-    np.testing.assert_allclose(w_u, G.sum(1))
-    np.testing.assert_allclose(w_v, G.sum(0))
-
-
-def test_wass_1d():
-    # test emd1d gives similar results as emd
-    n = 20
-    m = 30
-    rng = np.random.RandomState(0)
-    u = rng.randn(n, 1)
-    v = rng.randn(m, 1)
-
-    M = ot.dist(u, v, metric='sqeuclidean')
-
-    G, log = ot.emd([], [], M, log=True)
-    wass = log["cost"]
-
-    wass1d = ot.wasserstein_1d(u, v, [], [], p=2.)
-
-    # check loss is similar
-    np.testing.assert_allclose(np.sqrt(wass), wass1d)
 
 
 def test_emd_empty():
@@ -179,7 +232,7 @@ def test_emd2_multi():
     # Gaussian distributions
     a = gauss(n, m=20, s=5)  # m= mean, s= std
 
-    ls = np.arange(20, 500, 20)
+    ls = np.arange(20, 500, 100)
     nb = len(ls)
     b = np.zeros((n, nb))
     for i in range(nb):
@@ -249,6 +302,23 @@ def test_free_support_barycenter():
     np.testing.assert_allclose(X, bar_locations, rtol=1e-5, atol=1e-7)
 
 
+def test_free_support_barycenter_backends(nx):
+
+    measures_locations = [np.array([-1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
+    measures_weights = [np.array([1.]), np.array([1.])]
+    X_init = np.array([-12.]).reshape((1, 1))
+
+    X = ot.lp.free_support_barycenter(measures_locations, measures_weights, X_init)
+
+    measures_locations2 = [nx.from_numpy(x) for x in measures_locations]
+    measures_weights2 = [nx.from_numpy(x) for x in measures_weights]
+    X_init2 = nx.from_numpy(X_init)
+
+    X2 = ot.lp.free_support_barycenter(measures_locations2, measures_weights2, X_init2)
+
+    np.testing.assert_allclose(X, nx.to_numpy(X2))
+
+
 @pytest.mark.skipif(not ot.lp.cvx.cvxopt, reason="No cvxopt available")
 def test_lp_barycenter_cvxopt():
     a1 = np.array([1.0, 0, 0])[:, None]
@@ -291,17 +361,7 @@ def test_warnings():
         print('Computing {} EMD '.format(1))
         ot.emd(a, b, M, numItermax=1)
         assert "numItermax" in str(w[-1].message)
-        assert len(w) == 1
-        a[0] = 100
-        print('Computing {} EMD '.format(2))
-        ot.emd(a, b, M)
-        assert "infeasible" in str(w[-1].message)
-        assert len(w) == 2
-        a[0] = -1
-        print('Computing {} EMD '.format(2))
-        ot.emd(a, b, M)
-        assert "infeasible" in str(w[-1].message)
-        assert len(w) == 3
+        #assert len(w) == 1
 
 
 def test_dual_variables():

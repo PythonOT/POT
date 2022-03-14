@@ -58,7 +58,7 @@ help(ot.dist)
 # number of Bakeries to Cafés in a City (in this case Manhattan). We did a
 # quick google map search in Manhattan for bakeries and Cafés:
 #
-# .. image:: images/bak.png
+# .. image:: ../_static/images/bak.png
 #     :align: center
 #     :alt: bakery-cafe-manhattan
 #     :width: 600px
@@ -233,7 +233,7 @@ print('Wasserstein loss (EMD) = {0:.2f}'.format(W))
 # The Sinkhorn algorithm is very simple to code. You can implement it directly
 # using the following pseudo-code
 #
-# .. image:: images/sinkhorn.png
+# .. image:: ../_static/images/sinkhorn.png
 #     :align: center
 #     :alt: Sinkhorn algorithm
 #     :width: 440px
@@ -327,7 +327,7 @@ for k in range(len(reg_parameter)):
     time_sinkhorn_reg[k] = time.time() - start
 
     if k % 4 == 0 and k > 0:  # we only plot a few
-        ax = pl.subplot(1, 5, k / 4)
+        ax = pl.subplot(1, 5, k // 4)
         im = pl.imshow(ot_sinkhorn, vmin=0, vmax=max_ot)
         pl.title('reg={0:.2g}'.format(reg_parameter[k]))
         pl.xlabel('Cafés')

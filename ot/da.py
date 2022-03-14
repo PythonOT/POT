@@ -26,34 +26,36 @@ from .optim import gcg
 def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
                      numInnerItermax=200, stopInnerThr=1e-9, verbose=False,
                      log=False):
-    """
+    r"""
     Solve the entropic regularization optimal transport problem with nonconvex
     group lasso regularization
 
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega_e(\gamma)
-        + \eta \Omega_g(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot \Omega_e(\gamma) + \eta \ \Omega_g(\gamma)
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} = \mathbf{b}
 
-             \gamma\geq 0
+             \gamma \geq 0
+
+
     where :
 
-    - M is the (ns,nt) metric cost matrix
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
     - :math:`\Omega_e` is the entropic regularization term :math:`\Omega_e
       (\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - :math:`\Omega_g` is the group lasso  regularization term
       :math:`\Omega_g(\gamma)=\sum_{i,c} \|\gamma_{i,\mathcal{I}_c}\|^{1/2}_1`
-      where  :math:`\mathcal{I}_c` are the index of samples from class c
+      where  :math:`\mathcal{I}_c` are the index of samples from class `c`
       in the source domain.
-    - a and b are source and target weights (sum to 1)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
     The algorithm used for solving the problem is the generalized conditional
-    gradient as proposed in  [5]_ [7]_
+    gradient as proposed in :ref:`[5, 7] <references-sinkhorn-lpl1-mm>`.
 
 
     Parameters
@@ -84,19 +86,20 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
 
     Returns
     -------
-    gamma : (ns x nt) ndarray
+    gamma : (ns, nt) ndarray
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
 
 
+    .. _references-sinkhorn-lpl1-mm:
     References
     ----------
-
     .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
        "Optimal Transport for Domain Adaptation," in IEEE
        Transactions on Pattern Analysis and Machine Intelligence ,
        vol.PP, no.99, pp.1-1
+
     .. [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
        Generalized conditional gradient: analysis of convergence
        and applications. arXiv preprint arXiv:1510.06567.
@@ -137,34 +140,36 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
 def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
                      numInnerItermax=200, stopInnerThr=1e-9, verbose=False,
                      log=False):
-    """
+    r"""
     Solve the entropic regularization optimal transport problem with group
     lasso regularization
 
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + reg\cdot\Omega_e(\gamma)+
-        \eta \Omega_g(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot \Omega_e(\gamma) + \eta \ \Omega_g(\gamma)
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} = \mathbf{b}
 
-             \gamma\geq 0
+             \gamma \geq 0
+
+
     where :
 
-    - M is the (ns,nt) metric cost matrix
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
     - :math:`\Omega_e` is the entropic regularization term
       :math:`\Omega_e(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - :math:`\Omega_g` is the group lasso regulaization term
       :math:`\Omega_g(\gamma)=\sum_{i,c} \|\gamma_{i,\mathcal{I}_c}\|^2`
       where  :math:`\mathcal{I}_c` are the index of samples from class
-      c in the source domain.
-    - a and b are source and target weights (sum to 1)
+      `c` in the source domain.
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
     The algorithm used for solving the problem is the generalised conditional
-    gradient as proposed in  [5]_ [7]_
+    gradient as proposed in :ref:`[5, 7] <references-sinkhorn-l1l2-gl>`.
 
 
     Parameters
@@ -195,18 +200,19 @@ def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
 
     Returns
     -------
-    gamma : (ns x nt) ndarray
+    gamma : (ns, nt) ndarray
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
 
 
+    .. _references-sinkhorn-l1l2-gl:
     References
     ----------
-
     .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
        "Optimal Transport for Domain Adaptation," in IEEE Transactions
        on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+
     .. [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
        Generalized conditional gradient: analysis of convergence and
        applications. arXiv preprint arXiv:1510.06567.
@@ -245,38 +251,40 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
                             verbose2=False, numItermax=100, numInnerItermax=10,
                             stopInnerThr=1e-6, stopThr=1e-5, log=False,
                             **kwargs):
-    """Joint OT and linear mapping estimation as proposed in [8]
+    r"""Joint OT and linear mapping estimation as proposed in
+    :ref:`[8] <references-joint-OT-mapping-linear>`.
 
     The function solves the following optimization problem:
 
     .. math::
-        \min_{\gamma,L}\quad \|L(X_s) -n_s\gamma X_t\|^2_F +
-          \mu<\gamma,M>_F + \eta  \|L -I\|^2_F
+        \min_{\gamma,L}\quad \|L(\mathbf{X_s}) - n_s\gamma \mathbf{X_t} \|^2_F +
+          \mu \langle \gamma, \mathbf{M} \rangle_F + \eta \|L - \mathbf{I}\|^2_F
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} = \mathbf{b}
 
-             \gamma\geq 0
+             \gamma \geq 0
+
     where :
 
-    - M is the (ns,nt) squared euclidean cost matrix between samples in
-       Xs and Xt (scaled by ns)
-    - :math:`L` is a dxd linear operator that approximates the barycentric
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) squared euclidean cost matrix between samples in
+      :math:`\mathbf{X_s}` and :math:`\mathbf{X_t}` (scaled by :math:`n_s`)
+    - :math:`L` is a :math:`d\times d` linear operator that approximates the barycentric
       mapping
-    - :math:`I` is the identity matrix (neutral linear mapping)
-    - a and b are uniform source and target weights
+    - :math:`\mathbf{I}` is the identity matrix (neutral linear mapping)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are uniform source and target weights
 
     The problem consist in solving jointly an optimal transport matrix
     :math:`\gamma` and a linear mapping that fits the barycentric mapping
-    :math:`n_s\gamma X_t`.
+    :math:`n_s\gamma \mathbf{X_t}`.
 
     One can also estimate a mapping with constant bias (see supplementary
-    material of [8]) using the bias optional argument.
+    material of :ref:`[8] <references-joint-OT-mapping-linear>`) using the bias optional argument.
 
     The algorithm used for solving the problem is the block coordinate
-    descent that alternates between updates of G (using conditionnal gradient)
-    and the update of L using a classical least square solver.
+    descent that alternates between updates of :math:`\mathbf{G}` (using conditionnal gradient)
+    and the update of :math:`\mathbf{L}` using a classical least square solver.
 
 
     Parameters
@@ -307,17 +315,17 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
 
     Returns
     -------
-    gamma : (ns x nt) ndarray
+    gamma : (ns, nt) ndarray
         Optimal transportation matrix for the given parameters
-    L : (d x d) ndarray
-        Linear mapping matrix (d+1 x d if bias)
+    L : (d, d) ndarray
+        Linear mapping matrix ((:math:`d+1`, `d`) if bias)
     log : dict
         log dictionary return only if log==True in parameters
 
 
+    .. _references-joint-OT-mapping-linear:
     References
     ----------
-
     .. [8] M. Perrot, N. Courty, R. Flamary, A. Habrard,
         "Mapping estimation for discrete optimal transport",
         Neural Information Processing Systems (NIPS), 2016.
@@ -434,37 +442,41 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
                             numItermax=100, numInnerItermax=10,
                             stopInnerThr=1e-6, stopThr=1e-5, log=False,
                             **kwargs):
-    """Joint OT and nonlinear mapping estimation with kernels as proposed in [8]
+    r"""Joint OT and nonlinear mapping estimation with kernels as proposed in
+    :ref:`[8] <references-joint-OT-mapping-kernel>`.
 
     The function solves the following optimization problem:
 
     .. math::
-        \min_{\gamma,L\in\mathcal{H}}\quad \|L(X_s) -
-        n_s\gamma X_t\|^2_F + \mu<\gamma,M>_F + \eta  \|L\|^2_\mathcal{H}
+        \min_{\gamma, L\in\mathcal{H}}\quad \|L(\mathbf{X_s}) -
+        n_s\gamma \mathbf{X_t}\|^2_F + \mu \langle \gamma, \mathbf{M} \rangle_F +
+        \eta \|L\|^2_\mathcal{H}
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} = \mathbf{b}
 
-             \gamma\geq 0
+             \gamma \geq 0
+
+
     where :
 
-    - M is the (ns,nt) squared euclidean cost matrix between samples in
-      Xs and Xt (scaled by ns)
-    - :math:`L` is a ns x d linear operator on a kernel matrix that
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) squared euclidean cost matrix between samples in
+      :math:`\mathbf{X_s}` and :math:`\mathbf{X_t}` (scaled by :math:`n_s`)
+    - :math:`L` is a :math:`n_s \times d` linear operator on a kernel matrix that
       approximates the barycentric mapping
-    - a and b are uniform source and target weights
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are uniform source and target weights
 
     The problem consist in solving jointly an optimal transport matrix
     :math:`\gamma` and the nonlinear mapping that fits the barycentric mapping
-    :math:`n_s\gamma X_t`.
+    :math:`n_s\gamma \mathbf{X_t}`.
 
     One can also estimate a mapping with constant bias (see supplementary
-    material of [8]) using the bias optional argument.
+    material of :ref:`[8] <references-joint-OT-mapping-kernel>`) using the bias optional argument.
 
     The algorithm used for solving the problem is the block coordinate
-    descent that alternates between updates of G (using conditionnal gradient)
-    and the update of L using a classical kernel least square solver.
+    descent that alternates between updates of :math:`\mathbf{G}` (using conditionnal gradient)
+    and the update of :math:`\mathbf{L}` using a classical kernel least square solver.
 
 
     Parameters
@@ -478,7 +490,7 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
     eta : float, optional
         Regularization term  for the linear mapping L (>0)
     kerneltype : str,optional
-        kernel used by calling function ot.utils.kernel (gaussian by default)
+        kernel used by calling function :py:func:`ot.utils.kernel` (gaussian by default)
     sigma : float, optional
         Gaussian kernel bandwidth.
     bias : bool,optional
@@ -501,17 +513,17 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
 
     Returns
     -------
-    gamma : (ns x nt) ndarray
+    gamma : (ns, nt) ndarray
         Optimal transportation matrix for the given parameters
-    L : (ns x d) ndarray
-        Nonlinear mapping matrix (ns+1 x d if bias)
+    L : (ns, d) ndarray
+        Nonlinear mapping matrix ((:math:`n_s+1`, `d`) if bias)
     log : dict
         log dictionary return only if log==True in parameters
 
 
+    .. _references-joint-OT-mapping-kernel:
     References
     ----------
-
     .. [8] M. Perrot, N. Courty, R. Flamary, A. Habrard,
        "Mapping estimation for discrete optimal transport",
        Neural Information Processing Systems (NIPS), 2016.
@@ -645,26 +657,27 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
 
 def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
                       wt=None, bias=True, log=False):
-    """ return OT linear operator between samples
+    r"""Return OT linear operator between samples.
 
     The function estimates the optimal linear operator that aligns the two
     empirical distributions. This is equivalent to estimating the closed
-    form mapping between two Gaussian distributions :math:`N(\mu_s,\Sigma_s)`
-    and :math:`N(\mu_t,\Sigma_t)` as proposed in [14] and discussed in remark
-    2.29 in [15].
+    form mapping between two Gaussian distributions :math:`\mathcal{N}(\mu_s,\Sigma_s)`
+    and :math:`\mathcal{N}(\mu_t,\Sigma_t)` as proposed in
+    :ref:`[14] <references-OT-mapping-linear>` and discussed in remark 2.29 in
+    :ref:`[15] <references-OT-mapping-linear>`.
 
     The linear operator from source to target :math:`M`
 
     .. math::
-        M(x)=Ax+b
+        M(\mathbf{x})= \mathbf{A} \mathbf{x} + \mathbf{b}
 
     where :
 
     .. math::
-        A=\Sigma_s^{-1/2}(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2})^{1/2}
+        \mathbf{A} &= \Sigma_s^{-1/2} \left(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2} \right)^{1/2}
         \Sigma_s^{-1/2}
-    .. math::
-        b=\mu_t-A\mu_s
+
+        \mathbf{b} &= \mu_t - \mathbf{A} \mu_s
 
     Parameters
     ----------
@@ -673,35 +686,35 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
     xt : np.ndarray (nt,d)
         samples in the target domain
     reg : float,optional
-        regularization added to the diagonals of convariances (>0)
+        regularization added to the diagonals of covariances (>0)
     ws : np.ndarray (ns,1), optional
         weights for the source samples
     wt : np.ndarray (ns,1), optional
         weights for the target samples
     bias: boolean, optional
-        estimate bias b else b=0 (default:True)
+        estimate bias :math:`\mathbf{b}` else :math:`\mathbf{b} = 0` (default:True)
     log : bool, optional
         record log if True
 
 
     Returns
     -------
-    A : (d x d) ndarray
+    A : (d, d) ndarray
         Linear operator
-    b : (1 x d) ndarray
+    b : (1, d) ndarray
         bias
     log : dict
         log dictionary return only if log==True in parameters
 
 
+    .. _references-OT-mapping-linear:
     References
     ----------
-
     .. [14] Knott, M. and Smith, C. S. "On the optimal mapping of
         distributions", Journal of Optimization Theory and Applications
         Vol 43, 1984
 
-    .. [15]  Peyré, G., & Cuturi, M. (2017). "Computational Optimal
+    .. [15] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
         Transport", 2018.
 
 
@@ -754,24 +767,34 @@ def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, al
     r"""Solve the optimal transport problem (OT) with Laplacian regularization
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F + eta\Omega_\alpha(\gamma)
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \eta \cdot \Omega_\alpha(\gamma)
 
-        s.t.\ \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} = \mathbf{b}
 
-             \gamma\geq 0
+             \gamma \geq 0
 
     where:
 
-    - a and b are source and target weights (sum to 1)
-    - xs and xt are source and target samples
-    - M is the (ns,nt) metric cost matrix
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
+    - :math:`\mathbf{x_s}` and :math:`\mathbf{x_t}` are source and target samples
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
     - :math:`\Omega_\alpha` is the Laplacian regularization term
-      :math:`\Omega_\alpha = (1-\alpha)/n_s^2\sum_{i,j}S^s_{i,j}\|T(\mathbf{x}^s_i)-T(\mathbf{x}^s_j)\|^2+\alpha/n_t^2\sum_{i,j}S^t_{i,j}^'\|T(\mathbf{x}^t_i)-T(\mathbf{x}^t_j)\|^2`
-      with :math:`S^s_{i,j}, S^t_{i,j}` denoting source and target similarity matrices and :math:`T(\cdot)` being a barycentric mapping
 
-    The algorithm used for solving the problem is the conditional gradient algorithm as proposed in [5].
+    .. math::
+        \Omega_\alpha = \frac{1 - \alpha}{n_s^2} \sum_{i,j}
+        \mathbf{S^s}_{i,j} \|T(\mathbf{x}^s_i) - T(\mathbf{x}^s_j) \|^2 +
+        \frac{\alpha}{n_t^2} \sum_{i,j}
+        \mathbf{S^t}_{i,j} \|T(\mathbf{x}^t_i) - T(\mathbf{x}^t_j) \|^2
+
+
+    with :math:`\mathbf{S^s}_{i,j}, \mathbf{S^t}_{i,j}` denoting source and target similarity
+    matrices and :math:`T(\cdot)` being a barycentric mapping.
+
+    The algorithm used for solving the problem is the conditional gradient algorithm as proposed in
+    :ref:`[5] <references-emd-laplace>`.
 
     Parameters
     ----------
@@ -811,22 +834,23 @@ def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, al
 
     Returns
     -------
-    gamma : (ns x nt) ndarray
+    gamma : (ns, nt) ndarray
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary return only if log==True in parameters
 
 
+    .. _references-emd-laplace:
     References
     ----------
-
     .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
        "Optimal Transport for Domain Adaptation," in IEEE
-       Transactions on Pattern Analysis and Machine Intelligence ,
+       Transactions on Pattern Analysis and Machine Intelligence,
        vol.PP, no.99, pp.1-1
+
     .. [30] R. Flamary, N. Courty, D. Tuia, A. Rakotomamonjy,
         "Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching,"
-         in NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
+        in NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
 
     See Also
     --------
@@ -882,7 +906,7 @@ def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, al
 
 
 def distribution_estimation_uniform(X):
-    """estimates a uniform distribution from an array of samples X
+    r"""estimates a uniform distribution from an array of samples :math:`\mathbf{X}`
 
     Parameters
     ----------
@@ -892,7 +916,7 @@ def distribution_estimation_uniform(X):
     Returns
     -------
     mu : array-like, shape (n_samples,)
-        The uniform distribution estimated from X
+        The uniform distribution estimated from :math:`\mathbf{X}`
     """
 
     return unif(X.shape[0])
@@ -902,32 +926,32 @@ class BaseTransport(BaseEstimator):
 
     """Base class for OTDA objects
 
-    Notes
-    -----
-    All estimators should specify all the parameters that can be set
-    at the class level in their ``__init__`` as explicit keyword
-    arguments (no ``*args`` or ``**kwargs``).
+    .. note::
+        All estimators should specify all the parameters that can be set
+        at the class level in their ``__init__`` as explicit keyword
+        arguments (no ``*args`` or ``**kwargs``).
 
-    the fit method should:
+    The fit method should:
 
     - estimate a cost matrix and store it in a `cost_` attribute
-    - estimate a coupling matrix and store it in a `coupling_`
-    attribute
+    - estimate a coupling matrix and store it in a `coupling_` attribute
     - estimate distributions from source and target data and store them in
-    mu_s and mu_t attributes
-    - store Xs and Xt in attributes to be used later on in transform and
-    inverse_transform methods
+      `mu_s` and `mu_t` attributes
+    - store `Xs` and `Xt` in attributes to be used later on in `transform` and
+      `inverse_transform` methods
 
-    transform method should always get as input a Xs parameter
-    inverse_transform method should always get as input a Xt parameter
+    `transform` method should always get as input a `Xs` parameter
 
-    transform_labels method should always get as input a ys parameter
-    inverse_transform_labels method should always get as input a yt parameter
+    `inverse_transform` method should always get as input a `Xt` parameter
+
+    `transform_labels` method should always get as input a `ys` parameter
+
+    `inverse_transform_labels` method should always get as input a `yt` parameter
     """
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
-        (Xs, ys) and (Xt, yt)
+        r"""Build a coupling matrix from source and target sets of samples
+        :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
         ----------
@@ -938,8 +962,8 @@ class BaseTransport(BaseEstimator):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -986,9 +1010,9 @@ class BaseTransport(BaseEstimator):
         return self
 
     def fit_transform(self, Xs=None, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
-        (Xs, ys) and (Xt, yt) and transports source samples Xs onto target
-        ones Xt
+        r"""Build a coupling matrix from source and target sets of samples
+        :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
+        and transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
 
         Parameters
         ----------
@@ -999,8 +1023,8 @@ class BaseTransport(BaseEstimator):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -1014,7 +1038,7 @@ class BaseTransport(BaseEstimator):
         return self.fit(Xs, ys, Xt, yt).transform(Xs, ys, Xt, yt)
 
     def transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
-        """Transports source samples Xs onto target ones Xt
+        r"""Transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
 
         Parameters
         ----------
@@ -1025,8 +1049,8 @@ class BaseTransport(BaseEstimator):
         Xt : array-like, shape (n_target_samples, n_features)
             The target input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels for target. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels for target. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -1081,7 +1105,8 @@ class BaseTransport(BaseEstimator):
             return transp_Xs
 
     def transform_labels(self, ys=None):
-        """Propagate source labels ys to obtain estimated target labels as in [27]
+        r"""Propagate source labels :math:`\mathbf{y_s}` to obtain estimated target labels as in
+        :ref:`[27] <references-basetransport-transform-labels>`.
 
         Parameters
         ----------
@@ -1093,9 +1118,10 @@ class BaseTransport(BaseEstimator):
         transp_ys : array-like, shape (n_target_samples, nb_classes)
             Estimated soft target labels.
 
+
+        .. _references-basetransport-transform-labels:
         References
         ----------
-
         .. [27] Ievgen Redko, Nicolas Courty, Rémi Flamary, Devis Tuia
            "Optimal transport for multi-source domain adaptation under target shift",
            International Conference on Artificial Intelligence and Statistics (AISTATS), 2019.
@@ -1126,7 +1152,7 @@ class BaseTransport(BaseEstimator):
 
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None,
                           batch_size=128):
-        """Transports target samples Xt onto source samples Xs
+        r"""Transports target samples :math:`\mathbf{X_t}` onto source samples :math:`\mathbf{X_s}`
 
         Parameters
         ----------
@@ -1137,8 +1163,8 @@ class BaseTransport(BaseEstimator):
         Xt : array-like, shape (n_target_samples, n_features)
             The target input samples.
         yt : array-like, shape (n_target_samples,)
-            The target class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The target class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -1192,7 +1218,8 @@ class BaseTransport(BaseEstimator):
             return transp_Xt
 
     def inverse_transform_labels(self, yt=None):
-        """Propagate target labels yt to obtain estimated source labels ys
+        r"""Propagate target labels :math:`\mathbf{y_t}` to obtain estimated source labels
+        :math:`\mathbf{y_s}`
 
         Parameters
         ----------
@@ -1228,39 +1255,41 @@ class BaseTransport(BaseEstimator):
 
 
 class LinearTransport(BaseTransport):
-    """ OT linear operator between empirical distributions
+    r""" OT linear operator between empirical distributions
 
     The function estimates the optimal linear operator that aligns the two
     empirical distributions. This is equivalent to estimating the closed
-    form mapping between two Gaussian distributions :math:`N(\mu_s,\Sigma_s)`
-    and :math:`N(\mu_t,\Sigma_t)` as proposed in [14] and discussed in
-    remark 2.29 in [15].
+    form mapping between two Gaussian distributions :math:`\mathcal{N}(\mu_s,\Sigma_s)`
+    and :math:`\mathcal{N}(\mu_t,\Sigma_t)` as proposed in
+    :ref:`[14] <references-lineartransport>` and discussed in remark 2.29 in
+    :ref:`[15] <references-lineartransport>`.
 
     The linear operator from source to target :math:`M`
 
     .. math::
-        M(x)=Ax+b
+        M(\mathbf{x})= \mathbf{A} \mathbf{x} + \mathbf{b}
 
     where :
 
     .. math::
-        A=\Sigma_s^{-1/2}(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2})^{1/2}
+        \mathbf{A} &= \Sigma_s^{-1/2} \left(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2} \right)^{1/2}
         \Sigma_s^{-1/2}
-    .. math::
-        b=\mu_t-A\mu_s
+
+        \mathbf{b} &= \mu_t - \mathbf{A} \mu_s
 
     Parameters
     ----------
     reg : float,optional
-        regularization added to the daigonals of convariances (>0)
+        regularization added to the daigonals of covariances (>0)
     bias: boolean, optional
-        estimate bias b else b=0 (default:True)
+        estimate bias :math:`\mathbf{b}` else :math:`\mathbf{b} = 0` (default:True)
     log : bool, optional
         record log if True
 
+
+    .. _references-lineartransport:
     References
     ----------
-
     .. [14] Knott, M. and Smith, C. S. "On the optimal mapping of
         distributions", Journal of Optimization Theory and Applications
         Vol 43, 1984
@@ -1278,8 +1307,8 @@ class LinearTransport(BaseTransport):
         self.distribution_estimation = distribution_estimation
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
-        (Xs, ys) and (Xt, yt)
+        r"""Build a coupling matrix from source and target sets of samples
+        :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
         ----------
@@ -1290,8 +1319,8 @@ class LinearTransport(BaseTransport):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -1325,7 +1354,7 @@ class LinearTransport(BaseTransport):
         return self
 
     def transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
-        """Transports source samples Xs onto target ones Xt
+        r"""Transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
 
         Parameters
         ----------
@@ -1336,8 +1365,8 @@ class LinearTransport(BaseTransport):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -1358,7 +1387,7 @@ class LinearTransport(BaseTransport):
 
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None,
                           batch_size=128):
-        """Transports target samples Xt onto target samples Xs
+        r"""Transports target samples :math:`\mathbf{X_t}` onto source samples :math:`\mathbf{X_s}`
 
         Parameters
         ----------
@@ -1369,8 +1398,8 @@ class LinearTransport(BaseTransport):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -1392,7 +1421,7 @@ class LinearTransport(BaseTransport):
 
 class SinkhornTransport(BaseTransport):
 
-    """Domain Adapatation OT method based on Sinkhorn Algorithm
+    """Domain Adaptation OT method based on Sinkhorn Algorithm
 
     Parameters
     ----------
@@ -1400,7 +1429,7 @@ class SinkhornTransport(BaseTransport):
         Entropic regularization parameter
     max_iter : int, float, optional (default=1000)
         The minimum number of iteration before stopping the optimization
-        algorithm if no it has not converged
+        algorithm if it has not converged
     tol : float, optional (default=10e-9)
         The precision required to stop the optimization algorithm.
     verbose : bool, optional (default=False)
@@ -1417,8 +1446,8 @@ class SinkhornTransport(BaseTransport):
     out_of_sample_map : string, optional (default="ferradans")
         The kind of out of sample mapping to apply to transport samples
         from a domain into another one. Currently the only possible option is
-        "ferradans" which uses the method proposed in [6].
-    limit_max: float, optional (defaul=np.infty)
+        "ferradans" which uses the method proposed in :ref:`[6] <references-sinkhorntransport>`.
+    limit_max: float, optional (default=np.infty)
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit an cost defined
         by this variable
@@ -1428,16 +1457,20 @@ class SinkhornTransport(BaseTransport):
     coupling_ : array-like, shape (n_source_samples, n_target_samples)
         The optimal coupling
     log_ : dictionary
-        The dictionary of log, empty dic if parameter log is not True
+        The dictionary of log, empty dict if parameter log is not True
 
+
+    .. _references-sinkhorntransport:
     References
     ----------
     .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
            "Optimal Transport for Domain Adaptation," in IEEE Transactions
            on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+
     .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal
            Transport, Advances in Neural Information Processing Systems (NIPS)
            26, 2013
+
     .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
             Regularized discrete optimal transport. SIAM Journal on Imaging
             Sciences, 7(3), 1853-1882.
@@ -1460,8 +1493,8 @@ class SinkhornTransport(BaseTransport):
         self.out_of_sample_map = out_of_sample_map
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
-        (Xs, ys) and (Xt, yt)
+        r"""Build a coupling matrix from source and target sets of samples
+        :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
         ----------
@@ -1472,8 +1505,8 @@ class SinkhornTransport(BaseTransport):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -1504,7 +1537,7 @@ class SinkhornTransport(BaseTransport):
 
 class EMDTransport(BaseTransport):
 
-    """Domain Adapatation OT method based on Earth Mover's Distance
+    """Domain Adaptation OT method based on Earth Mover's Distance
 
     Parameters
     ----------
@@ -1520,7 +1553,7 @@ class EMDTransport(BaseTransport):
     out_of_sample_map : string, optional (default="ferradans")
         The kind of out of sample mapping to apply to transport samples
         from a domain into another one. Currently the only possible option is
-        "ferradans" which uses the method proposed in [6].
+        "ferradans" which uses the method proposed in :ref:`[6] <references-emdtransport>`.
     limit_max: float, optional (default=10)
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit an infinite cost
@@ -1534,14 +1567,16 @@ class EMDTransport(BaseTransport):
     coupling_ : array-like, shape (n_source_samples, n_target_samples)
         The optimal coupling
 
+
+    .. _references-emdtransport:
     References
     ----------
     .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
-           "Optimal Transport for Domain Adaptation," in IEEE Transactions
-           on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+        "Optimal Transport for Domain Adaptation," in IEEE Transactions
+        on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
     .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
-            Regularized discrete optimal transport. SIAM Journal on Imaging
-            Sciences, 7(3), 1853-1882.
+        Regularized discrete optimal transport. SIAM Journal on Imaging
+        Sciences, 7(3), 1853-1882.
     """
 
     def __init__(self, metric="sqeuclidean", norm=None, log=False,
@@ -1557,8 +1592,8 @@ class EMDTransport(BaseTransport):
         self.max_iter = max_iter
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
-        (Xs, ys) and (Xt, yt)
+        r"""Build a coupling matrix from source and target sets of samples
+        :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
         ----------
@@ -1569,8 +1604,8 @@ class EMDTransport(BaseTransport):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -1597,8 +1632,7 @@ class EMDTransport(BaseTransport):
 
 
 class SinkhornLpl1Transport(BaseTransport):
-
-    """Domain Adapatation OT method based on sinkhorn algorithm +
+    r"""Domain Adaptation OT method based on sinkhorn algorithm +
     LpL1 class regularization.
 
     Parameters
@@ -1609,7 +1643,7 @@ class SinkhornLpl1Transport(BaseTransport):
         Class regularization parameter
     max_iter : int, float, optional (default=10)
         The minimum number of iteration before stopping the optimization
-        algorithm if no it has not converged
+        algorithm if it has not converged
     max_inner_iter : int, float, optional (default=200)
         The number of iteration in the inner loop
     log : bool, optional (default=False)
@@ -1628,8 +1662,8 @@ class SinkhornLpl1Transport(BaseTransport):
     out_of_sample_map : string, optional (default="ferradans")
         The kind of out of sample mapping to apply to transport samples
         from a domain into another one. Currently the only possible option is
-        "ferradans" which uses the method proposed in [6].
-    limit_max: float, optional (defaul=np.infty)
+        "ferradans" which uses the method proposed in :ref:`[6] <references-sinkhornlpl1transport>`.
+    limit_max: float, optional (default=np.infty)
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit a cost defined by
         limit_max.
@@ -1639,16 +1673,19 @@ class SinkhornLpl1Transport(BaseTransport):
     coupling_ : array-like, shape (n_source_samples, n_target_samples)
         The optimal coupling
 
+
+    .. _references-sinkhornlpl1transport:
     References
     ----------
-
     .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
        "Optimal Transport for Domain Adaptation," in IEEE
        Transactions on Pattern Analysis and Machine Intelligence ,
        vol.PP, no.99, pp.1-1
+
     .. [2] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
        Generalized conditional gradient: analysis of convergence
        and applications. arXiv preprint arXiv:1510.06567.
+
     .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
             Regularized discrete optimal transport. SIAM Journal on Imaging
             Sciences, 7(3), 1853-1882.
@@ -1674,8 +1711,8 @@ class SinkhornLpl1Transport(BaseTransport):
         self.limit_max = limit_max
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
-        (Xs, ys) and (Xt, yt)
+        r"""Build a coupling matrix from source and target sets of samples
+        :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
         ----------
@@ -1686,8 +1723,8 @@ class SinkhornLpl1Transport(BaseTransport):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -1719,13 +1756,14 @@ class SinkhornLpl1Transport(BaseTransport):
 
 class EMDLaplaceTransport(BaseTransport):
 
-    """Domain Adapatation OT method based on Earth Mover's Distance with Laplacian regularization
+    """Domain Adaptation OT method based on Earth Mover's Distance with Laplacian regularization
 
     Parameters
     ----------
     reg_type : string optional (default='pos')
         Type of the regularization term: 'pos' and 'disp' for
-        regularization term defined in [2] and [6], respectively.
+        regularization term defined in :ref:`[2] <references-emdlaplacetransport>` and
+        :ref:`[6] <references-emdlaplacetransport>`, respectively.
     reg_lap : float, optional (default=1)
         Laplacian regularization parameter
     reg_src : float, optional (default=0.5)
@@ -1756,24 +1794,27 @@ class EMDLaplaceTransport(BaseTransport):
     out_of_sample_map : string, optional (default="ferradans")
         The kind of out of sample mapping to apply to transport samples
         from a domain into another one. Currently the only possible option is
-        "ferradans" which uses the method proposed in [6].
+        "ferradans" which uses the method proposed in :ref:`[6] <references-emdlaplacetransport>`.
 
     Attributes
     ----------
     coupling_ : array-like, shape (n_source_samples, n_target_samples)
         The optimal coupling
 
+
+    .. _references-emdlaplacetransport:
     References
     ----------
     .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
            "Optimal Transport for Domain Adaptation," in IEEE Transactions
            on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+
     .. [2] R. Flamary, N. Courty, D. Tuia, A. Rakotomamonjy,
         "Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching,"
-         in NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
+        in NIPS Workshop on Optimal Transport and Machine Learning OTML, 2014.
+
     .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
-            Regularized discrete optimal transport. SIAM Journal on Imaging
-            Sciences, 7(3), 1853-1882.
+        Regularized discrete optimal transport. SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
     """
 
     def __init__(self, reg_type='pos', reg_lap=1., reg_src=1., metric="sqeuclidean",
@@ -1798,8 +1839,8 @@ class EMDLaplaceTransport(BaseTransport):
         self.out_of_sample_map = out_of_sample_map
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
-        (Xs, ys) and (Xt, yt)
+        r"""Build a coupling matrix from source and target sets of samples
+        :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
         ----------
@@ -1810,8 +1851,8 @@ class EMDLaplaceTransport(BaseTransport):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -1840,8 +1881,8 @@ class EMDLaplaceTransport(BaseTransport):
 
 class SinkhornL1l2Transport(BaseTransport):
 
-    """Domain Adapatation OT method based on sinkhorn algorithm +
-    l1l2 class regularization.
+    """Domain Adaptation OT method based on sinkhorn algorithm +
+    L1L2 class regularization.
 
     Parameters
     ----------
@@ -1851,7 +1892,7 @@ class SinkhornL1l2Transport(BaseTransport):
         Class regularization parameter
     max_iter : int, float, optional (default=10)
         The minimum number of iteration before stopping the optimization
-        algorithm if no it has not converged
+        algorithm if it has not converged
     max_inner_iter : int, float, optional (default=200)
         The number of iteration in the inner loop
     tol : float, optional (default=10e-9)
@@ -1870,7 +1911,7 @@ class SinkhornL1l2Transport(BaseTransport):
     out_of_sample_map : string, optional (default="ferradans")
         The kind of out of sample mapping to apply to transport samples
         from a domain into another one. Currently the only possible option is
-        "ferradans" which uses the method proposed in [6].
+        "ferradans" which uses the method proposed in :ref:`[6] <references-sinkhornl1l2transport>`.
     limit_max: float, optional (default=10)
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit an infinite cost
@@ -1881,18 +1922,21 @@ class SinkhornL1l2Transport(BaseTransport):
     coupling_ : array-like, shape (n_source_samples, n_target_samples)
         The optimal coupling
     log_ : dictionary
-        The dictionary of log, empty dic if parameter log is not True
+        The dictionary of log, empty dict if parameter log is not True
 
+
+    .. _references-sinkhornl1l2transport:
     References
     ----------
-
     .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
        "Optimal Transport for Domain Adaptation," in IEEE
        Transactions on Pattern Analysis and Machine Intelligence ,
        vol.PP, no.99, pp.1-1
+
     .. [2] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
        Generalized conditional gradient: analysis of convergence
        and applications. arXiv preprint arXiv:1510.06567.
+
     .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
             Regularized discrete optimal transport. SIAM Journal on Imaging
             Sciences, 7(3), 1853-1882.
@@ -1918,8 +1962,8 @@ class SinkhornL1l2Transport(BaseTransport):
         self.limit_max = limit_max
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
-        (Xs, ys) and (Xt, yt)
+        r"""Build a coupling matrix from source and target sets of samples
+        :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
         ----------
@@ -1930,8 +1974,8 @@ class SinkhornL1l2Transport(BaseTransport):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -1973,7 +2017,7 @@ class MappingTransport(BaseEstimator):
     mu : float, optional (default=1)
         Weight for the linear OT loss (>0)
     eta : float, optional (default=0.001)
-        Regularization term for the linear mapping L (>0)
+        Regularization term for the linear mapping `L` (>0)
     bias : bool, optional (default=False)
         Estimate linear mapping with constant bias
     metric : string, optional (default="sqeuclidean")
@@ -2004,17 +2048,20 @@ class MappingTransport(BaseEstimator):
     ----------
     coupling_ : array-like, shape (n_source_samples, n_target_samples)
         The optimal coupling
-    mapping_ : array-like, shape (n_features (+ 1), n_features)
-        (if bias) for kernel == linear
+    mapping_ :
         The associated mapping
-        array-like, shape (n_source_samples (+ 1), n_features)
-        (if bias) for kernel == gaussian
+
+        - array-like, shape (`n_features` (+ 1), `n_features`),
+          (if bias) for kernel == linear
+
+        - array-like, shape (`n_source_samples` (+ 1), `n_features`),
+          (if bias) for kernel == gaussian
     log_ : dictionary
-        The dictionary of log, empty dic if parameter log is not True
+        The dictionary of log, empty dict if parameter log is not True
+
 
     References
     ----------
-
     .. [8] M. Perrot, N. Courty, R. Flamary, A. Habrard,
             "Mapping estimation for discrete optimal transport",
             Neural Information Processing Systems (NIPS), 2016.
@@ -2041,8 +2088,9 @@ class MappingTransport(BaseEstimator):
         self.verbose2 = verbose2
 
     def fit(self, Xs=None, ys=None, Xt=None, yt=None):
-        """Builds an optimal coupling and estimates the associated mapping
-        from source and target sets of samples (Xs, ys) and (Xt, yt)
+        r"""Builds an optimal coupling and estimates the associated mapping
+        from source and target sets of samples
+        :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
         ----------
@@ -2053,8 +2101,8 @@ class MappingTransport(BaseEstimator):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -2098,7 +2146,7 @@ class MappingTransport(BaseEstimator):
         return self
 
     def transform(self, Xs):
-        """Transports source samples Xs onto target ones Xt
+        r"""Transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
 
         Parameters
         ----------
@@ -2138,7 +2186,7 @@ class MappingTransport(BaseEstimator):
 
 class UnbalancedSinkhornTransport(BaseTransport):
 
-    """Domain Adapatation unbalanced OT method based on sinkhorn algorithm
+    """Domain Adaptation unbalanced OT method based on sinkhorn algorithm
 
     Parameters
     ----------
@@ -2151,7 +2199,7 @@ class UnbalancedSinkhornTransport(BaseTransport):
         'sinkhorn_epsilon_scaling', see those function for specific parameters
     max_iter : int, float, optional (default=10)
         The minimum number of iteration before stopping the optimization
-        algorithm if no it has not converged
+        algorithm if it has not converged
     tol : float, optional (default=10e-9)
         Stop threshold on error (inner sinkhorn solver) (>0)
     verbose : bool, optional (default=False)
@@ -2168,7 +2216,7 @@ class UnbalancedSinkhornTransport(BaseTransport):
     out_of_sample_map : string, optional (default="ferradans")
         The kind of out of sample mapping to apply to transport samples
         from a domain into another one. Currently the only possible option is
-        "ferradans" which uses the method proposed in [6].
+        "ferradans" which uses the method proposed in :ref:`[6] <references-unbalancedsinkhorntransport>`.
     limit_max: float, optional (default=10)
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit an infinite cost
@@ -2179,14 +2227,16 @@ class UnbalancedSinkhornTransport(BaseTransport):
     coupling_ : array-like, shape (n_source_samples, n_target_samples)
         The optimal coupling
     log_ : dictionary
-        The dictionary of log, empty dic if parameter log is not True
+        The dictionary of log, empty dict if parameter log is not True
 
+
+    .. _references-unbalancedsinkhorntransport:
     References
     ----------
-
     .. [1] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016).
-    Scaling algorithms for unbalanced transport problems. arXiv preprint
-    arXiv:1607.05816.
+        Scaling algorithms for unbalanced transport problems. arXiv preprint
+        arXiv:1607.05816.
+
     .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
             Regularized discrete optimal transport. SIAM Journal on Imaging
             Sciences, 7(3), 1853-1882.
@@ -2211,8 +2261,8 @@ class UnbalancedSinkhornTransport(BaseTransport):
         self.limit_max = limit_max
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
-        """Build a coupling matrix from source and target sets of samples
-        (Xs, ys) and (Xt, yt)
+        r"""Build a coupling matrix from source and target sets of samples
+        :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
         ----------
@@ -2223,8 +2273,8 @@ class UnbalancedSinkhornTransport(BaseTransport):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -2258,7 +2308,7 @@ class UnbalancedSinkhornTransport(BaseTransport):
 
 class JCPOTTransport(BaseTransport):
 
-    """Domain Adapatation OT method for multi-source target shift based on Wasserstein barycenter algorithm.
+    """Domain Adaptation OT method for multi-source target shift based on Wasserstein barycenter algorithm.
 
     Parameters
     ----------
@@ -2266,7 +2316,7 @@ class JCPOTTransport(BaseTransport):
         Entropic regularization parameter
     max_iter : int, float, optional (default=10)
         The minimum number of iteration before stopping the optimization
-        algorithm if no it has not converged
+        algorithm if it has not converged
     tol : float, optional (default=10e-9)
         Stop threshold on error (inner sinkhorn solver) (>0)
     verbose : bool, optional (default=False)
@@ -2283,7 +2333,7 @@ class JCPOTTransport(BaseTransport):
     out_of_sample_map : string, optional (default="ferradans")
         The kind of out of sample mapping to apply to transport samples
         from a domain into another one. Currently the only possible option is
-        "ferradans" which uses the method proposed in [6].
+        "ferradans" which uses the method proposed in :ref:`[6] <references-jcpottransport>`.
 
     Attributes
     ----------
@@ -2292,11 +2342,12 @@ class JCPOTTransport(BaseTransport):
     proportions_ : array-like, shape (n_classes,)
         Estimated class proportions in the target domain
     log_ : dictionary
-        The dictionary of log, empty dic if parameter log is not True
+        The dictionary of log, empty dict if parameter log is not True
 
+
+    .. _references-jcpottransport:
     References
     ----------
-
     .. [1] Ievgen Redko, Nicolas Courty, Rémi Flamary, Devis Tuia
        "Optimal transport for multi-source domain adaptation under target shift",
        International Conference on Artificial Intelligence and Statistics (AISTATS),
@@ -2322,8 +2373,8 @@ class JCPOTTransport(BaseTransport):
         self.out_of_sample_map = out_of_sample_map
 
     def fit(self, Xs, ys=None, Xt=None, yt=None):
-        """Building coupling matrices from a list of source and target sets of samples
-        (Xs, ys) and (Xt, yt)
+        r"""Building coupling matrices from a list of source and target sets of samples
+        :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
 
         Parameters
         ----------
@@ -2334,8 +2385,8 @@ class JCPOTTransport(BaseTransport):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -2368,7 +2419,7 @@ class JCPOTTransport(BaseTransport):
         return self
 
     def transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
-        """Transports source samples Xs onto target ones Xt
+        r"""Transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
 
         Parameters
         ----------
@@ -2379,8 +2430,8 @@ class JCPOTTransport(BaseTransport):
         Xt : array-like, shape (n_target_samples, n_features)
             The training input samples.
         yt : array-like, shape (n_target_samples,)
-            The class labels. If some target samples are unlabeled, fill the
-            yt's elements with -1.
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
 
             Warning: Note that, due to this convention -1 cannot be used as a
             class label
@@ -2440,7 +2491,8 @@ class JCPOTTransport(BaseTransport):
             return transp_Xs
 
     def transform_labels(self, ys=None):
-        """Propagate source labels ys to obtain target labels as in [27]
+        r"""Propagate source labels :math:`\mathbf{y_s}` to obtain target labels as in
+        :ref:`[27] <references-jcpottransport-transform-labels>`
 
         Parameters
         ----------
@@ -2451,6 +2503,14 @@ class JCPOTTransport(BaseTransport):
         -------
         yt : array-like, shape (n_target_samples, nb_classes)
             Estimated soft target labels.
+
+
+        .. _references-jcpottransport-transform-labels:
+        References
+        ----------
+        .. [27] Ievgen Redko, Nicolas Courty, Rémi Flamary, Devis Tuia
+           "Optimal transport for multi-source domain adaptation under target shift",
+           International Conference on Artificial Intelligence and Statistics (AISTATS), 2019.
         """
 
         # check the necessary inputs parameters are here
@@ -2482,11 +2542,12 @@ class JCPOTTransport(BaseTransport):
             return yt.T
 
     def inverse_transform_labels(self, yt=None):
-        """Propagate source labels ys to obtain target labels
+        r"""Propagate target labels :math:`\mathbf{y_t}` to obtain estimated source labels
+        :math:`\mathbf{y_s}`
 
         Parameters
         ----------
-        yt : array-like, shape (n_source_samples,)
+        yt : array-like, shape (n_target_samples,)
             The target class labels
 
         Returns
