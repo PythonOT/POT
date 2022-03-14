@@ -18,10 +18,10 @@ from matplotlib import gridspec
 
 
 def plot1D_mat(a, b, M, title=''):
-    """ Plot matrix M  with the source and target 1D distribution
+    r""" Plot matrix :math:`\mathbf{M}`  with the source and target 1D distribution
 
-    Creates a subplot with the source distribution a on the left and
-    target distribution b on the tot. The matrix M is shown in between.
+    Creates a subplot with the source distribution :math:`\mathbf{a}` on the left and
+    target distribution :math:`\mathbf{b}` on the top. The matrix :math:`\mathbf{M}` is shown in between.
 
 
     Parameters
@@ -61,10 +61,10 @@ def plot1D_mat(a, b, M, title=''):
 
 
 def plot2D_samples_mat(xs, xt, G, thr=1e-8, **kwargs):
-    """ Plot matrix M  in 2D with  lines using alpha values
+    r""" Plot matrix :math:`\mathbf{G}` in 2D with lines using alpha values
 
     Plot lines between source and target 2D samples with a color
-    proportional to the value of the matrix G between samples.
+    proportional to the value of the matrix :math:`\mathbf{G}` between samples.
 
 
     Parameters

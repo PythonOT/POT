@@ -23,29 +23,31 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + reg_m KL(\gamma 1, a) + reg_m KL(\gamma^T 1, b)
+        W = \min_\gamma \ \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg}\cdot\Omega(\gamma) +
+        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
+        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
         s.t.
-             \gamma\geq 0
+             \gamma \geq 0
+
     where :
 
-    - M is the (dim_a, dim_b) metric cost matrix
-    - :math:`\Omega` is the entropic regularization
-        term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target unbalanced distributions
+    - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
+    - :math:`\Omega` is the entropic regularization term, :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - KL is the Kullback-Leibler divergence
 
     The algorithm used for solving the problem is the generalized
-        Sinkhorn-Knopp matrix scaling algorithm as proposed in [10, 23]_
+    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25] <references-sinkhorn-unbalanced>`
 
 
     Parameters
     ----------
     a : np.ndarray (dim_a,)
-        Unnormalized histogram of dimension dim_a
+        Unnormalized histogram of dimension `dim_a`
     b : np.ndarray (dim_b,) or np.ndarray (dim_b, n_hists)
-        One or multiple unnormalized histograms of dimension dim_b
-        If many, compute all the OT distances (a, b_i)
+        One or multiple unnormalized histograms of dimension `dim_b`.
+        If many, compute all the OT distances :math:`(\mathbf{a}, \mathbf{b}_i)_i`
     M : np.ndarray (dim_a, dim_b)
         loss matrix
     reg : float
@@ -58,7 +60,7 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -68,14 +70,14 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
     Returns
     -------
     if n_hists == 1:
-        gamma : (dim_a x dim_b) ndarray
+        - gamma : (dim_a, dim_b) ndarray
             Optimal transportation matrix for the given parameters
-        log : dict
+        - log : dict
             log dictionary returned only if `log` is `True`
     else:
-        ot_distance : (n_hists,) ndarray
-            the OT distance between `a` and each of the histograms `b_i`
-        log : dict
+        - ot_distance : (n_hists,) ndarray
+            the OT distance between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
+        - log : dict
             log dictionary returned only if `log` is `True`
 
     Examples
@@ -90,9 +92,9 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
            [0.18807035, 0.51122823]])
 
 
+    .. _references-sinkhorn-unbalanced:
     References
     ----------
-
     .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal
         Transport, Advances in Neural Information Processing Systems
         (NIPS) 26, 2013
@@ -111,11 +113,11 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
 
     See Also
     --------
-    ot.unbalanced.sinkhorn_knopp_unbalanced : Unbalanced Classic Sinkhorn [10]
+    ot.unbalanced.sinkhorn_knopp_unbalanced : Unbalanced Classic Sinkhorn :ref:`[10] <references-sinkhorn-unbalanced>`
     ot.unbalanced.sinkhorn_stabilized_unbalanced:
-        Unbalanced Stabilized sinkhorn [9][10]
+        Unbalanced Stabilized sinkhorn :ref:`[9, 10] <references-sinkhorn-unbalanced>`
     ot.unbalanced.sinkhorn_reg_scaling_unbalanced:
-        Unbalanced Sinkhorn with epslilon scaling [9][10]
+        Unbalanced Sinkhorn with epslilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced>`
 
     """
 
@@ -151,29 +153,30 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + reg_m KL(\gamma 1, a) + reg_m KL(\gamma^T 1, b)
+        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg}\cdot\Omega(\gamma) +
+        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
+        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
         s.t.
              \gamma\geq 0
     where :
 
-    - M is the (dim_a, dim_b) metric cost matrix
-    - :math:`\Omega` is the entropic regularization term
-        :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target unbalanced distributions
+    - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
+    - :math:`\Omega` is the entropic regularization term, :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - KL is the Kullback-Leibler divergence
 
     The algorithm used for solving the problem is the generalized
-    Sinkhorn-Knopp matrix scaling algorithm as proposed in [10, 23]_
+    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25] <references-sinkhorn-unbalanced2>`
 
 
     Parameters
     ----------
     a : np.ndarray (dim_a,)
-        Unnormalized histogram of dimension dim_a
+        Unnormalized histogram of dimension `dim_a`
     b : np.ndarray (dim_b,) or np.ndarray (dim_b, n_hists)
-        One or multiple unnormalized histograms of dimension dim_b
-        If many, compute all the OT distances (a, b_i)
+        One or multiple unnormalized histograms of dimension `dim_b`.
+        If many, compute all the OT distances :math:`(\mathbf{a}, \mathbf{b}_i)_i`
     M : np.ndarray (dim_a, dim_b)
         loss matrix
     reg : float
@@ -186,7 +189,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -196,7 +199,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     Returns
     -------
     ot_distance : (n_hists,) ndarray
-        the OT distance between `a` and each of the histograms `b_i`
+        the OT distance between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
     log : dict
         log dictionary returned only if `log` is `True`
 
@@ -211,10 +214,9 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     array([0.31912866])
 
 
-
+    .. _references-sinkhorn-unbalanced2:
     References
     ----------
-
     .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal
         Transport, Advances in Neural Information Processing Systems
         (NIPS) 26, 2013
@@ -232,9 +234,9 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
 
     See Also
     --------
-    ot.unbalanced.sinkhorn_knopp : Unbalanced Classic Sinkhorn [10]
-    ot.unbalanced.sinkhorn_stabilized: Unbalanced Stabilized sinkhorn [9][10]
-    ot.unbalanced.sinkhorn_reg_scaling: Unbalanced Sinkhorn with epslilon scaling [9][10]
+    ot.unbalanced.sinkhorn_knopp : Unbalanced Classic Sinkhorn :ref:`[10] <references-sinkhorn-unbalanced2>`
+    ot.unbalanced.sinkhorn_stabilized: Unbalanced Stabilized sinkhorn :ref:`[9, 10] <references-sinkhorn-unbalanced2>`
+    ot.unbalanced.sinkhorn_reg_scaling: Unbalanced Sinkhorn with epslilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced2>`
 
     """
     b = np.asarray(b, dtype=np.float64)
@@ -270,26 +272,29 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + \reg_m KL(\gamma 1, a) + \reg_m KL(\gamma^T 1, b)
+        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg}\cdot\Omega(\gamma) +
+        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
+        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
         s.t.
-             \gamma\geq 0
+             \gamma \geq 0
+
     where :
 
-    - M is the (dim_a, dim_b) metric cost matrix
-    - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target unbalanced distributions
+    - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
+    - :math:`\Omega` is the entropic regularization term, :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - KL is the Kullback-Leibler divergence
 
-    The algorithm used for solving the problem is the generalized Sinkhorn-Knopp matrix scaling algorithm as proposed in [10, 23]_
+    The algorithm used for solving the problem is the generalized Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25] <references-sinkhorn-knopp-unbalanced>`
 
 
     Parameters
     ----------
     a : np.ndarray (dim_a,)
-        Unnormalized histogram of dimension dim_a
+        Unnormalized histogram of dimension `dim_a`
     b : np.ndarray (dim_b,) or np.ndarray (dim_b, n_hists)
-        One or multiple unnormalized histograms of dimension dim_b
+        One or multiple unnormalized histograms of dimension `dim_b`
         If many, compute all the OT distances (a, b_i)
     M : np.ndarray (dim_a, dim_b)
         loss matrix
@@ -300,7 +305,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (> 0)
+        Stop threshold on error (> 0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -310,15 +315,16 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
     Returns
     -------
     if n_hists == 1:
-        gamma : (dim_a x dim_b) ndarray
+        - gamma : (dim_a, dim_b) ndarray
             Optimal transportation matrix for the given parameters
-        log : dict
+        - log : dict
             log dictionary returned only if `log` is `True`
     else:
-        ot_distance : (n_hists,) ndarray
-            the OT distance between `a` and each of the histograms `b_i`
-        log : dict
+        - ot_distance : (n_hists,) ndarray
+            the OT distance between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
+        - log : dict
             log dictionary returned only if `log` is `True`
+
     Examples
     --------
 
@@ -330,9 +336,10 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
     array([[0.51122823, 0.18807035],
            [0.18807035, 0.51122823]])
 
+
+    .. _references-sinkhorn-knopp-unbalanced:
     References
     ----------
-
     .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016).
         Scaling algorithms for unbalanced transport problems. arXiv preprint
         arXiv:1607.05816.
@@ -445,32 +452,34 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
     problem and return the loss
 
     The function solves the following optimization problem using log-domain
-    stabilization as proposed in [10]:
+    stabilization as proposed in :ref:`[10] <references-sinkhorn-stabilized-unbalanced>`:
 
     .. math::
-        W = \min_\gamma <\gamma,M>_F + reg\cdot\Omega(\gamma) + reg_m KL(\gamma 1, a) + reg_m KL(\gamma^T 1, b)
+        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg}\cdot\Omega(\gamma) +
+        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
+        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
         s.t.
-             \gamma\geq 0
+             \gamma \geq 0
+
     where :
 
-    - M is the (dim_a, dim_b) metric cost matrix
-    - :math:`\Omega` is the entropic regularization
-        term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - a and b are source and target unbalanced distributions
+    - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
+    - :math:`\Omega` is the entropic regularization term, :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - KL is the Kullback-Leibler divergence
 
     The algorithm used for solving the problem is the generalized
-    Sinkhorn-Knopp matrix scaling algorithm as proposed in [10, 23]_
+    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25] <references-sinkhorn-stabilized-unbalanced>`
 
 
     Parameters
     ----------
     a : np.ndarray (dim_a,)
-        Unnormalized histogram of dimension dim_a
+        Unnormalized histogram of dimension `dim_a`
     b : np.ndarray (dim_b,) or np.ndarray (dim_b, n_hists)
-        One or multiple unnormalized histograms of dimension dim_b
-        If many, compute all the OT distances (a, b_i)
+        One or multiple unnormalized histograms of dimension `dim_b`.
+        If many, compute all the OT distances :math:`(\mathbf{a}, \mathbf{b}_i)_i`
     M : np.ndarray (dim_a, dim_b)
         loss matrix
     reg : float
@@ -482,7 +491,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -492,14 +501,14 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
     Returns
     -------
     if n_hists == 1:
-        gamma : (dim_a x dim_b) ndarray
+        - gamma : (dim_a, dim_b) ndarray
             Optimal transportation matrix for the given parameters
-        log : dict
+        - log : dict
             log dictionary returned only if `log` is `True`
     else:
-        ot_distance : (n_hists,) ndarray
-            the OT distance between `a` and each of the histograms `b_i`
-        log : dict
+        - ot_distance : (n_hists,) ndarray
+            the OT distance between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
+        - log : dict
             log dictionary returned only if `log` is `True`
     Examples
     --------
@@ -512,9 +521,10 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
     array([[0.51122823, 0.18807035],
            [0.18807035, 0.51122823]])
 
+
+    .. _references-sinkhorn-stabilized-unbalanced:
     References
     ----------
-
     .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016).
         Scaling algorithms for unbalanced transport problems. arXiv preprint arXiv:1607.05816.
 
@@ -654,29 +664,27 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
 def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
                                      numItermax=1000, stopThr=1e-6,
                                      verbose=False, log=False):
-    r"""Compute the entropic unbalanced wasserstein barycenter of A with stabilization.
+    r"""Compute the entropic unbalanced wasserstein barycenter of :math:`\mathbf{A}` with stabilization.
 
      The function solves the following optimization problem:
 
     .. math::
-       \mathbf{a} = arg\min_\mathbf{a} \sum_i Wu_{reg}(\mathbf{a},\mathbf{a}_i)
+       \mathbf{a} = \mathop{\arg \min}_\mathbf{a} \quad \sum_i W_{u_{reg}}(\mathbf{a},\mathbf{a}_i)
 
     where :
 
-    - :math:`Wu_{reg}(\cdot,\cdot)` is the unbalanced entropic regularized
-        Wasserstein distance (see ot.unbalanced.sinkhorn_unbalanced)
-    - :math:`\mathbf{a}_i` are training distributions in the columns of
-        matrix :math:`\mathbf{A}`
-    - reg and :math:`\mathbf{M}` are respectively the regularization term and
-        the cost matrix for OT
+    - :math:`W_{u_{reg}}(\cdot,\cdot)` is the unbalanced entropic regularized Wasserstein distance (see :py:func:`ot.unbalanced.sinkhorn_unbalanced`)
+    - :math:`\mathbf{a}_i` are training distributions in the columns of matrix :math:`\mathbf{A}`
+    - reg and :math:`\mathbf{M}` are respectively the regularization term and the cost matrix for OT
     - reg_mis the marginal relaxation hyperparameter
-        The algorithm used for solving the problem is the generalized
-        Sinkhorn-Knopp matrix scaling algorithm as proposed in [10]_
+
+    The algorithm used for solving the problem is the generalized
+    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10] <references-barycenter-unbalanced-stabilized>`
 
     Parameters
     ----------
     A : np.ndarray (dim, n_hists)
-        `n_hists` training distributions a_i of dimension dim
+        `n_hists` training distributions :math:`\mathbf{a}_i` of dimension `dim`
     M : np.ndarray (dim, dim)
         ground metric matrix for OT.
     reg : float
@@ -691,7 +699,7 @@ def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (> 0)
+        Stop threshold on error (> 0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -706,9 +714,9 @@ def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
         log dictionary return only if log==True in parameters
 
 
+    .. _references-barycenter-unbalanced-stabilized:
     References
     ----------
-
     .. [3] Benamou, J. D., Carlier, G., Cuturi, M., Nenna, L., & Peyré,
         G. (2015). Iterative Bregman projections for regularized transportation
         problems. SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
@@ -806,29 +814,27 @@ def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
 def barycenter_unbalanced_sinkhorn(A, M, reg, reg_m, weights=None,
                                    numItermax=1000, stopThr=1e-6,
                                    verbose=False, log=False):
-    r"""Compute the entropic unbalanced wasserstein barycenter of A.
+    r"""Compute the entropic unbalanced wasserstein barycenter of :math:`\mathbf{A}`.
 
-     The function solves the following optimization problem with a
+     The function solves the following optimization problem with :math:`\mathbf{a}`
 
     .. math::
-       \mathbf{a} = arg\min_\mathbf{a} \sum_i Wu_{reg}(\mathbf{a},\mathbf{a}_i)
+       \mathbf{a} = \mathop{\arg \min}_\mathbf{a} \quad \sum_i W_{u_{reg}}(\mathbf{a},\mathbf{a}_i)
 
     where :
 
-    - :math:`Wu_{reg}(\cdot,\cdot)` is the unbalanced entropic regularized
-    Wasserstein distance (see ot.unbalanced.sinkhorn_unbalanced)
-    - :math:`\mathbf{a}_i` are training distributions in the columns of matrix
-    :math:`\mathbf{A}`
-    - reg and :math:`\mathbf{M}` are respectively the regularization term and
-    the cost matrix for OT
+    - :math:`W_{u_{reg}}(\cdot,\cdot)` is the unbalanced entropic regularized Wasserstein distance (see :py:func:`ot.unbalanced.sinkhorn_unbalanced`)
+    - :math:`\mathbf{a}_i` are training distributions in the columns of matrix :math:`\mathbf{A}`
+    - reg and :math:`\mathbf{M}` are respectively the regularization term and the cost matrix for OT
     - reg_mis the marginal relaxation hyperparameter
+
     The algorithm used for solving the problem is the generalized
-    Sinkhorn-Knopp matrix scaling algorithm as proposed in [10]_
+    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10] <references-barycenter-unbalanced-sinkhorn>`
 
     Parameters
     ----------
     A : np.ndarray (dim, n_hists)
-        `n_hists` training distributions a_i of dimension dim
+        `n_hists` training distributions :math:`\mathbf{a}_i` of dimension `dim`
     M : np.ndarray (dim, dim)
         ground metric matrix for OT.
     reg : float
@@ -841,7 +847,7 @@ def barycenter_unbalanced_sinkhorn(A, M, reg, reg_m, weights=None,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (> 0)
+        Stop threshold on error (> 0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -856,9 +862,9 @@ def barycenter_unbalanced_sinkhorn(A, M, reg, reg_m, weights=None,
         log dictionary return only if log==True in parameters
 
 
+    .. _references-barycenter-unbalanced-sinkhorn:
     References
     ----------
-
     .. [3] Benamou, J. D., Carlier, G., Cuturi, M., Nenna, L., & Peyré, G.
         (2015). Iterative Bregman projections for regularized transportation
         problems. SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
@@ -936,29 +942,27 @@ def barycenter_unbalanced_sinkhorn(A, M, reg, reg_m, weights=None,
 def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
                           numItermax=1000, stopThr=1e-6,
                           verbose=False, log=False, **kwargs):
-    r"""Compute the entropic unbalanced wasserstein barycenter of A.
+    r"""Compute the entropic unbalanced wasserstein barycenter of :math:`\mathbf{A}`.
 
-     The function solves the following optimization problem with a
+     The function solves the following optimization problem with :math:`\mathbf{a}`
 
     .. math::
-       \mathbf{a} = arg\min_\mathbf{a} \sum_i Wu_{reg}(\mathbf{a},\mathbf{a}_i)
+       \mathbf{a} = \mathop{\arg \min}_\mathbf{a} \quad \sum_i W_{u_{reg}}(\mathbf{a},\mathbf{a}_i)
 
     where :
 
-    - :math:`Wu_{reg}(\cdot,\cdot)` is the unbalanced entropic regularized
-    Wasserstein distance (see ot.unbalanced.sinkhorn_unbalanced)
-    - :math:`\mathbf{a}_i` are training distributions in the columns of matrix
-    :math:`\mathbf{A}`
-    - reg and :math:`\mathbf{M}` are respectively the regularization term and
-    the cost matrix for OT
+    - :math:`W_{u_{reg}}(\cdot,\cdot)` is the unbalanced entropic regularized Wasserstein distance (see :py:func:`ot.unbalanced.sinkhorn_unbalanced`)
+    - :math:`\mathbf{a}_i` are training distributions in the columns of matrix :math:`\mathbf{A}`
+    - reg and :math:`\mathbf{M}` are respectively the regularization term and the cost matrix for OT
     - reg_mis the marginal relaxation hyperparameter
+
     The algorithm used for solving the problem is the generalized
-    Sinkhorn-Knopp matrix scaling algorithm as proposed in [10]_
+    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10] <references-barycenter-unbalanced>`
 
     Parameters
     ----------
     A : np.ndarray (dim, n_hists)
-        `n_hists` training distributions a_i of dimension dim
+        `n_hists` training distributions :math:`\mathbf{a}_i` of dimension `dim`
     M : np.ndarray (dim, dim)
         ground metric matrix for OT.
     reg : float
@@ -971,7 +975,7 @@ def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (> 0)
+        Stop threshold on error (> 0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -986,9 +990,9 @@ def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
         log dictionary return only if log==True in parameters
 
 
+    .. _references-barycenter-unbalanced:
     References
     ----------
-
     .. [3] Benamou, J. D., Carlier, G., Cuturi, M., Nenna, L., & Peyré, G.
         (2015). Iterative Bregman projections for regularized transportation
         problems. SIAM Journal on Scientific Computing, 37(2), A1111-A1138.

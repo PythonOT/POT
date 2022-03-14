@@ -11,6 +11,8 @@ from setuptools.extension import Extension
 import numpy
 from Cython.Build import cythonize
 
+sys.path.append(os.path.join("ot", "helpers"))
+from openmp_helpers import check_openmp_support
 
 # dirty but working
 __version__ = re.search(
@@ -30,7 +32,14 @@ if 'clean' in sys.argv[1:]:
         os.remove('ot/lp/emd_wrap.cpp')
 
 # add platform dependant optional compilation argument
-compile_args = ["-O3"]
+openmp_supported, flags = check_openmp_support()
+compile_args = ["/O2" if sys.platform == "win32" else "-O3"]
+link_args = []
+
+if openmp_supported:
+    compile_args += flags + ["/DOMP" if sys.platform == 'win32' else "-DOMP"]
+    link_args += flags
+
 if sys.platform.startswith('darwin'):
     compile_args.append("-stdlib=libc++")
     sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path'])
@@ -45,21 +54,23 @@ setup(
     author=u'Remi Flamary, Nicolas Courty',
     author_email='remi.flamary@gmail.com, ncourty@gmail.com',
     url='https://github.com/PythonOT/POT',
-    packages=find_packages(),
+    packages=find_packages(exclude=["benchmarks"]),
     ext_modules=cythonize(Extension(
         name="ot.lp.emd_wrap",
         sources=["ot/lp/emd_wrap.pyx", "ot/lp/EMD_wrapper.cpp"],  # cython/c++ src files
         language="c++",
         include_dirs=[numpy.get_include(), os.path.join(ROOT, 'ot/lp')],
         extra_compile_args=compile_args,
+        extra_link_args=link_args
     )),
     platforms=['linux', 'macosx', 'windows'],
     download_url='https://github.com/PythonOT/POT/archive/{}.tar.gz'.format(__version__),
     license='MIT',
     scripts=[],
     data_files=[],
-    setup_requires=["numpy>=1.16", "cython>=0.23"],
+    setup_requires=["oldest-supported-numpy", "cython>=0.23"],
     install_requires=["numpy>=1.16", "scipy>=1.0"],
+    python_requires=">=3.6",
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
@@ -68,10 +79,10 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Environment :: Console',
         'Operating System :: OS Independent',
-        'Operating System :: Linux',
+        'Operating System :: POSIX :: Linux',
         'Operating System :: MacOS',
         'Operating System :: POSIX',
-        'Operating System :: Windows',
+        'Operating System :: Microsoft :: Windows',
         'Programming Language :: Python',
         'Programming Language :: C++',
         'Programming Language :: C',
@@ -81,9 +92,10 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics',
         'Topic :: Scientific/Engineering :: Information Analysis',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ]
 )

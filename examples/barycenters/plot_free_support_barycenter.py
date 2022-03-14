@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-====================================================
+========================================================
 2D free support Wasserstein barycenters of distributions
-====================================================
+========================================================
 
 Illustration of 2D Wasserstein barycenters if distributions are weighted
 sum of diracs.

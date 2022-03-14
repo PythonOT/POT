@@ -15,7 +15,7 @@ from . import utils
 
 def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
                    verbose=False, log=False, to_numpy=True, **kwargs):
-    """
+    r"""
     Solve the entropic regularization optimal transport on GPU
 
     If the input matrix are in numpy format, they will be uploaded to the
@@ -54,7 +54,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
-        Stop threshol on error (>0)
+        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -148,13 +148,15 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
             # we can speed up the process by checking for the error only all
             # the 10th iterations
             if nbb:
-                err = np.sum((u - uprev)**2) / np.sum((u)**2) + \
-                    np.sum((v - vprev)**2) / np.sum((v)**2)
+                err = np.sqrt(
+                    np.sum((u - uprev)**2) / np.sum((u)**2)
+                    + np.sum((v - vprev)**2) / np.sum((v)**2)
+                )
             else:
                 # compute right marginal tmp2= (diag(u)Kdiag(v))^T1
                 tmp2 = np.sum(u[:, None] * K * v[None, :], 0)
                 #tmp2=np.einsum('i,ij,j->j', u, K, v)
-                err = np.linalg.norm(tmp2 - b)**2  # violation of marginal
+                err = np.linalg.norm(tmp2 - b)  # violation of marginal
             if log:
                 log['err'].append(err)
 

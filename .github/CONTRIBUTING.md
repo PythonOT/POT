@@ -182,11 +182,10 @@ reStructuredText documents live in the source code repository under the
 doc/ directory.
 
 You can edit the documentation using any text editor and then generate
-the HTML output by typing ``make html`` from the doc/ directory.
+the HTML output by typing ``make html`` from the ``docs/`` directory.
 Alternatively, ``make`` can be used to quickly generate the
-documentation without the example gallery. The resulting HTML files will
-be placed in ``_build/html/`` and are viewable in a web browser. See the
-``README`` file in the ``doc/`` directory for more information.
+documentation without the example gallery with `make html-noplot`. The resulting HTML files will
+be placed in `docs/build/html/` and are viewable in a web browser.
 
 For building the documentation, you will need
 [sphinx](http://sphinx.pocoo.org/),

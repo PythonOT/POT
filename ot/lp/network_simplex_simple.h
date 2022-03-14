@@ -25,15 +25,17 @@
  *
  */
 
-#ifndef LEMON_NETWORK_SIMPLEX_SIMPLE_H
-#define LEMON_NETWORK_SIMPLEX_SIMPLE_H
+#pragma once
+#undef DEBUG_LVL
 #define DEBUG_LVL 0
 
 #if DEBUG_LVL>0
 #include <iomanip>
 #endif
 
-
+#undef EPSILON
+#undef _EPSILON
+#undef MAX_DEBUG_ITER
 #define EPSILON 2.2204460492503131e-15
 #define _EPSILON 1e-8
 #define MAX_DEBUG_ITER 100000
@@ -50,6 +52,7 @@
 #include <vector>
 #include <limits>
 #include <algorithm>
+#include <iostream>
 #include <cstdio>
 #ifdef HASHMAP
 #include <hash_map>
@@ -63,6 +66,8 @@
 //#include "sparse_array_n.h"
 #include "full_bipartitegraph.h"
 
+#undef INVALIDNODE
+#undef INVALID
 #define INVALIDNODE -1
 #define INVALID (-1)
 
@@ -76,16 +81,16 @@ namespace lemon {
 	class SparseValueVector
 	{
 	public:
-		SparseValueVector(int n=0)
+		SparseValueVector(size_t n=0)
 		{
 		}
-		void resize(int n=0){};
-		T operator[](const int id) const
+		void resize(size_t n=0){};
+        T operator[](const size_t id) const
 		{
 #ifdef HASHMAP
-			typename stdext::hash_map<int,T>::const_iterator it = data.find(id);
+            typename stdext::hash_map<size_t,T>::const_iterator it = data.find(id);
 #else
-			typename std::map<int,T>::const_iterator it = data.find(id);
+            typename std::map<size_t,T>::const_iterator it = data.find(id);
 #endif
 			if (it==data.end())
 				return 0;
@@ -93,16 +98,16 @@ namespace lemon {
 				return it->second;
 		}
 
-		ProxyObject<T> operator[](const int id)
+		ProxyObject<T> operator[](const size_t id)
 		{
 			return ProxyObject<T>( this, id );
 		}
 
         //private:
 #ifdef HASHMAP
-		stdext::hash_map<int,T> data;
+        stdext::hash_map<size_t,T> data;
 #else
-		std::map<int,T> data;
+        std::map<size_t,T> data;
 #endif
 
 	};
@@ -110,7 +115,7 @@ namespace lemon {
 	template <typename T>
 	class ProxyObject {
 	public:
-		ProxyObject( SparseValueVector<T> *v, int idx ){_v=v; _idx=idx;};
+        ProxyObject( SparseValueVector<T> *v, size_t idx ){_v=v; _idx=idx;};
 		ProxyObject<T> & operator=( const T &v ) {
 			// If we get here, we know that operator[] was called to perform a write access,
 			// so we can insert an item in the vector if needed
@@ -123,9 +128,9 @@ namespace lemon {
 			// If we get here, we know that operator[] was called to perform a read access,
 			// so we can simply return the existing object
 #ifdef HASHMAP
-			typename stdext::hash_map<int,T>::iterator it = _v->data.find(_idx);
+            typename stdext::hash_map<size_t,T>::iterator it = _v->data.find(_idx);
 #else
-			typename std::map<int,T>::iterator it = _v->data.find(_idx);
+            typename std::map<size_t,T>::iterator it = _v->data.find(_idx);
 #endif
 			if (it==_v->data.end())
 				return 0;
@@ -137,9 +142,9 @@ namespace lemon {
 		{
 			if (val==0) return;
 #ifdef HASHMAP
-			typename stdext::hash_map<int,T>::iterator it = _v->data.find(_idx);
+            typename stdext::hash_map<size_t,T>::iterator it = _v->data.find(_idx);
 #else
-			typename std::map<int,T>::iterator it = _v->data.find(_idx);
+            typename std::map<size_t,T>::iterator it = _v->data.find(_idx);
 #endif
 			if (it==_v->data.end())
 				_v->data[_idx] = val;
@@ -156,9 +161,9 @@ namespace lemon {
 		{
 			if (val==0) return;
 #ifdef HASHMAP
-			typename stdext::hash_map<int,T>::iterator it = _v->data.find(_idx);
+            typename stdext::hash_map<size_t,T>::iterator it = _v->data.find(_idx);
 #else
-			typename std::map<int,T>::iterator it = _v->data.find(_idx);
+            typename std::map<size_t,T>::iterator it = _v->data.find(_idx);
 #endif
 			if (it==_v->data.end())
 				_v->data[_idx] = -val;
@@ -173,7 +178,7 @@ namespace lemon {
 		}
 
 		SparseValueVector<T> *_v;
-		int _idx;
+        size_t _idx;
 	};
 
 
@@ -204,7 +209,7 @@ namespace lemon {
     ///
     /// \tparam GR The digraph type the algorithm runs on.
     /// \tparam V The number type used for flow amounts, capacity bounds
-    /// and supply values in the algorithm. By default, it is \c int.
+    /// and supply values in the algorithm. By default, it is \c int64_t.
     /// \tparam C The number type used for costs and potentials in the
     /// algorithm. By default, it is the same as \c V.
     ///
@@ -214,7 +219,7 @@ namespace lemon {
     /// \note %NetworkSimplexSimple provides five different pivot rule
     /// implementations, from which the most efficient one is used
     /// by default. For more information, see \ref PivotRule.
-    template <typename GR, typename V = int, typename C = V, typename NodesType = unsigned short int>
+    template <typename GR, typename V = int, typename C = V, typename NodesType = unsigned short int, typename ArcsType = int64_t>
     class NetworkSimplexSimple
     {
     public:
@@ -228,7 +233,7 @@ namespace lemon {
         /// mixed order in the internal data structure.
         /// In special cases, it could lead to better overall performance,
         /// but it is usually slower. Therefore it is disabled by default.
-        NetworkSimplexSimple(const GR& graph, bool arc_mixing, int nbnodes, long long nb_arcs,int maxiters) :
+        NetworkSimplexSimple(const GR& graph, bool arc_mixing, int nbnodes, ArcsType nb_arcs, size_t maxiters) :
         _graph(graph),  //_arc_id(graph),
         _arc_mixing(arc_mixing), _init_nb_nodes(nbnodes), _init_nb_arcs(nb_arcs),
         MAX(std::numeric_limits<Value>::max()),
@@ -288,11 +293,11 @@ namespace lemon {
 
     private:
 
-        int max_iter;
+        size_t max_iter;
         TEMPLATE_DIGRAPH_TYPEDEFS(GR);
 
         typedef std::vector<int> IntVector;
-        typedef std::vector<NodesType> UHalfIntVector;
+        typedef std::vector<ArcsType> ArcVector;
         typedef std::vector<Value> ValueVector;
         typedef std::vector<Cost> CostVector;
         //	typedef SparseValueVector<Cost> CostVector;
@@ -315,9 +320,9 @@ namespace lemon {
         // Data related to the underlying digraph
         const GR &_graph;
         int _node_num;
-        int _arc_num;
-        int _all_arc_num;
-        int _search_arc_num;
+        ArcsType _arc_num;
+        ArcsType _all_arc_num;
+        ArcsType _search_arc_num;
 
         // Parameters of the problem
         SupplyType _stype;
@@ -325,9 +330,9 @@ namespace lemon {
 
         inline int _node_id(int n) const {return _node_num-n-1;} ;
 
-	    //IntArcMap _arc_id;
-        UHalfIntVector _source;
-        UHalfIntVector _target;
+// 	    IntArcMap _arc_id;
+        IntVector _source;  // keep nodes as integers
+        IntVector _target;
         bool _arc_mixing;
     public:
         // Node and arc data
@@ -341,7 +346,7 @@ namespace lemon {
     private:
         // Data for storing the spanning tree structure
         IntVector _parent;
-        IntVector _pred;
+        ArcVector _pred;
         IntVector _thread;
         IntVector _rev_thread;
         IntVector _succ_num;
@@ -349,17 +354,17 @@ namespace lemon {
         IntVector _dirty_revs;
         BoolVector _forward;
         StateVector _state;
-        int _root;
+        ArcsType _root;
 
         // Temporary data used in the current pivot iteration
-        int in_arc, join, u_in, v_in, u_out, v_out;
-        int first, second, right, last;
-        int stem, par_stem, new_stem;
+        ArcsType in_arc, join, u_in, v_in, u_out, v_out;
+        ArcsType first, second, right, last;
+        ArcsType stem, par_stem, new_stem;
         Value delta;
 
         const Value MAX;
 
-        int mixingCoeff;
+        ArcsType mixingCoeff;
 
     public:
 
@@ -373,27 +378,27 @@ namespace lemon {
     private:
 
         // thank you to DVK and MizardX from StackOverflow for this function!
-        inline int sequence(int k) const {
-            int smallv = (k > num_total_big_subsequence_numbers) & 1;
+        inline ArcsType sequence(ArcsType k) const {
+            ArcsType smallv = (k > num_total_big_subsequence_numbers) & 1;
 
             k -= num_total_big_subsequence_numbers * smallv;
-            int subsequence_length2 = subsequence_length- smallv;
-            int subsequence_num = (k / subsequence_length2) + num_big_subseqiences * smallv;
-            int subsequence_offset = (k % subsequence_length2) * mixingCoeff;
+            ArcsType subsequence_length2 = subsequence_length- smallv;
+            ArcsType subsequence_num = (k / subsequence_length2) + num_big_subseqiences * smallv;
+            ArcsType subsequence_offset = (k % subsequence_length2) * mixingCoeff;
 
             return subsequence_offset + subsequence_num;
         }
-        int subsequence_length;
-        int num_big_subseqiences;
-        int num_total_big_subsequence_numbers;
+        ArcsType subsequence_length;
+        ArcsType num_big_subseqiences;
+        ArcsType num_total_big_subsequence_numbers;
 
-        inline int getArcID(const Arc &arc) const
+        inline ArcsType getArcID(const Arc &arc) const
         {
             //int n = _arc_num-arc._id-1;
-            int n = _arc_num-GR::id(arc)-1;
+            ArcsType n = _arc_num-GR::id(arc)-1;
 
-            //int a = mixingCoeff*(n%mixingCoeff) + n/mixingCoeff;
-            //int b = _arc_id[arc];
+            //ArcsType a = mixingCoeff*(n%mixingCoeff) + n/mixingCoeff;
+            //ArcsType b = _arc_id[arc];
             if (_arc_mixing)
                 return sequence(n);
             else
@@ -401,16 +406,16 @@ namespace lemon {
         }
 
         // finally unused because too slow
-        inline int getSource(const int arc) const
+        inline ArcsType getSource(const ArcsType arc) const
         {
-            //int a = _source[arc];
+            //ArcsType a = _source[arc];
             //return a;
 
-            int n = _arc_num-arc-1;
+            ArcsType n = _arc_num-arc-1;
             if (_arc_mixing)
                 n = mixingCoeff*(n%mixingCoeff) + n/mixingCoeff;
 
-            int b;
+            ArcsType b;
             if (n>=0)
                 b = _node_id(_graph.source(GR::arcFromId( n ) ));
             else
@@ -436,17 +441,17 @@ namespace lemon {
         private:
 
             // References to the NetworkSimplexSimple class
-            const UHalfIntVector  &_source;
-            const UHalfIntVector  &_target;
+            const IntVector  &_source;
+            const IntVector  &_target;
             const CostVector &_cost;
             const StateVector &_state;
             const CostVector &_pi;
-            int &_in_arc;
-            int _search_arc_num;
+            ArcsType &_in_arc;
+            ArcsType _search_arc_num;
 
             // Pivot rule data
-            int _block_size;
-            int _next_arc;
+            ArcsType _block_size;
+            ArcsType _next_arc;
             NetworkSimplexSimple &_ns;
 
         public:
@@ -460,17 +465,16 @@ namespace lemon {
             {
                 // The main parameters of the pivot rule
                 const double BLOCK_SIZE_FACTOR = 1.0;
-                const int MIN_BLOCK_SIZE = 10;
+                const ArcsType MIN_BLOCK_SIZE = 10;
 
-                _block_size = std::max( int(BLOCK_SIZE_FACTOR *
-                                            std::sqrt(double(_search_arc_num))),
-                                       MIN_BLOCK_SIZE );
+                _block_size = std::max(ArcsType(BLOCK_SIZE_FACTOR * std::sqrt(double(_search_arc_num))), MIN_BLOCK_SIZE);
             }
+
             // Find next entering arc
             bool findEnteringArc() {
                 Cost c, min = 0;
-                int e;
-                int cnt = _block_size;
+                ArcsType e;
+                ArcsType cnt = _block_size;
                 double a;
                     for (e = _next_arc; e != _search_arc_num; ++e) {
                         c = _state[e] * (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
@@ -516,7 +520,7 @@ namespace lemon {
 
 
         int _init_nb_nodes;
-        long long _init_nb_arcs;
+        ArcsType _init_nb_arcs;
 
         /// \name Parameters
         /// The parameters of the algorithm can be specified using these
@@ -736,7 +740,7 @@ namespace lemon {
             for (int i = 0; i != _node_num; ++i) {
                 _supply[i] = 0;
             }
-            for (int i = 0; i != _arc_num; ++i) {
+            for (ArcsType i = 0; i != _arc_num; ++i) {
                 _cost[i] = 1;
             }
             _stype = GEQ;
@@ -745,7 +749,7 @@ namespace lemon {
 
 
 
-        int divid (int x, int y)
+        int64_t divid (int64_t x, int64_t y)
         {
             return (x-x%y)/y;
         }
@@ -775,7 +779,7 @@ namespace lemon {
             _node_num = _init_nb_nodes;
             _arc_num = _init_nb_arcs;
             int all_node_num = _node_num + 1;
-            int max_arc_num = _arc_num + 2 * _node_num;
+            ArcsType max_arc_num = _arc_num + 2 * _node_num;
 
             _source.resize(max_arc_num);
             _target.resize(max_arc_num);
@@ -798,13 +802,13 @@ namespace lemon {
             //_arc_mixing=false;
             if (_arc_mixing) {
                 // Store the arcs in a mixed order
-                int k = std::max(int(std::sqrt(double(_arc_num))), 10);
+                const ArcsType k = std::max(ArcsType(std::sqrt(double(_arc_num))), ArcsType(10));
                 mixingCoeff = k;
                 subsequence_length = _arc_num / mixingCoeff + 1;
                 num_big_subseqiences = _arc_num % mixingCoeff;
                 num_total_big_subsequence_numbers = subsequence_length * num_big_subseqiences;
 
-                int i = 0, j = 0;
+                ArcsType i = 0, j = 0;
                 Arc a; _graph.first(a);
                 for (; a != INVALID; _graph.next(a)) {
                     _source[i] = _node_id(_graph.source(a));
@@ -814,7 +818,7 @@ namespace lemon {
                 }
             } else {
                 // Store the arcs in the original order
-                int i = 0;
+                ArcsType i = 0;
                 Arc a; _graph.first(a);
                 for (; a != INVALID; _graph.next(a), ++i) {
                     _source[i] = _node_id(_graph.source(a));
@@ -856,7 +860,7 @@ namespace lemon {
          Number totalCost() const {
          Number c = 0;
          for (ArcIt a(_graph); a != INVALID; ++a) {
-         int i = getArcID(a);
+         int64_t i = getArcID(a);
          c += Number(_flow[i]) * Number(_cost[i]);
          }
          return c;
@@ -867,15 +871,15 @@ namespace lemon {
             Number c = 0;
 
             /*#ifdef HASHMAP
-             typename stdext::hash_map<int, Value>::const_iterator it;
+             typename stdext::hash_map<int64_t, Value>::const_iterator it;
              #else
-             typename std::map<int, Value>::const_iterator it;
+             typename std::map<int64_t, Value>::const_iterator it;
              #endif
              for (it = _flow.data.begin(); it!=_flow.data.end(); ++it)
              c += Number(it->second) * Number(_cost[it->first]);
              return c;*/
 
-            for (unsigned long i=0; i<_flow.size(); i++)
+            for (ArcsType i=0; i<_flow.size(); i++)
                 c += _flow[i] * Number(_cost[i]);
             return c;
 
@@ -944,14 +948,14 @@ namespace lemon {
         // Initialize internal data structures
         bool init() {
             if (_node_num == 0) return false;
-            
+
             // Check the sum of supply values
             _sum_supply = 0;
             for (int i = 0; i != _node_num; ++i) {
                 _sum_supply += _supply[i];
             }
             if ( fabs(_sum_supply) > _EPSILON ) return false;
-            
+
 			_sum_supply = 0;
 
             // Initialize artifical cost
@@ -960,14 +964,14 @@ namespace lemon {
                 ART_COST = std::numeric_limits<Cost>::max() / 2 + 1;
             } else {
                 ART_COST = 0;
-                for (int i = 0; i != _arc_num; ++i) {
+                for (ArcsType i = 0; i != _arc_num; ++i) {
                     if (_cost[i] > ART_COST) ART_COST = _cost[i];
                 }
                 ART_COST = (ART_COST + 1) * _node_num;
             }
 
             // Initialize arc maps
-            for (int i = 0; i != _arc_num; ++i) {
+            for (ArcsType i = 0; i != _arc_num; ++i) {
                 //_flow[i] = 0; //by default, the sparse matrix is empty
                 _state[i] = STATE_LOWER;
             }
@@ -988,7 +992,7 @@ namespace lemon {
                 // EQ supply constraints
                 _search_arc_num = _arc_num;
                 _all_arc_num = _arc_num + _node_num;
-                for (int u = 0, e = _arc_num; u != _node_num; ++u, ++e) {
+                for (ArcsType u = 0, e = _arc_num; u != _node_num; ++u, ++e) {
                     _parent[u] = _root;
                     _pred[u] = e;
                     _thread[u] = u + 1;
@@ -1016,8 +1020,8 @@ namespace lemon {
             else if (_sum_supply > 0) {
                 // LEQ supply constraints
                 _search_arc_num = _arc_num + _node_num;
-                int f = _arc_num + _node_num;
-                for (int u = 0, e = _arc_num; u != _node_num; ++u, ++e) {
+                ArcsType f = _arc_num + _node_num;
+                for (ArcsType u = 0, e = _arc_num; u != _node_num; ++u, ++e) {
                     _parent[u] = _root;
                     _thread[u] = u + 1;
                     _rev_thread[u + 1] = u;
@@ -1054,8 +1058,8 @@ namespace lemon {
             else {
                 // GEQ supply constraints
                 _search_arc_num = _arc_num + _node_num;
-                int f = _arc_num + _node_num;
-                for (int u = 0, e = _arc_num; u != _node_num; ++u, ++e) {
+                ArcsType f = _arc_num + _node_num;
+                for (ArcsType u = 0, e = _arc_num; u != _node_num; ++u, ++e) {
                     _parent[u] = _root;
                     _thread[u] = u + 1;
                     _rev_thread[u + 1] = u;
@@ -1120,9 +1124,9 @@ namespace lemon {
                 second = _source[in_arc];
             }
             delta = INF;
-            int result = 0;
+            char result = 0;
             Value d;
-            int e;
+            ArcsType e;
 
             // Search the cycle along the path form the first node to the root
             for (int u = first; u != join; u = _parent[u]) {
@@ -1239,7 +1243,7 @@ namespace lemon {
 
             // Update _rev_thread using the new _thread values
             for (int i = 0; i != int(_dirty_revs.size()); ++i) {
-                u = _dirty_revs[i];
+                int u = _dirty_revs[i];
                 _rev_thread[_thread[u]] = u;
             }
 
@@ -1257,7 +1261,7 @@ namespace lemon {
                 u = w;
             }
             _pred[u_in] = in_arc;
-            _forward[u_in] = ((unsigned int)u_in == _source[in_arc]);
+            _forward[u_in] = (u_in == _source[in_arc]);
             _succ_num[u_in] = old_succ_num;
 
             // Set limits for updating _last_succ form v_in and v_out
@@ -1328,7 +1332,7 @@ namespace lemon {
             if (_sum_supply > 0) total -= _sum_supply;
             if (total <= 0) return true;
 
-            IntVector arc_vector;
+            ArcVector arc_vector;
             if (_sum_supply >= 0) {
                 if (supply_nodes.size() == 1 && demand_nodes.size() == 1) {
                     // Perform a reverse graph search from the sink to the source
@@ -1345,7 +1349,7 @@ namespace lemon {
                         Arc a; _graph.firstIn(a, v);
                         for (; a != INVALID; _graph.nextIn(a)) {
                             if (reached[u = _graph.source(a)]) continue;
-                            int j = getArcID(a);
+                            ArcsType j = getArcID(a);
                             if (INF >= total) {
                                 arc_vector.push_back(j);
                                 reached[u] = true;
@@ -1355,7 +1359,7 @@ namespace lemon {
                     }
                 } else {
                     // Find the min. cost incomming arc for each demand node
-                    for (int i = 0; i != int(demand_nodes.size()); ++i) {
+                    for (int i = 0; i != demand_nodes.size(); ++i) {
                         Node v = demand_nodes[i];
                         Cost c, min_cost = std::numeric_limits<Cost>::max();
                         Arc min_arc = INVALID;
@@ -1393,7 +1397,7 @@ namespace lemon {
             }
 
             // Perform heuristic initial pivots
-            for (int i = 0; i != int(arc_vector.size()); ++i) {
+            for (ArcsType i = 0; i != arc_vector.size(); ++i) {
                 in_arc = arc_vector[i];
                 // l'erreur est probablement ici...
                 if (_state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -
@@ -1423,7 +1427,7 @@ namespace lemon {
             // Perform heuristic initial pivots
             if (!initialPivots()) return UNBOUNDED;
 
-            int iter_number=0;
+            size_t iter_number=0;
             //pivot.setDantzig(true);
             // Execute the Network Simplex algorithm
             while (pivot.findEnteringArc()) {
@@ -1443,7 +1447,7 @@ namespace lemon {
                     double a;
                     a= (fabs(_pi[_source[in_arc]])>=fabs(_pi[_target[in_arc]])) ? fabs(_pi[_source[in_arc]]) : fabs(_pi[_target[in_arc]]);
                     a=a>=fabs(_cost[in_arc])?a:fabs(_cost[in_arc]);
-                    for (int i=0; i<_flow.size(); i++) {
+                    for (int64_t i=0; i<_flow.size(); i++) {
                         sumFlow+=_state[i]*_flow[i];
                     }
                     std::cout << "Sum of the flow " << std::setprecision(20) << sumFlow << "\n" << iter_number << " iterations, current cost=" << curCost << "\nReduced cost=" << _state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -_pi[_target[in_arc]]) << "\nPrecision = "<< -EPSILON*(a) << "\n";
@@ -1482,12 +1486,12 @@ namespace lemon {
                 double a;
                 a= (fabs(_pi[_source[in_arc]])>=fabs(_pi[_target[in_arc]])) ? fabs(_pi[_source[in_arc]]) : fabs(_pi[_target[in_arc]]);
                 a=a>=fabs(_cost[in_arc])?a:fabs(_cost[in_arc]);
-                for (int i=0; i<_flow.size(); i++) {
+                for (int64_t i=0; i<_flow.size(); i++) {
                     sumFlow+=_state[i]*_flow[i];
                 }
-            
+
                 std::cout << "Sum of the flow " << std::setprecision(20) << sumFlow << "\n" << niter << " iterations, current cost=" << curCost << "\nReduced cost=" << _state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -_pi[_target[in_arc]]) << "\nPrecision = "<< -EPSILON*(a) << "\n";
-            
+
                 std::cout << "Arc in = (" << _node_id(_source[in_arc]) << ", " << _node_id(_target[in_arc]) <<")\n";
                 std::cout << "Supplies = (" << _supply[_source[in_arc]] << ", " << _supply[_target[in_arc]] << ")\n";
 
@@ -1505,9 +1509,9 @@ namespace lemon {
 #endif
             // Check feasibility
 			if( retVal == OPTIMAL){
-                for (int e = _search_arc_num; e != _all_arc_num; ++e) {
+                for (ArcsType e = _search_arc_num; e != _all_arc_num; ++e) {
                     if (_flow[e] != 0){
-                        if (abs(_flow[e]) > EPSILON)
+                        if (fabs(_flow[e]) > _EPSILON) // change of the original code following issue #126
                             return INFEASIBLE;
                         else
                             _flow[e]=0;
@@ -1521,20 +1525,20 @@ namespace lemon {
             if (_sum_supply == 0) {
                 if (_stype == GEQ) {
                     Cost max_pot = -std::numeric_limits<Cost>::max();
-                    for (int i = 0; i != _node_num; ++i) {
+                    for (ArcsType i = 0; i != _node_num; ++i) {
                         if (_pi[i] > max_pot) max_pot = _pi[i];
                     }
                     if (max_pot > 0) {
-                        for (int i = 0; i != _node_num; ++i)
+                        for (ArcsType i = 0; i != _node_num; ++i)
                             _pi[i] -= max_pot;
                     }
                 } else {
                     Cost min_pot = std::numeric_limits<Cost>::max();
-                    for (int i = 0; i != _node_num; ++i) {
+                    for (ArcsType i = 0; i != _node_num; ++i) {
                         if (_pi[i] < min_pot) min_pot = _pi[i];
                     }
                     if (min_pot < 0) {
-                        for (int i = 0; i != _node_num; ++i)
+                        for (ArcsType i = 0; i != _node_num; ++i)
                             _pi[i] -= min_pot;
                     }
                 }
@@ -1548,5 +1552,3 @@ namespace lemon {
     ///@}
 
 } //namespace lemon
-
-#endif //LEMON_NETWORK_SIMPLEX_H

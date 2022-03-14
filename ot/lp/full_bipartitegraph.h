@@ -23,10 +23,10 @@
  *
  */
 
-#ifndef LEMON_FULL_BIPARTITE_GRAPH_H
-#define LEMON_FULL_BIPARTITE_GRAPH_H
+#pragma once
 
 #include "core.h"
+#include <cstdint>
 
 ///\ingroup graphs
 ///\file
@@ -44,16 +44,16 @@ namespace lemon {
     //class Node;
 	typedef int Node;
     //class Arc;
-	typedef long long Arc;
+	typedef int64_t Arc;
 
   protected:
 
     int _node_num;
-    long long _arc_num;
+    int64_t _arc_num;
 	
     FullBipartiteDigraphBase() {}
 
-    void construct(int n1, int n2) { _node_num = n1+n2; _arc_num = n1 * n2; _n1=n1; _n2=n2;}
+    void construct(int n1, int n2) { _node_num = n1+n2; _arc_num = (int64_t)n1 * (int64_t)n2; _n1=n1; _n2=n2;}
 
   public:
 
@@ -65,25 +65,25 @@ namespace lemon {
 
     Arc arc(const Node& s, const Node& t) const {
 		if (s<_n1 && t>=_n1)
-			return Arc(s * _n2 + (t-_n1) );
+            return Arc((int64_t)s * (int64_t)_n2 + (int64_t)(t-_n1) );
 		else
 			return Arc(-1);
     }
 
     int nodeNum() const { return _node_num; }
-    long long arcNum() const { return _arc_num; }
+    int64_t arcNum() const { return _arc_num; }
 
     int maxNodeId() const { return _node_num - 1; }
-    long long maxArcId() const { return _arc_num - 1; }
+    int64_t maxArcId() const { return _arc_num - 1; }
 
     Node source(Arc arc) const { return arc / _n2; }
     Node target(Arc arc) const { return (arc % _n2) + _n1; }
 
     static int id(Node node) { return node; }
-    static long long id(Arc arc) { return arc; }
+    static int64_t id(Arc arc) { return arc; }
 
     static Node nodeFromId(int id) { return Node(id);}
-    static Arc arcFromId(int id) { return Arc(id);}
+    static Arc arcFromId(int64_t id) { return Arc(id);}
 
 
     Arc findArc(Node s, Node t, Arc prev = -1) const {
@@ -136,7 +136,7 @@ namespace lemon {
   ///
   /// \brief A directed full graph class.
   ///
-  /// FullBipartiteDigraph is a simple and fast implmenetation of directed full
+  /// FullBipartiteDigraph is a simple and fast implementation of directed full
   /// (complete) graphs. It contains an arc from each node to each node
   /// (including a loop for each node), therefore the number of arcs
   /// is the square of the number of nodes.
@@ -203,13 +203,10 @@ namespace lemon {
     /// \brief Number of nodes.
     int nodeNum() const { return Parent::nodeNum(); }
     /// \brief Number of arcs.
-    long long arcNum() const { return Parent::arcNum(); }
+    int64_t arcNum() const { return Parent::arcNum(); }
   };
 
 
 
 
 } //namespace lemon
-
-
-#endif //LEMON_FULL_GRAPH_H

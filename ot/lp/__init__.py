@@ -8,25 +8,52 @@ Solvers for the original linear program OT problem
 #
 # License: MIT License
 
+import os
 import multiprocessing
 import sys
 
 import numpy as np
-from scipy.sparse import coo_matrix
+import warnings
 
 from . import cvx
 from .cvx import barycenter
+
 # import compiled emd
 from .emd_wrap import emd_c, check_result, emd_1d_sorted
-from ..utils import dist
-from ..utils import parmap
+from .solver_1d import emd_1d, emd2_1d, wasserstein_1d
 
-__all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx',
+from ..utils import dist, list_to_array
+from ..utils import parmap
+from ..backend import get_backend
+
+
+
+__all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx', ' emd_1d_sorted',
            'emd_1d', 'emd2_1d', 'wasserstein_1d']
 
 
+def check_number_threads(numThreads):
+    """Checks whether or not the requested number of threads has a valid value.
+
+    Parameters
+    ----------
+    numThreads : int or str
+        The requested number of threads, should either be a strictly positive integer or "max" or None
+
+    Returns
+    -------
+    numThreads : int
+        Corrected number of threads
+    """
+    if (numThreads is None) or (isinstance(numThreads, str) and numThreads.lower() == 'max'):
+        return -1
+    if (not isinstance(numThreads, int)) or numThreads < 1:
+        raise ValueError('numThreads should either be "max" or a strictly positive integer')
+    return numThreads
+
+
 def center_ot_dual(alpha0, beta0, a=None, b=None):
-    r"""Center dual OT potentials w.r.t. theirs weights
+    r"""Center dual OT potentials w.r.t. their weights
 
     The main idea of this function is to find unique dual potentials
     that ensure some kind of centering/fairness. The main idea is to find dual potentials that lead to the same final objective value for both source and targets (see below for more details). It will help having
@@ -37,7 +64,7 @@ def center_ot_dual(alpha0, beta0, a=None, b=None):
     is the following:
 
     .. math::
-        \alpha^T a= \beta^T b
+        \alpha^T \mathbf{a} = \beta^T \mathbf{b}
 
     in addition to the OT problem constraints.
 
@@ -45,11 +72,11 @@ def center_ot_dual(alpha0, beta0, a=None, b=None):
     a constant from both  :math:`\alpha_0` and :math:`\beta_0`.
 
     .. math::
-        c=\frac{\beta0^T b-\alpha_0^T a}{1^Tb+1^Ta}
+        c &= \frac{\beta_0^T \mathbf{b} - \alpha_0^T \mathbf{a}}{\mathbf{1}^T \mathbf{b} + \mathbf{1}^T \mathbf{a}}
 
-        \alpha=\alpha_0+c
+        \alpha &= \alpha_0 + c
 
-        \beta=\beta0+c
+        \beta &= \beta_0 + c
 
     Parameters
     ----------
@@ -92,35 +119,35 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     The feasible values are computed efficiently but rather coarsely.
 
     .. warning::
-        This function is necessary because the C++ solver in emd_c
-        discards all samples in the distributions with 
-        zeros weights. This means that while the primal variable (transport 
+        This function is necessary because the C++ solver in `emd_c`
+        discards all samples in the distributions with
+        zeros weights. This means that while the primal variable (transport
         matrix) is exact, the solver only returns feasible dual potentials
-        on the samples with weights different from zero. 
+        on the samples with weights different from zero.
 
     First we compute the constraints violations:
 
     .. math::
-        V=\alpha+\beta^T-M
+        \mathbf{V} = \alpha + \beta^T - \mathbf{M}
 
-    Next we compute the max amount of violation per row (alpha) and
-    columns (beta)
+    Next we compute the max amount of violation per row (:math:`\alpha`) and
+    columns (:math:`beta`)
 
     .. math::
-        v^a_i=\max_j V_{i,j}
+        \mathbf{v^a}_i = \max_j \mathbf{V}_{i,j}
 
-        v^b_j=\max_i V_{i,j}
+        \mathbf{v^b}_j = \max_i \mathbf{V}_{i,j}
 
     Finally we update the dual potential with 0 weights if a
     constraint is violated
 
     .. math::
-        \alpha_i = \alpha_i -v^a_i \quad \text{ if } a_i=0 \text{ and } v^a_i>0
+        \alpha_i = \alpha_i - \mathbf{v^a}_i \quad \text{ if } \mathbf{a}_i=0 \text{ and } \mathbf{v^a}_i>0
 
-        \beta_j = \beta_j -v^b_j \quad \text{ if } b_j=0 \text{ and } v^b_j>0
+        \beta_j = \beta_j - \mathbf{v^b}_j \quad \text{ if } \mathbf{b}_j=0 \text{ and } \mathbf{v^b}_j > 0
 
     In the end the dual potentials are centered using function
-    :ref:`center_ot_dual`.
+    :py:func:`ot.lp.center_ot_dual`.
 
     Note that all those updates do not change the objective value of the
     solution but provide dual potentials that do not violate the constraints.
@@ -172,54 +199,63 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     return center_ot_dual(alpha, beta, a, b)
 
 
-def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
+def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
 
     .. math::
-        \gamma = arg\min_\gamma <\gamma,M>_F
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} = \mathbf{b}
 
-             \gamma\geq 0
+             \gamma \geq 0
+
     where :
 
-    - M is the metric cost matrix
-    - a and b are the sample weights
+    - :math:`\mathbf{M}` is the metric cost matrix
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are the sample weights
 
-    .. warning::
-        Note that the M matrix needs to be a C-order numpy.array in float64
-        format.
+    .. warning:: Note that the :math:`\mathbf{M}` matrix in numpy needs to be a C-order
+        numpy.array in float64 format. It will be converted if not in this
+        format
 
-    Uses the algorithm proposed in [1]_
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
+
+    Uses the algorithm proposed in :ref:`[1] <references-emd>`.
 
     Parameters
     ----------
-    a : (ns,) numpy.ndarray, float64
+    a : (ns,) array-like, float
         Source histogram (uniform weight if empty list)
-    b : (nt,) numpy.ndarray, float64
+    b : (nt,) array-like, float
         Target histogram (uniform weight if empty list)
-    M : (ns,nt) numpy.ndarray, float64
-        Loss matrix (c-order array with type float64)
+    M : (ns,nt) array-like, float
+        Loss matrix (c-order array in numpy with type float64)
     numItermax : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
     log: bool, optional (default=False)
-        If True, returns a dictionary containing the cost and dual
-        variables. Otherwise returns only the optimal transportation matrix.
+        If True, returns a dictionary containing the cost and dual variables.
+        Otherwise returns only the optimal transportation matrix.
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
         :ref:`center_ot_dual`.
+    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
+        If compiled with OpenMP, chooses the number of threads to parallelize.
+        "max" selects the highest number possible.
 
     Returns
     -------
-    gamma: (ns x nt) numpy.ndarray
-        Optimal transportation matrix for the given parameters
-    log: dict
-        If input log is true, a dictionary containing the cost and dual
-        variables and exit status
+    gamma: array-like, shape (ns, nt)
+        Optimal transportation matrix for the given
+        parameters
+    log: dict, optional
+        If input log is true, a dictionary containing the
+        cost and dual variables and exit status
 
 
     Examples
@@ -232,26 +268,39 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     >>> a=[.5,.5]
     >>> b=[.5,.5]
     >>> M=[[0.,1.],[1.,0.]]
-    >>> ot.emd(a,b,M)
+    >>> ot.emd(a, b, M)
     array([[0.5, 0. ],
            [0. , 0.5]])
 
+
+    .. _references-emd:
     References
     ----------
-
-    .. [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W.
-        (2011, December).  Displacement interpolation using Lagrangian mass
-        transport. In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p.
-        158). ACM.
+    .. [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W. (2011,
+        December).  Displacement interpolation using Lagrangian mass transport.
+        In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p. 158). ACM.
 
     See Also
     --------
     ot.bregman.sinkhorn : Entropic regularized OT
-    ot.optim.cg : General regularized OT"""
+    ot.optim.cg : General regularized OT
+    """
 
+    # convert to numpy if list
+    a, b, M = list_to_array(a, b, M)
+
+    a0, b0, M0 = a, b, M
+    nx = get_backend(M0, a0, b0)
+
+    # convert to numpy
+    M = nx.to_numpy(M)
+    a = nx.to_numpy(a)
+    b = nx.to_numpy(b)
+
+    # ensure float64
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    M = np.asarray(M, dtype=np.float64, order='C')
 
     # if empty array given then use uniform distributions
     if len(a) == 0:
@@ -262,10 +311,17 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     assert (a.shape[0] == M.shape[0] and b.shape[0] == M.shape[1]), \
         "Dimension mismatch, check dimensions of M with a and b"
 
+    # ensure that same mass
+    np.testing.assert_almost_equal(a.sum(0),
+                                   b.sum(0), err_msg='a and b vector must have the same sum')
+    b = b * a.sum() / b.sum()
+
     asel = a != 0
     bsel = b != 0
 
-    G, cost, u, v, result_code = emd_c(a, b, M, numItermax)
+    numThreads = check_number_threads(numThreads)
+
+    G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
 
     if center_dual:
         u, v = center_ot_dual(u, v, a, b)
@@ -277,66 +333,70 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True):
     if log:
         log = {}
         log['cost'] = cost
-        log['u'] = u
-        log['v'] = v
+        log['u'] = nx.from_numpy(u, type_as=a0)
+        log['v'] = nx.from_numpy(v, type_as=b0)
         log['warning'] = result_code_string
         log['result_code'] = result_code
-        return G, log
-    return G
+        return nx.from_numpy(G, type_as=M0), log
+    return nx.from_numpy(G, type_as=M0)
 
 
-def emd2(a, b, M, processes=multiprocessing.cpu_count(),
+def emd2(a, b, M, processes=1,
          numItermax=100000, log=False, return_matrix=False,
-         center_dual=True):
+         center_dual=True, numThreads=1):
     r"""Solves the Earth Movers distance problem and returns the loss
 
     .. math::
-        \min_\gamma <\gamma,M>_F
+        \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F
 
-        s.t. \gamma 1 = a
+        s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
-             \gamma^T 1= b
+             \gamma^T \mathbf{1} = \mathbf{b}
 
-             \gamma\geq 0
+             \gamma \geq 0
+
     where :
 
-    - M is the metric cost matrix
-    - a and b are the sample weights
+    - :math:`\mathbf{M}` is the metric cost matrix
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are the sample weights
 
-    .. warning::
-        Note that the M matrix needs to be a C-order numpy.array in float64
-        format.
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
 
-    Uses the algorithm proposed in [1]_
+    Uses the algorithm proposed in :ref:`[1] <references-emd2>`.
 
     Parameters
     ----------
-    a : (ns,) numpy.ndarray, float64
+    a : (ns,) array-like, float64
         Source histogram (uniform weight if empty list)
-    b : (nt,) numpy.ndarray, float64
+    b : (nt,) array-like, float64
         Target histogram (uniform weight if empty list)
-    M : (ns,nt) numpy.ndarray, float64
-        Loss matrix (c-order array with type float64)
-    processes : int, optional (default=nb cpu)
-        Nb of processes used for multiple emd computation (not used on windows)
+    M : (ns,nt) array-like, float64
+        Loss matrix (for numpy c-order array with type float64)
+    processes : int, optional (default=1)
+        Nb of processes used for multiple emd computation (deprecated)
     numItermax : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
     log: boolean, optional (default=False)
-        If True, returns a dictionary containing the cost and dual
+        If True, returns a dictionary containing dual
         variables. Otherwise returns only the optimal transportation cost.
     return_matrix: boolean, optional (default=False)
         If True, returns the optimal transportation matrix in the log.
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
         :ref:`center_ot_dual`.
+    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
+        If compiled with OpenMP, chooses the number of threads to parallelize.
+        "max" selects the highest number possible.
 
     Returns
     -------
-    gamma: (ns x nt) ndarray
-        Optimal transportation matrix for the given parameters
-    log: dictnp
-        If input log is true, a dictionary containing the cost and dual
+    W: float, array-like
+        Optimal transportation loss for the given parameters
+    log: dict
+        If input log is true, a dictionary containing dual
         variables and exit status
 
 
@@ -354,9 +414,10 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     >>> ot.emd2(a,b,M)
     0.0
 
+
+    .. _references-emd2:
     References
     ----------
-
     .. [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W.
         (2011, December).  Displacement interpolation using Lagrangian mass
         transport. In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p.
@@ -365,15 +426,22 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     See Also
     --------
     ot.bregman.sinkhorn : Entropic regularized OT
-    ot.optim.cg : General regularized OT"""
+    ot.optim.cg : General regularized OT
+    """
+
+    a, b, M = list_to_array(a, b, M)
+
+    a0, b0, M0 = a, b, M
+    nx = get_backend(M0, a0, b0)
+
+    # convert to numpy
+    M = nx.to_numpy(M)
+    a = nx.to_numpy(a)
+    b = nx.to_numpy(b)
 
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
-
-    # problem with pikling Forks
-    if sys.platform.endswith('win32'):
-        processes = 1
+    M = np.asarray(M, dtype=np.float64, order='C')
 
     # if empty array given then use uniform distributions
     if len(a) == 0:
@@ -386,11 +454,13 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
     asel = a != 0
 
+    numThreads = check_number_threads(numThreads)
+
     if log or return_matrix:
         def f(b):
             bsel = b != 0
 
-            G, cost, u, v, result_code = emd_c(a, b, M, numItermax)
+            G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
 
             if center_dual:
                 u, v = center_ot_dual(u, v, a, b)
@@ -400,23 +470,31 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
 
             result_code_string = check_result(result_code)
             log = {}
+            G = nx.from_numpy(G, type_as=M0)
             if return_matrix:
                 log['G'] = G
-            log['u'] = u
-            log['v'] = v
+            log['u'] = nx.from_numpy(u, type_as=a0)
+            log['v'] = nx.from_numpy(v, type_as=b0)
             log['warning'] = result_code_string
             log['result_code'] = result_code
+            cost = nx.set_gradients(nx.from_numpy(cost, type_as=M0),
+                                    (a0, b0, M0), (log['u'], log['v'], G))
             return [cost, log]
     else:
         def f(b):
             bsel = b != 0
-            G, cost, u, v, result_code = emd_c(a, b, M, numItermax)
+            G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
 
             if center_dual:
                 u, v = center_ot_dual(u, v, a, b)
 
             if np.any(~asel) or np.any(~bsel):
                 u, v = estimate_dual_null_weights(u, v, a, b, M)
+
+            G = nx.from_numpy(G, type_as=M0)
+            cost = nx.set_gradients(nx.from_numpy(cost, type_as=M0),
+                                    (a0, b0, M0), (nx.from_numpy(u, type_as=a0),
+                                                   nx.from_numpy(v, type_as=b0), G))
 
             check_result(result_code)
             return cost
@@ -426,45 +504,53 @@ def emd2(a, b, M, processes=multiprocessing.cpu_count(),
     nb = b.shape[1]
 
     if processes > 1:
-        res = parmap(f, [b[:, i].copy() for i in range(nb)], processes)
-    else:
-        res = list(map(f, [b[:, i].copy() for i in range(nb)]))
+        warnings.warn(
+            "The 'processes' parameter has been deprecated. "
+            "Multiprocessing should be done outside of POT."
+        )
+    res = list(map(f, [b[:, i].copy() for i in range(nb)]))
 
     return res
 
 
 def free_support_barycenter(measures_locations, measures_weights, X_init, b=None, weights=None, numItermax=100,
-                            stopThr=1e-7, verbose=False, log=None):
+                            stopThr=1e-7, verbose=False, log=None, numThreads=1):
     r"""
     Solves the free support (locations of the barycenters are optimized, not the weights) Wasserstein barycenter problem (i.e. the weighted Frechet mean for the 2-Wasserstein distance), formally:
 
     .. math::
-        \min_X \sum_{i=1}^N w_i W_2^2(b, X, a_i, X_i)
+        \min_\mathbf{X} \quad \sum_{i=1}^N w_i W_2^2(\mathbf{b}, \mathbf{X}, \mathbf{a}_i, \mathbf{X}_i)
 
     where :
 
     - :math:`w \in \mathbb{(0, 1)}^{N}`'s are the barycenter weights and sum to one
-    - the :math:`a_i \in \mathbb{R}^{k_i}` are the empirical measures weights and sum to one for each :math:`i`
-    - the :math:`X_i \in \mathbb{R}^{k_i, d}` are the empirical measures atoms locations
-    - :math:`b \in \mathbb{R}^{k}` is the desired weights vector of the barycenter
+    - the :math:`\mathbf{a}_i \in \mathbb{R}^{k_i}` are the empirical measures weights and sum to one for each :math:`i`
+    - the :math:`\mathbf{X}_i \in \mathbb{R}^{k_i, d}` are the empirical measures atoms locations
+    - :math:`\mathbf{b} \in \mathbb{R}^{k}` is the desired weights vector of the barycenter
 
-    This problem is considered in [1] (Algorithm 2). There are two differences with the following codes:
+    This problem is considered in :ref:`[1] <references-free-support-barycenter>` (Algorithm 2).
+    There are two differences with the following codes:
 
     - we do not optimize over the weights
-    - we do not do line search for the locations updates, we use i.e. theta = 1 in [1] (Algorithm 2). This can be seen as a discrete implementation of the fixed-point algorithm of [2] proposed in the continuous setting.
+    - we do not do line search for the locations updates, we use i.e. :math:`\theta = 1` in
+      :ref:`[1] <references-free-support-barycenter>` (Algorithm 2). This can be seen as a discrete
+      implementation of the fixed-point algorithm of
+      :ref:`[2] <references-free-support-barycenter>` proposed in the continuous setting.
 
     Parameters
     ----------
-    measures_locations : list of N (k_i,d) numpy.ndarray
-        The discrete support of a measure supported on k_i locations of a d-dimensional space (k_i can be different for each element of the list)
-    measures_weights : list of N (k_i,) numpy.ndarray
-        Numpy arrays where each numpy array has k_i non-negatives values summing to one representing the weights of each discrete input measure
+    measures_locations : list of N (k_i,d) array-like
+        The discrete support of a measure supported on :math:`k_i` locations of a `d`-dimensional space
+        (:math:`k_i` can be different for each element of the list)
+    measures_weights : list of N (k_i,) array-like
+        Numpy arrays where each numpy array has :math:`k_i` non-negatives values summing to one
+        representing the weights of each discrete input measure
 
-    X_init : (k,d) np.ndarray
-        Initialization of the support locations (on k atoms) of the barycenter
-    b : (k,) np.ndarray
+    X_init : (k,d) array-like
+        Initialization of the support locations (on `k` atoms) of the barycenter
+    b : (k,) array-like
         Initialization of the weights of the barycenter (non-negatives, sum to 1)
-    weights : (N,) np.ndarray
+    weights : (N,) array-like
         Initialization of the coefficients of the barycenter (non-negatives, sum to 1)
 
     numItermax : int, optional
@@ -475,20 +561,27 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
         Print information along iterations
     log : bool, optional
         record log if True
+    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
+        If compiled with OpenMP, chooses the number of threads to parallelize.
+        "max" selects the highest number possible.
+
 
     Returns
     -------
-    X : (k,d) np.ndarray
+    X : (k,d) array-like
         Support locations (on k atoms) of the barycenter
 
+
+    .. _references-free-support-barycenter:
     References
     ----------
-
     .. [1] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein barycenters." International Conference on Machine Learning. 2014.
 
     .. [2]  Álvarez-Esteban, Pedro C., et al. "A fixed-point approach to barycenters in Wasserstein space." Journal of Mathematical Analysis and Applications 441.2 (2016): 744-762.
 
     """
+
+    nx = get_backend(*measures_locations,*measures_weights,X_init)
 
     iter_count = 0
 
@@ -496,9 +589,9 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
     k = X_init.shape[0]
     d = X_init.shape[1]
     if b is None:
-        b = np.ones((k,)) / k
+        b = nx.ones((k,),type_as=X_init) / k
     if weights is None:
-        weights = np.ones((N,)) / N
+        weights = nx.ones((N,),type_as=X_init) / N
 
     X = X_init
 
@@ -509,15 +602,15 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
     while (displacement_square_norm > stopThr and iter_count < numItermax):
 
-        T_sum = np.zeros((k, d))
+        T_sum = nx.zeros((k, d),type_as=X_init)
+        
 
-        for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights,
-                                                                      weights.tolist()):
+        for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights,  weights):
             M_i = dist(X, measure_locations_i)
-            T_i = emd(b, measure_weights_i, M_i)
-            T_sum = T_sum + weight_i * np.reshape(1. / b, (-1, 1)) * np.matmul(T_i, measure_locations_i)
+            T_i = emd(b, measure_weights_i, M_i, numThreads=numThreads)
+            T_sum = T_sum + weight_i * 1. / b[:,None] * nx.dot(T_i, measure_locations_i)
 
-        displacement_square_norm = np.sum(np.square(T_sum - X))
+        displacement_square_norm = nx.sum((T_sum - X)**2)
         if log:
             displacement_square_norms.append(displacement_square_norm)
 
@@ -534,286 +627,3 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
     else:
         return X
 
-
-def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
-           log=False):
-    r"""Solves the Earth Movers distance problem between 1d measures and returns
-    the OT matrix
-
-
-    .. math::
-        \gamma = arg\min_\gamma \sum_i \sum_j \gamma_{ij} d(x_a[i], x_b[j])
-
-        s.t. \gamma 1 = a,
-             \gamma^T 1= b,
-             \gamma\geq 0
-    where :
-
-    - d is the metric
-    - x_a and x_b are the samples
-    - a and b are the sample weights
-
-    When 'minkowski' is used as a metric, :math:`d(x, y) = |x - y|^p`.
-
-    Uses the algorithm detailed in [1]_
-
-    Parameters
-    ----------
-    x_a : (ns,) or (ns, 1) ndarray, float64
-        Source dirac locations (on the real line)
-    x_b : (nt,) or (ns, 1) ndarray, float64
-        Target dirac locations (on the real line)
-    a : (ns,) ndarray, float64, optional
-        Source histogram (default is uniform weight)
-    b : (nt,) ndarray, float64, optional
-        Target histogram (default is uniform weight)
-    metric: str, optional (default='sqeuclidean')
-        Metric to be used. Only strings listed in :func:`ot.dist` are accepted.
-        Due to implementation details, this function runs faster when
-        `'sqeuclidean'`, `'cityblock'`,  or `'euclidean'` metrics are used.
-    p: float, optional (default=1.0)
-         The p-norm to apply for if metric='minkowski'
-    dense: boolean, optional (default=True)
-        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
-        Otherwise returns a sparse representation using scipy's `coo_matrix`
-        format. Due to implementation details, this function runs faster when
-        `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'` metrics
-        are used.
-    log: boolean, optional (default=False)
-        If True, returns a dictionary containing the cost.
-        Otherwise returns only the optimal transportation matrix.
-
-    Returns
-    -------
-    gamma: (ns, nt) ndarray
-        Optimal transportation matrix for the given parameters
-    log: dict
-        If input log is True, a dictionary containing the cost
-
-
-    Examples
-    --------
-
-    Simple example with obvious solution. The function emd_1d accepts lists and
-    performs automatic conversion to numpy arrays
-
-    >>> import ot
-    >>> a=[.5, .5]
-    >>> b=[.5, .5]
-    >>> x_a = [2., 0.]
-    >>> x_b = [0., 3.]
-    >>> ot.emd_1d(x_a, x_b, a, b)
-    array([[0. , 0.5],
-           [0.5, 0. ]])
-    >>> ot.emd_1d(x_a, x_b)
-    array([[0. , 0.5],
-           [0.5, 0. ]])
-
-    References
-    ----------
-
-    .. [1]  Peyré, G., & Cuturi, M. (2017). "Computational Optimal
-        Transport", 2018.
-
-    See Also
-    --------
-    ot.lp.emd : EMD for multidimensional distributions
-    ot.lp.emd2_1d : EMD for 1d distributions (returns cost instead of the
-        transportation matrix)
-    """
-    a = np.asarray(a, dtype=np.float64)
-    b = np.asarray(b, dtype=np.float64)
-    x_a = np.asarray(x_a, dtype=np.float64)
-    x_b = np.asarray(x_b, dtype=np.float64)
-
-    assert (x_a.ndim == 1 or x_a.ndim == 2 and x_a.shape[1] == 1), \
-        "emd_1d should only be used with monodimensional data"
-    assert (x_b.ndim == 1 or x_b.ndim == 2 and x_b.shape[1] == 1), \
-        "emd_1d should only be used with monodimensional data"
-
-    # if empty array given then use uniform distributions
-    if a.ndim == 0 or len(a) == 0:
-        a = np.ones((x_a.shape[0],), dtype=np.float64) / x_a.shape[0]
-    if b.ndim == 0 or len(b) == 0:
-        b = np.ones((x_b.shape[0],), dtype=np.float64) / x_b.shape[0]
-
-    x_a_1d = x_a.reshape((-1,))
-    x_b_1d = x_b.reshape((-1,))
-    perm_a = np.argsort(x_a_1d)
-    perm_b = np.argsort(x_b_1d)
-
-    G_sorted, indices, cost = emd_1d_sorted(a[perm_a], b[perm_b],
-                                            x_a_1d[perm_a], x_b_1d[perm_b],
-                                            metric=metric, p=p)
-    G = coo_matrix((G_sorted, (perm_a[indices[:, 0]], perm_b[indices[:, 1]])),
-                   shape=(a.shape[0], b.shape[0]))
-    if dense:
-        G = G.toarray()
-    if log:
-        log = {'cost': cost}
-        return G, log
-    return G
-
-
-def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
-            log=False):
-    r"""Solves the Earth Movers distance problem between 1d measures and returns
-    the loss
-
-
-    .. math::
-        \gamma = arg\min_\gamma \sum_i \sum_j \gamma_{ij} d(x_a[i], x_b[j])
-
-        s.t. \gamma 1 = a,
-             \gamma^T 1= b,
-             \gamma\geq 0
-    where :
-
-    - d is the metric
-    - x_a and x_b are the samples
-    - a and b are the sample weights
-
-    When 'minkowski' is used as a metric, :math:`d(x, y) = |x - y|^p`.
-
-    Uses the algorithm detailed in [1]_
-
-    Parameters
-    ----------
-    x_a : (ns,) or (ns, 1) ndarray, float64
-        Source dirac locations (on the real line)
-    x_b : (nt,) or (ns, 1) ndarray, float64
-        Target dirac locations (on the real line)
-    a : (ns,) ndarray, float64, optional
-        Source histogram (default is uniform weight)
-    b : (nt,) ndarray, float64, optional
-        Target histogram (default is uniform weight)
-    metric: str, optional (default='sqeuclidean')
-        Metric to be used. Only strings listed in :func:`ot.dist` are accepted.
-        Due to implementation details, this function runs faster when
-        `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'` metrics
-        are used.
-    p: float, optional (default=1.0)
-         The p-norm to apply for if metric='minkowski'
-    dense: boolean, optional (default=True)
-        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
-        Otherwise returns a sparse representation using scipy's `coo_matrix`
-        format. Only used if log is set to True. Due to implementation details,
-        this function runs faster when dense is set to False.
-    log: boolean, optional (default=False)
-        If True, returns a dictionary containing the transportation matrix.
-        Otherwise returns only the loss.
-
-    Returns
-    -------
-    loss: float
-        Cost associated to the optimal transportation
-    log: dict
-        If input log is True, a dictionary containing the Optimal transportation
-        matrix for the given parameters
-
-
-    Examples
-    --------
-
-    Simple example with obvious solution. The function emd2_1d accepts lists and
-    performs automatic conversion to numpy arrays
-
-    >>> import ot
-    >>> a=[.5, .5]
-    >>> b=[.5, .5]
-    >>> x_a = [2., 0.]
-    >>> x_b = [0., 3.]
-    >>> ot.emd2_1d(x_a, x_b, a, b)
-    0.5
-    >>> ot.emd2_1d(x_a, x_b)
-    0.5
-
-    References
-    ----------
-
-    .. [1]  Peyré, G., & Cuturi, M. (2017). "Computational Optimal
-        Transport", 2018.
-
-    See Also
-    --------
-    ot.lp.emd2 : EMD for multidimensional distributions
-    ot.lp.emd_1d : EMD for 1d distributions (returns the transportation matrix
-        instead of the cost)
-    """
-    # If we do not return G (log==False), then we should not to cast it to dense
-    # (useless overhead)
-    G, log_emd = emd_1d(x_a=x_a, x_b=x_b, a=a, b=b, metric=metric, p=p,
-                        dense=dense and log, log=True)
-    cost = log_emd['cost']
-    if log:
-        log_emd = {'G': G}
-        return cost, log_emd
-    return cost
-
-
-def wasserstein_1d(x_a, x_b, a=None, b=None, p=1.):
-    r"""Solves the p-Wasserstein distance problem between 1d measures and returns
-    the distance
-
-    .. math::
-        \min_\gamma \left( \sum_i \sum_j \gamma_{ij} \|x_a[i] - x_b[j]\|^p \right)^{1/p}
-
-        s.t. \gamma 1 = a,
-             \gamma^T 1= b,
-             \gamma\geq 0
-
-    where :
-
-    - x_a and x_b are the samples
-    - a and b are the sample weights
-
-    Uses the algorithm detailed in [1]_
-
-    Parameters
-    ----------
-    x_a : (ns,) or (ns, 1) ndarray, float64
-        Source dirac locations (on the real line)
-    x_b : (nt,) or (ns, 1) ndarray, float64
-        Target dirac locations (on the real line)
-    a : (ns,) ndarray, float64, optional
-        Source histogram (default is uniform weight)
-    b : (nt,) ndarray, float64, optional
-        Target histogram (default is uniform weight)
-    p: float, optional (default=1.0)
-         The order of the p-Wasserstein distance to be computed
-
-    Returns
-    -------
-    dist: float
-        p-Wasserstein distance
-
-
-    Examples
-    --------
-
-    Simple example with obvious solution. The function wasserstein_1d accepts
-    lists and performs automatic conversion to numpy arrays
-
-    >>> import ot
-    >>> a=[.5, .5]
-    >>> b=[.5, .5]
-    >>> x_a = [2., 0.]
-    >>> x_b = [0., 3.]
-    >>> ot.wasserstein_1d(x_a, x_b, a, b)
-    0.5
-    >>> ot.wasserstein_1d(x_a, x_b)
-    0.5
-
-    References
-    ----------
-
-    .. [1]  Peyré, G., & Cuturi, M. (2017). "Computational Optimal
-        Transport", 2018.
-
-    See Also
-    --------
-    ot.lp.emd_1d : EMD for 1d distributions
-    """
-    cost_emd = emd2_1d(x_a=x_a, x_b=x_b, a=a, b=b, metric='minkowski', p=p,
-                       dense=False, log=False)
-    return np.power(cost_emd, 1. / p)

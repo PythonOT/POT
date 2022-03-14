@@ -104,7 +104,7 @@ def test_partial_wasserstein():
     w, log = ot.partial.entropic_partial_wasserstein(p, q, M, reg=1, m=m,
                                                      log=True, verbose=True)
 
-    # check constratints
+    # check constraints
     np.testing.assert_equal(
         w0.sum(1) - p <= 1e-5, [True] * len(p))  # cf convergence wasserstein
     np.testing.assert_equal(
@@ -127,11 +127,11 @@ def test_partial_wasserstein():
 
     np.testing.assert_allclose(w0, w0_val, atol=1e-1, rtol=1e-1)
 
-    # check constratints
+    # check constraints
     np.testing.assert_equal(
-        G.sum(1) <= p, [True] * len(p))  # cf convergence wasserstein
+        G.sum(1) - p <= 1e-5, [True] * len(p))  # cf convergence wasserstein
     np.testing.assert_equal(
-        G.sum(0) <= q, [True] * len(q))  # cf convergence wasserstein
+        G.sum(0) - q <= 1e-5, [True] * len(q))  # cf convergence wasserstein
     np.testing.assert_allclose(
         np.sum(G), m, atol=1e-04)
 
@@ -194,7 +194,7 @@ def test_partial_gromov_wasserstein():
                                                               100, m=m,
                                                               log=True)
 
-    # check constratints
+    # check constraints
     np.testing.assert_equal(
         res0.sum(1) <= p, [True] * len(p))  # cf convergence wasserstein
     np.testing.assert_equal(

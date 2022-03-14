@@ -13,7 +13,7 @@ from .utils import check_random_state, deprecated
 
 
 def make_1D_gauss(n, m, s):
-    """return a 1D histogram for a gaussian distribution (n bins, mean m and std s)
+    """return a 1D histogram for a gaussian distribution (`n` bins, mean `m` and std `s`)
 
     Parameters
     ----------
@@ -26,7 +26,7 @@ def make_1D_gauss(n, m, s):
 
     Returns
     -------
-    h : ndarray (n,)
+    h : ndarray (`n`,)
         1D histogram for a gaussian distribution
     """
     x = np.arange(n, dtype=np.float64)
@@ -41,7 +41,7 @@ def get_1D_gauss(n, m, sigma):
 
 
 def make_2D_samples_gauss(n, m, sigma, random_state=None):
-    """Return n samples drawn from 2D gaussian N(m,sigma)
+    r"""Return `n` samples drawn from 2D gaussian :math:`\mathcal{N}(m, \sigma)`
 
     Parameters
     ----------
@@ -59,8 +59,8 @@ def make_2D_samples_gauss(n, m, sigma, random_state=None):
 
     Returns
     -------
-    X : ndarray, shape (n, 2)
-        n samples drawn from N(m, sigma).
+    X : ndarray, shape (`n`, 2)
+        n samples drawn from :math:`\mathcal{N}(m, \sigma)`.
     """
 
     generator = check_random_state(random_state)
@@ -102,7 +102,7 @@ def make_data_classif(dataset, n, nz=.5, theta=0, p=.5, random_state=None, **kwa
     Returns
     -------
     X : ndarray, shape (n, d)
-        n observation of size d
+        `n` observation of size `d`
     y : ndarray, shape (n,)
         labels of the samples.
     """
