@@ -5,9 +5,9 @@ r"""
 Logo of the POT toolbox
 =======================
 
-In this example plot the logo of the POT toolbox.
+In this example we plot the logo of the POT toolbox.
 
-A specificity of this logo is that it is done 100% i python and generated using
+A specificity of this logo is that it is done 100% in Python and generated using
 matplotlib using the EMD solver from POT.
 
 """
@@ -84,11 +84,10 @@ pl.plot(x2[:, 0], x2[:, 1], 'o', markerfacecolor='b', markeredgecolor='k')
 
 pl.axis('equal')
 pl.axis('off')
-#pl.ylim(min(x1[:,1].min(),x2[:,1].min())-1,max(x1[:,1].max(),x2[:,1].max())+1)
 
 # Save logo file
-pl.savefig('logo.svg', dpi=150, bbox_inches='tight')
-pl.savefig('logo.png', dpi=150, bbox_inches='tight')
+# pl.savefig('logo.svg', dpi=150, bbox_inches='tight')
+# pl.savefig('logo.png', dpi=150, bbox_inches='tight')
 
 # %%
 # Plot the logo (dark background)
@@ -109,5 +108,5 @@ pl.axis('equal')
 pl.axis('off')
 
 # Save logo file
-pl.savefig('logo_dark.svg', dpi=150, transparent=True, bbox_inches='tight')
-pl.savefig('logo_dark.png', dpi=150, transparent=True, bbox_inches='tight')
+# pl.savefig('logo_dark.svg', dpi=150, transparent=True, bbox_inches='tight')
+# pl.savefig('logo_dark.png', dpi=150, transparent=True, bbox_inches='tight')
