@@ -6,6 +6,10 @@
 POT: Python Optimal Transport
 =============================
 
+.. image:: _static/images/logo.svg
+  :width: 400
+  :alt: POT Logo
+
 Contents
 --------
 
@@ -19,6 +23,7 @@ Contents
    releases
    .github/CONTRIBUTING
    .github/CODE_OF_CONDUCT
+
 
 .. include:: ../../README.md
    :parser: myst_parser.sphinx_
