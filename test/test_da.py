@@ -19,6 +19,29 @@ except ImportError:
     nosklearn = True
 
 
+def test_class_jax_tf():
+    backends = []
+    from ot.backend import jax, tf
+    if jax:
+        backends.append(ot.backend.JaxBackend())
+    if tf:
+        backends.append(ot.backend.TensorflowBackend())
+
+    for nx in backends:
+        ns = 150
+        nt = 200
+
+        Xs, ys = make_data_classif('3gauss', ns)
+        Xt, yt = make_data_classif('3gauss2', nt)
+
+        Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
+
+        otda = ot.da.SinkhornLpl1Transport()
+
+        with pytest.raises(TypeError):
+            otda.fit(Xs=Xs, ys=ys, Xt=Xt)
+
+
 @pytest.skip_backend("jax")
 @pytest.skip_backend("tf")
 def test_sinkhorn_lpl1_transport_class(nx):
