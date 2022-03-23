@@ -59,7 +59,7 @@ def test_unbalanced_convergence(nx, method):
     M_np = nx.to_numpy(M)
     a_np, b_np = np.array([]), np.array([])
     a, b = nx.from_numpy(a_np, b_np)
-    
+
     G = ot.unbalanced.sinkhorn_unbalanced(
         a, b, M, reg=epsilon, reg_m=reg_m, method=method, verbose=True
     )
