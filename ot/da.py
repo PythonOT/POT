@@ -367,8 +367,8 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
     if log:
         log = {'err': []}
 
-    a = nx.from_numpy(unif(ns), type_as=xs)
-    b = nx.from_numpy(unif(nt), type_as=xt)
+    a = unif(ns, type_as=xs)
+    b = unif(nt, type_as=xt)
     M = dist(xs, xt) * ns
     G = emd(a, b, M)
 
@@ -581,8 +581,8 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
     if log:
         log = {'err': []}
 
-    a = nx.from_numpy(unif(ns), type_as=xs)
-    b = nx.from_numpy(unif(nt), type_as=xt)
+    a = unif(ns, type_as=xs)
+    b = unif(nt, type_as=xt)
     M = dist(xs, xt) * ns
     G = emd(a, b, M)
 
