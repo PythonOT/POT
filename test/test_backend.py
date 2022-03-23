@@ -278,6 +278,8 @@ def test_empty_backend():
         nx.isfinite(M)
     with pytest.raises(NotImplementedError):
         nx.array_equal(M, M)
+    with pytest.raises(NotImplementedError):
+        nx.is_floating_point(M)
 
 
 def test_func_backends(nx):
@@ -549,7 +551,11 @@ def test_func_backends(nx):
 
         A = nx.where(Mb >= nx.stack([nx.linspace(0, 1, 10)] * 3, axis=1), Mb, 0.0)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('where')
+        lst_name.append('where (cond, x, y)')
+
+        A = nx.where(nx.from_numpy(np.array([True, False])))
+        lst_b.append(nx.to_numpy(nx.stack(A)))
+        lst_name.append('where (cond)')
 
         A = nx.copy(Mb)
         lst_b.append(nx.to_numpy(A))
