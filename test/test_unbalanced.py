@@ -55,6 +55,19 @@ def test_unbalanced_convergence(nx, method):
     # check if sinkhorn_unbalanced2 returns the correct loss
     np.testing.assert_allclose(nx.to_numpy(nx.sum(G * M)), loss, atol=1e-5)
 
+    # check in case no histogram is provided
+    M_np = nx.to_numpy(M)
+    a_np, b_np = np.array([]), np.array([])
+    a, b = nx.from_numpy(a_np, b_np)
+    
+    G = ot.unbalanced.sinkhorn_unbalanced(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method, verbose=True
+    )
+    G_np = ot.unbalanced.sinkhorn_unbalanced(
+        a_np, b_np, M_np, reg=epsilon, reg_m=reg_m, method=method, verbose=True
+    )
+    np.testing.assert_allclose(G_np, nx.to_numpy(G))
+
 
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
 def test_unbalanced_multiple_inputs(nx, method):
