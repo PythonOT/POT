@@ -35,11 +35,7 @@ def test_gromov(nx):
     C1 /= C1.max()
     C2 /= C2.max()
 
-    C1b = nx.from_numpy(C1)
-    C2b = nx.from_numpy(C2)
-    pb = nx.from_numpy(p)
-    qb = nx.from_numpy(q)
-    G0b = nx.from_numpy(G0)
+    C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
 
     G = ot.gromov.gromov_wasserstein(C1, C2, p, q, 'square_loss', G0=G0, verbose=True)
     Gb = nx.to_numpy(ot.gromov.gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', G0=G0b, verbose=True))
@@ -105,11 +101,7 @@ def test_gromov_dtype_device(nx):
     for tp in nx.__type_list__:
         print(nx.dtype_device(tp))
 
-        C1b = nx.from_numpy(C1, type_as=tp)
-        C2b = nx.from_numpy(C2, type_as=tp)
-        pb = nx.from_numpy(p, type_as=tp)
-        qb = nx.from_numpy(q, type_as=tp)
-        G0b = nx.from_numpy(G0, type_as=tp)
+        C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0, type_as=tp)
 
         Gb = ot.gromov.gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', G0=G0b, verbose=True)
         gw_valb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', G0=G0b, log=False)
@@ -136,11 +128,7 @@ def test_gromov_device_tf():
 
     # Check that everything stays on the CPU
     with tf.device("/CPU:0"):
-        C1b = nx.from_numpy(C1)
-        C2b = nx.from_numpy(C2)
-        pb = nx.from_numpy(p)
-        qb = nx.from_numpy(q)
-        G0b = nx.from_numpy(G0)
+        C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
         Gb = ot.gromov.gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', G0=G0b, verbose=True)
         gw_valb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', G0=G0b, log=False)
         nx.assert_same_dtype_device(C1b, Gb)
@@ -148,11 +136,7 @@ def test_gromov_device_tf():
 
     if len(tf.config.list_physical_devices('GPU')) > 0:
         # Check that everything happens on the GPU
-        C1b = nx.from_numpy(C1)
-        C2b = nx.from_numpy(C2)
-        pb = nx.from_numpy(p)
-        qb = nx.from_numpy(q)
-        G0b = nx.from_numpy(G0b)
+        C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
         Gb = ot.gromov.gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', verbose=True)
         gw_valb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', log=False)
         nx.assert_same_dtype_device(C1b, Gb)
@@ -222,10 +206,7 @@ def test_entropic_gromov(nx):
     C1 /= C1.max()
     C2 /= C2.max()
 
-    C1b = nx.from_numpy(C1)
-    C2b = nx.from_numpy(C2)
-    pb = nx.from_numpy(p)
-    qb = nx.from_numpy(q)
+    C1b, C2b, pb, qb = nx.from_numpy(C1, C2, p, q)
 
     G = ot.gromov.entropic_gromov_wasserstein(
         C1, C2, p, q, 'square_loss', epsilon=5e-4, verbose=True)
@@ -285,10 +266,7 @@ def test_entropic_gromov_dtype_device(nx):
     for tp in nx.__type_list__:
         print(nx.dtype_device(tp))
 
-        C1b = nx.from_numpy(C1, type_as=tp)
-        C2b = nx.from_numpy(C2, type_as=tp)
-        pb = nx.from_numpy(p, type_as=tp)
-        qb = nx.from_numpy(q, type_as=tp)
+        C1b, C2b, pb, qb = nx.from_numpy(C1, C2, p, q, type_as=tp)
 
         Gb = ot.gromov.entropic_gromov_wasserstein(
             C1b, C2b, pb, qb, 'square_loss', epsilon=5e-4, verbose=True
@@ -320,10 +298,7 @@ def test_pointwise_gromov(nx):
     C1 /= C1.max()
     C2 /= C2.max()
 
-    C1b = nx.from_numpy(C1)
-    C2b = nx.from_numpy(C2)
-    pb = nx.from_numpy(p)
-    qb = nx.from_numpy(q)
+    C1b, C2b, pb, qb = nx.from_numpy(C1, C2, p, q)
 
     def loss(x, y):
         return np.abs(x - y)
@@ -381,10 +356,7 @@ def test_sampled_gromov(nx):
     C1 /= C1.max()
     C2 /= C2.max()
 
-    C1b = nx.from_numpy(C1)
-    C2b = nx.from_numpy(C2)
-    pb = nx.from_numpy(p)
-    qb = nx.from_numpy(q)
+    C1b, C2b, pb, qb = nx.from_numpy(C1, C2, p, q)
 
     def loss(x, y):
         return np.abs(x - y)
@@ -423,11 +395,7 @@ def test_gromov_barycenter(nx):
     n_samples = 3
     p = ot.unif(n_samples)
 
-    C1b = nx.from_numpy(C1)
-    C2b = nx.from_numpy(C2)
-    p1b = nx.from_numpy(p1)
-    p2b = nx.from_numpy(p2)
-    pb = nx.from_numpy(p)
+    C1b, C2b, p1b, p2b, pb = nx.from_numpy(C1, C2, p1, p2, p)
 
     Cb = ot.gromov.gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5],
@@ -495,11 +463,7 @@ def test_gromov_entropic_barycenter(nx):
     n_samples = 2
     p = ot.unif(n_samples)
 
-    C1b = nx.from_numpy(C1)
-    C2b = nx.from_numpy(C2)
-    p1b = nx.from_numpy(p1)
-    p2b = nx.from_numpy(p2)
-    pb = nx.from_numpy(p)
+    C1b, C2b, p1b, p2b, pb = nx.from_numpy(C1, C2, p1, p2, p)
 
     Cb = ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5],
@@ -578,12 +542,7 @@ def test_fgw(nx):
     M = ot.dist(ys, yt)
     M /= M.max()
 
-    Mb = nx.from_numpy(M)
-    C1b = nx.from_numpy(C1)
-    C2b = nx.from_numpy(C2)
-    pb = nx.from_numpy(p)
-    qb = nx.from_numpy(q)
-    G0b = nx.from_numpy(G0)
+    Mb, C1b, C2b, pb, qb, G0b = nx.from_numpy(M, C1, C2, p, q, G0)
 
     G, log = ot.gromov.fused_gromov_wasserstein(M, C1, C2, p, q, 'square_loss', alpha=0.5, G0=G0, log=True)
     Gb, logb = ot.gromov.fused_gromov_wasserstein(Mb, C1b, C2b, pb, qb, 'square_loss', alpha=0.5, G0=G0b, log=True)
@@ -681,13 +640,7 @@ def test_fgw_barycenter(nx):
     n_samples = 3
     p = ot.unif(n_samples)
 
-    ysb = nx.from_numpy(ys)
-    ytb = nx.from_numpy(yt)
-    C1b = nx.from_numpy(C1)
-    C2b = nx.from_numpy(C2)
-    p1b = nx.from_numpy(p1)
-    p2b = nx.from_numpy(p2)
-    pb = nx.from_numpy(p)
+    ysb, ytb, C1b, C2b, p1b, p2b, pb = nx.from_numpy(ys, yt, C1, C2, p1, p2, p)
 
     Xb, Cb = ot.gromov.fgw_barycenters(
         n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5, fixed_structure=False,
@@ -731,10 +684,8 @@ def test_gromov_wasserstein_linear_unmixing(nx):
     Cdict = np.stack([C1, C2])
     p = ot.unif(n)
 
-    C1b = nx.from_numpy(C1)
-    C2b = nx.from_numpy(C2)
-    Cdictb = nx.from_numpy(Cdict)
-    pb = nx.from_numpy(p)
+    C1b, C2b, Cdictb, pb = nx.from_numpy(C1, C2, Cdict, p)
+
     tol = 10**(-5)
     # Tests without regularization
     reg = 0.
@@ -824,13 +775,14 @@ def test_gromov_wasserstein_dictionary_learning(nx):
     dataset_means = [C.mean() for C in Cs]
     np.random.seed(0)
     Cdict_init = np.random.normal(loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(n_atoms, shape, shape))
+
     if projection == 'nonnegative_symmetric':
         Cdict_init = 0.5 * (Cdict_init + Cdict_init.transpose((0, 2, 1)))
         Cdict_init[Cdict_init < 0.] = 0.
-    Csb = [nx.from_numpy(C) for C in Cs]
-    psb = [nx.from_numpy(p) for p in ps]
-    qb = nx.from_numpy(q)
-    Cdict_initb = nx.from_numpy(Cdict_init)
+
+    Csb = nx.from_numpy(*Cs)
+    psb = nx.from_numpy(*ps)
+    qb, Cdict_initb = nx.from_numpy(q, Cdict_init)
 
     # Test: compare reconstruction error using initial dictionary and dictionary learned using this initialization
     # > Compute initial reconstruction of samples on this random dictionary without backend
@@ -988,12 +940,8 @@ def test_fused_gromov_wasserstein_linear_unmixing(nx):
     Ydict = np.stack([F, F])
     p = ot.unif(n)
 
-    C1b = nx.from_numpy(C1)
-    C2b = nx.from_numpy(C2)
-    Fb = nx.from_numpy(F)
-    Cdictb = nx.from_numpy(Cdict)
-    Ydictb = nx.from_numpy(Ydict)
-    pb = nx.from_numpy(p)
+    C1b, C2b, Fb, Cdictb, Ydictb, pb = nx.from_numpy(C1, C2, F, Cdict, Ydict, p)
+
     # Tests without regularization
     reg = 0.
 
@@ -1096,12 +1044,10 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
     dataset_feature_means = np.stack([Y.mean(axis=0) for Y in Ys])
     Ydict_init = np.random.normal(loc=dataset_feature_means.mean(axis=0), scale=dataset_feature_means.std(axis=0), size=(n_atoms, shape, 2))
 
-    Csb = [nx.from_numpy(C) for C in Cs]
-    Ysb = [nx.from_numpy(Y) for Y in Ys]
-    psb = [nx.from_numpy(p) for p in ps]
-    qb = nx.from_numpy(q)
-    Cdict_initb = nx.from_numpy(Cdict_init)
-    Ydict_initb = nx.from_numpy(Ydict_init)
+    Csb = nx.from_numpy(*Cs)
+    Ysb = nx.from_numpy(*Ys)
+    psb = nx.from_numpy(*ps)
+    qb, Cdict_initb, Ydict_initb = nx.from_numpy(q, Cdict_init, Ydict_init)
 
     # Test: Compute initial reconstruction of samples on this random dictionary
     alpha = 0.5

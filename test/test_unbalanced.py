@@ -9,8 +9,6 @@ import ot
 import pytest
 from ot.unbalanced import barycenter_unbalanced
 
-from scipy.special import logsumexp
-
 
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
 def test_unbalanced_convergence(nx, method):
@@ -86,8 +84,9 @@ def test_unbalanced_multiple_inputs(nx, method):
     fi = reg_m / (reg_m + epsilon)
     logb = nx.log(b + 1e-16)
     loga = nx.log(a + 1e-16)[:, None]
-    logKtu = nx.logsumexp(log["logu"][:, None, :] - M[:, :, None] / epsilon,
-                       axis=0)
+    logKtu = nx.logsumexp(
+        log["logu"][:, None, :] - M[:, :, None] / epsilon, axis=0
+    )
     logKv = nx.logsumexp(log["logv"][None, :] - M[:, :, None] / epsilon, axis=1)
     v_final = fi * (logb - logKtu)
     u_final = fi * (loga - logKv)
@@ -159,8 +158,9 @@ def test_unbalanced_barycenter(nx, method):
     fi = reg_m / (reg_m + epsilon)
     logA = nx.log(A + 1e-16)
     logq = nx.log(q + 1e-16)[:, None]
-    logKtu = nx.logsumexp(log["logu"][:, None, :] - M[:, :, None] / epsilon,
-                       axis=0)
+    logKtu = nx.logsumexp(
+        log["logu"][:, None, :] - M[:, :, None] / epsilon, axis=0
+    )
     logKv = nx.logsumexp(log["logv"][None, :] - M[:, :, None] / epsilon, axis=1)
     v_final = fi * (logq - logKtu)
     u_final = fi * (logA - logKv)
