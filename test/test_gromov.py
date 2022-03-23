@@ -431,11 +431,11 @@ def test_gromov_barycenter(nx):
 
     Cb = ot.gromov.gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5],
-        'square_loss', max_iter=100, tol=1e-3, verbose=True, random_state=42
+        'square_loss', max_iter=100, tol=1e-3, verbose=False, random_state=42
     )
     Cbb = nx.to_numpy(ot.gromov.gromov_barycenters(
         n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'square_loss', max_iter=100, tol=1e-3, verbose=True, random_state=42
+        'square_loss', max_iter=100, tol=1e-3, verbose=False, random_state=42
     ))
     np.testing.assert_allclose(Cb, Cbb, atol=1e-06)
     np.testing.assert_allclose(Cbb.shape, (n_samples, n_samples))
@@ -443,15 +443,15 @@ def test_gromov_barycenter(nx):
     # test of gromov_barycenters with `log` on
     Cb_, err_ = ot.gromov.gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5],
-        'square_loss', max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+        'square_loss', max_iter=100, tol=1e-3, verbose=False, random_state=42, log=True
     )
     Cbb_, errb_ = ot.gromov.gromov_barycenters(
         n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'square_loss', max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+        'square_loss', max_iter=100, tol=1e-3, verbose=False, random_state=42, log=True
     )
     Cbb_ = nx.to_numpy(Cbb_)
     np.testing.assert_allclose(Cb_, Cbb_, atol=1e-06)
-    np.testing.assert_array_almost_equal(err_['err'], errb_['err'])
+    np.testing.assert_array_almost_equal(err_['err'], nx.to_numpy(*errb_['err']))
     np.testing.assert_allclose(Cbb_.shape, (n_samples, n_samples))
 
     Cb2 = ot.gromov.gromov_barycenters(
@@ -468,15 +468,15 @@ def test_gromov_barycenter(nx):
     # test of gromov_barycenters with `log` on
     Cb2_, err2_ = ot.gromov.gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5],
-        'kl_loss', max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+        'kl_loss', max_iter=100, tol=1e-3, verbose=False, random_state=42, log=True
     )
     Cb2b_, err2b_ = ot.gromov.gromov_barycenters(
         n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'kl_loss', max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+        'kl_loss', max_iter=100, tol=1e-3, verbose=False, random_state=42, log=True
     )
     Cb2b_ = nx.to_numpy(Cb2b_)
     np.testing.assert_allclose(Cb2_, Cb2b_, atol=1e-06)
-    np.testing.assert_array_almost_equal(err2_['err'], err2_['err'])
+    np.testing.assert_array_almost_equal(err2_['err'], nx.to_numpy(*err2b_['err']))
     np.testing.assert_allclose(Cb2b_.shape, (n_samples, n_samples))
 
 
@@ -523,7 +523,7 @@ def test_gromov_entropic_barycenter(nx):
     )
     Cbb_ = nx.to_numpy(Cbb_)
     np.testing.assert_allclose(Cb_, Cbb_, atol=1e-06)
-    np.testing.assert_array_almost_equal(err_['err'], errb_['err'])
+    np.testing.assert_array_almost_equal(err_['err'], nx.to_numpy(*errb_['err']))
     np.testing.assert_allclose(Cbb_.shape, (n_samples, n_samples))
 
     Cb2 = ot.gromov.entropic_gromov_barycenters(
@@ -548,7 +548,7 @@ def test_gromov_entropic_barycenter(nx):
     )
     Cb2b_ = nx.to_numpy(Cb2b_)
     np.testing.assert_allclose(Cb2_, Cb2b_, atol=1e-06)
-    np.testing.assert_array_almost_equal(err2_['err'], err2_['err'])
+    np.testing.assert_array_almost_equal(err2_['err'], nx.to_numpy(*err2b_['err']))
     np.testing.assert_allclose(Cb2b_.shape, (n_samples, n_samples))
 
 
@@ -764,8 +764,8 @@ def test_gromov_wasserstein_linear_unmixing(nx):
     np.testing.assert_allclose(unmixing2, [0., 1.], atol=1e-01)
     np.testing.assert_allclose(C1_emb, nx.to_numpy(C1b_emb), atol=1e-06)
     np.testing.assert_allclose(C2_emb, nx.to_numpy(C2b_emb), atol=1e-06)
-    np.testing.assert_allclose(reconstruction1, reconstruction1b, atol=1e-06)
-    np.testing.assert_allclose(reconstruction2, reconstruction2b, atol=1e-06)
+    np.testing.assert_allclose(reconstruction1, nx.to_numpy(reconstruction1b), atol=1e-06)
+    np.testing.assert_allclose(reconstruction2, nx.to_numpy(reconstruction2b), atol=1e-06)
     np.testing.assert_allclose(C1b_emb.shape, (n, n))
     np.testing.assert_allclose(C2b_emb.shape, (n, n))
 
@@ -798,8 +798,8 @@ def test_gromov_wasserstein_linear_unmixing(nx):
     np.testing.assert_allclose(unmixing2, [0., 1.], atol=1e-01)
     np.testing.assert_allclose(C1_emb, nx.to_numpy(C1b_emb), atol=1e-06)
     np.testing.assert_allclose(C2_emb, nx.to_numpy(C2b_emb), atol=1e-06)
-    np.testing.assert_allclose(reconstruction1, reconstruction1b, atol=1e-06)
-    np.testing.assert_allclose(reconstruction2, reconstruction2b, atol=1e-06)
+    np.testing.assert_allclose(reconstruction1, nx.to_numpy(reconstruction1b), atol=1e-06)
+    np.testing.assert_allclose(reconstruction2, nx.to_numpy(reconstruction2b), atol=1e-06)
     np.testing.assert_allclose(C1b_emb.shape, (n, n))
     np.testing.assert_allclose(C2b_emb.shape, (n, n))
 
@@ -882,6 +882,7 @@ def test_gromov_wasserstein_dictionary_learning(nx):
         )
         total_reconstruction_b += reconstruction
 
+    total_reconstruction_b = nx.to_numpy(total_reconstruction_b)
     np.testing.assert_array_less(total_reconstruction_b, initial_total_reconstruction)
     np.testing.assert_allclose(total_reconstruction_b, total_reconstruction, atol=1e-05)
     np.testing.assert_allclose(total_reconstruction_b, total_reconstruction, atol=1e-05)
@@ -924,6 +925,7 @@ def test_gromov_wasserstein_dictionary_learning(nx):
         )
         total_reconstruction_b_bis += reconstruction
 
+    total_reconstruction_b_bis = nx.to_numpy(total_reconstruction_b_bis)
     np.testing.assert_allclose(total_reconstruction_b_bis, total_reconstruction_b, atol=1e-05)
     np.testing.assert_allclose(Cdict_bis, nx.to_numpy(Cdictb_bis), atol=1e-03)
 
@@ -969,6 +971,7 @@ def test_gromov_wasserstein_dictionary_learning(nx):
         )
         total_reconstruction_b_bis2 += reconstruction
 
+    total_reconstruction_b_bis2 = nx.to_numpy(total_reconstruction_b_bis2)
     np.testing.assert_allclose(total_reconstruction_b_bis2, total_reconstruction_bis2, atol=1e-05)
 
 
@@ -1022,8 +1025,8 @@ def test_fused_gromov_wasserstein_linear_unmixing(nx):
     np.testing.assert_allclose(C2_emb, nx.to_numpy(C2b_emb), atol=1e-03)
     np.testing.assert_allclose(Y1_emb, nx.to_numpy(Y1b_emb), atol=1e-03)
     np.testing.assert_allclose(Y2_emb, nx.to_numpy(Y2b_emb), atol=1e-03)
-    np.testing.assert_allclose(reconstruction1, reconstruction1b, atol=1e-06)
-    np.testing.assert_allclose(reconstruction2, reconstruction2b, atol=1e-06)
+    np.testing.assert_allclose(reconstruction1, nx.to_numpy(reconstruction1b), atol=1e-06)
+    np.testing.assert_allclose(reconstruction2, nx.to_numpy(reconstruction2b), atol=1e-06)
     np.testing.assert_allclose(C1b_emb.shape, (n, n))
     np.testing.assert_allclose(C2b_emb.shape, (n, n))
 
@@ -1058,8 +1061,8 @@ def test_fused_gromov_wasserstein_linear_unmixing(nx):
     np.testing.assert_allclose(C2_emb, nx.to_numpy(C2b_emb), atol=1e-03)
     np.testing.assert_allclose(Y1_emb, nx.to_numpy(Y1b_emb), atol=1e-03)
     np.testing.assert_allclose(Y2_emb, nx.to_numpy(Y2b_emb), atol=1e-03)
-    np.testing.assert_allclose(reconstruction1, reconstruction1b, atol=1e-06)
-    np.testing.assert_allclose(reconstruction2, reconstruction2b, atol=1e-06)
+    np.testing.assert_allclose(reconstruction1, nx.to_numpy(reconstruction1b), atol=1e-06)
+    np.testing.assert_allclose(reconstruction2, nx.to_numpy(reconstruction2b), atol=1e-06)
     np.testing.assert_allclose(C1b_emb.shape, (n, n))
     np.testing.assert_allclose(C2b_emb.shape, (n, n))
 
@@ -1151,6 +1154,7 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
         )
         total_reconstruction_b += reconstruction
 
+    total_reconstruction_b = nx.to_numpy(total_reconstruction_b)
     np.testing.assert_array_less(total_reconstruction_b, initial_total_reconstruction)
     np.testing.assert_allclose(total_reconstruction_b, total_reconstruction, atol=1e-05)
     np.testing.assert_allclose(Cdict, nx.to_numpy(Cdictb), atol=1e-03)
@@ -1192,6 +1196,8 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
             tol_outer=tol, tol_inner=tol, max_iter_outer=20, max_iter_inner=200
         )
         total_reconstruction_b_bis += reconstruction
+
+    total_reconstruction_b_bis = nx.to_numpy(total_reconstruction_b_bis)
     np.testing.assert_allclose(total_reconstruction_b_bis, total_reconstruction_b, atol=1e-05)
 
     # Test: without using adam optimizer, with log and verbose set to True
@@ -1237,4 +1243,5 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
         total_reconstruction_b_bis2 += reconstruction
 
     # > Compare results with/without backend
+    total_reconstruction_b_bis2 = nx.to_numpy(total_reconstruction_b_bis2)
     np.testing.assert_allclose(total_reconstruction_bis2, total_reconstruction_b_bis2, atol=1e-05)

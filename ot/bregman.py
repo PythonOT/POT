@@ -2659,10 +2659,10 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
         Dtmp2 = np.zeros((nbclasses, nsk))
 
         for c in classes:
-            nbelemperclass = nx.sum(Ys[d] == c)
+            nbelemperclass = float(nx.sum(Ys[d] == c))
             if nbelemperclass != 0:
-                Dtmp1[int(c), Ys[d] == c] = 1.
-                Dtmp2[int(c), Ys[d] == c] = 1. / (nbelemperclass)
+                Dtmp1[int(c), nx.to_numpy(Ys[d] == c)] = 1.
+                Dtmp2[int(c), nx.to_numpy(Ys[d] == c)] = 1. / (nbelemperclass)
         D1.append(nx.from_numpy(Dtmp1, type_as=Xs[0]))
         D2.append(nx.from_numpy(Dtmp2, type_as=Xs[0]))
 

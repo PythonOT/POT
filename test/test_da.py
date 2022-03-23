@@ -9,7 +9,6 @@ from numpy.testing import assert_allclose, assert_equal
 import pytest
 
 import ot
-from ot.backend import from_numpy, to_numpy
 from ot.datasets import make_data_classif
 from ot.utils import unif
 
@@ -32,7 +31,7 @@ def test_sinkhorn_lpl1_transport_class(nx):
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)
 
-    Xs, ys, Xt, yt = from_numpy(nx, Xs, ys, Xt, yt)
+    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
 
     otda = ot.da.SinkhornLpl1Transport()
 
@@ -119,7 +118,7 @@ def test_sinkhorn_l1l2_transport_class(nx):
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)
 
-    Xs, ys, Xt, yt = from_numpy(nx, Xs, ys, Xt, yt)
+    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
 
     otda = ot.da.SinkhornL1l2Transport()
 
@@ -214,7 +213,7 @@ def test_sinkhorn_transport_class(nx):
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)
 
-    Xs, ys, Xt, yt = from_numpy(nx, Xs, ys, Xt, yt)
+    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
 
     otda = ot.da.SinkhornTransport()
 
@@ -307,7 +306,7 @@ def test_unbalanced_sinkhorn_transport_class(nx):
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)
 
-    Xs, ys, Xt, yt = from_numpy(nx, Xs, ys, Xt, yt)
+    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
 
     otda = ot.da.UnbalancedSinkhornTransport()
 
@@ -386,7 +385,7 @@ def test_emd_transport_class(nx):
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)
 
-    Xs, ys, Xt, yt = from_numpy(nx, Xs, ys, Xt, yt)
+    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
 
     otda = ot.da.EMDTransport()
 
@@ -480,7 +479,7 @@ def test_mapping_transport_class(nx, kernel, bias):
     Xt, yt = make_data_classif('3gauss2', nt)
     Xs_new, _ = make_data_classif('3gauss', ns + 1)
 
-    Xs, Xt, Xs_new = from_numpy(nx, Xs, Xt, Xs_new)
+    Xs, Xt, Xs_new = nx.from_numpy(Xs, Xt, Xs_new)
 
     # Mapping tests
     bias = bias == "biased"
@@ -542,7 +541,7 @@ def test_linear_mapping(nx):
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)
 
-    Xsb, Xtb = from_numpy(nx, Xs, Xt)
+    Xsb, Xtb = nx.from_numpy(Xs, Xt)
 
     A, b = ot.da.OT_mapping_linear(Xsb, Xtb)
 
@@ -563,7 +562,7 @@ def test_linear_mapping_class(nx):
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)
 
-    Xsb, Xtb = from_numpy(nx, Xs, Xt)
+    Xsb, Xtb = nx.from_numpy(Xs, Xt)
 
     otmap = ot.da.LinearTransport()
 
@@ -596,7 +595,7 @@ def test_jcpot_transport_class(nx):
 
     Xt, yt = make_data_classif('3gauss2', nt)
 
-    Xs1, ys1, Xs2, ys2, Xt, yt = from_numpy(nx, Xs1, ys1, Xs2, ys2, Xt, yt)
+    Xs1, ys1, Xs2, ys2, Xt, yt = nx.from_numpy(Xs1, ys1, Xs2, ys2, Xt, yt)
 
     Xs = [Xs1, Xs2]
     ys = [ys1, ys2]
@@ -628,7 +627,7 @@ def test_jcpot_transport_class(nx):
             nx.to_numpy(
                 nx.dot(otda.log_['D1'][i], nx.sum(otda.coupling_[i], axis=1))
             ),
-            otda.proportions_,
+            nx.to_numpy(otda.proportions_),
             rtol=1e-3,
             atol=1e-3
         )
@@ -646,7 +645,7 @@ def test_jcpot_transport_class(nx):
     # check label propagation
     transp_yt = otda.transform_labels(ys)
     assert_equal(transp_yt.shape[0], yt.shape[0])
-    assert_equal(transp_yt.shape[1], len(np.unique(to_numpy(*ys))))
+    assert_equal(transp_yt.shape[1], len(np.unique(nx.to_numpy(*ys))))
 
     # check inverse label propagation
     transp_ys = otda.inverse_transform_labels(yt)
@@ -674,7 +673,7 @@ def test_jcpot_barycenter(nx):
     Xs2, ys2 = make_data_classif('2gauss_prop', ns2, nz=sigma, p=ps2)
     Xt, _ = make_data_classif('2gauss_prop', nt, nz=sigma, p=pt)
 
-    Xs1b, ys1b, Xs2b, ys2b, Xtb = from_numpy(nx, Xs1, ys1, Xs2, ys2, Xt)
+    Xs1b, ys1b, Xs2b, ys2b, Xtb = nx.from_numpy(Xs1, ys1, Xs2, ys2, Xt)
 
     Xsb = [Xs1b, Xs2b]
     ysb = [ys1b, ys2b]
@@ -697,7 +696,7 @@ def test_emd_laplace_class(nx):
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)
 
-    Xs, ys, Xt, yt = from_numpy(nx, Xs, ys, Xt, yt)
+    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
 
     otda = ot.da.EMDLaplaceTransport(reg_lap=0.01, max_iter=1000, tol=1e-9, verbose=False, log=True)
 

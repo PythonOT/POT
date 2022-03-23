@@ -185,13 +185,6 @@ def to_numpy(*args):
         return [get_backend(a).to_numpy(a) for a in args]
 
 
-def from_numpy(nx, *args):
-    if len(args) == 1:
-        return nx.from_numpy(args[0])
-    else:
-        return [nx.from_numpy(a) for a in args]
-
-
 class Backend():
     """
     Backend abstract class.
@@ -211,13 +204,29 @@ class Backend():
     def __str__(self):
         return self.__name__
 
-    # convert to numpy
-    def to_numpy(self, a):
+    # convert batch of tensors to numpy
+    def to_numpy(self, *arrays):
+        """Returns the numpy version of tensors"""
+        if len(arrays) == 1:
+            return self._to_numpy(arrays[0])
+        else:
+            return [self._to_numpy(array) for array in arrays]
+
+    # convert a tensor to numpy
+    def _to_numpy(self, a):
         """Returns the numpy version of a tensor"""
         raise NotImplementedError()
 
-    # convert from numpy
-    def from_numpy(self, a, type_as=None):
+    # convert batch of arrays from numpy
+    def from_numpy(self, *arrays, type_as=None):
+        """Creates tensors cloning a numpy array, with the given precision (defaulting to input's precision) and the given device (in case of GPUs)"""
+        if len(arrays) == 1:
+            return self._from_numpy(arrays[0], type_as=type_as)
+        else:
+            return [self._from_numpy(array, type_as=type_as) for array in arrays]
+
+    # convert an array from numpy
+    def _from_numpy(self, a, type_as=None):
         """Creates a tensor cloning a numpy array, with the given precision (defaulting to input's precision) and the given device (in case of GPUs)"""
         raise NotImplementedError()
 
@@ -887,10 +896,10 @@ class NumpyBackend(Backend):
 
     rng_ = np.random.RandomState()
 
-    def to_numpy(self, a):
+    def _to_numpy(self, a):
         return a
 
-    def from_numpy(self, a, type_as=None):
+    def _from_numpy(self, a, type_as=None):
         if type_as is None:
             return a
         elif isinstance(a, float):
@@ -1187,13 +1196,13 @@ class JaxBackend(Backend):
                 jax.device_put(jnp.array(1, dtype=jnp.float64), d)
             ]
 
-    def to_numpy(self, a):
+    def _to_numpy(self, a):
         return np.array(a)
 
     def _change_device(self, a, type_as):
         return jax.device_put(a, type_as.device_buffer.device())
 
-    def from_numpy(self, a, type_as=None):
+    def _from_numpy(self, a, type_as=None):
         if isinstance(a, float):
             a = np.array(a)
         if type_as is None:
@@ -1526,10 +1535,10 @@ class TorchBackend(Backend):
 
         self.ValFunction = ValFunction
 
-    def to_numpy(self, a):
+    def _to_numpy(self, a):
         return a.cpu().detach().numpy()
 
-    def from_numpy(self, a, type_as=None):
+    def _from_numpy(self, a, type_as=None):
         if isinstance(a, float):
             a = np.array(a)
         if type_as is None:
@@ -1914,10 +1923,10 @@ class CupyBackend(Backend):  # pragma: no cover
             cp.array(1, dtype=cp.float64)
         ]
 
-    def to_numpy(self, a):
+    def _to_numpy(self, a):
         return cp.asnumpy(a)
 
-    def from_numpy(self, a, type_as=None):
+    def _from_numpy(self, a, type_as=None):
         if isinstance(a, float):
             a = np.array(a)
         if type_as is None:
@@ -2267,10 +2276,10 @@ class TensorflowBackend(Backend):
                 stacklevel=2
             )
 
-    def to_numpy(self, a):
+    def _to_numpy(self, a):
         return a.numpy()
 
-    def from_numpy(self, a, type_as=None):
+    def _from_numpy(self, a, type_as=None):
         if isinstance(a, float):
             a = np.array(a)
         if not isinstance(a, self.__type__):
