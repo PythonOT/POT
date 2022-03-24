@@ -54,23 +54,3 @@ def test_factored_ot_backends(nx):
     # check constraints
     np.testing.assert_allclose(u, nx.to_numpy(Ga2).sum(1))
     np.testing.assert_allclose(u, nx.to_numpy(Gb2).sum(0))
-
-
-def test_factoired_ot2_backends(nx):
-    # test weak ot solver for different backends
-    n = 50
-    rng = np.random.RandomState(0)
-
-    xs = rng.randn(n, 2)
-    xt = rng.randn(n, 2)
-    u = ot.utils.unif(n)
-
-    xs2 = nx.from_numpy(xs)
-    xt2 = nx.from_numpy(xt)
-    u2 = nx.from_numpy(u)
-
-    loss = ot.factored_optimal_transport2(xs2, xt2, u2, u2, r=10)
-
-    loss = ot.factored_optimal_transport2(xs2, xt2, u2, u2, reg=1, r=10)
-
-    assert loss >= 0

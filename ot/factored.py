@@ -11,7 +11,7 @@ from .utils import dist
 from .lp import emd
 from .bregman import sinkhorn
 
-__all__ = ['factored_optimal_transport', 'factored_optimal_transport2']
+__all__ = ['factored_optimal_transport']
 
 
 def factored_optimal_transport(Xa, Xb, a=None, b=None, reg=0.0, r=100, X0=None, stopThr=1e-7, numItermax=100, verbose=False, log=False, **kwargs):
@@ -143,99 +143,3 @@ def factored_optimal_transport(Xa, Xb, a=None, b=None, reg=0.0, r=100, X0=None, 
         return Ga, Gb, X, log_dic
 
     return Ga, Gb, X
-
-
-def factored_optimal_transport2(Xa, Xb, a=None, b=None, reg=0.0, r=100, X0=None, stopThr=1e-7, numItermax=100, verbose=False, log=False, **kwargs):
-    r"""Solves factored OT problem and returns OT loss
-
-    This function solve the following OT problem [40]_
-
-    .. math::
-        \mathop{\arg \min}_\mu \quad  W_2^2(\mu_a,\mu)+ W_2^2(\mu,\mu_b)
-
-    where :
-
-    - :math:`\mu_a` and :math:`\mu_b`  are empirical distributions.
-    - :math:`\mu` is an empirical distribution with r samples
-
-    And returns the two OT plans between
-
-    .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends. But the algorithm uses the C++ CPU backend
-        which can lead to copy overhead on GPU arrays.
-
-    Uses the conditional gradient algorithm to solve the problem proposed in
-    :ref:`[39] <references-weak>`.
-
-    Parameters
-    ----------
-    Xa : (ns,d) array-like, float
-        Source samples
-    Xb : (nt,d) array-like, float
-        Target samples
-    a : (ns,) array-like, float
-        Source histogram (uniform weight if empty list)
-    b : (nt,) array-like, float
-        Target histogram (uniform weight if empty list))
-    numItermax : int, optional
-        Max number of iterations
-    stopThr : float, optional
-        Stop threshold on the relative variation (>0)
-    verbose : bool, optional
-        Print information along iterations
-    log : bool, optional
-        record log if True
-
-
-    Returns
-    -------
-    loss: array-like, shape (1,)
-        factored OT loss
-    log: dict, optional
-        If input log is true, a dictionary containing the cost and dual
-        variables and exit status
-
-
-    .. _references-factored:
-    References
-    ----------
-    .. [40] Forrow, A., Hütter, J. C., Nitzan, M., Rigollet, P., Schiebinger,
-        G., & Weed, J. (2019, April). Statistical optimal transport via factored
-        couplings. In The 22nd International Conference on Artificial
-        Intelligence and Statistics (pp. 2454-2465). PMLR.
-
-    See Also
-    --------
-    ot.bregman.sinkhorn : Entropic regularized OT
-    ot.optim.cg : General regularized OT
-    """
-
-    nx = get_backend(Xa, Xb)
-
-    n_a = Xa.shape[0]
-    n_b = Xb.shape[0]
-
-    if a is None:
-        a = nx.ones((n_a), type_as=Xa) / n_a
-    if b is None:
-        b = nx.ones((n_b), type_as=Xb) / n_b
-
-    Ga, Gb, X, log_dic = factored_optimal_transport(Xa, Xb, a=a, b=b, reg=reg, r=r, X0=X0, stopThr=stopThr, numItermax=numItermax, verbose=verbose, log=True, **kwargs)
-
-    log_dic['Ga'] = Ga
-    log_dic['Gb'] = Gb
-    log_dic['X'] = X
-
-    # define gradient properly
-    cost = log_dic['costa'] + log_dic['costb']
-    lst_input = (Xa, Xb, a, b)
-    lst_grad = (2 * (Xa * a[:, None] - nx.dot(Ga, X)),
-                2 * (Xb * b[:, None] - nx.dot(Gb.T, X)),
-                log_dic['ua'],
-                log_dic['vb'])
-    cost = nx.set_gradients(cost, lst_input, lst_grad)
-
-    if log:
-        return cost, log_dic
-    else:
-        return cost
