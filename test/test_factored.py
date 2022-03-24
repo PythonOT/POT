@@ -49,7 +49,7 @@ def test_factored_ot_backends(nx):
     np.testing.assert_allclose(u, nx.to_numpy(Ga2).sum(1))
     np.testing.assert_allclose(u, nx.to_numpy(Gb2).sum(0))
 
-    Ga2, Gb2, X2 = ot.factored_optimal_transport(xs2, xt2, u2, u2, reg=1, r=10)
+    Ga2, Gb2, X2 = ot.factored_optimal_transport(xs2, xt2, reg=1, r=10, X0=X2)
 
     # check constraints
     np.testing.assert_allclose(u, nx.to_numpy(Ga2).sum(1))
