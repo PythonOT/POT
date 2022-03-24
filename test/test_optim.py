@@ -32,9 +32,7 @@ def test_conditional_gradient(nx):
     def fb(G):
         return 0.5 * nx.sum(G ** 2)
 
-    ab = nx.from_numpy(a)
-    bb = nx.from_numpy(b)
-    Mb = nx.from_numpy(M, type_as=ab)
+    ab, bb, Mb = nx.from_numpy(a, b, M)
 
     reg = 1e-1
 
@@ -74,9 +72,7 @@ def test_conditional_gradient_itermax(nx):
     def fb(G):
         return 0.5 * nx.sum(G ** 2)
 
-    ab = nx.from_numpy(a)
-    bb = nx.from_numpy(b)
-    Mb = nx.from_numpy(M, type_as=ab)
+    ab, bb, Mb = nx.from_numpy(a, b, M)
 
     reg = 1e-1
 
@@ -118,9 +114,7 @@ def test_generalized_conditional_gradient(nx):
     reg1 = 1e-3
     reg2 = 1e-1
 
-    ab = nx.from_numpy(a)
-    bb = nx.from_numpy(b)
-    Mb = nx.from_numpy(M, type_as=ab)
+    ab, bb, Mb = nx.from_numpy(a, b, M)
 
     G, log = ot.optim.gcg(a, b, M, reg1, reg2, f, df, verbose=True, log=True)
     Gb, log = ot.optim.gcg(ab, bb, Mb, reg1, reg2, fb, df, verbose=True, log=True)
@@ -142,9 +136,12 @@ def test_line_search_armijo(nx):
     pk = np.array([[-0.25, 0.25], [0.25, -0.25]])
     gfk = np.array([[23.04273441, 23.0449082], [23.04273441, 23.0449082]])
     old_fval = -123
+
+    xkb, pkb, gfkb = nx.from_numpy(xk, pk, gfk)
+
     # Should not throw an exception and return 0. for alpha
     alpha, a, b = ot.optim.line_search_armijo(
-        lambda x: 1, nx.from_numpy(xk), nx.from_numpy(pk), nx.from_numpy(gfk), old_fval
+        lambda x: 1, xkb, pkb, gfkb, old_fval
     )
     alpha_np, anp, bnp = ot.optim.line_search_armijo(
         lambda x: 1, xk, pk, gfk, old_fval
