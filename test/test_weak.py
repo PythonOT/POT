@@ -45,9 +45,7 @@ def test_weak_ot_bakends(nx):
 
     G = ot.weak_optimal_transport(xs, xt, u, u)
 
-    xs2 = nx.from_numpy(xs)
-    xt2 = nx.from_numpy(xt)
-    u2 = nx.from_numpy(u)
+    xs2, xt2, u2 = nx.from_numpy(xs, xt, u)
 
     G2 = ot.weak_optimal_transport(xs2, xt2, u2, u2)
 
