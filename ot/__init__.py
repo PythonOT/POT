@@ -33,6 +33,7 @@ from . import partial
 from . import backend
 from . import regpath
 from . import weak
+from . import factored
 
 # OT functions
 from .lp import emd, emd2, emd_1d, emd2_1d, wasserstein_1d
@@ -44,6 +45,9 @@ from .sliced import sliced_wasserstein_distance, max_sliced_wasserstein_distance
 from .gromov import (gromov_wasserstein, gromov_wasserstein2,
                         gromov_barycenters, fused_gromov_wasserstein, fused_gromov_wasserstein2)
 from .weak import weak_optimal_transport
+from .factored import factored_optimal_transport, factored_optimal_transport2
+
+
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
@@ -57,4 +61,5 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'sinkhorn_unbalanced2', 'sliced_wasserstein_distance',
            'gromov_wasserstein', 'gromov_wasserstein2', 'gromov_barycenters', 'fused_gromov_wasserstein', 'fused_gromov_wasserstein2',
             'max_sliced_wasserstein_distance', 'weak_optimal_transport',
+            'factored_optimal_transport', 'factored_optimal_transport2'
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath']

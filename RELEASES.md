@@ -5,6 +5,7 @@
 
 #### New features
 
+- Implementation of factored OT with emd and sinkhorn (PR #TODO).
 - A brand new logo for POT (PR #357)
 - Better list of related examples in quick start guide with `minigallery` (PR #334).
 - Add optional log-domain Sinkhorn implementation in WDA to support smaller values
