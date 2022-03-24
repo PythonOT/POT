@@ -29,6 +29,7 @@ API and modules
    partial
    sliced
    weak
+   factored
 
 .. autosummary::
    :toctree: ../modules/generated/

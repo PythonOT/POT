@@ -72,3 +72,5 @@ def test_factoired_ot2_backends(nx):
     loss = ot.factored_optimal_transport2(xs2, xt2, u2, u2, r=10)
 
     loss = ot.factored_optimal_transport2(xs2, xt2, u2, u2, reg=1, r=10)
+
+    assert loss >= 0

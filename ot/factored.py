@@ -10,7 +10,6 @@ from .backend import get_backend
 from .utils import dist
 from .lp import emd
 from .bregman import sinkhorn
-import numpy as np
 
 __all__ = ['factored_optimal_transport', 'factored_optimal_transport2']
 
@@ -215,7 +214,6 @@ def factored_optimal_transport2(Xa, Xb, a=None, b=None, reg=0.0, r=100, X0=None,
 
     n_a = Xa.shape[0]
     n_b = Xb.shape[0]
-    d = Xa.shape[1]
 
     if a is None:
         a = nx.ones((n_a), type_as=Xa) / n_a
