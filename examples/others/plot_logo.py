@@ -86,8 +86,8 @@ pl.axis('equal')
 pl.axis('off')
 
 # Save logo file
-# pl.savefig('logo.svg', dpi=150, bbox_inches='tight')
-# pl.savefig('logo.png', dpi=150, bbox_inches='tight')
+# pl.savefig('logo.svg', dpi=150, transparent=True, bbox_inches='tight')
+# pl.savefig('logo.png', dpi=150, transparent=True, bbox_inches='tight')
 
 # %%
 # Plot the logo (dark background)
