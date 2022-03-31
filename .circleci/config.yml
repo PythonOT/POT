@@ -50,6 +50,11 @@ jobs:
             paths:
               - ~/.cache/pip
 
+        - run:
+            name: Install ffmpeg
+            command: |
+               sudo apt install ffmpeg
+
         # Look at what we have and fail early if there is some library conflict
         - run:
             name: Check installation
