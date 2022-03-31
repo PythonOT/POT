@@ -53,7 +53,8 @@ jobs:
         - run:
             name: Install ffmpeg
             command: |
-               sudo apt install ffmpeg
+              apt update 
+              apt install ffmpeg
 
         # Look at what we have and fail early if there is some library conflict
         - run:
