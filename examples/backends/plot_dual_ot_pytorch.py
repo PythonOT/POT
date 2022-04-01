@@ -65,12 +65,12 @@ xt = torch.tensor(Xt)
 u = torch.randn(n_source_samples, requires_grad=True)
 v = torch.randn(n_source_samples, requires_grad=True)
 
-reg=0.5
+reg = 0.5
 
-optimizer = torch.optim.Adam([u,v], lr=1)
+optimizer = torch.optim.Adam([u, v], lr=1)
 
-# number of iteration 
-n_iter = 200  
+# number of iteration
+n_iter = 200
 
 
 losses = []
@@ -78,7 +78,7 @@ losses = []
 for i in range(n_iter):
 
     # generate noise samples
-    
+
     # minus because we maximize te dual loss
     loss = -ot.stochastic.loss_dual_entropic(u, v, xs, xt, reg=reg)
     losses.append(float(loss.detach()))
@@ -105,12 +105,11 @@ Ge = ot.stochastic.plan_dual_entropic(u, v, xs, xt, reg=reg)
 
 pl.figure(3, (10, 5))
 pl.clf()
-ot.plot.plot2D_samples_mat(Xs, Xt, Ge.detach().numpy(),alpha=0.1)
+ot.plot.plot2D_samples_mat(Xs, Xt, Ge.detach().numpy(), alpha=0.1)
 pl.scatter(Xs[:, 0], Xs[:, 1], marker='+', label='Source samples', zorder=2)
 pl.scatter(Xt[:, 0], Xt[:, 1], marker='o', label='Target samples', zorder=2)
 pl.legend(loc=0)
 pl.title('Source and target distributions')
-
 
 
 # %%
@@ -120,12 +119,12 @@ pl.title('Source and target distributions')
 u = torch.randn(n_source_samples, requires_grad=True)
 v = torch.randn(n_source_samples, requires_grad=True)
 
-reg=0.01
+reg = 0.01
 
-optimizer = torch.optim.Adam([u,v], lr=1)
+optimizer = torch.optim.Adam([u, v], lr=1)
 
-# number of iteration 
-n_iter = 200 
+# number of iteration
+n_iter = 200
 
 
 losses = []
@@ -134,7 +133,7 @@ losses = []
 for i in range(n_iter):
 
     # generate noise samples
-    
+
     # minus because we maximize te dual loss
     loss = -ot.stochastic.loss_dual_quadratic(u, v, xs, xt, reg=reg)
     losses.append(float(loss.detach()))
@@ -162,7 +161,7 @@ Gq = ot.stochastic.plan_dual_quadratic(u, v, xs, xt, reg=reg)
 
 pl.figure(5, (10, 5))
 pl.clf()
-ot.plot.plot2D_samples_mat(Xs, Xt, Gq.detach().numpy(),alpha=0.1)
+ot.plot.plot2D_samples_mat(Xs, Xt, Gq.detach().numpy(), alpha=0.1)
 pl.scatter(Xs[:, 0], Xs[:, 1], marker='+', label='Source samples', zorder=2)
 pl.scatter(Xt[:, 0], Xt[:, 1], marker='o', label='Target samples', zorder=2)
 pl.legend(loc=0)
