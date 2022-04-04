@@ -8,7 +8,8 @@ for descrete and semicontinous measures from the POT library.
 
 """
 
-# Author: Kilian Fatras <kilian.fatras@gmail.com>
+# Authors: Kilian Fatras <kilian.fatras@gmail.com>
+#          Rémi Flamary <remi.flamary@polytechnique.edu>
 #
 # License: MIT License
 
