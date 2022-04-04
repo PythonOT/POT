@@ -70,8 +70,8 @@ torch.manual_seed(42)
 class Potential(torch.nn.Module):
     def __init__(self):
         super(Potential, self).__init__()
-        self.fc1 = nn.Linear(2, 300)
-        self.fc2 = nn.Linear(300, 1)
+        self.fc1 = nn.Linear(2, 200)
+        self.fc2 = nn.Linear(200, 1)
         self.relu = torch.nn.ReLU()  # instead of Heaviside step fn
 
     def forward(self, x):
@@ -86,10 +86,10 @@ v = Potential().double()
 
 reg = 1
 
-optimizer = torch.optim.Adam(list(u.parameters()) + list(v.parameters()), lr=.002)
+optimizer = torch.optim.Adam(list(u.parameters()) + list(v.parameters()), lr=.005)
 
 # number of iteration
-n_iter = 2000
+n_iter = 1000
 n_batch = 500
 
 
