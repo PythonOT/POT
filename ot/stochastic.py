@@ -4,7 +4,8 @@ Stochastic solvers for regularized OT.
 
 """
 
-# Author: Kilian Fatras <kilian.fatras@gmail.com>
+# Authors: Kilian Fatras <kilian.fatras@gmail.com>
+#          Rémi Flamary <remi.flamary@polytechnique.edu>
 #
 # License: MIT License
 
