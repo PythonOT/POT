@@ -15,7 +15,6 @@ Continuous OT plan estimation with Pytorch
 
 import numpy as np
 import matplotlib.pyplot as pl
-import matplotlib.animation as animation
 import torch
 from torch import nn
 import ot
@@ -28,8 +27,8 @@ import ot.plot
 torch.manual_seed(42)
 np.random.seed(42)
 
-n_source_samples = 300
-n_target_samples = 300
+n_source_samples = 10000
+n_target_samples = 10000
 theta = 2 * np.pi / 20
 noise_level = 0.1
 
@@ -43,11 +42,11 @@ Xt = Xt + 4
 # %%
 # Plot data
 # ---------
-
+nvisu = 300
 pl.figure(1, (5, 5))
 pl.clf()
-pl.scatter(Xs[:, 0], Xs[:, 1], marker='+', label='Source samples')
-pl.scatter(Xt[:, 0], Xt[:, 1], marker='o', label='Target samples')
+pl.scatter(Xs[:nvisu, 0], Xs[:nvisu, 1], marker='+', label='Source samples', alpha=0.5)
+pl.scatter(Xt[:nvisu, 0], Xt[:nvisu, 1], marker='o', label='Target samples', alpha=0.5)
 pl.legend(loc=0)
 ax_bounds = pl.axis()
 pl.title('Source and target distributions')
@@ -60,8 +59,8 @@ xs = torch.tensor(Xs)
 xt = torch.tensor(Xt)
 
 # %%
-# Estimating dual variables for entropic OT
-# -----------------------------------------
+# Estimating deep dual variables for entropic OT
+# ----------------------------------------------
 
 torch.manual_seed(42)
 
@@ -71,8 +70,8 @@ torch.manual_seed(42)
 class Potential(torch.nn.Module):
     def __init__(self):
         super(Potential, self).__init__()
-        self.fc1 = nn.Linear(2, 100)
-        self.fc2 = nn.Linear(100, 1)
+        self.fc1 = nn.Linear(2, 300)
+        self.fc2 = nn.Linear(300, 1)
         self.relu = torch.nn.ReLU()  # instead of Heaviside step fn
 
     def forward(self, x):
@@ -87,10 +86,11 @@ v = Potential().double()
 
 reg = 1
 
-optimizer = torch.optim.Adam(list(u.parameters()) + list(v.parameters()), lr=.005)
+optimizer = torch.optim.Adam(list(u.parameters()) + list(v.parameters()), lr=.002)
 
 # number of iteration
 n_iter = 2000
+n_batch = 500
 
 
 losses = []
@@ -99,8 +99,14 @@ for i in range(n_iter):
 
     # generate noise samples
 
+    iperms = torch.randint(0, n_source_samples, (n_batch,))
+    ipermt = torch.randint(0, n_target_samples, (n_batch,))
+
+    xsi = xs[iperms]
+    xti = xt[ipermt]
+
     # minus because we maximize te dual loss
-    loss = -ot.stochastic.loss_dual_entropic(u(xs), v(xt), xs, xt, reg=reg)
+    loss = -ot.stochastic.loss_dual_entropic(u(xsi), v(xti), xsi, xti, reg=reg)
     losses.append(float(loss.detach()))
 
     if i % 10 == 0:
@@ -117,23 +123,12 @@ pl.grid()
 pl.title('Dual objective (negative)')
 pl.xlabel("Iterations")
 
-Ge = ot.stochastic.plan_dual_entropic(u(xs), v(xt), xs, xt, reg=reg)
 
 # %%
-# Plot teh estimated entropic OT plan
-# -----------------------------------
-
-# pl.figure(3, (5, 5))
-# pl.clf()
-# ot.plot.plot2D_samples_mat(Xs, Xt, Ge.detach().numpy(), alpha=0.1)
-# pl.scatter(Xs[:, 0], Xs[:, 1], marker='+', label='Source samples', zorder=2)
-# pl.scatter(Xt[:, 0], Xt[:, 1], marker='o', label='Target samples', zorder=2)
-# pl.legend(loc=0)
-# ax_bounds = pl.axis()
-# pl.title('Entropic OT plan')
+# Plot the density on arget for a given source sample
+# ---------------------------------------------------
 
 
-#%%
 nv = 100
 xl = np.linspace(ax_bounds[0], ax_bounds[1], nv)
 yl = np.linspace(ax_bounds[2], ax_bounds[3], nv)
@@ -149,32 +144,32 @@ xg = torch.tensor(xg)
 wxg = torch.tensor(wxg)
 
 
-pl.figure(4, (15, 5))
+pl.figure(4, (12, 4))
 pl.clf()
 pl.subplot(1, 3, 1)
 
-iv = 0
+iv = 2
 Gg = ot.stochastic.plan_dual_entropic(u(xs[iv:iv + 1, :]), v(xg), xs[iv:iv + 1, :], xg, reg=reg, wt=wxg)
 Gg = Gg.reshape((nv, nv)).detach().numpy()
 
-pl.scatter(Xs[:, 0], Xs[:, 1], marker='+', label='Source samples', zorder=2, alpha=0.1)
-pl.scatter(Xt[:, 0], Xt[:, 1], marker='o', label='Target samples', zorder=2, alpha=0.1)
-pl.scatter(Xs[iv:iv + 1, 0], Xs[iv:iv + 1, 1], marker='+', label='Source sample', zorder=2, alpha=1, color='C0')
-pl.pcolormesh(XX, YY, Gg, cmap='Blues', label='Density of transported sourec sample')
+pl.scatter(Xs[:nvisu, 0], Xs[:nvisu, 1], marker='+', zorder=2, alpha=0.05)
+pl.scatter(Xt[:nvisu, 0], Xt[:nvisu, 1], marker='o', zorder=2, alpha=0.05)
+pl.scatter(Xs[iv:iv + 1, 0], Xs[iv:iv + 1, 1], s=100, marker='+', label='Source sample', zorder=2, alpha=1, color='C0')
+pl.pcolormesh(XX, YY, Gg, cmap='Greens', label='Density of transported sourec sample')
 pl.legend(loc=0)
 ax_bounds = pl.axis()
 pl.title('Density of transported source sample')
 
 pl.subplot(1, 3, 2)
 
-iv = 1
+iv = 3
 Gg = ot.stochastic.plan_dual_entropic(u(xs[iv:iv + 1, :]), v(xg), xs[iv:iv + 1, :], xg, reg=reg, wt=wxg)
 Gg = Gg.reshape((nv, nv)).detach().numpy()
 
-pl.scatter(Xs[:, 0], Xs[:, 1], marker='+', label='Source samples', zorder=2, alpha=0.1)
-pl.scatter(Xt[:, 0], Xt[:, 1], marker='o', label='Target samples', zorder=2, alpha=0.1)
-pl.scatter(Xs[iv:iv + 1, 0], Xs[iv:iv + 1, 1], marker='+', label='Source sample', zorder=2, alpha=1, color='C0')
-pl.pcolormesh(XX, YY, Gg, cmap='Blues', label='Density of transported sourec sample')
+pl.scatter(Xs[:nvisu, 0], Xs[:nvisu, 1], marker='+', zorder=2, alpha=0.05)
+pl.scatter(Xt[:nvisu, 0], Xt[:nvisu, 1], marker='o', zorder=2, alpha=0.05)
+pl.scatter(Xs[iv:iv + 1, 0], Xs[iv:iv + 1, 1], s=100, marker='+', label='Source sample', zorder=2, alpha=1, color='C0')
+pl.pcolormesh(XX, YY, Gg, cmap='Greens', label='Density of transported sourec sample')
 pl.legend(loc=0)
 ax_bounds = pl.axis()
 pl.title('Density of transported source sample')
@@ -185,10 +180,10 @@ iv = 6
 Gg = ot.stochastic.plan_dual_entropic(u(xs[iv:iv + 1, :]), v(xg), xs[iv:iv + 1, :], xg, reg=reg, wt=wxg)
 Gg = Gg.reshape((nv, nv)).detach().numpy()
 
-pl.scatter(Xs[:, 0], Xs[:, 1], marker='+', label='Source samples', zorder=2, alpha=0.1)
-pl.scatter(Xt[:, 0], Xt[:, 1], marker='o', label='Target samples', zorder=2, alpha=0.1)
-pl.scatter(Xs[iv:iv + 1, 0], Xs[iv:iv + 1, 1], marker='+', label='Source sample', zorder=2, alpha=1, color='C0')
-pl.pcolormesh(XX, YY, Gg, cmap='Blues', label='Density of transported sourec sample')
+pl.scatter(Xs[:nvisu, 0], Xs[:nvisu, 1], marker='+', zorder=2, alpha=0.05)
+pl.scatter(Xt[:nvisu, 0], Xt[:nvisu, 1], marker='o', zorder=2, alpha=0.05)
+pl.scatter(Xs[iv:iv + 1, 0], Xs[iv:iv + 1, 1], s=100, marker='+', label='Source sample', zorder=2, alpha=1, color='C0')
+pl.pcolormesh(XX, YY, Gg, cmap='Greens', label='Density of transported sourec sample')
 pl.legend(loc=0)
 ax_bounds = pl.axis()
 pl.title('Density of transported source sample')
