@@ -17,8 +17,23 @@ import os
 import re
 try:
     import sphinx_gallery
+    from sphinx_gallery.scrapers import matplotlib_scraper
+
+    class matplotlib_svg_scraper(object):
+
+        def __repr__(self):
+            return self.__class__.__name__
+
+        def __call__(self, *args, **kwargs):
+            return matplotlib_scraper(*args, format='svg', **kwargs)
+
 except ImportError:
     print("warning sphinx-gallery not installed")
+    matplotlib_svg_scraper  = object
+
+    
+
+
 
 # !!!! allow readthedoc compilation
 try:
@@ -349,6 +364,7 @@ sphinx_gallery_conf = {
 	'inspect_global_variables'  : True,
     'doc_module'          : ('ot','numpy','scipy','pylab'),
     'matplotlib_animations': True,
+    'image_scrapers': (matplotlib_svg_scraper(),),
     'reference_url': {
 	'ot': None}
 }
