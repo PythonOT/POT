@@ -5,11 +5,16 @@
 
 #### New features
 
+- Add stochastic loss and OT plan computation for regularized OT and 
+  backend examples(PR #360).
+- Implementation of factored OT with emd and sinkhorn (PR #358).
+- A brand new logo for POT (PR #357)
 - Better list of related examples in quick start guide with `minigallery` (PR #334).
 - Add optional log-domain Sinkhorn implementation in WDA to support smaller values
   of the regularization parameter (PR #336).
 - Backend implementation for `ot.lp.free_support_barycenter` (PR #340).
 - Add weak OT solver + example  (PR #341).
+- Add backend support for Domain Adaptation and Unbalanced solvers (PR #343).
 - Add (F)GW linear dictionary learning solvers + example  (PR #319)
 - Add links to related PR and Issues in the doc release page (PR #350)
 
@@ -18,6 +23,7 @@
 - Fix bug in instantiating an `autograd` function `ValFunction` (Issue #337, 
   PR #338)
 - Fix POT ABI compatibility with old and new numpy (Issue #346, PR #349)
+- Warning when feeding integer cost matrix to EMD solver resulting in an integer transport plan (Issue #345, PR #343)
 - Fix bug where gromov_wasserstein2 does not perform backpropagation with CUDA
   tensors (Issue #351, PR #352)
 
