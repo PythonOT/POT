@@ -5,6 +5,8 @@
 
 #### New features
 
+- Add stochastic loss and OT plan computation for regularized OT and 
+  backend examples(PR #360).
 - Implementation of factored OT with emd and sinkhorn (PR #358).
 - A brand new logo for POT (PR #357)
 - Better list of related examples in quick start guide with `minigallery` (PR #334).
