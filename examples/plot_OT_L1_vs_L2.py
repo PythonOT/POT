@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-==========================================
-2D Optimal transport for different metrics
-==========================================
+================================================
+Optimal Transport with different gournd metrics
+================================================
 
 2D OT on empirical distributio  with different ground metric.
 
