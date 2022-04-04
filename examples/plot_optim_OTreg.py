@@ -24,7 +24,7 @@ arXiv preprint arXiv:1510.06567.
 
 
 """
-# sphinx_gallery_thumbnail_number = 6
+# sphinx_gallery_thumbnail_number = 5
 
 import numpy as np
 import matplotlib.pylab as pl
@@ -58,7 +58,7 @@ M /= M.max()
 
 G0 = ot.emd(a, b, M)
 
-pl.figure(3, figsize=(5, 5))
+pl.figure(1, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, G0, 'OT matrix G0')
 
 ##############################################################################
@@ -80,7 +80,7 @@ reg = 1e-1
 
 Gl2 = ot.optim.cg(a, b, M, reg, f, df, verbose=True)
 
-pl.figure(3)
+pl.figure(2)
 ot.plot.plot1D_mat(a, b, Gl2, 'OT matrix Frob. reg')
 
 ##############################################################################
@@ -102,7 +102,7 @@ reg = 1e-3
 
 Ge = ot.optim.cg(a, b, M, reg, f, df, verbose=True)
 
-pl.figure(4, figsize=(5, 5))
+pl.figure(3, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, Ge, 'OT matrix Entrop. reg')
 
 ##############################################################################
@@ -125,7 +125,7 @@ reg2 = 1e-1
 
 Gel2 = ot.optim.gcg(a, b, M, reg1, reg2, f, df, verbose=True)
 
-pl.figure(5, figsize=(5, 5))
+pl.figure(4, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, Gel2, 'OT entropic + matrix Frob. reg')
 pl.show()
 
@@ -135,7 +135,7 @@ pl.show()
 
 nvisu = 40
 
-pl.figure(6, figsize=(10, 4))
+pl.figure(5, figsize=(10, 4))
 
 pl.subplot(2, 2, 1)
 pl.imshow(G0[:nvisu, :])
