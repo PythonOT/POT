@@ -111,7 +111,7 @@ pl.show()
 # Animation of the regpath for UOT l2
 # ------------------------
 
-nv = 200
+nv = 100
 g_list_v = np.logspace(-.5, -2.5, nv)
 
 pl.figure(3)
@@ -183,7 +183,7 @@ pl.show()
 # Animation of the regpath for semi-relaxed UOT l2
 # ------------------------
 
-nv = 200
+nv = 100
 g_list_v = np.logspace(2.5, -2, nv)
 
 pl.figure(5)
