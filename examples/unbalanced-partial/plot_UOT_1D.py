@@ -12,6 +12,8 @@ using a Kullback-Leibler relaxation.
 #
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 5
+
 import numpy as np
 import matplotlib.pylab as pl
 import ot
@@ -73,3 +75,16 @@ pl.figure(4, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, Gs, 'UOT matrix Sinkhorn')
 
 pl.show()
+
+
+# %%
+# plot the transported mass
+# -------------------------
+
+pl.figure(5, figsize=(6.4, 3))
+pl.plot(x, a, 'b', label='Source distribution')
+pl.plot(x, b, 'r', label='Target distribution')
+pl.fill(x, Gs.sum(1), 'b', alpha=0.5, label='Transported source')
+pl.fill(x, Gs.sum(0), 'r', alpha=0.5, label='Transported target')
+pl.legend(loc='upper right')
+pl.title('Distraibutions and transported mass for UOT')
