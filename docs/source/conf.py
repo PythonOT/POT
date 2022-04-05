@@ -17,8 +17,14 @@ import os
 import re
 try:
     import sphinx_gallery
+
 except ImportError:
     print("warning sphinx-gallery not installed")
+
+
+    
+
+
 
 # !!!! allow readthedoc compilation
 try:
