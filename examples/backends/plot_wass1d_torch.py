@@ -1,9 +1,9 @@
 r"""
-=================================
-Wasserstein 1D with PyTorch
-=================================
+=================================================
+Wasserstein 1D (flow and barycenter) with PyTorch
+=================================================
 
-In this small example, we consider the following minization problem:
+In this small example, we consider the following minimization problem:
 
 .. math::
   \mu^* = \min_\mu W(\mu,\nu)

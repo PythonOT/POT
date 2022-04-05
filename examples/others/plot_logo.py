@@ -7,8 +7,8 @@ Logo of the POT toolbox
 
 In this example we plot the logo of the POT toolbox.
 
-A specificity of this logo is that it is done 100% in Python and generated using
-matplotlib using the EMD solver from POT.
+This logo is that it is done 100% in Python and generated using
+matplotlib and ploting teh solution of the EMD solver from POT.
 
 """
 
@@ -86,8 +86,8 @@ pl.axis('equal')
 pl.axis('off')
 
 # Save logo file
-# pl.savefig('logo.svg', dpi=150, bbox_inches='tight')
-# pl.savefig('logo.png', dpi=150, bbox_inches='tight')
+# pl.savefig('logo.svg', dpi=150, transparent=True, bbox_inches='tight')
+# pl.savefig('logo.png', dpi=150, transparent=True, bbox_inches='tight')
 
 # %%
 # Plot the logo (dark background)

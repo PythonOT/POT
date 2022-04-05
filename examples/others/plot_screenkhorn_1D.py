@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-===============================
-1D Screened optimal transport
-===============================
+========================================
+Screened optimal transport (Screenkhorn)
+========================================
 
 This example illustrates the computation of Screenkhorn [26].
 
