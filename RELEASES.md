@@ -5,6 +5,7 @@
 
 #### New features
 
+- remode deprecated `ot.gpu` submodule (PR #361)
 - Update examples in the gallery (PR #359).
 - Add stochastic loss and OT plan computation for regularized OT and 
   backend examples(PR #360).
