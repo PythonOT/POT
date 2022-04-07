@@ -185,7 +185,7 @@ The contributors to this library are
 * [Alexandre Gramfort](http://alexandre.gramfort.net/) (CI, documentation)
 * [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/) (Partial OT)
 * [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/) (Mapping estimation)
-* [Léo Gautheron](https://github.com/aje) (GPU implementation)
+* [Léo Gautheron](https://github.com/aje) (Initial GPU implementation)
 * [Nathalie Gayraud](https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1) (DA classes)
 * [Stanislas Chambon](https://slasnista.github.io/) (DA classes)
 * [Antoine Rolet](https://arolet.github.io/) (EMD solver debug)
