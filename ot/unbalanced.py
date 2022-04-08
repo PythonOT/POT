@@ -1089,10 +1089,10 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
-    >>> nx.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, 'kl'),2)
+    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, 'kl'),2)
     array([[0.3 , 0.  ],
            [0.  , 0.07]])
-    >>> nx.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, 'l2'),2)
+    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, 'l2'),2)
     array([[0.25, 0.  ],
            [0.  , 0.  ]])
     .. _references-regpath:
