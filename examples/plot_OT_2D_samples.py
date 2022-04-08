@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ====================================================
-2D Optimal transport between empirical distributions
+Optimal Transport between 2D empirical distributions
 ====================================================
 
 Illustration of 2D optimal transport between discributions that are weighted

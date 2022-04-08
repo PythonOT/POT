@@ -5,6 +5,8 @@
 
 #### New features
 
+- remode deprecated `ot.gpu` submodule (PR #361)
+- Update examples in the gallery (PR #359).
 - Add stochastic loss and OT plan computation for regularized OT and 
   backend examples(PR #360).
 - Implementation of factored OT with emd and sinkhorn (PR #358).
@@ -254,7 +256,7 @@ are coming for the next versions.
 
 #### Closed issues
 
-- Add JMLR paper to teh readme ad Mathieu Blondel to the Acknoledgments (PR
+- Add JMLR paper to the readme and Mathieu Blondel to the Acknoledgments (PR
   #231, #232)
 - Bug in Unbalanced OT example (Issue #127)
 - Clean Cython output when calling setup.py clean (Issue #122)

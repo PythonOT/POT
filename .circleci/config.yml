@@ -36,6 +36,12 @@ jobs:
               - pip-cache
 
         - run:
+            name: Install ffmpeg
+            command: |
+              sudo apt update 
+              sudo apt install ffmpeg
+
+        - run:
             name: Get Python running
             command: |
               python -m pip install --user --upgrade --progress-bar off pip
@@ -49,6 +55,7 @@ jobs:
             key: pip-cache
             paths:
               - ~/.cache/pip
+
 
         # Look at what we have and fail early if there is some library conflict
         - run:

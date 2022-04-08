@@ -27,6 +27,8 @@ Machine Learning (pp. 4104-4113). PMLR.
 #
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 4
+
 
 # %%
 # Loading the data
