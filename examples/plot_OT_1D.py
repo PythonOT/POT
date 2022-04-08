@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-====================
-1D optimal transport
-====================
+======================================
+Optimal Transport for 1D distributions
+======================================
 
 This example illustrates the computation of EMD and Sinkhorn transport plans
 and their visualization.
@@ -64,7 +64,11 @@ ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
 
 #%% EMD
 
-G0 = ot.emd(a, b, M)
+# use fast 1D solver
+G0 = ot.emd_1d(x, x, a, b)
+
+# Equivalent to
+# G0 = ot.emd(a, b, M)
 
 pl.figure(3, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, G0, 'OT matrix G0')
