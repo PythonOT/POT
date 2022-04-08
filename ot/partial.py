@@ -7,8 +7,8 @@ Partial OT solvers
 # License: MIT License
 
 import numpy as np
-
 from .lp import emd
+
 
 def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
                                  **kwargs):
@@ -262,7 +262,7 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     b_extended = np.append(b, [(np.sum(a) - m) / nb_dummies] * nb_dummies)
     a_extended = np.append(a, [(np.sum(b) - m) / nb_dummies] * nb_dummies)
     M_extended = np.zeros((len(a_extended), len(b_extended)))
-    M_extended[-nb_dummies:, -nb_dummies:] = np.max(M)*2
+    M_extended[-nb_dummies:, -nb_dummies:] = np.max(M) * 2
     M_extended[:len(a), :len(b)] = M
 
     gamma, log_emd = emd(a_extended, b_extended, M_extended, log=True,

@@ -107,7 +107,7 @@ for p in range(4):
     pl.xticks(())
     if p < 1:
         pl.ylabel("mappings")
-    pl.subplot(2, 4, p+1+4)
+    pl.subplot(2, 4, p + 5)
     pl.imshow(P, cmap='jet')
     pl.yticks(())
     pl.xticks(())

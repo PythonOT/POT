@@ -1085,17 +1085,14 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     Examples
     --------
     >>> import ot
+    >>> import numpy as np
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
-    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, 'kl'),2)
+    >>> nx.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, 'kl'),2)
     array([[0.3 , 0.  ],
            [0.  , 0.07]])
-    >>> import ot
-    >>> a=[.5, .5]
-    >>> b=[.5, .5]
-    >>> M=[[0., 1.],[1., 0.]]
-    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, 'l2'),2)
+    >>> nx.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, 'l2'),2)
     array([[0.25, 0.  ],
            [0.  , 0.  ]])
     .. _references-regpath:
@@ -1218,6 +1215,7 @@ def mm_unbalanced2(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     Examples
     --------
     >>> import ot
+    >>> import numpy as np
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
