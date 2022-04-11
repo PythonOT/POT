@@ -784,17 +784,19 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
     T0 = nx.from_numpy(T, type_as=C10)
 
     log_fgw['fgw_dist'] = fgw_dist
-    log_fgw['u'] = nx.from_numpy(log_fgw['u'], type_as=C10)
-    log_fgw['v'] = nx.from_numpy(log_fgw['v'], type_as=C10)
-    log_fgw['T'] = T0
+    log_fgw['u'] = nx.from_numpy(log_fgw['u']), type_as = C10)
+    log_fgw['v']=nx.from_numpy(log_fgw['v'], type_as = C10)
+    log_fgw['T']=T0
 
     if loss_fun == 'square_loss':
-        gC1 = 2 * C1 * (p[:, None] * p[None, :]) - 2 * T.dot(C2).dot(T.T)
-        gC2 = 2 * C2 * (q[:, None] * q[None, :]) - 2 * T.T.dot(C1).dot(T)
-        gC1 = nx.from_numpy(gC1, type_as=C10)
-        gC2 = nx.from_numpy(gC2, type_as=C10)
-        fgw_dist = nx.set_gradients(fgw_dist, (p0, q0, C10, C20, M0),
-                                    (log_fgw['u'], log_fgw['v'], alpha * gC1, alpha * gC2, (1 - alpha) * T0))
+        gC1=2 * C1 * (p[:, None] * p[None, :]) - 2 * T.dot(C2).dot(T.T)
+        gC2=2 * C2 * (q[:, None] * q[None, :]) - 2 * T.T.dot(C1).dot(T)
+        gC1=nx.from_numpy(gC1, type_as = C10)
+        gC2=nx.from_numpy(gC2, type_as = C10)
+        fgw_dist=nx.set_gradients(fgw_dist, (p0, q0, C10, C20, M0),
+                                    (log_fgw['u'] - nx.mean(log_fgw['u']),
+                                    log_fgw['v'] - nx.mean(log_fgw['v']),
+                                    alpha * gC1, alpha * gC2, (1 - alpha) * T0))
 
     if log:
         return fgw_dist, log_fgw
