@@ -301,7 +301,6 @@ def test_mm_convergence(nx):
     M = ot.dist(x, y)
     M = M / M.max()
     reg_m = 100
-    nx = get_backend(M, a, b)
     a, b, M = nx.from_numpy(a, b, M)
 
     G_kl, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='kl',
