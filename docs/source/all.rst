@@ -26,6 +26,7 @@ API and modules
    plot
    stochastic
    unbalanced
+   regpath
    partial
    sliced
    weak

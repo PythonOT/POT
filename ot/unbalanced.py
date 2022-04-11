@@ -1037,33 +1037,36 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     r"""
     Solve the unbalanced optimal transport problem and return the OT plan.
     The function solves the following optimization problem:
+
     .. math::
         W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
         \mathrm{reg_m} \cdot \mathrm{div}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_m} \cdot \mathrm{div}(\gamma^T \mathbf{1}, \mathbf{b})
         s.t.
              \gamma \geq 0
+
     where:
+
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target
       unbalanced distributions
     - div is a divergence, either Kullback-Leibler or :math:`\ell_2` divergence
+
     The algorithm used for solving the problem is a maximization-
-    minimization algorithm as proposed in :ref:`[40] <references-regpath>`
+    minimization algorithm as proposed in :ref:`[41] <references-regpath>`
 
     Parameters
     ----------
     a : array-like (dim_a,)
         Unnormalized histogram of dimension `dim_a`
-    b : array-like (dim_b,) or array-like (dim_b, n_hists)
-        One or multiple unnormalized histograms of dimension `dim_b`
-        If many, compute all the OT distances (a, b_i)
+    b : array-like (dim_b,)
+        Unnormalized histogram of dimension `dim_b`
     M : array-like (dim_a, dim_b)
         loss matrix
     reg_m: float
         Marginal relaxation term > 0
     div: string, optional
-        Divergence to quantify the difference between the marginals
+        Divergence to quantify the difference between the marginals.
         Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic)
     G0: array-like (dim_a, dim_b)
         Initialization of the transport matrix
@@ -1077,9 +1080,9 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
         record log if True
     Returns
     -------
-    - gamma : (dim_a, dim_b) array-like
+    gamma : (dim_a, dim_b) array-like
             Optimal transportation matrix for the given parameters
-    - log : dict
+    log : dict
             log dictionary returned only if `log` is `True`
 
     Examples
@@ -1095,6 +1098,7 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, 'l2'), 2)
     array([[0.25, 0.  ],
            [0.  , 0.  ]])
+
 
     .. _references-regpath:
     References
@@ -1112,18 +1116,19 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
 
     dim_a, dim_b = M.shape
 
-    if G0 is None:
-        G = a[:, None] * b[None, :]
-    else:
-        G = G0
-
     if len(a) == 0:
         a = nx.ones(dim_a, type_as=M) / dim_a
     if len(b) == 0:
         b = nx.ones(dim_b, type_as=M) / dim_b
 
+    if G0 is None:
+        G = a[:, None] * b[None, :]
+    else:
+        G = G0
+
     if log:
         log = {'err': [], 'G': []}
+
     if div == 'kl':
         K = nx.exp(M / - reg_m / 2)
     elif div == 'l2':
@@ -1167,17 +1172,22 @@ def mm_unbalanced2(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     r"""
     Solve the unbalanced optimal transport problem and return the OT plan.
     The function solves the following optimization problem:
+
     .. math::
         W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
         \mathrm{reg_m} \cdot \mathrm{div}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_m} \cdot \mathrm{div}(\gamma^T \mathbf{1}, \mathbf{b})
+
         s.t.
              \gamma \geq 0
+
     where:
+
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target
       unbalanced distributions
     - :math:`\mathrm{div}` is a divergence, either Kullback-Leibler or :math:`\ell_2` divergence
+
     The algorithm used for solving the problem is a maximization-
     minimization algorithm as proposed in :ref:`[41] <references-regpath>`
 
@@ -1185,15 +1195,14 @@ def mm_unbalanced2(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     ----------
     a : array-like (dim_a,)
         Unnormalized histogram of dimension `dim_a`
-    b : array-like (dim_b,) or array-like (dim_b, n_hists)
-        One or multiple unnormalized histograms of dimension `dim_b`
-        If many, compute all the OT distances (a, b_i)
+    b : array-like (dim_b,)
+        Unnormalized histogram of dimension `dim_b`
     M : array-like (dim_a, dim_b)
         loss matrix
     reg_m: float
         Marginal relaxation term > 0
     div: string, optional
-        Divergence to quantify the difference between the marginals
+        Divergence to quantify the difference between the marginals.
         Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic)
     G0: array-like (dim_a, dim_b)
         Initialization of the transport matrix
