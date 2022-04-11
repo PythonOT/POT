@@ -1144,11 +1144,11 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
         Gprev = G
 
         if div == 'kl':
-            u = nx.sqrt(a / (G.sum(1) + 1e-16))
-            v = nx.sqrt(b / (G.sum(0) + 1e-16))
+            u = nx.sqrt(a / (nx.sum(G,1) + 1e-16))
+            v = nx.sqrt(b / (nx.sum(G,0) + 1e-16))
             G = G * K * u[:, None] * v[None, :]
         elif div == 'l2':
-            Gd = G.sum(0, keepdims=True) + G.sum(1, keepdims=True) + 1e-16
+            Gd = nx.sum(G,0, keepdims=True) + nx.sum(G,1, keepdims=True) + 1e-16
             G = G * K / Gd
 
         err = nx.sqrt(nx.sum((G - Gprev) ** 2))
