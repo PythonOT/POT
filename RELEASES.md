@@ -19,6 +19,7 @@
 - Add backend support for Domain Adaptation and Unbalanced solvers (PR #343).
 - Add (F)GW linear dictionary learning solvers + example  (PR #319)
 - Add links to related PR and Issues in the doc release page (PR #350)
+- Add new minimization-maximization algorithms for solving exact Unbalanced OT + example (PR #362)
 
 #### Closed issues
 
