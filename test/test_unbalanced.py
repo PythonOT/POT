@@ -325,7 +325,7 @@ def test_mm_convergence(nx):
     a_np, b_np = np.array([]), np.array([])
     a, b = nx.from_numpy(a_np, b_np)
 
-    G_kl_null, _ = ot.unbalanced.mm_unbalanced(a, b, M_, reg_m=reg_m, div='kl')
+    G_kl_null, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='kl')
     G_l2_null, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='l2')
     np.testing.assert_allclose(G_kl_null, G_kl)
     np.testing.assert_allclose(G_l2_null, G_l2)
