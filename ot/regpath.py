@@ -11,34 +11,48 @@ import scipy.sparse as sp
 
 
 def recast_ot_as_lasso(a, b, C):
-    r"""This function recasts the l2-penalized UOT problem as a Lasso problem
+    r"""This function recasts the l2-penalized UOT problem as a Lasso problem.
 
-    Recall the l2-penalized UOT problem defined in [Chapel et al., 2021]
+    Recall the l2-penalized UOT problem defined in
+    :ref:`[41] <references-regpath>`
+
     .. math::
-        UOT = \min_T <C, T> + \lambda \|T 1_m - a\|_2^2 +
-                \lambda \|T^T 1_n - b\|_2^2
+        \text{UOT}_{\lambda} = \min_T <C, T> + \lambda \|T 1_m -
+                                \mathbf{a}\|_2^2 +
+                                \lambda \|T^T 1_n - \mathbf{b}\|_2^2
+
         s.t.
             T \geq 0
-    where :
-    - C is the (dim_a, dim_b) metric cost matrix
-    - :math:`\lambda` is the l2-regularization coefficient
-    - a and b are source and target distributions
-    - T is the transport plan to optimize
 
-    The problem above can be reformulated to a non-negative penalized
-    linear regression problem, particularly Lasso
-    .. math::
-        UOT2 = \min_t \gamma c^T t + 0.5 * \|H t - y\|_2^2
-        s.t.
-            t \geq 0
     where :
-    - c is a (dim_a * dim_b, ) metric cost vector (flattened version of C)
-    - :math:`\gamma = 1/\lambda` is the l2-regularization coefficient
-    - y is the concatenation of vectors a and b, defined as y^T = [a^T b^T]
-    - H is a (dim_a + dim_b, dim_a * dim_b) metric matrix,
-        see [Chapel et al., 2021] for the design of H. The matrix product H t
-        computes both the source marginal and the target marginal.
-    - t is a (dim_a * dim_b, ) metric vector (flattened version of T)
+
+    - :math:`C` is the cost matrix
+    - :math:`\lambda` is the l2-regularization parameter
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are the source and target \
+      distributions
+    - :math:`T` is the transport plan to optimize
+
+    The problem above can be reformulated as a non-negative penalized
+    linear regression problem, particularly Lasso
+
+    .. math::
+        \text{UOT2}_{\lambda} = \min_{\mathbf{t}} \gamma \mathbf{c}^T
+        \mathbf{t} + 0.5 * \|H \mathbf{t} - \mathbf{y}\|_2^2
+
+        s.t.
+            \mathbf{t} \geq 0
+
+    where :
+
+    - :math:`\mathbf{c}` is the flattened version of the cost matrix :math:`C`
+    - :math:`\mathbf{y}` is the concatenation of vectors :math:`\mathbf{a}` \
+      and :math:`\mathbf{b}`
+    - :math:`H` is a  metric matrix, see :ref:`[41] <references-regpath>` for \
+      the design of :math:`H`. The matrix product :math:`H\mathbf{t}` \
+      computes both the source marginal and the target marginals.
+    - :math:`\mathbf{t}` is the flattened version of the transport plan \
+      :math:`T`
+
     Parameters
     ----------
     a : np.ndarray (dim_a,)
@@ -47,14 +61,16 @@ def recast_ot_as_lasso(a, b, C):
         Histogram of dimension dim_b
     C : np.ndarray, shape (dim_a, dim_b)
         Cost matrix
+
     Returns
     -------
     H : np.ndarray (dim_a+dim_b, dim_a*dim_b)
-        Auxiliary matrix constituted by 0 and 1
+        Design matrix that contains only 0 and 1
     y : np.ndarray (ns + nt, )
-        Concatenation of histogram a and histogram b
+        Concatenation of histograms :math:`\mathbf{a}` and :math:`\mathbf{b}`
     c : np.ndarray (ns * nt, )
-        Flattened array of cost matrix
+        Flattened array of the cost matrix
+
     Examples
     --------
     >>> import ot
@@ -73,12 +89,12 @@ def recast_ot_as_lasso(a, b, C):
     >>> c
     array([16., 25., 28., 16., 40., 36.])
 
+
     References
     ----------
-    [Chapel et al., 2021]:
-        Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
+    .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
         Unbalanced optimal transport through non-negative penalized
-        linear regression.
+        linear regression. NeurIPS.
     """
 
     dim_a = np.shape(a)[0]
@@ -97,33 +113,47 @@ def recast_ot_as_lasso(a, b, C):
 
 
 def recast_semi_relaxed_as_lasso(a, b, C):
-    r"""This function recasts the semi-relaxed l2-UOT problem as Lasso problem
+    r"""This function recasts the semi-relaxed l2-UOT problem as Lasso problem.
 
     .. math::
-        semi-relaxed UOT = \min_T <C, T> + \lambda \|T 1_m - a\|_2^2
+
+        \text{semi-relaxed UOT} = \min_T <C, T>
+                                  + \lambda \|T 1_m - \mathbf{a}\|_2^2
+
         s.t.
-            T^T 1_n = b
-            t \geq 0
+            T^T 1_n = \mathbf{b}
+
+            \mathbf{t} \geq 0
+
     where :
-    - C is the (dim_a, dim_b) metric cost matrix
-    - :math:`\lambda` is the l2-regularization coefficient
-    - a and b are source and target distributions
-    - T is the transport plan to optimize
+
+    - :math:`C` is the metric cost matrix
+    - :math:`\lambda` is the l2-regularization parameter
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are the source and target \
+      distributions
+    - :math:`T` is the transport plan to optimize
 
     The problem above can be reformulated as follows
+
     .. math::
-        semi-relaxed UOT2 = \min_t \gamma c^T t + 0.5 * \|H_r t - a\|_2^2
+        \text{semi-relaxed UOT2} = \min_t \gamma \mathbf{c}^T t
+                                   + 0.5 * \|H_r \mathbf{t} - \mathbf{a}\|_2^2
+
         s.t.
-            H_c t = b
-            t \geq 0
+            H_c \mathbf{t} = \mathbf{b}
+
+            \mathbf{t} \geq 0
+
     where :
-    - c is a (dim_a * dim_b, ) metric cost vector (flattened version of C)
-    - :math:`\gamma = 1/\lambda` is the l2-regularization coefficient
-    - H_r is  a (dim_a, dim_a * dim_b) metric matrix,
-        which computes the sum along the rows of transport plan T
-    - H_c is a (dim_b, dim_a * dim_b) metric matrix,
-        which computes the sum along the columns of transport plan T
-    - t is a (dim_a * dim_b, ) metric vector (flattened version of T)
+
+    - :math:`\mathbf{c}` is flattened version of the cost matrix :math:`C`
+    - :math:`\gamma = 1/\lambda` is the l2-regularization parameter
+    - :math:`H_r` is  a  metric matrix which computes the sum along the \
+      rows of the transport plan :math:`T`
+    - :math:`H_c` is a  metric matrix which computes the sum along the \
+      columns of the transport plan :math:`T`
+    - :math:`\mathbf{t}` is the flattened version of :math:`T`
+
     Parameters
     ----------
     a : np.ndarray (dim_a,)
@@ -132,16 +162,18 @@ def recast_semi_relaxed_as_lasso(a, b, C):
         Histogram of dimension dim_b
     C : np.ndarray, shape (dim_a, dim_b)
         Cost matrix
+
     Returns
     -------
     Hr : np.ndarray (dim_a, dim_a * dim_b)
         Auxiliary matrix constituted by 0 and 1, which computes
-        the sum along the rows of transport plan T
+        the sum along the rows of transport plan :math:`T`
     Hc : np.ndarray (dim_b, dim_a * dim_b)
         Auxiliary matrix constituted by 0 and 1, which computes
-        the sum along the columns of transport plan T
+        the sum along the columns of transport plan :math:`T`
     c : np.ndarray (ns * nt, )
-        Flattened array of cost matrix
+        Flattened array of the cost matrix
+
     Examples
     --------
     >>> import ot
@@ -179,49 +211,60 @@ def recast_semi_relaxed_as_lasso(a, b, C):
 
 def ot_next_gamma(phi, delta, HtH, Hty, c, active_index, current_gamma):
     r""" This function computes the next value of gamma if a variable
-    will be added in next iteration of the regularization path
+    is added in the next iteration of the regularization path.
 
     We look for the largest value of gamma such that
     the gradient of an inactive variable vanishes
+
     .. math::
-        \max_{i \in \bar{A}} \frac{h_i^T(H_A \phi - y)}{h_i^T H_A \delta - c_i}
+        \max_{i \in \bar{A}} \frac{\mathbf{h}_i^T(H_A \phi - \mathbf{y})}
+        {\mathbf{h}_i^T H_A \delta - \mathbf{c}_i}
+
     where :
+
     - A is the current active set
-    - h_i is the ith column of auxiliary matrix H
-    - H_A is the sub-matrix constructed by the columns of H
-        whose indices belong to the active set A
-    - c_i is the ith element of cost vector c
-    - y is the concatenation of source and target distribution
-    - :math:`\phi` is the intercept of the solutions in current iteration
-    - :math:`\delta` is the slope of the solutions in current iteration
+    - :math:`\mathbf{h}_i` is the :math:`i` th column of the design \
+      matrix :math:`{H}`
+    - :math:`{H}_A` is the sub-matrix constructed by the columns of \
+      :math:`{H}` whose indices belong to the active set A
+    - :math:`\mathbf{c}_i` is the :math:`i` th element of the cost vector \
+      :math:`\mathbf{c}`
+    - :math:`\mathbf{y}` is the concatenation of the source and target \
+      distributions
+    - :math:`\phi` is the intercept of the solutions at the current iteration
+    - :math:`\delta` is the slope of the solutions at the current iteration
+
     Parameters
     ----------
-    phi : np.ndarray (|A|, )
-        Intercept of the solutions in current iteration (t is piecewise linear)
-    delta : np.ndarray (|A|, )
-        Slope of the solutions in current iteration (t is piecewise linear)
+    phi : np.ndarray (size(A), )
+        Intercept of the solutions at the current iteration
+    delta : np.ndarray (size(A), )
+        Slope of the solutions at the current iteration
     HtH : np.ndarray (dim_a * dim_b, dim_a * dim_b)
-        Matrix product of H^T H
+        Matrix product of :math:`{H}^T {H}`
     Hty : np.ndarray (dim_a + dim_b, )
-        Matrix product of H^T y
+        Matrix product of :math:`{H}^T \mathbf{y}`
     c: np.ndarray (dim_a * dim_b, )
-        Flattened array of cost matrix C
+        Flattened array of the cost matrix :math:`{C}`
     active_index : list
         Indices of active variables
     current_gamma : float
-        Value of regularization coefficient at the start of current iteration
+        Value of the regularization parameter at the beginning of the current \
+        iteration
+
     Returns
     -------
     next_gamma : float
         Value of gamma if a variable is added to active set in next iteration
     next_active_index : int
         Index of variable to be activated
+
+
     References
     ----------
-    [Chapel et al., 2021]:
-        Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
+    .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
         Unbalanced optimal transport through non-negative penalized
-        linear regression.
+        linear regression. NeurIPS.
     """
     M = (HtH[:, active_index].dot(phi) - Hty) / \
         (HtH[:, active_index].dot(delta) - c + 1e-16)
@@ -237,56 +280,65 @@ def semi_relaxed_next_gamma(phi, delta, phi_u, delta_u, HrHr, Hc, Hra,
 
     By taking the Lagrangian form of the problem, we obtain a similar update
     as the two-sided relaxed UOT
+
     .. math::
-        \max_{i \in \bar{A}} \frac{h_{r i}^T(H_{r A} \phi - a) + h_{c i}^T
-            \phi_u}{h_{r i}^T H_{r A} \delta + h_{c i} \delta_u - c_i}
+
+        \max_{i \in \bar{A}} \frac{\mathbf{h}_{ri}^T(H_{rA} \phi - \mathbf{a})
+           + \mathbf{h}_{c i}^T\phi_u}{\mathbf{h}_{r i}^T H_{r A} \delta + \
+            \mathbf{h}_{c i} \delta_u - \mathbf{c}_i}
+
     where :
+
     - A is the current active set
-    - h_{r i} is the ith column of the matrix H_r
-    - h_{c i} is the ith column of the matrix H_c
-    - H_{r A} is the sub-matrix constructed by the columns of H_r
-        whose indices belong to the active set A
-    - c_i is the ith element of cost vector c
-    - y is the concatenation of source and target distribution
+    - :math:`\mathbf{h}_{r i}` is the ith column of the matrix :math:`H_r`
+    - :math:`\mathbf{h}_{c i}` is the ith column of the matrix :math:`H_c`
+    - :math:`H_{r A}` is the sub-matrix constructed by the columns of \
+      :math:`H_r` whose indices belong to the active set A
+    - :math:`\mathbf{c}_i` is the :math:`i` th element of cost vector \
+      :math:`\mathbf{c}`
     - :math:`\phi` is the intercept of the solutions in current iteration
     - :math:`\delta` is the slope of the solutions in current iteration
-    - :math:`\phi_u` is the intercept of Lagrange parameter in current
-        iteration
-    - :math:`\delta_u` is the slope of Lagrange parameter in current iteration
+    - :math:`\phi_u` is the intercept of Lagrange parameter at the \
+      current iteration
+    - :math:`\delta_u` is the slope of Lagrange parameter at the \
+      current iteration
+
     Parameters
     ----------
-    phi : np.ndarray (|A|, )
-        Intercept of the solutions in current iteration (t is piecewise linear)
-    delta : np.ndarray (|A|, )
-        Slope of the solutions in current iteration (t is piecewise linear)
+    phi : np.ndarray (size(A), )
+        Intercept of the solutions at the current iteration
+    delta : np.ndarray (size(A), )
+        Slope of the solutions at the current iteration
     phi_u : np.ndarray (dim_b, )
-        Intercept of the Lagrange parameter in current iteration (also linear)
+        Intercept of the Lagrange parameter at the current iteration
     delta_u : np.ndarray (dim_b, )
-        Slope of the Lagrange parameter in current iteration (also linear)
+        Slope of the Lagrange parameter at the current iteration
     HrHr : np.ndarray (dim_a * dim_b, dim_a * dim_b)
-        Matrix product of H_r^T H_r
+        Matrix product of :math:`H_r^T H_r`
     Hc : np.ndarray (dim_b, dim_a * dim_b)
-        Matrix that computes the sum along the columns of transport plan T
+        Matrix that computes the sum along the columns of the transport plan \
+        :math:`T`
     Hra : np.ndarray (dim_a * dim_b, )
-        Matrix product of H_r^T a
+        Matrix product of :math:`H_r^T \mathbf{a}`
     c: np.ndarray (dim_a * dim_b, )
-        Flattened array of cost matrix C
+        Flattened array of cost matrix :math:`C`
     active_index : list
         Indices of active variables
     current_gamma : float
         Value of regularization coefficient at the start of current iteration
+
     Returns
     -------
     next_gamma : float
         Value of gamma if a variable is added to active set in next iteration
     next_active_index : int
         Index of variable to be activated
+
     References
     ----------
-    [Chapel et al., 2021]:
-        Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
+    .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
         Unbalanced optimal transport through non-negative penalized
-        linear regression.
+        linear regression. NeurIPS.
     """
 
     M = (HrHr[:, active_index].dot(phi) - Hra + Hc.T.dot(phi_u)) / \
@@ -297,37 +349,48 @@ def semi_relaxed_next_gamma(phi, delta, phi_u, delta_u, HrHr, Hc, Hra,
 
 
 def compute_next_removal(phi, delta, current_gamma):
-    r""" This function computes the next value of gamma if a variable
-    is removed in next iteration of regularization path
+    r""" This function computes the next gamma value if a variable
+    is removed at the next iteration of the regularization path.
 
-    We look for the largest value of gamma such that
-    an element of current solution vanishes
+    We look for the largest value of the regularization parameter such that
+    an element of the current solution vanishes
+
     .. math::
         \max_{j \in A} \frac{\phi_j}{\delta_j}
+
     where :
+
     - A is the current active set
-    - phi_j is the jth element of the intercept of current solution
-    - delta_j is the jth elemnt of the slope of current solution
+    - :math:`\phi_j` is the :math:`j` th element of the intercept of the \
+      current solution
+    - :math:`\delta_j` is the :math:`j` th element of the slope of the \
+      current solution
+
+
     Parameters
     ----------
-    phi : np.ndarray (|A|, )
-        Intercept of the solutions in current iteration (t is piecewise linear)
-    delta : np.ndarray (|A|, )
-        Slope of the solutions in current iteration (t is piecewise linear)
+    phi : ndarray, shape (size(A), )
+        Intercept of the solution at the current iteration
+    delta : ndarray, shape (size(A), )
+        Slope of the solution at the current iteration
     current_gamma : float
-        Value of regularization coefficient at the start of current iteration
+        Value of the regularization parameter at the beginning of the \
+        current iteration
+
     Returns
     -------
     next_removal_gamma : float
-        Value of gamma if a variable is removed in next iteration
+        Gamma value if a variable is removed at the next iteration
     next_removal_index : int
-        Index of the variable to remove in next iteration
+        Index of the variable to be removed at the next iteration
+
+
+    .. _references-regpath:
     References
     ----------
-    [Chapel et al., 2021]:
-        Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
+    .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
         Unbalanced optimal transport through non-negative penalized
-        linear regression.
+        linear regression. NeurIPS.
     """
     r_candidate = phi / (delta - 1e-16)
     r_candidate[r_candidate >= (1 - 1e-8) * current_gamma] = 0
@@ -335,56 +398,74 @@ def compute_next_removal(phi, delta, current_gamma):
 
 
 def complement_schur(M_current, b, d, id_pop):
-    r""" This function computes the inverse of matrix in regularization path
-    using Schur complement
+    r""" This function computes the inverse of the design matrix in the \
+    regularization path using the  Schur complement. Two cases may arise:
 
-    Two cases may arise: Firstly one variable is added to the active set
+    Case 1: one variable is added to the active set
+
+
     .. math::
         M_{k+1}^{-1} =
         \begin{bmatrix}
-            M_{k}^{-1} + s^{-1} M_{k}^{-1} b b^T M_{k}^{-1} & -s^{-1} \\
-            - s^{-1} b^T M_{k}^{-1} & s^{-1}
+            M_{k}^{-1} + s^{-1} M_{k}^{-1} \mathbf{b} \mathbf{b}^T M_{k}^{-1} \
+            & - M_{k}^{-1} \mathbf{b} s^{-1}   \\
+            - s^{-1} \mathbf{b}^T M_{k}^{-1} & s^{-1}
         \end{bmatrix}
-    where :
-    - :math:`M_k^{-1}` is the inverse of matrix in previous iteration and
-        :math:`M_k` is the upper left block matrix in Schur formulation
-    - b is the upper right block matrix in Schur formulation. In our case,
-        b is reduced to a column vector and b^T is the lower left block matrix
-    - s is the Schur complement, given by
-        :math:`s = d - b^T M_{k}^{-1} b` in our case
 
-    Secondly, one variable is removed from the active set
-    .. math::
-        M_{k+1}^{-1} = M^{-1}_{A_k \backslash q} -
-                       \frac{r_{-q,q} r^{T}_{-q,q}}{r_{q,q}}
+
     where :
-    - q is the index of column and row to delete
-    - :math:`M^{-1}_{A_k \backslash q}` is the previous inverse matrix
-        without qth column and qth row
-    - r_{-q,q} is the qth column of :math:`M^{-1}_{k}` without the qth element
-    - r_{q, q} is the element of qth column and qth row in :math:`M^{-1}_{k}`
+
+    - :math:`M_k^{-1}` is the inverse of the design matrix :math:`H_A^tH_A` \
+      of the previous iteration
+    - :math:`\mathbf{b}` is the last column of :math:`M_{k}`
+    - :math:`s` is the Schur complement, given by  \
+      :math:`s = \mathbf{d} - \mathbf{b}^T M_{k}^{-1} \mathbf{b}`
+
+    Case 2: one variable is removed from the active set.
+
+    .. math::
+        M_{k+1}^{-1} = M^{-1}_{k \backslash q} -
+                       \frac{r_{-q,q} r^{T}_{-q,q}}{r_{q,q}}
+
+    where :
+
+    - :math:`q` is the index of column and row to delete
+    - :math:`M^{-1}_{k \backslash q}` is the previous inverse matrix deprived \
+      of the :math:`q` th column and :math:`q` th row
+    - :math:`r_{-q,q}` is the :math:`q` th column of :math:`M^{-1}_{k}` \
+      without the :math:`q` th element
+    - :math:`r_{q, q}` is the element of :math:`q` th column and :math:`q` th \
+      row in :math:`M^{-1}_{k}`
+
+
     Parameters
     ----------
-    M_current : np.ndarray (|A|-1, |A|-1)
-        Inverse matrix in previous iteration
-    b : np.ndarray (|A|-1, )
-        Upper right matrix in Schur complement, a column vector in our case
+    M_current : ndarray, shape (size(A)-1, size(A)-1)
+        Inverse matrix of :math:`H_A^tH_A` at the previous iteration, with \
+        size(A) the size of the active set
+    b : ndarray, shape (size(A)-1, )
+        None for case 2 (removal), last column of :math:`M_{k}` for case 1 \
+        (addition)
     d : float
-        Lower right matrix in Schur complement, a scalar in our case
-    id_pop
+        should be equal to 2 when UOT and 1 for the semi-relaxed OT
+    id_pop : int
         Index of the variable to be removed,  equal to -1
-        if none of the variables is deleted in current iteration
+        if no variable is deleted at the current iteration
+
+
     Returns
     -------
-    M : np.ndarray (|A|, |A|)
-        Inverse matrix needed in current iteration
+    M : ndarray, shape (size(A), size(A))
+        Inverse matrix of :math:`H_A^tH_A` of the current iteration
+
+
     References
     ----------
-    [Chapel et al., 2021]:
-        Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
+    .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
         Unbalanced optimal transport through non-negative penalized
-        linear regression.
+        linear regression. NeurIPS.
     """
+
     if b is None:
         b = M_current[id_pop, :]
         b = np.delete(b, id_pop)
@@ -409,33 +490,39 @@ def complement_schur(M_current, b, d, id_pop):
 
 
 def construct_augmented_H(active_index, m, Hc, HrHr):
-    r""" This function construct an augmented matrix for the first iteration of
-    semi-relaxed regularization path
+    r""" This function constructs an augmented matrix for the first iteration
+    of the semi-relaxed regularization path
 
     .. math::
-        Augmented_H =
+        \text{Augmented}_H =
         \begin{bmatrix}
             0 & H_{c A} \\
             H_{c A}^T & H_{r A}^T H_{r A}
         \end{bmatrix}
+
     where :
-    - H_{r A} is the sub-matrix constructed by the columns of H_r
-        whose indices belong to the active set A
-    - H_{c A} is the sub-matrix constructed by the columns of H_c
-        whose indices belong to the active set A
+
+    - :math:`H_{r A}` is the sub-matrix constructed by the columns of \
+      :math:`H_r` whose indices belong to the active set A
+    - :math:`H_{c A}` is the sub-matrix constructed by the columns of \
+      :math:`H_c` whose indices belong to the active set A
+
+
     Parameters
     ----------
     active_index : list
-        Indices of active variables
+        Indices of the active variables
     m : int
         Length of the target distribution
     Hc : np.ndarray (dim_b, dim_a * dim_b)
-        Matrix that computes the sum along the columns of transport plan T
+        Matrix that computes the sum along the columns of the transport plan \
+        :math:`T`
     HrHr : np.ndarray (dim_a * dim_b, dim_a * dim_b)
-        Matrix product of H_r^T H_r
+        Matrix product of :math:`H_r^T H_r`
+
     Returns
     -------
-    H_augmented : np.ndarray (dim_b + |A|, dim_b + |A|)
+    H_augmented : np.ndarray (dim_b + size(A), dim_b + size(A))
         Augmented matrix for the first iteration of the semi-relaxed
         regularization path
     """
@@ -451,18 +538,27 @@ def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
     r"""This function gives the regularization path of l2-penalized UOT problem
 
     The problem to optimize is the Lasso reformulation of the l2-penalized UOT:
+
     .. math::
-        \min_t \gamma c^T t + 0.5 * \|H t - y\|_2^2
+        \min_t \gamma \mathbf{c}^T \mathbf{t}
+               + 0.5 * \|{H} \mathbf{t} - \mathbf{y}\|_2^2
+
         s.t.
-            t \geq 0
+            \mathbf{t} \geq 0
+
     where :
-    - c is a (dim_a * dim_b, ) metric cost vector (flattened version of C)
+
+    - :math:`\mathbf{c}` is the flattened version of the cost matrix \
+      :math:`{C}`
     - :math:`\gamma = 1/\lambda` is the l2-regularization coefficient
-    - y is the concatenation of vectors a and b, defined as y^T = [a^T b^T]
-    - H is a (dim_a + dim_b, dim_a * dim_b) metric matrix,
-        see [Chapel et al., 2021] for the design of H. The matrix product Ht
-        computes both the source marginal and the target marginal.
-    - t is a (dim_a * dim_b, ) metric vector (flattened version of T)
+    - :math:`\mathbf{y}` is the concatenation of vectors :math:`\mathbf{a}` \
+      and :math:`\mathbf{b}`, defined as \
+      :math:`\mathbf{y}^T = [\mathbf{a}^T \mathbf{b}^T]`
+    - :math:`{H}` is a design matrix, see :ref:`[41] <references-regpath>` \
+      for the design of :math:`{H}`. The matrix product :math:`H\mathbf{t}` \
+      computes both the source marginal and the target marginals.
+    - :math:`\mathbf{t}` is the flattened version of the transport matrix
+
     Parameters
     ----------
     a : np.ndarray (dim_a,)
@@ -478,11 +574,12 @@ def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
     Returns
     -------
     t : np.ndarray (dim_a*dim_b, )
-        Flattened vector of optimal transport matrix
+        Flattened vector of the optimal transport matrix
     t_list : list
-        List of solutions in regularization path
+        List of solutions in the regularization path
     gamma_list : list
-        List of regularization coefficient in regularization path
+        List of regularization coefficients in the regularization path
+
     Examples
     --------
     >>> import ot
@@ -502,10 +599,9 @@ def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
 
     References
     ----------
-    [Chapel et al., 2021]:
-        Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
+    .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
         Unbalanced optimal transport through non-negative penalized
-        linear regression.
+        linear regression. NeurIPS.
     """
 
     n = np.shape(a)[0]
@@ -580,22 +676,32 @@ def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
 def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
                       itmax=50000):
     r"""This function gives the regularization path of semi-relaxed
-    l2-UOT problem
+    l2-UOT problem.
 
     The problem to optimize is the Lasso reformulation of the l2-penalized UOT:
+
     .. math::
-        \min_t \gamma c^T t + 0.5 * \|H_r t - a\|_2^2
+
+        \min_t \gamma \mathbf{c}^T t
+               + 0.5 * \|H_r \mathbf{t} - \mathbf{a}\|_2^2
+
         s.t.
-            H_c t = b
-            t \geq 0
+            H_c \mathbf{t} = \mathbf{b}
+
+            \mathbf{t} \geq 0
+
     where :
-    - c is a (dim_a * dim_b, ) metric cost vector (flattened version of C)
-    - :math:`\gamma = 1/\lambda` is the l2-regularization coefficient
-    - H_r is  a (dim_a, dim_a * dim_b) metric matrix,
-        which computes the sum along the rows of transport plan T
-    - H_c is a (dim_b, dim_a * dim_b) metric matrix,
-        which computes the sum along the columns of transport plan T
-    - t is a (dim_a * dim_b, ) metric vector (flattened version of T)
+
+    - :math:`\mathbf{c}` is the flattened version of the cost matrix \
+      :math:`C`
+    - :math:`\gamma = 1/\lambda` is the l2-regularization parameter
+    - :math:`H_r` is  a  matrix that computes the sum along the rows of \
+      the transport plan :math:`T`
+    - :math:`H_c` is  a  matrix that computes the sum along the columns of \
+      the transport plan :math:`T`
+    - :math:`\mathbf{t}` is the flattened version of the transport plan \
+      :math:`T`
+
     Parameters
     ----------
     a : np.ndarray (dim_a,)
@@ -608,14 +714,16 @@ def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
         l2-regularization coefficient
     itmax: int (optional)
         Maximum number of iteration
+
     Returns
     -------
     t : np.ndarray (dim_a*dim_b, )
-        Flattened vector of optimal transport matrix
+        Flattened vector of the (unregularized) optimal transport matrix
     t_list : list
-        List of solutions in regularization path
+        List of all the optimal transport vectors of the regularization path
     gamma_list : list
-        List of regularization coefficient in regularization path
+        List of the regularization parameters in the path
+
     Examples
     --------
     >>> import ot
@@ -635,10 +743,9 @@ def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
 
     References
     ----------
-    [Chapel et al., 2021]:
-        Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
+    .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
         Unbalanced optimal transport through non-negative penalized
-        linear regression.
+        linear regression. NeurIPS.
     """
 
     n = np.shape(a)[0]
@@ -722,8 +829,44 @@ def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
 
 def regularization_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
                         semi_relaxed=False, itmax=50000):
-    r"""This function combines both the semi-relaxed and the fully-relaxed
-    regularization paths of l2-UOT problem
+    r"""This function provides all the solutions of the regularization path \
+    of the l2-UOT problem :ref:`[41] <references-regpath>`.
+
+    The problem to optimize is the Lasso reformulation of the l2-penalized UOT:
+
+    .. math::
+        \min_t \gamma \mathbf{c}^T \mathbf{t}
+                + 0.5 * \|{H} \mathbf{t} - \mathbf{y}\|_2^2
+
+        s.t.
+            \mathbf{t} \geq 0
+
+    where :
+
+    - :math:`\mathbf{c}` is the flattened version of the cost matrix \
+      :math:`{C}`
+    - :math:`\gamma = 1/\lambda` is the l2-regularization coefficient
+    - :math:`\mathbf{y}` is the concatenation of vectors :math:`\mathbf{a}` \
+      and :math:`\mathbf{b}`, defined as \
+      :math:`\mathbf{y}^T = [\mathbf{a}^T \mathbf{b}^T]`
+    - :math:`{H}` is a design matrix, see :ref:`[41] <references-regpath>` \
+      for the design of :math:`{H}`. The matrix product :math:`H\mathbf{t}` \
+      computes both the source marginal and the target marginals.
+    - :math:`\mathbf{t}` is the flattened version of the transport matrix
+
+    For the semi-relaxed problem, it optimizes the Lasso reformulation of the
+    l2-penalized UOT:
+
+    .. math::
+
+        \min_t \gamma \mathbf{c}^T \mathbf{t}
+                + 0.5 * \|H_r \mathbf{t} - \mathbf{a}\|_2^2
+
+        s.t.
+            H_c \mathbf{t} = \mathbf{b}
+
+            \mathbf{t} \geq 0
+
 
     Parameters
     ----------
@@ -736,23 +879,24 @@ def regularization_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
     reg: float (optional)
         l2-regularization coefficient
     semi_relaxed : bool (optional)
-        Give the semi-relaxed path if true
+        Give the semi-relaxed path if True
     itmax: int (optional)
         Maximum number of iteration
+
     Returns
     -------
     t : np.ndarray (dim_a*dim_b, )
-        Flattened vector of optimal transport matrix
+        Flattened vector of the (unregularized) optimal transport matrix
     t_list : list
-        List of solutions in regularization path
+        List of all the optimal transport vectors of the regularization path
     gamma_list : list
-        List of regularization coefficient in regularization path
+        List of the regularization parameters in the path
+
     References
     ----------
-    [Chapel et al., 2021]:
-        Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
+    .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
         Unbalanced optimal transport through non-negative penalized
-        linear regression.
+        linear regression. NeurIPS.
     """
     if semi_relaxed:
         t, t_list, gamma_list = semi_relaxed_path(a, b, C, reg=reg,
@@ -765,27 +909,33 @@ def regularization_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
 
 def compute_transport_plan(gamma, gamma_list, Pi_list):
     r""" Given the regularization path, this function computes the transport
-    plan for any value of gamma by the piecewise linearity of the path
+    plan for any value of gamma thanks to the piecewise linearity of the path.
 
     .. math::
         t(\gamma) = \phi(\gamma) - \gamma \delta(\gamma)
-    where :
-    - :math:`\gamma` is the regularization coefficient
+
+    where:
+
+    - :math:`\gamma` is the regularization parameter
     - :math:`\phi(\gamma)` is the corresponding intercept
     - :math:`\delta(\gamma)` is the corresponding slope
-    - t is a (dim_a * dim_b, ) vector (flattened version of transport matrix)
+    - :math:`\mathbf{t}` is the flattened version of the transport matrix
+
     Parameters
     ----------
     gamma : float
         Regularization coefficient
     gamma_list : list
-        List of regularization coefficients in regularization path
+        List of regularization parameters of the regularization path
     Pi_list : list
-        List of solutions in regularization path
+        List of all the solutions of the regularization path
+
     Returns
     -------
     t : np.ndarray (dim_a*dim_b, )
-        Transport vector corresponding to the given value of gamma
+        Vectorization of the transport plan corresponding to the given value
+        of gamma
+
     Examples
     --------
     >>> import ot
@@ -804,12 +954,13 @@ def compute_transport_plan(gamma, gamma_list, Pi_list):
     array([0.        , 0.        , 0.        , 0.19722222, 0.05555556,
            0.        , 0.        , 0.24722222, 0.        ])
 
+
+    .. _references-regpath:
     References
     ----------
-    [Chapel et al., 2021]:
-        Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
+    .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
         Unbalanced optimal transport through non-negative penalized
-        linear regression.
+        linear regression. NeurIPS.
     """
 
     if gamma >= gamma_list[0]:
