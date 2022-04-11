@@ -147,13 +147,19 @@ def test_emd2_gradients():
         b1 = torch.tensor(a, requires_grad=True)
         M1 = torch.tensor(M, requires_grad=True)
 
-        val = ot.emd2(a1, b1, M1)
+        val, log = ot.emd2(a1, b1, M1, log=True)
 
         val.backward()
 
         assert a1.shape == a1.grad.shape
         assert b1.shape == b1.grad.shape
         assert M1.shape == M1.grad.shape
+
+        assert np.allclose(a1.grad.cpu().detach().numpy(),
+                           log['u'].cpu().detach().numpy() - log['u'].cpu().detach().numpy().mean())
+
+        assert np.allclose(b1.grad.cpu().detach().numpy(),
+                           log['v'].cpu().detach().numpy() - log['v'].cpu().detach().numpy().mean())
 
         # Testing for bug #309, checking for scaling of gradient
         a2 = torch.tensor(a, requires_grad=True)

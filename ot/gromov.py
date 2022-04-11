@@ -551,7 +551,8 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=
         gC1 = nx.from_numpy(gC1, type_as=C10)
         gC2 = nx.from_numpy(gC2, type_as=C10)
         gw = nx.set_gradients(gw, (p0, q0, C10, C20),
-                              (log_gw['u'], log_gw['v'], gC1, gC2))
+                              (log_gw['u'] - nx.mean(log_gw['u']),
+                              log_gw['v'] - nx.mean(log_gw['v']), gC1, gC2))
 
     if log:
         return gw, log_gw
@@ -793,7 +794,9 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
         gC1 = nx.from_numpy(gC1, type_as=C10)
         gC2 = nx.from_numpy(gC2, type_as=C10)
         fgw_dist = nx.set_gradients(fgw_dist, (p0, q0, C10, C20, M0),
-                                    (log_fgw['u'], log_fgw['v'], alpha * gC1, alpha * gC2, (1 - alpha) * T0))
+                                    (log_fgw['u'] - nx.mean(log_fgw['u']),
+                                    log_fgw['v'] - nx.mean(log_fgw['v']),
+                                    alpha * gC1, alpha * gC2, (1 - alpha) * T0))
 
     if log:
         return fgw_dist, log_fgw

@@ -5,7 +5,7 @@
 
 #### New features
 
-- remode deprecated `ot.gpu` submodule (PR #361)
+- Remove deprecated `ot.gpu` submodule (PR #361)
 - Update examples in the gallery (PR #359).
 - Add stochastic loss and OT plan computation for regularized OT and 
   backend examples(PR #360).
@@ -23,6 +23,8 @@
 
 #### Closed issues
 
+- Fix mass gradient of `ot.emd2` and `ot.gromov_wasserstein2` so that they are 
+  centered (Issue #364, PR #363)
 - Fix bug in instantiating an `autograd` function `ValFunction` (Issue #337, 
   PR #338)
 - Fix POT ABI compatibility with old and new numpy (Issue #346, PR #349)
