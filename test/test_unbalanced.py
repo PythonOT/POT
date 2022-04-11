@@ -321,7 +321,6 @@ def test_mm_convergence(nx):
                                atol=1e-5)
 
     # check in case no histogram is provided
-    M = nx.to_numpy(M)
     a_np, b_np = np.array([]), np.array([])
     a, b = nx.from_numpy(a_np, b_np)
 
