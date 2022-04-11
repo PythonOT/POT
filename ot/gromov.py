@@ -551,7 +551,8 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=
         gC1 = nx.from_numpy(gC1, type_as=C10)
         gC2 = nx.from_numpy(gC2, type_as=C10)
         gw = nx.set_gradients(gw, (p0, q0, C10, C20),
-                              (log_gw['u'], log_gw['v'], gC1, gC2))
+                              (log_gw['u'] - nx.mean(log_gw['u']),
+                              log_gw['v'] - nx.mean(log_gw['v']), gC1, gC2))
 
     if log:
         return gw, log_gw
