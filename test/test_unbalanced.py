@@ -306,7 +306,7 @@ def test_mm_convergence(nx):
     G_kl, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='kl',
                                           verbose=True, log=True)
     loss_kl = nx.to_numpy(ot.unbalanced.mm_unbalanced2(
-                             a, b, M, reg_m, div='kl', verbose=True))
+                          a, b, M, reg_m, div='kl', verbose=True))
     G_l2, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='l2',
                                           verbose=False, log=True)
 
