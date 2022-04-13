@@ -7,8 +7,7 @@ This releases introduces several new notable features. The less important
 but most exiting one being that we now have a logo for the toolbox (color
 and dark background) :
 
-![](https://pythonot.github.io/master/_images/logo.svg)
-![](https://pythonot.github.io/master/_static/logo_dark.svg)
+![](https://pythonot.github.io/master/_images/logo.svg)![](https://pythonot.github.io/master/_static/logo_dark.svg)
 
 This logo is generated using with matplotlib and using the solution of an OT
 problem provided by POT (with `ot.emd`). Generating the logo can be done with a
@@ -36,7 +35,12 @@ The [free support Wasserstein barycenter](https://pythonot.github.io/gen_modules
 Finally we have worked on the documentation to provide an update of existing
 examples in the gallery and and several new examples including [GW dictionary
 learning](https://pythonot.github.io/auto_examples/gromov/plot_gromov_wasserstein_dictionary_learning.html#sphx-glr-auto-examples-gromov-plot-gromov-wasserstein-dictionary-learning-py)
-and [weak Optimal Transport](https://pythonot.github.io/auto_examples/others/plot_WeakOT_VS_OT.html#sphx-glr-auto-examples-others-plot-weakot-vs-ot-py).
+[weak Optimal
+Transport](https://pythonot.github.io/auto_examples/others/plot_WeakOT_VS_OT.html#sphx-glr-auto-examples-others-plot-weakot-vs-ot-py),
+[NN based dual potentials
+estimation](https://pythonot.github.io/auto_examples/backends/plot_stoch_continuous_ot_pytorch.html#sphx-glr-auto-examples-backends-plot-stoch-continuous-ot-pytorch-py)
+and [Factored coupling OT](https://pythonot.github.io/auto_examples/others/plot_factored_coupling.html#sphx-glr-auto-examples-others-plot-factored-coupling-py).
+.
 
 #### New features
 
