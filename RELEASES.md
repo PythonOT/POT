@@ -1,22 +1,57 @@
 # Releases
 
 
-## 0.8.2dev Development
+## 0.8.2
+
+This releases introduces several new notable features. The less important
+but most exiting one being that we now have a logo for the toolbox (color
+and dark background) :
+
+![](https://pythonot.github.io/master/_images/logo.svg)
+![](https://pythonot.github.io/master/_static/logo_dark.svg)
+
+This logo is generated using with matplotlib and using the solution of an OT
+problem provided by POT (with `ot.emd`). Generating the logo can be done with a
+simple python script also provided in the [documentation gallery](https://pythonot.github.io/auto_examples/others/plot_logo.html#sphx-glr-auto-examples-others-plot-logo-py).
+
+New OT solvers include [Weak
+OT](https://pythonot.github.io/gen_modules/ot.weak.html#ot.weak.weak_optimal_transport)
+ and [OT with factored
+coupling](https://pythonot.github.io/gen_modules/ot.factored.html#ot.factored.factored_optimal_transport)
+that can be used on large datasets. The [Majorization Minimization](https://pythonot.github.io/gen_modules/ot.unbalanced.html?highlight=mm_#ot.unbalanced.mm_unbalanced) solvers for
+non-regularized Unbalanced OT are now also available. We also now provide an
+implementation of [GW and FGW unmixing](https://pythonot.github.io/gen_modules/ot.gromov.html#ot.gromov.gromov_wasserstein_linear_unmixing) and [dictionary learning](https://pythonot.github.io/gen_modules/ot.gromov.html#ot.gromov.gromov_wasserstein_dictionary_learning). It is now
+possible to use autodiff to solve entropic an quadratic regularized OT in the
+dual for full or stochastic optimization thanks to the new functions to compute
+the dual loss for [entropic](https://pythonot.github.io/gen_modules/ot.stochastic.html#ot.stochastic.loss_dual_entropic) and [quadratic](https://pythonot.github.io/gen_modules/ot.stochastic.html#ot.stochastic.loss_dual_quadratic) regularized OT and reconstruct the [OT
+plan](https://pythonot.github.io/gen_modules/ot.stochastic.html#ot.stochastic.plan_dual_entropic) on part or all of the data. They can be used for instance to solve OT
+problems with stochastic gradient or for estimating the [dual potentials as
+neural networks](https://pythonot.github.io/auto_examples/backends/plot_stoch_continuous_ot_pytorch.html#sphx-glr-auto-examples-backends-plot-stoch-continuous-ot-pytorch-py).
+
+On the backend front, we now have backend compatible functions and classes in
+the domain adaptation [`ot.da`](https://pythonot.github.io/gen_modules/ot.da.html#module-ot.da) and unbalanced OT [`ot.unbalanced`](https://pythonot.github.io/gen_modules/ot.unbalanced.html) modules. This
+means that the DA classes can be used on tensors from all compatible backends.
+The [free support Wasserstein barycenter](https://pythonot.github.io/gen_modules/ot.lp.html?highlight=free%20support#ot.lp.free_support_barycenter) solver is now also backend compatible.
+
+Finally we have worked on the documentation to provide an update of existing
+examples in the gallery and and several new examples including [GW dictionary
+learning](https://pythonot.github.io/auto_examples/gromov/plot_gromov_wasserstein_dictionary_learning.html#sphx-glr-auto-examples-gromov-plot-gromov-wasserstein-dictionary-learning-py)
+and [weak Optimal Transport](https://pythonot.github.io/auto_examples/others/plot_WeakOT_VS_OT.html#sphx-glr-auto-examples-others-plot-weakot-vs-ot-py).
 
 #### New features
 
 - Remove deprecated `ot.gpu` submodule (PR #361)
-- Update examples in the gallery (PR #359).
+- Update examples in the gallery (PR #359)
 - Add stochastic loss and OT plan computation for regularized OT and 
-  backend examples(PR #360).
-- Implementation of factored OT with emd and sinkhorn (PR #358).
+  backend examples(PR #360)
+- Implementation of factored OT with emd and sinkhorn (PR #358)
 - A brand new logo for POT (PR #357)
-- Better list of related examples in quick start guide with `minigallery` (PR #334).
+- Better list of related examples in quick start guide with `minigallery` (PR #334)
 - Add optional log-domain Sinkhorn implementation in WDA to support smaller values
-  of the regularization parameter (PR #336).
-- Backend implementation for `ot.lp.free_support_barycenter` (PR #340).
-- Add weak OT solver + example  (PR #341).
-- Add backend support for Domain Adaptation and Unbalanced solvers (PR #343).
+  of the regularization parameter (PR #336)
+- Backend implementation for `ot.lp.free_support_barycenter` (PR #340)
+- Add weak OT solver + example  (PR #341)
+- Add backend support for Domain Adaptation and Unbalanced solvers (PR #343)
 - Add (F)GW linear dictionary learning solvers + example  (PR #319)
 - Add links to related PR and Issues in the doc release page (PR #350)
 - Add new minimization-maximization algorithms for solving exact Unbalanced OT + example (PR #362)
