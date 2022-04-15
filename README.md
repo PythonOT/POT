@@ -180,35 +180,14 @@ This toolbox has been created and is maintained by
 * [Rémi Flamary](http://remi.flamary.com/)
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
 
-The contributors to this library are 
+The numerous contributors to this library are listed [here](CONTRIBUTORS.md).
 
-* [Alexandre Gramfort](http://alexandre.gramfort.net/) (CI, documentation)
-* [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/) (Partial OT)
-* [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/) (Mapping estimation)
-* [Léo Gautheron](https://github.com/aje) (Initial GPU implementation)
-* [Nathalie Gayraud](https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1) (DA classes)
-* [Stanislas Chambon](https://slasnista.github.io/) (DA classes)
-* [Antoine Rolet](https://arolet.github.io/) (EMD solver debug)
-* Erwan Vautier (Gromov-Wasserstein)
-* [Kilian Fatras](https://kilianfatras.github.io/) (Stochastic solvers)
-* [Alain Rakotomamonjy](https://sites.google.com/site/alainrakotomamonjy/home)
-* [Vayer Titouan](https://tvayer.github.io/) (Gromov-Wasserstein -, Fused-Gromov-Wasserstein)
-* [Hicham Janati](https://hichamjanati.github.io/) (Unbalanced OT, Debiased barycenters)
-* [Romain Tavenard](https://rtavenar.github.io/) (1d Wasserstein)
-* [Mokhtar Z. Alaya](http://mzalaya.github.io/) (Screenkhorn)
-* [Ievgen Redko](https://ievred.github.io/) (Laplacian DA, JCPOT)
-* [Adrien Corenflos](https://adriencorenflos.github.io/) (Sliced Wasserstein Distance)
-* [Tanguy Kerdoncuff](https://hv0nnus.github.io/) (Sampled Gromov Wasserstein)
-* [Minhui Huang](https://mhhuang95.github.io) (Projection Robust Wasserstein Distance)
-* [Nathan Cassereau](https://github.com/ncassereau-idris) (Backends)
-* [Cédric Vincent-Cuaz](https://github.com/cedricvincentcuaz) (Graph Dictionary Learning)
+POT has benefited from the financing or manpower from the following partners:
 
-This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
+<img src="docs/source/_static/images/logo_anr.jpg" alt="drawing" style="height:60px;"/>
+<img src="docs/source/_static/images/logo_cnrs.jpg" alt="drawing" style="height:60px;"/>
+<img src="docs/source/_static/images/logo_3ia.jpg" alt="drawing" style="height:60px;"/>
 
-* [Gabriel Peyré](http://gpeyre.github.io/) (Wasserstein Barycenters in Matlab)
-* [Mathieu Blondel](https://mblondel.org/) (original implementation smooth OT)
-* [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) (C++ code for EMD)
-* [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
 
 ## Contributions and code of conduct
 
