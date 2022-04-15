@@ -49,6 +49,4 @@ This toolbox benefit a lot from open source research and we would like to thank 
 
 POT has benefited from the financing or manpower from the following partners:
 
-<img src="docs/source/_static/images/logo_anr.jpg" alt="drawing" style="height:60px;"/>
-<img src="docs/source/_static/images/logo_cnrs.jpg" alt="drawing" style="height:60px;"/>
-<img src="docs/source/_static/images/logo_3ia.jpg" alt="drawing" style="height:60px;"/>
+<img src="docs/source/_static/images/logo_anr.jpg" alt="drawing" style="height:60px;"/><img src="docs/source/_static/images/logo_cnrs.jpg" alt="drawing" style="height:60px;"/><img src="docs/source/_static/images/logo_3ia.jpg" alt="drawing" style="height:60px;"/>

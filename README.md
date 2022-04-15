@@ -184,9 +184,7 @@ The numerous contributors to this library are listed [here](CONTRIBUTORS.md).
 
 POT has benefited from the financing or manpower from the following partners:
 
-<img src="docs/source/_static/images/logo_anr.jpg" alt="drawing" style="height:60px;"/>
-<img src="docs/source/_static/images/logo_cnrs.jpg" alt="drawing" style="height:60px;"/>
-<img src="docs/source/_static/images/logo_3ia.jpg" alt="drawing" style="height:60px;"/>
+<img src="docs/source/_static/images/logo_anr.jpg" alt="drawing" style="height:60px;"/><img src="docs/source/_static/images/logo_cnrs.jpg" alt="drawing" style="height:60px;"/><img src="docs/source/_static/images/logo_3ia.jpg" alt="drawing" style="height:60px;"/>
 
 
 ## Contributions and code of conduct
