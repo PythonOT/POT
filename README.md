@@ -184,7 +184,7 @@ The numerous contributors to this library are listed [here](CONTRIBUTORS.md).
 
 POT has benefited from the financing or manpower from the following partners:
 
-<img src="docs/source/_static/images/logo_anr.jpg" alt="ANR" style="height:60px;"/><img src="docs/source/_static/images/logo_cnrs.jpg" alt="CNRS" style="height:60px;"/><img src="docs/source/_static/images/logo_3ia.jpg" alt="3IA" style="height:60px;"/>
+<img src="https://pythonot.github.io/master/_static/images/logo_anr.jpg" alt="ANR" style="height:60px;"/><img src="https://pythonot.github.io/master/_static/images/logo_cnrs.jpg" alt="CNRS" style="height:60px;"/><img src="https://pythonot.github.io/master/_static/images/logo_3ia.jpg" alt="3IA" style="height:60px;"/>
 
 
 ## Contributions and code of conduct
