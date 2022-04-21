@@ -22,6 +22,7 @@ Contents
    auto_examples/index
    releases
    .github/CONTRIBUTING
+   contributors
    .github/CODE_OF_CONDUCT
 
 
