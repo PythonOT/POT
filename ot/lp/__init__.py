@@ -26,8 +26,6 @@ from ..utils import dist, list_to_array
 from ..utils import parmap
 from ..backend import get_backend
 
-
-
 __all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx', ' emd_1d_sorted',
            'emd_1d', 'emd2_1d', 'wasserstein_1d']
 
@@ -517,8 +515,8 @@ def emd2(a, b, M, processes=1,
             log['warning'] = result_code_string
             log['result_code'] = result_code
             cost = nx.set_gradients(nx.from_numpy(cost, type_as=type_as),
-                                    (a0, b0, M0), (log['u'] - nx.mean(log['u']), 
-                                    log['v'] - nx.mean(log['v']), G))
+                                    (a0, b0, M0), (log['u'] - nx.mean(log['u']),
+                                                   log['v'] - nx.mean(log['v']), G))
             return [cost, log]
     else:
         def f(b):
@@ -629,7 +627,7 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
     """
 
-    nx = get_backend(*measures_locations,*measures_weights,X_init)
+    nx = get_backend(*measures_locations, *measures_weights, X_init)
 
     iter_count = 0
 
@@ -637,9 +635,9 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
     k = X_init.shape[0]
     d = X_init.shape[1]
     if b is None:
-        b = nx.ones((k,),type_as=X_init) / k
+        b = nx.ones((k,), type_as=X_init) / k
     if weights is None:
-        weights = nx.ones((N,),type_as=X_init) / N
+        weights = nx.ones((N,), type_as=X_init) / N
 
     X = X_init
 
@@ -650,15 +648,14 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
     while (displacement_square_norm > stopThr and iter_count < numItermax):
 
-        T_sum = nx.zeros((k, d),type_as=X_init)
-        
+        T_sum = nx.zeros((k, d), type_as=X_init)
 
-        for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights,  weights):
+        for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights, weights):
             M_i = dist(X, measure_locations_i)
             T_i = emd(b, measure_weights_i, M_i, numThreads=numThreads)
-            T_sum = T_sum + weight_i * 1. / b[:,None] * nx.dot(T_i, measure_locations_i)
+            T_sum = T_sum + weight_i * 1. / b[:, None] * nx.dot(T_i, measure_locations_i)
 
-        displacement_square_norm = nx.sum((T_sum - X)**2)
+        displacement_square_norm = nx.sum((T_sum - X) ** 2)
         if log:
             displacement_square_norms.append(displacement_square_norm)
 
@@ -675,3 +672,98 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
     else:
         return X
 
+
+def generalised_free_support_barycenter(X, a, P, L, Y_init=None, b=None, weights=None,
+                                        numItermax=100, stopThr=1e-7, verbose=False, log=None, numThreads=1):
+    r"""
+    Solves the free support (locations of the barycenters are optimized, not the weights)
+    generalised Wasserstein barycenter problem (i.e. the weighted Frechet mean for the 2-Wasserstein distance,
+    with linear maps), formally:
+
+    .. math::
+        \min_\gamma \quad \sum_{i=1}^N w_i W_2^2(\nu_i, P_i\#\gamma)
+
+    where :
+
+    - :math:`\gamma = \sum_[l=1}^L b_l\delta_{y_l}` is the desired barycenter with each :math:`y_l \in \mathbb{R}^d`
+    - :math:`\mathbf{b} \in \mathbb{R}^{L}` is the desired weights vector of the barycenter
+    - The input measures are :math:`\nu_i = \sum_{j=1}^{k_i}a_{i,j}\delta_{x_{i,j}}`
+    - the :math:`\mathbf{a}_i \in \mathbb{R}^{k_i}` are the empirical measures weights and sum to one for each :math:`i`
+    - the :math:`\mathbf{X}_i \in \mathbb{R}^{k_i, d_i}` are the empirical measures atoms locations
+    - :math:`w = (w_1, \cdots w_p)` are the barycenter coefficients (on the simplex)
+    - Each :math:`P_i \in \mathbb{R}^{d, d_i}`, and :math:`P_i\#\nu_i = \sum_{j=1}^{k_i}a_{i,j}\delta_{P_ix_{i,j}}`
+
+    As show by :ref:`[42]`, this problem can be re-written as a Wasserstein Barycenter problem,
+    which we solve using the free support method :ref:`[20] <references-generalised-free-support-barycenter>`
+    (Algorithm 2).
+
+    Parameters
+    ----------
+    X : list of p (k_i,d_i) array-like
+        Discrete supports of the input measures: each consists of :math:`k_i` locations of a `d_i`-dimensional space
+        (:math:`k_i` can be different for each element of the list)
+    a : list of p (k_i,) array-like
+        Measure weights: each element is a vector (k_i) on the simplex
+    P : list of p (d_i,d) array-like
+        Each :math: `P_i` is a linear map `\mathbb{R}^{d} \rightarrow \mathbb{R}^{d_i}`
+    L : int
+        Number of barycenter points
+    Y_init : (L,d) array-like
+        Initialization of the support locations (on `k` atoms) of the barycenter
+    b : (L,) array-like
+        Initialization of the weights of the barycenter (non-negatives, sum to 1)
+    weights : (p,) array-like
+        Initialization of the coefficients of the barycenter (non-negatives, sum to 1)
+
+    numItermax : int, optional
+        Max number of iterations
+    stopThr : float, optional
+        Stop threshold on error (>0)
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        record log if True
+    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
+        If compiled with OpenMP, chooses the number of threads to parallelize.
+        "max" selects the highest number possible.
+
+
+    Returns
+    -------
+    X : (L,d) array-like
+        Support locations (on L atoms) of the barycenter
+
+
+    .. _references-generalised-free-support-barycenter:
+    References
+    ----------
+    .. [20] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein barycenters." International Conference on Machine Learning. 2014.
+
+    .. [42] DELON, Julie, GOZLAN, Nathael, et SAINT-DIZIER, Alexandre. Generalized Wasserstein barycenters between probability measures living on different subspaces. arXiv preprint arXiv:2105.09755, 2021.
+
+    """
+    nx = get_backend(*X, *a, *P)
+    d = P[0].shape[1]
+    A = nx.zeros((d, d), type_as=X[0])  # variable change matrix to reduce the problem to a Wasserstein Barycenter (WB)
+    for (P_i, lambda_i) in zip(P, weights):
+        A = A + lambda_i * P_i.T @ P_i
+    B = nx.inv(nx.sqrtm(A))
+
+    Z = [x @ Pi @ B.T for (x, Pi) in zip(X, P)]  # change of variables -> (WB) problem on Z
+
+    if Y_init is None:
+        Y_init = nx.randn((L, d), type_as=X[0])
+
+    if b is None:
+        b = nx.ones(L, type_as=X[0]) / L  # not optimised
+
+    out = free_support_barycenter(Z, a, Y_init, b, numItermax=numItermax,
+                                  stopThr=stopThr, verbose=verbose, log=log, numThreads=numThreads)
+
+    bar, log_dict = out if log else out, None  # if log is not None the out = (bar, log_dict)
+    bar = bar @ B.T  # return to the Generalised WB formulation
+
+    if log:
+        return bar, log_dict
+    else:
+        return bar
