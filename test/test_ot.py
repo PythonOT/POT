@@ -320,6 +320,45 @@ def test_free_support_barycenter_backends(nx):
     np.testing.assert_allclose(X, nx.to_numpy(X2))
 
 
+def test_generalised_free_support_barycenter():
+    X = [np.array([-1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
+    a = [np.array([1.]), np.array([1.])]
+
+    P = [np.array([1]), np.array([1])]
+
+    Y_init = np.array([-12.]).reshape((1, 1))
+
+    # obvious barycenter location between two diracs
+    Y_true = np.array([0.]).reshape((1, 1))
+
+    # test without log and no init
+    Y = ot.lp.generalized_free_support_barycenter(X, a, P, 1)
+    np.testing.assert_allclose(Y, Y_true, rtol=1e-5, atol=1e-7)
+
+    # test with log and init
+    Y, _ = ot.lp.generalized_free_support_barycenter(X, a, P, 1, Y_init=Y_init, b=np.array([1.]))
+    np.testing.assert_allclose(Y, Y_true, rtol=1e-5, atol=1e-7)
+
+
+def test_generalised_free_support_barycenter_backends(nx):
+
+    X = [np.array([-1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
+    a = [np.array([1.]), np.array([1.])]
+    P = [np.array([1]), np.array([1])]
+    Y_init = np.array([-12.]).reshape((1, 1))
+
+    Y = ot.lp.generalized_free_support_barycenter(X, a, P, 1, Y_init=Y_init)
+
+    X2 = nx.from_numpy(*X)
+    a2 = nx.from_numpy(*a)
+    P2 = nx.from_numpy(*P)
+    Y_init2 = nx.from_numpy(Y_init)
+
+    Y2 = ot.lp.generalized_free_support_barycenter(X2, a2, P2, 1, Y_init=Y_init2)
+
+    np.testing.assert_allclose(Y, nx.to_numpy(Y2))
+
+
 @pytest.mark.skipif(not ot.lp.cvx.cvxopt, reason="No cvxopt available")
 def test_lp_barycenter_cvxopt():
     a1 = np.array([1.0, 0, 0])[:, None]

@@ -27,7 +27,7 @@ from ..utils import parmap
 from ..backend import get_backend
 
 __all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx', ' emd_1d_sorted',
-           'emd_1d', 'emd2_1d', 'wasserstein_1d']
+           'emd_1d', 'emd2_1d', 'wasserstein_1d', 'generalized_free_support_barycenter']
 
 
 def check_number_threads(numThreads):
@@ -574,14 +574,14 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
     - the :math:`\mathbf{X}_i \in \mathbb{R}^{k_i, d}` are the empirical measures atoms locations
     - :math:`\mathbf{b} \in \mathbb{R}^{k}` is the desired weights vector of the barycenter
 
-    This problem is considered in :ref:`[1] <references-free-support-barycenter>` (Algorithm 2).
+    This problem is considered in :ref:`[20] <references-free-support-barycenter>` (Algorithm 2).
     There are two differences with the following codes:
 
     - we do not optimize over the weights
     - we do not do line search for the locations updates, we use i.e. :math:`\theta = 1` in
-      :ref:`[1] <references-free-support-barycenter>` (Algorithm 2). This can be seen as a discrete
+      :ref:`[20] <references-free-support-barycenter>` (Algorithm 2). This can be seen as a discrete
       implementation of the fixed-point algorithm of
-      :ref:`[2] <references-free-support-barycenter>` proposed in the continuous setting.
+      :ref:`[43] <references-free-support-barycenter>` proposed in the continuous setting.
 
     Parameters
     ----------
@@ -621,9 +621,9 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
     .. _references-free-support-barycenter:
     References
     ----------
-    .. [1] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein barycenters." International Conference on Machine Learning. 2014.
+    .. [20] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein barycenters." International Conference on Machine Learning. 2014.
 
-    .. [2]  Álvarez-Esteban, Pedro C., et al. "A fixed-point approach to barycenters in Wasserstein space." Journal of Mathematical Analysis and Applications 441.2 (2016): 744-762.
+    .. [43]  Álvarez-Esteban, Pedro C., et al. "A fixed-point approach to barycenters in Wasserstein space." Journal of Mathematical Analysis and Applications 441.2 (2016): 744-762.
 
     """
 
@@ -673,7 +673,7 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
         return X
 
 
-def generalised_free_support_barycenter(X, a, P, L, Y_init=None, b=None, weights=None,
+def generalized_free_support_barycenter(X, a, P, L, Y_init=None, b=None, weights=None,
                                         numItermax=100, stopThr=1e-7, verbose=False, log=None, numThreads=1):
     r"""
     Solves the free support (locations of the barycenters are optimized, not the weights)
