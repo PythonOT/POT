@@ -137,6 +137,7 @@ def test_partial_wasserstein():
 
 
 def test_partial_gromov_wasserstein():
+    np.random.seed(42)
     n_samples = 20  # nb samples
     n_noise = 10  # nb of samples (noise)
 
