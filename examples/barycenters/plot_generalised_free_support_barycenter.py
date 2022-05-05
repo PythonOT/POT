@@ -39,19 +39,19 @@ sz = I1.shape[0]
 UU, VV = np.meshgrid(np.arange(sz), np.arange(sz))
 
 # Input measure locations in their respective 2D spaces
-X_list = [np.stack((UU[I == 0], VV[I == 0]), 1) * 1.0 for I in [I1, I2, I3]]
+X_list = [np.stack((UU[im == 0], VV[im == 0]), 1) * 1.0 for im in [I1, I2, I3]]
 
 # Input measure weights
 a_list = [ot.unif(x.shape[0]) for x in X_list]
 
 # Projections 3D -> 2D
-P1 = np.array([[1,0,0],[0,1,0]])
-P2 = np.array([[0,1,0],[0,0,1]])
-P3 = np.array([[1,0,0],[0,0,1]])
-P_list = [P1,P2,P3]
+P1 = np.array([[1, 0, 0], [0, 1, 0]])
+P2 = np.array([[0, 1, 0], [0, 0, 1]])
+P3 = np.array([[1, 0, 0], [0, 0, 1]])
+P_list = [P1, P2, P3]
 
 # Barycenter weights
-weights = np.array([1/3, 1/3, 1/3])
+weights = np.array([1 / 3, 1 / 3, 1 / 3])
 
 # Number of barycenter points to compute
 n_samples_bary = 100
