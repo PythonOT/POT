@@ -1,5 +1,11 @@
 # Releases
 
+## 0.8.3dev
+
+#### New features
+
+- Added Generalized Wasserstein Barycenter solver + example
+
 
 ## 0.8.2
 

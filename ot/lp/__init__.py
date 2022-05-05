@@ -570,8 +570,8 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
     where :
 
     - :math:`w \in \mathbb{(0, 1)}^{N}`'s are the barycenter weights and sum to one
-    - the :math:`\mathbf{a}_i \in \mathbb{R}^{k_i}` are the empirical measures weights and sum to one for each :math:`i`
-    - the :math:`\mathbf{X}_i \in \mathbb{R}^{k_i, d}` are the empirical measures atoms locations
+    - `measure_weights` denotes the :math:`\mathbf{a}_i \in \mathbb{R}^{k_i}`: empirical measures weights (on simplex)
+    - `measures_locations` denotes the :math:`\mathbf{X}_i \in \mathbb{R}^{k_i, d}`: empirical measures atoms locations
     - :math:`\mathbf{b} \in \mathbb{R}^{k}` is the desired weights vector of the barycenter
 
     This problem is considered in :ref:`[20] <references-free-support-barycenter>` (Algorithm 2).
@@ -673,25 +673,25 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
         return X
 
 
-def generalized_free_support_barycenter(X, a, P, L, Y_init=None, b=None, weights=None,
-                                        numItermax=100, stopThr=1e-7, verbose=False, log=None, numThreads=1):
+def generalized_free_support_barycenter(X_list, a_list, P_list, n_samples_bary, Y_init=None, b=None, weights=None,
+                                        numItermax=100, stopThr=1e-7, verbose=False, log=None, numThreads=1, eps=0):
     r"""
-    Solves the free support (locations of the barycenters are optimized, not the weights)
-    generalised Wasserstein barycenter problem (i.e. the weighted Frechet mean for the 2-Wasserstein distance,
-    with linear maps), formally:
+    Solves the free support generalised Wasserstein barycenter problem: finding a barycenter (a discrete measure with
+    a fixed amount of points of uniform weights) whose respective projections fit the input measures.
+    More formally:
 
     .. math::
-        \min_\gamma \quad \sum_{i=1}^N w_i W_2^2(\nu_i, P_i\#\gamma)
+        \min_\gamma \quad \sum_{i=1}^p w_i W_2^2(\nu_i, \mathbf{P}_i\#\gamma)
 
     where :
 
-    - :math:`\gamma = \sum_[l=1}^L b_l\delta_{y_l}` is the desired barycenter with each :math:`y_l \in \mathbb{R}^d`
-    - :math:`\mathbf{b} \in \mathbb{R}^{L}` is the desired weights vector of the barycenter
+    - :math:`\gamma = \sum_{l=1}^n b_l\delta_{y_l}` is the desired barycenter with each :math:`y_l \in \mathbb{R}^d`
+    - :math:`\mathbf{b} \in \mathbb{R}^{n}` is the desired weights vector of the barycenter
     - The input measures are :math:`\nu_i = \sum_{j=1}^{k_i}a_{i,j}\delta_{x_{i,j}}`
-    - the :math:`\mathbf{a}_i \in \mathbb{R}^{k_i}` are the empirical measures weights and sum to one for each :math:`i`
-    - the :math:`\mathbf{X}_i \in \mathbb{R}^{k_i, d_i}` are the empirical measures atoms locations
+    - The :math:`\mathbf{a}_i \in \mathbb{R}^{k_i}` are the respective empirical measures weights (on the simplex)
+    - The :math:`\mathbf{X}_i \in \mathbb{R}^{k_i, d_i}` are the respective empirical measures atoms locations
     - :math:`w = (w_1, \cdots w_p)` are the barycenter coefficients (on the simplex)
-    - Each :math:`P_i \in \mathbb{R}^{d, d_i}`, and :math:`P_i\#\nu_i = \sum_{j=1}^{k_i}a_{i,j}\delta_{P_ix_{i,j}}`
+    - Each :math:`\mathbf{P}_i \in \mathbb{R}^{d, d_i}`, and :math:`P_i\#\nu_i = \sum_{j=1}^{k_i}a_{i,j}\delta_{P_ix_{i,j}}`
 
     As show by :ref:`[42]`, this problem can be re-written as a Wasserstein Barycenter problem,
     which we solve using the free support method :ref:`[20] <references-generalised-free-support-barycenter>`
@@ -699,22 +699,21 @@ def generalized_free_support_barycenter(X, a, P, L, Y_init=None, b=None, weights
 
     Parameters
     ----------
-    X : list of p (k_i,d_i) array-like
+    X_list : list of p (k_i,d_i) array-like
         Discrete supports of the input measures: each consists of :math:`k_i` locations of a `d_i`-dimensional space
         (:math:`k_i` can be different for each element of the list)
-    a : list of p (k_i,) array-like
+    a_list : list of p (k_i,) array-like
         Measure weights: each element is a vector (k_i) on the simplex
-    P : list of p (d_i,d) array-like
+    P_list : list of p (d_i,d) array-like
         Each :math: `P_i` is a linear map `\mathbb{R}^{d} \rightarrow \mathbb{R}^{d_i}`
-    L : int
+    n_samples_bary : int
         Number of barycenter points
-    Y_init : (L,d) array-like
+    Y_init : (n_samples_bary,d) array-like
         Initialization of the support locations (on `k` atoms) of the barycenter
-    b : (L,) array-like
-        Initialization of the weights of the barycenter (non-negatives, sum to 1)
+    b : (n_samples_bary,) array-like
+        Initialization of the weights of the barycenter measure (on the simplex)
     weights : (p,) array-like
-        Initialization of the coefficients of the barycenter (non-negatives, sum to 1)
-
+        Initialization of the coefficients of the barycenter (on the simplex)
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -726,12 +725,15 @@ def generalized_free_support_barycenter(X, a, P, L, Y_init=None, b=None, weights
     numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
         If compiled with OpenMP, chooses the number of threads to parallelize.
         "max" selects the highest number possible.
+    eps: Stability coefficient for the change of variable matrix inversion
+        If the :math:`\mathbf{P}_i^T` matrices don't span :math:`\mathbb{R}^d`, the problem is ill-defined and a matrix
+        inversion will fail. In this case one may set eps=1e-8 and get a solution anyway (which may make little sense)
 
 
     Returns
     -------
-    X : (L,d) array-like
-        Support locations (on L atoms) of the barycenter
+    Y : (n_samples_bary,d) array-like
+        Support locations (on n_samples_bary atoms) of the barycenter
 
 
     .. _references-generalised-free-support-barycenter:
@@ -742,28 +744,38 @@ def generalized_free_support_barycenter(X, a, P, L, Y_init=None, b=None, weights
     .. [42] DELON, Julie, GOZLAN, Nathael, et SAINT-DIZIER, Alexandre. Generalized Wasserstein barycenters between probability measures living on different subspaces. arXiv preprint arXiv:2105.09755, 2021.
 
     """
-    nx = get_backend(*X, *a, *P)
-    d = P[0].shape[1]
-    A = nx.zeros((d, d), type_as=X[0])  # variable change matrix to reduce the problem to a Wasserstein Barycenter (WB)
-    for (P_i, lambda_i) in zip(P, weights):
+    nx = get_backend(*X_list, *a_list, *P_list)
+    d = P_list[0].shape[1]
+    p = len(X_list)
+
+    if weights is None:
+        weights = nx.ones(p, type_as=X_list[0]) / p
+
+    # variable change matrix to reduce the problem to a Wasserstein Barycenter (WB)
+    A = eps * nx.eye(d, type_as=X_list[0])  # if eps nonzero: will force the invertibility of A
+    for (P_i, lambda_i) in zip(P_list, weights):
         A = A + lambda_i * P_i.T @ P_i
     B = nx.inv(nx.sqrtm(A))
 
-    Z = [x @ Pi @ B.T for (x, Pi) in zip(X, P)]  # change of variables -> (WB) problem on Z
+    Z_list = [x @ Pi @ B.T for (x, Pi) in zip(X_list, P_list)]  # change of variables -> (WB) problem on Z
 
     if Y_init is None:
-        Y_init = nx.randn((L, d), type_as=X[0])
+        Y_init = nx.randn(n_samples_bary, d, type_as=X_list[0])
 
     if b is None:
-        b = nx.ones(L, type_as=X[0]) / L  # not optimised
+        b = nx.ones(n_samples_bary, type_as=X_list[0]) / n_samples_bary  # not optimised
 
-    out = free_support_barycenter(Z, a, Y_init, b, numItermax=numItermax,
+    out = free_support_barycenter(Z_list, a_list, Y_init, b, numItermax=numItermax,
                                   stopThr=stopThr, verbose=verbose, log=log, numThreads=numThreads)
 
-    bar, log_dict = out if log else out, None  # if log is not None the out = (bar, log_dict)
-    bar = bar @ B.T  # return to the Generalised WB formulation
+    if log:  # unpack
+        Y, log_dict = out
+    else:
+        Y = out
+        log_dict = None
+    Y = Y @ B.T  # return to the Generalised WB formulation
 
     if log:
-        return bar, log_dict
+        return Y, log_dict
     else:
-        return bar
+        return Y

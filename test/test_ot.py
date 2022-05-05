@@ -321,30 +321,31 @@ def test_free_support_barycenter_backends(nx):
 
 
 def test_generalised_free_support_barycenter():
-    X = [np.array([-1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
+    np.random.seed(42)  # random inits
+    X = [np.array([-1., -1.]).reshape((1, 2)), np.array([1., 1.]).reshape((1, 2))]  # two 2D points bar is obviously 0
     a = [np.array([1.]), np.array([1.])]
 
-    P = [np.array([1]), np.array([1])]
+    P = [np.eye(2), np.eye(2)]
 
-    Y_init = np.array([-12.]).reshape((1, 1))
+    Y_init = np.array([-12., 7.]).reshape((1, 2))
 
-    # obvious barycenter location between two diracs
-    Y_true = np.array([0.]).reshape((1, 1))
+    # obvious barycenter location between two 2D diracs
+    Y_true = np.array([0., .0]).reshape((1, 2))
 
     # test without log and no init
     Y = ot.lp.generalized_free_support_barycenter(X, a, P, 1)
     np.testing.assert_allclose(Y, Y_true, rtol=1e-5, atol=1e-7)
 
     # test with log and init
-    Y, _ = ot.lp.generalized_free_support_barycenter(X, a, P, 1, Y_init=Y_init, b=np.array([1.]))
+    Y, _ = ot.lp.generalized_free_support_barycenter(X, a, P, 1, Y_init=Y_init, b=np.array([1.]), log=True)
     np.testing.assert_allclose(Y, Y_true, rtol=1e-5, atol=1e-7)
 
 
 def test_generalised_free_support_barycenter_backends(nx):
-
+    np.random.seed(42)
     X = [np.array([-1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
     a = [np.array([1.]), np.array([1.])]
-    P = [np.array([1]), np.array([1])]
+    P = [np.array([1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
     Y_init = np.array([-12.]).reshape((1, 1))
 
     Y = ot.lp.generalized_free_support_barycenter(X, a, P, 1, Y_init=Y_init)
