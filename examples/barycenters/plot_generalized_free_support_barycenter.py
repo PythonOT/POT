@@ -24,6 +24,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.pylab as pl
 import ot
+import matplotlib.animation as animation
 
 ##############################################################################
 # Generate and plot data
@@ -106,3 +107,29 @@ ax.set_zticks([])
 
 plt.tight_layout()
 plt.show()
+
+##############################################
+# Rotation animation
+# --------------------------------------------
+
+fig = plt.figure(figsize=(7, 7))
+ax = fig.add_subplot(1, 1, 1, projection="3d")
+
+
+def _init():
+    for Xi in X_visu:
+        ax.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker='o', alpha=.6)
+    ax.scatter(Y[:, 0], Y[:, 1], Y[:, 2], marker='o', alpha=.6)
+    ax.view_init(elev=0, azim=0)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
+    return fig,
+
+
+def _update_plot(i):
+    ax.view_init(elev=i, azim=4 * i)
+    return fig,
+
+
+ani = animation.FuncAnimation(fig, _update_plot, init_func=_init, frames=90, interval=50, blit=True, repeat_delay=2000)
