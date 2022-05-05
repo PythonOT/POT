@@ -623,7 +623,7 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
     ----------
     .. [20] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein barycenters." International Conference on Machine Learning. 2014.
 
-    .. [43]  Álvarez-Esteban, Pedro C., et al. "A fixed-point approach to barycenters in Wasserstein space." Journal of Mathematical Analysis and Applications 441.2 (2016): 744-762.
+    .. [43] Álvarez-Esteban, Pedro C., et al. "A fixed-point approach to barycenters in Wasserstein space." Journal of Mathematical Analysis and Applications 441.2 (2016): 744-762.
 
     """
 
@@ -693,8 +693,9 @@ def generalized_free_support_barycenter(X_list, a_list, P_list, n_samples_bary, 
     - :math:`w = (w_1, \cdots w_p)` are the barycenter coefficients (on the simplex)
     - Each :math:`\mathbf{P}_i \in \mathbb{R}^{d, d_i}`, and :math:`P_i\#\nu_i = \sum_{j=1}^{k_i}a_{i,j}\delta_{P_ix_{i,j}}`
 
-    As show by :ref:`[42]`, this problem can be re-written as a Wasserstein Barycenter problem,
-    which we solve using the free support method :ref:`[20] <references-generalised-free-support-barycenter>`
+    As show by :ref:`[42] <references-generalized-free-support-barycenter>`,
+    this problem can be re-written as a Wasserstein Barycenter problem,
+    which we solve using the free support method :ref:`[20] <references-generalized-free-support-barycenter>`
     (Algorithm 2).
 
     Parameters
@@ -736,12 +737,12 @@ def generalized_free_support_barycenter(X_list, a_list, P_list, n_samples_bary, 
         Support locations (on n_samples_bary atoms) of the barycenter
 
 
-    .. _references-generalised-free-support-barycenter:
+    .. _references-generalized-free-support-barycenter:
     References
     ----------
-    .. [20] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein barycenters." International Conference on Machine Learning. 2014.
+    .. [20] Cuturi, M. and Doucet, A.. "Fast computation of Wasserstein barycenters." International Conference on Machine Learning. 2014.
 
-    .. [42] DELON, Julie, GOZLAN, Nathael, et SAINT-DIZIER, Alexandre. Generalized Wasserstein barycenters between probability measures living on different subspaces. arXiv preprint arXiv:2105.09755, 2021.
+    .. [42] Delon, J., Gozlan, N., and Saint-Dizier, A.. Generalized Wasserstein barycenters between probability measures living on different subspaces. arXiv preprint arXiv:2105.09755, 2021.
 
     """
     nx = get_backend(*X_list, *a_list, *P_list)

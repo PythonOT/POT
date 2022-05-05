@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 =======================================
-Generalised Wasserstein Barycenter Demo
+Generalized Wasserstein Barycenter Demo
 =======================================
 
-This example illustrates the computation of Generalised Wasserstein Barycenter
+This example illustrates the computation of Generalized Wasserstein Barycenter
 as proposed in [42].
 
 
-[42] DELON, Julie, GOZLAN, Nathael, et SAINT-DIZIER, Alexandre.
+[42] Delon, J., Gozlan, N., and Saint-Dizier, A..
 Generalized Wasserstein barycenters between probability measures living on different subspaces.
 arXiv preprint arXiv:2105.09755, 2021.
 
@@ -26,9 +26,9 @@ import matplotlib.pylab as pl
 import ot
 import matplotlib.animation as animation
 
-##############################################################################
+########################
 # Generate and plot data
-# -------------
+# ----------------------
 
 # Input measures
 sub_sample_factor = 8
@@ -55,7 +55,7 @@ P_list = [P1, P2, P3]
 weights = np.array([1 / 3, 1 / 3, 1 / 3])
 
 # Number of barycenter points to compute
-n_samples_bary = 100
+n_samples_bary = 150
 
 # Send the input measures into 3D space for visualisation
 X_visu = [Xi @ Pi for (Xi, Pi) in zip(X_list, P_list)]
@@ -71,10 +71,27 @@ axis.set_yticks([])
 axis.set_zticks([])
 plt.show()
 
-##############################################################################
+#################################
 # Barycenter computation and plot
-# ----------------------
+# -------------------------------
+
 Y = ot.lp.generalized_free_support_barycenter(X_list, a_list, P_list, n_samples_bary)
+fig = plt.figure(figsize=(3, 3))
+
+axis = fig.add_subplot(1, 1, 1, projection="3d")
+for Xi in X_visu:
+    axis.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker='o', alpha=.6)
+axis.scatter(Y[:, 0], Y[:, 1], Y[:, 2], marker='o', alpha=.6)
+axis.view_init(azim=45)
+axis.set_xticks([])
+axis.set_yticks([])
+axis.set_zticks([])
+plt.show()
+
+
+#############################
+# Plotting projection matches
+# ---------------------------
 
 fig = plt.figure(figsize=(9, 3))
 
