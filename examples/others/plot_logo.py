@@ -18,7 +18,7 @@ matplotlib and ploting teh solution of the EMD solver from POT.
 
 # sphinx_gallery_thumbnail_number = 1
 
-# %%
+# %% Load modules
 import numpy as np
 import matplotlib.pyplot as pl
 import ot
@@ -36,21 +36,21 @@ p2 = np.array([[1.5, 6], [2, 4], [2, 5], [1.5, 3], [0.5, 2], [.5, 1], ])
 o1 = np.array([[0, 6.], [-1, 5], [-1.5, 4], [-1.5, 3], [-1, 2], [0, 1], ])
 o2 = np.array([[1, 6.], [2, 5], [2.5, 4], [2.5, 3], [2, 2], [1, 1], ])
 
-# scaling and translation for letter O
+# Scaling and translation for letter O
 o1[:, 0] += 6.4
 o2[:, 0] += 6.4
 o1[:, 0] *= 0.6
 o2[:, 0] *= 0.6
 
-# letter T
+# Letter T
 t1 = np.array([[-1, 6.], [-1, 5], [0, 4], [0, 3], [0, 2], [0, 1], ])
 t2 = np.array([[1.5, 6.], [1.5, 5], [0.5, 4], [0.5, 3], [0.5, 2], [0.5, 1], ])
 
-# translatin the T
+# Translating the T
 t1[:, 0] += 7.1
 t2[:, 0] += 7.1
 
-# Cocatenate all letters
+# Concatenate all letters
 x1 = np.concatenate((p1, o1, t1), axis=0)
 x2 = np.concatenate((p2, o2, t2), axis=0)
 
