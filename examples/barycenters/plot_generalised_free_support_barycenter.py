@@ -60,7 +60,7 @@ n_samples_bary = 100
 X_visu = [Xi @ Pi for (Xi, Pi) in zip(X_list, P_list)]
 
 # Plot the input data
-fig = plt.figure(figsize=(7, 7))
+fig = plt.figure(figsize=(3, 3))
 axis = fig.add_subplot(1, 1, 1, projection="3d")
 for Xi in X_visu:
     axis.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker='o', alpha=.6)

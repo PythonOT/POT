@@ -705,7 +705,7 @@ def generalized_free_support_barycenter(X_list, a_list, P_list, n_samples_bary, 
     a_list : list of p (k_i,) array-like
         Measure weights: each element is a vector (k_i) on the simplex
     P_list : list of p (d_i,d) array-like
-        Each :math: `P_i` is a linear map `\mathbb{R}^{d} \rightarrow \mathbb{R}^{d_i}`
+        Each :math:`P_i` is a linear map :math:`\mathbb{R}^{d} \rightarrow \mathbb{R}^{d_i}`
     n_samples_bary : int
         Number of barycenter points
     Y_init : (n_samples_bary,d) array-like
