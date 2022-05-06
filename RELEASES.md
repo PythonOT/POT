@@ -6,6 +6,11 @@
 
 - Added Generalized Wasserstein Barycenter solver + example (PR #372)
 
+#### Closed issues
+
+- Fixed an issue where we could not ask TorchBackend to place a random tensor on GPU
+  (Issue #371, PR #373)
+
 
 ## 0.8.2
 
