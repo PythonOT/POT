@@ -103,7 +103,7 @@ ax = pl.axis()
 
 # %%
 # Animate trajectories of the gradient flow along iteration
-# -------------------------------------------------------
+# ---------------------------------------------------------
 
 pl.figure(3, (8, 4))
 
@@ -122,7 +122,7 @@ ani = animation.FuncAnimation(pl.gcf(), _update_plot, nb_iter_max, interval=100,
 
 # %%
 # Compute the Sliced Wasserstein Barycenter
-#
+# -----------------------------------------
 x1_torch = torch.tensor(x1).to(device=device)
 x3_torch = torch.tensor(x3).to(device=device)
 xbinit = np.random.randn(500, 2) * 10 + 16
@@ -169,7 +169,7 @@ ax = pl.axis()
 
 # %%
 # Animate trajectories of the barycenter along gradient descent
-# -------------------------------------------------------
+# -------------------------------------------------------------
 
 pl.figure(5, (8, 4))
 
