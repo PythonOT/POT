@@ -37,6 +37,7 @@ The contributors to this library are:
 * [Minhui Huang](https://mhhuang95.github.io) (Projection Robust Wasserstein Distance)
 * [Nathan Cassereau](https://github.com/ncassereau-idris) (Backends)
 * [Cédric Vincent-Cuaz](https://github.com/cedricvincentcuaz) (Graph Dictionary Learning)
+* [Eloi Tanguy](https://github.com/eloitanguy) (Generalized Wasserstein Barycenters)
 
 ## Acknowledgments
 
