@@ -490,7 +490,6 @@ def test_barycenter(nx, method, verbose, warn):
         ot.bregman.barycenter(A_nx, M_nx, reg, log=True)
 
 
-
 @pytest.mark.parametrize("method, verbose, warn",
                          product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_log"],
                                  [True, False], [True, False]))
@@ -524,7 +523,6 @@ def test_barycenter_assymetric_cost(nx, method, verbose, warn):
         np.testing.assert_allclose(bary_wass, bary_wass_np)
 
         ot.bregman.barycenter(A_nx, M_nx, reg, log=True)
-
 
 
 @pytest.mark.parametrize("method, verbose, warn",
