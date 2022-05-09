@@ -137,7 +137,7 @@ def test_partial_wasserstein():
 
 
 def test_partial_gromov_wasserstein():
-    np.random.default_rng(42)
+    rng = np.random.RandomState(seed=42)
     n_samples = 20  # nb samples
     n_noise = 10  # nb of samples (noise)
 
@@ -151,7 +151,7 @@ def test_partial_gromov_wasserstein():
     cov_t = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
     xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s)
-    xs = np.concatenate((xs, ((np.random.rand(n_noise, 2) + 1) * 4)), axis=0)
+    xs = np.concatenate((xs, ((rng.rand(n_noise, 2) + 1) * 4)), axis=0)
     P = sp.linalg.sqrtm(cov_t)
     xt = np.random.randn(n_samples, 3).dot(P) + mu_t
     xt = np.concatenate((xt, ((np.random.rand(n_noise, 3) + 1) * 10)), axis=0)
