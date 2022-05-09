@@ -1511,7 +1511,7 @@ def barycenter_sinkhorn(A, M, reg, weights=None, numItermax=1000,
 
     for ii in range(numItermax):
 
-        UKv = u * nx.dot(K, A / nx.dot(K, u))
+        UKv = u * nx.dot(K.T, A / nx.dot(K, u))
         u = (u.T * geometricBar(weights, UKv)).T / UKv
 
         if ii % 10 == 1:
