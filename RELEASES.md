@@ -4,7 +4,7 @@
 
 #### New features
 
-- Added Generalized Wasserstein Barycenter solver + example (PR #372), fixed graphical details on the example (PR #374)
+- Added Generalized Wasserstein Barycenter solver + example (PR #372), fixed graphical details on the example (PR #376)
 
 #### Closed issues
 
