@@ -33,8 +33,8 @@ import matplotlib.animation as animation
 # Input measures
 sub_sample_factor = 8
 I1 = pl.imread('../../data/redcross.png').astype(np.float64)[::sub_sample_factor, ::sub_sample_factor, 2]
-I2 = pl.imread('../../data/tooth.png').astype(np.float64)[::sub_sample_factor, ::sub_sample_factor, 2]
-I3 = pl.imread('../../data/heart.png').astype(np.float64)[::sub_sample_factor, ::sub_sample_factor, 2]
+I2 = pl.imread('../../data/tooth.png').astype(np.float64)[::-sub_sample_factor, ::sub_sample_factor, 2]
+I3 = pl.imread('../../data/heart.png').astype(np.float64)[::-sub_sample_factor, ::sub_sample_factor, 2]
 
 sz = I1.shape[0]
 UU, VV = np.meshgrid(np.arange(sz), np.arange(sz))
@@ -145,8 +145,11 @@ def _init():
 
 
 def _update_plot(i):
-    ax.view_init(elev=i, azim=4 * i)
+    if i < 45:
+        ax.view_init(elev=0, azim=4 * i)
+    else:
+        ax.view_init(elev=i - 45, azim=4 * i)
     return fig,
 
 
-ani = animation.FuncAnimation(fig, _update_plot, init_func=_init, frames=90, interval=50, blit=True, repeat_delay=2000)
+ani = animation.FuncAnimation(fig, _update_plot, init_func=_init, frames=136, interval=50, blit=True, repeat_delay=2000)
