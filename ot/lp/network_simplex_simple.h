@@ -1432,9 +1432,7 @@ namespace lemon {
             // Execute the Network Simplex algorithm
             while (pivot.findEnteringArc()) {
                 if(max_iter > 0 && ++iter_number>=max_iter&&max_iter>0){
-                    char errMess[1000];
-                    sprintf( errMess, "RESULT MIGHT BE INACURATE\nMax number of iteration reached, currently \%d. Sometimes iterations go on in cycle even though the solution has been reached, to check if it's the case here have a look at the minimal reduced cost. If it is very close to machine precision, you might actually have the correct solution, if not try setting the maximum number of iterations a bit higher\n",iter_number );
-                    std::cerr << errMess;
+                    // max iterations hit
 					retVal = MAX_ITER_REACHED;
                     break;
                 }
