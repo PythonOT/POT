@@ -232,7 +232,7 @@ def dist(x1, x2=None, metric='sqeuclidean', p=2, w=None):
         if not get_backend(x1, x2).__name__ == 'numpy':
             raise NotImplementedError()
         else:
-            if metric.endswith("minkowski"):
+            if isinstance(metric, str) and metric.endswith("minkowski"):
                 return cdist(x1, x2, metric=metric, p=p, w=w)
             return cdist(x1, x2, metric=metric, w=w)
 
