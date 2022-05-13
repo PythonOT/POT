@@ -10,6 +10,8 @@
 
 - Fixed an issue where we could not ask TorchBackend to place a random tensor on GPU
   (Issue #371, PR #373)
+- Fixed an issue where hitting iteration limits would be reported to stderr by std::cerr regardless of Python's stderr stream status.
+
 
 ## 0.8.2
 
