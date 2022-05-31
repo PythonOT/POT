@@ -244,7 +244,7 @@ namespace lemon_omp {
 		/// mixed order in the internal data structure.
 		/// In special cases, it could lead to better overall performance,
 		/// but it is usually slower. Therefore it is disabled by default.
-		NetworkSimplexSimple(const GR& graph, bool arc_mixing, int nbnodes, ArcsType nb_arcs, size_t maxiters = 0, int numThreads=-1) :
+		NetworkSimplexSimple(const GR& graph, bool arc_mixing, int nbnodes, ArcsType nb_arcs, long long maxiters = 0, int numThreads=-1) :
 			_graph(graph),  //_arc_id(graph),
 			_arc_mixing(arc_mixing), _init_nb_nodes(nbnodes), _init_nb_arcs(nb_arcs),
 			MAX(std::numeric_limits<Value>::max()),
@@ -317,7 +317,7 @@ namespace lemon_omp {
 
 
 	private:
-		size_t max_iter;
+		long long max_iter;
 		int num_threads;
 		TEMPLATE_DIGRAPH_TYPEDEFS(GR);
 
@@ -1563,7 +1563,7 @@ namespace lemon_omp {
 			// Perform heuristic initial pivots
 			if (!initialPivots()) return UNBOUNDED;
 
-			size_t iter_number = 0;
+			long long iter_number = 0;
 			// Execute the Network Simplex algorithm
 			while (pivot.findEnteringArc()) {
 				if ((++iter_number <= max_iter&&max_iter > 0) || max_iter<=0) {
