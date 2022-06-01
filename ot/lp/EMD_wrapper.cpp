@@ -20,7 +20,7 @@
 
 
 int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
-                double* alpha, double* beta, double *cost, int maxIter)  {
+                double* alpha, double* beta, double *cost, uint64_t maxIter)  {
     // beware M and C are stored in row major C style!!!
 
     using namespace lemon;
@@ -122,7 +122,7 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
 
 
 int EMD_wrap_omp(int n1, int n2, double *X, double *Y, double *D, double *G,
-             double* alpha, double* beta, double *cost, int maxIter, int numThreads)  {
+             double* alpha, double* beta, double *cost, uint64_t maxIter, int numThreads)  {
     // beware M and C are stored in row major C style!!!
 
     using namespace lemon_omp;
