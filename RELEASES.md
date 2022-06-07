@@ -14,7 +14,7 @@
 - Fixed an issue where hitting iteration limits would be reported to stderr by std::cerr regardless of Python's stderr stream status (PR #377)
 - Fixed an issue where the metric argument in ot.dist did not allow a callable parameter (Issue #378, PR #379)
 - Fixed an issue where the max number of iterations in ot.emd was not allowed to go beyond 2^31 (PR #380)
-- Fixed an issue where pointers would overflow in the EMD solver, returning an incomplete transport plan above a certain size (PR #381)
+- Fixed an issue where pointers would overflow in the EMD solver, returning an incomplete transport plan above a certain size (around 46k) (PR #381)
 
 
 ## 0.8.2
