@@ -79,7 +79,7 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
     }
 
 
-    net.supplyMap(&weights1[0], n, &weights2[0], m);
+    net.supplyMap(&weights1[0], (int) n, &weights2[0], (int) m);
 
     // Set the cost of each edge
     int64_t idarc = 0;
