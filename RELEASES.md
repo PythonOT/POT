@@ -13,7 +13,10 @@
 - Fixed an issue where Sinkhorn solver assumed a symmetric cost matrix (Issue #374, PR #375)
 - Fixed an issue where hitting iteration limits would be reported to stderr by std::cerr regardless of Python's stderr stream status (PR #377)
 - Fixed an issue where the metric argument in ot.dist did not allow a callable parameter (Issue #378, PR #379)
-- Fixed an issue where the max number of iterations in ot.emd was not allow to go beyond 2^31 (PR #380) 
+- Fixed an issue where the max number of iterations in ot.emd was not allowed to go beyond 2^31 (PR #380)
+- Fixed an issue where pointers would overflow in the EMD solver, returning an
+incomplete transport plan above a certain size (slightly above 46k, its square being
+roughly 2^31) (PR #381)
 
 
 ## 0.8.2
