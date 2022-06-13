@@ -41,8 +41,8 @@
 #undef EPSILON
 #undef _EPSILON
 #undef MAX_DEBUG_ITER
-#define EPSILON std::numeric_limits<Cost>::epsilon()*10
-#define _EPSILON 1e-8
+#define EPSILON std::numeric_limits<Cost>::epsilon()
+#define _EPSILON 1e-14
 #define MAX_DEBUG_ITER 100000
 
 /// \ingroup min_cost_flow_algs

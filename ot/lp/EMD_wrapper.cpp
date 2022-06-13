@@ -24,7 +24,7 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
     // beware M and C are stored in row major C style!!!
 
     using namespace lemon;
-    int n, m, cur;
+    uint64_t n, m, cur;
 
     typedef FullBipartiteDigraph Digraph;
     DIGRAPH_TYPEDEFS(Digraph);
@@ -51,15 +51,15 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
 
     // Define the graph
 
-    std::vector<int> indI(n), indJ(m);
+    std::vector<uint64_t> indI(n), indJ(m);
     std::vector<double> weights1(n), weights2(m);
     Digraph di(n, m);
-    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, true, n+m, ((int64_t)n)*((int64_t)m), maxIter);
+    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, true, (int) (n + m), n * m, maxIter);
 
     // Set supply and demand, don't account for 0 values (faster)
 
     cur=0;
-    for (int i=0; i<n1; i++) {
+    for (uint64_t i=0; i<n1; i++) {
         double val=*(X+i);
         if (val>0) {
             weights1[ cur ] = val;
@@ -70,7 +70,7 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
     // Demand is actually negative supply...
 
     cur=0;
-    for (int i=0; i<n2; i++) {
+    for (uint64_t i=0; i<n2; i++) {
         double val=*(Y+i);
         if (val>0) {
             weights2[ cur ] = -val;
@@ -79,12 +79,12 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
     }
 
 
-    net.supplyMap(&weights1[0], n, &weights2[0], m);
+    net.supplyMap(&weights1[0], (int) n, &weights2[0], (int) m);
 
     // Set the cost of each edge
     int64_t idarc = 0;
-    for (int i=0; i<n; i++) {
-        for (int j=0; j<m; j++) {
+    for (uint64_t i=0; i<n; i++) {
+        for (uint64_t j=0; j<m; j++) {
             double val=*(D+indI[i]*n2+indJ[j]);
             net.setCost(di.arcFromId(idarc), val);
             ++idarc;
@@ -95,7 +95,7 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
     // Solve the problem with the network simplex algorithm
 
     int ret=net.run();
-    int i, j;
+    uint64_t i, j;
     if (ret==(int)net.OPTIMAL || ret==(int)net.MAX_ITER_REACHED) {
         *cost = 0;
         Arc a; di.first(a);
@@ -126,7 +126,7 @@ int EMD_wrap_omp(int n1, int n2, double *X, double *Y, double *D, double *G,
     // beware M and C are stored in row major C style!!!
 
     using namespace lemon_omp;
-    int n, m, cur;
+    uint64_t n, m, cur;
 
     typedef FullBipartiteDigraph Digraph;
     DIGRAPH_TYPEDEFS(Digraph);
@@ -153,15 +153,15 @@ int EMD_wrap_omp(int n1, int n2, double *X, double *Y, double *D, double *G,
 
     // Define the graph
 
-    std::vector<int> indI(n), indJ(m);
+    std::vector<uint64_t> indI(n), indJ(m);
     std::vector<double> weights1(n), weights2(m);
     Digraph di(n, m);
-    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, true, n+m, ((int64_t)n)*((int64_t)m), maxIter, numThreads);
+    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, true, (int) (n + m), n * m, maxIter, numThreads);
 
     // Set supply and demand, don't account for 0 values (faster)
 
     cur=0;
-    for (int i=0; i<n1; i++) {
+    for (uint64_t i=0; i<n1; i++) {
         double val=*(X+i);
         if (val>0) {
             weights1[ cur ] = val;
@@ -172,7 +172,7 @@ int EMD_wrap_omp(int n1, int n2, double *X, double *Y, double *D, double *G,
     // Demand is actually negative supply...
 
     cur=0;
-    for (int i=0; i<n2; i++) {
+    for (uint64_t i=0; i<n2; i++) {
         double val=*(Y+i);
         if (val>0) {
             weights2[ cur ] = -val;
@@ -181,12 +181,12 @@ int EMD_wrap_omp(int n1, int n2, double *X, double *Y, double *D, double *G,
     }
 
 
-    net.supplyMap(&weights1[0], n, &weights2[0], m);
+    net.supplyMap(&weights1[0], (int) n, &weights2[0], (int) m);
 
     // Set the cost of each edge
     int64_t idarc = 0;
-    for (int i=0; i<n; i++) {
-        for (int j=0; j<m; j++) {
+    for (uint64_t i=0; i<n; i++) {
+        for (uint64_t j=0; j<m; j++) {
             double val=*(D+indI[i]*n2+indJ[j]);
             net.setCost(di.arcFromId(idarc), val);
             ++idarc;
@@ -197,7 +197,7 @@ int EMD_wrap_omp(int n1, int n2, double *X, double *Y, double *D, double *G,
     // Solve the problem with the network simplex algorithm
 
     int ret=net.run();
-    int i, j;
+    uint64_t i, j;
     if (ret==(int)net.OPTIMAL || ret==(int)net.MAX_ITER_REACHED) {
         *cost = 0;
         Arc a; di.first(a);
