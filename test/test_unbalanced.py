@@ -1,6 +1,7 @@
 """Tests for module Unbalanced OT with entropy regularization"""
 
 # Author: Hicham Janati <hicham.janati@inria.fr>
+#         Laetitia Chapel <laetitia.chapel@univ-ubs.fr>
 #
 # License: MIT License
 
@@ -286,3 +287,54 @@ def test_implemented_methods(nx):
                                                method=method)
             barycenter_unbalanced(A, M, reg=epsilon, reg_m=reg_m,
                                   method=method)
+
+
+def test_mm_convergence(nx):
+    n = 100
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
+    rng = np.random.RandomState(75)
+    y = rng.randn(n, 2)
+    a_np = ot.utils.unif(n)
+    b_np = ot.utils.unif(n)
+
+    M = ot.dist(x, y)
+    M = M / M.max()
+    reg_m = 100
+    a, b, M = nx.from_numpy(a_np, b_np, M)
+
+    G_kl, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='kl',
+                                          verbose=False, log=True)
+    loss_kl = nx.to_numpy(
+        ot.unbalanced.mm_unbalanced2(a, b, M, reg_m, div='kl', verbose=True)
+    )
+    G_l2, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='l2',
+                                          verbose=False, log=True)
+
+    # check if the marginals come close to the true ones when large reg
+    np.testing.assert_allclose(np.sum(nx.to_numpy(G_kl), 1), a_np, atol=1e-03)
+    np.testing.assert_allclose(np.sum(nx.to_numpy(G_kl), 0), b_np, atol=1e-03)
+    np.testing.assert_allclose(np.sum(nx.to_numpy(G_l2), 1), a_np, atol=1e-03)
+    np.testing.assert_allclose(np.sum(nx.to_numpy(G_l2), 0), b_np, atol=1e-03)
+
+    # check if mm_unbalanced2 returns the correct loss
+    np.testing.assert_allclose(nx.to_numpy(nx.sum(G_kl * M)), loss_kl,
+                               atol=1e-5)
+
+    # check in case no histogram is provided
+    a_np, b_np = np.array([]), np.array([])
+    a, b = nx.from_numpy(a_np, b_np)
+
+    G_kl_null = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='kl', verbose=False)
+    G_l2_null = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='l2', verbose=False)
+    np.testing.assert_allclose(nx.to_numpy(G_kl_null), nx.to_numpy(G_kl))
+    np.testing.assert_allclose(nx.to_numpy(G_l2_null), nx.to_numpy(G_l2))
+
+    # test when G0 is given
+    G0 = ot.emd(a, b, M)
+    G0_np = nx.to_numpy(G0)
+    reg_m = 10000
+    G_kl = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='kl', G0=G0, verbose=False)
+    G_l2 = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='l2', G0=G0, verbose=False)
+    np.testing.assert_allclose(G0_np, nx.to_numpy(G_kl), atol=1e-05)
+    np.testing.assert_allclose(G0_np, nx.to_numpy(G_l2), atol=1e-05)

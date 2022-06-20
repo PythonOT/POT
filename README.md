@@ -26,13 +26,16 @@ POT provides the following generic OT solvers (links to examples):
 * Debiased Sinkhorn barycenters [Sinkhorn divergence barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_debiased_barycenter.html) [37]
 * [Smooth optimal transport solvers](https://pythonot.github.io/auto_examples/plot_OT_1D_smooth.html) (dual and semi-dual) for KL and squared L2 regularizations [17].
 * Weak OT solver between empirical distributions [39]
-* Non regularized [Wasserstein barycenters [16] ](https://pythonot.github.io/auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html)) with LP solver (only small scale).
-* [Gromov-Wasserstein distances](https://pythonot.github.io/auto_examples/gromov/plot_gromov.html) and [GW barycenters](https://pythonot.github.io/auto_examples/gromov/plot_gromov_barycenter.html)  (exact [13] and regularized [12]), differentiable using gradients from
+* Non regularized [Wasserstein barycenters [16] ](https://pythonot.github.io/auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html) with LP solver (only small scale).
+* [Gromov-Wasserstein distances](https://pythonot.github.io/auto_examples/gromov/plot_gromov.html) and [GW barycenters](https://pythonot.github.io/auto_examples/gromov/plot_gromov_barycenter.html)  (exact [13] and regularized [12]), differentiable using gradients from Graph Dictionary Learning [38]
  * [Fused-Gromov-Wasserstein distances solver](https://pythonot.github.io/auto_examples/gromov/plot_fgw.html#sphx-glr-auto-examples-plot-fgw-py) and [FGW barycenters](https://pythonot.github.io/auto_examples/gromov/plot_barycenter_fgw.html) [24]
-* [Stochastic solver](https://pythonot.github.io/auto_examples/plot_stochastic.html) for Large-scale Optimal Transport (semi-dual problem [18] and dual problem [19])
-* [Stochastic solver of Gromov Wasserstein](https://pythonot.github.io/auto_examples/gromov/plot_gromov.html) for large-scale problem with any loss functions [33]
+* [Stochastic
+  solver](https://pythonot.github.io/auto_examples/others/plot_stochastic.html) and
+  [differentiable losses](https://pythonot.github.io/auto_examples/backends/plot_stoch_continuous_ot_pytorch.html) for
+  Large-scale Optimal Transport (semi-dual problem [18] and dual problem [19])
+* [Sampled solver of Gromov Wasserstein](https://pythonot.github.io/auto_examples/gromov/plot_gromov.html) for large-scale problem with any loss functions [33]
 * Non regularized [free support Wasserstein barycenters](https://pythonot.github.io/auto_examples/barycenters/plot_free_support_barycenter.html) [20].
-* [Unbalanced OT](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_UOT_1D.html) with KL relaxation and [barycenter](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_UOT_barycenter_1D.html) [10, 25].
+* [One dimensional Unbalanced OT](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_UOT_1D.html) with KL relaxation and [barycenter](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_UOT_barycenter_1D.html) [10, 25]. Also [exact unbalanced OT](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_unbalanced_ot.html) with KL and quadratic regularization and the [regularization path of UOT](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_regpath.html) [41]
 * [Partial Wasserstein and Gromov-Wasserstein](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_partial_wass_and_gromov.html) (exact [29] and entropic [3]
   formulations).
 * [Sliced Wasserstein](https://pythonot.github.io/auto_examples/sliced-wasserstein/plot_variance.html) [31, 32] and Max-sliced Wasserstein [35] that can be used for gradient flows [36].
@@ -119,7 +122,7 @@ Note that for easier access the module is named `ot` instead of `pot`.
 
 ### Dependencies
 
-Some sub-modules require additional dependences which are discussed below
+Some sub-modules require additional dependencies which are discussed below
 
 * **ot.dr** (Wasserstein dimensionality reduction) depends on autograd and pymanopt that can be installed with:
 
@@ -127,7 +130,6 @@ Some sub-modules require additional dependences which are discussed below
 pip install pymanopt autograd
 ```
 
-* **ot.gpu** (GPU accelerated OT) depends on cupy that have to be installed following instructions on [this page](https://docs-cupy.chainer.org/en/stable/install.html). Obviously you will need CUDA installed and a compatible GPU. Note that this module is deprecated since version 0.8 and will be deleted in the future. GPU is now handled automatically through the backends and several solver already can run on GPU using the Pytorch backend.
 
 ## Examples
 
@@ -178,35 +180,12 @@ This toolbox has been created and is maintained by
 * [Rémi Flamary](http://remi.flamary.com/)
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
 
-The contributors to this library are 
+The numerous contributors to this library are listed [here](CONTRIBUTORS.md).
 
-* [Alexandre Gramfort](http://alexandre.gramfort.net/) (CI, documentation)
-* [Laetitia Chapel](http://people.irisa.fr/Laetitia.Chapel/) (Partial OT)
-* [Michael Perrot](http://perso.univ-st-etienne.fr/pem82055/) (Mapping estimation)
-* [Léo Gautheron](https://github.com/aje) (GPU implementation)
-* [Nathalie Gayraud](https://www.linkedin.com/in/nathalie-t-h-gayraud/?ppe=1) (DA classes)
-* [Stanislas Chambon](https://slasnista.github.io/) (DA classes)
-* [Antoine Rolet](https://arolet.github.io/) (EMD solver debug)
-* Erwan Vautier (Gromov-Wasserstein)
-* [Kilian Fatras](https://kilianfatras.github.io/) (Stochastic solvers)
-* [Alain Rakotomamonjy](https://sites.google.com/site/alainrakotomamonjy/home)
-* [Vayer Titouan](https://tvayer.github.io/) (Gromov-Wasserstein -, Fused-Gromov-Wasserstein)
-* [Hicham Janati](https://hichamjanati.github.io/) (Unbalanced OT, Debiased barycenters)
-* [Romain Tavenard](https://rtavenar.github.io/) (1d Wasserstein)
-* [Mokhtar Z. Alaya](http://mzalaya.github.io/) (Screenkhorn)
-* [Ievgen Redko](https://ievred.github.io/) (Laplacian DA, JCPOT)
-* [Adrien Corenflos](https://adriencorenflos.github.io/) (Sliced Wasserstein Distance)
-* [Tanguy Kerdoncuff](https://hv0nnus.github.io/) (Sampled Gromov Wasserstein)
-* [Minhui Huang](https://mhhuang95.github.io) (Projection Robust Wasserstein Distance)
-* [Nathan Cassereau](https://github.com/ncassereau-idris) (Backends)
-* [Cédric Vincent-Cuaz](https://github.com/cedricvincentcuaz) (Graph Dictionary Learning)
+POT has benefited from the financing or manpower from the following partners:
 
-This toolbox benefit a lot from open source research and we would like to thank the following persons for providing some code (in various languages):
+<img src="https://pythonot.github.io/master/_static/images/logo_anr.jpg" alt="ANR" style="height:60px;"/><img src="https://pythonot.github.io/master/_static/images/logo_cnrs.jpg" alt="CNRS" style="height:60px;"/><img src="https://pythonot.github.io/master/_static/images/logo_3ia.jpg" alt="3IA" style="height:60px;"/>
 
-* [Gabriel Peyré](http://gpeyre.github.io/) (Wasserstein Barycenters in Matlab)
-* [Mathieu Blondel](https://mblondel.org/) (original implementation smooth OT)
-* [Nicolas Bonneel](http://liris.cnrs.fr/~nbonneel/) (C++ code for EMD)
-* [Marco Cuturi](http://marcocuturi.net/) (Sinkhorn Knopp in Matlab/Cuda)
 
 ## Contributions and code of conduct
 
@@ -308,3 +287,9 @@ Dictionary Learning](https://arxiv.org/pdf/2102.06555.pdf), International Confer
 [39] Gozlan, N., Roberto, C., Samson, P. M., & Tetali, P. (2017). [Kantorovich duality for general transport costs and applications](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.712.1825&rep=rep1&type=pdf). Journal of Functional Analysis, 273(11), 3327-3405.
 
 [40] Forrow, A., Hütter, J. C., Nitzan, M., Rigollet, P., Schiebinger, G., & Weed, J. (2019, April). [Statistical optimal transport via factored couplings](http://proceedings.mlr.press/v89/forrow19a/forrow19a.pdf). In The 22nd International Conference on Artificial Intelligence and Statistics (pp. 2454-2465). PMLR.
+
+[41] Chapel*, L., Flamary*, R., Wu, H., Févotte, C., Gasso, G. (2021). [Unbalanced Optimal Transport through Non-negative Penalized Linear Regression](https://proceedings.neurips.cc/paper/2021/file/c3c617a9b80b3ae1ebd868b0017cc349-Paper.pdf) Advances in Neural Information Processing Systems (NeurIPS), 2020. (Two first co-authors)
+
+[42] Delon, J., Gozlan, N., and Saint-Dizier, A. [Generalized Wasserstein barycenters between probability measures living on different subspaces](https://arxiv.org/pdf/2105.09755). arXiv preprint arXiv:2105.09755, 2021.
+
+[43]  Álvarez-Esteban, Pedro C., et al. [A fixed-point approach to barycenters in Wasserstein space.](https://arxiv.org/pdf/1511.05355.pdf) Journal of Mathematical Analysis and Applications 441.2 (2016): 744-762.
