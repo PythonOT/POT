@@ -29,9 +29,12 @@ def test_emd_dimension_and_mass_mismatch():
 
     np.testing.assert_raises(AssertionError, ot.emd2, a, a, M)
 
+    # test emd and emd2 for mass mismatch
+    a = ot.utils.unif(n_samples)
     b = a.copy()
     a[0] = 100
     np.testing.assert_raises(AssertionError, ot.emd, a, b, M)
+    np.testing.assert_raises(AssertionError, ot.emd2, a, b, M)
 
 
 def test_emd_backends(nx):
