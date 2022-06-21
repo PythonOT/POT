@@ -17,6 +17,7 @@
 - Fixed an issue where pointers would overflow in the EMD solver, returning an
 incomplete transport plan above a certain size (slightly above 46k, its square being
 roughly 2^31) (PR #381)
+- Error raised when mass mismatch in emd2 (PR #386)
 
 
 ## 0.8.2
