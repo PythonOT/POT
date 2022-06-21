@@ -41,8 +41,8 @@
 #undef EPSILON
 #undef _EPSILON
 #undef MAX_DEBUG_ITER
-#define EPSILON std::numeric_limits<Cost>::epsilon()*10
-#define _EPSILON 1e-8
+#define EPSILON std::numeric_limits<Cost>::epsilon()
+#define _EPSILON 1e-14
 #define MAX_DEBUG_ITER 100000
 
 /// \ingroup min_cost_flow_algs
@@ -244,7 +244,7 @@ namespace lemon_omp {
 		/// mixed order in the internal data structure.
 		/// In special cases, it could lead to better overall performance,
 		/// but it is usually slower. Therefore it is disabled by default.
-		NetworkSimplexSimple(const GR& graph, bool arc_mixing, int nbnodes, ArcsType nb_arcs, size_t maxiters = 0, int numThreads=-1) :
+		NetworkSimplexSimple(const GR& graph, bool arc_mixing, int nbnodes, ArcsType nb_arcs, uint64_t maxiters = 0, int numThreads=-1) :
 			_graph(graph),  //_arc_id(graph),
 			_arc_mixing(arc_mixing), _init_nb_nodes(nbnodes), _init_nb_arcs(nb_arcs),
 			MAX(std::numeric_limits<Value>::max()),
@@ -317,7 +317,7 @@ namespace lemon_omp {
 
 
 	private:
-		size_t max_iter;
+		uint64_t max_iter;
 		int num_threads;
 		TEMPLATE_DIGRAPH_TYPEDEFS(GR);
 
@@ -1563,7 +1563,7 @@ namespace lemon_omp {
 			// Perform heuristic initial pivots
 			if (!initialPivots()) return UNBOUNDED;
 
-			size_t iter_number = 0;
+			uint64_t iter_number = 0;
 			// Execute the Network Simplex algorithm
 			while (pivot.findEnteringArc()) {
 				if ((++iter_number <= max_iter&&max_iter > 0) || max_iter<=0) {
@@ -1610,9 +1610,7 @@ namespace lemon_omp {
 
 
 				} else {
-					char errMess[1000];
-					sprintf( errMess, "RESULT MIGHT BE INACURATE\nMax number of iteration reached, currently \%d. Sometimes iterations go on in cycle even though the solution has been reached, to check if it's the case here have a look at the minimal reduced cost. If it is very close to machine precision, you might actually have the correct solution, if not try setting the maximum number of iterations a bit higher\n",iter_number );
-					std::cerr << errMess;
+					// max iters
 					retVal =  MAX_ITER_REACHED;
 					break;
 				}

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-==============================
-2D Sliced Wasserstein Distance
-==============================
+===============================================
+Sliced Wasserstein Distance on 2D distributions
+===============================================
 
 This example illustrates the computation of the sliced Wasserstein Distance as
 proposed in [31].
@@ -15,6 +15,8 @@ measures." Journal of Mathematical Imaging and Vision 51.1 (2015): 22-45
 # Author: Adrien Corenflos <adrien.corenflos@aalto.fi>
 #
 # License: MIT License
+
+# sphinx_gallery_thumbnail_number = 2
 
 import matplotlib.pylab as pl
 import numpy as np

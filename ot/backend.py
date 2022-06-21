@@ -1507,15 +1507,19 @@ class TorchBackend(Backend):
 
     def __init__(self):
 
-        self.rng_ = torch.Generator()
+        self.rng_ = torch.Generator("cpu")
         self.rng_.seed()
 
         self.__type_list__ = [torch.tensor(1, dtype=torch.float32),
                               torch.tensor(1, dtype=torch.float64)]
 
         if torch.cuda.is_available():
+            self.rng_cuda_ = torch.Generator("cuda")
+            self.rng_cuda_.seed()
             self.__type_list__.append(torch.tensor(1, dtype=torch.float32, device='cuda'))
             self.__type_list__.append(torch.tensor(1, dtype=torch.float64, device='cuda'))
+        else:
+            self.rng_cuda_ = torch.Generator("cpu")
 
         from torch.autograd import Function
 
@@ -1761,20 +1765,26 @@ class TorchBackend(Backend):
     def seed(self, seed=None):
         if isinstance(seed, int):
             self.rng_.manual_seed(seed)
+            self.rng_cuda_.manual_seed(seed)
         elif isinstance(seed, torch.Generator):
-            self.rng_ = seed
+            if self.device_type(seed) == "GPU":
+                self.rng_cuda_ = seed
+            else:
+                self.rng_ = seed
         else:
             raise ValueError("Non compatible seed : {}".format(seed))
 
     def rand(self, *size, type_as=None):
         if type_as is not None:
-            return torch.rand(size=size, generator=self.rng_, dtype=type_as.dtype, device=type_as.device)
+            generator = self.rng_cuda_ if self.device_type(type_as) == "GPU" else self.rng_
+            return torch.rand(size=size, generator=generator, dtype=type_as.dtype, device=type_as.device)
         else:
             return torch.rand(size=size, generator=self.rng_)
 
     def randn(self, *size, type_as=None):
         if type_as is not None:
-            return torch.randn(size=size, dtype=type_as.dtype, generator=self.rng_, device=type_as.device)
+            generator = self.rng_cuda_ if self.device_type(type_as) == "GPU" else self.rng_
+            return torch.randn(size=size, dtype=type_as.dtype, generator=generator, device=type_as.device)
         else:
             return torch.randn(size=size, generator=self.rng_)
 

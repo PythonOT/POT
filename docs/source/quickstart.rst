@@ -1028,15 +1028,6 @@ FAQ
     speedup can be obtained by using a GPU implementation since all operations
     are matrix/vector products.
 
-4. **Using GPU fails with error:  module 'ot' has no attribute 'gpu'**
-
-    In order to limit import time and hard dependencies in POT. we do not import
-    some sub-modules automatically with :code:`import ot`. In order to use the
-    acceleration in :any:`ot.gpu` you need first to import is with
-    :code:`import ot.gpu`.
-
-    See `Issue #85 <https://github.com/rflamary/POT/issues/85>`__ and :any:`ot.gpu`
-    for more details.
 
 
 References
@@ -1172,3 +1163,52 @@ References
 .. [30] Flamary, Rémi, et al. "Optimal transport with Laplacian regularization:
     Applications to domain adaptation and shape matching." NIPS Workshop on Optimal
     Transport and Machine Learning OTML. 2014.
+
+.. [31] Bonneel, Nicolas, et al. `Sliced and radon wasserstein barycenters of
+    measures
+    <https://perso.liris.cnrs.fr/nicolas.bonneel/WassersteinSliced-JMIV.pdf>`_\
+    , Journal of Mathematical Imaging and Vision 51.1 (2015): 22-45
+
+.. [32] Huang, M., Ma S., Lai, L. (2021). `A Riemannian Block Coordinate Descent Method for Computing the Projection Robust Wasserstein Distance <http://proceedings.mlr.press/v139/huang21e.html>`_\ , Proceedings of the 38th International Conference on Machine Learning (ICML).
+
+.. [33] Kerdoncuff T., Emonet R., Marc S. `Sampled Gromov Wasserstein
+    <https://hal.archives-ouvertes.fr/hal-03232509/document>`_\ , Machine
+    Learning Journal (MJL), 2021
+
+.. [34] Feydy, J., Séjourné, T., Vialard, F. X., Amari, S. I., Trouvé, A., &
+    Peyré, G. (2019, April). `Interpolating between optimal transport and MMD
+    using Sinkhorn divergences
+    <http://proceedings.mlr.press/v89/feydy19a/feydy19a.pdf>`_. In The 22nd
+    International Conference on Artificial Intelligence and Statistics (pp.
+    2681-2690). PMLR.
+
+.. [35] Deshpande, I., Hu, Y. T., Sun, R., Pyrros, A., Siddiqui, N., Koyejo, S., 
+    & Schwing, A. G. (2019). `Max-sliced wasserstein distance and its use 
+    for gans
+    <https://openaccess.thecvf.com/content_CVPR_2019/papers/Deshpande_Max-Sliced_Wasserstein_Distance_and_Its_Use_for_GANs_CVPR_2019_paper.pdf>`_. 
+    In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (pp. 10648-10656).
+
+.. [36] Liutkus, A., Simsekli, U., Majewski, S., Durmus, A., & Stöter, F. R. 
+       (2019, May). `Sliced-Wasserstein flows: Nonparametric generative modeling via
+        optimal transport and diffusions
+        <http://proceedings.mlr.press/v97/liutkus19a/liutkus19a.pdf>`_. In International
+        Conference on Machine Learning (pp. 4104-4113). PMLR.
+
+.. [37] Janati, H., Cuturi, M., Gramfort, A. `Debiased sinkhorn barycenters 
+    <http://proceedings.mlr.press/v119/janati20a/janati20a.pdf>`_ Proceedings of
+    the 37th International Conference on Machine Learning, PMLR 119:4692-4701, 2020
+
+.. [38] C. Vincent-Cuaz, T. Vayer, R. Flamary, M. Corneli, N. Courty, `Online
+       Graph Dictionary Learning <https://arxiv.org/pdf/2102.06555.pdf>`_\ , 
+       International Conference on Machine Learning (ICML), 2021.
+
+.. [39] Gozlan, N., Roberto, C., Samson, P. M., & Tetali, P. (2017).
+    `Kantorovich duality for general transport costs and applications
+    <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.712.1825&rep=rep1&type=pdf>`_.
+    Journal of Functional Analysis, 273(11), 3327-3405.
+
+.. [40] Forrow, A., Hütter, J. C., Nitzan, M., Rigollet, P., Schiebinger, G., &
+    Weed, J. (2019, April). `Statistical optimal transport via factored
+    couplings <http://proceedings.mlr.press/v89/forrow19a/forrow19a.pdf>`_. In
+    The 22nd International Conference on Artificial Intelligence and Statistics
+    (pp. 2454-2465). PMLR.
