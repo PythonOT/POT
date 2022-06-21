@@ -24,6 +24,7 @@
 - Warning when feeding integer cost matrix to EMD solver resulting in an integer transport plan (Issue #345, PR #343)
 - Fix bug where gromov_wasserstein2 does not perform backpropagation with CUDA
   tensors (Issue #351, PR #352)
+- Error raised when mass mismatch in emd2 (PR #386)
 
 
 ## 0.8.1.0
