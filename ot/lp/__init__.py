@@ -481,17 +481,17 @@ def emd2(a, b, M, processes=1,
     assert (a.shape[0] == M.shape[0] and b.shape[0] == M.shape[1]), \
         "Dimension mismatch, check dimensions of M with a and b"
 
+    # ensure that same mass
+    np.testing.assert_almost_equal(a.sum(0),
+                                   b.sum(0,keepdims=True), err_msg='a and b vector must have the same sum')
+    b = b * a.sum(0) / b.sum(0,keepdims=True)
+
     asel = a != 0
 
     numThreads = check_number_threads(numThreads)
 
     if log or return_matrix:
         def f(b):
-            # ensure that same mass
-            np.testing.assert_almost_equal(a.sum(0),
-                                           b.sum(0), err_msg='a and b vector must have the same sum')
-            b = b * a.sum() / b.sum()
-
             bsel = b != 0
 
             G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
@@ -525,11 +525,6 @@ def emd2(a, b, M, processes=1,
             return [cost, log]
     else:
         def f(b):
-            # ensure that same mass
-            np.testing.assert_almost_equal(a.sum(0),
-                                           b.sum(0), err_msg='a and b vector must have the same sum')
-            b = b * a.sum() / b.sum()
-
             bsel = b != 0
             G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
 
