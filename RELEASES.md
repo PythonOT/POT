@@ -17,6 +17,7 @@
 - Fixed an issue where pointers would overflow in the EMD solver, returning an
 incomplete transport plan above a certain size (slightly above 46k, its square being
 roughly 2^31) (PR #381)
+- Error raised when mass mismatch in emd2 (PR #386)
 
 
 ## 0.8.2
@@ -88,7 +89,6 @@ and [Factored coupling OT](https://pythonot.github.io/auto_examples/others/plot_
 - Warning when feeding integer cost matrix to EMD solver resulting in an integer transport plan (Issue #345, PR #343)
 - Fix bug where gromov_wasserstein2 does not perform backpropagation with CUDA
   tensors (Issue #351, PR #352)
-- Error raised when mass mismatch in emd2 (PR #386)
 
 
 ## 0.8.1.0
