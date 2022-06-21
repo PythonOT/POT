@@ -230,6 +230,8 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
         If this behaviour is unwanted, please make sure to provide a
         floating point input.
 
+    .. note:: An error will be raised if the vectors :math:`\mathbf{a}` and :math:`\mathbf{b}` do not sum to the same value.
+
     Uses the algorithm proposed in :ref:`[1] <references-emd>`.
 
     Parameters
@@ -389,6 +391,8 @@ def emd2(a, b, M, processes=1,
         If this behaviour is unwanted, please make sure to provide a
         floating point input.
 
+    .. note:: An error will be raised if the vectors :math:`\mathbf{a}` and :math:`\mathbf{b}` do not sum to the same value.
+
     Uses the algorithm proposed in :ref:`[1] <references-emd2>`.
 
     Parameters
@@ -480,6 +484,11 @@ def emd2(a, b, M, processes=1,
 
     assert (a.shape[0] == M.shape[0] and b.shape[0] == M.shape[1]), \
         "Dimension mismatch, check dimensions of M with a and b"
+
+    # ensure that same mass
+    np.testing.assert_almost_equal(a.sum(0),
+                                   b.sum(0,keepdims=True), err_msg='a and b vector must have the same sum')
+    b = b * a.sum(0) / b.sum(0,keepdims=True)
 
     asel = a != 0
 
