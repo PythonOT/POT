@@ -62,15 +62,15 @@ axes[0].set_title('Rotation: 0')
 
 axes[1].set_xlim([-3, 3])
 axes[1].set_ylim([-3, 3])
-axes[0].set_title('Rotation: 15')
+axes[1].set_title('Rotation: 15')
 
 axes[2].set_xlim([-3, 3])
 axes[2].set_ylim([-3, 3])
-axes[0].set_title('Rotation: 30')
+axes[2].set_title('Rotation: 30')
 
 axes[3].set_xlim([-3, 3])
 axes[3].set_ylim([-3, 3])
-axes[0].set_title('Rotation: 45')
+axes[3].set_title('Rotation: 45')
 
 plt.tight_layout()
 plt.show()
