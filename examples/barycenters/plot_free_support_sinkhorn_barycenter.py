@@ -20,19 +20,21 @@ from sklearn.datasets import make_moons
 # %%
 # General Parameters
 # ------------------
-reg = 1e-2 # Entropic Regularization
-numItermax = 20 # Maximum number of iterations for the Barycenter algorithm
-numInnerItermax = 50 # Maximum number of sinkhorn iterations
+reg = 1e-2  # Entropic Regularization
+numItermax = 20  # Maximum number of iterations for the Barycenter algorithm
+numInnerItermax = 50  # Maximum number of sinkhorn iterations
 n_samples = 200
 
 # %%
 # Generate Data
 # -------------
 
-get_rotation = lambda angle: np.array([
-        [np.cos((angle / 180) * np.pi), -np.sin((angle / 180) * np.pi)],
-        [np.sin((angle / 180) * np.pi), np.cos((angle / 180) * np.pi)]
-    ])
+
+def get_rotation(angle): return np.array([
+    [np.cos((angle / 180) * np.pi), -np.sin((angle / 180) * np.pi)],
+    [np.sin((angle / 180) * np.pi), np.cos((angle / 180) * np.pi)]
+])
+
 
 R2, R3, R4 = get_rotation(15), get_rotation(30), get_rotation(45)
 
@@ -82,10 +84,10 @@ plt.show()
 fig = plt.figure(figsize=(10, 10))
 
 weights = np.array([
-    [3/3, 0/3],
-    [2/3, 1/3],
-    [1/3, 2/3],
-    [0/3, 3/3],
+    [3 / 3, 0 / 3],
+    [2 / 3, 1 / 3],
+    [1 / 3, 2 / 3],
+    [0 / 3, 3 / 3],
 ]).astype(np.float32)
 
 for k in range(4):
