@@ -1660,7 +1660,6 @@ def free_support_sinkhorn_barycenter(measures_locations, measures_weights, X_ini
         return X
 
 
-
 def _barycenter_sinkhorn_log(A, M, reg, weights=None, numItermax=1000,
                              stopThr=1e-4, verbose=False, log=False, warn=True):
     r"""Compute the entropic wasserstein barycenter in log-domain
