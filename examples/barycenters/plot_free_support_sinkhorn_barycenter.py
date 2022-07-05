@@ -12,10 +12,10 @@ Illustration of Sinkhorn barycenter calculation between empirical distributions 
 #
 # License: MIT License
 
-import ot
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_moons
+import ot
 
 # %%
 # General Parameters
@@ -30,10 +30,13 @@ n_samples = 200
 # -------------
 
 
-def get_rotation(angle): return np.array([
-    [np.cos((angle / 180) * np.pi), -np.sin((angle / 180) * np.pi)],
-    [np.sin((angle / 180) * np.pi), np.cos((angle / 180) * np.pi)]
-])
+def get_rotation(angle):
+    """Returns a rotation matrix for angle given in degrees"""
+    R = np.array([
+        [np.cos((angle / 180) * np.pi), -np.sin((angle / 180) * np.pi)],
+        [np.sin((angle / 180) * np.pi), np.cos((angle / 180) * np.pi)]
+    ])
+    return R
 
 
 R2, R3, R4 = get_rotation(15), get_rotation(30), get_rotation(45)
