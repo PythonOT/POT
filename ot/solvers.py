@@ -11,6 +11,7 @@ from .utils import OTResult
 from .lp import emd2
 from .backend import get_backend
 from .unbalanced import mm_unbalanced
+from .bregman import sinkhorn_log
 
 
 def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
@@ -68,6 +69,41 @@ def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
                                       verbose=verbose, G0=plan_init)
 
             value = log['cost']
+
+        ## TODO partial OT (as unbalanced type but not backend compatible yet)
+
+        else:
+            raise(NotImplementedError('Unknown unbalanced_type parameter "{}"'.format(unbalanced_type)))
+
+    else:  # regularized OT
+
+        if unbalanced is None:  # Balanced regularized OT
+
+            if reg_type.lower() in ['entropy', 'kl']:
+
+                # default values for sinkhorn
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-9
+
+                plan, log = sinkhorn_log(a, b, M, reg=reg, numItermax=max_iter,
+                                         stopThr=tol, log=True,
+                                         verbose=verbose)
+
+                value_linear = nx.sum(M * plan)
+
+                if reg_type.lower() == 'entropy':
+                    value = value_linear + reg * nx.sum(plan * nx.log(plan + 1e-16))
+                else:
+                    value = value_linear + reg * nx.sum(plan * nx.log(plan / (a[:, None] * b[None, :]) + 1e-16))
+
+                potentials = (log['log_u'], log['log_v'])
+
+            # TODO L2 regularization (smooth OT not backend compatible yet)
+
+            else:
+                raise(NotImplementedError('Not implemented reg_type "{}" and '.format(reg_type)))
 
     res = OTResult(potentials=potentials, value=value,
                    value_linear=value_linear, plan=plan, status=status, backend=nx)

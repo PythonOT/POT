@@ -12,9 +12,9 @@ import pytest
 import ot
 
 
-lst_reg = [0]
-lst_reg_type = ['KL']
-lst_unbalanced = [None, 1.0]
+lst_reg = [0, 1.0]
+lst_reg_type = ['KL', 'entropy']
+lst_unbalanced = [None, 0.9]
 lst_unbalanced_type = ['KL', 'L2']
 
 
@@ -77,16 +77,20 @@ def test_solve_grid(nx, reg, reg_type, unbalanced, unbalanced_type):
 
     M = ot.dist(x, y)
 
-    # solve unif weights
-    sol0 = ot.solve(M, reg=reg, reg_type=reg_type, unbalanced=unbalanced, unbalanced_type=unbalanced_type)
+    try:
 
-    # solve signe weights
-    sol = ot.solve(M, a, b, reg=reg, reg_type=reg_type, unbalanced=unbalanced, unbalanced_type=unbalanced_type)
+        # solve unif weights
+        sol0 = ot.solve(M, reg=reg, reg_type=reg_type, unbalanced=unbalanced, unbalanced_type=unbalanced_type)
 
-    assert_allclose_sol(sol0, sol)
+        # solve signe weights
+        sol = ot.solve(M, a, b, reg=reg, reg_type=reg_type, unbalanced=unbalanced, unbalanced_type=unbalanced_type)
 
-    # solve in backend
-    ab, bb, Mb = nx.from_numpy(a, b, M)
-    solb = ot.solve(M, a, b, reg=reg, reg_type=reg_type, unbalanced=unbalanced, unbalanced_type=unbalanced_type)
+        assert_allclose_sol(sol0, sol)
 
-    assert_allclose_sol(sol, solb)
+        # solve in backend
+        ab, bb, Mb = nx.from_numpy(a, b, M)
+        solb = ot.solve(M, a, b, reg=reg, reg_type=reg_type, unbalanced=unbalanced, unbalanced_type=unbalanced_type)
+
+        assert_allclose_sol(sol, solb)
+    except NotImplementedError():
+        pass
