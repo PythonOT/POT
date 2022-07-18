@@ -306,7 +306,7 @@ def test_OTResult():
 
     res = ot.utils.OTResult()
 
-    test_cite = sol.citation
+    test_cite = res.citation
 
     lst_attributes = ['a_to_b',
                       'b_to_a',
