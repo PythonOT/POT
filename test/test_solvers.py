@@ -4,6 +4,8 @@
 #
 # License: MIT License
 
+
+import itertools
 import numpy as np
 import pytest
 
@@ -59,7 +61,7 @@ def test_solve(nx):
     assert_allclose_sol(sol, solb)
 
 
-@pytest.mark.parametrize("reg,reg_type,unbalanced,unbalanced_type", [(r, rt, u, ut) for r in lst_reg for rt in lst_reg_type for u in lst_unbalanced for ut in lst_unbalanced_type])
+@pytest.mark.parametrize("reg,reg_type,unbalanced,unbalanced_type", itertools.product(lst_reg, lst_reg_type, lst_unbalanced, lst_unbalanced_type))
 def test_solve_grid(nx, reg, reg_type, unbalanced, unbalanced_type):
     n_samples_s = 10
     n_samples_t = 7
