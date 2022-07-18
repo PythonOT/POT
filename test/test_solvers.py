@@ -49,6 +49,8 @@ def test_solve(nx):
     # solve unif weights
     sol0 = ot.solve(M)
 
+    print(sol0)
+
     # solve signe weights
     sol = ot.solve(M, a, b)
 

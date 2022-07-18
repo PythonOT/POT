@@ -300,3 +300,28 @@ def test_BaseEstimator():
         cl.set_params(bibi=10)
 
     assert cl.first == 'spam again'
+
+
+def test_OTResult():
+
+    res = ot.utils.OTResult()
+
+    test_cite = sol.citation
+
+    lst_attributes = ['a_to_b',
+                      'b_to_a',
+                      'lazy_plan',
+                      'marginal_a',
+                      'marginal_b',
+                      'marginals',
+                      'plan',
+                      'potential_a',
+                      'potential_b',
+                      'potentials',
+                      'sparse_plan',
+                      'status',
+                      'value',
+                      'value_linear']
+    for at in lst_attributes:
+        with pytest.raises(NotImplementedError):
+            getattr(res, at)
