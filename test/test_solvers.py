@@ -15,7 +15,7 @@ import ot
 lst_reg = [0, 1.0]
 lst_reg_type = ['KL', 'entropy']
 lst_unbalanced = [None, 0.9]
-lst_unbalanced_type = ['KL', 'L2']
+lst_unbalanced_type = ['KL', 'L2', 'TV']
 
 
 def assert_allclose_sol(sol1, sol2):

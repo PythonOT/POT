@@ -9,6 +9,7 @@ Partial OT solvers
 import numpy as np
 from .lp import emd
 from .backend import get_backend
+from .utils import list_to_array
 
 
 def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
@@ -114,6 +115,8 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
     --------
     ot.partial.partial_wasserstein : Partial Wasserstein with fixed mass
     """
+
+    a, b, M = list_to_array(a, b, M)
 
     nx = get_backend(a, b, M)
 
@@ -262,6 +265,8 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     ot.partial.entropic_partial_wasserstein: Partial Wasserstein with a
     entropic regularization parameter
     """
+
+    a, b, M = list_to_array(a, b, M)
 
     nx = get_backend(a, b, M)
 

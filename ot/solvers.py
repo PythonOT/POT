@@ -12,6 +12,7 @@ from .lp import emd2
 from .backend import get_backend
 from .unbalanced import mm_unbalanced
 from .bregman import sinkhorn_log
+from .partial import partial_wasserstein_lagrange
 
 
 def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
@@ -48,7 +49,7 @@ def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
             if max_iter is None:
                 max_iter = 1000000
 
-            value_linear, log = emd2(a, b, M, log=True, return_matrix=True, numThreads=max_iter)
+            value_linear, log = emd2(a, b, M, numItermax=max_iter, log=True, return_matrix=True)
 
             value = value_linear
             potentials = (log['u'], log['v'])
@@ -68,7 +69,18 @@ def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
                                       stopThr=tol, log=True,
                                       verbose=verbose, G0=plan_init)
 
-            value = log['cost']
+            value_linear = log['cost']
+            # TODO value
+
+        elif unbalanced_type.lower() == 'tv':
+
+            if max_iter is None:
+                max_iter = 1000000
+
+            plan, log = partial_wasserstein_lagrange(a, b, M, reg_m=unbalanced, log=True, numItermax=max_iter)
+
+            value_linear = nx.sum(M * plan)
+            value = value_linear + nx.sqrt(unbalanced / 2.0 * (nx.sum(nx.abs(nx.sum(plan, 1) - a)) + unbalanced * nx.sum(nx.abs(nx.sum(plan, 0) - b))))
 
         # TODO partial OT (as unbalanced type but not backend compatible yet)
 
