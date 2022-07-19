@@ -70,7 +70,7 @@ def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
 
             value = log['cost']
 
-        ## TODO partial OT (as unbalanced type but not backend compatible yet)
+        # TODO partial OT (as unbalanced type but not backend compatible yet)
 
         else:
             raise(NotImplementedError('Unknown unbalanced_type parameter "{}"'.format(unbalanced_type)))
