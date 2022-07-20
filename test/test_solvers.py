@@ -13,7 +13,7 @@ import ot
 
 
 lst_reg = [0, 1.0]
-lst_reg_type = ['KL', 'entropy']
+lst_reg_type = ['KL', 'entropy', 'L2']
 lst_unbalanced = [None, 0.9]
 lst_unbalanced_type = ['KL', 'L2', 'TV']
 

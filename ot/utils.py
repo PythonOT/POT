@@ -641,8 +641,8 @@ class OTResult:
             s += 'value={},'.format(self._value)
         if self._value_linear is not None:
             s += 'value_linear={},'.format(self._value_linear)
-        #if self._plan  is not None:
-        #    s += '\\\nplan={},'.format(self._plan)
+        if self._plan is not None:
+            s += 'plan={}(shape={}),'.format(self._plan.__class__.__name__, self._plan.shape)
 
         if s[-1] != '(':
             s = s[:-1] + ')'

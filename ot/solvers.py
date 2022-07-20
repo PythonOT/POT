@@ -13,6 +13,7 @@ from .backend import get_backend
 from .unbalanced import mm_unbalanced
 from .bregman import sinkhorn_log
 from .partial import partial_wasserstein_lagrange
+from .smooth import smooth_ot_dual
 
 
 def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
@@ -109,6 +110,19 @@ def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
                     value = value_linear + reg * nx.sum(plan * nx.log(plan / (a[:, None] * b[None, :]) + 1e-16))
 
                 potentials = (log['log_u'], log['log_v'])
+
+            elif reg_type.lower() == 'l2':
+
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-9
+
+                plan, log = smooth_ot_dual(a, b, M, reg=reg, numItermax=max_iter, stopThr=tol, log=True, verbose=verbose)
+
+                value_linear = nx.sum(M * plan)
+                value = value_linear + reg * nx.sum(plan**2)
+                potentials = (log['alpha'], log['beta'])
 
             # TODO L2 regularization (smooth OT not backend compatible yet)
 
