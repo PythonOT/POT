@@ -10,7 +10,7 @@ General OT solvers with unified API
 from .utils import OTResult
 from .lp import emd2
 from .backend import get_backend
-from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced
+from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
 from .bregman import sinkhorn_log
 from .partial import partial_wasserstein_lagrange
 from .smooth import smooth_ot_dual
@@ -156,6 +156,19 @@ def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
                 value = value_linear + reg * KL(nx, plan, a[:, None] * b[None, :]) + unbalanced * (KL(nx, nx.sum(plan, 1), a) + KL(nx, nx.sum(plan, 0), b))
 
                 potentials = (log['logu'], log['logv'])
+
+            elif reg_type.lower() in ['kl', 'l2'] and unbalanced_type.lower() in ['kl', 'l2']:
+
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-12
+
+                plan, log = lbfgsb_unbalanced(a, b, M, reg=reg, reg_m=unbalanced, reg_div=reg_type.lower(), regm_div=unbalanced_type.lower(), numItermax=max_iter, stopThr=tol, verbose=verbose, log=True)
+
+                value_linear = nx.sum(M * plan)
+
+                value = log['loss']
 
             else:
                 raise(NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
