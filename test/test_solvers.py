@@ -54,6 +54,12 @@ def test_solve(nx):
     # solve signe weights
     sol = ot.solve(M, a, b)
 
+    # check some attributes
+    potentials = sol.potentials
+    sparse_plan = sol.sparse_plan
+    marginals = sol.marginals
+    status = sol.status
+
     assert_allclose_sol(sol0, sol)
 
     # solve in backend
