@@ -290,7 +290,7 @@ def test_implemented_methods(nx):
                                   method=method)
 
 
-@pytest.mark.parametrize("reg_div,regm_div", itertools.product(['kl', 'l2'], ['kl', 'l2']))
+@pytest.mark.parametrize("reg_div,regm_div", itertools.product(['kl', 'l2', 'entropy'], ['kl', 'l2']))
 def test_lbfgsb_unbalanced(nx, reg_div, regm_div):
 
     np.random.seed(42)

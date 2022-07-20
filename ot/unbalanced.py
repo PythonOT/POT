@@ -1279,11 +1279,20 @@ def _get_loss_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl'):
         return kl(G, a[:, None] * b[None, :])
 
     def grad_kl(G):
-        return np.log(G / (a[:, None] * b[None, :]) + 1e-16) + 1  # a[:, None] * b[None, :]
+        return np.log(G / (a[:, None] * b[None, :]) + 1e-16) + 1
+
+    def reg_entropy(G):
+        return kl(G, 1)
+
+    def grad_entropy(G):
+        return np.log(G + 1e-16) + 1
 
     if reg_div == 'kl':
         reg_fun = reg_kl
         grad_reg_fun = grad_kl
+    elif reg_div == 'entropy':
+        reg_fun = reg_entropy
+        grad_reg_fun = grad_entropy
     else:
         reg_fun = reg_l2
         grad_reg_fun = grad_l2

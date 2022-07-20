@@ -157,7 +157,7 @@ def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
 
                 potentials = (log['logu'], log['logv'])
 
-            elif reg_type.lower() in ['kl', 'l2'] and unbalanced_type.lower() in ['kl', 'l2']:
+            elif reg_type.lower() in ['kl', 'l2', 'entropy'] and unbalanced_type.lower() in ['kl', 'l2']:
 
                 if max_iter is None:
                     max_iter = 1000
