@@ -49,7 +49,7 @@ def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
             if max_iter is None:
                 max_iter = 1000000
 
-            value_linear, log = emd2(a, b, M, numItermax=max_iter, log=True, return_matrix=True)
+            value_linear, log = emd2(a, b, M, numItermax=max_iter, log=True, return_matrix=True, numThreads=n_threads)
 
             value = value_linear
             potentials = (log['u'], log['v'])
@@ -81,8 +81,6 @@ def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
 
             value_linear = nx.sum(M * plan)
             value = value_linear + nx.sqrt(unbalanced / 2.0 * (nx.sum(nx.abs(nx.sum(plan, 1) - a)) + unbalanced * nx.sum(nx.abs(nx.sum(plan, 0) - b))))
-
-        # TODO partial OT (as unbalanced type but not backend compatible yet)
 
         else:
             raise(NotImplementedError('Unknown unbalanced_type parameter "{}"'.format(unbalanced_type)))

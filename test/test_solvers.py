@@ -62,6 +62,14 @@ def test_solve(nx):
 
     assert_allclose_sol(sol, solb)
 
+    # test not implemented unbalanced and check raise
+    with pytest.raises(NotImplementedError):
+        sol0 = ot.solve(M, unbalanced=1, unbalanced_type='cryptic divergence')
+
+    # test not implemented reg_type and check raise
+    with pytest.raises(NotImplementedError):
+        sol0 = ot.solve(M, reg=1, reg_type='cryptic divergence')
+
 
 @pytest.mark.parametrize("reg,reg_type,unbalanced,unbalanced_type", itertools.product(lst_reg, lst_reg_type, lst_unbalanced, lst_unbalanced_type))
 def test_solve_grid(nx, reg, reg_type, unbalanced, unbalanced_type):
