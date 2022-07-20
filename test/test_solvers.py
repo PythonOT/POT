@@ -100,5 +100,5 @@ def test_solve_grid(nx, reg, reg_type, unbalanced, unbalanced_type):
         solb = ot.solve(M, a, b, reg=reg, reg_type=reg_type, unbalanced=unbalanced, unbalanced_type=unbalanced_type)
 
         assert_allclose_sol(sol, solb)
-    except NotImplementedError():
+    except NotImplementedError:
         pass

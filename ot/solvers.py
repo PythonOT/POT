@@ -10,10 +10,14 @@ General OT solvers with unified API
 from .utils import OTResult
 from .lp import emd2
 from .backend import get_backend
-from .unbalanced import mm_unbalanced
+from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced
 from .bregman import sinkhorn_log
 from .partial import partial_wasserstein_lagrange
 from .smooth import smooth_ot_dual
+
+
+def KL(nx, p, q):
+    return nx.sum(p * nx.log(p / q + 1e-16))
 
 
 def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
@@ -35,7 +39,7 @@ def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
     if b is None:
         b = nx.ones(M.shape[1], type_as=M) / M.shape[1]
 
-    # default values for solution
+    # default values for solutions
     potentials = None
     value = None
     value_linear = None
@@ -71,20 +75,29 @@ def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
                                       verbose=verbose, G0=plan_init)
 
             value_linear = log['cost']
-            # TODO value
+
+            if unbalanced_type.lower() == 'kl':
+                value = value_linear + unbalanced * (KL(nx, nx.sum(plan, 1), a) + KL(nx, nx.sum(plan, 0), b))
+            else:
+                err_a = nx.sum(plan, 1) - a
+                err_b = nx.sum(plan, 0) - b
+                value = value_linear + unbalanced * nx.sum(err_a**2) + unbalanced * nx.sum(err_b**2)
 
         elif unbalanced_type.lower() == 'tv':
 
             if max_iter is None:
                 max_iter = 1000000
 
-            plan, log = partial_wasserstein_lagrange(a, b, M, reg_m=unbalanced, log=True, numItermax=max_iter)
+            plan, log = partial_wasserstein_lagrange(a, b, M, reg_m=unbalanced**2, log=True, numItermax=max_iter)
 
             value_linear = nx.sum(M * plan)
-            value = value_linear + nx.sqrt(unbalanced / 2.0 * (nx.sum(nx.abs(nx.sum(plan, 1) - a)) + unbalanced * nx.sum(nx.abs(nx.sum(plan, 0) - b))))
+            err_a = nx.sum(plan, 1) - a
+            err_b = nx.sum(plan, 0) - b
+            value = value_linear + nx.sqrt(unbalanced**2 / 2.0 * (nx.sum(nx.abs(err_a)) +
+                                                                  nx.sum(nx.abs(err_b))))
 
         else:
-            raise(NotImplementedError('Unknown unbalanced_type parameter "{}"'.format(unbalanced_type)))
+            raise(NotImplementedError('Unknown unbalanced_type="{}"'.format(unbalanced_type)))
 
     else:  # regularized OT
 
@@ -107,7 +120,7 @@ def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
                 if reg_type.lower() == 'entropy':
                     value = value_linear + reg * nx.sum(plan * nx.log(plan + 1e-16))
                 else:
-                    value = value_linear + reg * nx.sum(plan * nx.log(plan / (a[:, None] * b[None, :]) + 1e-16))
+                    value = value_linear + reg * KL(nx, plan, a[:, None] * b[None, :])
 
                 potentials = (log['log_u'], log['log_v'])
 
@@ -124,10 +137,28 @@ def solve(M, a=None, b=None, reg=0, reg_type="KL", unbalanced=None,
                 value = value_linear + reg * nx.sum(plan**2)
                 potentials = (log['alpha'], log['beta'])
 
-            # TODO L2 regularization (smooth OT not backend compatible yet)
+            else:
+                raise(NotImplementedError('Not implemented reg_type="{}"'.format(reg_type)))
+
+        else:  # unbalanced AND regularized OT
+
+            if reg_type.lower() in ['kl'] and unbalanced_type.lower() == 'kl':
+
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-9
+
+                plan, log = sinkhorn_knopp_unbalanced(a, b, M, reg=reg, reg_m=unbalanced, numItermax=max_iter, stopThr=tol, verbose=verbose, log=True)
+
+                value_linear = nx.sum(M * plan)
+
+                value = value_linear + reg * KL(nx, plan, a[:, None] * b[None, :]) + unbalanced * (KL(nx, nx.sum(plan, 1), a) + KL(nx, nx.sum(plan, 0), b))
+
+                potentials = (log['logu'], log['logv'])
 
             else:
-                raise(NotImplementedError('Not implemented reg_type "{}" and '.format(reg_type)))
+                raise(NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
 
     res = OTResult(potentials=potentials, value=value,
                    value_linear=value_linear, plan=plan, status=status, backend=nx)
