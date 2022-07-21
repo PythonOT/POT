@@ -14,7 +14,6 @@ Illustration of Sinkhorn barycenter calculation between empirical distributions 
 
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_moons
 import ot
 
 # %%
@@ -29,26 +28,18 @@ n_samples = 200
 # Generate Data
 # -------------
 
+X1 = np.random.randn(200, 2)
+X2 = 2 * np.concatenate([
+    np.concatenate([- np.ones([50, 1]), np.linspace(-1, 1, 50)[:, None]], axis=1),
+    np.concatenate([np.linspace(-1, 1, 50)[:, None], np.ones([50, 1])], axis=1),
+    np.concatenate([np.ones([50, 1]), np.linspace(1, -1, 50)[:, None]], axis=1),
+    np.concatenate([np.linspace(1, -1, 50)[:, None], - np.ones([50, 1])], axis=1),
+], axis=0)
+X3 = np.random.randn(200, 2)
+X3 = 2 * (X3 / np.linalg.norm(X3, axis=1)[:, None])
+X4 = np.random.multivariate_normal(np.array([0, 0]), np.array([[1., 0.5], [0.5, 1.]]), size=200)
 
-def get_rotation(angle):
-    """Returns a rotation matrix for angle given in degrees"""
-    R = np.array([
-        [np.cos((angle / 180) * np.pi), -np.sin((angle / 180) * np.pi)],
-        [np.sin((angle / 180) * np.pi), np.cos((angle / 180) * np.pi)]
-    ])
-    return R
-
-
-R2, R3, R4 = get_rotation(15), get_rotation(30), get_rotation(45)
-
-X1, _ = make_moons(n_samples=300, noise=1e-1)
-a1 = ot.utils.unif(X1.shape[0], type_as=X1)
-X2 = np.dot(X1, R2)
-a2 = ot.utils.unif(X1.shape[0], type_as=X2)
-X3 = np.dot(X1, R3)
-a3 = ot.utils.unif(X1.shape[0], type_as=X3)
-X4 = np.dot(X1, R4)
-a4 = ot.utils.unif(X1.shape[0], type_as=X4)
+a1, a2, a3, a4 = ot.unif(len(X1)), ot.unif(len(X1)), ot.unif(len(X1)), ot.unif(len(X1))
 
 # %%
 # Inspect generated distributions
@@ -63,19 +54,19 @@ axes[3].scatter(x=X4[:, 0], y=X4[:, 1], c='steelblue', edgecolor='k')
 
 axes[0].set_xlim([-3, 3])
 axes[0].set_ylim([-3, 3])
-axes[0].set_title('Rotation: 0')
+axes[0].set_title('Distribution 1')
 
 axes[1].set_xlim([-3, 3])
 axes[1].set_ylim([-3, 3])
-axes[1].set_title('Rotation: 15')
+axes[1].set_title('Distribution 2')
 
 axes[2].set_xlim([-3, 3])
 axes[2].set_ylim([-3, 3])
-axes[2].set_title('Rotation: 30')
+axes[2].set_title('Distribution 3')
 
 axes[3].set_xlim([-3, 3])
 axes[3].set_ylim([-3, 3])
-axes[3].set_title('Rotation: 45')
+axes[3].set_title('Distribution 4')
 
 plt.tight_layout()
 plt.show()
