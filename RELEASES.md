@@ -5,7 +5,7 @@
 #### New features
 
 - Added Generalized Wasserstein Barycenter solver + example (PR #372), fixed graphical details on the example (PR #376)
-- Added Free Support Sinkhorn Barycenter + example
+- Added Free Support Sinkhorn Barycenter + example (PR #387)
 
 #### Closed issues
 
