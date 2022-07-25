@@ -39,7 +39,7 @@ The contributors to this library are:
 * [Cédric Vincent-Cuaz](https://github.com/cedricvincentcuaz) (Graph Dictionary Learning)
 * [Eloi Tanguy](https://github.com/eloitanguy) (Generalized Wasserstein Barycenters)
 * [Camille Le Coz](https://www.linkedin.com/in/camille-le-coz-8593b91a1/) (EMD2 debug)
-* [Eduardo Fernandes Montesuma](https://eddardd.github.io/my-personal-blog/)
+* [Eduardo Fernandes Montesuma](https://eddardd.github.io/my-personal-blog/) (Free support sinkhorn barycenter)
 
 ## Acknowledgments
 
