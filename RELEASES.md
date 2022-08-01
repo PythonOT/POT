@@ -19,6 +19,7 @@
 incomplete transport plan above a certain size (slightly above 46k, its square being
 roughly 2^31) (PR #381)
 - Error raised when mass mismatch in emd2 (PR #386)
+- Fixed an issue where a pytorch example would throw an error if executed on a GPU (Issue #389, PR #391)
 
 
 ## 0.8.2

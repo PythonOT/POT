@@ -42,7 +42,7 @@ clean : FORCE
 	$(PYTHON) setup.py clean
 
 pep8 :
-	flake8 examples/ ot/ test/
+	flake8 examples/ ot/ test/ --count --max-line-length=127 --statistics --show-source
 
 test : FORCE pep8
 	$(PYTHON) -m pytest --durations=20 -v test/ --doctest-modules --ignore ot/gpu/  
