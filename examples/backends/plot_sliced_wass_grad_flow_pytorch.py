@@ -74,7 +74,7 @@ x_all = np.zeros((nb_iter_max, x1.shape[0], 2))
 loss_iter = []
 
 # generator for random permutations
-gen = torch.Generator()
+gen = torch.Generator(device=device)
 gen.manual_seed(42)
 
 for i in range(nb_iter_max):
@@ -136,7 +136,7 @@ x_all = np.zeros((nb_iter_max, xbary_torch.shape[0], 2))
 loss_iter = []
 
 # generator for random permutations
-gen = torch.Generator()
+gen = torch.Generator(device=device)
 gen.manual_seed(42)
 
 alpha = 0.5
