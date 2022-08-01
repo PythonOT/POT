@@ -734,7 +734,7 @@ def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
     if weights is None:
         weights = nx.ones(n_hists, type_as=A) / n_hists
     else:
-        assert(len(weights) == A.shape[1])
+        assert len(weights) == A.shape[1]
 
     if log:
         log = {'err': []}
@@ -882,7 +882,7 @@ def barycenter_unbalanced_sinkhorn(A, M, reg, reg_m, weights=None,
     if weights is None:
         weights = nx.ones(n_hists, type_as=A) / n_hists
     else:
-        assert(len(weights) == A.shape[1])
+        assert len(weights) == A.shape[1]
 
     if log:
         log = {'err': []}

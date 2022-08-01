@@ -1581,7 +1581,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 
     error = []
 
-    while(err > tol and cpt < max_iter):
+    while (err > tol and cpt < max_iter):
         Cprev = C
 
         T = [gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun,
@@ -1725,7 +1725,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         log_['err_structure'] = []
         log_['Ts_iter'] = []
 
-    while((err_feature > tol or err_structure > tol) and cpt < max_iter):
+    while ((err_feature > tol or err_structure > tol) and cpt < max_iter):
         Cprev = C
         Xprev = X
 
