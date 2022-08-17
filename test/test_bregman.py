@@ -879,6 +879,7 @@ def test_empirical_sinkhorn_divergence(nx):
     ot.bregman.empirical_sinkhorn_divergence(X_sb, X_tb, 1, a=ab, b=bb, log=True)
 
 
+@pytest.mark.skipif(not torch, reason="No torch available")
 def test_empirical_sinkhorn_divergence_gradient():
     # Test sinkhorn divergence
     n = 10
