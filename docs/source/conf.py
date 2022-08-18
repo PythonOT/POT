@@ -351,6 +351,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
 sphinx_gallery_conf = {
     'examples_dirs': ['../../examples', '../../examples/da'],
     'gallery_dirs': 'auto_examples',
+    'nested_sections' : False,
     'backreferences_dir':  'gen_modules/backreferences',
 	'inspect_global_variables'  : True,
     'doc_module'          : ('ot','numpy','scipy','pylab'),
