@@ -38,7 +38,7 @@ parsers:
 
 # https://docs.codecov.io/docs/ignoring-paths
 ignore:
-  - "ot/gpu/*"
+  - "ot/helpers/openmp_helpers.py"
 
 # https://docs.codecov.io/docs/pull-request-comments
 comment:
