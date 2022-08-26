@@ -62,5 +62,5 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'sinkhorn_unbalanced2', 'sliced_wasserstein_distance',
            'gromov_wasserstein', 'gromov_wasserstein2', 'gromov_barycenters', 'fused_gromov_wasserstein', 'fused_gromov_wasserstein2',
             'max_sliced_wasserstein_distance', 'weak_optimal_transport',
-            'factored_optimal_transport', 'solve'
+            'factored_optimal_transport', 'solve',
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath', 'solvers']
