@@ -83,7 +83,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
         Constant :math:`\mathbf{C}` matrix in Eq. (6)
     constC2 : array-like, shape (ns, nt)
         Constant :math:`\mathbf{C}` matrix in Eq. (6) but computed with C1.T and C2.T instead of C1 and C2.
-        This second matrix is useful for the computation of the gradient in the case of asymmetric C1 and C2, as explained 
+        This second matrix is useful for the computation of the gradient in the case of asymmetric C1 and C2, as explained
         in :ref:`[*] <references-init-matrix>` in subsection 5.1.
     hC1 : array-like, shape (ns, ns)
         :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
@@ -97,7 +97,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
     ..  [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
-    
+
     ..  [*] Dan Meller and Gonzague de Carpentier,
         "Mutilingual alignment of word embedding spaces", Subsection 5.1
         Research project at École Polytechnique. 2021.
@@ -245,7 +245,7 @@ def gwggrad(constC1, constC2, hC1, hC2, T):
         Constant :math:`\mathbf{C}` matrix in Eq. (6)
     constC2 : array-like, shape (ns, nt)
         Constant :math:`\mathbf{C}` matrix in Eq. (6) but computed with C1.T and C2.T instead of C1 and C2.
-        This second matrix is useful in the case of asymmetric C1 and C2, as explained 
+        This second matrix is useful in the case of asymmetric C1 and C2, as explained
         in :ref:`[*] <references-init-matrix>` in subsection 5.1.
     hC1 : array-like, shape (ns, ns)
         :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
@@ -266,16 +266,16 @@ def gwggrad(constC1, constC2, hC1, hC2, T):
     ..  [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
-    
+
     ..  [*] Dan Meller and Gonzague de Carpentier,
         "Mutilingual alignment of word embedding spaces", Subsection 5.1
         Research project at École Polytechnique. 2021.
         http://dx.doi.org/10.13140/RG.2.2.21701.37609.
 
     """
-    # [12] Prop. 2 misses a second term in the gradient (explained in [*]). 
+    # [12] Prop. 2 misses a second term in the gradient (explained in [*]).
     # In the case of symmetric matrices, the 2 terms are equal so Prop. 2 misses only a 2 factor.
-    return tensor_product(constC1, hC1, hC2, T) + tensor_product(constC2, hC1.T, hC2.T, T)  
+    return tensor_product(constC1, hC1, hC2, T) + tensor_product(constC2, hC1.T, hC2.T, T)
 
 
 def update_square_loss(p, lambdas, T, Cs):
