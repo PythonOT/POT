@@ -79,8 +79,12 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
 
     Returns
     -------
-    constC : array-like, shape (ns, nt)
+    constC1 : array-like, shape (ns, nt)
         Constant :math:`\mathbf{C}` matrix in Eq. (6)
+    constC2 : array-like, shape (ns, nt)
+        Constant :math:`\mathbf{C}` matrix in Eq. (6) but computed with C1.T and C2.T instead of C1 and C2.
+        This second matrix is useful for the computation of the gradient in the case of asymmetric C1 and C2, as explained 
+        in :ref:`[*] <references-init-matrix>` in subsection 5.1.
     hC1 : array-like, shape (ns, ns)
         :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
     hC2 : array-like, shape (nt, nt)
@@ -90,9 +94,14 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
     .. _references-init-matrix:
     References
     ----------
-    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+    ..  [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
+    
+    ..  [*] Dan Meller and Gonzague de Carpentier,
+        "Mutilingual alignment of word embedding spaces", Subsection 5.1
+        Research project at École Polytechnique. 2021.
+        http://dx.doi.org/10.13140/RG.2.2.21701.37609.
 
     """
     C1, C2, p, q = list_to_array(C1, C2, p, q)
@@ -123,19 +132,28 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
         def h2(b):
             return nx.log(b + 1e-15)
 
-    constC1 = nx.dot(
+    constC1a = nx.dot(
         nx.dot(f1(C1), nx.reshape(p, (-1, 1))),
         nx.ones((1, len(q)), type_as=q)
     )
-    constC2 = nx.dot(
+    constC1b = nx.dot(
         nx.ones((len(p), 1), type_as=p),
         nx.dot(nx.reshape(q, (1, -1)), f2(C2).T)
     )
-    constC = constC1 + constC2
+    constC2a = nx.dot(
+        nx.dot(f1(C1).T, nx.reshape(p, (-1, 1))),
+        nx.ones((1, len(q)), type_as=q)
+    )
+    constC2b = nx.dot(
+        nx.ones((len(p), 1), type_as=p),
+        nx.dot(nx.reshape(q, (1, -1)), f2(C2))
+    )
+    constC1 = constC1a + constC1b
+    constC2 = constC2a + constC2b
     hC1 = h1(C1)
     hC2 = h2(C2)
 
-    return constC, hC1, hC2
+    return constC1, constC2, hC1, hC2
 
 
 def tensor_product(constC, hC1, hC2, T):
@@ -216,15 +234,19 @@ def gwloss(constC, hC1, hC2, T):
     return nx.sum(tens * T)
 
 
-def gwggrad(constC, hC1, hC2, T):
+def gwggrad(constC1, constC2, hC1, hC2, T):
     r"""Return the gradient for Gromov-Wasserstein
 
-    The gradient is computed as described in Proposition 2 in :ref:`[12] <references-gwggrad>`
+    The gradient is computed as described in Proposition 2 in :ref:`[12] <references-gwggrad>` and in :ref:`[*] <references-gwggrad>`.
 
     Parameters
     ----------
-    constC : array-like, shape (ns, nt)
+    constC1 : array-like, shape (ns, nt)
         Constant :math:`\mathbf{C}` matrix in Eq. (6)
+    constC2 : array-like, shape (ns, nt)
+        Constant :math:`\mathbf{C}` matrix in Eq. (6) but computed with C1.T and C2.T instead of C1 and C2.
+        This second matrix is useful in the case of asymmetric C1 and C2, as explained 
+        in :ref:`[*] <references-init-matrix>` in subsection 5.1.
     hC1 : array-like, shape (ns, ns)
         :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
     hC2 : array-like, shape (nt, nt)
@@ -241,13 +263,19 @@ def gwggrad(constC, hC1, hC2, T):
     .. _references-gwggrad:
     References
     ----------
-    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+    ..  [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
+    
+    ..  [*] Dan Meller and Gonzague de Carpentier,
+        "Mutilingual alignment of word embedding spaces", Subsection 5.1
+        Research project at École Polytechnique. 2021.
+        http://dx.doi.org/10.13140/RG.2.2.21701.37609.
 
     """
-    return 2 * tensor_product(constC, hC1, hC2,
-                              T)  # [12] Prop. 2 misses a 2 factor
+    # [12] Prop. 2 misses a second term in the gradient (explained in [*]). 
+    # In the case of symmetric matrices, the 2 terms are equal so Prop. 2 misses only a 2 factor.
+    return tensor_product(constC1, hC1, hC2, T) + tensor_product(constC2, hC1.T, hC2.T, T)  
 
 
 def update_square_loss(p, lambdas, T, Cs):
@@ -415,13 +443,13 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=F
         np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
         np.testing.assert_allclose(G0.sum(axis=0), q, atol=1e-08)
 
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
+    constC, constC2, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
     def f(G):
         return gwloss(constC, hC1, hC2, G)
 
     def df(G):
-        return gwggrad(constC, hC1, hC2, G)
+        return gwggrad(constC, constC2, hC1, hC2, G)
 
     if log:
         res, log = cg(p, q, 0, 1, f, df, G0, log=True, armijo=armijo, C1=C1, C2=C2, constC=constC, **kwargs)
@@ -521,7 +549,7 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=
     C1 = nx.to_numpy(C10)
     C2 = nx.to_numpy(C20)
 
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
+    constC, constC2, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
     if G0 is None:
         G0 = p[:, None] * q[None, :]
@@ -535,7 +563,7 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', log=False, armijo=
         return gwloss(constC, hC1, hC2, G)
 
     def df(G):
-        return gwggrad(constC, hC1, hC2, G)
+        return gwggrad(constC, constC2, hC1, hC2, G)
 
     T, log_gw = cg(p, q, 0, 1, f, df, G0, log=True, armijo=armijo, C1=C1, C2=C2, constC=constC, **kwargs)
 
@@ -653,13 +681,13 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5,
         np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
         np.testing.assert_allclose(G0.sum(axis=0), q, atol=1e-08)
 
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
+    constC, constC2, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
     def f(G):
         return gwloss(constC, hC1, hC2, G)
 
     def df(G):
-        return gwggrad(constC, hC1, hC2, G)
+        return gwggrad(constC, constC2, hC1, hC2, G)
 
     if log:
         res, log = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, log=True, **kwargs)
@@ -764,7 +792,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
     C2 = nx.to_numpy(C20)
     M = nx.to_numpy(M0)
 
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
+    constC, constC2, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
     if G0 is None:
         G0 = p[:, None] * q[None, :]
@@ -778,7 +806,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', alpha=0.5
         return gwloss(constC, hC1, hC2, G)
 
     def df(G):
-        return gwggrad(constC, hC1, hC2, G)
+        return gwggrad(constC, constC2, hC1, hC2, G)
 
     T, log_fgw = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, armijo=armijo, C1=C1, C2=C2, constC=constC, log=True, **kwargs)
 
@@ -1280,7 +1308,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
 
     T = nx.outer(p, q)
 
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
+    constC, constC2, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
     cpt = 0
     err = 1
@@ -1293,7 +1321,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
         Tprev = T
 
         # compute the gradient
-        tens = gwggrad(constC, hC1, hC2, T)
+        tens = gwggrad(constC, constC2, hC1, hC2, T)
 
         T = sinkhorn(p, q, tens, epsilon, method='sinkhorn')
 
