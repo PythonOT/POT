@@ -6,6 +6,7 @@
 
 - Added Generalized Wasserstein Barycenter solver + example (PR #372), fixed graphical details on the example (PR #376)
 - Added Free Support Sinkhorn Barycenter + example (PR #387)
+- Generalization of Gromov-Wasserstein to asymmetric cost matrices (PR #399)
 
 #### Closed issues
 
