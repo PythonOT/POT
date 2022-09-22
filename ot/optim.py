@@ -507,9 +507,8 @@ def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=Non
         # line search
         deltaG = Gc - G
 
-        alpha, fc, f_val = line_search_solver(
-                cost=cost, G=G, deltaG=deltaG, Mi=Mi, f_val=f_val,
-                reg=reg1, M=M, Gc=Gc, alpha_min=0., alpha_max=1., qG=b, qdeltaG=bdeltaG, **kwargs)
+        alpha, fc, f_val = line_search_solver(cost=cost, G=G, deltaG=deltaG, Mi=Mi, f_val=f_val,
+                                              reg=reg1, M=M, Gc=Gc, alpha_min=0., alpha_max=1., qG=b, qdeltaG=bdeltaG, **kwargs)
 
         G = G + alpha * deltaG
         if semirelaxed:
