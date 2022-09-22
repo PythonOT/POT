@@ -14,6 +14,7 @@ from ot.backend import torch, tf
 
 import pytest
 
+
 def test_gromov(nx):
     n_samples = 50  # nb samples
 
@@ -75,67 +76,6 @@ def test_gromov(nx):
     np.testing.assert_allclose(
         q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
 
-def test_new_gromov(nx):
-    n_samples = 50  # nb samples
-
-    mu_s = np.array([0, 0])
-    cov_s = np.array([[1, 0], [0, 1]])
-
-    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
-
-    xt = xs[::-1].copy()
-
-    p = ot.unif(n_samples)
-    q = ot.unif(n_samples)
-    G0 = p[:, None] * q[None, :]
-
-    C1 = ot.dist(xs, xs)
-    C2 = ot.dist(xt, xt)
-
-    C1 /= C1.max()
-    C2 /= C2.max()
-
-    C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
-
-    G = ot.gromov.new_gromov_wasserstein(C1, C2, p, q, 'square_loss', G0=G0, symmetric=True, verbose=True)
-    Gb = nx.to_numpy(ot.gromov.new_gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', G0=G0b, symmetric=True, verbose=True))
-
-    # check constraints
-    np.testing.assert_allclose(G, Gb, atol=1e-06)
-    np.testing.assert_allclose(
-        p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
-    np.testing.assert_allclose(
-        q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
-
-    Id = (1 / (1.0 * n_samples)) * np.eye(n_samples, n_samples)
-
-    np.testing.assert_allclose(Gb, np.flipud(Id), atol=1e-04)
-    """
-    gw, log = ot.gromov.gromov_wasserstein2(C1, C2, p, q, 'kl_loss', log=True)
-    gwb, logb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', log=True)
-    gwb = nx.to_numpy(gwb)
-
-    gw_val = ot.gromov.gromov_wasserstein2(C1, C2, p, q, 'kl_loss', G0=G0, log=False)
-    gw_valb = nx.to_numpy(
-        ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', G0=G0b, log=False)
-    )
-
-    G = log['T']
-    Gb = nx.to_numpy(logb['T'])
-
-    np.testing.assert_allclose(gw, gwb, atol=1e-06)
-    np.testing.assert_allclose(gwb, 0, atol=1e-1, rtol=1e-1)
-
-    np.testing.assert_allclose(gw_val, gw_valb, atol=1e-06)
-    np.testing.assert_allclose(gwb, gw_valb, atol=1e-1, rtol=1e-1)  # cf log=False
-
-    # check constraints
-    np.testing.assert_allclose(G, Gb, atol=1e-06)
-    np.testing.assert_allclose(
-        p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
-    np.testing.assert_allclose(
-        q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
-    """
 
 def test_gromov_dtype_device(nx):
     # setup
