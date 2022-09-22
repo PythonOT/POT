@@ -412,7 +412,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
     C2 = nx.to_numpy(C20)
     if symmetric is None:
         C1t, C2t = C1.T, C2.T
-        symmetric = nx.allclose(C1, C1t, rtol=1e-10, atol=1e-10) or nx.allclose(C2, C2t, rtol=1e-10, atol=1e-10)
+        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
     if symmetric:
         C2t = C2
     else:
@@ -556,7 +556,7 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
 
     if symmetric is None:
         C1t, C2t = C1.T, C2.T
-        symmetric = nx.allclose(C1, C1t, rtol=1e-10, atol=1e-10) or nx.allclose(C2, C2t, rtol=1e-10, atol=1e-10)
+        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
     if symmetric:
         C2t = C2
     else:
@@ -713,7 +713,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
 
     if symmetric is None:
         C1t, C2t = C1.T, C2.T
-        symmetric = nx.allclose(C1, C1t, rtol=1e-10, atol=1e-10) or nx.allclose(C2, C2t, rtol=1e-10, atol=1e-10)
+        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
     if symmetric:
         C2t = C2
     else:
@@ -758,7 +758,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
         log['v'] = nx.from_numpy(log['v'], type_as=C10)
         return nx.from_numpy(res, type_as=C10), log
     else:
-        return nx.from_numpy(generic_cg(p, q, (1 - alpha) * M, f, df, alpha, None, lp_solver, line_search_solver, G0, log=True, **kwargs), type_as=C10)
+        return nx.from_numpy(generic_cg(p, q, (1 - alpha) * M, f, df, alpha, None, lp_solver, line_search_solver, G0, log=False, **kwargs), type_as=C10)
 
 
 def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric=None, alpha=0.5, armijo=False, G0=None, log=False, **kwargs):
@@ -863,7 +863,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
 
     if symmetric is None:
         C1t, C2t = C1.T, C2.T
-        symmetric = nx.allclose(C1, C1t, rtol=1e-10, atol=1e-10) or nx.allclose(C2, C2t, rtol=1e-10, atol=1e-10)
+        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
     if symmetric:
         C2t = C2
     else:
@@ -3047,7 +3047,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
     C2 = nx.to_numpy(C20)
     if symmetric is None:
         C1t, C2t = C1.T, C2.T
-        symmetric = nx.allclose(C1, C1t, rtol=1e-10, atol=1e-10) or nx.allclose(C2, C2t, rtol=1e-10, atol=1e-10)
+        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
     if symmetric:
         C1t, C2t = C1, C2
     else:
@@ -3185,7 +3185,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
 
     if symmetric is None:
         C1t, C2t = C1.T, C2.T
-        symmetric = nx.allclose(C1, C1t, rtol=1e-10, atol=1e-10) or nx.allclose(C2, C2t, rtol=1e-10, atol=1e-10)
+        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
     if symmetric:
         C2t = C2
     else:
@@ -3345,7 +3345,7 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
 
     if symmetric is None:
         C1t, C2t = C1.T, C2.T
-        symmetric = nx.allclose(C1, C1t, rtol=1e-10, atol=1e-10) or nx.allclose(C2, C2t, rtol=1e-10, atol=1e-10)
+        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
     if symmetric:
         C2t = C2
     else:
@@ -3397,7 +3397,7 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
         log['v'] = nx.from_numpy(log['v'], type_as=C10)
         return nx.from_numpy(res, type_as=C10), log
     else:
-        return nx.from_numpy(generic_cg(p, q, (1 - alpha) * M, f, df, alpha, None, lp_solver, line_search_solver, G0, semirelaxed=True, log=True, **kwargs), type_as=C10)
+        return nx.from_numpy(generic_cg(p, q, (1 - alpha) * M, f, df, alpha, None, lp_solver, line_search_solver, G0, semirelaxed=True, log=False, **kwargs), type_as=C10)
 
 
 def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', symmetric=None, alpha=0.5, armijo=False, G0=None, log=False, **kwargs):
@@ -3492,7 +3492,7 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
 
     if symmetric is None:
         C1t, C2t = C1.T, C2.T
-        symmetric = nx.allclose(C1, C1t, rtol=1e-10, atol=1e-10) or nx.allclose(C2, C2t, rtol=1e-10, atol=1e-10)
+        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
     if symmetric:
         C2t = C2
     else:
