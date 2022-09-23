@@ -427,16 +427,16 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
-    def f(G):
+    def f(G, qG=None):
         return gwloss(constC, hC1, hC2, G)
 
     if symmetric:
-        def df(G):
+        def df(G, qG=None):
             return gwggrad(constC, hC1, hC2, G)
     else:
         constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
 
-        def df(G):
+        def df(G, qG=None):
             return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
 
     def lp_solver(a, b, Mi, numItermax, log, **kwargs):
@@ -572,16 +572,16 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
-    def f(G):
+    def f(G, qG=None):
         return gwloss(constC, hC1, hC2, G)
 
     if symmetric:
-        def df(G):
+        def df(G, qG=None):
             return gwggrad(constC, hC1, hC2, G)
     else:
         constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
 
-        def df(G):
+        def df(G, qG=None):
             return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
 
     def lp_solver(a, b, Mi, numItermax, log, **kwargs):
@@ -729,16 +729,16 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
-    def f(G):
+    def f(G, qG=None):
         return gwloss(constC, hC1, hC2, G)
 
     if symmetric:
-        def df(G):
+        def df(G, qG=None):
             return gwggrad(constC, hC1, hC2, G)
     else:
         constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
 
-        def df(G):
+        def df(G, qG=None):
             return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
 
     def lp_solver(a, b, Mi, numItermax, log, **kwargs):
@@ -808,7 +808,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
-        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     alpha : float, optional
         Trade-off parameter (0 < alpha < 1)
     armijo : bool, optional
@@ -879,16 +879,16 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
         np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
         np.testing.assert_allclose(G0.sum(axis=0), q, atol=1e-08)
 
-    def f(G):
+    def f(G, qG=None):
         return gwloss(constC, hC1, hC2, G)
 
     if symmetric:
-        def df(G):
+        def df(G, qG=None):
             return gwggrad(constC, hC1, hC2, G)
     else:
         constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
 
-        def df(G):
+        def df(G, qG=None):
             return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
 
     def lp_solver(a, b, Mi, numItermax, log, **kwargs):
@@ -1622,7 +1622,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
         return C
 
 
-def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
+def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, symmetric=True,
                        max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None, random_state=None, **kwargs):
     r"""
     Returns the gromov-wasserstein barycenters of `S` measured similarity matrices :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
@@ -1652,6 +1652,9 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
         List of the `S` spaces' weights
     loss_fun : callable
         tensor-matrix multiplication function based on specific loss function
+    symmetric : bool, optional.
+        Either structures are to be assumed symmetric or not. Default value is True.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     update : callable
         function(:math:`\mathbf{p}`, lambdas, :math:`\mathbf{T}`, :math:`\mathbf{Cs}`) that updates
         :math:`\mathbf{C}` according to a specific Kernel with the `S` :math:`\mathbf{T}_s` couplings
@@ -1708,7 +1711,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
     while (err > tol and cpt < max_iter):
         Cprev = C
 
-        T = [gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun,
+        T = [gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, symmetric=symmetric,
                                 numItermax=max_iter, stopThr=1e-5, verbose=verbose, log=False, **kwargs) for s in range(S)]
         if loss_fun == 'square_loss':
             C = update_square_loss(p, lambdas, T, Cs)
@@ -1737,7 +1740,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 
 
 def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_features=False,
-                    p=None, loss_fun='square_loss', max_iter=100, tol=1e-9,
+                    p=None, loss_fun='square_loss', symmetric=True, max_iter=100, tol=1e-9,
                     verbose=False, log=False, init_C=None, init_X=None, random_state=None, **kwargs):
     r"""Compute the fgw barycenter as presented eq (5) in :ref:`[24] <references-fgw-barycenters>`
 
@@ -1761,6 +1764,9 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         Whether to fix the feature of the barycenter during the updates
     loss_fun : str
         Loss function used for the solver either 'square_loss' or 'kl_loss'
+    symmetric : bool, optional
+        Either structures are to be assumed symmetric or not. Default value is True.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -1864,7 +1870,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
                 T_temp = [t.T for t in T]
                 C = update_structure_matrix(p, lambdas, T_temp, Cs)
 
-        T = [fused_gromov_wasserstein(Ms[s], C, Cs[s], p, ps[s], loss_fun, alpha,
+        T = [fused_gromov_wasserstein(Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, symmetric=symmetric,
                                       numItermax=max_iter, stopThr=1e-5, verbose=verbose, **kwargs) for s in range(S)]
 
         # T is N,ns
@@ -1995,7 +2001,7 @@ def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, e
     - :math:`\mathbf{q}` is the target distribution assigned to every structures in the embedding space.
     - reg is the regularization coefficient.
 
-    The stochastic algorithm used for estimating the graph dictionary atoms as proposed in [38]
+    The stochastic algorithm used for estimating the graph dictionary atoms as proposed in [38]_
 
     Parameters
     ----------
@@ -2051,9 +2057,8 @@ def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, e
     References
     -------
 
-    ..[38]  Cédric Vincent-Cuaz, Titouan Vayer, Rémi Flamary, Marco Corneli, Nicolas Courty.
-            "Online Graph Dictionary Learning"
-            International Conference on Machine Learning (ICML). 2021.
+    .. [38]  Cédric Vincent-Cuaz, Titouan Vayer, Rémi Flamary, Marco Corneli, Nicolas Courty.
+            "Online Graph Dictionary Learning", International Conference on Machine Learning (ICML). 2021.
     """
     # Handle backend of non-optional arguments
     Cs0 = Cs
@@ -2185,7 +2190,7 @@ def gromov_wasserstein_linear_unmixing(C, Cdict, reg=0., p=None, q=None, tol_out
     - :math:`\mathbf{p}` and :math:`\mathbf{q}` are source and target weights.
     - reg is the regularization coefficient.
 
-    The algorithm used for solving the problem is a Block Coordinate Descent as discussed in [38], algorithm 1.
+    The algorithm used for solving the problem is a Block Coordinate Descent as discussed in [38]_ , algorithm 1.
 
     Parameters
     ----------
@@ -2221,9 +2226,8 @@ def gromov_wasserstein_linear_unmixing(C, Cdict, reg=0., p=None, q=None, tol_out
     References
     -------
 
-    ..[38]  Cédric Vincent-Cuaz, Titouan Vayer, Rémi Flamary, Marco Corneli, Nicolas Courty.
-            "Online Graph Dictionary Learning"
-            International Conference on Machine Learning (ICML). 2021.
+    .. [38]  Cédric Vincent-Cuaz, Titouan Vayer, Rémi Flamary, Marco Corneli, Nicolas Courty.
+            "Online Graph Dictionary Learning", International Conference on Machine Learning (ICML). 2021.
     """
     C0, Cdict0 = C, Cdict
     nx = get_backend(C0, Cdict0)
@@ -2297,7 +2301,7 @@ def _cg_gromov_wasserstein_unmixing(C, Cdict, Cembedded, w, const_q, T, starting
     - :math:`\mathbf{T}` is the optimal transport plan conditioned by the current state of :math:`\mathbf{w}`.
     - reg is the regularization coefficient.
 
-    The algorithm used for solving the problem is a Conditional Gradient Descent as discussed in [38]
+    The algorithm used for solving the problem is a Conditional Gradient Descent as discussed in [38]_
 
     Parameters
     ----------
@@ -2452,7 +2456,7 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
     - reg is the regularization coefficient.
 
 
-    The stochastic algorithm used for estimating the attributed graph dictionary atoms as proposed in [38]
+    The stochastic algorithm used for estimating the attributed graph dictionary atoms as proposed in [38]_
 
     Parameters
     ----------
@@ -2521,9 +2525,9 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
     References
     -------
 
-    ..[38]  Cédric Vincent-Cuaz, Titouan Vayer, Rémi Flamary, Marco Corneli, Nicolas Courty.
-            "Online Graph Dictionary Learning"
-            International Conference on Machine Learning (ICML). 2021.
+    .. [38]  Cédric Vincent-Cuaz, Titouan Vayer, Rémi Flamary, Marco Corneli, Nicolas Courty.
+            "Online Graph Dictionary Learning", International Conference on Machine Learning (ICML). 2021.
+
     """
     Cs0, Ys0 = Cs, Ys
     nx = get_backend(*Cs0, *Ys0)
@@ -2663,7 +2667,7 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict, Ydict, alpha, reg=0., 
     - :math:`\alpha` is the trade-off parameter of Fused Gromov-Wasserstein
     - reg is the regularization coefficient.
 
-    The algorithm used for solving the problem is a Block Coordinate Descent as discussed in [38], algorithm 6.
+    The algorithm used for solving the problem is a Block Coordinate Descent as discussed in [38]_, algorithm 6.
 
     Parameters
     ----------
@@ -2707,9 +2711,8 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict, Ydict, alpha, reg=0., 
     References
     -------
 
-    ..[38]  Cédric Vincent-Cuaz, Titouan Vayer, Rémi Flamary, Marco Corneli, Nicolas Courty.
-            "Online Graph Dictionary Learning"
-            International Conference on Machine Learning (ICML). 2021.
+    .. [38]  Cédric Vincent-Cuaz, Titouan Vayer, Rémi Flamary, Marco Corneli, Nicolas Courty.
+            "Online Graph Dictionary Learning", International Conference on Machine Learning (ICML). 2021.
     """
     C0, Y0, Cdict0, Ydict0 = C, Y, Cdict, Ydict
     nx = get_backend(C0, Y0, Cdict0, Ydict0)
@@ -2796,7 +2799,7 @@ def _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdict, Ydict, Cembedded, Yembedd
     - :math:`\alpha` is the trade-off parameter of Fused Gromov-Wasserstein
     - reg is the regularization coefficient.
 
-    The algorithm used for solving the problem is a Conditional Gradient Descent as discussed in [38], algorithm 7.
+    The algorithm used for solving the problem is a Conditional Gradient Descent as discussed in [38]_, algorithm 7.
 
     Parameters
     ----------
@@ -2966,6 +2969,116 @@ def _linesearch_fused_gromov_wasserstein_unmixing(w, grad_w, x, Y, Cdict, Ydict,
     return gamma, a, b, Cembedded_diff, Yembedded_diff
 
 
+def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss'):
+    r"""Return loss matrices and tensors for semi-relaxed Gromov-Wasserstein fast computation
+
+    Returns the value of :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2}) \otimes \mathbf{T}` with the
+    selected loss function as the loss function of Gromow-Wasserstein discrepancy.
+
+    The matrices are computed as described in Proposition 1 in :ref:`[12] <references-init-matrix>`
+
+    Where :
+
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{T}`: A coupling between those two spaces
+
+    The square-loss function :math:`L(a, b) = |a - b|^2` is read as :
+
+    .. math::
+
+        L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)
+
+        \mathrm{with} \ f_1(a) &= a^2
+
+                        f_2(b) &= b^2
+
+                        h_1(a) &= a
+
+                        h_2(b) &= 2b
+
+    The kl-loss function :math:`L(a, b) = a \log\left(\frac{a}{b}\right) - a + b` is read as :
+
+    .. math::
+
+        L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)
+
+        \mathrm{with} \ f_1(a) &= a \log(a) - a
+
+                        f_2(b) &= b
+
+                        h_1(a) &= a
+
+                        h_2(b) &= \log(b)
+
+    Parameters
+    ----------
+    C1 : array-like, shape (ns, ns)
+        Metric cost matrix in the source space
+    C2 : array-like, shape (nt, nt)
+        Metric cost matrix in the target space
+    T :  array-like, shape (ns, nt)
+        Coupling between source and target spaces
+    p : array-like, shape (ns,)
+
+    Returns
+    -------
+    constC : array-like, shape (ns, nt)
+        Constant :math:`\mathbf{C}` matrix in Eq. (6)
+    hC1 : array-like, shape (ns, ns)
+        :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
+    hC2 : array-like, shape (nt, nt)
+        :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
+
+
+    .. _references-init-matrix:
+    References
+    ----------
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
+
+    .. [43]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+            International Conference on Learning Representations (ICLR), 2021.
+    """
+    C1, C2, p = list_to_array(C1, C2, p)
+    nx = get_backend(C1, C2, p)
+
+    if loss_fun == 'square_loss':
+        def f1(a):
+            return (a**2)
+
+        def f2(b):
+            return (b**2)
+
+        def h1(a):
+            return a
+
+        def h2(b):
+            return 2 * b
+    elif loss_fun == 'kl_loss':
+        def f1(a):
+            return a * nx.log(a + 1e-15) - a
+
+        def f2(b):
+            return b
+
+        def h1(a):
+            return a
+
+        def h2(b):
+            return nx.log(b + 1e-15)
+
+    constC = nx.dot(nx.dot(f1(C1), nx.reshape(p, (-1, 1))),
+                    nx.ones((1, C2.shape[0]), type_as=p))
+
+    hC1 = h1(C1)
+    hC2 = h2(C2)
+    fC2t = f2(C2).T
+    return constC, hC1, hC2, fC2t
+
+
 def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=None, log=False, armijo=False, G0=None, **kwargs):
     r"""
     Returns the semi-relaxed gromov-wasserstein divergence transport from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
@@ -3030,8 +3143,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
 
     References
     ----------
-
-    ..[43]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [43]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2021.
     """
@@ -3061,20 +3173,25 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
         # Check first marginal of G0
         np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
 
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
+    constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
+
     ones_p = np.ones(p.shape[0])
 
-    def f(G):
-        return gwloss(constC, hC1, hC2, G)
+    def f(G, qG):
+        marginal_product = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2t))
+        return gwloss(constC + marginal_product, hC1, hC2, G)
 
     if symmetric:
-        def df(G):
-            return gwggrad(constC, hC1, hC2, G)
+        def df(G, qG):
+            marginal_product = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2t))
+            return gwggrad(constC + marginal_product, hC1, hC2, G)
     else:
-        constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
+        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1t, C2t, p, q, loss_fun)
 
-        def df(G):
-            return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
+        def df(G, qG):
+            marginal_product_1 = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2t))
+            marginal_product_2 = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2))
+            return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
 
     def lp_solver(a, b, Mi, numItermax, log, **kwargs):
 
@@ -3167,7 +3284,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
     References
     ----------
 
-    ..[43]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [43]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2021.
     """
@@ -3201,20 +3318,25 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
         np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
         np.testing.assert_allclose(G0.sum(axis=0), q, atol=1e-08)
 
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
+    constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
+
     ones_p = np.ones(p.shape[0])
 
-    def f(G):
-        return gwloss(constC, hC1, hC2, G)
+    def f(G, qG):
+        marginal_product = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2t))
+        return gwloss(constC + marginal_product, hC1, hC2, G)
 
     if symmetric:
-        def df(G):
-            return gwggrad(constC, hC1, hC2, G)
+        def df(G, qG):
+            marginal_product = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2t))
+            return gwggrad(constC + marginal_product, hC1, hC2, G)
     else:
-        constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
+        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1t, C2t, p, q, loss_fun)
 
-        def df(G):
-            return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
+        def df(G, qG):
+            marginal_product_1 = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2t))
+            marginal_product_2 = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2))
+            return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
 
     def lp_solver(a, b, Mi, numItermax, log, **kwargs):
 
@@ -3360,20 +3482,25 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
         # Check marginals of G0
         np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
 
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
+    constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
+
     ones_p = np.ones(p.shape[0])
 
-    def f(G):
-        return gwloss(constC, hC1, hC2, G)
+    def f(G, qG):
+        marginal_product = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2t))
+        return gwloss(constC + marginal_product, hC1, hC2, G)
 
     if symmetric:
-        def df(G):
-            return gwggrad(constC, hC1, hC2, G)
+        def df(G, qG):
+            marginal_product = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2t))
+            return gwggrad(constC + marginal_product, hC1, hC2, G)
     else:
-        constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
+        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1t, C2t, p, q, loss_fun)
 
-        def df(G):
-            return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
+        def df(G, qG):
+            marginal_product_1 = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2t))
+            marginal_product_2 = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2))
+            return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
 
     def lp_solver(a, b, Mi, numItermax, log, **kwargs):
 
@@ -3507,20 +3634,25 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
         # Check marginals of G0
         np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
 
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
+    constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
+
     ones_p = np.ones(p.shape[0])
 
-    def f(G):
-        return gwloss(constC, hC1, hC2, G)
+    def f(G, qG):
+        marginal_product = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2t))
+        return gwloss(constC + marginal_product, hC1, hC2, G)
 
     if symmetric:
-        def df(G):
-            return gwggrad(constC, hC1, hC2, G)
+        def df(G, qG):
+            marginal_product = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2t))
+            return gwggrad(constC + marginal_product, hC1, hC2, G)
     else:
-        constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
+        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1t, C2t, p, q, loss_fun)
 
-        def df(G):
-            return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
+        def df(G, qG):
+            marginal_product_1 = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2t))
+            marginal_product_2 = nx.dot(ones_p[:, None], nx.dot(qG[None, :], fC2))
+            return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
 
     def lp_solver(a, b, Mi, numItermax, log, **kwargs):
 

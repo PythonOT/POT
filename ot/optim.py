@@ -387,7 +387,7 @@ def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=Non
     a : array-like, shape (ns,)
         samples weights in the source domain
     b : array-like, shape (nt,)
-        samples in the target domain
+        samples weights in the target domain
     M : array-like, shape (ns, nt)
         loss matrix
     f : function
@@ -468,12 +468,12 @@ def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=Non
     bdeltaG = None
 
     if reg2 is None:
-        def cost(G):
-            return nx.sum(M * G) + reg1 * f(G)
+        def cost(G, qG=None):
+            return nx.sum(M * G) + reg1 * f(G, qG)
     else:
-        def cost(G):
-            return nx.sum(M * G) + reg1 * f(G) + reg2 * nx.sum(G * nx.log(G))
-    f_val = cost(G)
+        def cost(G, qG=None):
+            return nx.sum(M * G) + reg1 * f(G, qG) + reg2 * nx.sum(G * nx.log(G))
+    f_val = cost(G, b)
     if log:
         log['loss'].append(f_val)
 
@@ -490,7 +490,7 @@ def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=Non
         old_fval = f_val
 
         # problem linearization
-        Mi = M + reg1 * df(G)
+        Mi = M + reg1 * df(G, b)
         if not (reg2 is None):
             Mi += reg2 * (1 + nx.log(G))
         # set M positive
