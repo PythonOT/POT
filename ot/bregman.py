@@ -3173,8 +3173,7 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
             return loss
 
     else:
-        M = dist(nx.to_numpy(X_s), nx.to_numpy(X_t), metric=metric)
-        M = nx.from_numpy(M, type_as=a)
+        M = dist(X_s, X_t, metric=metric)
 
         if log:
             sinkhorn_loss, log = sinkhorn2(a, b, M, reg, numItermax=numIterMax,
@@ -3287,6 +3286,10 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
         International Conference on Artficial Intelligence and Statistics,
         (AISTATS) 21, 2018
     '''
+    X_s, X_t = list_to_array(X_s, X_t)
+
+    nx = get_backend(X_s, X_t)
+
     if log:
         sinkhorn_loss_ab, log_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
                                                        numIterMax=numIterMax,
@@ -3313,7 +3316,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
         log['log_sinkhorn_a'] = log_a
         log['log_sinkhorn_b'] = log_b
 
-        return max(0, sinkhorn_div), log
+        return nx.maximum(0, sinkhorn_div), log
 
     else:
         sinkhorn_loss_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
@@ -3332,7 +3335,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
                                               warn=warn, **kwargs)
 
         sinkhorn_div = sinkhorn_loss_ab - 0.5 * (sinkhorn_loss_a + sinkhorn_loss_b)
-        return max(0, sinkhorn_div)
+        return nx.maximum(0, sinkhorn_div)
 
 
 def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
