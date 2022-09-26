@@ -143,7 +143,7 @@ def test_dist():
     for metric in metrics_w:
         print(metric)
         ot.dist(x, x, metric=metric, p=3, w=np.random.random((2, )))
-        ot.dist(x, x, metric=metric, p=3, w=None) # check that not having any weight does not cause issues
+        ot.dist(x, x, metric=metric, p=3, w=None)  # check that not having any weight does not cause issues
     for metric in metrics:
         print(metric)
         ot.dist(x, x, metric=metric, p=3)
