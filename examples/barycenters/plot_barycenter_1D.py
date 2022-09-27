@@ -106,7 +106,7 @@ for i, z in enumerate(zs):
     ys = B_l2[:, i]
     verts.append(list(zip(x, ys)))
 
-ax = plt.gcf().gca(projection='3d')
+ax = plt.gcf().add_subplot(projection='3d')
 
 poly = PolyCollection(verts, facecolors=[cmap(a) for a in alpha_list])
 poly.set_alpha(0.7)
@@ -128,7 +128,7 @@ for i, z in enumerate(zs):
     ys = B_wass[:, i]
     verts.append(list(zip(x, ys)))
 
-ax = plt.gcf().gca(projection='3d')
+ax = plt.gcf().add_subplot(projection='3d')
 
 poly = PolyCollection(verts, facecolors=[cmap(a) for a in alpha_list])
 poly.set_alpha(0.7)
