@@ -70,9 +70,12 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
         Metric cost matrix in the source space
     C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    T :  array-like, shape (ns, nt)
-        Coupling between source and target spaces
     p : array-like, shape (ns,)
+        Probability distribution in the source space
+    q : array-like, shape (nt,)
+        Probability distribution in the target space
+    loss_fun : str, optional
+        Name of loss function to use: either 'square_loss' or 'kl_loss' (default='square_loss')
 
     Returns
     -------
@@ -1581,7 +1584,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun,
 
     error = []
 
-    while(err > tol and cpt < max_iter):
+    while (err > tol and cpt < max_iter):
         Cprev = C
 
         T = [gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun,
@@ -1725,7 +1728,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         log_['err_structure'] = []
         log_['Ts_iter'] = []
 
-    while((err_feature > tol or err_structure > tol) and cpt < max_iter):
+    while ((err_feature > tol or err_structure > tol) and cpt < max_iter):
         Cprev = C
         Xprev = X
 
