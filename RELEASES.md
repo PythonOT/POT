@@ -24,6 +24,7 @@ roughly 2^31) (PR #381)
 - Error raised when mass mismatch in emd2 (PR #386)
 - Fixed an issue where a pytorch example would throw an error if executed on a GPU (Issue #389, PR #391)
 - Added a work-around for scipy's bug, where you cannot compute the Hamming distance with a "None" weight attribute. (Issue #400, PR #402)
+- Fixed an issue where the doc could not be built due to some changes in matplotlib's API (Issue #403, PR #402)
 
 
 ## 0.8.2
