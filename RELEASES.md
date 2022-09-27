@@ -3,7 +3,8 @@
 ## 0.8.3dev
 
 #### New features
-
+- Added feature to (Fused) Gromov-Wasserstein solvers to handle asymmetric matrices (PR #401)
+- Added semi-relaxed (Fused) Gromov-Wasserstein solvers + examples (PR #401)
 - Added Generalized Wasserstein Barycenter solver + example (PR #372), fixed graphical details on the example (PR #376)
 - Added Free Support Sinkhorn Barycenter + example (PR #387)
 

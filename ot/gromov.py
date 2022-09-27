@@ -395,7 +395,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
         metric approach to object matching. Foundations of computational
         mathematics 11.4 (2011): 417-487.
 
-    .. [42] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
+    .. [44] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
     """
@@ -537,7 +537,7 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
         Graph Dictionary Learning, International Conference on Machine Learning
         (ICML), 2021.
 
-    .. [42] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
+    .. [44] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
     """
@@ -693,7 +693,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
         application on graphs", International Conference on Machine Learning
         (ICML). 2019.
 
-    .. [42] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
+    .. [44] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
     """
@@ -842,7 +842,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
         Graph Dictionary Learning, International Conference on Machine Learning
         (ICML), 2021.
 
-    .. [42] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
+    .. [44] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
     """
@@ -2056,9 +2056,9 @@ def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, e
         If use_log is True, contains loss evolutions by batches and epochs.
     References
     -------
-
-    .. [38]  Cédric Vincent-Cuaz, Titouan Vayer, Rémi Flamary, Marco Corneli, Nicolas Courty.
-            "Online Graph Dictionary Learning", International Conference on Machine Learning (ICML). 2021.
+    .. [38] C. Vincent-Cuaz, T. Vayer, R. Flamary, M. Corneli, N. Courty, Online
+        Graph Dictionary Learning, International Conference on Machine Learning
+        (ICML), 2021.
     """
     # Handle backend of non-optional arguments
     Cs0 = Cs
@@ -2225,9 +2225,9 @@ def gromov_wasserstein_linear_unmixing(C, Cdict, reg=0., p=None, q=None, tol_out
         reconstruction error
     References
     -------
-
-    .. [38]  Cédric Vincent-Cuaz, Titouan Vayer, Rémi Flamary, Marco Corneli, Nicolas Courty.
-            "Online Graph Dictionary Learning", International Conference on Machine Learning (ICML). 2021.
+    .. [38] C. Vincent-Cuaz, T. Vayer, R. Flamary, M. Corneli, N. Courty, Online
+        Graph Dictionary Learning, International Conference on Machine Learning
+        (ICML), 2021.
     """
     C0, Cdict0 = C, Cdict
     nx = get_backend(C0, Cdict0)
@@ -2524,10 +2524,9 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
         If use_log is True, contains loss evolutions by batches and epoches.
     References
     -------
-
-    .. [38]  Cédric Vincent-Cuaz, Titouan Vayer, Rémi Flamary, Marco Corneli, Nicolas Courty.
-            "Online Graph Dictionary Learning", International Conference on Machine Learning (ICML). 2021.
-
+    .. [38] C. Vincent-Cuaz, T. Vayer, R. Flamary, M. Corneli, N. Courty, Online
+        Graph Dictionary Learning, International Conference on Machine Learning
+        (ICML), 2021.
     """
     Cs0, Ys0 = Cs, Ys
     nx = get_backend(*Cs0, *Ys0)
@@ -2710,9 +2709,9 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict, Ydict, alpha, reg=0., 
         reconstruction error
     References
     -------
-
-    .. [38]  Cédric Vincent-Cuaz, Titouan Vayer, Rémi Flamary, Marco Corneli, Nicolas Courty.
-            "Online Graph Dictionary Learning", International Conference on Machine Learning (ICML). 2021.
+    .. [38] C. Vincent-Cuaz, T. Vayer, R. Flamary, M. Corneli, N. Courty, Online
+        Graph Dictionary Learning, International Conference on Machine Learning
+        (ICML), 2021.
     """
     C0, Y0, Cdict0, Ydict0 = C, Y, Cdict, Ydict
     nx = get_backend(C0, Y0, Cdict0, Ydict0)
@@ -2976,6 +2975,7 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss'):
     selected loss function as the loss function of Gromow-Wasserstein discrepancy.
 
     The matrices are computed as described in Proposition 1 in :ref:`[12] <references-init-matrix>`
+    and adapted to the semi-relaxed problem where the second marginal is not a constant anymore.
 
     Where :
 
@@ -3024,11 +3024,13 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss'):
     Returns
     -------
     constC : array-like, shape (ns, nt)
-        Constant :math:`\mathbf{C}` matrix in Eq. (6)
+        Constant :math:`\mathbf{C}` matrix in Eq. (6) adapted to srGW
     hC1 : array-like, shape (ns, ns)
         :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
     hC2 : array-like, shape (nt, nt)
         :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
+    fC2t: array-like, shape (nt, nt)
+        :math:`\mathbf{f2}(\mathbf{C2})^\top` matrix in Eq. (6)
 
 
     .. _references-init-matrix:
@@ -3038,7 +3040,7 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss'):
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
-    .. [43]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [45]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2021.
     """
@@ -3143,7 +3145,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
 
     References
     ----------
-    .. [43]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [45]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2021.
     """
@@ -3284,7 +3286,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
     References
     ----------
 
-    .. [43]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [45]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2021.
     """
@@ -3381,7 +3383,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
 
 def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', symmetric=None, alpha=0.5, armijo=False, G0=None, log=False, **kwargs):
     r"""
-    Computes the semi-relaxed FGW transport between two graphs (see :ref:`[24] <references-fused-gromov-wasserstein>`)
+    Computes the semi-relaxed FGW transport between two graphs (see :ref:`[45] <references-semirelaxed-fused-gromov-wasserstein>`)
 
     .. math::
         \gamma = \mathop{\arg \min}_\gamma \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
@@ -3401,7 +3403,7 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
 
-    The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[43] <references-semirelaxed-fused-gromov-wasserstein>`
+    The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[45] <references-semirelaxed-fused-gromov-wasserstein>`
 
     Parameters
     ----------
@@ -3448,7 +3450,7 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
         application on graphs", International Conference on Machine Learning
         (ICML). 2019.
 
-    .. [43] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [45] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2021.
     """
@@ -3529,7 +3531,7 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
 
 def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', symmetric=None, alpha=0.5, armijo=False, G0=None, log=False, **kwargs):
     r"""
-    Computes the semi-relaxed FGW divergence between two graphs see (see :ref:`[24] <references-fused-gromov-wasserstein2>`)
+    Computes the semi-relaxed FGW divergence between two graphs (see :ref:`[45] <references-semirelaxed-fused-gromov-wasserstein2>`)
 
     .. math::
         \min_\gamma \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F + \alpha \sum_{i,j,k,l}
@@ -3546,7 +3548,7 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
     - `L` is a loss function to account for the misfit between the similarity matrices
 
     The algorithm used for solving the problem is conditional gradient as
-    discussed in :ref:`[43] <semirelaxed-fused-gromov-wasserstein2>`
+    discussed in :ref:`[45] <semirelaxed-fused-gromov-wasserstein2>`
 
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
@@ -3600,7 +3602,7 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
         application on graphs", International Conference on Machine Learning
         (ICML). 2019.
 
-    .. [43] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [45] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2021.
     """
