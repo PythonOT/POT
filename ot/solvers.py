@@ -87,7 +87,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         - res.potentials : OT dual potentials
         - res.value : Optimal value of the optimization problem
         - res.value_linear : Linear OT loss with the optimal OT plan
-        
+
 
     .. _references-solve:
     References
@@ -185,7 +185,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
                                                                   nx.sum(nx.abs(err_b))))
 
         else:
-            raise(NotImplementedError('Unknown unbalanced_type="{}"'.format(unbalanced_type)))
+            raise (NotImplementedError('Unknown unbalanced_type="{}"'.format(unbalanced_type)))
 
     else:  # regularized OT
 
@@ -226,7 +226,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
                 potentials = (log['alpha'], log['beta'])
 
             else:
-                raise(NotImplementedError('Not implemented reg_type="{}"'.format(reg_type)))
+                raise (NotImplementedError('Not implemented reg_type="{}"'.format(reg_type)))
 
         else:  # unbalanced AND regularized OT
 
@@ -259,7 +259,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
                 value = log['loss']
 
             else:
-                raise(NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
+                raise (NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
 
     res = OTResult(potentials=potentials, value=value,
                    value_linear=value_linear, plan=plan, status=status, backend=nx)

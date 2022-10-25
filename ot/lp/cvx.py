@@ -80,7 +80,7 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver='interior-po
     if weights is None:
         weights = np.ones(A.shape[1]) / A.shape[1]
     else:
-        assert(len(weights) == A.shape[1])
+        assert (len(weights) == A.shape[1])
 
     n_distributions = A.shape[1]
     n = A.shape[0]
