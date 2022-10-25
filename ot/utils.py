@@ -234,7 +234,9 @@ def dist(x1, x2=None, metric='sqeuclidean', p=2, w=None):
         else:
             if isinstance(metric, str) and metric.endswith("minkowski"):
                 return cdist(x1, x2, metric=metric, p=p, w=w)
-            return cdist(x1, x2, metric=metric, w=w)
+            if w is not None:
+                return cdist(x1, x2, metric=metric, w=w)
+            return cdist(x1, x2, metric=metric)
 
 
 def dist0(n, method='lin_square'):
