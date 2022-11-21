@@ -204,6 +204,22 @@ def test_emd_emd2():
     np.testing.assert_allclose(w, 0)
 
 
+def test_omp_emd2():
+    # test emd2 and emd2 with openmp for simple identity
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    u = ot.utils.unif(n)
+
+    M = ot.dist(x, x)
+
+    w = ot.emd2(u, u, M)
+    w2 = ot.emd2(u, u, M, numThreads=2)
+
+    np.testing.assert_allclose(w, w2)
+
+
 def test_emd_empty():
     # test emd and emd2 for simple identity
     n = 100

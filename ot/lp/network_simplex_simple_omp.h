@@ -67,7 +67,7 @@
 //#include "core.h"
 //#include "lmath.h"
 
-#ifdef OMP
+#ifdef _OPENMP
 #include <omp.h>
 #endif
 #include <cmath>
@@ -254,7 +254,7 @@ namespace lemon_omp {
 			// Reset data structures
 			reset();
 			max_iter = maxiters;
-#ifdef OMP
+#ifdef _OPENMP
             if (max_threads < 0) {
                 max_threads = omp_get_max_threads();
             }
@@ -513,7 +513,7 @@ namespace lemon_omp {
 					int j;
 #pragma omp parallel
 					{
-#ifdef OMP
+#ifdef _OPENMP
 						int t = omp_get_thread_num();
 #else
 						int t = 0;
