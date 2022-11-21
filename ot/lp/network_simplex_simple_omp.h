@@ -268,7 +268,6 @@ namespace lemon_omp {
             omp_set_num_threads(num_threads);
 #else
             num_threads = 1;
-			printf("%d\n", 1 / 0);
 #endif
 		}
 
