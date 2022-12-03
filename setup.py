@@ -37,7 +37,7 @@ compile_args = ["/O2" if sys.platform == "win32" else "-O3"]
 link_args = []
 
 if openmp_supported:
-    compile_args += flags + ["/DOMP" if sys.platform == 'win32' else "-DOMP"]
+    compile_args += flags
     link_args += flags
 
 if sys.platform.startswith('darwin'):

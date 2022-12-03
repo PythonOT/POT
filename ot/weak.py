@@ -18,7 +18,7 @@ def weak_optimal_transport(Xa, Xb, a=None, b=None, verbose=False, log=False, G0=
 
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \quad \|X_a-diag(1/a)\gammaX_b\|_F^2
+        \gamma = \mathop{\arg \min}_\gamma \quad \sum_i \mathbf{a}_i \left(\mathbf{X^a}_i - \frac{1}{\mathbf{a}_i} \sum_j \gamma_{ij} \mathbf{X^b}_j \right)^2
 
         s.t. \ \gamma \mathbf{1} = \mathbf{a}
 
@@ -28,7 +28,7 @@ def weak_optimal_transport(Xa, Xb, a=None, b=None, verbose=False, log=False, G0=
 
     where :
 
-    - :math:`X_a` :math:`X_b`  are the sample matrices.
+    - :math:`X^a` and  :math:`X^b`  are the sample matrices.
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are the sample weights
 
 
@@ -49,6 +49,8 @@ def weak_optimal_transport(Xa, Xb, a=None, b=None, verbose=False, log=False, G0=
         Source histogram (uniform weight if empty list)
     b : (nt,) array-like, float
         Target histogram (uniform weight if empty list))
+    G0 : (ns,nt) array-like, float
+        initial guess (default is indep joint density)
     numItermax : int, optional
         Max number of iterations
     numItermaxEmd : int, optional
