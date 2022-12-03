@@ -24,9 +24,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
           unbalanced_type='KL', n_threads=1, max_iter=None, plan_init=None,
           potentials_init=None,
           tol=None, verbose=False):
-    r"""Solve the discrete optimal transport problem and return solution
-
-    The function returns an object of type :any:`OTResult`
+    r"""Solve the discrete optimal transport problem and return :any:`OTResult` object
 
     The function solves the following general optimal transport problem
 
@@ -36,16 +34,8 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     The regularization is selected with :any:`reg` (:math:`\lambda_r`) and :any:`reg_type`. By
     default ``reg=None`` and there is no regularization. The unbalanced marginal
     penalization can be selected with :any:`unbalanced` (:math:`\lambda_u`) and
-    :any:`unbalanced_type`. By default ``reg=None``
-
-    When ``reg>0`` you can choose the type of regularization from :
-
-    - ``reg="entropy"``: entropic regularization :math:`R(\mathbf{T})=\sum_{i,j} T_{i,j}\log(T_{i,j})` from seminal paper :ref:`[2] <references-solve>`.
-    - ``reg="KL"`` (**default**): Kullback–Leibler regularization :math:`R(\mathbf{T})=\sum_{i,j} T_{i,j}\log(\frac{T_{i,j}}{a_i,b_j})` from paper :ref:`[34] <references-solve>`.
-    - ``reg="L2"``: Quadratic regularization :math:`R(\mathbf{T})=\frac{1}{2}\sum_{i,j}
-      T_{i,j}^2` from  paper :ref:`[17] <references-solve>`.
-
-
+    :any:`unbalanced_type`. By default ``unbalanced=None`` and the function
+    solves the exact optimal transport problem (respecting the marginals).
 
     Parameters
     ----------
@@ -83,10 +73,104 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     res : OTResult()
         Result of the optimization problem. The information can be obtained as follows:
 
-        - res.T : OT plan
+        - res.plan : OT plan :math:`\mathbf{T}`
         - res.potentials : OT dual potentials
         - res.value : Optimal value of the optimization problem
         - res.value_linear : Linear OT loss with the optimal OT plan
+
+        See :any:`OTResult` for more information.
+
+    Notes
+    -----
+
+    The following methods are available for solving the OT problems:
+
+    - **Classical exact OT problem** (default parameters):
+
+    .. math::
+        \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F
+
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+
+             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+
+             \mathbf{T} \geq 0
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        res = ot.solve(M,a,b)
+
+    - **Entropic regularized OT** (when ``reg!=None``):
+
+    .. math::
+        \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F + \lambda R(\mathbf{T})
+
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+
+             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+
+             \mathbf{T} \geq 0
+
+    can be solved with the following code:
+    
+    .. code-block:: python
+
+        # default is ``"KL"`` regularization (``reg_type="KL"``)
+        res = ot.solve(M,a,b,reg=1.0)
+        # or for original Sinkhorn paper formulation [2] 
+        res = ot.solve(M,a,b,reg=1.0,reg_type='entropy')
+        
+    - **Quadratic regularized OT** (when ``reg!=None`` and ``reg_type="L2"``):
+
+    .. math::
+        \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F + \lambda R(\mathbf{T})
+
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+
+             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+
+             \mathbf{T} \geq 0
+
+    can be solved with the following code:
+    
+    .. code-block:: python
+
+        res = ot.solve(M,a,b,reg=1.0,reg_type='L2')
+
+    - **Unbalanced OT** (when ``unbalanced!=None``):
+
+    .. math::
+        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})    
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        # default is ``"KL"`` 
+        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0) 
+        # quadratic unbalanced OT
+        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0,unbalanced_type='L2') 
+        # TV = partial OT
+        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0,unbalanced_type='TV')
+
+
+    - **Regularized unbalanced regularized OT** (when ``unbalanced!=None`` and ``reg!=None``):
+
+    .. math::
+        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        # default is ``"KL"`` for both
+        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0) 
+        # quadratic unbalanced OT with KL regularization
+        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0,unbalanced_type='L2') 
+        # both quadratic
+        res = ot.solve(M,a,b,reg=1.0, reg_type='L2',unbalanced=1.0,unbalanced_type='L2') 
 
 
     .. _references-solve:
