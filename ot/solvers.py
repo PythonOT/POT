@@ -114,14 +114,14 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
              \mathbf{T} \geq 0
 
     can be solved with the following code:
-    
+
     .. code-block:: python
 
         # default is ``"KL"`` regularization (``reg_type="KL"``)
         res = ot.solve(M,a,b,reg=1.0)
-        # or for original Sinkhorn paper formulation [2] 
+        # or for original Sinkhorn paper formulation [2]
         res = ot.solve(M,a,b,reg=1.0,reg_type='entropy')
-        
+
     - **Quadratic regularized OT** (when ``reg!=None`` and ``reg_type="L2"``):
 
     .. math::
@@ -134,7 +134,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
              \mathbf{T} \geq 0
 
     can be solved with the following code:
-    
+
     .. code-block:: python
 
         res = ot.solve(M,a,b,reg=1.0,reg_type='L2')
@@ -142,16 +142,16 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     - **Unbalanced OT** (when ``unbalanced!=None``):
 
     .. math::
-        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})    
+        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
 
     can be solved with the following code:
 
     .. code-block:: python
 
-        # default is ``"KL"`` 
-        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0) 
+        # default is ``"KL"``
+        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0)
         # quadratic unbalanced OT
-        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0,unbalanced_type='L2') 
+        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0,unbalanced_type='L2')
         # TV = partial OT
         res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0,unbalanced_type='TV')
 
@@ -166,11 +166,11 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     .. code-block:: python
 
         # default is ``"KL"`` for both
-        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0) 
+        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0)
         # quadratic unbalanced OT with KL regularization
-        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0,unbalanced_type='L2') 
+        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0,unbalanced_type='L2')
         # both quadratic
-        res = ot.solve(M,a,b,reg=1.0, reg_type='L2',unbalanced=1.0,unbalanced_type='L2') 
+        res = ot.solve(M,a,b,reg=1.0, reg_type='L2',unbalanced=1.0,unbalanced_type='L2')
 
 
     .. _references-solve:
