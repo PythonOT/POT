@@ -42,6 +42,7 @@ def test_class_jax_tf():
             otda.fit(Xs=Xs, ys=ys, Xt=Xt)
 
 @pytest.skip_backend("jax")
+@pytest.skip_backend("tf")
 @pytest.mark.parametrize("class_to_test", [ot.da.EMDTransport, ot.da.SinkhornTransport, ot.da.SinkhornLpl1Transport, ot.da.SinkhornL1l2Transport, ot.da.SinkhornL1l2Transport])
 def test_log_da(nx, class_to_test):
 
