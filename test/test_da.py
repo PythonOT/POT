@@ -42,6 +42,25 @@ def test_class_jax_tf():
             otda.fit(Xs=Xs, ys=ys, Xt=Xt)
 
 
+@pytest.mark.parametrize("class_to_test", [ot.da.EMDTransport, ot.da.SinkhornTransport, ot.da.SinkhornLpl1Transport, ot.da.SinkhornL1l2Transport, ot.da.EMDLaplaceTransport])
+def test_log_da(nx, class_to_test):
+
+    ns = 150
+    nt = 200
+
+    Xs, ys = make_data_classif('3gauss', ns)
+    Xt, yt = make_data_classif('3gauss2', nt)
+
+    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
+
+    otda = class_to_test(log=True)
+
+    # test its computed
+    otda.fit(Xs=Xs, ys=ys, Xt=Xt)
+    assert hasattr(otda, "cost_")
+    assert hasattr(otda, "coupling_")
+
+
 @pytest.skip_backend("jax")
 @pytest.skip_backend("tf")
 def test_sinkhorn_lpl1_transport_class(nx):
