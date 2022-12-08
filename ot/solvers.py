@@ -22,8 +22,7 @@ def KL(nx, p, q):
 
 def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
           unbalanced_type='KL', n_threads=1, max_iter=None, plan_init=None,
-          potentials_init=None,
-          tol=None, verbose=False):
+          potentials_init=None, tol=None, verbose=False):
     r"""Solve the discrete optimal transport problem and return :any:`OTResult` object
 
     The function solves the following general optimal transport problem
