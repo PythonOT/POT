@@ -109,6 +109,7 @@ def test_solve_grid(nx, reg, reg_type, unbalanced, unbalanced_type):
     except NotImplementedError:
         pass
 
+
 def test_solve_not_implemented(nx):
 
     n_samples_s = 10

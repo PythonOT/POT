@@ -29,7 +29,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
     .. math::
         \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) +
-        \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + 
+        \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) +
         \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
 
     The regularization is selected with :any:`reg` (:math:`\lambda_r`) and :any:`reg_type`. By
