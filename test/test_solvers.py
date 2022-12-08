@@ -124,10 +124,10 @@ def test_solve_not_implemented(nx):
 
     # test not implemented and check raise
     with pytest.raises(NotImplementedError):
-        sol0 = ot.solve(M, reg=1.0, reg_type='cryptic divergence')
+        ot.solve(M, reg=1.0, reg_type='cryptic divergence')
     with pytest.raises(NotImplementedError):
-        sol0 = ot.solve(M, unbalanced=1.0, unbalanced_type='cryptic divergence')
+        ot.solve(M, unbalanced=1.0, unbalanced_type='cryptic divergence')
 
     # pairs of incompatible divergences
     with pytest.raises(NotImplementedError):
-        sol0 = ot.solve(M, reg=1.0, reg_type='kl', unbalanced=1.0, unbalanced_type='tv')
+        ot.solve(M, reg=1.0, reg_type='kl', unbalanced=1.0, unbalanced_type='tv')
