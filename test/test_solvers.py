@@ -12,7 +12,7 @@ import pytest
 import ot
 
 
-lst_reg = [0, 1.0]
+lst_reg = [None, 1.0]
 lst_reg_type = ['KL', 'entropy', 'L2']
 lst_unbalanced = [None, 0.9]
 lst_unbalanced_type = ['KL', 'L2', 'TV']
@@ -108,3 +108,25 @@ def test_solve_grid(nx, reg, reg_type, unbalanced, unbalanced_type):
         assert_allclose_sol(sol, solb)
     except NotImplementedError:
         pass
+
+def test_solve_not_implemented(nx):
+
+    n_samples_s = 10
+    n_samples_t = 7
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+
+    M = ot.dist(x, y)
+
+    # test not implemented and check raise
+    with pytest.raises(NotImplementedError):
+        sol0 = ot.solve(M, reg=1.0, reg_type='cryptic divergence')
+    with pytest.raises(NotImplementedError):
+        sol0 = ot.solve(M, unbalanced=1.0, unbalanced_type='cryptic divergence')
+
+    # pairs of incompatible divergences
+    with pytest.raises(NotImplementedError):
+        sol0 = ot.solve(M, reg=1.0, reg_type='kl', unbalanced=1.0, unbalanced_type='tv')
