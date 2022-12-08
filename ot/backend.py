@@ -2636,7 +2636,7 @@ class TensorflowBackend(Backend):
         return tf.linalg.sqrtm(a)
 
     def kl_div(self, p, q, eps=1e-16):
-        return tf.sum(p * tf.log(p / q + eps))
+        return tnp.sum(p * tnp.log(p / q + eps))
 
     def isfinite(self, a):
         return tnp.isfinite(a)
