@@ -30,7 +30,8 @@ roughly 2^31) (PR #381)
 - Fixed an issue where the doc could not be built due to some changes in matplotlib's API (Issue #403, PR #402)
 - Replaced Numpy C Compiler with Setuptools C Compiler due to deprecation issues (Issue #408, PR #409)
 - Fixed weak optimal transport docstring (Issue #404, PR #410)
-
+- Fixed error whith parameter `log=True`for `SinkhornLpl1Transport` (Issue #412, 
+PR #413)
 
 ## 0.8.2
 
