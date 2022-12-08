@@ -16,10 +16,6 @@ from .partial import partial_wasserstein_lagrange
 from .smooth import smooth_ot_dual
 
 
-def KL(nx, p, q):
-    return nx.sum(p * nx.log(p / q + 1e-16))
-
-
 def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
           unbalanced_type='KL', n_threads=1, max_iter=None, plan_init=None,
           potentials_init=None, tol=None, verbose=False):
@@ -249,7 +245,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
             value_linear = log['cost']
 
             if unbalanced_type.lower() == 'kl':
-                value = value_linear + unbalanced * (KL(nx, nx.sum(plan, 1), a) + KL(nx, nx.sum(plan, 0), b))
+                value = value_linear + unbalanced * (nx.kl_div(nx.sum(plan, 1), a) + nx.kl_div(nx.sum(plan, 0), b))
             else:
                 err_a = nx.sum(plan, 1) - a
                 err_b = nx.sum(plan, 0) - b
@@ -292,7 +288,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
                 if reg_type.lower() == 'entropy':
                     value = value_linear + reg * nx.sum(plan * nx.log(plan + 1e-16))
                 else:
-                    value = value_linear + reg * KL(nx, plan, a[:, None] * b[None, :])
+                    value = value_linear + reg * nx.kl_div(plan, a[:, None] * b[None, :])
 
                 potentials = (log['log_u'], log['log_v'])
 
@@ -325,7 +321,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
                 value_linear = nx.sum(M * plan)
 
-                value = value_linear + reg * KL(nx, plan, a[:, None] * b[None, :]) + unbalanced * (KL(nx, nx.sum(plan, 1), a) + KL(nx, nx.sum(plan, 0), b))
+                value = value_linear + reg * nx.kl_div(plan, a[:, None] * b[None, :]) + unbalanced * (nx.kl_div(nx.sum(plan, 1), a) + nx.kl_div(nx.sum(plan, 0), b))
 
                 potentials = (log['logu'], log['logv'])
 

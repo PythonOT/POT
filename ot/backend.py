@@ -854,6 +854,21 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def kl_div(self, p, q, eps=1e-16):
+        r"""
+        Computes the Kullback-Leibler divergence.
+
+        This function follows the api from :any:`scipy.stats.entropy`.
+
+        Parameter eps is used to avoid numerical errors and is added in the log.
+
+        .. math::
+             KL(p,q) = \sum_i p(i) \log (\frac{p(i)}{q(i)}+\epsilon)
+
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.entropy.html
+        """
+        raise NotImplementedError()
+
     def isfinite(self, a):
         r"""
         Tests element-wise for finiteness (not infinity and not Not a Number).
@@ -1157,6 +1172,9 @@ class NumpyBackend(Backend):
 
     def sqrtm(self, a):
         return scipy.linalg.sqrtm(a)
+
+    def kl_div(self, p, q, eps=1e-16):
+        return np.sum(p * np.log(p / q + eps))
 
     def isfinite(self, a):
         return np.isfinite(a)
@@ -1480,6 +1498,9 @@ class JaxBackend(Backend):
     def sqrtm(self, a):
         L, V = jnp.linalg.eigh(a)
         return (V * jnp.sqrt(L)[None, :]) @ V.T
+
+    def kl_div(self, p, q, eps=1e-16):
+        return jnp.sum(p * jnp.log(p / q + eps))
 
     def isfinite(self, a):
         return jnp.isfinite(a)
@@ -1901,6 +1922,9 @@ class TorchBackend(Backend):
         L, V = torch.linalg.eigh(a)
         return (V * torch.sqrt(L)[None, :]) @ V.T
 
+    def kl_div(self, p, q, eps=1e-16):
+        return torch.sum(p * torch.log(p / q + eps))
+
     def isfinite(self, a):
         return torch.isfinite(a)
 
@@ -2247,6 +2271,9 @@ class CupyBackend(Backend):  # pragma: no cover
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
         return (V * self.sqrt(L)[None, :]) @ V.T
+
+    def kl_div(self, p, q, eps=1e-16):
+        return cp.sum(p * cp.log(p / q + eps))
 
     def isfinite(self, a):
         return cp.isfinite(a)
@@ -2607,6 +2634,9 @@ class TensorflowBackend(Backend):
 
     def sqrtm(self, a):
         return tf.linalg.sqrtm(a)
+
+    def kl_div(self, p, q, eps=1e-16):
+        return tf.sum(p * tf.log(p / q + eps))
 
     def isfinite(self, a):
         return tnp.isfinite(a)
