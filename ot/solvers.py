@@ -99,7 +99,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
     .. code-block:: python
 
-        res = ot.solve(M,a,b)
+        res = ot.solve(M, a, b)
 
     - **Entropic regularized OT** (when ``reg!=None``):
 
@@ -117,9 +117,9 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     .. code-block:: python
 
         # default is ``"KL"`` regularization (``reg_type="KL"``)
-        res = ot.solve(M,a,b,reg=1.0)
+        res = ot.solve(M, a, b, reg=1.0)
         # or for original Sinkhorn paper formulation [2]
-        res = ot.solve(M,a,b,reg=1.0,reg_type='entropy')
+        res = ot.solve(M, a, b, reg=1.0, reg_type='entropy')
 
     - **Quadratic regularized OT** (when ``reg!=None`` and ``reg_type="L2"``):
 
@@ -192,7 +192,6 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         A., & Peyré, G. (2019, April). Interpolating between optimal transport
         and MMD using Sinkhorn divergences. In The 22nd International Conference
         on Artificial Intelligence and Statistics (pp. 2681-2690). PMLR.
-
 
     """
 
