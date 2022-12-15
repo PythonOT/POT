@@ -320,15 +320,18 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     if len(b.shape) < 2:
         if method.lower() == 'sinkhorn':
             res = sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
-                                 stopThr=stopThr, verbose=verbose, log=log,
+                                 stopThr=stopThr, verbose=verbose,
+                                 log=log, warn=warn,
                                  **kwargs)
         elif method.lower() == 'sinkhorn_log':
             res = sinkhorn_log(a, b, M, reg, numItermax=numItermax,
-                               stopThr=stopThr, verbose=verbose, log=log,
+                               stopThr=stopThr, verbose=verbose,
+                               log=log, warn=warn,
                                **kwargs)
         elif method.lower() == 'sinkhorn_stabilized':
             res = sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
-                                      stopThr=stopThr, verbose=verbose, log=log,
+                                      stopThr=stopThr, verbose=verbose,
+                                      log=log, warn=warn,
                                       **kwargs)
         else:
             raise ValueError("Unknown method '%s'." % method)
@@ -341,15 +344,18 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
         if method.lower() == 'sinkhorn':
             return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
-                                  stopThr=stopThr, verbose=verbose, log=log,
+                                  stopThr=stopThr, verbose=verbose,
+                                  log=log, warn=warn,
                                   **kwargs)
         elif method.lower() == 'sinkhorn_log':
             return sinkhorn_log(a, b, M, reg, numItermax=numItermax,
-                                stopThr=stopThr, verbose=verbose, log=log,
+                                stopThr=stopThr, verbose=verbose,
+                                log=log, warn=warn,
                                 **kwargs)
         elif method.lower() == 'sinkhorn_stabilized':
             return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
-                                       stopThr=stopThr, verbose=verbose, log=log,
+                                       stopThr=stopThr, verbose=verbose,
+                                       log=log, warn=warn,
                                        **kwargs)
         else:
             raise ValueError("Unknown method '%s'." % method)
