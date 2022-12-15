@@ -275,6 +275,8 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.sqrtm(M)
     with pytest.raises(NotImplementedError):
+        nx.kl_div(M, M)
+    with pytest.raises(NotImplementedError):
         nx.isfinite(M)
     with pytest.raises(NotImplementedError):
         nx.array_equal(M, M)
@@ -591,6 +593,10 @@ def test_func_backends(nx):
         A = nx.sqrtm(SquareMb.T @ SquareMb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("matrix square root")
+
+        A = nx.kl_div(nx.abs(Mb), nx.abs(Mb) + 1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("Kullback-Leibler divergence")
 
         A = nx.concatenate([vb, nx.from_numpy(np.array([np.inf, np.nan]))], axis=0)
         A = nx.isfinite(A)

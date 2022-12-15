@@ -8,6 +8,8 @@ Partial OT solvers
 
 import numpy as np
 from .lp import emd
+from .backend import get_backend
+from .utils import list_to_array
 
 
 def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
@@ -114,14 +116,22 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
     ot.partial.partial_wasserstein : Partial Wasserstein with fixed mass
     """
 
-    if np.sum(a) > 1 or np.sum(b) > 1:
+    a, b, M = list_to_array(a, b, M)
+
+    nx = get_backend(a, b, M)
+
+    if nx.sum(a) > 1 or nx.sum(b) > 1:
         raise ValueError("Problem infeasible. Check that a and b are in the "
                          "simplex")
 
     if reg_m is None:
-        reg_m = np.max(M) + 1
-    if reg_m < -np.max(M):
-        return np.zeros((len(a), len(b)))
+        reg_m = float(nx.max(M)) + 1
+    if reg_m < -nx.max(M):
+        return nx.zeros((len(a), len(b)), type_as=M)
+
+    a0, b0, M0 = a, b, M
+    # convert to humpy
+    a, b, M = nx.to_numpy(a, b, M)
 
     eps = 1e-20
     M = np.asarray(M, dtype=np.float64)
@@ -149,10 +159,16 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
     gamma = np.zeros((len(a), len(b)))
     gamma[np.ix_(idx_x, idx_y)] = gamma_extended[:-nb_dummies, :-nb_dummies]
 
+    # convert back to backend
+    gamma = nx.from_numpy(gamma, type_as=M0)
+
     if log_emd['warning'] is not None:
         raise ValueError("Error in the EMD resolution: try to increase the"
                          " number of dummy points")
-    log_emd['cost'] = np.sum(gamma * M)
+    log_emd['cost'] = nx.sum(gamma * M0)
+    log_emd['u'] = nx.from_numpy(log_emd['u'], type_as=a0)
+    log_emd['v'] = nx.from_numpy(log_emd['v'], type_as=b0)
+
     if log:
         return gamma, log_emd
     else:
@@ -250,14 +266,22 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     entropic regularization parameter
     """
 
+    a, b, M = list_to_array(a, b, M)
+
+    nx = get_backend(a, b, M)
+
     if m is None:
         return partial_wasserstein_lagrange(a, b, M, log=log, **kwargs)
     elif m < 0:
         raise ValueError("Problem infeasible. Parameter m should be greater"
                          " than 0.")
-    elif m > np.min((np.sum(a), np.sum(b))):
+    elif m > nx.min((nx.sum(a), nx.sum(b))):
         raise ValueError("Problem infeasible. Parameter m should lower or"
                          " equal than min(|a|_1, |b|_1).")
+
+    a0, b0, M0 = a, b, M
+    # convert to humpy
+    a, b, M = nx.to_numpy(a, b, M)
 
     b_extended = np.append(b, [(np.sum(a) - m) / nb_dummies] * nb_dummies)
     a_extended = np.append(a, [(np.sum(b) - m) / nb_dummies] * nb_dummies)
@@ -267,15 +291,20 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
 
     gamma, log_emd = emd(a_extended, b_extended, M_extended, log=True,
                          **kwargs)
+
+    gamma = nx.from_numpy(gamma[:len(a), :len(b)], type_as=M)
+
     if log_emd['warning'] is not None:
         raise ValueError("Error in the EMD resolution: try to increase the"
                          " number of dummy points")
-    log_emd['partial_w_dist'] = np.sum(M * gamma[:len(a), :len(b)])
+    log_emd['partial_w_dist'] = nx.sum(M0 * gamma)
+    log_emd['u'] = nx.from_numpy(log_emd['u'][:len(a)], type_as=a0)
+    log_emd['v'] = nx.from_numpy(log_emd['v'][:len(b)], type_as=b0)
 
     if log:
-        return gamma[:len(a), :len(b)], log_emd
+        return gamma, log_emd
     else:
-        return gamma[:len(a), :len(b)]
+        return gamma
 
 
 def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
