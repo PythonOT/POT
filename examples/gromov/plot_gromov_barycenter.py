@@ -110,8 +110,7 @@ for nb in range(4):
             if shapes[nb][i, j] < 0.95:
                 xs[nb].append([j, 8 - i])
 
-xs = np.array([np.array(xs[0]), np.array(xs[1]),
-               np.array(xs[2]), np.array(xs[3])])
+xs = [np.array(xs[s]) for s in range(S)]
 
 ##############################################################################
 # Barycenter computation
