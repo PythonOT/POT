@@ -32,6 +32,8 @@ roughly 2^31) (PR #381)
 - Fixed weak optimal transport docstring (Issue #404, PR #410)
 - Fixed error whith parameter `log=True`for `SinkhornLpl1Transport` (Issue #412, 
 PR #413)
+- Fixed a bug breaking an example where we would try to make an array of arrays of different shapes (Issue #424, PR #425)
+
 
 ## 0.8.2
 
