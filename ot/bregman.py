@@ -3247,7 +3247,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
     \gamma^*_b , \mathbf{M_b} \rangle_F)/2`.
 
     .. note: The current implementation does not account for the entropic contributions and thus differs from the
-    Sinkhorn divergence as introduced in the literature. The possibility to account for the entropic regularization
+    Sinkhorn divergence as introduced in the literature. The possibility to account for the entropic contributions
     will be provided in a future release.
 
 
