@@ -207,6 +207,9 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target
       weights (histograms, both sum to 1)
 
+    and returns :math:`\langle \gamma^*, \mathbf{M} \rangle_F` (without
+    the entropic contribution).
+
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends.
 
@@ -3059,6 +3062,9 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
       :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
+    and returns :math:`\langle \gamma^*, \mathbf{M} \rangle_F` (without
+    the entropic contribution).
+
 
     Parameters
     ----------
@@ -3236,6 +3242,13 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
     - :math:`\Omega` is the entropic regularization term
       :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
+
+    and returns :math:`\langle \gamma^*, \mathbf{M} \rangle_F -(\langle \gamma^*_a, \mathbf{M_a} \rangle_F + \langle
+    \gamma^*_b , \mathbf{M_b} \rangle_F)/2`.
+
+    .. note: The current implementation does not account for the entropic contributions and thus differs from the
+    Sinkhorn divergence as introduced in the literature. The possibility to account for the entropic contributions
+    will be provided in a future release.
 
 
     Parameters
