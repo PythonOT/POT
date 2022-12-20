@@ -32,6 +32,7 @@ roughly 2^31) (PR #381)
 - Fixed weak optimal transport docstring (Issue #404, PR #410)
 - Fixed error whith parameter `log=True`for `SinkhornLpl1Transport` (Issue #412, 
 PR #413)
+- Fix an issue where the parameter `stopThr` in `empirical_sinkhorn_divergence` was rendered useless by subcalls that explicitly specified `stopThr=1e-9` (Issue #421).
 
 ## 0.8.2
 
