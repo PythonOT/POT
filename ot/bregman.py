@@ -207,6 +207,9 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target
       weights (histograms, both sum to 1)
 
+    and returns :math:`\langle \gamma^*, \mathbf{M} \rangle_F` (without
+    the entropic contribution).
+
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends.
 
@@ -1284,7 +1287,7 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
         regi = get_reg(ii)
 
         G, logi = sinkhorn_stabilized(a, b, M, regi,
-                                      numItermax=numInnerItermax, stopThr=1e-9,
+                                      numItermax=numInnerItermax, stopThr=stopThr,
                                       warmstart=(alpha, beta), verbose=False,
                                       print_period=20, tau=tau, log=True)
 
@@ -3065,6 +3068,9 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
       :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
+    and returns :math:`\langle \gamma^*, \mathbf{M} \rangle_F` (without
+    the entropic contribution).
+
 
     Parameters
     ----------
@@ -3243,6 +3249,13 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
       :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
+    and returns :math:`\langle \gamma^*, \mathbf{M} \rangle_F -(\langle \gamma^*_a, \mathbf{M_a} \rangle_F + \langle
+    \gamma^*_b , \mathbf{M_b} \rangle_F)/2`.
+
+    .. note: The current implementation does not account for the entropic contributions and thus differs from the
+    Sinkhorn divergence as introduced in the literature. The possibility to account for the entropic contributions
+    will be provided in a future release.
+
 
     Parameters
     ----------
@@ -3299,17 +3312,17 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
     if log:
         sinkhorn_loss_ab, log_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
                                                        numIterMax=numIterMax,
-                                                       stopThr=1e-9, verbose=verbose,
+                                                       stopThr=stopThr, verbose=verbose,
                                                        log=log, warn=warn, **kwargs)
 
         sinkhorn_loss_a, log_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric,
                                                      numIterMax=numIterMax,
-                                                     stopThr=1e-9, verbose=verbose,
+                                                     stopThr=stopThr, verbose=verbose,
                                                      log=log, warn=warn, **kwargs)
 
         sinkhorn_loss_b, log_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric,
                                                      numIterMax=numIterMax,
-                                                     stopThr=1e-9, verbose=verbose,
+                                                     stopThr=stopThr, verbose=verbose,
                                                      log=log, warn=warn, **kwargs)
 
         sinkhorn_div = sinkhorn_loss_ab - 0.5 * (sinkhorn_loss_a + sinkhorn_loss_b)
@@ -3326,17 +3339,17 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     else:
         sinkhorn_loss_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
-                                               numIterMax=numIterMax, stopThr=1e-9,
+                                               numIterMax=numIterMax, stopThr=stopThr,
                                                verbose=verbose, log=log,
                                                warn=warn, **kwargs)
 
         sinkhorn_loss_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric,
-                                              numIterMax=numIterMax, stopThr=1e-9,
+                                              numIterMax=numIterMax, stopThr=stopThr,
                                               verbose=verbose, log=log,
                                               warn=warn, **kwargs)
 
         sinkhorn_loss_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric,
-                                              numIterMax=numIterMax, stopThr=1e-9,
+                                              numIterMax=numIterMax, stopThr=stopThr,
                                               verbose=verbose, log=log,
                                               warn=warn, **kwargs)
 

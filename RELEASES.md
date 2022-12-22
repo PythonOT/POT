@@ -33,6 +33,10 @@ roughly 2^31) (PR #381)
 - Fixed error with parameter `log=True`for `SinkhornLpl1Transport` (Issue #412, 
 PR #413)
 - Fixed an issue about `warn` parameter in `sinkhorn2` (PR #417)
+- Fix an issue where the parameter `stopThr` in `empirical_sinkhorn_divergence` was rendered useless by subcalls 
+  that explicitly specified `stopThr=1e-9` (Issue #421, PR #422).
+- Fixed a bug breaking an example where we would try to make an array of arrays of different shapes (Issue #424, PR #425)
+
 
 ## 0.8.2
 
