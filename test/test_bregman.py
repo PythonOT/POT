@@ -7,6 +7,7 @@
 #
 # License: MIT License
 
+import warnings
 from itertools import product
 
 import numpy as np
@@ -58,7 +59,10 @@ def test_convergence_warning(method):
         with pytest.warns(UserWarning):
             ot.barycenter(A, M, 1, method=method, stopThr=0, numItermax=1)
         with pytest.warns(UserWarning):
-            ot.sinkhorn2(a1, a2, M, 1, method=method, stopThr=0, numItermax=1)
+            ot.sinkhorn2(a1, a2, M, 1, method=method, stopThr=0, numItermax=1, warn=True)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            ot.sinkhorn2(a1, a2, M, 1, method=method, stopThr=0, numItermax=1, warn=False)
 
 
 def test_not_implemented_method():
