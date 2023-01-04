@@ -79,6 +79,8 @@ def test_partial_wasserstein_lagrange():
 
     w0, log0 = ot.partial.partial_wasserstein_lagrange(p, q, M, 1, log=True)
 
+    w0, log0 = ot.partial.partial_wasserstein_lagrange(p, q, M, 100, log=True)
+
 
 def test_partial_wasserstein():
 

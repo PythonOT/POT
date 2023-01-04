@@ -147,6 +147,8 @@ def sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, p=2,
 
     if projections is None:
         projections = get_random_projections(d, n_projections, seed, backend=nx, type_as=X_s)
+    else:
+        n_projections = projections.shape[1]
 
     X_s_projections = nx.dot(X_s, projections)
     X_t_projections = nx.dot(X_t, projections)

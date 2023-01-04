@@ -44,6 +44,7 @@ Original code from https://github.com/mblondel/smooth-ot/
 
 import numpy as np
 from scipy.optimize import minimize
+from .backend import get_backend
 
 
 def projection_simplex(V, z=1, axis=None):
@@ -511,6 +512,8 @@ def smooth_ot_dual(a, b, M, reg, reg_type='l2', method="L-BFGS-B", stopThr=1e-9,
 
     """
 
+    nx = get_backend(a, b, M)
+
     if reg_type.lower() in ['l2', 'squaredl2']:
         regul = SquaredL2(gamma=reg)
     elif reg_type.lower() in ['entropic', 'negentropy', 'kl']:
@@ -518,15 +521,19 @@ def smooth_ot_dual(a, b, M, reg, reg_type='l2', method="L-BFGS-B", stopThr=1e-9,
     else:
         raise NotImplementedError('Unknown regularization')
 
+    a0, b0, M0 = a, b, M
+    # convert to humpy
+    a, b, M = nx.to_numpy(a, b, M)
+
     # solve dual
     alpha, beta, res = solve_dual(a, b, M, regul, max_iter=numItermax,
                                   tol=stopThr, verbose=verbose)
 
     # reconstruct transport matrix
-    G = get_plan_from_dual(alpha, beta, M, regul)
+    G = nx.from_numpy(get_plan_from_dual(alpha, beta, M, regul), type_as=M0)
 
     if log:
-        log = {'alpha': alpha, 'beta': beta, 'res': res}
+        log = {'alpha': nx.from_numpy(alpha, type_as=a0), 'beta': nx.from_numpy(beta, type_as=b0), 'res': res}
         return G, log
     else:
         return G

@@ -110,6 +110,20 @@ def test_max_sliced_different_dists():
     assert res > 0.
 
 
+def test_sliced_same_proj():
+    n_projections = 10
+    seed = 12
+    rng = np.random.RandomState(0)
+    X = rng.randn(8, 2)
+    Y = rng.randn(8, 2)
+    cost1, log1 = ot.sliced_wasserstein_distance(X, Y, seed=seed, n_projections=n_projections, log=True)
+    P = get_random_projections(X.shape[1], n_projections=10, seed=seed)
+    cost2, log2 = ot.sliced_wasserstein_distance(X, Y, projections=P, log=True)
+
+    assert np.allclose(log1['projections'], log2['projections'])
+    assert np.isclose(cost1, cost2)
+
+
 def test_sliced_backend(nx):
 
     n = 100

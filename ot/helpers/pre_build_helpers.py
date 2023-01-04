@@ -4,34 +4,14 @@ import os
 import sys
 import glob
 import tempfile
-import setuptools  # noqa
 import subprocess
 
-from distutils.dist import Distribution
-from distutils.sysconfig import customize_compiler
-from numpy.distutils.ccompiler import new_compiler
-from numpy.distutils.command.config_compiler import config_cc
+from setuptools.command.build_ext import customize_compiler, new_compiler
 
 
 def _get_compiler():
-    """Get a compiler equivalent to the one that will be used to build POT
-    Handles compiler specified as follows:
-        - python setup.py build_ext --compiler=<compiler>
-        - CC=<compiler> python setup.py build_ext
-    """
-    dist = Distribution({'script_name': os.path.basename(sys.argv[0]),
-                         'script_args': sys.argv[1:],
-                         'cmdclass': {'config_cc': config_cc}})
-
-    cmd_opts = dist.command_options.get('build_ext')
-    if cmd_opts is not None and 'compiler' in cmd_opts:
-        compiler = cmd_opts['compiler'][1]
-    else:
-        compiler = None
-
-    ccompiler = new_compiler(compiler=compiler)
+    ccompiler = new_compiler()
     customize_compiler(ccompiler)
-
     return ccompiler
 
 
