@@ -31,6 +31,7 @@ API and modules
    sliced
    weak
    factored
+   gaussian
 
 .. autosummary::
    :toctree: ../modules/generated/

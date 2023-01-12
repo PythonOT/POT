@@ -40,6 +40,34 @@ def get_1D_gauss(n, m, sigma):
     return make_1D_gauss(n, m, sigma)
 
 
+def make_1D_samples_gauss(n, m, sigma, random_state=None):
+    r"""Return `n` samples drawn from 1D gaussian :math:`\mathcal{N}(m, \sigma)`
+
+    Parameters
+    ----------
+    n : int
+        number of samples to make
+    m : float
+        mean value of the gaussian distribution
+    sigma : float
+        std of the gaussian distribution
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    X : ndarray, shape (`n`, 1)
+        n samples drawn from :math:`\mathcal{N}(m, \sigma)`.
+    """
+
+    generator = check_random_state(random_state)
+    res = generator.randn(n, 1) * np.sqrt(sigma) + m
+    return res
+
+
 def make_2D_samples_gauss(n, m, sigma, random_state=None):
     r"""Return `n` samples drawn from 2D gaussian :math:`\mathcal{N}(m, \sigma)`
 
