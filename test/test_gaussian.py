@@ -5,7 +5,6 @@
 # License: MIT License
 
 import numpy as np
-import pytest
 
 import ot
 from ot.datasets import make_data_classif
@@ -31,7 +30,8 @@ def test_linear_mapping(nx):
 
 
 def test_bures_wasserstein_distance(nx):
-    ms, mt, Cs, Ct = [0], [10], [[1]], [[1]]
+    ms, mt = np.array([0]), np.array([10])
+    Cs, Ct = np.array([[1]]).astype(np.float32), np.array([[1]]).astype(np.float32)
     msb, mtb, Csb, Ctb = nx.from_numpy(ms, mt, Cs, Ct)
     Wb = ot.gaussian.bures_wasserstein_distance(msb, mtb, Csb, Ctb)
 
