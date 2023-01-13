@@ -32,7 +32,8 @@ def test_linear_mapping(nx):
 
 def test_bures_wasserstein_distance(nx):
     ms, mt, Cs, Ct = [0], [10], [[1]], [[1]]
-    Wb = ot.gaussian.bures_wasserstein_distance(ms, mt, Cs, Ct)
+    msb, mtb, Csb, Ctb = nx.from_numpy(ms, mt, Cs, Ct)
+    Wb = ot.gaussian.bures_wasserstein_distance(msb, mtb, Csb, Ctb)
 
     np.testing.assert_allclose(10, nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
 
