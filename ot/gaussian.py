@@ -112,7 +112,7 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
         log['Cs'] = Cs
         log['Ct'] = Ct
         log['Cs12'] = Cs12
-        log['Cs_12'] = Cs_12
+        log['Cs12inv'] = Cs12inv
         return A, b, log
     else:
         return A, b
