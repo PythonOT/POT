@@ -19,7 +19,7 @@ from .lp import emd
 from .utils import unif, dist, kernel, cost_normalization, label_normalization, laplacian, dots
 from .utils import list_to_array, check_params, BaseEstimator
 from .unbalanced import sinkhorn_unbalanced
-from .gaussian import OT_mapping_linear
+from .gaussian import empirical_bures_wasserstein_mapping
 from .optim import cg
 from .optim import gcg
 
@@ -1271,10 +1271,10 @@ class LinearTransport(BaseTransport):
         self.mu_t = self.distribution_estimation(Xt)
 
         # coupling estimation
-        returned_ = OT_mapping_linear(Xs, Xt, reg=self.reg,
-                                      ws=nx.reshape(self.mu_s, (-1, 1)),
-                                      wt=nx.reshape(self.mu_t, (-1, 1)),
-                                      bias=self.bias, log=self.log)
+        returned_ = empirical_bures_wasserstein_mapping(Xs, Xt, reg=self.reg,
+                                                        ws=nx.reshape(self.mu_s, (-1, 1)),
+                                                        wt=nx.reshape(self.mu_t, (-1, 1)),
+                                                        bias=self.bias, log=self.log)
 
         # deal with the value of log
         if self.log:

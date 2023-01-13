@@ -12,8 +12,88 @@ from .utils import dots
 from .utils import list_to_array
 
 
-def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
-                      wt=None, bias=True, log=False):
+def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
+    r"""Return OT linear operator between samples.
+
+    The function estimates the optimal linear operator that aligns the two
+    empirical distributions. This is equivalent to estimating the closed
+    form mapping between two Gaussian distributions :math:`\mathcal{N}(\mu_s,\Sigma_s)`
+    and :math:`\mathcal{N}(\mu_t,\Sigma_t)` as proposed in
+    :ref:`[1] <references-OT-mapping-linear>` and discussed in remark 2.29 in
+    :ref:`[2] <references-OT-mapping-linear>`.
+
+    The linear operator from source to target :math:`M`
+
+    .. math::
+        M(\mathbf{x})= \mathbf{A} \mathbf{x} + \mathbf{b}
+
+    where :
+
+    .. math::
+        \mathbf{A} &= \Sigma_s^{-1/2} \left(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2} \right)^{1/2}
+        \Sigma_s^{-1/2}
+
+        \mathbf{b} &= \mu_t - \mathbf{A} \mu_s
+
+    Parameters
+    ----------
+    ms : array-like (d,)
+        mean of the source distribution
+    mt : array-like (d,)
+        mean of the target distribution
+    Cs : array-like (d,)
+        covariance of the source distribution
+    Ct : array-like (d,)
+        covariance of the target distribution
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    A : (d, d) array-like
+        Linear operator
+    b : (1, d) array-like
+        bias
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    .. _references-OT-mapping-linear:
+    References
+    ----------
+    .. [1] Knott, M. and Smith, C. S. "On the optimal mapping of
+        distributions", Journal of Optimization Theory and Applications
+        Vol 43, 1984
+
+    .. [2] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
+        Transport", 2018.
+    """
+    ms, mt, Cs, Ct = list_to_array(ms, mt, Cs, Ct)
+    nx = get_backend(ms, mt, Cs, Ct)
+
+    Cs12 = nx.sqrtm(Cs)
+    Cs12inv = nx.inv(Cs12)
+
+    M0 = nx.sqrtm(dots(Cs12, Ct, Cs12))
+
+    A = dots(Cs12inv, M0, Cs12inv)
+
+    b = mt - nx.dot(ms, A)
+
+    if log:
+        log = {}
+        log['Cs'] = Cs
+        log['Ct'] = Ct
+        log['Cs12'] = Cs12
+        log['Cs12inv'] = Cs12inv
+        return A, b, log
+    else:
+        return A, b
+
+
+def empirical_bures_wasserstein_mapping(xs, xt, reg=1e-6, ws=None,
+                                        wt=None, bias=True, log=False):
     r"""Return OT linear operator between samples.
 
     The function estimates the optimal linear operator that aligns the two
