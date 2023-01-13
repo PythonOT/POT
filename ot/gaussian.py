@@ -73,8 +73,6 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
 
     .. [2] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
         Transport", 2018.
-
-
     """
     xs, xt = list_to_array(xs, xt)
     nx = get_backend(xs, xt)
@@ -128,7 +126,7 @@ def bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
     empirical distributions source :math:`\mu_s` and target :math:`\mu_t`,
     discussed in remark 2.31 :ref:`[1] <references-bures-wasserstein-distance>`.
 
-    The Bures Wasserstein distance beween source and target distribution :math:`\mathcal{W}`
+    The Bures Wasserstein distance between source and target distribution :math:`\mathcal{W}`
 
     .. math::
         \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \mathcal{B}(\Sigma_s, \Sigma_t)^{2}
