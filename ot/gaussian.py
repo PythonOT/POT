@@ -168,8 +168,6 @@ def bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
 
     .. [1] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
         Transport", 2018.
-
-
     """
     xs, xt = list_to_array(xs, xt)
     nx = get_backend(xs, xt)
