@@ -11,8 +11,6 @@ import ot
 from ot.datasets import make_data_classif
 
 
-@pytest.skip_backend("jax")
-@pytest.skip_backend("tf")
 def test_linear_mapping(nx):
     ns = 50
     nt = 50
@@ -32,8 +30,6 @@ def test_linear_mapping(nx):
     np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
 
 
-@pytest.skip_backend("jax")
-@pytest.skip_backend("tf")
 def test_bures_wasserstein_distance(nx):
     ms, mt, Cs, Ct = [0], [10], [[1]], [[1]]
     Wb = ot.gaussian.bures_wasserstein_distance(ms, mt, Cs, Ct)
@@ -41,8 +37,6 @@ def test_bures_wasserstein_distance(nx):
     np.testing.assert_allclose(10, nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
 
 
-@pytest.skip_backend("jax")
-@pytest.skip_backend("tf")
 def test_empirical_bures_wasserstein_distance(nx):
     ns = 200
     nt = 200
