@@ -1,4 +1,4 @@
-"""Tests for module da on Domain Adaptation """
+"""Tests for module gaussian"""
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #
@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 import ot
-from ot.datasets import make_data_classif, make_1D_samples_gauss
+from ot.datasets import make_data_classif
 
 
 @pytest.skip_backend("jax")
@@ -35,13 +35,22 @@ def test_linear_mapping(nx):
 @pytest.skip_backend("jax")
 @pytest.skip_backend("tf")
 def test_bures_wasserstein_distance(nx):
+    ms, mt, Cs, Ct = [0], [10], [[1]], [[1]]
+    Wb = ot.gaussian.bures_wasserstein_distance(ms, mt, Cs, Ct)
+
+    np.testing.assert_allclose(10, nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
+
+
+@pytest.skip_backend("jax")
+@pytest.skip_backend("tf")
+def test_empirical_bures_wasserstein_distance(nx):
     ns = 200
     nt = 200
 
-    Xs = make_1D_samples_gauss(ns, 0, 1, random_state=42)
-    Xt = make_1D_samples_gauss(nt, 10, 1, random_state=42)
-
+    rng = np.random.RandomState(1)
+    Xs = rng.normal(0, 1, ns)[:, np.newaxis]
+    Xt = rng.normal(10, 1, nt)[:, np.newaxis]
     Xsb, Xtb = nx.from_numpy(Xs, Xt)
-    Wb = ot.gaussian.bures_wasserstein_distance(Xsb, Xtb, bias=True)
+    Wb = ot.gaussian.empirical_bures_wasserstein_distance(Xsb, Xtb, bias=True)
 
     np.testing.assert_allclose(10, nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)

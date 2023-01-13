@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Domain adaptation with optimal transport
+Optimal transport for Gaussian distributions
 """
 
 # Author: Theo Gnassounou <theo.gnassounou@inria.fr>
@@ -99,7 +99,7 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
     Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt) + reg * nx.eye(d, type_as=xt)
 
     Cs12 = nx.sqrtm(Cs)
-    Cs_12 = nx.inv(Cs12)
+    Cs12inv = nx.inv(Cs12)
 
     M0 = nx.sqrtm(dots(Cs12, Ct, Cs12))
 
@@ -118,9 +118,70 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
         return A, b
 
 
-def bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
-                               wt=None, bias=True, log=False):
+def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     r"""Return Bures Wasserstein distance between samples.
+
+    The function estimates the Bures-Wasserstein distance between two
+    empirical distributions source :math:`\mu_s` and target :math:`\mu_t`,
+    discussed in remark 2.31 :ref:`[1] <references-bures-wasserstein-distance>`.
+
+    The Bures Wasserstein distance between source and target distribution :math:`\mathcal{W}`
+
+    .. math::
+        \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \mathcal{B}(\Sigma_s, \Sigma_t)^{2}
+
+    where :
+
+    .. math::
+        \mathbf{B}(\Sigma_s, \Sigma_t)^{2} &= \text{\Sigma_s^{1/2} + \Sigma_t^{1/2} - 2 \left(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2} \right)^{1/2}
+
+    Parameters
+    ----------
+    ms : array-like (d,)
+        mean of the source distribution
+    mt : array-like (d,)
+        mean of the target distribution
+    Cs : array-like (d,)
+        covariance of the source distribution
+    Ct : array-like (d,)
+        covariance of the target distribution
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    W : float
+        bures Wasserstein distance
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    .. _references-bures-wasserstein-distance:
+    References
+    ----------
+
+    .. [1] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
+        Transport", 2018.
+    """
+    ms, mt, Cs, Ct = list_to_array(ms, mt, Cs, Ct)
+    nx = get_backend(ms, mt, Cs, Ct)
+
+    Cs12 = nx.sqrtm(Cs)
+
+    B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
+    W = nx.norm(ms - mt) + B
+    if log:
+        log = {}
+        log['Cs12'] = Cs12
+        return W, log
+    else:
+        return W
+
+
+def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
+                                         wt=None, bias=True, log=False):
+    r"""Return Bures Wasserstein distance from mean and covariance of distribution.
 
     The function estimates the Bures-Wasserstein distance between two
     empirical distributions source :math:`\mu_s` and target :math:`\mu_t`,
@@ -195,7 +256,6 @@ def bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
     Cs12 = nx.sqrtm(Cs)
 
     B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
-    print(nx.norm(mxs - mxt), mxs, mxt)
     W = nx.norm(mxs - mxt) + B
     if log:
         log = {}
