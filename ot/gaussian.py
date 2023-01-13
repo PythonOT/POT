@@ -103,7 +103,7 @@ def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
 
     M0 = nx.sqrtm(dots(Cs12, Ct, Cs12))
 
-    A = dots(Cs_12, M0, Cs_12)
+    A = dots(Cs12inv, M0, Cs12inv)
 
     b = mxt - nx.dot(mxs, A)
 
