@@ -61,7 +61,7 @@ plt.plot(xt[:, 0], xt[:, 1], 'o')
 # Estimate linear mapping and transport
 # -------------------------------------
 
-Ae, be = ot.da.OT_mapping_linear(xs, xt)
+Ae, be = ot.gaussian.empirical_bures_wasserstein_mapping(xs, xt)
 
 xst = xs.dot(Ae) + be
 
