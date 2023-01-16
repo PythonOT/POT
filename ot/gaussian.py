@@ -213,7 +213,7 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     where :
 
     .. math::
-        \mathbf{B}(\Sigma_s, \Sigma_t)^{2} &= \text{\Sigma_s^{1/2} + \Sigma_t^{1/2} - 2 \left(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2} \right)^{1/2}
+        \mathbf{B}(\Sigma_s, \Sigma_t)^{2} = \text{\Sigma_s^{1/2} + \Sigma_t^{1/2} - 2 \left(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2} \right)^{1/2}
 
     Parameters
     ----------
@@ -232,7 +232,7 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     Returns
     -------
     W : float
-        bures Wasserstein distance
+        Bures Wasserstein distance
     log : dict
         log dictionary return only if log==True in parameters
 
@@ -275,7 +275,7 @@ def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
     where :
 
     .. math::
-        \mathbf{B}(\Sigma_s, \Sigma_t)^{2} &= \text{\Sigma_s^{1/2} + \Sigma_t^{1/2} - 2 \left(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2} \right)^{1/2}
+        \mathbf{B}(\Sigma_s, \Sigma_t)^{2} = \text{\Sigma_s^{1/2} + \Sigma_t^{1/2} - 2 \left(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2} \right)^{1/2}
 
     Parameters
     ----------
@@ -298,7 +298,7 @@ def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
     Returns
     -------
     W : float
-        bures Wasserstein distance
+        Bures Wasserstein distance
     log : dict
         log dictionary return only if log==True in parameters
 
