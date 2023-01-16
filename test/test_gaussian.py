@@ -83,10 +83,10 @@ def test_bures_wasserstein_distance(nx):
 
 @pytest.mark.parametrize("bias", [True, False])
 def test_empirical_bures_wasserstein_distance(nx, bias):
-    ns = 200
-    nt = 200
+    ns = 400
+    nt = 400
 
-    rng = np.random.RandomState(2)
+    rng = np.random.RandomState(10)
     Xs = rng.normal(0, 1, ns)[:, np.newaxis]
     Xt = rng.normal(10 * bias, 1, nt)[:, np.newaxis]
 

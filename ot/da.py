@@ -680,12 +680,7 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
         return G, L
 
 
-@deprecated()
-def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
-                      wt=None, bias=True, log=False):
-    """ Deprecated see  ot.gaussian.empirical_bures_wasserstein_mapping"""
-    return empirical_bures_wasserstein_mapping(xs, xt, reg=1e-6, ws=None,
-                                               wt=None, bias=True, log=False)
+OT_mapping_linear = deprecated(empirical_bures_wasserstein_mapping)
 
 
 def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, alpha=.5,

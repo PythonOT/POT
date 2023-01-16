@@ -84,8 +84,6 @@ def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
 
     if log:
         log = {}
-        log['Cs'] = Cs
-        log['Ct'] = Ct
         log['Cs12'] = Cs12
         log['Cs12inv'] = Cs12inv
         return A, b, log
@@ -179,23 +177,13 @@ def empirical_bures_wasserstein_mapping(xs, xt, reg=1e-6, ws=None,
     Cs = nx.dot((xs * ws).T, xs) / nx.sum(ws) + reg * nx.eye(d, type_as=xs)
     Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt) + reg * nx.eye(d, type_as=xt)
 
-    Cs12 = nx.sqrtm(Cs)
-    Cs12inv = nx.inv(Cs12)
-
-    M0 = nx.sqrtm(dots(Cs12, Ct, Cs12))
-
-    A = dots(Cs12inv, M0, Cs12inv)
-
-    b = mxt - nx.dot(mxs, A)
-
     if log:
-        log = {}
+        A, b, log = bures_wasserstein_mapping(mxs, mxt, Cs, Ct, log=log)
         log['Cs'] = Cs
         log['Ct'] = Ct
-        log['Cs12'] = Cs12
-        log['Cs12inv'] = Cs12inv
         return A, b, log
     else:
+        A, b = bures_wasserstein_mapping(mxs, mxt, Cs, Ct)
         return A, b
 
 
@@ -251,7 +239,7 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     Cs12 = nx.sqrtm(Cs)
 
     B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
-    W = nx.norm(ms - mt) + B
+    W = nx.sqrt(nx.norm(ms - mt)**2 + B)
     if log:
         log = {}
         log['Cs12'] = Cs12
@@ -334,15 +322,12 @@ def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
 
     Cs = nx.dot((xs * ws).T, xs) / nx.sum(ws) + reg * nx.eye(d, type_as=xs)
     Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt) + reg * nx.eye(d, type_as=xt)
-    Cs12 = nx.sqrtm(Cs)
 
-    B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
-    W = nx.norm(mxs - mxt) + B
     if log:
-        log = {}
+        W, log = bures_wasserstein_distance(mxs, mxt, Cs, Ct, log=log)
         log['Cs'] = Cs
         log['Ct'] = Ct
-        log['Cs12'] = Cs12
         return W, log
     else:
+        W = bures_wasserstein_distance(mxs, mxt, Cs, Ct)
         return W
