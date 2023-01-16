@@ -4,6 +4,7 @@ Optimal transport for Gaussian distributions
 """
 
 # Author: Theo Gnassounou <theo.gnassounou@inria.fr>
+#         Remi Flamary <remi.flamary@polytehnique.edu>
 #
 # License: MIT License
 
