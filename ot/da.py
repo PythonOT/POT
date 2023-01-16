@@ -17,7 +17,7 @@ from .backend import get_backend
 from .bregman import sinkhorn, jcpot_barycenter
 from .lp import emd
 from .utils import unif, dist, kernel, cost_normalization, label_normalization, laplacian, dots
-from .utils import list_to_array, check_params, BaseEstimator
+from .utils import list_to_array, check_params, BaseEstimator, deprecated
 from .unbalanced import sinkhorn_unbalanced
 from .gaussian import empirical_bures_wasserstein_mapping
 from .optim import cg
@@ -678,6 +678,14 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
         return G, L, log
     else:
         return G, L
+
+
+@deprecated()
+def OT_mapping_linear(xs, xt, reg=1e-6, ws=None,
+                      wt=None, bias=True, log=False):
+    """ Deprecated see  ot.gaussian.empirical_bures_wasserstein_mapping"""
+    return empirical_bures_wasserstein_mapping(xs, xt, reg=1e-6, ws=None,
+                                               wt=None, bias=True, log=False)
 
 
 def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, alpha=.5,
