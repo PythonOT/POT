@@ -25,12 +25,16 @@ def test_bures_wasserstein_mapping(nx):
 
     Xsb, msb, mtb, Csb, Ctb = nx.from_numpy(Xs, ms, mt, Cs, Ct)
 
-    A, b, log = ot.gaussian.bures_wasserstein_mapping(msb, mtb, Csb, Ctb, log=True)
+    A_log, b_log, log = ot.gaussian.bures_wasserstein_mapping(msb, mtb, Csb, Ctb, log=True)
+    A, b = ot.gaussian.bures_wasserstein_mapping(msb, mtb, Csb, Ctb, log=False)
 
     Xst = nx.to_numpy(nx.dot(Xsb, A) + b)
+    Xst_log = nx.to_numpy(nx.dot(Xsb, A_log) + b_log)
 
     Cst = np.cov(Xst.T)
+    Cst_log = np.cov(Xst_log.T)
 
+    np.testing.assert_allclose(Cst_log, Cst, rtol=1e-2, atol=1e-2)
     np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
 
 
@@ -52,12 +56,16 @@ def test_empirical_bures_wasserstein_mapping(nx, bias):
     Xsb, Xtb = nx.from_numpy(Xs, Xt)
 
     A, b, log = ot.gaussian.empirical_bures_wasserstein_mapping(Xsb, Xtb, log=True, bias=bias)
+    A_log, b_log = ot.gaussian.empirical_bures_wasserstein_mapping(Xsb, Xtb, log=False, bias=bias)
 
     Xst = nx.to_numpy(nx.dot(Xsb, A) + b)
+    Xst_log = nx.to_numpy(nx.dot(Xsb, A_log) + b_log)
 
     Ct = np.cov(Xt.T)
     Cst = np.cov(Xst.T)
+    Cst_log = np.cov(Xst_log.T)
 
+    np.testing.assert_allclose(Cst_log, Cst, rtol=1e-2, atol=1e-2)
     np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
 
 
@@ -65,8 +73,10 @@ def test_bures_wasserstein_distance(nx):
     ms, mt = np.array([0]), np.array([10])
     Cs, Ct = np.array([[1]]).astype(np.float32), np.array([[1]]).astype(np.float32)
     msb, mtb, Csb, Ctb = nx.from_numpy(ms, mt, Cs, Ct)
-    Wb, log = ot.gaussian.bures_wasserstein_distance(msb, mtb, Csb, Ctb, log=True)
+    Wb_log, log = ot.gaussian.bures_wasserstein_distance(msb, mtb, Csb, Ctb, log=True)
+    Wb = ot.gaussian.bures_wasserstein_distance(msb, mtb, Csb, Ctb, log=False)
 
+    np.testing.assert_allclose(nx.to_numpy(Wb_log), nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
     np.testing.assert_allclose(10, nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
 
 
@@ -80,6 +90,8 @@ def test_empirical_bures_wasserstein_distance(nx, bias):
     Xt = rng.normal(10 * bias, 1, nt)[:, np.newaxis]
 
     Xsb, Xtb = nx.from_numpy(Xs, Xt)
-    Wb, log = ot.gaussian.empirical_bures_wasserstein_distance(Xsb, Xtb, log=True, bias=bias)
+    Wb_log, log = ot.gaussian.empirical_bures_wasserstein_distance(Xsb, Xtb, log=True, bias=bias)
+    Wb = ot.gaussian.empirical_bures_wasserstein_distance(Xsb, Xtb, log=False, bias=bias)
 
+    np.testing.assert_allclose(nx.to_numpy(Wb_log), nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
     np.testing.assert_allclose(10 * bias, nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
