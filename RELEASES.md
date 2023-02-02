@@ -5,6 +5,7 @@
 #### New features
 - Added feature to (Fused) Gromov-Wasserstein solvers to handle asymmetric matrices (PR #401)
 - Added semi-relaxed (Fused) Gromov-Wasserstein solvers + examples (PR #401)
+- Added Bures Wasserstein distance in `ot.gaussian` (PR ##428)
 - Added Generalized Wasserstein Barycenter solver + example (PR #372), fixed graphical details on the example (PR #376)
 - Added Free Support Sinkhorn Barycenter + example (PR #387)
 - New API for OT solver using function `ot.solve` (PR #388)

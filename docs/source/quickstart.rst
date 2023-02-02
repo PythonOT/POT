@@ -279,7 +279,7 @@ distributions. In this case there exists a close form solution given in Remark
 2.29 in [15]_ and the Monge mapping is an affine function and can be
 also computed from the covariances and means of the source and target
 distributions. In the case when the finite sample dataset is supposed Gaussian,
-we provide :any:`ot.da.OT_mapping_linear` that returns the parameters for the
+we provide :any:`ot.gaussian.bures_wasserstein_mapping` that returns the parameters for the
 Monge mapping.
 
 
@@ -628,7 +628,7 @@ approximate a Monge mapping from finite distributions.
 First note that when the source and target distributions are supposed to be Gaussian
 distributions, there exists a close form solution for the mapping and its an
 affine function [14]_ of the form :math:`T(x)=Ax+b` . In this case we provide the function
-:any:`ot.da.OT_mapping_linear` that returns the operator :math:`A` and vector
+:any:`ot.gaussian.bures_wasserstein_mapping` that returns the operator :math:`A` and vector
 :math:`b`. Note that if the number of samples is too small there is a parameter
 :code:`reg` that provides a regularization for the covariance matrix estimation.
 
@@ -640,7 +640,7 @@ method proposed in [8]_ that estimates a continuous mapping approximating the
 barycentric mapping is provided in :any:`ot.da.joint_OT_mapping_linear` for
 linear mapping and :any:`ot.da.joint_OT_mapping_kernel` for non-linear mapping.
 
-.. minigallery:: ot.da.joint_OT_mapping_linear ot.da.joint_OT_mapping_linear ot.da.OT_mapping_linear
+.. minigallery:: ot.da.joint_OT_mapping_linear ot.da.joint_OT_mapping_linear ot.gaussian.bures_wasserstein_mapping
     :add-heading: Examples of Monge mapping estimation
     :heading-level: "
 

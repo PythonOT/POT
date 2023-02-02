@@ -38,7 +38,7 @@ def test_gromov(nx):
     C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
 
     G = ot.gromov.gromov_wasserstein(C1, C2, p, q, 'square_loss', G0=G0, verbose=True)
-    Gb = nx.to_numpy(ot.gromov.gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', G0=G0b, verbose=True))
+    Gb = nx.to_numpy(ot.gromov.gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', symmetric=True, G0=G0b, verbose=True))
 
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
@@ -75,6 +75,49 @@ def test_gromov(nx):
         p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
     np.testing.assert_allclose(
         q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+
+
+def test_asymmetric_gromov(nx):
+    n_samples = 50  # nb samples
+    np.random.seed(0)
+    C1 = np.random.uniform(low=0., high=10, size=(n_samples, n_samples))
+    idx = np.arange(n_samples)
+    np.random.shuffle(idx)
+    C2 = C1[idx, :][:, idx]
+
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+    G0 = p[:, None] * q[None, :]
+
+    C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
+
+    G, log = ot.gromov.gromov_wasserstein(C1, C2, p, q, 'square_loss', G0=G0, log=True, symmetric=False, verbose=True)
+    Gb, logb = ot.gromov.gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', log=True, symmetric=False, G0=G0b, verbose=True)
+    Gb = nx.to_numpy(Gb)
+    # check constraints
+    np.testing.assert_allclose(G, Gb, atol=1e-06)
+    np.testing.assert_allclose(
+        p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
+    np.testing.assert_allclose(
+        q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+
+    np.testing.assert_allclose(log['gw_dist'], 0., atol=1e-04)
+    np.testing.assert_allclose(logb['gw_dist'], 0., atol=1e-04)
+
+    gw, log = ot.gromov.gromov_wasserstein2(C1, C2, p, q, 'square_loss', G0=G0, log=True, symmetric=False, verbose=True)
+    gwb, logb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'square_loss', log=True, symmetric=False, G0=G0b, verbose=True)
+
+    G = log['T']
+    Gb = nx.to_numpy(logb['T'])
+    # check constraints
+    np.testing.assert_allclose(G, Gb, atol=1e-06)
+    np.testing.assert_allclose(
+        p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
+    np.testing.assert_allclose(
+        q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+
+    np.testing.assert_allclose(log['gw_dist'], 0., atol=1e-04)
+    np.testing.assert_allclose(logb['gw_dist'], 0., atol=1e-04)
 
 
 def test_gromov_dtype_device(nx):
