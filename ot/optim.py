@@ -27,7 +27,7 @@ with warnings.catch_warnings():
 
 def line_search_armijo(
     f, xk, pk, gfk, old_fval, args=(), c1=1e-4,
-    alpha0=0.99, alpha_min=None, alpha_max=None
+    alpha0=0.99, alpha_min=None, alpha_max=None, **kwargs
 ):
     r"""
     Armijo linesearch function that works with matrices
@@ -114,9 +114,6 @@ def solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2t,
         Cost matrix of the linearized transport problem. Corresponds to the gradient of the cost
     f_val : float
         Value of the cost at `G`
-    armijo : bool, optional
-        If True the steps of the line-search is found via an armijo research. Else closed form is used.
-        If there is convergence issues use False.
     C1 : array-like (ns,ns), optional
         Structure matrix in the source domain.
     C2t : array-like (nt,nt), optional
@@ -384,13 +381,22 @@ def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=Non
         G = G0
     bdeltaG = None
 
-    if reg2 is None:
-        def cost(G, qG=None):
-            return nx.sum(M * G) + reg1 * f(G, qG)
+    if semirelaxed:
+        if reg2 is None:
+            def cost(G, qG):
+                return nx.sum(M * G) + reg1 * f(G, qG)
+        else:
+            def cost(G, qG):
+                return nx.sum(M * G) + reg1 * f(G, qG) + reg2 * nx.sum(G * nx.log(G))
+        f_val = cost(G, b)
     else:
-        def cost(G, qG=None):
-            return nx.sum(M * G) + reg1 * f(G, qG) + reg2 * nx.sum(G * nx.log(G))
-    f_val = cost(G, b)
+        if reg2 is None:
+            def cost(G):
+                return nx.sum(M * G) + reg1 * f(G)
+        else:
+            def cost(G):
+                return nx.sum(M * G) + reg1 * f(G) + reg2 * nx.sum(G * nx.log(G))
+        f_val = cost(G)
     if log:
         log['loss'].append(f_val)
 
@@ -407,7 +413,11 @@ def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=Non
         old_fval = f_val
 
         # problem linearization
-        Mi = M + reg1 * df(G, b)
+        if semirelaxed:
+            Mi = M + reg1 * df(G, b)
+        else:
+            Mi = M + reg1 * df(G)
+
         if not (reg2 is None):
             Mi += reg2 * (1 + nx.log(G))
         # set M positive
@@ -420,11 +430,11 @@ def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=Non
             Gc = lp_solver(a, b, Mi, reg=reg1, numItermax=numInnerItermax, log=innerlog, **kwargs)
 
         if semirelaxed:
-            bdeltaG = b - Gc.sum(0)
+            bdeltaG = Gc.sum(0) - b
         # line search
         deltaG = Gc - G
 
-        alpha, fc, f_val = line_search_solver(cost=cost, G=G, deltaG=deltaG, Mi=Mi, f_val=f_val,
+        alpha, fc, f_val = line_search_solver(cost, G, deltaG, Mi, f_val,
                                               reg=reg1, M=M, Gc=Gc, alpha_min=0., alpha_max=1., qG=b, qdeltaG=bdeltaG, **kwargs)
 
         G = G + alpha * deltaG
@@ -456,7 +466,7 @@ def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=Non
         return G
 
 
-def cg(a, b, M, reg, f, df, G0=None, line_search_solver=solve_gromov_linesearch,
+def cg(a, b, M, reg, f, df, G0=None, line_search_solver=line_search_armijo,
        numItermax=200, numItermaxEmd=100000, stopThr=1e-9, stopThr2=1e-9,
        verbose=False, log=False, **kwargs):
     r"""
@@ -496,7 +506,7 @@ def cg(a, b, M, reg, f, df, G0=None, line_search_solver=solve_gromov_linesearch,
         initial guess (default is indep joint density)
     line_search_solver: function,
         Function to find the optimal step.
-        Default is the exact line search for Gromov-Wasserstein problem.
+        Default is line_search_armijo.
     numItermax : int, optional
         Max number of iterations
     numItermaxEmd : int, optional
@@ -700,7 +710,7 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
     """
 
     def lp_solver(a, b, Mi, numItermax, log, **kwargs):
-        return sinkhorn(a, b, Mi, reg1, numItermax=numItermax)
+        return sinkhorn(a, b, Mi, reg1, numItermax=numItermax, log=log)
 
     def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
         return line_search_armijo(cost, G, deltaG, Mi, f_val, alpha_min=alpha_min, alpha_max=alpha_max)

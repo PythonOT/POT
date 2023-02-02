@@ -430,16 +430,16 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
-    def f(G, qG=None):
+    def f(G):
         return gwloss(constC, hC1, hC2, G)
 
     if symmetric:
-        def df(G, qG=None):
+        def df(G):
             return gwggrad(constC, hC1, hC2, G)
     else:
         constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
 
-        def df(G, qG=None):
+        def df(G):
             return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
 
     if armijo:
@@ -571,16 +571,16 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
-    def f(G, qG=None):
+    def f(G):
         return gwloss(constC, hC1, hC2, G)
 
     if symmetric:
-        def df(G, qG=None):
+        def df(G):
             return gwggrad(constC, hC1, hC2, G)
     else:
         constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
 
-        def df(G, qG=None):
+        def df(G):
             return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
 
     if armijo:
@@ -725,16 +725,16 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
-    def f(G, qG=None):
+    def f(G):
         return gwloss(constC, hC1, hC2, G)
 
     if symmetric:
-        def df(G, qG=None):
+        def df(G):
             return gwggrad(constC, hC1, hC2, G)
     else:
         constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
 
-        def df(G, qG=None):
+        def df(G):
             return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
 
     if armijo:
@@ -873,16 +873,16 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
         np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
         np.testing.assert_allclose(G0.sum(axis=0), q, atol=1e-08)
 
-    def f(G, qG=None):
+    def f(G):
         return gwloss(constC, hC1, hC2, G)
 
     if symmetric:
-        def df(G, qG=None):
+        def df(G):
             return gwggrad(constC, hC1, hC2, G)
     else:
         constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
 
-        def df(G, qG=None):
+        def df(G):
             return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
 
     if armijo:
