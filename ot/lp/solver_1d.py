@@ -53,7 +53,7 @@ def wasserstein_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, requ
     distributions
 
     .. math:
-        OT_{loss} = \int_0^1 |cdf_u^{-1}(q)  cdf_v^{-1}(q)|^p dq
+        OT_{loss} = \int_0^1 |cdf_u^{-1}(q) - cdf_v^{-1}(q)|^p dq
 
     It is formally the p-Wasserstein distance raised to the power p.
     We do so in a vectorized way by first building the individual quantile functions then integrating them.
@@ -365,3 +365,448 @@ def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         log_emd = {'G': G}
         return cost, log_emd
     return cost
+
+
+
+def roll_cols(M, shifts):
+    r"""
+    Utils functions which allow to shift the order of each row of a 2d matrix
+
+    Parameters
+    ----------
+    M : (nr, nc) ndarray
+        Matrix to shift
+    shifts: int or (nr,) ndarray
+
+    Returns
+    -------
+    Shifted array
+    
+    Examples
+    --------
+    >>> M = np.array([[1,2,3],[4,5,6],[7,8,9]])
+    >>> roll_cols(M, 2)
+    array([[2, 3, 1],
+           [5, 6, 4],
+           [8, 9, 7]])
+    >>> roll_cols(M, np.array([[1],[2],[1]])))
+    array([[3, 1, 2],
+           [5, 6, 4],
+           [9, 7, 8]])
+
+    References
+    ----------
+    https://stackoverflow.com/questions/66596699/how-to-shift-columns-or-rows-in-a-tensor-with-different-offsets-in-pytorch
+     
+    """
+    nx = get_backend(M)
+
+    n_rows, n_cols = M.shape
+
+    arange1 = nx.tile(nx.arange(n_cols).reshape((1, n_cols)), (n_rows,1))
+    arange2 = (arange1 - shifts) % n_cols
+    
+    return nx.take_along_axis(M, arange2, 1)
+    
+
+def dCost(theta, u_values, v_values, u_cdf, v_cdf, p=2):
+    r""" Computes the left and right derivative of the cost (Equation (6.3) and (6.4) of [1])
+    
+    Parameters
+    ----------
+    theta: array-like, shape (n_batch, n)
+        Cuts on the circle
+    u_values: array-like, shape (n_batch, n)
+        locations of the first empirical distribution
+    v_values: array-like, shape (n_batch, n)
+        locations of the second empirical distribution
+    u_cdf: array-like, shape (n_batch, n)
+        cdf of the first empirical distribution
+    v_cdf: array-like, shape (n_batch, n)
+        cdf of the second empirical distribution
+    p: float, optional = 2
+        Power p used for computing the Wasserstein distance
+    
+    Returns
+    -------
+    dCp: array-like, shape (n_batch, 1)
+        The batched right derivative 
+    dCm: array-like, shape (n_batch, 1)
+        The batched left derivative 
+    
+    References
+    ---------
+    .. [44] Delon, Julie, Julien Salomon, and Andrei Sobolevski. "Fast transport optimization for Monge costs on the circle." SIAM Journal on Applied Mathematics 70.7 (2010): 2239-2258.
+    """
+    nx = get_backend(theta, u_values, v_values, u_cdf, v_cdf)
+    
+    v_values = nx.copy(v_values)
+    
+    n = u_values.shape[-1]
+    m_batch, m = v_values.shape
+    
+    v_cdf_theta = v_cdf - (theta - nx.floor(theta))
+    
+    mask_p = v_cdf_theta>=0
+    mask_n = v_cdf_theta<0
+         
+    v_values[mask_n] += nx.floor(theta)[mask_n]+1
+    v_values[mask_p] += nx.floor(theta)[mask_p]
+    
+    if nx.any(mask_n) and nx.any(mask_p):
+        v_cdf_theta[mask_n] += 1
+    
+    v_cdf_theta2 = nx.copy(v_cdf_theta)
+    v_cdf_theta2[mask_n] = np.inf
+    shift = (-nx.argmin(v_cdf_theta2, axis=-1))
+
+    v_cdf_theta = roll_cols(v_cdf_theta, nx.reshape(shift, (-1,1)))
+    v_values = roll_cols(v_values, nx.reshape(shift, (-1,1)))
+    v_values = nx.concatenate([v_values, nx.reshape(v_values[:,0],(-1,1))+1], axis=1)
+    
+    ## quantiles of F_u evaluated in F_v^\theta
+    u_index = nx.searchsorted(u_cdf, v_cdf_theta)
+    u_icdf_theta = nx.take_along_axis(u_values, nx.clip(u_index, 0, n-1), -1)
+    
+    ## Deal with 1
+    u_cdfm = nx.concatenate([u_cdf, nx.reshape(u_cdf[:,0], (-1,1))+1], axis=1)
+    u_valuesm = nx.concatenate([u_values, nx.reshape(u_values[:,0], (-1,1))+1], axis=1)
+    u_indexm = nx.searchsorted(u_cdfm, v_cdf_theta, side="right")
+    u_icdfm_theta = nx.take_along_axis(u_valuesm, nx.clip(u_indexm, 0, n), -1)
+    
+    dCp = nx.sum(nx.power(nx.abs(u_icdf_theta-v_values[:,1:]), p)
+                 -nx.power(nx.abs(u_icdf_theta-v_values[:,:-1]), p), axis=-1)
+    
+    dCm = nx.sum(nx.power(nx.abs(u_icdfm_theta-v_values[:,1:]), p)
+                 -nx.power(nx.abs(u_icdfm_theta-v_values[:,:-1]), p), axis=-1)
+        
+    return dCp.reshape(-1,1), dCm.reshape(-1,1)
+
+
+def Cost(theta, u_values, v_values, u_cdf, v_cdf, p):
+    r""" Computes the the cost (Equation (6.2) of [1])
+    
+    Parameters
+    ----------
+    theta: array-like, shape (n_batch, n)
+        Cuts on the circle
+    u_values: array-like, shape (n_batch, n)
+        locations of the first empirical distribution
+    v_values: array-like, shape (n_batch, n)
+        locations of the second empirical distribution
+    u_cdf: array-like, shape (n_batch, n)
+        cdf of the first empirical distribution
+    v_cdf: array-like, shape (n_batch, n)
+        cdf of the second empirical distribution
+    p: float, optional = 2
+        Power p used for computing the Wasserstein distance
+    
+    Returns
+    -------
+    ot_cost: array-like, shape (n_batch,)
+        OT cost evaluated at theta 
+    
+    References
+    ---------
+    .. [44] Delon, Julie, Julien Salomon, and Andrei Sobolevski. "Fast transport optimization for Monge costs on the circle." SIAM Journal on Applied Mathematics 70.7 (2010): 2239-2258.
+    """
+    nx = get_backend(theta, u_values, v_values, u_cdf, v_cdf)
+    
+    v_values = nx.copy(v_values)
+    
+    m_batch, m = v_values.shape
+    n_batch, n = u_values.shape
+
+    v_cdf_theta = v_cdf -(theta - nx.floor(theta))
+    
+    mask_p = v_cdf_theta>=0
+    mask_n = v_cdf_theta<0
+    
+    v_values[mask_n] += nx.floor(theta)[mask_n]+1
+    v_values[mask_p] += nx.floor(theta)[mask_p]
+    
+    if nx.any(mask_n) and nx.any(mask_p):
+        v_cdf_theta[mask_n] += 1
+    
+    ## Put negative values at the end
+    v_cdf_theta2 = nx.copy(v_cdf_theta)
+    v_cdf_theta2[mask_n] = np.inf
+    shift = (-nx.argmin(v_cdf_theta2, axis=-1))# .tolist()
+
+    v_cdf_theta = roll_cols(v_cdf_theta, nx.reshape(shift, (-1,1)))
+    v_values = roll_cols(v_values, nx.reshape(shift, (-1,1)))
+    v_values = nx.concatenate([v_values, nx.reshape(v_values[:,0], (-1,1))+1], axis=1)  
+        
+    ## Compute absciss
+    cdf_axis = nx.sort(nx.concatenate((u_cdf, v_cdf_theta), -1), -1)
+    cdf_axis_pad = nx.zero_pad(cdf_axis, pad_width=[(0,0),(1,0)])
+    
+    delta = cdf_axis_pad[..., 1:] - cdf_axis_pad[..., :-1]
+    
+    ## Compute icdf
+    u_index = nx.searchsorted(u_cdf, cdf_axis)
+    u_icdf = nx.take_along_axis(u_values, u_index.clip(0, n-1), -1)
+        
+    v_values = nx.concatenate([v_values, nx.reshape(v_values[:,0], (-1,1))+1], axis=1)
+    v_index = nx.searchsorted(v_cdf_theta, cdf_axis)
+    v_icdf = nx.take_along_axis(v_values, v_index.clip(0, m), -1)
+     
+    if p == 1:
+        ot_cost = nx.sum(delta*nx.abs(u_icdf-v_icdf), axis=-1)
+    else:
+        ot_cost = nx.sum(delta*nx.power(nx.abs(u_icdf-v_icdf), p), axis=-1)
+
+    return ot_cost
+
+
+def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1, 
+                         Lm=10, Lp=10, tm=-1, tp=1, eps=1e-6, require_sort=True):
+    r"""Computes the Wasserstein distance on the circle using the Binary search algorithm proposed in [1].
+
+    .. math:
+        OT_{loss} = \inf_{\theta\in\mathbb{R}}\int_0^1 |cdf_u^{-1}(q)  - (cdf_v-\theta)^{-1}(q)|^p\ \mathrm{d}q
+
+    Parameters
+    ----------
+    u_values : ndarray, shape (n, ...)
+        samples in the source domain
+    v_values : ndarray, shape (n, ...)
+        samples in the target domain
+    u_weights : ndarray, shape (n, ...), optional
+        samples weights in the source domain
+    v_weights : ndarray, shape (n, ...), optional
+        samples weights in the target domain
+    p : float, optional
+        Power p used for computing the Wasserstein distance
+    Lm : int, optional
+        Lower bound dC
+    Lp : int, optional
+        Upper bound dC
+    tm: float, optional
+        Lower bound theta
+    tp: float, optional
+        Upper bound theta
+    eps: float, optional
+        Stopping condition
+    require_sort: bool, optional
+        If True, sort the values.
+        
+    Examples
+    --------
+    >>> u = np.array([[0.2,0.5,0.8]])%1
+    >>> v = np.array([[0.4,0.5,0.7]])%1
+    >>> binary_search_circle(u.T, v.T, p=1)
+    array([0.1])
+
+    References
+    ----------
+    .. [44] Delon, Julie, Julien Salomon, and Andrei Sobolevski. "Fast transport optimization for Monge costs on the circle." SIAM Journal on Applied Mathematics 70.7 (2010): 2239-2258.
+    
+    Matlab Code: https://users.mccme.ru/ansobol/otarie/software.html
+    """
+    assert p >= 1, "The OT loss is only valid for p>=1, {p} was given".format(p=p)
+        
+    if u_weights is not None and v_weights is not None:
+        nx = get_backend(u_values, v_values, u_weights, v_weights)
+    else:
+        nx = get_backend(u_values, v_values)
+            
+    n = u_values.shape[0]
+    m = v_values.shape[0]
+    
+    if u_weights is None:
+        u_weights = nx.full(u_values.shape, 1. / n, type_as=u_values)
+    elif u_weights.ndim != u_values.ndim:
+        u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
+    if v_weights is None:
+        v_weights = nx.full(v_values.shape, 1. / m, type_as=v_values)
+    elif v_weights.ndim != v_values.ndim:
+        v_weights = nx.repeat(v_weights[..., None], v_values.shape[-1], -1)
+        
+    if require_sort:
+        u_sorter = nx.argsort(u_values, 0)
+        u_values = nx.take_along_axis(u_values, u_sorter, 0)
+
+        v_sorter = nx.argsort(v_values, 0)
+        v_values = nx.take_along_axis(v_values, v_sorter, 0)
+
+        u_weights = nx.take_along_axis(u_weights, u_sorter, 0)
+        v_weights = nx.take_along_axis(v_weights, v_sorter, 0)
+        
+    u_cdf = nx.cumsum(u_weights, 0).T
+    v_cdf = nx.cumsum(v_weights, 0).T
+    
+    u_values = u_values.T
+    v_values = v_values.T
+    
+    
+    L = max(Lm, Lp)
+    
+    tm = tm * nx.reshape(nx.ones((u_values.shape[0],), type_as=u_values), (-1,1))
+    tm = nx.tile(tm, (1, m))
+    tp = tp * nx.reshape(nx.ones((u_values.shape[0],), type_as=u_values), (-1,1))
+    tp = nx.tile(tp, (1, m))
+    tc = (tm+tp)/2
+    
+    done = nx.zeros((u_values.shape[0], m))
+        
+    cpt = 0
+    while nx.any(1-done):
+        cpt += 1
+        
+        dCp, dCm = dCost(tc, u_values, v_values, u_cdf, v_cdf, p)
+        done = ((dCp*dCm)<=0) * 1
+        
+        mask = ((tp-tm)<eps/L) * (1-done)
+        
+        if nx.any(mask):
+            ## can probably be improved by computing only relevant values
+            dCptp, dCmtp = dCost(tp, u_values, v_values, u_cdf, v_cdf, p)
+            dCptm, dCmtm = dCost(tm, u_values, v_values, u_cdf, v_cdf, p)
+            Ctm = Cost(tm, u_values, v_values, u_cdf, v_cdf, p).reshape(-1, 1)
+            Ctp = Cost(tp, u_values, v_values, u_cdf, v_cdf, p).reshape(-1, 1)
+        
+            mask_end = mask * (nx.abs(dCptm-dCmtp)>0.001)
+            tc[mask_end>0] = ((Ctp-Ctm+tm*dCptm-tp*dCmtp)/(dCptm-dCmtp))[mask_end>0]
+            done[nx.prod(mask, axis=-1)>0] = 1
+        elif nx.any(1-done):
+            tm[((1-mask)*(dCp<0))>0] = tc[((1-mask)*(dCp<0))>0]
+            tp[((1-mask)*(dCp>=0))>0] = tc[((1-mask)*(dCp>=0))>0]
+            tc[((1-mask)*(1-done))>0] = (tm[((1-mask)*(1-done))>0]+tp[((1-mask)*(1-done))>0])/2
+                
+    return Cost(tc, u_values, v_values, u_cdf, v_cdf, p)
+
+
+def w1_circle(u_values, v_values, u_weights=None, v_weights=None, require_sort=True):
+    r"""Computes the 1-Wasserstein distance on the circle using the level median.
+
+    .. math:
+        W_1(\mu,\nu) = \int_0^1 |F_u(t)-F_v(t)-LevMed(F_u-F_v)|\ \mathrm{d}t
+        
+    Parameters
+    ----------
+    u_values : ndarray, shape (n, ...)
+        samples in the source domain
+    v_values : ndarray, shape (n, ...)
+        samples in the target domain
+    u_weights : ndarray, shape (n, ...), optional
+        samples weights in the source domain
+    v_weights : ndarray, shape (n, ...), optional
+        samples weights in the target domain
+    require_sort: bool, optional
+        If True, sort the values.
+        
+    Examples
+    --------
+    >>> u = np.array([[0.2,0.5,0.8]])%1
+    >>> v = np.array([[0.4,0.5,0.7]])%1
+    >>> w1_circle(u.T, v.T)
+    array([0.1])
+
+    References
+    ----------
+    .. [45] Hundrieser, Shayan, Marcel Klatt, and Axel Munk. "The statistics of circular optimal transport." Directional Statistics for Innovative Applications: A Bicentennial Tribute to Florence Nightingale. Singapore: Springer Nature Singapore, 2022. 57-82.
+    
+    Code R: https://gitlab.gwdg.de/shundri/circularOT/-/tree/master/
+    """
+    
+    if u_weights is not None and v_weights is not None:
+        nx = get_backend(u_values, v_values, u_weights, v_weights)
+    else:
+        nx = get_backend(u_values, v_values)
+            
+    n = u_values.shape[0]
+    m = v_values.shape[0]
+    
+    if u_weights is None:
+        u_weights = nx.full(u_values.shape, 1. / n, type_as=u_values)
+    elif u_weights.ndim != u_values.ndim:
+        u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
+    if v_weights is None:
+        v_weights = nx.full(v_values.shape, 1. / m, type_as=v_values)
+    elif v_weights.ndim != v_values.ndim:
+        v_weights = nx.repeat(v_weights[..., None], v_values.shape[-1], -1)
+        
+    if require_sort:
+        u_sorter = nx.argsort(u_values, 0)
+        u_values = nx.take_along_axis(u_values, u_sorter, 0)
+
+        v_sorter = nx.argsort(v_values, 0)
+        v_values = nx.take_along_axis(v_values, v_sorter, 0)
+
+        u_weights = nx.take_along_axis(u_weights, u_sorter, 0)
+        v_weights = nx.take_along_axis(v_weights, v_sorter, 0)
+
+    
+    ## Code inspired from https://gitlab.gwdg.de/shundri/circularOT/-/tree/master/
+    values_sorted, values_sorter = nx.sort2(nx.concatenate((u_values, v_values), 0), 0)
+    
+    cdf_diff = nx.cumsum(nx.take_along_axis(nx.concatenate((u_weights, -v_weights),0),values_sorter,0),0)
+    cdf_diff_sorted, cdf_diff_sorter = nx.sort2(cdf_diff, axis=0)
+    
+    values_sorted = nx.zero_pad(values_sorted, pad_width=[(0,1),(0,0)], value=1)
+    delta = values_sorted[1:,...]-values_sorted[:-1,...]
+    weight_sorted = nx.take_along_axis(delta, cdf_diff_sorter, 0)
+        
+    sum_weights = nx.cumsum(weight_sorted, axis=0)-0.5
+    sum_weights[sum_weights<0] = np.inf
+    inds = nx.argmin(sum_weights, axis=0)
+
+    levMed = nx.take_along_axis(cdf_diff_sorted, nx.reshape(inds, (1,-1)), 0)
+
+    return nx.sum(delta * nx.abs(cdf_diff - levMed), axis=0)
+
+
+def w_circle(u_values, v_values, u_weights=None, v_weights=None, p=1, 
+             Lm=10, Lp=10, tm=-1, tp=1, eps=1e-6, require_sort=True):
+    r"""Computes the Wasserstein distance on the circle using either [1] for p=1 or
+    the Binary search algorithm proposed in [2] otherwise.
+
+    .. math:
+        OT_{loss} = \inf_{\theta\in\mathbb{R}}\int_0^1 |cdf_u^{-1}(q)  - (cdf_v-\theta)^{-1}(q)|^p\ \mathrm{d}q
+
+    Parameters
+    ----------
+    u_values : ndarray, shape (n, ...)
+        samples in the source domain
+    v_values : ndarray, shape (n, ...)
+        samples in the target domain
+    u_weights : ndarray, shape (n, ...), optional
+        samples weights in the source domain
+    v_weights : ndarray, shape (n, ...), optional
+        samples weights in the target domain
+    p : float, optional
+        Power p used for computing the Wasserstein distance
+    Lm : int, optional
+        Lower bound dC. For p>1.
+    Lp : int, optional
+        Upper bound dC. For p>1.
+    tm: float, optional
+        Lower bound theta. For p>1.
+    tp: float, optional
+        Upper bound theta. For p>1.
+    eps: float, optional
+        Stopping condition. For p>1.
+    require_sort: bool, optional
+        If True, sort the values.
+        
+    Examples
+    --------
+    >>> u = np.array([[0.2,0.5,0.8]])%1
+    >>> v = np.array([[0.4,0.5,0.7]])%1
+    >>> w_circle(u.T, v.T)
+    array([0.1])
+
+    References
+    ----------
+    .. [44] Hundrieser, Shayan, Marcel Klatt, and Axel Munk. "The statistics of circular optimal transport." Directional Statistics for Innovative Applications: A Bicentennial Tribute to Florence Nightingale. Singapore: Springer Nature Singapore, 2022. 57-82.
+    .. [45] Delon, Julie, Julien Salomon, and Andrei Sobolevski. "Fast transport optimization for Monge costs on the circle." SIAM Journal on Applied Mathematics 70.7 (2010): 2239-2258.
+    """
+    assert p >= 1, "The OT loss is only valid for p>=1, {p} was given".format(p=p)
+    
+    if p==1:
+        return w1_circle(u_values, v_values, u_weights, v_weights, require_sort)
+
+    return binary_search_circle(u_values, v_values, u_weights, v_weights, 
+                                p=p, Lm=Lm, Lp=Lp, tm=tm, tp=tp, eps=eps, 
+                                require_sort=require_sort)

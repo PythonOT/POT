@@ -107,7 +107,6 @@ def sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, p=2,
     --------
 
     >>> n_samples_a = 20
-    >>> reg = 0.1
     >>> X = np.random.normal(0., 1., (n_samples_a, 5))
     >>> sliced_wasserstein_distance(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
     0.0
@@ -208,7 +207,6 @@ def max_sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, 
     --------
 
     >>> n_samples_a = 20
-    >>> reg = 0.1
     >>> X = np.random.normal(0., 1., (n_samples_a, 5))
     >>> sliced_wasserstein_distance(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
     0.0
@@ -255,6 +253,97 @@ def max_sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, 
     projected_emd = wasserstein_1d(X_s_projections, X_t_projections, a, b, p=p)
 
     res = nx.max(projected_emd) ** (1.0 / p)
+    if log:
+        return res, {"projections": projections, "projected_emds": projected_emd}
+    return res
+
+
+def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
+                                 p=2, seed=None, log=False):
+    r"""
+    Compute the sliced-Wasserstein distance on the sphere.
+    
+    .. math::
+        SSW_p(\mu,\nu) = \left(\int_{\mathbb{V}_{d,2}} W_p^p(P^U_\#\mu, P^U_\#\nu)\ \mathrm{d}\sigma(U)\right^{\frac{1}{p}}
+        
+    where:
+    - :math: `P^U_\#\mu` stands for the pushforwards of the projection :math: `\forall x\in S^{d-1},\ P^U(x) = \frac{U^Tx}{\|U^Tx\|_2}`
+
+    Parameters:
+    -----------
+    X_s: ndarray, shape (n_samples_a, dim)
+        Samples in the source domain
+    X_t: ndarray, shape (n_samples_b, dim)
+        Samples in the target domain
+    a : ndarray, shape (n_samples_a,), optional
+        samples weights in the source domain
+    b : ndarray, shape (n_samples_b,), optional
+        samples weights in the target domain
+    n_projections : int, optional
+        Number of projections used for the Monte-Carlo approximation
+    p: float, optional =
+        Power p used for computing the spherical sliced Wasserstein
+    seed: int or RandomState or None, optional
+        Seed used for random number generator
+    log: bool, optional
+        if True, sliced_wasserstein_distance returns the projections used and their associated EMD.
+
+    Returns
+    -------
+    cost: float
+        Spherical Sliced Wasserstein Cost
+    log : dict, optional
+        log dictionary return only if log==True in parameters
+        
+    Examples
+    --------
+    >>> n_samples_a = 20
+    >>> X = np.random.normal(0., 1., (n_samples_a, 5))
+    >>> X = X / np.sqrt(np.sum(X**2, -1, keepdims=True))
+    >>> sliced_wasserstein_sphere(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
+    0.0
+
+    References
+    ----------
+    .. [46] Bonet, C., Berg, P., Courty, N., Septier, F., Drumetz, L., & Pham, M. T. (2022). Spherical sliced-wasserstein. Interna-
+tional Conference on Learning Representations.
+    """
+    from .lp import w_circle
+    
+    if a is not None and b is not None:
+        nx = get_backend(X_s, X_t, a, b)
+    else:
+        nx = get_backend(X_s, X_t)
+    
+    n, d = X_s.shape
+    m, _ = X_t.shape
+    
+    ## Uniforms and independent samples on the Stiefel manifold V_{d,2}    
+    if isinstance(seed, np.random.RandomState) and str(nx) == 'numpy':
+        Z = seed.randn(n_projections, d, 2)
+    else:
+        if seed is not None:
+            nx.seed(seed)
+        Z = nx.randn(n_projections, d, 2)
+        
+    projections, _ = nx.qr(Z)
+    
+    ## Projection on S^1
+    ## Projection on plane
+    Xps = nx.reshape(nx.dot(nx.transpose(projections,1,2)[:,None], X_s[:,:,None]),(n_projections, n, 2))
+    Xpt = nx.reshape(nx.dot(nx.transpose(projections,1,2)[:,None], X_t[:,:,None]),(n_projections, m, 2))
+    
+    ## Projection on sphere
+    Xps = Xps / nx.sqrt(nx.sum(Xps**2, -1, keepdims=True))
+    Xpt = Xpt / nx.sqrt(nx.sum(Xpt**2, -1, keepdims=True))
+    
+    ## Get coords
+    Xps = (nx.atan2(-Xps[:,:,1], -Xps[:,:,0])+np.pi)/(2*np.pi)
+    Xpt = (nx.atan2(-Xpt[:,:,1], -Xpt[:,:,0])+np.pi)/(2*np.pi)
+            
+    projected_emd = w_circle(Xps.T, Xpt.T, u_weights=a, v_weights=b, p=p)
+    res = nx.mean(projected_emd) ** (1/p)
+            
     if log:
         return res, {"projections": projections, "projected_emds": projected_emd}
     return res

@@ -534,7 +534,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def zero_pad(self, a, pad_width):
+    def zero_pad(self, a, pad_width, value):
         r"""
         Pads a tensor.
 
@@ -895,6 +895,63 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def tile(self, a, reps):
+        r"""
+        Construct an array by repeating a the number of times given by reps
+        
+        See: https://numpy.org/doc/stable/reference/generated/numpy.tile.html
+        """
+        raise NotImplementedError()
+
+
+    def floor(self, a):
+        r"""
+        Return the floor of the input element-wise
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.floor.html
+        """
+        raise NotImplementedError()
+
+    def prod(self, a, axis):
+        r"""
+        Return the product of all elements.
+
+        See: https://pytorch.org/docs/stable/generated/torch.prod.html    
+        """
+        raise NotImplementedError()
+
+    def sort2(self, a, axis=None):
+        r"""
+        Return the sorted array and the indices to sort the array
+
+        See: https://pytorch.org/docs/stable/generated/torch.sort.html
+        """
+        raise NotImplementedError()
+
+    def qr(self, a):
+        r"""
+        Return the QR factorization
+
+        See: https://pytorch.org/docs/stable/generated/torch.linalg.qr.html
+        """
+        raise NotImplementedError()
+
+    def atan2(self, a, b):
+        r"""
+        Element wise arctangent
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.arctan2.html
+        """
+        raise NotImplementedError()
+
+    def transpose(self, a, dim0, dim1):
+        r"""
+        Returns a tensor that is a transposed version of a. The given dimensions dim0 and dim1 are swapped.
+
+        See: https://pytorch.org/docs/stable/generated/torch.transpose.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -1039,8 +1096,8 @@ class NumpyBackend(Backend):
     def concatenate(self, arrays, axis=0):
         return np.concatenate(arrays, axis)
 
-    def zero_pad(self, a, pad_width):
-        return np.pad(a, pad_width)
+    def zero_pad(self, a, pad_width, value=0):
+        return np.pad(a, pad_width, constant_values=value)
 
     def argmax(self, a, axis=None):
         return np.argmax(a, axis=axis)
@@ -1184,6 +1241,27 @@ class NumpyBackend(Backend):
 
     def is_floating_point(self, a):
         return a.dtype.kind == "f"
+
+    def tile(self, a, reps):
+        return np.tile(a, reps)
+
+    def floor(self, a):
+        return np.floor(a)
+
+    def prod(self, a, axis):
+        return np.prod(a, axis=axis)
+
+    def sort2(self, a, axis):
+        return self.sort(a, axis), self.argsort(a, axis)
+
+    def qr(self, a):
+        return np.linalg.qr(a)
+
+    def atan2(self, a, b):
+        return np.arctan2(a, b)
+
+    def transpose(self, a, dim0, dim1):
+        return np.transpose(a, axes=[0,dim1,dim0])
 
 
 class JaxBackend(Backend):
@@ -1351,8 +1429,8 @@ class JaxBackend(Backend):
     def concatenate(self, arrays, axis=0):
         return jnp.concatenate(arrays, axis)
 
-    def zero_pad(self, a, pad_width):
-        return jnp.pad(a, pad_width)
+    def zero_pad(self, a, value=0):
+        return jnp.pad(a, pad_width, constant_values=value)
 
     def argmax(self, a, axis=None):
         return jnp.argmax(a, axis=axis)
@@ -1510,6 +1588,27 @@ class JaxBackend(Backend):
 
     def is_floating_point(self, a):
         return a.dtype.kind == "f"
+
+    def tile(self, a, reps):
+        return jnp.numpy.tile(a, reps)
+
+    def floor(self, a):
+        return jnp.numpy.floor(a)
+
+    def prod(self, a, axis):
+        return jnp.numpy.prod(a, axis=axis)
+
+    def sort2(self, a, axis):
+        return self.sort(a, axis), self.argsort(a, axis)
+
+    def qr(self, a):
+        return jnp.numpy.linalg.qr(a)
+
+    def atan2(self, a, b):
+        return jnp.numpy.arctan2(a, b)
+
+    def transpose(self, a, dim0, dim1):
+        return jnp.numpy.transpose(a, axes=[0,dim1,dim0])
 
 
 class TorchBackend(Backend):
@@ -1729,13 +1828,13 @@ class TorchBackend(Backend):
     def concatenate(self, arrays, axis=0):
         return torch.cat(arrays, dim=axis)
 
-    def zero_pad(self, a, pad_width):
+    def zero_pad(self, a, pad_width, value=0):
         from torch.nn.functional import pad
         # pad_width is an array of ndim tuples indicating how many 0 before and after
         # we need to add. We first need to make it compliant with torch syntax, that
         # starts with the last dim, then second last, etc.
         how_pad = tuple(element for tupl in pad_width[::-1] for element in tupl)
-        return pad(a, how_pad)
+        return pad(a, how_pad, value=value)
 
     def argmax(self, a, axis=None):
         return torch.argmax(a, dim=axis)
@@ -1934,6 +2033,27 @@ class TorchBackend(Backend):
     def is_floating_point(self, a):
         return a.dtype.is_floating_point
 
+    def tile(self, a, reps):
+        return a.repeat(reps)
+
+    def floor(self, a):
+        return torch.floor(a)
+
+    def prod(self, a, axis):
+        return torch.prod(a, dim=axis)
+
+    def sort2(self, a, axis):
+        return torch.sort(a, axis)
+
+    def qr(self, a):
+        return torch.linalg.qr(a)
+
+    def atan2(self, a, b):
+        return torch.atan2(a, b)
+
+    def transpose(self, a, dim0, dim1):
+        return torch.transpose(a, dim0, dim1)
+
 
 class CupyBackend(Backend):  # pragma: no cover
     """
@@ -2096,8 +2216,8 @@ class CupyBackend(Backend):  # pragma: no cover
     def concatenate(self, arrays, axis=0):
         return cp.concatenate(arrays, axis)
 
-    def zero_pad(self, a, pad_width):
-        return cp.pad(a, pad_width)
+    def zero_pad(self, a, pad_width, value=0):
+        return cp.pad(a, pad_width, constant_values=value)
 
     def argmax(self, a, axis=None):
         return cp.argmax(a, axis=axis)
@@ -2284,6 +2404,27 @@ class CupyBackend(Backend):  # pragma: no cover
     def is_floating_point(self, a):
         return a.dtype.kind == "f"
 
+    def tile(self, a, reps):
+        return cp.tile(a, reps)
+
+    def floor(self, a):
+        return cp.floor(a)
+
+    def prod(self, a, axis):
+        return cp.prod(a, axis=axis)
+
+    def sort2(self, a, axis):
+        return self.sort(a, axis), self.argsort(a, axis)
+
+    def qr(self, a):
+        return cp.linalg.qr(a)
+
+    def atan2(self, a, b):
+        return cp.arctan2(a, b)
+
+    def transpose(self, a, dim0, dim1):
+        return cp.transpose(a, axes=[0, dim1, dim0])
+
 
 class TensorflowBackend(Backend):
 
@@ -2454,8 +2595,8 @@ class TensorflowBackend(Backend):
     def concatenate(self, arrays, axis=0):
         return tnp.concatenate(arrays, axis)
 
-    def zero_pad(self, a, pad_width):
-        return tnp.pad(a, pad_width, mode="constant")
+    def zero_pad(self, a, pad_width, value=0):
+        return tnp.pad(a, pad_width, mode="constant", constant_values=value)
 
     def argmax(self, a, axis=None):
         return tnp.argmax(a, axis=axis)
@@ -2646,3 +2787,24 @@ class TensorflowBackend(Backend):
 
     def is_floating_point(self, a):
         return a.dtype.is_floating
+
+    def tile(self, a, reps):
+        return tf.tile(a, reps)
+
+    def floor(self, a):
+        return tf.floor(a)
+
+    def prod(self, a, axis):
+        return tf.experimental.numpy.prod(a, axis=axis)
+
+    def sort2(self, a, axis):
+        return self.sort(a, axis), self.argsort(a, axis)
+
+    def qr(self, a):
+        return tf.linalg.qr(a)
+
+    def atan2(self, a, b):
+        return tf.math.atan2(a, b)
+
+    def transpose(self, a, dim0, dim1):
+        return tf.transpose(a, perm=[0, dim1, dim0])
