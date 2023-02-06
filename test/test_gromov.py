@@ -252,8 +252,8 @@ def test_entropic_gromov(nx):
     C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
 
     G, log = ot.gromov.entropic_gromov_wasserstein(
-            C1, C2, p, q, 'square_loss', symmetric=None, G0=G0,
-            epsilon=1e-2, verbose=True, log=True)
+        C1, C2, p, q, 'square_loss', symmetric=None, G0=G0,
+        epsilon=1e-2, verbose=True, log=True)
     Gb = nx.to_numpy(ot.gromov.entropic_gromov_wasserstein(
         C1b, C2b, pb, qb, 'square_loss', symmetric=True, G0=None,
         epsilon=1e-2, verbose=True, log=False
@@ -302,8 +302,8 @@ def test_asymmetric_entropic_gromov(nx):
 
     C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
     G = ot.gromov.entropic_gromov_wasserstein(
-            C1, C2, p, q, 'square_loss', symmetric=None, G0=G0,
-            epsilon=1e-1, verbose=True, log=False)
+        C1, C2, p, q, 'square_loss', symmetric=None, G0=G0,
+        epsilon=1e-1, verbose=True, log=False)
     Gb = nx.to_numpy(ot.gromov.entropic_gromov_wasserstein(
         C1b, C2b, pb, qb, 'square_loss', symmetric=False, G0=None,
         epsilon=1e-1, verbose=True, log=False
