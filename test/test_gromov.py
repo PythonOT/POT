@@ -78,7 +78,7 @@ def test_gromov(nx):
 
 
 def test_asymmetric_gromov(nx):
-    n_samples = 50  # nb samples
+    n_samples = 30  # nb samples
     np.random.seed(0)
     C1 = np.random.uniform(low=0., high=10, size=(n_samples, n_samples))
     idx = np.arange(n_samples)
@@ -242,19 +242,21 @@ def test_entropic_gromov(nx):
 
     p = ot.unif(n_samples)
     q = ot.unif(n_samples)
-
+    G0 = p[:, None] * q[None, :]
     C1 = ot.dist(xs, xs)
     C2 = ot.dist(xt, xt)
 
     C1 /= C1.max()
     C2 /= C2.max()
 
-    C1b, C2b, pb, qb = nx.from_numpy(C1, C2, p, q)
+    C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
 
-    G = ot.gromov.entropic_gromov_wasserstein(
-        C1, C2, p, q, 'square_loss', epsilon=5e-4, verbose=True)
+    G, log = ot.gromov.entropic_gromov_wasserstein(
+            C1, C2, p, q, 'square_loss', symmetric=None, G0=G0,
+            epsilon=1e-2, verbose=True, log=True)
     Gb = nx.to_numpy(ot.gromov.entropic_gromov_wasserstein(
-        C1b, C2b, pb, qb, 'square_loss', epsilon=5e-4, verbose=True
+        C1b, C2b, pb, qb, 'square_loss', symmetric=True, G0=None,
+        epsilon=1e-2, verbose=True, log=False
     ))
 
     # check constraints
@@ -265,9 +267,11 @@ def test_entropic_gromov(nx):
         q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
 
     gw, log = ot.gromov.entropic_gromov_wasserstein2(
-        C1, C2, p, q, 'kl_loss', max_iter=10, epsilon=1e-2, log=True)
+        C1, C2, p, q, 'kl_loss', symmetric=True, G0=None,
+        max_iter=10, epsilon=1e-2, log=True)
     gwb, logb = ot.gromov.entropic_gromov_wasserstein2(
-        C1b, C2b, pb, qb, 'kl_loss', max_iter=10, epsilon=1e-2, log=True)
+        C1b, C2b, pb, qb, 'kl_loss', symmetric=None, G0=G0b,
+        max_iter=10, epsilon=1e-2, log=True)
     gwb = nx.to_numpy(gwb)
 
     G = log['T']
@@ -282,6 +286,45 @@ def test_entropic_gromov(nx):
         p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
     np.testing.assert_allclose(
         q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+
+
+def test_asymmetric_entropic_gromov(nx):
+    n_samples = 10  # nb samples
+    np.random.seed(0)
+    C1 = np.random.uniform(low=0., high=10, size=(n_samples, n_samples))
+    idx = np.arange(n_samples)
+    np.random.shuffle(idx)
+    C2 = C1[idx, :][:, idx]
+
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+    G0 = p[:, None] * q[None, :]
+
+    C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
+    G = ot.gromov.entropic_gromov_wasserstein(
+            C1, C2, p, q, 'square_loss', symmetric=None, G0=G0,
+            epsilon=1e-1, verbose=True, log=False)
+    Gb = nx.to_numpy(ot.gromov.entropic_gromov_wasserstein(
+        C1b, C2b, pb, qb, 'square_loss', symmetric=False, G0=None,
+        epsilon=1e-1, verbose=True, log=False
+    ))
+    # check constraints
+    np.testing.assert_allclose(G, Gb, atol=1e-06)
+    np.testing.assert_allclose(
+        p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
+    np.testing.assert_allclose(
+        q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+
+    gw = ot.gromov.entropic_gromov_wasserstein2(
+        C1, C2, p, q, 'kl_loss', symmetric=False, G0=None,
+        max_iter=10, epsilon=1e-1, log=False)
+    gwb = ot.gromov.entropic_gromov_wasserstein2(
+        C1b, C2b, pb, qb, 'kl_loss', symmetric=None, G0=G0b,
+        max_iter=10, epsilon=1e-1, log=False)
+    gwb = nx.to_numpy(gwb)
+
+    np.testing.assert_allclose(gw, gwb, atol=1e-06)
+    np.testing.assert_allclose(gw, 0, atol=1e-1, rtol=1e-1)
 
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")

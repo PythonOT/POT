@@ -1337,7 +1337,7 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
     return T
 
 
-def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
+def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None, G0=None,
                                 max_iter=1000, tol=1e-9, verbose=False, log=False):
     r"""
     Returns the gromov-wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
@@ -1376,6 +1376,13 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
         Loss function used for the solver either 'square_loss' or 'kl_loss'
     epsilon : float
         Regularization term >0
+    symmetric : bool, optional
+        Either C1 and C2 are to be assumed symmetric or not.
+        If let to its default None value, a symmetry test will be conducted.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+    G0: array-like, shape (ns,nt), optional
+        If None the initial transport plan of the solver is pq^T.
+        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -1384,7 +1391,6 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
         Print information along iterations
     log : bool, optional
         Record log if True.
-
     Returns
     -------
     T : array-like, shape (`ns`, `nt`)
@@ -1396,14 +1402,27 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
+    .. [44] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
+        distance between networks and stable network invariants.
+        Information and Inference: A Journal of the IMA, 8(4), 757-787.
     """
     C1, C2, p, q = list_to_array(C1, C2, p, q)
-    nx = get_backend(C1, C2, p, q)
-
-    T = nx.outer(p, q)
-
+    if G0 is None:
+        nx = get_backend(p, q, C1, C2)
+        G0 = nx.outer(p, q)
+    else:
+        nx = get_backend(p, q, C1, C2, G0)
+    T = G0
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
-
+    if symmetric is None:
+        C1t, C2t = C1.T, C2.T
+        symmetric = np.allclose(C1, C1t, atol=1e-12) and np.allclose(C2, C2t, atol=1e-10)
+    if symmetric:
+        C1t, C2t = C1, C2
+    else:
+        C1t, C2t = C1.T, C2.T
+        constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
+        print('p, q ,C1, C2, C1t, C2t, G0:', type(p), type(q), type(C1), type(C2), type(C1t), type(C2t), type(G0))
     cpt = 0
     err = 1
 
@@ -1415,8 +1434,10 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
         Tprev = T
 
         # compute the gradient
-        tens = gwggrad(constC, hC1, hC2, T)
-
+        if symmetric:
+            tens = gwggrad(constC, hC1, hC2, T)
+        else:
+            tens = 0.5 * (gwggrad(constC, hC1, hC2, T) + gwggrad(constCt, hC1t, hC2t, T))
         T = sinkhorn(p, q, tens, epsilon, method='sinkhorn')
 
         if cpt % 10 == 0:
@@ -1442,7 +1463,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon,
         return T
 
 
-def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
+def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon, symmetric=None, G0=None,
                                  max_iter=1000, tol=1e-9, verbose=False, log=False):
     r"""
     Returns the entropic gromov-wasserstein discrepancy between the two measured similarity matrices :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
@@ -1476,6 +1497,13 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
         Loss function used for the solver either 'square_loss' or 'kl_loss'
     epsilon : float
         Regularization term >0
+    symmetric : bool, optional
+        Either C1 and C2 are to be assumed symmetric or not.
+        If let to its default None value, a symmetry test will be conducted.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+    G0: array-like, shape (ns,nt), optional
+        If None the initial transport plan of the solver is pq^T.
+        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -1498,7 +1526,7 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
 
     """
     gw, logv = entropic_gromov_wasserstein(
-        C1, C2, p, q, loss_fun, epsilon, max_iter, tol, verbose, log=True)
+        C1, C2, p, q, loss_fun, epsilon, symmetric, G0, max_iter, tol, verbose, log=True)
 
     logv['T'] = gw
 
@@ -1508,7 +1536,7 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon,
         return logv['gw_dist']
 
 
-def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
+def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon, symmetric=True,
                                 max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None, random_state=None):
     r"""
     Returns the gromov-wasserstein barycenters of `S` measured similarity matrices :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
@@ -1544,6 +1572,9 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
         calculated at each iteration
     epsilon : float
         Regularization term >0
+    symmetric : bool, optional.
+        Either structures are to be assumed symmetric or not. Default value is True.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -1595,7 +1626,7 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon,
     while (err > tol) and (cpt < max_iter):
         Cprev = C
 
-        T = [entropic_gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, epsilon,
+        T = [entropic_gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, epsilon, symmetric, None,
                                          max_iter, 1e-4, verbose, log=False) for s in range(S)]
         if loss_fun == 'square_loss':
             C = update_square_loss(p, lambdas, T, Cs)
