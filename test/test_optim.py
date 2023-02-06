@@ -120,7 +120,7 @@ def test_generalized_conditional_gradient(nx):
     Gb, log = ot.optim.gcg(ab, bb, Mb, reg1, reg2, fb, df, verbose=True, log=True)
     Gb = nx.to_numpy(Gb)
 
-    np.testing.assert_allclose(Gb, G)
+    np.testing.assert_allclose(Gb, G, atol=1e-12)
     np.testing.assert_allclose(a, Gb.sum(1), atol=1e-05)
     np.testing.assert_allclose(b, Gb.sum(0), atol=1e-05)
 

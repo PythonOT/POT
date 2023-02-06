@@ -546,13 +546,13 @@ def cg(a, b, M, reg, f, df, G0=None, line_search_solver=line_search_armijo,
     def lp_solver(a, b, M, numItermax, log, **kwargs):
         return emd(a, b, M, numItermax, log)
 
-    return generic_cg(a, b, M, f, df, reg, 0., lp_solver, line_search_solver, G0=G0,
+    return generic_cg(a, b, M, f, df, reg, None, lp_solver, line_search_solver, G0=G0,
                       semirelaxed=False, numItermax=numItermax, numInnerItermax=numItermaxEmd, stopThr=stopThr,
                       stopThr2=stopThr2, verbose=verbose, log=log, innerlog=True, **kwargs)
 
 
 def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search_solver=solve_semirelaxed_gromov_linesearch,
-                   numItermax=200, numItermaxEmd=100000, stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, **kwargs):
+                   numItermax=200, stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, **kwargs):
     r"""
     Solve the general regularized and semi-relaxed OT problem with conditional gradient
 
@@ -591,8 +591,6 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search_solver=solve_semire
         Default is the exact line search for Gromov-Wasserstein problem.
     numItermax : int, optional
         Max number of iterations
-    numItermaxEmd : int, optional
-        Max number of iterations for emd
     stopThr : float, optional
         Stop threshold on the relative variation (>0)
     stopThr2 : float, optional
@@ -629,9 +627,9 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search_solver=solve_semire
         Gc *= (a / Gc.sum(axis=1))[:, None]
         return Gc
 
-    return generic_cg(a, b, M, f, df, reg, 0., lp_solver, line_search_solver, G0=G0,
-                      semirelaxed=True, numItermax=numItermax, numInnerItermax=numItermaxEmd, stopThr=stopThr,
-                      stopThr2=stopThr2, verbose=verbose, log=log, innerlog=True, **kwargs)
+    return generic_cg(a, b, M, f, df, reg, None, lp_solver, line_search_solver, G0=G0,
+                      semirelaxed=True, numItermax=numItermax, numInnerItermax=None, stopThr=stopThr,
+                      stopThr2=stopThr2, verbose=verbose, log=log, innerlog=False, **kwargs)
 
 
 def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
