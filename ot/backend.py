@@ -534,7 +534,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def zero_pad(self, a, pad_width, value):
+    def zero_pad(self, a, pad_width, value=0):
         r"""
         Pads a tensor.
 
@@ -898,11 +898,10 @@ class Backend():
     def tile(self, a, reps):
         r"""
         Construct an array by repeating a the number of times given by reps
-        
+
         See: https://numpy.org/doc/stable/reference/generated/numpy.tile.html
         """
         raise NotImplementedError()
-
 
     def floor(self, a):
         r"""
@@ -1261,7 +1260,7 @@ class NumpyBackend(Backend):
         return np.arctan2(a, b)
 
     def transpose(self, a, dim0, dim1):
-        return np.transpose(a, axes=[0,dim1,dim0])
+        return np.transpose(a, axes=[0, dim1, dim0])
 
 
 class JaxBackend(Backend):
@@ -1429,7 +1428,7 @@ class JaxBackend(Backend):
     def concatenate(self, arrays, axis=0):
         return jnp.concatenate(arrays, axis)
 
-    def zero_pad(self, a, value=0):
+    def zero_pad(self, a, pad_width, value=0):
         return jnp.pad(a, pad_width, constant_values=value)
 
     def argmax(self, a, axis=None):
@@ -1608,7 +1607,7 @@ class JaxBackend(Backend):
         return jnp.numpy.arctan2(a, b)
 
     def transpose(self, a, dim0, dim1):
-        return jnp.numpy.transpose(a, axes=[0,dim1,dim0])
+        return jnp.numpy.transpose(a, axes=[0, dim1, dim0])
 
 
 class TorchBackend(Backend):
@@ -2795,7 +2794,7 @@ class TensorflowBackend(Backend):
         return tf.floor(a)
 
     def prod(self, a, axis):
-        return tf.experimental.numpy.prod(a, axis=axis)
+        return tnp.prod(a, axis=axis)
 
     def sort2(self, a, axis):
         return self.sort(a, axis), self.argsort(a, axis)

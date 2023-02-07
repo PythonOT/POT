@@ -218,3 +218,63 @@ def test_emd1d_device_tf():
         nx.assert_same_dtype_device(xb, emd)
         nx.assert_same_dtype_device(xb, emd2)
         assert nx.dtype_device(emd)[1].startswith("GPU")
+
+
+def test_wasserstein_1d_circle():
+    # test binary_search_circle and w1_circle give similar results as emd
+    n = 20
+    m = 30
+    rng = np.random.RandomState(0)
+    u = rng.rand(n,)
+    v = rng.rand(m,)
+
+    w_u = rng.uniform(0., 1., n)
+    w_u = w_u / w_u.sum()
+
+    w_v = rng.uniform(0., 1., m)
+    w_v = w_v / w_v.sum()
+
+    M1 = np.minimum(np.abs(u[:, None] - v[None]), 1 - np.abs(u[:, None] - v[None]))
+
+    wass1 = ot.emd2(w_u, w_v, M1)
+
+    wass1_bsc = ot.binary_search_circle(u, v, w_u, w_v, p=1)
+    wass1_circle = ot.w1_circle(u, v, w_u, w_v)
+    w1_circle = ot.w_circle(u, v, w_u, w_v, p=1)
+
+    M2 = M1**2
+    wass2 = ot.emd2(w_u, w_v, M2)
+    wass2_bsc = ot.binary_search_circle(u, v, w_u, w_v, p=2)
+    w2_circle = ot.w_circle(u, v, w_u, w_v, p=2)
+
+    # check loss is similar
+    np.testing.assert_allclose(wass1, wass1_bsc)
+
+    np.testing.assert_allclose(wass1, wass1_circle, rtol=1e-2)
+    np.testing.assert_allclose(wass1, w1_circle, rtol=1e-2)
+
+    np.testing.assert_allclose(wass2, wass2_bsc)
+    np.testing.assert_allclose(wass2, w2_circle)
+
+
+@pytest.skip_backend("tf")
+def test_wasserstein1d_circle_devices(nx):
+    rng = np.random.RandomState(0)
+
+    n = 10
+    x = np.linspace(0, 1, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+    rho_v = np.abs(rng.randn(n))
+    rho_v /= rho_v.sum()
+
+    for tp in nx.__type_list__:
+        print(nx.dtype_device(tp))
+
+        xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
+
+        w1 = ot.w_circle(xb, xb, rho_ub, rho_vb, p=1)
+        w2_bsc = ot.w_circle(xb, xb, rho_ub, rho_vb, p=2)
+
+        nx.assert_same_dtype_device(xb, w1)
+        nx.assert_same_dtype_device(xb, w2_bsc)
