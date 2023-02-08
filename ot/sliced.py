@@ -309,7 +309,7 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
     ----------
     .. [46] Bonet, C., Berg, P., Courty, N., Septier, F., Drumetz, L., & Pham, M. T. (2023). Spherical sliced-wasserstein. International Conference on Learning Representations.
     """
-    from .lp import w_circle
+    from .lp import wasserstein_circle
 
     if a is not None and b is not None:
         nx = get_backend(X_s, X_t, a, b)
@@ -353,7 +353,7 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
     Xps_coords = (nx.atan2(-Xps[:, :, 1], -Xps[:, :, 0]) + np.pi) / (2 * np.pi)
     Xpt_coords = (nx.atan2(-Xpt[:, :, 1], -Xpt[:, :, 0]) + np.pi) / (2 * np.pi)
 
-    projected_emd = w_circle(Xps_coords.T, Xpt_coords.T, u_weights=a, v_weights=b, p=p)
+    projected_emd = wasserstein_circle(Xps_coords.T, Xpt_coords.T, u_weights=a, v_weights=b, p=p)
     res = nx.mean(projected_emd) ** (1 / p)
 
     if log:

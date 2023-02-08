@@ -38,7 +38,7 @@ from . import solvers
 from . import gaussian
 
 # OT functions
-from .lp import emd, emd2, emd_1d, emd2_1d, wasserstein_1d, binary_search_circle, w1_circle, w_circle
+from .lp import emd, emd2, emd_1d, emd2_1d, wasserstein_1d, binary_search_circle, wasserstein1_circle, wasserstein_circle
 from .bregman import sinkhorn, sinkhorn2, barycenter
 from .unbalanced import (sinkhorn_unbalanced, barycenter_unbalanced,
                          sinkhorn_unbalanced2)
@@ -65,4 +65,4 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
             'max_sliced_wasserstein_distance', 'weak_optimal_transport',
             'factored_optimal_transport', 'solve',
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath', 'solvers',
-           'binary_search_circle', 'w1_circle', 'w_circle']
+           'binary_search_circle', 'wasserstein1_circle', 'wasserstein_circle']

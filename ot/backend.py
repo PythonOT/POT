@@ -911,7 +911,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def prod(self, a, axis):
+    def prod(self, a, axis=None):
         r"""
         Return the product of all elements.
 
@@ -1247,10 +1247,10 @@ class NumpyBackend(Backend):
     def floor(self, a):
         return np.floor(a)
 
-    def prod(self, a, axis):
+    def prod(self, a, axis=0):
         return np.prod(a, axis=axis)
 
-    def sort2(self, a, axis):
+    def sort2(self, a, axis=-1):
         return self.sort(a, axis), self.argsort(a, axis)
 
     def qr(self, a):
@@ -1260,7 +1260,10 @@ class NumpyBackend(Backend):
         return np.arctan2(a, b)
 
     def transpose(self, a, dim0, dim1):
-        return np.transpose(a, axes=[0, dim1, dim0])
+        dims = list(range(len(a.shape)))
+        dims[dim0], dims[dim1] = dim1, dim0
+        return np.transpose(a, axes=dims)
+        # return np.transpose(a, axes=[0, dim1, dim0])
 
 
 class JaxBackend(Backend):
@@ -1589,25 +1592,27 @@ class JaxBackend(Backend):
         return a.dtype.kind == "f"
 
     def tile(self, a, reps):
-        return jnp.numpy.tile(a, reps)
+        return jnp.tile(a, reps)
 
     def floor(self, a):
-        return jnp.numpy.floor(a)
+        return jnp.floor(a)
 
-    def prod(self, a, axis):
-        return jnp.numpy.prod(a, axis=axis)
+    def prod(self, a, axis=0):
+        return jnp.prod(a, axis=axis)
 
-    def sort2(self, a, axis):
+    def sort2(self, a, axis=-1):
         return self.sort(a, axis), self.argsort(a, axis)
 
     def qr(self, a):
-        return jnp.numpy.linalg.qr(a)
+        return jnp.linalg.qr(a)
 
     def atan2(self, a, b):
-        return jnp.numpy.arctan2(a, b)
+        return jnp.arctan2(a, b)
 
     def transpose(self, a, dim0, dim1):
-        return jnp.numpy.transpose(a, axes=[0, dim1, dim0])
+        dims = list(range(len(a.shape)))
+        dims[dim0], dims[dim1] = dim1, dim0
+        return jnp.transpose(a, axes=dims)
 
 
 class TorchBackend(Backend):
@@ -2038,10 +2043,10 @@ class TorchBackend(Backend):
     def floor(self, a):
         return torch.floor(a)
 
-    def prod(self, a, axis):
+    def prod(self, a, axis=0):
         return torch.prod(a, dim=axis)
 
-    def sort2(self, a, axis):
+    def sort2(self, a, axis=-1):
         return torch.sort(a, axis)
 
     def qr(self, a):
@@ -2409,10 +2414,10 @@ class CupyBackend(Backend):  # pragma: no cover
     def floor(self, a):
         return cp.floor(a)
 
-    def prod(self, a, axis):
+    def prod(self, a, axis=0):
         return cp.prod(a, axis=axis)
 
-    def sort2(self, a, axis):
+    def sort2(self, a, axis=-1):
         return self.sort(a, axis), self.argsort(a, axis)
 
     def qr(self, a):
@@ -2422,7 +2427,9 @@ class CupyBackend(Backend):  # pragma: no cover
         return cp.arctan2(a, b)
 
     def transpose(self, a, dim0, dim1):
-        return cp.transpose(a, axes=[0, dim1, dim0])
+        dims = list(range(len(a.shape)))
+        dims[dim0], dims[dim1] = dim1, dim0
+        return cp.transpose(a, axes=dims)
 
 
 class TensorflowBackend(Backend):
@@ -2788,15 +2795,15 @@ class TensorflowBackend(Backend):
         return a.dtype.is_floating
 
     def tile(self, a, reps):
-        return tf.tile(a, reps)
+        return tnp.tile(a, reps)
 
     def floor(self, a):
         return tf.floor(a)
 
-    def prod(self, a, axis):
+    def prod(self, a, axis=0):
         return tnp.prod(a, axis=axis)
 
-    def sort2(self, a, axis):
+    def sort2(self, a, axis=-1):
         return self.sort(a, axis), self.argsort(a, axis)
 
     def qr(self, a):
@@ -2806,4 +2813,6 @@ class TensorflowBackend(Backend):
         return tf.math.atan2(a, b)
 
     def transpose(self, a, dim0, dim1):
-        return tf.transpose(a, perm=[0, dim1, dim0])
+        dims = list(range(len(a.shape)))
+        dims[dim0], dims[dim1] = dim1, dim0
+        return tf.transpose(a, perm=dims)

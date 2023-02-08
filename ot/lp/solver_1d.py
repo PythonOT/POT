@@ -579,7 +579,8 @@ def Cost(theta, u_values, v_values, u_cdf, v_cdf, p):
 
 def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
                          Lm=10, Lp=10, tm=-1, tp=1, eps=1e-6, require_sort=True):
-    r"""Computes the Wasserstein distance on the circle using the Binary search algorithm proposed in [44].
+    r"""Computes the Wasserstein distance on the circle using the Binary search algorithm proposed in [44]. 
+    Samples need to be in :math:`S^1\cong [0,1[`.
 
     .. math::
         W_p^p(u,v) = \inf_{\theta\in\mathbb{R}}\int_0^1 |F_u^{-1}(q)  - (F_v-\theta)^{-1}(q)|^p\ \mathrm{d}q
@@ -639,6 +640,9 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
         u_values = nx.reshape(u_values, (n, 1))
     if len(v_values.shape) == 1:
         v_values = nx.reshape(v_values, (m, 1))
+
+    u_values = u_values % 1
+    v_values = v_values % 1
 
     if u_weights is None:
         u_weights = nx.full(u_values.shape, 1. / n, type_as=u_values)
@@ -702,8 +706,9 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
     return Cost(tc, u_values, v_values, u_cdf, v_cdf, p)
 
 
-def w1_circle(u_values, v_values, u_weights=None, v_weights=None, require_sort=True):
+def wasserstein1_circle(u_values, v_values, u_weights=None, v_weights=None, require_sort=True):
     r"""Computes the 1-Wasserstein distance on the circle using the level median [45].
+    Samples need to be in :math:`S^1\cong [0,1[`.
 
     .. math::
         W_1(u,v) = \int_0^1 |F_u(t)-F_v(t)-LevMed(F_u-F_v)|\ \mathrm{d}t
@@ -725,7 +730,7 @@ def w1_circle(u_values, v_values, u_weights=None, v_weights=None, require_sort=T
     --------
     >>> u = np.array([[0.2,0.5,0.8]])%1
     >>> v = np.array([[0.4,0.5,0.7]])%1
-    >>> w1_circle(u.T, v.T)
+    >>> wasserstein1_circle(u.T, v.T)
     array([0.1])
 
     References
@@ -746,6 +751,9 @@ def w1_circle(u_values, v_values, u_weights=None, v_weights=None, require_sort=T
         u_values = nx.reshape(u_values, (n, 1))
     if len(v_values.shape) == 1:
         v_values = nx.reshape(v_values, (m, 1))
+
+    u_values = u_values % 1
+    v_values = v_values % 1
 
     if u_weights is None:
         u_weights = nx.full(u_values.shape, 1. / n, type_as=u_values)
@@ -785,10 +793,11 @@ def w1_circle(u_values, v_values, u_weights=None, v_weights=None, require_sort=T
     return nx.sum(delta * nx.abs(cdf_diff - levMed), axis=0)
 
 
-def w_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
-             Lm=10, Lp=10, tm=-1, tp=1, eps=1e-6, require_sort=True):
+def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
+                       Lm=10, Lp=10, tm=-1, tp=1, eps=1e-6, require_sort=True):
     r"""Computes the Wasserstein distance on the circle using either [45] for p=1 or
     the binary search algorithm proposed in [44] otherwise.
+    Samples need to be in :math:`S^1\cong [0,1[`.
 
     .. math:
         OT_{loss} = \inf_{\theta\in\mathbb{R}}\int_0^1 |cdf_u^{-1}(q)  - (cdf_v-\theta)^{-1}(q)|^p\ \mathrm{d}q
@@ -822,7 +831,7 @@ def w_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
     --------
     >>> u = np.array([[0.2,0.5,0.8]])%1
     >>> v = np.array([[0.4,0.5,0.7]])%1
-    >>> w_circle(u.T, v.T)
+    >>> wasserstein_circle(u.T, v.T)
     array([0.1])
 
     References
@@ -833,7 +842,7 @@ def w_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
     assert p >= 1, "The OT loss is only valid for p>=1, {p} was given".format(p=p)
 
     if p == 1:
-        return w1_circle(u_values, v_values, u_weights, v_weights, require_sort)
+        return wasserstein1_circle(u_values, v_values, u_weights, v_weights, require_sort)
 
     return binary_search_circle(u_values, v_values, u_weights, v_weights,
                                 p=p, Lm=Lm, Lp=Lp, tm=tm, tp=tp, eps=eps,

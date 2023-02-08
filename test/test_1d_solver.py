@@ -221,7 +221,7 @@ def test_emd1d_device_tf():
 
 
 def test_wasserstein_1d_circle():
-    # test binary_search_circle and w1_circle give similar results as emd
+    # test binary_search_circle and wasserstein_circle give similar results as emd
     n = 20
     m = 30
     rng = np.random.RandomState(0)
@@ -239,13 +239,13 @@ def test_wasserstein_1d_circle():
     wass1 = ot.emd2(w_u, w_v, M1)
 
     wass1_bsc = ot.binary_search_circle(u, v, w_u, w_v, p=1)
-    wass1_circle = ot.w1_circle(u, v, w_u, w_v)
-    w1_circle = ot.w_circle(u, v, w_u, w_v, p=1)
+    wass1_circle = ot.wasserstein1_circle(u, v, w_u, w_v)
+    w1_circle = ot.wasserstein_circle(u, v, w_u, w_v, p=1)
 
     M2 = M1**2
     wass2 = ot.emd2(w_u, w_v, M2)
     wass2_bsc = ot.binary_search_circle(u, v, w_u, w_v, p=2)
-    w2_circle = ot.w_circle(u, v, w_u, w_v, p=2)
+    w2_circle = ot.wasserstein_circle(u, v, w_u, w_v, p=2)
 
     # check loss is similar
     np.testing.assert_allclose(wass1, wass1_bsc)
@@ -273,8 +273,8 @@ def test_wasserstein1d_circle_devices(nx):
 
         xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
 
-        w1 = ot.w_circle(xb, xb, rho_ub, rho_vb, p=1)
-        w2_bsc = ot.w_circle(xb, xb, rho_ub, rho_vb, p=2)
+        w1 = ot.wasserstein_circle(xb, xb, rho_ub, rho_vb, p=1)
+        w2_bsc = ot.wasserstein_circle(xb, xb, rho_ub, rho_vb, p=2)
 
         nx.assert_same_dtype_device(xb, w1)
         nx.assert_same_dtype_device(xb, w2_bsc)

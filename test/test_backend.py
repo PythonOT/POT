@@ -282,6 +282,20 @@ def test_empty_backend():
         nx.array_equal(M, M)
     with pytest.raises(NotImplementedError):
         nx.is_floating_point(M)
+    with pytest.raises(NotImplementedError):
+        nx.tile(M, (10, 1))
+    with pytest.raises(NotImplementedError):
+        nx.floor(M)
+    with pytest.raises(NotImplementedError):
+        nx.prod(M)
+    with pytest.raises(NotImplementedError):
+        nx.sort2(M)
+    with pytest.raises(NotImplementedError):
+        nx.qr(M)
+    with pytest.raises(NotImplementedError):
+        nx.atan2(v, v)
+    with pytest.raises(NotImplementedError):
+        nx.transpose(M, 0, 1)
 
 
 def test_func_backends(nx):
@@ -602,6 +616,38 @@ def test_func_backends(nx):
         A = nx.isfinite(A)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("isfinite")
+
+        A = nx.tile(vb, (10, 1))
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("tile")
+
+        A = nx.floor(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("floor")
+
+        A = nx.prod(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("prod")
+
+        A, B = nx.sort2(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("sort2 sort")
+        lst_b.append(nx.to_numpy(B))
+        lst_name.append("sort2 argsort")
+
+        A, B = nx.qr(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("QR Q")
+        lst_b.append(nx.to_numpy(B))
+        lst_name.append("QR R")
+
+        A = nx.atan2(vb, vb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("atan2")
+
+        A = nx.transpose(Mb, 0, 1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("transpose")
 
         assert not nx.array_equal(Mb, vb), "array_equal (shape)"
         assert nx.array_equal(Mb, Mb), "array_equal (elements) - expected true"
