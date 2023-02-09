@@ -406,3 +406,49 @@ def test_sliced_sphere_backend_type_devices(nx):
         valb = ot.sliced_wasserstein_sphere(xb, yb)
 
         nx.assert_same_dtype_device(xb, valb)
+
+
+def test_sliced_sphere_unif():
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 3)
+    u = ot.utils.unif(n)
+
+    with pytest.raises(ValueError):
+        _ = ot.sliced_wasserstein_sphere_unif(x, u, 10, seed=rng)
+
+
+def test_sliced_sphere_unif_log():
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 4)
+    x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
+    u = ot.utils.unif(n)
+
+    res, log = ot.sliced_wasserstein_sphere_unif(x, u, 10, seed=rng, log=True)
+    assert len(log) == 2
+    projections = log["projections"]
+    projected_emds = log["projected_emds"]
+
+    assert projections.shape[0] == len(projected_emds) == 10
+    for emd in projected_emds:
+        assert emd > 0
+
+
+def test_sliced_sphere_unif_backend_type_devices(nx):
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 3)
+    x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
+
+    for tp in nx.__type_list__:
+        print(nx.dtype_device(tp))
+
+        xb = nx.from_numpy(x, type_as=tp)
+
+        valb = ot.sliced_wasserstein_sphere_unif(xb)
+
+        nx.assert_same_dtype_device(xb, valb)

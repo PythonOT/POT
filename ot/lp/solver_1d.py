@@ -614,6 +614,11 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
     require_sort: bool, optional
         If True, sort the values.
 
+    Returns
+    -------
+    loss: float
+        Cost associated to the optimal transportation
+
     Examples
     --------
     >>> u = np.array([[0.2,0.5,0.8]])%1
@@ -726,6 +731,11 @@ def wasserstein1_circle(u_values, v_values, u_weights=None, v_weights=None, requ
     require_sort: bool, optional
         If True, sort the values.
 
+    Returns
+    -------
+    loss: float
+        Cost associated to the optimal transportation
+
     Examples
     --------
     >>> u = np.array([[0.2,0.5,0.8]])%1
@@ -799,7 +809,7 @@ def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
     the binary search algorithm proposed in [44] otherwise.
     Samples need to be in :math:`S^1\cong [0,1[`.
 
-    .. math:
+    .. math::
         OT_{loss} = \inf_{\theta\in\mathbb{R}}\int_0^1 |cdf_u^{-1}(q)  - (cdf_v-\theta)^{-1}(q)|^p\ \mathrm{d}q
 
     Parameters
@@ -827,6 +837,11 @@ def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
     require_sort: bool, optional
         If True, sort the values.
 
+    Returns
+    -------
+    loss: float
+        Cost associated to the optimal transportation
+
     Examples
     --------
     >>> u = np.array([[0.2,0.5,0.8]])%1
@@ -847,3 +862,66 @@ def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
     return binary_search_circle(u_values, v_values, u_weights, v_weights,
                                 p=p, Lm=Lm, Lp=Lp, tm=tm, tp=tp, eps=eps,
                                 require_sort=require_sort)
+
+
+def wasserstein2_unif_circle(u_values, u_weights=None):
+    r"""Computes the closed-form for the 2-Wasserstein distance between samples and a uniform distribution on :math:`S^1`
+
+    .. math::
+        W_2^2(\mu_n, \nu) = \sum_{i=1}^n \alpha_i x_i^2 - \left(\sum_{i=1}^n \alpha_i x_i\right)^2 + \sum_{i=1}^n \alpha_i x_i \left(1-\alpha_i-2\sum_{k=1}^{i-1}\alpha_k\right) + \frac{1}{12}
+
+    where:
+
+    - :math:`\nu=\mathrm{Unif}(S^1)` and :math:`\mu_n  = \sum_{i=1}^n \alpha_i \delta_{x_i}`
+
+    Parameters
+    ----------
+    u_values: ndarray, shape (n, ...)
+        Samples
+    u_weights : ndarray, shape (n, ...), optional
+        samples weights in the source domain
+
+    Returns
+    -------
+    loss: float
+        Cost associated to the optimal transportation
+
+    Examples
+    --------
+    >>> x0 = np.array([[0], [0.2], [0.4]])
+    >>> wasserstein2_unif_circle(x0)
+    array([0.02111111])
+
+    References
+    ----------
+    .. [46] Bonet, C., Berg, P., Courty, N., Septier, F., Drumetz, L., & Pham, M. T. (2023). Spherical sliced-wasserstein. International Conference on Learning Representations.
+    """
+
+    if u_weights is not None:
+        nx = get_backend(u_values, u_weights)
+    else:
+        nx = get_backend(u_values)
+
+    n = u_values.shape[0]
+
+    u_values = u_values % 1
+
+    if len(u_values.shape) == 1:
+        u_values = nx.reshape(u_values, (n, 1))
+
+    if u_weights is None:
+        u_weights = nx.full(u_values.shape, 1. / n, type_as=u_values)
+    elif u_weights.ndim != u_values.ndim:
+        u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
+
+    u_values = nx.sort(u_values, 0)
+    u_cdf = nx.cumsum(u_weights, 0)
+    u_cdf = nx.zero_pad(u_cdf, [(1, 0), (0, 0)])
+
+    cpt1 = nx.sum(u_weights * u_values**2, axis=0)
+    u_mean = nx.sum(u_weights * u_values, axis=0)
+
+    ns = 1 - u_weights - 2 * u_cdf[:-1]
+    cpt2 = nx.sum(u_values * u_weights * ns, axis=0)
+
+    return cpt1 - u_mean**2 + cpt2 + 1 / 12

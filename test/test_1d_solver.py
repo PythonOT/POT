@@ -278,3 +278,48 @@ def test_wasserstein1d_circle_devices(nx):
 
         nx.assert_same_dtype_device(xb, w1)
         nx.assert_same_dtype_device(xb, w2_bsc)
+
+
+def test_wasserstein_1d_unif_circle():
+    # test wasserstein unif_circle give similar results as wasserstein1d
+    n = 20
+    m = 50000
+
+    rng = np.random.RandomState(0)
+    u = rng.rand(n,)
+    v = rng.rand(m,)
+
+    # w_u = rng.uniform(0., 1., n)
+    # w_u = w_u / w_u.sum()
+
+    w_u = ot.utils.unif(n)
+
+    w_v = ot.utils.unif(m)
+
+    M1 = np.minimum(np.abs(u[:, None] - v[None]), 1 - np.abs(u[:, None] - v[None]))
+    wass2 = ot.emd2(w_u, w_v, M1**2)
+
+    wass2_circle = ot.wasserstein_circle(u, v, w_u, w_v, p=2, eps=1e-15)
+    wass2_unif_circle = ot.wasserstein2_unif_circle(u, w_u)
+
+    # check loss is similar
+    np.testing.assert_allclose(wass2, wass2_unif_circle, atol=1e-3)
+    np.testing.assert_allclose(wass2_circle, wass2_unif_circle, atol=1e-3)
+
+
+def test_wasserstein1d_unif_circle_devices(nx):
+    rng = np.random.RandomState(0)
+
+    n = 10
+    x = np.linspace(0, 1, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+
+    for tp in nx.__type_list__:
+        print(nx.dtype_device(tp))
+
+        xb, rho_ub = nx.from_numpy(x, rho_u, type_as=tp)
+
+        w2 = ot.wasserstein2_unif_circle(xb, rho_ub)
+
+        nx.assert_same_dtype_device(xb, w2)

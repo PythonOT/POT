@@ -20,7 +20,9 @@ from .cvx import barycenter
 
 # import compiled emd
 from .emd_wrap import emd_c, check_result, emd_1d_sorted
-from .solver_1d import emd_1d, emd2_1d, wasserstein_1d, binary_search_circle, wasserstein1_circle, wasserstein_circle
+from .solver_1d import (emd_1d, emd2_1d, wasserstein_1d, 
+                        binary_search_circle, wasserstein1_circle, 
+                        wasserstein_circle, wasserstein2_unif_circle)
 
 from ..utils import dist, list_to_array
 from ..utils import parmap
@@ -28,7 +30,7 @@ from ..backend import get_backend
 
 __all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx', ' emd_1d_sorted',
            'emd_1d', 'emd2_1d', 'wasserstein_1d', 'generalized_free_support_barycenter',
-           'binary_search_circle', 'wasserstein1_circle', 'wasserstein_circle']
+           'binary_search_circle', 'wasserstein1_circle', 'wasserstein_circle', 'wasserstein2_unif_circle']
 
 
 def check_number_threads(numThreads):

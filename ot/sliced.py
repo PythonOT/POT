@@ -270,9 +270,8 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
 
     - :math:`P^U_\# \mu` stands for the pushforwards of the projection :math:`\forall x\in S^{d-1},\ P^U(x) = \frac{U^Tx}{\|U^Tx\|_2}`
 
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     X_s: ndarray, shape (n_samples_a, dim)
         Samples in the source domain
     X_t: ndarray, shape (n_samples_b, dim)
@@ -355,6 +354,87 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
 
     projected_emd = wasserstein_circle(Xps_coords.T, Xpt_coords.T, u_weights=a, v_weights=b, p=p)
     res = nx.mean(projected_emd) ** (1 / p)
+
+    if log:
+        return res, {"projections": projections, "projected_emds": projected_emd}
+    return res
+
+
+def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log=False):
+    r"""Compute the 2-spherical sliced wasserstein w.r.t. a uniform distribution.
+
+    .. math::
+        SSW_2(\mu_n, \nu)
+
+    where
+
+    - :math:`\mu_n=\sum_{i=1}^n \alpha_i \delta_{x_i}`
+    - :math:`\nu=\mathrm{Unif}(S^1)`
+
+    Parameters
+    ----------
+    X_s: ndarray, shape (n_samples_a, dim)
+        Samples in the source domain
+    a : ndarray, shape (n_samples_a,), optional
+        samples weights in the source domain
+    n_projections : int, optional
+        Number of projections used for the Monte-Carlo approximation
+    seed: int or RandomState or None, optional
+        Seed used for random number generator
+    log: bool, optional
+        if True, sliced_wasserstein_distance returns the projections used and their associated EMD.
+
+    Returns
+    -------
+    cost: float
+        Spherical Sliced Wasserstein Cost
+    log: dict, optional
+        log dictionary return only if log==True in parameters
+
+    Examples
+    ---------
+    >>> np.random.seed(42)
+    >>> x0 = np.random.randn(500,3)
+    >>> x0 = x0 / np.sqrt(np.sum(x0**2, -1, keepdims=True))
+    >>> sliced_wasserstein_sphere_unif(x0, seed=42)
+    0.017335828268020156
+
+    References:
+    -----------
+    .. [46] Bonet, C., Berg, P., Courty, N., Septier, F., Drumetz, L., & Pham, M. T. (2023). Spherical sliced-wasserstein. International Conference on Learning Representations.
+    """
+    from .lp import wasserstein2_unif_circle
+
+    if a is not None:
+        nx = get_backend(X_s, a)
+    else:
+        nx = get_backend(X_s)
+
+    n, d = X_s.shape
+
+    if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10**(-4)):
+        raise ValueError("X_s is not on the sphere.")
+
+    # Uniforms and independent samples on the Stiefel manifold V_{d,2}
+    if isinstance(seed, np.random.RandomState) and str(nx) == 'numpy':
+        Z = seed.randn(n_projections, d, 2)
+    else:
+        if seed is not None:
+            nx.seed(seed)
+        Z = nx.randn(n_projections, d, 2, type_as=X_s)
+
+    projections, _ = nx.qr(Z)
+
+    # Projection on S^1
+    # Projection on plane
+    Xps = nx.transpose(nx.reshape(nx.dot(nx.transpose(projections, 1, 2)[:, None], X_s[:, :, None]), (n_projections, 2, n)), 1, 2)
+    # Projection on sphere
+    Xps = Xps / nx.sqrt(nx.sum(Xps**2, -1, keepdims=True))
+    # Get coords
+    Xps_coords = (nx.atan2(-Xps[:, :, 1], -Xps[:, :, 0]) + np.pi) / (2 * np.pi)
+
+    projected_emd = wasserstein2_unif_circle(Xps_coords.T, u_weights=a)
+    res = nx.mean(projected_emd) ** (1 / 2)
 
     if log:
         return res, {"projections": projections, "projected_emds": projected_emd}
