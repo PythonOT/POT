@@ -3067,7 +3067,7 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss'):
 
     .. [45]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
-            International Conference on Learning Representations (ICLR), 2021.
+            International Conference on Learning Representations (ICLR), 2022.
     """
     C1, C2, p = list_to_array(C1, C2, p)
     nx = get_backend(C1, C2, p)
@@ -3157,7 +3157,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
     ----------
     .. [45]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
-            International Conference on Learning Representations (ICLR), 2021.
+            International Conference on Learning Representations (ICLR), 2022.
     """
     p = list_to_array(p)
     p0, C10, C20 = p, C1, C2
@@ -3281,7 +3281,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
 
     .. [45]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
-            International Conference on Learning Representations (ICLR), 2021.
+            International Conference on Learning Representations (ICLR), 2022.
     """
     p = list_to_array(p)
     p0, C10, C20 = p, C1, C2
@@ -3427,7 +3427,7 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
 
     .. [45] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
-            International Conference on Learning Representations (ICLR), 2021.
+            International Conference on Learning Representations (ICLR), 2022.
     """
     p = list_to_array(p)
     p0, C10, C20, M0 = p, C1, C2, M
@@ -3563,7 +3563,7 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
 
     .. [45] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
-            International Conference on Learning Representations (ICLR), 2021.
+            International Conference on Learning Representations (ICLR), 2022.
     """
     p = list_to_array(p)
     p0, C10, C20, M0 = p, C1, C2, M
