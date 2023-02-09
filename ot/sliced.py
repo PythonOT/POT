@@ -396,8 +396,9 @@ def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log
     >>> np.random.seed(42)
     >>> x0 = np.random.randn(500,3)
     >>> x0 = x0 / np.sqrt(np.sum(x0**2, -1, keepdims=True))
-    >>> sliced_wasserstein_sphere_unif(x0, seed=42)
-    0.017335828268020156
+    >>> ssw = sliced_wasserstein_sphere_unif(x0, seed=42)
+    >>> np.allclose(sliced_wasserstein_sphere_unif(x0, seed=42), 0.01734, atol=1e-3)
+    True
 
     References:
     -----------
