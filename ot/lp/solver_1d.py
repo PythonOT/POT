@@ -579,7 +579,7 @@ def Cost(theta, u_values, v_values, u_cdf, v_cdf, p):
 
 def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
                          Lm=10, Lp=10, tm=-1, tp=1, eps=1e-6, require_sort=True):
-    r"""Computes the Wasserstein distance on the circle using the Binary search algorithm proposed in [44]. 
+    r"""Computes the Wasserstein distance on the circle using the Binary search algorithm proposed in [44].
     Samples need to be in :math:`S^1\cong [0,1[`.
 
     .. math::

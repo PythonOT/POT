@@ -915,7 +915,7 @@ class Backend():
         r"""
         Return the product of all elements.
 
-        See: https://pytorch.org/docs/stable/generated/torch.prod.html    
+        See: https://pytorch.org/docs/stable/generated/torch.prod.html
         """
         raise NotImplementedError()
 
