@@ -1254,6 +1254,20 @@ class NumpyBackend(Backend):
         return self.sort(a, axis), self.argsort(a, axis)
 
     def qr(self, a):
+        np_version = tuple([int(k) for k in np.__version__.split(".")])
+        if np_version <= (1, 21, 6):
+            M, N = a.shape[-2], a.shape[-1]
+            K = min(M, N)
+
+            if len(a.shape) >= 3:
+                n = a.shape[0]
+            else:
+                n = 1
+            qs, rs = np.zeros((n, M, K)), np.zeros((n, K, N))
+
+            for i in range(a.shape[0]):
+                qs[i], rs[i] = np.linalg.qr(a[i])
+            return qs, rs
         return np.linalg.qr(a)
 
     def atan2(self, a, b):
