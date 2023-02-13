@@ -1261,12 +1261,15 @@ class NumpyBackend(Backend):
 
             if len(a.shape) >= 3:
                 n = a.shape[0]
-            else:
-                n = 1
-            qs, rs = np.zeros((n, M, K)), np.zeros((n, K, N))
 
-            for i in range(a.shape[0]):
-                qs[i], rs[i] = np.linalg.qr(a[i])
+                qs, rs = np.zeros((n, M, K)), np.zeros((n, K, N))
+
+                for i in range(a.shape[0]):
+                    qs[i], rs[i] = np.linalg.qr(a[i])
+
+            else:
+                return np.linalg.qr(a)
+
             return qs, rs
         return np.linalg.qr(a)
 
