@@ -1255,7 +1255,7 @@ class NumpyBackend(Backend):
 
     def qr(self, a):
         np_version = tuple([int(k) for k in np.__version__.split(".")])
-        if np_version <= (1, 21, 6):
+        if np_version < (1, 22, 0):
             M, N = a.shape[-2], a.shape[-1]
             K = min(M, N)
 
