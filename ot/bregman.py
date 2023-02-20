@@ -364,7 +364,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
             raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
+def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9, warmstart=None, 
                    verbose=False, log=False, warn=True,
                    **kwargs):
     r"""
@@ -409,6 +409,9 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
         Max number of iterations
     stopThr : float, optional
         Stop threshold on error (>0)
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual vectors. If provided, the dual vectors must be in logarithm form, 
+        i.e.  warmstart = (log_u, log_v), but not (u, v).
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -474,12 +477,15 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
 
     # we assume that no distances are null except those of the diagonal of
     # distances
-    if n_hists:
-        u = nx.ones((dim_a, n_hists), type_as=M) / dim_a
-        v = nx.ones((dim_b, n_hists), type_as=M) / dim_b
+    if warmstart is None:
+        if n_hists:
+            u = nx.ones((dim_a, n_hists), type_as=M) / dim_a
+            v = nx.ones((dim_b, n_hists), type_as=M) / dim_b
+        else:
+            u = nx.ones(dim_a, type_as=M) / dim_a
+            v = nx.ones(dim_b, type_as=M) / dim_b
     else:
-        u = nx.ones(dim_a, type_as=M) / dim_a
-        v = nx.ones(dim_b, type_as=M) / dim_b
+        u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
     K = nx.exp(M / (-reg))
 
@@ -546,7 +552,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
             return u.reshape((-1, 1)) * K * v.reshape((1, -1))
 
 
-def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
+def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, warmstart=None, verbose=False,
                  log=False, warn=True, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem in log space
@@ -590,6 +596,9 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
         Max number of iterations
     stopThr : float, optional
         Stop threshold on error (>0)
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual vectors. If provided, the dual vectors must be in logarithm form, 
+        i.e.  warmstart = (log_u, log_v), but not (u, v).
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -656,6 +665,10 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
     else:
         n_hists = 0
 
+    # in case of multiple historgrams
+    if n_hists > 1 and warmstart is None:
+        warmstart = [None] * n_hists
+
     if n_hists:  # we do not want to use tensors sor we do a loop
 
         lst_loss = []
@@ -663,7 +676,7 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
         lst_v = []
 
         for k in range(n_hists):
-            res = sinkhorn_log(a, b[:, k], M, reg, numItermax=numItermax,
+            res = sinkhorn_log(a, b[:, k], M, reg, numItermax=numItermax, warmstart=warmstart[k],
                                stopThr=stopThr, verbose=verbose, log=log, **kwargs)
 
             if log:
@@ -691,9 +704,11 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
 
         # we assume that no distances are null except those of the diagonal of
         # distances
-
-        u = nx.zeros(dim_a, type_as=M)
-        v = nx.zeros(dim_b, type_as=M)
+        if warmstart is None:
+            u = nx.zeros(dim_a, type_as=M)
+            v = nx.zeros(dim_b, type_as=M)
+        else:
+            u, v = warmstart
 
         def get_logT(u, v):
             if n_hists:
