@@ -146,7 +146,7 @@ for i in range(n_try):
 
 L_w2 = np.zeros((n_try, 100))
 for i in range(n_try):
-    L_w2[i] = ot.wasserstein2_unif_circle(xts[i].T)
+    L_w2[i] = ot.semidiscrete_wasserstein2_unif_circle(xts[i].T)
 
 m_w2 = np.mean(L_w2, axis=0)
 std_w2 = np.std(L_w2, axis=0)
