@@ -295,7 +295,7 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.atan2(v, v)
     with pytest.raises(NotImplementedError):
-        nx.transpose(M, 0, 1)
+        nx.transpose(M)
 
 
 def test_func_backends(nx):
@@ -645,7 +645,7 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append("atan2")
 
-        A = nx.transpose(Mb, 0, 1)
+        A = nx.transpose(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("transpose")
 

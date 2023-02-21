@@ -13,6 +13,7 @@ Sliced OT Distances
 import numpy as np
 from .backend import get_backend, NumpyBackend
 from .utils import list_to_array
+from .lp import wasserstein_circle, semidiscrete_wasserstein2_unif_circle
 
 
 def get_random_projections(d, n_projections, seed=None, backend=None, type_as=None):
@@ -261,7 +262,7 @@ def max_sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, 
 def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
                               p=2, seed=None, log=False):
     r"""
-    Compute the sliced-Wasserstein distance on the sphere.
+    Compute the spherical sliced-Wasserstein discrepancy.
 
     .. math::
         SSW_p(\mu,\nu) = \left(\int_{\mathbb{V}_{d,2}} W_p^p(P^U_\#\mu, P^U_\#\nu)\ \mathrm{d}\sigma(U)\right)^{\frac{1}{p}}
@@ -269,6 +270,8 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
     where:
 
     - :math:`P^U_\# \mu` stands for the pushforwards of the projection :math:`\forall x\in S^{d-1},\ P^U(x) = \frac{U^Tx}{\|U^Tx\|_2}`
+
+    The function runs on backend but tensorflow is not supported.
 
     Parameters
     ----------
@@ -287,13 +290,13 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
     seed: int or RandomState or None, optional
         Seed used for random number generator
     log: bool, optional
-        if True, sliced_wasserstein_distance returns the projections used and their associated EMD.
+        if True, sliced_wasserstein_sphere returns the projections used and their associated EMD.
 
     Returns
     -------
     cost: float
         Spherical Sliced Wasserstein Cost
-    log : dict, optional
+    log: dict, optional
         log dictionary return only if log==True in parameters
 
     Examples
@@ -308,8 +311,6 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
     ----------
     .. [46] Bonet, C., Berg, P., Courty, N., Septier, F., Drumetz, L., & Pham, M. T. (2023). Spherical sliced-wasserstein. International Conference on Learning Representations.
     """
-    from .lp import wasserstein_circle
-
     if a is not None and b is not None:
         nx = get_backend(X_s, X_t, a, b)
     else:
@@ -339,16 +340,14 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
 
     # Projection on S^1
     # Projection on plane
-    # Xps = nx.reshape(nx.dot(nx.transpose(projections, 1, 2)[:, None], X_s[:, :, None]), (n_projections, n, 2)) ## numpy reshapes in the wrong order
-    # Xpt = nx.reshape(nx.dot(nx.transpose(projections, 1, 2)[:, None], X_t[:, :, None]), (n_projections, m, 2))
-    Xps = nx.transpose(nx.reshape(nx.dot(nx.transpose(projections, 1, 2)[:, None], X_s[:, :, None]), (n_projections, 2, n)), 1, 2)
-    Xpt = nx.transpose(nx.reshape(nx.dot(nx.transpose(projections, 1, 2)[:, None], X_t[:, :, None]), (n_projections, 2, m)), 1, 2)
+    Xps = nx.transpose(nx.reshape(nx.dot(nx.transpose(projections, (0, 2, 1))[:, None], X_s[:, :, None]), (n_projections, 2, n)), (0, 2, 1))
+    Xpt = nx.transpose(nx.reshape(nx.dot(nx.transpose(projections, (0, 2, 1))[:, None], X_t[:, :, None]), (n_projections, 2, m)), (0, 2, 1))
 
     # Projection on sphere
     Xps = Xps / nx.sqrt(nx.sum(Xps**2, -1, keepdims=True))
     Xpt = Xpt / nx.sqrt(nx.sum(Xpt**2, -1, keepdims=True))
 
-    # Get coords
+    # Get coordinates on [0,1[
     Xps_coords = (nx.atan2(-Xps[:, :, 1], -Xps[:, :, 0]) + np.pi) / (2 * np.pi)
     Xpt_coords = (nx.atan2(-Xpt[:, :, 1], -Xpt[:, :, 0]) + np.pi) / (2 * np.pi)
 
@@ -404,8 +403,6 @@ def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log
     -----------
     .. [46] Bonet, C., Berg, P., Courty, N., Septier, F., Drumetz, L., & Pham, M. T. (2023). Spherical sliced-wasserstein. International Conference on Learning Representations.
     """
-    from .lp import wasserstein2_unif_circle
-
     if a is not None:
         nx = get_backend(X_s, a)
     else:
@@ -428,13 +425,13 @@ def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log
 
     # Projection on S^1
     # Projection on plane
-    Xps = nx.transpose(nx.reshape(nx.dot(nx.transpose(projections, 1, 2)[:, None], X_s[:, :, None]), (n_projections, 2, n)), 1, 2)
+    Xps = nx.transpose(nx.reshape(nx.dot(nx.transpose(projections, (0, 2, 1))[:, None], X_s[:, :, None]), (n_projections, 2, n)), (0, 2, 1))
     # Projection on sphere
     Xps = Xps / nx.sqrt(nx.sum(Xps**2, -1, keepdims=True))
-    # Get coords
+    # Get coordinates on [0,1[
     Xps_coords = (nx.atan2(-Xps[:, :, 1], -Xps[:, :, 0]) + np.pi) / (2 * np.pi)
 
-    projected_emd = wasserstein2_unif_circle(Xps_coords.T, u_weights=a)
+    projected_emd = semidiscrete_wasserstein2_unif_circle(Xps_coords.T, u_weights=a)
     res = nx.mean(projected_emd) ** (1 / 2)
 
     if log:

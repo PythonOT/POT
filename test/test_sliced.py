@@ -311,7 +311,7 @@ def test_sliced_sphere_bad_shapes():
         _ = ot.sliced_wasserstein_sphere(x, y, u, u, 10, seed=rng)
 
 
-def test_sliced_sphere():
+def test_sliced_sphere_values_on_the_sphere():
     n = 100
     rng = np.random.RandomState(0)
 
@@ -408,7 +408,7 @@ def test_sliced_sphere_backend_type_devices(nx):
         nx.assert_same_dtype_device(xb, valb)
 
 
-def test_sliced_sphere_unif():
+def test_sliced_sphere_unif_values_on_the_sphere():
     n = 100
     rng = np.random.RandomState(0)
 

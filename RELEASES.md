@@ -4,11 +4,10 @@
 
 #### New features
 
-- Added the spherical sliced-Wasserstein discrepancy in `ot.sliced_wasserstein_sphere` and `ot.sliced_wasserstein_sphere_unif` + examples (PR #434)
-- Added the Wasserstein distance on the circle in ``ot.wasserstein_circle`` (PR #434)
-- Added the 1-Wasserstein distance on the circle in `ot.wasserstein1_circle` (PR #434)
-- Added the Wasserstein distance on the circle (for p>=1) in `ot.binary_search_circle` + examples (PR #434)
-- Added the 2-Wasserstein distance on the circle w.r.t a uniform distribution in `ot.wasserstein2_unif_circle` (PR #434)
+- Added the spherical sliced-Wasserstein discrepancy in `ot.sliced.sliced_wasserstein_sphere` and `ot.sliced.sliced_wasserstein_sphere_unif` + examples (PR #434)
+- Added the Wasserstein distance on the circle in ``ot.lp.solver_1d.wasserstein_circle`` (PR #434)
+- Added the Wasserstein distance on the circle (for p>=1) in `ot.lp.solver_1d.binary_search_circle` + examples (PR #434)
+- Added the 2-Wasserstein distance on the circle w.r.t a uniform distribution in `ot.lp.solver_1d.semidiscrete_wasserstein2_unif_circle` (PR #434)
 - Added Bures Wasserstein distance in `ot.gaussian` (PR ##428)
 - Added Generalized Wasserstein Barycenter solver + example (PR #372), fixed graphical details on the example (PR #376)
 - Added Free Support Sinkhorn Barycenter + example (PR #387)

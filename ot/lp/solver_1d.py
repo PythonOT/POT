@@ -407,7 +407,7 @@ def roll_cols(M, shifts):
     return nx.take_along_axis(M, arange2, 1)
 
 
-def dCost(theta, u_values, v_values, u_cdf, v_cdf, p=2):
+def derivative_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p=2):
     r""" Computes the left and right derivative of the cost (Equation (6.3) and (6.4) of [1])
 
     Parameters
@@ -494,7 +494,7 @@ def dCost(theta, u_values, v_values, u_cdf, v_cdf, p=2):
     return dCp.reshape(-1, 1), dCm.reshape(-1, 1)
 
 
-def Cost(theta, u_values, v_values, u_cdf, v_cdf, p):
+def ot_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p):
     r""" Computes the the cost (Equation (6.2) of [1])
 
     Parameters
@@ -578,9 +578,13 @@ def Cost(theta, u_values, v_values, u_cdf, v_cdf, p):
 
 
 def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
-                         Lm=10, Lp=10, tm=-1, tp=1, eps=1e-6, require_sort=True):
+                         Lm=10, Lp=10, tm=-1, tp=1, eps=1e-6, require_sort=True,
+                         log=False):
     r"""Computes the Wasserstein distance on the circle using the Binary search algorithm proposed in [44].
-    Samples need to be in :math:`S^1\cong [0,1[`.
+    Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
+    takes the value % 1.
+    If the values are on :math:`S^1\subset\mathbb{R}^2`, first find the coordinates
+    using e.g. the atan2 function.
 
     .. math::
         W_p^p(u,v) = \inf_{\theta\in\mathbb{R}}\int_0^1 |F_u^{-1}(q)  - (F_v-\theta)^{-1}(q)|^p\ \mathrm{d}q
@@ -589,12 +593,19 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
 
     - :math:`F_u` and :math:`F_v` are respectively the cdfs of :math:`u` and :math:`v`
 
+    For values :math:`x=(x_1,x_2)\in S^1`, first get their coordinates with
+
+    .. math::
+        u = \frac{\pi + \mathrm{atan2}(-x_2,-x_1)}{2\pi}
+
+    The function runs on backend but tensorflow is not supported.
+
     Parameters
     ----------
     u_values : ndarray, shape (n, ...)
-        samples in the source domain
+        samples in the source domain (coordinates on [0,1[)
     v_values : ndarray, shape (n, ...)
-        samples in the target domain
+        samples in the target domain (coordinates on [0,1[)
     u_weights : ndarray, shape (n, ...), optional
         samples weights in the source domain
     v_weights : ndarray, shape (n, ...), optional
@@ -613,11 +624,15 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
         Stopping condition
     require_sort: bool, optional
         If True, sort the values.
+    log: bool, optional
+        If True, returns also the optimal theta
 
     Returns
     -------
     loss: float
         Cost associated to the optimal transportation
+    log: dict, optional
+        log dictionary returned only if log==True in parameters
 
     Examples
     --------
@@ -645,6 +660,11 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
         u_values = nx.reshape(u_values, (n, 1))
     if len(v_values.shape) == 1:
         v_values = nx.reshape(v_values, (m, 1))
+
+    if u_values.shape[1] != v_values.shape[1]:
+        raise ValueError(
+            "u and v must have the same number of dimensions {} and {} respectively given".format(u_values.shape[1],
+                                                                                                  v_values.shape[1]))
 
     u_values = u_values % 1
     v_values = v_values % 1
@@ -688,17 +708,17 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
     while nx.any(1 - done):
         cpt += 1
 
-        dCp, dCm = dCost(tc, u_values, v_values, u_cdf, v_cdf, p)
+        dCp, dCm = derivative_cost_on_circle(tc, u_values, v_values, u_cdf, v_cdf, p)
         done = ((dCp * dCm) <= 0) * 1
 
         mask = ((tp - tm) < eps / L) * (1 - done)
 
         if nx.any(mask):
             # can probably be improved by computing only relevant values
-            dCptp, dCmtp = dCost(tp, u_values, v_values, u_cdf, v_cdf, p)
-            dCptm, dCmtm = dCost(tm, u_values, v_values, u_cdf, v_cdf, p)
-            Ctm = Cost(tm, u_values, v_values, u_cdf, v_cdf, p).reshape(-1, 1)
-            Ctp = Cost(tp, u_values, v_values, u_cdf, v_cdf, p).reshape(-1, 1)
+            dCptp, dCmtp = derivative_cost_on_circle(tp, u_values, v_values, u_cdf, v_cdf, p)
+            dCptm, dCmtm = derivative_cost_on_circle(tm, u_values, v_values, u_cdf, v_cdf, p)
+            Ctm = ot_cost_on_circle(tm, u_values, v_values, u_cdf, v_cdf, p).reshape(-1, 1)
+            Ctp = ot_cost_on_circle(tp, u_values, v_values, u_cdf, v_cdf, p).reshape(-1, 1)
 
             mask_end = mask * (nx.abs(dCptm - dCmtp) > 0.001)
             tc[mask_end > 0] = ((Ctp - Ctm + tm * dCptm - tp * dCmtp) / (dCptm - dCmtp))[mask_end > 0]
@@ -708,12 +728,20 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
             tp[((1 - mask) * (dCp >= 0)) > 0] = tc[((1 - mask) * (dCp >= 0)) > 0]
             tc[((1 - mask) * (1 - done)) > 0] = (tm[((1 - mask) * (1 - done)) > 0] + tp[((1 - mask) * (1 - done)) > 0]) / 2
 
-    return Cost(tc, u_values, v_values, u_cdf, v_cdf, p)
+    w = ot_cost_on_circle(tc, u_values, v_values, u_cdf, v_cdf, p)
+
+    if log:
+        return w, {"optimal_theta": tc[:, 0]}
+    return w
 
 
 def wasserstein1_circle(u_values, v_values, u_weights=None, v_weights=None, require_sort=True):
     r"""Computes the 1-Wasserstein distance on the circle using the level median [45].
-    Samples need to be in :math:`S^1\cong [0,1[`.
+    Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
+    takes the value % 1.
+    If the values are on :math:`S^1\subset\mathbb{R}^2`, first find the coordinates
+    using e.g. the atan2 function.
+    The function runs on backend but tensorflow is not supported.
 
     .. math::
         W_1(u,v) = \int_0^1 |F_u(t)-F_v(t)-LevMed(F_u-F_v)|\ \mathrm{d}t
@@ -721,9 +749,9 @@ def wasserstein1_circle(u_values, v_values, u_weights=None, v_weights=None, requ
     Parameters
     ----------
     u_values : ndarray, shape (n, ...)
-        samples in the source domain
+        samples in the source domain (coordinates on [0,1[)
     v_values : ndarray, shape (n, ...)
-        samples in the target domain
+        samples in the target domain (coordinates on [0,1[)
     u_weights : ndarray, shape (n, ...), optional
         samples weights in the source domain
     v_weights : ndarray, shape (n, ...), optional
@@ -761,6 +789,11 @@ def wasserstein1_circle(u_values, v_values, u_weights=None, v_weights=None, requ
         u_values = nx.reshape(u_values, (n, 1))
     if len(v_values.shape) == 1:
         v_values = nx.reshape(v_values, (m, 1))
+
+    if u_values.shape[1] != v_values.shape[1]:
+        raise ValueError(
+            "u and v must have the same number of dimensions {} and {} respectively given".format(u_values.shape[1],
+                                                                                                  v_values.shape[1]))
 
     u_values = u_values % 1
     v_values = v_values % 1
@@ -807,17 +840,34 @@ def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
                        Lm=10, Lp=10, tm=-1, tp=1, eps=1e-6, require_sort=True):
     r"""Computes the Wasserstein distance on the circle using either [45] for p=1 or
     the binary search algorithm proposed in [44] otherwise.
-    Samples need to be in :math:`S^1\cong [0,1[`.
+    Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
+    takes the value % 1.
+    If the values are on :math:`S^1\subset\mathbb{R}^2`, first find the coordinates
+    using e.g. the atan2 function.
+
+    General loss returned:
 
     .. math::
         OT_{loss} = \inf_{\theta\in\mathbb{R}}\int_0^1 |cdf_u^{-1}(q)  - (cdf_v-\theta)^{-1}(q)|^p\ \mathrm{d}q
 
+    For p=1, [45]
+
+    .. math::
+        W_1(u,v) = \int_0^1 |F_u(t)-F_v(t)-LevMed(F_u-F_v)|\ \mathrm{d}t
+
+    For values :math:`x=(x_1,x_2)\in S^1`, first get their coordinates with
+
+    .. math::
+        u = \frac{\pi + \mathrm{atan2}(-x_2,-x_1)}{2\pi}
+
+    The function runs on backend but tensorflow is not supported.
+
     Parameters
     ----------
     u_values : ndarray, shape (n, ...)
-        samples in the source domain
+        samples in the source domain (coordinates on [0,1[)
     v_values : ndarray, shape (n, ...)
-        samples in the target domain
+        samples in the target domain (coordinates on [0,1[)
     u_weights : ndarray, shape (n, ...), optional
         samples weights in the source domain
     v_weights : ndarray, shape (n, ...), optional
@@ -864,8 +914,12 @@ def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
                                 require_sort=require_sort)
 
 
-def wasserstein2_unif_circle(u_values, u_weights=None):
+def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
     r"""Computes the closed-form for the 2-Wasserstein distance between samples and a uniform distribution on :math:`S^1`
+    Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
+    takes the value % 1.
+    If the values are on :math:`S^1\subset\mathbb{R}^2`, first find the coordinates
+    using e.g. the atan2 function.
 
     .. math::
         W_2^2(\mu_n, \nu) = \sum_{i=1}^n \alpha_i x_i^2 - \left(\sum_{i=1}^n \alpha_i x_i\right)^2 + \sum_{i=1}^n \alpha_i x_i \left(1-\alpha_i-2\sum_{k=1}^{i-1}\alpha_k\right) + \frac{1}{12}
@@ -873,6 +927,11 @@ def wasserstein2_unif_circle(u_values, u_weights=None):
     where:
 
     - :math:`\nu=\mathrm{Unif}(S^1)` and :math:`\mu_n  = \sum_{i=1}^n \alpha_i \delta_{x_i}`
+
+    For values :math:`x=(x_1,x_2)\in S^1`, first get their coordinates with
+
+    .. math::
+        u = \frac{\pi + \mathrm{atan2}(-x_2,-x_1)}{2\pi}
 
     Parameters
     ----------
@@ -889,7 +948,7 @@ def wasserstein2_unif_circle(u_values, u_weights=None):
     Examples
     --------
     >>> x0 = np.array([[0], [0.2], [0.4]])
-    >>> wasserstein2_unif_circle(x0)
+    >>> semidiscrete_wasserstein2_unif_circle(x0)
     array([0.02111111])
 
     References

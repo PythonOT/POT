@@ -536,7 +536,7 @@ class Backend():
 
     def zero_pad(self, a, pad_width, value=0):
         r"""
-        Pads a tensor.
+        Pads a tensor with a given value (0 by default).
 
         This function follows the api from :any:`numpy.pad`
 
@@ -915,7 +915,7 @@ class Backend():
         r"""
         Return the product of all elements.
 
-        See: https://pytorch.org/docs/stable/generated/torch.prod.html
+        See: https://numpy.org/doc/stable/reference/generated/numpy.prod.html
         """
         raise NotImplementedError()
 
@@ -931,7 +931,7 @@ class Backend():
         r"""
         Return the QR factorization
 
-        See: https://pytorch.org/docs/stable/generated/torch.linalg.qr.html
+        See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.qr.html
         """
         raise NotImplementedError()
 
@@ -943,11 +943,11 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def transpose(self, a, dim0, dim1):
+    def transpose(self, a, axes=None):
         r"""
         Returns a tensor that is a transposed version of a. The given dimensions dim0 and dim1 are swapped.
 
-        See: https://pytorch.org/docs/stable/generated/torch.transpose.html
+        See: https://numpy.org/doc/stable/reference/generated/numpy.transpose.html
         """
         raise NotImplementedError()
 
@@ -1276,11 +1276,8 @@ class NumpyBackend(Backend):
     def atan2(self, a, b):
         return np.arctan2(a, b)
 
-    def transpose(self, a, dim0, dim1):
-        dims = list(range(len(a.shape)))
-        dims[dim0], dims[dim1] = dim1, dim0
-        return np.transpose(a, axes=dims)
-        # return np.transpose(a, axes=[0, dim1, dim0])
+    def transpose(self, a, axes=None):
+        return np.transpose(a, axes)
 
 
 class JaxBackend(Backend):
@@ -1626,10 +1623,8 @@ class JaxBackend(Backend):
     def atan2(self, a, b):
         return jnp.arctan2(a, b)
 
-    def transpose(self, a, dim0, dim1):
-        dims = list(range(len(a.shape)))
-        dims[dim0], dims[dim1] = dim1, dim0
-        return jnp.transpose(a, axes=dims)
+    def transpose(self, a, axes=None):
+        return jnp.transpose(a, axes)
 
 
 class TorchBackend(Backend):
@@ -2072,8 +2067,10 @@ class TorchBackend(Backend):
     def atan2(self, a, b):
         return torch.atan2(a, b)
 
-    def transpose(self, a, dim0, dim1):
-        return torch.transpose(a, dim0, dim1)
+    def transpose(self, a, axes=None):
+        if axes is None:
+            axes = tuple(range(a.ndim)[::-1])
+        return torch.permute(a, axes)
 
 
 class CupyBackend(Backend):  # pragma: no cover
@@ -2443,10 +2440,8 @@ class CupyBackend(Backend):  # pragma: no cover
     def atan2(self, a, b):
         return cp.arctan2(a, b)
 
-    def transpose(self, a, dim0, dim1):
-        dims = list(range(len(a.shape)))
-        dims[dim0], dims[dim1] = dim1, dim0
-        return cp.transpose(a, axes=dims)
+    def transpose(self, a, axes=None):
+        return cp.transpose(a, axes)
 
 
 class TensorflowBackend(Backend):
@@ -2829,7 +2824,5 @@ class TensorflowBackend(Backend):
     def atan2(self, a, b):
         return tf.math.atan2(a, b)
 
-    def transpose(self, a, dim0, dim1):
-        dims = list(range(len(a.shape)))
-        dims[dim0], dims[dim1] = dim1, dim0
-        return tf.transpose(a, perm=dims)
+    def transpose(self, a, axes=None):
+        return tf.transpose(a, perm=axes)

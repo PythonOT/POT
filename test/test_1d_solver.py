@@ -239,7 +239,6 @@ def test_wasserstein_1d_circle():
     wass1 = ot.emd2(w_u, w_v, M1)
 
     wass1_bsc = ot.binary_search_circle(u, v, w_u, w_v, p=1)
-    wass1_circle = ot.wasserstein1_circle(u, v, w_u, w_v)
     w1_circle = ot.wasserstein_circle(u, v, w_u, w_v, p=1)
 
     M2 = M1**2
@@ -249,10 +248,7 @@ def test_wasserstein_1d_circle():
 
     # check loss is similar
     np.testing.assert_allclose(wass1, wass1_bsc)
-
-    np.testing.assert_allclose(wass1, wass1_circle, rtol=1e-2)
     np.testing.assert_allclose(wass1, w1_circle, rtol=1e-2)
-
     np.testing.assert_allclose(wass2, wass2_bsc)
     np.testing.assert_allclose(wass2, w2_circle)
 
@@ -293,14 +289,13 @@ def test_wasserstein_1d_unif_circle():
     # w_u = w_u / w_u.sum()
 
     w_u = ot.utils.unif(n)
-
     w_v = ot.utils.unif(m)
 
     M1 = np.minimum(np.abs(u[:, None] - v[None]), 1 - np.abs(u[:, None] - v[None]))
     wass2 = ot.emd2(w_u, w_v, M1**2)
 
     wass2_circle = ot.wasserstein_circle(u, v, w_u, w_v, p=2, eps=1e-15)
-    wass2_unif_circle = ot.wasserstein2_unif_circle(u, w_u)
+    wass2_unif_circle = ot.semidiscrete_wasserstein2_unif_circle(u, w_u)
 
     # check loss is similar
     np.testing.assert_allclose(wass2, wass2_unif_circle, atol=1e-3)
@@ -320,6 +315,33 @@ def test_wasserstein1d_unif_circle_devices(nx):
 
         xb, rho_ub = nx.from_numpy(x, rho_u, type_as=tp)
 
-        w2 = ot.wasserstein2_unif_circle(xb, rho_ub)
+        w2 = ot.semidiscrete_wasserstein2_unif_circle(xb, rho_ub)
 
         nx.assert_same_dtype_device(xb, w2)
+
+
+def test_binary_search_circle_log():
+    n = 20
+    m = 30
+    rng = np.random.RandomState(0)
+    u = rng.rand(n,)
+    v = rng.rand(m,)
+
+    wass2_bsc, log = ot.binary_search_circle(u, v, p=2, log=True)
+    optimal_thetas = log["optimal_theta"]
+
+    assert optimal_thetas.shape[0] == 1
+
+
+def test_wasserstein_circle_bad_shape():
+    n = 20
+    m = 30
+    rng = np.random.RandomState(0)
+    u = rng.rand(n, 2)
+    v = rng.rand(m, 1)
+
+    with pytest.raises(ValueError):
+        _ = ot.wasserstein_circle(u, v, p=2)
+
+    with pytest.raises(ValueError):
+        _ = ot.wasserstein_circle(u, v, p=1)
