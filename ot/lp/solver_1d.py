@@ -663,8 +663,8 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
 
     if u_values.shape[1] != v_values.shape[1]:
         raise ValueError(
-            "u and v must have the same number of dimensions {} and {} respectively given".format(u_values.shape[1],
-                                                                                                  v_values.shape[1]))
+            "u and v must have the same number of batchs {} and {} respectively given".format(u_values.shape[1],
+                                                                                              v_values.shape[1]))
 
     u_values = u_values % 1
     v_values = v_values % 1
@@ -792,8 +792,8 @@ def wasserstein1_circle(u_values, v_values, u_weights=None, v_weights=None, requ
 
     if u_values.shape[1] != v_values.shape[1]:
         raise ValueError(
-            "u and v must have the same number of dimensions {} and {} respectively given".format(u_values.shape[1],
-                                                                                                  v_values.shape[1]))
+            "u and v must have the same number of batchs {} and {} respectively given".format(u_values.shape[1],
+                                                                                              v_values.shape[1]))
 
     u_values = u_values % 1
     v_values = v_values % 1
