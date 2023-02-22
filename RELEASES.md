@@ -8,8 +8,8 @@
 - Added Generalized Wasserstein Barycenter solver + example (PR #372), fixed graphical details on the example (PR #376)
 - Added Free Support Sinkhorn Barycenter + example (PR #387)
 - New API for OT solver using function `ot.solve` (PR #388)
-- Backend version of `ot.partial` and `ot.smooth`  (PR #388)
-
+- Backend version of `ot.partial` and `ot.smooth` (PR #388)
+- Added argument for warmstart of dual vectors in Sinkhorn-based methods in `ot.bregman` (PR #)
 
 #### Closed issues
 
