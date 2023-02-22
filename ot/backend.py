@@ -2070,7 +2070,8 @@ class TorchBackend(Backend):
     def transpose(self, a, axes=None):
         if axes is None:
             axes = tuple(range(a.ndim)[::-1])
-        return torch.permute(a, axes)
+        return a.permute(axes)
+        # return torch.permute(a, axes)
 
 
 class CupyBackend(Backend):  # pragma: no cover
