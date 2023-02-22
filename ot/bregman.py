@@ -24,7 +24,7 @@ from ot.utils import unif, dist, list_to_array
 from .backend import get_backend
 
 
-def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None, 
+def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
              stopThr=1e-9, verbose=False, log=False, warn=True,
              **kwargs):
     r"""
@@ -157,27 +157,27 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
     """
 
     if method.lower() == 'sinkhorn':
-        return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
+        return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
                               stopThr=stopThr, verbose=verbose, log=log,
                               warn=warn,
                               **kwargs)
     elif method.lower() == 'sinkhorn_log':
-        return sinkhorn_log(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
+        return sinkhorn_log(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
                             stopThr=stopThr, verbose=verbose, log=log,
                             warn=warn,
                             **kwargs)
     elif method.lower() == 'greenkhorn':
-        return greenkhorn(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
+        return greenkhorn(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
                           stopThr=stopThr, verbose=verbose, log=log,
                           warn=warn)
     elif method.lower() == 'sinkhorn_stabilized':
-        return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
+        return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
                                    stopThr=stopThr, verbose=verbose,
                                    log=log, warn=warn,
                                    **kwargs)
     elif method.lower() == 'sinkhorn_epsilon_scaling':
         return sinkhorn_epsilon_scaling(a, b, M, reg,
-                                        numItermax=numItermax, warmstart=warmstart, 
+                                        numItermax=numItermax, warmstart=warmstart,
                                         stopThr=stopThr, verbose=verbose,
                                         log=log, warn=warn,
                                         **kwargs)
@@ -185,7 +185,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
         raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None, 
+def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
               stopThr=1e-9, verbose=False, log=False, warn=False, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the loss
@@ -328,17 +328,17 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
 
     if len(b.shape) < 2:
         if method.lower() == 'sinkhorn':
-            res = sinkhorn_knopp(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
+            res = sinkhorn_knopp(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
                                  stopThr=stopThr, verbose=verbose,
                                  log=log, warn=warn,
                                  **kwargs)
         elif method.lower() == 'sinkhorn_log':
-            res = sinkhorn_log(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
+            res = sinkhorn_log(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
                                stopThr=stopThr, verbose=verbose,
                                log=log, warn=warn,
                                **kwargs)
         elif method.lower() == 'sinkhorn_stabilized':
-            res = sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
+            res = sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
                                       stopThr=stopThr, verbose=verbose,
                                       log=log, warn=warn,
                                       **kwargs)
@@ -352,17 +352,17 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
     else:
 
         if method.lower() == 'sinkhorn':
-            return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
+            return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
                                   stopThr=stopThr, verbose=verbose,
                                   log=log, warn=warn,
                                   **kwargs)
         elif method.lower() == 'sinkhorn_log':
-            return sinkhorn_log(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
+            return sinkhorn_log(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
                                 stopThr=stopThr, verbose=verbose,
                                 log=log, warn=warn,
                                 **kwargs)
         elif method.lower() == 'sinkhorn_stabilized':
-            return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
+            return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
                                        stopThr=stopThr, verbose=verbose,
                                        log=log, warn=warn,
                                        **kwargs)
@@ -370,7 +370,7 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
             raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn_knopp(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9, 
+def sinkhorn_knopp(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9,
                    verbose=False, log=False, warn=True,
                    **kwargs):
     r"""
@@ -1101,7 +1101,8 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         # remove numerical problems and store them in K
         if nx.max(nx.abs(u)) > tau or nx.max(nx.abs(v)) > tau:
             if n_hists:
-                alpha, beta = alpha + reg * nx.max(nx.log(u), 1), beta + reg * nx.max(nx.log(v))
+                alpha, beta = alpha + reg * \
+                    nx.max(nx.log(u), 1), beta + reg * nx.max(nx.log(v))
             else:
                 alpha, beta = alpha + reg * nx.log(u), beta + reg * nx.log(v)
                 if n_hists:
@@ -1325,13 +1326,15 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
             # we can speed up the process by checking for the error only all
             # the 10th iterations
             transp = G
-            err = nx.norm(nx.sum(transp, axis=0) - b) ** 2 + nx.norm(nx.sum(transp, axis=1) - a) ** 2
+            err = nx.norm(nx.sum(transp, axis=0) - b) ** 2 + \
+                nx.norm(nx.sum(transp, axis=1) - a) ** 2
             if log:
                 log['err'].append(err)
 
             if verbose:
                 if ii % (print_period * 10) == 0:
-                    print('{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                    print('{:5s}|{:12s}'.format(
+                        'It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(ii, err))
 
         if err <= stopThr and ii > numItermin:
@@ -1675,8 +1678,10 @@ def free_support_sinkhorn_barycenter(measures_locations, measures_weights, X_ini
 
         for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights, weights):
             M_i = dist(X, measure_locations_i)
-            T_i = sinkhorn(b, measure_weights_i, M_i, reg=reg, numItermax=numInnerItermax, **kwargs)
-            T_sum = T_sum + weight_i * 1. / b[:, None] * nx.dot(T_i, measure_locations_i)
+            T_i = sinkhorn(b, measure_weights_i, M_i, reg=reg,
+                           numItermax=numInnerItermax, **kwargs)
+            T_sum = T_sum + weight_i * 1. / \
+                b[:, None] * nx.dot(T_i, measure_locations_i)
 
         displacement_square_norm = nx.sum((T_sum - X) ** 2)
         if log:
@@ -1685,7 +1690,8 @@ def free_support_sinkhorn_barycenter(measures_locations, measures_weights, X_ini
         X = T_sum
 
         if verbose:
-            print('iteration %d, displacement_square_norm=%f\n', iter_count, displacement_square_norm)
+            print('iteration %d, displacement_square_norm=%f\n',
+                  iter_count, displacement_square_norm)
 
         iter_count += 1
 
@@ -2240,7 +2246,8 @@ def _convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
 
             if verbose:
                 if ii % 200 == 0:
-                    print('{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                    print('{:5s}|{:12s}'.format(
+                        'It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(ii, err))
             if err < stopThr:
                 break
@@ -2318,7 +2325,8 @@ def _convolutional_barycenter2d_log(A, reg, weights=None, numItermax=10000,
 
             if verbose:
                 if ii % 200 == 0:
-                    print('{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                    print('{:5s}|{:12s}'.format(
+                        'It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(ii, err))
             if err < stopThr:
                 break
@@ -2477,7 +2485,8 @@ def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
 
             if verbose:
                 if ii % 200 == 0:
-                    print('{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                    print('{:5s}|{:12s}'.format(
+                        'It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(ii, err))
 
             # debiased Sinkhorn does not converge monotonically
@@ -2557,7 +2566,8 @@ def _convolutional_barycenter2d_debiased_log(A, reg, weights=None, numItermax=10
 
             if verbose:
                 if ii % 200 == 0:
-                    print('{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                    print('{:5s}|{:12s}'.format(
+                        'It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(ii, err))
             if err < stopThr and ii > 20:
                 break
@@ -3001,7 +3011,8 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         elif isinstance(batchSize, tuple) and len(batchSize) == 2:
             bs, bt = batchSize[0], batchSize[1]
         else:
-            raise ValueError("Batch size must be in integer or a tuple of two integers")
+            raise ValueError(
+                "Batch size must be in integer or a tuple of two integers")
 
         range_s, range_t = range(0, ns, bs), range(0, nt, bt)
 
@@ -3039,7 +3050,8 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
                     M = dist(X_s_np[i:i + bs, :], X_t_np, metric=metric)
                     M = nx.from_numpy(M, type_as=a)
                     m1_cols.append(
-                        nx.sum(nx.exp(f[i:i + bs, None] + g[None, :] - M / reg), axis=1)
+                        nx.sum(nx.exp(f[i:i + bs, None] +
+                               g[None, :] - M / reg), axis=1)
                     )
                 m1 = nx.concatenate(m1_cols, axis=0)
                 err = nx.sum(nx.abs(m1 - a))
@@ -3047,7 +3059,8 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
                     dict_log["err"].append(err)
 
                 if verbose and (i_ot + 1) % 100 == 0:
-                    print("Error in marginal at iteration {} = {}".format(i_ot + 1, err))
+                    print("Error in marginal at iteration {} = {}".format(
+                        i_ot + 1, err))
 
                 if err <= stopThr:
                     break
@@ -3188,8 +3201,8 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     if isLazy:
         if log:
             f, g, dict_log = empirical_sinkhorn(X_s, X_t, reg, a, b, metric,
-                                                numIterMax=numIterMax, 
-                                                warmstart=warmstart, 
+                                                numIterMax=numIterMax,
+                                                warmstart=warmstart,
                                                 stopThr=stopThr,
                                                 isLazy=isLazy,
                                                 batchSize=batchSize,
@@ -3197,8 +3210,8 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
                                                 warn=warn)
         else:
             f, g = empirical_sinkhorn(X_s, X_t, reg, a, b, metric,
-                                      numIterMax=numIterMax, 
-                                      warmstart=warmstart, 
+                                      numIterMax=numIterMax,
+                                      warmstart=warmstart,
                                       stopThr=stopThr,
                                       isLazy=isLazy, batchSize=batchSize,
                                       verbose=verbose, log=log,
@@ -3227,12 +3240,12 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         M = dist(X_s, X_t, metric=metric)
 
         if log:
-            sinkhorn_loss, log = sinkhorn2(a, b, M, reg, numItermax=numIterMax, warmstart=warmstart, 
+            sinkhorn_loss, log = sinkhorn2(a, b, M, reg, numItermax=numIterMax, warmstart=warmstart,
                                            stopThr=stopThr, verbose=verbose, log=log,
                                            warn=warn, **kwargs)
             return sinkhorn_loss, log
         else:
-            sinkhorn_loss = sinkhorn2(a, b, M, reg, numItermax=numIterMax, warmstart=warmstart, 
+            sinkhorn_loss = sinkhorn2(a, b, M, reg, numItermax=numIterMax, warmstart=warmstart,
                                       stopThr=stopThr, verbose=verbose, log=log,
                                       warn=warn, **kwargs)
             return sinkhorn_loss
@@ -3359,21 +3372,22 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     if log:
         sinkhorn_loss_ab, log_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
-                                                       numIterMax=numIterMax, warmstart=warmstart, 
+                                                       numIterMax=numIterMax, warmstart=warmstart,
                                                        stopThr=stopThr, verbose=verbose,
                                                        log=log, warn=warn, **kwargs)
 
         sinkhorn_loss_a, log_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric,
-                                                     numIterMax=numIterMax, warmstart=warmstart_a, 
+                                                     numIterMax=numIterMax, warmstart=warmstart_a,
                                                      stopThr=stopThr, verbose=verbose,
                                                      log=log, warn=warn, **kwargs)
 
         sinkhorn_loss_b, log_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric,
-                                                     numIterMax=numIterMax, warmstart=warmstart_b, 
+                                                     numIterMax=numIterMax, warmstart=warmstart_b,
                                                      stopThr=stopThr, verbose=verbose,
                                                      log=log, warn=warn, **kwargs)
 
-        sinkhorn_div = sinkhorn_loss_ab - 0.5 * (sinkhorn_loss_a + sinkhorn_loss_b)
+        sinkhorn_div = sinkhorn_loss_ab - 0.5 * \
+            (sinkhorn_loss_a + sinkhorn_loss_b)
 
         log = {}
         log['sinkhorn_loss_ab'] = sinkhorn_loss_ab
@@ -3387,24 +3401,25 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     else:
         sinkhorn_loss_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
-                                               numIterMax=numIterMax, warmstart=warmstart, 
+                                               numIterMax=numIterMax, warmstart=warmstart,
                                                stopThr=stopThr,
                                                verbose=verbose, log=log,
                                                warn=warn, **kwargs)
 
         sinkhorn_loss_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric,
-                                              numIterMax=numIterMax, warmstart=warmstart_a, 
+                                              numIterMax=numIterMax, warmstart=warmstart_a,
                                               stopThr=stopThr,
                                               verbose=verbose, log=log,
                                               warn=warn, **kwargs)
 
         sinkhorn_loss_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric,
-                                              numIterMax=numIterMax, warmstart=warmstart_b, 
+                                              numIterMax=numIterMax, warmstart=warmstart_b,
                                               stopThr=stopThr,
                                               verbose=verbose, log=log,
                                               warn=warn, **kwargs)
 
-        sinkhorn_div = sinkhorn_loss_ab - 0.5 * (sinkhorn_loss_a + sinkhorn_loss_b)
+        sinkhorn_div = sinkhorn_loss_ab - 0.5 * \
+            (sinkhorn_loss_a + sinkhorn_loss_b)
         return nx.maximum(0, sinkhorn_div)
 
 
@@ -3572,7 +3587,8 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
                 epsilon_u_square = a[0] / aK_sort[ns_budget - 1]
             else:
                 aK_sort = nx.from_numpy(
-                    bottleneck.partition(nx.to_numpy(K_sum_cols), ns_budget - 1)[ns_budget - 1],
+                    bottleneck.partition(nx.to_numpy(
+                        K_sum_cols), ns_budget - 1)[ns_budget - 1],
                     type_as=M
                 )
                 epsilon_u_square = a[0] / aK_sort
@@ -3582,7 +3598,8 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
                 epsilon_v_square = b[0] / bK_sort[nt_budget - 1]
             else:
                 bK_sort = nx.from_numpy(
-                    bottleneck.partition(nx.to_numpy(K_sum_rows), nt_budget - 1)[nt_budget - 1],
+                    bottleneck.partition(nx.to_numpy(
+                        K_sum_rows), nt_budget - 1)[nt_budget - 1],
                     type_as=M
                 )
                 epsilon_v_square = b[0] / bK_sort
