@@ -330,3 +330,13 @@ def test_OTResult():
     for at in lst_attributes:
         with pytest.raises(NotImplementedError):
             getattr(res, at)
+
+
+def test_get_coordinate_circle():
+
+    u = np.random.rand(1, 100)
+    x1, y1 = np.cos(u * (2 * np.pi)), np.sin(u * (2 * np.pi))
+    x = np.concatenate([x1, y1]).T
+    x_p = ot.utils.get_coordinate_circle(x)
+
+    np.testing.assert_allclose(u[0], x_p)

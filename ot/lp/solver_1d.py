@@ -598,6 +598,8 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
     .. math::
         u = \frac{\pi + \mathrm{atan2}(-x_2,-x_1)}{2\pi}
 
+    using e.g. ot.utils.get_coordinate_circle(x)
+
     The function runs on backend but tensorflow is not supported.
 
     Parameters
@@ -860,6 +862,8 @@ def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
     .. math::
         u = \frac{\pi + \mathrm{atan2}(-x_2,-x_1)}{2\pi}
 
+    using e.g. ot.utils.get_coordinate_circle(x)
+
     The function runs on backend but tensorflow is not supported.
 
     Parameters
@@ -931,7 +935,9 @@ def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
     For values :math:`x=(x_1,x_2)\in S^1`, it is required to first get their coordinates with
 
     .. math::
-        u = \frac{\pi + \mathrm{atan2}(-x_2,-x_1)}{2\pi}
+        u = \frac{\pi + \mathrm{atan2}(-x_2,-x_1)}{2\pi},
+
+    using e.g. ot.utils.get_coordinate_circle(x)
 
     Parameters
     ----------

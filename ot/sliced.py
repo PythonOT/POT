@@ -12,7 +12,7 @@ Sliced OT Distances
 
 import numpy as np
 from .backend import get_backend, NumpyBackend
-from .utils import list_to_array
+from .utils import list_to_array, get_coordinate_circle
 from .lp import wasserstein_circle, semidiscrete_wasserstein2_unif_circle
 
 
@@ -348,8 +348,8 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
     Xpt = Xpt / nx.sqrt(nx.sum(Xpt**2, -1, keepdims=True))
 
     # Get coordinates on [0,1[
-    Xps_coords = (nx.atan2(-Xps[:, :, 1], -Xps[:, :, 0]) + np.pi) / (2 * np.pi)
-    Xpt_coords = (nx.atan2(-Xpt[:, :, 1], -Xpt[:, :, 0]) + np.pi) / (2 * np.pi)
+    Xps_coords = nx.reshape(get_coordinate_circle(nx.reshape(Xps, (-1, 2))), (n_projections, n))
+    Xpt_coords = nx.reshape(get_coordinate_circle(nx.reshape(Xpt, (-1, 2))), (n_projections, m))
 
     projected_emd = wasserstein_circle(Xps_coords.T, Xpt_coords.T, u_weights=a, v_weights=b, p=p)
     res = nx.mean(projected_emd) ** (1 / p)
@@ -429,7 +429,7 @@ def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log
     # Projection on sphere
     Xps = Xps / nx.sqrt(nx.sum(Xps**2, -1, keepdims=True))
     # Get coordinates on [0,1[
-    Xps_coords = (nx.atan2(-Xps[:, :, 1], -Xps[:, :, 0]) + np.pi) / (2 * np.pi)
+    Xps_coords = nx.reshape(get_coordinate_circle(nx.reshape(Xps, (-1, 2))), (n_projections, n))
 
     projected_emd = semidiscrete_wasserstein2_unif_circle(Xps_coords.T, u_weights=a)
     res = nx.mean(projected_emd) ** (1 / 2)
