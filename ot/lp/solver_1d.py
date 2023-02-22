@@ -582,7 +582,7 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
                          log=False):
     r"""Computes the Wasserstein distance on the circle using the Binary search algorithm proposed in [44].
     Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
-    takes the value % 1.
+    takes the value modulo 1.
     If the values are on :math:`S^1\subset\mathbb{R}^2`, first find the coordinates
     using e.g. the atan2 function.
 
@@ -738,7 +738,7 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
 def wasserstein1_circle(u_values, v_values, u_weights=None, v_weights=None, require_sort=True):
     r"""Computes the 1-Wasserstein distance on the circle using the level median [45].
     Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
-    takes the value % 1.
+    takes the value modulo 1.
     If the values are on :math:`S^1\subset\mathbb{R}^2`, first find the coordinates
     using e.g. the atan2 function.
     The function runs on backend but tensorflow is not supported.
@@ -841,7 +841,7 @@ def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
     r"""Computes the Wasserstein distance on the circle using either [45] for p=1 or
     the binary search algorithm proposed in [44] otherwise.
     Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
-    takes the value % 1.
+    takes the value modulo 1.
     If the values are on :math:`S^1\subset\mathbb{R}^2`, first find the coordinates
     using e.g. the atan2 function.
 

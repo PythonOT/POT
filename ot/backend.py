@@ -2071,7 +2071,6 @@ class TorchBackend(Backend):
         if axes is None:
             axes = tuple(range(a.ndim)[::-1])
         return a.permute(axes)
-        # return torch.permute(a, axes)
 
 
 class CupyBackend(Backend):  # pragma: no cover

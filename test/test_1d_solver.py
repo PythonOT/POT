@@ -277,7 +277,7 @@ def test_wasserstein1d_circle_devices(nx):
 
 
 def test_wasserstein_1d_unif_circle():
-    # test wasserstein unif_circle give similar results as wasserstein1d
+    # test semidiscrete_wasserstein2_unif_circle versus wasserstein_circle
     n = 20
     m = 50000
 
