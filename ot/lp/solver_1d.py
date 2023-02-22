@@ -583,7 +583,7 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
     r"""Computes the Wasserstein distance on the circle using the Binary search algorithm proposed in [44].
     Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
     takes the value modulo 1.
-    If the values are on :math:`S^1\subset\mathbb{R}^2`, first find the coordinates
+    If the values are on :math:`S^1\subset\mathbb{R}^2`, it is required to first find the coordinates
     using e.g. the atan2 function.
 
     .. math::
@@ -593,7 +593,7 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
 
     - :math:`F_u` and :math:`F_v` are respectively the cdfs of :math:`u` and :math:`v`
 
-    For values :math:`x=(x_1,x_2)\in S^1`, first get their coordinates with
+    For values :math:`x=(x_1,x_2)\in S^1`, it is required to first get their coordinates with
 
     .. math::
         u = \frac{\pi + \mathrm{atan2}(-x_2,-x_1)}{2\pi}
@@ -842,7 +842,7 @@ def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
     the binary search algorithm proposed in [44] otherwise.
     Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
     takes the value modulo 1.
-    If the values are on :math:`S^1\subset\mathbb{R}^2`, first find the coordinates
+    If the values are on :math:`S^1\subset\mathbb{R}^2`, it requires to first find the coordinates
     using e.g. the atan2 function.
 
     General loss returned:
@@ -855,7 +855,7 @@ def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
     .. math::
         W_1(u,v) = \int_0^1 |F_u(t)-F_v(t)-LevMed(F_u-F_v)|\ \mathrm{d}t
 
-    For values :math:`x=(x_1,x_2)\in S^1`, first get their coordinates with
+    For values :math:`x=(x_1,x_2)\in S^1`, it is required to first get their coordinates with
 
     .. math::
         u = \frac{\pi + \mathrm{atan2}(-x_2,-x_1)}{2\pi}
@@ -917,8 +917,8 @@ def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
 def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
     r"""Computes the closed-form for the 2-Wasserstein distance between samples and a uniform distribution on :math:`S^1`
     Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
-    takes the value % 1.
-    If the values are on :math:`S^1\subset\mathbb{R}^2`, first find the coordinates
+    takes the value modulo 1.
+    If the values are on :math:`S^1\subset\mathbb{R}^2`, it is required to first find the coordinates
     using e.g. the atan2 function.
 
     .. math::
@@ -928,7 +928,7 @@ def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
 
     - :math:`\nu=\mathrm{Unif}(S^1)` and :math:`\mu_n  = \sum_{i=1}^n \alpha_i \delta_{x_i}`
 
-    For values :math:`x=(x_1,x_2)\in S^1`, first get their coordinates with
+    For values :math:`x=(x_1,x_2)\in S^1`, it is required to first get their coordinates with
 
     .. math::
         u = \frac{\pi + \mathrm{atan2}(-x_2,-x_1)}{2\pi}
