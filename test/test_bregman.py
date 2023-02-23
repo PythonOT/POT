@@ -1079,16 +1079,16 @@ def test_sinkhorn_warmstart():
 
     # Optimal plan with uniform warmstart
     pi_unif, _ = ot.bregman.sinkhorn(
-        a, b, M, reg, method="sinkhorn", warmstart=None, log=True)
+        a, b, M, reg, method="sinkhorn", log=True, warmstart=None)
     # Optimal plan with warmstart generated from unregularized OT
     pi_sh, _ = ot.bregman.sinkhorn(
-        a, b, M, reg, method="sinkhorn", warmstart=warmstart, log=True)
+        a, b, M, reg, method="sinkhorn", log=True, warmstart=warmstart)
     pi_sh_log, _ = ot.bregman.sinkhorn(
-        a, b, M, reg, method="sinkhorn_log", warmstart=warmstart, log=True)
+        a, b, M, reg, method="sinkhorn_log", log=True, warmstart=warmstart)
     pi_sh_stab, _ = ot.bregman.sinkhorn(
-        a, b, M, reg, method="sinkhorn_stabilized", warmstart=warmstart, log=True)
+        a, b, M, reg, method="sinkhorn_stabilized", log=True, warmstart=warmstart)
     pi_sh_sc, _ = ot.bregman.sinkhorn(
-        a, b, M, reg, method="sinkhorn_epsilon_scaling", warmstart=warmstart, log=True)
+        a, b, M, reg, method="sinkhorn_epsilon_scaling", log=True, warmstart=warmstart)
 
     np.testing.assert_allclose(pi_unif, pi_sh, atol=1e-05)
     np.testing.assert_allclose(pi_unif, pi_sh_log, atol=1e-05)
@@ -1112,14 +1112,14 @@ def test_empirical_sinkhorn_warmstart():
 
     # Optimal plan with uniform warmstart
     f, g, _ = ot.bregman.empirical_sinkhorn(
-        X_s=Xs, X_t=Xt, reg=reg, isLazy=True, warmstart=None, log=True)
+        X_s=Xs, X_t=Xt, reg=reg, isLazy=True, log=True, warmstart=None)
     pi_unif = np.exp(f[:, None] + g[None, :] - M / reg)
     # Optimal plan with warmstart generated from unregularized OT
     f, g, _ = ot.bregman.empirical_sinkhorn(
-        X_s=Xs, X_t=Xt, reg=reg, isLazy=True, warmstart=warmstart, log=True)
+        X_s=Xs, X_t=Xt, reg=reg, isLazy=True, log=True, warmstart=warmstart)
     pi_ws_lazy = np.exp(f[:, None] + g[None, :] - M / reg)
     pi_ws_not_lazy, _ = ot.bregman.empirical_sinkhorn(
-        X_s=Xs, X_t=Xt, reg=reg, isLazy=False, warmstart=warmstart, log=True)
+        X_s=Xs, X_t=Xt, reg=reg, isLazy=False, log=True, warmstart=warmstart)
 
     np.testing.assert_allclose(pi_unif, pi_ws_lazy, atol=1e-05)
     np.testing.assert_allclose(pi_unif, pi_ws_not_lazy, atol=1e-05)
@@ -1141,12 +1141,12 @@ def test_empirical_sinkhorn_divergence_warmstart():
 
     # Optimal plan with uniform warmstart
     sd_unif, _ = ot.bregman.empirical_sinkhorn_divergence(
-        X_s=Xs, X_t=Xt, reg=reg, isLazy=True, warmstart=None, log=True)
+        X_s=Xs, X_t=Xt, reg=reg, isLazy=True, log=True, warmstart=None)
     # Optimal plan with warmstart generated from unregularized OT
     sd_ws_lazy, _ = ot.bregman.empirical_sinkhorn_divergence(
-        X_s=Xs, X_t=Xt, reg=reg, isLazy=True, warmstart=warmstart, log=True)
+        X_s=Xs, X_t=Xt, reg=reg, isLazy=True, log=True, warmstart=warmstart)
     sd_ws_not_lazy, _ = ot.bregman.empirical_sinkhorn_divergence(
-        X_s=Xs, X_t=Xt, reg=reg, isLazy=False, warmstart=warmstart, log=True)
+        X_s=Xs, X_t=Xt, reg=reg, isLazy=False, log=True, warmstart=warmstart)
 
     np.testing.assert_allclose(sd_unif, sd_ws_lazy, atol=1e-05)
     np.testing.assert_allclose(sd_unif, sd_ws_not_lazy, atol=1e-05)

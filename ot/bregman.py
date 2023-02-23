@@ -24,9 +24,8 @@ from ot.utils import unif, dist, list_to_array
 from .backend import get_backend
 
 
-def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
-             stopThr=1e-9, verbose=False, log=False, warn=True,
-             **kwargs):
+def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9,
+             verbose=False, log=False, warn=True, warmstart=None, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -93,10 +92,6 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
         those function for specific parameters
     numItermax : int, optional
         Max number of iterations
-    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided,
-        the dual vectors must be already taken the logarithm,
-        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     verbose : bool, optional
@@ -105,6 +100,9 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
         record log if True
     warn : bool, optional
         if True, raises a warning if the algorithm doesn't convergence.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors)
 
     Returns
     -------
@@ -158,36 +156,35 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
     """
 
     if method.lower() == 'sinkhorn':
-        return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
+        return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
                               stopThr=stopThr, verbose=verbose, log=log,
-                              warn=warn,
+                              warn=warn, warmstart=warmstart,
                               **kwargs)
     elif method.lower() == 'sinkhorn_log':
-        return sinkhorn_log(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
+        return sinkhorn_log(a, b, M, reg, numItermax=numItermax,
                             stopThr=stopThr, verbose=verbose, log=log,
-                            warn=warn,
+                            warn=warn, warmstart=warmstart,
                             **kwargs)
     elif method.lower() == 'greenkhorn':
-        return greenkhorn(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
+        return greenkhorn(a, b, M, reg, numItermax=numItermax,
                           stopThr=stopThr, verbose=verbose, log=log,
-                          warn=warn)
+                          warn=warn, warmstart=warmstart)
     elif method.lower() == 'sinkhorn_stabilized':
-        return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
-                                   stopThr=stopThr, verbose=verbose,
-                                   log=log, warn=warn,
+        return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
+                                   stopThr=stopThr, warmstart=warmstart,
+                                   verbose=verbose, log=log, warn=warn,
                                    **kwargs)
     elif method.lower() == 'sinkhorn_epsilon_scaling':
-        return sinkhorn_epsilon_scaling(a, b, M, reg,
-                                        numItermax=numItermax, warmstart=warmstart,
-                                        stopThr=stopThr, verbose=verbose,
-                                        log=log, warn=warn,
+        return sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=numItermax,
+                                        stopThr=stopThr, warmstart=warmstart,
+                                        verbose=verbose, log=log, warn=warn,
                                         **kwargs)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
-              stopThr=1e-9, verbose=False, log=False, warn=False, **kwargs):
+def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
+              stopThr=1e-9, verbose=False, log=False, warn=False, warmstart=None, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the loss
 
@@ -256,10 +253,6 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
         'sinkhorn_stabilized', see those function for specific parameters
     numItermax : int, optional
         Max number of iterations
-    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided,
-        the dual vectors must be already taken the logarithm,
-        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     verbose : bool, optional
@@ -268,6 +261,9 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
         record log if True
     warn : bool, optional
         if True, raises a warning if the algorithm doesn't convergence.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors)
 
     Returns
     -------
@@ -330,19 +326,19 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
 
     if len(b.shape) < 2:
         if method.lower() == 'sinkhorn':
-            res = sinkhorn_knopp(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
+            res = sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
                                  stopThr=stopThr, verbose=verbose,
-                                 log=log, warn=warn,
+                                 log=log, warn=warn, warmstart=warmstart,
                                  **kwargs)
         elif method.lower() == 'sinkhorn_log':
-            res = sinkhorn_log(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
+            res = sinkhorn_log(a, b, M, reg, numItermax=numItermax,
                                stopThr=stopThr, verbose=verbose,
-                               log=log, warn=warn,
+                               log=log, warn=warn, warmstart=warmstart,
                                **kwargs)
         elif method.lower() == 'sinkhorn_stabilized':
-            res = sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
-                                      stopThr=stopThr, verbose=verbose,
-                                      log=log, warn=warn,
+            res = sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
+                                      stopThr=stopThr, warmstart=warmstart,
+                                      verbose=verbose, log=log, warn=warn,
                                       **kwargs)
         else:
             raise ValueError("Unknown method '%s'." % method)
@@ -354,27 +350,26 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
     else:
 
         if method.lower() == 'sinkhorn':
-            return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
+            return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
                                   stopThr=stopThr, verbose=verbose,
-                                  log=log, warn=warn,
+                                  log=log, warn=warn, warmstart=warmstart,
                                   **kwargs)
         elif method.lower() == 'sinkhorn_log':
-            return sinkhorn_log(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
+            return sinkhorn_log(a, b, M, reg, numItermax=numItermax,
                                 stopThr=stopThr, verbose=verbose,
-                                log=log, warn=warn,
+                                log=log, warn=warn, warmstart=warmstart,
                                 **kwargs)
         elif method.lower() == 'sinkhorn_stabilized':
-            return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax, warmstart=warmstart,
-                                       stopThr=stopThr, verbose=verbose,
-                                       log=log, warn=warn,
+            return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
+                                       stopThr=stopThr, warmstart=warmstart,
+                                       verbose=verbose, log=log, warn=warn,
                                        **kwargs)
         else:
             raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn_knopp(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9,
-                   verbose=False, log=False, warn=True,
-                   **kwargs):
+def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
+                   verbose=False, log=False, warn=True, warmstart=None, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -415,10 +410,6 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9,
         Regularization term >0
     numItermax : int, optional
         Max number of iterations
-    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided,
-        the dual vectors must be already taken the logarithm,
-        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     verbose : bool, optional
@@ -427,6 +418,9 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9,
         record log if True
     warn : bool, optional
         if True, raises a warning if the algorithm doesn't convergence.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors)
 
     Returns
     -------
@@ -561,8 +555,8 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9,
             return u.reshape((-1, 1)) * K * v.reshape((1, -1))
 
 
-def sinkhorn_log(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9, verbose=False,
-                 log=False, warn=True, **kwargs):
+def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
+                 log=False, warn=True, warmstart=None, **kwargs):
     r"""
     Solve the entropic regularization optimal transport problem in log space
     and return the OT matrix
@@ -603,10 +597,6 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9, ve
         Regularization term >0
     numItermax : int, optional
         Max number of iterations
-    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided,
-        the dual vectors must be already taken the logarithm,
-        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     verbose : bool, optional
@@ -615,6 +605,9 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9, ve
         record log if True
     warn : bool, optional
         if True, raises a warning if the algorithm doesn't convergence.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors)
 
     Returns
     -------
@@ -686,8 +679,8 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9, ve
         lst_v = []
 
         for k in range(n_hists):
-            res = sinkhorn_log(a, b[:, k], M, reg, numItermax=numItermax, warmstart=warmstart[k],
-                               stopThr=stopThr, verbose=verbose, log=log, **kwargs)
+            res = sinkhorn_log(a, b[:, k], M, reg, numItermax=numItermax, stopThr=stopThr,
+                               verbose=verbose, log=log, warmstart=warmstart[k], **kwargs)
 
             if log:
                 lst_loss.append(nx.sum(M * res[0]))
@@ -771,8 +764,8 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9, ve
             return nx.exp(get_logT(u, v))
 
 
-def greenkhorn(a, b, M, reg, numItermax=10000, warmstart=None, stopThr=1e-9, verbose=False,
-               log=False, warn=True):
+def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
+               log=False, warn=True, warmstart=None):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -814,16 +807,15 @@ def greenkhorn(a, b, M, reg, numItermax=10000, warmstart=None, stopThr=1e-9, ver
         Regularization term >0
     numItermax : int, optional
         Max number of iterations
-    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided,
-        the dual vectors must be already taken the logarithm,
-        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     log : bool, optional
         record log if True
     warn : bool, optional
         if True, raises a warning if the algorithm doesn't convergence.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors)
 
     Returns
     -------
@@ -2899,8 +2891,8 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
 
 
 def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
-                       numIterMax=10000, warmstart=None, stopThr=1e-9, isLazy=False, batchSize=100, verbose=False,
-                       log=False, warn=True, **kwargs):
+                       numIterMax=10000, stopThr=1e-9, isLazy=False, batchSize=100, verbose=False,
+                       log=False, warn=True, warmstart=None, **kwargs):
     r'''
     Solve the entropic regularization optimal transport problem and return the
     OT matrix from empirical data
@@ -2938,10 +2930,6 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         samples weights in the target domain
     numItermax : int, optional
         Max number of iterations
-    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided,
-        the dual vectors must be already taken the logarithm,
-        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     isLazy: boolean, optional
@@ -2957,6 +2945,9 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         record log if True
     warn : bool, optional
         if True, raises a warning if the algorithm doesn't convergence.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors)
 
 
     Returns
@@ -3085,18 +3076,18 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     else:
         M = dist(X_s, X_t, metric=metric)
         if log:
-            pi, log = sinkhorn(a, b, M, reg, numItermax=numIterMax, warmstart=warmstart, stopThr=stopThr,
-                               verbose=verbose, log=True, **kwargs)
+            pi, log = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr,
+                               verbose=verbose, log=True, warmstart=warmstart, **kwargs)
             return pi, log
         else:
-            pi = sinkhorn(a, b, M, reg, numItermax=numIterMax, warmstart=warmstart, stopThr=stopThr,
-                          verbose=verbose, log=False, **kwargs)
+            pi = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr,
+                          verbose=verbose, log=False, warmstart=warmstart, **kwargs)
             return pi
 
 
 def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
-                        numIterMax=10000, warmstart=None, stopThr=1e-9, isLazy=False,
-                        batchSize=100, verbose=False, log=False, warn=True, **kwargs):
+                        numIterMax=10000, stopThr=1e-9, isLazy=False, batchSize=100,
+                        verbose=False, log=False, warn=True, warmstart=None, **kwargs):
     r'''
     Solve the entropic regularization optimal transport problem from empirical
     data and return the OT loss
@@ -3138,10 +3129,6 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         samples weights in the target domain
     numItermax : int, optional
         Max number of iterations
-    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided,
-        the dual vectors must be already taken the logarithm,
-        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     isLazy: boolean, optional
@@ -3157,7 +3144,9 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         record log if True
     warn : bool, optional
         if True, raises a warning if the algorithm doesn't convergence.
-
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors)
 
     Returns
     -------
@@ -3209,20 +3198,20 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         if log:
             f, g, dict_log = empirical_sinkhorn(X_s, X_t, reg, a, b, metric,
                                                 numIterMax=numIterMax,
-                                                warmstart=warmstart,
                                                 stopThr=stopThr,
                                                 isLazy=isLazy,
                                                 batchSize=batchSize,
                                                 verbose=verbose, log=log,
-                                                warn=warn)
+                                                warn=warn,
+                                                warmstart=warmstart)
         else:
             f, g = empirical_sinkhorn(X_s, X_t, reg, a, b, metric,
                                       numIterMax=numIterMax,
-                                      warmstart=warmstart,
                                       stopThr=stopThr,
                                       isLazy=isLazy, batchSize=batchSize,
                                       verbose=verbose, log=log,
-                                      warn=warn)
+                                      warn=warn,
+                                      warmstart=warmstart)
 
         bs = batchSize if isinstance(batchSize, int) else batchSize[0]
         range_s = range(0, ns, bs)
@@ -3247,21 +3236,20 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         M = dist(X_s, X_t, metric=metric)
 
         if log:
-            sinkhorn_loss, log = sinkhorn2(a, b, M, reg, numItermax=numIterMax, warmstart=warmstart,
+            sinkhorn_loss, log = sinkhorn2(a, b, M, reg, numItermax=numIterMax,
                                            stopThr=stopThr, verbose=verbose, log=log,
-                                           warn=warn, **kwargs)
+                                           warn=warn, warmstart=warmstart, **kwargs)
             return sinkhorn_loss, log
         else:
-            sinkhorn_loss = sinkhorn2(a, b, M, reg, numItermax=numIterMax, warmstart=warmstart,
+            sinkhorn_loss = sinkhorn2(a, b, M, reg, numItermax=numIterMax,
                                       stopThr=stopThr, verbose=verbose, log=log,
-                                      warn=warn, **kwargs)
+                                      warn=warn, warmstart=warmstart, **kwargs)
             return sinkhorn_loss
 
 
 def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
-                                  numIterMax=10000, warmstart=None, stopThr=1e-9,
-                                  verbose=False, log=False, warn=True,
-                                  **kwargs):
+                                  numIterMax=10000, stopThr=1e-9, verbose=False,
+                                  log=False, warn=True, warmstart=None, **kwargs):
     r'''
     Compute the sinkhorn divergence loss from empirical data
 
@@ -3330,10 +3318,6 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
         samples weights in the target domain
     numItermax : int, optional
         Max number of iterations
-    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided,
-        the dual vectors must be already taken the logarithm,
-        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     verbose : bool, optional
@@ -3342,6 +3326,9 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
         record log if True
     warn : bool, optional
         if True, raises a warning if the algorithm doesn't convergence.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors)
 
     Returns
     -------
@@ -3380,19 +3367,19 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     if log:
         sinkhorn_loss_ab, log_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
-                                                       numIterMax=numIterMax, warmstart=warmstart,
-                                                       stopThr=stopThr, verbose=verbose,
-                                                       log=log, warn=warn, **kwargs)
+                                                       numIterMax=numIterMax, stopThr=stopThr,
+                                                       verbose=verbose, log=log, warn=warn,
+                                                       warmstart=warmstart, **kwargs)
 
         sinkhorn_loss_a, log_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric,
-                                                     numIterMax=numIterMax, warmstart=warmstart_a,
-                                                     stopThr=stopThr, verbose=verbose,
-                                                     log=log, warn=warn, **kwargs)
+                                                     numIterMax=numIterMax, stopThr=stopThr,
+                                                     verbose=verbose, log=log, warn=warn,
+                                                     warmstart=warmstart_a, **kwargs)
 
         sinkhorn_loss_b, log_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric,
-                                                     numIterMax=numIterMax, warmstart=warmstart_b,
-                                                     stopThr=stopThr, verbose=verbose,
-                                                     log=log, warn=warn, **kwargs)
+                                                     numIterMax=numIterMax, stopThr=stopThr,
+                                                     verbose=verbose, log=log, warn=warn,
+                                                     warmstart=warmstart_b, **kwargs)
 
         sinkhorn_div = sinkhorn_loss_ab - 0.5 * \
             (sinkhorn_loss_a + sinkhorn_loss_b)
@@ -3409,22 +3396,19 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     else:
         sinkhorn_loss_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
-                                               numIterMax=numIterMax, warmstart=warmstart,
-                                               stopThr=stopThr,
-                                               verbose=verbose, log=log,
-                                               warn=warn, **kwargs)
+                                               numIterMax=numIterMax, stopThr=stopThr,
+                                               verbose=verbose, log=log, warn=warn,
+                                               warmstart=warmstart, **kwargs)
 
         sinkhorn_loss_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric,
-                                              numIterMax=numIterMax, warmstart=warmstart_a,
-                                              stopThr=stopThr,
-                                              verbose=verbose, log=log,
-                                              warn=warn, **kwargs)
+                                              numIterMax=numIterMax, stopThr=stopThr,
+                                              verbose=verbose, log=log, warn=warn,
+                                              warmstart=warmstart_a, **kwargs)
 
         sinkhorn_loss_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric,
-                                              numIterMax=numIterMax, warmstart=warmstart_b,
-                                              stopThr=stopThr,
-                                              verbose=verbose, log=log,
-                                              warn=warn, **kwargs)
+                                              numIterMax=numIterMax, stopThr=stopThr,
+                                              verbose=verbose, log=log, warn=warn,
+                                              warmstart=warmstart_b, **kwargs)
 
         sinkhorn_div = sinkhorn_loss_ab - 0.5 * \
             (sinkhorn_loss_a + sinkhorn_loss_b)
