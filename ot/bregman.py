@@ -94,7 +94,8 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
     numItermax : int, optional
         Max number of iterations
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        Initialization of dual vectors. If provided,
+        the dual vectors must be already taken the logarithm,
         i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
@@ -256,7 +257,8 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None,
     numItermax : int, optional
         Max number of iterations
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        Initialization of dual vectors. If provided,
+        the dual vectors must be already taken the logarithm,
         i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
@@ -414,7 +416,8 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9,
     numItermax : int, optional
         Max number of iterations
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        Initialization of dual vectors. If provided,
+        the dual vectors must be already taken the logarithm,
         i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
@@ -601,7 +604,8 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9, ve
     numItermax : int, optional
         Max number of iterations
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        Initialization of dual vectors. If provided,
+        the dual vectors must be already taken the logarithm,
         i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
@@ -811,7 +815,8 @@ def greenkhorn(a, b, M, reg, numItermax=10000, warmstart=None, stopThr=1e-9, ver
     numItermax : int, optional
         Max number of iterations
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        Initialization of dual vectors. If provided,
+        the dual vectors must be already taken the logarithm,
         i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
@@ -2934,7 +2939,8 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     numItermax : int, optional
         Max number of iterations
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        Initialization of dual vectors. If provided,
+        the dual vectors must be already taken the logarithm,
         i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
@@ -3133,7 +3139,8 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     numItermax : int, optional
         Max number of iterations
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        Initialization of dual vectors. If provided,
+        the dual vectors must be already taken the logarithm,
         i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
@@ -3324,7 +3331,8 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
     numItermax : int, optional
         Max number of iterations
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
-        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        Initialization of dual vectors. If provided,
+        the dual vectors must be already taken the logarithm,
         i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
