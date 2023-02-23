@@ -41,6 +41,7 @@ The contributors to this library are:
 * [Camille Le Coz](https://www.linkedin.com/in/camille-le-coz-8593b91a1/) (EMD2 debug)
 * [Eduardo Fernandes Montesuma](https://eddardd.github.io/my-personal-blog/) (Free support sinkhorn barycenter)
 * [Theo Gnassounou](https://github.com/tgnassou) (OT between Gaussian distributions)
+* [Clément Bonet](https://clbonet.github.io) (Wassertstein on circle, Spherical Sliced-Wasserstein)
 
 ## Acknowledgments
 
