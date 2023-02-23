@@ -38,12 +38,15 @@ from . import solvers
 from . import gaussian
 
 # OT functions
-from .lp import emd, emd2, emd_1d, emd2_1d, wasserstein_1d
+from .lp import (emd, emd2, emd_1d, emd2_1d, wasserstein_1d, 
+                binary_search_circle, wasserstein_circle, 
+                semidiscrete_wasserstein2_unif_circle)
 from .bregman import sinkhorn, sinkhorn2, barycenter
 from .unbalanced import (sinkhorn_unbalanced, barycenter_unbalanced,
                          sinkhorn_unbalanced2)
 from .da import sinkhorn_lpl1_mm
-from .sliced import sliced_wasserstein_distance, max_sliced_wasserstein_distance
+from .sliced import (sliced_wasserstein_distance, max_sliced_wasserstein_distance, 
+                     sliced_wasserstein_sphere, sliced_wasserstein_sphere_unif)
 from .gromov import (gromov_wasserstein, gromov_wasserstein2,
                         gromov_barycenters, fused_gromov_wasserstein, fused_gromov_wasserstein2)
 from .weak import weak_optimal_transport
@@ -60,8 +63,10 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'emd2_1d', 'wasserstein_1d', 'backend', 'gaussian',
            'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim',
            'sinkhorn_unbalanced', 'barycenter_unbalanced',
-           'sinkhorn_unbalanced2', 'sliced_wasserstein_distance',
+           'sinkhorn_unbalanced2', 'sliced_wasserstein_distance', 'sliced_wasserstein_sphere',
            'gromov_wasserstein', 'gromov_wasserstein2', 'gromov_barycenters', 'fused_gromov_wasserstein', 'fused_gromov_wasserstein2',
             'max_sliced_wasserstein_distance', 'weak_optimal_transport',
             'factored_optimal_transport', 'solve',
-           'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath', 'solvers']
+           'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath', 'solvers',
+           'binary_search_circle', 'wasserstein_circle',
+           'semidiscrete_wasserstein2_unif_circle', 'sliced_wasserstein_sphere_unif']
