@@ -375,6 +375,36 @@ def check_random_state(seed):
                      ' instance'.format(seed))
 
 
+def get_coordinate_circle(x):
+    r"""For :math:`x\in S^1 \subset \mathbb{R}^2`, returns the coordinates in
+    turn (in [0,1[).
+
+    .. math::
+        u = \frac{\pi + \mathrm{atan2}(-x_2,-x_1)}{2\pi}
+
+    Parameters
+    ----------
+    x: ndarray, shape (n, 2)
+        Samples on the circle with ambient coordinates
+
+    Returns
+    -------
+    x_t: ndarray, shape (n,)
+        Coordinates on [0,1[
+
+    Examples
+    --------
+    >>> u = np.array([[0.2,0.5,0.8]]) * (2 * np.pi)
+    >>> x1, y1 = np.cos(u), np.sin(u)
+    >>> x = np.concatenate([x1, y1]).T
+    >>> get_coordinate_circle(x)
+    array([0.2, 0.5, 0.8])
+    """
+    nx = get_backend(x)
+    x_t = (nx.atan2(-x[:, 1], -x[:, 0]) + np.pi) / (2 * np.pi)
+    return x_t
+
+
 class deprecated(object):
     r"""Decorator to mark a function or class as deprecated.
 
