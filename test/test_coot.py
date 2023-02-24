@@ -25,38 +25,35 @@ def test_coot(nx):
     # test couplings
     pi_sample, pi_feature = coot(X=xs, Y=xt)
     pi_sample_nx, pi_feature_nx = coot(X=xs_nx, Y=xt_nx)
+    pi_sample_nx = nx.to_numpy(pi_sample)
+    pi_feature_nx = nx.to_numpy(pi_feature)
 
-    id_sample = np.eye(n_samples, n_samples) / n_samples
+    anti_id_sample = np.flipud(np.eye(n_samples, n_samples)) / n_samples
     id_feature = np.eye(2, 2) / 2
 
-    np.testing.assert_allclose(pi_sample, np.flipud(id_sample), atol=1e-04)
+    np.testing.assert_allclose(pi_sample, anti_id_sample, atol=1e-04)
+    np.testing.assert_allclose(pi_sample_nx, anti_id_sample, atol=1e-04)
     np.testing.assert_allclose(pi_feature, id_feature, atol=1e-04)
-    np.testing.assert_allclose(pi_sample_nx, nx.from_numpy(
-        np.flipud(id_sample).copy()), atol=1e-04)
-    np.testing.assert_allclose(
-        pi_feature_nx, nx.from_numpy(id_feature.copy()), atol=1e-04)
+    np.testing.assert_allclose(pi_feature_nx, id_feature, atol=1e-04)
 
     # test marginal distributions
     px_s, px_f = ot.unif(n_samples), ot.unif(2)
     py_s, py_f = ot.unif(n_samples), ot.unif(2)
 
-    px_s_nx, px_f_nx = nx.from_numpy(px_s), nx.from_numpy(px_f)
-    py_s_nx, py_f_nx = nx.from_numpy(py_s), nx.from_numpy(py_f)
+    np.testing.assert_allclose(px_s, pi_sample_nx.sum(0), atol=1e-04)
+    np.testing.assert_allclose(py_s, pi_sample_nx.sum(1), atol=1e-04)
+    np.testing.assert_allclose(px_f, pi_feature_nx.sum(0), atol=1e-04)
+    np.testing.assert_allclose(py_f, pi_feature_nx.sum(1), atol=1e-04)
 
-    np.testing.assert_allclose(px_s_nx, nx.sum(pi_sample_nx, axis=0), atol=1e-04)
-    np.testing.assert_allclose(py_s_nx, nx.sum(pi_sample_nx, axis=1), atol=1e-04)
-    np.testing.assert_allclose(px_f_nx, nx.sum(pi_feature_nx, axis=0), atol=1e-04)
-    np.testing.assert_allclose(py_f_nx, nx.sum(pi_feature_nx, axis=1), atol=1e-04)
-
-    np.testing.assert_allclose(px_s, nx.sum(pi_sample, axis=0), atol=1e-04)
-    np.testing.assert_allclose(py_s, nx.sum(pi_sample, axis=1), atol=1e-04)
-    np.testing.assert_allclose(px_f, nx.sum(pi_feature, axis=0), atol=1e-04)
-    np.testing.assert_allclose(py_f, nx.sum(pi_feature, axis=1), atol=1e-04)
+    np.testing.assert_allclose(px_s, pi_sample.sum(0), atol=1e-04)
+    np.testing.assert_allclose(py_s, pi_sample.sum(1), atol=1e-04)
+    np.testing.assert_allclose(px_f, pi_feature.sum(0), atol=1e-04)
+    np.testing.assert_allclose(py_f, pi_feature.sum(1), atol=1e-04)
 
     # test COOT distance
 
     coot_np = coot2(X=xs, Y=xt)
-    coot_nx = coot2(X=xs_nx, Y=xt_nx).item()
+    coot_nx = nx.to_numpy(coot2(X=xs_nx, Y=xt_nx))
     np.testing.assert_allclose(coot_np, 0, atol=1e-08)
     np.testing.assert_allclose(coot_nx, 0, atol=1e-08)
 
@@ -80,33 +77,30 @@ def test_entropic_coot(nx):
     pi_sample, pi_feature = coot(X=xs, Y=xt, eps=eps, nits_ot=nits_ot)
     pi_sample_nx, pi_feature_nx = coot(
         X=xs_nx, Y=xt_nx, eps=eps, nits_ot=nits_ot)
+    pi_sample_nx = nx.to_numpy(pi_sample)
+    pi_feature_nx = nx.to_numpy(pi_feature)
 
-    np.testing.assert_allclose(
-        pi_sample_nx, nx.from_numpy(pi_sample.copy()), atol=1e-04)
-    np.testing.assert_allclose(
-        pi_feature_nx, nx.from_numpy(pi_feature.copy()), atol=1e-04)
+    np.testing.assert_allclose(pi_sample, pi_sample_nx, atol=1e-04)
+    np.testing.assert_allclose(pi_feature, pi_feature_nx, atol=1e-04)
 
     # test marginal distributions
     px_s, px_f = ot.unif(n_samples), ot.unif(2)
     py_s, py_f = ot.unif(n_samples), ot.unif(2)
 
-    px_s_nx, px_f_nx = nx.from_numpy(px_s), nx.from_numpy(px_f)
-    py_s_nx, py_f_nx = nx.from_numpy(py_s), nx.from_numpy(py_f)
+    np.testing.assert_allclose(px_s, pi_sample_nx.sum(0), atol=1e-04)
+    np.testing.assert_allclose(py_s, pi_sample_nx.sum(1), atol=1e-04)
+    np.testing.assert_allclose(px_f, pi_feature_nx.sum(0), atol=1e-04)
+    np.testing.assert_allclose(py_f, pi_feature_nx.sum(1), atol=1e-04)
 
-    np.testing.assert_allclose(px_s_nx, nx.sum(pi_sample_nx, axis=0), atol=1e-04)
-    np.testing.assert_allclose(py_s_nx, nx.sum(pi_sample_nx, axis=1), atol=1e-04)
-    np.testing.assert_allclose(px_f_nx, nx.sum(pi_feature_nx, axis=0), atol=1e-04)
-    np.testing.assert_allclose(py_f_nx, nx.sum(pi_feature_nx, axis=1), atol=1e-04)
-
-    np.testing.assert_allclose(px_s, nx.sum(pi_sample, axis=0), atol=1e-04)
-    np.testing.assert_allclose(py_s, nx.sum(pi_sample, axis=1), atol=1e-04)
-    np.testing.assert_allclose(px_f, nx.sum(pi_feature, axis=0), atol=1e-04)
-    np.testing.assert_allclose(py_f, nx.sum(pi_feature, axis=1), atol=1e-04)
+    np.testing.assert_allclose(px_s, pi_sample.sum(0), atol=1e-04)
+    np.testing.assert_allclose(py_s, pi_sample.sum(1), atol=1e-04)
+    np.testing.assert_allclose(px_f, pi_feature.sum(0), atol=1e-04)
+    np.testing.assert_allclose(py_f, pi_feature.sum(1), atol=1e-04)
 
     # test entropic COOT distance
 
     coot_np = coot2(X=xs, Y=xt, eps=eps, nits_ot=nits_ot)
-    coot_nx = coot2(X=xs_nx, Y=xt_nx, eps=eps, nits_ot=nits_ot).item()
+    coot_nx = nx.to_numpy(coot2(X=xs_nx, Y=xt_nx, eps=eps, nits_ot=nits_ot))
 
     np.testing.assert_allclose(coot_np, coot_nx, atol=1e-08)
 
@@ -133,40 +127,37 @@ def test_coot_with_linear_terms(nx):
     alpha = (1, 2)
 
     # test couplings
-    id_sample = np.flipud(np.eye(n_samples, n_samples)) / n_samples
+    anti_id_sample = np.flipud(np.eye(n_samples, n_samples)) / n_samples
     id_feature = np.eye(2, 2) / 2
 
     pi_sample, pi_feature = coot(X=xs, Y=xt, alpha=alpha, D=D)
     pi_sample_nx, pi_feature_nx = coot(
         X=xs_nx, Y=xt_nx, alpha=alpha, D=D_nx)
+    pi_sample_nx = nx.to_numpy(pi_sample)
+    pi_feature_nx = nx.to_numpy(pi_feature)
 
-    np.testing.assert_allclose(pi_sample, id_sample, atol=1e-04)
+    np.testing.assert_allclose(pi_sample, anti_id_sample, atol=1e-04)
+    np.testing.assert_allclose(pi_sample_nx, anti_id_sample, atol=1e-04)
     np.testing.assert_allclose(pi_feature, id_feature, atol=1e-04)
-    np.testing.assert_allclose(
-        pi_sample_nx, nx.from_numpy(id_sample), atol=1e-04)
-    np.testing.assert_allclose(
-        pi_feature_nx, nx.from_numpy(id_feature), atol=1e-04)
+    np.testing.assert_allclose(pi_feature_nx, id_feature, atol=1e-04)
 
     # test marginal distributions
     px_s, px_f = ot.unif(n_samples), ot.unif(2)
     py_s, py_f = ot.unif(n_samples), ot.unif(2)
 
-    px_s_nx, px_f_nx = nx.from_numpy(px_s), nx.from_numpy(px_f)
-    py_s_nx, py_f_nx = nx.from_numpy(py_s), nx.from_numpy(py_f)
+    np.testing.assert_allclose(px_s, pi_sample_nx.sum(0), atol=1e-04)
+    np.testing.assert_allclose(py_s, pi_sample_nx.sum(1), atol=1e-04)
+    np.testing.assert_allclose(px_f, pi_feature_nx.sum(0), atol=1e-04)
+    np.testing.assert_allclose(py_f, pi_feature_nx.sum(1), atol=1e-04)
 
-    np.testing.assert_allclose(px_s_nx, nx.sum(pi_sample_nx, axis=0), atol=1e-04)
-    np.testing.assert_allclose(py_s_nx, nx.sum(pi_sample_nx, axis=1), atol=1e-04)
-    np.testing.assert_allclose(px_f_nx, nx.sum(pi_feature_nx, axis=0), atol=1e-04)
-    np.testing.assert_allclose(py_f_nx, nx.sum(pi_feature_nx, axis=1), atol=1e-04)
-
-    np.testing.assert_allclose(px_s, nx.sum(pi_sample, axis=0), atol=1e-04)
-    np.testing.assert_allclose(py_s, nx.sum(pi_sample, axis=1), atol=1e-04)
-    np.testing.assert_allclose(px_f, nx.sum(pi_feature, axis=0), atol=1e-04)
-    np.testing.assert_allclose(py_f, nx.sum(pi_feature, axis=1), atol=1e-04)
+    np.testing.assert_allclose(px_s, pi_sample.sum(0), atol=1e-04)
+    np.testing.assert_allclose(py_s, pi_sample.sum(1), atol=1e-04)
+    np.testing.assert_allclose(px_f, pi_feature.sum(0), atol=1e-04)
+    np.testing.assert_allclose(py_f, pi_feature.sum(1), atol=1e-04)
 
     # test COOT distance
 
     coot_np = coot2(X=xs, Y=xt, alpha=alpha, D=D)
-    coot_nx = coot2(X=xs_nx, Y=xt_nx, alpha=alpha, D=D_nx).item()
+    coot_nx = nx.to_numpy(coot2(X=xs_nx, Y=xt_nx, alpha=alpha, D=D_nx))
     np.testing.assert_allclose(coot_np, 0, atol=1e-08)
     np.testing.assert_allclose(coot_nx, 0, atol=1e-08)
