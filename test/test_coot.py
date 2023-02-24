@@ -25,8 +25,8 @@ def test_coot(nx):
     # test couplings
     pi_sample, pi_feature = coot(X=xs, Y=xt)
     pi_sample_nx, pi_feature_nx = coot(X=xs_nx, Y=xt_nx)
-    pi_sample_nx = nx.to_numpy(pi_sample)
-    pi_feature_nx = nx.to_numpy(pi_feature)
+    pi_sample_nx = nx.to_numpy(pi_sample_nx)
+    pi_feature_nx = nx.to_numpy(pi_feature_nx)
 
     anti_id_sample = np.flipud(np.eye(n_samples, n_samples)) / n_samples
     id_feature = np.eye(2, 2) / 2
@@ -77,8 +77,8 @@ def test_entropic_coot(nx):
     pi_sample, pi_feature = coot(X=xs, Y=xt, eps=eps, nits_ot=nits_ot)
     pi_sample_nx, pi_feature_nx = coot(
         X=xs_nx, Y=xt_nx, eps=eps, nits_ot=nits_ot)
-    pi_sample_nx = nx.to_numpy(pi_sample)
-    pi_feature_nx = nx.to_numpy(pi_feature)
+    pi_sample_nx = nx.to_numpy(pi_sample_nx)
+    pi_feature_nx = nx.to_numpy(pi_feature_nx)
 
     np.testing.assert_allclose(pi_sample, pi_sample_nx, atol=1e-04)
     np.testing.assert_allclose(pi_feature, pi_feature_nx, atol=1e-04)
@@ -133,8 +133,8 @@ def test_coot_with_linear_terms(nx):
     pi_sample, pi_feature = coot(X=xs, Y=xt, alpha=alpha, D=D)
     pi_sample_nx, pi_feature_nx = coot(
         X=xs_nx, Y=xt_nx, alpha=alpha, D=D_nx)
-    pi_sample_nx = nx.to_numpy(pi_sample)
-    pi_feature_nx = nx.to_numpy(pi_feature)
+    pi_sample_nx = nx.to_numpy(pi_sample_nx)
+    pi_feature_nx = nx.to_numpy(pi_feature_nx)
 
     np.testing.assert_allclose(pi_sample, anti_id_sample, atol=1e-04)
     np.testing.assert_allclose(pi_sample_nx, anti_id_sample, atol=1e-04)
