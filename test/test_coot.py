@@ -111,7 +111,7 @@ def test_entropic_coot(nx):
     np.testing.assert_allclose(coot_np, coot_torch, atol=1e-08)
 
 
-def test_fused_coot(nx):
+def test_coot_with_linear_terms(nx):
     n_samples = 60  # nb samples
 
     mu_s = np.array([0, 0])
@@ -164,7 +164,7 @@ def test_fused_coot(nx):
     np.testing.assert_allclose(px_f, pi_feature.sum(0), atol=1e-04)
     np.testing.assert_allclose(py_f, pi_feature.sum(1), atol=1e-04)
 
-    # test fused COOT distance
+    # test COOT distance
 
     coot_np = coot2(X=xs, Y=xt, alpha=alpha, D=D)
     coot_torch = coot2(X=xs_torch, Y=xt_torch, alpha=alpha, D=D_torch).item()

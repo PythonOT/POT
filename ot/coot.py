@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Fused CO-Optimal Transport and entropic Fused CO-Optimal Transport solvers
+CO-Optimal Transport solver
 """
 
 # Author: Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
 # License: MIT License
 
-import numpy as np
-from functools import partial
+import warnings
 from .lp import emd
 from .utils import list_to_array
 from .backend import get_backend
@@ -67,9 +66,9 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
         Allow the case where eps contains 0. In that case, the EMD solver is used instead of
         Sinkhorn solver.
     alpha : (scalar, scalar) tuple, float or int, optional (default = (1,1))
-        Interpolation parameter for fused COOT with respect to the sample and feature couplings.
+        Coeffficient parameter of linear terms with respect to the sample and feature couplings.
     D : tuple of matrices (sx, sy) and (fx, fy), float, optional (default = (None,None))
-        Sample and feature matrices, in case of fused COOT.
+        Sample and feature matrices with respect to the linear terms.
     warmstart : dictionary, optional (default = None)
         Containing 4 keys:
             + "duals_sample" and "duals_feature" whose values are
@@ -128,38 +127,9 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
         Advances in Neural Information Processing Systems, 33 (2020).
     """
 
-    def compute_kl(p, log_q):
-        kl = nx.sum(p * nx.log(p + 1.0 * (p == 0))) - nx.sum(p * log_q)
+    def compute_kl(p, q):
+        kl = nx.sum(p * nx.log(p + 1.0 * (p == 0))) - nx.sum(p * nx.log(q))
         return kl
-
-    def emd_solver(cost, p1_np, p2_np):
-        cost_np = nx.to_numpy(cost)
-        pi_np, log = emd(a=p1_np, b=p2_np, M=cost_np,
-                         numItermax=nits_ot, log=True)
-        f1 = nx.from_numpy(log["u"], type_as=cost)
-        f2 = nx.from_numpy(log["v"], type_as=cost)
-        pi = nx.from_numpy(pi_np, type_as=cost)
-
-        return pi, (f1, f2)
-
-    def get_distance(ot_cost, pi_sample, pi_feature, log_pxy_samp, log_pxy_feat,
-                     D_samp, alpha_samp, eps):
-        eps_samp, eps_feat = eps
-
-        # COOT part
-        coot = nx.sum(ot_cost * pi_feature)
-        if alpha_samp != 0:
-            coot = coot + alpha_samp * nx.sum(D_samp * pi_sample)
-
-        # Entropic part
-        if eps_samp != 0:
-            coot = coot + eps_samp * \
-                compute_kl(pi_sample, log_pxy_samp)
-        if eps_feat != 0:
-            coot = coot + eps_feat * \
-                compute_kl(pi_feature, log_pxy_feat)
-
-        return coot
 
     # Main function
 
@@ -190,27 +160,12 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
 
     if px_samp is None:
         px_samp = nx.ones(sx, type_as=X) / sx
-        px_samp_np = np.ones(sx) / sx  # create
-    else:
-        px_samp_np = nx.to_numpy(px_samp)
-
     if px_feat is None:
         px_feat = nx.ones(fx, type_as=X) / fx
-        px_feat_np = np.ones(fx) / fx
-    else:
-        px_feat_np = nx.to_numpy(px_feat)
-
     if py_samp is None:
         py_samp = nx.ones(sy, type_as=Y) / sy
-        py_samp_np = np.ones(sy) / sy
-    else:
-        py_samp_np = nx.to_numpy(py_samp)
-
     if py_feat is None:
         py_feat = nx.ones(fy, type_as=Y) / fy
-        py_feat_np = np.ones(fy) / fy
-    else:
-        py_feat_np = nx.to_numpy(py_feat)
 
     pxy_samp = px_samp[:, None] * py_samp[None, :]
     pxy_feat = px_feat[:, None] * py_feat[None, :]
@@ -232,13 +187,6 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
         pi_sample, pi_feature = warmstart["pi_sample"], warmstart["pi_feature"]
         duals_samp, duals_feat = warmstart["duals_sample"], warmstart["duals_feature"]
 
-    # create shortcuts of functions
-    self_sinkhorn = partial(sinkhorn, method=method_sinkhorn,
-                            numItermax=nits_ot, stopThr=tol_sinkhorn, log=True)
-    self_get_distance = partial(get_distance, log_pxy_samp=nx.log(pxy_samp),
-                                log_pxy_feat=nx.log(pxy_feat), D_samp=D_samp,
-                                alpha_samp=alpha_samp, eps=eps)
-
     # initialize log
     list_coot = [float("inf")]
     err = tol_bcd + 1e-3
@@ -249,26 +197,37 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
         # update sample coupling
         ot_cost = XY_sqr - 2 * X @ pi_feature @ Y.T  # size sx x sy
         if eps_samp > 0:
-            pi_sample, dict_log = self_sinkhorn(
-                a=px_samp, b=py_samp, M=ot_cost, reg=eps_samp, warmstart=duals_samp)
+            pi_sample, dict_log = sinkhorn(a=px_samp, b=py_samp, M=ot_cost, reg=eps_samp, method=method_sinkhorn,
+                                           numItermax=nits_ot, stopThr=tol_sinkhorn, log=True, warmstart=duals_samp)
             duals_samp = (nx.log(dict_log["u"]), nx.log(dict_log["v"]))
         elif eps_samp == 0:
-            pi_sample, duals_samp = emd_solver(ot_cost, px_samp_np, py_samp_np)
-
+            pi_sample, dict_log = emd(
+                a=px_samp, b=py_samp, M=ot_cost, numItermax=nits_ot, log=True)
+            duals_samp = (dict_log["u"], dict_log["v"])
         # update feature coupling
         ot_cost = XY_sqr_T - 2 * X.T @ pi_sample @ Y  # size fx x fy
         if eps_feat > 0:
-            pi_feature, dict_log = self_sinkhorn(
-                a=px_feat, b=py_feat, M=ot_cost, reg=eps_feat, warmstart=duals_feat)
+            pi_feature, dict_log = sinkhorn(a=px_feat, b=py_feat, M=ot_cost, reg=eps_feat, method=method_sinkhorn,
+                                            numItermax=nits_ot, stopThr=tol_sinkhorn, log=True, warmstart=duals_feat)
             duals_feat = (nx.log(dict_log["u"]), nx.log(dict_log["v"]))
         elif eps_feat == 0:
-            pi_feature, duals_feat = emd_solver(
-                ot_cost, px_feat_np, py_feat_np)
+            pi_feature, dict_log = emd(
+                a=px_feat, b=py_feat, M=ot_cost, numItermax=nits_ot, log=True)
+            duals_feat = (dict_log["u"], dict_log["v"])
 
         if idx % eval_bcd == 0:
             # update error
             err = nx.sum(nx.abs(pi_sample - pi_sample_prev))
-            coot = self_get_distance(ot_cost, pi_sample, pi_feature)
+
+            # COOT part
+            coot = nx.sum(ot_cost * pi_feature)
+            if alpha_samp != 0:
+                coot = coot + alpha_samp * nx.sum(D_samp * pi_sample)
+            # Entropic part
+            if eps_samp != 0:
+                coot = coot + eps_samp * compute_kl(pi_sample, pxy_samp)
+            if eps_feat != 0:
+                coot = coot + eps_feat * compute_kl(pi_feature, pxy_feat)
             list_coot.append(coot)
 
             if err < tol_bcd or abs(list_coot[-2] - list_coot[-1]) < early_stopping_tol:
@@ -280,7 +239,7 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
 
     # sanity check
     if nx.sum(nx.isnan(pi_sample)) > 0 or nx.sum(nx.isnan(pi_feature)) > 0:
-        print("There is NaN in coupling.")
+        warnings.warn("There is NaN in coupling.")
 
     if log:
         dict_log = {"duals_sample": duals_samp,
@@ -346,9 +305,9 @@ def co_optimal_transport2(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
         Allow the case where eps contains 0. In that case, the EMD solver is used instead of
         Sinkhorn solver.
     alpha : (scalar, scalar) tuple, float or int, optional (default = (1,1))
-        Interpolation parameter for fused COOT with respect to the sample and feature couplings.
+        Coeffficient parameter of linear terms with respect to the sample and feature couplings.
     D : tuple of matrices (sx, sy) and (fx, fy), float, optional (default = (None,None))
-        Sample and feature matrices, in case of fused COOT.
+        Sample and feature matrices with respect to the linear terms.
     warmstart : dictionary, optional (default = None)
         Containing 4 keys:
             + "duals_sample" and "duals_feature" whose values are
