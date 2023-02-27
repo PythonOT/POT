@@ -3388,7 +3388,7 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
         nx = get_backend(p, C1, C2, M, G0)
 
     if symmetric is None:
-        symmetric = nx.allclose(C1, C1t, atol=1e-10) and nx.allclose(C2, C2t, atol=1e-10)
+        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
 
     if G0 is None:
         q = unif(C2.shape[0])

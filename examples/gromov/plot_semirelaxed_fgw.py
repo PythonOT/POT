@@ -14,7 +14,7 @@ First, we generate two graphs following Stochastic Block Models, then show
 how to compute their srGW matchings and illustrate them. These graphs are then
 endowed with node features and we follow the same process with srFGW.
 
-[45] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+[48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
 "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
 International Conference on Learning Representations (ICLR), 2021.
 """

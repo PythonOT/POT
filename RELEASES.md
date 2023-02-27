@@ -5,8 +5,6 @@
 #### New features
 - Added feature to (Fused) Gromov-Wasserstein solvers to handle asymmetric matrices (PR #431)
 - Added semi-relaxed (Fused) Gromov-Wasserstein solvers in `ot.gromov` + examples (PR #431)
-- Added feature to (Fused) Gromov-Wasserstein solvers to handle asymmetric matrices (PR #401)
-- Added semi-relaxed (Fused) Gromov-Wasserstein solvers + examples (PR #401)
 - Added the spherical sliced-Wasserstein discrepancy in `ot.sliced.sliced_wasserstein_sphere` and `ot.sliced.sliced_wasserstein_sphere_unif` + examples (PR #434)
 - Added the Wasserstein distance on the circle in ``ot.lp.solver_1d.wasserstein_circle`` (PR #434)
 - Added the Wasserstein distance on the circle (for p>=1) in `ot.lp.solver_1d.binary_search_circle` + examples (PR #434)
