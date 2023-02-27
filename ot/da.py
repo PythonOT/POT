@@ -1417,12 +1417,13 @@ class SinkhornTransport(BaseTransport):
             Sciences, 7(3), 1853-1882.
     """
 
-    def __init__(self, reg_e=1., max_iter=1000,
+    def __init__(self, reg_e=1., method="sinkhorn", max_iter=1000,
                  tol=10e-9, verbose=False, log=False,
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
                  out_of_sample_map='ferradans', limit_max=np.infty):
         self.reg_e = reg_e
+        self.method = method
         self.max_iter = max_iter
         self.tol = tol
         self.verbose = verbose
@@ -1463,7 +1464,7 @@ class SinkhornTransport(BaseTransport):
         # coupling estimation
         returned_ = sinkhorn(
             a=self.mu_s, b=self.mu_t, M=self.cost_, reg=self.reg_e,
-            numItermax=self.max_iter, stopThr=self.tol,
+            method=self.method, numItermax=self.max_iter, stopThr=self.tol,
             verbose=self.verbose, log=self.log)
 
         # deal with the value of log
