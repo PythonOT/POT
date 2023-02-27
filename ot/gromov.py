@@ -398,7 +398,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
         metric approach to object matching. Foundations of computational
         mathematics 11.4 (2011): 417-487.
 
-    .. [44] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
+    .. [47] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
     """
@@ -414,12 +414,8 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
     C1 = nx.to_numpy(C10)
     C2 = nx.to_numpy(C20)
     if symmetric is None:
-        C1t, C2t = C1.T, C2.T
-        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
-    if symmetric:
-        C2t = C2
-    else:
-        C1t, C2t = C1.T, C2.T
+        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
+
     if G0 is None:
         G0 = p[:, None] * q[None, :]
     else:
@@ -437,7 +433,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
         def df(G):
             return gwggrad(constC, hC1, hC2, G)
     else:
-        constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
+        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun)
 
         def df(G):
             return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
@@ -445,19 +441,19 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
         armijo = True
 
     if armijo:
-        def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
-            return line_search_armijo(cost, G, deltaG, Mi, f_val, alpha_min=alpha_min, alpha_max=alpha_max)
+        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, f_val, **kwargs)
     else:
-        def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2t, reg, Gc, M, alpha_min, alpha_max)
+        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
+            return solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, reg=reg, M=M, **kwargs)
     if log:
-        res, log = cg(p, q, 0., 1., f, df, G0, line_search_solver, log=True, **kwargs)
+        res, log = cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
         log['gw_dist'] = nx.from_numpy(gwloss(constC, hC1, hC2, res), type_as=C10)
         log['u'] = nx.from_numpy(log['u'], type_as=C10)
         log['v'] = nx.from_numpy(log['v'], type_as=C10)
         return nx.from_numpy(res, type_as=C10), log
     else:
-        return nx.from_numpy(cg(p, q, 0., 1., f, df, G0, line_search_solver, log=False, **kwargs), type_as=C10)
+        return nx.from_numpy(cg(p, q, 0., 1., f, df, G0, line_search, log=False, **kwargs), type_as=C10)
 
 
 def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log=False, armijo=False, G0=None, **kwargs):
@@ -538,7 +534,7 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
         Graph Dictionary Learning, International Conference on Machine Learning
         (ICML), 2021.
 
-    .. [44] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
+    .. [47] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
     """
@@ -556,12 +552,7 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
     C2 = nx.to_numpy(C20)
 
     if symmetric is None:
-        C1t, C2t = C1.T, C2.T
-        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
-    if symmetric:
-        C2t = C2
-    else:
-        C1t, C2t = C1.T, C2.T
+        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
 
     if G0 is None:
         G0 = p[:, None] * q[None, :]
@@ -583,19 +574,19 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
         def df(G):
             return gwggrad(constC, hC1, hC2, G)
     else:
-        constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
+        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun)
 
         def df(G):
             return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
 
     if armijo:
-        def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
-            return line_search_armijo(cost, G, deltaG, Mi, f_val, alpha_min=alpha_min, alpha_max=alpha_max)
+        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, f_val, **kwargs)
     else:
-        def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2t, reg, Gc, M, alpha_min, alpha_max)
+        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
+            return solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, reg=reg, M=M, **kwargs)
 
-    T, log_gw = cg(p, q, 0., 1., f, df, G0, line_search_solver, log=True, **kwargs)
+    T, log_gw = cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
 
     T0 = nx.from_numpy(T, type_as=C10)
 
@@ -694,7 +685,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
         application on graphs", International Conference on Machine Learning
         (ICML). 2019.
 
-    .. [44] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
+    .. [47] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
     """
@@ -713,12 +704,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
     M = nx.to_numpy(M0)
 
     if symmetric is None:
-        C1t, C2t = C1.T, C2.T
-        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
-    if symmetric:
-        C2t = C2
-    else:
-        C1t, C2t = C1.T, C2.T
+        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
 
     if G0 is None:
         G0 = p[:, None] * q[None, :]
@@ -737,7 +723,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
         def df(G):
             return gwggrad(constC, hC1, hC2, G)
     else:
-        constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
+        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun)
 
         def df(G):
             return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
@@ -746,21 +732,21 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
         armijo = True
 
     if armijo:
-        def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
-            return line_search_armijo(cost, G, deltaG, Mi, f_val, alpha_min=alpha_min, alpha_max=alpha_max)
+        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, f_val, **kwargs)
     else:
-        def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2t, reg, Gc, M, alpha_min, alpha_max)
+        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
+            return solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, reg=reg, M=M, **kwargs)
 
     if log:
-        res, log = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search_solver, log=True, **kwargs)
+        res, log = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
         fgw_dist = nx.from_numpy(log['loss'][-1], type_as=C10)
         log['fgw_dist'] = fgw_dist
         log['u'] = nx.from_numpy(log['u'], type_as=C10)
         log['v'] = nx.from_numpy(log['v'], type_as=C10)
         return nx.from_numpy(res, type_as=C10), log
     else:
-        return nx.from_numpy(cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search_solver, log=False, **kwargs), type_as=C10)
+        return nx.from_numpy(cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=False, **kwargs), type_as=C10)
 
 
 def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric=None, alpha=0.5, armijo=False, G0=None, log=False, **kwargs):
@@ -844,7 +830,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
         Graph Dictionary Learning, International Conference on Machine Learning
         (ICML), 2021.
 
-    .. [44] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
+    .. [47] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
     """
@@ -864,12 +850,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
     M = nx.to_numpy(M0)
 
     if symmetric is None:
-        C1t, C2t = C1.T, C2.T
-        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
-    if symmetric:
-        C2t = C2
-    else:
-        C1t, C2t = C1.T, C2.T
+        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
 
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
 
@@ -888,7 +869,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
         def df(G):
             return gwggrad(constC, hC1, hC2, G)
     else:
-        constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
+        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun)
 
         def df(G):
             return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
@@ -896,13 +877,13 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
         armijo = True
 
     if armijo:
-        def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
-            return line_search_armijo(cost, G, deltaG, Mi, f_val, alpha_min=alpha_min, alpha_max=alpha_max)
+        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, f_val, **kwargs)
     else:
-        def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2t, reg, Gc, M, alpha_min, alpha_max)
+        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
+            return solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, reg=reg, M=M, **kwargs)
 
-    T, log_fgw = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search_solver, log=True, **kwargs)
+    T, log_fgw = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
 
     fgw_dist = nx.from_numpy(log_fgw['loss'][-1], type_as=C10)
 
@@ -1402,7 +1383,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
-    .. [44] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
+    .. [47] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
     """
@@ -1415,14 +1396,9 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
     T = G0
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
     if symmetric is None:
-        C1t, C2t = C1.T, C2.T
-        symmetric = np.allclose(C1, C1t, atol=1e-12) and np.allclose(C2, C2t, atol=1e-10)
-    if symmetric:
-        C1t, C2t = C1, C2
-    else:
-        C1t, C2t = C1.T, C2.T
-        constCt, hC1t, hC2t = init_matrix(C1t, C2t, p, q, loss_fun)
-        print('p, q ,C1, C2, C1t, C2t, G0:', type(p), type(q), type(C1), type(C2), type(C1t), type(C2t), type(G0))
+        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
+    if not symmetric:
+        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun)
     cpt = 0
     err = 1
 
@@ -3065,7 +3041,7 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss'):
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
-    .. [45]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [48]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
     """
@@ -3155,67 +3131,58 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
 
     References
     ----------
-    .. [45]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [48]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
     """
     p = list_to_array(p)
-    p0, C10, C20 = p, C1, C2
     if G0 is None:
-        nx = get_backend(p0, C10, C20)
+        nx = get_backend(p, C1, C2)
     else:
-        G0_ = G0
-        nx = get_backend(p0, C10, C20, G0_)
+        nx = get_backend(p, C1, C2, G0)
 
-    p = nx.to_numpy(p)
-    C1 = nx.to_numpy(C10)
-    C2 = nx.to_numpy(C20)
     if symmetric is None:
-        C1t, C2t = C1.T, C2.T
-        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
-    if symmetric:
-        C1t, C2t = C1, C2
-    else:
-        C1t, C2t = C1.T, C2.T
+        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
     if G0 is None:
         q = unif(C2.shape[0])
-        G0 = p[:, None] * q[None, :]
+        G0 = nx.outer(p, q)
     else:
-        G0 = nx.to_numpy(G0_)
-        q = G0.sum(0)
+        q = nx.sum(G0, 0)
         # Check first marginal of G0
-        np.testing.assert_allclose(G0.sum(1), p, atol=1e-08)
+        np.testing.assert_allclose(nx.sum(G0, 1), p, atol=1e-08)
 
     constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
 
-    ones_p = np.ones(p.shape[0])
+    ones_p = nx.ones(p.shape[0])
 
-    def f(G, qG):
-        marginal_product = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2t))
+    def f(G):
+        qG = nx.sum(G, 0)
+        marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
         return gwloss(constC + marginal_product, hC1, hC2, G)
 
     if symmetric:
-        def df(G, qG):
-            marginal_product = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2t))
+        def df(G):
+            qG = nx.sum(G, 0)
+            marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
             return gwggrad(constC + marginal_product, hC1, hC2, G)
     else:
-        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1t, C2t, p, loss_fun)
+        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1.T, C2.T, p, loss_fun)
 
-        def df(G, qG):
-            marginal_product_1 = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2t))
-            marginal_product_2 = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2))
+        def df(G):
+            qG = nx.sum(G, 0)
+            marginal_product_1 = nx.outer(ones_p, nx.dot(qG, fC2t))
+            marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
             return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
 
-    def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
-        return solve_semirelaxed_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2t, ones_p, qG, qdeltaG, reg, Gc, M, alpha_min, alpha_max)
+    def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
+        return solve_semirelaxed_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, ones_p, reg=reg, M=M, **kwargs)
 
     if log:
-        res, log = semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search_solver, log=True, **kwargs)
-        q = res.sum(0)
-        log['srgw_dist'] = nx.from_numpy(f(res, q), type_as=C10)
-        return nx.from_numpy(res, type_as=C10), log
+        res, log = semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
+        log['srgw_dist'] = log['loss'][-1]
+        return res, log
     else:
-        return nx.from_numpy(semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search_solver, log=False, **kwargs), type_as=C10)
+        return semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=False, **kwargs)
 
 
 def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric=None, log=False, G0=None, **kwargs):
@@ -3279,79 +3246,64 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
     References
     ----------
 
-    .. [45]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [48]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
     """
     p = list_to_array(p)
-    p0, C10, C20 = p, C1, C2
     if G0 is None:
-        nx = get_backend(p0, C10, C20)
+        nx = get_backend(p, C1, C2)
     else:
-        G0_ = G0
-        nx = get_backend(p0, C10, C20, G0_)
-
-    p = nx.to_numpy(p)
-    C1 = nx.to_numpy(C10)
-    C2 = nx.to_numpy(C20)
+        nx = get_backend(p, C1, C2, G0)
 
     if symmetric is None:
-        C1t, C2t = C1.T, C2.T
-        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
-    if symmetric:
-        C2t = C2
-    else:
-        C1t, C2t = C1.T, C2.T
+        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
 
     if G0 is None:
         q = unif(C2.shape[0])
-        G0 = p[:, None] * q[None, :]
+        G0 = nx.outer(p, q)
     else:
-        G0 = nx.to_numpy(G0_)
         q = G0.sum(0)
-        # Check marginals of G0
-        np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
-        np.testing.assert_allclose(G0.sum(axis=0), q, atol=1e-08)
+        # Check first marginal of G0
+        np.testing.assert_allclose(nx.sum(G0, 1), p, atol=1e-08)
 
     constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
 
-    ones_p = np.ones(p.shape[0])
+    ones_p = nx.ones(p.shape[0])
 
-    def f(G, qG):
-        marginal_product = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2t))
+    def f(G):
+        qG = nx.sum(G, 0)
+        marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
         return gwloss(constC + marginal_product, hC1, hC2, G)
 
     if symmetric:
-        def df(G, qG):
-            marginal_product = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2t))
+        def df(G):
+            qG = nx.sum(G, 0)
+            marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
             return gwggrad(constC + marginal_product, hC1, hC2, G)
     else:
-        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1t, C2t, p, loss_fun)
+        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1.T, C2.T, p, loss_fun)
 
-        def df(G, qG):
-            marginal_product_1 = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2t))
-            marginal_product_2 = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2))
+        def df(G):
+            qG = nx.sum(G, 0)
+            marginal_product_1 = nx.outer(ones_p, nx.dot(qG, fC2t))
+            marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
             return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
 
-    def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
-        return solve_semirelaxed_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2t, ones_p, qG, qdeltaG, reg, Gc, M, alpha_min, alpha_max)
+    def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
+        return solve_semirelaxed_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, ones_p, reg=reg, M=M, **kwargs)
 
-    T, log_srgw = semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search_solver, log=True, **kwargs)
+    T, log_srgw = semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
 
-    T0 = nx.from_numpy(T, type_as=C10)
-    q = T.sum(0)
-
-    log_srgw['srgw_dist'] = nx.from_numpy(f(T, q), type_as=C10)
-    log_srgw['T'] = T0
-
+    q = nx.sum(T, 0)
+    log_srgw['srgw_dist'] = f(T)
+    log_srgw['T'] = T
     srgw = log_srgw['srgw_dist']
 
     if loss_fun == 'square_loss':
-        gC1 = 2 * C1 * (p[:, None] * p[None, :]) - 2 * T.dot(C2).dot(T.T)
-        gC2 = 2 * C2 * (q[:, None] * q[None, :]) - 2 * T.T.dot(C1).dot(T)
-        gC1 = nx.from_numpy(gC1, type_as=C10)
-        gC2 = nx.from_numpy(gC2, type_as=C10)
-        srgw = nx.set_gradients(srgw, (C10, C20), (gC1, gC2))
+        gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
+        gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
+        srgw = nx.set_gradients(srgw, (C1, C2), (gC1, gC2))
 
     if log:
         return srgw, log_srgw
@@ -3361,7 +3313,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
 
 def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', symmetric=None, alpha=0.5, G0=None, log=False, **kwargs):
     r"""
-    Computes the semi-relaxed FGW transport between two graphs (see :ref:`[45] <references-semirelaxed-fused-gromov-wasserstein>`)
+    Computes the semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
 
     .. math::
         \gamma = \mathop{\arg \min}_\gamma \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
@@ -3381,7 +3333,7 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
 
-    The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[45] <references-semirelaxed-fused-gromov-wasserstein>`
+    The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`
 
     Parameters
     ----------
@@ -3425,75 +3377,64 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
         application on graphs", International Conference on Machine Learning
         (ICML). 2019.
 
-    .. [45] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
     """
     p = list_to_array(p)
-    p0, C10, C20, M0 = p, C1, C2, M
     if G0 is None:
-        nx = get_backend(p0, C10, C20, M0)
+        nx = get_backend(p, C1, C2, M)
     else:
-        G0_ = G0
-        nx = get_backend(p0, C10, C20, M0, G0_)
-
-    p = nx.to_numpy(p)
-    C1 = nx.to_numpy(C10)
-    C2 = nx.to_numpy(C20)
-    M = nx.to_numpy(M0)
+        nx = get_backend(p, C1, C2, M, G0)
 
     if symmetric is None:
-        C1t, C2t = C1.T, C2.T
-        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
-    if symmetric:
-        C2t = C2
-    else:
-        C1t, C2t = C1.T, C2.T
+        symmetric = nx.allclose(C1, C1t, atol=1e-10) and nx.allclose(C2, C2t, atol=1e-10)
 
     if G0 is None:
         q = unif(C2.shape[0])
-        G0 = p[:, None] * q[None, :]
+        G0 = nx.dot(nx.reshape(p, (-1, 1)), nx.reshape(q, (1, -1)))
     else:
-        G0 = nx.to_numpy(G0_)
         q = G0.sum(0)
         # Check marginals of G0
-        np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
+        nx.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
 
     constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
 
-    ones_p = np.ones(p.shape[0])
+    ones_p = nx.ones(p.shape[0])
 
-    def f(G, qG):
-        marginal_product = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2t))
+    def f(G):
+        qG = nx.sum(G, 0)
+        marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
         return gwloss(constC + marginal_product, hC1, hC2, G)
 
     if symmetric:
-        def df(G, qG):
-            marginal_product = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2t))
+        def df(G):
+            qG = nx.sum(G, 0)
+            marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
             return gwggrad(constC + marginal_product, hC1, hC2, G)
     else:
-        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1t, C2t, p, loss_fun)
+        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1.T, C2.T, p, loss_fun)
 
-        def df(G, qG):
-            marginal_product_1 = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2t))
-            marginal_product_2 = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2))
+        def df(G):
+            qG = nx.sum(G, 0)
+            marginal_product_1 = nx.outer(ones_p, nx.dot(qG, fC2t))
+            marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
             return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
 
-    def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
-        return solve_semirelaxed_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2t, ones_p, qG, qdeltaG, reg, Gc, M, alpha_min, alpha_max)
+    def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
+        return solve_semirelaxed_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, ones_p, reg=reg, M=M, **kwargs)
 
     if log:
-        res, log = semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search_solver, log=True, **kwargs)
-        srfgw_dist = nx.from_numpy(log['loss'][-1], type_as=C10)
-        log['srfgw_dist'] = srfgw_dist
-        return nx.from_numpy(res, type_as=C10), log
+        res, log = semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
+        log['srfgw_dist'] = log['loss'][-1]
+        return res, log
     else:
-        return nx.from_numpy(semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search_solver, log=False, **kwargs), type_as=C10)
+        return semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=False, **kwargs)
 
 
 def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', symmetric=None, alpha=0.5, G0=None, log=False, **kwargs):
     r"""
-    Computes the semi-relaxed FGW divergence between two graphs (see :ref:`[45] <references-semirelaxed-fused-gromov-wasserstein2>`)
+    Computes the semi-relaxed FGW divergence between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein2>`)
 
     .. math::
         \min_\gamma \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F + \alpha \sum_{i,j,k,l}
@@ -3510,7 +3451,7 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
     - `L` is a loss function to account for the misfit between the similarity matrices
 
     The algorithm used for solving the problem is conditional gradient as
-    discussed in :ref:`[45] <semirelaxed-fused-gromov-wasserstein2>`
+    discussed in :ref:`[48] <semirelaxed-fused-gromov-wasserstein2>`
 
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
@@ -3561,80 +3502,64 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
         application on graphs", International Conference on Machine Learning
         (ICML). 2019.
 
-    .. [45] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
     """
     p = list_to_array(p)
-    p0, C10, C20, M0 = p, C1, C2, M
     if G0 is None:
-        nx = get_backend(p0, C10, C20, M0)
+        nx = get_backend(p, C1, C2, M)
     else:
-        G0_ = G0
-        nx = get_backend(p0, C10, C20, M0, G0_)
-
-    p = nx.to_numpy(p)
-    C1 = nx.to_numpy(C10)
-    C2 = nx.to_numpy(C20)
-    M = nx.to_numpy(M0)
+        nx = get_backend(p, C1, C2, M, G0)
 
     if symmetric is None:
-        C1t, C2t = C1.T, C2.T
-        symmetric = np.allclose(C1, C1t, atol=1e-10) and np.allclose(C2, C2t, atol=1e-10)
-    if symmetric:
-        C2t = C2
-    else:
-        C1t, C2t = C1.T, C2.T
+        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
 
     if G0 is None:
         q = unif(C2.shape[0])
-        G0 = p[:, None] * q[None, :]
+        G0 = nx.dot(nx.reshape(p, (-1, 1)), nx.reshape(q, (1, -1)))
     else:
-        G0 = nx.to_numpy(G0_)
         q = G0.sum(0)
         # Check marginals of G0
-        np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
+        nx.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
 
     constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
 
-    ones_p = np.ones(p.shape[0])
+    ones_p = nx.ones(p.shape[0])
 
-    def f(G, qG):
-        marginal_product = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2t))
+    def f(G):
+        qG = nx.sum(G, 0)
+        marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
         return gwloss(constC + marginal_product, hC1, hC2, G)
 
     if symmetric:
-        def df(G, qG):
-            marginal_product = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2t))
+        def df(G):
+            qG = nx.sum(G, 0)
+            marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
             return gwggrad(constC + marginal_product, hC1, hC2, G)
     else:
-        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1t, C2t, p, loss_fun)
+        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1.T, C2.T, p, loss_fun)
 
-        def df(G, qG):
-            marginal_product_1 = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2t))
-            marginal_product_2 = np.dot(ones_p[:, None], np.dot(qG[None, :], fC2))
+        def df(G):
+            qG = nx.sum(G, 0)
+            marginal_product_1 = nx.outer(ones_p, nx.dot(qG, fC2t))
+            marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
             return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
 
-    def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
-        return solve_semirelaxed_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2t, ones_p, qG, qdeltaG, reg, Gc, M, alpha_min, alpha_max)
+    def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
+        return solve_semirelaxed_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, ones_p, reg=reg, M=M, **kwargs)
 
-    T, log_fgw = semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search_solver, log=True, **kwargs)
-    q = T.sum(0)
-
-    srfgw_dist = nx.from_numpy(log_fgw['loss'][-1], type_as=C10)
-
-    T0 = nx.from_numpy(T, type_as=C10)
-
+    T, log_fgw = semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
+    q = nx.sum(T, 0)
+    srfgw_dist = f(T)
     log_fgw['srfgw_dist'] = srfgw_dist
-    log_fgw['T'] = T0
+    log_fgw['T'] = T
 
     if loss_fun == 'square_loss':
-        gC1 = 2 * C1 * (p[:, None] * p[None, :]) - 2 * T.dot(C2).dot(T.T)
-        gC2 = 2 * C2 * (q[:, None] * q[None, :]) - 2 * T.T.dot(C1).dot(T)
-        gC1 = nx.from_numpy(gC1, type_as=C10)
-        gC2 = nx.from_numpy(gC2, type_as=C10)
-        srfgw_dist = nx.set_gradients(srfgw_dist, (C10, C20, M0),
-                                      (alpha * gC1, alpha * gC2, (1 - alpha) * T0))
+        gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
+        gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
+        srfgw_dist = nx.set_gradients(srfgw_dist, (C1, C2, M),
+                                      (alpha * gC1, alpha * gC2, (1 - alpha) * T))
 
     if log:
         return srfgw_dist, log_fgw

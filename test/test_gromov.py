@@ -21,8 +21,7 @@ def test_gromov(nx):
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
-
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=1)
     xt = xs[::-1].copy()
 
     p = ot.unif(n_samples)

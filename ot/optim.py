@@ -98,8 +98,8 @@ def line_search_armijo(
         return float(alpha), fc[0], phi1
 
 
-def solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2t,
-                            reg=None, Gc=None, M=None, alpha_min=None, alpha_max=None, **kwargs):
+def solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2t, M,
+                            reg=None, alpha_min=None, alpha_max=None, **kwargs):
     """
     Solve the linesearch in the FW iterations
 
@@ -111,19 +111,18 @@ def solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2t,
     deltaG : array-like (ns,nt)
         Difference between the optimal map found by linearization in the FW algorithm and the value at a given iteration
     Mi : array-like (ns,nt)
-        Cost matrix of the linearized transport problem. Corresponds to the gradient of the cost
+        Cost matrix of the linearized transport problem. Corresponds to the gradient of the cost.
+        Not used in this implementation. Could be if we want to avoid computations of C1.T.C2t and deduce next gradient directly in the line-search.
     f_val : float
         Value of the cost at `G`
     C1 : array-like (ns,ns), optional
         Structure matrix in the source domain.
     C2t : array-like (nt,nt), optional
         Transposed Structure matrix in the target domain.
-    reg : float, optional
+    reg : float
         Regularization parameter.
-    Gc : array-like (ns,nt), optional
-        Optimal map found by linearization in the FW algorithm.
-    M : array-like (ns,nt), optional
-        Cost matrix between the features. Only used and necessary when armijo=False
+    M : array-like (ns,nt)
+        Cost matrix between the features.
     alpha_min : float, optional
         Minimum value for alpha
     alpha_max : float, optional
@@ -161,17 +160,15 @@ def solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2t,
     if alpha_min is not None or alpha_max is not None:
         alpha = np.clip(alpha, alpha_min, alpha_max)
 
-    fc = None
-    # f_val = cost(G + alpha * deltaG) > removed to reduce numerical complexity
-    # as the new cost can be deduced from the line search quadratic function
+    # the new cost is deduced from the line search quadratic function
     f_val += a * (alpha ** 2) + b * alpha
 
-    return alpha, fc, f_val
+    return alpha, 1, f_val
 
 
 def solve_semirelaxed_gromov_linesearch(
-    G, deltaG, Mi, f_val, C1, C2t, ones_p, qG, qdeltaG,
-    reg=None, Gc=None, M=None, alpha_min=None, alpha_max=None, **kwargs
+    G, deltaG, Mi, f_val, C1, C2t, ones_p,
+    reg, M, alpha_min=None, alpha_max=None, **kwargs
 ):
     """
     Solve the linesearch in the FW iterations
@@ -200,12 +197,10 @@ def solve_semirelaxed_gromov_linesearch(
         Second marginal of the current transportation matrix G
     qdeltaG: array-like (nt,1)
         Difference of the second marginals of G and Gc
-    reg : float, optional
+    reg : float
         Regularization parameter.
-    Gc : array-like (ns,nt), optional
-        Optimal map found by linearization in the FW algorithm.
-    M : array-like (ns,nt), optional
-        Cost matrix between the features. Only used and necessary when armijo=False
+    M : array-like (ns,nt)
+        Cost matrix between the features.
     alpha_min : float, optional
         Minimum value for alpha
     alpha_max : float, optional
@@ -222,7 +217,7 @@ def solve_semirelaxed_gromov_linesearch(
 
     References
     ----------
-    .. [45]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [48]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2021.
     """
@@ -233,10 +228,11 @@ def solve_semirelaxed_gromov_linesearch(
     else:
         nx = get_backend(G, deltaG, C1, C2t, M)
 
+    qG, qdeltaG = nx.sum(G, 0), nx.sum(deltaG, 0)
     dot = nx.dot(nx.dot(C1, deltaG), C2t)
     C2t_square = C2t ** 2
-    dot_qG = nx.dot(ones_p[:, None] * qG[None, :], C2t_square)
-    dot_qdeltaG = nx.dot(ones_p[:, None] * qdeltaG[None, :], C2t_square)
+    dot_qG = nx.dot(nx.outer(ones_p, qG), C2t_square)
+    dot_qdeltaG = nx.dot(nx.outer(ones_p, qdeltaG), C2t_square)
     a = reg * nx.sum((dot_qdeltaG - 2 * dot) * deltaG)
     b = nx.sum(M * deltaG) + reg * (nx.sum((dot_qdeltaG - 2 * dot) * G) + nx.sum((dot_qG - 2 * nx.dot(nx.dot(C1, G), C2t)) * deltaG))
 
@@ -244,16 +240,14 @@ def solve_semirelaxed_gromov_linesearch(
     if alpha_min is not None or alpha_max is not None:
         alpha = np.clip(alpha, alpha_min, alpha_max)
 
-    fc = None
-    # f_val = cost(G + alpha * deltaG) > removed to reduce numerical complexity
-    # as the new cost can be deduced from the line search quadratic function
+    # the new cost can be deduced from the line search quadratic function
     f_val += a * (alpha ** 2) + b * alpha
 
-    return alpha, fc, f_val
+    return alpha, 1, f_val
 
 
-def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=None,
-               semirelaxed=False, numItermax=200, numInnerItermax=100000, stopThr=1e-9,
+def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search, G0=None,
+               numItermax=200, numInnerItermax=100000, stopThr=1e-9,
                stopThr2=1e-9, verbose=False, log=False, innerlog=True, **kwargs):
     r"""
     Solve the general regularized OT problem or its semi-relaxed version with
@@ -317,12 +311,10 @@ def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=Non
         If set to emd will solve the general regularized OT problem using cg.
         If set to lp_semi_relaxed_OT will solve the general regularized semi-relaxed OT problem using cg.
         If set to sinkhorn will solve the general regularized OT problem using generalized cg.
-    line_search_solver: function,
+    line_search: function,
         Function to find the optimal step. Currently used instances are:
         line_search_armijo (generic solver). solve_gromov_linesearch for (F)GW problem.
         solve_semirelaxed_gromov_linesearch for sr(F)GW problem. gcg_linesearch for the Generalized cg.
-    semirelaxed: bool
-        either the program corresponds to a semi-relaxed OT problem or not
     G0 :  array-like, shape (ns,nt), optional
         initial guess (default is indep joint density)
     numItermax : int, optional
@@ -379,24 +371,14 @@ def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=Non
         G = nx.outer(a, b)
     else:
         G = G0
-    bdeltaG = None
 
-    if semirelaxed:
-        if reg2 is None:
-            def cost(G, qG):
-                return nx.sum(M * G) + reg1 * f(G, qG)
-        else:
-            def cost(G, qG):
-                return nx.sum(M * G) + reg1 * f(G, qG) + reg2 * nx.sum(G * nx.log(G))
-        f_val = cost(G, b)
+    if reg2 is None:
+        def cost(G):
+            return nx.sum(M * G) + reg1 * f(G)
     else:
-        if reg2 is None:
-            def cost(G):
-                return nx.sum(M * G) + reg1 * f(G)
-        else:
-            def cost(G):
-                return nx.sum(M * G) + reg1 * f(G) + reg2 * nx.sum(G * nx.log(G))
-        f_val = cost(G)
+        def cost(G):
+            return nx.sum(M * G) + reg1 * f(G) + reg2 * nx.sum(G * nx.log(G))
+    f_val = cost(G)
     if log:
         log['loss'].append(f_val)
 
@@ -413,10 +395,7 @@ def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=Non
         old_fval = f_val
 
         # problem linearization
-        if semirelaxed:
-            Mi = M + reg1 * df(G, b)
-        else:
-            Mi = M + reg1 * df(G)
+        Mi = M + reg1 * df(G)
 
         if not (reg2 is None):
             Mi += reg2 * (1 + nx.log(G))
@@ -429,17 +408,14 @@ def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=Non
         else:
             Gc = lp_solver(a, b, Mi, reg=reg1, numItermax=numInnerItermax, log=innerlog, **kwargs)
 
-        if semirelaxed:
-            bdeltaG = Gc.sum(0) - b
         # line search
         deltaG = Gc - G
 
-        alpha, fc, f_val = line_search_solver(cost, G, deltaG, Mi, f_val,
-                                              reg=reg1, M=M, Gc=Gc, alpha_min=0., alpha_max=1., qG=b, qdeltaG=bdeltaG, **kwargs)
+        alpha, fc, f_val = line_search(cost, G, deltaG, Mi, f_val,
+                                       reg=reg1, M=M, **kwargs)
 
-        G = G + alpha * deltaG
-        if semirelaxed:
-            b = b + alpha * bdeltaG
+        G += alpha * deltaG
+
         # test convergence
         if it >= numItermax:
             loop = 0
@@ -466,7 +442,7 @@ def generic_cg(a, b, M, f, df, reg1, reg2, lp_solver, line_search_solver, G0=Non
         return G
 
 
-def cg(a, b, M, reg, f, df, G0=None, line_search_solver=line_search_armijo,
+def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
        numItermax=200, numItermaxEmd=100000, stopThr=1e-9, stopThr2=1e-9,
        verbose=False, log=False, **kwargs):
     r"""
@@ -504,7 +480,7 @@ def cg(a, b, M, reg, f, df, G0=None, line_search_solver=line_search_armijo,
         Regularization term >0
     G0 :  array-like, shape (ns,nt), optional
         initial guess (default is indep joint density)
-    line_search_solver: function,
+    line_search: function,
         Function to find the optimal step.
         Default is line_search_armijo.
     numItermax : int, optional
@@ -546,12 +522,12 @@ def cg(a, b, M, reg, f, df, G0=None, line_search_solver=line_search_armijo,
     def lp_solver(a, b, M, numItermax, log, **kwargs):
         return emd(a, b, M, numItermax, log)
 
-    return generic_cg(a, b, M, f, df, reg, None, lp_solver, line_search_solver, G0=G0,
-                      semirelaxed=False, numItermax=numItermax, numInnerItermax=numItermaxEmd, stopThr=stopThr,
+    return generic_cg(a, b, M, f, df, reg, None, lp_solver, line_search, G0=G0,
+                      numItermax=numItermax, numInnerItermax=numItermaxEmd, stopThr=stopThr,
                       stopThr2=stopThr2, verbose=verbose, log=log, innerlog=True, **kwargs)
 
 
-def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search_solver=solve_semirelaxed_gromov_linesearch,
+def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=solve_semirelaxed_gromov_linesearch,
                    numItermax=200, stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, **kwargs):
     r"""
     Solve the general regularized and semi-relaxed OT problem with conditional gradient
@@ -586,7 +562,7 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search_solver=solve_semire
         Regularization term >0
     G0 :  array-like, shape (ns,nt), optional
         initial guess (default is indep joint density)
-    line_search_solver: function,
+    line_search: function,
         Function to find the optimal step.
         Default is the exact line search for Gromov-Wasserstein problem.
     numItermax : int, optional
@@ -614,21 +590,21 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search_solver=solve_semire
     References
     ----------
 
-    .. [45]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [48]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2021.
 
     """
 
     def lp_solver(a, b, Mi, numItermax, log, **kwargs):
-
-        min_ = Mi.min(axis=1)
-        Gc = (Mi == min_[:, None]).astype(Mi.dtype)
-        Gc *= (a / Gc.sum(axis=1))[:, None]
+        nx = get_backend(a, b, Mi)
+        # get minimum by rows as binary mask
+        Gc = nx.floor(Mi == nx.reshape(nx.min(Mi, axis=1), (-1, 1)))
+        Gc *= nx.reshape((a / nx.sum(Gc, axis=1)), (-1, 1))
         return Gc
 
-    return generic_cg(a, b, M, f, df, reg, None, lp_solver, line_search_solver, G0=G0,
-                      semirelaxed=True, numItermax=numItermax, numInnerItermax=None, stopThr=stopThr,
+    return generic_cg(a, b, M, f, df, reg, None, lp_solver, line_search, G0=G0,
+                      numItermax=numItermax, numInnerItermax=None, stopThr=stopThr,
                       stopThr2=stopThr2, verbose=verbose, log=log, innerlog=False, **kwargs)
 
 
@@ -710,11 +686,11 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
     def lp_solver(a, b, Mi, numItermax, log, **kwargs):
         return sinkhorn(a, b, Mi, reg1, numItermax=numItermax, log=log)
 
-    def line_search_solver(cost, G, deltaG, Mi, f_val, reg, M, Gc, alpha_min, alpha_max, qG, qdeltaG, **kwargs):
-        return line_search_armijo(cost, G, deltaG, Mi, f_val, alpha_min=alpha_min, alpha_max=alpha_max)
+    def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
+        return line_search_armijo(cost, G, deltaG, Mi, f_val, **kwargs)
 
-    return generic_cg(a, b, M, f, df, reg2, reg1, lp_solver, line_search_solver, G0=G0,
-                      semirelaxed=False, numItermax=numItermax, numInnerItermax=numInnerItermax,
+    return generic_cg(a, b, M, f, df, reg2, reg1, lp_solver, line_search, G0=G0,
+                      numItermax=numItermax, numInnerItermax=numInnerItermax,
                       stopThr=stopThr, stopThr2=stopThr2, verbose=verbose, log=log, innerlog=log, **kwargs)
 
 
