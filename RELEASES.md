@@ -14,6 +14,7 @@
 - New API for OT solver using function `ot.solve` (PR #388)
 - Backend version of `ot.partial` and `ot.smooth` (PR #388)
 - Added argument for warmstart of dual potentials in Sinkhorn-based methods in `ot.bregman` (PR #437)
+- Add parameters method in `ot.da.SinkhornTransport` (PR #440)
 
 #### Closed issues
 
