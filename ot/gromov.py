@@ -587,8 +587,6 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
         def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
             return line_search_armijo(cost, G, deltaG, Mi, f_G, nx=np_, **kwargs)
     else:
-        # cg for GW is implemented using numpy on CPU
-        np_ = NumpyBackend()
         def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
             return solve_gromov_linesearch(G, deltaG, f_G, C1, C2.T, M=0., reg=1., nx=np_, **kwargs)
 
