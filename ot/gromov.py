@@ -441,11 +441,11 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
         armijo = True
 
     if armijo:
-        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
-            return line_search_armijo(cost, G, deltaG, Mi, f_val, **kwargs)
+        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, f_G, **kwargs)
     else:
-        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, reg=reg, M=M, **kwargs)
+        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
+            return solve_gromov_linesearch(G, deltaG, f_G, C1, C2.T, M=0., reg=1., **kwargs)
     if log:
         res, log = cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
         log['gw_dist'] = nx.from_numpy(gwloss(constC, hC1, hC2, res), type_as=C10)
@@ -580,11 +580,11 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
             return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
 
     if armijo:
-        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
-            return line_search_armijo(cost, G, deltaG, Mi, f_val, **kwargs)
+        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, f_G, **kwargs)
     else:
-        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, reg=reg, M=M, **kwargs)
+        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
+            return solve_gromov_linesearch(G, deltaG, f_G, C1, C2.T, M=0., reg=1., **kwargs)
 
     T, log_gw = cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
 
@@ -732,12 +732,11 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
         armijo = True
 
     if armijo:
-        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
-            return line_search_armijo(cost, G, deltaG, Mi, f_val, **kwargs)
+        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, f_G, **kwargs)
     else:
-        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, reg=reg, M=M, **kwargs)
-
+        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
+            return solve_gromov_linesearch(G, deltaG, f_G, C1, C2.T, M=(1 - alpha) * M, reg=alpha, **kwargs)
     if log:
         res, log = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
         fgw_dist = nx.from_numpy(log['loss'][-1], type_as=C10)
@@ -877,11 +876,11 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
         armijo = True
 
     if armijo:
-        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
-            return line_search_armijo(cost, G, deltaG, Mi, f_val, **kwargs)
+        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, f_G, **kwargs)
     else:
-        def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, reg=reg, M=M, **kwargs)
+        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
+            return solve_gromov_linesearch(G, deltaG, f_G, C1, C2.T, M=(1 - alpha) * M, reg=alpha, **kwargs)
 
     T, log_fgw = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
 
@@ -3144,7 +3143,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
     if symmetric is None:
         symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
     if G0 is None:
-        q = unif(C2.shape[0])
+        q = unif(C2.shape[0], type_as=p)
         G0 = nx.outer(p, q)
     else:
         q = nx.sum(G0, 0)
@@ -3153,7 +3152,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
 
     constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
 
-    ones_p = nx.ones(p.shape[0])
+    ones_p = nx.ones(p.shape[0], type_as=p)
 
     def f(G):
         qG = nx.sum(G, 0)
@@ -3174,8 +3173,8 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
             marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
             return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
 
-    def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
-        return solve_semirelaxed_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, ones_p, reg=reg, M=M, **kwargs)
+    def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
+        return solve_semirelaxed_gromov_linesearch(G, deltaG, f_G, C1, C2.T, ones_p, M=0., reg=1., **kwargs)
 
     if log:
         res, log = semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
@@ -3260,7 +3259,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
         symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
 
     if G0 is None:
-        q = unif(C2.shape[0])
+        q = unif(C2.shape[0], type_as=p)
         G0 = nx.outer(p, q)
     else:
         q = G0.sum(0)
@@ -3269,7 +3268,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
 
     constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
 
-    ones_p = nx.ones(p.shape[0])
+    ones_p = nx.ones(p.shape[0], type_as=p)
 
     def f(G):
         qG = nx.sum(G, 0)
@@ -3290,8 +3289,8 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
             marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
             return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
 
-    def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
-        return solve_semirelaxed_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, ones_p, reg=reg, M=M, **kwargs)
+    def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
+        return solve_semirelaxed_gromov_linesearch(G, deltaG, f_G, C1, C2.T, ones_p, M=0., reg=1., **kwargs)
 
     T, log_srgw = semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
 
@@ -3391,16 +3390,16 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
         symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
 
     if G0 is None:
-        q = unif(C2.shape[0])
+        q = unif(C2.shape[0], type_as=p)
         G0 = nx.dot(nx.reshape(p, (-1, 1)), nx.reshape(q, (1, -1)))
     else:
-        q = G0.sum(0)
+        q = nx.sum(G0, 0)
         # Check marginals of G0
-        nx.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
+        np.testing.assert_allclose(nx.sum(G0, 1), p, atol=1e-08)
 
     constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
 
-    ones_p = nx.ones(p.shape[0])
+    ones_p = nx.ones(p.shape[0], type_as=p)
 
     def f(G):
         qG = nx.sum(G, 0)
@@ -3421,8 +3420,9 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
             marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
             return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
 
-    def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
-        return solve_semirelaxed_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, ones_p, reg=reg, M=M, **kwargs)
+    def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
+        return solve_semirelaxed_gromov_linesearch(
+            G, deltaG, f_G, C1, C2.T, ones_p, M=(1 - alpha) * M, reg=alpha, **kwargs)
 
     if log:
         res, log = semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
@@ -3516,16 +3516,16 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
         symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
 
     if G0 is None:
-        q = unif(C2.shape[0])
+        q = unif(C2.shape[0], type_as=p)
         G0 = nx.dot(nx.reshape(p, (-1, 1)), nx.reshape(q, (1, -1)))
     else:
-        q = G0.sum(0)
+        q = nx.sum(G0, 0)
         # Check marginals of G0
-        nx.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
+        np.testing.assert_allclose(nx.sum(G0, 1), p, atol=1e-08)
 
     constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
 
-    ones_p = nx.ones(p.shape[0])
+    ones_p = nx.ones(p.shape[0], type_as=p)
 
     def f(G):
         qG = nx.sum(G, 0)
@@ -3546,12 +3546,13 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
             marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
             return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
 
-    def line_search(cost, G, deltaG, Mi, f_val, reg, M, **kwargs):
-        return solve_semirelaxed_gromov_linesearch(G, deltaG, Mi, f_val, C1, C2.T, ones_p, reg=reg, M=M, **kwargs)
+    def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
+        return solve_semirelaxed_gromov_linesearch(
+            G, deltaG, f_G, C1, C2.T, ones_p, M=(1 - alpha) * M, reg=alpha, **kwargs)
 
     T, log_fgw = semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
     q = nx.sum(T, 0)
-    srfgw_dist = f(T)
+    srfgw_dist = alpha * f(T) + (1 - alpha) * nx.sum(M * T)
     log_fgw['srfgw_dist'] = srfgw_dist
     log_fgw['T'] = T
 

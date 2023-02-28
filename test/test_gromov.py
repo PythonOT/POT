@@ -11,7 +11,6 @@ import numpy as np
 import ot
 from ot.backend import NumpyBackend
 from ot.backend import torch, tf
-
 import pytest
 
 
@@ -1351,32 +1350,33 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
 
 def test_semirelaxed_gromov(nx):
     np.random.seed(0)
-    list_n = [16, 8]
+    # unbalanced proportions
+    list_n = [30, 15]
     nt = 2
-    ns = 24
+    ns = np.sum(list_n)
     # create directed sbm with C2 as connectivity matrix
-    C1 = np.zeros((ns, ns))
-    C2 = np.array([[0.7, 0.05],
-                   [0.05, 0.9]])
+    C1 = np.zeros((ns, ns), dtype=np.float64)
+    C2 = np.array([[0.8, 0.05],
+                   [0.05, 1.]], dtype=np.float64)
     for i in range(nt):
         for j in range(nt):
             ni, nj = list_n[i], list_n[j]
             xij = np.random.binomial(size=(ni, nj), n=1, p=C2[i, j])
             C1[i * ni: (i + 1) * ni, j * nj: (j + 1) * nj] = xij
-    p = ot.unif(ns)
-    q0 = ot.unif(C2.shape[0])
+    p = ot.unif(ns, type_as=C1)
+    q0 = ot.unif(C2.shape[0], type_as=C1)
     G0 = p[:, None] * q0[None, :]
-
     # asymmetric
     C1b, C2b, pb, q0b, G0b = nx.from_numpy(C1, C2, p, q0, G0)
 
-    G, log = ot.gromov.semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=None, log=True, G0=None)
-    Gb, logb = ot.gromov.semirelaxed_gromov_wasserstein(C1b, C2b, pb, loss_fun='square_loss', symmetric=False, log=True, G0=G0b)
+    G, log = ot.gromov.semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=None, log=True, G0=G0)
+    Gb, logb = ot.gromov.semirelaxed_gromov_wasserstein(C1b, C2b, pb, loss_fun='square_loss', symmetric=False, log=True, G0=None)
 
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
-    np.testing.assert_allclose(p, nx.sum(Gb, axis=1), atol=1e-04)  # cf convergence gromov
-    np.testing.assert_allclose([2 / 3, 1 / 3], nx.sum(Gb, axis=0), atol=1e-02)  # cf convergence gromov
+    np.testing.assert_allclose(p, nx.sum(Gb, axis=1), atol=1e-04)
+    np.testing.assert_allclose(list_n / ns, np.sum(G, axis=0), atol=1e-01)
+    np.testing.assert_allclose(list_n / ns, nx.sum(Gb, axis=0), atol=1e-01)
 
     srgw, log2 = ot.gromov.semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric=False, log=True, G0=G0)
     srgwb, logb2 = ot.gromov.semirelaxed_gromov_wasserstein2(C1b, C2b, pb, loss_fun='square_loss', symmetric=None, log=True, G0=None)
@@ -1386,7 +1386,7 @@ def test_semirelaxed_gromov(nx):
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
     np.testing.assert_allclose(p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
-    np.testing.assert_allclose([2 / 3, 1 / 3], Gb.sum(0), atol=1e-04)  # cf convergence gromov
+    np.testing.assert_allclose(list_n / ns, Gb.sum(0), atol=1e-04)  # cf convergence gromov
 
     np.testing.assert_allclose(log2['srgw_dist'], logb['srgw_dist'], atol=1e-07)
     np.testing.assert_allclose(logb2['srgw_dist'], log['srgw_dist'], atol=1e-07)
@@ -1401,7 +1401,7 @@ def test_semirelaxed_gromov(nx):
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
     np.testing.assert_allclose(p, nx.sum(Gb, axis=1), atol=1e-04)  # cf convergence gromov
-    np.testing.assert_allclose([2 / 3, 1 / 3], nx.sum(Gb, axis=0), atol=1e-02)  # cf convergence gromov
+    np.testing.assert_allclose(list_n / ns, nx.sum(Gb, axis=0), atol=1e-02)  # cf convergence gromov
 
     srgw, log2 = ot.gromov.semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric=True, log=True, G0=G0)
     srgwb, logb2 = ot.gromov.semirelaxed_gromov_wasserstein2(C1b, C2b, pb, loss_fun='square_loss', symmetric=None, log=True, G0=None)
@@ -1409,11 +1409,11 @@ def test_semirelaxed_gromov(nx):
     srgw_ = ot.gromov.semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric=True, log=False, G0=G0)
 
     G = log2['T']
-    Gb = nx.to_numpy(logb2['T'])
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
-    np.testing.assert_allclose(p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
-    np.testing.assert_allclose([2 / 3, 1 / 3], Gb.sum(0), atol=1e-04)  # cf convergence gromov
+    np.testing.assert_allclose(p, nx.sum(Gb, 1), atol=1e-04)  # cf convergence gromov
+    np.testing.assert_allclose(list_n / ns, np.sum(G, axis=0), atol=1e-01)
+    np.testing.assert_allclose(list_n / ns, nx.sum(Gb, axis=0), atol=1e-01)
 
     np.testing.assert_allclose(log2['srgw_dist'], log['srgw_dist'], atol=1e-07)
     np.testing.assert_allclose(logb2['srgw_dist'], log['srgw_dist'], atol=1e-07)
@@ -1447,7 +1447,6 @@ def test_semirelaxed_fgw(nx):
 
     # asymmetric
     Mb, C1b, C2b, pb, q0b, G0b = nx.from_numpy(M, C1, C2, p, q0, G0)
-
     G, log = ot.gromov.semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', alpha=0.5, symmetric=None, log=True, G0=None)
     Gb, logb = ot.gromov.semirelaxed_fused_gromov_wasserstein(Mb, C1b, C2b, pb, loss_fun='square_loss', alpha=0.5, symmetric=False, log=True, G0=G0b)
 
