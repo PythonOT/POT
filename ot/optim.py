@@ -27,7 +27,7 @@ with warnings.catch_warnings():
 
 def line_search_armijo(
     f, xk, pk, gfk, old_fval, args=(), c1=1e-4,
-    alpha0=0.99, alpha_min=None, alpha_max=None, **kwargs
+    alpha0=0.99, alpha_min=None, alpha_max=None, nx=None, **kwargs
 ):
     r"""
     Armijo linesearch function that works with matrices
@@ -57,7 +57,8 @@ def line_search_armijo(
         minimum value for alpha
     alpha_max : float, optional
         maximum value for alpha
-
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
     Returns
     -------
     alpha : float
@@ -68,9 +69,9 @@ def line_search_armijo(
         loss value at step alpha
 
     """
-
-    xk, pk, gfk = list_to_array(xk, pk, gfk)
-    nx = get_backend(xk, pk)
+    if nx is None:
+        xk, pk, gfk = list_to_array(xk, pk, gfk)
+        nx = get_backend(xk, pk)
 
     if len(xk.shape) == 0:
         xk = nx.reshape(xk, (-1,))
@@ -99,7 +100,7 @@ def line_search_armijo(
 
 
 def solve_gromov_linesearch(G, deltaG, f_G, C1, C2t, M, reg,
-                            alpha_min=None, alpha_max=None, **kwargs):
+                            alpha_min=None, alpha_max=None, nx=None, **kwargs):
     """
     Solve the linesearch in the FW iterations
 
@@ -124,7 +125,8 @@ def solve_gromov_linesearch(G, deltaG, f_G, C1, C2t, M, reg,
         Minimum value for alpha
     alpha_max : float, optional
         Maximum value for alpha
-
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
     Returns
     -------
     alpha : float
@@ -142,12 +144,13 @@ def solve_gromov_linesearch(G, deltaG, f_G, C1, C2t, M, reg,
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
-    G, deltaG, C1, C2t, M = list_to_array(G, deltaG, C1, C2t, M)
+    if nx is None:
+        G, deltaG, C1, C2t, M = list_to_array(G, deltaG, C1, C2t, M)
 
-    if isinstance(M, int) or isinstance(M, float):
-        nx = get_backend(G, deltaG, C1, C2t)
-    else:
-        nx = get_backend(G, deltaG, C1, C2t, M)
+        if isinstance(M, int) or isinstance(M, float):
+            nx = get_backend(G, deltaG, C1, C2t)
+        else:
+            nx = get_backend(G, deltaG, C1, C2t, M)
 
     dot = nx.dot(nx.dot(C1, deltaG), C2t)
     a = -2 * reg * nx.sum(dot * deltaG)
@@ -164,7 +167,7 @@ def solve_gromov_linesearch(G, deltaG, f_G, C1, C2t, M, reg,
 
 
 def solve_semirelaxed_gromov_linesearch(G, deltaG, f_G, C1, C2t, ones_p,
-                                        M, reg, alpha_min=None, alpha_max=None, **kwargs):
+                                        M, reg, alpha_min=None, alpha_max=None, nx=None, **kwargs):
     """
     Solve the linesearch in the FW iterations
 
@@ -191,7 +194,8 @@ def solve_semirelaxed_gromov_linesearch(G, deltaG, f_G, C1, C2t, ones_p,
         Minimum value for alpha
     alpha_max : float, optional
         Maximum value for alpha
-
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
     Returns
     -------
     alpha : float
@@ -207,12 +211,13 @@ def solve_semirelaxed_gromov_linesearch(G, deltaG, f_G, C1, C2t, ones_p,
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2021.
     """
-    G, deltaG, C1, C2t, M = list_to_array(G, deltaG, C1, C2t, M)
+    if nx is None:
+        G, deltaG, C1, C2t, M = list_to_array(G, deltaG, C1, C2t, M)
 
-    if isinstance(M, int) or isinstance(M, float):
-        nx = get_backend(G, deltaG, C1, C2t)
-    else:
-        nx = get_backend(G, deltaG, C1, C2t, M)
+        if isinstance(M, int) or isinstance(M, float):
+            nx = get_backend(G, deltaG, C1, C2t)
+        else:
+            nx = get_backend(G, deltaG, C1, C2t, M)
 
     qG, qdeltaG = nx.sum(G, 0), nx.sum(deltaG, 0)
     dot = nx.dot(nx.dot(C1, deltaG), C2t)
@@ -233,7 +238,7 @@ def solve_semirelaxed_gromov_linesearch(G, deltaG, f_G, C1, C2t, ones_p,
 
 def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_search, G0=None,
                                  numItermax=200, numInnerItermax=100000, stopThr=1e-9,
-                                 stopThr2=1e-9, verbose=False, log=False, innerlog=True, **kwargs):
+                                 stopThr2=1e-9, verbose=False, log=False, **kwargs):
     r"""
     Solve the general regularized OT problem or its semi-relaxed version with
     conditional gradient or generalized conditional gradient depending on the
@@ -364,21 +369,21 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
     else:
         def cost(G):
             return nx.sum(M * G) + reg1 * f(G) + reg2 * nx.sum(G * nx.log(G))
-    f_G = cost(G)
+    cost_G = cost(G)
     if log:
-        log['loss'].append(f_G)
+        log['loss'].append(cost_G)
 
     it = 0
 
     if verbose:
         print('{:5s}|{:12s}|{:8s}|{:8s}'.format(
             'It.', 'Loss', 'Relative loss', 'Absolute loss') + '\n' + '-' * 48)
-        print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, f_G, 0, 0))
+        print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, cost_G, 0, 0))
 
     while loop:
 
         it += 1
-        old_f_G = f_G
+        old_cost_G = cost_G
         # problem linearization
         Mi = M + reg1 * df(G)
 
@@ -388,39 +393,35 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         Mi += nx.min(Mi)
 
         # solve linear program
-        if innerlog:
-            Gc, innerlog_ = lp_solver(a, b, Mi, numItermax=numInnerItermax, log=innerlog, reg=reg1, **kwargs)
-        else:
-            Gc = lp_solver(a, b, Mi, reg=reg1, numItermax=numInnerItermax, log=innerlog, **kwargs)
+        Gc, innerlog_ = lp_solver(a, b, Mi, numItermax=numInnerItermax, log=True, reg=reg1, **kwargs)
 
         # line search
         deltaG = Gc - G
 
-        alpha, fc, f_G = line_search(cost, G, deltaG, Mi, f_G, **kwargs)
+        alpha, fc, cost_G = line_search(cost, G, deltaG, Mi, cost_G, **kwargs)
 
-        G += alpha * deltaG
+        G = G + alpha * deltaG
 
         # test convergence
         if it >= numItermax:
             loop = 0
 
-        abs_delta_f_G = abs(f_G - old_f_G)
-        relative_delta_f_G = abs_delta_f_G / abs(f_G)
-        if relative_delta_f_G < stopThr or abs_delta_f_G < stopThr2:
+        abs_delta_cost_G = abs(cost_G - old_cost_G)
+        relative_delta_cost_G = abs_delta_cost_G / abs(cost_G)
+        if relative_delta_cost_G < stopThr or abs_delta_cost_G < stopThr2:
             loop = 0
 
         if log:
-            log['loss'].append(f_G)
+            log['loss'].append(cost_G)
 
         if verbose:
             if it % 20 == 0:
                 print('{:5s}|{:12s}|{:8s}|{:8s}'.format(
                     'It.', 'Loss', 'Relative loss', 'Absolute loss') + '\n' + '-' * 48)
-            print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, f_G, relative_delta_f_G, abs_delta_f_G))
+            print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, cost_G, relative_delta_cost_G, abs_delta_cost_G))
 
     if log:
-        if innerlog:
-            log.update(innerlog_)
+        log.update(innerlog_)
         return G, log
     else:
         return G
@@ -508,7 +509,7 @@ def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
 
     return generic_conditional_gradient(a, b, M, f, df, reg, None, lp_solver, line_search, G0=G0,
                                         numItermax=numItermax, numInnerItermax=numItermaxEmd, stopThr=stopThr,
-                                        stopThr2=stopThr2, verbose=verbose, log=log, innerlog=True, **kwargs)
+                                        stopThr2=stopThr2, verbose=verbose, log=log, **kwargs)
 
 
 def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=solve_semirelaxed_gromov_linesearch,
@@ -580,16 +581,20 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=solve_semirelaxed_g
 
     """
 
+    nx = get_backend(a, b)
+
     def lp_solver(a, b, Mi, numItermax, log, **kwargs):
-        nx = get_backend(a, b, Mi)
         # get minimum by rows as binary mask
         Gc = nx.ones(1, type_as=a) * (Mi == nx.reshape(nx.min(Mi, axis=1), (-1, 1)))
         Gc *= nx.reshape((a / nx.sum(Gc, axis=1)), (-1, 1))
-        return Gc
+        if log:
+            return Gc, {}
+        else:
+            return Gc
 
     return generic_conditional_gradient(a, b, M, f, df, reg, None, lp_solver, line_search, G0=G0,
                                         numItermax=numItermax, numInnerItermax=None, stopThr=stopThr,
-                                        stopThr2=stopThr2, verbose=verbose, log=log, innerlog=False, **kwargs)
+                                        stopThr2=stopThr2, verbose=verbose, log=log, **kwargs)
 
 
 def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
@@ -670,12 +675,12 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
     def lp_solver(a, b, Mi, numItermax, log, **kwargs):
         return sinkhorn(a, b, Mi, reg1, numItermax=numItermax, log=log)
 
-    def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
-        return line_search_armijo(cost, G, deltaG, Mi, f_G, **kwargs)
+    def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+        return line_search_armijo(cost, G, deltaG, Mi, cost_G, **kwargs)
 
     return generic_conditional_gradient(a, b, M, f, df, reg2, reg1, lp_solver, line_search, G0=G0,
                                         numItermax=numItermax, numInnerItermax=numInnerItermax,
-                                        stopThr=stopThr, stopThr2=stopThr2, verbose=verbose, log=log, innerlog=log, **kwargs)
+                                        stopThr=stopThr, stopThr2=stopThr2, verbose=verbose, log=log, **kwargs)
 
 
 def solve_1d_linesearch_quad(a, b):

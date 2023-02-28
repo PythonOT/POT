@@ -16,7 +16,7 @@ import pytest
 
 def test_gromov(nx):
     n_samples = 50  # nb samples
-
+    print(nx)
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
