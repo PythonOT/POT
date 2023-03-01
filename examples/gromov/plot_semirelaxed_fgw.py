@@ -19,7 +19,7 @@ endowed with node features and we follow the same process with srFGW.
 International Conference on Learning Representations (ICLR), 2021.
 """
 
-# Author: Cédric Vincent-Cuaz <cedric.vincent-cuaz@inria.fr>
+# Author: Cédric Vincent-Cuaz <cedvincentcuaz@gmail.com>
 #
 # License: MIT License
 
@@ -28,7 +28,7 @@ International Conference on Learning Representations (ICLR), 2021.
 import numpy as np
 import matplotlib.pylab as pl
 from ot.gromov import semirelaxed_gromov_wasserstein, semirelaxed_fused_gromov_wasserstein, gromov_wasserstein, fused_gromov_wasserstein
-import networkx as nx
+import networkx
 from networkx.generators.community import stochastic_block_model as sbm
 
 # %%
@@ -48,8 +48,8 @@ G2 = sbm(seed=0, sizes=[N2 // 2, N2 // 2], p=p2)
 G3 = sbm(seed=0, sizes=[N3 // 3, N3 // 3, N3 // 3], p=p3)
 
 
-C2 = nx.to_numpy_array(G2)
-C3 = nx.to_numpy_array(G3)
+C2 = networkx.to_numpy_array(G2)
+C3 = networkx.to_numpy_array(G3)
 
 h2 = np.ones(C2.shape[0]) / C2.shape[0]
 h3 = np.ones(C3.shape[0]) / C3.shape[0]
@@ -60,7 +60,7 @@ weight_inter_G2 = 0.5
 weight_intra_G3 = 1.
 weight_inter_G3 = 1.5
 
-weightedG2 = nx.Graph()
+weightedG2 = networkx.Graph()
 part_G2 = [G2.nodes[i]['block'] for i in range(N2)]
 
 for node in G2.nodes():
@@ -71,7 +71,7 @@ for i, j in G2.edges():
     else:
         weightedG2.add_edge(i, j, weight=weight_inter_G2)
 
-weightedG3 = nx.Graph()
+weightedG3 = networkx.Graph()
 part_G3 = [G3.nodes[i]['block'] for i in range(N3)]
 
 for node in G3.nodes():
@@ -120,7 +120,7 @@ def draw_graph(G, C, nodes_color_part, Gweights=None,
                shiftx=0, seed=0):
 
     if (pos is None):
-        pos = nx.spring_layout(G, scale=1., seed=seed)
+        pos = networkx.spring_layout(G, scale=1., seed=seed)
 
     if shiftx != 0:
         for k, v in pos.items():
@@ -129,7 +129,7 @@ def draw_graph(G, C, nodes_color_part, Gweights=None,
     alpha_edge = 0.7
     width_edge = 1.8
     if Gweights is None:
-        nx.draw_networkx_edges(G, pos, width=width_edge, alpha=alpha_edge, edge_color=edge_color)
+        networkx.draw_networkx_edges(G, pos, width=width_edge, alpha=alpha_edge, edge_color=edge_color)
     else:
         # We make more visible connections between activated nodes
         n = len(Gweights)
@@ -142,25 +142,25 @@ def draw_graph(G, C, nodes_color_part, Gweights=None,
                 elif C[i, j] > 0:
                     edgelist_deactivated.append((i, j))
 
-        nx.draw_networkx_edges(G, pos, edgelist=edgelist_activated,
-                               width=width_edge, alpha=alpha_edge,
-                               edge_color=edge_color)
-        nx.draw_networkx_edges(G, pos, edgelist=edgelist_deactivated,
-                               width=width_edge, alpha=0.1,
-                               edge_color=edge_color)
+        networkx.draw_networkx_edges(G, pos, edgelist=edgelist_activated,
+                                     width=width_edge, alpha=alpha_edge,
+                                     edge_color=edge_color)
+        networkx.draw_networkx_edges(G, pos, edgelist=edgelist_deactivated,
+                                     width=width_edge, alpha=0.1,
+                                     edge_color=edge_color)
 
     if Gweights is None:
         for node, node_color in enumerate(nodes_color_part):
-            nx.draw_networkx_nodes(G, pos, nodelist=[node],
-                                   node_size=node_size, alpha=1,
-                                   node_color=node_color)
+            networkx.draw_networkx_nodes(G, pos, nodelist=[node],
+                                         node_size=node_size, alpha=1,
+                                         node_color=node_color)
     else:
         scaled_Gweights = Gweights / (0.5 * Gweights.max())
         nodes_size = node_size * scaled_Gweights
         for node, node_color in enumerate(nodes_color_part):
-            nx.draw_networkx_nodes(G, pos, nodelist=[node],
-                                   node_size=nodes_size[node], alpha=1,
-                                   node_color=node_color)
+            networkx.draw_networkx_nodes(G, pos, nodelist=[node],
+                                         node_size=nodes_size[node], alpha=1,
+                                         node_color=node_color)
     return pos
 
 

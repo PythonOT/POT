@@ -3,7 +3,7 @@
 # Author: Erwan Vautier <erwan.vautier@gmail.com>
 #         Nicolas Courty <ncourty@irisa.fr>
 #         Titouan Vayer <titouan.vayer@irisa.fr>
-#         Cédric Vincent-Cuaz <cedric.vincent-cuaz@inria.fr>
+#         Cédric Vincent-Cuaz <cedvincentcuaz@gmail.com>
 #
 # License: MIT License
 
@@ -16,7 +16,6 @@ import pytest
 
 def test_gromov(nx):
     n_samples = 50  # nb samples
-    print(nx)
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
@@ -1420,6 +1419,45 @@ def test_semirelaxed_gromov(nx):
     np.testing.assert_allclose(srgw, srgw_, atol=1e-07)
 
 
+def test_semirelaxed_gromov2_gradients():
+    n_samples = 50  # nb samples
+
+    mu_s = np.array([0, 0])
+    cov_s = np.array([[1, 0], [0, 1]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
+
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=5)
+
+    p = ot.unif(n_samples)
+
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+
+    C1 /= C1.max()
+    C2 /= C2.max()
+
+    if torch:
+
+        devices = [torch.device("cpu")]
+        if torch.cuda.is_available():
+            devices.append(torch.device("cuda"))
+        for device in devices:
+            # semirelaxed solvers do not support gradients over masses yet.
+            p1 = torch.tensor(p, requires_grad=False, device=device)
+            C11 = torch.tensor(C1, requires_grad=True, device=device)
+            C12 = torch.tensor(C2, requires_grad=True, device=device)
+
+            val = ot.gromov.semirelaxed_gromov_wasserstein2(C11, C12, p1)
+
+            val.backward()
+
+            assert val.device == p1.device
+            assert p1.grad is None
+            assert C11.shape == C11.grad.shape
+            assert C12.shape == C12.grad.shape
+
+
 def test_semirelaxed_fgw(nx):
     np.random.seed(0)
     list_n = [16, 8]
@@ -1495,3 +1533,45 @@ def test_semirelaxed_fgw(nx):
     np.testing.assert_allclose(log2['srfgw_dist'], log['srfgw_dist'], atol=1e-07)
     np.testing.assert_allclose(logb2['srfgw_dist'], log['srfgw_dist'], atol=1e-07)
     np.testing.assert_allclose(srgw, srgw_, atol=1e-07)
+
+
+def test_semirelaxed_fgw2_gradients():
+    n_samples = 20  # nb samples
+
+    mu_s = np.array([0, 0])
+    cov_s = np.array([[1, 0], [0, 1]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
+
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=5)
+
+    p = ot.unif(n_samples)
+
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+    M = ot.dist(xs, xt)
+
+    C1 /= C1.max()
+    C2 /= C2.max()
+
+    if torch:
+
+        devices = [torch.device("cpu")]
+        if torch.cuda.is_available():
+            devices.append(torch.device("cuda"))
+        for device in devices:
+            # semirelaxed solvers do not support gradients over masses yet.
+            p1 = torch.tensor(p, requires_grad=False, device=device)
+            C11 = torch.tensor(C1, requires_grad=True, device=device)
+            C12 = torch.tensor(C2, requires_grad=True, device=device)
+            M1 = torch.tensor(M, requires_grad=True, device=device)
+
+            val = ot.gromov.semirelaxed_fused_gromov_wasserstein2(M1, C11, C12, p1)
+
+            val.backward()
+
+            assert val.device == p1.device
+            assert p1.grad is None
+            assert C11.shape == C11.grad.shape
+            assert C12.shape == C12.grad.shape
+            assert M1.shape == M1.grad.shape

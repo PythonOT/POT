@@ -7,7 +7,7 @@ Gromov-Wasserstein and Fused-Gromov-Wasserstein solvers and its semi-relaxed ver
 #         Nicolas Courty <ncourty@irisa.fr>
 #         Rémi Flamary <remi.flamary@unice.fr>
 #         Titouan Vayer <titouan.vayer@irisa.fr>
-#         Cédric Vincent-Cuaz <cedric.vincent-cuaz@inria.fr>
+#         Cédric Vincent-Cuaz <cedvincentcuaz@gmail.com>
 #
 # License: MIT License
 
@@ -16,13 +16,13 @@ import numpy as np
 
 from .bregman import sinkhorn
 from .utils import dist, UndefinedParameter, list_to_array
-from .optim import cg, semirelaxed_cg, line_search_armijo, solve_gromov_linesearch, solve_semirelaxed_gromov_linesearch
+from .optim import cg, semirelaxed_cg, line_search_armijo, solve_1d_linesearch_quad
 from .lp import emd_1d, emd
 from .utils import check_random_state, unif
 from .backend import get_backend, NumpyBackend
 
 
-def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
+def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
     r"""Return loss matrices and tensors for Gromov-Wasserstein fast computation
 
     Returns the value of :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2}) \otimes \mathbf{T}` with the
@@ -76,7 +76,8 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
         Probability distribution in the target space
     loss_fun : str, optional
         Name of loss function to use: either 'square_loss' or 'kl_loss' (default='square_loss')
-
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
     Returns
     -------
     constC : array-like, shape (ns, nt)
@@ -95,8 +96,9 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
         International Conference on Machine Learning (ICML). 2016.
 
     """
-    C1, C2, p, q = list_to_array(C1, C2, p, q)
-    nx = get_backend(C1, C2, p, q)
+    if nx is None:
+        C1, C2, p, q = list_to_array(C1, C2, p, q)
+        nx = get_backend(C1, C2, p, q)
 
     if loss_fun == 'square_loss':
         def f1(a):
@@ -138,7 +140,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
     return constC, hC1, hC2
 
 
-def tensor_product(constC, hC1, hC2, T):
+def tensor_product(constC, hC1, hC2, T, nx=None):
     r"""Return the tensor for Gromov-Wasserstein fast computation
 
     The tensor is computed as described in Proposition 1 Eq. (6) in :ref:`[12] <references-tensor-product>`
@@ -151,7 +153,8 @@ def tensor_product(constC, hC1, hC2, T):
         :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
     hC2 : array-like, shape (nt, nt)
         :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
-
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
     Returns
     -------
     tens : array-like, shape (`ns`, `nt`)
@@ -166,8 +169,9 @@ def tensor_product(constC, hC1, hC2, T):
         International Conference on Machine Learning (ICML). 2016.
 
     """
-    constC, hC1, hC2, T = list_to_array(constC, hC1, hC2, T)
-    nx = get_backend(constC, hC1, hC2, T)
+    if nx is None:
+        constC, hC1, hC2, T = list_to_array(constC, hC1, hC2, T)
+        nx = get_backend(constC, hC1, hC2, T)
 
     A = - nx.dot(
         nx.dot(hC1, T), hC2.T
@@ -177,7 +181,7 @@ def tensor_product(constC, hC1, hC2, T):
     return tens
 
 
-def gwloss(constC, hC1, hC2, T):
+def gwloss(constC, hC1, hC2, T, nx=None):
     r"""Return the Loss for Gromov-Wasserstein
 
     The loss is computed as described in Proposition 1 Eq. (6) in :ref:`[12] <references-gwloss>`
@@ -192,7 +196,8 @@ def gwloss(constC, hC1, hC2, T):
         :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
     T : array-like, shape (ns, nt)
         Current value of transport matrix :math:`\mathbf{T}`
-
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
     Returns
     -------
     loss : float
@@ -208,15 +213,15 @@ def gwloss(constC, hC1, hC2, T):
 
     """
 
-    tens = tensor_product(constC, hC1, hC2, T)
-
-    tens, T = list_to_array(tens, T)
-    nx = get_backend(tens, T)
+    tens = tensor_product(constC, hC1, hC2, T, nx)
+    if nx is None:
+        tens, T = list_to_array(tens, T)
+        nx = get_backend(tens, T)
 
     return nx.sum(tens * T)
 
 
-def gwggrad(constC, hC1, hC2, T):
+def gwggrad(constC, hC1, hC2, T, nx=None):
     r"""Return the gradient for Gromov-Wasserstein
 
     The gradient is computed as described in Proposition 2 in :ref:`[12] <references-gwggrad>`
@@ -231,7 +236,8 @@ def gwggrad(constC, hC1, hC2, T):
         :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
     T : array-like, shape (ns, nt)
         Current value of transport matrix :math:`\mathbf{T}`
-
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
     Returns
     -------
     grad : array-like, shape (`ns`, `nt`)
@@ -247,7 +253,7 @@ def gwggrad(constC, hC1, hC2, T):
 
     """
     return 2 * tensor_product(constC, hC1, hC2,
-                              T)  # [12] Prop. 2 misses a 2 factor
+                              T, nx)  # [12] Prop. 2 misses a 2 factor
 
 
 def update_square_loss(p, lambdas, T, Cs):
@@ -334,6 +340,11 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
         \mathbf{GW} = \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
+        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{\gamma}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{\gamma} &\geq 0
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -345,6 +356,8 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
+    .. note:: All computations in the conjugate gradient solver are done with
+        numpy to limit memory overhead.
 
     Parameters
     ----------
@@ -423,34 +436,34 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
         # Check marginals of G0
         np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
         np.testing.assert_allclose(G0.sum(axis=0), q, atol=1e-08)
+    # cg for GW is implemented using numpy on CPU
+    np_ = NumpyBackend()
 
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
+    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun, np_)
 
     def f(G):
-        return gwloss(constC, hC1, hC2, G)
+        return gwloss(constC, hC1, hC2, G, np_)
 
     if symmetric:
         def df(G):
-            return gwggrad(constC, hC1, hC2, G)
+            return gwggrad(constC, hC1, hC2, G, np_)
     else:
-        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun)
+        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun, np_)
 
         def df(G):
-            return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
+            return 0.5 * (gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_))
     if loss_fun == 'kl_loss':
-        armijo = True
+        armijo = True  # there is no closed form line-search with KL
 
-    # cg for GW is implemented using numpy on CPU
-    np_ = NumpyBackend()
     if armijo:
-        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
-            return line_search_armijo(cost, G, deltaG, Mi, f_G, nx=np_, **kwargs)
+        def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=np_, **kwargs)
     else:
-        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, f_G, C1, C2.T, M=0., reg=1., nx=np_, **kwargs)
+        def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+            return solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M=0., reg=1., nx=np_, **kwargs)
     if log:
         res, log = cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
-        log['gw_dist'] = nx.from_numpy(gwloss(constC, hC1, hC2, res), type_as=C10)
+        log['gw_dist'] = nx.from_numpy(log['loss'][-1], type_as=C10)
         log['u'] = nx.from_numpy(log['u'], type_as=C10)
         log['v'] = nx.from_numpy(log['v'], type_as=C10)
         return nx.from_numpy(res, type_as=C10), log
@@ -468,6 +481,11 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
         GW = \min_\mathbf{T} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
+        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{\gamma}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{\gamma} &\geq 0
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -478,11 +496,13 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
       matrices
 
     Note that when using backends, this loss function is differentiable wrt the
-    marices and weights for quadratic loss using the gradients from [38]_.
+    matrices (C1, C2) and weights (p, q) for quadratic loss using the gradients from [38]_.
 
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
+    .. note:: All computations in the conjugate gradient solver are done with
+        numpy to limit memory overhead.
 
     Parameters
     ----------
@@ -540,75 +560,27 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
     """
-    p, q = list_to_array(p, q)
-    p0, q0, C10, C20 = p, q, C1, C2
-    if G0 is None:
-        nx = get_backend(p0, q0, C10, C20)
-    else:
-        G0_ = G0
-        nx = get_backend(p0, q0, C10, C20, G0_)
+    # simple get_backend as the full one will be handled in gromov_wasserstein
+    nx = get_backend(C1, C2)
 
-    p = nx.to_numpy(p)
-    q = nx.to_numpy(q)
-    C1 = nx.to_numpy(C10)
-    C2 = nx.to_numpy(C20)
+    T0, log_gw = gromov_wasserstein(
+        C1, C2, p, q, loss_fun, symmetric, log=True, armijo=armijo, G0=G0, **kwargs)
 
-    if symmetric is None:
-        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
+    T = nx.from_numpy(T0, type_as=p)
 
-    if G0 is None:
-        G0 = p[:, None] * q[None, :]
-    else:
-        G0 = nx.to_numpy(G0_)
-        # Check marginals of G0
-        np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
-        np.testing.assert_allclose(G0.sum(axis=0), q, atol=1e-08)
-
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
-
-    if loss_fun == 'kl_loss':
-        armijo = True
-
-    def f(G):
-        return gwloss(constC, hC1, hC2, G)
-
-    if symmetric:
-        def df(G):
-            return gwggrad(constC, hC1, hC2, G)
-    else:
-        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun)
-
-        def df(G):
-            return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
-
-    # cg for GW is implemented using numpy on CPU
-    np_ = NumpyBackend()
-    if armijo:
-        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
-            return line_search_armijo(cost, G, deltaG, Mi, f_G, nx=np_, **kwargs)
-    else:
-        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, f_G, C1, C2.T, M=0., reg=1., nx=np_, **kwargs)
-
-    T, log_gw = cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
-
-    T0 = nx.from_numpy(T, type_as=C10)
-
-    log_gw['gw_dist'] = nx.from_numpy(gwloss(constC, hC1, hC2, T), type_as=C10)
-    log_gw['u'] = nx.from_numpy(log_gw['u'], type_as=C10)
-    log_gw['v'] = nx.from_numpy(log_gw['v'], type_as=C10)
-    log_gw['T'] = T0
+    log_gw['gw_dist'] = nx.from_numpy(log_gw['loss'][-1], type_as=C1)
+    log_gw['u'] = nx.from_numpy(log_gw['u'], type_as=C1)
+    log_gw['v'] = nx.from_numpy(log_gw['v'], type_as=C1)
+    log_gw['T'] = T
 
     gw = log_gw['gw_dist']
 
     if loss_fun == 'square_loss':
-        gC1 = 2 * C1 * (p[:, None] * p[None, :]) - 2 * T.dot(C2).dot(T.T)
-        gC2 = 2 * C2 * (q[:, None] * q[None, :]) - 2 * T.T.dot(C1).dot(T)
-        gC1 = nx.from_numpy(gC1, type_as=C10)
-        gC2 = nx.from_numpy(gC2, type_as=C10)
-        gw = nx.set_gradients(gw, (p0, q0, C10, C20),
+        gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
+        gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
+        gw = nx.set_gradients(gw, (p, q, C1, C2),
                               (log_gw['u'] - nx.mean(log_gw['u']),
-                              log_gw['v'] - nx.mean(log_gw['v']), gC1, gC2))
+                               log_gw['v'] - nx.mean(log_gw['v']), gC1, gC2))
 
     if log:
         return gw, log_gw
@@ -639,7 +611,8 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
-
+    .. note:: All computations in the conjugate gradient solver are done with
+        numpy to limit memory overhead.
     The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[24] <references-fused-gromov-wasserstein>`
 
     Parameters
@@ -717,32 +690,32 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
         # Check marginals of G0
         np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
         np.testing.assert_allclose(G0.sum(axis=0), q, atol=1e-08)
+    # cg for GW is implemented using numpy on CPU
+    np_ = NumpyBackend()
 
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
+    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun, np_)
 
     def f(G):
-        return gwloss(constC, hC1, hC2, G)
+        return gwloss(constC, hC1, hC2, G, np_)
 
     if symmetric:
         def df(G):
-            return gwggrad(constC, hC1, hC2, G)
+            return gwggrad(constC, hC1, hC2, G, np_)
     else:
-        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun)
+        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun, np_)
 
         def df(G):
-            return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
+            return 0.5 * (gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_))
 
     if loss_fun == 'kl_loss':
-        armijo = True
+        armijo = True  # there is no closed form line-search with KL
 
-    # cg for GW is implemented using numpy on CPU
-    np_ = NumpyBackend()
     if armijo:
-        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
-            return line_search_armijo(cost, G, deltaG, Mi, f_G, nx=np_, **kwargs)
+        def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=np_, **kwargs)
     else:
-        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, f_G, C1, C2.T, M=(1 - alpha) * M, reg=alpha, nx=np_, **kwargs)
+        def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+            return solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M=(1 - alpha) * M, reg=alpha, nx=np_, **kwargs)
     if log:
         res, log = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
         fgw_dist = nx.from_numpy(log['loss'][-1], type_as=C10)
@@ -780,9 +753,11 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
+    .. note:: All computations in the conjugate gradient solver are done with
+        numpy to limit memory overhead.
 
     Note that when using backends, this loss function is differentiable wrt the
-    marices and weights for quadratic loss using the gradients from [38]_.
+    matrices (C1, C2, M) and weights (p, q) for quadratic loss using the gradients from [38]_.
 
     Parameters
     ----------
@@ -839,82 +814,98 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
     """
-    p, q = list_to_array(p, q)
+    nx = get_backend(C1, C2, M)
 
-    p0, q0, C10, C20, M0 = p, q, C1, C2, M
-    if G0 is None:
-        nx = get_backend(p0, q0, C10, C20, M0)
-    else:
-        G0_ = G0
-        nx = get_backend(p0, q0, C10, C20, M0, G0_)
+    T0, log_fgw = fused_gromov_wasserstein(
+        M, C1, C2, p, q, loss_fun, symmetric, alpha, armijo, G0, log=True, **kwargs)
+    fgw_dist = nx.from_numpy(log_fgw['loss'][-1], type_as=C1)
 
-    p = nx.to_numpy(p)
-    q = nx.to_numpy(q)
-    C1 = nx.to_numpy(C10)
-    C2 = nx.to_numpy(C20)
-    M = nx.to_numpy(M0)
-
-    if symmetric is None:
-        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
-
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
-
-    if G0 is None:
-        G0 = p[:, None] * q[None, :]
-    else:
-        G0 = nx.to_numpy(G0_)
-        # Check marginals of G0
-        np.testing.assert_allclose(G0.sum(axis=1), p, atol=1e-08)
-        np.testing.assert_allclose(G0.sum(axis=0), q, atol=1e-08)
-
-    def f(G):
-        return gwloss(constC, hC1, hC2, G)
-
-    if symmetric:
-        def df(G):
-            return gwggrad(constC, hC1, hC2, G)
-    else:
-        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun)
-
-        def df(G):
-            return 0.5 * (gwggrad(constC, hC1, hC2, G) + gwggrad(constCt, hC1t, hC2t, G))
-    if loss_fun == 'kl_loss':
-        armijo = True
-
-    # cg for GW is implemented using numpy on CPU
-    np_ = NumpyBackend()
-    if armijo:
-        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
-            return line_search_armijo(cost, G, deltaG, Mi, f_G, nx=np_, **kwargs)
-    else:
-        def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, f_G, C1, C2.T, M=(1 - alpha) * M, reg=alpha, nx=np_, **kwargs)
-
-    T, log_fgw = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
-
-    fgw_dist = nx.from_numpy(log_fgw['loss'][-1], type_as=C10)
-
-    T0 = nx.from_numpy(T, type_as=C10)
+    T = nx.from_numpy(T0, type_as=C1)
 
     log_fgw['fgw_dist'] = fgw_dist
-    log_fgw['u'] = nx.from_numpy(log_fgw['u'], type_as=C10)
-    log_fgw['v'] = nx.from_numpy(log_fgw['v'], type_as=C10)
-    log_fgw['T'] = T0
+    log_fgw['u'] = nx.from_numpy(log_fgw['u'], type_as=C1)
+    log_fgw['v'] = nx.from_numpy(log_fgw['v'], type_as=C1)
+    log_fgw['T'] = T
 
     if loss_fun == 'square_loss':
-        gC1 = 2 * C1 * (p[:, None] * p[None, :]) - 2 * T.dot(C2).dot(T.T)
-        gC2 = 2 * C2 * (q[:, None] * q[None, :]) - 2 * T.T.dot(C1).dot(T)
-        gC1 = nx.from_numpy(gC1, type_as=C10)
-        gC2 = nx.from_numpy(gC2, type_as=C10)
-        fgw_dist = nx.set_gradients(fgw_dist, (p0, q0, C10, C20, M0),
+        gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
+        gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
+        fgw_dist = nx.set_gradients(fgw_dist, (p, q, C1, C2, M),
                                     (log_fgw['u'] - nx.mean(log_fgw['u']),
-                                    log_fgw['v'] - nx.mean(log_fgw['v']),
-                                    alpha * gC1, alpha * gC2, (1 - alpha) * T0))
+                                     log_fgw['v'] - nx.mean(log_fgw['v']),
+                                     alpha * gC1, alpha * gC2, (1 - alpha) * T))
 
     if log:
         return fgw_dist, log_fgw
     else:
         return fgw_dist
+
+
+def solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M, reg,
+                            alpha_min=None, alpha_max=None, nx=None, **kwargs):
+    """
+    Solve the linesearch in the FW iterations
+
+    Parameters
+    ----------
+
+    G : array-like, shape(ns,nt)
+        The transport map at a given iteration of the FW
+    deltaG : array-like (ns,nt)
+        Difference between the optimal map found by linearization in the FW algorithm and the value at a given iteration
+    cost_G : float
+        Value of the cost at `G`
+    C1 : array-like (ns,ns), optional
+        Structure matrix in the source domain.
+    C2 : array-like (nt,nt), optional
+        Structure matrix in the target domain.
+    M : array-like (ns,nt)
+        Cost matrix between the features.
+    reg : float
+        Regularization parameter.
+    alpha_min : float, optional
+        Minimum value for alpha
+    alpha_max : float, optional
+        Maximum value for alpha
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+    Returns
+    -------
+    alpha : float
+        The optimal step size of the FW
+    fc : int
+        nb of function call. Useless here
+    cost_G : float
+        The value of the cost for the next iteration
+
+
+    .. _references-solve-linesearch:
+    References
+    ----------
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain and Courty Nicolas
+        "Optimal Transport for structured data with application on graphs"
+        International Conference on Machine Learning (ICML). 2019.
+    """
+    if nx is None:
+        G, deltaG, C1, C2, M = list_to_array(G, deltaG, C1, C2, M)
+
+        if isinstance(M, int) or isinstance(M, float):
+            nx = get_backend(G, deltaG, C1, C2)
+        else:
+            nx = get_backend(G, deltaG, C1, C2, M)
+
+    dot = nx.dot(nx.dot(C1, deltaG), C2.T)
+    a = -2 * reg * nx.sum(dot * deltaG)
+    b = nx.sum(M * deltaG) - 2 * reg * (nx.sum(dot * G) + nx.sum(nx.dot(nx.dot(C1, G), C2.T) * deltaG))
+
+    alpha = solve_1d_linesearch_quad(a, b)
+    if alpha_min is not None or alpha_max is not None:
+        alpha = np.clip(alpha, alpha_min, alpha_max)
+
+    # the new cost is deduced from the line search quadratic function
+    cost_G = cost_G + a * (alpha ** 2) + b * alpha
+
+    return alpha, 1, cost_G
 
 
 def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
@@ -1401,11 +1392,11 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
     else:
         nx = get_backend(p, q, C1, C2, G0)
     T = G0
-    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun)
+    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun, nx)
     if symmetric is None:
         symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
     if not symmetric:
-        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun)
+        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun, nx)
     cpt = 0
     err = 1
 
@@ -1418,9 +1409,9 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
 
         # compute the gradient
         if symmetric:
-            tens = gwggrad(constC, hC1, hC2, T)
+            tens = gwggrad(constC, hC1, hC2, T, nx)
         else:
-            tens = 0.5 * (gwggrad(constC, hC1, hC2, T) + gwggrad(constCt, hC1t, hC2t, T))
+            tens = 0.5 * (gwggrad(constC, hC1, hC2, T, nx) + gwggrad(constCt, hC1t, hC2t, T, nx))
         T = sinkhorn(p, q, tens, epsilon, method='sinkhorn')
 
         if cpt % 10 == 0:
@@ -1440,7 +1431,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
         cpt += 1
 
     if log:
-        log['gw_dist'] = gwloss(constC, hC1, hC2, T)
+        log['gw_dist'] = gwloss(constC, hC1, hC2, T, nx)
         return T, log
     else:
         return T
@@ -2990,7 +2981,7 @@ def _linesearch_fused_gromov_wasserstein_unmixing(w, grad_w, x, Y, Cdict, Ydict,
     return gamma, a, b, Cembedded_diff, Yembedded_diff
 
 
-def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss'):
+def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
     r"""Return loss matrices and tensors for semi-relaxed Gromov-Wasserstein fast computation
 
     Returns the value of :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2}) \otimes \mathbf{T}` with the
@@ -3028,7 +3019,8 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss'):
     T :  array-like, shape (ns, nt)
         Coupling between source and target spaces
     p : array-like, shape (ns,)
-
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
     Returns
     -------
     constC : array-like, shape (ns, nt)
@@ -3052,8 +3044,9 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss'):
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
     """
-    C1, C2, p = list_to_array(C1, C2, p)
-    nx = get_backend(C1, C2, p)
+    if nx is None:
+        C1, C2, p = list_to_array(C1, C2, p)
+        nx = get_backend(C1, C2, p)
 
     if loss_fun == 'square_loss':
         def f1(a):
@@ -3087,6 +3080,9 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
         \mathbf{srGW} = \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
+        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{\gamma} &\geq 0
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -3096,8 +3092,8 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
     - `L`: loss function to account for the misfit between the similarity matrices
 
     .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends. But the algorithm uses the C++ CPU backend
-        which can lead to copy overhead on GPU arrays.
+        from all compatible backends. However all the steps in the conditional
+        gradient are not differentiable.
 
     Parameters
     ----------
@@ -3108,7 +3104,8 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
     p : array-like, shape (ns,)
         Distribution in the source space
     loss_fun : str
-        loss function used for the solver either 'square_loss' or 'kl_loss'
+        loss function used for the solver either 'square_loss' or 'kl_loss'.
+        'kl_loss' is not implemented yet and will raise an error.
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
@@ -3142,6 +3139,8 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
     """
+    if loss_fun == 'kl_loss':
+        raise NotImplementedError()
     p = list_to_array(p)
     if G0 is None:
         nx = get_backend(p, C1, C2)
@@ -3149,7 +3148,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
         nx = get_backend(p, C1, C2, G0)
 
     if symmetric is None:
-        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
+        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
     if G0 is None:
         q = unif(C2.shape[0], type_as=p)
         G0 = nx.outer(p, q)
@@ -3158,31 +3157,31 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
         # Check first marginal of G0
         np.testing.assert_allclose(nx.sum(G0, 1), p, atol=1e-08)
 
-    constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
+    constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun, nx)
 
     ones_p = nx.ones(p.shape[0], type_as=p)
 
     def f(G):
         qG = nx.sum(G, 0)
         marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
-        return gwloss(constC + marginal_product, hC1, hC2, G)
+        return gwloss(constC + marginal_product, hC1, hC2, G, nx)
 
     if symmetric:
         def df(G):
             qG = nx.sum(G, 0)
             marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
-            return gwggrad(constC + marginal_product, hC1, hC2, G)
+            return gwggrad(constC + marginal_product, hC1, hC2, G, nx)
     else:
-        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1.T, C2.T, p, loss_fun)
+        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1.T, C2.T, p, loss_fun, nx)
 
         def df(G):
             qG = nx.sum(G, 0)
             marginal_product_1 = nx.outer(ones_p, nx.dot(qG, fC2t))
             marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
-            return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
+            return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G, nx) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G, nx))
 
-    def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
-        return solve_semirelaxed_gromov_linesearch(G, deltaG, f_G, C1, C2.T, ones_p, M=0., reg=1., nx=nx, **kwargs)
+    def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+        return solve_semirelaxed_gromov_linesearch(G, deltaG, cost_G, C1, C2, ones_p, M=0., reg=1., nx=nx, **kwargs)
 
     if log:
         res, log = semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
@@ -3202,6 +3201,9 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
         srGW = \min_\mathbf{T} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
+        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{\gamma} &\geq 0
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -3211,11 +3213,10 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
       matrices
 
     Note that when using backends, this loss function is differentiable wrt the
-    matrices for quadratic loss using the gradients from [38]_.
-
+    matrices (C1, C2) but not yet for the weights p.
     .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends. But the algorithm uses the C++ CPU backend
-        which can lead to copy overhead on GPU arrays.
+        from all compatible backends. However all the steps in the conditional
+        gradient are not differentiable.
 
     Parameters
     ----------
@@ -3225,8 +3226,9 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
         Metric cost matrix in the target space
     p : array-like, shape (ns,)
         Distribution in the source space.
-    loss_fun :  str
-        loss function used for the solver either 'square_loss'
+    loss_fun : str
+        loss function used for the solver either 'square_loss' or 'kl_loss'.
+        'kl_loss' is not implemented yet and will raise an error.
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
@@ -3257,53 +3259,13 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
     """
-    p = list_to_array(p)
-    if G0 is None:
-        nx = get_backend(p, C1, C2)
-    else:
-        nx = get_backend(p, C1, C2, G0)
+    nx = get_backend(p, C1, C2)
 
-    if symmetric is None:
-        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
-
-    if G0 is None:
-        q = unif(C2.shape[0], type_as=p)
-        G0 = nx.outer(p, q)
-    else:
-        q = G0.sum(0)
-        # Check first marginal of G0
-        np.testing.assert_allclose(nx.sum(G0, 1), p, atol=1e-08)
-
-    constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
-
-    ones_p = nx.ones(p.shape[0], type_as=p)
-
-    def f(G):
-        qG = nx.sum(G, 0)
-        marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
-        return gwloss(constC + marginal_product, hC1, hC2, G)
-
-    if symmetric:
-        def df(G):
-            qG = nx.sum(G, 0)
-            marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
-            return gwggrad(constC + marginal_product, hC1, hC2, G)
-    else:
-        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1.T, C2.T, p, loss_fun)
-
-        def df(G):
-            qG = nx.sum(G, 0)
-            marginal_product_1 = nx.outer(ones_p, nx.dot(qG, fC2t))
-            marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
-            return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
-
-    def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
-        return solve_semirelaxed_gromov_linesearch(G, deltaG, f_G, C1, C2.T, ones_p, M=0., reg=1., nx=nx, **kwargs)
-
-    T, log_srgw = semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
+    T, log_srgw = semirelaxed_gromov_wasserstein(
+        C1, C2, p, loss_fun, symmetric, log=True, G0=G0, **kwargs)
 
     q = nx.sum(T, 0)
-    log_srgw['srgw_dist'] = f(T)
+    log_srgw['srgw_dist'] = log_srgw['loss'][-1]
     log_srgw['T'] = T
     srgw = log_srgw['srgw_dist']
 
@@ -3336,9 +3298,10 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
     - :math:`\mathbf{p}` source weights (sum to 1)
     - `L` is a loss function to account for the misfit between the similarity matrices
 
+
     .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends. But the algorithm uses the C++ CPU backend
-        which can lead to copy overhead on GPU arrays.
+        from all compatible backends. However all the steps in the conditional
+        gradient are not differentiable.
 
     The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`
 
@@ -3352,8 +3315,9 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
         Metric cost matrix representative of the structure in the target space
     p : array-like, shape (ns,)
         Distribution in the source space
-    loss_fun : str, optional
-        Loss function used for the solver
+    loss_fun : str
+        loss function used for the solver either 'square_loss' or 'kl_loss'.
+        'kl_loss' is not implemented yet and will raise an error.
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
@@ -3388,6 +3352,9 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
     """
+    if loss_fun == 'kl_loss':
+        raise NotImplementedError()
+
     p = list_to_array(p)
     if G0 is None:
         nx = get_backend(p, C1, C2, M)
@@ -3399,38 +3366,38 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
 
     if G0 is None:
         q = unif(C2.shape[0], type_as=p)
-        G0 = nx.dot(nx.reshape(p, (-1, 1)), nx.reshape(q, (1, -1)))
+        G0 = nx.outer(p, q)
     else:
         q = nx.sum(G0, 0)
         # Check marginals of G0
         np.testing.assert_allclose(nx.sum(G0, 1), p, atol=1e-08)
 
-    constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
+    constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun, nx)
 
     ones_p = nx.ones(p.shape[0], type_as=p)
 
     def f(G):
         qG = nx.sum(G, 0)
         marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
-        return gwloss(constC + marginal_product, hC1, hC2, G)
+        return gwloss(constC + marginal_product, hC1, hC2, G, nx)
 
     if symmetric:
         def df(G):
             qG = nx.sum(G, 0)
             marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
-            return gwggrad(constC + marginal_product, hC1, hC2, G)
+            return gwggrad(constC + marginal_product, hC1, hC2, G, nx)
     else:
-        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1.T, C2.T, p, loss_fun)
+        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1.T, C2.T, p, loss_fun, nx)
 
         def df(G):
             qG = nx.sum(G, 0)
             marginal_product_1 = nx.outer(ones_p, nx.dot(qG, fC2t))
             marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
-            return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
+            return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G, nx) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G, nx))
 
-    def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
+    def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
         return solve_semirelaxed_gromov_linesearch(
-            G, deltaG, f_G, C1, C2.T, ones_p, M=(1 - alpha) * M, reg=alpha, nx=nx, **kwargs)
+            G, deltaG, cost_G, C1, C2, ones_p, M=(1 - alpha) * M, reg=alpha, nx=nx, **kwargs)
 
     if log:
         res, log = semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
@@ -3461,12 +3428,12 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
     The algorithm used for solving the problem is conditional gradient as
     discussed in :ref:`[48] <semirelaxed-fused-gromov-wasserstein2>`
 
-    .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends. But the algorithm uses the C++ CPU backend
-        which can lead to copy overhead on GPU arrays.
-
     Note that when using backends, this loss function is differentiable wrt the
-    matrices for quadratic loss.
+    matrices (C1, C2) but not yet for the weights p.
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. However all the steps in the conditional
+        gradient are not differentiable.
 
     Parameters
     ----------
@@ -3479,7 +3446,8 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
     p :  array-like, shape (ns,)
         Distribution in the source space.
     loss_fun : str, optional
-        Loss function used for the solver.
+        loss function used for the solver either 'square_loss' or 'kl_loss'.
+        'kl_loss' is not implemented yet and will raise an error.
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
@@ -3514,53 +3482,12 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
     """
-    p = list_to_array(p)
-    if G0 is None:
-        nx = get_backend(p, C1, C2, M)
-    else:
-        nx = get_backend(p, C1, C2, M, G0)
+    nx = get_backend(p, C1, C2, M)
 
-    if symmetric is None:
-        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
-
-    if G0 is None:
-        q = unif(C2.shape[0], type_as=p)
-        G0 = nx.dot(nx.reshape(p, (-1, 1)), nx.reshape(q, (1, -1)))
-    else:
-        q = nx.sum(G0, 0)
-        # Check marginals of G0
-        np.testing.assert_allclose(nx.sum(G0, 1), p, atol=1e-08)
-
-    constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun)
-
-    ones_p = nx.ones(p.shape[0], type_as=p)
-
-    def f(G):
-        qG = nx.sum(G, 0)
-        marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
-        return gwloss(constC + marginal_product, hC1, hC2, G)
-
-    if symmetric:
-        def df(G):
-            qG = nx.sum(G, 0)
-            marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
-            return gwggrad(constC + marginal_product, hC1, hC2, G)
-    else:
-        constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1.T, C2.T, p, loss_fun)
-
-        def df(G):
-            qG = nx.sum(G, 0)
-            marginal_product_1 = nx.outer(ones_p, nx.dot(qG, fC2t))
-            marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
-            return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G))
-
-    def line_search(cost, G, deltaG, Mi, f_G, **kwargs):
-        return solve_semirelaxed_gromov_linesearch(
-            G, deltaG, f_G, C1, C2.T, ones_p, M=(1 - alpha) * M, reg=alpha, nx=nx, **kwargs)
-
-    T, log_fgw = semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
+    T, log_fgw = semirelaxed_fused_gromov_wasserstein(
+        M, C1, C2, p, loss_fun, symmetric, alpha, G0, log=True, **kwargs)
     q = nx.sum(T, 0)
-    srfgw_dist = alpha * f(T) + (1 - alpha) * nx.sum(M * T)
+    srfgw_dist = log_fgw['loss'][-1]
     log_fgw['srfgw_dist'] = srfgw_dist
     log_fgw['T'] = T
 
@@ -3574,3 +3501,73 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
         return srfgw_dist, log_fgw
     else:
         return srfgw_dist
+
+
+def solve_semirelaxed_gromov_linesearch(G, deltaG, cost_G, C1, C2, ones_p,
+                                        M, reg, alpha_min=None, alpha_max=None, nx=None, **kwargs):
+    """
+    Solve the linesearch in the FW iterations
+
+    Parameters
+    ----------
+
+    G : array-like, shape(ns,nt)
+        The transport map at a given iteration of the FW
+    deltaG : array-like (ns,nt)
+        Difference between the optimal map found by linearization in the FW algorithm and the value at a given iteration
+    cost_G : float
+        Value of the cost at `G`
+    C1 : array-like (ns,ns)
+        Structure matrix in the source domain.
+    C2 : array-like (nt,nt)
+        Structure matrix in the target domain.
+    ones_p: array-like (ns,1)
+        Array of ones of size ns
+    M : array-like (ns,nt)
+        Cost matrix between the features.
+    reg : float
+        Regularization parameter.
+    alpha_min : float, optional
+        Minimum value for alpha
+    alpha_max : float, optional
+        Maximum value for alpha
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+    Returns
+    -------
+    alpha : float
+        The optimal step size of the FW
+    fc : int
+        nb of function call. Useless here
+    cost_G : float
+        The value of the cost for the next iteration
+
+    References
+    ----------
+    .. [48]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+            International Conference on Learning Representations (ICLR), 2021.
+    """
+    if nx is None:
+        G, deltaG, C1, C2, M = list_to_array(G, deltaG, C1, C2, M)
+
+        if isinstance(M, int) or isinstance(M, float):
+            nx = get_backend(G, deltaG, C1, C2)
+        else:
+            nx = get_backend(G, deltaG, C1, C2, M)
+
+    qG, qdeltaG = nx.sum(G, 0), nx.sum(deltaG, 0)
+    dot = nx.dot(nx.dot(C1, deltaG), C2.T)
+    C2t_square = C2.T ** 2
+    dot_qG = nx.dot(nx.outer(ones_p, qG), C2t_square)
+    dot_qdeltaG = nx.dot(nx.outer(ones_p, qdeltaG), C2t_square)
+    a = reg * nx.sum((dot_qdeltaG - 2 * dot) * deltaG)
+    b = nx.sum(M * deltaG) + reg * (nx.sum((dot_qdeltaG - 2 * dot) * G) + nx.sum((dot_qG - 2 * nx.dot(nx.dot(C1, G), C2.T)) * deltaG))
+    alpha = solve_1d_linesearch_quad(a, b)
+    if alpha_min is not None or alpha_max is not None:
+        alpha = np.clip(alpha, alpha_min, alpha_max)
+
+    # the new cost can be deduced from the line search quadratic function
+    cost_G = cost_G + a * (alpha ** 2) + b * alpha
+
+    return alpha, 1, cost_G
