@@ -225,6 +225,45 @@ def test_gromov2_gradients():
             assert C12.shape == C12.grad.shape
 
 
+def test_gw_backend_dependencies(nx):
+    n_samples = 20  # nb samples
+
+    mu = np.array([0, 0])
+    cov = np.array([[1, 0], [0, 1]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=0)
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=1)
+
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+    G0 = p[:, None] * q[None, :]
+
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+
+    C1 /= C1.max()
+    C2 /= C2.max()
+
+    C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
+    Gb, logb = ot.gromov.gromov_wasserstein(C1b, C2b, pb, qb, 'square_loss', armijo=False, symmetric=True, G0=G0b, log=True)
+
+    # calls with nx=None
+    constCb, hC1b, hC2b = ot.gromov.init_matrix(C1b, C2b, pb, qb, loss_fun='square_loss')
+
+    def f(G):
+        return ot.gromov.gwloss(constCb, hC1b, hC2b, G, None)
+
+    def df(G):
+        return ot.gromov.gwggrad(constCb, hC1b, hC2b, G, None)
+
+    def line_search(cost, G, deltaG, Mi, cost_G):
+        return ot.gromov.solve_gromov_linesearch(G, deltaG, cost_G, C1b, C2b, M=0., reg=1., nx=None)
+    # feed the precomputed local optimum Gb to cg
+    res, log = ot.optim.cg(pb, qb, 0., 1., f, df, Gb, line_search, log=True, numItermax=1e4, stopThr=1e-9, stopThr2=1e-9)
+    # check constraints
+    np.testing.assert_allclose(res, Gb, atol=1e-06)
+
+
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_entropic_gromov(nx):
@@ -774,6 +813,57 @@ def test_fgw2_gradients():
             assert C11.shape == C11.grad.shape
             assert C12.shape == C12.grad.shape
             assert M1.shape == M1.grad.shape
+
+
+def test_fgw_backend_dependencies(nx):
+    n_samples = 20  # nb samples
+
+    mu = np.array([0, 0])
+    cov = np.array([[1, 0], [0, 1]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=0)
+    ys = np.random.randn(xs.shape[0], 2)
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=1)
+    yt = np.random.randn(xt.shape[0], 2)
+
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+    G0 = p[:, None] * q[None, :]
+
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+
+    C1 /= C1.max()
+    C2 /= C2.max()
+
+    M = ot.dist(ys, yt)
+    M /= M.max()
+
+    Mb, C1b, C2b, pb, qb, G0b = nx.from_numpy(M, C1, C2, p, q, G0)
+    alpha = 0.5
+    Gb, logb = ot.gromov.fused_gromov_wasserstein(Mb, C1b, C2b, pb, qb, 'square_loss', alpha=0.5, armijo=False, symmetric=True, G0=G0b, log=True)
+
+    # calls with nx=None
+    constCb, hC1b, hC2b = ot.gromov.init_matrix(C1b, C2b, pb, qb, loss_fun='square_loss')
+
+    def f(G):
+        return ot.gromov.gwloss(constCb, hC1b, hC2b, G, None)
+
+    def df(G):
+        return ot.gromov.gwggrad(constCb, hC1b, hC2b, G, None)
+
+    def line_search(cost, G, deltaG, Mi, cost_G):
+        return ot.gromov.solve_gromov_linesearch(G, deltaG, cost_G, C1b, C2b, M=(1 - alpha) * Mb, reg=alpha, nx=None)
+    # feed the precomputed local optimum Gb to cg
+    res, log = ot.optim.cg(pb, qb, (1 - alpha) * Mb, alpha, f, df, Gb, line_search, log=True, numItermax=1e4, stopThr=1e-9, stopThr2=1e-9)
+
+    def line_search(cost, G, deltaG, Mi, cost_G):
+        return ot.optim.line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=None)
+    # feed the precomputed local optimum Gb to cg
+    res_armijo, log_armijo = ot.optim.cg(pb, qb, (1 - alpha) * Mb, alpha, f, df, Gb, line_search, log=True, numItermax=1e4, stopThr=1e-9, stopThr2=1e-9)
+    # check constraints
+    np.testing.assert_allclose(res, Gb, atol=1e-06)
+    np.testing.assert_allclose(res_armijo, Gb, atol=1e-06)
 
 
 def test_fgw_barycenter(nx):
@@ -1458,6 +1548,49 @@ def test_semirelaxed_gromov2_gradients():
             assert C12.shape == C12.grad.shape
 
 
+def test_srgw_backend_dependencies(nx):
+    n_samples = 20  # nb samples
+
+    mu = np.array([0, 0])
+    cov = np.array([[1, 0], [0, 1]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=0)
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=1)
+
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+
+    C1 /= C1.max()
+    C2 /= C2.max()
+
+    C1b, C2b, pb, qb = nx.from_numpy(C1, C2, p, q)
+    Gb, logb = ot.gromov.semirelaxed_gromov_wasserstein(C1b, C2b, pb, 'square_loss', armijo=False, symmetric=True, G0=None, log=True)
+
+    # calls with nx=None
+    constCb, hC1b, hC2b, fC2tb = ot.gromov.init_matrix_semirelaxed(C1b, C2b, pb, loss_fun='square_loss')
+    ones_pb = nx.ones(pb.shape[0], type_as=pb)
+
+    def f(G):
+        qG = nx.sum(G, 0)
+        marginal_product = nx.outer(ones_pb, nx.dot(qG, fC2tb))
+        return ot.gromov.gwloss(constCb + marginal_product, hC1b, hC2b, G, nx=None)
+
+    def df(G):
+        qG = nx.sum(G, 0)
+        marginal_product = nx.outer(ones_pb, nx.dot(qG, fC2tb))
+        return ot.gromov.gwggrad(constCb + marginal_product, hC1b, hC2b, G, nx=None)
+
+    def line_search(cost, G, deltaG, Mi, cost_G):
+        return ot.gromov.solve_semirelaxed_gromov_linesearch(
+            G, deltaG, cost_G, C1b, C2b, ones_pb, 0., 1., nx=None)
+    # feed the precomputed local optimum Gb to semirelaxed_cg
+    res, log = ot.optim.semirelaxed_cg(pb, qb, 0., 1., f, df, Gb, line_search, log=True, numItermax=1e4, stopThr=1e-9, stopThr2=1e-9)
+    # check constraints
+    np.testing.assert_allclose(res, Gb, atol=1e-06)
+
+
 def test_semirelaxed_fgw(nx):
     np.random.seed(0)
     list_n = [16, 8]
@@ -1575,3 +1708,54 @@ def test_semirelaxed_fgw2_gradients():
             assert C11.shape == C11.grad.shape
             assert C12.shape == C12.grad.shape
             assert M1.shape == M1.grad.shape
+
+
+def test_srfgw_backend_dependencies(nx):
+    n_samples = 20  # nb samples
+
+    mu = np.array([0, 0])
+    cov = np.array([[1, 0], [0, 1]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=0)
+    ys = np.random.randn(xs.shape[0], 2)
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=1)
+    yt = np.random.randn(xt.shape[0], 2)
+
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+    G0 = p[:, None] * q[None, :]
+
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+
+    C1 /= C1.max()
+    C2 /= C2.max()
+
+    M = ot.dist(ys, yt)
+    M /= M.max()
+
+    Mb, C1b, C2b, pb, qb, G0b = nx.from_numpy(M, C1, C2, p, q, G0)
+    alpha = 0.5
+    Gb, logb = ot.gromov.semirelaxed_fused_gromov_wasserstein(Mb, C1b, C2b, pb, 'square_loss', alpha=0.5, armijo=False, symmetric=True, G0=G0b, log=True)
+
+    # calls with nx=None
+    constCb, hC1b, hC2b, fC2tb = ot.gromov.init_matrix_semirelaxed(C1b, C2b, pb, loss_fun='square_loss')
+    ones_pb = nx.ones(pb.shape[0], type_as=pb)
+
+    def f(G):
+        qG = nx.sum(G, 0)
+        marginal_product = nx.outer(ones_pb, nx.dot(qG, fC2tb))
+        return ot.gromov.gwloss(constCb + marginal_product, hC1b, hC2b, G, nx=None)
+
+    def df(G):
+        qG = nx.sum(G, 0)
+        marginal_product = nx.outer(ones_pb, nx.dot(qG, fC2tb))
+        return ot.gromov.gwggrad(constCb + marginal_product, hC1b, hC2b, G, nx=None)
+
+    def line_search(cost, G, deltaG, Mi, cost_G):
+        return ot.gromov.solve_semirelaxed_gromov_linesearch(
+            G, deltaG, cost_G, C1b, C2b, ones_pb, M=(1 - alpha) * Mb, reg=alpha, nx=None)
+    # feed the precomputed local optimum Gb to semirelaxed_cg
+    res, log = ot.optim.semirelaxed_cg(pb, qb, (1 - alpha) * Mb, alpha, f, df, Gb, line_search, log=True, numItermax=1e4, stopThr=1e-9, stopThr2=1e-9)
+    # check constraints
+    np.testing.assert_allclose(res, Gb, atol=1e-06)

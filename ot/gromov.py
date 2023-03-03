@@ -330,7 +330,8 @@ def update_kl_loss(p, lambdas, T, Cs):
     return nx.exp(tmpsum / ppt)
 
 
-def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log=False, armijo=False, G0=None, **kwargs):
+def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log=False, armijo=False, G0=None,
+                       max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
     Returns the gromov-wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
 
@@ -375,10 +376,6 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
-    max_iter : int, optional
-        Max number of iterations
-    tol : float, optional
-        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -389,6 +386,12 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    max_iter : int, optional
+        Max number of iterations
+    tol_rel : float, optional
+        Stop threshold on relative error (>0)
+    tol_abs : float, optional
+        Stop threshold on absolute error (>0)
     **kwargs : dict
         parameters can be directly passed to the ot.optim.cg solver
 
@@ -462,16 +465,17 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
             return solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M=0., reg=1., nx=np_, **kwargs)
     if log:
-        res, log = cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
+        res, log = cg(p, q, 0., 1., f, df, G0, line_search, log=True, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
         log['gw_dist'] = nx.from_numpy(log['loss'][-1], type_as=C10)
         log['u'] = nx.from_numpy(log['u'], type_as=C10)
         log['v'] = nx.from_numpy(log['v'], type_as=C10)
         return nx.from_numpy(res, type_as=C10), log
     else:
-        return nx.from_numpy(cg(p, q, 0., 1., f, df, G0, line_search, log=False, **kwargs), type_as=C10)
+        return nx.from_numpy(cg(p, q, 0., 1., f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs), type_as=C10)
 
 
-def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log=False, armijo=False, G0=None, **kwargs):
+def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log=False, armijo=False, G0=None,
+                        max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
     Returns the gromov-wasserstein discrepancy between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
 
@@ -520,10 +524,6 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
-    max_iter : int, optional
-        Max number of iterations
-    tol : float, optional
-        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -534,6 +534,14 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    max_iter : int, optional
+        Max number of iterations
+    tol_rel : float, optional
+        Stop threshold on relative error (>0)
+    tol_abs : float, optional
+        Stop threshold on absolute error (>0)
+    **kwargs : dict
+        parameters can be directly passed to the ot.optim.cg solver
 
     Returns
     -------
@@ -563,16 +571,11 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
     # simple get_backend as the full one will be handled in gromov_wasserstein
     nx = get_backend(C1, C2)
 
-    T0, log_gw = gromov_wasserstein(
-        C1, C2, p, q, loss_fun, symmetric, log=True, armijo=armijo, G0=G0, **kwargs)
+    T, log_gw = gromov_wasserstein(
+        C1, C2, p, q, loss_fun, symmetric, log=True, armijo=armijo, G0=G0,
+        max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs, **kwargs)
 
-    T = nx.from_numpy(T0, type_as=p)
-
-    log_gw['gw_dist'] = nx.from_numpy(log_gw['loss'][-1], type_as=C1)
-    log_gw['u'] = nx.from_numpy(log_gw['u'], type_as=C1)
-    log_gw['v'] = nx.from_numpy(log_gw['v'], type_as=C1)
     log_gw['T'] = T
-
     gw = log_gw['gw_dist']
 
     if loss_fun == 'square_loss':
@@ -588,7 +591,8 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
         return gw
 
 
-def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=None, alpha=0.5, armijo=False, G0=None, log=False, **kwargs):
+def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=None, alpha=0.5,
+                             armijo=False, G0=None, log=False, max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
     Computes the FGW transport between two graphs (see :ref:`[24] <references-fused-gromov-wasserstein>`)
 
@@ -643,6 +647,12 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
     log : bool, optional
         record log if True
+    max_iter : int, optional
+        Max number of iterations
+    tol_rel : float, optional
+        Stop threshold on relative error (>0)
+    tol_abs : float, optional
+        Stop threshold on absolute error (>0)
     **kwargs : dict
         parameters can be directly passed to the ot.optim.cg solver
 
@@ -717,17 +727,17 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
             return solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M=(1 - alpha) * M, reg=alpha, nx=np_, **kwargs)
     if log:
-        res, log = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
-        fgw_dist = nx.from_numpy(log['loss'][-1], type_as=C10)
-        log['fgw_dist'] = fgw_dist
+        res, log = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
+        log['fgw_dist'] = nx.from_numpy(log['loss'][-1], type_as=C10)
         log['u'] = nx.from_numpy(log['u'], type_as=C10)
         log['v'] = nx.from_numpy(log['v'], type_as=C10)
         return nx.from_numpy(res, type_as=C10), log
     else:
-        return nx.from_numpy(cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=False, **kwargs), type_as=C10)
+        return nx.from_numpy(cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs), type_as=C10)
 
 
-def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric=None, alpha=0.5, armijo=False, G0=None, log=False, **kwargs):
+def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric=None, alpha=0.5,
+                              armijo=False, G0=None, log=False, max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
     Computes the FGW distance between two graphs see (see :ref:`[24] <references-fused-gromov-wasserstein2>`)
 
@@ -787,6 +797,12 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
     log : bool, optional
         Record log if True.
+    max_iter : int, optional
+        Max number of iterations
+    tol_rel : float, optional
+        Stop threshold on relative error (>0)
+    tol_abs : float, optional
+        Stop threshold on absolute error (>0)
     **kwargs : dict
         Parameters can be directly passed to the ot.optim.cg solver.
 
@@ -816,15 +832,11 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
     """
     nx = get_backend(C1, C2, M)
 
-    T0, log_fgw = fused_gromov_wasserstein(
-        M, C1, C2, p, q, loss_fun, symmetric, alpha, armijo, G0, log=True, **kwargs)
-    fgw_dist = nx.from_numpy(log_fgw['loss'][-1], type_as=C1)
+    T, log_fgw = fused_gromov_wasserstein(
+        M, C1, C2, p, q, loss_fun, symmetric, alpha, armijo, G0, log=True,
+        max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs, **kwargs)
 
-    T = nx.from_numpy(T0, type_as=C1)
-
-    log_fgw['fgw_dist'] = fgw_dist
-    log_fgw['u'] = nx.from_numpy(log_fgw['u'], type_as=C1)
-    log_fgw['v'] = nx.from_numpy(log_fgw['v'], type_as=C1)
+    fgw_dist = log_fgw['fgw_dist']
     log_fgw['T'] = T
 
     if loss_fun == 'square_loss':
@@ -1669,7 +1681,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, symmetric=True, armijo=F
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
-        Stop threshold on error (>0).
+        Stop threshold on relative error (>0)
     verbose : bool, optional
         Print information along iterations.
     log : bool, optional
@@ -1722,7 +1734,7 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, symmetric=True, armijo=F
         Cprev = C
 
         T = [gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, symmetric=symmetric, armijo=armijo,
-                                numItermax=max_iter, stopThr=1e-5, verbose=verbose, log=False, **kwargs) for s in range(S)]
+                                max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, log=False, **kwargs) for s in range(S)]
         if loss_fun == 'square_loss':
             C = update_square_loss(p, lambdas, T, Cs)
 
@@ -1780,7 +1792,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
-        Stop threshold on error (>0).
+        Stop threshold on relative error (>0)
     verbose : bool, optional
         Print information along iterations.
     log : bool, optional
@@ -1884,7 +1896,7 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
                 C = update_structure_matrix(p, lambdas, T_temp, Cs)
 
         T = [fused_gromov_wasserstein(Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
-                                      numItermax=max_iter, stopThr=1e-5, verbose=verbose, **kwargs) for s in range(S)]
+                                      max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, **kwargs) for s in range(S)]
 
         # T is N,ns
         err_feature = nx.norm(X - nx.reshape(Xprev, (N, d)))
@@ -2271,7 +2283,9 @@ def gromov_wasserstein_linear_unmixing(C, Cdict, reg=0., p=None, q=None, tol_out
     while (convergence_criterion > tol_outer) and (outer_count < max_iter_outer):
         previous_loss = current_loss
         # 1. Solve GW transport between (C,p) and (\sum_d Cdictionary[d],q) fixing the unmixing w
-        T, log = gromov_wasserstein(C1=C, C2=Cembedded, p=p, q=q, loss_fun='square_loss', G0=T, log=True, armijo=False, symmetric=symmetric, **kwargs)
+        T, log = gromov_wasserstein(
+            C1=C, C2=Cembedded, p=p, q=q, loss_fun='square_loss', G0=T,
+            max_iter=max_iter_inner, tol_rel=tol_inner, tol_abs=0., log=True, armijo=False, symmetric=symmetric, **kwargs)
         current_loss = log['gw_dist']
         if reg != 0:
             current_loss -= reg * np.sum(w**2)
@@ -2768,7 +2782,9 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict, Ydict, alpha, reg=0., 
         # 1. Solve GW transport between (C,p) and (\sum_d Cdictionary[d],q) fixing the unmixing w
         Yt_varM = (np.ones((ns, d))).dot((Yembedded**2).T)
         M = Ys_constM + Yt_varM - 2 * Y.dot(Yembedded.T)  # euclidean distance matrix between features
-        T, log = fused_gromov_wasserstein(M, C, Cembedded, p, q, loss_fun='square_loss', alpha=alpha, armijo=False, G0=T, log=True, symmetric=symmetric, **kwargs)
+        T, log = fused_gromov_wasserstein(
+            M, C, Cembedded, p, q, loss_fun='square_loss', alpha=alpha,
+            max_iter=max_iter_inner, tol_rel=tol_inner, tol_abs=0., armijo=False, G0=T, log=True, symmetric=symmetric, **kwargs)
         current_loss = log['fgw_dist']
         if reg != 0:
             current_loss -= reg * np.sum(w**2)
@@ -3070,7 +3086,8 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
     return constC, hC1, hC2, fC2t
 
 
-def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=None, log=False, G0=None, **kwargs):
+def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=None, log=False, G0=None,
+                                   max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
     Returns the semi-relaxed gromov-wasserstein divergence transport from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
 
@@ -3110,10 +3127,6 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
-    max_iter : int, optional
-        Max number of iterations
-    tol : float, optional
-        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -3121,6 +3134,12 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    max_iter : int, optional
+        Max number of iterations
+    tol_rel : float, optional
+        Stop threshold on relative error (>0)
+    tol_abs : float, optional
+        Stop threshold on absolute error (>0)
     **kwargs : dict
         parameters can be directly passed to the ot.optim.cg solver
 
@@ -3184,14 +3203,15 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
         return solve_semirelaxed_gromov_linesearch(G, deltaG, cost_G, C1, C2, ones_p, M=0., reg=1., nx=nx, **kwargs)
 
     if log:
-        res, log = semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=True, **kwargs)
+        res, log = semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=True, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
         log['srgw_dist'] = log['loss'][-1]
         return res, log
     else:
-        return semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=False, **kwargs)
+        return semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
 
 
-def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric=None, log=False, G0=None, **kwargs):
+def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric=None, log=False, G0=None,
+                                    max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
     Returns the semi-relaxed gromov-wasserstein divergence from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
 
@@ -3233,10 +3253,6 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
-    max_iter : int, optional
-        Max number of iterations
-    tol : float, optional
-        Stop threshold on error (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -3244,6 +3260,14 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    max_iter : int, optional
+        Max number of iterations
+    tol_rel : float, optional
+        Stop threshold on relative error (>0)
+    tol_abs : float, optional
+        Stop threshold on absolute error (>0)
+    **kwargs : dict
+        parameters can be directly passed to the ot.optim.cg solver
 
     Returns
     -------
@@ -3262,10 +3286,10 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
     nx = get_backend(p, C1, C2)
 
     T, log_srgw = semirelaxed_gromov_wasserstein(
-        C1, C2, p, loss_fun, symmetric, log=True, G0=G0, **kwargs)
+        C1, C2, p, loss_fun, symmetric, log=True, G0=G0,
+        max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs, **kwargs)
 
     q = nx.sum(T, 0)
-    log_srgw['srgw_dist'] = log_srgw['loss'][-1]
     log_srgw['T'] = T
     srgw = log_srgw['srgw_dist']
 
@@ -3280,7 +3304,8 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
         return srgw
 
 
-def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', symmetric=None, alpha=0.5, G0=None, log=False, **kwargs):
+def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', symmetric=None, alpha=0.5, G0=None, log=False,
+                                         max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
     Computes the semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
 
@@ -3329,6 +3354,12 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
     log : bool, optional
         record log if True
+    max_iter : int, optional
+        Max number of iterations
+    tol_rel : float, optional
+        Stop threshold on relative error (>0)
+    tol_abs : float, optional
+        Stop threshold on absolute error (>0)
     **kwargs : dict
         parameters can be directly passed to the ot.optim.cg solver
 
@@ -3400,14 +3431,15 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
             G, deltaG, cost_G, C1, C2, ones_p, M=(1 - alpha) * M, reg=alpha, nx=nx, **kwargs)
 
     if log:
-        res, log = semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, **kwargs)
+        res, log = semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
         log['srfgw_dist'] = log['loss'][-1]
         return res, log
     else:
-        return semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=False, **kwargs)
+        return semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
 
 
-def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', symmetric=None, alpha=0.5, G0=None, log=False, **kwargs):
+def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', symmetric=None, alpha=0.5, G0=None, log=False,
+                                          max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
     Computes the semi-relaxed FGW divergence between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein2>`)
 
@@ -3459,6 +3491,12 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
     log : bool, optional
         Record log if True.
+    max_iter : int, optional
+        Max number of iterations
+    tol_rel : float, optional
+        Stop threshold on relative error (>0)
+    tol_abs : float, optional
+        Stop threshold on absolute error (>0)
     **kwargs : dict
         Parameters can be directly passed to the ot.optim.cg solver.
 
@@ -3485,10 +3523,10 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
     nx = get_backend(p, C1, C2, M)
 
     T, log_fgw = semirelaxed_fused_gromov_wasserstein(
-        M, C1, C2, p, loss_fun, symmetric, alpha, G0, log=True, **kwargs)
+        M, C1, C2, p, loss_fun, symmetric, alpha, G0, log=True,
+        max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs, **kwargs)
     q = nx.sum(T, 0)
-    srfgw_dist = log_fgw['loss'][-1]
-    log_fgw['srfgw_dist'] = srfgw_dist
+    srfgw_dist = log_fgw['srfgw_dist']
     log_fgw['T'] = T
 
     if loss_fun == 'square_loss':
