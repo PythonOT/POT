@@ -36,8 +36,8 @@ jobs:
     # Build docs
     - name: Generate HTML docs
       uses: ammaraskar/sphinx-action@master
-        with:
-          docs-folder: "docs/"
+      with:
+        docs-folder: "docs/"
     - uses: actions/upload-artifact@v1
       with:
         name: Documentation
