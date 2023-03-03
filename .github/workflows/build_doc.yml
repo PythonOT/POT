@@ -35,7 +35,7 @@ jobs:
         python -c "import ot"
     # Build docs
     - name: Generate HTML docs
-        uses: ammaraskar/sphinx-action@master
+      uses: ammaraskar/sphinx-action@master
         with:
           docs-folder: "docs/"
     - uses: actions/upload-artifact@v1
