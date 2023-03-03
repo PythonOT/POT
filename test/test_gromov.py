@@ -225,7 +225,7 @@ def test_gromov2_gradients():
             assert C12.shape == C12.grad.shape
 
 
-def test_gw_backend_dependencies(nx):
+def test_gw_helper_backend(nx):
     n_samples = 20  # nb samples
 
     mu = np.array([0, 0])
@@ -815,7 +815,7 @@ def test_fgw2_gradients():
             assert M1.shape == M1.grad.shape
 
 
-def test_fgw_backend_dependencies(nx):
+def test_fgw_helper_backend(nx):
     n_samples = 20  # nb samples
 
     mu = np.array([0, 0])
@@ -1548,7 +1548,7 @@ def test_semirelaxed_gromov2_gradients():
             assert C12.shape == C12.grad.shape
 
 
-def test_srgw_backend_dependencies(nx):
+def test_srgw_helper_backend(nx):
     n_samples = 20  # nb samples
 
     mu = np.array([0, 0])
@@ -1710,7 +1710,7 @@ def test_semirelaxed_fgw2_gradients():
             assert M1.shape == M1.grad.shape
 
 
-def test_srfgw_backend_dependencies(nx):
+def test_srfgw_helper_backend(nx):
     n_samples = 20  # nb samples
 
     mu = np.array([0, 0])
