@@ -15,6 +15,8 @@
 - Backend version of `ot.partial` and `ot.smooth` (PR #388)
 - Added argument for warmstart of dual potentials in Sinkhorn-based methods in `ot.bregman` (PR #437)
 - Add parameters method in `ot.da.SinkhornTransport` (PR #440)
+- `ot.dr` now uses the new Pymanopt API and POT is compatible with current
+  Pymanopt (PR #443)
 
 #### Closed issues
 
