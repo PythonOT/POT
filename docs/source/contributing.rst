@@ -1,6 +1,6 @@
 Contributing to POT
 ===================
 
-.. include:: ../../../.github/CONTRIBUTING.md
+.. include:: ../../.github/CONTRIBUTING.md
     :parser: myst_parser.sphinx_
-    :start-line: 3
+    :start-line: 2
