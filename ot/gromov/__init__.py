@@ -1,3 +1,45 @@
+# -*- coding: utf-8 -*-
+"""
+This module contains all solvers related to Gromov-Wasserstein problems
+
+.. currentmodule:: ot.gromov
+​
+.. automodule:: ot.gromov
+    :no-members:
+    :no-inherited-members:
+​
+:py:mod:`ot.gromov`:
+​
+.. autosummary::
+    :toctree: gen_modules/
+    :template: function.rst
+    ​
+    gromov_wasserstein
+    gromov_wasserstein2
+    fused_gromov_wasserstein
+    fused_gromov_wasserstein2
+    gromov_barycenters
+    fgw_barycenters
+    entropic_gromov_wasserstein
+    entropic_gromov_wasserstein2
+    entropic_gromov_barycenters
+    GW_distance_estimation
+    pointwise_gromov_wasserstein
+    sampled_gromov_wasserstein
+    gromov_wasserstein_dictionary_learning
+    gromov_wasserstein_linear_unmixing
+    fused_gromov_wasserstein_dictionary_learning
+    fused_gromov_wasserstein_linear_unmixing
+    semirelaxed_gromov_wasserstein
+    semirelaxed_gromov_wasserstein2
+    semirelaxed_fused_gromov_wasserstein
+    semirelaxed_fused_gromov_wasserstein2
+
+
+
+"""
+
+
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Cedric Vincent-Cuaz <cedvincentcuaz@gmail.com>
 #
