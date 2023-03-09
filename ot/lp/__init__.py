@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Solvers for the original linear program OT problem
+Solvers for the original linear program OT problem.
 
 """
 
