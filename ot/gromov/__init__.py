@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Solvers related to Gromov-Wasserstein problems.
+
+"""
+
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Cedric Vincent-Cuaz <cedvincentcuaz@gmail.com>
 #
@@ -40,4 +46,3 @@ __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad',
            'solve_semirelaxed_gromov_linesearch', 'gromov_wasserstein_dictionary_learning',
            'gromov_wasserstein_linear_unmixing', 'fused_gromov_wasserstein_dictionary_learning',
            'fused_gromov_wasserstein_linear_unmixing']
-
