@@ -35,17 +35,8 @@ jobs:
         python -c "import ot"
     # Build docs
     - name: Generate HTML docs
-      uses: ammaraskar/sphinx-action@master
+      uses: rickstaa/sphinx-action@master
       with:
-        pre-build-command: |
-            apt-get update
-            apt install -y build-essential
-            pip install -U pip
-            python -m pip install --user --upgrade --progress-bar off -r requirements.txt
-            python -m pip install --user --upgrade --progress-bar off -r docs/requirements.txt
-            python -m pip install --user --upgrade --progress-bar off ipython "https://api.github.com/repos/sphinx-gallery/sphinx-gallery/zipball/master" memory_profiler
-            pip install .
-
         docs-folder: "docs/"
     - uses: actions/upload-artifact@v1
       with:
