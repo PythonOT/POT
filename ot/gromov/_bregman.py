@@ -47,6 +47,14 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
     - `L`: loss function to account for the misfit between the similarity matrices
     - `H`: entropy
 
+    .. note:: If the inner solver `ot.sinkhorn` did not convergence, the
+        optimal coupling :math:`\mathbf{T}` returned by this function does not
+        necessarily satisfy the marginal constraints
+        :math:`\mathbf{T}\mathbf{1}=\mathbf{p}` and
+        :math:`\mathbf{T}^T\mathbf{1}=\mathbf{q}`. So the returned
+        Gromov-Wasserstein loss does not necessarily satisfy distance
+        properties and may be negative.
+
     Parameters
     ----------
     C1 : array-like, shape (ns, ns)
@@ -76,6 +84,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
         Print information along iterations
     log : bool, optional
         Record log if True.
+
     Returns
     -------
     T : array-like, shape (`ns`, `nt`)
@@ -162,6 +171,14 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon, symmetric=None
     - :math:`\mathbf{q}`: distribution in the target space
     - `L`: loss function to account for the misfit between the similarity matrices
     - `H`: entropy
+
+    .. note:: If the inner solver `ot.sinkhorn` did not convergence, the
+        optimal coupling :math:`\mathbf{T}` returned by this function does not
+        necessarily satisfy the marginal constraints
+        :math:`\mathbf{T}\mathbf{1}=\mathbf{p}` and
+        :math:`\mathbf{T}^T\mathbf{1}=\mathbf{q}`. So the returned
+        Gromov-Wasserstein loss does not necessarily satisfy distance
+        properties and may be negative.
 
     Parameters
     ----------
