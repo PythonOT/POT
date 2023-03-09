@@ -3,7 +3,6 @@
 ==========================
 Gromov-Wasserstein example
 ==========================
-
 This example is designed to show how to use the Gromov-Wassertsein distance
 computation in POT.
 """

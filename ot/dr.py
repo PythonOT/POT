@@ -167,7 +167,7 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, sinkhorn_method='sinkhorn', maxiter
         Size of dimensionnality reduction.
     reg : float, optional
         Regularization term >0 (entropic regularization)
-    solver : None | str, optional
+    solver : None | str, optional
         None for steepest descent or 'TrustRegions' for trust regions algorithm
         else should be a pymanopt.solvers
     sinkhorn_method : str
