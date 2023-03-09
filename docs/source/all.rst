@@ -13,26 +13,27 @@ API and modules
    :toctree: gen_modules/
    :template: module.rst
 
-   lp
+   
    backend
    bregman
-   smooth
-   gromov
-   optim
    da
-   dr
-   utils
    datasets
-   plot
-   stochastic
-   unbalanced
-   regpath
-   partial
-   sliced
-   weak
+   dr
    factored
    gaussian
-
+   gromov
+   lp
+   optim
+   partial
+   plot
+   regpath
+   sliced
+   smooth
+   stochastic
+   unbalanced
+   utils
+   weak
+   
 
 Main :py:mod:`ot` functions
 --------------
