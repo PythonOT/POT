@@ -33,9 +33,12 @@ API and modules
    factored
    gaussian
 
-.. autosummary::
-   :toctree: ../modules/generated/
-   :template: module.rst
+
+Main :py:mod:`ot` functions
+--------------
 
 .. automodule:: ot
    :members:
+
+
+
