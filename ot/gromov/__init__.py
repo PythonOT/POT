@@ -4,12 +4,6 @@ This module contains all solvers related to Gromov-Wasserstein problems
 
 .. currentmodule:: ot.gromov
 ​
-.. automodule:: ot.gromov
-    :no-members:
-    :no-inherited-members:
-​
-:py:mod:`ot.gromov`:
-​
 .. autosummary::
     :toctree: gen_modules/
     :template: function.rst
