@@ -36,7 +36,7 @@ API and modules
    
 
 Main :py:mod:`ot` functions
---------------
+---------------------------
 
 .. automodule:: ot
    :members:
