@@ -46,7 +46,7 @@ PR #413)
 - Fix an issue where the parameter `stopThr` in `empirical_sinkhorn_divergence` was rendered useless by subcalls
   that explicitly specified `stopThr=1e-9` (Issue #421, PR #422).
 - Fixed a bug breaking an example where we would try to make an array of arrays of different shapes (Issue #424, PR #425)
-
+- Fixed an issue with the documentation gallery section (PR #444)
 
 ## 0.8.2
 
