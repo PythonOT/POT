@@ -74,10 +74,10 @@ def line_search_armijo(
     """
     if nx is None:
         xk, pk, gfk = list_to_array(xk, pk, gfk)
-        xk0, pk0, gfk0 = xk, pk, gfk
-        nx = get_backend(xk0, pk0, gfk0)
+        xk0, pk0 = xk, pk
+        nx = get_backend(xk0, pk0)
     else:
-        xk0, pk0, gfk0 = xk, pk, gfk
+        xk0, pk0 = xk, pk
 
     if len(xk.shape) == 0:
         xk = nx.reshape(xk, (-1,))
@@ -170,7 +170,10 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
     b : array-like, shape (nt,)
         samples weights in the target domain
     M : array-like, shape (ns, nt)
-        loss matrix
+        loss matrixif isinstance(gfk, int) or isinstance(gfk, float):
+            nx = get_backend(a, b)
+        else:
+            nx = get_backend(a, b, M)
     f : function
         Regularization function taking a transportation matrix as argument
     df: function
