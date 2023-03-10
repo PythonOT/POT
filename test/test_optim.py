@@ -6,7 +6,6 @@
 
 import numpy as np
 import ot
-from ot.backend import torch, get_backend
 
 
 def test_conditional_gradient(nx):

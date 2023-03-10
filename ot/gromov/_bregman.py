@@ -11,9 +11,6 @@ Bregman projections solvers for entropic Gromov-Wasserstein
 #
 # License: MIT License
 
-import numpy as np
-
-
 from ..bregman import sinkhorn
 from ..utils import dist, list_to_array, check_random_state
 from ..backend import get_backend

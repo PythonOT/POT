@@ -74,12 +74,14 @@ def line_search_armijo(
     """
     if nx is None:
         xk, pk, gfk = list_to_array(xk, pk, gfk)
-        nx = get_backend(xk, pk)
+        xk0, pk0, gfk0 = xk, pk, gfk
+        nx = get_backend(xk0, pk0, gfk0)
+    else:
+        xk0, pk0, gfk0 = xk, pk, gfk
 
     if len(xk.shape) == 0:
         xk = nx.reshape(xk, (-1,))
 
-    xk0, pk0, gfk0 = xk, pk, gfk
     xk = nx.to_numpy(xk)
     pk = nx.to_numpy(pk)
     gfk = nx.to_numpy(gfk)
