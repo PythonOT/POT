@@ -74,9 +74,9 @@ def test_entropic_coot(nx):
     nits_ot = 2000
 
     # test couplings
-    pi_sample, pi_feature = coot(X=xs, Y=xt, eps=eps, nits_ot=nits_ot)
+    pi_sample, pi_feature = coot(X=xs, Y=xt, epsilon=eps, nits_ot=nits_ot)
     pi_sample_nx, pi_feature_nx = coot(
-        X=xs_nx, Y=xt_nx, eps=eps, nits_ot=nits_ot)
+        X=xs_nx, Y=xt_nx, epsilon=eps, nits_ot=nits_ot)
     pi_sample_nx = nx.to_numpy(pi_sample_nx)
     pi_feature_nx = nx.to_numpy(pi_feature_nx)
 
@@ -99,8 +99,8 @@ def test_entropic_coot(nx):
 
     # test entropic COOT distance
 
-    coot_np = coot2(X=xs, Y=xt, eps=eps, nits_ot=nits_ot)
-    coot_nx = nx.to_numpy(coot2(X=xs_nx, Y=xt_nx, eps=eps, nits_ot=nits_ot))
+    coot_np = coot2(X=xs, Y=xt, epsilon=eps, nits_ot=nits_ot)
+    coot_nx = nx.to_numpy(coot2(X=xs_nx, Y=xt_nx, epsilon=eps, nits_ot=nits_ot))
 
     np.testing.assert_allclose(coot_np, coot_nx, atol=1e-08)
 

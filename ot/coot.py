@@ -14,15 +14,14 @@ from .backend import get_backend
 from .bregman import sinkhorn
 
 
-def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
-                         alpha=(1, 1), D=(None, None), warmstart=None,
-                         nits_bcd=100, tol_bcd=1e-7, eval_bcd=1,
+def co_optimal_transport(X, Y, weights=None, epsilon=0, alpha=0, D=None,
+                         warmstart=None, nits_bcd=100, tol_bcd=1e-7, eval_bcd=1,
                          nits_ot=500, tol_sinkhorn=1e-7, method_sinkhorn="sinkhorn",
                          early_stopping_tol=1e-6, log=False, verbose=False):
     r"""
     Return the sample and feature transport plans between
-    :math:`(\mathbf{X}, \mathbf{p}_{xs}, \mathbf{p}_{xf})` and
-    :math:`(\mathbf{Y}, \mathbf{p}_{ys}, \mathbf{p}_{yf})`.
+    :math:`(\mathbf{X}, \mathbf{w}_{xs}, \mathbf{w}_{xf})` and
+    :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`.
 
     The function solves the following CO-Optimal Transport (COOT) problem:
 
@@ -30,10 +29,10 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
         \mathbf{COOT}_{\varepsilon} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
         \quad \sum_{i,j,k,l}
         (\mathbf{X}_{i,k} - \mathbf{Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l}
-        + \alpha_1 \sum_{i,j} \mathbf{P}_{i,j} \mathbf{D^{(s)}}_{i, j}
-        + \alpha_2 \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{D^{(f)}}_{k, l}
-        + \varepsilon_1 \mathbf{KL}(\mathbf{P} | \mathbf{p}_{xs} \mathbf{p}_{ys}^T)
-        + \varepsilon_2 \mathbf{KL}(\mathbf{Q} | \mathbf{p}_{xf} \mathbf{p}_{yf}^T)
+        + \alpha_s \sum_{i,j} \mathbf{P}_{i,j} \mathbf{D^{(s)}}_{i, j}
+        + \alpha_f \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{D^{(f)}}_{k, l}
+        + \varepsilon_s \mathbf{KL}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
+        + \varepsilon_f \mathbf{KL}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
 
     Where :
 
@@ -41,42 +40,40 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
     - :math:`\mathbf{Y}`: Data matrix in the target space
     - :math:`\mathbf{D^{(s)}}`: Additional sample matrix
     - :math:`\mathbf{D^{(f)}}`: Additional feature matrix
-    - :math:`\mathbf{p}_{xs}`: Distribution of the samples in the source space
-    - :math:`\mathbf{p}_{xf}`: Distribution of the features in the source space
-    - :math:`\mathbf{p}_{ys}`: Distribution of the samples in the target space
-    - :math:`\mathbf{p}_{yf}`: Distribution of the features in the target space
+    - :math:`\mathbf{w}_{xs}`: Distribution of the samples in the source space
+    - :math:`\mathbf{w}_{xf}`: Distribution of the features in the source space
+    - :math:`\mathbf{w}_{ys}`: Distribution of the samples in the target space
+    - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
 
     .. note:: This function allows epsilons to be zero.
     In that case, the `ot.lp.emd` solver of POT will be used.
 
     Parameters
     ----------
-    X : (sx, fx) array-like, float
+    X : (n_sample_x, n_feature_x) array-like, float
         First input matrix.
-    Y : (sy, fy) array-like, float
+    Y : (n_sample_y, n_feature_y) array-like, float
         Second input matrix.
-    px : (sx, fx) tuple, float, optional (default = (None,None))
-        Histogram assigned on rows (samples) and columns (features) of X.
-        Uniform distribution by default.
-    py : (sy, fy) tuple, float, optional (default = (None,None))
-        Histogram assigned on rows (samples) and columns (features) of Y.
-        Uniform distribution by default.
-    eps : (scalar, scalar) tuple, float or int (default = (0,0))
+    weights : (n_sample_x, n_feature_x, n_sample_y, n_feature_y) tuple, float, optional (default = None)
+        Histograms assigned on rows (samples) and columns (features) of X and Y.
+        Uniform distributions by default.
+    eps : scalar or (scalar, scalar) tuple, float or int, optional (default = 0)
         Regularisation parameters for entropic approximation of sample and feature couplings.
         Allow the case where eps contains 0. In that case, the EMD solver is used instead of
-        Sinkhorn solver.
-    alpha : (scalar, scalar) tuple, float or int, optional (default = (1,1))
+        Sinkhorn solver. If eps is scalar, then eps = (eps, eps).
+    alpha : scalar or (scalar, scalar) tuple, float or int, optional (default = 0)
         Coeffficient parameter of linear terms with respect to the sample and feature couplings.
-    D : tuple of matrices (sx, sy) and (fx, fy), float, optional (default = (None,None))
+        If alpha is scalar, then alpha = (alpha, alpha).
+    D : tuple of matrices (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y), float, optional (default = None)
         Sample and feature matrices with respect to the linear terms.
     warmstart : dictionary, optional (default = None)
-        Containing 4 keys:
+        Contains 4 keys:
             + "duals_sample" and "duals_feature" whose values are
-            tuples of 2 vectors of size (sx, sy) and (fx, fy).
+            tuples of 2 vectors of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
             Initialization of sample and feature dual vectors
             if using Sinkhorn algorithm. Zero vectors by default.
             + "pi_sample" and "pi_feature" whose values are matrices
-            of size (sx, sy) and (fx, fy).
+            of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
             Initialization of sample and feature couplings.
             Uniform distributions by default.
     nits_bcd : int, optional (default = 100)
@@ -108,15 +105,15 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
 
     Returns
     -------
-    pi_sample : (sx, sy) array-like, float
+    pi_samp : (n_sample_x, n_sample_y) array-like, float
         Sample coupling matrix.
-    pi_feature : (fx, fy) array-like, float
+    pi_feat : (n_feature_x, n_feature_y) array-like, float
         Feature coupling matrix.
 
     if log is True, then return additionally a dictionary whose keys are:
-        duals_sample : (sx, sy) tuple, float
+        duals_sample : (n_sample_x, n_sample_y) tuple, float
             Pair of dual vectors when solving OT problem w.r.t the sample coupling.
-        duals_feature : (fx, fy) tuple, float
+        duals_feature : (n_feature_x, n_feature_y) tuple, float
             Pair of dual vectors when solving OT problem w.r.t the feature coupling.
         distances : list, float
             List of COOT distances
@@ -124,7 +121,7 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
     References
     ----------
     .. [47] I. Redko, T. Vayer, R. Flamary, and N. Courty, CO-Optimal Transport,
-        Advances in Neural Information Processing Systems, 33 (2020).
+        Advances in Neural Information Processing ny_sampstems, 33 (2020).
     """
 
     def compute_kl(p, q):
@@ -140,51 +137,63 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
     X, Y = list_to_array(X, Y)
     nx = get_backend(X, Y)
 
-    # constant input variables
-    eps_samp, eps_feat = eps
+    if isinstance(epsilon, float) or isinstance(epsilon, int):
+        epsilon = (epsilon, epsilon)
+    if not isinstance(epsilon, tuple):
+        raise ValueError("epsilon must be either a scalar or a tuple.")
+    eps_samp, eps_feat = epsilon
+
+    if isinstance(alpha, float) or isinstance(alpha, int):
+        alpha = (alpha, alpha)
+    if not isinstance(alpha, tuple):
+        raise ValueError("alpha must be either a scalar or a tuple.")
     alpha_samp, alpha_feat = alpha
+
     if D is None:
         D = (None, None)
     D_samp, D_feat = D
+
+    # constant input variables
     if D_samp is None or alpha_samp == 0:
         D_samp, alpha_samp = 0, 0
     if D_feat is None or alpha_feat == 0:
         D_feat, alpha_feat = 0, 0
 
-    sx, fx = X.shape  # s for sample and f for feature
-    sy, fy = Y.shape  # s for sample and f for feature
+    nx_samp, nx_feat = X.shape
+    ny_samp, ny_feat = Y.shape
 
     # measures on rows and columns
-    px_samp, px_feat = px
-    py_samp, py_feat = py
+    if weights is None:
+        weights = (None, None, None, None)
+    wx_samp, wx_feat, wy_samp, wy_feat = weights
 
-    if px_samp is None:
-        px_samp = nx.ones(sx, type_as=X) / sx
-    if px_feat is None:
-        px_feat = nx.ones(fx, type_as=X) / fx
-    if py_samp is None:
-        py_samp = nx.ones(sy, type_as=Y) / sy
-    if py_feat is None:
-        py_feat = nx.ones(fy, type_as=Y) / fy
+    if wx_samp is None:
+        wx_samp = nx.ones(nx_samp, type_as=X) / nx_samp
+    if wx_feat is None:
+        wx_feat = nx.ones(nx_feat, type_as=X) / nx_feat
+    if wy_samp is None:
+        wy_samp = nx.ones(ny_samp, type_as=Y) / ny_samp
+    if wy_feat is None:
+        wy_feat = nx.ones(ny_feat, type_as=Y) / ny_feat
 
-    pxy_samp = px_samp[:, None] * py_samp[None, :]
-    pxy_feat = px_feat[:, None] * py_feat[None, :]
+    wxy_samp = wx_samp[:, None] * wy_samp[None, :]
+    wxy_feat = wx_feat[:, None] * wy_feat[None, :]
 
     # pre-calculate cost constants
-    XY_sqr = (X ** 2 @ px_feat)[:, None] + (Y ** 2 @
-                                            py_feat)[None, :] + alpha_samp * D_samp
-    XY_sqr_T = ((X.T)**2 @ px_samp)[:, None] + ((Y.T)
-                                                ** 2 @ py_samp)[None, :] + alpha_feat * D_feat
+    XY_sqr = (X ** 2 @ wx_feat)[:, None] + (Y ** 2 @
+                                            wy_feat)[None, :] + alpha_samp * D_samp
+    XY_sqr_T = ((X.T)**2 @ wx_samp)[:, None] + ((Y.T)
+                                                ** 2 @ wy_samp)[None, :] + alpha_feat * D_feat
 
     # initialize coupling and dual vectors
     if warmstart is None:
-        pi_sample, pi_feature = pxy_samp, pxy_feat  # size sx x sy and size fx x fy
-        duals_samp = (nx.zeros(sx, type_as=X), nx.zeros(
-            sy, type_as=Y))  # shape sx, sy
-        duals_feat = (nx.zeros(fx, type_as=X), nx.zeros(
-            fy, type_as=Y))  # shape fx, fy
+        pi_samp, pi_feat = wxy_samp, wxy_feat  # shape nx_samp x ny_samp and nx_feat x ny_feat
+        duals_samp = (nx.zeros(nx_samp, type_as=X), nx.zeros(
+            ny_samp, type_as=Y))  # shape nx_samp, ny_samp
+        duals_feat = (nx.zeros(nx_feat, type_as=X), nx.zeros(
+            ny_feat, type_as=Y))  # shape nx_feat, ny_feat
     else:
-        pi_sample, pi_feature = warmstart["pi_sample"], warmstart["pi_feature"]
+        pi_samp, pi_feat = warmstart["pi_sample"], warmstart["pi_feature"]
         duals_samp, duals_feat = warmstart["duals_sample"], warmstart["duals_feature"]
 
     # initialize log
@@ -192,42 +201,42 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
     err = tol_bcd + 1e-3
 
     for idx in range(nits_bcd):
-        pi_sample_prev = nx.copy(pi_sample)
+        pi_samp_prev = nx.copy(pi_samp)
 
         # update sample coupling
-        ot_cost = XY_sqr - 2 * X @ pi_feature @ Y.T  # size sx x sy
+        ot_cost = XY_sqr - 2 * X @ pi_feat @ Y.T  # size nx_samp x ny_samp
         if eps_samp > 0:
-            pi_sample, dict_log = sinkhorn(a=px_samp, b=py_samp, M=ot_cost, reg=eps_samp, method=method_sinkhorn,
-                                           numItermax=nits_ot, stopThr=tol_sinkhorn, log=True, warmstart=duals_samp)
+            pi_samp, dict_log = sinkhorn(a=wx_samp, b=wy_samp, M=ot_cost, reg=eps_samp, method=method_sinkhorn,
+                                         numItermax=nits_ot, stopThr=tol_sinkhorn, log=True, warmstart=duals_samp)
             duals_samp = (nx.log(dict_log["u"]), nx.log(dict_log["v"]))
         elif eps_samp == 0:
-            pi_sample, dict_log = emd(
-                a=px_samp, b=py_samp, M=ot_cost, numItermax=nits_ot, log=True)
+            pi_samp, dict_log = emd(
+                a=wx_samp, b=wy_samp, M=ot_cost, numItermax=nits_ot, log=True)
             duals_samp = (dict_log["u"], dict_log["v"])
         # update feature coupling
-        ot_cost = XY_sqr_T - 2 * X.T @ pi_sample @ Y  # size fx x fy
+        ot_cost = XY_sqr_T - 2 * X.T @ pi_samp @ Y  # size nx_feat x ny_feat
         if eps_feat > 0:
-            pi_feature, dict_log = sinkhorn(a=px_feat, b=py_feat, M=ot_cost, reg=eps_feat, method=method_sinkhorn,
-                                            numItermax=nits_ot, stopThr=tol_sinkhorn, log=True, warmstart=duals_feat)
+            pi_feat, dict_log = sinkhorn(a=wx_feat, b=wy_feat, M=ot_cost, reg=eps_feat, method=method_sinkhorn,
+                                         numItermax=nits_ot, stopThr=tol_sinkhorn, log=True, warmstart=duals_feat)
             duals_feat = (nx.log(dict_log["u"]), nx.log(dict_log["v"]))
         elif eps_feat == 0:
-            pi_feature, dict_log = emd(
-                a=px_feat, b=py_feat, M=ot_cost, numItermax=nits_ot, log=True)
+            pi_feat, dict_log = emd(
+                a=wx_feat, b=wy_feat, M=ot_cost, numItermax=nits_ot, log=True)
             duals_feat = (dict_log["u"], dict_log["v"])
 
         if idx % eval_bcd == 0:
             # update error
-            err = nx.sum(nx.abs(pi_sample - pi_sample_prev))
+            err = nx.sum(nx.abs(pi_samp - pi_samp_prev))
 
             # COOT part
-            coot = nx.sum(ot_cost * pi_feature)
+            coot = nx.sum(ot_cost * pi_feat)
             if alpha_samp != 0:
-                coot = coot + alpha_samp * nx.sum(D_samp * pi_sample)
+                coot = coot + alpha_samp * nx.sum(D_samp * pi_samp)
             # Entropic part
             if eps_samp != 0:
-                coot = coot + eps_samp * compute_kl(pi_sample, pxy_samp)
+                coot = coot + eps_samp * compute_kl(pi_samp, wxy_samp)
             if eps_feat != 0:
-                coot = coot + eps_feat * compute_kl(pi_feature, pxy_feat)
+                coot = coot + eps_feat * compute_kl(pi_feat, wxy_feat)
             list_coot.append(coot)
 
             if err < tol_bcd or abs(list_coot[-2] - list_coot[-1]) < early_stopping_tol:
@@ -238,7 +247,7 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
                     "CO-Optimal Transport cost at iteration {}: {}".format(idx + 1, coot))
 
     # sanity check
-    if nx.sum(nx.isnan(pi_sample)) > 0 or nx.sum(nx.isnan(pi_feature)) > 0:
+    if nx.sum(nx.isnan(pi_samp)) > 0 or nx.sum(nx.isnan(pi_feat)) > 0:
         warnings.warn("There is NaN in coupling.")
 
     if log:
@@ -246,22 +255,22 @@ def co_optimal_transport(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
                     "duals_feature": duals_feat,
                     "distances": list_coot[1:]}
 
-        return pi_sample, pi_feature, dict_log
+        return pi_samp, pi_feat, dict_log
 
     else:
-        return pi_sample, pi_feature
+        return pi_samp, pi_feat
 
 
-def co_optimal_transport2(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
-                          alpha=(1, 1), D=(None, None), warmstart=None,
-                          log=False, verbose=False, early_stopping_tol=1e-6,
+def co_optimal_transport2(X, Y, weights=None, epsilon=0, alpha=0, D=None,
+                          warmstart=None, log=False, verbose=False,
+                          early_stopping_tol=1e-6,
                           nits_bcd=100, tol_bcd=1e-7, eval_bcd=1,
                           nits_ot=500, tol_sinkhorn=1e-7,
                           method_sinkhorn="sinkhorn"):
     r"""
     Return the CO-Optimal Transport distance between
-    :math:`(\mathbf{X}, \mathbf{p}_{xs}, \mathbf{p}_{xf})` and
-    :math:`(\mathbf{Y}, \mathbf{p}_{ys}, \mathbf{p}_{yf})`.
+    :math:`(\mathbf{X}, \mathbf{w}_{xs}, \mathbf{w}_{xf})` and
+    :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`.
 
     The function solves the following CO-Optimal Transport (COOT) problem:
 
@@ -271,8 +280,8 @@ def co_optimal_transport2(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
         (\mathbf{X}_{i,k} - \mathbf{Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l}
         + \alpha_1 \sum_{i,j} \mathbf{P}_{i,j} \mathbf{D^{(s)}}_{i, j}
         + \alpha_2 \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{D^{(f)}}_{k, l}
-        + \varepsilon_1 \mathbf{KL}(\mathbf{P} | \mathbf{p}_{xs} \mathbf{p}_{ys}^T)
-        + \varepsilon_2 \mathbf{KL}(\mathbf{Q} | \mathbf{p}_{xf} \mathbf{p}_{yf}^T)
+        + \varepsilon_1 \mathbf{KL}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
+        + \varepsilon_2 \mathbf{KL}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
 
     Where :
 
@@ -280,42 +289,40 @@ def co_optimal_transport2(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
     - :math:`\mathbf{Y}`: Data matrix in the target space
     - :math:`\mathbf{D^{(s)}}`: Additional sample matrix
     - :math:`\mathbf{D^{(f)}}`: Additional feature matrix
-    - :math:`\mathbf{p}_{xs}`: Distribution of the samples in the source space
-    - :math:`\mathbf{p}_{xf}`: Distribution of the features in the source space
-    - :math:`\mathbf{p}_{ys}`: Distribution of the samples in the target space
-    - :math:`\mathbf{p}_{yf}`: Distribution of the features in the target space
+    - :math:`\mathbf{w}_{xs}`: Distribution of the samples in the source space
+    - :math:`\mathbf{w}_{xf}`: Distribution of the features in the source space
+    - :math:`\mathbf{w}_{ys}`: Distribution of the samples in the target space
+    - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
 
     .. note:: This function allows epsilons to be zero.
     In that case, the `ot.lp.emd` solver of POT will be used.
 
     Parameters
     ----------
-    X : (sx, fx) array-like, float
+    X : (n_sample_x, n_feature_x) array-like, float
         First input matrix.
-    Y : (sy, fy) array-like, float
+    Y : (n_sample_y, n_feature_y) array-like, float
         Second input matrix.
-    px : (sx, fx) tuple, float, optional (default = (None,None))
-        Histogram assigned on rows (samples) and columns (features) of X.
-        Uniform distribution by default.
-    py : (sy, fy) tuple, float, optional (default = (None,None))
-        Histogram assigned on rows (samples) and columns (features) of Y.
-        Uniform distribution by default.
-    eps : (scalar, scalar) tuple, float or int (default = (0,0))
+    weights : (n_sample_x, n_feature_x, n_sample_y, n_feature_y) tuple, float, optional (default = None)
+        Histograms assigned on rows (samples) and columns (features) of X and Y.
+        Uniform distributions by default.
+    eps : scalar or (scalar, scalar) tuple, float or int, optional (default = 0)
         Regularisation parameters for entropic approximation of sample and feature couplings.
         Allow the case where eps contains 0. In that case, the EMD solver is used instead of
-        Sinkhorn solver.
-    alpha : (scalar, scalar) tuple, float or int, optional (default = (1,1))
+        Sinkhorn solver. If eps is scalar, then eps = (eps, eps).
+    alpha : scalar or (scalar, scalar) tuple, float or int, optional (default = 0)
         Coeffficient parameter of linear terms with respect to the sample and feature couplings.
-    D : tuple of matrices (sx, sy) and (fx, fy), float, optional (default = (None,None))
+        If alpha is scalar, then alpha = (alpha, alpha).
+    D : tuple of matrices (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y), float, optional (default = None)
         Sample and feature matrices with respect to the linear terms.
     warmstart : dictionary, optional (default = None)
-        Containing 4 keys:
+        Contains 4 keys:
             + "duals_sample" and "duals_feature" whose values are
-            tuples of 2 vectors of size (sx, sy) and (fx, fy).
+            tuples of 2 vectors of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
             Initialization of sample and feature dual vectors
             if using Sinkhorn algorithm. Zero vectors by default.
             + "pi_sample" and "pi_feature" whose values are matrices
-            of size (sx, sy) and (fx, fy).
+            of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
             Initialization of sample and feature couplings.
             Uniform distributions by default.
     nits_bcd : int, optional (default = 100)
@@ -354,45 +361,46 @@ def co_optimal_transport2(X, Y, px=(None, None), py=(None, None), eps=(0, 0),
     References
     ----------
     .. [47] I. Redko, T. Vayer, R. Flamary, and N. Courty, CO-Optimal Transport,
-        Advances in Neural Information Processing Systems, 33 (2020).
+        Advances in Neural Information Processing ny_sampstems, 33 (2020).
     """
 
-    pi_sample, pi_feature, dict_log = co_optimal_transport(X=X, Y=Y, px=px, py=py, eps=eps,
-                                                           alpha=alpha, D=D, warmstart=warmstart,
-                                                           nits_bcd=nits_bcd, tol_bcd=tol_bcd,
-                                                           eval_bcd=eval_bcd, nits_ot=nits_ot,
-                                                           tol_sinkhorn=tol_sinkhorn, method_sinkhorn=method_sinkhorn,
-                                                           early_stopping_tol=early_stopping_tol,
-                                                           log=True, verbose=verbose)
+    pi_samp, pi_feat, dict_log = co_optimal_transport(X=X, Y=Y, weights=weights, epsilon=epsilon, alpha=alpha,
+                                                      D=D, warmstart=warmstart, nits_bcd=nits_bcd, tol_bcd=tol_bcd,
+                                                      eval_bcd=eval_bcd, nits_ot=nits_ot,
+                                                      tol_sinkhorn=tol_sinkhorn, method_sinkhorn=method_sinkhorn,
+                                                      early_stopping_tol=early_stopping_tol,
+                                                      log=True, verbose=verbose)
 
     X, Y = list_to_array(X, Y)
     nx = get_backend(X, Y)
 
-    sx, fx = X.shape
-    sy, fy = Y.shape
+    nx_samp, nx_feat = X.shape
+    ny_samp, ny_feat = Y.shape
 
-    px_samp, px_feat = px
-    py_samp, py_feat = py
+    # measures on rows and columns
+    if weights is None:
+        weights = (None, None, None, None)
+    wx_samp, wx_feat, wy_samp, wy_feat = weights
 
-    if px_samp is None:
-        px_samp = nx.ones(sx, type_as=X) / sx
-    if px_feat is None:
-        px_feat = nx.ones(fx, type_as=X) / fx
-    if py_samp is None:
-        py_samp = nx.ones(sy, type_as=Y) / sy
-    if py_feat is None:
-        py_feat = nx.ones(fy, type_as=Y) / fy
+    if wx_samp is None:
+        wx_samp = nx.ones(nx_samp, type_as=X) / nx_samp
+    if wx_feat is None:
+        wx_feat = nx.ones(nx_feat, type_as=X) / nx_feat
+    if wy_samp is None:
+        wy_samp = nx.ones(ny_samp, type_as=Y) / ny_samp
+    if wy_feat is None:
+        wy_feat = nx.ones(ny_feat, type_as=Y) / ny_feat
 
     vx_samp, vy_samp = dict_log["duals_sample"]
     vx_feat, vy_feat = dict_log["duals_feature"]
 
-    gradX = 2 * X * (px_samp[:, None] * px_feat[None, :]) - \
-        2 * pi_sample @ Y @ pi_feature.T  # shape (sx, fx)
-    gradY = 2 * Y * (py_samp[:, None] * py_feat[None, :]) - \
-        2 * pi_sample.T @ X @ pi_feature  # shape (sy, fy)
+    gradX = 2 * X * (wx_samp[:, None] * wx_feat[None, :]) - \
+        2 * pi_samp @ Y @ pi_feat.T  # shape (nx_samp, nx_feat)
+    gradY = 2 * Y * (wy_samp[:, None] * wy_feat[None, :]) - \
+        2 * pi_samp.T @ X @ pi_feat  # shape (ny_samp, ny_feat)
 
     coot = dict_log["distances"][-1]
-    coot = nx.set_gradients(coot, (px_samp, px_feat, py_samp, py_feat, X, Y),
+    coot = nx.set_gradients(coot, (wx_samp, wx_feat, wy_samp, wy_feat, X, Y),
                             (vx_samp, vx_feat, vy_samp, vy_feat, gradX, gradY))
 
     if log:
