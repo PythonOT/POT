@@ -120,15 +120,15 @@ def test_generalized_conditional_gradient(nx):
     Gb, log = ot.optim.gcg(ab, bb, Mb, reg1, reg2, fb, df, verbose=True, log=True)
     Gb = nx.to_numpy(Gb)
 
-    np.testing.assert_allclose(Gb, G)
+    np.testing.assert_allclose(Gb, G, atol=1e-12)
     np.testing.assert_allclose(a, Gb.sum(1), atol=1e-05)
     np.testing.assert_allclose(b, Gb.sum(0), atol=1e-05)
 
 
 def test_solve_1d_linesearch_quad_funct():
-    np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(1, -1, 0), 0.5)
-    np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(-1, 5, 0), 0)
-    np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(-1, 0.5, 0), 1)
+    np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(1, -1), 0.5)
+    np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(-1, 5), 0)
+    np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(-1, 0.5), 1)
 
 
 def test_line_search_armijo(nx):

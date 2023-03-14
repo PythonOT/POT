@@ -3048,7 +3048,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
                     M = nx.from_numpy(M, type_as=a)
                     m1_cols.append(
                         nx.sum(nx.exp(f[i:i + bs, None] +
-                               g[None, :] - M / reg), axis=1)
+                                      g[None, :] - M / reg), axis=1)
                     )
                 m1 = nx.concatenate(m1_cols, axis=0)
                 err = nx.sum(nx.abs(m1 - a))
