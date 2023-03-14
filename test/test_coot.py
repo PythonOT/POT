@@ -70,13 +70,13 @@ def test_entropic_coot(nx):
     xs_nx = nx.from_numpy(xs)
     xt_nx = nx.from_numpy(xt)
 
-    eps = (1, 1e-1)
+    epsilon = (1, 1e-1)
     nits_ot = 2000
 
     # test couplings
-    pi_sample, pi_feature = coot(X=xs, Y=xt, epsilon=eps, nits_ot=nits_ot)
+    pi_sample, pi_feature = coot(X=xs, Y=xt, epsilon=epsilon, nits_ot=nits_ot)
     pi_sample_nx, pi_feature_nx = coot(
-        X=xs_nx, Y=xt_nx, epsilon=eps, nits_ot=nits_ot)
+        X=xs_nx, Y=xt_nx, epsilon=epsilon, nits_ot=nits_ot)
     pi_sample_nx = nx.to_numpy(pi_sample_nx)
     pi_feature_nx = nx.to_numpy(pi_feature_nx)
 
@@ -99,8 +99,9 @@ def test_entropic_coot(nx):
 
     # test entropic COOT distance
 
-    coot_np = coot2(X=xs, Y=xt, epsilon=eps, nits_ot=nits_ot)
-    coot_nx = nx.to_numpy(coot2(X=xs_nx, Y=xt_nx, epsilon=eps, nits_ot=nits_ot))
+    coot_np = coot2(X=xs, Y=xt, epsilon=epsilon, nits_ot=nits_ot)
+    coot_nx = nx.to_numpy(
+        coot2(X=xs_nx, Y=xt_nx, epsilon=epsilon, nits_ot=nits_ot))
 
     np.testing.assert_allclose(coot_np, coot_nx, atol=1e-08)
 
@@ -117,12 +118,11 @@ def test_coot_with_linear_terms(nx):
     xs_nx = nx.from_numpy(xs)
     xt_nx = nx.from_numpy(xt)
 
-    D_sample = np.ones((n_samples, n_samples))
-    np.fill_diagonal(np.fliplr(D_sample), 0)
-    D_feature = np.ones((2, 2))
-    np.fill_diagonal(D_feature, 0)
-    D = (D_sample, D_feature)
-    D_nx = (nx.from_numpy(D_sample), nx.from_numpy(D_feature))
+    M_samp = np.ones((n_samples, n_samples))
+    np.fill_diagonal(np.fliplr(M_samp), 0)
+    M_feat = np.ones((2, 2))
+    np.fill_diagonal(M_feat, 0)
+    M_samp_nx, M_feat_nx = nx.from_numpy(M_samp), nx.from_numpy(M_feat)
 
     alpha = (1, 2)
 
@@ -130,9 +130,10 @@ def test_coot_with_linear_terms(nx):
     anti_id_sample = np.flipud(np.eye(n_samples, n_samples)) / n_samples
     id_feature = np.eye(2, 2) / 2
 
-    pi_sample, pi_feature = coot(X=xs, Y=xt, alpha=alpha, D=D)
+    pi_sample, pi_feature = coot(
+        X=xs, Y=xt, alpha=alpha, M_samp=M_samp, M_feat=M_feat)
     pi_sample_nx, pi_feature_nx = coot(
-        X=xs_nx, Y=xt_nx, alpha=alpha, D=D_nx)
+        X=xs_nx, Y=xt_nx, alpha=alpha, M_samp=M_samp_nx, M_feat=M_feat_nx)
     pi_sample_nx = nx.to_numpy(pi_sample_nx)
     pi_feature_nx = nx.to_numpy(pi_feature_nx)
 
@@ -157,7 +158,8 @@ def test_coot_with_linear_terms(nx):
 
     # test COOT distance
 
-    coot_np = coot2(X=xs, Y=xt, alpha=alpha, D=D)
-    coot_nx = nx.to_numpy(coot2(X=xs_nx, Y=xt_nx, alpha=alpha, D=D_nx))
+    coot_np = coot2(X=xs, Y=xt, alpha=alpha, M_samp=M_samp, M_feat=M_feat)
+    coot_nx = nx.to_numpy(
+        coot2(X=xs_nx, Y=xt_nx, alpha=alpha, M_samp=M_samp_nx, M_feat=M_feat_nx))
     np.testing.assert_allclose(coot_np, 0, atol=1e-08)
     np.testing.assert_allclose(coot_nx, 0, atol=1e-08)

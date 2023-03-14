@@ -14,7 +14,8 @@ from .backend import get_backend
 from .bregman import sinkhorn
 
 
-def co_optimal_transport(X, Y, weights=None, epsilon=0, alpha=0, D=None,
+def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
+                         epsilon=0, alpha=0, M_samp=None, M_feat=None,
                          warmstart=None, nits_bcd=100, tol_bcd=1e-7, eval_bcd=1,
                          nits_ot=500, tol_sinkhorn=1e-7, method_sinkhorn="sinkhorn",
                          early_stopping_tol=1e-6, log=False, verbose=False):
@@ -29,8 +30,8 @@ def co_optimal_transport(X, Y, weights=None, epsilon=0, alpha=0, D=None,
         \mathbf{COOT}_{\varepsilon} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
         \quad \sum_{i,j,k,l}
         (\mathbf{X}_{i,k} - \mathbf{Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l}
-        + \alpha_s \sum_{i,j} \mathbf{P}_{i,j} \mathbf{D^{(s)}}_{i, j}
-        + \alpha_f \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{D^{(f)}}_{k, l}
+        + \alpha_s \sum_{i,j} \mathbf{P}_{i,j} \mathbf{M^{(s)}}_{i, j}
+        + \alpha_f \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{M^{(f)}}_{k, l}
         + \varepsilon_s \mathbf{KL}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
         + \varepsilon_f \mathbf{KL}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
 
@@ -38,15 +39,15 @@ def co_optimal_transport(X, Y, weights=None, epsilon=0, alpha=0, D=None,
 
     - :math:`\mathbf{X}`: Data matrix in the source space
     - :math:`\mathbf{Y}`: Data matrix in the target space
-    - :math:`\mathbf{D^{(s)}}`: Additional sample matrix
-    - :math:`\mathbf{D^{(f)}}`: Additional feature matrix
+    - :math:`\mathbf{M^{(s)}}`: Additional sample matrix
+    - :math:`\mathbf{M^{(f)}}`: Additional feature matrix
     - :math:`\mathbf{w}_{xs}`: Distribution of the samples in the source space
     - :math:`\mathbf{w}_{xf}`: Distribution of the features in the source space
     - :math:`\mathbf{w}_{ys}`: Distribution of the samples in the target space
     - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
 
-    .. note:: This function allows epsilons to be zero.
-    In that case, the `ot.lp.emd` solver of POT will be used.
+    .. note:: This function allows epsilon to be zero.
+    In that case, the :any:`ot.lp.emd` solver of POT will be used.
 
     Parameters
     ----------
@@ -54,18 +55,30 @@ def co_optimal_transport(X, Y, weights=None, epsilon=0, alpha=0, D=None,
         First input matrix.
     Y : (n_sample_y, n_feature_y) array-like, float
         Second input matrix.
-    weights : (n_sample_x, n_feature_x, n_sample_y, n_feature_y) tuple, float, optional (default = None)
-        Histograms assigned on rows (samples) and columns (features) of X and Y.
-        Uniform distributions by default.
-    eps : scalar or (scalar, scalar) tuple, float or int, optional (default = 0)
-        Regularisation parameters for entropic approximation of sample and feature couplings.
-        Allow the case where eps contains 0. In that case, the EMD solver is used instead of
-        Sinkhorn solver. If eps is scalar, then eps = (eps, eps).
-    alpha : scalar or (scalar, scalar) tuple, float or int, optional (default = 0)
+    wx_samp : (n_sample_x, ) array-like, float, optional (default = None)
+        Histogram assigned on rows (samples) of matrix X.
+        Uniform distribution by default.
+    wx_feat : (n_feature_x, ) array-like, float, optional (default = None)
+        Histogram assigned on columns (features) of matrix X.
+        Uniform distribution by default.
+    wy_samp : (n_sample_y, ) array-like, float, optional (default = None)
+        Histogram assigned on rows (samples) of matrix Y.
+        Uniform distribution by default.
+    wy_feat : (n_feature_y, ) array-like, float, optional (default = None)
+        Histogram assigned on columns (features) of matrix Y.
+        Uniform distribution by default.
+    epsilon : scalar or indexable object of length 2, float or int, optional (default = 0)
+        Regularization parameters for entropic approximation of sample and feature couplings.
+        Allow the case where epsilon contains 0. In that case, the EMD solver is used instead of
+        Sinkhorn solver. If epsilon is scalar, then the same epsilon is applied to
+        both regularization of sample and feature couplings.
+    alpha : scalar or indexable object of length 2, float or int, optional (default = 0)
         Coeffficient parameter of linear terms with respect to the sample and feature couplings.
-        If alpha is scalar, then alpha = (alpha, alpha).
-    D : tuple of matrices (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y), float, optional (default = None)
-        Sample and feature matrices with respect to the linear terms.
+        If alpha is scalar, then the same alpha is applied to both linear terms.
+    M_samp : (n_sample_x, n_sample_y), float, optional (default = None)
+        Sample matrix with respect to the linear term on sample coupling.
+    M_feat : (n_feature_x, n_feature_y), float, optional (default = None)
+        Feature matrix with respect to the linear term on feature coupling.
     warmstart : dictionary, optional (default = None)
         Contains 4 keys:
             + "duals_sample" and "duals_feature" whose values are
@@ -116,7 +129,7 @@ def co_optimal_transport(X, Y, weights=None, epsilon=0, alpha=0, D=None,
         duals_feature : (n_feature_x, n_feature_y) tuple, float
             Pair of dual vectors when solving OT problem w.r.t the feature coupling.
         distances : list, float
-            List of COOT distances
+            List of COOT distances.
 
     References
     ----------
@@ -139,34 +152,30 @@ def co_optimal_transport(X, Y, weights=None, epsilon=0, alpha=0, D=None,
 
     if isinstance(epsilon, float) or isinstance(epsilon, int):
         epsilon = (epsilon, epsilon)
-    if not isinstance(epsilon, tuple):
-        raise ValueError("epsilon must be either a scalar or a tuple.")
-    eps_samp, eps_feat = epsilon
+    else:
+        if len(epsilon) != 2:
+            raise ValueError("Epsilon must be either a scalar or an indexable object of length 2.")
+        else:
+            eps_samp, eps_feat = epsilon[0], epsilon[1]
 
     if isinstance(alpha, float) or isinstance(alpha, int):
         alpha = (alpha, alpha)
-    if not isinstance(alpha, tuple):
-        raise ValueError("alpha must be either a scalar or a tuple.")
-    alpha_samp, alpha_feat = alpha
-
-    if D is None:
-        D = (None, None)
-    D_samp, D_feat = D
+    else:
+        if len(alpha) != 2:
+            raise ValueError("Alpha must be either a scalar or an indexable object of length 2.")
+        else:
+            alpha_samp, alpha_feat = alpha[0], alpha[1]
 
     # constant input variables
-    if D_samp is None or alpha_samp == 0:
-        D_samp, alpha_samp = 0, 0
-    if D_feat is None or alpha_feat == 0:
-        D_feat, alpha_feat = 0, 0
+    if M_samp is None or alpha_samp == 0:
+        M_samp, alpha_samp = 0, 0
+    if M_feat is None or alpha_feat == 0:
+        M_feat, alpha_feat = 0, 0
 
     nx_samp, nx_feat = X.shape
     ny_samp, ny_feat = Y.shape
 
     # measures on rows and columns
-    if weights is None:
-        weights = (None, None, None, None)
-    wx_samp, wx_feat, wy_samp, wy_feat = weights
-
     if wx_samp is None:
         wx_samp = nx.ones(nx_samp, type_as=X) / nx_samp
     if wx_feat is None:
@@ -181,9 +190,9 @@ def co_optimal_transport(X, Y, weights=None, epsilon=0, alpha=0, D=None,
 
     # pre-calculate cost constants
     XY_sqr = (X ** 2 @ wx_feat)[:, None] + (Y ** 2 @
-                                            wy_feat)[None, :] + alpha_samp * D_samp
+                                            wy_feat)[None, :] + alpha_samp * M_samp
     XY_sqr_T = ((X.T)**2 @ wx_samp)[:, None] + ((Y.T)
-                                                ** 2 @ wy_samp)[None, :] + alpha_feat * D_feat
+                                                ** 2 @ wy_samp)[None, :] + alpha_feat * M_feat
 
     # initialize coupling and dual vectors
     if warmstart is None:
@@ -231,7 +240,7 @@ def co_optimal_transport(X, Y, weights=None, epsilon=0, alpha=0, D=None,
             # COOT part
             coot = nx.sum(ot_cost * pi_feat)
             if alpha_samp != 0:
-                coot = coot + alpha_samp * nx.sum(D_samp * pi_samp)
+                coot = coot + alpha_samp * nx.sum(M_samp * pi_samp)
             # Entropic part
             if eps_samp != 0:
                 coot = coot + eps_samp * compute_kl(pi_samp, wxy_samp)
@@ -261,9 +270,9 @@ def co_optimal_transport(X, Y, weights=None, epsilon=0, alpha=0, D=None,
         return pi_samp, pi_feat
 
 
-def co_optimal_transport2(X, Y, weights=None, epsilon=0, alpha=0, D=None,
-                          warmstart=None, log=False, verbose=False,
-                          early_stopping_tol=1e-6,
+def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
+                          epsilon=0, alpha=0, M_samp=None, M_feat=None,
+                          warmstart=None, log=False, verbose=False, early_stopping_tol=1e-6,
                           nits_bcd=100, tol_bcd=1e-7, eval_bcd=1,
                           nits_ot=500, tol_sinkhorn=1e-7,
                           method_sinkhorn="sinkhorn"):
@@ -278,8 +287,8 @@ def co_optimal_transport2(X, Y, weights=None, epsilon=0, alpha=0, D=None,
         \mathbf{COOT}_{\varepsilon} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
         \quad \sum_{i,j,k,l}
         (\mathbf{X}_{i,k} - \mathbf{Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l}
-        + \alpha_1 \sum_{i,j} \mathbf{P}_{i,j} \mathbf{D^{(s)}}_{i, j}
-        + \alpha_2 \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{D^{(f)}}_{k, l}
+        + \alpha_1 \sum_{i,j} \mathbf{P}_{i,j} \mathbf{M^{(s)}}_{i, j}
+        + \alpha_2 \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{M^{(f)}}_{k, l}
         + \varepsilon_1 \mathbf{KL}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
         + \varepsilon_2 \mathbf{KL}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
 
@@ -287,15 +296,15 @@ def co_optimal_transport2(X, Y, weights=None, epsilon=0, alpha=0, D=None,
 
     - :math:`\mathbf{X}`: Data matrix in the source space
     - :math:`\mathbf{Y}`: Data matrix in the target space
-    - :math:`\mathbf{D^{(s)}}`: Additional sample matrix
-    - :math:`\mathbf{D^{(f)}}`: Additional feature matrix
+    - :math:`\mathbf{M^{(s)}}`: Additional sample matrix
+    - :math:`\mathbf{M^{(f)}}`: Additional feature matrix
     - :math:`\mathbf{w}_{xs}`: Distribution of the samples in the source space
     - :math:`\mathbf{w}_{xf}`: Distribution of the features in the source space
     - :math:`\mathbf{w}_{ys}`: Distribution of the samples in the target space
     - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
 
-    .. note:: This function allows epsilons to be zero.
-    In that case, the `ot.lp.emd` solver of POT will be used.
+    .. note:: This function allows epsilon to be zero.
+    In that case, the :any:`ot.lp.emd` solver of POT will be used.
 
     Parameters
     ----------
@@ -303,18 +312,30 @@ def co_optimal_transport2(X, Y, weights=None, epsilon=0, alpha=0, D=None,
         First input matrix.
     Y : (n_sample_y, n_feature_y) array-like, float
         Second input matrix.
-    weights : (n_sample_x, n_feature_x, n_sample_y, n_feature_y) tuple, float, optional (default = None)
-        Histograms assigned on rows (samples) and columns (features) of X and Y.
-        Uniform distributions by default.
-    eps : scalar or (scalar, scalar) tuple, float or int, optional (default = 0)
-        Regularisation parameters for entropic approximation of sample and feature couplings.
-        Allow the case where eps contains 0. In that case, the EMD solver is used instead of
-        Sinkhorn solver. If eps is scalar, then eps = (eps, eps).
-    alpha : scalar or (scalar, scalar) tuple, float or int, optional (default = 0)
+    wx_samp : (n_sample_x, ) array-like, float, optional (default = None)
+        Histogram assigned on rows (samples) of matrix X.
+        Uniform distribution by default.
+    wx_feat : (n_feature_x, ) array-like, float, optional (default = None)
+        Histogram assigned on columns (features) of matrix X.
+        Uniform distribution by default.
+    wy_samp : (n_sample_y, ) array-like, float, optional (default = None)
+        Histogram assigned on rows (samples) of matrix Y.
+        Uniform distribution by default.
+    wy_feat : (n_feature_y, ) array-like, float, optional (default = None)
+        Histogram assigned on columns (features) of matrix Y.
+        Uniform distribution by default.
+    epsilon : scalar or indexable object of length 2, float or int, optional (default = 0)
+        Regularization parameters for entropic approximation of sample and feature couplings.
+        Allow the case where epsilon contains 0. In that case, the EMD solver is used instead of
+        Sinkhorn solver. If epsilon is scalar, then the same epsilon is applied to
+        both regularization of sample and feature couplings.
+    alpha : scalar or indexable object of length 2, float or int, optional (default = 0)
         Coeffficient parameter of linear terms with respect to the sample and feature couplings.
-        If alpha is scalar, then alpha = (alpha, alpha).
-    D : tuple of matrices (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y), float, optional (default = None)
-        Sample and feature matrices with respect to the linear terms.
+        If alpha is scalar, then the same alpha is applied to both linear terms.
+    M_samp : (n_sample_x, n_sample_y), float, optional (default = None)
+        Sample matrix with respect to the linear term on sample coupling.
+    M_feat : (n_feature_x, n_feature_y), float, optional (default = None)
+        Feature matrix with respect to the linear term on feature coupling.
     warmstart : dictionary, optional (default = None)
         Contains 4 keys:
             + "duals_sample" and "duals_feature" whose values are
@@ -356,7 +377,7 @@ def co_optimal_transport2(X, Y, weights=None, epsilon=0, alpha=0, D=None,
     -------
     CO-Optimal Transport distance : float
 
-    If log is True, then also return the dictionary output of `co_optimal_transport` solver.
+    If log is True, then also return the dictionary output of :any:`co_optimal_transport` solver.
 
     References
     ----------
@@ -364,9 +385,10 @@ def co_optimal_transport2(X, Y, weights=None, epsilon=0, alpha=0, D=None,
         Advances in Neural Information Processing ny_sampstems, 33 (2020).
     """
 
-    pi_samp, pi_feat, dict_log = co_optimal_transport(X=X, Y=Y, weights=weights, epsilon=epsilon, alpha=alpha,
-                                                      D=D, warmstart=warmstart, nits_bcd=nits_bcd, tol_bcd=tol_bcd,
-                                                      eval_bcd=eval_bcd, nits_ot=nits_ot,
+    pi_samp, pi_feat, dict_log = co_optimal_transport(X=X, Y=Y, wx_samp=wx_samp, wx_feat=wx_feat, wy_samp=wy_samp,
+                                                      wy_feat=wy_feat, epsilon=epsilon, alpha=alpha, M_samp=M_samp,
+                                                      M_feat=M_feat, warmstart=warmstart, nits_bcd=nits_bcd,
+                                                      tol_bcd=tol_bcd, eval_bcd=eval_bcd, nits_ot=nits_ot,
                                                       tol_sinkhorn=tol_sinkhorn, method_sinkhorn=method_sinkhorn,
                                                       early_stopping_tol=early_stopping_tol,
                                                       log=True, verbose=verbose)
@@ -378,10 +400,6 @@ def co_optimal_transport2(X, Y, weights=None, epsilon=0, alpha=0, D=None,
     ny_samp, ny_feat = Y.shape
 
     # measures on rows and columns
-    if weights is None:
-        weights = (None, None, None, None)
-    wx_samp, wx_feat, wy_samp, wy_feat = weights
-
     if wx_samp is None:
         wx_samp = nx.ones(nx_samp, type_as=X) / nx_samp
     if wx_feat is None:

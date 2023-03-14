@@ -88,7 +88,7 @@ b = torch.tensor(ot.unif(n), requires_grad=True)
 
 for i in range(niter):
 
-    loss = coot2(X, Y_noisy, weights=(None, None, b, None))
+    loss = coot2(X, Y_noisy, wy_samp=b, log=False, verbose=False)
     losses.append(float(loss))
 
     loss.backward()
@@ -117,8 +117,7 @@ Clearly, the learned marginal distribution completely and successfully ignores t
 X, Y_noisy = X.numpy(), Y_noisy.numpy()
 b = b.detach().numpy()
 
-pi_sample, pi_feature = coot(X, Y_noisy, weights=(
-    None, None, b, None), log=False, verbose=True)
+pi_sample, pi_feature = coot(X, Y_noisy, wy_samp=b, log=False, verbose=True)
 
 fig = pl.figure(4, (9, 7))
 pl.clf()
