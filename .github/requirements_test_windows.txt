@@ -3,8 +3,7 @@ scipy>=1.3
 cython
 matplotlib
 autograd
-pymanopt==0.2.4; python_version <'3'
-pymanopt==0.2.6rc1; python_version >= '3'
+pymanopt
 cvxopt
 scikit-learn
 pytest

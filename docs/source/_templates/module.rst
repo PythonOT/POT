@@ -2,6 +2,7 @@
 {{ underline }}
 
 .. automodule:: {{ fullname }}
+   :members:
 
    {% block functions %}
    {% if functions %}
@@ -12,6 +13,7 @@
    {% for item in functions %}
 
    .. autofunction:: {{ item }}
+      
 
    .. include:: backreferences/{{fullname}}.{{item}}.examples
 
