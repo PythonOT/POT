@@ -170,10 +170,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
     b : array-like, shape (nt,)
         samples weights in the target domain
     M : array-like, shape (ns, nt)
-        loss matrixif isinstance(gfk, int) or isinstance(gfk, float):
-            nx = get_backend(a, b)
-        else:
-            nx = get_backend(a, b, M)
+        loss matrix
     f : function
         Regularization function taking a transportation matrix as argument
     df: function
@@ -185,7 +182,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
     lp_solver: function,
         linear program solver for direction finding of the (generalized) conditional gradient.
         If set to emd will solve the general regularized OT problem using cg.
-        If set to lp_semi_relaxed_OT will solve the general optimizeregularized semi-relaxed OT problem using cg.
+        If set to lp_semi_relaxed_OT will solve the general regularized semi-relaxed OT problem using cg.
         If set to sinkhorn will solve the general regularized OT problem using generalized cg.
     line_search: function,
         Function to find the optimal step. Currently used instances are:
