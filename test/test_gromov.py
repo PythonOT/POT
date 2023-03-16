@@ -214,7 +214,23 @@ def test_gromov2_gradients():
             C11 = torch.tensor(C1, requires_grad=True, device=device)
             C12 = torch.tensor(C2, requires_grad=True, device=device)
 
+            # Test with exact line-search
             val = ot.gromov_wasserstein2(C11, C12, p1, q1)
+
+            val.backward()
+
+            assert val.device == p1.device
+            assert q1.shape == q1.grad.shape
+            assert p1.shape == p1.grad.shape
+            assert C11.shape == C11.grad.shape
+            assert C12.shape == C12.grad.shape
+
+            # Test with armijo line-search
+            q1.grad = None
+            p1.grad = None
+            C11.grad = None
+            C12.grad = None
+            val = ot.gromov_wasserstein2(C11, C12, p1, q1, armijo=True)
 
             val.backward()
 
