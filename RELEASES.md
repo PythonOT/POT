@@ -47,6 +47,7 @@ PR #413)
   that explicitly specified `stopThr=1e-9` (Issue #421, PR #422).
 - Fixed a bug breaking an example where we would try to make an array of arrays of different shapes (Issue #424, PR #425)
 - Fixed an issue with the documentation gallery section (PR #444)
+- Fixed issues with cuda variables for `line_search_armijo` and `entropic_gromov_wasserstein` (Issue #445, #PR 446)
 
 ## 0.8.2
 

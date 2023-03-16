@@ -11,9 +11,6 @@ Bregman projections solvers for entropic Gromov-Wasserstein
 #
 # License: MIT License
 
-import numpy as np
-
-
 from ..bregman import sinkhorn
 from ..utils import dist, list_to_array, check_random_state
 from ..backend import get_backend
@@ -109,7 +106,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
     T = G0
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun, nx)
     if symmetric is None:
-        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
+        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
     if not symmetric:
         constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun, nx)
     cpt = 0
