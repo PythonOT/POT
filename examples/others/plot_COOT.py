@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
-""" CO-Optimal Transport example
+r"""
+===================================================
+Row and column alignments with CO-Optimal Transport
+===================================================
 
 This example is designed to show how to use the CO-Optimal Transport [47] in POT.
 CO-Optimal Transport allows to calculate the distance between two **arbitrary-size** matrices.
-In this example, we consider two random matrices $X_1$ and $X_2$ defined by:
-$(X_1)_{i,j} = \cos(\frac{i}{n_1} \pi) + \cos(\frac{j}{d_1} \pi) + \sigma \mathcal N(0,1)$ and
-$(X_2)_{i,j} = \cos(\frac{i}{n_2} \pi) + \cos(\frac{j}{d_2} \pi) + \sigma \mathcal N(0,1)$.
+and to align their rows and columns. In this example, we consider two random matrices :math:`X_1` and :math:`X_2` defined by
+:math:`(X_1)_{i,j} = \cos(\frac{i}{n_1} \pi) + \cos(\frac{j}{d_1} \pi) + \sigma \mathcal N(0,1)`
+and :math:`(X_2)_{i,j} = \cos(\frac{i}{n_2} \pi) + \cos(\frac{j}{d_2} \pi) + \sigma \mathcal N(0,1)`.
 
 [47] Redko, I., Vayer, T., Flamary, R., and Courty, N. (2020). [CO-Optimal Transport](https://proceedings.neurips.cc/paper/2020/file/cc384c68ad503482fb24e6d1e3b512ae-Paper.pdf). Advances in Neural Information Processing Systems, 33.
 """
@@ -21,6 +24,8 @@ from ot.coot import co_optimal_transport as coot
 from ot.coot import co_optimal_transport2 as coot2
 
 # Generating two random matrices
+
+# %%
 
 n1 = 20
 n2 = 10
@@ -47,6 +52,8 @@ pl.title("$X_2$")
 pl.tight_layout()
 
 # Visualizing the alignments of rows and columns, and calculating the CO-Optimal Transport distance
+
+# %%
 
 pi_sample, pi_feature, log = coot(X1, X2, log=True, verbose=True)
 coot_distance = coot2(X1, X2)

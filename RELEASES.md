@@ -16,10 +16,10 @@
 - New API for OT solver using function `ot.solve` (PR #388)
 - Backend version of `ot.partial` and `ot.smooth` (PR #388)
 - Added argument for warmstart of dual potentials in Sinkhorn-based methods in `ot.bregman` (PR #437)
-- Added the CO-Optimal Transport solver + examples (PR # 439)
-- Add parameters method in `ot.da.SinkhornTransport` (PR #440)
+- Added parameters method in `ot.da.SinkhornTransport` (PR #440)
 - `ot.dr` now uses the new Pymanopt API and POT is compatible with current
   Pymanopt (PR #443)
+- Added CO-Optimal Transport solver + examples (PR # 447)
 
 #### Closed issues
 
