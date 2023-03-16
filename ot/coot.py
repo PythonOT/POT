@@ -151,7 +151,7 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
     nx = get_backend(X, Y)
 
     if isinstance(epsilon, float) or isinstance(epsilon, int):
-        epsilon = (epsilon, epsilon)
+        eps_samp, eps_feat = epsilon, epsilon
     else:
         if len(epsilon) != 2:
             raise ValueError("Epsilon must be either a scalar or an indexable object of length 2.")
@@ -159,7 +159,7 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
             eps_samp, eps_feat = epsilon[0], epsilon[1]
 
     if isinstance(alpha, float) or isinstance(alpha, int):
-        alpha = (alpha, alpha)
+        alpha_samp, alpha_feat = alpha, alpha
     else:
         if len(alpha) != 2:
             raise ValueError("Alpha must be either a scalar or an indexable object of length 2.")
