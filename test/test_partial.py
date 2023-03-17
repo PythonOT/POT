@@ -8,6 +8,7 @@
 import numpy as np
 import scipy as sp
 import ot
+from ot.backend import torch, tf
 import pytest
 
 
@@ -136,6 +137,35 @@ def test_partial_wasserstein():
         G.sum(0) - q <= 1e-5, [True] * len(q))  # cf convergence wasserstein
     np.testing.assert_allclose(
         np.sum(G), m, atol=1e-04)
+
+
+def test_partial_wasserstein_gradients():
+    n_samples = 100
+    n_features = 2
+    m = 0.5
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_features)
+    a = ot.utils.unif(n_samples)
+
+    M = ot.dist(x, y)
+
+    if torch:
+
+        a1 = torch.tensor(a, requires_grad=True)
+        b1 = torch.tensor(a, requires_grad=True)
+        M1 = torch.tensor(M, requires_grad=True)
+
+        val = ot.partial.partial_wasserstein(a1, b1, M1, m=m)
+
+        val.backward()
+
+        assert a1.shape == a1.grad.shape
+        assert b1.shape == b1.grad.shape
+        assert M1.shape == M1.grad.shape
+
+        val = ot.partial.entropic_partial_wasserstein(p, q, M, reg=1, m=m)
 
 
 def test_partial_gromov_wasserstein():
