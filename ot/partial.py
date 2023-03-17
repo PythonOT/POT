@@ -275,31 +275,32 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     elif m < 0:
         raise ValueError("Problem infeasible. Parameter m should be greater"
                          " than 0.")
-    elif m > nx.min((nx.sum(a), nx.sum(b))):
+    elif m > nx.min(nx.stack((nx.sum(a), nx.sum(b)))):
         raise ValueError("Problem infeasible. Parameter m should lower or"
                          " equal than min(|a|_1, |b|_1).")
 
-    a0, b0, M0 = a, b, M
-    # convert to humpy
-    a, b, M = nx.to_numpy(a, b, M)
-
-    b_extended = np.append(b, [(np.sum(a) - m) / nb_dummies] * nb_dummies)
-    a_extended = np.append(a, [(np.sum(b) - m) / nb_dummies] * nb_dummies)
-    M_extended = np.zeros((len(a_extended), len(b_extended)))
-    M_extended[-nb_dummies:, -nb_dummies:] = np.max(M) * 2
-    M_extended[:len(a), :len(b)] = M
+    b_extension = nx.ones(nb_dummies, type_as=b) * (nx.sum(a) - m) / nb_dummies
+    b_extended = nx.concatenate((b, b_extension))
+    a_extension = nx.ones(nb_dummies, type_as=a) * (nx.sum(b) - m) / nb_dummies
+    a_extended = nx.concatenate((a, a_extension))
+    M_extension = nx.ones((nb_dummies, nb_dummies), type_as=M) * nx.max(M) * 2
+    M_extended = nx.concatenate(
+        (nx.concatenate((M, nx.zeros((M.shape[0], M_extension.shape[1]))), axis=1),
+         nx.concatenate((nx.zeros((M_extension.shape[0], M.shape[1])), M_extension), axis=1)),
+        axis=0
+    )
 
     gamma, log_emd = emd(a_extended, b_extended, M_extended, log=True,
                          **kwargs)
 
-    gamma = nx.from_numpy(gamma[:len(a), :len(b)], type_as=M)
+    gamma = gamma[:len(a), :len(b)]
 
     if log_emd['warning'] is not None:
         raise ValueError("Error in the EMD resolution: try to increase the"
                          " number of dummy points")
-    log_emd['partial_w_dist'] = nx.sum(M0 * gamma)
-    log_emd['u'] = nx.from_numpy(log_emd['u'][:len(a)], type_as=a0)
-    log_emd['v'] = nx.from_numpy(log_emd['v'][:len(b)], type_as=b0)
+    log_emd['partial_w_dist'] = nx.sum(M * gamma)
+    log_emd['u'] = log_emd['u'][:len(a)]
+    log_emd['v'] = log_emd['v'][:len(b)]
 
     if log:
         return gamma, log_emd

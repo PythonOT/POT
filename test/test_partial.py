@@ -152,20 +152,18 @@ def test_partial_wasserstein_gradients():
     M = ot.dist(x, y)
 
     if torch:
+        a1 = torch.tensor(a, requires_grad=True, dtype=torch.float64)
+        b1 = torch.tensor(a, requires_grad=True, dtype=torch.float64)
+        M1 = torch.tensor(M, requires_grad=True, dtype=torch.float64)
 
-        a1 = torch.tensor(a, requires_grad=True)
-        b1 = torch.tensor(a, requires_grad=True)
-        M1 = torch.tensor(M, requires_grad=True)
-
-        val = ot.partial.partial_wasserstein(a1, b1, M1, m=m)
-
-        val.backward()
+        gamma = ot.partial.partial_wasserstein(a1, b1, M1, m=m)
+        
+        cost = torch.sum(gamma * M1)
+        cost.backward()
 
         assert a1.shape == a1.grad.shape
         assert b1.shape == b1.grad.shape
         assert M1.shape == M1.grad.shape
-
-        val = ot.partial.entropic_partial_wasserstein(p, q, M, reg=1, m=m)
 
 
 def test_partial_gromov_wasserstein():
