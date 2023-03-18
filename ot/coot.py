@@ -19,7 +19,8 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
                          warmstart=None, nits_bcd=100, tol_bcd=1e-7, eval_bcd=1,
                          nits_ot=500, tol_sinkhorn=1e-7, method_sinkhorn="sinkhorn",
                          early_stopping_tol=1e-6, log=False, verbose=False):
-    r"""
+    r"""Compute the CO-Optimal Transport between two matrices.
+
     Return the sample and feature transport plans between
     :math:`(\mathbf{X}, \mathbf{w}_{xs}, \mathbf{w}_{xf})` and
     :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`.
@@ -47,7 +48,7 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
     - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
 
     .. note:: This function allows epsilon to be zero.
-    In that case, the :any:`ot.lp.emd` solver of POT will be used.
+              In that case, the :any:`ot.lp.emd` solver of POT will be used.
 
     Parameters
     ----------
@@ -81,14 +82,15 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
         Feature matrix with respect to the linear term on feature coupling.
     warmstart : dictionary, optional (default = None)
         Contains 4 keys:
-            + "duals_sample" and "duals_feature" whose values are
-            tuples of 2 vectors of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
-            Initialization of sample and feature dual vectors
-            if using Sinkhorn algorithm. Zero vectors by default.
-            + "pi_sample" and "pi_feature" whose values are matrices
-            of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
-            Initialization of sample and feature couplings.
-            Uniform distributions by default.
+            - "duals_sample" and "duals_feature" whose values are
+              tuples of 2 vectors of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
+              Initialization of sample and feature dual vectors
+              if using Sinkhorn algorithm. Zero vectors by default.
+
+            - "pi_sample" and "pi_feature" whose values are matrices
+              of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
+              Initialization of sample and feature couplings.
+              Uniform distributions by default.
     nits_bcd : int, optional (default = 100)
         Number of Block Coordinate Descent (BCD) iterations to solve COOT.
     tol_bcd : float, optional (default = 1e-7)
@@ -122,14 +124,14 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
         Sample coupling matrix.
     pi_feat : (n_feature_x, n_feature_y) array-like, float
         Feature coupling matrix.
-
-    if log is True, then return additionally a dictionary whose keys are:
-        duals_sample : (n_sample_x, n_sample_y) tuple, float
-            Pair of dual vectors when solving OT problem w.r.t the sample coupling.
-        duals_feature : (n_feature_x, n_feature_y) tuple, float
-            Pair of dual vectors when solving OT problem w.r.t the feature coupling.
-        distances : list, float
-            List of COOT distances.
+    log : dictionary, optional
+        Returned if `log` is True. The keys are:
+            duals_sample : (n_sample_x, n_sample_y) tuple, float
+                Pair of dual vectors when solving OT problem w.r.t the sample coupling.
+            duals_feature : (n_feature_x, n_feature_y) tuple, float
+                Pair of dual vectors when solving OT problem w.r.t the feature coupling.
+            distances : list, float
+                List of COOT distances.
 
     References
     ----------
@@ -276,8 +278,9 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
                           nits_bcd=100, tol_bcd=1e-7, eval_bcd=1,
                           nits_ot=500, tol_sinkhorn=1e-7,
                           method_sinkhorn="sinkhorn"):
-    r"""
-    Return the CO-Optimal Transport distance between
+    r"""Compute the CO-Optimal Transport distance between two measures.
+
+    Returns the CO-Optimal Transport distance between
     :math:`(\mathbf{X}, \mathbf{w}_{xs}, \mathbf{w}_{xf})` and
     :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`.
 
@@ -304,7 +307,7 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
     - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
 
     .. note:: This function allows epsilon to be zero.
-    In that case, the :any:`ot.lp.emd` solver of POT will be used.
+              In that case, the :any:`ot.lp.emd` solver of POT will be used.
 
     Parameters
     ----------
@@ -338,11 +341,12 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
         Feature matrix with respect to the linear term on feature coupling.
     warmstart : dictionary, optional (default = None)
         Contains 4 keys:
-            + "duals_sample" and "duals_feature" whose values are
+            - "duals_sample" and "duals_feature" whose values are
             tuples of 2 vectors of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
             Initialization of sample and feature dual vectors
             if using Sinkhorn algorithm. Zero vectors by default.
-            + "pi_sample" and "pi_feature" whose values are matrices
+
+            - "pi_sample" and "pi_feature" whose values are matrices
             of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
             Initialization of sample and feature couplings.
             Uniform distributions by default.
@@ -375,9 +379,11 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
 
     Returns
     -------
-    CO-Optimal Transport distance : float
-
-    If log is True, then also return the dictionary output of :any:`co_optimal_transport` solver.
+    float
+        CO-Optimal Transport distance.
+    dict
+        Contains logged informations from :any:`co_optimal_transport` solver.
+        Only returned if `log` parameter is True
 
     References
     ----------
