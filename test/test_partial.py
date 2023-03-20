@@ -181,6 +181,30 @@ def test_partial_wasserstein():
         np.testing.assert_allclose(G1.sum(), m, atol=1e-04)
 
 
+def test_partial_wasserstein2_gradient():
+    n_samples = 40
+
+    mu = np.array([0, 0])
+    cov = np.array([[1, 0], [0, 2]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
+
+    M = torch.tensor(ot.dist(xs, xt), requires_grad=True, dtype=torch.float64)
+
+    p = torch.tensor(ot.unif(n_samples), dtype=torch.float64)
+    q = torch.tensor(ot.unif(n_samples), dtype=torch.float64)
+
+    m = 0.5
+
+    w, log = ot.partial.partial_wasserstein2(p, q, M, m=m, log=True)
+    
+    w.backward()
+
+    assert M.grad is not None
+    assert M.grad.shape == M.shape
+
+
 def test_partial_gromov_wasserstein():
     rng = np.random.RandomState(seed=42)
     n_samples = 20  # nb samples
