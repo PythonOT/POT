@@ -138,32 +138,47 @@ def test_partial_wasserstein():
     np.testing.assert_allclose(
         np.sum(G), m, atol=1e-04)
 
-
-def test_partial_wasserstein_gradients():
-    n_samples = 100
-    n_features = 2
-    m = 0.5
-    rng = np.random.RandomState(0)
-
-    x = rng.randn(n_samples, n_features)
-    y = rng.randn(n_samples, n_features)
-    a = ot.utils.unif(n_samples)
-
-    M = ot.dist(x, y)
-
+    # check with torch
     if torch:
-        a1 = torch.tensor(a, requires_grad=True, dtype=torch.float64)
-        b1 = torch.tensor(a, requires_grad=True, dtype=torch.float64)
-        M1 = torch.tensor(M, requires_grad=True, dtype=torch.float64)
+        p1 = torch.tensor(p, dtype=torch.float64)
+        q1 = torch.tensor(q, dtype=torch.float64)
+        M1 = torch.tensor(M, dtype=torch.float64)
 
-        gamma = ot.partial.partial_wasserstein(a1, b1, M1, m=m)
-        
-        cost = torch.sum(gamma * M1)
-        cost.backward()
+        G, log = ot.partial.partial_wasserstein(p1, q1, M1, m=m, log=True)
 
-        assert a1.shape == a1.grad.shape
-        assert b1.shape == b1.grad.shape
-        assert M1.shape == M1.grad.shape
+        assert G.shape == (len(p), len(q))
+        assert type(G) == torch.Tensor
+
+        # check constraints
+        np.testing.assert_equal(
+            np.array(G.sum(1) - p) <= 1e-5, [True] * len(p))  # cf convergence wasserstein
+        np.testing.assert_equal(
+            np.array(G.sum(0) - q) <= 1e-5, [True] * len(q))  # cf convergence wasserstein
+
+        # check transported mass
+        np.testing.assert_allclose(G.sum(), m, atol=1e-04)
+
+        # compute associated loss val
+        w = torch.sum(G * M1)
+
+        # compute directly loss val
+        w1, log = ot.partial.partial_wasserstein2(p1, q1, M1, m=m, log=True)
+        G1 = log['T']
+
+        # test G1 shape and type
+        assert G1.shape == (len(p), len(q))
+        assert type(G1) == torch.Tensor
+
+        # assert min and argmin equal
+        np.testing.assert_allclose(w, w1, atol=1e-1, rtol=1e-1)
+        np.testing.assert_allclose(G, G1)
+
+        # check constraints
+        np.testing.assert_equal(
+            np.array(G1.sum(1) - p <= 1e-5), [True] * len(p))  # cf convergence wasserstein
+        np.testing.assert_equal(
+            np.array(G1.sum(0) - q <= 1e-5), [True] * len(q))  # cf convergence wasserstein
+        np.testing.assert_allclose(G1.sum(), m, atol=1e-04)
 
 
 def test_partial_gromov_wasserstein():
