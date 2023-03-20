@@ -390,14 +390,18 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
         NeurIPS.
     """
 
+    a, b, M = list_to_array(a, b, M)
+
+    nx = get_backend(a, b, M)
+
     partial_gw, log_w = partial_wasserstein(a, b, M, m, nb_dummies, log=True,
                                             **kwargs)
     log_w['T'] = partial_gw
 
     if log:
-        return np.sum(partial_gw * M), log_w
+        return nx.sum(partial_gw * M), log_w
     else:
-        return np.sum(partial_gw * M)
+        return nx.sum(partial_gw * M)
 
 
 def gwgrad_partial(C1, C2, T):
