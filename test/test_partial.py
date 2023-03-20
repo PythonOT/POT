@@ -8,7 +8,7 @@
 import numpy as np
 import scipy as sp
 import ot
-from ot.backend import torch, tf
+from ot.backend import torch
 import pytest
 
 
