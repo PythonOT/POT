@@ -843,60 +843,64 @@ def entropic_partial_wasserstein(a, b, M, reg, m=None, numItermax=1000,
     ot.partial.partial_wasserstein: exact Partial Wasserstein
     """
 
-    a = np.asarray(a, dtype=np.float64)
-    b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    a, b, M = list_to_array(a, b, M)
+
+    nx = get_backend(a, b, M)
 
     dim_a, dim_b = M.shape
-    dx = np.ones(dim_a, dtype=np.float64)
-    dy = np.ones(dim_b, dtype=np.float64)
+    dx = nx.ones(dim_a, type_as=a)
+    dy = nx.ones(dim_b, type_as=b)
 
     if len(a) == 0:
-        a = np.ones(dim_a, dtype=np.float64) / dim_a
+        a = nx.ones(dim_a, type_as=a) / dim_a
     if len(b) == 0:
-        b = np.ones(dim_b, dtype=np.float64) / dim_b
+        b = nx.ones(dim_b, type_as=b) / dim_b
 
     if m is None:
-        m = np.min((np.sum(a), np.sum(b))) * 1.0
+        m = nx.min(nx.stack((nx.sum(a), nx.sum(b)))) * 1.0
     if m < 0:
         raise ValueError("Problem infeasible. Parameter m should be greater"
                          " than 0.")
-    if m > np.min((np.sum(a), np.sum(b))):
+    if m > nx.min(nx.stack((nx.sum(a), nx.sum(b)))):
         raise ValueError("Problem infeasible. Parameter m should lower or"
                          " equal than min(|a|_1, |b|_1).")
 
     log_e = {'err': []}
 
-    # Next 3 lines equivalent to K=np.exp(-M/reg), but faster to compute
-    K = np.empty(M.shape, dtype=M.dtype)
-    np.divide(M, -reg, out=K)
-    np.exp(K, out=K)
-    np.multiply(K, m / np.sum(K), out=K)
+    if type(a) == type(b) == type(M) == np.ndarray:
+        # Next 3 lines equivalent to K=nx.exp(-M/reg), but faster to compute
+        K = np.empty(M.shape, dtype=M.dtype)
+        np.divide(M, -reg, out=K)
+        np.exp(K, out=K)
+        np.multiply(K, m / np.sum(K), out=K)
+    else:
+        K = nx.exp(-M / reg)
+        K = K * m / nx.sum(K)
 
     err, cpt = 1, 0
-    q1 = np.ones(K.shape)
-    q2 = np.ones(K.shape)
-    q3 = np.ones(K.shape)
+    q1 = nx.ones(K.shape, type_as=K)
+    q2 = nx.ones(K.shape, type_as=K)
+    q3 = nx.ones(K.shape, type_as=K)
 
     while (err > stopThr and cpt < numItermax):
         Kprev = K
         K = K * q1
-        K1 = np.dot(np.diag(np.minimum(a / np.sum(K, axis=1), dx)), K)
+        K1 = nx.dot(nx.diag(nx.minimum(a / nx.sum(K, axis=1), dx)), K)
         q1 = q1 * Kprev / K1
         K1prev = K1
         K1 = K1 * q2
-        K2 = np.dot(K1, np.diag(np.minimum(b / np.sum(K1, axis=0), dy)))
+        K2 = nx.dot(K1, nx.diag(nx.minimum(b / nx.sum(K1, axis=0), dy)))
         q2 = q2 * K1prev / K2
         K2prev = K2
         K2 = K2 * q3
-        K = K2 * (m / np.sum(K2))
+        K = K2 * (m / nx.sum(K2))
         q3 = q3 * K2prev / K
 
-        if np.any(np.isnan(K)) or np.any(np.isinf(K)):
+        if nx.any(nx.isnan(K)) or nx.any(nx.isinf(K)):
             print('Warning: numerical errors at iteration', cpt)
             break
         if cpt % 10 == 0:
-            err = np.linalg.norm(Kprev - K)
+            err = nx.norm(Kprev - K)
             if log:
                 log_e['err'].append(err)
             if verbose:
@@ -906,7 +910,7 @@ def entropic_partial_wasserstein(a, b, M, reg, m=None, numItermax=1000,
                 print('{:5d}|{:8e}|'.format(cpt, err))
 
         cpt = cpt + 1
-    log_e['partial_w_dist'] = np.sum(M * K)
+    log_e['partial_w_dist'] = nx.sum(M * K)
     if log:
         return K, log_e
     else:
