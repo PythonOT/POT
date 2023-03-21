@@ -8,11 +8,8 @@
 import numpy as np
 import scipy as sp
 import ot
-from ot.backend import get_backend_list, tf, to_numpy
+from ot.backend import to_numpy, torch
 import pytest
-
-
-backend_list = get_backend_list()
 
 
 def test_raise_errors():
@@ -86,7 +83,6 @@ def test_partial_wasserstein_lagrange():
     w0, log0 = ot.partial.partial_wasserstein_lagrange(p, q, M, 100, log=True)
 
 
-@pytest.mark.parametrize('nx', backend_list)
 def test_partial_wasserstein(nx):
 
     n_samples = 20  # nb samples (gaussian)
@@ -136,56 +132,58 @@ def test_partial_wasserstein(nx):
 
 
 def test_partial_wasserstein2_gradient():
-    n_samples = 40
+    if torch:
+        n_samples = 40
 
-    mu = np.array([0, 0])
-    cov = np.array([[1, 0], [0, 2]])
+        mu = np.array([0, 0])
+        cov = np.array([[1, 0], [0, 2]])
 
-    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
-    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
+        xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
+        xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
 
-    M = torch.tensor(ot.dist(xs, xt), requires_grad=True, dtype=torch.float64)
+        M = torch.tensor(ot.dist(xs, xt), requires_grad=True, dtype=torch.float64)
 
-    p = torch.tensor(ot.unif(n_samples), dtype=torch.float64)
-    q = torch.tensor(ot.unif(n_samples), dtype=torch.float64)
+        p = torch.tensor(ot.unif(n_samples), dtype=torch.float64)
+        q = torch.tensor(ot.unif(n_samples), dtype=torch.float64)
 
-    m = 0.5
+        m = 0.5
 
-    w, log = ot.partial.partial_wasserstein2(p, q, M, m=m, log=True)
+        w, log = ot.partial.partial_wasserstein2(p, q, M, m=m, log=True)
 
-    w.backward()
+        w.backward()
 
-    assert M.grad is not None
-    assert M.grad.shape == M.shape
+        assert M.grad is not None
+        assert M.grad.shape == M.shape
 
 
 def test_entropic_partial_wasserstein_gradient():
-    n_samples = 40
+    if torch:
+        n_samples = 40
 
-    mu = np.array([0, 0])
-    cov = np.array([[1, 0], [0, 2]])
+        mu = np.array([0, 0])
+        cov = np.array([[1, 0], [0, 2]])
 
-    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
-    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
+        xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
+        xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
 
-    M = torch.tensor(ot.dist(xs, xt), requires_grad=True, dtype=torch.float64)
+        M = torch.tensor(ot.dist(xs, xt), requires_grad=True, dtype=torch.float64)
 
-    p = torch.tensor(ot.unif(n_samples), requires_grad=True, dtype=torch.float64)
-    q = torch.tensor(ot.unif(n_samples), requires_grad=True, dtype=torch.float64)
+        p = torch.tensor(ot.unif(n_samples), requires_grad=True, dtype=torch.float64)
+        q = torch.tensor(ot.unif(n_samples), requires_grad=True, dtype=torch.float64)
 
-    m = 0.5
-    reg = 1
+        m = 0.5
+        reg = 1
 
-    _, log = ot.partial.entropic_partial_wasserstein(p, q, M, m=m, reg=reg, log=True)
+        _, log = ot.partial.entropic_partial_wasserstein(p, q, M, m=m, reg=reg, log=True)
 
-    log['partial_w_dist'].backward()
+        log['partial_w_dist'].backward()
 
-    assert M.grad is not None
-    assert p.grad is not None
-    assert q.grad is not None
-    assert M.grad.shape == M.shape
-    assert p.grad.shape == p.shape
-    assert q.grad.shape == q.shape
+        assert M.grad is not None
+        assert p.grad is not None
+        assert q.grad is not None
+        assert M.grad.shape == M.shape
+        assert p.grad.shape == p.shape
+        assert q.grad.shape == q.shape
 
 
 def test_partial_gromov_wasserstein():
