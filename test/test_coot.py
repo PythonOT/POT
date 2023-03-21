@@ -327,3 +327,31 @@ def test_coot_log(nx):
 
     list_coot_nx = log_nx["distances"]
     assert len(list_coot_nx) >= 1
+
+    # test with coot distance
+    coot_np, log = coot2(X=xs, Y=xt, log=True)
+    coot_nx, log_nx = nx.to_numpy(coot2(X=xs_nx, Y=xt_nx, log=True))
+
+    duals_sample, duals_feature = log["duals_sample"], log["duals_feature"]
+    assert len(duals_sample) == 2
+    assert len(duals_feature) == 2
+    assert len(duals_sample[0]) == n_samples
+    assert len(duals_sample[1]) == n_samples
+    assert len(duals_feature[0]) == 2
+    assert len(duals_feature[1]) == 2
+
+    duals_sample_nx = log_nx["duals_sample"]
+    assert len(duals_sample_nx) == 2
+    assert len(duals_sample_nx[0]) == n_samples
+    assert len(duals_sample_nx[1]) == n_samples
+
+    duals_feature_nx = log_nx["duals_feature"]
+    assert len(duals_feature_nx) == 2
+    assert len(duals_feature_nx[0]) == 2
+    assert len(duals_feature_nx[1]) == 2
+
+    list_coot = log["distances"]
+    assert len(list_coot) >= 1
+
+    list_coot_nx = log_nx["distances"]
+    assert len(list_coot_nx) >= 1
