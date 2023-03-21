@@ -8,9 +8,10 @@ import numpy as np
 import ot
 from ot.coot import co_optimal_transport as coot
 from ot.coot import co_optimal_transport2 as coot2
+import pytest
 
-
-def test_coot(nx):
+@pytest.mark.parametrize("verbose", [False, True, 1, 0])
+def test_coot(nx, verbose):
     n_samples = 60  # nb samples
 
     mu_s = np.array([0, 0])
@@ -23,8 +24,8 @@ def test_coot(nx):
     xt_nx = nx.from_numpy(xt)
 
     # test couplings
-    pi_sample, pi_feature = coot(X=xs, Y=xt)
-    pi_sample_nx, pi_feature_nx = coot(X=xs_nx, Y=xt_nx)
+    pi_sample, pi_feature = coot(X=xs, Y=xt, verbose=verbose)
+    pi_sample_nx, pi_feature_nx = coot(X=xs_nx, Y=xt_nx, verbose=verbose)
     pi_sample_nx = nx.to_numpy(pi_sample_nx)
     pi_feature_nx = nx.to_numpy(pi_feature_nx)
 
@@ -52,8 +53,8 @@ def test_coot(nx):
 
     # test COOT distance
 
-    coot_np = coot2(X=xs, Y=xt)
-    coot_nx = nx.to_numpy(coot2(X=xs_nx, Y=xt_nx))
+    coot_np = coot2(X=xs, Y=xt, verbose=verbose)
+    coot_nx = nx.to_numpy(coot2(X=xs_nx, Y=xt_nx, verbose=verbose))
     np.testing.assert_allclose(coot_np, 0, atol=1e-08)
     np.testing.assert_allclose(coot_nx, 0, atol=1e-08)
 
