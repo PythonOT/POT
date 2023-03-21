@@ -14,7 +14,7 @@
 - Added Generalized Wasserstein Barycenter solver + example (PR #372), fixed graphical details on the example (PR #376)
 - Added Free Support Sinkhorn Barycenter + example (PR #387)
 - New API for OT solver using function `ot.solve` (PR #388)
-- Backend version of `ot.partial` and `ot.smooth` (PR #388)
+- Backend version of `ot.partial` and `ot.smooth` (PR #388 and #449)
 - Added argument for warmstart of dual potentials in Sinkhorn-based methods in `ot.bregman` (PR #437)
 - Add parameters method in `ot.da.SinkhornTransport` (PR #440)
 - `ot.dr` now uses the new Pymanopt API and POT is compatible with current Pymanopt (PR #443)
