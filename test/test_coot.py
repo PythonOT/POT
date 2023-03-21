@@ -9,6 +9,7 @@ import ot
 from ot.coot import co_optimal_transport as coot
 from ot.coot import co_optimal_transport2 as coot2
 
+
 @pytest.mark.parametrize("verbose", [False, True, 1, 0])
 def test_coot(nx, verbose):
     n_samples = 60  # nb samples
