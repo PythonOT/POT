@@ -135,7 +135,7 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
 
     References
     ----------
-    .. [47] I. Redko, T. Vayer, R. Flamary, and N. Courty, CO-Optimal Transport,
+    .. [49] I. Redko, T. Vayer, R. Flamary, and N. Courty, CO-Optimal Transport,
         Advances in Neural Information Processing ny_sampstems, 33 (2020).
     """
 
