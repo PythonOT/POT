@@ -120,7 +120,7 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
 
     nx = get_backend(a, b, M)
 
-    if nx.sum(a) > 1 or nx.sum(b) > 1:
+    if nx.sum(a) > 1 + 1e-15 or nx.sum(b) > 1 + 1e-15:  # 1e-15 for numerical errors
         raise ValueError("Problem infeasible. Check that a and b are in the "
                          "simplex")
 
@@ -269,6 +269,12 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     a, b, M = list_to_array(a, b, M)
 
     nx = get_backend(a, b, M)
+
+    dim_a, dim_b = M.shape
+    if len(a) == 0:
+        a = nx.ones(dim_a, type_as=a) / dim_a
+    if len(b) == 0:
+        b = nx.ones(dim_b, type_as=b) / dim_b
 
     if m is None:
         return partial_wasserstein_lagrange(a, b, M, log=log, **kwargs)
