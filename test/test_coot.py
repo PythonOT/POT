@@ -8,6 +8,7 @@ import numpy as np
 import ot
 from ot.coot import co_optimal_transport as coot
 from ot.coot import co_optimal_transport2 as coot2
+import pytest
 
 
 @pytest.mark.parametrize("verbose", [False, True, 1, 0])
