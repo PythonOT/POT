@@ -105,8 +105,8 @@ def test_partial_wasserstein(nx):
 
     p, q, M = nx.from_numpy(p, q, M)
 
-    w0 = ot.partial.partial_wasserstein(p, q, M, m=m, log=False)
-    w = ot.partial.entropic_partial_wasserstein(p, q, M, reg=1, m=m, log=False, verbose=False)
+    w0, log0 = ot.partial.partial_wasserstein(p, q, M, m=m, log=True)
+    w, log = ot.partial.entropic_partial_wasserstein(p, q, M, reg=1, m=m, log=True, verbose=True)
 
     # check constraints
     np.testing.assert_equal(to_numpy(nx.sum(w0, axis=1) - p) <= 1e-5, [True] * len(p))
@@ -129,6 +129,29 @@ def test_partial_wasserstein(nx):
     np.testing.assert_equal(to_numpy(nx.sum(G, axis=1) - p) <= 1e-5, [True] * len(p))
     np.testing.assert_equal(to_numpy(nx.sum(G, axis=0) - q) <= 1e-5, [True] * len(q))
     np.testing.assert_allclose(np.sum(to_numpy(G)), m, atol=1e-04)
+
+    empty_array = nx.zeros(0, type_as=M)
+    w = ot.partial.partial_wasserstein(empty_array, empty_array, M=M, m=None)
+
+    # check constraints
+    np.testing.assert_equal(to_numpy(nx.sum(w, axis=1) - p) <= 1e-5, [True] * len(p))
+    np.testing.assert_equal(to_numpy(nx.sum(w, axis=0) - q) <= 1e-5, [True] * len(q))
+    np.testing.assert_equal(to_numpy(nx.sum(w, axis=1) - p) <= 1e-5, [True] * len(p))
+    np.testing.assert_equal(to_numpy(nx.sum(w, axis=0) - q) <= 1e-5, [True] * len(q))
+
+    # check transported mass
+    np.testing.assert_allclose(np.sum(to_numpy(w)), 1, atol=1e-04)
+
+    w0 = ot.partial.entropic_partial_wasserstein(empty_array, empty_array, M=M, reg=10, m=None)
+
+    # check constraints
+    np.testing.assert_equal(to_numpy(nx.sum(w0, axis=1) - p) <= 1e-5, [True] * len(p))
+    np.testing.assert_equal(to_numpy(nx.sum(w0, axis=0) - q) <= 1e-5, [True] * len(q))
+    np.testing.assert_equal(to_numpy(nx.sum(w0, axis=1) - p) <= 1e-5, [True] * len(p))
+    np.testing.assert_equal(to_numpy(nx.sum(w0, axis=0) - q) <= 1e-5, [True] * len(q))
+
+    # check transported mass
+    np.testing.assert_allclose(np.sum(to_numpy(w0)), 1, atol=1e-04)
 
 
 def test_partial_wasserstein2_gradient():
