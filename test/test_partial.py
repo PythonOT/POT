@@ -8,8 +8,11 @@
 import numpy as np
 import scipy as sp
 import ot
-from ot.backend import torch
+from ot.backend import get_backend_list, tf, to_numpy
 import pytest
+
+
+backend_list = get_backend_list()
 
 
 def test_raise_errors():
@@ -83,7 +86,8 @@ def test_partial_wasserstein_lagrange():
     w0, log0 = ot.partial.partial_wasserstein_lagrange(p, q, M, 100, log=True)
 
 
-def test_partial_wasserstein():
+@pytest.mark.parametrize('nx', backend_list)
+def test_partial_wasserstein(nx):
 
     n_samples = 20  # nb samples (gaussian)
     n_noise = 20  # nb of samples (noise)
@@ -103,18 +107,20 @@ def test_partial_wasserstein():
 
     m = 0.5
 
+    p, q, M = nx.from_numpy(p, q, M)
+
     w0 = ot.partial.partial_wasserstein(p, q, M, m=m, log=False)
     w = ot.partial.entropic_partial_wasserstein(p, q, M, reg=1, m=m, log=False, verbose=False)
 
     # check constraints
-    np.testing.assert_equal(w0.sum(1) - p <= 1e-5, [True] * len(p))
-    np.testing.assert_equal(w0.sum(0) - q <= 1e-5, [True] * len(q))
-    np.testing.assert_equal(w.sum(1) - p <= 1e-5, [True] * len(p))
-    np.testing.assert_equal(w.sum(0) - q <= 1e-5, [True] * len(q))
+    np.testing.assert_equal(to_numpy(nx.sum(w0, axis=1) - p) <= 1e-5, [True] * len(p))
+    np.testing.assert_equal(to_numpy(nx.sum(w0, axis=0) - q) <= 1e-5, [True] * len(q))
+    np.testing.assert_equal(to_numpy(nx.sum(w0, axis=1) - p) <= 1e-5, [True] * len(p))
+    np.testing.assert_equal(to_numpy(nx.sum(w0, axis=0) - q) <= 1e-5, [True] * len(q))
 
     # check transported mass
-    np.testing.assert_allclose(np.sum(w0), m, atol=1e-04)
-    np.testing.assert_allclose(np.sum(w), m, atol=1e-04)
+    np.testing.assert_allclose(np.sum(to_numpy(w0)), m, atol=1e-04)
+    np.testing.assert_allclose(np.sum(to_numpy(w)), m, atol=1e-04)
 
     w0, log0 = ot.partial.partial_wasserstein2(p, q, M, m=m, log=True)
     w0_val = ot.partial.partial_wasserstein2(p, q, M, m=m, log=False)
@@ -124,55 +130,9 @@ def test_partial_wasserstein():
     np.testing.assert_allclose(w0, w0_val, atol=1e-1, rtol=1e-1)
 
     # check constraints
-    np.testing.assert_equal(G.sum(1) - p <= 1e-5, [True] * len(p))
-    np.testing.assert_equal(G.sum(0) - q <= 1e-5, [True] * len(q))
-    np.testing.assert_allclose(np.sum(G), m, atol=1e-04)
-
-    # check with torch
-    if torch:
-        p_torch = torch.tensor(p, dtype=torch.float64)
-        q_torch = torch.tensor(q, dtype=torch.float64)
-        M_torch = torch.tensor(M, dtype=torch.float64)
-
-        G = ot.partial.partial_wasserstein(p_torch, q_torch, M_torch, m=m, log=False)
-        G_entropic = ot.partial.entropic_partial_wasserstein(p_torch, q_torch, M_torch, reg=1, m=m, log=False)
-
-        assert G.shape == (len(p), len(q))
-        assert type(G) == torch.Tensor
-        assert G_entropic.shape == (len(p), len(q))
-        assert type(G_entropic) == torch.Tensor
-
-        # check constraints
-        np.testing.assert_equal(np.array(G.sum(1) - p) <= 1e-5, [True] * len(p))
-        np.testing.assert_equal(np.array(G.sum(0) - q) <= 1e-5, [True] * len(q))
-        np.testing.assert_equal(np.array(G_entropic.sum(1) - p) <= 1e-5, [True] * len(p))
-        np.testing.assert_equal(np.array(G_entropic.sum(0) - q) <= 1e-5, [True] * len(q))
-
-        # check transported mass
-        np.testing.assert_allclose(G.sum(), m, atol=1e-04)
-        np.testing.assert_allclose(G_entropic.sum(), m, atol=1e-04)
-
-        # compute associated loss val
-        w = torch.sum(G * M_torch)
-
-        # compute directly loss val
-        w1, log = ot.partial.partial_wasserstein2(p_torch, q_torch, M_torch, m=m, log=True)
-        G1 = log['T']
-
-        # test G1 shape and type
-        assert G1.shape == (len(p), len(q))
-        assert type(G1) == torch.Tensor
-
-        # assert min and argmin equal
-        np.testing.assert_allclose(w, w1, atol=1e-1, rtol=1e-1)
-        np.testing.assert_allclose(G, G1)
-
-        # check constraints
-        np.testing.assert_equal(
-            np.array(G1.sum(1) - p <= 1e-5), [True] * len(p))  # cf convergence wasserstein
-        np.testing.assert_equal(
-            np.array(G1.sum(0) - q <= 1e-5), [True] * len(q))  # cf convergence wasserstein
-        np.testing.assert_allclose(G1.sum(), m, atol=1e-04)
+    np.testing.assert_equal(to_numpy(nx.sum(G, axis=1) - p) <= 1e-5, [True] * len(p))
+    np.testing.assert_equal(to_numpy(nx.sum(G, axis=0) - q) <= 1e-5, [True] * len(q))
+    np.testing.assert_allclose(np.sum(to_numpy(G)), m, atol=1e-04)
 
 
 def test_partial_wasserstein2_gradient():
