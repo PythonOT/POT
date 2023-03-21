@@ -11,7 +11,7 @@ random matrices :math:`X_1` and :math:`X_2` defined by
 :math:`(X_1)_{i,j} = \cos(\frac{i}{n_1} \pi) + \cos(\frac{j}{d_1} \pi) + \sigma \mathcal N(0,1)`
 and :math:`(X_2)_{i,j} = \cos(\frac{i}{n_2} \pi) + \cos(\frac{j}{d_2} \pi) + \sigma \mathcal N(0,1)`.
 
-.. [47] Redko, I., Vayer, T., Flamary, R., and Courty, N. (2020).
+.. [49] Redko, I., Vayer, T., Flamary, R., and Courty, N. (2020).
    `CO-Optimal Transport <https://proceedings.neurips.cc/paper/2020/file/cc384c68ad503482fb24e6d1e3b512ae-Paper.pdf>`_.
    Advances in Neural Information Processing Systems, 33.
 """
