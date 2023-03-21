@@ -8,8 +8,6 @@ import numpy as np
 import ot
 from ot.coot import co_optimal_transport as coot
 from ot.coot import co_optimal_transport2 as coot2
-import pytest
-
 
 @pytest.mark.parametrize("verbose", [False, True, 1, 0])
 def test_coot(nx, verbose):
@@ -332,7 +330,7 @@ def test_coot_log(nx):
 
     # test with coot distance
     coot_np, log = coot2(X=xs, Y=xt, log=True)
-    coot_nx, log_nx = nx.to_numpy(coot2(X=xs_nx, Y=xt_nx, log=True))
+    coot_nx, log_nx = coot2(X=xs_nx, Y=xt_nx, log=True)
 
     duals_sample, duals_feature = log["duals_sample"], log["duals_feature"]
     assert len(duals_sample) == 2
