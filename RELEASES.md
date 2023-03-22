@@ -16,8 +16,10 @@
 - New API for OT solver using function `ot.solve` (PR #388)
 - Backend version of `ot.partial` and `ot.smooth` (PR #388 and #449)
 - Added argument for warmstart of dual potentials in Sinkhorn-based methods in `ot.bregman` (PR #437)
-- Add parameters method in `ot.da.SinkhornTransport` (PR #440)
-- `ot.dr` now uses the new Pymanopt API and POT is compatible with current Pymanopt (PR #443)
+- Added parameters method in `ot.da.SinkhornTransport` (PR #440)
+- `ot.dr` now uses the new Pymanopt API and POT is compatible with current
+  Pymanopt (PR #443)
+- Added CO-Optimal Transport solver + examples (PR # 447)
 - Remove the redundant `nx.abs()` at the end of `wasserstein_1d()` (PR #448)
 
 #### Closed issues
