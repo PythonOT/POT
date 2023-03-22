@@ -16,6 +16,7 @@ API and modules
    
    backend
    bregman
+   coot
    da
    datasets
    dr
