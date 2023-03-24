@@ -1,0 +1,44 @@
+name: Build doc
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - 'master'  
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    # Standard drop-in approach that should work for most people.
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+
+    - name: Get Python running
+      run: |
+        python -m pip install --user --upgrade --progress-bar off pip
+        python -m pip install --user --upgrade --progress-bar off -r requirements.txt
+        python -m pip install --user --upgrade --progress-bar off -r docs/requirements.txt
+        python -m pip install --user --upgrade --progress-bar off ipython "https://api.github.com/repos/sphinx-gallery/sphinx-gallery/zipball/master" memory_profiler
+        python -m pip install --user -e .
+    # Look at what we have and fail early if there is some library conflict
+    - name: Check installation
+      run: |
+        which python
+        python -c "import ot"
+    # Build docs
+    - name: Generate HTML docs
+      uses: rickstaa/sphinx-action@master
+      with:
+        docs-folder: "docs/"
+    - uses: actions/upload-artifact@v1
+      with:
+        name: Documentation
+        path: docs/build/html/
