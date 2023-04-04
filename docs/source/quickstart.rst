@@ -127,14 +127,6 @@ been used to solve both graph Laplacian regularization OT and Gromov
 Wasserstein [30]_.
 
 
-.. note::
-
-    POT is originally designed to solve OT problems with Numpy interface and
-    is not yet compatible with Pytorch API. We are currently working on a torch
-    submodule that will provide OT solvers and losses for the most common deep
-    learning configurations.
-
-
 When not to use POT
 """""""""""""""""""
 
@@ -692,42 +684,8 @@ A list of the provided implementation is given in the following note.
     :heading-level: "
 
 
-Other applications
-------------------
-
-We discuss in the following several OT related problems and tools that has been
-proposed in the OT and machine learning community.
-
-Wasserstein Discriminant Analysis
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Wasserstein Discriminant Analysis [11]_ is a generalization of `Fisher Linear Discriminant
-Analysis <https://en.wikipedia.org/wiki/Linear_discriminant_analysis>`__ that
-allows discrimination between classes that are not linearly separable. It
-consists in finding a linear projector optimizing the following criterion
-
-.. math::
-    P = \text{arg}\min_P \frac{\sum_i OT_e(\mu_i\#P,\mu_i\#P)}{\sum_{i,j\neq i}
-    OT_e(\mu_i\#P,\mu_j\#P)}
-
-where :math:`\#` is the push-forward operator, :math:`OT_e` is the entropic OT
-loss and :math:`\mu_i` is the
-distribution of samples from class :math:`i`.  :math:`P` is also constrained to
-be in the Stiefel manifold. WDA can be solved in POT using function
-:any:`ot.dr.wda`. It requires to have installed :code:`pymanopt` and
-:code:`autograd` for manifold optimization and automatic differentiation
-respectively. Note that we also provide the Fisher discriminant estimator in
-:any:`ot.dr.fda` for easy comparison.
-
-.. warning::
-
-    Note that due to the hard dependency on  :code:`pymanopt` and
-    :code:`autograd`, :any:`ot.dr` is not imported by default. If you want to
-    use it you have to specifically import it with :code:`import ot.dr` .
-
-.. minigallery:: ot.dr.wda
-    :add-heading: Examples of the use of WDA
-    :heading-level: "
+Unbalanced and partial OT
+-------------------------
 
 
 
@@ -845,10 +803,11 @@ regularization of the problem.
     :heading-level: "
 
 
+Gromov Wasserstein and extensions
+---------------------------------
 
-
-Gromov-Wasserstein
-^^^^^^^^^^^^^^^^^^
+Gromov Wasserstein(GW)
+^^^^^^^^^^^^^^^^^^^^^^
 
 Gromov Wasserstein (GW) is a generalization of OT to distributions that do not lie in
 the same space [13]_. In this case one cannot compute distance between samples
@@ -877,6 +836,8 @@ There also exists an entropic regularized variant of GW that has been proposed i
     :add-heading: Examples of computation of GW, regularized G and FGW
     :heading-level: "
 
+Gromov Wasserstein barycenters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Note that similarly to Wasserstein distance GW allows for the definition of GW
 barycenters that can be expressed as
@@ -904,6 +865,43 @@ The implementations of FGW and FGW barycenter is provided in functions
     :add-heading: Examples of GW, regularized G and FGW barycenters
     :heading-level: "
 
+
+Other applications
+------------------
+
+We discuss in the following several OT related problems and tools that has been
+proposed in the OT and machine learning community.
+
+Wasserstein Discriminant Analysis
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Wasserstein Discriminant Analysis [11]_ is a generalization of `Fisher Linear Discriminant
+Analysis <https://en.wikipedia.org/wiki/Linear_discriminant_analysis>`__ that
+allows discrimination between classes that are not linearly separable. It
+consists in finding a linear projector optimizing the following criterion
+
+.. math::
+    P = \text{arg}\min_P \frac{\sum_i OT_e(\mu_i\#P,\mu_i\#P)}{\sum_{i,j\neq i}
+    OT_e(\mu_i\#P,\mu_j\#P)}
+
+where :math:`\#` is the push-forward operator, :math:`OT_e` is the entropic OT
+loss and :math:`\mu_i` is the
+distribution of samples from class :math:`i`.  :math:`P` is also constrained to
+be in the Stiefel manifold. WDA can be solved in POT using function
+:any:`ot.dr.wda`. It requires to have installed :code:`pymanopt` and
+:code:`autograd` for manifold optimization and automatic differentiation
+respectively. Note that we also provide the Fisher discriminant estimator in
+:any:`ot.dr.fda` for easy comparison.
+
+.. warning::
+
+    Note that due to the hard dependency on  :code:`pymanopt` and
+    :code:`autograd`, :any:`ot.dr` is not imported by default. If you want to
+    use it you have to specifically import it with :code:`import ot.dr` .
+
+.. minigallery:: ot.dr.wda
+    :add-heading: Examples of the use of WDA
+    :heading-level: "
 
 
 Solving OT with Multiple backends on CPU/GPU

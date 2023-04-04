@@ -8,7 +8,6 @@
     , :py:mod:`ot.unbalanced`.
     The following sub-modules are not imported due to additional dependencies:
     - :any:`ot.dr` : depends on :code:`pymanopt` and :code:`autograd`.
-    - :any:`ot.gpu` : depends on :code:`cupy` and a CUDA GPU.
     - :any:`ot.plot` : depends on :code:`matplotlib`
 """
 

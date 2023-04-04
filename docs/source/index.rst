@@ -21,9 +21,9 @@ Contents
    all
    auto_examples/index
    releases
-   .github/CONTRIBUTING
    contributors
-   .github/CODE_OF_CONDUCT
+   contributing
+   code_of_conduct
 
 
 .. include:: ../../README.md

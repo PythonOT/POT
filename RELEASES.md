@@ -3,7 +3,9 @@
 ## 0.8.3dev
 
 #### New features
-
+- Added feature to (Fused) Gromov-Wasserstein solvers herited from `ot.optim` to support relative and absolute loss variations as stopping criterions (PR #431)
+- Added feature to (Fused) Gromov-Wasserstein solvers to handle asymmetric matrices (PR #431)
+- Added semi-relaxed (Fused) Gromov-Wasserstein solvers in `ot.gromov` + examples (PR #431)
 - Added the spherical sliced-Wasserstein discrepancy in `ot.sliced.sliced_wasserstein_sphere` and `ot.sliced.sliced_wasserstein_sphere_unif` + examples (PR #434)
 - Added the Wasserstein distance on the circle in ``ot.lp.solver_1d.wasserstein_circle`` (PR #434)
 - Added the Wasserstein distance on the circle (for p>=1) in `ot.lp.solver_1d.binary_search_circle` + examples (PR #434)
@@ -12,9 +14,13 @@
 - Added Generalized Wasserstein Barycenter solver + example (PR #372), fixed graphical details on the example (PR #376)
 - Added Free Support Sinkhorn Barycenter + example (PR #387)
 - New API for OT solver using function `ot.solve` (PR #388)
-- Backend version of `ot.partial` and `ot.smooth` (PR #388)
+- Backend version of `ot.partial` and `ot.smooth` (PR #388 and #449)
 - Added argument for warmstart of dual potentials in Sinkhorn-based methods in `ot.bregman` (PR #437)
-- Add parameters method in `ot.da.SinkhornTransport` (PR #440)
+- Added parameters method in `ot.da.SinkhornTransport` (PR #440)
+- `ot.dr` now uses the new Pymanopt API and POT is compatible with current
+  Pymanopt (PR #443)
+- Added CO-Optimal Transport solver + examples (PR # 447)
+- Remove the redundant `nx.abs()` at the end of `wasserstein_1d()` (PR #448)
 
 #### Closed issues
 
@@ -42,7 +48,8 @@ PR #413)
 - Fix an issue where the parameter `stopThr` in `empirical_sinkhorn_divergence` was rendered useless by subcalls
   that explicitly specified `stopThr=1e-9` (Issue #421, PR #422).
 - Fixed a bug breaking an example where we would try to make an array of arrays of different shapes (Issue #424, PR #425)
-
+- Fixed an issue with the documentation gallery section (PR #444)
+- Fixed issues with cuda variables for `line_search_armijo` and `entropic_gromov_wasserstein` (Issue #445, #PR 446)
 
 ## 0.8.2
 
