@@ -15,7 +15,6 @@ Compare the speed of 1D Wasserstein barycenter between LP and DEMD.
 import numpy as np
 import matplotlib.pyplot as pl
 import ot
-from demd import demd
 
 # %%
 # Define 1d Barycenter Function and Compare Function
@@ -45,7 +44,7 @@ def compare_all(data, M, n, d):
     print('')
     print('D-EMD Algorithm:')
     ot.tic()
-    demd_obj = demd(np.vstack(data), n, d)
+    demd_obj = ot.demd(np.vstack(data), n, d)
     demd_time = ot.toc('')
     print('Obj\t: ', demd_obj)
     print('Time\t: ', demd_time)
@@ -54,6 +53,7 @@ def compare_all(data, M, n, d):
 # %%
 # 2 Random Dists with Increasing Bins
 # -----------------------------------
+
 
 def random2d(n=4):
     print('*'*10)
