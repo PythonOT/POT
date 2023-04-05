@@ -19,6 +19,7 @@ API and modules
    coot
    da
    datasets
+   demd
    dr
    factored
    gaussian
