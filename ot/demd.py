@@ -11,6 +11,7 @@ DEMD solvers for optimal transport
 import numpy as np
 from .backend import get_backend
 
+
 def greedy_primal_dual(aa, verbose=False):
     r"""
     The greedy algorithm that solves both primal and dual generalized Earth
@@ -49,7 +50,7 @@ def greedy_primal_dual(aa, verbose=False):
 
     References
     ----------
-    .. [1] Jeffery Kline. Properties of the d-dimensional earth mover’s
+    .. [51] Jeffery Kline. Properties of the d-dimensional earth mover’s
         problem. Discrete Applied Mathematics, 265: 128–141, 2019.
 
     Examples
@@ -136,7 +137,7 @@ def demd(x, d, n, return_dual_vars=False):
     
     References
     ----------
-    .. [1] Ronak Mehta, Jeffery Kline, Vishnu Suresh Lokhande, Glenn Fung, &
+    .. [50] Ronak Mehta, Jeffery Kline, Vishnu Suresh Lokhande, Glenn Fung, &
         Vikas Singh (2023). Efficient Discrete Multi Marginal Optimal
         Transport Regularization. In The Eleventh International
         Conference on Learning Representations.
