@@ -4,7 +4,14 @@ r"""
 1D Wasserstein barycenter: LP Barycenter vs DEMD
 =================================================================================
 
-Compare the speed of 1D Wasserstein barycenter between LP and DEMD.
+Compares the performance of two methods for computing the 1D Wasserstein
+barycenter:
+1. Linear Programming (LP) method
+2. Discrete Earth Mover's Distance (DEMD) method
+
+The comparison is performed by generating random Gaussian distributions with
+increasing numbers of bins and measuring the computation time of each method.
+The results are then plotted for visualization.
 """
 
 # Author: Ronak Mehta <ronakrm@cs.wisc.edu>
@@ -19,6 +26,10 @@ import ot
 # %%
 # Define 1d Barycenter Function and Compare Function
 # --------------------------------------------------
+# This section defines the functions `lp_1d_bary` and `compare_all`. The
+# `lp_1d_bary` function computes the barycenter using the LP method. The
+# `compare_all` function compares the LP method and DEMD method in terms of
+# computation time and objective values.
 
 
 def lp_1d_bary(data, M, n, d):
@@ -53,6 +64,8 @@ def compare_all(data, M, n, d):
 # %%
 # 2 Random Dists with Increasing Bins
 # -----------------------------------
+# Generates two random Gaussian distributions with increasing bin
+# sizes and compares the LP and DEMD methods
 
 
 def random2d(n=4):
@@ -86,8 +99,12 @@ ns, lp_times, demd_times = increasing_bins()
 # %%
 # Plot and Compare data
 # ---------------------
-pl.plot(ns, lp_times, 'o', label="LP Barycenter")
-pl.plot(ns, demd_times, 'o', label="DEMD")
+# plots the computation times for the LP and DEMD methods for
+# different bin sizes
+
+
+pl.plot(ns, lp_times, 'o', linestyle="-", label="LP Barycenter")
+pl.plot(ns, demd_times, 'o', linestyle="-", label="DEMD")
 # pl.yscale('log')
 pl.ylabel('Time Per Epoch (Seconds)')
 pl.xlabel('Number of Distributions')

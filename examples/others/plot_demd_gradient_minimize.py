@@ -4,7 +4,9 @@ r"""
 DEMD vs LP Gradient Decent without Pytorch
 =================================================================================
 
-Compare the loss between LP and DEMD.
+Compare the loss between LP and DEMD. The comparison is performed using random
+Gaussian or uniform distributions and calculating the loss for each method
+during the optimization process.
 """
 
 # Author: Ronak Mehta <ronakrm@cs.wisc.edu>
@@ -21,6 +23,8 @@ import ot
 # %%
 # Define function to get random (n, d) data
 # -------------------------------------------
+# The following function generates random (n, d) data with either
+# 'skewedGauss' or 'uniform' distributions
 
 
 def getData(n, d, dist='skewedGauss'):
@@ -47,6 +51,8 @@ def getData(n, d, dist='skewedGauss'):
 # %%
 # Gradient Decent
 # ---------------
+# The following section performs gradient descent optimization using
+# the DEMD method
 
 
 # %% parameters and data
@@ -78,6 +84,8 @@ demd_loss = [float(row.split()[-3]) for row in rows[1:]]
 print(output)
 
 # %% lp barycenter
+# ----------------
+# The following section computes 1D Wasserstein barycenter using the LP method
 
 
 def lp_1d_bary(data, M, n, d):
