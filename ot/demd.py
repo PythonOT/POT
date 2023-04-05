@@ -20,8 +20,8 @@ def greedy_primal_dual(aa, verbose=False):
     \ldots, p_{d} \in \mathbb{R}_{+}^{n}` with :math:`e^{\prime} p_{j}=1`
     for all :math:`j \in[d]`. Although the algorithm states that all
     histograms have the same number of bins, the algorithm can be easily
-    adapted to accept as inputs :math:`p_{i} \in \mathbb{R}_{+}^{n_{i}}$
-    with $n_{i} \neq n_{j}`.
+    adapted to accept as inputs :math:`p_{i} \in \mathbb{R}_{+}^{n_{i}}`
+    with :math:`n_{i} \neq n_{j}`.
 
     Parameters
     ----------
