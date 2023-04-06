@@ -1,6 +1,79 @@
 # Releases
 
-## 0.8.3dev
+## 0.9.0
+
+This new release contains so many new features and bug fixes since 0.8.2 that we
+decided to make it a new minor release at 0.9.0. 
+
+The releases contains many new features. First it contains an important
+update for all Gromov-Wasserstein solvers that brings to 30% gain in
+computation time (see PR #431) and allows the GW solvers to work on non symmetric
+matrices. It also brings novel solvers for the very
+efficient [semi-relaxed GW problem
+](https://pythonot.github.io/master/auto_examples/gromov/plot_semirelaxed_fgw.html#sphx-glr-auto-examples-gromov-plot-semirelaxed-fgw-py)
+that can be used to find the best re-weighting for one of the distribution. We
+also now have fast and differentiable solvers for [Wasserstein on the circle](https://pythonot.github.io/master/auto_examples/plot_compute_wasserstein_circle.html#sphx-glr-auto-examples-plot-compute-wasserstein-circle-py) and
+[sliced Wasserstein on the
+sphere](https://pythonot.github.io/master/auto_examples/backends/plot_ssw_unif_torch.html#sphx-glr-auto-examples-backends-plot-ssw-unif-torch-py).
+We are also very happy to provide new OT barycenter solvers such as the [Free
+support Sinkhorn
+barycenter](https://pythonot.github.io/master/auto_examples/barycenters/plot_free_support_sinkhorn_barycenter.html#sphx-glr-auto-examples-barycenters-plot-free-support-sinkhorn-barycenter-py)
+and the [Generalized Wasserstein
+barycenter](https://pythonot.github.io/master/auto_examples/barycenters/plot_generalized_free_support_barycenter.html#sphx-glr-auto-examples-barycenters-plot-generalized-free-support-barycenter-py).
+A new and differentiable solver for OT across spaces that provides OT plan
+between samples and features simultaneously and 
+called [Co-Optimal
+Transport](https://pythonot.github.io/master/auto_examples/others/plot_COOT.html)
+has also been implemented. Finally we began working on OT between Gaussian and
+now provide differentiable estimation for the Bures-Wasserstein [divergence](https://pythonot.github.io/master/gen_modules/ot.gaussian.html#ot.gaussian.bures_wasserstein_distance) and
+[mappings](https://pythonot.github.io/master/auto_examples/domain-adaptation/plot_otda_linear_mapping.html#sphx-glr-auto-examples-domain-adaptation-plot-otda-linear-mapping-py).
+
+Another important first step for POT toward the release 1.0.0 is the
+implementation of a unified API for OT solvers with introduction of [`ot.solve`](https://pythonot.github.io/master/all.html#ot.solve)
+function that can solve (depending on parameters) exact, regularized and
+unbalanced OT and return a new
+[`OTResult`](https://pythonot.github.io/master/gen_modules/ot.utils.html#ot.utils.OTResult)
+object. The idea behind this new API is to facilitate exploring different solvers
+with just a change of parameter and get a more unified API for them. We will keep
+the old solvers API for power users but it will be the preferred way to solve
+problems starting from release 1.0.0.
+We provide below some examples of use for the new function and how to
+recover different aspects of the solution (OT plan, full loss, linear part of the
+loss, dual variables) :
+```python
+#Solve  exact ot
+sol = ot.solve(M)
+
+# get the results
+G = sol.plan # OT plan
+ot_loss = sol.value # OT value (full loss for regularized and unbalanced)
+ot_loss_linear = sol.value_linear # OT value for linear term np.sum(sol.plan*M)
+alpha, beta = sol.potentials # dual potentials
+
+# direct plan and loss computation
+G = ot.solve(M).plan
+ot_loss = ot.solve(M).value
+
+# OT exact with marginals a/b
+sol2 = ot.solve(M, a, b)
+
+# regularized and unbalanced OT
+sol_rkl = ot.solve(M, a, b, reg=1) # KL regularization
+sol_rl2 = ot.solve(M, a, b, reg=1, reg_type='L2')
+sol_ul2 = ot.solve(M, a, b, unbalanced=10, unbalanced_type='L2')
+sol_rkl_ukl = ot.solve(M, a, b, reg=10, unbalanced=10) # KL + KL
+
+```
+The function is fully compatible with backends and will be implemented for
+different type of distribution support (empirical distributions, grids) and OT
+problems (Gromov-Wasserstein) in the new releases. This new API is not yet
+presented in the kickstart part of the documentation as it might still change
+when implementing new solvers but we encourage users to play with it.
+
+Finally, in addition to those many new  this release fixes 20 issues (some long
+standing) and we want to thank all the contributors who made this release so
+big. More details below.
+    
 
 #### New features
 - Added feature to (Fused) Gromov-Wasserstein solvers herited from `ot.optim` to support relative and absolute loss variations as stopping criterions (PR #431)
