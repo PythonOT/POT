@@ -93,7 +93,7 @@ def line_search_armijo(
         fc[0] += 1
         alpha10 = nx.from_numpy(alpha1)
         fval = f(xk0 + alpha10 * pk0, *args)
-        if type(fval) is float:
+        if isinstance(fval, float):
             # prevent bug from nx.to_numpy that can look for .cpu or .gpu
             return fval
         else:
@@ -101,7 +101,7 @@ def line_search_armijo(
 
     if old_fval is None:
         phi0 = phi(0.)
-    elif type(old_fval) is float:
+    elif isinstance(old_fval, float):
         # prevent bug from nx.to_numpy that can look for .cpu or .gpu
         phi0 = old_fval
     else:
