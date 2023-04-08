@@ -1,5 +1,10 @@
 # Releases
 
+## 0.9.1dev
+
+#### New features
+- Added feature Efficient Discrete Multi Marginal Optimal Transport Regularization + examples (PR #454)
+
 ## 0.9.0
 
 This new release contains so many new features and bug fixes since 0.8.2 that we
