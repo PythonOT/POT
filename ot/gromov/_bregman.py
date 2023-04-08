@@ -16,7 +16,7 @@ from ..utils import dist, list_to_array, check_random_state
 from ..backend import get_backend
 
 from ._utils import init_matrix, gwloss, gwggrad
-from ._utils import update_square_loss, update_kl_loss
+from ._utils import update_square_loss, update_kl_loss, update_feature_matrix
 
 
 def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None, G0=None,
@@ -219,10 +219,10 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon, symmetric=None
         International Conference on Machine Learning (ICML). 2016.
 
     """
-    gw, logv = entropic_gromov_wasserstein(
+    T, logv = entropic_gromov_wasserstein(
         C1, C2, p, q, loss_fun, epsilon, symmetric, G0, max_iter, tol, verbose, log=True)
 
-    logv['T'] = gw
+    logv['T'] = T
 
     if log:
         return logv['gw_dist'], logv
@@ -346,3 +346,409 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon, symmet
         return C, {"err": error}
     else:
         return C
+
+
+def entropic_fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun, epsilon, symmetric=None, alpha=0.5,
+                                      G0=None, max_iter=1000, tol=1e-9, verbose=False, log=False):
+    r"""
+    Returns the Fused Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
+    with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}`.
+
+    The function solves the following optimization problem:
+
+    .. math::
+        \mathbf{FGW} = \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
+    Where :
+
+    - :math:`\mathbf{M}`: metric cost matrix between features across domains
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity and feature matrices
+    - `H`: entropy
+    - :math:`\alpha`: trade-off parameter
+
+    .. note:: If the inner solver `ot.sinkhorn` did not convergence, the
+        optimal coupling :math:`\mathbf{T}` returned by this function does not
+        necessarily satisfy the marginal constraints
+        :math:`\mathbf{T}\mathbf{1}=\mathbf{p}` and
+        :math:`\mathbf{T}^T\mathbf{1}=\mathbf{q}`. So the returned
+        Fused Gromov-Wasserstein loss does not necessarily satisfy distance
+        properties and may be negative.
+
+    Parameters
+    ----------
+    M : array-like, shape (ns, nt)
+        Metric cost matrix between features across domains
+    C1 : array-like, shape (ns, ns)
+        Metric cost matrix in the source space
+    C2 : array-like, shape (nt, nt)
+        Metric cost matrix in the target space
+    p :  array-like, shape (ns,)
+        Distribution in the source space
+    q :  array-like, shape (nt,)
+        Distribution in the target space
+    loss_fun :  string
+        Loss function used for the solver either 'square_loss' or 'kl_loss'
+    epsilon : float
+        Regularization term >0
+    symmetric : bool, optional
+        Either C1 and C2 are to be assumed symmetric or not.
+        If let to its default None value, a symmetry test will be conducted.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+    alpha : float, optional
+        Trade-off parameter (0 < alpha < 1)
+    G0: array-like, shape (ns,nt), optional
+        If None the initial transport plan of the solver is pq^T.
+        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    max_iter : int, optional
+        Max number of iterations
+    tol : float, optional
+        Stop threshold on error (>0)
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        Record log if True.
+
+    Returns
+    -------
+    T : array-like, shape (`ns`, `nt`)
+        Optimal coupling between the two spaces
+
+    References
+    ----------
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
+
+    .. [47] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
+        distance between networks and stable network invariants.
+        Information and Inference: A Journal of the IMA, 8(4), 757-787.
+
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain
+        and Courty Nicolas "Optimal Transport for structured data with
+        application on graphs", International Conference on Machine Learning
+        (ICML). 2019.
+    """
+    M, C1, C2, p, q = list_to_array(M, C1, C2, p, q)
+    if G0 is None:
+        nx = get_backend(p, q, M, C1, C2)
+        G0 = nx.outer(p, q)
+    else:
+        nx = get_backend(p, q, M, C1, C2, G0)
+    T = G0
+    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun, nx)
+    if symmetric is None:
+        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
+    if not symmetric:
+        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun, nx)
+    cpt = 0
+    err = 1
+
+    if log:
+        log = {'err': []}
+
+    while (err > tol and cpt < max_iter):
+
+        Tprev = T
+
+        # compute the gradient
+        if symmetric:
+            tens = alpha * gwggrad(constC, hC1, hC2, T, nx) + (1 - alpha) * M
+        else:
+            tens = (alpha * 0.5) * (gwggrad(constC, hC1, hC2, T, nx) + gwggrad(constCt, hC1t, hC2t, T, nx)) + (1 - alpha) * M
+        T = sinkhorn(p, q, tens, epsilon, method='sinkhorn')
+
+        if cpt % 10 == 0:
+            # we can speed up the process by checking for the error only all
+            # the 10th iterations
+            err = nx.norm(T - Tprev)
+
+            if log:
+                log['err'].append(err)
+
+            if verbose:
+                if cpt % 200 == 0:
+                    print('{:5s}|{:12s}'.format(
+                        'It.', 'Err') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(cpt, err))
+
+        cpt += 1
+
+    if log:
+        log['fgw_dist'] = (1 - alpha) * nx.sum(M * T) + alpha * gwloss(constC, hC1, hC2, T, nx)
+        return T, log
+    else:
+        return T
+
+
+def entropic_fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun, epsilon, symmetric=None, alpha=0.5,
+                                       G0=None, max_iter=1000, tol=1e-9, verbose=False, log=False):
+    r"""
+    Returns the entropic Fused Gromov-Wasserstein discrepancy between the two measured similarity matrices :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
+    with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}`.
+
+    The function solves the following optimization problem:
+
+    .. math::
+        \mathbf{FGW} = \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
+
+    Where :
+
+    - :math:`\mathbf{M}`: metric cost matrix between features across domains
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity and feature matrices
+    - `H`: entropy
+    - :math:`\alpha`: trade-off parameter
+
+    .. note:: If the inner solver `ot.sinkhorn` did not convergence, the
+        optimal coupling :math:`\mathbf{T}` returned by this function does not
+        necessarily satisfy the marginal constraints
+        :math:`\mathbf{T}\mathbf{1}=\mathbf{p}` and
+        :math:`\mathbf{T}^T\mathbf{1}=\mathbf{q}`. So the returned
+        Fused Gromov-Wasserstein loss does not necessarily satisfy distance
+        properties and may be negative.
+
+    Parameters
+    ----------
+    M : array-like, shape (ns, nt)
+        Metric cost matrix between features across domains
+    C1 : array-like, shape (ns, ns)
+        Metric cost matrix in the source space
+    C2 : array-like, shape (nt, nt)
+        Metric cost matrix in the target space
+    p :  array-like, shape (ns,)
+        Distribution in the source space
+    q :  array-like, shape (nt,)
+        Distribution in the target space
+    loss_fun : str
+        Loss function used for the solver either 'square_loss' or 'kl_loss'
+    epsilon : float
+        Regularization term >0
+    symmetric : bool, optional
+        Either C1 and C2 are to be assumed symmetric or not.
+        If let to its default None value, a symmetry test will be conducted.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+    alpha : float, optional
+        Trade-off parameter (0 < alpha < 1)
+    G0: array-like, shape (ns,nt), optional
+        If None the initial transport plan of the solver is pq^T.
+        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    max_iter : int, optional
+        Max number of iterations
+    tol : float, optional
+        Stop threshold on error (>0)
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        Record log if True.
+
+    Returns
+    -------
+    fgw_dist : float
+        Fused Gromov-Wasserstein distance
+
+    References
+    ----------
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
+
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain
+        and Courty Nicolas "Optimal Transport for structured data with
+        application on graphs", International Conference on Machine Learning
+        (ICML). 2019.
+
+    """
+    T, logv = entropic_fused_gromov_wasserstein(
+        M, C1, C2, p, q, loss_fun, epsilon, symmetric,
+        alpha, G0, max_iter, tol, verbose, log=True)
+
+    logv['T'] = T
+
+    if log:
+        return logv['fgw_dist'], logv
+    else:
+        return logv['fgw_dist']
+
+
+def entropic_fused_gromov_barycenters(N, Ys, Cs, ps, p, lambdas, loss_fun, epsilon, symmetric=True, alpha=0.5,
+                                      max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None, init_Y=None, random_state=None):
+    r"""
+    Returns the Fused Gromov-Wasserstein barycenters of `S` measurable networks with node features :math:`(\mathbf{C}_s, \mathbf{Y}_s, \mathbf{p}_s)_{1 \leq s \leq S}`
+
+    The function solves the following optimization problem:
+
+    .. math::
+
+        \mathbf{C}, \mathbf{Y} = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}, \mathbf{Y}\in \mathbb{Y}^{N \times d}} \quad \sum_s \lambda_s \mathrm{FGW}_{\alpha}(\mathbf{C}, \mathbf{C}_s, \mathbf{Y}, \mathbf{Y}_s, \mathbf{p}, \mathbf{p}_s)
+
+    Where :
+
+    - :math:`\mathbf{Y}_s`: feature matrix
+    - :math:`\mathbf{C}_s`: metric cost matrix
+    - :math:`\mathbf{p}_s`: distribution
+
+    Parameters
+    ----------
+    N : int
+        Size of the targeted barycenter
+    Ys: list of array-like, each element has shape (ns,d)
+        Features of all samples
+    Cs : list of S array-like of shape (ns,ns)
+        Metric cost matrices
+    ps : list of S array-like of shape (ns,)
+        Sample weights in the `S` spaces
+    p : array-like, shape(N,)
+        Weights in the targeted barycenter
+    lambdas : list of float
+        List of the `S` spaces' weights.
+    loss_fun : callable
+        Tensor-matrix multiplication function based on specific loss function.
+    update : callable
+        function(:math:`\mathbf{p}`, lambdas, :math:`\mathbf{T}`, :math:`\mathbf{Cs}`) that updates
+        :math:`\mathbf{C}` according to a specific Kernel with the `S` :math:`\mathbf{T}_s` couplings
+        calculated at each iteration
+    epsilon : float
+        Regularization term >0
+    symmetric : bool, optional.
+        Either structures are to be assumed symmetric or not. Default value is True.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
+    alpha : float, optional
+        Trade-off parameter (0 < alpha < 1)
+    max_iter : int, optional
+        Max number of iterations
+    tol : float, optional
+        Stop threshold on error (>0)
+    verbose : bool, optional
+        Print information along iterations.
+    log : bool, optional
+        Record log if True.
+    init_C : bool | array-like, shape (N, N)
+        Random initial value for the :math:`\mathbf{C}` matrix provided by user.
+    init_Y : array-like, shape (N,d), optional
+        Initialization for the barycenters' features. If not set a
+        random init is used.
+    random_state : int or RandomState instance, optional
+        Fix the seed for reproducibility
+
+    Returns
+    -------
+    Y : array-like, shape (`N`, `d`)
+        Feature matrix in the barycenter space (permutated arbitrarily)
+    C : array-like, shape (`N`, `N`)
+        Similarity matrix in the barycenter space (permutated as Y's rows)
+    log : dict
+        Log dictionary of error during iterations. Return only if `log=True` in parameters.
+
+    References
+    ----------
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
+
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain
+        and Courty Nicolas
+        "Optimal Transport for structured data with application on graphs"
+        International Conference on Machine Learning (ICML). 2019.
+    """
+    Cs = list_to_array(*Cs)
+    Ys = list_to_array(*Ys)
+    ps = list_to_array(*ps)
+    p = list_to_array(p)
+    nx = get_backend(*Cs, *Ys, *ps, p)
+
+    S = len(Cs)
+    d = Ys[0].shape[1]  # dimension on the node features
+
+    # Initialization of C : random SPD matrix (if not provided by user)
+    if init_C is None:
+        generator = check_random_state(random_state)
+        xalea = generator.randn(N, 2)
+        C = dist(xalea, xalea)
+        C /= C.max()
+        C = nx.from_numpy(C, type_as=p)
+    else:
+        C = init_C
+
+    # Initialization of Y
+    if init_Y is None:
+        Y = nx.zeros((N, d), type_as=ps[0])
+    else:
+        Y = init_Y
+
+    T = [nx.outer(p, q) for q in ps]
+
+    Ms = [dist(Y, Ys[s]) for s in range(len(Ys))]
+
+    cpt = 0
+    err = 1
+
+    err_feature = 1
+    err_structure = 1
+
+    if log:
+        log_ = {}
+        log_['err_feature'] = []
+        log_['err_structure'] = []
+        log_['Ts_iter'] = []
+
+    while (err > tol) and (cpt < max_iter):
+        Cprev = C
+        Yprev = Y
+
+        T = [entropic_fused_gromov_wasserstein(
+            Ms[s], Cs[s], C, ps[s], p, loss_fun, epsilon, symmetric, alpha, None,
+            max_iter, 1e-4, verbose, log=False) for s in range(S)]
+
+        if loss_fun == 'square_loss':
+            C = update_square_loss(p, lambdas, T, Cs)
+
+        elif loss_fun == 'kl_loss':
+            C = update_kl_loss(p, lambdas, T, Cs)
+
+        Ys_temp = [y.T for y in Ys]
+        Y = update_feature_matrix(lambdas, Ys_temp, T, p).T
+        Ms = [dist(Y, Ys[s]) for s in range(len(Ys))]
+
+        if cpt % 10 == 0:
+            # we can speed up the process by checking for the error only all
+            # the 10th iterations
+            err_feature = nx.norm(Y - nx.reshape(Yprev, (N, d)))
+            err_structure = nx.norm(C - Cprev)
+            if log:
+                log_['err_feature'].append(err_feature)
+                log_['err_structure'].append(err_structure)
+                log_['Ts_iter'].append(T)
+
+            if verbose:
+                if cpt % 200 == 0:
+                    print('{:5s}|{:12s}'.format(
+                        'It.', 'Err') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(cpt, err_structure))
+                print('{:5d}|{:8e}|'.format(cpt, err_feature))
+
+        cpt += 1
+
+    if log:
+        log_['T'] = T  # from target to Ys
+        log_['p'] = p
+        log_['Ms'] = Ms
+
+    if log:
+        return Y, C, log_
+    else:
+        return Y, C

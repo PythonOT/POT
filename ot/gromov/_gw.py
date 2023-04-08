@@ -20,7 +20,7 @@ from ..utils import check_random_state
 from ..backend import get_backend, NumpyBackend
 
 from ._utils import init_matrix, gwloss, gwggrad
-from ._utils import update_square_loss, update_kl_loss
+from ._utils import update_square_loss, update_kl_loss, update_feature_matrix
 
 
 def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log=False, armijo=False, G0=None,
@@ -864,9 +864,12 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
 
         if not fixed_structure:
+            T_temp = [t.T for t in T]
             if loss_fun == 'square_loss':
-                T_temp = [t.T for t in T]
-                C = update_structure_matrix(p, lambdas, T_temp, Cs)
+                C = update_square_loss(p, lambdas, T_temp, Cs)
+
+            elif loss_fun == 'kl_loss':
+                C = update_kl_loss(p, lambdas, T_temp, Cs)
 
         T = [fused_gromov_wasserstein(Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
                                       max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, **kwargs) for s in range(S)]
@@ -897,82 +900,3 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         return X, C, log_
     else:
         return X, C
-
-
-def update_structure_matrix(p, lambdas, T, Cs):
-    r"""Updates :math:`\mathbf{C}` according to the L2 Loss kernel with the `S` :math:`\mathbf{T}_s` couplings.
-
-    It is calculated at each iteration
-
-    Parameters
-    ----------
-    p : array-like, shape (N,)
-        Masses in the targeted barycenter.
-    lambdas : list of float
-        List of the `S` spaces' weights.
-    T : list of S array-like of shape (ns, N)
-        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
-    Cs : list of S array-like, shape (ns, ns)
-        Metric cost matrices.
-
-    Returns
-    -------
-    C : array-like, shape (`nt`, `nt`)
-        Updated :math:`\mathbf{C}` matrix.
-    """
-    p = list_to_array(p)
-    T = list_to_array(*T)
-    Cs = list_to_array(*Cs)
-    nx = get_backend(*Cs, *T, p)
-
-    tmpsum = sum([
-        lambdas[s] * nx.dot(
-            nx.dot(T[s].T, Cs[s]),
-            T[s]
-        ) for s in range(len(T))
-    ])
-    ppt = nx.outer(p, p)
-    return tmpsum / ppt
-
-
-def update_feature_matrix(lambdas, Ys, Ts, p):
-    r"""Updates the feature with respect to the `S` :math:`\mathbf{T}_s` couplings.
-
-
-    See "Solving the barycenter problem with Block Coordinate Descent (BCD)"
-    in :ref:`[24] <references-update-feature-matrix>` calculated at each iteration
-
-    Parameters
-    ----------
-    p : array-like, shape (N,)
-        masses in the targeted barycenter
-    lambdas : list of float
-        List of the `S` spaces' weights
-    Ts : list of S array-like, shape (ns,N)
-        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration
-    Ys : list of S array-like, shape (d,ns)
-        The features.
-
-    Returns
-    -------
-    X : array-like, shape (`d`, `N`)
-
-
-    .. _references-update-feature-matrix:
-    References
-    ----------
-    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain and Courty Nicolas
-        "Optimal Transport for structured data with application on graphs"
-        International Conference on Machine Learning (ICML). 2019.
-    """
-    p = list_to_array(p)
-    Ts = list_to_array(*Ts)
-    Ys = list_to_array(*Ys)
-    nx = get_backend(*Ys, *Ts, p)
-
-    p = 1. / p
-    tmpsum = sum([
-        lambdas[s] * nx.dot(Ys[s], Ts[s].T) * p[None, :]
-        for s in range(len(Ts))
-    ])
-    return tmpsum

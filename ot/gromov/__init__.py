@@ -11,38 +11,51 @@ Solvers related to Gromov-Wasserstein problems.
 
 # All submodules and packages
 from ._utils import (init_matrix, tensor_product, gwloss, gwggrad,
-                     update_square_loss, update_kl_loss,
+                     update_square_loss, update_kl_loss, update_feature_matrix,
                      init_matrix_semirelaxed)
+
 from ._gw import (gromov_wasserstein, gromov_wasserstein2,
                   fused_gromov_wasserstein, fused_gromov_wasserstein2,
-                  solve_gromov_linesearch, gromov_barycenters, fgw_barycenters,
-                  update_structure_matrix, update_feature_matrix)
+                  solve_gromov_linesearch, gromov_barycenters, fgw_barycenters)
+                  
 from ._bregman import (entropic_gromov_wasserstein,
                        entropic_gromov_wasserstein2,
-                       entropic_gromov_barycenters)
+                       entropic_gromov_barycenters,
+                       entropic_fused_gromov_wasserstein,
+                       entropic_fused_gromov_wasserstein2,
+                       entropic_fused_gromov_barycenters)
+
 from ._estimators import (GW_distance_estimation, pointwise_gromov_wasserstein,
                           sampled_gromov_wasserstein)
+
 from ._semirelaxed import (semirelaxed_gromov_wasserstein,
                            semirelaxed_gromov_wasserstein2,
                            semirelaxed_fused_gromov_wasserstein,
                            semirelaxed_fused_gromov_wasserstein2,
-                           solve_semirelaxed_gromov_linesearch)
+                           solve_semirelaxed_gromov_linesearch,
+                           entropic_semirelaxed_gromov_wasserstein,
+                           entropic_semirelaxed_gromov_wasserstein2,
+                           entropic_semirelaxed_fused_gromov_wasserstein,
+                           entropic_semirelaxed_fused_gromov_wasserstein2)
+
 from ._dictionary import (gromov_wasserstein_dictionary_learning,
                           gromov_wasserstein_linear_unmixing,
                           fused_gromov_wasserstein_dictionary_learning,
                           fused_gromov_wasserstein_linear_unmixing)
 
 
-__all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad',
-           'update_square_loss', 'update_kl_loss', 'init_matrix_semirelaxed',
+__all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad', 'update_square_loss',
+           'update_kl_loss', 'update_feature_matrix', 'init_matrix_semirelaxed',
            'gromov_wasserstein', 'gromov_wasserstein2', 'fused_gromov_wasserstein',
            'fused_gromov_wasserstein2', 'solve_gromov_linesearch', 'gromov_barycenters',
-           'fgw_barycenters', 'update_structure_matrix', 'update_feature_matrix',
-           'entropic_gromov_wasserstein', 'entropic_gromov_wasserstein2',
-           'entropic_gromov_barycenters', 'GW_distance_estimation',
-           'pointwise_gromov_wasserstein', 'sampled_gromov_wasserstein',
+           'fgw_barycenters', 'entropic_gromov_wasserstein', 'entropic_gromov_wasserstein2',
+           'entropic_gromov_barycenters', 'entropic_fused_gromov_wasserstein',
+           'entropic_fused_gromov_wasserstein2', 'entropic_fused_gromov_barycenters',
+           'GW_distance_estimation', 'pointwise_gromov_wasserstein', 'sampled_gromov_wasserstein',
            'semirelaxed_gromov_wasserstein', 'semirelaxed_gromov_wasserstein2',
            'semirelaxed_fused_gromov_wasserstein', 'semirelaxed_fused_gromov_wasserstein2',
-           'solve_semirelaxed_gromov_linesearch', 'gromov_wasserstein_dictionary_learning',
+           'solve_semirelaxed_gromov_linesearch', 'entropic_semirelaxed_gromov_wasserstein', 
+           'entropic_semirelaxed_gromov_wasserstein2', 'entropic_semirelaxed_fused_gromov_wasserstein',
+           'entropic_semirelaxed_fused_gromov_wasserstein2', 'gromov_wasserstein_dictionary_learning',
            'gromov_wasserstein_linear_unmixing', 'fused_gromov_wasserstein_dictionary_learning',
            'fused_gromov_wasserstein_linear_unmixing']
