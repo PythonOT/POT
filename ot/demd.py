@@ -3,7 +3,7 @@
 DEMD solvers for optimal transport
 """
 
-# Author: Ronak Mehta <ronakrm@cs.wisc.edu> 
+# Author: Ronak Mehta <ronakrm@cs.wisc.edu>
 #         Xizheng Yu <xyu354@wisc.edu>
 #
 # License: MIT License
@@ -65,7 +65,7 @@ def greedy_primal_dual(aa, verbose=False):
 
     def OBJ(i):
         return max(i) - min(i)
-    
+
     # print(f"aa type is: {type(aa)}")
     nx = get_backend(aa)
 
@@ -134,7 +134,7 @@ def demd(x, d, n, return_dual_vars=False):
         The i-th column of the array corresponds to the i-th point.
     dual_obj : float, optional
         the value of the dual objective function evaluated at the solution.
-    
+
     References
     ----------
     .. [50] Ronak Mehta, Jeffery Kline, Vishnu Suresh Lokhande, Glenn Fung, &
@@ -143,9 +143,9 @@ def demd(x, d, n, return_dual_vars=False):
         Conference on Learning Representations.
 
     """
-    
+
     # function body here
-    nx = get_backend(x)
+    # nx = get_backend(x)
     log = greedy_primal_dual(x)
 
     if return_dual_vars:
@@ -194,10 +194,10 @@ def demd_minimize(f, x, d, n, vecsize, niters=100, lr=0.1, print_rate=100):
     list of ndarrays, each of shape (n,)
         The optimal solution as a list of n vectors, each of length vecsize.
     """
-    
+
     # function body here
     nx = get_backend(x)
-    
+
     def dualIter(f, x, d, n, vecsize, lr):
         funcval, grad, _ = f(x, d, n, return_dual_vars=True)
         xnew = nx.reshape(x, (d, n)) - grad * lr

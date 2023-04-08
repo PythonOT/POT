@@ -7,7 +7,6 @@
 
 import numpy as np
 import ot
-import pytest
 
 
 def create_test_data():
