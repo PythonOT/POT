@@ -613,9 +613,10 @@ def solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M, reg,
     return alpha, 1, cost_G
 
 
-def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, symmetric=True, armijo=False,
-                       max_iter=1000, tol=1e-9, verbose=False, log=False,
-                       init_C=None, random_state=None, **kwargs):
+def gromov_barycenters(
+        N, Cs, ps, p, lambdas, loss_fun, symmetric=True, armijo=False,
+        max_iter=1000, tol=1e-9, warmstartT=False, verbose=False, log=False,
+        init_C=None, random_state=None, **kwargs):
     r"""
     Returns the gromov-wasserstein barycenters of `S` measured similarity matrices :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
 
@@ -655,6 +656,9 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, symmetric=True, armijo=F
         Max number of iterations
     tol : float, optional
         Stop threshold on relative error (>0)
+    warmstartT: bool, optional
+        Either to perform warmstart of transport plans in the successive
+        fused gromov-wasserstein transport problems.s
     verbose : bool, optional
         Print information along iterations.
     log : bool, optional
@@ -701,13 +705,19 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, symmetric=True, armijo=F
     cpt = 0
     err = 1
 
+    if warmstartT:
+        T = [None] * S
     error = []
 
     while (err > tol and cpt < max_iter):
         Cprev = C
 
-        T = [gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, symmetric=symmetric, armijo=armijo,
-                                max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, log=False, **kwargs) for s in range(S)]
+        if warmstartT:
+            T = [gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, symmetric=symmetric, armijo=armijo, G0=T[s],
+                                    max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, log=False, **kwargs) for s in range(S)]
+        else:
+            T = [gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, symmetric=symmetric, armijo=armijo, G0=None,
+                                    max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, log=False, **kwargs) for s in range(S)]
         if loss_fun == 'square_loss':
             C = update_square_loss(p, lambdas, T, Cs)
 
@@ -734,9 +744,11 @@ def gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, symmetric=True, armijo=F
         return C
 
 
-def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_features=False,
-                    p=None, loss_fun='square_loss', armijo=False, symmetric=True, max_iter=100, tol=1e-9,
-                    verbose=False, log=False, init_C=None, init_X=None, random_state=None, **kwargs):
+def fgw_barycenters(
+        N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False,
+        fixed_features=False, p=None, loss_fun='square_loss', armijo=False,
+        symmetric=True, max_iter=100, tol=1e-9, warmstartT=False, verbose=False,
+        log=False, init_C=None, init_X=None, random_state=None, **kwargs):
     r"""Compute the fgw barycenter as presented eq (5) in :ref:`[24] <references-fgw-barycenters>`
 
     Parameters
@@ -766,6 +778,9 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
         Max number of iterations
     tol : float, optional
         Stop threshold on relative error (>0)
+    warmstartT: bool, optional
+        Either to perform warmstart of transport plans in the successive
+        fused gromov-wasserstein transport problems.
     verbose : bool, optional
         Print information along iterations.
     log : bool, optional
@@ -871,9 +886,14 @@ def fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fixed_
             elif loss_fun == 'kl_loss':
                 C = update_kl_loss(p, lambdas, T_temp, Cs)
 
-        T = [fused_gromov_wasserstein(Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
-                                      max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, **kwargs) for s in range(S)]
-
+        if warmstartT:
+            T = [fused_gromov_wasserstein(
+                Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
+                G0=T[s], max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, **kwargs) for s in range(S)]
+        else:
+            T = [fused_gromov_wasserstein(
+                Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
+                G0=None, max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, **kwargs) for s in range(S)]
         # T is N,ns
         err_feature = nx.norm(X - nx.reshape(Xprev, (N, d)))
         err_structure = nx.norm(C - Cprev)

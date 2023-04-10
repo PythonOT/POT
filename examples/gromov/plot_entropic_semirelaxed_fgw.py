@@ -93,18 +93,18 @@ gw = log['gw_dist']
 
 # 1) srGW_e(C2, h2, C3)
 OT_23, log_23 = entropic_semirelaxed_gromov_wasserstein(
-    C2, C3, h2, symmetric=True, epsilon=0.1, G0=None, log=True)
+    C2, C3, h2, symmetric=True, epsilon=1., G0=None, log=True)
 srgw_23 = log_23['srgw_dist']
 
 # 2) srGW_e(C3, h3, C2)
 
 OT_32, log_32 = entropic_semirelaxed_gromov_wasserstein(
-    C3, C2, h3, symmetric=None, epsilon=0.1, G0=None, log=True)
+    C3, C2, h3, symmetric=None, epsilon=1., G0=None, log=True)
 srgw_32 = log_32['srgw_dist']
 
 print('GW(C2, C3) = ', gw)
-print(r'$srGW_e$(C2, h2, C3) = ', srgw_23)
-print(r'$srGW_e$(C3, h3, C2) = ', srgw_32)
+print('srGW_e(C2, h2, C3) = ', srgw_23)
+print('srGW_e(C3, h3, C2) = ', srgw_32)
 
 
 #############################################################################
@@ -191,7 +191,7 @@ def draw_transp_colored_srGW(G1, C1, G2, C2, part_G1,
             if (T[k1, k2] > 0):
                 pl.plot([pos1[k1][0], pos2[k2][0]],
                         [pos1[k1][1], pos2[k2][1]],
-                        '-', lw=0.8, alpha=0.3,
+                        '-', lw=0.5, alpha=0.3,
                         color=nodes_color_part1[k1])
     return pos1, pos2
 

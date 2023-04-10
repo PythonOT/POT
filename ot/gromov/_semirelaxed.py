@@ -26,12 +26,12 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
     The function solves the following optimization problem:
 
     .. math::
-        \mathbf{srGW} = \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
+        \mathbf{T} = \mathop{\arg \min}_{\mathbf{T}} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf{T} &\geq 0
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -150,12 +150,12 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
     The function solves the following optimization problem:
 
     .. math::
-        srGW = \min_\mathbf{T} \quad \sum_{i,j,k,l}
+        \text{srGW} = \min_{\mathbf{T}} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf{T} &\geq 0
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -242,12 +242,12 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
     Computes the semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
-        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        \mathbf{T} = \mathop{\arg \min}_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) T_{i,j} T_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf{T} &\geq 0
 
     where :
 
@@ -376,12 +376,12 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
     Computes the semi-relaxed FGW divergence between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein2>`)
 
     .. math::
-        \min_\gamma \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F + \alpha \sum_{i,j,k,l}
-        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        \mathbf{srFGW} = \min_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) T_{i,j} T_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf{T} &\geq 0
 
     where :
 
@@ -554,12 +554,12 @@ def entropic_semirelaxed_gromov_wasserstein(
     The function solves the following optimization problem:
 
     .. math::
-        \mathbf{srGW} = \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
+        \mathbf{T} = \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf{T} &\geq 0
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -703,12 +703,12 @@ def entropic_semirelaxed_gromov_wasserstein2(
     The function solves the following optimization problem:
 
     .. math::
-        srGW = \min_\mathbf{T} \quad \sum_{i,j,k,l}
+        \mathbf{srGW} = \min_{\mathbf{T}} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf{T} &\geq 0
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -789,12 +789,12 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
     Computes the entropic-regularized semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \mathbf{T} = \mathop{\arg \min}_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf{T} &\geq 0
 
     where :
 
@@ -943,12 +943,12 @@ def entropic_semirelaxed_fused_gromov_wasserstein2(
     Computes the entropic-regularized semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \mathbf{srFGW} = \min_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf{T} &\geq 0
 
     where :
 

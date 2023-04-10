@@ -11,6 +11,8 @@ Bregman projections solvers for entropic Gromov-Wasserstein
 #
 # License: MIT License
 
+import numpy as np
+
 from ..bregman import sinkhorn
 from ..utils import dist, list_to_array, check_random_state
 from ..backend import get_backend
@@ -19,12 +21,15 @@ from ._utils import init_matrix, gwloss, gwggrad
 from ._utils import update_square_loss, update_kl_loss, update_feature_matrix
 
 
-def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None, G0=None,
-                                max_iter=1000, tol=1e-9, verbose=False, log=False):
+def entropic_gromov_wasserstein(
+        C1, C2, p, q, loss_fun, epsilon, symmetric=None, G0=None, max_iter=1000,
+        tol=1e-9, solver='PGD', warmstart=False, verbose=False, log=False, **kwargs):
     r"""
-    Returns the gromov-wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
+    Returns the Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
+    estimated using Sinkhorn projections.
 
-    The function solves the following optimization problem:
+    If `solver="PGD"`, the function solves the following entropic-regularized
+    Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
 
     .. math::
         \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
@@ -35,6 +40,17 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
 
              \mathbf{T} &\geq 0
 
+    Else if `solver="PPA"`, the function solves the following Gromov-Wasserstein
+    optimization problem using Proximal Point Algorithm [50]:
+
+    .. math::
+        \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -77,11 +93,21 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
         Max number of iterations
     tol : float, optional
         Stop threshold on error (>0)
+    solver: string, optional
+        Solver to use either 'PGD' for Projected Gradient Descent or 'PPA'
+        for Proximal Point Algorithm.
+        Default value is 'PGD'.
+    warmstart: bool, optional
+        Either to perform warmstart of dual potentials in the successive
+        Sinkhorn projections.
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
         Record log if True.
-
+    **kwargs: dict
+        parameters can be directly passed to the ot.sinkhorn solver.
+        Such as `numItermax` and `stopThr` to control its estimation precision,
+        e.g [50] suggests to use `numItermax=1`.
     Returns
     -------
     T : array-like, shape (`ns`, `nt`)
@@ -96,7 +122,14 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
     .. [47] Chowdhury, S., & Mémoli, F. (2019). The gromov–wasserstein
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
+
+    .. [50] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
+        learning for graph matching and node embedding. In International
+        Conference on Machine Learning (ICML), 2019.
     """
+    if solver not in ['PGD', 'PPA']:
+        raise ValueError("Unknown solver '%s'. Pick one in ['PGD', 'PPA']." % solver)
+
     C1, C2, p, q = list_to_array(C1, C2, p, q)
     if G0 is None:
         nx = get_backend(p, q, C1, C2)
@@ -112,6 +145,12 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
     cpt = 0
     err = 1
 
+    if warmstart:
+        # initialize potentials to cope with ot.sinkhorn initialization
+        N1, N2 = C1.shape[0], C2.shape[0]
+        mu = nx.zeros(N1, type_as=C1) - np.log(N1)
+        nu = nx.zeros(N2, type_as=C2) - np.log(N2)
+
     if log:
         log = {'err': []}
 
@@ -124,7 +163,17 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
             tens = gwggrad(constC, hC1, hC2, T, nx)
         else:
             tens = 0.5 * (gwggrad(constC, hC1, hC2, T, nx) + gwggrad(constCt, hC1t, hC2t, T, nx))
-        T = sinkhorn(p, q, tens, epsilon, method='sinkhorn')
+
+        if solver == 'PPA':
+            tens = tens - epsilon * nx.log(T)
+
+        if warmstart:
+            T, loginn = sinkhorn(p, q, tens, epsilon, method='sinkhorn', log=True, warmstart=(mu, nu), **kwargs)
+            mu = epsilon * nx.log(loginn['u'])
+            nu = epsilon * nx.log(loginn['v'])
+
+        else:
+            T = sinkhorn(p, q, tens, epsilon, method='sinkhorn', **kwargs)
 
         if cpt % 10 == 0:
             # we can speed up the process by checking for the error only all
@@ -149,17 +198,36 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
         return T
 
 
-def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon, symmetric=None, G0=None,
-                                 max_iter=1000, tol=1e-9, verbose=False, log=False):
+def entropic_gromov_wasserstein2(
+        C1, C2, p, q, loss_fun, epsilon, symmetric=None, G0=None, max_iter=1000,
+        tol=1e-9, solver='PGD', warmstart=False, verbose=False, log=False, **kwargs):
     r"""
-    Returns the entropic gromov-wasserstein discrepancy between the two measured similarity matrices :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
+    Returns the Gromov-Wasserstein distance between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
+    estimated using Sinkhorn projections.
 
-    The function solves the following optimization problem:
+    If `solver="PGD"`, the function solves the following entropic-regularized
+    Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
 
     .. math::
-        GW = \min_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})
-        \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
+        \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
 
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
+    Else if `solver="PPA"`, the function solves the following Gromov-Wasserstein
+    optimization problem using Proximal Point Algorithm [50]:
+
+    .. math::
+        \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -187,7 +255,7 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon, symmetric=None
         Distribution in the source space
     q :  array-like, shape (nt,)
         Distribution in the target space
-    loss_fun : str
+    loss_fun :  string
         Loss function used for the solver either 'square_loss' or 'kl_loss'
     epsilon : float
         Regularization term >0
@@ -202,11 +270,21 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon, symmetric=None
         Max number of iterations
     tol : float, optional
         Stop threshold on error (>0)
+    solver: string, optional
+        Solver to use either 'PGD' for Projected Gradient Descent or 'PPA'
+        for Proximal Point Algorithm.
+        Default value is 'PGD'.
+    warmstart: bool, optional
+        Either to perform warmstart of dual potentials in the successive
+        Sinkhorn projections.
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
         Record log if True.
-
+    **kwargs: dict
+        parameters can be directly passed to the ot.sinkhorn solver.
+        Such as `numItermax` and `stopThr` to control its estimation precision,
+        e.g [50] suggests to use `numItermax=1`.
     Returns
     -------
     gw_dist : float
@@ -218,9 +296,13 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon, symmetric=None
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
+    .. [50] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
+        learning for graph matching and node embedding. In International
+        Conference on Machine Learning (ICML), 2019.
     """
     T, logv = entropic_gromov_wasserstein(
-        C1, C2, p, q, loss_fun, epsilon, symmetric, G0, max_iter, tol, verbose, log=True)
+        C1, C2, p, q, loss_fun, epsilon, symmetric, G0, max_iter,
+        tol, solver, warmstart, verbose, log=True, **kwargs)
 
     logv['T'] = T
 
@@ -230,10 +312,12 @@ def entropic_gromov_wasserstein2(C1, C2, p, q, loss_fun, epsilon, symmetric=None
         return logv['gw_dist']
 
 
-def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon, symmetric=True,
-                                max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None, random_state=None):
+def entropic_gromov_barycenters(
+        N, Cs, ps, p, lambdas, loss_fun, epsilon, symmetric=True, max_iter=1000,
+        tol=1e-9, warmstartT=False, verbose=False, log=False, init_C=None, random_state=None, **kwargs):
     r"""
-    Returns the gromov-wasserstein barycenters of `S` measured similarity matrices :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
+    Returns the Gromov-Wasserstein barycenters of `S` measured similarity matrices :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
+    estimated using Gromov-Wasserstein transports from Sinkhorn projections.
 
     The function solves the following optimization problem:
 
@@ -273,6 +357,9 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon, symmet
         Max number of iterations
     tol : float, optional
         Stop threshold on error (>0)
+    warmstartT: bool, optional
+        Either to perform warmstart of transport plans in the successive
+        gromov-wasserstein transport problems.
     verbose : bool, optional
         Print information along iterations.
     log : bool, optional
@@ -281,6 +368,8 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon, symmet
         Random initial value for the :math:`\mathbf{C}` matrix provided by user.
     random_state : int or RandomState instance, optional
         Fix the seed for reproducibility
+    **kwargs: dict
+        parameters can be directly passed to the `ot.entropic_gromov_wasserstein` solver.
 
     Returns
     -------
@@ -317,11 +406,20 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon, symmet
 
     error = []
 
+    if warmstartT:
+        T = [None] * S
+
     while (err > tol) and (cpt < max_iter):
         Cprev = C
+        if warmstartT:
+            T = [entropic_gromov_wasserstein(
+                Cs[s], C, ps[s], p, loss_fun, epsilon, symmetric, T[s],
+                max_iter, 1e-4, verbose=verbose, log=False, **kwargs) for s in range(S)]
+        else:
+            T = [entropic_gromov_wasserstein(
+                Cs[s], C, ps[s], p, loss_fun, epsilon, symmetric, None,
+                max_iter, 1e-4, verbose=verbose, log=False, **kwargs) for s in range(S)]
 
-        T = [entropic_gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, epsilon, symmetric, None,
-                                         max_iter, 1e-4, verbose, log=False) for s in range(S)]
         if loss_fun == 'square_loss':
             C = update_square_loss(p, lambdas, T, Cs)
 
@@ -348,13 +446,17 @@ def entropic_gromov_barycenters(N, Cs, ps, p, lambdas, loss_fun, epsilon, symmet
         return C
 
 
-def entropic_fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun, epsilon, symmetric=None, alpha=0.5,
-                                      G0=None, max_iter=1000, tol=1e-9, verbose=False, log=False):
+def entropic_fused_gromov_wasserstein(
+        M, C1, C2, p, q, loss_fun, epsilon, symmetric=None, alpha=0.5, G0=None,
+        max_iter=1000, tol=1e-9, solver='PGD', warmstart=False,
+        verbose=False, log=False, **kwargs):
     r"""
     Returns the Fused Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
-    with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}`.
+    with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}`,
+    estimated using Sinkhorn projections.
 
-    The function solves the following optimization problem:
+    If `solver="PGD"`, the function solves the following entropic-regularized
+    Fused Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
 
     .. math::
         \mathbf{FGW} = \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
@@ -366,6 +468,18 @@ def entropic_fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun, epsilon, symmet
 
              \mathbf{T} &\geq 0
 
+    Else if `solver="PPA"`, the function solves the following Fused Gromov-Wasserstein
+    optimization problem using Proximal Point Algorithm [50]:
+
+    .. math::
+        \mathbf{FGW} = \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
     Where :
 
     - :math:`\mathbf{M}`: metric cost matrix between features across domains
@@ -414,15 +528,25 @@ def entropic_fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun, epsilon, symmet
         Max number of iterations
     tol : float, optional
         Stop threshold on error (>0)
+    solver: string, optional
+        Solver to use either 'PGD' for Projected Gradient Descent or 'PPA'
+        for Proximal Point Algorithm.
+        Default value is 'PGD'.
+    warmstart: bool, optional
+        Either to perform warmstart of dual potentials in the successive
+        Sinkhorn projections.
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
         Record log if True.
-
+    **kwargs: dict
+        parameters can be directly passed to the ot.sinkhorn solver.
+        Such as `numItermax` and `stopThr` to control its estimation precision,
+        e.g [50] suggests to use `numItermax=1`.
     Returns
     -------
     T : array-like, shape (`ns`, `nt`)
-        Optimal coupling between the two spaces
+        Optimal coupling between the two joint spaces
 
     References
     ----------
@@ -434,11 +558,18 @@ def entropic_fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun, epsilon, symmet
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
 
+    .. [50] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
+        learning for graph matching and node embedding. In International
+        Conference on Machine Learning (ICML), 2019.
+
     .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain
         and Courty Nicolas "Optimal Transport for structured data with
         application on graphs", International Conference on Machine Learning
         (ICML). 2019.
     """
+    if solver not in ['PGD', 'PPA']:
+        raise ValueError("Unknown solver '%s'. Pick one in ['PGD', 'PPA']." % solver)
+
     M, C1, C2, p, q = list_to_array(M, C1, C2, p, q)
     if G0 is None:
         nx = get_backend(p, q, M, C1, C2)
@@ -454,6 +585,12 @@ def entropic_fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun, epsilon, symmet
     cpt = 0
     err = 1
 
+    if warmstart:
+        # initialize potentials to cope with ot.sinkhorn initialization
+        N1, N2 = C1.shape[0], C2.shape[0]
+        mu = nx.zeros(N1, type_as=C1) - np.log(N1)
+        nu = nx.zeros(N2, type_as=C2) - np.log(N2)
+
     if log:
         log = {'err': []}
 
@@ -466,7 +603,17 @@ def entropic_fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun, epsilon, symmet
             tens = alpha * gwggrad(constC, hC1, hC2, T, nx) + (1 - alpha) * M
         else:
             tens = (alpha * 0.5) * (gwggrad(constC, hC1, hC2, T, nx) + gwggrad(constCt, hC1t, hC2t, T, nx)) + (1 - alpha) * M
-        T = sinkhorn(p, q, tens, epsilon, method='sinkhorn')
+
+        if solver == 'PPA':
+            tens = tens - epsilon * nx.log(T)
+
+        if warmstart:
+            T, loginn = sinkhorn(p, q, tens, epsilon, method='sinkhorn', log=True, warmstart=(mu, nu), **kwargs)
+            mu = epsilon * nx.log(loginn['u'])
+            nu = epsilon * nx.log(loginn['v'])
+
+        else:
+            T = sinkhorn(p, q, tens, epsilon, method='sinkhorn', **kwargs)
 
         if cpt % 10 == 0:
             # we can speed up the process by checking for the error only all
@@ -491,18 +638,40 @@ def entropic_fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun, epsilon, symmet
         return T
 
 
-def entropic_fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun, epsilon, symmetric=None, alpha=0.5,
-                                       G0=None, max_iter=1000, tol=1e-9, verbose=False, log=False):
+def entropic_fused_gromov_wasserstein2(
+        M, C1, C2, p, q, loss_fun, epsilon, symmetric=None, alpha=0.5, G0=None,
+        max_iter=1000, tol=1e-9, solver='PGD', warmstart=False,
+        verbose=False, log=False, **kwargs):
     r"""
-    Returns the entropic Fused Gromov-Wasserstein discrepancy between the two measured similarity matrices :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
-    with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}`.
+    Returns the Fused Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
+    with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}`,
+    estimated using Sinkhorn projections.
 
-    The function solves the following optimization problem:
+    If `solver="PGD"`, the function solves the following entropic-regularized
+    Fused Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
 
     .. math::
         \mathbf{FGW} = \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
 
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
+    Else if `solver="PPA"`, the function solves the following Fused Gromov-Wasserstein
+    optimization problem using Proximal Point Algorithm [50]:
+
+    .. math::
+        \mathbf{FGW} = \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
     Where :
 
     - :math:`\mathbf{M}`: metric cost matrix between features across domains
@@ -567,6 +736,10 @@ def entropic_fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun, epsilon, symme
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
+    .. [50] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
+        learning for graph matching and node embedding. In International
+        Conference on Machine Learning (ICML), 2019.
+
     .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain
         and Courty Nicolas "Optimal Transport for structured data with
         application on graphs", International Conference on Machine Learning
@@ -574,8 +747,8 @@ def entropic_fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun, epsilon, symme
 
     """
     T, logv = entropic_fused_gromov_wasserstein(
-        M, C1, C2, p, q, loss_fun, epsilon, symmetric,
-        alpha, G0, max_iter, tol, verbose, log=True)
+        M, C1, C2, p, q, loss_fun, epsilon, symmetric, alpha, G0, max_iter,
+        tol, solver, warmstart, verbose, log=True, **kwargs)
 
     logv['T'] = T
 
@@ -585,10 +758,13 @@ def entropic_fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun, epsilon, symme
         return logv['fgw_dist']
 
 
-def entropic_fused_gromov_barycenters(N, Ys, Cs, ps, p, lambdas, loss_fun, epsilon, symmetric=True, alpha=0.5,
-                                      max_iter=1000, tol=1e-9, verbose=False, log=False, init_C=None, init_Y=None, random_state=None):
+def entropic_fused_gromov_barycenters(
+        N, Ys, Cs, ps, p, lambdas, loss_fun, epsilon, symmetric=True,
+        alpha=0.5, max_iter=1000, tol=1e-9, warmstartT=False, verbose=False,
+        log=False, init_C=None, init_Y=None, random_state=None, **kwargs):
     r"""
     Returns the Fused Gromov-Wasserstein barycenters of `S` measurable networks with node features :math:`(\mathbf{C}_s, \mathbf{Y}_s, \mathbf{p}_s)_{1 \leq s \leq S}`
+    estimated using Fused Gromov-Wasserstein transports from Sinkhorn projections.
 
     The function solves the following optimization problem:
 
@@ -633,6 +809,9 @@ def entropic_fused_gromov_barycenters(N, Ys, Cs, ps, p, lambdas, loss_fun, epsil
         Max number of iterations
     tol : float, optional
         Stop threshold on error (>0)
+    warmstartT: bool, optional
+        Either to perform warmstart of transport plans in the successive
+        fused gromov-wasserstein transport problems.
     verbose : bool, optional
         Print information along iterations.
     log : bool, optional
@@ -644,6 +823,8 @@ def entropic_fused_gromov_barycenters(N, Ys, Cs, ps, p, lambdas, loss_fun, epsil
         random init is used.
     random_state : int or RandomState instance, optional
         Fix the seed for reproducibility
+    **kwargs: dict
+        parameters can be directly passed to the `ot.entropic_fused_gromov_wasserstein` solver.
 
     Returns
     -------
@@ -700,6 +881,9 @@ def entropic_fused_gromov_barycenters(N, Ys, Cs, ps, p, lambdas, loss_fun, epsil
     err_feature = 1
     err_structure = 1
 
+    if warmstartT:
+        T = [None] * S
+
     if log:
         log_ = {}
         log_['err_feature'] = []
@@ -710,9 +894,15 @@ def entropic_fused_gromov_barycenters(N, Ys, Cs, ps, p, lambdas, loss_fun, epsil
         Cprev = C
         Yprev = Y
 
-        T = [entropic_fused_gromov_wasserstein(
-            Ms[s], Cs[s], C, ps[s], p, loss_fun, epsilon, symmetric, alpha, None,
-            max_iter, 1e-4, verbose, log=False) for s in range(S)]
+        if warmstartT:
+            T = [entropic_fused_gromov_wasserstein(
+                Ms[s], Cs[s], C, ps[s], p, loss_fun, epsilon, symmetric, alpha,
+                None, max_iter, 1e-4, verbose, log=False, **kwargs) for s in range(S)]
+
+        else:
+            T = [entropic_fused_gromov_wasserstein(
+                Ms[s], Cs[s], C, ps[s], p, loss_fun, epsilon, symmetric, alpha,
+                None, max_iter, 1e-4, verbose, log=False, **kwargs) for s in range(S)]
 
         if loss_fun == 'square_loss':
             C = update_square_loss(p, lambdas, T, Cs)
