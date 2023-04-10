@@ -1,9 +1,85 @@
 # Releases
 
-## 0.8.3dev
+## 0.9.0
+
+This new release contains so many new features and bug fixes since 0.8.2 that we
+decided to make it a new minor release at 0.9.0. 
+
+The release contains many new features. First we did a major 
+update of all Gromov-Wasserstein solvers that brings up to 30% gain in
+computation time (see PR #431) and allows the GW solvers to work on non symmetric
+matrices. It also brings novel solvers for the very
+efficient [semi-relaxed GW problem
+](https://pythonot.github.io/master/auto_examples/gromov/plot_semirelaxed_fgw.html#sphx-glr-auto-examples-gromov-plot-semirelaxed-fgw-py)
+that can be used to find the best re-weighting for one of the distributions. We
+also now have fast and differentiable solvers for [Wasserstein on the circle](https://pythonot.github.io/master/auto_examples/plot_compute_wasserstein_circle.html#sphx-glr-auto-examples-plot-compute-wasserstein-circle-py) and
+[sliced Wasserstein on the
+sphere](https://pythonot.github.io/master/auto_examples/backends/plot_ssw_unif_torch.html#sphx-glr-auto-examples-backends-plot-ssw-unif-torch-py).
+We are also very happy to provide new OT barycenter solvers such as the [Free
+support Sinkhorn
+barycenter](https://pythonot.github.io/master/auto_examples/barycenters/plot_free_support_sinkhorn_barycenter.html#sphx-glr-auto-examples-barycenters-plot-free-support-sinkhorn-barycenter-py)
+and the [Generalized Wasserstein
+barycenter](https://pythonot.github.io/master/auto_examples/barycenters/plot_generalized_free_support_barycenter.html#sphx-glr-auto-examples-barycenters-plot-generalized-free-support-barycenter-py).
+A new differentiable solver for OT across spaces that provides OT plans
+between samples and features simultaneously and 
+called [Co-Optimal
+Transport](https://pythonot.github.io/master/auto_examples/others/plot_COOT.html)
+has also been implemented. Finally we began working on OT between Gaussian distributions and
+now provide differentiable estimation for the Bures-Wasserstein [divergence](https://pythonot.github.io/master/gen_modules/ot.gaussian.html#ot.gaussian.bures_wasserstein_distance) and
+[mappings](https://pythonot.github.io/master/auto_examples/domain-adaptation/plot_otda_linear_mapping.html#sphx-glr-auto-examples-domain-adaptation-plot-otda-linear-mapping-py).
+
+Another important first step  toward POT 1.0 is the
+implementation of a unified API for OT solvers with introduction of [`ot.solve`](https://pythonot.github.io/master/all.html#ot.solve)
+function that can solve (depending on parameters) exact, regularized and
+unbalanced OT and return a new
+[`OTResult`](https://pythonot.github.io/master/gen_modules/ot.utils.html#ot.utils.OTResult)
+object. The idea behind this new API is to facilitate exploring different solvers
+with just a change of parameter and get a more unified API for them. We will keep
+the old solvers API for power users but it will be the preferred way to solve
+problems starting from release 1.0.0.
+We provide below some examples of use for the new function and how to
+recover different aspects of the solution (OT plan, full loss, linear part of the
+loss, dual variables) :
+```python
+#Solve  exact ot
+sol = ot.solve(M)
+
+# get the results
+G = sol.plan # OT plan
+ot_loss = sol.value # OT value (full loss for regularized and unbalanced)
+ot_loss_linear = sol.value_linear # OT value for linear term np.sum(sol.plan*M)
+alpha, beta = sol.potentials # dual potentials
+
+# direct plan and loss computation
+G = ot.solve(M).plan
+ot_loss = ot.solve(M).value
+
+# OT exact with marginals a/b
+sol2 = ot.solve(M, a, b)
+
+# regularized and unbalanced OT
+sol_rkl = ot.solve(M, a, b, reg=1) # KL regularization
+sol_rl2 = ot.solve(M, a, b, reg=1, reg_type='L2')
+sol_ul2 = ot.solve(M, a, b, unbalanced=10, unbalanced_type='L2')
+sol_rkl_ukl = ot.solve(M, a, b, reg=10, unbalanced=10) # KL + KL
+
+```
+The function is fully compatible with backends and will be implemented for
+different types of distribution support (empirical distributions, grids) and OT
+problems (Gromov-Wasserstein) in the new releases. This new API is not yet
+presented in the kickstart part of the documentation as there is a small change
+that it might change
+when implementing new solvers but we encourage users to play with it.
+
+Finally, in addition to those many new  this release fixes 20 issues (some long
+standing) and we want to thank all the contributors who made this release so
+big. More details below.
+    
 
 #### New features
-
+- Added feature to (Fused) Gromov-Wasserstein solvers herited from `ot.optim` to support relative and absolute loss variations as stopping criterions (PR #431)
+- Added feature to (Fused) Gromov-Wasserstein solvers to handle asymmetric matrices (PR #431)
+- Added semi-relaxed (Fused) Gromov-Wasserstein solvers in `ot.gromov` + examples (PR #431)
 - Added the spherical sliced-Wasserstein discrepancy in `ot.sliced.sliced_wasserstein_sphere` and `ot.sliced.sliced_wasserstein_sphere_unif` + examples (PR #434)
 - Added the Wasserstein distance on the circle in ``ot.lp.solver_1d.wasserstein_circle`` (PR #434)
 - Added the Wasserstein distance on the circle (for p>=1) in `ot.lp.solver_1d.binary_search_circle` + examples (PR #434)
@@ -12,8 +88,13 @@
 - Added Generalized Wasserstein Barycenter solver + example (PR #372), fixed graphical details on the example (PR #376)
 - Added Free Support Sinkhorn Barycenter + example (PR #387)
 - New API for OT solver using function `ot.solve` (PR #388)
-- Backend version of `ot.partial` and `ot.smooth`  (PR #388)
-
+- Backend version of `ot.partial` and `ot.smooth` (PR #388 and #449)
+- Added argument for warmstart of dual potentials in Sinkhorn-based methods in `ot.bregman` (PR #437)
+- Added parameters method in `ot.da.SinkhornTransport` (PR #440)
+- `ot.dr` now uses the new Pymanopt API and POT is compatible with current
+  Pymanopt (PR #443)
+- Added CO-Optimal Transport solver + examples (PR # 447)
+- Remove the redundant `nx.abs()` at the end of `wasserstein_1d()` (PR #448)
 
 #### Closed issues
 
@@ -35,13 +116,14 @@ roughly 2^31) (PR #381)
 - Fixed an issue where the doc could not be built due to some changes in matplotlib's API (Issue #403, PR #402)
 - Replaced Numpy C Compiler with Setuptools C Compiler due to deprecation issues (Issue #408, PR #409)
 - Fixed weak optimal transport docstring (Issue #404, PR #410)
-- Fixed error with parameter `log=True`for `SinkhornLpl1Transport` (Issue #412, 
+- Fixed error with parameter `log=True`for `SinkhornLpl1Transport` (Issue #412,
 PR #413)
 - Fixed an issue about `warn` parameter in `sinkhorn2` (PR #417)
-- Fix an issue where the parameter `stopThr` in `empirical_sinkhorn_divergence` was rendered useless by subcalls 
+- Fix an issue where the parameter `stopThr` in `empirical_sinkhorn_divergence` was rendered useless by subcalls
   that explicitly specified `stopThr=1e-9` (Issue #421, PR #422).
 - Fixed a bug breaking an example where we would try to make an array of arrays of different shapes (Issue #424, PR #425)
-
+- Fixed an issue with the documentation gallery section (PR #444)
+- Fixed issues with cuda variables for `line_search_armijo` and `entropic_gromov_wasserstein` (Issue #445, #PR 446)
 
 ## 0.8.2
 
@@ -88,7 +170,7 @@ and [Factored coupling OT](https://pythonot.github.io/auto_examples/others/plot_
 
 - Remove deprecated `ot.gpu` submodule (PR #361)
 - Update examples in the gallery (PR #359)
-- Add stochastic loss and OT plan computation for regularized OT and 
+- Add stochastic loss and OT plan computation for regularized OT and
   backend examples(PR #360)
 - Implementation of factored OT with emd and sinkhorn (PR #358)
 - A brand new logo for POT (PR #357)
@@ -104,9 +186,9 @@ and [Factored coupling OT](https://pythonot.github.io/auto_examples/others/plot_
 
 #### Closed issues
 
-- Fix mass gradient of `ot.emd2` and `ot.gromov_wasserstein2` so that they are 
+- Fix mass gradient of `ot.emd2` and `ot.gromov_wasserstein2` so that they are
   centered (Issue #364, PR #363)
-- Fix bug in instantiating an `autograd` function `ValFunction` (Issue #337, 
+- Fix bug in instantiating an `autograd` function `ValFunction` (Issue #337,
   PR #338)
 - Fix POT ABI compatibility with old and new numpy (Issue #346, PR #349)
 - Warning when feeding integer cost matrix to EMD solver resulting in an integer transport plan (Issue #345, PR #343)
@@ -156,21 +238,21 @@ As always we want to that the contributors who helped make POT better (and bug f
 
 - Fix bug in older Numpy ABI (<1.20) (Issue #308, PR #326)
 - Fix bug  in `ot.dist` function when non euclidean distance (Issue #305, PR #306)
-- Fix gradient scaling for functions using `nx.set_gradients` (Issue #309, 
+- Fix gradient scaling for functions using `nx.set_gradients` (Issue #309,
   PR #310)
-- Fix bug in generalized Conditional gradient solver and SinkhornL1L2 
+- Fix bug in generalized Conditional gradient solver and SinkhornL1L2
   (Issue #311, PR #313)
 - Fix log error in `gromov_barycenters` (Issue #317, PR #3018)
 
 ## 0.8.0
 *November 2021*
 
-This new stable release introduces several important features. 
+This new stable release introduces several important features.
 
 First we now have
 an OpenMP compatible exact ot solver in `ot.emd`. The OpenMP version is used
 when the parameter `numThreads` is greater than one and can lead to nice
-speedups on multi-core machines. 
+speedups on multi-core machines.
 
 Second we have introduced a backend mechanism that allows to use standard POT
 function seamlessly on Numpy, Pytorch and Jax arrays. Other backends are coming
@@ -189,7 +271,7 @@ for a  [sliced Wasserstein gradient
 flow](https://PythonOT.github.io/auto_examples/backends/plot_sliced_wass_grad_flow_pytorch.html)
 and [optimizing the Gromov-Wassersein distance](https://PythonOT.github.io/auto_examples/backends/plot_optim_gromov_pytorch.html). Note that the Jax backend is still in early development and quite
 slow at the moment, we strongly recommend for Jax users to use the [OTT
-toolbox](https://github.com/google-research/ott)  when possible.  
+toolbox](https://github.com/google-research/ott)  when possible.
  As a result of this new feature,
  the old `ot.gpu` submodule is now deprecated since GPU
 implementations can be done using GPU arrays on the torch backends.
@@ -212,7 +294,7 @@ Finally POT was accepted for publication in the Journal of Machine Learning
 Research (JMLR) open source software track and we ask the POT users to cite [this
 paper](https://www.jmlr.org/papers/v22/20-451.html) from now on. The documentation has been improved in particular by adding a
 "Why OT?" section to the quick start guide and several new examples illustrating
-the new features. The documentation now has two version : the stable version 
+the new features. The documentation now has two version : the stable version
 [https://pythonot.github.io/](https://pythonot.github.io/)
 corresponding to the last release and the master version [https://pythonot.github.io/master](https://pythonot.github.io/master) that corresponds to the
 current master branch on GitHub.
@@ -222,7 +304,7 @@ As usual, we want to thank all the POT contributors (now 37 people have
 contributed to the toolbox). But for this release we thank in particular Nathan
 Cassereau and Kamel Guerda from the AI support team at
 [IDRIS](http://www.idris.fr/) for their support to the development of the
-backend and OpenMP implementations. 
+backend and OpenMP implementations.
 
 
 #### New features
@@ -289,7 +371,7 @@ repository for the new documentation is now hosted at
 
 This is the first release where the Python 2.7 tests have been removed. Most of
 the toolbox should still work but we do not offer support for Python 2.7 and
-will close related Issues. 
+will close related Issues.
 
 A lot of changes have been done to the documentation that is now hosted on
 [https://PythonOT.github.io/](https://PythonOT.github.io/) instead of
@@ -322,7 +404,7 @@ problems.
 
 This release is also the moment to thank all the POT contributors (old and new)
 for helping making POT such a nice toolbox. A lot of changes (also in the API)
-are coming for the next versions. 
+are coming for the next versions.
 
 
 #### Features
@@ -351,14 +433,14 @@ are coming for the next versions.
 - Log bugs for Gromov-Wassertein solver (Issue #107, fixed in PR #108)
 - Weight issues in barycenter function (PR #106)
 
-## 0.6.0 
+## 0.6.0
 *July 2019*
 
-This is the first official stable release of POT and this means a jump to 0.6! 
+This is the first official stable release of POT and this means a jump to 0.6!
 The library has been used in
 the wild for a while now and we have reached a state where a lot of fundamental
 OT solvers are available and tested. It has been quite stable in the last months
-but kept the beta flag in its Pypi classifiers until now. 
+but kept the beta flag in its Pypi classifiers until now.
 
 Note that this release will be the last one supporting officially Python 2.7 (See
 https://python3statement.org/ for more reasons). For next release we will keep
@@ -387,7 +469,7 @@ graphs](https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_fg
 
 A lot of work has been done on the documentation with several new
 examples corresponding to the new features and a lot of corrections for the
-docstrings. But the most visible change is a new 
+docstrings. But the most visible change is a new
 [quick start guide](https://pot.readthedocs.io/en/latest/quickstart.html) for
 POT that gives several pointers about which function or classes allow to solve which
 specific OT problem. When possible a link is provided to relevant examples.
@@ -425,29 +507,29 @@ bring new features and solvers to the library.
 - Issue #72 Macosx build problem
 
 
-## 0.5.0 
+## 0.5.0
 *Sep 2018*
 
-POT is 2 years old! This release brings numerous new features to the 
+POT is 2 years old! This release brings numerous new features to the
 toolbox as listed below but also several bug correction.
 
-Among the new features, we can highlight a [non-regularized Gromov-Wasserstein 
-solver](https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov.ipynb), 
-a new [greedy variant of sinkhorn](https://pot.readthedocs.io/en/latest/all.html#ot.bregman.greenkhorn),  
-[non-regularized](https://pot.readthedocs.io/en/latest/all.html#ot.lp.barycenter), 
+Among the new features, we can highlight a [non-regularized Gromov-Wasserstein
+solver](https://github.com/rflamary/POT/blob/master/notebooks/plot_gromov.ipynb),
+a new [greedy variant of sinkhorn](https://pot.readthedocs.io/en/latest/all.html#ot.bregman.greenkhorn),
+[non-regularized](https://pot.readthedocs.io/en/latest/all.html#ot.lp.barycenter),
 [convolutional (2D)](https://github.com/rflamary/POT/blob/master/notebooks/plot_convolutional_barycenter.ipynb)
 and [free support](https://github.com/rflamary/POT/blob/master/notebooks/plot_free_support_barycenter.ipynb)
- Wasserstein barycenters and [smooth](https://github.com/rflamary/POT/blob/prV0.5/notebooks/plot_OT_1D_smooth.ipynb) 
- and [stochastic](https://pot.readthedocs.io/en/latest/all.html#ot.stochastic.sgd_entropic_regularization) 
+ Wasserstein barycenters and [smooth](https://github.com/rflamary/POT/blob/prV0.5/notebooks/plot_OT_1D_smooth.ipynb)
+ and [stochastic](https://pot.readthedocs.io/en/latest/all.html#ot.stochastic.sgd_entropic_regularization)
 implementation of entropic OT.
 
-POT 0.5 also comes with a rewriting of ot.gpu using the cupy framework instead of 
-the unmaintained cudamat. Note that while we tried to keed changes to the 
-minimum, the OTDA classes were deprecated. If you are happy with the cudamat 
+POT 0.5 also comes with a rewriting of ot.gpu using the cupy framework instead of
+the unmaintained cudamat. Note that while we tried to keed changes to the
+minimum, the OTDA classes were deprecated. If you are happy with the cudamat
 implementation, we recommend you stay with stable release 0.4 for now.
 
-The code quality has also improved with 92% code coverage in tests that is now 
-printed to the log in the Travis builds. The documentation has also been 
+The code quality has also improved with 92% code coverage in tests that is now
+printed to the log in the Travis builds. The documentation has also been
 greatly improved with new modules and examples/notebooks.
 
 This new release is so full of new stuff and corrections thanks to the old
@@ -466,24 +548,24 @@ and new POT contributors (you can see the list in the [readme](https://github.co
 * Stochastic OT in the dual and semi-dual (PR #52 and PR #62)
 * Free support barycenters (PR #56)
 * Speed-up Sinkhorn function (PR #57 and PR #58)
-* Add convolutional Wassersein barycenters for 2D images (PR #64) 
+* Add convolutional Wassersein barycenters for 2D images (PR #64)
 * Add Greedy Sinkhorn variant (Greenkhorn) (PR #66)
 * Big ot.gpu update with cupy implementation (instead of un-maintained cudamat) (PR #67)
 
 #### Deprecation
 
-Deprecated OTDA Classes were removed from ot.da and ot.gpu for version 0.5 
-(PR #48 and PR #67). The deprecation message has been for a year here since 
+Deprecated OTDA Classes were removed from ot.da and ot.gpu for version 0.5
+(PR #48 and PR #67). The deprecation message has been for a year here since
 0.4 and it is time to pull the plug.
 
 #### Closed issues
 
 * Issue #35 : remove import plot from ot/__init__.py (See PR #41)
 * Issue #43 : Unusable parameter log for EMDTransport (See PR #44)
-* Issue #55 : UnicodeDecodeError: 'ascii' while installing with pip 
+* Issue #55 : UnicodeDecodeError: 'ascii' while installing with pip
 
 
-## 0.4 
+## 0.4
 *15 Sep 2017*
 
 This release contains a lot of contribution from new contributors.
@@ -493,14 +575,14 @@ This release contains a lot of contribution from new contributors.
 
 * Automatic notebooks and doc update (PR #27)
 * Add gromov Wasserstein solver and Gromov Barycenters (PR #23)
-* emd and emd2 can now return dual variables and have max_iter (PR #29 and PR #25) 
+* emd and emd2 can now return dual variables and have max_iter (PR #29 and PR #25)
 * New domain adaptation classes compatible with scikit-learn (PR #22)
 * Proper tests with pytest on travis (PR #19)
 * PEP 8 tests (PR #13)
 
 #### Closed issues
 
-* emd convergence problem du to fixed max iterations (#24) 
+* emd convergence problem du to fixed max iterations (#24)
 * Semi supervised DA error (#26)
 
 ## 0.3.1
@@ -508,7 +590,7 @@ This release contains a lot of contribution from new contributors.
 
 * Correct bug in emd on windows
 
-## 0.3 
+## 0.3
 *7 Jul 2017*
 
 * emd* and sinkhorn* are now performed in parallel for multiple target distributions
@@ -521,7 +603,7 @@ This release contains a lot of contribution from new contributors.
 * GPU implementations for sinkhorn and group lasso regularization
 
 
-## V0.2 
+## V0.2
 *7 Apr 2017*
 
 * New dimensionality reduction method (WDA)
@@ -529,7 +611,7 @@ This release contains a lot of contribution from new contributors.
 
 
 
-## 0.1.11 
+## 0.1.11
 *5 Jan 2017*
 
 * Add sphinx gallery for better documentation
@@ -537,7 +619,7 @@ This release contains a lot of contribution from new contributors.
 * Add simple tic() toc() functions for timing
 
 
-## 0.1.10 
+## 0.1.10
 *7 Nov 2016*
 * numerical stabilization for sinkhorn (log domain and epsilon scaling)
 

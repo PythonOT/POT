@@ -8,7 +8,6 @@
     , :py:mod:`ot.unbalanced`.
     The following sub-modules are not imported due to additional dependencies:
     - :any:`ot.dr` : depends on :code:`pymanopt` and :code:`autograd`.
-    - :any:`ot.gpu` : depends on :code:`cupy` and a CUDA GPU.
     - :any:`ot.plot` : depends on :code:`matplotlib`
 """
 
@@ -56,7 +55,7 @@ from .solvers import solve
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.8.3dev"
+__version__ = "0.9.0"
 
 __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'datasets', 'bregman', 'lp', 'tic', 'toc', 'toq', 'gromov',

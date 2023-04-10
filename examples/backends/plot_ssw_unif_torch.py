@@ -50,7 +50,7 @@ def plot_sphere(ax):
     r = np.linspace(1.0, 1.0, 50)
     X, Y = np.meshgrid(xlist, ylist)
 
-    Z = np.sqrt(r**2 - X**2 - Y**2)
+    Z = np.sqrt(np.maximum(r**2 - X**2 - Y**2, 0))
 
     ax.plot_wireframe(X, Y, Z, color="gray", alpha=.3)
     ax.plot_wireframe(X, Y, -Z, color="gray", alpha=.3)  # Now plot the bottom half

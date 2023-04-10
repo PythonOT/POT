@@ -1,4 +1,3 @@
-
 Contributing to POT
 ===================
 
