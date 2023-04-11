@@ -12,6 +12,7 @@ Bregman projections solvers for entropic Gromov-Wasserstein
 # License: MIT License
 
 import numpy as np
+import warnings
 
 from ..bregman import sinkhorn
 from ..utils import dist, list_to_array, check_random_state
@@ -191,6 +192,9 @@ def entropic_gromov_wasserstein(
 
         cpt += 1
 
+    if abs(nx.sum(T) - 1) > 1e-5:
+        warnings.warn("Solver failed to produce a transport plan. You might "
+                      "want to increase the regularization parameter `epsilon`.")
     if log:
         log['gw_dist'] = gwloss(constC, hC1, hC2, T, nx)
         return T, log
@@ -631,6 +635,9 @@ def entropic_fused_gromov_wasserstein(
 
         cpt += 1
 
+    if abs(nx.sum(T) - 1) > 1e-5:
+        warnings.warn("Solver failed to produce a transport plan. You might "
+                      "want to increase the regularization parameter `epsilon`.")
     if log:
         log['fgw_dist'] = (1 - alpha) * nx.sum(M * T) + alpha * gwloss(constC, hC1, hC2, T, nx)
         return T, log

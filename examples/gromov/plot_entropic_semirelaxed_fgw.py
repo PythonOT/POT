@@ -113,7 +113,9 @@ print('srGW_e(C3, h3, C2) = ', srgw_32)
 # ---------------------------------------------
 #
 # We color nodes of the graph on the right - then project its node colors
-# based on the optimal transport plan from the entropic srGW matching
+# based on the optimal transport plan from the entropic srGW matching.
+# We adjust the intensity of links across domains proportionaly to the mass
+# sent, adding a minimal intensity of 0.1 if mass sent is not zero.
 
 
 def draw_graph(G, C, nodes_color_part, Gweights=None,
@@ -187,11 +189,12 @@ def draw_transp_colored_srGW(G1, C1, G2, C2, part_G1,
     pos2 = draw_graph(G2, C2, nodes_color_part2, Gweights=p2, pos=pos2,
                       node_size=node_size, shiftx=shiftx, seed=seed_G2)
     for k1, v1 in pos1.items():
+        max_Tk1 = np.max(T[k1, :])
         for k2, v2 in pos2.items():
             if (T[k1, k2] > 0):
                 pl.plot([pos1[k1][0], pos2[k2][0]],
                         [pos1[k1][1], pos2[k2][1]],
-                        '-', lw=0.5, alpha=0.3,
+                        '-', lw=0.6, alpha=min(T[k1, k2] / max_Tk1 + 0.1, 1.),
                         color=nodes_color_part1[k1])
     return pos1, pos2
 
