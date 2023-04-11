@@ -600,7 +600,7 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
 
     using e.g. ot.utils.get_coordinate_circle(x)
 
-    The function runs on backend but tensorflow is not supported.
+    The function runs on backend but tensorflow and jax are not supported.
 
     Parameters
     ----------
@@ -743,7 +743,7 @@ def wasserstein1_circle(u_values, v_values, u_weights=None, v_weights=None, requ
     takes the value modulo 1.
     If the values are on :math:`S^1\subset\mathbb{R}^2`, first find the coordinates
     using e.g. the atan2 function.
-    The function runs on backend but tensorflow is not supported.
+    The function runs on backend but tensorflow and jax are not supported.
 
     .. math::
         W_1(u,v) = \int_0^1 |F_u(t)-F_v(t)-LevMed(F_u-F_v)|\ \mathrm{d}t
@@ -864,7 +864,7 @@ def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
 
     using e.g. ot.utils.get_coordinate_circle(x)
 
-    The function runs on backend but tensorflow is not supported.
+    The function runs on backend but tensorflow and jax are not supported.
 
     Parameters
     ----------
