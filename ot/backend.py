@@ -951,6 +951,14 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def detach(self, a):
+        r"""
+        Detach a tensor from the current graph.
+
+        See: https://pytorch.org/docs/stable/generated/torch.Tensor.detach.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -1278,6 +1286,9 @@ class NumpyBackend(Backend):
 
     def transpose(self, a, axes=None):
         return np.transpose(a, axes)
+
+    def detach(self, a):
+        return a
 
 
 class JaxBackend(Backend):
@@ -1625,6 +1636,10 @@ class JaxBackend(Backend):
 
     def transpose(self, a, axes=None):
         return jnp.transpose(a, axes)
+
+    def detach(self, a):
+        val, = jax.lax.stop_gradient((a,))
+        return val
 
 
 class TorchBackend(Backend):
@@ -2072,6 +2087,9 @@ class TorchBackend(Backend):
             axes = tuple(range(a.ndim)[::-1])
         return a.permute(axes)
 
+    def detach(self, a):
+        return a.detach()
+
 
 class CupyBackend(Backend):  # pragma: no cover
     """
@@ -2442,6 +2460,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def transpose(self, a, axes=None):
         return cp.transpose(a, axes)
+
+    def detach(self, a):
+        return a
 
 
 class TensorflowBackend(Backend):
@@ -2826,3 +2847,6 @@ class TensorflowBackend(Backend):
 
     def transpose(self, a, axes=None):
         return tf.transpose(a, perm=axes)
+
+    def detach(self, a):
+        return tf.stop_gradient(a)

@@ -7,6 +7,8 @@
 
 import numpy as np
 import pytest
+import torch
+import torch.nn.functional as F
 
 import ot
 from ot.sliced import get_random_projections
@@ -406,6 +408,20 @@ def test_sliced_sphere_backend_type_devices(nx):
         valb = ot.sliced_wasserstein_sphere(xb, yb)
 
         nx.assert_same_dtype_device(xb, valb)
+
+
+def test_sliced_sphere_gradient():
+    X0 = torch.randn((500, 3))
+    X0 = F.normalize(X0, p=2, dim=-1)
+    X0.requires_grad_(True)
+
+    X1 = torch.randn((500, 3))
+    X1 = F.normalize(X1, p=2, dim=-1)
+
+    sw = ot.sliced_wasserstein_sphere(X1, X0, n_projections=500, p=2)
+    grad_x0 = torch.autograd.grad(sw, X0)[0]
+
+    assert not torch.any(torch.isnan(grad_x0))
 
 
 def test_sliced_sphere_unif_values_on_the_sphere():

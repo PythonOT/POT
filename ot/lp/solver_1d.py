@@ -401,7 +401,7 @@ def roll_cols(M, shifts):
 
     n_rows, n_cols = M.shape
 
-    arange1 = nx.tile(nx.reshape(nx.arange(n_cols), (1, n_cols)), (n_rows, 1))
+    arange1 = nx.tile(nx.reshape(nx.arange(n_cols, type_as=shifts), (1, n_cols)), (n_rows, 1))
     arange2 = (arange1 - shifts) % n_cols
 
     return nx.take_along_axis(M, arange2, 1)
@@ -730,7 +730,7 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
             tp[((1 - mask) * (dCp >= 0)) > 0] = tc[((1 - mask) * (dCp >= 0)) > 0]
             tc[((1 - mask) * (1 - done)) > 0] = (tm[((1 - mask) * (1 - done)) > 0] + tp[((1 - mask) * (1 - done)) > 0]) / 2
 
-    w = ot_cost_on_circle(tc, u_values, v_values, u_cdf, v_cdf, p)
+    w = ot_cost_on_circle(nx.detach(tc), u_values, v_values, u_cdf, v_cdf, p)
 
     if log:
         return w, {"optimal_theta": tc[:, 0]}
