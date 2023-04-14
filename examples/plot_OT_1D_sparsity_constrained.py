@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """
 ================================
-Smooth optimal transport example
+Sparsity-constrained optimal transport example
 ================================
 
-This example illustrates the computation of EMD, Sinkhorn and smooth OT plans
-and their visualization.
+This example illustrates EMD, squared l2 regularized OT, and sparsity-constrained OT plans.
+The sparsity-constrained OT can be considered as a middle ground between EMD and squared l2 regularized OT.
 
 """
 
-# Author: Remi Flamary <remi.flamary@unice.fr>
+# Author: Tianlin Liu <t.liu@unibas.ch>
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 6
+# sphinx_gallery_thumbnail_number = 5
 
 import numpy as np
 import matplotlib.pylab as pl
@@ -58,47 +58,17 @@ pl.legend()
 pl.figure(2, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
 
-##############################################################################
-# Solve EMD
-# ---------
-
 
 #%% EMD
 
-G0 = ot.emd(a, b, M)
+# use fast 1D solver
+G0 = ot.emd_1d(x, x, a, b)
+
+# Equivalent to
+# G0 = ot.emd(a, b, M)
 
 pl.figure(3, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, G0, 'OT matrix G0')
-
-##############################################################################
-# Solve Sinkhorn
-# --------------
-
-
-#%% Sinkhorn
-
-lambd = 2e-3
-Gs = ot.sinkhorn(a, b, M, lambd, verbose=True)
-
-pl.figure(4, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, Gs, 'OT matrix Sinkhorn')
-
-pl.show()
-
-##############################################################################
-# Solve Smooth OT
-# ---------------
-
-
-#%% Smooth OT with KL regularization
-
-lambd = 2e-3
-Gsm = ot.smooth.smooth_ot_dual(a, b, M, lambd, reg_type='kl')
-
-pl.figure(5, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, Gsm, 'OT matrix Smooth OT KL reg.')
-
-pl.show()
 
 
 #%% Smooth OT with squared l2 regularization
@@ -106,7 +76,19 @@ pl.show()
 lambd = 1e-1
 Gsm = ot.smooth.smooth_ot_dual(a, b, M, lambd, reg_type='l2')
 
-pl.figure(6, figsize=(5, 5))
+pl.figure(4, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, Gsm, 'OT matrix Smooth OT l2 reg.')
 
 pl.show()
+
+
+#%% Smooth OT with squared l2 regularization
+
+lambd = 1e-1
+Gsc = ot.sparse.sparsity_constrained_ot_dual(a, b, M, lambd, max_nz=2)
+pl.figure(5, figsize=(5, 5))
+ot.plot.plot1D_mat(a, b, Gsc, 'Sparsity contrained OT matrix; k=2.')
+
+pl.show()
+
+# %%
