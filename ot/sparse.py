@@ -3,9 +3,11 @@ Sparsity-constrained optimal transport solvers.
 
 Implementation of :
 Sparsity-Constrained Optimal Transport.
-Tianlin Liu, Joan Puigcerver, Mathieu Blondel.
-In Proc. of AISTATS 2018.
-https://arxiv.org/abs/1710.06276
+Liu, T., Puigcerver, J., & Blondel, M. (2023).
+Sparsity-constrained optimal transport.
+Proceedings of the Eleventh International Conference on
+Learning Representations (ICLR).
+https://arxiv.org/abs/2209.15466
 
 [50] Liu, T., Puigcerver, J., & Blondel, M. (2023).
 Sparsity-constrained optimal transport.
@@ -21,6 +23,67 @@ Learning Representations (ICLR).
 import numpy as np
 import ot
 from .backend import get_backend
+
+
+def projection_sparse_simplex(V, max_nz, z=1, axis=None):
+    r"""Projection of :math:`\mathbf{V}` onto the simplex with cardinality constraint (maximum number of non-zero elements) and then scaled by `z`.
+
+    .. math::
+        P\left(\mathbf{V}, max_nz, z\right) = \mathop{\arg \min}_{\substack{\mathbf{y} >= 0 \\ \sum_i \mathbf{y}_i = z} \\ ||p||_0 \le \text{max_nz}} \quad \|\mathbf{y} - \mathbf{V}\|^2
+
+    Parameters
+    ----------
+    V: ndarray, rank 2
+    z: float or array
+        If array, len(z) must be compatible with :math:`\mathbf{V}`
+    axis: None or int
+        - axis=None: project :math:`\mathbf{V}` by :math:`P(\mathbf{V}.\mathrm{ravel}(), max_nz, z)`
+        - axis=1: project each :math:`\mathbf{V}_i` by :math:`P(\mathbf{V}_i, max_nz, z_i)`
+        - axis=0: project each :math:`\mathbf{V}_{:, j}` by :math:`P(\mathbf{V}_{:, j}, max_nz, z_j)`
+
+    Returns
+    -------
+    projection: ndarray, shape :math:`\mathbf{V}`.shape
+
+    References:
+        Sparse projections onto the simplex
+        Anastasios Kyrillidis, Stephen Becker, Volkan Cevher and, Christoph Koch
+        ICML 2013
+        https://arxiv.org/abs/1206.1529
+    """
+    if axis == 1:
+        max_nz_indices = np.argpartition(
+            V,
+            kth=-max_nz,
+            axis=1)[:, -max_nz:]
+        # Record nonzero column indices in a descending order
+        max_nz_indices = max_nz_indices[:, ::-1]
+
+        row_indices = np.arange(V.shape[0])[:, np.newaxis]
+
+        # Extract the top max_nz values for each row
+        # and then project to simplex.
+        U = V[row_indices, max_nz_indices]
+        z = np.ones(len(U)) * z
+        cssv = np.cumsum(U, axis=1) - z[:, np.newaxis]
+        ind = np.arange(max_nz) + 1
+        cond = U - cssv / ind > 0
+        rho = np.count_nonzero(cond, axis=1)
+        theta = cssv[np.arange(len(U)), rho - 1] / rho
+        nz_projection = np.maximum(U - theta[:, np.newaxis], 0)
+
+        # Put the projection of max_nz_values to their original column indices
+        # while keeping other values zero.
+        sparse_projection = np.zeros_like(V)
+        sparse_projection[row_indices, max_nz_indices] = nz_projection
+        return sparse_projection
+
+    elif axis == 0:
+        return projection_sparse_simplex(V.T, max_nz, z, axis=1).T
+
+    else:
+        V = V.ravel().reshape(1, -1)
+        return projection_sparse_simplex(V, max_nz, z, axis=1).ravel()
 
 
 class SparsityConstrained(ot.smooth.Regularization):
@@ -42,22 +105,9 @@ class SparsityConstrained(ot.smooth.Regularization):
         return val, G
 
     def max_Omega(self, X, b):
-        # For each column of X, find top max_nz values and
-        # their corresponding indices.
-        max_nz_indices = np.argpartition(
-            X,
-            kth=-self.max_nz,
-            axis=0)[-self.max_nz:]
-        max_nz_values = X[max_nz_indices, np.arange(X.shape[1])]
-
-        # Project the top max_nz values onto the simplex.
-        G_nz_values = ot.smooth.projection_simplex(
-            max_nz_values / (b * self.gamma), axis=0)
-
-        # Put the projection of max_nz_values to their original indices
-        # and set all other values zero.
-        G = np.zeros_like(X)
-        G[max_nz_indices, np.arange(X.shape[1])] = G_nz_values
+        # Project the scaled X onto the simplex with sparsity constraint.
+        G = projection_sparse_simplex(
+            X / (b * self.gamma), self.max_nz, axis=0)
         val = np.sum(X * G, axis=0)
         val -= 0.5 * self.gamma * b * np.sum(G * G, axis=0)
         return val, G
