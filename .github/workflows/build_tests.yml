@@ -37,10 +37,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest "pytest-cov<2.6" codecov
+        pip install pytest pytest-cov codecov
     - name: Run tests
       run: |
-        python -m pytest --durations=20 -v test/ ot/ --doctest-modules --ignore ot/gpu/ --cov=ot --color=yes
+        python -m pytest --durations=20 -v test/ ot/ --doctest-modules  --color=yes
     - name: Upload codecov
       run: |
         codecov
