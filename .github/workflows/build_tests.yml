@@ -40,8 +40,7 @@ jobs:
         pip install pytest pytest-cov
     - name: Run tests
       run: |
-        python -m pytest --durations=20 -v test/ ot/ --doctest-modules
-        --color=yes --cov-report=xml
+        python -m pytest --durations=20 -v test/ ot/ --doctest-modules --color=yes --cov-report=xml
     - name: Upload coverage reports to Codecov with GitHub Action
       uses: codecov/codecov-action@v3
 
