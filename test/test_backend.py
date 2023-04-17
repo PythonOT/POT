@@ -655,6 +655,12 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append("detach")
 
+        A, B = nx.detach(Mb, Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("detach A")
+        lst_b.append(nx.to_numpy(B))
+        lst_name.append("detach B")
+
         assert not nx.array_equal(Mb, vb), "array_equal (shape)"
         assert nx.array_equal(Mb, Mb), "array_equal (elements) - expected true"
         assert not nx.array_equal(
