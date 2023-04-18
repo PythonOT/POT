@@ -951,6 +951,14 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def detach(self, *args):
+        r"""
+        Detach tensors in arguments from the current graph.
+
+        See: https://pytorch.org/docs/stable/generated/torch.Tensor.detach.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -1278,6 +1286,11 @@ class NumpyBackend(Backend):
 
     def transpose(self, a, axes=None):
         return np.transpose(a, axes)
+
+    def detach(self, *args):
+        if len(args) == 1:
+            return args[0]
+        return args
 
 
 class JaxBackend(Backend):
@@ -1625,6 +1638,11 @@ class JaxBackend(Backend):
 
     def transpose(self, a, axes=None):
         return jnp.transpose(a, axes)
+
+    def detach(self, *args):
+        if len(args) == 1:
+            return jax.lax.stop_gradient((args[0],))[0]
+        return [jax.lax.stop_gradient((a,))[0] for a in args]
 
 
 class TorchBackend(Backend):
@@ -2072,6 +2090,11 @@ class TorchBackend(Backend):
             axes = tuple(range(a.ndim)[::-1])
         return a.permute(axes)
 
+    def detach(self, *args):
+        if len(args) == 1:
+            return args[0].detach()
+        return [a.detach() for a in args]
+
 
 class CupyBackend(Backend):  # pragma: no cover
     """
@@ -2442,6 +2465,11 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def transpose(self, a, axes=None):
         return cp.transpose(a, axes)
+
+    def detach(self, *args):
+        if len(args) == 1:
+            return args[0]
+        return args
 
 
 class TensorflowBackend(Backend):
@@ -2826,3 +2854,8 @@ class TensorflowBackend(Backend):
 
     def transpose(self, a, axes=None):
         return tf.transpose(a, perm=axes)
+
+    def detach(self, *args):
+        if len(args) == 1:
+            return tf.stop_gradient(args[0])
+        return [tf.stop_gradient(a) for a in args]

@@ -7,6 +7,7 @@
 #### Closed issues
 
 - Fix circleci-redirector action and codecov (PR #460)
+- Fix issues with cuda for ot.binary_search_circle and with gradients for ot.sliced_wasserstein_sphere (PR #457)
 
 ## 0.9.0
 
