@@ -1,8 +1,6 @@
 # Releases
 
 ## 0.9.1dev
-*Sine April 2023*
-
 
 #### New features
 
@@ -13,9 +11,10 @@
 - Added entropic semi-relaxed (Fused) Gromov-Wasserstein solvers in `ot.gromov` + examples (PR #455)
 
 #### Closed issues
-
+- Fix circleci-redirector action and codecov (PR #460)
 
 ## 0.9.0
+*April 2023*
 
 This new release contains so many new features and bug fixes since 0.8.2 that we
 decided to make it a new minor release at 0.9.0. 
@@ -108,7 +107,7 @@ big. More details below.
 - Added parameters method in `ot.da.SinkhornTransport` (PR #440)
 - `ot.dr` now uses the new Pymanopt API and POT is compatible with current
   Pymanopt (PR #443)
-- Added CO-Optimal Transport solver + examples (PR # 447)
+- Added CO-Optimal Transport solver + examples (PR #447)
 - Remove the redundant `nx.abs()` at the end of `wasserstein_1d()` (PR #448)
 
 #### Closed issues
