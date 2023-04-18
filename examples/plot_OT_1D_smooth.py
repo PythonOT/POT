@@ -4,8 +4,8 @@
 Smooth optimal transport example
 ================================
 
-This example illustrates the computation of EMD, Sinkhorn and smooth OT plans
-and their visualization.
+This example illustrates the computation of EMD, Sinkhorn, smooth OT plans,
+sparsity-constrained plans, and their visualization.
 
 """
 
@@ -108,5 +108,16 @@ Gsm = ot.smooth.smooth_ot_dual(a, b, M, lambd, reg_type='l2')
 
 pl.figure(6, figsize=(5, 5))
 ot.plot.plot1D_mat(a, b, Gsm, 'OT matrix Smooth OT l2 reg.')
+
+pl.show()
+
+#%% Sparsity-constrained OT
+
+lambd = 1e-1
+
+max_nz = 2  # two non-zero entries are permitted per column of the OT plan
+Gsc = ot.smooth.sparsity_constrained_ot_dual(a, b, M, lambd, max_nz=max_nz)
+pl.figure(5, figsize=(5, 5))
+ot.plot.plot1D_mat(a, b, Gsc, 'Sparsity contrained OT matrix; k=2.')
 
 pl.show()

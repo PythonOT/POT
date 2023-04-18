@@ -27,7 +27,6 @@ from . import da
 from . import gromov
 from . import smooth
 from . import stochastic
-from . import sparse
 from . import unbalanced
 from . import partial
 from . import backend
