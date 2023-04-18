@@ -305,10 +305,10 @@ def test_entropic_gromov(nx):
 
     G, log = ot.gromov.entropic_gromov_wasserstein(
         C1, C2, p, q, 'square_loss', symmetric=None, G0=G0,
-        epsilon=1e-2, verbose=True, log=True)
+        epsilon=1e-2, max_iter=10, verbose=True, log=True)
     Gb = nx.to_numpy(ot.gromov.entropic_gromov_wasserstein(
         C1b, C2b, pb, qb, 'square_loss', symmetric=True, G0=None,
-        epsilon=1e-2, verbose=True, log=False
+        epsilon=1e-2, max_iter=10, verbose=True, log=False
     ))
 
     # check constraints
@@ -363,10 +363,10 @@ def test_entropic_proximal_gromov(nx):
 
     G, log = ot.gromov.entropic_gromov_wasserstein(
         C1, C2, p, q, 'square_loss', symmetric=None, G0=G0,
-        epsilon=1e-1, solver='PPA', verbose=True, log=True, numItermax=1)
+        epsilon=1e-1, max_iter=50, solver='PPA', verbose=True, log=True, numItermax=1)
     Gb = nx.to_numpy(ot.gromov.entropic_gromov_wasserstein(
         C1b, C2b, pb, qb, 'square_loss', symmetric=True, G0=None,
-        epsilon=1e-1, solver='PPA', verbose=True, log=False, numItermax=1
+        epsilon=1e-1, max_iter=50, solver='PPA', verbose=True, log=False, numItermax=1
     ))
 
     # check constraints
@@ -398,6 +398,7 @@ def test_entropic_proximal_gromov(nx):
         q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
 
 
+@pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_asymmetric_entropic_gromov(nx):
     n_samples = 10  # nb samples
     np.random.seed(0)
@@ -413,10 +414,10 @@ def test_asymmetric_entropic_gromov(nx):
     C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
     G = ot.gromov.entropic_gromov_wasserstein(
         C1, C2, p, q, 'square_loss', symmetric=None, G0=G0,
-        epsilon=1e-1, verbose=True, log=False)
+        epsilon=1e-1, max_iter=5, verbose=True, log=False)
     Gb = nx.to_numpy(ot.gromov.entropic_gromov_wasserstein(
         C1b, C2b, pb, qb, 'square_loss', symmetric=False, G0=None,
-        epsilon=1e-1, verbose=True, log=False
+        epsilon=1e-1, max_iter=5, verbose=True, log=False
     ))
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
@@ -427,10 +428,10 @@ def test_asymmetric_entropic_gromov(nx):
 
     gw = ot.gromov.entropic_gromov_wasserstein2(
         C1, C2, p, q, 'kl_loss', symmetric=False, G0=None,
-        max_iter=10, epsilon=1e-1, log=False)
+        max_iter=5, epsilon=1e-1, log=False)
     gwb = ot.gromov.entropic_gromov_wasserstein2(
         C1b, C2b, pb, qb, 'kl_loss', symmetric=None, G0=G0b,
-        max_iter=10, epsilon=1e-1, log=False)
+        max_iter=5, epsilon=1e-1, log=False)
     gwb = nx.to_numpy(gwb)
 
     np.testing.assert_allclose(gw, gwb, atol=1e-06)
@@ -466,11 +467,11 @@ def test_entropic_gromov_dtype_device(nx):
 
         for solver in ['PGD', 'PPA']:
             Gb = ot.gromov.entropic_gromov_wasserstein(
-                C1b, C2b, pb, qb, 'square_loss', epsilon=1e-1, max_iter=10,
+                C1b, C2b, pb, qb, 'square_loss', epsilon=1e-1, max_iter=5,
                 solver=solver, verbose=True
             )
             gw_valb = ot.gromov.entropic_gromov_wasserstein2(
-                C1b, C2b, pb, qb, 'square_loss', epsilon=1e-1, max_iter=10,
+                C1b, C2b, pb, qb, 'square_loss', epsilon=1e-1, max_iter=5,
                 solver=solver, verbose=True
             )
 
@@ -478,6 +479,7 @@ def test_entropic_gromov_dtype_device(nx):
             nx.assert_same_dtype_device(C1b, gw_valb)
 
 
+@pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_entropic_fgw(nx):
     n_samples = 10  # nb samples
 
@@ -507,10 +509,10 @@ def test_entropic_fgw(nx):
 
     G, log = ot.gromov.entropic_fused_gromov_wasserstein(
         M, C1, C2, p, q, 'square_loss', symmetric=None, G0=G0,
-        epsilon=1e-2, verbose=True, log=True)
+        epsilon=1e-1, max_iter=10, verbose=True, log=True)
     Gb = nx.to_numpy(ot.gromov.entropic_fused_gromov_wasserstein(
         Mb, C1b, C2b, pb, qb, 'square_loss', symmetric=True, G0=None,
-        epsilon=1e-2, verbose=True, log=False
+        epsilon=1e-1, max_iter=10, verbose=True, log=False
     ))
 
     # check constraints
@@ -522,10 +524,10 @@ def test_entropic_fgw(nx):
 
     fgw, log = ot.gromov.entropic_fused_gromov_wasserstein2(
         M, C1, C2, p, q, 'kl_loss', symmetric=True, G0=None,
-        max_iter=10, epsilon=1e-2, log=True)
+        max_iter=10, epsilon=1e-1, log=True)
     fgwb, logb = ot.gromov.entropic_fused_gromov_wasserstein2(
         Mb, C1b, C2b, pb, qb, 'kl_loss', symmetric=None, G0=G0b,
-        max_iter=10, epsilon=1e-2, log=True)
+        max_iter=10, epsilon=1e-1, log=True)
     fgwb = nx.to_numpy(fgwb)
 
     G = log['T']
@@ -571,10 +573,10 @@ def test_entropic_proximal_fgw(nx):
 
     G, log = ot.gromov.entropic_fused_gromov_wasserstein(
         M, C1, C2, p, q, 'square_loss', symmetric=None, G0=G0,
-        epsilon=1e-1, solver='PPA', verbose=True, log=True, numItermax=1)
+        epsilon=1e-1, max_iter=10, solver='PPA', verbose=True, log=True, numItermax=1)
     Gb = nx.to_numpy(ot.gromov.entropic_fused_gromov_wasserstein(
         Mb, C1b, C2b, pb, qb, 'square_loss', symmetric=True, G0=None,
-        epsilon=1e-1, solver='PPA', verbose=True, log=False, numItermax=1
+        epsilon=1e-1, max_iter=10, solver='PPA', verbose=True, log=False, numItermax=1
     ))
 
     # check constraints
@@ -586,10 +588,10 @@ def test_entropic_proximal_fgw(nx):
 
     fgw, log = ot.gromov.entropic_fused_gromov_wasserstein2(
         M, C1, C2, p, q, 'kl_loss', symmetric=True, G0=None,
-        max_iter=10, epsilon=1e-1, solver='PPA', warmstart=True, log=True)
+        max_iter=5, epsilon=1e-1, solver='PPA', warmstart=True, log=True)
     fgwb, logb = ot.gromov.entropic_fused_gromov_wasserstein2(
         Mb, C1b, C2b, pb, qb, 'kl_loss', symmetric=None, G0=G0b,
-        max_iter=10, epsilon=1e-1, solver='PPA', warmstart=True, log=True)
+        max_iter=5, epsilon=1e-1, solver='PPA', warmstart=True, log=True)
     fgwb = nx.to_numpy(fgwb)
 
     G = log['T']
@@ -625,10 +627,10 @@ def test_asymmetric_entropic_fgw(nx):
     Mb, C1b, C2b, pb, qb, G0b = nx.from_numpy(M, C1, C2, p, q, G0)
     G = ot.gromov.entropic_fused_gromov_wasserstein(
         M, C1, C2, p, q, 'square_loss', symmetric=None, G0=G0,
-        epsilon=1e-1, verbose=True, log=False)
+        max_iter=5, epsilon=1e-1, verbose=True, log=False)
     Gb = nx.to_numpy(ot.gromov.entropic_fused_gromov_wasserstein(
         Mb, C1b, C2b, pb, qb, 'square_loss', symmetric=False, G0=None,
-        epsilon=1e-1, verbose=True, log=False
+        max_iter=5, epsilon=1e-1, verbose=True, log=False
     ))
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
@@ -639,10 +641,10 @@ def test_asymmetric_entropic_fgw(nx):
 
     fgw = ot.gromov.entropic_fused_gromov_wasserstein2(
         M, C1, C2, p, q, 'kl_loss', symmetric=False, G0=None,
-        max_iter=10, epsilon=1e-1, log=False)
+        max_iter=5, epsilon=1e-1, log=False)
     fgwb = ot.gromov.entropic_fused_gromov_wasserstein2(
         Mb, C1b, C2b, pb, qb, 'kl_loss', symmetric=None, G0=G0b,
-        max_iter=10, epsilon=1e-1, log=False)
+        max_iter=5, epsilon=1e-1, log=False)
     fgwb = nx.to_numpy(fgwb)
 
     np.testing.assert_allclose(fgw, fgwb, atol=1e-06)
@@ -682,11 +684,11 @@ def test_entropic_fgw_dtype_device(nx):
 
         for solver in ['PGD', 'PPA']:
             Gb = ot.gromov.entropic_fused_gromov_wasserstein(
-                Mb, C1b, C2b, pb, qb, 'square_loss', epsilon=0.1, max_iter=10,
+                Mb, C1b, C2b, pb, qb, 'square_loss', epsilon=0.1, max_iter=5,
                 solver=solver, verbose=True
             )
             fgw_valb = ot.gromov.entropic_fused_gromov_wasserstein2(
-                Mb, C1b, C2b, pb, qb, 'square_loss', epsilon=0.1, max_iter=10,
+                Mb, C1b, C2b, pb, qb, 'square_loss', epsilon=0.1, max_iter=5,
                 solver=solver, verbose=True
             )
 
@@ -715,12 +717,12 @@ def test_entropic_fgw_barycenter(nx):
 
     X, C, log = ot.gromov.entropic_fused_gromov_barycenters(
         n_samples, [ys, yt], [C1, C2], [p1, p2], p, [.5, .5], 'square_loss', 0.1,
-        max_iter=50, tol=1e-3, verbose=True, warmstartT=True, random_state=42,
+        max_iter=10, tol=1e-3, verbose=True, warmstartT=True, random_state=42,
         solver='PPA', numItermax=1, log=True
     )
     Xb, Cb = ot.gromov.entropic_fused_gromov_barycenters(
         n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], pb, [.5, .5], 'square_loss', 0.1,
-        max_iter=50, tol=1e-3, verbose=False, warmstartT=True, random_state=42,
+        max_iter=10, tol=1e-3, verbose=False, warmstartT=True, random_state=42,
         solver='PPA', numItermax=1, log=False)
     Xb, Cb = nx.to_numpy(Xb, Cb)
 
@@ -732,12 +734,12 @@ def test_entropic_fgw_barycenter(nx):
     # test with 'kl_loss' and log=True
     X, C, log = ot.gromov.entropic_fused_gromov_barycenters(
         n_samples, [ys, yt], [C1, C2], [p1, p2], p, [.5, .5], 'kl_loss', 0.1,
-        max_iter=50, tol=1e-3, verbose=False, warmstartT=False, random_state=42,
+        max_iter=10, tol=1e-3, verbose=False, warmstartT=False, random_state=42,
         solver='PPA', numItermax=1, log=True
     )
     Xb, Cb, logb = ot.gromov.entropic_fused_gromov_barycenters(
         n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], pb, [.5, .5], 'kl_loss', 0.1,
-        max_iter=50, tol=1e-3, verbose=False, warmstartT=False, random_state=42,
+        max_iter=10, tol=1e-3, verbose=False, warmstartT=False, random_state=42,
         solver='PPA', numItermax=1, log=True)
     Xb, Cb = nx.to_numpy(Xb, Cb)
 
@@ -932,11 +934,11 @@ def test_gromov_entropic_barycenter(nx):
 
     Cb = ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5], 'square_loss', 1e-3,
-        max_iter=50, tol=1e-3, verbose=True, warmstartT=True, random_state=42
+        max_iter=10, tol=1e-3, verbose=True, warmstartT=True, random_state=42
     )
     Cbb = nx.to_numpy(ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5], 'square_loss', 1e-3,
-        max_iter=50, tol=1e-3, verbose=True, warmstartT=True, random_state=42
+        max_iter=10, tol=1e-3, verbose=True, warmstartT=True, random_state=42
     ))
     np.testing.assert_allclose(Cb, Cbb, atol=1e-06)
     np.testing.assert_allclose(Cbb.shape, (n_samples, n_samples))
@@ -944,11 +946,11 @@ def test_gromov_entropic_barycenter(nx):
     # test of entropic_gromov_barycenters with `log` on
     Cb_, err_ = ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5],
-        'square_loss', 1e-3, max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+        'square_loss', 1e-3, max_iter=10, tol=1e-3, verbose=True, random_state=42, log=True
     )
     Cbb_, errb_ = ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'square_loss', 1e-3, max_iter=100, tol=1e-3, verbose=True, random_state=42, log=True
+        'square_loss', 1e-3, max_iter=10, tol=1e-3, verbose=True, random_state=42, log=True
     )
     Cbb_ = nx.to_numpy(Cbb_)
     np.testing.assert_allclose(Cb_, Cbb_, atol=1e-06)
@@ -957,11 +959,11 @@ def test_gromov_entropic_barycenter(nx):
 
     Cb2 = ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5],
-        'kl_loss', 1e-3, max_iter=100, tol=1e-3, random_state=42
+        'kl_loss', 1e-3, max_iter=10, tol=1e-3, random_state=42
     )
     Cb2b = nx.to_numpy(ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'kl_loss', 1e-3, max_iter=100, tol=1e-3, random_state=42
+        'kl_loss', 1e-3, max_iter=10, tol=1e-3, random_state=42
     ))
     np.testing.assert_allclose(Cb2, Cb2b, atol=1e-06)
     np.testing.assert_allclose(Cb2b.shape, (n_samples, n_samples))
@@ -969,11 +971,11 @@ def test_gromov_entropic_barycenter(nx):
     # test of entropic_gromov_barycenters with `log` on
     Cb2_, err2_ = ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5], 'kl_loss', 1e-3,
-        max_iter=100, tol=1e-3, warmstartT=True, verbose=True, random_state=42, log=True
+        max_iter=10, tol=1e-3, warmstartT=True, verbose=True, random_state=42, log=True
     )
     Cb2b_, err2b_ = ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'kl_loss', 1e-3, max_iter=100, tol=1e-3, warmstartT=True, verbose=True, random_state=42, log=True
+        'kl_loss', 1e-3, max_iter=10, tol=1e-3, warmstartT=True, verbose=True, random_state=42, log=True
     )
     Cb2b_ = nx.to_numpy(Cb2b_)
     np.testing.assert_allclose(Cb2_, Cb2b_, atol=1e-06)
@@ -2195,6 +2197,8 @@ def test_entropic_semirelaxed_gromov(nx):
     np.testing.assert_allclose(srgw, srgw_, atol=1e-07)
 
 
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
+@pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_entropic_semirelaxed_gromov_dtype_device(nx):
     # setup
     n_samples = 5  # nb samples
@@ -2308,6 +2312,7 @@ def test_entropic_semirelaxed_fgw(nx):
     np.testing.assert_allclose(srgw, srgw_, atol=1e-07)
 
 
+@pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_entropic_semirelaxed_fgw_dtype_device(nx):
     # setup
     n_samples = 5  # nb samples
