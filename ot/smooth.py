@@ -61,6 +61,7 @@ from scipy.optimize import minimize
 from .backend import get_backend
 import ot
 
+
 def projection_simplex(V, z=1, axis=None):
     r""" Projection of :math:`\mathbf{V}` onto the simplex, scaled by `z`
 
@@ -643,7 +644,6 @@ def smooth_ot_semi_dual(a, b, M, reg, reg_type='l2', max_nz=None,
 
             - 'l2' : Squared Euclidean regularization
             - 'sparsity_constrained' : Sparsity-constrained regularization [50]
-
     max_nz : int or None, optional. Used only in the case of reg_type = 'sparsity_constrained' to specify the maximum number of nonzeros per column of the optimal plan;
         not used for other regularization types.
     method : str
