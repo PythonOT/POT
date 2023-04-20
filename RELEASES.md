@@ -3,7 +3,13 @@
 ## 0.9.1dev
 
 #### New features
+
 - Added feature Efficient Discrete Multi Marginal Optimal Transport Regularization + examples (PR #454)
+
+#### Closed issues
+
+- Fix circleci-redirector action and codecov (PR #460)
+- Fix issues with cuda for ot.binary_search_circle and with gradients for ot.sliced_wasserstein_sphere (PR #457)
 
 ## 0.9.0
 
@@ -98,7 +104,7 @@ big. More details below.
 - Added parameters method in `ot.da.SinkhornTransport` (PR #440)
 - `ot.dr` now uses the new Pymanopt API and POT is compatible with current
   Pymanopt (PR #443)
-- Added CO-Optimal Transport solver + examples (PR # 447)
+- Added CO-Optimal Transport solver + examples (PR #447)
 - Remove the redundant `nx.abs()` at the end of `wasserstein_1d()` (PR #448)
 
 #### Closed issues
