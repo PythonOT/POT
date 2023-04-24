@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 ================================================
-Optimal Transport with different gournd metrics
+Optimal Transport with different ground metrics
 ================================================
 
-2D OT on empirical distributio  with different ground metric.
+2D OT on empirical distributio with different ground metric.
 
 Stole the figure idea from Fig. 1 and 2 in
 https://arxiv.org/pdf/1706.07650.pdf
