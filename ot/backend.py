@@ -2503,6 +2503,8 @@ class TensorflowBackend(Backend):
             )
 
     def _to_numpy(self, a):
+        if isinstance(a, float) or isinstance(a, int) or isinstance(a, np.ndarray):
+            return np.array(a)
         return a.numpy()
 
     def _from_numpy(self, a, type_as=None):
