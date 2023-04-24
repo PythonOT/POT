@@ -24,10 +24,10 @@
 
 # Author: Mathieu Blondel
 #         Remi Flamary <remi.flamary@unice.fr>
+#         Tianlin Liu <t.liu@unibas.ch>
 
 """
-Smooth and Sparse Optimal Transport solvers (KL an L2 reg.) [17] and sparsity
-constrained Optimal Transport solvers [50].
+Smooth and Sparse (KL an L2 reg.) and sparsity-constrained OT solvers.
 
 Implementation of :
 Smooth and Sparse Optimal Transport.
@@ -483,9 +483,9 @@ def get_plan_from_semi_dual(alpha, b, C, regul):
     return regul.max_Omega(X, b)[1] * b
 
 
-def smooth_ot_dual(a, b, M, reg, reg_type='l2', max_nz=None,
+def smooth_ot_dual(a, b, M, reg, reg_type='l2',
                    method="L-BFGS-B", stopThr=1e-9,
-                   numItermax=500, verbose=False, log=False):
+                   numItermax=500, verbose=False, log=False, max_nz=None):
     r"""
     Solve the regularized OT problem in the dual and return the OT matrix
 
