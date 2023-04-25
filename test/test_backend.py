@@ -296,6 +296,8 @@ def test_empty_backend():
         nx.atan2(v, v)
     with pytest.raises(NotImplementedError):
         nx.transpose(M)
+    with pytest.raises(NotImplementedError):
+        nx.detach(M)
 
 
 def test_func_backends(nx):
@@ -648,6 +650,16 @@ def test_func_backends(nx):
         A = nx.transpose(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("transpose")
+
+        A = nx.detach(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("detach")
+
+        A, B = nx.detach(Mb, Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("detach A")
+        lst_b.append(nx.to_numpy(B))
+        lst_name.append("detach B")
 
         assert not nx.array_equal(Mb, vb), "array_equal (shape)"
         assert nx.array_equal(Mb, Mb), "array_equal (elements) - expected true"

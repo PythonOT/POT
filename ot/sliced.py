@@ -271,7 +271,7 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
 
     - :math:`P^U_\# \mu` stands for the pushforwards of the projection :math:`\forall x\in S^{d-1},\ P^U(x) = \frac{U^Tx}{\|U^Tx\|_2}`
 
-    The function runs on backend but tensorflow is not supported.
+    The function runs on backend but tensorflow and jax are not supported.
 
     Parameters
     ----------
