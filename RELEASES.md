@@ -3,7 +3,7 @@
 ## 0.9.1dev
 
 #### New features
-
+ - Added the sparsity-constrained OT solver to `ot.smooth` and added ` projection_sparse_simplex` to `ot.utils` (PR #459)
 #### Closed issues
 
 - Fix circleci-redirector action and codecov (PR #460)
