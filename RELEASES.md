@@ -3,7 +3,6 @@
 ## 0.9.1dev
 
 #### New features
-
 - Make alpha parameter in Fused Gromov Wasserstein differentiable (PR #463)
 - Added the sparsity-constrained OT solver to `ot.smooth` and added `projection_sparse_simplex` to `ot.utils` (PR #459)
 - Added Proximal Point algorithm to solve GW problems via a new parameter `solver="PPA"` in `ot.gromov.entropic_gromov_wasserstein` + examples (PR #455)
@@ -11,7 +10,6 @@
 - Added sinkhorn projection based solvers for FGW `ot.gromov.entropic_fused_gromov_wasserstein` and entropic FGW barycenters + examples (PR #455)
 - Added features `warmstartT` and `kwargs` to all CG and entropic (F)GW barycenter solvers (PR #455)
 - Added entropic semi-relaxed (Fused) Gromov-Wasserstein solvers in `ot.gromov` + examples (PR #455)
-
 
 
 #### Closed issues
