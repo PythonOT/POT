@@ -6,7 +6,7 @@ Gromov-Wasserstein example
 This example is designed to show how to use the Gromov-Wasserstein distance
 computation in POT.
 We first compare 3 solvers to estimate the distance based on
-Conditional Gradient [24] or Sinkhorn projections [12, 50].
+Conditional Gradient [24] or Sinkhorn projections [12, 51].
 Then we compare 2 stochastic solvers to estimate the distance with a lower
 numerical cost [33].
 
@@ -22,7 +22,7 @@ International Conference on Machine Learning (ICML). 2019.
 [33] Kerdoncuff T., Emonet R., Marc S. "Sampled Gromov Wasserstein",
 Machine Learning Journal (MJL), 2021.
 
-[50] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019).
+[51] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019).
 "Gromov-wasserstein learning for graph matching and node embedding".
 In International Conference on Machine Learning (ICML), 2019.
 

@@ -42,7 +42,7 @@ def entropic_gromov_wasserstein(
              \mathbf{T} &\geq 0
 
     Else if `solver="PPA"`, the function solves the following Gromov-Wasserstein
-    optimization problem using Proximal Point Algorithm [50]:
+    optimization problem using Proximal Point Algorithm [51]:
 
     .. math::
         \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
@@ -108,7 +108,7 @@ def entropic_gromov_wasserstein(
     **kwargs: dict
         parameters can be directly passed to the ot.sinkhorn solver.
         Such as `numItermax` and `stopThr` to control its estimation precision,
-        e.g [50] suggests to use `numItermax=1`.
+        e.g [51] suggests to use `numItermax=1`.
     Returns
     -------
     T : array-like, shape (`ns`, `nt`)
@@ -124,7 +124,7 @@ def entropic_gromov_wasserstein(
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
 
-    .. [50] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
+    .. [51] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
         learning for graph matching and node embedding. In International
         Conference on Machine Learning (ICML), 2019.
     """
@@ -222,7 +222,7 @@ def entropic_gromov_wasserstein2(
              \mathbf{T} &\geq 0
 
     Else if `solver="PPA"`, the function solves the following Gromov-Wasserstein
-    optimization problem using Proximal Point Algorithm [50]:
+    optimization problem using Proximal Point Algorithm [51]:
 
     .. math::
         \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
@@ -288,7 +288,7 @@ def entropic_gromov_wasserstein2(
     **kwargs: dict
         parameters can be directly passed to the ot.sinkhorn solver.
         Such as `numItermax` and `stopThr` to control its estimation precision,
-        e.g [50] suggests to use `numItermax=1`.
+        e.g [51] suggests to use `numItermax=1`.
     Returns
     -------
     gw_dist : float
@@ -300,7 +300,7 @@ def entropic_gromov_wasserstein2(
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
-    .. [50] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
+    .. [51] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
         learning for graph matching and node embedding. In International
         Conference on Machine Learning (ICML), 2019.
     """
@@ -473,7 +473,7 @@ def entropic_fused_gromov_wasserstein(
              \mathbf{T} &\geq 0
 
     Else if `solver="PPA"`, the function solves the following Fused Gromov-Wasserstein
-    optimization problem using Proximal Point Algorithm [50]:
+    optimization problem using Proximal Point Algorithm [51]:
 
     .. math::
         \mathbf{FGW} = \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
@@ -546,7 +546,7 @@ def entropic_fused_gromov_wasserstein(
     **kwargs: dict
         parameters can be directly passed to the ot.sinkhorn solver.
         Such as `numItermax` and `stopThr` to control its estimation precision,
-        e.g [50] suggests to use `numItermax=1`.
+        e.g [51] suggests to use `numItermax=1`.
     Returns
     -------
     T : array-like, shape (`ns`, `nt`)
@@ -562,7 +562,7 @@ def entropic_fused_gromov_wasserstein(
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
 
-    .. [50] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
+    .. [51] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
         learning for graph matching and node embedding. In International
         Conference on Machine Learning (ICML), 2019.
 
@@ -668,7 +668,7 @@ def entropic_fused_gromov_wasserstein2(
              \mathbf{T} &\geq 0
 
     Else if `solver="PPA"`, the function solves the following Fused Gromov-Wasserstein
-    optimization problem using Proximal Point Algorithm [50]:
+    optimization problem using Proximal Point Algorithm [51]:
 
     .. math::
         \mathbf{FGW} = \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
@@ -743,7 +743,7 @@ def entropic_fused_gromov_wasserstein2(
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
-    .. [50] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
+    .. [51] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
         learning for graph matching and node embedding. In International
         Conference on Machine Learning (ICML), 2019.
 

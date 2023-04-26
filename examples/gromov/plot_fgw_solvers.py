@@ -6,7 +6,7 @@ Plot Fused-gromov-Wasserstein solvers
 
 This example illustrates the computation of FGW for attributed graphs
 using 3 different solvers to estimate the distance based on Conditional
-Gradient [24] or Sinkhorn projections [12, 50].
+Gradient [24] or Sinkhorn projections [12, 51].
 
 We generate two graphs following Stochastic Block Models further endowed with
 node features and compute their FGW matchings.
@@ -20,7 +20,7 @@ and Courty Nicolas
 "Optimal Transport for structured data with application on graphs"
 International Conference on Machine Learning (ICML). 2019.
 
-[50] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019).
+[51] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019).
 "Gromov-wasserstein learning for graph matching and node embedding".
 In International Conference on Machine Learning (ICML), 2019.
 """
