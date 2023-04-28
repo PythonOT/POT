@@ -151,6 +151,7 @@ for i in range(n_iter):
 
     loss.backward()
     optimizer.step()
+    optimizer.zero_grad()
 
     del M
 
