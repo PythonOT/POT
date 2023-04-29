@@ -631,6 +631,7 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 
 
     .. _references-free-support-barycenter:
+
     References
     ----------
     .. [20] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein barycenters." International Conference on Machine Learning. 2014.
@@ -688,7 +689,7 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
 def generalized_free_support_barycenter(X_list, a_list, P_list, n_samples_bary, Y_init=None, b=None, weights=None,
                                         numItermax=100, stopThr=1e-7, verbose=False, log=None, numThreads=1, eps=0):
     r"""
-    Solves the free support generalised Wasserstein barycenter problem: finding a barycenter (a discrete measure with
+    Solves the free support generalized Wasserstein barycenter problem: finding a barycenter (a discrete measure with
     a fixed amount of points of uniform weights) whose respective projections fit the input measures.
     More formally:
 
@@ -776,7 +777,7 @@ def generalized_free_support_barycenter(X_list, a_list, P_list, n_samples_bary, 
         Y_init = nx.randn(n_samples_bary, d, type_as=X_list[0])
 
     if b is None:
-        b = nx.ones(n_samples_bary, type_as=X_list[0]) / n_samples_bary  # not optimised
+        b = nx.ones(n_samples_bary, type_as=X_list[0]) / n_samples_bary  # not optimized
 
     out = free_support_barycenter(Z_list, a_list, Y_init, b, numItermax=numItermax,
                                   stopThr=stopThr, verbose=verbose, log=log, numThreads=numThreads)
@@ -786,7 +787,7 @@ def generalized_free_support_barycenter(X_list, a_list, P_list, n_samples_bary, 
     else:
         Y = out
         log_dict = None
-    Y = Y @ B.T  # return to the Generalised WB formulation
+    Y = Y @ B.T  # return to the Generalized WB formulation
 
     if log:
         return Y, log_dict

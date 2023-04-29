@@ -492,7 +492,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
     reg_m: float
         Marginal relaxation term > 0
     tau : float
-        thershold for max value in u or v for log scaling
+        threshold for max value in u or v for log scaling
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
