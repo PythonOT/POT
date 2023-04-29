@@ -837,7 +837,7 @@ There also exists an entropic regularized variant of GW that has been proposed i
     :heading-level: "
 
 Gromov Wasserstein barycenters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Note that similarly to Wasserstein distance GW allows for the definition of GW
 barycenters that can be expressed as

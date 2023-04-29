@@ -27,7 +27,7 @@ Examples
         np_config.enable_numpy_behavior()
 
 Performance
---------
+-----------
 
 - CPU: Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz
 - GPU: Tesla V100-SXM2-32GB
