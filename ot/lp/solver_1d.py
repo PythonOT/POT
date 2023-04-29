@@ -145,6 +145,7 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         s.t. \gamma 1 = a,
              \gamma^T 1= b,
              \gamma\geq 0
+
     where :
 
     - d is the metric
@@ -283,6 +284,7 @@ def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         s.t. \gamma 1 = a,
              \gamma^T 1= b,
              \gamma\geq 0
+
     where :
 
     - d is the metric

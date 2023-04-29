@@ -32,6 +32,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
         s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
 
              \mathbf{\gamma} &\geq 0
+
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -156,6 +157,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
         s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
 
              \mathbf{\gamma} &\geq 0
+
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -166,6 +168,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
 
     Note that when using backends, this loss function is differentiable wrt the
     matrices (C1, C2) but not yet for the weights p.
+
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. However all the steps in the conditional
         gradient are not differentiable.

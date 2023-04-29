@@ -295,7 +295,7 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
         + \varepsilon_1 \mathbf{KL}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
         + \varepsilon_2 \mathbf{KL}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
 
-    Where :
+    where :
 
     - :math:`\mathbf{X}`: Data matrix in the source space
     - :math:`\mathbf{Y}`: Data matrix in the target space
@@ -345,7 +345,6 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
             tuples of 2 vectors of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
             Initialization of sample and feature dual vectors
             if using Sinkhorn algorithm. Zero vectors by default.
-
             - "pi_sample" and "pi_feature" whose values are matrices
             of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
             Initialization of sample and feature couplings.

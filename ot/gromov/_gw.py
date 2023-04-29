@@ -39,6 +39,7 @@ def gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', symmetric=None, log
              \mathbf{\gamma}^T \mathbf{1} &= \mathbf{q}
 
              \mathbf{\gamma} &\geq 0
+
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -183,6 +184,7 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
              \mathbf{\gamma}^T \mathbf{1} &= \mathbf{q}
 
              \mathbf{\gamma} &\geq 0
+
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -310,6 +312,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
         which can lead to copy overhead on GPU arrays.
     .. note:: All computations in the conjugate gradient solver are done with
         numpy to limit memory overhead.
+
     The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[24] <references-fused-gromov-wasserstein>`
 
     Parameters
