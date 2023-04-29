@@ -80,6 +80,7 @@ plt.show()
 ##############################################################################
 # Barycentric interpolation
 # -------------------------
+
 #%% barycenter interpolation
 
 n_alpha = 11
