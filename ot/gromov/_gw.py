@@ -218,7 +218,7 @@ def gromov_wasserstein2(C1, C2, p, q, loss_fun='square_loss', symmetric=None, lo
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
-        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -332,7 +332,7 @@ def fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', symmetric=
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
-        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     alpha : float, optional
         Trade-off parameter (0 < alpha < 1)
     armijo : bool, optional

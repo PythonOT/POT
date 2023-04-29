@@ -69,7 +69,7 @@ def entropic_gromov_wasserstein(C1, C2, p, q, loss_fun, epsilon, symmetric=None,
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
-        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
