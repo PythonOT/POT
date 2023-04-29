@@ -74,7 +74,7 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
         Sinkhorn solver. If epsilon is scalar, then the same epsilon is applied to
         both regularization of sample and feature couplings.
     alpha : scalar or indexable object of length 2, float or int, optional (default = 0)
-        Coeffficient parameter of linear terms with respect to the sample and feature couplings.
+        Coefficient parameter of linear terms with respect to the sample and feature couplings.
         If alpha is scalar, then the same alpha is applied to both linear terms.
     M_samp : (n_sample_x, n_sample_y), float, optional (default = None)
         Sample matrix with respect to the linear term on sample coupling.
@@ -333,7 +333,7 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
         Sinkhorn solver. If epsilon is scalar, then the same epsilon is applied to
         both regularization of sample and feature couplings.
     alpha : scalar or indexable object of length 2, float or int, optional (default = 0)
-        Coeffficient parameter of linear terms with respect to the sample and feature couplings.
+        Coefficient parameter of linear terms with respect to the sample and feature couplings.
         If alpha is scalar, then the same alpha is applied to both linear terms.
     M_samp : (n_sample_x, n_sample_y), float, optional (default = None)
         Sample matrix with respect to the linear term on sample coupling.
@@ -382,7 +382,7 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
     float
         CO-Optimal Transport distance.
     dict
-        Contains logged informations from :any:`co_optimal_transport` solver.
+        Contains logged information from :any:`co_optimal_transport` solver.
         Only returned if `log` parameter is True
 
     References

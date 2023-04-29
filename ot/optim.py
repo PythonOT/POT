@@ -224,7 +224,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
 
     See Also
     --------
-    ot.lp.emd : Unregularized optimal ransport
+    ot.lp.emd : Unregularized optimal transport
     ot.bregman.sinkhorn : Entropic regularized optimal transport
     """
     a, b, M, G0 = list_to_array(a, b, M, G0)
@@ -380,7 +380,7 @@ def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
 
     See Also
     --------
-    ot.lp.emd : Unregularized optimal ransport
+    ot.lp.emd : Unregularized optimal transport
     ot.bregman.sinkhorn : Entropic regularized optimal transport
 
     """

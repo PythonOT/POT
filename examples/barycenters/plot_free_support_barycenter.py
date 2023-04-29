@@ -5,7 +5,7 @@
 ========================================================
 
 Illustration of 2D Wasserstein and Sinkhorn barycenters if distributions are weighted
-sum of diracs.
+sum of Diracs.
 
 """
 

@@ -74,7 +74,7 @@ t2, t_list2, g_list2 = ot.regpath.regularization_path(a, b, M, reg=final_gamma,
 # Plot the regularization path
 # ----------------
 #
-# The OT plan is ploted as a function of $\gamma$ that is the inverse of the
+# The OT plan is plotted as a function of $\gamma$ that is the inverse of the
 # weight on the marginal relaxations.
 
 #%% fully relaxed l2-penalized UOT

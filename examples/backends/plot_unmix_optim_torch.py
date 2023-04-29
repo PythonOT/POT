@@ -147,7 +147,7 @@ pl.title('Wasserstein distance')
 pl.xlabel("Iterations")
 
 ##############################################################################
-# Ploting the reweighted source distribution
+# Plotting the reweighted source distribution
 # ------------------------------------------
 
 pl.figure(3)

@@ -150,7 +150,7 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9,
     ot.bregman.sinkhorn_knopp : Classic Sinkhorn :ref:`[2] <references-sinkhorn>`
     ot.bregman.sinkhorn_stabilized: Stabilized sinkhorn
         :ref:`[9] <references-sinkhorn>` :ref:`[10] <references-sinkhorn>`
-    ot.bregman.sinkhorn_epsilon_scaling: Sinkhorn with epslilon scaling
+    ot.bregman.sinkhorn_epsilon_scaling: Sinkhorn with epsilon scaling
         :ref:`[9] <references-sinkhorn>` :ref:`[10] <references-sinkhorn>`
 
     """
@@ -2657,7 +2657,7 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
     ----------
 
     .. [4] S. Nakhostin, N. Courty, R. Flamary, D. Tuia, T. Corpetti,
-        Supervised planetary unmixing with optimal transport, Whorkshop
+        Supervised planetary unmixing with optimal transport, Workshop
         on Hyperspectral Image and Signal Processing :
         Evolution in Remote Sensing (WHISPERS), 2016.
     """
@@ -3352,7 +3352,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
     ----------
     .. [23] Aude Genevay, Gabriel Peyré, Marco Cuturi, Learning Generative
         Models with Sinkhorn Divergences,  Proceedings of the Twenty-First
-        International Conference on Artficial Intelligence and Statistics,
+        International Conference on Artificial Intelligence and Statistics,
         (AISTATS) 21, 2018
     '''
     X_s, X_t = list_to_array(X_s, X_t)

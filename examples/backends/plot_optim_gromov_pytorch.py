@@ -11,7 +11,7 @@ graph so that it minimizes the GW with a given Stochastic Block Model graph.
 We can see that this actually recovers the proportion of classes in the SBM
 and allows for an accurate clustering of the nodes using the GW optimal plan.
 
-In the second part, we optimize simultaneously the weights and the sructure of
+In the second part, we optimize simultaneously the weights and the structure of
 the template graph which allows us to perform graph compression and to recover
 other properties of the SBM.
 
@@ -96,7 +96,7 @@ pl.axis("off")
 # %%
 # Optimizing GW w.r.t. the weights on a template structure
 # ------------------------------------------------
-# The adajacency matrix C1 is block diagonal with 3 blocks. We want to
+# The adjacency matrix C1 is block diagonal with 3 blocks. We want to
 # optimize the weights of a simple template C0=eye(3) and see if we can
 # recover the proportion of classes from the SBM (up to a permutation).
 
@@ -193,7 +193,7 @@ pl.axis("off")
 # classes
 
 
-def graph_compession_gw(nb_nodes, C2, a2, nb_iter_max=100, lr=1e-2):
+def graph_compression_gw(nb_nodes, C2, a2, nb_iter_max=100, lr=1e-2):
     """ solve min_a GW(C1,C2,a, a2) by gradient descent"""
 
     # use pyTorch for our data
@@ -237,8 +237,8 @@ def graph_compession_gw(nb_nodes, C2, a2, nb_iter_max=100, lr=1e-2):
 
 
 nb_nodes = 3
-a0_est2, C0_est2, loss_iter2 = graph_compession_gw(nb_nodes, C1, ot.unif(n),
-                                                   nb_iter_max=100, lr=5e-2)
+a0_est2, C0_est2, loss_iter2 = graph_compression_gw(nb_nodes, C1, ot.unif(n),
+                                                    nb_iter_max=100, lr=5e-2)
 
 pl.figure(4)
 pl.plot(loss_iter2)

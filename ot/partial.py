@@ -516,7 +516,7 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     nb_dummies : int, optional
         Number of dummy points to add (avoid instabilities in the EMD solver)
     G0 : ndarray, shape (ns, nt), optional
-        Initialisation of the transportation matrix
+        Initialization of the transportation matrix
     thres : float, optional
         quantile of the gradient matrix to populate the cost matrix when 0
         (default: 1)
@@ -686,7 +686,7 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     C1 : ndarray, shape (ns, ns)
         Metric cost matrix in the source space
     C2 : ndarray, shape (nt, nt)
-        Metric costfr matrix in the target space
+        Metric cost matrix in the target space
     p : ndarray, shape (ns,)
         Distribution in the source space
     q : ndarray, shape (nt,)
@@ -697,7 +697,7 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     nb_dummies : int, optional
         Number of dummy points to add (avoid instabilities in the EMD solver)
     G0 : ndarray, shape (ns, nt), optional
-        Initialisation of the transportation matrix
+        Initialization of the transportation matrix
     thres : float, optional
         quantile of the gradient matrix to populate the cost matrix when 0
         (default: 1)
@@ -958,15 +958,15 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
     - `m` is the amount of mass to be transported
 
     The formulation of the GW problem has been proposed in
-    :ref:`[12] <references-entropic-partial-gromov-wassertein>` and the
-    partial GW in :ref:`[29] <references-entropic-partial-gromov-wassertein>`
+    :ref:`[12] <references-entropic-partial-gromov-wasserstein>` and the
+    partial GW in :ref:`[29] <references-entropic-partial-gromov-wasserstein>`
 
     Parameters
     ----------
     C1 : ndarray, shape (ns, ns)
         Metric cost matrix in the source space
     C2 : ndarray, shape (nt, nt)
-        Metric costfr matrix in the target space
+        Metric cost matrix in the target space
     p : ndarray, shape (ns,)
         Distribution in the source space
     q : ndarray, shape (nt,)
@@ -977,7 +977,7 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
         Amount of mass to be transported (default:
         :math:`\min\{\|\mathbf{p}\|_1, \|\mathbf{q}\|_1\}`)
     G0 : ndarray, shape (ns, nt), optional
-        Initialisation of the transportation matrix
+        Initialization of the transportation matrix
     numItermax : int, optional
         Max number of iterations
     tol : float, optional
@@ -1016,7 +1016,7 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
         log dictionary returned only if `log` is `True`
 
 
-    .. _references-entropic-partial-gromov-wassertein:
+    .. _references-entropic-partial-gromov-wasserstein:
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,
@@ -1107,8 +1107,8 @@ def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
     - `m` is the amount of mass to be transported
 
     The formulation of the GW problem has been proposed in
-    :ref:`[12] <references-entropic-partial-gromov-wassertein2>` and the
-    partial GW in :ref:`[29] <references-entropic-partial-gromov-wassertein2>`
+    :ref:`[12] <references-entropic-partial-gromov-wasserstein2>` and the
+    partial GW in :ref:`[29] <references-entropic-partial-gromov-wasserstein2>`
 
 
     Parameters
@@ -1116,7 +1116,7 @@ def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
     C1 : ndarray, shape (ns, ns)
         Metric cost matrix in the source space
     C2 : ndarray, shape (nt, nt)
-        Metric costfr matrix in the target space
+        Metric cost matrix in the target space
     p : ndarray, shape (ns,)
         Distribution in the source space
     q : ndarray, shape (nt,)
@@ -1127,7 +1127,7 @@ def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
         Amount of mass to be transported (default:
         :math:`\min\{\|\mathbf{p}\|_1, \|\mathbf{q}\|_1\}`)
     G0 : ndarray, shape (ns, nt), optional
-        Initialisation of the transportation matrix
+        Initialization of the transportation matrix
     numItermax : int, optional
         Max number of iterations
     tol : float, optional
@@ -1159,7 +1159,7 @@ def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
     1.87
 
 
-    .. _references-entropic-partial-gromov-wassertein2:
+    .. _references-entropic-partial-gromov-wasserstein2:
     References
     ----------
     .. [12] Peyré, Gabriel, Marco Cuturi, and Justin Solomon,

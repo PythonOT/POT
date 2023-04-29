@@ -20,7 +20,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
     r"""Return loss matrices and tensors for Gromov-Wasserstein fast computation
 
     Returns the value of :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2}) \otimes \mathbf{T}` with the
-    selected loss function as the loss function of Gromow-Wasserstein discrepancy.
+    selected loss function as the loss function of Gromov-Wasserstein discrepancy.
 
     The matrices are computed as described in Proposition 1 in :ref:`[12] <references-init-matrix>`
 
@@ -328,7 +328,7 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
     r"""Return loss matrices and tensors for semi-relaxed Gromov-Wasserstein fast computation
 
     Returns the value of :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2}) \otimes \mathbf{T}` with the
-    selected loss function as the loss function of semi-relaxed Gromow-Wasserstein discrepancy.
+    selected loss function as the loss function of semi-relaxed Gromov-Wasserstein discrepancy.
 
     The matrices are computed as described in Proposition 1 in :ref:`[12] <references-init-matrix>`
     and adapted to the semi-relaxed problem where the second marginal is not a constant anymore.

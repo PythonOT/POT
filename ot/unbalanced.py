@@ -121,7 +121,7 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
     ot.unbalanced.sinkhorn_stabilized_unbalanced:
         Unbalanced Stabilized sinkhorn :ref:`[9, 10] <references-sinkhorn-unbalanced>`
     ot.unbalanced.sinkhorn_reg_scaling_unbalanced:
-        Unbalanced Sinkhorn with epslilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced>`
+        Unbalanced Sinkhorn with epsilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced>`
 
     """
 
@@ -699,7 +699,7 @@ def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
     tau : float
         Stabilization threshold for log domain absorption.
     weights : array-like (n_hists,) optional
-        Weight of each distribution (barycentric coodinates)
+        Weight of each distribution (barycentric coordinates)
         If None, uniform weights are used.
     numItermax : int, optional
         Max number of iterations

@@ -106,6 +106,6 @@ pl.xscale('log')
 
 pl.xlabel("Number of projections")
 pl.ylabel("Distance")
-pl.title('Spherical Sliced Wasserstein Distance with 95% confidence inverval')
+pl.title('Spherical Sliced Wasserstein Distance with 95% confidence interval')
 
 pl.show()

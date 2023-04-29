@@ -67,7 +67,7 @@ help(ot.dist)
 # We extracted from this search their positions and generated fictional
 # production and sale number (that both sum to the same value).
 #
-# We have acess to the position of Bakeries ``bakery_pos`` and their
+# We have access to the position of Bakeries ``bakery_pos`` and their
 # respective production ``bakery_prod`` which describe the source
 # distribution. The Cafés where the croissants are sold are defined also by
 # their position ``cafe_pos`` and ``cafe_prod``, and describe the target
@@ -166,10 +166,10 @@ time_emd = time.time() - start
 # The function returns the transport matrix, which we can then visualize (next section).
 
 ##############################################################################
-# Transportation plan vizualization
+# Transportation plan visualization
 # `````````````````````````````````
 #
-# A good vizualization of the OT matrix in the 2D plane is to denote the
+# A good visualization of the OT matrix in the 2D plane is to denote the
 # transportation of mass between a Bakery and a Café by a line. This can easily
 # be done with a double ``for`` loop.
 #
