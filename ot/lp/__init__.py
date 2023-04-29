@@ -253,7 +253,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
         Otherwise returns only the optimal transportation matrix.
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
-        :ref:`center_ot_dual`.
+        :py:func:`ot.lp.center_ot_dual`.
     numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
         If compiled with OpenMP, chooses the number of threads to parallelize.
         "max" selects the highest number possible.
@@ -418,7 +418,7 @@ def emd2(a, b, M, processes=1,
         If True, returns the optimal transportation matrix in the log.
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
-        :ref:`center_ot_dual`.
+        :py:func:`ot.lp.center_ot_dual`.
     numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
         If compiled with OpenMP, chooses the number of threads to parallelize.
         "max" selects the highest number possible.
