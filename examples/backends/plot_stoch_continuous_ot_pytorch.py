@@ -126,7 +126,7 @@ pl.xlabel("Iterations")
 
 # %%
 # Plot the density on target for a given source sample
-# ---------------------------------------------------
+# ----------------------------------------------------
 
 
 nv = 100

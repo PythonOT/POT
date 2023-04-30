@@ -1,7 +1,7 @@
 r"""
-=================================
+=======================================================
 Optimizing the Gromov-Wasserstein distance with PyTorch
-=================================
+=======================================================
 
 In this example, we use the pytorch backend to optimize the Gromov-Wasserstein
 (GW) loss between two graphs expressed as empirical distribution.
@@ -38,7 +38,7 @@ from ot.gromov import gromov_wasserstein2
 
 # %%
 # Graph generation
-# ---------------
+# ----------------
 
 rng = np.random.RandomState(42)
 
@@ -95,7 +95,7 @@ pl.axis("off")
 
 # %%
 # Optimizing GW w.r.t. the weights on a template structure
-# ------------------------------------------------
+# --------------------------------------------------------
 # The adjacency matrix C1 is block diagonal with 3 blocks. We want to
 # optimize the weights of a simple template C0=eye(3) and see if we can
 # recover the proportion of classes from the SBM (up to a permutation).
@@ -155,7 +155,7 @@ print("True proportions : ", ratio)
 
 # %%
 # Community clustering with uniform and estimated weights
-# --------------------------------------------
+# -------------------------------------------------------
 # The GW OT  plan can be used to perform a clustering of the nodes of a graph
 # when computing the GW with a simple template like C0 by labeling nodes in
 # the original graph using by the index of the noe in the template receiving

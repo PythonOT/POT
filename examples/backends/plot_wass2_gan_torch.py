@@ -182,7 +182,7 @@ for i in range(9):
 
 # %%
 # Animate trajectories of generated samples along iteration
-# -------------------------------------------------------
+# ---------------------------------------------------------
 
 pl.figure(4, (8, 8))
 

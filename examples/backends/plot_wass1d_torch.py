@@ -94,7 +94,7 @@ pl.show()
 
 # %%
 # Wasserstein barycenter
-# ---------
+# ----------------------
 # In this example, we consider the following Wasserstein barycenter problem
 # $$ \\eta^* = \\min_\\eta\;\;\; (1-t)W(\\mu,\\eta) + tW(\\eta,\\nu)$$
 # where :math:`\\mu` and :math:`\\nu` are reference 1D measures, and :math:`t`
