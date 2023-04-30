@@ -1187,18 +1187,18 @@ References
     In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (pp. 10648-10656).
 
 .. [36] Liutkus, A., Simsekli, U., Majewski, S., Durmus, A., & Stöter, F. R. 
-       (2019, May). `Sliced-Wasserstein flows: Nonparametric generative modeling via
-        optimal transport and diffusions
-        <http://proceedings.mlr.press/v97/liutkus19a/liutkus19a.pdf>`_. In International
-        Conference on Machine Learning (pp. 4104-4113). PMLR.
+    (2019, May). `Sliced-Wasserstein flows: Nonparametric generative modeling via
+    optimal transport and diffusions
+    <http://proceedings.mlr.press/v97/liutkus19a/liutkus19a.pdf>`_. In International
+    Conference on Machine Learning (pp. 4104-4113). PMLR.
 
 .. [37] Janati, H., Cuturi, M., Gramfort, A. `Debiased sinkhorn barycenters 
     <http://proceedings.mlr.press/v119/janati20a/janati20a.pdf>`_ Proceedings of
     the 37th International Conference on Machine Learning, PMLR 119:4692-4701, 2020
 
 .. [38] C. Vincent-Cuaz, T. Vayer, R. Flamary, M. Corneli, N. Courty, `Online
-       Graph Dictionary Learning <https://arxiv.org/pdf/2102.06555.pdf>`_\ , 
-       International Conference on Machine Learning (ICML), 2021.
+    Graph Dictionary Learning <https://arxiv.org/pdf/2102.06555.pdf>`_\ , 
+    International Conference on Machine Learning (ICML), 2021.
 
 .. [39] Gozlan, N., Roberto, C., Samson, P. M., & Tetali, P. (2017).
     `Kantorovich duality for general transport costs and applications
