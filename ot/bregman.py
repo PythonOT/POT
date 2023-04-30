@@ -384,6 +384,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
              \gamma^T \mathbf{1} &= \mathbf{b}
 
              \gamma &\geq 0
+
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
@@ -572,6 +573,7 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
              \gamma^T \mathbf{1} &= \mathbf{b}
 
              \gamma &\geq 0
+
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
@@ -784,6 +786,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
              \gamma^T \mathbf{1} &= \mathbf{b}
 
              \gamma &\geq 0
+
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
@@ -950,6 +953,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
              \gamma^T \mathbf{1} &= \mathbf{b}
 
              \gamma &\geq 0
+
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
@@ -2908,6 +2912,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
              \gamma^T \mathbf{1} &= \mathbf{b}
 
              \gamma &\geq 0
+    
     where :
 
     - :math:`\mathbf{M}` is the (`n_samples_a`, `n_samples_b`) metric cost matrix
@@ -3104,6 +3109,7 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
              \gamma^T \mathbf{1} &= \mathbf{b}
 
              \gamma &\geq 0
+
     where :
 
     - :math:`\mathbf{M}` is the (`n_samples_a`, `n_samples_b`) metric cost matrix
@@ -3257,7 +3263,6 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
     sinkhorn divergence :math:`S`:
 
     .. math::
-
         W &= \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
         \mathrm{reg} \cdot\Omega(\gamma)
 
@@ -3287,6 +3292,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
              \gamma_b^T \mathbf{1} &= \mathbf{b}
 
              \gamma_b &\geq 0
+
     where :
 
     - :math:`\mathbf{M}` (resp. :math:`\mathbf{M_a}`, :math:`\mathbf{M_b}`)
