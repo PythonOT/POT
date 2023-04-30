@@ -2912,7 +2912,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
              \gamma^T \mathbf{1} &= \mathbf{b}
 
              \gamma &\geq 0
-    
+
     where :
 
     - :math:`\mathbf{M}` is the (`n_samples_a`, `n_samples_b`) metric cost matrix
