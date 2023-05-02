@@ -195,7 +195,7 @@ def gwloss(constC, hC1, hC2, T, nx=None):
     Returns
     -------
     loss : float
-        Gromov Wasserstein loss
+        Gromov-Wasserstein loss
 
 
     .. _references-gwloss:
@@ -235,7 +235,7 @@ def gwggrad(constC, hC1, hC2, T, nx=None):
     Returns
     -------
     grad : array-like, shape (`ns`, `nt`)
-           Gromov Wasserstein gradient
+        Gromov-Wasserstein gradient
 
 
     .. _references-gwggrad:

@@ -506,7 +506,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p, q, loss_fun='square_loss', symmetric
     Returns
     -------
     fgw-distance : float
-        Fused gromov wasserstein distance for the given parameters.
+        Fused Gromov-Wasserstein distance for the given parameters.
     log : dict
         Log dictionary return only if log==True in parameters.
 

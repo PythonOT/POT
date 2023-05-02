@@ -438,7 +438,7 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
     Returns
     -------
     srfgw-divergence : float
-        Semi-relaxed Fused gromov wasserstein divergence for the given parameters.
+        Semi-relaxed Fused Gromov-Wasserstein divergence for the given parameters.
     log : dict
         Log dictionary return only if log==True in parameters.
 
