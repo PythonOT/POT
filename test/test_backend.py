@@ -298,6 +298,8 @@ def test_empty_backend():
         nx.transpose(M)
     with pytest.raises(NotImplementedError):
         nx.detach(M)
+    with pytest.raises(NotImplementedError):
+        nx.matmul(M, M.T)
 
 
 def test_func_backends(nx):
@@ -660,6 +662,10 @@ def test_func_backends(nx):
         lst_name.append("detach A")
         lst_b.append(nx.to_numpy(B))
         lst_name.append("detach B")
+
+        A = nx.matmul(Mb, Mb.T)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("matmul")
 
         assert not nx.array_equal(Mb, vb), "array_equal (shape)"
         assert nx.array_equal(Mb, Mb), "array_equal (elements) - expected true"
