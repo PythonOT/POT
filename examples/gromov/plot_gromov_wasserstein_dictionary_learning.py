@@ -112,7 +112,7 @@ pl.show()
 
 #############################################################################
 #
-# Estimate the gromov-wasserstein dictionary from the dataset
+# Estimate the Gromov-Wasserstein dictionary from the dataset
 # -----------------------------------------------------------
 
 

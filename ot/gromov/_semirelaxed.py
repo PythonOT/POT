@@ -21,7 +21,7 @@ from ._utils import init_matrix_semirelaxed, gwloss, gwggrad
 def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=None, log=False, G0=None,
                                    max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
-    Returns the semi-relaxed gromov-wasserstein divergence transport from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
+    Returns the semi-relaxed Gromov-Wasserstein divergence transport from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
 
     The function solves the following optimization problem:
 

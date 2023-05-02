@@ -252,7 +252,7 @@ def gromov_wasserstein_linear_unmixing(C, Cdict, reg=0., p=None, q=None, tol_out
     Returns
     -------
     w: array-like, shape (D,)
-        gromov-wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{p})` onto the span of the dictionary.
+        Gromov-Wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{p})` onto the span of the dictionary.
     Cembedded: array-like, shape (nt,nt)
         embedded structure of :math:`(\mathbf{C},\mathbf{p})` onto the dictionary, :math:`\sum_d w_d\mathbf{C_{dict}[d]}`.
     T: array-like (ns, nt)
@@ -736,7 +736,7 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict, Ydict, alpha, reg=0., 
     Returns
     -------
     w: array-like, shape (D,)
-        fused gromov-wasserstein linear unmixing of (C,Y,p) onto the span of the dictionary.
+        fused Gromov-Wasserstein linear unmixing of (C,Y,p) onto the span of the dictionary.
     Cembedded: array-like, shape (nt,nt)
         embedded structure of :math:`(\mathbf{C},\mathbf{Y}, \mathbf{p})` onto the dictionary, :math:`\sum_d w_d\mathbf{C_{dict}[d]}`.
     Yembedded: array-like, shape (nt,d)
