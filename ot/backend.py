@@ -844,6 +844,16 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def eigvals(self, a):
+        r"""
+        Computes the matrix eigenvalues. Requires input to be square.
+
+        This function follows the api from :any:`np.linalg.sqrtm`.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.eigvals.html
+        """
+        raise NotImplementedError()
+
     def sqrtm(self, a):
         r"""
         Computes the matrix square root. Requires input to be definite positive.
@@ -1234,6 +1244,9 @@ class NumpyBackend(Backend):
     def inv(self, a):
         return scipy.linalg.inv(a)
 
+    def eigvals(self, a):
+        return np.linalg.eigvals(a)
+
     def sqrtm(self, a):
         return scipy.linalg.sqrtm(a)
 
@@ -1601,6 +1614,9 @@ class JaxBackend(Backend):
 
     def inv(self, a):
         return jnp.linalg.inv(a)
+
+    def eigvals(self, a):
+        return jnp.linalg.eigvals(a)
 
     def sqrtm(self, a):
         L, V = jnp.linalg.eigh(a)
@@ -2053,6 +2069,9 @@ class TorchBackend(Backend):
     def inv(self, a):
         return torch.linalg.inv(a)
 
+    def eigvals(self, a):
+        return torch.linalg.eigvals(a)
+
     def sqrtm(self, a):
         L, V = torch.linalg.eigh(a)
         return (V * torch.sqrt(L)[None, :]) @ V.T
@@ -2430,6 +2449,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def inv(self, a):
         return cp.linalg.inv(a)
+
+    def eigvals(self, a):
+        return cp.linalg.eigvals(a)
 
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
@@ -2822,6 +2844,9 @@ class TensorflowBackend(Backend):
 
     def inv(self, a):
         return tf.linalg.inv(a)
+
+    def eigvals(self, a):
+        return tf.linalg.eigvals(a)
 
     def sqrtm(self, a):
         return tf.linalg.sqrtm(a)

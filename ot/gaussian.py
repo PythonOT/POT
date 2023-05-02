@@ -202,7 +202,7 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     where :
 
     .. math::
-        \mathbf{B}(\Sigma_s, \Sigma_t)^{2} = \text{Tr}\left(\Sigma_s^{1/2} + \Sigma_t^{1/2} - 2 \sqrt{\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2}} \right)
+        \mathbf{B}(\Sigma_s, \Sigma_t)^{2} = \text{Tr}\left(\Sigma_s + \Sigma_t - 2 \sqrt{\Sigma_s\Sigma_t}} \right)
 
     Parameters
     ----------
@@ -236,13 +236,11 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     ms, mt, Cs, Ct = list_to_array(ms, mt, Cs, Ct)
     nx = get_backend(ms, mt, Cs, Ct)
 
-    Cs12 = nx.sqrtm(Cs)
-
-    B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
+    B = nx.trace(Cs) + nx.trace(Ct) - 2 * nx.sum(nx.sqrt(nx.eigvals(nx.dot(Cs, Ct))).real, axis=-1)
     W = nx.sqrt(nx.norm(ms - mt)**2 + B)
+
     if log:
         log = {}
-        log['Cs12'] = Cs12
         return W, log
     else:
         return W
@@ -264,7 +262,7 @@ def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
     where :
 
     .. math::
-        \mathbf{B}(\Sigma_s, \Sigma_t)^{2} = \text{Tr}\left(\Sigma_s^{1/2} + \Sigma_t^{1/2} - 2 \sqrt{\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2}} \right)
+        \mathbf{B}(\Sigma_s, \Sigma_t)^{2} = \text{Tr}\left(\Sigma_s + \Sigma_t - 2 \sqrt{\Sigma_s\Sigma_t}} \right)
 
     Parameters
     ----------
