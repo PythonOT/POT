@@ -9,6 +9,8 @@
 
 - Fix circleci-redirector action and codecov (PR #460)
 - Fix issues with cuda for ot.binary_search_circle and with gradients for ot.sliced_wasserstein_sphere (PR #457)
+- Major documentation cleanup (PR #462, #467)
+- Fix gradients for "Wasserstein2 Minibatch GAN" example (PR #466)
 
 ## 0.9.0
 
@@ -291,7 +293,7 @@ Pointwise Gromov
 Wasserstein](https://PythonOT.github.io/auto_examples/gromov/plot_gromov.html#compute-gw-with-a-scalable-stochastic-method-with-any-loss-function),
 Sinkhorn in log space with `method='sinkhorn_log'`, [Projection Robust
 Wasserstein](https://PythonOT.github.io/gen_modules/ot.dr.html?highlight=robust#ot.dr.projection_robust_wasserstein),
-ans [deviased Sinkorn barycenters](https://PythonOT.github.ioauto_examples/barycenters/plot_debiased_barycenter.html).
+ans [debiased Sinkhorn barycenters](https://PythonOT.github.ioauto_examples/barycenters/plot_debiased_barycenter.html).
 
 This release will also simplify the installation process. We have now a
 `pyproject.toml` that defines the build dependency and POT should now build even
@@ -534,7 +536,7 @@ and [free support](https://github.com/rflamary/POT/blob/master/notebooks/plot_fr
 implementation of entropic OT.
 
 POT 0.5 also comes with a rewriting of ot.gpu using the cupy framework instead of
-the unmaintained cudamat. Note that while we tried to keed changes to the
+the unmaintained cudamat. Note that while we tried to keep changes to the
 minimum, the OTDA classes were deprecated. If you are happy with the cudamat
 implementation, we recommend you stay with stable release 0.4 for now.
 
