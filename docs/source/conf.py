@@ -351,7 +351,8 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy/', None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
                        'matplotlib': ('http://matplotlib.org/', None),
-                       'torch': ('https://pytorch.org/docs/stable/', None)}
+                       'torch': ('https://pytorch.org/docs/stable/', None),
+                       'jax': ('https://jax.readthedocs.io/en/latest/', None)}
 
 sphinx_gallery_conf = {
     'examples_dirs': ['../../examples', '../../examples/da'],
