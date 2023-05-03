@@ -310,6 +310,9 @@ def test_func_backends(nx):
     v = rnd.randn(3)
     val = np.array([1.0])
 
+    M1 = rnd.randn(1, 2, 10, 10)
+    M2 = rnd.randn(3, 2, 10, 10)
+
     # Sparse tensors test
     sp_row = np.array([0, 3, 1, 0, 3])
     sp_col = np.array([0, 3, 1, 2, 2])
@@ -327,6 +330,9 @@ def test_func_backends(nx):
         Mb = nx.from_numpy(M)
         SquareMb = nx.from_numpy(SquareM)
         vb = nx.from_numpy(v)
+
+        M1b = nx.from_numpy(M1)
+        M2b = nx.from_numpy(M2)
 
         val = nx.from_numpy(val)
 
@@ -666,6 +672,9 @@ def test_func_backends(nx):
         A = nx.matmul(Mb, Mb.T)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("matmul")
+        A = nx.matmul(M1b, M2b)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("matmul broadcast")
 
         assert not nx.array_equal(Mb, vb), "array_equal (shape)"
         assert nx.array_equal(Mb, Mb), "array_equal (elements) - expected true"
