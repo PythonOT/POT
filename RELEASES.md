@@ -9,6 +9,8 @@
 
 - Fix circleci-redirector action and codecov (PR #460)
 - Fix issues with cuda for ot.binary_search_circle and with gradients for ot.sliced_wasserstein_sphere (PR #457)
+- Major documentation cleanup (PR #462, #467)
+- Fix gradients for "Wasserstein2 Minibatch GAN" example (PR #466)
 
 ## 0.9.0
 
@@ -87,7 +89,7 @@ big. More details below.
     
 
 #### New features
-- Added feature to (Fused) Gromov-Wasserstein solvers herited from `ot.optim` to support relative and absolute loss variations as stopping criterions (PR #431)
+- Added feature to (Fused) Gromov-Wasserstein solvers inherited from `ot.optim` to support relative and absolute loss variations as stopping criterions (PR #431)
 - Added feature to (Fused) Gromov-Wasserstein solvers to handle asymmetric matrices (PR #431)
 - Added semi-relaxed (Fused) Gromov-Wasserstein solvers in `ot.gromov` + examples (PR #431)
 - Added the spherical sliced-Wasserstein discrepancy in `ot.sliced.sliced_wasserstein_sphere` and `ot.sliced.sliced_wasserstein_sphere_unif` + examples (PR #434)
@@ -279,7 +281,7 @@ a [Generative Network
 (GAN)](https://PythonOT.github.io/auto_examples/backends/plot_wass2_gan_torch.html),
 for a  [sliced Wasserstein gradient
 flow](https://PythonOT.github.io/auto_examples/backends/plot_sliced_wass_grad_flow_pytorch.html)
-and [optimizing the Gromov-Wassersein distance](https://PythonOT.github.io/auto_examples/backends/plot_optim_gromov_pytorch.html). Note that the Jax backend is still in early development and quite
+and [optimizing the Gromov-Wasserstein distance](https://PythonOT.github.io/auto_examples/backends/plot_optim_gromov_pytorch.html). Note that the Jax backend is still in early development and quite
 slow at the moment, we strongly recommend for Jax users to use the [OTT
 toolbox](https://github.com/google-research/ott)  when possible.
  As a result of this new feature,
@@ -291,7 +293,7 @@ Pointwise Gromov
 Wasserstein](https://PythonOT.github.io/auto_examples/gromov/plot_gromov.html#compute-gw-with-a-scalable-stochastic-method-with-any-loss-function),
 Sinkhorn in log space with `method='sinkhorn_log'`, [Projection Robust
 Wasserstein](https://PythonOT.github.io/gen_modules/ot.dr.html?highlight=robust#ot.dr.projection_robust_wasserstein),
-ans [deviased Sinkorn barycenters](https://PythonOT.github.ioauto_examples/barycenters/plot_debiased_barycenter.html).
+ans [debiased Sinkhorn barycenters](https://PythonOT.github.ioauto_examples/barycenters/plot_debiased_barycenter.html).
 
 This release will also simplify the installation process. We have now a
 `pyproject.toml` that defines the build dependency and POT should now build even
@@ -432,7 +434,7 @@ are coming for the next versions.
 
 #### Closed issues
 
-- Add JMLR paper to the readme and Mathieu Blondel to the Acknoledgments (PR
+- Add JMLR paper to the readme and Mathieu Blondel to the Acknowledgments (PR
   #231, #232)
 - Bug in Unbalanced OT example (Issue #127)
 - Clean Cython output when calling setup.py clean (Issue #122)
@@ -440,7 +442,7 @@ are coming for the next versions.
 - EMD dimension mismatch (Issue #114, Fixed in PR #116)
 - 2D barycenter bug for non square images (Issue #124, fixed in PR #132)
 - Bad value in EMD 1D (Issue #138, fixed in PR #139)
-- Log bugs for Gromov-Wassertein solver (Issue #107, fixed in PR #108)
+- Log bugs for Gromov-Wasserstein solver (Issue #107, fixed in PR #108)
 - Weight issues in barycenter function (PR #106)
 
 ## 0.6.0
@@ -471,9 +473,9 @@ a solver for [Unbalanced OT
 barycenters](https://github.com/rflamary/POT/blob/master/notebooks/plot_UOT_barycenter_1D.ipynb).
 A new variant of Gromov-Wasserstein divergence called [Fused
 Gromov-Wasserstein](https://pot.readthedocs.io/en/latest/all.html?highlight=fused_#ot.gromov.fused_gromov_wasserstein)
-has been also contributed with exemples of use on [structured
+has been also contributed with examples of use on [structured
 data](https://github.com/rflamary/POT/blob/master/notebooks/plot_fgw.ipynb) and
-computing [barycenters of labeld
+computing [barycenters of labeled
 graphs](https://github.com/rflamary/POT/blob/master/notebooks/plot_barycenter_fgw.ipynb).
 
 
@@ -534,7 +536,7 @@ and [free support](https://github.com/rflamary/POT/blob/master/notebooks/plot_fr
 implementation of entropic OT.
 
 POT 0.5 also comes with a rewriting of ot.gpu using the cupy framework instead of
-the unmaintained cudamat. Note that while we tried to keed changes to the
+the unmaintained cudamat. Note that while we tried to keep changes to the
 minimum, the OTDA classes were deprecated. If you are happy with the cudamat
 implementation, we recommend you stay with stable release 0.4 for now.
 
@@ -558,7 +560,7 @@ and new POT contributors (you can see the list in the [readme](https://github.co
 * Stochastic OT in the dual and semi-dual (PR #52 and PR #62)
 * Free support barycenters (PR #56)
 * Speed-up Sinkhorn function (PR #57 and PR #58)
-* Add convolutional Wassersein barycenters for 2D images (PR #64)
+* Add convolutional Wasserstein barycenters for 2D images (PR #64)
 * Add Greedy Sinkhorn variant (Greenkhorn) (PR #66)
 * Big ot.gpu update with cupy implementation (instead of un-maintained cudamat) (PR #67)
 
@@ -609,7 +611,7 @@ This release contains a lot of contribution from new contributors.
 * new notebooks for emd computation and Wasserstein Discriminant Analysis
 * relocate notebooks
 * update documentation
-* clean_zeros(a,b,M) for removimg zeros in sparse distributions
+* clean_zeros(a,b,M) for removing zeros in sparse distributions
 * GPU implementations for sinkhorn and group lasso regularization
 
 
@@ -617,7 +619,7 @@ This release contains a lot of contribution from new contributors.
 *7 Apr 2017*
 
 * New dimensionality reduction method (WDA)
-* Efficient method emd2 returns only tarnsport (in paralell if several histograms given)
+* Efficient method emd2 returns only transport (in parallel if several histograms given)
 
 
 

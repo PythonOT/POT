@@ -299,7 +299,7 @@ def test_lp_barycenter():
     A = np.hstack((a1, a2))
     M = np.array([[0, 1.0, 4.0], [1.0, 0, 1.0], [4.0, 1.0, 0]])
 
-    # obvious barycenter between two diracs
+    # obvious barycenter between two Diracs
     bary0 = np.array([0, 1.0, 0])
 
     bary = ot.lp.barycenter(A, M, [.5, .5])
@@ -314,7 +314,7 @@ def test_free_support_barycenter():
 
     X_init = np.array([-12.]).reshape((1, 1))
 
-    # obvious barycenter location between two diracs
+    # obvious barycenter location between two Diracs
     bar_locations = np.array([0.]).reshape((1, 1))
 
     X = ot.lp.free_support_barycenter(measures_locations, measures_weights, X_init)
@@ -348,7 +348,7 @@ def test_generalised_free_support_barycenter():
 
     Y_init = np.array([-12., 7.]).reshape((1, 2))
 
-    # obvious barycenter location between two 2D diracs
+    # obvious barycenter location between two 2D Diracs
     Y_true = np.array([0., .0]).reshape((1, 2))
 
     # test without log and no init
@@ -387,7 +387,7 @@ def test_lp_barycenter_cvxopt():
     A = np.hstack((a1, a2))
     M = np.array([[0, 1.0, 4.0], [1.0, 0, 1.0], [4.0, 1.0, 0]])
 
-    # obvious barycenter between two diracs
+    # obvious barycenter between two Diracs
     bary0 = np.array([0, 1.0, 0])
 
     bary = ot.lp.barycenter(A, M, [.5, .5], solver=None)

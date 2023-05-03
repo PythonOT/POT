@@ -5,7 +5,7 @@ Weak Optimal Transport VS exact Optimal Transport
 ====================================================
 
 Illustration of 2D optimal transport between distributions that are weighted
-sum of diracs. The OT matrix is plotted with the samples.
+sum of Diracs. The OT matrix is plotted with the samples.
 
 """
 

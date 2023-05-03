@@ -36,7 +36,7 @@ import ot
 def smacof_mds(C, dim, max_iter=3000, eps=1e-9):
     """
     Returns an interpolated point cloud following the dissimilarity matrix C
-    using SMACOF multidimensional scaling (MDS) in specific dimensionned
+    using SMACOF multidimensional scaling (MDS) in specific dimensioned
     target space
 
     Parameters

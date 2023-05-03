@@ -60,7 +60,7 @@ pl.show()
 
 ##############################################################################
 # Compute semi-relaxed and fully relaxed regularization paths
-# -----------
+# -----------------------------------------------------------
 
 #%%
 final_gamma = 1e-8
@@ -72,9 +72,9 @@ t2, t_list2, g_list2 = ot.regpath.regularization_path(a, b, M, reg=final_gamma,
 
 ##############################################################################
 # Plot the regularization path
-# ----------------
+# ----------------------------
 #
-# The OT plan is ploted as a function of $\gamma$ that is the inverse of the
+# The OT plan is plotted as a function of $\gamma$ that is the inverse of the
 # weight on the marginal relaxations.
 
 #%% fully relaxed l2-penalized UOT
@@ -109,7 +109,7 @@ pl.show()
 
 # %%
 # Animation of the regpath for UOT l2
-# ------------------------
+# -----------------------------------
 
 nv = 100
 g_list_v = np.logspace(-.5, -2.5, nv)
@@ -149,7 +149,7 @@ ani = animation.FuncAnimation(pl.gcf(), _update_plot, nv, interval=50, repeat_de
 
 ##############################################################################
 # Plot the semi-relaxed regularization path
-# -------------------
+# -----------------------------------------
 
 #%% semi-relaxed l2-penalized UOT
 
@@ -181,7 +181,7 @@ pl.show()
 
 # %%
 # Animation of the regpath for semi-relaxed UOT l2
-# ------------------------
+# ------------------------------------------------
 
 nv = 100
 g_list_v = np.logspace(2.5, -2, nv)

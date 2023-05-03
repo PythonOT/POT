@@ -8,7 +8,7 @@ Logo of the POT toolbox
 In this example we plot the logo of the POT toolbox.
 
 This logo is that it is done 100% in Python and generated using
-matplotlib and ploting teh solution of the EMD solver from POT.
+matplotlib and plotting the solution of the EMD solver from POT.
 
 """
 

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 r"""
-=================================
+=====================================================
 (Fused) Gromov-Wasserstein Linear Dictionary Learning
-=================================
+=====================================================
 
-In this exemple, we illustrate how to learn a Gromov-Wasserstein dictionary on
+In this example, we illustrate how to learn a Gromov-Wasserstein dictionary on
 a dataset of structured data such as graphs, denoted
 :math:`\{ \mathbf{C_s} \}_{s \in [S]}` where every nodes have uniform weights.
 Given a dictionary :math:`\mathbf{C_{dict}}` composed of D structures of a fixed
@@ -49,7 +49,7 @@ from networkx.generators.community import stochastic_block_model as sbm
 #############################################################################
 #
 # Generate a dataset composed of graphs following Stochastic Block models of 1, 2 and 3 clusters.
-# ---------------------------------------------
+# -----------------------------------------------------------------------------------------------
 
 np.random.seed(42)
 
@@ -112,8 +112,8 @@ pl.show()
 
 #############################################################################
 #
-# Estimate the gromov-wasserstein dictionary from the dataset
-# ---------------------------------------------
+# Estimate the Gromov-Wasserstein dictionary from the dataset
+# -----------------------------------------------------------
 
 
 np.random.seed(0)
@@ -144,7 +144,7 @@ pl.show()
 #############################################################################
 #
 # Visualization of the estimated dictionary atoms
-# ---------------------------------------------
+# -----------------------------------------------
 
 
 # Continuous connections between nodes of the atoms are colored in shades of grey (1: dark / 2: white)
@@ -169,7 +169,7 @@ pl.show()
 #############################################################################
 #
 # Visualization of the embedding space
-# ---------------------------------------------
+# ------------------------------------
 
 unmixings = []
 reconstruction_errors = []
@@ -217,7 +217,7 @@ pl.show()
 #############################################################################
 #
 # Endow the dataset with node features
-# ---------------------------------------------
+# ------------------------------------
 # We follow this feature assignment on all nodes of a graph depending on its label/number of clusters
 # 1 cluster --> 0 as nodes feature
 # 2 clusters --> 1 as nodes feature
@@ -257,7 +257,7 @@ pl.show()
 #############################################################################
 #
 # Estimate a Fused Gromov-Wasserstein dictionary from the dataset of attributed graphs
-# ---------------------------------------------
+# ------------------------------------------------------------------------------------
 np.random.seed(0)
 ps = [ot.unif(C.shape[0]) for C in dataset]
 D = 3  # 6 atoms instead of 3
@@ -286,7 +286,7 @@ pl.show()
 #############################################################################
 #
 # Visualization of the estimated dictionary atoms
-# ---------------------------------------------
+# -----------------------------------------------
 
 pl.figure(7, (12, 8))
 pl.clf()
@@ -313,7 +313,7 @@ pl.show()
 #############################################################################
 #
 # Visualization of the embedding space
-# ---------------------------------------------
+# ------------------------------------
 
 unmixings = []
 reconstruction_errors = []

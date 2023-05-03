@@ -62,8 +62,8 @@ ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
 
 # Screenkhorn
 lambd = 2e-03  # entropy parameter
-ns_budget = 30  # budget number of points to be keeped in the source distribution
-nt_budget = 30  # budget number of points to be keeped in the target distribution
+ns_budget = 30  # budget number of points to be kept in the source distribution
+nt_budget = 30  # budget number of points to be kept in the target distribution
 
 G_screen = screenkhorn(a, b, M, lambd, ns_budget, nt_budget, uniform=False, restricted=True, verbose=True)
 pl.figure(4, figsize=(5, 5))

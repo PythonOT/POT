@@ -4,7 +4,7 @@
 1D Wasserstein barycenter demo for Unbalanced distributions
 ===========================================================
 
-This example illustrates the computation of regularized Wassersyein Barycenter
+This example illustrates the computation of regularized Wasserstein Barycenter
 as proposed in [10] for Unbalanced inputs.
 
 
