@@ -222,6 +222,8 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.mean(M)
     with pytest.raises(NotImplementedError):
+        nx.median(M)
+    with pytest.raises(NotImplementedError):
         nx.std(M)
     with pytest.raises(NotImplementedError):
         nx.linspace(0, 1, 50)
@@ -510,6 +512,10 @@ def test_func_backends(nx):
         A = nx.mean(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('mean')
+
+        A = nx.median(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('median')
 
         A = nx.std(Mb)
         lst_b.append(nx.to_numpy(A))
