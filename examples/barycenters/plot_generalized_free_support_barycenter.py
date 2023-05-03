@@ -57,7 +57,7 @@ weights = np.array([1 / 3, 1 / 3, 1 / 3])
 # Number of barycenter points to compute
 n_samples_bary = 150
 
-# Send the input measures into 3D space for visualisation
+# Send the input measures into 3D space for visualization
 X_visu = [Xi @ Pi for (Xi, Pi) in zip(X_list, P_list)]
 
 # Plot the input data

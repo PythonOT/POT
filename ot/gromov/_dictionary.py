@@ -148,7 +148,7 @@ def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, e
             Ts = [None] * batch_size
 
             for batch_idx, C_idx in enumerate(batch):
-                # BCD solver for Gromov-Wassersteisn linear unmixing used independently on each structure of the sampled batch
+                # BCD solver for Gromov-Wasserstein linear unmixing used independently on each structure of the sampled batch
                 unmixings[batch_idx], Cs_embedded[batch_idx], Ts[batch_idx], current_loss = gromov_wasserstein_linear_unmixing(
                     Cs[C_idx], Cdict, reg=reg, p=ps[C_idx], q=q, tol_outer=tol_outer, tol_inner=tol_inner,
                     max_iter_outer=max_iter_outer, max_iter_inner=max_iter_inner, symmetric=symmetric, **kwargs
@@ -252,7 +252,7 @@ def gromov_wasserstein_linear_unmixing(C, Cdict, reg=0., p=None, q=None, tol_out
     Returns
     -------
     w: array-like, shape (D,)
-        gromov-wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{p})` onto the span of the dictionary.
+        Gromov-Wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{p})` onto the span of the dictionary.
     Cembedded: array-like, shape (nt,nt)
         embedded structure of :math:`(\mathbf{C},\mathbf{p})` onto the dictionary, :math:`\sum_d w_d\mathbf{C_{dict}[d]}`.
     T: array-like (ns, nt)
@@ -559,7 +559,7 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
         Feature matrices composing the dictionary.
         The dictionary leading to the best loss over an epoch is saved and returned.
     log: dict
-        If use_log is True, contains loss evolutions by batches and epoches.
+        If use_log is True, contains loss evolutions by batches and epochs.
     References
     -------
     .. [38] C. Vincent-Cuaz, T. Vayer, R. Flamary, M. Corneli, N. Courty, Online
@@ -634,7 +634,7 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
             Ts = [None] * batch_size
 
             for batch_idx, C_idx in enumerate(batch):
-                # BCD solver for Gromov-Wassersteisn linear unmixing used independently on each structure of the sampled batch
+                # BCD solver for Gromov-Wasserstein linear unmixing used independently on each structure of the sampled batch
                 unmixings[batch_idx], Cs_embedded[batch_idx], Ys_embedded[batch_idx], Ts[batch_idx], current_loss = fused_gromov_wasserstein_linear_unmixing(
                     Cs[C_idx], Ys[C_idx], Cdict, Ydict, alpha, reg=reg, p=ps[C_idx], q=q,
                     tol_outer=tol_outer, tol_inner=tol_inner, max_iter_outer=max_iter_outer, max_iter_inner=max_iter_inner, symmetric=symmetric, **kwargs
@@ -736,7 +736,7 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict, Ydict, alpha, reg=0., 
     Returns
     -------
     w: array-like, shape (D,)
-        fused gromov-wasserstein linear unmixing of (C,Y,p) onto the span of the dictionary.
+        fused Gromov-Wasserstein linear unmixing of (C,Y,p) onto the span of the dictionary.
     Cembedded: array-like, shape (nt,nt)
         embedded structure of :math:`(\mathbf{C},\mathbf{Y}, \mathbf{p})` onto the dictionary, :math:`\sum_d w_d\mathbf{C_{dict}[d]}`.
     Yembedded: array-like, shape (nt,d)

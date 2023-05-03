@@ -5,7 +5,7 @@ Dimension reduction with OT
 
 .. warning::
     Note that by default the module is not imported in :mod:`ot`. In order to
-    use it you need to explicitely import :mod:`ot.dr`
+    use it you need to explicitly import :mod:`ot.dr`
 
 """
 
@@ -83,7 +83,7 @@ def fda(X, y, p=2, reg=1e-16):
     y : ndarray, shape (n,)
         Labels for training samples.
     p : int, optional
-        Size of dimensionnality reduction.
+        Size of dimensionality reduction.
     reg : float, optional
         Regularization term >0 (ridge regularization)
 
@@ -164,7 +164,7 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, sinkhorn_method='sinkhorn', maxiter
     y : ndarray, shape (n,)
         Labels for training samples.
     p : int, optional
-        Size of dimensionnality reduction.
+        Size of dimensionality reduction.
     reg : float, optional
         Regularization term >0 (entropic regularization)
     solver : None | str, optional
@@ -175,7 +175,7 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, sinkhorn_method='sinkhorn', maxiter
     P0 : ndarray, shape (d, p)
         Initial starting point for projection.
     normalize : bool, optional
-        Normalise the Wasserstaiun distance by the average distance on P0 (default : False)
+        Normalize the Wasserstaiun distance by the average distance on P0 (default : False)
     verbose : int, optional
         Print information along iterations.
 

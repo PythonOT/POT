@@ -3,7 +3,7 @@ Functions for plotting OT matrices
 
 .. warning::
     Note that by default the module is not import in :mod:`ot`. In order to
-    use it you need to explicitely import :mod:`ot.plot`
+    use it you need to explicitly import :mod:`ot.plot`
 
 
 """

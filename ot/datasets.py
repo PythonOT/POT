@@ -22,7 +22,7 @@ def make_1D_gauss(n, m, s):
     m : float
         mean value of the gaussian distribution
     s : float
-        standard deviaton of the gaussian distribution
+        standard deviation of the gaussian distribution
 
     Returns
     -------

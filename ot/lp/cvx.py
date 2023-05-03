@@ -52,7 +52,7 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver='interior-po
     reg : float
         Regularization term >0
     weights : np.ndarray (n,)
-        Weights of each histogram a_i on the simplex (barycentric coodinates)
+        Weights of each histogram a_i on the simplex (barycentric coordinates)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional

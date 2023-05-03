@@ -173,7 +173,7 @@ def max_sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, 
 
     where :
 
-    - :math:`\theta_\# \mu` stands for the pushforwars of the projection :math:`\mathbb{R}^d \ni X \mapsto \langle \theta, X \rangle`
+    - :math:`\theta_\# \mu` stands for the pushforwards of the projection :math:`\mathbb{R}^d \ni X \mapsto \langle \theta, X \rangle`
 
 
     Parameters

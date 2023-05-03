@@ -135,7 +135,7 @@ for i in range(niter):
 
 ##############################################################################
 # Estimated weights and convergence of the objective
-# ---------------------------------------------------
+# --------------------------------------------------
 
 we = w.detach().numpy()
 print('Estimated mixture:', we)
@@ -147,8 +147,8 @@ pl.title('Wasserstein distance')
 pl.xlabel("Iterations")
 
 ##############################################################################
-# Ploting the reweighted source distribution
-# ------------------------------------------
+# Plotting the reweighted source distribution
+# -------------------------------------------
 
 pl.figure(3)
 

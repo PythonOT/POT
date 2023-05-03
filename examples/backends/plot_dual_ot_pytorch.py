@@ -100,7 +100,7 @@ pl.xlabel("Iterations")
 Ge = ot.stochastic.plan_dual_entropic(u, v, xs, xt, reg=reg)
 
 # %%
-# Plot teh estimated entropic OT plan
+# Plot the estimated entropic OT plan
 # -----------------------------------
 
 pl.figure(3, (10, 5))
@@ -114,7 +114,7 @@ pl.title('Source and target distributions')
 
 # %%
 # Estimating dual variables for quadratic OT
-# -----------------------------------------
+# ------------------------------------------
 
 u = torch.randn(n_source_samples, requires_grad=True)
 v = torch.randn(n_source_samples, requires_grad=True)
@@ -157,7 +157,7 @@ Gq = ot.stochastic.plan_dual_quadratic(u, v, xs, xt, reg=reg)
 
 # %%
 # Plot the estimated quadratic OT plan
-# -----------------------------------
+# ------------------------------------
 
 pl.figure(5, (10, 5))
 pl.clf()
