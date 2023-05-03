@@ -430,7 +430,7 @@ def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log
 
     # Projection on S^1
     # Projection on plane
-    Xps = nx.matmul(nx.transpose(projections, (0, 2, 1))[:, None], X_s[:, :, None])[:, :, :, 0]
+    Xps = nx.transpose(nx.einsum("ijk, lk -> ijl", nx.transpose(projections, (0, 2, 1)), X_s), (0, 2, 1))
     # Projection on sphere
     Xps = Xps / nx.sqrt(nx.sum(Xps**2, -1, keepdims=True))
     # Get coordinates on [0,1[
