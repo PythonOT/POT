@@ -311,7 +311,7 @@ def test_func_backends(nx):
     val = np.array([1.0])
 
     M1 = rnd.randn(1, 2, 10, 10)
-    M2 = rnd.randn(3, 2, 10, 10)
+    M2 = rnd.randn(3, 1, 10, 10)
 
     # Sparse tensors test
     sp_row = np.array([0, 3, 1, 0, 3])
