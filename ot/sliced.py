@@ -345,8 +345,8 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
 
     # Projection on S^1
     # Projection on plane
-    Xps = nx.matmul(nx.transpose(projections, (0, 2, 1))[:, None], X_s[:, :, None])[:, :, :, 0]
-    Xpt = nx.matmul(nx.transpose(projections, (0, 2, 1))[:, None], X_t[:, :, None])[:, :, :, 0]
+    Xps = nx.transpose(nx.einsum("ijk, lk -> ijl", nx.transpose(projections, (0, 2, 1)), X_s), (0, 2, 1))
+    Xpt = nx.transpose(nx.einsum("ijk, lk -> ijl", nx.transpose(projections, (0, 2, 1)), X_t), (0, 2, 1))
 
     # Projection on sphere
     Xps = Xps / nx.sqrt(nx.sum(Xps**2, -1, keepdims=True))
