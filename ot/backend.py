@@ -574,6 +574,16 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def median(self, a, axis=None):
+        r"""
+        Computes the median of a tensor along given dimensions.
+
+        This function follows the api from :any:`numpy.median`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.median.html
+        """
+        raise NotImplementedError()
+
     def std(self, a, axis=None):
         r"""
         Computes the standard deviation of a tensor along given dimensions.
@@ -1115,6 +1125,9 @@ class NumpyBackend(Backend):
     def mean(self, a, axis=None):
         return np.mean(a, axis=axis)
 
+    def median(self, a, axis=None):
+        return np.median(a, axis=axis)
+
     def std(self, a, axis=None):
         return np.std(a, axis=axis)
 
@@ -1469,6 +1482,9 @@ class JaxBackend(Backend):
 
     def mean(self, a, axis=None):
         return jnp.mean(a, axis=axis)
+
+    def median(self, a, axis=None):
+        return jnp.median(a, axis=axis)
 
     def std(self, a, axis=None):
         return jnp.std(a, axis=axis)
@@ -1884,6 +1900,12 @@ class TorchBackend(Backend):
         else:
             return torch.mean(a)
 
+    def median(self, a, axis=None):
+        if axis is not None:
+            return torch.median(a, dim=axis)
+        else:
+            return torch.median(a)
+
     def std(self, a, axis=None):
         if axis is not None:
             return torch.std(a, dim=axis, unbiased=False)
@@ -2270,6 +2292,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def mean(self, a, axis=None):
         return cp.mean(a, axis=axis)
+
+    def median(self, a, axis=None):
+        return cp.median(a, axis=axis)
 
     def std(self, a, axis=None):
         return cp.std(a, axis=axis)
