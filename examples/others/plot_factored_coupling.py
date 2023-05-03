@@ -47,8 +47,8 @@ pl.title('Source and target distributions')
 
 
 # %%
-# Compute Factore OT and exact OT solutions
-# --------------------------------------
+# Compute Factored OT and exact OT solutions
+# ------------------------------------------
 
 #%% EMD
 M = ot.dist(xs, xt)
@@ -61,7 +61,7 @@ Ga, Gb, xb = ot.factored_optimal_transport(xs, xt, a, b, r=4)
 
 # %%
 # Plot factored OT and exact OT solutions
-# --------------------------------------
+# ---------------------------------------
 
 pl.figure(2, (14, 4))
 

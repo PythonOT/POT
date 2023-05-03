@@ -21,7 +21,7 @@ from ._utils import init_matrix_semirelaxed, gwloss, gwggrad
 def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=None, log=False, G0=None,
                                    max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
-    Returns the semi-relaxed gromov-wasserstein divergence transport from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
+    Returns the semi-relaxed Gromov-Wasserstein divergence transport from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
 
     The function solves the following optimization problem:
 
@@ -32,6 +32,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
         s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
 
              \mathbf{\gamma} &\geq 0
+
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -58,7 +59,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
-        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -156,6 +157,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
         s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
 
              \mathbf{\gamma} &\geq 0
+
     Where :
 
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
@@ -166,6 +168,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
 
     Note that when using backends, this loss function is differentiable wrt the
     matrices (C1, C2) but not yet for the weights p.
+
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. However all the steps in the conditional
         gradient are not differentiable.
@@ -184,7 +187,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
-        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -278,7 +281,7 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
-        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     alpha : float, optional
         Trade-off parameter (0 < alpha < 1)
     G0: array-like, shape (ns,nt), optional
@@ -415,7 +418,7 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
-        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     alpha : float, optional
         Trade-off parameter (0 < alpha < 1)
     G0: array-like, shape (ns,nt), optional
@@ -435,7 +438,7 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
     Returns
     -------
     srfgw-divergence : float
-        Semi-relaxed Fused gromov wasserstein divergence for the given parameters.
+        Semi-relaxed Fused Gromov-Wasserstein divergence for the given parameters.
     log : dict
         Log dictionary return only if log==True in parameters.
 

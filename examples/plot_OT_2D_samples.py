@@ -4,8 +4,8 @@
 Optimal Transport between 2D empirical distributions
 ====================================================
 
-Illustration of 2D optimal transport between discributions that are weighted
-sum of diracs. The OT matrix is plotted with the samples.
+Illustration of 2D optimal transport between distributions that are weighted
+sum of Diracs. The OT matrix is plotted with the samples.
 
 """
 
@@ -105,7 +105,7 @@ pl.show()
 
 
 ##############################################################################
-# Emprirical Sinkhorn
+# Empirical Sinkhorn
 # -------------------
 
 #%% sinkhorn

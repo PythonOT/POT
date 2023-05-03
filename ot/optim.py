@@ -138,6 +138,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
              \gamma^T \mathbf{1} &= \mathbf{b} (optional constraint)
 
              \gamma &\geq 0
+
     where :
 
     - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
@@ -157,6 +158,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
              \gamma^T \mathbf{1} &= \mathbf{b}
 
              \gamma &\geq 0
+
     where :
 
     - :math:`\Omega` is the entropic regularization term :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
@@ -224,7 +226,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
 
     See Also
     --------
-    ot.lp.emd : Unregularized optimal ransport
+    ot.lp.emd : Unregularized optimal transport
     ot.bregman.sinkhorn : Entropic regularized optimal transport
     """
     a, b, M, G0 = list_to_array(a, b, M, G0)
@@ -325,6 +327,7 @@ def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
              \gamma^T \mathbf{1} &= \mathbf{b}
 
              \gamma &\geq 0
+
     where :
 
     - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
@@ -380,7 +383,7 @@ def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
 
     See Also
     --------
-    ot.lp.emd : Unregularized optimal ransport
+    ot.lp.emd : Unregularized optimal transport
     ot.bregman.sinkhorn : Entropic regularized optimal transport
 
     """
@@ -407,6 +410,7 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
         s.t. \ \gamma \mathbf{1} &= \mathbf{a}
 
              \gamma &\geq 0
+
     where :
 
     - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
@@ -492,6 +496,7 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
              \gamma^T \mathbf{1} &= \mathbf{b}
 
              \gamma &\geq 0
+
     where :
 
     - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix

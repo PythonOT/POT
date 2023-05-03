@@ -50,7 +50,7 @@ ot_sinkhorn_semi = ot.da.SinkhornTransport(reg_e=1e-1)
 ot_sinkhorn_semi.fit(Xs=Xs, Xt=Xt, ys=ys, yt=yt)
 transp_Xs_sinkhorn_semi = ot_sinkhorn_semi.transform(Xs=Xs)
 
-# semi supervised DA uses available labaled target samples to modify the cost
+# semi supervised DA uses available labeled target samples to modify the cost
 # matrix involved in the OT problem. The cost of transporting a source sample
 # of class A onto a target sample of class B != A is set to infinite, or a
 # very large value
@@ -92,7 +92,7 @@ pl.subplot(2, 2, 4)
 pl.imshow(ot_sinkhorn_semi.cost_, interpolation='nearest')
 pl.xticks([])
 pl.yticks([])
-pl.title('Cost matrix - semisupervised DA')
+pl.title('Cost matrix - semi-supervised DA')
 
 pl.tight_layout()
 

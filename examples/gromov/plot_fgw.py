@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ==============================
-Plot Fused-gromov-Wasserstein
+Plot Fused-Gromov-Wasserstein
 ==============================
 
 This example illustrates the computation of FGW for 1D measures [18].

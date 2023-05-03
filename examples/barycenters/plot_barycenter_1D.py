@@ -4,7 +4,7 @@
 1D Wasserstein barycenter demo
 ==============================
 
-This example illustrates the computation of regularized Wassersyein Barycenter
+This example illustrates the computation of regularized Wasserstein Barycenter
 as proposed in [3].
 
 
@@ -80,6 +80,7 @@ plt.show()
 ##############################################################################
 # Barycentric interpolation
 # -------------------------
+
 #%% barycenter interpolation
 
 n_alpha = 11

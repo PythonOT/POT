@@ -3,7 +3,7 @@
 Stochastic examples
 ===================
 
-This example is designed to show how to use the stochatic optimization
+This example is designed to show how to use the stochastic optimization
 algorithms for discrete and semi-continuous measures from the POT library.
 
 [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F.
@@ -61,7 +61,7 @@ print(sag_pi)
 # Semi-Continuous Case
 # ````````````````````
 #
-# Sample one general measure a, one discrete measures b for the semicontinous
+# Sample one general measure a, one discrete measures b for the semicontinuous
 # case, the points where source and target measures are defined and compute the
 # cost matrix.
 
@@ -80,7 +80,7 @@ Y_target = rng.randn(n_target, 2)
 M = ot.dist(X_source, Y_target)
 
 #############################################################################
-# Call the "ASGD" method to find the transportation matrix in the semicontinous
+# Call the "ASGD" method to find the transportation matrix in the semicontinuous
 # case.
 
 method = "ASGD"
