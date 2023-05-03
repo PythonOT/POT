@@ -328,7 +328,7 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
     if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10**(-4)):
         raise ValueError("X_s is not on the sphere.")
     if nx.any(nx.abs(nx.sum(X_t**2, axis=-1) - 1) > 10**(-4)):
-        raise ValueError("Xt is not on the sphere.")
+        raise ValueError("X_t is not on the sphere.")
 
     if projections is None:
         # Uniforms and independent samples on the Stiefel manifold V_{d,2}
