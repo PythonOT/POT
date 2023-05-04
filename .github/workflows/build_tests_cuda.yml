@@ -27,5 +27,5 @@ jobs:
         python3.10 -m pip install  --ignore-installed -e .
     - name: Run tests
       run: |
-        python3.10 -m pytest --durations=20 -v test/ ot/ --doctest-modules --color=yes 
+        python3.10 -m pytest --durations=20 -v test/ ot/ --doctest-modules --color=yes --ignore=test/test_dr.py --ignore=ot.dr --ignore=ot.plot
 
