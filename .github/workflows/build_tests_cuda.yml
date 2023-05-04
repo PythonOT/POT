@@ -27,7 +27,7 @@ jobs:
       with:
         environment-file: .github/environment.yml
         miniconda-version: "latest"
-        python-version: 3.10
+        python-version: "3.10"
         activate-environment: pot
         auto-activate-base: false
     # Show Conda and Python Versions
