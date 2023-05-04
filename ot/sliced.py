@@ -345,8 +345,8 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
 
     # Projection on S^1
     # Projection on plane
-    Xps = nx.transpose(nx.einsum("ijk, lk -> ijl", nx.transpose(projections, (0, 2, 1)), X_s), (0, 2, 1))
-    Xpt = nx.transpose(nx.einsum("ijk, lk -> ijl", nx.transpose(projections, (0, 2, 1)), X_t), (0, 2, 1))
+    Xps = nx.einsum("ikj, lk -> ilj", projections, X_s)
+    Xpt = nx.einsum("ikj, lk -> ilj", projections, X_t)
 
     # Projection on sphere
     Xps = Xps / nx.sqrt(nx.sum(Xps**2, -1, keepdims=True))
@@ -430,9 +430,11 @@ def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log
 
     # Projection on S^1
     # Projection on plane
-    Xps = nx.transpose(nx.einsum("ijk, lk -> ijl", nx.transpose(projections, (0, 2, 1)), X_s), (0, 2, 1))
+    Xps = nx.einsum("ikj, lk -> ilj", projections, X_s)
+
     # Projection on sphere
     Xps = Xps / nx.sqrt(nx.sum(Xps**2, -1, keepdims=True))
+
     # Get coordinates on [0,1[
     Xps_coords = nx.reshape(get_coordinate_circle(nx.reshape(Xps, (-1, 2))), (n_projections, n))
 
