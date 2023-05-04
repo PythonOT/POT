@@ -38,6 +38,7 @@ jobs:
         which python
     - name: Install POT
       run: |
+        conda activate "pot"
         pip install -e .
     - name: Install dependencies
       run: |
