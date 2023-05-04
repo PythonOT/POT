@@ -25,7 +25,7 @@ jobs:
     - name: Setting Up Conda Environment
       uses: conda-incubator/setup-miniconda@v2
       with:
-        environment-file: environment.yml
+        environment-file: .github/environment.yml
         miniconda-version: "latest"
         python-version: 3.10
         activate-environment: pot
