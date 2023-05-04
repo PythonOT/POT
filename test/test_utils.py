@@ -280,9 +280,14 @@ def test_cost_normalization(nx):
     M1 = nx.to_numpy(M0)
     np.testing.assert_allclose(C, M1)
 
-    M = ot.utils.cost_normalization(C1, 'median')
-    M1 = nx.to_numpy(M)
-    np.testing.assert_allclose(np.median(M1), 1)
+    # This function still not work with Tensorflow backend
+    if not nx.__name__ == 'tf':
+        M = ot.utils.cost_normalization(C1, 'median')
+        M1 = nx.to_numpy(M)
+        np.testing.assert_allclose(np.median(M1), 1)
+    else:
+        with pytest.raises(NotImplementedError):
+            ot.utils.cost_normalization(C1, 'median')
 
     M = ot.utils.cost_normalization(C1, 'max')
     M1 = nx.to_numpy(M)

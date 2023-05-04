@@ -513,9 +513,13 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('mean')
 
-        A = nx.median(Mb)
-        lst_b.append(nx.to_numpy(A))
-        lst_name.append('median')
+        if not nx.__name__ == 'tf':
+            A = nx.median(Mb)
+            lst_b.append(nx.to_numpy(A))
+            lst_name.append('median')
+        else:
+            with pytest.raises(NotImplementedError):
+                nx.median(Mb)
 
         A = nx.std(Mb)
         lst_b.append(nx.to_numpy(A))

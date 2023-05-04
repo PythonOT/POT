@@ -2682,6 +2682,11 @@ class TensorflowBackend(Backend):
     def mean(self, a, axis=None):
         return tnp.mean(a, axis=axis)
 
+    # This could be a tentative implementation, in case of installing tensorflow_probability
+    # def median(self, a, axis=None):
+    #     import tensorflow_probability as tfp
+    #     return tfp.stats.percentile(a, 50., axis=axis, interpolation="midpoint")
+
     def std(self, a, axis=None):
         return tnp.std(a, axis=axis)
 
