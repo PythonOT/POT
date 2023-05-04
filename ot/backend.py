@@ -1902,9 +1902,9 @@ class TorchBackend(Backend):
 
     def median(self, a, axis=None):
         if axis is not None:
-            return torch.median(a, dim=axis)
+            return torch.quantile(a, 0.5, interpolation="midpoint", dim=axis)
         else:
-            return torch.median(a)
+            return torch.quantile(a, 0.5, interpolation="midpoint")
 
     def std(self, a, axis=None):
         if axis is not None:
