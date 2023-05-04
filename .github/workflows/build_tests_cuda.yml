@@ -35,6 +35,7 @@ jobs:
       run: |
         conda --version
         conda info --envs
+        conda activate "pot"
         which python
     - name: Install POT
       run: |
