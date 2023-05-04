@@ -31,9 +31,11 @@ jobs:
         activate-environment: pot
         auto-activate-base: false
     # Show Conda and Python Versions
-    - run: conda --version
-    - run: conda info --envs
-    - run: which python
+    - name: Show Conda and Python Versions
+      run: |
+        conda --version
+        conda info --envs
+        which python
     - name: Install POT
       run: |
         pip install -e .
