@@ -11,6 +11,7 @@
 - Fix issues with cuda for ot.binary_search_circle and with gradients for ot.sliced_wasserstein_sphere (PR #457)
 - Major documentation cleanup (PR #462, #467)
 - Fix gradients for "Wasserstein2 Minibatch GAN" example (PR #466)
+- Faster Bures-Wasserstein distance with NumPy backend (PR #468)
 
 ## 0.9.0
 
