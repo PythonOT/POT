@@ -1243,7 +1243,8 @@ class NumpyBackend(Backend):
         return scipy.linalg.inv(a)
 
     def sqrtm(self, a):
-        return scipy.linalg.sqrtm(a)
+        L, V = np.linalg.eigh(a)
+        return (V * np.sqrt(L)[None, :]) @ V.T
 
     def kl_div(self, p, q, eps=1e-16):
         return np.sum(p * np.log(p / q + eps))
@@ -2450,7 +2451,7 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
-        return (V * self.sqrt(L)[None, :]) @ V.T
+        return (V * cp.sqrt(L)[None, :]) @ V.T
 
     def kl_div(self, p, q, eps=1e-16):
         return cp.sum(p * cp.log(p / q + eps))
@@ -2844,7 +2845,8 @@ class TensorflowBackend(Backend):
         return tf.linalg.inv(a)
 
     def sqrtm(self, a):
-        return tf.linalg.sqrtm(a)
+        L, V = tf.linalg.eigh(a)
+        return (V * tf.sqrt(L)[None, :]) @ V.T
 
     def kl_div(self, p, q, eps=1e-16):
         return tnp.sum(p * tnp.log(p / q + eps))
