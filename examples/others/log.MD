@@ -1,0 +1,60 @@
+Large code changes:
+- Merged `greedy_primal_dual` and `demd` to `ot.lp.discrete_mmot`, named `demd_minimize` to `ot.lp.discrete_mmot_converge`.
+- Changed parameter names and return values to follow POT's API standard.
+- Merge two examples together, removing time and loss compare (discuss using text discription), and add barycenter plots.
+- Add more detailed mathematic proves and explanations in documentation.
+
+Comments resolved below:
+- The new solvers should be in `ot.lp.discrete_emd` or something else more descriptive
+    - Fixed. Move our method under `ot.lp` and named as `discrete_mmot` stands for multi marginal optimal transport
+- the example should not need to transpose the data. it means that the API for the implemented function is not good (it should retrun the smae thing as ot.lp.barycenter)
+    - For `ot.lp.barycenter`, input distributions A is defined `A (np.ndarray (d,n))`, but stacked data is shaped (n, d), that's why we added transpose here. We have moved transpose to initial generation of distributions A to avoid confusions. This is the same approach as other examples in POT such as [1D Wasserstein barycenter: exact LP vs entropic regularization](https://pythonot.github.io/auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html#sphx-glr-auto-examples-barycenters-plot-barycenter-lp-vs-entropic-py)
+- where is the barycener? Objective is nice but the barycenetr shoudl be rtruned
+    - `discrete_mmot` denotes a single iteration in the converging calculation. Since we are not defining a learning rate here, we cannot return updated all distributions. But we have updated distributions in each iteration with `A_new = nx.reshape(A, (d, n)) - grad * lr` in converging method, and returned final barycenters/distributions at the end.
+- why only plot thr time? pleade also plot the barycenter.
+    - Added.
+- Plot the data
+    - Fixed.
+- what is all this? sphinx-gallery can print the output of the function properly (assuming it is using print)
+    - Removed. We were trying to compare the time efficency between two methods. Therefore I used stdout to retreive the loss and time data from the output.
+- not clear what is the comparaison, the baryenter estimation?
+    - Our method converges all the distributions rather than calculating a single center for all distributions, the comparasion is intending to show two different methods works on the same distributions.
+- the functiuon should reurn data already well formated
+    - Fixed. The function is removed following previous comments.
+- No need for a function if you just call it oncen alaos visualize the data
+    - Removed.
+- this s a weird name for a function, if it computes a barycenter then just call it `discrete_emd_barycenter`
+    - Fixed. Named as `discrete_mmot_converge`
+- also do `bary, ~ = ot.demd_minimize(ot.demd, data, d, n, vecsize, niters=3000, lr=0.00001)` to avoid betting the barycenter later
+    - Fixed, added log as an additional return value following the POT API.
+- you must stor eand return the loss instead of parsing the text output of the function...
+    - Fixed. But we only can get one final loss from log instead all losses through iterations. We will add comment comparasions for the time difference.
+- same comment as above
+    - Fixed. Added transpose when create A.
+- `weights=np.ones(d)/d` or `weights=ot.unif(d)`
+    - Fixed.
+- if you solve the same problem, the loss should be the same or similar. Why is it so different.
+    - They are not the same problem. **EXPLANATION NEEDED**
+- you need to plot both baryceneters. Are they the same? if not why? Maybe a discussion here explaining the method vs standard LP
+    - We added plots for both barycenters. They are not the same. **EXPLANATION NEEDED**
+- add more detzails heren alaos the references papers
+    - **ADD PAPERS**
+- $ is not compatible with sphinx, please use proper math notations. Also what is aa? what is its relation with the p discussed above.
+    - Removed $. And we merged `greedy_primal_dual` to `discrete_mmot` for better structure and naming. aa refered to A in that context.
+- are those the input distributions? how many of them?
+    - Yes, these are input distributions. Changed to A to follow POT API.
+- this function needs to foloow POT API. look at https://pythonot.github.io/all.html#ot.emd or https://pythonot.github.io/all.html#ot.emd2.
+    - Fixed. Changed `x` to `A`, `aa` to `A`.
+- hare you should express the optimization problem that the functio solves with proper maths and noations (agai see ot.emd), define what is generalized EMD, If it is a multimarginal then please explain it
+    - **EXPLANATION NEEDED**
+- the function should return an OT plan (following ot.emd API) and a log dictionary with other information.
+    - Followed this schema in `discrete_mmot_converge`
+- the output of the function should be of the same type as the input of the function
+- should use nx.sum
+    - Fixed, used `nx.sum` and `nx.dot`.
+- desctibe mroe precisely what you are solkving. is it a barycenter?
+    - **EXPLANATION NEEDED**
+- bad naming, at least discrete_emd or discrete_emd2 if teh function return emd without the plan . if you give the function an empirical distribution then you shoud also put it in the name. Finally emd is computed beteen twoi distibutions so why is there only on naumpy arrya here?
+    - Naming changed. We are solving a different problem than emd. **EXPLANATION NEEDED**
+- those shapes can be infered from x they should not be passed as parameters
+    - Removed unnacessary parameters that can be inferred.
