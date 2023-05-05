@@ -28,10 +28,10 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) +
         \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
 
-    The regularization is selected with ``reg`` (:math:`\lambda_r`) and ``reg_type``. By
+    The regularization is selected with `reg` (:math:`\lambda_r`) and `reg_type`. By
     default ``reg=None`` and there is no regularization. The unbalanced marginal
-    penalization can be selected with ``unbalanced`` (:math:`\lambda_u`) and
-    ``unbalanced_type``. By default ``unbalanced=None`` and the function
+    penalization can be selected with `unbalanced` (:math:`\lambda_u`) and
+    `unbalanced_type`. By default ``unbalanced=None`` and the function
     solves the exact optimal transport problem (respecting the marginals).
 
     Parameters
@@ -46,12 +46,12 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         Regularization weight :math:`\lambda_r`, by default None (no reg., exact
         OT)
     reg_type : str, optional
-        Type of regularization :math:`R`  either "KL", "L2", 'entropy', by default "KL"
+        Type of regularization :math:`R`  either "KL", "L2", "entropy", by default "KL"
     unbalanced : float, optional
         Unbalanced penalization weight :math:`\lambda_u`, by default None
         (balanced OT)
     unbalanced_type : str, optional
-        Type of unbalanced penalization unction :math:`U`  either "KL", "L2", 'TV', by default 'KL'
+        Type of unbalanced penalization unction :math:`U`  either "KL", "L2", "TV", by default "KL"
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
     max_iter : int, optional
