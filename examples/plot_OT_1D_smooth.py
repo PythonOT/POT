@@ -94,6 +94,6 @@ max_nz = 2  # two non-zero entries are permitted per column of the OT plan
 Gsc = ot.smooth.smooth_ot_dual(
     a, b, M, lambd, reg_type='sparsity_constrained', max_nz=max_nz)
 pl.figure(5, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, Gsc, 'Sparsity contrained OT matrix; k=2.')
+ot.plot.plot1D_mat(a, b, Gsc, 'Sparsity constrained OT matrix; k=2.')
 
 pl.show()

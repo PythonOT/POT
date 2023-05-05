@@ -4,7 +4,7 @@
 OT distances in 1D
 ==================
 
-Shows how to compute multiple Wassersein and Sinkhorn with two different
+Shows how to compute multiple Wasserstein and Sinkhorn with two different
 ground metrics and plot their values for different distributions.
 
 
@@ -76,7 +76,7 @@ pl.tight_layout()
 #%% Compute and plot distributions and loss matrix
 
 d_emd = ot.emd2(a, B, M)  # direct computation of OT loss
-d_emd2 = ot.emd2(a, B, M2)  # direct computation of OT loss with metrixc M2
+d_emd2 = ot.emd2(a, B, M2)  # direct computation of OT loss with metric M2
 d_tv = [np.sum(abs(a - B[:, i])) for i in range(n_target)]
 
 pl.figure(2)

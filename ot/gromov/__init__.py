@@ -17,7 +17,7 @@ from ._utils import (init_matrix, tensor_product, gwloss, gwggrad,
 from ._gw import (gromov_wasserstein, gromov_wasserstein2,
                   fused_gromov_wasserstein, fused_gromov_wasserstein2,
                   solve_gromov_linesearch, gromov_barycenters, fgw_barycenters)
-                  
+
 from ._bregman import (entropic_gromov_wasserstein,
                        entropic_gromov_wasserstein2,
                        entropic_gromov_barycenters,
@@ -54,7 +54,7 @@ __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad', 'update_square_
            'GW_distance_estimation', 'pointwise_gromov_wasserstein', 'sampled_gromov_wasserstein',
            'semirelaxed_gromov_wasserstein', 'semirelaxed_gromov_wasserstein2',
            'semirelaxed_fused_gromov_wasserstein', 'semirelaxed_fused_gromov_wasserstein2',
-           'solve_semirelaxed_gromov_linesearch', 'entropic_semirelaxed_gromov_wasserstein', 
+           'solve_semirelaxed_gromov_linesearch', 'entropic_semirelaxed_gromov_wasserstein',
            'entropic_semirelaxed_gromov_wasserstein2', 'entropic_semirelaxed_fused_gromov_wasserstein',
            'entropic_semirelaxed_fused_gromov_wasserstein2', 'gromov_wasserstein_dictionary_learning',
            'gromov_wasserstein_linear_unmixing', 'fused_gromov_wasserstein_dictionary_learning',

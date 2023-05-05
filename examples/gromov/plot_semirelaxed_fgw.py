@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-==========================
+===============================================
 Semi-relaxed (Fused) Gromov-Wasserstein example
-==========================
+===============================================
 
 This example is designed to show how to use the semi-relaxed Gromov-Wasserstein
 and the semi-relaxed Fused Gromov-Wasserstein divergences.
@@ -34,7 +34,7 @@ from networkx.generators.community import stochastic_block_model as sbm
 #############################################################################
 #
 # Generate two graphs following Stochastic Block models of 2 and 3 clusters.
-# ---------------------------------------------
+# --------------------------------------------------------------------------
 
 
 N2 = 20  # 2 communities
@@ -85,7 +85,7 @@ for i, j in G3.edges():
 #############################################################################
 #
 # Compute their semi-relaxed Gromov-Wasserstein divergences
-# ---------------------------------------------
+# ---------------------------------------------------------
 
 # 0) GW(C2, h2, C3, h3) for reference
 OT, log = gromov_wasserstein(C2, C3, h2, h3, symmetric=True, log=True)
@@ -110,7 +110,7 @@ print('srGW(C3, h3, C2) = ', srgw_32)
 #############################################################################
 #
 # Visualization of the semi-relaxed Gromov-Wasserstein matchings
-# ---------------------------------------------
+# --------------------------------------------------------------
 #
 # We color nodes of the graph on the right - then project its node colors
 # based on the optimal transport plan from the srGW matching
@@ -226,7 +226,7 @@ pl.show()
 #############################################################################
 #
 # Add node features
-# ---------------------------------------------
+# -----------------
 
 # We add node features with given mean - by clusters
 # and inversely proportional to clusters' intra-connectivity
@@ -242,7 +242,7 @@ for i, c in enumerate(part_G3):
 #############################################################################
 #
 # Compute their semi-relaxed Fused Gromov-Wasserstein divergences
-# ---------------------------------------------
+# ---------------------------------------------------------------
 
 alpha = 0.5
 # Compute pairwise euclidean distance between node features
@@ -272,7 +272,7 @@ print('srGW(C3, F3, h3, C2, F2) = ', srfgw_32)
 #############################################################################
 #
 # Visualization of the semi-relaxed Fused Gromov-Wasserstein matchings
-# ---------------------------------------------
+# --------------------------------------------------------------------
 #
 # We color nodes of the graph on the right - then project its node colors
 # based on the optimal transport plan from the srFGW matching

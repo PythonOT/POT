@@ -28,7 +28,7 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
                      numInnerItermax=200, stopInnerThr=1e-9, verbose=False,
                      log=False):
     r"""
-    Solve the entropic regularization optimal transport problem with nonconvex
+    Solve the entropic regularization optimal transport problem with non-convex
     group lasso regularization
 
     The function solves the following optimization problem:
@@ -172,13 +172,13 @@ def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
     - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
     - :math:`\Omega_e` is the entropic regularization term
       :math:`\Omega_e(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
-    - :math:`\Omega_g` is the group lasso regulaization term
+    - :math:`\Omega_g` is the group lasso regularization term
       :math:`\Omega_g(\gamma)=\sum_{i,c} \|\gamma_{i,\mathcal{I}_c}\|^2`
       where  :math:`\mathcal{I}_c` are the index of samples from class
       `c` in the source domain.
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (sum to 1)
 
-    The algorithm used for solving the problem is the generalised conditional
+    The algorithm used for solving the problem is the generalized conditional
     gradient as proposed in :ref:`[5, 7] <references-sinkhorn-l1l2-gl>`.
 
 
@@ -296,7 +296,7 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
     material of :ref:`[8] <references-joint-OT-mapping-linear>`) using the bias optional argument.
 
     The algorithm used for solving the problem is the block coordinate
-    descent that alternates between updates of :math:`\mathbf{G}` (using conditionnal gradient)
+    descent that alternates between updates of :math:`\mathbf{G}` (using conditional gradient)
     and the update of :math:`\mathbf{L}` using a classical least square solver.
 
 
@@ -494,7 +494,7 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
     material of :ref:`[8] <references-joint-OT-mapping-kernel>`) using the bias optional argument.
 
     The algorithm used for solving the problem is the block coordinate
-    descent that alternates between updates of :math:`\mathbf{G}` (using conditionnal gradient)
+    descent that alternates between updates of :math:`\mathbf{G}` (using conditional gradient)
     and the update of :math:`\mathbf{L}` using a classical kernel least square solver.
 
 

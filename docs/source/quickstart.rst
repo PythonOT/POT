@@ -151,7 +151,7 @@ case you are only solving an approximation of the Wasserstein distance because
 the 1-Lipschitz constraint on the dual cannot be enforced exactly (approximated
 through filter thresholding or regularization). Finally note that in order to
 avoid solving large scale OT problems, a number of recent approached minimized
-the expected Wasserstein distance on minibtaches that is different from the
+the expected Wasserstein distance on minibatches that is different from the
 Wasserstein but has better computational and
 `statistical properties <https://arxiv.org/pdf/1910.04091.pdf>`_.
 
@@ -164,8 +164,8 @@ Optimal transport and Wasserstein distance
     In POT, most functions that solve OT or regularized OT problems have two
     versions that return the OT matrix or the value of the optimal solution. For
     instance :any:`ot.emd` returns the OT matrix and :any:`ot.emd2` returns the
-    Wassertsein distance. This approach has been implemented in practice for all
-    solvers that return an OT matrix (even Gromov-Wasserstsein).
+    Wasserstein distance. This approach has been implemented in practice for all
+    solvers that return an OT matrix (even Gromov-Wasserstein).
 
 .. _kantorovitch_solve:
 
@@ -349,9 +349,9 @@ More details about the algorithms used are given in the following note.
       classic algorithm [2]_.
     + :code:`method='sinkhorn_log'` calls :any:`ot.bregman.sinkhorn_log`  the
       sinkhorn algorithm in log space [2]_ that is more stable but can be
-      slower in numpy since `logsumexp` is not implmemented in parallel. 
+      slower in numpy since `logsumexp` is not implemented in parallel.
       It is the recommended solver for applications that requires
-      differentiability with a  small number of iterations.
+      differentiability with a small number of iterations.
     + :code:`method='sinkhorn_stabilized'` calls :any:`ot.bregman.sinkhorn_stabilized`  the
       log stabilized version of the algorithm [9]_.
     + :code:`method='sinkhorn_epsilon_scaling'` calls
@@ -368,7 +368,7 @@ More details about the algorithms used are given in the following note.
     function to solve the smooth problem with :code:`L-BFGS-B` algorithm. Tu use
     this solver, use functions :any:`ot.smooth.smooth_ot_dual` or
     :any:`ot.smooth.smooth_ot_semi_dual` with parameter :code:`reg_type='kl'` to
-    choose entropic/Kullbach Leibler regularization.
+    choose entropic/Kullbach-Leibler regularization.
 
     **Choosing a Sinkhorn solver**
 
@@ -378,7 +378,7 @@ More details about the algorithms used are given in the following note.
     :any:`ot.bregman.sinkhorn_stabilized` solver that will avoid numerical
     errors. This last solver can be very slow in practice and might not even
     converge to a reasonable OT matrix in a finite time. This is why
-    :any:`ot.bregman.sinkhorn_epsilon_scaling` that relie on iterating the value
+    :any:`ot.bregman.sinkhorn_epsilon_scaling` that relies on iterating the value
     of the regularization (and using warm start) sometimes leads to better
     solutions. Note that the greedy version of the Sinkhorn
     :any:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
@@ -546,7 +546,7 @@ where :math:`b_k` are also weights in the simplex. In the non-regularized case,
 the problem above is a classical linear program. In this case we propose a
 solver :meth:`ot.lp.barycenter` that relies on generic LP solvers. By default the
 function uses :any:`scipy.optimize.linprog`, but more efficient LP solvers from
-cvxopt can be also used by changing parameter :code:`solver`. Note that this problem
+`cvxopt` can be also used by changing parameter :code:`solver`. Note that this problem
 requires to solve a very large linear program and can be very slow in
 practice.
 
@@ -812,7 +812,7 @@ Gromov Wasserstein(GW)
 Gromov Wasserstein (GW) is a generalization of OT to distributions that do not lie in
 the same space [13]_. In this case one cannot compute distance between samples
 from the two distributions. [13]_ proposed instead to realign the metric spaces
-by computing a transport between distance matrices. The Gromow Wasserstein
+by computing a transport between distance matrices. The Gromov Wasserstein
 alignment between two distributions can be expressed as the one minimizing:
 
 .. math::
@@ -837,7 +837,7 @@ There also exists an entropic regularized variant of GW that has been proposed i
     :heading-level: "
 
 Gromov Wasserstein barycenters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Note that similarly to Wasserstein distance GW allows for the definition of GW
 barycenters that can be expressed as
@@ -1134,7 +1134,7 @@ References
 
 .. [23] Genevay, A., Peyré, G., Cuturi, M., `Learning Generative Models with
     Sinkhorn Divergences <https://arxiv.org/abs/1706.00292>`__, Proceedings
-    of the Twenty-First International Conference on Artficial Intelligence
+    of the Twenty-First International Conference on Artificial Intelligence
     and Statistics, (AISTATS) 21, 2018
 
 .. [24] Vayer, T., Chapel, L., Flamary, R., Tavenard, R. and Courty, N.
@@ -1187,18 +1187,18 @@ References
     In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (pp. 10648-10656).
 
 .. [36] Liutkus, A., Simsekli, U., Majewski, S., Durmus, A., & Stöter, F. R. 
-       (2019, May). `Sliced-Wasserstein flows: Nonparametric generative modeling via
-        optimal transport and diffusions
-        <http://proceedings.mlr.press/v97/liutkus19a/liutkus19a.pdf>`_. In International
-        Conference on Machine Learning (pp. 4104-4113). PMLR.
+    (2019, May). `Sliced-Wasserstein flows: Nonparametric generative modeling via
+    optimal transport and diffusions
+    <http://proceedings.mlr.press/v97/liutkus19a/liutkus19a.pdf>`_. In International
+    Conference on Machine Learning (pp. 4104-4113). PMLR.
 
 .. [37] Janati, H., Cuturi, M., Gramfort, A. `Debiased sinkhorn barycenters 
     <http://proceedings.mlr.press/v119/janati20a/janati20a.pdf>`_ Proceedings of
     the 37th International Conference on Machine Learning, PMLR 119:4692-4701, 2020
 
 .. [38] C. Vincent-Cuaz, T. Vayer, R. Flamary, M. Corneli, N. Courty, `Online
-       Graph Dictionary Learning <https://arxiv.org/pdf/2102.06555.pdf>`_\ , 
-       International Conference on Machine Learning (ICML), 2021.
+    Graph Dictionary Learning <https://arxiv.org/pdf/2102.06555.pdf>`_\ , 
+    International Conference on Machine Learning (ICML), 2021.
 
 .. [39] Gozlan, N., Roberto, C., Samson, P. M., & Tetali, P. (2017).
     `Kantorovich duality for general transport costs and applications

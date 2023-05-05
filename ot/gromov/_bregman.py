@@ -86,7 +86,7 @@ def entropic_gromov_wasserstein(
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
-        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
@@ -206,7 +206,7 @@ def entropic_gromov_wasserstein2(
         C1, C2, p, q, loss_fun, epsilon, symmetric=None, G0=None, max_iter=1000,
         tol=1e-9, solver='PGD', warmstart=False, verbose=False, log=False, **kwargs):
     r"""
-    Returns the Gromov-Wasserstein distance between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
+    Returns the Gromov-Wasserstein discrepancy between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
     estimated using Sinkhorn projections.
 
     If `solver="PGD"`, the function solves the following entropic-regularized
@@ -266,7 +266,7 @@ def entropic_gromov_wasserstein2(
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
-        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.

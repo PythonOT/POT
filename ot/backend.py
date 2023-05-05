@@ -27,7 +27,7 @@ Examples
         np_config.enable_numpy_behavior()
 
 Performance
---------
+-----------
 
 - CPU: Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz
 - GPU: Tesla V100-SXM2-32GB
@@ -959,6 +959,14 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def matmul(self, a, b):
+        r"""
+        Matrix product of two arrays.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.matmul.html#numpy.matmul
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -1235,7 +1243,8 @@ class NumpyBackend(Backend):
         return scipy.linalg.inv(a)
 
     def sqrtm(self, a):
-        return scipy.linalg.sqrtm(a)
+        L, V = np.linalg.eigh(a)
+        return (V * np.sqrt(L)[None, :]) @ V.T
 
     def kl_div(self, p, q, eps=1e-16):
         return np.sum(p * np.log(p / q + eps))
@@ -1291,6 +1300,9 @@ class NumpyBackend(Backend):
         if len(args) == 1:
             return args[0]
         return args
+
+    def matmul(self, a, b):
+        return np.matmul(a, b)
 
 
 class JaxBackend(Backend):
@@ -1643,6 +1655,9 @@ class JaxBackend(Backend):
         if len(args) == 1:
             return jax.lax.stop_gradient((args[0],))[0]
         return [jax.lax.stop_gradient((a,))[0] for a in args]
+
+    def matmul(self, a, b):
+        return jnp.matmul(a, b)
 
 
 class TorchBackend(Backend):
@@ -2097,6 +2112,9 @@ class TorchBackend(Backend):
             return args[0].detach()
         return [a.detach() for a in args]
 
+    def matmul(self, a, b):
+        return torch.matmul(a, b)
+
 
 class CupyBackend(Backend):  # pragma: no cover
     """
@@ -2433,7 +2451,7 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
-        return (V * self.sqrt(L)[None, :]) @ V.T
+        return (V * cp.sqrt(L)[None, :]) @ V.T
 
     def kl_div(self, p, q, eps=1e-16):
         return cp.sum(p * cp.log(p / q + eps))
@@ -2472,6 +2490,9 @@ class CupyBackend(Backend):  # pragma: no cover
         if len(args) == 1:
             return args[0]
         return args
+
+    def matmul(self, a, b):
+        return cp.matmul(a, b)
 
 
 class TensorflowBackend(Backend):
@@ -2824,7 +2845,8 @@ class TensorflowBackend(Backend):
         return tf.linalg.inv(a)
 
     def sqrtm(self, a):
-        return tf.linalg.sqrtm(a)
+        L, V = tf.linalg.eigh(a)
+        return (V * tf.sqrt(L)[None, :]) @ V.T
 
     def kl_div(self, p, q, eps=1e-16):
         return tnp.sum(p * tnp.log(p / q + eps))
@@ -2863,3 +2885,6 @@ class TensorflowBackend(Backend):
         if len(args) == 1:
             return tf.stop_gradient(args[0])
         return [tf.stop_gradient(a) for a in args]
+
+    def matmul(self, a, b):
+        return tnp.matmul(a, b)
