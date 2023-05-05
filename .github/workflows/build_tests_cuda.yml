@@ -12,8 +12,7 @@ jobs:
   linux-cuda:
 
     runs-on: pc-cuda
-    if: "github.event.review.state == 'approved' || github.event_name ==
-    'workflow_dispatch' || (github.event_name == 'push' && github.branch == 'master')"
+    if: github.event.review.state == 'approved' || github.event_name ==     'workflow_dispatch' || (github.event_name == 'push' && github.event.branch == 'master')
 
     steps:
     - uses: actions/checkout@v1
