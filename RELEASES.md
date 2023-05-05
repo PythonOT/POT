@@ -12,6 +12,7 @@
 - Major documentation cleanup (PR #462, #467)
 - Fix gradients for "Wasserstein2 Minibatch GAN" example (PR #466)
 - Faster Bures-Wasserstein distance with NumPy backend (PR #468)
+- Fix issue backend for ot.sliced_wasserstein_sphere ot.sliced_wasserstein_sphere_unif (PR #471)
 
 ## 0.9.0
 
