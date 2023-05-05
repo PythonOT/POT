@@ -28,10 +28,10 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) +
         \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
 
-    The regularization is selected with :any:`reg` (:math:`\lambda_r`) and :any:`reg_type`. By
+    The regularization is selected with ``reg`` (:math:`\lambda_r`) and ``reg_type``. By
     default ``reg=None`` and there is no regularization. The unbalanced marginal
-    penalization can be selected with :any:`unbalanced` (:math:`\lambda_u`) and
-    :any:`unbalanced_type`. By default ``unbalanced=None`` and the function
+    penalization can be selected with ``unbalanced`` (:math:`\lambda_u`) and
+    ``unbalanced_type``. By default ``unbalanced=None`` and the function
     solves the exact optimal transport problem (respecting the marginals).
 
     Parameters
