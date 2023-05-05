@@ -15,7 +15,7 @@ import numpy as np
 import warnings
 
 from ..bregman import sinkhorn
-from ..utils import dist, list_to_array, check_random_state
+from ..utils import dist, list_to_array, check_random_state, unif
 from ..backend import get_backend
 
 from ._utils import init_matrix, gwloss, gwggrad
@@ -23,7 +23,7 @@ from ._utils import update_square_loss, update_kl_loss, update_feature_matrix
 
 
 def entropic_gromov_wasserstein(
-        C1, C2, p, q, loss_fun, epsilon, symmetric=None, G0=None, max_iter=1000,
+        C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1, symmetric=None, G0=None, max_iter=1000,
         tol=1e-9, solver='PGD', warmstart=False, verbose=False, log=False, **kwargs):
     r"""
     Returns the Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
@@ -75,13 +75,15 @@ def entropic_gromov_wasserstein(
         Metric cost matrix in the source space
     C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    p :  array-like, shape (ns,)
-        Distribution in the source space
-    q :  array-like, shape (nt,)
-        Distribution in the target space
-    loss_fun :  string
+    p : array-like, shape (ns,), optional
+        Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
+    q : array-like, shape (nt,), optional
+        Distribution in the target space.
+        If let to its default value None, uniform distribution is taken.
+    loss_fun :  string, optional
         Loss function used for the solver either 'square_loss' or 'kl_loss'
-    epsilon : float
+    epsilon : float, optional
         Regularization term >0
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
@@ -131,18 +133,33 @@ def entropic_gromov_wasserstein(
     if solver not in ['PGD', 'PPA']:
         raise ValueError("Unknown solver '%s'. Pick one in ['PGD', 'PPA']." % solver)
 
-    C1, C2, p, q = list_to_array(C1, C2, p, q)
-    if G0 is None:
-        nx = get_backend(p, q, C1, C2)
-        G0 = nx.outer(p, q)
+    C1, C2 = list_to_array(C1, C2)
+    arr = [C1, C2]
+    if p is not None:
+        arr.append(list_to_array(p))
     else:
-        nx = get_backend(p, q, C1, C2, G0)
+        p = unif(C1.shape[0], type_as=C1)
+    if q is not None:
+        arr.append(list_to_array(q))
+    else:
+        q = unif(C2.shape[0], type_as=C2)
+
+    if G0 is not None:
+        arr.append(G0)
+
+    nx = get_backend(*arr)
+
+    if G0 is None:
+        G0 = nx.outer(p, q)
+
     T = G0
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun, nx)
+
     if symmetric is None:
         symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
     if not symmetric:
         constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun, nx)
+
     cpt = 0
     err = 1
 
@@ -203,7 +220,7 @@ def entropic_gromov_wasserstein(
 
 
 def entropic_gromov_wasserstein2(
-        C1, C2, p, q, loss_fun, epsilon, symmetric=None, G0=None, max_iter=1000,
+        C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1, symmetric=None, G0=None, max_iter=1000,
         tol=1e-9, solver='PGD', warmstart=False, verbose=False, log=False, **kwargs):
     r"""
     Returns the Gromov-Wasserstein discrepancy between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
@@ -255,13 +272,15 @@ def entropic_gromov_wasserstein2(
         Metric cost matrix in the source space
     C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    p :  array-like, shape (ns,)
-        Distribution in the source space
-    q :  array-like, shape (nt,)
-        Distribution in the target space
-    loss_fun :  string
+    p : array-like, shape (ns,), optional
+        Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
+    q : array-like, shape (nt,), optional
+        Distribution in the target space.
+        If let to its default value None, uniform distribution is taken.
+    loss_fun :  string, optional
         Loss function used for the solver either 'square_loss' or 'kl_loss'
-    epsilon : float
+    epsilon : float, optional
         Regularization term >0
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
@@ -317,8 +336,9 @@ def entropic_gromov_wasserstein2(
 
 
 def entropic_gromov_barycenters(
-        N, Cs, ps, p, lambdas, loss_fun, epsilon, symmetric=True, max_iter=1000,
-        tol=1e-9, warmstartT=False, verbose=False, log=False, init_C=None, random_state=None, **kwargs):
+        N, Cs, ps=None, p=None, lambdas=None, loss_fun='square_loss',
+        epsilon=0.1, symmetric=True, max_iter=1000, tol=1e-9, warmstartT=False,
+        verbose=False, log=False, init_C=None, random_state=None, **kwargs):
     r"""
     Returns the Gromov-Wasserstein barycenters of `S` measured similarity matrices :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
     estimated using Gromov-Wasserstein transports from Sinkhorn projections.
@@ -340,19 +360,18 @@ def entropic_gromov_barycenters(
         Size of the targeted barycenter
     Cs : list of S array-like of shape (ns,ns)
         Metric cost matrices
-    ps : list of S array-like of shape (ns,)
-        Sample weights in the `S` spaces
-    p : array-like, shape(N,)
-        Weights in the targeted barycenter
-    lambdas : list of float
+    ps : list of S array-like of shape (ns,), optional
+        Sample weights in the `S` spaces.
+        If let to its default value None, uniform distributions are taken.
+    p : array-like, shape (N,), optional
+        Weights in the targeted barycenter.
+        If let to its default value None, uniform distribution is taken.
+    lambdas : list of float, optional
         List of the `S` spaces' weights.
-    loss_fun : callable
-        Tensor-matrix multiplication function based on specific loss function.
-    update : callable
-        function(:math:`\mathbf{p}`, lambdas, :math:`\mathbf{T}`, :math:`\mathbf{Cs}`) that updates
-        :math:`\mathbf{C}` according to a specific Kernel with the `S` :math:`\mathbf{T}_s` couplings
-        calculated at each iteration
-    epsilon : float
+        If let to its default value None, uniform weights are taken.
+    loss_fun : callable, optional
+        tensor-matrix multiplication function based on specific loss function
+    epsilon : float, optional
         Regularization term >0
     symmetric : bool, optional.
         Either structures are to be assumed symmetric or not. Default value is True.
@@ -389,11 +408,21 @@ def entropic_gromov_barycenters(
         International Conference on Machine Learning (ICML). 2016.
     """
     Cs = list_to_array(*Cs)
-    ps = list_to_array(*ps)
-    p = list_to_array(p)
-    nx = get_backend(*Cs, *ps, p)
+    arr = [*Cs]
+    if ps is not None:
+        arr += list_to_array(*ps)
+    else:
+        ps = [unif(C.shape[0], type_as=C) for C in Cs]
+    if p is not None:
+        arr.append(list_to_array(p))
+    else:
+        p = unif(N, type_as=Cs[0])
+
+    nx = get_backend(*arr)
 
     S = len(Cs)
+    if lambdas is None:
+        lambdas = [1. / S] * S
 
     # Initialization of C : random SPD matrix (if not provided by user)
     if init_C is None:
@@ -451,9 +480,9 @@ def entropic_gromov_barycenters(
 
 
 def entropic_fused_gromov_wasserstein(
-        M, C1, C2, p, q, loss_fun, epsilon, symmetric=None, alpha=0.5, G0=None,
-        max_iter=1000, tol=1e-9, solver='PGD', warmstart=False,
-        verbose=False, log=False, **kwargs):
+        M, C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1,
+        symmetric=None, alpha=0.5, G0=None, max_iter=1000, tol=1e-9,
+        solver='PGD', warmstart=False, verbose=False, log=False, **kwargs):
     r"""
     Returns the Fused Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
     with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}`,
@@ -511,13 +540,15 @@ def entropic_fused_gromov_wasserstein(
         Metric cost matrix in the source space
     C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    p :  array-like, shape (ns,)
-        Distribution in the source space
-    q :  array-like, shape (nt,)
-        Distribution in the target space
-    loss_fun :  string
+    p : array-like, shape (ns,), optional
+        Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
+    q : array-like, shape (nt,), optional
+        Distribution in the target space.
+        If let to its default value None, uniform distribution is taken.
+    loss_fun :  string, optional
         Loss function used for the solver either 'square_loss' or 'kl_loss'
-    epsilon : float
+    epsilon : float, optional
         Regularization term >0
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
@@ -574,12 +605,25 @@ def entropic_fused_gromov_wasserstein(
     if solver not in ['PGD', 'PPA']:
         raise ValueError("Unknown solver '%s'. Pick one in ['PGD', 'PPA']." % solver)
 
-    M, C1, C2, p, q = list_to_array(M, C1, C2, p, q)
-    if G0 is None:
-        nx = get_backend(p, q, M, C1, C2)
-        G0 = nx.outer(p, q)
+    M, C1, C2 = list_to_array(M, C1, C2)
+    arr = [M, C1, C2]
+    if p is not None:
+        arr.append(list_to_array(p))
     else:
-        nx = get_backend(p, q, M, C1, C2, G0)
+        p = unif(C1.shape[0], type_as=C1)
+    if q is not None:
+        arr.append(list_to_array(q))
+    else:
+        q = unif(C2.shape[0], type_as=C2)
+
+    if G0 is not None:
+        arr.append(G0)
+
+    nx = get_backend(*arr)
+
+    if G0 is None:
+        G0 = nx.outer(p, q)
+
     T = G0
     constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun, nx)
     if symmetric is None:
@@ -646,9 +690,9 @@ def entropic_fused_gromov_wasserstein(
 
 
 def entropic_fused_gromov_wasserstein2(
-        M, C1, C2, p, q, loss_fun, epsilon, symmetric=None, alpha=0.5, G0=None,
-        max_iter=1000, tol=1e-9, solver='PGD', warmstart=False,
-        verbose=False, log=False, **kwargs):
+        M, C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1,
+        symmetric=None, alpha=0.5, G0=None, max_iter=1000, tol=1e-9,
+        solver='PGD', warmstart=False, verbose=False, log=False, **kwargs):
     r"""
     Returns the Fused Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
     with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}`,
@@ -706,13 +750,15 @@ def entropic_fused_gromov_wasserstein2(
         Metric cost matrix in the source space
     C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    p :  array-like, shape (ns,)
-        Distribution in the source space
-    q :  array-like, shape (nt,)
-        Distribution in the target space
-    loss_fun : str
+    p : array-like, shape (ns,), optional
+        Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
+    q : array-like, shape (nt,), optional
+        Distribution in the target space.
+        If let to its default value None, uniform distribution is taken.
+    loss_fun :  string, optional
         Loss function used for the solver either 'square_loss' or 'kl_loss'
-    epsilon : float
+    epsilon : float, optional
         Regularization term >0
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
@@ -766,9 +812,10 @@ def entropic_fused_gromov_wasserstein2(
 
 
 def entropic_fused_gromov_barycenters(
-        N, Ys, Cs, ps, p, lambdas, loss_fun, epsilon, symmetric=True,
-        alpha=0.5, max_iter=1000, tol=1e-9, warmstartT=False, verbose=False,
-        log=False, init_C=None, init_Y=None, random_state=None, **kwargs):
+        N, Ys, Cs, ps=None, p=None, lambdas=None, loss_fun='square_loss',
+        epsilon=0.1, symmetric=True, alpha=0.5, max_iter=1000, tol=1e-9,
+        warmstartT=False, verbose=False, log=False, init_C=None, init_Y=None,
+        random_state=None, **kwargs):
     r"""
     Returns the Fused Gromov-Wasserstein barycenters of `S` measurable networks with node features :math:`(\mathbf{C}_s, \mathbf{Y}_s, \mathbf{p}_s)_{1 \leq s \leq S}`
     estimated using Fused Gromov-Wasserstein transports from Sinkhorn projections.
@@ -793,19 +840,18 @@ def entropic_fused_gromov_barycenters(
         Features of all samples
     Cs : list of S array-like of shape (ns,ns)
         Metric cost matrices
-    ps : list of S array-like of shape (ns,)
-        Sample weights in the `S` spaces
-    p : array-like, shape(N,)
-        Weights in the targeted barycenter
-    lambdas : list of float
+    ps : list of S array-like of shape (ns,), optional
+        Sample weights in the `S` spaces.
+        If let to its default value None, uniform distributions are taken.
+    p : array-like, shape (N,), optional
+        Weights in the targeted barycenter.
+        If let to its default value None, uniform distribution is taken.
+    lambdas : list of float, optional
         List of the `S` spaces' weights.
-    loss_fun : callable
-        Tensor-matrix multiplication function based on specific loss function.
-    update : callable
-        function(:math:`\mathbf{p}`, lambdas, :math:`\mathbf{T}`, :math:`\mathbf{Cs}`) that updates
-        :math:`\mathbf{C}` according to a specific Kernel with the `S` :math:`\mathbf{T}_s` couplings
-        calculated at each iteration
-    epsilon : float
+        If let to its default value None, uniform weights are taken.
+    loss_fun : callable, optional
+        tensor-matrix multiplication function based on specific loss function
+    epsilon : float, optional
         Regularization term >0
     symmetric : bool, optional.
         Either structures are to be assumed symmetric or not. Default value is True.
@@ -855,11 +901,21 @@ def entropic_fused_gromov_barycenters(
     """
     Cs = list_to_array(*Cs)
     Ys = list_to_array(*Ys)
-    ps = list_to_array(*ps)
-    p = list_to_array(p)
-    nx = get_backend(*Cs, *Ys, *ps, p)
+    arr = [*Cs, *Ys]
+    if ps is not None:
+        arr += list_to_array(*ps)
+    else:
+        ps = [unif(C.shape[0], type_as=C) for C in Cs]
+    if p is not None:
+        arr.append(list_to_array(p))
+    else:
+        p = unif(N, type_as=Cs[0])
 
+    nx = get_backend(*arr)
     S = len(Cs)
+    if lambdas is None:
+        lambdas = [1. / S] * S
+
     d = Ys[0].shape[1]  # dimension on the node features
 
     # Initialization of C : random SPD matrix (if not provided by user)

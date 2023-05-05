@@ -18,7 +18,7 @@ from ..backend import get_backend
 from ._utils import init_matrix_semirelaxed, gwloss, gwggrad
 
 
-def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=None, log=False, G0=None,
+def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symmetric=None, log=False, G0=None,
                                    max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
     Returns the semi-relaxed Gromov-Wasserstein divergence transport from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
@@ -51,8 +51,9 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
         Metric cost matrix in the source space
     C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    p : array-like, shape (ns,)
-        Distribution in the source space
+    p : array-like, shape (ns,), optional
+        Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
     loss_fun : str
         loss function used for the solver either 'square_loss' or 'kl_loss'.
         'kl_loss' is not implemented yet and will raise an error.
@@ -93,11 +94,16 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
     """
     if loss_fun == 'kl_loss':
         raise NotImplementedError()
-    p = list_to_array(p)
-    if G0 is None:
-        nx = get_backend(p, C1, C2)
+    arr = [C1, C2]
+    if p is not None:
+        arr.append(list_to_array(p))
     else:
-        nx = get_backend(p, C1, C2, G0)
+        p = unif(C1.shape[0], type_as=C1)
+
+    if G0 is not None:
+        arr.append(G0)
+
+    nx = get_backend(*arr)
 
     if symmetric is None:
         symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
@@ -143,7 +149,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=
         return semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
 
 
-def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric=None, log=False, G0=None,
+def semirelaxed_gromov_wasserstein2(C1, C2, p=None, loss_fun='square_loss', symmetric=None, log=False, G0=None,
                                     max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
     Returns the semi-relaxed gromov-wasserstein divergence from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
@@ -179,8 +185,9 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
         Metric cost matrix in the source space
     C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    p : array-like, shape (ns,)
+    p : array-like, shape (ns,), optional
         Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
     loss_fun : str
         loss function used for the solver either 'square_loss' or 'kl_loss'.
         'kl_loss' is not implemented yet and will raise an error.
@@ -218,7 +225,12 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
     """
-    nx = get_backend(p, C1, C2)
+    # partial get_backend as the full one will be handled in gromov_wasserstein
+    nx = get_backend(C1, C2)
+
+    # init marginals if set as None
+    if p is None:
+        p = unif(C1.shape[0], type_as=C1)
 
     T, log_srgw = semirelaxed_gromov_wasserstein(
         C1, C2, p, loss_fun, symmetric, log=True, G0=G0,
@@ -239,8 +251,9 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric
         return srgw
 
 
-def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', symmetric=None, alpha=0.5, G0=None, log=False,
-                                         max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
+def semirelaxed_fused_gromov_wasserstein(
+        M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, alpha=0.5,
+        G0=None, log=False, max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
     Computes the semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
 
@@ -273,8 +286,9 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
         Metric cost matrix representative of the structure in the source space
     C2 : array-like, shape (nt, nt)
         Metric cost matrix representative of the structure in the target space
-    p : array-like, shape (ns,)
-        Distribution in the source space
+    p : array-like, shape (ns,), optional
+        Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
     loss_fun : str
         loss function used for the solver either 'square_loss' or 'kl_loss'.
         'kl_loss' is not implemented yet and will raise an error.
@@ -321,11 +335,16 @@ def semirelaxed_fused_gromov_wasserstein(M, C1, C2, p, loss_fun='square_loss', s
     if loss_fun == 'kl_loss':
         raise NotImplementedError()
 
-    p = list_to_array(p)
-    if G0 is None:
-        nx = get_backend(p, C1, C2, M)
+    arr = [M, C1, C2]
+    if p is not None:
+        arr.append(list_to_array(p))
     else:
-        nx = get_backend(p, C1, C2, M, G0)
+        p = unif(C1.shape[0], type_as=C1)
+
+    if G0 is not None:
+        arr.append(G0)
+
+    nx = get_backend(*arr)
 
     if symmetric is None:
         symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
@@ -455,7 +474,12 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
     """
-    nx = get_backend(p, C1, C2, M)
+    # partial get_backend as the full one will be handled in gromov_wasserstein
+    nx = get_backend(C1, C2)
+
+    # init marginals if set as None
+    if p is None:
+        p = unif(C1.shape[0], type_as=C1)
 
     T, log_fgw = semirelaxed_fused_gromov_wasserstein(
         M, C1, C2, p, loss_fun, symmetric, alpha, G0, log=True,
@@ -622,11 +646,16 @@ def entropic_semirelaxed_gromov_wasserstein(
     """
     if loss_fun == 'kl_loss':
         raise NotImplementedError()
-    p = list_to_array(p)
-    if G0 is None:
-        nx = get_backend(p, C1, C2)
+    arr = [C1, C2]
+    if p is not None:
+        arr.append(list_to_array(p))
     else:
-        nx = get_backend(p, C1, C2, G0)
+        p = unif(C1.shape[0], type_as=C1)
+
+    if G0 is not None:
+        arr.append(G0)
+
+    nx = get_backend(*arr)
 
     if symmetric is None:
         symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
@@ -866,11 +895,16 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
     """
     if loss_fun == 'kl_loss':
         raise NotImplementedError()
-    p = list_to_array(p)
-    if G0 is None:
-        nx = get_backend(p, C1, C2)
+    arr = [M, C1, C2]
+    if p is not None:
+        arr.append(list_to_array(p))
     else:
-        nx = get_backend(p, C1, C2, G0)
+        p = unif(C1.shape[0], type_as=C1)
+
+    if G0 is not None:
+        arr.append(G0)
+
+    nx = get_backend(*arr)
 
     if symmetric is None:
         symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)

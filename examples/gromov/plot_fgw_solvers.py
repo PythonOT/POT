@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ==============================
-Plot Fused-gromov-Wasserstein solvers
+Comparison of Fused Gromov-Wasserstein solvers
 ==============================
 
 This example illustrates the computation of FGW for attributed graphs
