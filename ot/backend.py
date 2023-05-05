@@ -2703,10 +2703,12 @@ class TensorflowBackend(Backend):
     def mean(self, a, axis=None):
         return tnp.mean(a, axis=axis)
 
-    # This could be a tentative implementation, in case of installing tensorflow_probability
-    # def median(self, a, axis=None):
-    #     import tensorflow_probability as tfp
-    #     return tfp.stats.percentile(a, 50., axis=axis, interpolation="midpoint")
+    def median(self, a, axis=None):
+        warnings.warn("The median it is being computed using numpy and the array is detached in "
+                      "the Tensorflow backend.")
+        a_ = self.to_numpy(a)
+        a_median = np.median(a_, axis=axis)
+        return self.from_numpy(a_median, type_as=a)
 
     def std(self, a, axis=None):
         return tnp.std(a, axis=axis)
