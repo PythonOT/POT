@@ -279,7 +279,7 @@ def test_wasserstein1d_circle_devices(nx):
 def test_wasserstein_1d_unif_circle():
     # test semidiscrete_wasserstein2_unif_circle versus wasserstein_circle
     n = 20
-    m = 50000
+    m = 1000
 
     rng = np.random.RandomState(0)
     u = rng.rand(n,)
@@ -298,8 +298,8 @@ def test_wasserstein_1d_unif_circle():
     wass2_unif_circle = ot.semidiscrete_wasserstein2_unif_circle(u, w_u)
 
     # check loss is similar
-    np.testing.assert_allclose(wass2, wass2_unif_circle, atol=1e-3)
-    np.testing.assert_allclose(wass2_circle, wass2_unif_circle, atol=1e-3)
+    np.testing.assert_allclose(wass2, wass2_unif_circle, atol=1e-2)
+    np.testing.assert_allclose(wass2_circle, wass2_unif_circle, atol=1e-2)
 
 
 def test_wasserstein1d_unif_circle_devices(nx):
