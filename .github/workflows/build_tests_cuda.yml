@@ -1,0 +1,25 @@
+name: Tests CUDA
+
+on:
+  workflow_dispatch:
+  pull_request_review:
+    types: [submitted]
+  push:
+    branches:
+      - 'master'  # Set a branch to run CI tests on
+
+jobs:
+  linux-cuda:
+
+    runs-on: pc-cuda
+    if: github.event.review.state == 'approved' || github.event_name ==     'workflow_dispatch' || (github.event_name == 'push' && github.event.branch == 'master')
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install POT
+      run: |
+        python3.10 -m pip install  --ignore-installed -e .
+    - name: Run tests
+      run: |
+        python3.10 -m pytest --durations=20 -v test/ ot/ --doctest-modules --color=yes --ignore=test/test_dr.py --ignore=ot.dr --ignore=ot.plot
+
