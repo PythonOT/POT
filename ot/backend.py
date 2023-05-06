@@ -1916,10 +1916,15 @@ class TorchBackend(Backend):
             return torch.mean(a)
 
     def median(self, a, axis=None):
-        if axis is not None:
-            return torch.quantile(a, 0.5, interpolation="midpoint", dim=axis)
-        else:
-            return torch.quantile(a, 0.5, interpolation="midpoint")
+        # if axis is not None:
+        #     return torch.quantile(a, 0.5, interpolation="midpoint", dim=axis)
+        # else:
+        #     return torch.quantile(a, 0.5, interpolation="midpoint")
+        warnings.warn("The median is being computed using numpy and the array has been detached "
+                      "in the Pytorch backend.")
+        a_ = self.to_numpy(a)
+        a_median = np.median(a_, axis=axis)
+        return self.from_numpy(a_median, type_as=a)
 
     def std(self, a, axis=None):
         if axis is not None:
@@ -2704,8 +2709,8 @@ class TensorflowBackend(Backend):
         return tnp.mean(a, axis=axis)
 
     def median(self, a, axis=None):
-        warnings.warn("The median it is being computed using numpy and the array is detached in "
-                      "the Tensorflow backend.")
+        warnings.warn("The median is being computed using numpy and the array has been detached "
+                      "in the Tensorflow backend.")
         a_ = self.to_numpy(a)
         a_median = np.median(a_, axis=axis)
         return self.from_numpy(a_median, type_as=a)
