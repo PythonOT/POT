@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-DEMD solvers for optimal transport
+d-MMOT solvers for optimal transport
 """
 
 # Author: Ronak Mehta <ronakrm@cs.wisc.edu>
@@ -13,81 +13,50 @@ from ..backend import get_backend
 
 # M -> obj
 
-def greedy_primal_dual(A, verbose=False):
-    r"""
-    The greedy algorithm that solves both primal and dual generalized Earth
-    mover’s programs.
-
-    The algorithm accepts :math:`d` distributions (i.e., histograms) :math:`p_{1},
-    \ldots, p_{d} \in \mathbb{R}_{+}^{n}` with :math:`e^{\prime} p_{j}=1`
-    for all :math:`j \in[d]`. Although the algorithm states that all
-    histograms have the same number of bins, the algorithm can be easily
-    adapted to accept as inputs :math:`p_{i} \in \mathbb{R}_{+}^{n_{i}}`
-    with :math:`n_{i} \neq n_{j}`.
-
-    Parameters
-    ----------
-    A : list of numpy arrays -> nd array
-        The input arrays are list of distributions
-    
-
-    Returns
-    -------
-    dict : dic
-        A dictionary containing the solution of the primal-dual problem:
-        - 'x': a dictionary that maps tuples of indices to the corresponding
-          primal variables. The tuples are the indices of the entries that are
-          set to their minimum value during the algorithm.
-        - 'primal objective': a float, the value of the objective function
-          evaluated at the solution.
-        - 'dual': a list of numpy arrays, the dual variables corresponding to
-          the input arrays. The i-th element of the list is the dual variable
-          corresponding to the i-th dimension of the input arrays.
-        - 'dual objective': a float, the value of the dual objective function
-          evaluated at the solution.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> A = [np.array([[1, 2], [3, 4]]), np.array([[5, 6], [7, 8]])]
-    >>> result = greedy_primal_dual(A)
-    >>> result['primal objective']
-    -12
-    """
-
-    pass
-
-
 def discrete_mmot(A, verbose=False, log=False):
     r"""
-    Solver of our proposed method: d−Dimensional Earch Mover’s Distance (DEMD).
+    Compute the discrete multi marginal optimal transport of distributions A
     
-    multi marginal optimal transport
+    The algorithm solves both primal and dual d-MMOT programs
+    
+    The algorithm accepts :math:`d` distributions (i.e., histograms) 
+    :math:`p_{1}, \ldots, p_{d} \in \mathbb{R}_{+}^{n}` with :math:`e^{\prime} 
+    p_{j}=1` for all :math:`j \in[d]`. Although the algorithm states that all 
+    histograms have the same number of bins, the algorithm can be easily 
+    adapted to accept as inputs :math:`p_{i} \in \mathbb{R}_{+}^{n_{i}}` 
+    with :math:`n_{i} \neq n_{j}` [50].
+
+    
+    The function solves the following optimization problem[51]:
+        
+
 
     Parameters
     ----------
-    A : numpy array, shape (d * n, )
-        The input vector containing coordinates of n points in d dimensions.
-    d : int
-        The number of dimensions of the points.
-    n : int
-        The number of points.
+    A : nx.ndarray, shape (d * n, )
+        The input ndarray containing distributions of n bins in d dimensions.
     verbose : bool, optional
-        If True, print debugging information during the execution of the
-        algorithm. Default is False.
-    return_dual_vars : bool, optional
-        If True, also return the dual variables and the dual objective value of
-        the DEMD problem. Default is False.
+        If True, print debugging information during execution. Default=False.
+    log : bool, optional
+        If True, record log. Default is False.
 
     Returns
     -------
-    primal_obj : float
+    obj : float
         the value of the primal objective function evaluated at the solution.
-    dual_vars : numpy array, shape (d, n-1), optional
-        the values of the dual variables corresponding to the input points.
-        The i-th column of the array corresponds to the i-th point.
-    dual_obj : float, optional
-        the value of the dual objective function evaluated at the solution.
+    log : dict
+        A dictionary containing the log of the discrete mmot problem:
+        - 'A': a dictionary that maps tuples of indices to the corresponding
+        primal variables. The tuples are the indices of the entries that are
+        set to their minimum value during the algorithm.
+        - 'primal objective': a float, the value of the objective function
+        evaluated at the solution.
+        - 'dual': a list of arrays, the dual variables corresponding to
+        the input arrays. The i-th element of the list is the dual variable
+        corresponding to the i-th dimension of the input arrays.
+        - 'dual objective': a float, the value of the dual objective function
+        evaluated at the solution.
+
 
     References
     ----------
@@ -95,14 +64,15 @@ def discrete_mmot(A, verbose=False, log=False):
         Vikas Singh (2023). Efficient Discrete Multi Marginal Optimal
         Transport Regularization. In The Eleventh International
         Conference on Learning Representations.
-    .. [51] Jeffery Kline. Properties of the d-dimensional earth mover’s
-        problem. Discrete Applied Mathematics, 265: 128–141, 2019.
+    .. [51] Jeffery Kline. Properties of the d-dimensional earth mover's
+        problem. Discrete Applied Mathematics, 265: 128-141, 2019.
+    .. [52] Leonid V Kantorovich. On the translocation of masses. Dokl. Akad.
+        Nauk SSSR, 37:227-229, 1942.
     """
     
     def OBJ(i):
         return max(i) - min(i)
 
-    # print(f"A type is: {type(A)}")
     nx = get_backend(A)
 
     AA = [nx.copy(_) for _ in A]
@@ -113,8 +83,10 @@ def discrete_mmot(A, verbose=False, log=False):
 
     idx = [0, ] * len(AA)
     obj = 0
+    
     if verbose:
         print('i minval oldidx\t\tobj\t\tvals')
+        
     while all([i < _ for _, i in zip(dims, idx)]):
         vals = [v[i] for v, i in zip(AA, idx)]
         minval = min(vals)
@@ -151,33 +123,69 @@ def discrete_mmot(A, verbose=False, log=False):
     else:
         return obj
 
-    # if return_dual_vars:
-    #     dual = log['dual']
-    #     return_dual = np.array(dual)
-    #     dualobj = log['dual objective']
-    #     return log['primal objective'], return_dual, log['dual objective']
-    # else:
-    #     return log['primal objective'], log
 
+def discrete_mmot_converge(
+    A, niters=100, lr=0.1, print_rate=100, verbose=False, log=False):
+    r"""Compute a d-MMOT problem using gradient descent.
+    
+    Discrete Multi-Marginal Optimal Transport (d-MMOT): Let :math:`p_1, \ldots,
+    p_d\in\mathbb{R}^n_{+}` be discrete probability distributions. Let 
+    :math:`C_d : \mathbb{R}^{n^{d}}\rightarrow \mathbb{R}_{+}`. 
+    The discrete multi-marginal optimal transport problem (d-MMOT) can be 
+    written as:
+    
+    .. math::  
+        \underset{{X \in \mathbb{R}^{n\times \cdots \times n}}}{\textrm{min}}
+        \quad C_d(X) \quad \textrm{s.t.}\quad X_i = p_i,\ (\forall i\in [d]),
+    
+    where :math:`X_i \in \mathbb{R}^n` is the :math:`i`-th marginal of :math:
+    `X \in \mathbb{R}^{n\times \cdots \times n}=\mathbb{R}^{n^{d}}`.
+    
+    Following the original formulation (Kantorovich 1942), we will restrict the
+    cost function :math:`C_d(\cdot)` to the linear map, :math:`C_d(X) :=
+    \langle c, X \rangle_{\otimes}`, where :math:`c \in \mathbb{R}_{+}^{n\times
+    \cdots \times n}` is nonnegative. Here, the d-MMOT is the LP,
+    
+    .. math::
+        \begin{align}\begin{aligned}
+            \underset{x\in\mathbb{R}^{n^{d}}_{+}} {\textrm{min}}
+            \sum_{i_1,\ldots,i_d} c(i_1,\ldots, i_d)\, x(i_1,\ldots,i_d) \quad 
+            \textrm{s.t.}
+            \sum_{i_2,\ldots,i_d} x(i_1,\ldots,i_d) &= p_1(i_i), 
+            (\forall i_1\in[n])\\
+            \qquad\vdots\\
+            \sum_{i_1,\ldots,i_{d-1}} x(i_1,\ldots,i_d) &= p_{d}(i_{d}), 
+            (\forall i_d\in[n]).
+            \end{aligned}
+        \end{align}
+    
+    The dual linear program of the d-MMOT problem is:
+    
+    .. math::
+        \underset{z_j\in\mathbb{R}^n, j\in[d]}{\textrm{maximize}}\qquad\sum_{j}
+        p_j'z_j\qquad \textrm{subject to}\qquad z_{1}(i_1)+\cdots+z_{d}(i_{d})
+        \leq c(i_1,\ldots,i_{d}),
+    
+    
+    where the indices in the constraints include all :math:`i_j\in[n]`, :math:
+    `j\in[d]`. Denote by :math:`\phi(p_1,\ldots,p_d)`, the optimal objective 
+    value of the LP in d-MMOT problem. Let :math:`z^*` be an optimal solution 
+    to the dual program. Then,
 
-def discrete_mmot_converge(A, niters=100, lr=0.1, print_rate=100, log=False):
-    r"""
-    Minimize a DEMD function using gradient descent.
+    .. math::
+        \begin{align}
+            \nabla \phi(p_1,\ldots,p_{d}) &= z^*, 
+            ~~\text{and for any $t\in \mathbb{R}$,}~~
+            \phi(p_1,p_2,\ldots,p_{d}) = \sum_{j}p_j'
+            (z_j^* + t\, \eta), \nonumber \\
+            \text{where } \eta &:= (z_1^{*}(n)\,e, z^*_1(n)\,e, \cdots,
+            z^*_{d}(n)\,e)
+        \end{align}
 
     Parameters
     ----------
-    f : callable
-        The objective function to minimize. This function must take as input
-        a matrix x of shape (d, n) and return a scalar value representing
-        the objective function evaluated at x. It may also return a matrix of
-        shape (d, n) representing the gradient of the objective function
-        with respect to x, and/or any other dual variables needed for the
-        optimization algorithm. The signature of this function should be:
-        `f(x, d, n, return_dual_vars=False) -> float`
-        or
-        `f(x, d, n, return_dual_vars=True) -> (float, ndarray, ...)`
-    A : ndarray, shape (d, n)
-        The initial point for the optimization algorithm.
+    A : nx.ndarray, shape (d, n)
+        The input ndarray containing distributions of n bins in d dimensions.
     niters : int, optional (default=100)
         The maximum number of iterations for the optimization algorithm.
     lr : float, optional (default=0.1)
@@ -185,11 +193,18 @@ def discrete_mmot_converge(A, niters=100, lr=0.1, print_rate=100, log=False):
     print_rate : int, optional (default=100)
         The rate at which to print the objective value and gradient norm
         during the optimization algorithm.
+    verbose : bool, optional
+        If True, print debugging information during execution. Default=False.
+    log : bool, optional
+        If True, record log. Default is False.
 
     Returns
     -------
-    list of ndarrays, each of shape (n,)
-        The optimal solution as a list of n vectors, each of length vecsize.
+    a : list of ndarrays, each of shape (n,)
+        The optimal solution as a list of n approximate barycenters, each of 
+        length vecsize.
+    log : dict
+        log dictionary return only if log==True in parameters
     """
 
     # function body here
@@ -197,10 +212,9 @@ def discrete_mmot_converge(A, niters=100, lr=0.1, print_rate=100, log=False):
     d, n = A.shape
 
     def dualIter(A, lr):
-        funcval, log_dict = discrete_mmot(A, log=True)
+        funcval, log_dict = discrete_mmot(A, verbose=verbose, log=True)
         grad = np.array(log_dict['dual'])
         A_new = nx.reshape(A, (d, n)) - grad * lr
-        # A_new = A - grad * lr
         return funcval, A_new, grad, log_dict
 
     def renormalize(A):
@@ -235,4 +249,3 @@ def discrete_mmot_converge(A, niters=100, lr=0.1, print_rate=100, log=False):
         return a, log_dict
     else:
         return a
-    
