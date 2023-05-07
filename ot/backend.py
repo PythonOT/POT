@@ -1916,10 +1916,15 @@ class TorchBackend(Backend):
             return torch.mean(a)
 
     def median(self, a, axis=None):
-        # if axis is not None:
-        #     return torch.quantile(a, 0.5, interpolation="midpoint", dim=axis)
-        # else:
-        #     return torch.quantile(a, 0.5, interpolation="midpoint")
+        from packaging import version
+        # Since version 1.11.0, interpolation is available
+        if version.parse(torch.__version__) >= version.parse("1.11.0"):
+            if axis is not None:
+                return torch.quantile(a, 0.5, interpolation="midpoint", dim=axis)
+            else:
+                return torch.quantile(a, 0.5, interpolation="midpoint")
+
+        # Else, use numpy
         warnings.warn("The median is being computed using numpy and the array has been detached "
                       "in the Pytorch backend.")
         a_ = self.to_numpy(a)
