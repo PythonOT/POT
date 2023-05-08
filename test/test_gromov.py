@@ -34,8 +34,11 @@ def test_gromov(nx):
 
     C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
 
-    G = ot.gromov.gromov_wasserstein(C1, C2, None, q, 'square_loss', G0=G0, verbose=True)
-    Gb = nx.to_numpy(ot.gromov.gromov_wasserstein(C1b, C2b, pb, None, 'square_loss', symmetric=True, G0=G0b, verbose=True))
+    G = ot.gromov.gromov_wasserstein(
+        C1, C2, None, q, 'square_loss', G0=G0, verbose=True,
+        alpha_min=0., alpha_max=1.)
+    Gb = nx.to_numpy(ot.gromov.gromov_wasserstein(
+        C1b, C2b, pb, None, 'square_loss', symmetric=True, G0=G0b, verbose=True))
 
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
@@ -740,15 +743,25 @@ def test_entropic_fgw_barycenter(nx):
     np.testing.assert_allclose(Xb.shape, (n_samples, ys.shape[1]))
 
     # test with 'kl_loss' and log=True
+    # providing init_C, init_Y
+    generator = ot.utils.check_random_state(42)
+    xalea = generator.randn(n_samples, 2)
+    init_C = ot.utils.dist(xalea, xalea)
+    init_C /= init_C.max()
+    init_Cb = nx.from_numpy(init_C)
+
+    init_Y = np.zeros((n_samples, ys.shape[1]), dtype=ys.dtype)
+    init_Yb = nx.from_numpy(init_Y)
+
     X, C, log = ot.gromov.entropic_fused_gromov_barycenters(
         n_samples, [ys, yt], [C1, C2], [p1, p2], p, None, 'kl_loss', 0.1,
         max_iter=10, tol=1e-3, verbose=False, warmstartT=False, random_state=42,
-        solver='PPA', numItermax=1, log=True
+        solver='PPA', numItermax=1, init_C=init_C, init_Y=init_Y, log=True
     )
     Xb, Cb, logb = ot.gromov.entropic_fused_gromov_barycenters(
         n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], pb, [.5, .5], 'kl_loss', 0.1,
         max_iter=10, tol=1e-3, verbose=False, warmstartT=False, random_state=42,
-        solver='PPA', numItermax=1, log=True)
+        solver='PPA', numItermax=1, init_C=init_Cb, init_Y=init_Yb, log=True)
     Xb, Cb = nx.to_numpy(Xb, Cb)
 
     np.testing.assert_allclose(C, Cb, atol=1e-06)
@@ -909,13 +922,21 @@ def test_gromov_barycenter(nx):
     np.testing.assert_allclose(Cb2b.shape, (n_samples, n_samples))
 
     # test of gromov_barycenters with `log` on
+    # providing init_C
+    generator = ot.utils.check_random_state(42)
+    xalea = generator.randn(n_samples, 2)
+    init_C = ot.utils.dist(xalea, xalea)
+    init_C /= init_C.max()
+    init_Cb = nx.from_numpy(init_C)
+
     Cb2_, err2_ = ot.gromov.gromov_barycenters(
-        n_samples, [C1, C2], [p1, p2], p, [.5, .5],
-        'kl_loss', max_iter=100, tol=1e-3, verbose=False, random_state=42, log=True
+        n_samples, [C1, C2], [p1, p2], p, [.5, .5], 'kl_loss', max_iter=100,
+        tol=1e-3, verbose=False, random_state=42, log=True, init_C=init_C
     )
     Cb2b_, err2b_ = ot.gromov.gromov_barycenters(
-        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'kl_loss', max_iter=100, tol=1e-3, verbose=False, random_state=42, log=True
+        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5], 'kl_loss',
+        max_iter=100, tol=1e-3, verbose=True, random_state=42,
+        init_C=init_Cb, log=True
     )
     Cb2b_ = nx.to_numpy(Cb2b_)
     np.testing.assert_allclose(Cb2_, Cb2b_, atol=1e-06)
@@ -977,13 +998,22 @@ def test_gromov_entropic_barycenter(nx):
     np.testing.assert_allclose(Cb2b.shape, (n_samples, n_samples))
 
     # test of entropic_gromov_barycenters with `log` on
+    # providing init_C
+    generator = ot.utils.check_random_state(42)
+    xalea = generator.randn(n_samples, 2)
+    init_C = ot.utils.dist(xalea, xalea)
+    init_C /= init_C.max()
+    init_Cb = nx.from_numpy(init_C)
+
     Cb2_, err2_ = ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5], 'kl_loss', 1e-3,
-        max_iter=10, tol=1e-3, warmstartT=True, verbose=True, random_state=42, log=True
+        max_iter=10, tol=1e-3, warmstartT=True, verbose=True, random_state=42,
+        init_C=init_C, log=True
     )
     Cb2b_, err2b_ = ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'kl_loss', 1e-3, max_iter=10, tol=1e-3, warmstartT=True, verbose=True, random_state=42, log=True
+        'kl_loss', 1e-3, max_iter=10, tol=1e-3, warmstartT=True, verbose=True,
+        random_state=42, init_Cb=init_Cb, log=True
     )
     Cb2b_ = nx.to_numpy(Cb2b_)
     np.testing.assert_allclose(Cb2_, Cb2b_, atol=1e-06)
@@ -1277,7 +1307,7 @@ def test_fgw_barycenter(nx):
     init_Cb = nx.from_numpy(init_C)
 
     Xb, Cb = ot.gromov.fgw_barycenters(
-        n_samples, [ysb, ytb], [C1b, C2b], ps=[p1b, p2b], lambdas=[.5, .5],
+        n_samples, [ysb, ytb], [C1b, C2b], ps=[p1b, p2b], lambdas=None,
         alpha=0.5, fixed_structure=True, init_C=init_Cb, fixed_features=False,
         p=None, loss_fun='square_loss', max_iter=100, tol=1e-3
     )
@@ -1292,7 +1322,7 @@ def test_fgw_barycenter(nx):
         n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
         fixed_structure=False, fixed_features=True, init_X=init_Xb,
         p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3,
-        warmstartT=True, log=True, random_state=98765
+        warmstartT=True, log=True, random_state=98765, verbose=True
     )
     X, C = nx.to_numpy(Xb), nx.to_numpy(Cb)
     np.testing.assert_allclose(C.shape, (n_samples, n_samples))
@@ -1849,8 +1879,11 @@ def test_semirelaxed_gromov(nx):
     # asymmetric
     C1b, C2b, pb, q0b, G0b = nx.from_numpy(C1, C2, p, q0, G0)
 
-    G, log = ot.gromov.semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=None, log=True, G0=G0)
-    Gb, logb = ot.gromov.semirelaxed_gromov_wasserstein(C1b, C2b, None, loss_fun='square_loss', symmetric=False, log=True, G0=None)
+    G, log = ot.gromov.semirelaxed_gromov_wasserstein(
+        C1, C2, p, loss_fun='square_loss', symmetric=None, log=True, G0=G0)
+    Gb, logb = ot.gromov.semirelaxed_gromov_wasserstein(
+        C1b, C2b, None, loss_fun='square_loss', symmetric=False, log=True,
+        G0=None, alpha_min=0., alpha_max=1.)
 
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
@@ -1858,8 +1891,10 @@ def test_semirelaxed_gromov(nx):
     np.testing.assert_allclose(list_n / ns, np.sum(G, axis=0), atol=1e-01)
     np.testing.assert_allclose(list_n / ns, nx.sum(Gb, axis=0), atol=1e-01)
 
-    srgw, log2 = ot.gromov.semirelaxed_gromov_wasserstein2(C1, C2, None, loss_fun='square_loss', symmetric=False, log=True, G0=G0)
-    srgwb, logb2 = ot.gromov.semirelaxed_gromov_wasserstein2(C1b, C2b, pb, loss_fun='square_loss', symmetric=None, log=True, G0=None)
+    srgw, log2 = ot.gromov.semirelaxed_gromov_wasserstein2(
+        C1, C2, None, loss_fun='square_loss', symmetric=False, log=True, G0=G0)
+    srgwb, logb2 = ot.gromov.semirelaxed_gromov_wasserstein2(
+        C1b, C2b, pb, loss_fun='square_loss', symmetric=None, log=True, G0=None)
 
     G = log2['T']
     Gb = nx.to_numpy(logb2['T'])
@@ -1875,16 +1910,20 @@ def test_semirelaxed_gromov(nx):
     C1 = 0.5 * (C1 + C1.T)
     C1b, C2b, pb, q0b, G0b = nx.from_numpy(C1, C2, p, q0, G0)
 
-    G, log = ot.gromov.semirelaxed_gromov_wasserstein(C1, C2, p, loss_fun='square_loss', symmetric=None, log=True, G0=None)
-    Gb = ot.gromov.semirelaxed_gromov_wasserstein(C1b, C2b, pb, loss_fun='square_loss', symmetric=True, log=False, G0=G0b)
+    G, log = ot.gromov.semirelaxed_gromov_wasserstein(
+        C1, C2, p, loss_fun='square_loss', symmetric=None, log=True, G0=None)
+    Gb = ot.gromov.semirelaxed_gromov_wasserstein(
+        C1b, C2b, pb, loss_fun='square_loss', symmetric=True, log=False, G0=G0b)
 
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
     np.testing.assert_allclose(p, nx.sum(Gb, axis=1), atol=1e-04)  # cf convergence gromov
     np.testing.assert_allclose(list_n / ns, nx.sum(Gb, axis=0), atol=1e-02)  # cf convergence gromov
 
-    srgw, log2 = ot.gromov.semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric=True, log=True, G0=G0)
-    srgwb, logb2 = ot.gromov.semirelaxed_gromov_wasserstein2(C1b, C2b, pb, loss_fun='square_loss', symmetric=None, log=True, G0=None)
+    srgw, log2 = ot.gromov.semirelaxed_gromov_wasserstein2(
+        C1, C2, p, loss_fun='square_loss', symmetric=True, log=True, G0=G0)
+    srgwb, logb2 = ot.gromov.semirelaxed_gromov_wasserstein2(
+        C1b, C2b, pb, loss_fun='square_loss', symmetric=None, log=True, G0=None)
 
     srgw_ = ot.gromov.semirelaxed_gromov_wasserstein2(C1, C2, p, loss_fun='square_loss', symmetric=True, log=False, G0=G0)
 
