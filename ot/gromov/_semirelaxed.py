@@ -26,7 +26,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symme
     The function solves the following optimization problem:
 
     .. math::
-        \mathbf{T} = \mathop{\arg \min}_{\mathbf{T}} \quad \sum_{i,j,k,l}
+        \mathbf{T}^^* \in \mathop{\arg \min}_{\mathbf{T}} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
@@ -258,7 +258,7 @@ def semirelaxed_fused_gromov_wasserstein(
     Computes the semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
 
     .. math::
-        \mathbf{T} = \mathop{\arg \min}_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \mathbf{T}^* \in \mathop{\arg \min}_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) T_{i,j} T_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
@@ -581,7 +581,7 @@ def entropic_semirelaxed_gromov_wasserstein(
     The function solves the following optimization problem:
 
     .. math::
-        \mathbf{T} = \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
+        \mathbf{T}^* \in \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
@@ -821,7 +821,7 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
     Computes the entropic-regularized semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
 
     .. math::
-        \mathbf{T} = \mathop{\arg \min}_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \mathbf{T}^* \in \mathop{\arg \min}_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}

@@ -31,7 +31,7 @@ def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric
     The function solves the following optimization problem:
 
     .. math::
-        \mathbf{GW} = \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
+        \mathbf{T}^* \in \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
@@ -187,7 +187,7 @@ def gromov_wasserstein2(C1, C2, p=None, q=None, loss_fun='square_loss', symmetri
     The function solves the following optimization problem:
 
     .. math::
-        GW = \min_\mathbf{T} \quad \sum_{i,j,k,l}
+        \mathbf{GW} = \min_\mathbf{T} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
@@ -311,14 +311,14 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
     Computes the FGW transport between two graphs (see :ref:`[24] <references-fused-gromov-wasserstein>`)
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \mathbf{T}^* \in \mathop{\arg \min}_\mathbf{T}  \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma}^T \mathbf{1} &= \mathbf{q}
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf{T} &\geq 0
 
     where :
 
@@ -375,7 +375,7 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
 
     Returns
     -------
-    gamma : array-like, shape (`ns`, `nt`)
+    T : array-like, shape (`ns`, `nt`)
         Optimal transportation matrix for the given parameters.
     log : dict
         Log dictionary return only if log==True in parameters.
@@ -468,14 +468,14 @@ def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss',
     Computes the FGW distance between two graphs see (see :ref:`[24] <references-fused-gromov-wasserstein2>`)
 
     .. math::
-        \min_\gamma \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F + \alpha \sum_{i,j,k,l}
+        \mathbf{GW} = \min_\mathbf{T} \quad (1 - \alpha) \langle \mathbf(T), \mathbf{M} \rangle_F + \alpha \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf(T)\mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma}^T \mathbf{1} &= \mathbf{q}
+             \mathbf(T)^T \mathbf{1} &= \mathbf{q}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf(T) &\geq 0
 
     where :
 

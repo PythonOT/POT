@@ -33,7 +33,7 @@ def entropic_gromov_wasserstein(
     Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
 
     .. math::
-        \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
+        \mathbf{T}^* \in \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -45,7 +45,7 @@ def entropic_gromov_wasserstein(
     optimization problem using Proximal Point Algorithm [51]:
 
     .. math::
-        \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        \mathbf{T}^* \in \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -230,7 +230,7 @@ def entropic_gromov_wasserstein2(
     Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
 
     .. math::
-        \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
+        \mathbf{GW} = \mathop{\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -242,7 +242,7 @@ def entropic_gromov_wasserstein2(
     optimization problem using Proximal Point Algorithm [51]:
 
     .. math::
-        \mathbf{GW} = \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        \mathbf{GW} = \mathop{\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -492,7 +492,7 @@ def entropic_fused_gromov_wasserstein(
     Fused Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
 
     .. math::
-        \mathbf{FGW} = \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \mathbf{T}^* \in \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
@@ -505,7 +505,7 @@ def entropic_fused_gromov_wasserstein(
     optimization problem using Proximal Point Algorithm [51]:
 
     .. math::
-        \mathbf{FGW} = \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \mathbf{T}^* \in\mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
@@ -702,7 +702,7 @@ def entropic_fused_gromov_wasserstein2(
     Fused Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
 
     .. math::
-        \mathbf{FGW} = \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \mathbf{FGW} = \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
@@ -715,7 +715,7 @@ def entropic_fused_gromov_wasserstein2(
     optimization problem using Proximal Point Algorithm [51]:
 
     .. math::
-        \mathbf{FGW} = \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \mathbf{FGW} = \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
