@@ -1898,8 +1898,8 @@ def barycenter_stabilized(A, M, reg, tau=1e10, weights=None, numItermax=1000,
                           "Or a larger absorption threshold `tau`.")
     if log:
         log['niter'] = ii
-        log['logu'] = np.log(u + 1e-16)
-        log['logv'] = np.log(v + 1e-16)
+        log['logu'] = nx.log(u + 1e-16)
+        log['logv'] = nx.log(v + 1e-16)
         return q, log
     else:
         return q
