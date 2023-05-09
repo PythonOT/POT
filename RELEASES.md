@@ -16,6 +16,7 @@
 - Fix gradients for "Wasserstein2 Minibatch GAN" example (PR #466)
 - Faster Bures-Wasserstein distance with NumPy backend (PR #468)
 - Fix issue backend for ot.sliced_wasserstein_sphere ot.sliced_wasserstein_sphere_unif (PR #471)
+- Fix issue with ot.barycenter_stabilized when used with PyTorch tensors and log=True (RP #474)
 - Fix `utils.cost_normalization` function issue to work with multiple backends (PR #472)
 
 ## 0.9.0
