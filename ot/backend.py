@@ -574,6 +574,16 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def median(self, a, axis=None):
+        r"""
+        Computes the median of a tensor along given dimensions.
+
+        This function follows the api from :any:`numpy.median`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.median.html
+        """
+        raise NotImplementedError()
+
     def std(self, a, axis=None):
         r"""
         Computes the standard deviation of a tensor along given dimensions.
@@ -1123,6 +1133,9 @@ class NumpyBackend(Backend):
     def mean(self, a, axis=None):
         return np.mean(a, axis=axis)
 
+    def median(self, a, axis=None):
+        return np.median(a, axis=axis)
+
     def std(self, a, axis=None):
         return np.std(a, axis=axis)
 
@@ -1481,6 +1494,9 @@ class JaxBackend(Backend):
 
     def mean(self, a, axis=None):
         return jnp.mean(a, axis=axis)
+
+    def median(self, a, axis=None):
+        return jnp.median(a, axis=axis)
 
     def std(self, a, axis=None):
         return jnp.std(a, axis=axis)
@@ -1899,6 +1915,22 @@ class TorchBackend(Backend):
         else:
             return torch.mean(a)
 
+    def median(self, a, axis=None):
+        from packaging import version
+        # Since version 1.11.0, interpolation is available
+        if version.parse(torch.__version__) >= version.parse("1.11.0"):
+            if axis is not None:
+                return torch.quantile(a, 0.5, interpolation="midpoint", dim=axis)
+            else:
+                return torch.quantile(a, 0.5, interpolation="midpoint")
+
+        # Else, use numpy
+        warnings.warn("The median is being computed using numpy and the array has been detached "
+                      "in the Pytorch backend.")
+        a_ = self.to_numpy(a)
+        a_median = np.median(a_, axis=axis)
+        return self.from_numpy(a_median, type_as=a)
+
     def std(self, a, axis=None):
         if axis is not None:
             return torch.std(a, dim=axis, unbiased=False)
@@ -2289,6 +2321,9 @@ class CupyBackend(Backend):  # pragma: no cover
     def mean(self, a, axis=None):
         return cp.mean(a, axis=axis)
 
+    def median(self, a, axis=None):
+        return cp.median(a, axis=axis)
+
     def std(self, a, axis=None):
         return cp.std(a, axis=axis)
 
@@ -2677,6 +2712,13 @@ class TensorflowBackend(Backend):
 
     def mean(self, a, axis=None):
         return tnp.mean(a, axis=axis)
+
+    def median(self, a, axis=None):
+        warnings.warn("The median is being computed using numpy and the array has been detached "
+                      "in the Tensorflow backend.")
+        a_ = self.to_numpy(a)
+        a_median = np.median(a_, axis=axis)
+        return self.from_numpy(a_median, type_as=a)
 
     def std(self, a, axis=None):
         return tnp.std(a, axis=axis)

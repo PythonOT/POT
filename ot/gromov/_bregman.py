@@ -33,7 +33,7 @@ def entropic_gromov_wasserstein(
     Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
 
     .. math::
-        \mathbf{T}^* \in \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
+        \mathbf{T}^* \in \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon H(\mathbf{T})
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -91,7 +91,9 @@ def entropic_gromov_wasserstein(
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
-        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+        Otherwise G0 will be used as initial transport of the solver. G0 is not
+        required to satisfy marginal constraints but we strongly recommand it 
+        to correcly estimate the GW distance.
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -230,7 +232,7 @@ def entropic_gromov_wasserstein2(
     Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
 
     .. math::
-        \mathbf{GW} = \mathop{\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
+        \mathbf{GW} = \mathop{\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon H(\mathbf{T}) 
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -288,7 +290,9 @@ def entropic_gromov_wasserstein2(
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
-        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+        Otherwise G0 will be used as initial transport of the solver. G0 is not
+        required to satisfy marginal constraints but we strongly recommand it 
+        to correcly estimate the GW distance.
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -492,8 +496,8 @@ def entropic_fused_gromov_wasserstein(
     Fused Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
 
     .. math::
-        \mathbf{T}^* \in \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
-        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
+        \mathbf{T}^* \in \mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon H(\mathbf{T})
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -505,7 +509,7 @@ def entropic_fused_gromov_wasserstein(
     optimization problem using Proximal Point Algorithm [51]:
 
     .. math::
-        \mathbf{T}^* \in\mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \mathbf{T}^* \in\mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
@@ -558,7 +562,9 @@ def entropic_fused_gromov_wasserstein(
         Trade-off parameter (0 < alpha < 1)
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
-        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+        Otherwise G0 will be used as initial transport of the solver. G0 is not
+        required to satisfy marginal constraints but we strongly recommand it 
+        to correcly estimate the GW distance.
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -702,8 +708,8 @@ def entropic_fused_gromov_wasserstein2(
     Fused Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
 
     .. math::
-        \mathbf{FGW} = \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
-        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon(H(\mathbf{T}))
+        \mathbf{FGW} = \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon H(\mathbf{T})
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -715,7 +721,7 @@ def entropic_fused_gromov_wasserstein2(
     optimization problem using Proximal Point Algorithm [51]:
 
     .. math::
-        \mathbf{FGW} = \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \gamma, \mathbf{M} \rangle_F +
+        \mathbf{FGW} = \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
@@ -768,7 +774,9 @@ def entropic_fused_gromov_wasserstein2(
         Trade-off parameter (0 < alpha < 1)
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
-        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+        Otherwise G0 will be used as initial transport of the solver. G0 is not
+        required to satisfy marginal constraints but we strongly recommand it 
+        to correcly estimate the GW distance.
     max_iter : int, optional
         Max number of iterations
     tol : float, optional

@@ -6,13 +6,14 @@
 - Make alpha parameter in Fused Gromov Wasserstein differentiable (PR #463)
 - Added the sparsity-constrained OT solver to `ot.smooth` and added `projection_sparse_simplex` to `ot.utils` (PR #459)
 - Add tests on GPU for master branch and approved PR (PR #473)
+- Add `median` method to all inherited classes of `backend.Backend` (PR #472)
 - Added Proximal Point algorithm to solve GW problems via a new parameter `solver="PPA"` in `ot.gromov.entropic_gromov_wasserstein` + examples (PR #455)
 - Added features `warmstart` and `kwargs` in `ot.gromov.entropic_gromov_wasserstein` to respectively perform warmstart on dual potentials and pass parameters to `ot.sinkhorn` (PR #455)
 - Added sinkhorn projection based solvers for FGW `ot.gromov.entropic_fused_gromov_wasserstein` and entropic FGW barycenters + examples (PR #455)
 - Added features `warmstartT` and `kwargs` to all CG and entropic (F)GW barycenter solvers (PR #455)
 - Added entropic semi-relaxed (Fused) Gromov-Wasserstein solvers in `ot.gromov` + examples (PR #455)
 - Make marginal parameters optional for (F)GW solvers in `._gw`, `._bregman` and `._semirelaxed` (PR #455)
- 
+
 #### Closed issues
 - Fix circleci-redirector action and codecov (PR #460)
 - Fix issues with cuda for ot.binary_search_circle and with gradients for ot.sliced_wasserstein_sphere (PR #457)
@@ -21,6 +22,7 @@
 - Faster Bures-Wasserstein distance with NumPy backend (PR #468)
 - Fix issue backend for ot.sliced_wasserstein_sphere ot.sliced_wasserstein_sphere_unif (PR #471)
 - Fix issue with ot.barycenter_stabilized when used with PyTorch tensors and log=True (RP #474)
+- Fix `utils.cost_normalization` function issue to work with multiple backends (PR #472)
 
 ## 0.9.0
 *April 2023*
