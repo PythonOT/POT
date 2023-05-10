@@ -6,6 +6,7 @@
 - Make alpha parameter in Fused Gromov Wasserstein differentiable (PR #463)
 - Added the sparsity-constrained OT solver to `ot.smooth` and added ` projection_sparse_simplex` to `ot.utils` (PR #459)
 - Add tests on GPU for master branch and approved PR (PR #473)
+- Add `median` method to all inherited classes of `backend.Backend` (PR #472)
 
 #### Closed issues
 
@@ -16,6 +17,7 @@
 - Faster Bures-Wasserstein distance with NumPy backend (PR #468)
 - Fix issue backend for ot.sliced_wasserstein_sphere ot.sliced_wasserstein_sphere_unif (PR #471)
 - Fix issue with ot.barycenter_stabilized when used with PyTorch tensors and log=True (RP #474)
+- Fix `utils.cost_normalization` function issue to work with multiple backends (PR #472)
 
 ## 0.9.0
 
