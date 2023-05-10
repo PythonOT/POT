@@ -359,16 +359,18 @@ def cost_normalization(C, norm=None):
         The input cost matrix normalized according to given norm.
     """
 
+    nx = get_backend(C)
+
     if norm is None:
         pass
     elif norm == "median":
-        C /= float(np.median(C))
+        C /= float(nx.median(C))
     elif norm == "max":
-        C /= float(np.max(C))
+        C /= float(nx.max(C))
     elif norm == "log":
-        C = np.log(1 + C)
+        C = nx.log(1 + C)
     elif norm == "loglog":
-        C = np.log1p(np.log1p(C))
+        C = nx.log(1 + nx.log(1 + C))
     else:
         raise ValueError('Norm %s is not a valid option.\n'
                          'Valid options are:\n'
