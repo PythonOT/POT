@@ -92,7 +92,7 @@ def entropic_gromov_wasserstein(
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 will be used as initial transport of the solver. G0 is not
-        required to satisfy marginal constraints but we strongly recommand it 
+        required to satisfy marginal constraints but we strongly recommand it
         to correcly estimate the GW distance.
     max_iter : int, optional
         Max number of iterations
@@ -232,7 +232,7 @@ def entropic_gromov_wasserstein2(
     Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
 
     .. math::
-        \mathbf{GW} = \mathop{\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon H(\mathbf{T}) 
+        \mathbf{GW} = \mathop{\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} - \epsilon H(\mathbf{T})
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -291,7 +291,7 @@ def entropic_gromov_wasserstein2(
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 will be used as initial transport of the solver. G0 is not
-        required to satisfy marginal constraints but we strongly recommand it 
+        required to satisfy marginal constraints but we strongly recommand it
         to correcly estimate the GW distance.
     max_iter : int, optional
         Max number of iterations
@@ -563,7 +563,7 @@ def entropic_fused_gromov_wasserstein(
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 will be used as initial transport of the solver. G0 is not
-        required to satisfy marginal constraints but we strongly recommand it 
+        required to satisfy marginal constraints but we strongly recommand it
         to correcly estimate the GW distance.
     max_iter : int, optional
         Max number of iterations
@@ -775,7 +775,7 @@ def entropic_fused_gromov_wasserstein2(
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 will be used as initial transport of the solver. G0 is not
-        required to satisfy marginal constraints but we strongly recommand it 
+        required to satisfy marginal constraints but we strongly recommand it
         to correcly estimate the GW distance.
     max_iter : int, optional
         Max number of iterations
