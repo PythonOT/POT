@@ -680,7 +680,7 @@ class Backend():
 
         This function follows the api from :any:`numpy.random.seed`
 
-        See: https://numpy.org/doc/stable/reference/generated/numpy.random.seed.html
+        See: https://numpy.org/doc/stable/reference/random/generated/numpy.random.seed.html
         """
         raise NotImplementedError()
 
@@ -690,7 +690,7 @@ class Backend():
 
         This function follows the api from :any:`numpy.random.rand`
 
-        See: https://numpy.org/doc/stable/reference/generated/numpy.random.rand.html
+        See: https://numpy.org/doc/stable/reference/random/generated/numpy.random.rand.html
         """
         raise NotImplementedError()
 
@@ -700,7 +700,7 @@ class Backend():
 
         This function follows the api from :any:`numpy.random.rand`
 
-        See: https://numpy.org/doc/stable/reference/generated/numpy.random.rand.html
+        See: https://numpy.org/doc/stable/reference/random/generated/numpy.random.rand.html
         """
         raise NotImplementedError()
 
