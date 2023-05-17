@@ -15,9 +15,12 @@ from ..backend import get_backend
 
 def discrete_mmot(A, verbose=False, log=False):
     r"""
-    Compute the discrete multi marginal optimal transport of distributions A
+    Compute the discrete multi-marginal optimal transport of distributions A.
     
-    The algorithm solves both primal and dual d-MMOT programs
+    The algorithm solves both primal and dual d-MMOT programs concurrently to
+    produce the optimal transport plan as well as the total (minimal) cost.
+    The cost is a generalized Monge cost, and the solution is independent of
+    which Monge cost is desired.
     
     The algorithm accepts :math:`d` distributions (i.e., histograms) 
     :math:`p_{1}, \ldots, p_{d} \in \mathbb{R}_{+}^{n}` with :math:`e^{\prime} 
@@ -25,10 +28,21 @@ def discrete_mmot(A, verbose=False, log=False):
     histograms have the same number of bins, the algorithm can be easily 
     adapted to accept as inputs :math:`p_{i} \in \mathbb{R}_{+}^{n_{i}}` 
     with :math:`n_{i} \neq n_{j}` [50].
-
     
     The function solves the following optimization problem[51]:
-        
+
+    .. math::
+        \begin{align}\begin{aligned}
+            \underset{x\in\mathbb{R}^{n^{d}}_{+}} {\textrm{min}}
+            \sum_{i_1,\ldots,i_d} c(i_1,\ldots, i_d)\, x(i_1,\ldots,i_d) \quad 
+            \textrm{s.t.}
+            \sum_{i_2,\ldots,i_d} x(i_1,\ldots,i_d) &= p_1(i_i), 
+            (\forall i_1\in[n])\\
+            \qquad\vdots\\
+            \sum_{i_1,\ldots,i_{d-1}} x(i_1,\ldots,i_d) &= p_{d}(i_{d}), 
+            (\forall i_d\in[n]).
+            \end{aligned}
+        \end{align}    
 
 
     Parameters
@@ -68,6 +82,10 @@ def discrete_mmot(A, verbose=False, log=False):
         problem. Discrete Applied Mathematics, 265: 128-141, 2019.
     .. [52] Leonid V Kantorovich. On the translocation of masses. Dokl. Akad.
         Nauk SSSR, 37:227-229, 1942.
+    
+    See Also
+    --------
+    ot.lp.discrete_mmot_converge : Minimized the d-Dimensional Earth Mover's Distance (d-MMOT)
     """
     
     def OBJ(i):
@@ -126,25 +144,11 @@ def discrete_mmot(A, verbose=False, log=False):
 
 def discrete_mmot_converge(
     A, niters=100, lr=0.1, print_rate=100, verbose=False, log=False):
-    r"""Compute a d-MMOT problem using gradient descent.
+    r"""Minimize the d-dimensional EMD using gradient descent.
     
     Discrete Multi-Marginal Optimal Transport (d-MMOT): Let :math:`p_1, \ldots,
-    p_d\in\mathbb{R}^n_{+}` be discrete probability distributions. Let 
-    :math:`C_d : \mathbb{R}^{n^{d}}\rightarrow \mathbb{R}_{+}`. 
-    The discrete multi-marginal optimal transport problem (d-MMOT) can be 
-    written as:
-    
-    .. math::  
-        \underset{{X \in \mathbb{R}^{n\times \cdots \times n}}}{\textrm{min}}
-        \quad C_d(X) \quad \textrm{s.t.}\quad X_i = p_i,\ (\forall i\in [d]),
-    
-    where :math:`X_i \in \mathbb{R}^n` is the :math:`i`-th marginal of :math:
-    `X \in \mathbb{R}^{n\times \cdots \times n}=\mathbb{R}^{n^{d}}`.
-    
-    Following the original formulation (Kantorovich 1942), we will restrict the
-    cost function :math:`C_d(\cdot)` to the linear map, :math:`C_d(X) :=
-    \langle c, X \rangle_{\otimes}`, where :math:`c \in \mathbb{R}_{+}^{n\times
-    \cdots \times n}` is nonnegative. Here, the d-MMOT is the LP,
+    p_d\in\mathbb{R}^n_{+}` be discrete probability distributions. Here,
+    the d-MMOT is the LP,
     
     .. math::
         \begin{align}\begin{aligned}
@@ -182,6 +186,10 @@ def discrete_mmot_converge(
             z^*_{d}(n)\,e)
         \end{align}
 
+    Using these dual variables naturally provided by the algorithm in
+    ot.lp.discrete_mmot, gradient steps move each input distribution
+    to minimize their d-mmot distance.
+
     Parameters
     ----------
     A : nx.ndarray, shape (d, n)
@@ -205,6 +213,10 @@ def discrete_mmot_converge(
         length vecsize.
     log : dict
         log dictionary return only if log==True in parameters
+
+    See Also
+    --------
+    ot.lp.discrete_mmot : d-Dimensional Earth Mover's Solver
     """
 
     # function body here

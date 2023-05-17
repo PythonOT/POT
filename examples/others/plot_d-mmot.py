@@ -130,7 +130,7 @@ barys = ot.lp.discrete_mmot_converge(A.T, niters=9000, lr=0.00001)
 # ----------------
 # The following section computes 1D Wasserstein barycenter using the LP method
 weights = ot.unif(d)
-lp_bary, bary_log = ot.lp.barycenter(A, M, weights, solver='interior-point', p
+lp_bary, bary_log = ot.lp.barycenter(A, M, weights, solver='interior-point',
                                       verbose=True, log=True)
 
 # %%
