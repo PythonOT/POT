@@ -17,7 +17,7 @@
 #### Closed issues
 - Fix circleci-redirector action and codecov (PR #460)
 - Fix issues with cuda for ot.binary_search_circle and with gradients for ot.sliced_wasserstein_sphere (PR #457)
-- Major documentation cleanup (PR #462, #467)
+- Major documentation cleanup (PR #462, #467, #475)
 - Fix gradients for "Wasserstein2 Minibatch GAN" example (PR #466)
 - Faster Bures-Wasserstein distance with NumPy backend (PR #468)
 - Fix issue backend for ot.sliced_wasserstein_sphere ot.sliced_wasserstein_sphere_unif (PR #471)
