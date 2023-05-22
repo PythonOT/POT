@@ -392,7 +392,7 @@ def semirelaxed_fused_gromov_wasserstein(
         return semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
 
 
-def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', symmetric=None, alpha=0.5, G0=None, log=False,
+def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, alpha=0.5, G0=None, log=False,
                                           max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
     Computes the semi-relaxed FGW divergence between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein2>`)
@@ -431,6 +431,7 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p, loss_fun='square_loss', 
         Metric cost matrix representative of the structure in the target space.
     p :  array-like, shape (ns,)
         Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
     loss_fun : str, optional
         loss function used for the solver either 'square_loss' or 'kl_loss'.
         'kl_loss' is not implemented yet and will raise an error.
@@ -571,7 +572,7 @@ def solve_semirelaxed_gromov_linesearch(G, deltaG, cost_G, C1, C2, ones_p,
 
 
 def entropic_semirelaxed_gromov_wasserstein(
-        C1, C2, p, loss_fun='square_loss', epsilon=0.1, symmetric=None,
+        C1, C2, p=None, loss_fun='square_loss', epsilon=0.1, symmetric=None,
         G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
     r"""
     Returns the entropic-regularized semi-relaxed gromov-wasserstein divergence
@@ -605,8 +606,9 @@ def entropic_semirelaxed_gromov_wasserstein(
         Metric cost matrix in the source space
     C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    p : array-like, shape (ns,)
-        Distribution in the source space
+    p : array-like, shape (ns,), optional
+        Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
     loss_fun : str
         loss function used for the solver either 'square_loss' or 'kl_loss'.
         'kl_loss' is not implemented yet and will raise an error.
@@ -725,7 +727,7 @@ def entropic_semirelaxed_gromov_wasserstein(
 
 
 def entropic_semirelaxed_gromov_wasserstein2(
-        C1, C2, p, loss_fun='square_loss', epsilon=0.1, symmetric=None,
+        C1, C2, p=None, loss_fun='square_loss', epsilon=0.1, symmetric=None,
         G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
     r"""
     Returns the entropic-regularized semi-relaxed gromov-wasserstein divergence
@@ -761,8 +763,9 @@ def entropic_semirelaxed_gromov_wasserstein2(
         Metric cost matrix in the source space
     C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    p : array-like, shape (ns,)
+    p : array-like, shape (ns,), optional
         Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
     loss_fun : str
         loss function used for the solver either 'square_loss' or 'kl_loss'.
         'kl_loss' is not implemented yet and will raise an error.
@@ -815,7 +818,7 @@ def entropic_semirelaxed_gromov_wasserstein2(
 
 
 def entropic_semirelaxed_fused_gromov_wasserstein(
-        M, C1, C2, p, loss_fun='square_loss', symmetric=None, epsilon=0.1,
+        M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, epsilon=0.1,
         alpha=0.5, G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
     r"""
     Computes the entropic-regularized semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
@@ -851,8 +854,9 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
         Metric cost matrix representative of the structure in the source space
     C2 : array-like, shape (nt, nt)
         Metric cost matrix representative of the structure in the target space
-    p : array-like, shape (ns,)
-        Distribution in the source space
+    p : array-like, shape (ns,), optional
+        Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
     loss_fun : str
         loss function used for the solver either 'square_loss' or 'kl_loss'.
         'kl_loss' is not implemented yet and will raise an error.
@@ -974,7 +978,7 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
 
 
 def entropic_semirelaxed_fused_gromov_wasserstein2(
-        M, C1, C2, p, loss_fun='square_loss', symmetric=None, epsilon=0.1,
+        M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, epsilon=0.1,
         alpha=0.5, G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
     r"""
     Computes the entropic-regularized semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
@@ -1010,8 +1014,9 @@ def entropic_semirelaxed_fused_gromov_wasserstein2(
         Metric cost matrix representative of the structure in the source space.
     C2 : array-like, shape (nt, nt)
         Metric cost matrix representative of the structure in the target space.
-    p :  array-like, shape (ns,)
+    p :  array-like, shape (ns,), optional
         Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
     loss_fun : str, optional
         loss function used for the solver either 'square_loss' or 'kl_loss'.
         'kl_loss' is not implemented yet and will raise an error.
