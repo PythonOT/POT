@@ -81,8 +81,8 @@ def factored_optimal_transport(Xa, Xb, a=None, b=None, reg=0.0, r=100, X0=None, 
 
     See Also
     --------
-    ot.bregman.sinkhorn : Entropic regularized OT ot.optim.cg : General
-    regularized OT
+    ot.bregman.sinkhorn : Entropic regularized OT
+    ot.optim.cg : General regularized OT
     """
 
     nx = get_backend(Xa, Xb)

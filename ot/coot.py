@@ -74,7 +74,7 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
         Sinkhorn solver. If epsilon is scalar, then the same epsilon is applied to
         both regularization of sample and feature couplings.
     alpha : scalar or indexable object of length 2, float or int, optional (default = 0)
-        Coeffficient parameter of linear terms with respect to the sample and feature couplings.
+        Coefficient parameter of linear terms with respect to the sample and feature couplings.
         If alpha is scalar, then the same alpha is applied to both linear terms.
     M_samp : (n_sample_x, n_sample_y), float, optional (default = None)
         Sample matrix with respect to the linear term on sample coupling.
@@ -295,7 +295,7 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
         + \varepsilon_1 \mathbf{KL}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
         + \varepsilon_2 \mathbf{KL}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
 
-    Where :
+    where :
 
     - :math:`\mathbf{X}`: Data matrix in the source space
     - :math:`\mathbf{Y}`: Data matrix in the target space
@@ -333,7 +333,7 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
         Sinkhorn solver. If epsilon is scalar, then the same epsilon is applied to
         both regularization of sample and feature couplings.
     alpha : scalar or indexable object of length 2, float or int, optional (default = 0)
-        Coeffficient parameter of linear terms with respect to the sample and feature couplings.
+        Coefficient parameter of linear terms with respect to the sample and feature couplings.
         If alpha is scalar, then the same alpha is applied to both linear terms.
     M_samp : (n_sample_x, n_sample_y), float, optional (default = None)
         Sample matrix with respect to the linear term on sample coupling.
@@ -345,7 +345,6 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
             tuples of 2 vectors of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
             Initialization of sample and feature dual vectors
             if using Sinkhorn algorithm. Zero vectors by default.
-
             - "pi_sample" and "pi_feature" whose values are matrices
             of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
             Initialization of sample and feature couplings.
@@ -382,7 +381,7 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
     float
         CO-Optimal Transport distance.
     dict
-        Contains logged informations from :any:`co_optimal_transport` solver.
+        Contains logged information from :any:`co_optimal_transport` solver.
         Only returned if `log` parameter is True
 
     References

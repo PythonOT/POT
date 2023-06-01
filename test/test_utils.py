@@ -41,6 +41,59 @@ def test_proj_simplex(nx):
     np.testing.assert_allclose(l1, l2, atol=1e-5)
 
 
+def test_projection_sparse_simplex():
+
+    def double_sort_projection_sparse_simplex(X, max_nz, z=1, axis=None):
+        r"""This is an equivalent but less efficient version
+        of ot.utils.projection_sparse_simplex, as it uses two
+        sorts instead of one.
+        """
+
+        if axis == 0:
+            # For each column of X, find top max_nz values and
+            # their corresponding indices. This incurs a sort.
+            max_nz_indices = np.argpartition(
+                X,
+                kth=-max_nz,
+                axis=0)[-max_nz:]
+
+            max_nz_values = X[max_nz_indices, np.arange(X.shape[1])]
+
+            # Project the top max_nz values onto the simplex.
+            # This incurs a second sort.
+            G_nz_values = ot.smooth.projection_simplex(
+                max_nz_values, z=z, axis=0)
+
+            # Put the projection of max_nz_values to their original indices
+            # and set all other values zero.
+            G = np.zeros_like(X)
+            G[max_nz_indices, np.arange(X.shape[1])] = G_nz_values
+            return G
+        elif axis == 1:
+            return double_sort_projection_sparse_simplex(
+                X.T, max_nz, z, axis=0).T
+
+        else:
+            X = X.ravel().reshape(-1, 1)
+            return double_sort_projection_sparse_simplex(
+                X, max_nz, z, axis=0).ravel()
+
+    m, n = 5, 10
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(m, n))
+    max_nz = 3
+
+    for axis in [0, 1, None]:
+        slow_sparse_proj = double_sort_projection_sparse_simplex(
+            X, max_nz, axis=axis)
+        fast_sparse_proj = ot.utils.projection_sparse_simplex(
+            X, max_nz, axis=axis)
+
+        # check that two versions produce consistent results
+        np.testing.assert_allclose(
+            slow_sparse_proj, fast_sparse_proj)
+
+
 def test_parmap():
 
     n = 10
@@ -217,25 +270,31 @@ def test_clean_zeros():
     assert len(b) == n - nz2
 
 
-def test_cost_normalization():
+def test_cost_normalization(nx):
 
     C = np.random.rand(10, 10)
+    C1 = nx.from_numpy(C)
 
     # does nothing
-    M0 = ot.utils.cost_normalization(C)
-    np.testing.assert_allclose(C, M0)
+    M0 = ot.utils.cost_normalization(C1)
+    M1 = nx.to_numpy(M0)
+    np.testing.assert_allclose(C, M1)
 
-    M = ot.utils.cost_normalization(C, 'median')
-    np.testing.assert_allclose(np.median(M), 1)
+    M = ot.utils.cost_normalization(C1, 'median')
+    M1 = nx.to_numpy(M)
+    np.testing.assert_allclose(np.median(M1), 1)
 
-    M = ot.utils.cost_normalization(C, 'max')
-    np.testing.assert_allclose(M.max(), 1)
+    M = ot.utils.cost_normalization(C1, 'max')
+    M1 = nx.to_numpy(M)
+    np.testing.assert_allclose(M1.max(), 1)
 
-    M = ot.utils.cost_normalization(C, 'log')
-    np.testing.assert_allclose(M.max(), np.log(1 + C).max())
+    M = ot.utils.cost_normalization(C1, 'log')
+    M1 = nx.to_numpy(M)
+    np.testing.assert_allclose(M1.max(), np.log(1 + C).max())
 
-    M = ot.utils.cost_normalization(C, 'loglog')
-    np.testing.assert_allclose(M.max(), np.log(1 + np.log(1 + C)).max())
+    M = ot.utils.cost_normalization(C1, 'loglog')
+    M1 = nx.to_numpy(M)
+    np.testing.assert_allclose(M1.max(), np.log(1 + np.log(1 + C)).max())
 
 
 def test_check_params():

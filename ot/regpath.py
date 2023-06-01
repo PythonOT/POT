@@ -399,7 +399,7 @@ def compute_next_removal(phi, delta, current_gamma):
 
 def complement_schur(M_current, b, d, id_pop):
     r""" This function computes the inverse of the design matrix in the \
-    regularization path using the  Schur complement. Two cases may arise:
+    regularization path using the Schur complement. Two cases may arise:
 
     Case 1: one variable is added to the active set
 

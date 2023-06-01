@@ -27,7 +27,7 @@ Examples
         np_config.enable_numpy_behavior()
 
 Performance
---------
+-----------
 
 - CPU: Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz
 - GPU: Tesla V100-SXM2-32GB
@@ -574,6 +574,16 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def median(self, a, axis=None):
+        r"""
+        Computes the median of a tensor along given dimensions.
+
+        This function follows the api from :any:`numpy.median`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.median.html
+        """
+        raise NotImplementedError()
+
     def std(self, a, axis=None):
         r"""
         Computes the standard deviation of a tensor along given dimensions.
@@ -670,7 +680,7 @@ class Backend():
 
         This function follows the api from :any:`numpy.random.seed`
 
-        See: https://numpy.org/doc/stable/reference/generated/numpy.random.seed.html
+        See: https://numpy.org/doc/stable/reference/random/generated/numpy.random.seed.html
         """
         raise NotImplementedError()
 
@@ -680,7 +690,7 @@ class Backend():
 
         This function follows the api from :any:`numpy.random.rand`
 
-        See: https://numpy.org/doc/stable/reference/generated/numpy.random.rand.html
+        See: https://numpy.org/doc/stable/reference/random/generated/numpy.random.rand.html
         """
         raise NotImplementedError()
 
@@ -690,7 +700,7 @@ class Backend():
 
         This function follows the api from :any:`numpy.random.rand`
 
-        See: https://numpy.org/doc/stable/reference/generated/numpy.random.rand.html
+        See: https://numpy.org/doc/stable/reference/random/generated/numpy.random.rand.html
         """
         raise NotImplementedError()
 
@@ -959,6 +969,14 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def matmul(self, a, b):
+        r"""
+        Matrix product of two arrays.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.matmul.html#numpy.matmul
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -1115,6 +1133,9 @@ class NumpyBackend(Backend):
     def mean(self, a, axis=None):
         return np.mean(a, axis=axis)
 
+    def median(self, a, axis=None):
+        return np.median(a, axis=axis)
+
     def std(self, a, axis=None):
         return np.std(a, axis=axis)
 
@@ -1235,7 +1256,8 @@ class NumpyBackend(Backend):
         return scipy.linalg.inv(a)
 
     def sqrtm(self, a):
-        return scipy.linalg.sqrtm(a)
+        L, V = np.linalg.eigh(a)
+        return (V * np.sqrt(L)[None, :]) @ V.T
 
     def kl_div(self, p, q, eps=1e-16):
         return np.sum(p * np.log(p / q + eps))
@@ -1291,6 +1313,9 @@ class NumpyBackend(Backend):
         if len(args) == 1:
             return args[0]
         return args
+
+    def matmul(self, a, b):
+        return np.matmul(a, b)
 
 
 class JaxBackend(Backend):
@@ -1470,6 +1495,9 @@ class JaxBackend(Backend):
     def mean(self, a, axis=None):
         return jnp.mean(a, axis=axis)
 
+    def median(self, a, axis=None):
+        return jnp.median(a, axis=axis)
+
     def std(self, a, axis=None):
         return jnp.std(a, axis=axis)
 
@@ -1644,6 +1672,9 @@ class JaxBackend(Backend):
             return jax.lax.stop_gradient((args[0],))[0]
         return [jax.lax.stop_gradient((a,))[0] for a in args]
 
+    def matmul(self, a, b):
+        return jnp.matmul(a, b)
+
 
 class TorchBackend(Backend):
     """
@@ -1694,10 +1725,12 @@ class TorchBackend(Backend):
         self.ValFunction = ValFunction
 
     def _to_numpy(self, a):
+        if isinstance(a, float) or isinstance(a, int) or isinstance(a, np.ndarray):
+            return np.array(a)
         return a.cpu().detach().numpy()
 
     def _from_numpy(self, a, type_as=None):
-        if isinstance(a, float):
+        if isinstance(a, float) or isinstance(a, int):
             a = np.array(a)
         if type_as is None:
             return torch.from_numpy(a)
@@ -1881,6 +1914,22 @@ class TorchBackend(Backend):
             return torch.mean(a, dim=axis)
         else:
             return torch.mean(a)
+
+    def median(self, a, axis=None):
+        from packaging import version
+        # Since version 1.11.0, interpolation is available
+        if version.parse(torch.__version__) >= version.parse("1.11.0"):
+            if axis is not None:
+                return torch.quantile(a, 0.5, interpolation="midpoint", dim=axis)
+            else:
+                return torch.quantile(a, 0.5, interpolation="midpoint")
+
+        # Else, use numpy
+        warnings.warn("The median is being computed using numpy and the array has been detached "
+                      "in the Pytorch backend.")
+        a_ = self.to_numpy(a)
+        a_median = np.median(a_, axis=axis)
+        return self.from_numpy(a_median, type_as=a)
 
     def std(self, a, axis=None):
         if axis is not None:
@@ -2095,6 +2144,9 @@ class TorchBackend(Backend):
             return args[0].detach()
         return [a.detach() for a in args]
 
+    def matmul(self, a, b):
+        return torch.matmul(a, b)
+
 
 class CupyBackend(Backend):  # pragma: no cover
     """
@@ -2269,6 +2321,9 @@ class CupyBackend(Backend):  # pragma: no cover
     def mean(self, a, axis=None):
         return cp.mean(a, axis=axis)
 
+    def median(self, a, axis=None):
+        return cp.median(a, axis=axis)
+
     def std(self, a, axis=None):
         return cp.std(a, axis=axis)
 
@@ -2431,7 +2486,7 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
-        return (V * self.sqrt(L)[None, :]) @ V.T
+        return (V * cp.sqrt(L)[None, :]) @ V.T
 
     def kl_div(self, p, q, eps=1e-16):
         return cp.sum(p * cp.log(p / q + eps))
@@ -2471,6 +2526,9 @@ class CupyBackend(Backend):  # pragma: no cover
             return args[0]
         return args
 
+    def matmul(self, a, b):
+        return cp.matmul(a, b)
+
 
 class TensorflowBackend(Backend):
 
@@ -2501,6 +2559,8 @@ class TensorflowBackend(Backend):
             )
 
     def _to_numpy(self, a):
+        if isinstance(a, float) or isinstance(a, int) or isinstance(a, np.ndarray):
+            return np.array(a)
         return a.numpy()
 
     def _from_numpy(self, a, type_as=None):
@@ -2652,6 +2712,13 @@ class TensorflowBackend(Backend):
 
     def mean(self, a, axis=None):
         return tnp.mean(a, axis=axis)
+
+    def median(self, a, axis=None):
+        warnings.warn("The median is being computed using numpy and the array has been detached "
+                      "in the Tensorflow backend.")
+        a_ = self.to_numpy(a)
+        a_median = np.median(a_, axis=axis)
+        return self.from_numpy(a_median, type_as=a)
 
     def std(self, a, axis=None):
         return tnp.std(a, axis=axis)
@@ -2820,7 +2887,8 @@ class TensorflowBackend(Backend):
         return tf.linalg.inv(a)
 
     def sqrtm(self, a):
-        return tf.linalg.sqrtm(a)
+        L, V = tf.linalg.eigh(a)
+        return (V * tf.sqrt(L)[None, :]) @ V.T
 
     def kl_div(self, p, q, eps=1e-16):
         return tnp.sum(p * tnp.log(p / q + eps))
@@ -2859,3 +2927,6 @@ class TensorflowBackend(Backend):
         if len(args) == 1:
             return tf.stop_gradient(args[0])
         return [tf.stop_gradient(a) for a in args]
+
+    def matmul(self, a, b):
+        return tnp.matmul(a, b)

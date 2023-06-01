@@ -5,7 +5,7 @@
 ========================================================
 
 Illustration of 2D Wasserstein and Sinkhorn barycenters if distributions are weighted
-sum of diracs.
+sum of Diracs.
 
 """
 
@@ -50,7 +50,7 @@ pl.title('Distributions')
 
 # %%
 # Compute free support Wasserstein barycenter
-# -------------------------------
+# -------------------------------------------
 
 k = 200  # number of Diracs of the barycenter
 X_init = np.random.normal(0., 1., (k, d))  # initial Dirac locations
@@ -60,7 +60,7 @@ X = ot.lp.free_support_barycenter(measures_locations, measures_weights, X_init, 
 
 # %%
 # Plot the Wasserstein barycenter
-# ---------
+# -------------------------------
 
 pl.figure(2, (8, 3))
 pl.scatter(x1[:, 0], x1[:, 1], alpha=0.5)
@@ -81,7 +81,7 @@ X = ot.bregman.free_support_sinkhorn_barycenter(measures_locations, measures_wei
 
 # %%
 # Plot the Wasserstein barycenter
-# ---------
+# -------------------------------
 
 pl.figure(2, (8, 3))
 pl.scatter(x1[:, 0], x1[:, 1], alpha=0.5)

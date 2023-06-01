@@ -19,13 +19,13 @@ optimization problem:
 
 
 In practice we do not have access to the full distribution :math:`\mu_d` but
-samples and we cannot compute the Wasserstein distance for lare dataset.
+samples and we cannot compute the Wasserstein distance for large dataset.
 [Arjovsky2017] proposed to approximate the dual potential of Wasserstein 1
 with a neural network recovering an optimization problem similar to GAN.
 In this example
 we will optimize the expectation of the Wasserstein distance over minibatches
 at each iterations as proposed in [Genevay2018]. Optimizing the Minibatches
-of the Wasserstein distance  has been studied in[Fatras2019].
+of the Wasserstein distance  has been studied in [Fatras2019].
 
 [Arjovsky2017] Arjovsky, M., Chintala, S., & Bottou, L. (2017, July).
 Wasserstein generative adversarial networks. In International conference
@@ -151,6 +151,7 @@ for i in range(n_iter):
 
     loss.backward()
     optimizer.step()
+    optimizer.zero_grad()
 
     del M
 
@@ -182,7 +183,7 @@ for i in range(9):
 
 # %%
 # Animate trajectories of generated samples along iteration
-# -------------------------------------------------------
+# ---------------------------------------------------------
 
 pl.figure(4, (8, 8))
 
