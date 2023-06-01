@@ -58,7 +58,8 @@ print('')
 print('Discrete MMOT Algorithm:')
 ot.tic()
 # dmmot_obj, log = ot.lp.discrete_mmot(A.T, n, d)
-barys, log = ot.lp.discrete_mmot_converge(A, niters=3000, lr=0.000002, log=True)
+barys, log = ot.lp.discrete_mmot_converge(
+    A, niters=3000, lr=0.000002, log=True)
 dmmot_obj = log['primal objective']
 print('Time\t: ', ot.toc(''))
 print('Obj\t: ', dmmot_obj)
@@ -73,7 +74,7 @@ for i in range(len(barys)):
         pl.plot(x, barys[i], 'g-*', label='Discrete MMOT')
     else:
         continue
-        #pl.plot(x, barys[i], 'g-*')
+        # pl.plot(x, barys[i], 'g-*')
 pl.plot(x, lp_bary, 'k-', label='LP Barycenter')
 pl.plot(x, a1, 'b', label='Source distribution')
 pl.plot(x, a2, 'r', label='Target distribution')
@@ -93,12 +94,10 @@ for i in range(d):
     m = n * (0.5 * np.random.rand(1)) * float(np.random.randint(2) + 1)
     a = ot.datasets.make_1D_gauss(n, m=m, s=5)
     data.append(a)
-    
+
 x = np.arange(n, dtype=np.float64)
 M = ot.utils.dist(x.reshape((n, 1)), metric='minkowski')
 A = np.vstack(data).T
-
-print(A.shape)
 
 pl.figure(1, figsize=(6.4, 3))
 for i in range(len(data)):
@@ -122,7 +121,7 @@ bary = barys[0]
 # Compute 1D Wasserstein barycenter using the LP method
 weights = ot.unif(d)
 lp_bary, bary_log = ot.lp.barycenter(A, M, weights, solver='interior-point',
-                                      verbose=True, log=True)
+                                     verbose=True, log=True)
 
 # %%
 # Compare Barycenters in both methods
@@ -144,7 +143,7 @@ for i in range(len(barys)):
         pl.plot(x, barys[i], 'g-*', label='Discrete MMOT')
     else:
         continue
-        #pl.plot(x, barys[i], 'g')
+        # pl.plot(x, barys[i], 'g')
 pl.plot(x, lp_bary, 'k-', label='LP Wasserstein')
 # pl.plot(x, bary, 'g', label='Discrete MMOT')
 pl.title('Barycenters')
