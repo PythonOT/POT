@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 r"""
-===============================================================================
-d-MMOT vs LP Gradient Decent without Pytorch
-===============================================================================
+=================================================================================
+Computing d-dimensional Barycenters via d-MMOT
+=================================================================================
 
-Compare the loss convergence between LP and DEMD. The comparison is performed 
-using random Gaussian or uniform distributions and calculating the loss for 
-each method during the optimization process.
+When the cost is discretized (Monge), the d-MMOT solver can more quickly compute and
+minimize the distance between many distributions without the need for intermediate
+barycenter computations. This example compares the time to identify,
+and the quality of, solutions for the d-MMOT problem using a primal/dual algorithm
+and classical LP barycenter approaches.
 """
 
 # Author: Ronak Mehta <ronakrm@cs.wisc.edu>
@@ -15,11 +17,13 @@ each method during the optimization process.
 # License: MIT License
 
 # %%
-# 2 distributions
+# Generating 2 distributions
 # -----
 import numpy as np
 import matplotlib.pyplot as pl
 import ot
+
+np.random.seed(0)
 
 n = 100
 d = 2
@@ -38,8 +42,10 @@ pl.plot(x, a2, 'r', label='Target distribution')
 pl.legend()
 
 # %%
-# Run test
+# Minimize the distances among distributions, identify the Barycenter
 # -----
+# The objective being minimized is different for both methods, so the objective values
+# cannot be compared.
 
 print('LP Iterations:')
 ot.tic()
@@ -66,32 +72,34 @@ print('Obj\t: ', dmmot_obj)
 pl.figure(1, figsize=(6.4, 3))
 for i in range(len(barys)):
     if i == 0:
-        pl.plot(x, barys[i], 'g', label='Discrete MMOT')
+        pl.plot(x, barys[i], 'g-*', label='Discrete MMOT')
     else:
-        pl.plot(x, barys[i], 'g')
+        continue
+        #pl.plot(x, barys[i], 'g-*')
+pl.plot(x, lp_bary, 'k-', label='LP Barycenter')
 pl.plot(x, a1, 'b', label='Source distribution')
 pl.plot(x, a2, 'r', label='Target distribution')
 pl.title('Barycenters')
 pl.legend()
 
-# %%
-# Compare d-MMOOT with original distributions
-# ---------
-pl.figure(1, figsize=(6.4, 3))
-for i in range(len(barys)):
-    if i == 0:
-        pl.plot(x, barys[i], 'g', label='Discrete MMOT')
-    else:
-        pl.plot(x, barys[i], 'g')
-# pl.plot(x, bary, 'g', label='Discrete MMOT')
-pl.plot(x, lp_bary, 'b', label='LP Wasserstein')
-pl.title('Barycenters')
-pl.legend()
+# # %%
+# # Compare d-MMOT with original distributions
+# # ---------
+# pl.figure(1, figsize=(6.4, 3))
+# for i in range(len(barys)):
+#     if i == 0:
+#         pl.plot(x, barys[i], 'g', label='Discrete MMOT')
+#     else:
+#         pl.plot(x, barys[i], 'g')
+# # pl.plot(x, bary, 'g', label='Discrete MMOT')
+# pl.plot(x, lp_bary, 'b', label='LP Wasserstein')
+# pl.title('Barycenters')
+# pl.legend()
 
 # %%
-# Define parameters, generate and plot distributions
+# More than 2 distributions
 # --------------------------------------------------
-# The following code generates random (n, d) data with in gauss
+# Generate 7 pseudorandom gaussian distributions with 50 bins.
 n = 50  # nb bins
 d = 7
 vecsize = n * d
@@ -116,56 +124,51 @@ pl.title('Distributions')
 pl.legend()
 
 # %%
-# Gradient Decent
+# Minimizing Distances Among Many Distributions
 # ---------------
-# The following section performs gradient descent optimization using
-# the DEMD method
+# The objective being minimized is different for both methods, so the objective values
+# cannot be compared.
+
+# Perform gradient descent optimization using
+# the d-MMOT method.
 
 barys = ot.lp.discrete_mmot_converge(A.T, niters=9000, lr=0.00001)
 
-# after minimization, any distribution can be used as a estimate of barycenter
-# bary = barys[0]
+# after minimization, any distribution can be used as a estimate of barycenter.
+bary = barys[0]
 
-
-# %% lp barycenter
-# ----------------
-# The following section computes 1D Wasserstein barycenter using the LP method
+# Compute 1D Wasserstein barycenter using the LP method
 weights = ot.unif(d)
 lp_bary, bary_log = ot.lp.barycenter(A, M, weights, solver='interior-point',
-                                     verbose=True, log=True)
+                                      verbose=True, log=True)
 
 # %%
 # Compare Barycenters in both methods
 # ---------
 pl.figure(1, figsize=(6.4, 3))
-for i in range(len(barys)):
-    if i == 0:
-        pl.plot(x, barys[i], 'g', label='Discrete MMOT')
-    else:
-        pl.plot(x, barys[i], 'g')
-# pl.plot(x, bary, 'g', label='Discrete MMOT')
-pl.plot(x, lp_bary, 'b', label='LP Wasserstein')
+# for i in range(len(barys)):
+#     if i == 0:
+#         pl.plot(x, barys[i], 'g', label='Discrete MMOT')
+#     else:
+#          pl.plot(x, barys[i], 'g')
+pl.plot(x, bary, 'g-*', label='Discrete MMOT')
+pl.plot(x, lp_bary, 'k-', label='LP Wasserstein')
 pl.title('Barycenters')
 pl.legend()
 
 # %%
-# Compare d-MMOOT with original distributions
+# Compare with original distributions
 # ---------
 pl.figure(1, figsize=(6.4, 3))
-for i in range(len(barys)):
-    if i == 0:
-        pl.plot(x, barys[i], 'g', label='Discrete MMOT')
-    else:
-        pl.plot(x, barys[i], 'g')
-# pl.plot(x, bary, 'g', label='Discrete MMOT')
 for i in range(len(data)):
     pl.plot(x, data[i])
+for i in range(len(barys)):
+    if i == 0:
+        pl.plot(x, barys[i], 'g-*', label='Discrete MMOT')
+    else:
+        continue
+        #pl.plot(x, barys[i], 'g')
+pl.plot(x, lp_bary, 'k-', label='LP Wasserstein')
+# pl.plot(x, bary, 'g', label='Discrete MMOT')
 pl.title('Barycenters')
 pl.legend()
-
-
-# %%
-# Compare the loss between DEMD and LP Barycenter
-# ---------
-# The barycenter approach does not minize the distance between
-# the distributions, while our DEMD does.
