@@ -78,7 +78,7 @@ def discrete_mmot(A, verbose=False, log=False):
 
     Parameters
     ----------
-    A : nx.ndarray, shape (d * n, )
+    A : nx.ndarray, shape (n * d, )
         The input ndarray containing distributions of n bins in d dimensions.
     verbose : bool, optional
         If True, print debugging information during execution. Default=False.
@@ -116,15 +116,14 @@ def discrete_mmot(A, verbose=False, log=False):
     
     See Also
     --------
-    ot.lp.discrete_mmot_converge : Minimized the d-Dimensional Earth Mover's Distance (d-MMOT)
+    ot.lp.discrete_mmot_converge : Minimized the d-Dimensional Earth Mover's 
+    Distance (d-MMOT)
     """
-    
-    def OBJ(i):
-        return max(i) - min(i)
 
     nx = get_backend(A)
 
-    AA = [nx.copy(_) for _ in A]
+    # AA = [nx.copy(_) for _ in A]
+    AA = [nx.copy(A[:, j]) for j in range(A.shape[1])]
 
     dims = tuple([len(_) for _ in AA])
     xx = {}
@@ -141,13 +140,13 @@ def discrete_mmot(A, verbose=False, log=False):
         minval = min(vals)
         i = vals.index(minval)
         xx[tuple(idx)] = minval
-        obj += (OBJ(idx)) * minval
+        obj += (dist_monge(idx)) * minval
         for v, j in zip(AA, idx):
             v[j] -= minval
         oldidx = nx.copy(idx)
         idx[i] += 1
         if idx[i] < dims[i]:
-            dual[i][idx[i]] += OBJ(idx) - OBJ(oldidx) + dual[i][idx[i]-1]
+            dual[i][idx[i]] += dist_monge(idx) - dist_monge(oldidx) + dual[i][idx[i]-1]
         if verbose:
             print(i, minval, oldidx, obj, '\t', vals)
 
@@ -160,7 +159,7 @@ def discrete_mmot(A, verbose=False, log=False):
         except Exception:
             pass
 
-    dualobj = nx.sum([nx.dot(arr, dual_arr) for arr, dual_arr in zip(A, dual)])
+    dualobj = nx.sum([nx.dot(A[:, i], arr) for i, arr in enumerate(dual)])
 
     log_dict = {'A': xx, 
            'primal objective': obj,
@@ -223,7 +222,7 @@ def discrete_mmot_converge(
 
     Parameters
     ----------
-    A : nx.ndarray, shape (d, n)
+    A : nx.ndarray, shape (n, d)
         The input ndarray containing distributions of n bins in d dimensions.
     niters : int, optional (default=100)
         The maximum number of iterations for the optimization algorithm.
@@ -252,25 +251,25 @@ def discrete_mmot_converge(
 
     # function body here
     nx = get_backend(A)
-    d, n = A.shape
+    n, d = A.shape
 
     def dualIter(A, lr):
         funcval, log_dict = discrete_mmot(A, verbose=verbose, log=True)
-        grad = np.array(log_dict['dual'])
-        A_new = nx.reshape(A, (d, n)) - grad * lr
+        grad = np.column_stack(log_dict['dual'])
+        A_new = nx.reshape(A, (n, d)) - grad * lr
         return funcval, A_new, grad, log_dict
 
     def renormalize(A):
-        A = nx.reshape(A, (d, n))
-        for i in range(A.shape[0]):
-            if min(A[i, :]) < 0:
-                A[i, :] -= min(A[i, :])
-            A[i, :] /= nx.sum(A[i, :])
+        A = nx.reshape(A, (n, d))
+        for i in range(A.shape[1]):
+            if min(A[:, i]) < 0:
+                A[:, i] -= min(A[:, i])
+            A[:, i] /= nx.sum(A[:, i])
         return A
 
     def listify(A):
-        return [A[i, :] for i in range(A.shape[0])]
-
+        return [A[:, i] for i in range(A.shape[1])]
+    
     funcval, _, grad, log_dict = dualIter(A, lr)
     gn = nx.norm(grad)
 
@@ -286,7 +285,7 @@ def discrete_mmot_converge(
             print(f'Iter {i:2.0f}:\tObj:\t{funcval:.4f}\tGradNorm:\t{gn:.4f}')
 
     A = renormalize(A)
-    a = listify(nx.reshape(A, (d, n)))
+    a = listify(A)
     
     if log:
         return a, log_dict

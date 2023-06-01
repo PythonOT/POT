@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 r"""
-=================================================================================
+===============================================================================
 Computing d-dimensional Barycenters via d-MMOT
-=================================================================================
+===============================================================================
 
-When the cost is discretized (Monge), the d-MMOT solver can more quickly compute and
-minimize the distance between many distributions without the need for intermediate
-barycenter computations. This example compares the time to identify,
-and the quality of, solutions for the d-MMOT problem using a primal/dual algorithm
-and classical LP barycenter approaches.
+When the cost is discretized (Monge), the d-MMOT solver can more quickly
+compute and minimize the distance between many distributions without the need
+for intermediate barycenter computations. This example compares the time to
+identify, and the quality of, solutions for the d-MMOT problem using a
+primal/dual algorithm and classical LP barycenter approaches.
 """
 
 # Author: Ronak Mehta <ronakrm@cs.wisc.edu>
@@ -32,8 +32,6 @@ a1 = ot.datasets.make_1D_gauss(n, m=20, s=5)  # m=mean, s=std
 a2 = ot.datasets.make_1D_gauss(n, m=60, s=8)
 A = np.vstack((a1, a2)).T
 x = np.arange(n, dtype=np.float64)
-# M = ot.utils.dist0(n)
-# M /= M.max()
 M = ot.utils.dist(x.reshape((n, 1)), metric='minkowski')
 
 pl.figure(1, figsize=(6.4, 3))
@@ -44,8 +42,8 @@ pl.legend()
 # %%
 # Minimize the distances among distributions, identify the Barycenter
 # -----
-# The objective being minimized is different for both methods, so the objective values
-# cannot be compared.
+# The objective being minimized is different for both methods, so the objective
+# values cannot be compared.
 
 print('LP Iterations:')
 ot.tic()
@@ -60,7 +58,7 @@ print('')
 print('Discrete MMOT Algorithm:')
 ot.tic()
 # dmmot_obj, log = ot.lp.discrete_mmot(A.T, n, d)
-barys, log = ot.lp.discrete_mmot_converge(A.T, niters=3000, lr=0.000002, log=True)
+barys, log = ot.lp.discrete_mmot_converge(A, niters=3000, lr=0.000002, log=True)
 dmmot_obj = log['primal objective']
 print('Time\t: ', ot.toc(''))
 print('Obj\t: ', dmmot_obj)
@@ -81,20 +79,6 @@ pl.plot(x, a1, 'b', label='Source distribution')
 pl.plot(x, a2, 'r', label='Target distribution')
 pl.title('Barycenters')
 pl.legend()
-
-# # %%
-# # Compare d-MMOT with original distributions
-# # ---------
-# pl.figure(1, figsize=(6.4, 3))
-# for i in range(len(barys)):
-#     if i == 0:
-#         pl.plot(x, barys[i], 'g', label='Discrete MMOT')
-#     else:
-#         pl.plot(x, barys[i], 'g')
-# # pl.plot(x, bary, 'g', label='Discrete MMOT')
-# pl.plot(x, lp_bary, 'b', label='LP Wasserstein')
-# pl.title('Barycenters')
-# pl.legend()
 
 # %%
 # More than 2 distributions
@@ -126,13 +110,11 @@ pl.legend()
 # %%
 # Minimizing Distances Among Many Distributions
 # ---------------
-# The objective being minimized is different for both methods, so the objective values
-# cannot be compared.
+# The objective being minimized is different for both methods, so the objective
+# values cannot be compared.
 
-# Perform gradient descent optimization using
-# the d-MMOT method.
-
-barys = ot.lp.discrete_mmot_converge(A.T, niters=9000, lr=0.00001)
+# Perform gradient descent optimization using the d-MMOT method.
+barys = ot.lp.discrete_mmot_converge(A, niters=9000, lr=0.00001)
 
 # after minimization, any distribution can be used as a estimate of barycenter.
 bary = barys[0]
@@ -146,11 +128,6 @@ lp_bary, bary_log = ot.lp.barycenter(A, M, weights, solver='interior-point',
 # Compare Barycenters in both methods
 # ---------
 pl.figure(1, figsize=(6.4, 3))
-# for i in range(len(barys)):
-#     if i == 0:
-#         pl.plot(x, barys[i], 'g', label='Discrete MMOT')
-#     else:
-#          pl.plot(x, barys[i], 'g')
 pl.plot(x, bary, 'g-*', label='Discrete MMOT')
 pl.plot(x, lp_bary, 'k-', label='LP Wasserstein')
 pl.title('Barycenters')
