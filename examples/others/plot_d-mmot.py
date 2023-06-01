@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 r"""
-=================================================================================
+===============================================================================
 d-MMOT vs LP Gradient Decent without Pytorch
-=================================================================================
+===============================================================================
 
-Compare the loss convergence between LP and DEMD. The comparison is performed using random
-Gaussian or uniform distributions and calculating the loss for each method
-during the optimization process.
+Compare the loss convergence between LP and DEMD. The comparison is performed 
+using random Gaussian or uniform distributions and calculating the loss for 
+each method during the optimization process.
 """
 
 # Author: Ronak Mehta <ronakrm@cs.wisc.edu>
@@ -58,6 +58,7 @@ barys, log = ot.lp.discrete_mmot_converge(A.T, niters=3000, lr=0.000002, log=Tru
 dmmot_obj = log['primal objective']
 print('Time\t: ', ot.toc(''))
 print('Obj\t: ', dmmot_obj)
+
 
 # %%
 # Compare Barycenters in both methods
@@ -130,8 +131,8 @@ barys = ot.lp.discrete_mmot_converge(A.T, niters=9000, lr=0.00001)
 # ----------------
 # The following section computes 1D Wasserstein barycenter using the LP method
 weights = ot.unif(d)
-lp_bary, bary_log = ot.lp.barycenter(A, M, weights, solver='interior-point', p
-                                      verbose=True, log=True)
+lp_bary, bary_log = ot.lp.barycenter(A, M, weights, solver='interior-point',
+                                     verbose=True, log=True)
 
 # %%
 # Compare Barycenters in both methods

@@ -11,7 +11,38 @@ d-MMOT solvers for optimal transport
 import numpy as np
 from ..backend import get_backend
 
-# M -> obj
+def dist_monge(i):
+    r"""
+    A tensor :math:c is Monge if for all valid :math:i_1, \ldots i_d and 
+    :math:j_1, \ldots, j_d,
+    
+    .. math::
+        c(s_1, \ldots, s_d) + c(t_1, \ldots t_d) \leq c(i_1, \ldots i_d) + 
+        c(j_1, \ldots, j_d)
+    
+    where :math:s_k = \min(i_k, j_k) and :math:t_k = \max(i_k, j_k).
+
+    Our focus is on a specific cost, which is known to be Monge:
+    
+    .. math::
+        c(i_1,i_2,\ldots,i_d) = \max{i_k:k\in[d]} - \min{i_k:k\in[d]}.
+        
+    When :math:d=2, this cost reduces to :math:c(i_1,i_2)=|i_1-i_2|, 
+    which agrees with the classical EMD cost. This choice of :math:c is called
+    the generalized EMD cost.
+    
+    Parameters
+    ----------
+    i : list
+        The list for which the generalized EMD cost is to be computed.
+    
+    Returns
+    -------
+    cost : numeric value
+        The generalized EMD cost of the tensor.
+    """
+    
+    return max(i) - min(i)
 
 def discrete_mmot(A, verbose=False, log=False):
     r"""
