@@ -27,8 +27,8 @@ import ot.plot
 torch.manual_seed(42)
 np.random.seed(42)
 
-n_source_samples = 10000
-n_target_samples = 10000
+n_source_samples = 5000
+n_target_samples = 5000
 theta = 2 * np.pi / 20
 noise_level = 0.1
 
