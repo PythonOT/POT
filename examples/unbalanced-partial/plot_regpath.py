@@ -63,7 +63,7 @@ pl.show()
 # -----------------------------------------------------------
 
 #%%
-final_gamma = 1e-8
+final_gamma = 1e-6
 t, t_list, g_list = ot.regpath.regularization_path(a, b, M, reg=final_gamma,
                                                    semi_relaxed=False)
 t2, t_list2, g_list2 = ot.regpath.regularization_path(a, b, M, reg=final_gamma,
@@ -111,7 +111,7 @@ pl.show()
 # Animation of the regpath for UOT l2
 # -----------------------------------
 
-nv = 100
+nv = 50
 g_list_v = np.logspace(-.5, -2.5, nv)
 
 pl.figure(3)
@@ -144,7 +144,7 @@ def _update_plot(iv):
 i = 0
 _update_plot(i)
 
-ani = animation.FuncAnimation(pl.gcf(), _update_plot, nv, interval=50, repeat_delay=2000)
+ani = animation.FuncAnimation(pl.gcf(), _update_plot, nv, interval=100, repeat_delay=2000)
 
 
 ##############################################################################
@@ -183,7 +183,7 @@ pl.show()
 # Animation of the regpath for semi-relaxed UOT l2
 # ------------------------------------------------
 
-nv = 100
+nv = 50
 g_list_v = np.logspace(2, -2, nv)
 
 pl.figure(5)
@@ -216,4 +216,4 @@ def _update_plot(iv):
 i = 0
 _update_plot(i)
 
-ani = animation.FuncAnimation(pl.gcf(), _update_plot, nv, interval=50, repeat_delay=2000)
+ani = animation.FuncAnimation(pl.gcf(), _update_plot, nv, interval=100, repeat_delay=2000)
