@@ -29,7 +29,7 @@ import ot
 
 # %% parameters and data generation
 
-n = 500  # nb samples
+n = 200  # nb samples
 
 mu_s = np.array([0, 0])
 cov_s = np.array([[1, 0], [0, 1]])
@@ -58,9 +58,9 @@ pl.title('Source and target distributions')
 # Sliced Wasserstein distance for different seeds and number of projections
 # -------------------------------------------------------------------------
 
-n_seed = 50
-n_projections_arr = np.logspace(0, 3, 25, dtype=int)
-res = np.empty((n_seed, 25))
+n_seed = 20
+n_projections_arr = np.logspace(0, 3, 10, dtype=int)
+res = np.empty((n_seed, 10))
 
 # %% Compute statistics
 for seed in range(n_seed):
