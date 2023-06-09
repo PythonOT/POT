@@ -14,7 +14,7 @@ sparsity-constrained OT, together with their visualizations.
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 6
+# sphinx_gallery_thumbnail_number = 5
 
 import numpy as np
 import matplotlib.pylab as pl

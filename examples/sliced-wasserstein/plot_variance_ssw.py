@@ -28,7 +28,7 @@ import ot
 
 # %% parameters and data generation
 
-n = 500  # nb samples
+n = 200  # nb samples
 
 xs = np.random.randn(n, 3)
 xt = np.random.randn(n, 3)
@@ -81,9 +81,9 @@ pl.title("Source and Target distribution")
 # Spherical Sliced Wasserstein for different seeds and number of projections
 # --------------------------------------------------------------------------
 
-n_seed = 50
-n_projections_arr = np.logspace(0, 3, 25, dtype=int)
-res = np.empty((n_seed, 25))
+n_seed = 20
+n_projections_arr = np.logspace(0, 3, 10, dtype=int)
+res = np.empty((n_seed, 10))
 
 # %% Compute statistics
 for seed in range(n_seed):
