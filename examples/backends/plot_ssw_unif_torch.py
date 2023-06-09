@@ -82,7 +82,7 @@ for i in range(n_iter):
     sw = ot.sliced_wasserstein_sphere_unif(x, n_projections=500)
     grad_x = torch.autograd.grad(sw, x)[0]
 
-    x = x - lr * grad_x /np.sqrt(i/10+1)
+    x = x - lr * grad_x / np.sqrt(i / 10 + 1)
     x = F.normalize(x, p=2, dim=1)
 
     losses.append(sw.item())

@@ -27,7 +27,7 @@ import matplotlib.animation as animation
 
 #%% parameters and data generation
 
-n = 50  # nb samples
+n = 20  # nb samples
 
 mu_s = np.array([-1, -1])
 cov_s = np.array([[1, 0], [0, 1]])
@@ -184,7 +184,7 @@ pl.show()
 # ------------------------------------------------
 
 nv = 100
-g_list_v = np.logspace(2.5, -2, nv)
+g_list_v = np.logspace(2, -2, nv)
 
 pl.figure(5)
 
