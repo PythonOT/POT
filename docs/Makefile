@@ -50,6 +50,8 @@ help:
 .PHONY: clean
 clean:
 	rm -rf $(BUILDDIR)/*
+	rm -rf source/gen_modules/*
+	rm -rf source/auto_examples/*
 
 .PHONY: html
 html:
