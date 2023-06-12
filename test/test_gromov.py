@@ -1752,6 +1752,23 @@ def test_semirelaxed_fgw2_gradients():
             assert C12.shape == C12.grad.shape
             assert M1.shape == M1.grad.shape
 
+            # full gradients with alpha
+            p1 = torch.tensor(p, requires_grad=False, device=device)
+            C11 = torch.tensor(C1, requires_grad=True, device=device)
+            C12 = torch.tensor(C2, requires_grad=True, device=device)
+            M1 = torch.tensor(M, requires_grad=True, device=device)
+            alpha = torch.tensor(0.5, requires_grad=True, device=device)
+
+            val = ot.gromov.semirelaxed_fused_gromov_wasserstein2(M1, C11, C12, p1, alpha=alpha)
+
+            val.backward()
+
+            assert val.device == p1.device
+            assert p1.grad is None
+            assert C11.shape == C11.grad.shape
+            assert C12.shape == C12.grad.shape
+            assert alpha.shape == alpha.grad.shape
+
 
 def test_srfgw_helper_backend(nx):
     n_samples = 20  # nb samples
