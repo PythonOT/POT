@@ -324,6 +324,49 @@ def update_kl_loss(p, lambdas, T, Cs):
     return nx.exp(tmpsum / ppt)
 
 
+def update_feature_matrix(lambdas, Ys, Ts, p):
+    r"""Updates the feature with respect to the `S` :math:`\mathbf{T}_s` couplings.
+
+
+    See "Solving the barycenter problem with Block Coordinate Descent (BCD)"
+    in :ref:`[24] <references-update-feature-matrix>` calculated at each iteration
+
+    Parameters
+    ----------
+    p : array-like, shape (N,)
+        masses in the targeted barycenter
+    lambdas : list of float
+        List of the `S` spaces' weights
+    Ts : list of S array-like, shape (ns,N)
+        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration
+    Ys : list of S array-like, shape (d,ns)
+        The features.
+
+    Returns
+    -------
+    X : array-like, shape (`d`, `N`)
+
+
+    .. _references-update-feature-matrix:
+    References
+    ----------
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain and Courty Nicolas
+        "Optimal Transport for structured data with application on graphs"
+        International Conference on Machine Learning (ICML). 2019.
+    """
+    p = list_to_array(p)
+    Ts = list_to_array(*Ts)
+    Ys = list_to_array(*Ys)
+    nx = get_backend(*Ys, *Ts, p)
+
+    p = 1. / p
+    tmpsum = sum([
+        lambdas[s] * nx.dot(Ys[s], Ts[s].T) * p[None, :]
+        for s in range(len(Ts))
+    ])
+    return tmpsum
+
+
 def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
     r"""Return loss matrices and tensors for semi-relaxed Gromov-Wasserstein fast computation
 
