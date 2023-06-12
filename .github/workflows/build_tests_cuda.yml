@@ -4,9 +4,6 @@ on:
   workflow_dispatch:
   pull_request_review:
     types: [submitted]
-  push:
-    branches:
-      - 'master'  # Set a branch to run CI tests on
 
 jobs:
   linux-cuda:
