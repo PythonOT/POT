@@ -29,10 +29,10 @@ import ot
 this_file = os.path.realpath('__file__')
 data_path = os.path.join(Path(this_file).parent.parent.parent, 'data')
 
-f1 = 1 - plt.imread(os.path.join(data_path, 'redcross.png'))[:, :, 2]
-f2 = 1 - plt.imread(os.path.join(data_path, 'tooth.png'))[:, :, 2]
-f3 = 1 - plt.imread(os.path.join(data_path, 'heart.png'))[:, :, 2]
-f4 = 1 - plt.imread(os.path.join(data_path, 'duck.png'))[:, :, 2]
+f1 = 1 - plt.imread(os.path.join(data_path, 'redcross.png'))[::2, ::2, 2]
+f2 = 1 - plt.imread(os.path.join(data_path, 'tooth.png'))[::2, ::2, 2]
+f3 = 1 - plt.imread(os.path.join(data_path, 'heart.png'))[::2, ::2, 2]
+f4 = 1 - plt.imread(os.path.join(data_path, 'duck.png'))[::2, ::2, 2]
 
 f1 = f1 / np.sum(f1)
 f2 = f2 / np.sum(f2)

@@ -27,8 +27,8 @@ import ot.plot
 torch.manual_seed(42)
 np.random.seed(42)
 
-n_source_samples = 10000
-n_target_samples = 10000
+n_source_samples = 1000
+n_target_samples = 1000
 theta = 2 * np.pi / 20
 noise_level = 0.1
 
@@ -89,7 +89,7 @@ reg = 1
 optimizer = torch.optim.Adam(list(u.parameters()) + list(v.parameters()), lr=.005)
 
 # number of iteration
-n_iter = 1000
+n_iter = 500
 n_batch = 500
 
 
