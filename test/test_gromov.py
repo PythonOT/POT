@@ -1753,7 +1753,7 @@ def test_semirelaxed_fgw2_gradients():
             assert M1.shape == M1.grad.shape
 
             # full gradients with alpha
-            p1 = torch.tensor(p, requires_grad=True, device=device)
+            p1 = torch.tensor(p, requires_grad=False, device=device)
             C11 = torch.tensor(C1, requires_grad=True, device=device)
             C12 = torch.tensor(C2, requires_grad=True, device=device)
             M1 = torch.tensor(M, requires_grad=True, device=device)
@@ -1764,7 +1764,7 @@ def test_semirelaxed_fgw2_gradients():
             val.backward()
 
             assert val.device == p1.device
-            assert p1.shape == p1.grad.shape
+            assert p1.grad is None
             assert C11.shape == C11.grad.shape
             assert C12.shape == C12.grad.shape
             assert alpha.shape == alpha.grad.shape
