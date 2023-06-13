@@ -11,7 +11,6 @@ import ot
 
 def create_test_data():
     np.random.seed(1234)
-    d = 2
     n = 4
     a1 = ot.datasets.make_1D_gauss(n, m=20, s=5)
     a2 = ot.datasets.make_1D_gauss(n, m=60, s=8)
@@ -38,7 +37,7 @@ def test_discrete_mmot_converge():
     d = 2
     niters = 10
     result = ot.lp.discrete_mmot_converge(A, niters, 0.001, 5)
-    
+
     expected_obj = np.array([[0.05553516, 0.13082618, 0.27327479, 0.54036388],
                              [0.04185365, 0.09570724, 0.24384705, 0.61859206]])
 
