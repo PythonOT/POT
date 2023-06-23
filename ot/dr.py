@@ -376,3 +376,157 @@ def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopTh
         iter = iter + 1
 
     return pi, U
+
+
+def ewca(X, P0=None, reg=0.1, k=2, method='MM', sinkhorn_method='sinkhorn', stopThr=1e-3, maxiter=100, maxiter_sink=100, maxiter_MM=10, verbose=0):
+    r"""
+    Entropic Wasserstein Component Analysis :ref:`[XX] <references-entropic-wasserstein-component_analysis>`
+
+    The function solves the following optimization problem:
+    TODO: add equation
+
+    Parameters
+    ----------
+    X : ndarray, shape (n, d)
+        Samples from measure :math:`\mu`
+    P0 : ndarray, shape (d, k), optional
+        Initial starting point for projection.
+    reg : float, optional
+        Regularization term >0 (entropic regularization)
+    k : int, optional
+        Subspace dimension
+    method : str, optional
+        Eather 'BCD' or 'MM' (Block Coordinate Descent or Majorization-Minimization)
+        Prefer MM when d is large.
+    sinkhorn_method : str
+        Method used for the Sinkhorn solver, either 'sinkhorn' or 'sinkhorn_log'
+    stopThr : float, optional
+        Stop threshold on error (>0)
+    maxiter : int, optional
+        Maximum number of iterations of the BCD/MM
+    maxiter_sink : int, optional
+        Maximum number of iterations of the Sinkhorn solver
+    maxiter_MM : int, optional
+        Maximum number of iterations of the MM (only used when method='MM')
+    verbose : int, optional
+        Print information along iterations.
+
+    Returns
+    -------
+    pi : ndarray, shape (n, n)
+        Optimal transportation matrix for the given parameters
+    U : ndarray, shape (d, k)
+        Projection operator.
+
+
+    .. _references-entropic-wasserstein-component_analysis:
+    References
+    ----------
+    .. [XX] Collas, A., Vayer, T., Flamary, F., & Breloy, A. (2023).
+            Entropic Wasserstein Component Analysis
+    """  # noqa
+    if sinkhorn_method.lower() == 'sinkhorn':
+        sinkhorn_solver = sinkhorn
+    elif sinkhorn_method.lower() == 'sinkhorn_log':
+        sinkhorn_solver = sinkhorn_log
+    else:
+        raise ValueError("Unknown Sinkhorn method '%s'." % sinkhorn_method)
+
+    n, d = X.shape
+    X = X - X.mean(0)
+
+    if P0 is None:
+        pca_fitted = PCA(n_components=k).fit(X)
+        P = pca_fitted.components_.T
+        if method == 'MM':
+            lambda_scm = pca_fitted.explained_variance_[0]
+    else:
+        P = P0
+
+    # marginals
+    u0 = (1./n) * np.ones(n)
+
+    # print iterations
+    if verbose > 0:
+        print('{:4s}|{:13s}|{:12s}|{:12s}'.format('It.', 'Loss', 'Crit.', 'Thres.') + '\n' + '-' * 40)
+
+
+    def compute_loss(M, G, reg):
+        return np.sum(M * G) + reg * np.sum(G * (np.log(G) - 1))
+
+
+    def Grassmann_distance(P1, P2):
+        proj = P1.T @ P2
+        _, s, _ = np.linalg.svd(proj)
+        s[s > 1] = 1
+        s = np.arccos(s)
+        return np.linalg.norm(s)
+
+
+    # loop
+    it = 0
+    crit = np.inf
+    warmstart_sinkhorn = None
+
+    while (it < maxiter) and (crit > stopThr):
+        P_old = P
+
+        # Solve transport
+        M = ot.dist(X, (X @ P) @ P.T)
+        G, log_sinkhorn = ot.sinkhorn(
+            u0, u0, M, reg,
+            numItermax=maxiter_sink,
+            method=sinkhorn_method, warmstart=warmstart_sinkhorn,
+            warn=warn, log=True
+        )
+        key_warmstart = 'warmstart'
+        if key_warmstart in log_sinkhorn:
+            alpha, beta = log_sinkhorn[key_warmstart]
+            if type(alpha) == type(beta) == torch.Tensor:
+                alpha, beta = alpha.detach(), beta.detach()
+            warmstart_sinkhorn = (alpha, beta)
+        if (G >= 1e-300).all():
+            loss = compute_loss(M, G, reg)
+        else:
+            loss = np.inf
+
+        # Solve PCA
+        G_sym = (G + G.T) / 2
+
+        if method == 'BCD':
+            # block coordinate descent
+            S = X.T @ (2 * G_sym - (1. / n) * np.eye(n)) @ X
+            _, U = np.linalg.eigh(S)
+            P = U[:, ::-1][:, :k]
+
+        elif method == 'MM':
+            # majorization-minimization
+            eig, _ = np.linalg.eigh(G_sym)
+            lambda_G = eig[0]
+
+            for _ in range(maxiter_MM):
+                X_proj = X @ P
+                X_T_X_proj = X.T @ X_proj
+
+                R = (1 / n) * X_T_X_proj
+                alpha = 1 - 2 * n * lambda_G
+                if alpha > 0:
+                    R = alpha * (R - lambda_scm * P)
+                else:
+                    R = alpha * R
+
+                R = R - (2 * X.T @ (G_sym @ X_proj)) + (2 * lambda_G * X_T_X_proj)
+                P, _ = np.linalg.qr(R)
+
+        else:
+            raise ValueError(f"Unknown method '{method}', use 'BCD' or 'MM'.")
+
+        # stop or not
+        it += 1
+        crit = Grassmann_distance(P_old, P)
+
+        # print
+        if verbose > 0:
+            print('{:4d}|{:8e}|{:8e}|{:8e}'.format(it, loss, crit, thresh))
+
+    return G, P
