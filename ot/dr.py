@@ -385,13 +385,13 @@ def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopTh
 
 def ewca(X, U0=None, reg=1, k=2, method='BCD', sinkhorn_method='sinkhorn', stopThr=1e-6, maxiter=100, maxiter_sink=1000, maxiter_MM=10, verbose=0):
     r"""
-    Entropic Wasserstein Component Analysis :ref:`[52] <references-entropic-wasserstein-component_analysis>`
+    Entropic Wasserstein Component Analysis :ref:`[52] <references-entropic-wasserstein-component_analysis>`.
 
     The function solves the following optimization problem:
 
     .. math::
         \mathbf{U} = \mathop{\arg \min}_\mathbf{U} \quad
-        W(\mathbf{X}, \mathbf{U}\mathbf{U}^T \\mathbf{X})
+        W(\mathbf{X}, \mathbf{U}\mathbf{U}^T \mathbf{X})
 
     where :
 
@@ -402,33 +402,33 @@ def ewca(X, U0=None, reg=1, k=2, method='BCD', sinkhorn_method='sinkhorn', stopT
     Parameters
     ----------
     X : ndarray, shape (n, d)
-        Samples from measure :math:`\mu`
+        Samples from measure :math:`\mu`.
     U0 : ndarray, shape (d, k), optional
         Initial starting point for projection.
     reg : float, optional
-        Regularization term >0 (entropic regularization)
+        Regularization term >0 (entropic regularization).
     k : int, optional
-        Subspace dimension
+        Subspace dimension.
     method : str, optional
-        Eather 'BCD' or 'MM' (Block Coordinate Descent or Majorization-Minimization)
+        Eather 'BCD' or 'MM' (Block Coordinate Descent or Majorization-Minimization).
         Prefer MM when d is large.
     sinkhorn_method : str
         Method used for the Sinkhorn solver, see :ref:`ot.bregman.sinkhorn` for more details.
     stopThr : float, optional
-        Stop threshold on error (>0)
+        Stop threshold on error (>0).
     maxiter : int, optional
-        Maximum number of iterations of the BCD/MM
+        Maximum number of iterations of the BCD/MM.
     maxiter_sink : int, optional
-        Maximum number of iterations of the Sinkhorn solver
+        Maximum number of iterations of the Sinkhorn solver.
     maxiter_MM : int, optional
-        Maximum number of iterations of the MM (only used when method='MM')
+        Maximum number of iterations of the MM (only used when method='MM').
     verbose : int, optional
         Print information along iterations.
 
     Returns
     -------
     pi : ndarray, shape (n, n)
-        Optimal transportation matrix for the given parameters
+        Optimal transportation matrix for the given parameters.
     U : ndarray, shape (d, k)
         Matrix Stiefel manifold.
 
@@ -437,7 +437,7 @@ def ewca(X, U0=None, reg=1, k=2, method='BCD', sinkhorn_method='sinkhorn', stopT
     References
     ----------
     .. [52] Collas, A., Vayer, T., Flamary, F., & Breloy, A. (2023).
-            Entropic Wasserstein Component Analysis
+            Entropic Wasserstein Component Analysis.
     """  # noqa
     n, d = X.shape
     X = X - X.mean(0)
