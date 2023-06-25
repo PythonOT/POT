@@ -383,7 +383,7 @@ def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopTh
     return pi, U
 
 
-def ewca(X, U0=None, reg=1, k=2, method='BCD', sinkhorn_method='sinkhorn', stopThr=1e-3, maxiter=100, maxiter_sink=100, maxiter_MM=10, verbose=0):
+def ewca(X, U0=None, reg=1, k=2, method='BCD', sinkhorn_method='sinkhorn', stopThr=1e-6, maxiter=100, maxiter_sink=1000, maxiter_MM=10, verbose=0):
     r"""
     Entropic Wasserstein Component Analysis :ref:`[52] <references-entropic-wasserstein-component_analysis>`
 
