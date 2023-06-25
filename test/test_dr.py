@@ -148,21 +148,23 @@ def test_prw():
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
 def test_ewca():
 
-    d = 10
-    n_samples = 100
+    d = 5
+    n_samples = 50
+    k = 3
     np.random.seed(0)
 
     # generate gaussian dataset
     A = np.random.normal(size=(d, d))
     Q, _ = np.linalg.qr(A)
-    D = np.random.normal(size=d) ** 2
+    D = np.random.normal(size=d)
+    D = (D / np.linalg.norm(D)) ** 4
     cov = Q @ np.diag(D) @ Q.T
     X = np.random.multivariate_normal(np.zeros(d), cov, size=n_samples)
+    X = X - X.mean(0, keepdims=True)
     assert X.shape == (n_samples, d)
 
-    # compute first 3 components
-    k = 3
-    pi, U = ot.dr.ewca(X, reg=1, method='BCD', k=k, verbose=1, sinkhorn_method='sinkhorn_log')
+    # compute first 3 components with BCD
+    pi, U = ot.dr.ewca(X, reg=0.01, method='BCD', k=k, verbose=1, sinkhorn_method='sinkhorn_log')
     assert pi.shape == (n_samples, n_samples)
     assert (pi >= 0).all()
     assert np.allclose(pi.sum(0), 1 / n_samples, atol=1e-3)
@@ -170,8 +172,29 @@ def test_ewca():
     assert U.shape == (d, k)
     assert np.allclose(U.T @ U, np.eye(k), atol=1e-3)
 
-    # test that U contains the first 3 eigenvectors of the covariance matrix
-    U_PCA = np.linalg.svd(X.T - X.mean(0, keepdims=True).T, full_matrices=False)[0][:, :k]
-    for i in range(k):
-        cos = np.abs(np.dot(U[:, i], U_PCA[:, i]))
-        assert cos > 0.99
+    # test that U contains the principal components
+    U_first_eigvec = np.linalg.svd(X.T, full_matrices=False)[0][:, :k]
+    _, cos, _ = np.linalg.svd(U.T @ U_first_eigvec, full_matrices=False)
+    assert np.allclose(cos, np.ones(k), atol=1e-3)
+
+    # compute first 3 components with MM
+    pi, U = ot.dr.ewca(X, reg=0.01, method='MM', k=k, verbose=1, sinkhorn_method='sinkhorn_log')
+    assert pi.shape == (n_samples, n_samples)
+    assert (pi >= 0).all()
+    assert np.allclose(pi.sum(0), 1 / n_samples, atol=1e-3)
+    assert np.allclose(pi.sum(1), 1 / n_samples, atol=1e-3)
+    assert U.shape == (d, k)
+    assert np.allclose(U.T @ U, np.eye(k), atol=1e-3)
+
+    # test that U contains the principal components
+    U_first_eigvec = np.linalg.svd(X.T, full_matrices=False)[0][:, :k]
+    _, cos, _ = np.linalg.svd(U.T @ U_first_eigvec, full_matrices=False)
+    assert np.allclose(cos, np.ones(k), atol=1e-3)
+
+    # compute last 3 components
+    pi, U = ot.dr.ewca(X, reg=100000, method='MM', k=k, verbose=1, sinkhorn_method='sinkhorn_log')
+
+    # test that U contains the last principal components
+    U_last_eigvec = np.linalg.svd(X.T, full_matrices=False)[0][:, -k:]
+    _, cos, _ = np.linalg.svd(U.T @ U_last_eigvec, full_matrices=False)
+    assert np.allclose(cos, np.ones(k), atol=1e-3)
