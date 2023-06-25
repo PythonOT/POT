@@ -2,6 +2,7 @@
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Minhui Huang <mhhuang@ucdavis.edu>
+#         Antoine Collas <antoine.collas@inria.fr>
 #
 # License: MIT License
 
@@ -9,6 +10,7 @@ import numpy as np
 import ot
 import pytest
 
+import ot.dr
 try:  # test if autograd and pymanopt are installed
     import ot.dr
     nogo = False
@@ -141,3 +143,35 @@ def test_prw():
     U0, _ = np.linalg.qr(U0)
 
     pi, U = ot.dr.projection_robust_wasserstein(X, Y, a, b, tau, U0=U0, reg=reg, k=k, maxiter=1000, verbose=1)
+
+
+@pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
+def test_ewca():
+
+    d = 10
+    n_samples = 100
+    np.random.seed(0)
+
+    # generate gaussian dataset
+    A = np.random.normal(size=(d, d))
+    Q, _ = np.linalg.qr(A)
+    D = np.random.normal(size=d) ** 2
+    cov = Q @ np.diag(D) @ Q.T
+    X = np.random.multivariate_normal(np.zeros(d), cov, size=n_samples)
+    assert X.shape == (n_samples, d)
+
+    # compute first 3 components
+    k = 3
+    pi, U = ot.dr.ewca(X, reg=1, method='BCD', k=k, verbose=1, sinkhorn_method='sinkhorn_log')
+    assert pi.shape == (n_samples, n_samples)
+    assert (pi >= 0).all()
+    assert np.allclose(pi.sum(0), 1 / n_samples, atol=1e-3)
+    assert np.allclose(pi.sum(1), 1 / n_samples, atol=1e-3)
+    assert U.shape == (d, k)
+    assert np.allclose(U.T @ U, np.eye(k), atol=1e-3)
+
+    # test that U contains the first 3 eigenvectors of the covariance matrix
+    U_PCA = np.linalg.svd(X.T - X.mean(0, keepdims=True).T, full_matrices=False)[0][:, :k]
+    for i in range(k):
+        cos = np.abs(np.dot(U[:, i], U_PCA[:, i]))
+        assert cos > 0.99
