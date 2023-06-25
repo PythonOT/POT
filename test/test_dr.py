@@ -10,7 +10,6 @@ import numpy as np
 import ot
 import pytest
 
-import ot.dr
 try:  # test if autograd and pymanopt are installed
     import ot.dr
     nogo = False
