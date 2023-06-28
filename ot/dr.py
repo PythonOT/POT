@@ -460,7 +460,7 @@ def ewca(X, U0=None, reg=1, k=2, method='BCD', sinkhorn_method='sinkhorn', stopT
     def compute_loss(M, pi, reg):
         return np.sum(M * pi) + reg * np.sum(pi * (np.log(pi) - 1))
 
-    def Grassmann_distance(U1, U2):
+    def grassmann_distance(U1, U2):
         proj = U1.T @ U2
         _, s, _ = np.linalg.svd(proj)
         s[s > 1] = 1
@@ -524,7 +524,7 @@ def ewca(X, U0=None, reg=1, k=2, method='BCD', sinkhorn_method='sinkhorn', stopT
 
         # stop or not
         it += 1
-        crit = Grassmann_distance(U_old, U)
+        crit = grassmann_distance(U_old, U)
 
         # print
         if verbose > 0:
