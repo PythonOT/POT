@@ -12,7 +12,7 @@ import numpy as np
 from ..backend import get_backend
 
 
-def dist_monge(i):
+def dist_monge_max_min(i):
     r"""
     A tensor :math:c is Monge if for all valid :math:i_1, \ldots i_d and
     :math:j_1, \ldots, j_d,
@@ -35,12 +35,12 @@ def dist_monge(i):
     Parameters
     ----------
     i : list
-        The list for which the generalized EMD cost is to be computed.
+        The list of integer indexes.
 
     Returns
     -------
     cost : numeric value
-        The generalized EMD cost of the tensor.
+        The ground cost (generalized EMD cost) of the tensor.
 
     References
     ----------
@@ -57,33 +57,36 @@ def dist_monge(i):
     return max(i) - min(i)
 
 
-def discrete_mmot(A, verbose=False, log=False):
+def dmmot_monge_1dgrid_loss(A, verbose=False, log=False):
     r"""
     Compute the discrete multi-marginal optimal transport of distributions A.
 
+    This function operates on distributions whose supports are real numbers on
+    the real line.
+
     The algorithm solves both primal and dual d-MMOT programs concurrently to
     produce the optimal transport plan as well as the total (minimal) cost.
-    The cost is a generalized Monge cost, and the solution is independent of
+    The cost is a ground cost, and the solution is independent of
     which Monge cost is desired.
 
     The algorithm accepts :math:`d` distributions (i.e., histograms)
-    :math:`p_{1}, \ldots, p_{d} \in \mathbb{R}_{+}^{n}` with :math:`e^{\prime}
-    p_{j}=1` for all :math:`j \in[d]`. Although the algorithm states that all
+    :math:`a_{1}, \ldots, a_{d} \in \mathbb{R}_{+}^{n}` with :math:`e^{\prime}
+    a_{j}=1` for all :math:`j \in[d]`. Although the algorithm states that all
     histograms have the same number of bins, the algorithm can be easily
-    adapted to accept as inputs :math:`p_{i} \in \mathbb{R}_{+}^{n_{i}}`
+    adapted to accept as inputs :math:`a_{i} \in \mathbb{R}_{+}^{n_{i}}`
     with :math:`n_{i} \neq n_{j}` [50].
 
     The function solves the following optimization problem[51]:
 
     .. math::
         \begin{align}\begin{aligned}
-            \underset{x\in\mathbb{R}^{n^{d}}_{+}} {\textrm{min}}
-            \sum_{i_1,\ldots,i_d} c(i_1,\ldots, i_d)\, x(i_1,\ldots,i_d) \quad
-            \textrm{s.t.}
-            \sum_{i_2,\ldots,i_d} x(i_1,\ldots,i_d) &= p_1(i_i),
+            \underset{\gamma\in\mathbb{R}^{n^{d}}_{+}} {\textrm{min}}
+            \sum_{i_1,\ldots,i_d} c(i_1,\ldots, i_d)\, \gamma(i_1,\ldots,i_d)
+            \quad \textrm{s.t.}
+            \sum_{i_2,\ldots,i_d} \gamma(i_1,\ldots,i_d) &= a_1(i_i),
             (\forall i_1\in[n])\\
             \qquad\vdots\\
-            \sum_{i_1,\ldots,i_{d-1}} x(i_1,\ldots,i_d) &= p_{d}(i_{d}),
+            \sum_{i_1,\ldots,i_{d-1}} \gamma(i_1,\ldots,i_d) &= a_{d}(i_{d}),
             (\forall i_d\in[n]).
             \end{aligned}
         \end{align}
@@ -129,18 +132,18 @@ def discrete_mmot(A, verbose=False, log=False):
 
     See Also
     --------
-    ot.lp.discrete_mmot_converge : Minimized the d-Dimensional Earth Mover's
-    Distance (d-MMOT)
+    ot.lp.dmmot_monge_1dgrid_optimize : Optimize the d-Dimensional Earth
+    Mover's Distance (d-MMOT)
     """
 
     nx = get_backend(A)
+    A = nx.to_numpy(A)
 
-    # AA = [nx.copy(_) for _ in A]
-    AA = [nx.copy(A[:, j]) for j in range(A.shape[1])]
+    AA = [np.copy(A[:, j]) for j in range(A.shape[1])]
 
     dims = tuple([len(_) for _ in AA])
     xx = {}
-    dual = [nx.zeros(d) for d in dims]
+    dual = [np.zeros(d) for d in dims]
 
     idx = [0, ] * len(AA)
     obj = 0
@@ -153,13 +156,16 @@ def discrete_mmot(A, verbose=False, log=False):
         minval = min(vals)
         i = vals.index(minval)
         xx[tuple(idx)] = minval
-        obj += (dist_monge(idx)) * minval
+        obj += (dist_monge_max_min(idx)) * minval
         for v, j in zip(AA, idx):
             v[j] -= minval
-        oldidx = nx.copy(idx)
+        # oldidx = nx.copy(idx)
+        oldidx = idx.copy()
         idx[i] += 1
         if idx[i] < dims[i]:
-            temp = dist_monge(idx) - dist_monge(oldidx) + dual[i][idx[i] - 1]
+            temp = (dist_monge_max_min(idx) -
+                    dist_monge_max_min(oldidx) +
+                    dual[i][idx[i] - 1])
             dual[i][idx[i]] += temp
         if verbose:
             print(i, minval, oldidx, obj, '\t', vals)
@@ -173,12 +179,16 @@ def discrete_mmot(A, verbose=False, log=False):
         except Exception:
             pass
 
-    dualobj = nx.sum([nx.dot(A[:, i], arr) for i, arr in enumerate(dual)])
+    dualobj = sum([np.dot(A[:, i], arr) for i, arr in enumerate(dual)])
+    obj = nx.from_numpy(obj)
 
     log_dict = {'A': xx,
                 'primal objective': obj,
                 'dual': dual,
                 'dual objective': dualobj}
+
+    # define forward/backward relations for pytorch
+    obj = nx.set_gradients(obj, (nx.from_numpy(A)), (dual))
 
     if log:
         return obj, log_dict
@@ -186,12 +196,12 @@ def discrete_mmot(A, verbose=False, log=False):
         return obj
 
 
-def discrete_mmot_converge(
+def dmmot_monge_1dgrid_optimize(
         A, niters=100, lr=0.1, print_rate=100, verbose=False, log=False):
     r"""Minimize the d-dimensional EMD using gradient descent.
 
-    Discrete Multi-Marginal Optimal Transport (d-MMOT): Let :math:`p_1, \ldots,
-    p_d\in\mathbb{R}^n_{+}` be discrete probability distributions. Here,
+    Discrete Multi-Marginal Optimal Transport (d-MMOT): Let :math:`a_1, \ldots,
+    a_d\in\mathbb{R}^n_{+}` be discrete probability distributions. Here,
     the d-MMOT is the LP,
 
     .. math::
@@ -199,10 +209,10 @@ def discrete_mmot_converge(
             \underset{x\in\mathbb{R}^{n^{d}}_{+}} {\textrm{min}}
             \sum_{i_1,\ldots,i_d} c(i_1,\ldots, i_d)\, x(i_1,\ldots,i_d) \quad
             \textrm{s.t.}
-            \sum_{i_2,\ldots,i_d} x(i_1,\ldots,i_d) &= p_1(i_i),
+            \sum_{i_2,\ldots,i_d} x(i_1,\ldots,i_d) &= a_1(i_i),
             (\forall i_1\in[n])\\
             \qquad\vdots\\
-            \sum_{i_1,\ldots,i_{d-1}} x(i_1,\ldots,i_d) &= p_{d}(i_{d}),
+            \sum_{i_1,\ldots,i_{d-1}} x(i_1,\ldots,i_d) &= a_{d}(i_{d}),
             (\forall i_d\in[n]).
             \end{aligned}
         \end{align}
@@ -211,27 +221,27 @@ def discrete_mmot_converge(
 
     .. math::
         \underset{z_j\in\mathbb{R}^n, j\in[d]}{\textrm{maximize}}\qquad\sum_{j}
-        p_j'z_j\qquad \textrm{subject to}\qquad z_{1}(i_1)+\cdots+z_{d}(i_{d})
+        a_j'z_j\qquad \textrm{subject to}\qquad z_{1}(i_1)+\cdots+z_{d}(i_{d})
         \leq c(i_1,\ldots,i_{d}),
 
 
     where the indices in the constraints include all :math:`i_j\in[n]`, :math:
-    `j\in[d]`. Denote by :math:`\phi(p_1,\ldots,p_d)`, the optimal objective
+    `j\in[d]`. Denote by :math:`\phi(a_1,\ldots,a_d)`, the optimal objective
     value of the LP in d-MMOT problem. Let :math:`z^*` be an optimal solution
     to the dual program. Then,
 
     .. math::
         \begin{align}
-            \nabla \phi(p_1,\ldots,p_{d}) &= z^*,
+            \nabla \phi(a_1,\ldots,a_{d}) &= z^*,
             ~~\text{and for any $t\in \mathbb{R}$,}~~
-            \phi(p_1,p_2,\ldots,p_{d}) = \sum_{j}p_j'
+            \phi(a_1,a_2,\ldots,a_{d}) = \sum_{j}a_j'
             (z_j^* + t\, \eta), \nonumber \\
             \text{where } \eta &:= (z_1^{*}(n)\,e, z^*_1(n)\,e, \cdots,
             z^*_{d}(n)\,e)
         \end{align}
 
     Using these dual variables naturally provided by the algorithm in
-    ot.lp.discrete_mmot, gradient steps move each input distribution
+    ot.lp.dmmot_monge_1dgrid_loss, gradient steps move each input distribution
     to minimize their d-mmot distance.
 
     Parameters
@@ -272,32 +282,34 @@ def discrete_mmot_converge(
 
     See Also
     --------
-    ot.lp.discrete_mmot : d-Dimensional Earth Mover's Solver
+    ot.lp.dmmot_monge_1dgrid_loss: d-Dimensional Earth Mover's Solver
     """
 
     # function body here
     nx = get_backend(A)
+    A = nx.to_numpy(A)
     n, d = A.shape  # n is dim, d is n_hists
 
     def dualIter(A, lr):
-        funcval, log_dict = discrete_mmot(A, verbose=verbose, log=True)
+        funcval, log_dict = dmmot_monge_1dgrid_loss(
+            A, verbose=verbose, log=True)
         grad = np.column_stack(log_dict['dual'])
-        A_new = nx.reshape(A, (n, d)) - grad * lr
+        A_new = np.reshape(A, (n, d)) - grad * lr
         return funcval, A_new, grad, log_dict
 
     def renormalize(A):
-        A = nx.reshape(A, (n, d))
+        A = np.reshape(A, (n, d))
         for i in range(A.shape[1]):
             if min(A[:, i]) < 0:
                 A[:, i] -= min(A[:, i])
-            A[:, i] /= nx.sum(A[:, i])
+            A[:, i] /= np.sum(A[:, i])
         return A
 
     def listify(A):
         return [A[:, i] for i in range(A.shape[1])]
 
     funcval, _, grad, log_dict = dualIter(A, lr)
-    gn = nx.norm(grad)
+    gn = np.linalg.norm(grad)
 
     print(f'Inital:\t\tObj:\t{funcval:.4f}\tGradNorm:\t{gn:.4f}')
 
@@ -305,7 +317,7 @@ def discrete_mmot_converge(
 
         A = renormalize(A)
         funcval, A, grad, log_dict = dualIter(A, lr)
-        gn = nx.norm(grad)
+        gn = np.linalg.norm(grad)
 
         if i % print_rate == 0:
             print(f'Iter {i:2.0f}:\tObj:\t{funcval:.4f}\tGradNorm:\t{gn:.4f}')
