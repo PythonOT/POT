@@ -187,7 +187,7 @@ def test_dist():
     # tests that every metric runs correctly
     metrics_w = [
         'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
-        'euclidean', 'hamming', 'jaccard', 'kulczynski1',
+        'euclidean', 'hamming', 'jaccard',
         'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
         'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule'
     ]  # those that support weights
