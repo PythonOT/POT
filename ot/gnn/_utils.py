@@ -14,7 +14,7 @@ def template_initialisation(n_templates, n_template_nodes, n_features, feature_i
     """"
     Initialises templates for the Template Fused Gromov Wasserstein layer.
     Returns the adjacency matrices and the features of the nodes of the templates.
-    Adjacency matrics are intialised uniformly with values in :math:[0,1] 
+    Adjacency matrics are intialised uniformly with values in :math:[0,1]
     Features of the nodes are intialised following a normal distribution.
 
     Parameters

@@ -41,7 +41,7 @@ class TFGWLayer(nn.Module):
         Parameters
         ----------
         n_features : int
-                Feature dimension of the nodes.        
+                Feature dimension of the nodes.
         n_templates : int
                 Number of graph templates.
         n_templates_nodes : int
