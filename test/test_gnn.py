@@ -4,12 +4,7 @@
 #
 # License: MIT License
 
-import torch
-from torch_geometric.nn import Linear
-from torch_geometric.data import Data as GraphData
-from torch_geometric.loader import DataLoader
-import torch.nn as nn
-from ot.gnn import TFGWLayer
+
 import pytest
 
 try:  # test if pytorch_geometric is installed
@@ -19,55 +14,64 @@ except ImportError:
     nogo = True
 
 
-class pooling_LTFGW(nn.Module):
-    """
-    Pooling architecture using the LTFGW layer.
 
-    Parameters
-    ----------
-    n_features: int
-        Number of features for each node.
-    n_template: int
-        Number of templates.
-    n_template_nodes: int
-        Number of nodes in each template.
-    """
 
-    def __init__(self, n_features, n_templates, n_template_nodes):
+    
+def test_TFGW():
+    # Test the TFGW layer by passing two graphs through the layer and doing backpropagation.
+
+    import torch
+    from torch_geometric.nn import Linear
+    from torch_geometric.data import Data as GraphData
+    from torch_geometric.loader import DataLoader
+    import torch.nn as nn
+    from ot.gnn import TFGWLayer
+
+
+    class pooling_TFGW(nn.Module):
         """
         Pooling architecture using the LTFGW layer.
 
         Parameters
         ----------
         n_features: int
-           Number of features for each node.
+            Number of features for each node.
         n_template: int
             Number of templates.
         n_template_nodes: int
             Number of nodes in each template.
         """
-        super().__init__()
 
-        self.n_features = n_features
-        self.n_templates = n_templates
-        self.n_template_nodes = n_template_nodes
+        def __init__(self, n_features, n_templates, n_template_nodes):
+            """
+            Pooling architecture using the LTFGW layer.
 
-        self.TFGW = TFGWLayer(self.n_templates, self.n_template_nodes, self.n_features)
+            Parameters
+            ----------
+            n_features: int
+            Number of features for each node.
+            n_template: int
+                Number of templates.
+            n_template_nodes: int
+                Number of nodes in each template.
+            """
+            super().__init__()
 
-        self.last_linear = Linear(self.n_templates, 1)
+            self.n_features = n_features
+            self.n_templates = n_templates
+            self.n_template_nodes = n_template_nodes
 
-    def forward(self, x, edge_index):
+            self.TFGW = TFGWLayer(self.n_templates, self.n_template_nodes, self.n_features)
 
-        x = self.TFGW(x, edge_index)
+            self.last_linear = Linear(self.n_templates, 1)
 
-        x = self.last_linear(x)
+        def forward(self, x, edge_index):
 
-        return x
+            x = self.TFGW(x, edge_index)
 
+            x = self.last_linear(x)
 
-@pytest.mark.skipif(not nogo, reason="torch_geometric not installed")
-def test_TFGW():
-    # Test the TFGW layer by passing two graphs through the layer and doing backpropagation.
+            return x
 
     n_templates = 3
     n_template_nodes = 3
@@ -89,7 +93,7 @@ def test_TFGW():
 
     dataset = DataLoader([graph1, graph2], batch_size=1)
 
-    model = pooling_LTFGW(n_features, n_templates, n_template_nodes)
+    model = pooling_TFGW(n_features, n_templates, n_template_nodes)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     criterion = torch.nn.CrossEntropyLoss()
