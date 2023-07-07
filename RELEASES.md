@@ -3,7 +3,7 @@
 ## 0.9.1dev
 
 #### New features
-- Template Fused Gromov Wasserstein layer in `ot.gnn`.
+- Template Fused Gromov Wasserstein layer in `ot.gnn` (PR #488)
 - Make alpha parameter in semi-relaxed Fused Gromov Wasserstein differentiable (PR #483)
 - Make alpha parameter in Fused Gromov Wasserstein differentiable (PR #463)
 - Added the sparsity-constrained OT solver to `ot.smooth` and added `projection_sparse_simplex` to `ot.utils` (PR #459)
