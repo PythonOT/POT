@@ -14,9 +14,6 @@ except ImportError:
     nogo = True
 
 
-
-
-    
 def test_TFGW():
     # Test the TFGW layer by passing two graphs through the layer and doing backpropagation.
 
@@ -26,7 +23,6 @@ def test_TFGW():
     from torch_geometric.loader import DataLoader
     import torch.nn as nn
     from ot.gnn import TFGWLayer
-
 
     class pooling_TFGW(nn.Module):
         """
