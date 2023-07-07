@@ -161,7 +161,7 @@ plt.show()
 
 #%% We compute the barycenter using FGW. Structure matrices are computed using the shortest_path distance in the graph
 # Features distances are the euclidean distances
-Cs = [shortest_path(nx.adjacency_matrix(x)) for x in X0]
+Cs = [shortest_path(nx.adjacency_matrix(x, dtype=np.int_)) for x in X0]
 ps = [np.ones(len(x.nodes())) / len(x.nodes()) for x in X0]
 Ys = [np.array([v for (k, v) in nx.get_node_attributes(x, 'attr_name').items()]).reshape(-1, 1) for x in X0]
 lambdas = np.array([np.ones(len(Ys)) / len(Ys)]).ravel()
