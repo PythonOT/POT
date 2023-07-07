@@ -9,7 +9,7 @@ from ._utils import template_initialisation, FGW_pooling
 
 class TFGWLayer(nn.Module):
     """
-    Template Fused Gromov-Wasserstein (TFGW) layer. This layer acts as a pooling layer for graph neural networks.
+    Template Fused Gromov-Wasserstein (TFGW) layer. This layer is a pooling layer for graph neural networks.
         It computes the fused Gromov-Wasserstein distances between the graph and a set of templates.
 
     Parameters
@@ -35,7 +35,7 @@ class TFGWLayer(nn.Module):
 
     def __init__(self, n_features, n_templates=2, n_template_nodes=2, alpha0=None, train_node_weights=True):
         """
-        Template Fused Gromov-Wasserstein (TFGW) layer. This layer acts as a pooling layer for graph neural networks.
+        Template Fused Gromov-Wasserstein (TFGW) layer. This layer is a pooling layer for graph neural networks.
             It computes the fused Gromov-Wasserstein distances between the graph and a set of templates.
 
         Parameters
