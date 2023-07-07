@@ -10,3 +10,4 @@ jax
 jaxlib
 tensorflow
 pytest
+torch_geometric
