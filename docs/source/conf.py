@@ -357,7 +357,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
 sphinx_gallery_conf = {
     'examples_dirs': ['../../examples', '../../examples/da'],
     'gallery_dirs': 'auto_examples',
-    'filename_pattern': 'plot_',
+    'filename_pattern': 'plot_(?!barycenter_fgw)',
     'nested_sections' : False,
     'backreferences_dir':  'gen_modules/backreferences',
 	'inspect_global_variables'  : True,
