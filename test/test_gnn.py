@@ -41,7 +41,7 @@ class pooling_LTFGW(nn.Module):
         ----------
         n_features: int
            Number of features for each node.
-        n_tempkate: int
+        n_template: int
             Number of templates.
         n_template_nodes: int
             Number of nodes in each template.
