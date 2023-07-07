@@ -4,8 +4,6 @@ GNN layers utils
 """
 
 import torch
-import torch.nn.functional as F
-import numpy as np
 from ..utils import dist
 from ..gromov import fused_gromov_wasserstein2
 
