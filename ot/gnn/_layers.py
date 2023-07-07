@@ -29,7 +29,7 @@ class TFGWLayer(nn.Module):
 
     References
     ----------
-    .. [51]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [52]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Template based graph neural network with optimal transport distances"
     """
 
