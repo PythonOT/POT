@@ -9,13 +9,11 @@ import pytest
 
 try:  # test if pytorch_geometric is installed
     import torch_geometric
-    import torch
-    nogo = False
 except ImportError:
-    nogo = True
+    torch_geometric = False
 
 
-@pytest.mark.skipif(nogo, reason="pytorch_geometric not installed")
+@pytest.mark.skipif(not torch_geometric, reason="pytorch_geometric not installed")
 def test_TFGW():
     # Test the TFGW layer by passing two graphs through the layer and doing backpropagation.
 
