@@ -82,7 +82,6 @@ def FGW_pooling(x, edge_index, x_T, C_T, alpha, q):
     p = torch.ones(n) / n
 
     C = torch.sparse_coo_tensor(edge_index, torch.ones(len(edge_index[0])), size=(n, n)).type(torch.float)
-
     C = C.to_dense()
 
     if not n_feat == n_feat_T:

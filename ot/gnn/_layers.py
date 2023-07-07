@@ -14,16 +14,14 @@ class TFGWLayer(nn.Module):
 
     Parameters
     ----------
+    n_features : int
+        Feature dimension of the nodes.
     n_templates : int
          Number of graph templates.
     n_templates_nodes : int
         Number of nodes in each template.
-    n_features : int
-        Feature dimension of the nodes.
-    k : int, optional
-        Number of hops to construct the neighborhood subgraphs.
     alpha0 : float, optional
-        Trade-off parameter (0 < alpha < 1). If None, alpha is optimised, else it is fixed at the given value.
+        Trade-off parameter (0 < alpha < 1). If None alpha is trained, else it is fixed at the given value.
     train_node_weights : bool, optional
         If True, the templates node weights are learned.
         Else, they are uniform.
@@ -42,16 +40,14 @@ class TFGWLayer(nn.Module):
 
         Parameters
         ----------
+        n_features : int
+                Feature dimension of the nodes.        
         n_templates : int
                 Number of graph templates.
         n_templates_nodes : int
                 Number of nodes in each template.
-        n_features : int
-                Feature dimension of the nodes.
-        k : int, optional
-                Number of hops to construct the neighborhood subgraphs.
         alpha0 : float, optional
-                Trade-off parameter (0 < alpha < 1). If None, alpha is learned, else it is fixed at the given value.
+                Trade-off parameter (0 < alpha < 1). If None alpha is trained, else it is fixed at the given value.
         train_node_weights : bool, optional
                 If True, the templates node weights are learned.
                 Else, they are uniform.
