@@ -3791,3 +3791,96 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
         return gamma, log
     else:
         return gamma
+ 
+
+
+
+########################################################################################
+#################################### WORK IN PROGRESS ##################################
+########################################################################################
+
+## Questions: 
+# How to initialize Q, R and g for lowrank algo ? (possible answer in lowrank algo implemention on github by original researchers)
+# Input arguments of lowrank_sinkhorn: cost matrix M ? or X_s / X_t ?
+# How to determine the rank r ? (other than 1/r > alpha)
+# How to choose alpha ?
+
+## Observations: 
+# OT Matrix => full of np.nan => issues with division and overflow in multiply
+# Not sure if I interpreted corretly some of the calculations in the original pseudo-code
+
+
+
+def lowrank_sinkhorn(a, b, M, reg=0, metric='sqeuclidean',
+                     numIterMax=10000, stopThr=1e-9):
+    
+    a, b, M = list_to_array(a, b, M)
+    nx = get_backend(M, a, b)
+
+    if len(a) == 0:
+        a = nx.full((M.shape[0],), 1.0 / M.shape[0], type_as=M)
+    if len(b) == 0:
+        b = nx.full((M.shape[1],), 1.0 / M.shape[1], type_as=M)
+
+    a, b = a.reshape((-1,1)), b.reshape((-1,1))
+    n, m = a.shape[0], b.shape[0]
+
+    r = 3 # how to determine the rank r ?
+    alpha = 1e-10 # how to pick alpha other than 1/r > alpha
+    
+    L = nx.sqrt((2/(alpha**4))*nx.norm(M,2)**2 + (reg + (2/(alpha**3))*nx.norm(M,2))**2)
+    gamma = 1/(2*L(reg,alpha,M))
+    
+    # Start values for Q, R, g (not sure ???)
+    Q, R, g = nx.ones((n,r)), nx.ones((m,r)), nx.ones((r,1)) 
+
+    n_iter = 0
+    err = 1
+    
+    while n_iter < numIterMax:
+        
+        epsilon1 = nx.exp(-gamma*(M @ R)/nx.diag(g) - ((gamma*reg)-1)*nx.log(Q))
+        epsilon2 = nx.exp(-gamma*(M.T @ Q)*nx.diag(1/g) - ((gamma*reg)-1)*nx.log(R))
+        omega = nx.diag(Q.T @ M @ R).reshape((-1,1))
+        epsilon3 = nx.exp(gamma*omega/(g**2)) - (gamma*reg - 1)*nx.log(g)
+        
+
+        #----------------------------------------------------------------------------------------#
+        #                                      LR-Dykstra
+        #----------------------------------------------------------------------------------------#
+        
+        # Initial inputs
+        q3_1, q3_2 = nx.ones((r,1), dtype=int), nx.ones((r,1), dtype=int)
+        v1_, v2_ = nx.ones((r,1), dtype=int), nx.ones((r,1), dtype=int)
+        q1, q2 = nx.ones((r,1), dtype=int), nx.ones((r,1), dtype=int)
+        g_ = epsilon3 
+        
+        if err > stopThr:
+            u1 = a / (epsilon1 @ v1_)
+            u2 = b / (epsilon2 @ v2_)
+
+            g = nx.maximum(alpha, g_ * q3_1)
+            q3_1 = g_ * q3_1 / g
+            g_ = g 
+
+            prod1 = v1_ * q1 * (epsilon1.T @ u1)**(1/3)
+            prod2 = v2_ * q2 * (epsilon2.T @ u2)**(1/3)
+            g = (g_ * q3_2)**(1/3) * prod1 * prod2
+
+            v1 = g / (epsilon1.T @ u1)
+            v2 = g / (epsilon2.T @ u2)
+    
+            q1 = v1_ * q1 / v1
+            q2 = v2_ * q2 / v2
+            q3_2 = g_ * q3_2 / g
+
+            # Compute error
+            err1 = nx.sum(nx.abs(u1 * (epsilon1 @ v1) - a))
+            err2 = nx.sum(nx.abs(u2 * (epsilon2 @ v2) - b))
+            err = err1 + err2
+
+        Q = nx.diag(u1).reshape((-1,1)) * epsilon1 * nx.diag(v1).reshape((-1,1))
+        R = nx.diag(u2).reshape((-1,1)) * epsilon2 * nx.diag(v2).reshape((-1,1))
+    
+    # Return OT matrix 
+    return nx.dot(M, nx.diag(1/g) * (Q @ R.T))
