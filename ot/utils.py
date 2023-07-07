@@ -285,7 +285,7 @@ def dist(x1, x2=None, metric='sqeuclidean', p=2, w=None):
         'sqeuclidean' or 'euclidean' on all backends. On numpy the function also
         accepts  from the scipy.spatial.distance.cdist function : 'braycurtis',
         'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
-        'euclidean', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
+        'euclidean', 'hamming', 'jaccard', 'kulczynski1', 'mahalanobis',
         'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
         'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski', 'yule'.
     p : float, optional
