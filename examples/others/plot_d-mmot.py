@@ -45,12 +45,13 @@ pl.legend()
 # The objective being minimized is different for both methods, so the objective
 # values cannot be compared.
 
-print('LP Iterations:')
-ot.tic()
+# L2 Iteration
+weights = np.ones(d) / d
+l2_bary = A.dot(weights)
+
+# print('LP Iterations:')
 # alpha = 1  # /d  # 0<=alpha<=1
 # weights = np.array(d * [alpha])
-weights = np.ones(d)/d
-l2_bary = A.dot(weights)
 # lp_bary, lp_log = ot.lp.barycenter(
 #     A, M, weights, solver='interior-point', verbose=False, log=True)
 # print('Time\t: ', ot.toc(''))
@@ -59,8 +60,8 @@ l2_bary = A.dot(weights)
 print('')
 print('Discrete MMOT Algorithm:')
 ot.tic()
-barys, log = ot.lp.dmmot_monge_1dgrid_optimize(
-    A, niters=4000, lr=0.000002, log=True)
+barys, log = ot.lp.dmmot_monge_ddgrid_optimize(
+    A, niters=4000, lr_init=1e-5, lr_decay=0.997, log=True)
 dmmot_obj = log['primal objective']
 print('Time\t: ', ot.toc(''))
 print('Obj\t: ', dmmot_obj)
@@ -68,7 +69,7 @@ print('Obj\t: ', dmmot_obj)
 
 # %%
 # Compare Barycenters in both methods
-# ---------
+# -----
 pl.figure(1, figsize=(6.4, 3))
 for i in range(len(barys)):
     if i == 0:
@@ -115,7 +116,8 @@ pl.legend()
 # values cannot be compared.
 
 # Perform gradient descent optimization using the d-MMOT method.
-barys = ot.lp.dmmot_monge_1dgrid_optimize(A, niters=9000, lr=0.00001)
+barys = ot.lp.dmmot_monge_ddgrid_optimize(
+    A, niters=3000, lr_init=1e-4, lr_decay=0.997)
 
 # after minimization, any distribution can be used as a estimate of barycenter.
 bary = barys[0]

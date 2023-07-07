@@ -20,11 +20,11 @@ def create_test_data(nx):
     return A, x
 
 
-def test_dmmot_monge_1dgrid_loss(nx):
+def test_dmmot_monge_ddgrid_loss(nx):
     A, x = create_test_data(nx)
 
-    # Compute loss using dmmot_monge_1dgrid_loss
-    primal_obj = ot.lp.dmmot_monge_1dgrid_loss(A)
+    # Compute loss using dmmot_monge_ddgrid_loss
+    primal_obj = ot.lp.dmmot_monge_ddgrid_loss(A)
     primal_obj = nx.to_numpy(primal_obj)
     expected_primal_obj = 0.13667759626298503
 
@@ -53,12 +53,15 @@ def test_dmmot_monge_1dgrid_loss(nx):
                                    Expected different primal objective value")
 
 
-def test_dmmot_monge_1dgrid_optimize(nx):
+def test_dmmot_monge_ddgrid_optimize(nx):
     # test discrete_mmot_converge result
     A, _ = create_test_data(nx)
     d = 2
     niters = 10
-    result = ot.lp.dmmot_monge_1dgrid_optimize(A, niters, 0.001, 5)
+    result = ot.lp.dmmot_monge_ddgrid_optimize(A,
+                                               niters,
+                                               lr_init=1e-3,
+                                               lr_decay=1)
 
     expected_obj = np.array([[0.05553516, 0.13082618, 0.27327479, 0.54036388],
                              [0.04185365, 0.09570724, 0.24384705, 0.61859206]])

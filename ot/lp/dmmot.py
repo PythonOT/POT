@@ -57,7 +57,7 @@ def dist_monge_max_min(i):
     return max(i) - min(i)
 
 
-def dmmot_monge_1dgrid_loss(A, verbose=False, log=False):
+def dmmot_monge_ddgrid_loss(A, verbose=False, log=False):
     r"""
     Compute the discrete multi-marginal optimal transport of distributions A.
 
@@ -132,7 +132,7 @@ def dmmot_monge_1dgrid_loss(A, verbose=False, log=False):
 
     See Also
     --------
-    ot.lp.dmmot_monge_1dgrid_optimize : Optimize the d-Dimensional Earth
+    ot.lp.dmmot_monge_ddgrid_optimize : Optimize the d-Dimensional Earth
     Mover's Distance (d-MMOT)
     """
 
@@ -196,8 +196,14 @@ def dmmot_monge_1dgrid_loss(A, verbose=False, log=False):
         return obj
 
 
-def dmmot_monge_1dgrid_optimize(
-        A, niters=100, lr=0.1, print_rate=100, verbose=False, log=False):
+def dmmot_monge_ddgrid_optimize(
+        A,
+        niters=100,
+        lr_init=1e-5,
+        lr_decay=0.995,
+        print_rate=100,
+        verbose=False,
+        log=False):
     r"""Minimize the d-dimensional EMD using gradient descent.
 
     Discrete Multi-Marginal Optimal Transport (d-MMOT): Let :math:`a_1, \ldots,
@@ -241,7 +247,7 @@ def dmmot_monge_1dgrid_optimize(
         \end{align}
 
     Using these dual variables naturally provided by the algorithm in
-    ot.lp.dmmot_monge_1dgrid_loss, gradient steps move each input distribution
+    ot.lp.dmmot_monge_ddgrid_loss, gradient steps move each input distribution
     to minimize their d-mmot distance.
 
     Parameters
@@ -250,8 +256,10 @@ def dmmot_monge_1dgrid_optimize(
         The input ndarray containing distributions of n bins in d dimensions.
     niters : int, optional (default=100)
         The maximum number of iterations for the optimization algorithm.
-    lr : float, optional (default=0.1)
-        The learning rate (step size) for the optimization algorithm.
+    lr_init : float, optional (default=1e-5)
+        The initial learning rate (step size) for the optimization algorithm.
+    lr_decay : float, optional (default=0.995)
+        The learning rate decay rate in each iteration.
     print_rate : int, optional (default=100)
         The rate at which to print the objective value and gradient norm
         during the optimization algorithm.
@@ -282,7 +290,7 @@ def dmmot_monge_1dgrid_optimize(
 
     See Also
     --------
-    ot.lp.dmmot_monge_1dgrid_loss: d-Dimensional Earth Mover's Solver
+    ot.lp.dmmot_monge_ddgrid_loss: d-Dimensional Earth Mover's Solver
     """
 
     # function body here
@@ -291,7 +299,7 @@ def dmmot_monge_1dgrid_optimize(
     n, d = A.shape  # n is dim, d is n_hists
 
     def dualIter(A, lr):
-        funcval, log_dict = dmmot_monge_1dgrid_loss(
+        funcval, log_dict = dmmot_monge_ddgrid_loss(
             A, verbose=verbose, log=True)
         grad = np.column_stack(log_dict['dual'])
         A_new = np.reshape(A, (n, d)) - grad * lr
@@ -308,6 +316,8 @@ def dmmot_monge_1dgrid_optimize(
     def listify(A):
         return [A[:, i] for i in range(A.shape[1])]
 
+    lr = lr_init
+
     funcval, _, grad, log_dict = dualIter(A, lr)
     gn = np.linalg.norm(grad)
 
@@ -321,6 +331,8 @@ def dmmot_monge_1dgrid_optimize(
 
         if i % print_rate == 0:
             print(f'Iter {i:2.0f}:\tObj:\t{funcval:.4f}\tGradNorm:\t{gn:.4f}')
+
+        lr *= lr_decay
 
     A = renormalize(A)
     a = listify(A)
