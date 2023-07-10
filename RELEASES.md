@@ -19,6 +19,8 @@
 - Added feature Efficient Discrete Multi Marginal Optimal Transport Regularization + examples (PR #454)
 
 #### Closed issues
+
+- Fix change in scipy API for `cdist` (PR #487)
 - Fix circleci-redirector action and codecov (PR #460)
 - Fix issues with cuda for ot.binary_search_circle and with gradients for ot.sliced_wasserstein_sphere (PR #457)
 - Major documentation cleanup (PR #462, #467, #475)
