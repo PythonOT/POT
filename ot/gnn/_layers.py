@@ -7,7 +7,7 @@ import torch.nn as nn
 from ._utils import template_initialisation, FGW_pooling
 
 
-class TFGWLayer(nn.Module):
+class TFGWPooling(nn.Module):
     """
     Template Fused Gromov-Wasserstein (TFGW) layer. This layer is a pooling layer for graph neural networks.
         It computes the fused Gromov-Wasserstein distances between the graph and a set of templates.
