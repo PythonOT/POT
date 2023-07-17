@@ -1,6 +1,6 @@
 
-from ._utils import (template_initialisation,FGW_pooling)
+from ._utils import (TFGW_template_initialisation,distance_to_templates)
 
-from ._layers import (TFGWLayer)
+from ._layers import (TFGWPooling)
 
-__all__ = ['template_initialisation', 'FGW_pooling', 'TFGWLayer']
+__all__ = ['TFGW_template_initialisation', 'distance_to_templates', 'TFGWPooling']

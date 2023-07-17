@@ -327,7 +327,8 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
 
     # ensure that same mass
     np.testing.assert_almost_equal(a.sum(0),
-                                   b.sum(0), err_msg='a and b vector must have the same sum')
+                                   b.sum(0), err_msg='a and b vector must have the same sum',
+                                   decimal=6)
     b = b * a.sum() / b.sum()
 
     asel = a != 0

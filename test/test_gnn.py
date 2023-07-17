@@ -22,34 +22,16 @@ def test_TFGW():
     from torch_geometric.data import Data as GraphData
     from torch_geometric.loader import DataLoader
     import torch.nn as nn
-    from ot.gnn import TFGWLayer
+    from ot.gnn import TFGWPooling
 
     class pooling_TFGW(nn.Module):
         """
         Pooling architecture using the LTFGW layer.
-
-        Parameters
-        ----------
-        n_features: int
-            Number of features for each node.
-        n_template: int
-            Number of templates.
-        n_template_nodes: int
-            Number of nodes in each template.
         """
 
         def __init__(self, n_features, n_templates, n_template_nodes):
             """
             Pooling architecture using the LTFGW layer.
-
-            Parameters
-            ----------
-            n_features: int
-            Number of features for each node.
-            n_template: int
-                Number of templates.
-            n_template_nodes: int
-                Number of nodes in each template.
             """
             super().__init__()
 
@@ -57,15 +39,15 @@ def test_TFGW():
             self.n_templates = n_templates
             self.n_template_nodes = n_template_nodes
 
-            self.TFGW = TFGWLayer(self.n_templates, self.n_template_nodes, self.n_features)
+            self.TFGW = TFGWPooling(self.n_templates, self.n_template_nodes, self.n_features)
 
-            self.last_linear = Linear(self.n_templates, 1)
+            self.linear = Linear(self.n_templates, 1)
 
         def forward(self, x, edge_index):
 
             x = self.TFGW(x, edge_index)
 
-            x = self.last_linear(x)
+            x = self.linear(x)
 
             return x
 

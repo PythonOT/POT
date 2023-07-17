@@ -4,7 +4,7 @@ Template Fused Gromov Wasserstein
 
 import torch
 import torch.nn as nn
-from ._utils import template_initialisation, FGW_pooling
+from ._utils import TFGW_template_initialisation, distance_to_templates
 
 
 class TFGWPooling(nn.Module):
@@ -16,15 +16,23 @@ class TFGWPooling(nn.Module):
     ----------
     n_features : int
         Feature dimension of the nodes.
-    n_templates : int
+    n_tplt : int
          Number of graph templates.
-    n_templates_nodes : int
+    n_tplt_nodes : int
         Number of nodes in each template.
     alpha0 : float, optional
-        Trade-off parameter (0 < alpha < 1). If None alpha is trained, else it is fixed at the given value.
+        FGW trade-off parameter (0 < alpha < 1). If None alpha is trained, else it is fixed at the given value.
+        Weights features (alpha=0) and structure (alpha=1).
     train_node_weights : bool, optional
         If True, the templates node weights are learned.
         Else, they are uniform.
+    multi_alpha: bool, optional
+        If True, the alpha parameter is a vector of size n_tplt.        
+    feature_init_mean: float, optional
+        Mean of the random normal law to initialize the template features.
+    feature_init_std: float, optional
+        Standard deviation of the random normal law to initialize the template features.
+
 
 
     References
@@ -33,7 +41,7 @@ class TFGWPooling(nn.Module):
             "Template based graph neural network with optimal transport distances"
     """
 
-    def __init__(self, n_features, n_templates=2, n_template_nodes=2, alpha0=None, train_node_weights=True):
+    def __init__(self, n_features, n_tplt=2, n_tplt_nodes=2, alpha0=None, train_node_weights=True, multi_alpha=False, feature_init_mean=0., feature_init_std=1.):
         """
         Template Fused Gromov-Wasserstein (TFGW) layer. This layer is a pooling layer for graph neural networks.
             It computes the fused Gromov-Wasserstein distances between the graph and a set of templates.
@@ -42,15 +50,22 @@ class TFGWPooling(nn.Module):
         ----------
         n_features : int
                 Feature dimension of the nodes.
-        n_templates : int
+        n_tplt : int
                 Number of graph templates.
-        n_templates_nodes : int
+        n_tplt_nodes : int
                 Number of nodes in each template.
-        alpha0 : float, optional
+        alpha : float, optional
                 Trade-off parameter (0 < alpha < 1). If None alpha is trained, else it is fixed at the given value.
+                Weights features (alpha=0) and structure (alpha=1).
         train_node_weights : bool, optional
                 If True, the templates node weights are learned.
                 Else, they are uniform.
+        multi_alpha: bool, optional
+                If True, the alpha parameter is a vector of size n_tplt.
+        feature_init_mean: float, optional
+                Mean of the random normal law to initialize the template features.
+        feature_init_std: float, optional
+                Standard deviation of the random normal law to initialize the template features.
 
         References
         ----------
@@ -60,13 +75,16 @@ class TFGWPooling(nn.Module):
         """
         super().__init__()
 
-        self.n_templates = n_templates
-        self.n_templates_nodes = n_template_nodes
+        self.n_tplt = n_tplt
+        self.n_tplt_nodes = n_tplt_nodes
         self.n_features = n_features
+        self.multi_alpha = multi_alpha
+        self.feature_init_mean = feature_init_mean
+        self.feature_init_std = feature_init_std
 
-        templates, templates_features, self.q0 = template_initialisation(self.n_templates_nodes, self.n_templates, self.n_features)
-        self.templates = nn.Parameter(templates)
-        self.templates_features = nn.Parameter(templates_features)
+        tplt_adjacencies, tplt_features, self.q0 = TFGW_template_initialisation(self.n_tplt, self.n_tplt_nodes, self.n_features, self.feature_init_mean, self.feature_init_std)
+        self.tplt_adjacencies = nn.Parameter(tplt_adjacencies)
+        self.tplt_features = nn.Parameter(tplt_features)
 
         self.softmax = nn.Softmax(dim=1)
 
@@ -74,14 +92,25 @@ class TFGWPooling(nn.Module):
             self.q0 = nn.Parameter(self.q0)
 
         if alpha0 is None:
-            alpha0 = torch.Tensor([0])
+            if multi_alpha:
+                self.alpha0 =torch.Tensor([0] * self.n_tplt)
+            else:
+                alpha0 = torch.Tensor([0])
             self.alpha0 = nn.Parameter(alpha0)
         else:
-            alpha0 = torch.Tensor([alpha0])
+            if multi_alpha:
+                self.alpha0 = torch.Tensor([alpha0] * self.n_tplt)
+                self.alpha0 = nn.Parameter(self.alpha0) 
+            else:
+                self.alpha0 = torch.Tensor([alpha0])
             self.alpha0 = torch.logit(alpha0)
 
-    def forward(self, x, edge_index):
+    def forward(self, x, edge_index, batch=None):
         alpha = torch.sigmoid(self.alpha0)
         q = self.softmax(self.q0)
-        x = FGW_pooling(x, edge_index, self.templates_features, self.templates, alpha, q)
+        x = distance_to_templates(edge_index, self.tplt_adjacencies, x, self.tplt_features, q, alpha, self.multi_alpha, batch)
         return x
+    
+
+
+
