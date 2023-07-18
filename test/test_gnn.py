@@ -22,7 +22,7 @@ def test_TFGW():
     from torch_geometric.data import Data as GraphData
     from torch_geometric.loader import DataLoader
     import torch.nn as nn
-    from ot.gnn import TFGWPooling
+    from ot.gnn import TFGWPooling, TGWPooling
 
     class pooling_TFGW(nn.Module):
         """
@@ -51,6 +51,34 @@ def test_TFGW():
 
             return x
 
+
+    class pooling_TGW(nn.Module):
+        """
+        Pooling architecture using the LTFGW layer.
+        """
+
+        def __init__(self, n_features, n_templates, n_template_nodes):
+            """
+            Pooling architecture using the LTFGW layer.
+            """
+            super().__init__()
+
+            self.n_features = n_features
+            self.n_templates = n_templates
+            self.n_template_nodes = n_template_nodes
+
+            self.TFGW = TGWPooling(self.n_templates, self.n_template_nodes, self.n_features)
+
+            self.linear = Linear(self.n_templates, 1)
+
+        def forward(self, x, edge_index):
+
+            x = self.TFGW(x, edge_index)
+
+            x = self.linear(x)
+
+            return x            
+
     n_templates = 3
     n_template_nodes = 3
     n_nodes = 10
@@ -71,17 +99,32 @@ def test_TFGW():
 
     dataset = DataLoader([graph1, graph2], batch_size=1)
 
-    model = pooling_TFGW(n_features, n_templates, n_template_nodes)
+    model_FGW = pooling_TFGW(n_features, n_templates, n_template_nodes)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    optimizer = torch.optim.Adam(model_FGW.parameters(), lr=0.01)
     criterion = torch.nn.CrossEntropyLoss()
 
-    model.train()
+    model_FGW.train()
 
     for i in range(n_epochs):
         for data in dataset:
 
-            out = model(data.x, data.edge_index)
+            out = model_FGW(data.x, data.edge_index)
+            loss = criterion(out, data.y)
+            loss.backward()
+            optimizer.step()
+
+    model_GW = pooling_TGW(n_features, n_templates, n_template_nodes)
+
+    optimizer = torch.optim.Adam(model_GW.parameters(), lr=0.01)
+    criterion = torch.nn.CrossEntropyLoss()
+
+    model_GW.train()
+
+    for i in range(n_epochs):
+        for data in dataset:
+
+            out = model_GW(data.x, data.edge_index)
             loss = criterion(out, data.y)
             loss.backward()
             optimizer.step()

@@ -5,8 +5,7 @@ GNN layers utils
 
 import torch
 from ..utils import dist
-from ..gromov import fused_gromov_wasserstein2
-from torch_geometric.data import Batch
+from ..gromov import fused_gromov_wasserstein2, gromov_wasserstein2
 from torch_geometric.utils import subgraph
 
 
@@ -52,7 +51,7 @@ def TFGW_template_initialisation(n_tplt, n_tplt_nodes, n_features, feature_init_
     return tplt_adjacencies, tplt_features, q0
 
 
-def distance_to_templates(G_edges, tplt_adjacencies, G_features, tplt_features, tplt_weights, alpha, multi_alpha, batch=None):
+def distance_to_templates(G_edges, tplt_adjacencies, G_features, tplt_features, tplt_weights, alpha=0.5, multi_alpha=False, batch=None, fused=True):
     """
     Computes the FGW distances between a graph and graph templates.
 
@@ -68,13 +67,16 @@ def distance_to_templates(G_edges, tplt_adjacencies, G_features, tplt_features, 
         List of the node features of the templates.
     weights : torch tensor, shape (n_templates, n_template_nodes)
         Weights on the nodes of the templates.
-    alpha : float
+    alpha : float, optional
         Trade-off parameter (0 < alpha < 1).
         Weights features (alpha=0) and structure (alpha=1).
     multi_alpha: bool, optional
         If True, the alpha parameter is a vector of size n_templates.
     batch: torch tensor
         Node level batch vector.
+    fused: bool, optional
+        If True, the fused Gromov-Wasserstein distance is computed.
+        Else, the Wasserstein distance is computed.
 
     Returns
     -------
@@ -109,14 +111,20 @@ def distance_to_templates(G_edges, tplt_adjacencies, G_features, tplt_features, 
                 raise ValueError('The templates and the graphs must have the same feature dimension.')
 
             for j in range(n_T):
+                
+                if fused:
 
-                template_features = tplt_features[j].reshape(len(tplt_features[j]), n_feat_T)
-                M = dist(G_features_i, template_features).type(torch.float)
+                  template_features = tplt_features[j].reshape(len(tplt_features[j]), n_feat_T)
+                  M = dist(G_features_i, template_features).type(torch.float)
 
-                if multi_alpha:
-                    embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha[j], symmetric=True, max_iter=50)
+                  if multi_alpha:
+                      embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha[j], symmetric=True, max_iter=50)
+                  else:
+                      embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha, symmetric=True, max_iter=50)
+                
                 else:
-                    embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha, symmetric=True, max_iter=50)
+                    
+                  embedding= gromov_wasserstein2(C,tplt_adjacencies[j],weights_G,tplt_weights[j],max_iter=50)
 
                 distances[i, j] = embedding
 
@@ -136,14 +144,20 @@ def distance_to_templates(G_edges, tplt_adjacencies, G_features, tplt_features, 
         distances = torch.zeros(n_T)
 
         for j in range(n_T):
+            
+            if fused:
 
-            template_features = tplt_features[j].reshape(len(tplt_features[j]), n_feat_T)
-            M = dist(G_features, template_features).type(torch.float)
+              template_features = tplt_features[j].reshape(len(tplt_features[j]), n_feat_T)
+              M = dist(G_features, template_features).type(torch.float)
 
-            if multi_alpha:
-                embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha[j], symmetric=True, max_iter=100)
+              if multi_alpha:
+                  embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha[j], symmetric=True, max_iter=100)
+              else:
+                  embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha, symmetric=True, max_iter=100)
+
             else:
-                embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha, symmetric=True, max_iter=100)
+                
+              embedding= gromov_wasserstein2(C,tplt_adjacencies[j],weights_G,tplt_weights[j],max_iter=50)
 
             distances[j] = embedding
 
