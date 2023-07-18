@@ -46,13 +46,13 @@ def TFGW_template_initialisation(n_tplt, n_tplt_nodes, n_features, feature_init_
     torch.nn.init.normal_(tplt_features, mean=feature_init_mean, std=feature_init_std)
 
     q0 = torch.zeros(n_tplt, n_tplt_nodes)
-    
-    tplt_adjacencies=0.5 * (tplt_adjacencies + torch.transpose(tplt_adjacencies, 1, 2))
+
+    tplt_adjacencies = 0.5 * (tplt_adjacencies + torch.transpose(tplt_adjacencies, 1, 2))
 
     return tplt_adjacencies, tplt_features, q0
 
 
-def distance_to_templates(G_edges, tplt_adjacencies, G_features, tplt_features, tplt_weights, alpha, multi_alpha,batch=None):
+def distance_to_templates(G_edges, tplt_adjacencies, G_features, tplt_features, tplt_weights, alpha, multi_alpha, batch=None):
     """
     Computes the FGW distances between a graph and graph templates.
 
@@ -81,73 +81,70 @@ def distance_to_templates(G_edges, tplt_adjacencies, G_features, tplt_features, 
     distances : torch tensor, shape (n_templates)
         Vector of fused Gromov-Wasserstein distances between the graph and the templates.
     """
-    
-    if not batch==None:
-      n_T, _, n_feat_T = tplt_features.shape
 
-      num_graphs=torch.max(batch)+1
-      distances=torch.zeros(num_graphs,n_T)
-      
-      #iterate over the graphs in the batch
-      for i in range(num_graphs):
-        
-        nodes=torch.where(batch==i)[0]
+    if not batch is None:
+        n_T, _, n_feat_T = tplt_features.shape
 
-        G_edges_i,_=subgraph(nodes,edge_index=G_edges, relabel_nodes=True)
-        G_features_i=G_features[nodes]
+        num_graphs = torch.max(batch) + 1
+        distances = torch.zeros(num_graphs, n_T)
 
-        n, n_feat = G_features_i.shape
+        #iterate over the graphs in the batch
+        for i in range(num_graphs):
+
+            nodes = torch.where(batch == i)[0]
+
+            G_edges_i, _ = subgraph(nodes, edge_index=G_edges, relabel_nodes=True)
+            G_features_i = G_features[nodes]
+
+            n, n_feat = G_features_i.shape
+
+            weights_G = torch.ones(n) / n
+
+            n_edges = len(G_edges_i[0])
+
+            C = torch.sparse_coo_tensor(G_edges_i, torch.ones(n_edges), size=(n, n)).type(torch.float)
+            C = C.to_dense()
+
+            if not n_feat == n_feat_T:
+                raise ValueError('The templates and the graphs must have the same feature dimension.')
+
+            for j in range(n_T):
+
+                template_features = tplt_features[j].reshape(len(tplt_features[j]), n_feat_T)
+                M = dist(G_features_i, template_features).type(torch.float)
+
+                if multi_alpha:
+                    embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha[j], symmetric=True, max_iter=50)
+                else:
+                    embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha, symmetric=True, max_iter=50)
+
+                distances[i, j] = embedding
+
+    else:
+
+        n, n_feat = G_features.shape
+        n_T, _, n_feat_T = tplt_features.shape
 
         weights_G = torch.ones(n) / n
 
-        n_edges=len(G_edges_i[0])
-
-        C = torch.sparse_coo_tensor(G_edges_i, torch.ones(n_edges), size=(n, n)).type(torch.float)
+        C = torch.sparse_coo_tensor(G_edges, torch.ones(len(G_edges[0])), size=(n, n)).type(torch.float)
         C = C.to_dense()
 
         if not n_feat == n_feat_T:
-          raise ValueError('The templates and the graphs must have the same feature dimension.')
+            raise ValueError('The templates and the graphs must have the same feature dimension.')
+
+        distances = torch.zeros(n_T)
 
         for j in range(n_T):
 
-          template_features = tplt_features[j].reshape(len(tplt_features[j]), n_feat_T)
-          M = dist(G_features_i, template_features).type(torch.float)
-            
+            template_features = tplt_features[j].reshape(len(tplt_features[j]), n_feat_T)
+            M = dist(G_features, template_features).type(torch.float)
 
-          if multi_alpha:
-            embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha[j], symmetric=True, max_iter=50)
-          else:
-            embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha, symmetric=True, max_iter=50)
+            if multi_alpha:
+                embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha[j], symmetric=True, max_iter=100)
+            else:
+                embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha, symmetric=True, max_iter=100)
 
-          distances[i,j] = embedding
-
-
-
-    else:
-         
-      n, n_feat = G_features.shape
-      n_T, _, n_feat_T = tplt_features.shape
-
-      weights_G = torch.ones(n) / n
-
-      C = torch.sparse_coo_tensor(G_edges, torch.ones(len(G_edges[0])), size=(n, n)).type(torch.float)
-      C = C.to_dense()
-
-      if not n_feat == n_feat_T:
-          raise ValueError('The templates and the graphs must have the same feature dimension.')
-
-      distances = torch.zeros(n_T)
-
-      for j in range(n_T):
-
-          template_features = tplt_features[j].reshape(len(tplt_features[j]), n_feat_T)
-          M = dist(G_features, template_features).type(torch.float)
-
-          if multi_alpha:
-              embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha[j], symmetric=True, max_iter=100)
-          else:
-              embedding = fused_gromov_wasserstein2(M, C, tplt_adjacencies[j], weights_G, tplt_weights[j], alpha=alpha, symmetric=True, max_iter=100)
-
-          distances[j] = embedding
+            distances[j] = embedding
 
     return distances

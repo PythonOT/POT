@@ -27,7 +27,7 @@ class TFGWPooling(nn.Module):
         If True, the templates node weights are learned.
         Else, they are uniform.
     multi_alpha: bool, optional
-        If True, the alpha parameter is a vector of size n_tplt.        
+        If True, the alpha parameter is a vector of size n_tplt.
     feature_init_mean: float, optional
         Mean of the random normal law to initialize the template features.
     feature_init_std: float, optional
@@ -93,14 +93,14 @@ class TFGWPooling(nn.Module):
 
         if alpha0 is None:
             if multi_alpha:
-                self.alpha0 =torch.Tensor([0] * self.n_tplt)
+                self.alpha0 = torch.Tensor([0] * self.n_tplt)
             else:
                 alpha0 = torch.Tensor([0])
             self.alpha0 = nn.Parameter(alpha0)
         else:
             if multi_alpha:
                 self.alpha0 = torch.Tensor([alpha0] * self.n_tplt)
-                self.alpha0 = nn.Parameter(self.alpha0) 
+                self.alpha0 = nn.Parameter(self.alpha0)
             else:
                 self.alpha0 = torch.Tensor([alpha0])
             self.alpha0 = torch.logit(alpha0)
@@ -110,7 +110,3 @@ class TFGWPooling(nn.Module):
         q = self.softmax(self.q0)
         x = distance_to_templates(edge_index, self.tplt_adjacencies, x, self.tplt_features, q, alpha, self.multi_alpha, batch)
         return x
-    
-
-
-
