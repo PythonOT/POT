@@ -132,6 +132,10 @@ class TWPooling(nn.Module):
     feature_init_std: float, optional
         Standard deviation of the random normal law to initialize the template features.
 
+    References
+    ----------
+    .. [53] Bécigneul, G., Ganea, O. E., Chen, B., Barzilay, R., & Jaakkola, T. S. (2020). [Optimal transport graph neural networks] (https://arxiv.org/pdf/2006.04804)
+
     """
 
     def __init__(self, n_features, n_tplt=2, n_tplt_nodes=2, train_node_weights=True, feature_init_mean=0., feature_init_std=1.):
