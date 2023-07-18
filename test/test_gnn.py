@@ -51,7 +51,6 @@ def test_TFGW():
 
             return x
 
-
     class pooling_TGW(nn.Module):
         """
         Pooling architecture using the LTFGW layer.
@@ -77,7 +76,7 @@ def test_TFGW():
 
             x = self.linear(x)
 
-            return x            
+            return x
 
     n_templates = 3
     n_template_nodes = 3

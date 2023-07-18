@@ -144,11 +144,9 @@ class pooling_TFGW(nn.Module):
         return x
 
 
-
 ##############################################################################
 # Graph classification training
 # ---------
-
 
 n_epochs = 30
 
