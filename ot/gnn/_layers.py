@@ -132,11 +132,6 @@ class TGWPooling(nn.Module):
     feature_init_std: float, optional
         Standard deviation of the random normal law to initialize the template features.
 
-
-    References
-    ----------
-    .. [52]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
-            "Template based graph neural network with optimal transport distances"
     """
 
     def __init__(self, n_features, n_tplt=2, n_tplt_nodes=2, train_node_weights=True, feature_init_mean=0., feature_init_std=1.):
@@ -159,11 +154,6 @@ class TGWPooling(nn.Module):
                 Mean of the random normal law to initialize the template features.
         feature_init_std: float, optional
                 Standard deviation of the random normal law to initialize the template features.
-
-        References
-        ----------
-        .. [52]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
-              "Template based graph neural network with optimal transport distances"
 
         """
         super().__init__()
