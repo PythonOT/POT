@@ -4,7 +4,7 @@ Template Fused Gromov Wasserstein
 
 import torch
 import torch.nn as nn
-from ._utils import TFGW_template_initialisation, distance_to_templates
+from ._utils import TFGW_template_initialisation, FGW_distance_to_templates, wasserstein_distance_to_templates
 
 
 class TFGWPooling(nn.Module):
@@ -107,14 +107,14 @@ class TFGWPooling(nn.Module):
     def forward(self, x, edge_index, batch=None):
         alpha = torch.sigmoid(self.alpha0)
         q = self.softmax(self.q0)
-        x = distance_to_templates(edge_index, self.tplt_adjacencies, x, self.tplt_features, q, alpha, self.multi_alpha, batch)
+        x = FGW_distance_to_templates(edge_index, self.tplt_adjacencies, x, self.tplt_features, q, alpha, self.multi_alpha, batch)
         return x
 
 
-class TGWPooling(nn.Module):
+class TWPooling(nn.Module):
     """
-    Template Gromov-Wasserstein (TGW) layer. This layer is a pooling layer for graph neural networks.
-        It computes the Gromov-Wasserstein distances between the graph and a set of templates.
+    Template Wasserstein (TW) layer. This layer is a pooling layer for graph neural networks.
+        It computes the Wasserstein distances between the features of the graph features and a set of templates.
 
     Parameters
     ----------
@@ -136,24 +136,24 @@ class TGWPooling(nn.Module):
 
     def __init__(self, n_features, n_tplt=2, n_tplt_nodes=2, train_node_weights=True, feature_init_mean=0., feature_init_std=1.):
         """
-        Template Fused Gromov-Wasserstein (TFGW) layer. This layer is a pooling layer for graph neural networks.
-            It computes the Gromov-Wasserstein distances between the graph and a set of templates.
+        Template Wasserstein (TW) layer. This layer is a pooling layer for graph neural networks.
+            It computes the Wasserstein distances between the features of the graph and a set of templates.
 
         Parameters
         ----------
         n_features : int
-                Feature dimension of the nodes.
+            Feature dimension of the nodes.
         n_tplt : int
-                Number of graph templates.
+            Number of graph templates.
         n_tplt_nodes : int
-                Number of nodes in each template.
+            Number of nodes in each template.
         train_node_weights : bool, optional
-                If True, the templates node weights are learned.
-                Else, they are uniform.
+            If True, the templates node weights are learned.
+            Else, they are uniform.
         feature_init_mean: float, optional
-                Mean of the random normal law to initialize the template features.
+            Mean of the random normal law to initialize the template features.
         feature_init_std: float, optional
-                Standard deviation of the random normal law to initialize the template features.
+            Standard deviation of the random normal law to initialize the template features.
 
         """
         super().__init__()
@@ -164,8 +164,7 @@ class TGWPooling(nn.Module):
         self.feature_init_mean = feature_init_mean
         self.feature_init_std = feature_init_std
 
-        tplt_adjacencies, tplt_features, self.q0 = TFGW_template_initialisation(self.n_tplt, self.n_tplt_nodes, self.n_features, self.feature_init_mean, self.feature_init_std)
-        self.tplt_adjacencies = nn.Parameter(tplt_adjacencies)
+        _, tplt_features, self.q0 = TFGW_template_initialisation(self.n_tplt, self.n_tplt_nodes, self.n_features, self.feature_init_mean, self.feature_init_std)
         self.tplt_features = nn.Parameter(tplt_features)
 
         self.softmax = nn.Softmax(dim=1)
@@ -173,7 +172,7 @@ class TGWPooling(nn.Module):
         if train_node_weights:
             self.q0 = nn.Parameter(self.q0)
 
-    def forward(self, x, edge_index, batch=None):
+    def forward(self, x, edge_index=None, batch=None):
         q = self.softmax(self.q0)
-        x = distance_to_templates(edge_index, self.tplt_adjacencies, x, self.tplt_features, q, batch=batch, fused=False)
+        x = wasserstein_distance_to_templates(x, self.tplt_features, q, batch)
         return x
