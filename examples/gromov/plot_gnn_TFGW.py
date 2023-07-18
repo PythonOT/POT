@@ -89,7 +89,6 @@ pl.figure(0, figsize=(8, 2.5))
 pl.clf()
 pl.subplot(121)
 pl.axis('off')
-pl.axis
 pl.title('Graph of class 1', fontsize=fontsize)
 G = to_networkx(graphs1[0], to_undirected=True)
 pos = nx.spring_layout(G, seed=0)
@@ -140,7 +139,7 @@ class pooling_TFGW(nn.Module):
 
         x = self.TFGW(x, edge_index, batch)
 
-        x_latent = x
+        x_latent = x  # save latent embeddings for visualization
 
         x = self.linear(x)
 
@@ -209,6 +208,8 @@ pl.title('Accuracy')
 
 pl.tight_layout()
 pl.show()
+
+#Test
 
 test_accs = []
 
