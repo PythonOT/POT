@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-====================================================
-Optimal Transport for dimensionality reduction
-using EWCA (Entropic Wasserstein Component Analysis)
-====================================================
+=======================================
+Entropic Wasserstein Component Analysis
+=======================================
 
-This example illustrates the computation of EWCA
-for dimensionality reduction and its visualization.
+This example illustrates the use of EWCA as proposed in [52].
+
+
+[52] Collas, A., Vayer, T., Flamary, F., & Breloy, A. (2023).
+Entropic Wasserstein Component Analysis.
 
 """
 
