@@ -10,12 +10,12 @@ from ..lp import emd2
 from torch_geometric.utils import subgraph
 
 
-def TFGW_template_initialisation(n_tplt, n_tplt_nodes, n_features, feature_init_mean=0., feature_init_std=1.):
+def TFGW_template_initialization(n_tplt, n_tplt_nodes, n_features, feature_init_mean=0., feature_init_std=1.):
     """
-    Initialises templates for the Template Fused Gromov Wasserstein layer.
+    Initializes templates for the Template Fused Gromov Wasserstein layer.
     Returns the adjacency matrices and the features of the nodes of the templates.
-    Adjacency matrics are intialised uniformly with values in :math:`[0,1]`
-    Features of the nodes are intialised following a normal distribution.
+    Adjacency matrices are intialised uniformly with values in :math:`[0,1]`.
+    Node features are intialized following a normal distribution.
 
     Parameters
     ----------
@@ -37,7 +37,8 @@ def TFGW_template_initialisation(n_tplt, n_tplt_nodes, n_features, feature_init_
            Adjancency matrices for the templates.
       tplt_features: torch tensor, shape (n_templates, n_template_nodes, n_features)
            Node features for each template.
-      q0: weight on the template nodes.
+      q: torch tensor, shape (n_templates, n_template_nodes)
+           weight on the template nodes.
     """
 
     tplt_adjacencies = torch.rand((n_tplt, n_tplt_nodes, n_tplt_nodes))
@@ -45,25 +46,25 @@ def TFGW_template_initialisation(n_tplt, n_tplt_nodes, n_features, feature_init_
 
     torch.nn.init.normal_(tplt_features, mean=feature_init_mean, std=feature_init_std)
 
-    q0 = torch.zeros(n_tplt, n_tplt_nodes)
+    q = torch.zeros(n_tplt, n_tplt_nodes)
 
     tplt_adjacencies = 0.5 * (tplt_adjacencies + torch.transpose(tplt_adjacencies, 1, 2))
 
-    return tplt_adjacencies, tplt_features, q0
+    return tplt_adjacencies, tplt_features, q
 
 
 def FGW_distance_to_templates(G_edges, tplt_adjacencies, G_features, tplt_features, tplt_weights, alpha=0.5, multi_alpha=False, batch=None):
     """
-    Computes the FGW distances between a graph and graph templates.
+    Computes the FGW distances between a graph and templates.
 
     Parameters
     ----------
-    G_edges : torch tensor, shape(n_edges, 2)
-        Edge indexes of the graph in the Pytorch Geometric format.
+    G_edges : torch tensor, shape (n_edges, 2)
+        Edge indices of the graph in the Pytorch Geometric format.
     tplt_adjacencies : list of torch tensors, shape (n_templates, n_template_nodes, n_templates_nodes)
         List of the adjacency matrices of the templates.
     G_features : torch tensor, shape (n_nodes, n_features)
-        Node features of the graph.
+        Graph node features.
     tplt_features : list of torch tensors, shape (n_templates, n_template_nodes, n_features)
         List of the node features of the templates.
     weights : torch tensor, shape (n_templates, n_template_nodes)
@@ -72,7 +73,7 @@ def FGW_distance_to_templates(G_edges, tplt_adjacencies, G_features, tplt_featur
         Trade-off parameter (0 < alpha < 1).
         Weights features (alpha=0) and structure (alpha=1).
     multi_alpha: bool, optional
-        If True, the alpha parameter is a vector of size n_templates.
+        If True, the alpha parameter is a vector of size n_templates. 
     batch: torch tensor, optional
         Batch vector which assigns each node to its graph.
 

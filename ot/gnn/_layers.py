@@ -4,7 +4,7 @@ Template Fused Gromov Wasserstein
 
 import torch
 import torch.nn as nn
-from ._utils import TFGW_template_initialisation, FGW_distance_to_templates, wasserstein_distance_to_templates
+from ._utils import TFGW_template_initialization, FGW_distance_to_templates, wasserstein_distance_to_templates
 
 
 class TFGWPooling(nn.Module):
@@ -63,7 +63,7 @@ class TFGWPooling(nn.Module):
 
         where :
 
-        - :math:`\mathcal{G}=\{(\overline{C}_k,\overline{F}_k,\overline{h}_k) \}_{k \in \{1,...,K \}} }` is the set of :math:`K` templates charactersised by their adjacency matrices :math:`\bar{C}_k`, their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`.
+        - :math:`\mathcal{G}=\{(\overline{C}_k,\overline{F}_k,\overline{h}_k) \}_{k \in \{1,...,K \}} }` is the set of :math:`K` templates charactersised by their adjacency matrices :math:`\overline{C}_k`, their feature matrices :math:`\overline{F}_k` and their node weights :math:`\overline{h}_k`.
         - :math:`C`, :math:`F` and :math:`h` are respectively the adjacency matrix, the feature matrix and the node weights of the graph.
         - :math:`\alpha` is the trade-off parameter between features and structure for the Fused Gromov-Wasserstein distance.
 
@@ -106,7 +106,7 @@ class TFGWPooling(nn.Module):
         self.feature_init_mean = feature_init_mean
         self.feature_init_std = feature_init_std
 
-        tplt_adjacencies, tplt_features, self.q0 = TFGW_template_initialisation(self.n_tplt, self.n_tplt_nodes, self.n_features, self.feature_init_mean, self.feature_init_std)
+        tplt_adjacencies, tplt_features, self.q0 = TFGW_template_initialization(self.n_tplt, self.n_tplt_nodes, self.n_features, self.feature_init_mean, self.feature_init_std)
         self.tplt_adjacencies = nn.Parameter(tplt_adjacencies)
         self.tplt_features = nn.Parameter(tplt_features)
 
@@ -141,11 +141,11 @@ class TWPooling(nn.Module):
         Computes the Wasserstein distances between the features of the graph features and a set of templates.
 
     .. math::
-        TW_{\bar{\mathcal{G}}}(C,F,h)=[W(F,h,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}
+        TW_{\overline{\mathcal{G}}}(C,F,h)=[W(F,h,\overline{F}_k,\overline{h}_k)]_{k=1}^{K}
 
     where :
 
-    - :math:`\mathcal{G}=\{(\bar{F}_k,\bar{h}_k) \}_{k \in \{1,...,K \}} \}` is the set of :math:`K` templates charactersised by their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`.
+    - :math:`\mathcal{G}=\{(\overline{F}_k,\overline{h}_k) \}_{k \in \{1,...,K \}} \}` is the set of :math:`K` templates charactersised by their feature matrices :math:`\overline{F}_k` and their node weights :math:`\overline{h}_k`.
     - :math:`F` and :math:`h` are respectively the feature matrix and the node weights of the graph.
 
     Parameters
@@ -176,11 +176,11 @@ class TWPooling(nn.Module):
         Computes the Wasserstein distances between the features of the graph features and a set of templates.
 
     .. math::
-        TW_{\bar{\mathcal{G}}}(C,F,h)=[W(F,h,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}
+        TW_{\overline{\mathcal{G}}}(C,F,h)=[W(F,h,\overline{F}_k,\overline{h}_k)]_{k=1}^{K}
 
     where :
 
-    - :math:`\mathcal{G}=\{(\bar{F}_k,\bar{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`.
+    - :math:`\mathcal{G}=\{(\overline{F}_k,\overline{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their feature matrices :math:`\overline{F}_k` and their node weights :math:`\overline{h}_k`.
     - :math:`F` and :math:`h` are respectively the feature matrix and the node weights of the graph.
 
     Parameters
@@ -211,7 +211,7 @@ class TWPooling(nn.Module):
         self.feature_init_mean = feature_init_mean
         self.feature_init_std = feature_init_std
 
-        _, tplt_features, self.q0 = TFGW_template_initialisation(self.n_tplt, self.n_tplt_nodes, self.n_features, self.feature_init_mean, self.feature_init_std)
+        _, tplt_features, self.q0 = TFGW_template_initialization(self.n_tplt, self.n_tplt_nodes, self.n_features, self.feature_init_mean, self.feature_init_std)
         self.tplt_features = nn.Parameter(tplt_features)
 
         self.softmax = nn.Softmax(dim=1)
