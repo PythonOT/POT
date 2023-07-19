@@ -87,7 +87,6 @@ def test_TFGW():
             optimizer.step()
 
 
-
 @pytest.mark.skipif(not torch_geometric, reason="pytorch_geometric not installed")
 def test_TFGW():
     # Test the TW layer by passing two graphs through the layer and doing backpropagation.
@@ -98,7 +97,6 @@ def test_TFGW():
     from torch_geometric.loader import DataLoader
     import torch.nn as nn
     from ot.gnn import TWPooling
-
 
     class pooling_TW(nn.Module):
         """

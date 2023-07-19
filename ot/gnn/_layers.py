@@ -14,11 +14,11 @@ class TFGWPooling(nn.Module):
 
 
     .. math::
-        TFGW_{\bar{\mathcal{G}},\alpha}(C,F,h)=[FGW_{\alpha}(C,F,h,\bar{C}_k,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}    
+        TFGW_{\bar{\mathcal{G}},\alpha}(C,F,h)=[FGW_{\alpha}(C,F,h,\bar{C}_k,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}
 
     where :
 
-    - :math:`\mathcal{G}=\{(\bar{C}_k,\bar{F}_k,\bar{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their adjacency matrices :math:`\bar{C}_k`, their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`. 
+    - :math:`\mathcal{G}=\{(\bar{C}_k,\bar{F}_k,\bar{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their adjacency matrices :math:`\bar{C}_k`, their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`.
     - :math:`C`, :math:`F` and :math:`h` are respectively the adjacency matrix, the feature matrix and the node weights of the graph.
     - :math:`\alpha` is the trade-off parameter between features and structure for the Fused Gromov-Wasserstein distance.
 
@@ -59,11 +59,11 @@ class TFGWPooling(nn.Module):
 
 
     .. math::
-        TFGW_{\bar{\mathcal{G}},\alpha}(C,F,h)=[FGW_{\alpha}(C,F,h,\bar{C}_k,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}    
+        TFGW_{\bar{\mathcal{G}},\alpha}(C,F,h)=[FGW_{\alpha}(C,F,h,\bar{C}_k,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}
 
     where :
 
-    - :math:`\mathcal{G}=\{(\bar{C}_k,\bar{F}_k,\bar{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their adjacency matrices :math:`\bar{C}_k`, their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`. 
+    - :math:`\mathcal{G}=\{(\bar{C}_k,\bar{F}_k,\bar{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their adjacency matrices :math:`\bar{C}_k`, their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`.
     - :math:`C`, :math:`F` and :math:`h` are respectively the adjacency matrix, the feature matrix and the node weights of the graph.
     - :math:`\alpha` is the trade-off parameter between features and structure for the Fused Gromov-Wasserstein distance.
 
@@ -141,12 +141,12 @@ class TWPooling(nn.Module):
         It computes the Wasserstein distances between the features of the graph features and a set of templates.
 
     .. math::
-        TW_{\bar{\mathcal{G}}}(C,F,h)=[W(F,h,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}    
+        TW_{\bar{\mathcal{G}}}(C,F,h)=[W(F,h,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}
 
     where :
 
-    - :math:`\mathcal{G}=\{(\bar{F}_k,\bar{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`. 
-    - :math:`F` and :math:`h` are respectively the feature matrix and the node weights of the graph.      
+    - :math:`\mathcal{G}=\{(\bar{F}_k,\bar{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`.
+    - :math:`F` and :math:`h` are respectively the feature matrix and the node weights of the graph.
 
     Parameters
     ----------
@@ -166,7 +166,7 @@ class TWPooling(nn.Module):
 
     References
     ----------
-    .. [53] Bécigneul, G., Ganea, O. E., Chen, B., Barzilay, R., & Jaakkola, T. S. (2020). [Optimal transport graph neural networks] 
+    .. [53] Bécigneul, G., Ganea, O. E., Chen, B., Barzilay, R., & Jaakkola, T. S. (2020). [Optimal transport graph neural networks]
 
     """
 
@@ -176,12 +176,12 @@ class TWPooling(nn.Module):
         It computes the Wasserstein distances between the features of the graph features and a set of templates.
 
     .. math::
-        TW_{\bar{\mathcal{G}}}(C,F,h)=[W(F,h,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}    
+        TW_{\bar{\mathcal{G}}}(C,F,h)=[W(F,h,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}
 
     where :
 
-    - :math:`\mathcal{G}=\{(\bar{F}_k,\bar{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`. 
-    - :math:`F` and :math:`h` are respectively the feature matrix and the node weights of the graph.      
+    - :math:`\mathcal{G}=\{(\bar{F}_k,\bar{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`.
+    - :math:`F` and :math:`h` are respectively the feature matrix and the node weights of the graph.
 
     Parameters
     ----------
