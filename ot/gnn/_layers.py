@@ -138,7 +138,7 @@ class TFGWPooling(nn.Module):
 class TWPooling(nn.Module):
     r"""
     Template Wasserstein (TW) layer. This layer is a pooling layer for graph neural networks.
-        It computes the Wasserstein distances between the features of the graph features and a set of templates.
+        Computes the Wasserstein distances between the features of the graph features and a set of templates.
 
     .. math::
         TW_{\bar{\mathcal{G}}}(C,F,h)=[W(F,h,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}
@@ -173,7 +173,7 @@ class TWPooling(nn.Module):
     def __init__(self, n_features, n_tplt=2, n_tplt_nodes=2, train_node_weights=True, feature_init_mean=0., feature_init_std=1.):
         """
     Template Wasserstein (TW) layer. This layer is a pooling layer for graph neural networks.
-        It computes the Wasserstein distances between the features of the graph features and a set of templates.
+        Computes the Wasserstein distances between the features of the graph features and a set of templates.
 
     .. math::
         TW_{\bar{\mathcal{G}}}(C,F,h)=[W(F,h,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}

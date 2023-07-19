@@ -14,7 +14,7 @@ def TFGW_template_initialisation(n_tplt, n_tplt_nodes, n_features, feature_init_
     """"
     Initialises templates for the Template Fused Gromov Wasserstein layer.
     Returns the adjacency matrices and the features of the nodes of the templates.
-    Adjacency matrics are intialised uniformly with values in :math:[0,1]
+    Adjacency matrics are intialised uniformly with values in :math:`[0,1]`
     Features of the nodes are intialised following a normal distribution.
 
     Parameters
@@ -73,12 +73,12 @@ def FGW_distance_to_templates(G_edges, tplt_adjacencies, G_features, tplt_featur
         Weights features (alpha=0) and structure (alpha=1).
     multi_alpha: bool, optional
         If True, the alpha parameter is a vector of size n_templates.
-    batch: torch tensor
-        Node level batch vector.
+    batch: torch tensor, optional
+        Batch vector which assigns each node to its graph.
 
     Returns
     -------
-    distances : torch tensor, shape (n_templates)
+    distances : torch tensor, shape (n_templates) if batch=None, else shape (n_graphs, n_templates).
         Vector of fused Gromov-Wasserstein distances between the graph and the templates.
     """
 
@@ -173,13 +173,13 @@ def wasserstein_distance_to_templates(G_features, tplt_features, tplt_weights, b
         List of the node features of the templates.
     weights : torch tensor, shape (n_templates, n_template_nodes)
         Weights on the nodes of the templates.
-    batch: torch tensor
-        Node level batch vector.
+    batch: torch tensor, optional
+        Batch vector which assigns each node to its graph.
 
     Returns
     -------
-    distances : torch tensor, shape (n_templates)
-        Vector of fused Gromov-Wasserstein distances between the graph and the templates.
+    distances : torch tensor, shape (n_templates) if batch=None, else shape (n_graphs, n_templates)
+        Vector of Wasserstein distances between the graph and the templates.
     """
 
     if batch is None:
