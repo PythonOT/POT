@@ -73,7 +73,7 @@ def FGW_distance_to_templates(G_edges, tplt_adjacencies, G_features, tplt_featur
         Trade-off parameter (0 < alpha < 1).
         Weights features (alpha=0) and structure (alpha=1).
     multi_alpha: bool, optional
-        If True, the alpha parameter is a vector of size n_templates. 
+        If True, the alpha parameter is a vector of size n_templates.
     batch: torch tensor, optional
         Batch vector which assigns each node to its graph.
 
