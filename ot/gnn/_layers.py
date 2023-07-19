@@ -14,11 +14,13 @@ class TFGWPooling(nn.Module):
 
 
     .. math::
-        TFGW_{\bar{\mathcal{G}},\alpha}(C,F,h)=[FGW_{\alpha}(C,F,h,\bar{C}_k,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}
+        TFGW_{\overline{\mathcal{G}},\alpha}(C,F,h)=[FGW_{\alpha}(C,F,h,\overline{C}_k,\overline{F}_k,\overline{h}_k)]_{k=1}^{K}
 
     where :
 
-    - :math:`\mathcal{G}=\{(\bar{C}_k,\bar{F}_k,\bar{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their adjacency matrices :math:`\bar{C}_k`, their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`.
+    - :math:`\mathcal{G}=\{(\overline{C}_k,\overline{F}_k,\overline{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K`
+        templates characterized by their adjacency matrices :math:`\overliner{C}_k`, their feature matrices :math:`\overline{F}_k` and
+        their node weights :math:`\overline{h}_k`.
     - :math:`C`, :math:`F` and :math:`h` are respectively the adjacency matrix, the feature matrix and the node weights of the graph.
     - :math:`\alpha` is the trade-off parameter between features and structure for the Fused Gromov-Wasserstein distance.
 
