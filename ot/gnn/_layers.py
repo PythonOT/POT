@@ -8,19 +8,17 @@ from ._utils import TFGW_template_initialisation, FGW_distance_to_templates, was
 
 
 class TFGWPooling(nn.Module):
-    """
+    r"""
     Template Fused Gromov-Wasserstein (TFGW) layer. This layer is a pooling layer for graph neural networks.
-        It computes the fused Gromov-Wasserstein distances between the graph and a set of templates.
+        Computes the fused Gromov-Wasserstein distances between the graph and a set of templates.
 
 
     .. math::
-        TFGW_{\overline{\mathcal{G}},\alpha}(C,F,h)=[FGW_{\alpha}(C,F,h,\overline{C}_k,\overline{F}_k,\overline{h}_k)]_{k=1}^{K}
+        TFGW_{ \overline{ \mathcal{G} }, \alpha }(C,F,h)=[ FGW_{\alpha}(C,F,h,\overline{C}_k,\overline{F}_k,\overline{h}_k)]_{k=1}^{K}
 
     where :
 
-    - :math:`\mathcal{G}=\{(\overline{C}_k,\overline{F}_k,\overline{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K`
-        templates characterized by their adjacency matrices :math:`\overliner{C}_k`, their feature matrices :math:`\overline{F}_k` and
-        their node weights :math:`\overline{h}_k`.
+    - :math:`\mathcal{G}=\{(\overline{C}_k,\overline{F}_k,\overline{h}_k) \}_{k \in \{1,...,K \}} \}` is the set of :math:`K` templates characterized by their adjacency matrices :math:`\overline{C}_k`, their feature matrices :math:`\overline{F}_k` and their node weights :math:`\overline{h}_k`.
     - :math:`C`, :math:`F` and :math:`h` are respectively the adjacency matrix, the feature matrix and the node weights of the graph.
     - :math:`\alpha` is the trade-off parameter between features and structure for the Fused Gromov-Wasserstein distance.
 
@@ -56,49 +54,49 @@ class TFGWPooling(nn.Module):
 
     def __init__(self, n_features, n_tplt=2, n_tplt_nodes=2, alpha=None, train_node_weights=True, multi_alpha=False, feature_init_mean=0., feature_init_std=1.):
         """
-    Template Fused Gromov-Wasserstein (TFGW) layer. This layer is a pooling layer for graph neural networks.
-        It computes the fused Gromov-Wasserstein distances between the graph and a set of templates.
+        Template Fused Gromov-Wasserstein (TFGW) layer. This layer is a pooling layer for graph neural networks.
+            Computes the fused Gromov-Wasserstein distances between the graph and a set of templates.
 
 
-    .. math::
-        TFGW_{\bar{\mathcal{G}},\alpha}(C,F,h)=[FGW_{\alpha}(C,F,h,\bar{C}_k,\bar{F}_k,\bar{h}_k)]_{k=1}^{K}
+        .. math::
+            TFGW_{\overline{\mathcal{G}},\alpha}(C,F,h)=[FGW_{\alpha}(C,F,h,\overline{C}_k,\overline{F}_k,\overline{h}_k)]_{k=1}^{K}
 
-    where :
+        where :
 
-    - :math:`\mathcal{G}=\{(\bar{C}_k,\bar{F}_k,\bar{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their adjacency matrices :math:`\bar{C}_k`, their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`.
-    - :math:`C`, :math:`F` and :math:`h` are respectively the adjacency matrix, the feature matrix and the node weights of the graph.
-    - :math:`\alpha` is the trade-off parameter between features and structure for the Fused Gromov-Wasserstein distance.
-
-
-    Parameters
-    ----------
-    n_features : int
-        Feature dimension of the nodes.
-    n_tplt : int
-         Number of graph templates.
-    n_tplt_nodes : int
-        Number of nodes in each template.
-    alpha : float, optional
-        FGW trade-off parameter (0 < alpha < 1). If None alpha is trained, else it is fixed at the given value.
-        Weights features (alpha=0) and structure (alpha=1).
-    train_node_weights : bool, optional
-        If True, the templates node weights are learned.
-        Else, they are uniform.
-    multi_alpha: bool, optional
-        If True, the alpha parameter is a vector of size n_tplt.
-    feature_init_mean: float, optional
-        Mean of the random normal law to initialize the template features.
-    feature_init_std: float, optional
-        Standard deviation of the random normal law to initialize the template features.
+        - :math:`\mathcal{G}=\{(\overline{C}_k,\overline{F}_k,\overline{h}_k) \}_{k \in \{1,...,K \}} }` is the set of :math:`K` templates charactersised by their adjacency matrices :math:`\bar{C}_k`, their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`.
+        - :math:`C`, :math:`F` and :math:`h` are respectively the adjacency matrix, the feature matrix and the node weights of the graph.
+        - :math:`\alpha` is the trade-off parameter between features and structure for the Fused Gromov-Wasserstein distance.
 
 
+        Parameters
+        ----------
+        n_features : int
+            Feature dimension of the nodes.
+        n_tplt : int
+            Number of graph templates.
+        n_tplt_nodes : int
+            Number of nodes in each template.
+        alpha : float, optional
+            FGW trade-off parameter (0 < alpha < 1). If None alpha is trained, else it is fixed at the given value.
+            Weights features (alpha=0) and structure (alpha=1).
+        train_node_weights : bool, optional
+            If True, the templates node weights are learned.
+            Else, they are uniform.
+        multi_alpha: bool, optional
+            If True, the alpha parameter is a vector of size n_tplt.
+        feature_init_mean: float, optional
+            Mean of the random normal law to initialize the template features.
+        feature_init_std: float, optional
+            Standard deviation of the random normal law to initialize the template features.
 
-    References
-    ----------
-    .. [52]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
-            "Template based graph neural network with optimal transport distances"
 
-        """
+
+        References
+        ----------
+        .. [52]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+                "Template based graph neural network with optimal transport distances"
+
+            """
         super().__init__()
 
         self.n_tplt = n_tplt
@@ -138,7 +136,7 @@ class TFGWPooling(nn.Module):
 
 
 class TWPooling(nn.Module):
-    """
+    r"""
     Template Wasserstein (TW) layer. This layer is a pooling layer for graph neural networks.
         It computes the Wasserstein distances between the features of the graph features and a set of templates.
 
@@ -147,7 +145,7 @@ class TWPooling(nn.Module):
 
     where :
 
-    - :math:`\mathcal{G}=\{(\bar{F}_k,\bar{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`.
+    - :math:`\mathcal{G}=\{(\bar{F}_k,\bar{h}_k) \}_{k \in \{1,...,K \}} \}` is the set of :math:`K` templates charactersised by their feature matrices :math:`\bar{F}_k` and their node weights :math:`\bar{h}_k`.
     - :math:`F` and :math:`h` are respectively the feature matrix and the node weights of the graph.
 
     Parameters
