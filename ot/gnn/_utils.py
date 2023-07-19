@@ -11,7 +11,7 @@ from torch_geometric.utils import subgraph
 
 
 def TFGW_template_initialisation(n_tplt, n_tplt_nodes, n_features, feature_init_mean=0., feature_init_std=1.):
-    """"
+    """
     Initialises templates for the Template Fused Gromov Wasserstein layer.
     Returns the adjacency matrices and the features of the nodes of the templates.
     Adjacency matrics are intialised uniformly with values in :math:`[0,1]`
