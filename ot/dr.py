@@ -12,15 +12,20 @@ Dimension reduction with OT
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Minhui Huang <mhhuang@ucdavis.edu>
 #         Jakub Zadrozny <jakub.r.zadrozny@gmail.com>
+#         Antoine Collas <antoine.collas@inria.fr>
 #
 # License: MIT License
 
 from scipy import linalg
 import autograd.numpy as np
+from sklearn.decomposition import PCA
 
 import pymanopt
 import pymanopt.manifolds
 import pymanopt.optimizers
+
+from .bregman import sinkhorn as sinkhorn_bregman
+from .utils import dist as dist_utils
 
 
 def dist(x1, x2):
@@ -374,5 +379,155 @@ def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopTh
             print('RBCD Iteration: ', iter, ' error', err, '\t fval: ', f_val)
 
         iter = iter + 1
+
+    return pi, U
+
+
+def ewca(X, U0=None, reg=1, k=2, method='BCD', sinkhorn_method='sinkhorn', stopThr=1e-6, maxiter=100, maxiter_sink=1000, maxiter_MM=10, verbose=0):
+    r"""
+    Entropic Wasserstein Component Analysis :ref:`[52] <references-entropic-wasserstein-component_analysis>`.
+
+    The function solves the following optimization problem:
+
+    .. math::
+        \mathbf{U} = \mathop{\arg \min}_\mathbf{U} \quad
+        W(\mathbf{X}, \mathbf{U}\mathbf{U}^T \mathbf{X})
+
+    where :
+
+    - :math:`\mathbf{U}` is a matrix in the Stiefel(`p`, `d`) manifold
+    - :math:`W` is entropic regularized Wasserstein distances
+    - :math:`\mathbf{X}` are samples
+
+    Parameters
+    ----------
+    X : ndarray, shape (n, d)
+        Samples from measure :math:`\mu`.
+    U0 : ndarray, shape (d, k), optional
+        Initial starting point for projection.
+    reg : float, optional
+        Regularization term >0 (entropic regularization).
+    k : int, optional
+        Subspace dimension.
+    method : str, optional
+        Eather 'BCD' or 'MM' (Block Coordinate Descent or Majorization-Minimization).
+        Prefer MM when d is large.
+    sinkhorn_method : str
+        Method used for the Sinkhorn solver, see :ref:`ot.bregman.sinkhorn` for more details.
+    stopThr : float, optional
+        Stop threshold on error (>0).
+    maxiter : int, optional
+        Maximum number of iterations of the BCD/MM.
+    maxiter_sink : int, optional
+        Maximum number of iterations of the Sinkhorn solver.
+    maxiter_MM : int, optional
+        Maximum number of iterations of the MM (only used when method='MM').
+    verbose : int, optional
+        Print information along iterations.
+
+    Returns
+    -------
+    pi : ndarray, shape (n, n)
+        Optimal transportation matrix for the given parameters.
+    U : ndarray, shape (d, k)
+        Matrix Stiefel manifold.
+
+
+    .. _references-entropic-wasserstein-component_analysis:
+    References
+    ----------
+    .. [52] Collas, A., Vayer, T., Flamary, F., & Breloy, A. (2023).
+            Entropic Wasserstein Component Analysis.
+    """  # noqa
+    n, d = X.shape
+    X = X - X.mean(0)
+
+    if U0 is None:
+        pca_fitted = PCA(n_components=k).fit(X)
+        U = pca_fitted.components_.T
+        if method == 'MM':
+            lambda_scm = pca_fitted.explained_variance_[0]
+    else:
+        U = U0
+
+    # marginals
+    u0 = (1. / n) * np.ones(n)
+
+    # print iterations
+    if verbose > 0:
+        print('{:4s}|{:13s}|{:12s}|{:12s}'.format('It.', 'Loss', 'Crit.', 'Thres.') + '\n' + '-' * 40)
+
+    def compute_loss(M, pi, reg):
+        return np.sum(M * pi) + reg * np.sum(pi * (np.log(pi) - 1))
+
+    def grassmann_distance(U1, U2):
+        proj = U1.T @ U2
+        _, s, _ = np.linalg.svd(proj)
+        s[s > 1] = 1
+        s = np.arccos(s)
+        return np.linalg.norm(s)
+
+    # loop
+    it = 0
+    crit = np.inf
+    sinkhorn_warmstart = None
+
+    while (it < maxiter) and (crit > stopThr):
+        U_old = U
+
+        # Solve transport
+        M = dist_utils(X, (X @ U) @ U.T)
+        pi, log_sinkhorn = sinkhorn_bregman(
+            u0, u0, M, reg,
+            numItermax=maxiter_sink,
+            method=sinkhorn_method, warmstart=sinkhorn_warmstart,
+            warn=False, log=True
+        )
+        key_warmstart = 'warmstart'
+        if key_warmstart in log_sinkhorn:
+            sinkhorn_warmstart = log_sinkhorn[key_warmstart]
+        if (pi >= 1e-300).all():
+            loss = compute_loss(M, pi, reg)
+        else:
+            loss = np.inf
+
+        # Solve PCA
+        pi_sym = (pi + pi.T) / 2
+
+        if method == 'BCD':
+            # block coordinate descent
+            S = X.T @ (2 * pi_sym - (1. / n) * np.eye(n)) @ X
+            _, U = np.linalg.eigh(S)
+            U = U[:, ::-1][:, :k]
+
+        elif method == 'MM':
+            # majorization-minimization
+            eig, _ = np.linalg.eigh(pi_sym)
+            lambda_pi = eig[0]
+
+            for _ in range(maxiter_MM):
+                X_proj = X @ U
+                X_T_X_proj = X.T @ X_proj
+
+                R = (1 / n) * X_T_X_proj
+                alpha = 1 - 2 * n * lambda_pi
+                if alpha > 0:
+                    R = alpha * (R - lambda_scm * U)
+                else:
+                    R = alpha * R
+
+                R = R - (2 * X.T @ (pi_sym @ X_proj)) + (2 * lambda_pi * X_T_X_proj)
+                U, _ = np.linalg.qr(R)
+
+        else:
+            raise ValueError(f"Unknown method '{method}', use 'BCD' or 'MM'.")
+
+        # stop or not
+        it += 1
+        crit = grassmann_distance(U_old, U)
+
+        # print
+        if verbose > 0:
+            print('{:4d}|{:8e}|{:8e}|{:8e}'.format(it, loss, crit, stopThr))
 
     return pi, U

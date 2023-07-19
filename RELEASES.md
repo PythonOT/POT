@@ -15,6 +15,7 @@
 - Added features `warmstartT` and `kwargs` to all CG and entropic (F)GW barycenter solvers (PR #455)
 - Added entropic semi-relaxed (Fused) Gromov-Wasserstein solvers in `ot.gromov` + examples (PR #455)
 - Make marginal parameters optional for (F)GW solvers in `._gw`, `._bregman` and `._semirelaxed` (PR #455)
+- Add Entropic Wasserstein Component Analysis (ECWA) in ot.dr (PR #486)
 
 #### Closed issues
 
