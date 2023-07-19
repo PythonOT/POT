@@ -1,6 +1,12 @@
+# -*- coding: utf-8 -*-
 """
 Template Fused Gromov Wasserstein
 """
+
+# Author: Sonia Mazelet <sonia.mazelet@ens-paris-saclay.fr>
+#         Rémi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
 
 import torch
 import torch.nn as nn
@@ -90,7 +96,6 @@ class TFGWPooling(nn.Module):
             Standard deviation of the random normal law to initialize the template features.
 
 
-
         References
         ----------
         .. [53]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
@@ -129,6 +134,16 @@ class TFGWPooling(nn.Module):
             self.alpha0 = torch.logit(alpha0)
 
     def forward(self, x, edge_index, batch=None):
+        """
+        Parameters
+        ----------
+        x : torch.Tensor
+           Node features.
+        edge_index : torch.Tensor
+           Edge indices.
+        batch : torch.Tensor, optional
+            Batch vector which assigns each node to its graph.
+        """
         alpha = torch.sigmoid(self.alpha0)
         q = self.softmax(self.q0)
         x = FGW_distance_to_templates(edge_index, self.tplt_adjacencies, x, self.tplt_features, q, alpha, self.multi_alpha, batch)
@@ -137,7 +152,7 @@ class TFGWPooling(nn.Module):
 
 class TWPooling(nn.Module):
     r"""
-    Template Wasserstein (TW) layer. This layer is a pooling layer for graph neural networks.
+    Template Wasserstein (TW) layer, also kown as OT-GNN layer. This layer is a pooling layer for graph neural networks.
         Computes the Wasserstein distances between the features of the graph features and a set of templates.
 
     .. math::
@@ -172,7 +187,7 @@ class TWPooling(nn.Module):
 
     def __init__(self, n_features, n_tplt=2, n_tplt_nodes=2, train_node_weights=True, feature_init_mean=0., feature_init_std=1.):
         """
-        Template Wasserstein (TW) layer. This layer is a pooling layer for graph neural networks.
+        Template Wasserstein (TW) layer, also kown as OT-GNN layer. This layer is a pooling layer for graph neural networks.
             Computes the Wasserstein distances between the features of the graph features and a set of templates.
 
         .. math::
@@ -220,6 +235,16 @@ class TWPooling(nn.Module):
             self.q0 = nn.Parameter(self.q0)
 
     def forward(self, x, edge_index=None, batch=None):
+        """
+        Parameters
+        ----------
+        x : torch.Tensor
+           Node features.
+        edge_index : torch.Tensor
+           Edge indices.
+        batch : torch.Tensor, optional
+            Batch vector which assigns each node to its graph.
+        """
         q = self.softmax(self.q0)
         x = wasserstein_distance_to_templates(x, self.tplt_features, q, batch)
         return x

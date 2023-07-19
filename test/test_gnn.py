@@ -1,6 +1,7 @@
 """Tests for module gnn"""
 
 # Author: Sonia Mazelet <sonia.mazelet@ens-paris-saclay.fr>
+#         Rémi Flamary <remi.flamary@unice.fr>
 #
 # License: MIT License
 

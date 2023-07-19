@@ -11,6 +11,7 @@ This example first illustrates how to train a graph classification gnn based on 
 """
 
 # Author: Sonia Mazelet <sonia.mazelet@ens-paris-saclay.fr>
+#         Rémi Flamary <remi.flamary@unice.fr>
 #
 # License: MIT License
 

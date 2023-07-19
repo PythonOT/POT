@@ -3,6 +3,11 @@
 GNN layers utils
 """
 
+# Author: Sonia Mazelet <sonia.mazelet@ens-paris-saclay.fr>
+#         Rémi Flamary <remi.flamary@unice.fr>
+#
+# License: MIT License
+
 import torch
 from ..utils import dist
 from ..gromov import fused_gromov_wasserstein2
@@ -33,11 +38,11 @@ def TFGW_template_initialization(n_tplt, n_tplt_nodes, n_features, feature_init_
 
     Returns
     ----------
-      tplt_adjacencies: torch tensor, shape (n_templates, n_template_nodes, n_template_nodes)
+      tplt_adjacencies: torch.Tensor, shape (n_templates, n_template_nodes, n_template_nodes)
            Adjancency matrices for the templates.
-      tplt_features: torch tensor, shape (n_templates, n_template_nodes, n_features)
+      tplt_features: torch.Tensor, shape (n_templates, n_template_nodes, n_features)
            Node features for each template.
-      q: torch tensor, shape (n_templates, n_template_nodes)
+      q: torch.Tensor, shape (n_templates, n_template_nodes)
            weight on the template nodes.
     """
 
@@ -59,27 +64,27 @@ def FGW_distance_to_templates(G_edges, tplt_adjacencies, G_features, tplt_featur
 
     Parameters
     ----------
-    G_edges : torch tensor, shape (n_edges, 2)
+    G_edges : torch.Tensor, shape (n_edges, 2)
         Edge indices of the graph in the Pytorch Geometric format.
-    tplt_adjacencies : list of torch tensors, shape (n_templates, n_template_nodes, n_templates_nodes)
+    tplt_adjacencies : list of torch.Tensor, shape (n_templates, n_template_nodes, n_templates_nodes)
         List of the adjacency matrices of the templates.
-    G_features : torch tensor, shape (n_nodes, n_features)
+    G_features : torch.Tensor, shape (n_nodes, n_features)
         Graph node features.
-    tplt_features : list of torch tensors, shape (n_templates, n_template_nodes, n_features)
+    tplt_features : list of torch.Tensor, shape (n_templates, n_template_nodes, n_features)
         List of the node features of the templates.
-    weights : torch tensor, shape (n_templates, n_template_nodes)
+    weights : torch.Tensor, shape (n_templates, n_template_nodes)
         Weights on the nodes of the templates.
     alpha : float, optional
         Trade-off parameter (0 < alpha < 1).
         Weights features (alpha=0) and structure (alpha=1).
     multi_alpha: bool, optional
         If True, the alpha parameter is a vector of size n_templates.
-    batch: torch tensor, optional
+    batch: torch.Tensor, optional
         Batch vector which assigns each node to its graph.
 
     Returns
     -------
-    distances : torch tensor, shape (n_templates) if batch=None, else shape (n_graphs, n_templates).
+    distances : torch.Tensor, shape (n_templates) if batch=None, else shape (n_graphs, n_templates).
         Vector of fused Gromov-Wasserstein distances between the graph and the templates.
     """
 
@@ -168,18 +173,18 @@ def wasserstein_distance_to_templates(G_features, tplt_features, tplt_weights, b
 
     Parameters
     ----------
-    G_features : torch tensor, shape (n_nodes, n_features)
+    G_features : torch.Tensor, shape (n_nodes, n_features)
         Node features of the graph.
-    tplt_features : list of torch tensors, shape (n_templates, n_template_nodes, n_features)
+    tplt_features : list of torch.Tensor, shape (n_templates, n_template_nodes, n_features)
         List of the node features of the templates.
-    weights : torch tensor, shape (n_templates, n_template_nodes)
+    weights : torch.Tensor, shape (n_templates, n_template_nodes)
         Weights on the nodes of the templates.
-    batch: torch tensor, optional
+    batch: torch.Tensor, optional
         Batch vector which assigns each node to its graph.
 
     Returns
     -------
-    distances : torch tensor, shape (n_templates) if batch=None, else shape (n_graphs, n_templates)
+    distances : torch.Tensor, shape (n_templates) if batch=None, else shape (n_graphs, n_templates)
         Vector of Wasserstein distances between the graph and the templates.
     """
 
