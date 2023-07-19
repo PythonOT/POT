@@ -172,36 +172,36 @@ class TWPooling(nn.Module):
 
     def __init__(self, n_features, n_tplt=2, n_tplt_nodes=2, train_node_weights=True, feature_init_mean=0., feature_init_std=1.):
         """
-    Template Wasserstein (TW) layer. This layer is a pooling layer for graph neural networks.
-        Computes the Wasserstein distances between the features of the graph features and a set of templates.
+        Template Wasserstein (TW) layer. This layer is a pooling layer for graph neural networks.
+            Computes the Wasserstein distances between the features of the graph features and a set of templates.
 
-    .. math::
-        TW_{\overline{\mathcal{G}}}(C,F,h)=[W(F,h,\overline{F}_k,\overline{h}_k)]_{k=1}^{K}
+        .. math::
+            TW_{\overline{\mathcal{G}}}(C,F,h)=[W(F,h,\overline{F}_k,\overline{h}_k)]_{k=1}^{K}
 
-    where :
+        where :
 
-    - :math:`\mathcal{G}=\{(\overline{F}_k,\overline{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their feature matrices :math:`\overline{F}_k` and their node weights :math:`\overline{h}_k`.
-    - :math:`F` and :math:`h` are respectively the feature matrix and the node weights of the graph.
+        - :math:`\mathcal{G}=\{(\overline{F}_k,\overline{h}_k) \}_{k \in \llbracket 1;K \rrbracket }` is the set of :math:`K` templates charactersised by their feature matrices :math:`\overline{F}_k` and their node weights :math:`\overline{h}_k`.
+        - :math:`F` and :math:`h` are respectively the feature matrix and the node weights of the graph.
 
-    Parameters
-    ----------
-    n_features : int
-        Feature dimension of the nodes.
-    n_tplt : int
-         Number of graph templates.
-    n_tplt_nodes : int
-        Number of nodes in each template.
-    train_node_weights : bool, optional
-        If True, the templates node weights are learned.
-        Else, they are uniform.
-    feature_init_mean: float, optional
-        Mean of the random normal law to initialize the template features.
-    feature_init_std: float, optional
-        Standard deviation of the random normal law to initialize the template features.
+        Parameters
+        ----------
+        n_features : int
+            Feature dimension of the nodes.
+        n_tplt : int
+            Number of graph templates.
+        n_tplt_nodes : int
+            Number of nodes in each template.
+        train_node_weights : bool, optional
+            If True, the templates node weights are learned.
+            Else, they are uniform.
+        feature_init_mean: float, optional
+            Mean of the random normal law to initialize the template features.
+        feature_init_std: float, optional
+            Standard deviation of the random normal law to initialize the template features.
 
-    References
-    ----------
-    .. [53] Bécigneul, G., Ganea, O. E., Chen, B., Barzilay, R., & Jaakkola, T. S. (2020). [Optimal transport graph neural networks]
+        References
+        ----------
+        .. [53] Bécigneul, G., Ganea, O. E., Chen, B., Barzilay, R., & Jaakkola, T. S. (2020). [Optimal transport graph neural networks]
         """
         super().__init__()
 

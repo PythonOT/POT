@@ -22,6 +22,7 @@ API and modules
    dr
    factored
    gaussian
+   gnn
    gromov
    lp
    optim
