@@ -54,7 +54,7 @@ POT provides the following Machine Learning related solvers:
 * [Linear OT mapping](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_linear_mapping.html) [14] and [Joint OT mapping estimation](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_mapping.html) [8].
 * [Wasserstein Discriminant Analysis](https://pythonot.github.io/auto_examples/others/plot_WDA.html) [11] (requires autograd + pymanopt).
 * [JCPOT algorithm for multi-source domain adaptation with target shift](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_jcpot.html) [27].
-* Graph Neural Network OT layers TFGW [52] and TW (OT-GNN) [53] (https://pythonot.github.io/auto_examples/gromov/plot_gnn_TFGW.html)
+* [Graph Neural Network OT layers TFGW](https://pythonot.github.io/auto_examples/gromov/plot_gnn_TFGW.html) [52] and TW (OT-GNN) [53] 
 
 Some other examples are available in the  [documentation](https://pythonot.github.io/auto_examples/index.html).
 
