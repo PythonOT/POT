@@ -48,7 +48,7 @@ class TFGWPooling(nn.Module):
 
     References
     ----------
-    .. [52]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+    .. [53]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Template based graph neural network with optimal transport distances"
     """
 
@@ -93,7 +93,7 @@ class TFGWPooling(nn.Module):
 
         References
         ----------
-        .. [52]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+        .. [53]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
                 "Template based graph neural network with optimal transport distances"
 
             """
@@ -166,7 +166,7 @@ class TWPooling(nn.Module):
 
     References
     ----------
-    .. [53] Bécigneul, G., Ganea, O. E., Chen, B., Barzilay, R., & Jaakkola, T. S. (2020). [Optimal transport graph neural networks]
+    .. [54] Bécigneul, G., Ganea, O. E., Chen, B., Barzilay, R., & Jaakkola, T. S. (2020). [Optimal transport graph neural networks]
 
     """
 
@@ -201,7 +201,7 @@ class TWPooling(nn.Module):
 
         References
         ----------
-        .. [53] Bécigneul, G., Ganea, O. E., Chen, B., Barzilay, R., & Jaakkola, T. S. (2020). [Optimal transport graph neural networks]
+        .. [54] Bécigneul, G., Ganea, O. E., Chen, B., Barzilay, R., & Jaakkola, T. S. (2020). [Optimal transport graph neural networks]
         """
         super().__init__()
 
