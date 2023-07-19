@@ -88,7 +88,7 @@ def test_TFGW():
 
 
 @pytest.mark.skipif(not torch_geometric, reason="pytorch_geometric not installed")
-def test_TFGW():
+def test_TW():
     # Test the TW layer by passing two graphs through the layer and doing backpropagation.
 
     import torch
