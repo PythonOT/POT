@@ -49,23 +49,21 @@ pl.legend()
 weights = np.ones(d) / d
 l2_bary = A.dot(weights)
 
-# print('LP Iterations:')
-# alpha = 1  # /d  # 0<=alpha<=1
-# weights = np.array(d * [alpha])
-# lp_bary, lp_log = ot.lp.barycenter(
-#     A, M, weights, solver='interior-point', verbose=False, log=True)
-# print('Time\t: ', ot.toc(''))
-# print('Obj\t: ', lp_log['fun'])
+print('LP Iterations:')
+weights = np.ones(d) / d
+lp_bary, lp_log = ot.lp.barycenter(
+    A, M, weights, solver='interior-point', verbose=False, log=True)
+print('Time\t: ', ot.toc(''))
+print('Obj\t: ', lp_log['fun'])
 
 print('')
 print('Discrete MMOT Algorithm:')
 ot.tic()
-barys, log = ot.lp.dmmot_monge_ddgrid_optimize(
+barys, log = ot.lp.dmmot_monge_1dgrid_optimize(
     A, niters=4000, lr_init=1e-5, lr_decay=0.997, log=True)
 dmmot_obj = log['primal objective']
 print('Time\t: ', ot.toc(''))
 print('Obj\t: ', dmmot_obj)
-
 
 # %%
 # Compare Barycenters in both methods
@@ -77,12 +75,13 @@ for i in range(len(barys)):
     else:
         continue
         # pl.plot(x, barys[i], 'g-*')
-# pl.plot(x, lp_bary, 'k-', label='LP Barycenter')
-pl.plot(x, l2_bary, 'k', label='L2 Barycenter')
+pl.plot(x, lp_bary, label='LP Barycenter')
+pl.plot(x, l2_bary, label='L2 Barycenter')
 pl.plot(x, a1, 'b', label='Source distribution')
 pl.plot(x, a2, 'r', label='Target distribution')
-pl.title('Barycenters')
+pl.title('Monge Cost: Barycenters from LP Solver and dmmot solver')
 pl.legend()
+
 
 # %%
 # More than 2 distributions
@@ -116,7 +115,7 @@ pl.legend()
 # values cannot be compared.
 
 # Perform gradient descent optimization using the d-MMOT method.
-barys = ot.lp.dmmot_monge_ddgrid_optimize(
+barys = ot.lp.dmmot_monge_1dgrid_optimize(
     A, niters=3000, lr_init=1e-4, lr_decay=0.997)
 
 # after minimization, any distribution can be used as a estimate of barycenter.
@@ -125,8 +124,8 @@ bary = barys[0]
 # Compute 1D Wasserstein barycenter using the L2/LP method
 weights = ot.unif(d)
 l2_bary = A.dot(weights)
-# lp_bary, bary_log = ot.lp.barycenter(A, M, weights, solver='interior-point',
-#                                      verbose=True, log=True)
+lp_bary, bary_log = ot.lp.barycenter(A, M, weights, solver='interior-point',
+                                     verbose=False, log=True)
 
 # %%
 # Compare Barycenters in both methods
@@ -134,16 +133,9 @@ l2_bary = A.dot(weights)
 pl.figure(1, figsize=(6.4, 3))
 pl.plot(x, bary, 'g-*', label='Discrete MMOT')
 pl.plot(x, l2_bary, 'k', label='L2 Barycenter')
-# pl.plot(x, lp_bary, 'k-', label='LP Wasserstein')
+pl.plot(x, lp_bary, 'k-', label='LP Wasserstein')
 pl.title('Barycenters')
 pl.legend()
-
-# %%
-# Compare all converged distributions
-# ---------
-pl.figure(1, figsize=(6.4, 3))
-for i in range(len(barys)):
-    pl.plot(x, barys[i], 'g', label='Discrete MMOT')
 
 # %%
 # Compare with original distributions
@@ -157,8 +149,10 @@ for i in range(len(barys)):
     else:
         continue
         # pl.plot(x, barys[i], 'g')
-pl.plot(x, l2_bary, 'k', label='L2 Barycenter')
-# pl.plot(x, lp_bary, 'k-', label='LP Wasserstein')
+pl.plot(x, l2_bary, 'k^', label='L2')
+pl.plot(x, lp_bary, 'o', color='grey', label='LP')
 pl.title('Barycenters')
 pl.legend()
+pl.show()
+
 # %%

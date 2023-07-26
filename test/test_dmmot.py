@@ -20,11 +20,11 @@ def create_test_data(nx):
     return A, x
 
 
-def test_dmmot_monge_ddgrid_loss(nx):
+def test_dmmot_monge_1dgrid_loss(nx):
     A, x = create_test_data(nx)
 
-    # Compute loss using dmmot_monge_ddgrid_loss
-    primal_obj = ot.lp.dmmot_monge_ddgrid_loss(A)
+    # Compute loss using dmmot_monge_1dgrid_loss
+    primal_obj = ot.lp.dmmot_monge_1dgrid_loss(A)
     primal_obj = nx.to_numpy(primal_obj)
     expected_primal_obj = 0.13667759626298503
 
@@ -43,7 +43,7 @@ def test_dmmot_monge_ddgrid_loss(nx):
         # deal with C-contiguous error from tensorflow backend (not sure why)
         x = np.ascontiguousarray(x)
         # compute loss
-        _, log = ot.lp.emd(x, np.array(bary/np.sum(bary)), M, log=True)
+        _, log = ot.lp.emd(x, np.array(bary / np.sum(bary)), M, log=True)
         ot_obj += log['cost']
 
     np.testing.assert_allclose(primal_obj,
@@ -53,12 +53,12 @@ def test_dmmot_monge_ddgrid_loss(nx):
                                    Expected different primal objective value")
 
 
-def test_dmmot_monge_ddgrid_optimize(nx):
+def test_dmmot_monge_1dgrid_optimize(nx):
     # test discrete_mmot_converge result
     A, _ = create_test_data(nx)
     d = 2
     niters = 10
-    result = ot.lp.dmmot_monge_ddgrid_optimize(A,
+    result = ot.lp.dmmot_monge_1dgrid_optimize(A,
                                                niters,
                                                lr_init=1e-3,
                                                lr_decay=1)

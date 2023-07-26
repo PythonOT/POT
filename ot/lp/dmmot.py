@@ -12,6 +12,46 @@ import numpy as np
 from ..backend import get_backend
 
 
+def ground_cost(i, metric="monge"):
+    r"""
+    Calculate cost based on selected cost function.
+
+    Parameters
+    ----------
+    i : list
+        The list of integer indexes.
+    metric : str, optional, (default="monge")
+        The cost function to use. Options: "monge", "monge_square",
+        "monge_sqrt", "monge_log", "monge_exp", "monge_mean".
+
+    Returns
+    -------
+    cost : numeric value
+        The ground cost of the tensor.
+
+    See Also
+    --------
+    ot.lp.dist_monge_max_min : Monge Cost.
+    """
+
+    if metric == "monge":
+        return dist_monge_max_min(i)
+    elif metric == "monge_square":
+        return dist_monge_max_min(i) ** 2
+    elif metric == "monge_sqrt":
+        return np.sqrt(dist_monge_max_min(i))
+    elif metric == "monge_log":
+        return np.log(dist_monge_max_min(i) + 1)
+    elif metric == "monge_exp":
+        # numerical instability
+        scaling_factor = 0.01
+        return np.exp(scaling_factor * dist_monge_max_min(i))
+    elif metric == "monge_mean":
+        return np.mean(dist_monge_max_min(i))
+    else:
+        raise ValueError(f"Unknown cost function: {metric}")
+
+
 def dist_monge_max_min(i):
     r"""
     A tensor :math:c is Monge if for all valid :math:i_1, \ldots i_d and
@@ -57,7 +97,7 @@ def dist_monge_max_min(i):
     return max(i) - min(i)
 
 
-def dmmot_monge_ddgrid_loss(A, verbose=False, log=False):
+def dmmot_monge_1dgrid_loss(A, metric='monge', verbose=False, log=False):
     r"""
     Compute the discrete multi-marginal optimal transport of distributions A.
 
@@ -96,6 +136,9 @@ def dmmot_monge_ddgrid_loss(A, verbose=False, log=False):
     ----------
     A : nx.ndarray, shape (dim, n_hists)
         The input ndarray containing distributions of n bins in d dimensions.
+    metric : str, optional, (default="monge")
+        The cost function to use. Options: "monge", "monge_square",
+        "monge_sqrt", "monge_log", "monge_exp", "monge_mean".
     verbose : bool, optional
         If True, print debugging information during execution. Default=False.
     log : bool, optional
@@ -132,7 +175,7 @@ def dmmot_monge_ddgrid_loss(A, verbose=False, log=False):
 
     See Also
     --------
-    ot.lp.dmmot_monge_ddgrid_optimize : Optimize the d-Dimensional Earth
+    ot.lp.dmmot_monge_1dgrid_optimize : Optimize the d-Dimensional Earth
     Mover's Distance (d-MMOT)
     """
 
@@ -156,15 +199,15 @@ def dmmot_monge_ddgrid_loss(A, verbose=False, log=False):
         minval = min(vals)
         i = vals.index(minval)
         xx[tuple(idx)] = minval
-        obj += (dist_monge_max_min(idx)) * minval
+        obj += (ground_cost(idx, metric)) * minval
         for v, j in zip(AA, idx):
             v[j] -= minval
         # oldidx = nx.copy(idx)
         oldidx = idx.copy()
         idx[i] += 1
         if idx[i] < dims[i]:
-            temp = (dist_monge_max_min(idx) -
-                    dist_monge_max_min(oldidx) +
+            temp = (ground_cost(idx, metric) -
+                    ground_cost(oldidx, metric) +
                     dual[i][idx[i] - 1])
             dual[i][idx[i]] += temp
         if verbose:
@@ -196,12 +239,13 @@ def dmmot_monge_ddgrid_loss(A, verbose=False, log=False):
         return obj
 
 
-def dmmot_monge_ddgrid_optimize(
+def dmmot_monge_1dgrid_optimize(
         A,
         niters=100,
         lr_init=1e-5,
         lr_decay=0.995,
         print_rate=100,
+        metric='monge',
         verbose=False,
         log=False):
     r"""Minimize the d-dimensional EMD using gradient descent.
@@ -247,7 +291,7 @@ def dmmot_monge_ddgrid_optimize(
         \end{align}
 
     Using these dual variables naturally provided by the algorithm in
-    ot.lp.dmmot_monge_ddgrid_loss, gradient steps move each input distribution
+    ot.lp.dmmot_monge_1dgrid_loss, gradient steps move each input distribution
     to minimize their d-mmot distance.
 
     Parameters
@@ -263,6 +307,9 @@ def dmmot_monge_ddgrid_optimize(
     print_rate : int, optional (default=100)
         The rate at which to print the objective value and gradient norm
         during the optimization algorithm.
+    metric : str, optional, (default="monge")
+        The cost function to use. Options: "monge", "monge_square",
+        "monge_sqrt", "monge_log", "monge_exp", "monge_mean".
     verbose : bool, optional
         If True, print debugging information during execution. Default=False.
     log : bool, optional
@@ -290,7 +337,7 @@ def dmmot_monge_ddgrid_optimize(
 
     See Also
     --------
-    ot.lp.dmmot_monge_ddgrid_loss: d-Dimensional Earth Mover's Solver
+    ot.lp.dmmot_monge_1dgrid_loss: d-Dimensional Earth Mover's Solver
     """
 
     # function body here
@@ -299,8 +346,8 @@ def dmmot_monge_ddgrid_optimize(
     n, d = A.shape  # n is dim, d is n_hists
 
     def dualIter(A, lr):
-        funcval, log_dict = dmmot_monge_ddgrid_loss(
-            A, verbose=verbose, log=True)
+        funcval, log_dict = dmmot_monge_1dgrid_loss(
+            A, metric, verbose=verbose, log=True)
         grad = np.column_stack(log_dict['dual'])
         A_new = np.reshape(A, (n, d)) - grad * lr
         return funcval, A_new, grad, log_dict
