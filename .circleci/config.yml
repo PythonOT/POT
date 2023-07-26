@@ -4,7 +4,7 @@ version: 2
 jobs:
     build_docs:
       docker:
-        - image: cimg/python:3.9
+        - image: cimg/python:3.10
       resource_class: medium
       steps:
         - checkout
