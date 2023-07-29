@@ -11,6 +11,7 @@ d-MMOT solvers for optimal transport
 import numpy as np
 from ..backend import get_backend
 
+
 def dist_monge_max_min(i):
     r"""
     A tensor :math:c is Monge if for all valid :math:i_1, \ldots i_d and
