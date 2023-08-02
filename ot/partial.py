@@ -873,7 +873,7 @@ def entropic_partial_wasserstein(a, b, M, reg, m=None, numItermax=1000,
 
     log_e = {'err': []}
 
-    if type(a) == type(b) == type(M) == np.ndarray:
+    if nx.__name__ == "numpy":
         # Next 3 lines equivalent to K=nx.exp(-M/reg), but faster to compute
         K = np.empty(M.shape, dtype=M.dtype)
         np.divide(M, -reg, out=K)
