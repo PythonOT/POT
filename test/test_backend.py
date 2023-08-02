@@ -37,17 +37,7 @@ def test_to_numpy(nx):
     assert isinstance(M2, np.ndarray)
 
 
-def test_get_backend():
-
-    A = np.zeros((3, 2))
-    B = np.zeros((3, 1))
-
-    nx = get_backend(A)
-    assert nx.__name__ == 'numpy'
-
-    nx = get_backend(A, B)
-    assert nx.__name__ == 'numpy'
-
+def test_get_backend_invalid():
     # error if no parameters
     with pytest.raises(ValueError):
         get_backend()
@@ -56,64 +46,38 @@ def test_get_backend():
     with pytest.raises(ValueError):
         get_backend(1, 2.0)
 
-    # test torch
-    if torch:
 
-        A2 = torch.from_numpy(A)
-        B2 = torch.from_numpy(B)
+def test_get_backend(nx):
 
-        nx = get_backend(A2)
-        assert nx.__name__ == 'torch'
+    A = np.zeros((3, 2))
+    B = np.zeros((3, 1))
 
-        nx = get_backend(A2, B2)
-        assert nx.__name__ == 'torch'
+    nx_np = get_backend(A)
+    assert nx_np.__name__ == 'numpy'
 
-        # test not unique types in input
+    A2, B2 = nx.from_numpy(A, B)
+
+    effective_nx = get_backend(A2)
+    assert effective_nx.__name__ == nx.__name__
+
+    effective_nx = get_backend(A2, B2)
+    assert effective_nx.__name__ == nx.__name__
+
+    if nx.__name__ != "numpy":
+        # test that types mathcing different backends in input raise an error
         with pytest.raises(ValueError):
             get_backend(A, B2)
+    else:
+        # Check that subclassing a numpy array does not break get_backend
+        # note: This is only tested for numpy as this is hard to be consistent
+        # with other backends
+        class nx_subclass(nx.__type__):
+            pass
 
-    if jax:
+        A3 = nx_subclass(0)
 
-        A2 = jax.numpy.array(A)
-        B2 = jax.numpy.array(B)
-
-        nx = get_backend(A2)
-        assert nx.__name__ == 'jax'
-
-        nx = get_backend(A2, B2)
-        assert nx.__name__ == 'jax'
-
-        # test not unique types in input
-        with pytest.raises(ValueError):
-            get_backend(A, B2)
-
-    if cp:
-        A2 = cp.asarray(A)
-        B2 = cp.asarray(B)
-
-        nx = get_backend(A2)
-        assert nx.__name__ == 'cupy'
-
-        nx = get_backend(A2, B2)
-        assert nx.__name__ == 'cupy'
-
-        # test not unique types in input
-        with pytest.raises(ValueError):
-            get_backend(A, B2)
-
-    if tf:
-        A2 = tf.convert_to_tensor(A)
-        B2 = tf.convert_to_tensor(B)
-
-        nx = get_backend(A2)
-        assert nx.__name__ == 'tf'
-
-        nx = get_backend(A2, B2)
-        assert nx.__name__ == 'tf'
-
-        # test not unique types in input
-        with pytest.raises(ValueError):
-            get_backend(A, B2)
+        effective_nx = get_backend(A3, B2)
+        assert effective_nx.__name__ == nx.__name__
 
 
 def test_convert_between_backends(nx):

@@ -165,7 +165,7 @@ def get_backend(*args):
 
     for backend in _BACKENDS:
         if _check_args_backend(backend, args):
-            return backend()
+            return backend
 
     raise ValueError("Unknown type of non implemented backend.")
 
@@ -1312,7 +1312,7 @@ class NumpyBackend(Backend):
         return np.matmul(a, b)
 
 
-register_backend(NumpyBackend)
+register_backend(NumpyBackend())
 
 
 class JaxBackend(Backend):
@@ -1675,7 +1675,7 @@ class JaxBackend(Backend):
 
 if jax:
     # Only register jax backend if it is installed
-    register_backend(JaxBackend)
+    register_backend(JaxBackend())
 
 
 class TorchBackend(Backend):
@@ -2152,7 +2152,7 @@ class TorchBackend(Backend):
 
 if torch:
     # Only register torch backend if it is installed
-    register_backend(TorchBackend)
+    register_backend(TorchBackend())
 
 
 class CupyBackend(Backend):  # pragma: no cover
@@ -2539,7 +2539,7 @@ class CupyBackend(Backend):  # pragma: no cover
 
 if cp:
     # Only register cp backend if it is installed
-    register_backend(CupyBackend)
+    register_backend(CupyBackend())
 
 
 class TensorflowBackend(Backend):
@@ -2946,4 +2946,4 @@ class TensorflowBackend(Backend):
 
 if tf:
     # Only register tensorflow backend if it is installed
-    register_backend(TensorflowBackend)
+    register_backend(TensorflowBackend())
