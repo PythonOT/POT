@@ -258,7 +258,7 @@ def c_transform_entropic(b, M, reg, beta):
 
 
 def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
-                                log=False):
+                             log=False):
     r'''
     Compute the transportation matrix to solve the regularized discrete measures optimal transport max problem
 
