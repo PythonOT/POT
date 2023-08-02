@@ -131,23 +131,27 @@ except ImportError:
 str_type_error = "All array should be from the same type/backend. Current types are : {}"
 
 
+# Mapping between argument types and the existing backend
+_BACKENDS = []
+
+
+def register_backend(backend):
+    _BACKENDS.append(backend)
+
+
 def get_backend_list():
     """Returns the list of available backends"""
-    lst = [NumpyBackend(), ]
+    return _BACKENDS
 
-    if torch:
-        lst.append(TorchBackend())
 
-    if jax:
-        lst.append(JaxBackend())
+def _check_args_backend(backend, args):
+    is_instance = set(isinstance(a, backend.__type__) for a in args)
+    # check that all arguments matched or not the type
+    if len(is_instance) == 1:
+        return is_instance.pop()
 
-    if cp:  # pragma: no cover
-        lst.append(CupyBackend())
-
-    if tf:
-        lst.append(TensorflowBackend())
-
-    return lst
+    # Oterwise return an error
+    raise ValueError(str_type_error.format([type(a) for a in args]))
 
 
 def get_backend(*args):
@@ -158,22 +162,12 @@ def get_backend(*args):
     # check that some arrays given
     if not len(args) > 0:
         raise ValueError(" The function takes at least one parameter")
-    # check all same type
-    if not len(set(type(a) for a in args)) == 1:
-        raise ValueError(str_type_error.format([type(a) for a in args]))
 
-    if isinstance(args[0], np.ndarray):
-        return NumpyBackend()
-    elif isinstance(args[0], torch_type):
-        return TorchBackend()
-    elif isinstance(args[0], jax_type):
-        return JaxBackend()
-    elif isinstance(args[0], cp_type):  # pragma: no cover
-        return CupyBackend()
-    elif isinstance(args[0], tf_type):
-        return TensorflowBackend()
-    else:
-        raise ValueError("Unknown type of non implemented backend.")
+    for backend in _BACKENDS:
+        if _check_args_backend(backend, args):
+            return backend
+
+    raise ValueError("Unknown type of non implemented backend.")
 
 
 def to_numpy(*args):
@@ -1318,6 +1312,9 @@ class NumpyBackend(Backend):
         return np.matmul(a, b)
 
 
+register_backend(NumpyBackend())
+
+
 class JaxBackend(Backend):
     """
     JAX implementation of the backend
@@ -1674,6 +1671,11 @@ class JaxBackend(Backend):
 
     def matmul(self, a, b):
         return jnp.matmul(a, b)
+
+
+if jax:
+    # Only register jax backend if it is installed
+    register_backend(JaxBackend())
 
 
 class TorchBackend(Backend):
@@ -2148,6 +2150,11 @@ class TorchBackend(Backend):
         return torch.matmul(a, b)
 
 
+if torch:
+    # Only register torch backend if it is installed
+    register_backend(TorchBackend())
+
+
 class CupyBackend(Backend):  # pragma: no cover
     """
     CuPy implementation of the backend
@@ -2528,6 +2535,11 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def matmul(self, a, b):
         return cp.matmul(a, b)
+
+
+if cp:
+    # Only register cp backend if it is installed
+    register_backend(CupyBackend())
 
 
 class TensorflowBackend(Backend):
@@ -2930,3 +2942,8 @@ class TensorflowBackend(Backend):
 
     def matmul(self, a, b):
         return tnp.matmul(a, b)
+
+
+if tf:
+    # Only register tensorflow backend if it is installed
+    register_backend(TensorflowBackend())
