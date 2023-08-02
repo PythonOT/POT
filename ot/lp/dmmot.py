@@ -47,7 +47,7 @@ def dist_monge_max_min(i):
     .. [56] Jeffery Kline. Properties of the d-dimensional earth mover's
         problem. Discrete Applied Mathematics, 265: 128-141, 2019.
     .. [57] Wolfgang W. Bein, Peter Brucker, James K. Park, and Pramod K.
-        Pathak. A monge property for the d- dimensional transportation problem.
+        Pathak. A monge property for the d-dimensional transportation problem.
         Discrete Applied Mathematics, 58(2):97-109, 1995. ISSN 0166-218X. doi:
         https://doi.org/10.1016/0166-218X(93)E0121-E. URL
         https://www.sciencedirect.com/ science/article/pii/0166218X93E0121E.
@@ -137,6 +137,7 @@ def dmmot_monge_1dgrid_loss(A, verbose=False, log=False):
     """
 
     nx = get_backend(A)
+    A_copy = nx.copy(A)
     A = nx.to_numpy(A)
 
     AA = [np.copy(A[:, j]) for j in range(A.shape[1])]
@@ -188,7 +189,7 @@ def dmmot_monge_1dgrid_loss(A, verbose=False, log=False):
                 'dual objective': dualobj}
 
     # define forward/backward relations for pytorch
-    obj = nx.set_gradients(obj, (nx.from_numpy(A)), (dual))
+    obj = nx.set_gradients(obj, (A_copy), (dual))
 
     if log:
         return obj, log_dict
