@@ -42,6 +42,8 @@ The contributors to this library are:
 * [Eduardo Fernandes Montesuma](https://eddardd.github.io/my-personal-blog/) (Free support sinkhorn barycenter)
 * [Theo Gnassounou](https://github.com/tgnassou) (OT between Gaussian distributions)
 * [Clément Bonet](https://clbonet.github.io) (Wassertstein on circle, Spherical Sliced-Wasserstein)
+* [Ronak Mehta](https://ronakrm.github.io) (Efficient Discrete Multi Marginal Optimal Transport Regularization)
+* [Xizheng Yu](https://github.com/x12hengyu) (Efficient Discrete Multi Marginal Optimal Transport Regularization)
 * [Sonia Mazelet](https://github.com/SoniaMaz8) (Template based GNN layers)
 
 ## Acknowledgments
