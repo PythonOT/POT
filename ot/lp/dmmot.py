@@ -137,7 +137,7 @@ def dmmot_monge_1dgrid_loss(A, verbose=False, log=False):
     """
 
     nx = get_backend(A)
-    A_copy = nx.copy(A)
+    A_copy = A
     A = nx.to_numpy(A)
 
     AA = [np.copy(A[:, j]) for j in range(A.shape[1])]
