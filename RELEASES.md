@@ -18,6 +18,8 @@
 - Make marginal parameters optional for (F)GW solvers in `._gw`, `._bregman` and `._semirelaxed` (PR #455)
 - Add Entropic Wasserstein Component Analysis (ECWA) in ot.dr (PR #486)
 
+- Added feature Efficient Discrete Multi Marginal Optimal Transport Regularization + examples (PR #454)
+
 #### Closed issues
 
 - Fix change in scipy API for `cdist` (PR #487)

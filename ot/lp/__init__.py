@@ -17,6 +17,7 @@ import warnings
 
 from . import cvx
 from .cvx import barycenter
+from .dmmot import *
 
 # import compiled emd
 from .emd_wrap import emd_c, check_result, emd_1d_sorted
@@ -30,7 +31,8 @@ from ..backend import get_backend
 
 __all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx', ' emd_1d_sorted',
            'emd_1d', 'emd2_1d', 'wasserstein_1d', 'generalized_free_support_barycenter',
-           'binary_search_circle', 'wasserstein_circle', 'semidiscrete_wasserstein2_unif_circle']
+           'binary_search_circle', 'wasserstein_circle', 'semidiscrete_wasserstein2_unif_circle',
+           'discrete_mmot', 'discrete_mmot_converge']
 
 
 def check_number_threads(numThreads):
