@@ -202,7 +202,7 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     return center_ot_dual(alpha, beta, a, b)
 
 
-def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
+def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1, check_marginals=True):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
 
@@ -259,6 +259,10 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
     numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
         If compiled with OpenMP, chooses the number of threads to parallelize.
         "max" selects the highest number possible.
+    check_marginals: bool, optional (default=True)
+        If True, checks that the marginals mass are equal. If False, skips the
+        check.
+    
 
     Returns
     -------
@@ -328,9 +332,10 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
         "Dimension mismatch, check dimensions of M with a and b"
 
     # ensure that same mass
-    np.testing.assert_almost_equal(a.sum(0),
-                                   b.sum(0), err_msg='a and b vector must have the same sum',
-                                   decimal=6)
+    if check_marginals:
+        np.testing.assert_almost_equal(a.sum(0),
+                                    b.sum(0), err_msg='a and b vector must have the same sum',
+                                    decimal=6)
     b = b * a.sum() / b.sum()
 
     asel = a != 0
@@ -368,7 +373,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1):
 
 def emd2(a, b, M, processes=1,
          numItermax=100000, log=False, return_matrix=False,
-         center_dual=True, numThreads=1):
+         center_dual=True, numThreads=1, check_marginals=True):
     r"""Solves the Earth Movers distance problem and returns the loss
 
     .. math::
@@ -425,7 +430,11 @@ def emd2(a, b, M, processes=1,
     numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
         If compiled with OpenMP, chooses the number of threads to parallelize.
         "max" selects the highest number possible.
-
+    check_marginals: bool, optional (default=True)
+        If True, checks that the marginals mass are equal. If False, skips the
+        check.
+        
+    
     Returns
     -------
     W: float, array-like
@@ -492,8 +501,10 @@ def emd2(a, b, M, processes=1,
         "Dimension mismatch, check dimensions of M with a and b"
 
     # ensure that same mass
-    np.testing.assert_almost_equal(a.sum(0),
-                                   b.sum(0,keepdims=True), err_msg='a and b vector must have the same sum')
+    if check_marginals:
+        np.testing.assert_almost_equal(a.sum(0),
+                                    b.sum(0,keepdims=True), err_msg='a and b vector must have the same sum',
+                                    decimal=6)
     b = b * a.sum(0) / b.sum(0,keepdims=True)
 
     asel = a != 0
