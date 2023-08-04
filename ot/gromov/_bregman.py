@@ -225,7 +225,7 @@ def entropic_gromov_wasserstein2(
         C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1, symmetric=None, G0=None, max_iter=1000,
         tol=1e-9, solver='PGD', warmstart=False, verbose=False, log=False, **kwargs):
     r"""
-    Returns the Gromov-Wasserstein discrepancy :math:`\mathbf{GW}` between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
+    Returns the Gromov-Wasserstein loss :math:`\mathbf{GW}` between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
     estimated using Sinkhorn projections. To recover the Gromov-Wasserstein distance as defined in [13] compute :math:`d_{GW} = \frac{1}{2} \sqrt{\mathbf{GW}}`.
 
     If `solver="PGD"`, the function solves the following entropic-regularized
