@@ -1,6 +1,18 @@
 # Releases
 
-## 0.9.1dev
+## 0.9.1
+*August 2023*
+
+This new release contains several new features and bug fixes. 
+
+New features include a new submodule `ot.gnn` that contains two new Graph neural network layers (compatible with [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/)) for template-based pooling of graphs with an example on [graph classification](https://pythonot.github.io/master/auto_examples/gromov/plot_gnn_TFGW.html). Related to this, we also now provide FGW and semi relaxed FGW solvers for which the resulting loss is differentiable w.r.t. the parameter `alpha`. Other contributions on the (F)GW front include a new solver for the Proximal Point algorithm [that can be used to solve entropic GW problems](https://pythonot.github.io/master/auto_examples/gromov/plot_fgw_solvers.html) (using the parameter `solver="PPA"`), novels Sinkhorn-based solvers for entropic semi-relaxed (F)GW, the possibility to provide a warm-start to the solvers, and optional marginal weights of the samples (uniform weights ar used by default).
+
+We also provide a new solver for the [Entropic Wasserstein Component Analysis](https://pythonot.github.io/master/auto_examples/others/plot_EWCA.html) that is a generalization of the celebrated PCA taking into account the local neighborhood of the samples. We also now have a new solver in `ot.smooth` for the [sparsity-constrained OT (last plot)](https://pythonot.github.io/master/auto_examples/plot_OT_1D_smooth.html) that can be used to find regularized OT plans with sparsity constraints. Finally we have a first multi-marginal solver for regular 1D distributions with a Monge loss (see [here](https://pythonot.github.io/master/auto_examples/others/plot_dmmot.html)).
+
+The documentation and testings have also been updated. We now have nearly 95% code coverage with the tests. The documentation has been updated and some examples have been streamlined to build more quickly and avoid timeout problems with CircleCI. We also added an optional CI on GPU for the master branch and approved PRs that can be used when a GPU runner is online. 
+
+Many other bugs and issues have been fixed and we want to thank all the contributors, old and new, who made this release possible. More details below.
+
 
 #### New features
 - Template-based Fused Gromov Wasserstein GNN layer in `ot.gnn` (PR #488)
@@ -17,20 +29,29 @@
 - Added entropic semi-relaxed (Fused) Gromov-Wasserstein solvers in `ot.gromov` + examples (PR #455)
 - Make marginal parameters optional for (F)GW solvers in `._gw`, `._bregman` and `._semirelaxed` (PR #455)
 - Add Entropic Wasserstein Component Analysis (ECWA) in ot.dr (PR #486)
-
 - Added feature Efficient Discrete Multi Marginal Optimal Transport Regularization + examples (PR #454)
 
 #### Closed issues
 
 - Fix change in scipy API for `cdist` (PR #487)
+- More permissive check_backend (PR #494)
 - Fix circleci-redirector action and codecov (PR #460)
 - Fix issues with cuda for ot.binary_search_circle and with gradients for ot.sliced_wasserstein_sphere (PR #457)
-- Major documentation cleanup (PR #462, #467, #475)
+- Major documentation cleanup (PR #462, PR #467, PR #475)
 - Fix gradients for "Wasserstein2 Minibatch GAN" example (PR #466)
 - Faster Bures-Wasserstein distance with NumPy backend (PR #468)
 - Fix issue backend for ot.sliced_wasserstein_sphere ot.sliced_wasserstein_sphere_unif (PR #471)
-- Fix issue with ot.barycenter_stabilized when used with PyTorch tensors and log=True (RP #474)
+- Fix issue with ot.barycenter_stabilized when used with PyTorch tensors and log=True (PR #474)
 - Fix `utils.cost_normalization` function issue to work with multiple backends (PR #472)
+
+#### New Contributors
+* @kachayev made their first contribution in PR #462
+* @liutianlin0121 made their first contribution in PR #459
+* @francois-rozet made their first contribution in PR #468
+* @framunoz made their first contribution in PR #472
+* @SoniaMaz8 made their first contribution in PR #483
+* @tomMoral made their first contribution in PR #494
+* @12hengyu made their first contribution in PR #454
 
 ## 0.9.0
 *April 2023*
@@ -159,6 +180,7 @@ PR #413)
 - Fixed issues with cuda variables for `line_search_armijo` and `entropic_gromov_wasserstein` (Issue #445, #PR 446)
 
 ## 0.8.2
+*April 2022*
 
 This releases introduces several new notable features. The less important
 but most exiting one being that we now have a logo for the toolbox (color
