@@ -5,10 +5,13 @@
 
 This new release contains several new features and bug fixes. 
 
-New features include a new submodule `ot.gnn` that contains two new Graph neural network layers (compatible with [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/)) for template-based pooling of graphs with an example for [graph classification](https://pythonot.github.io/master/auto_examples/gromov/plot_gnn_TFGW.html). Related to this, we also now provide FGW and semi relaxed FGW solvers for which the resulting loss is differentiable w.r.t. the parameter `alpha`. Other conribution on the GW front include a new solver for the [Proximal Point algorithm](https://pythonot.github.io/master/auto_examples/gromov/plot_gromov_proximal_point.html) that can be used to solve entropic GW problems (using the parameter `solver="PPA"`), novels sinkhorn-based solvers for entropic semi-relaxed (F)GW, anc the possibility to provide a warm-start to the solvers 
+New features include a new submodule `ot.gnn` that contains two new Graph neural network layers (compatible with [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/)) for template-based pooling of graphs with an example for [graph classification](https://pythonot.github.io/master/auto_examples/gromov/plot_gnn_TFGW.html). Related to this, we also now provide FGW and semi relaxed FGW solvers for which the resulting loss is differentiable w.r.t. the parameter `alpha`. Other conribution on the GW front include a new solver for the [Proximal Point algorithm](https://pythonot.github.io/master/auto_examples/gromov/plot_gromov_proximal_point.html) that can be used to solve entropic GW problems (using the parameter `solver="PPA"`), novels Sinkhorn-based solvers for entropic semi-relaxed (F)GW, and the possibility to provide a warm-start to the solvers.
 
-We also provide a new solver for the [Entropic Wasserstein Component Analysis](https://pythonot.github.io/master/auto_examples/others/plot_EWCA.html) that is a generalization of the celebrated PCA taking into account the local neighborhood of the samples. Finally we now provide. We also had a new solver in `ot.smooth` for the [sparsity-constrained OT (last plot)](https://pythonot.github.io/master/auto_examples/plot_OT_1D_smooth.html) that can be used to find regularized OT plans with sparsity constraints. 
+We also provide a new solver for the [Entropic Wasserstein Component Analysis](https://pythonot.github.io/master/auto_examples/others/plot_EWCA.html) that is a generalization of the celebrated PCA taking into account the local neighborhood of the samples. Finally we now provide. We also had a new solver in `ot.smooth` for the [sparsity-constrained OT (last plot)](https://pythonot.github.io/master/auto_examples/plot_OT_1D_smooth.html) that can be used to find regularized OT plans with sparsity constraints. Finally we now have our first multi-marginal solver for regular 1D distributions with a Monge loss (see [here](https://pythonot.github.io/master/auto_examples/others/plot_dmmot.html)).
 
+The documentation and testings have also been updated. We now have nearly 95% code coverage with the tests. The documentation has been updated and some examples have been streamlined to build more quickly and avoid timeout problems with CircleCI. We also added an optional CI on GPU for the master branch and approved PRs when the GPU runner is online. 
+
+Many other bugs and issues have been fixed and we want to thank all the contributors, old and new, who made this release possible. More details below.
 
 
 #### New features
@@ -26,7 +29,6 @@ We also provide a new solver for the [Entropic Wasserstein Component Analysis](h
 - Added entropic semi-relaxed (Fused) Gromov-Wasserstein solvers in `ot.gromov` + examples (PR #455)
 - Make marginal parameters optional for (F)GW solvers in `._gw`, `._bregman` and `._semirelaxed` (PR #455)
 - Add Entropic Wasserstein Component Analysis (ECWA) in ot.dr (PR #486)
-
 - Added feature Efficient Discrete Multi Marginal Optimal Transport Regularization + examples (PR #454)
 
 #### Closed issues
