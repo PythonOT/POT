@@ -43,6 +43,7 @@ Many other bugs and issues have been fixed and we want to thank all the contribu
 - Fix issue backend for ot.sliced_wasserstein_sphere ot.sliced_wasserstein_sphere_unif (PR #471)
 - Fix issue with ot.barycenter_stabilized when used with PyTorch tensors and log=True (PR #474)
 - Fix `utils.cost_normalization` function issue to work with multiple backends (PR #472)
+- Fix pression error on marginal sums and  (Issue #429, PR #496)
 
 #### New Contributors
 * @kachayev made their first contribution in PR #462
