@@ -332,7 +332,7 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
     - :math:`\mathbf{q}`: distribution in the target space
     - `L`: loss function to account for the misfit between the similarity and feature matrices
     - :math:`\alpha`: trade-off parameter
-    
+
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
@@ -494,7 +494,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss',
     - :math:`\mathbf{q}`: distribution in the target space
     - `L`: loss function to account for the misfit between the similarity and feature matrices
     - :math:`\alpha`: trade-off parameter
-    
+
     Note that when using backends, this loss function is differentiable wrt the
     matrices (C1, C2, M) and weights (p, q) for quadratic loss using the gradients from [38]_.
 
@@ -836,7 +836,7 @@ def fgw_barycenters(
     - :math:`\mathbf{Y}_s`: feature matrix
     - :math:`\mathbf{C}_s`: metric cost matrix
     - :math:`\mathbf{p}_s`: distribution
-    
+
     Parameters
     ----------
     N : int
