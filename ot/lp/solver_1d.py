@@ -134,7 +134,7 @@ def wasserstein_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, requ
 
 
 def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
-           log=False):
+           log=False, check_marginals=True):
     r"""Solves the Earth Movers distance problem between 1d measures and returns
     the OT matrix
 
@@ -181,6 +181,9 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     log: boolean, optional (default=False)
         If True, returns a dictionary containing the cost.
         Otherwise returns only the optimal transportation matrix.
+    check_marginals: bool, optional (default=True)
+        If True, checks that the marginals mass are equal. If False, skips the
+        check.
 
     Returns
     -------
@@ -235,11 +238,13 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         b = nx.ones((x_b.shape[0],), type_as=x_b) / x_b.shape[0]
 
     # ensure that same mass
-    np.testing.assert_almost_equal(
-        nx.to_numpy(nx.sum(a, axis=0)),
-        nx.to_numpy(nx.sum(b, axis=0)),
-        err_msg='a and b vector must have the same sum'
-    )
+    if check_marginals:
+        np.testing.assert_almost_equal(
+            nx.to_numpy(nx.sum(a, axis=0)),
+            nx.to_numpy(nx.sum(b, axis=0)),
+            err_msg='a and b vector must have the same sum',
+            decimal=6
+        )
     b = b * nx.sum(a) / nx.sum(b)
 
     x_a_1d = nx.reshape(x_a, (-1,))
