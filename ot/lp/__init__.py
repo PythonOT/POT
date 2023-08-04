@@ -17,7 +17,7 @@ import warnings
 
 from . import cvx
 from .cvx import barycenter
-from .dmmot import *
+from .dmmot import dmmot_monge_1dgrid_loss, dmmot_monge_1dgrid_optimize
 
 # import compiled emd
 from .emd_wrap import emd_c, check_result, emd_1d_sorted
