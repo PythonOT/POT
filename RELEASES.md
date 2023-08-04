@@ -33,6 +33,7 @@ Many other bugs and issues have been fixed and we want to thank all the contribu
 
 #### Closed issues
 
+- Fix gromov conventions (PR #497)
 - Fix change in scipy API for `cdist` (PR #487)
 - More permissive check_backend (PR #494)
 - Fix circleci-redirector action and codecov (PR #460)
