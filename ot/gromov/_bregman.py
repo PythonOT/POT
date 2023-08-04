@@ -226,8 +226,7 @@ def entropic_gromov_wasserstein2(
         tol=1e-9, solver='PGD', warmstart=False, verbose=False, log=False, **kwargs):
     r"""
     Returns the Gromov-Wasserstein discrepancy :math:`\mathbf{GW}` between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
-    estimated using Sinkhorn projections.
-    The Gromov-Wasserstein distance as defined in [13] satisfies :math:`d_{GW} = \frac{1}{2} \sqrt{\mathbf{GW}}`.
+    estimated using Sinkhorn projections. To recover the Gromov-Wasserstein distance as defined in [13] compute :math:`d_{GW} = \frac{1}{2} \sqrt{\mathbf{GW}}`.
 
     If `solver="PGD"`, the function solves the following entropic-regularized
     Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
