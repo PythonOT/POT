@@ -21,12 +21,12 @@ from ._utils import init_matrix_semirelaxed, gwloss, gwggrad
 def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symmetric=None, log=False, G0=None,
                                    max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
-    Returns the semi-relaxed Gromov-Wasserstein divergence transport from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
+    Returns the semi-relaxed Gromov-Wasserstein divergence transport from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}` (see [48]).
 
-    The function solves the following optimization problem:
+    The function solves the following optimization problem using Conditional Gradient:
 
     .. math::
-        \mathbf{T}^^* \in \mathop{\arg \min}_{\mathbf{T}} \quad \sum_{i,j,k,l}
+        \mathbf{T}^* \in \mathop{\arg \min}_{\mathbf{T}} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
@@ -152,9 +152,9 @@ def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symme
 def semirelaxed_gromov_wasserstein2(C1, C2, p=None, loss_fun='square_loss', symmetric=None, log=False, G0=None,
                                     max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
-    Returns the semi-relaxed gromov-wasserstein divergence from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
+    Returns the semi-relaxed Gromov-Wasserstein divergence from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}` (see [48]).
 
-    The function solves the following optimization problem:
+    The function solves the following optimization problem using Conditional Gradient:
 
     .. math::
         \text{srGW} = \min_{\mathbf{T}} \quad \sum_{i,j,k,l}
@@ -255,7 +255,7 @@ def semirelaxed_fused_gromov_wasserstein(
         M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, alpha=0.5,
         G0=None, log=False, max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
-    Computes the semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
+    Computes the semi-relaxed Fused Gromov-Wasserstein transport between two graphs (see [48]).
 
     .. math::
         \mathbf{T}^* \in \mathop{\arg \min}_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
@@ -395,10 +395,10 @@ def semirelaxed_fused_gromov_wasserstein(
 def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, alpha=0.5, G0=None, log=False,
                                           max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
-    Computes the semi-relaxed FGW divergence between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein2>`)
+    Computes the semi-relaxed FGW divergence between two graphs (see [48]).
 
     .. math::
-        \mathbf{srFGW} = \min_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \mathbf{srFGW}_{\alpha} = \min_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) T_{i,j} T_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
@@ -511,7 +511,7 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p=None, loss_fun='square_lo
 def solve_semirelaxed_gromov_linesearch(G, deltaG, cost_G, C1, C2, ones_p,
                                         M, reg, alpha_min=None, alpha_max=None, nx=None, **kwargs):
     """
-    Solve the linesearch in the FW iterations
+    Solve the linesearch in the Conditional Gradient iterations for the semi-relaxed Gromov-Wasserstein divergence.
 
     Parameters
     ----------
@@ -829,6 +829,7 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
         alpha=0.5, G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
     r"""
     Computes the entropic-regularized semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
+    estimated using a Mirror Descent algorithm following the KL geometry.
 
     .. math::
         \mathbf{T}^* \in \mathop{\arg \min}_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
@@ -988,10 +989,11 @@ def entropic_semirelaxed_fused_gromov_wasserstein2(
         M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, epsilon=0.1,
         alpha=0.5, G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
     r"""
-    Computes the entropic-regularized semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
+    Computes the entropic-regularized semi-relaxed FGW divergence between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
+    estimated using a Mirror Descent algorithm following the KL geometry.
 
     .. math::
-        \mathbf{srFGW} = \min_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \mathbf{srFGW}_{\alpha} = \min_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}

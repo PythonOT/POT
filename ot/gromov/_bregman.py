@@ -225,8 +225,9 @@ def entropic_gromov_wasserstein2(
         C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1, symmetric=None, G0=None, max_iter=1000,
         tol=1e-9, solver='PGD', warmstart=False, verbose=False, log=False, **kwargs):
     r"""
-    Returns the Gromov-Wasserstein discrepancy between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
+    Returns the Gromov-Wasserstein discrepancy :math:`\mathbf{GW}` between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
     estimated using Sinkhorn projections.
+    The Gromov-Wasserstein distance as defined in [13] satisfies :math:`d_{GW} = \frac{1}{2} \sqrt{\mathbf{GW}}`.
 
     If `solver="PGD"`, the function solves the following entropic-regularized
     Gromov-Wasserstein optimization problem using Projected Gradient Descent [12]:
@@ -351,7 +352,7 @@ def entropic_gromov_barycenters(
 
     .. math::
 
-        \mathbf{C} = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
+        \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
 
     Where :
 
@@ -700,7 +701,7 @@ def entropic_fused_gromov_wasserstein2(
         symmetric=None, alpha=0.5, G0=None, max_iter=1000, tol=1e-9,
         solver='PGD', warmstart=False, verbose=False, log=False, **kwargs):
     r"""
-    Returns the Fused Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
+    Returns the Fused Gromov-Wasserstein distance between :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
     with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}`,
     estimated using Sinkhorn projections.
 
@@ -832,7 +833,7 @@ def entropic_fused_gromov_barycenters(
 
     .. math::
 
-        \mathbf{C}, \mathbf{Y} = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}, \mathbf{Y}\in \mathbb{Y}^{N \times d}} \quad \sum_s \lambda_s \mathrm{FGW}_{\alpha}(\mathbf{C}, \mathbf{C}_s, \mathbf{Y}, \mathbf{Y}_s, \mathbf{p}, \mathbf{p}_s)
+        \mathbf{C}^*, \mathbf{Y}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}, \mathbf{Y}\in \mathbb{Y}^{N \times d}} \quad \sum_s \lambda_s \mathrm{FGW}_{\alpha}(\mathbf{C}, \mathbf{C}_s, \mathbf{Y}, \mathbf{Y}_s, \mathbf{p}, \mathbf{p}_s)
 
     Where :
 
