@@ -574,4 +574,35 @@ def empirical_gaussian_gromov_wasserstein_mapping(xs, xt, ws=None,
     59(4), 1178-1198.
     """
 
-    pass
+    xs, xt = list_to_array(xs, xt)
+    nx = get_backend(xs, xt)
+
+    ds = xs.shape[1]
+    dt = xt.shape[1]
+
+    if ws is None:
+        ws = nx.ones((xs.shape[0]), type_as=xs) / xs.shape[0]
+
+    if wt is None:
+        wt = nx.ones((xt.shape[0]), type_as=xt) / xt.shape[0]
+
+    mxs = nx.dot(ws, xs) / nx.sum(ws)
+    mxt = nx.dot(wt, xt) / nx.sum(wt)
+
+    xs = xs - mxs
+    xt = xt - mxt
+
+    Cs = nx.dot((xs * ws[:, None]).T, xs) / nx.sum(ws)
+    Ct = nx.dot((xt * wt[:, None]).T, xt) / nx.sum(wt)
+
+    if log:
+
+        A, b, log = gaussian_gromov_wasserstein_mapping(mxs, mxt, Cs, Ct, sign_eigs=sign_eigs, log=log)
+        log['Cov_s'] = Cs
+        log['Cov_t'] = Ct
+        return A, b, log
+
+    else:
+        A, b = gaussian_gromov_wasserstein_mapping(mxs, mxt, Cs, Ct, sign_eigs=sign_eigs)
+        return A, b
+
