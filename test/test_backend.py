@@ -588,6 +588,10 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append("matrix square root")
 
+        D, U = nx.eigh(SquareMb.T @ SquareMb)
+        lst_b.append(nx.to_numpy(nx.dot(U, nx.dot(nx.diag(D), U.T))))
+        lst_name.append("eigh ")
+
         A = nx.kl_div(nx.abs(Mb), nx.abs(Mb) + 1)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("Kullback-Leibler divergence")

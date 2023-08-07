@@ -858,6 +858,16 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def eigh(self, a):
+        r"""
+        Computes the eigenvalues and eigenvectors of a symmetric tensor.
+
+        This function follows the api from :any:`scipy.linalg.eigh`.
+
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.eigh.html
+        """
+        raise NotImplementedError()
+
     def kl_div(self, p, q, eps=1e-16):
         r"""
         Computes the Kullback-Leibler divergence.
@@ -1253,6 +1263,9 @@ class NumpyBackend(Backend):
         L, V = np.linalg.eigh(a)
         return (V * np.sqrt(L)[None, :]) @ V.T
 
+    def eigh(self, a):
+        return np.linalg.eigh(a)
+
     def kl_div(self, p, q, eps=1e-16):
         return np.sum(p * np.log(p / q + eps))
 
@@ -1630,6 +1643,9 @@ class JaxBackend(Backend):
     def sqrtm(self, a):
         L, V = jnp.linalg.eigh(a)
         return (V * jnp.sqrt(L)[None, :]) @ V.T
+
+    def eigh(self, a):
+        return jnp.linalg.eigh(a)
 
     def kl_div(self, p, q, eps=1e-16):
         return jnp.sum(p * jnp.log(p / q + eps))
@@ -2106,6 +2122,9 @@ class TorchBackend(Backend):
         L, V = torch.linalg.eigh(a)
         return (V * torch.sqrt(L)[None, :]) @ V.T
 
+    def eigh(self, a):
+        return torch.linalg.eigh(a)
+
     def kl_div(self, p, q, eps=1e-16):
         return torch.sum(p * torch.log(p / q + eps))
 
@@ -2494,6 +2513,9 @@ class CupyBackend(Backend):  # pragma: no cover
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
         return (V * cp.sqrt(L)[None, :]) @ V.T
+
+    def eigh(self, a):
+        return cp.linalg.eigh(a)
 
     def kl_div(self, p, q, eps=1e-16):
         return cp.sum(p * cp.log(p / q + eps))
@@ -2901,6 +2923,9 @@ class TensorflowBackend(Backend):
     def sqrtm(self, a):
         L, V = tf.linalg.eigh(a)
         return (V * tf.sqrt(L)[None, :]) @ V.T
+
+    def eigh(self, a):
+        return tf.linalg.eigh(a)
 
     def kl_div(self, p, q, eps=1e-16):
         return tnp.sum(p * tnp.log(p / q + eps))

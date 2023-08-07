@@ -331,3 +331,247 @@ def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
     else:
         W = bures_wasserstein_distance(mxs, mxt, Cs, Ct)
         return W
+
+
+def gaussian_gromov_wasserstein_distance(Cov_s, Cov_t, log=False):
+    r""" Return the Gaussian Gromov-Wasserstein value from [57].
+
+    This function return the closed form value of the Gaussian Gromov-Wasserstein
+    distance between two Gaussian distributions
+    :math:`\mathcal{N}(\mu_s,\Sigma_s)` and :math:`\mathcal{N}(\mu_t,\Sigma_t)`
+    when the OT plan is assumed to be also Gaussian. See [57] Theorem 4.1 for
+    more details.
+
+    Parameters
+    ----------
+    Cov_s : array-like (d,d)
+        covariance of the source distribution
+    Cov_t : array-like (d,d)
+        covariance of the target distribution
+
+
+    Returns
+    -------
+    G : float
+        Gaussian Gromov-Wasserstein distance
+
+
+    .. _references-gaussien_gromov_wasserstein_distance:
+    References
+    ----------
+    [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
+    distances between Gaussian distributions. Journal of Applied Probability,
+    59(4),
+    1178-1198.
+    """
+
+    nx = get_backend(Cov_s, Cov_t)
+
+    # ensure that Cov_s is the largest covariance matrix
+    # that is m >= n
+    if Cov_s.shape[0] < Cov_t.shape[0]:
+        Cov_s, Cov_t = Cov_t, Cov_s
+
+    n = Cov_t.shape[0]
+
+    # compte and sort eigenvalues decerasingly
+    d_s = nx.flip(nx.sort(nx.eigh(Cov_s)[0]))
+    d_t = nx.flip(nx.sort(nx.eigh(Cov_t)[0]))
+
+    # compute the gaussien Gromov-Wasserstein distance
+    res = 4 * (nx.sum(d_s) - nx.sum(d_t))**2 + 8 * nx.sum((d_s[:n] - d_t)**2) + 8 * nx.sum((d_s[n:])**2)
+    if log:
+        log = {}
+        log['d_s'] = d_s
+        log['d_t'] = d_t
+        return nx.sqrt(res), log
+    else:
+        return nx.sqrt(res)
+
+
+def empirical_gaussian_gromov_wasserstein_distance(xs, xt, ws=None,
+                                                   wt=None, log=False):
+    r"""Return Gaussian Gromov-Wasserstein distance between samples.
+
+    The function estimates the Gaussian Gromov-Wasserstein distance between two
+    Gaussien distributions source :math:`\mu_s` and target :math:`\mu_t`, whose
+    parameters are estimated from the provided samples :math:`\mathcal{X}_s` and
+    :math:`\mathcal{X}_t`. See [57] Theorem 4.1 for more details.
+
+    Parameters
+    ----------
+    xs : array-like (ns,d)
+        samples in the source domain
+    xt : array-like (nt,d)
+        samples in the target domain
+    ws : array-like (ns,1), optional
+        weights for the source samples
+    wt : array-like (ns,1), optional
+        weights for the target samples
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    G : float
+        Gaussian Gromov-Wasserstein distance
+
+
+    .. _references-gaussien_gromov_wasserstein:
+    References
+    ----------
+    [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
+    distances between Gaussian distributions. Journal of Applied Probability,
+    59(4), 1178-1198.
+    """
+    xs, xt = list_to_array(xs, xt)
+    nx = get_backend(xs, xt)
+
+    ds = xs.shape[1]
+    dt = xt.shape[1]
+
+    if ws is None:
+        ws = nx.ones((xs.shape[0]), type_as=xs) / xs.shape[0]
+
+    if wt is None:
+        wt = nx.ones((xt.shape[0]), type_as=xt) / xt.shape[0]
+
+    mxs = nx.dot(ws, xs) / nx.sum(ws)
+    mxt = nx.dot(wt, xt) / nx.sum(wt)
+
+    xs = xs - mxs
+    xt = xt - mxt
+
+    Cs = nx.dot((xs * ws[:, None]).T, xs) / nx.sum(ws)
+    Ct = nx.dot((xt * wt[:, None]).T, xt) / nx.sum(wt)
+
+    if log:
+        G, log = gaussian_gromov_wasserstein_distance(Cs, Ct, log=log)
+        log['Cov_s'] = Cs
+        log['Cov_t'] = Ct
+        return G, log
+    else:
+        G = gaussian_gromov_wasserstein_distance(Cs, Ct)
+        return G
+
+
+def gaussian_gromov_wasserstein_mapping(mu_s, mu_t, Cov_s, Cov_t, sign_eigs=None, log=False):
+    r""" Return the Gaussian Gromov-Wasserstein mapping from [57].
+
+    This function return the closed form value of the Gaussian
+    Gromov-Wasserstein mapping between two Gaussian distributions
+    :math:`\mathcal{N}(\mu_s,\Sigma_s)` and :math:`\mathcal{N}(\mu_t,\Sigma_t)`
+    when the OT plan is assumed to be also Gaussian. See [57] Theorem 4.1 for
+    more details.
+
+    Parameters
+    ----------
+    mu_s : array-like (ds,)
+        mean of the source distribution
+    mu_t : array-like (dt,)
+        mean of the target distribution
+    Cov_s : array-like (ds,ds)
+        covariance of the source distribution
+    Cov_t : array-like (dt,dt)
+        covariance of the target distribution
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    A : (dt, ds) array-like
+        Linear operator
+    b : (1, dt) array-like
+        bias
+
+
+    .. _references-gaussien_gromov_wasserstein_mapping:
+    References
+    ----------
+    [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
+    distances between Gaussian distributions. Journal of Applied Probability,
+    59(4), 1178-1198.
+    """
+
+    nx = get_backend(mu_s, mu_t, Cov_s, Cov_t)
+
+    n = Cov_t.shape[0]
+    m = Cov_s.shape[0]
+
+    # compte and sort eigenvalues/eigenvectors decreasingly
+    d_s, U_s = nx.eigh(Cov_s)
+    id_s = nx.flip(nx.argsort(d_s))
+    ds, Us = d_s[id_s], U_s[:, id_s]
+
+    d_t, U_t = nx.eigh(Cov_t)
+    id_t = nx.flip(nx.argsort(d_t))
+    dt, Ut = d_t[id_t], U_t[:, id_t]
+
+    if sign_eigs is None:
+        sign_eigs = nx.ones(min(m, n), type_as=mu_s)
+
+    if m >= n:
+        A = nx.concatenate((nx.diag(sign_eigs * d_t / d_s[:n]), nx.zeros((n, m - n), type_as=mu_s)), axis=1).T
+    else:
+        A = nx.concatenate((nx.diag(sign_eigs * d_t[:m] / d_s), nx.zeros((n - m, m), type_as=mu_s)), axis=0).T
+
+    A = nx.dot(nx.dot(U_s, A), Ut.T)
+
+    # compute the gaussien Gromov-Wasserstein dis
+    b = mu_t - nx.dot(mu_s, A)
+
+    if log:
+        log = {}
+        log['d_s'] = d_s
+        log['d_t'] = d_t
+        log['U_s'] = U_s
+        log['U_t'] = U_t
+        return A, b, log
+    else:
+        return A, b
+
+
+def empirical_gaussian_gromov_wasserstein_mapping(xs, xt, ws=None,
+                                                  wt=None, sign_eigs=None, log=False):
+    r"""Return Gaussian Gromov-Wasserstein mapping between samples.
+
+    The function estimates the Gaussian Gromov-Wasserstein mapping between two
+    Gaussien distributions source :math:`\mu_s` and target :math:`\mu_t`, whose
+    parameters are estimated from the provided samples :math:`\mathcal{X}_s` and
+    :math:`\mathcal{X}_t`. See [57] Theorem 4.1 for more details.
+
+
+    Parameters
+    ----------
+    xs : array-like (ns,ds)
+        samples in the source domain
+    xt : array-like (nt,dt)
+        samples in the target domain
+    ws : array-like (ns,1), optional
+        weights for the source samples
+    wt : array-like (ns,1), optional
+        weights for the target samples
+    sign_eigs : array-like (min(ds,dt),), optional
+        sign of the eigenvalues of the mapping matrix
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    A : (dt, ds) array-like
+        Linear operator
+    b : (1, dt) array-like
+        bias
+
+    .. _references-empirical_gaussian_gromov_wasserstein_mapping:
+    References
+    ----------
+    [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
+    distances between Gaussian distributions. Journal of Applied Probability,
+    59(4), 1178-1198.
+    """
+
+    pass
