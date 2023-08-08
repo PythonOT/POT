@@ -1423,7 +1423,6 @@ class LinearGWTransport(LinearTransport):
         self : object
             Returns self.
         """
-        nx = self._get_backend(Xs, ys, Xt, yt)
 
         self.mu_s = self.distribution_estimation(Xs)
         self.mu_t = self.distribution_estimation(Xt)
