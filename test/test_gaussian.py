@@ -157,3 +157,12 @@ def test_gaussian_gromov_wasserstein_mapping(nx, d_target):
     np.testing.assert_allclose(nx.to_numpy(A), nx.to_numpy(Ae0))
     if d_target <= 2:
         np.testing.assert_allclose(Ct, Cst)
+
+    # test the other way around (target to source)
+    Ai, bi, logi = ot.gaussian.gaussian_gromov_wasserstein_mapping(mtb, msb, Ctb, Csb, log=True)
+
+    Xtt = nx.to_numpy(nx.dot(Xtb, Ai) + bi)
+    Ctt = np.cov(Xtt.T)
+
+    if d_target >= 2:
+        np.testing.assert_allclose(Cs, Ctt)
