@@ -124,14 +124,14 @@ class TFGWPooling(nn.Module):
             if multi_alpha:
                 self.alpha0 = torch.Tensor([0] * self.n_tplt)
             else:
-                alpha0 = torch.Tensor([0])
-            self.alpha0 = nn.Parameter(alpha0)
+                self.alpha0 = torch.Tensor([0])
+            self.alpha0 = nn.Parameter(self.alpha0)
         else:
             if multi_alpha:
                 self.alpha0 = torch.Tensor([alpha] * self.n_tplt)
             else:
                 self.alpha0 = torch.Tensor([alpha])
-            self.alpha0 = torch.logit(alpha0)
+            self.alpha0 = torch.logit(self.alpha0)
 
     def forward(self, x, edge_index, batch=None):
         """
@@ -227,8 +227,8 @@ class TWPooling(nn.Module):
         self.feature_init_std = feature_init_std
 
         _, tplt_features, self.q0 = TFGW_template_initialization(self.n_tplt, self.n_tplt_nodes, self.n_features, self.feature_init_mean, self.feature_init_std)
-        self.tplt_features = nn.Parameter(tplt_features)
 
+        self.tplt_features = nn.Parameter(tplt_features)
         self.softmax = nn.Softmax(dim=1)
 
         if train_node_weights:
