@@ -1382,6 +1382,10 @@ class LinearGWTransport(LinearTransport):
 
     Parameters
     ----------
+    sign_eigs : array-like (n_features), str, optional
+        sign of the eigenvalues of the mapping matrix, by default all signs will
+        be positive. If 'skewness' is provided, the sign of the eigenvalues is
+        selected as the product of the sign of the skewness of the projected data.
     log : bool, optional
         record log if True
 
@@ -1395,8 +1399,9 @@ class LinearGWTransport(LinearTransport):
 
     """
 
-    def __init__(self, log=False,
+    def __init__(self, log=False, sign_eigs=None,
                  distribution_estimation=distribution_estimation_uniform):
+        self.sign_eigs = sign_eigs
         self.log = log
         self.distribution_estimation = distribution_estimation
 
@@ -1434,6 +1439,7 @@ class LinearGWTransport(LinearTransport):
         returned_ = empirical_gaussian_gromov_wasserstein_mapping(Xs, Xt,
                                                                   ws=self.mu_s[:, None],
                                                                   wt=self.mu_t[:, None],
+                                                                  sign_eigs=self.sign_eigs,
                                                                   log=self.log)
 
         # deal with the value of log
@@ -1447,6 +1453,7 @@ class LinearGWTransport(LinearTransport):
         returned_1_ = empirical_gaussian_gromov_wasserstein_mapping(Xt, Xs,
                                                                     ws=self.mu_t[:, None],
                                                                     wt=self.mu_s[:, None],
+                                                                    sign_eigs=self.sign_eigs,
                                                                     log=self.log)
         if self.log:
             self.A1_, self.B1_, self.log_1_ = returned_1_
