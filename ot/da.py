@@ -1365,7 +1365,7 @@ class LinearGWTransport(LinearTransport):
     r""" OT Gaussian Gromov-Wasserstein linear operator between empirical distributions
 
     The function estimates the optimal linear operator that aligns the two
-    empirical distributions optimaly wrt the Gromov wassretsein distance. This is equivalent to estimating the closed
+    empirical distributions optimally wrt the Gromov-Wasserstein distance. This is equivalent to estimating the closed
     form mapping between two Gaussian distributions :math:`\mathcal{N}(\mu_s,\Sigma_s)`
     and :math:`\mathcal{N}(\mu_t,\Sigma_t)` as proposed in
     :ref:`[57] <references-lineargwtransport>`.

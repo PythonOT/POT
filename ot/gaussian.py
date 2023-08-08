@@ -42,9 +42,9 @@ def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
         mean of the source distribution
     mt : array-like (d,)
         mean of the target distribution
-    Cs : array-like (d,)
+    Cs : array-like (d,d)
         covariance of the source distribution
-    Ct : array-like (d,)
+    Ct : array-like (d,d)
         covariance of the target distribution
     log : bool, optional
         record log if True
@@ -210,9 +210,9 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
         mean of the source distribution
     mt : array-like (d,)
         mean of the target distribution
-    Cs : array-like (d,)
+    Cs : array-like (d,d)
         covariance of the source distribution
-    Ct : array-like (d,)
+    Ct : array-like (d,d)
         covariance of the target distribution
     log : bool, optional
         record log if True
@@ -344,9 +344,9 @@ def gaussian_gromov_wasserstein_distance(Cov_s, Cov_t, log=False):
 
     Parameters
     ----------
-    Cov_s : array-like (d,d)
+    Cov_s : array-like (ds,ds)
         covariance of the source distribution
-    Cov_t : array-like (d,d)
+    Cov_t : array-like (dt,dt)
         covariance of the target distribution
 
 
