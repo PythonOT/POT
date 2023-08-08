@@ -26,9 +26,9 @@ from ._utils import update_square_loss, update_kl_loss, update_feature_matrix
 def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric=None, log=False, armijo=False, G0=None,
                        max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
-    Returns the Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
+    Returns the Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`.
 
-    The function solves the following optimization problem:
+    The function solves the following optimization problem using Conditional Gradient:
 
     .. math::
         \mathbf{T}^* \in \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
@@ -182,9 +182,10 @@ def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric
 def gromov_wasserstein2(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric=None, log=False, armijo=False, G0=None,
                         max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
-    Returns the Gromov-Wasserstein discrepancy between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
+    Returns the Gromov-Wasserstein loss :math:`\mathbf{GW}` between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`.
+    To recover the Gromov-Wasserstein distance as defined in [13] compute :math:`d_{GW} = \frac{1}{2} \sqrt{\mathbf{GW}}`.
 
-    The function solves the following optimization problem:
+    The function solves the following optimization problem using Conditional Gradient:
 
     .. math::
         \mathbf{GW} = \min_\mathbf{T} \quad \sum_{i,j,k,l}
@@ -308,10 +309,13 @@ def gromov_wasserstein2(C1, C2, p=None, q=None, loss_fun='square_loss', symmetri
 def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', symmetric=None, alpha=0.5,
                              armijo=False, G0=None, log=False, max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
-    Computes the FGW transport between two graphs (see :ref:`[24] <references-fused-gromov-wasserstein>`)
+    Returns the Fused Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
+    with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}` (see :ref:`[24] <references-fused-gromov-wasserstein>`).
+
+    The function solves the following optimization problem using Conditional Gradient:
 
     .. math::
-        \mathbf{T}^* \in \mathop{\arg \min}_\mathbf{T}  \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \mathbf{T}^* \in\mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
@@ -319,12 +323,15 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
              \mathbf{T}^T \mathbf{1} &= \mathbf{q}
 
              \mathbf{T} &\geq 0
+    Where :
 
-    where :
-
-    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
-    - :math:`\mathbf{p}` and :math:`\mathbf{q}` are source and target weights (sum to 1)
-    - `L` is a loss function to account for the misfit between the similarity matrices
+    - :math:`\mathbf{M}`: metric cost matrix between features across domains
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity and feature matrices
+    - :math:`\alpha`: trade-off parameter
 
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
@@ -332,7 +339,6 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
     .. note:: All computations in the conjugate gradient solver are done with
         numpy to limit memory overhead.
 
-    The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[24] <references-fused-gromov-wasserstein>`
 
     Parameters
     ----------
@@ -465,35 +471,38 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
 def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss', symmetric=None, alpha=0.5,
                               armijo=False, G0=None, log=False, max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
     r"""
-    Computes the FGW distance between two graphs see (see :ref:`[24] <references-fused-gromov-wasserstein2>`)
+    Returns the Fused Gromov-Wasserstein distance between :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
+    with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}` (see :ref:`[24] <references-fused-gromov-wasserstein>`).
+
+    The function solves the following optimization problem using Conditional Gradient:
 
     .. math::
-        \mathbf{GW} = \min_\mathbf{T} \quad (1 - \alpha) \langle \mathbf(T), \mathbf{M} \rangle_F + \alpha \sum_{i,j,k,l}
-        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        \mathbf{FGW} = \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf(T)\mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf(T)^T \mathbf{1} &= \mathbf{q}
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
 
-             \mathbf(T) &\geq 0
+             \mathbf{T} &\geq 0
+    Where :
 
-    where :
+    - :math:`\mathbf{M}`: metric cost matrix between features across domains
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity and feature matrices
+    - :math:`\alpha`: trade-off parameter
 
-    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
-    - :math:`\mathbf{p}` and :math:`\mathbf{q}` are source and target weights (sum to 1)
-    - `L` is a loss function to account for the misfit between the similarity matrices
-
-    The algorithm used for solving the problem is conditional gradient as
-    discussed in :ref:`[24] <references-fused-gromov-wasserstein2>`
+    Note that when using backends, this loss function is differentiable wrt the
+    matrices (C1, C2, M) and weights (p, q) for quadratic loss using the gradients from [38]_.
 
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
     .. note:: All computations in the conjugate gradient solver are done with
         numpy to limit memory overhead.
-
-    Note that when using backends, this loss function is differentiable wrt the
-    matrices (C1, C2, M) and weights (p, q) for quadratic loss using the gradients from [38]_.
 
     Parameters
     ----------
@@ -668,13 +677,13 @@ def gromov_barycenters(
         max_iter=1000, tol=1e-9, warmstartT=False, verbose=False, log=False,
         init_C=None, random_state=None, **kwargs):
     r"""
-    Returns the gromov-wasserstein barycenters of `S` measured similarity matrices :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
+    Returns the Gromov-Wasserstein barycenters of `S` measured similarity matrices :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
 
     The function solves the following optimization problem with block coordinate descent:
 
     .. math::
 
-        \mathbf{C} = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
+        \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
 
     Where :
 
@@ -812,7 +821,21 @@ def fgw_barycenters(
         fixed_features=False, p=None, loss_fun='square_loss', armijo=False,
         symmetric=True, max_iter=100, tol=1e-9, warmstartT=False, verbose=False,
         log=False, init_C=None, init_X=None, random_state=None, **kwargs):
-    r"""Compute the fgw barycenter as presented eq (5) in :ref:`[24] <references-fgw-barycenters>`
+    r"""
+    Returns the Fused Gromov-Wasserstein barycenters of `S` measurable networks with node features :math:`(\mathbf{C}_s, \mathbf{Y}_s, \mathbf{p}_s)_{1 \leq s \leq S}`
+    (see eq (5) in :ref:`[24] <references-fgw-barycenters>`), estimated using Fused Gromov-Wasserstein transports from Conditional Gradient solvers.
+
+    The function solves the following optimization problem:
+
+    .. math::
+
+        \mathbf{C}^*, \mathbf{Y}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}, \mathbf{Y}\in \mathbb{Y}^{N \times d}} \quad \sum_s \lambda_s \mathrm{FGW}_{\alpha}(\mathbf{C}, \mathbf{C}_s, \mathbf{Y}, \mathbf{Y}_s, \mathbf{p}, \mathbf{p}_s)
+
+    Where :
+
+    - :math:`\mathbf{Y}_s`: feature matrix
+    - :math:`\mathbf{C}_s`: metric cost matrix
+    - :math:`\mathbf{p}_s`: distribution
 
     Parameters
     ----------
