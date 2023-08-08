@@ -139,7 +139,7 @@ def test_TFGW_variants():
     criterion = torch.nn.CrossEntropyLoss()
 
     for train_node_weights in [True, False]:
-        for alpha in [None, 0.5]:
+        for alpha in [None, 0, 0.5]:
             for multi_alpha in [True, False]:
                 model = GNN_pooling(n_features, n_templates, n_template_nodes,
                                     pooling_layer=TFGWPooling(n_templates, n_template_nodes, n_features, alpha=alpha, multi_alpha=multi_alpha, train_node_weights=train_node_weights))
