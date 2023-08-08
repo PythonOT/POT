@@ -96,3 +96,72 @@ def test_empirical_bures_wasserstein_distance(nx, bias):
 
     np.testing.assert_allclose(nx.to_numpy(Wb_log), nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
     np.testing.assert_allclose(10 * bias, nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
+
+
+@pytest.mark.parametrize("d_target", [1, 2, 3, 10])
+def test_gaussian_gromov_wasserstein_distance(nx, d_target):
+    ns = 400
+    nt = 400
+
+    rng = np.random.RandomState(10)
+    Xs, ys = make_data_classif('3gauss', ns, random_state=rng)
+    Xt, yt = make_data_classif('3gauss2', nt, random_state=rng)
+    Xt = np.concatenate((Xt, rng.normal(0, 1, (nt, 8))), axis=1)
+    Xt = Xt[:, 0:d_target].reshape((nt, d_target))
+
+    ms = np.mean(Xs, axis=0)[None, :]
+    mt = np.mean(Xt, axis=0)[None, :]
+    Cs = np.cov(Xs.T)
+    Ct = np.cov(Xt.T).reshape((d_target, d_target))
+
+    Xsb, Xtb, msb, mtb, Csb, Ctb = nx.from_numpy(Xs, Xt, ms, mt, Cs, Ct)
+
+    Gb, log = ot.gaussian.gaussian_gromov_wasserstein_distance(Csb, Ctb, log=True)
+    Ge, log = ot.gaussian.empirical_gaussian_gromov_wasserstein_distance(Xsb, Xtb, log=True)
+
+    # no log
+    Ge0 = ot.gaussian.empirical_gaussian_gromov_wasserstein_distance(Xsb, Xtb, log=False)
+
+    np.testing.assert_allclose(nx.to_numpy(Gb), nx.to_numpy(Ge), rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(nx.to_numpy(Ge), nx.to_numpy(Ge0), rtol=1e-2, atol=1e-2)
+
+
+@pytest.mark.parametrize("d_target", [1, 2, 3, 10])
+def test_gaussian_gromov_wasserstein_mapping(nx, d_target):
+    ns = 400
+    nt = 400
+
+    rng = np.random.RandomState(10)
+    Xs, ys = make_data_classif('3gauss', ns, random_state=rng)
+    Xt, yt = make_data_classif('3gauss2', nt, random_state=rng)
+    Xt = np.concatenate((Xt, rng.normal(0, 1, (nt, 8))), axis=1)
+    Xt = Xt[:, 0:d_target].reshape((nt, d_target))
+
+    ms = np.mean(Xs, axis=0)[None, :]
+    mt = np.mean(Xt, axis=0)[None, :]
+    Cs = np.cov(Xs.T)
+    Ct = np.cov(Xt.T).reshape((d_target, d_target))
+
+    Xsb, Xtb, msb, mtb, Csb, Ctb = nx.from_numpy(Xs, Xt, ms, mt, Cs, Ct)
+
+    A, b, log = ot.gaussian.gaussian_gromov_wasserstein_mapping(msb, mtb, Csb, Ctb, log=True)
+    Ae, be, loge = ot.gaussian.empirical_gaussian_gromov_wasserstein_mapping(Xsb, Xtb, log=True)
+
+    # no log + skewness
+    Ae0, be0 = ot.gaussian.empirical_gaussian_gromov_wasserstein_mapping(Xsb, Xtb, log=False, sign_eigs='skewness')
+
+    Xst = nx.to_numpy(nx.dot(Xsb, A) + b)
+    Cst = np.cov(Xst.T)
+
+    np.testing.assert_allclose(nx.to_numpy(A), nx.to_numpy(Ae))
+    if d_target <= 2:
+        np.testing.assert_allclose(Ct, Cst)
+
+    # test the other way around (target to source)
+    Ai, bi, logi = ot.gaussian.gaussian_gromov_wasserstein_mapping(mtb, msb, Ctb, Csb, log=True)
+
+    Xtt = nx.to_numpy(nx.dot(Xtb, Ai) + bi)
+    Ctt = np.cov(Xtt.T)
+
+    if d_target >= 2:
+        np.testing.assert_allclose(Cs, Ctt)
