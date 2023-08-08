@@ -19,7 +19,7 @@ from .lp import emd
 from .utils import unif, dist, kernel, cost_normalization, label_normalization, laplacian, dots
 from .utils import list_to_array, check_params, BaseEstimator, deprecated
 from .unbalanced import sinkhorn_unbalanced
-from .gaussian import empirical_bures_wasserstein_mapping
+from .gaussian import empirical_bures_wasserstein_mapping, empirical_gaussian_gromov_wasserstein_mapping
 from .optim import cg
 from .optim import gcg
 
@@ -1269,6 +1269,7 @@ class LinearTransport(BaseTransport):
             Returns self.
         """
         nx = self._get_backend(Xs, ys, Xt, yt)
+        self.nx = nx
 
         self.mu_s = self.distribution_estimation(Xs)
         self.mu_t = self.distribution_estimation(Xt)
@@ -1358,6 +1359,109 @@ class LinearTransport(BaseTransport):
             transp_Xt = nx.dot(Xt, self.A1_) + self.B1_
 
             return transp_Xt
+
+
+class LinearGWTransport(LinearTransport):
+    r""" OT Gaussian Gromov-Wasserstein linear operator between empirical distributions
+
+    The function estimates the optimal linear operator that aligns the two
+    empirical distributions optimally wrt the Gromov-Wasserstein distance. This is equivalent to estimating the closed
+    form mapping between two Gaussian distributions :math:`\mathcal{N}(\mu_s,\Sigma_s)`
+    and :math:`\mathcal{N}(\mu_t,\Sigma_t)` as proposed in
+    :ref:`[57] <references-lineargwtransport>`.
+
+    The linear operator from source to target :math:`M`
+
+    .. math::
+        M(\mathbf{x})= \mathbf{A} \mathbf{x} + \mathbf{b}
+
+    where the matrix :math:`\mathbf{A}` and the vector :math:`\mathbf{b}` are
+    defined in :ref:`[57] <references-lineargwtransport>`.
+
+
+
+    Parameters
+    ----------
+    sign_eigs : array-like (n_features), str, optional
+        sign of the eigenvalues of the mapping matrix, by default all signs will
+        be positive. If 'skewness' is provided, the sign of the eigenvalues is
+        selected as the product of the sign of the skewness of the projected data.
+    log : bool, optional
+        record log if True
+
+
+    .. _references-lineargwtransport:
+    References
+    ----------
+    .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
+    distances between Gaussian distributions. Journal of Applied Probability,
+    59(4), 1178-1198.
+
+    """
+
+    def __init__(self, log=False, sign_eigs=None,
+                 distribution_estimation=distribution_estimation_uniform):
+        self.sign_eigs = sign_eigs
+        self.log = log
+        self.distribution_estimation = distribution_estimation
+
+    def fit(self, Xs=None, ys=None, Xt=None, yt=None):
+        r"""Build a coupling matrix from source and target sets of samples
+        :math:`(\mathbf{X_s}, \mathbf{y_s})` and :math:`(\mathbf{X_t}, \mathbf{y_t})`
+
+        Parameters
+        ----------
+        Xs : array-like, shape (n_source_samples, n_features)
+            The training input samples.
+        ys : array-like, shape (n_source_samples,)
+            The class labels
+        Xt : array-like, shape (n_target_samples, n_features)
+            The training input samples.
+        yt : array-like, shape (n_target_samples,)
+            The class labels. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
+
+            Warning: Note that, due to this convention -1 cannot be used as a
+            class label
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        nx = self._get_backend(Xs, ys, Xt, yt)
+        self.nx = nx
+
+        self.mu_s = self.distribution_estimation(Xs)
+        self.mu_t = self.distribution_estimation(Xt)
+
+        # coupling estimation
+        returned_ = empirical_gaussian_gromov_wasserstein_mapping(Xs, Xt,
+                                                                  ws=self.mu_s[:, None],
+                                                                  wt=self.mu_t[:, None],
+                                                                  sign_eigs=self.sign_eigs,
+                                                                  log=self.log)
+
+        # deal with the value of log
+        if self.log:
+            self.A_, self.B_, self.log_ = returned_
+        else:
+            self.A_, self.B_, = returned_
+            self.log_ = dict()
+
+        # re compute inverse mapping
+        returned_1_ = empirical_gaussian_gromov_wasserstein_mapping(Xt, Xs,
+                                                                    ws=self.mu_t[:, None],
+                                                                    wt=self.mu_s[:, None],
+                                                                    sign_eigs=self.sign_eigs,
+                                                                    log=self.log)
+        if self.log:
+            self.A1_, self.B1_, self.log_1_ = returned_1_
+        else:
+            self.A1_, self.B1_, = returned_1_
+            self.log_ = dict()
+
+        return self
 
 
 class SinkhornTransport(BaseTransport):
