@@ -125,6 +125,7 @@ def test_gaussian_gromov_wasserstein_distance(nx, d_target):
     np.testing.assert_allclose(nx.to_numpy(Gb), nx.to_numpy(Ge), rtol=1e-2, atol=1e-2)
     np.testing.assert_allclose(nx.to_numpy(Ge), nx.to_numpy(Ge0), rtol=1e-2, atol=1e-2)
 
+
 @pytest.mark.parametrize("d_target", [1, 2, 3, 10])
 def test_gaussian_gromov_wasserstein_mapping(nx, d_target):
     ns = 400
@@ -143,7 +144,7 @@ def test_gaussian_gromov_wasserstein_mapping(nx, d_target):
 
     Xsb, Xtb, msb, mtb, Csb, Ctb = nx.from_numpy(Xs, Xt, ms, mt, Cs, Ct)
 
-    A,b , log = ot.gaussian.gaussian_gromov_wasserstein_mapping(msb, mtb, Csb, Ctb, log=True)
+    A, b, log = ot.gaussian.gaussian_gromov_wasserstein_mapping(msb, mtb, Csb, Ctb, log=True)
     Ae, be, loge = ot.gaussian.empirical_gaussian_gromov_wasserstein_mapping(Xsb, Xtb, log=True)
 
     # no log
@@ -154,5 +155,5 @@ def test_gaussian_gromov_wasserstein_mapping(nx, d_target):
 
     np.testing.assert_allclose(nx.to_numpy(A), nx.to_numpy(Ae))
     np.testing.assert_allclose(nx.to_numpy(A), nx.to_numpy(Ae0))
-    if d_target <=2:
+    if d_target <= 2:
         np.testing.assert_allclose(Ct, Cst)
