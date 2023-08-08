@@ -114,9 +114,9 @@ def test_TFGW_variants():
 
             self.linear = Linear(self.n_templates, 1)
 
-        def forward(self, x, edge_index):
+        def forward(self, x, edge_index, batch=None):
 
-            x = self.TFGW(x, edge_index)
+            x = self.TFGW(x, edge_index, batch=batch)
 
             x = self.linear(x)
 
@@ -134,7 +134,7 @@ def test_TFGW_variants():
     x1 = torch.rand(n_nodes, n_features)
     graph1 = GraphData(x=x1, edge_index=edge_index1, y=torch.tensor([0.]))
     batch1 = torch.tensor([1] * n_nodes)
-    batch1[:n_nodes//2] = 0
+    batch1[:n_nodes // 2] = 0
 
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -151,6 +151,7 @@ def test_TFGW_variants():
 
                 # predict on batch
                 out1 = model(graph1.x, graph1.edge_index, batch1)
+
 
 @pytest.mark.skipif(not torch_geometric, reason="pytorch_geometric not installed")
 def test_TW_variants():
@@ -175,9 +176,9 @@ def test_TW_variants():
 
             self.linear = Linear(self.n_templates, 1)
 
-        def forward(self, x, edge_index):
+        def forward(self, x, edge_index, batch=None):
 
-            x = self.TFGW(x, edge_index)
+            x = self.TFGW(x, edge_index, batch=batch)
 
             x = self.linear(x)
 
@@ -194,6 +195,8 @@ def test_TW_variants():
     edge_index1 = torch.stack(torch.where(C1 == 1))
     x1 = torch.rand(n_nodes, n_features)
     graph1 = GraphData(x=x1, edge_index=edge_index1, y=torch.tensor([0.]))
+    batch1 = torch.tensor([1] * n_nodes)
+    batch1[:n_nodes // 2] = 0
 
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -203,10 +206,11 @@ def test_TW_variants():
                             pooling_layer=TWPooling(n_templates, n_template_nodes, n_features, train_node_weights=train_node_weights))
 
         out1 = model(graph1.x, graph1.edge_index)
-
         loss = criterion(out1, graph1.y)
-
         loss.backward()
+
+        # predict on batch
+        out1 = model(graph1.x, graph1.edge_index, batch1)
 
 
 @pytest.mark.skipif(not torch_geometric, reason="pytorch_geometric not installed")
