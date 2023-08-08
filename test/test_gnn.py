@@ -126,21 +126,13 @@ def test_TFGW_variants():
     n_template_nodes = 3
     n_nodes = 10
     n_features = 3
-    n_epochs = 3
 
     torch.manual_seed(0)
 
     C1 = torch.randint(0, 2, size=(n_nodes, n_nodes))
-    C2 = torch.randint(0, 2, size=(n_nodes, n_nodes))
-
     edge_index1 = torch.stack(torch.where(C1 == 1))
-    edge_index2 = torch.stack(torch.where(C2 == 1))
-
     x1 = torch.rand(n_nodes, n_features)
-    x2 = torch.rand(n_nodes, n_features)
-
     graph1 = GraphData(x=x1, edge_index=edge_index1, y=torch.tensor([0.]))
-    graph2 = GraphData(x=x2, edge_index=edge_index2, y=torch.tensor([1.]))
 
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -192,21 +184,13 @@ def test_TW_variants():
     n_template_nodes = 3
     n_nodes = 10
     n_features = 3
-    n_epochs = 3
 
     torch.manual_seed(0)
 
     C1 = torch.randint(0, 2, size=(n_nodes, n_nodes))
-    C2 = torch.randint(0, 2, size=(n_nodes, n_nodes))
-
     edge_index1 = torch.stack(torch.where(C1 == 1))
-    edge_index2 = torch.stack(torch.where(C2 == 1))
-
     x1 = torch.rand(n_nodes, n_features)
-    x2 = torch.rand(n_nodes, n_features)
-
     graph1 = GraphData(x=x1, edge_index=edge_index1, y=torch.tensor([0.]))
-    graph2 = GraphData(x=x2, edge_index=edge_index2, y=torch.tensor([1.]))
 
     criterion = torch.nn.CrossEntropyLoss()
 
