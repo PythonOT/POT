@@ -502,22 +502,24 @@ def gaussian_gromov_wasserstein_mapping(mu_s, mu_t, Cov_s, Cov_t, sign_eigs=None
 
     # compte and sort eigenvalues/eigenvectors decreasingly
     d_s, U_s = nx.eigh(Cov_s)
+    print(d_s)
     id_s = nx.flip(nx.argsort(d_s))
-    ds, Us = d_s[id_s], U_s[:, id_s]
+    d_s, U_s = d_s[id_s], U_s[:, id_s]
+    print(d_s)
 
     d_t, U_t = nx.eigh(Cov_t)
     id_t = nx.flip(nx.argsort(d_t))
-    dt, Ut = d_t[id_t], U_t[:, id_t]
+    d_t, U_t = d_t[id_t], U_t[:, id_t]
 
     if sign_eigs is None:
         sign_eigs = nx.ones(min(m, n), type_as=mu_s)
 
     if m >= n:
-        A = nx.concatenate((nx.diag(sign_eigs * d_t / d_s[:n]), nx.zeros((n, m - n), type_as=mu_s)), axis=1).T
+        A = nx.concatenate((nx.diag(sign_eigs * nx.sqrt(d_t) / nx.sqrt(d_s[:n])), nx.zeros((n, m - n), type_as=mu_s)), axis=1).T
     else:
-        A = nx.concatenate((nx.diag(sign_eigs * d_t[:m] / d_s), nx.zeros((n - m, m), type_as=mu_s)), axis=0).T
+        A = nx.concatenate((nx.diag(sign_eigs *nx.sqrt(d_t[:m]) / nx.sqrt(d_s)), nx.zeros((n - m, m), type_as=mu_s)), axis=0).T
 
-    A = nx.dot(nx.dot(U_s, A), Ut.T)
+    A = nx.dot(nx.dot(U_s, A), U_t.T)
 
     # compute the gaussien Gromov-Wasserstein dis
     b = mu_t - nx.dot(mu_s, A)
