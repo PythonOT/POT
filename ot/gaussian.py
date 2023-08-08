@@ -403,9 +403,9 @@ def empirical_gaussian_gromov_wasserstein_distance(xs, xt, ws=None,
         samples in the source domain
     xt : array-like (nt,d)
         samples in the target domain
-    ws : array-like (ns), optional
+    ws : array-like (ns,1), optional
         weights for the source samples
-    wt : array-like (ns), optional
+    wt : array-like (ns,1), optional
         weights for the target samples
     log : bool, optional
         record log if True
@@ -428,19 +428,19 @@ def empirical_gaussian_gromov_wasserstein_distance(xs, xt, ws=None,
     nx = get_backend(xs, xt)
 
     if ws is None:
-        ws = nx.ones((xs.shape[0]), type_as=xs) / xs.shape[0]
+        ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
 
     if wt is None:
-        wt = nx.ones((xt.shape[0]), type_as=xt) / xt.shape[0]
+        wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
 
-    mxs = nx.dot(ws, xs) / nx.sum(ws)
-    mxt = nx.dot(wt, xt) / nx.sum(wt)
+    mxs = nx.dot(ws.T, xs) / nx.sum(ws)
+    mxt = nx.dot(wt.T, xt) / nx.sum(wt)
 
     xs = xs - mxs
     xt = xt - mxt
 
-    Cs = nx.dot((xs * ws[:, None]).T, xs) / nx.sum(ws)
-    Ct = nx.dot((xt * wt[:, None]).T, xt) / nx.sum(wt)
+    Cs = nx.dot((xs * ws).T, xs) / nx.sum(ws)
+    Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt)
 
     if log:
         G, log = gaussian_gromov_wasserstein_distance(Cs, Ct, log=log)
@@ -549,8 +549,10 @@ def empirical_gaussian_gromov_wasserstein_mapping(xs, xt, ws=None,
         weights for the source samples
     wt : array-like (ns,1), optional
         weights for the target samples
-    sign_eigs : array-like (min(ds,dt),), optional
-        sign of the eigenvalues of the mapping matrix
+    sign_eigs : array-like (min(ds,dt),) or string, optional
+        sign of the eigenvalues of the mapping matrix, by default all signs will
+        be positive. If 'skewness' is provided, the sign of the eigenvalues is
+        selected as the product of the sign of the skewness of the projected data.
     log : bool, optional
         record log if True
 
@@ -571,30 +573,64 @@ def empirical_gaussian_gromov_wasserstein_mapping(xs, xt, ws=None,
     """
 
     xs, xt = list_to_array(xs, xt)
+
     nx = get_backend(xs, xt)
 
+    m = xs.shape[1]
+    n = xt.shape[1]
+
     if ws is None:
-        ws = nx.ones((xs.shape[0]), type_as=xs) / xs.shape[0]
+        ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
 
     if wt is None:
-        wt = nx.ones((xt.shape[0]), type_as=xt) / xt.shape[0]
+        wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
 
-    mxs = nx.dot(ws, xs) / nx.sum(ws)
-    mxt = nx.dot(wt, xt) / nx.sum(wt)
+    # estimate mean and covariance
+    mu_s = nx.dot(ws.T, xs) / nx.sum(ws)
+    mu_t = nx.dot(wt.T, xt) / nx.sum(wt)
 
-    xs = xs - mxs
-    xt = xt - mxt
+    xs = xs - mu_s
+    xt = xt - mu_t
 
-    Cs = nx.dot((xs * ws[:, None]).T, xs) / nx.sum(ws)
-    Ct = nx.dot((xt * wt[:, None]).T, xt) / nx.sum(wt)
+    Cov_s = nx.dot((xs * ws).T, xs) / nx.sum(ws)
+    Cov_t = nx.dot((xt * wt).T, xt) / nx.sum(wt)
+
+    # compte and sort eigenvalues/eigenvectors decreasingly
+    d_s, U_s = nx.eigh(Cov_s)
+    id_s = nx.flip(nx.argsort(d_s))
+    d_s, U_s = d_s[id_s], U_s[:, id_s]
+
+    d_t, U_t = nx.eigh(Cov_t)
+    id_t = nx.flip(nx.argsort(d_t))
+    d_t, U_t = d_t[id_t], U_t[:, id_t]
+
+    # select the sign of the eigenvalues
+    if sign_eigs is None:
+        sign_eigs = nx.ones(min(m, n), type_as=mu_s)
+    elif sign_eigs == 'skewness':
+        size = min(m, n)
+        skew_s = nx.sum((nx.dot(xs, U_s[:, :size]))**3 * ws, axis=0)
+        skew_t = nx.sum((nx.dot(xt, U_t[:, :size]))**3 * wt, axis=0)
+        sign_eigs = nx.sign(skew_t * skew_s)
+
+    if m >= n:
+        A = nx.concatenate((nx.diag(sign_eigs * nx.sqrt(d_t) / nx.sqrt(d_s[:n])), nx.zeros((n, m - n), type_as=mu_s)), axis=1).T
+    else:
+        A = nx.concatenate((nx.diag(sign_eigs * nx.sqrt(d_t[:m]) / nx.sqrt(d_s)), nx.zeros((n - m, m), type_as=mu_s)), axis=0).T
+
+    A = nx.dot(nx.dot(U_s, A), U_t.T)
+
+    # compute the gaussien Gromov-Wasserstein dis
+    b = mu_t - nx.dot(mu_s, A)
 
     if log:
-
-        A, b, log = gaussian_gromov_wasserstein_mapping(mxs, mxt, Cs, Ct, sign_eigs=sign_eigs, log=log)
-        log['Cov_s'] = Cs
-        log['Cov_t'] = Ct
+        log = {}
+        log['d_s'] = d_s
+        log['d_t'] = d_t
+        log['U_s'] = U_s
+        log['U_t'] = U_t
+        log['Cov_s'] = Cov_s
+        log['Cov_t'] = Cov_t
         return A, b, log
-
     else:
-        A, b = gaussian_gromov_wasserstein_mapping(mxs, mxt, Cs, Ct, sign_eigs=sign_eigs)
         return A, b

@@ -371,6 +371,10 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('minimum')
 
+        A = nx.sign(vb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('sign')
+
         A = nx.abs(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('abs')

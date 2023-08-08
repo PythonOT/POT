@@ -147,14 +147,13 @@ def test_gaussian_gromov_wasserstein_mapping(nx, d_target):
     A, b, log = ot.gaussian.gaussian_gromov_wasserstein_mapping(msb, mtb, Csb, Ctb, log=True)
     Ae, be, loge = ot.gaussian.empirical_gaussian_gromov_wasserstein_mapping(Xsb, Xtb, log=True)
 
-    # no log
-    Ae0, be0 = ot.gaussian.empirical_gaussian_gromov_wasserstein_mapping(Xsb, Xtb, log=False)
+    # no log + skewness
+    Ae0, be0 = ot.gaussian.empirical_gaussian_gromov_wasserstein_mapping(Xsb, Xtb, log=False, sign_eigs='skewness')
 
     Xst = nx.to_numpy(nx.dot(Xsb, A) + b)
     Cst = np.cov(Xst.T)
 
     np.testing.assert_allclose(nx.to_numpy(A), nx.to_numpy(Ae))
-    np.testing.assert_allclose(nx.to_numpy(A), nx.to_numpy(Ae0))
     if d_target <= 2:
         np.testing.assert_allclose(Ct, Cst)
 

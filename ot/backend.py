@@ -338,6 +338,15 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def sign(self, a):
+        r""" Returns an element-wise indication of the sign of a number.
+
+        This function follows the api from :any:`numpy.sign`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.sign.html
+        """
+        raise NotImplementedError()
+
     def dot(self, a, b):
         r"""
         Returns the dot product of two tensors.
@@ -1057,6 +1066,9 @@ class NumpyBackend(Backend):
     def minimum(self, a, b):
         return np.minimum(a, b)
 
+    def sign(self, a):
+        return np.sign(a)
+
     def dot(self, a, b):
         return np.dot(a, b)
 
@@ -1427,6 +1439,9 @@ class JaxBackend(Backend):
 
     def minimum(self, a, b):
         return jnp.minimum(a, b)
+
+    def sign(self, a):
+        return jnp.sign(a)
 
     def dot(self, a, b):
         return jnp.dot(a, b)
@@ -1844,6 +1859,9 @@ class TorchBackend(Backend):
             return torch.minimum(a, b)
         else:
             return torch.min(torch.stack(torch.broadcast_tensors(a, b)), axis=0)[0]
+
+    def sign(self, a):
+        return torch.sign(a)
 
     def dot(self, a, b):
         return torch.matmul(a, b)
@@ -2267,6 +2285,9 @@ class CupyBackend(Backend):  # pragma: no cover
     def minimum(self, a, b):
         return cp.minimum(a, b)
 
+    def sign(self, a):
+        return cp.sign(a)
+
     def abs(self, a):
         return cp.abs(a)
 
@@ -2663,6 +2684,9 @@ class TensorflowBackend(Backend):
 
     def minimum(self, a, b):
         return tnp.minimum(a, b)
+
+    def sign(self, a):
+        return tnp.sign(a)
 
     def dot(self, a, b):
         if len(b.shape) == 1:

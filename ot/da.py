@@ -1269,6 +1269,7 @@ class LinearTransport(BaseTransport):
             Returns self.
         """
         nx = self._get_backend(Xs, ys, Xt, yt)
+        self.nx = nx
 
         self.mu_s = self.distribution_estimation(Xs)
         self.mu_t = self.distribution_estimation(Xt)
@@ -1423,14 +1424,16 @@ class LinearGWTransport(LinearTransport):
         self : object
             Returns self.
         """
+        nx = self._get_backend(Xs, ys, Xt, yt)
+        self.nx = nx
 
         self.mu_s = self.distribution_estimation(Xs)
         self.mu_t = self.distribution_estimation(Xt)
 
         # coupling estimation
         returned_ = empirical_gaussian_gromov_wasserstein_mapping(Xs, Xt,
-                                                                  ws=self.mu_s,
-                                                                  wt=self.mu_t,
+                                                                  ws=self.mu_s[:, None],
+                                                                  wt=self.mu_t[:, None],
                                                                   log=self.log)
 
         # deal with the value of log
@@ -1442,8 +1445,8 @@ class LinearGWTransport(LinearTransport):
 
         # re compute inverse mapping
         returned_1_ = empirical_gaussian_gromov_wasserstein_mapping(Xt, Xs,
-                                                                    ws=self.mu_t,
-                                                                    wt=self.mu_s,
+                                                                    ws=self.mu_t[:, None],
+                                                                    wt=self.mu_s[:, None],
                                                                     log=self.log)
         if self.log:
             self.A1_, self.B1_, self.log_1_ = returned_1_
