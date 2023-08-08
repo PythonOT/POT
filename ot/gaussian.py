@@ -274,9 +274,9 @@ def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
         samples in the target domain
     reg : float,optional
         regularization added to the diagonals of covariances (>0)
-    ws : array-like (ns,1), optional
+    ws : array-like (ns), optional
         weights for the source samples
-    wt : array-like (ns,1), optional
+    wt : array-like (ns), optional
         weights for the target samples
     bias: boolean, optional
         estimate bias :math:`\mathbf{b}` else :math:`\mathbf{b} = 0` (default:True)
@@ -359,10 +359,9 @@ def gaussian_gromov_wasserstein_distance(Cov_s, Cov_t, log=False):
     .. _references-gaussien_gromov_wasserstein_distance:
     References
     ----------
-    [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
+    .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
     distances between Gaussian distributions. Journal of Applied Probability,
-    59(4),
-    1178-1198.
+    59(4), 1178-1198.
     """
 
     nx = get_backend(Cov_s, Cov_t)
@@ -404,9 +403,9 @@ def empirical_gaussian_gromov_wasserstein_distance(xs, xt, ws=None,
         samples in the source domain
     xt : array-like (nt,d)
         samples in the target domain
-    ws : array-like (ns,1), optional
+    ws : array-like (ns), optional
         weights for the source samples
-    wt : array-like (ns,1), optional
+    wt : array-like (ns), optional
         weights for the target samples
     log : bool, optional
         record log if True
@@ -421,15 +420,12 @@ def empirical_gaussian_gromov_wasserstein_distance(xs, xt, ws=None,
     .. _references-gaussien_gromov_wasserstein:
     References
     ----------
-    [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
+    .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
     distances between Gaussian distributions. Journal of Applied Probability,
     59(4), 1178-1198.
     """
     xs, xt = list_to_array(xs, xt)
     nx = get_backend(xs, xt)
-
-    ds = xs.shape[1]
-    dt = xt.shape[1]
 
     if ws is None:
         ws = nx.ones((xs.shape[0]), type_as=xs) / xs.shape[0]
@@ -490,7 +486,7 @@ def gaussian_gromov_wasserstein_mapping(mu_s, mu_t, Cov_s, Cov_t, sign_eigs=None
     .. _references-gaussien_gromov_wasserstein_mapping:
     References
     ----------
-    [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
+    .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
     distances between Gaussian distributions. Journal of Applied Probability,
     59(4), 1178-1198.
     """
@@ -569,16 +565,13 @@ def empirical_gaussian_gromov_wasserstein_mapping(xs, xt, ws=None,
     .. _references-empirical_gaussian_gromov_wasserstein_mapping:
     References
     ----------
-    [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
+    .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
     distances between Gaussian distributions. Journal of Applied Probability,
     59(4), 1178-1198.
     """
 
     xs, xt = list_to_array(xs, xt)
     nx = get_backend(xs, xt)
-
-    ds = xs.shape[1]
-    dt = xt.shape[1]
 
     if ws is None:
         ws = nx.ones((xs.shape[0]), type_as=xs) / xs.shape[0]

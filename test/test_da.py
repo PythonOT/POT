@@ -604,6 +604,33 @@ def test_linear_mapping_class(nx):
 
 @pytest.skip_backend("jax")
 @pytest.skip_backend("tf")
+def test_linear_gw_mapping_class(nx):
+    ns = 50
+    nt = 50
+
+    Xs, ys = make_data_classif('3gauss', ns)
+    Xt, yt = make_data_classif('3gauss2', nt)
+
+    Xsb, Xtb = nx.from_numpy(Xs, Xt)
+
+    otmap = ot.da.LinearGWTransport()
+
+    otmap.fit(Xs=Xsb, Xt=Xtb)
+    assert hasattr(otmap, "A_")
+    assert hasattr(otmap, "B_")
+    assert hasattr(otmap, "A1_")
+    assert hasattr(otmap, "B1_")
+
+    Xst = nx.to_numpy(otmap.transform(Xs=Xsb))
+
+    Ct = np.cov(Xt.T)
+    Cst = np.cov(Xst.T)
+
+    np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
+
+
+@pytest.skip_backend("jax")
+@pytest.skip_backend("tf")
 def test_jcpot_transport_class(nx):
     """test_jcpot_transport
     """

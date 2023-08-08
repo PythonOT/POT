@@ -13,6 +13,8 @@ Linear OT mapping estimation
 # License: MIT License
 
 # sphinx_gallery_thumbnail_number = 2
+
+#%%
 import os
 from pathlib import Path
 
@@ -75,7 +77,7 @@ plt.clf()
 plt.plot(xs[:, 0], xs[:, 1], '+')
 plt.plot(xt[:, 0], xt[:, 1], 'o')
 plt.plot(xst[:, 0], xst[:, 1], '+')
-
+plt.legend(('Source', 'Target', 'Transp'), loc=0)
 plt.show()
 
 ##############################################################################
