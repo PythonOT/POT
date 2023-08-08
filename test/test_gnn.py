@@ -133,6 +133,8 @@ def test_TFGW_variants():
     edge_index1 = torch.stack(torch.where(C1 == 1))
     x1 = torch.rand(n_nodes, n_features)
     graph1 = GraphData(x=x1, edge_index=edge_index1, y=torch.tensor([0.]))
+    batch1 = torch.tensor([1] * n_nodes)
+    batch1[:n_nodes//2] = 0
 
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -142,12 +144,13 @@ def test_TFGW_variants():
                 model = GNN_pooling(n_features, n_templates, n_template_nodes,
                                     pooling_layer=TFGWPooling(n_templates, n_template_nodes, n_features, alpha=alpha, multi_alpha=multi_alpha, train_node_weights=train_node_weights))
 
+                # predict
                 out1 = model(graph1.x, graph1.edge_index)
-
                 loss = criterion(out1, graph1.y)
-
                 loss.backward()
 
+                # predict on batch
+                out1 = model(graph1.x, graph1.edge_index, batch1)
 
 @pytest.mark.skipif(not torch_geometric, reason="pytorch_geometric not installed")
 def test_TW_variants():
