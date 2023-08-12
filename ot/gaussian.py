@@ -8,9 +8,10 @@ Optimal transport for Gaussian distributions
 #
 # License: MIT License
 
+import warnings
+
 from .backend import get_backend
-from .utils import dots
-from .utils import list_to_array
+from .utils import dots, is_all_finite, list_to_array
 
 
 def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
@@ -72,6 +73,7 @@ def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
     """
     ms, mt, Cs, Ct = list_to_array(ms, mt, Cs, Ct)
     nx = get_backend(ms, mt, Cs, Ct)
+    is_input_finite = is_all_finite(ms, mt, Cs, Ct)
 
     Cs12 = nx.sqrtm(Cs)
     Cs12inv = nx.inv(Cs12)
@@ -81,6 +83,9 @@ def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
     A = dots(Cs12inv, M0, Cs12inv)
 
     b = mt - nx.dot(ms, A)
+
+    if is_input_finite and not is_all_finite(A, b):
+        warnings.warn("Warning: 'bures_wasserstein_mapping' caused numerical errors.")
 
     if log:
         log = {}
@@ -235,11 +240,16 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     """
     ms, mt, Cs, Ct = list_to_array(ms, mt, Cs, Ct)
     nx = get_backend(ms, mt, Cs, Ct)
+    is_input_finite = is_all_finite(ms, mt, Cs, Ct)
 
     Cs12 = nx.sqrtm(Cs)
 
     B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
     W = nx.sqrt(nx.norm(ms - mt)**2 + B)
+
+    if is_input_finite and not is_all_finite(W):
+        warnings.warn("Warning: 'bures_wasserstein_distance' caused numerical errors.")
+
     if log:
         log = {}
         log['Cs12'] = Cs12

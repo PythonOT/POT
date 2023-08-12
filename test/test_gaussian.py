@@ -11,6 +11,7 @@ import pytest
 
 import ot
 from ot.datasets import make_data_classif
+from ot.utils import is_all_finite
 
 
 def test_bures_wasserstein_mapping(nx):
@@ -68,6 +69,14 @@ def test_empirical_bures_wasserstein_mapping(nx, bias):
 
     np.testing.assert_allclose(Cst_log, Cst, rtol=1e-2, atol=1e-2)
     np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
+
+
+def test_empirical_bures_wasserstein_mapping_instabilities_warning():
+    Xs = np.random.rand(10, 1000)
+    Xt = np.random.rand(10, 1000)
+    with pytest.warns():
+        A, b = ot.gaussian.empirical_bures_wasserstein_mapping(Xs, Xt)
+        assert not is_all_finite(A, b)
 
 
 def test_bures_wasserstein_distance(nx):
