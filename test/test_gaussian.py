@@ -72,8 +72,8 @@ def test_empirical_bures_wasserstein_mapping(nx, bias):
 
 
 def test_empirical_bures_wasserstein_mapping_instabilities_warning():
-    Xs = np.random.rand(10, 1000)
-    Xt = np.random.rand(10, 1000)
+    Xs = np.random.rand(2000, 1000)
+    Xt = np.random.rand(2000, 1000)
     with pytest.warns():
         A, b = ot.gaussian.empirical_bures_wasserstein_mapping(Xs, Xt)
         assert not is_all_finite(A, b)

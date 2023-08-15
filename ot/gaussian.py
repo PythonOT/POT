@@ -247,7 +247,7 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
     W = nx.sqrt(nx.norm(ms - mt)**2 + B)
 
-    if is_input_finite and not is_all_finite(W):
+    if is_input_finite and not nx.isfinite(W):
         warnings.warn("Warning: 'bures_wasserstein_distance' caused numerical errors.")
 
     if log:
