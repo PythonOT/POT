@@ -4,7 +4,7 @@
 [![Anaconda Cloud](https://anaconda.org/conda-forge/pot/badges/version.svg)](https://anaconda.org/conda-forge/pot)
 [![Build Status](https://github.com/PythonOT/POT/actions/workflows/build_tests.yml/badge.svg)](https://github.com/PythonOT/POT/actions)
 [![Codecov Status](https://codecov.io/gh/PythonOT/POT/branch/master/graph/badge.svg)](https://codecov.io/gh/PythonOT/POT)
-[![Downloads](https://pepy.tech/badge/pot)](https://pepy.tech/project/pot)
+[![Downloads](https://static.pepy.tech/badge/pot)](https://pepy.tech/project/pot)
 [![Anaconda downloads](https://anaconda.org/conda-forge/pot/badges/downloads.svg)](https://anaconda.org/conda-forge/pot)
 [![License](https://anaconda.org/conda-forge/pot/badges/license.svg)](https://github.com/PythonOT/POT/blob/master/LICENSE)
 
