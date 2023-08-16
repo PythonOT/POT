@@ -85,7 +85,7 @@ def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
     b = mt - nx.dot(ms, A)
 
     if is_input_finite and not is_all_finite(A, b):
-        warnings.warn("Warning: 'bures_wasserstein_mapping' caused numerical errors.")
+        warnings.warn("Numerical errors encountered in ot.gaussian.bures_wasserstein_mapping")
 
     if log:
         log = {}
@@ -248,7 +248,7 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     W = nx.sqrt(nx.norm(ms - mt)**2 + B)
 
     if is_input_finite and not nx.isfinite(W):
-        warnings.warn("Warning: 'bures_wasserstein_distance' caused numerical errors.")
+        warnings.warn("Numerical errors encountered in ot.gaussian.bures_wasserstein_distance")
 
     if log:
         log = {}
