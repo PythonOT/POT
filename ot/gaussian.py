@@ -73,7 +73,6 @@ def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
     """
     ms, mt, Cs, Ct = list_to_array(ms, mt, Cs, Ct)
     nx = get_backend(ms, mt, Cs, Ct)
-    is_input_finite = is_all_finite(ms, mt, Cs, Ct)
 
     Cs12 = nx.sqrtm(Cs)
     Cs12inv = nx.inv(Cs12)
@@ -83,9 +82,6 @@ def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
     A = dots(Cs12inv, M0, Cs12inv)
 
     b = mt - nx.dot(ms, A)
-
-    if is_input_finite and not is_all_finite(A, b):
-        warnings.warn("Numerical errors encountered in ot.gaussian.bures_wasserstein_mapping")
 
     if log:
         log = {}
@@ -160,6 +156,7 @@ def empirical_bures_wasserstein_mapping(xs, xt, reg=1e-6, ws=None,
     """
     xs, xt = list_to_array(xs, xt)
     nx = get_backend(xs, xt)
+    is_input_finite = is_all_finite(xs, xt)
 
     d = xs.shape[1]
 
@@ -184,11 +181,19 @@ def empirical_bures_wasserstein_mapping(xs, xt, reg=1e-6, ws=None,
 
     if log:
         A, b, log = bures_wasserstein_mapping(mxs, mxt, Cs, Ct, log=log)
+    else:
+        A, b = bures_wasserstein_mapping(mxs, mxt, Cs, Ct)
+
+    if is_input_finite and not is_all_finite(A, b):
+        warnings.warn(
+            "Numerical errors were encountered in ot.gaussian.empirical_bures_wasserstein_mapping. "
+            "Consider increasing the regularization parameter `reg`.")
+
+    if log:
         log['Cs'] = Cs
         log['Ct'] = Ct
         return A, b, log
     else:
-        A, b = bures_wasserstein_mapping(mxs, mxt, Cs, Ct)
         return A, b
 
 
@@ -240,15 +245,11 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     """
     ms, mt, Cs, Ct = list_to_array(ms, mt, Cs, Ct)
     nx = get_backend(ms, mt, Cs, Ct)
-    is_input_finite = is_all_finite(ms, mt, Cs, Ct)
 
     Cs12 = nx.sqrtm(Cs)
 
     B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
     W = nx.sqrt(nx.norm(ms - mt)**2 + B)
-
-    if is_input_finite and not nx.isfinite(W):
-        warnings.warn("Numerical errors encountered in ot.gaussian.bures_wasserstein_distance")
 
     if log:
         log = {}
