@@ -384,6 +384,12 @@ def dots(*args):
     return reduce(nx.dot, args)
 
 
+def is_all_finite(*args):
+    r"""Tests element-wise for finiteness in all arguments."""
+    nx = get_backend(*args)
+    return all(not nx.any(~nx.isfinite(arg)) for arg in args)
+
+
 def label_normalization(y, start=0):
     r""" Transform labels to start at a given value
 
