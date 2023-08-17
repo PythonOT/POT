@@ -159,12 +159,12 @@ def test_sinkhorn_l1l2_transport_class(nx):
     ns = 50
     nt = 50
 
-    Xs, ys = make_data_classif('3gauss', ns)
-    Xt, yt = make_data_classif('3gauss2', nt)
+    Xs, ys = make_data_classif('3gauss', ns, random_state=42)
+    Xt, yt = make_data_classif('3gauss2', nt, random_state=43)
 
     Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
 
-    otda = ot.da.SinkhornL1l2Transport()
+    otda = ot.da.SinkhornL1l2Transport(max_inner_iter=500)
 
     # test its computed
     with warnings.catch_warnings():
