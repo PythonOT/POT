@@ -7,6 +7,7 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 import pytest
+import warnings
 
 import ot
 from ot.datasets import make_data_classif
@@ -166,7 +167,9 @@ def test_sinkhorn_l1l2_transport_class(nx):
     otda = ot.da.SinkhornL1l2Transport()
 
     # test its computed
-    otda.fit(Xs=Xs, ys=ys, Xt=Xt)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        otda.fit(Xs=Xs, ys=ys, Xt=Xt)
     assert hasattr(otda, "cost_")
     assert hasattr(otda, "coupling_")
     assert hasattr(otda, "log_")
