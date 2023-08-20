@@ -800,3 +800,30 @@ def test_emd_laplace_class(nx):
     transp_ys = otda.inverse_transform_labels(yt)
     assert_equal(transp_ys.shape[0], ys.shape[0])
     assert_equal(transp_ys.shape[1], len(np.unique(nx.to_numpy(yt))))
+
+
+def test_sinkhorn_l1l2_gl_cost_vectorized():
+    n_samples, n_labels = 150, 3
+    rng = np.random.RandomState(42)
+    G = rng.rand(n_samples, n_samples)
+    labels_a = rng.randint(n_labels, size=(n_samples,))
+
+    # previously used implementation for the cost estimator
+    lstlab = np.unique(labels_a)
+    def f(G):
+        res = 0
+        for i in range(G.shape[1]):
+            for lab in lstlab:
+                temp = G[labels_a == lab, i]
+                res += np.linalg.norm(temp)
+        return res
+
+    # new vectorized implementation for the cost estimator
+    lstlab, lstlab_idx = np.unique(labels_a, return_inverse=True)
+    n_samples = lstlab.shape[0]
+    midx = np.eye(n_samples, dtype='int32')[None, lstlab_idx]
+    def f2(G):
+        G_split = np.repeat(G.T[:, :, None], n_samples, axis=2)
+        return np.linalg.norm(G_split * midx, axis=1).sum()
+
+    assert np.allclose(f(G), f2(G))
