@@ -407,7 +407,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def norm(self, a, axis=None):
+    def norm(self, a, axis=None, keepdims=False):
         r"""
         Computes the matrix frobenius norm.
 
@@ -1087,8 +1087,8 @@ class NumpyBackend(Backend):
     def power(self, a, exponents):
         return np.power(a, exponents)
 
-    def norm(self, a, axis=None):
-        return np.linalg.norm(a, axis=axis)
+    def norm(self, a, axis=None, keepdims=False):
+        return np.linalg.norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return np.any(a)
@@ -1461,8 +1461,8 @@ class JaxBackend(Backend):
     def power(self, a, exponents):
         return jnp.power(a, exponents)
 
-    def norm(self, a, axis=None):
-        return jnp.linalg.norm(a, axis=axis)
+    def norm(self, a, axis=None, keepdims=False):
+        return jnp.linalg.norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return jnp.any(a)
@@ -1881,8 +1881,8 @@ class TorchBackend(Backend):
     def power(self, a, exponents):
         return torch.pow(a, exponents)
 
-    def norm(self, a, axis=None):
-        return torch.linalg.norm(a.double(), dim=axis)
+    def norm(self, a, axis=None, keepdims=False):
+        return torch.linalg.norm(a.double(), dim=axis, keepdims=keepdims)
 
     def any(self, a):
         return torch.any(a)
@@ -2306,8 +2306,8 @@ class CupyBackend(Backend):  # pragma: no cover
     def dot(self, a, b):
         return cp.dot(a, b)
 
-    def norm(self, a, axis=None):
-        return cp.linalg.norm(a, axis=axis)
+    def norm(self, a, axis=None, keepdims=False):
+        return cp.linalg.norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return cp.any(a)
@@ -2717,8 +2717,8 @@ class TensorflowBackend(Backend):
     def power(self, a, exponents):
         return tnp.power(a, exponents)
 
-    def norm(self, a, axis=None):
-        return tf.math.reduce_euclidean_norm(a, axis=axis)
+    def norm(self, a, axis=None, keepdims=False):
+        return tf.math.reduce_euclidean_norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return tnp.any(a)

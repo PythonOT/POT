@@ -148,8 +148,8 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
 
 
 def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
-                     numInnerItermax=200, stopInnerThr=1e-9, verbose=False,
-                     log=False):
+                     numInnerItermax=200, stopInnerThr=1e-9, eps=1e-12,
+                     verbose=False, log=False):
     r"""
     Solve the entropic regularization optimal transport problem with group
     lasso regularization
@@ -202,6 +202,8 @@ def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
         Max number of iterations (inner sinkhorn solver)
     stopInnerThr : float, optional
         Stop threshold on error (inner sinkhorn solver) (>0)
+    eps: float, optional (default=1e-12)
+        Small value to avoid division by zero
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -241,19 +243,13 @@ def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
 
     def f(G):
         G_split = nx.repeat(G.T[:, :, None], n_labels, axis=2)
-        return nx.norm(G_split * unroll_labels_idx, axis=1).sum()
-
-    lstlab = nx.unique(labels_a)
+        return nx.sum(nx.norm(G_split * unroll_labels_idx, axis=1))
 
     def df(G):
-        W = nx.zeros(G.shape, type_as=G)
-        for i in range(G.shape[1]):
-            for lab in lstlab:
-                temp = G[labels_a == lab, i]
-                n = nx.norm(temp)
-                if n:
-                    W[labels_a == lab, i] = temp / n
-        return W
+        G_split = nx.repeat(G.T[:, :, None], n_labels, axis=2) * unroll_labels_idx
+        W = nx.norm(G_split * unroll_labels_idx, axis=1, keepdims=True)
+        G_norm = G_split / nx.clip(W, eps, None)
+        return nx.sum(G_norm, axis=2).T
 
     return gcg(a, b, M, reg, eta, f, df, G0=None, numItermax=numItermax,
                numInnerItermax=numInnerItermax, stopThr=stopInnerThr,
