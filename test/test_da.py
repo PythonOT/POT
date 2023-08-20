@@ -810,6 +810,7 @@ def test_sinkhorn_l1l2_gl_cost_vectorized():
 
     # previously used implementation for the cost estimator
     lstlab = np.unique(labels_a)
+
     def f(G):
         res = 0
         for i in range(G.shape[1]):
@@ -822,6 +823,7 @@ def test_sinkhorn_l1l2_gl_cost_vectorized():
     lstlab, lstlab_idx = np.unique(labels_a, return_inverse=True)
     n_samples = lstlab.shape[0]
     midx = np.eye(n_samples, dtype='int32')[None, lstlab_idx]
+
     def f2(G):
         G_split = np.repeat(G.T[:, :, None], n_samples, axis=2)
         return np.linalg.norm(G_split * midx, axis=1).sum()

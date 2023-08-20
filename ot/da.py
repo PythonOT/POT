@@ -238,11 +238,13 @@ def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
     labels_u, labels_idx = nx.unique(labels_a, return_inverse=True)
     n_labels = labels_u.shape[0]
     unroll_labels_idx = nx.eye(n_labels, type_as=labels_u)[None, labels_idx]
+
     def f(G):
         G_split = nx.repeat(G.T[:, :, None], n_labels, axis=2)
         return nx.norm(G_split * unroll_labels_idx, axis=1).sum()
 
     lstlab = nx.unique(labels_a)
+
     def df(G):
         W = nx.zeros(G.shape, type_as=G)
         for i in range(G.shape[1]):
