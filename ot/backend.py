@@ -2793,7 +2793,8 @@ class TensorflowBackend(Backend):
     def unique(self, a, return_inverse=False):
         y, idx = tf.unique(tf.reshape(a, [-1]))
         sort_idx = tf.argsort(y)
-        return y[sort_idx] if not return_inverse else (y[sort_idx], sort_idx[idx])
+        y_prime = tf.gather(y, sort_idx)
+        return y_prime if not return_inverse else (y_prime, tf.gather(y, idx))
 
     def logsumexp(self, a, axis=None):
         return tf.math.reduce_logsumexp(a, axis=axis)
