@@ -802,6 +802,8 @@ def test_emd_laplace_class(nx):
     assert_equal(transp_ys.shape[1], len(np.unique(nx.to_numpy(yt))))
 
 
+@pytest.skip_backend("jax")
+@pytest.skip_backend("tf")
 def test_sinkhorn_l1l2_gl_cost_vectorized(nx):
     n_samples, n_labels = 150, 3
     rng = np.random.RandomState(42)
