@@ -79,10 +79,10 @@ def test_gromov(nx):
 
 def test_asymmetric_gromov(nx):
     n_samples = 30  # nb samples
-    np.random.seed(0)
-    C1 = np.random.uniform(low=0., high=10, size=(n_samples, n_samples))
+    rng = np.random.RandomState(0)
+    C1 = rng.uniform(low=0., high=10, size=(n_samples, n_samples))
     idx = np.arange(n_samples)
-    np.random.shuffle(idx)
+    rng.shuffle(idx)
     C2 = C1[idx, :][:, idx]
 
     p = ot.unif(n_samples)
@@ -412,10 +412,10 @@ def test_entropic_proximal_gromov(nx):
 @pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_asymmetric_entropic_gromov(nx):
     n_samples = 10  # nb samples
-    np.random.seed(0)
-    C1 = np.random.uniform(low=0., high=10, size=(n_samples, n_samples))
+    rng = np.random.RandomState(0)
+    C1 = rng.uniform(low=0., high=10, size=(n_samples, n_samples))
     idx = np.arange(n_samples)
-    np.random.shuffle(idx)
+    rng.shuffle(idx)
     C2 = C1[idx, :][:, idx]
 
     p = ot.unif(n_samples)
@@ -501,7 +501,8 @@ def test_entropic_fgw(nx):
 
     xt = xs[::-1].copy()
 
-    ys = np.random.randn(xs.shape[0], 2)
+    rng = np.random.RandomState(42)
+    ys = rng.randn(xs.shape[0], 2)
     yt = ys[::-1].copy()
 
     p = ot.unif(n_samples)
@@ -565,7 +566,8 @@ def test_entropic_proximal_fgw(nx):
 
     xt = xs[::-1].copy()
 
-    ys = np.random.randn(xs.shape[0], 2)
+    rng = np.random.RandomState(42)
+    ys = rng.randn(xs.shape[0], 2)
     yt = ys[::-1].copy()
 
     p = ot.unif(n_samples)
@@ -621,13 +623,13 @@ def test_entropic_proximal_fgw(nx):
 
 def test_asymmetric_entropic_fgw(nx):
     n_samples = 10  # nb samples
-    np.random.seed(0)
-    C1 = np.random.uniform(low=0., high=10, size=(n_samples, n_samples))
+    rng = np.random.RandomState(0)
+    C1 = rng.uniform(low=0., high=10, size=(n_samples, n_samples))
     idx = np.arange(n_samples)
-    np.random.shuffle(idx)
+    rng.shuffle(idx)
     C2 = C1[idx, :][:, idx]
 
-    ys = np.random.randn(n_samples, 2)
+    ys = rng.randn(n_samples, 2)
     yt = ys[idx, :]
     M = ot.dist(ys, yt)
 
@@ -671,11 +673,12 @@ def test_entropic_fgw_dtype_device(nx):
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=42)
+    rng = np.random.RandomState(42)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=rng)
 
     xt = xs[::-1].copy()
 
-    ys = np.random.randn(xs.shape[0], 2)
+    ys = rng.randn(xs.shape[0], 2)
     yt = ys[::-1].copy()
 
     p = ot.unif(n_samples)
@@ -711,11 +714,12 @@ def test_entropic_fgw_barycenter(nx):
     ns = 5
     nt = 10
 
+    rng = np.random.RandomState(42)
     Xs, ys = ot.datasets.make_data_classif('3gauss', ns, random_state=42)
     Xt, yt = ot.datasets.make_data_classif('3gauss2', nt, random_state=42)
 
-    ys = np.random.randn(Xs.shape[0], 2)
-    yt = np.random.randn(Xt.shape[0], 2)
+    ys = rng.randn(Xs.shape[0], 2)
+    yt = rng.randn(Xt.shape[0], 2)
 
     C1 = ot.dist(Xs)
     C2 = ot.dist(Xt)
@@ -1031,7 +1035,8 @@ def test_fgw(nx):
 
     xt = xs[::-1].copy()
 
-    ys = np.random.randn(xs.shape[0], 2)
+    rng = np.random.RandomState(42)
+    ys = rng.randn(xs.shape[0], 2)
     yt = ys[::-1].copy()
 
     p = ot.unif(n_samples)
@@ -1085,14 +1090,14 @@ def test_fgw(nx):
 
 def test_asymmetric_fgw(nx):
     n_samples = 50  # nb samples
-    np.random.seed(0)
-    C1 = np.random.uniform(low=0., high=10, size=(n_samples, n_samples))
+    rng = np.random.RandomState(0)
+    C1 = rng.uniform(low=0., high=10, size=(n_samples, n_samples))
     idx = np.arange(n_samples)
-    np.random.shuffle(idx)
+    rng.shuffle(idx)
     C2 = C1[idx, :][:, idx]
 
     # add features
-    F1 = np.random.uniform(low=0., high=10, size=(n_samples, 1))
+    F1 = rng.uniform(low=0., high=10, size=(n_samples, 1))
     F2 = F1[idx, :]
     p = ot.unif(n_samples)
     q = ot.unif(n_samples)
@@ -1228,10 +1233,11 @@ def test_fgw_helper_backend(nx):
     mu = np.array([0, 0])
     cov = np.array([[1, 0], [0, 1]])
 
+    rng = np.random.RandomState(42)
     xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=0)
-    ys = np.random.randn(xs.shape[0], 2)
+    ys = rng.randn(xs.shape[0], 2)
     xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=1)
-    yt = np.random.randn(xt.shape[0], 2)
+    yt = rng.randn(xt.shape[0], 2)
 
     p = ot.unif(n_samples)
     q = ot.unif(n_samples)
@@ -1274,16 +1280,15 @@ def test_fgw_helper_backend(nx):
 
 
 def test_fgw_barycenter(nx):
-    np.random.seed(42)
-
     ns = 10
     nt = 20
 
     Xs, ys = ot.datasets.make_data_classif('3gauss', ns, random_state=42)
     Xt, yt = ot.datasets.make_data_classif('3gauss2', nt, random_state=42)
 
-    ys = np.random.randn(Xs.shape[0], 2)
-    yt = np.random.randn(Xt.shape[0], 2)
+    rng = np.random.RandomState(42)
+    ys = rng.randn(Xs.shape[0], 2)
+    yt = rng.randn(Xt.shape[0], 2)
 
     C1 = ot.dist(Xs)
     C2 = ot.dist(Xt)
@@ -1301,7 +1306,7 @@ def test_fgw_barycenter(nx):
         fixed_features=False, p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3, random_state=12345
     )
 
-    xalea = np.random.randn(n_samples, 2)
+    xalea = rng.randn(n_samples, 2)
     init_C = ot.dist(xalea, xalea)
     init_C /= init_C.max()
     init_Cb = nx.from_numpy(init_C)
@@ -1315,7 +1320,7 @@ def test_fgw_barycenter(nx):
     np.testing.assert_allclose(Cb.shape, (n_samples, n_samples))
     np.testing.assert_allclose(Xb.shape, (n_samples, ys.shape[1]))
 
-    init_X = np.random.randn(n_samples, ys.shape[1])
+    init_X = rng.randn(n_samples, ys.shape[1])
     init_Xb = nx.from_numpy(init_X)
 
     Xb, Cb, logb = ot.gromov.fgw_barycenters(
@@ -1438,8 +1443,8 @@ def test_gromov_wasserstein_dictionary_learning(nx):
     # Provide initialization for the graph dictionary of shape (n_atoms, shape, shape)
     # following the same procedure than implemented in gromov_wasserstein_dictionary_learning.
     dataset_means = [C.mean() for C in Cs]
-    np.random.seed(0)
-    Cdict_init = np.random.normal(loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(n_atoms, shape, shape))
+    rng = np.random.RandomState(0)
+    Cdict_init = rng.normal(loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(n_atoms, shape, shape))
 
     if projection == 'nonnegative_symmetric':
         Cdict_init = 0.5 * (Cdict_init + Cdict_init.transpose((0, 2, 1)))
@@ -1507,12 +1512,12 @@ def test_gromov_wasserstein_dictionary_learning(nx):
 
     # Test: Perform same comparison without providing the initial dictionary being an optional input
     #       knowing than the initialization scheme is the same than implemented to set the benchmarked initialization.
-    np.random.seed(0)
     Cdict_bis, log = ot.gromov.gromov_wasserstein_dictionary_learning(
         Cs, D=n_atoms, nt=shape, ps=None, q=None, Cdict_init=None,
         epochs=epochs, batch_size=n_samples, learning_rate=1., reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=10, max_iter_inner=50,
-        projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
+        projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose,
+        random_state=0
     )
     # > Compute reconstruction of samples on learned dictionary
     total_reconstruction_bis = 0
@@ -1526,12 +1531,12 @@ def test_gromov_wasserstein_dictionary_learning(nx):
     np.testing.assert_allclose(total_reconstruction_bis, total_reconstruction, atol=1e-05)
 
     # Test: Same after going through backend
-    np.random.seed(0)
     Cdictb_bis, log = ot.gromov.gromov_wasserstein_dictionary_learning(
         Csb, D=n_atoms, nt=shape, ps=psb, q=qb, Cdict_init=None,
         epochs=epochs, batch_size=n_samples, learning_rate=1., reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=10, max_iter_inner=50,
-        projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
+        projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer,
+        verbose=verbose, random_state=0
     )
     # > Compute reconstruction of samples on learned dictionary
     total_reconstruction_b_bis = 0
@@ -1553,12 +1558,12 @@ def test_gromov_wasserstein_dictionary_learning(nx):
     verbose = True
     use_log = True
 
-    np.random.seed(0)
     Cdict_bis2, log = ot.gromov.gromov_wasserstein_dictionary_learning(
         Cs, D=n_atoms, nt=shape, ps=ps, q=q, Cdict_init=Cdict,
         epochs=epochs, batch_size=n_samples, learning_rate=10., reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=10, max_iter_inner=50,
-        projection=projection, use_log=use_log, use_adam_optimizer=use_adam_optimizer, verbose=verbose
+        projection=projection, use_log=use_log, use_adam_optimizer=use_adam_optimizer,
+        verbose=verbose, random_state=0,
     )
     # > Compute reconstruction of samples on learned dictionary
     total_reconstruction_bis2 = 0
@@ -1572,12 +1577,12 @@ def test_gromov_wasserstein_dictionary_learning(nx):
     np.testing.assert_array_less(total_reconstruction_bis2, total_reconstruction)
 
     # Test: Same after going through backend
-    np.random.seed(0)
     Cdictb_bis2, log = ot.gromov.gromov_wasserstein_dictionary_learning(
         Csb, D=n_atoms, nt=shape, ps=psb, q=qb, Cdict_init=Cdictb,
         epochs=epochs, batch_size=n_samples, learning_rate=10., reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=10, max_iter_inner=50,
-        projection=projection, use_log=use_log, use_adam_optimizer=use_adam_optimizer, verbose=verbose
+        projection=projection, use_log=use_log, use_adam_optimizer=use_adam_optimizer,
+        verbose=verbose, random_state=0,
     )
     # > Compute reconstruction of samples on learned dictionary
     total_reconstruction_b_bis2 = 0
@@ -1701,13 +1706,13 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
     # Provide initialization for the graph dictionary of shape (n_atoms, shape, shape)
     # following the same procedure than implemented in gromov_wasserstein_dictionary_learning.
     dataset_structure_means = [C.mean() for C in Cs]
-    np.random.seed(0)
-    Cdict_init = np.random.normal(loc=np.mean(dataset_structure_means), scale=np.std(dataset_structure_means), size=(n_atoms, shape, shape))
+    rng = np.random.RandomState(0)
+    Cdict_init = rng.normal(loc=np.mean(dataset_structure_means), scale=np.std(dataset_structure_means), size=(n_atoms, shape, shape))
     if projection == 'nonnegative_symmetric':
         Cdict_init = 0.5 * (Cdict_init + Cdict_init.transpose((0, 2, 1)))
         Cdict_init[Cdict_init < 0.] = 0.
     dataset_feature_means = np.stack([Y.mean(axis=0) for Y in Ys])
-    Ydict_init = np.random.normal(loc=dataset_feature_means.mean(axis=0), scale=dataset_feature_means.std(axis=0), size=(n_atoms, shape, 2))
+    Ydict_init = rng.normal(loc=dataset_feature_means.mean(axis=0), scale=dataset_feature_means.std(axis=0), size=(n_atoms, shape, 2))
 
     Csb = nx.from_numpy(*Cs)
     Ysb = nx.from_numpy(*Ys)
@@ -1749,12 +1754,12 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
     np.testing.assert_array_less(total_reconstruction, initial_total_reconstruction)
 
     # Test: Perform same experiments after going through backend
-
     Cdictb, Ydictb, log = ot.gromov.fused_gromov_wasserstein_dictionary_learning(
         Csb, Ysb, D=n_atoms, nt=shape, ps=None, q=None, Cdict_init=Cdict_initb, Ydict_init=Ydict_initb,
         epochs=epochs, batch_size=2 * n_samples, learning_rate_C=1., learning_rate_Y=1., alpha=alpha, reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=10, max_iter_inner=50,
-        projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
+        projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose,
+        random_state=0
     )
     # > Compute reconstruction of samples on learned dictionary
     total_reconstruction_b = 0
@@ -1772,12 +1777,12 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
     np.testing.assert_allclose(Ydict, nx.to_numpy(Ydictb), atol=1e-03)
 
     # Test: Perform similar experiment without providing the initial dictionary being an optional input
-    np.random.seed(0)
     Cdict_bis, Ydict_bis, log = ot.gromov.fused_gromov_wasserstein_dictionary_learning(
         Cs, Ys, D=n_atoms, nt=shape, ps=None, q=None, Cdict_init=None, Ydict_init=None,
         epochs=epochs, batch_size=n_samples, learning_rate_C=1., learning_rate_Y=1., alpha=alpha, reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=10, max_iter_inner=50,
-        projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
+        projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose,
+        random_state=0
     )
     # > Compute reconstruction of samples on learned dictionary
     total_reconstruction_bis = 0
@@ -1791,12 +1796,12 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
     np.testing.assert_allclose(total_reconstruction_bis, total_reconstruction, atol=1e-05)
 
     # > Same after going through backend
-    np.random.seed(0)
     Cdictb_bis, Ydictb_bis, log = ot.gromov.fused_gromov_wasserstein_dictionary_learning(
         Csb, Ysb, D=n_atoms, nt=shape, ps=None, q=None, Cdict_init=None, Ydict_init=None,
         epochs=epochs, batch_size=n_samples, learning_rate_C=1., learning_rate_Y=1., alpha=alpha, reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=10, max_iter_inner=50,
-        projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose
+        projection=projection, use_log=False, use_adam_optimizer=use_adam_optimizer, verbose=verbose,
+        random_state=0,
     )
 
     # > Compute reconstruction of samples on learned dictionary
@@ -1817,12 +1822,12 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
     use_log = True
 
     # > Experiment providing previously estimated dictionary to speed up the test compared to providing initial random init.
-    np.random.seed(0)
     Cdict_bis2, Ydict_bis2, log = ot.gromov.fused_gromov_wasserstein_dictionary_learning(
         Cs, Ys, D=n_atoms, nt=shape, ps=ps, q=q, Cdict_init=Cdict, Ydict_init=Ydict,
         epochs=epochs, batch_size=n_samples, learning_rate_C=10., learning_rate_Y=10., alpha=alpha, reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=10, max_iter_inner=50,
-        projection=projection, use_log=use_log, use_adam_optimizer=use_adam_optimizer, verbose=verbose
+        projection=projection, use_log=use_log, use_adam_optimizer=use_adam_optimizer,
+        verbose=verbose, random_state=0,
     )
     # > Compute reconstruction of samples on learned dictionary
     total_reconstruction_bis2 = 0
@@ -1836,12 +1841,12 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
     np.testing.assert_array_less(total_reconstruction_bis2, total_reconstruction)
 
     # > Same after going through backend
-    np.random.seed(0)
     Cdictb_bis2, Ydictb_bis2, log = ot.gromov.fused_gromov_wasserstein_dictionary_learning(
         Csb, Ysb, D=n_atoms, nt=shape, ps=None, q=None, Cdict_init=Cdictb, Ydict_init=Ydictb,
         epochs=epochs, batch_size=n_samples, learning_rate_C=10., learning_rate_Y=10., alpha=alpha, reg=0.,
         tol_outer=tol, tol_inner=tol, max_iter_outer=10, max_iter_inner=50,
-        projection=projection, use_log=use_log, use_adam_optimizer=use_adam_optimizer, verbose=verbose
+        projection=projection, use_log=use_log, use_adam_optimizer=use_adam_optimizer, verbose=verbose,
+        random_state=0,
     )
 
     # > Compute reconstruction of samples on learned dictionary
@@ -1859,7 +1864,7 @@ def test_fused_gromov_wasserstein_dictionary_learning(nx):
 
 
 def test_semirelaxed_gromov(nx):
-    np.random.seed(0)
+    rng = np.random.RandomState(0)
     # unbalanced proportions
     list_n = [30, 15]
     nt = 2
@@ -1871,7 +1876,7 @@ def test_semirelaxed_gromov(nx):
     for i in range(nt):
         for j in range(nt):
             ni, nj = list_n[i], list_n[j]
-            xij = np.random.binomial(size=(ni, nj), n=1, p=C2[i, j])
+            xij = rng.binomial(size=(ni, nj), n=1, p=C2[i, j])
             C1[i * ni: (i + 1) * ni, j * nj: (j + 1) * nj] = xij
     p = ot.unif(ns, type_as=C1)
     q0 = ot.unif(C2.shape[0], type_as=C1)
@@ -2022,7 +2027,7 @@ def test_srgw_helper_backend(nx):
 
 
 def test_semirelaxed_fgw(nx):
-    np.random.seed(0)
+    rng = np.random.RandomState(0)
     list_n = [16, 8]
     nt = 2
     ns = 24
@@ -2033,11 +2038,11 @@ def test_semirelaxed_fgw(nx):
     for i in range(nt):
         for j in range(nt):
             ni, nj = list_n[i], list_n[j]
-            xij = np.random.binomial(size=(ni, nj), n=1, p=C2[i, j])
+            xij = rng.binomial(size=(ni, nj), n=1, p=C2[i, j])
             C1[i * ni: (i + 1) * ni, j * nj: (j + 1) * nj] = xij
     F1 = np.zeros((ns, 1))
-    F1[:16] = np.random.normal(loc=0., scale=0.01, size=(16, 1))
-    F1[16:] = np.random.normal(loc=1., scale=0.01, size=(8, 1))
+    F1[:16] = rng.normal(loc=0., scale=0.01, size=(16, 1))
+    F1[16:] = rng.normal(loc=1., scale=0.01, size=(8, 1))
     F2 = np.zeros((2, 1))
     F2[1, :] = 1.
     M = (F1 ** 2).dot(np.ones((1, nt))) + np.ones((ns, 1)).dot((F2 ** 2).T) - 2 * F1.dot(F2.T)
@@ -2163,10 +2168,11 @@ def test_srfgw_helper_backend(nx):
     mu = np.array([0, 0])
     cov = np.array([[1, 0], [0, 1]])
 
+    rng = np.random.RandomState(42)
     xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=0)
-    ys = np.random.randn(xs.shape[0], 2)
+    ys = rng.randn(xs.shape[0], 2)
     xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=1)
-    yt = np.random.randn(xt.shape[0], 2)
+    yt = rng.randn(xt.shape[0], 2)
 
     p = ot.unif(n_samples)
     q = ot.unif(n_samples)
@@ -2209,7 +2215,6 @@ def test_srfgw_helper_backend(nx):
 
 
 def test_entropic_semirelaxed_gromov(nx):
-    np.random.seed(0)
     # unbalanced proportions
     list_n = [30, 15]
     nt = 2
@@ -2218,10 +2223,11 @@ def test_entropic_semirelaxed_gromov(nx):
     C1 = np.zeros((ns, ns), dtype=np.float64)
     C2 = np.array([[0.8, 0.05],
                    [0.05, 1.]], dtype=np.float64)
+    rng = np.random.RandomState(0)
     for i in range(nt):
         for j in range(nt):
             ni, nj = list_n[i], list_n[j]
-            xij = np.random.binomial(size=(ni, nj), n=1, p=C2[i, j])
+            xij = rng.binomial(size=(ni, nj), n=1, p=C2[i, j])
             C1[i * ni: (i + 1) * ni, j * nj: (j + 1) * nj] = xij
     p = ot.unif(ns, type_as=C1)
     q0 = ot.unif(C2.shape[0], type_as=C1)
@@ -2318,7 +2324,7 @@ def test_entropic_semirelaxed_gromov_dtype_device(nx):
 
 
 def test_entropic_semirelaxed_fgw(nx):
-    np.random.seed(0)
+    rng = np.random.RandomState(0)
     list_n = [16, 8]
     nt = 2
     ns = 24
@@ -2329,11 +2335,11 @@ def test_entropic_semirelaxed_fgw(nx):
     for i in range(nt):
         for j in range(nt):
             ni, nj = list_n[i], list_n[j]
-            xij = np.random.binomial(size=(ni, nj), n=1, p=C2[i, j])
+            xij = rng.binomial(size=(ni, nj), n=1, p=C2[i, j])
             C1[i * ni: (i + 1) * ni, j * nj: (j + 1) * nj] = xij
     F1 = np.zeros((ns, 1))
-    F1[:16] = np.random.normal(loc=0., scale=0.01, size=(16, 1))
-    F1[16:] = np.random.normal(loc=1., scale=0.01, size=(8, 1))
+    F1[:16] = rng.normal(loc=0., scale=0.01, size=(16, 1))
+    F1[16:] = rng.normal(loc=1., scale=0.01, size=(8, 1))
     F2 = np.zeros((2, 1))
     F2[1, :] = 1.
     M = (F1 ** 2).dot(np.ones((1, nt))) + np.ones((ns, 1)).dot((F2 ** 2).T) - 2 * F1.dot(F2.T)
@@ -2407,7 +2413,8 @@ def test_entropic_semirelaxed_fgw_dtype_device(nx):
 
     xt = xs[::-1].copy()
 
-    ys = np.random.randn(xs.shape[0], 2)
+    rng = np.random.RandomState(42)
+    ys = rng.randn(xs.shape[0], 2)
     yt = ys[::-1].copy()
 
     p = ot.unif(n_samples)
@@ -2441,10 +2448,10 @@ def test_not_implemented_solver():
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=42)
+    rng = np.random.RandomState(42)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=rng)
     xt = xs[::-1].copy()
-
-    ys = np.random.randn(xs.shape[0], 2)
+    ys = rng.randn(xs.shape[0], 2)
     yt = ys[::-1].copy()
 
     p = ot.unif(n_samples)

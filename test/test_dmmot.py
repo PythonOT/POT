@@ -10,7 +10,6 @@ import ot
 
 
 def create_test_data(nx):
-    np.random.seed(1234)
     n = 4
     a1 = ot.datasets.make_1D_gauss(n, m=20, s=5)
     a2 = ot.datasets.make_1D_gauss(n, m=60, s=8)

@@ -16,9 +16,9 @@ def test_fully_relaxed_path():
     mu = np.array([0, 0])
     cov = np.array([[1, 0], [0, 2]])
 
-    np.random.seed(0)
-    xs = ot.datasets.make_2D_samples_gauss(n_source, mu, cov)
-    xt = ot.datasets.make_2D_samples_gauss(n_target, mu, cov)
+    rng = np.random.RandomState(0)
+    xs = ot.datasets.make_2D_samples_gauss(n_source, mu, cov, random_state=rng)
+    xt = ot.datasets.make_2D_samples_gauss(n_target, mu, cov, random_state=rng)
 
     # source and target distributions
     a = ot.utils.unif(n_source)
@@ -44,9 +44,9 @@ def test_semi_relaxed_path():
     mu = np.array([0, 0])
     cov = np.array([[1, 0], [0, 2]])
 
-    np.random.seed(0)
-    xs = ot.datasets.make_2D_samples_gauss(n_source, mu, cov)
-    xt = ot.datasets.make_2D_samples_gauss(n_target, mu, cov)
+    rng = np.random.RandomState(0)
+    xs = ot.datasets.make_2D_samples_gauss(n_source, mu, cov, random_state=rng)
+    xt = ot.datasets.make_2D_samples_gauss(n_target, mu, cov, random_state=rng)
 
     # source and target distributions
     a = ot.utils.unif(n_source)
