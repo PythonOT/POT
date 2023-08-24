@@ -1004,7 +1004,6 @@ def entropic_fused_gromov_barycenters(
                 print('{:5d}|{:8e}|'.format(cpt, err_feature))
 
         cpt += 1
-        print('Y type:', type(Y))
     if log:
         log_['T'] = T  # from target to Ys
         log_['p'] = p
