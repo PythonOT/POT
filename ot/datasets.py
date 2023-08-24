@@ -155,7 +155,7 @@ def make_data_classif(dataset, n, nz=.5, theta=0, p=.5, random_state=None, **kwa
     elif dataset.lower() == '2gauss_prop':
 
         y = np.concatenate((np.ones(int(p * n)), np.zeros(int((1 - p) * n))))
-        x = np.hstack((0 * y[:, None] - 0, 1 - 2 * y[:, None])) + nz * np.random.randn(len(y), 2)
+        x = np.hstack((0 * y[:, None] - 0, 1 - 2 * y[:, None])) + nz * generator.randn(len(y), 2)
 
         if ('bias' not in kwargs) and ('b' not in kwargs):
             kwargs['bias'] = np.array([0, 2])
