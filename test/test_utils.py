@@ -195,7 +195,7 @@ def test_dist():
 
     for metric in metrics_w:
         print(metric)
-        ot.dist(x, x, metric=metric, p=3, w=np.random.random((2, )))
+        ot.dist(x, x, metric=metric, p=3, w=rng.random((2, )))
         ot.dist(x, x, metric=metric, p=3, w=None)  # check that not having any weight does not cause issues
     for metric in metrics:
         print(metric)
@@ -271,8 +271,9 @@ def test_clean_zeros():
 
 
 def test_cost_normalization(nx):
+    rng = np.random.RandomState(0)
 
-    C = np.random.rand(10, 10)
+    C = rng.rand(10, 10)
     C1 = nx.from_numpy(C)
 
     # does nothing
@@ -392,8 +393,8 @@ def test_OTResult():
 
 
 def test_get_coordinate_circle():
-
-    u = np.random.rand(1, 100)
+    rng = np.random.RandomState(42)
+    u = rng.rand(1, 100)
     x1, y1 = np.cos(u * (2 * np.pi)), np.sin(u * (2 * np.pi))
     x = np.concatenate([x1, y1]).T
     x_p = ot.utils.get_coordinate_circle(x)

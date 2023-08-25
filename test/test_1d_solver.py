@@ -163,8 +163,8 @@ def test_emd_1d_emd2_1d():
     np.testing.assert_allclose(G, G_1d, atol=1e-15)
 
     # check AssertionError is raised if called on non 1d arrays
-    u = np.random.randn(n, 2)
-    v = np.random.randn(m, 2)
+    u = rng.randn(n, 2)
+    v = rng.randn(m, 2)
     with pytest.raises(AssertionError):
         ot.emd_1d(u, v, [], [])
 
