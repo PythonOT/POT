@@ -405,9 +405,9 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
         Metric cost matrix in the source space
     C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    T :  array-like, shape (ns, nt)
-        Coupling between source and target spaces
     p : array-like, shape (ns,)
+    loss_fun : str, optional
+        Name of loss function to use: either 'square_loss' or 'kl_loss' (default='square_loss')
     nx : backend, optional
         If let to its default value None, a backend test will be conducted.
 
