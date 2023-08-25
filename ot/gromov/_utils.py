@@ -72,6 +72,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
         Name of loss function to use: either 'square_loss' or 'kl_loss' (default='square_loss')
     nx : backend, optional
         If let to its default value None, a backend test will be conducted.
+
     Returns
     -------
     constC : array-like, shape (ns, nt)
@@ -118,6 +119,8 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
 
         def h2(b):
             return nx.log(b + 1e-15)
+    else:
+        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
 
     constC1 = nx.dot(
         nx.dot(f1(C1), nx.reshape(p, (-1, 1))),
@@ -407,6 +410,7 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
     p : array-like, shape (ns,)
     nx : backend, optional
         If let to its default value None, a backend test will be conducted.
+
     Returns
     -------
     constC : array-like, shape (ns, nt)
@@ -446,6 +450,10 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
 
         def h2(b):
             return 2 * b
+    elif loss_fun == 'kl_loss':
+        raise NotImplementedError()
+    else:
+        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Only 'square_loss' is supported.")
 
     constC = nx.dot(nx.dot(f1(C1), nx.reshape(p, (-1, 1))),
                     nx.ones((1, C2.shape[0]), type_as=p))
