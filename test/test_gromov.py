@@ -2056,7 +2056,6 @@ def test_gw_semirelaxed_helper_validation(loss_fun):
     xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=0)
     xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=1)
     p = ot.unif(n_samples)
-    q = ot.unif(n_samples)
     C1 = ot.dist(xs, xs)
     C2 = ot.dist(xt, xt)
     ot.gromov.init_matrix_semirelaxed(C1, C2, p, loss_fun=loss_fun)
