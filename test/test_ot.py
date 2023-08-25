@@ -340,7 +340,6 @@ def test_free_support_barycenter_backends(nx):
 
 
 def test_generalised_free_support_barycenter():
-    np.random.seed(42)  # random inits
     X = [np.array([-1., -1.]).reshape((1, 2)), np.array([1., 1.]).reshape((1, 2))]  # two 2D points bar is obviously 0
     a = [np.array([1.]), np.array([1.])]
 
@@ -361,7 +360,6 @@ def test_generalised_free_support_barycenter():
 
 
 def test_generalised_free_support_barycenter_backends(nx):
-    np.random.seed(42)
     X = [np.array([-1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
     a = [np.array([1.]), np.array([1.])]
     P = [np.array([1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
