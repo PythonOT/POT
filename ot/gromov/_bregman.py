@@ -373,8 +373,8 @@ def entropic_gromov_barycenters(
     lambdas : list of float, optional
         List of the `S` spaces' weights.
         If let to its default value None, uniform weights are taken.
-    loss_fun : callable, optional
-        tensor-matrix multiplication function based on specific loss function
+    loss_fun :  string, optional (default='square_loss')
+        Loss function used for the solver either 'square_loss' or 'kl_loss'
     epsilon : float, optional
         Regularization term >0
     symmetric : bool, optional.
