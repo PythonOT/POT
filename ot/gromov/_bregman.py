@@ -81,7 +81,7 @@ def entropic_gromov_wasserstein(
     q : array-like, shape (nt,), optional
         Distribution in the target space.
         If let to its default value None, uniform distribution is taken.
-    loss_fun :  string, optional
+    loss_fun :  string, optional (default='square_loss')
         Loss function used for the solver either 'square_loss' or 'kl_loss'
     epsilon : float, optional
         Regularization term >0
@@ -134,6 +134,9 @@ def entropic_gromov_wasserstein(
     """
     if solver not in ['PGD', 'PPA']:
         raise ValueError("Unknown solver '%s'. Pick one in ['PGD', 'PPA']." % solver)
+
+    if loss_fun not in ('square_loss', 'kl_loss'):
+        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
 
     C1, C2 = list_to_array(C1, C2)
     arr = [C1, C2]
@@ -411,6 +414,9 @@ def entropic_gromov_barycenters(
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
     """
+    if loss_fun not in ('square_loss', 'kl_loss'):
+        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
+
     Cs = list_to_array(*Cs)
     arr = [*Cs]
     if ps is not None:
@@ -459,7 +465,6 @@ def entropic_gromov_barycenters(
 
         if loss_fun == 'square_loss':
             C = update_square_loss(p, lambdas, T, Cs)
-
         elif loss_fun == 'kl_loss':
             C = update_kl_loss(p, lambdas, T, Cs)
 
