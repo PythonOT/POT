@@ -93,7 +93,7 @@ def entropic_gromov_wasserstein(
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 will be used as initial transport of the solver. G0 is not
         required to satisfy marginal constraints but we strongly recommand it
-        to correcly estimate the GW distance.
+        to correctly estimate the GW distance.
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
