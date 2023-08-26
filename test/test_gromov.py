@@ -291,6 +291,24 @@ def test_gw_helper_backend(nx):
     np.testing.assert_allclose(res, Gb, atol=1e-06)
 
 
+@pytest.mark.parametrize('loss_fun', [
+    'square_loss',
+    'kl_loss',
+    pytest.param('unknown_loss', marks=pytest.mark.xfail(raises=ValueError)),
+])
+def test_gw_helper_validation(loss_fun):
+    n_samples = 20  # nb samples
+    mu = np.array([0, 0])
+    cov = np.array([[1, 0], [0, 1]])
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=0)
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=1)
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+    ot.gromov.init_matrix(C1, C2, p, q, loss_fun=loss_fun)
+
+
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_entropic_gromov(nx):
@@ -2024,6 +2042,23 @@ def test_srgw_helper_backend(nx):
     res, log = ot.optim.semirelaxed_cg(pb, qb, 0., 1., f, df, Gb, line_search, log=True, numItermax=1e4, stopThr=1e-9, stopThr2=1e-9)
     # check constraints
     np.testing.assert_allclose(res, Gb, atol=1e-06)
+
+
+@pytest.mark.parametrize('loss_fun', [
+    'square_loss',
+    pytest.param('kl_loss', marks=pytest.mark.xfail(raises=NotImplementedError)),
+    pytest.param('unknown_loss', marks=pytest.mark.xfail(raises=ValueError)),
+])
+def test_gw_semirelaxed_helper_validation(loss_fun):
+    n_samples = 20  # nb samples
+    mu = np.array([0, 0])
+    cov = np.array([[1, 0], [0, 1]])
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=0)
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=1)
+    p = ot.unif(n_samples)
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+    ot.gromov.init_matrix_semirelaxed(C1, C2, p, loss_fun=loss_fun)
 
 
 def test_semirelaxed_fgw(nx):
