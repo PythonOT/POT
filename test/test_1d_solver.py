@@ -9,12 +9,10 @@ import numpy as np
 import pytest
 
 import ot
+from ot.backend import tf
 from ot.lp import wasserstein_1d
 
-from ot.backend import get_backend_list, tf
 from scipy.stats import wasserstein_distance
-
-backend_list = get_backend_list()
 
 
 def test_emd_1d_emd2_1d_with_weights():
@@ -53,10 +51,7 @@ def test_emd_1d_emd2_1d_with_weights():
     np.testing.assert_allclose(w_v, G.sum(0))
 
 
-@pytest.mark.parametrize('nx', backend_list)
 def test_wasserstein_1d(nx):
-    from scipy.stats import wasserstein_distance
-
     rng = np.random.RandomState(0)
 
     n = 100
