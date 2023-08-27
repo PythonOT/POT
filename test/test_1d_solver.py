@@ -100,8 +100,6 @@ def test_wasserstein_1d_type_devices(nx):
 
 @pytest.mark.skipif(not tf, reason="tf not installed")
 def test_wasserstein_1d_device_tf():
-    if not tf:
-        return
     nx = ot.backend.TensorflowBackend()
     rng = np.random.RandomState(0)
     n = 10
