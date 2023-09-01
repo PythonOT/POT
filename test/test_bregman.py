@@ -298,7 +298,8 @@ def test_sinkhorn_variants(nx):
 def test_sinkhorn_variants_dtype_device(nx, method):
     n = 100
 
-    x = np.random.randn(n, 2)
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
     u = ot.utils.unif(n)
 
     M = ot.dist(x, x)
@@ -317,7 +318,8 @@ def test_sinkhorn_variants_dtype_device(nx, method):
 def test_sinkhorn2_variants_dtype_device(nx, method):
     n = 100
 
-    x = np.random.randn(n, 2)
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
     u = ot.utils.unif(n)
 
     M = ot.dist(x, x)
@@ -337,7 +339,8 @@ def test_sinkhorn2_variants_dtype_device(nx, method):
 def test_sinkhorn2_variants_device_tf(method):
     nx = ot.backend.TensorflowBackend()
     n = 100
-    x = np.random.randn(n, 2)
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
     u = ot.utils.unif(n)
     M = ot.dist(x, x)
 
@@ -690,11 +693,12 @@ def test_barycenter_stabilization(nx):
 
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
 def test_wasserstein_bary_2d(nx, method):
+    rng = np.random.RandomState(42)
     size = 20  # size of a square image
-    a1 = np.random.rand(size, size)
+    a1 = rng.rand(size, size)
     a1 += a1.min()
     a1 = a1 / np.sum(a1)
-    a2 = np.random.rand(size, size)
+    a2 = rng.rand(size, size)
     a2 += a2.min()
     a2 = a2 / np.sum(a2)
     # creating matrix A containing all distributions
@@ -724,11 +728,12 @@ def test_wasserstein_bary_2d(nx, method):
 
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
 def test_wasserstein_bary_2d_debiased(nx, method):
+    rng = np.random.RandomState(42)
     size = 20  # size of a square image
-    a1 = np.random.rand(size, size)
+    a1 = rng.rand(size, size)
     a1 += a1.min()
     a1 = a1 / np.sum(a1)
-    a2 = np.random.rand(size, size)
+    a2 = rng.rand(size, size)
     a2 += a2.min()
     a2 = a2 / np.sum(a2)
     # creating matrix A containing all distributions

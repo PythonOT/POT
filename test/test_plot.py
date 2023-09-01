@@ -52,9 +52,10 @@ def test_plot2D_samples_mat():
     mu_t = np.array([4, 4])
     cov_t = np.array([[1, -.8], [-.8, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(n_bins, mu_s, cov_s)
-    xt = ot.datasets.make_2D_samples_gauss(n_bins, mu_t, cov_t)
+    rng = np.random.RandomState(42)
+    xs = ot.datasets.make_2D_samples_gauss(n_bins, mu_s, cov_s, random_state=rng)
+    xt = ot.datasets.make_2D_samples_gauss(n_bins, mu_t, cov_t, random_state=rng)
 
-    G = 1.0 * (np.random.rand(n_bins, n_bins) < 0.01)
+    G = 1.0 * (rng.rand(n_bins, n_bins) < 0.01)
 
     ot.plot.plot2D_samples_mat(xs, xt, G, thr=1e-5)

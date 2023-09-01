@@ -272,7 +272,7 @@ def test_projections_stiefel():
     rng = np.random.RandomState(0)
 
     n_projs = 500
-    x = np.random.randn(100, 3)
+    x = rng.randn(100, 3)
     x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
 
     ssw, log = ot.sliced_wasserstein_sphere(x, x, n_projections=n_projs,

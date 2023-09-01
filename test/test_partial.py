@@ -20,10 +20,11 @@ def test_raise_errors():
     mu = np.array([0, 0])
     cov = np.array([[1, 0], [0, 2]])
 
-    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
-    xs = np.append(xs, (np.random.rand(n_noise, 2) + 1) * 4).reshape((-1, 2))
-    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
-    xt = np.append(xt, (np.random.rand(n_noise, 2) + 1) * -3).reshape((-1, 2))
+    rng = np.random.RandomState(42)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=rng)
+    xs = np.append(xs, (rng.rand(n_noise, 2) + 1) * 4).reshape((-1, 2))
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=rng)
+    xt = np.append(xt, (rng.rand(n_noise, 2) + 1) * -3).reshape((-1, 2))
 
     M = ot.dist(xs, xt)
 
@@ -68,10 +69,11 @@ def test_partial_wasserstein_lagrange():
     mu = np.array([0, 0])
     cov = np.array([[1, 0], [0, 2]])
 
-    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
-    xs = np.append(xs, (np.random.rand(n_noise, 2) + 1) * 4).reshape((-1, 2))
-    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
-    xt = np.append(xt, (np.random.rand(n_noise, 2) + 1) * -3).reshape((-1, 2))
+    rng = np.random.RandomState(42)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=rng)
+    xs = np.append(xs, (rng.rand(n_noise, 2) + 1) * 4).reshape((-1, 2))
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=rng)
+    xt = np.append(xt, (rng.rand(n_noise, 2) + 1) * -3).reshape((-1, 2))
 
     M = ot.dist(xs, xt)
 
@@ -91,10 +93,11 @@ def test_partial_wasserstein(nx):
     mu = np.array([0, 0])
     cov = np.array([[1, 0], [0, 2]])
 
-    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
-    xs = np.append(xs, (np.random.rand(n_noise, 2) + 1) * 4).reshape((-1, 2))
-    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov)
-    xt = np.append(xt, (np.random.rand(n_noise, 2) + 1) * -3).reshape((-1, 2))
+    rng = np.random.RandomState(42)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=rng)
+    xs = np.append(xs, (rng.rand(n_noise, 2) + 1) * 4).reshape((-1, 2))
+    xt = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=rng)
+    xt = np.append(xt, (rng.rand(n_noise, 2) + 1) * -3).reshape((-1, 2))
 
     M = ot.dist(xs, xt)
 
@@ -210,7 +213,7 @@ def test_entropic_partial_wasserstein_gradient():
 
 
 def test_partial_gromov_wasserstein():
-    rng = np.random.RandomState(seed=42)
+    rng = np.random.RandomState(42)
     n_samples = 20  # nb samples
     n_noise = 10  # nb of samples (noise)
 
@@ -223,7 +226,7 @@ def test_partial_gromov_wasserstein():
     mu_t = np.array([0, 0, 0])
     cov_t = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, rng)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=rng)
     xs = np.concatenate((xs, ((rng.rand(n_noise, 2) + 1) * 4)), axis=0)
     P = sp.linalg.sqrtm(cov_t)
     xt = rng.randn(n_samples, 3).dot(P) + mu_t

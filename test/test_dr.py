@@ -21,14 +21,14 @@ except ImportError:
 def test_fda():
 
     n_samples = 90  # nb samples in source and target datasets
-    np.random.seed(0)
+    rng = np.random.RandomState(0)
 
     # generate gaussian dataset
-    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples)
+    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples, random_state=rng)
 
     n_features_noise = 8
 
-    xs = np.hstack((xs, np.random.randn(n_samples, n_features_noise)))
+    xs = np.hstack((xs, rng.randn(n_samples, n_features_noise)))
 
     p = 1
 
@@ -43,14 +43,14 @@ def test_fda():
 def test_wda():
 
     n_samples = 100  # nb samples in source and target datasets
-    np.random.seed(0)
+    rng = np.random.RandomState(0)
 
     # generate gaussian dataset
-    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples)
+    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples, random_state=rng)
 
     n_features_noise = 8
 
-    xs = np.hstack((xs, np.random.randn(n_samples, n_features_noise)))
+    xs = np.hstack((xs, rng.randn(n_samples, n_features_noise)))
 
     p = 2
 
@@ -65,14 +65,14 @@ def test_wda():
 def test_wda_low_reg():
 
     n_samples = 100  # nb samples in source and target datasets
-    np.random.seed(0)
+    rng = np.random.RandomState(0)
 
     # generate gaussian dataset
-    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples)
+    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples, random_state=rng)
 
     n_features_noise = 8
 
-    xs = np.hstack((xs, np.random.randn(n_samples, n_features_noise)))
+    xs = np.hstack((xs, rng.randn(n_samples, n_features_noise)))
 
     p = 2
 
@@ -87,18 +87,18 @@ def test_wda_low_reg():
 def test_wda_normalized():
 
     n_samples = 100  # nb samples in source and target datasets
-    np.random.seed(0)
+    rng = np.random.RandomState(0)
 
     # generate gaussian dataset
-    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples)
+    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples, random_state=rng)
 
     n_features_noise = 8
 
-    xs = np.hstack((xs, np.random.randn(n_samples, n_features_noise)))
+    xs = np.hstack((xs, rng.randn(n_samples, n_features_noise)))
 
     p = 2
 
-    P0 = np.random.randn(10, p)
+    P0 = rng.randn(10, p)
     P0 /= P0.sum(0, keepdims=True)
 
     Pwda, projwda = ot.dr.wda(xs, ys, p, maxiter=10, P0=P0, normalize=True)
@@ -115,7 +115,7 @@ def test_prw():
     k = 3  # Subspace dimension
     dim = 3
 
-    def fragmented_hypercube(n, d, dim):
+    def fragmented_hypercube(n, d, dim, rng):
         assert dim <= d
         assert dim >= 1
         assert dim == int(dim)
@@ -124,21 +124,22 @@ def test_prw():
         b = (1. / n) * np.ones(n)
 
         # First measure : uniform on the hypercube
-        X = np.random.uniform(-1, 1, size=(n, d))
+        X = rng.uniform(-1, 1, size=(n, d))
 
         # Second measure : fragmentation
-        tmp_y = np.random.uniform(-1, 1, size=(n, d))
+        tmp_y = rng.uniform(-1, 1, size=(n, d))
         Y = tmp_y + 2 * np.sign(tmp_y) * np.array(dim * [1] + (d - dim) * [0])
         return a, b, X, Y
 
-    a, b, X, Y = fragmented_hypercube(n, d, dim)
+    rng = np.random.RandomState(42)
+    a, b, X, Y = fragmented_hypercube(n, d, dim, rng)
 
     tau = 0.002
     reg = 0.2
 
     pi, U = ot.dr.projection_robust_wasserstein(X, Y, a, b, tau, reg=reg, k=k, maxiter=1000, verbose=1)
 
-    U0 = np.random.randn(d, k)
+    U0 = rng.randn(d, k)
     U0, _ = np.linalg.qr(U0)
 
     pi, U = ot.dr.projection_robust_wasserstein(X, Y, a, b, tau, U0=U0, reg=reg, k=k, maxiter=1000, verbose=1)
@@ -150,15 +151,15 @@ def test_ewca():
     d = 5
     n_samples = 50
     k = 3
-    np.random.seed(0)
+    rng = np.random.RandomState(0)
 
     # generate gaussian dataset
-    A = np.random.normal(size=(d, d))
+    A = rng.normal(size=(d, d))
     Q, _ = np.linalg.qr(A)
-    D = np.random.normal(size=d)
+    D = rng.normal(size=d)
     D = (D / np.linalg.norm(D)) ** 4
     cov = Q @ np.diag(D) @ Q.T
-    X = np.random.multivariate_normal(np.zeros(d), cov, size=n_samples)
+    X = rng.multivariate_normal(np.zeros(d), cov, size=n_samples)
     X = X - X.mean(0, keepdims=True)
     assert X.shape == (n_samples, d)
 
