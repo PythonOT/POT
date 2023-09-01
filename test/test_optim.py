@@ -11,7 +11,6 @@ import ot
 def test_conditional_gradient(nx):
 
     n_bins = 100  # nb bins
-    np.random.seed(0)
     # bin positions
     x = np.arange(n_bins, dtype=np.float64)
 
@@ -90,7 +89,6 @@ def test_conditional_gradient_itermax(nx):
 def test_generalized_conditional_gradient(nx):
 
     n_bins = 100  # nb bins
-    np.random.seed(0)
     # bin positions
     x = np.arange(n_bins, dtype=np.float64)
 

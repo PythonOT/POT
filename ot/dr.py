@@ -25,7 +25,7 @@ import pymanopt.manifolds
 import pymanopt.optimizers
 
 from .bregman import sinkhorn as sinkhorn_bregman
-from .utils import dist as dist_utils
+from .utils import dist as dist_utils, check_random_state
 
 
 def dist(x1, x2):
@@ -267,7 +267,7 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, sinkhorn_method='sinkhorn', maxiter
     return Popt.point, proj
 
 
-def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopThr=1e-3, maxiter=100, verbose=0):
+def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopThr=1e-3, maxiter=100, verbose=0, random_state=None):
     r"""
     Projection Robust Wasserstein Distance :ref:`[32] <references-projection-robust-wasserstein>`
 
@@ -303,6 +303,9 @@ def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopTh
         Stop threshold on error (>0)
     verbose : int, optional
         Print information along iterations.
+    random_state : int, RandomState instance or None, default=None
+        Determines random number generation for initial value of projection
+        operator when U0 is not given.
 
     Returns
     -------
@@ -332,7 +335,8 @@ def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopTh
     assert d > k
 
     if U0 is None:
-        U = np.random.randn(d, k)
+        rng = check_random_state(random_state)
+        U = rng.randn(d, k)
         U, _ = np.linalg.qr(U)
     else:
         U = U0

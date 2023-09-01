@@ -10,7 +10,7 @@ Stochastic solvers for regularized OT.
 # License: MIT License
 
 import numpy as np
-from .utils import dist
+from .utils import dist, check_random_state
 from .backend import get_backend
 
 ##############################################################################
@@ -69,7 +69,7 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
     return b - khi
 
 
-def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
+def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None, random_state=None):
     r"""
     Compute the SAG algorithm to solve the regularized discrete measures optimal transport max problem
 
@@ -110,6 +110,9 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
         Number of iteration.
     lr : float
         Learning rate.
+    random_state : int, RandomState instance or None, default=None
+        Determines random number generation. Pass an int for reproducible
+        output across multiple function calls.
 
     Returns
     -------
@@ -129,8 +132,9 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
     cur_beta = np.zeros(n_target)
     stored_gradient = np.zeros((n_source, n_target))
     sum_stored_gradient = np.zeros(n_target)
+    rng = check_random_state(random_state)
     for _ in range(numItermax):
-        i = np.random.randint(n_source)
+        i = rng.randint(n_source)
         cur_coord_grad = a[i] * coordinate_grad_semi_dual(b, M, reg,
                                                           cur_beta, i)
         sum_stored_gradient += (cur_coord_grad - stored_gradient[i])
@@ -139,7 +143,7 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None):
     return cur_beta
 
 
-def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
+def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None, random_state=None):
     r'''
     Compute the ASGD algorithm to solve the regularized semi continous measures optimal transport max problem
 
@@ -177,6 +181,9 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
         Number of iteration.
     lr : float
         Learning rate.
+    random_state : int, RandomState instance or None, default=None
+        Determines random number generation. Pass an int for reproducible
+        output across multiple function calls.
 
     Returns
     -------
@@ -195,9 +202,10 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None):
     n_target = np.shape(M)[1]
     cur_beta = np.zeros(n_target)
     ave_beta = np.zeros(n_target)
+    rng = check_random_state(random_state)
     for cur_iter in range(numItermax):
         k = cur_iter + 1
-        i = np.random.randint(n_source)
+        i = rng.randint(n_source)
         cur_coord_grad = coordinate_grad_semi_dual(b, M, reg, cur_beta, i)
         cur_beta += (lr / np.sqrt(k)) * cur_coord_grad
         ave_beta = (1. / k) * cur_beta + (1 - 1. / k) * ave_beta
@@ -422,7 +430,7 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
     return grad_alpha, grad_beta
 
 
-def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
+def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr, random_state=None):
     r'''
     Compute the sgd algorithm to solve the regularized discrete measures optimal transport dual problem
 
@@ -460,6 +468,9 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
         number of iteration
     lr : float
         learning rate
+    random_state : int, RandomState instance or None, default=None
+        Determines random number generation. Pass an int for reproducible
+        output across multiple function calls.
 
     Returns
     -------
@@ -477,10 +488,11 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr):
     n_target = np.shape(M)[1]
     cur_alpha = np.zeros(n_source)
     cur_beta = np.zeros(n_target)
+    rng = check_random_state(random_state)
     for cur_iter in range(numItermax):
         k = np.sqrt(cur_iter + 1)
-        batch_alpha = np.random.choice(n_source, batch_size, replace=False)
-        batch_beta = np.random.choice(n_target, batch_size, replace=False)
+        batch_alpha = rng.choice(n_source, batch_size, replace=False)
+        batch_beta = rng.choice(n_target, batch_size, replace=False)
         update_alpha, update_beta = batch_grad_dual(a, b, M, reg, cur_alpha,
                                                     cur_beta, batch_size,
                                                     batch_alpha, batch_beta)

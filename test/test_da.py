@@ -570,12 +570,11 @@ def test_mapping_transport_class_specific_seed(nx):
     # check that it does not crash when derphi is very close to 0
     ns = 20
     nt = 30
-    np.random.seed(39)
-    Xs, ys = make_data_classif('3gauss', ns)
-    Xt, yt = make_data_classif('3gauss2', nt)
+    rng = np.random.RandomState(39)
+    Xs, ys = make_data_classif('3gauss', ns, random_state=rng)
+    Xt, yt = make_data_classif('3gauss2', nt, random_state=rng)
     otda = ot.da.MappingTransport(kernel="gaussian", bias=False)
     otda.fit(Xs=nx.from_numpy(Xs), Xt=nx.from_numpy(Xt))
-    np.random.seed(None)
 
 
 @pytest.skip_backend("jax")
@@ -715,7 +714,6 @@ def test_jcpot_barycenter(nx):
     nt = 50
 
     sigma = 0.1
-    np.random.seed(1985)
 
     ps1 = .2
     ps2 = .9
