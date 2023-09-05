@@ -5,7 +5,6 @@
 # License: MIT License
 
 import functools
-import os
 import pytest
 
 from ot.backend import (
