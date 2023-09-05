@@ -5,6 +5,7 @@
 # License: MIT License
 
 import functools
+import os
 import pytest
 
 from ot.backend import (
@@ -17,9 +18,9 @@ from ot.backend import (
 
 
 if jax:
+    os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
     from jax.config import config
     config.update("jax_enable_x64", True)
-    config.update("xla_python_client_preallocate", False)
 
 if tf:
     # make sure TF doesn't allocate entire GPU
