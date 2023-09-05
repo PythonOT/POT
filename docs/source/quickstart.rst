@@ -961,11 +961,12 @@ List of compatible Backends
 - `Tensorflow <https://www.tensorflow.org/>`_ (all outputs differentiable w.r.t. inputs)
 - `Cupy <https://cupy.dev/>`_ (no differentiation, GPU only)
 
-Library automatically detect which backend are available to be used. Backend is instantiated lazily
-only when needed to avoid unnecessary GPU memory allocations. It's also possible to disable import
-of the corresponding backend library (for example, to speedup library import) with environment variable
-`POT_BACKEND_DISABLE_<NAME>` (e.g. `POT_BACKEND_DISABLE_TENSORFLOW`). Note that `numpy` backend
-cannot be disabled.
+The library automatically detects which backends are available for use. A backend
+is instantiated lazily only when necessary to prevent unwarranted GPU memory allocations.
+You can also disable the import of a specific backend library (e.g., to accelerate
+loading of `ot` library) using the environment variable `POT_BACKEND_DISABLE_<NAME>`.
+For instance, to disable TensorFlow, set `export POT_BACKEND_DISABLE_TENSORFLOW=1`.
+It's important to note that the `numpy` backend cannot be disabled.
 
 
 List of compatible modules
