@@ -160,13 +160,18 @@ _BACKEND_IMPLEMENTATIONS = []
 _BACKENDS = {}
 
 
-def register_backend_implementation(backend_impl):
-    _BACKEND_IMPLEMENTATIONS.append(backend_impl)
-
-
 def get_backend_list():
-    """Returns the list of available backends"""
+    """Returns the list of already instantiated backends."""
     return list(_BACKENDS.values())
+
+
+def get_available_backend_implementations():
+    """Returns the list of available backend implementations."""
+    return _BACKEND_IMPLEMENTATIONS
+
+
+def _register_backend_implementation(backend_impl):
+    _BACKEND_IMPLEMENTATIONS.append(backend_impl)
 
 
 def _get_backend_instance(backend_impl):
@@ -1368,7 +1373,7 @@ class NumpyBackend(Backend):
         return np.matmul(a, b)
 
 
-register_backend_implementation(NumpyBackend)
+_register_backend_implementation(NumpyBackend)
 
 
 class JaxBackend(Backend):
@@ -1737,7 +1742,7 @@ class JaxBackend(Backend):
 
 if jax:
     # Only register jax backend if it is installed
-    register_backend_implementation(JaxBackend)
+    _register_backend_implementation(JaxBackend)
 
 
 class TorchBackend(Backend):
@@ -2220,7 +2225,7 @@ class TorchBackend(Backend):
 
 if torch:
     # Only register torch backend if it is installed
-    register_backend_implementation(TorchBackend)
+    _register_backend_implementation(TorchBackend)
 
 
 class CupyBackend(Backend):  # pragma: no cover
@@ -2613,7 +2618,7 @@ class CupyBackend(Backend):  # pragma: no cover
 
 if cp:
     # Only register cp backend if it is installed
-    register_backend_implementation(CupyBackend)
+    _register_backend_implementation(CupyBackend)
 
 
 class TensorflowBackend(Backend):
@@ -3026,4 +3031,4 @@ class TensorflowBackend(Backend):
 
 if tf:
     # Only register tensorflow backend if it is installed
-    register_backend_implementation(TensorflowBackend)
+    _register_backend_implementation(TensorflowBackend)

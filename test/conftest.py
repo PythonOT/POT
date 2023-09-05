@@ -4,18 +4,42 @@
 
 # License: MIT License
 
-import pytest
-from ot.backend import jax, tf
-from ot.backend import get_backend_list
 import functools
+import pytest
+
+from ot.backend import (
+    get_available_backend_implementations,
+    get_backend_list,
+    _get_backend_instance,
+    jax,
+    tf
+)
+
 
 if jax:
     from jax.config import config
     config.update("jax_enable_x64", True)
 
 if tf:
+    # make sure TF doesn't allocate entire GPU
+    import tensorflow as tf
+    physical_devices = tf.config.list_physical_devices('GPU')
+    for device in physical_devices:
+        try:
+            tf.config.experimental.set_memory_growth(device, True)
+        except Exception:
+            pass
+
+    # allow numpy API for TF
     from tensorflow.python.ops.numpy_ops import np_config
     np_config.enable_numpy_behavior()
+
+
+# before taking list of backends, we need to make sure all
+# available implementations are instantiated. looks somewhat hacky,
+# but hopefully it won't be needed for a common library use
+for backend_impl in get_available_backend_implementations():
+    _get_backend_instance(backend_impl)
 
 backend_list = get_backend_list()
 
