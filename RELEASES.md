@@ -3,7 +3,7 @@
 ## 0.9.2
 
 #### Closed issues
-- Lazily instantiate backends to avoid unnecessary GPU memory pre-allocations on package import (PR #520)
+- Lazily instantiate backends to avoid unnecessary GPU memory pre-allocations on package import (Issue #516, PR #520)
 
 
 ## 0.9.1
