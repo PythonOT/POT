@@ -8,13 +8,7 @@ import functools
 import os
 import pytest
 
-from ot.backend import (
-    get_available_backend_implementations,
-    get_backend_list,
-    _get_backend_instance,
-    jax,
-    tf
-)
+from ot.backend import get_backend_list, jax, tf
 
 
 if jax:
@@ -36,12 +30,6 @@ if tf:
     from tensorflow.python.ops.numpy_ops import np_config
     np_config.enable_numpy_behavior()
 
-
-# before taking list of backends, we need to make sure all
-# available implementations are instantiated. looks somewhat hacky,
-# but hopefully it won't be needed for a common library use
-for backend_impl in get_available_backend_implementations():
-    _get_backend_instance(backend_impl)
 
 backend_list = get_backend_list()
 

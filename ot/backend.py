@@ -160,16 +160,6 @@ _BACKEND_IMPLEMENTATIONS = []
 _BACKENDS = {}
 
 
-def get_backend_list():
-    """Returns the list of already instantiated backends."""
-    return list(_BACKENDS.values())
-
-
-def get_available_backend_implementations():
-    """Returns the list of available backend implementations."""
-    return _BACKEND_IMPLEMENTATIONS
-
-
 def _register_backend_implementation(backend_impl):
     _BACKEND_IMPLEMENTATIONS.append(backend_impl)
 
@@ -188,6 +178,29 @@ def _check_args_backend(backend_impl, args):
 
     # Otherwise return an error
     raise ValueError(str_type_error.format([type(arg) for arg in args]))
+
+
+def get_backend_list():
+    """Returns instances of all available backends.
+
+    Note that the function forces all detected implementations
+    to be instantiated even if specific backend was not use before.
+    Be careful as instantiation of the backend might lead to side effects,
+    like GPU memory pre-allocation. See the documentation for more details.
+    If you only need to know which implementations are available,
+    use `:py:func:`ot.backend.get_available_backend_implementations`,
+    which does not force instance of the backend object to be created.
+    """
+    return [
+        _get_backend_instance(backend_impl)
+        for backend_impl
+        in get_available_backend_implementations()
+    ]
+
+
+def get_available_backend_implementations():
+    """Returns the list of available backend implementations."""
+    return _BACKEND_IMPLEMENTATIONS
 
 
 def get_backend(*args):
