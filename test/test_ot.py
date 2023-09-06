@@ -103,8 +103,6 @@ def test_emd_emd2_types_devices(nx):
 
 @pytest.mark.skipif(not tf, reason="tf not installed")
 def test_emd_emd2_devices_tf():
-    if not tf:
-        return
     nx = ot.backend.TensorflowBackend()
 
     n_samples = 100
