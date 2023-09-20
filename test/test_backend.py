@@ -3,6 +3,7 @@
 # Author: Remi Flamary <remi.flamary@polytechnique.edu>
 #         Nicolas Courty <ncourty@irisa.fr>
 #
+#
 # License: MIT License
 
 import ot
@@ -767,3 +768,11 @@ def test_gradients_backends():
             [dl_dw, dl_db] = tape.gradient(manipulated_loss, [w, b])
             assert nx.allclose(dl_dw, w)
             assert nx.allclose(dl_db, b)
+
+
+def test_get_backend_none():
+    a, b = np.zeros((2, 3)), None
+    nx = get_backend(a, b)
+    assert str(nx) == 'numpy'
+    with pytest.raises(ValueError):
+        get_backend(None, None)

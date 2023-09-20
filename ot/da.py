@@ -1390,8 +1390,8 @@ class LinearGWTransport(LinearTransport):
     References
     ----------
     .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
-    distances between Gaussian distributions. Journal of Applied Probability,
-    59(4), 1178-1198.
+            distances between Gaussian distributions. Journal of Applied Probability,
+            59(4), 1178-1198.
 
     """
 
