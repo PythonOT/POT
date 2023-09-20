@@ -11,3 +11,4 @@ jaxlib
 tensorflow
 pytest
 torch_geometric
+cvxpy
