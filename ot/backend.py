@@ -206,11 +206,15 @@ def get_available_backend_implementations():
 def get_backend(*args):
     """Returns the proper backend for a list of input arrays
 
+        Accepts None entries in the arguments, and ignores them
+
         Also raises TypeError if all arrays are not from the same backend
     """
+    args = [arg for arg in args if arg is not None]  # exclude None entries
+
     # check that some arrays given
-    if len(args) == 0:
-        raise ValueError(" The function takes at least one parameter")
+    if not len(args) > 0:
+        raise ValueError(" The function takes at least one (non-None) parameter")
 
     for backend_impl in _BACKEND_IMPLEMENTATIONS:
         if _check_args_backend(backend_impl, args):

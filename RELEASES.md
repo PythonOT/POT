@@ -1,6 +1,9 @@
 # Releases
 
-## 0.9.2
+## 0.9.2dev
+
+#### New features
++ Tweaked `get_backend` to ignore `None` inputs (PR # 525)
 
 #### Closed issues
 - Lazily instantiate backends to avoid unnecessary GPU memory pre-allocations on package import (Issue #516, PR #520)
