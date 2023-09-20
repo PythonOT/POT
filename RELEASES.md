@@ -1,5 +1,11 @@
 # Releases
 
+## 0.9.2
+
+#### New features
+- Callbacks for generalized conditional gradient in `ot.da.sinkhorn_l1l2_gl` are now vectorized to improve performance (PR #507)
+
+
 ## 0.9.1
 *August 2023*
 
