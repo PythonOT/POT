@@ -2,7 +2,11 @@
 
 ## 0.9.2dev
 
-Tweaked `get_backend` to ignore `None` inputs (PR # 525)
+#### New features
++ Tweaked `get_backend` to ignore `None` inputs (PR # 525)
+
+#### Closed issues
+
 
 ## 0.9.1
 *August 2023*
