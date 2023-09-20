@@ -86,13 +86,13 @@ def nearest_brenier_potential(X, V, X_classes=None, a=None, b=None, strongly_con
             on Artificial Intelligence and Statistics, pages 1222–1232. PMLR, 2020.
 
     """
+    try:
+        import cvxpy as cvx
+    except ImportError:
+        print('Please install CVXPY to use this function')
+        return
     assert X.shape == V.shape, f"point shape should be the same as value shape, yet {X.shape} != {V.shape}"
-    if X_classes is not None and a is None and b is None:
-        nx = get_backend(X, V, X_classes)
-    if X_classes is None and a is not None and b is None:
-        nx = get_backend(X, V, a)
-    else:
-        nx = get_backend(X, V)
+    nx = get_backend(X, V, X_classes, a, b)
     assert 0 <= strongly_convex_constant <= gradient_lipschitz_constant, "incompatible regularity assumption"
     n, d = X.shape
     if X_classes is not None:
@@ -100,19 +100,19 @@ def nearest_brenier_potential(X, V, X_classes=None, a=None, b=None, strongly_con
     else:
         X_classes = nx.zeros(n)
     if a is None:
-        a = ot.unif(n)
+        a = unif(n, type_as=X)
     if b is None:
-        b = ot.unif(n)
+        b = unif(n, type_as=X)
     assert a.size == b.size == n, 'incorrect measure weight sizes'
 
-    if isinstance(seed, np.random.RandomState) and str(nx) == 'numpy':
-        G = np.random.randn(n, d)
+    if isinstance(seed, np.random.RandomState):
+        G_val = np.random.randn(n, d)
     else:
         if seed is not None:
-            nx.seed(seed)
-        G = nx.randn(n, d)
+            np.random.seed(seed)
+        G_val = np.random.randn(n, d)
 
-    phi = None
+    phi_val = None
     log_dict = {
         'G_list': [],
         'phi_list': [],
@@ -124,22 +124,47 @@ def nearest_brenier_potential(X, V, X_classes=None, a=None, b=None, strongly_con
         # optimise the plan
         plan = emd(a, b, cost_matrix)
         # optimise the values phi and the gradients G
-        out = solve_nearest_brenier_potential_qcqp(plan, X, X_classes, V,
-                                                   strongly_convex_constant, gradient_lipschitz_constant, log)
-        if not log:
-            phi, G = out
-        else:
-            phi, G, it_log_dict = out
+        phi = cvx.Variable(n)
+        G = cvx.Variable((n, d))
+        constraints = []
+        cost = 0
+        for i in range(n):
+            for j in range(n):
+                cost += cvx.sum_squares(G[i, :] - V[j, :]) * plan[i, j]
+        objective = cvx.Minimize(cost)  # OT cost
+        c1, c2, c3 = ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
+
+        for k in np.unique(X_classes):  # constraints for the convex interpolation
+            for i in np.where(X_classes == k)[0]:
+                for j in np.where(X_classes == k)[0]:
+                    constraints += [
+                        phi[i] >= phi[j] + G[j].T @ (X[i] - X[j]) + c1 * cvx.sum_squares(G[i] - G[j]) \
+                        + c2 * cvx.sum_squares(X[i] - X[j]) - c3 * (G[j] - G[i]).T @ (X[j] - X[i])
+                    ]
+        problem = cvx.Problem(objective, constraints)
+        problem.solve(solver=cvx.ECOS)
+        it_log_dict = {
+            'solve_time': problem.solver_stats.solve_time,
+            'setup_time': problem.solver_stats.setup_time,
+            'num_iters': problem.solver_stats.num_iters,
+            'status': problem.status,
+            'value': problem.value
+        }
+        phi_val, G_val = phi.value, G.value
+        if log:
             log_dict['its'].append(it_log_dict)
-            log_dict['G_list'].append(G)
-            log_dict['phi_list'].append(phi)
+            log_dict['G_list'].append(G_val)
+            log_dict['phi_list'].append(phi_val)
 
+    # convert back to backend
+    phi_val = nx.from_numpy(phi_val)
+    G_val = nx.from_numpy(G_val)
     if not log:
-        return phi, G
-    return phi, G, log_dict
+        return phi_val, G_val
+    return phi_val, G_val, log_dict
 
 
-def qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant):
+def ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant):
     r"""
     Handy function computing the constants for the Nearest Brenier Potential QCQP problems
 
@@ -162,88 +187,8 @@ def qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant):
     return c1, c2, c3
 
 
-def solve_nearest_brenier_potential_qcqp(plan, X, X_classes, V, strongly_convex_constant=0.6,
-                                         gradient_lipschitz_constant=1.4, log=False):
-    r"""
-    Solves the QCQP problem from `nearest_brenier_potential`, using the method from :ref:`[58]`.
-
-    Parameters
-    ----------
-    plan : array-like (n, n)
-        fixed OT plan matrix
-    X: array-like (n, d)
-        reference points used to compute the optimal values phi and G
-    X_classes : array-like (n,)
-        classes of the reference points
-    V: array-like (n, d)
-        values of the gradients at the reference points X
-    strongly_convex_constant : float, optional
-        constant for the strong convexity of the input potential phi, defaults to 0.6
-    gradient_lipschitz_constant : float, optional
-        constant for the Lipschitz property of the input gradient G, defaults to 1.4
-    log : bool, optional
-        record log if true
-
-    Returns
-    -------
-    phi : array-like (n,)
-        optimal values of the potential at the points X
-    G : array-like (n, d)
-        optimal values of the gradients at the points X
-    log : dict, optional
-        If input log is true, a dictionary containing solver information
-
-    References
-    ----------
-
-    .. [58] François-Pierre Paty, Alexandre d’Aspremont, and Marco Cuturi. Regularity as regularization:
-            Smooth and strongly convex brenier potentials in optimal transport. In International Conference
-            on Artificial Intelligence and Statistics, pages 1222–1232. PMLR, 2020.
-
-    """
-    try:
-        import cvxpy as cvx
-    except ImportError:
-        print('Please install CVXPY to use this function')
-    assert X.shape == V.shape, f"point shape should be the same as value shape, yet {X.shape} != {V.shape}"
-    assert 0 <= strongly_convex_constant <= gradient_lipschitz_constant, "incompatible regularity assumption"
-    n, d = X.shape
-    assert X_classes.size == n, "incorrect number of class items"
-    assert plan.shape == (n, n), f'plan should be of shape {(n, n)} but is of shape {plan.shape}'
-    phi = cvx.Variable(n)
-    G = cvx.Variable((n, d))
-    constraints = []
-    cost = 0
-    for i in range(n):
-        for j in range(n):
-            cost += cvx.sum_squares(G[i, :] - V[j, :]) * plan[i, j]
-    objective = cvx.Minimize(cost)  # OT cost
-    c1, c2, c3 = qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
-
-    for k in np.unique(X_classes):  # constraints for the convex interpolation
-        for i in np.where(X_classes == k)[0]:
-            for j in np.where(X_classes == k)[0]:
-                constraints += [
-                    phi[i] >= phi[j] + G[j].T @ (X[i] - X[j]) + c1 * cvx.sum_squares(G[i] - G[j]) \
-                    + c2 * cvx.sum_squares(X[i] - X[j]) - c3 * (G[j] - G[i]).T @ (X[j] - X[i])
-                ]
-    problem = cvx.Problem(objective, constraints)
-    problem.solve(solver=cvx.ECOS)
-
-    if not log:
-        return phi.value, G.value
-    log_dict = {
-        'solve_time': problem.solver_stats.solve_time,
-        'setup_time': problem.solver_stats.setup_time,
-        'num_iters': problem.solver_stats.num_iters,
-        'status': problem.status,
-        'value': problem.value
-    }
-    return phi.value, G.value, log_dict
-
-
-def bounding_potentials_from_point_values(X, X_classes, phi, G, Y, Y_classes, strongly_convex_constant=0.6,
-                                          gradient_lipschitz_constant=1.4, log=False):
+def bounding_potentials_from_point_values(X, phi, G, Y, X_classes=None, Y_classes=None,
+                                          strongly_convex_constant=0.6, gradient_lipschitz_constant=1.4, log=False):
     r"""
     Compute the values of the lower and upper bounding potentials at the input points Y, using the potential optimal
     values phi at X and their gradients G at X. The 'lower' potential corresponds to the method from :ref:`[58]`,
@@ -284,8 +229,10 @@ def bounding_potentials_from_point_values(X, X_classes, phi, G, Y, Y_classes, st
         optimal values of the gradients at the points X
     Y : array-like (m, d)
         input points
-    Y_classes : array_like (m)
-        classes of the input points
+    X_classes : array-like (n,), optional
+        classes of the reference points, defaults to a single class
+    Y_classes : array_like (m,), optional
+        classes of the input points, defaults to a single class
     strongly_convex_constant : float, optional
         constant for the strong convexity of the input potential phi, defaults to 0.6
     gradient_lipschitz_constant : float, optional
@@ -318,12 +265,18 @@ def bounding_potentials_from_point_values(X, X_classes, phi, G, Y, Y_classes, st
         import cvxpy as cvx
     except ImportError:
         print('Please install CVXPY to use this function')
+        return
+    nx = get_backend(X, X)
     m, d = Y.shape
     assert Y_classes.size == m, 'wrong number of class items for Y'
     assert X.shape[1] == d, f'incompatible dimensions between X: {X.shape} and Y: {Y.shape}'
     n, _ = X.shape
+    if X_classes is not None:
+        assert X_classes.size == n, "incorrect number of class items"
+    else:
+        X_classes = nx.zeros(n)
     assert X_classes.size == n, 'wrong number of class items for X'
-    c1, c2, c3 = qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
+    c1, c2, c3 = ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
     phi_lu = np.zeros((2, m))
     G_lu = np.zeros((2, m, d))
     log_dict = {}

@@ -1,5 +1,10 @@
 # Releases
 
+## 0.9.2dev
+
+- Added support for [Nearest Brenier Potentials (SSNB)](http://proceedings.mlr.press/v108/paty20a/paty20a.pdf) (PR #)
+- Tweaked `get_backend` to ignore `None` inputs (PR #525)
+
 ## 0.9.1
 *August 2023*
 

@@ -150,18 +150,22 @@ def _check_args_backend(backend, args):
     if len(is_instance) == 1:
         return is_instance.pop()
 
-    # Oterwise return an error
+    # Otherwise return an error
     raise ValueError(str_type_error.format([type(a) for a in args]))
 
 
 def get_backend(*args):
     """Returns the proper backend for a list of input arrays
 
+        Accepts None entries in the arguments, and ignores them
+
         Also raises TypeError if all arrays are not from the same backend
     """
+    args = [arg for arg in args if arg is not None]  # exclude None entries
+
     # check that some arrays given
     if not len(args) > 0:
-        raise ValueError(" The function takes at least one parameter")
+        raise ValueError(" The function takes at least one (non-None) parameter")
 
     for backend in _BACKENDS:
         if _check_args_backend(backend, args):
