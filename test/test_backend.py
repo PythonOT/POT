@@ -3,6 +3,7 @@
 # Author: Remi Flamary <remi.flamary@polytechnique.edu>
 #         Nicolas Courty <ncourty@irisa.fr>
 #
+#
 # License: MIT License
 
 import ot
