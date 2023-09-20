@@ -1,5 +1,13 @@
 # Releases
 
+## 0.9.2dev
+
+#### New features
++ Tweaked `get_backend` to ignore `None` inputs (PR # 525)
+
+#### Closed issues
+
+
 ## 0.9.1
 *August 2023*
 
