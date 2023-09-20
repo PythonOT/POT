@@ -62,13 +62,7 @@ plt.show()
 
 # %%
 # Fitting the Nearest Brenier Potential
-if not os.path.isfile('/home/eloi/POT_ssnb/examples/others/phi.npy'):
-    phi, G = ot.nearest_brenier_potential_fit(Xs, Xt, Xs_classes, its=10, seed=0)
-    np.save('/home/eloi/POT_ssnb/examples/others/phi.npy', phi)
-    np.save('/home/eloi/POT_ssnb/examples/others/G.npy', G)
-else:
-    phi = np.load('/home/eloi/POT_ssnb/examples/others/phi.npy')
-    G = np.load('/home/eloi/POT_ssnb/examples/others/G.npy')
+phi, G = ot.nearest_brenier_potential_fit(Xs, Xt, Xs_classes, its=10, seed=0)
 
 # %%
 # Computing the predictions (images by nabla phi) for random samples of the source distribution
@@ -78,14 +72,7 @@ t = rng.uniform(0, 2 * np.pi, size=n_predict_samples)
 r = rng.uniform(size=n_predict_samples)
 Ys = np.stack([r * np.cos(t), r * np.sin(t)], axis=-1)
 Ys_classes = (Ys[:, 0] < 0).astype(int)
-
-if not os.path.isfile('/home/eloi/POT_ssnb/examples/others/phi_lu.npy'):
-    phi_lu, G_lu = ot.nearest_brenier_potential_predict_bounds(Xs, phi, G, Ys, Xs_classes, Ys_classes)
-    np.save('/home/eloi/POT_ssnb/examples/others/phi_lu.npy', phi_lu)
-    np.save('/home/eloi/POT_ssnb/examples/others/G_lu.npy', G_lu)
-else:
-    phi_lu = np.load('/home/eloi/POT_ssnb/examples/others/phi_lu.npy')
-    G_lu = np.load('/home/eloi/POT_ssnb/examples/others/G_lu.npy')
+phi_lu, G_lu = ot.nearest_brenier_potential_predict_bounds(Xs, phi, G, Ys, Xs_classes, Ys_classes)
 
 # %%
 # Plot predictions for the gradient of the lower-bounding potential
