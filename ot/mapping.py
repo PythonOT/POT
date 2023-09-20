@@ -7,14 +7,14 @@ Optimal Transport maps and variants
 #
 # License: MIT License
 
-from .backend import get_backend
+from .backend import get_backend, to_numpy
 from .lp import emd
 import numpy as np
 from .utils import dist, unif
 
 
-def nearest_brenier_potential(X, V, X_classes=None, a=None, b=None, strongly_convex_constant=.6,
-                              gradient_lipschitz_constant=1.4, its=100, log=False, seed=None):
+def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly_convex_constant=.6,
+                                  gradient_lipschitz_constant=1.4, its=100, log=False, seed=None):
     r"""
     Computes optimal values and gradients at X for a strongly convex potential :math:`\\varphi` with Lipschitz gradients
     on the partitions defined by `X_classes`, where :math:`\\varphi` is optimal such that
@@ -42,6 +42,8 @@ def nearest_brenier_potential(X, V, X_classes=None, a=None, b=None, strongly_con
     This problem is solved by alternating over the variable :math:`\pi` and the variables :math:`\\varphi_i, g_i`.
     For :math:`\pi`, the problem is the standard discrete OT problem, and for :math:`\\varphi_i, g_i`, the
     problem is a convex QCQP solved using :code:`cvxpy` (ECOS solver).
+
+    Accepts any compatible backend, but will perform the QCQP optimisation on Numpy arrays, and convert back at the end.
 
     Parameters
     ----------
@@ -94,6 +96,7 @@ def nearest_brenier_potential(X, V, X_classes=None, a=None, b=None, strongly_con
     assert X.shape == V.shape, f"point shape should be the same as value shape, yet {X.shape} != {V.shape}"
     nx = get_backend(X, V, X_classes, a, b)
     assert 0 <= strongly_convex_constant <= gradient_lipschitz_constant, "incompatible regularity assumption"
+    X, V = to_numpy(X), to_numpy(V)
     n, d = X.shape
     if X_classes is not None:
         assert X_classes.size == n, "incorrect number of class items"
@@ -120,9 +123,10 @@ def nearest_brenier_potential(X, V, X_classes=None, a=None, b=None, strongly_con
     }
 
     for _ in range(its):  # alternate optimisation iterations
-        cost_matrix = dist(G, V)
+        cost_matrix = dist(G_val, V)
         # optimise the plan
         plan = emd(a, b, cost_matrix)
+
         # optimise the values phi and the gradients G
         phi = cvx.Variable(n)
         G = cvx.Variable((n, d))
@@ -134,15 +138,16 @@ def nearest_brenier_potential(X, V, X_classes=None, a=None, b=None, strongly_con
         objective = cvx.Minimize(cost)  # OT cost
         c1, c2, c3 = ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
 
-        for k in np.unique(X_classes):  # constraints for the convex interpolation
-            for i in np.where(X_classes == k)[0]:
-                for j in np.where(X_classes == k)[0]:
+        for k in nx.unique(X_classes):  # constraints for the convex interpolation
+            for i in nx.where(X_classes == k)[0]:
+                for j in nx.where(X_classes == k)[0]:
                     constraints += [
                         phi[i] >= phi[j] + G[j].T @ (X[i] - X[j]) + c1 * cvx.sum_squares(G[i] - G[j]) \
                         + c2 * cvx.sum_squares(X[i] - X[j]) - c3 * (G[j] - G[i]).T @ (X[j] - X[i])
                     ]
         problem = cvx.Problem(objective, constraints)
         problem.solve(solver=cvx.ECOS)
+        phi_val, G_val = phi.value, G.value
         it_log_dict = {
             'solve_time': problem.solver_stats.solve_time,
             'setup_time': problem.solver_stats.setup_time,
@@ -150,7 +155,6 @@ def nearest_brenier_potential(X, V, X_classes=None, a=None, b=None, strongly_con
             'status': problem.status,
             'value': problem.value
         }
-        phi_val, G_val = phi.value, G.value
         if log:
             log_dict['its'].append(it_log_dict)
             log_dict['G_list'].append(G_val)
@@ -187,8 +191,8 @@ def ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant):
     return c1, c2, c3
 
 
-def bounding_potentials_from_point_values(X, phi, G, Y, X_classes=None, Y_classes=None,
-                                          strongly_convex_constant=0.6, gradient_lipschitz_constant=1.4, log=False):
+def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_classes=None,
+                                             strongly_convex_constant=0.6, gradient_lipschitz_constant=1.4, log=False):
     r"""
     Compute the values of the lower and upper bounding potentials at the input points Y, using the potential optimal
     values phi at X and their gradients G at X. The 'lower' potential corresponds to the method from :ref:`[58]`,
@@ -197,7 +201,7 @@ def bounding_potentials_from_point_values(X, phi, G, Y, X_classes=None, Y_classe
 
     If :math:`I_k` is the subset of :math:`[n]` of the i such that :math:`x_i` is in the partition (or class)
     :math:`E_k`, for each :math:`y \in E_k`, this function solves the convex QCQP problems,
-    respectively for l: 'lower' and u: 'upper:
+    respectively for l: 'lower' and u: 'upper':
 
     .. math::
         (\\varphi_{l}(x), \\nabla \\varphi_l(x)) = \\text{argmin}\ t,
@@ -266,7 +270,11 @@ def bounding_potentials_from_point_values(X, phi, G, Y, X_classes=None, Y_classe
     except ImportError:
         print('Please install CVXPY to use this function')
         return
-    nx = get_backend(X, X)
+    nx = get_backend(X, phi, G, Y)
+    X = to_numpy(X)
+    phi = to_numpy(phi)
+    G = to_numpy(G)
+    Y = to_numpy(Y)
     m, d = Y.shape
     assert Y_classes.size == m, 'wrong number of class items for Y'
     assert X.shape[1] == d, f'incompatible dimensions between X: {X.shape} and Y: {Y.shape}'
@@ -277,8 +285,8 @@ def bounding_potentials_from_point_values(X, phi, G, Y, X_classes=None, Y_classe
         X_classes = nx.zeros(n)
     assert X_classes.size == n, 'wrong number of class items for X'
     c1, c2, c3 = ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
-    phi_lu = np.zeros((2, m))
-    G_lu = np.zeros((2, m, d))
+    phi_lu = nx.zeros((2, m))
+    G_lu = nx.zeros((2, m, d))
     log_dict = {}
 
     for y_idx in range(m):
@@ -289,15 +297,15 @@ def bounding_potentials_from_point_values(X, phi, G, Y, X_classes=None, Y_classe
         objective = cvx.Minimize(phi_l_y)
         constraints = []
         k = Y_classes[y_idx]
-        for j in np.where(X_classes == k)[0]:
+        for j in nx.where(X_classes == k)[0]:
             constraints += [
                 phi_l_y >= phi[j] + G[j].T @ (Y[y_idx] - X[j]) + c1 * cvx.sum_squares(G_l_y - G[j]) \
                 + c2 * cvx.sum_squares(Y[y_idx] - X[j]) - c3 * (G[j] - G_l_y).T @ (X[j] - Y[y_idx])
             ]
         problem = cvx.Problem(objective, constraints)
         problem.solve(solver=cvx.ECOS)
-        phi_lu[0, y_idx] = phi_l_y.value
-        G_lu[0, y_idx] = G_l_y.value
+        phi_lu[0, y_idx] = nx.from_numpy(phi_l_y.value, type_as=X)
+        G_lu[0, y_idx] = nx.from_numpy(G_l_y.value, type_as=X)
         if log:
             log_item['l'] = {
                 'solve_time': problem.solver_stats.solve_time,
@@ -312,15 +320,15 @@ def bounding_potentials_from_point_values(X, phi, G, Y, X_classes=None, Y_classe
         G_u_y = cvx.Variable(d)
         objective = cvx.Maximize(phi_u_y)
         constraints = []
-        for i in np.where(X_classes == k)[0]:
+        for i in nx.where(X_classes == k)[0]:
             constraints += [
                 phi[i] >= phi_u_y + G_u_y.T @ (X[i] - Y[y_idx]) + c1 * cvx.sum_squares(G[i] - G_u_y) \
                 + c2 * cvx.sum_squares(X[i] - Y[y_idx]) - c3 * (G_u_y - G[i]).T @ (Y[y_idx] - X[i])
             ]
         problem = cvx.Problem(objective, constraints)
         problem.solve(solver=cvx.ECOS)
-        phi_lu[1, y_idx] = phi_u_y.value
-        G_lu[1, y_idx] = G_u_y.value
+        phi_lu[1, y_idx] = nx.from_numpy(phi_u_y.value, type_as=X)
+        G_lu[1, y_idx] = nx.from_numpy(G_u_y.value, type_as=X)
         if log:
             log_item['u'] = {
                 'solve_time': problem.solver_stats.solve_time,
@@ -334,4 +342,3 @@ def bounding_potentials_from_point_values(X, phi, G, Y, X_classes=None, Y_classe
     if not log:
         return phi_lu, G_lu
     return phi_lu, G_lu, log_dict
-
