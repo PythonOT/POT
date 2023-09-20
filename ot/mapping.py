@@ -95,7 +95,6 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
         return
     assert X.shape == V.shape, f"point shape should be the same as value shape, yet {X.shape} != {V.shape}"
     nx = get_backend(X, V, X_classes, a, b)
-    assert 0 <= strongly_convex_constant <= gradient_lipschitz_constant, "incompatible regularity assumption"
     X, V = to_numpy(X), to_numpy(V)
     n, d = X.shape
     if X_classes is not None:
@@ -184,6 +183,7 @@ def ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant):
     c3 : float
 
     """
+    assert 0 < strongly_convex_constant < gradient_lipschitz_constant, "incompatible regularity assumption"
     c = 1 / (2 * (1 - strongly_convex_constant / gradient_lipschitz_constant))
     c1 = c / gradient_lipschitz_constant
     c2 = strongly_convex_constant * c
@@ -276,7 +276,10 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
     G = to_numpy(G)
     Y = to_numpy(Y)
     m, d = Y.shape
-    assert Y_classes.size == m, 'wrong number of class items for Y'
+    if Y_classes is not None:
+        assert Y_classes.size == m, 'wrong number of class items for Y'
+    else:
+        Y_classes = nx.zeros(m)
     assert X.shape[1] == d, f'incompatible dimensions between X: {X.shape} and Y: {Y.shape}'
     n, _ = X.shape
     if X_classes is not None:
