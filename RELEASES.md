@@ -6,6 +6,7 @@
 + Tweaked `get_backend` to ignore `None` inputs (PR # 525)
 
 #### Closed issues
+- Fix line search evaluating cost outside of the interpolation range (Issue #502, PR #504)
 
 
 ## 0.9.1
