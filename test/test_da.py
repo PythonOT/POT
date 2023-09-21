@@ -351,69 +351,70 @@ def test_unbalanced_sinkhorn_transport_class(nx):
 
     Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
 
-    otda = ot.da.UnbalancedSinkhornTransport()
+    for log in [True, False]:
+        otda = ot.da.UnbalancedSinkhornTransport(log=log)
 
-    # test its computed
-    otda.fit(Xs=Xs, Xt=Xt)
-    assert hasattr(otda, "cost_")
-    assert hasattr(otda, "coupling_")
-    assert hasattr(otda, "log_")
+        # test its computed
+        otda.fit(Xs=Xs, Xt=Xt)
+        assert hasattr(otda, "cost_")
+        assert hasattr(otda, "coupling_")
+        assert hasattr(otda, "log_")
 
-    # test dimensions of coupling
-    assert_equal(otda.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
-    assert_equal(otda.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
+        # test dimensions of coupling
+        assert_equal(otda.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+        assert_equal(otda.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
 
-    # test transform
-    transp_Xs = otda.transform(Xs=Xs)
-    assert_equal(transp_Xs.shape, Xs.shape)
+        # test transform
+        transp_Xs = otda.transform(Xs=Xs)
+        assert_equal(transp_Xs.shape, Xs.shape)
 
-    # check label propagation
-    transp_yt = otda.transform_labels(ys)
-    assert_equal(transp_yt.shape[0], yt.shape[0])
-    assert_equal(transp_yt.shape[1], len(np.unique(ys)))
+        # check label propagation
+        transp_yt = otda.transform_labels(ys)
+        assert_equal(transp_yt.shape[0], yt.shape[0])
+        assert_equal(transp_yt.shape[1], len(np.unique(ys)))
 
-    # check inverse label propagation
-    transp_ys = otda.inverse_transform_labels(yt)
-    assert_equal(transp_ys.shape[0], ys.shape[0])
-    assert_equal(transp_ys.shape[1], len(np.unique(yt)))
+        # check inverse label propagation
+        transp_ys = otda.inverse_transform_labels(yt)
+        assert_equal(transp_ys.shape[0], ys.shape[0])
+        assert_equal(transp_ys.shape[1], len(np.unique(yt)))
 
-    Xs_new = nx.from_numpy(make_data_classif('3gauss', ns + 1)[0])
-    transp_Xs_new = otda.transform(Xs_new)
+        Xs_new = nx.from_numpy(make_data_classif('3gauss', ns + 1)[0])
+        transp_Xs_new = otda.transform(Xs_new)
 
-    # check that the oos method is working
-    assert_equal(transp_Xs_new.shape, Xs_new.shape)
+        # check that the oos method is working
+        assert_equal(transp_Xs_new.shape, Xs_new.shape)
 
-    # test inverse transform
-    transp_Xt = otda.inverse_transform(Xt=Xt)
-    assert_equal(transp_Xt.shape, Xt.shape)
+        # test inverse transform
+        transp_Xt = otda.inverse_transform(Xt=Xt)
+        assert_equal(transp_Xt.shape, Xt.shape)
 
-    Xt_new = nx.from_numpy(make_data_classif('3gauss2', nt + 1)[0])
-    transp_Xt_new = otda.inverse_transform(Xt=Xt_new)
+        Xt_new = nx.from_numpy(make_data_classif('3gauss2', nt + 1)[0])
+        transp_Xt_new = otda.inverse_transform(Xt=Xt_new)
 
-    # check that the oos method is working
-    assert_equal(transp_Xt_new.shape, Xt_new.shape)
+        # check that the oos method is working
+        assert_equal(transp_Xt_new.shape, Xt_new.shape)
 
-    # test fit_transform
-    transp_Xs = otda.fit_transform(Xs=Xs, Xt=Xt)
-    assert_equal(transp_Xs.shape, Xs.shape)
+        # test fit_transform
+        transp_Xs = otda.fit_transform(Xs=Xs, Xt=Xt)
+        assert_equal(transp_Xs.shape, Xs.shape)
 
-    # test unsupervised vs semi-supervised mode
-    otda_unsup = ot.da.SinkhornTransport()
-    otda_unsup.fit(Xs=Xs, Xt=Xt)
-    n_unsup = nx.sum(otda_unsup.cost_)
+        # test unsupervised vs semi-supervised mode
+        otda_unsup = ot.da.SinkhornTransport()
+        otda_unsup.fit(Xs=Xs, Xt=Xt)
+        n_unsup = nx.sum(otda_unsup.cost_)
 
-    otda_semi = ot.da.SinkhornTransport()
-    otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
-    assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
-    n_semisup = nx.sum(otda_semi.cost_)
+        otda_semi = ot.da.SinkhornTransport()
+        otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+        assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+        n_semisup = nx.sum(otda_semi.cost_)
 
-    # check that the cost matrix norms are indeed different
-    assert n_unsup != n_semisup, "semisupervised mode not working"
+        # check that the cost matrix norms are indeed different
+        assert n_unsup != n_semisup, "semisupervised mode not working"
 
-    # check everything runs well with log=True
-    otda = ot.da.SinkhornTransport(log=True)
-    otda.fit(Xs=Xs, ys=ys, Xt=Xt)
-    assert len(otda.log_.keys()) != 0
+        # check everything runs well with log=True
+        otda = ot.da.SinkhornTransport(log=True)
+        otda.fit(Xs=Xs, ys=ys, Xt=Xt)
+        assert len(otda.log_.keys()) != 0
 
 
 @pytest.skip_backend("jax")
@@ -585,20 +586,28 @@ def test_linear_mapping_class(nx):
 
     Xsb, Xtb = nx.from_numpy(Xs, Xt)
 
-    otmap = ot.da.LinearTransport()
+    for log in [True, False]:
+        otmap = ot.da.LinearTransport(log=log)
 
-    otmap.fit(Xs=Xsb, Xt=Xtb)
-    assert hasattr(otmap, "A_")
-    assert hasattr(otmap, "B_")
-    assert hasattr(otmap, "A1_")
-    assert hasattr(otmap, "B1_")
+        otmap.fit(Xs=Xsb, Xt=Xtb)
+        assert hasattr(otmap, "A_")
+        assert hasattr(otmap, "B_")
+        assert hasattr(otmap, "A1_")
+        assert hasattr(otmap, "B1_")
 
-    Xst = nx.to_numpy(otmap.transform(Xs=Xsb))
+        Xst = nx.to_numpy(otmap.transform(Xs=Xsb))
 
-    Ct = np.cov(Xt.T)
-    Cst = np.cov(Xst.T)
+        Ct = np.cov(Xt.T)
+        Cst = np.cov(Xst.T)
 
-    np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
+        np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
+
+        Xts = nx.to_numpy(otmap.inverse_transform(Xt=Xt))
+
+        Cs = np.cov(Xs.T)
+        Cts = np.cov(Xts.T)
+
+        np.testing.assert_allclose(Cs, Cts, rtol=1e-2, atol=1e-2)
 
 
 @pytest.skip_backend("jax")
@@ -612,20 +621,21 @@ def test_linear_gw_mapping_class(nx):
 
     Xsb, Xtb = nx.from_numpy(Xs, Xt)
 
-    otmap = ot.da.LinearGWTransport()
+    for log in [True, False]:
+        otmap = ot.da.LinearGWTransport(log=log)
 
-    otmap.fit(Xs=Xsb, Xt=Xtb)
-    assert hasattr(otmap, "A_")
-    assert hasattr(otmap, "B_")
-    assert hasattr(otmap, "A1_")
-    assert hasattr(otmap, "B1_")
+        otmap.fit(Xs=Xsb, Xt=Xtb)
+        assert hasattr(otmap, "A_")
+        assert hasattr(otmap, "B_")
+        assert hasattr(otmap, "A1_")
+        assert hasattr(otmap, "B1_")
 
-    Xst = nx.to_numpy(otmap.transform(Xs=Xsb))
+        Xst = nx.to_numpy(otmap.transform(Xs=Xsb))
 
-    Ct = np.cov(Xt.T)
-    Cst = np.cov(Xst.T)
+        Ct = np.cov(Xt.T)
+        Cst = np.cov(Xst.T)
 
-    np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
+        np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
 
 
 @pytest.skip_backend("jax")
@@ -648,58 +658,60 @@ def test_jcpot_transport_class(nx):
     Xs = [Xs1, Xs2]
     ys = [ys1, ys2]
 
-    otda = ot.da.JCPOTTransport(reg_e=1, max_iter=10000, tol=1e-9, verbose=True, log=True)
+    for log in [True, False]:
+        otda = ot.da.JCPOTTransport(reg_e=1, max_iter=10000, tol=1e-9, verbose=True, log=log)
 
-    # test its computed
-    otda.fit(Xs=Xs, ys=ys, Xt=Xt)
+        # test its computed
+        otda.fit(Xs=Xs, ys=ys, Xt=Xt)
 
-    assert hasattr(otda, "coupling_")
-    assert hasattr(otda, "proportions_")
-    assert hasattr(otda, "log_")
+        assert hasattr(otda, "coupling_")
+        assert hasattr(otda, "proportions_")
+        assert hasattr(otda, "log_")
 
-    # test dimensions of coupling
-    for i, xs in enumerate(Xs):
-        assert_equal(otda.coupling_[i].shape, ((xs.shape[0], Xt.shape[0])))
+        # test dimensions of coupling
+        for i, xs in enumerate(Xs):
+            assert_equal(otda.coupling_[i].shape, ((xs.shape[0], Xt.shape[0])))
 
-    # test all margin constraints
-    mu_t = unif(nt)
+        # test all margin constraints
+        mu_t = unif(nt)
 
-    for i in range(len(Xs)):
-        # test margin constraints w.r.t. uniform target weights for each coupling matrix
-        assert_allclose(
-            nx.to_numpy(nx.sum(otda.coupling_[i], axis=0)), mu_t, rtol=1e-3, atol=1e-3)
+        for i in range(len(Xs)):
+            # test margin constraints w.r.t. uniform target weights for each coupling matrix
+            assert_allclose(
+                nx.to_numpy(nx.sum(otda.coupling_[i], axis=0)), mu_t, rtol=1e-3, atol=1e-3)
 
-        # test margin constraints w.r.t. modified source weights for each source domain
+            if log:
+                # test margin constraints w.r.t. modified source weights for each source domain
 
-        assert_allclose(
-            nx.to_numpy(
-                nx.dot(otda.log_['D1'][i], nx.sum(otda.coupling_[i], axis=1))
-            ),
-            nx.to_numpy(otda.proportions_),
-            rtol=1e-3,
-            atol=1e-3
-        )
+                assert_allclose(
+                    nx.to_numpy(
+                        nx.dot(otda.log_['D1'][i], nx.sum(otda.coupling_[i], axis=1))
+                    ),
+                    nx.to_numpy(otda.proportions_),
+                    rtol=1e-3,
+                    atol=1e-3
+                )
 
-    # test transform
-    transp_Xs = otda.transform(Xs=Xs)
-    [assert_equal(x.shape, y.shape) for x, y in zip(transp_Xs, Xs)]
+        # test transform
+        transp_Xs = otda.transform(Xs=Xs)
+        [assert_equal(x.shape, y.shape) for x, y in zip(transp_Xs, Xs)]
 
-    Xs_new = nx.from_numpy(make_data_classif('3gauss', ns1 + 1)[0])
-    transp_Xs_new = otda.transform(Xs_new)
+        Xs_new = nx.from_numpy(make_data_classif('3gauss', ns1 + 1)[0])
+        transp_Xs_new = otda.transform(Xs_new)
 
-    # check that the oos method is working
-    assert_equal(transp_Xs_new.shape, Xs_new.shape)
+        # check that the oos method is working
+        assert_equal(transp_Xs_new.shape, Xs_new.shape)
 
-    # check label propagation
-    transp_yt = otda.transform_labels(ys)
-    assert_equal(transp_yt.shape[0], yt.shape[0])
-    assert_equal(transp_yt.shape[1], len(np.unique(nx.to_numpy(*ys))))
+        # check label propagation
+        transp_yt = otda.transform_labels(ys)
+        assert_equal(transp_yt.shape[0], yt.shape[0])
+        assert_equal(transp_yt.shape[1], len(np.unique(nx.to_numpy(*ys))))
 
-    # check inverse label propagation
-    transp_ys = otda.inverse_transform_labels(yt)
-    for x, y in zip(transp_ys, ys):
-        assert_equal(x.shape[0], y.shape[0])
-        assert_equal(x.shape[1], len(np.unique(nx.to_numpy(y))))
+        # check inverse label propagation
+        transp_ys = otda.inverse_transform_labels(yt)
+        for x, y in zip(transp_ys, ys):
+            assert_equal(x.shape[0], y.shape[0])
+            assert_equal(x.shape[1], len(np.unique(nx.to_numpy(y))))
 
 
 def test_jcpot_barycenter(nx):
@@ -745,56 +757,99 @@ def test_emd_laplace_class(nx):
 
     Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
 
-    otda = ot.da.EMDLaplaceTransport(reg_lap=0.01, max_iter=1000, tol=1e-9, verbose=False, log=True)
+    for log in [True, False]:
+        otda = ot.da.EMDLaplaceTransport(reg_lap=0.01, max_iter=1000, tol=1e-9, verbose=False, log=log)
 
-    # test its computed
-    otda.fit(Xs=Xs, ys=ys, Xt=Xt)
+        # test its computed
+        otda.fit(Xs=Xs, ys=ys, Xt=Xt)
 
-    assert hasattr(otda, "coupling_")
-    assert hasattr(otda, "log_")
+        assert hasattr(otda, "coupling_")
+        assert hasattr(otda, "log_")
 
-    # test dimensions of coupling
-    assert_equal(otda.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
+        # test dimensions of coupling
+        assert_equal(otda.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
 
-    # test all margin constraints
-    mu_s = unif(ns)
-    mu_t = unif(nt)
+        # test all margin constraints
+        mu_s = unif(ns)
+        mu_t = unif(nt)
+
+        assert_allclose(
+            nx.to_numpy(nx.sum(otda.coupling_, axis=0)), mu_t, rtol=1e-3, atol=1e-3)
+        assert_allclose(
+            nx.to_numpy(nx.sum(otda.coupling_, axis=1)), mu_s, rtol=1e-3, atol=1e-3)
+
+        # test transform
+        transp_Xs = otda.transform(Xs=Xs)
+        [assert_equal(x.shape, y.shape) for x, y in zip(transp_Xs, Xs)]
+
+        Xs_new = nx.from_numpy(make_data_classif('3gauss', ns + 1)[0])
+        transp_Xs_new = otda.transform(Xs_new)
+
+        # check that the oos method is working
+        assert_equal(transp_Xs_new.shape, Xs_new.shape)
+
+        # test inverse transform
+        transp_Xt = otda.inverse_transform(Xt=Xt)
+        assert_equal(transp_Xt.shape, Xt.shape)
+
+        Xt_new = nx.from_numpy(make_data_classif('3gauss2', nt + 1)[0])
+        transp_Xt_new = otda.inverse_transform(Xt=Xt_new)
+
+        # check that the oos method is working
+        assert_equal(transp_Xt_new.shape, Xt_new.shape)
+
+        # test fit_transform
+        transp_Xs = otda.fit_transform(Xs=Xs, Xt=Xt)
+        assert_equal(transp_Xs.shape, Xs.shape)
+
+        # check label propagation
+        transp_yt = otda.transform_labels(ys)
+        assert_equal(transp_yt.shape[0], yt.shape[0])
+        assert_equal(transp_yt.shape[1], len(np.unique(nx.to_numpy(ys))))
+
+        # check inverse label propagation
+        transp_ys = otda.inverse_transform_labels(yt)
+        assert_equal(transp_ys.shape[0], ys.shape[0])
+        assert_equal(transp_ys.shape[1], len(np.unique(nx.to_numpy(yt))))
+
+
+def test_nearest_brenier_potential(nx):
+    X = nx.ones((2, 2))
+    for ssnb in [ot.da.NearestBrenierPotential(log=True), ot.da.NearestBrenierPotential(log=False)]:
+        ssnb.fit(Xs=X, Xt=X)
+        G_lu = ssnb.transform(Xs=X)
+        np.testing.assert_almost_equal(G_lu[0], X)  # 'new' input isn't new, so should be equal to target
+        np.testing.assert_almost_equal(G_lu[1], X)
+
+
+@pytest.mark.skipif(nosklearn, reason="No sklearn available")
+@pytest.skip_backend("jax")
+@pytest.skip_backend("tf")
+def test_emd_laplace(nx):
+    """Complements :code:`test_emd_laplace_class` for uncovered options in :code:`emd_laplace`"""
+    ns = 50
+    nt = 50
+
+    Xs, ys = make_data_classif('3gauss', ns)
+    Xt, yt = make_data_classif('3gauss2', nt)
+
+    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
+    M = ot.dist(Xs, Xt)
+    with pytest.raises(ValueError):
+        ot.da.emd_laplace(ot.unif(ns), ot.unif(nt), Xs, Xt, M, sim_param=['INVALID', 'INPUT', 2])
+    with pytest.raises(ValueError):
+        ot.da.emd_laplace(ot.unif(ns), ot.unif(nt), Xs, Xt, M, sim=['INVALID', 'INPUT', 2])
+
+    # test all margin constraints with gaussian similarity and disp regularisation
+    coupling = ot.da.emd_laplace(ot.unif(ns), ot.unif(nt), Xs, Xt, M, sim='gauss', reg='disp')
 
     assert_allclose(
-        nx.to_numpy(nx.sum(otda.coupling_, axis=0)), mu_t, rtol=1e-3, atol=1e-3)
+        nx.to_numpy(nx.sum(coupling, axis=0)), unif(nt), rtol=1e-3, atol=1e-3)
     assert_allclose(
-        nx.to_numpy(nx.sum(otda.coupling_, axis=1)), mu_s, rtol=1e-3, atol=1e-3)
+        nx.to_numpy(nx.sum(coupling, axis=1)), unif(ns), rtol=1e-3, atol=1e-3)
 
-    # test transform
-    transp_Xs = otda.transform(Xs=Xs)
-    [assert_equal(x.shape, y.shape) for x, y in zip(transp_Xs, Xs)]
 
-    Xs_new = nx.from_numpy(make_data_classif('3gauss', ns + 1)[0])
-    transp_Xs_new = otda.transform(Xs_new)
-
-    # check that the oos method is working
-    assert_equal(transp_Xs_new.shape, Xs_new.shape)
-
-    # test inverse transform
-    transp_Xt = otda.inverse_transform(Xt=Xt)
-    assert_equal(transp_Xt.shape, Xt.shape)
-
-    Xt_new = nx.from_numpy(make_data_classif('3gauss2', nt + 1)[0])
-    transp_Xt_new = otda.inverse_transform(Xt=Xt_new)
-
-    # check that the oos method is working
-    assert_equal(transp_Xt_new.shape, Xt_new.shape)
-
-    # test fit_transform
-    transp_Xs = otda.fit_transform(Xs=Xs, Xt=Xt)
-    assert_equal(transp_Xs.shape, Xs.shape)
-
-    # check label propagation
-    transp_yt = otda.transform_labels(ys)
-    assert_equal(transp_yt.shape[0], yt.shape[0])
-    assert_equal(transp_yt.shape[1], len(np.unique(nx.to_numpy(ys))))
-
-    # check inverse label propagation
-    transp_ys = otda.inverse_transform_labels(yt)
-    assert_equal(transp_ys.shape[0], ys.shape[0])
-    assert_equal(transp_ys.shape[1], len(np.unique(nx.to_numpy(yt))))
+def test_joint_OT_mapping_verbose():
+    xs = np.zeros((2, 1))
+    ot.da.joint_OT_mapping_kernel(xs, xs, verbose=True)
+    ot.da.joint_OT_mapping_linear(xs, xs, verbose=True)

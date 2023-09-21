@@ -22,10 +22,12 @@ which bound any SSNB potential which is optimal in the sense of [58], Definition
     \varphi \in \mathrm{argmin}_{\varphi \in \mathcal{F}}\ \mathrm{W}_2(\nabla \varphi \#\mu_s, \mu_t),
 
 where :math:`\mathcal{F}` is the space functions that are on every set :math:`E_k` l-strongly convex
-with an L-Lipschitz gradient, given :math:`(E_k)_{k \in [K]}` a partition of the ambiant source space.
+with an L-Lipschitz gradient, given :math:`(E_k)_{k \in [K]}` a partition of the ambient source space.
 
 We perform the optimisation on a low amount of fitting samples and with few iterations,
 since solving the SSNB problem is quite computationally expensive.
+
+THIS EXAMPLE REQUIRES CVXPY
 
 .. [58] François-Pierre Paty, Alexandre d’Aspremont, and Marco Cuturi. Regularity as regularization:
         Smooth and strongly convex brenier potentials in optimal transport. In International Conference
@@ -42,7 +44,6 @@ since solving the SSNB problem is quite computationally expensive.
 import matplotlib.pyplot as plt
 import numpy as np
 import ot
-import os
 
 # %%
 # Generating the fitting data

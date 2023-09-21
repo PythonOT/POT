@@ -8,6 +8,7 @@ Domain adaptation with optimal transport
 #         Michael Perrot <michael.perrot@univ-st-etienne.fr>
 #         Nathalie Gayraud <nat.gayraud@gmail.com>
 #         Ievgen Redko <ievgen.redko@univ-st-etienne.fr>
+#         Eloi Tanguy <eloi.tanguy@u-paris.fr>
 #
 # License: MIT License
 
@@ -22,6 +23,7 @@ from .unbalanced import sinkhorn_unbalanced
 from .gaussian import empirical_bures_wasserstein_mapping, empirical_gaussian_gromov_wasserstein_mapping
 from .optim import cg
 from .optim import gcg
+from .mapping import nearest_brenier_potential_fit, nearest_brenier_potential_predict_bounds
 
 
 def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
@@ -2635,3 +2637,163 @@ class JCPOTTransport(BaseTransport):
                 transp_ys.append(nx.dot(D1, transp.T).T)
 
             return transp_ys
+
+
+class NearestBrenierPotential(BaseTransport):
+    r"""
+    Smooth Strongly Convex Nearest Brenier Potentials (SSNB) is a method from :ref:`[58]` that computes
+    an l-strongly convex potential :math:`\varphi` with an L-Lipschitz gradient such that
+    :math:`\nabla \varphi \# \mu \approx \nu`. This regularity can be enforced only on the components of a partition
+    of the ambient space (encoded by point classes), which is a relaxation compared to imposing global regularity.
+
+    SSNBs approach the target measure by solving the optimisation problem:
+
+    .. math::
+        \\varphi \in \\text{argmin}_{\\varphi \in \\mathcal{F}}\ \\text{W}_2(\\nabla \\varphi \#\\mu_s, \\mu_t),
+
+    where :math:`\mathcal{F}` is the space functions that are on every set :math:`E_k` l-strongly convex
+    with an L-Lipschitz gradient, given :math:`(E_k)_{k \in [K]}` a partition of the ambient source space.
+
+    The problem is solved on "fitting" source and target data via a convex Quadratically Constrained Quadratic Program,
+    yielding the values :code:`phi` and the gradients :code:`G` at at the source points.
+    The images of "new" source samples are then found by solving a (simpler) Quadratically Constrained Linear Program
+    at each point, using the fitting "parameters" :code:`phi` and :code:`G`. We provide two possible images, which
+    correspond to "lower" and "upper potentials" (:ref:`[59]`, Theorem 3.14). Each of these two images are optimal
+    solutions of the SSNB problem, and can be used in practice.
+
+    Parameters
+    ----------
+    strongly_convex_constant : float, optional
+        constant for the strong convexity of the input potential phi, defaults to 0.6
+    gradient_lipschitz_constant : float, optional
+        constant for the Lipschitz property of the input gradient G, defaults to 1.4
+    its: int, optional
+        number of iterations, defaults to 100
+    log : bool, optional
+        record log if true
+    seed: int or RandomState or None, optional
+        Seed used for random number generator (for the initialisation in :code:`fit`.
+
+    References
+    ----------
+
+    .. [58] François-Pierre Paty, Alexandre d’Aspremont, and Marco Cuturi. Regularity as regularization:
+            Smooth and strongly convex brenier potentials in optimal transport. In International Conference
+            on Artificial Intelligence and Statistics, pages 1222–1232. PMLR, 2020.
+
+    .. [59] Adrien B Taylor. Convex interpolation and performance estimation of first-order methods for
+            convex optimization. PhD thesis, Catholic University of Louvain, Louvain-la-Neuve, Belgium,
+            2017.
+
+    See Also
+    --------
+    ot.mapping.nearest_brenier_potential_fit : Fitting the SSNB on source and target data
+    ot.mapping.nearest_brenier_potential_predict_bounds : Predicting SSNB images on new source data
+    """
+    def __init__(self, strongly_convex_constant=0.6, gradient_lipschitz_constant=1.4, log=False, its=100, seed=None):
+        self.strongly_convex_constant = strongly_convex_constant
+        self.gradient_lipschitz_constant = gradient_lipschitz_constant
+        self.log = log
+        self.its = its
+        self.seed = seed
+        self.fit_log, self.predict_log = None, None
+        self.phi, self.G = None, None
+        self.fit_Xs, self.fit_ys, self.fit_Xt = None, None, None
+
+    def fit(self, Xs=None, ys=None, Xt=None, yt=None):
+        r"""
+        Fits the Smooth Strongly Convex Nearest Brenier Potential [58] to the source data :code:`Xs` to the target data
+        :code:`Xt`, with the partition given by the (optional) labels :code:`ys`.
+
+        Wrapper for :code:`ot.mapping.nearest_brenier_potential_fit`.
+
+        THIS METHOD REQUIRES THE CVXPY LIBRARY
+
+        Parameters
+        ----------
+        Xs : array-like (n, d)
+            source points used to compute the optimal values phi and G
+        ys : array-like (n,), optional
+            classes of the reference points, defaults to a single class
+        Xt : array-like (n, d)
+            values of the gradients at the reference points X
+        yt : optional
+            ignored.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+
+        References
+        ----------
+
+        .. [58] François-Pierre Paty, Alexandre d’Aspremont, and Marco Cuturi. Regularity as regularization:
+                Smooth and strongly convex brenier potentials in optimal transport. In International Conference
+                on Artificial Intelligence and Statistics, pages 1222–1232. PMLR, 2020.
+
+        See Also
+        --------
+        ot.mapping.nearest_brenier_potential_fit : Fitting the SSNB on source and target data
+
+        """
+        self.fit_Xs, self.fit_ys, self.fit_Xt = Xs, ys, Xt
+        returned = nearest_brenier_potential_fit(Xs, Xt, X_classes=ys,
+                                                 strongly_convex_constant=self.strongly_convex_constant,
+                                                 gradient_lipschitz_constant=self.gradient_lipschitz_constant,
+                                                 its=self.its, log=self.log)
+
+        if self.log:
+            self.phi, self.G, self.fit_log = returned
+        else:
+            self.phi, self.G = returned
+
+        return self
+
+    def transform(self, Xs, ys=None):
+        r"""
+        Computes the images of the new source samples :code:`Xs` of classes :code:`ys` by the fitted
+        Smooth Strongly Convex Nearest Brenier Potentials (SSNB) :ref:`[58]`. The output is the images of two SSNB optimal
+        maps, called 'lower' and 'upper' potentials (from :ref:`[59]`, Theorem 3.14).
+
+        Wrapper for :code:`nearest_brenier_potential_predict_bounds`.
+
+        THIS METHOD REQUIRES THE CVXPY LIBRARY
+
+        Parameters
+        ----------
+        Xs : array-like (m, d)
+            input source points
+        ys : : array_like (m,), optional
+            classes of the input source points, defaults to a single class
+
+        Returns
+        -------
+        G_lu : array-like (2, m, d)
+            gradients of the lower and upper bounding potentials at Y (images of the source inputs)
+
+        References
+        ----------
+
+        .. [58] François-Pierre Paty, Alexandre d’Aspremont, and Marco Cuturi. Regularity as regularization:
+                Smooth and strongly convex brenier potentials in optimal transport. In International Conference
+                on Artificial Intelligence and Statistics, pages 1222–1232. PMLR, 2020.
+
+        .. [59] Adrien B Taylor. Convex interpolation and performance estimation of first-order methods for
+                convex optimization. PhD thesis, Catholic University of Louvain, Louvain-la-Neuve, Belgium,
+                2017.
+
+        See Also
+        --------
+        ot.mapping.nearest_brenier_potential_predict_bounds : Predicting SSNB images on new source data
+
+        """
+        returned = nearest_brenier_potential_predict_bounds(
+            self.fit_Xs, self.phi, self.G, Xs, X_classes=self.fit_ys, Y_classes=ys,
+            strongly_convex_constant=self.strongly_convex_constant,
+            gradient_lipschitz_constant=self.gradient_lipschitz_constant, log=self.log)
+        if self.log:
+            _, G_lu, self.predict_log = returned
+        else:
+            _, G_lu = returned
+        return G_lu

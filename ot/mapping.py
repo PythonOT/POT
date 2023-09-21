@@ -45,17 +45,19 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
 
     Accepts any compatible backend, but will perform the QCQP optimisation on Numpy arrays, and convert back at the end.
 
+    THIS FUNCTION REQUIRES THE CVXPY LIBRARY
+
     Parameters
     ----------
-    X: array-like (n, d)
+    X : array-like (n, d)
         reference points used to compute the optimal values phi and G
-    V: array-like (n, d)
+    V : array-like (n, d)
         values of the gradients at the reference points X
     X_classes : array-like (n,), optional
         classes of the reference points, defaults to a single class
-    a: array-like (n,), optional
+    a : array-like (n,), optional
         weights for the reference points X, defaults to uniform
-    b: array-like (n,), optional
+    b : array-like (n,), optional
         weights for the target points V, defaults to uniform
     strongly_convex_constant : float, optional
         constant for the strong convexity of the input potential phi, defaults to 0.6
@@ -63,8 +65,6 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
         constant for the Lipschitz property of the input gradient G, defaults to 1.4
     its: int, optional
         number of iterations, defaults to 100
-    pbar: bool, optional
-        if True show a progress bar, defaults to False
     log : bool, optional
         record log if true
     seed: int or RandomState or None, optional
@@ -86,6 +86,11 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
     .. [58] François-Pierre Paty, Alexandre d’Aspremont, and Marco Cuturi. Regularity as regularization:
             Smooth and strongly convex brenier potentials in optimal transport. In International Conference
             on Artificial Intelligence and Statistics, pages 1222–1232. PMLR, 2020.
+
+    See Also
+    --------
+    ot.mapping.nearest_brenier_potential_predict_bounds : Predicting SSNB images on new source data
+    ot.da.NearestBrenierPotential : BaseTransport wrapper for SSNB
 
     """
     try:
@@ -197,7 +202,8 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
     Compute the values of the lower and upper bounding potentials at the input points Y, using the potential optimal
     values phi at X and their gradients G at X. The 'lower' potential corresponds to the method from :ref:`[58]`,
     Equation 2, while the bounding property and 'upper' potential come from :ref:`[59]`, Theorem 3.14 (taking into
-    account the fact that this theorem's statement has a min instead of a max, which is a typo).
+    account the fact that this theorem's statement has a min instead of a max, which is a typo). Both potentials are
+    optimal for the SSNB problem.
 
     If :math:`I_k` is the subset of :math:`[n]` of the i such that :math:`x_i` is in the partition (or class)
     :math:`E_k`, for each :math:`y \in E_k`, this function solves the convex QCQP problems,
@@ -220,6 +226,8 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
 		+ c_2\|x_i-y\|_2^2 - c_3\langle g-g_i, y -x_i \\rangle.
 
     The constants :math:`c_1, c_2, c_3` only depend on `strongly_convex_constant` and `gradient_lipschitz_constant`.
+
+    THIS FUNCTION REQUIRES THE CVXPY LIBRARY
 
     Parameters
     ----------
@@ -263,6 +271,11 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
     .. [59] Adrien B Taylor. Convex interpolation and performance estimation of first-order methods for
             convex optimization. PhD thesis, Catholic University of Louvain, Louvain-la-Neuve, Belgium,
             2017.
+
+    See Also
+    --------
+    ot.mapping.nearest_brenier_potential_fit : Fitting the SSNB on source and target data
+    ot.da.NearestBrenierPotential : BaseTransport wrapper for SSNB
 
     """
     try:
