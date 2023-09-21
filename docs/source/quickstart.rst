@@ -964,7 +964,7 @@ List of compatible Backends
 The library automatically detects which backends are available for use. A backend
 is instantiated lazily only when necessary to prevent unwarranted GPU memory allocations.
 You can also disable the import of a specific backend library (e.g., to accelerate
-loading of `ot` library) using the environment variable `POT_BACKEND_DISABLE_<NAME>`.
+loading of `ot` library) using the environment variable `POT_BACKEND_DISABLE_<NAME>` with <NAME> in (TORCH,TENSORFLOW,CUPY,JAX).
 For instance, to disable TensorFlow, set `export POT_BACKEND_DISABLE_TENSORFLOW=1`.
 It's important to note that the `numpy` backend cannot be disabled.
 
