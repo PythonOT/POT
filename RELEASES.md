@@ -4,7 +4,7 @@
 
 #### New features
 + Added support for [Nearest Brenier Potentials (SSNB)](http://proceedings.mlr.press/v108/paty20a/paty20a.pdf) (PR #526)
-+ Tweaked `get_backend` to ignore `None` inputs (PR # 525)
++ Tweaked `get_backend` to ignore `None` inputs (PR #525)
 
 #### Closed issues
 - Fix line search evaluating cost outside of the interpolation range (Issue #502, PR #504)
