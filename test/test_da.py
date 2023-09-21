@@ -19,6 +19,12 @@ try:  # test if cudamat installed
 except ImportError:
     nosklearn = True
 
+try:  # test if cvxpy is installed
+    import cvxpy  # noqa: F401
+    nocvxpy = False
+except ImportError:
+    npcvxpy = True
+
 
 def test_class_jax_tf():
     backends = []
@@ -816,6 +822,7 @@ def test_emd_laplace_class(nx):
         assert_equal(transp_ys.shape[1], len(np.unique(nx.to_numpy(yt))))
 
 
+@pytest.mark.skipif(nocvxpy, reason="No CVXPY available")
 def test_nearest_brenier_potential(nx):
     X = nx.ones((2, 2))
     for ssnb in [ot.da.NearestBrenierPotential(log=True), ot.da.NearestBrenierPotential(log=False)]:

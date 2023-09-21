@@ -5,8 +5,17 @@
 
 import numpy as np
 import ot
+import pytest
 
 
+try:  # test if cvxpy is installed
+    import cvxpy  # noqa: F401
+    nocvxpy = False
+except ImportError:
+    npcvxpy = True
+
+
+@pytest.mark.skipif(nocvxpy, reason="No CVXPY available")
 def test_ssnb_qcqp_constants():
     c1, c2, c3 = ot.mapping.ssnb_qcqp_constants(.5, 1)
     np.testing.assert_almost_equal(c1, 1)
@@ -14,6 +23,7 @@ def test_ssnb_qcqp_constants():
     np.testing.assert_almost_equal(c3, 1)
 
 
+@pytest.mark.skipif(nocvxpy, reason="No CVXPY available")
 def test_nearest_brenier_potential_fit(nx):
     X = nx.ones((2, 2))
     phi, G, log = ot.nearest_brenier_potential_fit(X, X, its=3, log=True)
@@ -24,6 +34,7 @@ def test_nearest_brenier_potential_fit(nx):
     ot.nearest_brenier_potential_fit(X, X, its=1, seed=np.random.RandomState(seed=0))
 
 
+@pytest.mark.skipif(nocvxpy, reason="No CVXPY available")
 def test_brenier_potential_predict_bounds(nx):
     X = nx.ones((2, 2))
     phi, G = ot.nearest_brenier_potential_fit(X, X, its=3)
