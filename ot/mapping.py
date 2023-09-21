@@ -149,7 +149,7 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
             for i in np.where(X_classes == k)[0]:
                 for j in np.where(X_classes == k)[0]:
                     constraints += [
-                        phi[i] >= phi[j] + G[j].T @ (X[i] - X[j]) + c1 * cvx.sum_squares(G[i] - G[j]) \
+                        phi[i] >= phi[j] + G[j].T @ (X[i] - X[j]) + c1 * cvx.sum_squares(G[i] - G[j])
                         + c2 * cvx.sum_squares(X[i] - X[j]) - c3 * (G[j] - G[i]).T @ (X[j] - X[i])
                     ]
         problem = cvx.Problem(objective, constraints)
@@ -325,7 +325,7 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
         k = Y_classes[y_idx]
         for j in np.where(X_classes == k)[0]:
             constraints += [
-                phi_l_y >= phi[j] + G[j].T @ (Y[y_idx] - X[j]) + c1 * cvx.sum_squares(G_l_y - G[j]) \
+                phi_l_y >= phi[j] + G[j].T @ (Y[y_idx] - X[j]) + c1 * cvx.sum_squares(G_l_y - G[j])
                 + c2 * cvx.sum_squares(Y[y_idx] - X[j]) - c3 * (G[j] - G_l_y).T @ (X[j] - Y[y_idx])
             ]
         problem = cvx.Problem(objective, constraints)
@@ -348,7 +348,7 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
         constraints = []
         for i in np.where(X_classes == k)[0]:
             constraints += [
-                phi[i] >= phi_u_y + G_u_y.T @ (X[i] - Y[y_idx]) + c1 * cvx.sum_squares(G[i] - G_u_y) \
+                phi[i] >= phi_u_y + G_u_y.T @ (X[i] - Y[y_idx]) + c1 * cvx.sum_squares(G[i] - G_u_y)
                 + c2 * cvx.sum_squares(X[i] - Y[y_idx]) - c3 * (G_u_y - G[i]).T @ (Y[y_idx] - X[i])
             ]
         problem = cvx.Problem(objective, constraints)
