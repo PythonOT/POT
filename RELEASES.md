@@ -4,6 +4,7 @@
 
 #### New features
 + Tweaked `get_backend` to ignore `None` inputs (PR # 525)
++ Callbacks for generalized conditional gradient in `ot.da.sinkhorn_l1l2_gl` are now vectorized to improve performance (PR #507)
 
 #### Closed issues
 - Fix line search evaluating cost outside of the interpolation range (Issue #502, PR #504)
