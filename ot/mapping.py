@@ -31,8 +31,8 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
 
          \\text{s.t.}\ \\forall k \in [K],\; \\forall i,j \in I_k:
 
-		\\varphi_i-\\varphi_j-\langle g_j, x_i-x_j\\rangle \geq c_1\|g_i - g_j\|_2^2 +
-		c_2\|x_i-x_j\|_2^2 - c_3\langle g_j-g_i, x_j -x_i \\rangle.
+        \\varphi_i-\\varphi_j-\langle g_j, x_i-x_j\\rangle \geq c_1\|g_i - g_j\|_2^2 +
+        c_2\|x_i-x_j\|_2^2 - c_3\langle g_j-g_i, x_j -x_i \\rangle.
 
     The constants :math:`c_1, c_2, c_3` only depend on `strongly_convex_constant` and `gradient_lipschitz_constant`.
     The constraint :math:`\pi \in \Pi(a, b)` denotes the fact that the matrix :math:`\pi` belong to the OT polytope
@@ -214,16 +214,16 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
 
         t\in \mathbb{R},\; g\in \mathbb{R}^d,
 
-		\\text{s.t.} \\forall j \in I_k,\; t-\\varphi_j - \langle g_j, y-x_j \\rangle \geq c_1\|g - g_j\|_2^2
-		+ c_2\|y-x_j\|_2^2 - c_3\langle g_j-g, x_j -y \\rangle.
+        \\text{s.t.} \\forall j \in I_k,\; t-\\varphi_j - \langle g_j, y-x_j \\rangle \geq c_1\|g - g_j\|_2^2
+        + c_2\|y-x_j\|_2^2 - c_3\langle g_j-g, x_j -y \\rangle.
 
     .. math::
         (\\varphi_{u}(x), \\nabla \\varphi_u(x)) = \\text{argmax}\ t,
 
         t\in \mathbb{R},\; g\in \mathbb{R}^d,
 
-		\\text{s.t.} \\forall i \in I_k,\; \\varphi_i^* -t - \langle g, x_i-y \\rangle \geq c_1\|g_i - g\|_2^2
-		+ c_2\|x_i-y\|_2^2 - c_3\langle g-g_i, y -x_i \\rangle.
+        \\text{s.t.} \\forall i \in I_k,\; \\varphi_i^* -t - \langle g, x_i-y \\rangle \geq c_1\|g_i - g\|_2^2
+        + c_2\|x_i-y\|_2^2 - c_3\langle g-g_i, y -x_i \\rangle.
 
     The constants :math:`c_1, c_2, c_3` only depend on `strongly_convex_constant` and `gradient_lipschitz_constant`.
 
