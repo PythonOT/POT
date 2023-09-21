@@ -862,12 +862,6 @@ def test_emd_laplace(nx):
         nx.to_numpy(nx.sum(coupling, axis=1)), unif(ns), rtol=1e-3, atol=1e-3)
 
 
-def test_joint_OT_mapping_verbose():
-    xs = np.zeros((2, 1))
-    ot.da.joint_OT_mapping_kernel(xs, xs, verbose=True)
-    ot.da.joint_OT_mapping_linear(xs, xs, verbose=True)
-
-
 @pytest.skip_backend("jax")
 @pytest.skip_backend("tf")
 def test_sinkhorn_l1l2_gl_cost_vectorized(nx):

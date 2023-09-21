@@ -45,3 +45,9 @@ def test_brenier_potential_predict_bounds(nx):
     np.testing.assert_almost_equal(to_numpy(G_lu[1]), to_numpy(X))
     # test with no log but classes
     ot.nearest_brenier_potential_predict_bounds(X, phi, G, X, X_classes=nx.ones(2), Y_classes=nx.ones(2))
+
+
+def test_joint_OT_mapping_verbose():
+    xs = np.zeros((2, 1))
+    ot.mapping.joint_OT_mapping_kernel(xs, xs, verbose=True)
+    ot.mapping.joint_OT_mapping_linear(xs, xs, verbose=True)
