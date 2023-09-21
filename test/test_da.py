@@ -830,8 +830,9 @@ def test_nearest_brenier_potential(nx):
     for ssnb in [ot.da.NearestBrenierPotential(log=True), ot.da.NearestBrenierPotential(log=False)]:
         ssnb.fit(Xs=X, Xt=X)
         G_lu = ssnb.transform(Xs=X)
-        np.testing.assert_almost_equal(G_lu[0], X)  # 'new' input isn't new, so should be equal to target
-        np.testing.assert_almost_equal(G_lu[1], X)
+        # 'new' input isn't new, so should be equal to target
+        np.testing.assert_almost_equal(nx.to_numpy(G_lu[0]), nx.to_numpy(X))
+        np.testing.assert_almost_equal(nx.to_numpy(G_lu[1]), nx.to_numpy(X))
 
 
 @pytest.mark.skipif(nosklearn, reason="No sklearn available")
