@@ -411,7 +411,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def norm(self, a):
+    def norm(self, a, axis=None, keepdims=False):
         r"""
         Computes the matrix frobenius norm.
 
@@ -631,7 +631,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def unique(self, a):
+    def unique(self, a, return_inverse=False):
         r"""
         Finds unique elements of given tensor.
 
@@ -1091,8 +1091,8 @@ class NumpyBackend(Backend):
     def power(self, a, exponents):
         return np.power(a, exponents)
 
-    def norm(self, a):
-        return np.sqrt(np.sum(np.square(a)))
+    def norm(self, a, axis=None, keepdims=False):
+        return np.linalg.norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return np.any(a)
@@ -1168,8 +1168,8 @@ class NumpyBackend(Backend):
     def diag(self, a, k=0):
         return np.diag(a, k)
 
-    def unique(self, a):
-        return np.unique(a)
+    def unique(self, a, return_inverse=False):
+        return np.unique(a, return_inverse=return_inverse)
 
     def logsumexp(self, a, axis=None):
         return special.logsumexp(a, axis=axis)
@@ -1465,8 +1465,8 @@ class JaxBackend(Backend):
     def power(self, a, exponents):
         return jnp.power(a, exponents)
 
-    def norm(self, a):
-        return jnp.sqrt(jnp.sum(jnp.square(a)))
+    def norm(self, a, axis=None, keepdims=False):
+        return jnp.linalg.norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return jnp.any(a)
@@ -1539,8 +1539,8 @@ class JaxBackend(Backend):
     def diag(self, a, k=0):
         return jnp.diag(a, k)
 
-    def unique(self, a):
-        return jnp.unique(a)
+    def unique(self, a, return_inverse=False):
+        return jnp.unique(a, return_inverse=return_inverse)
 
     def logsumexp(self, a, axis=None):
         return jspecial.logsumexp(a, axis=axis)
@@ -1885,8 +1885,8 @@ class TorchBackend(Backend):
     def power(self, a, exponents):
         return torch.pow(a, exponents)
 
-    def norm(self, a):
-        return torch.sqrt(torch.sum(torch.square(a)))
+    def norm(self, a, axis=None, keepdims=False):
+        return torch.linalg.norm(a.double(), dim=axis, keepdims=keepdims)
 
     def any(self, a):
         return torch.any(a)
@@ -1990,8 +1990,8 @@ class TorchBackend(Backend):
     def diag(self, a, k=0):
         return torch.diag(a, diagonal=k)
 
-    def unique(self, a):
-        return torch.unique(a)
+    def unique(self, a, return_inverse=False):
+        return torch.unique(a, return_inverse=return_inverse)
 
     def logsumexp(self, a, axis=None):
         if axis is not None:
@@ -2310,8 +2310,8 @@ class CupyBackend(Backend):  # pragma: no cover
     def dot(self, a, b):
         return cp.dot(a, b)
 
-    def norm(self, a):
-        return cp.sqrt(cp.sum(cp.square(a)))
+    def norm(self, a, axis=None, keepdims=False):
+        return cp.linalg.norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return cp.any(a)
@@ -2387,8 +2387,8 @@ class CupyBackend(Backend):  # pragma: no cover
     def diag(self, a, k=0):
         return cp.diag(a, k)
 
-    def unique(self, a):
-        return cp.unique(a)
+    def unique(self, a, return_inverse=False):
+        return cp.unique(a, return_inverse=return_inverse)
 
     def logsumexp(self, a, axis=None):
         # Taken from
@@ -2721,8 +2721,8 @@ class TensorflowBackend(Backend):
     def power(self, a, exponents):
         return tnp.power(a, exponents)
 
-    def norm(self, a):
-        return tf.math.reduce_euclidean_norm(a)
+    def norm(self, a, axis=None, keepdims=False):
+        return tf.math.reduce_euclidean_norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return tnp.any(a)
@@ -2794,8 +2794,15 @@ class TensorflowBackend(Backend):
     def diag(self, a, k=0):
         return tnp.diag(a, k)
 
-    def unique(self, a):
-        return tf.sort(tf.unique(tf.reshape(a, [-1]))[0])
+    def unique(self, a, return_inverse=False):
+        y, idx = tf.unique(tf.reshape(a, [-1]))
+        sort_idx = tf.argsort(y)
+        y_prime = tf.gather(y, sort_idx)
+        if return_inverse:
+            inv_sort_idx = tf.math.invert_permutation(sort_idx)
+            return y_prime, tf.gather(inv_sort_idx, idx)
+        else:
+            return y_prime
 
     def logsumexp(self, a, axis=None):
         return tf.math.reduce_logsumexp(a, axis=axis)

@@ -15,12 +15,14 @@ from ot.utils import unif
 
 try:  # test if cudamat installed
     import sklearn  # noqa: F401
+
     nosklearn = False
 except ImportError:
     nosklearn = True
 
 try:  # test if cvxpy is installed
     import cvxpy  # noqa: F401
+
     nocvxpy = False
 except ImportError:
     npcvxpy = True
@@ -51,9 +53,9 @@ def test_class_jax_tf():
 
 @pytest.skip_backend("jax")
 @pytest.skip_backend("tf")
-@pytest.mark.parametrize("class_to_test", [ot.da.EMDTransport, ot.da.SinkhornTransport, ot.da.SinkhornLpl1Transport, ot.da.SinkhornL1l2Transport, ot.da.SinkhornL1l2Transport])
+@pytest.mark.parametrize("class_to_test", [ot.da.EMDTransport, ot.da.SinkhornTransport, ot.da.SinkhornLpl1Transport,
+                                           ot.da.SinkhornL1l2Transport, ot.da.SinkhornL1l2Transport])
 def test_log_da(nx, class_to_test):
-
     ns = 50
     nt = 50
 
@@ -863,3 +865,52 @@ def test_joint_OT_mapping_verbose():
     xs = np.zeros((2, 1))
     ot.da.joint_OT_mapping_kernel(xs, xs, verbose=True)
     ot.da.joint_OT_mapping_linear(xs, xs, verbose=True)
+
+
+@pytest.skip_backend("jax")
+@pytest.skip_backend("tf")
+def test_sinkhorn_l1l2_gl_cost_vectorized(nx):
+    n_samples, n_labels = 150, 3
+    rng = np.random.RandomState(42)
+    G = rng.rand(n_samples, n_samples)
+    labels_a = rng.randint(n_labels, size=(n_samples,))
+    G, labels_a = nx.from_numpy(G), nx.from_numpy(labels_a)
+
+    # previously used implementation for the cost estimator
+    lstlab = nx.unique(labels_a)
+
+    def f(G):
+        res = 0
+        for i in range(G.shape[1]):
+            for lab in lstlab:
+                temp = G[labels_a == lab, i]
+                res += nx.norm(temp)
+        return res
+
+    def df(G):
+        W = nx.zeros(G.shape, type_as=G)
+        for i in range(G.shape[1]):
+            for lab in lstlab:
+                temp = G[labels_a == lab, i]
+                n = nx.norm(temp)
+                if n:
+                    W[labels_a == lab, i] = temp / n
+        return W
+
+    # new vectorized implementation for the cost estimator
+    labels_u, labels_idx = nx.unique(labels_a, return_inverse=True)
+    n_labels = labels_u.shape[0]
+    unroll_labels_idx = nx.eye(n_labels, type_as=labels_u)[None, labels_idx]
+
+    def f2(G):
+        G_split = nx.repeat(G.T[:, :, None], n_labels, axis=2)
+        return nx.sum(nx.norm(G_split * unroll_labels_idx, axis=1))
+
+    def df2(G):
+        G_split = nx.repeat(G.T[:, :, None], n_labels, axis=2) * unroll_labels_idx
+        W = nx.norm(G_split * unroll_labels_idx, axis=1, keepdims=True)
+        G_norm = G_split / nx.clip(W, 1e-12, None)
+        return nx.sum(G_norm, axis=2).T
+
+    assert np.allclose(f(G), f2(G))
+    assert np.allclose(df(G), df2(G))
