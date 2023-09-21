@@ -13,7 +13,7 @@ try:  # test if cvxpy is installed
     import cvxpy  # noqa: F401
     nocvxpy = False
 except ImportError:
-    npcvxpy = True
+    nocvxpy = True
 
 
 @pytest.mark.skipif(nocvxpy, reason="No CVXPY available")

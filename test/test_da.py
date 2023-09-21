@@ -25,7 +25,7 @@ try:  # test if cvxpy is installed
 
     nocvxpy = False
 except ImportError:
-    npcvxpy = True
+    nocvxpy = True
 
 
 def test_class_jax_tf():
