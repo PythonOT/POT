@@ -5,7 +5,7 @@
     :py:mod:`ot.utils`, :py:mod:`ot.datasets`,
     :py:mod:`ot.gromov`, :py:mod:`ot.smooth`
     :py:mod:`ot.stochastic`, :py:mod:`ot.partial`, :py:mod:`ot.regpath`
-    , :py:mod:`ot.unbalanced`.
+    , :py:mod:`ot.unbalanced`, :py:mod`ot.mapping`.
     The following sub-modules are not imported due to additional dependencies:
     - :any:`ot.dr` : depends on :code:`pymanopt` and :code:`autograd`.
     - :any:`ot.plot` : depends on :code:`matplotlib`
