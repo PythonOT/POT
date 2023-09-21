@@ -2649,7 +2649,11 @@ class NearestBrenierPotential(BaseTransport):
     SSNBs approach the target measure by solving the optimisation problem:
 
     .. math::
-        \\varphi \in \\text{argmin}_{\\varphi \in \\mathcal{F}}\ \\text{W}_2(\\nabla \\varphi \#\\mu_s, \\mu_t),
+        :nowrap:
+
+        \begin{gather*}
+        \varphi \in \text{argmin}_{\varphi \in \mathcal{F}}\ \text{W}_2(\nabla \varphi \#\mu_s, \mu_t),
+        \end{gather*}
 
     where :math:`\mathcal{F}` is the space functions that are on every set :math:`E_k` l-strongly convex
     with an L-Lipschitz gradient, given :math:`(E_k)_{k \in [K]}` a partition of the ambient source space.
@@ -2660,6 +2664,9 @@ class NearestBrenierPotential(BaseTransport):
     at each point, using the fitting "parameters" :code:`phi` and :code:`G`. We provide two possible images, which
     correspond to "lower" and "upper potentials" (:ref:`[59]`, Theorem 3.14). Each of these two images are optimal
     solutions of the SSNB problem, and can be used in practice.
+
+    .. warning:: This function requires the CVXPY library
+    .. warning:: Accepts any backend but will convert to Numpy then back to the backend.
 
     Parameters
     ----------
@@ -2707,7 +2714,8 @@ class NearestBrenierPotential(BaseTransport):
 
         Wrapper for :code:`ot.mapping.nearest_brenier_potential_fit`.
 
-        THIS METHOD REQUIRES THE CVXPY LIBRARY
+        .. warning:: This function requires the CVXPY library
+        .. warning:: Accepts any backend but will convert to Numpy then back to the backend.
 
         Parameters
         ----------
@@ -2758,7 +2766,8 @@ class NearestBrenierPotential(BaseTransport):
 
         Wrapper for :code:`nearest_brenier_potential_predict_bounds`.
 
-        THIS METHOD REQUIRES THE CVXPY LIBRARY
+        .. warning:: This function requires the CVXPY library
+        .. warning:: Accepts any backend but will convert to Numpy then back to the backend.
 
         Parameters
         ----------

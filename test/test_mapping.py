@@ -6,6 +6,7 @@
 import numpy as np
 import ot
 import pytest
+from ot.backend import to_numpy
 
 
 try:  # test if cvxpy is installed
@@ -27,7 +28,7 @@ def test_ssnb_qcqp_constants():
 def test_nearest_brenier_potential_fit(nx):
     X = nx.ones((2, 2))
     phi, G, log = ot.nearest_brenier_potential_fit(X, X, its=3, log=True)
-    np.testing.assert_almost_equal(G, X)  # image of source should be close to target
+    np.testing.assert_almost_equal(to_numpy(G), to_numpy(X))  # image of source should be close to target
     # test without log but with X_classes and seed
     ot.nearest_brenier_potential_fit(X, X, X_classes=nx.ones(2), its=1, seed=0)
     # test with seed being a np.random.RandomState
@@ -39,7 +40,8 @@ def test_brenier_potential_predict_bounds(nx):
     X = nx.ones((2, 2))
     phi, G = ot.nearest_brenier_potential_fit(X, X, its=3)
     phi_lu, G_lu, log = ot.nearest_brenier_potential_predict_bounds(X, phi, G, X, log=True)
-    np.testing.assert_almost_equal(G_lu[0], X)  # 'new' input isn't new, so should be equal to target
-    np.testing.assert_almost_equal(G_lu[1], X)
+    # 'new' input isn't new, so should be equal to target
+    np.testing.assert_almost_equal(to_numpy(G_lu[0]), to_numpy(X))
+    np.testing.assert_almost_equal(to_numpy(G_lu[1]), to_numpy(X))
     # test with no log but classes
     ot.nearest_brenier_potential_predict_bounds(X, phi, G, X, X_classes=nx.ones(2), Y_classes=nx.ones(2))

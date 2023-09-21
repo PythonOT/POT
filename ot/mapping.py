@@ -16,36 +16,38 @@ from .utils import dist, unif
 def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly_convex_constant=.6,
                                   gradient_lipschitz_constant=1.4, its=100, log=False, seed=None):
     r"""
-    Computes optimal values and gradients at X for a strongly convex potential :math:`\\varphi` with Lipschitz gradients
-    on the partitions defined by `X_classes`, where :math:`\\varphi` is optimal such that
-    :math:`\\nabla \\varphi \#\\mu \\approx \\nu`, given samples :math:`X = x_1, \\cdots, x_n \\sim \\mu` and
-    :math:`V = v_1, \\cdots, v_n \\sim \\nu`. Finding such a potential that has the desired regularity on the
+    Computes optimal values and gradients at X for a strongly convex potential :math:`\varphi` with Lipschitz gradients
+    on the partitions defined by `X_classes`, where :math:`\varphi` is optimal such that
+    :math:`\nabla \varphi \#\mu \approx \nu`, given samples :math:`X = x_1, \cdots, x_n \sim \mu` and
+    :math:`V = v_1, \cdots, v_n \sim \nu`. Finding such a potential that has the desired regularity on the
     partition :math:`(E_k)_{k \in [K]}` (given by the classes `X_classes`) is equivalent to finding optimal values
-    `phi` for the :math:`\\varphi(x_i)` and its gradients :math:`\\nabla \\varphi(x_i)` (variable`G`).
+    `phi` for the :math:`\varphi(x_i)` and its gradients :math:`\nabla \varphi(x_i)` (variable`G`).
     In practice, these optimal values are found by solving the following problem
 
     .. math::
-        \\text{min} \\sum_{i,j}\\pi_{i,j}\|g_i - v_j\|_2^2
+        :nowrap:
 
-         g_1,\\cdots, g_n \in \mathbb{R}^d,\; \\varphi_1, \\cdots, \\varphi_n \in \mathbb{R},\; \pi \in \Pi(a, b)
-
-         \\text{s.t.}\ \\forall k \in [K],\; \\forall i,j \in I_k:
-
-        \\varphi_i-\\varphi_j-\langle g_j, x_i-x_j\\rangle \geq c_1\|g_i - g_j\|_2^2 +
-        c_2\|x_i-x_j\|_2^2 - c_3\langle g_j-g_i, x_j -x_i \\rangle.
+        \begin{gather*}
+        \text{min} \sum_{i,j}\pi_{i,j}\|g_i - v_j\|_2^2 \\
+        g_1,\cdots, g_n \in \mathbb{R}^d,\; \varphi_1, \cdots, \varphi_n \in \mathbb{R},\; \pi \in \Pi(a, b) \\
+        \text{s.t.}\ \forall k \in [K],\; \forall i,j \in I_k: \\
+        \varphi_i-\varphi_j-\langle g_j, x_i-x_j\rangle \geq c_1\|g_i - g_j\|_2^2
+        + c_2\|x_i-x_j\|_2^2 - c_3\langle g_j-g_i, x_j -x_i \rangle.
+        \end{gather*}
 
     The constants :math:`c_1, c_2, c_3` only depend on `strongly_convex_constant` and `gradient_lipschitz_constant`.
     The constraint :math:`\pi \in \Pi(a, b)` denotes the fact that the matrix :math:`\pi` belong to the OT polytope
     of marginals a and b. :math:`I_k` is the subset of :math:`[n]` of the i such that :math:`x_i` is in the
     partition (or class) :math:`E_k`, i.e. `X_classes[i] == k`.
 
-    This problem is solved by alternating over the variable :math:`\pi` and the variables :math:`\\varphi_i, g_i`.
-    For :math:`\pi`, the problem is the standard discrete OT problem, and for :math:`\\varphi_i, g_i`, the
+    This problem is solved by alternating over the variable :math:`\pi` and the variables :math:`\varphi_i, g_i`.
+    For :math:`\pi`, the problem is the standard discrete OT problem, and for :math:`\varphi_i, g_i`, the
     problem is a convex QCQP solved using :code:`cvxpy` (ECOS solver).
 
     Accepts any compatible backend, but will perform the QCQP optimisation on Numpy arrays, and convert back at the end.
 
-    THIS FUNCTION REQUIRES THE CVXPY LIBRARY
+    .. warning:: This function requires the CVXPY library
+    .. warning:: Accepts any backend but will convert to Numpy then back to the backend.
 
     Parameters
     ----------
@@ -103,14 +105,15 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
     X, V = to_numpy(X), to_numpy(V)
     n, d = X.shape
     if X_classes is not None:
+        X_classes = to_numpy(X_classes)
         assert X_classes.size == n, "incorrect number of class items"
     else:
-        X_classes = nx.zeros(n)
+        X_classes = np.zeros(n)
     if a is None:
-        a = unif(n, type_as=X)
+        a = unif(n)
     if b is None:
-        b = unif(n, type_as=X)
-    assert a.size == b.size == n, 'incorrect measure weight sizes'
+        b = unif(n)
+    assert a.shape[-1] == b.shape[-1] == n, 'incorrect measure weight sizes'
 
     if isinstance(seed, np.random.RandomState):
         G_val = np.random.randn(n, d)
@@ -142,9 +145,9 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
         objective = cvx.Minimize(cost)  # OT cost
         c1, c2, c3 = ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
 
-        for k in nx.unique(X_classes):  # constraints for the convex interpolation
-            for i in nx.where(X_classes == k)[0]:
-                for j in nx.where(X_classes == k)[0]:
+        for k in np.unique(X_classes):  # constraints for the convex interpolation
+            for i in np.where(X_classes == k)[0]:
+                for j in np.where(X_classes == k)[0]:
                     constraints += [
                         phi[i] >= phi[j] + G[j].T @ (X[i] - X[j]) + c1 * cvx.sum_squares(G[i] - G[j]) \
                         + c2 * cvx.sum_squares(X[i] - X[j]) - c3 * (G[j] - G[i]).T @ (X[j] - X[i])
@@ -210,24 +213,29 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
     respectively for l: 'lower' and u: 'upper':
 
     .. math::
-        (\\varphi_{l}(x), \\nabla \\varphi_l(x)) = \\text{argmin}\ t,
+        :nowrap:
 
-        t\in \mathbb{R},\; g\in \mathbb{R}^d,
-
-        \\text{s.t.} \\forall j \in I_k,\; t-\\varphi_j - \langle g_j, y-x_j \\rangle \geq c_1\|g - g_j\|_2^2
-        + c_2\|y-x_j\|_2^2 - c_3\langle g_j-g, x_j -y \\rangle.
+        \begin{gather*}
+        (\varphi_{l}(x), \nabla \varphi_l(x)) = \text{argmin}\ t, \\
+        t\in \mathbb{R},\; g\in \mathbb{R}^d, \\
+        \text{s.t.} \forall j \in I_k,\; t-\varphi_j - \langle g_j, y-x_j \rangle \geq c_1\|g - g_j\|_2^2
+        + c_2\|y-x_j\|_2^2 - c_3\langle g_j-g, x_j -y \rangle.
+        \end{gather*}
 
     .. math::
-        (\\varphi_{u}(x), \\nabla \\varphi_u(x)) = \\text{argmax}\ t,
+        :nowrap:
 
-        t\in \mathbb{R},\; g\in \mathbb{R}^d,
-
-        \\text{s.t.} \\forall i \in I_k,\; \\varphi_i^* -t - \langle g, x_i-y \\rangle \geq c_1\|g_i - g\|_2^2
-        + c_2\|x_i-y\|_2^2 - c_3\langle g-g_i, y -x_i \\rangle.
+        \begin{gather*}
+        (\varphi_{u}(x), \nabla \varphi_u(x)) = \text{argmax}\ t, \\
+        t\in \mathbb{R},\; g\in \mathbb{R}^d, \\
+        \text{s.t.} \forall i \in I_k,\; \varphi_i^* -t - \langle g, x_i-y \rangle \geq c_1\|g_i - g\|_2^2
+        + c_2\|x_i-y\|_2^2 - c_3\langle g-g_i, y -x_i \rangle.
+        \end{gather*}
 
     The constants :math:`c_1, c_2, c_3` only depend on `strongly_convex_constant` and `gradient_lipschitz_constant`.
 
-    THIS FUNCTION REQUIRES THE CVXPY LIBRARY
+    .. warning:: This function requires the CVXPY library
+    .. warning:: Accepts any backend but will convert to Numpy then back to the backend.
 
     Parameters
     ----------
@@ -290,19 +298,21 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
     Y = to_numpy(Y)
     m, d = Y.shape
     if Y_classes is not None:
+        Y_classes = to_numpy(Y_classes)
         assert Y_classes.size == m, 'wrong number of class items for Y'
     else:
-        Y_classes = nx.zeros(m)
+        Y_classes = np.zeros(m)
     assert X.shape[1] == d, f'incompatible dimensions between X: {X.shape} and Y: {Y.shape}'
     n, _ = X.shape
     if X_classes is not None:
+        X_classes = to_numpy(X_classes)
         assert X_classes.size == n, "incorrect number of class items"
     else:
-        X_classes = nx.zeros(n)
+        X_classes = np.zeros(n)
     assert X_classes.size == n, 'wrong number of class items for X'
     c1, c2, c3 = ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
-    phi_lu = nx.zeros((2, m))
-    G_lu = nx.zeros((2, m, d))
+    phi_lu = np.zeros((2, m))
+    G_lu = np.zeros((2, m, d))
     log_dict = {}
 
     for y_idx in range(m):
@@ -313,15 +323,15 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
         objective = cvx.Minimize(phi_l_y)
         constraints = []
         k = Y_classes[y_idx]
-        for j in nx.where(X_classes == k)[0]:
+        for j in np.where(X_classes == k)[0]:
             constraints += [
                 phi_l_y >= phi[j] + G[j].T @ (Y[y_idx] - X[j]) + c1 * cvx.sum_squares(G_l_y - G[j]) \
                 + c2 * cvx.sum_squares(Y[y_idx] - X[j]) - c3 * (G[j] - G_l_y).T @ (X[j] - Y[y_idx])
             ]
         problem = cvx.Problem(objective, constraints)
         problem.solve(solver=cvx.ECOS)
-        phi_lu[0, y_idx] = nx.from_numpy(phi_l_y.value, type_as=X)
-        G_lu[0, y_idx] = nx.from_numpy(G_l_y.value, type_as=X)
+        phi_lu[0, y_idx] = phi_l_y.value
+        G_lu[0, y_idx] = G_l_y.value
         if log:
             log_item['l'] = {
                 'solve_time': problem.solver_stats.solve_time,
@@ -336,15 +346,15 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
         G_u_y = cvx.Variable(d)
         objective = cvx.Maximize(phi_u_y)
         constraints = []
-        for i in nx.where(X_classes == k)[0]:
+        for i in np.where(X_classes == k)[0]:
             constraints += [
                 phi[i] >= phi_u_y + G_u_y.T @ (X[i] - Y[y_idx]) + c1 * cvx.sum_squares(G[i] - G_u_y) \
                 + c2 * cvx.sum_squares(X[i] - Y[y_idx]) - c3 * (G_u_y - G[i]).T @ (Y[y_idx] - X[i])
             ]
         problem = cvx.Problem(objective, constraints)
         problem.solve(solver=cvx.ECOS)
-        phi_lu[1, y_idx] = nx.from_numpy(phi_u_y.value, type_as=X)
-        G_lu[1, y_idx] = nx.from_numpy(G_u_y.value, type_as=X)
+        phi_lu[1, y_idx] = phi_u_y.value
+        G_lu[1, y_idx] = G_u_y.value
         if log:
             log_item['u'] = {
                 'solve_time': problem.solver_stats.solve_time,
@@ -355,6 +365,7 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
             }
             log_dict[y_idx] = log_item
 
+    phi_lu, G_lu = nx.from_numpy(phi_lu), nx.from_numpy(G_lu)
     if not log:
         return phi_lu, G_lu
     return phi_lu, G_lu, log_dict

@@ -611,7 +611,7 @@ def test_linear_mapping_class(nx):
 
         np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
 
-        Xts = nx.to_numpy(otmap.inverse_transform(Xt=Xt))
+        Xts = nx.to_numpy(otmap.inverse_transform(Xt=Xtb))
 
         Cs = np.cov(Xs.T)
         Cts = np.cov(Xts.T)
@@ -851,7 +851,7 @@ def test_emd_laplace(nx):
         ot.da.emd_laplace(ot.unif(ns), ot.unif(nt), Xs, Xt, M, sim=['INVALID', 'INPUT', 2])
 
     # test all margin constraints with gaussian similarity and disp regularisation
-    coupling = ot.da.emd_laplace(ot.unif(ns), ot.unif(nt), Xs, Xt, M, sim='gauss', reg='disp')
+    coupling = ot.da.emd_laplace(ot.unif(ns, type_as=Xs), ot.unif(nt, type_as=Xs), Xs, Xt, M, sim='gauss', reg='disp')
 
     assert_allclose(
         nx.to_numpy(nx.sum(coupling, axis=0)), unif(nt), rtol=1e-3, atol=1e-3)
