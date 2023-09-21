@@ -412,6 +412,14 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('norm')
 
+        A = nx.norm(Mb, axis=1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('norm(M,axis=1)')
+
+        A = nx.norm(Mb, axis=1, keepdims=True)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('norm(M,axis=1,keepdims=True)')
+
         A = nx.any(vb > 0)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('any')
@@ -517,6 +525,12 @@ def test_func_backends(nx):
         A = nx.unique(nx.from_numpy(np.stack([M, M])))
         lst_b.append(nx.to_numpy(A))
         lst_name.append('unique')
+
+        A, A2 = nx.unique(nx.from_numpy(np.stack([M, M]).reshape(-1)), return_inverse=True)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('unique(M,return_inverse=True)[0]')
+        lst_b.append(nx.to_numpy(A2))
+        lst_name.append('unique(M,return_inverse=True)[1]')
 
         A = nx.logsumexp(Mb)
         lst_b.append(nx.to_numpy(A))

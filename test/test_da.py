@@ -801,3 +801,52 @@ def test_emd_laplace_class(nx):
     transp_ys = otda.inverse_transform_labels(yt)
     assert_equal(transp_ys.shape[0], ys.shape[0])
     assert_equal(transp_ys.shape[1], len(np.unique(nx.to_numpy(yt))))
+
+
+@pytest.skip_backend("jax")
+@pytest.skip_backend("tf")
+def test_sinkhorn_l1l2_gl_cost_vectorized(nx):
+    n_samples, n_labels = 150, 3
+    rng = np.random.RandomState(42)
+    G = rng.rand(n_samples, n_samples)
+    labels_a = rng.randint(n_labels, size=(n_samples,))
+    G, labels_a = nx.from_numpy(G), nx.from_numpy(labels_a)
+
+    # previously used implementation for the cost estimator
+    lstlab = nx.unique(labels_a)
+
+    def f(G):
+        res = 0
+        for i in range(G.shape[1]):
+            for lab in lstlab:
+                temp = G[labels_a == lab, i]
+                res += nx.norm(temp)
+        return res
+
+    def df(G):
+        W = nx.zeros(G.shape, type_as=G)
+        for i in range(G.shape[1]):
+            for lab in lstlab:
+                temp = G[labels_a == lab, i]
+                n = nx.norm(temp)
+                if n:
+                    W[labels_a == lab, i] = temp / n
+        return W
+
+    # new vectorized implementation for the cost estimator
+    labels_u, labels_idx = nx.unique(labels_a, return_inverse=True)
+    n_labels = labels_u.shape[0]
+    unroll_labels_idx = nx.eye(n_labels, type_as=labels_u)[None, labels_idx]
+
+    def f2(G):
+        G_split = nx.repeat(G.T[:, :, None], n_labels, axis=2)
+        return nx.sum(nx.norm(G_split * unroll_labels_idx, axis=1))
+
+    def df2(G):
+        G_split = nx.repeat(G.T[:, :, None], n_labels, axis=2) * unroll_labels_idx
+        W = nx.norm(G_split * unroll_labels_idx, axis=1, keepdims=True)
+        G_norm = G_split / nx.clip(W, 1e-12, None)
+        return nx.sum(G_norm, axis=2).T
+
+    assert np.allclose(f(G), f2(G))
+    assert np.allclose(df(G), df2(G))
