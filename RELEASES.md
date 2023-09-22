@@ -1,5 +1,16 @@
 # Releases
 
+## 0.9.2dev
+
+#### New features
++ Tweaked `get_backend` to ignore `None` inputs (PR # 525)
++ Callbacks for generalized conditional gradient in `ot.da.sinkhorn_l1l2_gl` are now vectorized to improve performance (PR #507)
+
+#### Closed issues
+- Fix line search evaluating cost outside of the interpolation range (Issue #502, PR #504)
+- Lazily instantiate backends to avoid unnecessary GPU memory pre-allocations on package import (Issue #516, PR #520)
+
+
 ## 0.9.1
 *August 2023*
 

@@ -3,6 +3,7 @@
 # Author: Remi Flamary <remi.flamary@polytechnique.edu>
 #         Nicolas Courty <ncourty@irisa.fr>
 #
+#
 # License: MIT License
 
 import ot
@@ -411,6 +412,14 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('norm')
 
+        A = nx.norm(Mb, axis=1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('norm(M,axis=1)')
+
+        A = nx.norm(Mb, axis=1, keepdims=True)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('norm(M,axis=1,keepdims=True)')
+
         A = nx.any(vb > 0)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('any')
@@ -516,6 +525,12 @@ def test_func_backends(nx):
         A = nx.unique(nx.from_numpy(np.stack([M, M])))
         lst_b.append(nx.to_numpy(A))
         lst_name.append('unique')
+
+        A, A2 = nx.unique(nx.from_numpy(np.stack([M, M]).reshape(-1)), return_inverse=True)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('unique(M,return_inverse=True)[0]')
+        lst_b.append(nx.to_numpy(A2))
+        lst_name.append('unique(M,return_inverse=True)[1]')
 
         A = nx.logsumexp(Mb)
         lst_b.append(nx.to_numpy(A))
@@ -753,3 +768,11 @@ def test_gradients_backends():
             [dl_dw, dl_db] = tape.gradient(manipulated_loss, [w, b])
             assert nx.allclose(dl_dw, w)
             assert nx.allclose(dl_db, b)
+
+
+def test_get_backend_none():
+    a, b = np.zeros((2, 3)), None
+    nx = get_backend(a, b)
+    assert str(nx) == 'numpy'
+    with pytest.raises(ValueError):
+        get_backend(None, None)
