@@ -9,6 +9,7 @@
 
 #### Closed issues
 - Fix line search evaluating cost outside of the interpolation range (Issue #502, PR #504)
+- Lazily instantiate backends to avoid unnecessary GPU memory pre-allocations on package import (Issue #516, PR #520)
 
 
 ## 0.9.1
