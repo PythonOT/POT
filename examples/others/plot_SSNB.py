@@ -80,14 +80,8 @@ plt.show()
 # %%
 # Fitting the Nearest Brenier Potential
 L = 3  # need L > 2 to allow the 2*y term, default is 1.4
-if not os.path.isfile('/home/eloi/POT_ssnb/examples/others/phi.npy'):
-    phi, G = ot.nearest_brenier_potential_fit(Xs, Xt, Xs_classes, its=10, init_method='barycentric',
-                                              gradient_lipschitz_constant=L)
-    np.save('/home/eloi/POT_ssnb/examples/others/phi.npy', phi)
-    np.save('/home/eloi/POT_ssnb/examples/others/G.npy', G)
-else:
-    phi = np.load('/home/eloi/POT_ssnb/examples/others/phi.npy')
-    G = np.load('/home/eloi/POT_ssnb/examples/others/G.npy')
+phi, G = ot.nearest_brenier_potential_fit(Xs, Xt, Xs_classes, its=10, init_method='barycentric',
+                                          gradient_lipschitz_constant=L)
 
 # %%
 # Plotting the images of the source data
@@ -106,14 +100,8 @@ plt.show()
 n_predict_samples = 50
 Ys = rng.uniform(-1, 1, size=(n_predict_samples, 2))
 Ys_classes = (Ys[:, 0] < 0).astype(int)
-if not os.path.isfile('/home/eloi/POT_ssnb/examples/others/phi_lu.npy'):
-    phi_lu, G_lu = ot.nearest_brenier_potential_predict_bounds(Xs, phi, G, Ys, Xs_classes, Ys_classes,
-                                                               gradient_lipschitz_constant=L)
-    np.save('/home/eloi/POT_ssnb/examples/others/phi_lu.npy', phi_lu)
-    np.save('/home/eloi/POT_ssnb/examples/others/G_lu.npy', G_lu)
-else:
-    phi_lu = np.load('/home/eloi/POT_ssnb/examples/others/phi_lu.npy')
-    G_lu = np.load('/home/eloi/POT_ssnb/examples/others/G_lu.npy')
+phi_lu, G_lu = ot.nearest_brenier_potential_predict_bounds(Xs, phi, G, Ys, Xs_classes, Ys_classes,
+                                                           gradient_lipschitz_constant=L)
 
 # %%
 # Plot predictions for the gradient of the lower-bounding potential
