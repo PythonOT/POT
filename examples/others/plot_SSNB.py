@@ -45,7 +45,6 @@ THIS EXAMPLE REQUIRES CVXPY
 import matplotlib.pyplot as plt
 import numpy as np
 import ot
-import os
 
 # %%
 # Generating the fitting data
