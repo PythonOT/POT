@@ -17,7 +17,7 @@ from .utils import dist, unif, list_to_array, kernel, dots
 
 
 def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly_convex_constant=.6,
-                                  gradient_lipschitz_constant=1.4, its=100, log=False, seed=None):
+                                  gradient_lipschitz_constant=1.4, its=100, log=False, init_method='barycentric'):
     r"""
     Computes optimal values and gradients at X for a strongly convex potential :math:`\varphi` with Lipschitz gradients
     on the partitions defined by `X_classes`, where :math:`\varphi` is optimal such that
@@ -72,8 +72,8 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
         number of iterations, defaults to 100
     log : bool, optional
         record log if true
-    seed: int or RandomState or None, optional
-        Seed used for random number generator
+    init_method : str, optional
+        'target' initialises G=V, 'barycentric' initialises at the image of X by the barycentric projection
 
     Returns
     -------
@@ -112,19 +112,15 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
         assert X_classes.size == n, "incorrect number of class items"
     else:
         X_classes = np.zeros(n)
-    if a is None:
-        a = unif(n)
-    if b is None:
-        b = unif(n)
+    a = unif(n) if a is None else nx.to_numpy(a)
+    b = unif(n) if b is None else nx.to_numpy(b)
     assert a.shape[-1] == b.shape[-1] == n, 'incorrect measure weight sizes'
 
-    if isinstance(seed, np.random.RandomState):
-        G_val = np.random.randn(n, d)
-    else:
-        if seed is not None:
-            np.random.seed(seed)
-        G_val = np.random.randn(n, d)
-
+    assert init_method in ['target', 'barycentric'], f"Unsupported initialization method '{init_method}'"
+    if init_method == 'target':
+        G_val = V
+    else:  # Init G_val with barycentric projection
+        G_val = emd(a, b, dist(X, V)) @ V
     phi_val = None
     log_dict = {
         'G_list': [],

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# sphinx_gallery_thumbnail_number = 2
+# sphinx_gallery_thumbnail_number = 4
 r"""
 =====================================================
 Smooth and Strongly Convex Nearest Brenier Potentials
@@ -10,10 +10,10 @@ SSNB computes an l-strongly convex potential :math:`\varphi` with an L-Lipschitz
 :math:`\nabla \varphi \# \mu \approx \nu`. This regularity can be enforced only on the components of a partition
 of the ambient space, which is a relaxation compared to imposing global regularity.
 
-In this example, we consider a source measure :math:`\mu_s` which is the uniform measure on the unit sphere in
+In this example, we consider a source measure :math:`\mu_s` which is the uniform measure on the unit square in
 :math:`\mathbb{R}^2`, and the target measure :math:`\mu_t` which is the image of :math:`\mu_x` by
-:math:`T(x_1, x_2) = (x_1 + 2\mathrm{sign}(x_2), x_2)`. The map :math:`T` is non-smooth, and we wish to approximate it
-using a "Brenier-style" map :math:`\nabla \varphi` which is regular on the partition
+:math:`T(x_1, x_2) = (x_1 + 2\mathrm{sign}(x_2), 2 * x_2)`. The map :math:`T` is non-smooth, and we wish to approximate
+it using a "Brenier-style" map :math:`\nabla \varphi` which is regular on the partition
 :math:`\lbrace x_1 <=0, x_1>0\rbrace`, which is well adapted to this particular dataset.
 
 We represent the gradients of the "bounding potentials" :math:`\varphi_l, \varphi_u` (from [59], Theorem 3.14),
@@ -45,36 +45,75 @@ THIS EXAMPLE REQUIRES CVXPY
 import matplotlib.pyplot as plt
 import numpy as np
 import ot
+import os
 
 # %%
 # Generating the fitting data
-n_fitting_samples = 16
-t = np.linspace(0, 2 * np.pi, n_fitting_samples)
-r = 1
-Xs = np.stack([r * np.cos(t), r * np.sin(t)], axis=-1)
+n_fitting_samples = 30
+rng = np.random.RandomState(seed=0)
+Xs = rng.uniform(-1, 1, size=(n_fitting_samples, 2))
 Xs_classes = (Xs[:, 0] < 0).astype(int)
-Xt = np.stack([Xs[:, 0] + 2 * np.sign(Xs[:, 0]), Xs[:, 1]], axis=-1)
+Xt = np.stack([Xs[:, 0] + 2 * np.sign(Xs[:, 0]), 2 * Xs[:, 1]], axis=-1)
 
 plt.scatter(Xs[Xs_classes == 0, 0], Xs[Xs_classes == 0, 1], c='blue', label='source class 0')
 plt.scatter(Xs[Xs_classes == 1, 0], Xs[Xs_classes == 1, 1], c='dodgerblue', label='source class 1')
 plt.scatter(Xt[:, 0], Xt[:, 1], c='red', label='target')
+plt.axis('equal')
 plt.title('Splitting sphere dataset')
 plt.legend(loc='upper right')
 plt.show()
 
 # %%
+# Plotting image of barycentric projection (SSNB initialisation values)
+plt.clf()
+pi = ot.emd(ot.unif(n_fitting_samples), ot.unif(n_fitting_samples), ot.dist(Xs, Xt))
+plt.scatter(Xs[:, 0], Xs[:, 1], c='dodgerblue', label='source')
+plt.scatter(Xt[:, 0], Xt[:, 1], c='red', label='target')
+bar_img = pi @ Xt
+for i in range(n_fitting_samples):
+    plt.plot([Xs[i, 0], bar_img[i, 0]], [Xs[i, 1], bar_img[i, 1]], color='black', alpha=.5)
+plt.title('Images of in-data source samples by the barycentric map')
+plt.legend(loc='upper right')
+plt.axis('equal')
+plt.show()
+
+# %%
 # Fitting the Nearest Brenier Potential
-phi, G = ot.nearest_brenier_potential_fit(Xs, Xt, Xs_classes, its=10, seed=0)
+L = 3  # need L > 2 to allow the 2*y term, default is 1.4
+if not os.path.isfile('/home/eloi/POT_ssnb/examples/others/phi.npy'):
+    phi, G = ot.nearest_brenier_potential_fit(Xs, Xt, Xs_classes, its=10, init_method='barycentric',
+                                              gradient_lipschitz_constant=L)
+    np.save('/home/eloi/POT_ssnb/examples/others/phi.npy', phi)
+    np.save('/home/eloi/POT_ssnb/examples/others/G.npy', G)
+else:
+    phi = np.load('/home/eloi/POT_ssnb/examples/others/phi.npy')
+    G = np.load('/home/eloi/POT_ssnb/examples/others/G.npy')
+
+# %%
+# Plotting the images of the source data
+plt.clf()
+plt.scatter(Xs[:, 0], Xs[:, 1], c='dodgerblue', label='source')
+plt.scatter(Xt[:, 0], Xt[:, 1], c='red', label='target')
+for i in range(n_fitting_samples):
+    plt.plot([Xs[i, 0], G[i, 0]], [Xs[i, 1], G[i, 1]], color='black', alpha=.5)
+plt.title('Images of in-data source samples by the fitted SSNB')
+plt.legend(loc='upper right')
+plt.axis('equal')
+plt.show()
 
 # %%
 # Computing the predictions (images by nabla phi) for random samples of the source distribution
-rng = np.random.RandomState(seed=0)
-n_predict_samples = 100
-t = rng.uniform(0, 2 * np.pi, size=n_predict_samples)
-r = rng.uniform(size=n_predict_samples)
-Ys = np.stack([r * np.cos(t), r * np.sin(t)], axis=-1)
+n_predict_samples = 50
+Ys = rng.uniform(-1, 1, size=(n_predict_samples, 2))
 Ys_classes = (Ys[:, 0] < 0).astype(int)
-phi_lu, G_lu = ot.nearest_brenier_potential_predict_bounds(Xs, phi, G, Ys, Xs_classes, Ys_classes)
+if not os.path.isfile('/home/eloi/POT_ssnb/examples/others/phi_lu.npy'):
+    phi_lu, G_lu = ot.nearest_brenier_potential_predict_bounds(Xs, phi, G, Ys, Xs_classes, Ys_classes,
+                                                               gradient_lipschitz_constant=L)
+    np.save('/home/eloi/POT_ssnb/examples/others/phi_lu.npy', phi_lu)
+    np.save('/home/eloi/POT_ssnb/examples/others/G_lu.npy', G_lu)
+else:
+    phi_lu = np.load('/home/eloi/POT_ssnb/examples/others/phi_lu.npy')
+    G_lu = np.load('/home/eloi/POT_ssnb/examples/others/G_lu.npy')
 
 # %%
 # Plot predictions for the gradient of the lower-bounding potential
@@ -85,6 +124,7 @@ for i in range(n_predict_samples):
     plt.plot([Ys[i, 0], G_lu[0, i, 0]], [Ys[i, 1], G_lu[0, i, 1]], color='black', alpha=.5)
 plt.title('Images of new source samples by $\\nabla \\varphi_l$')
 plt.legend(loc='upper right')
+plt.axis('equal')
 plt.show()
 
 # %%
@@ -96,4 +136,5 @@ for i in range(n_predict_samples):
     plt.plot([Ys[i, 0], G_lu[1, i, 0]], [Ys[i, 1], G_lu[1, i, 1]], color='black', alpha=.5)
 plt.title('Images of new source samples by $\\nabla \\varphi_u$')
 plt.legend(loc='upper right')
+plt.axis('equal')
 plt.show()

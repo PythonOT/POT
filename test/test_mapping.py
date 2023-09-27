@@ -29,10 +29,9 @@ def test_nearest_brenier_potential_fit(nx):
     X = nx.ones((2, 2))
     phi, G, log = ot.nearest_brenier_potential_fit(X, X, its=3, log=True)
     np.testing.assert_almost_equal(to_numpy(G), to_numpy(X))  # image of source should be close to target
-    # test without log but with X_classes and seed
-    ot.nearest_brenier_potential_fit(X, X, X_classes=nx.ones(2), its=1, seed=0)
-    # test with seed being a np.random.RandomState
-    ot.nearest_brenier_potential_fit(X, X, its=1, seed=np.random.RandomState(seed=0))
+    # test without log but with X_classes, a, b and other init method
+    a = nx.ones(2) / 2
+    ot.nearest_brenier_potential_fit(X, X, X_classes=nx.ones(2), a=a, b=a, its=1, init_method='target')
 
 
 @pytest.mark.skipif(nocvxpy, reason="No CVXPY available")
@@ -47,7 +46,12 @@ def test_brenier_potential_predict_bounds(nx):
     ot.nearest_brenier_potential_predict_bounds(X, phi, G, X, X_classes=nx.ones(2), Y_classes=nx.ones(2))
 
 
-def test_joint_OT_mapping_verbose():
-    xs = np.zeros((2, 1))
+def test_joint_OT_mapping():
+    """
+    Complements the tests in test_da, for verbose, log and bias options
+    """
+    xs = np.array([[.1, .2], [-.1, .3]])
     ot.mapping.joint_OT_mapping_kernel(xs, xs, verbose=True)
     ot.mapping.joint_OT_mapping_linear(xs, xs, verbose=True)
+    ot.mapping.joint_OT_mapping_kernel(xs, xs, log=True, bias=True)
+    ot.mapping.joint_OT_mapping_linear(xs, xs, log=True, bias=True)
