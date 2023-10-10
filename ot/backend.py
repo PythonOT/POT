@@ -87,43 +87,67 @@ Performance
 # License: MIT License
 
 import numpy as np
+import os
 import scipy
 import scipy.linalg
-import scipy.special as special
 from scipy.sparse import issparse, coo_matrix, csr_matrix
-import warnings
+import scipy.special as special
 import time
+import warnings
 
-try:
-    import torch
-    torch_type = torch.Tensor
-except ImportError:
+
+DISABLE_TORCH_KEY = 'POT_BACKEND_DISABLE_PYTORCH'
+DISABLE_JAX_KEY = 'POT_BACKEND_DISABLE_JAX'
+DISABLE_CUPY_KEY = 'POT_BACKEND_DISABLE_CUPY'
+DISABLE_TF_KEY = 'POT_BACKEND_DISABLE_TENSORFLOW'
+
+
+if not os.environ.get(DISABLE_TORCH_KEY, False):
+    try:
+        import torch
+        torch_type = torch.Tensor
+    except ImportError:
+        torch = False
+        torch_type = float
+else:
     torch = False
     torch_type = float
 
-try:
-    import jax
-    import jax.numpy as jnp
-    import jax.scipy.special as jspecial
-    from jax.lib import xla_bridge
-    jax_type = jax.numpy.ndarray
-except ImportError:
+if not os.environ.get(DISABLE_JAX_KEY, False):
+    try:
+        import jax
+        import jax.numpy as jnp
+        import jax.scipy.special as jspecial
+        from jax.lib import xla_bridge
+        jax_type = jax.numpy.ndarray
+    except ImportError:
+        jax = False
+        jax_type = float
+else:
     jax = False
     jax_type = float
 
-try:
-    import cupy as cp
-    import cupyx
-    cp_type = cp.ndarray
-except ImportError:
+if not os.environ.get(DISABLE_CUPY_KEY, False):
+    try:
+        import cupy as cp
+        import cupyx
+        cp_type = cp.ndarray
+    except ImportError:
+        cp = False
+        cp_type = float
+else:
     cp = False
     cp_type = float
 
-try:
-    import tensorflow as tf
-    import tensorflow.experimental.numpy as tnp
-    tf_type = tf.Tensor
-except ImportError:
+if not os.environ.get(DISABLE_TF_KEY, False):
+    try:
+        import tensorflow as tf
+        import tensorflow.experimental.numpy as tnp
+        tf_type = tf.Tensor
+    except ImportError:
+        tf = False
+        tf_type = float
+else:
     tf = False
     tf_type = float
 
@@ -132,40 +156,69 @@ str_type_error = "All array should be from the same type/backend. Current types 
 
 
 # Mapping between argument types and the existing backend
-_BACKENDS = []
+_BACKEND_IMPLEMENTATIONS = []
+_BACKENDS = {}
 
 
-def register_backend(backend):
-    _BACKENDS.append(backend)
+def _register_backend_implementation(backend_impl):
+    _BACKEND_IMPLEMENTATIONS.append(backend_impl)
 
 
-def get_backend_list():
-    """Returns the list of available backends"""
-    return _BACKENDS
+def _get_backend_instance(backend_impl):
+    if backend_impl.__name__ not in _BACKENDS:
+        _BACKENDS[backend_impl.__name__] = backend_impl()
+    return _BACKENDS[backend_impl.__name__]
 
 
-def _check_args_backend(backend, args):
-    is_instance = set(isinstance(a, backend.__type__) for a in args)
+def _check_args_backend(backend_impl, args):
+    is_instance = set(isinstance(arg, backend_impl.__type__) for arg in args)
     # check that all arguments matched or not the type
     if len(is_instance) == 1:
         return is_instance.pop()
 
-    # Oterwise return an error
-    raise ValueError(str_type_error.format([type(a) for a in args]))
+    # Otherwise return an error
+    raise ValueError(str_type_error.format([type(arg) for arg in args]))
+
+
+def get_backend_list():
+    """Returns instances of all available backends.
+
+    Note that the function forces all detected implementations
+    to be instantiated even if specific backend was not use before.
+    Be careful as instantiation of the backend might lead to side effects,
+    like GPU memory pre-allocation. See the documentation for more details.
+    If you only need to know which implementations are available,
+    use `:py:func:`ot.backend.get_available_backend_implementations`,
+    which does not force instance of the backend object to be created.
+    """
+    return [
+        _get_backend_instance(backend_impl)
+        for backend_impl
+        in get_available_backend_implementations()
+    ]
+
+
+def get_available_backend_implementations():
+    """Returns the list of available backend implementations."""
+    return _BACKEND_IMPLEMENTATIONS
 
 
 def get_backend(*args):
     """Returns the proper backend for a list of input arrays
 
+        Accepts None entries in the arguments, and ignores them
+
         Also raises TypeError if all arrays are not from the same backend
     """
+    args = [arg for arg in args if arg is not None]  # exclude None entries
+
     # check that some arrays given
     if not len(args) > 0:
-        raise ValueError(" The function takes at least one parameter")
+        raise ValueError(" The function takes at least one (non-None) parameter")
 
-    for backend in _BACKENDS:
-        if _check_args_backend(backend, args):
-            return backend
+    for backend_impl in _BACKEND_IMPLEMENTATIONS:
+        if _check_args_backend(backend_impl, args):
+            return _get_backend_instance(backend_impl)
 
     raise ValueError("Unknown type of non implemented backend.")
 
@@ -407,7 +460,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def norm(self, a):
+    def norm(self, a, axis=None, keepdims=False):
         r"""
         Computes the matrix frobenius norm.
 
@@ -627,7 +680,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def unique(self, a):
+    def unique(self, a, return_inverse=False):
         r"""
         Finds unique elements of given tensor.
 
@@ -1087,8 +1140,8 @@ class NumpyBackend(Backend):
     def power(self, a, exponents):
         return np.power(a, exponents)
 
-    def norm(self, a):
-        return np.sqrt(np.sum(np.square(a)))
+    def norm(self, a, axis=None, keepdims=False):
+        return np.linalg.norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return np.any(a)
@@ -1164,8 +1217,8 @@ class NumpyBackend(Backend):
     def diag(self, a, k=0):
         return np.diag(a, k)
 
-    def unique(self, a):
-        return np.unique(a)
+    def unique(self, a, return_inverse=False):
+        return np.unique(a, return_inverse=return_inverse)
 
     def logsumexp(self, a, axis=None):
         return special.logsumexp(a, axis=axis)
@@ -1337,7 +1390,7 @@ class NumpyBackend(Backend):
         return np.matmul(a, b)
 
 
-register_backend(NumpyBackend())
+_register_backend_implementation(NumpyBackend)
 
 
 class JaxBackend(Backend):
@@ -1461,8 +1514,8 @@ class JaxBackend(Backend):
     def power(self, a, exponents):
         return jnp.power(a, exponents)
 
-    def norm(self, a):
-        return jnp.sqrt(jnp.sum(jnp.square(a)))
+    def norm(self, a, axis=None, keepdims=False):
+        return jnp.linalg.norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return jnp.any(a)
@@ -1535,8 +1588,8 @@ class JaxBackend(Backend):
     def diag(self, a, k=0):
         return jnp.diag(a, k)
 
-    def unique(self, a):
-        return jnp.unique(a)
+    def unique(self, a, return_inverse=False):
+        return jnp.unique(a, return_inverse=return_inverse)
 
     def logsumexp(self, a, axis=None):
         return jspecial.logsumexp(a, axis=axis)
@@ -1706,7 +1759,7 @@ class JaxBackend(Backend):
 
 if jax:
     # Only register jax backend if it is installed
-    register_backend(JaxBackend())
+    _register_backend_implementation(JaxBackend)
 
 
 class TorchBackend(Backend):
@@ -1881,8 +1934,8 @@ class TorchBackend(Backend):
     def power(self, a, exponents):
         return torch.pow(a, exponents)
 
-    def norm(self, a):
-        return torch.sqrt(torch.sum(torch.square(a)))
+    def norm(self, a, axis=None, keepdims=False):
+        return torch.linalg.norm(a.double(), dim=axis, keepdims=keepdims)
 
     def any(self, a):
         return torch.any(a)
@@ -1986,8 +2039,8 @@ class TorchBackend(Backend):
     def diag(self, a, k=0):
         return torch.diag(a, diagonal=k)
 
-    def unique(self, a):
-        return torch.unique(a)
+    def unique(self, a, return_inverse=False):
+        return torch.unique(a, return_inverse=return_inverse)
 
     def logsumexp(self, a, axis=None):
         if axis is not None:
@@ -2189,7 +2242,7 @@ class TorchBackend(Backend):
 
 if torch:
     # Only register torch backend if it is installed
-    register_backend(TorchBackend())
+    _register_backend_implementation(TorchBackend)
 
 
 class CupyBackend(Backend):  # pragma: no cover
@@ -2306,8 +2359,8 @@ class CupyBackend(Backend):  # pragma: no cover
     def dot(self, a, b):
         return cp.dot(a, b)
 
-    def norm(self, a):
-        return cp.sqrt(cp.sum(cp.square(a)))
+    def norm(self, a, axis=None, keepdims=False):
+        return cp.linalg.norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return cp.any(a)
@@ -2383,8 +2436,8 @@ class CupyBackend(Backend):  # pragma: no cover
     def diag(self, a, k=0):
         return cp.diag(a, k)
 
-    def unique(self, a):
-        return cp.unique(a)
+    def unique(self, a, return_inverse=False):
+        return cp.unique(a, return_inverse=return_inverse)
 
     def logsumexp(self, a, axis=None):
         # Taken from
@@ -2582,7 +2635,7 @@ class CupyBackend(Backend):  # pragma: no cover
 
 if cp:
     # Only register cp backend if it is installed
-    register_backend(CupyBackend())
+    _register_backend_implementation(CupyBackend)
 
 
 class TensorflowBackend(Backend):
@@ -2717,8 +2770,8 @@ class TensorflowBackend(Backend):
     def power(self, a, exponents):
         return tnp.power(a, exponents)
 
-    def norm(self, a):
-        return tf.math.reduce_euclidean_norm(a)
+    def norm(self, a, axis=None, keepdims=False):
+        return tf.math.reduce_euclidean_norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return tnp.any(a)
@@ -2790,8 +2843,15 @@ class TensorflowBackend(Backend):
     def diag(self, a, k=0):
         return tnp.diag(a, k)
 
-    def unique(self, a):
-        return tf.sort(tf.unique(tf.reshape(a, [-1]))[0])
+    def unique(self, a, return_inverse=False):
+        y, idx = tf.unique(tf.reshape(a, [-1]))
+        sort_idx = tf.argsort(y)
+        y_prime = tf.gather(y, sort_idx)
+        if return_inverse:
+            inv_sort_idx = tf.math.invert_permutation(sort_idx)
+            return y_prime, tf.gather(inv_sort_idx, idx)
+        else:
+            return y_prime
 
     def logsumexp(self, a, axis=None):
         return tf.math.reduce_logsumexp(a, axis=axis)
@@ -2995,4 +3055,4 @@ class TensorflowBackend(Backend):
 
 if tf:
     # Only register tensorflow backend if it is installed
-    register_backend(TensorflowBackend())
+    _register_backend_implementation(TensorflowBackend)
