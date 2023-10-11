@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Optimal Transport maps and variants
+
+.. warning::
+    Note that by default the module is not imported in :mod:`ot`. In order to
+    use it you need to explicitly import :mod:`ot.mapping`
 """
 
 # Author: Eloi Tanguy <eloi.tanguy@u-paris.fr>
@@ -142,7 +146,7 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
             for j in range(n):
                 cost += cvx.sum_squares(G[i, :] - V[j, :]) * plan[i, j]
         objective = cvx.Minimize(cost)  # OT cost
-        c1, c2, c3 = ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
+        c1, c2, c3 = _ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
 
         for k in np.unique(X_classes):  # constraints for the convex interpolation
             for i in np.where(X_classes == k)[0]:
@@ -174,7 +178,7 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
     return phi_val, G_val, log_dict
 
 
-def ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant):
+def _ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant):
     r"""
     Handy function computing the constants for the Nearest Brenier Potential QCQP problems
 
@@ -309,7 +313,7 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
     else:
         X_classes = np.zeros(n)
     assert X_classes.size == n, 'wrong number of class items for X'
-    c1, c2, c3 = ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
+    c1, c2, c3 = _ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
     phi_lu = np.zeros((2, m))
     G_lu = np.zeros((2, m, d))
     log_dict = {}

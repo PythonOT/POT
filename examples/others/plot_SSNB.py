@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# sphinx_gallery_thumbnail_number = 4
 r"""
 =====================================================
 Smooth and Strongly Convex Nearest Brenier Potentials
@@ -42,6 +41,8 @@ THIS EXAMPLE REQUIRES CVXPY
 # Author: Eloi Tanguy <eloi.tanguy@u-paris.fr>
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 4
+
 import matplotlib.pyplot as plt
 import numpy as np
 import ot
@@ -79,8 +80,8 @@ plt.show()
 # %%
 # Fitting the Nearest Brenier Potential
 L = 3  # need L > 2 to allow the 2*y term, default is 1.4
-phi, G = ot.nearest_brenier_potential_fit(Xs, Xt, Xs_classes, its=10, init_method='barycentric',
-                                          gradient_lipschitz_constant=L)
+phi, G = ot.mapping.nearest_brenier_potential_fit(Xs, Xt, Xs_classes, its=10, init_method='barycentric',
+                                                  gradient_lipschitz_constant=L)
 
 # %%
 # Plotting the images of the source data
@@ -99,8 +100,8 @@ plt.show()
 n_predict_samples = 50
 Ys = rng.uniform(-1, 1, size=(n_predict_samples, 2))
 Ys_classes = (Ys[:, 0] < 0).astype(int)
-phi_lu, G_lu = ot.nearest_brenier_potential_predict_bounds(Xs, phi, G, Ys, Xs_classes, Ys_classes,
-                                                           gradient_lipschitz_constant=L)
+phi_lu, G_lu = ot.mapping.nearest_brenier_potential_predict_bounds(Xs, phi, G, Ys, Xs_classes, Ys_classes,
+                                                                   gradient_lipschitz_constant=L)
 
 # %%
 # Plot predictions for the gradient of the lower-bounding potential

@@ -35,7 +35,6 @@ from . import weak
 from . import factored
 from . import solvers
 from . import gaussian
-from . import mapping
 
 # OT functions
 from .lp import (emd, emd2, emd_1d, emd2_1d, wasserstein_1d,
@@ -52,8 +51,6 @@ from .gromov import (gromov_wasserstein, gromov_wasserstein2,
 from .weak import weak_optimal_transport
 from .factored import factored_optimal_transport
 from .solvers import solve
-from .mapping import (nearest_brenier_potential_fit, nearest_brenier_potential_predict_bounds, joint_OT_mapping_kernel,
-                      joint_OT_mapping_linear)
 
 # utils functions
 from .utils import dist, unif, tic, toc, toq
@@ -71,5 +68,4 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'factored_optimal_transport', 'solve',
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath', 'solvers',
            'binary_search_circle', 'wasserstein_circle',
-           'semidiscrete_wasserstein2_unif_circle', 'sliced_wasserstein_sphere_unif', 'nearest_brenier_potential_fit',
-           'nearest_brenier_potential_predict_bounds', 'joint_OT_mapping_kernel', 'joint_OT_mapping_linear']
+           'semidiscrete_wasserstein2_unif_circle', 'sliced_wasserstein_sphere_unif']
