@@ -29,7 +29,7 @@ def get_random_projections(d, n_projections, seed=None, backend=None, type_as=No
     seed: int or RandomState, optional
         Seed used for numpy random number generator
     backend:
-        Backend to ue for random generation
+        Backend to use for random generation
 
     Returns
     -------

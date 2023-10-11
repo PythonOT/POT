@@ -25,6 +25,7 @@ API and modules
    gnn
    gromov
    lp
+   mapping
    optim
    partial
    plot

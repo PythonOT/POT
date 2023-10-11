@@ -8,6 +8,7 @@ Domain adaptation with optimal transport
 #         Michael Perrot <michael.perrot@univ-st-etienne.fr>
 #         Nathalie Gayraud <nat.gayraud@gmail.com>
 #         Ievgen Redko <ievgen.redko@univ-st-etienne.fr>
+#         Eloi Tanguy <eloi.tanguy@u-paris.fr>
 #
 # License: MIT License
 
@@ -22,6 +23,8 @@ from .unbalanced import sinkhorn_unbalanced
 from .gaussian import empirical_bures_wasserstein_mapping, empirical_gaussian_gromov_wasserstein_mapping
 from .optim import cg
 from .optim import gcg
+from .mapping import nearest_brenier_potential_fit, nearest_brenier_potential_predict_bounds, joint_OT_mapping_linear, \
+    joint_OT_mapping_kernel
 
 
 def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
@@ -254,426 +257,6 @@ def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
     return gcg(a, b, M, reg, eta, f, df, G0=None, numItermax=numItermax,
                numInnerItermax=numInnerItermax, stopThr=stopInnerThr,
                verbose=verbose, log=log)
-
-
-def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
-                            verbose2=False, numItermax=100, numInnerItermax=10,
-                            stopInnerThr=1e-6, stopThr=1e-5, log=False,
-                            **kwargs):
-    r"""Joint OT and linear mapping estimation as proposed in
-    :ref:`[8] <references-joint-OT-mapping-linear>`.
-
-    The function solves the following optimization problem:
-
-    .. math::
-        \min_{\gamma,L}\quad \|L(\mathbf{X_s}) - n_s\gamma \mathbf{X_t} \|^2_F +
-          \mu \langle \gamma, \mathbf{M} \rangle_F + \eta \|L - \mathbf{I}\|^2_F
-
-        s.t. \ \gamma \mathbf{1} = \mathbf{a}
-
-             \gamma^T \mathbf{1} = \mathbf{b}
-
-             \gamma \geq 0
-
-    where :
-
-    - :math:`\mathbf{M}` is the (`ns`, `nt`) squared euclidean cost matrix between samples in
-      :math:`\mathbf{X_s}` and :math:`\mathbf{X_t}` (scaled by :math:`n_s`)
-    - :math:`L` is a :math:`d\times d` linear operator that approximates the barycentric
-      mapping
-    - :math:`\mathbf{I}` is the identity matrix (neutral linear mapping)
-    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are uniform source and target weights
-
-    The problem consist in solving jointly an optimal transport matrix
-    :math:`\gamma` and a linear mapping that fits the barycentric mapping
-    :math:`n_s\gamma \mathbf{X_t}`.
-
-    One can also estimate a mapping with constant bias (see supplementary
-    material of :ref:`[8] <references-joint-OT-mapping-linear>`) using the bias optional argument.
-
-    The algorithm used for solving the problem is the block coordinate
-    descent that alternates between updates of :math:`\mathbf{G}` (using conditional gradient)
-    and the update of :math:`\mathbf{L}` using a classical least square solver.
-
-
-    Parameters
-    ----------
-    xs : array-like (ns,d)
-        samples in the source domain
-    xt : array-like (nt,d)
-        samples in the target domain
-    mu : float,optional
-        Weight for the linear OT loss (>0)
-    eta : float, optional
-        Regularization term  for the linear mapping L (>0)
-    bias : bool,optional
-        Estimate linear mapping with constant bias
-    numItermax : int, optional
-        Max number of BCD iterations
-    stopThr : float, optional
-        Stop threshold on relative loss decrease (>0)
-    numInnerItermax : int, optional
-        Max number of iterations (inner CG solver)
-    stopInnerThr : float, optional
-        Stop threshold on error (inner CG solver) (>0)
-    verbose : bool, optional
-        Print information along iterations
-    log : bool, optional
-        record log if True
-
-
-    Returns
-    -------
-    gamma : (ns, nt) array-like
-        Optimal transportation matrix for the given parameters
-    L : (d, d) array-like
-        Linear mapping matrix ((:math:`d+1`, `d`) if bias)
-    log : dict
-        log dictionary return only if log==True in parameters
-
-
-    .. _references-joint-OT-mapping-linear:
-    References
-    ----------
-    .. [8] M. Perrot, N. Courty, R. Flamary, A. Habrard,
-        "Mapping estimation for discrete optimal transport",
-        Neural Information Processing Systems (NIPS), 2016.
-
-    See Also
-    --------
-    ot.lp.emd : Unregularized OT
-    ot.optim.cg : General regularized OT
-
-    """
-    xs, xt = list_to_array(xs, xt)
-    nx = get_backend(xs, xt)
-
-    ns, nt, d = xs.shape[0], xt.shape[0], xt.shape[1]
-
-    if bias:
-        xs1 = nx.concatenate((xs, nx.ones((ns, 1), type_as=xs)), axis=1)
-        xstxs = nx.dot(xs1.T, xs1)
-        Id = nx.eye(d + 1, type_as=xs)
-        Id[-1] = 0
-        I0 = Id[:, :-1]
-
-        def sel(x):
-            return x[:-1, :]
-    else:
-        xs1 = xs
-        xstxs = nx.dot(xs1.T, xs1)
-        Id = nx.eye(d, type_as=xs)
-        I0 = Id
-
-        def sel(x):
-            return x
-
-    if log:
-        log = {'err': []}
-
-    a = unif(ns, type_as=xs)
-    b = unif(nt, type_as=xt)
-    M = dist(xs, xt) * ns
-    G = emd(a, b, M)
-
-    vloss = []
-
-    def loss(L, G):
-        """Compute full loss"""
-        return (
-            nx.sum((nx.dot(xs1, L) - ns * nx.dot(G, xt)) ** 2)
-            + mu * nx.sum(G * M)
-            + eta * nx.sum(sel(L - I0) ** 2)
-        )
-
-    def solve_L(G):
-        """ solve L problem with fixed G (least square)"""
-        xst = ns * nx.dot(G, xt)
-        return nx.solve(xstxs + eta * Id, nx.dot(xs1.T, xst) + eta * I0)
-
-    def solve_G(L, G0):
-        """Update G with CG algorithm"""
-        xsi = nx.dot(xs1, L)
-
-        def f(G):
-            return nx.sum((xsi - ns * nx.dot(G, xt)) ** 2)
-
-        def df(G):
-            return -2 * ns * nx.dot(xsi - ns * nx.dot(G, xt), xt.T)
-
-        G = cg(a, b, M, 1.0 / mu, f, df, G0=G0,
-               numItermax=numInnerItermax, stopThr=stopInnerThr)
-        return G
-
-    L = solve_L(G)
-
-    vloss.append(loss(L, G))
-
-    if verbose:
-        print('{:5s}|{:12s}|{:8s}'.format(
-            'It.', 'Loss', 'Delta loss') + '\n' + '-' * 32)
-        print('{:5d}|{:8e}|{:8e}'.format(0, vloss[-1], 0))
-
-    # init loop
-    if numItermax > 0:
-        loop = 1
-    else:
-        loop = 0
-    it = 0
-
-    while loop:
-
-        it += 1
-
-        # update G
-        G = solve_G(L, G)
-
-        # update L
-        L = solve_L(G)
-
-        vloss.append(loss(L, G))
-
-        if it >= numItermax:
-            loop = 0
-
-        if abs(vloss[-1] - vloss[-2]) / abs(vloss[-2]) < stopThr:
-            loop = 0
-
-        if verbose:
-            if it % 20 == 0:
-                print('{:5s}|{:12s}|{:8s}'.format(
-                    'It.', 'Loss', 'Delta loss') + '\n' + '-' * 32)
-            print('{:5d}|{:8e}|{:8e}'.format(
-                it, vloss[-1], (vloss[-1] - vloss[-2]) / abs(vloss[-2])))
-    if log:
-        log['loss'] = vloss
-        return G, L, log
-    else:
-        return G, L
-
-
-def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
-                            sigma=1, bias=False, verbose=False, verbose2=False,
-                            numItermax=100, numInnerItermax=10,
-                            stopInnerThr=1e-6, stopThr=1e-5, log=False,
-                            **kwargs):
-    r"""Joint OT and nonlinear mapping estimation with kernels as proposed in
-    :ref:`[8] <references-joint-OT-mapping-kernel>`.
-
-    The function solves the following optimization problem:
-
-    .. math::
-        \min_{\gamma, L\in\mathcal{H}}\quad \|L(\mathbf{X_s}) -
-        n_s\gamma \mathbf{X_t}\|^2_F + \mu \langle \gamma, \mathbf{M} \rangle_F +
-        \eta \|L\|^2_\mathcal{H}
-
-        s.t. \ \gamma \mathbf{1} = \mathbf{a}
-
-             \gamma^T \mathbf{1} = \mathbf{b}
-
-             \gamma \geq 0
-
-
-    where :
-
-    - :math:`\mathbf{M}` is the (`ns`, `nt`) squared euclidean cost matrix between samples in
-      :math:`\mathbf{X_s}` and :math:`\mathbf{X_t}` (scaled by :math:`n_s`)
-    - :math:`L` is a :math:`n_s \times d` linear operator on a kernel matrix that
-      approximates the barycentric mapping
-    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are uniform source and target weights
-
-    The problem consist in solving jointly an optimal transport matrix
-    :math:`\gamma` and the nonlinear mapping that fits the barycentric mapping
-    :math:`n_s\gamma \mathbf{X_t}`.
-
-    One can also estimate a mapping with constant bias (see supplementary
-    material of :ref:`[8] <references-joint-OT-mapping-kernel>`) using the bias optional argument.
-
-    The algorithm used for solving the problem is the block coordinate
-    descent that alternates between updates of :math:`\mathbf{G}` (using conditional gradient)
-    and the update of :math:`\mathbf{L}` using a classical kernel least square solver.
-
-
-    Parameters
-    ----------
-    xs : array-like (ns,d)
-        samples in the source domain
-    xt : array-like (nt,d)
-        samples in the target domain
-    mu : float,optional
-        Weight for the linear OT loss (>0)
-    eta : float, optional
-        Regularization term  for the linear mapping L (>0)
-    kerneltype : str,optional
-        kernel used by calling function :py:func:`ot.utils.kernel` (gaussian by default)
-    sigma : float, optional
-        Gaussian kernel bandwidth.
-    bias : bool,optional
-        Estimate linear mapping with constant bias
-    verbose : bool, optional
-        Print information along iterations
-    verbose2 : bool, optional
-        Print information along iterations
-    numItermax : int, optional
-        Max number of BCD iterations
-    numInnerItermax : int, optional
-        Max number of iterations (inner CG solver)
-    stopInnerThr : float, optional
-        Stop threshold on error (inner CG solver) (>0)
-    stopThr : float, optional
-        Stop threshold on relative loss decrease (>0)
-    log : bool, optional
-        record log if True
-
-
-    Returns
-    -------
-    gamma : (ns, nt) array-like
-        Optimal transportation matrix for the given parameters
-    L : (ns, d) array-like
-        Nonlinear mapping matrix ((:math:`n_s+1`, `d`) if bias)
-    log : dict
-        log dictionary return only if log==True in parameters
-
-
-    .. _references-joint-OT-mapping-kernel:
-    References
-    ----------
-    .. [8] M. Perrot, N. Courty, R. Flamary, A. Habrard,
-       "Mapping estimation for discrete optimal transport",
-       Neural Information Processing Systems (NIPS), 2016.
-
-    See Also
-    --------
-    ot.lp.emd : Unregularized OT
-    ot.optim.cg : General regularized OT
-
-    """
-    xs, xt = list_to_array(xs, xt)
-    nx = get_backend(xs, xt)
-
-    ns, nt = xs.shape[0], xt.shape[0]
-
-    K = kernel(xs, xs, method=kerneltype, sigma=sigma)
-    if bias:
-        K1 = nx.concatenate((K, nx.ones((ns, 1), type_as=xs)), axis=1)
-        Id = nx.eye(ns + 1, type_as=xs)
-        Id[-1] = 0
-        Kp = nx.eye(ns + 1, type_as=xs)
-        Kp[:ns, :ns] = K
-
-        # ls regu
-        # K0 = K1.T.dot(K1)+eta*I
-        # Kreg=I
-
-        # RKHS regul
-        K0 = nx.dot(K1.T, K1) + eta * Kp
-        Kreg = Kp
-
-    else:
-        K1 = K
-        Id = nx.eye(ns, type_as=xs)
-
-        # ls regul
-        # K0 = K1.T.dot(K1)+eta*I
-        # Kreg=I
-
-        # proper kernel ridge
-        K0 = K + eta * Id
-        Kreg = K
-
-    if log:
-        log = {'err': []}
-
-    a = unif(ns, type_as=xs)
-    b = unif(nt, type_as=xt)
-    M = dist(xs, xt) * ns
-    G = emd(a, b, M)
-
-    vloss = []
-
-    def loss(L, G):
-        """Compute full loss"""
-        return (
-            nx.sum((nx.dot(K1, L) - ns * nx.dot(G, xt)) ** 2)
-            + mu * nx.sum(G * M)
-            + eta * nx.trace(dots(L.T, Kreg, L))
-        )
-
-    def solve_L_nobias(G):
-        """ solve L problem with fixed G (least square)"""
-        xst = ns * nx.dot(G, xt)
-        return nx.solve(K0, xst)
-
-    def solve_L_bias(G):
-        """ solve L problem with fixed G (least square)"""
-        xst = ns * nx.dot(G, xt)
-        return nx.solve(K0, nx.dot(K1.T, xst))
-
-    def solve_G(L, G0):
-        """Update G with CG algorithm"""
-        xsi = nx.dot(K1, L)
-
-        def f(G):
-            return nx.sum((xsi - ns * nx.dot(G, xt)) ** 2)
-
-        def df(G):
-            return -2 * ns * nx.dot(xsi - ns * nx.dot(G, xt), xt.T)
-
-        G = cg(a, b, M, 1.0 / mu, f, df, G0=G0,
-               numItermax=numInnerItermax, stopThr=stopInnerThr)
-        return G
-
-    if bias:
-        solve_L = solve_L_bias
-    else:
-        solve_L = solve_L_nobias
-
-    L = solve_L(G)
-
-    vloss.append(loss(L, G))
-
-    if verbose:
-        print('{:5s}|{:12s}|{:8s}'.format(
-            'It.', 'Loss', 'Delta loss') + '\n' + '-' * 32)
-        print('{:5d}|{:8e}|{:8e}'.format(0, vloss[-1], 0))
-
-    # init loop
-    if numItermax > 0:
-        loop = 1
-    else:
-        loop = 0
-    it = 0
-
-    while loop:
-
-        it += 1
-
-        # update G
-        G = solve_G(L, G)
-
-        # update L
-        L = solve_L(G)
-
-        vloss.append(loss(L, G))
-
-        if it >= numItermax:
-            loop = 0
-
-        if abs(vloss[-1] - vloss[-2]) / abs(vloss[-2]) < stopThr:
-            loop = 0
-
-        if verbose:
-            if it % 20 == 0:
-                print('{:5s}|{:12s}|{:8s}'.format(
-                    'It.', 'Loss', 'Delta loss') + '\n' + '-' * 32)
-            print('{:5d}|{:8e}|{:8e}'.format(
-                it, vloss[-1], (vloss[-1] - vloss[-2]) / abs(vloss[-2])))
-    if log:
-        log['loss'] = vloss
-        return G, L, log
-    else:
-        return G, L
 
 
 OT_mapping_linear = deprecated(empirical_bures_wasserstein_mapping)
@@ -2631,3 +2214,172 @@ class JCPOTTransport(BaseTransport):
                 transp_ys.append(nx.dot(D1, transp.T).T)
 
             return transp_ys
+
+
+class NearestBrenierPotential(BaseTransport):
+    r"""
+    Smooth Strongly Convex Nearest Brenier Potentials (SSNB) is a method from :ref:`[58]` that computes
+    an l-strongly convex potential :math:`\varphi` with an L-Lipschitz gradient such that
+    :math:`\nabla \varphi \# \mu \approx \nu`. This regularity can be enforced only on the components of a partition
+    of the ambient space (encoded by point classes), which is a relaxation compared to imposing global regularity.
+
+    SSNBs approach the target measure by solving the optimisation problem:
+
+    .. math::
+        :nowrap:
+
+        \begin{gather*}
+        \varphi \in \text{argmin}_{\varphi \in \mathcal{F}}\ \text{W}_2(\nabla \varphi \#\mu_s, \mu_t),
+        \end{gather*}
+
+    where :math:`\mathcal{F}` is the space functions that are on every set :math:`E_k` l-strongly convex
+    with an L-Lipschitz gradient, given :math:`(E_k)_{k \in [K]}` a partition of the ambient source space.
+
+    The problem is solved on "fitting" source and target data via a convex Quadratically Constrained Quadratic Program,
+    yielding the values :code:`phi` and the gradients :code:`G` at at the source points.
+    The images of "new" source samples are then found by solving a (simpler) Quadratically Constrained Linear Program
+    at each point, using the fitting "parameters" :code:`phi` and :code:`G`. We provide two possible images, which
+    correspond to "lower" and "upper potentials" (:ref:`[59]`, Theorem 3.14). Each of these two images are optimal
+    solutions of the SSNB problem, and can be used in practice.
+
+    .. warning:: This function requires the CVXPY library
+    .. warning:: Accepts any backend but will convert to Numpy then back to the backend.
+
+    Parameters
+    ----------
+    strongly_convex_constant : float, optional
+        constant for the strong convexity of the input potential phi, defaults to 0.6
+    gradient_lipschitz_constant : float, optional
+        constant for the Lipschitz property of the input gradient G, defaults to 1.4
+    its: int, optional
+        number of iterations, defaults to 100
+    log : bool, optional
+        record log if true
+    seed: int or RandomState or None, optional
+        Seed used for random number generator (for the initialisation in :code:`fit`.
+
+    References
+    ----------
+
+    .. [58] François-Pierre Paty, Alexandre d’Aspremont, and Marco Cuturi. Regularity as regularization:
+            Smooth and strongly convex brenier potentials in optimal transport. In International Conference
+            on Artificial Intelligence and Statistics, pages 1222–1232. PMLR, 2020.
+
+    .. [59] Adrien B Taylor. Convex interpolation and performance estimation of first-order methods for
+            convex optimization. PhD thesis, Catholic University of Louvain, Louvain-la-Neuve, Belgium,
+            2017.
+
+    See Also
+    --------
+    ot.mapping.nearest_brenier_potential_fit : Fitting the SSNB on source and target data
+    ot.mapping.nearest_brenier_potential_predict_bounds : Predicting SSNB images on new source data
+    """
+    def __init__(self, strongly_convex_constant=0.6, gradient_lipschitz_constant=1.4, log=False, its=100, seed=None):
+        self.strongly_convex_constant = strongly_convex_constant
+        self.gradient_lipschitz_constant = gradient_lipschitz_constant
+        self.log = log
+        self.its = its
+        self.seed = seed
+        self.fit_log, self.predict_log = None, None
+        self.phi, self.G = None, None
+        self.fit_Xs, self.fit_ys, self.fit_Xt = None, None, None
+
+    def fit(self, Xs=None, ys=None, Xt=None, yt=None):
+        r"""
+        Fits the Smooth Strongly Convex Nearest Brenier Potential [58] to the source data :code:`Xs` to the target data
+        :code:`Xt`, with the partition given by the (optional) labels :code:`ys`.
+
+        Wrapper for :code:`ot.mapping.nearest_brenier_potential_fit`.
+
+        .. warning:: This function requires the CVXPY library
+        .. warning:: Accepts any backend but will convert to Numpy then back to the backend.
+
+        Parameters
+        ----------
+        Xs : array-like (n, d)
+            source points used to compute the optimal values phi and G
+        ys : array-like (n,), optional
+            classes of the reference points, defaults to a single class
+        Xt : array-like (n, d)
+            values of the gradients at the reference points X
+        yt : optional
+            ignored.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+
+        References
+        ----------
+
+        .. [58] François-Pierre Paty, Alexandre d’Aspremont, and Marco Cuturi. Regularity as regularization:
+                Smooth and strongly convex brenier potentials in optimal transport. In International Conference
+                on Artificial Intelligence and Statistics, pages 1222–1232. PMLR, 2020.
+
+        See Also
+        --------
+        ot.mapping.nearest_brenier_potential_fit : Fitting the SSNB on source and target data
+
+        """
+        self.fit_Xs, self.fit_ys, self.fit_Xt = Xs, ys, Xt
+        returned = nearest_brenier_potential_fit(Xs, Xt, X_classes=ys,
+                                                 strongly_convex_constant=self.strongly_convex_constant,
+                                                 gradient_lipschitz_constant=self.gradient_lipschitz_constant,
+                                                 its=self.its, log=self.log)
+
+        if self.log:
+            self.phi, self.G, self.fit_log = returned
+        else:
+            self.phi, self.G = returned
+
+        return self
+
+    def transform(self, Xs, ys=None):
+        r"""
+        Computes the images of the new source samples :code:`Xs` of classes :code:`ys` by the fitted
+        Smooth Strongly Convex Nearest Brenier Potentials (SSNB) :ref:`[58]`. The output is the images of two SSNB optimal
+        maps, called 'lower' and 'upper' potentials (from :ref:`[59]`, Theorem 3.14).
+
+        Wrapper for :code:`nearest_brenier_potential_predict_bounds`.
+
+        .. warning:: This function requires the CVXPY library
+        .. warning:: Accepts any backend but will convert to Numpy then back to the backend.
+
+        Parameters
+        ----------
+        Xs : array-like (m, d)
+            input source points
+        ys : : array_like (m,), optional
+            classes of the input source points, defaults to a single class
+
+        Returns
+        -------
+        G_lu : array-like (2, m, d)
+            gradients of the lower and upper bounding potentials at Y (images of the source inputs)
+
+        References
+        ----------
+
+        .. [58] François-Pierre Paty, Alexandre d’Aspremont, and Marco Cuturi. Regularity as regularization:
+                Smooth and strongly convex brenier potentials in optimal transport. In International Conference
+                on Artificial Intelligence and Statistics, pages 1222–1232. PMLR, 2020.
+
+        .. [59] Adrien B Taylor. Convex interpolation and performance estimation of first-order methods for
+                convex optimization. PhD thesis, Catholic University of Louvain, Louvain-la-Neuve, Belgium,
+                2017.
+
+        See Also
+        --------
+        ot.mapping.nearest_brenier_potential_predict_bounds : Predicting SSNB images on new source data
+
+        """
+        returned = nearest_brenier_potential_predict_bounds(
+            self.fit_Xs, self.phi, self.G, Xs, X_classes=self.fit_ys, Y_classes=ys,
+            strongly_convex_constant=self.strongly_convex_constant,
+            gradient_lipschitz_constant=self.gradient_lipschitz_constant, log=self.log)
+        if self.log:
+            _, G_lu, self.predict_log = returned
+        else:
+            _, G_lu = returned
+        return G_lu
