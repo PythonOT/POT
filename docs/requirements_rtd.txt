@@ -12,3 +12,4 @@ autograd
 pymanopt
 cvxopt
 scikit-learn
+cvxpy
