@@ -2036,9 +2036,9 @@ class TorchBackend(Backend):
 
     def linspace(self, start, stop, num, type_as=None):
         if type_as is None:
-            return torch.linspace(start, stop, num, dtype=torch.float64)
+            return torch.linspace(start, stop, num)
         else:
-            return torch.linspace(start, stop, num, dtype=torch.float64, device=type_as.device)
+            return torch.linspace(start, stop, num, dtype=type_as.dtype, device=type_as.device)
 
     def meshgrid(self, a, b):
         try:
