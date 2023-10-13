@@ -945,7 +945,7 @@ def test_wasserstein_bary_2d_debiased_dtype_device(nx, method):
 def test_wasserstein_bary_2d_debiased_device_tf(method):
     # Using the Tensorflow backend
     nx = ot.backend.TensorflowBackend()
-    
+
     rng = np.random.RandomState(42)
     size = 20  # size of a square image
 
@@ -1018,7 +1018,6 @@ def test_wasserstein_bary_2d_debiased_device_tf(method):
             # Test that the dtype and device are the same after the computation
             nx.assert_same_dtype_device(Ab, bary_wass_b)
             assert nx.dtype_device(bary_wass_b)[1].startswith("GPU")
-
 
 
 def test_unmix(nx):
