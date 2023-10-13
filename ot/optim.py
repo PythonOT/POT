@@ -297,7 +297,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
             loop = 0
 
         abs_delta_cost_G = abs(cost_G - old_cost_G)
-        relative_delta_cost_G = abs_delta_cost_G / abs(cost_G)
+        relative_delta_cost_G = abs_delta_cost_G / abs(cost_G) if cost_G != 0. else np.nan
         if relative_delta_cost_G < stopThr or abs_delta_cost_G < stopThr2:
             loop = 0
 
