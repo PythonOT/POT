@@ -995,7 +995,6 @@ def test_wasserstein_bary_2d_debiased_device_tf(method):
             # Test that the dtype and device are the same after the computation
             nx.assert_same_dtype_device(Ab, bary_wass_b)
 
-    
     # Check that everything happens on the GPU
     Ab = nx.from_numpy(A)
 
