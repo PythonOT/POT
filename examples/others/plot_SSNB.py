@@ -41,7 +41,7 @@ THIS EXAMPLE REQUIRES CVXPY
 # Author: Eloi Tanguy <eloi.tanguy@u-paris.fr>
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 3
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -61,20 +61,6 @@ plt.scatter(Xt[:, 0], Xt[:, 1], c='red', label='target')
 plt.axis('equal')
 plt.title('Splitting sphere dataset')
 plt.legend(loc='upper right')
-plt.show()
-
-# %%
-# Plotting image of barycentric projection (SSNB initialisation values)
-plt.clf()
-pi = ot.emd(ot.unif(n_fitting_samples), ot.unif(n_fitting_samples), ot.dist(Xs, Xt))
-plt.scatter(Xs[:, 0], Xs[:, 1], c='dodgerblue', label='source')
-plt.scatter(Xt[:, 0], Xt[:, 1], c='red', label='target')
-bar_img = pi @ Xt
-for i in range(n_fitting_samples):
-    plt.plot([Xs[i, 0], bar_img[i, 0]], [Xs[i, 1], bar_img[i, 1]], color='black', alpha=.5)
-plt.title('Images of in-data source samples by the barycentric map')
-plt.legend(loc='upper right')
-plt.axis('equal')
 plt.show()
 
 # %%
