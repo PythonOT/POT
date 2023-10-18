@@ -86,15 +86,15 @@ Performance
 #
 # License: MIT License
 
-import numpy as np
 import os
-import scipy
-import scipy.linalg
-from scipy.sparse import issparse, coo_matrix, csr_matrix
-import scipy.special as special
 import time
 import warnings
 
+import numpy as np
+import scipy
+import scipy.linalg
+import scipy.special as special
+from scipy.sparse import coo_matrix, csr_matrix, issparse
 
 DISABLE_TORCH_KEY = 'POT_BACKEND_DISABLE_PYTORCH'
 DISABLE_JAX_KEY = 'POT_BACKEND_DISABLE_JAX'
@@ -650,7 +650,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def linspace(self, start, stop, num):
+    def linspace(self, start, stop, num, type_as=None):
         r"""
         Returns a specified number of evenly spaced values over a given interval.
 
@@ -1208,8 +1208,11 @@ class NumpyBackend(Backend):
     def std(self, a, axis=None):
         return np.std(a, axis=axis)
 
-    def linspace(self, start, stop, num):
-        return np.linspace(start, stop, num)
+    def linspace(self, start, stop, num, type_as=None):
+        if type_as is None:
+            return np.linspace(start, stop, num)
+        else:
+            return np.linspace(start, stop, num, dtype=type_as.dtype)
 
     def meshgrid(self, a, b):
         return np.meshgrid(a, b)
@@ -1579,8 +1582,11 @@ class JaxBackend(Backend):
     def std(self, a, axis=None):
         return jnp.std(a, axis=axis)
 
-    def linspace(self, start, stop, num):
-        return jnp.linspace(start, stop, num)
+    def linspace(self, start, stop, num, type_as=None):
+        if type_as is None:
+            return jnp.linspace(start, stop, num)
+        else:
+            return self._change_device(jnp.linspace(start, stop, num, dtype=type_as.dtype), type_as)
 
     def meshgrid(self, a, b):
         return jnp.meshgrid(a, b)
@@ -1986,6 +1992,7 @@ class TorchBackend(Backend):
 
     def zero_pad(self, a, pad_width, value=0):
         from torch.nn.functional import pad
+
         # pad_width is an array of ndim tuples indicating how many 0 before and after
         # we need to add. We first need to make it compliant with torch syntax, that
         # starts with the last dim, then second last, etc.
@@ -2006,6 +2013,7 @@ class TorchBackend(Backend):
 
     def median(self, a, axis=None):
         from packaging import version
+
         # Since version 1.11.0, interpolation is available
         if version.parse(torch.__version__) >= version.parse("1.11.0"):
             if axis is not None:
@@ -2026,8 +2034,11 @@ class TorchBackend(Backend):
         else:
             return torch.std(a, unbiased=False)
 
-    def linspace(self, start, stop, num):
-        return torch.linspace(start, stop, num, dtype=torch.float64)
+    def linspace(self, start, stop, num, type_as=None):
+        if type_as is None:
+            return torch.linspace(start, stop, num)
+        else:
+            return torch.linspace(start, stop, num, dtype=type_as.dtype, device=type_as.device)
 
     def meshgrid(self, a, b):
         try:
@@ -2427,8 +2438,12 @@ class CupyBackend(Backend):  # pragma: no cover
     def std(self, a, axis=None):
         return cp.std(a, axis=axis)
 
-    def linspace(self, start, stop, num):
-        return cp.linspace(start, stop, num)
+    def linspace(self, start, stop, num, type_as=None):
+        if type_as is None:
+            return cp.linspace(start, stop, num)
+        else:
+            with cp.cuda.Device(type_as.device):
+                return cp.linspace(start, stop, num, dtype=type_as.dtype)
 
     def meshgrid(self, a, b):
         return cp.meshgrid(a, b)
@@ -2834,8 +2849,11 @@ class TensorflowBackend(Backend):
     def std(self, a, axis=None):
         return tnp.std(a, axis=axis)
 
-    def linspace(self, start, stop, num):
-        return tnp.linspace(start, stop, num)
+    def linspace(self, start, stop, num, type_as=None):
+        if type_as is None:
+            return tnp.linspace(start, stop, num)
+        else:
+            return tnp.linspace(start, stop, num, dtype=type_as.dtype)
 
     def meshgrid(self, a, b):
         return tnp.meshgrid(a, b)
