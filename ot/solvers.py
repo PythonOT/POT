@@ -14,6 +14,9 @@ from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalan
 from .bregman import sinkhorn_log
 from .partial import partial_wasserstein_lagrange
 from .smooth import smooth_ot_dual
+from .gromov import gromov_wasserstein2, fused_gromov_wasserstein2, entropic_gromov_wasserstein2, entropic_fused_gromov_wasserstein2
+
+#, entropic_gromov_wasserstein2, entropic_fused_gromov_wasserstein2
 
 
 def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
@@ -343,5 +346,266 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
     res = OTResult(potentials=potentials, value=value,
                    value_linear=value_linear, plan=plan, status=status, backend=nx)
+
+    return res
+
+
+def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None, alpha=0.5, reg=None,
+                 reg_type="entropy", unbalanced=None, unbalanced_type='KL',
+                 n_threads=1, method=None, max_iter=None, plan_init=None, tol=None,
+                 verbose=False):
+    r""" Solve the discrete (Fused) Gromov-Wasserstein and return :any:`OTResult` object
+
+    The function solves the following optimization problem:
+
+    .. math::
+        \min_{\mathbf{T}\geq 0} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} + \lambda_r R(\mathbf{T}) + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
+
+    The regularization is selected with `reg` (:math:`\lambda_r`) and
+    `reg_type`. By default ``reg=None`` and there is no regularization. The
+    unbalanced marginal penalization can be selected with `unbalanced`
+    (:math:`\lambda_u`) and `unbalanced_type`. By default ``unbalanced=None``
+    and the function solves the exact optimal transport problem (respecting the
+    marginals).
+
+    Parameters
+    ----------
+    Ca : array_like, shape (dim_a, dim_a)
+        Cost matrix in the source domain
+    Cb : array_like, shape (dim_b, dim_b)
+        Cost matrix in the target domain
+    M : array_like, shape (dim_a, dim_b), optional
+        Linear cost matrix for Fused Gromov-Wasserstein (default is None).
+    a : array-like, shape (dim_a,), optional
+        Samples weights in the source domain (default is uniform)
+    b : array-like, shape (dim_b,), optional
+        Samples weights in the source domain (default is uniform)
+    loss : str, optional
+        Type of loss function, either ``"L2"`` or ``"KL"``, by default ``"L2"``
+    symmetric : bool, optional
+        Use symmetric version of the Gromov-Wasserstein problem, by default None
+        tests wether the matrices are symmetric or True/False to avoid the test.
+    reg : float, optional
+        Regularization weight :math:`\lambda_r`, by default None (no reg., exact
+        OT)
+    reg_type : str, optional
+        Type of regularization :math:`R`, by default "entropic" (only used when
+        ``reg!=None``)
+    alpha : float, optional
+        Weight the quadratic term (alpha*Gromov) and the linear term
+        ((1-alpha)*Wass) in the Fused Gromov-Wasserstein problem. Not used for
+        Gromov problem (when M is not provided). By default ``alpha=None` corresponds to to
+        ``alpha=1`` for Gromov problem (``M==None``) and ``alpha=0.5`` for Fused
+        Gromov-Wasserstein problem (``M!=None``)
+    unbalanced : float, optional
+        Unbalanced penalization weight :math:`\lambda_u`, by default None
+        (balanced OT), Not implemented yet
+    unbalanced_type : str, optional
+        Type of unbalanced penalization unction :math:`U`  either "KL", "L2",
+        "TV", by default "KL" , Not implemented yet
+    n_threads : int, optional
+        Number of OMP threads for exact OT solver, by default 1
+    max_iter : int, optional
+        Maximum number of iteration, by default None (default values in each
+        solvers)
+    plan_init : array_like, shape (dim_a, dim_b), optional
+        Initialization of the OT plan for iterative methods, by default None
+    tol : float, optional
+        Tolerance for solution precision, by default None (default values in
+        each solvers)
+    verbose : bool, optional
+        Print information in the solver, by default False
+
+    Returns
+    -------
+    res : OTResult()
+        Result of the optimization problem. The information can be obtained as follows:
+
+        - res.plan : OT plan :math:`\mathbf{T}`
+        - res.potentials : OT dual potentials
+        - res.value : Optimal value of the optimization problem
+        - res.value_linear : Linear OT loss with the optimal OT plan
+        - res.value_quad : Quadratic (GW) part of the OT loss with the optimal OT plan
+
+        See :any:`OTResult` for more information.
+
+    Notes
+    -----
+    The following methods are available for solving the Gromov-Wasserstein
+    problem:
+
+    """
+
+    # detect backend
+    nx = get_backend(Ca, Cb, M, a, b)
+
+    # create uniform weights if not given
+    if a is None:
+        a = nx.ones(Ca.shape[0], type_as=Ca) / Ca.shape[0]
+    if b is None:
+        b = nx.ones(Cb.shape[1], type_as=Cb) / Cb.shape[1]
+
+    # default values for solutions
+    potentials = None
+    value = None
+    value_linear = None
+    value_quad = None
+    plan = None
+    status = None
+
+    loss_dict = {'l2': 'square_loss', 'kl': 'kl_loss'}
+
+    if reg is None or reg == 0:  # exact OT
+
+        if unbalanced is None:  # Exact balanced OT
+
+            if M is None or alpha == 1:  # Gromov-Wasserstein problem
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 10000
+                if tol is None:
+                    tol = 1e-9
+
+                value, log = gromov_wasserstein2(Ca, Cb, a, b, loss_fun=loss_dict[loss.lower()], log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+
+                value_quad = value
+                if alpha == 1:  # set to 0 for FGW with alpha=1
+                    value_linear = 0
+                plan = log['T']
+                potentials = (log['u'], log['v'])
+
+            elif alpha == 0:  # Wasserstein problem
+
+                # default values for EMD solver
+                if max_iter is None:
+                    max_iter = 1000000
+
+                value_linear, log = emd2(a, b, M, numItermax=max_iter, log=True, return_matrix=True, numThreads=n_threads)
+
+                value = value_linear
+                potentials = (log['u'], log['v'])
+                plan = log['G']
+                status = log["warning"] if log["warning"] is not None else 'Converged'
+                value_quad = 0
+
+            else:  # Fused Gromov-Wasserstein problem
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 10000
+                if tol is None:
+                    tol = 1e-9
+
+                value, log = fused_gromov_wasserstein2(M, Ca, Cb, a, b, loss_fun=loss_dict[loss.lower()], alpha=alpha, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+
+                value_linear = log['lin_loss']
+                value_quad = log['quad_loss']
+                plan = log['T']
+                potentials = (log['u'], log['v'])
+
+        elif unbalanced_type.lower() in ['kl', 'l2']:  # unbalanced exact OT
+
+            raise (NotImplementedError('Unbalanced_type="{}"'.format(unbalanced_type)))
+
+        else:
+            raise (NotImplementedError('Unknown unbalanced_type="{}"'.format(unbalanced_type)))
+
+    else:  # regularized OT
+
+        if unbalanced is None:  # Balanced regularized OT
+
+            if reg_type.lower() in ['entropy'] and (M is None or alpha == 1):  # Entropic Gromov-Wasserstein problem
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-9
+                if method is None:
+                    method = 'PGD'
+
+                value_quad, log = entropic_gromov_wasserstein2(Ca, Cb, a, b, epsilon=reg, loss_fun=loss_dict[loss.lower()], log=True, symmetric=symmetric, solver=method, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+
+                plan = log['T']
+                value_linear = 0
+                value = value_quad + reg * nx.sum(plan * nx.log(plan + 1e-16))
+                # potentials = (log['log_u'], log['log_v'])  #TODO
+
+            elif reg_type.lower() in ['entropy'] and M is not None and alpha == 0:  # Entropic Wasserstein problem
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-9
+
+                plan, log = sinkhorn_log(a, b, M, reg=reg, numItermax=max_iter,
+                                            stopThr=tol, log=True,
+                                            verbose=verbose)
+
+                value_linear = nx.sum(M * plan)
+                value = value_linear + reg * nx.sum(plan * nx.log(plan + 1e-16))
+                potentials = (log['log_u'], log['log_v'])
+
+            elif reg_type.lower() in ['entropy'] and M is not None:  # Entropic Fused Gromov-Wasserstein problem
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-9
+                if method is None:
+                    method = 'PGD'
+
+                value_noreg, log = entropic_fused_gromov_wasserstein2(M, Ca, Cb, a, b, loss_fun=loss_dict[loss.lower()], alpha=alpha, log=True, symmetric=symmetric, solver=method, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+
+                value_linear = log['lin_loss']
+                value_quad = log['quad_loss']
+                plan = log['T']
+                # potentials = (log['u'], log['v'])
+                value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
+
+            else:
+                raise (NotImplementedError('Not implemented reg_type="{}"'.format(reg_type)))
+
+        else:  # unbalanced AND regularized OT
+
+            raise (NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
+
+            # if reg_type.lower() in ['kl'] and unbalanced_type.lower() == 'kl':
+
+            #     if max_iter is None:
+            #         max_iter = 1000
+            #     if tol is None:
+            #         tol = 1e-9
+
+            #     plan, log = sinkhorn_knopp_unbalanced(a, b, M, reg=reg, reg_m=unbalanced, numItermax=max_iter, stopThr=tol, verbose=verbose, log=True)
+
+            #     value_linear = nx.sum(M * plan)
+
+            #     value = value_linear + reg * nx.kl_div(plan, a[:, None] * b[None, :]) + unbalanced * (nx.kl_div(nx.sum(plan, 1), a) + nx.kl_div(nx.sum(plan, 0), b))
+
+            #     potentials = (log['logu'], log['logv'])
+
+            # elif reg_type.lower() in ['kl', 'l2', 'entropy'] and unbalanced_type.lower() in ['kl', 'l2']:
+
+            #     if max_iter is None:
+            #         max_iter = 1000
+            #     if tol is None:
+            #         tol = 1e-12
+
+            #     plan, log = lbfgsb_unbalanced(a, b, M, reg=reg, reg_m=unbalanced, reg_div=reg_type.lower(), regm_div=unbalanced_type.lower(), numItermax=max_iter, stopThr=tol, verbose=verbose, log=True)
+
+            #     value_linear = nx.sum(M * plan)
+
+            #     value = log['loss']
+
+            # else:
+            #     raise (NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
+
+    res = OTResult(potentials=potentials, value=value,
+                   value_linear=value_linear, value_quad=value_quad, plan=plan, status=status, backend=nx)
 
     return res

@@ -50,7 +50,7 @@ from .gromov import (gromov_wasserstein, gromov_wasserstein2,
                      gromov_barycenters, fused_gromov_wasserstein, fused_gromov_wasserstein2)
 from .weak import weak_optimal_transport
 from .factored import factored_optimal_transport
-from .solvers import solve
+from .solvers import solve, solve_gromov
 
 # utils functions
 from .utils import dist, unif, tic, toc, toq
