@@ -20,7 +20,8 @@ import warnings
 import numpy as np
 from scipy.optimize import fmin_l_bfgs_b
 
-from ot.utils import unif, dist, list_to_array
+from ot.utils import dist, list_to_array, unif
+
 from .backend import get_backend
 
 
@@ -2217,11 +2218,11 @@ def _convolutional_barycenter2d(A, reg, weights=None, numItermax=10000,
 
     # build the convolution operator
     # this is equivalent to blurring on horizontal then vertical directions
-    t = nx.linspace(0, 1, A.shape[1])
+    t = nx.linspace(0, 1, A.shape[1], type_as=A)
     [Y, X] = nx.meshgrid(t, t)
     K1 = nx.exp(-(X - Y) ** 2 / reg)
 
-    t = nx.linspace(0, 1, A.shape[2])
+    t = nx.linspace(0, 1, A.shape[2], type_as=A)
     [Y, X] = nx.meshgrid(t, t)
     K2 = nx.exp(-(X - Y) ** 2 / reg)
 
@@ -2295,11 +2296,11 @@ def _convolutional_barycenter2d_log(A, reg, weights=None, numItermax=10000,
     err = 1
     # build the convolution operator
     # this is equivalent to blurring on horizontal then vertical directions
-    t = nx.linspace(0, 1, width)
+    t = nx.linspace(0, 1, width, type_as=A)
     [Y, X] = nx.meshgrid(t, t)
     M1 = - (X - Y) ** 2 / reg
 
-    t = nx.linspace(0, 1, height)
+    t = nx.linspace(0, 1, height, type_as=A)
     [Y, X] = nx.meshgrid(t, t)
     M2 = - (X - Y) ** 2 / reg
 
@@ -2452,11 +2453,11 @@ def _convolutional_barycenter2d_debiased(A, reg, weights=None, numItermax=10000,
 
     # build the convolution operator
     # this is equivalent to blurring on horizontal then vertical directions
-    t = nx.linspace(0, 1, width)
+    t = nx.linspace(0, 1, width, type_as=A)
     [Y, X] = nx.meshgrid(t, t)
     K1 = nx.exp(-(X - Y) ** 2 / reg)
 
-    t = nx.linspace(0, 1, height)
+    t = nx.linspace(0, 1, height, type_as=A)
     [Y, X] = nx.meshgrid(t, t)
     K2 = nx.exp(-(X - Y) ** 2 / reg)
 
@@ -2532,11 +2533,11 @@ def _convolutional_barycenter2d_debiased_log(A, reg, weights=None, numItermax=10
     err = 1
     # build the convolution operator
     # this is equivalent to blurring on horizontal then vertical directions
-    t = nx.linspace(0, 1, width)
+    t = nx.linspace(0, 1, width, type_as=A)
     [Y, X] = nx.meshgrid(t, t)
     M1 = - (X - Y) ** 2 / reg
 
-    t = nx.linspace(0, 1, height)
+    t = nx.linspace(0, 1, height, type_as=A)
     [Y, X] = nx.meshgrid(t, t)
     M2 = - (X - Y) ** 2 / reg
 

@@ -6,16 +6,13 @@
 #
 # License: MIT License
 
-import ot
-import ot.backend
-from ot.backend import torch, jax, tf
-
-import pytest
-
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal_nulp
 
-from ot.backend import get_backend, get_backend_list, to_numpy
+import ot
+import ot.backend
+from ot.backend import get_backend, get_backend_list, jax, tf, to_numpy, torch
 
 
 def test_get_backend_list():
@@ -507,6 +504,7 @@ def test_func_backends(nx):
         lst_name.append('std')
 
         A = nx.linspace(0, 1, 50)
+        A = nx.linspace(0, 1, 50, type_as=Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('linspace')
 
