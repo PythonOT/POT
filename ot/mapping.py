@@ -124,7 +124,7 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
     if init_method == 'target':
         G_val = V
     else:  # Init G_val with barycentric projection
-        G_val = emd(a, b, dist(X, V)) @ V
+        G_val = emd(a, b, dist(X, V)) @ V / a
     phi_val = None
     log_dict = {
         'G_list': [],
