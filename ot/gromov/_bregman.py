@@ -826,10 +826,10 @@ def entropic_fused_gromov_wasserstein2(
     logv['T'] = T
 
     lin_term = nx.sum(T * M)
-    gw_term = (logv['gw_dist'] - (1 - alpha) * lin_term) / alpha
+    gw_term = (logv['fgw_dist'] - (1 - alpha) * lin_term) / alpha
 
-    log_fgw['quad_loss'] = gw_term * alpha
-    log_fgw['lin_loss'] = lin_term * (1 - alpha)
+    logv['quad_loss'] = gw_term * alpha
+    logv['lin_loss'] = lin_term * (1 - alpha)
 
     if log:
         return logv['fgw_dist'], logv
