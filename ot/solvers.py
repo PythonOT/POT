@@ -542,8 +542,8 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None, alph
                     tol = 1e-9
 
                 plan, log = sinkhorn_log(a, b, M, reg=reg, numItermax=max_iter,
-                                            stopThr=tol, log=True,
-                                            verbose=verbose)
+                                         stopThr=tol, log=True,
+                                         verbose=verbose)
 
                 value_linear = nx.sum(M * plan)
                 value = value_linear + reg * nx.sum(plan * nx.log(plan + 1e-16))
