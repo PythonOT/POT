@@ -712,7 +712,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
 
             else:  # partial FGW
 
-                raise(NotImplementedError('Partial FGW not implemented yet'))
+                raise (NotImplementedError('Partial FGW not implemented yet'))
 
         elif unbalanced_type.lower() in ['kl', 'l2']:  # unbalanced exact OT
 
@@ -835,7 +835,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
 
             else:  # partial FGW
 
-                raise(NotImplementedError('Partial entropic FGW not implemented yet'))
+                raise (NotImplementedError('Partial entropic FGW not implemented yet'))
 
         else:  # unbalanced AND regularized OT
 
