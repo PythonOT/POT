@@ -461,6 +461,10 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
 
     loss_dict = {'l2': 'square_loss', 'kl': 'kl_loss'}
 
+    if loss.lower() not in loss_dict.keys():
+        raise (ValueError('Unknown GW loss="{}"'.format(loss)))
+    loss_fun = loss_dict[loss.lower()]
+
     if reg is None or reg == 0:  # exact OT
 
         if unbalanced is None and unbalanced_type.lower() not in ['semirelaxed']:  # Exact balanced OT
@@ -473,7 +477,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 if tol is None:
                     tol = 1e-9
 
-                value, log = gromov_wasserstein2(Ca, Cb, a, b, loss_fun=loss_dict[loss.lower()], log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value, log = gromov_wasserstein2(Ca, Cb, a, b, loss_fun=loss_fun, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
 
                 value_quad = value
                 if alpha == 1:  # set to 0 for FGW with alpha=1
@@ -503,7 +507,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 if tol is None:
                     tol = 1e-9
 
-                value, log = fused_gromov_wasserstein2(M, Ca, Cb, a, b, loss_fun=loss_dict[loss.lower()], alpha=alpha, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value, log = fused_gromov_wasserstein2(M, Ca, Cb, a, b, loss_fun=loss_fun, alpha=alpha, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
 
                 value_linear = log['lin_loss']
                 value_quad = log['quad_loss']
@@ -520,7 +524,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 if tol is None:
                     tol = 1e-9
 
-                value, log = semirelaxed_gromov_wasserstein2(Ca, Cb, a, loss_fun=loss_dict[loss.lower()], log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value, log = semirelaxed_gromov_wasserstein2(Ca, Cb, a, loss_fun=loss_fun, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
 
                 value_quad = value
                 if alpha == 1:  # set to 0 for FGW with alpha=1
@@ -536,7 +540,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 if tol is None:
                     tol = 1e-9
 
-                value, log = semirelaxed_fused_gromov_wasserstein2(M, Ca, Cb, a, loss_fun=loss_dict[loss.lower()], alpha=alpha, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value, log = semirelaxed_fused_gromov_wasserstein2(M, Ca, Cb, a, loss_fun=loss_fun, alpha=alpha, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
 
                 value_linear = log['lin_loss']
                 value_quad = log['quad_loss']
@@ -564,7 +568,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 if method is None:
                     method = 'PGD'
 
-                value_quad, log = entropic_gromov_wasserstein2(Ca, Cb, a, b, epsilon=reg, loss_fun=loss_dict[loss.lower()], log=True, symmetric=symmetric, solver=method, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value_quad, log = entropic_gromov_wasserstein2(Ca, Cb, a, b, epsilon=reg, loss_fun=loss_fun, log=True, symmetric=symmetric, solver=method, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
 
                 plan = log['T']
                 value_linear = 0
@@ -597,7 +601,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 if method is None:
                     method = 'PGD'
 
-                value_noreg, log = entropic_fused_gromov_wasserstein2(M, Ca, Cb, a, b, loss_fun=loss_dict[loss.lower()], alpha=alpha, log=True, symmetric=symmetric, solver=method, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value_noreg, log = entropic_fused_gromov_wasserstein2(M, Ca, Cb, a, b, loss_fun=loss_fun, alpha=alpha, log=True, symmetric=symmetric, solver=method, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
 
                 value_linear = log['lin_loss']
                 value_quad = log['quad_loss']
@@ -618,7 +622,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 if tol is None:
                     tol = 1e-9
 
-                value_quad, log = entropic_semirelaxed_gromov_wasserstein2(Ca, Cb, a, epsilon=reg, loss_fun=loss_dict[loss.lower()], log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value_quad, log = entropic_semirelaxed_gromov_wasserstein2(Ca, Cb, a, epsilon=reg, loss_fun=loss_fun, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
 
                 plan = log['T']
                 value_linear = 0
@@ -632,7 +636,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 if tol is None:
                     tol = 1e-9
 
-                value_noreg, log = entropic_semirelaxed_fused_gromov_wasserstein2(M, Ca, Cb, a, loss_fun=loss_dict[loss.lower()], alpha=alpha, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value_noreg, log = entropic_semirelaxed_fused_gromov_wasserstein2(M, Ca, Cb, a, loss_fun=loss_fun, alpha=alpha, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
 
                 value_linear = log['lin_loss']
                 value_quad = log['quad_loss']
@@ -642,37 +646,6 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
         else:  # unbalanced AND regularized OT
 
             raise (NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
-
-            # if reg_type.lower() in ['kl'] and unbalanced_type.lower() == 'kl':
-
-            #     if max_iter is None:
-            #         max_iter = 1000
-            #     if tol is None:
-            #         tol = 1e-9
-
-            #     plan, log = sinkhorn_knopp_unbalanced(a, b, M, reg=reg, reg_m=unbalanced, numItermax=max_iter, stopThr=tol, verbose=verbose, log=True)
-
-            #     value_linear = nx.sum(M * plan)
-
-            #     value = value_linear + reg * nx.kl_div(plan, a[:, None] * b[None, :]) + unbalanced * (nx.kl_div(nx.sum(plan, 1), a) + nx.kl_div(nx.sum(plan, 0), b))
-
-            #     potentials = (log['logu'], log['logv'])
-
-            # elif reg_type.lower() in ['kl', 'l2', 'entropy'] and unbalanced_type.lower() in ['kl', 'l2']:
-
-            #     if max_iter is None:
-            #         max_iter = 1000
-            #     if tol is None:
-            #         tol = 1e-12
-
-            #     plan, log = lbfgsb_unbalanced(a, b, M, reg=reg, reg_m=unbalanced, reg_div=reg_type.lower(), regm_div=unbalanced_type.lower(), numItermax=max_iter, stopThr=tol, verbose=verbose, log=True)
-
-            #     value_linear = nx.sum(M * plan)
-
-            #     value = log['loss']
-
-            # else:
-            #     raise (NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
 
     res = OTResult(potentials=potentials, value=value,
                    value_linear=value_linear, value_quad=value_quad, plan=plan, status=status, backend=nx)
