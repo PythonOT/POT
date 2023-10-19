@@ -402,7 +402,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
         Weight the quadratic term (alpha*Gromov) and the linear term
         ((1-alpha)*Wass) in the Fused Gromov-Wasserstein problem. Not used for
         Gromov problem (when M is not provided). By default ``alpha=None``
-        corresponds to to 
+        corresponds to to
         ``alpha=1`` for Gromov problem (``M==None``) and ``alpha=0.5`` for Fused
         Gromov-Wasserstein problem (``M!=None``)
     unbalanced : float, optional
