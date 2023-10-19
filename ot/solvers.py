@@ -440,6 +440,115 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     The following methods are available for solving the Gromov-Wasserstein
     problem:
 
+    - **Classical Gromov-Wasserstein (GW) problem :ref:`[3] <references-solve-gromov>`** (default parameters):
+
+    .. math::
+        \min_{\mathbf{T}\geq 0} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j}
+
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+
+             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+
+             \mathbf{T} \geq 0
+
+    can be solved with the following code:
+
+    .. code-block:: python
+        res = ot.solve_gromov(Ca, Cb) # uniform weights
+        res = ot.solve_gromov(Ca, Cb, a=a, b=) # given weights
+        res = ot.solve_gromov(Ca, Cb, loss='KL') # KL loss
+
+        plan = res.plan # GW plan
+        value = res.value # GW value
+
+    - **Fused Gromov-Wasserstein (FGW) problem ref:`[24] <references-solve-gromov>`** (when ``M!=None``):
+
+    .. math::
+        \min_{\mathbf{T}\geq 0} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j}
+
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+
+             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+
+             \mathbf{T} \geq 0
+
+    can be solved with the following code:
+
+    .. code-block:: python
+        res = ot.solve_gromov(Ca, Cb, M) # uniform weights, alpha=0.5 (default)
+        res = ot.solve_gromov(Ca, Cb, M, a=a, b=b, alpha=0.1) # given weights and alpha
+
+        plan = res.plan # FGW plan
+        loss_linear_term = res.value_linear # Wasserstein part of the loss
+        loss_quad_term = res.value_quad # Gromov part of the loss
+        loss = res.value # FGW value
+
+    - **Regularized (Fused) Gromov-Wasserstein (GW) problem ref:`[12] <references-solve-gromov>`** (when  ``reg!=None``):
+
+    .. math::
+        \min_{\mathbf{T}\geq 0} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} + \lambda_r R(\mathbf{T})
+
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+
+             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+
+             \mathbf{T} \geq 0
+
+    can be solved with the following code:
+
+    .. code-block:: python
+        res = ot.solve_gromov(Ca, Cb, reg=1.0) # GW entropy regularization (default)
+        res = ot.solve_gromov(Ca, Cb, M, a=a, b=b, reg=10, alpha=0.1) # FGW with entropy
+
+        plan = res.plan # FGW plan
+        loss_linear_term = res.value_linear # Wasserstein part of the loss
+        loss_quad_term = res.value_quad # Gromov part of the loss
+        loss = res.value # FGW value (including regularization)
+
+    - **Semi-relaxed (Fused) Gromov-Wasserstein (GW) problemref:`[48] <references-solve-gromov>`** (when  ``unbalanced='semirelaxed'``):
+
+    .. math::
+        \min_{\mathbf{T}\geq 0} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j}
+
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+
+             \mathbf{T} \geq 0
+
+    can be solved with the following code:
+
+    .. code-block:: python
+        res = ot.solve_gromov(Ca, Cb, unbalanced='semirelaxed') # semirelaxed GW
+        res = ot.solve_gromov(Ca, Cb, unbalanced='semirelaxed', reg=1) # entropic semirelaxed GW
+        res = ot.solve_gromov(Ca, Cb, M, unbalanced='semirelaxed', alpha=0.1) # semirelaxed FGW
+
+        plan = res.plan # FGW plan
+        right_marginal = res.marginal_b # right marginal of the plan
+
+    .. _references-solve-gromov:
+    References
+    ----------
+
+    .. [3] Mémoli, F. (2011). Gromov–Wasserstein distances and the metric
+        approach to object matching. Foundations of computational mathematics,
+        11(4), 417-487.
+
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon (2016),
+        Gromov-Wasserstein averaging of kernel and distance matrices
+        International Conference on Machine Learning (ICML).
+
+    .. [24] Vayer, T., Chapel, L., Flamary, R., Tavenard, R. and Courty, N.
+        (2019). Optimal Transport for structured data with application on graphs
+        Proceedings of the 36th International Conference on Machine Learning
+        (ICML).
+
+    .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer,
+        Nicolas Courty (2022). Semi-relaxed Gromov-Wasserstein divergence and
+        applications on graphs. International Conference on Learning
+        Representations (ICLR), 2022.
+
     """
 
     # detect backend
