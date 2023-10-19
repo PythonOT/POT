@@ -19,6 +19,7 @@ from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
                      semirelaxed_gromov_wasserstein2, semirelaxed_fused_gromov_wasserstein2,
                      entropic_semirelaxed_fused_gromov_wasserstein2,
                      entropic_semirelaxed_gromov_wasserstein2)
+from .partial import partial_gromov_wasserstein2, entropic_partial_gromov_wasserstein2
 
 #, entropic_gromov_wasserstein2, entropic_fused_gromov_wasserstein2
 
@@ -400,15 +401,16 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     alpha : float, optional
         Weight the quadratic term (alpha*Gromov) and the linear term
         ((1-alpha)*Wass) in the Fused Gromov-Wasserstein problem. Not used for
-        Gromov problem (when M is not provided). By default ``alpha=None` corresponds to to
+        Gromov problem (when M is not provided). By default ``alpha=None``
+        corresponds to to 
         ``alpha=1`` for Gromov problem (``M==None``) and ``alpha=0.5`` for Fused
         Gromov-Wasserstein problem (``M!=None``)
     unbalanced : float, optional
         Unbalanced penalization weight :math:`\lambda_u`, by default None
         (balanced OT), Not implemented yet
     unbalanced_type : str, optional
-        Type of unbalanced penalization unction :math:`U`  either "KL", "L2",
-        "TV", by default "KL" , Not implemented yet
+        Type of unbalanced penalization unction :math:`U`  either "KL", "semirelaxed",
+        "partial", by default "KL" , Not implemented yet
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
     max_iter : int, optional
@@ -440,10 +442,10 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     The following methods are available for solving the Gromov-Wasserstein
     problem:
 
-    - **Classical Gromov-Wasserstein (GW) problem :ref:`[3] <references-solve-gromov>`** (default parameters):
+    - **Classical Gromov-Wasserstein (GW) problem [3]** (default parameters):
 
     .. math::
-        \min_{\mathbf{T}\geq 0} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j}
+        \min_{\mathbf{T}\geq 0} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j}\mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
 
@@ -454,6 +456,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     can be solved with the following code:
 
     .. code-block:: python
+
         res = ot.solve_gromov(Ca, Cb) # uniform weights
         res = ot.solve_gromov(Ca, Cb, a=a, b=) # given weights
         res = ot.solve_gromov(Ca, Cb, loss='KL') # KL loss
@@ -461,11 +464,11 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
         plan = res.plan # GW plan
         value = res.value # GW value
 
-    - **Fused Gromov-Wasserstein (FGW) problem ref:`[24] <references-solve-gromov>`** (when ``M!=None``):
+    - **Fused Gromov-Wasserstein (FGW) problem [24]** (when ``M!=None``):
 
     .. math::
         \min_{\mathbf{T}\geq 0} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
-        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j}
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j}\mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
 
@@ -476,6 +479,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     can be solved with the following code:
 
     .. code-block:: python
+
         res = ot.solve_gromov(Ca, Cb, M) # uniform weights, alpha=0.5 (default)
         res = ot.solve_gromov(Ca, Cb, M, a=a, b=b, alpha=0.1) # given weights and alpha
 
@@ -484,11 +488,11 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
         loss_quad_term = res.value_quad # Gromov part of the loss
         loss = res.value # FGW value
 
-    - **Regularized (Fused) Gromov-Wasserstein (GW) problem ref:`[12] <references-solve-gromov>`** (when  ``reg!=None``):
+    - **Regularized (Fused) Gromov-Wasserstein (GW) problem [12]** (when  ``reg!=None``):
 
     .. math::
         \min_{\mathbf{T}\geq 0} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
-        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} + \lambda_r R(\mathbf{T})
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j}\mathbf{T}_{k,l} + \lambda_r R(\mathbf{T})
 
         s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
 
@@ -499,6 +503,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     can be solved with the following code:
 
     .. code-block:: python
+
         res = ot.solve_gromov(Ca, Cb, reg=1.0) # GW entropy regularization (default)
         res = ot.solve_gromov(Ca, Cb, M, a=a, b=b, reg=10, alpha=0.1) # FGW with entropy
 
@@ -507,11 +512,11 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
         loss_quad_term = res.value_quad # Gromov part of the loss
         loss = res.value # FGW value (including regularization)
 
-    - **Semi-relaxed (Fused) Gromov-Wasserstein (GW) problemref:`[48] <references-solve-gromov>`** (when  ``unbalanced='semirelaxed'``):
+    - **Semi-relaxed (Fused) Gromov-Wasserstein (GW) [48]** (when  ``unbalanced='semirelaxed'``):
 
     .. math::
         \min_{\mathbf{T}\geq 0} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
-        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j}
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j}\mathbf{T}_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
 
@@ -520,12 +525,34 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     can be solved with the following code:
 
     .. code-block:: python
+
         res = ot.solve_gromov(Ca, Cb, unbalanced='semirelaxed') # semirelaxed GW
         res = ot.solve_gromov(Ca, Cb, unbalanced='semirelaxed', reg=1) # entropic semirelaxed GW
         res = ot.solve_gromov(Ca, Cb, M, unbalanced='semirelaxed', alpha=0.1) # semirelaxed FGW
 
         plan = res.plan # FGW plan
         right_marginal = res.marginal_b # right marginal of the plan
+
+    - **Partial (Fused) Gromov-Wasserstein (GW) problem [29]** (when  ``unbalanced='partial'``):
+
+    .. math::
+        \min_{\mathbf{T}\geq 0} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j}\mathbf{T}_{k,l}
+
+        s.t. \ \mathbf{T} \mathbf{1} \leq \mathbf{a}
+
+                \mathbf{T}^T \mathbf{1} \leq \mathbf{b}
+
+                \mathbf{T} \geq 0
+
+                \mathbf{1}^T\mathbf{T}\mathbf{1} = m
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        res = ot.solve_gromov(Ca, Cb, unbalanced_type='partial', unbalanced=0.8) # partial GW with m=0.8
+
 
     .. _references-solve-gromov:
     References
@@ -548,6 +575,10 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
         Nicolas Courty (2022). Semi-relaxed Gromov-Wasserstein divergence and
         applications on graphs. International Conference on Learning
         Representations (ICLR), 2022.
+
+    .. [29] Chapel, L., Alaya, M., Gasso, G. (2020). Partial Optimal Transport
+        with Applications on Positive-Unlabeled Learning, Advances in Neural
+        Information Processing Systems (NeurIPS), 2020.
 
     """
 
@@ -656,6 +687,33 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 plan = log['T']
                 # potentials = (log['u'], log['v']) TODO
 
+        elif unbalanced_type.lower() in ['partial']:  # Partial OT
+
+            if M is None:  # Partial Gromov-Wasserstein problem
+
+                if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
+                    raise (ValueError('Partial GW mass given in reg is too large'))
+                if loss.lower() != 'l2':
+                    raise (NotImplementedError('Partial GW only implemented with L2 loss'))
+                if symmetric is not None:
+                    raise (NotImplementedError('Partial GW only implemented with symmetric=True'))
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-7
+
+                value, log = partial_gromov_wasserstein2(Ca, Cb, a, b, m=unbalanced, log=True, numItermax=max_iter, G0=plan_init, tol=tol, verbose=verbose)
+
+                value_quad = value
+                plan = log['T']
+                # potentials = (log['u'], log['v']) TODO
+
+            else:  # partial FGW
+
+                raise(NotImplementedError('Partial FGW not implemented yet'))
+
         elif unbalanced_type.lower() in ['kl', 'l2']:  # unbalanced exact OT
 
             raise (NotImplementedError('Unbalanced_type="{}"'.format(unbalanced_type)))
@@ -751,6 +809,33 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 value_quad = log['quad_loss']
                 plan = log['T']
                 value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
+
+        elif unbalanced_type.lower() in ['partial']:  # Partial OT
+
+            if M is None:  # Partial Gromov-Wasserstein problem
+
+                if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
+                    raise (ValueError('Partial GW mass given in reg is too large'))
+                if loss.lower() != 'l2':
+                    raise (NotImplementedError('Partial GW only implemented with L2 loss'))
+                if symmetric is not None:
+                    raise (NotImplementedError('Partial GW only implemented with symmetric=True'))
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-7
+
+                value_quad, log = entropic_partial_gromov_wasserstein2(Ca, Cb, a, b, reg=reg, m=unbalanced, log=True, numItermax=max_iter, G0=plan_init, tol=tol, verbose=verbose)
+
+                value_quad = value
+                plan = log['T']
+                # potentials = (log['u'], log['v']) TODO
+
+            else:  # partial FGW
+
+                raise(NotImplementedError('Partial entropic FGW not implemented yet'))
 
         else:  # unbalanced AND regularized OT
 

@@ -12,14 +12,14 @@ import pytest
 import ot
 
 
-lst_reg = [None, 1.0]
+lst_reg = [None, 1]
 lst_reg_type = ['KL', 'entropy', 'L2']
 lst_unbalanced = [None, 0.9]
 lst_unbalanced_type = ['KL', 'L2', 'TV']
 
 lst_reg_type_gromov = ['entropy']
 lst_gw_losses = ['L2', 'KL']
-lst_unbalanced_type_gromov = ['KL', 'semirelaxed']
+lst_unbalanced_type_gromov = ['KL', 'semirelaxed', 'partial']
 lst_unbalanced_gromov = [None, 0.9]
 lst_alpha = [0, 0.4, 0.9, 1]
 

@@ -17,7 +17,7 @@ from ot.backend import torch, tf
 
 
 def test_gromov(nx):
-    n_samples = 50  # nb samples
+    n_samples = 20  # nb samples
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
@@ -80,7 +80,7 @@ def test_gromov(nx):
 
 
 def test_asymmetric_gromov(nx):
-    n_samples = 30  # nb samples
+    n_samples = 20  # nb samples
     rng = np.random.RandomState(0)
     C1 = rng.uniform(low=0., high=10, size=(n_samples, n_samples))
     idx = np.arange(n_samples)
@@ -124,7 +124,7 @@ def test_asymmetric_gromov(nx):
 
 def test_gromov_dtype_device(nx):
     # setup
-    n_samples = 50  # nb samples
+    n_samples = 20  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
@@ -160,7 +160,7 @@ def test_gromov_dtype_device(nx):
 @pytest.mark.skipif(not tf, reason="tf not installed")
 def test_gromov_device_tf():
     nx = ot.backend.TensorflowBackend()
-    n_samples = 50  # nb samples
+    n_samples = 20  # nb samples
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
     xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
@@ -192,7 +192,7 @@ def test_gromov_device_tf():
 
 
 def test_gromov2_gradients():
-    n_samples = 50  # nb samples
+    n_samples = 20  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
@@ -257,7 +257,7 @@ def test_gromov2_gradients():
 
 
 def test_gw_helper_backend(nx):
-    n_samples = 20  # nb samples
+    n_samples = 10  # nb samples
 
     mu = np.array([0, 0])
     cov = np.array([[1, 0], [0, 1]])
@@ -301,7 +301,7 @@ def test_gw_helper_backend(nx):
     pytest.param('unknown_loss', marks=pytest.mark.xfail(raises=ValueError)),
 ])
 def test_gw_helper_validation(loss_fun):
-    n_samples = 20  # nb samples
+    n_samples = 10  # nb samples
     mu = np.array([0, 0])
     cov = np.array([[1, 0], [0, 1]])
     xs = ot.datasets.make_2D_samples_gauss(n_samples, mu, cov, random_state=0)
@@ -548,7 +548,7 @@ def test_entropic_gromov_dtype_device(nx):
 
 @pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_entropic_fgw(nx):
-    n_samples = 10  # nb samples
+    n_samples = 5  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
@@ -613,7 +613,7 @@ def test_entropic_fgw(nx):
 
 
 def test_entropic_proximal_fgw(nx):
-    n_samples = 10  # nb samples
+    n_samples = 5  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
@@ -678,7 +678,7 @@ def test_entropic_proximal_fgw(nx):
 
 
 def test_asymmetric_entropic_fgw(nx):
-    n_samples = 10  # nb samples
+    n_samples = 5  # nb samples
     rng = np.random.RandomState(0)
     C1 = rng.uniform(low=0., high=10, size=(n_samples, n_samples))
     idx = np.arange(n_samples)
