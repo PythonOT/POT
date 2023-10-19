@@ -18,7 +18,7 @@ lst_unbalanced = [None, 0.9]
 lst_unbalanced_type = ['KL', 'L2', 'TV']
 
 lst_reg_type_gromov = ['entropy']
-lst_unbalanced_type_gromov = ['KL']
+lst_unbalanced_type_gromov = ['semirelaxed']
 lst_unbalanced_gromov = [None, 0.9]
 lst_alpha = [0, 0.4, 0.9, 1]
 
@@ -112,7 +112,7 @@ def test_solve_grid(nx, reg, reg_type, unbalanced, unbalanced_type):
 
         assert_allclose_sol(sol, solb)
     except NotImplementedError:
-        pass
+        pytest.skip("Not implemented")
 
 
 def test_solve_not_implemented(nx):
@@ -142,8 +142,8 @@ def test_solve_gromov(nx):
 
     np.random.seed(0)
 
-    n_samples_s = 5
-    n_samples_t = 10
+    n_samples_s = 3
+    n_samples_t = 5
 
     Ca = np.random.rand(n_samples_s, n_samples_s)
     Ca = (Ca + Ca.T) / 2
@@ -181,8 +181,8 @@ def test_solve_gromov_grid(nx, reg, reg_type, unbalanced, unbalanced_type, alpha
 
     np.random.seed(0)
 
-    n_samples_s = 5
-    n_samples_t = 10
+    n_samples_s = 3
+    n_samples_t = 5
 
     Ca = np.random.rand(n_samples_s, n_samples_s)
     Ca = (Ca + Ca.T) / 2
@@ -210,4 +210,4 @@ def test_solve_gromov_grid(nx, reg, reg_type, unbalanced, unbalanced_type, alpha
         assert_allclose_sol(sol0_fgw, solx_fgw)
 
     except NotImplementedError:
-        pass
+        pytest.skip("Not implemented")

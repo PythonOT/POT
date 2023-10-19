@@ -488,6 +488,8 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p=None, loss_fun='square_lo
     q = nx.sum(T, 0)
     srfgw_dist = log_fgw['srfgw_dist']
     log_fgw['T'] = T
+    log_fgw['lin_loss'] = nx.sum(M * T) * (1 - alpha)
+    log_fgw['quad_loss'] = srfgw_dist - log_fgw['lin_loss']
 
     if loss_fun == 'square_loss':
         gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
@@ -979,7 +981,9 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
     if log:
         qG = nx.sum(G, 0)
         marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
-        log['srfgw_dist'] = alpha * gwloss(constC + marginal_product, hC1, hC2, G, nx) + (1 - alpha) * nx.sum(M * G)
+        log['lin_loss'] = nx.sum(M * G) * (1 - alpha)
+        log['quad_loss'] = alpha * gwloss(constC + marginal_product, hC1, hC2, G, nx)
+        log['srfgw_dist'] = log['lin_loss'] + log['quad_loss']
         return G, log
     else:
         return G

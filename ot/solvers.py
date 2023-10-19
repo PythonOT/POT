@@ -14,7 +14,11 @@ from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalan
 from .bregman import sinkhorn_log
 from .partial import partial_wasserstein_lagrange
 from .smooth import smooth_ot_dual
-from .gromov import gromov_wasserstein2, fused_gromov_wasserstein2, entropic_gromov_wasserstein2, entropic_fused_gromov_wasserstein2
+from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
+                     entropic_gromov_wasserstein2, entropic_fused_gromov_wasserstein2,
+                     semirelaxed_gromov_wasserstein2, semirelaxed_fused_gromov_wasserstein2,
+                     entropic_semirelaxed_fused_gromov_wasserstein2,
+                     entropic_semirelaxed_gromov_wasserstein2)
 
 #, entropic_gromov_wasserstein2, entropic_fused_gromov_wasserstein2
 
@@ -350,7 +354,8 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     return res
 
 
-def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None, alpha=0.5, reg=None,
+def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
+                 alpha=0.5, reg=None,
                  reg_type="entropy", unbalanced=None, unbalanced_type='KL',
                  n_threads=1, method=None, max_iter=None, plan_init=None, tol=None,
                  verbose=False):
@@ -458,7 +463,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None, alph
 
     if reg is None or reg == 0:  # exact OT
 
-        if unbalanced is None:  # Exact balanced OT
+        if unbalanced is None and unbalanced_type.lower() not in ['semirelaxed']:  # Exact balanced OT
 
             if M is None or alpha == 1:  # Gromov-Wasserstein problem
 
@@ -505,6 +510,39 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None, alph
                 plan = log['T']
                 potentials = (log['u'], log['v'])
 
+        elif unbalanced_type.lower() in ['semirelaxed']:  # Semi-relaxed  OT
+
+            if M is None or alpha == 1:  # Semi relaxed Gromov-Wasserstein problem
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 10000
+                if tol is None:
+                    tol = 1e-9
+
+                value, log = semirelaxed_gromov_wasserstein2(Ca, Cb, a, loss_fun=loss_dict[loss.lower()], log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+
+                value_quad = value
+                if alpha == 1:  # set to 0 for FGW with alpha=1
+                    value_linear = 0
+                plan = log['T']
+                # potentials = (log['u'], log['v']) TODO
+
+            else:  # Semi relaxed Fused Gromov-Wasserstein problem
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 10000
+                if tol is None:
+                    tol = 1e-9
+
+                value, log = semirelaxed_fused_gromov_wasserstein2(M, Ca, Cb, a, loss_fun=loss_dict[loss.lower()], alpha=alpha, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+
+                value_linear = log['lin_loss']
+                value_quad = log['quad_loss']
+                plan = log['T']
+                # potentials = (log['u'], log['v']) TODO
+
         elif unbalanced_type.lower() in ['kl', 'l2']:  # unbalanced exact OT
 
             raise (NotImplementedError('Unbalanced_type="{}"'.format(unbalanced_type)))
@@ -514,7 +552,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None, alph
 
     else:  # regularized OT
 
-        if unbalanced is None:  # Balanced regularized OT
+        if unbalanced is None and unbalanced_type.lower() not in ['semirelaxed']:  # Balanced regularized OT
 
             if reg_type.lower() in ['entropy'] and (M is None or alpha == 1):  # Entropic Gromov-Wasserstein problem
 
@@ -569,6 +607,37 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None, alph
 
             else:
                 raise (NotImplementedError('Not implemented reg_type="{}"'.format(reg_type)))
+
+        elif unbalanced_type.lower() in ['semirelaxed']:  # Semi-relaxed  OT
+
+            if reg_type.lower() in ['entropy'] and (M is None or alpha == 1):  # Entropic Semi-relaxed Gromov-Wasserstein problem
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-9
+
+                value_quad, log = entropic_semirelaxed_gromov_wasserstein2(Ca, Cb, a, epsilon=reg, loss_fun=loss_dict[loss.lower()], log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+
+                plan = log['T']
+                value_linear = 0
+                value = value_quad + reg * nx.sum(plan * nx.log(plan + 1e-16))
+
+            else:  # Entropic Semi-relaxed FGW problem
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-9
+
+                value_noreg, log = entropic_semirelaxed_fused_gromov_wasserstein2(M, Ca, Cb, a, loss_fun=loss_dict[loss.lower()], alpha=alpha, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+
+                value_linear = log['lin_loss']
+                value_quad = log['quad_loss']
+                plan = log['T']
+                value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
 
         else:  # unbalanced AND regularized OT
 
