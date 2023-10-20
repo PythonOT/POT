@@ -602,7 +602,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     loss_dict = {'l2': 'square_loss', 'kl': 'kl_loss'}
 
     if loss.lower() not in loss_dict.keys():
-        raise (ValueError('Unknown GW loss="{}"'.format(loss)))
+        raise (NotImplementedError('Not implemented GW loss="{}"'.format(loss)))
     loss_fun = loss_dict[loss.lower()]
 
     if reg is None or reg == 0:  # exact OT

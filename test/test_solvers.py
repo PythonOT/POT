@@ -207,8 +207,51 @@ def test_solve_gromov_grid(nx, reg, reg_type, unbalanced, unbalanced_type, alpha
         solx = ot.solve_gromov(Cax, Cbx, reg=reg, reg_type=reg_type, unbalanced=unbalanced, unbalanced_type=unbalanced_type, loss=loss)  # GW
         solx_fgw = ot.solve_gromov(Cax, Cbx, Mx, reg=reg, reg_type=reg_type, unbalanced=unbalanced, unbalanced_type=unbalanced_type, alpha=alpha, loss=loss)  # FGW
 
+        solx.value_quad
+
         assert_allclose_sol(sol0, solx)
         assert_allclose_sol(sol0_fgw, solx_fgw)
 
     except NotImplementedError:
         pytest.skip("Not implemented")
+
+
+def test_solve_gromov_not_implemented(nx):
+
+    np.random.seed(0)
+
+    n_samples_s = 3
+    n_samples_t = 5
+
+    Ca = np.random.rand(n_samples_s, n_samples_s)
+    Ca = (Ca + Ca.T) / 2
+
+    Cb = np.random.rand(n_samples_t, n_samples_t)
+    Cb = (Cb + Cb.T) / 2
+
+    a = ot.utils.unif(n_samples_s)
+    b = ot.utils.unif(n_samples_t)
+
+    M = np.random.rand(n_samples_s, n_samples_t)
+
+    Ca, Cb, M, a, b = nx.from_numpy(Ca, Cb, M, a, b)
+
+    # test not implemented and check raise
+    with pytest.raises(NotImplementedError):
+        ot.solve_gromov(Ca, Cb, loss='weird loss')
+    with pytest.raises(NotImplementedError):
+        ot.solve_gromov(Ca, Cb, unbalanced=1, unbalanced_type='cryptic divergence')
+    with pytest.raises(NotImplementedError):
+        ot.solve_gromov(Ca, Cb, reg=1, reg_type='cryptic divergence')
+
+    # detect partial not implemented and error detect in value
+    with pytest.raises(ValueError):
+        ot.solve_gromov(Ca, Cb, unbalanced_type='partial', unbalanced=1.5)
+    with pytest.raises(NotImplementedError):
+        ot.solve_gromov(Ca, Cb, unbalanced_type='partial', unbalanced=0.5, symmetric=False)
+    with pytest.raises(NotImplementedError):
+        ot.solve_gromov(Ca, Cb, M, unbalanced_type='partial', unbalanced=0.5)
+    with pytest.raises(ValueError):
+        ot.solve_gromov(Ca, Cb, reg=1, unbalanced_type='partial', unbalanced=1.5)
+    with pytest.raises(NotImplementedError):
+        ot.solve_gromov(Ca, Cb, reg=1, unbalanced_type='partial', unbalanced=0.5, symmetric=False)

@@ -386,7 +386,8 @@ def test_OTResult():
                       'sparse_plan',
                       'status',
                       'value',
-                      'value_linear']
+                      'value_linear',
+                      'value_quad']
     for at in lst_attributes:
         with pytest.raises(NotImplementedError):
             getattr(res, at)
