@@ -59,11 +59,11 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         Unbalanced penalization weight :math:`\lambda_u`, by default None
         (balanced OT)
     unbalanced_type : str, optional
-        Type of unbalanced penalization unction :math:`U`  either "KL", "L2", "TV", by default "KL"
+        Type of unbalanced penalization function :math:`U`  either "KL", "L2", "TV", by default "KL"
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
     max_iter : int, optional
-        Maximum number of iteration, by default None (default values in each solvers)
+        Maximum number of iterations, by default None (default values in each solvers)
     plan_init : array_like, shape (dim_a, dim_b), optional
         Initialization of the OT plan for iterative methods, by default None
     potentials_init : (array_like(dim_a,),array_like(dim_b,)), optional
@@ -391,30 +391,29 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
         Type of loss function, either ``"L2"`` or ``"KL"``, by default ``"L2"``
     symmetric : bool, optional
         Use symmetric version of the Gromov-Wasserstein problem, by default None
-        tests wether the matrices are symmetric or True/False to avoid the test.
+        tests whether the matrices are symmetric or True/False to avoid the test.
     reg : float, optional
         Regularization weight :math:`\lambda_r`, by default None (no reg., exact
         OT)
     reg_type : str, optional
-        Type of regularization :math:`R`, by default "entropic" (only used when
+        Type of regularization :math:`R`, by default "entropy" (only used when
         ``reg!=None``)
     alpha : float, optional
         Weight the quadratic term (alpha*Gromov) and the linear term
         ((1-alpha)*Wass) in the Fused Gromov-Wasserstein problem. Not used for
         Gromov problem (when M is not provided). By default ``alpha=None``
-        corresponds to to
-        ``alpha=1`` for Gromov problem (``M==None``) and ``alpha=0.5`` for Fused
-        Gromov-Wasserstein problem (``M!=None``)
+        corresponds to ``alpha=1`` for Gromov problem (``M==None``) and
+        ``alpha=0.5`` for Fused Gromov-Wasserstein problem (``M!=None``)
     unbalanced : float, optional
         Unbalanced penalization weight :math:`\lambda_u`, by default None
         (balanced OT), Not implemented yet
     unbalanced_type : str, optional
-        Type of unbalanced penalization unction :math:`U`  either "KL", "semirelaxed",
-        "partial", by default "KL" , Not implemented yet
+        Type of unbalanced penalization function :math:`U` either "KL", "semirelaxed",
+        "partial", by default "KL" but note that it is not implemented yet.
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
     max_iter : int, optional
-        Maximum number of iteration, by default None (default values in each
+        Maximum number of iterations, by default None (default values in each
         solvers)
     plan_init : array_like, shape (dim_a, dim_b), optional
         Initialization of the OT plan for iterative methods, by default None
