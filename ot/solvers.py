@@ -412,6 +412,10 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
         "partial", by default "KL" but note that it is not implemented yet.
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
+    method : str, optional
+        Method for solving the problem, for entropic problems "PGD" is projected
+        gradient descent and "PPA" for proximal point, default None for
+        automatic selection ("PGD").
     max_iter : int, optional
         Maximum number of iterations, by default None (default values in each
         solvers)
@@ -457,7 +461,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     .. code-block:: python
 
         res = ot.solve_gromov(Ca, Cb) # uniform weights
-        res = ot.solve_gromov(Ca, Cb, a=a, b=) # given weights
+        res = ot.solve_gromov(Ca, Cb, a=a, b=b) # given weights
         res = ot.solve_gromov(Ca, Cb, loss='KL') # KL loss
 
         plan = res.plan # GW plan
