@@ -582,6 +582,12 @@ def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss',
     fgw_dist = log_fgw['fgw_dist']
     log_fgw['T'] = T
 
+    # compute separate terms for gradients and log
+    lin_term = nx.sum(T * M)
+    log_fgw['quad_loss'] = (fgw_dist - (1 - alpha) * lin_term)
+    log_fgw['lin_loss'] = lin_term * (1 - alpha)
+    gw_term = log_fgw['quad_loss'] / alpha
+
     if loss_fun == 'square_loss':
         gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
         gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
@@ -591,8 +597,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss',
                                          log_fgw['v'] - nx.mean(log_fgw['v']),
                                          alpha * gC1, alpha * gC2, (1 - alpha) * T))
         else:
-            lin_term = nx.sum(T * M)
-            gw_term = (fgw_dist - (1 - alpha) * lin_term) / alpha
+
             fgw_dist = nx.set_gradients(fgw_dist, (p, q, C1, C2, M, alpha),
                                         (log_fgw['u'] - nx.mean(log_fgw['u']),
                                          log_fgw['v'] - nx.mean(log_fgw['v']),

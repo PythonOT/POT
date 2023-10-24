@@ -731,11 +731,12 @@ class UndefinedParameter(Exception):
 
 
 class OTResult:
-    def __init__(self, potentials=None, value=None, value_linear=None, plan=None, log=None, backend=None, sparse_plan=None, lazy_plan=None, status=None):
+    def __init__(self, potentials=None, value=None, value_linear=None, value_quad=None, plan=None, log=None, backend=None, sparse_plan=None, lazy_plan=None, status=None):
 
         self._potentials = potentials
         self._value = value
         self._value_linear = value_linear
+        self._value_quad = value_quad
         self._plan = plan
         self._log = log
         self._sparse_plan = sparse_plan
@@ -828,7 +829,8 @@ class OTResult:
 
     @property
     def value(self):
-        """Full transport cost, including possible regularization terms."""
+        """Full transport cost, including possible regularization terms and
+        quadratic term for Gromov Wasserstein solutions."""
         if self._value is not None:
             return self._value
         else:
@@ -839,6 +841,14 @@ class OTResult:
         """The "minimal" transport cost, i.e. the product between the transport plan and the cost."""
         if self._value_linear is not None:
             return self._value_linear
+        else:
+            raise NotImplementedError()
+
+    @property
+    def value_quad(self):
+        """The quadratic part of the transport cost for Gromov-Wasserstein solutions."""
+        if self._value_quad is not None:
+            return self._value_quad
         else:
             raise NotImplementedError()
 

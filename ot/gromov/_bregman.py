@@ -330,6 +330,7 @@ def entropic_gromov_wasserstein2(
         learning for graph matching and node embedding. In International
         Conference on Machine Learning (ICML), 2019.
     """
+
     T, logv = entropic_gromov_wasserstein(
         C1, C2, p, q, loss_fun, epsilon, symmetric, G0, max_iter,
         tol, solver, warmstart, verbose, log=True, **kwargs)
@@ -815,11 +816,18 @@ def entropic_fused_gromov_wasserstein2(
         (ICML). 2019.
 
     """
+
+    nx = get_backend(M, C1, C2)
+
     T, logv = entropic_fused_gromov_wasserstein(
         M, C1, C2, p, q, loss_fun, epsilon, symmetric, alpha, G0, max_iter,
         tol, solver, warmstart, verbose, log=True, **kwargs)
 
     logv['T'] = T
+
+    lin_term = nx.sum(T * M)
+    logv['quad_loss'] = (logv['fgw_dist'] - (1 - alpha) * lin_term)
+    logv['lin_loss'] = lin_term * (1 - alpha)
 
     if log:
         return logv['fgw_dist'], logv

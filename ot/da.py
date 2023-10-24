@@ -2274,6 +2274,7 @@ class NearestBrenierPotential(BaseTransport):
     ot.mapping.nearest_brenier_potential_fit : Fitting the SSNB on source and target data
     ot.mapping.nearest_brenier_potential_predict_bounds : Predicting SSNB images on new source data
     """
+
     def __init__(self, strongly_convex_constant=0.6, gradient_lipschitz_constant=1.4, log=False, its=100, seed=None):
         self.strongly_convex_constant = strongly_convex_constant
         self.gradient_lipschitz_constant = gradient_lipschitz_constant
