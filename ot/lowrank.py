@@ -2,8 +2,10 @@
 ############################################## WORK IN PROGRESS #################################################
 #################################################################################################################
 
+## Implementation of the LR-Dykstra algorithm and low rank sinkhorn algorithms 
 
-from ot.utils import unif, list_to_array
+
+from ot.utils import unif, list_to_array, dist
 from ot.backend import get_backend
 from ot.datasets import make_1D_gauss as gauss
 
@@ -11,13 +13,13 @@ from ot.datasets import make_1D_gauss as gauss
 
 ################################## LR-DYSKTRA ALGORITHM ##########################################
 
-def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, dykstra_w): 
+def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, dykstra_p): 
     """
     Implementation of the Dykstra algorithm for low rank Sinkhorn
     """
 
     # get dykstra parameters 
-    q3_1, q3_2, v1_, v2_, q1, q2 = dykstra_w
+    q3_1, q3_2, v1_, v2_, q1, q2 = dykstra_p
 
     # POT backend
     eps1, eps2, eps3, p1, p2 = list_to_array(eps1, eps2, eps3, p1, p2)
@@ -58,18 +60,18 @@ def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, dykstra_w):
     Q = u1[:,None] * eps1 * v1[None,:]
     R = u2[:,None] * eps2 * v2[None,:]
 
-    dykstra_w = [q3_1, q3_2, v1_, v2_, q1, q2]
+    dykstra_p = [q3_1, q3_2, v1_, v2_, q1, q2]
 
-    return Q, R, g, err, dykstra_w
+    return Q, R, g, err, dykstra_p
     
 
 
 #################################### LOW RANK SINKHORN ALGORITHM #########################################
 
 
-def lowrank_sinkhorn(X_s, X_t, reg=0, a=None, b=None, r=4, metric='sqeuclidean', alpha=1e-10, numIterMax=10000, stopThr=1e-20):
+def lowrank_sinkhorn(X_s, X_t, reg=0, a=None, b=None, r=2, metric='sqeuclidean', alpha=1e-10, numIterMax=10000, stopThr=1e-20):
     r'''
-    Solve the entropic regularization optimal transport problem under low-nonnegative low rank constraints
+    Solve the entropic regularization optimal transport problem under low-nonnegative rank constraints on the feasible couplings.
     
     Parameters
     ----------
@@ -95,7 +97,7 @@ def lowrank_sinkhorn(X_s, X_t, reg=0, a=None, b=None, r=4, metric='sqeuclidean',
     R: array-like, shape (n_samples_b, r)
         Second low-rank matrix decomposition of the OT plan
     g : array-like, shape (r, )
-        ...
+        Third low-rank matrix decomposition of the OT plan
 
     '''
 
@@ -108,7 +110,7 @@ def lowrank_sinkhorn(X_s, X_t, reg=0, a=None, b=None, r=4, metric='sqeuclidean',
     if b is None:
         b = nx.from_numpy(unif(nt), type_as=X_s)
     
-    M = ot.dist(X_s,X_t, metric=metric) 
+    M = dist(X_s,X_t, metric=metric) 
     
     # Compute rank
     r = min(ns, nt, r)
@@ -122,7 +124,7 @@ def lowrank_sinkhorn(X_s, X_t, reg=0, a=None, b=None, r=4, metric='sqeuclidean',
     q3_1, q3_2 = nx.ones(r), nx.ones(r)
     v1_, v2_ = nx.ones(r), nx.ones(r)
     q1, q2 = nx.ones(r), nx.ones(r)
-    dykstra_w = [q3_1, q3_2, v1_, v2_, q1, q2]
+    dykstra_p = [q3_1, q3_2, v1_, v2_, q1, q2]
     n_iter = 0
     err = 1
 
@@ -139,7 +141,7 @@ def lowrank_sinkhorn(X_s, X_t, reg=0, a=None, b=None, r=4, metric='sqeuclidean',
             omega = nx.diag(nx.dot(Q.T, CR))
             eps3 = nx.exp(gamma*omega/(g**2) - (gamma*reg - 1)*nx.log(g))
 
-            Q, R, g, err, dykstra_w = LR_Dysktra(eps1, eps2, eps3, a, b, alpha, dykstra_w)
+            Q, R, g, err, dykstra_p = LR_Dysktra(eps1, eps2, eps3, a, b, alpha, dykstra_p)
         else:
             break
     
@@ -153,18 +155,18 @@ def lowrank_sinkhorn(X_s, X_t, reg=0, a=None, b=None, r=4, metric='sqeuclidean',
 ## Test with X_s, X_t from ot.datasets
 #############################################################################
 
-import numpy as np
-import ot 
+# import numpy as np
+# import ot 
 
-Xs, _ = ot.datasets.make_data_classif('3gauss', n=1000)
-Xt, _ = ot.datasets.make_data_classif('3gauss2', n=1500)
+# Xs, _ = ot.datasets.make_data_classif('3gauss', n=1000)
+# Xt, _ = ot.datasets.make_data_classif('3gauss2', n=1500)
 
 
-Q, R, g = lowrank_sinkhorn(Xs,Xt,reg=0.1)
-M = ot.dist(Xs,Xt)
-P = np.dot(Q,np.dot(np.diag(1/g),R.T))
+# Q, R, g = lowrank_sinkhorn(Xs,Xt,reg=0.1)
+# M = ot.dist(Xs,Xt)
+# P = np.dot(Q,np.dot(np.diag(1/g),R.T))
 
-print(np.sum(P))
+# print(np.sum(P))
 
 
 
