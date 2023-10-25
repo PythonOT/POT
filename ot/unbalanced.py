@@ -1150,10 +1150,10 @@ def mm_unbalanced(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
-    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, 'kl'), 2)
+    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, div='kl'), 2)
     array([[0.3 , 0.  ],
            [0.  , 0.07]])
-    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, 'l2'), 2)
+    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, div='l2'), 2)
     array([[0.25, 0.  ],
            [0.  , 0.  ]])
 
@@ -1304,9 +1304,9 @@ def mm_unbalanced2(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
-    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, 'l2'),2)
+    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, div='l2'), 2)
     0.25
-    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, 'kl'),2)
+    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, div='kl'), 2)
     0.57
 
     References
@@ -1473,9 +1473,9 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
-    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, 'l2'),2)
+    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, div='l2'),2)
     0.25
-    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, 'kl'),2)
+    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, div='kl'),2)
     0.57
 
     References
