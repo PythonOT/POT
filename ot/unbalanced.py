@@ -128,7 +128,7 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m=None, method='sinkhorn', numItermax=
     ot.unbalanced.sinkhorn_stabilized_unbalanced:
         Unbalanced Stabilized sinkhorn :ref:`[9, 10] <references-sinkhorn-unbalanced>`
     ot.unbalanced.sinkhorn_reg_scaling_unbalanced:
-        Unbalanced Sinkhorn with epslilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced>`
+        Unbalanced Sinkhorn with epsilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced>`
 
     """
 
@@ -253,7 +253,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m=None, method='sinkhorn',
     --------
     ot.unbalanced.sinkhorn_knopp : Unbalanced Classic Sinkhorn :ref:`[10] <references-sinkhorn-unbalanced2>`
     ot.unbalanced.sinkhorn_stabilized: Unbalanced Stabilized sinkhorn :ref:`[9, 10] <references-sinkhorn-unbalanced2>`
-    ot.unbalanced.sinkhorn_reg_scaling: Unbalanced Sinkhorn with epslilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced2>`
+    ot.unbalanced.sinkhorn_reg_scaling: Unbalanced Sinkhorn with epsilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced2>`
 
     """
     b = list_to_array(b)
@@ -528,7 +528,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
         For semi-relaxed case, use either
         (float("inf"), scalar) or (scalar, float("inf")).
     tau : float
-        thershold for max value in u or v for log scaling
+        threshold for max value in u or v for log scaling
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -746,7 +746,7 @@ def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
     tau : float
         Stabilization threshold for log domain absorption.
     weights : array-like (n_hists,) optional
-        Weight of each distribution (barycentric coodinates)
+        Weight of each distribution (barycentric coordinates)
         If None, uniform weights are used.
     numItermax : int, optional
         Max number of iterations
