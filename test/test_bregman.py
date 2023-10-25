@@ -1061,7 +1061,10 @@ def test_convolutional_barycenter_non_square(nx):
     np.testing.assert_allclose(np.ones((2, 3)) / (2 * 3), b, atol=1e-02)
     np.testing.assert_allclose(b, b_np)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
 def test_sinkhorn_warmstart():
     m, n = 10, 20
     a = ot.unif(m)
@@ -1069,7 +1072,11 @@ def test_sinkhorn_warmstart():
 
     Xs = np.arange(m) * 1.0
     Xt = np.arange(n) * 1.0
+<<<<<<< HEAD
     M = ot.dist(Xs.reshape(-1, 1), Xt.reshape(-1, 1))
+=======
+    M = ot.dist(Xs.reshape(-1,1), Xt.reshape(-1,1))
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
 
     # Generate warmstart from dual vectors of unregularized OT
     _, log = ot.lp.emd(a, b, M, log=True)
@@ -1078,6 +1085,7 @@ def test_sinkhorn_warmstart():
     reg = 1
 
     # Optimal plan with uniform warmstart
+<<<<<<< HEAD
     pi_unif, _ = ot.bregman.sinkhorn(
         a, b, M, reg, method="sinkhorn", log=True, warmstart=None)
     # Optimal plan with warmstart generated from unregularized OT
@@ -1089,17 +1097,32 @@ def test_sinkhorn_warmstart():
         a, b, M, reg, method="sinkhorn_stabilized", log=True, warmstart=warmstart)
     pi_sh_sc, _ = ot.bregman.sinkhorn(
         a, b, M, reg, method="sinkhorn_epsilon_scaling", log=True, warmstart=warmstart)
+=======
+    pi_unif, _ = ot.bregman.sinkhorn(a, b, M, reg, method="sinkhorn", warmstart=None, log=True)
+    # Optimal plan with warmstart generated from unregularized OT
+    pi_sh, _ = ot.bregman.sinkhorn(a, b, M, reg, method="sinkhorn", warmstart=warmstart, log=True)
+    pi_sh_log, _ = ot.bregman.sinkhorn(a, b, M, reg, method="sinkhorn_log", warmstart=warmstart, log=True)
+    pi_sh_stab, _ = ot.bregman.sinkhorn(a, b, M, reg, method="sinkhorn_stabilized", warmstart=warmstart, log=True)
+    pi_sh_sc, _ = ot.bregman.sinkhorn(a, b, M, reg, method="sinkhorn_epsilon_scaling", warmstart=warmstart, log=True)
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
 
     np.testing.assert_allclose(pi_unif, pi_sh, atol=1e-05)
     np.testing.assert_allclose(pi_unif, pi_sh_log, atol=1e-05)
     np.testing.assert_allclose(pi_unif, pi_sh_stab, atol=1e-05)
     np.testing.assert_allclose(pi_unif, pi_sh_sc, atol=1e-05)
 
+<<<<<<< HEAD
 
 def test_empirical_sinkhorn_warmstart():
     m, n = 10, 20
     Xs = np.arange(m).reshape(-1, 1) * 1.0
     Xt = np.arange(n).reshape(-1, 1) * 1.0
+=======
+def test_empirical_sinkhorn_warmstart():
+    m, n = 10, 20
+    Xs = np.arange(m).reshape(-1,1) * 1.0
+    Xt = np.arange(n).reshape(-1,1) * 1.0
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
     M = ot.dist(Xs, Xt)
 
     # Generate warmstart from dual vectors of unregularized OT
@@ -1111,6 +1134,7 @@ def test_empirical_sinkhorn_warmstart():
     reg = 1
 
     # Optimal plan with uniform warmstart
+<<<<<<< HEAD
     f, g, _ = ot.bregman.empirical_sinkhorn(
         X_s=Xs, X_t=Xt, reg=reg, isLazy=True, log=True, warmstart=None)
     pi_unif = np.exp(f[:, None] + g[None, :] - M / reg)
@@ -1120,10 +1144,19 @@ def test_empirical_sinkhorn_warmstart():
     pi_ws_lazy = np.exp(f[:, None] + g[None, :] - M / reg)
     pi_ws_not_lazy, _ = ot.bregman.empirical_sinkhorn(
         X_s=Xs, X_t=Xt, reg=reg, isLazy=False, log=True, warmstart=warmstart)
+=======
+    f, g, _ = ot.bregman.empirical_sinkhorn(X_s=Xs, X_t=Xt, reg=reg, isLazy=True, warmstart=None, log=True)
+    pi_unif = np.exp(f[:, None] + g[None, :] - M / reg)
+    # Optimal plan with warmstart generated from unregularized OT
+    f, g, _ = ot.bregman.empirical_sinkhorn(X_s=Xs, X_t=Xt, reg=reg, isLazy=True, warmstart=warmstart, log=True)
+    pi_ws_lazy = np.exp(f[:, None] + g[None, :] - M / reg)
+    pi_ws_not_lazy, _ = ot.bregman.empirical_sinkhorn(X_s=Xs, X_t=Xt, reg=reg, isLazy=False, warmstart=warmstart, log=True)
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
 
     np.testing.assert_allclose(pi_unif, pi_ws_lazy, atol=1e-05)
     np.testing.assert_allclose(pi_unif, pi_ws_not_lazy, atol=1e-05)
 
+<<<<<<< HEAD
 
 def test_empirical_sinkhorn_divergence_warmstart():
     m, n = 10, 20
@@ -1131,6 +1164,14 @@ def test_empirical_sinkhorn_divergence_warmstart():
     Xt = np.arange(n).reshape(-1, 1) * 1.0
     M = ot.dist(Xs, Xt)
 
+=======
+def test_empirical_sinkhorn_divergence_warmstart():
+    m, n = 10, 20
+    Xs = np.arange(m).reshape(-1,1) * 1.0
+    Xt = np.arange(n).reshape(-1,1) * 1.0
+    M = ot.dist(Xs, Xt)
+    
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
     # Generate warmstart from dual vectors of unregularized OT
     a = ot.unif(m)
     b = ot.unif(n)
@@ -1140,6 +1181,7 @@ def test_empirical_sinkhorn_divergence_warmstart():
     reg = 1
 
     # Optimal plan with uniform warmstart
+<<<<<<< HEAD
     sd_unif, _ = ot.bregman.empirical_sinkhorn_divergence(
         X_s=Xs, X_t=Xt, reg=reg, isLazy=True, log=True, warmstart=None)
     # Optimal plan with warmstart generated from unregularized OT
@@ -1150,3 +1192,12 @@ def test_empirical_sinkhorn_divergence_warmstart():
 
     np.testing.assert_allclose(sd_unif, sd_ws_lazy, atol=1e-05)
     np.testing.assert_allclose(sd_unif, sd_ws_not_lazy, atol=1e-05)
+=======
+    sd_unif, _ = ot.bregman.empirical_sinkhorn_divergence(X_s=Xs, X_t=Xt, reg=reg, isLazy=True, warmstart=None, log=True)    
+    # Optimal plan with warmstart generated from unregularized OT
+    sd_ws_lazy, _ = ot.bregman.empirical_sinkhorn_divergence(X_s=Xs, X_t=Xt, reg=reg, isLazy=True, warmstart=warmstart, log=True)
+    sd_ws_not_lazy, _ = ot.bregman.empirical_sinkhorn_divergence(X_s=Xs, X_t=Xt, reg=reg, isLazy=False, warmstart=warmstart, log=True)
+
+    np.testing.assert_allclose(sd_unif, sd_ws_lazy, atol=1e-05)
+    np.testing.assert_allclose(sd_unif, sd_ws_not_lazy, atol=1e-05)
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in

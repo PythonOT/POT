@@ -24,8 +24,14 @@ from ot.utils import unif, dist, list_to_array
 from .backend import get_backend
 
 
+<<<<<<< HEAD
 def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9,
              verbose=False, log=False, warn=True, warmstart=None, **kwargs):
+=======
+def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None, 
+             stopThr=1e-9, verbose=False, log=False, warn=True,
+             **kwargs):
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -92,6 +98,9 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9,
         those function for specific parameters
     numItermax : int, optional
         Max number of iterations
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     verbose : bool, optional
@@ -156,20 +165,21 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9,
     """
 
     if method.lower() == 'sinkhorn':
-        return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
+        return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
                               stopThr=stopThr, verbose=verbose, log=log,
                               warn=warn, warmstart=warmstart,
                               **kwargs)
     elif method.lower() == 'sinkhorn_log':
-        return sinkhorn_log(a, b, M, reg, numItermax=numItermax,
+        return sinkhorn_log(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
                             stopThr=stopThr, verbose=verbose, log=log,
                             warn=warn, warmstart=warmstart,
                             **kwargs)
     elif method.lower() == 'greenkhorn':
-        return greenkhorn(a, b, M, reg, numItermax=numItermax,
+        return greenkhorn(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
                           stopThr=stopThr, verbose=verbose, log=log,
                           warn=warn, warmstart=warmstart)
     elif method.lower() == 'sinkhorn_stabilized':
+<<<<<<< HEAD
         return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
                                    stopThr=stopThr, warmstart=warmstart,
                                    verbose=verbose, log=log, warn=warn,
@@ -178,13 +188,29 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9,
         return sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=numItermax,
                                         stopThr=stopThr, warmstart=warmstart,
                                         verbose=verbose, log=log, warn=warn,
+=======
+        return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
+                                   stopThr=stopThr, verbose=verbose,
+                                   log=log, warn=warn,
+                                   **kwargs)
+    elif method.lower() == 'sinkhorn_epsilon_scaling':
+        return sinkhorn_epsilon_scaling(a, b, M, reg,
+                                        numItermax=numItermax, warmstart=warmstart, 
+                                        stopThr=stopThr, verbose=verbose,
+                                        log=log, warn=warn,
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
                                         **kwargs)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
 
+<<<<<<< HEAD
 def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
               stopThr=1e-9, verbose=False, log=False, warn=False, warmstart=None, **kwargs):
+=======
+def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000, warmstart=None, 
+              stopThr=1e-9, verbose=False, log=False, warn=False, **kwargs):
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
     r"""
     Solve the entropic regularization optimal transport problem and return the loss
 
@@ -253,6 +279,9 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
         'sinkhorn_stabilized', see those function for specific parameters
     numItermax : int, optional
         Max number of iterations
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     verbose : bool, optional
@@ -326,19 +355,25 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
 
     if len(b.shape) < 2:
         if method.lower() == 'sinkhorn':
-            res = sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
+            res = sinkhorn_knopp(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
                                  stopThr=stopThr, verbose=verbose,
                                  log=log, warn=warn, warmstart=warmstart,
                                  **kwargs)
         elif method.lower() == 'sinkhorn_log':
-            res = sinkhorn_log(a, b, M, reg, numItermax=numItermax,
+            res = sinkhorn_log(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
                                stopThr=stopThr, verbose=verbose,
                                log=log, warn=warn, warmstart=warmstart,
                                **kwargs)
         elif method.lower() == 'sinkhorn_stabilized':
+<<<<<<< HEAD
             res = sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
                                       stopThr=stopThr, warmstart=warmstart,
                                       verbose=verbose, log=log, warn=warn,
+=======
+            res = sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
+                                      stopThr=stopThr, verbose=verbose,
+                                      log=log, warn=warn,
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
                                       **kwargs)
         else:
             raise ValueError("Unknown method '%s'." % method)
@@ -350,26 +385,38 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     else:
 
         if method.lower() == 'sinkhorn':
-            return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
+            return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
                                   stopThr=stopThr, verbose=verbose,
                                   log=log, warn=warn, warmstart=warmstart,
                                   **kwargs)
         elif method.lower() == 'sinkhorn_log':
-            return sinkhorn_log(a, b, M, reg, numItermax=numItermax,
+            return sinkhorn_log(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
                                 stopThr=stopThr, verbose=verbose,
                                 log=log, warn=warn, warmstart=warmstart,
                                 **kwargs)
         elif method.lower() == 'sinkhorn_stabilized':
+<<<<<<< HEAD
             return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
                                        stopThr=stopThr, warmstart=warmstart,
                                        verbose=verbose, log=log, warn=warn,
+=======
+            return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax, warmstart=warmstart, 
+                                       stopThr=stopThr, verbose=verbose,
+                                       log=log, warn=warn,
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
                                        **kwargs)
         else:
             raise ValueError("Unknown method '%s'." % method)
 
 
+<<<<<<< HEAD
 def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
                    verbose=False, log=False, warn=True, warmstart=None, **kwargs):
+=======
+def sinkhorn_knopp(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9, 
+                   verbose=False, log=False, warn=True,
+                   **kwargs):
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -410,6 +457,12 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
         Regularization term >0
     numItermax : int, optional
         Max number of iterations
+<<<<<<< HEAD
+=======
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        i.e.  warmstart = (log_u, log_v), but not (u, v).
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
     stopThr : float, optional
         Stop threshold on error (>0)
     verbose : bool, optional
@@ -555,8 +608,13 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
             return u.reshape((-1, 1)) * K * v.reshape((1, -1))
 
 
+<<<<<<< HEAD
 def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
                  log=False, warn=True, warmstart=None, **kwargs):
+=======
+def sinkhorn_log(a, b, M, reg, numItermax=1000, warmstart=None, stopThr=1e-9, verbose=False,
+                 log=False, warn=True, **kwargs):
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
     r"""
     Solve the entropic regularization optimal transport problem in log space
     and return the OT matrix
@@ -597,6 +655,12 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
         Regularization term >0
     numItermax : int, optional
         Max number of iterations
+<<<<<<< HEAD
+=======
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        i.e.  warmstart = (log_u, log_v), but not (u, v).
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
     stopThr : float, optional
         Stop threshold on error (>0)
     verbose : bool, optional
@@ -764,8 +828,13 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
             return nx.exp(get_logT(u, v))
 
 
+<<<<<<< HEAD
 def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
                log=False, warn=True, warmstart=None):
+=======
+def greenkhorn(a, b, M, reg, numItermax=10000, warmstart=None, stopThr=1e-9, verbose=False,
+               log=False, warn=True):
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -807,6 +876,9 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
         Regularization term >0
     numItermax : int, optional
         Max number of iterations
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     log : bool, optional
@@ -2891,8 +2963,13 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
 
 
 def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
+<<<<<<< HEAD
                        numIterMax=10000, stopThr=1e-9, isLazy=False, batchSize=100, verbose=False,
                        log=False, warn=True, warmstart=None, **kwargs):
+=======
+                       numIterMax=10000, warmstart=None, stopThr=1e-9, isLazy=False, batchSize=100, verbose=False,
+                       log=False, warn=True, **kwargs):
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
     r'''
     Solve the entropic regularization optimal transport problem and return the
     OT matrix from empirical data
@@ -2930,6 +3007,9 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         samples weights in the target domain
     numItermax : int, optional
         Max number of iterations
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     isLazy: boolean, optional
@@ -3076,18 +3156,32 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     else:
         M = dist(X_s, X_t, metric=metric)
         if log:
+<<<<<<< HEAD
             pi, log = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr,
                                verbose=verbose, log=True, warmstart=warmstart, **kwargs)
             return pi, log
         else:
             pi = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr,
                           verbose=verbose, log=False, warmstart=warmstart, **kwargs)
+=======
+            pi, log = sinkhorn(a, b, M, reg, numItermax=numIterMax, warmstart=warmstart, stopThr=stopThr,
+                               verbose=verbose, log=True, **kwargs)
+            return pi, log
+        else:
+            pi = sinkhorn(a, b, M, reg, numItermax=numIterMax, warmstart=warmstart, stopThr=stopThr,
+                          verbose=verbose, log=False, **kwargs)
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
             return pi
 
 
 def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
+<<<<<<< HEAD
                         numIterMax=10000, stopThr=1e-9, isLazy=False, batchSize=100,
                         verbose=False, log=False, warn=True, warmstart=None, **kwargs):
+=======
+                        numIterMax=10000, warmstart=None, stopThr=1e-9, isLazy=False,
+                        batchSize=100, verbose=False, log=False, warn=True, **kwargs):
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
     r'''
     Solve the entropic regularization optimal transport problem from empirical
     data and return the OT loss
@@ -3129,6 +3223,9 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         samples weights in the target domain
     numItermax : int, optional
         Max number of iterations
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     isLazy: boolean, optional
@@ -3197,7 +3294,8 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     if isLazy:
         if log:
             f, g, dict_log = empirical_sinkhorn(X_s, X_t, reg, a, b, metric,
-                                                numIterMax=numIterMax,
+                                                numIterMax=numIterMax, 
+                                                warmstart=warmstart, 
                                                 stopThr=stopThr,
                                                 isLazy=isLazy,
                                                 batchSize=batchSize,
@@ -3206,7 +3304,12 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
                                                 warmstart=warmstart)
         else:
             f, g = empirical_sinkhorn(X_s, X_t, reg, a, b, metric,
+<<<<<<< HEAD
                                       numIterMax=numIterMax,
+=======
+                                      numIterMax=numIterMax, 
+                                      warmstart=warmstart, 
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
                                       stopThr=stopThr,
                                       isLazy=isLazy, batchSize=batchSize,
                                       verbose=verbose, log=log,
@@ -3236,20 +3339,26 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         M = dist(X_s, X_t, metric=metric)
 
         if log:
-            sinkhorn_loss, log = sinkhorn2(a, b, M, reg, numItermax=numIterMax,
+            sinkhorn_loss, log = sinkhorn2(a, b, M, reg, numItermax=numIterMax, warmstart=warmstart, 
                                            stopThr=stopThr, verbose=verbose, log=log,
                                            warn=warn, warmstart=warmstart, **kwargs)
             return sinkhorn_loss, log
         else:
-            sinkhorn_loss = sinkhorn2(a, b, M, reg, numItermax=numIterMax,
+            sinkhorn_loss = sinkhorn2(a, b, M, reg, numItermax=numIterMax, warmstart=warmstart, 
                                       stopThr=stopThr, verbose=verbose, log=log,
                                       warn=warn, warmstart=warmstart, **kwargs)
             return sinkhorn_loss
 
 
 def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
+<<<<<<< HEAD
                                   numIterMax=10000, stopThr=1e-9, verbose=False,
                                   log=False, warn=True, warmstart=None, **kwargs):
+=======
+                                  numIterMax=10000, warmstart=None, stopThr=1e-9,
+                                  verbose=False, log=False, warn=True,
+                                  **kwargs):
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
     r'''
     Compute the sinkhorn divergence loss from empirical data
 
@@ -3318,6 +3427,9 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
         samples weights in the target domain
     numItermax : int, optional
         Max number of iterations
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual vectors. If provided, the dual vectors must be already taken the logarithm, 
+        i.e.  warmstart = (log_u, log_v), but not (u, v).
     stopThr : float, optional
         Stop threshold on error (>0)
     verbose : bool, optional
@@ -3367,6 +3479,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     if log:
         sinkhorn_loss_ab, log_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
+<<<<<<< HEAD
                                                        numIterMax=numIterMax, stopThr=stopThr,
                                                        verbose=verbose, log=log, warn=warn,
                                                        warmstart=warmstart, **kwargs)
@@ -3380,6 +3493,21 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
                                                      numIterMax=numIterMax, stopThr=stopThr,
                                                      verbose=verbose, log=log, warn=warn,
                                                      warmstart=warmstart_b, **kwargs)
+=======
+                                                       numIterMax=numIterMax, warmstart=warmstart, 
+                                                       stopThr=stopThr, verbose=verbose,
+                                                       log=log, warn=warn, **kwargs)
+
+        sinkhorn_loss_a, log_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric,
+                                                     numIterMax=numIterMax, warmstart=warmstart_a, 
+                                                     stopThr=stopThr, verbose=verbose,
+                                                     log=log, warn=warn, **kwargs)
+
+        sinkhorn_loss_b, log_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric,
+                                                     numIterMax=numIterMax, warmstart=warmstart_b, 
+                                                     stopThr=stopThr, verbose=verbose,
+                                                     log=log, warn=warn, **kwargs)
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
 
         sinkhorn_div = sinkhorn_loss_ab - 0.5 * \
             (sinkhorn_loss_a + sinkhorn_loss_b)
@@ -3396,6 +3524,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     else:
         sinkhorn_loss_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
+<<<<<<< HEAD
                                                numIterMax=numIterMax, stopThr=stopThr,
                                                verbose=verbose, log=log, warn=warn,
                                                warmstart=warmstart, **kwargs)
@@ -3409,6 +3538,24 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
                                               numIterMax=numIterMax, stopThr=stopThr,
                                               verbose=verbose, log=log, warn=warn,
                                               warmstart=warmstart_b, **kwargs)
+=======
+                                               numIterMax=numIterMax, warmstart=warmstart, 
+                                               stopThr=stopThr,
+                                               verbose=verbose, log=log,
+                                               warn=warn, **kwargs)
+
+        sinkhorn_loss_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric,
+                                              numIterMax=numIterMax, warmstart=warmstart_a, 
+                                              stopThr=stopThr,
+                                              verbose=verbose, log=log,
+                                              warn=warn, **kwargs)
+
+        sinkhorn_loss_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric,
+                                              numIterMax=numIterMax, warmstart=warmstart_b, 
+                                              stopThr=stopThr,
+                                              verbose=verbose, log=log,
+                                              warn=warn, **kwargs)
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
 
         sinkhorn_div = sinkhorn_loss_ab - 0.5 * \
             (sinkhorn_loss_a + sinkhorn_loss_b)

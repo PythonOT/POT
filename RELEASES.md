@@ -14,6 +14,7 @@
 - Added Generalized Wasserstein Barycenter solver + example (PR #372), fixed graphical details on the example (PR #376)
 - Added Free Support Sinkhorn Barycenter + example (PR #387)
 - New API for OT solver using function `ot.solve` (PR #388)
+<<<<<<< HEAD
 - Backend version of `ot.partial` and `ot.smooth` (PR #388 and #449)
 - Added argument for warmstart of dual potentials in Sinkhorn-based methods in `ot.bregman` (PR #437)
 - Added parameters method in `ot.da.SinkhornTransport` (PR #440)
@@ -21,6 +22,10 @@
   Pymanopt (PR #443)
 - Added CO-Optimal Transport solver + examples (PR # 447)
 - Remove the redundant `nx.abs()` at the end of `wasserstein_1d()` (PR #448)
+=======
+- Backend version of `ot.partial` and `ot.smooth` (PR #388)
+- Added argument for warmstart of dual vectors in Sinkhorn-based methods in `ot.bregman` (PR #)
+>>>>>>> Added argument for warmstart of dual vectors in Sinkhorn-based methods in
 
 #### Closed issues
 
