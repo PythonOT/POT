@@ -1319,7 +1319,7 @@ def mm_unbalanced2(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
     ot.lp.emd2 : Unregularized OT loss
     ot.unbalanced.sinkhorn_unbalanced2 : Entropic regularized OT loss
     """
-    _, log_mm = mm_unbalanced(a, b, M, reg, reg_m, div=div, G0=G0,
+    _, log_mm = mm_unbalanced(a, b, M, reg_m, reg=reg, div=div, G0=G0,
                               numItermax=numItermax, stopThr=stopThr,
                               verbose=verbose, log=True)
 
