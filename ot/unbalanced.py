@@ -1151,11 +1151,11 @@ def mm_unbalanced(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
     >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 5, div='kl'), 2)
-    array([[0.45 , 0.  ],
-           [0.   , 0.34]])
+    array([[0.45, 0.  ],
+           [0.  , 0.34]])
     >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 5, div='l2'), 2)
-    array([[0.4 , 0. ],
-           [0.  , 0.1]])
+    array([[0.4, 0. ],
+           [0. , 0.1]])
 
 
     .. _references-regpath:
@@ -1475,11 +1475,11 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
     >>> np.round(ot.unbalanced.lbfgsb_unbalanced(a, b, M, reg=0, reg_m=5, reg_div='kl', regm_div='kl'), 2)
-    array([[0.45 , 0.  ],
-           [0.   , 0.34]])
+    array([[0.45, 0.  ],
+           [0.  , 0.34]])
     >>> np.round(ot.unbalanced.lbfgsb_unbalanced(a, b, M, reg=0, reg_m=5, reg_div='l2', regm_div='l2'), 2)
-    array([[0.4 , 0. ],
-           [0.  , 0.1]])
+    array([[0.4, 0. ],
+           [0. , 0.1]])
 
     References
     ----------
