@@ -4,10 +4,9 @@
 
 ## Implementation of the LR-Dykstra algorithm and low rank sinkhorn algorithms 
 
-
-from ot.utils import unif, list_to_array, dist
-from ot.backend import get_backend
-from ot.datasets import make_1D_gauss as gauss
+import warnings
+from .utils import unif, list_to_array, dist
+from .backend import get_backend
 
 
 
@@ -15,7 +14,7 @@ from ot.datasets import make_1D_gauss as gauss
 
 def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, dykstra_p): 
     """
-    Implementation of the Dykstra algorithm for low rank Sinkhorn
+    Implementation of the Dykstra algorithm for low rank sinkhorn
     """
 
     # get dykstra parameters 
@@ -69,9 +68,12 @@ def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, dykstra_p):
 #################################### LOW RANK SINKHORN ALGORITHM #########################################
 
 
-def lowrank_sinkhorn(X_s, X_t, reg=0, a=None, b=None, r=2, metric='sqeuclidean', alpha=1e-10, numIterMax=10000, stopThr=1e-20):
+def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=2, metric='sqeuclidean', alpha="auto", 
+                     numItermax=10000, stopThr=1e-9, warn=True, verbose=False):
     r'''
-    Solve the entropic regularization optimal transport problem under low-nonnegative rank constraints on the feasible couplings.
+    Solve the entropic regularization optimal transport problem under low-nonnegative rank constraints.
+    
+    This function returns the two low-rank matrix decomposition of the OT plan (Q,R), as well as the weight vector g.
     
     Parameters
     ----------
@@ -79,17 +81,22 @@ def lowrank_sinkhorn(X_s, X_t, reg=0, a=None, b=None, r=2, metric='sqeuclidean',
         samples in the source domain
     X_t : array-like, shape (n_samples_b, dim)
         samples in the target domain
-    reg : float
-        Regularization term >0
     a : array-like, shape (n_samples_a,)
         samples weights in the source domain
     b : array-like, shape (n_samples_b,)
         samples weights in the target domain
+    reg : float, optional
+        Regularization term >0
+    rank: int, optional 
+        Nonnegative rank of the OT plan
+    alpha: int, optional 
+        Lower bound for the weight vector g (>0 and <1/r)
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
         Stop threshold on error (>0)
 
+        
     Returns
     -------
     Q : array-like, shape (n_samples_a, r)
@@ -97,7 +104,14 @@ def lowrank_sinkhorn(X_s, X_t, reg=0, a=None, b=None, r=2, metric='sqeuclidean',
     R: array-like, shape (n_samples_b, r)
         Second low-rank matrix decomposition of the OT plan
     g : array-like, shape (r, )
-        Third low-rank matrix decomposition of the OT plan
+        Weight vector for the low-rank decomposition of the OT plan
+    
+        
+    References
+    ----------
+
+    .. Scetbon, M., Cuturi, M., & Peyré, G (2021).
+        Low-Rank Sinkhorn Factorization. arXiv preprint arXiv:2103.04737.
 
     '''
 
@@ -110,13 +124,22 @@ def lowrank_sinkhorn(X_s, X_t, reg=0, a=None, b=None, r=2, metric='sqeuclidean',
     if b is None:
         b = nx.from_numpy(unif(nt), type_as=X_s)
     
+    # Compute cost matrix
     M = dist(X_s,X_t, metric=metric) 
-    
+
     # Compute rank
-    r = min(ns, nt, r)
+    rank = min(ns, nt, rank)
+    r = rank
+    
+    if alpha == 'auto':
+        alpha = 1.0 / (r + 1)
+        
+    if (1/r < alpha) or (alpha < 0):
+        warnings.warn("The provided alpha value might lead to instabilities.")
+
     
     # Compute gamma
-    L = nx.sqrt((2/(alpha**4))*nx.norm(M)**2 + (reg + (2/(alpha**3))*nx.norm(M))**2)
+    L = nx.sqrt((2/(alpha**4))*(nx.norm(M)**2) + (reg + (2/(alpha**3))*(nx.norm(M))**2))
     gamma = 1/(2*L)
     
     # Initialisation 
@@ -125,25 +148,34 @@ def lowrank_sinkhorn(X_s, X_t, reg=0, a=None, b=None, r=2, metric='sqeuclidean',
     v1_, v2_ = nx.ones(r), nx.ones(r)
     q1, q2 = nx.ones(r), nx.ones(r)
     dykstra_p = [q3_1, q3_2, v1_, v2_, q1, q2]
-    n_iter = 0
     err = 1
 
-    while n_iter < numIterMax:
-        if err > stopThr:
-            n_iter = n_iter + 1
-            
-            CR = nx.dot(M,R)
-            C_t_Q = nx.dot(M.T,Q)
-            diag_g = (1/g)[:,None]
+    for ii in range(numItermax):
+        CR = nx.dot(M,R)
+        C_t_Q = nx.dot(M.T,Q)
+        diag_g = (1/g)[:,None]
 
-            eps1 = nx.exp(-gamma*(nx.dot(CR,diag_g)) - ((gamma*reg)-1)*nx.log(Q))
-            eps2 = nx.exp(-gamma*(nx.dot(C_t_Q,diag_g)) - ((gamma*reg)-1)*nx.log(R))
-            omega = nx.diag(nx.dot(Q.T, CR))
-            eps3 = nx.exp(gamma*omega/(g**2) - (gamma*reg - 1)*nx.log(g))
+        eps1 = nx.exp(-gamma*(nx.dot(CR,diag_g)) - ((gamma*reg)-1)*nx.log(Q))
+        eps2 = nx.exp(-gamma*(nx.dot(C_t_Q,diag_g)) - ((gamma*reg)-1)*nx.log(R))
+        omega = nx.diag(nx.dot(Q.T, CR))
+        eps3 = nx.exp(gamma*omega/(g**2) - (gamma*reg - 1)*nx.log(g))
 
-            Q, R, g, err, dykstra_p = LR_Dysktra(eps1, eps2, eps3, a, b, alpha, dykstra_p)
-        else:
+        Q, R, g, err, dykstra_p = LR_Dysktra(eps1, eps2, eps3, a, b, alpha, dykstra_p)
+        
+        if err < stopThr:
             break
+
+        if verbose:
+                if ii % 200 == 0:
+                    print(
+                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(ii, err))
+
+    else: 
+        if warn:
+            warnings.warn("Sinkhorn did not converge. You might want to "
+                          "increase the number of iterations `numItermax` "
+                          "or the regularization parameter `reg`.")
     
     return Q, R, g
 
@@ -161,8 +193,13 @@ def lowrank_sinkhorn(X_s, X_t, reg=0, a=None, b=None, r=2, metric='sqeuclidean',
 # Xs, _ = ot.datasets.make_data_classif('3gauss', n=1000)
 # Xt, _ = ot.datasets.make_data_classif('3gauss2', n=1500)
 
+# ns = Xs.shape[0]
+# nt = Xt.shape[0]
 
-# Q, R, g = lowrank_sinkhorn(Xs,Xt,reg=0.1)
+# a = unif(ns)
+# b = unif(nt)
+
+# Q, R, g = lowrank_sinkhorn(Xs, Xt, reg=0.1, metric='euclidean', verbose=True, numItermax=100)
 # M = ot.dist(Xs,Xt)
 # P = np.dot(Q,np.dot(np.diag(1/g),R.T))
 

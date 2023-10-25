@@ -926,7 +926,7 @@ def solve_sample(X_s, X_t, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         Result of the optimization problem. This class only returns a partial OT plan and the OT dual potentials to reduce memory costs. 
         The information can be obtained as follows:
 
-        - res.lazy_plan : OT plan computed on a subsample of X_s and X_t :math:`\mathbf{T}`
+        - res.lazy_plan : OT plan computed on a subsample of X_s and X_t 
         - res.potentials : OT dual potentials
 
         See :any:`OTResultLazy` for more information.
@@ -975,29 +975,34 @@ def solve_sample(X_s, X_t, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
     if is_Lazy: 
         #################  WIP ####################
         if reg is None or reg == 0: # EMD solver for isLazy ?
-            if unbalanced is None: # not sure "unbalanced" parameter is needed here ? (since we won't compute value)
-                pass
-            elif unbalanced_type.lower() in ['kl', 'l2']: 
-                pass 
-            elif unbalanced_type.lower() == 'tv':
-                pass
-            pass
+            
+            if unbalanced is None: # balanced EMD solver for isLazy ?
+                raise (NotImplementedError('Not implemented balanced with no regularization'))
+            
+            else:
+                raise (NotImplementedError('Not implemented unbalanced_type="{}" with no regularization'.format(unbalanced_type)))
+            
+
         #############################################
         
         else: 
-            # compute potentials
-            u, v, log = empirical_sinkhorn(X_s, X_t, reg, a, b, metric='sqeuclidean', numIterMax=max_iter, stopThr=tol, 
-                                            isLazy=True, batchSize=batch_size, verbose=verbose, log=True)
-            potentials = (log["u"], log["v"])
+            if unbalanced is None:
+                u, v, log = empirical_sinkhorn(X_s, X_t, reg, a, b, metric='sqeuclidean', numIterMax=max_iter, stopThr=tol, 
+                                                isLazy=True, batchSize=batch_size, verbose=verbose, log=True)
+                # compute potentials
+                potentials = (log["u"], log["v"])
 
-            # compute lazy_plan
-            ns_lazy, nt_lazy = 100, 100 # size of the lazy_plan (subplan)
-            M = dist(X_s[:ns_lazy,:], X_t[:nt_lazy,:], metric)
-            K = nx.exp(M / (-reg))
-            lazy_plan = u[:ns_lazy].reshape((-1, 1)) * K * v[:nt_lazy].reshape((1, -1))
+                # compute lazy_plan
+                ns_lazy, nt_lazy = 100, 100 # size of the lazy_plan (subplan)
+                M = dist(X_s[:ns_lazy,:], X_t[:nt_lazy,:], metric)
+                K = nx.exp(M / (-reg))
+                lazy_plan = u[:ns_lazy].reshape((-1, 1)) * K * v[:nt_lazy].reshape((1, -1))
 
-            res_lazy = OTResultLazy(potentials=potentials, lazy_plan=lazy_plan, backend=nx)
-            return res_lazy
+                res_lazy = OTResultLazy(potentials=potentials, lazy_plan=lazy_plan, backend=nx)
+                return res_lazy
+            
+            else:
+                raise (NotImplementedError('Not implemented unbalanced_type="{}" with regularization'.format(unbalanced_type)))
             
     else:
         # compute cost matrix M and use solve function 
