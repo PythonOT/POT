@@ -1083,7 +1083,7 @@ def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
         raise ValueError("Unknown method '%s'." % method)
 
 
-def mm_unbalanced(a, b, M, reg, reg_m, div='kl', G0=None, numItermax=1000,
+def mm_unbalanced(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
                   stopThr=1e-15, verbose=False, log=False):
     r"""
     Solve the unbalanced optimal transport problem and return the OT plan.
@@ -1116,12 +1116,13 @@ def mm_unbalanced(a, b, M, reg, reg_m, div='kl', G0=None, numItermax=1000,
         Unnormalized histogram of dimension `dim_b`
     M : array-like (dim_a, dim_b)
         loss matrix
-    reg : float
-        Entropy regularization term >= 0
     reg_m: float or indexable object of length 2
         Marginal relaxation term >= 0.
         If reg_m is a scalar,
         then the same reg_m is applied to both marginal relaxations.
+    reg : float, optional (default = 0)
+        Entropy regularization term >= 0.
+        By default, solve the unregularized problem
     div: string, optional
         Divergence to quantify the difference between the marginals.
         Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic)
@@ -1235,7 +1236,7 @@ def mm_unbalanced(a, b, M, reg, reg_m, div='kl', G0=None, numItermax=1000,
         return G
 
 
-def mm_unbalanced2(a, b, M, reg, reg_m, div='kl', G0=None, numItermax=1000,
+def mm_unbalanced2(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
                    stopThr=1e-15, verbose=False, log=False):
     r"""
     Solve the unbalanced optimal transport problem and return the OT plan.
@@ -1268,12 +1269,13 @@ def mm_unbalanced2(a, b, M, reg, reg_m, div='kl', G0=None, numItermax=1000,
         Unnormalized histogram of dimension `dim_b`
     M : array-like (dim_a, dim_b)
         loss matrix
-    reg : float
-        Entropy regularization term >= 0
     reg_m: float or indexable object of length 2
         Marginal relaxation term >= 0.
         If reg_m is a scalar,
         then the same reg_m is applied to both marginal relaxations.
+    reg : float, optional (default = 0)
+        Entropy regularization term >= 0.
+        By default, solve the unregularized problem
     div: string, optional
         Divergence to quantify the difference between the marginals.
         Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic)
