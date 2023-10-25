@@ -15,8 +15,8 @@ import warnings
 import numpy as np
 from scipy.optimize import minimize, Bounds
 
-from ot.backend import get_backend
-from ot.utils import list_to_array
+from .backend import get_backend
+from .utils import list_to_array
 
 
 def sinkhorn_unbalanced(a, b, M, reg, reg_m=None, method='sinkhorn', numItermax=1000,
