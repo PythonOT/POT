@@ -15,8 +15,8 @@ import warnings
 import numpy as np
 from scipy.optimize import minimize, Bounds
 
-from .backend import get_backend
-from .utils import list_to_array
+from ot.backend import get_backend
+from ot.utils import list_to_array
 
 
 def sinkhorn_unbalanced(a, b, M, reg, reg_m=None, method='sinkhorn', numItermax=1000,
@@ -1150,12 +1150,12 @@ def mm_unbalanced(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
-    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, div='kl'), 2)
-    array([[0.3 , 0.  ],
-           [0.  , 0.07]])
-    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, div='l2'), 2)
-    array([[0.25, 0.  ],
-           [0.  , 0.  ]])
+    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 5, div='kl'), 2)
+    array([[0.45 , 0.   ],
+           [0.   , 0.34 ]])
+    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 5, div='l2'), 2)
+    array([[0.4 , 0.  ],
+           [0.  , 0.1 ]])
 
 
     .. _references-regpath:
@@ -1169,6 +1169,7 @@ def mm_unbalanced(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
     ot.lp.emd : Unregularized OT
     ot.unbalanced.sinkhorn_unbalanced : Entropic regularized OT
     """
+
     M, a, b = list_to_array(M, a, b)
     nx = get_backend(M, a, b)
 
@@ -1304,10 +1305,10 @@ def mm_unbalanced2(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
-    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, div='l2'), 2)
-    0.25
-    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, div='kl'), 2)
-    0.57
+    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 5, div='l2'), 2)
+    0.8
+    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 5, div='kl'), 2)
+    1.79
 
     References
     ----------
@@ -1461,8 +1462,8 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
 
     Returns
     -------
-    ot_distance : array-like
-        the OT distance between :math:`\mathbf{a}` and :math:`\mathbf{b}`
+    gamma : (dim_a, dim_b) array-like
+            Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`
 
@@ -1473,10 +1474,12 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
-    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, div='l2'),2)
-    0.25
-    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, div='kl'),2)
-    0.57
+    >>> np.round(ot.unbalanced.lbfgsb_unbalanced(a, b, M, reg=0, reg_m=5, reg_div='kl', regm_div='kl'), 2)
+    array([[0.45 , 0.   ],
+           [0.   , 0.34 ]])
+    >>> np.round(ot.unbalanced.lbfgsb_unbalanced(a, b, M, reg=0, reg_m=5, reg_div='l2', regm_div='l2'), 2)
+    array([[0.4 , 0.  ],
+           [0.  , 0.1 ]])
 
     References
     ----------
@@ -1489,6 +1492,7 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
     ot.unbalanced.sinkhorn_unbalanced2 : Entropic regularized OT loss
     """
 
+    M, a, b = list_to_array(M, a, b)
     nx = get_backend(M, a, b)
 
     M0 = M
