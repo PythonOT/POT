@@ -16,10 +16,10 @@ import numpy as np
 from scipy.optimize import minimize, Bounds
 
 from .backend import get_backend
-from .utils import list_to_array
+from .utils import list_to_array, extract_parameters
 
 
-def sinkhorn_unbalanced(a, b, M, reg, reg_m=None, method='sinkhorn', numItermax=1000,
+def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
                         stopThr=1e-6, verbose=False, log=False, **kwargs):
     r"""
     Solve the unbalanced entropic regularization optimal transport problem
@@ -58,13 +58,13 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m=None, method='sinkhorn', numItermax=
         loss matrix
     reg : float
         Entropy regularization term > 0
-    reg_m: float or indexable object of length 2, optional (default = None)
+    reg_m: float or indexable object of length 1 or 2
         Marginal relaxation term.
-        By default, `reg_m=None` corresponds to solving an
-        entropic **balanced** OT (i.e. `reg_m=float("inf")`). If reg_m is a scalar,
+        If reg_m is a scalar or an indexable object of length 1,
         then the same reg_m is applied to both marginal relaxations.
+        The entropic balanced OT can be recovered using `reg_m=float("inf")`.
         For semi-relaxed case, use either
-        (float("inf"), scalar) or (scalar, float("inf")).
+        `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
     method : str
         method used for the solver either 'sinkhorn',  'sinkhorn_stabilized' or
         'sinkhorn_reg_scaling', see those function for specific parameters
@@ -154,7 +154,7 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m=None, method='sinkhorn', numItermax=
         raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn_unbalanced2(a, b, M, reg, reg_m=None, method='sinkhorn',
+def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
                          numItermax=1000, stopThr=1e-6, verbose=False,
                          log=False, **kwargs):
     r"""
@@ -193,13 +193,13 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m=None, method='sinkhorn',
         loss matrix
     reg : float
         Entropy regularization term > 0
-    reg_m: float or indexable object of length 2, optional (default = None)
+    reg_m: float or indexable object of length 1 or 2
         Marginal relaxation term.
-        By default, `reg_m=None` corresponds to solving an
-        entropic **balanced** OT (i.e. `reg_m=float("inf")`). If reg_m is a scalar,
+        If reg_m is a scalar or an indexable object of length 1,
         then the same reg_m is applied to both marginal relaxations.
+        The entropic balanced OT can be recovered using `reg_m=float("inf")`.
         For semi-relaxed case, use either
-        (float("inf"), scalar) or (scalar, float("inf")).
+        `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
     method : str
         method used for the solver either 'sinkhorn',  'sinkhorn_stabilized' or
         'sinkhorn_reg_scaling', see those function for specific parameters
@@ -282,7 +282,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m=None, method='sinkhorn',
         raise ValueError('Unknown method %s.' % method)
 
 
-def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m=None, numItermax=1000,
+def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
                               stopThr=1e-6, verbose=False, log=False, **kwargs):
     r"""
     Solve the entropic regularization unbalanced optimal transport problem and
@@ -320,13 +320,13 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m=None, numItermax=1000,
         loss matrix
     reg : float
         Entropy regularization term > 0
-    reg_m: float or indexable object of length 2, optional (default = None)
+    reg_m: float or indexable object of length 1 or 2
         Marginal relaxation term.
-        By default, `reg_m=None` corresponds to solving an
-        entropic **balanced** OT (i.e. `reg_m=float("inf")`). If reg_m is a scalar,
+        If reg_m is a scalar or an indexable object of length 1,
         then the same reg_m is applied to both marginal relaxations.
+        The entropic balanced OT can be recovered using `reg_m=float("inf")`.
         For semi-relaxed case, use either
-        (float("inf"), scalar) or (scalar, float("inf")).
+        `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -394,15 +394,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m=None, numItermax=1000,
     else:
         n_hists = 0
 
-    if isinstance(reg_m, float) or isinstance(reg_m, int):
-        reg_m1, reg_m2 = reg_m, reg_m
-    elif reg_m is None:
-        reg_m1, reg_m2 = float("inf"), float("inf")
-    else:
-        if len(reg_m) != 2:
-            raise ValueError("Epsilon must be either a scalar or an indexable object of length 2.")
-        else:
-            reg_m1, reg_m2 = reg_m[0], reg_m[1]
+    reg_m1, reg_m2 = extract_parameters(reg_m, nx)
 
     if log:
         log = {'err': []}
@@ -520,13 +512,13 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
         loss matrix
     reg : float
         Entropy regularization term > 0
-    reg_m: float or indexable object of length 2, optional (default = None)
+    reg_m: float or indexable object of length 1 or 2
         Marginal relaxation term.
-        By default, `reg_m=None` corresponds to solving an
-        entropic **balanced** OT (i.e. `reg_m=float("inf")`). If reg_m is a scalar,
+        If reg_m is a scalar or an indexable object of length 1,
         then the same reg_m is applied to both marginal relaxations.
+        The entropic balanced OT can be recovered using `reg_m=float("inf")`.
         For semi-relaxed case, use either
-        (float("inf"), scalar) or (scalar, float("inf")).
+        `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
     tau : float
         threshold for max value in u or v for log scaling
     numItermax : int, optional
@@ -594,15 +586,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
     else:
         n_hists = 0
 
-    if isinstance(reg_m, float) or isinstance(reg_m, int):
-        reg_m1, reg_m2 = reg_m, reg_m
-    elif reg_m is None:
-        reg_m1, reg_m2 = float("inf"), float("inf")
-    else:
-        if len(reg_m) != 2:
-            raise ValueError("Epsilon must be either a scalar or an indexable object of length 2.")
-        else:
-            reg_m1, reg_m2 = reg_m[0], reg_m[1]
+    reg_m1, reg_m2 = extract_parameters(reg_m, nx)
 
     if log:
         log = {'err': []}
@@ -1116,9 +1100,9 @@ def mm_unbalanced(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
         Unnormalized histogram of dimension `dim_b`
     M : array-like (dim_a, dim_b)
         loss matrix
-    reg_m: float or indexable object of length 2
-        Marginal relaxation term >= 0.
-        If reg_m is a scalar,
+    reg_m: float or indexable object of length 1 or 2
+        Marginal relaxation term >= 0, but cannot be infinity.
+        If reg_m is a scalar or an indexable object of length 1,
         then the same reg_m is applied to both marginal relaxations.
     reg : float, optional (default = 0)
         Entropy regularization term >= 0.
@@ -1185,13 +1169,7 @@ def mm_unbalanced(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
     else:
         G = G0
 
-    if isinstance(reg_m, float) or isinstance(reg_m, int):
-        reg_m1, reg_m2 = reg_m, reg_m
-    else:
-        if len(reg_m) != 2:
-            raise ValueError("Epsilon must be either a scalar or an indexable object of length 2.")
-        else:
-            reg_m1, reg_m2 = reg_m[0], reg_m[1]
+    reg_m1, reg_m2 = extract_parameters(reg_m, nx)
 
     if log:
         log = {'err': [], 'G': []}
@@ -1270,9 +1248,9 @@ def mm_unbalanced2(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
         Unnormalized histogram of dimension `dim_b`
     M : array-like (dim_a, dim_b)
         loss matrix
-    reg_m: float or indexable object of length 2
-        Marginal relaxation term >= 0.
-        If reg_m is a scalar,
+    reg_m: float or indexable object of length 1 or 2
+        Marginal relaxation term >= 0, but cannot be infinity.
+        If reg_m is a scalar or an indexable object of length 1,
         then the same reg_m is applied to both marginal relaxations.
     reg : float, optional (default = 0)
         Entropy regularization term >= 0.
@@ -1438,10 +1416,10 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
     M : array-like (dim_a, dim_b)
         loss matrix
     reg: float
-        regularization term (>=0)
-    reg_m: float or indexable object of length 2
-        Marginal relaxation term.
-        If reg_m is a scalar,
+        regularization term >=0
+    reg_m: float or indexable object of length 1 or 2
+        Marginal relaxation term >= 0, but cannot be infinity.
+        If reg_m is a scalar or an indexable object of length 1,
         then the same reg_m is applied to both marginal relaxations.
     reg_div: string, optional
         Divergence used for regularization.
@@ -1499,13 +1477,7 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
     # convert to humpy
     a, b, M = nx.to_numpy(a, b, M)
 
-    if isinstance(reg_m, float) or isinstance(reg_m, int):
-        reg_m1, reg_m2 = reg_m, reg_m
-    else:
-        if len(reg_m) != 2:
-            raise ValueError("Epsilon must be either a scalar or an indexable object of length 2.")
-        else:
-            reg_m1, reg_m2 = reg_m[0], reg_m[1]
+    reg_m1, reg_m2 = extract_parameters(reg_m, nx)
 
     if G0 is not None:
         G0 = nx.to_numpy(G0)

@@ -73,8 +73,8 @@ def test_unbalanced_convergence(nx, method):
     np.testing.assert_allclose(G_np, nx.to_numpy(G))
 
 
-@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
-def test_unbalanced_relaxation_parameters(nx, method):
+@pytest.mark.parametrize("method,reg_m", itertools.product(["sinkhorn", "sinkhorn_stabilized"], [1, float("inf")]))
+def test_unbalanced_relaxation_parameters(nx, method, reg_m):
     # test generalized sinkhorn for unbalanced OT
     n = 100
     rng = np.random.RandomState(50)
@@ -87,28 +87,34 @@ def test_unbalanced_relaxation_parameters(nx, method):
 
     M = ot.dist(x, x)
     epsilon = 1.
-    reg_m = 1.
 
     a, b, M = nx.from_numpy(a, b, M)
 
-    loss_1, log_1 = ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg=epsilon,
-                                                      reg_m=reg_m,
-                                                      method=method,
-                                                      log=True,
-                                                      verbose=True)
+    # options for reg_m
+    full_list_reg_m = [reg_m, reg_m]
+    full_tuple_reg_m = (reg_m, reg_m)
+    tuple_reg_m, list_reg_m = (reg_m), [reg_m]
+    nx_reg_m = reg_m * nx.ones(1)
+    list_options = [nx_reg_m, full_tuple_reg_m,
+                    tuple_reg_m, full_list_reg_m, list_reg_m]
 
-    loss_2, log_2 = ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg=epsilon,
-                                                      reg_m=(reg_m, reg_m),
-                                                      method=method,
-                                                      log=True,
-                                                      verbose=True)
+    loss, log = ot.unbalanced.sinkhorn_unbalanced(
+        a, b, M, reg=epsilon, reg_m=reg_m,
+        method=method, log=True, verbose=True
+        )
 
-    np.testing.assert_allclose(
-        nx.to_numpy(log_1["logu"]), nx.to_numpy(log_2["logu"]), atol=1e-05)
-    np.testing.assert_allclose(
-        nx.to_numpy(log_1["logv"]), nx.to_numpy(log_2["logv"]), atol=1e-05)
-    np.testing.assert_allclose(
-        nx.to_numpy(loss_1), nx.to_numpy(loss_2), atol=1e-05)
+    for opt in list_options:
+        loss_opt, log_opt = ot.unbalanced.sinkhorn_unbalanced(
+            a, b, M, reg=epsilon, reg_m=opt,
+            method=method, log=True, verbose=True
+            )
+
+        np.testing.assert_allclose(
+            nx.to_numpy(log["logu"]), nx.to_numpy(log_opt["logu"]), atol=1e-05)
+        np.testing.assert_allclose(
+            nx.to_numpy(log["logv"]), nx.to_numpy(log_opt["logv"]), atol=1e-05)
+        np.testing.assert_allclose(
+            nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05)
 
 
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
@@ -362,17 +368,26 @@ def test_lbfgsb_unbalanced_relaxation_parameters(nx, reg_div, regm_div):
 
     a = ot.unif(5)
     b = ot.unif(6)
+
     reg_m = 10
+    full_list_reg_m = [reg_m, reg_m]
+    full_tuple_reg_m = (reg_m, reg_m)
+    tuple_reg_m, list_reg_m = (reg_m), [reg_m]
+    nx_reg_m = reg_m * nx.ones(1)
+    list_options = [nx_reg_m, full_tuple_reg_m,
+                    tuple_reg_m, full_list_reg_m, list_reg_m]
 
     G = ot.unbalanced.lbfgsb_unbalanced(a, b, M, 1, reg_m=reg_m,
                                         reg_div=reg_div, regm_div=regm_div,
                                         log=False, verbose=False)
 
-    G0 = ot.unbalanced.lbfgsb_unbalanced(a, b, M, 1, reg_m=(reg_m, reg_m),
-                                         reg_div=reg_div, regm_div=regm_div,
-                                         log=False, verbose=False)
+    for opt in list_options:
+        G0 = ot.unbalanced.lbfgsb_unbalanced(
+            a, b, M, 1, reg_m=opt, reg_div=reg_div,
+            regm_div=regm_div, log=False, verbose=False
+            )
 
-    np.testing.assert_allclose(nx.to_numpy(G), nx.to_numpy(G0), atol=1e-06)
+        np.testing.assert_allclose(nx.to_numpy(G), nx.to_numpy(G0), atol=1e-06)
 
 
 @pytest.mark.parametrize("div", ["kl", "l2"])
@@ -430,24 +445,67 @@ def test_mm_relaxation_parameters(nx, div):
 
     M = ot.dist(x, y)
     M = M / M.max()
-    reg_m = 100
-    reg = 1e-2
-
     a, b, M = nx.from_numpy(a_np, b_np, M)
 
-    G0, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, reg=reg, div=div,
-                                        verbose=False, log=True)
+    reg = 1e-2
+
+    reg_m = 100
+    full_list_reg_m = [reg_m, reg_m]
+    full_tuple_reg_m = (reg_m, reg_m)
+    tuple_reg_m, list_reg_m = (reg_m), [reg_m]
+    nx_reg_m = reg_m * nx.ones(1)
+    list_options = [nx_reg_m, full_tuple_reg_m,
+                    tuple_reg_m, full_list_reg_m, list_reg_m]
+
+    G0, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, reg=reg,
+                                        div=div, verbose=False, log=True)
     loss_0 = nx.to_numpy(
         ot.unbalanced.mm_unbalanced2(a, b, M, reg_m=reg_m, reg=reg,
                                      div=div, verbose=True)
     )
 
-    G1, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=(reg_m, reg_m),
-                                        reg=reg, div=div,
-                                        verbose=False, log=True)
+    for opt in list_options:
+        G1, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=opt,
+                                            reg=reg, div=div,
+                                            verbose=False, log=True)
+        loss_1 = nx.to_numpy(
+            ot.unbalanced.mm_unbalanced2(a, b, M, reg_m=opt,
+                                         reg=reg, div=div, verbose=True)
+        )
+
+        np.testing.assert_allclose(nx.to_numpy(G0), nx.to_numpy(G1), atol=1e-05)
+        assert loss_0 == loss_1
+
+
+def test_mm_wrong_divergence(nx):
+
+    n = 100
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
+    rng = np.random.RandomState(75)
+    y = rng.randn(n, 2)
+    a_np = ot.utils.unif(n)
+    b_np = ot.utils.unif(n)
+
+    M = ot.dist(x, y)
+    M = M / M.max()
+    a, b, M = nx.from_numpy(a_np, b_np, M)
+
+    reg = 1e-2
+    reg_m = 100
+
+    G0, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, reg=reg,
+                                        div="kl", verbose=False, log=True)
+    loss_0 = nx.to_numpy(
+        ot.unbalanced.mm_unbalanced2(a, b, M, reg_m=reg_m, reg=reg,
+                                     div="kl", verbose=True)
+    )
+
+    G1, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, reg=reg,
+                                        div="wrong_div", verbose=False, log=True)
     loss_1 = nx.to_numpy(
-        ot.unbalanced.mm_unbalanced2(a, b, M, reg_m=(reg_m, reg_m),
-                                     reg=reg, div=div, verbose=True)
+        ot.unbalanced.mm_unbalanced2(a, b, M, reg_m=reg_m, reg=reg,
+                                     div="wrong_div", verbose=True)
     )
 
     np.testing.assert_allclose(nx.to_numpy(G0), nx.to_numpy(G1), atol=1e-05)
