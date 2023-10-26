@@ -492,7 +492,7 @@ def get_coordinate_circle(x):
     return x_t
 
 
-def extract_parameters(parameter, nx):
+def extract_parameters(parameter):
     r"""Extract parameters from a given parameter
     Used in unbalanced OT and COOT solvers
     to handle marginal regularization and entropic regularization.
@@ -508,7 +508,7 @@ def extract_parameters(parameter, nx):
     param_2 : float
     """
 
-    if isinstance(parameter, float) or isinstance(parameter, int) or parameter == float("inf"):
+    if isinstance(parameter, float) or isinstance(parameter, int):
         param_1, param_2 = parameter, parameter
     elif len(parameter) == 1:
         param_1, param_2 = parameter[0], parameter[0]
