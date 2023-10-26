@@ -101,13 +101,13 @@ def test_unbalanced_relaxation_parameters(nx, method, reg_m):
     loss, log = ot.unbalanced.sinkhorn_unbalanced(
         a, b, M, reg=epsilon, reg_m=reg_m,
         method=method, log=True, verbose=True
-        )
+    )
 
     for opt in list_options:
         loss_opt, log_opt = ot.unbalanced.sinkhorn_unbalanced(
             a, b, M, reg=epsilon, reg_m=opt,
             method=method, log=True, verbose=True
-            )
+        )
 
         np.testing.assert_allclose(
             nx.to_numpy(log["logu"]), nx.to_numpy(log_opt["logu"]), atol=1e-05)
@@ -385,7 +385,7 @@ def test_lbfgsb_unbalanced_relaxation_parameters(nx, reg_div, regm_div):
         G0 = ot.unbalanced.lbfgsb_unbalanced(
             a, b, M, 1, reg_m=opt, reg_div=reg_div,
             regm_div=regm_div, log=False, verbose=False
-            )
+        )
 
         np.testing.assert_allclose(nx.to_numpy(G), nx.to_numpy(G0), atol=1e-06)
 

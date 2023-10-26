@@ -611,13 +611,16 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
     err = 1.
     alpha = nx.zeros(dim_a, type_as=M)
     beta = nx.zeros(dim_b, type_as=M)
+    ones_a = nx.ones(dim_a, type_as=M)
+    ones_b = nx.ones(dim_b, type_as=M)
+
     while (err > stopThr and cpt < numItermax):
         uprev = u
         vprev = v
 
         Kv = nx.dot(K, v)
-        f_alpha = nx.exp(- alpha / (reg + reg_m1)) if reg_m1 != float("inf") else 1
-        f_beta = nx.exp(- beta / (reg + reg_m2)) if reg_m2 != float("inf") else 1
+        f_alpha = nx.exp(- alpha / (reg + reg_m1)) if reg_m1 != float("inf") else ones_a
+        f_beta = nx.exp(- beta / (reg + reg_m2)) if reg_m2 != float("inf") else ones_b
 
         if n_hists:
             f_alpha = f_alpha[:, None]
