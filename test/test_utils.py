@@ -408,8 +408,10 @@ def test_LazyTensor(nx):
 
     n1 = 100
     n2 = 200
-    x1 = np.random.randn(n1, 2)
-    x2 = np.random.randn(n2, 2)
+
+    rng = np.random.RandomState(42)
+    x1 = rng.randn(n1, 2)
+    x2 = rng.randn(n2, 2)
 
     x1, x2 = nx.from_numpy(x1, x2)
 
@@ -427,13 +429,38 @@ def test_LazyTensor(nx):
     assert T.x2 is x2
 
     # get the full tensor (not lazy)
-    full_T = T[:]
+    T[:]
 
     # get one component
-    T11 = T[1, 1]
+    T[1, 1]
 
     # get one row
-    T1 = T[1]
+    T[1]
 
     # get one column with slices
-    Tsliced = T[::10, 5]
+    T[::10, 5]
+
+
+def test_OTResult_LazyTensor(nx):
+
+    n1 = 100
+    n2 = 200
+
+    rng = np.random.RandomState(42)
+    a = rng.rand(n1)
+    a = a / a.sum()
+    b = rng.rand(n2)
+    b = b / b.sum()
+
+    a, b = nx.from_numpy(a, b)
+
+    def getitem(i, j, a, b):
+        return a[i, None] * b[None, j]
+
+    # create a lazy tensor
+    T = ot.utils.LazyTensor((n1, n2), getitem, a=a, b=b)
+
+    res = ot.utils.OTResult(lazy_plan=T, batch_size=10, backend=nx)
+
+    np.testing.assert_allclose(nx.to_numpy(a), nx.to_numpy(res.marginal_a))
+    np.testing.assert_allclose(nx.to_numpy(b), nx.to_numpy(res.marginal_b))

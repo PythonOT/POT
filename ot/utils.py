@@ -944,9 +944,14 @@ class OTResult:
         elif self._lazy_plan is not None:
             lp = self._lazy_plan
             bs = self._batch_size
-            res = self._backend.zeros(lp.shape[0])
-            for i in range(0, lp.shape[0], bs):
-                res[i:i + bs] = self._backend.sum(lp[i:i + bs], 1)
+            nx = self._backend
+            res = nx.zeros(lp.shape[0], type_as=lp[0])
+            if nx.__name__ == 'jax':
+                for i in range(0, lp.shape[0], bs):
+                    res = res.at[i:i + bs].set(nx.sum(lp[i:i + bs], 1))
+            else:
+                for i in range(0, lp.shape[0], bs):
+                    res[i:i + bs] = nx.sum(lp[i:i + bs], 1)
             return res
         else:
             raise NotImplementedError()
@@ -959,9 +964,14 @@ class OTResult:
         elif self._lazy_plan is not None:
             lp = self._lazy_plan
             bs = self._batch_size
-            res = self._backend.zeros(lp.shape[1])
-            for i in range(0, lp.shape[1], bs):
-                res[i:i + bs] = self._backend.sum(lp[:, i:i + bs], 0)
+            nx = self._backend
+            res = nx.zeros(lp.shape[1], type_as=lp[0])
+            if nx.__name__ == 'jax':
+                for i in range(0, lp.shape[1], bs):
+                    res = res.at[i:i + bs].set(nx.sum(lp[:, i:i + bs], 0))
+            else:
+                for i in range(0, lp.shape[1], bs):
+                    res[i:i + bs] = nx.sum(lp[:, i:i + bs], 0)
             return res
         else:
             raise NotImplementedError()
