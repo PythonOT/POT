@@ -460,7 +460,7 @@ def test_OTResult_LazyTensor(nx):
     # create a lazy tensor
     T = ot.utils.LazyTensor((n1, n2), getitem, a=a, b=b)
 
-    res = ot.utils.OTResult(lazy_plan=T, batch_size=10, backend=nx)
+    res = ot.utils.OTResult(lazy_plan=T, batch_size=9, backend=nx)
 
     np.testing.assert_allclose(nx.to_numpy(a), nx.to_numpy(res.marginal_a))
     np.testing.assert_allclose(nx.to_numpy(b), nx.to_numpy(res.marginal_b))
