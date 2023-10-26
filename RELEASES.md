@@ -9,6 +9,7 @@
 + The `linspace` method of the backends now has the `type_as` argument to convert to the same dtype and device. (PR #533)
 + The `convolutional_barycenter2d` and `convolutional_barycenter2d_debiased` functions now work with different devices.. (PR #533)
 + New API for Gromov-Wasserstein solvers with `ot.solve_gromov` function (PR #536)
++ New LP solvers from scipy used by default for LP barycenter (PR #537)
 
 #### Closed issues
 - Fix line search evaluating cost outside of the interpolation range (Issue #502, PR #504)
