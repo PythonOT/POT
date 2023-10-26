@@ -511,8 +511,7 @@ def extract_parameters(parameter, nx):
     if isinstance(parameter, float) or isinstance(parameter, int) or parameter == float("inf"):
         param_1, param_2 = parameter, parameter
     elif len(parameter) == 1:
-        parameter = parameter * nx.ones(2)
-        param_1, param_2 = parameter[0], parameter[1]
+        param_1, param_2 = parameter[0], parameter[0]
     else:
         if len(parameter) > 2:
             raise ValueError("Parameter must be either a scalar, \
