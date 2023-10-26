@@ -389,6 +389,7 @@ def test_OTResult():
                       'value_linear',
                       'value_quad']
     for at in lst_attributes:
+        print(at)
         with pytest.raises(NotImplementedError):
             getattr(res, at)
 
@@ -401,3 +402,38 @@ def test_get_coordinate_circle():
     x_p = ot.utils.get_coordinate_circle(x)
 
     np.testing.assert_allclose(u[0], x_p)
+
+
+def test_LazyTensor(nx):
+
+    n1 = 100
+    n2 = 200
+    x1 = np.random.randn(n1, 2)
+    x2 = np.random.randn(n2, 2)
+
+    x1, x2 = nx.from_numpy(x1, x2)
+
+    # i,j can be integers or slices, x1,x2 have to be passed as keyword arguments
+    def getitem(i, j, x1, x2):
+        return nx.dot(x1[i], x2[j].T)
+
+    # create a lazy tensor
+    T = ot.utils.LazyTensor((n1, n2), getitem, x1=x1, x2=x2)
+
+    assert T.shape == (n1, n2)
+    assert str(T) == "LazyTensor(shape=(100, 200),attributes=(x1,x2))"
+
+    assert T.x1 is x1
+    assert T.x2 is x2
+
+    # get the full tensor (not lazy)
+    full_T = T[:]
+
+    # get one component
+    T11 = T[1, 1]
+
+    # get one row
+    T1 = T[1]
+
+    # get one column with slices
+    Tsliced = T[::10, 5]

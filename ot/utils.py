@@ -731,7 +731,76 @@ class UndefinedParameter(Exception):
 
 
 class OTResult:
-    def __init__(self, potentials=None, value=None, value_linear=None, value_quad=None, plan=None, log=None, backend=None, sparse_plan=None, lazy_plan=None, status=None):
+    """ Base class for OT results.
+
+    Parameters
+    ----------
+
+    potentials : tuple of array-like, shape (`n1`, `n2`)
+        Dual potentials, i.e. Lagrange multipliers for the marginal constraints.
+        This pair of arrays has the same shape, numerical type
+        and properties as the input weights "a" and "b".
+    value : float, array-like
+        Full transport cost, including possible regularization terms and
+        quadratic term for Gromov Wasserstein solutions.
+    value_linear : float, array-like
+        The linear part of the transport cost, i.e. the product between the
+        transport plan and the cost.
+    value_quad : float, array-like
+        The quadratic part of the transport cost for Gromov-Wasserstein
+        solutions.
+    plan : array-like, shape (`n1`, `n2`)
+        Transport plan, encoded as a dense array.
+    log : dict
+        Dictionary containing potential information about the solver.
+    backend : Backend
+        Backend used to compute the results.
+    sparse_plan : array-like, shape (`n1`, `n2`)
+        Transport plan, encoded as a sparse array.
+    lazy_plan : LazyTensor
+        Transport plan, encoded as a symbolic POT or KeOps LazyTensor.
+    status : int or str
+        Status of the solver.
+    batch_size : int
+        Batch size used to compute the results/marginals for LazyTensor.
+
+    Attributes
+    ----------
+
+    potentials : tuple of array-like, shape (`n1`, `n2`)
+        Dual potentials, i.e. Lagrange multipliers for the marginal constraints.
+        This pair of arrays has the same shape, numerical type
+        and properties as the input weights "a" and "b".
+    potential_a : array-like, shape (`n1`,)
+        First dual potential, associated to the "source" measure "a".
+    potential_b : array-like, shape (`n2`,)
+        Second dual potential, associated to the "target" measure "b".
+    value : float, array-like
+        Full transport cost, including possible regularization terms and
+        quadratic term for Gromov Wasserstein solutions.
+    value_linear : float, array-like
+        The linear part of the transport cost, i.e. the product between the
+        transport plan and the cost.
+    value_quad : float, array-like
+        The quadratic part of the transport cost for Gromov-Wasserstein
+        solutions.
+    plan : array-like, shape (`n1`, `n2`)
+        Transport plan, encoded as a dense array.
+    sparse_plan : array-like, shape (`n1`, `n2`)
+        Transport plan, encoded as a sparse array.
+    lazy_plan : LazyTensor
+        Transport plan, encoded as a symbolic POT or KeOps LazyTensor.
+    marginals : tuple of array-like, shape (`n1`,), (`n2`,)
+        Marginals of the transport plan: should be very close to "a" and "b"
+        for balanced OT.
+    marginal_a : array-like, shape (`n1`,)
+        Marginal of the transport plan for the "source" measure "a".
+    marginal_b : array-like, shape (`n2`,)
+        Marginal of the transport plan for the "target" measure "b".
+
+    """
+
+    def __init__(self, potentials=None, value=None, value_linear=None, value_quad=None, plan=None, log=None, backend=None, sparse_plan=None, lazy_plan=None, status=None, batch_size=100):
 
         self._potentials = potentials
         self._value = value
@@ -743,6 +812,7 @@ class OTResult:
         self._lazy_plan = lazy_plan
         self._backend = backend if backend is not None else NumpyBackend()
         self._status = status
+        self._batch_size = batch_size
 
         # I assume that other solvers may return directly
         # some primal objects?
@@ -763,7 +833,8 @@ class OTResult:
             s += 'value_linear={},'.format(self._value_linear)
         if self._plan is not None:
             s += 'plan={}(shape={}),'.format(self._plan.__class__.__name__, self._plan.shape)
-
+        if self._lazy_plan is not None:
+            s += 'lazy_plan={}(shape={}),'.format(self._lazy_plan.__class__.__name__, self._lazy_plan.shape)
         if s[-1] != '(':
             s = s[:-1] + ')'
         else:
@@ -823,7 +894,10 @@ class OTResult:
     @property
     def lazy_plan(self):
         """Transport plan, encoded as a symbolic KeOps LazyTensor."""
-        raise NotImplementedError()
+        if self._lazy_plan is not None:
+            return self._lazy_plan
+        else:
+            raise NotImplementedError()
 
     # Loss values --------------------------------
 
@@ -867,6 +941,13 @@ class OTResult:
         """First marginal of the transport plan, with the same shape as "a"."""
         if self._plan is not None:
             return self._backend.sum(self._plan, 1)
+        elif self._lazy_plan is not None:
+            lp = self._lazy_plan
+            bs = self._batch_size
+            res = self._backend.zeros(lp.shape[0])
+            for i in range(0, lp.shape[0], bs):
+                res[i:i + bs] = self._backend.sum(lp[i:i + bs], 1)
+            return res
         else:
             raise NotImplementedError()
 
@@ -875,6 +956,13 @@ class OTResult:
         """Second marginal of the transport plan, with the same shape as "b"."""
         if self._plan is not None:
             return self._backend.sum(self._plan, 0)
+        elif self._lazy_plan is not None:
+            lp = self._lazy_plan
+            bs = self._batch_size
+            res = self._backend.zeros(lp.shape[1])
+            for i in range(0, lp.shape[1], bs):
+                res[i:i + bs] = self._backend.sum(lp[:, i:i + bs], 0)
+            return res
         else:
             raise NotImplementedError()
 
@@ -938,3 +1026,70 @@ class OTResult:
               url     = {http://jmlr.org/papers/v22/20-451.html}
             }
         """
+
+
+class LazyTensor(object):
+    """ A lazy tensor is a tensor that is not stored in memory. Instead, it is
+    defined by a function that computes its values on the fly from slices.
+
+    Parameters
+    ----------
+
+    shape : tuple
+        shape of the tensor
+    getitem : callable
+        function that computes the values of the indices/slices and tensors
+        as arguments
+
+    kwargs : dict
+        named arguments for the function, those names will be used as attributed
+        of the LazyTensor object
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> v = np.arange(5)
+    >>> def getitem(i,j, v):
+    ...     return v[i,None]+v[None,j]
+    >>> T = LazyTensor((5,5),getitem, v=v)
+    >>> T[1,2]
+    array([3])
+    >>> T[1,:]
+    array([[1, 2, 3, 4, 5]])
+    >>> T[:]
+    array([[0, 1, 2, 3, 4],
+           [1, 2, 3, 4, 5],
+           [2, 3, 4, 5, 6],
+           [3, 4, 5, 6, 7],
+           [4, 5, 6, 7, 8]])
+
+    """
+
+    def __init__(self, shape, getitem, **kwargs):
+
+        self._getitem = getitem
+        self.shape = shape
+        self.ndim = len(shape)
+        self.kwargs = kwargs
+
+        # set attributes for named arguments/arrays
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    def __getitem__(self, key):
+        k = []
+        if isinstance(key, int) or isinstance(key, slice):
+            k.append(key)
+            for i in range(self.ndim - 1):
+                k.append(slice(None))
+        elif isinstance(key, tuple):
+            k = list(key)
+            for i in range(self.ndim - len(key)):
+                k.append(slice(None))
+        else:
+            raise NotImplementedError("Only integer, slice, and tuple indexing is supported")
+
+        return self._getitem(*k, **self.kwargs)
+
+    def __repr__(self):
+        return "LazyTensor(shape={},attributes=({}))".format(self.shape, ','.join(self.kwargs.keys()))
