@@ -369,12 +369,16 @@ def test_lbfgsb_unbalanced_relaxation_parameters(nx, reg_div, regm_div):
     a = ot.unif(5)
     b = ot.unif(6)
 
+    a, b, M = nx.from_numpy(a, b, M)
+
     reg_m = 10
     full_list_reg_m = [reg_m, reg_m]
     full_tuple_reg_m = (reg_m, reg_m)
     tuple_reg_m, list_reg_m = (reg_m), [reg_m]
-    nx_reg_m = reg_m * nx.ones(1)
-    list_options = [nx_reg_m, full_tuple_reg_m,
+    np1_reg_m = reg_m * np.ones(1)
+    np2_reg_m = reg_m * np.ones(2)
+
+    list_options = [np1_reg_m, np2_reg_m, full_tuple_reg_m,
                     tuple_reg_m, full_list_reg_m, list_reg_m]
 
     G = ot.unbalanced.lbfgsb_unbalanced(a, b, M, 1, reg_m=reg_m,
@@ -453,8 +457,10 @@ def test_mm_relaxation_parameters(nx, div):
     full_list_reg_m = [reg_m, reg_m]
     full_tuple_reg_m = (reg_m, reg_m)
     tuple_reg_m, list_reg_m = (reg_m), [reg_m]
-    nx_reg_m = reg_m * nx.ones(1)
-    list_options = [nx_reg_m, full_tuple_reg_m,
+    nx1_reg_m = reg_m * nx.ones(1)
+    nx2_reg_m = reg_m * nx.ones(2)
+
+    list_options = [nx1_reg_m, nx2_reg_m, full_tuple_reg_m,
                     tuple_reg_m, full_list_reg_m, list_reg_m]
 
     G0, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, reg=reg,
@@ -474,7 +480,7 @@ def test_mm_relaxation_parameters(nx, div):
         )
 
         np.testing.assert_allclose(nx.to_numpy(G0), nx.to_numpy(G1), atol=1e-05)
-        assert loss_0 == loss_1
+        np.testing.assert_allclose(loss_0, loss_1, atol=1e-5)
 
 
 def test_mm_wrong_divergence(nx):
@@ -509,4 +515,4 @@ def test_mm_wrong_divergence(nx):
     )
 
     np.testing.assert_allclose(nx.to_numpy(G0), nx.to_numpy(G1), atol=1e-05)
-    assert loss_0 == loss_1
+    np.testing.assert_allclose(loss_0, loss_1, atol=1e-5)

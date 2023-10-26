@@ -65,6 +65,7 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
         The entropic balanced OT can be recovered using `reg_m=float("inf")`.
         For semi-relaxed case, use either
         `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
+        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
     method : str
         method used for the solver either 'sinkhorn',  'sinkhorn_stabilized' or
         'sinkhorn_reg_scaling', see those function for specific parameters
@@ -200,6 +201,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
         The entropic balanced OT can be recovered using `reg_m=float("inf")`.
         For semi-relaxed case, use either
         `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
+        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
     method : str
         method used for the solver either 'sinkhorn',  'sinkhorn_stabilized' or
         'sinkhorn_reg_scaling', see those function for specific parameters
@@ -327,6 +329,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
         The entropic balanced OT can be recovered using `reg_m=float("inf")`.
         For semi-relaxed case, use either
         `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
+        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -519,6 +522,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
         The entropic balanced OT can be recovered using `reg_m=float("inf")`.
         For semi-relaxed case, use either
         `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
+        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
     tau : float
         threshold for max value in u or v for log scaling
     numItermax : int, optional
@@ -1107,6 +1111,7 @@ def mm_unbalanced(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
         Marginal relaxation term >= 0, but cannot be infinity.
         If reg_m is a scalar or an indexable object of length 1,
         then the same reg_m is applied to both marginal relaxations.
+        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
     reg : float, optional (default = 0)
         Entropy regularization term >= 0.
         By default, solve the unregularized problem
@@ -1255,6 +1260,7 @@ def mm_unbalanced2(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
         Marginal relaxation term >= 0, but cannot be infinity.
         If reg_m is a scalar or an indexable object of length 1,
         then the same reg_m is applied to both marginal relaxations.
+        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
     reg : float, optional (default = 0)
         Entropy regularization term >= 0.
         By default, solve the unregularized problem
@@ -1424,6 +1430,7 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
         Marginal relaxation term >= 0, but cannot be infinity.
         If reg_m is a scalar or an indexable object of length 1,
         then the same reg_m is applied to both marginal relaxations.
+        If reg_m is an array, it must be a Numpy array.
     reg_div: string, optional
         Divergence used for regularization.
         Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic)
@@ -1477,7 +1484,7 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
     nx = get_backend(M, a, b)
 
     M0 = M
-    # convert to humpy
+    # convert to numpy
     a, b, M = nx.to_numpy(a, b, M)
 
     reg_m1, reg_m2 = extract_parameters(reg_m, nx)
