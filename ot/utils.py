@@ -492,8 +492,8 @@ def get_coordinate_circle(x):
     return x_t
 
 
-def extract_parameters(parameter):
-    r"""Extract parameters from a given parameter
+def get_parameter_pair(parameter):
+    r"""Extract a pair of parameters from a given parameter
     Used in unbalanced OT and COOT solvers
     to handle marginal regularization and entropic regularization.
 

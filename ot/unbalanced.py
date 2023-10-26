@@ -16,7 +16,7 @@ import numpy as np
 from scipy.optimize import minimize, Bounds
 
 from .backend import get_backend
-from .utils import list_to_array, extract_parameters
+from .utils import list_to_array, get_parameter_pair
 
 
 def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
@@ -397,7 +397,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
     else:
         n_hists = 0
 
-    reg_m1, reg_m2 = extract_parameters(reg_m)
+    reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
     if log:
         log = {'err': []}
@@ -590,7 +590,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
     else:
         n_hists = 0
 
-    reg_m1, reg_m2 = extract_parameters(reg_m)
+    reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
     if log:
         log = {'err': []}
@@ -1177,7 +1177,7 @@ def mm_unbalanced(a, b, M, reg_m, reg=0, div='kl', G0=None, numItermax=1000,
     else:
         G = G0
 
-    reg_m1, reg_m2 = extract_parameters(reg_m)
+    reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
     if log:
         log = {'err': [], 'G': []}
@@ -1487,7 +1487,7 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
     # convert to numpy
     a, b, M = nx.to_numpy(a, b, M)
 
-    reg_m1, reg_m2 = extract_parameters(reg_m)
+    reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
     if G0 is not None:
         G0 = nx.to_numpy(G0)
