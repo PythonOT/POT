@@ -2,8 +2,10 @@
 
 # Author: Hicham Janati <hicham.janati@inria.fr>
 #         Laetitia Chapel <laetitia.chapel@univ-ubs.fr>
+#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
 # License: MIT License
+
 
 import itertools
 import numpy as np
@@ -71,6 +73,50 @@ def test_unbalanced_convergence(nx, method):
     np.testing.assert_allclose(G_np, nx.to_numpy(G))
 
 
+@pytest.mark.parametrize("method,reg_m", itertools.product(["sinkhorn", "sinkhorn_stabilized"], [1, float("inf")]))
+def test_unbalanced_relaxation_parameters(nx, method, reg_m):
+    # test generalized sinkhorn for unbalanced OT
+    n = 100
+    rng = np.random.RandomState(50)
+
+    x = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+
+    # make dists unbalanced
+    b = rng.rand(n, 2)
+
+    M = ot.dist(x, x)
+    epsilon = 1.
+
+    a, b, M = nx.from_numpy(a, b, M)
+
+    # options for reg_m
+    full_list_reg_m = [reg_m, reg_m]
+    full_tuple_reg_m = (reg_m, reg_m)
+    tuple_reg_m, list_reg_m = (reg_m), [reg_m]
+    nx_reg_m = reg_m * nx.ones(1)
+    list_options = [nx_reg_m, full_tuple_reg_m,
+                    tuple_reg_m, full_list_reg_m, list_reg_m]
+
+    loss, log = ot.unbalanced.sinkhorn_unbalanced(
+        a, b, M, reg=epsilon, reg_m=reg_m,
+        method=method, log=True, verbose=True
+    )
+
+    for opt in list_options:
+        loss_opt, log_opt = ot.unbalanced.sinkhorn_unbalanced(
+            a, b, M, reg=epsilon, reg_m=opt,
+            method=method, log=True, verbose=True
+        )
+
+        np.testing.assert_allclose(
+            nx.to_numpy(log["logu"]), nx.to_numpy(log_opt["logu"]), atol=1e-05)
+        np.testing.assert_allclose(
+            nx.to_numpy(log["logv"]), nx.to_numpy(log_opt["logv"]), atol=1e-05)
+        np.testing.assert_allclose(
+            nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05)
+
+
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
 def test_unbalanced_multiple_inputs(nx, method):
     # test generalized sinkhorn for unbalanced OT
@@ -110,8 +156,6 @@ def test_unbalanced_multiple_inputs(nx, method):
         nx.to_numpy(u_final), nx.to_numpy(log["logu"]), atol=1e-05)
     np.testing.assert_allclose(
         nx.to_numpy(v_final), nx.to_numpy(log["logv"]), atol=1e-05)
-
-    assert len(loss) == b.shape[1]
 
 
 def test_stabilized_vs_sinkhorn(nx):
@@ -292,9 +336,11 @@ def test_implemented_methods(nx):
 
 @pytest.mark.parametrize("reg_div,regm_div", itertools.product(['kl', 'l2', 'entropy'], ['kl', 'l2']))
 def test_lbfgsb_unbalanced(nx, reg_div, regm_div):
-    rng = np.random.RandomState(42)
-    xs = rng.randn(5, 2)
-    xt = rng.randn(6, 2)
+
+    np.random.seed(42)
+
+    xs = np.random.randn(5, 2)
+    xt = np.random.randn(6, 2)
 
     M = ot.dist(xs, xt)
 
@@ -310,7 +356,46 @@ def test_lbfgsb_unbalanced(nx, reg_div, regm_div):
     np.testing.assert_allclose(G, nx.to_numpy(Gb))
 
 
-def test_mm_convergence(nx):
+@pytest.mark.parametrize("reg_div,regm_div", itertools.product(['kl', 'l2', 'entropy'], ['kl', 'l2']))
+def test_lbfgsb_unbalanced_relaxation_parameters(nx, reg_div, regm_div):
+
+    np.random.seed(42)
+
+    xs = np.random.randn(5, 2)
+    xt = np.random.randn(6, 2)
+
+    M = ot.dist(xs, xt)
+
+    a = ot.unif(5)
+    b = ot.unif(6)
+
+    a, b, M = nx.from_numpy(a, b, M)
+
+    reg_m = 10
+    full_list_reg_m = [reg_m, reg_m]
+    full_tuple_reg_m = (reg_m, reg_m)
+    tuple_reg_m, list_reg_m = (reg_m), [reg_m]
+    np1_reg_m = reg_m * np.ones(1)
+    np2_reg_m = reg_m * np.ones(2)
+
+    list_options = [np1_reg_m, np2_reg_m, full_tuple_reg_m,
+                    tuple_reg_m, full_list_reg_m, list_reg_m]
+
+    G = ot.unbalanced.lbfgsb_unbalanced(a, b, M, 1, reg_m=reg_m,
+                                        reg_div=reg_div, regm_div=regm_div,
+                                        log=False, verbose=False)
+
+    for opt in list_options:
+        G0 = ot.unbalanced.lbfgsb_unbalanced(
+            a, b, M, 1, reg_m=opt, reg_div=reg_div,
+            regm_div=regm_div, log=False, verbose=False
+        )
+
+        np.testing.assert_allclose(nx.to_numpy(G), nx.to_numpy(G0), atol=1e-06)
+
+
+@pytest.mark.parametrize("div", ["kl", "l2"])
+def test_mm_convergence(nx, div):
     n = 100
     rng = np.random.RandomState(42)
     x = rng.randn(n, 2)
@@ -324,38 +409,110 @@ def test_mm_convergence(nx):
     reg_m = 100
     a, b, M = nx.from_numpy(a_np, b_np, M)
 
-    G_kl, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='kl',
-                                          verbose=False, log=True)
-    loss_kl = nx.to_numpy(
-        ot.unbalanced.mm_unbalanced2(a, b, M, reg_m, div='kl', verbose=True)
+    G, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div=div,
+                                       verbose=False, log=True)
+    loss = nx.to_numpy(
+        ot.unbalanced.mm_unbalanced2(a, b, M, reg_m, div=div, verbose=True)
     )
-    G_l2, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='l2',
-                                          verbose=False, log=True)
 
     # check if the marginals come close to the true ones when large reg
-    np.testing.assert_allclose(np.sum(nx.to_numpy(G_kl), 1), a_np, atol=1e-03)
-    np.testing.assert_allclose(np.sum(nx.to_numpy(G_kl), 0), b_np, atol=1e-03)
-    np.testing.assert_allclose(np.sum(nx.to_numpy(G_l2), 1), a_np, atol=1e-03)
-    np.testing.assert_allclose(np.sum(nx.to_numpy(G_l2), 0), b_np, atol=1e-03)
+    np.testing.assert_allclose(np.sum(nx.to_numpy(G), 1), a_np, atol=1e-03)
+    np.testing.assert_allclose(np.sum(nx.to_numpy(G), 0), b_np, atol=1e-03)
 
     # check if mm_unbalanced2 returns the correct loss
-    np.testing.assert_allclose(nx.to_numpy(nx.sum(G_kl * M)), loss_kl,
-                               atol=1e-5)
+    np.testing.assert_allclose(nx.to_numpy(nx.sum(G * M)), loss, atol=1e-5)
 
     # check in case no histogram is provided
     a_np, b_np = np.array([]), np.array([])
     a, b = nx.from_numpy(a_np, b_np)
 
-    G_kl_null = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='kl', verbose=False)
-    G_l2_null = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='l2', verbose=False)
-    np.testing.assert_allclose(nx.to_numpy(G_kl_null), nx.to_numpy(G_kl))
-    np.testing.assert_allclose(nx.to_numpy(G_l2_null), nx.to_numpy(G_l2))
+    G_null = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div=div, verbose=False)
+    np.testing.assert_allclose(nx.to_numpy(G_null), nx.to_numpy(G))
 
     # test when G0 is given
     G0 = ot.emd(a, b, M)
     G0_np = nx.to_numpy(G0)
     reg_m = 10000
-    G_kl = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='kl', G0=G0, verbose=False)
-    G_l2 = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div='l2', G0=G0, verbose=False)
-    np.testing.assert_allclose(G0_np, nx.to_numpy(G_kl), atol=1e-05)
-    np.testing.assert_allclose(G0_np, nx.to_numpy(G_l2), atol=1e-05)
+    G = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, div=div, G0=G0, verbose=False)
+    np.testing.assert_allclose(G0_np, nx.to_numpy(G), atol=1e-05)
+
+
+@pytest.mark.parametrize("div", ["kl", "l2"])
+def test_mm_relaxation_parameters(nx, div):
+    n = 100
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
+    rng = np.random.RandomState(75)
+    y = rng.randn(n, 2)
+    a_np = ot.utils.unif(n)
+    b_np = ot.utils.unif(n)
+
+    M = ot.dist(x, y)
+    M = M / M.max()
+    a, b, M = nx.from_numpy(a_np, b_np, M)
+
+    reg = 1e-2
+
+    reg_m = 100
+    full_list_reg_m = [reg_m, reg_m]
+    full_tuple_reg_m = (reg_m, reg_m)
+    tuple_reg_m, list_reg_m = (reg_m), [reg_m]
+    nx1_reg_m = reg_m * nx.ones(1)
+    nx2_reg_m = reg_m * nx.ones(2)
+
+    list_options = [nx1_reg_m, nx2_reg_m, full_tuple_reg_m,
+                    tuple_reg_m, full_list_reg_m, list_reg_m]
+
+    G0, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, reg=reg,
+                                        div=div, verbose=False, log=True)
+    loss_0 = nx.to_numpy(
+        ot.unbalanced.mm_unbalanced2(a, b, M, reg_m=reg_m, reg=reg,
+                                     div=div, verbose=True)
+    )
+
+    for opt in list_options:
+        G1, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=opt,
+                                            reg=reg, div=div,
+                                            verbose=False, log=True)
+        loss_1 = nx.to_numpy(
+            ot.unbalanced.mm_unbalanced2(a, b, M, reg_m=opt,
+                                         reg=reg, div=div, verbose=True)
+        )
+
+        np.testing.assert_allclose(nx.to_numpy(G0), nx.to_numpy(G1), atol=1e-05)
+        np.testing.assert_allclose(loss_0, loss_1, atol=1e-5)
+
+
+def test_mm_wrong_divergence(nx):
+
+    n = 100
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
+    rng = np.random.RandomState(75)
+    y = rng.randn(n, 2)
+    a_np = ot.utils.unif(n)
+    b_np = ot.utils.unif(n)
+
+    M = ot.dist(x, y)
+    M = M / M.max()
+    a, b, M = nx.from_numpy(a_np, b_np, M)
+
+    reg = 1e-2
+    reg_m = 100
+
+    G0, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, reg=reg,
+                                        div="kl", verbose=False, log=True)
+    loss_0 = nx.to_numpy(
+        ot.unbalanced.mm_unbalanced2(a, b, M, reg_m=reg_m, reg=reg,
+                                     div="kl", verbose=True)
+    )
+
+    G1, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, reg=reg,
+                                        div="wrong_div", verbose=False, log=True)
+    loss_1 = nx.to_numpy(
+        ot.unbalanced.mm_unbalanced2(a, b, M, reg_m=reg_m, reg=reg,
+                                     div="wrong_div", verbose=True)
+    )
+
+    np.testing.assert_allclose(nx.to_numpy(G0), nx.to_numpy(G1), atol=1e-05)
+    np.testing.assert_allclose(loss_0, loss_1, atol=1e-5)
