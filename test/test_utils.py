@@ -489,6 +489,15 @@ def test_LazyTensor_reduce(nx):
     s = ot.utils.reduce_lazytensor(T, nx.sum, nx=nx)
     np.testing.assert_allclose(nx.to_numpy(s), 1)
 
+    s2 = ot.utils.reduce_lazytensor(T, nx.sum)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
+
+    s2 = ot.utils.reduce_lazytensor(T, nx.sum, batch_size=500)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
+
+    s2 = ot.utils.reduce_lazytensor(T, nx.sum, batch_size=11)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
+
     # sum over axis 0
     s = ot.utils.reduce_lazytensor(T, nx.sum, axis=0, nx=nx)
     np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(b))

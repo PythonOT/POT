@@ -491,7 +491,7 @@ def get_coordinate_circle(x):
     x_t = (nx.atan2(-x[:, 1], -x[:, 0]) + np.pi) / (2 * np.pi)
     return x_t
 
-  
+
 def reduce_lazytensor(a, fun, axis=None, nx=None, batch_size=None):
     """ Reduce a LazyTensor along an axis with function fun using batches.
 
@@ -524,7 +524,7 @@ def reduce_lazytensor(a, fun, axis=None, nx=None, batch_size=None):
     """
 
     if nx is None:
-        nx = get_backend(a)
+        nx = get_backend(a[0])
 
     if batch_size is None:
         batch_size = 100
@@ -551,13 +551,11 @@ def reduce_lazytensor(a, fun, axis=None, nx=None, batch_size=None):
         else:
             shape = (a.shape[0], *a.shape[2:])
         res = nx.zeros(shape, type_as=a[0])
-        if nx.__name__ == "jax":
+        if nx.__name__ in ["jax", "tf"]:
             lst = []
             for i in range(0, a.shape[0], batch_size):
                 lst.append(fun(a[i:i + batch_size], 1))
             return nx.concatenate(lst, axis=0)
-        elif nx.__name__ == "tf":
-            raise (NotImplementedError("LazyTensor reduction not implemented for TF backend."))
         else:
             for i in range(0, a.shape[0], batch_size):
                 res[i:i + batch_size] = fun(a[i:i + batch_size], axis=1)
@@ -565,6 +563,7 @@ def reduce_lazytensor(a, fun, axis=None, nx=None, batch_size=None):
 
     else:
         raise (NotImplementedError("Only axis=None is implemented for now."))
+
 
 def get_parameter_pair(parameter):
     r"""Extract a pair of parameters from a given parameter
