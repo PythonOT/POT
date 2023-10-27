@@ -10,6 +10,7 @@
 + The `convolutional_barycenter2d` and `convolutional_barycenter2d_debiased` functions now work with different devices.. (PR #533)
 + New API for Gromov-Wasserstein solvers with `ot.solve_gromov` function (PR #536)
 + New LP solvers from scipy used by default for LP barycenter (PR #537)
++ Update wheels to Python 3.12 and remove old i686 arch that do not have scipy wheels (PR #543)
 
 #### Closed issues
 - Fix line search evaluating cost outside of the interpolation range (Issue #502, PR #504)
