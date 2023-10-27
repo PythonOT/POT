@@ -491,7 +491,7 @@ def get_coordinate_circle(x):
     x_t = (nx.atan2(-x[:, 1], -x[:, 0]) + np.pi) / (2 * np.pi)
     return x_t
 
-
+  
 def reduce_lazytensor(a, fun, axis=None, nx=None, batch_size=None):
     """ Reduce a LazyTensor along an axis with function fun using batches.
 
@@ -565,6 +565,35 @@ def reduce_lazytensor(a, fun, axis=None, nx=None, batch_size=None):
 
     else:
         raise (NotImplementedError("Only axis=None is implemented for now."))
+
+def get_parameter_pair(parameter):
+    r"""Extract a pair of parameters from a given parameter
+    Used in unbalanced OT and COOT solvers
+    to handle marginal regularization and entropic regularization.
+
+    Parameters
+    ----------
+    parameter : float or indexable object
+    nx : backend object
+
+    Returns
+    -------
+    param_1 : float
+    param_2 : float
+    """
+
+    if isinstance(parameter, float) or isinstance(parameter, int):
+        param_1, param_2 = parameter, parameter
+    elif len(parameter) == 1:
+        param_1, param_2 = parameter[0], parameter[0]
+    else:
+        if len(parameter) > 2:
+            raise ValueError("Parameter must be either a scalar, \
+                             or an indexable object of length 1 or 2.")
+        else:
+            param_1, param_2 = parameter[0], parameter[1]
+
+    return param_1, param_2
 
 
 class deprecated(object):
