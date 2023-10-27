@@ -492,6 +492,81 @@ def get_coordinate_circle(x):
     return x_t
 
 
+def reduce_lazytensor(a, fun, axis=None, nx=None, batch_size=None):
+    """ Reduce a LazyTensor along an axis with function fun using batches.
+
+    When axis=None, reduce the LazyTensor to a scalar as a sum of fun over
+    batches taken along dim.
+
+    Parameters
+    ----------
+
+    a : LazyTensor
+        LazyTensor to reduce
+    fun : callable
+        Function to apply to the LazyTensor
+    axis : int, optional
+        Axis along which to reduce the LazyTensor. If None, reduce the
+        LazyTensor to a scalar as a sum of fun over batches taken along axis 0.
+        If 0 or 1 reduce the LazyTensor to a vector/matrix as a sum of fun over
+        batches taken along axis.
+    nx : Backend, optional
+        Backend to use for the reduction
+    batch_size : int, optional
+        Size of the batches to use for the reduction (default=100)
+
+    Returns
+    -------
+
+    res : array-like
+        Result of the reduction
+
+    """
+
+    if nx is None:
+        nx = get_backend(a)
+
+    if batch_size is None:
+        batch_size = 100
+
+    if axis is None:
+        res = 0.0
+        for i in range(0, a.shape[0], batch_size):
+            res += fun(a[i:i + batch_size])
+        return res
+    elif axis == 0:
+        res = nx.zeros(a.shape[1:], type_as=a[0])
+        if nx.__name__ in ["jax", "tf"]:
+            lst = []
+            for j in range(0, a.shape[1], batch_size):
+                lst.append(fun(a[:, j:j + batch_size], 0))
+            return nx.concatenate(lst, axis=0)
+        else:
+            for j in range(0, a.shape[1], batch_size):
+                res[j:j + batch_size] = fun(a[:, j:j + batch_size], axis=0)
+        return res
+    elif axis == 1:
+        if len(a.shape) == 2:
+            shape = (a.shape[0])
+        else:
+            shape = (a.shape[0], *a.shape[2:])
+        res = nx.zeros(shape, type_as=a[0])
+        if nx.__name__ == "jax":
+            lst = []
+            for i in range(0, a.shape[0], batch_size):
+                lst.append(fun(a[i:i + batch_size], 1))
+            return nx.concatenate(lst, axis=0)
+        elif nx.__name__ == "tf":
+            raise (NotImplementedError("LazyTensor reduction not implemented for TF backend."))
+        else:
+            for i in range(0, a.shape[0], batch_size):
+                res[i:i + batch_size] = fun(a[i:i + batch_size], axis=1)
+        return res
+
+    else:
+        raise (NotImplementedError("Only axis=None is implemented for now."))
+
+
 class deprecated(object):
     r"""Decorator to mark a function or class as deprecated.
 
@@ -945,14 +1020,7 @@ class OTResult:
             lp = self._lazy_plan
             bs = self._batch_size
             nx = self._backend
-            res = nx.zeros(lp.shape[0], type_as=lp[0])
-            if nx.__name__ == 'jax':
-                for i in range(0, lp.shape[0], bs):
-                    res = res.at[i:i + bs].set(nx.sum(lp[i:i + bs], 1))
-            else:
-                for i in range(0, lp.shape[0], bs):
-                    res[i:i + bs] = nx.sum(lp[i:i + bs], 1)
-            return res
+            return reduce_lazytensor(lp, nx.sum, axis=1, nx=nx, batch_size=bs)
         else:
             raise NotImplementedError()
 
@@ -965,14 +1033,7 @@ class OTResult:
             lp = self._lazy_plan
             bs = self._batch_size
             nx = self._backend
-            res = nx.zeros(lp.shape[1], type_as=lp[0])
-            if nx.__name__ == 'jax':
-                for i in range(0, lp.shape[1], bs):
-                    res = res.at[i:i + bs].set(nx.sum(lp[:, i:i + bs], 0))
-            else:
-                for i in range(0, lp.shape[1], bs):
-                    res[i:i + bs] = nx.sum(lp[:, i:i + bs], 0)
-            return res
+            return reduce_lazytensor(lp, nx.sum, axis=0, nx=nx, batch_size=bs)
         else:
             raise NotImplementedError()
 

@@ -464,3 +464,40 @@ def test_OTResult_LazyTensor(nx):
 
     np.testing.assert_allclose(nx.to_numpy(a), nx.to_numpy(res.marginal_a))
     np.testing.assert_allclose(nx.to_numpy(b), nx.to_numpy(res.marginal_b))
+
+
+def test_LazyTensor_reduce(nx):
+
+    n1 = 100
+    n2 = 200
+
+    rng = np.random.RandomState(42)
+    a = rng.rand(n1)
+    a = a / a.sum()
+    b = rng.rand(n2)
+    b = b / b.sum()
+
+    a, b = nx.from_numpy(a, b)
+
+    def getitem(i, j, a, b):
+        return a[i, None] * b[None, j]
+
+    # create a lazy tensor
+    T = ot.utils.LazyTensor((n1, n2), getitem, a=a, b=b)
+
+    # total sum
+    s = ot.utils.reduce_lazytensor(T, nx.sum, nx=nx)
+    np.testing.assert_allclose(nx.to_numpy(s), 1)
+
+    # sum over axis 0
+    s = ot.utils.reduce_lazytensor(T, nx.sum, axis=0, nx=nx)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(b))
+
+    # sum over axis 1
+    s = ot.utils.reduce_lazytensor(T, nx.sum, axis=1, nx=nx)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(a))
+
+    # test otehr reduction function
+    s = ot.utils.reduce_lazytensor(T, nx.logsumexp, axis=1, nx=nx)
+    s2 = nx.logsumexp(T[:], axis=1)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
