@@ -10,6 +10,27 @@ import sys
 import pytest
 
 
+def get_LazyTensor(nx):
+    n1 = 100
+    n2 = 200
+
+    rng = np.random.RandomState(42)
+    a = rng.rand(n1)
+    a /= a.sum()
+    b = rng.rand(n2)
+    b /= b.sum()
+
+    a, b = nx.from_numpy(a, b)
+
+    def getitem(i, j, a, b):
+        return a[i, None] * b[None, j]
+
+    # create a lazy tensor
+    T = ot.utils.LazyTensor((n1, n2), getitem, a=a, b=b)
+
+    return T
+
+
 def test_proj_simplex(nx):
     n = 10
     rng = np.random.RandomState(0)
@@ -444,22 +465,7 @@ def test_LazyTensor(nx):
 
 def test_OTResult_LazyTensor(nx):
 
-    n1 = 100
-    n2 = 200
-
-    rng = np.random.RandomState(42)
-    a = rng.rand(n1)
-    a /= a.sum()
-    b = rng.rand(n2)
-    b /= b.sum()
-
-    a, b = nx.from_numpy(a, b)
-
-    def getitem(i, j, a, b):
-        return a[i, None] * b[None, j]
-
-    # create a lazy tensor
-    T = ot.utils.LazyTensor((n1, n2), getitem, a=a, b=b)
+    T = get_LazyTensor(nx)
 
     res = ot.utils.OTResult(lazy_plan=T, batch_size=9, backend=nx)
 
@@ -469,22 +475,7 @@ def test_OTResult_LazyTensor(nx):
 
 def test_LazyTensor_reduce(nx):
 
-    n1 = 100
-    n2 = 200
-
-    rng = np.random.RandomState(42)
-    a = rng.rand(n1)
-    a /= a.sum()
-    b = rng.rand(n2)
-    b /= b.sum()
-
-    a, b = nx.from_numpy(a, b)
-
-    def getitem(i, j, a, b):
-        return a[i, None] * b[None, j]
-
-    # create a lazy tensor
-    T = ot.utils.LazyTensor((n1, n2), getitem, a=a, b=b)
+    T = get_LazyTensor(nx)
 
     T0 = T[:]
     s0 = nx.sum(T0)

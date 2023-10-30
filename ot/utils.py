@@ -492,7 +492,7 @@ def get_coordinate_circle(x):
     return x_t
 
 
-def reduce_lazytensor(a, func, axis=None, nx=None, batch_size=None):
+def reduce_lazytensor(a, func, axis=None, nx=None, batch_size=100):
     """ Reduce a LazyTensor along an axis with function fun using batches.
 
     When axis=None, reduce the LazyTensor to a scalar as a sum of fun over
@@ -528,9 +528,6 @@ def reduce_lazytensor(a, func, axis=None, nx=None, batch_size=None):
 
     if nx is None:
         nx = get_backend(a[0])
-
-    if batch_size is None:
-        batch_size = 100
 
     if axis is None:
         res = 0.0
