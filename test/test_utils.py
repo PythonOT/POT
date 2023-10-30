@@ -408,6 +408,7 @@ def test_LazyTensor(nx):
 
     n1 = 100
     n2 = 200
+    shape = (n1, n2)
 
     rng = np.random.RandomState(42)
     x1 = rng.randn(n1, 2)
@@ -429,16 +430,16 @@ def test_LazyTensor(nx):
     assert T.x2 is x2
 
     # get the full tensor (not lazy)
-    T[:]
+    assert T[:].shape == shape
 
     # get one component
-    T[1, 1]
+    assert T[1, 1] == nx.dot(x1[1], x2[1].T)
 
     # get one row
-    T[1]
+    assert T[1].shape == (n2,)
 
     # get one column with slices
-    T[::10, 5]
+    assert T[::10, 5].shape == (10,)
 
 
 def test_OTResult_LazyTensor(nx):
@@ -448,9 +449,9 @@ def test_OTResult_LazyTensor(nx):
 
     rng = np.random.RandomState(42)
     a = rng.rand(n1)
-    a = a / a.sum()
+    a /= a.sum()
     b = rng.rand(n2)
-    b = b / b.sum()
+    b /= b.sum()
 
     a, b = nx.from_numpy(a, b)
 
@@ -473,9 +474,9 @@ def test_LazyTensor_reduce(nx):
 
     rng = np.random.RandomState(42)
     a = rng.rand(n1)
-    a = a / a.sum()
+    a /= a.sum()
     b = rng.rand(n2)
-    b = b / b.sum()
+    b /= b.sum()
 
     a, b = nx.from_numpy(a, b)
 
@@ -485,9 +486,13 @@ def test_LazyTensor_reduce(nx):
     # create a lazy tensor
     T = ot.utils.LazyTensor((n1, n2), getitem, a=a, b=b)
 
+    T0 = T[:]
+    s0 = nx.sum(T0)
+
     # total sum
     s = ot.utils.reduce_lazytensor(T, nx.sum, nx=nx)
     np.testing.assert_allclose(nx.to_numpy(s), 1)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s0))
 
     s2 = ot.utils.reduce_lazytensor(T, nx.sum)
     np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))

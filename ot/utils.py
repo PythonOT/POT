@@ -492,18 +492,22 @@ def get_coordinate_circle(x):
     return x_t
 
 
-def reduce_lazytensor(a, fun, axis=None, nx=None, batch_size=None):
+def reduce_lazytensor(a, func, axis=None, nx=None, batch_size=None):
     """ Reduce a LazyTensor along an axis with function fun using batches.
 
     When axis=None, reduce the LazyTensor to a scalar as a sum of fun over
     batches taken along dim.
 
+    .. warning:: 
+        This function works for tensor of any order but the reduction can be done
+        only along the first two axis (or global). Also, in order to work, it requires that the slice of size `batch_size` along the axis to reduce (or axis 0 if `axis=None`) is can be computed and fits in memory.
+
+
     Parameters
     ----------
-
     a : LazyTensor
         LazyTensor to reduce
-    fun : callable
+    func : callable
         Function to apply to the LazyTensor
     axis : int, optional
         Axis along which to reduce the LazyTensor. If None, reduce the
@@ -517,7 +521,6 @@ def reduce_lazytensor(a, fun, axis=None, nx=None, batch_size=None):
 
     Returns
     -------
-
     res : array-like
         Result of the reduction
 
@@ -532,18 +535,18 @@ def reduce_lazytensor(a, fun, axis=None, nx=None, batch_size=None):
     if axis is None:
         res = 0.0
         for i in range(0, a.shape[0], batch_size):
-            res += fun(a[i:i + batch_size])
+            res += func(a[i:i + batch_size])
         return res
     elif axis == 0:
         res = nx.zeros(a.shape[1:], type_as=a[0])
         if nx.__name__ in ["jax", "tf"]:
             lst = []
             for j in range(0, a.shape[1], batch_size):
-                lst.append(fun(a[:, j:j + batch_size], 0))
+                lst.append(func(a[:, j:j + batch_size], 0))
             return nx.concatenate(lst, axis=0)
         else:
             for j in range(0, a.shape[1], batch_size):
-                res[j:j + batch_size] = fun(a[:, j:j + batch_size], axis=0)
+                res[j:j + batch_size] = func(a[:, j:j + batch_size], axis=0)
         return res
     elif axis == 1:
         if len(a.shape) == 2:
@@ -554,11 +557,11 @@ def reduce_lazytensor(a, fun, axis=None, nx=None, batch_size=None):
         if nx.__name__ in ["jax", "tf"]:
             lst = []
             for i in range(0, a.shape[0], batch_size):
-                lst.append(fun(a[i:i + batch_size], 1))
+                lst.append(func(a[i:i + batch_size], 1))
             return nx.concatenate(lst, axis=0)
         else:
             for i in range(0, a.shape[0], batch_size):
-                res[i:i + batch_size] = fun(a[i:i + batch_size], axis=1)
+                res[i:i + batch_size] = func(a[i:i + batch_size], axis=1)
         return res
 
     else:
