@@ -492,6 +492,36 @@ def get_coordinate_circle(x):
     return x_t
 
 
+def get_parameter_pair(parameter):
+    r"""Extract a pair of parameters from a given parameter
+    Used in unbalanced OT and COOT solvers
+    to handle marginal regularization and entropic regularization.
+
+    Parameters
+    ----------
+    parameter : float or indexable object
+    nx : backend object
+
+    Returns
+    -------
+    param_1 : float
+    param_2 : float
+    """
+
+    if isinstance(parameter, float) or isinstance(parameter, int):
+        param_1, param_2 = parameter, parameter
+    elif len(parameter) == 1:
+        param_1, param_2 = parameter[0], parameter[0]
+    else:
+        if len(parameter) > 2:
+            raise ValueError("Parameter must be either a scalar, \
+                             or an indexable object of length 1 or 2.")
+        else:
+            param_1, param_2 = parameter[0], parameter[1]
+
+    return param_1, param_2
+
+
 class deprecated(object):
     r"""Decorator to mark a function or class as deprecated.
 

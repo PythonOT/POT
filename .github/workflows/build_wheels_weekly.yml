@@ -29,7 +29,7 @@ jobs:
 
     - name: Install cibuildwheel
       run: |
-        python -m pip install cibuildwheel==2.14.1
+        python -m pip install cibuildwheel==2.16.2
 
     - name: Set up QEMU
       if: runner.os == 'Linux'
@@ -39,7 +39,7 @@ jobs:
 
     - name: Build wheels
       env:
-        CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp* cp*musl* cp36*" # remove pypy on mac and win (wrong version)
+        CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp* cp*musl* cp36* *i686" # remove pypy on mac and win (wrong version)
         CIBW_BEFORE_BUILD: "pip install numpy cython"
         CIBW_ARCHS_LINUX: auto aarch64 # force aarch64 with QEMU
         CIBW_ARCHS_MACOS: x86_64 universal2 arm64

@@ -9,6 +9,9 @@
 + The `linspace` method of the backends now has the `type_as` argument to convert to the same dtype and device. (PR #533)
 + The `convolutional_barycenter2d` and `convolutional_barycenter2d_debiased` functions now work with different devices.. (PR #533)
 + New API for Gromov-Wasserstein solvers with `ot.solve_gromov` function (PR #536)
++ New LP solvers from scipy used by default for LP barycenter (PR #537)
++ Update wheels to Python 3.12 and remove old i686 arch that do not have scipy wheels (PR #543)
++ Upgraded unbalanced OT solvers for more flexibility (PR #539)
 
 #### Closed issues
 - Fix line search evaluating cost outside of the interpolation range (Issue #502, PR #504)
@@ -18,13 +21,13 @@
 ## 0.9.1
 *August 2023*
 
-This new release contains several new features and bug fixes. 
+This new release contains several new features and bug fixes.
 
 New features include a new submodule `ot.gnn` that contains two new Graph neural network layers (compatible with [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/)) for template-based pooling of graphs with an example on [graph classification](https://pythonot.github.io/master/auto_examples/gromov/plot_gnn_TFGW.html). Related to this, we also now provide FGW and semi relaxed FGW solvers for which the resulting loss is differentiable w.r.t. the parameter `alpha`. Other contributions on the (F)GW front include a new solver for the Proximal Point algorithm [that can be used to solve entropic GW problems](https://pythonot.github.io/master/auto_examples/gromov/plot_fgw_solvers.html) (using the parameter `solver="PPA"`), new solvers for entropic FGW barycenters, novels Sinkhorn-based solvers for entropic semi-relaxed (F)GW, the possibility to provide a warm-start to the solvers, and optional marginal weights of the samples (uniform weights ar used by default). Finally we added in the submodule `ot.gaussian` and `ot.da` new loss and mapping estimators for the Gaussian Gromov-Wasserstein that can be used as a fast alternative to GW and estimates linear mappings between unregistered spaces that can potentially have different size (See the update [linear mapping example](https://pythonot.github.io/master/auto_examples/domain-adaptation/plot_otda_linear_mapping.html) for an illustration).
 
 We also provide a new solver for the [Entropic Wasserstein Component Analysis](https://pythonot.github.io/master/auto_examples/others/plot_EWCA.html) that is a generalization of the celebrated PCA taking into account the local neighborhood of the samples. We also now have a new solver in `ot.smooth` for the [sparsity-constrained OT (last plot)](https://pythonot.github.io/master/auto_examples/plot_OT_1D_smooth.html) that can be used to find regularized OT plans with sparsity constraints. Finally we have a first multi-marginal solver for regular 1D distributions with a Monge loss (see [here](https://pythonot.github.io/master/auto_examples/others/plot_dmmot.html)).
 
-The documentation and testings have also been updated. We now have nearly 95% code coverage with the tests. The documentation has been updated and some examples have been streamlined to build more quickly and avoid timeout problems with CircleCI. We also added an optional CI on GPU for the master branch and approved PRs that can be used when a GPU runner is online. 
+The documentation and testings have also been updated. We now have nearly 95% code coverage with the tests. The documentation has been updated and some examples have been streamlined to build more quickly and avoid timeout problems with CircleCI. We also added an optional CI on GPU for the master branch and approved PRs that can be used when a GPU runner is online.
 
 Many other bugs and issues have been fixed and we want to thank all the contributors, old and new, who made this release possible. More details below.
 
@@ -75,9 +78,9 @@ Many other bugs and issues have been fixed and we want to thank all the contribu
 *April 2023*
 
 This new release contains so many new features and bug fixes since 0.8.2 that we
-decided to make it a new minor release at 0.9.0. 
+decided to make it a new minor release at 0.9.0.
 
-The release contains many new features. First we did a major 
+The release contains many new features. First we did a major
 update of all Gromov-Wasserstein solvers that brings up to 30% gain in
 computation time (see PR #431) and allows the GW solvers to work on non symmetric
 matrices. It also brings novel solvers for the very
@@ -93,7 +96,7 @@ barycenter](https://pythonot.github.io/master/auto_examples/barycenters/plot_fre
 and the [Generalized Wasserstein
 barycenter](https://pythonot.github.io/master/auto_examples/barycenters/plot_generalized_free_support_barycenter.html#sphx-glr-auto-examples-barycenters-plot-generalized-free-support-barycenter-py).
 A new differentiable solver for OT across spaces that provides OT plans
-between samples and features simultaneously and 
+between samples and features simultaneously and
 called [Co-Optimal
 Transport](https://pythonot.github.io/master/auto_examples/others/plot_COOT.html)
 has also been implemented. Finally we began working on OT between Gaussian distributions and
@@ -146,7 +149,7 @@ when implementing new solvers but we encourage users to play with it.
 Finally, in addition to those many new  this release fixes 20 issues (some long
 standing) and we want to thank all the contributors who made this release so
 big. More details below.
-    
+
 
 #### New features
 - Added feature to (Fused) Gromov-Wasserstein solvers inherited from `ot.optim` to support relative and absolute loss variations as stopping criterions (PR #431)

@@ -83,7 +83,7 @@ ot.toc()
 
 
 ot.tic()
-bary_wass2 = ot.lp.barycenter(A, M, weights, solver='interior-point', verbose=True)
+bary_wass2 = ot.lp.barycenter(A, M, weights)
 ot.toc()
 
 pl.figure(2)
@@ -149,7 +149,7 @@ ot.toc()
 
 
 ot.tic()
-bary_wass2 = ot.lp.barycenter(A, M, weights, solver='interior-point', verbose=True)
+bary_wass2 = ot.lp.barycenter(A, M, weights)
 ot.toc()
 
 
@@ -223,7 +223,7 @@ ot.toc()
 
 
 ot.tic()
-bary_wass2 = ot.lp.barycenter(A, M, weights, solver='interior-point', verbose=True)
+bary_wass2 = ot.lp.barycenter(A, M, weights)
 ot.toc()
 
 
