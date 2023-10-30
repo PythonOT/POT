@@ -498,7 +498,7 @@ def reduce_lazytensor(a, func, axis=None, nx=None, batch_size=None):
     When axis=None, reduce the LazyTensor to a scalar as a sum of fun over
     batches taken along dim.
 
-    .. warning:: 
+    .. warning::
         This function works for tensor of any order but the reduction can be done
         only along the first two axis (or global). Also, in order to work, it requires that the slice of size `batch_size` along the axis to reduce (or axis 0 if `axis=None`) is can be computed and fits in memory.
 
