@@ -28,7 +28,7 @@ def get_LazyTensor(nx):
     # create a lazy tensor
     T = ot.utils.LazyTensor((n1, n2), getitem, a=a, b=b)
 
-    return T
+    return T, a, b
 
 
 def test_proj_simplex(nx):
@@ -465,7 +465,7 @@ def test_LazyTensor(nx):
 
 def test_OTResult_LazyTensor(nx):
 
-    T = get_LazyTensor(nx)
+    T, a, b = get_LazyTensor(nx)
 
     res = ot.utils.OTResult(lazy_plan=T, batch_size=9, backend=nx)
 
@@ -475,7 +475,7 @@ def test_OTResult_LazyTensor(nx):
 
 def test_LazyTensor_reduce(nx):
 
-    T = get_LazyTensor(nx)
+    T, a, b = get_LazyTensor(nx)
 
     T0 = T[:]
     s0 = nx.sum(T0)
@@ -506,3 +506,46 @@ def test_LazyTensor_reduce(nx):
     s = ot.utils.reduce_lazytensor(T, nx.logsumexp, axis=1, nx=nx)
     s2 = nx.logsumexp(T[:], axis=1)
     np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
+
+
+def test_lowrank_LazyTensor(nx):
+
+    p = 5
+    n1 = 100
+    n2 = 200
+
+    shape = (n1, n2)
+
+    rng = np.random.RandomState(42)
+    X1 = rng.randn(n1, p)
+    X2 = rng.randn(n2, p)
+    diag_d = rng.rand(p)
+
+    X1, X2, diag_d = nx.from_numpy(X1, X2, diag_d)
+
+    T0 = nx.dot(X1, X2.T)
+
+    T = ot.utils.get_lowrank_lazytensor(X1, X2)
+
+    np.testing.assert_allclose(nx.to_numpy(T[:]), nx.to_numpy(T0))
+
+    assert T.Q is X1
+    assert T.R is X2
+
+    # get the full tensor (not lazy)
+    assert T[:].shape == shape
+
+    # get one component
+    assert T[1, 1] == nx.dot(X1[1], X2[1].T)
+
+    # get one row
+    assert T[1].shape == (n2,)
+
+    # get one column with slices
+    assert T[::10, 5].shape == (10,)
+
+    T0 = nx.dot(X1 * diag_d[None, :], X2.T)
+
+    T = ot.utils.get_lowrank_lazytensor(X1, X2, diag_d, nx=nx)
+
+    np.testing.assert_allclose(nx.to_numpy(T[:]), nx.to_numpy(T0))

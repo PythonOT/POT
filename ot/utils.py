@@ -565,6 +565,31 @@ def reduce_lazytensor(a, func, axis=None, nx=None, batch_size=100):
         raise (NotImplementedError("Only axis=None is implemented for now."))
 
 
+def get_lowrank_lazytensor(Q, R, d=None, nx=None):
+    """ Get a lowrank LazyTensor T=Q@R^T or T=Q@diag(d)@R^T"""
+
+    if nx is None:
+        nx = get_backend(Q, R, d)
+
+    shape = (Q.shape[0], R.shape[0])
+
+    if d is None:
+
+        def func(i, j, Q, R):
+            return nx.dot(Q[i], R[j].T)
+
+        T = LazyTensor(shape, func, Q=Q, R=R)
+
+    else:
+
+        def func(i, j, Q, R, d):
+            return nx.dot(Q[i] * d[None, :], R[j].T)
+
+        T = LazyTensor(shape, func, Q=Q, R=R, d=d)
+
+    return T
+
+
 def get_parameter_pair(parameter):
     r"""Extract a pair of parameters from a given parameter
     Used in unbalanced OT and COOT solvers
