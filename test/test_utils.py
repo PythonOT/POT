@@ -462,6 +462,9 @@ def test_LazyTensor(nx):
     # get one column with slices
     assert T[::10, 5].shape == (10,)
 
+    with pytest.raises(NotImplementedError):
+        T["error"]
+
 
 def test_OTResult_LazyTensor(nx):
 
@@ -506,6 +509,23 @@ def test_LazyTensor_reduce(nx):
     s = ot.utils.reduce_lazytensor(T, nx.logsumexp, axis=1, nx=nx)
     s2 = nx.logsumexp(T[:], axis=1)
     np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
+
+    # test 3D tensors
+    def getitem(i, j, k, a, b, c):
+        return a[i, None, None] * b[None, j, None] * c[None, None, k]
+
+    # create a lazy tensor
+    n = a.shape[0]
+    T = ot.utils.LazyTensor((n, n, n), getitem, a=a, b=a, c=a)
+
+    # total sum
+    s1 = ot.utils.reduce_lazytensor(T, nx.sum, axis=0, nx=nx)
+    s2 = ot.utils.reduce_lazytensor(T, nx.sum, axis=1, nx=nx)
+
+    np.testing.assert_allclose(nx.to_numpy(s1), nx.to_numpy(s2))
+
+    with pytest.raises(NotImplementedError):
+        ot.utils.reduce_lazytensor(T, nx.sum, axis=2, nx=nx, batch_size=10)
 
 
 def test_lowrank_LazyTensor(nx):

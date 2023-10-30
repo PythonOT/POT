@@ -562,7 +562,7 @@ def reduce_lazytensor(a, func, axis=None, nx=None, batch_size=100):
         return res
 
     else:
-        raise (NotImplementedError("Only axis=None is implemented for now."))
+        raise (NotImplementedError("Only axis=None, 0 or 1 is implemented for now."))
 
 
 def get_lowrank_lazytensor(Q, R, d=None, nx=None):
