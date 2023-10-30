@@ -566,7 +566,23 @@ def reduce_lazytensor(a, func, axis=None, nx=None, batch_size=100):
 
 
 def get_lowrank_lazytensor(Q, R, d=None, nx=None):
-    """ Get a lowrank LazyTensor T=Q@R^T or T=Q@diag(d)@R^T"""
+    """ Get a low rank LazyTensor T=Q@R^T or T=Q@diag(d)@R^T
+    
+    Parameters
+    ----------
+    Q : ndarray, shape (n, r)
+        First factor of the lowrank tensor
+    R : ndarray, shape (m, r)
+        Second factor of the lowrank tensor
+    d : ndarray, shape (r,), optional
+        Diagonal of the lowrank tensor
+    nx : Backend, optional
+        Backend to use for the reduction
+        
+    Returns
+    -------
+    T : LazyTensor
+        Lowrank tensor T=Q@R^T or T=Q@diag(d)@R^T    """
 
     if nx is None:
         nx = get_backend(Q, R, d)
