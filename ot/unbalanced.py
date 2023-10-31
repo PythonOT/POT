@@ -1540,8 +1540,6 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     ot.unbalanced.sinkhorn_unbalanced2 : Entropic regularized OT loss
     """
 
-    if c is None:
-        c = a[:, None] * b[None, :]
     M, a, b, c = list_to_array(M, a, b, c)
     nx = get_backend(M, a, b, c)
     M0 = M
@@ -1549,6 +1547,7 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     # convert to numpy
     a, b, c, M = nx.to_numpy(a, b, c, M)
     G0 = np.zeros(M.shape) if G0 is None else nx.to_numpy(G0)
+    c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
 
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
     _func = _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div, regm_div)
