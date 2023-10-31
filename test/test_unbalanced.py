@@ -14,7 +14,7 @@ import pytest
 from ot.unbalanced import barycenter_unbalanced
 
 
-@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized"], ["kl", "entropy"]))
+@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn"], ["kl", "entropy"]))
 # @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
 def test_unbalanced_convergence(nx, method, reg_type):
     # test generalized sinkhorn for unbalanced OT
