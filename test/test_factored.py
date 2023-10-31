@@ -28,6 +28,7 @@ def test_factored_ot():
     # check constraints
     np.testing.assert_allclose(u, Ga.sum(1))
     np.testing.assert_allclose(u, Gb.sum(0))
+    np.testing.assert_allclose(1, log['lazy_plan'][:].sum())
 
 
 def test_factored_ot_backends(nx):

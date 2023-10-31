@@ -7,7 +7,7 @@ Factored OT solvers (low rank, cost or OT plan)
 # License: MIT License
 
 from .backend import get_backend
-from .utils import dist
+from .utils import dist, get_lowrank_lazytensor
 from .lp import emd
 from .bregman import sinkhorn
 
@@ -139,6 +139,7 @@ def factored_optimal_transport(Xa, Xb, a=None, b=None, reg=0.0, r=100, X0=None, 
                    'vb': logb['v'],
                    'costa': loga['cost'],
                    'costb': logb['cost'],
+                   'lazy_plan': get_lowrank_lazytensor(Ga * r, Gb.T, nx=nx),
                    }
         return Ga, Gb, X, log_dic
 
