@@ -445,7 +445,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
     if reg_type == "kl":
-        K = nx.exp(-M / reg) * a[:, None] * b[None, :]
+        K = nx.exp(-M / reg) * a.squeeze()[:, None] * b.squeeze()[None, :]
     elif reg_type == "entropy":
         K = nx.exp(-M / reg)
 
@@ -654,7 +654,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
     if reg_type == "kl":
-        K = nx.exp(-M / reg) * a[:, None] * b[None, :]
+        K = nx.exp(-M / reg) * a.squeeze()[:, None] * b.squeeze()[None, :]
     elif reg_type == "entropy":
         K = nx.exp(-M / reg)
 
@@ -1540,12 +1540,12 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     ot.unbalanced.sinkhorn_unbalanced2 : Entropic regularized OT loss
     """
 
-    M, a, b, c = list_to_array(M, a, b, c)
-    nx = get_backend(M, a, b, c)
+    M, a, b = list_to_array(M, a, b)
+    nx = get_backend(M, a, b)
     M0 = M
 
     # convert to numpy
-    a, b, c, M = nx.to_numpy(a, b, c, M)
+    a, b, M = nx.to_numpy(a, b, M)
     G0 = np.zeros(M.shape) if G0 is None else nx.to_numpy(G0)
     c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
 
