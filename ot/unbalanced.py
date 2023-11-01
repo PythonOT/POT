@@ -445,7 +445,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
     if reg_type == "kl":
-        K = nx.exp(-M / reg) * a.squeeze()[:, None] * b.squeeze()[None, :]
+        K = nx.exp(-M / reg) * a.reshape(-1)[:, None] * b.reshape(-1)[None, :]
     elif reg_type == "entropy":
         K = nx.exp(-M / reg)
 
@@ -654,7 +654,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
     if reg_type == "kl":
-        log_ab = nx.log(a + 1e-16).squeeze()[:, None] + nx.log(b + 1e-16).squeeze()[None, :]
+        log_ab = nx.log(a + 1e-16).reshape(-1)[:, None] + nx.log(b + 1e-16).reshape(-1)[None, :]
         M0 = M - reg * log_ab
     else:
         M0 = M
