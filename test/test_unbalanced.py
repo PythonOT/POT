@@ -32,22 +32,13 @@ def test_unbalanced_convergence(nx, method, reg_type):
     epsilon = 1.
     reg_m = 1.
 
-    G, log = ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg=epsilon,
-<<<<<<< HEAD
-                                               reg_m=reg_m, reg_type=reg_type,
-=======
-                                               reg_m=reg_m,reg_type=reg_type,
->>>>>>> e903625db204822f642d8fd4077001568c53eeaf
-                                               method=method,
-                                               log=True,
-                                               verbose=True)
+    G, log = ot.unbalanced.sinkhorn_unbalanced(
+        a, b, M, reg=epsilon, reg_m=reg_m, reg_type=reg_type,
+        method=method, log=True, verbose=True
+    )
     loss = nx.to_numpy(ot.unbalanced.sinkhorn_unbalanced2(
-<<<<<<< HEAD
         a, b, M, reg=epsilon, reg_m=reg_m, reg_type=reg_type,
         method=method, verbose=True
-=======
-        a, b, M, epsilon, reg_m, reg_type=reg_type, method=method, verbose=True
->>>>>>> e903625db204822f642d8fd4077001568c53eeaf
     ))
     # check fixed point equations
     # in log-domain
