@@ -654,9 +654,12 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
     if reg_type == "kl":
-        K = nx.exp(-M / reg) * a.squeeze()[:, None] * b.squeeze()[None, :]
-    elif reg_type == "entropy":
-        K = nx.exp(-M / reg)
+        log_ab = nx.log(a + 1e-16).squeeze()[:, None] + nx.log(b + 1e-16).squeeze()[None, :]
+        M0 = M - reg * log_ab
+    else:
+        M0 = M
+
+    K = nx.exp(-M0 / reg)
 
     fi_1 = reg_m1 / (reg_m1 + reg) if reg_m1 != float("inf") else 1
     fi_2 = reg_m2 / (reg_m2 + reg) if reg_m2 != float("inf") else 1
@@ -691,7 +694,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
             else:
                 alpha = alpha + reg * nx.log(nx.max(u))
                 beta = beta + reg * nx.log(nx.max(v))
-            K = nx.exp((alpha[:, None] + beta[None, :] - M) / reg)
+            K = nx.exp((alpha[:, None] + beta[None, :] - M0) / reg)
             v = nx.ones(v.shape, type_as=v)
         Kv = nx.dot(K, v)
 
@@ -737,7 +740,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
             nx.log(M + 1e-100)[:, :, None]
             + logu[:, None, :]
             + logv[None, :, :]
-            - M[:, :, None] / reg,
+            - M0[:, :, None] / reg,
             axis=(0, 1)
         )
         res = nx.exp(res)
@@ -747,7 +750,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
             return res
 
     else:  # return OT matrix
-        ot_matrix = nx.exp(logu[:, None] + logv[None, :] - M / reg)
+        ot_matrix = nx.exp(logu[:, None] + logv[None, :] - M0 / reg)
         if log:
             return ot_matrix, log
         else:
