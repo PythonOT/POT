@@ -19,8 +19,8 @@ from .backend import get_backend
 from .utils import list_to_array, get_parameter_pair
 
 
-def sinkhorn_unbalanced(a, b, M, reg, reg_m, reg_type="entropy", warmstart=None,
-                        method='sinkhorn', numItermax=1000,
+def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
+                        reg_type="entropy", warmstart=None, numItermax=1000,
                         stopThr=1e-6, verbose=False, log=False, **kwargs):
     r"""
     Solve the unbalanced entropic regularization optimal transport problem
@@ -67,6 +67,9 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, reg_type="entropy", warmstart=None,
         For semi-relaxed case, use either
         `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
         If reg_m is an array, it must have the same backend as input arrays (a, b, M).
+    method : str
+        method used for the solver either 'sinkhorn', 'sinkhorn_stabilized' or
+        'sinkhorn_reg_scaling', see those function for specific parameters
     reg_type : string, optional
         Regularizer term. Can take two values:
         'entropy' (negative entropy)
@@ -75,10 +78,7 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, reg_type="entropy", warmstart=None,
         :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
-        (that is the logarithm of the u,v sinkhorn scaling vectors).s
-    method : str
-        method used for the solver either 'sinkhorn', 'sinkhorn_stabilized' or
-        'sinkhorn_reg_scaling', see those function for specific parameters
+        (that is the logarithm of the u,v sinkhorn scaling vectors).
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -165,8 +165,8 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, reg_type="entropy", warmstart=None,
         raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn_unbalanced2(a, b, M, reg, reg_m, reg_type="entropy", warmstart=None,
-                         method='sinkhorn', numItermax=1000,
+def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
+                         reg_type="entropy", warmstart=None, numItermax=1000,
                          stopThr=1e-6, verbose=False, log=False, **kwargs):
     r"""
     Solve the entropic regularization unbalanced optimal transport problem and
@@ -212,6 +212,9 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, reg_type="entropy", warmstart=None
         For semi-relaxed case, use either
         `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
         If reg_m is an array, it must have the same backend as input arrays (a, b, M).
+    method : str
+        method used for the solver either 'sinkhorn', 'sinkhorn_stabilized' or
+        'sinkhorn_reg_scaling', see those function for specific parameterss
     reg_type : string, optional
         Regularizer term. Can take two values:
         'entropy' (negative entropy)
@@ -221,9 +224,6 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, reg_type="entropy", warmstart=None
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the u,v sinkhorn scaling vectors).
-    method : str
-        method used for the solver either 'sinkhorn', 'sinkhorn_stabilized' or
-        'sinkhorn_reg_scaling', see those function for specific parameters
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -435,12 +435,12 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
     # distances
     if warmstart is None:
         if n_hists:
-            u = nx.ones((dim_a, 1), type_as=M) / dim_a
-            v = nx.ones((dim_b, n_hists), type_as=M) / dim_b
+            u = nx.ones((dim_a, 1), type_as=M)
+            v = nx.ones((dim_b, n_hists), type_as=M)
             a = a.reshape(dim_a, 1)
         else:
-            u = nx.ones(dim_a, type_as=M) / dim_a
-            v = nx.ones(dim_b, type_as=M) / dim_b
+            u = nx.ones(dim_a, type_as=M)
+            v = nx.ones(dim_b, type_as=M)
     else:
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
@@ -644,12 +644,12 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
     # distances
     if warmstart is None:
         if n_hists:
-            u = nx.ones((dim_a, n_hists), type_as=M) / dim_a
-            v = nx.ones((dim_b, n_hists), type_as=M) / dim_b
+            u = nx.ones((dim_a, n_hists), type_as=M)
+            v = nx.ones((dim_b, n_hists), type_as=M)
             a = a.reshape(dim_a, 1)
         else:
-            u = nx.ones(dim_a, type_as=M) / dim_a
-            v = nx.ones(dim_b, type_as=M) / dim_b
+            u = nx.ones(dim_a, type_as=M)
+            v = nx.ones(dim_b, type_as=M)
     else:
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 

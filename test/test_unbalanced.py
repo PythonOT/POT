@@ -33,12 +33,12 @@ def test_unbalanced_convergence(nx, method, reg_type):
     reg_m = 1.
 
     G, log = ot.unbalanced.sinkhorn_unbalanced(
-        a, b, M, reg=epsilon, reg_m=reg_m, reg_type=reg_type,
-        method=method, log=True, verbose=True
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, log=True, verbose=True
     )
     loss = nx.to_numpy(ot.unbalanced.sinkhorn_unbalanced2(
-        a, b, M, reg=epsilon, reg_m=reg_m, reg_type=reg_type,
-        method=method, verbose=True
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, verbose=True
     ))
     # check fixed point equations
     # in log-domain
@@ -70,13 +70,59 @@ def test_unbalanced_convergence(nx, method, reg_type):
 
     G = ot.unbalanced.sinkhorn_unbalanced(
         a, b, M, reg=epsilon, reg_m=reg_m,
-        reg_type=reg_type, method=method, verbose=True
+        method=method, reg_type=reg_type, verbose=True
     )
     G_np = ot.unbalanced.sinkhorn_unbalanced(
         a_np, b_np, M_np, reg=epsilon, reg_m=reg_m,
-        reg_type=reg_type, method=method, verbose=True
+        method=method, reg_type=reg_type, verbose=True
     )
     np.testing.assert_allclose(G_np, nx.to_numpy(G))
+
+
+@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized"], ["kl", "entropy"]))
+# @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
+def test_unbalanced_warmstart(nx, method, reg_type):
+    # test generalized sinkhorn for unbalanced OT
+    n = 100
+    rng = np.random.RandomState(42)
+
+    x = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+
+    # make dists unbalanced
+    b = ot.utils.unif(n) * 1.5
+    M = ot.dist(x, x)
+    a, b, M = nx.from_numpy(a, b, M)
+
+    epsilon = 1.
+    reg_m = 1.
+
+    dim_a, dim_b = M.shape
+    warmstart = (nx.zeros(dim_a, type_as=M), nx.zeros(dim_b, type_as=M))
+    G, log = ot.unbalanced.sinkhorn_unbalanced(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, warmstart=warmstart, log=True, verbose=True
+    )
+    loss = nx.to_numpy(ot.unbalanced.sinkhorn_unbalanced2(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, warmstart=warmstart, verbose=True
+    ))
+
+    G0, log0 = ot.unbalanced.sinkhorn_unbalanced(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, warmstart=None, log=True, verbose=True
+    )
+    loss0 = nx.to_numpy(ot.unbalanced.sinkhorn_unbalanced2(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, warmstart=None, verbose=True
+    ))
+
+    np.testing.assert_allclose(loss, loss0, atol=1e-6)
+    np.testing.assert_allclose(
+        nx.to_numpy(log["logu"]), nx.to_numpy(log0["logu"]), atol=1e-05)
+    np.testing.assert_allclose(
+        nx.to_numpy(log["logv"]), nx.to_numpy(log0["logv"]), atol=1e-05)
+    np.testing.assert_allclose(nx.to_numpy(G), nx.to_numpy(G0), atol=1e-05)
 
 
 @pytest.mark.parametrize("method,reg_m", itertools.product(["sinkhorn", "sinkhorn_stabilized"], [1, float("inf")]))
