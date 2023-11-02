@@ -244,11 +244,12 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     --------
 
     >>> import ot
+    >>> import numpy as np
     >>> a=[.5, .10]
     >>> b=[.5, .5]
     >>> M=[[0., 1.],[1., 0.]]
-    >>> ot.unbalanced.sinkhorn_unbalanced2(a, b, M, 1., 1.)
-    0.3191285827553562
+    >>> np.round(ot.unbalanced.sinkhorn_unbalanced2(a, b, M, 1., 1.), 8)
+    0.31912858
 
     .. _references-sinkhorn-unbalanced2:
     References
