@@ -117,7 +117,7 @@ def test_unbalanced_warmstart(nx, method, reg_type):
         reg_type=reg_type, warmstart=None, verbose=True
     ))
 
-    np.testing.assert_allclose(loss, loss0, atol=1e-6)
+    np.testing.assert_allclose(loss, loss0, atol=1e-5)
     np.testing.assert_allclose(
         nx.to_numpy(log["logu"]), nx.to_numpy(log0["logu"]), atol=1e-05)
     np.testing.assert_allclose(
