@@ -23,6 +23,7 @@ from scipy.optimize import fmin_l_bfgs_b
 from ot.utils import dist, list_to_array, unif
 
 from .backend import get_backend
+from .gaussian import dual_gaussian_init
 
 
 def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9,
@@ -541,6 +542,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
         log['niter'] = ii
         log['u'] = u
         log['v'] = v
+        log['warmstart'] = (nx.log(u), nx.log(v))
 
     if n_hists:  # return only loss
         res = nx.einsum('ik,ij,jk,ij->k', u, K, v, M)
@@ -697,6 +699,7 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
                    'log_v': nx.stack(lst_v, 1), }
             log['u'] = nx.exp(log['log_u'])
             log['v'] = nx.exp(log['log_v'])
+            log['warmstart'] = (log['log_u'], log['log_v'])
             return res, log
         else:
             return res
@@ -2999,15 +3002,23 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     if b is None:
         b = nx.from_numpy(unif(nt), type_as=X_s)
 
+    if warmstart is None:
+        f, g = nx.zeros((ns,), type_as=a), nx.zeros((nt,), type_as=a)
+    elif warmstart == 'gaussian':
+        # init only g since f is the first updated
+        f = dual_gaussian_init(X_s, X_t, a[:, None], b[:, None])
+        g = dual_gaussian_init(X_t, X_s, b[:, None], a[:, None])
+    elif (isinstance(warmstart, tuple) or isinstance(warmstart, list)) and len(warmstart) == 2:
+        f, g = warmstart
+    else:
+        raise ValueError(
+            "warmstart must be None, 'gaussian' or a tuple of two arrays")
+
     if isLazy:
         if log:
             dict_log = {"err": []}
 
         log_a, log_b = nx.log(a), nx.log(b)
-        if warmstart is None:
-            f, g = nx.zeros((ns,), type_as=a), nx.zeros((nt,), type_as=a)
-        else:
-            f, g = warmstart
 
         if isinstance(batchSize, int):
             bs, bt = batchSize, batchSize
@@ -3075,6 +3086,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         if log:
             dict_log["u"] = f
             dict_log["v"] = g
+            dict_log["warmstart"] = (f, g)
             return (f, g, dict_log)
         else:
             return (f, g)
@@ -3083,11 +3095,11 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         M = dist(X_s, X_t, metric=metric)
         if log:
             pi, log = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr,
-                               verbose=verbose, log=True, warmstart=warmstart, **kwargs)
+                               verbose=verbose, log=True, warmstart=(f, g), **kwargs)
             return pi, log
         else:
             pi = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr,
-                          verbose=verbose, log=False, warmstart=warmstart, **kwargs)
+                          verbose=verbose, log=False, warmstart=(f, g), **kwargs)
             return pi
 
 
@@ -3200,6 +3212,19 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         a = nx.from_numpy(unif(ns), type_as=X_s)
     if b is None:
         b = nx.from_numpy(unif(nt), type_as=X_s)
+
+    if warmstart is None:
+        warmstart = nx.zeros((ns,), type_as=a), nx.zeros((nt,), type_as=a)
+    elif warmstart == 'gaussian':
+        # init only g since f is the first updated
+        f = dual_gaussian_init(X_s, X_t, a[:, None], b[:, None])
+        g = dual_gaussian_init(X_t, X_s, b[:, None], a[:, None])
+        warmstart = (f, g)
+    elif (isinstance(warmstart, tuple) or isinstance(warmstart, list)) and len(warmstart) == 2:
+        warmstart = warmstart
+    else:
+        raise ValueError(
+            "warmstart must be None, 'gaussian' or a tuple of two arrays")
 
     if isLazy:
         if log:

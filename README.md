@@ -334,3 +334,4 @@ distances between Gaussian distributions](https://hal.science/hal-03197398v2/fil
 
 [59] Taylor A. B. (2017). [Convex interpolation and performance estimation of first-order methods for convex optimization.](https://dial.uclouvain.be/pr/boreal/object/boreal%3A182881/datastream/PDF_01/view) PhD thesis, Catholic University of Louvain, Louvain-la-Neuve, Belgium, 2017.
 
+[60] Thornton, James, and Marco Cuturi. [Rethinking initialization of the sinkhorn algorithm](https://arxiv.org/pdf/2206.07630.pdf). International Conference on Artificial Intelligence and Statistics. PMLR, 2023.
