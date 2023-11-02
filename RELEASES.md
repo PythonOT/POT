@@ -20,6 +20,7 @@
 + Wrapper for `geomloss`` solver on empirical samples (PR #571)
 + Add `stop_criterion` feature to (un)regularized (f)gw barycenter solvers (PR #578)
 + Add `fixed_structure` and `fixed_features` to entropic fgw barycenter solver (PR #578)
++ Add Bures Wasserstein barycenter (PR #554).
 
 #### Closed issues
 - Fix line search evaluating cost outside of the interpolation range (Issue #502, PR #504)
