@@ -140,6 +140,36 @@ def test_unbalanced_warmstart(nx, method, reg_type):
     np.testing.assert_allclose(nx.to_numpy(loss0), nx.to_numpy(loss1), atol=1e-5)
 
 
+@pytest.mark.parametrize("method,reg_type, log", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], ["kl", "entropy"], [True, False]))
+def test_sinkhorn_unbalanced2(nx, method, reg_type, log):
+    n = 100
+    rng = np.random.RandomState(42)
+
+    x = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+
+    # make dists unbalanced
+    b = ot.utils.unif(n) * 1.5
+    M = ot.dist(x, x)
+    a, b, M = nx.from_numpy(a, b, M)
+
+    epsilon = 1.
+    reg_m = 1.
+
+    loss = nx.to_numpy(ot.unbalanced.sinkhorn_unbalanced2(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, log=False, verbose=True
+    ))
+
+    res = ot.unbalanced.sinkhorn_unbalanced2(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, log=log, verbose=True
+    )
+    loss0 = res[0] if log else res
+
+    np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss0), atol=1e-5)
+
+
 @pytest.mark.parametrize("method,reg_m", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], [1, float("inf")]))
 def test_unbalanced_relaxation_parameters(nx, method, reg_m):
     # test generalized sinkhorn for unbalanced OT
@@ -202,11 +232,10 @@ def test_unbalanced_multiple_inputs(nx, method):
 
     a, b, M = nx.from_numpy(a, b, M)
 
-    loss, log = ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg=epsilon,
-                                                  reg_m=reg_m,
-                                                  method=method,
-                                                  log=True,
-                                                  verbose=True)
+    G, log = ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg=epsilon,
+                                               reg_m=reg_m, method=method,
+                                               log=True, verbose=True)
+
     # check fixed point equations
     # in log-domain
     fi = reg_m / (reg_m + epsilon)
