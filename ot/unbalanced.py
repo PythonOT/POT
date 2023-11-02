@@ -277,30 +277,55 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     ot.unbalanced.sinkhorn_reg_scaling: Unbalanced Sinkhorn with epsilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced2>`
 
     """
-    b = list_to_array(b)
+    M, a, b = list_to_array(M, a, b)
+    nx = get_backend(M, a, b)
+
     if len(b.shape) < 2:
-        b = b[:, None]
+        if method.lower() == 'sinkhorn':
+            res = sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                            warmstart, numItermax=numItermax,
+                                            stopThr=stopThr, verbose=verbose,
+                                            log=log, **kwargs)
 
-    if method.lower() == 'sinkhorn':
-        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type,
-                                         warmstart, numItermax=numItermax,
-                                         stopThr=stopThr, verbose=verbose,
-                                         log=log, **kwargs)
+        elif method.lower() == 'sinkhorn_stabilized':
+            res = sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                                 warmstart, numItermax=numItermax,
+                                                 stopThr=stopThr, verbose=verbose,
+                                                 log=log, **kwargs)
+        elif method.lower() in ['sinkhorn_reg_scaling']:
+            warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
+            res = sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                            warmstart, numItermax=numItermax,
+                                            stopThr=stopThr, verbose=verbose,
+                                            log=log, **kwargs)
+        else:
+            raise ValueError('Unknown method %s.' % method)
 
-    elif method.lower() == 'sinkhorn_stabilized':
-        return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type,
-                                              warmstart, numItermax=numItermax,
-                                              stopThr=stopThr,
-                                              verbose=verbose,
-                                              log=log, **kwargs)
-    elif method.lower() in ['sinkhorn_reg_scaling']:
-        warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
-        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type,
-                                         warmstart, numItermax=numItermax,
-                                         stopThr=stopThr, verbose=verbose,
-                                         log=log, **kwargs)
+        if log:
+            return nx.sum(M * res[0]), res[1]
+        else:
+            return nx.sum(M * res)
+
     else:
-        raise ValueError('Unknown method %s.' % method)
+        if method.lower() == 'sinkhorn':
+            return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                             warmstart, numItermax=numItermax,
+                                             stopThr=stopThr, verbose=verbose,
+                                             log=log, **kwargs)
+
+        elif method.lower() == 'sinkhorn_stabilized':
+            return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                                  warmstart, numItermax=numItermax,
+                                                  stopThr=stopThr, verbose=verbose,
+                                                  log=log, **kwargs)
+        elif method.lower() in ['sinkhorn_reg_scaling']:
+            warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
+            return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                             warmstart, numItermax=numItermax,
+                                             stopThr=stopThr, verbose=verbose,
+                                             log=log, **kwargs)
+        else:
+            raise ValueError('Unknown method %s.' % method)
 
 
 def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
@@ -443,8 +468,6 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
             v = nx.ones(dim_b, type_as=M)
     else:
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
-        if not n_hists:
-            u, v = u.reshape(-1), v.reshape(-1)
 
     if reg_type == "kl":
         K = nx.exp(-M / reg) * a.reshape(-1)[:, None] * b.reshape(-1)[None, :]
@@ -654,8 +677,6 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
             v = nx.ones(dim_b, type_as=M)
     else:
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
-        if not n_hists:
-            u, v = u.reshape(-1), v.reshape(-1)
 
     if reg_type == "kl":
         log_ab = nx.log(a + 1e-16).reshape(-1)[:, None] + nx.log(b + 1e-16).reshape(-1)[None, :]

@@ -15,7 +15,6 @@ from ot.unbalanced import barycenter_unbalanced
 
 
 @pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized"], ["kl", "entropy"]))
-# @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
 def test_unbalanced_convergence(nx, method, reg_type):
     # test generalized sinkhorn for unbalanced OT
     n = 100
@@ -80,7 +79,6 @@ def test_unbalanced_convergence(nx, method, reg_type):
 
 
 @pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized"], ["kl", "entropy"]))
-# @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
 def test_unbalanced_warmstart(nx, method, reg_type):
     # test generalized sinkhorn for unbalanced OT
     n = 100
@@ -115,8 +113,8 @@ def test_unbalanced_warmstart(nx, method, reg_type):
         reg_type=reg_type, warmstart=warmstart, verbose=True
     )
 
-    _, log = ot.lp.emd(a, b, M, log=True)
-    warmstart1 = (log["u"], log["v"])
+    _, log_emd = ot.lp.emd(a, b, M, log=True)
+    warmstart1 = (log_emd["u"], log_emd["v"])
     G1, log1 = ot.unbalanced.sinkhorn_unbalanced(
         a, b, M, reg=epsilon, reg_m=reg_m, method=method,
         reg_type=reg_type, warmstart=warmstart1, log=True, verbose=True
@@ -125,9 +123,6 @@ def test_unbalanced_warmstart(nx, method, reg_type):
         a, b, M, reg=epsilon, reg_m=reg_m, method=method,
         reg_type=reg_type, warmstart=warmstart1, verbose=True
     )
-
-    np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss0), atol=1e-5)
-    np.testing.assert_allclose(nx.to_numpy(loss0), nx.to_numpy(loss1), atol=1e-5)
 
     np.testing.assert_allclose(
         nx.to_numpy(log["logu"]), nx.to_numpy(log0["logu"]), atol=1e-05)
@@ -140,6 +135,9 @@ def test_unbalanced_warmstart(nx, method, reg_type):
 
     np.testing.assert_allclose(nx.to_numpy(G), nx.to_numpy(G0), atol=1e-05)
     np.testing.assert_allclose(nx.to_numpy(G0), nx.to_numpy(G1), atol=1e-05)
+
+    np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss0), atol=1e-5)
+    np.testing.assert_allclose(nx.to_numpy(loss0), nx.to_numpy(loss1), atol=1e-5)
 
 
 @pytest.mark.parametrize("method,reg_m", itertools.product(["sinkhorn", "sinkhorn_stabilized"], [1, float("inf")]))
