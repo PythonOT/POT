@@ -88,41 +88,58 @@ def test_unbalanced_warmstart(nx, method, reg_type):
 
     x = rng.randn(n, 2)
     a = ot.utils.unif(n)
-
-    # make dists unbalanced
-    b = ot.utils.unif(n) * 1.5
+    b = ot.utils.unif(n)
     M = ot.dist(x, x)
     a, b, M = nx.from_numpy(a, b, M)
 
     epsilon = 1.
     reg_m = 1.
 
-    dim_a, dim_b = M.shape
-    warmstart = (nx.zeros(dim_a, type_as=M), nx.zeros(dim_b, type_as=M))
-    G, log = ot.unbalanced.sinkhorn_unbalanced(
-        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
-        reg_type=reg_type, warmstart=warmstart, log=True, verbose=True
-    )
-    loss = nx.to_numpy(ot.unbalanced.sinkhorn_unbalanced2(
-        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
-        reg_type=reg_type, warmstart=warmstart, verbose=True
-    ))
-
     G0, log0 = ot.unbalanced.sinkhorn_unbalanced(
         a, b, M, reg=epsilon, reg_m=reg_m, method=method,
         reg_type=reg_type, warmstart=None, log=True, verbose=True
     )
-    loss0 = nx.to_numpy(ot.unbalanced.sinkhorn_unbalanced2(
+    loss0 = ot.unbalanced.sinkhorn_unbalanced2(
         a, b, M, reg=epsilon, reg_m=reg_m, method=method,
         reg_type=reg_type, warmstart=None, verbose=True
-    ))
+    )
 
-    np.testing.assert_allclose(loss, loss0, atol=1e-5)
+    # dim_a, dim_b = M.shape
+    # warmstart = (nx.zeros(dim_a, type_as=M), nx.zeros(dim_b, type_as=M))
+    # G, log = ot.unbalanced.sinkhorn_unbalanced(
+    #     a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+    #     reg_type=reg_type, warmstart=warmstart, log=True, verbose=True
+    # )
+    # loss = ot.unbalanced.sinkhorn_unbalanced2(
+    #     a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+    #     reg_type=reg_type, warmstart=warmstart, verbose=True
+    # )
+
+    _, log = ot.lp.emd(a, b, M, log=True)
+    warmstart1 = (log["u"], log["v"])
+    G1, log1 = ot.unbalanced.sinkhorn_unbalanced(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, warmstart=warmstart1, log=True, verbose=True
+    )
+    loss1 = ot.unbalanced.sinkhorn_unbalanced2(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, warmstart=warmstart1, verbose=True
+    )
+
+    # np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss0), atol=1e-5)
+    np.testing.assert_allclose(nx.to_numpy(loss0), nx.to_numpy(loss1), atol=1e-5)
+
+    # np.testing.assert_allclose(
+    #     nx.to_numpy(log["logu"]), nx.to_numpy(log0["logu"]), atol=1e-05)
+    # np.testing.assert_allclose(
+    #     nx.to_numpy(log["logv"]), nx.to_numpy(log0["logv"]), atol=1e-05)
     np.testing.assert_allclose(
-        nx.to_numpy(log["logu"]), nx.to_numpy(log0["logu"]), atol=1e-05)
+        nx.to_numpy(log0["logu"]), nx.to_numpy(log1["logu"]), atol=1e-05)
     np.testing.assert_allclose(
-        nx.to_numpy(log["logv"]), nx.to_numpy(log0["logv"]), atol=1e-05)
-    np.testing.assert_allclose(nx.to_numpy(G), nx.to_numpy(G0), atol=1e-05)
+        nx.to_numpy(log0["logv"]), nx.to_numpy(log1["logv"]), atol=1e-05)
+
+    # np.testing.assert_allclose(nx.to_numpy(G), nx.to_numpy(G0), atol=1e-05)
+    np.testing.assert_allclose(nx.to_numpy(G0), nx.to_numpy(G1), atol=1e-05)
 
 
 @pytest.mark.parametrize("method,reg_m", itertools.product(["sinkhorn", "sinkhorn_stabilized"], [1, float("inf")]))
