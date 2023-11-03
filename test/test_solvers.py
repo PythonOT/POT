@@ -261,19 +261,6 @@ def test_solve_gromov_not_implemented(nx):
 
 ######## Test functions for ot.solve_sample ########
 
-def assert_allclose_sol_sample(sol1, sol2):
-    # test attributes of OTResultLazy class
-    lst_attr = ['potentials','potential_a', 'potential_b', 'lazy_plan']
-
-    nx1 = sol1._backend if sol1._backend is not None else ot.backend.NumpyBackend()
-    nx2 = sol2._backend if sol2._backend is not None else ot.backend.NumpyBackend()
-
-    for attr in lst_attr:
-        try:
-            np.allclose(nx1.to_numpy(getattr(sol1, attr)), nx2.to_numpy(getattr(sol2, attr)))
-        except NotImplementedError:
-            pass
-
 
 @pytest.mark.parametrize("reg,reg_type,unbalanced,unbalanced_type", itertools.product(lst_reg, lst_reg_type, lst_unbalanced, lst_unbalanced_type))
 def test_solve_sample(nx):
@@ -334,13 +321,13 @@ def test_lazy_solve_sample(nx):
     sol.potentials
     sol.lazy_plan
 
-    assert_allclose_sol_sample(sol0, sol)
+    assert_allclose_sol(sol0, sol)
 
     # solve in backend
     X_sb, X_tb, ab, bb = nx.from_numpy(X_s, X_t, a, b)
     solb = ot.solve_sample(X_sb, X_tb, ab, bb, reg=0.1, is_Lazy=True)
 
-    assert_allclose_sol_sample(sol, solb)
+    assert_allclose_sol(sol, solb)
 
     # test not implemented reg==0 (or None) + balanced and check raise
     with pytest.raises(NotImplementedError):
@@ -353,6 +340,8 @@ def test_lazy_solve_sample(nx):
     # test not implemented reg != 0 + unbalanced_type and check raise
     with pytest.raises(NotImplementedError):
         sol0 = ot.solve_sample(X_s, X_t, reg=0.1, unbalanced_type="kl", is_Lazy=True) 
+
+
 
 
 

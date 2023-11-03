@@ -20,7 +20,8 @@ from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
                      entropic_semirelaxed_fused_gromov_wasserstein2,
                      entropic_semirelaxed_gromov_wasserstein2)
 from .partial import partial_gromov_wasserstein2, entropic_partial_gromov_wasserstein2
-from .bregman import empirical_sinkhorn
+
+
 
 
 #, entropic_gromov_wasserstein2, entropic_fused_gromov_wasserstein2
@@ -853,18 +854,14 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
 
 
 
-########## ot.solve_sample function ###########
 
-from .bregman import empirical_sinkhorn
-from .utils import unif, dist
-
+##### new ot.solve_sample function 
 
 def solve_sample(X_s, X_t, a=None, b=None, metric='sqeuclidean', reg=None, reg_type="KL", unbalanced=None,
           unbalanced_type='KL', is_Lazy=False, batch_size=None, n_threads=1, max_iter=None, plan_init=None,
           potentials_init=None, tol=None, verbose=False):
     
     r"""Solve the discrete optimal transport problem using the samples in the source and target domains.
-    It returns either a :any:`OTResult` or :any:`OTResultLazy` object.
 
     The function solves the following general optimal transport problem
 
@@ -916,7 +913,7 @@ def solve_sample(X_s, X_t, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
 
     Returns
     -------
-    
+
     res : OTResult()
         Result of the optimization problem. The information can be obtained as follows:
 
@@ -926,9 +923,9 @@ def solve_sample(X_s, X_t, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         - res.value_linear : Linear OT loss with the optimal OT plan
 
         See :any:`OTResult` for more information.
-    
 
     """
+    
     # Detect backend
     arr = [X_s,X_t]
     if a is not None:
@@ -937,15 +934,15 @@ def solve_sample(X_s, X_t, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         arr.append(b)
     nx = get_backend(*arr)
 
-    # Create uniform weights if not given
+    # create uniform weights if not given
     ns, nt = X_s.shape[0], X_t.shape[0]
     if a is None:
         a = nx.from_numpy(unif(ns), type_as=X_s)
     if b is None:
         b = nx.from_numpy(unif(nt), type_as=X_s)
 
-    if metric is not 'sqeuclidean':
-        raise (NotImplementedError('Only implemented for sqeuclidean metric'))
+    if metric != 'sqeuclidean':
+        raise (NotImplementedError('Not implemented metric = {} (only sqeulidean)'.format(metric)))
 
 
     # default values for solutions
@@ -980,7 +977,9 @@ def solve_sample(X_s, X_t, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
                 potentials = (log["u"], log["v"])
 
                 # compute lazy_plan
-                pass
+                # ...
+
+                raise (NotImplementedError('Not implemented balanced with regularization'))
             
             else:
                 raise (NotImplementedError('Not implemented unbalanced_type="{}" with regularization'.format(unbalanced_type)))
@@ -991,9 +990,3 @@ def solve_sample(X_s, X_t, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         
         res = solve(M, a, b, reg, reg_type, unbalanced, unbalanced_type, n_threads, max_iter, plan_init, potentials_init, tol, verbose)
         return res
-
-
-
-
-
-
