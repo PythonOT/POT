@@ -403,28 +403,3 @@ def test_get_coordinate_circle():
     np.testing.assert_allclose(u[0], x_p)
 
 
-
-##############################################################################################
-##################################### WORK IN PROGRESS #######################################
-##############################################################################################
-
-# test function for OTResultLazy
-
-def test_OTResultLazy():
-
-    res_lazy = ot.utils.OTResultLazy()
-
-    # test print
-    print(res_lazy)
-
-    # tets get citation
-    print(res_lazy.citation)
-
-    lst_attributes = ['lazy_plan',
-                      'potential_a',
-                      'potential_b',
-                      'potentials']
-    
-    for at in lst_attributes:
-        with pytest.raises(NotImplementedError):
-            getattr(res_lazy, at)
