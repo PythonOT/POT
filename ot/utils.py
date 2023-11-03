@@ -1167,3 +1167,69 @@ class OTResult:
               url     = {http://jmlr.org/papers/v22/20-451.html}
             }
         """
+
+class LazyTensor(object):
+    """ A lazy tensor is a tensor that is not stored in memory. Instead, it is
+    defined by a function that computes its values on the fly from slices.
+
+    Parameters
+    ----------
+
+    shape : tuple
+        shape of the tensor
+    getitem : callable
+        function that computes the values of the indices/slices and tensors
+        as arguments
+
+    kwargs : dict
+        named arguments for the function, those names will be used as attributed
+        of the LazyTensor object
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> v = np.arange(5)
+    >>> def getitem(i,j, v):
+    ...     return v[i,None]+v[None,j]
+    >>> T = LazyTensor((5,5),getitem, v=v)
+    >>> T[1,2]
+    array([3])
+    >>> T[1,:]
+    array([[1, 2, 3, 4, 5]])
+    >>> T[:]
+    array([[0, 1, 2, 3, 4],
+           [1, 2, 3, 4, 5],
+           [2, 3, 4, 5, 6],
+           [3, 4, 5, 6, 7],
+           [4, 5, 6, 7, 8]])
+
+    """
+
+    def __init__(self, shape, getitem, **kwargs):
+
+        self._getitem = getitem
+        self.shape = shape
+        self.ndim = len(shape)
+        self.kwargs = kwargs
+
+        # set attributes for named arguments/arrays
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    def __getitem__(self, key):
+        k = []
+        if isinstance(key, int) or isinstance(key, slice):
+            k.append(key)
+            for i in range(self.ndim - 1):
+                k.append(slice(None))
+        elif isinstance(key, tuple):
+            k = list(key)
+            for i in range(self.ndim - len(key)):
+                k.append(slice(None))
+        else:
+            raise NotImplementedError("Only integer, slice, and tuple indexing is supported")
+
+        return self._getitem(*k, **self.kwargs)
+
+    def __repr__(self):
+        return "LazyTensor(shape={},attributes=({}))".format(self.shape, ','.join(self.kwargs.keys()))

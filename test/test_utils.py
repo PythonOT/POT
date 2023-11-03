@@ -423,3 +423,150 @@ def test_get_coordinate_circle():
     x_p = ot.utils.get_coordinate_circle(x)
 
     np.testing.assert_allclose(u[0], x_p)
+
+
+def test_LazyTensor(nx):
+
+    n1 = 100
+    n2 = 200
+    shape = (n1, n2)
+
+    rng = np.random.RandomState(42)
+    x1 = rng.randn(n1, 2)
+    x2 = rng.randn(n2, 2)
+
+    x1, x2 = nx.from_numpy(x1, x2)
+
+    # i,j can be integers or slices, x1,x2 have to be passed as keyword arguments
+    def getitem(i, j, x1, x2):
+        return nx.dot(x1[i], x2[j].T)
+
+    # create a lazy tensor
+    T = ot.utils.LazyTensor((n1, n2), getitem, x1=x1, x2=x2)
+
+    assert T.shape == (n1, n2)
+    assert str(T) == "LazyTensor(shape=(100, 200),attributes=(x1,x2))"
+
+    assert T.x1 is x1
+    assert T.x2 is x2
+
+    # get the full tensor (not lazy)
+    assert T[:].shape == shape
+
+    # get one component
+    assert T[1, 1] == nx.dot(x1[1], x2[1].T)
+
+    # get one row
+    assert T[1].shape == (n2,)
+
+    # get one column with slices
+    assert T[::10, 5].shape == (10,)
+
+    with pytest.raises(NotImplementedError):
+        T["error"]
+
+
+def test_OTResult_LazyTensor(nx):
+
+    T, a, b = get_LazyTensor(nx)
+
+    res = ot.utils.OTResult(lazy_plan=T, batch_size=9, backend=nx)
+
+    np.testing.assert_allclose(nx.to_numpy(a), nx.to_numpy(res.marginal_a))
+    np.testing.assert_allclose(nx.to_numpy(b), nx.to_numpy(res.marginal_b))
+
+
+def test_LazyTensor_reduce(nx):
+
+    T, a, b = get_LazyTensor(nx)
+
+    T0 = T[:]
+    s0 = nx.sum(T0)
+
+    # total sum
+    s = ot.utils.reduce_lazytensor(T, nx.sum, nx=nx)
+    np.testing.assert_allclose(nx.to_numpy(s), 1)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s0))
+
+    s2 = ot.utils.reduce_lazytensor(T, nx.sum)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
+
+    s2 = ot.utils.reduce_lazytensor(T, nx.sum, batch_size=500)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
+
+    s2 = ot.utils.reduce_lazytensor(T, nx.sum, batch_size=11)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
+
+    # sum over axis 0
+    s = ot.utils.reduce_lazytensor(T, nx.sum, axis=0, nx=nx)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(b))
+
+    # sum over axis 1
+    s = ot.utils.reduce_lazytensor(T, nx.sum, axis=1, nx=nx)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(a))
+
+    # test otehr reduction function
+    s = ot.utils.reduce_lazytensor(T, nx.logsumexp, axis=1, nx=nx)
+    s2 = nx.logsumexp(T[:], axis=1)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
+
+    # test 3D tensors
+    def getitem(i, j, k, a, b, c):
+        return a[i, None, None] * b[None, j, None] * c[None, None, k]
+
+    # create a lazy tensor
+    n = a.shape[0]
+    T = ot.utils.LazyTensor((n, n, n), getitem, a=a, b=a, c=a)
+
+    # total sum
+    s1 = ot.utils.reduce_lazytensor(T, nx.sum, axis=0, nx=nx)
+    s2 = ot.utils.reduce_lazytensor(T, nx.sum, axis=1, nx=nx)
+
+    np.testing.assert_allclose(nx.to_numpy(s1), nx.to_numpy(s2))
+
+    with pytest.raises(NotImplementedError):
+        ot.utils.reduce_lazytensor(T, nx.sum, axis=2, nx=nx, batch_size=10)
+
+
+def test_lowrank_LazyTensor(nx):
+
+    p = 5
+    n1 = 100
+    n2 = 200
+
+    shape = (n1, n2)
+
+    rng = np.random.RandomState(42)
+    X1 = rng.randn(n1, p)
+    X2 = rng.randn(n2, p)
+    diag_d = rng.rand(p)
+
+    X1, X2, diag_d = nx.from_numpy(X1, X2, diag_d)
+
+    T0 = nx.dot(X1, X2.T)
+
+    T = ot.utils.get_lowrank_lazytensor(X1, X2)
+
+    np.testing.assert_allclose(nx.to_numpy(T[:]), nx.to_numpy(T0))
+
+    assert T.Q is X1
+    assert T.R is X2
+
+    # get the full tensor (not lazy)
+    assert T[:].shape == shape
+
+    # get one component
+    assert T[1, 1] == nx.dot(X1[1], X2[1].T)
+
+    # get one row
+    assert T[1].shape == (n2,)
+
+    # get one column with slices
+    assert T[::10, 5].shape == (10,)
+
+    T0 = nx.dot(X1 * diag_d[None, :], X2.T)
+
+    T = ot.utils.get_lowrank_lazytensor(X1, X2, diag_d, nx=nx)
+
+    np.testing.assert_allclose(nx.to_numpy(T[:]), nx.to_numpy(T0))
+    
