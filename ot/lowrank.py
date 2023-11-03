@@ -73,6 +73,7 @@ def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, dykstra_p, stopThr, nx=None):
 
     return Q, R, dykstra_p
     
+    
 
 
 #################################### LOW RANK SINKHORN ALGORITHM #########################################
@@ -126,7 +127,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=2, alpha="auto",
         Low-Rank Sinkhorn Factorization. arXiv preprint arXiv:2103.04737.
 
     '''
-
+    # POT backend
     nx = get_backend(X_s, X_t)
     ns, nt = X_s.shape[0], X_t.shape[0]
     if a is None:
@@ -203,8 +204,18 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=2, alpha="auto",
     #         warnings.warn("Sinkhorn did not converge. You might want to "
     #                       "increase the number of iterations `numItermax` "
     #                       "or the regularization parameter `reg`.")
+
+
+    # Compute OT value using trace formula for scalar product 
+    v1 = nx.dot(Q.T,M1)
+    v2 = nx.dot(R,nx.dot(diag_g.T,v1))
+    value_linear = nx.sum(nx.diag(nx.dot(v2,M2.T))) # compute Trace
+
+    #value = value_linear + reg * nx.sum(plan * nx.log(plan + 1e-16))
+
+    #value
     
-    return Q, R, g
+    return value_linear, Q, R, g
 
 
 

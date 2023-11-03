@@ -10,6 +10,27 @@ import sys
 import pytest
 
 
+def get_LazyTensor(nx):
+    n1 = 100
+    n2 = 200
+
+    rng = np.random.RandomState(42)
+    a = rng.rand(n1)
+    a /= a.sum()
+    b = rng.rand(n2)
+    b /= b.sum()
+
+    a, b = nx.from_numpy(a, b)
+
+    def getitem(i, j, a, b):
+        return a[i, None] * b[None, j]
+
+    # create a lazy tensor
+    T = ot.utils.LazyTensor((n1, n2), getitem, a=a, b=b)
+
+    return T, a, b
+
+
 def test_proj_simplex(nx):
     n = 10
     rng = np.random.RandomState(0)
@@ -389,6 +410,7 @@ def test_OTResult():
                       'value_linear',
                       'value_quad']
     for at in lst_attributes:
+        print(at)
         with pytest.raises(NotImplementedError):
             getattr(res, at)
 
@@ -401,5 +423,3 @@ def test_get_coordinate_circle():
     x_p = ot.utils.get_coordinate_circle(x)
 
     np.testing.assert_allclose(u[0], x_p)
-
-

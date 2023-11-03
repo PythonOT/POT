@@ -492,6 +492,151 @@ def get_coordinate_circle(x):
     return x_t
 
 
+def reduce_lazytensor(a, func, axis=None, nx=None, batch_size=100):
+    """ Reduce a LazyTensor along an axis with function fun using batches.
+
+    When axis=None, reduce the LazyTensor to a scalar as a sum of fun over
+    batches taken along dim.
+
+    .. warning::
+        This function works for tensor of any order but the reduction can be done
+        only along the first two axis (or global). Also, in order to work, it requires that the slice of size `batch_size` along the axis to reduce (or axis 0 if `axis=None`) is can be computed and fits in memory.
+
+
+    Parameters
+    ----------
+    a : LazyTensor
+        LazyTensor to reduce
+    func : callable
+        Function to apply to the LazyTensor
+    axis : int, optional
+        Axis along which to reduce the LazyTensor. If None, reduce the
+        LazyTensor to a scalar as a sum of fun over batches taken along axis 0.
+        If 0 or 1 reduce the LazyTensor to a vector/matrix as a sum of fun over
+        batches taken along axis.
+    nx : Backend, optional
+        Backend to use for the reduction
+    batch_size : int, optional
+        Size of the batches to use for the reduction (default=100)
+
+    Returns
+    -------
+    res : array-like
+        Result of the reduction
+
+    """
+
+    if nx is None:
+        nx = get_backend(a[0])
+
+    if axis is None:
+        res = 0.0
+        for i in range(0, a.shape[0], batch_size):
+            res += func(a[i:i + batch_size])
+        return res
+    elif axis == 0:
+        res = nx.zeros(a.shape[1:], type_as=a[0])
+        if nx.__name__ in ["jax", "tf"]:
+            lst = []
+            for j in range(0, a.shape[1], batch_size):
+                lst.append(func(a[:, j:j + batch_size], 0))
+            return nx.concatenate(lst, axis=0)
+        else:
+            for j in range(0, a.shape[1], batch_size):
+                res[j:j + batch_size] = func(a[:, j:j + batch_size], axis=0)
+        return res
+    elif axis == 1:
+        if len(a.shape) == 2:
+            shape = (a.shape[0])
+        else:
+            shape = (a.shape[0], *a.shape[2:])
+        res = nx.zeros(shape, type_as=a[0])
+        if nx.__name__ in ["jax", "tf"]:
+            lst = []
+            for i in range(0, a.shape[0], batch_size):
+                lst.append(func(a[i:i + batch_size], 1))
+            return nx.concatenate(lst, axis=0)
+        else:
+            for i in range(0, a.shape[0], batch_size):
+                res[i:i + batch_size] = func(a[i:i + batch_size], axis=1)
+        return res
+
+    else:
+        raise (NotImplementedError("Only axis=None, 0 or 1 is implemented for now."))
+
+
+def get_lowrank_lazytensor(Q, R, d=None, nx=None):
+    """ Get a low rank LazyTensor T=Q@R^T or T=Q@diag(d)@R^T
+
+    Parameters
+    ----------
+    Q : ndarray, shape (n, r)
+        First factor of the lowrank tensor
+    R : ndarray, shape (m, r)
+        Second factor of the lowrank tensor
+    d : ndarray, shape (r,), optional
+        Diagonal of the lowrank tensor
+    nx : Backend, optional
+        Backend to use for the reduction
+
+    Returns
+    -------
+    T : LazyTensor
+        Lowrank tensor T=Q@R^T or T=Q@diag(d)@R^T
+    """
+
+    if nx is None:
+        nx = get_backend(Q, R, d)
+
+    shape = (Q.shape[0], R.shape[0])
+
+    if d is None:
+
+        def func(i, j, Q, R):
+            return nx.dot(Q[i], R[j].T)
+
+        T = LazyTensor(shape, func, Q=Q, R=R)
+
+    else:
+
+        def func(i, j, Q, R, d):
+            return nx.dot(Q[i] * d[None, :], R[j].T)
+
+        T = LazyTensor(shape, func, Q=Q, R=R, d=d)
+
+    return T
+
+
+def get_parameter_pair(parameter):
+    r"""Extract a pair of parameters from a given parameter
+    Used in unbalanced OT and COOT solvers
+    to handle marginal regularization and entropic regularization.
+
+    Parameters
+    ----------
+    parameter : float or indexable object
+    nx : backend object
+
+    Returns
+    -------
+    param_1 : float
+    param_2 : float
+    """
+
+    if isinstance(parameter, float) or isinstance(parameter, int):
+        param_1, param_2 = parameter, parameter
+    elif len(parameter) == 1:
+        param_1, param_2 = parameter[0], parameter[0]
+    else:
+        if len(parameter) > 2:
+            raise ValueError("Parameter must be either a scalar, \
+                             or an indexable object of length 1 or 2.")
+        else:
+            param_1, param_2 = parameter[0], parameter[1]
+
+    return param_1, param_2
+
+
 class deprecated(object):
     r"""Decorator to mark a function or class as deprecated.
 
@@ -731,7 +876,76 @@ class UndefinedParameter(Exception):
 
 
 class OTResult:
-    def __init__(self, potentials=None, value=None, value_linear=None, value_quad=None, plan=None, log=None, backend=None, sparse_plan=None, lazy_plan=None, status=None):
+    """ Base class for OT results.
+
+    Parameters
+    ----------
+
+    potentials : tuple of array-like, shape (`n1`, `n2`)
+        Dual potentials, i.e. Lagrange multipliers for the marginal constraints.
+        This pair of arrays has the same shape, numerical type
+        and properties as the input weights "a" and "b".
+    value : float, array-like
+        Full transport cost, including possible regularization terms and
+        quadratic term for Gromov Wasserstein solutions.
+    value_linear : float, array-like
+        The linear part of the transport cost, i.e. the product between the
+        transport plan and the cost.
+    value_quad : float, array-like
+        The quadratic part of the transport cost for Gromov-Wasserstein
+        solutions.
+    plan : array-like, shape (`n1`, `n2`)
+        Transport plan, encoded as a dense array.
+    log : dict
+        Dictionary containing potential information about the solver.
+    backend : Backend
+        Backend used to compute the results.
+    sparse_plan : array-like, shape (`n1`, `n2`)
+        Transport plan, encoded as a sparse array.
+    lazy_plan : LazyTensor
+        Transport plan, encoded as a symbolic POT or KeOps LazyTensor.
+    status : int or str
+        Status of the solver.
+    batch_size : int
+        Batch size used to compute the results/marginals for LazyTensor.
+
+    Attributes
+    ----------
+
+    potentials : tuple of array-like, shape (`n1`, `n2`)
+        Dual potentials, i.e. Lagrange multipliers for the marginal constraints.
+        This pair of arrays has the same shape, numerical type
+        and properties as the input weights "a" and "b".
+    potential_a : array-like, shape (`n1`,)
+        First dual potential, associated to the "source" measure "a".
+    potential_b : array-like, shape (`n2`,)
+        Second dual potential, associated to the "target" measure "b".
+    value : float, array-like
+        Full transport cost, including possible regularization terms and
+        quadratic term for Gromov Wasserstein solutions.
+    value_linear : float, array-like
+        The linear part of the transport cost, i.e. the product between the
+        transport plan and the cost.
+    value_quad : float, array-like
+        The quadratic part of the transport cost for Gromov-Wasserstein
+        solutions.
+    plan : array-like, shape (`n1`, `n2`)
+        Transport plan, encoded as a dense array.
+    sparse_plan : array-like, shape (`n1`, `n2`)
+        Transport plan, encoded as a sparse array.
+    lazy_plan : LazyTensor
+        Transport plan, encoded as a symbolic POT or KeOps LazyTensor.
+    marginals : tuple of array-like, shape (`n1`,), (`n2`,)
+        Marginals of the transport plan: should be very close to "a" and "b"
+        for balanced OT.
+    marginal_a : array-like, shape (`n1`,)
+        Marginal of the transport plan for the "source" measure "a".
+    marginal_b : array-like, shape (`n2`,)
+        Marginal of the transport plan for the "target" measure "b".
+
+    """
+
+    def __init__(self, potentials=None, value=None, value_linear=None, value_quad=None, plan=None, log=None, backend=None, sparse_plan=None, lazy_plan=None, status=None, batch_size=100):
 
         self._potentials = potentials
         self._value = value
@@ -743,6 +957,7 @@ class OTResult:
         self._lazy_plan = lazy_plan
         self._backend = backend if backend is not None else NumpyBackend()
         self._status = status
+        self._batch_size = batch_size
 
         # I assume that other solvers may return directly
         # some primal objects?
@@ -763,7 +978,8 @@ class OTResult:
             s += 'value_linear={},'.format(self._value_linear)
         if self._plan is not None:
             s += 'plan={}(shape={}),'.format(self._plan.__class__.__name__, self._plan.shape)
-
+        if self._lazy_plan is not None:
+            s += 'lazy_plan={}(shape={}),'.format(self._lazy_plan.__class__.__name__, self._lazy_plan.shape)
         if s[-1] != '(':
             s = s[:-1] + ')'
         else:
@@ -823,7 +1039,10 @@ class OTResult:
     @property
     def lazy_plan(self):
         """Transport plan, encoded as a symbolic KeOps LazyTensor."""
-        raise NotImplementedError()
+        if self._lazy_plan is not None:
+            return self._lazy_plan
+        else:
+            raise NotImplementedError()
 
     # Loss values --------------------------------
 
@@ -867,6 +1086,11 @@ class OTResult:
         """First marginal of the transport plan, with the same shape as "a"."""
         if self._plan is not None:
             return self._backend.sum(self._plan, 1)
+        elif self._lazy_plan is not None:
+            lp = self._lazy_plan
+            bs = self._batch_size
+            nx = self._backend
+            return reduce_lazytensor(lp, nx.sum, axis=1, nx=nx, batch_size=bs)
         else:
             raise NotImplementedError()
 
@@ -875,6 +1099,11 @@ class OTResult:
         """Second marginal of the transport plan, with the same shape as "b"."""
         if self._plan is not None:
             return self._backend.sum(self._plan, 0)
+        elif self._lazy_plan is not None:
+            lp = self._lazy_plan
+            bs = self._batch_size
+            nx = self._backend
+            return reduce_lazytensor(lp, nx.sum, axis=0, nx=nx, batch_size=bs)
         else:
             raise NotImplementedError()
 
@@ -938,4 +1167,3 @@ class OTResult:
               url     = {http://jmlr.org/papers/v22/20-451.html}
             }
         """
-
