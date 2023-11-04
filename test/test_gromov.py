@@ -52,31 +52,31 @@ def test_gromov(nx):
     Id = (1 / (1.0 * n_samples)) * np.eye(n_samples, n_samples)
 
     np.testing.assert_allclose(Gb, np.flipud(Id), atol=1e-04)
+    for armijo in [False, True]:
+        gw, log = ot.gromov.gromov_wasserstein2(C1, C2, None, q, 'kl_loss', armijo=armijo, log=True)
+        gwb, logb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, None, 'kl_loss', armijo=armijo, log=True)
+        gwb = nx.to_numpy(gwb)
 
-    gw, log = ot.gromov.gromov_wasserstein2(C1, C2, None, q, 'kl_loss', armijo=True, log=True)
-    gwb, logb = ot.gromov.gromov_wasserstein2(C1b, C2b, pb, None, 'kl_loss', armijo=True, log=True)
-    gwb = nx.to_numpy(gwb)
+        gw_val = ot.gromov.gromov_wasserstein2(C1, C2, p, q, 'kl_loss', armijo=armijo, G0=G0, log=False)
+        gw_valb = nx.to_numpy(
+            ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', armijo=armijo, G0=G0b, log=False)
+        )
 
-    gw_val = ot.gromov.gromov_wasserstein2(C1, C2, p, q, 'kl_loss', armijo=True, G0=G0, log=False)
-    gw_valb = nx.to_numpy(
-        ot.gromov.gromov_wasserstein2(C1b, C2b, pb, qb, 'kl_loss', armijo=True, G0=G0b, log=False)
-    )
+        G = log['T']
+        Gb = nx.to_numpy(logb['T'])
 
-    G = log['T']
-    Gb = nx.to_numpy(logb['T'])
+        np.testing.assert_allclose(gw, gwb, atol=1e-06)
+        np.testing.assert_allclose(gwb, 0, atol=1e-1, rtol=1e-1)
 
-    np.testing.assert_allclose(gw, gwb, atol=1e-06)
-    np.testing.assert_allclose(gwb, 0, atol=1e-1, rtol=1e-1)
+        np.testing.assert_allclose(gw_val, gw_valb, atol=1e-06)
+        np.testing.assert_allclose(gwb, gw_valb, atol=1e-1, rtol=1e-1)  # cf log=False
 
-    np.testing.assert_allclose(gw_val, gw_valb, atol=1e-06)
-    np.testing.assert_allclose(gwb, gw_valb, atol=1e-1, rtol=1e-1)  # cf log=False
-
-    # check constraints
-    np.testing.assert_allclose(G, Gb, atol=1e-06)
-    np.testing.assert_allclose(
-        p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
-    np.testing.assert_allclose(
-        q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+        # check constraints
+        np.testing.assert_allclose(G, Gb, atol=1e-06)
+        np.testing.assert_allclose(
+            p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
+        np.testing.assert_allclose(
+            q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
 
 
 def test_asymmetric_gromov(nx):
@@ -1191,33 +1191,34 @@ def test_asymmetric_fgw(nx):
     np.testing.assert_allclose(logb['fgw_dist'], 0., atol=1e-04)
 
     # Tests with kl-loss:
-    G, log = ot.gromov.fused_gromov_wasserstein(M, C1, C2, p, q, 'kl_loss', alpha=0.5, G0=G0, log=True, symmetric=False, verbose=True)
-    Gb, logb = ot.gromov.fused_gromov_wasserstein(Mb, C1b, C2b, pb, qb, 'kl_loss', alpha=0.5, log=True, symmetric=None, G0=G0b, verbose=True)
-    Gb = nx.to_numpy(Gb)
-    # check constraints
-    np.testing.assert_allclose(G, Gb, atol=1e-06)
-    np.testing.assert_allclose(
-        p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
-    np.testing.assert_allclose(
-        q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+    for armijo in [False, True]:
+        G, log = ot.gromov.fused_gromov_wasserstein(M, C1, C2, p, q, 'kl_loss', alpha=0.5, armijo=armijo, G0=G0, log=True, symmetric=False, verbose=True)
+        Gb, logb = ot.gromov.fused_gromov_wasserstein(Mb, C1b, C2b, pb, qb, 'kl_loss', alpha=0.5, armijo=armijo, log=True, symmetric=None, G0=G0b, verbose=True)
+        Gb = nx.to_numpy(Gb)
+        # check constraints
+        np.testing.assert_allclose(G, Gb, atol=1e-06)
+        np.testing.assert_allclose(
+            p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
+        np.testing.assert_allclose(
+            q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
 
-    np.testing.assert_allclose(log['fgw_dist'], 0., atol=1e-04)
-    np.testing.assert_allclose(logb['fgw_dist'], 0., atol=1e-04)
+        np.testing.assert_allclose(log['fgw_dist'], 0., atol=1e-04)
+        np.testing.assert_allclose(logb['fgw_dist'], 0., atol=1e-04)
 
-    fgw, log = ot.gromov.fused_gromov_wasserstein2(M, C1, C2, p, q, 'kl_loss', alpha=0.5, G0=G0, log=True, symmetric=None, verbose=True)
-    fgwb, logb = ot.gromov.fused_gromov_wasserstein2(Mb, C1b, C2b, pb, qb, 'kl_loss', alpha=0.5, log=True, symmetric=False, G0=G0b, verbose=True)
+        fgw, log = ot.gromov.fused_gromov_wasserstein2(M, C1, C2, p, q, 'kl_loss', alpha=0.5, G0=G0, log=True, symmetric=None, verbose=True)
+        fgwb, logb = ot.gromov.fused_gromov_wasserstein2(Mb, C1b, C2b, pb, qb, 'kl_loss', alpha=0.5, log=True, symmetric=False, G0=G0b, verbose=True)
 
-    G = log['T']
-    Gb = nx.to_numpy(logb['T'])
-    # check constraints
-    np.testing.assert_allclose(G, Gb, atol=1e-06)
-    np.testing.assert_allclose(
-        p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
-    np.testing.assert_allclose(
-        q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+        G = log['T']
+        Gb = nx.to_numpy(logb['T'])
+        # check constraints
+        np.testing.assert_allclose(G, Gb, atol=1e-06)
+        np.testing.assert_allclose(
+            p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
+        np.testing.assert_allclose(
+            q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
 
-    np.testing.assert_allclose(log['fgw_dist'], 0., atol=1e-04)
-    np.testing.assert_allclose(logb['fgw_dist'], 0., atol=1e-04)
+        np.testing.assert_allclose(log['fgw_dist'], 0., atol=1e-04)
+        np.testing.assert_allclose(logb['fgw_dist'], 0., atol=1e-04)
 
 
 def test_fgw2_gradients():
