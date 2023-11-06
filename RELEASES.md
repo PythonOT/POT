@@ -13,6 +13,8 @@
 + Update wheels to Python 3.12 and remove old i686 arch that do not have scipy wheels (PR #543)
 + Upgraded unbalanced OT solvers for more flexibility (PR #539)
 + Add LazyTensor for modeling plans and low rank tensor in large scale OT (PR #544)
++ Add exact line-search for `gromov_wasserstein` and `fused_gromov_wasserstein` with KL loss (PR #556)
++ Add KL loss to all semi-relaxed (Fused) Gromov-Wasserstein solvers (PR #559)
 + Further upgraded unbalanced OT solvers for more flexibility and future use (PR #551)
 
 #### Closed issues
