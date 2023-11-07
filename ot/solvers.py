@@ -7,8 +7,8 @@ General OT solvers with unified API
 #
 # License: MIT License
 
-from .utils import OTResult, unif, dist
-from .lp import emd2
+from .utils import OTResult, dist
+from .lp import emd2, wasserstein_1d
 from .backend import get_backend
 from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
 from .bregman import sinkhorn_log, empirical_sinkhorn
@@ -20,6 +20,8 @@ from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
                      entropic_semirelaxed_fused_gromov_wasserstein2,
                      entropic_semirelaxed_gromov_wasserstein2)
 from .partial import partial_gromov_wasserstein2, entropic_partial_gromov_wasserstein2
+from .gaussian import empirical_bures_wasserstein_distance
+from .factored import factored_optimal_transport
 
 
 def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
@@ -599,6 +601,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     value_quad = None
     plan = None
     status = None
+    log = None
 
     loss_dict = {'l2': 'square_loss', 'kl': 'kl_loss'}
 
@@ -843,14 +846,14 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
             raise (NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
 
     res = OTResult(potentials=potentials, value=value,
-                   value_linear=value_linear, value_quad=value_quad, plan=plan, status=status, backend=nx)
+                   value_linear=value_linear, value_quad=value_quad, plan=plan, status=status, backend=nx, log=log)
 
     return res
 
 
 def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_type="KL", unbalanced=None,
-                 unbalanced_type='KL', lazy=False, batch_size=None, method=None, n_threads=1, max_iter=None, plan_init=None,
-                 potentials_init=None, tol=None, verbose=False):
+                 unbalanced_type='KL', lazy=False, batch_size=None, method=None, n_threads=1, max_iter=None, plan_init=None, rank=100,
+                 potentials_init=None, X_init=None, tol=None, verbose=False):
     r"""Solve the discrete optimal transport problem using the samples in the source and target domains.
 
     The function solves the following general optimal transport problem
@@ -898,8 +901,8 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         solvers)
     method : str, optional
         Method for solving the problem, this can be used to select the solver
-        for unalanced problems (see :any:`ot.solve`), or to select a specific
-        lazy large scale solver.
+        for unbalanced problems (see :any:`ot.solve`), or to select a specific
+        large scale solver.
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
     max_iter : int, optional
@@ -928,7 +931,8 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
 
     """
 
-    if method is not None and method.lower() in ['1d', 'sliced', 'lowrank', 'factored']:
+    if method is not None and method.lower() in ['1d', 'gaussian', 'lowrank', 'factored']:
+        lazy0 = lazy
         lazy = True
 
     if not lazy:  # default non lazy solver calls ot.solve
@@ -952,17 +956,58 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         plan = None
         lazy_plan = None
         status = None
+        log = None
 
-        #################  WIP ####################
-        if reg is None or reg == 0:  # EMD solver for isLazy ?
+        if method.lower() == '1d':  # Wasserstein 1d (parallel on all dimensions)
+            if metric == 'sqeuclidean':
+                p = 2
+            elif metric in ['euclidean', 'cityblock']:
+                p = 1
+            else:
+                raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
 
-            if unbalanced is None:  # balanced EMD solver for isLazy ?
+            value = wasserstein_1d(X_a, X_b, a, b, p=p)
+            value_linear = value
+
+        elif method.lower() == 'gaussian':  # Gaussian Bures-Wasserstein
+
+            if not metric.lower() in ['sqeuclidean']:
+                raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
+
+            if reg is None:
+                reg = 1e-6
+
+            value, log = empirical_bures_wasserstein_distance(X_a, X_b, reg=reg, log=True)
+            value = value**2  # return the value (squared bures distance)
+            value_linear = value  # return the value
+
+        elif method.lower() == 'factored':  # Factored OT
+
+            if not metric.lower() in ['sqeuclidean']:
+                raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
+
+            if max_iter is None:
+                max_iter = 100
+            if tol is None:
+                tol = 1e-7
+            if reg is None:
+                reg = 0
+
+            Q, R, X, log = factored_optimal_transport(X_a, X_b, reg=reg, r=rank, log=True, stopThr=tol, numItermax=max_iter, verbose=verbose)
+            log['X'] = X
+
+            value_linear = log['costa'] + log['costb']
+            lazy_plan = log['lazy_plan']
+            if not lazy0:  # store plan if not lazy
+                plan = lazy_plan[:]
+
+        elif reg is None or reg == 0:  # exact OT
+
+            if unbalanced is None:  # balanced EMD solver not available for lazy
                 raise (NotImplementedError('Exact OT solver with lazy=True not implemented'))
 
             else:
                 raise (NotImplementedError('Non regularized solver with unbalanced_type="{}" not implemented'.format(unbalanced_type)))
-
-        #############################################
 
         else:
             if unbalanced is None:
@@ -986,3 +1031,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
 
             else:
                 raise (NotImplementedError('Not implemented unbalanced_type="{}" with regularization'.format(unbalanced_type)))
+
+        res = OTResult(potentials=potentials, value=value, lazy_plan=lazy_plan,
+                       value_linear=value_linear, plan=plan, status=status, backend=nx, log=log)
+        return res

@@ -257,9 +257,6 @@ def test_solve_gromov_not_implemented(nx):
         ot.solve_gromov(Ca, Cb, reg=1, unbalanced_type='partial', unbalanced=0.5, symmetric=False)
 
 
-######## Test functions for ot.solve_sample ########
-
-
 def test_solve_sample(nx):
     # test solve_sample when is_Lazy = False
     n = 100
