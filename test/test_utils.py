@@ -569,4 +569,3 @@ def test_lowrank_LazyTensor(nx):
     T = ot.utils.get_lowrank_lazytensor(X1, X2, diag_d, nx=nx)
 
     np.testing.assert_allclose(nx.to_numpy(T[:]), nx.to_numpy(T0))
-    

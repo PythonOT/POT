@@ -22,11 +22,6 @@ from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
 from .partial import partial_gromov_wasserstein2, entropic_partial_gromov_wasserstein2
 
 
-
-
-#, entropic_gromov_wasserstein2, entropic_fused_gromov_wasserstein2
-
-
 def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
           unbalanced_type='KL', n_threads=1, max_iter=None, plan_init=None,
           potentials_init=None, tol=None, verbose=False):
@@ -853,14 +848,9 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     return res
 
 
-
-
-##### new ot.solve_sample function 
-
-def solve_sample(X_s, X_t, a=None, b=None, metric='sqeuclidean', reg=None, reg_type="KL", unbalanced=None,
-          unbalanced_type='KL', is_Lazy=False, batch_size=None, n_threads=1, max_iter=None, plan_init=None,
-          potentials_init=None, tol=None, verbose=False):
-    
+def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_type="KL", unbalanced=None,
+                 unbalanced_type='KL', lazy=False, batch_size=None, method=None, n_threads=1, max_iter=None, plan_init=None,
+                 potentials_init=None, tol=None, verbose=False):
     r"""Solve the discrete optimal transport problem using the samples in the source and target domains.
 
     The function solves the following general optimal transport problem
@@ -869,6 +859,10 @@ def solve_sample(X_s, X_t, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) +
         \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) +
         \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
+
+    where the cost matrix :math:`\mathbf{M}` is computed from the samples in the
+    source and target domains wuch that :math:`M_{i,j} = d(x_i,y_j)` where
+    :math:`d` is a metric (by default the squared Euclidean distance).
 
     The regularization is selected with `reg` (:math:`\lambda_r`) and `reg_type`. By
     default ``reg=None`` and there is no regularization. The unbalanced marginal
@@ -881,7 +875,7 @@ def solve_sample(X_s, X_t, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
     X_s : array-like, shape (n_samples_a, dim)
         samples in the source domain
     X_t : array-like, shape (n_samples_b, dim)
-        samples in the target domain 
+        samples in the target domain
     a : array-like, shape (dim_a,), optional
         Samples weights in the source domain (default is uniform)
     b : array-like, shape (dim_b,), optional
@@ -896,8 +890,16 @@ def solve_sample(X_s, X_t, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         (balanced OT)
     unbalanced_type : str, optional
         Type of unbalanced penalization function :math:`U`  either "KL", "L2", "TV", by default "KL"
-    is_Lazy : bool, optional 
-        Return :any:`OTResultlazy` object to reduce memory cost when True, by default False
+    lazy : bool, optional
+        Return :any:`OTResultlazy` object to reduce memory cost when True, by
+        default False
+    batch_size : int, optional
+        Batch size for lazy solver, by default None (default values in each
+        solvers)
+    method : str, optional
+        Method for solving the problem, this can be used to select the solver
+        for unalanced problems (see :any:`ot.solve`), or to select a specific
+        lazy large scale solver.
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
     max_iter : int, optional
@@ -925,68 +927,62 @@ def solve_sample(X_s, X_t, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         See :any:`OTResult` for more information.
 
     """
-    
-    # Detect backend
-    arr = [X_s,X_t]
-    if a is not None:
-        arr.append(a)
-    if b is not None:
-        arr.append(b)
-    nx = get_backend(*arr)
 
-    # create uniform weights if not given
-    ns, nt = X_s.shape[0], X_t.shape[0]
-    if a is None:
-        a = nx.from_numpy(unif(ns), type_as=X_s)
-    if b is None:
-        b = nx.from_numpy(unif(nt), type_as=X_s)
+    if method is not None and method.lower() in ['1d', 'sliced', 'lowrank', 'factored']:
+        lazy = True
 
-    if metric != 'sqeuclidean':
-        raise (NotImplementedError('Not implemented metric = {} (only sqeulidean)'.format(metric)))
+    if not lazy:  # default non lazy solver calls ot.solve
 
+        # compute cost matrix M and use solve function
+        M = dist(X_a, X_b, metric)
 
-    # default values for solutions
-    potentials = None
-    lazy_plan = None
+        res = solve(M, a, b, reg, reg_type, unbalanced, unbalanced_type, n_threads, max_iter, plan_init, potentials_init, tol, verbose)
 
-    if max_iter is None:
-        max_iter = 1000
-    if tol is None:
-        tol = 1e-9
-    if batch_size is None:
-        batch_size = 100
+        return res
 
-    if is_Lazy: 
+    else:
+
+        # Detect backend
+        nx = get_backend(X_a, X_b, a, b)
+
+        # default values for solutions
+        potentials = None
+        value = None
+        value_linear = None
+        plan = None
+        lazy_plan = None
+        status = None
+
         #################  WIP ####################
-        if reg is None or reg == 0: # EMD solver for isLazy ?
-            
-            if unbalanced is None: # balanced EMD solver for isLazy ?
-                raise (NotImplementedError('Not implemented balanced with no regularization'))
-            
+        if reg is None or reg == 0:  # EMD solver for isLazy ?
+
+            if unbalanced is None:  # balanced EMD solver for isLazy ?
+                raise (NotImplementedError('Exact OT solver with lazy=True not implemented'))
+
             else:
-                raise (NotImplementedError('Not implemented unbalanced_type="{}" with no regularization'.format(unbalanced_type)))
-            
+                raise (NotImplementedError('Non regularized solver with unbalanced_type="{}" not implemented'.format(unbalanced_type)))
 
         #############################################
-        
-        else: 
+
+        else:
             if unbalanced is None:
-                u, v, log = empirical_sinkhorn(X_s, X_t, reg, a, b, metric='sqeuclidean', numIterMax=max_iter, stopThr=tol, 
-                                                isLazy=True, batchSize=batch_size, verbose=verbose, log=True)
+
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-9
+                if batch_size is None:
+                    batch_size = 100
+
+                u, v, log = empirical_sinkhorn(X_a, X_b, reg, a, b, metric=metric, numIterMax=max_iter, stopThr=tol,
+                                               isLazy=True, batchSize=batch_size, verbose=verbose, log=True)
                 # compute potentials
-                potentials = (log["u"], log["v"])
+                potentials = (u, v)
 
                 # compute lazy_plan
                 # ...
 
                 raise (NotImplementedError('Not implemented balanced with regularization'))
-            
+
             else:
                 raise (NotImplementedError('Not implemented unbalanced_type="{}" with regularization'.format(unbalanced_type)))
-            
-    else:
-        # compute cost matrix M and use solve function 
-        M = dist(X_s, X_t, metric) 
-        
-        res = solve(M, a, b, reg, reg_type, unbalanced, unbalanced_type, n_threads, max_iter, plan_init, potentials_init, tol, verbose)
-        return res

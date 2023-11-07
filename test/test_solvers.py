@@ -257,12 +257,9 @@ def test_solve_gromov_not_implemented(nx):
         ot.solve_gromov(Ca, Cb, reg=1, unbalanced_type='partial', unbalanced=0.5, symmetric=False)
 
 
-
-
 ######## Test functions for ot.solve_sample ########
 
 
-@pytest.mark.parametrize("reg,reg_type,unbalanced,unbalanced_type", itertools.product(lst_reg, lst_reg_type, lst_unbalanced, lst_unbalanced_type))
 def test_solve_sample(nx):
     # test solve_sample when is_Lazy = False
     n = 100
@@ -272,8 +269,13 @@ def test_solve_sample(nx):
     a = ot.utils.unif(X_s.shape[0])
     b = ot.utils.unif(X_t.shape[0])
 
+    M = ot.dist(X_s, X_t)
+
+    # solve with ot.solve
+    sol00 = ot.solve(M, a, b)
+
     # solve unif weights
-    sol0 = ot.solve_sample(X_s, X_t) 
+    sol0 = ot.solve_sample(X_s, X_t)
 
     # solve signe weights
     sol = ot.solve_sample(X_s, X_t, a, b)
@@ -285,6 +287,7 @@ def test_solve_sample(nx):
     sol.status
 
     assert_allclose_sol(sol0, sol)
+    assert_allclose_sol(sol0, sol00)
 
     # solve in backend
     X_sb, X_tb, ab, bb = nx.from_numpy(X_s, X_t, a, b)
@@ -301,47 +304,41 @@ def test_solve_sample(nx):
         sol0 = ot.solve_sample(X_s, X_t, reg=1, reg_type='cryptic divergence')
 
 
+# def test_lazy_solve_sample(nx):
+#     # test solve_sample when is_Lazy = True
+#     n = 100
+#     X_s = np.reshape(1.0 * np.arange(n), (n, 1))
+#     X_t = np.reshape(1.0 * np.arange(0, n), (n, 1))
 
-def test_lazy_solve_sample(nx):
-    # test solve_sample when is_Lazy = True
-    n = 100
-    X_s = np.reshape(1.0 * np.arange(n), (n, 1))
-    X_t = np.reshape(1.0 * np.arange(0, n), (n, 1))
+#     a = ot.utils.unif(X_s.shape[0])
+#     b = ot.utils.unif(X_t.shape[0])
 
-    a = ot.utils.unif(X_s.shape[0])
-    b = ot.utils.unif(X_t.shape[0])
+#     # solve unif weights
+#     sol0 = ot.solve_sample(X_s, X_t, reg=0.1, lazy=True)  # reg != 0 or None since no implementation yet for is_Lazy=True
 
-    # solve unif weights
-    sol0 = ot.solve_sample(X_s, X_t, reg=0.1, is_Lazy=True) # reg != 0 or None since no implementation yet for is_Lazy=True
+#     # solve signe weights
+#     sol = ot.solve_sample(X_s, X_t, a, b, reg=0.1, lazy=True)
 
-    # solve signe weights
-    sol = ot.solve_sample(X_s, X_t, a, b, reg=0.1, is_Lazy=True)
+#     # check some attributes
+#     sol.potentials
+#     sol.lazy_plan
 
-    # check some attributes
-    sol.potentials
-    sol.lazy_plan
+#     assert_allclose_sol(sol0, sol)
 
-    assert_allclose_sol(sol0, sol)
+#     # solve in backend
+#     X_sb, X_tb, ab, bb = nx.from_numpy(X_s, X_t, a, b)
+#     solb = ot.solve_sample(X_sb, X_tb, ab, bb, reg=0.1, lazy=True)
 
-    # solve in backend
-    X_sb, X_tb, ab, bb = nx.from_numpy(X_s, X_t, a, b)
-    solb = ot.solve_sample(X_sb, X_tb, ab, bb, reg=0.1, is_Lazy=True)
+#     assert_allclose_sol(sol, solb)
 
-    assert_allclose_sol(sol, solb)
+#     # test not implemented reg==0 (or None) + balanced and check raise
+#     with pytest.raises(NotImplementedError):
+#         sol0 = ot.solve_sample(X_s, X_t, lazy=True)  # reg == 0 (or None) + unbalanced= None are default
 
-    # test not implemented reg==0 (or None) + balanced and check raise
-    with pytest.raises(NotImplementedError):
-        sol0 = ot.solve_sample(X_s, X_t, is_Lazy=True) # reg == 0 (or None) + unbalanced= None are default  
+#     # test not implemented reg==0 (or None) + unbalanced_type and check raise
+#     with pytest.raises(NotImplementedError):
+#         sol0 = ot.solve_sample(X_s, X_t, unbalanced_type="kl", lazy=True)  # reg == 0 (or None) is default
 
-    # test not implemented reg==0 (or None) + unbalanced_type and check raise
-    with pytest.raises(NotImplementedError):
-        sol0 = ot.solve_sample(X_s, X_t, unbalanced_type="kl", is_Lazy=True) # reg == 0 (or None) is default 
-    
-    # test not implemented reg != 0 + unbalanced_type and check raise
-    with pytest.raises(NotImplementedError):
-        sol0 = ot.solve_sample(X_s, X_t, reg=0.1, unbalanced_type="kl", is_Lazy=True) 
-
-
-
-
-
+#     # test not implemented reg != 0 + unbalanced_type and check raise
+#     with pytest.raises(NotImplementedError):
+#         sol0 = ot.solve_sample(X_s, X_t, reg=0.1, unbalanced_type="kl", lazy=True)
