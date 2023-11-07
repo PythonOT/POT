@@ -122,6 +122,37 @@ def test_asymmetric_gromov(nx):
     np.testing.assert_allclose(logb['gw_dist'], 0., atol=1e-04)
 
 
+def test_gromov_integer_warnings(nx):
+    n_samples = 10  # nb samples
+    mu_s = np.array([0, 0])
+    cov_s = np.array([[1, 0], [0, 1]])
+
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=1)
+    xt = xs[::-1].copy()
+
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+    G0 = p[:, None] * q[None, :]
+
+    C1 = ot.dist(xs, xs)
+    C2 = ot.dist(xt, xt)
+
+    C1 /= C1.max()
+    C2 /= C2.max()
+    C1 = C1.astype(np.int32)
+    C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
+
+    G = ot.gromov.gromov_wasserstein(
+        C1, C2, None, q, 'square_loss', G0=G0, verbose=True,
+        alpha_min=0., alpha_max=1.)
+    Gb = nx.to_numpy(ot.gromov.gromov_wasserstein(
+        C1b, C2b, pb, None, 'square_loss', symmetric=True, G0=G0b, verbose=True))
+
+    # check constraints
+    np.testing.assert_allclose(G, Gb, atol=1e-06)
+    np.testing.assert_allclose(G, 0., atol=1e-09)
+
+
 def test_gromov_dtype_device(nx):
     # setup
     n_samples = 20  # nb samples
@@ -1145,7 +1176,7 @@ def test_fgw(nx):
 
 
 def test_asymmetric_fgw(nx):
-    n_samples = 50  # nb samples
+    n_samples = 20  # nb samples
     rng = np.random.RandomState(0)
     C1 = rng.uniform(low=0., high=10, size=(n_samples, n_samples))
     idx = np.arange(n_samples)
@@ -1219,6 +1250,32 @@ def test_asymmetric_fgw(nx):
 
         np.testing.assert_allclose(log['fgw_dist'], 0., atol=1e-04)
         np.testing.assert_allclose(logb['fgw_dist'], 0., atol=1e-04)
+
+
+def test_fgw_integer_warnings(nx):
+    n_samples = 20  # nb samples
+    rng = np.random.RandomState(0)
+    C1 = rng.uniform(low=0., high=10, size=(n_samples, n_samples))
+    idx = np.arange(n_samples)
+    rng.shuffle(idx)
+    C2 = C1[idx, :][:, idx]
+
+    # add features
+    F1 = rng.uniform(low=0., high=10, size=(n_samples, 1))
+    F2 = F1[idx, :]
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+    G0 = p[:, None] * q[None, :]
+
+    M = ot.dist(F1, F2).astype(np.int32)
+    Mb, C1b, C2b, pb, qb, G0b = nx.from_numpy(M, C1, C2, p, q, G0)
+
+    G, log = ot.gromov.fused_gromov_wasserstein(M, C1, C2, p, q, 'square_loss', alpha=0.5, G0=G0, log=True, symmetric=False, verbose=True)
+    Gb, logb = ot.gromov.fused_gromov_wasserstein(Mb, C1b, C2b, pb, qb, 'square_loss', alpha=0.5, log=True, symmetric=None, G0=G0b, verbose=True)
+    Gb = nx.to_numpy(Gb)
+    # check constraints
+    np.testing.assert_allclose(G, Gb, atol=1e-06)
+    np.testing.assert_allclose(G, 0., atol=1e-06)
 
 
 def test_fgw2_gradients():

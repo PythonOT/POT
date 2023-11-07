@@ -20,7 +20,7 @@
 #### Closed issues
 - Fix line search evaluating cost outside of the interpolation range (Issue #502, PR #504)
 - Lazily instantiate backends to avoid unnecessary GPU memory pre-allocations on package import (Issue #516, PR #520)
-
+- Handle documentation and warnings when integers are provided to (f)gw solvers based on cg (Issue #530, PR #559)
 
 ## 0.9.1
 *August 2023*
