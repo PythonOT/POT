@@ -399,6 +399,19 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
 
                         h_2(b) &= 2b
 
+    The kl-loss function :math:`L(a, b) = a \log\left(\frac{a}{b}\right) - a + b` is read as :
+
+    .. math::
+
+        L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)
+
+        \mathrm{with} \ f_1(a) &= a \log(a) - a
+
+                        f_2(b) &= b
+
+                        h_1(a) &= a
+
+                        h_2(b) &= \log(b)
     Parameters
     ----------
     C1 : array-like, shape (ns, ns)
@@ -451,9 +464,19 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
         def h2(b):
             return 2 * b
     elif loss_fun == 'kl_loss':
-        raise NotImplementedError()
+        def f1(a):
+            return a * nx.log(a + 1e-15) - a
+
+        def f2(b):
+            return b
+
+        def h1(a):
+            return a
+
+        def h2(b):
+            return nx.log(b + 1e-15)
     else:
-        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Only 'square_loss' is supported.")
+        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
 
     constC = nx.dot(nx.dot(f1(C1), nx.reshape(p, (-1, 1))),
                     nx.ones((1, C2.shape[0]), type_as=p))
