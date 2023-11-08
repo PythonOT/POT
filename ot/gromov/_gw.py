@@ -167,7 +167,7 @@ def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric
             return 0.5 * (gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_))
 
     # removed since 0.9.2
-    #if loss_fun == 'kl_loss':
+    # if loss_fun == 'kl_loss':
     #    armijo = True # there is no closed form line-search with KL
 
     if armijo:
@@ -479,7 +479,7 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
             return 0.5 * (gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_))
 
     # removed since 0.9.2
-    #if loss_fun == 'kl_loss':
+    # if loss_fun == 'kl_loss':
     #    armijo = True  # there is no closed form line-search with KL
 
     if armijo:
@@ -828,7 +828,7 @@ def gromov_barycenters(
         C = init_C
 
     # removed since 0.9.2
-    #if loss_fun == 'kl_loss':
+    # if loss_fun == 'kl_loss':
     #    armijo = True
 
     cpt = 0
@@ -1015,7 +1015,7 @@ def fgw_barycenters(
         T = [nx.outer(p, q) for q in ps]
 
     # removed since 0.9.2
-    #if loss_fun == 'kl_loss':
+    # if loss_fun == 'kl_loss':
     #    armijo = True
 
     cpt = 0
