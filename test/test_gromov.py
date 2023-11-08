@@ -1425,11 +1425,18 @@ def test_fgw_barycenter(nx):
     init_C /= init_C.max()
     init_Cb = nx.from_numpy(init_C)
 
-    Xb, Cb = ot.gromov.fgw_barycenters(
-        n_samples, [ysb, ytb], [C1b, C2b], ps=[p1b, p2b], lambdas=None,
-        alpha=0.5, fixed_structure=True, init_C=init_Cb, fixed_features=False,
-        p=None, loss_fun='square_loss', max_iter=100, tol=1e-3
-    )
+    try:  # to raise warning when `fixed_structure=True`and `init_C=None`
+        Xb, Cb = ot.gromov.fgw_barycenters(
+            n_samples, [ysb, ytb], [C1b, C2b], ps=[p1b, p2b], lambdas=None,
+            alpha=0.5, fixed_structure=True, init_C=None, fixed_features=False,
+            p=None, loss_fun='square_loss', max_iter=100, tol=1e-3
+        )
+    except:
+        Xb, Cb = ot.gromov.fgw_barycenters(
+            n_samples, [ysb, ytb], [C1b, C2b], ps=[p1b, p2b], lambdas=None,
+            alpha=0.5, fixed_structure=True, init_C=init_Cb, fixed_features=False,
+            p=None, loss_fun='square_loss', max_iter=100, tol=1e-3
+        )
     Xb, Cb = nx.to_numpy(Xb), nx.to_numpy(Cb)
     np.testing.assert_allclose(Cb.shape, (n_samples, n_samples))
     np.testing.assert_allclose(Xb.shape, (n_samples, ys.shape[1]))
@@ -1437,12 +1444,21 @@ def test_fgw_barycenter(nx):
     init_X = rng.randn(n_samples, ys.shape[1])
     init_Xb = nx.from_numpy(init_X)
 
-    Xb, Cb, logb = ot.gromov.fgw_barycenters(
-        n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
-        fixed_structure=False, fixed_features=True, init_X=init_Xb,
-        p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3,
-        warmstartT=True, log=True, random_state=98765, verbose=True
-    )
+    try:  # to raise warning when `fixed_features=True`and `init_X=None`
+        Xb, Cb, logb = ot.gromov.fgw_barycenters(
+            n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
+            fixed_structure=False, fixed_features=True, init_X=None,
+            p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3,
+            warmstartT=True, log=True, random_state=98765, verbose=True
+        )
+    except:
+        Xb, Cb, logb = ot.gromov.fgw_barycenters(
+            n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
+            fixed_structure=False, fixed_features=True, init_X=init_Xb,
+            p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3,
+            warmstartT=True, log=True, random_state=98765, verbose=True
+        )
+
     X, C = nx.to_numpy(Xb), nx.to_numpy(Cb)
     np.testing.assert_allclose(C.shape, (n_samples, n_samples))
     np.testing.assert_allclose(X.shape, (n_samples, ys.shape[1]))

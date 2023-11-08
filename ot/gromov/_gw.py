@@ -1005,12 +1005,14 @@ def fgw_barycenters(
     else:
         if init_X is None:
             X = nx.zeros((N, d), type_as=ps[0])
+
         else:
             X = init_X
 
-    T = [nx.outer(p, q) for q in ps]
-
     Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
+
+    if warmstartT:
+        T = [nx.outer(p, q) for q in ps]
 
     # removed since 0.9.2
     #if loss_fun == 'kl_loss':
@@ -1030,20 +1032,6 @@ def fgw_barycenters(
         Cprev = C
         Xprev = X
 
-        if not fixed_features:
-            Ys_temp = [y.T for y in Ys]
-            X = update_feature_matrix(lambdas, Ys_temp, T, p).T
-
-        Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
-
-        if not fixed_structure:
-            T_temp = [t.T for t in T]
-            if loss_fun == 'square_loss':
-                C = update_square_loss(p, lambdas, T_temp, Cs)
-
-            elif loss_fun == 'kl_loss':
-                C = update_kl_loss(p, lambdas, T_temp, Cs)
-
         if warmstartT:
             T = [fused_gromov_wasserstein(
                 Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
@@ -1053,6 +1041,19 @@ def fgw_barycenters(
                 Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
                 G0=None, max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, **kwargs) for s in range(S)]
         # T is N,ns
+        if not fixed_features:
+            Ys_temp = [y.T for y in Ys]
+            X = update_feature_matrix(lambdas, Ys_temp, T, p).T
+            Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
+
+        if not fixed_structure:
+            T_temp = [t.T for t in T]
+            if loss_fun == 'square_loss':
+                C = update_square_loss(p, lambdas, T_temp, Cs)
+
+            elif loss_fun == 'kl_loss':
+                C = update_kl_loss(p, lambdas, T_temp, Cs)
+
         err_feature = nx.norm(X - nx.reshape(Xprev, (N, d)))
         err_structure = nx.norm(C - Cprev)
         if log:
