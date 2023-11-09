@@ -229,7 +229,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=2, alpha="auto",
     if (1/r < alpha) or (alpha < 0):
         warnings.warn("The provided alpha value might lead to instabilities.")
 
-     # Default value for shape tensor parameter in LazyTensor 
+    # Default value for shape tensor parameter in LazyTensor 
     if shape_plan == "auto":
         shape_plan = (ns,nt) 
 
@@ -243,6 +243,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=2, alpha="auto",
     # Initialize the low rank matrices Q, R, g 
     Q, R, g = nx.ones((ns,r)), nx.ones((nt,r)), nx.ones(r) 
     k = 100 # not specified in paper ?
+
 
 
     # -------------------------- Low rank algorithm ------------------------------
@@ -267,6 +268,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=2, alpha="auto",
         Q, R, g = LR_Dysktra(eps1, eps2, eps3, a, b, alpha, stopThr, numItermax, warn, nx)
 
 
+
     # ----------------- Compute lazy_plan, value and value_linear  ------------------
     # see "Section 3.2: The Low-rank OT Problem" in the paper
 
@@ -281,7 +283,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=2, alpha="auto",
     v2 = nx.dot(R,nx.dot(diag_g.T,v1))
     value_linear = nx.sum(nx.diag(nx.dot(M2.T, v2)))
 
-    # Compute value with entropy reg (entropy of Q, R, g must be computed separatly)
+    # Compute value with entropy reg (entropy of Q, R, g must be computed separatly, see "Section 3.2" in the paper)
     reg_Q = nx.sum(Q * nx.log(Q + 1e-16)) # entropy for Q
     reg_g = nx.sum(g * nx.log(g + 1e-16)) # entropy for g
     reg_R = nx.sum(R * nx.log(R + 1e-16)) # entropy for R
