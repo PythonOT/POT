@@ -1,57 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-Bregman projections solvers for entropic regularized OT
+Bregman projections solvers for entropic regularized wasserstein barycenters
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Nicolas Courty <ncourty@irisa.fr>
-#         Kilian Fatras <kilian.fatras@irisa.fr>
-#         Titouan Vayer <titouan.vayer@irisa.fr>
 #         Hicham Janati <hicham.janati100@gmail.com>
-#         Mokhtar Z. Alaya <mokhtarzahdi.alaya@gmail.com>
-#         Alexander Tong <alexander.tong@yale.edu>
 #         Ievgen Redko <ievgen.redko@univ-st-etienne.fr>
-#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
 # License: MIT License
 
 import warnings
+import numpy as np
 
-
-from ..utils import dist, list_to_array
+from ..utils import dist, list_to_array, unif
 from ..backend import get_backend
 
+from ._utils import geometricBar, geometricMean, projR, projC
 from ._sinkhorn import sinkhorn
-
-
-
-def geometricBar(weights, alldistribT):
-    """return the weighted geometric mean of distributions"""
-    weights, alldistribT = list_to_array(weights, alldistribT)
-    nx = get_backend(weights, alldistribT)
-    assert (len(weights) == alldistribT.shape[1])
-    return nx.exp(nx.dot(nx.log(alldistribT), weights.T))
-
-
-def geometricMean(alldistribT):
-    """return the  geometric mean of distributions"""
-    alldistribT = list_to_array(alldistribT)
-    nx = get_backend(alldistribT)
-    return nx.exp(nx.mean(nx.log(alldistribT), axis=1))
-
-
-def projR(gamma, p):
-    """return the KL projection on the row constrints """
-    gamma, p = list_to_array(gamma, p)
-    nx = get_backend(gamma, p)
-    return (gamma.T * p / nx.maximum(nx.sum(gamma, axis=1), 1e-10)).T
-
-
-def projC(gamma, q):
-    """return the KL projection on the column constrints """
-    gamma, q = list_to_array(gamma, q)
-    nx = get_backend(gamma, q)
-    return gamma * q / nx.maximum(nx.sum(gamma, axis=0), 1e-10)
 
 
 def barycenter(A, M, reg, weights=None, method="sinkhorn", numItermax=10000,
@@ -954,5 +920,3 @@ def jcpot_barycenter(Xs, Ys, Xt, reg, metric='sqeuclidean', numItermax=100,
         return bary, log
     else:
         return bary
-
-

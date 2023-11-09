@@ -1,17 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Bregman projections solvers for entropic regularized OT
+Bregman projections solvers for entropic regularized Wasserstein convolutional barycenters
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Nicolas Courty <ncourty@irisa.fr>
-#         Kilian Fatras <kilian.fatras@irisa.fr>
-#         Titouan Vayer <titouan.vayer@irisa.fr>
-#         Hicham Janati <hicham.janati100@gmail.com>
-#         Mokhtar Z. Alaya <mokhtarzahdi.alaya@gmail.com>
-#         Alexander Tong <alexander.tong@yale.edu>
-#         Ievgen Redko <ievgen.redko@univ-st-etienne.fr>
-#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
 # License: MIT License
 
@@ -497,4 +490,3 @@ def _convolutional_barycenter2d_debiased_log(A, reg, weights=None, numItermax=10
         return nx.exp(log_bar), log
     else:
         return nx.exp(log_bar)
-

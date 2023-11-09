@@ -5,12 +5,8 @@ Bregman projections solvers for entropic regularized OT
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Nicolas Courty <ncourty@irisa.fr>
-#         Kilian Fatras <kilian.fatras@irisa.fr>
 #         Titouan Vayer <titouan.vayer@irisa.fr>
-#         Hicham Janati <hicham.janati100@gmail.com>
-#         Mokhtar Z. Alaya <mokhtarzahdi.alaya@gmail.com>
 #         Alexander Tong <alexander.tong@yale.edu>
-#         Ievgen Redko <ievgen.redko@univ-st-etienne.fr>
 #         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
 # License: MIT License
