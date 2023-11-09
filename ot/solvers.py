@@ -11,7 +11,7 @@ from .utils import OTResult, dist
 from .lp import emd2, wasserstein_1d
 from .backend import get_backend
 from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
-from .bregman import sinkhorn_log, empirical_sinkhorn
+from .bregman import sinkhorn_log, empirical_sinkhorn2
 from .partial import partial_wasserstein_lagrange
 from .smooth import smooth_ot_dual
 from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
@@ -958,7 +958,9 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         status = None
         log = None
 
-        if method.lower() == '1d':  # Wasserstein 1d (parallel on all dimensions)
+        method = method.lower() if method is not None else ''
+
+        if method == '1d':  # Wasserstein 1d (parallel on all dimensions)
             if metric == 'sqeuclidean':
                 p = 2
             elif metric in ['euclidean', 'cityblock']:
@@ -969,7 +971,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
             value = wasserstein_1d(X_a, X_b, a, b, p=p)
             value_linear = value
 
-        elif method.lower() == 'gaussian':  # Gaussian Bures-Wasserstein
+        elif method == 'gaussian':  # Gaussian Bures-Wasserstein
 
             if not metric.lower() in ['sqeuclidean']:
                 raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
@@ -981,7 +983,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
             value = value**2  # return the value (squared bures distance)
             value_linear = value  # return the value
 
-        elif method.lower() == 'factored':  # Factored OT
+        elif method == 'factored':  # Factored OT
 
             if not metric.lower() in ['sqeuclidean']:
                 raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
@@ -997,6 +999,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
             log['X'] = X
 
             value_linear = log['costa'] + log['costb']
+            value = value_linear  # TODO add reg term
             lazy_plan = log['lazy_plan']
             if not lazy0:  # store plan if not lazy
                 plan = lazy_plan[:]
@@ -1019,15 +1022,11 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
                 if batch_size is None:
                     batch_size = 100
 
-                u, v, log = empirical_sinkhorn(X_a, X_b, reg, a, b, metric=metric, numIterMax=max_iter, stopThr=tol,
-                                               isLazy=True, batchSize=batch_size, verbose=verbose, log=True)
+                value_linear, log = empirical_sinkhorn2(X_a, X_b, reg, a, b, metric=metric, numIterMax=max_iter, stopThr=tol,
+                                                        isLazy=True, batchSize=batch_size, verbose=verbose, log=True)
                 # compute potentials
-                potentials = (u, v)
-
-                # compute lazy_plan
-                # ...
-
-                raise (NotImplementedError('Not implemented balanced with regularization'))
+                potentials = (log["u"], log["v"])
+                lazy_plan = log['lazy_plan']
 
             else:
                 raise (NotImplementedError('Not implemented unbalanced_type="{}" with regularization'.format(unbalanced_type)))

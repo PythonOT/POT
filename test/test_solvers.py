@@ -23,6 +23,15 @@ lst_unbalanced_type_gromov = ['KL', 'semirelaxed', 'partial']
 lst_unbalanced_gromov = [None, 0.9]
 lst_alpha = [0, 0.4, 0.9, 1]
 
+lst_method_params_solve_sample = [
+    {'method': '1d'},
+    {'method': 'gaussian'},
+    {'method': 'gaussian', 'reg': 1},
+    {'method': 'factored', 'rank': 10},
+]
+# set readable ids for each param
+lst_method_params_solve_sample = [pytest.param(param, id=str(param)) for param in lst_method_params_solve_sample]
+
 
 def assert_allclose_sol(sol1, sol2):
 
@@ -299,6 +308,32 @@ def test_solve_sample(nx):
     # test not implemented reg_type and check raise
     with pytest.raises(NotImplementedError):
         sol0 = ot.solve_sample(X_s, X_t, reg=1, reg_type='cryptic divergence')
+
+
+@pytest.mark.parametrize("method_params", lst_method_params_solve_sample)
+def test_solve_sample_methods(nx, method_params):
+
+    n_samples_s = 20
+    n_samples_t = 7
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+    a = ot.utils.unif(n_samples_s)
+    b = ot.utils.unif(n_samples_t)
+
+    xb, yb, ab, bb = nx.from_numpy(x, y, a, b)
+
+    sol = ot.solve_sample(x, y, **method_params)
+    solb = ot.solve_sample(xb, yb, ab, bb, **method_params)
+
+    # check some attributes (no need )
+    assert_allclose_sol(sol, solb)
+
+    sol2 = ot.solve_sample(x, x, **method_params)
+    if method_params['method'] != 'factored':
+        np.testing.assert_allclose(sol2.value, 0)
 
 
 # def test_lazy_solve_sample(nx):
