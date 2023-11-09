@@ -36,7 +36,6 @@ from . import factored
 from . import solvers
 from . import gaussian
 from . import lowrank
-from . import lowrank
 
 # OT functions
 from .lp import (emd, emd2, emd_1d, emd2_1d, wasserstein_1d,
