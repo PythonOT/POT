@@ -166,10 +166,6 @@ def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric
         def df(G):
             return 0.5 * (gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_))
 
-    # removed since 0.9.2
-    #if loss_fun == 'kl_loss':
-    #    armijo = True # there is no closed form line-search with KL
-
     if armijo:
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
             return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=np_, **kwargs)
@@ -477,10 +473,6 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
 
         def df(G):
             return 0.5 * (gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_))
-
-    # removed since 0.9.2
-    #if loss_fun == 'kl_loss':
-    #    armijo = True  # there is no closed form line-search with KL
 
     if armijo:
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
@@ -827,10 +819,6 @@ def gromov_barycenters(
     else:
         C = init_C
 
-    # removed since 0.9.2
-    #if loss_fun == 'kl_loss':
-    #    armijo = True
-
     cpt = 0
     err = 1
 
@@ -1005,16 +993,14 @@ def fgw_barycenters(
     else:
         if init_X is None:
             X = nx.zeros((N, d), type_as=ps[0])
+
         else:
             X = init_X
 
-    T = [nx.outer(p, q) for q in ps]
-
     Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
 
-    # removed since 0.9.2
-    #if loss_fun == 'kl_loss':
-    #    armijo = True
+    if warmstartT:
+        T = [nx.outer(p, q) for q in ps]
 
     cpt = 0
     err_feature = 1
@@ -1030,20 +1016,6 @@ def fgw_barycenters(
         Cprev = C
         Xprev = X
 
-        if not fixed_features:
-            Ys_temp = [y.T for y in Ys]
-            X = update_feature_matrix(lambdas, Ys_temp, T, p).T
-
-        Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
-
-        if not fixed_structure:
-            T_temp = [t.T for t in T]
-            if loss_fun == 'square_loss':
-                C = update_square_loss(p, lambdas, T_temp, Cs)
-
-            elif loss_fun == 'kl_loss':
-                C = update_kl_loss(p, lambdas, T_temp, Cs)
-
         if warmstartT:
             T = [fused_gromov_wasserstein(
                 Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
@@ -1053,6 +1025,19 @@ def fgw_barycenters(
                 Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
                 G0=None, max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, **kwargs) for s in range(S)]
         # T is N,ns
+        if not fixed_features:
+            Ys_temp = [y.T for y in Ys]
+            X = update_feature_matrix(lambdas, Ys_temp, T, p).T
+            Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
+
+        if not fixed_structure:
+            T_temp = [t.T for t in T]
+            if loss_fun == 'square_loss':
+                C = update_square_loss(p, lambdas, T_temp, Cs)
+
+            elif loss_fun == 'kl_loss':
+                C = update_kl_loss(p, lambdas, T_temp, Cs)
+
         err_feature = nx.norm(X - nx.reshape(Xprev, (N, d)))
         err_structure = nx.norm(C - Cprev)
         if log:
