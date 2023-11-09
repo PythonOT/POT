@@ -175,3 +175,22 @@ def test_gaussian_gromov_wasserstein_mapping(nx, d_target):
 
     if d_target >= 2:
         np.testing.assert_allclose(Cs, Ctt)
+
+
+def test_gaussian_init(nx):
+    ns = 50
+    nt = 50
+
+    Xs, ys = make_data_classif('3gauss', ns)
+    Xt, yt = make_data_classif('3gauss2', nt)
+
+    a_s = np.ones((ns, 1)) / ns
+    a_t = np.ones((nt, 1)) / nt
+
+    Xsb, Xtb, a_sb, a_tb = nx.from_numpy(Xs, Xt, a_s, a_t)
+
+    f = ot.gaussian.dual_gaussian_init(Xsb, Xtb)
+
+    f2 = ot.gaussian.dual_gaussian_init(Xsb, Xtb, a_sb, a_tb)
+
+    np.testing.assert_allclose(nx.to_numpy(f), nx.to_numpy(f2))

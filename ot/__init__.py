@@ -40,7 +40,7 @@ from . import gaussian
 from .lp import (emd, emd2, emd_1d, emd2_1d, wasserstein_1d,
                  binary_search_circle, wasserstein_circle,
                  semidiscrete_wasserstein2_unif_circle)
-from .bregman import sinkhorn, sinkhorn2, barycenter
+from .bregman import (sinkhorn, sinkhorn2, barycenter, empirical_sinkhorn, empirical_sinkhorn2, empirical_sinkhorn_divergence)
 from .unbalanced import (sinkhorn_unbalanced, barycenter_unbalanced,
                          sinkhorn_unbalanced2)
 from .da import sinkhorn_lpl1_mm
@@ -61,6 +61,7 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'datasets', 'bregman', 'lp', 'tic', 'toc', 'toq', 'gromov',
            'emd2_1d', 'wasserstein_1d', 'backend', 'gaussian',
            'dist', 'unif', 'barycenter', 'sinkhorn_lpl1_mm', 'da', 'optim',
+           'empirical_sinkhorn', 'empirical_sinkhorn2', 'empirical_sinkhorn_divergence',
            'sinkhorn_unbalanced', 'barycenter_unbalanced',
            'sinkhorn_unbalanced2', 'sliced_wasserstein_distance', 'sliced_wasserstein_sphere',
            'gromov_wasserstein', 'gromov_wasserstein2', 'gromov_barycenters', 'fused_gromov_wasserstein',

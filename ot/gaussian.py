@@ -645,3 +645,51 @@ def empirical_gaussian_gromov_wasserstein_mapping(xs, xt, ws=None,
         return A, b, log
     else:
         return A, b
+
+
+def dual_gaussian_init(xs, xt, ws=None, wt=None, reg=1e-6):
+    r""" Return the source dual potential gaussian initialization.
+
+    This function return the dual potential gaussian initialization that can be
+    used to initialize the Sinkhorn algorithm. This initialization is based on
+    the Monge mapping between the source and target distributions seen as two
+    Gaussian distributions [60].
+
+    Parameters
+    ----------
+    xs : array-like (ns,ds)
+        samples in the source domain
+    xt : array-like (nt,dt)
+        samples in the target domain
+    ws : array-like (ns,1), optional
+        weights for the source samples
+    wt : array-like (ns,1), optional
+        weights for the target samples
+    reg : float,optional
+        regularization added to the diagonals of covariances (>0)
+
+    .. [60] Thornton, James, and Marco Cuturi. "Rethinking initialization of the
+    sinkhorn     algorithm." International Conference on Artificial Intelligence
+    and Statistics. PMLR, 2023.
+    """
+
+    nx = get_backend(xs, xt)
+
+    if ws is None:
+        ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
+
+    if wt is None:
+        wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
+
+    # estimate mean and covariance
+    mu_s = nx.dot(ws.T, xs) / nx.sum(ws)
+    mu_t = nx.dot(wt.T, xt) / nx.sum(wt)
+
+    A, b = empirical_bures_wasserstein_mapping(xs, xt, ws=ws, wt=wt, reg=reg)
+
+    xsc = xs - mu_s
+
+    # compute the dual potential (see appendix D in [60])
+    f = nx.sum(xs**2 - nx.dot(xsc, A) * xsc - mu_t * xs, 1)
+
+    return f
