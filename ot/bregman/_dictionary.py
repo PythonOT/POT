@@ -4,6 +4,7 @@ Dictionary Learning based on Bregman projections for entropic regularized OT
 """
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
+#         Nicolas Courty <ncourty@irisa.fr>
 #
 # License: MIT License
 

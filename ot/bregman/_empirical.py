@@ -5,6 +5,7 @@ Bregman projections solvers for entropic regularized OT for empirical distributi
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Kilian Fatras <kilian.fatras@irisa.fr>
+#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
 # License: MIT License
 
