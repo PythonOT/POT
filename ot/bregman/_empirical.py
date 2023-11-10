@@ -87,6 +87,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     Examples
     --------
 
+    >>> import numpy as np
     >>> n_samples_a = 2
     >>> n_samples_b = 2
     >>> reg = 0.1
@@ -286,6 +287,7 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     Examples
     --------
 
+    >>> import numpy as np
     >>> n_samples_a = 2
     >>> n_samples_b = 2
     >>> reg = 0.1
@@ -467,6 +469,8 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
 
     Examples
     --------
+
+    >>> import numpy as np
     >>> n_samples_a = 2
     >>> n_samples_b = 4
     >>> reg = 0.1
