@@ -9,7 +9,6 @@ Bregman projections solvers for entropic regularized OT for empirical distributi
 # License: MIT License
 
 import warnings
-import numpy as np
 
 from ..utils import dist, list_to_array, unif
 from ..backend import get_backend
