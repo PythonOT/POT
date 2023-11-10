@@ -81,7 +81,7 @@ def test_empirical_bures_wasserstein_mapping_numerical_error_warning():
 
 
 def test_bures_wasserstein_distance(nx):
-    ms, mt = np.array([0]), np.array([10])
+    ms, mt = np.array([0]).astype(np.float32), np.array([10]).astype(np.float32)
     Cs, Ct = np.array([[1]]).astype(np.float32), np.array([[1]]).astype(np.float32)
     msb, mtb, Csb, Ctb = nx.from_numpy(ms, mt, Cs, Ct)
     Wb_log, log = ot.gaussian.bures_wasserstein_distance(msb, mtb, Csb, Ctb, log=True)
