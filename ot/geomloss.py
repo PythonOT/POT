@@ -9,8 +9,9 @@ try:
     import torch
     from torch.autograd import grad
     from .utils import get_backend, LazyTensor, dist
-except:
+except BaseException:
     geomloss = False
+
 
 def get_sinkhorn_geomloss_lazytensor(X_a, X_b, f, g, a, b, metric='sqeuclidean', reg=1e-1, nx=None):
     """ Get a LazyTensor of sinkhorn solution T = exp((f+g^T-C)/reg)*(ab^T)
@@ -46,18 +47,18 @@ def get_sinkhorn_geomloss_lazytensor(X_a, X_b, f, g, a, b, metric='sqeuclidean',
 
     def func(i, j, X_a, X_b, f, g, a, b, metric, reg):
         C = dist(X_a[i], X_b[j], metric=metric)
-        return nx.exp((f[i, None] + g[None, j] - C) / reg)* (a[i,None]*b[None,j])
+        return nx.exp((f[i, None] + g[None, j] - C) / reg) * (a[i, None] * b[None, j])
 
     T = LazyTensor(shape, func, X_a=X_a, X_b=X_b, f=f, g=g, a=a, b=b, metric=metric, reg=reg)
 
-    return T    
+    return T
+
 
 def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
-                        numIterMax=10000, stopThr=1e-9,
-                        verbose=False, log=False, warn=True, warmstart=None):
+                                 numIterMax=10000, stopThr=1e-9,
+                                 verbose=False, log=False, warn=True, warmstart=None):
 
     if geomloss:
-
 
         nx = get_backend(X_s, X_t, a, b)
 
@@ -72,10 +73,10 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
             b = torch.ones(X_t.shape[0], dtype=X_t.dtype, device=X_t.device) / X_t.shape[0]
 
         if metric == 'sqeuclidean':
-            p=2
-            blur = reg/2 # because geomloss divides cost by two
+            p = 2
+            blur = reg / 2  # because geomloss divides cost by two
         elif metric == 'euclidean':
-            p=1
+            p = 1
             blur = reg
         else:
             raise ValueError('geomloss only supports sqeuclidean and euclidean metrics')
@@ -84,10 +85,10 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
         X_t.requires_grad = True
         a.requires_grad = True
         b.requires_grad = True
-        
+
         loss = SamplesLoss(loss='sinkhorn', p=p, blur=blur, backend='auto', debias=False, verbose=verbose)
 
-        value = loss(a, X_s, b, X_t) # linear + entropic/KL reg?
+        value = loss(a, X_s, b, X_t)  # linear + entropic/KL reg?
 
         if metric == 'sqeuclidean':
             value *= 2  # because geomloss divides cost by two
@@ -107,8 +108,5 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
         else:
             return value
 
-
     else:
         raise ImportError('geomloss not installed')
-
-    
