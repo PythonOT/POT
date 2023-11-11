@@ -812,7 +812,7 @@ def test_entropic_fgw_barycenter(nx):
     C2 = ot.dist(Xt)
     p1 = ot.unif(ns)
     p2 = ot.unif(nt)
-    n_samples = 2
+    n_samples = 3
     p = ot.unif(n_samples)
 
     ysb, ytb, C1b, C2b, p1b, p2b, pb = nx.from_numpy(ys, yt, C1, C2, p1, p2, p)
@@ -820,12 +820,12 @@ def test_entropic_fgw_barycenter(nx):
     X, C, log = ot.gromov.entropic_fused_gromov_barycenters(
         n_samples, [ys, yt], [C1, C2], None, p, [.5, .5], 'square_loss', 0.1,
         max_iter=10, tol=1e-3, verbose=True, warmstartT=True, random_state=42,
-        solver='PPA', numItermax=1, log=True
+        solver='PPA', numItermax=100, log=True
     )
     Xb, Cb = ot.gromov.entropic_fused_gromov_barycenters(
         n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], None, [.5, .5], 'square_loss', 0.1,
         max_iter=10, tol=1e-3, verbose=False, warmstartT=True, random_state=42,
-        solver='PPA', numItermax=1, log=False)
+        solver='PPA', numItermax=100, log=False)
     Xb, Cb = nx.to_numpy(Xb, Cb)
 
     np.testing.assert_allclose(C, Cb, atol=1e-06)
