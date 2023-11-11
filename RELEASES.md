@@ -24,6 +24,7 @@
 - Correct independence of `fgw_barycenters` to `init_C` and `init_X` (Issue #547, PR #566)
 - Avoid precision change when computing norm using PyTorch backend (Discussion #570, PR #572)
 - Create `ot/bregman/`repository (Issue #567, PR #569)
+- Fix matrix feature shape in `entropic_fused_gromov_barycenters`(Issue #574, PR #573)  
 
 
 ## 0.9.1
