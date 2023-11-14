@@ -16,7 +16,7 @@ from itertools import product
 
 # Add test functions for each function in lowrank.py file ?
 
-def test_lowrank_sinkhorn(verbose, warn):
+def test_lowrank_sinkhorn():
     # test low rank sinkhorn
     n = 100
     a = ot.unif(n)

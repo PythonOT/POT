@@ -8,8 +8,8 @@ Low rank OT solvers
 
 
 import warnings
-from ot.utils import unif, LazyTensor
-from ot.backend import get_backend
+from .utils import unif, LazyTensor
+from .backend import get_backend
 
 
 def compute_lr_cost_matrix(X_s, X_t, nx=None):
@@ -218,6 +218,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=2, alpha="auto",
         b = unif(nt, type_as=X_t)
 
     # Compute rank (see Section 3.1, def 1)
+    r = rank
     if rank == "auto":
         r = min(ns, nt)
 
@@ -290,7 +291,6 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=2, alpha="auto",
     value = value_linear + reg * (reg_Q + reg_g + reg_R)
 
     return value, value_linear, lazy_plan, Q, R, g
-
 
 
 
