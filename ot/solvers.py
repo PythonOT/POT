@@ -987,7 +987,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
 
         # lazy solver of memory complexity O(n)
         res = ot.solve_sample(xa, xb, a, b, reg=1.0, lazy=True, batch_size=100)
-        # lazy OT plan 
+        # lazy OT plan
         lazy_plan = res.lazy_plan
 
     - **Quadratic regularized OT [17]** (when ``reg!=None`` and ``reg_type="L2"``):
@@ -1045,26 +1045,26 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         res = ot.solve_sample(xa, xb, a, b, reg=1.0, reg_type='L2',
         unbalanced=1.0, unbalanced_type='L2')
 
-        
+
     - **Factored OT [2]** (when ``method='factored'``):
 
     This method solve the following OT problem [40]_
 
     .. math::
         \mathop{\arg \min}_\mu \quad  W_2^2(\mu_a,\mu)+ W_2^2(\mu,\mu_b)
-    
+
     where $\mu$ is a uniform weighted empirical distribution of  :math:`\mu_a` and :math:`\mu_b` are the empirical measures associated
     to the samples in the source and target domains, and :math:`W_2` is the
-    Wasserstein distance. This problem is solved using exact OT solvers for 
+    Wasserstein distance. This problem is solved using exact OT solvers for
     `reg=None` and the Sinkhorn solver for `reg!=None`. The solution provides
     two transport plans that can be used to recover a low rank OT plan between
-    the two distributions. 
+    the two distributions.
 
     .. code-block:: python
 
         res = ot.solve_sample(xa, xb, method='factored', rank=10)
 
-        # recover the lazy low rank plan 
+        # recover the lazy low rank plan
         factored_solution_lazy = res.lazy_plan
 
         # recover the full low rank plan
@@ -1072,7 +1072,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
 
     - **Gaussian Bures-Wasserstein [2]** (when ``method='gaussian'``):
 
-    This method computes the Gaussian Bures-Wasserstein distance between two 
+    This method computes the Gaussian Bures-Wasserstein distance between two
     Gaussian distributions estimated from teh empirical distributions
 
     .. math::
@@ -1105,7 +1105,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         # recover the squared Wasserstein distances
         W_dists = res.value
 
-    
+
     .. _references-solve-sample:
     References
     ----------
@@ -1140,7 +1140,6 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
     .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
         Unbalanced optimal transport through non-negative penalized
         linear regression. NeurIPS.
-
 
 
     """
