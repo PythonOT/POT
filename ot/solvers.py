@@ -25,7 +25,7 @@ from .factored import factored_optimal_transport
 
 
 def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
-          unbalanced_type='KL', n_threads=1, max_iter=None, plan_init=None,
+          unbalanced_type='KL', method=None, n_threads=1, max_iter=None, plan_init=None,
           potentials_init=None, tol=None, verbose=False):
     r"""Solve the discrete optimal transport problem and return :any:`OTResult` object
 
@@ -851,7 +851,8 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     return res
 
 
-def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_type="KL", unbalanced=None,
+def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_type="KL",
+                 unbalanced=None,
                  unbalanced_type='KL', lazy=False, batch_size=None, method=None, n_threads=1, max_iter=None, plan_init=None, rank=100,
                  potentials_init=None, X_init=None, tol=None, verbose=False):
     r"""Solve the discrete optimal transport problem using the samples in the source and target domains.
@@ -940,7 +941,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         # compute cost matrix M and use solve function
         M = dist(X_a, X_b, metric)
 
-        res = solve(M, a, b, reg, reg_type, unbalanced, unbalanced_type, n_threads, max_iter, plan_init, potentials_init, tol, verbose)
+        res = solve(M, a, b, reg, reg_type, unbalanced, unbalanced_type, method, n_threads, max_iter, plan_init, potentials_init, tol, verbose)
 
         return res
 
