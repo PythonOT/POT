@@ -132,7 +132,7 @@ def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=No
 #################################### LOW RANK SINKHORN ALGORITHM #########################################
 
 
-def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=2, alpha="auto", 
+def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto", 
                      numItermax=10000, stopThr=1e-9, warn=True, shape_plan="auto"): 
     
     r'''
