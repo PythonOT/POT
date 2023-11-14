@@ -23,7 +23,7 @@ def test_lowrank_sinkhorn():
     b = ot.unif(n)
 
     X_s = np.reshape(1.0 * np.arange(n), (n, 1))
-    X_t = np.reshape(1.0 * np.arange(0, n), (n, 1))
+    X_t = np.reshape(1.0 * np.arange(n), (n, 1))
 
     # what to test for value, value_linear, Q, R and g ?
     value, value_linear, lazy_plan, Q, R, g = ot.lowrank.lowrank_sinkhorn(X_s, X_t, a, b, 0.1)
@@ -52,7 +52,7 @@ def test_lowrank_sinkhorn_alpha_warning(alpha,rank):
     X_t = np.reshape(1.0 * np.arange(0, n), (n, 1))
     
     with pytest.warns(UserWarning):
-        ot.lowrank.lowrank_sinkhorn(X_s, X_t, 0.1, a, b, r=rank, alpha=alpha, warn=False) # remove warning for lack of convergence 
+        ot.lowrank.lowrank_sinkhorn(X_s, X_t, 0.1, a, b, rank=rank, alpha=alpha, warn=False) # remove warning for lack of convergence 
     
 
 
