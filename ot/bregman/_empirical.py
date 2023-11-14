@@ -58,7 +58,6 @@ def get_sinkhorn_lazytensor(X_a, X_b, f, g, metric='sqeuclidean', reg=1e-1, nx=N
     return T
 
 
-
 def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
                        numIterMax=10000, stopThr=1e-9, isLazy=False, batchSize=100, verbose=False,
                        log=False, warn=True, warmstart=None, **kwargs):
