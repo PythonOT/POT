@@ -90,7 +90,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
     The following methods are available for solving the OT problems:
 
-    - **Classical exact OT problem** (default parameters):
+    - **Classical exact OT problem [1]** (default parameters) :
 
     .. math::
         \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F
@@ -107,7 +107,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
         res = ot.solve(M, a, b)
 
-    - **Entropic regularized OT** (when ``reg!=None``):
+    - **Entropic regularized OT [2]** (when ``reg!=None``):
 
     .. math::
         \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F + \lambda R(\mathbf{T})
@@ -127,7 +127,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         # or for original Sinkhorn paper formulation [2]
         res = ot.solve(M, a, b, reg=1.0, reg_type='entropy')
 
-    - **Quadratic regularized OT** (when ``reg!=None`` and ``reg_type="L2"``):
+    - **Quadratic regularized OT [17]** (when ``reg!=None`` and ``reg_type="L2"``):
 
     .. math::
         \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F + \lambda R(\mathbf{T})
@@ -144,7 +144,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
         res = ot.solve(M,a,b,reg=1.0,reg_type='L2')
 
-    - **Unbalanced OT** (when ``unbalanced!=None``):
+    - **Unbalanced OT [41]** (when ``unbalanced!=None``):
 
     .. math::
         \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
@@ -154,14 +154,14 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     .. code-block:: python
 
         # default is ``"KL"``
-        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0)
+        res = ot.solve(M,a,b,unbalanced=1.0)
         # quadratic unbalanced OT
-        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0,unbalanced_type='L2')
+        res = ot.solve(M,a,b,unbalanced=1.0,unbalanced_type='L2')
         # TV = partial OT
-        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0,unbalanced_type='TV')
+        res = ot.solve(M,a,b,unbalanced=1.0,unbalanced_type='TV')
 
 
-    - **Regularized unbalanced regularized OT** (when ``unbalanced!=None`` and ``reg!=None``):
+    - **Regularized unbalanced regularized OT [34]** (when ``unbalanced!=None`` and ``reg!=None``):
 
     .. math::
         \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
@@ -182,6 +182,11 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     References
     ----------
 
+    .. [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W.
+        (2011, December).  Displacement interpolation using Lagrangian mass
+        transport. In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p.
+        158). ACM.
+
     .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation
         of Optimal Transport, Advances in Neural Information Processing
         Systems (NIPS) 26, 2013
@@ -198,6 +203,10 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         A., & Peyré, G. (2019, April). Interpolating between optimal transport
         and MMD using Sinkhorn divergences. In The 22nd International Conference
         on Artificial Intelligence and Statistics (pp. 2681-2690). PMLR.
+
+    .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
+        Unbalanced optimal transport through non-negative penalized
+        linear regression. NeurIPS.
 
     """
 
@@ -413,9 +422,8 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
     method : str, optional
-        Method for solving the problem, for entropic problems "PGD" is projected
-        gradient descent and "PPA" for proximal point, default None for
-        automatic selection ("PGD").
+        Method for solving the problem when multiple algorithms are available,
+        default None for automatic selection.
     max_iter : int, optional
         Maximum number of iterations, by default None (default values in each
         solvers)
@@ -929,6 +937,140 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         - res.value_linear : Linear OT loss with the optimal OT plan
 
         See :any:`OTResult` for more information.
+
+    Notes
+    -----
+
+    The following methods are available for solving the OT problems:
+
+    - **Classical exact OT problem [1]** (default parameters) :
+
+    .. math::
+        \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F
+
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+
+             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+
+             \mathbf{T} \geq 0,  M_{i,j} = d(x_i,y_j)
+
+
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        res = ot.solve_sample(xa, xb, a, b)
+
+        # for uniform weights
+        res = ot.solve_sample(xa, xb)
+
+    - **Entropic regularized OT [2]** (when ``reg!=None``):
+
+    .. math::
+        \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F + \lambda R(\mathbf{T})
+
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+
+             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+
+             \mathbf{T} \geq 0,  M_{i,j} = d(x_i,y_j)
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        # default is ``"KL"`` regularization (``reg_type="KL"``)
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0)
+        # or for original Sinkhorn paper formulation [2]
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, reg_type='entropy')
+
+    - **Quadratic regularized OT [17]** (when ``reg!=None`` and ``reg_type="L2"``):
+
+    .. math::
+        \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F + \lambda R(\mathbf{T})
+
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+
+             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+
+             \mathbf{T} \geq 0,  M_{i,j} = d(x_i,y_j)
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, reg_type='L2')
+
+    - **Unbalanced OT [41]** (when ``unbalanced!=None``):
+
+    .. math::
+        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
+
+        with  M_{i,j} = d(x_i,y_j)
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        # default is ``"KL"``
+        res = ot.solve_sample(xa, xb, a, b, unbalanced=1.0)
+        # quadratic unbalanced OT
+        res = ot.solve_sample(xa, xb, a, b, unbalanced=1.0,unbalanced_type='L2')
+        # TV = partial OT
+        res = ot.solve_sample(xa, xb, a, b, unbalanced=1.0,unbalanced_type='TV')
+
+
+    - **Regularized unbalanced regularized OT [34]** (when ``unbalanced!=None`` and ``reg!=None``):
+
+    .. math::
+        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
+
+        with  M_{i,j} = d(x_i,y_j)
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        # default is ``"KL"`` for both
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, unbalanced=1.0)
+        # quadratic unbalanced OT with KL regularization
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, unbalanced=1.0,unbalanced_type='L2')
+        # both quadratic
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, reg_type='L2', unbalanced=1.0, unbalanced_type='L2')
+
+
+    .. _references-solve-sample:
+    References
+    ----------
+
+    .. [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W.
+        (2011, December).  Displacement interpolation using Lagrangian mass
+        transport. In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p.
+        158). ACM.
+
+    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation
+        of Optimal Transport, Advances in Neural Information Processing
+        Systems (NIPS) 26, 2013
+
+    .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016).
+        Scaling algorithms for unbalanced transport problems.
+        arXiv preprint arXiv:1607.05816.
+
+    .. [17] Blondel, M., Seguy, V., & Rolet, A. (2018). Smooth and Sparse
+        Optimal Transport. Proceedings of the Twenty-First International
+        Conference on Artificial Intelligence and Statistics (AISTATS).
+
+    .. [34] Feydy, J., Séjourné, T., Vialard, F. X., Amari, S. I., Trouvé,
+        A., & Peyré, G. (2019, April). Interpolating between optimal transport
+        and MMD using Sinkhorn divergences. In The 22nd International Conference
+        on Artificial Intelligence and Statistics (pp. 2681-2690). PMLR.
+
+    .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
+        Unbalanced optimal transport through non-negative penalized
+        linear regression. NeurIPS.
+
+
 
     """
 
