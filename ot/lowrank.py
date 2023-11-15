@@ -171,7 +171,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
         Regularization term >0
     rank: int, default "auto"
         Nonnegative rank of the OT plan
-    alpha: int, default "auto"
+    alpha: int, default "auto" (1e-10)
         Lower bound for the weight vector g (>0 and <1/r)
     numItermax : int, optional
         Max number of iterations
@@ -221,14 +221,14 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
     r = rank
     if rank == "auto":
         r = min(ns, nt)
+    
+    if alpha == "auto":
+        alpha = 1e-10
 
-    # Check values of alpha, the lower bound for 1/rank 
+    # Dykstra algorithm won't converge if 1/rank < alpha (alpha is the lower bound for 1/rank)
     # (see "Section 3.2: The Low-rank OT Problem (LOT)" in the paper)
-    if alpha == 'auto':
-        alpha = 1e-10 
-
-    if (1/r < alpha) or (alpha < 0):
-        warnings.warn("The provided alpha value might lead to instabilities.")
+    if 1/r < alpha :
+        raise ValueError("alpha ({a}) should be smaller than 1/rank ({r}) for the Dykstra algorithm to converge.".format(a=alpha,r=1/rank))
 
     # Default value for shape tensor parameter in LazyTensor 
     if shape_plan == "auto":
@@ -291,6 +291,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
     value = value_linear + reg * (reg_Q + reg_g + reg_R)
 
     return value, value_linear, lazy_plan, Q, R, g
+
 
 
 
