@@ -336,9 +336,9 @@ def test_check_random_state_error():
         ot.utils.check_random_state('error')
 
 
-def test_get_parameter_pairs_error():
+def test_get_parameter_pair_error():
     with pytest.raises(ValueError):
-        ot.utils.get_parameter_pairs((1, 2, 3))  # not pair ;)
+        ot.utils.get_parameter_pair((1, 2, 3))  # not pair ;)
 
 
 def test_deprecated_func():
