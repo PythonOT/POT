@@ -1941,7 +1941,7 @@ class TorchBackend(Backend):
         return torch.pow(a, exponents)
 
     def norm(self, a, axis=None, keepdims=False):
-        return torch.linalg.norm(a.double(), dim=axis, keepdims=keepdims)
+        return torch.linalg.norm(a, dim=axis, keepdims=keepdims)
 
     def any(self, a):
         return torch.any(a)

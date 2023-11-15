@@ -459,6 +459,12 @@ def test_entropic_proximal_gromov(nx):
 
     C1b, C2b, pb, qb, G0b = nx.from_numpy(C1, C2, p, q, G0)
 
+    with pytest.raises(ValueError):
+        loss_fun = 'weird_loss_fun'
+        G, log = ot.gromov.entropic_gromov_wasserstein(
+            C1, C2, None, q, loss_fun, symmetric=None, G0=G0,
+            epsilon=1e-1, max_iter=50, solver='PPA', verbose=True, log=True, numItermax=1)
+
     G, log = ot.gromov.entropic_gromov_wasserstein(
         C1, C2, None, q, 'square_loss', symmetric=None, G0=G0,
         epsilon=1e-1, max_iter=50, solver='PPA', verbose=True, log=True, numItermax=1)
@@ -605,6 +611,12 @@ def test_entropic_fgw(nx):
     M = ot.dist(ys, yt)
 
     Mb, C1b, C2b, pb, qb, G0b = nx.from_numpy(M, C1, C2, p, q, G0)
+
+    with pytest.raises(ValueError):
+        loss_fun = 'weird_loss_fun'
+        G, log = ot.gromov.entropic_fused_gromov_wasserstein(
+            M, C1, C2, None, None, loss_fun, symmetric=None, G0=G0,
+            epsilon=1e-1, max_iter=10, verbose=True, log=True)
 
     G, log = ot.gromov.entropic_fused_gromov_wasserstein(
         M, C1, C2, None, None, 'square_loss', symmetric=None, G0=G0,
@@ -812,20 +824,28 @@ def test_entropic_fgw_barycenter(nx):
     C2 = ot.dist(Xt)
     p1 = ot.unif(ns)
     p2 = ot.unif(nt)
-    n_samples = 2
+    n_samples = 3
     p = ot.unif(n_samples)
 
     ysb, ytb, C1b, C2b, p1b, p2b, pb = nx.from_numpy(ys, yt, C1, C2, p1, p2, p)
 
+    with pytest.raises(ValueError):
+        loss_fun = 'weird_loss_fun'
+        X, C, log = ot.gromov.entropic_fused_gromov_barycenters(
+            n_samples, [ys, yt], [C1, C2], None, p, [.5, .5], loss_fun, 0.1,
+            max_iter=10, tol=1e-3, verbose=True, warmstartT=True, random_state=42,
+            solver='PPA', numItermax=10, log=True
+        )
+
     X, C, log = ot.gromov.entropic_fused_gromov_barycenters(
         n_samples, [ys, yt], [C1, C2], None, p, [.5, .5], 'square_loss', 0.1,
         max_iter=10, tol=1e-3, verbose=True, warmstartT=True, random_state=42,
-        solver='PPA', numItermax=1, log=True
+        solver='PPA', numItermax=10, log=True
     )
     Xb, Cb = ot.gromov.entropic_fused_gromov_barycenters(
         n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], None, [.5, .5], 'square_loss', 0.1,
         max_iter=10, tol=1e-3, verbose=False, warmstartT=True, random_state=42,
-        solver='PPA', numItermax=1, log=False)
+        solver='PPA', numItermax=10, log=False)
     Xb, Cb = nx.to_numpy(Xb, Cb)
 
     np.testing.assert_allclose(C, Cb, atol=1e-06)
@@ -1051,6 +1071,13 @@ def test_gromov_entropic_barycenter(nx):
     p = ot.unif(n_samples)
 
     C1b, C2b, p1b, p2b, pb = nx.from_numpy(C1, C2, p1, p2, p)
+
+    with pytest.raises(ValueError):
+        loss_fun = 'weird_loss_fun'
+        Cb = ot.gromov.entropic_gromov_barycenters(
+            n_samples, [C1, C2], None, p, [.5, .5], loss_fun, 1e-3,
+            max_iter=10, tol=1e-3, verbose=True, warmstartT=True, random_state=42
+        )
 
     Cb = ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1, C2], None, p, [.5, .5], 'square_loss', 1e-3,
