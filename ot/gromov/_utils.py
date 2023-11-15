@@ -361,7 +361,7 @@ def update_kl_loss(p, lambdas, T, Cs, nx=None):
     # Correct order mistake in Equation 15 in [12]
     tmpsum = sum([
         lambdas[s] * nx.dot(
-            nx.dot(T[s], nx.log(Cs[s])),
+            nx.dot(T[s], nx.log(nx.maximum(Cs[s], 1e-15))),
             T[s].T
         ) for s in range(len(T))
     ])
