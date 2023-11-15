@@ -1441,11 +1441,20 @@ def test_fgw_barycenter(nx):
     p = ot.unif(n_samples)
 
     ysb, ytb, C1b, C2b, p1b, p2b, pb = nx.from_numpy(ys, yt, C1, C2, p1, p2, p)
-
-    Xb, Cb = ot.gromov.fgw_barycenters(
-        n_samples, [ysb, ytb], [C1b, C2b], None, [.5, .5], 0.5, fixed_structure=False,
-        fixed_features=False, p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3, random_state=12345
+    lambdas = [.5, .5]
+    Csb = [C1b, C2b]
+    Ysb = [ysb, ytb]
+    Xb, Cb, logb = ot.gromov.fgw_barycenters(
+        n_samples, Ysb, Csb, None, lambdas, 0.5, fixed_structure=False,
+        fixed_features=False, p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3,
+        random_state=12345, log=True
     )
+    # test correspondance with utils function
+    recovered_Cb = ot.gromov.update_square_loss(pb, lambdas, logb['Ts_iter'][-1], Csb)
+    recovered_Xb = ot.gromov.update_feature_matrix(lambdas, [y.T for y in Ysb], logb['Ts_iter'][-1], pb).T
+
+    np.testing.assert_allclose(Cb, recovered_Cb)
+    np.testing.assert_allclose(Xb, recovered_Xb)
 
     xalea = rng.randn(n_samples, 2)
     init_C = ot.dist(xalea, xalea)
@@ -1454,7 +1463,7 @@ def test_fgw_barycenter(nx):
 
     with pytest.raises(ot.utils.UndefinedParameter):  # to raise warning when `fixed_structure=True`and `init_C=None`
         Xb, Cb = ot.gromov.fgw_barycenters(
-            n_samples, [ysb, ytb], [C1b, C2b], ps=[p1b, p2b], lambdas=None,
+            n_samples, Ysb, Csb, ps=[p1b, p2b], lambdas=None,
             alpha=0.5, fixed_structure=True, init_C=None, fixed_features=False,
             p=None, loss_fun='square_loss', max_iter=100, tol=1e-3
         )
@@ -1490,13 +1499,18 @@ def test_fgw_barycenter(nx):
     np.testing.assert_allclose(X.shape, (n_samples, ys.shape[1]))
 
     # add test with 'kl_loss'
-    X, C = ot.gromov.fgw_barycenters(
+    X, C, log = ot.gromov.fgw_barycenters(
         n_samples, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
         fixed_structure=False, fixed_features=False, p=p, loss_fun='kl_loss',
-        max_iter=100, tol=1e-3, init_C=C, init_X=X, warmstartT=True, random_state=12345
+        max_iter=100, tol=1e-3, init_C=C, init_X=X, warmstartT=True,
+        random_state=12345, log=True
     )
     np.testing.assert_allclose(C.shape, (n_samples, n_samples))
     np.testing.assert_allclose(X.shape, (n_samples, ys.shape[1]))
+
+    # test correspondance with utils function
+    recovered_C = ot.gromov.update_kl_loss(p, lambdas, log['Ts_iter'][-1], [C1, C2])
+    np.testing.assert_allclose(C, recovered_C)
 
 
 def test_gromov_wasserstein_linear_unmixing(nx):
