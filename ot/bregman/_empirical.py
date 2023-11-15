@@ -18,7 +18,10 @@ from ._sinkhorn import sinkhorn, sinkhorn2
 
 
 def get_sinkhorn_lazytensor(X_a, X_b, f, g, metric='sqeuclidean', reg=1e-1, nx=None):
-    """ Get a LazyTensor of sinkhorn solution T = exp(f+g^T-C/reg)
+    r""" Get a LazyTensor of Sinkhorn solution from the dual potentials
+
+    The returned LazyTensor is
+    :math:`\mathbf{T} = exp(  \mathbf{f} \mathbf{1}_b^\top + \mathbf{1}_a \mathbf{g}^\top - \mathbf{C}/reg)`, where :math:`\mathbf{C}` is the pairwise metric matrix between samples :math:`\mathbf{X}_a` and :math:`\mathbf{X}_b`.
 
     Parameters
     ----------
@@ -41,7 +44,7 @@ def get_sinkhorn_lazytensor(X_a, X_b, f, g, metric='sqeuclidean', reg=1e-1, nx=N
     Returns
     -------
     T : LazyTensor
-        Lowrank tensor T = exp(f+g^T-C/reg)
+        Sinkhorn solution tensor
     """
 
     if nx is None:
