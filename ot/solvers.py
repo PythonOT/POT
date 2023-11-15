@@ -59,7 +59,11 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         Unbalanced penalization weight :math:`\lambda_u`, by default None
         (balanced OT)
     unbalanced_type : str, optional
-        Type of unbalanced penalization function :math:`U`  either "KL", "L2", "TV", by default "KL"
+        Type of unbalanced penalization function :math:`U`  either "KL", "L2",
+        "TV", by default "KL"
+    method : str, optional
+        Method for solving the problem when multiple algorithms are available,
+        default None for automatic selection.
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
     max_iter : int, optional
