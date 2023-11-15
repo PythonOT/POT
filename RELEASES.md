@@ -25,6 +25,7 @@
 - Avoid precision change when computing norm using PyTorch backend (Discussion #570, PR #572)
 - Create `ot/bregman/`repository (Issue #567, PR #569)
 - Fix matrix feature shape in `entropic_fused_gromov_barycenters`(Issue #574, PR #573)  
+- Fix (fused) gromov-wasserstein barycenter solvers to support `kl_loss`(PR #576)
 
 
 ## 0.9.1
