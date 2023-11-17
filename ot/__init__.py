@@ -35,7 +35,7 @@ from . import weak
 from . import factored
 from . import solvers
 from . import gaussian
-from . import lowrank
+
 
 # OT functions
 from .lp import (emd, emd2, emd_1d, emd2_1d, wasserstein_1d,
@@ -67,7 +67,7 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'sinkhorn_unbalanced2', 'sliced_wasserstein_distance', 'sliced_wasserstein_sphere',
            'gromov_wasserstein', 'gromov_wasserstein2', 'gromov_barycenters', 'fused_gromov_wasserstein',
            'fused_gromov_wasserstein2', 'max_sliced_wasserstein_distance', 'weak_optimal_transport',
-           'factored_optimal_transport', 'solve', 'solve_gromov',
+           'factored_optimal_transport', 'solve', 'solve_gromov','solve_sample', 
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath', 'solvers',
            'binary_search_circle', 'wasserstein_circle',
            'semidiscrete_wasserstein2_unif_circle', 'sliced_wasserstein_sphere_unif', 'lowrank_sinkhorn']

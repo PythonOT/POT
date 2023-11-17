@@ -1115,6 +1115,14 @@ class OTResult:
         else:
             raise NotImplementedError()
 
+    @property
+    def log(self):
+        """Dictionary containing potential information about the solver."""
+        if self._log is not None:
+            return self._log
+        else:
+            raise NotImplementedError()
+
     # Barycentric mappings -------------------------
     # Return the displacement vectors as an array
     # that has the same shape as "xa"/"xb" (for samples)

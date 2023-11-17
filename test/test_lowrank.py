@@ -35,9 +35,7 @@ def test_lowrank_sinkhorn():
     X_s = np.reshape(1.0 * np.arange(n), (n, 1))
     X_t = np.reshape(1.0 * np.arange(n), (n, 1))
 
-    # what to test for value, value_linear, Q, R and g ?
     value, value_linear, lazy_plan, Q, R, g = ot.lowrank.lowrank_sinkhorn(X_s, X_t, a, b, 0.1)
-    
     P = lazy_plan[:] # default shape for lazy_plan in lowrank_sinkhorn is (ns, nt)
 
     # check constraints for P

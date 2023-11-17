@@ -318,6 +318,9 @@ def test_cost_normalization(nx):
     M1 = nx.to_numpy(M)
     np.testing.assert_allclose(M1.max(), np.log(1 + np.log(1 + C)).max())
 
+    with pytest.raises(ValueError):
+        ot.utils.cost_normalization(C1, 'error')
+
 
 def test_check_params():
 
@@ -326,6 +329,16 @@ def test_check_params():
 
     res0 = ot.utils.check_params(first='OK', second=None)
     assert res0 is False
+
+
+def test_check_random_state_error():
+    with pytest.raises(ValueError):
+        ot.utils.check_random_state('error')
+
+
+def test_get_parameter_pair_error():
+    with pytest.raises(ValueError):
+        ot.utils.get_parameter_pair((1, 2, 3))  # not pair ;)
 
 
 def test_deprecated_func():
@@ -408,7 +421,8 @@ def test_OTResult():
                       'status',
                       'value',
                       'value_linear',
-                      'value_quad']
+                      'value_quad',
+                      'log']
     for at in lst_attributes:
         print(at)
         with pytest.raises(NotImplementedError):

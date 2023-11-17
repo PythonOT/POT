@@ -11,10 +11,54 @@ Bregman projections solvers for entropic regularized OT for empirical distributi
 
 import warnings
 
-from ..utils import dist, list_to_array, unif
+from ..utils import dist, list_to_array, unif, LazyTensor
 from ..backend import get_backend
 
 from ._sinkhorn import sinkhorn, sinkhorn2
+
+
+def get_sinkhorn_lazytensor(X_a, X_b, f, g, metric='sqeuclidean', reg=1e-1, nx=None):
+    r""" Get a LazyTensor of Sinkhorn solution from the dual potentials
+
+    The returned LazyTensor is
+    :math:`\mathbf{T} = exp(  \mathbf{f} \mathbf{1}_b^\top + \mathbf{1}_a \mathbf{g}^\top - \mathbf{C}/reg)`, where :math:`\mathbf{C}` is the pairwise metric matrix between samples :math:`\mathbf{X}_a` and :math:`\mathbf{X}_b`.
+
+    Parameters
+    ----------
+    X_a : array-like, shape (n_samples_a, dim)
+        samples in the source domain
+    X_b : array-like, shape (n_samples_b, dim)
+        samples in the target domain
+    f : array-like, shape (n_samples_a,)
+        First dual potentials (log space)
+    g : array-like, shape (n_samples_b,)
+        Second dual potentials (log space)
+    metric : str, default='sqeuclidean'
+        Metric used for the cost matrix computation
+    reg : float, default=1e-1
+        Regularization term >0
+    nx : Backend(), default=None
+        Numerical backend used
+
+
+    Returns
+    -------
+    T : LazyTensor
+        Sinkhorn solution tensor
+    """
+
+    if nx is None:
+        nx = get_backend(X_a, X_b, f, g)
+
+    shape = (X_a.shape[0], X_b.shape[0])
+
+    def func(i, j, X_a, X_b, f, g, metric, reg):
+        C = dist(X_a[i], X_b[j], metric=metric)
+        return nx.exp(f[i, None] + g[None, j] - C / reg)
+
+    T = LazyTensor(shape, func, X_a=X_a, X_b=X_b, f=f, g=g, metric=metric, reg=reg)
+
+    return T
 
 
 def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
@@ -198,6 +242,8 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         if log:
             dict_log["u"] = f
             dict_log["v"] = g
+            dict_log["niter"] = i_ot
+            dict_log["lazy_plan"] = get_sinkhorn_lazytensor(X_s, X_t, f, g, metric, reg)
             return (f, g, dict_log)
         else:
             return (f, g)
