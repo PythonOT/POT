@@ -7,11 +7,11 @@ General OT solvers with unified API
 #
 # License: MIT License
 
-from .utils import OTResult
-from .lp import emd2
+from .utils import OTResult, dist
+from .lp import emd2, wasserstein_1d
 from .backend import get_backend
 from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
-from .bregman import sinkhorn_log
+from .bregman import sinkhorn_log, empirical_sinkhorn2
 from .partial import partial_wasserstein_lagrange
 from .smooth import smooth_ot_dual
 from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
@@ -20,12 +20,12 @@ from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
                      entropic_semirelaxed_fused_gromov_wasserstein2,
                      entropic_semirelaxed_gromov_wasserstein2)
 from .partial import partial_gromov_wasserstein2, entropic_partial_gromov_wasserstein2
-
-#, entropic_gromov_wasserstein2, entropic_fused_gromov_wasserstein2
+from .gaussian import empirical_bures_wasserstein_distance
+from .factored import factored_optimal_transport
 
 
 def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
-          unbalanced_type='KL', n_threads=1, max_iter=None, plan_init=None,
+          unbalanced_type='KL', method=None, n_threads=1, max_iter=None, plan_init=None,
           potentials_init=None, tol=None, verbose=False):
     r"""Solve the discrete optimal transport problem and return :any:`OTResult` object
 
@@ -59,7 +59,11 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         Unbalanced penalization weight :math:`\lambda_u`, by default None
         (balanced OT)
     unbalanced_type : str, optional
-        Type of unbalanced penalization function :math:`U`  either "KL", "L2", "TV", by default "KL"
+        Type of unbalanced penalization function :math:`U`  either "KL", "L2",
+        "TV", by default "KL"
+    method : str, optional
+        Method for solving the problem when multiple algorithms are available,
+        default None for automatic selection.
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
     max_iter : int, optional
@@ -90,7 +94,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
     The following methods are available for solving the OT problems:
 
-    - **Classical exact OT problem** (default parameters):
+    - **Classical exact OT problem [1]** (default parameters) :
 
     .. math::
         \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F
@@ -107,7 +111,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
         res = ot.solve(M, a, b)
 
-    - **Entropic regularized OT** (when ``reg!=None``):
+    - **Entropic regularized OT [2]** (when ``reg!=None``):
 
     .. math::
         \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F + \lambda R(\mathbf{T})
@@ -127,7 +131,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         # or for original Sinkhorn paper formulation [2]
         res = ot.solve(M, a, b, reg=1.0, reg_type='entropy')
 
-    - **Quadratic regularized OT** (when ``reg!=None`` and ``reg_type="L2"``):
+    - **Quadratic regularized OT [17]** (when ``reg!=None`` and ``reg_type="L2"``):
 
     .. math::
         \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F + \lambda R(\mathbf{T})
@@ -144,7 +148,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
         res = ot.solve(M,a,b,reg=1.0,reg_type='L2')
 
-    - **Unbalanced OT** (when ``unbalanced!=None``):
+    - **Unbalanced OT [41]** (when ``unbalanced!=None``):
 
     .. math::
         \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
@@ -154,14 +158,14 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     .. code-block:: python
 
         # default is ``"KL"``
-        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0)
+        res = ot.solve(M,a,b,unbalanced=1.0)
         # quadratic unbalanced OT
-        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0,unbalanced_type='L2')
+        res = ot.solve(M,a,b,unbalanced=1.0,unbalanced_type='L2')
         # TV = partial OT
-        res = ot.solve(M,a,b,reg=1.0,unbalanced=1.0,unbalanced_type='TV')
+        res = ot.solve(M,a,b,unbalanced=1.0,unbalanced_type='TV')
 
 
-    - **Regularized unbalanced regularized OT** (when ``unbalanced!=None`` and ``reg!=None``):
+    - **Regularized unbalanced regularized OT [34]** (when ``unbalanced!=None`` and ``reg!=None``):
 
     .. math::
         \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
@@ -182,6 +186,11 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     References
     ----------
 
+    .. [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W.
+        (2011, December).  Displacement interpolation using Lagrangian mass
+        transport. In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p.
+        158). ACM.
+
     .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation
         of Optimal Transport, Advances in Neural Information Processing
         Systems (NIPS) 26, 2013
@@ -198,6 +207,10 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         A., & Peyré, G. (2019, April). Interpolating between optimal transport
         and MMD using Sinkhorn divergences. In The 22nd International Conference
         on Artificial Intelligence and Statistics (pp. 2681-2690). PMLR.
+
+    .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
+        Unbalanced optimal transport through non-negative penalized
+        linear regression. NeurIPS.
 
     """
 
@@ -413,9 +426,8 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
     method : str, optional
-        Method for solving the problem, for entropic problems "PGD" is projected
-        gradient descent and "PPA" for proximal point, default None for
-        automatic selection ("PGD").
+        Method for solving the problem when multiple algorithms are available,
+        default None for automatic selection.
     max_iter : int, optional
         Maximum number of iterations, by default None (default values in each
         solvers)
@@ -601,6 +613,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     value_quad = None
     plan = None
     status = None
+    log = None
 
     loss_dict = {'l2': 'square_loss', 'kl': 'kl_loss'}
 
@@ -845,6 +858,396 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
             raise (NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
 
     res = OTResult(potentials=potentials, value=value,
-                   value_linear=value_linear, value_quad=value_quad, plan=plan, status=status, backend=nx)
+                   value_linear=value_linear, value_quad=value_quad, plan=plan, status=status, backend=nx, log=log)
 
     return res
+
+
+def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_type="KL",
+                 unbalanced=None,
+                 unbalanced_type='KL', lazy=False, batch_size=None, method=None, n_threads=1, max_iter=None, plan_init=None, rank=100,
+                 potentials_init=None, X_init=None, tol=None, verbose=False):
+    r"""Solve the discrete optimal transport problem using the samples in the source and target domains.
+
+    The function solves the following general optimal transport problem
+
+    .. math::
+        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) +
+        \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) +
+        \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
+
+    where the cost matrix :math:`\mathbf{M}` is computed from the samples in the
+    source and target domains such that :math:`M_{i,j} = d(x_i,y_j)` where
+    :math:`d` is a metric (by default the squared Euclidean distance).
+
+    The regularization is selected with `reg` (:math:`\lambda_r`) and `reg_type`. By
+    default ``reg=None`` and there is no regularization. The unbalanced marginal
+    penalization can be selected with `unbalanced` (:math:`\lambda_u`) and
+    `unbalanced_type`. By default ``unbalanced=None`` and the function
+    solves the exact optimal transport problem (respecting the marginals).
+
+    Parameters
+    ----------
+    X_s : array-like, shape (n_samples_a, dim)
+        samples in the source domain
+    X_t : array-like, shape (n_samples_b, dim)
+        samples in the target domain
+    a : array-like, shape (dim_a,), optional
+        Samples weights in the source domain (default is uniform)
+    b : array-like, shape (dim_b,), optional
+        Samples weights in the source domain (default is uniform)
+    reg : float, optional
+        Regularization weight :math:`\lambda_r`, by default None (no reg., exact
+        OT)
+    reg_type : str, optional
+        Type of regularization :math:`R`  either "KL", "L2", "entropy", by default "KL"
+    unbalanced : float, optional
+        Unbalanced penalization weight :math:`\lambda_u`, by default None
+        (balanced OT)
+    unbalanced_type : str, optional
+        Type of unbalanced penalization function :math:`U`  either "KL", "L2", "TV", by default "KL"
+    lazy : bool, optional
+        Return :any:`OTResultlazy` object to reduce memory cost when True, by
+        default False
+    batch_size : int, optional
+        Batch size for lazy solver, by default None (default values in each
+        solvers)
+    method : str, optional
+        Method for solving the problem, this can be used to select the solver
+        for unbalanced problems (see :any:`ot.solve`), or to select a specific
+        large scale solver.
+    n_threads : int, optional
+        Number of OMP threads for exact OT solver, by default 1
+    max_iter : int, optional
+        Maximum number of iteration, by default None (default values in each solvers)
+    plan_init : array_like, shape (dim_a, dim_b), optional
+        Initialization of the OT plan for iterative methods, by default None
+    potentials_init : (array_like(dim_a,),array_like(dim_b,)), optional
+        Initialization of the OT dual potentials for iterative methods, by default None
+    tol : _type_, optional
+        Tolerance for solution precision, by default None (default values in each solvers)
+    verbose : bool, optional
+        Print information in the solver, by default False
+
+    Returns
+    -------
+
+    res : OTResult()
+        Result of the optimization problem. The information can be obtained as follows:
+
+        - res.plan : OT plan :math:`\mathbf{T}`
+        - res.potentials : OT dual potentials
+        - res.value : Optimal value of the optimization problem
+        - res.value_linear : Linear OT loss with the optimal OT plan
+
+        See :any:`OTResult` for more information.
+
+    Notes
+    -----
+
+    The following methods are available for solving the OT problems:
+
+    - **Classical exact OT problem [1]** (default parameters) :
+
+    .. math::
+        \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F
+
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+
+             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+
+             \mathbf{T} \geq 0,  M_{i,j} = d(x_i,y_j)
+
+
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        res = ot.solve_sample(xa, xb, a, b)
+
+        # for uniform weights
+        res = ot.solve_sample(xa, xb)
+
+    - **Entropic regularized OT [2]** (when ``reg!=None``):
+
+    .. math::
+        \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F + \lambda R(\mathbf{T})
+
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+
+             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+
+             \mathbf{T} \geq 0,  M_{i,j} = d(x_i,y_j)
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        # default is ``"KL"`` regularization (``reg_type="KL"``)
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0)
+        # or for original Sinkhorn paper formulation [2]
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, reg_type='entropy')
+
+        # lazy solver of memory complexity O(n)
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, lazy=True, batch_size=100)
+        # lazy OT plan
+        lazy_plan = res.lazy_plan
+
+    - **Quadratic regularized OT [17]** (when ``reg!=None`` and ``reg_type="L2"``):
+
+    .. math::
+        \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F + \lambda R(\mathbf{T})
+
+        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+
+             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+
+             \mathbf{T} \geq 0,  M_{i,j} = d(x_i,y_j)
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, reg_type='L2')
+
+    - **Unbalanced OT [41]** (when ``unbalanced!=None``):
+
+    .. math::
+        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
+
+        with  M_{i,j} = d(x_i,y_j)
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        # default is ``"KL"``
+        res = ot.solve_sample(xa, xb, a, b, unbalanced=1.0)
+        # quadratic unbalanced OT
+        res = ot.solve_sample(xa, xb, a, b, unbalanced=1.0,unbalanced_type='L2')
+        # TV = partial OT
+        res = ot.solve_sample(xa, xb, a, b, unbalanced=1.0,unbalanced_type='TV')
+
+
+    - **Regularized unbalanced regularized OT [34]** (when ``unbalanced!=None`` and ``reg!=None``):
+
+    .. math::
+        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
+
+        with  M_{i,j} = d(x_i,y_j)
+
+    can be solved with the following code:
+
+    .. code-block:: python
+
+        # default is ``"KL"`` for both
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, unbalanced=1.0)
+        # quadratic unbalanced OT with KL regularization
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, unbalanced=1.0,unbalanced_type='L2')
+        # both quadratic
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, reg_type='L2',
+        unbalanced=1.0, unbalanced_type='L2')
+
+
+    - **Factored OT [2]** (when ``method='factored'``):
+
+    This method solve the following OT problem [40]_
+
+    .. math::
+        \mathop{\arg \min}_\mu \quad  W_2^2(\mu_a,\mu)+ W_2^2(\mu,\mu_b)
+
+    where $\mu$ is a uniform weighted empirical distribution of  :math:`\mu_a` and :math:`\mu_b` are the empirical measures associated
+    to the samples in the source and target domains, and :math:`W_2` is the
+    Wasserstein distance. This problem is solved using exact OT solvers for
+    `reg=None` and the Sinkhorn solver for `reg!=None`. The solution provides
+    two transport plans that can be used to recover a low rank OT plan between
+    the two distributions.
+
+    .. code-block:: python
+
+        res = ot.solve_sample(xa, xb, method='factored', rank=10)
+
+        # recover the lazy low rank plan
+        factored_solution_lazy = res.lazy_plan
+
+        # recover the full low rank plan
+        factored_solution = factored_solution_lazy[:]
+
+    - **Gaussian Bures-Wasserstein [2]** (when ``method='gaussian'``):
+
+    This method computes the Gaussian Bures-Wasserstein distance between two
+    Gaussian distributions estimated from teh empirical distributions
+
+    .. math::
+        \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \mathcal{B}(\Sigma_s, \Sigma_t)^{2}
+
+    where :
+
+    .. math::
+        \mathbf{B}(\Sigma_s, \Sigma_t)^{2} = \text{Tr}\left(\Sigma_s + \Sigma_t - 2 \sqrt{\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2}} \right)
+
+    The covariances and means are estimated from the data.
+
+    .. code-block:: python
+
+        res = ot.solve_sample(xa, xb, method='gaussian')
+
+        # recover the squared Gaussian Bures-Wasserstein distance
+        BW_dist = res.value
+
+    - **Wasserstein 1d [1]** (when ``method='1D'``):
+
+    This method computes the Wasserstein distance between two 1d distributions
+    estimated from the empirical distributions. For multivariate data the
+    distances are computed independently for each dimension.
+
+    .. code-block:: python
+
+        res = ot.solve_sample(xa, xb, method='1D')
+
+        # recover the squared Wasserstein distances
+        W_dists = res.value
+
+
+    .. _references-solve-sample:
+    References
+    ----------
+
+    .. [1] Bonneel, N., Van De Panne, M., Paris, S., & Heidrich, W.
+        (2011, December).  Displacement interpolation using Lagrangian mass
+        transport. In ACM Transactions on Graphics (TOG) (Vol. 30, No. 6, p.
+        158). ACM.
+
+    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation
+        of Optimal Transport, Advances in Neural Information Processing
+        Systems (NIPS) 26, 2013
+
+    .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016).
+        Scaling algorithms for unbalanced transport problems.
+        arXiv preprint arXiv:1607.05816.
+
+    .. [17] Blondel, M., Seguy, V., & Rolet, A. (2018). Smooth and Sparse
+        Optimal Transport. Proceedings of the Twenty-First International
+        Conference on Artificial Intelligence and Statistics (AISTATS).
+
+    .. [34] Feydy, J., Séjourné, T., Vialard, F. X., Amari, S. I., Trouvé,
+        A., & Peyré, G. (2019, April). Interpolating between optimal transport
+        and MMD using Sinkhorn divergences. In The 22nd International Conference
+        on Artificial Intelligence and Statistics (pp. 2681-2690). PMLR.
+
+    .. [40] Forrow, A., Hütter, J. C., Nitzan, M., Rigollet, P., Schiebinger,
+        G., & Weed, J. (2019, April). Statistical optimal transport via factored
+        couplings. In The 22nd International Conference on Artificial
+        Intelligence and Statistics (pp. 2454-2465). PMLR.
+
+    .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
+        Unbalanced optimal transport through non-negative penalized
+        linear regression. NeurIPS.
+
+
+    """
+
+    if method is not None and method.lower() in ['1d', 'gaussian', 'lowrank', 'factored']:
+        lazy0 = lazy
+        lazy = True
+
+    if not lazy:  # default non lazy solver calls ot.solve
+
+        # compute cost matrix M and use solve function
+        M = dist(X_a, X_b, metric)
+
+        res = solve(M, a, b, reg, reg_type, unbalanced, unbalanced_type, method, n_threads, max_iter, plan_init, potentials_init, tol, verbose)
+
+        return res
+
+    else:
+
+        # Detect backend
+        nx = get_backend(X_a, X_b, a, b)
+
+        # default values for solutions
+        potentials = None
+        value = None
+        value_linear = None
+        plan = None
+        lazy_plan = None
+        status = None
+        log = None
+
+        method = method.lower() if method is not None else ''
+
+        if method == '1d':  # Wasserstein 1d (parallel on all dimensions)
+            if metric == 'sqeuclidean':
+                p = 2
+            elif metric in ['euclidean', 'cityblock']:
+                p = 1
+            else:
+                raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
+
+            value = wasserstein_1d(X_a, X_b, a, b, p=p)
+            value_linear = value
+
+        elif method == 'gaussian':  # Gaussian Bures-Wasserstein
+
+            if not metric.lower() in ['sqeuclidean']:
+                raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
+
+            if reg is None:
+                reg = 1e-6
+
+            value, log = empirical_bures_wasserstein_distance(X_a, X_b, reg=reg, log=True)
+            value = value**2  # return the value (squared bures distance)
+            value_linear = value  # return the value
+
+        elif method == 'factored':  # Factored OT
+
+            if not metric.lower() in ['sqeuclidean']:
+                raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
+
+            if max_iter is None:
+                max_iter = 100
+            if tol is None:
+                tol = 1e-7
+            if reg is None:
+                reg = 0
+
+            Q, R, X, log = factored_optimal_transport(X_a, X_b, reg=reg, r=rank, log=True, stopThr=tol, numItermax=max_iter, verbose=verbose)
+            log['X'] = X
+
+            value_linear = log['costa'] + log['costb']
+            value = value_linear  # TODO add reg term
+            lazy_plan = log['lazy_plan']
+            if not lazy0:  # store plan if not lazy
+                plan = lazy_plan[:]
+
+        elif reg is None or reg == 0:  # exact OT
+
+            if unbalanced is None:  # balanced EMD solver not available for lazy
+                raise (NotImplementedError('Exact OT solver with lazy=True not implemented'))
+
+            else:
+                raise (NotImplementedError('Non regularized solver with unbalanced_type="{}" not implemented'.format(unbalanced_type)))
+
+        else:
+            if unbalanced is None:
+
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-9
+                if batch_size is None:
+                    batch_size = 100
+
+                value_linear, log = empirical_sinkhorn2(X_a, X_b, reg, a, b, metric=metric, numIterMax=max_iter, stopThr=tol,
+                                                        isLazy=True, batchSize=batch_size, verbose=verbose, log=True)
+                # compute potentials
+                potentials = (log["u"], log["v"])
+                lazy_plan = log['lazy_plan']
+
+            else:
+                raise (NotImplementedError('Not implemented unbalanced_type="{}" with regularization'.format(unbalanced_type)))
+
+        res = OTResult(potentials=potentials, value=value, lazy_plan=lazy_plan,
+                       value_linear=value_linear, plan=plan, status=status, backend=nx, log=log)
+        return res
