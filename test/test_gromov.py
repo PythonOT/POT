@@ -1461,7 +1461,7 @@ def test_fgw_barycenter(nx):
     init_C /= init_C.max()
     init_Cb = nx.from_numpy(init_C)
 
-    with pytest.raises(ot.utils.UndefinedParameter):  # to raise warning when `fixed_structure=True`and `init_C=None`
+    with pytest.raises(ot.utils.UndefinedParameter):  # to raise an error when `fixed_structure=True`and `init_C=None`
         Xb, Cb = ot.gromov.fgw_barycenters(
             n_samples, Ysb, Csb, ps=[p1b, p2b], lambdas=None,
             alpha=0.5, fixed_structure=True, init_C=None, fixed_features=False,
@@ -1480,7 +1480,7 @@ def test_fgw_barycenter(nx):
     init_X = rng.randn(n_samples, ys.shape[1])
     init_Xb = nx.from_numpy(init_X)
 
-    with pytest.raises(ot.utils.UndefinedParameter):  # to raise warning when `fixed_features=True`and `init_X=None`
+    with pytest.raises(ot.utils.UndefinedParameter):  # to raise an error when `fixed_features=True`and `init_X=None`
         Xb, Cb, logb = ot.gromov.fgw_barycenters(
             n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
             fixed_structure=False, fixed_features=True, init_X=None,

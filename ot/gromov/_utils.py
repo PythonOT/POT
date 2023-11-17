@@ -294,9 +294,6 @@ def update_square_loss(p, lambdas, T, Cs, nx=None):
 
     """
     if nx is None:
-        T = list_to_array(*T)
-        Cs = list_to_array(*Cs)
-        p = list_to_array(p)
         nx = get_backend(p, *T, *Cs)
 
     # Correct order mistake in Equation 14 in [12]
@@ -353,9 +350,6 @@ def update_kl_loss(p, lambdas, T, Cs, nx=None):
 
     """
     if nx is None:
-        Cs = list_to_array(*Cs)
-        T = list_to_array(*T)
-        p = list_to_array(p)
         nx = get_backend(p, *T, *Cs)
 
     # Correct order mistake in Equation 15 in [12]
@@ -403,9 +397,6 @@ def update_feature_matrix(lambdas, Ys, Ts, p, nx=None):
         International Conference on Machine Learning (ICML). 2019.
     """
     if nx is None:
-        p = list_to_array(p)
-        Ts = list_to_array(*Ts)
-        Ys = list_to_array(*Ys)
         nx = get_backend(*Ys, *Ts, p)
 
     p = 1. / p
