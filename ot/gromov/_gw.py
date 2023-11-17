@@ -12,6 +12,7 @@ Gromov-Wasserstein and Fused-Gromov-Wasserstein conditional gradient solvers.
 # License: MIT License
 
 import numpy as np
+import warnings
 
 
 from ..utils import dist, UndefinedParameter, list_to_array
@@ -53,6 +54,10 @@ def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric
         which can lead to copy overhead on GPU arrays.
     .. note:: All computations in the conjugate gradient solver are done with
         numpy to limit memory overhead.
+    .. note:: This function will cast the computed transport plan to the data
+        type of the provided input :math:`\mathbf{C}_1`. Casting to an integer
+        tensor might result in a loss of precision. If this behaviour is
+        unwanted, please make sure to provide a floating point input.
 
     Parameters
     ----------
@@ -122,7 +127,7 @@ def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric
     if q is not None:
         arr.append(list_to_array(q))
     else:
-        q = unif(C2.shape[0], type_as=C2)
+        q = unif(C2.shape[0], type_as=C1)
     if G0 is not None:
         G0_ = G0
         arr.append(G0)
@@ -161,16 +166,22 @@ def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric
         def df(G):
             return 0.5 * (gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_))
 
-    # removed since 0.9.2
-    #if loss_fun == 'kl_loss':
-    #    armijo = True # there is no closed form line-search with KL
-
     if armijo:
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
             return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=np_, **kwargs)
     else:
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
             return solve_gromov_linesearch(G, deltaG, cost_G, hC1, hC2, M=0., reg=1., nx=np_, **kwargs)
+
+    if not nx.is_floating_point(C10):
+        warnings.warn(
+            "Input structure matrix consists of integer. The transport plan will be "
+            "casted accordingly, possibly resulting in a loss of precision. "
+            "If this behaviour is unwanted, please make sure your input "
+            "structure matrix consists of floating point elements.",
+            stacklevel=2
+        )
+
     if log:
         res, log = cg(p, q, 0., 1., f, df, G0, line_search, log=True, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
         log['gw_dist'] = nx.from_numpy(log['loss'][-1], type_as=C10)
@@ -216,6 +227,10 @@ def gromov_wasserstein2(C1, C2, p=None, q=None, loss_fun='square_loss', symmetri
         which can lead to copy overhead on GPU arrays.
     .. note:: All computations in the conjugate gradient solver are done with
         numpy to limit memory overhead.
+    .. note:: This function will cast the computed transport plan to the data
+        type of the provided input :math:`\mathbf{C}_1`. Casting to an integer
+        tensor might result in a loss of precision. If this behaviour is
+        unwanted, please make sure to provide a floating point input.
 
     Parameters
     ----------
@@ -286,7 +301,7 @@ def gromov_wasserstein2(C1, C2, p=None, q=None, loss_fun='square_loss', symmetri
     if p is None:
         p = unif(C1.shape[0], type_as=C1)
     if q is None:
-        q = unif(C2.shape[0], type_as=C2)
+        q = unif(C2.shape[0], type_as=C1)
 
     T, log_gw = gromov_wasserstein(
         C1, C2, p, q, loss_fun, symmetric, log=True, armijo=armijo, G0=G0,
@@ -344,6 +359,10 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
         which can lead to copy overhead on GPU arrays.
     .. note:: All computations in the conjugate gradient solver are done with
         numpy to limit memory overhead.
+    .. note:: This function will cast the computed transport plan to the data
+        type of the provided input :math:`\mathbf{M}`. Casting to an integer
+        tensor might result in a loss of precision. If this behaviour is
+        unwanted, please make sure to provide a floating point input.
 
 
     Parameters
@@ -409,11 +428,11 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
     if p is not None:
         arr.append(list_to_array(p))
     else:
-        p = unif(C1.shape[0], type_as=C1)
+        p = unif(C1.shape[0], type_as=M)
     if q is not None:
         arr.append(list_to_array(q))
     else:
-        q = unif(C2.shape[0], type_as=C2)
+        q = unif(C2.shape[0], type_as=M)
     if G0 is not None:
         G0_ = G0
         arr.append(G0)
@@ -455,24 +474,28 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
         def df(G):
             return 0.5 * (gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_))
 
-    # removed since 0.9.2
-    #if loss_fun == 'kl_loss':
-    #    armijo = True  # there is no closed form line-search with KL
-
     if armijo:
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
             return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=np_, **kwargs)
     else:
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
             return solve_gromov_linesearch(G, deltaG, cost_G, hC1, hC2, M=(1 - alpha) * M, reg=alpha, nx=np_, **kwargs)
+    if not nx.is_floating_point(M0):
+        warnings.warn(
+            "Input feature matrix consists of integer. The transport plan will be "
+            "casted accordingly, possibly resulting in a loss of precision. "
+            "If this behaviour is unwanted, please make sure your input "
+            "feature matrix consists of floating point elements.",
+            stacklevel=2
+        )
     if log:
         res, log = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
-        log['fgw_dist'] = nx.from_numpy(log['loss'][-1], type_as=C10)
-        log['u'] = nx.from_numpy(log['u'], type_as=C10)
-        log['v'] = nx.from_numpy(log['v'], type_as=C10)
-        return nx.from_numpy(res, type_as=C10), log
+        log['fgw_dist'] = nx.from_numpy(log['loss'][-1], type_as=M0)
+        log['u'] = nx.from_numpy(log['u'], type_as=M0)
+        log['v'] = nx.from_numpy(log['v'], type_as=M0)
+        return nx.from_numpy(res, type_as=M0), log
     else:
-        return nx.from_numpy(cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs), type_as=C10)
+        return nx.from_numpy(cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs), type_as=M0)
 
 
 def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss', symmetric=None, alpha=0.5,
@@ -510,6 +533,10 @@ def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss',
         which can lead to copy overhead on GPU arrays.
     .. note:: All computations in the conjugate gradient solver are done with
         numpy to limit memory overhead.
+    .. note:: This function will cast the computed transport plan to the data
+        type of the provided input :math:`\mathbf{M}`. Casting to an integer
+        tensor might result in a loss of precision. If this behaviour is
+        unwanted, please make sure to provide a floating point input.
 
     Parameters
     ----------
@@ -578,9 +605,9 @@ def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss',
 
     # init marginals if set as None
     if p is None:
-        p = unif(C1.shape[0], type_as=C1)
+        p = unif(C1.shape[0], type_as=M)
     if q is None:
-        q = unif(C2.shape[0], type_as=C2)
+        q = unif(C2.shape[0], type_as=M)
 
     T, log_fgw = fused_gromov_wasserstein(
         M, C1, C2, p, q, loss_fun, symmetric, alpha, armijo, G0, log=True,
@@ -792,10 +819,6 @@ def gromov_barycenters(
     else:
         C = init_C
 
-    # removed since 0.9.2
-    #if loss_fun == 'kl_loss':
-    #    armijo = True
-
     cpt = 0
     err = 1
 
@@ -970,16 +993,14 @@ def fgw_barycenters(
     else:
         if init_X is None:
             X = nx.zeros((N, d), type_as=ps[0])
+
         else:
             X = init_X
 
-    T = [nx.outer(p, q) for q in ps]
-
     Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
 
-    # removed since 0.9.2
-    #if loss_fun == 'kl_loss':
-    #    armijo = True
+    if warmstartT:
+        T = [nx.outer(p, q) for q in ps]
 
     cpt = 0
     err_feature = 1
@@ -995,20 +1016,6 @@ def fgw_barycenters(
         Cprev = C
         Xprev = X
 
-        if not fixed_features:
-            Ys_temp = [y.T for y in Ys]
-            X = update_feature_matrix(lambdas, Ys_temp, T, p).T
-
-        Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
-
-        if not fixed_structure:
-            T_temp = [t.T for t in T]
-            if loss_fun == 'square_loss':
-                C = update_square_loss(p, lambdas, T_temp, Cs)
-
-            elif loss_fun == 'kl_loss':
-                C = update_kl_loss(p, lambdas, T_temp, Cs)
-
         if warmstartT:
             T = [fused_gromov_wasserstein(
                 Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
@@ -1018,6 +1025,19 @@ def fgw_barycenters(
                 Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
                 G0=None, max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, **kwargs) for s in range(S)]
         # T is N,ns
+        if not fixed_features:
+            Ys_temp = [y.T for y in Ys]
+            X = update_feature_matrix(lambdas, Ys_temp, T, p).T
+            Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
+
+        if not fixed_structure:
+            T_temp = [t.T for t in T]
+            if loss_fun == 'square_loss':
+                C = update_square_loss(p, lambdas, T_temp, Cs)
+
+            elif loss_fun == 'kl_loss':
+                C = update_kl_loss(p, lambdas, T_temp, Cs)
+
         err_feature = nx.norm(X - nx.reshape(Xprev, (N, d)))
         err_structure = nx.norm(C - Cprev)
         if log:

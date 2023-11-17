@@ -13,11 +13,18 @@
 + Update wheels to Python 3.12 and remove old i686 arch that do not have scipy wheels (PR #543)
 + Upgraded unbalanced OT solvers for more flexibility (PR #539)
 + Add LazyTensor for modeling plans and low rank tensor in large scale OT (PR #544)
++ Add exact line-search for `gromov_wasserstein` and `fused_gromov_wasserstein` with KL loss (PR #556)
++ Add KL loss to all semi-relaxed (Fused) Gromov-Wasserstein solvers (PR #559)
 + Further upgraded unbalanced OT solvers for more flexibility and future use (PR #551)
 
 #### Closed issues
 - Fix line search evaluating cost outside of the interpolation range (Issue #502, PR #504)
 - Lazily instantiate backends to avoid unnecessary GPU memory pre-allocations on package import (Issue #516, PR #520)
+- Handle documentation and warnings when integers are provided to (f)gw solvers based on cg (Issue #530, PR #559)
+- Correct independence of `fgw_barycenters` to `init_C` and `init_X` (Issue #547, PR #566)
+- Avoid precision change when computing norm using PyTorch backend (Discussion #570, PR #572)
+- Create `ot/bregman/`repository (Issue #567, PR #569)
+- Fix matrix feature shape in `entropic_fused_gromov_barycenters`(Issue #574, PR #573)  
 
 
 ## 0.9.1

@@ -961,7 +961,8 @@ def entropic_fused_gromov_barycenters(
     else:
         Y = init_Y
 
-    T = [nx.outer(p_, p) for p_ in ps]
+    if warmstartT:
+        T = [nx.outer(p_, p) for p_ in ps]
 
     Ms = [dist(Ys[s], Y) for s in range(len(Ys))]
 
@@ -970,9 +971,6 @@ def entropic_fused_gromov_barycenters(
 
     err_feature = 1
     err_structure = 1
-
-    if warmstartT:
-        T = [None] * S
 
     if log:
         log_ = {}
@@ -987,7 +985,7 @@ def entropic_fused_gromov_barycenters(
         if warmstartT:
             T = [entropic_fused_gromov_wasserstein(
                 Ms[s], Cs[s], C, ps[s], p, loss_fun, epsilon, symmetric, alpha,
-                None, max_iter, 1e-4, verbose=verbose, log=False, **kwargs) for s in range(S)]
+                T[s], max_iter, 1e-4, verbose=verbose, log=False, **kwargs) for s in range(S)]
 
         else:
             T = [entropic_fused_gromov_wasserstein(
@@ -1001,7 +999,7 @@ def entropic_fused_gromov_barycenters(
 
         Ys_temp = [y.T for y in Ys]
         T_temp = [Ts.T for Ts in T]
-        Y = update_feature_matrix(lambdas, Ys_temp, T_temp, p)
+        Y = update_feature_matrix(lambdas, Ys_temp, T_temp, p).T
         Ms = [dist(Ys[s], Y) for s in range(len(Ys))]
 
         if cpt % 10 == 0:
