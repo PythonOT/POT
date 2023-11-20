@@ -1129,8 +1129,8 @@ def fgw_barycenters(
                 if cpt % 200 == 0:
                     print('{:5s}|{:12s}'.format(
                         'It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(cpt, err_structure))
-                print('{:5d}|{:8e}|'.format(cpt, err_feature))
+                    print('{:5d}|{:8e}|'.format(cpt, err_structure))
+                    print('{:5d}|{:8e}|'.format(cpt, err_feature))
         else:
             err_rel_loss = abs(curr_loss - prev_loss) / prev_loss if prev_loss != 0. else np.nan
             if log:
