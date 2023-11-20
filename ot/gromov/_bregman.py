@@ -1037,7 +1037,7 @@ def entropic_fused_gromov_barycenters(
             log_['loss'] = []
             log_['err_rel_loss'] = []
 
-    while ((err_feature > tol or err_structure > tol) and err_rel_loss > tol and cpt < max_iter):
+    while ((err_feature > tol or err_structure > tol or err_rel_loss > tol) and cpt < max_iter):
         if conv_criterion == 'barycenter':
             Cprev = C
             Yprev = Y
