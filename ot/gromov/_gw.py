@@ -830,16 +830,18 @@ def gromov_barycenters(
         Cprev = C
 
         if warmstartT:
-            T = [gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, symmetric=symmetric, armijo=armijo, G0=T[s],
-                                    max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, log=False, **kwargs) for s in range(S)]
+            T = [gromov_wasserstein(
+                C, Cs[s], p, ps[s], loss_fun, symmetric=symmetric, armijo=armijo, G0=T[s],
+                max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, log=False, **kwargs) for s in range(S)]
         else:
-            T = [gromov_wasserstein(Cs[s], C, ps[s], p, loss_fun, symmetric=symmetric, armijo=armijo, G0=None,
-                                    max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, log=False, **kwargs) for s in range(S)]
+            T = [gromov_wasserstein(
+                C, Cs[s], p, ps[s], loss_fun, symmetric=symmetric, armijo=armijo, G0=None,
+                max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, log=False, **kwargs) for s in range(S)]
         if loss_fun == 'square_loss':
-            C = update_square_loss(p, lambdas, T, Cs)
+            C = update_square_loss(p, lambdas, T, Cs, nx)
 
         elif loss_fun == 'kl_loss':
-            C = update_kl_loss(p, lambdas, T, Cs)
+            C = update_kl_loss(p, lambdas, T, Cs, nx)
 
         if cpt % 10 == 0:
             # we can speed up the process by checking for the error only all
@@ -898,14 +900,14 @@ def fgw_barycenters(
         If let to its default value None, uniform weights are taken.
     alpha : float, optional
         Alpha parameter for the fgw distance.
-    fixed_structure : bool
-        Whether to fix the structure of the barycenter during the updates
-    fixed_features : bool
+    fixed_structure : bool, optional
+        Whether to fix the structure of the barycenter during the updates.
+    fixed_features : bool, optional
         Whether to fix the feature of the barycenter during the updates
     p : array-like, shape (N,), optional
         Weights in the targeted barycenter.
         If let to its default value None, uniform distribution is taken.
-    loss_fun : str
+    loss_fun : str, optional
         Loss function used for the solver either 'square_loss' or 'kl_loss'
     symmetric : bool, optional
         Either structures are to be assumed symmetric or not. Default value is True.
@@ -1024,19 +1026,18 @@ def fgw_barycenters(
             T = [fused_gromov_wasserstein(
                 Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
                 G0=None, max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, **kwargs) for s in range(S)]
-        # T is N,ns
+
         if not fixed_features:
             Ys_temp = [y.T for y in Ys]
-            X = update_feature_matrix(lambdas, Ys_temp, T, p).T
+            X = update_feature_matrix(lambdas, Ys_temp, T, p, nx).T
             Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
 
         if not fixed_structure:
-            T_temp = [t.T for t in T]
             if loss_fun == 'square_loss':
-                C = update_square_loss(p, lambdas, T_temp, Cs)
+                C = update_square_loss(p, lambdas, T, Cs, nx)
 
             elif loss_fun == 'kl_loss':
-                C = update_kl_loss(p, lambdas, T_temp, Cs)
+                C = update_kl_loss(p, lambdas, T, Cs, nx)
 
         err_feature = nx.norm(X - nx.reshape(Xprev, (N, d)))
         err_structure = nx.norm(C - Cprev)
