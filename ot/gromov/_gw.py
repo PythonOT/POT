@@ -1118,8 +1118,11 @@ def fgw_barycenters(
 
         # update convergence criterion
         if conv_criterion == 'barycenter':
-            err_feature = nx.norm(X - nx.reshape(Xprev, (N, d)))
-            err_structure = nx.norm(C - Cprev)
+            err_feature, err_structure = 0., 0.
+            if not fixed_features:
+                err_feature = nx.norm(X - Xprev)
+            if not fixed_structure:
+                err_structure = nx.norm(C - Cprev)
             if log:
                 log_['err_feature'].append(err_feature)
                 log_['err_structure'].append(err_structure)
@@ -1129,8 +1132,8 @@ def fgw_barycenters(
                 if cpt % 200 == 0:
                     print('{:5s}|{:12s}'.format(
                         'It.', 'Err') + '\n' + '-' * 19)
-                    print('{:5d}|{:8e}|'.format(cpt, err_structure))
-                    print('{:5d}|{:8e}|'.format(cpt, err_feature))
+                print('{:5d}|{:8e}|'.format(cpt, err_structure))
+                print('{:5d}|{:8e}|'.format(cpt, err_feature))
         else:
             err_rel_loss = abs(curr_loss - prev_loss) / prev_loss if prev_loss != 0. else np.nan
             if log:

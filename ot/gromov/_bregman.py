@@ -15,7 +15,7 @@ import numpy as np
 import warnings
 
 from ..bregman import sinkhorn
-from ..utils import dist, list_to_array, check_random_state, unif
+from ..utils import dist, UndefinedParameter, list_to_array, check_random_state, unif
 from ..backend import get_backend
 
 from ._utils import init_matrix, gwloss, gwggrad
@@ -874,7 +874,8 @@ def entropic_fused_gromov_barycenters(
         N, Ys, Cs, ps=None, p=None, lambdas=None, loss_fun='square_loss',
         epsilon=0.1, symmetric=True, alpha=0.5, max_iter=1000, tol=1e-9,
         conv_criterion='barycenter', warmstartT=False, verbose=False,
-        log=False, init_C=None, init_Y=None, random_state=None, **kwargs):
+        log=False, init_C=None, init_Y=None, fixed_structure=False,
+        fixed_features=False, random_state=None, **kwargs):
     r"""
     Returns the Fused Gromov-Wasserstein barycenters of `S` measurable networks with node features :math:`(\mathbf{C}_s, \mathbf{Y}_s, \mathbf{p}_s)_{1 \leq s \leq S}`
     estimated using Fused Gromov-Wasserstein transports from Sinkhorn projections.
@@ -932,6 +933,10 @@ def entropic_fused_gromov_barycenters(
         Print information along iterations.
     log : bool, optional
         Record log if True.
+    fixed_structure : bool, optional
+        Whether to fix the structure of the barycenter during the updates.
+    fixed_features : bool, optional
+        Whether to fix the feature of the barycenter during the updates
     init_C : bool | array-like, shape (N, N)
         Random initial value for the :math:`\mathbf{C}` matrix provided by user.
     init_Y : array-like, shape (N,d), optional
@@ -991,26 +996,38 @@ def entropic_fused_gromov_barycenters(
 
     d = Ys[0].shape[1]  # dimension on the node features
 
-    # Initialization of C : random SPD matrix (if not provided by user)
-    if init_C is None:
-        generator = check_random_state(random_state)
-        xalea = generator.randn(N, 2)
-        C = dist(xalea, xalea)
-        C /= C.max()
-        C = nx.from_numpy(C, type_as=p)
+    # Initialization of C : random euclidean distance matrix (if not provided by user)
+    if fixed_structure:
+        if init_C is None:
+            raise UndefinedParameter('If C is fixed it must be initialized')
+        else:
+            C = init_C
     else:
-        C = init_C
+        if init_C is None:
+            generator = check_random_state(random_state)
+            xalea = generator.randn(N, 2)
+            C = dist(xalea, xalea)
+            C = nx.from_numpy(C, type_as=ps[0])
+        else:
+            C = init_C
 
     # Initialization of Y
-    if init_Y is None:
-        Y = nx.zeros((N, d), type_as=ps[0])
+    if fixed_features:
+        if init_Y is None:
+            raise UndefinedParameter('If Y is fixed it must be initialized')
+        else:
+            Y = init_Y
     else:
-        Y = init_Y
+        if init_Y is None:
+            Y = nx.zeros((N, d), type_as=ps[0])
+
+        else:
+            Y = init_Y
+
+    Ms = [dist(Y, Ys[s]) for s in range(len(Ys))]
 
     if warmstartT:
         T = [None] * S
-
-    Ms = [dist(Y, Ys[s]) for s in range(len(Ys))]
 
     cpt = 0
 
@@ -1062,19 +1079,25 @@ def entropic_fused_gromov_barycenters(
             curr_loss = np.sum([output[1]['fgw_dist'] for output in res])
 
         # update barycenters
-        if loss_fun == 'square_loss':
-            C = update_square_loss(p, lambdas, T, Cs, nx)
-        elif loss_fun == 'kl_loss':
-            C = update_kl_loss(p, lambdas, T, Cs, nx)
+        if not fixed_features:
+            Ys_temp = [y.T for y in Ys]
+            X = update_feature_matrix(lambdas, Ys_temp, T, p, nx).T
+            Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
 
-        Ys_temp = [y.T for y in Ys]
-        Y = update_feature_matrix(lambdas, Ys_temp, T, p, nx).T
-        Ms = [dist(Y, Ys[s]) for s in range(len(Ys))]
+        if not fixed_structure:
+            if loss_fun == 'square_loss':
+                C = update_square_loss(p, lambdas, T, Cs, nx)
+
+            elif loss_fun == 'kl_loss':
+                C = update_kl_loss(p, lambdas, T, Cs, nx)
 
         # update convergence criterion
         if conv_criterion == 'barycenter':
-            err_feature = nx.norm(Y - nx.reshape(Yprev, (N, d)))
-            err_structure = nx.norm(C - Cprev)
+            err_feature, err_structure = 0., 0.
+            if not fixed_features:
+                err_feature = nx.norm(Y - Yprev)
+            if not fixed_structure:
+                err_structure = nx.norm(C - Cprev)
             if log:
                 log_['err_feature'].append(err_feature)
                 log_['err_structure'].append(err_structure)
