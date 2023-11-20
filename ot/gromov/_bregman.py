@@ -423,6 +423,9 @@ def entropic_gromov_barycenters(
     if loss_fun not in ('square_loss', 'kl_loss'):
         raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
 
+    if conv_criterion not in ['barycenter', 'loss']:
+        raise ValueError(f"Unknown `conv_criterion='{conv_criterion}'`. Use one of: {'barycenter', 'loss'}.")
+
     Cs = list_to_array(*Cs)
     arr = [*Cs]
     if ps is not None:
@@ -966,7 +969,7 @@ def entropic_fused_gromov_barycenters(
     if loss_fun not in ('square_loss', 'kl_loss'):
         raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
 
-    if not conv_criterion in ['barycenter', 'loss']:
+    if conv_criterion not in ['barycenter', 'loss']:
         raise ValueError(f"Unknown `conv_criterion='{conv_criterion}'`. Use one of: {'barycenter', 'loss'}.")
 
     Cs = list_to_array(*Cs)

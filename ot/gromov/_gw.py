@@ -770,7 +770,7 @@ def gromov_barycenters(
     conv_criterion : str, optional. Default is 'barycenter'.
         Convergence criterion taking values in ['barycenter', 'loss']. If set to 'barycenter'
         uses absolute norm variations of estimated barycenters. Else if set to 'loss'
-        uses the relative variations of the loss. 
+        uses the relative variations of the loss.
     warmstartT: bool, optional
         Either to perform warmstart of transport plans in the successive
         fused gromov-wasserstein transport problems.s
@@ -801,7 +801,7 @@ def gromov_barycenters(
         International Conference on Machine Learning (ICML). 2016.
 
     """
-    if not conv_criterion in ['barycenter', 'loss']:
+    if conv_criterion not in ['barycenter', 'loss']:
         raise ValueError(f"Unknown `conv_criterion='{conv_criterion}'`. Use one of: {'barycenter', 'loss'}.")
 
     Cs = list_to_array(*Cs)
@@ -962,7 +962,7 @@ def fgw_barycenters(
     conv_criterion : str, optional. Default is 'barycenter'.
         Convergence criterion taking values in ['barycenter', 'loss']. If set to 'barycenter'
         uses absolute norm variations of estimated barycenters. Else if set to 'loss'
-        uses the relative variations of the loss. 
+        uses the relative variations of the loss.
     warmstartT: bool, optional
         Either to perform warmstart of transport plans in the successive
         fused gromov-wasserstein transport problems.
@@ -1000,7 +1000,7 @@ def fgw_barycenters(
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
-    if not conv_criterion in ['barycenter', 'loss']:
+    if conv_criterion not in ['barycenter', 'loss']:
         raise ValueError(f"Unknown `conv_criterion='{conv_criterion}'`. Use one of: {'barycenter', 'loss'}.")
 
     Cs = list_to_array(*Cs)
