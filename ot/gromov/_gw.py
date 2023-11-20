@@ -721,9 +721,10 @@ def solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M, reg,
 
 
 def gromov_barycenters(
-        N, Cs, ps=None, p=None, lambdas=None, loss_fun='square_loss', symmetric=True, armijo=False,
-        max_iter=1000, tol=1e-9, warmstartT=False, verbose=False, log=False,
-        init_C=None, random_state=None, **kwargs):
+        N, Cs, ps=None, p=None, lambdas=None, loss_fun='square_loss',
+        symmetric=True, armijo=False, max_iter=1000, tol=1e-9,
+        conv_criterion='barycenter', warmstartT=False, verbose=False,
+        log=False, init_C=None, random_state=None, **kwargs):
     r"""
     Returns the Gromov-Wasserstein barycenters of `S` measured similarity matrices :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
 
@@ -766,6 +767,10 @@ def gromov_barycenters(
         Max number of iterations
     tol : float, optional
         Stop threshold on relative error (>0)
+    conv_criterion : str, optional. Default is 'barycenter'.
+        Convergence criterion taking values in ['barycenter', 'loss']. If set to 'barycenter'
+        uses absolute norm variations of estimated barycenters. Else if set to 'loss'
+        uses the relative variations of the loss. 
     warmstartT: bool, optional
         Either to perform warmstart of transport plans in the successive
         fused gromov-wasserstein transport problems.s
@@ -783,7 +788,11 @@ def gromov_barycenters(
     C : array-like, shape (`N`, `N`)
         Similarity matrix in the barycenter space (permutated arbitrarily)
     log : dict
-        Log dictionary of error during iterations. Return only if `log=True` in parameters.
+        Only returned when log=True. It contains the keys:
+
+        - :math:`\mathbf{T}`: list of (`N`, `ns`) transport matrices
+        - :math:`\mathbf{p}`: (`N`,) barycenter weights
+        - values used in convergence evaluation.
 
     References
     ----------
@@ -792,6 +801,9 @@ def gromov_barycenters(
         International Conference on Machine Learning (ICML). 2016.
 
     """
+    if not conv_criterion in ['barycenter', 'loss']:
+        raise ValueError(f"Unknown `conv_criterion='{conv_criterion}'`. Use one of: {'barycenter', 'loss'}.")
+
     Cs = list_to_array(*Cs)
     arr = [*Cs]
     if ps is not None:
@@ -820,45 +832,75 @@ def gromov_barycenters(
         C = init_C
 
     cpt = 0
-    err = 1
+    err = 1e15  # either the error on 'barycenter' or 'loss'
 
     if warmstartT:
         T = [None] * S
-    error = []
+
+    if conv_criterion == 'barycenter':
+        inner_log = False
+    else:
+        inner_log = True
+        curr_loss = 1e15
+
+    if log:
+        log_ = {}
+        log_['err'] = []
+        if conv_criterion == 'loss':
+            log_['loss'] = []
 
     while (err > tol and cpt < max_iter):
-        Cprev = C
-
-        if warmstartT:
-            T = [gromov_wasserstein(
-                C, Cs[s], p, ps[s], loss_fun, symmetric=symmetric, armijo=armijo, G0=T[s],
-                max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, log=False, **kwargs) for s in range(S)]
+        if conv_criterion == 'barycenter':
+            Cprev = C
         else:
-            T = [gromov_wasserstein(
+            prev_loss = curr_loss
+
+        # get transport plans
+        if warmstartT:
+            res = [gromov_wasserstein(
+                C, Cs[s], p, ps[s], loss_fun, symmetric=symmetric, armijo=armijo, G0=T[s],
+                max_iter=max_iter, tol_rel=1e-5, tol_abs=0., log=inner_log, verbose=verbose, **kwargs)
+                for s in range(S)]
+        else:
+            res = [gromov_wasserstein(
                 C, Cs[s], p, ps[s], loss_fun, symmetric=symmetric, armijo=armijo, G0=None,
-                max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, log=False, **kwargs) for s in range(S)]
+                max_iter=max_iter, tol_rel=1e-5, tol_abs=0., log=inner_log, verbose=verbose, **kwargs)
+                for s in range(S)]
+        if conv_criterion == 'barycenter':
+            T = res
+        else:
+            T = [output[0] for output in res]
+            curr_loss = np.sum([output[1]['gw_dist'] for output in res])
+
+        # update barycenters
         if loss_fun == 'square_loss':
             C = update_square_loss(p, lambdas, T, Cs, nx)
 
         elif loss_fun == 'kl_loss':
             C = update_kl_loss(p, lambdas, T, Cs, nx)
 
-        if cpt % 10 == 0:
-            # we can speed up the process by checking for the error only all
-            # the 10th iterations
+        # update convergence criterion
+        if conv_criterion == 'barycenter':
             err = nx.norm(C - Cprev)
-            error.append(err)
+            if log:
+                log_['err'].append(err)
 
-            if verbose:
-                if cpt % 200 == 0:
-                    print('{:5s}|{:12s}'.format(
-                        'It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(cpt, err))
+        else:
+            err = abs(curr_loss - prev_loss) / prev_loss if prev_loss != 0. else np.nan
+            if log:
+                log_['loss'].append(curr_loss)
+                log_['err'].append(err)
+
+        if verbose:
+            if cpt % 200 == 0:
+                print('{:5s}|{:12s}'.format(
+                    'It.', 'Err') + '\n' + '-' * 19)
+            print('{:5d}|{:8e}|'.format(cpt, err))
 
         cpt += 1
 
     if log:
-        return C, {"err": error}
+        return C, log_
     else:
         return C
 
@@ -866,8 +908,9 @@ def gromov_barycenters(
 def fgw_barycenters(
         N, Ys, Cs, ps=None, lambdas=None, alpha=0.5, fixed_structure=False,
         fixed_features=False, p=None, loss_fun='square_loss', armijo=False,
-        symmetric=True, max_iter=100, tol=1e-9, warmstartT=False, verbose=False,
-        log=False, init_C=None, init_X=None, random_state=None, **kwargs):
+        symmetric=True, max_iter=100, tol=1e-9, conv_criterion='barycenter',
+        warmstartT=False, verbose=False, log=False, init_C=None, init_X=None,
+        random_state=None, **kwargs):
     r"""
     Returns the Fused Gromov-Wasserstein barycenters of `S` measurable networks with node features :math:`(\mathbf{C}_s, \mathbf{Y}_s, \mathbf{p}_s)_{1 \leq s \leq S}`
     (see eq (5) in :ref:`[24] <references-fgw-barycenters>`), estimated using Fused Gromov-Wasserstein transports from Conditional Gradient solvers.
@@ -916,6 +959,10 @@ def fgw_barycenters(
         Max number of iterations
     tol : float, optional
         Stop threshold on relative error (>0)
+    conv_criterion : str, optional. Default is 'barycenter'.
+        Convergence criterion taking values in ['barycenter', 'loss']. If set to 'barycenter'
+        uses absolute norm variations of estimated barycenters. Else if set to 'loss'
+        uses the relative variations of the loss. 
     warmstartT: bool, optional
         Either to perform warmstart of transport plans in the successive
         fused gromov-wasserstein transport problems.
@@ -943,7 +990,7 @@ def fgw_barycenters(
 
         - :math:`\mathbf{T}`: list of (`N`, `ns`) transport matrices
         - :math:`(\mathbf{M}_s)_s`: all distance matrices between the feature of the barycenter and the other features :math:`(dist(\mathbf{X}, \mathbf{Y}_s))_s` shape (`N`, `ns`)
-
+        - values used in convergence evaluation.
 
     .. _references-fgw-barycenters:
     References
@@ -953,6 +1000,9 @@ def fgw_barycenters(
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
+    if not conv_criterion in ['barycenter', 'loss']:
+        raise ValueError(f"Unknown `conv_criterion='{conv_criterion}'`. Use one of: {'barycenter', 'loss'}.")
+
     Cs = list_to_array(*Cs)
     Ys = list_to_array(*Ys)
     arr = [*Cs, *Ys]
@@ -1002,31 +1052,53 @@ def fgw_barycenters(
     Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
 
     if warmstartT:
-        T = [nx.outer(p, q) for q in ps]
+        T = [None] * S
 
     cpt = 0
-    err_feature = 1
-    err_structure = 1
+    err_feature = 1e15
+    err_structure = 1e15
+    err_rel_loss = 1e15
 
+    if conv_criterion == 'barycenter':
+        inner_log = False
+    else:
+        inner_log = True
+        curr_loss = 1e15
     if log:
         log_ = {}
-        log_['err_feature'] = []
-        log_['err_structure'] = []
-        log_['Ts_iter'] = []
-
-    while ((err_feature > tol or err_structure > tol) and cpt < max_iter):
-        Cprev = C
-        Xprev = X
-
-        if warmstartT:
-            T = [fused_gromov_wasserstein(
-                Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
-                G0=T[s], max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, **kwargs) for s in range(S)]
+        if conv_criterion == 'barycenter':
+            log_['err_feature'] = []
+            log_['err_structure'] = []
+            log_['Ts_iter'] = []
         else:
-            T = [fused_gromov_wasserstein(
-                Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
-                G0=None, max_iter=max_iter, tol_rel=1e-5, tol_abs=0., verbose=verbose, **kwargs) for s in range(S)]
+            log_['loss'] = []
+            log_['err_rel_loss'] = []
 
+    while ((err_feature > tol or err_structure > tol or err_rel_loss > tol) and cpt < max_iter):
+        if conv_criterion == 'barycenter':
+            Cprev = C
+            Xprev = X
+        else:
+            prev_loss = curr_loss
+
+        # get transport plans
+        if warmstartT:
+            res = [fused_gromov_wasserstein(
+                Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
+                G0=T[s], max_iter=max_iter, tol_rel=1e-5, tol_abs=0., log=inner_log, verbose=verbose, **kwargs)
+                for s in range(S)]
+        else:
+            res = [fused_gromov_wasserstein(
+                Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
+                G0=None, max_iter=max_iter, tol_rel=1e-5, tol_abs=0., log=inner_log, verbose=verbose, **kwargs)
+                for s in range(S)]
+        if conv_criterion == 'barycenter':
+            T = res
+        else:
+            T = [output[0] for output in res]
+            curr_loss = np.sum([output[1]['fgw_dist'] for output in res])
+
+        # update barycenters
         if not fixed_features:
             Ys_temp = [y.T for y in Ys]
             X = update_feature_matrix(lambdas, Ys_temp, T, p, nx).T
@@ -1039,19 +1111,32 @@ def fgw_barycenters(
             elif loss_fun == 'kl_loss':
                 C = update_kl_loss(p, lambdas, T, Cs, nx)
 
-        err_feature = nx.norm(X - nx.reshape(Xprev, (N, d)))
-        err_structure = nx.norm(C - Cprev)
-        if log:
-            log_['err_feature'].append(err_feature)
-            log_['err_structure'].append(err_structure)
-            log_['Ts_iter'].append(T)
+        # update convergence criterion
+        if conv_criterion == 'barycenter':
+            err_feature = nx.norm(X - nx.reshape(Xprev, (N, d)))
+            err_structure = nx.norm(C - Cprev)
+            if log:
+                log_['err_feature'].append(err_feature)
+                log_['err_structure'].append(err_structure)
+                log_['Ts_iter'].append(T)
 
-        if verbose:
-            if cpt % 200 == 0:
-                print('{:5s}|{:12s}'.format(
-                    'It.', 'Err') + '\n' + '-' * 19)
-            print('{:5d}|{:8e}|'.format(cpt, err_structure))
-            print('{:5d}|{:8e}|'.format(cpt, err_feature))
+            if verbose:
+                if cpt % 200 == 0:
+                    print('{:5s}|{:12s}'.format(
+                        'It.', 'Err') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(cpt, err_structure))
+                print('{:5d}|{:8e}|'.format(cpt, err_feature))
+        else:
+            err_rel_loss = abs(curr_loss - prev_loss) / prev_loss if prev_loss != 0. else np.nan
+            if log:
+                log_['loss'].append(curr_loss)
+                log_['err_rel_loss'].append(err_rel_loss)
+
+            if verbose:
+                if cpt % 200 == 0:
+                    print('{:5s}|{:12s}'.format(
+                        'It.', 'Err') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(cpt, err_rel_loss))
 
         cpt += 1
 
