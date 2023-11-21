@@ -39,6 +39,8 @@ from ._screenkhorn import (screenkhorn)
 
 from ._dictionary import (unmix)
 
+from ._geomloss import (empirical_sinkhorn2_geomloss, geomloss)
+
 
 __all__ = ['geometricBar', 'geometricMean', 'projR', 'projC',
            'sinkhorn', 'sinkhorn2', 'sinkhorn_knopp', 'sinkhorn_log',
@@ -46,8 +48,8 @@ __all__ = ['geometricBar', 'geometricMean', 'projR', 'projC',
            'barycenter', 'barycenter_sinkhorn', 'free_support_sinkhorn_barycenter',
            'barycenter_stabilized', 'barycenter_debiased', 'jcpot_barycenter',
            'convolutional_barycenter2d', 'convolutional_barycenter2d_debiased',
-           'empirical_sinkhorn', 'empirical_sinkhorn2',
-           'empirical_sinkhorn_divergence',
+           'empirical_sinkhorn', 'empirical_sinkhorn2', 'empirical_sinkhorn2_geomloss'
+           'empirical_sinkhorn_divergence', 'geomloss',
            'screenkhorn',
            'unmix'
            ]
