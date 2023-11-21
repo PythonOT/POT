@@ -8,6 +8,7 @@
 import itertools
 import numpy as np
 import pytest
+import sys
 
 import ot
 from ot.bregman import geomloss
@@ -348,6 +349,7 @@ def test_solve_sample_lazy(nx):
     np.testing.assert_allclose(sol0.plan, sol.lazy_plan[:], rtol=1e-5, atol=1e-5)
 
 
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python3.10 or higher")
 @pytest.mark.skipif(not geomloss, reason="pytorch not installed")
 @pytest.skip_backend('tf')
 @pytest.skip_backend("cupy")
