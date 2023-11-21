@@ -128,7 +128,7 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
     References
     ----------
 
-    .. [60]   Feydy, J., Roussillon, P., Trouvé, A., & Gori, P. (2019). [Fast
+    .. [60] Feydy, J., Roussillon, P., Trouvé, A., & Gori, P. (2019). [Fast
            and scalable optimal transport for brain tractograms. In Medical Image
            Computing and Computer Assisted Intervention–MICCAI 2019: 22nd
            International Conference, Shenzhen, China, October 13–17, 2019,
