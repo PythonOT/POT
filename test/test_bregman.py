@@ -15,6 +15,7 @@ import pytest
 
 import ot
 from ot.backend import tf, torch
+from ot.bregman import geomloss
 
 
 @pytest.mark.parametrize("verbose, warn", product([True, False], [True, False]))
@@ -1057,6 +1058,7 @@ def test_empirical_sinkhorn(nx):
     np.testing.assert_allclose(loss_emp_sinkhorn, loss_sinkhorn, atol=1e-05)
 
 
+@pytest.mark.skipif(not geomloss, reason="pytorch not installed")
 @pytest.skip_backend('tf')
 @pytest.skip_backend("cupy")
 @pytest.skip_backend("jax")
