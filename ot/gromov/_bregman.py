@@ -457,17 +457,17 @@ def entropic_gromov_barycenters(
         Cprev = C
         if warmstartT:
             T = [entropic_gromov_wasserstein(
-                Cs[s], C, ps[s], p, loss_fun, epsilon, symmetric, T[s],
+                C, Cs[s], p, ps[s], loss_fun, epsilon, symmetric, T[s],
                 max_iter, 1e-4, verbose=verbose, log=False, **kwargs) for s in range(S)]
         else:
             T = [entropic_gromov_wasserstein(
-                Cs[s], C, ps[s], p, loss_fun, epsilon, symmetric, None,
+                C, Cs[s], p, ps[s], loss_fun, epsilon, symmetric, None,
                 max_iter, 1e-4, verbose=verbose, log=False, **kwargs) for s in range(S)]
 
         if loss_fun == 'square_loss':
-            C = update_square_loss(p, lambdas, T, Cs)
+            C = update_square_loss(p, lambdas, T, Cs, nx)
         elif loss_fun == 'kl_loss':
-            C = update_kl_loss(p, lambdas, T, Cs)
+            C = update_kl_loss(p, lambdas, T, Cs, nx)
 
         if cpt % 10 == 0:
             # we can speed up the process by checking for the error only all
@@ -962,9 +962,9 @@ def entropic_fused_gromov_barycenters(
         Y = init_Y
 
     if warmstartT:
-        T = [nx.outer(p_, p) for p_ in ps]
+        T = [None] * S
 
-    Ms = [dist(Ys[s], Y) for s in range(len(Ys))]
+    Ms = [dist(Y, Ys[s]) for s in range(len(Ys))]
 
     cpt = 0
     err = 1
@@ -984,23 +984,22 @@ def entropic_fused_gromov_barycenters(
 
         if warmstartT:
             T = [entropic_fused_gromov_wasserstein(
-                Ms[s], Cs[s], C, ps[s], p, loss_fun, epsilon, symmetric, alpha,
+                Ms[s], C, Cs[s], p, ps[s], loss_fun, epsilon, symmetric, alpha,
                 T[s], max_iter, 1e-4, verbose=verbose, log=False, **kwargs) for s in range(S)]
 
         else:
             T = [entropic_fused_gromov_wasserstein(
-                Ms[s], Cs[s], C, ps[s], p, loss_fun, epsilon, symmetric, alpha,
+                Ms[s], C, Cs[s], p, ps[s], loss_fun, epsilon, symmetric, alpha,
                 None, max_iter, 1e-4, verbose=verbose, log=False, **kwargs) for s in range(S)]
 
         if loss_fun == 'square_loss':
-            C = update_square_loss(p, lambdas, T, Cs)
+            C = update_square_loss(p, lambdas, T, Cs, nx)
         elif loss_fun == 'kl_loss':
-            C = update_kl_loss(p, lambdas, T, Cs)
+            C = update_kl_loss(p, lambdas, T, Cs, nx)
 
         Ys_temp = [y.T for y in Ys]
-        T_temp = [Ts.T for Ts in T]
-        Y = update_feature_matrix(lambdas, Ys_temp, T_temp, p).T
-        Ms = [dist(Ys[s], Y) for s in range(len(Ys))]
+        Y = update_feature_matrix(lambdas, Ys_temp, T, p, nx).T
+        Ms = [dist(Y, Ys[s]) for s in range(len(Ys))]
 
         if cpt % 10 == 0:
             # we can speed up the process by checking for the error only all

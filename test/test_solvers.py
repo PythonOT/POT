@@ -23,6 +23,27 @@ lst_unbalanced_type_gromov = ['KL', 'semirelaxed', 'partial']
 lst_unbalanced_gromov = [None, 0.9]
 lst_alpha = [0, 0.4, 0.9, 1]
 
+lst_method_params_solve_sample = [
+    {'method': '1d'},
+    {'method': '1d', 'metric': 'euclidean'},
+    {'method': 'gaussian'},
+    {'method': 'gaussian', 'reg': 1},
+    {'method': 'factored', 'rank': 10},
+]
+
+lst_parameters_solve_sample_NotImplemented = [
+    {'method': '1d', 'metric': 'any other one'},  # fail 1d on weird metrics
+    {'method': 'gaussian', 'metric': 'euclidean'},  # fail gaussian on metric not euclidean
+    {'method': 'factored', 'metric': 'euclidean'},  # fail factored on metric not euclidean
+    {'lazy': True},  # fail lazy for non regularized
+    {'lazy': True, 'unbalanced': 1},  # fail lazy for non regularized unbalanced
+    {'lazy': True, 'reg': 1, 'unbalanced': 1},  # fail lazy for unbalanced and regularized
+]
+
+# set readable ids for each param
+lst_method_params_solve_sample = [pytest.param(param, id=str(param)) for param in lst_method_params_solve_sample]
+lst_parameters_solve_sample_NotImplemented = [pytest.param(param, id=str(param)) for param in lst_parameters_solve_sample_NotImplemented]
+
 
 def assert_allclose_sol(sol1, sol2):
 
@@ -255,3 +276,118 @@ def test_solve_gromov_not_implemented(nx):
         ot.solve_gromov(Ca, Cb, reg=1, unbalanced_type='partial', unbalanced=1.5)
     with pytest.raises(NotImplementedError):
         ot.solve_gromov(Ca, Cb, reg=1, unbalanced_type='partial', unbalanced=0.5, symmetric=False)
+
+
+def test_solve_sample(nx):
+    # test solve_sample when is_Lazy = False
+    n = 20
+    X_s = np.reshape(1.0 * np.arange(n), (n, 1))
+    X_t = np.reshape(1.0 * np.arange(0, n), (n, 1))
+
+    a = ot.utils.unif(X_s.shape[0])
+    b = ot.utils.unif(X_t.shape[0])
+
+    M = ot.dist(X_s, X_t)
+
+    # solve with ot.solve
+    sol00 = ot.solve(M, a, b)
+
+    # solve unif weights
+    sol0 = ot.solve_sample(X_s, X_t)
+
+    # solve signe weights
+    sol = ot.solve_sample(X_s, X_t, a, b)
+
+    # check some attributes
+    sol.potentials
+    sol.sparse_plan
+    sol.marginals
+    sol.status
+
+    assert_allclose_sol(sol0, sol)
+    assert_allclose_sol(sol0, sol00)
+
+    # solve in backend
+    X_sb, X_tb, ab, bb = nx.from_numpy(X_s, X_t, a, b)
+    solb = ot.solve_sample(X_sb, X_tb, ab, bb)
+
+    assert_allclose_sol(sol, solb)
+
+    # test not implemented unbalanced and check raise
+    with pytest.raises(NotImplementedError):
+        sol0 = ot.solve_sample(X_s, X_t, unbalanced=1, unbalanced_type='cryptic divergence')
+
+    # test not implemented reg_type and check raise
+    with pytest.raises(NotImplementedError):
+        sol0 = ot.solve_sample(X_s, X_t, reg=1, reg_type='cryptic divergence')
+
+
+def test_solve_sample_lazy(nx):
+    # test solve_sample when is_Lazy = False
+    n = 20
+    X_s = np.reshape(1.0 * np.arange(n), (n, 1))
+    X_t = np.reshape(1.0 * np.arange(0, n), (n, 1))
+
+    a = ot.utils.unif(X_s.shape[0])
+    b = ot.utils.unif(X_t.shape[0])
+
+    X_s, X_t, a, b = nx.from_numpy(X_s, X_t, a, b)
+
+    M = ot.dist(X_s, X_t)
+
+    # solve with ot.solve
+    sol00 = ot.solve(M, a, b, reg=1)
+
+    sol0 = ot.solve_sample(X_s, X_t, a, b, reg=1)
+
+    # solve signe weights
+    sol = ot.solve_sample(X_s, X_t, a, b, reg=1, lazy=True)
+
+    assert_allclose_sol(sol0, sol00)
+
+    np.testing.assert_allclose(sol0.plan, sol.lazy_plan[:], rtol=1e-5, atol=1e-5)
+
+
+@pytest.mark.parametrize("method_params", lst_method_params_solve_sample)
+def test_solve_sample_methods(nx, method_params):
+
+    n_samples_s = 20
+    n_samples_t = 7
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+    a = ot.utils.unif(n_samples_s)
+    b = ot.utils.unif(n_samples_t)
+
+    xb, yb, ab, bb = nx.from_numpy(x, y, a, b)
+
+    sol = ot.solve_sample(x, y, **method_params)
+    solb = ot.solve_sample(xb, yb, ab, bb, **method_params)
+
+    # check some attributes (no need )
+    assert_allclose_sol(sol, solb)
+
+    sol2 = ot.solve_sample(x, x, **method_params)
+    if method_params['method'] != 'factored':
+        np.testing.assert_allclose(sol2.value, 0)
+
+
+@pytest.mark.parametrize("method_params", lst_parameters_solve_sample_NotImplemented)
+def test_solve_sample_NotImplemented(nx, method_params):
+
+    n_samples_s = 20
+    n_samples_t = 7
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+    a = ot.utils.unif(n_samples_s)
+    b = ot.utils.unif(n_samples_t)
+
+    xb, yb, ab, bb = nx.from_numpy(x, y, a, b)
+
+    with pytest.raises(NotImplementedError):
+        ot.solve_sample(xb, yb, ab, bb, **method_params)

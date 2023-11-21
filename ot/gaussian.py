@@ -249,7 +249,7 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     Cs12 = nx.sqrtm(Cs)
 
     B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
-    W = nx.sqrt(nx.norm(ms - mt)**2 + B)
+    W = nx.sqrt(nx.maximum(nx.norm(ms - mt)**2 + B, 0))
 
     if log:
         log = {}

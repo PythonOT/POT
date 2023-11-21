@@ -1078,10 +1078,10 @@ def test_lazy_empirical_sinkhorn(nx):
     sinkhorn_sqe = nx.to_numpy(ot.sinkhorn(ab, bb, M_nx, 1))
 
     f, g, log_es = ot.bregman.empirical_sinkhorn(
-        X_sb, X_tb, 0.1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
+        X_sb, X_tb, 1, numIterMax=numIterMax, isLazy=True, batchSize=5, log=True)
     f, g = nx.to_numpy(f), nx.to_numpy(g)
-    G_log = np.exp(f[:, None] + g[None, :] - M / 0.1)
-    sinkhorn_log, log_s = ot.sinkhorn(ab, bb, M_nx, 0.1, log=True)
+    G_log = np.exp(f[:, None] + g[None, :] - M / 1)
+    sinkhorn_log, log_s = ot.sinkhorn(ab, bb, M_nx, 1, log=True)
     sinkhorn_log = nx.to_numpy(sinkhorn_log)
 
     f, g = ot.bregman.empirical_sinkhorn(
@@ -1091,9 +1091,13 @@ def test_lazy_empirical_sinkhorn(nx):
     sinkhorn_m = nx.to_numpy(ot.sinkhorn(ab, bb, M_mb, 1))
 
     loss_emp_sinkhorn, log = ot.bregman.empirical_sinkhorn2(
-        X_sb, X_tb, 1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
+        X_sb, X_tb, 1, numIterMax=numIterMax, isLazy=True, batchSize=5, log=True)
+    G_lazy = nx.to_numpy(log['lazy_plan'][:])
     loss_emp_sinkhorn = nx.to_numpy(loss_emp_sinkhorn)
     loss_sinkhorn = nx.to_numpy(ot.sinkhorn2(ab, bb, M_nx, 1))
+
+    loss_emp_sinkhorn = ot.bregman.empirical_sinkhorn2(
+        X_sb, X_tb, 1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=False)
 
     # check constraints
     np.testing.assert_allclose(
@@ -1109,6 +1113,7 @@ def test_lazy_empirical_sinkhorn(nx):
     np.testing.assert_allclose(
         sinkhorn_m.sum(0), G_m.sum(0), atol=1e-05)  # metric euclidian
     np.testing.assert_allclose(loss_emp_sinkhorn, loss_sinkhorn, atol=1e-05)
+    np.testing.assert_allclose(G_log, G_lazy, atol=1e-05)
 
 
 def test_empirical_sinkhorn_divergence(nx):

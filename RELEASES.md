@@ -16,6 +16,7 @@
 + Add exact line-search for `gromov_wasserstein` and `fused_gromov_wasserstein` with KL loss (PR #556)
 + Add KL loss to all semi-relaxed (Fused) Gromov-Wasserstein solvers (PR #559)
 + Further upgraded unbalanced OT solvers for more flexibility and future use (PR #551)
++ New API function `ot.solve_sample` for solving OT problems from empirical samples (PR #563)
 
 #### Closed issues
 - Fix line search evaluating cost outside of the interpolation range (Issue #502, PR #504)
@@ -25,6 +26,7 @@
 - Avoid precision change when computing norm using PyTorch backend (Discussion #570, PR #572)
 - Create `ot/bregman/`repository (Issue #567, PR #569)
 - Fix matrix feature shape in `entropic_fused_gromov_barycenters`(Issue #574, PR #573)  
+- Fix (fused) gromov-wasserstein barycenter solvers to support `kl_loss`(PR #576)
 
 
 ## 0.9.1
