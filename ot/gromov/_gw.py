@@ -723,7 +723,7 @@ def solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M, reg,
 def gromov_barycenters(
         N, Cs, ps=None, p=None, lambdas=None, loss_fun='square_loss',
         symmetric=True, armijo=False, max_iter=1000, tol=1e-9,
-        conv_criterion='barycenter', warmstartT=False, verbose=False,
+        stop_criterion='barycenter', warmstartT=False, verbose=False,
         log=False, init_C=None, random_state=None, **kwargs):
     r"""
     Returns the Gromov-Wasserstein barycenters of `S` measured similarity matrices :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
@@ -759,16 +759,15 @@ def gromov_barycenters(
     symmetric : bool, optional.
         Either structures are to be assumed symmetric or not. Default value is True.
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
-    update : callable
-        function(:math:`\mathbf{p}`, lambdas, :math:`\mathbf{T}`, :math:`\mathbf{Cs}`) that updates
-        :math:`\mathbf{C}` according to a specific Kernel with the `S` :math:`\mathbf{T}_s` couplings
-        calculated at each iteration
+    armijo : bool, optional
+        If True the step of the line-search is found via an armijo research.
+        Else closed form is used. If there are convergence issues use False.
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
         Stop threshold on relative error (>0)
-    conv_criterion : str, optional. Default is 'barycenter'.
-        Convergence criterion taking values in ['barycenter', 'loss']. If set to 'barycenter'
+    stop_criterion : str, optional. Default is 'barycenter'.
+        Stop criterion taking values in ['barycenter', 'loss']. If set to 'barycenter'
         uses absolute norm variations of estimated barycenters. Else if set to 'loss'
         uses the relative variations of the loss.
     warmstartT: bool, optional
@@ -801,8 +800,8 @@ def gromov_barycenters(
         International Conference on Machine Learning (ICML). 2016.
 
     """
-    if conv_criterion not in ['barycenter', 'loss']:
-        raise ValueError(f"Unknown `conv_criterion='{conv_criterion}'`. Use one of: {'barycenter', 'loss'}.")
+    if stop_criterion not in ['barycenter', 'loss']:
+        raise ValueError(f"Unknown `stop_criterion='{stop_criterion}'`. Use one of: {'barycenter', 'loss'}.")
 
     Cs = list_to_array(*Cs)
     arr = [*Cs]
@@ -837,7 +836,7 @@ def gromov_barycenters(
     if warmstartT:
         T = [None] * S
 
-    if conv_criterion == 'barycenter':
+    if stop_criterion == 'barycenter':
         inner_log = False
     else:
         inner_log = True
@@ -846,11 +845,11 @@ def gromov_barycenters(
     if log:
         log_ = {}
         log_['err'] = []
-        if conv_criterion == 'loss':
+        if stop_criterion == 'loss':
             log_['loss'] = []
 
     while (err > tol and cpt < max_iter):
-        if conv_criterion == 'barycenter':
+        if stop_criterion == 'barycenter':
             Cprev = C
         else:
             prev_loss = curr_loss
@@ -866,7 +865,7 @@ def gromov_barycenters(
                 C, Cs[s], p, ps[s], loss_fun, symmetric=symmetric, armijo=armijo, G0=None,
                 max_iter=max_iter, tol_rel=1e-5, tol_abs=0., log=inner_log, verbose=verbose, **kwargs)
                 for s in range(S)]
-        if conv_criterion == 'barycenter':
+        if stop_criterion == 'barycenter':
             T = res
         else:
             T = [output[0] for output in res]
@@ -880,7 +879,7 @@ def gromov_barycenters(
             C = update_kl_loss(p, lambdas, T, Cs, nx)
 
         # update convergence criterion
-        if conv_criterion == 'barycenter':
+        if stop_criterion == 'barycenter':
             err = nx.norm(C - Cprev)
             if log:
                 log_['err'].append(err)
@@ -900,6 +899,9 @@ def gromov_barycenters(
         cpt += 1
 
     if log:
+        log_['T'] = T
+        log_['p'] = p
+
         return C, log_
     else:
         return C
@@ -908,7 +910,7 @@ def gromov_barycenters(
 def fgw_barycenters(
         N, Ys, Cs, ps=None, lambdas=None, alpha=0.5, fixed_structure=False,
         fixed_features=False, p=None, loss_fun='square_loss', armijo=False,
-        symmetric=True, max_iter=100, tol=1e-9, conv_criterion='barycenter',
+        symmetric=True, max_iter=100, tol=1e-9, stop_criterion='barycenter',
         warmstartT=False, verbose=False, log=False, init_C=None, init_X=None,
         random_state=None, **kwargs):
     r"""
@@ -952,6 +954,9 @@ def fgw_barycenters(
         If let to its default value None, uniform distribution is taken.
     loss_fun : str, optional
         Loss function used for the solver either 'square_loss' or 'kl_loss'
+    armijo : bool, optional
+        If True the step of the line-search is found via an armijo research.
+        Else closed form is used. If there are convergence issues use False.
     symmetric : bool, optional
         Either structures are to be assumed symmetric or not. Default value is True.
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
@@ -959,8 +964,8 @@ def fgw_barycenters(
         Max number of iterations
     tol : float, optional
         Stop threshold on relative error (>0)
-    conv_criterion : str, optional. Default is 'barycenter'.
-        Convergence criterion taking values in ['barycenter', 'loss']. If set to 'barycenter'
+    stop_criterion : str, optional. Default is 'barycenter'.
+        Stop criterion taking values in ['barycenter', 'loss']. If set to 'barycenter'
         uses absolute norm variations of estimated barycenters. Else if set to 'loss'
         uses the relative variations of the loss.
     warmstartT: bool, optional
@@ -989,6 +994,7 @@ def fgw_barycenters(
         Only returned when log=True. It contains the keys:
 
         - :math:`\mathbf{T}`: list of (`N`, `ns`) transport matrices
+        - :math:`\mathbf{p}`: (`N`,) barycenter weights
         - :math:`(\mathbf{M}_s)_s`: all distance matrices between the feature of the barycenter and the other features :math:`(dist(\mathbf{X}, \mathbf{Y}_s))_s` shape (`N`, `ns`)
         - values used in convergence evaluation.
 
@@ -1000,8 +1006,8 @@ def fgw_barycenters(
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
-    if conv_criterion not in ['barycenter', 'loss']:
-        raise ValueError(f"Unknown `conv_criterion='{conv_criterion}'`. Use one of: {'barycenter', 'loss'}.")
+    if stop_criterion not in ['barycenter', 'loss']:
+        raise ValueError(f"Unknown `stop_criterion='{stop_criterion}'`. Use one of: {'barycenter', 'loss'}.")
 
     Cs = list_to_array(*Cs)
     Ys = list_to_array(*Ys)
@@ -1056,7 +1062,7 @@ def fgw_barycenters(
 
     cpt = 0
 
-    if conv_criterion == 'barycenter':
+    if stop_criterion == 'barycenter':
         inner_log = False
         err_feature = 1e15
         err_structure = 1e15
@@ -1071,7 +1077,7 @@ def fgw_barycenters(
 
     if log:
         log_ = {}
-        if conv_criterion == 'barycenter':
+        if stop_criterion == 'barycenter':
             log_['err_feature'] = []
             log_['err_structure'] = []
             log_['Ts_iter'] = []
@@ -1080,7 +1086,7 @@ def fgw_barycenters(
             log_['err_rel_loss'] = []
 
     while ((err_feature > tol or err_structure > tol or err_rel_loss > tol) and cpt < max_iter):
-        if conv_criterion == 'barycenter':
+        if stop_criterion == 'barycenter':
             Cprev = C
             Xprev = X
         else:
@@ -1097,7 +1103,7 @@ def fgw_barycenters(
                 Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
                 G0=None, max_iter=max_iter, tol_rel=1e-5, tol_abs=0., log=inner_log, verbose=verbose, **kwargs)
                 for s in range(S)]
-        if conv_criterion == 'barycenter':
+        if stop_criterion == 'barycenter':
             T = res
         else:
             T = [output[0] for output in res]
@@ -1117,7 +1123,7 @@ def fgw_barycenters(
                 C = update_kl_loss(p, lambdas, T, Cs, nx)
 
         # update convergence criterion
-        if conv_criterion == 'barycenter':
+        if stop_criterion == 'barycenter':
             err_feature, err_structure = 0., 0.
             if not fixed_features:
                 err_feature = nx.norm(X - Xprev)
@@ -1149,11 +1155,10 @@ def fgw_barycenters(
         cpt += 1
 
     if log:
-        log_['T'] = T  # from target to Ys
+        log_['T'] = T
         log_['p'] = p
         log_['Ms'] = Ms
 
-    if log:
         return X, C, log_
     else:
         return X, C
