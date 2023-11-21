@@ -52,7 +52,7 @@ def get_sinkhorn_geomloss_lazytensor(X_a, X_b, f, g, a, b, metric='sqeuclidean',
 
     def func(i, j, X_a, X_b, f, g, a, b, metric, blur):
         if metric == 'sqeuclidean':
-            C = dist(X_a[i], X_b[j], metric=metric)/2
+            C = dist(X_a[i], X_b[j], metric=metric) / 2
         else:
             C = dist(X_a[i], X_b[j], metric=metric)
         return nx.exp((f[i, None] + g[None, j] - C) / (blur**2)) * (a[i, None] * b[None, j])
@@ -77,7 +77,7 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
 
                 \gamma\geq 0
 
-    where : 
+    where :
 
     - :math:`C` is the cost matrix such that :math:`C_{i,j}=d(x_i^s,x_j^t)` and
       :math:`d` is a metric.
@@ -103,21 +103,21 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
     b : array-like, shape (n_samples_b,), default=None
         samples weights in the target domain
     metric : str, default='sqeuclidean'
-        Metric used for the cost matrix computation Only acepted values are 
+        Metric used for the cost matrix computation Only acepted values are
         'sqeuclidean' and 'euclidean'.
     scaling : float, default=0.95
-        Scaling parameter used for epsilon scaling. Value close to one promote 
+        Scaling parameter used for epsilon scaling. Value close to one promote
         precision while value close to zero promote speed.
     verbose : bool, default=False
-        Print information 
+        Print information
     debias : bool, default=False
         Use the debiased version of Sinkhorn algorithm [12]_.
     log : bool, default=False
         Return log dictionary containing all computed objects
     backend : str, default='auto'
-        Numerical backend for geomloss. Only 'auto' and 'tensorized' 'online' 
+        Numerical backend for geomloss. Only 'auto' and 'tensorized' 'online'
         and 'multiscale' are accepted values.
-    
+
     Returns
     -------
     value : float
@@ -135,14 +135,11 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
            Proceedings, Part III 22 (pp. 636-644). Springer International
            Publishing.
 
-    .. [61] Charlier, B., Feydy, J., Glaunes, J. A., Collin, F. D., & Durif, G. 
-            (2021). Kernel operations on the gpu, with autodiff, without memory 
+    .. [61] Charlier, B., Feydy, J., Glaunes, J. A., Collin, F. D., & Durif, G.
+            (2021). Kernel operations on the gpu, with autodiff, without memory
             overflows. The Journal of Machine Learning Research, 22(1), 3457-3462.
 
     """
-
-
-
 
     if geomloss:
 
@@ -152,26 +149,26 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
             raise ValueError('geomloss only support torch or numpy backend')
 
         if nx.__name__ == 'numpy':
-            X_s_torch= torch.tensor(X_s)
+            X_s_torch = torch.tensor(X_s)
             X_t_torch = torch.tensor(X_t)
             if a is not None:
-                a_torch= torch.tensor(a)
+                a_torch = torch.tensor(a)
             if b is not None:
                 b_torch = torch.tensor(b)
         else:
-            X_s_torch= X_s
-            X_t_torch= X_t
+            X_s_torch = X_s
+            X_t_torch = X_t
 
-            a_torch= a
-            b_torch= b
+            a_torch = a
+            b_torch = b
             # after that we are all in torch
 
         # after that we are all in torch
 
         if a_torch is None:
-            a_torch= torch.ones(X_s_torch.shape[0], dtype=X_s_torch.dtype, device=X_s_torch.device) / X_s_torch.shape[0]
+            a_torch = torch.ones(X_s_torch.shape[0], dtype=X_s_torch.dtype, device=X_s_torch.device) / X_s_torch.shape[0]
         if b_torch is None:
-            b_torch= torch.ones(X_t_torch.shape[0], dtype=X_t_torch.dtype, device=X_t_torch.device) / X_t_torch.shape[0]
+            b_torch = torch.ones(X_t_torch.shape[0], dtype=X_t_torch.dtype, device=X_t_torch.device) / X_t_torch.shape[0]
 
         # set blur value and p
         if metric == 'sqeuclidean':
@@ -201,7 +198,7 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
         if nx.__name__ == 'numpy':
             f = f.cpu().detach().numpy()
             g = g.cpu().detach().numpy()
-            value = value.cpu().detach().numpy()    
+            value = value.cpu().detach().numpy()
 
         if log:
             log = {}
