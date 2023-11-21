@@ -1083,6 +1083,10 @@ def test_geomloss_solver(nx, metric):
     # check equality of plans
     np.testing.assert_allclose(G_sqe, G_geomloss, atol=1e-03)  # metric sqeuclidian
 
+    # check error on wrong metric
+    with pytest.raises(ValueError):
+        ot.bregman.empirical_sinkhorn2_geomloss(X_sb, X_tb, 1, metric='wrong_metric')
+
 
 def test_lazy_empirical_sinkhorn(nx):
     # test sinkhorn
