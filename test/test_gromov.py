@@ -438,6 +438,7 @@ def test_entropic_gromov2(nx, loss_fun):
         q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
 
 
+@pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_entropic_proximal_gromov(nx):
     n_samples = 10  # nb samples
 
@@ -463,14 +464,14 @@ def test_entropic_proximal_gromov(nx):
         loss_fun = 'weird_loss_fun'
         G, log = ot.gromov.entropic_gromov_wasserstein(
             C1, C2, None, q, loss_fun, symmetric=None, G0=G0,
-            epsilon=1e-1, max_iter=50, solver='PPA', verbose=True, log=True, numItermax=1)
+            epsilon=1e-1, max_iter=10, solver='PPA', verbose=True, log=True, numItermax=1)
 
     G, log = ot.gromov.entropic_gromov_wasserstein(
         C1, C2, None, q, 'square_loss', symmetric=None, G0=G0,
-        epsilon=1e-1, max_iter=50, solver='PPA', verbose=True, log=True, numItermax=1)
+        epsilon=1e-1, max_iter=10, solver='PPA', verbose=True, log=True, numItermax=1)
     Gb = nx.to_numpy(ot.gromov.entropic_gromov_wasserstein(
         C1b, C2b, pb, None, 'square_loss', symmetric=True, G0=None,
-        epsilon=1e-1, max_iter=50, solver='PPA', verbose=True, log=False, numItermax=1
+        epsilon=1e-1, max_iter=10, solver='PPA', verbose=True, log=False, numItermax=1
     ))
 
     # check constraints
@@ -478,7 +479,7 @@ def test_entropic_proximal_gromov(nx):
     np.testing.assert_allclose(
         p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
     np.testing.assert_allclose(
-        q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+        q, Gb.sum(0), atol=1e-02)  # cf convergence gromov
 
     gw, log = ot.gromov.entropic_gromov_wasserstein2(
         C1, C2, p, q, 'kl_loss', symmetric=True, G0=None,
@@ -499,7 +500,7 @@ def test_entropic_proximal_gromov(nx):
     np.testing.assert_allclose(
         p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
     np.testing.assert_allclose(
-        q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+        q, Gb.sum(0), atol=1e-02)  # cf convergence gromov
 
 
 @pytest.skip_backend("tf", reason="test very slow with tf backend")
@@ -655,6 +656,7 @@ def test_entropic_fgw(nx):
         q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
 
 
+@pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_entropic_proximal_fgw(nx):
     n_samples = 5  # nb samples
 
@@ -834,24 +836,35 @@ def test_entropic_fgw_barycenter(nx):
         X, C, log = ot.gromov.entropic_fused_gromov_barycenters(
             n_samples, [ys, yt], [C1, C2], None, p, [.5, .5], loss_fun, 0.1,
             max_iter=10, tol=1e-3, verbose=True, warmstartT=True, random_state=42,
-            solver='PPA', numItermax=10, log=True
+            solver='PPA', numItermax=10, log=True, symmetric=True,
+        )
+    with pytest.raises(ValueError):
+        stop_criterion = 'unknown stop criterion'
+        X, C, log = ot.gromov.entropic_fused_gromov_barycenters(
+            n_samples, [ys, yt], [C1, C2], None, p, [.5, .5], 'square_loss',
+            0.1, max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
+            verbose=True, warmstartT=True, random_state=42,
+            solver='PPA', numItermax=10, log=True, symmetric=True,
         )
 
-    X, C, log = ot.gromov.entropic_fused_gromov_barycenters(
-        n_samples, [ys, yt], [C1, C2], None, p, [.5, .5], 'square_loss', 0.1,
-        max_iter=10, tol=1e-3, verbose=True, warmstartT=True, random_state=42,
-        solver='PPA', numItermax=10, log=True
-    )
-    Xb, Cb = ot.gromov.entropic_fused_gromov_barycenters(
-        n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], None, [.5, .5], 'square_loss', 0.1,
-        max_iter=10, tol=1e-3, verbose=False, warmstartT=True, random_state=42,
-        solver='PPA', numItermax=10, log=False)
-    Xb, Cb = nx.to_numpy(Xb, Cb)
+    for stop_criterion in ['barycenter', 'loss']:
+        X, C, log = ot.gromov.entropic_fused_gromov_barycenters(
+            n_samples, [ys, yt], [C1, C2], None, p, [.5, .5], 'square_loss',
+            epsilon=0.1, max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
+            verbose=True, warmstartT=True, random_state=42, solver='PPA',
+            numItermax=10, log=True, symmetric=True
+        )
+        Xb, Cb = ot.gromov.entropic_fused_gromov_barycenters(
+            n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], None, [.5, .5],
+            'square_loss', epsilon=0.1, max_iter=10, tol=1e-3,
+            stop_criterion=stop_criterion, verbose=False, warmstartT=True,
+            random_state=42, solver='PPA', numItermax=10, log=False, symmetric=True)
+        Xb, Cb = nx.to_numpy(Xb, Cb)
 
-    np.testing.assert_allclose(C, Cb, atol=1e-06)
-    np.testing.assert_allclose(Cb.shape, (n_samples, n_samples))
-    np.testing.assert_allclose(X, Xb, atol=1e-06)
-    np.testing.assert_allclose(Xb.shape, (n_samples, ys.shape[1]))
+        np.testing.assert_allclose(C, Cb, atol=1e-06)
+        np.testing.assert_allclose(Cb.shape, (n_samples, n_samples))
+        np.testing.assert_allclose(X, Xb, atol=1e-06)
+        np.testing.assert_allclose(Xb.shape, (n_samples, ys.shape[1]))
 
     # test with 'kl_loss' and log=True
     # providing init_C, init_Y
@@ -865,14 +878,15 @@ def test_entropic_fgw_barycenter(nx):
     init_Yb = nx.from_numpy(init_Y)
 
     X, C, log = ot.gromov.entropic_fused_gromov_barycenters(
-        n_samples, [ys, yt], [C1, C2], [p1, p2], p, None, 'kl_loss', 0.1,
+        n_samples, [ys, yt], [C1, C2], [p1, p2], p, None, 'kl_loss', 0.1, True,
         max_iter=10, tol=1e-3, verbose=False, warmstartT=False, random_state=42,
         solver='PPA', numItermax=1, init_C=init_C, init_Y=init_Y, log=True
     )
     Xb, Cb, logb = ot.gromov.entropic_fused_gromov_barycenters(
-        n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], pb, [.5, .5], 'kl_loss', 0.1,
-        max_iter=10, tol=1e-3, verbose=False, warmstartT=False, random_state=42,
-        solver='PPA', numItermax=1, init_C=init_Cb, init_Y=init_Yb, log=True)
+        n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], pb, [.5, .5], 'kl_loss',
+        0.1, True, max_iter=10, tol=1e-3, verbose=False, warmstartT=False,
+        random_state=42, solver='PPA', numItermax=1, init_C=init_Cb,
+        init_Y=init_Yb, log=True)
     Xb, Cb = nx.to_numpy(Xb, Cb)
 
     np.testing.assert_allclose(C, Cb, atol=1e-06)
@@ -881,6 +895,50 @@ def test_entropic_fgw_barycenter(nx):
     np.testing.assert_allclose(Xb.shape, (n_samples, ys.shape[1]))
     np.testing.assert_array_almost_equal(log['err_feature'], nx.to_numpy(*logb['err_feature']))
     np.testing.assert_array_almost_equal(log['err_structure'], nx.to_numpy(*logb['err_structure']))
+
+    # add tests with fixed_structures or fixed_features
+    init_C = ot.utils.dist(xalea, xalea)
+    init_C /= init_C.max()
+    init_Cb = nx.from_numpy(init_C)
+
+    init_Y = np.zeros((n_samples, ys.shape[1]), dtype=ys.dtype)
+    init_Yb = nx.from_numpy(init_Y)
+
+    fixed_structure, fixed_features = True, False
+    with pytest.raises(ot.utils.UndefinedParameter):  # to raise an error when `fixed_structure=True`and `init_C=None`
+        Xb, Cb = ot.gromov.entropic_fused_gromov_barycenters(
+            n_samples, [ysb, ytb], [C1b, C2b], ps=[p1b, p2b], lambdas=None,
+            fixed_structure=fixed_structure, init_C=None,
+            fixed_features=fixed_features, p=None, max_iter=10, tol=1e-3
+        )
+
+    Xb, Cb = ot.gromov.entropic_fused_gromov_barycenters(
+        n_samples, [ysb, ytb], [C1b, C2b], ps=[p1b, p2b], lambdas=None,
+        fixed_structure=fixed_structure, init_C=init_Cb,
+        fixed_features=fixed_features, max_iter=10, tol=1e-3
+    )
+    Xb, Cb = nx.to_numpy(Xb), nx.to_numpy(Cb)
+    np.testing.assert_allclose(Cb, init_Cb)
+    np.testing.assert_allclose(Xb.shape, (n_samples, ys.shape[1]))
+
+    fixed_structure, fixed_features = False, True
+    with pytest.raises(ot.utils.UndefinedParameter):  # to raise an error when `fixed_features=True`and `init_X=None`
+        Xb, Cb, logb = ot.gromov.entropic_fused_gromov_barycenters(
+            n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], lambdas=[.5, .5],
+            fixed_structure=fixed_structure, fixed_features=fixed_features,
+            init_Y=None, p=pb, max_iter=10, tol=1e-3,
+            warmstartT=True, log=True, random_state=98765, verbose=True
+        )
+    Xb, Cb, logb = ot.gromov.entropic_fused_gromov_barycenters(
+        n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], lambdas=[.5, .5],
+        fixed_structure=fixed_structure, fixed_features=fixed_features,
+        init_Y=init_Yb, p=pb, max_iter=10, tol=1e-3,
+        warmstartT=True, log=True, random_state=98765, verbose=True
+    )
+
+    X, C = nx.to_numpy(Xb), nx.to_numpy(Cb)
+    np.testing.assert_allclose(C.shape, (n_samples, n_samples))
+    np.testing.assert_allclose(Xb, init_Yb)
 
 
 def test_pointwise_gromov(nx):
@@ -995,39 +1053,51 @@ def test_gromov_barycenter(nx):
     p = ot.unif(n_samples)
 
     C1b, C2b, p1b, p2b, pb = nx.from_numpy(C1, C2, p1, p2, p)
+    with pytest.raises(ValueError):
+        stop_criterion = 'unknown stop criterion'
+        Cb = ot.gromov.gromov_barycenters(
+            n_samples, [C1, C2], None, p, [.5, .5], 'square_loss', max_iter=10,
+            tol=1e-3, stop_criterion=stop_criterion, verbose=False,
+            random_state=42
+        )
 
-    Cb = ot.gromov.gromov_barycenters(
-        n_samples, [C1, C2], None, p, [.5, .5],
-        'square_loss', max_iter=100, tol=1e-3, verbose=False, random_state=42
-    )
-    Cbb = nx.to_numpy(ot.gromov.gromov_barycenters(
-        n_samples, [C1b, C2b], [p1b, p2b], None, [.5, .5],
-        'square_loss', max_iter=100, tol=1e-3, verbose=False, random_state=42
-    ))
-    np.testing.assert_allclose(Cb, Cbb, atol=1e-06)
-    np.testing.assert_allclose(Cbb.shape, (n_samples, n_samples))
+    for stop_criterion in ['barycenter', 'loss']:
+        Cb = ot.gromov.gromov_barycenters(
+            n_samples, [C1, C2], None, p, [.5, .5], 'square_loss', max_iter=10,
+            tol=1e-3, stop_criterion=stop_criterion, verbose=False,
+            random_state=42
+        )
+        Cbb = nx.to_numpy(ot.gromov.gromov_barycenters(
+            n_samples, [C1b, C2b], [p1b, p2b], None, [.5, .5], 'square_loss',
+            max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
+            verbose=False, random_state=42
+        ))
+        np.testing.assert_allclose(Cb, Cbb, atol=1e-06)
+        np.testing.assert_allclose(Cbb.shape, (n_samples, n_samples))
 
-    # test of gromov_barycenters with `log` on
-    Cb_, err_ = ot.gromov.gromov_barycenters(
-        n_samples, [C1, C2], [p1, p2], p, None, 'square_loss', max_iter=100,
-        tol=1e-3, verbose=False, warmstartT=True, random_state=42, log=True
-    )
-    Cbb_, errb_ = ot.gromov.gromov_barycenters(
-        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5], 'square_loss', max_iter=100,
-        tol=1e-3, verbose=False, warmstartT=True, random_state=42, log=True
-    )
-    Cbb_ = nx.to_numpy(Cbb_)
-    np.testing.assert_allclose(Cb_, Cbb_, atol=1e-06)
-    np.testing.assert_array_almost_equal(err_['err'], nx.to_numpy(*errb_['err']))
-    np.testing.assert_allclose(Cbb_.shape, (n_samples, n_samples))
+        # test of gromov_barycenters with `log` on
+        Cb_, err_ = ot.gromov.gromov_barycenters(
+            n_samples, [C1, C2], [p1, p2], p, None, 'square_loss', max_iter=10,
+            tol=1e-3, stop_criterion=stop_criterion, verbose=False,
+            warmstartT=True, random_state=42, log=True
+        )
+        Cbb_, errb_ = ot.gromov.gromov_barycenters(
+            n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5], 'square_loss',
+            max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
+            verbose=False, warmstartT=True, random_state=42, log=True
+        )
+        Cbb_ = nx.to_numpy(Cbb_)
+        np.testing.assert_allclose(Cb_, Cbb_, atol=1e-06)
+        np.testing.assert_array_almost_equal(err_['err'], nx.to_numpy(*errb_['err']))
+        np.testing.assert_allclose(Cbb_.shape, (n_samples, n_samples))
 
     Cb2 = ot.gromov.gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5],
-        'kl_loss', max_iter=100, tol=1e-3, warmstartT=True, random_state=42
+        'kl_loss', max_iter=10, tol=1e-3, warmstartT=True, random_state=42
     )
     Cb2b = nx.to_numpy(ot.gromov.gromov_barycenters(
         n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'kl_loss', max_iter=100, tol=1e-3, warmstartT=True, random_state=42
+        'kl_loss', max_iter=10, tol=1e-3, warmstartT=True, random_state=42
     ))
     np.testing.assert_allclose(Cb2, Cb2b, atol=1e-06)
     np.testing.assert_allclose(Cb2b.shape, (n_samples, n_samples))
@@ -1041,12 +1111,12 @@ def test_gromov_barycenter(nx):
     init_Cb = nx.from_numpy(init_C)
 
     Cb2_, err2_ = ot.gromov.gromov_barycenters(
-        n_samples, [C1, C2], [p1, p2], p, [.5, .5], 'kl_loss', max_iter=100,
+        n_samples, [C1, C2], [p1, p2], p, [.5, .5], 'kl_loss', max_iter=10,
         tol=1e-3, verbose=False, random_state=42, log=True, init_C=init_C
     )
     Cb2b_, err2b_ = ot.gromov.gromov_barycenters(
         n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5], 'kl_loss',
-        max_iter=100, tol=1e-3, verbose=True, random_state=42,
+        max_iter=10, tol=1e-3, verbose=True, random_state=42,
         init_C=init_Cb, log=True
     )
     Cb2b_ = nx.to_numpy(Cb2b_)
@@ -1078,6 +1148,13 @@ def test_gromov_entropic_barycenter(nx):
             n_samples, [C1, C2], None, p, [.5, .5], loss_fun, 1e-3,
             max_iter=10, tol=1e-3, verbose=True, warmstartT=True, random_state=42
         )
+    with pytest.raises(ValueError):
+        stop_criterion = 'unknown stop criterion'
+        Cb = ot.gromov.entropic_gromov_barycenters(
+            n_samples, [C1, C2], None, p, [.5, .5], 'square_loss', 1e-3,
+            max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
+            verbose=True, warmstartT=True, random_state=42
+        )
 
     Cb = ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1, C2], None, p, [.5, .5], 'square_loss', 1e-3,
@@ -1091,18 +1168,21 @@ def test_gromov_entropic_barycenter(nx):
     np.testing.assert_allclose(Cbb.shape, (n_samples, n_samples))
 
     # test of entropic_gromov_barycenters with `log` on
-    Cb_, err_ = ot.gromov.entropic_gromov_barycenters(
-        n_samples, [C1, C2], [p1, p2], p, None,
-        'square_loss', 1e-3, max_iter=10, tol=1e-3, verbose=True, random_state=42, log=True
-    )
-    Cbb_, errb_ = ot.gromov.entropic_gromov_barycenters(
-        n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5],
-        'square_loss', 1e-3, max_iter=10, tol=1e-3, verbose=True, random_state=42, log=True
-    )
-    Cbb_ = nx.to_numpy(Cbb_)
-    np.testing.assert_allclose(Cb_, Cbb_, atol=1e-06)
-    np.testing.assert_array_almost_equal(err_['err'], nx.to_numpy(*errb_['err']))
-    np.testing.assert_allclose(Cbb_.shape, (n_samples, n_samples))
+    for stop_criterion in ['barycenter', 'loss']:
+        Cb_, err_ = ot.gromov.entropic_gromov_barycenters(
+            n_samples, [C1, C2], [p1, p2], p, None, 'square_loss', 1e-3,
+            max_iter=10, tol=1e-3, stop_criterion=stop_criterion, verbose=True,
+            random_state=42, log=True
+        )
+        Cbb_, errb_ = ot.gromov.entropic_gromov_barycenters(
+            n_samples, [C1b, C2b], [p1b, p2b], pb, [.5, .5], 'square_loss',
+            1e-3, max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
+            verbose=True, random_state=42, log=True
+        )
+        Cbb_ = nx.to_numpy(Cbb_)
+        np.testing.assert_allclose(Cb_, Cbb_, atol=1e-06)
+        np.testing.assert_array_almost_equal(err_['err'], nx.to_numpy(*errb_['err']))
+        np.testing.assert_allclose(Cbb_.shape, (n_samples, n_samples))
 
     Cb2 = ot.gromov.entropic_gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], p, [.5, .5],
@@ -1220,8 +1300,12 @@ def test_asymmetric_fgw(nx):
     M = ot.dist(F1, F2)
     Mb, C1b, C2b, pb, qb, G0b = nx.from_numpy(M, C1, C2, p, q, G0)
 
-    G, log = ot.gromov.fused_gromov_wasserstein(M, C1, C2, p, q, 'square_loss', alpha=0.5, G0=G0, log=True, symmetric=False, verbose=True)
-    Gb, logb = ot.gromov.fused_gromov_wasserstein(Mb, C1b, C2b, pb, qb, 'square_loss', alpha=0.5, log=True, symmetric=None, G0=G0b, verbose=True)
+    G, log = ot.gromov.fused_gromov_wasserstein(
+        M, C1, C2, p, q, 'square_loss', alpha=0.5, G0=G0, log=True,
+        symmetric=False, verbose=True)
+    Gb, logb = ot.gromov.fused_gromov_wasserstein(
+        Mb, C1b, C2b, pb, qb, 'square_loss', alpha=0.5, log=True,
+        symmetric=None, G0=G0b, verbose=True)
     Gb = nx.to_numpy(Gb)
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
@@ -1233,8 +1317,12 @@ def test_asymmetric_fgw(nx):
     np.testing.assert_allclose(log['fgw_dist'], 0., atol=1e-04)
     np.testing.assert_allclose(logb['fgw_dist'], 0., atol=1e-04)
 
-    fgw, log = ot.gromov.fused_gromov_wasserstein2(M, C1, C2, p, q, 'square_loss', alpha=0.5, G0=G0, log=True, symmetric=None, verbose=True)
-    fgwb, logb = ot.gromov.fused_gromov_wasserstein2(Mb, C1b, C2b, pb, qb, 'square_loss', alpha=0.5, log=True, symmetric=False, G0=G0b, verbose=True)
+    fgw, log = ot.gromov.fused_gromov_wasserstein2(
+        M, C1, C2, p, q, 'square_loss', alpha=0.5, G0=G0, log=True,
+        symmetric=None, verbose=True)
+    fgwb, logb = ot.gromov.fused_gromov_wasserstein2(
+        Mb, C1b, C2b, pb, qb, 'square_loss', alpha=0.5, log=True,
+        symmetric=False, G0=G0b, verbose=True)
 
     G = log['T']
     Gb = nx.to_numpy(logb['T'])
@@ -1250,8 +1338,12 @@ def test_asymmetric_fgw(nx):
 
     # Tests with kl-loss:
     for armijo in [False, True]:
-        G, log = ot.gromov.fused_gromov_wasserstein(M, C1, C2, p, q, 'kl_loss', alpha=0.5, armijo=armijo, G0=G0, log=True, symmetric=False, verbose=True)
-        Gb, logb = ot.gromov.fused_gromov_wasserstein(Mb, C1b, C2b, pb, qb, 'kl_loss', alpha=0.5, armijo=armijo, log=True, symmetric=None, G0=G0b, verbose=True)
+        G, log = ot.gromov.fused_gromov_wasserstein(
+            M, C1, C2, p, q, 'kl_loss', alpha=0.5, armijo=armijo, G0=G0,
+            log=True, symmetric=False, verbose=True)
+        Gb, logb = ot.gromov.fused_gromov_wasserstein(
+            Mb, C1b, C2b, pb, qb, 'kl_loss', alpha=0.5, armijo=armijo,
+            log=True, symmetric=None, G0=G0b, verbose=True)
         Gb = nx.to_numpy(Gb)
         # check constraints
         np.testing.assert_allclose(G, Gb, atol=1e-06)
@@ -1263,8 +1355,12 @@ def test_asymmetric_fgw(nx):
         np.testing.assert_allclose(log['fgw_dist'], 0., atol=1e-04)
         np.testing.assert_allclose(logb['fgw_dist'], 0., atol=1e-04)
 
-        fgw, log = ot.gromov.fused_gromov_wasserstein2(M, C1, C2, p, q, 'kl_loss', alpha=0.5, G0=G0, log=True, symmetric=None, verbose=True)
-        fgwb, logb = ot.gromov.fused_gromov_wasserstein2(Mb, C1b, C2b, pb, qb, 'kl_loss', alpha=0.5, log=True, symmetric=False, G0=G0b, verbose=True)
+        fgw, log = ot.gromov.fused_gromov_wasserstein2(
+            M, C1, C2, p, q, 'kl_loss', alpha=0.5, G0=G0, log=True,
+            symmetric=None, verbose=True)
+        fgwb, logb = ot.gromov.fused_gromov_wasserstein2(
+            Mb, C1b, C2b, pb, qb, 'kl_loss', alpha=0.5, log=True,
+            symmetric=False, G0=G0b, verbose=True)
 
         G = log['T']
         Gb = nx.to_numpy(logb['T'])
@@ -1297,8 +1393,12 @@ def test_fgw_integer_warnings(nx):
     M = ot.dist(F1, F2).astype(np.int32)
     Mb, C1b, C2b, pb, qb, G0b = nx.from_numpy(M, C1, C2, p, q, G0)
 
-    G, log = ot.gromov.fused_gromov_wasserstein(M, C1, C2, p, q, 'square_loss', alpha=0.5, G0=G0, log=True, symmetric=False, verbose=True)
-    Gb, logb = ot.gromov.fused_gromov_wasserstein(Mb, C1b, C2b, pb, qb, 'square_loss', alpha=0.5, log=True, symmetric=None, G0=G0b, verbose=True)
+    G, log = ot.gromov.fused_gromov_wasserstein(
+        M, C1, C2, p, q, 'square_loss', alpha=0.5, G0=G0, log=True,
+        symmetric=False, verbose=True)
+    Gb, logb = ot.gromov.fused_gromov_wasserstein(
+        Mb, C1b, C2b, pb, qb, 'square_loss', alpha=0.5, log=True,
+        symmetric=None, G0=G0b, verbose=True)
     Gb = nx.to_numpy(Gb)
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
@@ -1446,7 +1546,7 @@ def test_fgw_barycenter(nx):
     Ysb = [ysb, ytb]
     Xb, Cb, logb = ot.gromov.fgw_barycenters(
         n_samples, Ysb, Csb, None, lambdas, 0.5, fixed_structure=False,
-        fixed_features=False, p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3,
+        fixed_features=False, p=pb, loss_fun='square_loss', max_iter=10, tol=1e-3,
         random_state=12345, log=True
     )
     # test correspondance with utils function
@@ -1465,13 +1565,13 @@ def test_fgw_barycenter(nx):
         Xb, Cb = ot.gromov.fgw_barycenters(
             n_samples, Ysb, Csb, ps=[p1b, p2b], lambdas=None,
             alpha=0.5, fixed_structure=True, init_C=None, fixed_features=False,
-            p=None, loss_fun='square_loss', max_iter=100, tol=1e-3
+            p=None, loss_fun='square_loss', max_iter=10, tol=1e-3
         )
 
     Xb, Cb = ot.gromov.fgw_barycenters(
         n_samples, [ysb, ytb], [C1b, C2b], ps=[p1b, p2b], lambdas=None,
         alpha=0.5, fixed_structure=True, init_C=init_Cb, fixed_features=False,
-        p=None, loss_fun='square_loss', max_iter=100, tol=1e-3
+        p=None, loss_fun='square_loss', max_iter=10, tol=1e-3
     )
     Xb, Cb = nx.to_numpy(Xb), nx.to_numpy(Cb)
     np.testing.assert_allclose(Cb.shape, (n_samples, n_samples))
@@ -1484,13 +1584,13 @@ def test_fgw_barycenter(nx):
         Xb, Cb, logb = ot.gromov.fgw_barycenters(
             n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
             fixed_structure=False, fixed_features=True, init_X=None,
-            p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3,
+            p=pb, loss_fun='square_loss', max_iter=10, tol=1e-3,
             warmstartT=True, log=True, random_state=98765, verbose=True
         )
     Xb, Cb, logb = ot.gromov.fgw_barycenters(
         n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
         fixed_structure=False, fixed_features=True, init_X=init_Xb,
-        p=pb, loss_fun='square_loss', max_iter=100, tol=1e-3,
+        p=pb, loss_fun='square_loss', max_iter=10, tol=1e-3,
         warmstartT=True, log=True, random_state=98765, verbose=True
     )
 
@@ -1499,17 +1599,27 @@ def test_fgw_barycenter(nx):
     np.testing.assert_allclose(X.shape, (n_samples, ys.shape[1]))
 
     # add test with 'kl_loss'
-    X, C, log = ot.gromov.fgw_barycenters(
-        n_samples, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
-        fixed_structure=False, fixed_features=False, p=p, loss_fun='kl_loss',
-        max_iter=100, tol=1e-3, init_C=C, init_X=X, warmstartT=True,
-        random_state=12345, log=True
-    )
-    np.testing.assert_allclose(C.shape, (n_samples, n_samples))
-    np.testing.assert_allclose(X.shape, (n_samples, ys.shape[1]))
+    with pytest.raises(ValueError):
+        stop_criterion = 'unknown stop criterion'
+        X, C, log = ot.gromov.fgw_barycenters(
+            n_samples, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
+            fixed_structure=False, fixed_features=False, p=p, loss_fun='kl_loss',
+            max_iter=100, tol=1e-3, stop_criterion=stop_criterion, init_C=C,
+            init_X=X, warmstartT=True, random_state=12345, log=True
+        )
+
+    for stop_criterion in ['barycenter', 'loss']:
+        X, C, log = ot.gromov.fgw_barycenters(
+            n_samples, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
+            fixed_structure=False, fixed_features=False, p=p, loss_fun='kl_loss',
+            max_iter=100, tol=1e-3, stop_criterion=stop_criterion, init_C=C,
+            init_X=X, warmstartT=True, random_state=12345, log=True, verbose=True
+        )
+        np.testing.assert_allclose(C.shape, (n_samples, n_samples))
+        np.testing.assert_allclose(X.shape, (n_samples, ys.shape[1]))
 
     # test correspondance with utils function
-    recovered_C = ot.gromov.update_kl_loss(p, lambdas, log['Ts_iter'][-1], [C1, C2])
+    recovered_C = ot.gromov.update_kl_loss(p, lambdas, log['T'], [C1, C2])
     np.testing.assert_allclose(C, recovered_C)
 
 

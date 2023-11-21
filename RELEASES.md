@@ -18,6 +18,8 @@
 + Further upgraded unbalanced OT solvers for more flexibility and future use (PR #551)
 + New API function `ot.solve_sample` for solving OT problems from empirical samples (PR #563)
 + Wrapper for `geomloss`` solver on empirical samples (PR #571)
++ Add `stop_criterion` feature to (un)regularized (f)gw barycenter solvers (PR #578)
++ Add `fixed_structure` and `fixed_features` to entropic fgw barycenter solver (PR #578)
 
 #### Closed issues
 - Fix line search evaluating cost outside of the interpolation range (Issue #502, PR #504)
