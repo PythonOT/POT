@@ -1079,8 +1079,10 @@ def test_geomloss_solver(nx, metric):
     value, log = ot.bregman.empirical_sinkhorn2_geomloss(X_sb, X_tb, 1, metric=metric, log=True)
     G_geomloss = nx.to_numpy(log['lazy_plan'][:])
 
+    print(value)
+
     # call with log = False
-    value = ot.bregman.empirical_sinkhorn2_geomloss(X_sb, X_tb, 1, metric=metric)
+    ot.bregman.empirical_sinkhorn2_geomloss(X_sb, X_tb, 1, metric=metric)
 
     # check equality of plans
     np.testing.assert_allclose(G_sqe, G_geomloss, atol=1e-03)  # metric sqeuclidian
