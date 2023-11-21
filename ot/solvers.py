@@ -1000,6 +1000,26 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         res = ot.solve_sample(xa, xb, a, b, reg=1.0, lazy=True, batch_size=100)
         # lazy OT plan
         lazy_plan = res.lazy_plan
+    
+    We also have a very efficient solver with compiled CPU/CUDA code using
+    geomloss/PyKeOps thta cen be used with the following code:
+
+    .. code-block:: python
+
+        # automatic solver
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss')
+
+        # force O(n) memory efficient solver
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss_online')
+
+        # force pre-computed cost matrix
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss_tensorized')
+        
+        # use multiscale solver
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss_multiscale')
+    
+        # One can play with speed (small scaling factor) and precision (scaling close to 1)
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss', scaling=0.5)
 
     - **Quadratic regularized OT [17]** (when ``reg!=None`` and ``reg_type="L2"``):
 
