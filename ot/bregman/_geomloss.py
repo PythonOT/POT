@@ -13,8 +13,8 @@ try:
     from geomloss import SamplesLoss
     import torch
     from torch.autograd import grad
-    from .utils import get_backend, LazyTensor, dist
-except BaseException:
+    from ..utils import get_backend, LazyTensor, dist
+except ImportError:
     geomloss = False
 
 
@@ -148,27 +148,26 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
         if nx.__name__ not in ['torch', 'numpy']:
             raise ValueError('geomloss only support torch or numpy backend')
 
+        if a is None:
+            a = nx.ones(X_s.shape[0], type_as=X_s) / X_s.shape[0]
+        if b is None:
+            b = nx.ones(X_t.shape[0], type_as=X_t) / X_t.shape[0]
+
         if nx.__name__ == 'numpy':
             X_s_torch = torch.tensor(X_s)
             X_t_torch = torch.tensor(X_t)
-            if a is not None:
-                a_torch = torch.tensor(a)
-            if b is not None:
-                b_torch = torch.tensor(b)
+
+            a_torch = torch.tensor(a)
+            b_torch = torch.tensor(b)
+
         else:
             X_s_torch = X_s
             X_t_torch = X_t
 
             a_torch = a
             b_torch = b
-            # after that we are all in torch
 
         # after that we are all in torch
-
-        if a_torch is None:
-            a_torch = torch.ones(X_s_torch.shape[0], dtype=X_s_torch.dtype, device=X_s_torch.device) / X_s_torch.shape[0]
-        if b_torch is None:
-            b_torch = torch.ones(X_t_torch.shape[0], dtype=X_t_torch.dtype, device=X_t_torch.device) / X_t_torch.shape[0]
 
         # set blur value and p
         if metric == 'sqeuclidean':
@@ -206,7 +205,7 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
             log['g'] = g
             log['value'] = value
 
-            log['lazy_tensor'] = get_sinkhorn_geomloss_lazytensor(X_s, X_t, f, g, a, b, metric=metric, blur=blur, nx=nx)
+            log['lazy_plan'] = get_sinkhorn_geomloss_lazytensor(X_s, X_t, f, g, a, b, metric=metric, blur=blur, nx=nx)
 
             return value, log
 

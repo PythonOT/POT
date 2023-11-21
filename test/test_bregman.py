@@ -1057,6 +1057,33 @@ def test_empirical_sinkhorn(nx):
     np.testing.assert_allclose(loss_emp_sinkhorn, loss_sinkhorn, atol=1e-05)
 
 
+@pytest.skip_backend('tf')
+@pytest.skip_backend("cupy")
+@pytest.skip_backend("jax")
+@pytest.mark.parametrize("metric", ["sqeuclidean", "euclidean"])
+def test_geomloss_solver(nx, metric):
+    # test sinkhorn
+    n = 10
+    a = ot.unif(n)
+    b = ot.unif(n)
+
+    X_s = np.reshape(1.0 * np.arange(n), (n, 1))
+    X_t = np.reshape(1.0 * np.arange(0, n), (n, 1))
+
+    ab, bb, X_sb, X_tb = nx.from_numpy(a, b, X_s, X_t)
+
+    G_sqe = nx.to_numpy(ot.bregman.empirical_sinkhorn(X_sb, X_tb, 1, metric=metric))
+
+    value, log = ot.bregman.empirical_sinkhorn2_geomloss(X_sb, X_tb, 1, metric=metric, log=True)
+    G_geomloss = nx.to_numpy(log['lazy_plan'][:])
+
+    # call with log = False
+    value = ot.bregman.empirical_sinkhorn2_geomloss(X_sb, X_tb, 1, metric=metric)
+
+    # check equality of plans
+    np.testing.assert_allclose(G_sqe, G_geomloss, atol=1e-03)  # metric sqeuclidian
+
+
 def test_lazy_empirical_sinkhorn(nx):
     # test sinkhorn
     n = 10
