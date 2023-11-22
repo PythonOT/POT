@@ -12,3 +12,5 @@ tensorflow
 pytest
 torch_geometric
 cvxpy
+geomloss
+pykeops
