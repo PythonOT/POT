@@ -90,6 +90,10 @@ def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symme
     .. [48]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
+    .. [62] H. Van Assel, C. Vincent-Cuaz, T. Vayer, R. Flamary, N. Courty.
+            "Interpolating between Clustering and Dimensionality Reduction with
+            Gromov-Wasserstein". NeurIPS 2023 Workshop OTML.
+
     """
     arr = [C1, C2]
     if p is not None:
@@ -220,6 +224,10 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p=None, loss_fun='square_loss', symm
     .. [48]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
+
+    .. [62] H. Van Assel, C. Vincent-Cuaz, T. Vayer, R. Flamary, N. Courty.
+            "Interpolating between Clustering and Dimensionality Reduction with
+            Gromov-Wasserstein". NeurIPS 2023 Workshop OTML.
     """
     # partial get_backend as the full one will be handled in gromov_wasserstein
     nx = get_backend(C1, C2)
@@ -331,6 +339,10 @@ def semirelaxed_fused_gromov_wasserstein(
     .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
+
+    .. [62] H. Van Assel, C. Vincent-Cuaz, T. Vayer, R. Flamary, N. Courty.
+            "Interpolating between Clustering and Dimensionality Reduction with
+            Gromov-Wasserstein". NeurIPS 2023 Workshop OTML.
     """
     arr = [M, C1, C2]
     if p is not None:
@@ -470,6 +482,10 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p=None, loss_fun='square_lo
     .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
+
+    .. [62] H. Van Assel, C. Vincent-Cuaz, T. Vayer, R. Flamary, N. Courty.
+            "Interpolating between Clustering and Dimensionality Reduction with
+            Gromov-Wasserstein". NeurIPS 2023 Workshop OTML.
     """
     # partial get_backend as the full one will be handled in gromov_wasserstein
     nx = get_backend(C1, C2)
@@ -561,6 +577,10 @@ def solve_semirelaxed_gromov_linesearch(G, deltaG, cost_G, C1, C2, ones_p,
     .. [48]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2021.
+
+    .. [62] H. Van Assel, C. Vincent-Cuaz, T. Vayer, R. Flamary, N. Courty.
+            "Interpolating between Clustering and Dimensionality Reduction with
+            Gromov-Wasserstein". NeurIPS 2023 Workshop OTML.
     """
     if nx is None:
         G, deltaG, C1, C2, M = list_to_array(G, deltaG, C1, C2, M)
