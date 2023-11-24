@@ -509,9 +509,10 @@ def entropic_BAPG_gromov_wasserstein(
 
         cpt += 1
 
-    if abs(nx.sum(T) - 1) > 1e-5:
+    if nx.any(nx.isnan(T)):
         warnings.warn("Solver failed to produce a transport plan. You might "
-                      "want to increase the regularization parameter `epsilon`.")
+                      "want to increase the regularization parameter `epsilon`.",
+                      UserWarning)
     if log:
         log['gw_dist'] = gwloss(constC, hC1, hC2, T, nx)
 
@@ -1328,9 +1329,10 @@ def entropic_BAPG_fused_gromov_wasserstein(
 
         cpt += 1
 
-    if abs(nx.sum(T) - 1) > 1e-5:
+    if nx.any(nx.isnan(T)):
         warnings.warn("Solver failed to produce a transport plan. You might "
-                      "want to increase the regularization parameter `epsilon`.")
+                      "want to increase the regularization parameter `epsilon`.",
+                      UserWarning)
     if log:
         log['fgw_dist'] = (1 - alpha) * nx.sum(M * T) + alpha * gwloss(constC, hC1, hC2, T, nx)
 
