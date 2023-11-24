@@ -11,7 +11,7 @@ from .utils import OTResult, dist
 from .lp import emd2, wasserstein_1d
 from .backend import get_backend
 from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
-from .bregman import sinkhorn_log, empirical_sinkhorn2
+from .bregman import sinkhorn_log, empirical_sinkhorn2, empirical_sinkhorn2_geomloss
 from .partial import partial_wasserstein_lagrange
 from .smooth import smooth_ot_dual
 from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
@@ -22,6 +22,8 @@ from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
 from .partial import partial_gromov_wasserstein2, entropic_partial_gromov_wasserstein2
 from .gaussian import empirical_bures_wasserstein_distance
 from .factored import factored_optimal_transport
+
+lst_method_lazy = ['1d', 'gaussian', 'lowrank', 'factored', 'geomloss', 'geomloss_auto', 'geomloss_tensorized', 'geomloss_online', 'geomloss_multiscale']
 
 
 def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
@@ -865,7 +867,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
 
 def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_type="KL",
                  unbalanced=None,
-                 unbalanced_type='KL', lazy=False, batch_size=None, method=None, n_threads=1, max_iter=None, plan_init=None, rank=100,
+                 unbalanced_type='KL', lazy=False, batch_size=None, method=None, n_threads=1, max_iter=None, plan_init=None, rank=100, scaling=0.95,
                  potentials_init=None, X_init=None, tol=None, verbose=False):
     r"""Solve the discrete optimal transport problem using the samples in the source and target domains.
 
@@ -922,6 +924,10 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         Maximum number of iteration, by default None (default values in each solvers)
     plan_init : array_like, shape (dim_a, dim_b), optional
         Initialization of the OT plan for iterative methods, by default None
+    rank : int, optional
+        Rank of the OT matrix for lazy solers (method='factored'), by default 100
+    scaling : float, optional
+        Scaling factor for the epsilon scaling lazy solvers (method='geomloss'), by default 0.95
     potentials_init : (array_like(dim_a,),array_like(dim_b,)), optional
         Initialization of the OT dual potentials for iterative methods, by default None
     tol : _type_, optional
@@ -939,6 +945,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         - res.potentials : OT dual potentials
         - res.value : Optimal value of the optimization problem
         - res.value_linear : Linear OT loss with the optimal OT plan
+        - res.lazy_plan : Lazy OT plan (when ``lazy=True`` or lazy method)
 
         See :any:`OTResult` for more information.
 
@@ -993,6 +1000,26 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         res = ot.solve_sample(xa, xb, a, b, reg=1.0, lazy=True, batch_size=100)
         # lazy OT plan
         lazy_plan = res.lazy_plan
+
+    We also have a very efficient solver with compiled CPU/CUDA code using
+    geomloss/PyKeOps that can be used with the following code:
+
+    .. code-block:: python
+
+        # automatic solver
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss')
+
+        # force O(n) memory efficient solver
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss_online')
+
+        # force pre-computed cost matrix
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss_tensorized')
+
+        # use multiscale solver
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss_multiscale')
+
+        # One can play with speed (small scaling factor) and precision (scaling close to 1)
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss', scaling=0.5)
 
     - **Quadratic regularized OT [17]** (when ``reg!=None`` and ``reg_type="L2"``):
 
@@ -1148,7 +1175,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
 
     """
 
-    if method is not None and method.lower() in ['1d', 'gaussian', 'lowrank', 'factored']:
+    if method is not None and method.lower() in lst_method_lazy:
         lazy0 = lazy
         lazy = True
 
@@ -1220,6 +1247,28 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
             lazy_plan = log['lazy_plan']
             if not lazy0:  # store plan if not lazy
                 plan = lazy_plan[:]
+
+        elif method.startswith('geomloss'):  # Geomloss solver for entropi OT
+
+            split_method = method.split('_')
+            if len(split_method) == 2:
+                backend = split_method[1]
+            else:
+                if lazy0 is None:
+                    backend = 'auto'
+                elif lazy0:
+                    backend = 'online'
+                else:
+                    backend = 'tensorized'
+
+            value, log = empirical_sinkhorn2_geomloss(X_a, X_b, reg=reg, a=a, b=b, metric=metric, log=True, verbose=verbose, scaling=scaling, backend=backend)
+
+            lazy_plan = log['lazy_plan']
+            if not lazy0:  # store plan if not lazy
+                plan = lazy_plan[:]
+
+            # return scaled potentials (to be consistent with other solvers)
+            potentials = (log['f'] / (lazy_plan.blur**2), log['g'] / (lazy_plan.blur**2))
 
         elif reg is None or reg == 0:  # exact OT
 

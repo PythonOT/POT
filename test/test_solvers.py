@@ -8,9 +8,10 @@
 import itertools
 import numpy as np
 import pytest
+import sys
 
 import ot
-
+from ot.bregman import geomloss
 
 lst_reg = [None, 1]
 lst_reg_type = ['KL', 'entropy', 'L2']
@@ -346,6 +347,48 @@ def test_solve_sample_lazy(nx):
     assert_allclose_sol(sol0, sol00)
 
     np.testing.assert_allclose(sol0.plan, sol.lazy_plan[:], rtol=1e-5, atol=1e-5)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python3.10 or higher")
+@pytest.mark.skipif(not geomloss, reason="pytorch not installed")
+@pytest.skip_backend('tf')
+@pytest.skip_backend("cupy")
+@pytest.skip_backend("jax")
+@pytest.mark.parametrize("metric", ["sqeuclidean", "euclidean"])
+def test_solve_sample_geomloss(nx, metric):
+    # test solve_sample when is_Lazy = False
+    n_samples_s = 13
+    n_samples_t = 7
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+    a = ot.utils.unif(n_samples_s)
+    b = ot.utils.unif(n_samples_t)
+
+    xb, yb, ab, bb = nx.from_numpy(x, y, a, b)
+
+    sol0 = ot.solve_sample(xb, yb, ab, bb, reg=1)
+
+    # solve signe weights
+    sol = ot.solve_sample(xb, yb, ab, bb, reg=1, method='geomloss')
+    assert_allclose_sol(sol0, sol)
+
+    sol1 = ot.solve_sample(xb, yb, ab, bb, reg=1, lazy=False, method='geomloss')
+    assert_allclose_sol(sol0, sol)
+
+    sol1 = ot.solve_sample(xb, yb, ab, bb, reg=1, lazy=True, method='geomloss_tensorized')
+    np.testing.assert_allclose(nx.to_numpy(sol1.lazy_plan[:]), nx.to_numpy(sol.lazy_plan[:]), rtol=1e-5, atol=1e-5)
+
+    sol1 = ot.solve_sample(xb, yb, ab, bb, reg=1, lazy=True, method='geomloss_online')
+    np.testing.assert_allclose(nx.to_numpy(sol1.lazy_plan[:]), nx.to_numpy(sol.lazy_plan[:]), rtol=1e-5, atol=1e-5)
+
+    sol1 = ot.solve_sample(xb, yb, ab, bb, reg=1, lazy=True, method='geomloss_multiscale')
+    np.testing.assert_allclose(nx.to_numpy(sol1.lazy_plan[:]), nx.to_numpy(sol.lazy_plan[:]), rtol=1e-5, atol=1e-5)
+
+    sol1 = ot.solve_sample(xb, yb, ab, bb, reg=1, lazy=True, method='geomloss')
+    np.testing.assert_allclose(nx.to_numpy(sol1.lazy_plan[:]), nx.to_numpy(sol.lazy_plan[:]), rtol=1e-5, atol=1e-5)
 
 
 @pytest.mark.parametrize("method_params", lst_method_params_solve_sample)

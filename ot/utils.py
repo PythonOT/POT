@@ -527,7 +527,7 @@ def reduce_lazytensor(a, func, axis=None, nx=None, batch_size=100):
     """
 
     if nx is None:
-        nx = get_backend(a[0])
+        nx = get_backend(a[0:1])
 
     if axis is None:
         res = 0.0
