@@ -13,13 +13,13 @@ import pytest
 
 ################################################## WORK IN PROGRESS #######################################################
 
-def test_compute_lr_cost_matrix():
+def test_compute_lr_sqeuclidean_matrix():
     # test computation of low rank cost matrices M1 and M2
     n = 100
     X_s = np.reshape(1.0 * np.arange(2*n), (n, 2))
     X_t = np.reshape(1.0 * np.arange(2*n), (n, 2))
 
-    M1, M2 = ot.lowrank.compute_lr_cost_matrix(X_s, X_t)
+    M1, M2 = ot.lowrank.compute_lr_sqeuclidean_matrix(X_s, X_t)
     M = ot.dist(X_s, X_t, metric="sqeuclidean") # original cost matrix
 
     np.testing.assert_allclose(
@@ -35,8 +35,9 @@ def test_lowrank_sinkhorn():
     X_s = np.reshape(1.0 * np.arange(n), (n, 1))
     X_t = np.reshape(1.0 * np.arange(n), (n, 1))
 
-    value, value_linear, lazy_plan, Q, R, g = ot.lowrank.lowrank_sinkhorn(X_s, X_t, a, b, 0.1)
-    P = lazy_plan[:] # default shape for lazy_plan in lowrank_sinkhorn is (ns, nt)
+    Q, R, g, log = ot.lowrank.lowrank_sinkhorn(X_s, X_t, a, b, reg=0.1, log=True)
+    P = log["lazy_plan"][:]
+    value_linear = log["value_linear"]
 
     # check constraints for P
     np.testing.assert_allclose(a, P.sum(1), atol=1e-05) 
@@ -58,7 +59,7 @@ def test_lowrank_sinkhorn():
 
 
 @pytest.mark.parametrize(("alpha, rank"),((0.8,2),(0.5,3),(0.2,6))) 
-def test_lowrank_sinkhorn_alpha_warning(alpha,rank):
+def test_lowrank_sinkhorn_alpha_error(alpha,rank):
     # Test warning for value of alpha 
     n = 100
     a = ot.unif(n)
@@ -71,20 +72,20 @@ def test_lowrank_sinkhorn_alpha_warning(alpha,rank):
         ot.lowrank.lowrank_sinkhorn(X_s, X_t, a, b, reg=0.1, rank=rank, alpha=alpha, warn=False) 
 
 
+def test_lowrank_sinkhorn_backends(nx):
+    # Test low rank sinkhorn for different backends
+    n = 100
+    a = ot.unif(n)
+    b = ot.unif(n)
 
-# def test_lowrank_sinkhorn_backends(nx):
-#     # Test low rank sinkhorn for different backends
-#     n = 100
-#     a = ot.unif(n)
-#     b = ot.unif(n)
+    X_s = np.reshape(1.0 * np.arange(n), (n, 1))
+    X_t = np.reshape(1.0 * np.arange(0, n), (n, 1))
 
-#     X_s = np.reshape(1.0 * np.arange(n), (n, 1))
-#     X_t = np.reshape(1.0 * np.arange(0, n), (n, 1))
+    ab, bb, X_sb, X_tb = nx.from_numpy(a, b, X_s, X_t)
 
-#     ab, bb, X_sb, X_tb = nx.from_numpy(a, b, X_s, X_t)
+    Q, R, g, log = ot.lowrank.lowrank_sinkhorn(X_sb, X_tb, ab, bb, reg=0.1, log=True)
+    lazy_plan = log["lazy_plan"]
+    P = lazy_plan[:] 
 
-#     value, value_linear, lazy_plan, Q, R, g = lowrank_sinkhorn(X_sb, X_tb, ab, bb, reg=0.1)
-#     P = lazy_plan[:] # default shape for lazy_plan in lowrank_sinkhorn is (ns, nt)
-
-#     np.testing.assert_allclose(ab, P.sum(1), atol=1e-05) 
-#     np.testing.assert_allclose(bb, P.sum(0), atol=1e-05)
+    np.testing.assert_allclose(ab, P.sum(1), atol=1e-05) 
+    np.testing.assert_allclose(bb, P.sum(0), atol=1e-05)

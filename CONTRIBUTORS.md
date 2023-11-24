@@ -45,6 +45,7 @@ The contributors to this library are:
 * [Ronak Mehta](https://ronakrm.github.io) (Efficient Discrete Multi Marginal Optimal Transport Regularization)
 * [Xizheng Yu](https://github.com/x12hengyu) (Efficient Discrete Multi Marginal Optimal Transport Regularization)
 * [Sonia Mazelet](https://github.com/SoniaMaz8) (Template based GNN layers)
+* [Laurène David](https://github.com/laudavid) (Low rank sinkhorn)
 
 ## Acknowledgments
 
