@@ -8,7 +8,7 @@ Low rank OT solvers
 
 
 import warnings
-from .utils import unif, get_lowrank_lazytensor
+from .utils import unif, list_to_array, get_lowrank_lazytensor
 from .backend import get_backend
 
 
@@ -33,15 +33,17 @@ def compute_lr_sqeuclidean_matrix(X_s, X_t, nx=None):
     d = X_s.shape[1]
 
     # First low rank decomposition of the cost matrix (A)
-    M1 = nx.zeros((ns,(d+2)))
-    M1[:,0] = [nx.norm(X_s[i,:])**2 for i in range(ns)]
-    M1[:,1] = nx.ones(ns)
+    M1 = nx.zeros((ns,(d+2)), type_as=X_s)
+    norm_M1 = list_to_array([nx.norm(X_s[i,:])**2 for i in range(ns)])
+    M1[:,0] = nx.from_numpy(norm_M1)
+    M1[:,1] = nx.ones(ns, type_as=X_s)
     M1[:,2:] = -2*X_s
 
     # Second low rank decomposition of the cost matrix (B)
-    M2 = nx.zeros((nt,(d+2)))
-    M2[:,0] = nx.ones(nt)
-    M2[:,1] = [nx.norm(X_t[i,:])**2 for i in range(nt)]
+    M2 = nx.zeros((nt,(d+2)), type_as=X_s)
+    M2[:,0] = nx.ones(nt, type_as=X_s)
+    norm_M2 = list_to_array([nx.norm(X_t[i,:])**2 for i in range(nt)])
+    M2[:,1] = nx.from_numpy(norm_M2)
     M2[:,2:] = X_t
 
     return M1, M2
@@ -67,9 +69,9 @@ def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=No
     # ----------------- Initialisation of Dykstra algorithm -----------------
     r = len(eps3) # rank
     g_ = nx.copy(eps3) # \tilde{g}
-    q3_1, q3_2 = nx.ones(r), nx.ones(r) # q^{(3)}_1, q^{(3)}_2
-    v1_, v2_ = nx.ones(r), nx.ones(r) # \tilde{v}^{(1)}, \tilde{v}^{(2)}
-    q1, q2 = nx.ones(r), nx.ones(r) # q^{(1)}, q^{(2)} 
+    q3_1, q3_2 = nx.ones(r, type_as=p1), nx.ones(r, type_as=p1) # q^{(3)}_1, q^{(3)}_2
+    v1_, v2_ = nx.ones(r, type_as=p1), nx.ones(r, type_as=p1) # \tilde{v}^{(1)}, \tilde{v}^{(2)}
+    q1, q2 = nx.ones(r, type_as=p1), nx.ones(r, type_as=p1) # q^{(1)}, q^{(2)} 
     err = 1 # initial error
 
 
@@ -238,7 +240,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
     gamma = 1/(2*L)
     
     # Initialize the low rank matrices Q, R, g 
-    Q, R, g = nx.ones((ns,r)), nx.ones((nt,r)), nx.ones(r) 
+    Q, R, g = nx.ones((ns,r), type_as=a), nx.ones((nt,r), type_as=a), nx.ones(r, type_as=a) 
     k = 100 # not specified in paper ?
 
 
@@ -292,8 +294,6 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
         return Q, R, g, dict_log
 
     return Q, R, g
-
-
 
 
 
