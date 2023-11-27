@@ -46,7 +46,7 @@ import numpy as np
 import matplotlib.pylab as pl
 from ot.gromov import (fused_gromov_wasserstein,
                        entropic_fused_gromov_wasserstein,
-                       entropic_BAPG_fused_gromov_wasserstein)
+                       BAPG_fused_gromov_wasserstein)
 import networkx
 from networkx.generators.community import stochastic_block_model as sbm
 from time import time
@@ -128,7 +128,7 @@ time_pgd = 1000 * (end_pgd - start_pgd)
 # Alternated Bregman Projected Gradient algorithm with Kullback-Leibler as proximal operator
 print('Bregman Alternated Projected Gradient \n')
 start_bapg = time()
-T_bapg, log_bapg = entropic_BAPG_fused_gromov_wasserstein(
+T_bapg, log_bapg = BAPG_fused_gromov_wasserstein(
     M, C2, C3, h2, h3, 'square_loss', alpha=alpha, epsilon=1.,
     tol=1e-9, marginal_loss=True, verbose=True, log=True)
 end_bapg = time()

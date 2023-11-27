@@ -343,7 +343,7 @@ def entropic_gromov_wasserstein2(
         return logv['gw_dist']
 
 
-def entropic_BAPG_gromov_wasserstein(
+def BAPG_gromov_wasserstein(
         C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1,
         symmetric=None, G0=None, max_iter=1000, tol=1e-9, marginal_loss=False,
         verbose=False, log=False):
@@ -351,11 +351,24 @@ def entropic_BAPG_gromov_wasserstein(
     Returns the Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
     estimated using Bregman Alternated Projected Gradient method.
 
-    The function solves the following Gromov-Wasserstein
-    optimization problem [63]:
+    If `marginal_loss=True`, the function solves the following Gromov-Wasserstein
+    optimization problem :
 
     .. math::
         \mathbf{T}^* \in \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
+    Else, the function solves an equivalent problem [63], where constant terms only
+    depending on the marginals :math:`\mathbf{p}`: and :math:`\mathbf{q}`: are
+    discarded while assuming that L decomposes as in Proposition 1 in [12]:
+
+    .. math::
+        \mathbf{T}^* \in\mathop{\arg\min}_\mathbf{T} \quad - \langle h_1(\mathbf{C}_1) \mathbf{T} h_2(\mathbf{C_2})^\top , \mathbf{T} \rangle_F
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -369,6 +382,7 @@ def entropic_BAPG_gromov_wasserstein(
     - :math:`\mathbf{p}`: distribution in the source space
     - :math:`\mathbf{q}`: distribution in the target space
     - `L`: loss function to account for the misfit between the similarity matrices
+        satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
 
     .. note:: By algorithmic design the optimal coupling :math:`\mathbf{T}`
         returned by this function does not necessarily satisfy the marginal
@@ -407,7 +421,7 @@ def entropic_BAPG_gromov_wasserstein(
     tol : float, optional
         Stop threshold on error (>0)
     marginal_loss: bool, optional. Default is False.
-        Include constant terms or not in the matching objective function.
+        Include constant marginal terms or not in the objective function.
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -524,18 +538,32 @@ def entropic_BAPG_gromov_wasserstein(
         return T
 
 
-def entropic_BAPG_gromov_wasserstein2(
+def BAPG_gromov_wasserstein2(
         C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1, symmetric=None, G0=None, max_iter=1000,
         tol=1e-9, marginal_loss=False, verbose=False, log=False):
     r"""
     Returns the Gromov-Wasserstein loss :math:`\mathbf{GW}` between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
     estimated using Bregman Alternated Projected Gradient method.
 
-    The function solves the following Gromov-Wasserstein
-    optimization problem [63]:
+    If `marginal_loss=True`, the function solves the following Gromov-Wasserstein
+    optimization problem :
+
 
     .. math::
         \mathbf{GW} = \mathop{\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
+    Else, the function solves an equivalent problem [63, 64], where constant terms only
+    depending on the marginals :math:`\mathbf{p}`: and :math:`\mathbf{q}`: are
+    discarded while assuming that L decomposes as in Proposition 1 in [12]:
+
+    .. math::
+        \mathop{\min}_\mathbf{T}  \quad - \langle h_1(\mathbf{C}_1) \mathbf{T} h_2(\mathbf{C_2})^\top , \mathbf{T} \rangle_F
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -549,6 +577,7 @@ def entropic_BAPG_gromov_wasserstein2(
     - :math:`\mathbf{p}`: distribution in the source space
     - :math:`\mathbf{q}`: distribution in the target space
     - `L`: loss function to account for the misfit between the similarity matrices
+        satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
 
     .. note:: By algorithmic design the optimal coupling :math:`\mathbf{T}`
         returned by this function does not necessarily satisfy the marginal
@@ -588,7 +617,7 @@ def entropic_BAPG_gromov_wasserstein2(
     tol : float, optional
         Stop threshold on error (>0)
     marginal_loss: bool, optional. Default is False.
-        Include constant terms or not in the matching objective function.
+        Include constant marginal terms or not in the objective function.
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -607,7 +636,7 @@ def entropic_BAPG_gromov_wasserstein2(
 
     """
 
-    T, logv = entropic_BAPG_gromov_wasserstein(
+    T, logv = BAPG_gromov_wasserstein(
         C1, C2, p, q, loss_fun, epsilon, symmetric, G0, max_iter,
         tol, marginal_loss, verbose, log=True)
 
@@ -1153,7 +1182,7 @@ def entropic_fused_gromov_wasserstein2(
         return logv['fgw_dist']
 
 
-def entropic_BAPG_fused_gromov_wasserstein(
+def BAPG_fused_gromov_wasserstein(
         M, C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1,
         symmetric=None, alpha=0.5, G0=None, max_iter=1000, tol=1e-9,
         marginal_loss=False, verbose=False, log=False):
@@ -1162,8 +1191,8 @@ def entropic_BAPG_fused_gromov_wasserstein(
     with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}`,
     estimated using Bregman Alternated Projected Gradient method.
 
-    The function solves the following Fused Gromov-Wasserstein
-    optimization problem [63, 64]:
+    If `marginal_loss=True`, the function solves the following Fused Gromov-Wasserstein
+    optimization problem :
 
     .. math::
         \mathbf{T}^* \in\mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
@@ -1174,14 +1203,29 @@ def entropic_BAPG_fused_gromov_wasserstein(
              \mathbf{T}^T \mathbf{1} &= \mathbf{q}
 
              \mathbf{T} &\geq 0
+
+    Else, the function solves an equivalent problem [63, 64], where constant terms only
+    depending on the marginals :math:`\mathbf{p}`: and :math:`\mathbf{q}`: are
+    discarded while assuming that L decomposes as in Proposition 1 in [12]:
+
+    .. math::
+        \mathbf{T}^* \in\mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F -
+        \alpha \langle h_1(\mathbf{C}_1) \mathbf{T} h_2(\mathbf{C_2})^\top , \mathbf{T} \rangle_F
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
     Where :
 
-    - :math:`\mathbf{M}`: metric cost matrix between features across domains
+    - :math:`\mathbf{M}`: pairwise relation matrix between features across domains
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
     - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
     - :math:`\mathbf{p}`: distribution in the source space
     - :math:`\mathbf{q}`: distribution in the target space
     - `L`: loss function to account for the misfit between the similarity and feature matrices
+        satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
     - :math:`\alpha`: trade-off parameter
 
     .. note:: By algorithmic design the optimal coupling :math:`\mathbf{T}`
@@ -1194,7 +1238,7 @@ def entropic_BAPG_fused_gromov_wasserstein(
     Parameters
     ----------
     M : array-like, shape (ns, nt)
-        Metric cost matrix between features across domains
+        Pairwise relation matrix between features across domains
     C1 : array-like, shape (ns, ns)
         Metric cost matrix in the source space
     C2 : array-like, shape (nt, nt)
@@ -1225,7 +1269,7 @@ def entropic_BAPG_fused_gromov_wasserstein(
     tol : float, optional
         Stop threshold on error (>0)
     marginal_loss: bool, optional. Default is False.
-        Include constant terms or not in the matching objective function.
+        Include constant marginal terms or not in the objective function.
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -1344,7 +1388,7 @@ def entropic_BAPG_fused_gromov_wasserstein(
         return T
 
 
-def entropic_BAPG_fused_gromov_wasserstein2(
+def BAPG_fused_gromov_wasserstein2(
         M, C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1,
         symmetric=None, alpha=0.5, G0=None, max_iter=1000, tol=1e-9,
         marginal_loss=False, verbose=False, log=False):
@@ -1353,13 +1397,26 @@ def entropic_BAPG_fused_gromov_wasserstein2(
     with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}`,
     estimated using Bregman Alternated Projected Gradient method.
 
-    The function solves the following Fused Gromov-Wasserstein
-    optimization problem [63, 64]:
+    If `marginal_loss=True`, the function solves the following Fused Gromov-Wasserstein
+    optimization problem :
 
     .. math::
         \mathbf{FGW} = \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
         \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
+    Else, the function solves an equivalent problem [63, 64], where constant terms only
+    depending on the marginals :math:`\mathbf{p}`: and :math:`\mathbf{q}`: are
+    discarded while assuming that L decomposes as in Proposition 1 in [12]:
+
+    .. math::
+        \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F -
+        \alpha \langle h_1(\mathbf{C}_1) \mathbf{T} h_2(\mathbf{C_2})^\top , \mathbf{T} \rangle_F
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
              \mathbf{T}^T \mathbf{1} &= \mathbf{q}
@@ -1373,6 +1430,7 @@ def entropic_BAPG_fused_gromov_wasserstein2(
     - :math:`\mathbf{p}`: distribution in the source space
     - :math:`\mathbf{q}`: distribution in the target space
     - `L`: loss function to account for the misfit between the similarity and feature matrices
+        satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
     - :math:`\alpha`: trade-off parameter
 
     .. note:: By algorithmic design the optimal coupling :math:`\mathbf{T}`
@@ -1416,7 +1474,7 @@ def entropic_BAPG_fused_gromov_wasserstein2(
     tol : float, optional
         Stop threshold on error (>0)
     marginal_loss: bool, optional. Default is False.
-        Include constant terms or not in the matching objective function.
+        Include constant marginal terms or not in the objective function.
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -1438,7 +1496,7 @@ def entropic_BAPG_fused_gromov_wasserstein2(
     """
     nx = get_backend(M, C1, C2)
 
-    T, logv = entropic_BAPG_fused_gromov_wasserstein(
+    T, logv = BAPG_fused_gromov_wasserstein(
         M, C1, C2, p, q, loss_fun, epsilon, symmetric, alpha, G0, max_iter,
         tol, marginal_loss, verbose, log=True)
 
