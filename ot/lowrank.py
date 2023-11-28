@@ -14,43 +14,37 @@ from .backend import get_backend
 
 def compute_lr_sqeuclidean_matrix(X_s, X_t, nx=None):
     """
-    Compute low rank decomposition of a sqeuclidean cost matrix. 
-    This function won't work for other metrics. 
+    Compute low rank decomposition of a sqeuclidean cost matrix.
+    This function won't work for other metrics.
 
     See "Section 3.5, proposition 1" of the paper
 
     References
     ----------
     .. [63] Scetbon, M., Cuturi, M., & Peyré, G (2021).
-        "Low-Rank Sinkhorn Factorization" arXiv preprint arXiv:2103.04737. 
+        "Low-Rank Sinkhorn Factorization" arXiv preprint arXiv:2103.04737.
     """
 
     if nx is None:
-        nx = get_backend(X_s,X_t)
-        
+        nx = get_backend(X_s, X_t)
+
     ns = X_s.shape[0]
     nt = X_t.shape[0]
-    d = X_s.shape[1]
 
     # First low rank decomposition of the cost matrix (A)
-    M1 = nx.zeros((ns,(d+2)), type_as=X_s)
-    norm_M1 = list_to_array([nx.norm(X_s[i,:])**2 for i in range(ns)])
-    M1[:,0] = nx.from_numpy(norm_M1)
-    M1[:,1] = nx.ones(ns, type_as=X_s)
-    M1[:,2:] = -2*X_s
+    array1 = nx.reshape(nx.sum(X_s**2, 1), (-1, 1))
+    array2 = nx.reshape(nx.ones(ns, type_as=X_s), (-1, 1))
+    M1 = nx.concatenate((array1, array2, -2 * X_s), axis=1)
 
     # Second low rank decomposition of the cost matrix (B)
-    M2 = nx.zeros((nt,(d+2)), type_as=X_s)
-    M2[:,0] = nx.ones(nt, type_as=X_s)
-    norm_M2 = list_to_array([nx.norm(X_t[i,:])**2 for i in range(nt)])
-    M2[:,1] = nx.from_numpy(norm_M2)
-    M2[:,2:] = X_t
+    array1 = nx.reshape(nx.ones(nt, type_as=X_s), (-1, 1))
+    array2 = nx.reshape(nx.sum(X_t**2, 1), (-1, 1))
+    M2 = nx.concatenate((array1, array2, X_t), axis=1)
 
     return M1, M2
 
 
-
-def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=None): 
+def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=None):
     """
     Implementation of the Dykstra algorithm for the Low Rank sinkhorn OT solver.
 
@@ -58,30 +52,27 @@ def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=No
     ----------
     .. [63] Scetbon, M., Cuturi, M., & Peyré, G (2021).
         "Low-Rank Sinkhorn Factorization" arXiv preprint arXiv:2103.04737.
-        
+
     """
 
     # POT backend if None
     if nx is None:
         nx = get_backend(eps1, eps2, eps3, p1, p2)
 
-
     # ----------------- Initialisation of Dykstra algorithm -----------------
-    r = len(eps3) # rank
-    g_ = nx.copy(eps3) # \tilde{g}
-    q3_1, q3_2 = nx.ones(r, type_as=p1), nx.ones(r, type_as=p1) # q^{(3)}_1, q^{(3)}_2
-    v1_, v2_ = nx.ones(r, type_as=p1), nx.ones(r, type_as=p1) # \tilde{v}^{(1)}, \tilde{v}^{(2)}
-    q1, q2 = nx.ones(r, type_as=p1), nx.ones(r, type_as=p1) # q^{(1)}, q^{(2)} 
-    err = 1 # initial error
-
+    r = len(eps3)  # rank
+    g_ = nx.copy(eps3)  # \tilde{g}
+    q3_1, q3_2 = nx.ones(r, type_as=p1), nx.ones(r, type_as=p1)  # q^{(3)}_1, q^{(3)}_2
+    v1_, v2_ = nx.ones(r, type_as=p1), nx.ones(r, type_as=p1)  # \tilde{v}^{(1)}, \tilde{v}^{(2)}
+    q1, q2 = nx.ones(r, type_as=p1), nx.ones(r, type_as=p1)  # q^{(1)}, q^{(2)}
+    err = 1  # initial error
 
     # --------------------- Dykstra algorithm -------------------------
-    
-    # See Section 3.3 - "Algorithm 2 LR-Dykstra" in paper
-    
-    for ii in range(numItermax):    
-        if err > stopThr:
 
+    # See Section 3.3 - "Algorithm 2 LR-Dykstra" in paper
+
+    for ii in range(numItermax):
+        if err > stopThr:
             # Compute u^{(1)} and u^{(2)}
             u1 = p1 / nx.dot(eps1, v1_)
             u2 = p2 / nx.dot(eps2, v2_)
@@ -92,19 +83,19 @@ def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=No
             g_ = nx.copy(g)
 
             # Compute new value of g with \prod
-            prod1 = ((v1_ * q1) * nx.dot(eps1.T, u1))
-            prod2 = ((v2_ * q2) * nx.dot(eps2.T, u2))
-            g = (g_ * q3_2 * prod1 * prod2)**(1/3)
+            prod1 = (v1_ * q1) * nx.dot(eps1.T, u1)
+            prod2 = (v2_ * q2) * nx.dot(eps2.T, u2)
+            g = (g_ * q3_2 * prod1 * prod2) ** (1 / 3)
 
             # Compute v^{(1)} and v^{(2)}
-            v1 = g / nx.dot(eps1.T,u1)
-            v2 = g / nx.dot(eps2.T,u2)
+            v1 = g / nx.dot(eps1.T, u1)
+            v2 = g / nx.dot(eps2.T, u2)
 
             # Compute q^{(1)}, q^{(2)} and q^{(3)}_2
             q1 = (v1_ * q1) / v1
             q2 = (v2_ * q2) / v2
             q3_2 = (g_ * q3_2) / g
-            
+
             # Update values of \tilde{v}^{(1)}, \tilde{v}^{(2)} and \tilde{g}
             v1_, v2_ = nx.copy(v1), nx.copy(v2)
             g_ = nx.copy(g)
@@ -116,36 +107,32 @@ def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=No
 
         else:
             break
-    
-    else: 
+
+    else:
         if warn:
-            warnings.warn("Sinkhorn did not converge. You might want to "
-                          "increase the number of iterations `numItermax` ")
+            warnings.warn(
+                "Sinkhorn did not converge. You might want to "
+                "increase the number of iterations `numItermax` "
+            )
 
     # Compute low rank matrices Q, R
-    Q = u1[:,None] * eps1 * v1[None,:]
-    R = u2[:,None] * eps2 * v2[None,:]
+    Q = u1[:, None] * eps1 * v1[None, :]
+    R = u2[:, None] * eps2 * v2[None, :]
 
     return Q, R, g
-    
-    
 
 
-#################################### LOW RANK SINKHORN ALGORITHM #########################################
-
-
-def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto", 
-                     numItermax=10000, stopThr=1e-9, warn=True, log=False): 
-    
-    r'''
+def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
+                     numItermax=1000, stopThr=1e-9, warn=True, log=False):
+    r"""
     Solve the entropic regularization optimal transport problem under low-nonnegative rank constraints.
 
     The function solves the following optimization problem:
 
     .. math::
-        \mathop{\inf_{(Q,R,g) \in \mathcal{C(a,b,r)}}} \langle C, Q\mathrm{diag}(1/g)R^T \rangle - 
+        \mathop{\inf_{(Q,R,g) \in \mathcal{C(a,b,r)}}} \langle C, Q\mathrm{diag}(1/g)R^T \rangle -
             \mathrm{reg} \cdot H((Q,R,g))
-        
+
     where :
     - :math:`C` is the (`dim_a`, `dim_b`) metric cost matrix
     - :math:`H((Q,R,g))` is the values of the three respective entropies evaluated for each term.
@@ -153,11 +140,11 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
     - :math: `g` is the weight vector for the low-rank decomposition of the OT plan
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (histograms, both sum to 1)
     - :math: `r` is the rank of the OT plan
-    - :math: `\mathcal{C(a,b,r)}` are the low-rank couplings of the OT problem 
-        \mathcal{C(a,b,r)} = \mathcal{C_1(a,b,r)} \cap \mathcal{C_2(r)} with 
+    - :math: `\mathcal{C(a,b,r)}` are the low-rank couplings of the OT problem
+        \mathcal{C(a,b,r)} = \mathcal{C_1(a,b,r)} \cap \mathcal{C_2(r)} with
             \mathcal{C_1(a,b,r)} = \{ (Q,R,g) s.t Q\mathbb{1}_r = a, R^T \mathbb{1}_m = b \}
             \mathcal{C_2(r)} = \{ (Q,R,g) s.t Q\mathbb{1}_n = R^T \mathbb{1}_m = g \}
-    
+
 
     Parameters
     ----------
@@ -184,30 +171,30 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
     log : bool, optional
         record log if True
 
-        
+
     Returns
     -------
     lazy_plan : LazyTensor()
-        OT plan in a LazyTensor object of shape (shape_plan) 
+        OT plan in a LazyTensor object of shape (shape_plan)
         See :any:`LazyTensor` for more information.
     value : float
-        Optimal value of the optimization problem,
+        Optimal value of the optimization problem
     value_linear : float
-        Linear OT loss with the optimal OT 
+        Linear OT loss with the optimal OT
     Q : array-like, shape (n_samples_a, r)
-        First low-rank matrix decomposition of the OT plan 
+        First low-rank matrix decomposition of the OT plan
     R: array-like, shape (n_samples_b, r)
         Second low-rank matrix decomposition of the OT plan
     g : array-like, shape (r, )
         Weight vector for the low-rank decomposition of the OT plan
-    
-        
+
+
     References
     ----------
     .. [63] Scetbon, M., Cuturi, M., & Peyré, G (2021).
         "Low-Rank Sinkhorn Factorization" arXiv preprint arXiv:2103.04737.
 
-    '''
+    """
 
     # POT backend
     nx = get_backend(X_s, X_t)
@@ -223,66 +210,72 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
     r = rank
     if rank == "auto":
         r = min(ns, nt)
-    
+
     if alpha == "auto":
         alpha = 1e-10
 
     # Dykstra algorithm won't converge if 1/rank < alpha (alpha is the lower bound for 1/rank)
     # (see "Section 3.2: The Low-rank OT Problem (LOT)" in the paper)
-    if 1/r < alpha :
-        raise ValueError("alpha ({a}) should be smaller than 1/rank ({r}) for the Dykstra algorithm to converge.".format(a=alpha,r=1/rank))
+    if 1 / r < alpha:
+        raise ValueError("alpha ({a}) should be smaller than 1/rank ({r}) for the Dykstra algorithm to converge.".format(
+            a=alpha, r=1 / rank))
 
     # Low rank decomposition of the sqeuclidean cost matrix (A, B)
     M1, M2 = compute_lr_sqeuclidean_matrix(X_s, X_t, nx=None)
 
     # Compute gamma (see "Section 3.4, proposition 4" in the paper)
-    L = nx.sqrt(3*(2/(alpha**4))*((nx.norm(M1)*nx.norm(M2))**2) + (reg + (2/(alpha**3))*(nx.norm(M1)*nx.norm(M2)))**2)
-    gamma = 1/(2*L)
-    
-    # Initialize the low rank matrices Q, R, g 
-    Q, R, g = nx.ones((ns,r), type_as=a), nx.ones((nt,r), type_as=a), nx.ones(r, type_as=a) 
-    k = 100 # not specified in paper ?
+    L = nx.sqrt(
+        3 * (2 / (alpha**4)) * ((nx.norm(M1) * nx.norm(M2)) ** 2) +
+        (reg + (2 / (alpha**3)) * (nx.norm(M1) * nx.norm(M2))) ** 2
+    )
+    gamma = 1 / (2 * L)
 
+    # Initialize the low rank matrices Q, R, g
+    Q = nx.ones((ns, r), type_as=a)
+    R = nx.ones((nt, r), type_as=a)
+    g = nx.ones(r, type_as=a)
+    k = 100
 
     # -------------------------- Low rank algorithm ------------------------------
     # see "Section 3.3, Algorithm 3 LOT" in the paper
 
-    for ii in range(k): 
+    for ii in range(k):
         # Compute the C*R dot matrix using the lr decomposition of C
         CR_ = nx.dot(M2.T, R)
-        CR = nx.dot(M1, CR_) 
-        
+        CR = nx.dot(M1, CR_)
+
         # Compute the C.t * Q dot matrix using the lr decomposition of C
         CQ_ = nx.dot(M1.T, Q)
         CQ = nx.dot(M2, CQ_)
-        
-        diag_g = (1/g)[None,:]
 
-        eps1 = nx.exp(-gamma*(CR*diag_g) - ((gamma*reg)-1)*nx.log(Q))
-        eps2 = nx.exp(-gamma*(CQ*diag_g) - ((gamma*reg)-1)*nx.log(R))
+        diag_g = (1 / g)[None, :]
+
+        eps1 = nx.exp(-gamma * (CR * diag_g) - ((gamma * reg) - 1) * nx.log(Q))
+        eps2 = nx.exp(-gamma * (CQ * diag_g) - ((gamma * reg) - 1) * nx.log(R))
         omega = nx.diag(nx.dot(Q.T, CR))
-        eps3 = nx.exp(gamma*omega/(g**2) - (gamma*reg - 1)*nx.log(g))
+        eps3 = nx.exp(gamma * omega / (g**2) - (gamma * reg - 1) * nx.log(g))
 
-        Q, R, g = LR_Dysktra(eps1, eps2, eps3, a, b, alpha, stopThr, numItermax, warn, nx)
-        Q = Q+1e-16
-        R = R+1e-16
-
+        Q, R, g = LR_Dysktra(
+            eps1, eps2, eps3, a, b, alpha, stopThr, numItermax, warn, nx
+        )
+        Q = Q + 1e-16
+        R = R + 1e-16
 
     # ----------------- Compute lazy_plan, value and value_linear  ------------------
     # see "Section 3.2: The Low-rank OT Problem" in the paper
 
     # Compute lazy plan (using LazyTensor class)
-    lazy_plan = get_lowrank_lazytensor(Q, R, 1/g) 
-    
+    lazy_plan = get_lowrank_lazytensor(Q, R, 1 / g)
+
     # Compute value_linear (using trace formula)
-    v1 = nx.dot(Q.T,M1)
-    v2 = nx.dot(R,(v1.T*diag_g).T)
+    v1 = nx.dot(Q.T, M1)
+    v2 = nx.dot(R, (v1.T * diag_g).T)
     value_linear = nx.sum(nx.diag(nx.dot(M2.T, v2)))
 
     # Compute value with entropy reg (entropy of Q, R, g must be computed separatly, see "Section 3.2" in the paper)
-    reg_Q = nx.sum(Q * nx.log(Q + 1e-16)) # entropy for Q
-    reg_g = nx.sum(g * nx.log(g + 1e-16)) # entropy for g
-    reg_R = nx.sum(R * nx.log(R + 1e-16)) # entropy for R
+    reg_Q = nx.sum(Q * nx.log(Q + 1e-16))  # entropy for Q
+    reg_g = nx.sum(g * nx.log(g + 1e-16))  # entropy for g
+    reg_R = nx.sum(R * nx.log(R + 1e-16))  # entropy for R
     value = value_linear + reg * (reg_Q + reg_g + reg_R)
 
     if log:
@@ -290,10 +283,8 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
         dict_log["value"] = value
         dict_log["value_linear"] = value_linear
         dict_log["lazy_plan"] = lazy_plan
-        
+
         return Q, R, g, dict_log
 
     return Q, R, g
-
-
 
