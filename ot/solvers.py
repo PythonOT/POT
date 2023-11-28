@@ -1248,26 +1248,25 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
             lazy_plan = log['lazy_plan']
             if not lazy0:  # store plan if not lazy
                 plan = lazy_plan[:]
-        
+
         elif method == "lowrank":
 
             if not metric.lower() in ['sqeuclidean']:
                 raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
-            
+
             if max_iter is None:
                 max_iter = 1000
             if tol is None:
                 tol = 1e-9
             if reg is None:
                 reg = 0
-            
+
             Q, R, g, log = lowrank_sinkhorn(X_a, X_b, reg=reg, a=a, b=b, numItermax=max_iter, stopThr=tol, log=True)
             value = log['value']
             value_linear = log['value_linear']
             lazy_plan = log['lazy_plan']
             if not lazy0:  # store plan if not lazy
                 plan = lazy_plan[:]
-
 
         elif method.startswith('geomloss'):  # Geomloss solver for entropi OT
 

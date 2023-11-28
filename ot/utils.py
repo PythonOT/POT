@@ -1176,6 +1176,7 @@ class OTResult:
             }
         """
 
+
 class LazyTensor(object):
     """ A lazy tensor is a tensor that is not stored in memory. Instead, it is
     defined by a function that computes its values on the fly from slices.

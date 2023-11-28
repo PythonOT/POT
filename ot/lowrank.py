@@ -8,7 +8,7 @@ Low rank OT solvers
 
 
 import warnings
-from .utils import unif, list_to_array, get_lowrank_lazytensor
+from .utils import unif, get_lowrank_lazytensor
 from .backend import get_backend
 
 
@@ -287,4 +287,3 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
         return Q, R, g, dict_log
 
     return Q, R, g
-
