@@ -516,12 +516,8 @@ def empirical_bures_wasserstein_barycenter(
         nx.dot((X[i] * w[i]).T, X[i]) / nx.sum(w[i]) + reg * nx.eye(d[i], type_as=X[i])
         for i in range(k)
     ]
-<<<<<<< HEAD
     m = nx.stack(m, axis=0)
     C = nx.stack(C, axis=0)
-=======
-
->>>>>>> 041f52f2dc76e966cc5a8cd44d12fcf9ceaad3e4
     if log:
         mb, Cb, log = bures_wasserstein_barycenter(m, C, weights=weights, num_iter=num_iter, eps=eps, log=log)
         return mb, Cb, log
