@@ -366,11 +366,11 @@ def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, lo
 
     Parameters
     ----------
-    m : list of array-like (d,)
-        mean of each distribution
-    C : list of array-like (d,d)
-        covariance of each distribution
-    weights : array-like (n,), optional
+    m : array-like (k,d)
+        mean of k distributions
+    C : array-like (k,d,d)
+        covariance of k distributions
+    weights : array-like (k), optional
         weights for each distribution
     num_iter : int, optional
         number of iteration for the fixed point algorithm
@@ -399,18 +399,26 @@ def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, lo
     """
     nx = get_backend(*C, *m,)
 
+    # Compute the mean barycenter
     mb = nx.mean(m)
+
+    # Init the covariance barycenter
     Cb = nx.mean(C, axis=0)
 
     if weights is None:
         weights = nx.ones(len(C), type_as=C[0]) / len(C)
-    diff = 1000  # I don't know what is the best value for this
+
     for it in range(num_iter):
+        # fixed point update
         Cb12 = nx.sqrtm(Cb)
+
         Cnew = Cb12 @ C @ Cb12
-        Cnew = [nx.sqrtm(C) for C in Cnew]
+        for i in range(len(C)):
+            Cnew[i] = nx.sqrtm(Cnew[i])
         Cnew *= weights[:, None, None]
         Cnew = nx.sum(Cnew, axis=0)
+
+        # check convergence
         diff = nx.norm(Cb - Cnew)
         if diff <= eps:
             break
