@@ -413,8 +413,10 @@ def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, lo
         Cb12 = nx.sqrtm(Cb)
 
         Cnew = Cb12 @ C @ Cb12
+        C_ = []
         for i in range(len(C)):
-            Cnew[i] = nx.sqrtm(Cnew[i])
+            C_.append(nx.sqrtm(Cnew[i]))
+        Cnew = nx.stack(C_, axis=0)
         Cnew *= weights[:, None, None]
         Cnew = nx.sum(Cnew, axis=0)
 
@@ -514,7 +516,8 @@ def empirical_bures_wasserstein_barycenter(
         nx.dot((X[i] * w[i]).T, X[i]) / nx.sum(w[i]) + reg * nx.eye(d[i], type_as=X[i])
         for i in range(k)
     ]
-
+    m = nx.stack(m, axis=0)
+    C = nx.stack(C, axis=0)
     if log:
         mb, Cb, log = bures_wasserstein_barycenter(m, C, weights=weights, num_iter=num_iter, eps=eps, log=log)
         return mb, Cb, log

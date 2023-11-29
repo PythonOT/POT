@@ -123,7 +123,8 @@ def test_bures_wasserstein_barycenter(nx):
         y.append(y_)
         m.append(m_)
         C.append(C_)
-
+    m = np.array(m)
+    C = np.array(C)
     X = nx.from_numpy(*X)
     m = nx.from_numpy(m)
     C = nx.from_numpy(C)
@@ -141,9 +142,11 @@ def test_bures_wasserstein_barycenter(nx):
 
     # test with closed form for diagonal covariance matrices
     Cdiag = [nx.diag(nx.diag(C[i])) for i in range(k)]
+    Cdiag = nx.stack(Cdiag, axis=0)
     mbdiag, Cbdiag = ot.gaussian.bures_wasserstein_barycenter(m, Cdiag, log=False)
 
     Cdiag_sqrt = [nx.sqrtm(C) for C in Cdiag]
+    Cdiag_sqrt = nx.stack(Cdiag_sqrt, axis=0)
     Cdiag_mean = nx.mean(Cdiag_sqrt, axis=0)
     Cdiag_cf = Cdiag_mean @ Cdiag_mean
 
