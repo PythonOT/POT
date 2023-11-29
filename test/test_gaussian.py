@@ -125,8 +125,8 @@ def test_bures_wasserstein_barycenter(nx):
         C.append(C_)
 
     X = nx.from_numpy(*X)
-    m = nx.from_numpy(*m)
-    C = nx.from_numpy(*C)
+    m = nx.from_numpy(m)
+    C = nx.from_numpy(C)
 
     mblog, Cblog, log = ot.gaussian.bures_wasserstein_barycenter(m, C, log=True)
     mb, Cb = ot.gaussian.bures_wasserstein_barycenter(m, C, log=False)
@@ -150,7 +150,8 @@ def test_bures_wasserstein_barycenter(nx):
     np.testing.assert_allclose(Cbdiag, Cdiag_cf, rtol=1e-2, atol=1e-2)
 
 
-def test_empirical_bures_wasserstein_barycenter(nx):
+@pytest.mark.parametrize("bias", [True, False])
+def test_empirical_bures_wasserstein_barycenter(nx, bias):
     n = 50
     k = 10
     X = []
@@ -162,8 +163,8 @@ def test_empirical_bures_wasserstein_barycenter(nx):
 
     X = nx.from_numpy(*X)
 
-    mblog, Cblog, log = ot.gaussian.empirical_bures_wasserstein_barycenter(X, log=True)
-    mb, Cb = ot.gaussian.empirical_bures_wasserstein_barycenter(X, log=False)
+    mblog, Cblog, log = ot.gaussian.empirical_bures_wasserstein_barycenter(X, log=True, bias=bias)
+    mb, Cb = ot.gaussian.empirical_bures_wasserstein_barycenter(X, log=False, bias=bias)
 
     np.testing.assert_allclose(Cb, Cblog, rtol=1e-2, atol=1e-2)
     np.testing.assert_allclose(mb, mblog, rtol=1e-2, atol=1e-2)
