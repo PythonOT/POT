@@ -343,6 +343,311 @@ def entropic_gromov_wasserstein2(
         return logv['gw_dist']
 
 
+def BAPG_gromov_wasserstein(
+        C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1,
+        symmetric=None, G0=None, max_iter=1000, tol=1e-9, marginal_loss=False,
+        verbose=False, log=False):
+    r"""
+    Returns the Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
+    estimated using Bregman Alternated Projected Gradient method.
+
+    If `marginal_loss=True`, the function solves the following Gromov-Wasserstein
+    optimization problem :
+
+    .. math::
+        \mathbf{T}^* \in \mathop{\arg\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
+    Else, the function solves an equivalent problem [63], where constant terms only
+    depending on the marginals :math:`\mathbf{p}`: and :math:`\mathbf{q}`: are
+    discarded while assuming that L decomposes as in Proposition 1 in [12]:
+
+    .. math::
+        \mathbf{T}^* \in\mathop{\arg\min}_\mathbf{T} \quad - \langle h_1(\mathbf{C}_1) \mathbf{T} h_2(\mathbf{C_2})^\top , \mathbf{T} \rangle_F
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+    Where :
+
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity matrices
+        satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
+
+    .. note:: By algorithmic design the optimal coupling :math:`\mathbf{T}`
+        returned by this function does not necessarily satisfy the marginal
+        constraints :math:`\mathbf{T}\mathbf{1}=\mathbf{p}` and
+        :math:`\mathbf{T}^T\mathbf{1}=\mathbf{q}`. So the returned
+        Gromov-Wasserstein loss does not necessarily satisfy distance
+        properties and may be negative.
+
+    Parameters
+    ----------
+    C1 : array-like, shape (ns, ns)
+        Metric cost matrix in the source space
+    C2 : array-like, shape (nt, nt)
+        Metric cost matrix in the target space
+    p : array-like, shape (ns,), optional
+        Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
+    q : array-like, shape (nt,), optional
+        Distribution in the target space.
+        If let to its default value None, uniform distribution is taken.
+    loss_fun : string, optional (default='square_loss')
+        Loss function used for the solver either 'square_loss' or 'kl_loss'
+    epsilon : float, optional
+        Regularization term >0
+    symmetric : bool, optional
+        Either C1 and C2 are to be assumed symmetric or not.
+        If let to its default None value, a symmetry test will be conducted.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
+    G0: array-like, shape (ns,nt), optional
+        If None the initial transport plan of the solver is pq^T.
+        Otherwise G0 will be used as initial transport of the solver. G0 is not
+        required to satisfy marginal constraints but we strongly recommend it
+        to correctly estimate the GW distance.
+    max_iter : int, optional
+        Max number of iterations
+    tol : float, optional
+        Stop threshold on error (>0)
+    marginal_loss: bool, optional. Default is False.
+        Include constant marginal terms or not in the objective function.
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        Record log if True.
+    Returns
+    -------
+    T : array-like, shape (`ns`, `nt`)
+        Optimal coupling between the two spaces
+
+    References
+    ----------
+    .. [63] Li, J., Tang, J., Kong, L., Liu, H., Li, J., So, A. M. C., & Blanchet, J.
+        "A Convergent Single-Loop Algorithm for Relaxation of Gromov-Wasserstein
+        in Graph Data". International Conference on Learning Representations (ICLR), 2022.
+
+    """
+    if loss_fun not in ('square_loss', 'kl_loss'):
+        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
+
+    C1, C2 = list_to_array(C1, C2)
+    arr = [C1, C2]
+    if p is not None:
+        arr.append(list_to_array(p))
+    else:
+        p = unif(C1.shape[0], type_as=C1)
+    if q is not None:
+        arr.append(list_to_array(q))
+    else:
+        q = unif(C2.shape[0], type_as=C2)
+
+    if G0 is not None:
+        arr.append(G0)
+
+    nx = get_backend(*arr)
+
+    if G0 is None:
+        G0 = nx.outer(p, q)
+
+    T = G0
+    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun, nx)
+
+    if symmetric is None:
+        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
+    if not symmetric:
+        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun, nx)
+
+    if marginal_loss:
+        if symmetric:
+            def df(T):
+                return gwggrad(constC, hC1, hC2, T, nx)
+        else:
+            def df(T):
+                return 0.5 * (gwggrad(constC, hC1, hC2, T, nx) + gwggrad(constCt, hC1t, hC2t, T, nx))
+
+    else:
+        if symmetric:
+            def df(T):
+                A = - nx.dot(nx.dot(hC1, T), hC2.T)
+                return 2 * A
+        else:
+            def df(T):
+                A = - nx.dot(nx.dot(hC1, T), hC2t)
+                At = - nx.dot(nx.dot(hC1t, T), hC2)
+                return A + At
+
+    cpt = 0
+    err = 1e15
+
+    if log:
+        log = {'err': []}
+
+    while (err > tol and cpt < max_iter):
+
+        Tprev = T
+
+        # rows update
+        T = T * nx.exp(- df(T) / epsilon)
+        row_scaling = p / nx.sum(T, 1)
+        T = nx.reshape(row_scaling, (-1, 1)) * T
+
+        # columns update
+        T = T * nx.exp(- df(T) / epsilon)
+        column_scaling = q / nx.sum(T, 0)
+        T = nx.reshape(column_scaling, (1, -1)) * T
+
+        if cpt % 10 == 0:
+            # we can speed up the process by checking for the error only all
+            # the 10th iterations
+            err = nx.norm(T - Tprev)
+
+            if log:
+                log['err'].append(err)
+
+            if verbose:
+                if cpt % 200 == 0:
+                    print('{:5s}|{:12s}'.format(
+                        'It.', 'Err') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(cpt, err))
+
+        cpt += 1
+
+    if nx.any(nx.isnan(T)):
+        warnings.warn("Solver failed to produce a transport plan. You might "
+                      "want to increase the regularization parameter `epsilon`.",
+                      UserWarning)
+    if log:
+        log['gw_dist'] = gwloss(constC, hC1, hC2, T, nx)
+
+        if not marginal_loss:
+            log['loss'] = log['gw_dist'] - nx.sum(constC * T)
+
+        return T, log
+    else:
+        return T
+
+
+def BAPG_gromov_wasserstein2(
+        C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1, symmetric=None, G0=None, max_iter=1000,
+        tol=1e-9, marginal_loss=False, verbose=False, log=False):
+    r"""
+    Returns the Gromov-Wasserstein loss :math:`\mathbf{GW}` between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
+    estimated using Bregman Alternated Projected Gradient method.
+
+    If `marginal_loss=True`, the function solves the following Gromov-Wasserstein
+    optimization problem :
+
+
+    .. math::
+        \mathbf{GW} = \mathop{\min}_\mathbf{T} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
+    Else, the function solves an equivalent problem [63, 64], where constant terms only
+    depending on the marginals :math:`\mathbf{p}`: and :math:`\mathbf{q}`: are
+    discarded while assuming that L decomposes as in Proposition 1 in [12]:
+
+    .. math::
+        \mathop{\min}_\mathbf{T}  \quad - \langle h_1(\mathbf{C}_1) \mathbf{T} h_2(\mathbf{C_2})^\top , \mathbf{T} \rangle_F
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+    Where :
+
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity matrices
+        satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
+
+    .. note:: By algorithmic design the optimal coupling :math:`\mathbf{T}`
+        returned by this function does not necessarily satisfy the marginal
+        constraints :math:`\mathbf{T}\mathbf{1}=\mathbf{p}` and
+        :math:`\mathbf{T}^T\mathbf{1}=\mathbf{q}`. So the returned
+        Gromov-Wasserstein loss does not necessarily satisfy distance
+        properties and may be negative.
+
+
+    Parameters
+    ----------
+    C1 : array-like, shape (ns, ns)
+        Metric cost matrix in the source space
+    C2 : array-like, shape (nt, nt)
+        Metric cost matrix in the target space
+    p : array-like, shape (ns,), optional
+        Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
+    q : array-like, shape (nt,), optional
+        Distribution in the target space.
+        If let to its default value None, uniform distribution is taken.
+    loss_fun : string, optional (default='square_loss')
+        Loss function used for the solver either 'square_loss' or 'kl_loss'
+    epsilon : float, optional
+        Regularization term >0
+    symmetric : bool, optional
+        Either C1 and C2 are to be assumed symmetric or not.
+        If let to its default None value, a symmetry test will be conducted.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
+    G0: array-like, shape (ns,nt), optional
+        If None the initial transport plan of the solver is pq^T.
+        Otherwise G0 will be used as initial transport of the solver. G0 is not
+        required to satisfy marginal constraints but we strongly recommand it
+        to correcly estimate the GW distance.
+    max_iter : int, optional
+        Max number of iterations
+    tol : float, optional
+        Stop threshold on error (>0)
+    marginal_loss: bool, optional. Default is False.
+        Include constant marginal terms or not in the objective function.
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        Record log if True.
+
+    Returns
+    -------
+    gw_dist : float
+        Gromov-Wasserstein distance
+
+    References
+    ----------
+    .. [63] Li, J., Tang, J., Kong, L., Liu, H., Li, J., So, A. M. C., & Blanchet, J.
+        "A Convergent Single-Loop Algorithm for Relaxation of Gromov-Wasserstein
+        in Graph Data". International Conference on Learning Representations (ICLR), 2023.
+
+    """
+
+    T, logv = BAPG_gromov_wasserstein(
+        C1, C2, p, q, loss_fun, epsilon, symmetric, G0, max_iter,
+        tol, marginal_loss, verbose, log=True)
+
+    logv['T'] = T
+
+    if log:
+        return logv['gw_dist'], logv
+    else:
+        return logv['gw_dist']
+
+
 def entropic_gromov_barycenters(
         N, Cs, ps=None, p=None, lambdas=None, loss_fun='square_loss',
         epsilon=0.1, symmetric=True, max_iter=1000, tol=1e-9,
@@ -864,6 +1169,336 @@ def entropic_fused_gromov_wasserstein2(
     T, logv = entropic_fused_gromov_wasserstein(
         M, C1, C2, p, q, loss_fun, epsilon, symmetric, alpha, G0, max_iter,
         tol, solver, warmstart, verbose, log=True, **kwargs)
+
+    logv['T'] = T
+
+    lin_term = nx.sum(T * M)
+    logv['quad_loss'] = (logv['fgw_dist'] - (1 - alpha) * lin_term)
+    logv['lin_loss'] = lin_term * (1 - alpha)
+
+    if log:
+        return logv['fgw_dist'], logv
+    else:
+        return logv['fgw_dist']
+
+
+def BAPG_fused_gromov_wasserstein(
+        M, C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1,
+        symmetric=None, alpha=0.5, G0=None, max_iter=1000, tol=1e-9,
+        marginal_loss=False, verbose=False, log=False):
+    r"""
+    Returns the Fused Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
+    with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}`,
+    estimated using Bregman Alternated Projected Gradient method.
+
+    If `marginal_loss=True`, the function solves the following Fused Gromov-Wasserstein
+    optimization problem :
+
+    .. math::
+        \mathbf{T}^* \in\mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
+    Else, the function solves an equivalent problem [63, 64], where constant terms only
+    depending on the marginals :math:`\mathbf{p}`: and :math:`\mathbf{q}`: are
+    discarded while assuming that L decomposes as in Proposition 1 in [12]:
+
+    .. math::
+        \mathbf{T}^* \in\mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F -
+        \alpha \langle h_1(\mathbf{C}_1) \mathbf{T} h_2(\mathbf{C_2})^\top , \mathbf{T} \rangle_F
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
+    Where :
+
+    - :math:`\mathbf{M}`: pairwise relation matrix between features across domains
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity and feature matrices
+        satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
+    - :math:`\alpha`: trade-off parameter
+
+    .. note:: By algorithmic design the optimal coupling :math:`\mathbf{T}`
+        returned by this function does not necessarily satisfy the marginal
+        constraints :math:`\mathbf{T}\mathbf{1}=\mathbf{p}` and
+        :math:`\mathbf{T}^T\mathbf{1}=\mathbf{q}`. So the returned Fused
+        Gromov-Wasserstein loss does not necessarily satisfy distance
+        properties and may be negative.
+
+    Parameters
+    ----------
+    M : array-like, shape (ns, nt)
+        Pairwise relation matrix between features across domains
+    C1 : array-like, shape (ns, ns)
+        Metric cost matrix in the source space
+    C2 : array-like, shape (nt, nt)
+        Metric cost matrix in the target space
+    p : array-like, shape (ns,), optional
+        Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
+    q : array-like, shape (nt,), optional
+        Distribution in the target space.
+        If let to its default value None, uniform distribution is taken.
+    loss_fun : string, optional (default='square_loss')
+        Loss function used for the solver either 'square_loss' or 'kl_loss'
+    epsilon : float, optional
+        Regularization term >0
+    symmetric : bool, optional
+        Either C1 and C2 are to be assumed symmetric or not.
+        If let to its default None value, a symmetry test will be conducted.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
+    alpha : float, optional
+        Trade-off parameter (0 < alpha < 1)
+    G0: array-like, shape (ns,nt), optional
+        If None the initial transport plan of the solver is pq^T.
+        Otherwise G0 will be used as initial transport of the solver. G0 is not
+        required to satisfy marginal constraints but we strongly recommend it
+        to correctly estimate the GW distance.
+    max_iter : int, optional
+        Max number of iterations
+    tol : float, optional
+        Stop threshold on error (>0)
+    marginal_loss: bool, optional. Default is False.
+        Include constant marginal terms or not in the objective function.
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        Record log if True.
+    Returns
+    -------
+    T : array-like, shape (`ns`, `nt`)
+        Optimal coupling between the two joint spaces
+
+    References
+    ----------
+    .. [63] Li, J., Tang, J., Kong, L., Liu, H., Li, J., So, A. M. C., & Blanchet, J.
+        "A Convergent Single-Loop Algorithm for Relaxation of Gromov-Wasserstein
+        in Graph Data". International Conference on Learning Representations (ICLR), 2023.
+
+    .. [64] Ma, X., Chu, X., Wang, Y., Lin, Y., Zhao, J., Ma, L., & Zhu, W.
+        "Fused Gromov-Wasserstein Graph Mixup for Graph-level Classifications".
+        In Thirty-seventh Conference on Neural Information Processing Systems.
+    """
+    if loss_fun not in ('square_loss', 'kl_loss'):
+        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
+
+    M, C1, C2 = list_to_array(M, C1, C2)
+    arr = [M, C1, C2]
+    if p is not None:
+        arr.append(list_to_array(p))
+    else:
+        p = unif(C1.shape[0], type_as=C1)
+    if q is not None:
+        arr.append(list_to_array(q))
+    else:
+        q = unif(C2.shape[0], type_as=C2)
+
+    if G0 is not None:
+        arr.append(G0)
+
+    nx = get_backend(*arr)
+
+    if G0 is None:
+        G0 = nx.outer(p, q)
+
+    T = G0
+    constC, hC1, hC2 = init_matrix(C1, C2, p, q, loss_fun, nx)
+    if symmetric is None:
+        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
+    if not symmetric:
+        constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun, nx)
+
+    # Define gradients
+    if marginal_loss:
+        if symmetric:
+            def df(T):
+                return alpha * gwggrad(constC, hC1, hC2, T, nx) + (1 - alpha) * M
+        else:
+            def df(T):
+                return (alpha * 0.5) * (gwggrad(constC, hC1, hC2, T, nx) + gwggrad(constCt, hC1t, hC2t, T, nx)) + (1 - alpha) * M
+
+    else:
+        if symmetric:
+            def df(T):
+                A = - nx.dot(nx.dot(hC1, T), hC2.T)
+                return 2 * alpha * A + (1 - alpha) * M
+        else:
+            def df(T):
+                A = - nx.dot(nx.dot(hC1, T), hC2t)
+                At = - nx.dot(nx.dot(hC1t, T), hC2)
+                return alpha * (A + At) + (1 - alpha) * M
+    cpt = 0
+    err = 1e15
+
+    if log:
+        log = {'err': []}
+
+    while (err > tol and cpt < max_iter):
+
+        Tprev = T
+
+        # rows update
+        T = T * nx.exp(- df(T) / epsilon)
+        row_scaling = p / nx.sum(T, 1)
+        T = nx.reshape(row_scaling, (-1, 1)) * T
+
+        # columns update
+        T = T * nx.exp(- df(T) / epsilon)
+        column_scaling = q / nx.sum(T, 0)
+        T = nx.reshape(column_scaling, (1, -1)) * T
+
+        if cpt % 10 == 0:
+            # we can speed up the process by checking for the error only all
+            # the 10th iterations
+            err = nx.norm(T - Tprev)
+
+            if log:
+                log['err'].append(err)
+
+            if verbose:
+                if cpt % 200 == 0:
+                    print('{:5s}|{:12s}'.format(
+                        'It.', 'Err') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(cpt, err))
+
+        cpt += 1
+
+    if nx.any(nx.isnan(T)):
+        warnings.warn("Solver failed to produce a transport plan. You might "
+                      "want to increase the regularization parameter `epsilon`.",
+                      UserWarning)
+    if log:
+        log['fgw_dist'] = (1 - alpha) * nx.sum(M * T) + alpha * gwloss(constC, hC1, hC2, T, nx)
+
+        if not marginal_loss:
+            log['loss'] = log['fgw_dist'] - alpha * nx.sum(constC * T)
+
+        return T, log
+    else:
+        return T
+
+
+def BAPG_fused_gromov_wasserstein2(
+        M, C1, C2, p=None, q=None, loss_fun='square_loss', epsilon=0.1,
+        symmetric=None, alpha=0.5, G0=None, max_iter=1000, tol=1e-9,
+        marginal_loss=False, verbose=False, log=False):
+    r"""
+    Returns the Fused Gromov-Wasserstein loss between :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
+    with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}`,
+    estimated using Bregman Alternated Projected Gradient method.
+
+    If `marginal_loss=True`, the function solves the following Fused Gromov-Wasserstein
+    optimization problem :
+
+    .. math::
+        \mathbf{FGW} = \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
+    Else, the function solves an equivalent problem [63, 64], where constant terms only
+    depending on the marginals :math:`\mathbf{p}`: and :math:`\mathbf{q}`: are
+    discarded while assuming that L decomposes as in Proposition 1 in [12]:
+
+    .. math::
+        \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F -
+        \alpha \langle h_1(\mathbf{C}_1) \mathbf{T} h_2(\mathbf{C_2})^\top , \mathbf{T} \rangle_F
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+    Where :
+
+    - :math:`\mathbf{M}`: metric cost matrix between features across domains
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+    - :math:`\mathbf{p}`: distribution in the source space
+    - :math:`\mathbf{q}`: distribution in the target space
+    - `L`: loss function to account for the misfit between the similarity and feature matrices
+        satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
+    - :math:`\alpha`: trade-off parameter
+
+    .. note:: By algorithmic design the optimal coupling :math:`\mathbf{T}`
+        returned by this function does not necessarily satisfy the marginal
+        constraints :math:`\mathbf{T}\mathbf{1}=\mathbf{p}` and
+        :math:`\mathbf{T}^T\mathbf{1}=\mathbf{q}`. So the returned Fused
+        Gromov-Wasserstein loss does not necessarily satisfy distance
+        properties and may be negative.
+
+    Parameters
+    ----------
+    M : array-like, shape (ns, nt)
+        Metric cost matrix between features across domains
+    C1 : array-like, shape (ns, ns)
+        Metric cost matrix in the source space
+    C2 : array-like, shape (nt, nt)
+        Metric cost matrix in the target space
+    p : array-like, shape (ns,), optional
+        Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
+    q : array-like, shape (nt,), optional
+        Distribution in the target space.
+        If let to its default value None, uniform distribution is taken.
+    loss_fun : string, optional (default='square_loss')
+        Loss function used for the solver either 'square_loss' or 'kl_loss'
+    epsilon : float, optional
+        Regularization term >0
+    symmetric : bool, optional
+        Either C1 and C2 are to be assumed symmetric or not.
+        If let to its default None value, a symmetry test will be conducted.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
+    alpha : float, optional
+        Trade-off parameter (0 < alpha < 1)
+    G0: array-like, shape (ns,nt), optional
+        If None the initial transport plan of the solver is pq^T.
+        Otherwise G0 will be used as initial transport of the solver. G0 is not
+        required to satisfy marginal constraints but we strongly recommend it
+        to correctly estimate the GW distance.
+    max_iter : int, optional
+        Max number of iterations
+    tol : float, optional
+        Stop threshold on error (>0)
+    marginal_loss: bool, optional. Default is False.
+        Include constant marginal terms or not in the objective function.
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        Record log if True.
+    Returns
+    -------
+    T : array-like, shape (`ns`, `nt`)
+        Optimal coupling between the two joint spaces
+
+    References
+    ----------
+    .. [63] Li, J., Tang, J., Kong, L., Liu, H., Li, J., So, A. M. C., & Blanchet, J.
+        "A Convergent Single-Loop Algorithm for Relaxation of Gromov-Wasserstein
+        in Graph Data". International Conference on Learning Representations (ICLR), 2023.
+
+    .. [64] Ma, X., Chu, X., Wang, Y., Lin, Y., Zhao, J., Ma, L., & Zhu, W.
+        "Fused Gromov-Wasserstein Graph Mixup for Graph-level Classifications".
+        In Thirty-seventh Conference on Neural Information Processing Systems.
+    """
+    nx = get_backend(M, C1, C2)
+
+    T, logv = BAPG_fused_gromov_wasserstein(
+        M, C1, C2, p, q, loss_fun, epsilon, symmetric, alpha, G0, max_iter,
+        tol, marginal_loss, verbose, log=True)
 
     logv['T'] = T
 
