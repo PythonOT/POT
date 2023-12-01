@@ -400,10 +400,10 @@ def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, lo
     nx = get_backend(*C, *m,)
 
     # Compute the mean barycenter
-    mb = nx.mean(m)
+    mb = nx.dot(weights, m)
 
     # Init the covariance barycenter
-    Cb = nx.mean(C, axis=0)
+    Cb = nx.mean(C * weights[:, None, None], axis=0)
 
     if weights is None:
         weights = nx.ones(len(C), type_as=C[0]) / len(C)
