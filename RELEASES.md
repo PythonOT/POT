@@ -1,6 +1,51 @@
 # Releases
 
-## 0.9.2dev
+## 0.9.2
+*December 2023*
+
+This new release contains several new features and bug fixes. Among the new features
+we have a new solver for estimation of nearest Brenier potentials (SSNB) that can be used for O mapping estimation (on small problems), new Bregman Alternated Projected Gradient solvers for GW and FGW, and new solvers for Bures-Wasserstein barycenters.  Finally we have a new exact line-search for (F)GW solvers with KL loss that can be used to improve the convergence of the solvers.
+
+We also have a new `LazyTensor` class that can be used to model OT plans and low rank tensors in large scale OT. This class is used y the new wrapper for `geomloss` Sinkhorn solver on empirical samples that can lead to x10/x100 speedups on CPU or GPU and have  a lazy implementation that allows solving very large problems of a few millions samples.
+
+We also have a new API for solving OT problems from empirical samples with `ot.solve_sample`  Finally we have a new API for Gromov-Wasserstein solvers with `ot.solve_gromov` function that centralizes most of the (F)GW methods with unified notation. Some example of how to use the new API below:
+
+```python
+# Generate random data
+xs, xt = np.random.randn(100, 2), np.random.randn(50, 2)
+
+# Solve OT problem with empirical samples
+sol = ot.solve_sample(xs, xt) # Exact OT betwen smaples with uniform weights
+sol = ot.solve_sample(xs, xt, wa, wb) # Exact OT with weights given by user 
+
+sol = ot.solve_sample(xs, xt, reg= 1, metric='euclidean') # sinkhorn with euclidean metric
+
+sol = ot.solve_sample(xs, xt, reg= 1, method='geomloss') # faster sinkhorn solver on CPU/GPU
+
+# Solve GW problem 
+Cs, Ct = ot.dist(xs, xs), ot.dist(xt, xt) # compute cost matrices
+sol = ot.solve_gromov(Cs,Ct) # Exact GW between samples with uniform weights
+
+# Solve FGW problem
+M = ot.dist(xs, xt) # compute cost matrix
+
+# Exact FGW between samples with uniform weights
+sol = ot.solve_gromov(Cs, Ct, M, loss='KL') # FGW with KL data fitting  
+
+
+# recover solutions objects
+P = sol.plan # OT plan
+u, v = sol.potentials # dual variables
+value = sol.value # OT value
+
+
+```
+
+Users are encouraged to use the new API but it might still be subjects to small changes before the release of POT 1.0 .
+This class is used in the new BAPG solvers for GW and FGW that can be used to solve large scale OT problems with a small memory footprint. 
+
+We also fixed a number of issues, the most pressing being a problem of GPU memory allocation when pytorch is installed that will not happen now thanks to Lazy initialization. We now also have the possibility to deactivate some backends which prvent python from importing them using environment variables. 
+
 
 #### New features
 + Added support for [Nearest Brenier Potentials (SSNB)](http://proceedings.mlr.press/v108/paty20a/paty20a.pdf) (PR #526) + minor fix (PR #535)
