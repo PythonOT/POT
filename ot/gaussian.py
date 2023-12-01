@@ -399,14 +399,14 @@ def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, lo
     """
     nx = get_backend(*C, *m,)
 
+    if weights is None:
+        weights = nx.ones(C.shape[0], type_as=C[0]) / C.shape[0]
+
     # Compute the mean barycenter
-    mb = nx.dot(weights, m)
+    mb = nx.sum(m * weights[:, None], axis=0)
 
     # Init the covariance barycenter
     Cb = nx.mean(C * weights[:, None, None], axis=0)
-
-    if weights is None:
-        weights = nx.ones(len(C), type_as=C[0]) / len(C)
 
     for it in range(num_iter):
         # fixed point update
