@@ -158,7 +158,6 @@ def test_sinkhorn_lpl1_transport_class(nx):
     assert mass_semi == 0, "semisupervised mode not working"
 
 
-@pytest.skip_backend("jax")
 @pytest.skip_backend("tf")
 def test_sinkhorn_l1l2_transport_class(nx):
     """test_sinkhorn_transport

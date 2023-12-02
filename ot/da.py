@@ -499,18 +499,13 @@ class BaseTransport(BaseEstimator):
                 if self.limit_max != np.infty:
                     self.limit_max = self.limit_max * nx.max(self.cost_)
 
-                # assumes labeled source samples occupy the first rows
-                # and labeled target samples occupy the first columns
-                classes = [c for c in nx.unique(ys) if c != -1]
-                for c in classes:
-                    idx_s = nx.where((ys != c) & (ys != -1))
-                    idx_t = nx.where(yt == c)
-
-                    # all the coefficients corresponding to a source sample
-                    # and a target sample :
-                    # with different labels get a infinite
-                    for j in idx_t[0]:
-                        self.cost_[idx_s[0], j] = self.limit_max
+                # xxx(okachaiev): add "ones_like"?
+                missing_labels = ys + nx.ones(ys.shape, type_as=ys)
+                # xxx(okachaiev): i guess we need better tests for the use case of -1 labels
+                missing_labels = nx.repeat(missing_labels[:, None], ys.shape[0], 1)
+                label_match = nx.repeat(ys[:, None], ys.shape[0], 1) - nx.repeat(yt[None, :], yt.shape[0], 0)
+                # xxx(okachaiev): can we have negative cost?
+                self.cost_ = nx.maximum(self.cost_, nx.abs(label_match) * nx.abs(missing_labels) * self.limit_max)
 
             # distribution estimation
             self.mu_s = self.distribution_estimation(Xs)
@@ -586,6 +581,7 @@ class BaseTransport(BaseEstimator):
                 transp = self.coupling_ / nx.sum(self.coupling_, axis=1)[:, None]
 
                 # set nans to 0
+                # xxx(okachaiev): replace with nan_to_num (add backend function)
                 transp[~ nx.isfinite(transp)] = 0
 
                 # compute transported samples
@@ -606,6 +602,7 @@ class BaseTransport(BaseEstimator):
                     # transport the source samples
                     transp = self.coupling_ / nx.sum(
                         self.coupling_, axis=1)[:, None]
+                    # xxx(okachaiev): replace with nan_to_num (add backend function)
                     transp[~ nx.isfinite(transp)] = 0
                     transp_Xs_ = nx.dot(transp, self.xt_)
 
@@ -645,26 +642,24 @@ class BaseTransport(BaseEstimator):
 
         # check the necessary inputs parameters are here
         if check_params(ys=ys):
-
-            ysTemp = label_normalization(nx.copy(ys))
-            classes = nx.unique(ysTemp)
-            n = len(classes)
-            D1 = nx.zeros((n, len(ysTemp)), type_as=self.coupling_)
-
             # perform label propagation
             transp = self.coupling_ / nx.sum(self.coupling_, axis=0)[None, :]
 
             # set nans to 0
+            # xxx(okachaiev): replace with nan_to_nums
             transp[~ nx.isfinite(transp)] = 0
 
-            for c in classes:
-                D1[int(c), ysTemp == c] = 1
+            ysTemp = label_normalization(nx.copy(ys))
+            labels_u, labels_idx = nx.unique(ysTemp, return_inverse=True)
+            n_labels = labels_u.shape[0]
+            unroll_labels_idx = nx.eye(n_labels, type_as=transp)[None, labels_idx].squeeze(0)
 
             # compute propagated labels
-            transp_ys = nx.dot(D1, transp)
+            transp_ys = nx.dot(unroll_labels_idx.T, transp)
 
             return transp_ys.T
 
+    # xxx(okachaiev): seems like a lot of code duplication
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None,
                           batch_size=128):
         r"""Transports target samples :math:`\mathbf{X_t}` onto source samples :math:`\mathbf{X_s}`
@@ -697,11 +692,11 @@ class BaseTransport(BaseEstimator):
         if check_params(Xt=Xt):
 
             if nx.array_equal(self.xt_, Xt):
-
                 # perform standard barycentric mapping
                 transp_ = self.coupling_.T / nx.sum(self.coupling_, 0)[:, None]
 
                 # set nans to 0
+                # xxx(okachaiev): replace with nan_to_nums
                 transp_[~ nx.isfinite(transp_)] = 0
 
                 # compute transported samples
@@ -721,6 +716,7 @@ class BaseTransport(BaseEstimator):
                     # transport the target samples
                     transp_ = self.coupling_.T / nx.sum(
                         self.coupling_, 0)[:, None]
+                    # xxx(okachaiev): replace with nan_to_nums
                     transp_[~ nx.isfinite(transp_)] = 0
                     transp_Xt_ = nx.dot(transp_, self.xs_)
 
@@ -750,25 +746,20 @@ class BaseTransport(BaseEstimator):
 
         # check the necessary inputs parameters are here
         if check_params(yt=yt):
-
-            ytTemp = label_normalization(nx.copy(yt))
-            classes = nx.unique(ytTemp)
-            n = len(classes)
-            D1 = nx.zeros((n, len(ytTemp)), type_as=self.coupling_)
-
             # perform label propagation
             transp = self.coupling_ / nx.sum(self.coupling_, 1)[:, None]
-
             # set nans to 0
             transp[~ nx.isfinite(transp)] = 0
 
-            for c in classes:
-                D1[int(c), ytTemp == c] = 1
+            ytTemp = label_normalization(nx.copy(yt))
+            # xxx(okachaiev): move this to a helper?
+            labels_u, labels_idx = nx.unique(ytTemp, return_inverse=True)
+            n_labels = labels_u.shape[0]
+            unroll_labels_idx = nx.eye(n_labels, type_as=transp)[None, labels_idx].squeeze(0)
 
             # compute propagated samples
-            transp_ys = nx.dot(D1, transp.T)
-
-            return transp_ys.T
+            transp_ys = nx.dot(unroll_labels_idx, transp)
+            return transp_ys
 
 
 class LinearTransport(BaseTransport):
