@@ -576,13 +576,11 @@ class BaseTransport(BaseEstimator):
         if check_params(Xs=Xs):
 
             if nx.array_equal(self.xs_, Xs):
-
                 # perform standard barycentric mapping
                 transp = self.coupling_ / nx.sum(self.coupling_, axis=1)[:, None]
 
                 # set nans to 0
-                # xxx(okachaiev): replace with nan_to_num (add backend function)
-                transp[~ nx.isfinite(transp)] = 0
+                transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
                 # compute transported samples
                 transp_Xs = nx.dot(transp, self.xt_)
@@ -600,10 +598,8 @@ class BaseTransport(BaseEstimator):
                     idx = nx.argmin(D0, axis=1)
 
                     # transport the source samples
-                    transp = self.coupling_ / nx.sum(
-                        self.coupling_, axis=1)[:, None]
-                    # xxx(okachaiev): replace with nan_to_num (add backend function)
-                    transp[~ nx.isfinite(transp)] = 0
+                    transp = self.coupling_ / nx.sum(self.coupling_, axis=1)[:, None]
+                    transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
                     transp_Xs_ = nx.dot(transp, self.xt_)
 
                     # define the transported points
@@ -646,8 +642,7 @@ class BaseTransport(BaseEstimator):
             transp = self.coupling_ / nx.sum(self.coupling_, axis=0)[None, :]
 
             # set nans to 0
-            # xxx(okachaiev): replace with nan_to_nums
-            transp[~ nx.isfinite(transp)] = 0
+            transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
             # compute propagated labels
             labels = label_normalization(nx.copy(ys))
@@ -656,7 +651,6 @@ class BaseTransport(BaseEstimator):
 
             return transp_ys.T
 
-    # xxx(okachaiev): seems like a lot of code duplication
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None,
                           batch_size=128):
         r"""Transports target samples :math:`\mathbf{X_t}` onto source samples :math:`\mathbf{X_s}`
@@ -693,8 +687,7 @@ class BaseTransport(BaseEstimator):
                 transp_ = self.coupling_.T / nx.sum(self.coupling_, 0)[:, None]
 
                 # set nans to 0
-                # xxx(okachaiev): replace with nan_to_nums
-                transp_[~ nx.isfinite(transp_)] = 0
+                transp_ = nx.nan_to_num(transp_, nan=0, posinf=0, neginf=0)
 
                 # compute transported samples
                 transp_Xt = nx.dot(transp_, self.xs_)
@@ -711,10 +704,8 @@ class BaseTransport(BaseEstimator):
                     idx = nx.argmin(D0, axis=1)
 
                     # transport the target samples
-                    transp_ = self.coupling_.T / nx.sum(
-                        self.coupling_, 0)[:, None]
-                    # xxx(okachaiev): replace with nan_to_nums
-                    transp_[~ nx.isfinite(transp_)] = 0
+                    transp_ = self.coupling_.T / nx.sum(self.coupling_, 0)[:, None]
+                    transp_ = nx.nan_to_num(transp_, nan=0, posinf=0, neginf=0)
                     transp_Xt_ = nx.dot(transp_, self.xs_)
 
                     # define the transported points
@@ -746,12 +737,12 @@ class BaseTransport(BaseEstimator):
             # perform label propagation
             transp = self.coupling_ / nx.sum(self.coupling_, 1)[:, None]
             # set nans to 0
-            transp[~ nx.isfinite(transp)] = 0
+            transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
             # compute propagated samples
             labels = label_normalization(nx.copy(yt))
-            masks = labels_to_masks(labels, nx=nx, type_as=transp).T
-            transp_ys = nx.dot(masks, transp.T)
+            masks = labels_to_masks(labels, nx=nx, type_as=transp)
+            transp_ys = nx.dot(masks.T, transp.T)
 
             return transp_ys.T
 
