@@ -390,7 +390,7 @@ def is_all_finite(*args):
     return all(not nx.any(~nx.isfinite(arg)) for arg in args)
 
 
-def label_normalization(y, start=0):
+def label_normalization(y, start=0, nx=None):
     r""" Transform labels to start at a given value
 
     Parameters
@@ -399,31 +399,31 @@ def label_normalization(y, start=0):
         The vector of labels to be normalized.
     start : int
         Desired value for the smallest label in :math:`\mathbf{y}` (default=0)
+    nx : Backend, optional
+        Backend to perform computations on. If omitted, the backend defaults to that of `y`.
 
     Returns
     -------
     y : array-like, shape (`n1`, )
         The input vector of labels normalized according to given start value.
     """
-    nx = get_backend(y)
-
+    if nx is None:
+        nx = get_backend(y)
     diff = nx.min(nx.unique(y)) - start
-    if diff != 0:
-        y -= diff
-    return y
+    return y if diff == 0 else (y - diff)
 
 
-def labels_to_masks(y, nx=None, type_as=None):
-    r"""Transforms (n_samples,) vector of labels into a (n_samples, n_labels) matrix of masks. 
+def labels_to_masks(y, type_as=None, nx=None):
+    r"""Transforms (n_samples,) vector of labels into a (n_samples, n_labels) matrix of masks.
 
     Parameters
     ----------
     y : array-like, shape (n_samples, )
         The vector of labels.
-    nx : Backend, optional
-        Backend to perform computations on. If omitted, the backend defaults to that of `y`.
     type_as : array_like
         Array of the same type of the expected output.
+    nx : Backend, optional
+        Backend to perform computations on. If omitted, the backend defaults to that of `y`.
 
     Returns
     -------

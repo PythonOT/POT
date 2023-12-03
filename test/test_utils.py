@@ -585,7 +585,7 @@ def test_lowrank_LazyTensor(nx):
     np.testing.assert_allclose(nx.to_numpy(T[:]), nx.to_numpy(T0))
 
 
-def test_label_to_mask_helper(nx):
+def test_labels_to_mask_helper(nx):
     y = np.array([1, 0, 2, 2, 1])
     out = np.array([
         [0, 1, 0],
@@ -597,3 +597,14 @@ def test_label_to_mask_helper(nx):
     y = nx.from_numpy(y)
     masks = ot.utils.labels_to_masks(y)
     np.testing.assert_array_equal(out, masks)
+
+
+def test_label_normalization(nx):
+    y = nx.from_numpy(np.arange(5) + 1)
+    out = np.arange(5)
+    # labels are shifted
+    y_normalized = ot.utils.label_normalization(y)
+    np.testing.assert_array_equal(out, y_normalized)
+    # labels are shifted but the shift if expected
+    y_normalized_start = ot.utils.label_normalization(y, start=1)
+    np.testing.assert_array_equal(y, y_normalized_start)

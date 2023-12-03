@@ -644,7 +644,7 @@ class BaseTransport(BaseEstimator):
             transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
             # compute propagated labels
-            labels = label_normalization(nx.copy(ys))
+            labels = label_normalization(ys)
             masks = labels_to_masks(labels, nx=nx, type_as=transp)
             transp_ys = nx.dot(masks.T, transp)
 
@@ -739,7 +739,7 @@ class BaseTransport(BaseEstimator):
             transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
             # compute propagated samples
-            labels = label_normalization(nx.copy(yt))
+            labels = label_normalization(yt)
             masks = labels_to_masks(labels, nx=nx, type_as=transp)
             transp_ys = nx.dot(masks.T, transp.T)
 
@@ -2126,7 +2126,7 @@ class JCPOTTransport(BaseTransport):
                 type_as=ys[0]
             )
             for i in range(len(ys)):
-                ysTemp = label_normalization(nx.copy(ys[i]))
+                ysTemp = label_normalization(ys[i])
                 classes = nx.unique(ysTemp)
                 n = len(classes)
                 ns = len(ysTemp)
@@ -2169,7 +2169,7 @@ class JCPOTTransport(BaseTransport):
         # check the necessary inputs parameters are here
         if check_params(yt=yt):
             transp_ys = []
-            ytTemp = label_normalization(nx.copy(yt))
+            ytTemp = label_normalization(yt)
             classes = nx.unique(ytTemp)
             n = len(classes)
             D1 = nx.zeros((n, len(ytTemp)), type_as=self.coupling_[0])
