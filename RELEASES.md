@@ -1,5 +1,10 @@
 # Releases
 
+## Next Release
+
+#### New features
++ Domain adaptation method `SinkhornL1l2Transport` now supports JAX backend (PR #587)
+
 ## 0.9.2dev
 
 #### New features
