@@ -782,10 +782,8 @@ class BaseEstimator(object):
         nx = get_backend(
             *[input_ for input_ in arrays if input_ is not None]
         )
-        if nx.__name__ in ("jax", "tf"):
-            raise TypeError(
-                """JAX or TF arrays have been received but domain
-                adaptation does not support those backend.""")
+        if nx.__name__ in ("tf",):
+            raise TypeError("Domain adaptation does not support TF backend.")
         self.nx = nx
         return nx
 
