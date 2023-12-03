@@ -501,7 +501,6 @@ class BaseTransport(BaseEstimator):
 
                 # zeros where source label is missing (masked with -1)
                 missing_labels = ys + nx.ones(ys.shape, type_as=ys)
-                # xxx(okachaiev): i guess we need better tests for the use case of -1 labels
                 missing_labels = nx.repeat(missing_labels[:, None], ys.shape[0], 1)
                 # zeros where labels match
                 label_match = ys[:, None] - yt[None, :]

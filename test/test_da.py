@@ -168,8 +168,11 @@ def test_sinkhorn_l1l2_transport_class(nx):
 
     Xs, ys = make_data_classif('3gauss', ns, random_state=42)
     Xt, yt = make_data_classif('3gauss2', nt, random_state=43)
+    # prepare semi-supervised labels
+    yt_semi = np.copy(yt)
+    yt_semi[np.arange(0, nt, 2)] = -1
 
-    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
+    Xs, ys, Xt, yt, yt_semi = nx.from_numpy(Xs, ys, Xt, yt, yt_semi)
 
     otda = ot.da.SinkhornL1l2Transport(max_inner_iter=500)
 
@@ -233,7 +236,7 @@ def test_sinkhorn_l1l2_transport_class(nx):
     n_unsup = nx.sum(otda_unsup.cost_)
 
     otda_semi = ot.da.SinkhornL1l2Transport()
-    otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+    otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt_semi)
     assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
     n_semisup = nx.sum(otda_semi.cost_)
 
@@ -242,11 +245,9 @@ def test_sinkhorn_l1l2_transport_class(nx):
 
     # check that the coupling forbids mass transport between labeled source
     # and labeled target samples
-    mass_semi = nx.sum(
-        otda_semi.coupling_[otda_semi.cost_ == otda_semi.limit_max])
+    mass_semi = nx.sum(otda_semi.coupling_[otda_semi.cost_ == otda_semi.limit_max])
     mass_semi = otda_semi.coupling_[otda_semi.cost_ == otda_semi.limit_max]
-    assert_allclose(nx.to_numpy(mass_semi), np.zeros(list(mass_semi.shape)),
-                    rtol=1e-9, atol=1e-9)
+    assert_allclose(nx.to_numpy(mass_semi), np.zeros_like(mass_semi), rtol=1e-9, atol=1e-9)
 
     # check everything runs well with log=True
     otda = ot.da.SinkhornL1l2Transport(log=True)
