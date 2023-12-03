@@ -436,7 +436,7 @@ def labels_to_masks(y, nx=None, type_as=None):
         type_as = y
     labels_u, labels_idx = nx.unique(y, return_inverse=True)
     n_labels = labels_u.shape[0]
-    masks = nx.eye(n_labels, type_as=type_as)[None, labels_idx].squeeze(0)
+    masks = nx.eye(n_labels, type_as=type_as)[labels_idx]
     return masks
 
 
