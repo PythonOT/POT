@@ -583,3 +583,17 @@ def test_lowrank_LazyTensor(nx):
     T = ot.utils.get_lowrank_lazytensor(X1, X2, diag_d, nx=nx)
 
     np.testing.assert_allclose(nx.to_numpy(T[:]), nx.to_numpy(T0))
+
+
+def test_label_to_mask_helper(nx):
+    y = np.array([1, 0, 2, 2, 1])
+    out = np.array([
+        [0, 1, 0],
+        [1, 0, 0],
+        [0, 0, 1],
+        [0, 0, 1],
+        [0, 1, 0],
+    ])
+    y = nx.from_numpy(y)
+    masks = ot.utils.labels_to_masks(y)
+    np.testing.assert_array_equal(out, masks)

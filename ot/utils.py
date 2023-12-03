@@ -415,7 +415,7 @@ def label_normalization(y, start=0):
 
 def labels_to_masks(y, nx=None, type_as=None):
     r"""Transforms (n_samples,) vector of labels into a (n_samples, n_labels) matrix of masks. 
-    
+
     Parameters
     ----------
     y : array-like, shape (n_samples, )
