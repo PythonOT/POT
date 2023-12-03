@@ -409,7 +409,7 @@ def label_normalization(y, start=0, nx=None):
     """
     if nx is None:
         nx = get_backend(y)
-    diff = nx.min(nx.unique(y)) - start
+    diff = nx.min(y) - start
     return y if diff == 0 else (y - diff)
 
 
