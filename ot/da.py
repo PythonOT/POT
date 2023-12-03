@@ -738,7 +738,7 @@ class BaseTransport(BaseEstimator):
             # set nans to 0
             transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
-            # compute propagated samples
+            # compute propagated labels
             labels = label_normalization(yt)
             masks = labels_to_masks(labels, nx=nx, type_as=transp)
             transp_ys = nx.dot(masks.T, transp.T)
