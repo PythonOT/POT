@@ -264,6 +264,8 @@ def test_empty_backend():
         nx.detach(M)
     with pytest.raises(NotImplementedError):
         nx.matmul(M, M.T)
+    with pytest.raises(NotImplementedError):
+        nx.nan_to_num(M)
 
 
 def test_func_backends(nx):
@@ -666,6 +668,11 @@ def test_func_backends(nx):
         A = nx.matmul(M1b, M2b)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("matmul broadcast")
+
+        vec = nx.from_numpy(np.array([1, np.nan, -1]))
+        vec = nx.nan_to_num(vec, nan=0)
+        lst_b.append(nx.to_numpy(vec))
+        lst_name.append("nan_to_num")
 
         assert not nx.array_equal(Mb, vb), "array_equal (shape)"
         assert nx.array_equal(Mb, Mb), "array_equal (elements) - expected true"
