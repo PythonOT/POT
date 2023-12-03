@@ -18,7 +18,7 @@ from .backend import get_backend
 from .bregman import sinkhorn, jcpot_barycenter
 from .lp import emd
 from .utils import unif, dist, kernel, cost_normalization, label_normalization, laplacian, dots
-from .utils import list_to_array, check_params, BaseEstimator, deprecated
+from .utils import BaseEstimator, check_params, deprecated, labels_to_masks, list_to_array
 from .unbalanced import sinkhorn_unbalanced
 from .gaussian import empirical_bures_wasserstein_mapping, empirical_gaussian_gromov_wasserstein_mapping
 from .optim import cg
@@ -499,12 +499,12 @@ class BaseTransport(BaseEstimator):
                 if self.limit_max != np.infty:
                     self.limit_max = self.limit_max * nx.max(self.cost_)
 
-                # xxx(okachaiev): add "ones_like"?
+                # zeros where source label is missing (masked with -1)
                 missing_labels = ys + nx.ones(ys.shape, type_as=ys)
                 # xxx(okachaiev): i guess we need better tests for the use case of -1 labels
                 missing_labels = nx.repeat(missing_labels[:, None], ys.shape[0], 1)
-                label_match = nx.repeat(ys[:, None], ys.shape[0], 1) - nx.repeat(yt[None, :], yt.shape[0], 0)
-                # xxx(okachaiev): can we have negative cost?
+                # zeros where labels match
+                label_match = ys[:, None] - yt[None, :]
                 self.cost_ = nx.maximum(self.cost_, nx.abs(label_match) * nx.abs(missing_labels) * self.limit_max)
 
             # distribution estimation
@@ -649,13 +649,10 @@ class BaseTransport(BaseEstimator):
             # xxx(okachaiev): replace with nan_to_nums
             transp[~ nx.isfinite(transp)] = 0
 
-            ysTemp = label_normalization(nx.copy(ys))
-            labels_u, labels_idx = nx.unique(ysTemp, return_inverse=True)
-            n_labels = labels_u.shape[0]
-            unroll_labels_idx = nx.eye(n_labels, type_as=transp)[None, labels_idx].squeeze(0)
-
             # compute propagated labels
-            transp_ys = nx.dot(unroll_labels_idx.T, transp)
+            labels = label_normalization(nx.copy(ys))
+            masks = labels_to_masks(labels, nx=nx, type_as=transp)
+            transp_ys = nx.dot(masks.T, transp)
 
             return transp_ys.T
 
@@ -751,15 +748,12 @@ class BaseTransport(BaseEstimator):
             # set nans to 0
             transp[~ nx.isfinite(transp)] = 0
 
-            ytTemp = label_normalization(nx.copy(yt))
-            # xxx(okachaiev): move this to a helper?
-            labels_u, labels_idx = nx.unique(ytTemp, return_inverse=True)
-            n_labels = labels_u.shape[0]
-            unroll_labels_idx = nx.eye(n_labels, type_as=transp)[None, labels_idx].squeeze(0)
-
             # compute propagated samples
-            transp_ys = nx.dot(unroll_labels_idx, transp)
-            return transp_ys
+            labels = label_normalization(nx.copy(yt))
+            masks = labels_to_masks(labels, nx=nx, type_as=transp).T
+            transp_ys = nx.dot(masks, transp.T)
+
+            return transp_ys.T
 
 
 class LinearTransport(BaseTransport):

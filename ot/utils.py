@@ -413,6 +413,33 @@ def label_normalization(y, start=0):
     return y
 
 
+def labels_to_masks(y, nx=None, type_as=None):
+    r"""Transforms (n_samples,) vector of labels into a (n_samples, n_labels) matrix of masks. 
+    
+    Parameters
+    ----------
+    y : array-like, shape (n_samples, )
+        The vector of labels.
+    nx : Backend, optional
+        Backend to perform computations on. If omitted, the backend defaults to that of `y`.
+    type_as : array_like
+        Array of the same type of the expected output.
+
+    Returns
+    -------
+    masks : array-like, shape (n_samples, n_labels)
+        The (n_samples, n_labels) matrix of label masks.
+    """
+    if nx is None:
+        nx = get_backend(y)
+    if type_as is None:
+        type_as = y
+    labels_u, labels_idx = nx.unique(y, return_inverse=True)
+    n_labels = labels_u.shape[0]
+    masks = nx.eye(n_labels, type_as=type_as)[None, labels_idx].squeeze(0)
+    return masks
+
+
 def parmap(f, X, nprocs="default"):
     r""" parallel map for multiprocessing.
     The function has been deprecated and only performs a regular map.
