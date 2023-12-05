@@ -14,15 +14,32 @@ from .backend import get_backend
 
 def compute_lr_sqeuclidean_matrix(X_s, X_t, nx=None):
     """
-    Compute low rank decomposition of a sqeuclidean cost matrix.
-    This function won't work for other metrics.
+    Compute the low rank decomposition of a squared euclidean distance matrix.
+    This function won't work for any other distance metric.
 
-    See "Section 3.5, proposition 1" of the paper
+    See "Section 3.5, proposition 1"
+
+    Parameters
+    ----------
+    X_s : array-like, shape (n_samples_a, dim)
+        samples in the source domain
+    X_t : array-like, shape (n_samples_b, dim)
+        samples in the target domain
+    nx : POT backend, default none
+
+
+    Returns
+    ----------
+    M1 : array-like, shape (n_samples_a, dim+2)
+        First low rank decomposition of the distance matrix
+    M2 : array-like, shape (n_samples_b, dim+2)
+        Second low rank decomposition of the distance matrix
+
 
     References
     ----------
-    .. [63] Scetbon, M., Cuturi, M., & Peyré, G (2021).
-        "Low-Rank Sinkhorn Factorization" arXiv preprint arXiv:2103.04737.
+    .. [65] Scetbon, M., Cuturi, M., & Peyré, G. (2021).
+    "Low-rank Sinkhorn factorization". In International Conference on Machine Learning.
     """
 
     if nx is None:
@@ -44,14 +61,49 @@ def compute_lr_sqeuclidean_matrix(X_s, X_t, nx=None):
     return M1, M2
 
 
-def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=None):
+def _LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=None):
     """
     Implementation of the Dykstra algorithm for the Low Rank sinkhorn OT solver.
+    This function is specific to lowrank_sinkhorn.
+
+    Parameters
+    ----------
+    eps1 : array-like, shape (n_samples_a, r)
+        First input parameter of the Dykstra algorithm
+    eps2 : array-like, shape (n_samples_b, r)
+        Second input parameter of the Dykstra algorithm
+    eps3 : array-like, shape (r,)
+        Third input parameter of the Dykstra algorithm
+    p1 : array-like, shape (n_samples_a,)
+        Samples weights in the source domain (same as "a" in lowrank_sinkhorn)
+    p2 : array-like, shape (n_samples_b,)
+        Samples weights in the target domain (same as "b" in lowrank_sinkhorn)
+    alpha: int
+        Lower bound for the weight vector g (same as "alpha" in lowrank_sinkhorn)
+    stopThr : float
+        Stop threshold on error
+    numItermax : int
+        Max number of iterations
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
+    nx : default None
+        POT backend
+
+
+    Returns
+    ----------
+    Q : array-like, shape (n_samples_a, r)
+        Dykstra update of the first low-rank matrix decomposition Q
+    R: array-like, shape (n_samples_b, r)
+        Dykstra update of the Second low-rank matrix decomposition R
+    g : array-like, shape (r, )
+        Dykstra update of the weight vector g
+
 
     References
     ----------
-    .. [63] Scetbon, M., Cuturi, M., & Peyré, G (2021).
-        "Low-Rank Sinkhorn Factorization" arXiv preprint arXiv:2103.04737.
+    .. [65] Scetbon, M., Cuturi, M., & Peyré, G. (2021).
+    "Low-rank Sinkhorn factorization". In International Conference on Machine Learning.
 
     """
 
@@ -122,7 +174,7 @@ def LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=No
     return Q, R, g
 
 
-def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
+def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None,
                      numItermax=1000, stopThr=1e-9, warn=True, log=False):
     r"""
     Solve the entropic regularization optimal transport problem under low-nonnegative rank constraints.
@@ -141,9 +193,6 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (histograms, both sum to 1)
     - :math: `r` is the rank of the OT plan
     - :math: `\mathcal{C(a,b,r)}` are the low-rank couplings of the OT problem
-        \mathcal{C(a,b,r)} = \mathcal{C_1(a,b,r)} \cap \mathcal{C_2(r)} with
-            \mathcal{C_1(a,b,r)} = \{ (Q,R,g) s.t Q\mathbb{1}_r = a, R^T \mathbb{1}_m = b \}
-            \mathcal{C_2(r)} = \{ (Q,R,g) s.t Q\mathbb{1}_n = R^T \mathbb{1}_m = g \}
 
 
     Parameters
@@ -158,10 +207,10 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
         samples weights in the target domain
     reg : float, optional
         Regularization term >0
-    rank: int, default "auto"
-        Nonnegative rank of the OT plan
-    alpha: int, default "auto" (1e-10)
-        Lower bound for the weight vector g (>0 and <1/r)
+    rank: int, optional. Default is None. (>0)
+        Nonnegative rank of the OT plan. If None, min(ns, nt) is considered.
+    alpha: int, optional. Default is None. (>0 and <1/r)
+        Lower bound for the weight vector g. If None, 1e-10 is considered
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -191,7 +240,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
 
     References
     ----------
-    .. [63] Scetbon, M., Cuturi, M., & Peyré, G (2021).
+    .. [65] Scetbon, M., Cuturi, M., & Peyré, G (2021).
         "Low-Rank Sinkhorn Factorization" arXiv preprint arXiv:2103.04737.
 
     """
@@ -208,10 +257,10 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
 
     # Compute rank (see Section 3.1, def 1)
     r = rank
-    if rank == "auto":
+    if rank is None:
         r = min(ns, nt)
 
-    if alpha == "auto":
+    if alpha is None:
         alpha = 1e-10
 
     # Dykstra algorithm won't converge if 1/rank < alpha (alpha is the lower bound for 1/rank)
@@ -219,6 +268,9 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
     if 1 / r < alpha:
         raise ValueError("alpha ({a}) should be smaller than 1/rank ({r}) for the Dykstra algorithm to converge.".format(
             a=alpha, r=1 / rank))
+
+    if r <= 0:
+        raise ValueError("The rank parameter cannot have a negative value")
 
     # Low rank decomposition of the sqeuclidean cost matrix (A, B)
     M1, M2 = compute_lr_sqeuclidean_matrix(X_s, X_t, nx=None)
@@ -255,7 +307,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank="auto", alpha="auto",
         omega = nx.diag(nx.dot(Q.T, CR))
         eps3 = nx.exp(gamma * omega / (g**2) - (gamma * reg - 1) * nx.log(g))
 
-        Q, R, g = LR_Dysktra(
+        Q, R, g = _LR_Dysktra(
             eps1, eps2, eps3, a, b, alpha, stopThr, numItermax, warn, nx
         )
         Q = Q + 1e-16

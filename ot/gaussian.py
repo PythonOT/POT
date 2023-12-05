@@ -344,6 +344,188 @@ def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
         return W
 
 
+def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, log=False):
+    r"""Return OT linear operator between samples.
+
+    The function estimates the optimal barycenter of the
+    empirical distributions. This is equivalent to resolving the fixed point
+     algorithm for multiple Gaussian distributions :math:`\left{\mathcal{N}(\mu,\Sigma)\right}_{i=1}^n`
+    :ref:`[1] <references-OT-mapping-linear-barycenter>`.
+
+    The barycenter still following a Gaussian distribution :math:`\mathcal{N}(\mu_b,\Sigma_b)`
+    where :
+
+    .. math::
+        \mu_b = \sum_{i=1}^n w_i \mu_i
+
+    And the barycentric covariance is the solution of the following fixed-point algorithm:
+
+    .. math::
+        \Sigma_b = \sum_{i=1}^n w_i \left(\Sigma_b^{1/2}\Sigma_i^{1/2}\Sigma_b^{1/2}\right)^{1/2}
+
+
+    Parameters
+    ----------
+    m : array-like (k,d)
+        mean of k distributions
+    C : array-like (k,d,d)
+        covariance of k distributions
+    weights : array-like (k), optional
+        weights for each distribution
+    num_iter : int, optional
+        number of iteration for the fixed point algorithm
+    eps : float, optional
+        tolerance for the fixed point algorithm
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    mb : (d,) array-like
+        mean of the barycenter
+    Cb : (d, d) array-like
+        covariance of the barycenter
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    .. _references-OT-mapping-linear-barycenter:
+    References
+    ----------
+    .. [1] M. Agueh and G. Carlier, "Barycenters in the Wasserstein space",
+        SIAM Journal on Mathematical Analysis, vol. 43, no. 2, pp. 904-924,
+        2011.
+    """
+    nx = get_backend(*C, *m,)
+
+    if weights is None:
+        weights = nx.ones(C.shape[0], type_as=C[0]) / C.shape[0]
+
+    # Compute the mean barycenter
+    mb = nx.sum(m * weights[:, None], axis=0)
+
+    # Init the covariance barycenter
+    Cb = nx.mean(C * weights[:, None, None], axis=0)
+
+    for it in range(num_iter):
+        # fixed point update
+        Cb12 = nx.sqrtm(Cb)
+
+        Cnew = Cb12 @ C @ Cb12
+        C_ = []
+        for i in range(len(C)):
+            C_.append(nx.sqrtm(Cnew[i]))
+        Cnew = nx.stack(C_, axis=0)
+        Cnew *= weights[:, None, None]
+        Cnew = nx.sum(Cnew, axis=0)
+
+        # check convergence
+        diff = nx.norm(Cb - Cnew)
+        if diff <= eps:
+            break
+        Cb = Cnew
+    else:
+        print("Dit not converge.")
+
+    if log:
+        log = {}
+        log['num_iter'] = it
+        log['final_diff'] = diff
+        return mb, Cb, log
+    else:
+        return mb, Cb
+
+
+def empirical_bures_wasserstein_barycenter(
+    X, reg=1e-6, weights=None, num_iter=1000, eps=1e-7,
+    w=None, bias=True, log=False
+):
+    r"""Return OT linear operator between samples.
+
+    The function estimates the optimal barycenter of the
+    empirical distributions. This is equivalent to resolving the fixed point
+     algorithm for multiple Gaussian distributions :math:`\left{\mathcal{N}(\mu,\Sigma)\right}_{i=1}^n`
+    :ref:`[1] <references-OT-mapping-linear-barycenter>`.
+
+    The barycenter still following a Gaussian distribution :math:`\mathcal{N}(\mu_b,\Sigma_b)`
+    where :
+
+    .. math::
+        \mu_b = \sum_{i=1}^n w_i \mu_i
+
+    And the barycentric covariance is the solution of the following fixed-point algorithm:
+
+    .. math::
+        \Sigma_b = \sum_{i=1}^n w_i \left(\Sigma_b^{1/2}\Sigma_i^{1/2}\Sigma_b^{1/2}\right)^{1/2}
+
+
+    Parameters
+    ----------
+    X : list of array-like (n,d)
+        samples in each distribution
+    reg : float,optional
+        regularization added to the diagonals of covariances (>0)
+    weights : array-like (n,), optional
+        weights for each distribution
+    num_iter : int, optional
+        number of iteration for the fixed point algorithm
+    eps : float, optional
+        tolerance for the fixed point algorithm
+    w : list of array-like (n,), optional
+        weights for each sample in each distribution
+    bias: boolean, optional
+        estimate bias :math:`\mathbf{b}` else :math:`\mathbf{b} = 0` (default:True)
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    mb : (d,) array-like
+        mean of the barycenter
+    Cb : (d, d) array-like
+        covariance of the barycenter
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    .. _references-OT-mapping-linear-barycenter:
+    References
+    ----------
+    .. [1] M. Agueh and G. Carlier, "Barycenters in the Wasserstein space",
+        SIAM Journal on Mathematical Analysis, vol. 43, no. 2, pp. 904-924,
+        2011.
+    """
+    X = list_to_array(*X)
+    nx = get_backend(*X)
+
+    k = len(X)
+    d = [X[i].shape[1] for i in range(k)]
+
+    if bias:
+        m = [nx.mean(X[i], axis=0)[None, :] for i in range(k)]
+        X = [X[i] - m[i] for i in range(k)]
+    else:
+        m = [nx.zeros((1, d[i]), type_as=X[i]) for i in range(k)]
+
+    if w is None:
+        w = [nx.ones((X[i].shape[0], 1), type_as=X[i]) / X[i].shape[0] for i in range(k)]
+
+    C = [
+        nx.dot((X[i] * w[i]).T, X[i]) / nx.sum(w[i]) + reg * nx.eye(d[i], type_as=X[i])
+        for i in range(k)
+    ]
+    m = nx.stack(m, axis=0)
+    C = nx.stack(C, axis=0)
+    if log:
+        mb, Cb, log = bures_wasserstein_barycenter(m, C, weights=weights, num_iter=num_iter, eps=eps, log=log)
+        return mb, Cb, log
+    else:
+        mb, Cb = bures_wasserstein_barycenter(m, C, weights=weights, num_iter=num_iter, eps=eps, log=log)
+        return mb, Cb
+
+
 def gaussian_gromov_wasserstein_distance(Cov_s, Cov_t, log=False):
     r""" Return the Gaussian Gromov-Wasserstein value from [57].
 
