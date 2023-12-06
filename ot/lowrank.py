@@ -8,8 +8,126 @@ Low rank OT solvers
 
 
 import warnings
-from .utils import unif, get_lowrank_lazytensor
+from .utils import unif, dist, get_lowrank_lazytensor
 from .backend import get_backend
+from .bregman import sinkhorn
+from sklearn.cluster import KMeans
+
+# ADD FUNCTION FOR LOW RANK INIT [WIP]
+
+
+def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init=None, random_state=None, nx=None):
+    """
+    Implementation of different initialization strategies for the low rank sinkhorn solver (Q ,R, g).
+
+    Parameters
+    ----------
+    X_s : array-like, shape (n_samples_a, dim)
+        samples in the source domain
+    X_t : array-like, shape (n_samples_b, dim)
+        samples in the target domain
+    a : array-like, shape (n_samples_a,)
+        samples weights in the source domain
+    b : array-like, shape (n_samples_b,)
+        samples weights in the target domain
+    rank : int, optional. Default is None. (>0)
+        Nonnegative rank of the OT plan.
+    init : str, default is 'kmeans'
+        Initialization strategy for Q, R and g. 'random', 'trivial' or 'kmeans'
+    reg_init : float, optional. Default is None. (>0)
+        Regularization term for a 'kmeans' init. If None, 1 is considered.
+    random_state : default None
+        Random state for a "random" or 'kmeans' init strategy
+    nx : default None
+        POT backend
+
+
+    Returns
+    ---------
+    Q : array-like, shape (n_samples_a, r)
+        Init for the first low-rank matrix decomposition of the OT plan (Q)
+    R: array-like, shape (n_samples_b, r)
+        Init for the second low-rank matrix decomposition of the OT plan (R)
+    g : array-like, shape (r, )
+        Init for the weight vector of the low-rank decomposition of the OT plan (g)
+
+    """
+
+    if nx is None:
+        nx = get_backend(X_s, X_t, a, b)
+
+    if reg_init is None:
+        reg_init = 0.1
+
+    ns = X_s.shape[0]
+    nt = X_t.shape[0]
+    r = rank
+
+    if init == "random":
+        nx.seed(seed=random_state)
+
+        # Init g
+        g = nx.abs(nx.randn(r, type_as=X_s)) + 1
+        g = g / nx.sum(g)
+
+        # Init Q
+        Q = nx.abs(nx.randn(ns, r, type_as=X_s)) + 1
+        Q = (Q.T * (a / nx.sum(Q, axis=1))).T
+
+        # Init R
+        R = nx.abs(nx.randn(nt, rank, type_as=X_s)) + 1
+        R = (R.T * (b / nx.sum(R, axis=1))).T
+
+    if init == "trivial":
+        # Init g
+        g = nx.ones(rank) / rank
+
+        lambda_1 = min(nx.min(a), nx.min(g), nx.min(b)) / 2
+        a1 = nx.arange(start=1, stop=ns + 1, type_as=X_s)
+        a1 = a1 / nx.sum(a1)
+        a2 = (a - lambda_1 * a1) / (1 - lambda_1)
+
+        b1 = nx.arange(start=1, stop=nt + 1, type_as=X_s)
+        b1 = b1 / nx.sum(b1)
+        b2 = (b - lambda_1 * b1) / (1 - lambda_1)
+
+        g1 = nx.arange(start=1, stop=rank + 1, type_as=X_s)
+        g1 = g1 / nx.sum(g1)
+        g2 = (g - lambda_1 * g1) / (1 - lambda_1)
+
+        # Init Q
+        Q1 = lambda_1 * nx.dot(a1[:, None], nx.reshape(g1, (1, -1)))
+        Q2 = (1 - lambda_1) * nx.dot(a2[:, None], nx.reshape(g2, (1, -1)))
+        Q = Q1 + Q2
+
+        # Init R
+        R1 = lambda_1 * nx.dot(b1[:, None], nx.reshape(g1, (1, -1)))
+        R2 = (1 - lambda_1) * nx.dot(b2[:, None], nx.reshape(g2, (1, -1)))
+        R = R1 + R2
+
+    if init == "kmeans":
+        # Init g
+        g = nx.ones(rank, type_as=X_s) / rank
+
+        # Init Q
+        kmeans_Xs = KMeans(n_clusters=rank, random_state=random_state, n_init="auto")
+        kmeans_Xs.fit(X_s)
+        Z_Xs = nx.from_numpy(kmeans_Xs.cluster_centers_)
+        C_Xs = dist(X_s, Z_Xs)  # shape (ns, rank)
+        C_Xs = C_Xs / nx.max(C_Xs)
+        Q = sinkhorn(a, g, C_Xs, reg=reg_init, numItermax=10000, stopThr=1e-3)
+
+        # Init R
+        kmeans_Xt = KMeans(n_clusters=rank, random_state=random_state, n_init="auto")
+        kmeans_Xt.fit(X_t)
+        Z_Xt = nx.from_numpy(kmeans_Xt.cluster_centers_)
+        C_Xt = dist(X_t, Z_Xt)  # shape (nt, rank)
+        C_Xt = C_Xt / nx.max(C_Xt)
+        R = sinkhorn(b, g, C_Xt, reg=reg_init, numItermax=10000, stopThr=1e-3)
+
+    return Q, R, g
+
+##################################################################################
 
 
 def compute_lr_sqeuclidean_matrix(X_s, X_t, nx=None):
@@ -25,7 +143,8 @@ def compute_lr_sqeuclidean_matrix(X_s, X_t, nx=None):
         samples in the source domain
     X_t : array-like, shape (n_samples_b, dim)
         samples in the target domain
-    nx : POT backend, default none
+    nx : default None
+        POT backend
 
 
     Returns
@@ -175,6 +294,7 @@ def _LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=N
 
 
 def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None,
+                     init="kmeans", reg_init=None, seed_init=None,
                      numItermax=1000, stopThr=1e-9, warn=True, log=False):
     r"""
     Solve the entropic regularization optimal transport problem under low-nonnegative rank constraints.
@@ -207,10 +327,16 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None,
         samples weights in the target domain
     reg : float, optional
         Regularization term >0
-    rank: int, optional. Default is None. (>0)
+    rank : int, optional. Default is None. (>0)
         Nonnegative rank of the OT plan. If None, min(ns, nt) is considered.
-    alpha: int, optional. Default is None. (>0 and <1/r)
+    alpha : int, optional. Default is None. (>0 and <1/r)
         Lower bound for the weight vector g. If None, 1e-10 is considered
+    init : str, optional. Default is 'kmeans'
+        Initialization strategy for Q, R, g. 'random', 'trivial' or 'kmeans'
+    reg_init : float, optional. Default is None. (>0)
+        Regularization term for a 'kmeans' init. If None, 1 is considered.
+    seed_init : int, optional. Default is None. (>0)
+        Random state for a 'random' or 'kmeans' init strategy.
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -222,7 +348,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None,
 
 
     Returns
-    -------
+    ---------
     lazy_plan : LazyTensor()
         OT plan in a LazyTensor object of shape (shape_plan)
         See :any:`LazyTensor` for more information.
@@ -282,10 +408,11 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None,
     )
     gamma = 1 / (2 * L)
 
+    if reg_init is None:
+        reg_init = 1
+
     # Initialize the low rank matrices Q, R, g
-    Q = nx.ones((ns, r), type_as=a)
-    R = nx.ones((nt, r), type_as=a)
-    g = nx.ones(r, type_as=a)
+    Q, R, g = _init_lr_sinkhorn(X_s, X_t, a, b, r, init, reg_init, seed_init, nx=nx)
     k = 100
 
     # -------------------------- Low rank algorithm ------------------------------

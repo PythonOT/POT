@@ -52,6 +52,24 @@ def test_lowrank_sinkhorn():
         ot.lowrank.lowrank_sinkhorn(X_s, X_t, a, b, reg=0.1, stopThr=0, numItermax=1)
 
 
+@pytest.mark.parametrize(("init"), ("random", "trivial", "kmeans"))
+def test_lowrank_sinkhorn_init(init):
+    # test lowrank inits
+    n = 100
+    a = ot.unif(n)
+    b = ot.unif(n)
+
+    X_s = np.reshape(1.0 * np.arange(n), (n, 1))
+    X_t = np.reshape(1.0 * np.arange(n), (n, 1))
+
+    Q, R, g, log = ot.lowrank.lowrank_sinkhorn(X_s, X_t, a, b, reg=0.1, log=True, init=init, reg_init=1)
+    P = log["lazy_plan"][:]
+
+    # check constraints for P
+    np.testing.assert_allclose(a, P.sum(1), atol=1e-05)
+    np.testing.assert_allclose(b, P.sum(0), atol=1e-05)
+
+
 @pytest.mark.parametrize(("alpha, rank"), ((0.8, 2), (0.5, 3), (0.2, 6)))
 def test_lowrank_sinkhorn_alpha_error(alpha, rank):
     # Test warning for value of alpha
@@ -63,9 +81,7 @@ def test_lowrank_sinkhorn_alpha_error(alpha, rank):
     X_t = np.reshape(1.0 * np.arange(0, n), (n, 1))
 
     with pytest.raises(ValueError):
-        ot.lowrank.lowrank_sinkhorn(
-            X_s, X_t, a, b, reg=0.1, rank=rank, alpha=alpha, warn=False
-        )
+        ot.lowrank.lowrank_sinkhorn(X_s, X_t, a, b, reg=0.1, rank=rank, alpha=alpha, warn=False)
 
 
 @pytest.skip_backend('tf')
