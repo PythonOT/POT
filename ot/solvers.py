@@ -22,6 +22,7 @@ from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
 from .partial import partial_gromov_wasserstein2, entropic_partial_gromov_wasserstein2
 from .gaussian import empirical_bures_wasserstein_distance
 from .factored import factored_optimal_transport
+from .lowrank import lowrank_sinkhorn
 
 lst_method_lazy = ['1d', 'gaussian', 'lowrank', 'factored', 'geomloss', 'geomloss_auto', 'geomloss_tensorized', 'geomloss_online', 'geomloss_multiscale']
 
@@ -1244,6 +1245,25 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
 
             value_linear = log['costa'] + log['costb']
             value = value_linear  # TODO add reg term
+            lazy_plan = log['lazy_plan']
+            if not lazy0:  # store plan if not lazy
+                plan = lazy_plan[:]
+
+        elif method == "lowrank":
+
+            if not metric.lower() in ['sqeuclidean']:
+                raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
+
+            if max_iter is None:
+                max_iter = 1000
+            if tol is None:
+                tol = 1e-9
+            if reg is None:
+                reg = 0
+
+            Q, R, g, log = lowrank_sinkhorn(X_a, X_b, reg=reg, a=a, b=b, numItermax=max_iter, stopThr=tol, log=True)
+            value = log['value']
+            value_linear = log['value_linear']
             lazy_plan = log['lazy_plan']
             if not lazy0:  # store plan if not lazy
                 plan = lazy_plan[:]
