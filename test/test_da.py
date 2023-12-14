@@ -7,7 +7,6 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 import pytest
-import warnings
 
 import ot
 from ot.datasets import make_data_classif
