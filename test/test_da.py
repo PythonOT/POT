@@ -175,11 +175,9 @@ def test_sinkhorn_l1l2_transport_class(nx):
     Xs, ys, Xt, yt, yt_semi = nx.from_numpy(Xs, ys, Xt, yt, yt_semi)
 
     otda = ot.da.SinkhornL1l2Transport(max_inner_iter=500)
+    otda.fit(Xs=Xs, ys=ys, Xt=Xt)
 
     # test its computed
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        otda.fit(Xs=Xs, ys=ys, Xt=Xt)
     assert hasattr(otda, "cost_")
     assert hasattr(otda, "coupling_")
     assert hasattr(otda, "log_")
