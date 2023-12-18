@@ -22,8 +22,10 @@ API and modules
    dr
    factored
    gaussian
+   gnn
    gromov
    lp
+   mapping
    optim
    partial
    plot

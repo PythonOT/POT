@@ -4,18 +4,32 @@
 
 # License: MIT License
 
-import pytest
-from ot.backend import jax, tf
-from ot.backend import get_backend_list
 import functools
+import os
+import pytest
+
+from ot.backend import get_backend_list, jax, tf
+
 
 if jax:
+    os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
     from jax.config import config
     config.update("jax_enable_x64", True)
 
 if tf:
+    # make sure TF doesn't allocate entire GPU
+    import tensorflow as tf
+    physical_devices = tf.config.list_physical_devices('GPU')
+    for device in physical_devices:
+        try:
+            tf.config.experimental.set_memory_growth(device, True)
+        except Exception:
+            pass
+
+    # allow numpy API for TF
     from tensorflow.python.ops.numpy_ops import np_config
     np_config.enable_numpy_behavior()
+
 
 backend_list = get_backend_list()
 

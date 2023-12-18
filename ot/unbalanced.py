@@ -5,6 +5,8 @@ Regularized Unbalanced OT solvers
 
 # Author: Hicham Janati <hicham.janati@inria.fr>
 #         Laetitia Chapel <laetitia.chapel@univ-ubs.fr>
+#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
+#
 # License: MIT License
 
 from __future__ import division
@@ -14,11 +16,11 @@ import numpy as np
 from scipy.optimize import minimize, Bounds
 
 from .backend import get_backend
-from .utils import list_to_array
-# from .utils import unif, dist
+from .utils import list_to_array, get_parameter_pair
 
 
-def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
+def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
+                        reg_type="entropy", warmstart=None, numItermax=1000,
                         stopThr=1e-6, verbose=False, log=False, **kwargs):
     r"""
     Solve the unbalanced entropic regularization optimal transport problem
@@ -27,9 +29,10 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma \ \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg}\cdot\Omega(\gamma) +
-        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
-        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
+        W = \min_\gamma \ \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot \Omega(\gamma) +
+        \mathrm{reg_{m1}} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
+        \mathrm{reg_{m2}} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
         s.t.
              \gamma \geq 0
@@ -37,7 +40,7 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
-    - :math:`\Omega` is the entropic regularization term, :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\Omega` is the entropic regularization term, can be either KL divergence or negative entropy
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - KL is the Kullback-Leibler divergence
 
@@ -56,11 +59,26 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
         loss matrix
     reg : float
         Entropy regularization term > 0
-    reg_m: float
-        Marginal relaxation term > 0
+    reg_m: float or indexable object of length 1 or 2
+        Marginal relaxation term.
+        If reg_m is a scalar or an indexable object of length 1,
+        then the same reg_m is applied to both marginal relaxations.
+        The entropic balanced OT can be recovered using `reg_m=float("inf")`.
+        For semi-relaxed case, use either
+        `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
+        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
     method : str
-        method used for the solver either 'sinkhorn',  'sinkhorn_stabilized' or
+        method used for the solver either 'sinkhorn', 'sinkhorn_stabilized' or
         'sinkhorn_reg_scaling', see those function for specific parameters
+    reg_type : string, optional
+        Regularizer term. Can take two values:
+        'entropy' (negative entropy)
+        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`, or
+        'kl' (Kullback-Leibler)
+        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors).
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -92,9 +110,8 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
     >>> b=[.5, .5]
     >>> M=[[0., 1.], [1., 0.]]
     >>> ot.sinkhorn_unbalanced(a, b, M, 1, 1)
-    array([[0.51122823, 0.18807035],
-           [0.18807035, 0.51122823]])
-
+    array([[0.51122814, 0.18807032],
+           [0.18807032, 0.51122814]])
 
     .. _references-sinkhorn-unbalanced:
     References
@@ -126,21 +143,21 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
     """
 
     if method.lower() == 'sinkhorn':
-        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m,
-                                         numItermax=numItermax,
+        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                         warmstart, numItermax=numItermax,
                                          stopThr=stopThr, verbose=verbose,
                                          log=log, **kwargs)
 
     elif method.lower() == 'sinkhorn_stabilized':
-        return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m,
-                                              numItermax=numItermax,
+        return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                              warmstart, numItermax=numItermax,
                                               stopThr=stopThr,
                                               verbose=verbose,
                                               log=log, **kwargs)
     elif method.lower() in ['sinkhorn_reg_scaling']:
-        warnings.warn('Method not implemented yet. Using classic Sinkhorn Knopp')
-        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m,
-                                         numItermax=numItermax,
+        warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
+        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                         warmstart, numItermax=numItermax,
                                          stopThr=stopThr, verbose=verbose,
                                          log=log, **kwargs)
     else:
@@ -148,8 +165,8 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn', numItermax=1000,
 
 
 def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
-                         numItermax=1000, stopThr=1e-6, verbose=False,
-                         log=False, **kwargs):
+                         reg_type="entropy", warmstart=None, numItermax=1000,
+                         stopThr=1e-6, verbose=False, log=False, **kwargs):
     r"""
     Solve the entropic regularization unbalanced optimal transport problem and
     return the loss
@@ -157,17 +174,17 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg}\cdot\Omega(\gamma) +
-        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
-        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
+        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot \Omega(\gamma) +
+        \mathrm{reg_{m1}} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
+        \mathrm{reg_{m2}} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
         s.t.
              \gamma\geq 0
-
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
-    - :math:`\Omega` is the entropic regularization term, :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\Omega` is the entropic regularization term, can be either KL divergence or negative entropy
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - KL is the Kullback-Leibler divergence
 
@@ -186,11 +203,26 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
         loss matrix
     reg : float
         Entropy regularization term > 0
-    reg_m: float
-        Marginal relaxation term > 0
+    reg_m: float or indexable object of length 1 or 2
+        Marginal relaxation term.
+        If reg_m is a scalar or an indexable object of length 1,
+        then the same reg_m is applied to both marginal relaxations.
+        The entropic balanced OT can be recovered using `reg_m=float("inf")`.
+        For semi-relaxed case, use either
+        `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
+        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
     method : str
-        method used for the solver either 'sinkhorn',  'sinkhorn_stabilized' or
-        'sinkhorn_reg_scaling', see those function for specific parameters
+        method used for the solver either 'sinkhorn', 'sinkhorn_stabilized' or
+        'sinkhorn_reg_scaling', see those function for specific parameterss
+    reg_type : string, optional
+        Regularizer term. Can take two values:
+        'entropy' (negative entropy)
+        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`, or
+        'kl' (Kullback-Leibler)
+        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors).
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -212,12 +244,12 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     --------
 
     >>> import ot
+    >>> import numpy as np
     >>> a=[.5, .10]
     >>> b=[.5, .5]
     >>> M=[[0., 1.],[1., 0.]]
-    >>> ot.unbalanced.sinkhorn_unbalanced2(a, b, M, 1., 1.)
-    array([0.31912866])
-
+    >>> np.round(ot.unbalanced.sinkhorn_unbalanced2(a, b, M, 1., 1.), 8)
+    0.31912858
 
     .. _references-sinkhorn-unbalanced2:
     References
@@ -244,34 +276,60 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     ot.unbalanced.sinkhorn_reg_scaling: Unbalanced Sinkhorn with epsilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced2>`
 
     """
-    b = list_to_array(b)
+    M, a, b = list_to_array(M, a, b)
+    nx = get_backend(M, a, b)
+
     if len(b.shape) < 2:
-        b = b[:, None]
+        if method.lower() == 'sinkhorn':
+            res = sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                            warmstart, numItermax=numItermax,
+                                            stopThr=stopThr, verbose=verbose,
+                                            log=log, **kwargs)
 
-    if method.lower() == 'sinkhorn':
-        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m,
-                                         numItermax=numItermax,
-                                         stopThr=stopThr, verbose=verbose,
-                                         log=log, **kwargs)
+        elif method.lower() == 'sinkhorn_stabilized':
+            res = sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                                 warmstart, numItermax=numItermax,
+                                                 stopThr=stopThr, verbose=verbose,
+                                                 log=log, **kwargs)
+        elif method.lower() in ['sinkhorn_reg_scaling']:
+            warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
+            res = sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                            warmstart, numItermax=numItermax,
+                                            stopThr=stopThr, verbose=verbose,
+                                            log=log, **kwargs)
+        else:
+            raise ValueError('Unknown method %s.' % method)
 
-    elif method.lower() == 'sinkhorn_stabilized':
-        return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m,
-                                              numItermax=numItermax,
-                                              stopThr=stopThr,
-                                              verbose=verbose,
-                                              log=log, **kwargs)
-    elif method.lower() in ['sinkhorn_reg_scaling']:
-        warnings.warn('Method not implemented yet. Using classic Sinkhorn Knopp')
-        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m,
-                                         numItermax=numItermax,
-                                         stopThr=stopThr, verbose=verbose,
-                                         log=log, **kwargs)
+        if log:
+            return nx.sum(M * res[0]), res[1]
+        else:
+            return nx.sum(M * res)
+
     else:
-        raise ValueError('Unknown method %s.' % method)
+        if method.lower() == 'sinkhorn':
+            return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                             warmstart, numItermax=numItermax,
+                                             stopThr=stopThr, verbose=verbose,
+                                             log=log, **kwargs)
+
+        elif method.lower() == 'sinkhorn_stabilized':
+            return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                                  warmstart, numItermax=numItermax,
+                                                  stopThr=stopThr, verbose=verbose,
+                                                  log=log, **kwargs)
+        elif method.lower() in ['sinkhorn_reg_scaling']:
+            warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
+            return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type,
+                                             warmstart, numItermax=numItermax,
+                                             stopThr=stopThr, verbose=verbose,
+                                             log=log, **kwargs)
+        else:
+            raise ValueError('Unknown method %s.' % method)
 
 
-def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
-                              stopThr=1e-6, verbose=False, log=False, **kwargs):
+def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
+                              warmstart=None, numItermax=1000, stopThr=1e-6,
+                              verbose=False, log=False, **kwargs):
     r"""
     Solve the entropic regularization unbalanced optimal transport problem and
     return the OT plan
@@ -279,9 +337,10 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg}\cdot\Omega(\gamma) +
-        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
-        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
+        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot \Omega(\gamma) +
+        \mathrm{reg_{m1}} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
+        \mathrm{reg_{m2}} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
         s.t.
              \gamma \geq 0
@@ -289,7 +348,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
-    - :math:`\Omega` is the entropic regularization term, :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\Omega` is the entropic regularization term, can be either KL divergence or negative entropy
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - KL is the Kullback-Leibler divergence
 
@@ -307,8 +366,23 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
         loss matrix
     reg : float
         Entropy regularization term > 0
-    reg_m: float
-        Marginal relaxation term > 0
+    reg_m: float or indexable object of length 1 or 2
+        Marginal relaxation term.
+        If reg_m is a scalar or an indexable object of length 1,
+        then the same reg_m is applied to both marginal relaxations.
+        The entropic balanced OT can be recovered using `reg_m=float("inf")`.
+        For semi-relaxed case, use either
+        `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
+        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
+    reg_type : string, optional
+        Regularizer term. Can take two values:
+        'entropy' (negative entropy)
+        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`, or
+        'kl' (Kullback-Leibler)
+        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors).
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -340,9 +414,8 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
     >>> b=[.5, .5]
     >>> M=[[0., 1.],[1., 0.]]
     >>> ot.unbalanced.sinkhorn_knopp_unbalanced(a, b, M, 1., 1.)
-    array([[0.51122823, 0.18807035],
-           [0.18807035, 0.51122823]])
-
+    array([[0.51122814, 0.18807032],
+           [0.18807032, 0.51122814]])
 
     .. _references-sinkhorn-knopp-unbalanced:
     References
@@ -376,22 +449,31 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
     else:
         n_hists = 0
 
+    reg_m1, reg_m2 = get_parameter_pair(reg_m)
+
     if log:
         log = {'err': []}
 
     # we assume that no distances are null except those of the diagonal of
     # distances
-    if n_hists:
-        u = nx.ones((dim_a, 1), type_as=M) / dim_a
-        v = nx.ones((dim_b, n_hists), type_as=M) / dim_b
-        a = a.reshape(dim_a, 1)
+    if warmstart is None:
+        if n_hists:
+            u = nx.ones((dim_a, 1), type_as=M)
+            v = nx.ones((dim_b, n_hists), type_as=M)
+            a = a.reshape(dim_a, 1)
+        else:
+            u = nx.ones(dim_a, type_as=M)
+            v = nx.ones(dim_b, type_as=M)
     else:
-        u = nx.ones(dim_a, type_as=M) / dim_a
-        v = nx.ones(dim_b, type_as=M) / dim_b
+        u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
-    K = nx.exp(M / (-reg))
+    if reg_type == "kl":
+        K = nx.exp(-M / reg) * a.reshape(-1)[:, None] * b.reshape(-1)[None, :]
+    elif reg_type == "entropy":
+        K = nx.exp(-M / reg)
 
-    fi = reg_m / (reg_m + reg)
+    fi_1 = reg_m1 / (reg_m1 + reg) if reg_m1 != float("inf") else 1
+    fi_2 = reg_m2 / (reg_m2 + reg) if reg_m2 != float("inf") else 1
 
     err = 1.
 
@@ -400,9 +482,9 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
         vprev = v
 
         Kv = nx.dot(K, v)
-        u = (a / Kv) ** fi
+        u = (a / Kv) ** fi_1
         Ktu = nx.dot(K.T, u)
-        v = (b / Ktu) ** fi
+        v = (b / Ktu) ** fi_2
 
         if (nx.any(Ktu == 0.)
                 or nx.any(nx.isnan(u)) or nx.any(nx.isnan(v))
@@ -450,9 +532,10 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, numItermax=1000,
             return u[:, None] * K * v[None, :]
 
 
-def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000,
-                                   stopThr=1e-6, verbose=False, log=False,
-                                   **kwargs):
+def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
+                                   warmstart=None, tau=1e5,
+                                   numItermax=1000, stopThr=1e-6,
+                                   verbose=False, log=False, **kwargs):
     r"""
     Solve the entropic regularization unbalanced optimal transport
     problem and return the loss
@@ -461,9 +544,10 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
     stabilization as proposed in :ref:`[10] <references-sinkhorn-stabilized-unbalanced>`:
 
     .. math::
-        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F + \mathrm{reg}\cdot\Omega(\gamma) +
-        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
-        \mathrm{reg_m} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
+        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot \Omega(\gamma) +
+        \mathrm{reg_{m1}} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
+        \mathrm{reg_{m2}} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
         s.t.
              \gamma \geq 0
@@ -471,7 +555,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
-    - :math:`\Omega` is the entropic regularization term, :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\Omega` is the entropic regularization term, can be either KL divergence or negative entropy
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - KL is the Kullback-Leibler divergence
 
@@ -490,8 +574,23 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
         loss matrix
     reg : float
         Entropy regularization term > 0
-    reg_m: float
-        Marginal relaxation term > 0
+    reg_m: float or indexable object of length 1 or 2
+        Marginal relaxation term.
+        If reg_m is a scalar or an indexable object of length 1,
+        then the same reg_m is applied to both marginal relaxations.
+        The entropic balanced OT can be recovered using `reg_m=float("inf")`.
+        For semi-relaxed case, use either
+        `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
+        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
+    reg_type : string, optional
+        Regularizer term. Can take two values:
+        'entropy' (negative entropy)
+        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`, or
+        'kl' (Kullback-Leibler)
+        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors).
     tau : float
         threshold for max value in u or v for log scaling
     numItermax : int, optional
@@ -524,9 +623,8 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
     >>> b=[.5, .5]
     >>> M=[[0., 1.],[1., 0.]]
     >>> ot.unbalanced.sinkhorn_stabilized_unbalanced(a, b, M, 1., 1.)
-    array([[0.51122823, 0.18807035],
-           [0.18807035, 0.51122823]])
-
+    array([[0.51122814, 0.18807032],
+           [0.18807032, 0.51122814]])
 
     .. _references-sinkhorn-stabilized-unbalanced:
     References
@@ -559,42 +657,56 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
     else:
         n_hists = 0
 
+    reg_m1, reg_m2 = get_parameter_pair(reg_m)
+
     if log:
         log = {'err': []}
 
     # we assume that no distances are null except those of the diagonal of
     # distances
-    if n_hists:
-        u = nx.ones((dim_a, n_hists), type_as=M) / dim_a
-        v = nx.ones((dim_b, n_hists), type_as=M) / dim_b
-        a = a.reshape(dim_a, 1)
+    if warmstart is None:
+        if n_hists:
+            u = nx.ones((dim_a, n_hists), type_as=M)
+            v = nx.ones((dim_b, n_hists), type_as=M)
+            a = a.reshape(dim_a, 1)
+        else:
+            u = nx.ones(dim_a, type_as=M)
+            v = nx.ones(dim_b, type_as=M)
     else:
-        u = nx.ones(dim_a, type_as=M) / dim_a
-        v = nx.ones(dim_b, type_as=M) / dim_b
+        u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
-    # print(reg)
-    K = nx.exp(-M / reg)
+    if reg_type == "kl":
+        log_ab = nx.log(a + 1e-16).reshape(-1)[:, None] + nx.log(b + 1e-16).reshape(-1)[None, :]
+        M0 = M - reg * log_ab
+    else:
+        M0 = M
 
-    fi = reg_m / (reg_m + reg)
+    K = nx.exp(-M0 / reg)
+
+    fi_1 = reg_m1 / (reg_m1 + reg) if reg_m1 != float("inf") else 1
+    fi_2 = reg_m2 / (reg_m2 + reg) if reg_m2 != float("inf") else 1
 
     cpt = 0
     err = 1.
     alpha = nx.zeros(dim_a, type_as=M)
     beta = nx.zeros(dim_b, type_as=M)
+    ones_a = nx.ones(dim_a, type_as=M)
+    ones_b = nx.ones(dim_b, type_as=M)
+
     while (err > stopThr and cpt < numItermax):
         uprev = u
         vprev = v
 
         Kv = nx.dot(K, v)
-        f_alpha = nx.exp(- alpha / (reg + reg_m))
-        f_beta = nx.exp(- beta / (reg + reg_m))
+        f_alpha = nx.exp(- alpha / (reg + reg_m1)) if reg_m1 != float("inf") else ones_a
+        f_beta = nx.exp(- beta / (reg + reg_m2)) if reg_m2 != float("inf") else ones_b
 
         if n_hists:
             f_alpha = f_alpha[:, None]
             f_beta = f_beta[:, None]
-        u = ((a / (Kv + 1e-16)) ** fi) * f_alpha
+        u = ((a / (Kv + 1e-16)) ** fi_1) * f_alpha
         Ktu = nx.dot(K.T, u)
-        v = ((b / (Ktu + 1e-16)) ** fi) * f_beta
+        v = ((b / (Ktu + 1e-16)) ** fi_2) * f_beta
         absorbing = False
         if nx.any(u > tau) or nx.any(v > tau):
             absorbing = True
@@ -604,7 +716,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
             else:
                 alpha = alpha + reg * nx.log(nx.max(u))
                 beta = beta + reg * nx.log(nx.max(v))
-            K = nx.exp((alpha[:, None] + beta[None, :] - M) / reg)
+            K = nx.exp((alpha[:, None] + beta[None, :] - M0) / reg)
             v = nx.ones(v.shape, type_as=v)
         Kv = nx.dot(K, v)
 
@@ -650,7 +762,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
             nx.log(M + 1e-100)[:, :, None]
             + logu[:, None, :]
             + logv[None, :, :]
-            - M[:, :, None] / reg,
+            - M0[:, :, None] / reg,
             axis=(0, 1)
         )
         res = nx.exp(res)
@@ -660,7 +772,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, tau=1e5, numItermax=1000
             return res
 
     else:  # return OT matrix
-        ot_matrix = nx.exp(logu[:, None] + logv[None, :] - M / reg)
+        ot_matrix = nx.exp(logu[:, None] + logv[None, :] - M0 / reg)
         if log:
             return ot_matrix, log
         else:
@@ -1037,7 +1149,7 @@ def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
         raise ValueError("Unknown method '%s'." % method)
 
 
-def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
+def mm_unbalanced(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, numItermax=1000,
                   stopThr=1e-15, verbose=False, log=False):
     r"""
     Solve the unbalanced optimal transport problem and return the OT plan.
@@ -1045,8 +1157,10 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
 
     .. math::
         W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
-        \mathrm{reg_m} \cdot \mathrm{div}(\gamma \mathbf{1}, \mathbf{a}) +
-        \mathrm{reg_m} \cdot \mathrm{div}(\gamma^T \mathbf{1}, \mathbf{b})
+        \mathrm{reg_{m1}} \cdot \mathrm{div}(\gamma \mathbf{1}, \mathbf{a}) +
+        \mathrm{reg_{m2}} \cdot \mathrm{div}(\gamma^T \mathbf{1}, \mathbf{b}) +
+        \mathrm{reg} \cdot \mathrm{div}(\gamma, \mathbf{c})
+
         s.t.
              \gamma \geq 0
 
@@ -1055,6 +1169,7 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target
       unbalanced distributions
+    - :math:`\mathbf{c}` is a reference distribution for the regularization
     - div is a divergence, either Kullback-Leibler or :math:`\ell_2` divergence
 
     The algorithm used for solving the problem is a maximization-
@@ -1068,8 +1183,17 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
         Unnormalized histogram of dimension `dim_b`
     M : array-like (dim_a, dim_b)
         loss matrix
-    reg_m: float
-        Marginal relaxation term > 0
+    reg_m: float or indexable object of length 1 or 2
+        Marginal relaxation term >= 0, but cannot be infinity.
+        If reg_m is a scalar or an indexable object of length 1,
+        then the same reg_m is applied to both marginal relaxations.
+        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
+    reg : float, optional (default = 0)
+        Regularization term >= 0.
+        By default, solve the unregularized problem
+    c : array-like (dim_a, dim_b), optional (default = None)
+        Reference measure for the regularization.
+        If None, then use `\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
     div: string, optional
         Divergence to quantify the difference between the marginals.
         Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic)
@@ -1097,12 +1221,12 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
-    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, 'kl'), 2)
-    array([[0.3 , 0.  ],
-           [0.  , 0.07]])
-    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 1, 'l2'), 2)
-    array([[0.25, 0.  ],
-           [0.  , 0.  ]])
+    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 5, div='kl'), 2)
+    array([[0.45, 0.  ],
+           [0.  , 0.34]])
+    >>> np.round(ot.unbalanced.mm_unbalanced(a, b, M, 5, div='l2'), 2)
+    array([[0.4, 0. ],
+           [0. , 0.1]])
 
 
     .. _references-regpath:
@@ -1116,6 +1240,7 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     ot.lp.emd : Unregularized OT
     ot.unbalanced.sinkhorn_unbalanced : Entropic regularized OT
     """
+
     M, a, b = list_to_array(M, a, b)
     nx = get_backend(M, a, b)
 
@@ -1126,35 +1251,37 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     if len(b) == 0:
         b = nx.ones(dim_b, type_as=M) / dim_b
 
-    if G0 is None:
-        G = a[:, None] * b[None, :]
-    else:
-        G = G0
+    G = a[:, None] * b[None, :] if G0 is None else G0
+    c = a[:, None] * b[None, :] if c is None else c
+
+    reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
     if log:
         log = {'err': [], 'G': []}
 
-    if div == 'kl':
-        K = nx.exp(M / - reg_m / 2)
-    elif div == 'l2':
-        K = nx.maximum(a[:, None] + b[None, :] - M / reg_m / 2,
-                       nx.zeros((dim_a, dim_b), type_as=M))
-    else:
+    if div not in ["kl", "l2"]:
         warnings.warn("The div parameter should be either equal to 'kl' or \
                       'l2': it has been set to 'kl'.")
         div = 'kl'
-        K = nx.exp(M / - reg_m / 2)
+
+    if div == 'kl':
+        sum_r = reg + reg_m1 + reg_m2
+        r1, r2, r = reg_m1 / sum_r, reg_m2 / sum_r, reg / sum_r
+        K = (a[:, None]**r1) * (b[None, :]**r2) * (c**r) * nx.exp(- M / sum_r)
+    elif div == 'l2':
+        K = reg_m1 * a[:, None] + reg_m2 * b[None, :] + reg * c - M
+        K = nx.maximum(K, nx.zeros((dim_a, dim_b), type_as=M))
 
     for i in range(numItermax):
         Gprev = G
 
         if div == 'kl':
-            u = nx.sqrt(a / (nx.sum(G, 1) + 1e-16))
-            v = nx.sqrt(b / (nx.sum(G, 0) + 1e-16))
-            G = G * K * u[:, None] * v[None, :]
+            Gd = (nx.sum(G, 1, keepdims=True)**r1) * (nx.sum(G, 0, keepdims=True)**r2) + 1e-16
+            G = K * G**(r1 + r2) / Gd
         elif div == 'l2':
-            Gd = nx.sum(G, 0, keepdims=True) + nx.sum(G, 1, keepdims=True) + 1e-16
-            G = G * K / Gd
+            Gd = reg_m1 * nx.sum(G, 1, keepdims=True) + \
+                reg_m2 * nx.sum(G, 0, keepdims=True) + reg * G + 1e-16
+            G = K * G / Gd
 
         err = nx.sqrt(nx.sum((G - Gprev) ** 2))
         if log:
@@ -1172,7 +1299,7 @@ def mm_unbalanced(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
         return G
 
 
-def mm_unbalanced2(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
+def mm_unbalanced2(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, numItermax=1000,
                    stopThr=1e-15, verbose=False, log=False):
     r"""
     Solve the unbalanced optimal transport problem and return the OT plan.
@@ -1180,8 +1307,9 @@ def mm_unbalanced2(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
 
     .. math::
         W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
-        \mathrm{reg_m} \cdot \mathrm{div}(\gamma \mathbf{1}, \mathbf{a}) +
-        \mathrm{reg_m} \cdot \mathrm{div}(\gamma^T \mathbf{1}, \mathbf{b})
+        \mathrm{reg_{m1}} \cdot \mathrm{div}(\gamma \mathbf{1}, \mathbf{a}) +
+        \mathrm{reg_{m2}} \cdot \mathrm{div}(\gamma^T \mathbf{1}, \mathbf{b}) +
+        \mathrm{reg} \cdot \mathrm{div}(\gamma, \mathbf{c})
 
         s.t.
              \gamma \geq 0
@@ -1191,6 +1319,7 @@ def mm_unbalanced2(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target
       unbalanced distributions
+    - :math:`\mathbf{c}` is a reference distribution for the regularization
     - :math:`\mathrm{div}` is a divergence, either Kullback-Leibler or :math:`\ell_2` divergence
 
     The algorithm used for solving the problem is a maximization-
@@ -1204,8 +1333,17 @@ def mm_unbalanced2(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
         Unnormalized histogram of dimension `dim_b`
     M : array-like (dim_a, dim_b)
         loss matrix
-    reg_m: float
-        Marginal relaxation term > 0
+    reg_m: float or indexable object of length 1 or 2
+        Marginal relaxation term >= 0, but cannot be infinity.
+        If reg_m is a scalar or an indexable object of length 1,
+        then the same reg_m is applied to both marginal relaxations.
+        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
+    reg : float, optional (default = 0)
+        Entropy regularization term >= 0.
+        By default, solve the unregularized problem
+    c : array-like (dim_a, dim_b), optional (default = None)
+        Reference measure for the regularization.
+        If None, then use `\mathbf{c} = mathbf{a} mathbf{b}^T`.
     div: string, optional
         Divergence to quantify the difference between the marginals.
         Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic)
@@ -1234,10 +1372,10 @@ def mm_unbalanced2(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
-    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, 'l2'),2)
-    0.25
-    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, 'kl'),2)
-    0.57
+    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 5, div='l2'), 2)
+    0.8
+    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 5, div='kl'), 2)
+    1.79
 
     References
     ----------
@@ -1249,7 +1387,7 @@ def mm_unbalanced2(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
     ot.lp.emd2 : Unregularized OT loss
     ot.unbalanced.sinkhorn_unbalanced2 : Entropic regularized OT loss
     """
-    _, log_mm = mm_unbalanced(a, b, M, reg_m, div=div, G0=G0,
+    _, log_mm = mm_unbalanced(a, b, M, reg_m, c=c, reg=reg, div=div, G0=G0,
                               numItermax=numItermax, stopThr=stopThr,
                               verbose=verbose, log=True)
 
@@ -1259,7 +1397,7 @@ def mm_unbalanced2(a, b, M, reg_m, div='kl', G0=None, numItermax=1000,
         return log_mm['cost']
 
 
-def _get_loss_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl'):
+def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div='kl'):
     """
     return the loss function (scipy.optimize compatible) for regularized
     unbalanced OT
@@ -1268,25 +1406,25 @@ def _get_loss_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl'):
     m, n = M.shape
 
     def kl(p, q):
-        return np.sum(p * np.log(p / q + 1e-16))
+        return np.sum(p * np.log(p / q + 1e-16)) - np.sum(p) + np.sum(q)
 
     def reg_l2(G):
-        return np.sum((G - a[:, None] * b[None, :])**2) / 2
+        return np.sum((G - c)**2) / 2
 
     def grad_l2(G):
-        return G - a[:, None] * b[None, :]
+        return G - c
 
     def reg_kl(G):
-        return kl(G, a[:, None] * b[None, :])
+        return kl(G, c)
 
     def grad_kl(G):
-        return np.log(G / (a[:, None] * b[None, :]) + 1e-16) + 1
+        return np.log(G / c + 1e-16)
 
     def reg_entropy(G):
-        return kl(G, 1)
+        return np.sum(G * np.log(G + 1e-16)) - np.sum(G)
 
     def grad_entropy(G):
-        return np.log(G + 1e-16) + 1
+        return np.log(G + 1e-16)
 
     if reg_div == 'kl':
         reg_fun = reg_kl
@@ -1299,16 +1437,19 @@ def _get_loss_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl'):
         grad_reg_fun = grad_l2
 
     def marg_l2(G):
-        return 0.5 * np.sum((G.sum(1) - a)**2) + 0.5 * np.sum((G.sum(0) - b)**2)
+        return reg_m1 * 0.5 * np.sum((G.sum(1) - a)**2) + \
+            reg_m2 * 0.5 * np.sum((G.sum(0) - b)**2)
 
     def grad_marg_l2(G):
-        return np.outer((G.sum(1) - a), np.ones(n)) + np.outer(np.ones(m), (G.sum(0) - b))
+        return reg_m1 * np.outer((G.sum(1) - a), np.ones(n)) + \
+            reg_m2 * np.outer(np.ones(m), (G.sum(0) - b))
 
     def marg_kl(G):
-        return kl(G.sum(1), a) + kl(G.sum(0), b)
+        return reg_m1 * kl(G.sum(1), a) + reg_m2 * kl(G.sum(0), b)
 
     def grad_marg_kl(G):
-        return np.outer(np.log(G.sum(1) / a + 1e-16) + 1, np.ones(n)) + np.outer(np.ones(m), np.log(G.sum(0) / b + 1e-16) + 1)
+        return reg_m1 * np.outer(np.log(G.sum(1) / a + 1e-16), np.ones(n)) + \
+            reg_m2 * np.outer(np.ones(m), np.log(G.sum(0) / b + 1e-16))
 
     if regm_div == 'kl':
         regm_fun = marg_kl
@@ -1321,17 +1462,17 @@ def _get_loss_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl'):
         G = G.reshape((m, n))
 
         # compute loss
-        val = np.sum(G * M) + reg * reg_fun(G) + reg_m * regm_fun(G)
+        val = np.sum(G * M) + reg * reg_fun(G) + regm_fun(G)
 
         # compute gradient
-        grad = M + reg * grad_reg_fun(G) + reg_m * grad_regm_fun(G)
+        grad = M + reg * grad_reg_fun(G) + grad_regm_fun(G)
 
         return val, grad.ravel()
 
     return _func
 
 
-def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None, numItermax=1000,
+def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', G0=None, numItermax=1000,
                       stopThr=1e-15, method='L-BFGS-B', verbose=False, log=False):
     r"""
     Solve the unbalanced optimal transport problem and return the OT plan using L-BFGS-B.
@@ -1339,9 +1480,9 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
 
     .. math::
         W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
-        + \mathrm{reg} \mathrm{div}(\gamma,\mathbf{a}\mathbf{b}^T)
-        \mathrm{reg_m} \cdot \mathrm{div_m}(\gamma \mathbf{1}, \mathbf{a}) +
-        \mathrm{reg_m} \cdot \mathrm{div}(\gamma^T \mathbf{1}, \mathbf{b})
+        + \mathrm{reg} \mathrm{div}(\gamma, \mathbf{c})
+        \mathrm{reg_{m1}} \cdot \mathrm{div_m}(\gamma \mathbf{1}, \mathbf{a}) +
+        \mathrm{reg_{m2}} \cdot \mathrm{div}(\gamma^T \mathbf{1}, \mathbf{b})
 
         s.t.
              \gamma \geq 0
@@ -1351,6 +1492,7 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target
       unbalanced distributions
+    - :math:`\mathbf{c}` is a reference distribution for the regularization
     - :math:`\mathrm{div}` is a divergence, either Kullback-Leibler or :math:`\ell_2` divergence
 
     The algorithm used for solving the problem is a L-BFGS-B from scipy.optimize
@@ -1364,13 +1506,20 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
     M : array-like (dim_a, dim_b)
         loss matrix
     reg: float
-        regularization term (>=0)
-    reg_m: float
-        Marginal relaxation term >= 0
+        regularization term >=0
+    c : array-like (dim_a, dim_b), optional (default = None)
+        Reference measure for the regularization.
+        If None, then use `\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+    reg_m: float or indexable object of length 1 or 2
+        Marginal relaxation term >= 0, but cannot be infinity.
+        If reg_m is a scalar or an indexable object of length 1,
+        then the same reg_m is applied to both marginal relaxations.
+        If reg_m is an array, it must be a Numpy array.
     reg_div: string, optional
         Divergence used for regularization.
-        Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic)
-    reg_div: string, optional
+        Can take three values: 'entropy' (negative entropy), or
+        'kl' (Kullback-Leibler) or 'l2' (quadratic).
+    regm_div: string, optional
         Divergence to quantify the difference between the marginals.
         Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic)
     G0: array-like (dim_a, dim_b)
@@ -1386,8 +1535,8 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
 
     Returns
     -------
-    ot_distance : array-like
-        the OT distance between :math:`\mathbf{a}` and :math:`\mathbf{b}`
+    gamma : (dim_a, dim_b) array-like
+            Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`
 
@@ -1398,10 +1547,12 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
-    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, 'l2'),2)
-    0.25
-    >>> np.round(ot.unbalanced.mm_unbalanced2(a, b, M, 1, 'kl'),2)
-    0.57
+    >>> np.round(ot.unbalanced.lbfgsb_unbalanced(a, b, M, reg=0, reg_m=5, reg_div='kl', regm_div='kl'), 2)
+    array([[0.45, 0.  ],
+           [0.  , 0.34]])
+    >>> np.round(ot.unbalanced.lbfgsb_unbalanced(a, b, M, reg=0, reg_m=5, reg_div='l2', regm_div='l2'), 2)
+    array([[0.4, 0. ],
+           [0. , 0.1]])
 
     References
     ----------
@@ -1413,18 +1564,18 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, reg_div='kl', regm_div='kl', G0=None,
     ot.lp.emd2 : Unregularized OT loss
     ot.unbalanced.sinkhorn_unbalanced2 : Entropic regularized OT loss
     """
+
+    M, a, b = list_to_array(M, a, b)
     nx = get_backend(M, a, b)
-
     M0 = M
-    # convert to humpy
+
+    # convert to numpy
     a, b, M = nx.to_numpy(a, b, M)
+    G0 = np.zeros(M.shape) if G0 is None else nx.to_numpy(G0)
+    c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
 
-    if G0 is not None:
-        G0 = nx.to_numpy(G0)
-    else:
-        G0 = np.zeros(M.shape)
-
-    _func = _get_loss_unbalanced(a, b, M, reg, reg_m, reg_div, regm_div)
+    reg_m1, reg_m2 = get_parameter_pair(reg_m)
+    _func = _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div, regm_div)
 
     res = minimize(_func, G0.ravel(), method=method, jac=True, bounds=Bounds(0, np.inf),
                    tol=stopThr, options=dict(maxiter=numItermax, disp=verbose))

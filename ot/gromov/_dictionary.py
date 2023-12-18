@@ -11,13 +11,13 @@
 import numpy as np
 
 
-from ..utils import unif
+from ..utils import unif, check_random_state
 from ..backend import get_backend
 from ._gw import gromov_wasserstein, fused_gromov_wasserstein
 
 
 def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, epochs=20, batch_size=32, learning_rate=1., Cdict_init=None, projection='nonnegative_symmetric', use_log=True,
-                                           tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False, **kwargs):
+                                           tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False, random_state=None, **kwargs):
     r"""
     Infer Gromov-Wasserstein linear dictionary :math:`\{ (\mathbf{C_{dict}[d]}, q) \}_{d \in [D]}`  from the list of structures :math:`\{ (\mathbf{C_s},\mathbf{p_s}) \}_s`
 
@@ -81,6 +81,9 @@ def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, e
         Maximum number of iterations for the Conjugate Gradient. Default is 200.
     verbose : bool, optional
         Print the reconstruction loss every epoch. Default is False.
+    random_state : int, RandomState instance or None, default=None
+        Determines random number generation. Pass an int for reproducible
+        output across multiple function calls.
 
     Returns
     -------
@@ -90,6 +93,7 @@ def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, e
         The dictionary leading to the best loss over an epoch is saved and returned.
     log: dict
         If use_log is True, contains loss evolutions by batches and epochs.
+
     References
     -------
     .. [38] C. Vincent-Cuaz, T. Vayer, R. Flamary, M. Corneli, N. Courty, Online
@@ -110,10 +114,11 @@ def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, e
         q = unif(nt)
     else:
         q = nx.to_numpy(q)
+    rng = check_random_state(random_state)
     if Cdict_init is None:
         # Initialize randomly structures of dictionary atoms based on samples
         dataset_means = [C.mean() for C in Cs]
-        Cdict = np.random.normal(loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(D, nt, nt))
+        Cdict = rng.normal(loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(D, nt, nt))
     else:
         Cdict = nx.to_numpy(Cdict_init).copy()
         assert Cdict.shape == (D, nt, nt)
@@ -141,7 +146,7 @@ def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, e
 
         for _ in range(iter_by_epoch):
             # batch sampling
-            batch = np.random.choice(range(dataset_size), size=batch_size, replace=False)
+            batch = rng.choice(range(dataset_size), size=batch_size, replace=False)
             cumulated_loss_over_batch = 0.
             unmixings = np.zeros((batch_size, D))
             Cs_embedded = np.zeros((batch_size, nt, nt))
@@ -469,7 +474,8 @@ def _linesearch_gromov_wasserstein_unmixing(w, grad_w, x, Cdict, Cembedded, cons
 
 def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., ps=None, q=None, epochs=20, batch_size=32, learning_rate_C=1., learning_rate_Y=1.,
                                                  Cdict_init=None, Ydict_init=None, projection='nonnegative_symmetric', use_log=False,
-                                                 tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False, **kwargs):
+                                                 tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False,
+                                                 random_state=None, **kwargs):
     r"""
     Infer Fused Gromov-Wasserstein linear dictionary :math:`\{ (\mathbf{C_{dict}[d]}, \mathbf{Y_{dict}[d]}, \mathbf{q}) \}_{d \in [D]}`  from the list of S attributed structures :math:`\{ (\mathbf{C_s}, \mathbf{Y_s},\mathbf{p_s}) \}_s`
 
@@ -548,6 +554,9 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
         Maximum number of iterations for the Conjugate Gradient. Default is 200.
     verbose : bool, optional
         Print the reconstruction loss every epoch. Default is False.
+    random_state : int, RandomState instance or None, default=None
+        Determines random number generation. Pass an int for reproducible
+        output across multiple function calls.
 
     Returns
     -------
@@ -560,6 +569,7 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
         The dictionary leading to the best loss over an epoch is saved and returned.
     log: dict
         If use_log is True, contains loss evolutions by batches and epochs.
+
     References
     -------
     .. [38] C. Vincent-Cuaz, T. Vayer, R. Flamary, M. Corneli, N. Courty, Online
@@ -583,17 +593,18 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
     else:
         q = nx.to_numpy(q)
 
+    rng = check_random_state(random_state)
     if Cdict_init is None:
         # Initialize randomly structures of dictionary atoms based on samples
         dataset_means = [C.mean() for C in Cs]
-        Cdict = np.random.normal(loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(D, nt, nt))
+        Cdict = rng.normal(loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(D, nt, nt))
     else:
         Cdict = nx.to_numpy(Cdict_init).copy()
         assert Cdict.shape == (D, nt, nt)
     if Ydict_init is None:
         # Initialize randomly features of dictionary atoms based on samples distribution by feature component
         dataset_feature_means = np.stack([F.mean(axis=0) for F in Ys])
-        Ydict = np.random.normal(loc=dataset_feature_means.mean(axis=0), scale=dataset_feature_means.std(axis=0), size=(D, nt, d))
+        Ydict = rng.normal(loc=dataset_feature_means.mean(axis=0), scale=dataset_feature_means.std(axis=0), size=(D, nt, d))
     else:
         Ydict = nx.to_numpy(Ydict_init).copy()
         assert Ydict.shape == (D, nt, d)
@@ -626,7 +637,7 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
         for _ in range(iter_by_epoch):
 
             # Batch iterations
-            batch = np.random.choice(range(dataset_size), size=batch_size, replace=False)
+            batch = rng.choice(range(dataset_size), size=batch_size, replace=False)
             cumulated_loss_over_batch = 0.
             unmixings = np.zeros((batch_size, D))
             Cs_embedded = np.zeros((batch_size, nt, nt))

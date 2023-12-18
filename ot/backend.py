@@ -86,44 +86,68 @@ Performance
 #
 # License: MIT License
 
+import os
+import time
+import warnings
+
 import numpy as np
 import scipy
 import scipy.linalg
 import scipy.special as special
-from scipy.sparse import issparse, coo_matrix, csr_matrix
-import warnings
-import time
+from scipy.sparse import coo_matrix, csr_matrix, issparse
 
-try:
-    import torch
-    torch_type = torch.Tensor
-except ImportError:
+DISABLE_TORCH_KEY = 'POT_BACKEND_DISABLE_PYTORCH'
+DISABLE_JAX_KEY = 'POT_BACKEND_DISABLE_JAX'
+DISABLE_CUPY_KEY = 'POT_BACKEND_DISABLE_CUPY'
+DISABLE_TF_KEY = 'POT_BACKEND_DISABLE_TENSORFLOW'
+
+
+if not os.environ.get(DISABLE_TORCH_KEY, False):
+    try:
+        import torch
+        torch_type = torch.Tensor
+    except ImportError:
+        torch = False
+        torch_type = float
+else:
     torch = False
     torch_type = float
 
-try:
-    import jax
-    import jax.numpy as jnp
-    import jax.scipy.special as jspecial
-    from jax.lib import xla_bridge
-    jax_type = jax.numpy.ndarray
-except ImportError:
+if not os.environ.get(DISABLE_JAX_KEY, False):
+    try:
+        import jax
+        import jax.numpy as jnp
+        import jax.scipy.special as jspecial
+        from jax.lib import xla_bridge
+        jax_type = jax.numpy.ndarray
+    except ImportError:
+        jax = False
+        jax_type = float
+else:
     jax = False
     jax_type = float
 
-try:
-    import cupy as cp
-    import cupyx
-    cp_type = cp.ndarray
-except ImportError:
+if not os.environ.get(DISABLE_CUPY_KEY, False):
+    try:
+        import cupy as cp
+        import cupyx
+        cp_type = cp.ndarray
+    except ImportError:
+        cp = False
+        cp_type = float
+else:
     cp = False
     cp_type = float
 
-try:
-    import tensorflow as tf
-    import tensorflow.experimental.numpy as tnp
-    tf_type = tf.Tensor
-except ImportError:
+if not os.environ.get(DISABLE_TF_KEY, False):
+    try:
+        import tensorflow as tf
+        import tensorflow.experimental.numpy as tnp
+        tf_type = tf.Tensor
+    except ImportError:
+        tf = False
+        tf_type = float
+else:
     tf = False
     tf_type = float
 
@@ -131,49 +155,72 @@ except ImportError:
 str_type_error = "All array should be from the same type/backend. Current types are : {}"
 
 
+# Mapping between argument types and the existing backend
+_BACKEND_IMPLEMENTATIONS = []
+_BACKENDS = {}
+
+
+def _register_backend_implementation(backend_impl):
+    _BACKEND_IMPLEMENTATIONS.append(backend_impl)
+
+
+def _get_backend_instance(backend_impl):
+    if backend_impl.__name__ not in _BACKENDS:
+        _BACKENDS[backend_impl.__name__] = backend_impl()
+    return _BACKENDS[backend_impl.__name__]
+
+
+def _check_args_backend(backend_impl, args):
+    is_instance = set(isinstance(arg, backend_impl.__type__) for arg in args)
+    # check that all arguments matched or not the type
+    if len(is_instance) == 1:
+        return is_instance.pop()
+
+    # Otherwise return an error
+    raise ValueError(str_type_error.format([type(arg) for arg in args]))
+
+
 def get_backend_list():
-    """Returns the list of available backends"""
-    lst = [NumpyBackend(), ]
+    """Returns instances of all available backends.
 
-    if torch:
-        lst.append(TorchBackend())
+    Note that the function forces all detected implementations
+    to be instantiated even if specific backend was not use before.
+    Be careful as instantiation of the backend might lead to side effects,
+    like GPU memory pre-allocation. See the documentation for more details.
+    If you only need to know which implementations are available,
+    use `:py:func:`ot.backend.get_available_backend_implementations`,
+    which does not force instance of the backend object to be created.
+    """
+    return [
+        _get_backend_instance(backend_impl)
+        for backend_impl
+        in get_available_backend_implementations()
+    ]
 
-    if jax:
-        lst.append(JaxBackend())
 
-    if cp:  # pragma: no cover
-        lst.append(CupyBackend())
-
-    if tf:
-        lst.append(TensorflowBackend())
-
-    return lst
+def get_available_backend_implementations():
+    """Returns the list of available backend implementations."""
+    return _BACKEND_IMPLEMENTATIONS
 
 
 def get_backend(*args):
     """Returns the proper backend for a list of input arrays
 
+        Accepts None entries in the arguments, and ignores them
+
         Also raises TypeError if all arrays are not from the same backend
     """
+    args = [arg for arg in args if arg is not None]  # exclude None entries
+
     # check that some arrays given
     if not len(args) > 0:
-        raise ValueError(" The function takes at least one parameter")
-    # check all same type
-    if not len(set(type(a) for a in args)) == 1:
-        raise ValueError(str_type_error.format([type(a) for a in args]))
+        raise ValueError(" The function takes at least one (non-None) parameter")
 
-    if isinstance(args[0], np.ndarray):
-        return NumpyBackend()
-    elif isinstance(args[0], torch_type):
-        return TorchBackend()
-    elif isinstance(args[0], jax_type):
-        return JaxBackend()
-    elif isinstance(args[0], cp_type):  # pragma: no cover
-        return CupyBackend()
-    elif isinstance(args[0], tf_type):
-        return TensorflowBackend()
-    else:
-        raise ValueError("Unknown type of non implemented backend.")
+    for backend_impl in _BACKEND_IMPLEMENTATIONS:
+        if _check_args_backend(backend_impl, args):
+            return _get_backend_instance(backend_impl)
+
+    raise ValueError("Unknown type of non implemented backend.")
 
 
 def to_numpy(*args):
@@ -344,6 +391,15 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def sign(self, a):
+        r""" Returns an element-wise indication of the sign of a number.
+
+        This function follows the api from :any:`numpy.sign`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.sign.html
+        """
+        raise NotImplementedError()
+
     def dot(self, a, b):
         r"""
         Returns the dot product of two tensors.
@@ -404,7 +460,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def norm(self, a):
+    def norm(self, a, axis=None, keepdims=False):
         r"""
         Computes the matrix frobenius norm.
 
@@ -594,7 +650,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def linspace(self, start, stop, num):
+    def linspace(self, start, stop, num, type_as=None):
         r"""
         Returns a specified number of evenly spaced values over a given interval.
 
@@ -624,7 +680,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def unique(self, a):
+    def unique(self, a, return_inverse=False):
         r"""
         Finds unique elements of given tensor.
 
@@ -864,6 +920,16 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def eigh(self, a):
+        r"""
+        Computes the eigenvalues and eigenvectors of a symmetric tensor.
+
+        This function follows the api from :any:`scipy.linalg.eigh`.
+
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.eigh.html
+        """
+        raise NotImplementedError()
+
     def kl_div(self, p, q, eps=1e-16):
         r"""
         Computes the Kullback-Leibler divergence.
@@ -1053,6 +1119,9 @@ class NumpyBackend(Backend):
     def minimum(self, a, b):
         return np.minimum(a, b)
 
+    def sign(self, a):
+        return np.sign(a)
+
     def dot(self, a, b):
         return np.dot(a, b)
 
@@ -1071,8 +1140,8 @@ class NumpyBackend(Backend):
     def power(self, a, exponents):
         return np.power(a, exponents)
 
-    def norm(self, a):
-        return np.sqrt(np.sum(np.square(a)))
+    def norm(self, a, axis=None, keepdims=False):
+        return np.linalg.norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return np.any(a)
@@ -1139,8 +1208,11 @@ class NumpyBackend(Backend):
     def std(self, a, axis=None):
         return np.std(a, axis=axis)
 
-    def linspace(self, start, stop, num):
-        return np.linspace(start, stop, num)
+    def linspace(self, start, stop, num, type_as=None):
+        if type_as is None:
+            return np.linspace(start, stop, num)
+        else:
+            return np.linspace(start, stop, num, dtype=type_as.dtype)
 
     def meshgrid(self, a, b):
         return np.meshgrid(a, b)
@@ -1148,8 +1220,8 @@ class NumpyBackend(Backend):
     def diag(self, a, k=0):
         return np.diag(a, k)
 
-    def unique(self, a):
-        return np.unique(a)
+    def unique(self, a, return_inverse=False):
+        return np.unique(a, return_inverse=return_inverse)
 
     def logsumexp(self, a, axis=None):
         return special.logsumexp(a, axis=axis)
@@ -1259,6 +1331,9 @@ class NumpyBackend(Backend):
         L, V = np.linalg.eigh(a)
         return (V * np.sqrt(L)[None, :]) @ V.T
 
+    def eigh(self, a):
+        return np.linalg.eigh(a)
+
     def kl_div(self, p, q, eps=1e-16):
         return np.sum(p * np.log(p / q + eps))
 
@@ -1316,6 +1391,9 @@ class NumpyBackend(Backend):
 
     def matmul(self, a, b):
         return np.matmul(a, b)
+
+
+_register_backend_implementation(NumpyBackend)
 
 
 class JaxBackend(Backend):
@@ -1418,6 +1496,9 @@ class JaxBackend(Backend):
     def minimum(self, a, b):
         return jnp.minimum(a, b)
 
+    def sign(self, a):
+        return jnp.sign(a)
+
     def dot(self, a, b):
         return jnp.dot(a, b)
 
@@ -1436,8 +1517,8 @@ class JaxBackend(Backend):
     def power(self, a, exponents):
         return jnp.power(a, exponents)
 
-    def norm(self, a):
-        return jnp.sqrt(jnp.sum(jnp.square(a)))
+    def norm(self, a, axis=None, keepdims=False):
+        return jnp.linalg.norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return jnp.any(a)
@@ -1501,8 +1582,11 @@ class JaxBackend(Backend):
     def std(self, a, axis=None):
         return jnp.std(a, axis=axis)
 
-    def linspace(self, start, stop, num):
-        return jnp.linspace(start, stop, num)
+    def linspace(self, start, stop, num, type_as=None):
+        if type_as is None:
+            return jnp.linspace(start, stop, num)
+        else:
+            return self._change_device(jnp.linspace(start, stop, num, dtype=type_as.dtype), type_as)
 
     def meshgrid(self, a, b):
         return jnp.meshgrid(a, b)
@@ -1510,8 +1594,8 @@ class JaxBackend(Backend):
     def diag(self, a, k=0):
         return jnp.diag(a, k)
 
-    def unique(self, a):
-        return jnp.unique(a)
+    def unique(self, a, return_inverse=False):
+        return jnp.unique(a, return_inverse=return_inverse)
 
     def logsumexp(self, a, axis=None):
         return jspecial.logsumexp(a, axis=axis)
@@ -1634,6 +1718,9 @@ class JaxBackend(Backend):
         L, V = jnp.linalg.eigh(a)
         return (V * jnp.sqrt(L)[None, :]) @ V.T
 
+    def eigh(self, a):
+        return jnp.linalg.eigh(a)
+
     def kl_div(self, p, q, eps=1e-16):
         return jnp.sum(p * jnp.log(p / q + eps))
 
@@ -1674,6 +1761,11 @@ class JaxBackend(Backend):
 
     def matmul(self, a, b):
         return jnp.matmul(a, b)
+
+
+if jax:
+    # Only register jax backend if it is installed
+    _register_backend_implementation(JaxBackend)
 
 
 class TorchBackend(Backend):
@@ -1827,6 +1919,9 @@ class TorchBackend(Backend):
         else:
             return torch.min(torch.stack(torch.broadcast_tensors(a, b)), axis=0)[0]
 
+    def sign(self, a):
+        return torch.sign(a)
+
     def dot(self, a, b):
         return torch.matmul(a, b)
 
@@ -1845,8 +1940,8 @@ class TorchBackend(Backend):
     def power(self, a, exponents):
         return torch.pow(a, exponents)
 
-    def norm(self, a):
-        return torch.sqrt(torch.sum(torch.square(a)))
+    def norm(self, a, axis=None, keepdims=False):
+        return torch.linalg.norm(a, dim=axis, keepdims=keepdims)
 
     def any(self, a):
         return torch.any(a)
@@ -1897,6 +1992,7 @@ class TorchBackend(Backend):
 
     def zero_pad(self, a, pad_width, value=0):
         from torch.nn.functional import pad
+
         # pad_width is an array of ndim tuples indicating how many 0 before and after
         # we need to add. We first need to make it compliant with torch syntax, that
         # starts with the last dim, then second last, etc.
@@ -1917,6 +2013,7 @@ class TorchBackend(Backend):
 
     def median(self, a, axis=None):
         from packaging import version
+
         # Since version 1.11.0, interpolation is available
         if version.parse(torch.__version__) >= version.parse("1.11.0"):
             if axis is not None:
@@ -1937,8 +2034,11 @@ class TorchBackend(Backend):
         else:
             return torch.std(a, unbiased=False)
 
-    def linspace(self, start, stop, num):
-        return torch.linspace(start, stop, num, dtype=torch.float64)
+    def linspace(self, start, stop, num, type_as=None):
+        if type_as is None:
+            return torch.linspace(start, stop, num)
+        else:
+            return torch.linspace(start, stop, num, dtype=type_as.dtype, device=type_as.device)
 
     def meshgrid(self, a, b):
         try:
@@ -1950,8 +2050,8 @@ class TorchBackend(Backend):
     def diag(self, a, k=0):
         return torch.diag(a, diagonal=k)
 
-    def unique(self, a):
-        return torch.unique(a)
+    def unique(self, a, return_inverse=False):
+        return torch.unique(a, return_inverse=return_inverse)
 
     def logsumexp(self, a, axis=None):
         if axis is not None:
@@ -2104,6 +2204,9 @@ class TorchBackend(Backend):
         L, V = torch.linalg.eigh(a)
         return (V * torch.sqrt(L)[None, :]) @ V.T
 
+    def eigh(self, a):
+        return torch.linalg.eigh(a)
+
     def kl_div(self, p, q, eps=1e-16):
         return torch.sum(p * torch.log(p / q + eps))
 
@@ -2146,6 +2249,11 @@ class TorchBackend(Backend):
 
     def matmul(self, a, b):
         return torch.matmul(a, b)
+
+
+if torch:
+    # Only register torch backend if it is installed
+    _register_backend_implementation(TorchBackend)
 
 
 class CupyBackend(Backend):  # pragma: no cover
@@ -2241,6 +2349,9 @@ class CupyBackend(Backend):  # pragma: no cover
     def minimum(self, a, b):
         return cp.minimum(a, b)
 
+    def sign(self, a):
+        return cp.sign(a)
+
     def abs(self, a):
         return cp.abs(a)
 
@@ -2259,8 +2370,8 @@ class CupyBackend(Backend):  # pragma: no cover
     def dot(self, a, b):
         return cp.dot(a, b)
 
-    def norm(self, a):
-        return cp.sqrt(cp.sum(cp.square(a)))
+    def norm(self, a, axis=None, keepdims=False):
+        return cp.linalg.norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return cp.any(a)
@@ -2327,8 +2438,12 @@ class CupyBackend(Backend):  # pragma: no cover
     def std(self, a, axis=None):
         return cp.std(a, axis=axis)
 
-    def linspace(self, start, stop, num):
-        return cp.linspace(start, stop, num)
+    def linspace(self, start, stop, num, type_as=None):
+        if type_as is None:
+            return cp.linspace(start, stop, num)
+        else:
+            with cp.cuda.Device(type_as.device):
+                return cp.linspace(start, stop, num, dtype=type_as.dtype)
 
     def meshgrid(self, a, b):
         return cp.meshgrid(a, b)
@@ -2336,8 +2451,8 @@ class CupyBackend(Backend):  # pragma: no cover
     def diag(self, a, k=0):
         return cp.diag(a, k)
 
-    def unique(self, a):
-        return cp.unique(a)
+    def unique(self, a, return_inverse=False):
+        return cp.unique(a, return_inverse=return_inverse)
 
     def logsumexp(self, a, axis=None):
         # Taken from
@@ -2488,6 +2603,9 @@ class CupyBackend(Backend):  # pragma: no cover
         L, V = cp.linalg.eigh(a)
         return (V * cp.sqrt(L)[None, :]) @ V.T
 
+    def eigh(self, a):
+        return cp.linalg.eigh(a)
+
     def kl_div(self, p, q, eps=1e-16):
         return cp.sum(p * cp.log(p / q + eps))
 
@@ -2528,6 +2646,11 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def matmul(self, a, b):
         return cp.matmul(a, b)
+
+
+if cp:
+    # Only register cp backend if it is installed
+    _register_backend_implementation(CupyBackend)
 
 
 class TensorflowBackend(Backend):
@@ -2630,6 +2753,9 @@ class TensorflowBackend(Backend):
     def minimum(self, a, b):
         return tnp.minimum(a, b)
 
+    def sign(self, a):
+        return tnp.sign(a)
+
     def dot(self, a, b):
         if len(b.shape) == 1:
             if len(a.shape) == 1:
@@ -2659,8 +2785,8 @@ class TensorflowBackend(Backend):
     def power(self, a, exponents):
         return tnp.power(a, exponents)
 
-    def norm(self, a):
-        return tf.math.reduce_euclidean_norm(a)
+    def norm(self, a, axis=None, keepdims=False):
+        return tf.math.reduce_euclidean_norm(a, axis=axis, keepdims=keepdims)
 
     def any(self, a):
         return tnp.any(a)
@@ -2723,8 +2849,11 @@ class TensorflowBackend(Backend):
     def std(self, a, axis=None):
         return tnp.std(a, axis=axis)
 
-    def linspace(self, start, stop, num):
-        return tnp.linspace(start, stop, num)
+    def linspace(self, start, stop, num, type_as=None):
+        if type_as is None:
+            return tnp.linspace(start, stop, num)
+        else:
+            return tnp.linspace(start, stop, num, dtype=type_as.dtype)
 
     def meshgrid(self, a, b):
         return tnp.meshgrid(a, b)
@@ -2732,8 +2861,15 @@ class TensorflowBackend(Backend):
     def diag(self, a, k=0):
         return tnp.diag(a, k)
 
-    def unique(self, a):
-        return tf.sort(tf.unique(tf.reshape(a, [-1]))[0])
+    def unique(self, a, return_inverse=False):
+        y, idx = tf.unique(tf.reshape(a, [-1]))
+        sort_idx = tf.argsort(y)
+        y_prime = tf.gather(y, sort_idx)
+        if return_inverse:
+            inv_sort_idx = tf.math.invert_permutation(sort_idx)
+            return y_prime, tf.gather(inv_sort_idx, idx)
+        else:
+            return y_prime
 
     def logsumexp(self, a, axis=None):
         return tf.math.reduce_logsumexp(a, axis=axis)
@@ -2890,6 +3026,9 @@ class TensorflowBackend(Backend):
         L, V = tf.linalg.eigh(a)
         return (V * tf.sqrt(L)[None, :]) @ V.T
 
+    def eigh(self, a):
+        return tf.linalg.eigh(a)
+
     def kl_div(self, p, q, eps=1e-16):
         return tnp.sum(p * tnp.log(p / q + eps))
 
@@ -2930,3 +3069,8 @@ class TensorflowBackend(Backend):
 
     def matmul(self, a, b):
         return tnp.matmul(a, b)
+
+
+if tf:
+    # Only register tensorflow backend if it is installed
+    _register_backend_implementation(TensorflowBackend)

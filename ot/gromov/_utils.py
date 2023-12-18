@@ -72,6 +72,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
         Name of loss function to use: either 'square_loss' or 'kl_loss' (default='square_loss')
     nx : backend, optional
         If let to its default value None, a backend test will be conducted.
+
     Returns
     -------
     constC : array-like, shape (ns, nt)
@@ -118,6 +119,8 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
 
         def h2(b):
             return nx.log(b + 1e-15)
+    else:
+        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
 
     constC1 = nx.dot(
         nx.dot(f1(C1), nx.reshape(p, (-1, 1))),
@@ -250,10 +253,20 @@ def gwggrad(constC, hC1, hC2, T, nx=None):
                               T, nx)  # [12] Prop. 2 misses a 2 factor
 
 
-def update_square_loss(p, lambdas, T, Cs):
+def update_square_loss(p, lambdas, T, Cs, nx=None):
     r"""
-    Updates :math:`\mathbf{C}` according to the L2 Loss kernel with the `S` :math:`\mathbf{T}_s`
-    couplings calculated at each iteration
+    Updates :math:`\mathbf{C}` according to the L2 Loss kernel with the `S`
+    :math:`\mathbf{T}_s` couplings calculated at each iteration of the GW
+    barycenter problem in :ref:`[12]`:
+
+    .. math::
+
+        \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
+
+    Where :
+
+    - :math:`\mathbf{C}_s`: metric cost matrix
+    - :math:`\mathbf{p}_s`: distribution
 
     Parameters
     ----------
@@ -261,25 +274,33 @@ def update_square_loss(p, lambdas, T, Cs):
         Masses in the targeted barycenter.
     lambdas : list of float
         List of the `S` spaces' weights.
-    T : list of S array-like of shape (ns,N)
+    T : list of S array-like of shape (N, ns)
         The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
     Cs : list of S array-like, shape(ns,ns)
         Metric cost matrices.
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
 
     Returns
     ----------
     C : array-like, shape (`nt`, `nt`)
         Updated :math:`\mathbf{C}` matrix.
-    """
-    T = list_to_array(*T)
-    Cs = list_to_array(*Cs)
-    p = list_to_array(p)
-    nx = get_backend(p, *T, *Cs)
 
+    References
+    ----------
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
+
+    """
+    if nx is None:
+        nx = get_backend(p, *T, *Cs)
+
+    # Correct order mistake in Equation 14 in [12]
     tmpsum = sum([
         lambdas[s] * nx.dot(
-            nx.dot(T[s].T, Cs[s]),
-            T[s]
+            nx.dot(T[s], Cs[s]),
+            T[s].T
         ) for s in range(len(T))
     ])
     ppt = nx.outer(p, p)
@@ -287,9 +308,20 @@ def update_square_loss(p, lambdas, T, Cs):
     return tmpsum / ppt
 
 
-def update_kl_loss(p, lambdas, T, Cs):
+def update_kl_loss(p, lambdas, T, Cs, nx=None):
     r"""
-    Updates :math:`\mathbf{C}` according to the KL Loss kernel with the `S` :math:`\mathbf{T}_s` couplings calculated at each iteration
+    Updates :math:`\mathbf{C}` according to the KL Loss kernel with the `S`
+    :math:`\mathbf{T}_s` couplings calculated at each iteration of the GW
+    barycenter problem in :ref:`[12]`:
+
+    .. math::
+
+        \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
+
+    Where :
+
+    - :math:`\mathbf{C}_s`: metric cost matrix
+    - :math:`\mathbf{p}_s`: distribution
 
 
     Parameters
@@ -298,30 +330,81 @@ def update_kl_loss(p, lambdas, T, Cs):
         Weights in the targeted barycenter.
     lambdas : list of float
         List of the `S` spaces' weights
-    T : list of S array-like of shape (ns,N)
+    T : list of S array-like of shape (N, ns)
         The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
     Cs : list of S array-like, shape(ns,ns)
         Metric cost matrices.
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
 
     Returns
     ----------
     C : array-like, shape (`ns`, `ns`)
         updated :math:`\mathbf{C}` matrix
-    """
-    Cs = list_to_array(*Cs)
-    T = list_to_array(*T)
-    p = list_to_array(p)
-    nx = get_backend(p, *T, *Cs)
 
+    References
+    ----------
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
+
+    """
+    if nx is None:
+        nx = get_backend(p, *T, *Cs)
+
+    # Correct order mistake in Equation 15 in [12]
     tmpsum = sum([
         lambdas[s] * nx.dot(
-            nx.dot(T[s].T, Cs[s]),
-            T[s]
+            nx.dot(T[s], nx.log(nx.maximum(Cs[s], 1e-15))),
+            T[s].T
         ) for s in range(len(T))
     ])
     ppt = nx.outer(p, p)
 
     return nx.exp(tmpsum / ppt)
+
+
+def update_feature_matrix(lambdas, Ys, Ts, p, nx=None):
+    r"""Updates the feature with respect to the `S` :math:`\mathbf{T}_s` couplings.
+
+
+    See "Solving the barycenter problem with Block Coordinate Descent (BCD)"
+    in :ref:`[24] <references-update-feature-matrix>` calculated at each iteration
+
+    Parameters
+    ----------
+    p : array-like, shape (N,)
+        masses in the targeted barycenter
+    lambdas : list of float
+        List of the `S` spaces' weights
+    Ts : list of S array-like, shape (N, ns)
+        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration
+    Ys : list of S array-like, shape (d,ns)
+        The features.
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    -------
+    X : array-like, shape (`d`, `N`)
+
+
+    .. _references-update-feature-matrix:
+    References
+    ----------
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain and Courty Nicolas
+        "Optimal Transport for structured data with application on graphs"
+        International Conference on Machine Learning (ICML). 2019.
+    """
+    if nx is None:
+        nx = get_backend(*Ys, *Ts, p)
+
+    p = 1. / p
+    tmpsum = sum([
+        lambdas[s] * nx.dot(Ys[s], Ts[s].T) * p[None, :]
+        for s in range(len(Ts))
+    ])
+    return tmpsum
 
 
 def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
@@ -353,17 +436,31 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
 
                         h_2(b) &= 2b
 
+    The kl-loss function :math:`L(a, b) = a \log\left(\frac{a}{b}\right) - a + b` is read as :
+
+    .. math::
+
+        L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)
+
+        \mathrm{with} \ f_1(a) &= a \log(a) - a
+
+                        f_2(b) &= b
+
+                        h_1(a) &= a
+
+                        h_2(b) &= \log(b)
     Parameters
     ----------
     C1 : array-like, shape (ns, ns)
         Metric cost matrix in the source space
     C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space
-    T :  array-like, shape (ns, nt)
-        Coupling between source and target spaces
     p : array-like, shape (ns,)
+    loss_fun : str, optional
+        Name of loss function to use: either 'square_loss' or 'kl_loss' (default='square_loss')
     nx : backend, optional
         If let to its default value None, a backend test will be conducted.
+
     Returns
     -------
     constC : array-like, shape (ns, nt)
@@ -403,6 +500,20 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
 
         def h2(b):
             return 2 * b
+    elif loss_fun == 'kl_loss':
+        def f1(a):
+            return a * nx.log(a + 1e-15) - a
+
+        def f2(b):
+            return b
+
+        def h1(a):
+            return a
+
+        def h2(b):
+            return nx.log(b + 1e-15)
+    else:
+        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
 
     constC = nx.dot(nx.dot(f1(C1), nx.reshape(p, (-1, 1))),
                     nx.ones((1, C2.shape[0]), type_as=p))

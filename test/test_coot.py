@@ -223,21 +223,22 @@ def test_coot_warmstart(nx):
     xt_nx = nx.from_numpy(xt)
 
     # initialize warmstart
-    init_pi_sample = np.random.rand(n_samples, n_samples)
+    rng = np.random.RandomState(42)
+    init_pi_sample = rng.rand(n_samples, n_samples)
     init_pi_sample = init_pi_sample / np.sum(init_pi_sample)
     init_pi_sample_nx = nx.from_numpy(init_pi_sample)
 
-    init_pi_feature = np.random.rand(2, 2)
+    init_pi_feature = rng.rand(2, 2)
     init_pi_feature /= init_pi_feature / np.sum(init_pi_feature)
     init_pi_feature_nx = nx.from_numpy(init_pi_feature)
 
-    init_duals_sample = (np.random.random(n_samples) * 2 - 1,
-                         np.random.random(n_samples) * 2 - 1)
+    init_duals_sample = (rng.random(n_samples) * 2 - 1,
+                         rng.random(n_samples) * 2 - 1)
     init_duals_sample_nx = (nx.from_numpy(init_duals_sample[0]),
                             nx.from_numpy(init_duals_sample[1]))
 
-    init_duals_feature = (np.random.random(2) * 2 - 1,
-                          np.random.random(2) * 2 - 1)
+    init_duals_feature = (rng.random(2) * 2 - 1,
+                          rng.random(2) * 2 - 1)
     init_duals_feature_nx = (nx.from_numpy(init_duals_feature[0]),
                              nx.from_numpy(init_duals_feature[1]))
 

@@ -10,6 +10,27 @@ import sys
 import pytest
 
 
+def get_LazyTensor(nx):
+    n1 = 100
+    n2 = 200
+
+    rng = np.random.RandomState(42)
+    a = rng.rand(n1)
+    a /= a.sum()
+    b = rng.rand(n2)
+    b /= b.sum()
+
+    a, b = nx.from_numpy(a, b)
+
+    def getitem(i, j, a, b):
+        return a[i, None] * b[None, j]
+
+    # create a lazy tensor
+    T = ot.utils.LazyTensor((n1, n2), getitem, a=a, b=b)
+
+    return T, a, b
+
+
 def test_proj_simplex(nx):
     n = 10
     rng = np.random.RandomState(0)
@@ -187,7 +208,7 @@ def test_dist():
     # tests that every metric runs correctly
     metrics_w = [
         'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
-        'euclidean', 'hamming', 'jaccard', 'kulsinski',
+        'euclidean', 'hamming', 'jaccard',
         'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
         'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule'
     ]  # those that support weights
@@ -195,7 +216,7 @@ def test_dist():
 
     for metric in metrics_w:
         print(metric)
-        ot.dist(x, x, metric=metric, p=3, w=np.random.random((2, )))
+        ot.dist(x, x, metric=metric, p=3, w=rng.random((2, )))
         ot.dist(x, x, metric=metric, p=3, w=None)  # check that not having any weight does not cause issues
     for metric in metrics:
         print(metric)
@@ -271,8 +292,9 @@ def test_clean_zeros():
 
 
 def test_cost_normalization(nx):
+    rng = np.random.RandomState(0)
 
-    C = np.random.rand(10, 10)
+    C = rng.rand(10, 10)
     C1 = nx.from_numpy(C)
 
     # does nothing
@@ -296,6 +318,9 @@ def test_cost_normalization(nx):
     M1 = nx.to_numpy(M)
     np.testing.assert_allclose(M1.max(), np.log(1 + np.log(1 + C)).max())
 
+    with pytest.raises(ValueError):
+        ot.utils.cost_normalization(C1, 'error')
+
 
 def test_check_params():
 
@@ -304,6 +329,16 @@ def test_check_params():
 
     res0 = ot.utils.check_params(first='OK', second=None)
     assert res0 is False
+
+
+def test_check_random_state_error():
+    with pytest.raises(ValueError):
+        ot.utils.check_random_state('error')
+
+
+def test_get_parameter_pair_error():
+    with pytest.raises(ValueError):
+        ot.utils.get_parameter_pair((1, 2, 3))  # not pair ;)
 
 
 def test_deprecated_func():
@@ -385,17 +420,166 @@ def test_OTResult():
                       'sparse_plan',
                       'status',
                       'value',
-                      'value_linear']
+                      'value_linear',
+                      'value_quad',
+                      'log']
     for at in lst_attributes:
+        print(at)
         with pytest.raises(NotImplementedError):
             getattr(res, at)
 
 
 def test_get_coordinate_circle():
-
-    u = np.random.rand(1, 100)
+    rng = np.random.RandomState(42)
+    u = rng.rand(1, 100)
     x1, y1 = np.cos(u * (2 * np.pi)), np.sin(u * (2 * np.pi))
     x = np.concatenate([x1, y1]).T
     x_p = ot.utils.get_coordinate_circle(x)
 
     np.testing.assert_allclose(u[0], x_p)
+
+
+def test_LazyTensor(nx):
+
+    n1 = 100
+    n2 = 200
+    shape = (n1, n2)
+
+    rng = np.random.RandomState(42)
+    x1 = rng.randn(n1, 2)
+    x2 = rng.randn(n2, 2)
+
+    x1, x2 = nx.from_numpy(x1, x2)
+
+    # i,j can be integers or slices, x1,x2 have to be passed as keyword arguments
+    def getitem(i, j, x1, x2):
+        return nx.dot(x1[i], x2[j].T)
+
+    # create a lazy tensor
+    T = ot.utils.LazyTensor((n1, n2), getitem, x1=x1, x2=x2)
+
+    assert T.shape == (n1, n2)
+    assert str(T) == "LazyTensor(shape=(100, 200),attributes=(x1,x2))"
+
+    assert T.x1 is x1
+    assert T.x2 is x2
+
+    # get the full tensor (not lazy)
+    assert T[:].shape == shape
+
+    # get one component
+    assert T[1, 1] == nx.dot(x1[1], x2[1].T)
+
+    # get one row
+    assert T[1].shape == (n2,)
+
+    # get one column with slices
+    assert T[::10, 5].shape == (10,)
+
+    with pytest.raises(NotImplementedError):
+        T["error"]
+
+
+def test_OTResult_LazyTensor(nx):
+
+    T, a, b = get_LazyTensor(nx)
+
+    res = ot.utils.OTResult(lazy_plan=T, batch_size=9, backend=nx)
+
+    np.testing.assert_allclose(nx.to_numpy(a), nx.to_numpy(res.marginal_a))
+    np.testing.assert_allclose(nx.to_numpy(b), nx.to_numpy(res.marginal_b))
+
+
+def test_LazyTensor_reduce(nx):
+
+    T, a, b = get_LazyTensor(nx)
+
+    T0 = T[:]
+    s0 = nx.sum(T0)
+
+    # total sum
+    s = ot.utils.reduce_lazytensor(T, nx.sum, nx=nx)
+    np.testing.assert_allclose(nx.to_numpy(s), 1)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s0))
+
+    s2 = ot.utils.reduce_lazytensor(T, nx.sum)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
+
+    s2 = ot.utils.reduce_lazytensor(T, nx.sum, batch_size=500)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
+
+    s2 = ot.utils.reduce_lazytensor(T, nx.sum, batch_size=11)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
+
+    # sum over axis 0
+    s = ot.utils.reduce_lazytensor(T, nx.sum, axis=0, nx=nx)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(b))
+
+    # sum over axis 1
+    s = ot.utils.reduce_lazytensor(T, nx.sum, axis=1, nx=nx)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(a))
+
+    # test otehr reduction function
+    s = ot.utils.reduce_lazytensor(T, nx.logsumexp, axis=1, nx=nx)
+    s2 = nx.logsumexp(T[:], axis=1)
+    np.testing.assert_allclose(nx.to_numpy(s), nx.to_numpy(s2))
+
+    # test 3D tensors
+    def getitem(i, j, k, a, b, c):
+        return a[i, None, None] * b[None, j, None] * c[None, None, k]
+
+    # create a lazy tensor
+    n = a.shape[0]
+    T = ot.utils.LazyTensor((n, n, n), getitem, a=a, b=a, c=a)
+
+    # total sum
+    s1 = ot.utils.reduce_lazytensor(T, nx.sum, axis=0, nx=nx)
+    s2 = ot.utils.reduce_lazytensor(T, nx.sum, axis=1, nx=nx)
+
+    np.testing.assert_allclose(nx.to_numpy(s1), nx.to_numpy(s2))
+
+    with pytest.raises(NotImplementedError):
+        ot.utils.reduce_lazytensor(T, nx.sum, axis=2, nx=nx, batch_size=10)
+
+
+def test_lowrank_LazyTensor(nx):
+
+    p = 5
+    n1 = 100
+    n2 = 200
+
+    shape = (n1, n2)
+
+    rng = np.random.RandomState(42)
+    X1 = rng.randn(n1, p)
+    X2 = rng.randn(n2, p)
+    diag_d = rng.rand(p)
+
+    X1, X2, diag_d = nx.from_numpy(X1, X2, diag_d)
+
+    T0 = nx.dot(X1, X2.T)
+
+    T = ot.utils.get_lowrank_lazytensor(X1, X2)
+
+    np.testing.assert_allclose(nx.to_numpy(T[:]), nx.to_numpy(T0))
+
+    assert T.Q is X1
+    assert T.R is X2
+
+    # get the full tensor (not lazy)
+    assert T[:].shape == shape
+
+    # get one component
+    assert T[1, 1] == nx.dot(X1[1], X2[1].T)
+
+    # get one row
+    assert T[1].shape == (n2,)
+
+    # get one column with slices
+    assert T[::10, 5].shape == (10,)
+
+    T0 = nx.dot(X1 * diag_d[None, :], X2.T)
+
+    T = ot.utils.get_lowrank_lazytensor(X1, X2, diag_d, nx=nx)
+
+    np.testing.assert_allclose(nx.to_numpy(T[:]), nx.to_numpy(T0))

@@ -3,18 +3,16 @@
 # Author: Remi Flamary <remi.flamary@polytechnique.edu>
 #         Nicolas Courty <ncourty@irisa.fr>
 #
+#
 # License: MIT License
+
+import numpy as np
+import pytest
+from numpy.testing import assert_array_almost_equal_nulp
 
 import ot
 import ot.backend
-from ot.backend import torch, jax, cp, tf
-
-import pytest
-
-import numpy as np
-from numpy.testing import assert_array_almost_equal_nulp
-
-from ot.backend import get_backend, get_backend_list, to_numpy
+from ot.backend import get_backend, get_backend_list, jax, tf, to_numpy, torch
 
 
 def test_get_backend_list():
@@ -37,17 +35,7 @@ def test_to_numpy(nx):
     assert isinstance(M2, np.ndarray)
 
 
-def test_get_backend():
-
-    A = np.zeros((3, 2))
-    B = np.zeros((3, 1))
-
-    nx = get_backend(A)
-    assert nx.__name__ == 'numpy'
-
-    nx = get_backend(A, B)
-    assert nx.__name__ == 'numpy'
-
+def test_get_backend_invalid():
     # error if no parameters
     with pytest.raises(ValueError):
         get_backend()
@@ -56,64 +44,38 @@ def test_get_backend():
     with pytest.raises(ValueError):
         get_backend(1, 2.0)
 
-    # test torch
-    if torch:
 
-        A2 = torch.from_numpy(A)
-        B2 = torch.from_numpy(B)
+def test_get_backend(nx):
 
-        nx = get_backend(A2)
-        assert nx.__name__ == 'torch'
+    A = np.zeros((3, 2))
+    B = np.zeros((3, 1))
 
-        nx = get_backend(A2, B2)
-        assert nx.__name__ == 'torch'
+    nx_np = get_backend(A)
+    assert nx_np.__name__ == 'numpy'
 
-        # test not unique types in input
+    A2, B2 = nx.from_numpy(A, B)
+
+    effective_nx = get_backend(A2)
+    assert effective_nx.__name__ == nx.__name__
+
+    effective_nx = get_backend(A2, B2)
+    assert effective_nx.__name__ == nx.__name__
+
+    if nx.__name__ != "numpy":
+        # test that types mathcing different backends in input raise an error
         with pytest.raises(ValueError):
             get_backend(A, B2)
+    else:
+        # Check that subclassing a numpy array does not break get_backend
+        # note: This is only tested for numpy as this is hard to be consistent
+        # with other backends
+        class nx_subclass(nx.__type__):
+            pass
 
-    if jax:
+        A3 = nx_subclass(0)
 
-        A2 = jax.numpy.array(A)
-        B2 = jax.numpy.array(B)
-
-        nx = get_backend(A2)
-        assert nx.__name__ == 'jax'
-
-        nx = get_backend(A2, B2)
-        assert nx.__name__ == 'jax'
-
-        # test not unique types in input
-        with pytest.raises(ValueError):
-            get_backend(A, B2)
-
-    if cp:
-        A2 = cp.asarray(A)
-        B2 = cp.asarray(B)
-
-        nx = get_backend(A2)
-        assert nx.__name__ == 'cupy'
-
-        nx = get_backend(A2, B2)
-        assert nx.__name__ == 'cupy'
-
-        # test not unique types in input
-        with pytest.raises(ValueError):
-            get_backend(A, B2)
-
-    if tf:
-        A2 = tf.convert_to_tensor(A)
-        B2 = tf.convert_to_tensor(B)
-
-        nx = get_backend(A2)
-        assert nx.__name__ == 'tf'
-
-        nx = get_backend(A2, B2)
-        assert nx.__name__ == 'tf'
-
-        # test not unique types in input
-        with pytest.raises(ValueError):
-            get_backend(A, B2)
+        effective_nx = get_backend(A3, B2)
+        assert effective_nx.__name__ == nx.__name__
 
 
 def test_convert_between_backends(nx):
@@ -407,6 +369,10 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append('minimum')
 
+        A = nx.sign(vb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('sign')
+
         A = nx.abs(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('abs')
@@ -442,6 +408,14 @@ def test_func_backends(nx):
         A = nx.norm(vb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('norm')
+
+        A = nx.norm(Mb, axis=1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('norm(M,axis=1)')
+
+        A = nx.norm(Mb, axis=1, keepdims=True)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('norm(M,axis=1,keepdims=True)')
 
         A = nx.any(vb > 0)
         lst_b.append(nx.to_numpy(A))
@@ -530,6 +504,7 @@ def test_func_backends(nx):
         lst_name.append('std')
 
         A = nx.linspace(0, 1, 50)
+        A = nx.linspace(0, 1, 50, type_as=Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append('linspace')
 
@@ -548,6 +523,12 @@ def test_func_backends(nx):
         A = nx.unique(nx.from_numpy(np.stack([M, M])))
         lst_b.append(nx.to_numpy(A))
         lst_name.append('unique')
+
+        A, A2 = nx.unique(nx.from_numpy(np.stack([M, M]).reshape(-1)), return_inverse=True)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('unique(M,return_inverse=True)[0]')
+        lst_b.append(nx.to_numpy(A2))
+        lst_name.append('unique(M,return_inverse=True)[1]')
 
         A = nx.logsumexp(Mb)
         lst_b.append(nx.to_numpy(A))
@@ -623,6 +604,10 @@ def test_func_backends(nx):
         A = nx.sqrtm(SquareMb.T @ SquareMb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("matrix square root")
+
+        D, U = nx.eigh(SquareMb.T @ SquareMb)
+        lst_b.append(nx.to_numpy(nx.dot(U, nx.dot(nx.diag(D), U.T))))
+        lst_name.append("eigh ")
 
         A = nx.kl_div(nx.abs(Mb), nx.abs(Mb) + 1)
         lst_b.append(nx.to_numpy(A))
@@ -781,3 +766,11 @@ def test_gradients_backends():
             [dl_dw, dl_db] = tape.gradient(manipulated_loss, [w, b])
             assert nx.allclose(dl_dw, w)
             assert nx.allclose(dl_db, b)
+
+
+def test_get_backend_none():
+    a, b = np.zeros((2, 3)), None
+    nx = get_backend(a, b)
+    assert str(nx) == 'numpy'
+    with pytest.raises(ValueError):
+        get_backend(None, None)

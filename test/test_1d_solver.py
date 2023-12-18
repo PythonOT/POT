@@ -9,12 +9,10 @@ import numpy as np
 import pytest
 
 import ot
+from ot.backend import tf
 from ot.lp import wasserstein_1d
 
-from ot.backend import get_backend_list, tf
 from scipy.stats import wasserstein_distance
-
-backend_list = get_backend_list()
 
 
 def test_emd_1d_emd2_1d_with_weights():
@@ -53,10 +51,7 @@ def test_emd_1d_emd2_1d_with_weights():
     np.testing.assert_allclose(w_v, G.sum(0))
 
 
-@pytest.mark.parametrize('nx', backend_list)
 def test_wasserstein_1d(nx):
-    from scipy.stats import wasserstein_distance
-
     rng = np.random.RandomState(0)
 
     n = 100
@@ -105,8 +100,6 @@ def test_wasserstein_1d_type_devices(nx):
 
 @pytest.mark.skipif(not tf, reason="tf not installed")
 def test_wasserstein_1d_device_tf():
-    if not tf:
-        return
     nx = ot.backend.TensorflowBackend()
     rng = np.random.RandomState(0)
     n = 10
@@ -163,8 +156,8 @@ def test_emd_1d_emd2_1d():
     np.testing.assert_allclose(G, G_1d, atol=1e-15)
 
     # check AssertionError is raised if called on non 1d arrays
-    u = np.random.randn(n, 2)
-    v = np.random.randn(m, 2)
+    u = rng.randn(n, 2)
+    v = rng.randn(m, 2)
     with pytest.raises(AssertionError):
         ot.emd_1d(u, v, [], [])
 

@@ -27,7 +27,7 @@ with warnings.catch_warnings():
 
 def line_search_armijo(
     f, xk, pk, gfk, old_fval, args=(), c1=1e-4,
-    alpha0=0.99, alpha_min=None, alpha_max=None, nx=None, **kwargs
+    alpha0=0.99, alpha_min=0., alpha_max=None, nx=None, **kwargs
 ):
     r"""
     Armijo linesearch function that works with matrices
@@ -56,7 +56,7 @@ def line_search_armijo(
         :math:`c_1` const in armijo rule (>0)
     alpha0 : float, optional
         initial step (>0)
-    alpha_min : float, optional
+    alpha_min : float, default=0.
         minimum value for alpha
     alpha_max : float, optional
         maximum value for alpha
@@ -89,6 +89,14 @@ def line_search_armijo(
     fc = [0]
 
     def phi(alpha1):
+        # it's necessary to check boundary condition here for the coefficient
+        # as the callback could be evaluated for negative value of alpha by
+        # `scalar_search_armijo` function here:
+        #
+        # https://github.com/scipy/scipy/blob/11509c4a98edded6c59423ac44ca1b7f28fba1fd/scipy/optimize/linesearch.py#L686
+        #
+        # see more details https://github.com/PythonOT/POT/issues/502
+        alpha1 = np.clip(alpha1, alpha_min, alpha_max)
         # The callable function operates on nx backend
         fc[0] += 1
         alpha10 = nx.from_numpy(alpha1)
@@ -109,13 +117,12 @@ def line_search_armijo(
 
     derphi0 = np.sum(pk * gfk)  # Quickfix for matrices
     alpha, phi1 = scalar_search_armijo(
-        phi, phi0, derphi0, c1=c1, alpha0=alpha0)
+        phi, phi0, derphi0, c1=c1, alpha0=alpha0, amin=alpha_min)
 
     if alpha is None:
         return 0., fc[0], nx.from_numpy(phi0, type_as=xk0)
     else:
-        if alpha_min is not None or alpha_max is not None:
-            alpha = np.clip(alpha, alpha_min, alpha_max)
+        alpha = np.clip(alpha, alpha_min, alpha_max)
         return nx.from_numpy(alpha, type_as=xk0), fc[0], nx.from_numpy(phi1, type_as=xk0)
 
 
@@ -290,7 +297,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
             loop = 0
 
         abs_delta_cost_G = abs(cost_G - old_cost_G)
-        relative_delta_cost_G = abs_delta_cost_G / abs(cost_G)
+        relative_delta_cost_G = abs_delta_cost_G / abs(cost_G) if cost_G != 0. else np.nan
         if relative_delta_cost_G < stopThr or abs_delta_cost_G < stopThr2:
             loop = 0
 

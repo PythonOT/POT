@@ -14,7 +14,8 @@ import numpy as np
 import pytest
 
 import ot
-from ot.backend import torch, tf
+from ot.backend import tf, torch
+from ot.bregman import geomloss
 
 
 @pytest.mark.parametrize("verbose, warn", product([True, False], [True, False]))
@@ -298,7 +299,8 @@ def test_sinkhorn_variants(nx):
 def test_sinkhorn_variants_dtype_device(nx, method):
     n = 100
 
-    x = np.random.randn(n, 2)
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
     u = ot.utils.unif(n)
 
     M = ot.dist(x, x)
@@ -317,7 +319,8 @@ def test_sinkhorn_variants_dtype_device(nx, method):
 def test_sinkhorn2_variants_dtype_device(nx, method):
     n = 100
 
-    x = np.random.randn(n, 2)
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
     u = ot.utils.unif(n)
 
     M = ot.dist(x, x)
@@ -337,7 +340,8 @@ def test_sinkhorn2_variants_dtype_device(nx, method):
 def test_sinkhorn2_variants_device_tf(method):
     nx = ot.backend.TensorflowBackend()
     n = 100
-    x = np.random.randn(n, 2)
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
     u = ot.utils.unif(n)
     M = ot.dist(x, x)
 
@@ -349,13 +353,15 @@ def test_sinkhorn2_variants_device_tf(method):
         nx.assert_same_dtype_device(Mb, Gb)
         nx.assert_same_dtype_device(Mb, lossb)
 
+    # Check that everything happens on the GPU
+    ub, Mb = nx.from_numpy(u, M)
+    Gb = ot.sinkhorn(ub, ub, Mb, 1, method=method, stopThr=1e-10)
+    lossb = ot.sinkhorn2(ub, ub, Mb, 1, method=method, stopThr=1e-10)
+    nx.assert_same_dtype_device(Mb, Gb)
+    nx.assert_same_dtype_device(Mb, lossb)
+
+    # Check this only if GPU is available
     if len(tf.config.list_physical_devices('GPU')) > 0:
-        # Check that everything happens on the GPU
-        ub, Mb = nx.from_numpy(u, M)
-        Gb = ot.sinkhorn(ub, ub, Mb, 1, method=method, stopThr=1e-10)
-        lossb = ot.sinkhorn2(ub, ub, Mb, 1, method=method, stopThr=1e-10)
-        nx.assert_same_dtype_device(Mb, Gb)
-        nx.assert_same_dtype_device(Mb, lossb)
         assert nx.dtype_device(Gb)[1].startswith("GPU")
 
 
@@ -688,19 +694,32 @@ def test_barycenter_stabilization(nx):
     np.testing.assert_allclose(bar, bar_np)
 
 
-@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
-def test_wasserstein_bary_2d(nx, method):
-    size = 20  # size of a square image
-    a1 = np.random.rand(size, size)
+def create_random_images_dist(seed, size=20):
+    """Creates an array of two random images of size (size, size). Returns an array of shape (2, size, size)."""
+    rng = np.random.RandomState(seed)
+
+    # First image
+    a1 = rng.rand(size, size)
     a1 += a1.min()
-    a1 = a1 / np.sum(a1)
-    a2 = np.random.rand(size, size)
+    a1 = a1 / np.sum(a1)  # Ensure that it is a probability distribution
+
+    # Second image
+    a2 = rng.rand(size, size)
     a2 += a2.min()
     a2 = a2 / np.sum(a2)
-    # creating matrix A containing all distributions
+
+    # Creating matrix A containing all distributions
     A = np.zeros((2, size, size))
     A[0, :, :] = a1
     A[1, :, :] = a2
+
+    return A
+
+
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
+def test_wasserstein_bary_2d(nx, method):
+    # Create the array of images to test
+    A = create_random_images_dist(42, size=20)
 
     A_nx = nx.from_numpy(A)
 
@@ -711,9 +730,11 @@ def test_wasserstein_bary_2d(nx, method):
             ot.bregman.convolutional_barycenter2d(A_nx, reg, method=method)
     else:
         bary_wass_np, log_np = ot.bregman.convolutional_barycenter2d(
-            A, reg, method=method, verbose=True, log=True)
+            A, reg, method=method, verbose=True, log=True
+        )
         bary_wass = nx.to_numpy(
-            ot.bregman.convolutional_barycenter2d(A_nx, reg, method=method))
+            ot.bregman.convolutional_barycenter2d(A_nx, reg, method=method)
+        )
 
         np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
         np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
@@ -723,18 +744,113 @@ def test_wasserstein_bary_2d(nx, method):
 
 
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
+def test_wasserstein_bary_2d_dtype_device(nx, method):
+    # Create the array of images to test
+    A = create_random_images_dist(42, size=20)
+
+    for tp in nx.__type_list__:
+        print(nx.dtype_device(tp))
+
+        Ab = nx.from_numpy(A, type_as=tp)
+
+        # wasserstein
+        reg = 1e-2
+        if nx.__name__ in ("jax", "tf") and method == "sinkhorn_log":
+            with pytest.raises(NotImplementedError):
+                ot.bregman.convolutional_barycenter2d(Ab, reg, method=method)
+        else:
+            # Compute the barycenter with numpy
+            bary_wass_np, log_np = ot.bregman.convolutional_barycenter2d(
+                A, reg, method=method, verbose=True, log=True
+            )
+            # Compute the barycenter with the backend
+            bary_wass_b = ot.bregman.convolutional_barycenter2d(Ab, reg, method=method)
+            # Convert the backend result to numpy, to compare with the numpy result
+            bary_wass = nx.to_numpy(bary_wass_b)
+
+            np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
+            np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
+
+            # help in checking if log and verbose do not bug the function
+            ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
+
+            # Test that the dtype and device are the same after the computation
+            nx.assert_same_dtype_device(Ab, bary_wass_b)
+
+
+@pytest.mark.skipif(not tf, reason="tf not installed")
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
+def test_wasserstein_bary_2d_device_tf(method):
+    # Using the Tensorflow backend
+    nx = ot.backend.TensorflowBackend()
+
+    # Create the array of images to test
+    A = create_random_images_dist(42, size=20)
+
+    # Check that everything stays on the CPU
+    with tf.device("/CPU:0"):
+        Ab = nx.from_numpy(A)
+
+        # wasserstein
+        reg = 1e-2
+        if method == "sinkhorn_log":
+            with pytest.raises(NotImplementedError):
+                ot.bregman.convolutional_barycenter2d(Ab, reg, method=method)
+        else:
+            # Compute the barycenter with numpy
+            bary_wass_np, log_np = ot.bregman.convolutional_barycenter2d(
+                A, reg, method=method, verbose=True, log=True
+            )
+            # Compute the barycenter with the backend
+            bary_wass_b = ot.bregman.convolutional_barycenter2d(Ab, reg, method=method)
+            # Convert the backend result to numpy, to compare with the numpy result
+            bary_wass = nx.to_numpy(bary_wass_b)
+
+            np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
+            np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
+
+            # help in checking if log and verbose do not bug the function
+            ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
+
+            # Test that the dtype and device are the same after the computation
+            nx.assert_same_dtype_device(Ab, bary_wass_b)
+
+    # Check that everything happens on the GPU
+    Ab = nx.from_numpy(A)
+
+    # wasserstein
+    reg = 1e-2
+    if method == "sinkhorn_log":
+        with pytest.raises(NotImplementedError):
+            ot.bregman.convolutional_barycenter2d(Ab, reg, method=method)
+    else:
+        # Compute the barycenter with numpy
+        bary_wass_np, log_np = ot.bregman.convolutional_barycenter2d(
+            A, reg, method=method, verbose=True, log=True
+        )
+        # Compute the barycenter with the backend
+        bary_wass_b = ot.bregman.convolutional_barycenter2d(Ab, reg, method=method)
+        # Convert the backend result to numpy, to compare with the numpy result
+        bary_wass = nx.to_numpy(bary_wass_b)
+
+        np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
+        np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
+
+        # help in checking if log and verbose do not bug the function
+        ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
+
+        # Test that the dtype and device are the same after the computation
+        nx.assert_same_dtype_device(Ab, bary_wass_b)
+
+        # Check this only if GPU is available
+        if len(tf.config.list_physical_devices("GPU")) > 0:
+            assert nx.dtype_device(bary_wass_b)[1].startswith("GPU")
+
+
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
 def test_wasserstein_bary_2d_debiased(nx, method):
-    size = 20  # size of a square image
-    a1 = np.random.rand(size, size)
-    a1 += a1.min()
-    a1 = a1 / np.sum(a1)
-    a2 = np.random.rand(size, size)
-    a2 += a2.min()
-    a2 = a2 / np.sum(a2)
-    # creating matrix A containing all distributions
-    A = np.zeros((2, size, size))
-    A[0, :, :] = a1
-    A[1, :, :] = a2
+    # Create the array of images to test
+    A = create_random_images_dist(42, size=20)
 
     A_nx = nx.from_numpy(A)
 
@@ -742,19 +858,123 @@ def test_wasserstein_bary_2d_debiased(nx, method):
     reg = 1e-2
     if nx.__name__ in ("jax", "tf") and method == "sinkhorn_log":
         with pytest.raises(NotImplementedError):
-            ot.bregman.convolutional_barycenter2d_debiased(
-                A_nx, reg, method=method)
+            ot.bregman.convolutional_barycenter2d_debiased(A_nx, reg, method=method)
     else:
         bary_wass_np, log_np = ot.bregman.convolutional_barycenter2d_debiased(
-            A, reg, method=method, verbose=True, log=True)
+            A, reg, method=method, verbose=True, log=True
+        )
         bary_wass = nx.to_numpy(
-            ot.bregman.convolutional_barycenter2d_debiased(A_nx, reg, method=method))
+            ot.bregman.convolutional_barycenter2d_debiased(A_nx, reg, method=method)
+        )
 
         np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
         np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
 
         # help in checking if log and verbose do not bug the function
-        ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
+        ot.bregman.convolutional_barycenter2d_debiased(A, reg, log=True, verbose=True)
+
+
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
+def test_wasserstein_bary_2d_debiased_dtype_device(nx, method):
+    # Create the array of images to test
+    A = create_random_images_dist(42, size=20)
+
+    for tp in nx.__type_list__:
+        print(nx.dtype_device(tp))
+
+        Ab = nx.from_numpy(A, type_as=tp)
+
+        # wasserstein
+        reg = 1e-2
+        if nx.__name__ in ("jax", "tf") and method == "sinkhorn_log":
+            with pytest.raises(NotImplementedError):
+                ot.bregman.convolutional_barycenter2d_debiased(Ab, reg, method=method)
+        else:
+            # Compute the barycenter with numpy
+            bary_wass_np, log_np = ot.bregman.convolutional_barycenter2d_debiased(
+                A, reg, method=method, verbose=True, log=True
+            )
+            # Compute the barycenter with the backend
+            bary_wass_b = ot.bregman.convolutional_barycenter2d_debiased(
+                Ab, reg, method=method
+            )
+            # Convert the backend result to numpy, to compare with the numpy result
+            bary_wass = nx.to_numpy(bary_wass_b)
+
+            np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
+            np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
+
+            # help in checking if log and verbose do not bug the function
+            ot.bregman.convolutional_barycenter2d_debiased(
+                A, reg, log=True, verbose=True
+            )
+
+            # Test that the dtype and device are the same after the computation
+            nx.assert_same_dtype_device(Ab, bary_wass_b)
+
+
+@pytest.mark.skipif(not tf, reason="tf not installed")
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
+def test_wasserstein_bary_2d_debiased_device_tf(method):
+    # Using the Tensorflow backend
+    nx = ot.backend.TensorflowBackend()
+
+    # Create the array of images to test
+    A = create_random_images_dist(42, size=20)
+
+    # Check that everything stays on the CPU
+    with tf.device("/CPU:0"):
+        Ab = nx.from_numpy(A)
+
+        # wasserstein
+        reg = 1e-2
+        if method == "sinkhorn_log":
+            with pytest.raises(NotImplementedError):
+                ot.bregman.convolutional_barycenter2d_debiased(Ab, reg, method=method)
+        else:
+            # Compute the barycenter with numpy
+            bary_wass_np, log_np = ot.bregman.convolutional_barycenter2d_debiased(
+                A, reg, method=method, verbose=True, log=True
+            )
+            # Compute the barycenter with the backend
+            bary_wass_b = ot.bregman.convolutional_barycenter2d_debiased(
+                Ab, reg, method=method
+            )
+            # Convert the backend result to numpy, to compare with the numpy result
+            bary_wass = nx.to_numpy(bary_wass_b)
+
+            np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
+            np.testing.assert_allclose(bary_wass, bary_wass_np, atol=1e-3)
+
+            # help in checking if log and verbose do not bug the function
+            ot.bregman.convolutional_barycenter2d_debiased(
+                A, reg, log=True, verbose=True
+            )
+
+            # Test that the dtype and device are the same after the computation
+            nx.assert_same_dtype_device(Ab, bary_wass_b)
+
+    # Check that everything happens on the GPU
+    Ab = nx.from_numpy(A)
+
+    # wasserstein
+    reg = 1e-2
+    if method == "sinkhorn_log":
+        with pytest.raises(NotImplementedError):
+            ot.bregman.convolutional_barycenter2d_debiased(Ab, reg, method=method)
+    else:
+        # Compute the barycenter with numpy
+        bary_wass_np, log_np = ot.bregman.convolutional_barycenter2d_debiased(
+            A, reg, method=method, verbose=True, log=True
+        )
+        # Compute the barycenter with the backend
+        bary_wass_b = ot.bregman.convolutional_barycenter2d_debiased(
+            Ab, reg, method=method
+        )
+        # Convert the backend result to numpy, to compare with the numpy result
+        bary_wass = nx.to_numpy(bary_wass_b)
+
+        np.testing.assert_allclose(1, np.sum(bary_wass), rtol=1e-3)
 
 
 def test_unmix(nx):
@@ -838,6 +1058,40 @@ def test_empirical_sinkhorn(nx):
     np.testing.assert_allclose(loss_emp_sinkhorn, loss_sinkhorn, atol=1e-05)
 
 
+@pytest.mark.skipif(not geomloss, reason="pytorch not installed")
+@pytest.skip_backend('tf')
+@pytest.skip_backend("cupy")
+@pytest.skip_backend("jax")
+@pytest.mark.parametrize("metric", ["sqeuclidean", "euclidean"])
+def test_geomloss_solver(nx, metric):
+    # test sinkhorn
+    n = 10
+    a = ot.unif(n)
+    b = ot.unif(n)
+
+    X_s = np.reshape(1.0 * np.arange(n), (n, 1))
+    X_t = np.reshape(1.0 * np.arange(0, n), (n, 1))
+
+    ab, bb, X_sb, X_tb = nx.from_numpy(a, b, X_s, X_t)
+
+    G_sqe = nx.to_numpy(ot.bregman.empirical_sinkhorn(X_sb, X_tb, 1, metric=metric))
+
+    value, log = ot.bregman.empirical_sinkhorn2_geomloss(X_sb, X_tb, 1, metric=metric, log=True)
+    G_geomloss = nx.to_numpy(log['lazy_plan'][:])
+
+    print(value)
+
+    # call with log = False
+    ot.bregman.empirical_sinkhorn2_geomloss(X_sb, X_tb, 1, metric=metric)
+
+    # check equality of plans
+    np.testing.assert_allclose(G_sqe, G_geomloss, atol=1e-03)  # metric sqeuclidian
+
+    # check error on wrong metric
+    with pytest.raises(ValueError):
+        ot.bregman.empirical_sinkhorn2_geomloss(X_sb, X_tb, 1, metric='wrong_metric')
+
+
 def test_lazy_empirical_sinkhorn(nx):
     # test sinkhorn
     n = 10
@@ -859,10 +1113,10 @@ def test_lazy_empirical_sinkhorn(nx):
     sinkhorn_sqe = nx.to_numpy(ot.sinkhorn(ab, bb, M_nx, 1))
 
     f, g, log_es = ot.bregman.empirical_sinkhorn(
-        X_sb, X_tb, 0.1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
+        X_sb, X_tb, 1, numIterMax=numIterMax, isLazy=True, batchSize=5, log=True)
     f, g = nx.to_numpy(f), nx.to_numpy(g)
-    G_log = np.exp(f[:, None] + g[None, :] - M / 0.1)
-    sinkhorn_log, log_s = ot.sinkhorn(ab, bb, M_nx, 0.1, log=True)
+    G_log = np.exp(f[:, None] + g[None, :] - M / 1)
+    sinkhorn_log, log_s = ot.sinkhorn(ab, bb, M_nx, 1, log=True)
     sinkhorn_log = nx.to_numpy(sinkhorn_log)
 
     f, g = ot.bregman.empirical_sinkhorn(
@@ -872,9 +1126,13 @@ def test_lazy_empirical_sinkhorn(nx):
     sinkhorn_m = nx.to_numpy(ot.sinkhorn(ab, bb, M_mb, 1))
 
     loss_emp_sinkhorn, log = ot.bregman.empirical_sinkhorn2(
-        X_sb, X_tb, 1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=True)
+        X_sb, X_tb, 1, numIterMax=numIterMax, isLazy=True, batchSize=5, log=True)
+    G_lazy = nx.to_numpy(log['lazy_plan'][:])
     loss_emp_sinkhorn = nx.to_numpy(loss_emp_sinkhorn)
     loss_sinkhorn = nx.to_numpy(ot.sinkhorn2(ab, bb, M_nx, 1))
+
+    loss_emp_sinkhorn = ot.bregman.empirical_sinkhorn2(
+        X_sb, X_tb, 1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=False)
 
     # check constraints
     np.testing.assert_allclose(
@@ -890,6 +1148,7 @@ def test_lazy_empirical_sinkhorn(nx):
     np.testing.assert_allclose(
         sinkhorn_m.sum(0), G_m.sum(0), atol=1e-05)  # metric euclidian
     np.testing.assert_allclose(loss_emp_sinkhorn, loss_sinkhorn, atol=1e-05)
+    np.testing.assert_allclose(G_log, G_lazy, atol=1e-05)
 
 
 def test_empirical_sinkhorn_divergence(nx):

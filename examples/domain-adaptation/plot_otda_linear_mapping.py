@@ -13,6 +13,8 @@ Linear OT mapping estimation
 # License: MIT License
 
 # sphinx_gallery_thumbnail_number = 2
+
+#%%
 import os
 from pathlib import Path
 
@@ -55,27 +57,43 @@ xt = xt.dot(A) + b
 plt.figure(1, (5, 5))
 plt.plot(xs[:, 0], xs[:, 1], '+')
 plt.plot(xt[:, 0], xt[:, 1], 'o')
-
+plt.legend(('Source', 'Target'))
+plt.title('Source and target distributions')
+plt.show()
 
 ##############################################################################
 # Estimate linear mapping and transport
 # -------------------------------------
 
+
+# Gaussian (linear) Monge mapping estimation
 Ae, be = ot.gaussian.empirical_bures_wasserstein_mapping(xs, xt)
 
 xst = xs.dot(Ae) + be
 
+# Gaussian (linear) GW mapping estimation
+Agw, bgw = ot.gaussian.empirical_gaussian_gromov_wasserstein_mapping(xs, xt)
+
+xstgw = xs.dot(Agw) + bgw
 
 ##############################################################################
 # Plot transported samples
 # ------------------------
 
-plt.figure(1, (5, 5))
+plt.figure(2, (10, 5))
 plt.clf()
+plt.subplot(1, 2, 1)
 plt.plot(xs[:, 0], xs[:, 1], '+')
 plt.plot(xt[:, 0], xt[:, 1], 'o')
 plt.plot(xst[:, 0], xst[:, 1], '+')
-
+plt.legend(('Source', 'Target', 'Transp. Monge'), loc=0)
+plt.title('Transported samples with Monge')
+plt.subplot(1, 2, 2)
+plt.plot(xs[:, 0], xs[:, 1], '+')
+plt.plot(xt[:, 0], xt[:, 1], 'o')
+plt.plot(xstgw[:, 0], xstgw[:, 1], '+')
+plt.legend(('Source', 'Target', 'Transp. GW'), loc=0)
+plt.title('Transported samples with Gaussian GW')
 plt.show()
 
 ##############################################################################
@@ -112,8 +130,8 @@ X2 = im2mat(I2)
 # Estimate mapping and adapt
 # ----------------------------
 
+# Monge mapping
 mapping = ot.da.LinearTransport()
-
 mapping.fit(Xs=X1, Xt=X2)
 
 
@@ -123,6 +141,18 @@ xts = mapping.inverse_transform(Xt=X2)
 I1t = minmax(mat2im(xst, I1.shape))
 I2t = minmax(mat2im(xts, I2.shape))
 
+# gaussian GW mapping
+
+mapping = ot.da.LinearGWTransport()
+mapping.fit(Xs=X1, Xt=X2)
+
+
+xstgw = mapping.transform(Xs=X1)
+xtsgw = mapping.inverse_transform(Xt=X2)
+
+I1tgw = minmax(mat2im(xstgw, I1.shape))
+I2tgw = minmax(mat2im(xtsgw, I2.shape))
+
 # %%
 
 
@@ -130,24 +160,34 @@ I2t = minmax(mat2im(xts, I2.shape))
 # Plot transformed images
 # -----------------------
 
-plt.figure(2, figsize=(10, 7))
+plt.figure(3, figsize=(14, 7))
 
-plt.subplot(2, 2, 1)
+plt.subplot(2, 3, 1)
 plt.imshow(I1)
 plt.axis('off')
 plt.title('Im. 1')
 
-plt.subplot(2, 2, 2)
+plt.subplot(2, 3, 4)
 plt.imshow(I2)
 plt.axis('off')
 plt.title('Im. 2')
 
-plt.subplot(2, 2, 3)
+plt.subplot(2, 3, 2)
 plt.imshow(I1t)
 plt.axis('off')
-plt.title('Mapping Im. 1')
+plt.title('Monge mapping Im. 1')
 
-plt.subplot(2, 2, 4)
+plt.subplot(2, 3, 5)
 plt.imshow(I2t)
 plt.axis('off')
-plt.title('Inverse mapping Im. 2')
+plt.title('Inverse Monge mapping Im. 2')
+
+plt.subplot(2, 3, 3)
+plt.imshow(I1tgw)
+plt.axis('off')
+plt.title('Gaussian GW mapping Im. 1')
+
+plt.subplot(2, 3, 6)
+plt.imshow(I2tgw)
+plt.axis('off')
+plt.title('Inverse Gaussian GW mapping Im. 2')

@@ -20,14 +20,14 @@ from ..backend import get_backend
 def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
                            nb_samples_p=None, nb_samples_q=None, std=True, random_state=None):
     r"""
-    Returns an approximation of the gromov-wasserstein cost between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
-    with a fixed transport plan :math:`\mathbf{T}`.
+    Returns an approximation of the Gromov-Wasserstein loss between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
+    with a fixed transport plan :math:`\mathbf{T}`. To recover an approximation of the Gromov-Wasserstein distance as defined in [13] compute :math:`d_{GW} = \frac{1}{2} \sqrt{\mathbf{GW}}`.
 
     The function gives an unbiased approximation of the following equation:
 
     .. math::
 
-        GW = \sum_{i,j,k,l} L(\mathbf{C_{1}}_{i,k}, \mathbf{C_{2}}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        \mathbf{GW} = \sum_{i,j,k,l} L(\mathbf{C_{1}}_{i,k}, \mathbf{C_{2}}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
     Where :
 
