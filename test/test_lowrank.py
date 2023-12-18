@@ -15,7 +15,7 @@ def test_compute_lr_sqeuclidean_matrix():
     X_s = np.reshape(1.0 * np.arange(2 * n), (n, 2))
     X_t = np.reshape(1.0 * np.arange(2 * n), (n, 2))
 
-    M1, M2 = ot.lowrank.compute_lr_sqeuclidean_matrix(X_s, X_t)
+    M1, M2 = ot.lowrank.compute_lr_sqeuclidean_matrix(X_s, X_t, rescale_cost=False)
     M = ot.dist(X_s, X_t, metric="sqeuclidean")  # original cost matrix
 
     np.testing.assert_allclose(np.dot(M1, M2.T), M, atol=1e-05)
@@ -30,7 +30,7 @@ def test_lowrank_sinkhorn():
     X_s = np.reshape(1.0 * np.arange(n), (n, 1))
     X_t = np.reshape(1.0 * np.arange(n), (n, 1))
 
-    Q, R, g, log = ot.lowrank.lowrank_sinkhorn(X_s, X_t, a, b, reg=0.1, log=True)
+    Q, R, g, log = ot.lowrank.lowrank_sinkhorn(X_s, X_t, a, b, reg=0.1, log=True, rescale_cost=False)
     P = log["lazy_plan"][:]
     value_linear = log["value_linear"]
 
@@ -84,9 +84,27 @@ def test_lowrank_sinkhorn_alpha_error(alpha, rank):
         ot.lowrank.lowrank_sinkhorn(X_s, X_t, a, b, reg=0.1, rank=rank, alpha=alpha, warn=False)
 
 
+@pytest.mark.parametrize(("gamma_init"), ("rescale", "theory"))
+def test_lowrank_sinkhorn_gamma_init(gamma_init):
+    # Test lr sinkhorn with different init strategies
+    n = 100
+    a = ot.unif(n)
+    b = ot.unif(n)
+
+    X_s = np.reshape(1.0 * np.arange(n), (n, 1))
+    X_t = np.reshape(1.0 * np.arange(n), (n, 1))
+
+    Q, R, g, log = ot.lowrank.lowrank_sinkhorn(X_s, X_t, a, b, reg=0.1, gamma_init=gamma_init, log=True)
+    P = log["lazy_plan"][:]
+
+    # check constraints for P
+    np.testing.assert_allclose(a, P.sum(1), atol=1e-05)
+    np.testing.assert_allclose(b, P.sum(0), atol=1e-05)
+
+
 @pytest.skip_backend('tf')
 def test_lowrank_sinkhorn_backends(nx):
-    # Test low rank sinkhorn for different backends
+    # test low rank sinkhorn for different backends
     n = 100
     a = ot.unif(n)
     b = ot.unif(n)

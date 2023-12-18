@@ -19,6 +19,7 @@ from sklearn.cluster import KMeans
 def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init=None, random_state=None, nx=None):
     """
     Implementation of different initialization strategies for the low rank sinkhorn solver (Q ,R, g).
+    This function is specific to lowrank_sinkhorn.
 
     Parameters
     ----------
@@ -30,9 +31,9 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init=None, random_state=No
         samples weights in the source domain
     b : array-like, shape (n_samples_b,)
         samples weights in the target domain
-    rank : int, optional. Default is None. (>0)
+    rank : int
         Nonnegative rank of the OT plan.
-    init : str, default is 'kmeans'
+    init : str
         Initialization strategy for Q, R and g. 'random', 'trivial' or 'kmeans'
     reg_init : float, optional. Default is None. (>0)
         Regularization term for a 'kmeans' init. If None, 1 is considered.
@@ -51,6 +52,12 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init=None, random_state=No
     g : array-like, shape (r, )
         Init for the weight vector of the low-rank decomposition of the OT plan (g)
 
+
+    References
+    -----------
+    .. [65] Scetbon, M., Cuturi, M., & Peyré, G. (2021).
+        "Low-rank Sinkhorn factorization". In International Conference on Machine Learning.
+
     """
 
     if nx is None:
@@ -58,6 +65,9 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init=None, random_state=No
 
     if reg_init is None:
         reg_init = 0.1
+
+    if random_state is None:
+        random_state = 49
 
     ns = X_s.shape[0]
     nt = X_t.shape[0]
@@ -130,10 +140,10 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init=None, random_state=No
 ##################################################################################
 
 
-def compute_lr_sqeuclidean_matrix(X_s, X_t, nx=None):
+def compute_lr_sqeuclidean_matrix(X_s, X_t, rescale_cost, nx=None):
     """
     Compute the low rank decomposition of a squared euclidean distance matrix.
-    This function won't work for any other distance metric.
+    This function won't work for other distance metrics.
 
     See "Section 3.5, proposition 1"
 
@@ -143,6 +153,8 @@ def compute_lr_sqeuclidean_matrix(X_s, X_t, nx=None):
         samples in the source domain
     X_t : array-like, shape (n_samples_b, dim)
         samples in the target domain
+    rescale_cost : bool
+        Rescale the low rank factorization of the sqeuclidean cost matrix
     nx : default None
         POT backend
 
@@ -156,9 +168,9 @@ def compute_lr_sqeuclidean_matrix(X_s, X_t, nx=None):
 
 
     References
-    ----------
+    -----------
     .. [65] Scetbon, M., Cuturi, M., & Peyré, G. (2021).
-    "Low-rank Sinkhorn factorization". In International Conference on Machine Learning.
+        "Low-rank Sinkhorn factorization". In International Conference on Machine Learning.
     """
 
     if nx is None:
@@ -176,6 +188,10 @@ def compute_lr_sqeuclidean_matrix(X_s, X_t, nx=None):
     array1 = nx.reshape(nx.ones(nt, type_as=X_s), (-1, 1))
     array2 = nx.reshape(nx.sum(X_t**2, 1), (-1, 1))
     M2 = nx.concatenate((array1, array2, X_t), axis=1)
+
+    if rescale_cost is True:
+        M1 = M1 / nx.sqrt(nx.max(M1))
+        M2 = M2 / nx.sqrt(nx.max(M2))
 
     return M1, M2
 
@@ -222,7 +238,7 @@ def _LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=N
     References
     ----------
     .. [65] Scetbon, M., Cuturi, M., & Peyré, G. (2021).
-    "Low-rank Sinkhorn factorization". In International Conference on Machine Learning.
+        "Low-rank Sinkhorn Factorization". In International Conference on Machine Learning.
 
     """
 
@@ -282,7 +298,7 @@ def _LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=N
     else:
         if warn:
             warnings.warn(
-                "Sinkhorn did not converge. You might want to "
+                "Dykstra did not converge. You might want to "
                 "increase the number of iterations `numItermax` "
             )
 
@@ -293,9 +309,9 @@ def _LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=N
     return Q, R, g
 
 
-def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None,
-                     init="kmeans", reg_init=None, seed_init=None,
-                     numItermax=1000, stopThr=1e-9, warn=True, log=False):
+def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None, rescale_cost=True,
+                     init=None, reg_init=None, seed_init=None, gamma_init=None,
+                     numItermax=2000, stopThr=1e-7, warn=True, log=False):
     r"""
     Solve the entropic regularization optimal transport problem under low-nonnegative rank constraints.
 
@@ -331,16 +347,20 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None,
         Nonnegative rank of the OT plan. If None, min(ns, nt) is considered.
     alpha : int, optional. Default is None. (>0 and <1/r)
         Lower bound for the weight vector g. If None, 1e-10 is considered
-    init : str, optional. Default is 'kmeans'
-        Initialization strategy for Q, R, g. 'random', 'trivial' or 'kmeans'
+    rescale_cost : bool, optional. Default is False
+        Rescale the low rank factorization of the sqeuclidean cost matrix
+    init : str, optional. Default is None. If None, "random" is considered.
+        Initialization strategy for the low rank couplings. 'random', 'trivial' or 'kmeans'
     reg_init : float, optional. Default is None. (>0)
         Regularization term for a 'kmeans' init. If None, 1 is considered.
     seed_init : int, optional. Default is None. (>0)
         Random state for a 'random' or 'kmeans' init strategy.
-    numItermax : int, optional
-        Max number of iterations
-    stopThr : float, optional
-        Stop threshold on error (>0)
+    gamma_init : str, optional. If None, 'rescale' is considered
+        Initialization strategy for gamma. 'rescale', or 'theory'
+    numItermax : int, optional. Default is 2000.
+        Max number of iterations for the Dykstra algorithm
+    stopThr : float, optional. Default is 1e-7.
+        Stop threshold on error (>0) in Dykstra
     warn : bool, optional
         if True, raises a warning if the algorithm doesn't convergence.
     log : bool, optional
@@ -349,25 +369,20 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None,
 
     Returns
     ---------
-    lazy_plan : LazyTensor()
-        OT plan in a LazyTensor object of shape (shape_plan)
-        See :any:`LazyTensor` for more information.
-    value : float
-        Optimal value of the optimization problem
-    value_linear : float
-        Linear OT loss with the optimal OT
     Q : array-like, shape (n_samples_a, r)
         First low-rank matrix decomposition of the OT plan
     R: array-like, shape (n_samples_b, r)
         Second low-rank matrix decomposition of the OT plan
     g : array-like, shape (r, )
-        Weight vector for the low-rank decomposition of the OT plan
+        Weight vector for the low-rank decomposition of the OT
+    log : dict (lazy_plan, value and value_linear)
+        log dictionary return only if log==True in parameters
 
 
     References
     ----------
-    .. [65] Scetbon, M., Cuturi, M., & Peyré, G (2021).
-        "Low-Rank Sinkhorn Factorization" arXiv preprint arXiv:2103.04737.
+    .. [65] Scetbon, M., Cuturi, M., & Peyré, G. (2021).
+        "Low-rank Sinkhorn Factorization". In International Conference on Machine Learning.
 
     """
 
@@ -385,55 +400,74 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None,
     r = rank
     if rank is None:
         r = min(ns, nt)
-
-    if alpha is None:
-        alpha = 1e-10
-
-    # Dykstra algorithm won't converge if 1/rank < alpha (alpha is the lower bound for 1/rank)
-    # (see "Section 3.2: The Low-rank OT Problem (LOT)" in the paper)
-    if 1 / r < alpha:
-        raise ValueError("alpha ({a}) should be smaller than 1/rank ({r}) for the Dykstra algorithm to converge.".format(
-            a=alpha, r=1 / rank))
+    else:
+        r = min(ns, nt, rank)
 
     if r <= 0:
         raise ValueError("The rank parameter cannot have a negative value")
 
-    # Low rank decomposition of the sqeuclidean cost matrix (A, B)
-    M1, M2 = compute_lr_sqeuclidean_matrix(X_s, X_t, nx=None)
+    # Compute alpha
+    if alpha is None:
+        alpha = 1e-10
 
-    # Compute gamma (see "Section 3.4, proposition 4" in the paper)
-    L = nx.sqrt(
-        3 * (2 / (alpha**4)) * ((nx.norm(M1) * nx.norm(M2)) ** 2) +
-        (reg + (2 / (alpha**3)) * (nx.norm(M1) * nx.norm(M2))) ** 2
-    )
-    gamma = 1 / (2 * L)
+    # Dykstra won't converge if 1/rank < alpha (see Section 3.2)
+    if 1 / r < alpha:
+        raise ValueError("alpha ({a}) should be smaller than 1/rank ({r}) for the Dykstra algorithm to converge.".format(
+            a=alpha, r=1 / rank))
 
-    if reg_init is None:
-        reg_init = 1
+    # Low rank decomposition of the sqeuclidean cost matrix
+    M1, M2 = compute_lr_sqeuclidean_matrix(X_s, X_t, rescale_cost, nx)
 
     # Initialize the low rank matrices Q, R, g
+    if init is None:
+        init = "random"
+
     Q, R, g = _init_lr_sinkhorn(X_s, X_t, a, b, r, init, reg_init, seed_init, nx=nx)
-    k = 100
+
+    # Gamma initialization
+    if gamma_init is None:
+        gamma_init = "rescale"
+
+    if gamma_init == "theory":
+        L = nx.sqrt(
+            3 * (2 / (alpha**4)) * ((nx.norm(M1) * nx.norm(M2)) ** 2) +
+            (reg + (2 / (alpha**3)) * (nx.norm(M1) * nx.norm(M2))) ** 2
+        )
+        gamma = 1 / (2 * L)
+
+    if gamma_init not in ["rescale", "theory"]:
+        raise (NotImplementedError('Not implemented gamma_init="{}"'.format(gamma_init)))
 
     # -------------------------- Low rank algorithm ------------------------------
-    # see "Section 3.3, Algorithm 3 LOT" in the paper
+    # see "Section 3.3, Algorithm 3 LOT"
 
-    for ii in range(k):
-        # Compute the C*R dot matrix using the lr decomposition of C
-        CR_ = nx.dot(M2.T, R)
-        CR = nx.dot(M1, CR_)
-
-        # Compute the C.t * Q dot matrix using the lr decomposition of C
-        CQ_ = nx.dot(M1.T, Q)
-        CQ = nx.dot(M2, CQ_)
-
+    for ii in range(100):
+        # Compute C*R dot using the lr decomposition of C
+        CR = nx.dot(M2.T, R)
+        CR_ = nx.dot(M1, CR)
         diag_g = (1 / g)[None, :]
+        CR_g = CR_ * diag_g
 
-        eps1 = nx.exp(-gamma * (CR * diag_g) - ((gamma * reg) - 1) * nx.log(Q))
-        eps2 = nx.exp(-gamma * (CQ * diag_g) - ((gamma * reg) - 1) * nx.log(R))
-        omega = nx.diag(nx.dot(Q.T, CR))
-        eps3 = nx.exp(gamma * omega / (g**2) - (gamma * reg - 1) * nx.log(g))
+        # Compute C.T * Q using the lr decomposition of C
+        CQ = nx.dot(M1.T, Q)
+        CQ_ = nx.dot(M2, CQ)
+        CQ_g = CQ_ * diag_g
 
+        # Compute omega
+        omega = nx.diag(nx.dot(Q.T, CR_))
+
+        # Rescale gamma at each iteration
+        if gamma_init == "rescale":
+            norm_1 = nx.max(nx.abs(CR_ * diag_g + reg * nx.log(Q))) ** 2
+            norm_2 = nx.max(nx.abs(CQ_ * diag_g + reg * nx.log(R))) ** 2
+            norm_3 = nx.max(nx.abs(-omega * diag_g)) ** 2
+            gamma = 10 / max(norm_1, norm_2, norm_3)
+
+        eps1 = nx.exp(-gamma * CR_g - ((gamma * reg) - 1) * nx.log(Q))
+        eps2 = nx.exp(-gamma * CQ_g - ((gamma * reg) - 1) * nx.log(R))
+        eps3 = nx.exp((gamma * omega / (g**2)) - (gamma * reg - 1) * nx.log(g))
+
+        # LR Dykstra algorithm
         Q, R, g = _LR_Dysktra(
             eps1, eps2, eps3, a, b, alpha, stopThr, numItermax, warn, nx
         )
@@ -451,7 +485,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None,
     v2 = nx.dot(R, (v1.T * diag_g).T)
     value_linear = nx.sum(nx.diag(nx.dot(M2.T, v2)))
 
-    # Compute value with entropy reg (entropy of Q, R, g must be computed separatly, see "Section 3.2" in the paper)
+    # Compute value with entropy reg (see "Section 3.2" in the paper)
     reg_Q = nx.sum(Q * nx.log(Q + 1e-16))  # entropy for Q
     reg_g = nx.sum(g * nx.log(g + 1e-16))  # entropy for g
     reg_R = nx.sum(R * nx.log(R + 1e-16))  # entropy for R

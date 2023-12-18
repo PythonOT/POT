@@ -30,7 +30,7 @@ lst_method_params_solve_sample = [
     {'method': 'gaussian'},
     {'method': 'gaussian', 'reg': 1},
     {'method': 'factored', 'rank': 10},
-    {'method': 'lowrank', 'reg': 0.1}
+    {'method': 'lowrank', 'rank': 10}
 ]
 
 lst_parameters_solve_sample_NotImplemented = [
