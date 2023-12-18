@@ -99,8 +99,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'POT Python Optimal Transport'
-copyright = u'2016-2021, Rémi Flamary, Nicolas Courty'
-author = u'Rémi Flamary, Nicolas Courty'
+copyright = u'2016-2023, POT Contributors'
+author = u'Rémi Flamary, POT Contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

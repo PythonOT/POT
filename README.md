@@ -178,10 +178,15 @@ The examples folder contain several examples and use case for the library. The f
 
 ## Acknowledgements
 
-This toolbox has been created and is maintained by
+This toolbox has been created by
 
 * [Rémi Flamary](http://remi.flamary.com/)
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
+
+It is currently maintained by 
+
+* [Rémi Flamary](http://remi.flamary.com/)
+* [Cédric Vincent-Cuaz](https://cedricvincentcuaz.github.io/)
 
 The numerous contributors to this library are listed [here](CONTRIBUTORS.md).
 
