@@ -13,8 +13,6 @@ from .backend import get_backend
 from .bregman import sinkhorn
 from sklearn.cluster import KMeans
 
-# ADD FUNCTION FOR LOW RANK INIT [WIP]
-
 
 def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init=None, random_state=None, nx=None):
     """
@@ -137,8 +135,6 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init=None, random_state=No
 
     return Q, R, g
 
-##################################################################################
-
 
 def compute_lr_sqeuclidean_matrix(X_s, X_t, rescale_cost, nx=None):
     """
@@ -181,11 +177,11 @@ def compute_lr_sqeuclidean_matrix(X_s, X_t, rescale_cost, nx=None):
 
     # First low rank decomposition of the cost matrix (A)
     array1 = nx.reshape(nx.sum(X_s**2, 1), (-1, 1))
-    array2 = nx.reshape(nx.ones(ns, type_as=X_s), (-1, 1))
+    array2 = nx.ones((ns, 1), type_as=X_s)
     M1 = nx.concatenate((array1, array2, -2 * X_s), axis=1)
 
     # Second low rank decomposition of the cost matrix (B)
-    array1 = nx.reshape(nx.ones(nt, type_as=X_s), (-1, 1))
+    array1 = nx.ones((nt, 1), type_as=X_s)
     array2 = nx.reshape(nx.sum(X_t**2, 1), (-1, 1))
     M2 = nx.concatenate((array1, array2, X_t), axis=1)
 
@@ -309,11 +305,12 @@ def _LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=N
     return Q, R, g
 
 
-def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None, rescale_cost=True,
-                     init=None, reg_init=None, seed_init=None, gamma_init=None,
+def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, rescale_cost=True,
+                     init="random", reg_init=None, seed_init=None, gamma_init="rescale",
                      numItermax=2000, stopThr=1e-7, warn=True, log=False):
     r"""
-    Solve the entropic regularization optimal transport problem under low-nonnegative rank constraints.
+    Solve the entropic regularization optimal transport problem under low-nonnegative rank constraints 
+    on the couplings.
 
     The function solves the following optimization problem:
 
@@ -345,18 +342,20 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None, res
         Regularization term >0
     rank : int, optional. Default is None. (>0)
         Nonnegative rank of the OT plan. If None, min(ns, nt) is considered.
-    alpha : int, optional. Default is None. (>0 and <1/r)
-        Lower bound for the weight vector g. If None, 1e-10 is considered
+    alpha : int, optional. Default is 1e-10. (>0 and <1/r)
+        Lower bound for the weight vector g. 
     rescale_cost : bool, optional. Default is False
         Rescale the low rank factorization of the sqeuclidean cost matrix
-    init : str, optional. Default is None. If None, "random" is considered.
+    init : str, optional. Default is 'random'. 
         Initialization strategy for the low rank couplings. 'random', 'trivial' or 'kmeans'
     reg_init : float, optional. Default is None. (>0)
         Regularization term for a 'kmeans' init. If None, 1 is considered.
     seed_init : int, optional. Default is None. (>0)
         Random state for a 'random' or 'kmeans' init strategy.
-    gamma_init : str, optional. If None, 'rescale' is considered
+    gamma_init : str, optional. Default is "rescale".
         Initialization strategy for gamma. 'rescale', or 'theory'
+        Gamma is a constant that scales the convergence criterion of the Mirror Descent 
+        optimization scheme used to compute the low-rank couplings (Q, R and g)
     numItermax : int, optional. Default is 2000.
         Max number of iterations for the Dykstra algorithm
     stopThr : float, optional. Default is 1e-7.
@@ -406,10 +405,6 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None, res
     if r <= 0:
         raise ValueError("The rank parameter cannot have a negative value")
 
-    # Compute alpha
-    if alpha is None:
-        alpha = 1e-10
-
     # Dykstra won't converge if 1/rank < alpha (see Section 3.2)
     if 1 / r < alpha:
         raise ValueError("alpha ({a}) should be smaller than 1/rank ({r}) for the Dykstra algorithm to converge.".format(
@@ -419,15 +414,9 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None, res
     M1, M2 = compute_lr_sqeuclidean_matrix(X_s, X_t, rescale_cost, nx)
 
     # Initialize the low rank matrices Q, R, g
-    if init is None:
-        init = "random"
-
     Q, R, g = _init_lr_sinkhorn(X_s, X_t, a, b, r, init, reg_init, seed_init, nx=nx)
 
     # Gamma initialization
-    if gamma_init is None:
-        gamma_init = "rescale"
-
     if gamma_init == "theory":
         L = nx.sqrt(
             3 * (2 / (alpha**4)) * ((nx.norm(M1) * nx.norm(M2)) ** 2) +
@@ -473,6 +462,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=None, res
         )
         Q = Q + 1e-16
         R = R + 1e-16
+        g = g + 1e-16
 
     # ----------------- Compute lazy_plan, value and value_linear  ------------------
     # see "Section 3.2: The Low-rank OT Problem" in the paper
