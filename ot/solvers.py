@@ -23,7 +23,6 @@ from .partial import partial_gromov_wasserstein2, entropic_partial_gromov_wasser
 from .gaussian import empirical_bures_wasserstein_distance
 from .factored import factored_optimal_transport
 from .lowrank import lowrank_sinkhorn
-from .lowrank import lowrank_sinkhorn
 
 lst_method_lazy = ['1d', 'gaussian', 'lowrank', 'factored', 'geomloss', 'geomloss_auto', 'geomloss_tensorized', 'geomloss_online', 'geomloss_multiscale']
 

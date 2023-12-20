@@ -120,4 +120,3 @@ def test_lowrank_sinkhorn_backends(nx):
 
     np.testing.assert_allclose(ab, P.sum(1), atol=1e-05)
     np.testing.assert_allclose(bb, P.sum(0), atol=1e-05)
-

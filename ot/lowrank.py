@@ -309,7 +309,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, re
                      init="random", reg_init=None, seed_init=None, gamma_init="rescale",
                      numItermax=2000, stopThr=1e-7, warn=True, log=False):
     r"""
-    Solve the entropic regularization optimal transport problem under low-nonnegative rank constraints 
+    Solve the entropic regularization optimal transport problem under low-nonnegative rank constraints
     on the couplings.
 
     The function solves the following optimization problem:
@@ -343,10 +343,10 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, re
     rank : int, optional. Default is None. (>0)
         Nonnegative rank of the OT plan. If None, min(ns, nt) is considered.
     alpha : int, optional. Default is 1e-10. (>0 and <1/r)
-        Lower bound for the weight vector g. 
+        Lower bound for the weight vector g.
     rescale_cost : bool, optional. Default is False
         Rescale the low rank factorization of the sqeuclidean cost matrix
-    init : str, optional. Default is 'random'. 
+    init : str, optional. Default is 'random'.
         Initialization strategy for the low rank couplings. 'random', 'trivial' or 'kmeans'
     reg_init : float, optional. Default is None. (>0)
         Regularization term for a 'kmeans' init. If None, 1 is considered.
@@ -354,7 +354,7 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, re
         Random state for a 'random' or 'kmeans' init strategy.
     gamma_init : str, optional. Default is "rescale".
         Initialization strategy for gamma. 'rescale', or 'theory'
-        Gamma is a constant that scales the convergence criterion of the Mirror Descent 
+        Gamma is a constant that scales the convergence criterion of the Mirror Descent
         optimization scheme used to compute the low-rank couplings (Q, R and g)
     numItermax : int, optional. Default is 2000.
         Max number of iterations for the Dykstra algorithm

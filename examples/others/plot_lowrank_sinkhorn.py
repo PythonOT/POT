@@ -125,4 +125,3 @@ pl.axis('off')
 pl.title('Low rank (rank=50)')
 
 pl.tight_layout()
-
