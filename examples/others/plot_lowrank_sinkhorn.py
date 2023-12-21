@@ -13,6 +13,8 @@ This example illustrates the computation of Low Rank Sinkhorn [26].
 # Author: Laurène David <laurene.david@ip-paris.fr>
 #
 # License: MIT License
+#
+# sphinx_gallery_thumbnail_number = 2
 
 import numpy as np
 import matplotlib.pylab as pl
@@ -86,7 +88,7 @@ for rank in list_rank:
 #%%
 
 # Plot sinkhorn vs low rank sinkhorn
-pl.figure(3, figsize=(10, 4))
+pl.figure(1, figsize=(10, 4))
 
 pl.subplot(1, 3, 1)
 pl.imshow(list_P_Sin[0], interpolation='nearest')
@@ -107,7 +109,7 @@ pl.show()
 
 #%%
 
-pl.figure(3, figsize=(10, 4))
+pl.figure(2, figsize=(10, 4))
 
 pl.subplot(1, 3, 1)
 pl.imshow(list_P_LR[0], interpolation='nearest')

@@ -11,10 +11,16 @@ import warnings
 from .utils import unif, dist, get_lowrank_lazytensor
 from .backend import get_backend
 from .bregman import sinkhorn
-from sklearn.cluster import KMeans
+
+# test if sklearn is installed for linux-minimal-deps
+try:
+    import sklearn.cluster
+    sklearn_import = True
+except ImportError:
+    sklearn_import = False
 
 
-def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init=None, random_state=None, nx=None):
+def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init, random_state, nx=None):
     """
     Implementation of different initialization strategies for the low rank sinkhorn solver (Q ,R, g).
     This function is specific to lowrank_sinkhorn.
@@ -33,11 +39,11 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init=None, random_state=No
         Nonnegative rank of the OT plan.
     init : str
         Initialization strategy for Q, R and g. 'random', 'trivial' or 'kmeans'
-    reg_init : float, optional. Default is None. (>0)
-        Regularization term for a 'kmeans' init. If None, 1 is considered.
-    random_state : default None
+    reg_init : float, optional.
+        Regularization term for a 'kmeans' init.
+    random_state : int, optional.
         Random state for a "random" or 'kmeans' init strategy
-    nx : default None
+    nx : optional, Default is None
         POT backend
 
 
@@ -61,12 +67,6 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init=None, random_state=No
     if nx is None:
         nx = get_backend(X_s, X_t, a, b)
 
-    if reg_init is None:
-        reg_init = 0.1
-
-    if random_state is None:
-        random_state = 49
-
     ns = X_s.shape[0]
     nt = X_t.shape[0]
     r = rank
@@ -86,7 +86,7 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init=None, random_state=No
         R = nx.abs(nx.randn(nt, rank, type_as=X_s)) + 1
         R = (R.T * (b / nx.sum(R, axis=1))).T
 
-    if init == "trivial":
+    if init == "deterministic":
         # Init g
         g = nx.ones(rank) / rank
 
@@ -114,24 +114,28 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init=None, random_state=No
         R = R1 + R2
 
     if init == "kmeans":
-        # Init g
-        g = nx.ones(rank, type_as=X_s) / rank
+        if sklearn_import:
+            # Init g
+            g = nx.ones(rank, type_as=X_s) / rank
 
-        # Init Q
-        kmeans_Xs = KMeans(n_clusters=rank, random_state=random_state, n_init="auto")
-        kmeans_Xs.fit(X_s)
-        Z_Xs = nx.from_numpy(kmeans_Xs.cluster_centers_)
-        C_Xs = dist(X_s, Z_Xs)  # shape (ns, rank)
-        C_Xs = C_Xs / nx.max(C_Xs)
-        Q = sinkhorn(a, g, C_Xs, reg=reg_init, numItermax=10000, stopThr=1e-3)
+            # Init Q
+            kmeans_Xs = sklearn.cluster.KMeans(n_clusters=rank, random_state=random_state, n_init="auto")
+            kmeans_Xs.fit(X_s)
+            Z_Xs = nx.from_numpy(kmeans_Xs.cluster_centers_)
+            C_Xs = dist(X_s, Z_Xs)  # shape (ns, rank)
+            C_Xs = C_Xs / nx.max(C_Xs)
+            Q = sinkhorn(a, g, C_Xs, reg=reg_init, numItermax=10000, stopThr=1e-3)
 
-        # Init R
-        kmeans_Xt = KMeans(n_clusters=rank, random_state=random_state, n_init="auto")
-        kmeans_Xt.fit(X_t)
-        Z_Xt = nx.from_numpy(kmeans_Xt.cluster_centers_)
-        C_Xt = dist(X_t, Z_Xt)  # shape (nt, rank)
-        C_Xt = C_Xt / nx.max(C_Xt)
-        R = sinkhorn(b, g, C_Xt, reg=reg_init, numItermax=10000, stopThr=1e-3)
+            # Init R
+            kmeans_Xt = sklearn.cluster.KMeans(n_clusters=rank, random_state=random_state, n_init="auto")
+            kmeans_Xt.fit(X_t)
+            Z_Xt = nx.from_numpy(kmeans_Xt.cluster_centers_)
+            C_Xt = dist(X_t, Z_Xt)  # shape (nt, rank)
+            C_Xt = C_Xt / nx.max(C_Xt)
+            R = sinkhorn(b, g, C_Xt, reg=reg_init, numItermax=10000, stopThr=1e-3)
+
+        else:
+            raise ImportError("Scikit-learn should be installed to use the 'kmeans' init.")
 
     return Q, R, g
 
@@ -306,7 +310,7 @@ def _LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=N
 
 
 def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, rescale_cost=True,
-                     init="random", reg_init=None, seed_init=None, gamma_init="rescale",
+                     init="random", reg_init=1e-1, seed_init=49, gamma_init="rescale",
                      numItermax=2000, stopThr=1e-7, warn=True, log=False):
     r"""
     Solve the entropic regularization optimal transport problem under low-nonnegative rank constraints
@@ -347,10 +351,10 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, re
     rescale_cost : bool, optional. Default is False
         Rescale the low rank factorization of the sqeuclidean cost matrix
     init : str, optional. Default is 'random'.
-        Initialization strategy for the low rank couplings. 'random', 'trivial' or 'kmeans'
-    reg_init : float, optional. Default is None. (>0)
+        Initialization strategy for the low rank couplings. 'random', 'deterministic' or 'kmeans'
+    reg_init : float, optional. Default is 1e-1. (>0)
         Regularization term for a 'kmeans' init. If None, 1 is considered.
-    seed_init : int, optional. Default is None. (>0)
+    seed_init : int, optional. Default is 49. (>0)
         Random state for a 'random' or 'kmeans' init strategy.
     gamma_init : str, optional. Default is "rescale".
         Initialization strategy for gamma. 'rescale', or 'theory'
