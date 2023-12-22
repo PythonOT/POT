@@ -1769,7 +1769,7 @@ class MappingTransport(BaseEstimator):
                 transp = self.coupling_ / nx.sum(self.coupling_, 1)[:, None]
 
                 # set nans to 0
-                transp[~ nx.isfinite(transp)] = 0
+                transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
                 # compute transported samples
                 transp_Xs = nx.dot(transp, self.xt_)
@@ -2058,7 +2058,7 @@ class JCPOTTransport(BaseTransport):
                     transp = coupling / nx.sum(coupling, 1)[:, None]
 
                     # set nans to 0
-                    transp[~ nx.isfinite(transp)] = 0
+                    transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
                     # compute transported samples
                     transp_Xs.append(nx.dot(transp, self.xt_))
@@ -2082,7 +2082,7 @@ class JCPOTTransport(BaseTransport):
                     # transport the source samples
                     for coupling in self.coupling_:
                         transp = coupling / nx.sum(coupling, 1)[:, None]
-                        transp[~ nx.isfinite(transp)] = 0
+                        transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
                         transp_Xs_.append(nx.dot(transp, self.xt_))
 
                     transp_Xs_ = nx.concatenate(transp_Xs_, axis=0)
@@ -2135,7 +2135,7 @@ class JCPOTTransport(BaseTransport):
                 transp = self.coupling_[i] / nx.sum(self.coupling_[i], 1)[:, None]
 
                 # set nans to 0
-                transp[~ nx.isfinite(transp)] = 0
+                transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
                 if self.log:
                     D1 = self.log_['D1'][i]
@@ -2183,7 +2183,7 @@ class JCPOTTransport(BaseTransport):
                 transp = self.coupling_[i] / nx.sum(self.coupling_[i], 1)[:, None]
 
                 # set nans to 0
-                transp[~ nx.isfinite(transp)] = 0
+                transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
                 # compute propagated labels
                 transp_ys.append(nx.dot(D1, transp.T).T)
