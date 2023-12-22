@@ -18,7 +18,7 @@ from .backend import get_backend
 from .bregman import sinkhorn, jcpot_barycenter
 from .lp import emd
 from .utils import unif, dist, kernel, cost_normalization, label_normalization, laplacian, dots
-from .utils import list_to_array, check_params, BaseEstimator, deprecated
+from .utils import BaseEstimator, check_params, deprecated, labels_to_masks, list_to_array
 from .unbalanced import sinkhorn_unbalanced
 from .gaussian import empirical_bures_wasserstein_mapping, empirical_gaussian_gromov_wasserstein_mapping
 from .optim import cg
@@ -499,18 +499,12 @@ class BaseTransport(BaseEstimator):
                 if self.limit_max != np.infty:
                     self.limit_max = self.limit_max * nx.max(self.cost_)
 
-                # assumes labeled source samples occupy the first rows
-                # and labeled target samples occupy the first columns
-                classes = [c for c in nx.unique(ys) if c != -1]
-                for c in classes:
-                    idx_s = nx.where((ys != c) & (ys != -1))
-                    idx_t = nx.where(yt == c)
-
-                    # all the coefficients corresponding to a source sample
-                    # and a target sample :
-                    # with different labels get a infinite
-                    for j in idx_t[0]:
-                        self.cost_[idx_s[0], j] = self.limit_max
+                # zeros where source label is missing (masked with -1)
+                missing_labels = ys + nx.ones(ys.shape, type_as=ys)
+                missing_labels = nx.repeat(missing_labels[:, None], ys.shape[0], 1)
+                # zeros where labels match
+                label_match = ys[:, None] - yt[None, :]
+                self.cost_ = nx.maximum(self.cost_, nx.abs(label_match) * nx.abs(missing_labels) * self.limit_max)
 
             # distribution estimation
             self.mu_s = self.distribution_estimation(Xs)
@@ -581,12 +575,11 @@ class BaseTransport(BaseEstimator):
         if check_params(Xs=Xs):
 
             if nx.array_equal(self.xs_, Xs):
-
                 # perform standard barycentric mapping
                 transp = self.coupling_ / nx.sum(self.coupling_, axis=1)[:, None]
 
                 # set nans to 0
-                transp[~ nx.isfinite(transp)] = 0
+                transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
                 # compute transported samples
                 transp_Xs = nx.dot(transp, self.xt_)
@@ -604,9 +597,8 @@ class BaseTransport(BaseEstimator):
                     idx = nx.argmin(D0, axis=1)
 
                     # transport the source samples
-                    transp = self.coupling_ / nx.sum(
-                        self.coupling_, axis=1)[:, None]
-                    transp[~ nx.isfinite(transp)] = 0
+                    transp = self.coupling_ / nx.sum(self.coupling_, axis=1)[:, None]
+                    transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
                     transp_Xs_ = nx.dot(transp, self.xt_)
 
                     # define the transported points
@@ -645,23 +637,16 @@ class BaseTransport(BaseEstimator):
 
         # check the necessary inputs parameters are here
         if check_params(ys=ys):
-
-            ysTemp = label_normalization(nx.copy(ys))
-            classes = nx.unique(ysTemp)
-            n = len(classes)
-            D1 = nx.zeros((n, len(ysTemp)), type_as=self.coupling_)
-
             # perform label propagation
             transp = self.coupling_ / nx.sum(self.coupling_, axis=0)[None, :]
 
             # set nans to 0
-            transp[~ nx.isfinite(transp)] = 0
-
-            for c in classes:
-                D1[int(c), ysTemp == c] = 1
+            transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
             # compute propagated labels
-            transp_ys = nx.dot(D1, transp)
+            labels = label_normalization(ys)
+            masks = labels_to_masks(labels, nx=nx, type_as=transp)
+            transp_ys = nx.dot(masks.T, transp)
 
             return transp_ys.T
 
@@ -697,12 +682,11 @@ class BaseTransport(BaseEstimator):
         if check_params(Xt=Xt):
 
             if nx.array_equal(self.xt_, Xt):
-
                 # perform standard barycentric mapping
                 transp_ = self.coupling_.T / nx.sum(self.coupling_, 0)[:, None]
 
                 # set nans to 0
-                transp_[~ nx.isfinite(transp_)] = 0
+                transp_ = nx.nan_to_num(transp_, nan=0, posinf=0, neginf=0)
 
                 # compute transported samples
                 transp_Xt = nx.dot(transp_, self.xs_)
@@ -719,9 +703,8 @@ class BaseTransport(BaseEstimator):
                     idx = nx.argmin(D0, axis=1)
 
                     # transport the target samples
-                    transp_ = self.coupling_.T / nx.sum(
-                        self.coupling_, 0)[:, None]
-                    transp_[~ nx.isfinite(transp_)] = 0
+                    transp_ = self.coupling_.T / nx.sum(self.coupling_, 0)[:, None]
+                    transp_ = nx.nan_to_num(transp_, nan=0, posinf=0, neginf=0)
                     transp_Xt_ = nx.dot(transp_, self.xs_)
 
                     # define the transported points
@@ -750,23 +733,15 @@ class BaseTransport(BaseEstimator):
 
         # check the necessary inputs parameters are here
         if check_params(yt=yt):
-
-            ytTemp = label_normalization(nx.copy(yt))
-            classes = nx.unique(ytTemp)
-            n = len(classes)
-            D1 = nx.zeros((n, len(ytTemp)), type_as=self.coupling_)
-
             # perform label propagation
             transp = self.coupling_ / nx.sum(self.coupling_, 1)[:, None]
-
             # set nans to 0
-            transp[~ nx.isfinite(transp)] = 0
+            transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
-            for c in classes:
-                D1[int(c), ytTemp == c] = 1
-
-            # compute propagated samples
-            transp_ys = nx.dot(D1, transp.T)
+            # compute propagated labels
+            labels = label_normalization(yt)
+            masks = labels_to_masks(labels, nx=nx, type_as=transp)
+            transp_ys = nx.dot(masks.T, transp.T)
 
             return transp_ys.T
 
@@ -2151,7 +2126,7 @@ class JCPOTTransport(BaseTransport):
                 type_as=ys[0]
             )
             for i in range(len(ys)):
-                ysTemp = label_normalization(nx.copy(ys[i]))
+                ysTemp = label_normalization(ys[i])
                 classes = nx.unique(ysTemp)
                 n = len(classes)
                 ns = len(ysTemp)
@@ -2194,7 +2169,7 @@ class JCPOTTransport(BaseTransport):
         # check the necessary inputs parameters are here
         if check_params(yt=yt):
             transp_ys = []
-            ytTemp = label_normalization(nx.copy(yt))
+            ytTemp = label_normalization(yt)
             classes = nx.unique(ytTemp)
             n = len(classes)
             D1 = nx.zeros((n, len(ytTemp)), type_as=self.coupling_[0])

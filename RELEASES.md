@@ -67,6 +67,7 @@ We also fixed a number of issues, the most pressing being a problem of GPU memor
 + Add `fixed_structure` and `fixed_features` to entropic fgw barycenter solver (PR #578)
 + Add new BAPG solvers with KL projections for GW and FGW (PR #581)
 + Add Bures-Wasserstein barycenter in `ot.gaussian` and example (PR #582, PR #584)
++ Domain adaptation method `SinkhornL1l2Transport` now supports JAX backend (PR #587)
 + Added support for [Low-Rank Sinkhorn Factorization](https://arxiv.org/pdf/2103.04737.pdf) (PR #568)
 
 
