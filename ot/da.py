@@ -128,7 +128,7 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
         indices_labels.append(idxc)
 
     W = nx.zeros(M.shape, type_as=M)
-    for cpt in range(numItermax):
+    for _ in range(numItermax):
         Mreg = M + eta * W
         if log:
             transp, log = sinkhorn(a, b, Mreg, reg, numItermax=numInnerItermax,

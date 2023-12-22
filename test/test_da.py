@@ -70,7 +70,6 @@ def test_log_da(nx, class_to_test):
     assert hasattr(otda, "log_")
 
 
-@pytest.skip_backend("jax")
 @pytest.skip_backend("tf")
 def test_sinkhorn_lpl1_transport_class(nx):
     """test_sinkhorn_transport
@@ -81,8 +80,11 @@ def test_sinkhorn_lpl1_transport_class(nx):
 
     Xs, ys = make_data_classif('3gauss', ns)
     Xt, yt = make_data_classif('3gauss2', nt)
+    # prepare semi-supervised labels
+    yt_semi = np.copy(yt)
+    yt_semi[np.arange(0, nt, 2)] = -1
 
-    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
+    Xs, ys, Xt, yt, yt_semi = nx.from_numpy(Xs, ys, Xt, yt, yt_semi)
 
     otda = ot.da.SinkhornLpl1Transport()
 
@@ -143,7 +145,7 @@ def test_sinkhorn_lpl1_transport_class(nx):
     n_unsup = nx.sum(otda_unsup.cost_)
 
     otda_semi = ot.da.SinkhornLpl1Transport()
-    otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+    otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt_semi)
     assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
     n_semisup = nx.sum(otda_semi.cost_)
 
@@ -906,3 +908,41 @@ def test_sinkhorn_l1l2_gl_cost_vectorized(nx):
 
     assert np.allclose(f(G), f2(G))
     assert np.allclose(df(G), df2(G))
+
+
+@pytest.skip_backend("jax")
+@pytest.skip_backend("tf")
+def test_sinkhorn_lpl1_vectorization(nx):
+    n_samples, n_labels = 150, 3
+    rng = np.random.RandomState(42)
+    M = rng.rand(n_samples, n_samples)
+    labels_a = rng.randint(n_labels, size=(n_samples,))
+    M, labels_a = nx.from_numpy(M), nx.from_numpy(labels_a)
+
+    # hard-coded params from the original code
+    p, epsilon = 0.5, 1e-3
+    T = nx.from_numpy(rng.rand(n_samples, n_samples))
+
+    def unvectorized(transp):
+        indices_labels = []
+        classes = nx.unique(labels_a)
+        for c in classes:
+            idxc, = nx.where(labels_a == c)
+            indices_labels.append(idxc)
+        W = nx.ones(M.shape, type_as=M)
+        for (i, c) in enumerate(classes):
+            majs = nx.sum(transp[indices_labels[i]], axis=0)
+            majs = p * ((majs + epsilon) ** (p - 1))
+            W[indices_labels[i]] = majs
+        return W
+
+    def vectorized(transp):
+        labels_u, labels_idx = nx.unique(labels_a, return_inverse=True)
+        n_labels = labels_u.shape[0]
+        unroll_labels_idx = nx.eye(n_labels, type_as=labels_u)[None, labels_idx]
+        W = nx.repeat(transp.T[:, :, None], n_labels, axis=2) * unroll_labels_idx
+        W = nx.sum(W, axis=2).T
+        W = p * ((W + epsilon) ** (p - 1))
+        return W
+
+    assert np.allclose(unvectorized(T), vectorized(T))
