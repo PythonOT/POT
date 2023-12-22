@@ -936,13 +936,27 @@ def test_sinkhorn_lpl1_vectorization(nx):
             W[indices_labels[i]] = majs
         return W
 
+    def unvectorized_v2(transp):
+        indices_labels = []
+        classes = nx.unique(labels_a)
+        for c in classes:
+            idxc, = nx.where(labels_a == c)
+            indices_labels.append(idxc)
+        W = nx.zeros(M.shape, type_as=M)
+        for (i, c) in enumerate(classes):
+            W[indices_labels[i]] = nx.sum(transp[indices_labels[i]], axis=0)
+        W = p * ((W + epsilon) ** (p - 1))
+        return W-1
+
+
     def vectorized(transp):
         labels_u, labels_idx = nx.unique(labels_a, return_inverse=True)
         n_labels = labels_u.shape[0]
-        unroll_labels_idx = nx.eye(n_labels, type_as=labels_u)[None, labels_idx]
-        W = nx.repeat(transp.T[:, :, None], n_labels, axis=2) * unroll_labels_idx
-        W = nx.sum(W, axis=2).T
+        unroll_labels_idx = nx.eye(n_labels, type_as=transp)[labels_idx]
+        W = nx.repeat(transp.T[:, :, None], n_labels, axis=2) * unroll_labels_idx[None, :, :]
+        W = nx.sum(W, axis=1)
         W = p * ((W + epsilon) ** (p - 1))
-        return W
+        W = W @ unroll_labels_idx.T
+        return W.T
 
     assert np.allclose(unvectorized(T), vectorized(T))
