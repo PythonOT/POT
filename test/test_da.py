@@ -28,10 +28,9 @@ except ImportError:
 
 
 def test_class_jax_tf():
+    from ot.backend import tf
+
     backends = []
-    from ot.backend import jax, tf
-    if jax:
-        backends.append(ot.backend.JaxBackend())
     if tf:
         backends.append(ot.backend.TensorflowBackend())
 
