@@ -143,10 +143,12 @@ def test_sinkhorn_lpl1_transport_class(nx):
     # test unsupervised vs semi-supervised mode
     otda_unsup = ot.da.SinkhornLpl1Transport()
     otda_unsup.fit(Xs=Xs, ys=ys, Xt=Xt)
+    assert np.all(np.isfinite(nx.to_numpy(otda_unsup.coupling_))), "unsup coupling is finite"
     n_unsup = nx.sum(otda_unsup.cost_)
 
     otda_semi = ot.da.SinkhornLpl1Transport()
     otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt_semi)
+    assert np.all(np.isfinite(nx.to_numpy(otda_semi.coupling_))), "semi coupling is finite"
     assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
     n_semisup = nx.sum(otda_semi.cost_)
 
