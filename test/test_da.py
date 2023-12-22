@@ -77,8 +77,8 @@ def test_sinkhorn_lpl1_transport_class(nx):
     ns = 50
     nt = 50
 
-    Xs, ys = make_data_classif('3gauss', ns)
-    Xt, yt = make_data_classif('3gauss2', nt)
+    Xs, ys = make_data_classif('3gauss', ns, random_state=42)
+    Xt, yt = make_data_classif('3gauss2', nt, random_state=43)
     # prepare semi-supervised labels
     yt_semi = np.copy(yt)
     yt_semi[np.arange(0, nt, 2)] = -1
@@ -91,6 +91,8 @@ def test_sinkhorn_lpl1_transport_class(nx):
     otda.fit(Xs=Xs, ys=ys, Xt=Xt)
     assert hasattr(otda, "cost_")
     assert hasattr(otda, "coupling_")
+    assert np.all(np.isfinite(nx.to_numpy(otda.cost_))), "cost is finite"
+    assert np.all(np.isfinite(nx.to_numpy(otda.coupling_))), "coupling is finite"
 
     # test dimensions of coupling
     assert_equal(otda.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
@@ -108,7 +110,7 @@ def test_sinkhorn_lpl1_transport_class(nx):
     transp_Xs = otda.transform(Xs=Xs)
     assert_equal(transp_Xs.shape, Xs.shape)
 
-    Xs_new = nx.from_numpy(make_data_classif('3gauss', ns + 1)[0])
+    Xs_new = nx.from_numpy(make_data_classif('3gauss', ns + 1, random_state=44)[0])
     transp_Xs_new = otda.transform(Xs_new)
 
     # check that the oos method is working
@@ -118,7 +120,7 @@ def test_sinkhorn_lpl1_transport_class(nx):
     transp_Xt = otda.inverse_transform(Xt=Xt)
     assert_equal(transp_Xt.shape, Xt.shape)
 
-    Xt_new = nx.from_numpy(make_data_classif('3gauss2', nt + 1)[0])
+    Xt_new = nx.from_numpy(make_data_classif('3gauss2', nt + 1, random_state=45)[0])
     transp_Xt_new = otda.inverse_transform(Xt=Xt_new)
 
     # check that the oos method is working
