@@ -121,11 +121,9 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
     p = 0.5
     epsilon = 1e-3
 
-    indices_labels = []
-    classes = nx.unique(labels_a)
-    for c in classes:
-        idxc, = nx.where(labels_a == c)
-        indices_labels.append(idxc)
+    labels_u, labels_idx = nx.unique(labels_a, return_inverse=True)
+    n_labels = labels_u.shape[0]
+    unroll_labels_idx = nx.eye(n_labels, type_as=M)[labels_idx]
 
     W = nx.zeros(M.shape, type_as=M)
     for _ in range(numItermax):
@@ -136,13 +134,12 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
         else:
             transp = sinkhorn(a, b, Mreg, reg, numItermax=numInnerItermax,
                               stopThr=stopInnerThr)
-        # the transport has been computed. Check if classes are really
-        # separated
-        W = nx.ones(M.shape, type_as=M)
-        for (i, c) in enumerate(classes):
-            majs = nx.sum(transp[indices_labels[i]], axis=0)
-            majs = p * ((majs + epsilon) ** (p - 1))
-            W[indices_labels[i]] = majs
+        # the transport has been computed
+        # check if classes are really separated
+        W = nx.repeat(transp.T[:, :, None], n_labels, axis=2) * unroll_labels_idx[None, :, :]
+        W = nx.sum(W, axis=1)
+        W = W @ unroll_labels_idx.T
+        W = p * ((W.T + epsilon) ** (p - 1))
 
     if log:
         return transp, log

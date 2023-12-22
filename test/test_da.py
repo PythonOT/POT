@@ -936,19 +936,6 @@ def test_sinkhorn_lpl1_vectorization(nx):
             W[indices_labels[i]] = majs
         return W
 
-    def unvectorized_v2(transp):
-        indices_labels = []
-        classes = nx.unique(labels_a)
-        for c in classes:
-            idxc, = nx.where(labels_a == c)
-            indices_labels.append(idxc)
-        W = nx.zeros(M.shape, type_as=M)
-        for (i, c) in enumerate(classes):
-            W[indices_labels[i]] = nx.sum(transp[indices_labels[i]], axis=0)
-        W = p * ((W + epsilon) ** (p - 1))
-        return W-1
-
-
     def vectorized(transp):
         labels_u, labels_idx = nx.unique(labels_a, return_inverse=True)
         n_labels = labels_u.shape[0]
