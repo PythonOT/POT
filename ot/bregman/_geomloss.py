@@ -87,7 +87,7 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
 
     The algorithm used for solving the problem is the Sinkhorn-Knopp matrix
     scaling algorithm as proposed in and computed in log space for
-    better stability and epsilon-scaling. The solution is computed ina lzy way
+    better stability and epsilon-scaling. The solution is computed in a lazy way
     using the Geomloss [60] and the KeOps library [61].
 
     Parameters
