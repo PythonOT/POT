@@ -1272,7 +1272,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
             if not lazy0:  # store plan if not lazy
                 plan = lazy_plan[:]
 
-        elif method.startswith('geomloss'):  # Geomloss solver for entropi OT
+        elif method.startswith('geomloss'):  # Geomloss solver for entropic OT
 
             split_method = method.split('_')
             if len(split_method) == 2:
