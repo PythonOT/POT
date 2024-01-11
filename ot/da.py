@@ -500,11 +500,14 @@ class BaseTransport(BaseEstimator):
                     self.limit_max = self.limit_max * nx.max(self.cost_)
 
                 # zeros where source label is missing (masked with -1)
-                missing_labels = ys + nx.ones(ys.shape, type_as=ys)
-                missing_labels = nx.repeat(missing_labels[:, None], ys.shape[0], 1)
+                missing_ys = (ys == -1) + nx.zeros(ys.shape, type_as=ys)
+                missing_yt = (yt == -1) + nx.zeros(yt.shape, type_as=yt)
+                missing_labels = missing_ys[:, None] @ missing_yt[None, :]
                 # zeros where labels match
-                label_match = ys[:, None] - yt[None, :]
-                self.cost_ = nx.maximum(self.cost_, nx.abs(label_match) * nx.abs(missing_labels) * self.limit_max)
+                label_match = ((ys[:, None] - yt[None, :]) != 0)
+                cost_correction = label_match * missing_labels * self.limit_max
+                cost_correction = nx.nan_to_num(cost_correction, -np.infty)
+                self.cost_ = nx.maximum(self.cost_, cost_correction)
 
             # distribution estimation
             self.mu_s = self.distribution_estimation(Xs)
