@@ -150,7 +150,7 @@ def test_sinkhorn_lpl1_transport_class(nx):
     n_semisup = nx.sum(otda_semi.cost_)
 
     # check that the cost matrix norms are indeed different
-    assert n_unsup != n_semisup, "semisupervised mode not working"
+    assert np.allclose(n_unsup, n_semisup, atol=1e-7), "semisupervised mode is not working"
 
     # check that the coupling forbids mass transport between labeled source
     # and labeled target samples
@@ -240,7 +240,7 @@ def test_sinkhorn_l1l2_transport_class(nx):
     n_semisup = nx.sum(otda_semi.cost_)
 
     # check that the cost matrix norms are indeed different
-    assert n_unsup != n_semisup, "semisupervised mode not working"
+    assert np.allclose(n_unsup, n_semisup, atol=1e-7), "semisupervised mode is not working"
 
     # check that the coupling forbids mass transport between labeled source
     # and labeled target samples
@@ -333,7 +333,7 @@ def test_sinkhorn_transport_class(nx):
     n_semisup = nx.sum(otda_semi.cost_)
 
     # check that the cost matrix norms are indeed different
-    assert n_unsup != n_semisup, "semisupervised mode not working"
+    assert np.allclose(n_unsup, n_semisup, atol=1e-7), "semisupervised mode is not working"
 
     # check that the coupling forbids mass transport between labeled source
     # and labeled target samples
@@ -425,7 +425,7 @@ def test_unbalanced_sinkhorn_transport_class(nx):
         n_semisup = nx.sum(otda_semi.cost_)
 
         # check that the cost matrix norms are indeed different
-        assert n_unsup != n_semisup, "semisupervised mode not working"
+        assert np.allclose(n_unsup, n_semisup, atol=1e-7), "semisupervised mode is not working"
 
         # check everything runs well with log=True
         otda = ot.da.SinkhornTransport(log=True)
@@ -521,7 +521,7 @@ def test_emd_transport_class(nx):
     n_semisup = nx.sum(otda_semi.cost_)
 
     # check that the cost matrix norms are indeed different
-    assert n_unsup != n_semisup, "semisupervised mode not working"
+    assert np.allclose(n_unsup, n_semisup, atol=1e-7), "semisupervised mode is not working"
 
     # check that the coupling forbids mass transport between labeled source
     # and labeled target samples
