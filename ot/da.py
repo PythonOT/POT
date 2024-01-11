@@ -13,6 +13,7 @@ Domain adaptation with optimal transport
 # License: MIT License
 
 import numpy as np
+import warnings
 
 from .backend import get_backend
 from .bregman import sinkhorn, jcpot_barycenter
@@ -511,7 +512,11 @@ class BaseTransport(BaseEstimator):
                 # that he cells (i, j) has -Inf where there's no correction necessary
                 # by 'correction' we mean setting cost to a large value when
                 # labels do not match
-                cost_correction = label_match * missing_labels * self.limit_max
+                # we suppress potential RuntimeWarning caused by Inf multiplication
+                # (as we explicitly cover potential NANs later)
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore', category=RuntimeWarning)
+                    cost_correction = label_match * missing_labels * self.limit_max
                 # this operation is necessary because 0 * Inf = NAN
                 # thus is irrelevant when limit_max is finite
                 cost_correction = nx.nan_to_num(cost_correction, -np.infty)
