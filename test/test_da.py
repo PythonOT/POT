@@ -89,7 +89,9 @@ def test_sinkhorn_lpl1_transport_class(nx):
     # test its computed
     otda.fit(Xs=Xs, ys=ys, Xt=Xt)
     assert hasattr(otda, "cost_")
+    assert not np.any(np.isnan(nx.to_numpy(otda.cost_))), "cost is finite"
     assert hasattr(otda, "coupling_")
+    assert np.all(np.isfinite(nx.to_numpy(otda.coupling_))), "coupling is finite"
 
     # test dimensions of coupling
     assert_equal(otda.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
@@ -371,6 +373,10 @@ def test_unbalanced_sinkhorn_transport_class(nx):
         # test dimensions of coupling
         assert_equal(otda.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
         assert_equal(otda.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
+        assert not np.any(np.isnan(nx.to_numpy(otda.cost_))), "cost is finite"
+
+        # test coupling
+        assert np.all(np.isfinite(nx.to_numpy(otda.coupling_))), "coupling is finite"
 
         # test transform
         transp_Xs = otda.transform(Xs=Xs)
@@ -409,10 +415,12 @@ def test_unbalanced_sinkhorn_transport_class(nx):
         # test unsupervised vs semi-supervised mode
         otda_unsup = ot.da.SinkhornTransport()
         otda_unsup.fit(Xs=Xs, Xt=Xt)
+        assert not np.any(np.isnan(nx.to_numpy(otda_unsup.cost_))), "cost is finite"
         n_unsup = nx.sum(otda_unsup.cost_)
 
         otda_semi = ot.da.SinkhornTransport()
         otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+        assert not np.any(np.isnan(nx.to_numpy(otda_semi.cost_))), "cost is finite"
         assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
         n_semisup = nx.sum(otda_semi.cost_)
 
@@ -422,6 +430,7 @@ def test_unbalanced_sinkhorn_transport_class(nx):
         # check everything runs well with log=True
         otda = ot.da.SinkhornTransport(log=True)
         otda.fit(Xs=Xs, ys=ys, Xt=Xt)
+        assert not np.any(np.isnan(nx.to_numpy(otda.cost_))), "cost is finite"
         assert len(otda.log_.keys()) != 0
 
 
@@ -448,7 +457,9 @@ def test_emd_transport_class(nx):
 
     # test dimensions of coupling
     assert_equal(otda.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert not np.any(np.isnan(nx.to_numpy(otda.cost_))), "cost is finite"
     assert_equal(otda.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert np.all(np.isfinite(nx.to_numpy(otda.coupling_))), "coupling is finite"
 
     # test margin constraints
     mu_s = unif(ns)
@@ -495,11 +506,18 @@ def test_emd_transport_class(nx):
     # test unsupervised vs semi-supervised mode
     otda_unsup = ot.da.EMDTransport()
     otda_unsup.fit(Xs=Xs, ys=ys, Xt=Xt)
+    assert_equal(otda_unsup.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert not np.any(np.isnan(nx.to_numpy(otda_unsup.cost_))), "cost is finite"
+    assert_equal(otda_unsup.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert np.all(np.isfinite(nx.to_numpy(otda_unsup.coupling_))), "coupling is finite"
     n_unsup = nx.sum(otda_unsup.cost_)
 
     otda_semi = ot.da.EMDTransport()
     otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
     assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert not np.any(np.isnan(nx.to_numpy(otda_semi.cost_))), "cost is finite"
+    assert_equal(otda_semi.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert np.all(np.isfinite(nx.to_numpy(otda_semi.coupling_))), "coupling is finite"
     n_semisup = nx.sum(otda_semi.cost_)
 
     # check that the cost matrix norms are indeed different
