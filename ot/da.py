@@ -13,6 +13,7 @@ Domain adaptation with optimal transport
 # License: MIT License
 
 import numpy as np
+import warnings
 
 from .backend import get_backend
 from .bregman import sinkhorn, jcpot_barycenter
@@ -496,12 +497,27 @@ class BaseTransport(BaseEstimator):
                 if self.limit_max != np.infty:
                     self.limit_max = self.limit_max * nx.max(self.cost_)
 
-                # zeros where source label is missing (masked with -1)
-                missing_labels = ys + nx.ones(ys.shape, type_as=ys)
-                missing_labels = nx.repeat(missing_labels[:, None], ys.shape[0], 1)
-                # zeros where labels match
-                label_match = ys[:, None] - yt[None, :]
-                self.cost_ = nx.maximum(self.cost_, nx.abs(label_match) * nx.abs(missing_labels) * self.limit_max)
+                # missing_labels is a (ns, nt) matrix of {0, 1} such that
+                # the cells (i, j) has 0 iff either ys[i] or yt[j] is masked
+                missing_ys = (ys == -1) + nx.zeros(ys.shape, type_as=ys)
+                missing_yt = (yt == -1) + nx.zeros(yt.shape, type_as=yt)
+                missing_labels = missing_ys[:, None] @ missing_yt[None, :]
+                # labels_match is a (ns, nt) matrix of {True, False} such that
+                # the cells (i, j) has False if ys[i] != yt[i]
+                label_match = (ys[:, None] - yt[None, :]) != 0
+                # cost correction is a (ns, nt) matrix of {-Inf, float, Inf} such
+                # that he cells (i, j) has -Inf where there's no correction necessary
+                # by 'correction' we mean setting cost to a large value when
+                # labels do not match
+                # we suppress potential RuntimeWarning caused by Inf multiplication
+                # (as we explicitly cover potential NANs later)
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore', category=RuntimeWarning)
+                    cost_correction = label_match * missing_labels * self.limit_max
+                # this operation is necessary because 0 * Inf = NAN
+                # thus is irrelevant when limit_max is finite
+                cost_correction = nx.nan_to_num(cost_correction, -np.infty)
+                self.cost_ = nx.maximum(self.cost_, cost_correction)
 
             # distribution estimation
             self.mu_s = self.distribution_estimation(Xs)
