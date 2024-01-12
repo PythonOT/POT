@@ -1,5 +1,11 @@
 # Releases
 
+## 0.9.3
+
+#### Closed issues
+- Fixed an issue with cost correction for mismatched labels in `ot.da.BaseTransport` fit methods. This fix addresses the original issue introduced PR #587 (PR #593)
+
+
 ## 0.9.2
 *December 2023*
 
