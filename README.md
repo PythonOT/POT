@@ -8,7 +8,7 @@
 [![Anaconda downloads](https://anaconda.org/conda-forge/pot/badges/downloads.svg)](https://anaconda.org/conda-forge/pot)
 [![License](https://anaconda.org/conda-forge/pot/badges/license.svg)](https://github.com/PythonOT/POT/blob/master/LICENSE)
 
-This open source Python library provide several solvers for optimization
+This open source Python library provides several solvers for optimization
 problems related to Optimal Transport for signal, image processing and machine
 learning.
 
