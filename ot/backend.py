@@ -1043,6 +1043,14 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
+        r"""
+        Replace NaN with zero and infinity with large finite numbers or with the numbers defined by the user.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.nan_to_num.html#numpy.nan_to_num
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -1391,6 +1399,9 @@ class NumpyBackend(Backend):
 
     def matmul(self, a, b):
         return np.matmul(a, b)
+
+    def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
+        return np.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
 
 
 _register_backend_implementation(NumpyBackend)
@@ -1761,6 +1772,9 @@ class JaxBackend(Backend):
 
     def matmul(self, a, b):
         return jnp.matmul(a, b)
+
+    def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
+        return jnp.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
 
 
 if jax:
@@ -2250,6 +2264,10 @@ class TorchBackend(Backend):
     def matmul(self, a, b):
         return torch.matmul(a, b)
 
+    def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
+        out = None if copy else x
+        return torch.nan_to_num(x, nan=nan, posinf=posinf, neginf=neginf, out=out)
+
 
 if torch:
     # Only register torch backend if it is installed
@@ -2646,6 +2664,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def matmul(self, a, b):
         return cp.matmul(a, b)
+
+    def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
+        return cp.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
 
 
 if cp:
@@ -3069,6 +3090,12 @@ class TensorflowBackend(Backend):
 
     def matmul(self, a, b):
         return tnp.matmul(a, b)
+
+    # todo(okachaiev): replace this with a more reasonable implementation
+    def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
+        x = self.to_numpy(x)
+        x = np.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
+        return self.from_numpy(x)
 
 
 if tf:

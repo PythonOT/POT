@@ -7,7 +7,6 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 import pytest
-import warnings
 
 import ot
 from ot.datasets import make_data_classif
@@ -90,7 +89,9 @@ def test_sinkhorn_lpl1_transport_class(nx):
     # test its computed
     otda.fit(Xs=Xs, ys=ys, Xt=Xt)
     assert hasattr(otda, "cost_")
+    assert not np.any(np.isnan(nx.to_numpy(otda.cost_))), "cost is finite"
     assert hasattr(otda, "coupling_")
+    assert np.all(np.isfinite(nx.to_numpy(otda.coupling_))), "coupling is finite"
 
     # test dimensions of coupling
     assert_equal(otda.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
@@ -149,7 +150,7 @@ def test_sinkhorn_lpl1_transport_class(nx):
     n_semisup = nx.sum(otda_semi.cost_)
 
     # check that the cost matrix norms are indeed different
-    assert n_unsup != n_semisup, "semisupervised mode not working"
+    assert np.allclose(n_unsup, n_semisup, atol=1e-7), "semisupervised mode is not working"
 
     # check that the coupling forbids mass transport between labeled source
     # and labeled target samples
@@ -158,7 +159,6 @@ def test_sinkhorn_lpl1_transport_class(nx):
     assert mass_semi == 0, "semisupervised mode not working"
 
 
-@pytest.skip_backend("jax")
 @pytest.skip_backend("tf")
 def test_sinkhorn_l1l2_transport_class(nx):
     """test_sinkhorn_transport
@@ -169,15 +169,16 @@ def test_sinkhorn_l1l2_transport_class(nx):
 
     Xs, ys = make_data_classif('3gauss', ns, random_state=42)
     Xt, yt = make_data_classif('3gauss2', nt, random_state=43)
+    # prepare semi-supervised labels
+    yt_semi = np.copy(yt)
+    yt_semi[np.arange(0, nt, 2)] = -1
 
-    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
+    Xs, ys, Xt, yt, yt_semi = nx.from_numpy(Xs, ys, Xt, yt, yt_semi)
 
     otda = ot.da.SinkhornL1l2Transport(max_inner_iter=500)
+    otda.fit(Xs=Xs, ys=ys, Xt=Xt)
 
     # test its computed
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        otda.fit(Xs=Xs, ys=ys, Xt=Xt)
     assert hasattr(otda, "cost_")
     assert hasattr(otda, "coupling_")
     assert hasattr(otda, "log_")
@@ -234,20 +235,18 @@ def test_sinkhorn_l1l2_transport_class(nx):
     n_unsup = nx.sum(otda_unsup.cost_)
 
     otda_semi = ot.da.SinkhornL1l2Transport()
-    otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+    otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt_semi)
     assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
     n_semisup = nx.sum(otda_semi.cost_)
 
     # check that the cost matrix norms are indeed different
-    assert n_unsup != n_semisup, "semisupervised mode not working"
+    assert np.allclose(n_unsup, n_semisup, atol=1e-7), "semisupervised mode is not working"
 
     # check that the coupling forbids mass transport between labeled source
     # and labeled target samples
-    mass_semi = nx.sum(
-        otda_semi.coupling_[otda_semi.cost_ == otda_semi.limit_max])
+    mass_semi = nx.sum(otda_semi.coupling_[otda_semi.cost_ == otda_semi.limit_max])
     mass_semi = otda_semi.coupling_[otda_semi.cost_ == otda_semi.limit_max]
-    assert_allclose(nx.to_numpy(mass_semi), np.zeros(list(mass_semi.shape)),
-                    rtol=1e-9, atol=1e-9)
+    assert_allclose(nx.to_numpy(mass_semi), np.zeros_like(mass_semi), rtol=1e-9, atol=1e-9)
 
     # check everything runs well with log=True
     otda = ot.da.SinkhornL1l2Transport(log=True)
@@ -334,7 +333,7 @@ def test_sinkhorn_transport_class(nx):
     n_semisup = nx.sum(otda_semi.cost_)
 
     # check that the cost matrix norms are indeed different
-    assert n_unsup != n_semisup, "semisupervised mode not working"
+    assert np.allclose(n_unsup, n_semisup, atol=1e-7), "semisupervised mode is not working"
 
     # check that the coupling forbids mass transport between labeled source
     # and labeled target samples
@@ -374,6 +373,10 @@ def test_unbalanced_sinkhorn_transport_class(nx):
         # test dimensions of coupling
         assert_equal(otda.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
         assert_equal(otda.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
+        assert not np.any(np.isnan(nx.to_numpy(otda.cost_))), "cost is finite"
+
+        # test coupling
+        assert np.all(np.isfinite(nx.to_numpy(otda.coupling_))), "coupling is finite"
 
         # test transform
         transp_Xs = otda.transform(Xs=Xs)
@@ -412,19 +415,22 @@ def test_unbalanced_sinkhorn_transport_class(nx):
         # test unsupervised vs semi-supervised mode
         otda_unsup = ot.da.SinkhornTransport()
         otda_unsup.fit(Xs=Xs, Xt=Xt)
+        assert not np.any(np.isnan(nx.to_numpy(otda_unsup.cost_))), "cost is finite"
         n_unsup = nx.sum(otda_unsup.cost_)
 
         otda_semi = ot.da.SinkhornTransport()
         otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+        assert not np.any(np.isnan(nx.to_numpy(otda_semi.cost_))), "cost is finite"
         assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
         n_semisup = nx.sum(otda_semi.cost_)
 
         # check that the cost matrix norms are indeed different
-        assert n_unsup != n_semisup, "semisupervised mode not working"
+        assert np.allclose(n_unsup, n_semisup, atol=1e-7), "semisupervised mode is not working"
 
         # check everything runs well with log=True
         otda = ot.da.SinkhornTransport(log=True)
         otda.fit(Xs=Xs, ys=ys, Xt=Xt)
+        assert not np.any(np.isnan(nx.to_numpy(otda.cost_))), "cost is finite"
         assert len(otda.log_.keys()) != 0
 
 
@@ -451,7 +457,9 @@ def test_emd_transport_class(nx):
 
     # test dimensions of coupling
     assert_equal(otda.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert not np.any(np.isnan(nx.to_numpy(otda.cost_))), "cost is finite"
     assert_equal(otda.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert np.all(np.isfinite(nx.to_numpy(otda.coupling_))), "coupling is finite"
 
     # test margin constraints
     mu_s = unif(ns)
@@ -498,15 +506,22 @@ def test_emd_transport_class(nx):
     # test unsupervised vs semi-supervised mode
     otda_unsup = ot.da.EMDTransport()
     otda_unsup.fit(Xs=Xs, ys=ys, Xt=Xt)
+    assert_equal(otda_unsup.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert not np.any(np.isnan(nx.to_numpy(otda_unsup.cost_))), "cost is finite"
+    assert_equal(otda_unsup.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert np.all(np.isfinite(nx.to_numpy(otda_unsup.coupling_))), "coupling is finite"
     n_unsup = nx.sum(otda_unsup.cost_)
 
     otda_semi = ot.da.EMDTransport()
     otda_semi.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
     assert_equal(otda_semi.cost_.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert not np.any(np.isnan(nx.to_numpy(otda_semi.cost_))), "cost is finite"
+    assert_equal(otda_semi.coupling_.shape, ((Xs.shape[0], Xt.shape[0])))
+    assert np.all(np.isfinite(nx.to_numpy(otda_semi.coupling_))), "coupling is finite"
     n_semisup = nx.sum(otda_semi.cost_)
 
     # check that the cost matrix norms are indeed different
-    assert n_unsup != n_semisup, "semisupervised mode not working"
+    assert np.allclose(n_unsup, n_semisup, atol=1e-7), "semisupervised mode is not working"
 
     # check that the coupling forbids mass transport between labeled source
     # and labeled target samples

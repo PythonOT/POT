@@ -185,16 +185,22 @@ The examples folder contain several examples and use case for the library. The f
 
 ## Acknowledgements
 
-This toolbox has been created and is maintained by
+This toolbox has been created by
 
-* [Rémi Flamary](http://remi.flamary.com/)
+* [Rémi Flamary](https://remi.flamary.com/)
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
+
+It is currently maintained by 
+
+* [Rémi Flamary](https://remi.flamary.com/)
+* [Cédric Vincent-Cuaz](https://cedricvincentcuaz.github.io/)
 
 The numerous contributors to this library are listed [here](CONTRIBUTORS.md).
 
 POT has benefited from the financing or manpower from the following partners:
 
-<img src="https://pythonot.github.io/master/_static/images/logo_anr.jpg" alt="ANR" style="height:60px;"/><img src="https://pythonot.github.io/master/_static/images/logo_cnrs.jpg" alt="CNRS" style="height:60px;"/><img src="https://pythonot.github.io/master/_static/images/logo_3ia.jpg" alt="3IA" style="height:60px;"/>
+<img src="https://pythonot.github.io/master/_static/images/logo_anr.jpg" alt="ANR" style="height:60px;"/><img src="https://pythonot.github.io/master/_static/images/logo_cnrs.jpg" alt="CNRS" style="height:60px;"/><img src="https://pythonot.github.io/master/_static/images/logo_3ia.jpg" alt="3IA" style="height:60px;"/><img src="https://pythonot.github.io/master/_static/images/logo_hiparis.png" alt="Hi!PARIS" style="height:60px;"/>
+
 
 
 ## Contributions and code of conduct
@@ -347,3 +353,5 @@ distances between Gaussian distributions](https://hal.science/hal-03197398v2/fil
 [63] Li, J., Tang, J., Kong, L., Liu, H., Li, J., So, A. M. C., & Blanchet, J. (2022). [A Convergent Single-Loop Algorithm for Relaxation of Gromov-Wasserstein in Graph Data](https://openreview.net/pdf?id=0jxPyVWmiiF). In The Eleventh International Conference on Learning Representations.
 
 [64] Ma, X., Chu, X., Wang, Y., Lin, Y., Zhao, J., Ma, L., & Zhu, W. (2023). [Fused Gromov-Wasserstein Graph Mixup for Graph-level Classifications](https://openreview.net/pdf?id=uqkUguNu40). In Thirty-seventh Conference on Neural Information Processing Systems.
+
+[65] Scetbon, M., Cuturi, M., & Peyré, G. (2021). [Low-Rank Sinkhorn Factorization](https://arxiv.org/pdf/2103.04737.pdf).
