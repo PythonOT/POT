@@ -5,7 +5,7 @@
     :py:mod:`ot.utils`, :py:mod:`ot.datasets`,
     :py:mod:`ot.gromov`, :py:mod:`ot.smooth`
     :py:mod:`ot.stochastic`, :py:mod:`ot.partial`, :py:mod:`ot.regpath`
-    , :py:mod:`ot.unbalanced`, :py:mod`ot.mapping`.
+    , :py:mod:`ot.unbalanced`, :py:mod:`ot.mapping` .
     The following sub-modules are not imported due to additional dependencies:
     - :any:`ot.dr` : depends on :code:`pymanopt` and :code:`autograd`.
     - :any:`ot.plot` : depends on :code:`matplotlib`
@@ -71,4 +71,5 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'factored_optimal_transport', 'solve', 'solve_gromov','solve_sample', 
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath', 'solvers',
            'binary_search_circle', 'wasserstein_circle',
-           'semidiscrete_wasserstein2_unif_circle', 'sliced_wasserstein_sphere_unif', 'lowrank_sinkhorn']
+           'semidiscrete_wasserstein2_unif_circle', 'sliced_wasserstein_sphere_unif',
+           'lowrank_sinkhorn']
