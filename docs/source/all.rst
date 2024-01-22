@@ -24,6 +24,7 @@ API and modules
    gaussian
    gnn
    gromov
+   lowrank
    lp
    mapping
    optim

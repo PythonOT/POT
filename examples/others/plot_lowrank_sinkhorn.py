@@ -88,40 +88,35 @@ for rank in list_rank:
 #%%
 
 # Plot sinkhorn vs low rank sinkhorn
-pl.figure(1, figsize=(10, 4))
+pl.figure(1, figsize=(10, 8))
 
-pl.subplot(1, 3, 1)
+pl.subplot(2, 3, 1)
 pl.imshow(list_P_Sin[0], interpolation='nearest')
 pl.axis('off')
 pl.title('Sinkhorn (reg=0.05)')
 
-pl.subplot(1, 3, 2)
+pl.subplot(2, 3, 2)
 pl.imshow(list_P_Sin[1], interpolation='nearest')
 pl.axis('off')
 pl.title('Sinkhorn (reg=0.005)')
 
-pl.subplot(1, 3, 3)
+pl.subplot(2, 3, 3)
 pl.imshow(list_P_Sin[2], interpolation='nearest')
 pl.axis('off')
 pl.title('Sinkhorn (reg=0.001)')
 pl.show()
 
-
-#%%
-
-pl.figure(2, figsize=(10, 4))
-
-pl.subplot(1, 3, 1)
+pl.subplot(2, 3, 4)
 pl.imshow(list_P_LR[0], interpolation='nearest')
 pl.axis('off')
 pl.title('Low rank (rank=3)')
 
-pl.subplot(1, 3, 2)
+pl.subplot(2, 3, 5)
 pl.imshow(list_P_LR[1], interpolation='nearest')
 pl.axis('off')
 pl.title('Low rank (rank=10)')
 
-pl.subplot(1, 3, 3)
+pl.subplot(2, 3, 6)
 pl.imshow(list_P_LR[2], interpolation='nearest')
 pl.axis('off')
 pl.title('Low rank (rank=50)')
