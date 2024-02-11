@@ -2961,3 +2961,59 @@ def test_not_implemented_solver():
     with pytest.raises(ValueError):
         ot.gromov.entropic_fused_gromov_wasserstein(
             M, C1, C2, p, q, 'square_loss', epsilon=1e-1, solver=solver)
+
+
+def test_quantized_gromov(nx):
+    n_samples = 30  # nb samples
+
+    rng = np.random.RandomState(0)
+    C1 = rng.uniform(low=0., high=10, size=(n_samples, n_samples))
+    C1 = (C1 + C1.T) / 2.
+
+    C2 = rng.uniform(low=10., high=20., size=(n_samples, n_samples))
+    C2 = (C2 + C2.T) / 2.
+
+    p = ot.unif(n_samples)
+    q = ot.unif(n_samples)
+
+    npart1 = 2
+    npart2 = 3
+
+    C1b, C2b, pb, qb = nx.from_numpy(C1, C2, p, q)
+
+    log_tests = [True, False, False, True, True, False]
+    count_mode = 0
+    for part_method in ['fluid', 'louvain', 'spectral']:
+        for rep_method in ['pagerank', 'random']:
+            print(f'--- [start] {part_method}, {rep_method} ---')
+            log_ = log_tests[count_mode]
+            count_mode += 1
+
+            res = ot.gromov.quantized_gromov_wasserstein(
+                C1, C2, npart1, npart2, p=p, q=None, part_method=part_method,
+                rep_method=rep_method, log=log_)
+
+            resb = ot.gromov.quantized_gromov_wasserstein(
+                C1b, C2b, npart1, npart2, p=None, q=qb, part_method=part_method,
+                rep_method=rep_method, log=log_)
+
+            if log_:
+                T_global, Ts_local, T, log = res
+                T_globalb, Ts_localb, Tb, logb = resb
+            else:
+                T_global, Ts_local, T = res
+                T_globalb, Ts_localb, Tb = resb
+
+            Tb = nx.to_numpy(Tb)
+            # check constraints
+            np.testing.assert_allclose(T, Tb, atol=1e-06)
+            np.testing.assert_allclose(
+                p, Tb.sum(1), atol=1e-06)  # cf convergence gromov
+            np.testing.assert_allclose(
+                q, Tb.sum(0), atol=1e-06)  # cf convergence gromov
+
+            if log_:
+                for key in log.keys():
+                    np.testing.assert_allclose(log[key], logb[key], atol=1e-06)
+
+            print(f'--- [successful] {part_method}, {rep_method} ---')

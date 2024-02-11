@@ -9,9 +9,9 @@ Quantized Gromov-Wasserstein solvers.
 import numpy as np
 import warnings
 from networkx.algorithms.community import asyn_fluidc, louvain_communities
-from networkx import from_numpy_matrix, pagerank
+from networkx import from_numpy_array, pagerank
 from sklearn.cluster import SpectralClustering
-from random import choice
+from random import choice, seed
 
 from ..utils import list_to_array
 from ..utils import unif
@@ -69,19 +69,19 @@ def _get_partition(C, npart, part_method='fluid', random_state=0, nx=None):
         C = nx.to_numpy(C0)
 
         if part_method == 'louvain':
-            graph = from_numpy_matrix(C)
+            graph = from_numpy_array(C)
             part_sets = louvain_communities(graph, seed=random_state)
             part = np.zeros(n)
             for iset_, set_ in enumerate(part_sets):
-                set_ = np.array(set_)
+                set_ = list(set_)
                 part[set_] = iset_
 
         elif part_method == 'fluid':
-            graph = from_numpy_matrix(C)
+            graph = from_numpy_array(C)
             part_sets = asyn_fluidc(graph, npart, seed=random_state)
             part = np.zeros(n)
             for iset_, set_ in enumerate(part_sets):
-                set_ = np.array(set_)
+                set_ = list(set_)
                 part[set_] = iset_
 
         elif part_method == 'spectral':
@@ -93,7 +93,7 @@ def _get_partition(C, npart, part_method='fluid', random_state=0, nx=None):
     return nx.from_numpy(part, type_as=C0)
 
 
-def _get_representants(C, part, rep_method='pagerank', nx=None):
+def _get_representants(C, part, rep_method='pagerank', random_state=0, nx=None):
     """
     Get representants for each partition of a given structure matrix either.
 
@@ -107,12 +107,14 @@ def _get_representants(C, part, rep_method='pagerank', nx=None):
         Selection method for representant in each partition. Can be either 'random'
         i.e random sampling within each partition, or 'pagerank' to select a
         node with maximal pagerank.
+    random_state: int, optional
+        Random seed for the partitioning algorithm
     nx : backend, optional
         POT backend
 
     Returns
     -------
-    rep_indices : array-like, shape (npart,)
+    rep_indices : list, shape (npart,)
         indices for representative node of each partition sorted
         according to partition identifiers.
 
@@ -125,23 +127,31 @@ def _get_representants(C, part, rep_method='pagerank', nx=None):
     if nx is None:
         nx = get_backend(C, part)
 
-    part_ids = nx.unique(part)
-    rep_indices = nx.zeros(part_ids.shape[0], type_as=part_ids)
+    rep_indices = []
 
     if rep_method == 'random':
+        part_ids = nx.unique(part)
+
+        seed(random_state)
         for id_, part_id in enumerate(part_ids):
             indices = nx.where(part == part_id)[0]
-            rep_indices[id_] = choice(indices)
+            rep_indices.append(choice(indices))
 
     elif rep_method == 'pagerank':
-        for id_, part_id in enumerate(part_id):
-            indices = nx.where(part == part_id)[0]
-            C_id = C[indices, :][:, indices]
-            graph = from_numpy_matrix(C_id)
-            pagerank_values = pagerank(graph).values()
-            rep_idx = np.argmax(pagerank_values)
-            rep_indices[id_] = indices[rep_idx]
+        C0, part0 = C, part
+        C = nx.to_numpy(C0)
+        part = nx.to_numpy(part0)
+        part_ids = np.unique(part)
 
+        for id_, part_id in enumerate(part_ids):
+            indices = np.where(part == part_id)[0]
+            C_id = C[indices, :][:, indices]
+            graph = from_numpy_array(C_id)
+            pagerank_values = list(pagerank(graph).values())
+            rep_idx = np.argmax(pagerank_values)
+            rep_indices.append(indices[rep_idx])
+
+    print('rep_indices:', rep_indices)
     return rep_indices
 
 
@@ -159,7 +169,7 @@ def _formate_partitioned_graph(C, p, part, rep_indices, nx=None):
         Node distribution.
     part : array-like, shape (n,)
         Array of partition assignment for each node.
-    rep_indices : array-like, shape (npart,)
+    rep_indices : list of array-like of ints, shape (npart,)
         indices for representative node of each partition sorted according to
         partition identifiers.
     nx : backend, optional
@@ -314,8 +324,8 @@ def quantized_gromov_wasserstein(
     part2 = _get_partition(C2, npart2, part_method=part_method, random_state=random_state, nx=nx)
 
     # get representants for each partition
-    rep_indices1 = _get_representants(C1, part1, rep_method=rep_method, nx=nx)
-    rep_indices2 = _get_representants(C2, part2, rep_method=rep_method, nx=nx)
+    rep_indices1 = _get_representants(C1, part1, rep_method=rep_method, random_state=random_state, nx=nx)
+    rep_indices2 = _get_representants(C2, part2, rep_method=rep_method, random_state=random_state, nx=nx)
 
     # formate partitions
     CR1, list_R1, list_p1 = _formate_partitioned_graph(C1, p, part1, rep_indices1, nx=nx)
@@ -442,8 +452,8 @@ def quantized_gromov_wasserstein_partitioned(
     npart1 = len(list_R1)
     npart2 = len(list_R2)
 
-    pR1 = [nx.sum(p) for p in list_p1]
-    pR2 = [nx.sum(q) for q in list_p2]
+    pR1 = nx.from_numpy(list_to_array([nx.sum(p) for p in list_p1]))
+    pR2 = nx.from_numpy(list_to_array([nx.sum(q) for q in list_p2]))
     # compute global alignment
     res_gw = gromov_wasserstein(
         CR1, CR2, pR1, pR2, loss_fun='square_loss', symmetric=True, log=log,
@@ -482,7 +492,8 @@ def quantized_gromov_wasserstein_partitioned(
             start_j = 0
             for j in range(npart2):
                 end_j = start_j + list_R2[j].shape[0]
-                T[start_i:end_i, start_j:end_j] = T_global[i, j] * Ts_local[(i, j)]
+                if T_global[i, j] != 0.:
+                    T[start_i:end_i, start_j:end_j] = T_global[i, j] * Ts_local[(i, j)]
                 start_j = end_j
             start_i = end_i
 
