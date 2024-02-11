@@ -47,6 +47,8 @@ from ._dictionary import (gromov_wasserstein_dictionary_learning,
                           fused_gromov_wasserstein_dictionary_learning,
                           fused_gromov_wasserstein_linear_unmixing)
 
+from ._quantized import (quantized_gromov_wasserstein,
+                         quantized_gromov_wasserstein_partitioned)
 
 __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad', 'update_square_loss',
            'update_kl_loss', 'update_feature_matrix', 'init_matrix_semirelaxed',
@@ -64,4 +66,5 @@ __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad', 'update_square_
            'entropic_semirelaxed_gromov_wasserstein2', 'entropic_semirelaxed_fused_gromov_wasserstein',
            'entropic_semirelaxed_fused_gromov_wasserstein2', 'gromov_wasserstein_dictionary_learning',
            'gromov_wasserstein_linear_unmixing', 'fused_gromov_wasserstein_dictionary_learning',
-           'fused_gromov_wasserstein_linear_unmixing']
+           'fused_gromov_wasserstein_linear_unmixing',
+           'quantized_gromov_wasserstein', 'quantized_gromov_wasserstein_partitioned']
