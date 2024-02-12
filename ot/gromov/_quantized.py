@@ -12,7 +12,6 @@ from networkx.algorithms.community import asyn_fluidc, louvain_communities
 from networkx import from_numpy_array, pagerank
 from sklearn.cluster import SpectralClustering
 import random
-from time import time
 
 from ..utils import list_to_array
 from ..utils import unif
@@ -57,7 +56,7 @@ def _get_partition(C, npart, part_method='fluid', random_state=0, nx=None):
     n = C.shape[0]
     C0 = C
 
-    if npart > n:
+    if npart >= n:
         warnings.warn(
             "Requested number of partitions higher than the number of nodes"
             "hence we enforce each node to be a partition.",
@@ -170,7 +169,7 @@ def _formate_partitioned_graph(C, p, part, rep_indices, nx=None):
     """
     Formate a measurable space :math:`(\mathbf{C}, \mathbf{p})` into a partitioned
     measurable space taking into account partitions and representants
-    :math:`\mathcal{P} = \left{(\mathbf{P_{i}}, \mathbf{r_{i}})\right}_i`. 
+    :math:`\mathcal{P} = \left{(\mathbf{P_{i}}, \mathbf{r_{i}})\right}_i`.
 
     Parameters
     ----------
@@ -225,7 +224,7 @@ def quantized_gromov_wasserstein(
     r"""
     Returns the quantized Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})`
     and :math:`(\mathbf{C_2}, \mathbf{q})`, whose samples are assigned to partitions and representants
-    :math:`\mathcal{P_1} = \left{(\mathbf{P_{1, i}}, \mathbf{r_{1, i}})\right}_i` 
+    :math:`\mathcal{P_1} = \left{(\mathbf{P_{1, i}}, \mathbf{r_{1, i}})\right}_i`
     and :math:`\mathcal{P_2} = \left{(\mathbf{P_{2, j}}, \mathbf{r_{2, j}})\right}_j`.
 
     The function estimates the following optimization problem:
@@ -366,7 +365,7 @@ def quantized_gromov_wasserstein_partitioned(
     r"""
     Returns the quantized Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})`
     and :math:`(\mathbf{C_2}, \mathbf{q})`, whose samples are assigned to partitions and representants
-    :math:`\mathcal{P_1} = \left{(\mathbf{P_{1, i}}, \mathbf{r_{1, i}})\right}_i` 
+    :math:`\mathcal{P_1} = \left{(\mathbf{P_{1, i}}, \mathbf{r_{1, i}})\right}_i`
     and :math:`\mathcal{P_2} = \left{(\mathbf{P_{2, j}}, \mathbf{r_{2, j}})\right}_j`.
     The latter are precomputed and encoded e.g for the source as: :math:`\mathbf{CR_1}`
     structure matrix between representants; `list_R1` a list of relations between representants
