@@ -2976,44 +2976,78 @@ def test_quantized_gromov(nx):
     p = ot.unif(n_samples)
     q = ot.unif(n_samples)
 
-    npart1 = 2
     npart2 = 3
 
     C1b, C2b, pb, qb = nx.from_numpy(C1, C2, p, q)
 
-    log_tests = [True, False, False, True, True, False]
-    count_mode = 0
-    for part_method in ['fluid', 'louvain', 'spectral']:
-        for rep_method in ['pagerank', 'random']:
-            print(f'--- [start] {part_method}, {rep_method} ---')
-            log_ = log_tests[count_mode]
-            count_mode += 1
+    for npart1 in [1, n_samples + 1, 2]:
+        log_tests = [True, False, False, True, True, False]
+        count_mode = 0
 
-            res = ot.gromov.quantized_gromov_wasserstein(
-                C1, C2, npart1, npart2, p=p, q=None, part_method=part_method,
-                rep_method=rep_method, log=log_)
+        for part_method in ['louvain', 'spectral', 'fluid']:
+            for rep_method in ['random', 'pagerank']:
 
-            resb = ot.gromov.quantized_gromov_wasserstein(
-                C1b, C2b, npart1, npart2, p=None, q=qb, part_method=part_method,
-                rep_method=rep_method, log=log_)
+                log_ = log_tests[count_mode]
+                count_mode += 1
 
-            if log_:
-                T_global, Ts_local, T, log = res
-                T_globalb, Ts_localb, Tb, logb = resb
-            else:
-                T_global, Ts_local, T = res
-                T_globalb, Ts_localb, Tb = resb
+                res = ot.gromov.quantized_gromov_wasserstein(
+                    C1, C2, npart1, npart2, p=p, q=None, part_method=part_method,
+                    rep_method=rep_method, log=log_)
 
-            Tb = nx.to_numpy(Tb)
-            # check constraints
-            np.testing.assert_allclose(T, Tb, atol=1e-06)
-            np.testing.assert_allclose(
-                p, Tb.sum(1), atol=1e-06)  # cf convergence gromov
-            np.testing.assert_allclose(
-                q, Tb.sum(0), atol=1e-06)  # cf convergence gromov
+                resb = ot.gromov.quantized_gromov_wasserstein(
+                    C1b, C2b, npart1, npart2, p=None, q=qb, part_method=part_method,
+                    rep_method=rep_method, log=log_)
 
-            if log_:
-                for key in log.keys():
-                    np.testing.assert_allclose(log[key], logb[key], atol=1e-06)
+                if log_:
+                    T_global, Ts_local, T, log = res
+                    T_globalb, Ts_localb, Tb, logb = resb
+                else:
+                    T_global, Ts_local, T = res
+                    T_globalb, Ts_localb, Tb = resb
 
-            print(f'--- [successful] {part_method}, {rep_method} ---')
+                Tb = nx.to_numpy(Tb)
+                # check constraints
+                np.testing.assert_allclose(T, Tb, atol=1e-06)
+                np.testing.assert_allclose(
+                    p, Tb.sum(1), atol=1e-06)  # cf convergence gromov
+                np.testing.assert_allclose(
+                    q, Tb.sum(0), atol=1e-06)  # cf convergence gromov
+
+                if log_:
+                    for key in log.keys():
+                        np.testing.assert_allclose(log[key], logb[key], atol=1e-06)
+
+    # complementary tests for utils functions
+    part1b = ot.gromov._quantized._get_partition(
+        C1b, npart1, part_method='fluid', random_state=0)
+    part2b = ot.gromov._quantized._get_partition(
+        C2b, npart2, part_method='fluid', random_state=0)
+
+    rep_indices1b = ot.gromov._quantized._get_representants(
+        C1b, part1b, rep_method='pagerank', random_state=0)
+    rep_indices2b = ot.gromov._quantized._get_representants(
+        C2b, part2b, rep_method='pagerank', random_state=0)
+
+    CR1b, list_R1b, list_p1b = ot.gromov._quantized._formate_partitioned_graph(
+        C1b, pb, part1b, rep_indices1b)
+    CR2b, list_R2b, list_p2b = ot.gromov._quantized._formate_partitioned_graph(
+        C2b, qb, part2b, rep_indices2b)
+
+    T_globalb, Ts_localb, _ = ot.gromov.quantized_gromov_wasserstein_partitioned(
+        CR1b, CR2b, list_R1b, list_R2b, list_p1b, list_p2b, build_OT=False)
+
+    T_globalb = nx.to_numpy(T_globalb)
+    np.testing.assert_allclose(T_global, T_globalb, atol=1e-06)
+
+    for key in Ts_localb.keys():
+        T_localb = nx.to_numpy(Ts_localb[key])
+        np.testing.assert_allclose(Ts_local[key], T_localb, atol=1e-06)
+
+    # tests for edge cases
+    method = 'unknown_method'
+    with pytest.raises(ValueError):
+        ot.gromov._quantized._get_partition(
+            C1b, npart1, part_method=method, random_state=0)
+    with pytest.raises(ValueError):
+        ot.gromov._quantized._get_representants(
+            C1b, part1b, rep_method='unknown_method', random_state=0)

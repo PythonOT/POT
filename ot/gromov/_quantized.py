@@ -55,6 +55,7 @@ def _get_partition(C, npart, part_method='fluid', random_state=0, nx=None):
         nx = get_backend(C)
 
     n = C.shape[0]
+    C0 = C
 
     if npart > n:
         warnings.warn(
@@ -65,8 +66,10 @@ def _get_partition(C, npart, part_method='fluid', random_state=0, nx=None):
 
         part = np.arange(n)
 
+    elif npart == 1:
+        part = np.zeros(n)
+
     else:
-        C0 = C
         C = nx.to_numpy(C0)
 
         if part_method == 'louvain':
@@ -90,6 +93,9 @@ def _get_partition(C, npart, part_method='fluid', random_state=0, nx=None):
                                     random_state=random_state,
                                     affinity='precomputed').fit(C)
             part = sc.labels_
+
+        else:
+            raise ValueError(f"Unknown `part_method='{part_method}'`. Use one of: {'louvain', 'fluid', 'spectral'}.")
 
     return nx.from_numpy(part, type_as=C0)
 
@@ -129,10 +135,12 @@ def _get_representants(C, part, rep_method='pagerank', random_state=0, nx=None):
         nx = get_backend(C, part)
 
     rep_indices = []
+    part_ids = nx.unique(part)
+    n_part_ids = part_ids.shape[0]
+    if n_part_ids == C.shape[0]:
+        rep_indices = nx.arange(n_part_ids)
 
-    if rep_method == 'random':
-        part_ids = nx.unique(part)
-
+    elif rep_method == 'random':
         random.seed(random_state)
         for id_, part_id in enumerate(part_ids):
             indices = nx.where(part == part_id)[0]
@@ -152,7 +160,9 @@ def _get_representants(C, part, rep_method='pagerank', random_state=0, nx=None):
             rep_idx = np.argmax(pagerank_values)
             rep_indices.append(indices[rep_idx])
 
-    print('rep_indices:', rep_indices)
+    else:
+        raise ValueError(f"Unknown `rep_method='{rep_method}'`. Use one of: {'random', 'pagerank'}.")
+
     return rep_indices
 
 
