@@ -11,7 +11,8 @@ import warnings
 from networkx.algorithms.community import asyn_fluidc, louvain_communities
 from networkx import from_numpy_array, pagerank
 from sklearn.cluster import SpectralClustering
-from random import choice, seed
+import random
+from time import time
 
 from ..utils import list_to_array
 from ..utils import unif
@@ -132,10 +133,10 @@ def _get_representants(C, part, rep_method='pagerank', random_state=0, nx=None):
     if rep_method == 'random':
         part_ids = nx.unique(part)
 
-        seed(random_state)
+        random.seed(random_state)
         for id_, part_id in enumerate(part_ids):
             indices = nx.where(part == part_id)[0]
-            rep_indices.append(choice(indices))
+            rep_indices.append(random.choice(indices))
 
     elif rep_method == 'pagerank':
         C0, part0 = C, part
@@ -483,19 +484,12 @@ def quantized_gromov_wasserstein_partitioned(
                 Ts_local[(i, j)] = res_1d
 
     if build_OT:
-        ns = sum([R.shape[0] for R in list_R1])
-        nt = sum([R.shape[0] for R in list_R2])
-        T = nx.zeros((ns, nt), type_as=CR1)
-        start_i = 0
+        T_rows = []
         for i in range(npart1):
-            end_i = start_i + list_R1[i].shape[0]
-            start_j = 0
-            for j in range(npart2):
-                end_j = start_j + list_R2[j].shape[0]
-                if T_global[i, j] != 0.:
-                    T[start_i:end_i, start_j:end_j] = T_global[i, j] * Ts_local[(i, j)]
-                start_j = end_j
-            start_i = end_i
+            list_Ti = [T_global[i, j] * Ts_local[(i, j)] for j in range(npart2)]
+            Ti = nx.concatenate(list_Ti, axis=1)
+            T_rows.append(Ti)
+        T = nx.concatenate(T_rows, axis=0)
 
     else:
         T = None
