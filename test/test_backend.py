@@ -267,7 +267,13 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.nan_to_num(M)
     with pytest.raises(NotImplementedError):
-        nx.detach(M)
+        nx.sign(M)
+    with pytest.raises(NotImplementedError):
+        nx.dtype_device(M)
+    with pytest.raises(NotImplementedError):
+        nx.assert_same_dtype_device(M, M)
+    with pytest.raises(NotImplementedError):
+        nx.eigh(M)
 
 
 def test_func_backends(nx):
@@ -658,10 +664,6 @@ def test_func_backends(nx):
         A = nx.transpose(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("transpose")
-
-        A = nx.detach(Mb)
-        lst_b.append(nx.to_numpy(A))
-        lst_name.append("detach")
 
         A, B = nx.detach(Mb, Mb)
         lst_b.append(nx.to_numpy(A))
