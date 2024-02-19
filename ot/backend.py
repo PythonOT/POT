@@ -281,12 +281,12 @@ class Backend():
         """Define the gradients for the value val wrt the inputs """
         raise NotImplementedError()
 
-    def detach(self, a):
+    def detach(self, *arrays):
         """Detach the tensor from the computation graph"""
         if len(arrays) == 1:
-            return self._detach(arrays[0], type_as=type_as)
+            return self._detach(arrays[0])
         else:
-            return [self._detach(array, type_as=type_as) for array in arrays]
+            return [self._detach(array) for array in arrays]
 
     def _detach(self, a):
         """Detach the tensor from the computation graph"""
