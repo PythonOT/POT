@@ -266,6 +266,8 @@ def test_empty_backend():
         nx.matmul(M, M.T)
     with pytest.raises(NotImplementedError):
         nx.nan_to_num(M)
+    with pytest.raises(NotImplementedError):
+        nx.detach(M)
 
 
 def test_func_backends(nx):
@@ -310,6 +312,11 @@ def test_func_backends(nx):
 
         lst_b.append(nx.to_numpy(A))
         lst_name.append('set_gradients')
+
+        A = nx.detach(Mb)
+        A, B = nx.detach(Mb, Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('detach')
 
         A = nx.zeros((10, 3))
         A = nx.zeros((10, 3), type_as=Mb)

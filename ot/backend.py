@@ -281,6 +281,17 @@ class Backend():
         """Define the gradients for the value val wrt the inputs """
         raise NotImplementedError()
 
+    def detach(self, a):
+        """Detach the tensor from the computation graph"""
+        if len(arrays) == 1:
+            return self._detach(arrays[0], type_as=type_as)
+        else:
+            return [self._detach(array, type_as=type_as) for array in arrays]
+
+    def _detach(self, a):
+        """Detach the tensor from the computation graph"""
+        raise NotImplementedError()
+
     def zeros(self, shape, type_as=None):
         r"""
         Creates a tensor full of zeros.
@@ -1082,6 +1093,10 @@ class NumpyBackend(Backend):
         # No gradients for numpy
         return val
 
+    def _detach(self, a):
+        # No gradients for numpy
+        return a
+
     def zeros(self, shape, type_as=None):
         if type_as is None:
             return np.zeros(shape)
@@ -1461,6 +1476,9 @@ class JaxBackend(Backend):
 
         val, = jax.tree_map(lambda z: z + aux, (val,))
         return val
+
+    def _detach(self, a):
+        return jax.lax.stop_gradient(a)
 
     def zeros(self, shape, type_as=None):
         if type_as is None:
@@ -1850,6 +1868,9 @@ class TorchBackend(Backend):
         res = Func.apply(val, grads, *inputs)
 
         return res
+
+    def _detach(self, a):
+        return a.detach()
 
     def zeros(self, shape, type_as=None):
         if isinstance(shape, int):
@@ -2312,6 +2333,9 @@ class CupyBackend(Backend):  # pragma: no cover
         # No gradients for cupy
         return val
 
+    def _detach(self, a):
+        return a
+
     def zeros(self, shape, type_as=None):
         if isinstance(shape, (list, tuple)):
             shape = tuple(int(i) for i in shape)
@@ -2728,6 +2752,9 @@ class TensorflowBackend(Backend):
                 return grads
             return val, grad
         return tmp(inputs)
+
+    def _detach(self, a):
+        return tf.stop_gradient(a)
 
     def zeros(self, shape, type_as=None):
         if type_as is None:
