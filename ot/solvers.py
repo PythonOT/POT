@@ -29,7 +29,7 @@ lst_method_lazy = ['1d', 'gaussian', 'lowrank', 'factored', 'geomloss', 'geomlos
 
 def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
           unbalanced_type='KL', method=None, n_threads=1, max_iter=None, plan_init=None,
-          potentials_init=None, tol=None, verbose=False):
+          potentials_init=None, tol=None, verbose=False, grad='implicit'):
     r"""Solve the discrete optimal transport problem and return :any:`OTResult` object
 
     The function solves the following general optimal transport problem
@@ -79,6 +79,9 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         Tolerance for solution precision, by default None (default values in each solvers)
     verbose : bool, optional
         Print information in the solver, by default False
+    grad : str, optional
+        Type of gradient computation, either 'implicit' or 'explicit' only for
+        inkhorn solver. By default 'implicit'.
 
     Returns
     -------
@@ -297,6 +300,10 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
             if reg_type.lower() in ['entropy', 'kl']:
 
+                if grad == 'implicit':  # if implicit then detach the input
+                    M0, a0, b0 = M, a, b
+                    M, a, b = nx.detach(M, a, b)
+
                 # default values for sinkhorn
                 if max_iter is None:
                     max_iter = 1000
@@ -315,6 +322,11 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
                     value = value_linear + reg * nx.kl_div(plan, a[:, None] * b[None, :])
 
                 potentials = (log['log_u'], log['log_v'])
+
+                if grad == 'implicit':  # set the gradient at convergence
+
+                    value = nx.set_gradients(value, (M0, a0, b0),
+                                             (plan, potentials[0], potentials[1]))
 
             elif reg_type.lower() == 'l2':
 
@@ -869,7 +881,8 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
 def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_type="KL",
                  unbalanced=None,
                  unbalanced_type='KL', lazy=False, batch_size=None, method=None, n_threads=1, max_iter=None, plan_init=None, rank=100, scaling=0.95,
-                 potentials_init=None, X_init=None, tol=None, verbose=False):
+                 potentials_init=None, X_init=None, tol=None, verbose=False,
+                 grad='implicit'):
     r"""Solve the discrete optimal transport problem using the samples in the source and target domains.
 
     The function solves the following general optimal transport problem
@@ -935,6 +948,9 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         Tolerance for solution precision, by default None (default values in each solvers)
     verbose : bool, optional
         Print information in the solver, by default False
+    grad : str, optional
+        Type of gradient computation, either 'implicit' or 'unroll' (only for
+        sinkhorn solver), by default 'implicit'.
 
     Returns
     -------
@@ -1189,7 +1205,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         # compute cost matrix M and use solve function
         M = dist(X_a, X_b, metric)
 
-        res = solve(M, a, b, reg, reg_type, unbalanced, unbalanced_type, method, n_threads, max_iter, plan_init, potentials_init, tol, verbose)
+        res = solve(M, a, b, reg, reg_type, unbalanced, unbalanced_type, method, n_threads, max_iter, plan_init, potentials_init, tol, verbose, grad)
 
         return res
 
