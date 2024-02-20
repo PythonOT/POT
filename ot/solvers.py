@@ -140,6 +140,16 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         # or for original Sinkhorn paper formulation [2]
         res = ot.solve(M, a, b, reg=1.0, reg_type='entropy')
 
+        # Use implicit differentiation for memory saving
+        res = ot.solve(M, a, b, reg=1.0, grad='implicit') # M, a, b are torch tensors
+        res.value.backward() # only the value is differentiable
+
+    Note that by default the Sinkhorn solver uses automatic differentiation to
+    compute the gradients of the values and plan. This can be changed with the
+    `grad` parameter. The `implicit` mode computes the implicit gradients only
+    for the value and the other outputs are detached. This is useful for
+    memory saving when only the gradient of value is needed.
+
     - **Quadratic regularized OT [17]** (when ``reg!=None`` and ``reg_type="L2"``):
 
     .. math::
@@ -1023,6 +1033,16 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         res = ot.solve_sample(xa, xb, a, b, reg=1.0, lazy=True, batch_size=100)
         # lazy OT plan
         lazy_plan = res.lazy_plan
+
+        # Use implicit differentiation for memory saving
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, grad='implicit')
+        res.value.backward() # only the value is differentiable
+
+    Note that by default the Sinkhorn solver uses automatic differentiation to
+    compute the gradients of the values and plan. This can be changed with the
+    `grad` parameter. The `implicit` mode computes the implicit gradients only
+    for the value and the other outputs are detached. This is useful for
+    memory saving when only the gradient of value is needed.
 
     We also have a very efficient solver with compiled CPU/CUDA code using
     geomloss/PyKeOps that can be used with the following code:
