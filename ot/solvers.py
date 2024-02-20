@@ -29,7 +29,7 @@ lst_method_lazy = ['1d', 'gaussian', 'lowrank', 'factored', 'geomloss', 'geomlos
 
 def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
           unbalanced_type='KL', method=None, n_threads=1, max_iter=None, plan_init=None,
-          potentials_init=None, tol=None, verbose=False, grad='implicit'):
+          potentials_init=None, tol=None, verbose=False, grad='autodiff'):
     r"""Solve the discrete optimal transport problem and return :any:`OTResult` object
 
     The function solves the following general optimal transport problem
@@ -80,8 +80,11 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     verbose : bool, optional
         Print information in the solver, by default False
     grad : str, optional
-        Type of gradient computation, either 'implicit' or 'explicit' only for
-        inkhorn solver. By default 'implicit'.
+        Type of gradient computation, either or 'autodiff' or 'implicit'  used only for
+        Sinkhorn solver. By default 'autodiff' provides gradients wrt all
+        outputs (`plan, value, value_linear`) but with important memory cost.
+        'implicit' provides gradients only for `value` and and other outputs are
+        detached. This is useful for memory saving when only the value is needed.
 
     Returns
     -------
@@ -882,7 +885,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
                  unbalanced=None,
                  unbalanced_type='KL', lazy=False, batch_size=None, method=None, n_threads=1, max_iter=None, plan_init=None, rank=100, scaling=0.95,
                  potentials_init=None, X_init=None, tol=None, verbose=False,
-                 grad='implicit'):
+                 grad='autodiff'):
     r"""Solve the discrete optimal transport problem using the samples in the source and target domains.
 
     The function solves the following general optimal transport problem
@@ -949,8 +952,11 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
     verbose : bool, optional
         Print information in the solver, by default False
     grad : str, optional
-        Type of gradient computation, either 'implicit' or 'unroll' (only for
-        sinkhorn solver), by default 'implicit'.
+        Type of gradient computation, either or 'autodiff' or 'implicit'  used only for
+        Sinkhorn solver. By default 'autodiff' provides gradients wrt all
+        outputs (`plan, value, value_linear`) but with important memory cost.
+        'implicit' provides gradients only for `value` and and other outputs are
+        detached. This is useful for memory saving when only the value is needed.
 
     Returns
     -------

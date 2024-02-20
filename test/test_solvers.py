@@ -126,7 +126,7 @@ def test_solve_implicit():
     b = torch.tensor(b, requires_grad=True)
     M = torch.tensor(M, requires_grad=True)
 
-    sol0 = ot.solve(M, a, b, reg=1)
+    sol0 = ot.solve(M, a, b, reg=10, grad='implicit')
     sol0.value.backward()
 
     gM0 = M.grad.clone()
@@ -137,13 +137,14 @@ def test_solve_implicit():
     b = torch.tensor(b, requires_grad=True)
     M = torch.tensor(M, requires_grad=True)
 
-    sol = ot.solve(M, a, b, reg=1, grad='unroll')
+    sol = ot.solve(M, a, b, reg=10, grad='autodiff')
     sol.value.backward()
 
     gM = M.grad.clone()
     ga = a.grad.clone()
     gb = b.grad.clone()
 
+    # Note, gradients aer invariant to change in constant so we center them
     assert torch.allclose(gM0, gM)
     assert torch.allclose(ga0 - ga0.mean(), ga - ga.mean())
     assert torch.allclose(gb0 - gb0.mean(), gb - gb.mean())
