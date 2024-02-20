@@ -326,7 +326,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
                 if grad == 'implicit':  # set the gradient at convergence
 
                     value = nx.set_gradients(value, (M0, a0, b0),
-                                             (plan, potentials[0], potentials[1]))
+                                             (plan, reg * (potentials[0] - potentials[0].mean()), reg * (potentials[1] - potentials[1].mean())))
 
             elif reg_type.lower() == 'l2':
 
