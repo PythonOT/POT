@@ -29,7 +29,7 @@ lst_method_lazy = ['1d', 'gaussian', 'lowrank', 'factored', 'geomloss', 'geomlos
 
 def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
           unbalanced_type='KL', method=None, n_threads=1, max_iter=None, plan_init=None,
-          potentials_init=None, tol=None, verbose=False):
+          potentials_init=None, tol=None, verbose=False, grad='autodiff'):
     r"""Solve the discrete optimal transport problem and return :any:`OTResult` object
 
     The function solves the following general optimal transport problem
@@ -79,6 +79,12 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         Tolerance for solution precision, by default None (default values in each solvers)
     verbose : bool, optional
         Print information in the solver, by default False
+    grad : str, optional
+        Type of gradient computation, either or 'autodiff' or 'implicit'  used only for
+        Sinkhorn solver. By default 'autodiff' provides gradients wrt all
+        outputs (`plan, value, value_linear`) but with important memory cost.
+        'implicit' provides gradients only for `value` and and other outputs are
+        detached. This is useful for memory saving when only the value is needed.
 
     Returns
     -------
@@ -133,6 +139,16 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         res = ot.solve(M, a, b, reg=1.0)
         # or for original Sinkhorn paper formulation [2]
         res = ot.solve(M, a, b, reg=1.0, reg_type='entropy')
+
+        # Use implicit differentiation for memory saving
+        res = ot.solve(M, a, b, reg=1.0, grad='implicit') # M, a, b are torch tensors
+        res.value.backward() # only the value is differentiable
+
+    Note that by default the Sinkhorn solver uses automatic differentiation to
+    compute the gradients of the values and plan. This can be changed with the
+    `grad` parameter. The `implicit` mode computes the implicit gradients only
+    for the value and the other outputs are detached. This is useful for
+    memory saving when only the gradient of value is needed.
 
     - **Quadratic regularized OT [17]** (when ``reg!=None`` and ``reg_type="L2"``):
 
@@ -297,6 +313,10 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
             if reg_type.lower() in ['entropy', 'kl']:
 
+                if grad == 'implicit':  # if implicit then detach the input
+                    M0, a0, b0 = M, a, b
+                    M, a, b = nx.detach(M, a, b)
+
                 # default values for sinkhorn
                 if max_iter is None:
                     max_iter = 1000
@@ -315,6 +335,11 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
                     value = value_linear + reg * nx.kl_div(plan, a[:, None] * b[None, :])
 
                 potentials = (log['log_u'], log['log_v'])
+
+                if grad == 'implicit':  # set the gradient at convergence
+
+                    value = nx.set_gradients(value, (M0, a0, b0),
+                                             (plan, reg * (potentials[0] - potentials[0].mean()), reg * (potentials[1] - potentials[1].mean())))
 
             elif reg_type.lower() == 'l2':
 
@@ -869,7 +894,8 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
 def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_type="KL",
                  unbalanced=None,
                  unbalanced_type='KL', lazy=False, batch_size=None, method=None, n_threads=1, max_iter=None, plan_init=None, rank=100, scaling=0.95,
-                 potentials_init=None, X_init=None, tol=None, verbose=False):
+                 potentials_init=None, X_init=None, tol=None, verbose=False,
+                 grad='autodiff'):
     r"""Solve the discrete optimal transport problem using the samples in the source and target domains.
 
     The function solves the following general optimal transport problem
@@ -935,6 +961,12 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         Tolerance for solution precision, by default None (default values in each solvers)
     verbose : bool, optional
         Print information in the solver, by default False
+    grad : str, optional
+        Type of gradient computation, either or 'autodiff' or 'implicit'  used only for
+        Sinkhorn solver. By default 'autodiff' provides gradients wrt all
+        outputs (`plan, value, value_linear`) but with important memory cost.
+        'implicit' provides gradients only for `value` and and other outputs are
+        detached. This is useful for memory saving when only the value is needed.
 
     Returns
     -------
@@ -1001,6 +1033,16 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         res = ot.solve_sample(xa, xb, a, b, reg=1.0, lazy=True, batch_size=100)
         # lazy OT plan
         lazy_plan = res.lazy_plan
+
+        # Use implicit differentiation for memory saving
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, grad='implicit')
+        res.value.backward() # only the value is differentiable
+
+    Note that by default the Sinkhorn solver uses automatic differentiation to
+    compute the gradients of the values and plan. This can be changed with the
+    `grad` parameter. The `implicit` mode computes the implicit gradients only
+    for the value and the other outputs are detached. This is useful for
+    memory saving when only the gradient of value is needed.
 
     We also have a very efficient solver with compiled CPU/CUDA code using
     geomloss/PyKeOps that can be used with the following code:
@@ -1189,7 +1231,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         # compute cost matrix M and use solve function
         M = dist(X_a, X_b, metric)
 
-        res = solve(M, a, b, reg, reg_type, unbalanced, unbalanced_type, method, n_threads, max_iter, plan_init, potentials_init, tol, verbose)
+        res = solve(M, a, b, reg, reg_type, unbalanced, unbalanced_type, method, n_threads, max_iter, plan_init, potentials_init, tol, verbose, grad)
 
         return res
 
