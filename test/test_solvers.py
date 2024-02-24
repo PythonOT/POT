@@ -12,6 +12,7 @@ import sys
 
 import ot
 from ot.bregman import geomloss
+from ot.backend import torch
 
 lst_reg = [None, 1]
 lst_reg_type = ['KL', 'entropy', 'L2']
@@ -105,6 +106,48 @@ def test_solve(nx):
     # test not implemented reg_type and check raise
     with pytest.raises(NotImplementedError):
         sol0 = ot.solve(M, reg=1, reg_type='cryptic divergence')
+
+
+@pytest.mark.skipif(not torch, reason="torch no installed")
+def test_solve_implicit():
+
+    n_samples_s = 10
+    n_samples_t = 7
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+    a = ot.utils.unif(n_samples_s)
+    b = ot.utils.unif(n_samples_t)
+    M = ot.dist(x, y)
+
+    a = torch.tensor(a, requires_grad=True)
+    b = torch.tensor(b, requires_grad=True)
+    M = torch.tensor(M, requires_grad=True)
+
+    sol0 = ot.solve(M, a, b, reg=10, grad='implicit')
+    sol0.value.backward()
+
+    gM0 = M.grad.clone()
+    ga0 = a.grad.clone()
+    gb0 = b.grad.clone()
+
+    a = torch.tensor(a, requires_grad=True)
+    b = torch.tensor(b, requires_grad=True)
+    M = torch.tensor(M, requires_grad=True)
+
+    sol = ot.solve(M, a, b, reg=10, grad='autodiff')
+    sol.value.backward()
+
+    gM = M.grad.clone()
+    ga = a.grad.clone()
+    gb = b.grad.clone()
+
+    # Note, gradients aer invariant to change in constant so we center them
+    assert torch.allclose(gM0, gM)
+    assert torch.allclose(ga0 - ga0.mean(), ga - ga.mean())
+    assert torch.allclose(gb0 - gb0.mean(), gb - gb.mean())
 
 
 @pytest.mark.parametrize("reg,reg_type,unbalanced,unbalanced_type", itertools.product(lst_reg, lst_reg_type, lst_unbalanced, lst_unbalanced_type))
