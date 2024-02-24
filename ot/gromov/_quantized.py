@@ -8,8 +8,15 @@ Quantized Gromov-Wasserstein solvers.
 
 import numpy as np
 import warnings
-from networkx.algorithms.community import asyn_fluidc, louvain_communities
-from networkx import from_numpy_array, pagerank
+
+try:
+    from networkx.algorithms.community import asyn_fluidc, louvain_communities
+    from networkx import from_numpy_array, pagerank
+    networkx_is_installed = True
+except:
+    networkx_is_installed = False
+    pass
+
 from sklearn.cluster import SpectralClustering
 import random
 
@@ -18,7 +25,7 @@ from ..utils import unif
 from ..backend import get_backend
 from ..lp import emd_1d
 from ._gw import gromov_wasserstein
-
+from ._utils import init_matrix, gwloss
 
 def _get_partition(C, npart, part_method='fluid', random_state=0, nx=None):
     """
@@ -224,8 +231,8 @@ def quantized_gromov_wasserstein(
     r"""
     Returns the quantized Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})`
     and :math:`(\mathbf{C_2}, \mathbf{q})`, whose samples are assigned to partitions and representants
-    :math:`\mathcal{P_1} = \left{(\mathbf{P_{1, i}}, \mathbf{r_{1, i}})\right}_i`
-    and :math:`\mathcal{P_2} = \left{(\mathbf{P_{2, j}}, \mathbf{r_{2, j}})\right}_j`.
+    :math:`\mathcal{P_1} = \{(\mathbf{P_{1, i}}, \mathbf{r_{1, i}})\}_{i \leq npart1}`
+    and :math:`\mathcal{P_2} = \{(\mathbf{P_{2, j}}, \mathbf{r_{2, j}})\}_{j \leq npart2}`.
 
     The function estimates the following optimization problem:
 
@@ -239,11 +246,12 @@ def quantized_gromov_wasserstein(
 
              \mathbf{T} &\geq 0
 
-             \mathbf{T}_{|\mathbf{P_{1, i}}, (\mathbf{P_{2, j}}} &= T^{g}_{ij} \mathbf{T}^{(i,j)}
+             \mathbf{T}_{|\mathbf{P_{1, i}}, \mathbf{P_{2, j}}} &= T^{g}_{ij} \mathbf{T}^{(i,j)}
 
-    using a two-step strategy: i) computing a global alignment \mathbf{T}^{g} between
-    representants of each space; ii) computing local alignments \mathbf{T}^{(i, j)} between
-    samples within each partitions seen as 1D measures.
+    using a two-step strategy computing: i) a global alignment :math:`\mathbf{T}^{g}`
+    between representants across spaces; ii) local alignments
+    :math:`\mathbf{T}^{(i, j)}` between partitions :math:`\mathbf{P_{1, i}}`
+    and :math:`\mathbf{P_{2, j}}` seen as 1D measures.
 
     Where :
 
@@ -251,7 +259,7 @@ def quantized_gromov_wasserstein(
     - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
     - :math:`\mathbf{p}`: distribution in the source space
     - :math:`\mathbf{q}`: distribution in the target space
-    - `L`: quadratic loss function to account for the misfit between the similarity matrices
+    - :math:`L`: quadratic loss function to account for the misfit between the similarity matrices
 
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
@@ -286,8 +294,8 @@ def quantized_gromov_wasserstein(
         If True the step of the line-search is found via an armijo research. Else closed form is used.
         If there are convergence issues use False.
     G0: array-like, shape (ns,nt), optional
-        If None the initial transport plan of the solver is pq^T.
-        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+        If None the initial transport plan is :math:`\mathbf{pq}^\top`.
+        Otherwise G0 is used as initialization and must satisfy marginal constraints.
     max_iter : int, optional
         Max number of iterations
     tol_rel : float, optional
@@ -302,14 +310,14 @@ def quantized_gromov_wasserstein(
     Returns
     -------
     T_global: array-like, shape (`npart1`, `npart2`)
-        Gromov-Wasserstein coupling between structure matrices of representants.
+        Gromov-Wasserstein alignment :math:`\mathbf{T}^{g}` between representants.
     Ts_local: dict of local OT matrices.
-        Dictionary with keys `(i, j)` corresponding to 1D OT between partition `i`
-        in source space and partition `j` in target space.
-    T: array-like, shape `(ns, nt)``
-        Coupling between the two spaces if `build_OT=True` else None.
+        Dictionary with keys :math:`(i, j)` corresponding to 1D OT between
+        :math:`\mathbf{P_{1, i}}` and :math:`\mathbf{P_{2, j}}` if :math:`T^{g}_{ij} \neq 0`.
+    T: array-like, shape `(ns, nt)`
+        Coupling between the two spaces.
     log : dict
-        Convergence information and loss.
+        Convergence information for inner problems and qGW loss.
 
     References
     ----------
@@ -317,6 +325,26 @@ def quantized_gromov_wasserstein(
         Quantized gromov-wasserstein. ECML PKDD 2021. Springer International Publishing.
 
     """
+    if (part_method in ['fluid', 'louvain']) and (not networkx_is_installed):
+        warnings.warn(
+            f"""
+            Networkx is not installed, so part_method={part_method}
+            is not available and by default set to `spectral`. Consider
+            installing Networkx to make this functionality available.
+            """
+        )
+        part_method = 'spectral'
+
+    if (rep_method == 'pagerank') and (not networkx_is_installed):
+        warnings.warn(
+            """
+            Networkx is not installed, so rep_method=pagerank
+            is not available and by default set to `random`. Consider
+            installing Networkx to make this functionality available.
+            """
+        )
+        rep_method = 'random'
+
     arr = [C1, C2]
     if p is not None:
         arr.append(list_to_array(p))
@@ -349,7 +377,11 @@ def quantized_gromov_wasserstein(
         tol_abs=tol_abs, nx=nx, **kwargs)
     if log:
         T_global, Ts_local, T, log_ = res
-
+        
+        # compute the qGW distance
+        constC, hC1, hC2 = init_matrix(C1, C2, p, q, 'square_loss', nx)
+        log_['qGW_dist'] = gwloss(constC, hC1, hC2, T, nx)
+        
         return T_global, Ts_local, T, log_
 
     else:
@@ -365,9 +397,9 @@ def quantized_gromov_wasserstein_partitioned(
     r"""
     Returns the quantized Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})`
     and :math:`(\mathbf{C_2}, \mathbf{q})`, whose samples are assigned to partitions and representants
-    :math:`\mathcal{P_1} = \left{(\mathbf{P_{1, i}}, \mathbf{r_{1, i}})\right}_i`
-    and :math:`\mathcal{P_2} = \left{(\mathbf{P_{2, j}}, \mathbf{r_{2, j}})\right}_j`.
-    The latter are precomputed and encoded e.g for the source as: :math:`\mathbf{CR_1}`
+    :math:`\mathcal{P_1} = \{(\mathbf{P_{1, i}}, \mathbf{r_{1, i}})\}_{i \leq npart1}`
+    and :math:`\mathcal{P_2} = \{(\mathbf{P_{2, j}}, \mathbf{r_{2, j}})\}_{j \leq npart2}`.
+    The latter must be precomputed and encoded e.g for the source as: :math:`\mathbf{CR_1}`
     structure matrix between representants; `list_R1` a list of relations between representants
     and their associated samples; `list_p1` a list of nodes distribution within each partition.
 
@@ -383,11 +415,12 @@ def quantized_gromov_wasserstein_partitioned(
 
              \mathbf{T} &\geq 0
 
-             \mathbf{T}_{|\mathbf{P_{1, i}}, (\mathbf{P_{2, j}}} &= T^{g}_{ij} \mathbf{T}^{(i,j)}
+             \mathbf{T}_{|\mathbf{P_{1, i}}, \mathbf{P_{2, j}}} &= T^{g}_{ij} \mathbf{T}^{(i,j)}
 
-    using a two-step strategy: i) computing a global alignment \mathbf{T}^{g} between
-    representants of each space; ii) computing local alignments \mathbf{T}^{(i, j)} between
-    samples within each partitions seen as 1D measures.
+    using a two-step strategy computing: i) a global alignment :math:`\mathbf{T}^{g}`
+    between representants across spaces; ii) local alignments
+    :math:`\mathbf{T}^{(i, j)}` between partitions :math:`\mathbf{P_{1, i}}`
+    and :math:`\mathbf{P_{2, j}}` seen as 1D measures.
 
     Where :
 
@@ -395,7 +428,7 @@ def quantized_gromov_wasserstein_partitioned(
     - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
     - :math:`\mathbf{p}`: distribution in the source space
     - :math:`\mathbf{q}`: distribution in the target space
-    - `L`: quadratic loss function to account for the misfit between the similarity matrices
+    - :math:`L`: quadratic loss function to account for the misfit between the similarity matrices
 
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
@@ -439,14 +472,14 @@ def quantized_gromov_wasserstein_partitioned(
     Returns
     -------
     T_global: array-like, shape (`npart1`, `npart2`)
-        Gromov-Wasserstein coupling between structure matrices of representants.
+        Gromov-Wasserstein alignment :math:`\mathbf{T}^{g}` between representants.
     Ts_local: dict of local OT matrices.
-        Dictionary with keys `(i, j)` corresponding to 1D OT between partition `i`
-        in source space and partition `j` in target space.
-    T: array-like, shape `(ns, nt)``
+        Dictionary with keys :math:`(i, j)` corresponding to 1D OT between
+        :math:`\mathbf{P_{1, i}}` and :math:`\mathbf{P_{2, j}}` if :math:`T^{g}_{ij} \neq 0`.
+    T: array-like, shape `(ns, nt)`
         Coupling between the two spaces if `build_OT=True` else None.
     log : dict, if `log=True`.
-        Contains losses for the global and local alignment problems.
+        Convergence information and losses of inner OT problems.
 
     References
     ----------
@@ -462,8 +495,10 @@ def quantized_gromov_wasserstein_partitioned(
     npart1 = len(list_R1)
     npart2 = len(list_R2)
 
+    # compute marginals for global alignment
     pR1 = nx.from_numpy(list_to_array([nx.sum(p) for p in list_p1]))
     pR2 = nx.from_numpy(list_to_array([nx.sum(q) for q in list_p2]))
+
     # compute global alignment
     res_gw = gromov_wasserstein(
         CR1, CR2, pR1, pR2, loss_fun='square_loss', symmetric=True, log=log,
@@ -483,19 +518,27 @@ def quantized_gromov_wasserstein_partitioned(
 
     for i in range(npart1):
         for j in range(npart2):
-            res_1d = emd_1d(list_R1[i], list_R2[j], list_p1_norm[i], list_p2_norm[j],
-                            metric='sqeuclidean', p=1., log=log)
-            if log:
-                T_local, log_local = res_1d
-                Ts_local[(i, j)] = T_local
-                log_[f'cost ({i},{j})'] = log_local['cost']
-            else:
-                Ts_local[(i, j)] = res_1d
+            if T_global[i, j] != 0.:
+                res_1d = emd_1d(list_R1[i], list_R2[j], list_p1_norm[i], list_p2_norm[j],
+                                metric='sqeuclidean', p=1., log=log)
+                if log:
+                    T_local, log_local = res_1d
+                    Ts_local[(i, j)] = T_local
+                    log_[f'cost ({i},{j})'] = log_local['cost']
+                else:
+                    Ts_local[(i, j)] = res_1d
 
     if build_OT:
         T_rows = []
         for i in range(npart1):
-            list_Ti = [T_global[i, j] * Ts_local[(i, j)] for j in range(npart2)]
+            list_Ti = []
+            for j in range(npart2):
+                if T_global[i, j] == 0.:
+                    T_local = nx.zeros((list_R1[i].shape[0], list_R2[j].shape[0]), type_as=T_global)
+                else:
+                    T_local = T_global[i, j] * Ts_local[(i, j)]
+                list_Ti.append(T_local)
+
             Ti = nx.concatenate(list_Ti, axis=1)
             T_rows.append(Ti)
         T = nx.concatenate(T_rows, axis=0)

@@ -3015,7 +3015,11 @@ def test_quantized_gromov(nx):
 
                 if log_:
                     for key in log.keys():
-                        np.testing.assert_allclose(log[key], logb[key], atol=1e-06)
+                        # The inner test T_global[i, j] != 0. can lead to different
+                        # computation of 1D OT computations between partition depending
+                        # on the different float errors across backend
+                        if key in logb.keys():
+                            np.testing.assert_allclose(log[key], logb[key], atol=1e-06)
 
     # complementary tests for utils functions
     part1b = ot.gromov._quantized._get_partition(
