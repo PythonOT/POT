@@ -12,12 +12,16 @@ import warnings
 try:
     from networkx.algorithms.community import asyn_fluidc, louvain_communities
     from networkx import from_numpy_array, pagerank
-    networkx_is_installed = True
-except:
-    networkx_is_installed = False
-    pass
+    networkx_import = True
+except ImportError:
+    networkx_import = False
 
-from sklearn.cluster import SpectralClustering
+try:
+    from sklearn.cluster import SpectralClustering, KMeans
+    sklearn_import = True
+except ImportError:
+    sklearn_import = False
+
 import random
 
 from ..utils import list_to_array
@@ -27,20 +31,23 @@ from ..lp import emd_1d
 from ._gw import gromov_wasserstein
 from ._utils import init_matrix, gwloss
 
-def _get_partition(C, npart, part_method='fluid', random_state=0, nx=None):
+
+def _get_partition(C, npart, part_method='random', random_state=0, nx=None):
     """
-    Partitioning a given structure matrix either using one of {'louvain', 'fluid'}
-    algorithms from networkx or 'spectral' clustering from scikit-learn.
+    Partitioning a given structure matrix either 'random', or using one
+    of {'louvain', 'fluid'} algorithms from networkx, or {'spectral', 'kmeans'}
+    clustering from scikit-learn.
 
     Parameters
     ----------
-    C : array-like, shape (n, n)
-        structure matrix
+    C : array-like, shape (n, n) or (n, d)
+        structure matrix if `part_method` in {'random', 'louvain', 'fluid', 'spectral'}
+        or feature matrix if `part_method="kmeans"`.
     npart : int,
         number of partitions/clusters smaller than the number of nodes in C.
-    part_method : str, optional. Default is 'fluid'.
-        Partitioning algorithm to use among {'louvain', 'fluid', 'spectral'}. If the
-        louvain algorithm is used, the requested number of partitions is ignored.
+    part_method : str, optional. Default is 'random'.
+        Partitioning algorithm to use among {'random', 'louvain', 'fluid', 'spectral', 'kmeans'}.
+        If the louvain algorithm is used, the requested number of partitions is ignored.
     random_state: int, optional
         Random seed for the partitioning algorithm
     nx : backend, optional
@@ -75,45 +82,60 @@ def _get_partition(C, npart, part_method='fluid', random_state=0, nx=None):
     elif npart == 1:
         part = np.zeros(n)
 
-    else:
+    elif part_method == 'random':
+        # randomly partition the space
+        random.seed(random_state)
+        part = list_to_array(random.choices(np.arange(npart), k=C.shape[0]))
+
+    elif part_method == 'louvain':
         C = nx.to_numpy(C0)
+        graph = from_numpy_array(C)
+        part_sets = louvain_communities(graph, seed=random_state)
+        part = np.zeros(n)
+        for iset_, set_ in enumerate(part_sets):
+            set_ = list(set_)
+            part[set_] = iset_
 
-        if part_method == 'louvain':
-            graph = from_numpy_array(C)
-            part_sets = louvain_communities(graph, seed=random_state)
-            part = np.zeros(n)
-            for iset_, set_ in enumerate(part_sets):
-                set_ = list(set_)
-                part[set_] = iset_
+    elif part_method == 'fluid':
+        C = nx.to_numpy(C0)
+        graph = from_numpy_array(C)
+        part_sets = asyn_fluidc(graph, npart, seed=random_state)
+        part = np.zeros(n)
+        for iset_, set_ in enumerate(part_sets):
+            set_ = list(set_)
+            part[set_] = iset_
 
-        elif part_method == 'fluid':
-            graph = from_numpy_array(C)
-            part_sets = asyn_fluidc(graph, npart, seed=random_state)
-            part = np.zeros(n)
-            for iset_, set_ in enumerate(part_sets):
-                set_ = list(set_)
-                part[set_] = iset_
+    elif part_method == 'spectral':
+        C = nx.to_numpy(C0)
+        sc = SpectralClustering(n_clusters=npart,
+                                random_state=random_state,
+                                affinity='precomputed').fit(C)
+        part = sc.labels_
 
-        elif part_method == 'spectral':
-            sc = SpectralClustering(n_clusters=npart,
-                                    random_state=random_state,
-                                    affinity='precomputed').fit(C)
-            part = sc.labels_
+    elif part_method == 'kmeans':
+        C = nx.to_numpy(C0)
+        km = KMeans(n_clusters=npart, random_state=random_state,
+                    ).fit(C)
+        part = km.labels_
 
-        else:
-            raise ValueError(f"Unknown `part_method='{part_method}'`. Use one of: {'louvain', 'fluid', 'spectral'}.")
-
+    else:
+        raise ValueError(
+            f"""
+            Unknown `part_method='{part_method}'`. Use one of:
+            {'random', 'louvain', 'fluid', 'spectral', 'kmeans'}.
+            """)
     return nx.from_numpy(part, type_as=C0)
 
 
-def _get_representants(C, part, rep_method='pagerank', random_state=0, nx=None):
+def _get_representants(C, part, rep_method='random', random_state=0, nx=None):
     """
     Get representants for each partition of a given structure matrix either.
 
     Parameters
     ----------
-    C : array-like, shape (n, n)
-        structure matrix
+    C : array-like, shape (n, n) or (n, d)
+        structure matrix if `part_method` in {'random', 'louvain', 'fluid', 'spectral'}
+        or feature matrix if `part_method="kmeans"`.
     part : array-like, shape (n,)
         Array of partition assignment for each node.
     rep_method : str, optional. Default is 'pagerank'.
@@ -158,16 +180,31 @@ def _get_representants(C, part, rep_method='pagerank', random_state=0, nx=None):
         part = nx.to_numpy(part0)
         part_ids = np.unique(part)
 
-        for id_, part_id in enumerate(part_ids):
-            indices = np.where(part == part_id)[0]
+        for id_ in part_ids:
+            indices = np.where(part == id_)[0]
             C_id = C[indices, :][:, indices]
             graph = from_numpy_array(C_id)
             pagerank_values = list(pagerank(graph).values())
             rep_idx = np.argmax(pagerank_values)
             rep_indices.append(indices[rep_idx])
 
+    elif rep_method == 'kmeans':
+        rep_indices = []
+        part_ids = nx.unique(part)
+        for id_ in part_ids:
+            indices = nx.where(part == id_)[0]
+            C_id = C[indices, :]
+            centroid = nx.mean(C_id, axis=0)
+            dists = nx.sum((C_id - centroid[None, :]) ** 2, axis=1)
+            closest_idx = nx.argmin(dists)
+            rep_indices.append(indices[closest_idx])
+
     else:
-        raise ValueError(f"Unknown `rep_method='{rep_method}'`. Use one of: {'random', 'pagerank'}.")
+        raise ValueError(
+            f"""
+            Unknown `rep_method='{rep_method}'`. Use one of:
+            {'random', 'pagerank', 'kmeans'}.
+            """)
 
     return rep_indices
 
@@ -225,8 +262,8 @@ def _formate_partitioned_graph(C, p, part, rep_indices, nx=None):
 
 
 def quantized_gromov_wasserstein(
-        C1, C2, npart1, npart2, p=None, q=None, part_method='fluid',
-        rep_method='pagerank', log=False, armijo=False, max_iter=1e4,
+        C1, C2, npart1, npart2, A1=None, A2=None, p=None, q=None, part_method='fluid',
+        rep_method='random', log=False, armijo=False, max_iter=1e4,
         tol_rel=1e-9, tol_abs=1e-9, random_state=0, **kwargs):
     r"""
     Returns the quantized Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})`
@@ -279,13 +316,17 @@ def quantized_gromov_wasserstein(
     q : array-like, shape (nt,), optional
         Distribution in the target space.
         If let to its default value None, uniform distribution is taken.
-    part_method : str, optional. Default is 'fluid'.
-        Partitioning algorithm to use among {'louvain', 'fluid', 'spectral'}. If the
-        louvain algorithm is used, the requested number of partitions is ignored.
-    rep_method : str, optional. Default is 'pagerank'.
+    A1 : array-like, shape (ns, ns) or (ns, ds), optional. Default is None.
+        Structure matrix or feature matrix in the source space to perform the partitioning.
+    A2 : array-like, shape (nt, nt) or (nt, dt), optional. Default is None.
+        Structure matrix or feature matrix in in the target space to perform the partitioning.
+    part_method : str, optional. Default is 'random'.
+        Partitioning algorithm to use among {'random', 'louvain', 'fluid', 'spectral', 'kmeans'}.
+        If the louvain algorithm is used, the requested number of partitions is ignored.
+    rep_method : str, optional. Default is 'random'.
         Selection method for representant in each partition. Can be either 'random'
-        i.e random sampling within each partition, or 'pagerank' to select a
-        node with maximal pagerank.
+        i.e random sampling within each partition, 'pagerank' to select a
+        node with maximal pagerank or 'kmeans' to select neirest point to centroid.
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -325,17 +366,17 @@ def quantized_gromov_wasserstein(
         Quantized gromov-wasserstein. ECML PKDD 2021. Springer International Publishing.
 
     """
-    if (part_method in ['fluid', 'louvain']) and (not networkx_is_installed):
+    if (part_method in ['fluid', 'louvain']) and (not networkx_import):
         warnings.warn(
             f"""
             Networkx is not installed, so part_method={part_method}
-            is not available and by default set to `spectral`. Consider
+            is not available and by default set to `random`. Consider
             installing Networkx to make this functionality available.
             """
         )
-        part_method = 'spectral'
+        part_method = 'random'
 
-    if (rep_method == 'pagerank') and (not networkx_is_installed):
+    if (rep_method == 'pagerank') and (not networkx_import):
         warnings.warn(
             """
             Networkx is not installed, so rep_method=pagerank
@@ -345,7 +386,26 @@ def quantized_gromov_wasserstein(
         )
         rep_method = 'random'
 
+    if (part_method == 'kmeans' or rep_method == 'kmeans') and (not sklearn_import):
+        warnings.warn(
+            """
+            Scikit-Learn is not installed, so rep_method=kmeans
+            is not available and by default set to `random`. Consider
+            installing Scikit-Learn to make this functionality available.
+            """
+        )
+        part_method = 'random'
+        rep_method = 'random'
+
     arr = [C1, C2]
+    if A1 is not None:
+        arr.append(A1)
+    else:
+        A1 = C1
+    if A2 is not None:
+        arr.append(A2)
+    else:
+        A2 = C2
     if p is not None:
         arr.append(list_to_array(p))
     else:
@@ -357,15 +417,15 @@ def quantized_gromov_wasserstein(
 
     nx = get_backend(*arr)
 
-    # compute partition
-    part1 = _get_partition(C1, npart1, part_method=part_method, random_state=random_state, nx=nx)
-    part2 = _get_partition(C2, npart2, part_method=part_method, random_state=random_state, nx=nx)
+    # compute partition over A1 and A2
+    part1 = _get_partition(A1, npart1, part_method=part_method, random_state=random_state, nx=nx)
+    part2 = _get_partition(A2, npart2, part_method=part_method, random_state=random_state, nx=nx)
 
     # get representants for each partition
-    rep_indices1 = _get_representants(C1, part1, rep_method=rep_method, random_state=random_state, nx=nx)
-    rep_indices2 = _get_representants(C2, part2, rep_method=rep_method, random_state=random_state, nx=nx)
+    rep_indices1 = _get_representants(A1, part1, rep_method=rep_method, random_state=random_state, nx=nx)
+    rep_indices2 = _get_representants(A2, part2, rep_method=rep_method, random_state=random_state, nx=nx)
 
-    # formate partitions
+    # formate partitions over C1 and C2
     CR1, list_R1, list_p1 = _formate_partitioned_graph(C1, p, part1, rep_indices1, nx=nx)
     CR2, list_R2, list_p2 = _formate_partitioned_graph(C2, q, part2, rep_indices2, nx=nx)
 
@@ -377,11 +437,11 @@ def quantized_gromov_wasserstein(
         tol_abs=tol_abs, nx=nx, **kwargs)
     if log:
         T_global, Ts_local, T, log_ = res
-        
+
         # compute the qGW distance
         constC, hC1, hC2 = init_matrix(C1, C2, p, q, 'square_loss', nx)
         log_['qGW_dist'] = gwloss(constC, hC1, hC2, T, nx)
-        
+
         return T_global, Ts_local, T, log_
 
     else:

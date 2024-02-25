@@ -2982,55 +2982,58 @@ def test_quantized_gromov(nx):
 
     for npart1 in [1, n_samples + 1, 2]:
         log_tests = [True, False, False, True, True, False]
+        pairs_part_rep = [
+            ('louvain', 'random'), ('fluid', 'pagerank'), ('spectral', 'random'),
+            ('random', 'random'), ('kmeans', 'kmeans')]
+
         count_mode = 0
 
-        for part_method in ['louvain', 'spectral', 'fluid']:
-            for rep_method in ['random', 'pagerank']:
+        for part_method, rep_method in pairs_part_rep:
+            print(part_method, rep_method)
+            log_ = log_tests[count_mode]
+            count_mode += 1
 
-                log_ = log_tests[count_mode]
-                count_mode += 1
+            res = ot.gromov.quantized_gromov_wasserstein(
+                C1, C2, npart1, npart2, C1, None, p=p, q=None, part_method=part_method,
+                rep_method=rep_method, log=log_)
 
-                res = ot.gromov.quantized_gromov_wasserstein(
-                    C1, C2, npart1, npart2, p=p, q=None, part_method=part_method,
-                    rep_method=rep_method, log=log_)
+            resb = ot.gromov.quantized_gromov_wasserstein(
+                C1b, C2b, npart1, npart2, None, C2b, p=None, q=qb, part_method=part_method,
+                rep_method=rep_method, log=log_)
 
-                resb = ot.gromov.quantized_gromov_wasserstein(
-                    C1b, C2b, npart1, npart2, p=None, q=qb, part_method=part_method,
-                    rep_method=rep_method, log=log_)
+            if log_:
+                T_global, Ts_local, T, log = res
+                T_globalb, Ts_localb, Tb, logb = resb
+            else:
+                T_global, Ts_local, T = res
+                T_globalb, Ts_localb, Tb = resb
 
-                if log_:
-                    T_global, Ts_local, T, log = res
-                    T_globalb, Ts_localb, Tb, logb = resb
-                else:
-                    T_global, Ts_local, T = res
-                    T_globalb, Ts_localb, Tb = resb
+            Tb = nx.to_numpy(Tb)
+            # check constraints
+            np.testing.assert_allclose(T, Tb, atol=1e-06)
+            np.testing.assert_allclose(
+                p, Tb.sum(1), atol=1e-06)  # cf convergence gromov
+            np.testing.assert_allclose(
+                q, Tb.sum(0), atol=1e-06)  # cf convergence gromov
 
-                Tb = nx.to_numpy(Tb)
-                # check constraints
-                np.testing.assert_allclose(T, Tb, atol=1e-06)
-                np.testing.assert_allclose(
-                    p, Tb.sum(1), atol=1e-06)  # cf convergence gromov
-                np.testing.assert_allclose(
-                    q, Tb.sum(0), atol=1e-06)  # cf convergence gromov
-
-                if log_:
-                    for key in log.keys():
-                        # The inner test T_global[i, j] != 0. can lead to different
-                        # computation of 1D OT computations between partition depending
-                        # on the different float errors across backend
-                        if key in logb.keys():
-                            np.testing.assert_allclose(log[key], logb[key], atol=1e-06)
+            if log_:
+                for key in log.keys():
+                    # The inner test T_global[i, j] != 0. can lead to different
+                    # computation of 1D OT computations between partition depending
+                    # on the different float errors across backend
+                    if key in logb.keys():
+                        np.testing.assert_allclose(log[key], logb[key], atol=1e-06)
 
     # complementary tests for utils functions
     part1b = ot.gromov._quantized._get_partition(
-        C1b, npart1, part_method='fluid', random_state=0)
+        C1b, npart1, part_method=pairs_part_rep[-1][0], random_state=0)
     part2b = ot.gromov._quantized._get_partition(
-        C2b, npart2, part_method='fluid', random_state=0)
+        C2b, npart2, part_method=pairs_part_rep[-1][0], random_state=0)
 
     rep_indices1b = ot.gromov._quantized._get_representants(
-        C1b, part1b, rep_method='pagerank', random_state=0)
+        C1b, part1b, rep_method=pairs_part_rep[-1][1], random_state=0)
     rep_indices2b = ot.gromov._quantized._get_representants(
-        C2b, part2b, rep_method='pagerank', random_state=0)
+        C2b, part2b, rep_method=pairs_part_rep[-1][1], random_state=0)
 
     CR1b, list_R1b, list_p1b = ot.gromov._quantized._formate_partitioned_graph(
         C1b, pb, part1b, rep_indices1b)
@@ -3054,4 +3057,4 @@ def test_quantized_gromov(nx):
             C1b, npart1, part_method=method, random_state=0)
     with pytest.raises(ValueError):
         ot.gromov._quantized._get_representants(
-            C1b, part1b, rep_method='unknown_method', random_state=0)
+            C1b, part1b, rep_method=method, random_state=0)
