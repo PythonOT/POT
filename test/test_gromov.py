@@ -15,6 +15,8 @@ import ot
 from ot.backend import NumpyBackend
 from ot.backend import torch, tf
 
+from ot.gromov._quantized import networkx_import, sklearn_import
+
 
 def test_gromov(nx):
     n_samples = 20  # nb samples
@@ -2982,9 +2984,13 @@ def test_quantized_gromov(nx):
 
     for npart1 in [1, n_samples + 1, 2]:
         log_tests = [True, False, False, True, True, False]
-        pairs_part_rep = [
-            ('louvain', 'random'), ('fluid', 'pagerank'), ('spectral', 'random'),
-            ('random', 'random'), ('kmeans', 'kmeans')]
+
+        pairs_part_rep = [('random', 'random')]
+        if networkx_import:
+            pairs_part_rep += [('louvain', 'random'), ('fluid', 'pagerank'),
+                               ('spectral', 'random')]
+        if sklearn_import:
+            pairs_part_rep += [('kmeans', 'kmeans')]
 
         count_mode = 0
 
