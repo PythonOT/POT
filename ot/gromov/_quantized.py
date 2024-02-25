@@ -366,32 +366,23 @@ def quantized_gromov_wasserstein(
         Quantized gromov-wasserstein. ECML PKDD 2021. Springer International Publishing.
 
     """
-    if (part_method in ['fluid', 'louvain']) and (not networkx_import):
+    if (part_method in ['fluid', 'louvain'] or rep_method == 'pagerank') and (not networkx_import):
         warnings.warn(
             f"""
-            Networkx is not installed, so part_method={part_method}
-            is not available and by default set to `random`. Consider
-            installing Networkx to make this functionality available.
+            Networkx is not installed, so part_method={part_method} and/or
+            rep_method={rep_method} cannot be used and are set to `random`
+            default methods. Consider installing Networkx to fix this.
             """
         )
         part_method = 'random'
-
-    if (rep_method == 'pagerank') and (not networkx_import):
-        warnings.warn(
-            """
-            Networkx is not installed, so rep_method=pagerank
-            is not available and by default set to `random`. Consider
-            installing Networkx to make this functionality available.
-            """
-        )
         rep_method = 'random'
 
-    if (part_method == 'kmeans' or rep_method == 'kmeans') and (not sklearn_import):
+    if (part_method in ['kmeans', 'spectral'] or rep_method == 'kmeans') and (not sklearn_import):
         warnings.warn(
-            """
-            Scikit-Learn is not installed, so rep_method=kmeans
-            is not available and by default set to `random`. Consider
-            installing Scikit-Learn to make this functionality available.
+            f"""
+            Scikit-learn is not installed, so part_method={part_method} and/or
+            rep_method={rep_method} cannot be used and are set to `random`
+            default methods. Consider installing Scikit-learn to fix this.
             """
         )
         part_method = 'random'
