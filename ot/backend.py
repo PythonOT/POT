@@ -281,6 +281,19 @@ class Backend():
         """Define the gradients for the value val wrt the inputs """
         raise NotImplementedError()
 
+    def detach(self, *arrays):
+        """Detach the tensors from the computation graph
+
+        See: https://pytorch.org/docs/stable/generated/torch.Tensor.detach.html"""
+        if len(arrays) == 1:
+            return self._detach(arrays[0])
+        else:
+            return [self._detach(array) for array in arrays]
+
+    def _detach(self, a):
+        """Detach the tensor from the computation graph"""
+        raise NotImplementedError()
+
     def zeros(self, shape, type_as=None):
         r"""
         Creates a tensor full of zeros.
@@ -1027,14 +1040,6 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def detach(self, *args):
-        r"""
-        Detach tensors in arguments from the current graph.
-
-        See: https://pytorch.org/docs/stable/generated/torch.Tensor.detach.html
-        """
-        raise NotImplementedError()
-
     def matmul(self, a, b):
         r"""
         Matrix product of two arrays.
@@ -1081,6 +1086,10 @@ class NumpyBackend(Backend):
     def set_gradients(self, val, inputs, grads):
         # No gradients for numpy
         return val
+
+    def _detach(self, a):
+        # No gradients for numpy
+        return a
 
     def zeros(self, shape, type_as=None):
         if type_as is None:
@@ -1392,11 +1401,6 @@ class NumpyBackend(Backend):
     def transpose(self, a, axes=None):
         return np.transpose(a, axes)
 
-    def detach(self, *args):
-        if len(args) == 1:
-            return args[0]
-        return args
-
     def matmul(self, a, b):
         return np.matmul(a, b)
 
@@ -1461,6 +1465,9 @@ class JaxBackend(Backend):
 
         val, = jax.tree_map(lambda z: z + aux, (val,))
         return val
+
+    def _detach(self, a):
+        return jax.lax.stop_gradient(a)
 
     def zeros(self, shape, type_as=None):
         if type_as is None:
@@ -1765,11 +1772,6 @@ class JaxBackend(Backend):
     def transpose(self, a, axes=None):
         return jnp.transpose(a, axes)
 
-    def detach(self, *args):
-        if len(args) == 1:
-            return jax.lax.stop_gradient((args[0],))[0]
-        return [jax.lax.stop_gradient((a,))[0] for a in args]
-
     def matmul(self, a, b):
         return jnp.matmul(a, b)
 
@@ -1850,6 +1852,9 @@ class TorchBackend(Backend):
         res = Func.apply(val, grads, *inputs)
 
         return res
+
+    def _detach(self, a):
+        return a.detach()
 
     def zeros(self, shape, type_as=None):
         if isinstance(shape, int):
@@ -2256,11 +2261,6 @@ class TorchBackend(Backend):
             axes = tuple(range(a.ndim)[::-1])
         return a.permute(axes)
 
-    def detach(self, *args):
-        if len(args) == 1:
-            return args[0].detach()
-        return [a.detach() for a in args]
-
     def matmul(self, a, b):
         return torch.matmul(a, b)
 
@@ -2311,6 +2311,9 @@ class CupyBackend(Backend):  # pragma: no cover
     def set_gradients(self, val, inputs, grads):
         # No gradients for cupy
         return val
+
+    def _detach(self, a):
+        return a
 
     def zeros(self, shape, type_as=None):
         if isinstance(shape, (list, tuple)):
@@ -2657,11 +2660,6 @@ class CupyBackend(Backend):  # pragma: no cover
     def transpose(self, a, axes=None):
         return cp.transpose(a, axes)
 
-    def detach(self, *args):
-        if len(args) == 1:
-            return args[0]
-        return args
-
     def matmul(self, a, b):
         return cp.matmul(a, b)
 
@@ -2728,6 +2726,9 @@ class TensorflowBackend(Backend):
                 return grads
             return val, grad
         return tmp(inputs)
+
+    def _detach(self, a):
+        return tf.stop_gradient(a)
 
     def zeros(self, shape, type_as=None):
         if type_as is None:
@@ -3082,11 +3083,6 @@ class TensorflowBackend(Backend):
 
     def transpose(self, a, axes=None):
         return tf.transpose(a, perm=axes)
-
-    def detach(self, *args):
-        if len(args) == 1:
-            return tf.stop_gradient(args[0])
-        return [tf.stop_gradient(a) for a in args]
 
     def matmul(self, a, b):
         return tnp.matmul(a, b)
