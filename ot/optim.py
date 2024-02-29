@@ -12,7 +12,6 @@ import numpy as np
 import warnings
 from .lp import emd
 from .bregman import sinkhorn
-from .utils import list_to_array
 from .backend import get_backend
 
 with warnings.catch_warnings():
@@ -73,7 +72,6 @@ def line_search_armijo(
 
     """
     if nx is None:
-        xk, pk, gfk = list_to_array(xk, pk, gfk)
         xk0, pk0 = xk, pk
         nx = get_backend(xk0, pk0)
     else:
@@ -236,7 +234,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
     ot.lp.emd : Unregularized optimal transport
     ot.bregman.sinkhorn : Entropic regularized optimal transport
     """
-    a, b, M, G0 = list_to_array(a, b, M, G0)
+
     if isinstance(M, int) or isinstance(M, float):
         nx = get_backend(a, b)
     else:

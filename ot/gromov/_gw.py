@@ -699,8 +699,6 @@ def solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M, reg,
 
     """
     if nx is None:
-        G, deltaG, C1, C2, M = list_to_array(G, deltaG, C1, C2, M)
-
         if isinstance(M, int) or isinstance(M, float):
             nx = get_backend(G, deltaG, C1, C2)
         else:
