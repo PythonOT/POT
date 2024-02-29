@@ -6,7 +6,7 @@ pymanopt
 cvxopt
 scikit-learn
 torch
-jax
+jax<=0.4.24
 jaxlib
 tensorflow
 pytest
