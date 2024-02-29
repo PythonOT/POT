@@ -1,11 +1,12 @@
 # Releases
 
-## 0.9.3
+## 0.9.3dev
 
 #### Closed issues
 - Fixed an issue with cost correction for mismatched labels in `ot.da.BaseTransport` fit methods. This fix addresses the original issue introduced PR #587 (PR #593)
 - Fix gpu compatibility of sr(F)GW solvers when `G0 is not None`(PR #596)
 - Fix doc and example for lowrank sinkhorn (PR #601)
+- Fix issue with empty weights for `ot.emd2` (PR #606, Issue #534)
 
 ## 0.9.2
 *December 2023*
