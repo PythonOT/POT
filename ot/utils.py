@@ -56,12 +56,24 @@ def laplacian(x):
     return L
 
 
-def list_to_array(*lst):
+def list_to_array(*lst, nx=None):
     r""" Convert a list if in numpy format """
+    if nx is None:  # find backend
+        lst_not_empty = [a for a in lst if len(a) > 0 and not isinstance(a, list)]
+        if len(lst_not_empty) == 0:
+            type_as = np.zeros(0)
+            nx = get_backend(type_as)
+        else:
+            nx = get_backend(*lst_not_empty)
+            type_as = lst_not_empty[0]
     if len(lst) > 1:
-        return [np.array(a) if isinstance(a, list) else a for a in lst]
+        return [nx.from_numpy(np.array(a), type_as=type_as)
+                if isinstance(a, list) else a for a in lst]
     else:
-        return np.array(lst[0]) if isinstance(lst[0], list) else lst[0]
+        if isinstance(lst[0], list):
+            return nx.from_numpy(np.array(lst[0]), type_as=type_as)
+        else:
+            return lst[0]
 
 
 def proj_simplex(v, z=1):

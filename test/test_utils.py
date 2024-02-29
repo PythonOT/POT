@@ -322,6 +322,18 @@ def test_cost_normalization(nx):
         ot.utils.cost_normalization(C1, 'error')
 
 
+def test_list_to_array(nx):
+
+    lst = [np.array([1, 2, 3]), np.array([4, 5, 6])]
+
+    a1, a2 = ot.utils.list_to_array(*lst)
+
+    assert a1.shape == (3,)
+    assert a2.shape == (3,)
+
+    a, b, M = ot.utils.list_to_array([], [], [[1.0, 2.0], [3.0, 4.0]])
+
+
 def test_check_params():
 
     res1 = ot.utils.check_params(first='OK', second=20)
