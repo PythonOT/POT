@@ -74,7 +74,11 @@ def test_emd2_backends(nx):
 
     valb = ot.emd2(ab, ab, Mb)
 
+    # check with empty inputs
+    valb2 = ot.emd2([], [], Mb)
+
     np.allclose(val, nx.to_numpy(valb))
+    np.allclose(val, nx.to_numpy(valb2))
 
 
 def test_emd_emd2_types_devices(nx):

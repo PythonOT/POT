@@ -223,8 +223,12 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     ot.lp.emd2_1d : EMD for 1d distributions (returns cost instead of the
         transportation matrix)
     """
-    a, b, x_a, x_b = list_to_array(a, b, x_a, x_b)
+    x_a, x_b = list_to_array(x_a, x_b)
     nx = get_backend(x_a, x_b)
+    if a is not None:
+        a = list_to_array(a, nx=nx)
+    if b is not None:
+        b = list_to_array(b, nx=nx)
 
     assert (x_a.ndim == 1 or x_a.ndim == 2 and x_a.shape[1] == 1), \
         "emd_1d should only be used with monodimensional data"
