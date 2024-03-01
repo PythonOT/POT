@@ -58,13 +58,19 @@ def laplacian(x):
 
 def list_to_array(*lst, nx=None):
     r""" Convert a list if in numpy format """
+    lst_not_empty = [a for a in lst if len(a) > 0 and not isinstance(a, list)]
     if nx is None:  # find backend
-        lst_not_empty = [a for a in lst if len(a) > 0 and not isinstance(a, list)]
+
         if len(lst_not_empty) == 0:
             type_as = np.zeros(0)
             nx = get_backend(type_as)
         else:
             nx = get_backend(*lst_not_empty)
+            type_as = lst_not_empty[0]
+    else:
+        if len(lst_not_empty) == 0:
+            type_as = None
+        else:
             type_as = lst_not_empty[0]
     if len(lst) > 1:
         return [nx.from_numpy(np.array(a), type_as=type_as)
