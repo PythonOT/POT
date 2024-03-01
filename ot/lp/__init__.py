@@ -302,17 +302,24 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1, c
     ot.optim.cg : General regularized OT
     """
 
-    # convert to numpy if list
     a, b, M = list_to_array(a, b, M)
+    nx = get_backend(M, a, b)
 
-    a0, b0, M0 = a, b, M
-    if len(a0) != 0:
-        type_as = a0
-    elif len(b0) != 0:
-        type_as = b0
+    if len(a) != 0:
+        type_as = a
+    elif len(b) != 0:
+        type_as = b
     else:
-        type_as = M0
-    nx = get_backend(M0, a0, b0)
+        type_as = M
+
+    # if empty array given then use uniform distributions
+    if len(a) == 0:
+        a = nx.ones((M.shape[0],), type_as=type_as) / M.shape[0]
+    if len(b) == 0:
+        b = nx.ones((M.shape[1],), type_as=type_as) / M.shape[1]
+
+    # store original tensors
+    a0, b0, M0 = a, b, M
 
     # convert to numpy
     M, a, b = nx.to_numpy(M, a, b)
@@ -474,15 +481,23 @@ def emd2(a, b, M, processes=1,
     """
 
     a, b, M = list_to_array(a, b, M)
+    nx = get_backend(M, a, b)
 
-    a0, b0, M0 = a, b, M
-    if len(a0) != 0:
-        type_as = a0
-    elif len(b0) != 0:
-        type_as = b0
+    if len(a) != 0:
+        type_as = a
+    elif len(b) != 0:
+        type_as = b
     else:
-        type_as = M0
-    nx = get_backend(M0, a0, b0)
+        type_as = M
+
+    # if empty array given then use uniform distributions
+    if len(a) == 0:
+        a = nx.ones((M.shape[0],), type_as=type_as) / M.shape[0]
+    if len(b) == 0:
+        b = nx.ones((M.shape[1],), type_as=type_as) / M.shape[1]
+
+    # store original tensors
+    a0, b0, M0 = a, b, M
 
     # convert to numpy
     M, a, b = nx.to_numpy(M, a, b)
@@ -491,11 +506,6 @@ def emd2(a, b, M, processes=1,
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64, order='C')
 
-    # if empty array given then use uniform distributions
-    if len(a) == 0:
-        a = np.ones((M.shape[0],), dtype=np.float64) / M.shape[0]
-    if len(b) == 0:
-        b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
 
     assert (a.shape[0] == M.shape[0] and b.shape[0] == M.shape[1]), \
         "Dimension mismatch, check dimensions of M with a and b"
