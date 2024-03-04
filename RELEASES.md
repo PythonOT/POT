@@ -5,6 +5,10 @@
 #### New features
 + `ot.gromov._gw.solve_gromov_linesearch` now has an argument to specifify if the matrices are symmetric in which case the computation can be done faster.
 
+#### New features
+- Add implicit sinkhorn gradients in `ot.solve` and `ot.solve_sample` (PR #605)
+- New quantized GW solvers `ot.gromov.quantized_gromov_wasserstein` and `ot.gromov.quantized_gromov_wasserstein_partitioned` (PR #603) 
+
 #### Closed issues
 - Fixed an issue with cost correction for mismatched labels in `ot.da.BaseTransport` fit methods. This fix addresses the original issue introduced PR #587 (PR #593)
 - Fix gpu compatibility of sr(F)GW solvers when `G0 is not None`(PR #596)
