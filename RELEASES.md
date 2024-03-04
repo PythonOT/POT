@@ -10,7 +10,7 @@
 - Fix gpu compatibility of sr(F)GW solvers when `G0 is not None`(PR #596)
 - Fix doc and example for lowrank sinkhorn (PR #601)
 - Fix issue with empty weights for `ot.emd2` (PR #606, Issue #534)
-- Fix a sign error regarding the gradient of `ot.gromov._gw.fused_gromov_wasserstein2` and `ot.gromov._gw.gromov_wasserstein2` for the kl loss
+- Fix a sign error regarding the gradient of `ot.gromov._gw.fused_gromov_wasserstein2` and `ot.gromov._gw.gromov_wasserstein2` for the kl loss (PR #610)
 
 ## 0.9.2
 *December 2023*
