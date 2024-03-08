@@ -1208,12 +1208,25 @@ class SinkhornTransport(BaseTransport):
             # check the necessary inputs parameters are here
             g = self.log_['log_v']
 
-            M = dist(Xs, self.xt_, metric=self.metric)
-            M = cost_normalization(M, self.norm, value=self.norm_cost_)
+            indices = nx.arange(Xs.shape[0])
+            batch_ind = [
+                indices[i:i + batch_size]
+                for i in range(0, len(indices), batch_size)]
 
-            K = nx.exp(-M / self.reg_e + g[None, :])
+            transp_Xs = []
+            for bi in batch_ind:
+                # get the nearest neighbor in the source domain
+                M = dist(Xs[bi], self.xt_, metric=self.metric)
 
-            transp_Xs = nx.dot(K, self.xt_) / nx.sum(K, axis=1)[:, None]
+                M = cost_normalization(M, self.norm, value=self.norm_cost_)
+
+                K = nx.exp(-M / self.reg_e + g[None, :])
+
+                transp_Xs_ = nx.dot(K, self.xt_) / nx.sum(K, axis=1)[:, None]
+
+                transp_Xs.append(transp_Xs_)
+
+            transp_Xs = nx.concatenate(transp_Xs, axis=0)
 
             return transp_Xs
 
@@ -1252,12 +1265,25 @@ class SinkhornTransport(BaseTransport):
 
             f = self.log_['log_u']
 
-            M = dist(Xt, self.xs_, metric=self.metric)
-            M = cost_normalization(M, self.norm, value=self.norm_cost_)
+            indices = nx.arange(Xt.shape[0])
+            batch_ind = [
+                indices[i:i + batch_size]
+                for i in range(0, len(indices), batch_size
+                               )]
 
-            K = nx.exp(-M / self.reg_e + f[None, :])
+            transp_Xt = []
+            for bi in batch_ind:
 
-            transp_Xt = nx.dot(K, self.xs_) / nx.sum(K, axis=1)[:, None]
+                M = dist(Xt[bi], self.xs_, metric=self.metric)
+                M = cost_normalization(M, self.norm, value=self.norm_cost_)
+
+                K = nx.exp(-M / self.reg_e + f[None, :])
+
+                transp_Xt_ = nx.dot(K, self.xs_) / nx.sum(K, axis=1)[:, None]
+
+                transp_Xt.append(transp_Xt_)
+
+            transp_Xt = nx.concatenate(transp_Xt, axis=0)
 
             return transp_Xt
 
