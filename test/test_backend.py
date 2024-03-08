@@ -264,6 +264,16 @@ def test_empty_backend():
         nx.detach(M)
     with pytest.raises(NotImplementedError):
         nx.matmul(M, M.T)
+    with pytest.raises(NotImplementedError):
+        nx.nan_to_num(M)
+    with pytest.raises(NotImplementedError):
+        nx.sign(M)
+    with pytest.raises(NotImplementedError):
+        nx.dtype_device(M)
+    with pytest.raises(NotImplementedError):
+        nx.assert_same_dtype_device(M, M)
+    with pytest.raises(NotImplementedError):
+        nx.eigh(M)
 
 
 def test_func_backends(nx):
@@ -308,6 +318,11 @@ def test_func_backends(nx):
 
         lst_b.append(nx.to_numpy(A))
         lst_name.append('set_gradients')
+
+        A = nx.detach(Mb)
+        A, B = nx.detach(Mb, Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append('detach')
 
         A = nx.zeros((10, 3))
         A = nx.zeros((10, 3), type_as=Mb)
@@ -650,10 +665,6 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append("transpose")
 
-        A = nx.detach(Mb)
-        lst_b.append(nx.to_numpy(A))
-        lst_name.append("detach")
-
         A, B = nx.detach(Mb, Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("detach A")
@@ -666,6 +677,11 @@ def test_func_backends(nx):
         A = nx.matmul(M1b, M2b)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("matmul broadcast")
+
+        vec = nx.from_numpy(np.array([1, np.nan, -1]))
+        vec = nx.nan_to_num(vec, nan=0)
+        lst_b.append(nx.to_numpy(vec))
+        lst_name.append("nan_to_num")
 
         assert not nx.array_equal(Mb, vb), "array_equal (shape)"
         assert nx.array_equal(Mb, Mb), "array_equal (elements) - expected true"

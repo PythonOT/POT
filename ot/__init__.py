@@ -5,7 +5,7 @@
     :py:mod:`ot.utils`, :py:mod:`ot.datasets`,
     :py:mod:`ot.gromov`, :py:mod:`ot.smooth`
     :py:mod:`ot.stochastic`, :py:mod:`ot.partial`, :py:mod:`ot.regpath`
-    , :py:mod:`ot.unbalanced`, :py:mod`ot.mapping`.
+    , :py:mod:`ot.unbalanced`, :py:mod:`ot.mapping` .
     The following sub-modules are not imported due to additional dependencies:
     - :any:`ot.dr` : depends on :code:`pymanopt` and :code:`autograd`.
     - :any:`ot.plot` : depends on :code:`matplotlib`
@@ -58,7 +58,7 @@ from .lowrank import lowrank_sinkhorn, lowrank_gromov_wasserstein
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.9.2dev"
+__version__ = "0.9.3dev"
 
 __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'datasets', 'bregman', 'lp', 'tic', 'toc', 'toq', 'gromov',
@@ -71,5 +71,10 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'factored_optimal_transport', 'solve', 'solve_gromov','solve_sample', 
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath', 'solvers',
            'binary_search_circle', 'wasserstein_circle',
+<<<<<<< HEAD
            'semidiscrete_wasserstein2_unif_circle', 'sliced_wasserstein_sphere_unif', 'lowrank_sinkhorn', 
            'lowrank_gromov_wasserstein']
+=======
+           'semidiscrete_wasserstein2_unif_circle', 'sliced_wasserstein_sphere_unif',
+           'lowrank_sinkhorn']
+>>>>>>> 63e44e5dfc51acf208ee088d65c980945c7da8b7

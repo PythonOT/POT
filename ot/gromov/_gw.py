@@ -171,7 +171,7 @@ def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric
             return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=np_, **kwargs)
     else:
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, cost_G, hC1, hC2, M=0., reg=1., nx=np_, **kwargs)
+            return solve_gromov_linesearch(G, deltaG, cost_G, hC1, hC2, M=0., reg=1., nx=np_, symmetric=symmetric, **kwargs)
 
     if not nx.is_floating_point(C10):
         warnings.warn(
@@ -315,7 +315,7 @@ def gromov_wasserstein2(C1, C2, p=None, q=None, loss_fun='square_loss', symmetri
         gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
     elif loss_fun == 'kl_loss':
         gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(T, nx.dot(nx.log(C2 + 1e-15), T.T))
-        gC2 = nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
+        gC2 = - nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
 
     gw = nx.set_gradients(gw, (p, q, C1, C2),
                           (log_gw['u'] - nx.mean(log_gw['u']),
@@ -479,7 +479,7 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
             return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=np_, **kwargs)
     else:
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, cost_G, hC1, hC2, M=(1 - alpha) * M, reg=alpha, nx=np_, **kwargs)
+            return solve_gromov_linesearch(G, deltaG, cost_G, hC1, hC2, M=(1 - alpha) * M, reg=alpha, nx=np_, symmetric=symmetric, **kwargs)
     if not nx.is_floating_point(M0):
         warnings.warn(
             "Input feature matrix consists of integer. The transport plan will be "
@@ -627,7 +627,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss',
         gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
     elif loss_fun == 'kl_loss':
         gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(T, nx.dot(nx.log(C2 + 1e-15), T.T))
-        gC2 = nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
+        gC2 = - nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
     if isinstance(alpha, int) or isinstance(alpha, float):
         fgw_dist = nx.set_gradients(fgw_dist, (p, q, C1, C2, M),
                                     (log_fgw['u'] - nx.mean(log_fgw['u']),
@@ -647,7 +647,7 @@ def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss',
 
 
 def solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M, reg,
-                            alpha_min=None, alpha_max=None, nx=None, **kwargs):
+                            alpha_min=None, alpha_max=None, nx=None, symmetric=False, **kwargs):
     """
     Solve the linesearch in the FW iterations for any inner loss that decomposes as in Proposition 1 in :ref:`[12] <references-solve-linesearch>`.
 
@@ -676,6 +676,10 @@ def solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M, reg,
         Maximum value for alpha
     nx : backend, optional
         If let to its default value None, a backend test will be conducted.
+    symmetric : bool, optional
+        Either structures are to be assumed symmetric or not. Default value is False.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
+
     Returns
     -------
     alpha : float
@@ -699,8 +703,6 @@ def solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M, reg,
 
     """
     if nx is None:
-        G, deltaG, C1, C2, M = list_to_array(G, deltaG, C1, C2, M)
-
         if isinstance(M, int) or isinstance(M, float):
             nx = get_backend(G, deltaG, C1, C2)
         else:
@@ -708,7 +710,10 @@ def solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M, reg,
 
     dot = nx.dot(nx.dot(C1, deltaG), C2.T)
     a = - reg * nx.sum(dot * deltaG)
-    b = nx.sum(M * deltaG) - reg * (nx.sum(dot * G) + nx.sum(nx.dot(nx.dot(C1, G), C2.T) * deltaG))
+    if symmetric:
+        b = nx.sum(M * deltaG) - 2 * reg * nx.sum(dot * G)
+    else:
+        b = nx.sum(M * deltaG) - reg * (nx.sum(dot * G) + nx.sum(nx.dot(nx.dot(C1, G), C2.T) * deltaG))
 
     alpha = solve_1d_linesearch_quad(a, b)
     if alpha_min is not None or alpha_max is not None:

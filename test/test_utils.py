@@ -322,6 +322,18 @@ def test_cost_normalization(nx):
         ot.utils.cost_normalization(C1, 'error')
 
 
+def test_list_to_array(nx):
+
+    lst = [np.array([1, 2, 3]), np.array([4, 5, 6])]
+
+    a1, a2 = ot.utils.list_to_array(*lst)
+
+    assert a1.shape == (3,)
+    assert a2.shape == (3,)
+
+    a, b, M = ot.utils.list_to_array([], [], [[1.0, 2.0], [3.0, 4.0]])
+
+
 def test_check_params():
 
     res1 = ot.utils.check_params(first='OK', second=20)
@@ -583,3 +595,28 @@ def test_lowrank_LazyTensor(nx):
     T = ot.utils.get_lowrank_lazytensor(X1, X2, diag_d, nx=nx)
 
     np.testing.assert_allclose(nx.to_numpy(T[:]), nx.to_numpy(T0))
+
+
+def test_labels_to_mask_helper(nx):
+    y = np.array([1, 0, 2, 2, 1])
+    out = np.array([
+        [0, 1, 0],
+        [1, 0, 0],
+        [0, 0, 1],
+        [0, 0, 1],
+        [0, 1, 0],
+    ])
+    y = nx.from_numpy(y)
+    masks = ot.utils.labels_to_masks(y)
+    np.testing.assert_array_equal(out, masks)
+
+
+def test_label_normalization(nx):
+    y = nx.from_numpy(np.arange(5) + 1)
+    out = np.arange(5)
+    # labels are shifted
+    y_normalized = ot.utils.label_normalization(y)
+    np.testing.assert_array_equal(out, y_normalized)
+    # labels are shifted but the shift if expected
+    y_normalized_start = ot.utils.label_normalization(y, start=1)
+    np.testing.assert_array_equal(y, y_normalized_start)

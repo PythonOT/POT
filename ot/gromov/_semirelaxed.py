@@ -114,7 +114,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symme
     else:
         q = nx.sum(G0, 0)
         # Check first marginal of G0
-        np.testing.assert_allclose(nx.sum(G0, 1), p, atol=1e-08)
+        assert nx.allclose(nx.sum(G0, 1), p, atol=1e-08)
 
     constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun, nx)
 
@@ -250,7 +250,7 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p=None, loss_fun='square_loss', symm
 
     elif loss_fun == 'kl_loss':
         gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(T, nx.dot(nx.log(C2 + 1e-15), T.T))
-        gC2 = nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
+        gC2 = - nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
 
     srgw = nx.set_gradients(srgw, (C1, C2), (gC1, gC2))
 
@@ -363,8 +363,8 @@ def semirelaxed_fused_gromov_wasserstein(
         G0 = nx.outer(p, q)
     else:
         q = nx.sum(G0, 0)
-        # Check marginals of G0
-        np.testing.assert_allclose(nx.sum(G0, 1), p, atol=1e-08)
+        # Check first marginal of G0
+        assert nx.allclose(nx.sum(G0, 1), p, atol=1e-08)
 
     constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun, nx)
 
@@ -509,7 +509,7 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p=None, loss_fun='square_lo
 
     elif loss_fun == 'kl_loss':
         gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(T, nx.dot(nx.log(C2 + 1e-15), T.T))
-        gC2 = nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
+        gC2 = - nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
 
     if isinstance(alpha, int) or isinstance(alpha, float):
         srfgw_dist = nx.set_gradients(srfgw_dist, (C1, C2, M),
@@ -583,8 +583,6 @@ def solve_semirelaxed_gromov_linesearch(G, deltaG, cost_G, C1, C2, ones_p,
             Gromov-Wasserstein". NeurIPS 2023 Workshop OTML.
     """
     if nx is None:
-        G, deltaG, C1, C2, M = list_to_array(G, deltaG, C1, C2, M)
-
         if isinstance(M, int) or isinstance(M, float):
             nx = get_backend(G, deltaG, C1, C2)
         else:
@@ -703,7 +701,7 @@ def entropic_semirelaxed_gromov_wasserstein(
     else:
         q = nx.sum(G0, 0)
         # Check first marginal of G0
-        np.testing.assert_allclose(nx.sum(G0, 1), p, atol=1e-08)
+        assert nx.allclose(nx.sum(G0, 1), p, atol=1e-08)
 
     constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun, nx)
 
@@ -951,7 +949,7 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
     else:
         q = nx.sum(G0, 0)
         # Check first marginal of G0
-        np.testing.assert_allclose(nx.sum(G0, 1), p, atol=1e-08)
+        assert nx.allclose(nx.sum(G0, 1), p, atol=1e-08)
 
     constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun, nx)
 

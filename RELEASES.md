@@ -1,6 +1,74 @@
 # Releases
 
-## 0.9.2dev
+## 0.9.3dev
+
+#### New features
++ `ot.gromov._gw.solve_gromov_linesearch` now has an argument to specifify if the matrices are symmetric in which case the computation can be done faster.
+
+#### Closed issues
+- Fixed an issue with cost correction for mismatched labels in `ot.da.BaseTransport` fit methods. This fix addresses the original issue introduced PR #587 (PR #593)
+- Fix gpu compatibility of sr(F)GW solvers when `G0 is not None`(PR #596)
+- Fix doc and example for lowrank sinkhorn (PR #601)
+- Fix issue with empty weights for `ot.emd2` (PR #606, Issue #534)
+- Fix a sign error regarding the gradient of `ot.gromov._gw.fused_gromov_wasserstein2` and `ot.gromov._gw.gromov_wasserstein2` for the kl loss (PR #610)
+- Fix same sign error for sr(F)GW conditional gradient solvers (PR #611)
+
+
+## 0.9.2
+*December 2023*
+
+This new release contains several new features and bug fixes. Among the new features
+we have a new solver for estimation of nearest Brenier potentials (SSNB) that can be used for OT mapping estimation (on small problems), new Bregman Alternated Projected Gradient solvers for GW and FGW, and new solvers for Bures-Wasserstein barycenters. We also provide a first solver for Low Rank Sinkhorn that will be ussed to provide low rak OT extensions in the next releases. Finally we have a new exact line-search for (F)GW solvers with KL loss that can be used to improve the convergence of the solvers.
+
+We also have a new `LazyTensor` class that can be used to model OT plans and low rank tensors in large scale OT. This class is used to return the plan for the new wrapper for `geomloss` Sinkhorn solver on empirical samples that can lead to x10/x100 speedups on CPU or GPU and have  a lazy implementation that allows solving very large problems of a few millions samples.
+
+We also have a new API for solving OT problems from empirical samples with `ot.solve_sample`  Finally we have a new API for Gromov-Wasserstein solvers with `ot.solve_gromov` function that centralizes most of the (F)GW methods with unified notation. Some example of how to use the new API below:
+
+```python
+# Generate random data
+xs, xt = np.random.randn(100, 2), np.random.randn(50, 2)
+
+# Solve OT problem with empirical samples
+sol = ot.solve_sample(xs, xt) # Exact OT betwen smaples with uniform weights
+sol = ot.solve_sample(xs, xt, wa, wb) # Exact OT with weights given by user 
+
+sol = ot.solve_sample(xs, xt, reg= 1, metric='euclidean') # sinkhorn with euclidean metric
+
+sol = ot.solve_sample(xs, xt, reg= 1, method='geomloss') # faster sinkhorn solver on CPU/GPU
+
+sol = ot.solve_sample(x,x2, method='factored', rank=10) # compute factored OT
+
+sol = ot.solve_sample(x,x2, method='lowrank', rank=10) # compute lowrank sinkhorn OT
+
+value_bw = ot.solve_sample(xs, xt, method='gaussian').value # Bures-Wasserstein distance
+
+# Solve GW problem 
+Cs, Ct = ot.dist(xs, xs), ot.dist(xt, xt) # compute cost matrices
+sol = ot.solve_gromov(Cs,Ct) # Exact GW between samples with uniform weights
+
+# Solve FGW problem
+M = ot.dist(xs, xt) # compute cost matrix
+
+# Exact FGW between samples with uniform weights
+sol = ot.solve_gromov(Cs, Ct, M, loss='KL', alpha=0.7) # FGW with KL data fitting  
+
+
+# recover solutions objects
+P = sol.plan # OT plan
+u, v = sol.potentials # dual variables
+value = sol.value # OT value
+
+# for GW and FGW
+value_linear = sol.value_linear # linear part of the loss
+value_quad = sol.value_quad # quadratic part of the loss 
+
+```
+
+Users are encouraged to use the new API (it is much simpler) but it might still be subjects to small changes before the release of POT 1.0 .
+
+
+We also fixed a number of issues, the most pressing being a problem of GPU memory allocation when pytorch is installed that will not happen now thanks to Lazy initialization of the backends. We now also have the possibility to deactivate some backends using environment which prevents POT from importing them and can lead to large import speedup. 
+
 
 #### New features
 + Added support for [Nearest Brenier Potentials (SSNB)](http://proceedings.mlr.press/v108/paty20a/paty20a.pdf) (PR #526) + minor fix (PR #535)
@@ -22,6 +90,7 @@
 + Add `fixed_structure` and `fixed_features` to entropic fgw barycenter solver (PR #578)
 + Add new BAPG solvers with KL projections for GW and FGW (PR #581)
 + Add Bures-Wasserstein barycenter in `ot.gaussian` and example (PR #582, PR #584)
++ Domain adaptation method `SinkhornL1l2Transport` now supports JAX backend (PR #587)
 + Added support for [Low-Rank Sinkhorn Factorization](https://arxiv.org/pdf/2103.04737.pdf) (PR #568)
 
 

@@ -105,8 +105,8 @@ def test_lowrank_sinkhorn_gamma_init(gamma_init):
     P = log["lazy_plan"][:]
 
     # check constraints for P
-    np.testing.assert_allclose(a, P.sum(1), atol=1e-04)
-    np.testing.assert_allclose(b, P.sum(0), atol=1e-04)
+    np.testing.assert_allclose(a, P.sum(1), atol=1e-05)
+    np.testing.assert_allclose(b, P.sum(0), atol=1e-05)
 
 
 @pytest.skip_backend('tf')

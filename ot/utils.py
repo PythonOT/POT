@@ -56,12 +56,30 @@ def laplacian(x):
     return L
 
 
-def list_to_array(*lst):
+def list_to_array(*lst, nx=None):
     r""" Convert a list if in numpy format """
-    if len(lst) > 1:
-        return [np.array(a) if isinstance(a, list) else a for a in lst]
+    lst_not_empty = [a for a in lst if len(a) > 0 and not isinstance(a, list)]
+    if nx is None:  # find backend
+
+        if len(lst_not_empty) == 0:
+            type_as = np.zeros(0)
+            nx = get_backend(type_as)
+        else:
+            nx = get_backend(*lst_not_empty)
+            type_as = lst_not_empty[0]
     else:
-        return np.array(lst[0]) if isinstance(lst[0], list) else lst[0]
+        if len(lst_not_empty) == 0:
+            type_as = None
+        else:
+            type_as = lst_not_empty[0]
+    if len(lst) > 1:
+        return [nx.from_numpy(np.array(a), type_as=type_as)
+                if isinstance(a, list) else a for a in lst]
+    else:
+        if isinstance(lst[0], list):
+            return nx.from_numpy(np.array(lst[0]), type_as=type_as)
+        else:
+            return lst[0]
 
 
 def proj_simplex(v, z=1):
@@ -390,7 +408,7 @@ def is_all_finite(*args):
     return all(not nx.any(~nx.isfinite(arg)) for arg in args)
 
 
-def label_normalization(y, start=0):
+def label_normalization(y, start=0, nx=None):
     r""" Transform labels to start at a given value
 
     Parameters
@@ -399,18 +417,45 @@ def label_normalization(y, start=0):
         The vector of labels to be normalized.
     start : int
         Desired value for the smallest label in :math:`\mathbf{y}` (default=0)
+    nx : Backend, optional
+        Backend to perform computations on. If omitted, the backend defaults to that of `y`.
 
     Returns
     -------
     y : array-like, shape (`n1`, )
         The input vector of labels normalized according to given start value.
     """
-    nx = get_backend(y)
+    if nx is None:
+        nx = get_backend(y)
+    diff = nx.min(y) - start
+    return y if diff == 0 else (y - diff)
 
-    diff = nx.min(nx.unique(y)) - start
-    if diff != 0:
-        y -= diff
-    return y
+
+def labels_to_masks(y, type_as=None, nx=None):
+    r"""Transforms (n_samples,) vector of labels into a (n_samples, n_labels) matrix of masks.
+
+    Parameters
+    ----------
+    y : array-like, shape (n_samples, )
+        The vector of labels.
+    type_as : array_like
+        Array of the same type of the expected output.
+    nx : Backend, optional
+        Backend to perform computations on. If omitted, the backend defaults to that of `y`.
+
+    Returns
+    -------
+    masks : array-like, shape (n_samples, n_labels)
+        The (n_samples, n_labels) matrix of label masks.
+    """
+    if nx is None:
+        nx = get_backend(y)
+    if type_as is None:
+        type_as = y
+    labels_u, labels_idx = nx.unique(y, return_inverse=True)
+    n_labels = labels_u.shape[0]
+    masks = nx.eye(n_labels, type_as=type_as)[labels_idx]
+    return masks
 
 
 def parmap(f, X, nprocs="default"):
@@ -755,10 +800,8 @@ class BaseEstimator(object):
         nx = get_backend(
             *[input_ for input_ in arrays if input_ is not None]
         )
-        if nx.__name__ in ("jax", "tf"):
-            raise TypeError(
-                """JAX or TF arrays have been received but domain
-                adaptation does not support those backend.""")
+        if nx.__name__ in ("tf",):
+            raise TypeError("Domain adaptation does not support TF backend.")
         self.nx = nx
         return nx
 

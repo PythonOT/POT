@@ -319,17 +319,18 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, re
     The function solves the following optimization problem:
 
     .. math::
-        \mathop{\inf_{(Q,R,g) \in \mathcal{C(a,b,r)}}} \langle C, Q\mathrm{diag}(1/g)R^T \rangle -
-            \mathrm{reg} \cdot H((Q,R,g))
+        \mathop{\inf_{(\mathbf{Q},\mathbf{R},\mathbf{g}) \in \mathcal{C}(\mathbf{a},\mathbf{b},r)}} \langle \mathbf{C}, \mathbf{Q}\mathrm{diag}(1/\mathbf{g})\mathbf{R}^\top \rangle -
+            \mathrm{reg} \cdot H((\mathbf{Q}, \mathbf{R}, \mathbf{g}))
 
     where :
-    - :math:`C` is the (`dim_a`, `dim_b`) metric cost matrix
-    - :math:`H((Q,R,g))` is the values of the three respective entropies evaluated for each term.
-    - :math: `Q` and `R` are the low-rank matrix decomposition of the OT plan
-    - :math: `g` is the weight vector for the low-rank decomposition of the OT plan
+
+    - :math:`\mathbf{C}` is the (`dim_a`, `dim_b`) metric cost matrix
+    - :math:`H((\mathbf{Q}, \mathbf{R}, \mathbf{g}))` is the values of the three respective entropies evaluated for each term.
+    - :math:`\mathbf{Q}` and :math:`\mathbf{R}` are the low-rank matrix decomposition of the OT plan
+    - :math:`\mathbf{g}` is the weight vector for the low-rank decomposition of the OT plan
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (histograms, both sum to 1)
-    - :math: `r` is the rank of the OT plan
-    - :math: `\mathcal{C(a,b,r)}` are the low-rank couplings of the OT problem
+    - :math:`r` is the rank of the OT plan
+    - :math:`\mathcal{C}(\mathbf{a}, \mathbf{b}, r)` are the low-rank couplings of the OT problem
 
 
     Parameters
