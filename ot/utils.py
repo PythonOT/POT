@@ -360,7 +360,7 @@ def dist0(n, method='lin_square'):
     return res
 
 
-def cost_normalization(C, norm=None):
+def cost_normalization(C, norm=None, return_value=False, value=None):
     r""" Apply normalization to the loss matrix
 
     Parameters
@@ -382,9 +382,13 @@ def cost_normalization(C, norm=None):
     if norm is None:
         pass
     elif norm == "median":
-        C /= float(nx.median(C))
+        if value is None:
+            value = nx.median(C)
+        C /= value
     elif norm == "max":
-        C /= float(nx.max(C))
+        if value is None:
+            value = nx.max(C)
+        C /= float(value)
     elif norm == "log":
         C = nx.log(1 + C)
     elif norm == "loglog":
@@ -393,7 +397,10 @@ def cost_normalization(C, norm=None):
         raise ValueError('Norm %s is not a valid option.\n'
                          'Valid options are:\n'
                          'median, max, log, loglog' % norm)
-    return C
+    if return_value:
+        return C, value
+    else:
+        return C
 
 
 def dots(*args):

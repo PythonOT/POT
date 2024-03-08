@@ -346,6 +346,26 @@ def test_sinkhorn_transport_class(nx):
     otda.fit(Xs=Xs, ys=ys, Xt=Xt)
     assert len(otda.log_.keys()) != 0
 
+    # test diffeernt transform and inverse transform
+    otda = ot.da.SinkhornTransport(out_of_sample_map='ferradans')
+    transp_Xs = otda.fit_transform(Xs=Xs, Xt=Xt)
+    assert_equal(transp_Xs.shape, Xs.shape)
+    transp_Xt = otda.inverse_transform(Xt=Xt)
+    assert_equal(transp_Xt.shape, Xt.shape)
+
+    # test diffeernt transform
+    otda = ot.da.SinkhornTransport(out_of_sample_map='continuous', method='sinkhorn')
+    transp_Xs2 = otda.fit_transform(Xs=Xs, Xt=Xt)
+    assert_equal(transp_Xs2.shape, Xs.shape)
+    transp_Xt2 = otda.inverse_transform(Xt=Xt)
+    assert_equal(transp_Xt2.shape, Xt.shape)
+
+    np.testing.assert_almost_equal(nx.to_numpy(transp_Xs), nx.to_numpy(transp_Xs2), decimal=5)
+    np.testing.assert_almost_equal(nx.to_numpy(transp_Xt), nx.to_numpy(transp_Xt2), decimal=5)
+
+    with pytest.raises(ValueError):
+        otda = ot.da.SinkhornTransport(out_of_sample_map='unknown')
+
 
 @pytest.skip_backend("jax")
 @pytest.skip_backend("tf")
