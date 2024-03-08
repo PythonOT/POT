@@ -524,20 +524,20 @@ def _flat_product_operator(X, nx=None):
 
     n = X.shape[0]
     x1 = X[0, :][:, None]
-    X_flat = nx.dot(x1, x1.T).flatten()[:,None]
-    
-    for i in range(1,n):
+    X_flat = nx.dot(x1, x1.T).flatten()[:, None]
+
+    for i in range(1, n):
         x = X[i, :][:, None]
-        x_out = nx.dot(x, x.T).flatten()[:,None]
-        X_flat= nx.concatenate((X_flat, x_out), axis=1)
-    
+        x_out = nx.dot(x, x.T).flatten()[:, None]
+        X_flat = nx.concatenate((X_flat, x_out), axis=1)
+
     X_flat = X_flat.T
 
     return X_flat
 
 
-def lowrank_gromov_wasserstein(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, gamma_init="rescale", 
-                               rescale_cost=True, stopThr=1e-4, numItermax=1000, stopThr_dykstra=1e-3, 
+def lowrank_gromov_wasserstein(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, gamma_init="rescale",
+                               rescale_cost=True, stopThr=1e-4, numItermax=1000, stopThr_dykstra=1e-3,
                                numItermax_dykstra=10000, seed_init=49, warn=True, warn_dykstra=False, log=False):
 
     r"""
@@ -551,6 +551,7 @@ def lowrank_gromov_wasserstein(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha
             \epsilon \cdot H((Q,R,g))
 
     where :
+
     - :math: `A` is the (`dim_a`, `dim_a`) square pairwise cost matrix of the source domain
     - :math: `B` is the (`dim_a`, `dim_a`) square pairwise cost matrix of the target domain
     - :math: `\mathcal{Q}_{A,B}` is quadratic objective function of the Gromov Wasserstein plan
@@ -596,7 +597,7 @@ def lowrank_gromov_wasserstein(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha
         Stop threshold on error (>0) in Dykstra
     warn : bool, optional
         if True, raises a warning if the low rank GW algorithm doesn't convergence.
-    warn_dykstra: bool, optional 
+    warn_dykstra: bool, optional
         if True, raises a warning if the Dykstra algorithm doesn't convergence.
     log : bool, optional
         record log if True
@@ -666,7 +667,7 @@ def lowrank_gromov_wasserstein(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha
 
     # initial value of error
     err = 1
-    
+
     for ii in range(numItermax):
         Q_prev = Q
         R_prev = R
