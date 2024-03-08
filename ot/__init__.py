@@ -71,10 +71,5 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'factored_optimal_transport', 'solve', 'solve_gromov','solve_sample', 
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath', 'solvers',
            'binary_search_circle', 'wasserstein_circle',
-<<<<<<< HEAD
            'semidiscrete_wasserstein2_unif_circle', 'sliced_wasserstein_sphere_unif', 'lowrank_sinkhorn', 
            'lowrank_gromov_wasserstein']
-=======
-           'semidiscrete_wasserstein2_unif_circle', 'sliced_wasserstein_sphere_unif',
-           'lowrank_sinkhorn']
->>>>>>> 63e44e5dfc51acf208ee088d65c980945c7da8b7
