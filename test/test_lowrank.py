@@ -125,8 +125,8 @@ def test_lowrank_sinkhorn_backends(nx):
     lazy_plan = log["lazy_plan"]
     P = lazy_plan[:]
 
-    np.testing.assert_allclose(ab, P.sum(1), atol=1e-04)
-    np.testing.assert_allclose(bb, P.sum(0), atol=1e-04)
+    np.testing.assert_allclose(ab, P.sum(1), atol=1e-05)
+    np.testing.assert_allclose(bb, P.sum(0), atol=1e-05)
 
 
 def test__flat_product_operator():
