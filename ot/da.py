@@ -1058,12 +1058,13 @@ class SinkhornTransport(BaseTransport):
         can occur with large metric values.
     distribution_estimation : callable, optional (defaults to the uniform)
         The kind of distribution estimation to employ
-    out_of_sample_map : string, optional (default="pooladian")
+    out_of_sample_map : string, optional (default="continuous")
         The kind of out of sample mapping to apply to transport samples
         from a domain into another one. Currently the only possible option is
         "ferradans" which uses the nearest neighbor method proposed in :ref:`[6]
-        <references-sinkhorntransport>` while "pooladian" use the out of sample
+        <references-sinkhorntransport>` while "continuous" use the out of sample
         method from :ref:`[66]
+        <references-sinkhorntransport>` and :ref:`[19]
         <references-sinkhorntransport>`.
     limit_max: float, optional (default=np.infty)
         Controls the semi supervised mode. Transport between labeled source
@@ -1093,6 +1094,10 @@ class SinkhornTransport(BaseTransport):
             Regularized discrete optimal transport. SIAM Journal on Imaging
             Sciences, 7(3), 1853-1882.
 
+    .. [19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet, A.
+             & Blondel, M. Large-scale Optimal Transport and Mapping Estimation.
+             International Conference on Learning Representation (2018)
+
     .. [66] Pooladian, Aram-Alexandre, and Jonathan Niles-Weed. "Entropic
             estimation of optimal transport maps." arXiv preprint
             arXiv:2109.12004 (2021).
@@ -1103,9 +1108,9 @@ class SinkhornTransport(BaseTransport):
                  tol=10e-9, verbose=False, log=False,
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='pooladian', limit_max=np.infty):
+                 out_of_sample_map='continuous', limit_max=np.infty):
 
-        if out_of_sample_map not in ['ferradans', 'pooladian']:
+        if out_of_sample_map not in ['ferradans', 'continuous']:
             raise ValueError('Unknown out_of_sample_map method')
 
         self.reg_e = reg_e
@@ -1147,11 +1152,11 @@ class SinkhornTransport(BaseTransport):
 
         super(SinkhornTransport, self).fit(Xs, ys, Xt, yt)
 
-        if self.out_of_sample_map == 'pooladian':
+        if self.out_of_sample_map == 'continuous':
             self.log = True
             if not self.method == 'sinkhorn_log':
                 self.method = 'sinkhorn_log'
-                warnings.warn("The method has been set to 'sinkhorn_log' as it is the only method available for out_of_sample_map='pooladian'")
+                warnings.warn("The method has been set to 'sinkhorn_log' as it is the only method available for out_of_sample_map='continuous'")
 
         # coupling estimation
         returned_ = sinkhorn(
@@ -1198,7 +1203,7 @@ class SinkhornTransport(BaseTransport):
         if self.out_of_sample_map == 'ferradans':
             return super(SinkhornTransport, self).transform(Xs, ys, Xt, yt, batch_size)
 
-        else:  # self.out_of_sample_map == 'pooladian':
+        else:  # self.out_of_sample_map == 'continuous':
 
             # check the necessary inputs parameters are here
             g = self.log_['log_v']
@@ -1243,7 +1248,7 @@ class SinkhornTransport(BaseTransport):
         if self.out_of_sample_map == 'ferradans':
             return super(SinkhornTransport, self).inverse_transform(Xs, ys, Xt, yt, batch_size)
 
-        else:  # self.out_of_sample_map == 'pooladian':
+        else:  # self.out_of_sample_map == 'continuous':
 
             f = self.log_['log_u']
 

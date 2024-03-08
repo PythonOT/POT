@@ -354,11 +354,14 @@ def test_sinkhorn_transport_class(nx):
     assert_equal(transp_Xt.shape, Xt.shape)
 
     # test diffeernt transform
-    otda = ot.da.SinkhornTransport(out_of_sample_map='pooladian')
-    transp_Xs = otda.fit_transform(Xs=Xs, Xt=Xt)
-    assert_equal(transp_Xs.shape, Xs.shape)
-    transp_Xt = otda.inverse_transform(Xt=Xt)
-    assert_equal(transp_Xt.shape, Xt.shape)
+    otda = ot.da.SinkhornTransport(out_of_sample_map='continuous')
+    transp_Xs2 = otda.fit_transform(Xs=Xs, Xt=Xt)
+    assert_equal(transp_Xs2.shape, Xs.shape)
+    transp_Xt2 = otda.inverse_transform(Xt=Xt)
+    assert_equal(transp_Xt2.shape, Xt.shape)
+
+    np.testing.assert_almost_equal(nx.to_numpy(transp_Xs), nx.to_numpy(transp_Xs2), decimal=5)
+    np.testing.assert_almost_equal(nx.to_numpy(transp_Xt), nx.to_numpy(transp_Xt2), decimal=5)
 
     with pytest.raises(ValueError):
         otda = ot.da.SinkhornTransport(out_of_sample_map='unknown')
