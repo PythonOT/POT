@@ -354,7 +354,7 @@ def test_sinkhorn_transport_class(nx):
     assert_equal(transp_Xt.shape, Xt.shape)
 
     # test diffeernt transform
-    otda = ot.da.SinkhornTransport(out_of_sample_map='continuous')
+    otda = ot.da.SinkhornTransport(out_of_sample_map='continuous', method='sinkhorn')
     transp_Xs2 = otda.fit_transform(Xs=Xs, Xt=Xt)
     assert_equal(transp_Xs2.shape, Xs.shape)
     transp_Xt2 = otda.inverse_transform(Xt=Xt)
