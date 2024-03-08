@@ -493,7 +493,7 @@ class BaseTransport(BaseEstimator):
 
             # pairwise distance
             self.cost_ = dist(Xs, Xt, metric=self.metric)
-            self.cost_ = cost_normalization(self.cost_, self.norm)
+            self.cost_, self.norm_cost_ = cost_normalization(self.cost_, self.norm, return_value=True)
 
             if (ys is not None) and (yt is not None):
 
@@ -1209,7 +1209,7 @@ class SinkhornTransport(BaseTransport):
             g = self.log_['log_v']
 
             M = dist(Xs, self.xt_, metric=self.metric)
-            M = cost_normalization(M, self.norm)
+            M = cost_normalization(M, self.norm, value=self.norm_cost_)
 
             K = nx.exp(-M / self.reg_e + g[None, :])
 
@@ -1253,7 +1253,7 @@ class SinkhornTransport(BaseTransport):
             f = self.log_['log_u']
 
             M = dist(Xt, self.xs_, metric=self.metric)
-            M = cost_normalization(M, self.norm)
+            M = cost_normalization(M, self.norm, value=self.norm_cost_)
 
             K = nx.exp(-M / self.reg_e + f[None, :])
 
