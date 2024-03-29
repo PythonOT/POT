@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from openmp_helpers import check_openmp_support
+
 import os
 import re
 import subprocess
@@ -13,6 +13,7 @@ import numpy
 from Cython.Build import cythonize
 
 sys.path.append(os.path.join("ot", "helpers"))
+from openmp_helpers import check_openmp_support
 
 # dirty but working
 __version__ = re.search(
