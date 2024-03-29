@@ -13,7 +13,7 @@ from ot.backend import get_backend_list, jax, tf
 
 if jax:
     os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
-    from jax.config import config
+    from jax import config
     config.update("jax_enable_x64", True)
 
 if tf:

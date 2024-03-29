@@ -17,8 +17,8 @@ Layers and functions for optimal transport in Graph Neural Networks.
 # All submodules and packages
 
 
-from ._utils import (FGW_distance_to_templates,wasserstein_distance_to_templates)
+from ._utils import (FGW_distance_to_templates, wasserstein_distance_to_templates)
 
-from ._layers import (TFGWPooling,TWPooling)
+from ._layers import (TFGWPooling, TWPooling)
 
-__all__ = [ 'FGW_distance_to_templates', 'wasserstein_distance_to_templates','TFGWPooling','TWPooling']
+__all__ = ['FGW_distance_to_templates', 'wasserstein_distance_to_templates', 'TFGWPooling', 'TWPooling']

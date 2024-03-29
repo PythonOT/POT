@@ -56,12 +56,30 @@ def laplacian(x):
     return L
 
 
-def list_to_array(*lst):
+def list_to_array(*lst, nx=None):
     r""" Convert a list if in numpy format """
-    if len(lst) > 1:
-        return [np.array(a) if isinstance(a, list) else a for a in lst]
+    lst_not_empty = [a for a in lst if len(a) > 0 and not isinstance(a, list)]
+    if nx is None:  # find backend
+
+        if len(lst_not_empty) == 0:
+            type_as = np.zeros(0)
+            nx = get_backend(type_as)
+        else:
+            nx = get_backend(*lst_not_empty)
+            type_as = lst_not_empty[0]
     else:
-        return np.array(lst[0]) if isinstance(lst[0], list) else lst[0]
+        if len(lst_not_empty) == 0:
+            type_as = None
+        else:
+            type_as = lst_not_empty[0]
+    if len(lst) > 1:
+        return [nx.from_numpy(np.array(a), type_as=type_as)
+                if isinstance(a, list) else a for a in lst]
+    else:
+        if isinstance(lst[0], list):
+            return nx.from_numpy(np.array(lst[0]), type_as=type_as)
+        else:
+            return lst[0]
 
 
 def proj_simplex(v, z=1):
@@ -342,7 +360,7 @@ def dist0(n, method='lin_square'):
     return res
 
 
-def cost_normalization(C, norm=None):
+def cost_normalization(C, norm=None, return_value=False, value=None):
     r""" Apply normalization to the loss matrix
 
     Parameters
@@ -364,9 +382,13 @@ def cost_normalization(C, norm=None):
     if norm is None:
         pass
     elif norm == "median":
-        C /= float(nx.median(C))
+        if value is None:
+            value = nx.median(C)
+        C /= value
     elif norm == "max":
-        C /= float(nx.max(C))
+        if value is None:
+            value = nx.max(C)
+        C /= float(value)
     elif norm == "log":
         C = nx.log(1 + C)
     elif norm == "loglog":
@@ -375,7 +397,10 @@ def cost_normalization(C, norm=None):
         raise ValueError('Norm %s is not a valid option.\n'
                          'Valid options are:\n'
                          'median, max, log, loglog' % norm)
-    return C
+    if return_value:
+        return C, value
+    else:
+        return C
 
 
 def dots(*args):

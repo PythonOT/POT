@@ -6,8 +6,8 @@ pymanopt
 cvxopt
 scikit-learn
 torch
-jax
-jaxlib
+jax<=0.4.24
+jaxlib<=0.4.24
 tensorflow
 pytest
 torch_geometric
