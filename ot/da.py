@@ -1055,7 +1055,8 @@ class SinkhornTransport(BaseTransport):
         The ground metric for the Wasserstein problem
     norm : string, optional (default=None)
         If given, normalize the ground metric to avoid numerical errors that
-        can occur with large metric values.
+        can occur with large metric values. Accepted values are  'median',
+        'max', 'log' and 'loglog'.
     distribution_estimation : callable, optional (defaults to the uniform)
         The kind of distribution estimation to employ
     out_of_sample_map : string, optional (default="continuous")
