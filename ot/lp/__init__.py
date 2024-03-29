@@ -21,8 +21,8 @@ from .dmmot import dmmot_monge_1dgrid_loss, dmmot_monge_1dgrid_optimize
 
 # import compiled emd
 from .emd_wrap import emd_c, check_result, emd_1d_sorted
-from .solver_1d import (emd_1d, emd2_1d, wasserstein_1d, 
-                        binary_search_circle, wasserstein_circle, 
+from .solver_1d import (emd_1d, emd2_1d, wasserstein_1d,
+                        binary_search_circle, wasserstein_circle,
                         semidiscrete_wasserstein2_unif_circle)
 
 from ..utils import dist, list_to_array
@@ -262,7 +262,7 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1, c
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
-    
+
 
     Returns
     -------
@@ -341,8 +341,8 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1, c
     # ensure that same mass
     if check_marginals:
         np.testing.assert_almost_equal(a.sum(0),
-                                    b.sum(0), err_msg='a and b vector must have the same sum',
-                                    decimal=6)
+                                       b.sum(0), err_msg='a and b vector must have the same sum',
+                                       decimal=6)
     b = b * a.sum() / b.sum()
 
     asel = a != 0
@@ -440,8 +440,8 @@ def emd2(a, b, M, processes=1,
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
-        
-    
+
+
     Returns
     -------
     W: float, array-like
@@ -506,16 +506,15 @@ def emd2(a, b, M, processes=1,
     b = np.asarray(b, dtype=np.float64)
     M = np.asarray(M, dtype=np.float64, order='C')
 
-
     assert (a.shape[0] == M.shape[0] and b.shape[0] == M.shape[1]), \
         "Dimension mismatch, check dimensions of M with a and b"
 
     # ensure that same mass
     if check_marginals:
         np.testing.assert_almost_equal(a.sum(0),
-                                    b.sum(0,keepdims=True), err_msg='a and b vector must have the same sum',
-                                    decimal=6)
-    b = b * a.sum(0) / b.sum(0,keepdims=True)
+                                       b.sum(0, keepdims=True), err_msg='a and b vector must have the same sum',
+                                       decimal=6)
+    b = b * a.sum(0) / b.sum(0, keepdims=True)
 
     asel = a != 0
 
