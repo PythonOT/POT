@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 import ot
+from ot.backend import torch
 
 
 def test_semirelaxed_gromov(nx):

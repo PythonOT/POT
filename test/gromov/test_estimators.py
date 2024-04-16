@@ -1,8 +1,7 @@
 """ Tests for gromov._estimators.py """
 
-# Author: Erwan Vautier <erwan.vautier@gmail.com>
-#         Nicolas Courty <ncourty@irisa.fr>
-#         Titouan Vayer <titouan.vayer@irisa.fr>
+# Author: Rémi Flamary <remi.flamary@unice.fr>
+#         Tanguy Kerdoncuff <tanguy.kerdoncuff@laposte.net>
 #         Cédric Vincent-Cuaz <cedvincentcuaz@gmail.com>
 #
 # License: MIT License

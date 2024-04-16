@@ -1,7 +1,6 @@
 """ Tests for gromov._bregman.py """
 
-# Author: Erwan Vautier <erwan.vautier@gmail.com>
-#         Nicolas Courty <ncourty@irisa.fr>
+# Author: Rémi Flamary <remi.flamary@unice.fr>
 #         Titouan Vayer <titouan.vayer@irisa.fr>
 #         Cédric Vincent-Cuaz <cedvincentcuaz@gmail.com>
 #
