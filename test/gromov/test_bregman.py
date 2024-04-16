@@ -1,4 +1,4 @@
-"""Tests for module gromov  """
+""" Tests for gromov._bregman.py """
 
 # Author: Erwan Vautier <erwan.vautier@gmail.com>
 #         Nicolas Courty <ncourty@irisa.fr>

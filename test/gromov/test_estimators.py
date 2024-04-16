@@ -1,4 +1,4 @@
-"""Tests for module gromov  """
+""" Tests for gromov._estimators.py """
 
 # Author: Erwan Vautier <erwan.vautier@gmail.com>
 #         Nicolas Courty <ncourty@irisa.fr>
@@ -9,11 +9,9 @@
 
 import numpy as np
 import pytest
-import warnings
 
 import ot
 from ot.backend import NumpyBackend
-from ot.backend import torch, tf
 
 
 def test_pointwise_gromov(nx):

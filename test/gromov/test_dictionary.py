@@ -1,19 +1,12 @@
-"""Tests for module gromov  """
+""" Tests for gromov._dictionary.py """
 
-# Author: Erwan Vautier <erwan.vautier@gmail.com>
-#         Nicolas Courty <ncourty@irisa.fr>
-#         Titouan Vayer <titouan.vayer@irisa.fr>
-#         Cédric Vincent-Cuaz <cedvincentcuaz@gmail.com>
+# Author: Cédric Vincent-Cuaz <cedvincentcuaz@gmail.com>
 #
 # License: MIT License
 
 import numpy as np
-import pytest
-import warnings
 
 import ot
-from ot.backend import NumpyBackend
-from ot.backend import torch, tf
 
 
 def test_gromov_wasserstein_linear_unmixing(nx):
