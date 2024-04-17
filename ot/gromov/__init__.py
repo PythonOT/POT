@@ -47,6 +47,8 @@ from ._dictionary import (gromov_wasserstein_dictionary_learning,
                           fused_gromov_wasserstein_dictionary_learning,
                           fused_gromov_wasserstein_linear_unmixing)
 
+from ._lowrank import (_flat_product_operator, lowrank_gromov_wasserstein)
+
 
 __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad', 'update_square_loss',
            'update_kl_loss', 'update_feature_matrix', 'init_matrix_semirelaxed',
