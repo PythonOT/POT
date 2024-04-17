@@ -12,7 +12,7 @@
 - Fix issue with empty weights for `ot.emd2` (PR #606, Issue #534)
 - Fix a sign error regarding the gradient of `ot.gromov._gw.fused_gromov_wasserstein2` and `ot.gromov._gw.gromov_wasserstein2` for the kl loss (PR #610)
 - Fix same sign error for sr(F)GW conditional gradient solvers (PR #611)
-
+- Split `test/test_gromov.py` into `test/gromov/` (PR #619)
 
 ## 0.9.2
 *December 2023*
