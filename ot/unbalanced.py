@@ -17,6 +17,7 @@ from scipy.optimize import minimize, Bounds
 
 from .backend import get_backend
 from .utils import list_to_array, get_parameter_pair
+import warnings
 
 
 def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
@@ -1426,21 +1427,12 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
     def grad_entropy(G):
         return np.log(G + 1e-16)
 
-    def reg_tv(G):
-        return np.sum(np.abs(G))
-
-    def grad_tv(G):
-        return np.sign(G)
-
     if reg_div == 'kl':
         reg_fun = reg_kl
         grad_reg_fun = grad_kl
     elif reg_div == 'entropy':
         reg_fun = reg_entropy
         grad_reg_fun = grad_entropy
-    elif reg_div == 'tv':
-        reg_fun = reg_tv
-        grad_reg_fun = grad_tv
     elif isinstance(reg_div, tuple):
         reg_fun = reg_div[0]
         grad_reg_fun = reg_div[1]
@@ -1543,6 +1535,8 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
         Can take three values: 'entropy' (negative entropy), or
         'kl' (Kullback-Leibler) or 'l2' (quadratic) or a tuple
         of two calable functions returning the reg term and its derivative.
+        Note that the callable functions should be able to handle numpy arrays
+        and not tesors from the backend
     regm_div: string, optional
         Divergence to quantify the difference between the marginals.
         Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic)
@@ -1597,6 +1591,18 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     a, b, M = nx.to_numpy(a, b, M)
     G0 = np.zeros(M.shape) if G0 is None else nx.to_numpy(G0)
     c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
+
+    # wrap the callable function to handle numpy arrays
+    if isinstance(reg_div, tuple):
+        f0, df0 = reg_div
+        try:
+            v = f0(G0)
+            g = df0(G0)
+        except BaseException:
+            warnings.warn("The callable functions should be able to handle numpy arrays, wrapper ar added to handle this which comes with overhead")
+            def f(x): return nx.to_numpy(f0(nx.from_numpy(x, type_as=M0)))
+            def df(x): return nx.to_numpy(df0(nx.from_numpy(x, type_as=M0)))
+            reg_div = (f, df)
 
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
     _func = _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div, regm_div)

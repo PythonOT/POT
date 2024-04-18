@@ -23,6 +23,7 @@ from .partial import partial_gromov_wasserstein2, entropic_partial_gromov_wasser
 from .gaussian import empirical_bures_wasserstein_distance
 from .factored import factored_optimal_transport
 from .lowrank import lowrank_sinkhorn
+from .optim import cg
 
 lst_method_lazy = ['1d', 'gaussian', 'lowrank', 'factored', 'geomloss', 'geomloss_auto', 'geomloss_tensorized', 'geomloss_online', 'geomloss_multiscale']
 
@@ -80,10 +81,10 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     verbose : bool, optional
         Print information in the solver, by default False
     grad : str, optional
-        Type of gradient computation, either or 'autodiff' or 'implicit'  used only for
+        Type of gradient computation, either or 'autodiff' or 'envelope'  used only for
         Sinkhorn solver. By default 'autodiff' provides gradients wrt all
         outputs (`plan, value, value_linear`) but with important memory cost.
-        'implicit' provides gradients only for `value` and and other outputs are
+        'envelope' provides gradients only for `value` and and other outputs are
         detached. This is useful for memory saving when only the value is needed.
 
     Returns
@@ -311,9 +312,22 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
         if unbalanced is None:  # Balanced regularized OT
 
-            if reg_type.lower() in ['entropy', 'kl']:
+            if isinstance(reg_type, tuple):  # general solver
 
-                if grad == 'implicit':  # if implicit then detach the input
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-9
+
+                plan, log = cg(a, b, M, reg=reg, f=reg_type[0], df=reg_type[1], numItermax=max_iter, stopThr=tol, log=True, verbose=verbose, G0=plan_init)
+
+                value_linear = nx.sum(M * plan)
+                value = log['loss'][-1]
+                potentials = (log['u'], log['v'])
+
+            elif reg_type.lower() in ['entropy', 'kl']:
+
+                if grad == 'envelope':  # if implicit then detach the input
                     M0, a0, b0 = M, a, b
                     M, a, b = nx.detach(M, a, b)
 
@@ -336,7 +350,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
                 potentials = (log['log_u'], log['log_v'])
 
-                if grad == 'implicit':  # set the gradient at convergence
+                if grad == 'envelope':  # set the gradient at convergence
 
                     value = nx.set_gradients(value, (M0, a0, b0),
                                              (plan, reg * (potentials[0] - potentials[0].mean()), reg * (potentials[1] - potentials[1].mean())))

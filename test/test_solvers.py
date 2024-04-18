@@ -12,10 +12,11 @@ import sys
 
 import ot
 from ot.bregman import geomloss
-from ot.backend import torch
+from ot.backend import torch, NumpyBackend
+
 
 lst_reg = [None, 1]
-lst_reg_type = ['KL', 'entropy', 'L2']
+lst_reg_type = ['KL', 'entropy', 'L2', 'tuple']
 lst_unbalanced = [None, 0.9]
 lst_unbalanced_type = ['KL', 'L2', 'TV']
 
@@ -166,6 +167,12 @@ def test_solve_grid(nx, reg, reg_type, unbalanced, unbalanced_type):
 
     try:
 
+        if reg_type == 'tuple':
+            def f(G): return np.sum(G**2)
+            def df(G): return 2 * G
+
+            reg_type = (f, df)
+
         # solve unif weights
         sol0 = ot.solve(M, reg=reg, reg_type=reg_type, unbalanced=unbalanced, unbalanced_type=unbalanced_type)
 
@@ -176,9 +183,17 @@ def test_solve_grid(nx, reg, reg_type, unbalanced, unbalanced_type):
 
         # solve in backend
         ab, bb, Mb = nx.from_numpy(a, b, M)
-        solb = ot.solve(M, a, b, reg=reg, reg_type=reg_type, unbalanced=unbalanced, unbalanced_type=unbalanced_type)
+
+        if isinstance(reg_type, tuple):
+            def f(G): return nx.sum(G**2)
+            def df(G): return 2 * G
+
+            reg_type = (f, df)
+
+        solb = ot.solve(Mb, ab, bb, reg=reg, reg_type=reg_type, unbalanced=unbalanced, unbalanced_type=unbalanced_type)
 
         assert_allclose_sol(sol, solb)
+
     except NotImplementedError:
         pytest.skip("Not implemented")
 
