@@ -94,7 +94,7 @@ lst_solvers = [  # name, param for ot.solve function
     ('Exact OT', dict()),
     ('Entropic Reg. OT', dict(reg=0.005)),
     ('L2 Reg OT', dict(reg=1, reg_type='l2')),
-    ('Group Lasso Reg. OT', dict(reg=0.1, reg_type=reg_type_gl, unbalanced=15, unbalanced_type='l2', plan_init=np.outer(a, b))),
+    ('Group Lasso Reg. OT', dict(reg=0.1, reg_type=reg_type_gl)),
 
 
     # unbalanced OT KL
