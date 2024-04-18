@@ -110,7 +110,7 @@ def test_solve(nx):
 
 
 @pytest.mark.skipif(not torch, reason="torch no installed")
-def test_solve_implicit():
+def test_solve_envelope():
 
     n_samples_s = 10
     n_samples_t = 7
@@ -127,7 +127,7 @@ def test_solve_implicit():
     b = torch.tensor(b, requires_grad=True)
     M = torch.tensor(M, requires_grad=True)
 
-    sol0 = ot.solve(M, a, b, reg=10, grad='implicit')
+    sol0 = ot.solve(M, a, b, reg=10, grad='envelope')
     sol0.value.backward()
 
     gM0 = M.grad.clone()

@@ -143,13 +143,13 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         # or for original Sinkhorn paper formulation [2]
         res = ot.solve(M, a, b, reg=1.0, reg_type='entropy')
 
-        # Use implicit differentiation for memory saving
-        res = ot.solve(M, a, b, reg=1.0, grad='implicit') # M, a, b are torch tensors
+        # Use envelope theorem differentiation for memory saving
+        res = ot.solve(M, a, b, reg=1.0, grad='envelope') # M, a, b are torch tensors
         res.value.backward() # only the value is differentiable
 
     Note that by default the Sinkhorn solver uses automatic differentiation to
     compute the gradients of the values and plan. This can be changed with the
-    `grad` parameter. The `implicit` mode computes the implicit gradients only
+    `grad` parameter. The `envelope` mode computes the gradients only
     for the value and the other outputs are detached. This is useful for
     memory saving when only the gradient of value is needed.
 
@@ -329,7 +329,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
             elif reg_type.lower() in ['entropy', 'kl']:
 
-                if grad == 'envelope':  # if implicit then detach the input
+                if grad == 'envelope':  # if envelope then detach the input
                     M0, a0, b0 = M, a, b
                     M, a, b = nx.detach(M, a, b)
 
@@ -980,10 +980,10 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
     verbose : bool, optional
         Print information in the solver, by default False
     grad : str, optional
-        Type of gradient computation, either or 'autodiff' or 'implicit'  used only for
+        Type of gradient computation, either or 'autodiff' or 'envelope'  used only for
         Sinkhorn solver. By default 'autodiff' provides gradients wrt all
         outputs (`plan, value, value_linear`) but with important memory cost.
-        'implicit' provides gradients only for `value` and and other outputs are
+        'envelope' provides gradients only for `value` and and other outputs are
         detached. This is useful for memory saving when only the value is needed.
 
     Returns
@@ -1052,13 +1052,13 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         # lazy OT plan
         lazy_plan = res.lazy_plan
 
-        # Use implicit differentiation for memory saving
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, grad='implicit')
+        # Use envelope theorem differentiation for memory saving
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, grad='envelope')
         res.value.backward() # only the value is differentiable
 
     Note that by default the Sinkhorn solver uses automatic differentiation to
     compute the gradients of the values and plan. This can be changed with the
-    `grad` parameter. The `implicit` mode computes the implicit gradients only
+    `grad` parameter. The `envelope` mode computes the gradients only
     for the value and the other outputs are detached. This is useful for
     memory saving when only the gradient of value is needed.
 
