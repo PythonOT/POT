@@ -1426,12 +1426,24 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
     def grad_entropy(G):
         return np.log(G + 1e-16)
 
+    def reg_tv(G):
+        return np.sum(np.abs(G))
+
+    def grad_tv(G):
+        return np.sign(G)
+
     if reg_div == 'kl':
         reg_fun = reg_kl
         grad_reg_fun = grad_kl
     elif reg_div == 'entropy':
         reg_fun = reg_entropy
         grad_reg_fun = grad_entropy
+    elif reg_div == 'tv':
+        reg_fun = reg_tv
+        grad_reg_fun = grad_tv
+    elif isinstance(reg_div, tuple):
+        reg_fun = reg_div[0]
+        grad_reg_fun = reg_div[1]
     else:
         reg_fun = reg_l2
         grad_reg_fun = grad_l2
@@ -1451,9 +1463,20 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
         return reg_m1 * np.outer(np.log(G.sum(1) / a + 1e-16), np.ones(n)) + \
             reg_m2 * np.outer(np.ones(m), np.log(G.sum(0) / b + 1e-16))
 
+    def marg_tv(G):
+        return reg_m1 * np.sum(np.abs(G.sum(1) - a)) + \
+            reg_m2 * np.sum(np.abs(G.sum(0) - b))
+
+    def grad_marg_tv(G):
+        return reg_m1 * np.outer(np.sign(G.sum(1) - a), np.ones(n)) + \
+            reg_m2 * np.outer(np.ones(m), np.sign(G.sum(0) - b))
+
     if regm_div == 'kl':
         regm_fun = marg_kl
         grad_regm_fun = grad_marg_kl
+    elif regm_div == 'tv':
+        regm_fun = marg_tv
+        grad_regm_fun = grad_marg_tv
     else:
         regm_fun = marg_l2
         grad_regm_fun = grad_marg_l2
@@ -1518,7 +1541,8 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     reg_div: string, optional
         Divergence used for regularization.
         Can take three values: 'entropy' (negative entropy), or
-        'kl' (Kullback-Leibler) or 'l2' (quadratic).
+        'kl' (Kullback-Leibler) or 'l2' (quadratic) or a tuple
+        of two calable functions returning the reg term and its derivative.
     regm_div: string, optional
         Divergence to quantify the difference between the marginals.
         Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic)

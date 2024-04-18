@@ -359,7 +359,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
         else:  # unbalanced AND regularized OT
 
-            if reg_type.lower() in ['kl'] and unbalanced_type.lower() == 'kl':
+            if not isinstance(reg_type, tuple) and reg_type.lower() in ['kl'] and unbalanced_type.lower() == 'kl':
 
                 if max_iter is None:
                     max_iter = 1000
@@ -374,14 +374,16 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
                 potentials = (log['logu'], log['logv'])
 
-            elif reg_type.lower() in ['kl', 'l2', 'entropy'] and unbalanced_type.lower() in ['kl', 'l2']:
+            elif (isinstance(reg_type, tuple) or reg_type.lower() in ['kl', 'l2', 'entropy']) and unbalanced_type.lower() in ['kl', 'l2', 'tv']:
 
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
                     tol = 1e-12
+                if isinstance(reg_type, str):
+                    reg_type = reg_type.lower()
 
-                plan, log = lbfgsb_unbalanced(a, b, M, reg=reg, reg_m=unbalanced, reg_div=reg_type.lower(), regm_div=unbalanced_type.lower(), numItermax=max_iter, stopThr=tol, verbose=verbose, log=True)
+                plan, log = lbfgsb_unbalanced(a, b, M, reg=reg, reg_m=unbalanced, reg_div=reg_type, regm_div=unbalanced_type.lower(), numItermax=max_iter, stopThr=tol, verbose=verbose, log=True, G0=plan_init)
 
                 value_linear = nx.sum(M * plan)
 
