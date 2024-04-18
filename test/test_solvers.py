@@ -12,7 +12,7 @@ import sys
 
 import ot
 from ot.bregman import geomloss
-from ot.backend import torch, NumpyBackend
+from ot.backend import torch
 
 
 lst_reg = [None, 1]
@@ -168,8 +168,11 @@ def test_solve_grid(nx, reg, reg_type, unbalanced, unbalanced_type):
     try:
 
         if reg_type == 'tuple':
-            def f(G): return np.sum(G**2)
-            def df(G): return 2 * G
+            def f(G):
+                return np.sum(G**2)
+
+            def df(G):
+                return 2 * G
 
             reg_type = (f, df)
 
@@ -185,8 +188,11 @@ def test_solve_grid(nx, reg, reg_type, unbalanced, unbalanced_type):
         ab, bb, Mb = nx.from_numpy(a, b, M)
 
         if isinstance(reg_type, tuple):
-            def f(G): return nx.sum(G**2)
-            def df(G): return 2 * G
+            def f(G):
+                return nx.sum(G**2)
+
+            def df(G):
+                return 2 * G
 
             reg_type = (f, df)
 

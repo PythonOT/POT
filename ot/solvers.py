@@ -58,7 +58,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         Regularization weight :math:`\lambda_r`, by default None (no reg., exact
         OT)
     reg_type : str, optional
-        Type of regularization :math:`R`  either "KL", "L2", "entropy", 
+        Type of regularization :math:`R`  either "KL", "L2", "entropy",
         by default "KL". a tuple of functions can be provided for general
         solver (see :any:`cg`). This is only used when ``reg!=None``.
     unbalanced : float, optional

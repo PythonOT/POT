@@ -17,7 +17,6 @@ from scipy.optimize import minimize, Bounds
 
 from .backend import get_backend
 from .utils import list_to_array, get_parameter_pair
-import warnings
 
 
 def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
@@ -1596,12 +1595,17 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     if isinstance(reg_div, tuple):
         f0, df0 = reg_div
         try:
-            v = f0(G0)
-            g = df0(G0)
+            f0(G0)
+            df0(G0)
         except BaseException:
             warnings.warn("The callable functions should be able to handle numpy arrays, wrapper ar added to handle this which comes with overhead")
-            def f(x): return nx.to_numpy(f0(nx.from_numpy(x, type_as=M0)))
-            def df(x): return nx.to_numpy(df0(nx.from_numpy(x, type_as=M0)))
+
+            def f(x):
+                return nx.to_numpy(f0(nx.from_numpy(x, type_as=M0)))
+
+            def df(x):
+                return nx.to_numpy(df0(nx.from_numpy(x, type_as=M0)))
+
             reg_div = (f, df)
 
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
