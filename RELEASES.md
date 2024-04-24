@@ -3,10 +3,7 @@
 ## 0.9.3dev
 
 #### New features
-+ `ot.gromov._gw.solve_gromov_linesearch` now has an argument to specifify if the matrices are symmetric in which case the computation can be done faster.
-
-#### New features
-- Add implicit sinkhorn gradients in `ot.solve` and `ot.solve_sample` (PR #605)
+- `ot.gromov._gw.solve_gromov_linesearch` now has an argument to specifify if the matrices are symmetric in which case the computation can be done faster.
 - New quantized GW solvers `ot.gromov.quantized_gromov_wasserstein` and `ot.gromov.quantized_gromov_wasserstein_partitioned` (PR #603) 
 
 #### Closed issues
@@ -16,7 +13,7 @@
 - Fix issue with empty weights for `ot.emd2` (PR #606, Issue #534)
 - Fix a sign error regarding the gradient of `ot.gromov._gw.fused_gromov_wasserstein2` and `ot.gromov._gw.gromov_wasserstein2` for the kl loss (PR #610)
 - Fix same sign error for sr(F)GW conditional gradient solvers (PR #611)
-
+- Split `test/test_gromov.py` into `test/gromov/` (PR #619)
 
 ## 0.9.2
 *December 2023*

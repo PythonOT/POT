@@ -36,7 +36,7 @@ if __name__ == "__main__":
         warmup_runs=warmup_runs
     )
     print(convert_to_html_table(
-        results, 
+        results,
         param_name="Sample size",
         main_title=f"Sinkhorn Knopp - Averaged on {n_runs} runs"
     ))

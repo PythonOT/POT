@@ -493,7 +493,7 @@ class BaseTransport(BaseEstimator):
 
             # pairwise distance
             self.cost_ = dist(Xs, Xt, metric=self.metric)
-            self.cost_ = cost_normalization(self.cost_, self.norm)
+            self.cost_, self.norm_cost_ = cost_normalization(self.cost_, self.norm, return_value=True)
 
             if (ys is not None) and (yt is not None):
 
@@ -1055,13 +1055,18 @@ class SinkhornTransport(BaseTransport):
         The ground metric for the Wasserstein problem
     norm : string, optional (default=None)
         If given, normalize the ground metric to avoid numerical errors that
-        can occur with large metric values.
+        can occur with large metric values. Accepted values are  'median',
+        'max', 'log' and 'loglog'.
     distribution_estimation : callable, optional (defaults to the uniform)
         The kind of distribution estimation to employ
-    out_of_sample_map : string, optional (default="ferradans")
+    out_of_sample_map : string, optional (default="continuous")
         The kind of out of sample mapping to apply to transport samples
         from a domain into another one. Currently the only possible option is
-        "ferradans" which uses the method proposed in :ref:`[6] <references-sinkhorntransport>`.
+        "ferradans" which uses the nearest neighbor method proposed in :ref:`[6]
+        <references-sinkhorntransport>` while "continuous" use the out of sample
+        method from :ref:`[66]
+        <references-sinkhorntransport>` and :ref:`[19]
+        <references-sinkhorntransport>`.
     limit_max: float, optional (default=np.infty)
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit an cost defined
@@ -1089,13 +1094,26 @@ class SinkhornTransport(BaseTransport):
     .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
             Regularized discrete optimal transport. SIAM Journal on Imaging
             Sciences, 7(3), 1853-1882.
+
+    .. [19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet, A.
+             & Blondel, M. Large-scale Optimal Transport and Mapping Estimation.
+             International Conference on Learning Representation (2018)
+
+    .. [66] Pooladian, Aram-Alexandre, and Jonathan Niles-Weed. "Entropic
+            estimation of optimal transport maps." arXiv preprint
+            arXiv:2109.12004 (2021).
+
     """
 
-    def __init__(self, reg_e=1., method="sinkhorn", max_iter=1000,
+    def __init__(self, reg_e=1., method="sinkhorn_log", max_iter=1000,
                  tol=10e-9, verbose=False, log=False,
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='ferradans', limit_max=np.infty):
+                 out_of_sample_map='continuous', limit_max=np.infty):
+
+        if out_of_sample_map not in ['ferradans', 'continuous']:
+            raise ValueError('Unknown out_of_sample_map method')
+
         self.reg_e = reg_e
         self.method = method
         self.max_iter = max_iter
@@ -1135,6 +1153,12 @@ class SinkhornTransport(BaseTransport):
 
         super(SinkhornTransport, self).fit(Xs, ys, Xt, yt)
 
+        if self.out_of_sample_map == 'continuous':
+            self.log = True
+            if not self.method == 'sinkhorn_log':
+                self.method = 'sinkhorn_log'
+                warnings.warn("The method has been set to 'sinkhorn_log' as it is the only method available for out_of_sample_map='continuous'")
+
         # coupling estimation
         returned_ = sinkhorn(
             a=self.mu_s, b=self.mu_t, M=self.cost_, reg=self.reg_e,
@@ -1149,6 +1173,120 @@ class SinkhornTransport(BaseTransport):
             self.log_ = dict()
 
         return self
+
+    def transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
+        r"""Transports source samples :math:`\mathbf{X_s}` onto target ones :math:`\mathbf{X_t}`
+
+        Parameters
+        ----------
+        Xs : array-like, shape (n_source_samples, n_features)
+            The source input samples.
+        ys : array-like, shape (n_source_samples,)
+            The class labels for source samples
+        Xt : array-like, shape (n_target_samples, n_features)
+            The target input samples.
+        yt : array-like, shape (n_target_samples,)
+            The class labels for target. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
+
+            Warning: Note that, due to this convention -1 cannot be used as a
+            class label
+        batch_size : int, optional (default=128)
+            The batch size for out of sample inverse transform
+
+        Returns
+        -------
+        transp_Xs : array-like, shape (n_source_samples, n_features)
+            The transport source samples.
+        """
+        nx = self.nx
+
+        if self.out_of_sample_map == 'ferradans':
+            return super(SinkhornTransport, self).transform(Xs, ys, Xt, yt, batch_size)
+
+        else:  # self.out_of_sample_map == 'continuous':
+
+            # check the necessary inputs parameters are here
+            g = self.log_['log_v']
+
+            indices = nx.arange(Xs.shape[0])
+            batch_ind = [
+                indices[i:i + batch_size]
+                for i in range(0, len(indices), batch_size)]
+
+            transp_Xs = []
+            for bi in batch_ind:
+                # get the nearest neighbor in the source domain
+                M = dist(Xs[bi], self.xt_, metric=self.metric)
+
+                M = cost_normalization(M, self.norm, value=self.norm_cost_)
+
+                K = nx.exp(-M / self.reg_e + g[None, :])
+
+                transp_Xs_ = nx.dot(K, self.xt_) / nx.sum(K, axis=1)[:, None]
+
+                transp_Xs.append(transp_Xs_)
+
+            transp_Xs = nx.concatenate(transp_Xs, axis=0)
+
+            return transp_Xs
+
+    def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
+        r"""Transports target samples :math:`\mathbf{X_t}` onto source samples :math:`\mathbf{X_s}`
+
+        Parameters
+        ----------
+        Xs : array-like, shape (n_source_samples, n_features)
+            The source input samples.
+        ys : array-like, shape (n_source_samples,)
+            The class labels for source samples
+        Xt : array-like, shape (n_target_samples, n_features)
+            The target input samples.
+        yt : array-like, shape (n_target_samples,)
+            The class labels for target. If some target samples are unlabelled, fill the
+            :math:`\mathbf{y_t}`'s elements with -1.
+
+            Warning: Note that, due to this convention -1 cannot be used as a
+            class label
+        batch_size : int, optional (default=128)
+            The batch size for out of sample inverse transform
+
+        Returns
+        -------
+        transp_Xt : array-like, shape (n_source_samples, n_features)
+            The transport target samples.
+        """
+
+        nx = self.nx
+
+        if self.out_of_sample_map == 'ferradans':
+            return super(SinkhornTransport, self).inverse_transform(Xs, ys, Xt, yt, batch_size)
+
+        else:  # self.out_of_sample_map == 'continuous':
+
+            f = self.log_['log_u']
+
+            indices = nx.arange(Xt.shape[0])
+            batch_ind = [
+                indices[i:i + batch_size]
+                for i in range(0, len(indices), batch_size
+                               )]
+
+            transp_Xt = []
+            for bi in batch_ind:
+
+                M = dist(Xt[bi], self.xs_, metric=self.metric)
+                M = cost_normalization(M, self.norm, value=self.norm_cost_)
+
+                K = nx.exp(-M / self.reg_e + f[None, :])
+
+                transp_Xt_ = nx.dot(K, self.xs_) / nx.sum(K, axis=1)[:, None]
+
+                transp_Xt.append(transp_Xt_)
+
+            transp_Xt = nx.concatenate(transp_Xt, axis=0)
+
+            return transp_Xt
 
 
 class EMDTransport(BaseTransport):
