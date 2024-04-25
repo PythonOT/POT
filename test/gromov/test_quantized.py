@@ -6,11 +6,8 @@
 
 import numpy as np
 import pytest
-import warnings
 
 import ot
-from ot.backend import NumpyBackend
-from ot.backend import torch, tf
 
 from ot.gromov._quantized import (
     networkx_import, sklearn_import)
@@ -50,11 +47,11 @@ def test_quantized_gromov(nx):
             log_ = log_tests[count_mode]
             count_mode += 1
 
-            res = ot.gromov.quantized_gromov_wasserstein(
+            res = ot.gromov.quantized_fused_gromov_wasserstein(
                 C1, C2, npart1, npart2, C1, None, p=p, q=None, part_method=part_method,
                 rep_method=rep_method, log=log_)
 
-            resb = ot.gromov.quantized_gromov_wasserstein(
+            resb = ot.gromov.quantized_fused_gromov_wasserstein(
                 C1b, C2b, npart1, npart2, None, C2b, p=None, q=qb, part_method=part_method,
                 rep_method=rep_method, log=log_)
 
@@ -97,7 +94,7 @@ def test_quantized_gromov(nx):
     CR2b, list_R2b, list_p2b = ot.gromov.format_partitioned_graph(
         C2b, qb, part2b, rep_indices2b)
 
-    T_globalb, Ts_localb, _ = ot.gromov.quantized_gromov_wasserstein_partitioned(
+    T_globalb, Ts_localb, _ = ot.gromov.quantized_fused_gromov_wasserstein_partitioned(
         CR1b, CR2b, list_R1b, list_R2b, list_p1b, list_p2b, build_OT=False)
 
     T_globalb = nx.to_numpy(T_globalb)
