@@ -23,6 +23,7 @@ from .partial import partial_gromov_wasserstein2, entropic_partial_gromov_wasser
 from .gaussian import empirical_bures_wasserstein_distance
 from .factored import factored_optimal_transport
 from .lowrank import lowrank_sinkhorn
+from .optim import cg
 
 lst_method_lazy = ['1d', 'gaussian', 'lowrank', 'factored', 'geomloss', 'geomloss_auto', 'geomloss_tensorized', 'geomloss_online', 'geomloss_multiscale']
 
@@ -57,13 +58,15 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         Regularization weight :math:`\lambda_r`, by default None (no reg., exact
         OT)
     reg_type : str, optional
-        Type of regularization :math:`R`  either "KL", "L2", "entropy", by default "KL"
+        Type of regularization :math:`R`  either "KL", "L2", "entropy",
+        by default "KL". a tuple of functions can be provided for general
+        solver (see :any:`cg`). This is only used when ``reg!=None``.
     unbalanced : float, optional
         Unbalanced penalization weight :math:`\lambda_u`, by default None
         (balanced OT)
     unbalanced_type : str, optional
         Type of unbalanced penalization function :math:`U`  either "KL", "L2",
-        "TV", by default "KL"
+        "TV", by default "KL".
     method : str, optional
         Method for solving the problem when multiple algorithms are available,
         default None for automatic selection.
@@ -80,10 +83,10 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     verbose : bool, optional
         Print information in the solver, by default False
     grad : str, optional
-        Type of gradient computation, either or 'autodiff' or 'implicit'  used only for
+        Type of gradient computation, either or 'autodiff' or 'envelope'  used only for
         Sinkhorn solver. By default 'autodiff' provides gradients wrt all
         outputs (`plan, value, value_linear`) but with important memory cost.
-        'implicit' provides gradients only for `value` and and other outputs are
+        'envelope' provides gradients only for `value` and and other outputs are
         detached. This is useful for memory saving when only the value is needed.
 
     Returns
@@ -140,13 +143,13 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
         # or for original Sinkhorn paper formulation [2]
         res = ot.solve(M, a, b, reg=1.0, reg_type='entropy')
 
-        # Use implicit differentiation for memory saving
-        res = ot.solve(M, a, b, reg=1.0, grad='implicit') # M, a, b are torch tensors
+        # Use envelope theorem differentiation for memory saving
+        res = ot.solve(M, a, b, reg=1.0, grad='envelope') # M, a, b are torch tensors
         res.value.backward() # only the value is differentiable
 
     Note that by default the Sinkhorn solver uses automatic differentiation to
     compute the gradients of the values and plan. This can be changed with the
-    `grad` parameter. The `implicit` mode computes the implicit gradients only
+    `grad` parameter. The `envelope` mode computes the gradients only
     for the value and the other outputs are detached. This is useful for
     memory saving when only the gradient of value is needed.
 
@@ -311,9 +314,22 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
         if unbalanced is None:  # Balanced regularized OT
 
-            if reg_type.lower() in ['entropy', 'kl']:
+            if isinstance(reg_type, tuple):  # general solver
 
-                if grad == 'implicit':  # if implicit then detach the input
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-9
+
+                plan, log = cg(a, b, M, reg=reg, f=reg_type[0], df=reg_type[1], numItermax=max_iter, stopThr=tol, log=True, verbose=verbose, G0=plan_init)
+
+                value_linear = nx.sum(M * plan)
+                value = log['loss'][-1]
+                potentials = (log['u'], log['v'])
+
+            elif reg_type.lower() in ['entropy', 'kl']:
+
+                if grad == 'envelope':  # if envelope then detach the input
                     M0, a0, b0 = M, a, b
                     M, a, b = nx.detach(M, a, b)
 
@@ -336,7 +352,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
                 potentials = (log['log_u'], log['log_v'])
 
-                if grad == 'implicit':  # set the gradient at convergence
+                if grad == 'envelope':  # set the gradient at convergence
 
                     value = nx.set_gradients(value, (M0, a0, b0),
                                              (plan, reg * (potentials[0] - potentials[0].mean()), reg * (potentials[1] - potentials[1].mean())))
@@ -359,7 +375,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
         else:  # unbalanced AND regularized OT
 
-            if reg_type.lower() in ['kl'] and unbalanced_type.lower() == 'kl':
+            if not isinstance(reg_type, tuple) and reg_type.lower() in ['kl'] and unbalanced_type.lower() == 'kl':
 
                 if max_iter is None:
                     max_iter = 1000
@@ -374,14 +390,16 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
                 potentials = (log['logu'], log['logv'])
 
-            elif reg_type.lower() in ['kl', 'l2', 'entropy'] and unbalanced_type.lower() in ['kl', 'l2']:
+            elif (isinstance(reg_type, tuple) or reg_type.lower() in ['kl', 'l2', 'entropy']) and unbalanced_type.lower() in ['kl', 'l2', 'tv']:
 
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
                     tol = 1e-12
+                if isinstance(reg_type, str):
+                    reg_type = reg_type.lower()
 
-                plan, log = lbfgsb_unbalanced(a, b, M, reg=reg, reg_m=unbalanced, reg_div=reg_type.lower(), regm_div=unbalanced_type.lower(), numItermax=max_iter, stopThr=tol, verbose=verbose, log=True)
+                plan, log = lbfgsb_unbalanced(a, b, M, reg=reg, reg_m=unbalanced, reg_div=reg_type, regm_div=unbalanced_type.lower(), numItermax=max_iter, stopThr=tol, verbose=verbose, log=True, G0=plan_init)
 
                 value_linear = nx.sum(M * plan)
 
@@ -962,10 +980,10 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
     verbose : bool, optional
         Print information in the solver, by default False
     grad : str, optional
-        Type of gradient computation, either or 'autodiff' or 'implicit'  used only for
+        Type of gradient computation, either or 'autodiff' or 'envelope'  used only for
         Sinkhorn solver. By default 'autodiff' provides gradients wrt all
         outputs (`plan, value, value_linear`) but with important memory cost.
-        'implicit' provides gradients only for `value` and and other outputs are
+        'envelope' provides gradients only for `value` and and other outputs are
         detached. This is useful for memory saving when only the value is needed.
 
     Returns
@@ -1034,13 +1052,13 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         # lazy OT plan
         lazy_plan = res.lazy_plan
 
-        # Use implicit differentiation for memory saving
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, grad='implicit')
+        # Use envelope theorem differentiation for memory saving
+        res = ot.solve_sample(xa, xb, a, b, reg=1.0, grad='envelope')
         res.value.backward() # only the value is differentiable
 
     Note that by default the Sinkhorn solver uses automatic differentiation to
     compute the gradients of the values and plan. This can be changed with the
-    `grad` parameter. The `implicit` mode computes the implicit gradients only
+    `grad` parameter. The `envelope` mode computes the gradients only
     for the value and the other outputs are detached. This is useful for
     memory saving when only the gradient of value is needed.
 
