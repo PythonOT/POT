@@ -32,7 +32,7 @@ from ._utils import init_matrix, gwloss
 
 
 def quantized_fused_gromov_wasserstein_partitioned(
-        CR1, CR2, list_R1, list_R2, list_p1, list_p2, MR,
+        CR1, CR2, list_R1, list_R2, list_p1, list_p2, MR=None,
         alpha=1., build_OT=False, log=False, armijo=False, max_iter=1e4,
         tol_rel=1e-9, tol_abs=1e-9, nx=None, **kwargs):
     r"""
@@ -691,8 +691,9 @@ def quantized_fused_gromov_wasserstein(
         C1_new = alpha * C1_aux + (1 - alpha) * DF1
         C2_new = alpha * C2_aux + (1 - alpha) * DF2
 
-        part1 = get_graph_partition(C1_new, npart1, part_method, random_state=random_state, nx=nx)
-        part2 = get_graph_partition(C2_new, npart2, part_method, random_state=random_state, nx=nx)
+        part_method_ = part_method[:-6]
+        part1 = get_graph_partition(C1_new, npart1, part_method_, random_state=random_state, nx=nx)
+        part2 = get_graph_partition(C2_new, npart2, part_method_, random_state=random_state, nx=nx)
 
     else:
         part1 = get_graph_partition(C1_aux, npart1, part_method, F1, alpha, random_state, nx)
@@ -705,8 +706,10 @@ def quantized_fused_gromov_wasserstein(
             C1_new = alpha * C1_aux + (1 - alpha) * DF1
             C2_new = alpha * C2_aux + (1 - alpha) * DF2
 
-        rep_indices1 = get_graph_representants(C1_new, part1, rep_method, random_state, nx)
-        rep_indices2 = get_graph_representants(C2_new, part2, rep_method, random_state, nx)
+        rep_method_ = rep_method[:-6]
+
+        rep_indices1 = get_graph_representants(C1_new, part1, rep_method_, random_state, nx)
+        rep_indices2 = get_graph_representants(C2_new, part2, rep_method_, random_state, nx)
 
     else:
         rep_indices1 = get_graph_representants(C1_aux, part1, rep_method, random_state, nx)
@@ -737,12 +740,9 @@ def quantized_fused_gromov_wasserstein(
     if log:
         T_global, Ts_local, T, log_ = res
 
-        if alpha != 0.:
-            # compute the transport cost on structures
-            constC, hC1, hC2 = init_matrix(C1, C2, p, q, 'square_loss', nx)
-            structure_cost = gwloss(constC, hC1, hC2, T, nx)
-        else:
-            structure_cost = 0.
+        # compute the transport cost on structures
+        constC, hC1, hC2 = init_matrix(C1, C2, p, q, 'square_loss', nx)
+        structure_cost = gwloss(constC, hC1, hC2, T, nx)
 
         if alpha != 1.:
             M = dist(F1, F2)
@@ -810,15 +810,19 @@ def get_partition_and_representants_samples(
             stacklevel=2
         )
 
-        part = np.arange(n)
+        part = nx.arange(n)
+        rep_indices = nx.arange(n)
 
     elif npart == 1:
-        part = np.zeros(n)
+        random.seed(random_state)
+        part = nx.zeros(n)
+        rep_indices = [random.choice(nx.arange(n))]
 
     elif method == 'random':
         # randomly partition the space
         random.seed(random_state)
         part = list_to_array(random.choices(np.arange(npart), k=X.shape[0]))
+        part = nx.from_numpy(part, type_as=X0)
 
         # randomly select representant in each partition
         rep_indices = []
@@ -829,9 +833,8 @@ def get_partition_and_representants_samples(
 
     elif method == 'kmeans':
         X = nx.to_numpy(X0)
-        km = KMeans(n_clusters=npart, random_state=random_state,
-                    ).fit(X)
-        part = km.labels_
+        km = KMeans(n_clusters=npart, random_state=random_state).fit(X)
+        part = nx.from_numpy(km.labels_, type_as=X0)
 
         rep_indices = []
         for part_id in range(npart):
@@ -839,13 +842,14 @@ def get_partition_and_representants_samples(
             dists = dist(X[indices], km.cluster_centers_[part_id][None, :])
             best_idx = indices[dists.argmin()]
             rep_indices.append(best_idx)
+
     else:
         raise ValueError(
             f"""
             Unknown `method='{method}'`. Use one of: {'random', 'kmeans'}
             """)
 
-    return nx.from_numpy(part, type_as=X0), rep_indices
+    return part, rep_indices
 
 
 def format_partitioned_samples(
@@ -900,7 +904,7 @@ def format_partitioned_samples(
         if F is not None:
             arr.append(F)
 
-        nx = get_backend(X, p, part)
+        nx = get_backend(*arr)
 
     if alpha != 1.:
         if F is None:
@@ -919,12 +923,12 @@ def format_partitioned_samples(
     for id_, part_id in enumerate(part_ids):
         indices = nx.where(part == part_id)[0]
         if alpha != 0:
-            structure_R = dist(X[indices], X[rep_indices[id_]][:, None])
+            structure_R = dist(X[indices], X[rep_indices[id_]][None, :])
         else:
             structure_R = 0.
 
         if alpha != 1:
-            features_R = dist(F[indices], F[rep_indices[id_]][:, None])
+            features_R = dist(F[indices], F[rep_indices[id_]][None, :])
         else:
             features_R = 0.
 
@@ -1089,25 +1093,25 @@ def quantized_fused_gromov_wasserstein_samples(
     if ('fused' in method) and (alpha != 1.):
         X1_new = nx.concatenate([alpha * X1, (1 - alpha) * F1], axis=1)
         X2_new = nx.concatenate([alpha * X2, (1 - alpha) * F2], axis=1)
+        method_ = method[:-6]
     else:
         X1_new, X2_new = X1, X2
-
+        method_ = method
     part1, rep_indices1 = get_partition_and_representants_samples(
-        X1_new, npart1, method, random_state, nx)
+        X1_new, npart1, method_, random_state, nx)
     part2, rep_indices2 = get_partition_and_representants_samples(
-        X2_new, npart2, method, random_state, nx)
+        X2_new, npart2, method_, random_state, nx)
 
     # format partitions over (C1, F1) and (C2, F2)
 
     if (F1 is None) and (F2 is None):
         CR1, list_R1, list_p1 = format_partitioned_samples(
             X1, p, part1, rep_indices1, nx=nx)
-        CR2, list_R2, list_p2 = format_partitioned_graph(
+        CR2, list_R2, list_p2 = format_partitioned_samples(
             X2, q, part2, rep_indices2, nx=nx)
 
         MR = None
     else:
-
         CR1, list_R1, list_p1, FR1 = format_partitioned_samples(
             X1, p, part1, rep_indices1, F1, alpha, nx)
         CR2, list_R2, list_p2, FR2 = format_partitioned_samples(
