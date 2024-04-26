@@ -50,7 +50,7 @@ from .sliced import (sliced_wasserstein_distance, max_sliced_wasserstein_distanc
                      sliced_wasserstein_sphere, sliced_wasserstein_sphere_unif)
 from .gromov import (gromov_wasserstein, gromov_wasserstein2,
                      gromov_barycenters, fused_gromov_wasserstein, fused_gromov_wasserstein2,
-                     lowrank_gromov_wasserstein)
+                     lowrank_gromov_wasserstein_samples)
 from .weak import weak_optimal_transport
 from .factored import factored_optimal_transport
 from .solvers import solve, solve_gromov, solve_sample
@@ -73,4 +73,4 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath', 'solvers',
            'binary_search_circle', 'wasserstein_circle',
            'semidiscrete_wasserstein2_unif_circle', 'sliced_wasserstein_sphere_unif', 'lowrank_sinkhorn', 
-           'lowrank_gromov_wasserstein']
+           'lowrank_gromov_wasserstein_samples']

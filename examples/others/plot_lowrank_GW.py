@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 ========================================
-Low rank Gromov-Wasterstein
+Low rank Gromov-Wasterstein between samples
 ========================================
 
-This example illustrates the computation of Low Rank Gromov Wasserstein [66].
+Comparaison between entropic Gromov-Wasserstein and Low Rank Gromov Wasserstein [67]
+on two curves in 2D and 3D, both sampled with 200 points.
 
-[66] Scetbon, M., Peyré, G. & Cuturi, M. (2022).
+The squared Euclidean distance is considered as the ground cost for both samples.
+
+[67] Scetbon, M., Peyré, G. & Cuturi, M. (2022).
 "Linear-Time GromovWasserstein Distances using Low Rank Couplings and Costs".
 In International Conference on Machine Learning (ICML), 2022.
 """
@@ -21,6 +24,7 @@ In International Conference on Machine Learning (ICML), 2022.
 import numpy as np
 import matplotlib.pylab as pl
 import ot.plot
+import time
 
 ##############################################################################
 # Generate data
@@ -71,45 +75,79 @@ pl.show()
 # ------------
 
 #%%
+
+# Compute cost matrices
+C1 = ot.dist(X, X, metric="sqeuclidean")
+C2 = ot.dist(Y, Y, metric="sqeuclidean")
+
+# Scale cost matrices
+r1 = C1.max()
+r2 = C2.max()
+
+C1 = C1 / r1
+C2 = C2 / r2
+
+
 # Solve entropic gw
-C1 = ot.dist(X, X)
-C1 = C1 / C1.max()
-
-C2 = ot.dist(Y, Y)
-C2 = C2 / C2.max()
-
 reg = 5 * 1e-3
 
+start = time.time()
 gw, log = ot.gromov.entropic_gromov_wasserstein(
     C1, C2, tol=1e-3, epsilon=reg,
     log=True, verbose=False)
 
+end = time.time()
+time_entropic = end - start
+
+entropic_gw_loss = np.round(log['gw_dist'], 3)
+
 # Plot entropic gw
 pl.figure(2)
-pl.imshow(gw, interpolation="nearest", cmap="Greys", aspect="auto")
-pl.title("Entropic Gromov-Wasserstein")
+pl.imshow(gw, interpolation="nearest", aspect="auto")
+pl.title("Entropic Gromov-Wasserstein (loss={})".format(entropic_gw_loss))
 pl.show()
+
+
+##############################################################################
+# Low rank squared euclidean cost matrices
+# ------------
+# %%
+
+# Compute the low rank sqeuclidean cost decompositions
+A1, A2 = ot.lowrank.compute_lr_sqeuclidean_matrix(X, X, rescale_cost=False)
+B1, B2 = ot.lowrank.compute_lr_sqeuclidean_matrix(Y, Y, rescale_cost=False)
+
+# Scale the low rank cost matrices
+A1, A2 = A1 / np.sqrt(r1), A2 / np.sqrt(r1)
+B1, B2 = B1 / np.sqrt(r2), B2 / np.sqrt(r2)
 
 
 ##############################################################################
 # Low rank Gromov-Wasserstein
 # ------------
 # %%
+
 # Solve low rank gromov-wasserstein with different ranks
 list_rank = [10, 50]
 list_P_GW = []
 list_loss_GW = []
+list_time_GW = []
 
 for rank in list_rank:
-    Q, R, g, log = ot.lowrank_gromov_wasserstein(
-        X, Y, reg=0, rank=rank, rescale_cost=True, seed_init=49, log=True
+    start = time.time()
+
+    Q, R, g, log = ot.lowrank_gromov_wasserstein_samples(
+        X, Y, reg=0, rank=rank, rescale_cost=False, cost_factorized_Xs=(A1, A2),
+        cost_factorized_Xt=(B1, B2), seed_init=49, numItermax=1000, log=True, stopThr=1e-6,
     )
+    end = time.time()
 
     P = log["lazy_plan"][:]
     loss = log["value"]
 
     list_P_GW.append(P)
-    list_loss_GW.append(np.round(loss, 2))
+    list_loss_GW.append(np.round(loss, 3))
+    list_time_GW.append(end - start)
 
 
 # %%
@@ -117,14 +155,19 @@ for rank in list_rank:
 pl.figure(3, figsize=(10, 4))
 
 pl.subplot(1, 2, 1)
-pl.imshow(list_P_GW[0], interpolation="nearest", cmap="Greys", aspect="auto")
-#pl.axis('off')
+pl.imshow(list_P_GW[0], interpolation="nearest", aspect="auto")
 pl.title('Low rank GW (rank=10, loss={})'.format(list_loss_GW[0]))
 
 pl.subplot(1, 2, 2)
-pl.imshow(list_P_GW[1], interpolation="nearest", cmap="Greys", aspect="auto")
-#pl.axis('off')
+pl.imshow(list_P_GW[1], interpolation="nearest", aspect="auto")
 pl.title('Low rank GW (rank=50, loss={})'.format(list_loss_GW[1]))
 
 pl.tight_layout()
 pl.show()
+
+
+# %%
+# Compare computation time between entropic GW and low rank GW
+print("Entropic GW: {:.2f}s".format(time_entropic))
+print("Low rank GW (rank=10): {:.2f}s".format(list_time_GW[0]))
+print("Low rank GW (rank=50): {:.2f}s".format(list_time_GW[1]))

@@ -58,13 +58,15 @@ def _flat_product_operator(X, nx=None):
     return X_flat
 
 
-def lowrank_gromov_wasserstein(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, gamma_init="rescale",
-                               rescale_cost=True, stopThr=1e-4, numItermax=1000, stopThr_dykstra=1e-3,
-                               numItermax_dykstra=10000, seed_init=49, warn=True, warn_dykstra=False, log=False):
+def lowrank_gromov_wasserstein_samples(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, gamma_init="rescale",
+                                       rescale_cost=True, cost_factorized_Xs=None, cost_factorized_Xt=None, stopThr=1e-4, numItermax=1000,
+                                       stopThr_dykstra=1e-3, numItermax_dykstra=10000, seed_init=49, warn=True, warn_dykstra=False, log=False):
 
     r"""
     Solve the entropic regularization Gromov-Wasserstein transport problem under low-nonnegative rank constraints
     on the couplings and cost matrices.
+
+    Squared euclidean distance matrices are considered for the target and source distributions.
 
     The function solves the following optimization problem:
 
@@ -74,29 +76,31 @@ def lowrank_gromov_wasserstein(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha
 
     where :
 
-    - :math: `A` is the (`dim_a`, `dim_a`) square pairwise cost matrix of the source domain
-    - :math: `B` is the (`dim_a`, `dim_a`) square pairwise cost matrix of the target domain
-    - :math: `\mathcal{Q}_{A,B}` is quadratic objective function of the Gromov Wasserstein plan
-    - :math: `Q` and `R` are the low-rank matrix decomposition of the Gromov-Wasserstein plan
-    - :math: `g` is the weight vector for the low-rank decomposition of the Gromov-Wasserstein plan
-    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (histograms, both sum to 1)
-    - :math: `r` is the rank of the Gromov-Wasserstein plan
-    - :math: `\mathcal{C(a,b,r)}` are the low-rank couplings of the OT problem
+    - :math: `A` is the (`dim_a`, `dim_a`) square pairwise cost matrix of the source domain.
+    - :math: `B` is the (`dim_a`, `dim_a`) square pairwise cost matrix of the target domain.
+    - :math: `\mathcal{Q}_{A,B}` is quadratic objective function of the Gromov Wasserstein plan.
+    - :math: `Q` and `R` are the low-rank matrix decomposition of the Gromov-Wasserstein plan.
+    - :math: `g` is the weight vector for the low-rank decomposition of the Gromov-Wasserstein plan.
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (histograms, both sum to 1).
+    - :math: `r` is the rank of the Gromov-Wasserstein plan.
+    - :math: `\mathcal{C(a,b,r)}` are the low-rank couplings of the OT problem.
     - :math:`H((Q,R,g))` is the values of the three respective entropies evaluated for each term.
 
 
     Parameters
     ----------
-    X_s : array-like, shape (n_samples_a, dim)
-        samples in the source domain
-    X_t : array-like, shape (n_samples_b, dim)
-        samples in the target domain
-    a : array-like, shape (n_samples_a,)
-        samples weights in the source domain
-    b : array-like, shape (n_samples_b,)
-        samples weights in the target domain
+    X_s : array-like, shape (n_samples_a, dim_Xs)
+        Samples in the source domain
+    X_t : array-like, shape (n_samples_b, dim_Xt)
+        Samples in the target domain
+    a : array-like, shape (n_samples_a,), optional
+        Samples weights in the source domain
+        If let to its default value None, uniform distribution is taken.
+    b : array-like, shape (n_samples_b,), optional
+        Samples weights in the target domain
+        If let to its default value None, uniform distribution is taken.
     reg : float, optional
-        Regularization term >0
+        Regularization term >=0
     rank : int, optional. Default is None. (>0)
         Nonnegative rank of the OT plan. If None, min(ns, nt) is considered.
     alpha : int, optional. Default is 1e-10. (>0 and <1/r)
@@ -113,10 +117,20 @@ def lowrank_gromov_wasserstein(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha
         Max number of iterations for Low Rank GW
     stopThr : float, optional. Default is 1e-4.
         Stop threshold on error (>0) for Low Rank GW
+        The error is the sum of Kullback Divergences computed for each low rank
+        coupling (Q, R and g) and scaled using gamma.
     numItermax_dykstra : int, optional. Default is 2000.
         Max number of iterations for the Dykstra algorithm
     stopThr_dykstra : float, optional. Default is 1e-7.
         Stop threshold on error (>0) in Dykstra
+    cost_factorized_Xs: tuple, optional. Default is None
+        Tuple with two pre-computed low rank decompositions (A1, A2) of the source cost
+        matrix. Both matrices should have a shape of (n_samples_a, dim_Xs + 2).
+        If None, the low rank cost matrices will be computed as sqeuclidean cost matrices.
+    cost_factorized_Xt: tuple, optional. Default is None
+        Tuple with two pre-computed low rank decompositions (B1, B2) of the target cost
+        matrix. Both matrices should have a shape of (n_samples_b, dim_Xt + 2).
+        If None, the low rank cost matrices will be computed as sqeuclidean cost matrices.
     warn : bool, optional
         if True, raises a warning if the low rank GW algorithm doesn't convergence.
     warn_dykstra: bool, optional
@@ -170,9 +184,15 @@ def lowrank_gromov_wasserstein(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha
         raise ValueError("alpha ({a}) should be smaller than 1/rank ({r}) for the Dykstra algorithm to converge.".format(
             a=alpha, r=1 / rank))
 
-    # LR decomposition of the two sqeuclidean cost matrices
-    A1, A2 = compute_lr_sqeuclidean_matrix(X_s, X_s, rescale_cost, nx=nx)
-    B1, B2 = compute_lr_sqeuclidean_matrix(X_t, X_t, rescale_cost, nx=nx)
+    if cost_factorized_Xs is not None:
+        A1, A2 = cost_factorized_Xs
+    else:
+        A1, A2 = compute_lr_sqeuclidean_matrix(X_s, X_s, rescale_cost, nx=nx)
+
+    if cost_factorized_Xt is not None:
+        B1, B2 = cost_factorized_Xt
+    else:
+        B1, B2 = compute_lr_sqeuclidean_matrix(X_t, X_t, rescale_cost, nx=nx)
 
     # Initial values for LR couplings (Q, R, g) with LOT
     Q, R, g = _init_lr_sinkhorn(
@@ -274,11 +294,13 @@ def lowrank_gromov_wasserstein(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha
     G = nx.dot(Q.T, G * diag_g)
     value_quad = c1 + nx.trace(G) / 2
 
-    # Compute value with entropy reg (see "Section 3.2" in the paper)
-    reg_Q = nx.sum(Q * nx.log(Q + 1e-16))  # entropy for Q
-    reg_g = nx.sum(g * nx.log(g + 1e-16))  # entropy for g
-    reg_R = nx.sum(R * nx.log(R + 1e-16))  # entropy for R
-    value = value_quad + reg * (reg_Q + reg_g + reg_R)
+    if reg != 0:
+        reg_Q = nx.sum(Q * nx.log(Q + 1e-16))  # entropy for Q
+        reg_g = nx.sum(g * nx.log(g + 1e-16))  # entropy for g
+        reg_R = nx.sum(R * nx.log(R + 1e-16))  # entropy for R
+        value = value_quad + reg * (reg_Q + reg_g + reg_R)
+    else:
+        value = value_quad
 
     if log:
         dict_log = dict()
