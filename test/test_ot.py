@@ -245,6 +245,11 @@ def test_emd_empty():
     np.testing.assert_allclose(w, 0)
 
 
+def test_emd_nan_in_loss_matrix():
+    with pytest.raises(ValueError, match='The loss matrix should not contain NaN values.'):
+        ot.emd([], [], [np.nan])
+
+
 def test_emd2_multi():
     n = 500  # nb bins
 
