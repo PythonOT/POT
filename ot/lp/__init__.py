@@ -237,6 +237,8 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1, c
 
     .. note:: An error will be raised if the vectors :math:`\mathbf{a}` and :math:`\mathbf{b}` do not sum to the same value.
 
+    .. note:: An error will be raided if the loss matrix :math:`\mathbf{M}` contains NaNs.
+
     Uses the algorithm proposed in :ref:`[1] <references-emd>`.
 
     Parameters
@@ -301,6 +303,9 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1, c
     ot.bregman.sinkhorn : Entropic regularized OT
     ot.optim.cg : General regularized OT
     """
+
+    if np.isnan(M).any():
+        raise ValueError('The loss matrix should not contain NaN values.')
 
     a, b, M = list_to_array(a, b, M)
     nx = get_backend(M, a, b)
