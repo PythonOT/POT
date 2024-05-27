@@ -12,7 +12,7 @@ jobs:
     if: github.event.review.state == 'approved' || github.event_name ==     'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
     - name: Install POT
       run: |
         python3.10 -m pip install  --ignore-installed -e .
