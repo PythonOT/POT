@@ -1,19 +1,29 @@
 # Releases
 
-## 0.9.3dev
+## 0.9.4dev
 
 #### New features
-- `ot.gromov._gw.solve_gromov_linesearch` now has an argument to specifify if the matrices are symmetric in which case the computation can be done faster.
-- New quantized GW solvers `ot.gromov.quantized_gromov_wasserstein` and `ot.gromov.quantized_gromov_wasserstein_partitioned` (PR #603) 
++ New quantized GW solvers `ot.gromov.quantized_gromov_wasserstein` and `ot.gromov.quantized_gromov_wasserstein_partitioned` (PR #603)
++ `ot.gromov._gw.solve_gromov_linesearch` now has an argument to specify if the matrices are symmetric in which case the computation can be done faster (PR #607).
++ Continuous entropic mapping (PR #613)
++ New general unbalanced solvers for `ot.solve` and BFGS solver and illustrative example (PR #620)
++ Add gradient computation with envelope theorem to sinkhorn solver of `ot.solve` with `grad='envelope'` (PR #605).
 
 #### Closed issues
-- Fixed an issue with cost correction for mismatched labels in `ot.da.BaseTransport` fit methods. This fix addresses the original issue introduced PR #587 (PR #593)
 - Fix gpu compatibility of sr(F)GW solvers when `G0 is not None`(PR #596)
 - Fix doc and example for lowrank sinkhorn (PR #601)
 - Fix issue with empty weights for `ot.emd2` (PR #606, Issue #534)
 - Fix a sign error regarding the gradient of `ot.gromov._gw.fused_gromov_wasserstein2` and `ot.gromov._gw.gromov_wasserstein2` for the kl loss (PR #610)
 - Fix same sign error for sr(F)GW conditional gradient solvers (PR #611)
 - Split `test/test_gromov.py` into `test/gromov/` (PR #619)
+
+## 0.9.3
+*January 2024*
+
+
+#### Closed issues
+- Fixed an issue with cost correction for mismatched labels in `ot.da.BaseTransport` fit methods. This fix addresses the original issue introduced PR #587 (PR #593)
+
 
 ## 0.9.2
 *December 2023*
