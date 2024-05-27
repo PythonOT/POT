@@ -100,7 +100,7 @@ for i in range(n_alpha):
 #%% plot interpolation
 plt.figure(2)
 
-cmap = plt.cm.get_cmap('viridis')
+cmap = plt.get_cmap('viridis')
 verts = []
 zs = alpha_list
 for i, z in enumerate(zs):
@@ -122,7 +122,7 @@ plt.title('Barycenter interpolation with l2')
 plt.tight_layout()
 
 plt.figure(3)
-cmap = plt.cm.get_cmap('viridis')
+cmap = plt.get_cmap('viridis')
 verts = []
 zs = alpha_list
 for i, z in enumerate(zs):
