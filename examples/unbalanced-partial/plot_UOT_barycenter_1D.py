@@ -120,7 +120,7 @@ for i in range(0, n_weight):
 
 pl.figure(3)
 
-cmap = pl.cm.get_cmap('viridis')
+cmap = pl.get_cmap('viridis')
 verts = []
 zs = weight_list
 for i, z in enumerate(zs):
@@ -142,7 +142,7 @@ pl.title('Barycenter interpolation with l2')
 pl.tight_layout()
 
 pl.figure(4)
-cmap = pl.cm.get_cmap('viridis')
+cmap = pl.get_cmap('viridis')
 verts = []
 zs = weight_list
 for i, z in enumerate(zs):
