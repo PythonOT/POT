@@ -47,6 +47,7 @@ ECML PKDD 2021. Springer International Publishing.
 
 import numpy as np
 import matplotlib.pylab as pl
+import matplotlib.pyplot as plt
 import networkx
 from networkx.generators.community import stochastic_block_model as sbm
 from scipy.sparse.csgraph import shortest_path
@@ -54,7 +55,8 @@ from scipy.sparse.csgraph import shortest_path
 from ot.gromov import (
     quantized_fused_gromov_wasserstein_partitioned, quantized_fused_gromov_wasserstein,
     get_graph_partition, get_graph_representants, format_partitioned_graph,
-    quantized_fused_gromov_wasserstein_samples)
+    quantized_fused_gromov_wasserstein_samples,
+    get_partition_and_representants_samples)
 
 #############################################################################
 #
@@ -355,7 +357,7 @@ def draw_transp_colored_qGW(
     return pos1, pos2
 
 
-pl.figure(2, figsize=(6, 2))
+pl.figure(2, figsize=(5, 2.5))
 pl.clf()
 pl.axis('off')
 pl.subplot(1, 2, 1)
@@ -407,28 +409,79 @@ FX = z - z.min() / (z.max() - z.min())
 FX = np.clip(0.8 * FX + 0.2, a_min=0.2, a_max=1.)  # for numerical issues
 FY = FX
 
+
+#############################################################################
+#
+# Visualize partitioned attributed point clouds
+# --------------------------------------------------------------------------
+#
+# Compute the partitioning and representant selection further used within
+# qFGW wrapper, both provided by a K-means algorithm. Then visualize partitioned spaces.
+
+part1, rep_indices1 = get_partition_and_representants_samples(
+    X, 4, 'kmeans', 0)
+part2, rep_indices2 = get_partition_and_representants_samples(
+    Y, 4, 'kmeans', 0)
+
+upart1 = np.unique(part1)
+upart2 = np.unique(part2)
+
 # Plot the source and target samples as distributions
-pl.figure(3, figsize=(8, 5))
-pl.clf()
-pl.axis('off')
-pl.subplot(1, 2, 1)
-pl.title("2D curve (source)")
+s = 20
+fig = plt.figure(3, figsize=(6, 3))
 
-pl.scatter(X[:, 0], X[:, 1], color="blue", alpha=FX, linewidth=6)
-pl.tick_params(left=False, right=False, labelleft=False,
-               labelbottom=False, bottom=False)
+ax1 = fig.add_subplot(1, 3, 1)
+ax1.set_title("2D curve")
+ax1.scatter(X[:, 0], X[:, 1], color="C0", alpha=FX, s=s)
+plt.axis('off')
 
-ax = pl.subplot(1, 2, 2, projection='3d')
-ax.set_title("3D curve (target)")
 
-ax.scatter(Y[:, 0], Y[:, 1], Y[:, 2], c='red', alpha=FY, linewidth=6)
-ax.tick_params(left=False, right=False, labelleft=False,
-               labelbottom=False, bottom=False)
-ax.view_init(15, -50)
+ax2 = fig.add_subplot(1, 3, 2)
+ax2.set_title("Partitioning")
+for i, elem in enumerate(upart1):
+    idx = np.argwhere(part1 == elem)[:, 0]
+    ax2.scatter(X[idx, 0], X[idx, 1], color="C%s" % i, alpha=FX[idx], s=s)
+plt.axis('off')
 
-pl.tight_layout()
-pl.show()
+ax3 = fig.add_subplot(1, 3, 3)
+ax3.set_title("Representant selection")
+for i, elem in enumerate(upart1):
+    idx = np.argwhere(part1 == elem)[:, 0]
+    ax3.scatter(X[idx, 0], X[idx, 1], color="C%s" % i, alpha=FX[idx], s=10)
+    rep_idx = rep_indices1[i]
+    ax3.scatter([X[rep_idx, 0]], [X[rep_idx, 1]], color="C%s" % i, alpha=1, s=6 * s, marker='*')
+plt.axis('off')
+plt.tight_layout()
+plt.show()
 
+start_color = upart1.shape[0] + 1
+
+fig = plt.figure(4, figsize=(6, 5))
+
+ax4 = fig.add_subplot(1, 3, 1, projection="3d")
+ax4.set_title("3D curve")
+ax4.scatter(Y[:, 0], Y[:, 1], Y[:, 2], c='C0', alpha=FY, s=s)
+plt.axis('off')
+
+ax5 = fig.add_subplot(1, 3, 2, projection="3d")
+ax5.set_title("Partitioning")
+for i, elem in enumerate(upart2):
+    idx = np.argwhere(part2 == elem)[:, 0]
+    color = 'C%s' % (start_color + i)
+    ax5.scatter(Y[idx, 0], Y[idx, 1], Y[idx, 2], c=color, alpha=FY[idx], s=s)
+plt.axis('off')
+
+ax6 = fig.add_subplot(1, 3, 3, projection="3d")
+ax6.set_title("Representant selection")
+for i, elem in enumerate(upart2):
+    idx = np.argwhere(part2 == elem)[:, 0]
+    color = 'C%s' % (start_color + i)
+    rep_idx = rep_indices2[i]
+    ax6.scatter(Y[idx, 0], Y[idx, 1], Y[idx, 2], c=color, alpha=FY[idx], s=s)
+    ax6.scatter([Y[rep_idx, 0]], [Y[rep_idx, 1]], [Y[rep_idx, 2]], c=color, alpha=1, s=6 * s, marker='*')
+plt.axis('off')
+plt.tight_layout()
+plt.show()
 
 #############################################################################
 #
@@ -443,3 +496,10 @@ pl.show()
 T_global, Ts_local, T, log = quantized_fused_gromov_wasserstein_samples(
     X, Y, 4, 4, p=None, q=None, F1=FX[:, None], F2=FY[:, None], alpha=0.5,
     method='kmeans', log=True)
+
+# Plot low rank GW with different ranks
+pl.figure(5, figsize=(3, 3))
+pl.title('OT matrix')
+pl.imshow(T, interpolation="nearest", aspect="auto")
+pl.axis('off')
+pl.show()
