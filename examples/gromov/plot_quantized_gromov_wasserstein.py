@@ -54,10 +54,7 @@ from scipy.sparse.csgraph import shortest_path
 from ot.gromov import (
     quantized_fused_gromov_wasserstein_partitioned, quantized_fused_gromov_wasserstein,
     get_graph_partition, get_graph_representants, format_partitioned_graph,
-    quantized_fused_gromov_wasserstein_samples,
-    get_partition_and_representants_samples, format_partitioned_samples)
-
-from ot.utils import dist
+    quantized_fused_gromov_wasserstein_samples)
 
 #############################################################################
 #
