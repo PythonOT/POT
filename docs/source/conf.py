@@ -22,16 +22,12 @@ except ImportError:
     print("warning sphinx-gallery not installed")
 
 
-    
-
-
-
 # !!!! allow readthedoc compilation
 try:
     from unittest.mock import MagicMock
 except ImportError:
     from mock import Mock as MagicMock
-    ## check whether in the source directory...
+    # check whether in the source directory...
 #
 
 
@@ -42,7 +38,7 @@ class Mock(MagicMock):
         return MagicMock()
 
 
-MOCK_MODULES = [ 'cupy']
+MOCK_MODULES = ['cupy']
 # 'autograd.numpy','pymanopt.manifolds','pymanopt.solvers',
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 # !!!!
@@ -357,12 +353,12 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
 sphinx_gallery_conf = {
     'examples_dirs': ['../../examples', '../../examples/da'],
     'gallery_dirs': 'auto_examples',
-    'filename_pattern': 'plot_', #(?!barycenter_fgw)
-    'nested_sections' : False,
-    'backreferences_dir':  'gen_modules/backreferences',
-	'inspect_global_variables'  : True,
-    'doc_module'          : ('ot','numpy','scipy','pylab'),
+    'filename_pattern': 'plot_',  # (?!barycenter_fgw)
+    'nested_sections': False,
+    'backreferences_dir': 'gen_modules/backreferences',
+    'inspect_global_variables': True,
+    'doc_module': ('ot', 'numpy', 'scipy', 'pylab'),
     'matplotlib_animations': True,
     'reference_url': {
-	'ot': None}
+        'ot': None}
 }

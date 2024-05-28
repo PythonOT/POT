@@ -58,7 +58,7 @@ from .lowrank import lowrank_sinkhorn
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.9.3"
+__version__ = "0.9.4dev"
 
 __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'datasets', 'bregman', 'lp', 'tic', 'toc', 'toq', 'gromov',
@@ -68,7 +68,7 @@ __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'sinkhorn_unbalanced2', 'sliced_wasserstein_distance', 'sliced_wasserstein_sphere',
            'gromov_wasserstein', 'gromov_wasserstein2', 'gromov_barycenters', 'fused_gromov_wasserstein',
            'fused_gromov_wasserstein2', 'max_sliced_wasserstein_distance', 'weak_optimal_transport',
-           'factored_optimal_transport', 'solve', 'solve_gromov','solve_sample', 
+           'factored_optimal_transport', 'solve', 'solve_gromov', 'solve_sample',
            'smooth', 'stochastic', 'unbalanced', 'partial', 'regpath', 'solvers',
            'binary_search_circle', 'wasserstein_circle',
            'semidiscrete_wasserstein2_unif_circle', 'sliced_wasserstein_sphere_unif',
