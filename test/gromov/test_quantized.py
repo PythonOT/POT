@@ -212,6 +212,7 @@ def test_quantized_fgw(nx):
             'spectral_fused', 'random', log_)
 
 
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
 def test_quantized_gw_samples(nx):
     n_samples_1 = 20  # nb samples
     n_samples_2 = 30  # nb samples
@@ -237,7 +238,6 @@ def test_quantized_gw_samples(nx):
     alpha = 1.
 
     for method in methods:
-        print('method:', method)
         log_ = log_tests[count_mode]
         count_mode += 1
 
@@ -271,6 +271,7 @@ def test_quantized_gw_samples(nx):
                     np.testing.assert_allclose(log[key], logb[key], atol=1e-06)
 
 
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
 def test_quantized_fgw_samples(nx):
     n_samples_1 = 20  # nb samples
     n_samples_2 = 30  # nb samples
