@@ -1,17 +1,39 @@
 # -*- coding: utf-8 -*-
 """
 ===============================================
-Quantized Gromov-Wasserstein example
+Quantized Fused Gromov-Wasserstein examples
 ===============================================
 
-This example is designed to show how to use the quantized Gromov-Wasserstein
-solvers [66]. POT provides a wrapper `quantized_gromov_wasserstein` operating other
-graphs, and a generic solver `quantized_gromov_wasserstein_partitioned` that allows
-the user to precompute any partitioning and representant selection methods.
+These examples show how to use the quantized (Fused) Gromov-Wasserstein
+solvers (qFGW) [66]. POT provides a generic solver `quantized_fused_gromov_wasserstein_partitioned`
+that takes as inputs partitioned graphs potentially endowed with node features,
+which have to be built by the user. On top of that, POT provides two wrappers:
+    i) `quantized_fused_gromov_wasserstein` operating over generic graphs, whose
+    partitioning is performed via `get_graph_partition` using e.g the Louvain algorithm,
+    and representant for each partition can be selected via `get_graph_representants`
+    using e.g the PageRank algorithm.
 
-We generate two graphs following Stochastic Block Models encoded as shortest path
-matrices. Then show how to compute their quantized gromov-wasserstein
-matchings using both solvers.
+    ii) `quantized_fused_gromov_wasserstein_samples` operating over point clouds,
+    e.g :math:`X_1 \in R^{n_1 * d_1}` and :math:`X_2 \in R^{n_2 * d_2}`
+    endowed with their respective euclidean geometry, whose partitioning and
+    representant selection is performed jointly using e.g the K-means algorithm
+    via the function `get_partition_and_representants_samples`.
+
+
+We illustrate next how to compute the qGW distance on both types of data by:
+
+    i) Generating two graphs following Stochastic Block Models encoded as shortest
+    path matrices as qGW solvers tends to require dense structure to achieve a good
+    approximation of the GW distance (as qGW is an upper-bound of GW). In the meantime,
+    we illustrate an optional feature of our solvers, namely the use of auxiliary
+    structures e.g adjacency matrices to perform the graph partitioning.
+
+    ii) Generating two point clouds representing curves in 2D and 3D respectively.
+    We augment these point clouds by considering additional features of the same
+    dimensionaly :math:`F_1 \in R^{n_1 * d}` and :math:`F_2 \in R^{n_2 * d}`,
+    representing the color intensity associated to each sample of both distributions.
+    Then we compute the qFGW distance between these attributed point clouds.
+
 
 [66] Chowdhury, S., Miller, D., & Needham, T. (2021). Quantized gromov-wasserstein.
 ECML PKDD 2021. Springer International Publishing.
@@ -21,7 +43,7 @@ ECML PKDD 2021. Springer International Publishing.
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 1
+# sphinx_gallery_thumbnail_number = 2
 
 import numpy as np
 import matplotlib.pylab as pl
@@ -29,40 +51,57 @@ import networkx
 from networkx.generators.community import stochastic_block_model as sbm
 from scipy.sparse.csgraph import shortest_path
 
-from ot.gromov import quantized_gromov_wasserstein, quantized_gromov_wasserstein_partitioned
-from ot.gromov._quantized import _get_partition, _get_representants, _formate_partitioned_graph
+from ot.gromov import (
+    quantized_fused_gromov_wasserstein_partitioned, quantized_fused_gromov_wasserstein,
+    get_graph_partition, get_graph_representants, format_partitioned_graph,
+    quantized_fused_gromov_wasserstein_samples,
+    get_partition_and_representants_samples, format_partitioned_samples)
+
+from ot.utils import dist
 
 #############################################################################
 #
-# Generate two graphs following Stochastic Block models of 2 and 3 clusters.
+# Generate graphs
 # --------------------------------------------------------------------------
+#
+# Create two graphs following Stochastic Block models of 2 and 3 clusters.
 
-
-N2 = 30  # 2 communities
-N3 = 45  # 3 communities
-p2 = [[0.8, 0.1],
+N1 = 30  # 2 communities
+N2 = 45  # 3 communities
+p1 = [[0.8, 0.1],
       [0.1, 0.7]]
-p3 = [[0.8, 0.1, 0.],
+p2 = [[0.8, 0.1, 0.],
       [0.1, 0.75, 0.1],
       [0., 0.1, 0.7]]
-G2 = sbm(seed=0, sizes=[N2 // 2, N2 // 2], p=p2)
-G3 = sbm(seed=0, sizes=[N3 // 3, N3 // 3, N3 // 3], p=p3)
+G1 = sbm(seed=0, sizes=[N1 // 2, N1 // 2], p=p1)
+G2 = sbm(seed=0, sizes=[N2 // 3, N2 // 3, N2 // 3], p=p2)
 
 
+C1 = networkx.to_numpy_array(G1)
 C2 = networkx.to_numpy_array(G2)
-C3 = networkx.to_numpy_array(G3)
 
+spC1 = shortest_path(C1)
 spC2 = shortest_path(C2)
-spC3 = shortest_path(C3)
 
+h1 = np.ones(C1.shape[0]) / C1.shape[0]
 h2 = np.ones(C2.shape[0]) / C2.shape[0]
-h3 = np.ones(C3.shape[0]) / C3.shape[0]
 
 # Add weights on the edges for visualization later on
-weight_intra_G2 = 5
-weight_inter_G2 = 0.5
-weight_intra_G3 = 1.
-weight_inter_G3 = 1.5
+weight_intra_G1 = 5
+weight_inter_G1 = 0.5
+weight_intra_G2 = 1.
+weight_inter_G2 = 1.5
+
+weightedG1 = networkx.Graph()
+part_G1 = [G1.nodes[i]['block'] for i in range(N1)]
+
+for node in G1.nodes():
+    weightedG1.add_node(node)
+for i, j in G1.edges():
+    if part_G1[i] == part_G1[j]:
+        weightedG1.add_edge(i, j, weight=weight_intra_G1)
+    else:
+        weightedG1.add_edge(i, j, weight=weight_inter_G1)
 
 weightedG2 = networkx.Graph()
 part_G2 = [G2.nodes[i]['block'] for i in range(N2)]
@@ -75,77 +114,21 @@ for i, j in G2.edges():
     else:
         weightedG2.add_edge(i, j, weight=weight_inter_G2)
 
-weightedG3 = networkx.Graph()
-part_G3 = [G3.nodes[i]['block'] for i in range(N3)]
 
-for node in G3.nodes():
-    weightedG3.add_node(node)
-for i, j in G3.edges():
-    if part_G3[i] == part_G3[j]:
-        weightedG3.add_edge(i, j, weight=weight_intra_G3)
-    else:
-        weightedG3.add_edge(i, j, weight=weight_inter_G3)
+# setup for graph visualization
 
-#############################################################################
-#
-# Compute their quantized Gromov-Wasserstein distance using the wrapper
-# ---------------------------------------------------------
+def node_coloring(part, starting_color=0):
 
-# 0) qGW(spC2, h2, spC3, h3) while partitioning the adjacency matrices C2 and C3
-#   in 2 and 3 clusters respectively, using the Fluid algorithm and selecting
-#   representant in each partition using maximal pagerank.
-#   Notice that C2 and C3 are optional and if they are not specified these
-#   pre-processing algorithms will be applied to spC2 and spC3.
+    # get graphs partition and their coloring
+    unique_colors = ['C%s' % (starting_color + i) for i in np.unique(part)]
+    nodes_color_part = []
+    for cluster in part:
+        nodes_color_part.append(unique_colors[cluster])
 
-part_method = 'louvain'
-rep_method = 'pagerank'
-OT_global, OTs_local, OT, log = quantized_gromov_wasserstein(
-    spC2, spC3, 2, 3, C2, C3, h2, h3, part_method=part_method,
-    rep_method=rep_method, log=True)
-
-qGW_dist = log['qGW_dist']
-
-#############################################################################
-#
-# Compute their quantized Gromov-Wasserstein distance using any partitioning and representant selection methods
-# ---------------------------------------------------------
-
-# 1-a) Partition C2 and C3 in 2 and 3 clusters respectively using the Fluid
-#    algorithm implementation from networkx. Encode these partitions via vectors of assignments.
-
-part2 = _get_partition(C2, npart=2, part_method=part_method)
-part3 = _get_partition(C3, npart=3, part_method=part_method)
-
-# 1-b) Select representant in each partition using the Pagerank algorithm
-#     implementation from networkx.
-
-rep_indices2 = _get_representants(C2, part2, rep_method=rep_method)
-rep_indices3 = _get_representants(C3, part3, rep_method=rep_method)
-
-# 1-c) Formate partitions. CR (2, 2) relations between representants in each space.
-# list_R contain relations between samples and representants within each partition.
-# list_h contain samples relative importance within each partition.
-
-CR2, list_R2, list_h2 = _formate_partitioned_graph(spC2, h2, part2, rep_indices2)
-CR3, list_R3, list_h3 = _formate_partitioned_graph(spC3, h3, part3, rep_indices3)
-
-# 1-d) call to partitioned quantized gromov-wasserstein solver
-
-OT_global_, OTs_local_, OT_, log_ = quantized_gromov_wasserstein_partitioned(
-    CR2, CR3, list_R2, list_R3, list_h2, list_h3, build_OT=True, log=True)
+    return nodes_color_part
 
 
-#############################################################################
-#
-# Visualization of the quantized Gromov-Wasserstein matching
-# --------------------------------------------------------------
-#
-# We color nodes of the graph based on the respective partition of each graph.
-# On the first plot we illustrate the qGW matching between both shortest path matrices.
-# While the GW matching across representants of each space is illustrated on the right.
-
-
-def draw_graph(G, C, nodes_color_part, rep_indices, pos=None,
+def draw_graph(G, C, nodes_color_part, rep_indices, node_alphas=None, pos=None,
                edge_color='black', alpha_edge=0.7, node_size=None,
                shiftx=0, seed=0, highlight_rep=False):
 
@@ -174,12 +157,18 @@ def draw_graph(G, C, nodes_color_part, rep_indices, pos=None,
 
     for node, node_color in enumerate(nodes_color_part):
         local_node_shape, local_node_size = 'o', node_size
-        if node in rep_indices:
-            local_node_shape, local_node_size = '*', 6 * node_size
 
-        alpha = 0.9
         if highlight_rep:
-            alpha = 0.9 if node in rep_indices else 0.2
+            if node in rep_indices:
+                local_node_shape, local_node_size = '*', 6 * node_size
+
+        if node_alphas is None:
+            alpha = 0.9
+            if highlight_rep:
+                alpha = 0.9 if node in rep_indices else 0.2
+
+        else:
+            alpha = node_alphas[node]
 
         networkx.draw_networkx_nodes(G, pos, nodelist=[node], alpha=alpha,
                                      node_shape=local_node_shape,
@@ -187,6 +176,140 @@ def draw_graph(G, C, nodes_color_part, rep_indices, pos=None,
                                      node_color=node_color)
 
     return pos
+
+
+#############################################################################
+#
+# Compute their quantized Gromov-Wasserstein distance without using the wrapper
+# ---------------------------------------------------------
+#
+# We detail next the steps implemented within the wrapper that preprocess graphs
+# to form partitioned graphs, which are then passed as input to the generic qFGW solver.
+
+# 1-a) Partition C1 and C2 in 2 and 3 clusters respectively using Louvain
+#    algorithm from Networkx. Then encode these partitions via vectors of assignments.
+
+part_method = 'louvain'
+rep_method = 'pagerank'
+
+npart_1 = 2  # 2 clusters used to describe C1
+npart_2 = 3  # 3 clusters used to describe C2
+
+part1 = get_graph_partition(
+    C1, npart=npart_1, part_method=part_method, F=None, alpha=1.)
+part2 = get_graph_partition(
+    C2, npart=npart_2, part_method=part_method, F=None, alpha=1.)
+
+# 1-b) Select representant in each partition using the Pagerank algorithm
+#     implementation from networkx.
+
+rep_indices1 = get_graph_representants(C1, part1, rep_method=rep_method)
+rep_indices2 = get_graph_representants(C2, part2, rep_method=rep_method)
+
+# 1-c) Formate partitions such that:
+# CR contains relations between representants in each space.
+# list_R contains relations between samples and representants within each partition.
+# list_h contains samples relative importance within each partition.
+
+CR1, list_R1, list_h1 = format_partitioned_graph(
+    spC1, h1, part1, rep_indices1, F=None, M=None, alpha=1.)
+
+CR2, list_R2, list_h2 = format_partitioned_graph(
+    spC2, h2, part2, rep_indices2, F=None, M=None, alpha=1.)
+
+# 1-d) call to partitioned quantized gromov-wasserstein solver
+
+OT_global_, OTs_local_, OT_, log_ = quantized_fused_gromov_wasserstein_partitioned(
+    CR1, CR2, list_R1, list_R2, list_h1, list_h2, MR=None,
+    alpha=1., build_OT=True, log=True)
+
+
+# Visualization of the graph pre-processing
+
+node_size = 40
+fontsize = 10
+seed_G1 = 0
+seed_G2 = 3
+
+part1_ = part1.astype(np.int32)
+part2_ = part2.astype(np.int32)
+
+
+nodes_color_part1 = node_coloring(part1_, starting_color=0)
+nodes_color_part2 = node_coloring(part2_, starting_color=np.unique(nodes_color_part1).shape[0])
+
+
+pl.figure(1, figsize=(6, 5))
+pl.clf()
+pl.axis('off')
+pl.subplot(2, 3, 1)
+pl.title(r'Input graph: $\mathbf{spC_1}$', fontsize=fontsize)
+
+pos1 = draw_graph(
+    G1, C1, ['C0' for _ in part1_], rep_indices1, node_size=node_size, seed=seed_G1)
+
+pl.subplot(2, 3, 2)
+pl.title('Partitioning', fontsize=fontsize)
+
+_ = draw_graph(
+    G1, C1, nodes_color_part1, rep_indices1, pos=pos1, node_size=node_size, seed=seed_G1)
+
+pl.subplot(2, 3, 3)
+pl.title('Representant selection', fontsize=fontsize)
+
+_ = draw_graph(
+    G1, C1, nodes_color_part1, rep_indices1, pos=pos1, node_size=node_size,
+    seed=seed_G1, highlight_rep=True)
+
+pl.subplot(2, 3, 4)
+pl.title(r'Input graph: $\mathbf{spC_2}$', fontsize=fontsize)
+
+pos2 = draw_graph(
+    G2, C2, ['C0' for _ in part2_], rep_indices2, node_size=node_size, seed=seed_G2)
+
+pl.subplot(2, 3, 5)
+pl.title(r'Partitioning', fontsize=fontsize)
+
+_ = draw_graph(
+    G2, C2, nodes_color_part2, rep_indices2, pos=pos2, node_size=node_size, seed=seed_G2)
+
+pl.subplot(2, 3, 6)
+pl.title(r'Representant selection', fontsize=fontsize)
+
+_ = draw_graph(
+    G2, C2, nodes_color_part2, rep_indices2, pos=pos2, node_size=node_size,
+    seed=seed_G2, highlight_rep=True)
+pl.tight_layout()
+
+#############################################################################
+#
+# Compute the quantized Gromov-Wasserstein distance using the wrapper
+# ---------------------------------------------------------
+#
+# Compute qGW(spC1, h1, spC2, h2). We also illustrate the use of auxiliary matrices
+# such that the adjacency matrices `C1_aux=C1` and `C2_aux=C2` to partition the graph using
+# Louvain algorithm, and the Pagerank algorithm for selecting representant within
+# each partition. Notice that `C1_aux` and `C2_aux` are optional, if they are not
+# specified these pre-processing algorithms will be applied to spC2 and spC3.
+
+
+# no node features are considered on this synthetic dataset. Hence we simply
+# let F1, F2 = None and set alpha = 1.
+OT_global, OTs_local, OT, log = quantized_fused_gromov_wasserstein(
+    spC1, spC2, npart_1, npart_2, h1, h2, C1_aux=C1, C2_aux=C2, F1=None, F2=None,
+    alpha=1., part_method=part_method, rep_method=rep_method, log=True)
+
+qGW_dist = log['qFGW_dist']
+
+
+#############################################################################
+#
+# Visualization of the quantized Gromov-Wasserstein matching
+# --------------------------------------------------------------
+#
+# We color nodes of the graph based on the respective partition of each graph.
+# On the first plot we illustrate the qGW matching between both shortest path matrices.
+# While the GW matching across representants of each space is illustrated on the right.
 
 
 def draw_transp_colored_qGW(
@@ -211,7 +334,7 @@ def draw_transp_colored_qGW(
         shiftx=0, seed=seed_G1, highlight_rep=highlight_rep)
     pos2 = draw_graph(
         G2, C2, nodes_color_part2, rep_indices2, pos=pos2, node_size=node_size,
-        shiftx=shiftx, seed=seed_G2, highlight_rep=highlight_rep)
+        shiftx=shiftx, seed=seed_G1, highlight_rep=highlight_rep)
 
     if not highlight_rep:
         for k1, v1 in pos1.items():
@@ -235,33 +358,91 @@ def draw_transp_colored_qGW(
     return pos1, pos2
 
 
-node_size = 40
-fontsize = 10
-seed_G2 = 0
-seed_G3 = 3
-
-part2_ = part2.astype(np.int32)
-part3_ = part3.astype(np.int32)
-
-pl.figure(1, figsize=(8, 3))
+pl.figure(2, figsize=(6, 2))
 pl.clf()
 pl.axis('off')
 pl.subplot(1, 2, 1)
-pl.title(r'qGW$(\mathbf{spC_2}, \mathbf{spC_3}) =%s$' % (np.round(qGW_dist, 3)), fontsize=fontsize)
+pl.title(r'qGW$(\mathbf{spC_1}, \mathbf{spC_1}) =%s$' % (np.round(qGW_dist, 3)), fontsize=fontsize)
 
 pos1, pos2 = draw_transp_colored_qGW(
-    weightedG2, C2, weightedG3, C3, part2_, part3_, rep_indices2, rep_indices3,
-    T=OT_, shiftx=1.5, node_size=node_size, seed_G1=seed_G2, seed_G2=seed_G3)
+    weightedG1, C1, weightedG2, C2, part1_, part2_, rep_indices1, rep_indices2,
+    T=OT_, shiftx=1.5, node_size=node_size, seed_G1=seed_G1, seed_G2=seed_G2)
 
 pl.tight_layout()
 
 pl.subplot(1, 2, 2)
-pl.title(r' GW$(\mathbf{CR_2}, \mathbf{CR_3}) =%s$' % (np.round(log_['gw_dist_CR'], 3)), fontsize=fontsize)
+pl.title(r' GW$(\mathbf{CR_1}, \mathbf{CR_2}) =%s$' % (np.round(log_['global dist'], 3)), fontsize=fontsize)
 
 pos1, pos2 = draw_transp_colored_qGW(
-    weightedG2, C2, weightedG3, C3, part2_, part3_, rep_indices2, rep_indices3,
-    T=OT_global, shiftx=1.5, node_size=node_size, seed_G1=seed_G2, seed_G2=seed_G3,
+    weightedG1, C1, weightedG2, C2, part1_, part2_, rep_indices1, rep_indices2,
+    T=OT_global, shiftx=1.5, node_size=node_size, seed_G1=seed_G1, seed_G2=seed_G2,
     highlight_rep=True)
 
 pl.tight_layout()
 pl.show()
+
+#############################################################################
+#
+# Generate attributed point clouds
+# --------------------------------------------------------------------------
+#
+# Create two attributed point clouds representing curves in 2D and 3D respectively,
+# whose samples are further associated to various color intensities.
+
+n_samples = 100
+
+# Generate 2D and 3D curves
+theta = np.linspace(-4 * np.pi, 4 * np.pi, n_samples)
+z = np.linspace(1, 2, n_samples)
+r = z**2 + 1
+x = r * np.sin(theta)
+y = r * np.cos(theta)
+
+# Source and target distribution across spaces encoded respectively via their
+# squared euclidean distance matrices.
+
+X = np.concatenate([x.reshape(-1, 1), z.reshape(-1, 1)], axis=1)
+Y = np.concatenate([x.reshape(-1, 1), y.reshape(-1, 1), z.reshape(-1, 1)], axis=1)
+
+# Further associated to color intensity features derived from z
+
+FX = z - z.min() / (z.max() - z.min())
+FX = np.clip(0.8 * FX + 0.2, a_min=0.2, a_max=1.)  # for numerical issues
+FY = FX
+
+# Plot the source and target samples as distributions
+pl.figure(3, figsize=(8, 5))
+pl.clf()
+pl.axis('off')
+pl.subplot(1, 2, 1)
+pl.title("2D curve (source)")
+
+pl.scatter(X[:, 0], X[:, 1], color="blue", alpha=FX, linewidth=6)
+pl.tick_params(left=False, right=False, labelleft=False,
+               labelbottom=False, bottom=False)
+
+ax = pl.subplot(1, 2, 2, projection='3d')
+ax.set_title("3D curve (target)")
+
+ax.scatter(Y[:, 0], Y[:, 1], Y[:, 2], c='red', alpha=FY, linewidth=6)
+ax.tick_params(left=False, right=False, labelleft=False,
+               labelbottom=False, bottom=False)
+ax.view_init(15, -50)
+
+pl.tight_layout()
+pl.show()
+
+
+#############################################################################
+#
+# Compute the quantized Fused Gromov-Wasserstein distance between samples using the wrapper
+# ---------------------------------------------------------
+#
+# Compute qFGW(X, FX, hX, Y, FY, HY), setting the trade-off parameter between
+# structures and features `alpha=0.5`. This solver considers a squared euclidean structure
+# for each distribution X and Y, and partition each of them into 4 clusters using
+# the K-means algorithm before computing qFGW.
+
+T_global, Ts_local, T, log = quantized_fused_gromov_wasserstein_samples(
+    X, Y, 4, 4, p=None, q=None, F1=FX[:, None], F2=FY[:, None], alpha=0.5,
+    method='kmeans', log=True)
