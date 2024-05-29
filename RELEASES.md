@@ -8,6 +8,7 @@
 + Continuous entropic mapping (PR #613)
 + New general unbalanced solvers for `ot.solve` and BFGS solver and illustrative example (PR #620)
 + Add gradient computation with envelope theorem to sinkhorn solver of `ot.solve` with `grad='envelope'` (PR #605).
++ Added support for [Low rank Gromov-Wasserstein](https://proceedings.mlr.press/v162/scetbon22b/scetbon22b.pdf) with `ot.gromov.lowrank_gromov_wasserstein_samples` (PR #614)
 
 #### Closed issues
 - Fix gpu compatibility of sr(F)GW solvers when `G0 is not None`(PR #596)
