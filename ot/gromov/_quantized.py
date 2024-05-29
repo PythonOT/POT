@@ -135,7 +135,7 @@ def quantized_fused_gromov_wasserstein_partitioned(
 
     References
     ----------
-    .. [67] Chowdhury, S., Miller, D., & Needham, T. (2021).
+    .. [68] Chowdhury, S., Miller, D., & Needham, T. (2021).
         Quantized gromov-wasserstein. ECML PKDD 2021. Springer International Publishing.
 
     """
@@ -267,7 +267,7 @@ def get_graph_partition(C, npart, part_method='random', F=None, alpha=1.,
 
     References
     ----------
-    .. [67] Chowdhury, S., Miller, D., & Needham, T. (2021).
+    .. [68] Chowdhury, S., Miller, D., & Needham, T. (2021).
         Quantized gromov-wasserstein. ECML PKDD 2021. Springer International Publishing.
 
     """
@@ -363,7 +363,7 @@ def get_graph_representants(C, part, rep_method='pagerank', random_state=0, nx=N
 
     References
     ----------
-    .. [67] Chowdhury, S., Miller, D., & Needham, T. (2021).
+    .. [68] Chowdhury, S., Miller, D., & Needham, T. (2021).
         Quantized gromov-wasserstein. ECML PKDD 2021. Springer International Publishing.
 
     """
@@ -451,7 +451,7 @@ def format_partitioned_graph(C, p, part, rep_indices, F=None, M=None,
 
     References
     ----------
-    .. [67] Chowdhury, S., Miller, D., & Needham, T. (2021).
+    .. [68] Chowdhury, S., Miller, D., & Needham, T. (2021).
         Quantized gromov-wasserstein. ECML PKDD 2021. Springer International Publishing.
 
     """
@@ -622,7 +622,7 @@ def quantized_fused_gromov_wasserstein(
 
     References
     ----------
-    .. [67] Chowdhury, S., Miller, D., & Needham, T. (2021).
+    .. [68] Chowdhury, S., Miller, D., & Needham, T. (2021).
         Quantized gromov-wasserstein. ECML PKDD 2021. Springer International Publishing.
 
     """
@@ -793,7 +793,7 @@ def get_partition_and_representants_samples(
 
     References
     ----------
-    .. [67] Chowdhury, S., Miller, D., & Needham, T. (2021).
+    .. [68] Chowdhury, S., Miller, D., & Needham, T. (2021).
         Quantized gromov-wasserstein. ECML PKDD 2021. Springer International Publishing.
 
     """
@@ -895,7 +895,7 @@ def format_partitioned_samples(
 
     References
     ----------
-    .. [67] Chowdhury, S., Miller, D., & Needham, T. (2021).
+    .. [68] Chowdhury, S., Miller, D., & Needham, T. (2021).
         Quantized gromov-wasserstein. ECML PKDD 2021. Springer International Publishing.
 
     """
@@ -1052,7 +1052,7 @@ def quantized_fused_gromov_wasserstein_samples(
 
     References
     ----------
-    .. [67] Chowdhury, S., Miller, D., & Needham, T. (2021).
+    .. [68] Chowdhury, S., Miller, D., & Needham, T. (2021).
         Quantized gromov-wasserstein. ECML PKDD 2021. Springer International Publishing.
 
     """

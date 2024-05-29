@@ -5,7 +5,7 @@ Quantized Fused Gromov-Wasserstein examples
 ===============================================
 
 These examples show how to use the quantized (Fused) Gromov-Wasserstein
-solvers (qFGW) [66]. POT provides a generic solver `quantized_fused_gromov_wasserstein_partitioned`
+solvers (qFGW) [68]. POT provides a generic solver `quantized_fused_gromov_wasserstein_partitioned`
 that takes as inputs partitioned graphs potentially endowed with node features,
 which have to be built by the user. On top of that, POT provides two wrappers:
     i) `quantized_fused_gromov_wasserstein` operating over generic graphs, whose
@@ -35,7 +35,7 @@ We illustrate next how to compute the qGW distance on both types of data by:
     Then we compute the qFGW distance between these attributed point clouds.
 
 
-[66] Chowdhury, S., Miller, D., & Needham, T. (2021). Quantized gromov-wasserstein.
+[68] Chowdhury, S., Miller, D., & Needham, T. (2021). Quantized gromov-wasserstein.
 ECML PKDD 2021. Springer International Publishing.
 """
 
@@ -164,7 +164,7 @@ def draw_graph(G, C, nodes_color_part, rep_indices, node_alphas=None, pos=None,
         if node_alphas is None:
             alpha = 0.9
             if highlight_rep:
-                alpha = 0.9 if node in rep_indices else 0.2
+                alpha = 0.9 if node in rep_indices else 0.1
 
         else:
             alpha = node_alphas[node]
@@ -498,8 +498,18 @@ T_global, Ts_local, T, log = quantized_fused_gromov_wasserstein_samples(
     method='kmeans', log=True)
 
 # Plot low rank GW with different ranks
-pl.figure(5, figsize=(3, 3))
-pl.title('OT matrix')
+pl.figure(5, figsize=(6, 3))
+pl.subplot(1, 2, 1)
+pl.title('OT between distributions')
 pl.imshow(T, interpolation="nearest", aspect="auto")
+pl.colorbar()
 pl.axis('off')
+
+pl.subplot(1, 2, 2)
+pl.title('OT between representants')
+pl.imshow(T_global, interpolation="nearest", aspect="auto")
+pl.axis('off')
+pl.colorbar()
+
+pl.tight_layout()
 pl.show()
