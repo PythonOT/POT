@@ -42,7 +42,6 @@ def test_quantized_gw(nx):
         count_mode = 0
 
         for part_method, rep_method in pairs_part_rep:
-            print(part_method, rep_method)
             log_ = log_tests[count_mode]
             count_mode += 1
 
@@ -189,6 +188,10 @@ def test_quantized_fgw(nx):
             ot.gromov.get_graph_partition(
                 C1b, npart1, part_method=method, random_state=0)
 
+    with pytest.raises(ValueError):
+        ot.gromov.get_graph_partition(
+            C1b, npart1, part_method=method, alpha=0.5, F=None, random_state=0)
+
     # tests for edge cases of the representant selection
     with pytest.raises(ValueError):
         ot.gromov.get_graph_representants(
@@ -214,8 +217,8 @@ def test_quantized_fgw(nx):
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 def test_quantized_gw_samples(nx):
-    n_samples_1 = 20  # nb samples
-    n_samples_2 = 30  # nb samples
+    n_samples_1 = 15  # nb samples
+    n_samples_2 = 20  # nb samples
 
     rng = np.random.RandomState(0)
     X1 = rng.uniform(low=0., high=10, size=(n_samples_1, 2))
@@ -269,6 +272,11 @@ def test_quantized_gw_samples(nx):
                 # on the different float errors across backend
                 if key in logb.keys():
                     np.testing.assert_allclose(log[key], logb[key], atol=1e-06)
+
+    # tests for edge cases of the representant selection
+    with pytest.raises(ValueError):
+        ot.gromov.get_partition_and_representants_samples(
+            X1, npart1, method='unknown_method', random_state=0)
 
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
@@ -357,3 +365,13 @@ def test_quantized_fgw_samples(nx):
     for key in Ts_localb.keys():
         T_localb = nx.to_numpy(Ts_localb[key])
         np.testing.assert_allclose(Ts_local[key], T_localb, atol=1e-06)
+
+    # tests for edge cases of the format_partitioned_graph function
+    with pytest.raises(ValueError):
+        CR1b, list_R1b, list_p1b, FR1b = ot.gromov.format_partitioned_samples(
+            X1b, pb, part1b, rep_indices1, None, alpha)
+
+    # for non-consistent feature information provided
+    with pytest.raises(ValueError):
+        ot.gromov.quantized_fused_gromov_wasserstein_samples(
+            X1, X2, npart1, npart2, p, None, None, F2, alpha, 'fused_spectral', log_)

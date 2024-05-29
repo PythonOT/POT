@@ -922,10 +922,7 @@ def format_partitioned_samples(
 
     for id_, part_id in enumerate(part_ids):
         indices = nx.where(part == part_id)[0]
-        if alpha != 0:
-            structure_R = dist(X[indices], X[rep_indices[id_]][None, :])
-        else:
-            structure_R = 0.
+        structure_R = dist(X[indices], X[rep_indices[id_]][None, :])
 
         if alpha != 1:
             features_R = dist(F[indices], F[rep_indices[id_]][None, :])
@@ -1101,7 +1098,6 @@ def quantized_fused_gromov_wasserstein_samples(
         X1_new, npart1, method_, random_state, nx)
     part2, rep_indices2 = get_partition_and_representants_samples(
         X2_new, npart2, method_, random_state, nx)
-
     # format partitions over (C1, F1) and (C2, F2)
 
     if (F1 is None) and (F2 is None):
@@ -1132,12 +1128,9 @@ def quantized_fused_gromov_wasserstein_samples(
         C1 = dist(X1, X1)
         C2 = dist(X2, X2)
 
-        if alpha != 0.:
-            # compute the transport cost on structures
-            constC, hC1, hC2 = init_matrix(C1, C2, p, q, 'square_loss', nx)
-            structure_cost = gwloss(constC, hC1, hC2, T, nx)
-        else:
-            structure_cost = 0.
+        # compute the transport cost on structures
+        constC, hC1, hC2 = init_matrix(C1, C2, p, q, 'square_loss', nx)
+        structure_cost = gwloss(constC, hC1, hC2, T, nx)
 
         if alpha != 1.:
             M = dist(F1, F2)
