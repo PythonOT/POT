@@ -50,6 +50,16 @@ from ._dictionary import (gromov_wasserstein_dictionary_learning,
 from ._lowrank import (_flat_product_operator, lowrank_gromov_wasserstein_samples)
 
 
+from ._quantized import (quantized_fused_gromov_wasserstein_partitioned,
+                         get_graph_partition,
+                         get_graph_representants,
+                         format_partitioned_graph,
+                         quantized_fused_gromov_wasserstein,
+                         get_partition_and_representants_samples,
+                         format_partitioned_samples,
+                         quantized_fused_gromov_wasserstein_samples
+                         )
+
 __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad', 'update_square_loss',
            'update_kl_loss', 'update_feature_matrix', 'init_matrix_semirelaxed',
            'gromov_wasserstein', 'gromov_wasserstein2', 'fused_gromov_wasserstein',
@@ -66,4 +76,8 @@ __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad', 'update_square_
            'entropic_semirelaxed_gromov_wasserstein2', 'entropic_semirelaxed_fused_gromov_wasserstein',
            'entropic_semirelaxed_fused_gromov_wasserstein2', 'gromov_wasserstein_dictionary_learning',
            'gromov_wasserstein_linear_unmixing', 'fused_gromov_wasserstein_dictionary_learning',
-           'fused_gromov_wasserstein_linear_unmixing', 'lowrank_gromov_wasserstein_samples']
+           'fused_gromov_wasserstein_linear_unmixing', 'lowrank_gromov_wasserstein_samples',
+           'quantized_fused_gromov_wasserstein_partitioned', 'get_graph_partition',
+           'get_graph_representants', 'format_partitioned_graph',
+           'quantized_fused_gromov_wasserstein', 'get_partition_and_representants_samples',
+           'format_partitioned_samples', 'quantized_fused_gromov_wasserstein_samples']
