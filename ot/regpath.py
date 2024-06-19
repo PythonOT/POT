@@ -762,7 +762,7 @@ def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
         active_index.append(i * m + j)
     gamma_list = []
     t_list = []
-    current_gamma = np.Inf
+    current_gamma = np.inf
     augmented_H0 = construct_augmented_H(active_index, m, Hc, HrHr)
     add_col = np.array([])
     id_pop = -1
