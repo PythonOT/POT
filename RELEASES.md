@@ -3,10 +3,13 @@
 ## 0.9.4dev
 
 #### New features
++ NumPy 2.0 support is added (PR #629)
++ New quantized FGW solvers `ot.gromov.quantized_fused_gromov_wasserstein`, `ot.gromov.quantized_fused_gromov_wasserstein_samples` and `ot.gromov.quantized_fused_gromov_wasserstein_partitioned` (PR #603)
 + `ot.gromov._gw.solve_gromov_linesearch` now has an argument to specify if the matrices are symmetric in which case the computation can be done faster (PR #607).
 + Continuous entropic mapping (PR #613)
 + New general unbalanced solvers for `ot.solve` and BFGS solver and illustrative example (PR #620)
 + Add gradient computation with envelope theorem to sinkhorn solver of `ot.solve` with `grad='envelope'` (PR #605).
++ Added support for [Low rank Gromov-Wasserstein](https://proceedings.mlr.press/v162/scetbon22b/scetbon22b.pdf) with `ot.gromov.lowrank_gromov_wasserstein_samples` (PR #614)
 
 #### Closed issues
 - Fix gpu compatibility of sr(F)GW solvers when `G0 is not None`(PR #596)

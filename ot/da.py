@@ -497,7 +497,7 @@ class BaseTransport(BaseEstimator):
 
             if (ys is not None) and (yt is not None):
 
-                if self.limit_max != np.infty:
+                if self.limit_max != np.inf:
                     self.limit_max = self.limit_max * nx.max(self.cost_)
 
                 # missing_labels is a (ns, nt) matrix of {0, 1} such that
@@ -519,7 +519,7 @@ class BaseTransport(BaseEstimator):
                     cost_correction = label_match * missing_labels * self.limit_max
                 # this operation is necessary because 0 * Inf = NAN
                 # thus is irrelevant when limit_max is finite
-                cost_correction = nx.nan_to_num(cost_correction, -np.infty)
+                cost_correction = nx.nan_to_num(cost_correction, -np.inf)
                 self.cost_ = nx.maximum(self.cost_, cost_correction)
 
             # distribution estimation
@@ -1067,7 +1067,7 @@ class SinkhornTransport(BaseTransport):
         method from :ref:`[66]
         <references-sinkhorntransport>` and :ref:`[19]
         <references-sinkhorntransport>`.
-    limit_max: float, optional (default=np.infty)
+    limit_max: float, optional (default=np.inf)
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit an cost defined
         by this variable
@@ -1109,7 +1109,7 @@ class SinkhornTransport(BaseTransport):
                  tol=10e-9, verbose=False, log=False,
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='continuous', limit_max=np.infty):
+                 out_of_sample_map='continuous', limit_max=np.inf):
 
         if out_of_sample_map not in ['ferradans', 'continuous']:
             raise ValueError('Unknown out_of_sample_map method')
@@ -1417,7 +1417,7 @@ class SinkhornLpl1Transport(BaseTransport):
         The kind of out of sample mapping to apply to transport samples
         from a domain into another one. Currently the only possible option is
         "ferradans" which uses the method proposed in :ref:`[6] <references-sinkhornlpl1transport>`.
-    limit_max: float, optional (default=np.infty)
+    limit_max: float, optional (default=np.inf)
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit a cost defined by
         limit_max.
@@ -1450,7 +1450,7 @@ class SinkhornLpl1Transport(BaseTransport):
                  tol=10e-9, verbose=False,
                  metric="sqeuclidean", norm=None,
                  distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='ferradans', limit_max=np.infty):
+                 out_of_sample_map='ferradans', limit_max=np.inf):
         self.reg_e = reg_e
         self.reg_cl = reg_cl
         self.max_iter = max_iter
