@@ -3,6 +3,7 @@
 ## 0.9.4dev
 
 #### New features
++ NumPy 2.0 support is added (PR #629)
 + New quantized FGW solvers `ot.gromov.quantized_fused_gromov_wasserstein`, `ot.gromov.quantized_fused_gromov_wasserstein_samples` and `ot.gromov.quantized_fused_gromov_wasserstein_partitioned` (PR #603)
 + `ot.gromov._gw.solve_gromov_linesearch` now has an argument to specify if the matrices are symmetric in which case the computation can be done faster (PR #607).
 + Continuous entropic mapping (PR #613)
