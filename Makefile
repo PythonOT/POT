@@ -85,7 +85,7 @@ aautopep8 :
 	autopep8 -air test ot examples --jobs -1
 	
 wheels :
-	CIBW_BEFORE_BUILD="pip install numpy cython" cibuildwheel --platform linux --output-dir dist
+	cibuildwheel --platform linux --output-dir dist
 
 dist : wheels
 	$(PYTHON) setup.py sdist
