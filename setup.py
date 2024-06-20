@@ -78,7 +78,7 @@ setup(
         'backend-jax': ['jax<=0.4.24', 'jaxlib<=0.4.24'],
         'backend-cupy': [], # should be installed with conda, not pip, or figure out what CUDA version above.
         'backend-tf': ['tensorflow'],
-        'backend-torch': ['torch_geometric'],
+        'backend-torch': ['torch'],
         'cvxopt': ['cvxopt'], # on it's own to prevent accidental GPL violations
         'dr': ['scikit-learn', 'pymanopt', 'autograd'],
         'gnn': ['torch', 'torch_geometric'],
