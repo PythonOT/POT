@@ -15,7 +15,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install POT
       run: |
-        python3.10 -m pip install  --ignore-installed -e .
+        python3.10 -m pip install --upgrade pip setuptools
+        python3.10 -m pip install --ignore-installed -e .
     - name: Run tests
       run: |
         python3.10 -m pytest --durations=20 -v test/ ot/ --doctest-modules --color=yes --ignore=test/test_dr.py --ignore=ot.dr --ignore=ot.plot
