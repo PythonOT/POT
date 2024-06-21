@@ -808,13 +808,19 @@ def gromov_barycenters(
     if stop_criterion not in ['barycenter', 'loss']:
         raise ValueError(f"Unknown `stop_criterion='{stop_criterion}'`. Use one of: {'barycenter', 'loss'}.")
 
-    Cs = list_to_array(*Cs)
+    if isinstance(Cs[0], list):
+        raise ValueError("Deprecated feature in POT 0.9.4: structures Cs[i] are lists and should be arrays from a supported backend (e.g numpy).")
+
     arr = [*Cs]
     if ps is not None:
-        arr += list_to_array(*ps)
+        if isinstance(ps[0], list):
+            raise ValueError("Deprecated feature in POT 0.9.4: weights ps[i] are lists and should be arrays from a supported backend (e.g numpy).")
+
+        arr += [*ps]
     else:
         ps = [unif(C.shape[0], type_as=C) for C in Cs]
     if p is not None:
+
         arr.append(list_to_array(p))
     else:
         p = unif(N, type_as=Cs[0])
@@ -1014,11 +1020,15 @@ def fgw_barycenters(
     if stop_criterion not in ['barycenter', 'loss']:
         raise ValueError(f"Unknown `stop_criterion='{stop_criterion}'`. Use one of: {'barycenter', 'loss'}.")
 
-    Cs = list_to_array(*Cs)
-    Ys = list_to_array(*Ys)
+    if isinstance(Cs[0], list) or isinstance(Ys[0], list):
+        raise ValueError("Deprecated feature in POT 0.9.4: structures Cs[i] and/or features Ys[i] are lists and should be arrays from a supported backend (e.g numpy).")
+
     arr = [*Cs, *Ys]
     if ps is not None:
-        arr += list_to_array(*ps)
+        if isinstance(ps[0], list):
+            raise ValueError("Deprecated feature in POT 0.9.4: weights ps[i] are lists and should be arrays from a supported backend (e.g numpy).")
+
+        arr += [*ps]
     else:
         ps = [unif(C.shape[0], type_as=C) for C in Cs]
     if p is not None:
