@@ -46,7 +46,7 @@ if sys.platform.startswith('darwin'):
     sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path'])
     os.environ['CFLAGS'] = '-isysroot "{}"'.format(sdk_path.rstrip().decode("utf-8"))
 
-with open('requirements_opt.txt') as f:
+with open('requirements_all.txt') as f:
     optional_requirements = f.read().splitlines()
 
 setup(
