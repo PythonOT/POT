@@ -19,6 +19,7 @@
 - Fix a sign error regarding the gradient of `ot.gromov._gw.fused_gromov_wasserstein2` and `ot.gromov._gw.gromov_wasserstein2` for the kl loss (PR #610)
 - Fix same sign error for sr(F)GW conditional gradient solvers (PR #611)
 - Split `test/test_gromov.py` into `test/gromov/` (PR #619)
+- Fix (F)GW barycenter functions to support computing barycenter on 1 input + deprecate structures as lists (PR #628)
 
 ## 0.9.3
 *January 2024*
