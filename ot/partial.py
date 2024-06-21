@@ -4,12 +4,13 @@ Partial OT solvers
 """
 
 # Author: Laetitia Chapel <laetitia.chapel@irisa.fr>
+#             Yikun Bai < yikun.bai@vanderbilt.edu >
+#             Cédric Vincent-Cuaz <cedvincentcuaz@gmail.com>
+
 from .utils import list_to_array
 from .backend import get_backend
 from .lp import emd
 import numpy as np
-Yikun Bai < yikun.bai @ vanderbilt.edu >
-Cédric Vincent - Cuaz < cedvincentcuaz @ gmail.com >
 
 # License: MIT License
 
