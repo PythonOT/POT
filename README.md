@@ -113,6 +113,12 @@ or get the very latest version by running:
 pip install -U https://github.com/PythonOT/POT/archive/master.zip # with --user for user install (no root)
 ```
 
+Optional dependencies may be installed with
+```console
+pip install POT[all]
+```
+Note that this installs `cvxopt`, which is licensed under GPL 3.0. Alternatively, if you cannot use GPL-licensed software, the specific optional dependencies may be installed individually, or per-submodule. The available optional installations are `backend-jax, backend-tf, backend-torch, cvxopt, dr, gnn, all`.
+
 #### Anaconda installation with conda-forge
 
 If you use the Anaconda python distribution, POT is available in [conda-forge](https://conda-forge.org). To install it and the required dependencies:

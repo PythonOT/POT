@@ -373,8 +373,10 @@ def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, al
     elif sim == 'knn':
         if sim_param is None:
             sim_param = 3
-
-        from sklearn.neighbors import kneighbors_graph
+        try:
+            from sklearn.neighbors import kneighbors_graph
+        except ImportError:
+            raise ValueError('scikit-learn must be installed to use knn similarity. Install with `$pip install scikit-learn`.')
 
         sS = nx.from_numpy(kneighbors_graph(
             X=nx.to_numpy(xs), n_neighbors=int(sim_param)
