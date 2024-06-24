@@ -982,7 +982,7 @@ def test_sinkhorn_lpl1_vectorization(nx):
         W = nx.repeat(transp.T[:, :, None], n_labels, axis=2) * unroll_labels_idx[None, :, :]
         W = nx.sum(W, axis=1)
         W = p * ((W + epsilon) ** (p - 1))
-        W = W @ unroll_labels_idx.T
+        W = nx.dot(W, unroll_labels_idx.T)
         return W.T
 
     assert np.allclose(unvectorized(T), vectorized(T))

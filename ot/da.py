@@ -139,7 +139,7 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
         # check if classes are really separated
         W = nx.repeat(transp.T[:, :, None], n_labels, axis=2) * unroll_labels_idx[None, :, :]
         W = nx.sum(W, axis=1)
-        W = W @ unroll_labels_idx.T
+        W = nx.dot(W, unroll_labels_idx.T)
         W = p * ((W.T + epsilon) ** (p - 1))
 
     if log:
