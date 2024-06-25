@@ -120,6 +120,7 @@ if not os.environ.get(DISABLE_JAX_KEY, False):
         import jax.scipy.special as jspecial
         from jax.lib import xla_bridge
         jax_type = jax.numpy.ndarray
+        jax_new_version = float('.'.join(jax.__version__.split('.')[:2])) > 4.24
     except ImportError:
         jax = False
         jax_type = float
@@ -1439,11 +1440,19 @@ class JaxBackend(Backend):
                 jax.device_put(jnp.array(1, dtype=jnp.float64), d)
             ]
 
+        self.jax_new_version = jax_new_version
+
     def _to_numpy(self, a):
         return np.array(a)
 
+    def _get_device(self, a):
+        if self.jax_new_version:
+            return a.addressable_data(0)
+        else:
+            return a.device_buffer.device()
+
     def _change_device(self, a, type_as):
-        return jax.device_put(a, type_as.device_buffer.device())
+        return jax.device_put(a, self.get_device(type_as))
 
     def _from_numpy(self, a, type_as=None):
         if isinstance(a, float):
