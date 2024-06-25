@@ -29,6 +29,7 @@ From a maintenance point of view, we now have a new option to install optional d
 - Fix line-search in partial GW and change default init to the interior of partial transport plans (PR #602)
 - Fix `ot.da.sinkhorn_lpl1_mm` compatibility with JAX (PR #592)
 - Fiw linesearch import error on Scipy 1.14 (PR #642, Issue #641)
+- Upgrade supported JAX versions from jax<=0.4.24 to jax<=0.4.30 (PR #643)
 
 ## 0.9.3
 *January 2024*
