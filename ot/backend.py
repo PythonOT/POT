@@ -128,6 +128,8 @@ else:
     jax = False
     jax_type = float
 
+jax_new_version = True
+
 if not os.environ.get(DISABLE_CUPY_KEY, False):
     try:
         import cupy as cp
@@ -1697,7 +1699,10 @@ class JaxBackend(Backend):
         return jnp.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
 
     def dtype_device(self, a):
-        return a.dtype, a.device_buffer.device()
+        if self.jax_new_version:
+            return a.dtype, list(a.devices())[0]
+        else:
+            return a.dtype, a.device_buffer.device()
 
     def assert_same_dtype_device(self, a, b):
         a_dtype, a_device = self.dtype_device(a)
