@@ -304,9 +304,6 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1, c
     ot.optim.cg : General regularized OT
     """
 
-    if np.isnan(M).any():
-        raise ValueError('The loss matrix should not contain NaN values.')
-
     a, b, M = list_to_array(a, b, M)
     nx = get_backend(M, a, b)
 
@@ -329,6 +326,9 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1, c
     # convert to numpy
     M, a, b = nx.to_numpy(M, a, b)
 
+    if np.isnan(M).any():
+        raise ValueError('The loss matrix should not contain NaN values.')
+  
     # ensure float64
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
@@ -506,6 +506,9 @@ def emd2(a, b, M, processes=1,
 
     # convert to numpy
     M, a, b = nx.to_numpy(M, a, b)
+
+    if np.isnan(M).any():
+        raise ValueError('The loss matrix should not contain NaN values.')
 
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
