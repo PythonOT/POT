@@ -906,6 +906,7 @@ def test_fgw_barycenter(nx):
     np.testing.assert_allclose(C, Cb, atol=1e-06)
     np.testing.assert_allclose(X, Xb, atol=1e-06)
 
+
 # Related to issue 469
 def test_gromov2_nan_in_target_cost():
     # GIVEN - a target cost matrix with a NaN value
