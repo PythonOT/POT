@@ -6,8 +6,8 @@ pymanopt @ git+https://github.com/pymanopt/pymanopt.git@master
 cvxopt
 scikit-learn
 torch
-jax<=0.4.24
-jaxlib<=0.4.24
+jax
+jaxlib
 tensorflow
 pytest
 torch_geometric
