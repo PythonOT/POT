@@ -80,7 +80,7 @@ setup(
         'backend-tf': ['tensorflow'],
         'backend-torch': ['torch'],
         'cvxopt': ['cvxopt'], # on it's own to prevent accidental GPL violations
-        'dr': ['scikit-learn', 'pymanopt', 'autograd'],
+        'dr': ['scikit-learn', 'https://github.com/pymanopt/pymanopt/archive/master.zip', 'autograd'],
         'gnn': ['torch', 'torch_geometric'],
         'all': optional_requirements
     },
