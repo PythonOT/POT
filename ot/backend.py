@@ -1447,7 +1447,7 @@ class JaxBackend(Backend):
 
     def _get_device(self, a):
         if self.jax_new_version:
-            return a.devices()[0]
+            return list(a.devices())[0]
         else:
             return a.device_buffer.device()
 
@@ -1460,8 +1460,6 @@ class JaxBackend(Backend):
         if type_as is None:
             return jnp.array(a)
         else:
-            print(f'jnp.array(a) : {jnp.array(a)} ,', self._get_device(jnp.array(a)))
-            print(f'type_as: {type_as} ,', self._get_device(type_as))
             return self._change_device(jnp.array(a).astype(type_as.dtype), type_as)
 
     def set_gradients(self, val, inputs, grads):
