@@ -2,12 +2,12 @@ numpy>=1.20
 scipy>=1.6
 matplotlib
 autograd
-pymanopt
+https://github.com/pymanopt/pymanopt/archive/master.zip
 cvxopt
 scikit-learn
 torch
-jax<=0.4.24
-jaxlib<=0.4.24
+jax
+jaxlib
 tensorflow
 pytest
 torch_geometric
