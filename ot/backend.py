@@ -1447,7 +1447,7 @@ class JaxBackend(Backend):
 
     def _get_device(self, a):
         if self.jax_new_version:
-            return a.device()
+            return a.devices()[0]
         else:
             return a.device_buffer.device()
 
