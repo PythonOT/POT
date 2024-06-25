@@ -120,7 +120,7 @@ if not os.environ.get(DISABLE_JAX_KEY, False):
         import jax.scipy.special as jspecial
         from jax.lib import xla_bridge
         jax_type = jax.numpy.ndarray
-        jax_new_version = float('.'.join(jax.__version__.split('.')[:2])) > 4.24
+        jax_new_version = float('.'.join(jax.__version__.split('.')[1:])) > 4.24
     except ImportError:
         jax = False
         jax_type = float
