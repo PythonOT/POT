@@ -128,8 +128,6 @@ else:
     jax = False
     jax_type = float
 
-jax_new_version = True
-
 if not os.environ.get(DISABLE_CUPY_KEY, False):
     try:
         import cupy as cp
