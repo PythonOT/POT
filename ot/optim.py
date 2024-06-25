@@ -19,7 +19,7 @@ with warnings.catch_warnings():
     try:
         from scipy.optimize import scalar_search_armijo
     except ImportError:
-        from scipy.optimize.linesearch import scalar_search_armijo
+        from scipy.optimize._linesearch import scalar_search_armijo
 
 # The corresponding scipy function does not work for matrices
 

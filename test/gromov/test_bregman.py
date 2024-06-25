@@ -792,6 +792,46 @@ def test_entropic_fgw_barycenter(nx):
     np.testing.assert_allclose(C.shape, (n_samples, n_samples))
     np.testing.assert_allclose(Xb, init_Yb)
 
+    # test edge cases for fgw barycenters:
+    # C1 as list
+    with pytest.raises(ValueError):
+        C1_list = [list(c) for c in C1b]
+        _, _, _ = ot.gromov.entropic_fused_gromov_barycenters(
+            n_samples, [ysb], [C1_list], [p1b], lambdas=None,
+            fixed_structure=False, fixed_features=False,
+            init_Y=None, p=pb, max_iter=10, tol=1e-3,
+            warmstartT=True, log=True, random_state=98765, verbose=True
+        )
+
+    # p1, p2 as lists
+    with pytest.raises(ValueError):
+        p1_list = list(p1b)
+        p2_list = list(p2b)
+        _, _, _ = ot.gromov.entropic_fused_gromov_barycenters(
+            n_samples, [ysb, ytb], [C1b, C2b], [p1_list, p2_list], lambdas=[0.5, 0.5],
+            fixed_structure=False, fixed_features=False,
+            init_Y=None, p=pb, max_iter=10, tol=1e-3,
+            warmstartT=True, log=True, random_state=98765, verbose=True
+        )
+
+    # unique input structure
+    X, C = ot.gromov.entropic_fused_gromov_barycenters(
+        n_samples, [ys], [C1], [p1], lambdas=None,
+        fixed_structure=False, fixed_features=False,
+        init_Y=init_Y, p=p, max_iter=10, tol=1e-3,
+        warmstartT=True, log=False, random_state=98765, verbose=True
+    )
+
+    Xb, Cb = ot.gromov.entropic_fused_gromov_barycenters(
+        n_samples, [ysb], [C1b], [p1b], lambdas=None,
+        fixed_structure=False, fixed_features=False,
+        init_Y=init_Yb, p=pb, max_iter=10, tol=1e-3,
+        warmstartT=True, log=False, random_state=98765, verbose=True
+    )
+
+    np.testing.assert_allclose(C, Cb, atol=1e-06)
+    np.testing.assert_allclose(X, Xb, atol=1e-06)
+
 
 @pytest.mark.filterwarnings("ignore:divide")
 def test_gromov_entropic_barycenter(nx):
@@ -885,6 +925,41 @@ def test_gromov_entropic_barycenter(nx):
     np.testing.assert_allclose(Cb2_, Cb2b_, atol=1e-06)
     np.testing.assert_array_almost_equal(err2_['err'], nx.to_numpy(*err2b_['err']))
     np.testing.assert_allclose(Cb2b_.shape, (n_samples, n_samples))
+
+    # test edge cases for gw barycenters:
+    # C1 as list
+    with pytest.raises(ValueError):
+        C1_list = [list(c) for c in C1b]
+        _, _ = ot.gromov.entropic_gromov_barycenters(
+            n_samples, [C1_list], [p1b], pb, None, 'square_loss', 1e-3,
+            max_iter=10, tol=1e-3, warmstartT=True, verbose=True,
+            random_state=42, init_C=None, log=True
+        )
+
+    # p1, p2 as lists
+    with pytest.raises(ValueError):
+        p1_list = list(p1b)
+        p2_list = list(p2b)
+        _, _ = ot.gromov.entropic_gromov_barycenters(
+            n_samples, [C1b, C2b], [p1_list, p2_list], pb, None,
+            'kl_loss', 1e-3, max_iter=10, tol=1e-3, warmstartT=True,
+            verbose=True, random_state=42, init_Cb=None, log=True
+        )
+
+    # unique input structure
+    Cb = ot.gromov.entropic_gromov_barycenters(
+        n_samples, [C1], [p1], p, None, 'square_loss', 1e-3,
+        max_iter=10, tol=1e-3, warmstartT=True, verbose=True, random_state=42,
+        init_C=None, log=False)
+
+    Cbb = ot.gromov.entropic_gromov_barycenters(
+        n_samples, [C1b], [p1b], pb, [1.], 'square_loss', 1e-3,
+        max_iter=10, tol=1e-3, warmstartT=True, verbose=True,
+        random_state=42, init_Cb=None, log=False
+    )
+
+    np.testing.assert_allclose(Cb, Cbb, atol=1e-06)
+    np.testing.assert_allclose(Cbb.shape, (n_samples, n_samples))
 
 
 def test_not_implemented_solver():

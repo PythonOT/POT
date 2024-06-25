@@ -46,6 +46,9 @@ if sys.platform.startswith('darwin'):
     sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path'])
     os.environ['CFLAGS'] = '-isysroot "{}"'.format(sdk_path.rstrip().decode("utf-8"))
 
+with open('requirements_all.txt') as f:
+    optional_requirements = f.read().splitlines()
+
 setup(
     name='POT',
     version=__version__,
@@ -70,7 +73,18 @@ setup(
     scripts=[],
     data_files=[],
     install_requires=["numpy>=1.16", "scipy>=1.6"],
-    python_requires=">=3.6",
+    extras_require={
+        'backend-numpy': [], # in requirements.
+        'backend-jax': ['jax<=0.4.24', 'jaxlib<=0.4.24'],
+        'backend-cupy': [], # should be installed with conda, not pip, or figure out what CUDA version above.
+        'backend-tf': ['tensorflow'],
+        'backend-torch': ['torch'],
+        'cvxopt': ['cvxopt'], # on it's own to prevent accidental GPL violations
+        'dr': ['scikit-learn', 'pymanopt', 'autograd'],
+        'gnn': ['torch', 'torch_geometric'],
+        'all': optional_requirements
+    },
+    python_requires=">=3.7",
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
@@ -92,10 +106,11 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics',
         'Topic :: Scientific/Engineering :: Information Analysis',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
     ]
 )

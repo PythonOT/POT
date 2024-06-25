@@ -429,6 +429,40 @@ def test_gromov_barycenter(nx):
     np.testing.assert_array_almost_equal(err2_['err'], nx.to_numpy(*err2b_['err']))
     np.testing.assert_allclose(Cb2b_.shape, (n_samples, n_samples))
 
+    # test edge cases for gw barycenters:
+    # C1 as list
+    with pytest.raises(ValueError):
+        C1_list = [list(c) for c in C1]
+        _ = ot.gromov.gromov_barycenters(
+            n_samples, [C1_list], None, p, None, 'square_loss', max_iter=10,
+            tol=1e-3, stop_criterion=stop_criterion, verbose=False,
+            random_state=42
+        )
+
+    # p1, p2 as lists
+    with pytest.raises(ValueError):
+        p1_list = list(p1)
+        p2_list = list(p2)
+        _ = ot.gromov.gromov_barycenters(
+            n_samples, [C1, C2], [p1_list, p2_list], p, None, 'square_loss', max_iter=10,
+            tol=1e-3, stop_criterion=stop_criterion, verbose=False,
+            random_state=42
+        )
+
+    # unique input structure
+    Cb = ot.gromov.gromov_barycenters(
+        n_samples, [C1], None, p, None, 'square_loss', max_iter=10,
+        tol=1e-3, stop_criterion=stop_criterion, verbose=False,
+        random_state=42
+    )
+    Cbb = nx.to_numpy(ot.gromov.gromov_barycenters(
+        n_samples, [C1b], None, None, [1.], 'square_loss',
+        max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
+        verbose=False, random_state=42
+    ))
+    np.testing.assert_allclose(Cb, Cbb, atol=1e-06)
+    np.testing.assert_allclose(Cbb.shape, (n_samples, n_samples))
+
 
 def test_fgw(nx):
     n_samples = 20  # nb samples
@@ -815,7 +849,7 @@ def test_fgw_barycenter(nx):
         X, C, log = ot.gromov.fgw_barycenters(
             n_samples, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
             fixed_structure=False, fixed_features=False, p=p, loss_fun='kl_loss',
-            max_iter=100, tol=1e-3, stop_criterion=stop_criterion, init_C=C,
+            max_iter=10, tol=1e-3, stop_criterion=stop_criterion, init_C=C,
             init_X=X, warmstartT=True, random_state=12345, log=True
         )
 
@@ -823,7 +857,7 @@ def test_fgw_barycenter(nx):
         X, C, log = ot.gromov.fgw_barycenters(
             n_samples, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
             fixed_structure=False, fixed_features=False, p=p, loss_fun='kl_loss',
-            max_iter=100, tol=1e-3, stop_criterion=stop_criterion, init_C=C,
+            max_iter=10, tol=1e-3, stop_criterion=stop_criterion, init_C=C,
             init_X=X, warmstartT=True, random_state=12345, log=True, verbose=True
         )
         np.testing.assert_allclose(C.shape, (n_samples, n_samples))
@@ -832,6 +866,45 @@ def test_fgw_barycenter(nx):
     # test correspondance with utils function
     recovered_C = ot.gromov.update_kl_loss(p, lambdas, log['T'], [C1, C2])
     np.testing.assert_allclose(C, recovered_C)
+
+    # test edge cases for fgw barycenters:
+    # C1 as list
+    with pytest.raises(ValueError):
+        C1b_list = [list(c) for c in C1b]
+        _, _, _ = ot.gromov.fgw_barycenters(
+            n_samples, [ysb], [C1b_list], [p1b], None, 0.5,
+            fixed_structure=False, fixed_features=False, p=pb, loss_fun='square_loss',
+            max_iter=10, tol=1e-3, stop_criterion=stop_criterion, init_C=Cb,
+            init_X=Xb, warmstartT=True, random_state=12345, log=True, verbose=True
+        )
+
+    # p1, p2 as lists
+    with pytest.raises(ValueError):
+        p1_list = list(p1)
+        p2_list = list(p2)
+        _, _, _ = ot.gromov.fgw_barycenters(
+            n_samples, [ysb, ytb], [C1b, C2b], [p1_list, p2_list], None, 0.5,
+            fixed_structure=False, fixed_features=False, p=p, loss_fun='kl_loss',
+            max_iter=10, tol=1e-3, stop_criterion=stop_criterion, init_C=Cb,
+            init_X=Xb, warmstartT=True, random_state=12345, log=True, verbose=True
+        )
+
+    # unique input structure
+    X, C = ot.gromov.fgw_barycenters(
+        n_samples, [ys], [C1], [p1], None, 0.5,
+        fixed_structure=False, fixed_features=False, p=p, loss_fun='square_loss',
+        max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
+        warmstartT=True, random_state=12345, log=False, verbose=False
+    )
+    Xb, Cb = ot.gromov.fgw_barycenters(
+        n_samples, [ysb], [C1b], [p1b], [1.], 0.5,
+        fixed_structure=False, fixed_features=False, p=pb, loss_fun='square_loss',
+        max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
+        warmstartT=True, random_state=12345, log=False, verbose=False
+    )
+
+    np.testing.assert_allclose(C, Cb, atol=1e-06)
+    np.testing.assert_allclose(X, Xb, atol=1e-06)
 
 
 # Related to issue 469

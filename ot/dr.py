@@ -17,12 +17,15 @@ Dimension reduction with OT
 # License: MIT License
 
 from scipy import linalg
-import autograd.numpy as np
-from sklearn.decomposition import PCA
+try:
+    import autograd.numpy as np
+    from sklearn.decomposition import PCA
 
-import pymanopt
-import pymanopt.manifolds
-import pymanopt.optimizers
+    import pymanopt
+    import pymanopt.manifolds
+    import pymanopt.optimizers
+except ImportError:
+    raise ImportError("Missing dependency for ot.dr. Requires autograd, pymanopt, scikit-learn. You can install with install with 'pip install POT[dr]', or 'conda install autograd pymanopt scikit-learn'")
 
 from .bregman import sinkhorn as sinkhorn_bregman
 from .utils import dist as dist_utils, check_random_state
