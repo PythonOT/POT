@@ -2,7 +2,7 @@ numpy>=1.20
 scipy>=1.6
 matplotlib
 autograd
-pymanopt
+pymanopt @ git+https://github.com/pymanopt/pymanopt.git@master
 cvxopt
 scikit-learn
 torch
