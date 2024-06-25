@@ -1452,7 +1452,7 @@ class JaxBackend(Backend):
             return a.device_buffer.device()
 
     def _change_device(self, a, type_as):
-        return jax.device_put(a, self.get_device(type_as))
+        return jax.device_put(a, self._get_device(type_as))
 
     def _from_numpy(self, a, type_as=None):
         if isinstance(a, float):
