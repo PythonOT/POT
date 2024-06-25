@@ -61,7 +61,7 @@ POT provides the following Machine Learning related solvers:
 * [Linear OT mapping](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_linear_mapping.html) [14] and [Joint OT mapping estimation](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_mapping.html) [8].
 * [Wasserstein Discriminant Analysis](https://pythonot.github.io/auto_examples/others/plot_WDA.html) [11] (requires autograd + pymanopt).
 * [JCPOT algorithm for multi-source domain adaptation with target shift](https://pythonot.github.io/auto_examples/domain-adaptation/plot_otda_jcpot.html) [27].
-* [Graph Neural Network OT layers TFGW](https://pythonot.github.io/auto_examples/gromov/plot_gnn_TFGW.html) [52] and TW (OT-GNN) [53] 
+* [Graph Neural Network OT layers TFGW](https://pythonot.github.io/auto_examples/gromov/plot_gnn_TFGW.html) [52] and TW (OT-GNN) [53]
 
 Some other examples are available in the  [documentation](https://pythonot.github.io/auto_examples/index.html).
 
@@ -197,7 +197,7 @@ This toolbox has been created by
 * [Rémi Flamary](https://remi.flamary.com/)
 * [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
 
-It is currently maintained by 
+It is currently maintained by
 
 * [Rémi Flamary](https://remi.flamary.com/)
 * [Cédric Vincent-Cuaz](https://cedricvincentcuaz.github.io/)
@@ -368,3 +368,5 @@ distances between Gaussian distributions](https://hal.science/hal-03197398v2/fil
 [67] Scetbon, M., Peyré, G. & Cuturi, M. (2022). [Linear-Time Gromov-Wasserstein Distances using Low Rank Couplings and Costs](https://proceedings.mlr.press/v162/scetbon22b/scetbon22b.pdf). In International Conference on Machine Learning (ICML), 2022.
 
 [68] Chowdhury, S., Miller, D., & Needham, T. (2021). [Quantized gromov-wasserstein](https://link.springer.com/chapter/10.1007/978-3-030-86523-8_49). ECML PKDD 2021. Springer International Publishing.
+
+[69] Thual, A., Tran, H., Zemskova, T., Courty, N., Flamary, R., Dehaene, S. & Thirion, B. (2022). [Aligning individual brains with Fused Unbalanced Gromov-Wasserstein](https://proceedings.neurips.cc/paper_files/paper/2022/file/8906cac4ca58dcaf17e97a0486ad57ca-Paper-Conference.pdf). In Conference on Neural Information Processing Systems (NeurIPS).
