@@ -75,7 +75,7 @@ setup(
     install_requires=["numpy>=1.16", "scipy>=1.6"],
     extras_require={
         'backend-numpy': [], # in requirements.
-        'backend-jax': ['jax<=0.4.24', 'jaxlib<=0.4.24'],
+        'backend-jax': ['jax', 'jaxlib'],
         'backend-cupy': [], # should be installed with conda, not pip, or figure out what CUDA version above.
         'backend-tf': ['tensorflow'],
         'backend-torch': ['torch'],
