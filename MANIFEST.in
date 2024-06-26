@@ -1,6 +1,7 @@
 include README.md
 include RELEASES.md
 include LICENSE
+include requirements_all.txt
 include ot/lp/core.h
 include ot/lp/EMD.h
 include ot/lp/EMD_wrapper.cpp
