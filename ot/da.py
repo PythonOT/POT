@@ -122,14 +122,12 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
     p = 0.5
     epsilon = 1e-3
 
-    indices_labels = []
-    classes = nx.unique(labels_a)
-    for c in classes:
-        idxc, = nx.where(labels_a == c)
-        indices_labels.append(idxc)
+    labels_u, labels_idx = nx.unique(labels_a, return_inverse=True)
+    n_labels = labels_u.shape[0]
+    unroll_labels_idx = nx.eye(n_labels, type_as=M)[labels_idx]
 
     W = nx.zeros(M.shape, type_as=M)
-    for cpt in range(numItermax):
+    for _ in range(numItermax):
         Mreg = M + eta * W
         if log:
             transp, log = sinkhorn(a, b, Mreg, reg, numItermax=numInnerItermax,
@@ -137,13 +135,12 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
         else:
             transp = sinkhorn(a, b, Mreg, reg, numItermax=numInnerItermax,
                               stopThr=stopInnerThr)
-        # the transport has been computed. Check if classes are really
-        # separated
-        W = nx.ones(M.shape, type_as=M)
-        for (i, c) in enumerate(classes):
-            majs = nx.sum(transp[indices_labels[i]], axis=0)
-            majs = p * ((majs + epsilon) ** (p - 1))
-            W[indices_labels[i]] = majs
+        # the transport has been computed
+        # check if classes are really separated
+        W = nx.repeat(transp.T[:, :, None], n_labels, axis=2) * unroll_labels_idx[None, :, :]
+        W = nx.sum(W, axis=1)
+        W = nx.dot(W, unroll_labels_idx.T)
+        W = p * ((W.T + epsilon) ** (p - 1))
 
     if log:
         return transp, log
@@ -1925,7 +1922,7 @@ class MappingTransport(BaseEstimator):
                 transp = self.coupling_ / nx.sum(self.coupling_, 1)[:, None]
 
                 # set nans to 0
-                transp[~ nx.isfinite(transp)] = 0
+                transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
                 # compute transported samples
                 transp_Xs = nx.dot(transp, self.xt_)
@@ -2214,7 +2211,7 @@ class JCPOTTransport(BaseTransport):
                     transp = coupling / nx.sum(coupling, 1)[:, None]
 
                     # set nans to 0
-                    transp[~ nx.isfinite(transp)] = 0
+                    transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
                     # compute transported samples
                     transp_Xs.append(nx.dot(transp, self.xt_))
@@ -2238,7 +2235,7 @@ class JCPOTTransport(BaseTransport):
                     # transport the source samples
                     for coupling in self.coupling_:
                         transp = coupling / nx.sum(coupling, 1)[:, None]
-                        transp[~ nx.isfinite(transp)] = 0
+                        transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
                         transp_Xs_.append(nx.dot(transp, self.xt_))
 
                     transp_Xs_ = nx.concatenate(transp_Xs_, axis=0)
@@ -2291,7 +2288,7 @@ class JCPOTTransport(BaseTransport):
                 transp = self.coupling_[i] / nx.sum(self.coupling_[i], 1)[:, None]
 
                 # set nans to 0
-                transp[~ nx.isfinite(transp)] = 0
+                transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
                 if self.log:
                     D1 = self.log_['D1'][i]
@@ -2339,7 +2336,7 @@ class JCPOTTransport(BaseTransport):
                 transp = self.coupling_[i] / nx.sum(self.coupling_[i], 1)[:, None]
 
                 # set nans to 0
-                transp[~ nx.isfinite(transp)] = 0
+                transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
                 # compute propagated labels
                 transp_ys.append(nx.dot(D1, transp.T).T)

@@ -17,8 +17,9 @@ from .backend import get_backend
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
-        from scipy.optimize import scalar_search_armijo
-    except ImportError:
+        from scipy.optimize._linesearch import scalar_search_armijo
+    except ModuleNotFoundError:
+        # scipy<1.8.0
         from scipy.optimize.linesearch import scalar_search_armijo
 
 # The corresponding scipy function does not work for matrices
