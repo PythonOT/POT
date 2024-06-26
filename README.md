@@ -370,3 +370,7 @@ distances between Gaussian distributions](https://hal.science/hal-03197398v2/fil
 [68] Chowdhury, S., Miller, D., & Needham, T. (2021). [Quantized gromov-wasserstein](https://link.springer.com/chapter/10.1007/978-3-030-86523-8_49). ECML PKDD 2021. Springer International Publishing.
 
 [69] Thual, A., Tran, H., Zemskova, T., Courty, N., Flamary, R., Dehaene, S. & Thirion, B. (2022). [Aligning individual brains with Fused Unbalanced Gromov-Wasserstein](https://proceedings.neurips.cc/paper_files/paper/2022/file/8906cac4ca58dcaf17e97a0486ad57ca-Paper-Conference.pdf). In Conference on Neural Information Processing Systems (NeurIPS).
+
+[70] H. Tran, H. Janati, N. Courty, R. Flamary, I. Redko, P. Demetci and
+R. Singh. (2023). [Unbalanced Co-Optimal Transport](https://https://ojs.aaai.org/index.php/AAAI/article/view/26193). In AAAI Conference on
+Artificial Intelligence (AAAI).

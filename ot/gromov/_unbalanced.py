@@ -36,7 +36,7 @@ def fused_unbalanced_cross_spaces_divergence(
         &\quad \sum_{i,j,k,l}
         (\mathbf{X}_{i,k} - \mathbf{Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l} \\
         &+ \rho_s \mathbf{KL}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
-        + \rho_f \mathbf{KL}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
+        + \rho_f \mathbf{KL}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w}_{xf} \mathbf{w}_{yf}^T) \\
         &+ \alpha_s \sum_{i,j} \mathbf{P}_{i,j} \mathbf{M^{(s)}}_{i, j}
         + \alpha_f \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{M^{(f)}}_{k, l}
         + \mathbf{Reg}(\mathbf{P}, \mathbf{Q})
@@ -147,6 +147,7 @@ def fused_unbalanced_cross_spaces_divergence(
         Feature coupling matrix.
     log : dictionary, optional
         Returned if `log` is True. The keys are:
+            error : list of L1 norms between the current and previous sample coupling.
             duals_sample : (n_sample_x, n_sample_y) tuple, float
                 Pair of dual vectors when solving OT problem w.r.t the sample coupling.
             duals_feature : (n_feature_x, n_feature_y) tuple, float
@@ -284,7 +285,7 @@ def fused_unbalanced_cross_spaces_divergence(
         linear_cost = A_sqr + B_sqr - 2 * nx.sum(AB)
 
         if linear_cost < 0:
-            warnings.warn("The linear cost is negative: {}".format(linear_cost.item()))
+            warnings.warn("The linear cost is negative: {}".format(linear_cost))
 
         ucoot_cost = linear_cost
         if M_samp is not None:
@@ -320,7 +321,7 @@ def fused_unbalanced_cross_spaces_divergence(
         wx, wy, wxy = tuple_weights
 
         pi1, pi2 = nx.sum(pi, 1), nx.sum(pi, 0)
-        l2_pi1, l2_pi2, l2_pi = nx.sum(pi1**2).item(), nx.sum(pi2**2).item(), nx.sum(pi**2).item()
+        l2_pi1, l2_pi2, l2_pi = nx.sum(pi1**2), nx.sum(pi2**2), nx.sum(pi**2)
 
         weighted_wx = wx * nx.sum(pi1 * wx) / l2_pi1
         weighted_wy = wy * nx.sum(pi2 * wy) / l2_pi2
@@ -458,7 +459,7 @@ def fused_unbalanced_cross_spaces_divergence(
         pi_samp_prev = nx.copy(pi_samp)
 
         # Update feature coupling
-        mass = nx.sum(pi_samp).item()
+        mass = nx.sum(pi_samp)
         uot_cost = local_cost_feat(pi=pi_samp)
 
         if divergence == "kl":
@@ -474,7 +475,7 @@ def fused_unbalanced_cross_spaces_divergence(
         pi_feat = nx.sqrt(mass / nx.sum(pi_feat)) * pi_feat
 
         # Update sample coupling
-        mass = nx.sum(pi_feat).item()
+        mass = nx.sum(pi_feat)
         uot_cost = local_cost_samp(pi=pi_feat)
 
         if divergence == "kl":
@@ -489,9 +490,9 @@ def fused_unbalanced_cross_spaces_divergence(
                                              new_eps, new_rho, pi_samp, duals_samp)
         pi_samp = nx.sqrt(mass / nx.sum(pi_samp)) * pi_samp  # shape nx x ny
 
-        # get error
+        # get L1 error
         err = nx.sum(nx.abs(pi_samp - pi_samp_prev))
-        dict_log["error"].append(err.item())
+        dict_log["error"].append(err)
         if verbose:
             print('{:5d}|{:8e}|'.format(idx + 1, err))
         if err < tol:
@@ -531,6 +532,132 @@ def unbalanced_co_optimal_transport(
         method_sinkhorn="sinkhorn", log=False, verbose=False,
         **kwargs_solve):
 
+    r"""Compute the unbalanced Co-Optimal Transport between two matrices.
+
+    Return the sample and feature transport plans between
+    :math:`(\mathbf{X}, \mathbf{w}_{xs}, \mathbf{w}_{xf})` and
+    :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`.
+
+    The function solves the following problem:
+
+    .. math::
+        \mathbf{UCOOT} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
+        &\quad \sum_{i,j,k,l}
+        (\mathbf{X}_{i,k} - \mathbf{Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l} \\
+        &+ \rho_s \mathbf{KL}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
+        + \rho_f \mathbf{KL}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w}_{xf} \mathbf{w}_{yf}^T) \\
+        &+ \alpha_s \sum_{i,j} \mathbf{P}_{i,j} \mathbf{M^{(s)}}_{i, j}
+        + \alpha_f \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{M^{(f)}}_{k, l} \\
+        &+ \varepsilon_s \mathbf{KL}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
+        + \varepsilon_f \mathbf{KL}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
+
+    Where :
+
+    - :math:`\mathbf{X}`: Data matrix in the source space
+    - :math:`\mathbf{Y}`: Data matrix in the target space
+    - :math:`\mathbf{M^{(s)}}`: Additional sample matrix
+    - :math:`\mathbf{M^{(f)}}`: Additional feature matrix
+    - :math:`\mathbf{w}_{xs}`: Distribution of the samples in the source space
+    - :math:`\mathbf{w}_{xf}`: Distribution of the features in the source space
+    - :math:`\mathbf{w}_{ys}`: Distribution of the samples in the target space
+    - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
+
+    .. note:: This function allows epsilon to be zero.
+              In that case, the :any:`ot.lp.emd` solver of POT will be used.
+
+    Parameters
+    ----------
+    X : (n_sample_x, n_feature_x) array-like, float
+        First input matrix.
+    Y : (n_sample_y, n_feature_y) array-like, float
+        Second input matrix.
+    wx_samp : (n_sample_x, ) array-like, float, optional (default = None)
+        Histogram assigned on rows (samples) of matrix X.
+        Uniform distribution by default.
+    wx_feat : (n_feature_x, ) array-like, float, optional (default = None)
+        Histogram assigned on columns (features) of matrix X.
+        Uniform distribution by default.
+    wy_samp : (n_sample_y, ) array-like, float, optional (default = None)
+        Histogram assigned on rows (samples) of matrix Y.
+        Uniform distribution by default.
+    wy_feat : (n_feature_y, ) array-like, float, optional (default = None)
+        Histogram assigned on columns (features) of matrix Y.
+        Uniform distribution by default.
+    reg_marginals: float or indexable object of length 1 or 2
+        Marginal relaxation terms for sample and feature couplings.
+        If reg_marginals is a scalar or an indexable object of length 1,
+        then the same reg_marginals is applied to both marginal relaxations.
+    epsilon : scalar or indexable object of length 2, float or int, optional (default = 0)
+        Regularization parameters for entropic approximation of sample and feature couplings.
+        Allow the case where epsilon contains 0. In that case, the MM solver is used by default
+        instead of Sinkhorn solver. If epsilon is scalar, then the same epsilon is applied to
+        both regularization of sample and feature couplings.
+    divergence : string, optional (default = "kl")
+        If divergence = "kl", then D is the Kullback-Leibler divergence.
+        If divergence = "l2", then D is the half squared Euclidean norm.
+    unbalanced_solver : string, optional (default = "scaling")
+        Solver for the unbalanced OT subroutine.
+        If divergence = "kl", then unbalanced_solver can be: "scaling", "mm", "lbfgsb"
+        If divergence = "l2", then unbalanced_solver can be "mm", "lbfgsb"
+    alpha : scalar or indexable object of length 2, float or int, optional (default = 0)
+        Coeffficient parameter of linear terms with respect to the sample and feature couplings.
+        If alpha is scalar, then the same alpha is applied to both linear terms.
+    M_samp : (n_sample_x, n_sample_y), float, optional (default = None)
+        Sample matrix associated to the Wasserstein linear term on sample coupling.
+    M_feat : (n_feature_x, n_feature_y), float, optional (default = None)
+        Feature matrix associated to the Wasserstein linear term on feature coupling.
+    init_pi : tuple of two matrices of size (n_sample_x, n_sample_y) and
+        (n_feature_x, n_feature_y), optional (default = None).
+        Initialization of sample and feature couplings.
+        Uniform distributions by default.
+    init_duals : tuple of two tuples ((n_sample_x, ), (n_sample_y, )) and ((n_feature_x, ), (n_feature_y, )), optional (default = None).
+        Initialization of sample and feature dual vectors
+        if using scaling (Sinkhorn) algorithm. Zero vectors by default.
+    max_iter : int, optional (default = 100)
+        Number of Block Coordinate Descent (BCD) iterations.
+    tol : float, optional (default = 1e-7)
+        Tolerance of BCD scheme. If the L1-norm between the current and previous
+        sample couplings is under this threshold, then stop BCD scheme.
+    max_iter_ot : int, optional (default = 100)
+        Number of iterations to solve each of the
+        two unbalanced optimal transport problems in each BCD iteration.
+    tol_ot : float, optional (default = 1e-7)
+        Tolerance of unbalanced solver for each of the
+        two unbalanced optimal transport problems in each BCD iteration.
+    method_sinkhorn : string, optional (default = "sinkhorn")
+        Method used in POT's `ot.sinkhorn` solver when divergence = "kl" and
+        unbalanced_solver = "scaling". Only support method_sinkhorn = "sinkhorn"
+        and method_sinkhorn = "sinkhorn_log".
+    log : bool, optional (default = False)
+        If True then the cost and 4 dual vectors, including
+        2 from sample and 2 from feature couplings, are recorded.
+    verbose : bool, optional (default = False)
+        If True then print the COOT cost at every multiplier of `eval_bcd`-th iteration.
+
+    Returns
+    -------
+    pi_samp : (n_sample_x, n_sample_y) array-like, float
+        Sample coupling matrix.
+    pi_feat : (n_feature_x, n_feature_y) array-like, float
+        Feature coupling matrix.
+    log : dictionary, optional
+        Returned if `log` is True. The keys are:
+            error : list of L1 norms between the current and previous sample coupling.
+            duals_sample : (n_sample_x, n_sample_y) tuple, float
+                Pair of dual vectors when solving OT problem w.r.t the sample coupling.
+            duals_feature : (n_feature_x, n_feature_y) tuple, float
+                Pair of dual vectors when solving OT problem w.r.t the feature coupling.
+            linear : float
+                Linear part of the cost.
+            ucoot : float
+                Total cost.
+
+    References
+    ----------
+    .. [70] H. Tran, H. Janati, N. Courty, R. Flamary, I. Redko, P. Demetci and R. Singh,
+    Unbalanced Co-Optimal Transport, AAAI Conference on Artificial Intelligence, 2023.
+    """
+
     return fused_unbalanced_cross_spaces_divergence(
         X=X, Y=Y, wx_samp=wx_samp, wx_feat=wx_feat,
         wy_samp=wy_samp, wy_feat=wy_feat, reg_marginals=reg_marginals,
@@ -550,6 +677,130 @@ def unbalanced_co_optimal_transport2(
         max_iter=100, tol=1e-7, max_iter_ot=500, tol_ot=1e-7,
         method_sinkhorn="sinkhorn", log=False, verbose=False,
         **kwargs_solve):
+
+    r"""Compute the unbalanced Co-Optimal Transport between two matrices.
+
+    Return the sample and feature transport plans between
+    :math:`(\mathbf{X}, \mathbf{w}_{xs}, \mathbf{w}_{xf})` and
+    :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`.
+
+    The function solves the following problem:
+
+    .. math::
+        \mathbf{UCOOT} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
+        &\quad \sum_{i,j,k,l}
+        (\mathbf{X}_{i,k} - \mathbf{Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l} \\
+        &+ \rho_s \mathbf{KL}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
+        + \rho_f \mathbf{KL}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w}_{xf} \mathbf{w}_{yf}^T) \\
+        &+ \alpha_s \sum_{i,j} \mathbf{P}_{i,j} \mathbf{M^{(s)}}_{i, j}
+        + \alpha_f \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{M^{(f)}}_{k, l} \\
+        &+ \varepsilon_s \mathbf{KL}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
+        + \varepsilon_f \mathbf{KL}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
+
+    Where :
+
+    - :math:`\mathbf{X}`: Data matrix in the source space
+    - :math:`\mathbf{Y}`: Data matrix in the target space
+    - :math:`\mathbf{M^{(s)}}`: Additional sample matrix
+    - :math:`\mathbf{M^{(f)}}`: Additional feature matrix
+    - :math:`\mathbf{w}_{xs}`: Distribution of the samples in the source space
+    - :math:`\mathbf{w}_{xf}`: Distribution of the features in the source space
+    - :math:`\mathbf{w}_{ys}`: Distribution of the samples in the target space
+    - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
+
+    .. note:: This function allows epsilon to be zero.
+              In that case, the :any:`ot.lp.emd` solver of POT will be used.
+
+    Parameters
+    ----------
+    X : (n_sample_x, n_feature_x) array-like, float
+        First input matrix.
+    Y : (n_sample_y, n_feature_y) array-like, float
+        Second input matrix.
+    wx_samp : (n_sample_x, ) array-like, float, optional (default = None)
+        Histogram assigned on rows (samples) of matrix X.
+        Uniform distribution by default.
+    wx_feat : (n_feature_x, ) array-like, float, optional (default = None)
+        Histogram assigned on columns (features) of matrix X.
+        Uniform distribution by default.
+    wy_samp : (n_sample_y, ) array-like, float, optional (default = None)
+        Histogram assigned on rows (samples) of matrix Y.
+        Uniform distribution by default.
+    wy_feat : (n_feature_y, ) array-like, float, optional (default = None)
+        Histogram assigned on columns (features) of matrix Y.
+        Uniform distribution by default.
+    reg_marginals: float or indexable object of length 1 or 2
+        Marginal relaxation terms for sample and feature couplings.
+        If reg_marginals is a scalar or an indexable object of length 1,
+        then the same reg_marginals is applied to both marginal relaxations.
+    epsilon : scalar or indexable object of length 2, float or int, optional (default = 0)
+        Regularization parameters for entropic approximation of sample and feature couplings.
+        Allow the case where epsilon contains 0. In that case, the MM solver is used by default
+        instead of Sinkhorn solver. If epsilon is scalar, then the same epsilon is applied to
+        both regularization of sample and feature couplings.
+    divergence : string, optional (default = "kl")
+        If divergence = "kl", then D is the Kullback-Leibler divergence.
+        If divergence = "l2", then D is the half squared Euclidean norm.
+    unbalanced_solver : string, optional (default = "scaling")
+        Solver for the unbalanced OT subroutine.
+        If divergence = "kl", then unbalanced_solver can be: "scaling", "mm", "lbfgsb"
+        If divergence = "l2", then unbalanced_solver can be "mm", "lbfgsb"
+    alpha : scalar or indexable object of length 2, float or int, optional (default = 0)
+        Coeffficient parameter of linear terms with respect to the sample and feature couplings.
+        If alpha is scalar, then the same alpha is applied to both linear terms.
+    M_samp : (n_sample_x, n_sample_y), float, optional (default = None)
+        Sample matrix associated to the Wasserstein linear term on sample coupling.
+    M_feat : (n_feature_x, n_feature_y), float, optional (default = None)
+        Feature matrix associated to the Wasserstein linear term on feature coupling.
+    init_pi : tuple of two matrices of size (n_sample_x, n_sample_y) and
+        (n_feature_x, n_feature_y), optional (default = None).
+        Initialization of sample and feature couplings.
+        Uniform distributions by default.
+    init_duals : tuple of two tuples ((n_sample_x, ), (n_sample_y, )) and ((n_feature_x, ), (n_feature_y, )), optional (default = None).
+        Initialization of sample and feature dual vectors
+        if using scaling (Sinkhorn) algorithm. Zero vectors by default.
+    max_iter : int, optional (default = 100)
+        Number of Block Coordinate Descent (BCD) iterations.
+    tol : float, optional (default = 1e-7)
+        Tolerance of BCD scheme. If the L1-norm between the current and previous
+        sample couplings is under this threshold, then stop BCD scheme.
+    max_iter_ot : int, optional (default = 100)
+        Number of iterations to solve each of the
+        two unbalanced optimal transport problems in each BCD iteration.
+    tol_ot : float, optional (default = 1e-7)
+        Tolerance of unbalanced solver for each of the
+        two unbalanced optimal transport problems in each BCD iteration.
+    method_sinkhorn : string, optional (default = "sinkhorn")
+        Method used in POT's `ot.sinkhorn` solver when divergence = "kl" and
+        unbalanced_solver = "scaling". Only support method_sinkhorn = "sinkhorn"
+        and method_sinkhorn = "sinkhorn_log".
+    log : bool, optional (default = False)
+        If True then the cost and 4 dual vectors, including
+        2 from sample and 2 from feature couplings, are recorded.
+    verbose : bool, optional (default = False)
+        If True then print the COOT cost at every multiplier of `eval_bcd`-th iteration.
+
+    Returns
+    -------
+    ucoot : float
+        UCOOT cost.
+    log : dictionary, optional
+        Returned if `log` is True. The keys are:
+            error : list of L1 norms between the current and previous sample coupling.
+            duals_sample : (n_sample_x, n_sample_y) tuple, float
+                Pair of dual vectors when solving OT problem w.r.t the sample coupling.
+            duals_feature : (n_feature_x, n_feature_y) tuple, float
+                Pair of dual vectors when solving OT problem w.r.t the feature coupling.
+            linear : float
+                Linear part of UCOOT cost.
+            ucoot : float
+                UCOOT cost.
+
+    References
+    ----------
+    .. [70] H. Tran, H. Janati, N. Courty, R. Flamary, I. Redko, P. Demetci and R. Singh,
+    Unbalanced Co-Optimal Transport, AAAI Conference on Artificial Intelligence, 2023.
+    """
 
     pi_samp, pi_feat, dict_log = unbalanced_co_optimal_transport(
         X=X, Y=Y, wx_samp=wx_samp, wx_feat=wx_feat, wy_samp=wy_samp, wy_feat=wy_feat,
@@ -622,7 +873,7 @@ def fused_unbalanced_gromov_wasserstein(
         tol=1e-7, max_iter_ot=500, tol_ot=1e-7, method_sinkhorn="sinkhorn",
         log=False, verbose=False, **kwargs_solve):
 
-    r"""Compute the fused unbalanced cross-spaces divergence between two matrices.
+    r"""Compute the fused unbalanced Gromov-Wasserstein between two matrices.
 
     Return the sample and feature transport plans between
     :math:`(\mathbf{C^X}, \mathbf{w_X})` and :math:`(\mathbf{C^Y}, \mathbf{w_Y})`.
@@ -711,21 +962,25 @@ def fused_unbalanced_gromov_wasserstein(
     -------
     pi_samp : (n_sample_x, n_sample_y) array-like, float
         Sample coupling matrix.
+        In practice, we use this matrix as solution of FUGW.
     pi_feat : (n_sample_x, n_sample_y) array-like, float
         Second sample coupling matrix.
+        In practice, we usually ignore this output.
     log : dictionary, optional
         Returned if `log` is True. The keys are:
-            duals_sample : (n_sample_x, n_sample_y) tuple, float
+            error : list of L1 norms between the current and previous sample couplings.
+            duals : (n_sample_x, n_sample_y) tuple, float
                 Pair of dual vectors when solving OT problem w.r.t the sample coupling.
-            linear : float
-                Linear part of the cost.
-            ucoot : float
-                Total cost.
+            linear_cost : float
+                Linear part of FUGW cost.
+            fugw_cost : float
+                Total FUGW cost.
 
     References
     ----------
-    .. [69] I. Redko, T. Vayer, R. Flamary, and N. Courty, CO-Optimal Transport,
-        Advances in Neural Information Processing ny_sampstems, 33 (2020).
+    .. [69] Thual, A., Tran, H., Zemskova, T., Courty, N., Flamary, R., Dehaene, S. & Thirion, B.,
+    Aligning individual brains with Fused Unbalanced Gromov-Wasserstein,
+    Advances in Neural Information Systems, 35 (2022).
     """
 
     alpha = (alpha / 2, alpha / 2)
@@ -760,7 +1015,7 @@ def fused_unbalanced_gromov_wasserstein2(
         tol=1e-7, max_iter_ot=500, tol_ot=1e-7, method_sinkhorn="sinkhorn",
         log=False, verbose=False, **kwargs_solve):
 
-    r"""Compute the fused unbalanced cross-spaces divergence between two matrices.
+    r"""Compute the fused unbalanced Gromov-Wasserstein between two matrices.
 
     Return the sample and feature transport plans between
     :math:`(\mathbf{C^X}, \mathbf{w_X})` and :math:`(\mathbf{C^Y}, \mathbf{w_Y})`.
@@ -847,23 +1102,23 @@ def fused_unbalanced_gromov_wasserstein2(
 
     Returns
     -------
-    pi_samp : (n_sample_x, n_sample_y) array-like, float
-        Sample coupling matrix.
-    pi_feat : (n_sample_x, n_sample_y) array-like, float
-        Second sample coupling matrix.
+    fugw : float
+        Total FUGW cost
     log : dictionary, optional
         Returned if `log` is True. The keys are:
-            duals_sample : (n_sample_x, n_sample_y) tuple, float
+            error : list of L1 norms between the current and previous sample couplings.
+            duals : (n_sample_x, n_sample_y) tuple, float
                 Pair of dual vectors when solving OT problem w.r.t the sample coupling.
             linear : float
-                Linear part of the cost.
-            ucoot : float
-                Total cost.
+                Linear part of FUGW cost.
+            fugw_cost : float
+                Total FUGW cost.
 
     References
     ----------
-    .. [69] I. Redko, T. Vayer, R. Flamary, and N. Courty, CO-Optimal Transport,
-        Advances in Neural Information Processing ny_sampstems, 33 (2020).
+    .. [69] Thual, A., Tran, H., Zemskova, T., Courty, N., Flamary, R., Dehaene, S. & Thirion, B.,
+    Aligning individual brains with Fused Unbalanced Gromov-Wasserstein,
+    Advances in Neural Information Systems, 35 (2022).
     """
 
     pi_samp, pi_feat, log_fugw = fused_unbalanced_gromov_wasserstein(
