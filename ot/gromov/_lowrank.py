@@ -61,7 +61,6 @@ def _flat_product_operator(X, nx=None):
 def lowrank_gromov_wasserstein_samples(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, gamma_init="rescale",
                                        rescale_cost=True, cost_factorized_Xs=None, cost_factorized_Xt=None, stopThr=1e-4, numItermax=1000,
                                        stopThr_dykstra=1e-3, numItermax_dykstra=10000, seed_init=49, warn=True, warn_dykstra=False, log=False):
-
     r"""
     Solve the entropic regularization Gromov-Wasserstein transport problem under low-nonnegative rank constraints
     on the couplings and cost matrices.
