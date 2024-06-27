@@ -13,7 +13,7 @@ import warnings
 
 from .backend import get_backend
 from .utils import dots, is_all_finite, list_to_array
-from .gaussian import bures_wasserstein_distance, bures_wasserstein_mapping, gaussian_pdf
+from .gaussian import bures_wasserstein_distance, bures_wasserstein_mapping
 from .lp import emd2, emd
 from scipy.stats import multivariate_normal
 
