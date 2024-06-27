@@ -12,6 +12,11 @@ import ot
 from ot.utils import proj_simplex
 from ot.gmm import gaussian_pdf, gmm_pdf, dist_bures, gmm_ot_loss, gmm_ot_plan, gmm_ot_apply_map
 
+try:
+    import torch
+except ImportError:
+    torch = False
+
 
 def get_gmms():
     rng = np.random.RandomState(seed=42)
@@ -84,3 +89,22 @@ def test_gmm_apply_map():
     rng = np.random.RandomState(seed=42)
     x = rng.randn(7, 3)
     gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t)
+
+
+@pytest.mark.skipif(not torch, reason="No torch available")
+def test_gradient_gmm_ot_loss_pytorch():
+    m_s, m_t, C_s, C_t, w_s, w_t = get_gmms()
+    m_s = torch.tensor(m_s, requires_grad=True)
+    m_t = torch.tensor(m_t, requires_grad=True)
+    C_s = torch.tensor(C_s, requires_grad=True)
+    C_t = torch.tensor(C_t, requires_grad=True)
+    w_s = torch.tensor(w_s, requires_grad=True)
+    w_t = torch.tensor(w_t, requires_grad=True)
+    loss = gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t)
+    loss.backward()
+    grad_m_s = m_s.grad
+    grad_C_s = C_s.grad
+    grad_w_s = w_s.grad
+    assert (grad_m_s**2).sum().item() > 0
+    assert (grad_C_s**2).sum().item() > 0
+    assert (grad_w_s**2).sum().item() > 0

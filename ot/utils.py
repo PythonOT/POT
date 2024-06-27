@@ -1292,3 +1292,12 @@ class LazyTensor(object):
 
     def __repr__(self):
         return "LazyTensor(shape={},attributes=({}))".format(self.shape, ','.join(self.kwargs.keys()))
+
+
+def proj_SDP(S, nx=None, vmin=0.):
+    if nx is None:
+        nx = get_backend(S)
+    
+    w, P = nx.eigh(S)
+    w = nx.clip(w, vmin, None)
+    return P @ nx.diag(w) @ P.T

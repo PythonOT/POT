@@ -620,3 +620,10 @@ def test_label_normalization(nx):
     # labels are shifted but the shift if expected
     y_normalized_start = ot.utils.label_normalization(y, start=1)
     np.testing.assert_array_equal(y, y_normalized_start)
+
+
+def test_proj_SDP(nx):
+    S = np.diag([1., -1., 2.])
+    S = nx.from_numpy(S)
+    S1 = ot.utils.proj_SDP(S)
+    assert np.allclose(nx.to_numpy(S1), np.diag([1, 0, 2]))

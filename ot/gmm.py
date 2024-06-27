@@ -40,7 +40,7 @@ def dist_bures(m_s, m_t, C_s, C_t):
     D = nx.zeros((k_s, k_t), type_as=m_s)
     for i in range(k_s):
         for j in range(k_t):
-            D[i, j] = bures_wasserstein_distance(m_s[i], m_t[j], C_s[i], C_t[j])
+            D[i, j] = bures_wasserstein_distance(m_s[i], m_t[j], C_s[i], C_t[j]) ** 2
     return D
 
 
