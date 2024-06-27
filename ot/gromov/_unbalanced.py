@@ -17,7 +17,7 @@ from ot.unbalanced import sinkhorn_unbalanced, mm_unbalanced, lbfgsb_unbalanced
 
 def fused_unbalanced_cross_spaces_divergence(
         X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
-        reg_marginals=None, epsilon=0, reg_type="joint", divergence="kl",
+        reg_marginals=10, epsilon=0, reg_type="joint", divergence="kl",
         unbalanced_solver="scaling", alpha=0, M_samp=None, M_feat=None,
         init_pi=None, init_duals=None, max_iter=100, tol=1e-7,
         max_iter_ot=500, tol_ot=1e-7, method_sinkhorn="sinkhorn",
@@ -492,7 +492,8 @@ def fused_unbalanced_cross_spaces_divergence(
 
         # get L1 error
         err = nx.sum(nx.abs(pi_samp - pi_samp_prev))
-        dict_log["error"].append(err)
+        if log:
+            dict_log["error"].append(err)
         if verbose:
             print('{:5d}|{:8e}|'.format(idx + 1, err))
         if err < tol:
@@ -526,8 +527,9 @@ def fused_unbalanced_cross_spaces_divergence(
 
 def unbalanced_co_optimal_transport(
         X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
-        reg_marginals=None, epsilon=0, divergence="kl",
-        unbalanced_solver="mm", init_pi=None, init_duals=None,
+        reg_marginals=10, epsilon=0, divergence="kl",
+        unbalanced_solver="mm", alpha=0, M_samp=None, M_feat=None,
+        init_pi=None, init_duals=None,
         max_iter=100, tol=1e-7, max_iter_ot=500, tol_ot=1e-7,
         method_sinkhorn="sinkhorn", log=False, verbose=False,
         **kwargs_solve):
@@ -663,7 +665,7 @@ def unbalanced_co_optimal_transport(
         wy_samp=wy_samp, wy_feat=wy_feat, reg_marginals=reg_marginals,
         epsilon=epsilon, reg_type="independent",
         divergence=divergence, unbalanced_solver=unbalanced_solver,
-        alpha=0, M_samp=None, M_feat=None, init_pi=init_pi,
+        alpha=alpha, M_samp=M_samp, M_feat=M_feat, init_pi=init_pi,
         init_duals=init_duals, max_iter=max_iter, tol=tol,
         max_iter_ot=max_iter_ot, tol_ot=tol_ot,
         method_sinkhorn=method_sinkhorn, log=log,
@@ -672,8 +674,9 @@ def unbalanced_co_optimal_transport(
 
 def unbalanced_co_optimal_transport2(
         X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
-        reg_marginals=None, epsilon=0, divergence="kl",
-        unbalanced_solver="scaling", init_pi=None, init_duals=None,
+        reg_marginals=10, epsilon=0, divergence="kl",
+        unbalanced_solver="scaling", alpha=0, M_samp=None, M_feat=None,
+        init_pi=None, init_duals=None,
         max_iter=100, tol=1e-7, max_iter_ot=500, tol_ot=1e-7,
         method_sinkhorn="sinkhorn", log=False, verbose=False,
         **kwargs_solve):
@@ -805,7 +808,7 @@ def unbalanced_co_optimal_transport2(
     pi_samp, pi_feat, dict_log = unbalanced_co_optimal_transport(
         X=X, Y=Y, wx_samp=wx_samp, wx_feat=wx_feat, wy_samp=wy_samp, wy_feat=wy_feat,
         reg_marginals=reg_marginals, epsilon=epsilon, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=0, M_samp=None, M_feat=None,
+        unbalanced_solver=unbalanced_solver, alpha=alpha, M_samp=M_samp, M_feat=M_feat,
         init_pi=init_pi, init_duals=init_duals, max_iter=max_iter, tol=tol,
         max_iter_ot=max_iter_ot, tol_ot=tol_ot, method_sinkhorn=method_sinkhorn,
         log=True, verbose=verbose, **kwargs_solve)
@@ -867,7 +870,7 @@ def unbalanced_co_optimal_transport2(
 
 
 def fused_unbalanced_gromov_wasserstein(
-        Cx, Cy, wx=None, wy=None, reg_marginals=None, epsilon=0,
+        Cx, Cy, wx=None, wy=None, reg_marginals=10, epsilon=0,
         divergence="kl", unbalanced_solver="mm",
         alpha=0, M=None, init_duals=None, init_pi=None, max_iter=100,
         tol=1e-7, max_iter_ot=500, tol_ot=1e-7, method_sinkhorn="sinkhorn",
@@ -1009,7 +1012,7 @@ def fused_unbalanced_gromov_wasserstein(
 
 
 def fused_unbalanced_gromov_wasserstein2(
-        Cx, Cy, wx=None, wy=None, reg_marginals=None, epsilon=0,
+        Cx, Cy, wx=None, wy=None, reg_marginals=10, epsilon=0,
         divergence="kl", unbalanced_solver="mm",
         alpha=0, M=None, init_duals=None, init_pi=None, max_iter=100,
         tol=1e-7, max_iter_ot=500, tol_ot=1e-7, method_sinkhorn="sinkhorn",
