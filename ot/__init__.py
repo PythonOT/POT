@@ -59,7 +59,7 @@ from .lowrank import lowrank_sinkhorn
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.9.4dev"
+__version__ = "0.9.4"
 
 __all__ = ['emd', 'emd2', 'emd_1d', 'sinkhorn', 'sinkhorn2', 'utils',
            'datasets', 'bregman', 'lp', 'tic', 'toc', 'toq', 'gromov',
