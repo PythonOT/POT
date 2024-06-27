@@ -19,8 +19,8 @@ from scipy.stats import multivariate_normal
 
 
 def gaussian_pdf(x, m, C):
-    var = multivariate_normal(mean=m, cov=C)
-    return var.pdf(x)
+    gauss = multivariate_normal(mean=m, cov=C)
+    return gauss.pdf(x)
 
 
 def gmm_pdf(x, m, C, w):
@@ -70,16 +70,25 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
     Applies the barycentric or stochastic map associated to the GMM OT from the
     source GMM to the target GMM
     """
+    
     if plan is None:
         plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
+        nx = get_backend(x, m_s, m_t, C_s, C_t, w_s, w_t)
+    else:
+        nx = get_backend(x, m_s, m_t, C_s, C_t, w_s, w_t, plan)
     
-    # TODO asserts
-    normalisation = np.expand_dims(m0.pdf(x), -1)  # from (...) to (..., 1)
-    out = nx.zeros_like(x)
-    for k0 in range(m0.n_components):
-        for k1 in range(m1.n_components):
-            g = gaussian_pdf(x, m_s[k0], C_s[k0])[:, None]
-            A, b = bures_wasserstein_mapping(m_s[k0], m_t[k1], C_s[k0], C_t[k1])
-            Tk0k1x = A @ x + b
-            out = out + w[k0, k1] * g * Tk0k1x
-    return out / normalisation
+    if method == 'bary':
+        # TODO asserts
+        normalisation = gmm_pdf(x, m_s, C_s, w_s)[:, None]
+        out = nx.zeros(x.shape)
+        for k0 in range(m_s.shape[0]):
+            for k1 in range(m_t.shape[0]):
+                g = gaussian_pdf(x, m_s[k0], C_s[k0])[:, None]
+                A, b = bures_wasserstein_mapping(
+                    m_s[k0], m_t[k1], C_s[k0], C_t[k1])
+                Tk0k1x = x @ A + b
+                out = out + plan[k0, k1] * g * Tk0k1x
+        return out / normalisation
+    
+    else:  # rand
+        raise NotImplementedError('Mapping {} not implemented'.format(method))

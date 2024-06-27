@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 import ot
 from ot.utils import proj_simplex
-from ot.gmm import gaussian_pdf, gmm_pdf, dist_bures
+from ot.gmm import gaussian_pdf, gmm_pdf, dist_bures, gmm_ot_loss, gmm_ot_plan, gmm_ot_apply_map
 
 
 def get_gmms():
@@ -46,9 +46,41 @@ def test_gmm_pdf():
     m_s, _, C_s, _, w_s, _ = get_gmms()
     p = gmm_pdf(x, m_s, C_s, w_s)
 
+
 def test_dist_bures():
     m_s, m_t, C_s, C_t, _, _ = get_gmms()
     D = dist_bures(m_s, m_t, C_s, C_t)
     D0 = dist_bures(m_s, m_s, C_s, C_s)
-    print(D0)
-    assert np.allclose(np.diag(D0), 0)
+
+    assert np.allclose(np.diag(D0), 0, atol=1e-6)
+
+
+def test_gmm_ot_loss():
+    m_s, m_t, C_s, C_t, w_s, w_t = get_gmms()
+    loss = gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t)
+
+    assert loss > 0
+
+    loss = gmm_ot_loss(m_s, m_s, C_s, C_s, w_s, w_s)
+
+    assert np.allclose(loss, 0, atol=1e-6)
+
+
+def test_gmm_ot_plan():
+    m_s, m_t, C_s, C_t, w_s, w_t = get_gmms()
+
+    plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
+
+    assert np.allclose(plan.sum(0), w_t, atol=1e-6)
+    assert np.allclose(plan.sum(1), w_s, atol=1e-6)
+
+    plan = gmm_ot_plan(m_s, m_s + 1, C_s, C_s, w_s, w_s)
+
+    assert np.allclose(plan, np.diag(w_s), atol=1e-6)
+
+
+def test_gmm_apply_map():
+    m_s, m_t, C_s, C_t, w_s, w_t = get_gmms()
+    rng = np.random.RandomState(seed=42)
+    x = rng.randn(7, 3)
+    gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t)
