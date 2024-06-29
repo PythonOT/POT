@@ -788,7 +788,7 @@ def empirical_gaussian_gromov_wasserstein_mapping(xs, xt, ws=None,
     Cov_s = nx.dot((xs * ws).T, xs) / nx.sum(ws)
     Cov_t = nx.dot((xt * wt).T, xt) / nx.sum(wt)
 
-    # compte and sort eigenvalues/eigenvectors decreasingly
+    # compute and sort eigenvalues/eigenvectors decreasingly
     d_s, U_s = nx.eigh(Cov_s)
     id_s = nx.flip(nx.argsort(d_s))
     d_s, U_s = d_s[id_s], U_s[:, id_s]
