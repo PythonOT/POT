@@ -19,8 +19,8 @@ def fused_unbalanced_cross_spaces_divergence(
         X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
         reg_marginals=10, epsilon=0, reg_type="joint", divergence="kl",
         unbalanced_solver="scaling", alpha=0, M_samp=None, M_feat=None,
-        init_pi=None, init_duals=None, max_iter=100, tol=1e-7,
-        max_iter_ot=500, tol_ot=1e-7, method_sinkhorn="sinkhorn",
+        rescale_plan=True, init_pi=None, init_duals=None, max_iter=100,
+        tol=1e-7, max_iter_ot=500, tol_ot=1e-7, method_sinkhorn="sinkhorn",
         log=False, verbose=False, **kwargs_solver):
 
     r"""Compute the fused unbalanced cross-spaces divergence between two matrices.
@@ -35,8 +35,8 @@ def fused_unbalanced_cross_spaces_divergence(
         \mathbf{Div} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
         &\quad \sum_{i,j,k,l}
         (\mathbf{X}_{i,k} - \mathbf{Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l} \\
-        &+ \rho_s \mathbf{KL}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
-        + \rho_f \mathbf{KL}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w}_{xf} \mathbf{w}_{yf}^T) \\
+        &+ \rho_s \mathbf{Div}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
+        + \rho_f \mathbf{Div}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w}_{xf} \mathbf{w}_{yf}^T) \\
         &+ \alpha_s \sum_{i,j} \mathbf{P}_{i,j} \mathbf{M^{(s)}}_{i, j}
         + \alpha_f \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{M^{(f)}}_{k, l}
         + \mathbf{Reg}(\mathbf{P}, \mathbf{Q})
@@ -51,18 +51,19 @@ def fused_unbalanced_cross_spaces_divergence(
     - :math:`\mathbf{w}_{xf}`: Distribution of the features in the source space
     - :math:`\mathbf{w}_{ys}`: Distribution of the samples in the target space
     - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
+    - :math:`\mathbf{Div}`: Either Kullback-Leibler divergence or half-squared L2 norm.
     - :math:`\mathbf{Reg}`: Regularizer for sample and feature couplings.
     We consider two types of regulizer:
         + Independent regularization used in unbalanced Co-Optimal Transport
         .. math::
             \mathbf{Reg}(\mathbf{P}, \mathbf{Q}) =
-            \varepsilon_s \mathbf{KL}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
-            + \varepsilon_f \mathbf{KL}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
+            \varepsilon_s \mathbf{Div}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
+            + \varepsilon_f \mathbf{Div}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
 
         + Joint regularization used in fused unbalanced Gromov-Wasserstein
         .. math::
             \mathbf{Reg}(\mathbf{P}, \mathbf{Q}) =
-            \varepsilon \mathbf{KL}(\mathbf{P} \otimes \mathbf{Q} | (\mathbf{w}_{xs} \mathbf{w}_{ys}^T) \otimes (\mathbf{w}_{xf} \mathbf{w}_{yf}^T) )
+            \varepsilon \mathbf{Div}(\mathbf{P} \otimes \mathbf{Q} | (\mathbf{w}_{xs} \mathbf{w}_{ys}^T) \otimes (\mathbf{w}_{xf} \mathbf{w}_{yf}^T) )
 
     .. note:: This function allows epsilon to be zero.
               In that case, the :any:`ot.lp.emd` solver of POT will be used.
@@ -111,6 +112,9 @@ def fused_unbalanced_cross_spaces_divergence(
         Sample matrix associated to the Wasserstein linear term on sample coupling.
     M_feat : (n_feature_x, n_feature_y), float, optional (default = None)
         Feature matrix associated to the Wasserstein linear term on feature coupling.
+    rescale_plan : boolean, optional (default = True)
+        If True, then rescale the transport plans in each BCD iteration,
+        so that they always have equal mass.
     init_pi : tuple of two matrices of size (n_sample_x, n_sample_y) and
         (n_feature_x, n_feature_y), optional (default = None).
         Initialization of sample and feature couplings.
@@ -472,7 +476,9 @@ def fused_unbalanced_cross_spaces_divergence(
             new_wx, new_wy, new_wxy = new_w
             pi_feat, duals_feat = uot_solver(new_wx, new_wy, new_wxy, uot_cost,
                                              new_eps, new_rho, pi_feat, duals_feat)
-        pi_feat = nx.sqrt(mass / nx.sum(pi_feat)) * pi_feat
+
+        if rescale_plan:
+            pi_feat = nx.sqrt(mass / nx.sum(pi_feat)) * pi_feat
 
         # Update sample coupling
         mass = nx.sum(pi_feat)
@@ -488,7 +494,9 @@ def fused_unbalanced_cross_spaces_divergence(
             new_wx, new_wy, new_wxy = new_w
             pi_samp, duals_samp = uot_solver(new_wx, new_wy, new_wxy, uot_cost,
                                              new_eps, new_rho, pi_samp, duals_samp)
-        pi_samp = nx.sqrt(mass / nx.sum(pi_samp)) * pi_samp  # shape nx x ny
+
+        if rescale_plan:
+            pi_samp = nx.sqrt(mass / nx.sum(pi_samp)) * pi_samp  # shape nx x ny
 
         # get L1 error
         err = nx.sum(nx.abs(pi_samp - pi_samp_prev))
@@ -529,7 +537,7 @@ def unbalanced_co_optimal_transport(
         X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
         reg_marginals=10, epsilon=0, divergence="kl",
         unbalanced_solver="mm", alpha=0, M_samp=None, M_feat=None,
-        init_pi=None, init_duals=None,
+        rescale_plan=True, init_pi=None, init_duals=None,
         max_iter=100, tol=1e-7, max_iter_ot=500, tol_ot=1e-7,
         method_sinkhorn="sinkhorn", log=False, verbose=False,
         **kwargs_solve):
@@ -546,12 +554,12 @@ def unbalanced_co_optimal_transport(
         \mathbf{UCOOT} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
         &\quad \sum_{i,j,k,l}
         (\mathbf{X}_{i,k} - \mathbf{Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l} \\
-        &+ \rho_s \mathbf{KL}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
-        + \rho_f \mathbf{KL}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w}_{xf} \mathbf{w}_{yf}^T) \\
+        &+ \rho_s \mathbf{Div}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
+        + \rho_f \mathbf{Div}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w}_{xf} \mathbf{w}_{yf}^T) \\
         &+ \alpha_s \sum_{i,j} \mathbf{P}_{i,j} \mathbf{M^{(s)}}_{i, j}
         + \alpha_f \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{M^{(f)}}_{k, l} \\
-        &+ \varepsilon_s \mathbf{KL}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
-        + \varepsilon_f \mathbf{KL}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
+        &+ \varepsilon_s \mathbf{Div}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
+        + \varepsilon_f \mathbf{Div}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
 
     Where :
 
@@ -563,6 +571,7 @@ def unbalanced_co_optimal_transport(
     - :math:`\mathbf{w}_{xf}`: Distribution of the features in the source space
     - :math:`\mathbf{w}_{ys}`: Distribution of the samples in the target space
     - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
+    - :math:`\mathbf{Div}`: Either Kullback-Leibler divergence or half-squared L2 norm.
 
     .. note:: This function allows epsilon to be zero.
               In that case, the :any:`ot.lp.emd` solver of POT will be used.
@@ -608,6 +617,9 @@ def unbalanced_co_optimal_transport(
         Sample matrix associated to the Wasserstein linear term on sample coupling.
     M_feat : (n_feature_x, n_feature_y), float, optional (default = None)
         Feature matrix associated to the Wasserstein linear term on feature coupling.
+    rescale_plan : boolean, optional (default = True)
+        If True, then rescale the transport plans in each BCD iteration,
+        so that they always have equal mass.
     init_pi : tuple of two matrices of size (n_sample_x, n_sample_y) and
         (n_feature_x, n_feature_y), optional (default = None).
         Initialization of sample and feature couplings.
@@ -665,8 +677,8 @@ def unbalanced_co_optimal_transport(
         wy_samp=wy_samp, wy_feat=wy_feat, reg_marginals=reg_marginals,
         epsilon=epsilon, reg_type="independent",
         divergence=divergence, unbalanced_solver=unbalanced_solver,
-        alpha=alpha, M_samp=M_samp, M_feat=M_feat, init_pi=init_pi,
-        init_duals=init_duals, max_iter=max_iter, tol=tol,
+        alpha=alpha, M_samp=M_samp, M_feat=M_feat, rescale_plan=rescale_plan,
+        init_pi=init_pi, init_duals=init_duals, max_iter=max_iter, tol=tol,
         max_iter_ot=max_iter_ot, tol_ot=tol_ot,
         method_sinkhorn=method_sinkhorn, log=log,
         verbose=verbose, **kwargs_solve)
@@ -676,7 +688,7 @@ def unbalanced_co_optimal_transport2(
         X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
         reg_marginals=10, epsilon=0, divergence="kl",
         unbalanced_solver="scaling", alpha=0, M_samp=None, M_feat=None,
-        init_pi=None, init_duals=None,
+        rescale_plan=True, init_pi=None, init_duals=None,
         max_iter=100, tol=1e-7, max_iter_ot=500, tol_ot=1e-7,
         method_sinkhorn="sinkhorn", log=False, verbose=False,
         **kwargs_solve):
@@ -693,12 +705,12 @@ def unbalanced_co_optimal_transport2(
         \mathbf{UCOOT} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
         &\quad \sum_{i,j,k,l}
         (\mathbf{X}_{i,k} - \mathbf{Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l} \\
-        &+ \rho_s \mathbf{KL}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
-        + \rho_f \mathbf{KL}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w}_{xf} \mathbf{w}_{yf}^T) \\
+        &+ \rho_s \mathbf{Div}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
+        + \rho_f \mathbf{Div}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w}_{xf} \mathbf{w}_{yf}^T) \\
         &+ \alpha_s \sum_{i,j} \mathbf{P}_{i,j} \mathbf{M^{(s)}}_{i, j}
         + \alpha_f \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{M^{(f)}}_{k, l} \\
-        &+ \varepsilon_s \mathbf{KL}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
-        + \varepsilon_f \mathbf{KL}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
+        &+ \varepsilon_s \mathbf{Div}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
+        + \varepsilon_f \mathbf{Div}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
 
     Where :
 
@@ -710,9 +722,13 @@ def unbalanced_co_optimal_transport2(
     - :math:`\mathbf{w}_{xf}`: Distribution of the features in the source space
     - :math:`\mathbf{w}_{ys}`: Distribution of the samples in the target space
     - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
+    - :math:`\mathbf{Div}`: Either Kullback-Leibler divergence or half-squared L2 norm.
 
     .. note:: This function allows epsilon to be zero.
               In that case, the :any:`ot.lp.emd` solver of POT will be used.
+
+              The computation of gradients is only supported for KL divergence.
+              The case of half squared-L2 norm uses those of KL divergence.
 
     Parameters
     ----------
@@ -755,6 +771,9 @@ def unbalanced_co_optimal_transport2(
         Sample matrix associated to the Wasserstein linear term on sample coupling.
     M_feat : (n_feature_x, n_feature_y), float, optional (default = None)
         Feature matrix associated to the Wasserstein linear term on feature coupling.
+    rescale_plan : boolean, optional (default = True)
+        If True, then rescale the transport plans in each BCD iteration,
+        so that they always have equal mass.
     init_pi : tuple of two matrices of size (n_sample_x, n_sample_y) and
         (n_feature_x, n_feature_y), optional (default = None).
         Initialization of sample and feature couplings.
@@ -805,13 +824,17 @@ def unbalanced_co_optimal_transport2(
     Unbalanced Co-Optimal Transport, AAAI Conference on Artificial Intelligence, 2023.
     """
 
+    if divergence != "kl":
+        warnings.warn("The computation of gradients is only supported for KL divergence, not \
+                      for {} divergence".format(divergence))
+
     pi_samp, pi_feat, dict_log = unbalanced_co_optimal_transport(
         X=X, Y=Y, wx_samp=wx_samp, wx_feat=wx_feat, wy_samp=wy_samp, wy_feat=wy_feat,
         reg_marginals=reg_marginals, epsilon=epsilon, divergence=divergence,
         unbalanced_solver=unbalanced_solver, alpha=alpha, M_samp=M_samp, M_feat=M_feat,
-        init_pi=init_pi, init_duals=init_duals, max_iter=max_iter, tol=tol,
-        max_iter_ot=max_iter_ot, tol_ot=tol_ot, method_sinkhorn=method_sinkhorn,
-        log=True, verbose=verbose, **kwargs_solve)
+        rescale_plan=rescale_plan, init_pi=init_pi, init_duals=init_duals,
+        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
+        method_sinkhorn=method_sinkhorn, log=True, verbose=verbose, **kwargs_solve)
 
     X, Y, pi_samp, pi_feat = list_to_array(X, Y, pi_samp, pi_feat)
     nx = get_backend(X, Y, pi_samp, pi_feat)
@@ -886,10 +909,10 @@ def fused_unbalanced_gromov_wasserstein(
     .. math::
         \mathbf{FUGW} = \mathop{\arg \min}_{\mathbf{P}} &\quad \sum_{i,j,k,l}
         (\mathbf{C^X}_{i,k} - \mathbf{C^Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{P}_{k,l} \\
-        &+ \rho_1 \mathbf{KL}(\mathbf{P}_{\# 1} \mathbf{P}_{\# 1}^T | \mathbf{w_X} \mathbf{w_X}^T)
-        + \rho_2 \mathbf{KL}(\mathbf{P}_{\# 2} \mathbf{P}_{\# 2}^T | \mathbf{w_Y} \mathbf{w_Y}^T)
+        &+ \rho_1 \mathbf{Div}(\mathbf{P}_{\# 1} \mathbf{P}_{\# 1}^T | \mathbf{w_X} \mathbf{w_X}^T)
+        + \rho_2 \mathbf{Div}(\mathbf{P}_{\# 2} \mathbf{P}_{\# 2}^T | \mathbf{w_Y} \mathbf{w_Y}^T)
         &+ \alpha \sum_{i,j} \mathbf{P}_{i,j} \mathbf{M}_{i, j}
-        + \varepsilon \mathbf{KL}(\mathbf{P} \otimes \mathbf{P} | (\mathbf{w_X} \mathbf{w_Y}^T) \otimes (\mathbf{w_X} \mathbf{w_Y}^T) )
+        + \varepsilon \mathbf{Div}(\mathbf{P} \otimes \mathbf{P} | (\mathbf{w_X} \mathbf{w_Y}^T) \otimes (\mathbf{w_X} \mathbf{w_Y}^T) )
 
     Where :
 
@@ -898,6 +921,7 @@ def fused_unbalanced_gromov_wasserstein(
     - :math:`\mathbf{M}`: Additional sample matrix
     - :math:`\mathbf{w_X}`: Distribution of the samples in the source space
     - :math:`\mathbf{w_Y}`: Distribution of the samples in the target space
+    - :math:`\mathbf{Div}`: Either Kullback-Leibler divergence or half-squared L2 norm.
 
     .. note:: This function allows epsilon to be zero.
               In that case, the :any:`ot.lp.emd` solver of POT will be used.
@@ -992,7 +1016,8 @@ def fused_unbalanced_gromov_wasserstein(
         X=Cx, Y=Cy, wx_samp=wx, wx_feat=wx, wy_samp=wy, wy_feat=wy,
         reg_marginals=reg_marginals, epsilon=epsilon, reg_type="joint",
         divergence=divergence, unbalanced_solver=unbalanced_solver,
-        alpha=alpha, M_samp=M, M_feat=M, init_pi=(init_pi, init_pi),
+        alpha=alpha, M_samp=M, M_feat=M, rescale_plan=True,
+        init_pi=(init_pi, init_pi),
         init_duals=(init_duals, init_duals), max_iter=max_iter, tol=tol,
         max_iter_ot=max_iter_ot, tol_ot=tol_ot,
         method_sinkhorn=method_sinkhorn, log=True,
@@ -1028,10 +1053,10 @@ def fused_unbalanced_gromov_wasserstein2(
     .. math::
         \mathbf{FUGW} = \mathop{\arg \min}_{\mathbf{P}} &\quad \sum_{i,j,k,l}
         (\mathbf{C^X}_{i,k} - \mathbf{C^Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{P}_{k,l} \\
-        &+ \rho_1 \mathbf{KL}(\mathbf{P}_{\# 1} \mathbf{P}_{\# 1}^T | \mathbf{w_X} \mathbf{w_X}^T)
-        + \rho_2 \mathbf{KL}(\mathbf{P}_{\# 2} \mathbf{P}_{\# 2}^T | \mathbf{w_Y} \mathbf{w_Y}^T)
+        &+ \rho_1 \mathbf{Div}(\mathbf{P}_{\# 1} \mathbf{P}_{\# 1}^T | \mathbf{w_X} \mathbf{w_X}^T)
+        + \rho_2 \mathbf{Div}(\mathbf{P}_{\# 2} \mathbf{P}_{\# 2}^T | \mathbf{w_Y} \mathbf{w_Y}^T)
         &+ \alpha \sum_{i,j} \mathbf{P}_{i,j} \mathbf{M}_{i, j}
-        + \varepsilon \mathbf{KL}(\mathbf{P} \otimes \mathbf{P} | (\mathbf{w_X} \mathbf{w_Y}^T) \otimes (\mathbf{w_X} \mathbf{w_Y}^T) )
+        + \varepsilon \mathbf{Div}(\mathbf{P} \otimes \mathbf{P} | (\mathbf{w_X} \mathbf{w_Y}^T) \otimes (\mathbf{w_X} \mathbf{w_Y}^T) )
 
     Where :
 
@@ -1040,9 +1065,13 @@ def fused_unbalanced_gromov_wasserstein2(
     - :math:`\mathbf{M}`: Additional sample matrix
     - :math:`\mathbf{w_X}`: Distribution of the samples in the source space
     - :math:`\mathbf{w_Y}`: Distribution of the samples in the target space
+    - :math:`\mathbf{Div}`: Either Kullback-Leibler divergence or half-squared L2 norm.
 
     .. note:: This function allows epsilon to be zero.
               In that case, the :any:`ot.lp.emd` solver of POT will be used.
+
+              The computation of gradients is only supported for KL divergence.
+              The case of half squared-L2 norm uses those of KL divergence.
 
     Parameters
     ----------
@@ -1123,6 +1152,10 @@ def fused_unbalanced_gromov_wasserstein2(
     Aligning individual brains with Fused Unbalanced Gromov-Wasserstein,
     Advances in Neural Information Systems, 35 (2022).
     """
+
+    if divergence != "kl":
+        warnings.warn("The computation of gradients is only supported for KL divergence, not \
+                      for {} divergence".format(divergence))
 
     pi_samp, pi_feat, log_fugw = fused_unbalanced_gromov_wasserstein(
         Cx=Cx, Cy=Cy, wx=wx, wy=wy, reg_marginals=reg_marginals,
