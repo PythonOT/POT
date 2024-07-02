@@ -5,7 +5,7 @@ Learning sample marginal distribution with CO-Optimal Transport
 ===============================================================
 
 In this example, we illustrate how to estimate the sample marginal distribution which minimizes
-the CO-Optimal Transport distance [47]_ between two matrices. More precisely, given a source data
+the CO-Optimal Transport distance [49] between two matrices. More precisely, given a source data
 :math:`(X, \mu_x^{(s)}, \mu_x^{(f)})` and a target matrix :math:`Y` associated with a fixed
 histogram on features :math:`\mu_y^{(f)}`, we want to solve the following problem
 
