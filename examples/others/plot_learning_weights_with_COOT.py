@@ -5,7 +5,8 @@ Learning sample marginal distribution with CO-Optimal Transport
 ===============================================================
 
 In this example, we illustrate how to estimate the sample marginal distribution which minimizes
-the CO-Optimal Transport distance [49] between two matrices. More precisely, given a source data
+the CO-Optimal Transport distance [49] between two input matrices, whose rows/columns
+represent the samples/features, respectively. More precisely, given a source data
 :math:`(X, \mu_x^{(s)}, \mu_x^{(f)})` and a target matrix :math:`Y` associated with a fixed
 histogram on features :math:`\mu_y^{(f)}`, we want to solve the following problem
 
@@ -35,6 +36,7 @@ import ot
 
 from ot.coot import co_optimal_transport as coot
 from ot.coot import co_optimal_transport2 as coot2
+from ot.gromov._unbalanced import unbalanced_co_optimal_transport
 
 
 # %%
@@ -119,6 +121,52 @@ X, Y_noisy = X.numpy(), Y_noisy.numpy()
 b = b.detach().numpy()
 
 pi_sample, pi_feature = coot(X, Y_noisy, wy_samp=b, log=False, verbose=True)
+
+fig = pl.figure(4, (9, 7))
+pl.clf()
+
+ax1 = pl.subplot(2, 2, 3)
+pl.imshow(X, vmin=-2, vmax=2)
+pl.xlabel('$X$')
+
+ax2 = pl.subplot(2, 2, 2)
+ax2.yaxis.tick_right()
+pl.imshow(np.transpose(Y_noisy), vmin=-2, vmax=2)
+pl.title("Transpose(Noisy $Y$)")
+ax2.xaxis.tick_top()
+
+for i in range(n1):
+    j = np.argmax(pi_sample[i, :])
+    xyA = (d1 - .5, i)
+    xyB = (j, d2 - .5)
+    con = ConnectionPatch(xyA=xyA, xyB=xyB, coordsA=ax1.transData,
+                          coordsB=ax2.transData, color="black")
+    fig.add_artist(con)
+
+for i in range(d1):
+    j = np.argmax(pi_feature[i, :])
+    xyA = (i, -.5)
+    xyB = (-.5, j)
+    con = ConnectionPatch(
+        xyA=xyA, xyB=xyB, coordsA=ax1.transData, coordsB=ax2.transData, color="blue")
+    fig.add_artist(con)
+
+# %%
+# Now, let see if we can use unbalanced Co-Optimal Transport to recover the clean OT plans,
+# without the need of learning the marginal distribution as in Co-Optimal Transport.
+# -----------------------------------------------------------------------------------------
+
+pi_sample, pi_feature = unbalanced_co_optimal_transport(
+    X=X, Y=Y_noisy, reg_marginals=(10, 10), epsilon=0, divergence="kl",
+    unbalanced_solver="mm", max_iter=1000, tol=1e-6,
+    max_iter_ot=1000, tol_ot=1e-6, log=False, verbose=False
+)
+
+# %%
+# Visualizing the row and column alignments learned by unbalanced Co-Optimal Transport.
+# -----------------------------------------------------------------------------------------
+#
+# Similar to Co-Optimal Transport, we are also be able to fully recover the clean OT plans.
 
 fig = pl.figure(4, (9, 7))
 pl.clf()

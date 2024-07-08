@@ -3,6 +3,7 @@
 ## 0.9.5dev
 
 #### New features
++ Implementation of Fused Unbalanced Gromov-Wasserstein and Unbalanced Co-Optimal Transport solvers (PR #617)
 
 #### Closed issues
 
@@ -23,7 +24,6 @@ From a maintenance point of view, we now have a new option to install optional d
 + Add gradient computation with envelope theorem to sinkhorn solver of `ot.solve` with `grad='envelope'` (PR #605).
 + Added support for [Low rank Gromov-Wasserstein](https://proceedings.mlr.press/v162/scetbon22b/scetbon22b.pdf) with `ot.gromov.lowrank_gromov_wasserstein_samples` (PR #614)
 + Optional dependencies may now be installed with `pip install POT[all]` The specific backends or submodules' dependencies may also be installed individually. The pip options are: `backend-jax, backend-tf, backend-torch, cvxopt, dr, gnn, all`. The installation of the `cupy` backend should be done with conda.
-+ Implementation of Fused Unbalanced Gromov-Wasserstein and Unbalanced Co-Optimal Transport solvers (PR #617)
 
 #### Closed issues
 - Fix gpu compatibility of sr(F)GW solvers when `G0 is not None`(PR #596)
