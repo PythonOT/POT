@@ -12,6 +12,7 @@ import pytest
 from ot.gromov._unbalanced import unbalanced_co_optimal_transport, unbalanced_co_optimal_transport2
 
 
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
 @pytest.mark.parametrize("unbalanced_solver, divergence", itertools.product(["mm", "lbfgsb"], ["kl", "l2"]))
 def test_sanity(nx, unbalanced_solver, divergence):
@@ -90,6 +91,7 @@ def test_sanity(nx, unbalanced_solver, divergence):
     np.testing.assert_allclose(ucoot, 0, atol=1e-06)
 
 
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
 @pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["scaling", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]))
 def test_init_plans(nx, unbalanced_solver, divergence, eps):
@@ -164,6 +166,7 @@ def test_init_plans(nx, unbalanced_solver, divergence, eps):
     np.testing.assert_allclose(ucoot, ucoot_nx, atol=1e-08)
 
 
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
 @pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["scaling", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]))
 def test_init_duals(nx, unbalanced_solver, divergence, eps):
@@ -240,6 +243,7 @@ def test_init_duals(nx, unbalanced_solver, divergence, eps):
     np.testing.assert_allclose(ucoot, ucoot_nx, atol=1e-08)
 
 
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
 @pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["scaling", "mm", "lbfgsb"], ["kl", "l2"], [0, 1e-2]))
 def test_linear_part(nx, unbalanced_solver, divergence, eps):
@@ -319,6 +323,7 @@ def test_linear_part(nx, unbalanced_solver, divergence, eps):
     np.testing.assert_allclose(ucoot, ucoot_nx, atol=1e-08)
 
 
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
 @pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["scaling", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]))
 def test_reg_marginals(nx, unbalanced_solver, divergence, eps):
@@ -400,6 +405,7 @@ def test_reg_marginals(nx, unbalanced_solver, divergence, eps):
         np.testing.assert_allclose(ucoot, ucoot_nx, atol=1e-08)
 
 
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
 @pytest.mark.parametrize("unbalanced_solver, divergence, alpha", itertools.product(["scaling", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]))
 def test_eps(nx, unbalanced_solver, divergence, alpha):
@@ -482,6 +488,7 @@ def test_eps(nx, unbalanced_solver, divergence, alpha):
         np.testing.assert_allclose(ucoot, ucoot_nx, atol=1e-08)
 
 
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
 @pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["scaling", "mm", "lbfgsb"], ["kl", "l2"], [0, 1e-2]))
 def test_alpha(nx, unbalanced_solver, divergence, eps):
@@ -568,6 +575,7 @@ def test_alpha(nx, unbalanced_solver, divergence, eps):
         np.testing.assert_allclose(ucoot, ucoot_nx, atol=1e-08)
 
 
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
 @pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["scaling", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]))
 def test_log(nx, unbalanced_solver, divergence, eps):
@@ -640,6 +648,7 @@ def test_log(nx, unbalanced_solver, divergence, eps):
     np.testing.assert_allclose(ucoot, ucoot_nx, atol=1e-08)
 
 
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
 @pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["scaling", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]))
 def test_marginals(nx, unbalanced_solver, divergence, eps):
@@ -712,6 +721,7 @@ def test_marginals(nx, unbalanced_solver, divergence, eps):
     np.testing.assert_allclose(ucoot, ucoot_nx, atol=1e-08)
 
 
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
 def test_raise_value_error(nx):
     n_samples = 5  # nb samples
