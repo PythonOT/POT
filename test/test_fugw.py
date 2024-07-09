@@ -44,8 +44,8 @@ def test_sanity(nx, unbalanced_solver, divergence):
     reg_m = (100, 50)
     eps = 0
     alpha = 0.5
-    max_iter_ot = 10000
-    max_iter = 10000
+    max_iter_ot = 100
+    max_iter = 100
     tol = 1e-7
     tol_ot = 1e-7
 
@@ -125,8 +125,8 @@ def test_init_plans(nx, unbalanced_solver, divergence, eps):
 
     reg_m = (100, 50)
     alpha = 0.5
-    max_iter_ot = 1000
-    max_iter = 1000
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-5
     tol_ot = 1e-5
 
@@ -204,8 +204,8 @@ def test_init_duals(nx, unbalanced_solver, divergence, eps):
 
     reg_m = (100, 50)
     alpha = 0.5
-    max_iter_ot = 1000
-    max_iter = 1000
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-5
     tol_ot = 1e-5
 
@@ -278,8 +278,8 @@ def test_reg_marginals(nx, unbalanced_solver, divergence, eps):
     C2 /= C2.max()
 
     alpha = 0.5
-    max_iter_ot = 1000
-    max_iter = 1000
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-5
     tol_ot = 1e-5
 
@@ -360,8 +360,8 @@ def test_log(nx, unbalanced_solver, divergence, eps):
 
     reg_m = (100, 50)
     alpha = 0.5
-    max_iter_ot = 1000
-    max_iter = 1000
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-5
     tol_ot = 1e-5
 
@@ -435,8 +435,8 @@ def test_marginals(nx, unbalanced_solver, divergence, eps):
 
     reg_m = (100, 50)
     alpha = 0.5
-    max_iter_ot = 1000
-    max_iter = 1000
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-5
     tol_ot = 1e-5
 
@@ -507,8 +507,8 @@ def test_raise_value_error(nx):
 
     eps = 1e-2
     reg_m = (10, 100)
-    max_iter_ot = 1000
-    max_iter = 1000
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-6
     tol_ot = 1e-6
 

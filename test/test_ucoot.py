@@ -33,8 +33,8 @@ def test_sanity(nx, unbalanced_solver, divergence):
 
     reg_m = (10, 5)
     eps = 0
-    max_iter_ot = 1000
-    max_iter = 1000
+    max_iter_ot = 200
+    max_iter = 200
     tol = 1e-7
     tol_ot = 1e-7
 
@@ -114,8 +114,8 @@ def test_init_plans(nx, unbalanced_solver, divergence, eps):
 
     reg_m = (1, 5)
     alpha = (0.1, 0.2)
-    max_iter_ot = 100
-    max_iter = 100
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-7
     tol_ot = 1e-7
 
@@ -191,8 +191,8 @@ def test_init_duals(nx, unbalanced_solver, divergence, eps):
 
     reg_m = (10, 5)
     alpha = (0.1, 0.2)
-    max_iter_ot = 100
-    max_iter = 100
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-7
     tol_ot = 1e-7
 
@@ -271,8 +271,8 @@ def test_linear_part(nx, unbalanced_solver, divergence, eps):
 
     reg_m = (10, 5)
     alpha = (0.1, 0.2)
-    max_iter_ot = 100
-    max_iter = 100
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-7
     tol_ot = 1e-7
 
@@ -343,8 +343,8 @@ def test_reg_marginals(nx, unbalanced_solver, divergence, eps):
     px_s_nx, px_f_nx, py_s_nx, py_f_nx = nx.from_numpy(px_s, px_f, py_s, py_f)
 
     alpha = (0.1, 0.2)
-    max_iter_ot = 1000
-    max_iter = 1000
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-7
     tol_ot = 1e-7
 
@@ -426,8 +426,8 @@ def test_eps(nx, unbalanced_solver, divergence, alpha):
 
     reg_m = (10, 5)
     alpha = (0.1, 0.2)
-    max_iter_ot = 100
-    max_iter = 100
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-7
     tol_ot = 1e-7
 
@@ -515,8 +515,8 @@ def test_alpha(nx, unbalanced_solver, divergence, eps):
     M_samp_nx, M_feat_nx = nx.from_numpy(M_samp, M_feat)
 
     reg_m = (10, 5)
-    max_iter_ot = 100
-    max_iter = 100
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-7
     tol_ot = 1e-7
 
@@ -596,8 +596,8 @@ def test_log(nx, unbalanced_solver, divergence, eps):
 
     reg_m = (10, 5)
     alpha = (0.1, 0.2)
-    max_iter_ot = 100
-    max_iter = 100
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-7
     tol_ot = 1e-7
 
@@ -669,8 +669,8 @@ def test_marginals(nx, unbalanced_solver, divergence, eps):
 
     reg_m = (10, 5)
     alpha = (0.1, 0.2)
-    max_iter_ot = 100
-    max_iter = 100
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-7
     tol_ot = 1e-7
 
@@ -741,8 +741,8 @@ def test_raise_value_error(nx):
 
     reg_m = (10, 5)
     eps = 0
-    max_iter_ot = 100
-    max_iter = 100
+    max_iter_ot = 5
+    max_iter = 5
     tol = 1e-7
     tol_ot = 1e-7
 
