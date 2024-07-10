@@ -3,6 +3,7 @@
 ## 0.9.5dev
 
 #### New features
+- Add feature `mass=True` for `nx.kl_div` (PR #654)
 
 #### Closed issues
 
