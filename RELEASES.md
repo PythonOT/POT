@@ -4,6 +4,7 @@
 
 #### New features
 + Implementation of Fused Unbalanced Gromov-Wasserstein and Unbalanced Co-Optimal Transport solvers (PR #617)
++ Add feature `mass=True` for `nx.kl_div` (PR #654)
 
 #### Closed issues
 
