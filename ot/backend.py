@@ -954,7 +954,7 @@ class Backend():
 
         .. math::
              KL(p,q) = \langle \mathbf{p}, log(\mathbf{p} / \mathbf{q} + eps \rangle
-             + \mathbb{1}_{mass=True} \langle \mathbf{q} - \mathbf{q}, \mathbf{1} \rangle
+             + \mathbb{1}_{mass=True} \langle \mathbf{q} - \mathbf{p}, \mathbf{1} \rangle
 
         See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.entropy.html
         """

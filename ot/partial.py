@@ -123,7 +123,7 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
 
     nx = get_backend(a, b, M)
 
-    if nx.sum(a) > 1 + 1e-15 or nx.sum(b) > 1 + 1e-15:  # 1e-15 for numerical errors
+    if nx.sum(a) > 1 + 1e-16 or nx.sum(b) > 1 + 1e-16:  # 1e-16 for numerical errors
         raise ValueError("Problem infeasible. Check that a and b are in the "
                          "simplex")
 
