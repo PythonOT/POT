@@ -364,7 +364,7 @@ def _barycenter_sinkhorn_log(A, M, reg, weights=None, numItermax=1000,
         log = {'err': []}
 
     M = - M / reg
-    logA = nx.log(A + 1e-15)
+    logA = nx.log(A + 1e-16)
     log_KU, G = nx.zeros((2, *logA.shape), type_as=A)
     err = 1
     for ii in range(numItermax):
@@ -702,7 +702,7 @@ def _barycenter_debiased_log(A, M, reg, weights=None, numItermax=1000,
         log = {'err': []}
 
     M = - M / reg
-    logA = nx.log(A + 1e-15)
+    logA = nx.log(A + 1e-16)
     log_KU, G = nx.zeros((2, *logA.shape), type_as=A)
     c = nx.zeros(dim, type_as=A)
     err = 1

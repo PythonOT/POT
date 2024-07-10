@@ -109,7 +109,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
             return 2 * b
     elif loss_fun == 'kl_loss':
         def f1(a):
-            return a * nx.log(a + 1e-15) - a
+            return a * nx.log(a + 1e-16) - a
 
         def f2(b):
             return b
@@ -118,7 +118,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
             return a
 
         def h2(b):
-            return nx.log(b + 1e-15)
+            return nx.log(b + 1e-16)
     else:
         raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
 
@@ -502,7 +502,7 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
             return 2 * b
     elif loss_fun == 'kl_loss':
         def f1(a):
-            return a * nx.log(a + 1e-15) - a
+            return a * nx.log(a + 1e-16) - a
 
         def f2(b):
             return b
@@ -511,7 +511,7 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
             return a
 
         def h2(b):
-            return nx.log(b + 1e-15)
+            return nx.log(b + 1e-16)
     else:
         raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
 
