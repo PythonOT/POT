@@ -944,16 +944,17 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def kl_div(self, p, q, eps=1e-16):
+    def kl_div(self, p, q, mass=False, eps=1e-16):
         r"""
-        Computes the Kullback-Leibler divergence.
+        Computes the (Generalized) Kullback-Leibler divergence.
 
         This function follows the api from :any:`scipy.stats.entropy`.
 
         Parameter eps is used to avoid numerical errors and is added in the log.
 
         .. math::
-             KL(p,q) = \sum_i p(i) \log (\frac{p(i)}{q(i)}+\epsilon)
+             KL(p,q) = \langle \mathbf{p}, log(\mathbf{p} / \mathbf{q} + eps \rangle
+             + \mathbb{1}_{mass=True} \langle \mathbf{q} - \mathbf{q}, \mathbf{1} \rangle
 
         See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.entropy.html
         """
@@ -1352,8 +1353,11 @@ class NumpyBackend(Backend):
     def eigh(self, a):
         return np.linalg.eigh(a)
 
-    def kl_div(self, p, q, eps=1e-16):
-        return np.sum(p * np.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16):
+        value = np.sum(p * np.log(p / q + eps))
+        if mass:
+            value = value + np.sum(q - p)
+        return value
 
     def isfinite(self, a):
         return np.isfinite(a)
@@ -1751,8 +1755,11 @@ class JaxBackend(Backend):
     def eigh(self, a):
         return jnp.linalg.eigh(a)
 
-    def kl_div(self, p, q, eps=1e-16):
-        return jnp.sum(p * jnp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16):
+        value = jnp.sum(p * jnp.log(p / q + eps))
+        if mass:
+            value = value + jnp.sum(q - p)
+        return value
 
     def isfinite(self, a):
         return jnp.isfinite(a)
@@ -2238,8 +2245,11 @@ class TorchBackend(Backend):
     def eigh(self, a):
         return torch.linalg.eigh(a)
 
-    def kl_div(self, p, q, eps=1e-16):
-        return torch.sum(p * torch.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16):
+        value = torch.sum(p * torch.log(p / q + eps))
+        if mass:
+            value = value + torch.sum(q - p)
+        return value
 
     def isfinite(self, a):
         return torch.isfinite(a)
@@ -2639,8 +2649,11 @@ class CupyBackend(Backend):  # pragma: no cover
     def eigh(self, a):
         return cp.linalg.eigh(a)
 
-    def kl_div(self, p, q, eps=1e-16):
-        return cp.sum(p * cp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16):
+        value = cp.sum(p * cp.log(p / q + eps))
+        if mass:
+            value = value + cp.sum(q - p)
+        return value
 
     def isfinite(self, a):
         return cp.isfinite(a)
@@ -3063,8 +3076,11 @@ class TensorflowBackend(Backend):
     def eigh(self, a):
         return tf.linalg.eigh(a)
 
-    def kl_div(self, p, q, eps=1e-16):
-        return tnp.sum(p * tnp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16):
+        value = tnp.sum(p * tnp.log(p / q + eps))
+        if mass:
+            value = value + tnp.sum(q - p)
+        return value
 
     def isfinite(self, a):
         return tnp.isfinite(a)
