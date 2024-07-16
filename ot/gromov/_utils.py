@@ -400,11 +400,9 @@ def update_feature_matrix(lambdas, Ys, Ts, p, nx=None):
         nx = get_backend(*Ys, *Ts, p)
 
     p = 1. / p
-    tmpsum = sum([
-        lambdas[s] * nx.dot(Ys[s], Ts[s].T) * p[None, :]
-        for s in range(len(Ts))
-    ])
-    return tmpsum
+    list_features = [lambdas[s] * nx.dot(Ys[s], Ts[s].T) for s in range(len(Ts))]
+    
+    return sum(list_features) * p[None, :]
 
 
 def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
@@ -522,3 +520,215 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
     hC2 = h2(C2)
     fC2t = f2(C2).T
     return constC, hC1, hC2, fC2t
+
+
+def relaxed_update_square_loss(Ts, Cs, lambdas, p=None, nx=None):
+    r"""
+    Updates :math:`\mathbf{C}` according to the L2 inner loss with the `S`
+    :math:`\mathbf{T}_s` couplings calculated at each iteration of relaxed
+    versions of the GW barycenter problem like in :ref:`[48]`:
+
+    .. math::
+
+        \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad
+        \sum_s \lambda_s \sum_{i,j,k,l}
+        L2(\mathbf{C}^{(s)}_{i,k}, \mathbf{C}_{j,l}) \mathbf{T}^{(s)}_{i,j} \mathbf{T}^{(s)}_{k,l}
+    
+    Where :
+
+    - :math:`\mathbf{C}^{(s)}`: pairwise matrix in the s^{th} source space .
+    - :math:`\mathbf{C}`: pairwise matrix in the target space.
+    
+    Parameters
+    ----------
+    Ts : list of S array-like of shape (N, ns)
+        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
+    Cs : list of S array-like, shape(ns,ns)
+        Metric cost matrices.
+    lambdas : list of float,
+        List of the `S` spaces' weights.
+    p : array-like or list of S array-like, shape (N,) or (S,N)
+        Masses or list of masses in the targeted barycenter.
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    ----------
+    C : array-like, shape (`nt`, `nt`)
+        Updated :math:`\mathbf{C}` matrix.
+
+    References
+    ----------
+    .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+            International Conference on Learning Representations (ICLR), 2022.
+    
+    """
+    if nx is None:
+        arr = [*Ts, *Cs]
+        if p is not None:
+            if len(p.shape) == 2:
+                arr += [*p]
+            else:
+                arr += [p]
+            
+        nx = get_backend(arr)
+    
+    S = len(Ts)
+    list_structures = [lambdas[s] * nx.dot(nx.dot(Ts[s], Cs[s]),Ts[s].T)
+                       for s in range(S)
+    ]
+    if len(p.shape) == 1: # shared target masses potentially with zeros
+        zeros_idx = nx.where(p == 0)[0]
+        inv_p = 1. / p
+        inv_p[zeros_idx] = 1.
+        
+        return sum(list_structures) * nx.out(inv_p, inv_p)
+    
+    else:
+        if p is None:
+            p = [Ts[s].sum(0) for s in range(S)]
+        p_sum = sum(p)
+        zeros_idx = nx.where(p_sum == 0)[0]
+        quotient = sum([nx.outer(p[s], p[s]) for s in range(S)])
+        
+        quotient[zeros_idx, :] = 1.
+        quotient[:, zeros_idx] = 1.
+        
+        return sum(list_structures) / quotient
+
+
+def relaxed_update_kl_loss(Ts, Cs, lambdas, p=None, nx=None):
+    r"""
+    Updates :math:`\mathbf{C}` according to the KL inner loss with the `S`
+    :math:`\mathbf{T}_s` couplings calculated at each iteration of relaxed
+    versions of the GW barycenter problem like in :ref:`[48]`:
+
+    .. math::
+
+        \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad
+        \sum_s \lambda_s \sum_{i,j,k,l}
+        KL(\mathbf{C}^{(s)}_{i,k}, \mathbf{C}_{j,l}) \mathbf{T}^{(s)}_{i,j} \mathbf{T}^{(s)}_{k,l}
+    
+    Where :
+
+    - :math:`\mathbf{C}^{(s)}`: pairwise matrix in the s^{th} source space .
+    - :math:`\mathbf{C}`: pairwise matrix in the target space.
+    
+
+    Parameters
+    ----------
+    Ts : list of S array-like of shape (N, ns)
+        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
+    Cs : list of S array-like, shape(ns,ns)
+        Metric cost matrices.
+    lambdas : list of float,
+        List of the `S` spaces' weights.
+    p : array-like or list of S array-like, shape (N,) or (S,N)
+        Masses or list of masses in the targeted barycenter.
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    ----------
+    C : array-like, shape (`ns`, `ns`)
+        updated :math:`\mathbf{C}` matrix
+
+    References
+    ----------
+    .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+            International Conference on Learning Representations (ICLR), 2022.
+    
+    """
+    if nx is None:
+        arr = [*Ts, *Cs]
+        if p is not None:
+            if len(p.shape) == 2:
+                arr += [*p]
+            else:
+                arr += [p]
+            
+        nx = get_backend(arr)
+    
+    S = len(Ts)
+    
+    list_structures = [lambdas[s] * nx.dot(
+        nx.dot(Ts[s], nx.log(nx.maximum(Cs[s], 1e-16))), Ts[s].T)
+        for s in range(S)]
+    
+    
+    if len(p.shape) == 1: # shared target masses potentially with zeros
+        zeros_idx = nx.where(p == 0)[0]
+        inv_p = 1. / p
+        inv_p[zeros_idx] = 1.
+        
+        return sum(list_structures) * nx.out(inv_p, inv_p)
+    
+    else:
+        if p is None:
+            p = [Ts[s].sum(0) for s in range(S)]
+        p_sum = sum(p)
+        zeros_idx = nx.where(p_sum == 0)[0]
+        quotient = sum([nx.outer(p[s], p[s]) for s in range(S)])
+        
+        quotient[zeros_idx, :] = 1.
+        quotient[:, zeros_idx] = 1.
+        
+        return sum(list_structures) / quotient
+
+
+def relaxed_update_feature_matrix(Ts, Ys, lambdas, p=None, nx=None):
+    r"""Updates the feature with respect to the `S` :math:`\mathbf{T}_s`
+    couplings calculated at each iteration of relaxed versions of the FGW
+    barycenter problem in :ref:`[48]`.
+
+    Parameters
+    ----------
+    Ts : list of S array-like, shape (N, ns)
+        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration
+    Ys : list of S array-like, shape (d,ns)
+        The features.
+    lambdas : list of float
+        List of the `S` spaces' weights
+    p : array-like or list of S array-like, shape (N,) or (S,N)
+        Masses or list of masses in the targeted barycenter.
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    -------
+    X : array-like, shape (`d`, `N`)
+
+    References
+    ----------
+    .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+            International Conference on Learning Representations (ICLR), 2022.
+    """
+    if nx is None:
+        arr = [*Ts, *Ys]
+        if p is not None:
+            if len(p.shape) == 2:
+                arr += [*p]
+            else:
+                arr += [p]
+            
+        nx = get_backend(arr)
+    
+    S = len(Ts)
+    if len(p.shape) == 1: # shared target masses potentially with zeros
+        zeros_idx = nx.where(p == 0)[0]
+        inv_p = 1. / p
+        inv_p[zeros_idx] = 1.
+    else:
+        if p is None:
+            p = [Ts[s].sum(0) for s in range(S)]
+        p_sum = sum(p)
+        zeros_idx = nx.where(p_sum == 0)[0]
+        inv_p = 1. / p_sum
+        inv_p[zeros_idx] = 1.
+    
+    list_features = [lambdas[s] * nx.dot(Ys[s], Ts[s].T) for s in range(S)]
+    
+    return sum(list_features) * inv_p[None, :]
