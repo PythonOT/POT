@@ -230,7 +230,7 @@ def quantized_fused_gromov_wasserstein_partitioned(
 
 def get_graph_partition(C, npart, part_method='random', F=None, alpha=1.,
                         random_state=0, nx=None):
-    """
+    r"""
     Partitioning a given graph with structure matrix :math:`\mathbf{C} \in R^{n \times n}`
     into `npart` partitions either 'random', or using one of {'louvain', 'fluid'}
     algorithms from networkx, or 'spectral' clustering from scikit-learn,
@@ -335,7 +335,7 @@ def get_graph_partition(C, npart, part_method='random', F=None, alpha=1.,
 
 
 def get_graph_representants(C, part, rep_method='pagerank', random_state=0, nx=None):
-    """
+    r"""
     Get representative node for each partition given by :math:`\mathbf{part} \in R^{n}`
     of a graph with structure matrix :math:`\mathbf{C} \in R^{n \times n}`.
     Selection is either done randomly or using 'pagerank' algorithm from networkx.
@@ -408,7 +408,7 @@ def get_graph_representants(C, part, rep_method='pagerank', random_state=0, nx=N
 
 def format_partitioned_graph(C, p, part, rep_indices, F=None, M=None,
                              alpha=1., nx=None):
-    """
+    r"""
     Format an attributed graph :math:`(\mathbf{C}, \mathbf{F}, \mathbf{p})`
     with structure matrix :math:`(\mathbf{C} \in R^{n \times n}`, feature matrix
     :math:`(\mathbf{F} \in R^{n \times d}` and node relative importance
@@ -761,7 +761,7 @@ def quantized_fused_gromov_wasserstein(
 
 def get_partition_and_representants_samples(
         X, npart, method='kmeans', random_state=0, nx=None):
-    """
+    r"""
     Compute `npart` partitions and representants over samples :math:`\mathbf{X} \in R^{n \times d}`
     using either a random or a kmeans algorithm.
 
@@ -854,7 +854,7 @@ def get_partition_and_representants_samples(
 
 def format_partitioned_samples(
         X, p, part, rep_indices, F=None, alpha=1., nx=None):
-    """
+    r"""
     Format an attributed graph :math:`(\mathbf{D}(\mathbf{X}), \mathbf{F}, \mathbf{p})`
     with euclidean structure matrix :math:`(\mathbf{D}(\mathbf{X}) \in R^{n \times n}`,
     feature matrix :math:`(\mathbf{F} \in R^{n \times d}` and node relative importance
