@@ -59,7 +59,7 @@ class TFGWPooling(nn.Module):
     """
 
     def __init__(self, n_features, n_tplt=2, n_tplt_nodes=2, alpha=None, train_node_weights=True, multi_alpha=False, feature_init_mean=0., feature_init_std=1.):
-        """
+        r"""
         Template Fused Gromov-Wasserstein (TFGW) layer. This layer is a pooling layer for graph neural networks.
             Computes the fused Gromov-Wasserstein distances between the graph and a set of templates.
 
@@ -186,7 +186,7 @@ class TWPooling(nn.Module):
     """
 
     def __init__(self, n_features, n_tplt=2, n_tplt_nodes=2, train_node_weights=True, feature_init_mean=0., feature_init_std=1.):
-        """
+        r"""
         Template Wasserstein (TW) layer, also kown as OT-GNN layer. This layer is a pooling layer for graph neural networks.
             Computes the Wasserstein distances between the features of the graph features and a set of templates.
 
