@@ -1295,9 +1295,40 @@ class LazyTensor(object):
 
 
 def proj_SDP(S, nx=None, vmin=0.):
+    """
+    Project a symmetric matrix onto the space of symmetric matrices with
+    eigenvalues larger or equal to `vmin`.
+
+    Parameters:
+    ----------
+    S : array_like (n, d, d)
+        The input symmetric matrix or matrices.
+    nx : module, optional
+        The numerical backend module to use. If not provided, the backend will
+        be fetched from the input matrix `S`.
+    vmin : float, optional
+        The minimum value for the eigenvalues. Eigenvalues below this value will
+        be clipped to vmin.
+    
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends.
+
+    Returns:
+    -------
+    P : ndarray (n, d, d)
+        The projected symmetric positive definite matrix.
+
+    """
     if nx is None:
         nx = get_backend(S)
-    
+
     w, P = nx.eigh(S)
     w = nx.clip(w, vmin, None)
-    return P @ nx.diag(w) @ P.T
+
+    if len(S.shape) == 2:  # input was (d, d)
+        return P @ nx.diag(w) @ P.T
+
+    else:  # input was (n, d, d): broadcasting
+        Q = nx.einsum('ijk,ik->ijk', P, w)  # Q[i] = P[i] @ diag(w[i])
+        # R[i] = Q[i] @ P[i].T
+        return nx.einsum('ijk,ikl->ijl', Q, nx.transpose(P, (0, 2, 1)))

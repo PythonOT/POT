@@ -623,7 +623,25 @@ def test_label_normalization(nx):
 
 
 def test_proj_SDP(nx):
-    S = np.diag([1., -1., 2.])
-    S = nx.from_numpy(S)
-    S1 = ot.utils.proj_SDP(S)
-    assert np.allclose(nx.to_numpy(S1), np.diag([1, 0, 2]))
+    t = np.pi / 8
+    U = np.array([[np.cos(t), -np.sin(t)], [np.sin(t), np.cos(t)]])
+    w = np.array([1., -1.])
+    S = np.stack([U @ np.diag(w) @ U.T]*2, axis=0)
+    S_nx = nx.from_numpy(S)
+    R = ot.utils.proj_SDP(S_nx)
+
+    w_expected = np.array([1., 0.])
+    S_expected = np.stack([U @ np.diag(w_expected) @ U.T]*2, axis=0)
+    assert np.allclose(nx.to_numpy(R), S_expected)
+
+    R0 = ot.utils.proj_SDP(S_nx[0])
+    assert np.allclose(nx.to_numpy(R[0]), S_expected[0])
+
+
+def test_laplacian():
+    n = 100
+    rng = np.random.RandomState(0)
+    x = rng.randn(n, 2)
+    M = ot.dist(x, x)
+    L = ot.utils.laplacian(M)
+    assert L.shape == (n, n)
