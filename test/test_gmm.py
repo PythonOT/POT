@@ -9,7 +9,7 @@
 import numpy as np
 import pytest
 from ot.utils import proj_simplex
-from ot.gmm import gaussian_pdf, gmm_pdf, dist_bures, gmm_ot_loss, gmm_ot_plan, gmm_ot_apply_map
+from ot.gmm import gaussian_pdf, gmm_pdf, dist_bures_squared, gmm_ot_loss, gmm_ot_plan, gmm_ot_apply_map
 
 try:
     import torch
@@ -39,7 +39,8 @@ def test_gaussian_pdf():
     d = 3
     x = rng.randn(n, d)
     m, _, C, _, _, _ = get_gmms()
-    gaussian_pdf(x, m[0], C[0])
+    pdf = gaussian_pdf(x, m[0], C[0])
+    assert pdf.shape == (n,)
 
 
 def test_gmm_pdf():
@@ -51,12 +52,25 @@ def test_gmm_pdf():
     gmm_pdf(x, m_s, C_s, w_s)
 
 
-def test_dist_bures():
+def test_dist_bures_squared(nx):
     m_s, m_t, C_s, C_t, _, _ = get_gmms()
-    dist_bures(m_s, m_t, C_s, C_t)
-    D0 = dist_bures(m_s, m_s, C_s, C_s)
+    m_s = nx.from_numpy(m_s)
+    m_t = nx.from_numpy(m_t)
+    C_s = nx.from_numpy(C_s)
+    C_t = nx.from_numpy(C_t)
+    dist_bures_squared(m_s, m_t, C_s, C_t)
+    D0 = dist_bures_squared(m_s, m_s, C_s, C_s)
 
     assert np.allclose(np.diag(D0), 0, atol=1e-6)
+
+    with pytest.raises(AssertionError):
+        dist_bures_squared(m_s[:, 1:], m_t, C_s, C_t)
+
+    with pytest.raises(AssertionError):
+        dist_bures_squared(m_s[1:], m_t, C_s, C_t)
+
+    with pytest.raises(AssertionError):
+        dist_bures_squared(m_s, m_t[1:], C_s, C_t)
 
 
 def test_gmm_ot_loss():
@@ -68,6 +82,12 @@ def test_gmm_ot_loss():
     loss = gmm_ot_loss(m_s, m_s, C_s, C_s, w_s, w_s)
 
     assert np.allclose(loss, 0, atol=1e-6)
+
+    with pytest.raises(AssertionError):
+        gmm_ot_loss(m_s, m_t, C_s, C_t, w_s[1:], w_t)
+
+    with pytest.raises(AssertionError):
+        gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t[1:])
 
 
 def test_gmm_ot_plan():
@@ -81,6 +101,12 @@ def test_gmm_ot_plan():
     plan = gmm_ot_plan(m_s, m_s + 1, C_s, C_s, w_s, w_s)
 
     assert np.allclose(plan, np.diag(w_s), atol=1e-6)
+
+    with pytest.raises(AssertionError):
+        gmm_ot_loss(m_s, m_t, C_s, C_t, w_s[1:], w_t)
+
+    with pytest.raises(AssertionError):
+        gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t[1:])
 
 
 def test_gmm_apply_map():

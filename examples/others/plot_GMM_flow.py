@@ -4,8 +4,8 @@
 GMM Flow
 ====================================================
 
-Illustration of the flow of a Gaussian Mixture with 
-respect to its GMM-OT distance with respect to a 
+Illustration of the flow of a Gaussian Mixture with
+respect to its GMM-OT distance with respect to a
 fixed GMM.
 
 """
@@ -52,6 +52,7 @@ w_s.requires_grad_()
 w_t = torch.tensor(ot.unif(kt))
 # w_t = proj_simplex(torch.rand(kt))
 
+
 def draw_cov(mu, C, color=None, label=None, nstd=1, alpha=.5):
 
     def eigsorted(cov):
@@ -67,10 +68,12 @@ def draw_cov(mu, C, color=None, label=None, nstd=1, alpha=.5):
                   angle=theta, facecolor=color, edgecolor=color, label=label, fill=True)
     pl.gca().add_artist(ell)
 
+
 def draw_gmm(ms, Cs, ws, color=None, nstd=.5, alpha=1):
     for k in range(ms.shape[0]):
-        draw_cov(ms[k], Cs[k], color, None, nstd, 
+        draw_cov(ms[k], Cs[k], color, None, nstd,
                  alpha * ws[k])
+
 
 axis = [-3, 3, -3, 3]
 pl.figure(1, (20, 10))
@@ -78,8 +81,8 @@ pl.clf()
 
 pl.subplot(1, 2, 1)
 pl.scatter(m_s[:, 0].detach(), m_s[:, 1].detach(), color='C0')
-draw_gmm(m_s.detach(), C_s.detach(), 
-         torch.softmax(w_s, 0).detach().numpy(), 
+draw_gmm(m_s.detach(), C_s.detach(),
+         torch.softmax(w_s, 0).detach().numpy(),
          color='C0')
 pl.axis(axis)
 pl.title('Source GMM')
@@ -98,7 +101,7 @@ n_gd_its = 300
 lr = 3e-2
 opt = Adam([{'params': m_s, 'lr': 2 * lr},
            {'params': C_s, 'lr': lr}])
-           # {'params': w_s, 'lr': lr}])
+# {'params': w_s, 'lr': lr}])
 m_list = [m_s.data.numpy().copy()]
 C_list = [C_s.data.numpy().copy()]
 w_list = [torch.softmax(w_s, 0).data.numpy().copy()]
@@ -106,7 +109,7 @@ loss_list = []
 
 for _ in range(n_gd_its):
     opt.zero_grad()
-    loss = gmm_ot_loss(m_s, m_t, C_s, C_t, 
+    loss = gmm_ot_loss(m_s, m_t, C_s, C_t,
                        torch.softmax(w_s, 0), w_t)
     loss.backward()
     opt.step()
