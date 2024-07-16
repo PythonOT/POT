@@ -29,15 +29,15 @@ def gmm_pdf(x, m, C, w):
 
 
 def dist_bures(m_s, m_t, C_s, C_t):
-    r"""
-    """
     nx = get_backend(m_s, C_s, m_t, C_t)
     k_s, k_t = m_s.shape[0], m_t.shape[0]
     # TODO assert tailles
     D = nx.zeros((k_s, k_t), type_as=m_s)
     for i in range(k_s):
         for j in range(k_t):
-            D[i, j] = bures_wasserstein_distance(m_s[i], m_t[j], C_s[i], C_t[j]) ** 2
+            D[i, j] = bures_wasserstein_distance(m_s[i], m_t[j],
+                                                 C_s[i], C_t[j])
+            D[i, j] = D[i, j] ** 2
     return D
 
 
@@ -67,7 +67,7 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
     Applies the barycentric or stochastic map associated to the GMM OT from the
     source GMM to the target GMM
     """
-    
+
     if plan is None:
         plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
         nx = get_backend(x, m_s, m_t, C_s, C_t, w_s, w_t)

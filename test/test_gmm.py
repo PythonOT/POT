@@ -39,7 +39,7 @@ def test_gaussian_pdf():
     d = 3
     x = rng.randn(n, d)
     m, _, C, _, _, _ = get_gmms()
-    p = gaussian_pdf(x, m[0], C[0])
+    gaussian_pdf(x, m[0], C[0])
 
 
 def test_gmm_pdf():
@@ -48,12 +48,12 @@ def test_gmm_pdf():
     d = 3
     x = rng.randn(n, d)
     m_s, _, C_s, _, w_s, _ = get_gmms()
-    p = gmm_pdf(x, m_s, C_s, w_s)
+    gmm_pdf(x, m_s, C_s, w_s)
 
 
 def test_dist_bures():
     m_s, m_t, C_s, C_t, _, _ = get_gmms()
-    D = dist_bures(m_s, m_t, C_s, C_t)
+    dist_bures(m_s, m_t, C_s, C_t)
     D0 = dist_bures(m_s, m_s, C_s, C_s)
 
     assert np.allclose(np.diag(D0), 0, atol=1e-6)

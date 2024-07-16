@@ -1309,7 +1309,7 @@ def proj_SDP(S, nx=None, vmin=0.):
     vmin : float, optional
         The minimum value for the eigenvalues. Eigenvalues below this value will
         be clipped to vmin.
-    
+
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends.
 
