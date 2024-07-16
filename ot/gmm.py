@@ -9,10 +9,7 @@ Optimal transport for Gaussian Mixtures
 #
 # License: MIT License
 
-import warnings
-
 from .backend import get_backend
-from .utils import dots, is_all_finite, list_to_array
 from .gaussian import bures_wasserstein_distance, bures_wasserstein_mapping
 from .lp import emd2, emd
 from scipy.stats import multivariate_normal
@@ -76,7 +73,7 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
         nx = get_backend(x, m_s, m_t, C_s, C_t, w_s, w_t)
     else:
         nx = get_backend(x, m_s, m_t, C_s, C_t, w_s, w_t, plan)
-    
+
     if method == 'bary':
         # TODO asserts
         normalisation = gmm_pdf(x, m_s, C_s, w_s)[:, None]
@@ -89,6 +86,6 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
                 Tk0k1x = x @ A + b
                 out = out + plan[k0, k1] * g * Tk0k1x
         return out / normalisation
-    
+
     else:  # rand
         raise NotImplementedError('Mapping {} not implemented'.format(method))

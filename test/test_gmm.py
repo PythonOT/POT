@@ -8,7 +8,6 @@
 
 import numpy as np
 import pytest
-import ot
 from ot.utils import proj_simplex
 from ot.gmm import gaussian_pdf, gmm_pdf, dist_bures, gmm_ot_loss, gmm_ot_plan, gmm_ot_apply_map
 
