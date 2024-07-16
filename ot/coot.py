@@ -139,10 +139,6 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
         Advances in Neural Information Processing ny_sampstems, 33 (2020).
     """
 
-    def compute_kl(p, q):
-        kl = nx.sum(p * nx.log(p + 1.0 * (p == 0))) - nx.sum(p * nx.log(q))
-        return kl
-
     # Main function
 
     if method_sinkhorn not in ["sinkhorn", "sinkhorn_log"]:
@@ -245,9 +241,9 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
                 coot = coot + alpha_samp * nx.sum(M_samp * pi_samp)
             # Entropic part
             if eps_samp != 0:
-                coot = coot + eps_samp * compute_kl(pi_samp, wxy_samp)
+                coot = coot + eps_samp * nx.kl_div(pi_samp, wxy_samp)
             if eps_feat != 0:
-                coot = coot + eps_feat * compute_kl(pi_feat, wxy_feat)
+                coot = coot + eps_feat * nx.kl_div(pi_feat, wxy_feat)
             list_coot.append(coot)
 
             if err < tol_bcd or abs(list_coot[-2] - list_coot[-1]) < early_stopping_tol:

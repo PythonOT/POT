@@ -645,3 +645,19 @@ def test_laplacian():
     M = ot.dist(x, x)
     L = ot.utils.laplacian(M)
     assert L.shape == (n, n)
+
+
+def test_kl_div(nx):
+    n = 10
+    rng = np.random.RandomState(0)
+    # test on non-negative tensors
+    x = rng.randn(n)
+    x = x - x.min() + 1e-5
+    y = rng.randn(n)
+    y = y - y.min() + 1e-5
+    xb = nx.from_numpy(x)
+    yb = nx.from_numpy(y)
+    kl = nx.kl_div(xb, yb)
+    kl_mass = nx.kl_div(xb, yb, True)
+    recovered_kl = kl_mass - nx.sum(yb - xb)
+    np.testing.assert_allclose(kl, recovered_kl)
