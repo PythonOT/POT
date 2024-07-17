@@ -19,7 +19,8 @@ from ..backend import get_backend
 
 from ._utils import (
     init_matrix_semirelaxed, gwloss, gwggrad,
-    update_square_loss, update_kl_loss, update_feature_matrix
+    generic_update_square_loss, generic_update_kl_loss,
+    generic_update_feature_matrix
     )
 
 
@@ -1123,7 +1124,7 @@ def semirelaxed_fgw_barycenters(
     .. math::
 
         \mathbf{C}^*, \mathbf{Y}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}, \mathbf{Y}\in \mathbb{Y}^{N \times d}}
-        \quad \sum_s \lambda_s \mathrm{srFGW}_{\alpha}(\mathbf{C}, \mathbf{C}_s, \mathbf{Y}, \mathbf{Y}_s, \mathbf{p}_s)
+        \quad \sum_s \lambda_s \mathrm{srFGW}_{\alpha}(\mathbf{C}_s, \mathbf{Y}_s, \mathbf{p}_s, \mathbf{C}, \mathbf{Y})
 
     Where :
 
@@ -1246,7 +1247,7 @@ def semirelaxed_fgw_barycenters(
         else:
             X = init_X
 
-    Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
+    Ms = [dist(Ys[s], X) for s in range(len(Ys))]
 
     if warmstartT:
         T = [None] * S
@@ -1276,6 +1277,7 @@ def semirelaxed_fgw_barycenters(
             log_['err_rel_loss'] = []
 
     while ((err_feature > tol or err_structure > tol or err_rel_loss > tol) and cpt < max_iter):
+        print('-- cpt :', cpt)
         if stop_criterion == 'barycenter':
             Cprev = C
             Xprev = X
@@ -1284,13 +1286,14 @@ def semirelaxed_fgw_barycenters(
 
         # get transport plans
         if warmstartT:
+            print('Ms[0] : {Ms[0].shape} / Cs[0] : {Cs[0].shape} / ps[s] : {ps[0].shape}')
             res = [semirelaxed_fused_gromov_wasserstein(
-                Ms[s], C, Cs[s], ps[s], loss_fun, symmetric, alpha, T[s],
+                Ms[s], Cs[s], C, ps[s], loss_fun, symmetric, alpha, T[s],
                 inner_log, max_iter, tol_rel=1e-5, tol_abs=0., **kwargs)
                 for s in range(S)]
         else:
             res = [semirelaxed_fused_gromov_wasserstein(
-                Ms[s], C, Cs[s], ps[s], loss_fun, symmetric, alpha, None,
+                Ms[s], Cs[s], C, ps[s], loss_fun, symmetric, alpha, None,
                 inner_log, max_iter, tol_rel=1e-5, tol_abs=0., **kwargs)
                 for s in range(S)]
         if stop_criterion == 'barycenter':
@@ -1300,17 +1303,17 @@ def semirelaxed_fgw_barycenters(
             curr_loss = np.sum([output[1]['srfgw_dist'] for output in res])
 
         # update barycenters
+        p = [T[s].sum(0) for s in range(S)]
         if not fixed_features:
-            Ys_temp = [y.T for y in Ys]
-            X = update_feature_matrix(lambdas, Ys_temp, T, p, True, nx).T
-            Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
+            X = generic_update_feature_matrix(T, Ys, lambdas, p, nx=nx)
+            Ms = [dist(Ys[s], X) for s in range(len(Ys))]
 
         if not fixed_structure:
             if loss_fun == 'square_loss':
-                C = update_square_loss(p, lambdas, T, Cs, True, nx)
+                C = generic_update_square_loss(T, Cs, lambdas, p, nx=nx)
 
             elif loss_fun == 'kl_loss':
-                C = update_kl_loss(p, lambdas, T, Cs, True, nx)
+                C = generic_update_kl_loss(T, Cs, lambdas, p, nx=nx)
 
         # update convergence criterion
         if stop_criterion == 'barycenter':

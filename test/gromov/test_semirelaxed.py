@@ -645,10 +645,10 @@ def test_semirelaxed_fgw_barycenter(nx):
         random_state=12345, log=True
     )
     # test correspondance with utils function
-    recovered_Cb = ot.gromov.update_square_loss(
-        pb, lambdas, logb['Ts_iter'][-1], Csb, True)
-    recovered_Xb = ot.gromov.update_feature_matrix(
-        lambdas, [y.T for y in Ysb], logb['Ts_iter'][-1], pb).T
+    recovered_Cb = ot.gromov.generic_update_square_loss(
+        logb['T'], Csb, lambdas)
+    recovered_Xb = ot.gromov.generic_update_feature_matrix(
+        logb['T'], [y.T for y in Ysb], lambdas).T
 
     np.testing.assert_allclose(Cb, recovered_Cb)
     np.testing.assert_allclose(Xb, recovered_Xb)
@@ -659,16 +659,16 @@ def test_semirelaxed_fgw_barycenter(nx):
     init_Cb = nx.from_numpy(init_C)
 
     with pytest.raises(ot.utils.UndefinedParameter):  # to raise an error when `fixed_structure=True`and `init_C=None`
-        Xb, Cb = ot.gromov.fgw_barycenters(
-            n_samples, Ysb, Csb, ps=[p1b, p2b], lambdas=None,
-            alpha=0.5, fixed_structure=True, init_C=None, fixed_features=False,
-            p=None, loss_fun='square_loss', max_iter=10, tol=1e-3
+        Xb, Cb, logb = ot.gromov.semirelaxed_fgw_barycenters(
+            n_samples, Ysb, Csb, ps=[p1b, p2b], lambdas=None, alpha=0.5, 
+            fixed_structure=True, init_C=None, fixed_features=False,
+            loss_fun='square_loss', max_iter=10, tol=1e-3
         )
-
-    Xb, Cb = ot.gromov.fgw_barycenters(
+            
+    Xb, Cb = ot.gromov.semirelaxed_fgw_barycenters(
         n_samples, [ysb, ytb], [C1b, C2b], ps=[p1b, p2b], lambdas=None,
         alpha=0.5, fixed_structure=True, init_C=init_Cb, fixed_features=False,
-        p=None, loss_fun='square_loss', max_iter=10, tol=1e-3
+        loss_fun='square_loss', max_iter=10, tol=1e-3
     )
     Xb, Cb = nx.to_numpy(Xb), nx.to_numpy(Cb)
     np.testing.assert_allclose(Cb.shape, (n_samples, n_samples))
@@ -676,18 +676,19 @@ def test_semirelaxed_fgw_barycenter(nx):
 
     init_X = rng.randn(n_samples, ys.shape[1])
     init_Xb = nx.from_numpy(init_X)
-
+    
+    # Tests with `fixed_structure=False` and `fixed_features=True`
     with pytest.raises(ot.utils.UndefinedParameter):  # to raise an error when `fixed_features=True`and `init_X=None`
-        Xb, Cb, logb = ot.gromov.fgw_barycenters(
+        Xb, Cb, logb = ot.gromov.semirelaxed_fgw_barycenters(
             n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
             fixed_structure=False, fixed_features=True, init_X=None,
-            p=pb, loss_fun='square_loss', max_iter=10, tol=1e-3,
+            loss_fun='square_loss', max_iter=10, tol=1e-3,
             warmstartT=True, log=True, random_state=98765, verbose=True
         )
-    Xb, Cb, logb = ot.gromov.fgw_barycenters(
+    Xb, Cb, logb = ot.gromov.semirelaxed_fgw_barycenters(
         n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
         fixed_structure=False, fixed_features=True, init_X=init_Xb,
-        p=pb, loss_fun='square_loss', max_iter=10, tol=1e-3,
+        loss_fun='square_loss', max_iter=10, tol=1e-3,
         warmstartT=True, log=True, random_state=98765, verbose=True
     )
 
@@ -698,9 +699,9 @@ def test_semirelaxed_fgw_barycenter(nx):
     # add test with 'kl_loss'
     with pytest.raises(ValueError):
         stop_criterion = 'unknown stop criterion'
-        X, C, log = ot.gromov.fgw_barycenters(
+        X, C, log = ot.gromov.semirelaxed_fgw_barycenters(
             n_samples, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
-            fixed_structure=False, fixed_features=False, p=p, loss_fun='kl_loss',
+            fixed_structure=False, fixed_features=False, loss_fun='kl_loss',
             max_iter=10, tol=1e-3, stop_criterion=stop_criterion, init_C=C,
             init_X=X, warmstartT=True, random_state=12345, log=True
         )
@@ -708,7 +709,7 @@ def test_semirelaxed_fgw_barycenter(nx):
     for stop_criterion in ['barycenter', 'loss']:
         X, C, log = ot.gromov.fgw_barycenters(
             n_samples, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
-            fixed_structure=False, fixed_features=False, p=p, loss_fun='kl_loss',
+            fixed_structure=False, fixed_features=False, loss_fun='kl_loss',
             max_iter=10, tol=1e-3, stop_criterion=stop_criterion, init_C=C,
             init_X=X, warmstartT=True, random_state=12345, log=True, verbose=True
         )
@@ -716,41 +717,22 @@ def test_semirelaxed_fgw_barycenter(nx):
         np.testing.assert_allclose(X.shape, (n_samples, ys.shape[1]))
 
     # test correspondance with utils function
-    recovered_C = ot.gromov.update_kl_loss(p, lambdas, log['T'], [C1, C2])
+    recovered_C = ot.gromov.generic_update_kl_loss(
+        log['T'], [C1, C2], lambdas)
+    
     np.testing.assert_allclose(C, recovered_C)
 
-    # test edge cases for fgw barycenters:
-    # C1 as list
-    with pytest.raises(ValueError):
-        C1b_list = [list(c) for c in C1b]
-        _, _, _ = ot.gromov.fgw_barycenters(
-            n_samples, [ysb], [C1b_list], [p1b], None, 0.5,
-            fixed_structure=False, fixed_features=False, p=pb, loss_fun='square_loss',
-            max_iter=10, tol=1e-3, stop_criterion=stop_criterion, init_C=Cb,
-            init_X=Xb, warmstartT=True, random_state=12345, log=True, verbose=True
-        )
-
-    # p1, p2 as lists
-    with pytest.raises(ValueError):
-        p1_list = list(p1)
-        p2_list = list(p2)
-        _, _, _ = ot.gromov.fgw_barycenters(
-            n_samples, [ysb, ytb], [C1b, C2b], [p1_list, p2_list], None, 0.5,
-            fixed_structure=False, fixed_features=False, p=p, loss_fun='kl_loss',
-            max_iter=10, tol=1e-3, stop_criterion=stop_criterion, init_C=Cb,
-            init_X=Xb, warmstartT=True, random_state=12345, log=True, verbose=True
-        )
-
+    # test edge cases for semirelaxed fgw barycenters:
     # unique input structure
-    X, C = ot.gromov.fgw_barycenters(
+    X, C = ot.gromov.semirelaxed_fgw_barycenters(
         n_samples, [ys], [C1], [p1], None, 0.5,
-        fixed_structure=False, fixed_features=False, p=p, loss_fun='square_loss',
+        fixed_structure=False, fixed_features=False, loss_fun='square_loss',
         max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
         warmstartT=True, random_state=12345, log=False, verbose=False
     )
-    Xb, Cb = ot.gromov.fgw_barycenters(
+    Xb, Cb = ot.gromov.semirelaxed_fgw_barycenters(
         n_samples, [ysb], [C1b], [p1b], [1.], 0.5,
-        fixed_structure=False, fixed_features=False, p=pb, loss_fun='square_loss',
+        fixed_structure=False, fixed_features=False, loss_fun='square_loss',
         max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
         warmstartT=True, random_state=12345, log=False, verbose=False
     )
