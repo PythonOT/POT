@@ -590,12 +590,18 @@ def update_barycenter_structure(
     S = len(Ts)
 
     if loss_fun == 'square_loss':
-        def inner_transform(C): return C
-        def outer_transform(C): return C
+        def inner_transform(C):
+            return C
+
+        def outer_transform(C):
+            return C
 
     elif loss_fun == 'kl_loss':
-        def inner_transform(C): return C if target else nx.log(nx.maximum(C, 1e-16))
-        def outer_transform(C): return C if target else nx.exp(C)
+        def inner_transform(C):
+            return C if target else nx.log(nx.maximum(C, 1e-16))
+
+        def outer_transform(C):
+            return C if target else nx.exp(C)
 
     else:
         raise ValueError(f"not supported loss_fun = {loss_fun}")
@@ -622,7 +628,7 @@ def update_barycenter_structure(
         quotient = sum([nx.outer(p[s], p[s]) for s in range(S)])
         prod = nx.nan_to_num(1. / quotient, nan=1., posinf=1., neginf=1.)
 
-    return outer_transform(sum(list_structures) * quotient)
+    return outer_transform(sum(list_structures) * prod)
 
 
 def update_barycenter_feature(
