@@ -1,5 +1,5 @@
 # %% -*- coding: utf-8 -*-
-"""
+r"""
 ====================================================
 GMM Flow
 ====================================================
@@ -22,10 +22,10 @@ import numpy as np
 import matplotlib.pylab as pl
 import ot
 import ot.plot
-from ot.utils import proj_simplex, proj_SDP
+from ot.utils import proj_SDP
 from ot.gmm import gmm_ot_loss
 import torch
-from torch.optim import SGD, Adam
+from torch.optim import Adam
 from matplotlib.patches import Ellipse
 
 # %%
