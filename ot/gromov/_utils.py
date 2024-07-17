@@ -401,7 +401,7 @@ def update_feature_matrix(lambdas, Ys, Ts, p, nx=None):
 
     p = 1. / p
     list_features = [lambdas[s] * nx.dot(Ys[s], Ts[s].T) for s in range(len(Ts))]
-    
+
     return sum(list_features) * p[None, :]
 
 
@@ -522,9 +522,10 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
     return constC, hC1, hC2, fC2t
 
 
-def generic_update_square_loss(Ts, Cs, lambdas, p=None, target=True, nx=None):
+def update_barycenter_structure(
+        Ts, Cs, lambdas, p=None, loss_fun='square_loss', target=True, nx=None):
     r"""
-    Updates :math:`\mathbf{C}` according to the L2 inner loss with the `S`
+    Updates :math:`\mathbf{C}` according to the inner loss L with the `S`
     :math:`\mathbf{T}_s` couplings calculated at each iteration of relaxed
     versions of the GW barycenter problem like in :ref:`[48]`.
     If `target=True` it solves for:
@@ -533,21 +534,22 @@ def generic_update_square_loss(Ts, Cs, lambdas, p=None, target=True, nx=None):
 
         \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad
         \sum_s \lambda_s \sum_{i,j,k,l}
-        L2(\mathbf{C}^{(s)}_{i,k}, \mathbf{C}_{j,l}) \mathbf{T}^{(s)}_{i,j} \mathbf{T}^{(s)}_{k,l}
-    
+        L(\mathbf{C}^{(s)}_{i,k}, \mathbf{C}_{j,l}) \mathbf{T}^{(s)}_{i,j} \mathbf{T}^{(s)}_{k,l}
+
     Else it solves the symmetric problem:
-    
+
     .. math::
 
         \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad
         \sum_s \lambda_s \sum_{i,j,k,l}
-        L2(\mathbf{C}_{j,l}, \mathbf{C}^{(s)}_{i,k}) \mathbf{T}^{(s)}_{i,j} \mathbf{T}^{(s)}_{k,l}
-    
+        L(\mathbf{C}_{j,l}, \mathbf{C}^{(s)}_{i,k}) \mathbf{T}^{(s)}_{i,j} \mathbf{T}^{(s)}_{k,l}
+
     Where :
 
     - :math:`\mathbf{C}^{(s)}`: pairwise matrix in the s^{th} source space .
     - :math:`\mathbf{C}`: pairwise matrix in the target space.
-    
+    - :math:`\mathbf{C}`: inner divergence for the GW loss
+
     Parameters
     ----------
     Ts : list of S array-like of shape (ns, N) if `target=True` else (N, ns).
@@ -556,8 +558,10 @@ def generic_update_square_loss(Ts, Cs, lambdas, p=None, target=True, nx=None):
         Metric cost matrices.
     lambdas : list of float,
         List of the `S` spaces' weights.
-    p : array-like or list of S array-like, shape (N,) or (S,N)
+    p : array-like, shape (N,) or (S,N)
         Masses or list of masses in the targeted barycenter.
+    loss_fun : str, optional. Default is 'square_loss'
+        Name of loss function to use in ['square_loss', 'kl_loss'].
     target: bool, optional. Default is True.
         Whether the barycenter is positioned as target (True) or source (False).
     nx : backend, optional
@@ -573,145 +577,61 @@ def generic_update_square_loss(Ts, Cs, lambdas, p=None, target=True, nx=None):
     .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
-    
+
     """
+
     if nx is None:
         arr = [*Ts, *Cs]
         if p is not None:
-            if len(p.shape) == 2:
-                arr += [*p]
-            else:
-                arr += [p]
-            
-        nx = get_backend(arr)
-    
+            arr += [p]
+
+        nx = get_backend(*arr)
+
     S = len(Ts)
-    
-    list_structures = [lambdas[s] * nx.dot(nx.dot(Ts[s].T, Cs[s]), Ts[s])
-                       for s in range(S)
-    ]
-    
-    if len(p.shape) == 1: # shared target masses potentially with zeros
-        zeros_idx = nx.where(p == 0)[0]
-        inv_p = 1. / p
-        inv_p[zeros_idx] = 1.
-        
-        return sum(list_structures) * nx.out(inv_p, inv_p)
-    
+
+    if loss_fun == 'square_loss':
+        def inner_transform(C): return C
+        def outer_transform(C): return C
+
+    elif loss_fun == 'kl_loss':
+        def inner_transform(C): return C if target else nx.log(nx.maximum(C, 1e-16))
+        def outer_transform(C): return C if target else nx.exp(C)
+
     else:
-        if p is None:
-            p = [Ts[s].sum(int(not target)) for s in range(S)]
-                
-        p_sum = sum(p)
-        zeros_idx = nx.where(p_sum == 0)[0]
-        quotient = sum([nx.outer(p[s], p[s]) for s in range(S)])
-        
-        quotient[zeros_idx, :] = 1.
-        quotient[:, zeros_idx] = 1.
-        
-        return sum(list_structures) / quotient
+        raise ValueError(f"not supported loss_fun = {loss_fun}")
 
-
-def generic_update_kl_loss(Ts, Cs, lambdas, p=None, target=True, nx=None):
-    r"""
-    Updates :math:`\mathbf{C}` according to the KL inner loss with the `S`
-    :math:`\mathbf{T}_s` couplings calculated at each iteration of relaxed
-    versions of the GW barycenter problem like in :ref:`[48]`.
-    If `target=True` it solves for:
-
-    .. math::
-
-        \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad
-        \sum_s \lambda_s \sum_{i,j,k,l}
-        KL(\mathbf{C}^{(s)}_{i,k}, \mathbf{C}_{j,l}) \mathbf{T}^{(s)}_{i,j} \mathbf{T}^{(s)}_{k,l}
-    
-    Else it solves the symmetric problem:
-    
-    .. math::
-
-        \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad
-        \sum_s \lambda_s \sum_{i,j,k,l}
-        KL(\mathbf{C}_{j,l}, \mathbf{C}^{(s)}_{i,k}) \mathbf{T}^{(s)}_{i,j} \mathbf{T}^{(s)}_{k,l}
-    
-    
-    Where :
-
-    - :math:`\mathbf{C}^{(s)}`: pairwise matrix in the s^{th} source space .
-    - :math:`\mathbf{C}`: pairwise matrix in the target space.
-    
-
-    Parameters
-    ----------
-    Ts : list of S array-like of shape (ns, N) if `target=True` else (N, ns).
-        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
-    Cs : list of S array-like, shape(ns,ns)
-        Metric cost matrices.
-    lambdas : list of float,
-        List of the `S` spaces' weights.
-    p : array-like or list of S array-like, shape (N,) or (S,N)
-        Masses or list of masses in the targeted barycenter.
-    target: bool, optional. Default is True.
-        Whether the barycenter is positioned as target (True) or source (False).
-    nx : backend, optional
-        If let to its default value None, a backend test will be conducted.
-
-    Returns
-    ----------
-    C : array-like, shape (`ns`, `ns`)
-        updated :math:`\mathbf{C}` matrix
-
-    References
-    ----------
-    .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
-            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
-            International Conference on Learning Representations (ICLR), 2022.
-    
-    """
-    if nx is None:
-        arr = [*Ts, *Cs]
-        if p is not None:
-            if len(p.shape) == 2:
-                arr += [*p]
-            else:
-                arr += [p]
-            
-        nx = get_backend(arr)
-    
-    S = len(Ts)
-    
-    inner_transform = lambda C : C if target else nx.log(nx.maximum(C, 1e-16))
-    outer_transform = lambda C : C if target else nx.exp(C)
-    
-    list_structures = [lambdas[s] * nx.dot(
-            nx.dot(Ts[s], inner_transform(Cs[s]), Ts[s].T)
+    if target:
+        list_structures = [lambdas[s] * nx.dot(
+            nx.dot(Ts[s].T, inner_transform(Cs[s])), Ts[s])
             for s in range(S)]
-    
-    if len(p.shape) == 1: # shared target masses potentially with zeros
-        zeros_idx = nx.where(p == 0)[0]
-        inv_p = 1. / p
-        inv_p[zeros_idx] = 1.
-        
-        return outer_transform(sum(list_structures) * nx.out(inv_p, inv_p))
-    
     else:
-        if p is None:
-            p = [Ts[s].sum(int(not target)) for s in range(S)]
-        p_sum = sum(p)
-        zeros_idx = nx.where(p_sum == 0)[0]
+        list_structures = [lambdas[s] * nx.dot(
+            nx.dot(Ts[s], inner_transform(Cs[s])), Ts[s].T)
+            for s in range(S)]
+
+    if p is None:
+        p = nx.concatenate(
+            [nx.sum(Ts[s], int(not target))[None, :] for s in range(S)],
+            axis=0)
+
+    if len(p.shape) == 1:  # shared target masses potentially with zeros
+        inv_p = nx.nan_to_num(1. / p, nan=1., posinf=1., neginf=1.)
+        prod = nx.outer(inv_p, inv_p)
+
+    else:
         quotient = sum([nx.outer(p[s], p[s]) for s in range(S)])
-        
-        quotient[zeros_idx, :] = 1.
-        quotient[:, zeros_idx] = 1.
-        
-        return outer_transform(sum(list_structures) / quotient)
+        prod = nx.nan_to_num(1. / quotient, nan=1., posinf=1., neginf=1.)
+
+    return outer_transform(sum(list_structures) * quotient)
 
 
-def generic_update_feature_matrix(Ts, Ys, lambdas, p=None, target=True, nx=None):
+def update_barycenter_feature(
+        Ts, Ys, lambdas, p=None, loss_fun='square_loss', target=True, nx=None):
     r"""Updates the feature with respect to the `S` :math:`\mathbf{T}_s`
     couplings calculated at each iteration of relaxed versions of the FGW
-    barycenter problem in :ref:`[48]`.
+    barycenter problem in :ref:`[48]` with inner wasserstein loss `loss_fun`.
     If `target=True` the barycenter is considered as the target else as the source.
-    
+
     Parameters
     ----------
     Ts : list of S array-like of shape (ns, N) if `target=True` else (N, ns).
@@ -720,8 +640,10 @@ def generic_update_feature_matrix(Ts, Ys, lambdas, p=None, target=True, nx=None)
         Feature matrices.
     lambdas : list of float
         List of the `S` spaces' weights
-    p : array-like or list of S array-like, shape (N,) or (S,N)
+    p : array-like, shape (N,) or (S,N)
         Masses or list of masses in the targeted barycenter.
+    loss_fun : str, optional. Default is 'square_loss'
+        Name of loss function to use in ['square_loss'].
     target: bool, optional. Default is True.
         Whether the barycenter is positioned as target (True) or source (False).
     nx : backend, optional
@@ -740,29 +662,30 @@ def generic_update_feature_matrix(Ts, Ys, lambdas, p=None, target=True, nx=None)
     if nx is None:
         arr = [*Ts, *Ys]
         if p is not None:
-            if len(p.shape) == 2:
-                arr += [*p]
-            else:
-                arr += [p]
-            
-        nx = get_backend(arr)
-    
+            arr += [p]
+
+        nx = get_backend(*arr)
+
+    if loss_fun != 'square_loss':
+        raise ValueError(f"not supported loss_fun = {loss_fun}")
+
     S = len(Ts)
-    if len(p.shape) == 1: # shared target masses potentially with zeros
-        zeros_idx = nx.where(p == 0)[0]
-        inv_p = 1. / p
-        inv_p[zeros_idx] = 1.
-    else:
-        if p is None:
-            p = [Ts[s].sum(int(not target)) for s in range(S)]
-        p_sum = sum(p)
-        zeros_idx = nx.where(p_sum == 0)[0]
-        inv_p = 1. / p_sum
-        inv_p[zeros_idx] = 1.
-    
+
     if target:
         list_features = [lambdas[s] * nx.dot(Ts[s].T, Ys[s]) for s in range(S)]
     else:
         list_features = [lambdas[s] * nx.dot(Ts[s], Ys[s]) for s in range(S)]
-    
-    return sum(list_features) * inv_p[None, :]
+
+    if p is None:
+        p = nx.concatenate(
+            [nx.sum(Ts[s], int(not target))[None, :] for s in range(S)],
+            axis=0)
+
+    if len(p.shape) == 1:  # shared target masses potentially with zeros
+        inv_p = nx.nan_to_num(1. / p, nan=1., posinf=1., neginf=1.)
+
+    else:
+        p_sum = sum(p)
+        inv_p = nx.nan_to_num(1. / p_sum, nan=1., posinf=1., neginf=1.)
+
+    return sum(list_features) * inv_p[:, None]

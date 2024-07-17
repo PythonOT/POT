@@ -13,8 +13,7 @@ Solvers related to Gromov-Wasserstein problems.
 from ._utils import (init_matrix, tensor_product, gwloss, gwggrad,
                      update_square_loss, update_kl_loss, update_feature_matrix,
                      init_matrix_semirelaxed,
-                     generic_update_square_loss, generic_update_kl_loss,
-                     generic_update_feature_matrix,
+                     update_barycenter_structure, update_barycenter_feature,
                      )
 
 from ._gw import (gromov_wasserstein, gromov_wasserstein2,
@@ -67,8 +66,7 @@ from ._quantized import (quantized_fused_gromov_wasserstein_partitioned,
 
 __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad', 'update_square_loss',
            'update_kl_loss', 'update_feature_matrix', 'init_matrix_semirelaxed',
-           'generic_update_square_loss', 'generic_update_kl_loss',
-           'generic_update_feature_matrix',
+           'update_barycenter_structure', 'update_barycenter_feature',
            'gromov_wasserstein', 'gromov_wasserstein2', 'fused_gromov_wasserstein',
            'fused_gromov_wasserstein2', 'solve_gromov_linesearch', 'gromov_barycenters',
            'fgw_barycenters', 'entropic_gromov_wasserstein', 'entropic_gromov_wasserstein2',
