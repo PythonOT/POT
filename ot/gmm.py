@@ -189,10 +189,49 @@ def gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t):
 
 
 def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
-                     method='bary'):
-    r"""
-    Applies the barycentric or stochastic map associated to the GMM OT from the
-    source GMM to the target GMM
+                     method='bary', seed=None):
+    """
+    Apply Gaussian Mixture Model (GMM) optimal transport (OT) mapping to input data.
+
+    Parameters:
+    -----------
+    x : array-like, shape (n_samples, d)
+        Input data points.
+
+    m_s : array-like, shape (k_s, d)
+        Mean vectors of the source GMM components.
+
+    m_t : array-like, shape (k_t, d)
+        Mean vectors of the target GMM components.
+
+    C_s : array-like, shape (k_s, d, d)
+        Covariance matrices of the source GMM components.
+
+    C_t : array-like, shape (k_t, d, d)
+        Covariance matrices of the target GMM components.
+
+    w_s : array-like, shape (k_s,)
+        Weights of the source GMM components.
+
+    w_t : array-like, shape (k_t,)
+        Weights of the target GMM components.
+
+    plan : array-like, shape (k_s, k_t), optional
+        Optimal transport plan between the source and target GMM components.
+        If not provided, it will be computed internally.
+
+    method : {'bary', 'rand'}, optional
+        Method for applying the GMM OT mapping. 'bary' uses barycentric mapping,
+        while 'rand' uses random sampling. Default is 'bary'.
+
+    seed : int, optional
+        Seed for the random number generator. Only used when method='rand'.
+
+    Returns:
+    --------
+    out : array-like, shape (n_samples, d)
+        Output data points after applying the GMM OT mapping.
+
     """
 
     if plan is None:
@@ -201,27 +240,62 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
     else:
         nx = get_backend(x, m_s, m_t, C_s, C_t, w_s, w_t, plan)
 
+    k_s, k_t = m_s.shape[0], m_t.shape[0]
+    d = m_s.shape[1]
+    n_samples = x.shape[0]
+
     if method == 'bary':
         # TODO asserts
         normalization = gmm_pdf(x, m_s, C_s, w_s)[:, None]
         out = nx.zeros(x.shape)
 
-        for k0 in range(m_s.shape[0]):
-            Cs12 = nx.sqrtm(C_s[k0])
+        for i in range(k_s):
+            Cs12 = nx.sqrtm(C_s[i])
             Cs12inv = nx.inv(Cs12)
 
-            for k1 in range(m_t.shape[0]):
-                g = gaussian_pdf(x, m_s[k0], C_s[k0])[:, None]
+            for j in range(k_t):
+                g = gaussian_pdf(x, m_s[i], C_s[i])[:, None]
 
-                M0 = nx.sqrtm(Cs12 @ C_t[k1] @ Cs12)
+                M0 = nx.sqrtm(Cs12 @ C_t[j] @ Cs12)
                 A = Cs12inv @ M0 @ Cs12inv
-                b = m_t[k1] - A @ m_s[k0]
+                b = m_t[j] - A @ m_s[i]
 
-                # gaussian mapping between components k0 and k1 applied to x
-                Tk0k1x = x @ A + b
-                out = out + plan[k0, k1] * g * Tk0k1x
+                # gaussian mapping between components i and j applied to x
+                T_ij_x = x @ A + b
+                out = out + plan[i, j] * g * T_ij_x
 
         return out / normalization
 
     else:  # rand
-        raise NotImplementedError('Mapping {} not implemented'.format(method))
+        # A[i, j] is the linear part of the gaussian mapping between components
+        # i and j, b[i, j] is the translation part
+        rng = np.random.RandomState(seed)
+
+        A = nx.zeros((k_s, k_t, d, d))
+        b = nx.zeros((k_s, k_t, d))
+
+        for i in range(k_s):
+            Cs12 = nx.sqrtm(C_s[i])
+            Cs12inv = nx.inv(Cs12)
+
+            for j in range(k_t):
+                M0 = nx.sqrtm(Cs12 @ C_t[j] @ Cs12)
+                A[i, j] = Cs12inv @ M0 @ Cs12inv
+                b[i, j] = m_t[j] - A[i, j] @ m_s[i]
+
+        normalization = gmm_pdf(x, m_s, C_s, w_s)  # (n_samples,)
+        gs = np.stack(
+            [gaussian_pdf(x, m_s[i], C_s[i]) for i in range(k_s)], axis=-1)
+        # (n_samples, k_s)
+        out = nx.zeros(x.shape)
+
+        for i_sample in range(n_samples):
+            p_mat = plan * gs[i_sample][:, None] / normalization[i_sample]
+            p = p_mat.reshape(k_s * k_t)  # stack line-by-line
+            # sample between 0 and k_s * k_t - 1
+            ij_mat = rng.choice(k_s * k_t, p=p)
+            i = ij_mat // k_t
+            j = ij_mat % k_t
+            out[i_sample] = A[i, j] @ x[i_sample] + b[i, j]
+
+        return out

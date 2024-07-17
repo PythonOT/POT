@@ -17,7 +17,7 @@ except ImportError:
     torch = False
 
 
-def get_gmms():
+def get_gmms(nx=None):
     rng = np.random.RandomState(seed=42)
     ks = 3
     kt = 5
@@ -30,6 +30,13 @@ def get_gmms():
     C_t = np.matmul(C_t, np.transpose(C_t, (0, 2, 1)))
     w_s = proj_simplex(rng.rand(ks))
     w_t = proj_simplex(rng.rand(kt))
+    if nx is not None:
+        m_s = nx.from_numpy(m_s)
+        m_t = nx.from_numpy(m_t)
+        C_s = nx.from_numpy(C_s)
+        C_t = nx.from_numpy(C_t)
+        w_s = nx.from_numpy(w_s)
+        w_t = nx.from_numpy(w_t)
     return m_s, m_t, C_s, C_t, w_s, w_t
 
 
@@ -52,12 +59,10 @@ def test_gmm_pdf():
     gmm_pdf(x, m_s, C_s, w_s)
 
 
+@pytest.skip_backend('tf')  # skips because of array assignment
+@pytest.skip_backend("jax")
 def test_dist_bures_squared(nx):
-    m_s, m_t, C_s, C_t, _, _ = get_gmms()
-    m_s = nx.from_numpy(m_s)
-    m_t = nx.from_numpy(m_t)
-    C_s = nx.from_numpy(C_s)
-    C_t = nx.from_numpy(C_t)
+    m_s, m_t, C_s, C_t, _, _ = get_gmms(nx)
     dist_bures_squared(m_s, m_t, C_s, C_t)
     D0 = dist_bures_squared(m_s, m_s, C_s, C_s)
 
@@ -73,8 +78,10 @@ def test_dist_bures_squared(nx):
         dist_bures_squared(m_s, m_t[1:], C_s, C_t)
 
 
-def test_gmm_ot_loss():
-    m_s, m_t, C_s, C_t, w_s, w_t = get_gmms()
+@pytest.skip_backend('tf')  # skips because of array assignment
+@pytest.skip_backend("jax")
+def test_gmm_ot_loss(nx):
+    m_s, m_t, C_s, C_t, w_s, w_t = get_gmms(nx)
     loss = gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t)
 
     assert loss > 0
@@ -90,8 +97,10 @@ def test_gmm_ot_loss():
         gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t[1:])
 
 
-def test_gmm_ot_plan():
-    m_s, m_t, C_s, C_t, w_s, w_t = get_gmms()
+@pytest.skip_backend('tf')  # skips because of array assignment
+@pytest.skip_backend("jax")
+def test_gmm_ot_plan(nx):
+    m_s, m_t, C_s, C_t, w_s, w_t = get_gmms(nx)
 
     plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
 
@@ -113,7 +122,12 @@ def test_gmm_apply_map():
     m_s, m_t, C_s, C_t, w_s, w_t = get_gmms()
     rng = np.random.RandomState(seed=42)
     x = rng.randn(7, 3)
-    gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t)
+
+    for method in ['bary', 'rand']:
+        gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, method=method)
+
+    plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
+    gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=plan)
 
 
 @pytest.mark.skipif(not torch, reason="No torch available")
