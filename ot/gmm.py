@@ -44,8 +44,8 @@ def gmm_pdf(x, m, C, w):
     r"""
     Compute the probability density function (PDF) of a Gaussian Mixture Model (GMM) at given points.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     x : array-like, shape (n_samples, d)
         The input samples.
     m : array-like, shape (n_components, d)
@@ -55,8 +55,8 @@ def gmm_pdf(x, m, C, w):
     w : array-like, shape (n_components,)
         The weights of the Gaussian components.
 
-    Returns:
-    --------
+    Returns
+    -------
     out : array-like, shape (n_components,)
         The PDF values at the given points.
 
@@ -69,10 +69,12 @@ def gmm_pdf(x, m, C, w):
 
 def dist_bures_squared(m_s, m_t, C_s, C_t):
     """
-    Compute the matrix of the squared Bures distances between the components of two Gaussian Mixture Models (GMMs).
+    Compute the matrix of the squared Bures distances between the components of
+    two Gaussian Mixture Models (GMMs). Used to compute the GMM Optimal
+    Transport distance [69].
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     m_s : array-like, shape (k_s, d)
         Mean vectors of the source GMM.
     m_t : array-like, shape (k_t, d)
@@ -82,10 +84,17 @@ def dist_bures_squared(m_s, m_t, C_s, C_t):
     C_t : array-like, shape (k_t, d, d)
         Covariance matrices of the target GMM.
 
-    Returns:
-    --------
+    Returns
+    -------
     dist : array-like, shape (k_s, k_t)
-        Matrix of squared Bures distances between the components of the source and target GMMs.
+        Matrix of squared Bures distances between the components of the source
+        and target GMMs.
+
+    References
+    ----------
+    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in
+    the space of Gaussian mixture models. SIAM Journal on Imaging Sciences,
+    13(2), 936-970.
 
     """
     nx = get_backend(m_s, C_s, m_t, C_t)
@@ -115,10 +124,10 @@ def dist_bures_squared(m_s, m_t, C_s, C_t):
 def gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t):
     """
     Compute the Gaussian Mixture Model (GMM) Optimal Transport distance between
-    two GMMs.
+    two GMMs introduced in [69].
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     m_s : array-like, shape (k_s, d)
         Mean vectors of the source GMM.
     m_t : array-like, shape (k_t, d)
@@ -132,10 +141,16 @@ def gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t):
     w_t : array-like, shape (k_t,)
         Weights of the target GMM components.
 
-    Returns:
-    --------
+    Returns
+    -------
     loss : float
         The GMM-OT loss.
+
+    References
+    ----------
+    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in
+    the space of Gaussian mixture models. SIAM Journal on Imaging Sciences,
+    13(2), 936-970.
 
     """
     get_backend(m_s, C_s, w_s, m_t, C_t, w_t)
@@ -153,10 +168,10 @@ def gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t):
 def gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t):
     r"""
     Compute the Gaussian Mixture Model (GMM) Optimal Transport plan between
-    two GMMs.
+    two GMMs introduced in [69].
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     m_s : array-like, shape (k_s, d)
         Mean vectors of the source GMM.
     m_t : array-like, shape (k_t, d)
@@ -170,10 +185,16 @@ def gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t):
     w_t : array-like, shape (k_t,)
         Weights of the target GMM components.
 
-    Returns:
-    --------
+    Returns
+    -------
     plan : array-like, shape (k_s, k_t)
         The GMM-OT plan.
+
+    References
+    ----------
+    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in
+    the space of Gaussian mixture models. SIAM Journal on Imaging Sciences,
+    13(2), 936-970.
 
     """
     get_backend(m_s, C_s, w_s, m_t, C_t, w_t)
@@ -191,10 +212,14 @@ def gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t):
 def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
                      method='bary', seed=None):
     """
-    Apply Gaussian Mixture Model (GMM) optimal transport (OT) mapping to input data.
+    Apply Gaussian Mixture Model (GMM) optimal transport (OT) mapping to input
+    data. The 'barycentric' mapping corresponds to the barycentric projection
+    of the GMM-OT plan, and is called T_bary in [69]. The 'random' mapping takes
+    for each input point a random pair (i,j) of components of the GMMs and
+    applied the Gaussian map, it is called T_rand in [69].
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     x : array-like, shape (n_samples, d)
         Input data points.
 
@@ -227,10 +252,16 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
     seed : int, optional
         Seed for the random number generator. Only used when method='rand'.
 
-    Returns:
-    --------
+    Returns
+    -------
     out : array-like, shape (n_samples, d)
         Output data points after applying the GMM OT mapping.
+
+    References
+    ----------
+    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in
+    the space of Gaussian mixture models. SIAM Journal on Imaging Sciences,
+    13(2), 936-970.
 
     """
 

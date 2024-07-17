@@ -727,7 +727,7 @@ def empirical_gaussian_gromov_wasserstein_mapping(xs, xt, ws=None,
     r"""Return Gaussian Gromov-Wasserstein mapping between samples.
 
     The function estimates the Gaussian Gromov-Wasserstein mapping between two
-    Gaussien distributions source :math:`\mu_s` and target :math:`\mu_t`, whose
+    Gaussian distributions source :math:`\mu_s` and target :math:`\mu_t`, whose
     parameters are estimated from the provided samples :math:`\mathcal{X}_s` and
     :math:`\mathcal{X}_t`. See [57] Theorem 4.1 for more details.
 

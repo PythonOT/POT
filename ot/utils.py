@@ -1299,7 +1299,7 @@ def proj_SDP(S, nx=None, vmin=0.):
     Project a symmetric matrix onto the space of symmetric matrices with
     eigenvalues larger or equal to `vmin`.
 
-    Parameters:
+    Parameters
     ----------
     S : array_like (n, d, d)
         The input symmetric matrix or matrices.
@@ -1313,7 +1313,7 @@ def proj_SDP(S, nx=None, vmin=0.):
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends.
 
-    Returns:
+    Returns
     -------
     P : ndarray (n, d, d)
         The projected symmetric positive definite matrix.

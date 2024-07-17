@@ -4,6 +4,7 @@
 
 #### New features
 - Add feature `mass=True` for `nx.kl_div` (PR #654)
+- Gaussian Mixture Model OT `ot.gmm` (PR #655)
 
 #### Closed issues
 
