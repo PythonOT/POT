@@ -9,8 +9,6 @@ Regularized Unbalanced OT solvers
 #
 # License: MIT License
 
-from __future__ import division
-
 from ..backend import get_backend
 from ..utils import list_to_array, get_parameter_pair
 

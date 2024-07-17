@@ -9,9 +9,7 @@ Regularized Unbalanced OT solvers
 #
 # License: MIT License
 
-from __future__ import division
 import warnings
-
 import numpy as np
 from scipy.optimize import minimize, Bounds
 
