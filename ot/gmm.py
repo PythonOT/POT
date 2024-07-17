@@ -68,7 +68,7 @@ def gmm_pdf(x, m, C, w):
 
 
 def dist_bures_squared(m_s, m_t, C_s, C_t):
-    """
+    r"""
     Compute the matrix of the squared Bures distances between the components of
     two Gaussian Mixture Models (GMMs). Used to compute the GMM Optimal
     Transport distance [69].
@@ -122,7 +122,7 @@ def dist_bures_squared(m_s, m_t, C_s, C_t):
 
 
 def gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t):
-    """
+    r"""
     Compute the Gaussian Mixture Model (GMM) Optimal Transport distance between
     two GMMs introduced in [69].
 
@@ -211,7 +211,7 @@ def gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t):
 
 def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
                      method='bary', seed=None):
-    """
+    r"""
     Apply Gaussian Mixture Model (GMM) optimal transport (OT) mapping to input
     data. The 'barycentric' mapping corresponds to the barycentric projection
     of the GMM-OT plan, and is called T_bary in [69]. The 'random' mapping takes
