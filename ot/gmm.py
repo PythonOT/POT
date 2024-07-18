@@ -42,7 +42,8 @@ def gaussian_pdf(x, m, C):
 
 def gmm_pdf(x, m, C, w):
     r"""
-    Compute the probability density function (PDF) of a Gaussian Mixture Model (GMM) at given points.
+    Compute the probability density function (PDF) of a Gaussian Mixture Model (GMM) 
+    at given points.
 
     Parameters
     ----------
@@ -92,9 +93,7 @@ def dist_bures_squared(m_s, m_t, C_s, C_t):
 
     References
     ----------
-    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in
-    the space of Gaussian mixture models. SIAM Journal on Imaging Sciences,
-    13(2), 936-970.
+    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in the space of Gaussian mixture models. SIAM Journal on Imaging Sciences, 13(2), 936-970.
 
     """
     nx = get_backend(m_s, C_s, m_t, C_t)
@@ -148,9 +147,7 @@ def gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t):
 
     References
     ----------
-    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in
-    the space of Gaussian mixture models. SIAM Journal on Imaging Sciences,
-    13(2), 936-970.
+    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in the space of Gaussian mixture models. SIAM Journal on Imaging Sciences, 13(2), 936-970.
 
     """
     get_backend(m_s, C_s, w_s, m_t, C_t, w_t)
@@ -192,9 +189,7 @@ def gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t):
 
     References
     ----------
-    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in
-    the space of Gaussian mixture models. SIAM Journal on Imaging Sciences,
-    13(2), 936-970.
+    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in the space of Gaussian mixture models. SIAM Journal on Imaging Sciences, 13(2), 936-970.
 
     """
     get_backend(m_s, C_s, w_s, m_t, C_t, w_t)
@@ -259,9 +254,7 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
 
     References
     ----------
-    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in
-    the space of Gaussian mixture models. SIAM Journal on Imaging Sciences,
-    13(2), 936-970.
+    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in the space of Gaussian mixture models. SIAM Journal on Imaging Sciences, 13(2), 936-970.
 
     """
 
