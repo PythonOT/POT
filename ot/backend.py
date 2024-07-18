@@ -1058,6 +1058,14 @@ class Backend():
         """
         raise NotImplementedError()
 
+    def det(self, a):
+        r"""
+        Compute the determinant of an array.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.det.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -1411,6 +1419,9 @@ class NumpyBackend(Backend):
 
     def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
         return np.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
+
+    def det(self, a):
+        return np.linalg.det(a)
 
 
 _register_backend_implementation(NumpyBackend)
@@ -1796,6 +1807,9 @@ class JaxBackend(Backend):
 
     def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
         return jnp.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
+
+    def det(self, x):
+        return jnp.numpy.linalg.det(x)
 
 
 if jax:
@@ -2290,6 +2304,9 @@ class TorchBackend(Backend):
         out = None if copy else x
         return torch.nan_to_num(x, nan=nan, posinf=posinf, neginf=neginf, out=out)
 
+    def det(self, x):
+        return torch.linalg.det(x)
+
 
 if torch:
     # Only register torch backend if it is installed
@@ -2690,6 +2707,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
         return cp.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
+
+    def det(self, x):
+        return cp.linalg.det(x)
 
 
 if cp:
@@ -3120,6 +3140,9 @@ class TensorflowBackend(Backend):
         x = self.to_numpy(x)
         x = np.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
         return self.from_numpy(x)
+
+    def det(self, x):
+        return tf.linalg.det(x)
 
 
 if tf:
