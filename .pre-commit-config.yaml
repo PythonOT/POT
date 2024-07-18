@@ -29,10 +29,10 @@ repos:
   #         - tomli
   #       files: ^ot/|^docs/|^examples/
   #       types_or: [python, bib, rst, inc]
-  #       # args: [
-  #       #   "--ignore-words",
-  #       #   "ignore-words.txt",
-  #       # ]
+  #       args: [
+  #         "--ignore-words",
+  #         "ignore-words.txt",
+  #       ]
 
   # yamllint
   # - repo: https://github.com/adrienverge/yamllint.git
