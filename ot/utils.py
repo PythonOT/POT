@@ -204,7 +204,7 @@ def projection_sparse_simplex(V, max_nz, z=1, axis=None, nx=None):
 
         if isinstance(nx, JaxBackend):
             # in Jax, we need to use the `at` property of `jax.numpy.ndarray`
-            # to do in-place array modificatons.
+            # to do in-place array modifications.
             sparse_projection = sparse_projection.at[row_indices, max_nz_indices].set(
                 nz_projection
             )
@@ -785,7 +785,7 @@ class deprecated(object):
 
 
 def _is_deprecated(func):
-    r"""Helper to check if func is wraped by our deprecated decorator"""
+    r"""Helper to check if func is wrapped by our deprecated decorator"""
     if sys.version_info < (3, 5):
         raise NotImplementedError("This is only available for python3.5 " "or above")
     closures = getattr(func, "__closure__", [])

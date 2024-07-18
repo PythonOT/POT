@@ -78,7 +78,7 @@ losses = []
 for i in range(n_iter):
     # generate noise samples
 
-    # minus because we maximize te dual loss
+    # minus because we maximize the dual loss
     loss = -ot.stochastic.loss_dual_entropic(u, v, xs, xt, reg=reg)
     losses.append(float(loss.detach()))
 
@@ -132,7 +132,7 @@ losses = []
 for i in range(n_iter):
     # generate noise samples
 
-    # minus because we maximize te dual loss
+    # minus because we maximize the dual loss
     loss = -ot.stochastic.loss_dual_quadratic(u, v, xs, xt, reg=reg)
     losses.append(float(loss.detach()))
 

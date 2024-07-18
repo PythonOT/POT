@@ -4,7 +4,7 @@
 Low rank Gromov-Wasterstein between samples
 ========================================
 
-Comparaison between entropic Gromov-Wasserstein and Low Rank Gromov Wasserstein [67]
+Comparison between entropic Gromov-Wasserstein and Low Rank Gromov Wasserstein [67]
 on two curves in 2D and 3D, both sampled with 200 points.
 
 The squared Euclidean distance is considered as the ground cost for both samples.

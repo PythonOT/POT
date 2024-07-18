@@ -1127,7 +1127,7 @@ def barycenter_unbalanced_sinkhorn(
     reg_m: float
         Marginal relaxation term > 0
     weights : array-like (n_hists,) optional
-        Weight of each distribution (barycentric coodinates)
+        Weight of each distribution (barycentric coordinates)
         If None, uniform weights are used.
     numItermax : int, optional
         Max number of iterations
@@ -1272,7 +1272,7 @@ def barycenter_unbalanced(
     reg_m: float
         Marginal relaxation term > 0
     weights : array-like (n_hists,) optional
-        Weight of each distribution (barycentric coodinates)
+        Weight of each distribution (barycentric coordinates)
         If None, uniform weights are used.
     numItermax : int, optional
         Max number of iterations

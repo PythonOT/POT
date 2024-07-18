@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ==============================
-Graph classification with Tempate Based Fused Gromov Wasserstein
+Graph classification with Template Based Fused Gromov Wasserstein
 ==============================
 
 This example first illustrates how to train a graph classification gnn based on the Template Fused Gromov Wasserstein layer as proposed in [52] .

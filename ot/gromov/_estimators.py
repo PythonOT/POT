@@ -443,7 +443,7 @@ def sampled_gromov_wasserstein(
             try:
                 new_T = sinkhorn(a=p, b=q, M=Lik, reg=epsilon)
             except (RuntimeWarning, UserWarning):
-                print("Warning catched in Sinkhorn: Return last stable T")
+                print("Warning caught in Sinkhorn: Return last stable T")
                 break
         else:
             new_T = emd(a=p, b=q, M=Lik)

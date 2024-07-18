@@ -234,7 +234,7 @@ part2 = get_graph_partition(
 rep_indices1 = get_graph_representants(C1, part1, rep_method=rep_method)
 rep_indices2 = get_graph_representants(C2, part2, rep_method=rep_method)
 
-# 1-c) Formate partitions such that:
+# 1-c) Format partitions such that:
 # CR contains relations between representants in each space.
 # list_R contains relations between samples and representants within each partition.
 # list_h contains samples relative importance within each partition.

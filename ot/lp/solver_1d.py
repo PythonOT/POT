@@ -597,7 +597,7 @@ def ot_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p):
 
     if nx.__name__ == "torch":
         # this is to ensure the best performance for torch searchsorted
-        # and avoid a warninng related to non-contiguous arrays
+        # and avoid a warning related to non-contiguous arrays
         u_cdf = u_cdf.contiguous()
         v_cdf_theta = v_cdf_theta.contiguous()
         cdf_axis = cdf_axis.contiguous()

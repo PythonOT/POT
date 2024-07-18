@@ -159,7 +159,7 @@ print("True proportions : ", ratio)
 # -------------------------------------------------------
 # The GW OT  plan can be used to perform a clustering of the nodes of a graph
 # when computing the GW with a simple template like C0 by labeling nodes in
-# the original graph using by the index of the noe in the template receiving
+# the original graph using by the index of the node in the template receiving
 # the most mass.
 #
 # We show here the result of such a clustering when using uniform weights on

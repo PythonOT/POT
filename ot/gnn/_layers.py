@@ -181,7 +181,7 @@ class TFGWPooling(nn.Module):
 
 class TWPooling(nn.Module):
     r"""
-    Template Wasserstein (TW) layer, also kown as OT-GNN layer. This layer is a pooling layer for graph neural networks.
+    Template Wasserstein (TW) layer, also known as OT-GNN layer. This layer is a pooling layer for graph neural networks.
         Computes the Wasserstein distances between the features of the graph features and a set of templates.
 
     .. math::
@@ -224,7 +224,7 @@ class TWPooling(nn.Module):
         feature_init_std=1.0,
     ):
         r"""
-        Template Wasserstein (TW) layer, also kown as OT-GNN layer. This layer is a pooling layer for graph neural networks.
+        Template Wasserstein (TW) layer, also known as OT-GNN layer. This layer is a pooling layer for graph neural networks.
             Computes the Wasserstein distances between the features of the graph features and a set of templates.
 
         .. math::

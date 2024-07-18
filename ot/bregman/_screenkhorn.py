@@ -91,7 +91,7 @@ def screenkhorn(
     pgtol: `float`, default=1e-09
       Final objective function accuracy in LBFGS solver
     verbose: `bool`, default=False
-        If `True`, display informations about the cardinals of the active sets
+        If `True`, display information about the cardinals of the active sets
         and the parameters kappa and epsilon
 
 

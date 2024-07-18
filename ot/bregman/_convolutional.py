@@ -52,7 +52,7 @@ def convolutional_barycenter2d(
     reg : float
         Regularization term >0
     weights : array-like, shape (n_hists,)
-        Weights of each image on the simplex (barycentric coodinates)
+        Weights of each image on the simplex (barycentric coordinates)
     method : string, optional
         method used for the solver either 'sinkhorn' or 'sinkhorn_log'
     numItermax : int, optional
@@ -326,7 +326,7 @@ def convolutional_barycenter2d_debiased(
     reg : float
         Regularization term >0
     weights : array-like, shape (n_hists,)
-        Weights of each image on the simplex (barycentric coodinates)
+        Weights of each image on the simplex (barycentric coordinates)
     method : string, optional
         method used for the solver either 'sinkhorn' or 'sinkhorn_log'
     numItermax : int, optional

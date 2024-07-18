@@ -51,7 +51,7 @@ def dist_monge_max_min(i):
         Discrete Applied Mathematics, 58(2):97-109, 1995. ISSN 0166-218X. doi:
         https://doi.org/10.1016/0166-218X(93)E0121-E. URL
         https://www.sciencedirect.com/ science/article/pii/0166218X93E0121E.
-        Workshop on Discrete Algoritms.
+        Workshop on Discrete Algorithms.
     """
 
     return max(i) - min(i)
@@ -328,7 +328,7 @@ def dmmot_monge_1dgrid_optimize(
     funcval, _, grad, log_dict = dualIter(A, lr)
     gn = np.linalg.norm(grad)
 
-    print(f"Inital:\t\tObj:\t{funcval:.4f}\tGradNorm:\t{gn:.4f}")
+    print(f"Initial:\t\tObj:\t{funcval:.4f}\tGradNorm:\t{gn:.4f}")
 
     for i in range(niters):
         A = renormalize(A)

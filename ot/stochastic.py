@@ -146,7 +146,7 @@ def averaged_sgd_entropic_transport(
     a, b, M, reg, numItermax=300000, lr=None, random_state=None
 ):
     r"""
-    Compute the ASGD algorithm to solve the regularized semi continous measures optimal transport max problem
+    Compute the ASGD algorithm to solve the regularized semi continuous measures optimal transport max problem
 
     The function solves the following optimization problem:
 
@@ -305,7 +305,7 @@ def solve_semi_dual_entropic(
         cost matrix
     reg : float
         Regularization term > 0
-    methode : str
+    method : str
         used method (SAG or ASGD)
     numItermax : int
         number of iteration

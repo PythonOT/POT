@@ -813,7 +813,7 @@ def sinkhorn_log(
     else:
         n_hists = 0
 
-    # in case of multiple historgrams
+    # in case of multiple histograms
     if n_hists > 1 and warmstart is None:
         warmstart = [None] * n_hists
 

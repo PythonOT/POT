@@ -21,8 +21,8 @@ def TFGW_template_initialization(
     """
     Initializes templates for the Template Fused Gromov Wasserstein layer.
     Returns the adjacency matrices and the features of the nodes of the templates.
-    Adjacency matrices are intialised uniformly with values in :math:`[0,1]`.
-    Node features are intialized following a normal distribution.
+    Adjacency matrices are initialized uniformly with values in :math:`[0,1]`.
+    Node features are initialized following a normal distribution.
 
     Parameters
     ----------
@@ -41,7 +41,7 @@ def TFGW_template_initialization(
     Returns
     ----------
       tplt_adjacencies: torch.Tensor, shape (n_templates, n_template_nodes, n_template_nodes)
-           Adjancency matrices for the templates.
+           Adjacency matrices for the templates.
       tplt_features: torch.Tensor, shape (n_templates, n_template_nodes, n_features)
            Node features for each template.
       q: torch.Tensor, shape (n_templates, n_template_nodes)

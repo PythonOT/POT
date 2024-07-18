@@ -59,7 +59,7 @@ def to_update(fname, cache):
 
 
 def update(fname, cache):
-    # jupyter nbconvert --to notebook --execute mynotebook.ipynb --output targte
+    # jupyter nbconvert --to notebook --execute mynotebook.ipynb --output target
     subprocess.check_call(["cp", path_doc + fname, path_nb])
     print(
         " ".join(

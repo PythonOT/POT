@@ -64,7 +64,7 @@ def barycenter(
     method : str (optional)
         method used for the solver either 'sinkhorn' or 'sinkhorn_stabilized' or 'sinkhorn_log'
     weights : array-like, shape (n_hists,)
-        Weights of each histogram :math:`\mathbf{a}_i` on the simplex (barycentric coodinates)
+        Weights of each histogram :math:`\mathbf{a}_i` on the simplex (barycentric coordinates)
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -177,7 +177,7 @@ def barycenter_sinkhorn(
     reg : float
         Regularization term > 0
     weights : array-like, shape (n_hists,)
-        Weights of each histogram :math:`\mathbf{a}_i` on the simplex (barycentric coodinates)
+        Weights of each histogram :math:`\mathbf{a}_i` on the simplex (barycentric coordinates)
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -515,7 +515,7 @@ def barycenter_stabilized(
         threshold for max value in :math:`\mathbf{u}` or :math:`\mathbf{v}`
         for log scaling
     weights : array-like, shape (n_hists,)
-        Weights of each histogram :math:`\mathbf{a}_i` on the simplex (barycentric coodinates)
+        Weights of each histogram :math:`\mathbf{a}_i` on the simplex (barycentric coordinates)
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -668,7 +668,7 @@ def barycenter_debiased(
     method : str (optional)
         method used for the solver either 'sinkhorn' or 'sinkhorn_log'
     weights : array-like, shape (n_hists,)
-        Weights of each histogram :math:`\mathbf{a}_i` on the simplex (barycentric coodinates)
+        Weights of each histogram :math:`\mathbf{a}_i` on the simplex (barycentric coordinates)
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional

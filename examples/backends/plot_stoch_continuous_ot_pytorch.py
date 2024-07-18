@@ -104,7 +104,7 @@ for i in range(n_iter):
     xsi = xs[iperms]
     xti = xt[ipermt]
 
-    # minus because we maximize te dual loss
+    # minus because we maximize the dual loss
     loss = -ot.stochastic.loss_dual_entropic(u(xsi), v(xti), xsi, xti, reg=reg)
     losses.append(float(loss.detach()))
 

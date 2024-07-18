@@ -130,7 +130,7 @@ def unmix(
         K = projC(K, a)
         K0 = projC(K0, h0)
         new = nx.sum(K0, axis=1)
-        # we recombine the current selection from dictionnary
+        # we recombine the current selection from dictionary
         inv_new = nx.dot(D, new)
         other = nx.sum(K, axis=1)
         # geometric interpolation

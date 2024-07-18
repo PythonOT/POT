@@ -337,8 +337,8 @@ def entropic_gromov_wasserstein2(
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 will be used as initial transport of the solver. G0 is not
-        required to satisfy marginal constraints but we strongly recommand it
-        to correcly estimate the GW distance.
+        required to satisfy marginal constraints but we strongly recommend it
+        to correctly estimate the GW distance.
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -701,8 +701,8 @@ def BAPG_gromov_wasserstein2(
     G0: array-like, shape (ns,nt), optional
         If None the initial transport plan of the solver is pq^T.
         Otherwise G0 will be used as initial transport of the solver. G0 is not
-        required to satisfy marginal constraints but we strongly recommand it
-        to correcly estimate the GW distance.
+        required to satisfy marginal constraints but we strongly recommend it
+        to correctly estimate the GW distance.
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -1331,7 +1331,7 @@ def entropic_fused_gromov_wasserstein2(
     symmetric : bool, optional
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
-        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     alpha : float, optional
         Trade-off parameter (0 < alpha < 1)
     G0: array-like, shape (ns,nt), optional

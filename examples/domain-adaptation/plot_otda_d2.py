@@ -4,7 +4,7 @@
 OT for domain adaptation on empirical distributions
 ===================================================
 
-This example introduces a domain adaptation in a 2D setting. It explicits
+This example introduces a domain adaptation in a 2D setting. It explains
 the problem of domain adaptation and introduces some optimal transport
 approaches to solve it.
 

@@ -121,7 +121,7 @@ def empirical_sinkhorn2_geomloss(
     b : array-like, shape (n_samples_b,), default=None
         samples weights in the target domain
     metric : str, default='sqeuclidean'
-        Metric used for the cost matrix computation Only acepted values are
+        Metric used for the cost matrix computation Only accepted values are
         'sqeuclidean' and 'euclidean'.
     scaling : float, default=0.95
         Scaling parameter used for epsilon scaling. Value close to one promote

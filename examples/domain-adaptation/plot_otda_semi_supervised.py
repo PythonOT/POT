@@ -5,7 +5,7 @@ OTDA unsupervised vs semi-supervised setting
 ============================================
 
 This example introduces a semi supervised domain adaptation in a 2D setting.
-It explicits the problem of semi supervised domain adaptation and introduces
+It shows the problem of semi supervised domain adaptation and introduces
 some optimal transport approaches to solve it.
 
 Quantities such as optimal couplings, greater coupling coefficients and

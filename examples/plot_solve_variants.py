@@ -4,7 +4,7 @@
 Optimal Transport solvers comparison
 ======================================
 
-This example illustrates the solutions returns for diffrent variants of exact,
+This example illustrates the solutions returns for different variants of exact,
 regularized and unbalanced OT solvers.
 """
 
@@ -103,7 +103,7 @@ lst_solvers = [  # name, param for ot.solve function
     # unbalanced OT KL
     ("Unbalanced KL No Reg.", dict(unbalanced=0.005)),
     (
-        "Unbalanced KL wit KL Reg.",
+        "Unbalanced KL with KL Reg.",
         dict(reg=0.0005, unbalanced=0.005, unbalanced_type="kl", reg_type="kl"),
     ),
     (

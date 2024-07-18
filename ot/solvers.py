@@ -1504,7 +1504,7 @@ def solve_sample(
     - **Gaussian Bures-Wasserstein [2]** (when ``method='gaussian'``):
 
     This method computes the Gaussian Bures-Wasserstein distance between two
-    Gaussian distributions estimated from teh empirical distributions
+    Gaussian distributions estimated from the empirical distributions
 
     .. math::
         \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \mathcal{B}(\Sigma_s, \Sigma_t)^{2}

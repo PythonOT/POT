@@ -70,7 +70,7 @@ def gromov_wasserstein_dictionary_learning(
     reg : float, optional
         Coefficient of the negative quadratic regularization used to promote sparsity of w. The default is 0.
     ps : list of S array-like, shape (ns,), optional
-        Distribution in each source space C of Cs. Default is None and corresponds to uniform distibutions.
+        Distribution in each source space C of Cs. Default is None and corresponds to uniform distributions.
     q : array-like, shape (nt,), optional
         Distribution in the embedding space whose structure will be learned. Default is None and corresponds to uniform distributions.
     epochs: int, optional
@@ -648,7 +648,7 @@ def fused_gromov_wasserstein_dictionary_learning(
     reg : float, optional
         Coefficient of the negative quadratic regularization used to promote sparsity of w. The default is 0.
     ps : list of S array-like, shape (ns,), optional
-        Distribution in each source space C of Cs. Default is None and corresponds to uniform distibutions.
+        Distribution in each source space C of Cs. Default is None and corresponds to uniform distributions.
     q : array-like, shape (nt,), optional
         Distribution in the embedding space whose structure will be learned. Default is None and corresponds to uniform distributions.
     epochs: int, optional

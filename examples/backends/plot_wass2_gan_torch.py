@@ -140,7 +140,7 @@ for i in range(n_iter):
     # generate sample along iterations
     xvisu[i, :, :] = G(xnvisu).detach()
 
-    # generate smaples and compte distance matrix
+    # generate samples and compte distance matrix
     xg = G(xn)
     M = ot.dist(xg, xd)
 
