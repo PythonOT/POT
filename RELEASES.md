@@ -4,8 +4,8 @@
 
 #### New features
 - Add feature `mass=True` for `nx.kl_div` (PR #654)
-- Gaussian Mixture Model OT `ot.gmm` (PR #655)
-- Fixed `ot.gaussian` ignoring weights when computing means (PR #655, Issue #648)
+- Gaussian Mixture Model OT `ot.gmm` (PR #649)
+- Fixed `ot.gaussian` ignoring weights when computing means (PR #649, Issue #648)
 
 #### Closed issues
 
