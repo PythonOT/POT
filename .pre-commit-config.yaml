@@ -4,7 +4,7 @@ repos:
     rev: v0.3.0
     hooks:
       - id: ruff
-        name: ruff lint 
+        name: ruff lint
         args: ["--fix"]
         files: ^ot/
       - id: ruff
@@ -35,13 +35,13 @@ repos:
         ]
 
   # yamllint
-  # - repo: https://github.com/adrienverge/yamllint.git
-  #   rev: v1.35.1
-  #   hooks:
-  #     - id: yamllint
-  #       args: [--strict]
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+      # args: [--strict]
 
-  # # rstcheck
+# # rstcheck
   # - repo: https://github.com/rstcheck/rstcheck.git
   #   rev: v6.2.0
   #   hooks:
