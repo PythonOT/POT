@@ -1,4 +1,4 @@
-"""Tests for main module ot """
+"""Tests for main module ot"""
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #
@@ -125,7 +125,7 @@ def test_emd_emd2_devices_tf():
         nx.assert_same_dtype_device(Mb, Gb)
         nx.assert_same_dtype_device(Mb, w)
 
-    if len(tf.config.list_physical_devices('GPU')) > 0:
+    if len(tf.config.list_physical_devices("GPU")) > 0:
         # Check that everything happens on the GPU
         ab, Mb = nx.from_numpy(a, M)
         Gb = ot.emd(ab, ab, Mb)
@@ -147,7 +147,6 @@ def test_emd2_gradients():
     M = ot.dist(x, y)
 
     if torch:
-
         a1 = torch.tensor(a, requires_grad=True)
         b1 = torch.tensor(a, requires_grad=True)
         M1 = torch.tensor(M, requires_grad=True)
@@ -160,11 +159,15 @@ def test_emd2_gradients():
         assert b1.shape == b1.grad.shape
         assert M1.shape == M1.grad.shape
 
-        assert np.allclose(a1.grad.cpu().detach().numpy(),
-                           log['u'].cpu().detach().numpy() - log['u'].cpu().detach().numpy().mean())
+        assert np.allclose(
+            a1.grad.cpu().detach().numpy(),
+            log["u"].cpu().detach().numpy() - log["u"].cpu().detach().numpy().mean(),
+        )
 
-        assert np.allclose(b1.grad.cpu().detach().numpy(),
-                           log['v'].cpu().detach().numpy() - log['v'].cpu().detach().numpy().mean())
+        assert np.allclose(
+            b1.grad.cpu().detach().numpy(),
+            log["v"].cpu().detach().numpy() - log["v"].cpu().detach().numpy().mean(),
+        )
 
         # Testing for bug #309, checking for scaling of gradient
         a2 = torch.tensor(a, requires_grad=True)
@@ -175,12 +178,15 @@ def test_emd2_gradients():
 
         val.backward()
 
-        assert np.allclose(10.0 * a1.grad.cpu().detach().numpy(),
-                           a2.grad.cpu().detach().numpy())
-        assert np.allclose(10.0 * b1.grad.cpu().detach().numpy(),
-                           b2.grad.cpu().detach().numpy())
-        assert np.allclose(10.0 * M1.grad.cpu().detach().numpy(),
-                           M2.grad.cpu().detach().numpy())
+        assert np.allclose(
+            10.0 * a1.grad.cpu().detach().numpy(), a2.grad.cpu().detach().numpy()
+        )
+        assert np.allclose(
+            10.0 * b1.grad.cpu().detach().numpy(), b2.grad.cpu().detach().numpy()
+        )
+        assert np.allclose(
+            10.0 * M1.grad.cpu().detach().numpy(), M2.grad.cpu().detach().numpy()
+        )
 
 
 def test_emd_emd2():
@@ -264,30 +270,30 @@ def test_emd2_multi():
     M = ot.dist(x.reshape((n, 1)), x.reshape((n, 1)))
     # M/=M.max()
 
-    print('Computing {} EMD '.format(nb))
+    print("Computing {} EMD ".format(nb))
 
     # emd loss 1 proc
     ot.tic()
     emd1 = ot.emd2(a, b, M, 1)
-    ot.toc('1 proc : {} s')
+    ot.toc("1 proc : {} s")
 
     # emd loss multipro proc
     ot.tic()
     emdn = ot.emd2(a, b, M)
-    ot.toc('multi proc : {} s')
+    ot.toc("multi proc : {} s")
 
     np.testing.assert_allclose(emd1, emdn)
 
     # emd loss multipro proc with log
     ot.tic()
     emdn = ot.emd2(a, b, M, log=True, return_matrix=True)
-    ot.toc('multi proc : {} s')
+    ot.toc("multi proc : {} s")
 
     for i in range(len(emdn)):
         emd = emdn[i]
         log = emd[1]
         cost = emd[0]
-        check_duality_gap(a, b[:, i], M, log['G'], log['u'], log['v'], cost)
+        check_duality_gap(a, b[:, i], M, log["G"], log["u"], log["v"], cost)
         emdn[i] = cost
 
     emdn = np.array(emdn)
@@ -304,20 +310,23 @@ def test_lp_barycenter():
     # obvious barycenter between two Diracs
     bary0 = np.array([0, 1.0, 0])
 
-    bary = ot.lp.barycenter(A, M, [.5, .5])
+    bary = ot.lp.barycenter(A, M, [0.5, 0.5])
 
     np.testing.assert_allclose(bary, bary0, rtol=1e-5, atol=1e-7)
     np.testing.assert_allclose(bary.sum(), 1)
 
 
 def test_free_support_barycenter():
-    measures_locations = [np.array([-1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
-    measures_weights = [np.array([1.]), np.array([1.])]
+    measures_locations = [
+        np.array([-1.0]).reshape((1, 1)),
+        np.array([1.0]).reshape((1, 1)),
+    ]
+    measures_weights = [np.array([1.0]), np.array([1.0])]
 
-    X_init = np.array([-12.]).reshape((1, 1))
+    X_init = np.array([-12.0]).reshape((1, 1))
 
     # obvious barycenter location between two Diracs
-    bar_locations = np.array([0.]).reshape((1, 1))
+    bar_locations = np.array([0.0]).reshape((1, 1))
 
     X = ot.lp.free_support_barycenter(measures_locations, measures_weights, X_init)
 
@@ -325,10 +334,12 @@ def test_free_support_barycenter():
 
 
 def test_free_support_barycenter_backends(nx):
-
-    measures_locations = [np.array([-1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
-    measures_weights = [np.array([1.]), np.array([1.])]
-    X_init = np.array([-12.]).reshape((1, 1))
+    measures_locations = [
+        np.array([-1.0]).reshape((1, 1)),
+        np.array([1.0]).reshape((1, 1)),
+    ]
+    measures_weights = [np.array([1.0]), np.array([1.0])]
+    X_init = np.array([-12.0]).reshape((1, 1))
 
     X = ot.lp.free_support_barycenter(measures_locations, measures_weights, X_init)
 
@@ -342,30 +353,35 @@ def test_free_support_barycenter_backends(nx):
 
 
 def test_generalised_free_support_barycenter():
-    X = [np.array([-1., -1.]).reshape((1, 2)), np.array([1., 1.]).reshape((1, 2))]  # two 2D points bar is obviously 0
-    a = [np.array([1.]), np.array([1.])]
+    X = [
+        np.array([-1.0, -1.0]).reshape((1, 2)),
+        np.array([1.0, 1.0]).reshape((1, 2)),
+    ]  # two 2D points bar is obviously 0
+    a = [np.array([1.0]), np.array([1.0])]
 
     P = [np.eye(2), np.eye(2)]
 
-    Y_init = np.array([-12., 7.]).reshape((1, 2))
+    Y_init = np.array([-12.0, 7.0]).reshape((1, 2))
 
     # obvious barycenter location between two 2D Diracs
-    Y_true = np.array([0., .0]).reshape((1, 2))
+    Y_true = np.array([0.0, 0.0]).reshape((1, 2))
 
     # test without log and no init
     Y = ot.lp.generalized_free_support_barycenter(X, a, P, 1)
     np.testing.assert_allclose(Y, Y_true, rtol=1e-5, atol=1e-7)
 
     # test with log and init
-    Y, _ = ot.lp.generalized_free_support_barycenter(X, a, P, 1, Y_init=Y_init, b=np.array([1.]), log=True)
+    Y, _ = ot.lp.generalized_free_support_barycenter(
+        X, a, P, 1, Y_init=Y_init, b=np.array([1.0]), log=True
+    )
     np.testing.assert_allclose(Y, Y_true, rtol=1e-5, atol=1e-7)
 
 
 def test_generalised_free_support_barycenter_backends(nx):
-    X = [np.array([-1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
-    a = [np.array([1.]), np.array([1.])]
-    P = [np.array([1.]).reshape((1, 1)), np.array([1.]).reshape((1, 1))]
-    Y_init = np.array([-12.]).reshape((1, 1))
+    X = [np.array([-1.0]).reshape((1, 1)), np.array([1.0]).reshape((1, 1))]
+    a = [np.array([1.0]), np.array([1.0])]
+    P = [np.array([1.0]).reshape((1, 1)), np.array([1.0]).reshape((1, 1))]
+    Y_init = np.array([-12.0]).reshape((1, 1))
 
     Y = ot.lp.generalized_free_support_barycenter(X, a, P, 1, Y_init=Y_init)
 
@@ -390,7 +406,7 @@ def test_lp_barycenter_cvxopt():
     # obvious barycenter between two Diracs
     bary0 = np.array([0, 1.0, 0])
 
-    bary = ot.lp.barycenter(A, M, [.5, .5], solver=None)
+    bary = ot.lp.barycenter(A, M, [0.5, 0.5], solver=None)
 
     np.testing.assert_allclose(bary, bary0, rtol=1e-5, atol=1e-7)
     np.testing.assert_allclose(bary.sum(), 1)
@@ -413,15 +429,15 @@ def test_warnings():
     b = gauss(m, m=mean2, s=10)
 
     # loss matrix
-    M = ot.dist(x.reshape((-1, 1)), y.reshape((-1, 1))) ** (1. / 2)
+    M = ot.dist(x.reshape((-1, 1)), y.reshape((-1, 1))) ** (1.0 / 2)
 
-    print('Computing {} EMD '.format(1))
+    print("Computing {} EMD ".format(1))
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        print('Computing {} EMD '.format(1))
+        print("Computing {} EMD ".format(1))
         ot.emd(a, b, M, numItermax=1)
         assert "numItermax" in str(w[-1].message)
-        #assert len(w) == 1
+        # assert len(w) == 1
 
 
 def test_dual_variables():
@@ -441,18 +457,18 @@ def test_dual_variables():
     b = gauss(m, m=mean2, s=10)
 
     # loss matrix
-    M = ot.dist(x.reshape((-1, 1)), y.reshape((-1, 1))) ** (1. / 2)
+    M = ot.dist(x.reshape((-1, 1)), y.reshape((-1, 1))) ** (1.0 / 2)
 
-    print('Computing {} EMD '.format(1))
+    print("Computing {} EMD ".format(1))
 
     # emd loss 1 proc
     ot.tic()
     G, log = ot.emd(a, b, M, log=True)
-    ot.toc('1 proc : {} s')
+    ot.toc("1 proc : {} s")
 
     ot.tic()
     G2 = ot.emd(b, a, np.ascontiguousarray(M.T))
-    ot.toc('1 proc : {} s')
+    ot.toc("1 proc : {} s")
 
     cost1 = (G * M).sum()
     # Check symmetry
@@ -461,10 +477,10 @@ def test_dual_variables():
     np.testing.assert_almost_equal(cost1, np.abs(mean1 - mean2))
 
     # Check that both cost computations are equivalent
-    np.testing.assert_almost_equal(cost1, log['cost'])
-    check_duality_gap(a, b, M, G, log['u'], log['v'], log['cost'])
+    np.testing.assert_almost_equal(cost1, log["cost"])
+    check_duality_gap(a, b, M, G, log["u"], log["v"], log["cost"])
 
-    constraint_violation = log['u'][:, None] + log['v'][None, :] - M
+    constraint_violation = log["u"][:, None] + log["v"][None, :] - M
 
     assert constraint_violation.max() < 1e-8
 
@@ -477,5 +493,6 @@ def check_duality_gap(a, b, M, G, u, v, cost):
     [ind1, ind2] = np.nonzero(G)
 
     # Check that reduced cost is zero on transport arcs
-    np.testing.assert_array_almost_equal((M - u.reshape(-1, 1) - v.reshape(1, -1))[ind1, ind2],
-                                         np.zeros(ind1.size))
+    np.testing.assert_array_almost_equal(
+        (M - u.reshape(-1, 1) - v.reshape(1, -1))[ind1, ind2], np.zeros(ind1.size)
+    )

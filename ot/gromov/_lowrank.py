@@ -6,7 +6,6 @@ Low rank Gromov-Wasserstein solver
 #
 # License: MIT License
 
-
 import warnings
 from ..utils import unif, get_lowrank_lazytensor
 from ..backend import get_backend
@@ -58,9 +57,27 @@ def _flat_product_operator(X, nx=None):
     return X_flat
 
 
-def lowrank_gromov_wasserstein_samples(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, gamma_init="rescale",
-                                       rescale_cost=True, cost_factorized_Xs=None, cost_factorized_Xt=None, stopThr=1e-4, numItermax=1000,
-                                       stopThr_dykstra=1e-3, numItermax_dykstra=10000, seed_init=49, warn=True, warn_dykstra=False, log=False):
+def lowrank_gromov_wasserstein_samples(
+    X_s,
+    X_t,
+    a=None,
+    b=None,
+    reg=0,
+    rank=None,
+    alpha=1e-10,
+    gamma_init="rescale",
+    rescale_cost=True,
+    cost_factorized_Xs=None,
+    cost_factorized_Xt=None,
+    stopThr=1e-4,
+    numItermax=1000,
+    stopThr_dykstra=1e-3,
+    numItermax_dykstra=10000,
+    seed_init=49,
+    warn=True,
+    warn_dykstra=False,
+    log=False,
+):
     r"""
     Solve the entropic regularization Gromov-Wasserstein transport problem under low-nonnegative rank constraints
     on the couplings and cost matrices.
@@ -180,8 +197,11 @@ def lowrank_gromov_wasserstein_samples(X_s, X_t, a=None, b=None, reg=0, rank=Non
 
     # Dykstra won't converge if 1/rank < alpha (see Section 3.2)
     if 1 / r < alpha:
-        raise ValueError("alpha ({a}) should be smaller than 1/rank ({r}) for the Dykstra algorithm to converge.".format(
-            a=alpha, r=1 / rank))
+        raise ValueError(
+            "alpha ({a}) should be smaller than 1/rank ({r}) for the Dykstra algorithm to converge.".format(
+                a=alpha, r=1 / rank
+            )
+        )
 
     if cost_factorized_Xs is not None:
         A1, A2 = cost_factorized_Xs
@@ -204,7 +224,9 @@ def lowrank_gromov_wasserstein_samples(X_s, X_t, a=None, b=None, reg=0, rank=Non
         gamma = 1 / (2 * L)
 
     if gamma_init not in ["rescale", "theory"]:
-        raise (NotImplementedError('Not implemented gamma_init="{}"'.format(gamma_init)))
+        raise (
+            NotImplementedError('Not implemented gamma_init="{}"'.format(gamma_init))
+        )
 
     # initial value of error
     err = 1
@@ -217,7 +239,7 @@ def lowrank_gromov_wasserstein_samples(X_s, X_t, a=None, b=None, reg=0, rank=Non
         if err > stopThr:
             # Compute cost matrices
             C1 = nx.dot(A2.T, Q * (1 / g)[None, :])
-            C1 = - 4 * nx.dot(A1, C1)
+            C1 = -4 * nx.dot(A1, C1)
             C2 = nx.dot(R.T, B1)
             C2 = nx.dot(C2, B2.T)
             diag_g = (1 / g)[None, :]
@@ -248,7 +270,16 @@ def lowrank_gromov_wasserstein_samples(X_s, X_t, a=None, b=None, reg=0, rank=Non
 
             # Update couplings with LR Dykstra algorithm
             Q, R, g = _LR_Dysktra(
-                K1, K2, K3, a, b, alpha, stopThr_dykstra, numItermax_dykstra, warn_dykstra, nx
+                K1,
+                K2,
+                K3,
+                a,
+                b,
+                alpha,
+                stopThr_dykstra,
+                numItermax_dykstra,
+                warn_dykstra,
+                nx,
             )
 
             # Update error with kullback-divergence
@@ -274,7 +305,7 @@ def lowrank_gromov_wasserstein_samples(X_s, X_t, a=None, b=None, reg=0, rank=Non
 
     # Update low rank costs
     C1 = nx.dot(A2.T, Q * (1 / g)[None, :])
-    C1 = - 4 * nx.dot(A1, C1)
+    C1 = -4 * nx.dot(A1, C1)
     C2 = nx.dot(R.T, B1)
     C2 = nx.dot(C2, B2.T)
 

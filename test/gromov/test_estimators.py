@@ -1,4 +1,4 @@
-""" Tests for gromov._estimators.py """
+"""Tests for gromov._estimators.py"""
 
 # Author: Rémi Flamary <remi.flamary@unice.fr>
 #         Tanguy Kerdoncuff <tanguy.kerdoncuff@laposte.net>
@@ -41,27 +41,47 @@ def test_pointwise_gromov(nx):
         return nx.abs(x - y)
 
     G, log = ot.gromov.pointwise_gromov_wasserstein(
-        C1, C2, p, q, loss, max_iter=100, log=True, verbose=True, random_state=42)
+        C1, C2, p, q, loss, max_iter=100, log=True, verbose=True, random_state=42
+    )
     G = NumpyBackend().todense(G)
     Gb, logb = ot.gromov.pointwise_gromov_wasserstein(
-        C1b, C2b, pb, qb, lossb, max_iter=100, log=True, verbose=True, random_state=42)
+        C1b, C2b, pb, qb, lossb, max_iter=100, log=True, verbose=True, random_state=42
+    )
     Gb = nx.to_numpy(nx.todense(Gb))
 
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
-    np.testing.assert_allclose(
-        p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
-    np.testing.assert_allclose(
-        q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+    np.testing.assert_allclose(p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
+    np.testing.assert_allclose(q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
 
-    np.testing.assert_allclose(float(logb['gw_dist_estimated']), 0.0, atol=1e-08)
-    np.testing.assert_allclose(float(logb['gw_dist_std']), 0.0, atol=1e-08)
+    np.testing.assert_allclose(float(logb["gw_dist_estimated"]), 0.0, atol=1e-08)
+    np.testing.assert_allclose(float(logb["gw_dist_std"]), 0.0, atol=1e-08)
 
     G, log = ot.gromov.pointwise_gromov_wasserstein(
-        C1, C2, p, q, loss, max_iter=100, alpha=0.1, log=True, verbose=True, random_state=42)
+        C1,
+        C2,
+        p,
+        q,
+        loss,
+        max_iter=100,
+        alpha=0.1,
+        log=True,
+        verbose=True,
+        random_state=42,
+    )
     G = NumpyBackend().todense(G)
     Gb, logb = ot.gromov.pointwise_gromov_wasserstein(
-        C1b, C2b, pb, qb, lossb, max_iter=100, alpha=0.1, log=True, verbose=True, random_state=42)
+        C1b,
+        C2b,
+        pb,
+        qb,
+        lossb,
+        max_iter=100,
+        alpha=0.1,
+        log=True,
+        verbose=True,
+        random_state=42,
+    )
     Gb = nx.to_numpy(nx.todense(Gb))
 
     np.testing.assert_allclose(G, Gb, atol=1e-06)
@@ -97,14 +117,34 @@ def test_sampled_gromov(nx):
         return nx.abs(x - y)
 
     G, log = ot.gromov.sampled_gromov_wasserstein(
-        C1, C2, p, q, loss, max_iter=20, nb_samples_grad=2, epsilon=1, log=True, verbose=True, random_state=42)
+        C1,
+        C2,
+        p,
+        q,
+        loss,
+        max_iter=20,
+        nb_samples_grad=2,
+        epsilon=1,
+        log=True,
+        verbose=True,
+        random_state=42,
+    )
     Gb, logb = ot.gromov.sampled_gromov_wasserstein(
-        C1b, C2b, pb, qb, lossb, max_iter=20, nb_samples_grad=2, epsilon=1, log=True, verbose=True, random_state=42)
+        C1b,
+        C2b,
+        pb,
+        qb,
+        lossb,
+        max_iter=20,
+        nb_samples_grad=2,
+        epsilon=1,
+        log=True,
+        verbose=True,
+        random_state=42,
+    )
     Gb = nx.to_numpy(Gb)
 
     # check constraints
     np.testing.assert_allclose(G, Gb, atol=1e-06)
-    np.testing.assert_allclose(
-        p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
-    np.testing.assert_allclose(
-        q, Gb.sum(0), atol=1e-04)  # cf convergence gromov
+    np.testing.assert_allclose(p, Gb.sum(1), atol=1e-04)  # cf convergence gromov
+    np.testing.assert_allclose(q, Gb.sum(0), atol=1e-04)  # cf convergence gromov

@@ -1,4 +1,4 @@
-"""Tests for module partial  """
+"""Tests for module partial"""
 
 # Author:
 #         Laetitia Chapel <laetitia.chapel@irisa.fr>
@@ -13,7 +13,6 @@ import pytest
 
 
 def test_raise_errors():
-
     n_samples = 20  # nb samples (gaussian)
     n_noise = 20  # nb of samples (noise)
 
@@ -53,16 +52,15 @@ def test_raise_errors():
         ot.partial.partial_gromov_wasserstein(M, M, p, q, m=-1, log=True)
 
     with pytest.raises(ValueError):
-        ot.partial.entropic_partial_gromov_wasserstein(M, M, p, q, reg=1, m=2,
-                                                       log=True)
+        ot.partial.entropic_partial_gromov_wasserstein(M, M, p, q, reg=1, m=2, log=True)
 
     with pytest.raises(ValueError):
-        ot.partial.entropic_partial_gromov_wasserstein(M, M, p, q, reg=1, m=-1,
-                                                       log=True)
+        ot.partial.entropic_partial_gromov_wasserstein(
+            M, M, p, q, reg=1, m=-1, log=True
+        )
 
 
 def test_partial_wasserstein_lagrange():
-
     n_samples = 20  # nb samples (gaussian)
     n_noise = 20  # nb of samples (noise)
 
@@ -86,7 +84,6 @@ def test_partial_wasserstein_lagrange():
 
 
 def test_partial_wasserstein(nx):
-
     n_samples = 20  # nb samples (gaussian)
     n_noise = 20  # nb of samples (noise)
 
@@ -109,7 +106,9 @@ def test_partial_wasserstein(nx):
     p, q, M = nx.from_numpy(p, q, M)
 
     w0, log0 = ot.partial.partial_wasserstein(p, q, M, m=m, log=True)
-    w, log = ot.partial.entropic_partial_wasserstein(p, q, M, reg=1, m=m, log=True, verbose=True)
+    w, log = ot.partial.entropic_partial_wasserstein(
+        p, q, M, reg=1, m=m, log=True, verbose=True
+    )
 
     # check constraints
     np.testing.assert_equal(to_numpy(nx.sum(w0, axis=1) - p) <= 1e-5, [True] * len(p))
@@ -124,7 +123,7 @@ def test_partial_wasserstein(nx):
     w0, log0 = ot.partial.partial_wasserstein2(p, q, M, m=m, log=True)
     w0_val = ot.partial.partial_wasserstein2(p, q, M, m=m, log=False)
 
-    G = log0['T']
+    G = log0["T"]
 
     np.testing.assert_allclose(w0, w0_val, atol=1e-1, rtol=1e-1)
 
@@ -145,7 +144,9 @@ def test_partial_wasserstein(nx):
     # check transported mass
     np.testing.assert_allclose(np.sum(to_numpy(w)), 1, atol=1e-04)
 
-    w0 = ot.partial.entropic_partial_wasserstein(empty_array, empty_array, M=M, reg=10, m=None)
+    w0 = ot.partial.entropic_partial_wasserstein(
+        empty_array, empty_array, M=M, reg=10, m=None
+    )
 
     # check constraints
     np.testing.assert_equal(to_numpy(nx.sum(w0, axis=1) - p) <= 1e-5, [True] * len(p))
@@ -200,9 +201,11 @@ def test_entropic_partial_wasserstein_gradient():
         m = 0.5
         reg = 1
 
-        _, log = ot.partial.entropic_partial_wasserstein(p, q, M, m=m, reg=reg, log=True)
+        _, log = ot.partial.entropic_partial_wasserstein(
+            p, q, M, m=m, reg=reg, log=True
+        )
 
-        log['partial_w_dist'].backward()
+        log["partial_w_dist"].backward()
 
         assert M.grad is not None
         assert p.grad is not None
@@ -238,50 +241,49 @@ def test_partial_gromov_wasserstein():
     C3 = ot.dist(xt2, xt2)
 
     m = 2 / 3
-    res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C3, p, q, m=m,
-                                                       log=True, verbose=True)
+    res0, log0 = ot.partial.partial_gromov_wasserstein(
+        C1, C3, p, q, m=m, log=True, verbose=True
+    )
     np.testing.assert_allclose(res0, 0, atol=1e-1, rtol=1e-1)
 
     C1 = sp.spatial.distance.cdist(xs, xs)
     C2 = sp.spatial.distance.cdist(xt, xt)
 
     m = 1
-    res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m,
-                                                       log=True)
-    G = ot.gromov.gromov_wasserstein(C1, C2, p, q, 'square_loss')
+    res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True)
+    G = ot.gromov.gromov_wasserstein(C1, C2, p, q, "square_loss")
     np.testing.assert_allclose(G, res0, atol=1e-04)
 
-    res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
-                                                              m=m, log=True)
-    G = ot.gromov.entropic_gromov_wasserstein(
-        C1, C2, p, q, 'square_loss', epsilon=10)
+    res, log = ot.partial.entropic_partial_gromov_wasserstein(
+        C1, C2, p, q, 10, m=m, log=True
+    )
+    G = ot.gromov.entropic_gromov_wasserstein(C1, C2, p, q, "square_loss", epsilon=10)
     np.testing.assert_allclose(G, res, atol=1e-02)
 
-    w0, log0 = ot.partial.partial_gromov_wasserstein2(C1, C2, p, q, m=m,
-                                                      log=True)
-    w0_val = ot.partial.partial_gromov_wasserstein2(C1, C2, p, q, m=m,
-                                                    log=False)
-    G = log0['T']
+    w0, log0 = ot.partial.partial_gromov_wasserstein2(C1, C2, p, q, m=m, log=True)
+    w0_val = ot.partial.partial_gromov_wasserstein2(C1, C2, p, q, m=m, log=False)
+    G = log0["T"]
     np.testing.assert_allclose(w0, w0_val, atol=1e-1, rtol=1e-1)
 
     m = 2 / 3
-    res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m,
-                                                       log=True)
-    res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q,
-                                                              100, m=m,
-                                                              log=True)
+    res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True)
+    res, log = ot.partial.entropic_partial_gromov_wasserstein(
+        C1, C2, p, q, 100, m=m, log=True
+    )
 
     # check constraints
     np.testing.assert_equal(
-        res0.sum(1) <= p, [True] * len(p))  # cf convergence wasserstein
+        res0.sum(1) <= p, [True] * len(p)
+    )  # cf convergence wasserstein
     np.testing.assert_equal(
-        res0.sum(0) <= q, [True] * len(q))  # cf convergence wasserstein
-    np.testing.assert_allclose(
-        np.sum(res0), m, atol=1e-04)
+        res0.sum(0) <= q, [True] * len(q)
+    )  # cf convergence wasserstein
+    np.testing.assert_allclose(np.sum(res0), m, atol=1e-04)
 
     np.testing.assert_equal(
-        res.sum(1) <= p, [True] * len(p))  # cf convergence wasserstein
+        res.sum(1) <= p, [True] * len(p)
+    )  # cf convergence wasserstein
     np.testing.assert_equal(
-        res.sum(0) <= q, [True] * len(q))  # cf convergence wasserstein
-    np.testing.assert_allclose(
-        np.sum(res), m, atol=1e-04)
+        res.sum(0) <= q, [True] * len(q)
+    )  # cf convergence wasserstein
+    np.testing.assert_allclose(np.sum(res), m, atol=1e-04)

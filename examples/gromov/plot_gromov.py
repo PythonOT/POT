@@ -74,9 +74,9 @@ xt = np.random.randn(n_samples, 3).dot(P) + mu_t
 
 fig = pl.figure(1)
 ax1 = fig.add_subplot(121)
-ax1.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
-ax2 = fig.add_subplot(122, projection='3d')
-ax2.scatter(xt[:, 0], xt[:, 1], xt[:, 2], color='r')
+ax1.plot(xs[:, 0], xs[:, 1], "+b", label="Source samples")
+ax2 = fig.add_subplot(122, projection="3d")
+ax2.scatter(xt[:, 0], xt[:, 1], xt[:, 2], color="r")
 pl.show()
 
 #############################################################################
@@ -94,11 +94,11 @@ C2 /= C2.max()
 pl.figure(2)
 pl.subplot(121)
 pl.imshow(C1)
-pl.title('C1')
+pl.title("C1")
 
 pl.subplot(122)
 pl.imshow(C2)
-pl.title('C2')
+pl.title("C2")
 
 pl.show()
 
@@ -112,26 +112,36 @@ q = ot.unif(n_samples)
 
 # Conditional Gradient algorithm
 gw0, log0 = ot.gromov.gromov_wasserstein(
-    C1, C2, p, q, 'square_loss', verbose=True, log=True)
+    C1, C2, p, q, "square_loss", verbose=True, log=True
+)
 
 # Proximal Point algorithm with Kullback-Leibler as proximal operator
 gw, log = ot.gromov.entropic_gromov_wasserstein(
-    C1, C2, p, q, 'square_loss', epsilon=5e-4, solver='PPA',
-    log=True, verbose=True)
+    C1, C2, p, q, "square_loss", epsilon=5e-4, solver="PPA", log=True, verbose=True
+)
 
 # Projected Gradient algorithm with entropic regularization
 gwe, loge = ot.gromov.entropic_gromov_wasserstein(
-    C1, C2, p, q, 'square_loss', epsilon=5e-4, solver='PGD',
-    log=True, verbose=True)
+    C1, C2, p, q, "square_loss", epsilon=5e-4, solver="PGD", log=True, verbose=True
+)
 
-print('Gromov-Wasserstein distance estimated with Conditional Gradient solver: ' + str(log0['gw_dist']))
-print('Gromov-Wasserstein distance estimated with Proximal Point solver: ' + str(log['gw_dist']))
-print('Entropic Gromov-Wasserstein distance estimated with Projected Gradient solver: ' + str(loge['gw_dist']))
+print(
+    "Gromov-Wasserstein distance estimated with Conditional Gradient solver: "
+    + str(log0["gw_dist"])
+)
+print(
+    "Gromov-Wasserstein distance estimated with Proximal Point solver: "
+    + str(log["gw_dist"])
+)
+print(
+    "Entropic Gromov-Wasserstein distance estimated with Projected Gradient solver: "
+    + str(loge["gw_dist"])
+)
 
 # compute OT sparsity level
-gw0_sparsity = 100 * (gw0 == 0.).astype(np.float64).sum() / (n_samples ** 2)
-gw_sparsity = 100 * (gw == 0.).astype(np.float64).sum() / (n_samples ** 2)
-gwe_sparsity = 100 * (gwe == 0.).astype(np.float64).sum() / (n_samples ** 2)
+gw0_sparsity = 100 * (gw0 == 0.0).astype(np.float64).sum() / (n_samples**2)
+gw_sparsity = 100 * (gw == 0.0).astype(np.float64).sum() / (n_samples**2)
+gwe_sparsity = 100 * (gwe == 0.0).astype(np.float64).sum() / (n_samples**2)
 
 # Methods using Sinkhorn projections tend to produce feasibility errors on the
 # marginal constraints
@@ -141,25 +151,43 @@ err = np.linalg.norm(gw.sum(1) - p) + np.linalg.norm(gw.sum(0) - q)
 erre = np.linalg.norm(gwe.sum(1) - p) + np.linalg.norm(gwe.sum(0) - q)
 
 pl.figure(3, (10, 6))
-cmap = 'Blues'
+cmap = "Blues"
 fontsize = 12
 pl.subplot(131)
 pl.imshow(gw0, cmap=cmap)
-pl.title('(CG algo) GW=%s \n  \n OT sparsity=%s \n feasibility error=%s' % (
-    np.round(log0['gw_dist'], 4), str(np.round(gw0_sparsity, 2)) + ' %', np.round(np.round(err0, 4))),
-    fontsize=fontsize)
+pl.title(
+    "(CG algo) GW=%s \n  \n OT sparsity=%s \n feasibility error=%s"
+    % (
+        np.round(log0["gw_dist"], 4),
+        str(np.round(gw0_sparsity, 2)) + " %",
+        np.round(np.round(err0, 4)),
+    ),
+    fontsize=fontsize,
+)
 
 pl.subplot(132)
 pl.imshow(gw, cmap=cmap)
-pl.title('(PP algo) GW=%s \n  \n OT sparsity=%s \nfeasibility error=%s' % (
-    np.round(log['gw_dist'], 4), str(np.round(gw_sparsity, 2)) + ' %', np.round(err, 4)),
-    fontsize=fontsize)
+pl.title(
+    "(PP algo) GW=%s \n  \n OT sparsity=%s \nfeasibility error=%s"
+    % (
+        np.round(log["gw_dist"], 4),
+        str(np.round(gw_sparsity, 2)) + " %",
+        np.round(err, 4),
+    ),
+    fontsize=fontsize,
+)
 
 pl.subplot(133)
 pl.imshow(gwe, cmap=cmap)
-pl.title('Entropic GW=%s \n  \n OT sparsity=%s \nfeasibility error=%s' % (
-    np.round(loge['gw_dist'], 4), str(np.round(gwe_sparsity, 2)) + ' %', np.round(erre, 4)),
-    fontsize=fontsize)
+pl.title(
+    "Entropic GW=%s \n  \n OT sparsity=%s \nfeasibility error=%s"
+    % (
+        np.round(loge["gw_dist"], 4),
+        str(np.round(gwe_sparsity, 2)) + " %",
+        np.round(erre, 4),
+    ),
+    fontsize=fontsize,
+)
 
 pl.tight_layout()
 pl.show()
@@ -174,26 +202,30 @@ def loss(x, y):
     return np.abs(x - y)
 
 
-pgw, plog = ot.gromov.pointwise_gromov_wasserstein(C1, C2, p, q, loss, max_iter=100,
-                                                   log=True)
+pgw, plog = ot.gromov.pointwise_gromov_wasserstein(
+    C1, C2, p, q, loss, max_iter=100, log=True
+)
 
-sgw, slog = ot.gromov.sampled_gromov_wasserstein(C1, C2, p, q, loss, epsilon=0.1, max_iter=100,
-                                                 log=True)
+sgw, slog = ot.gromov.sampled_gromov_wasserstein(
+    C1, C2, p, q, loss, epsilon=0.1, max_iter=100, log=True
+)
 
-print('Pointwise Gromov-Wasserstein distance estimated: ' + str(plog['gw_dist_estimated']))
-print('Variance estimated: ' + str(plog['gw_dist_std']))
-print('Sampled Gromov-Wasserstein distance: ' + str(slog['gw_dist_estimated']))
-print('Variance estimated: ' + str(slog['gw_dist_std']))
+print(
+    "Pointwise Gromov-Wasserstein distance estimated: " + str(plog["gw_dist_estimated"])
+)
+print("Variance estimated: " + str(plog["gw_dist_std"]))
+print("Sampled Gromov-Wasserstein distance: " + str(slog["gw_dist_estimated"]))
+print("Variance estimated: " + str(slog["gw_dist_std"]))
 
 
 pl.figure(4, (10, 5))
 
 pl.subplot(121)
 pl.imshow(pgw.toarray(), cmap=cmap)
-pl.title('Pointwise Gromov Wasserstein')
+pl.title("Pointwise Gromov Wasserstein")
 
 pl.subplot(122)
 pl.imshow(sgw, cmap=cmap)
-pl.title('Sampled Gromov Wasserstein')
+pl.title("Sampled Gromov Wasserstein")
 
 pl.show()

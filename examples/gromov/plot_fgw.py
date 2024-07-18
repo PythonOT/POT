@@ -41,11 +41,15 @@ np.random.seed(0)
 
 phi = np.arange(n)[:, None]
 xs = phi + sig * np.random.randn(n, 1)
-ys = np.vstack((np.ones((n // 2, 1)), 0 * np.ones((n // 2, 1)))) + sig2 * np.random.randn(n, 1)
+ys = np.vstack(
+    (np.ones((n // 2, 1)), 0 * np.ones((n // 2, 1)))
+) + sig2 * np.random.randn(n, 1)
 
 phi2 = np.arange(n2)[:, None]
 xt = phi2 + sig * np.random.randn(n2, 1)
-yt = np.vstack((np.ones((n2 // 2, 1)), 0 * np.ones((n2 // 2, 1)))) + sig2 * np.random.randn(n2, 1)
+yt = np.vstack(
+    (np.ones((n2 // 2, 1)), 0 * np.ones((n2 // 2, 1)))
+) + sig2 * np.random.randn(n2, 1)
 yt = yt[::-1, :]
 
 p = ot.unif(n)
@@ -62,15 +66,15 @@ pl.figure(1, (7, 7))
 pl.subplot(2, 1, 1)
 
 pl.scatter(ys, xs, c=phi, s=70)
-pl.ylabel('Feature value a', fontsize=20)
-pl.title('$\mu=\sum_i \delta_{x_i,a_i}$', fontsize=25, y=1)
+pl.ylabel("Feature value a", fontsize=20)
+pl.title("$\mu=\sum_i \delta_{x_i,a_i}$", fontsize=25, y=1)
 pl.xticks(())
 pl.yticks(())
 pl.subplot(2, 1, 2)
 pl.scatter(yt, xt, c=phi2, s=70)
-pl.xlabel('coordinates x/y', fontsize=25)
-pl.ylabel('Feature value b', fontsize=20)
-pl.title('$\\nu=\sum_j \delta_{y_j,b_j}$', fontsize=25, y=1)
+pl.xlabel("coordinates x/y", fontsize=25)
+pl.ylabel("Feature value b", fontsize=20)
+pl.title("$\\nu=\sum_j \delta_{y_j,b_j}$", fontsize=25, y=1)
 pl.yticks(())
 pl.tight_layout()
 pl.show()
@@ -91,7 +95,7 @@ Got = ot.emd([], [], M)
 # Plot matrices
 # -------------
 
-cmap = 'Reds'
+cmap = "Reds"
 
 pl.figure(2, (5, 5))
 fs = 15
@@ -101,7 +105,7 @@ gs = pl.GridSpec(5, 5)
 
 ax1 = pl.subplot(gs[3:, :2])
 
-pl.imshow(C1, cmap=cmap, interpolation='nearest')
+pl.imshow(C1, cmap=cmap, interpolation="nearest")
 pl.title("$C_1$", fontsize=fs)
 pl.xlabel("$k$", fontsize=fs)
 pl.ylabel("$i$", fontsize=fs)
@@ -110,22 +114,22 @@ pl.yticks(l_x)
 
 ax2 = pl.subplot(gs[:3, 2:])
 
-pl.imshow(C2, cmap=cmap, interpolation='nearest')
+pl.imshow(C2, cmap=cmap, interpolation="nearest")
 pl.title("$C_2$", fontsize=fs)
 pl.ylabel("$l$", fontsize=fs)
 pl.xticks(())
 pl.yticks(l_y)
-ax2.set_aspect('auto')
+ax2.set_aspect("auto")
 
 ax3 = pl.subplot(gs[3:, 2:], sharex=ax2, sharey=ax1)
-pl.imshow(M, cmap=cmap, interpolation='nearest')
+pl.imshow(M, cmap=cmap, interpolation="nearest")
 pl.yticks(l_x)
 pl.xticks(l_y)
 pl.ylabel("$i$", fontsize=fs)
 pl.title("$M_{AB}$", fontsize=fs)
 pl.xlabel("$j$", fontsize=fs)
 pl.tight_layout()
-ax3.set_aspect('auto')
+ax3.set_aspect("auto")
 pl.show()
 
 ##############################################################################
@@ -136,35 +140,39 @@ pl.show()
 alpha = 1e-3
 
 ot.tic()
-Gwg, logw = fused_gromov_wasserstein(M, C1, C2, p, q, loss_fun='square_loss', alpha=alpha, verbose=True, log=True)
+Gwg, logw = fused_gromov_wasserstein(
+    M, C1, C2, p, q, loss_fun="square_loss", alpha=alpha, verbose=True, log=True
+)
 ot.toc()
 
 # reload_ext WGW
-Gg, log = gromov_wasserstein(C1, C2, p, q, loss_fun='square_loss', verbose=True, log=True)
+Gg, log = gromov_wasserstein(
+    C1, C2, p, q, loss_fun="square_loss", verbose=True, log=True
+)
 
 ##############################################################################
 # Visualize transport matrices
 # ----------------------------
 
 # visu OT matrix
-cmap = 'Blues'
+cmap = "Blues"
 fs = 15
 pl.figure(3, (13, 5))
 pl.clf()
 pl.subplot(1, 3, 1)
-pl.imshow(Got, cmap=cmap, interpolation='nearest')
+pl.imshow(Got, cmap=cmap, interpolation="nearest")
 pl.ylabel("$i$", fontsize=fs)
 pl.xticks(())
 
-pl.title('Wasserstein ($M$ only)')
+pl.title("Wasserstein ($M$ only)")
 
 pl.subplot(1, 3, 2)
-pl.imshow(Gg, cmap=cmap, interpolation='nearest')
-pl.title('Gromov ($C_1,C_2$ only)')
+pl.imshow(Gg, cmap=cmap, interpolation="nearest")
+pl.title("Gromov ($C_1,C_2$ only)")
 pl.xticks(())
 pl.subplot(1, 3, 3)
-pl.imshow(Gwg, cmap=cmap, interpolation='nearest')
-pl.title('FGW  ($M+C_1,C_2$)')
+pl.imshow(Gwg, cmap=cmap, interpolation="nearest")
+pl.title("FGW  ($M+C_1,C_2$)")
 
 pl.xlabel("$j$", fontsize=fs)
 pl.ylabel("$i$", fontsize=fs)

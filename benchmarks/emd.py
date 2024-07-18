@@ -3,11 +3,7 @@
 
 import numpy as np
 import ot
-from .benchmark import (
-    setup_backends,
-    exec_bench,
-    convert_to_html_table
-)
+from .benchmark import setup_backends, exec_bench, convert_to_html_table
 
 
 def setup(n_samples):
@@ -31,10 +27,12 @@ if __name__ == "__main__":
         tested_function=lambda a, M: ot.emd(a, a, M),
         param_list=param_list,
         n_runs=n_runs,
-        warmup_runs=warmup_runs
+        warmup_runs=warmup_runs,
     )
-    print(convert_to_html_table(
-        results,
-        param_name="Sample size",
-        main_title=f"EMD - Averaged on {n_runs} runs"
-    ))
+    print(
+        convert_to_html_table(
+            results,
+            param_name="Sample size",
+            main_title=f"EMD - Averaged on {n_runs} runs",
+        )
+    )

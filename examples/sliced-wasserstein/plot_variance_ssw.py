@@ -45,10 +45,10 @@ a, b = np.ones((n,)) / n, np.ones((n,)) / n  # uniform distribution on samples
 # %% plot samples
 
 fig = pl.figure(figsize=(10, 10))
-ax = pl.axes(projection='3d')
+ax = pl.axes(projection="3d")
 ax.grid(False)
 
-u, v = np.mgrid[0:2 * np.pi:30j, 0:np.pi:30j]
+u, v = np.mgrid[0 : 2 * np.pi : 30j, 0 : np.pi : 30j]
 x = np.cos(u) * np.sin(v)
 y = np.sin(u) * np.sin(v)
 z = np.cos(v)
@@ -60,9 +60,9 @@ ax.scatter(xt[:, 0], xt[:, 1], xt[:, 2], label="Target")
 
 fs = 10
 # Labels
-ax.set_xlabel('x', fontsize=fs)
-ax.set_ylabel('y', fontsize=fs)
-ax.set_zlabel('z', fontsize=fs)
+ax.set_xlabel("x", fontsize=fs)
+ax.set_ylabel("y", fontsize=fs)
+ax.set_zlabel("z", fontsize=fs)
 
 ax.view_init(20, 120)
 ax.set_xlim(-1.5, 1.5)
@@ -88,7 +88,9 @@ res = np.empty((n_seed, 10))
 # %% Compute statistics
 for seed in range(n_seed):
     for i, n_projections in enumerate(n_projections_arr):
-        res[seed, i] = ot.sliced_wasserstein_sphere(xs, xt, a, b, n_projections, seed=seed, p=1)
+        res[seed, i] = ot.sliced_wasserstein_sphere(
+            xs, xt, a, b, n_projections, seed=seed, p=1
+        )
 
 res_mean = np.mean(res, axis=0)
 res_std = np.std(res, axis=0)
@@ -99,13 +101,15 @@ res_std = np.std(res, axis=0)
 
 pl.figure(2)
 pl.plot(n_projections_arr, res_mean, label=r"$SSW_1$")
-pl.fill_between(n_projections_arr, res_mean - 2 * res_std, res_mean + 2 * res_std, alpha=0.5)
+pl.fill_between(
+    n_projections_arr, res_mean - 2 * res_std, res_mean + 2 * res_std, alpha=0.5
+)
 
 pl.legend()
-pl.xscale('log')
+pl.xscale("log")
 
 pl.xlabel("Number of projections")
 pl.ylabel("Distance")
-pl.title('Spherical Sliced Wasserstein Distance with 95% confidence interval')
+pl.title("Spherical Sliced Wasserstein Distance with 95% confidence interval")
 
 pl.show()

@@ -25,7 +25,7 @@ from ot.datasets import make_1D_gauss as gauss
 # -------------
 
 
-#%% parameters
+# %% parameters
 
 n = 100  # nb bins
 
@@ -37,7 +37,7 @@ a = gauss(n, m=20, s=5)  # m= mean, s= std
 b = gauss(n, m=60, s=10)
 
 # make distributions unbalanced
-b *= 5.
+b *= 5.0
 
 # loss matrix
 M = ot.dist(x.reshape((n, 1)), x.reshape((n, 1)))
@@ -48,17 +48,17 @@ M /= M.max()
 # Plot distributions and loss matrix
 # ----------------------------------
 
-#%% plot the distributions
+# %% plot the distributions
 
 pl.figure(1, figsize=(6.4, 3))
-pl.plot(x, a, 'b', label='Source distribution')
-pl.plot(x, b, 'r', label='Target distribution')
+pl.plot(x, a, "b", label="Source distribution")
+pl.plot(x, b, "r", label="Target distribution")
 pl.legend()
 
 # plot distributions and loss matrix
 
 pl.figure(2, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
+ot.plot.plot1D_mat(a, b, M, "Cost matrix M")
 
 
 ##############################################################################
@@ -68,11 +68,11 @@ ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
 # Sinkhorn
 
 epsilon = 0.1  # entropy parameter
-alpha = 1.  # Unbalanced KL relaxation parameter
+alpha = 1.0  # Unbalanced KL relaxation parameter
 Gs = ot.unbalanced.sinkhorn_unbalanced(a, b, M, epsilon, alpha, verbose=True)
 
 pl.figure(3, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, Gs, 'UOT matrix Sinkhorn')
+ot.plot.plot1D_mat(a, b, Gs, "UOT matrix Sinkhorn")
 
 pl.show()
 
@@ -82,9 +82,9 @@ pl.show()
 # -------------------------
 
 pl.figure(4, figsize=(6.4, 3))
-pl.plot(x, a, 'b', label='Source distribution')
-pl.plot(x, b, 'r', label='Target distribution')
-pl.fill(x, Gs.sum(1), 'b', alpha=0.5, label='Transported source')
-pl.fill(x, Gs.sum(0), 'r', alpha=0.5, label='Transported target')
-pl.legend(loc='upper right')
-pl.title('Distributions and transported mass for UOT')
+pl.plot(x, a, "b", label="Source distribution")
+pl.plot(x, b, "r", label="Target distribution")
+pl.fill(x, Gs.sum(1), "b", alpha=0.5, label="Transported source")
+pl.fill(x, Gs.sum(0), "r", alpha=0.5, label="Transported target")
+pl.legend(loc="upper right")
+pl.title("Distributions and transported mass for UOT")

@@ -1,26 +1,26 @@
-#Copyright (c) 2018, Mathieu Blondel
-#All rights reserved.
+# Copyright (c) 2018, Mathieu Blondel
+# All rights reserved.
 #
-#Redistribution and use in source and binary forms, with or without
-#modification, are permitted provided that the following conditions are met:
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
 #
-#1. Redistributions of source code must retain the above copyright notice, this
-#list of conditions and the following disclaimer.
+# 1. Redistributions of source code must retain the above copyright notice, this
+# list of conditions and the following disclaimer.
 #
-#2. Redistributions in binary form must reproduce the above copyright notice,
-#this list of conditions and the following disclaimer in the documentation and/or
-#other materials provided with the distribution.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation and/or
+# other materials provided with the distribution.
 #
-#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-#ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-#WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-#IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-#INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-#NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
-#OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-#LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-#OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-#THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+# OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+# THE POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Mathieu Blondel
 #         Remi Flamary <remi.flamary@unice.fr>
@@ -63,7 +63,7 @@ import ot
 
 
 def projection_simplex(V, z=1, axis=None):
-    r""" Projection of :math:`\mathbf{V}` onto the simplex, scaled by `z`
+    r"""Projection of :math:`\mathbf{V}` onto the simplex, scaled by `z`
 
     .. math::
         P\left(\mathbf{V}, z\right) = \mathop{\arg \min}_{\substack{\mathbf{y} >= 0 \\ \sum_i \mathbf{y}_i = z}} \quad \|\mathbf{y} - \mathbf{V}\|^2
@@ -104,10 +104,10 @@ def projection_simplex(V, z=1, axis=None):
 class Regularization(object):
     r"""Base class for Regularization objects
 
-        Notes
-        -----
-        This class is not intended for direct use but as apparent for true
-        regularization implementation.
+    Notes
+    -----
+    This class is not intended for direct use but as apparent for true
+    regularization implementation.
     """
 
     def __init__(self, gamma=1.0):
@@ -186,7 +186,7 @@ class Regularization(object):
 
 
 class NegEntropy(Regularization):
-    """ NegEntropy regularization """
+    """NegEntropy regularization"""
 
     def delta_Omega(self, X):
         G = np.exp(X / self.gamma - 1)
@@ -206,11 +206,11 @@ class NegEntropy(Regularization):
 
 
 class SquaredL2(Regularization):
-    """ Squared L2 regularization """
+    """Squared L2 regularization"""
 
     def delta_Omega(self, X):
         max_X = np.maximum(X, 0)
-        val = np.sum(max_X ** 2, axis=0) / (2 * self.gamma)
+        val = np.sum(max_X**2, axis=0) / (2 * self.gamma)
         G = max_X / self.gamma
         return val, G
 
@@ -221,11 +221,11 @@ class SquaredL2(Regularization):
         return val, G
 
     def Omega(self, T):
-        return 0.5 * self.gamma * np.sum(T ** 2)
+        return 0.5 * self.gamma * np.sum(T**2)
 
 
 class SparsityConstrained(Regularization):
-    """ Squared L2 regularization with sparsity constraints """
+    """Squared L2 regularization with sparsity constraints"""
 
     def __init__(self, max_nz, gamma=1.0):
         self.max_nz = max_nz
@@ -233,28 +233,28 @@ class SparsityConstrained(Regularization):
 
     def delta_Omega(self, X):
         # For each column of X, find entries that are not among the top max_nz.
-        non_top_indices = np.argpartition(
-            -X, self.max_nz, axis=0)[self.max_nz:]
+        non_top_indices = np.argpartition(-X, self.max_nz, axis=0)[self.max_nz :]
         # Set these entries to -inf.
         if X.ndim == 1:
             X[non_top_indices] = 0.0
         else:
             X[non_top_indices, np.arange(X.shape[1])] = 0.0
         max_X = np.maximum(X, 0)
-        val = np.sum(max_X ** 2, axis=0) / (2 * self.gamma)
+        val = np.sum(max_X**2, axis=0) / (2 * self.gamma)
         G = max_X / self.gamma
         return val, G
 
     def max_Omega(self, X, b):
         # Project the scaled X onto the simplex with sparsity constraint.
         G = ot.utils.projection_sparse_simplex(
-            X / (b * self.gamma), self.max_nz, axis=0)
+            X / (b * self.gamma), self.max_nz, axis=0
+        )
         val = np.sum(X * G, axis=0)
         val -= 0.5 * self.gamma * b * np.sum(G * G, axis=0)
         return val, G
 
     def Omega(self, T):
-        return 0.5 * self.gamma * np.sum(T ** 2)
+        return 0.5 * self.gamma * np.sum(T**2)
 
 
 def dual_obj_grad(alpha, beta, a, b, C, regul):
@@ -301,8 +301,9 @@ def dual_obj_grad(alpha, beta, a, b, C, regul):
     return obj, grad_alpha, grad_beta
 
 
-def solve_dual(a, b, C, regul, method="L-BFGS-B", tol=1e-3, max_iter=500,
-               verbose=False):
+def solve_dual(
+    a, b, C, regul, method="L-BFGS-B", tol=1e-3, max_iter=500, verbose=False
+):
     """
     Solve the "smoothed" dual objective.
 
@@ -331,8 +332,8 @@ def solve_dual(a, b, C, regul, method="L-BFGS-B", tol=1e-3, max_iter=500,
 
     def _func(params):
         # Unpack alpha and beta.
-        alpha = params[:len(a)]
-        beta = params[len(a):]
+        alpha = params[: len(a)]
+        beta = params[len(a) :]
 
         obj, grad_alpha, grad_beta = dual_obj_grad(alpha, beta, a, b, C, regul)
 
@@ -348,11 +349,17 @@ def solve_dual(a, b, C, regul, method="L-BFGS-B", tol=1e-3, max_iter=500,
     beta_init = np.zeros(len(b))
     params_init = np.concatenate((alpha_init, beta_init))
 
-    res = minimize(_func, params_init, method=method, jac=True,
-                   tol=tol, options=dict(maxiter=max_iter, disp=verbose))
+    res = minimize(
+        _func,
+        params_init,
+        method=method,
+        jac=True,
+        tol=tol,
+        options=dict(maxiter=max_iter, disp=verbose),
+    )
 
-    alpha = res.x[:len(a)]
-    beta = res.x[len(a):]
+    alpha = res.x[: len(a)]
+    beta = res.x[len(a) :]
 
     return alpha, beta, res
 
@@ -396,8 +403,9 @@ def semi_dual_obj_grad(alpha, a, b, C, regul):
     return obj, grad
 
 
-def solve_semi_dual(a, b, C, regul, method="L-BFGS-B", tol=1e-3, max_iter=500,
-                    verbose=False):
+def solve_semi_dual(
+    a, b, C, regul, method="L-BFGS-B", tol=1e-3, max_iter=500, verbose=False
+):
     """
     Solve the "smoothed" semi-dual objective.
 
@@ -430,8 +438,14 @@ def solve_semi_dual(a, b, C, regul, method="L-BFGS-B", tol=1e-3, max_iter=500,
 
     alpha_init = np.zeros(len(a))
 
-    res = minimize(_func, alpha_init, method=method, jac=True,
-                   tol=tol, options=dict(maxiter=max_iter, disp=verbose))
+    res = minimize(
+        _func,
+        alpha_init,
+        method=method,
+        jac=True,
+        tol=tol,
+        options=dict(maxiter=max_iter, disp=verbose),
+    )
 
     return res.x, res
 
@@ -483,9 +497,19 @@ def get_plan_from_semi_dual(alpha, b, C, regul):
     return regul.max_Omega(X, b)[1] * b
 
 
-def smooth_ot_dual(a, b, M, reg, reg_type='l2',
-                   method="L-BFGS-B", stopThr=1e-9,
-                   numItermax=500, verbose=False, log=False, max_nz=None):
+def smooth_ot_dual(
+    a,
+    b,
+    M,
+    reg,
+    reg_type="l2",
+    method="L-BFGS-B",
+    stopThr=1e-9,
+    numItermax=500,
+    verbose=False,
+    log=False,
+    max_nz=None,
+):
     r"""
     Solve the regularized OT problem in the dual and return the OT matrix
 
@@ -568,39 +592,53 @@ def smooth_ot_dual(a, b, M, reg, reg_type='l2',
 
     nx = get_backend(a, b, M)
 
-    if reg_type.lower() in ['l2', 'squaredl2']:
+    if reg_type.lower() in ["l2", "squaredl2"]:
         regul = SquaredL2(gamma=reg)
-    elif reg_type.lower() in ['entropic', 'negentropy', 'kl']:
+    elif reg_type.lower() in ["entropic", "negentropy", "kl"]:
         regul = NegEntropy(gamma=reg)
-    elif reg_type.lower() in ['sparsity_constrained', 'sparsity-constrained']:
+    elif reg_type.lower() in ["sparsity_constrained", "sparsity-constrained"]:
         if not isinstance(max_nz, int):
-            raise ValueError(
-                f'max_nz {max_nz} must be an integer')
+            raise ValueError(f"max_nz {max_nz} must be an integer")
         regul = SparsityConstrained(gamma=reg, max_nz=max_nz)
     else:
-        raise NotImplementedError('Unknown regularization')
+        raise NotImplementedError("Unknown regularization")
 
     a0, b0, M0 = a, b, M
     # convert to humpy
     a, b, M = nx.to_numpy(a, b, M)
 
     # solve dual
-    alpha, beta, res = solve_dual(a, b, M, regul, max_iter=numItermax,
-                                  tol=stopThr, verbose=verbose)
+    alpha, beta, res = solve_dual(
+        a, b, M, regul, max_iter=numItermax, tol=stopThr, verbose=verbose
+    )
 
     # reconstruct transport matrix
     G = nx.from_numpy(get_plan_from_dual(alpha, beta, M, regul), type_as=M0)
 
     if log:
-        log = {'alpha': nx.from_numpy(alpha, type_as=a0), 'beta': nx.from_numpy(beta, type_as=b0), 'res': res}
+        log = {
+            "alpha": nx.from_numpy(alpha, type_as=a0),
+            "beta": nx.from_numpy(beta, type_as=b0),
+            "res": res,
+        }
         return G, log
     else:
         return G
 
 
-def smooth_ot_semi_dual(a, b, M, reg, reg_type='l2', max_nz=None,
-                        method="L-BFGS-B", stopThr=1e-9,
-                        numItermax=500, verbose=False, log=False):
+def smooth_ot_semi_dual(
+    a,
+    b,
+    M,
+    reg,
+    reg_type="l2",
+    max_nz=None,
+    method="L-BFGS-B",
+    stopThr=1e-9,
+    numItermax=500,
+    verbose=False,
+    log=False,
+):
     r"""
     Solve the regularized OT problem in the semi-dual and return the OT matrix
 
@@ -682,27 +720,27 @@ def smooth_ot_semi_dual(a, b, M, reg, reg_type='l2', max_nz=None,
     ot.optim.cg : General regularized OT
 
     """
-    if reg_type.lower() in ['l2', 'squaredl2']:
+    if reg_type.lower() in ["l2", "squaredl2"]:
         regul = SquaredL2(gamma=reg)
-    elif reg_type.lower() in ['entropic', 'negentropy', 'kl']:
+    elif reg_type.lower() in ["entropic", "negentropy", "kl"]:
         regul = NegEntropy(gamma=reg)
-    elif reg_type.lower() in ['sparsity_constrained', 'sparsity-constrained']:
+    elif reg_type.lower() in ["sparsity_constrained", "sparsity-constrained"]:
         if not isinstance(max_nz, int):
-            raise ValueError(
-                f'max_nz {max_nz} must be an integer')
+            raise ValueError(f"max_nz {max_nz} must be an integer")
         regul = SparsityConstrained(gamma=reg, max_nz=max_nz)
     else:
-        raise NotImplementedError('Unknown regularization')
+        raise NotImplementedError("Unknown regularization")
 
     # solve dual
-    alpha, res = solve_semi_dual(a, b, M, regul, max_iter=numItermax,
-                                 tol=stopThr, verbose=verbose)
+    alpha, res = solve_semi_dual(
+        a, b, M, regul, max_iter=numItermax, tol=stopThr, verbose=verbose
+    )
 
     # reconstruct transport matrix
     G = get_plan_from_semi_dual(alpha, b, M, regul)
 
     if log:
-        log = {'alpha': alpha, 'res': res}
+        log = {"alpha": alpha, "res": res}
         return G, log
     else:
         return G

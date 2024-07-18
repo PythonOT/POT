@@ -10,10 +10,12 @@ from .backend import get_backend
 from .optim import cg
 import numpy as np
 
-__all__ = ['weak_optimal_transport']
+__all__ = ["weak_optimal_transport"]
 
 
-def weak_optimal_transport(Xa, Xb, a=None, b=None, verbose=False, log=False, G0=None, **kwargs):
+def weak_optimal_transport(
+    Xa, Xb, a=None, b=None, verbose=False, log=False, G0=None, **kwargs
+):
     r"""Solves the weak optimal transport problem between two empirical distributions
 
 
@@ -110,7 +112,7 @@ def weak_optimal_transport(Xa, Xb, a=None, b=None, verbose=False, log=False, G0=
 
     # weak OT loss
     def f(T):
-        return np.dot(a2, np.sum((Xa2 - np.dot(T, Xb2) / a2[:, None])**2, 1))
+        return np.dot(a2, np.sum((Xa2 - np.dot(T, Xb2) / a2[:, None]) ** 2, 1))
 
     # weak OT gradient
     def df(T):
@@ -119,8 +121,10 @@ def weak_optimal_transport(Xa, Xb, a=None, b=None, verbose=False, log=False, G0=
     # solve with conditional gradient and return solution
     if log:
         res, log = cg(a2, b2, 0, 1, f, df, T0, log=log, verbose=verbose, **kwargs)
-        log['u'] = nx.from_numpy(log['u'], type_as=Xa)
-        log['v'] = nx.from_numpy(log['v'], type_as=Xb)
+        log["u"] = nx.from_numpy(log["u"], type_as=Xa)
+        log["v"] = nx.from_numpy(log["v"], type_as=Xb)
         return nx.from_numpy(res, type_as=Xa), log
     else:
-        return nx.from_numpy(cg(a2, b2, 0, 1, f, df, T0, log=log, verbose=verbose, **kwargs), type_as=Xa)
+        return nx.from_numpy(
+            cg(a2, b2, 0, 1, f, df, T0, log=log, verbose=verbose, **kwargs), type_as=Xa
+        )

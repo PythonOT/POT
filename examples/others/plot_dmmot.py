@@ -32,11 +32,11 @@ a1 = ot.datasets.make_1D_gauss(n, m=20, s=5)  # m=mean, s=std
 a2 = ot.datasets.make_1D_gauss(n, m=60, s=8)
 A = np.vstack((a1, a2)).T
 x = np.arange(n, dtype=np.float64)
-M = ot.utils.dist(x.reshape((n, 1)), metric='minkowski')
+M = ot.utils.dist(x.reshape((n, 1)), metric="minkowski")
 
 pl.figure(1, figsize=(6.4, 3))
-pl.plot(x, a1, 'b', label='Source distribution')
-pl.plot(x, a2, 'r', label='Target distribution')
+pl.plot(x, a1, "b", label="Source distribution")
+pl.plot(x, a2, "r", label="Target distribution")
 pl.legend()
 
 # %%
@@ -49,21 +49,23 @@ pl.legend()
 weights = np.ones(d) / d
 l2_bary = A.dot(weights)
 
-print('LP Iterations:')
+print("LP Iterations:")
 weights = np.ones(d) / d
 lp_bary, lp_log = ot.lp.barycenter(
-    A, M, weights, solver='interior-point', verbose=False, log=True)
-print('Time\t: ', ot.toc(''))
-print('Obj\t: ', lp_log['fun'])
+    A, M, weights, solver="interior-point", verbose=False, log=True
+)
+print("Time\t: ", ot.toc(""))
+print("Obj\t: ", lp_log["fun"])
 
-print('')
-print('Discrete MMOT Algorithm:')
+print("")
+print("Discrete MMOT Algorithm:")
 ot.tic()
 barys, log = ot.lp.dmmot_monge_1dgrid_optimize(
-    A, niters=4000, lr_init=1e-5, lr_decay=0.997, log=True)
-dmmot_obj = log['primal objective']
-print('Time\t: ', ot.toc(''))
-print('Obj\t: ', dmmot_obj)
+    A, niters=4000, lr_init=1e-5, lr_decay=0.997, log=True
+)
+dmmot_obj = log["primal objective"]
+print("Time\t: ", ot.toc(""))
+print("Obj\t: ", dmmot_obj)
 
 # %%
 # Compare Barycenters in both methods
@@ -71,15 +73,15 @@ print('Obj\t: ', dmmot_obj)
 pl.figure(1, figsize=(6.4, 3))
 for i in range(len(barys)):
     if i == 0:
-        pl.plot(x, barys[i], 'g-*', label='Discrete MMOT')
+        pl.plot(x, barys[i], "g-*", label="Discrete MMOT")
     else:
         continue
         # pl.plot(x, barys[i], 'g-*')
-pl.plot(x, lp_bary, label='LP Barycenter')
-pl.plot(x, l2_bary, label='L2 Barycenter')
-pl.plot(x, a1, 'b', label='Source distribution')
-pl.plot(x, a2, 'r', label='Target distribution')
-pl.title('Monge Cost: Barycenters from LP Solver and dmmot solver')
+pl.plot(x, lp_bary, label="LP Barycenter")
+pl.plot(x, l2_bary, label="L2 Barycenter")
+pl.plot(x, a1, "b", label="Source distribution")
+pl.plot(x, a2, "r", label="Target distribution")
+pl.title("Monge Cost: Barycenters from LP Solver and dmmot solver")
 pl.legend()
 
 
@@ -98,14 +100,14 @@ for i in range(d):
     data.append(a)
 
 x = np.arange(n, dtype=np.float64)
-M = ot.utils.dist(x.reshape((n, 1)), metric='minkowski')
+M = ot.utils.dist(x.reshape((n, 1)), metric="minkowski")
 A = np.vstack(data).T
 
 pl.figure(1, figsize=(6.4, 3))
 for i in range(len(data)):
     pl.plot(x, data[i])
 
-pl.title('Distributions')
+pl.title("Distributions")
 pl.legend()
 
 # %%
@@ -115,8 +117,7 @@ pl.legend()
 # values cannot be compared.
 
 # Perform gradient descent optimization using the d-MMOT method.
-barys = ot.lp.dmmot_monge_1dgrid_optimize(
-    A, niters=3000, lr_init=1e-4, lr_decay=0.997)
+barys = ot.lp.dmmot_monge_1dgrid_optimize(A, niters=3000, lr_init=1e-4, lr_decay=0.997)
 
 # after minimization, any distribution can be used as a estimate of barycenter.
 bary = barys[0]
@@ -124,17 +125,18 @@ bary = barys[0]
 # Compute 1D Wasserstein barycenter using the L2/LP method
 weights = ot.unif(d)
 l2_bary = A.dot(weights)
-lp_bary, bary_log = ot.lp.barycenter(A, M, weights, solver='interior-point',
-                                     verbose=False, log=True)
+lp_bary, bary_log = ot.lp.barycenter(
+    A, M, weights, solver="interior-point", verbose=False, log=True
+)
 
 # %%
 # Compare Barycenters in both methods
 # ---------
 pl.figure(1, figsize=(6.4, 3))
-pl.plot(x, bary, 'g-*', label='Discrete MMOT')
-pl.plot(x, l2_bary, 'k', label='L2 Barycenter')
-pl.plot(x, lp_bary, 'k-', label='LP Wasserstein')
-pl.title('Barycenters')
+pl.plot(x, bary, "g-*", label="Discrete MMOT")
+pl.plot(x, l2_bary, "k", label="L2 Barycenter")
+pl.plot(x, lp_bary, "k-", label="LP Wasserstein")
+pl.title("Barycenters")
 pl.legend()
 
 # %%
@@ -145,13 +147,13 @@ for i in range(len(data)):
     pl.plot(x, data[i])
 for i in range(len(barys)):
     if i == 0:
-        pl.plot(x, barys[i], 'g-*', label='Discrete MMOT')
+        pl.plot(x, barys[i], "g-*", label="Discrete MMOT")
     else:
         continue
         # pl.plot(x, barys[i], 'g')
-pl.plot(x, l2_bary, 'k^', label='L2')
-pl.plot(x, lp_bary, 'o', color='grey', label='LP')
-pl.title('Barycenters')
+pl.plot(x, l2_bary, "k^", label="L2")
+pl.plot(x, lp_bary, "o", color="grey", label="LP")
+pl.title("Barycenters")
 pl.legend()
 pl.show()
 

@@ -1,4 +1,4 @@
-"""Tests for module COOT on OT """
+"""Tests for module COOT on OT"""
 
 # Author: Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
@@ -18,8 +18,7 @@ def test_coot(nx, verbose):
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=4)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
     xt = xs[::-1].copy()
     xs_nx = nx.from_numpy(xs)
     xt_nx = nx.from_numpy(xt)
@@ -66,8 +65,7 @@ def test_entropic_coot(nx):
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=4)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
     xt = xs[::-1].copy()
     xs_nx = nx.from_numpy(xs)
     xt_nx = nx.from_numpy(xt)
@@ -78,7 +76,8 @@ def test_entropic_coot(nx):
     # test couplings
     pi_sample, pi_feature = coot(X=xs, Y=xt, epsilon=epsilon, nits_ot=nits_ot)
     pi_sample_nx, pi_feature_nx = coot(
-        X=xs_nx, Y=xt_nx, epsilon=epsilon, nits_ot=nits_ot)
+        X=xs_nx, Y=xt_nx, epsilon=epsilon, nits_ot=nits_ot
+    )
     pi_sample_nx = nx.to_numpy(pi_sample_nx)
     pi_feature_nx = nx.to_numpy(pi_feature_nx)
 
@@ -102,8 +101,7 @@ def test_entropic_coot(nx):
     # test entropic COOT distance
 
     coot_np = coot2(X=xs, Y=xt, epsilon=epsilon, nits_ot=nits_ot)
-    coot_nx = nx.to_numpy(
-        coot2(X=xs_nx, Y=xt_nx, epsilon=epsilon, nits_ot=nits_ot))
+    coot_nx = nx.to_numpy(coot2(X=xs_nx, Y=xt_nx, epsilon=epsilon, nits_ot=nits_ot))
 
     np.testing.assert_allclose(coot_np, coot_nx, atol=1e-08)
 
@@ -114,8 +112,7 @@ def test_coot_with_linear_terms(nx):
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=4)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
     xt = xs[::-1].copy()
     xs_nx = nx.from_numpy(xs)
     xt_nx = nx.from_numpy(xt)
@@ -132,10 +129,10 @@ def test_coot_with_linear_terms(nx):
     anti_id_sample = np.flipud(np.eye(n_samples, n_samples)) / n_samples
     id_feature = np.eye(2, 2) / 2
 
-    pi_sample, pi_feature = coot(
-        X=xs, Y=xt, alpha=alpha, M_samp=M_samp, M_feat=M_feat)
+    pi_sample, pi_feature = coot(X=xs, Y=xt, alpha=alpha, M_samp=M_samp, M_feat=M_feat)
     pi_sample_nx, pi_feature_nx = coot(
-        X=xs_nx, Y=xt_nx, alpha=alpha, M_samp=M_samp_nx, M_feat=M_feat_nx)
+        X=xs_nx, Y=xt_nx, alpha=alpha, M_samp=M_samp_nx, M_feat=M_feat_nx
+    )
     pi_sample_nx = nx.to_numpy(pi_sample_nx)
     pi_feature_nx = nx.to_numpy(pi_feature_nx)
 
@@ -162,7 +159,8 @@ def test_coot_with_linear_terms(nx):
 
     coot_np = coot2(X=xs, Y=xt, alpha=alpha, M_samp=M_samp, M_feat=M_feat)
     coot_nx = nx.to_numpy(
-        coot2(X=xs_nx, Y=xt_nx, alpha=alpha, M_samp=M_samp_nx, M_feat=M_feat_nx))
+        coot2(X=xs_nx, Y=xt_nx, alpha=alpha, M_samp=M_samp_nx, M_feat=M_feat_nx)
+    )
     np.testing.assert_allclose(coot_np, 0, atol=1e-08)
     np.testing.assert_allclose(coot_nx, 0, atol=1e-08)
 
@@ -173,8 +171,7 @@ def test_coot_raise_value_error(nx):
     mu_s = np.array([2, 4])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=43)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=43)
     xt = xs[::-1].copy()
     xs_nx = nx.from_numpy(xs)
     xt_nx = nx.from_numpy(xt)
@@ -216,8 +213,7 @@ def test_coot_warmstart(nx):
     mu_s = np.array([2, 3])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=125)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=125)
     xt = xs[::-1].copy()
     xs_nx = nx.from_numpy(xs)
     xt_nx = nx.from_numpy(xt)
@@ -232,34 +228,35 @@ def test_coot_warmstart(nx):
     init_pi_feature /= init_pi_feature / np.sum(init_pi_feature)
     init_pi_feature_nx = nx.from_numpy(init_pi_feature)
 
-    init_duals_sample = (rng.random(n_samples) * 2 - 1,
-                         rng.random(n_samples) * 2 - 1)
-    init_duals_sample_nx = (nx.from_numpy(init_duals_sample[0]),
-                            nx.from_numpy(init_duals_sample[1]))
+    init_duals_sample = (rng.random(n_samples) * 2 - 1, rng.random(n_samples) * 2 - 1)
+    init_duals_sample_nx = (
+        nx.from_numpy(init_duals_sample[0]),
+        nx.from_numpy(init_duals_sample[1]),
+    )
 
-    init_duals_feature = (rng.random(2) * 2 - 1,
-                          rng.random(2) * 2 - 1)
-    init_duals_feature_nx = (nx.from_numpy(init_duals_feature[0]),
-                             nx.from_numpy(init_duals_feature[1]))
+    init_duals_feature = (rng.random(2) * 2 - 1, rng.random(2) * 2 - 1)
+    init_duals_feature_nx = (
+        nx.from_numpy(init_duals_feature[0]),
+        nx.from_numpy(init_duals_feature[1]),
+    )
 
     warmstart = {
         "pi_sample": init_pi_sample,
         "pi_feature": init_pi_feature,
         "duals_sample": init_duals_sample,
-        "duals_feature": init_duals_feature
+        "duals_feature": init_duals_feature,
     }
 
     warmstart_nx = {
         "pi_sample": init_pi_sample_nx,
         "pi_feature": init_pi_feature_nx,
         "duals_sample": init_duals_sample_nx,
-        "duals_feature": init_duals_feature_nx
+        "duals_feature": init_duals_feature_nx,
     }
 
     # test couplings
     pi_sample, pi_feature = coot(X=xs, Y=xt, warmstart=warmstart)
-    pi_sample_nx, pi_feature_nx = coot(
-        X=xs_nx, Y=xt_nx, warmstart=warmstart_nx)
+    pi_sample_nx, pi_feature_nx = coot(X=xs_nx, Y=xt_nx, warmstart=warmstart_nx)
     pi_sample_nx = nx.to_numpy(pi_sample_nx)
     pi_feature_nx = nx.to_numpy(pi_feature_nx)
 
@@ -298,8 +295,7 @@ def test_coot_log(nx):
     mu_s = np.array([-2, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=43)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=43)
     xt = xs[::-1].copy()
     xs_nx = nx.from_numpy(xs)
     xt_nx = nx.from_numpy(xt)

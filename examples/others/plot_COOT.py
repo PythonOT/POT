@@ -36,14 +36,14 @@ d2 = 8
 sigma = 0.2
 
 X1 = (
-    np.cos(np.arange(n1) * np.pi / n1)[:, None] +
-    np.cos(np.arange(d1) * np.pi / d1)[None, :] +
-    sigma * np.random.randn(n1, d1)
+    np.cos(np.arange(n1) * np.pi / n1)[:, None]
+    + np.cos(np.arange(d1) * np.pi / d1)[None, :]
+    + sigma * np.random.randn(n1, d1)
 )
 X2 = (
-    np.cos(np.arange(n2) * np.pi / n2)[:, None] +
-    np.cos(np.arange(d2) * np.pi / d2)[None, :] +
-    sigma * np.random.randn(n2, d2)
+    np.cos(np.arange(n2) * np.pi / n2)[:, None]
+    + np.cos(np.arange(d2) * np.pi / d2)[None, :]
+    + sigma * np.random.randn(n2, d2)
 )
 
 # %%
@@ -52,7 +52,7 @@ X2 = (
 pl.figure(1, (8, 5))
 pl.subplot(1, 2, 1)
 pl.imshow(X1)
-pl.title('$X_1$')
+pl.title("$X_1$")
 
 pl.subplot(1, 2, 2)
 pl.imshow(X2)
@@ -65,14 +65,14 @@ pl.tight_layout()
 
 pi_sample, pi_feature, log = coot(X1, X2, log=True, verbose=True)
 coot_distance = coot2(X1, X2)
-print('CO-Optimal Transport distance = {:.5f}'.format(coot_distance))
+print("CO-Optimal Transport distance = {:.5f}".format(coot_distance))
 
 fig = pl.figure(4, (9, 7))
 pl.clf()
 
 ax1 = pl.subplot(2, 2, 3)
 pl.imshow(X1)
-pl.xlabel('$X_1$')
+pl.xlabel("$X_1$")
 
 ax2 = pl.subplot(2, 2, 2)
 ax2.yaxis.tick_right()
@@ -82,16 +82,18 @@ ax2.xaxis.tick_top()
 
 for i in range(n1):
     j = np.argmax(pi_sample[i, :])
-    xyA = (d1 - .5, i)
-    xyB = (j, d2 - .5)
-    con = ConnectionPatch(xyA=xyA, xyB=xyB, coordsA=ax1.transData,
-                          coordsB=ax2.transData, color="black")
+    xyA = (d1 - 0.5, i)
+    xyB = (j, d2 - 0.5)
+    con = ConnectionPatch(
+        xyA=xyA, xyB=xyB, coordsA=ax1.transData, coordsB=ax2.transData, color="black"
+    )
     fig.add_artist(con)
 
 for i in range(d1):
     j = np.argmax(pi_feature[i, :])
-    xyA = (i, -.5)
-    xyB = (-.5, j)
+    xyA = (i, -0.5)
+    xyB = (-0.5, j)
     con = ConnectionPatch(
-        xyA=xyA, xyB=xyB, coordsA=ax1.transData, coordsB=ax2.transData, color="blue")
+        xyA=xyA, xyB=xyB, coordsA=ax1.transData, coordsB=ax2.transData, color="blue"
+    )
     fig.add_artist(con)

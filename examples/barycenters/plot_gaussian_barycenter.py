@@ -45,7 +45,6 @@ m = np.stack((m1, m2, m3, m4))
 
 
 def draw_cov(mu, C, color=None, label=None, nstd=1):
-
     def eigsorted(cov):
         vals, vecs = np.linalg.eigh(cov)
         order = vals.argsort()[::-1]
@@ -54,11 +53,19 @@ def draw_cov(mu, C, color=None, label=None, nstd=1):
     vals, vecs = eigsorted(C)
     theta = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
     w, h = 2 * nstd * np.sqrt(vals)
-    ell = Ellipse(xy=(mu[0], mu[1]),
-                  width=w, height=h, alpha=0.5,
-                  angle=theta, facecolor=color, edgecolor=color, label=label, fill=True)
+    ell = Ellipse(
+        xy=(mu[0], mu[1]),
+        width=w,
+        height=h,
+        alpha=0.5,
+        angle=theta,
+        facecolor=color,
+        edgecolor=color,
+        label=label,
+        fill=True,
+    )
     pl.gca().add_artist(ell)
-    #pl.scatter(mu[0],mu[1],color=color, marker='x')
+    # pl.scatter(mu[0],mu[1],color=color, marker='x')
 
 
 axis = [-1.5, 5.5, -1.5, 5.5]
@@ -67,24 +74,24 @@ pl.figure(1, (8, 2))
 pl.clf()
 
 pl.subplot(1, 4, 1)
-draw_cov(m1, C1, color='C0')
+draw_cov(m1, C1, color="C0")
 pl.axis(axis)
-pl.title('$\mathcal{N}(m_1,\Sigma_1)$')
+pl.title("$\mathcal{N}(m_1,\Sigma_1)$")
 
 pl.subplot(1, 4, 2)
-draw_cov(m2, C2, color='C1')
+draw_cov(m2, C2, color="C1")
 pl.axis(axis)
-pl.title('$\mathcal{N}(m_2,\Sigma_2)$')
+pl.title("$\mathcal{N}(m_2,\Sigma_2)$")
 
 pl.subplot(1, 4, 3)
-draw_cov(m3, C3, color='C2')
+draw_cov(m3, C3, color="C2")
 pl.axis(axis)
-pl.title('$\mathcal{N}(m_3,\Sigma_3)$')
+pl.title("$\mathcal{N}(m_3,\Sigma_3)$")
 
 pl.subplot(1, 4, 4)
-draw_cov(m4, C4, color='C3')
+draw_cov(m4, C4, color="C3")
 pl.axis(axis)
-pl.title('$\mathcal{N}(m_4,\Sigma_4)$')
+pl.title("$\mathcal{N}(m_4,\Sigma_4)$")
 
 # %%
 # Compute Bures-Wasserstein barycenters and plot them
@@ -97,10 +104,9 @@ v3 = np.array((0, 0, 1, 0))
 v4 = np.array((0, 0, 0, 1))
 
 
-colors = np.stack((colors.to_rgb('C0'),
-                   colors.to_rgb('C1'),
-                   colors.to_rgb('C2'),
-                   colors.to_rgb('C3')))
+colors = np.stack(
+    (colors.to_rgb("C0"), colors.to_rgb("C1"), colors.to_rgb("C2"), colors.to_rgb("C3"))
+)
 
 pl.figure(2, (8, 8))
 
@@ -123,5 +129,5 @@ for i in range(nb_interp):
         draw_cov(mb, Cb, color=color, label=None, nstd=0.3)
 
 pl.axis(axis)
-pl.axis('off')
+pl.axis("off")
 pl.tight_layout()

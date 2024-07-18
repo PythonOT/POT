@@ -24,8 +24,21 @@ from ._utils import init_matrix, gwloss, gwggrad
 from ._utils import update_square_loss, update_kl_loss, update_feature_matrix
 
 
-def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric=None, log=False, armijo=False, G0=None,
-                       max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
+def gromov_wasserstein(
+    C1,
+    C2,
+    p=None,
+    q=None,
+    loss_fun="square_loss",
+    symmetric=None,
+    log=False,
+    armijo=False,
+    G0=None,
+    max_iter=1e4,
+    tol_rel=1e-9,
+    tol_abs=1e-9,
+    **kwargs,
+):
     r"""
     Returns the Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`.
 
@@ -140,7 +153,9 @@ def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric
     C1 = nx.to_numpy(C10)
     C2 = nx.to_numpy(C20)
     if symmetric is None:
-        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
+        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(
+            C2, C2.T, atol=1e-10
+        )
 
     if G0 is None:
         G0 = p[:, None] * q[None, :]
@@ -158,20 +173,36 @@ def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric
         return gwloss(constC, hC1, hC2, G, np_)
 
     if symmetric:
+
         def df(G):
             return gwggrad(constC, hC1, hC2, G, np_)
     else:
         constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun, np_)
 
         def df(G):
-            return 0.5 * (gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_))
+            return 0.5 * (
+                gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_)
+            )
 
     if armijo:
+
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
             return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=np_, **kwargs)
     else:
+
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, cost_G, hC1, hC2, M=0., reg=1., nx=np_, symmetric=symmetric, **kwargs)
+            return solve_gromov_linesearch(
+                G,
+                deltaG,
+                cost_G,
+                hC1,
+                hC2,
+                M=0.0,
+                reg=1.0,
+                nx=np_,
+                symmetric=symmetric,
+                **kwargs,
+            )
 
     if not nx.is_floating_point(C10):
         warnings.warn(
@@ -179,21 +210,65 @@ def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric
             "casted accordingly, possibly resulting in a loss of precision. "
             "If this behaviour is unwanted, please make sure your input "
             "structure matrix consists of floating point elements.",
-            stacklevel=2
+            stacklevel=2,
         )
 
     if log:
-        res, log = cg(p, q, 0., 1., f, df, G0, line_search, log=True, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
-        log['gw_dist'] = nx.from_numpy(log['loss'][-1], type_as=C10)
-        log['u'] = nx.from_numpy(log['u'], type_as=C10)
-        log['v'] = nx.from_numpy(log['v'], type_as=C10)
+        res, log = cg(
+            p,
+            q,
+            0.0,
+            1.0,
+            f,
+            df,
+            G0,
+            line_search,
+            log=True,
+            numItermax=max_iter,
+            stopThr=tol_rel,
+            stopThr2=tol_abs,
+            **kwargs,
+        )
+        log["gw_dist"] = nx.from_numpy(log["loss"][-1], type_as=C10)
+        log["u"] = nx.from_numpy(log["u"], type_as=C10)
+        log["v"] = nx.from_numpy(log["v"], type_as=C10)
         return nx.from_numpy(res, type_as=C10), log
     else:
-        return nx.from_numpy(cg(p, q, 0., 1., f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs), type_as=C10)
+        return nx.from_numpy(
+            cg(
+                p,
+                q,
+                0.0,
+                1.0,
+                f,
+                df,
+                G0,
+                line_search,
+                log=False,
+                numItermax=max_iter,
+                stopThr=tol_rel,
+                stopThr2=tol_abs,
+                **kwargs,
+            ),
+            type_as=C10,
+        )
 
 
-def gromov_wasserstein2(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric=None, log=False, armijo=False, G0=None,
-                        max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
+def gromov_wasserstein2(
+    C1,
+    C2,
+    p=None,
+    q=None,
+    loss_fun="square_loss",
+    symmetric=None,
+    log=False,
+    armijo=False,
+    G0=None,
+    max_iter=1e4,
+    tol_rel=1e-9,
+    tol_abs=1e-9,
+    **kwargs,
+):
     r"""
     Returns the Gromov-Wasserstein loss :math:`\mathbf{GW}` between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`.
     To recover the Gromov-Wasserstein distance as defined in [13] compute :math:`d_{GW} = \frac{1}{2} \sqrt{\mathbf{GW}}`.
@@ -304,22 +379,43 @@ def gromov_wasserstein2(C1, C2, p=None, q=None, loss_fun='square_loss', symmetri
         q = unif(C2.shape[0], type_as=C1)
 
     T, log_gw = gromov_wasserstein(
-        C1, C2, p, q, loss_fun, symmetric, log=True, armijo=armijo, G0=G0,
-        max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs, **kwargs)
+        C1,
+        C2,
+        p,
+        q,
+        loss_fun,
+        symmetric,
+        log=True,
+        armijo=armijo,
+        G0=G0,
+        max_iter=max_iter,
+        tol_rel=tol_rel,
+        tol_abs=tol_abs,
+        **kwargs,
+    )
 
-    log_gw['T'] = T
-    gw = log_gw['gw_dist']
+    log_gw["T"] = T
+    gw = log_gw["gw_dist"]
 
-    if loss_fun == 'square_loss':
+    if loss_fun == "square_loss":
         gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
         gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
-    elif loss_fun == 'kl_loss':
-        gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(T, nx.dot(nx.log(C2 + 1e-15), T.T))
-        gC2 = - nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
+    elif loss_fun == "kl_loss":
+        gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(
+            T, nx.dot(nx.log(C2 + 1e-15), T.T)
+        )
+        gC2 = -nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
 
-    gw = nx.set_gradients(gw, (p, q, C1, C2),
-                          (log_gw['u'] - nx.mean(log_gw['u']),
-                           log_gw['v'] - nx.mean(log_gw['v']), gC1, gC2))
+    gw = nx.set_gradients(
+        gw,
+        (p, q, C1, C2),
+        (
+            log_gw["u"] - nx.mean(log_gw["u"]),
+            log_gw["v"] - nx.mean(log_gw["v"]),
+            gC1,
+            gC2,
+        ),
+    )
 
     if log:
         return gw, log_gw
@@ -327,8 +423,23 @@ def gromov_wasserstein2(C1, C2, p=None, q=None, loss_fun='square_loss', symmetri
         return gw
 
 
-def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', symmetric=None, alpha=0.5,
-                             armijo=False, G0=None, log=False, max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
+def fused_gromov_wasserstein(
+    M,
+    C1,
+    C2,
+    p=None,
+    q=None,
+    loss_fun="square_loss",
+    symmetric=None,
+    alpha=0.5,
+    armijo=False,
+    G0=None,
+    log=False,
+    max_iter=1e4,
+    tol_rel=1e-9,
+    tol_abs=1e-9,
+    **kwargs,
+):
     r"""
     Returns the Fused Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
     with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}` (see :ref:`[24] <references-fused-gromov-wasserstein>`).
@@ -448,7 +559,9 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
     alpha = nx.to_numpy(alpha0)
 
     if symmetric is None:
-        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
+        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(
+            C2, C2.T, atol=1e-10
+        )
 
     if G0 is None:
         G0 = p[:, None] * q[None, :]
@@ -466,40 +579,103 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
         return gwloss(constC, hC1, hC2, G, np_)
 
     if symmetric:
+
         def df(G):
             return gwggrad(constC, hC1, hC2, G, np_)
     else:
         constCt, hC1t, hC2t = init_matrix(C1.T, C2.T, p, q, loss_fun, np_)
 
         def df(G):
-            return 0.5 * (gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_))
+            return 0.5 * (
+                gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_)
+            )
 
     if armijo:
+
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
             return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=np_, **kwargs)
     else:
+
         def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
-            return solve_gromov_linesearch(G, deltaG, cost_G, hC1, hC2, M=(1 - alpha) * M, reg=alpha, nx=np_, symmetric=symmetric, **kwargs)
+            return solve_gromov_linesearch(
+                G,
+                deltaG,
+                cost_G,
+                hC1,
+                hC2,
+                M=(1 - alpha) * M,
+                reg=alpha,
+                nx=np_,
+                symmetric=symmetric,
+                **kwargs,
+            )
+
     if not nx.is_floating_point(M0):
         warnings.warn(
             "Input feature matrix consists of integer. The transport plan will be "
             "casted accordingly, possibly resulting in a loss of precision. "
             "If this behaviour is unwanted, please make sure your input "
             "feature matrix consists of floating point elements.",
-            stacklevel=2
+            stacklevel=2,
         )
     if log:
-        res, log = cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
-        log['fgw_dist'] = nx.from_numpy(log['loss'][-1], type_as=M0)
-        log['u'] = nx.from_numpy(log['u'], type_as=M0)
-        log['v'] = nx.from_numpy(log['v'], type_as=M0)
+        res, log = cg(
+            p,
+            q,
+            (1 - alpha) * M,
+            alpha,
+            f,
+            df,
+            G0,
+            line_search,
+            log=True,
+            numItermax=max_iter,
+            stopThr=tol_rel,
+            stopThr2=tol_abs,
+            **kwargs,
+        )
+        log["fgw_dist"] = nx.from_numpy(log["loss"][-1], type_as=M0)
+        log["u"] = nx.from_numpy(log["u"], type_as=M0)
+        log["v"] = nx.from_numpy(log["v"], type_as=M0)
         return nx.from_numpy(res, type_as=M0), log
     else:
-        return nx.from_numpy(cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs), type_as=M0)
+        return nx.from_numpy(
+            cg(
+                p,
+                q,
+                (1 - alpha) * M,
+                alpha,
+                f,
+                df,
+                G0,
+                line_search,
+                log=False,
+                numItermax=max_iter,
+                stopThr=tol_rel,
+                stopThr2=tol_abs,
+                **kwargs,
+            ),
+            type_as=M0,
+        )
 
 
-def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss', symmetric=None, alpha=0.5,
-                              armijo=False, G0=None, log=False, max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
+def fused_gromov_wasserstein2(
+    M,
+    C1,
+    C2,
+    p=None,
+    q=None,
+    loss_fun="square_loss",
+    symmetric=None,
+    alpha=0.5,
+    armijo=False,
+    G0=None,
+    log=False,
+    max_iter=1e4,
+    tol_rel=1e-9,
+    tol_abs=1e-9,
+    **kwargs,
+):
     r"""
     Returns the Fused Gromov-Wasserstein distance between :math:`(\mathbf{C_1}, \mathbf{Y_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{Y_2}, \mathbf{q})`
     with pairwise distance matrix :math:`\mathbf{M}` between node feature matrices :math:`\mathbf{Y_1}` and :math:`\mathbf{Y_2}` (see :ref:`[24] <references-fused-gromov-wasserstein>`).
@@ -610,35 +786,65 @@ def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss',
         q = unif(C2.shape[0], type_as=M)
 
     T, log_fgw = fused_gromov_wasserstein(
-        M, C1, C2, p, q, loss_fun, symmetric, alpha, armijo, G0, log=True,
-        max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs, **kwargs)
+        M,
+        C1,
+        C2,
+        p,
+        q,
+        loss_fun,
+        symmetric,
+        alpha,
+        armijo,
+        G0,
+        log=True,
+        max_iter=max_iter,
+        tol_rel=tol_rel,
+        tol_abs=tol_abs,
+        **kwargs,
+    )
 
-    fgw_dist = log_fgw['fgw_dist']
-    log_fgw['T'] = T
+    fgw_dist = log_fgw["fgw_dist"]
+    log_fgw["T"] = T
 
     # compute separate terms for gradients and log
     lin_term = nx.sum(T * M)
-    log_fgw['quad_loss'] = (fgw_dist - (1 - alpha) * lin_term)
-    log_fgw['lin_loss'] = lin_term * (1 - alpha)
-    gw_term = log_fgw['quad_loss'] / alpha
+    log_fgw["quad_loss"] = fgw_dist - (1 - alpha) * lin_term
+    log_fgw["lin_loss"] = lin_term * (1 - alpha)
+    gw_term = log_fgw["quad_loss"] / alpha
 
-    if loss_fun == 'square_loss':
+    if loss_fun == "square_loss":
         gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
         gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
-    elif loss_fun == 'kl_loss':
-        gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(T, nx.dot(nx.log(C2 + 1e-15), T.T))
-        gC2 = - nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
+    elif loss_fun == "kl_loss":
+        gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(
+            T, nx.dot(nx.log(C2 + 1e-15), T.T)
+        )
+        gC2 = -nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
     if isinstance(alpha, int) or isinstance(alpha, float):
-        fgw_dist = nx.set_gradients(fgw_dist, (p, q, C1, C2, M),
-                                    (log_fgw['u'] - nx.mean(log_fgw['u']),
-                                     log_fgw['v'] - nx.mean(log_fgw['v']),
-                                     alpha * gC1, alpha * gC2, (1 - alpha) * T))
+        fgw_dist = nx.set_gradients(
+            fgw_dist,
+            (p, q, C1, C2, M),
+            (
+                log_fgw["u"] - nx.mean(log_fgw["u"]),
+                log_fgw["v"] - nx.mean(log_fgw["v"]),
+                alpha * gC1,
+                alpha * gC2,
+                (1 - alpha) * T,
+            ),
+        )
     else:
-        fgw_dist = nx.set_gradients(fgw_dist, (p, q, C1, C2, M, alpha),
-                                    (log_fgw['u'] - nx.mean(log_fgw['u']),
-                                     log_fgw['v'] - nx.mean(log_fgw['v']),
-                                     alpha * gC1, alpha * gC2, (1 - alpha) * T,
-                                     gw_term - lin_term))
+        fgw_dist = nx.set_gradients(
+            fgw_dist,
+            (p, q, C1, C2, M, alpha),
+            (
+                log_fgw["u"] - nx.mean(log_fgw["u"]),
+                log_fgw["v"] - nx.mean(log_fgw["v"]),
+                alpha * gC1,
+                alpha * gC2,
+                (1 - alpha) * T,
+                gw_term - lin_term,
+            ),
+        )
 
     if log:
         return fgw_dist, log_fgw
@@ -646,8 +852,20 @@ def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss',
         return fgw_dist
 
 
-def solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M, reg,
-                            alpha_min=None, alpha_max=None, nx=None, symmetric=False, **kwargs):
+def solve_gromov_linesearch(
+    G,
+    deltaG,
+    cost_G,
+    C1,
+    C2,
+    M,
+    reg,
+    alpha_min=None,
+    alpha_max=None,
+    nx=None,
+    symmetric=False,
+    **kwargs,
+):
     """
     Solve the linesearch in the FW iterations for any inner loss that decomposes as in Proposition 1 in :ref:`[12] <references-solve-linesearch>`.
 
@@ -709,27 +927,43 @@ def solve_gromov_linesearch(G, deltaG, cost_G, C1, C2, M, reg,
             nx = get_backend(G, deltaG, C1, C2, M)
 
     dot = nx.dot(nx.dot(C1, deltaG), C2.T)
-    a = - reg * nx.sum(dot * deltaG)
+    a = -reg * nx.sum(dot * deltaG)
     if symmetric:
         b = nx.sum(M * deltaG) - 2 * reg * nx.sum(dot * G)
     else:
-        b = nx.sum(M * deltaG) - reg * (nx.sum(dot * G) + nx.sum(nx.dot(nx.dot(C1, G), C2.T) * deltaG))
+        b = nx.sum(M * deltaG) - reg * (
+            nx.sum(dot * G) + nx.sum(nx.dot(nx.dot(C1, G), C2.T) * deltaG)
+        )
 
     alpha = solve_1d_linesearch_quad(a, b)
     if alpha_min is not None or alpha_max is not None:
         alpha = np.clip(alpha, alpha_min, alpha_max)
 
     # the new cost is deduced from the line search quadratic function
-    cost_G = cost_G + a * (alpha ** 2) + b * alpha
+    cost_G = cost_G + a * (alpha**2) + b * alpha
 
     return alpha, 1, cost_G
 
 
 def gromov_barycenters(
-        N, Cs, ps=None, p=None, lambdas=None, loss_fun='square_loss',
-        symmetric=True, armijo=False, max_iter=1000, tol=1e-9,
-        stop_criterion='barycenter', warmstartT=False, verbose=False,
-        log=False, init_C=None, random_state=None, **kwargs):
+    N,
+    Cs,
+    ps=None,
+    p=None,
+    lambdas=None,
+    loss_fun="square_loss",
+    symmetric=True,
+    armijo=False,
+    max_iter=1000,
+    tol=1e-9,
+    stop_criterion="barycenter",
+    warmstartT=False,
+    verbose=False,
+    log=False,
+    init_C=None,
+    random_state=None,
+    **kwargs,
+):
     r"""
     Returns the Gromov-Wasserstein barycenters of `S` measured similarity matrices :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
 
@@ -805,22 +1039,27 @@ def gromov_barycenters(
         International Conference on Machine Learning (ICML). 2016.
 
     """
-    if stop_criterion not in ['barycenter', 'loss']:
-        raise ValueError(f"Unknown `stop_criterion='{stop_criterion}'`. Use one of: {'barycenter', 'loss'}.")
+    if stop_criterion not in ["barycenter", "loss"]:
+        raise ValueError(
+            f"Unknown `stop_criterion='{stop_criterion}'`. Use one of: {'barycenter', 'loss'}."
+        )
 
     if isinstance(Cs[0], list):
-        raise ValueError("Deprecated feature in POT 0.9.4: structures Cs[i] are lists and should be arrays from a supported backend (e.g numpy).")
+        raise ValueError(
+            "Deprecated feature in POT 0.9.4: structures Cs[i] are lists and should be arrays from a supported backend (e.g numpy)."
+        )
 
     arr = [*Cs]
     if ps is not None:
         if isinstance(ps[0], list):
-            raise ValueError("Deprecated feature in POT 0.9.4: weights ps[i] are lists and should be arrays from a supported backend (e.g numpy).")
+            raise ValueError(
+                "Deprecated feature in POT 0.9.4: weights ps[i] are lists and should be arrays from a supported backend (e.g numpy)."
+            )
 
         arr += [*ps]
     else:
         ps = [unif(C.shape[0], type_as=C) for C in Cs]
     if p is not None:
-
         arr.append(list_to_array(p))
     else:
         p = unif(N, type_as=Cs[0])
@@ -829,7 +1068,7 @@ def gromov_barycenters(
 
     S = len(Cs)
     if lambdas is None:
-        lambdas = [1. / S] * S
+        lambdas = [1.0 / S] * S
 
     # Initialization of C : random SPD matrix (if not provided by user)
     if init_C is None:
@@ -847,7 +1086,7 @@ def gromov_barycenters(
     if warmstartT:
         T = [None] * S
 
-    if stop_criterion == 'barycenter':
+    if stop_criterion == "barycenter":
         inner_log = False
     else:
         inner_log = True
@@ -855,63 +1094,92 @@ def gromov_barycenters(
 
     if log:
         log_ = {}
-        log_['err'] = []
-        if stop_criterion == 'loss':
-            log_['loss'] = []
+        log_["err"] = []
+        if stop_criterion == "loss":
+            log_["loss"] = []
 
-    while (err > tol and cpt < max_iter):
-        if stop_criterion == 'barycenter':
+    while err > tol and cpt < max_iter:
+        if stop_criterion == "barycenter":
             Cprev = C
         else:
             prev_loss = curr_loss
 
         # get transport plans
         if warmstartT:
-            res = [gromov_wasserstein(
-                C, Cs[s], p, ps[s], loss_fun, symmetric=symmetric, armijo=armijo, G0=T[s],
-                max_iter=max_iter, tol_rel=1e-5, tol_abs=0., log=inner_log, verbose=verbose, **kwargs)
-                for s in range(S)]
+            res = [
+                gromov_wasserstein(
+                    C,
+                    Cs[s],
+                    p,
+                    ps[s],
+                    loss_fun,
+                    symmetric=symmetric,
+                    armijo=armijo,
+                    G0=T[s],
+                    max_iter=max_iter,
+                    tol_rel=1e-5,
+                    tol_abs=0.0,
+                    log=inner_log,
+                    verbose=verbose,
+                    **kwargs,
+                )
+                for s in range(S)
+            ]
         else:
-            res = [gromov_wasserstein(
-                C, Cs[s], p, ps[s], loss_fun, symmetric=symmetric, armijo=armijo, G0=None,
-                max_iter=max_iter, tol_rel=1e-5, tol_abs=0., log=inner_log, verbose=verbose, **kwargs)
-                for s in range(S)]
-        if stop_criterion == 'barycenter':
+            res = [
+                gromov_wasserstein(
+                    C,
+                    Cs[s],
+                    p,
+                    ps[s],
+                    loss_fun,
+                    symmetric=symmetric,
+                    armijo=armijo,
+                    G0=None,
+                    max_iter=max_iter,
+                    tol_rel=1e-5,
+                    tol_abs=0.0,
+                    log=inner_log,
+                    verbose=verbose,
+                    **kwargs,
+                )
+                for s in range(S)
+            ]
+        if stop_criterion == "barycenter":
             T = res
         else:
             T = [output[0] for output in res]
-            curr_loss = np.sum([output[1]['gw_dist'] for output in res])
+            curr_loss = np.sum([output[1]["gw_dist"] for output in res])
 
         # update barycenters
-        if loss_fun == 'square_loss':
+        if loss_fun == "square_loss":
             C = update_square_loss(p, lambdas, T, Cs, nx)
 
-        elif loss_fun == 'kl_loss':
+        elif loss_fun == "kl_loss":
             C = update_kl_loss(p, lambdas, T, Cs, nx)
 
         # update convergence criterion
-        if stop_criterion == 'barycenter':
+        if stop_criterion == "barycenter":
             err = nx.norm(C - Cprev)
             if log:
-                log_['err'].append(err)
+                log_["err"].append(err)
 
         else:
-            err = abs(curr_loss - prev_loss) / prev_loss if prev_loss != 0. else np.nan
+            err = abs(curr_loss - prev_loss) / prev_loss if prev_loss != 0.0 else np.nan
             if log:
-                log_['loss'].append(curr_loss)
-                log_['err'].append(err)
+                log_["loss"].append(curr_loss)
+                log_["err"].append(err)
 
         if verbose:
             if cpt % 200 == 0:
-                print('{:5s}|{:12s}'.format(
-                    'It.', 'Err') + '\n' + '-' * 19)
-            print('{:5d}|{:8e}|'.format(cpt, err))
+                print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+            print("{:5d}|{:8e}|".format(cpt, err))
 
         cpt += 1
 
     if log:
-        log_['T'] = T
-        log_['p'] = p
+        log_["T"] = T
+        log_["p"] = p
 
         return C, log_
     else:
@@ -919,11 +1187,29 @@ def gromov_barycenters(
 
 
 def fgw_barycenters(
-        N, Ys, Cs, ps=None, lambdas=None, alpha=0.5, fixed_structure=False,
-        fixed_features=False, p=None, loss_fun='square_loss', armijo=False,
-        symmetric=True, max_iter=100, tol=1e-9, stop_criterion='barycenter',
-        warmstartT=False, verbose=False, log=False, init_C=None, init_X=None,
-        random_state=None, **kwargs):
+    N,
+    Ys,
+    Cs,
+    ps=None,
+    lambdas=None,
+    alpha=0.5,
+    fixed_structure=False,
+    fixed_features=False,
+    p=None,
+    loss_fun="square_loss",
+    armijo=False,
+    symmetric=True,
+    max_iter=100,
+    tol=1e-9,
+    stop_criterion="barycenter",
+    warmstartT=False,
+    verbose=False,
+    log=False,
+    init_C=None,
+    init_X=None,
+    random_state=None,
+    **kwargs,
+):
     r"""
     Returns the Fused Gromov-Wasserstein barycenters of `S` measurable networks with node features :math:`(\mathbf{C}_s, \mathbf{Y}_s, \mathbf{p}_s)_{1 \leq s \leq S}`
     (see eq (5) in :ref:`[24] <references-fgw-barycenters>`), estimated using Fused Gromov-Wasserstein transports from Conditional Gradient solvers.
@@ -1017,16 +1303,22 @@ def fgw_barycenters(
         "Optimal Transport for structured data with application on graphs"
         International Conference on Machine Learning (ICML). 2019.
     """
-    if stop_criterion not in ['barycenter', 'loss']:
-        raise ValueError(f"Unknown `stop_criterion='{stop_criterion}'`. Use one of: {'barycenter', 'loss'}.")
+    if stop_criterion not in ["barycenter", "loss"]:
+        raise ValueError(
+            f"Unknown `stop_criterion='{stop_criterion}'`. Use one of: {'barycenter', 'loss'}."
+        )
 
     if isinstance(Cs[0], list) or isinstance(Ys[0], list):
-        raise ValueError("Deprecated feature in POT 0.9.4: structures Cs[i] and/or features Ys[i] are lists and should be arrays from a supported backend (e.g numpy).")
+        raise ValueError(
+            "Deprecated feature in POT 0.9.4: structures Cs[i] and/or features Ys[i] are lists and should be arrays from a supported backend (e.g numpy)."
+        )
 
     arr = [*Cs, *Ys]
     if ps is not None:
         if isinstance(ps[0], list):
-            raise ValueError("Deprecated feature in POT 0.9.4: weights ps[i] are lists and should be arrays from a supported backend (e.g numpy).")
+            raise ValueError(
+                "Deprecated feature in POT 0.9.4: weights ps[i] are lists and should be arrays from a supported backend (e.g numpy)."
+            )
 
         arr += [*ps]
     else:
@@ -1040,13 +1332,13 @@ def fgw_barycenters(
 
     S = len(Cs)
     if lambdas is None:
-        lambdas = [1. / S] * S
+        lambdas = [1.0 / S] * S
 
     d = Ys[0].shape[1]  # dimension on the node features
 
     if fixed_structure:
         if init_C is None:
-            raise UndefinedParameter('If C is fixed it must be initialized')
+            raise UndefinedParameter("If C is fixed it must be initialized")
         else:
             C = init_C
     else:
@@ -1060,7 +1352,7 @@ def fgw_barycenters(
 
     if fixed_features:
         if init_X is None:
-            raise UndefinedParameter('If X is fixed it must be initialized')
+            raise UndefinedParameter("If X is fixed it must be initialized")
         else:
             X = init_X
     else:
@@ -1077,31 +1369,33 @@ def fgw_barycenters(
 
     cpt = 0
 
-    if stop_criterion == 'barycenter':
+    if stop_criterion == "barycenter":
         inner_log = False
         err_feature = 1e15
         err_structure = 1e15
-        err_rel_loss = 0.
+        err_rel_loss = 0.0
 
     else:
         inner_log = True
-        err_feature = 0.
-        err_structure = 0.
+        err_feature = 0.0
+        err_structure = 0.0
         curr_loss = 1e15
         err_rel_loss = 1e15
 
     if log:
         log_ = {}
-        if stop_criterion == 'barycenter':
-            log_['err_feature'] = []
-            log_['err_structure'] = []
-            log_['Ts_iter'] = []
+        if stop_criterion == "barycenter":
+            log_["err_feature"] = []
+            log_["err_structure"] = []
+            log_["Ts_iter"] = []
         else:
-            log_['loss'] = []
-            log_['err_rel_loss'] = []
+            log_["loss"] = []
+            log_["err_rel_loss"] = []
 
-    while ((err_feature > tol or err_structure > tol or err_rel_loss > tol) and cpt < max_iter):
-        if stop_criterion == 'barycenter':
+    while (
+        err_feature > tol or err_structure > tol or err_rel_loss > tol
+    ) and cpt < max_iter:
+        if stop_criterion == "barycenter":
             Cprev = C
             Xprev = X
         else:
@@ -1109,20 +1403,54 @@ def fgw_barycenters(
 
         # get transport plans
         if warmstartT:
-            res = [fused_gromov_wasserstein(
-                Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
-                G0=T[s], max_iter=max_iter, tol_rel=1e-5, tol_abs=0., log=inner_log, verbose=verbose, **kwargs)
-                for s in range(S)]
+            res = [
+                fused_gromov_wasserstein(
+                    Ms[s],
+                    C,
+                    Cs[s],
+                    p,
+                    ps[s],
+                    loss_fun=loss_fun,
+                    alpha=alpha,
+                    armijo=armijo,
+                    symmetric=symmetric,
+                    G0=T[s],
+                    max_iter=max_iter,
+                    tol_rel=1e-5,
+                    tol_abs=0.0,
+                    log=inner_log,
+                    verbose=verbose,
+                    **kwargs,
+                )
+                for s in range(S)
+            ]
         else:
-            res = [fused_gromov_wasserstein(
-                Ms[s], C, Cs[s], p, ps[s], loss_fun=loss_fun, alpha=alpha, armijo=armijo, symmetric=symmetric,
-                G0=None, max_iter=max_iter, tol_rel=1e-5, tol_abs=0., log=inner_log, verbose=verbose, **kwargs)
-                for s in range(S)]
-        if stop_criterion == 'barycenter':
+            res = [
+                fused_gromov_wasserstein(
+                    Ms[s],
+                    C,
+                    Cs[s],
+                    p,
+                    ps[s],
+                    loss_fun=loss_fun,
+                    alpha=alpha,
+                    armijo=armijo,
+                    symmetric=symmetric,
+                    G0=None,
+                    max_iter=max_iter,
+                    tol_rel=1e-5,
+                    tol_abs=0.0,
+                    log=inner_log,
+                    verbose=verbose,
+                    **kwargs,
+                )
+                for s in range(S)
+            ]
+        if stop_criterion == "barycenter":
             T = res
         else:
             T = [output[0] for output in res]
-            curr_loss = np.sum([output[1]['fgw_dist'] for output in res])
+            curr_loss = np.sum([output[1]["fgw_dist"] for output in res])
 
         # update barycenters
         if not fixed_features:
@@ -1131,48 +1459,48 @@ def fgw_barycenters(
             Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
 
         if not fixed_structure:
-            if loss_fun == 'square_loss':
+            if loss_fun == "square_loss":
                 C = update_square_loss(p, lambdas, T, Cs, nx)
 
-            elif loss_fun == 'kl_loss':
+            elif loss_fun == "kl_loss":
                 C = update_kl_loss(p, lambdas, T, Cs, nx)
 
         # update convergence criterion
-        if stop_criterion == 'barycenter':
-            err_feature, err_structure = 0., 0.
+        if stop_criterion == "barycenter":
+            err_feature, err_structure = 0.0, 0.0
             if not fixed_features:
                 err_feature = nx.norm(X - Xprev)
             if not fixed_structure:
                 err_structure = nx.norm(C - Cprev)
             if log:
-                log_['err_feature'].append(err_feature)
-                log_['err_structure'].append(err_structure)
-                log_['Ts_iter'].append(T)
+                log_["err_feature"].append(err_feature)
+                log_["err_structure"].append(err_structure)
+                log_["Ts_iter"].append(T)
 
             if verbose:
                 if cpt % 200 == 0:
-                    print('{:5s}|{:12s}'.format(
-                        'It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(cpt, err_structure))
-                print('{:5d}|{:8e}|'.format(cpt, err_feature))
+                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+                print("{:5d}|{:8e}|".format(cpt, err_structure))
+                print("{:5d}|{:8e}|".format(cpt, err_feature))
         else:
-            err_rel_loss = abs(curr_loss - prev_loss) / prev_loss if prev_loss != 0. else np.nan
+            err_rel_loss = (
+                abs(curr_loss - prev_loss) / prev_loss if prev_loss != 0.0 else np.nan
+            )
             if log:
-                log_['loss'].append(curr_loss)
-                log_['err_rel_loss'].append(err_rel_loss)
+                log_["loss"].append(curr_loss)
+                log_["err_rel_loss"].append(err_rel_loss)
 
             if verbose:
                 if cpt % 200 == 0:
-                    print('{:5s}|{:12s}'.format(
-                        'It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(cpt, err_rel_loss))
+                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+                print("{:5d}|{:8e}|".format(cpt, err_rel_loss))
 
         cpt += 1
 
     if log:
-        log_['T'] = T
-        log_['p'] = p
-        log_['Ms'] = Ms
+        log_["T"] = T
+        log_["p"] = p
+        log_["Ms"] = Ms
 
         return X, C, log_
     else:

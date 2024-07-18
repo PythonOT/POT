@@ -1,4 +1,4 @@
-"""Tests for module plot for visualization """
+"""Tests for module plot for visualization"""
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #
@@ -10,7 +10,8 @@ import pytest
 
 try:  # test if matplotlib is installed
     import matplotlib
-    matplotlib.use('Agg')
+
+    matplotlib.use("Agg")
     nogo = False
 except ImportError:
     nogo = True
@@ -18,7 +19,6 @@ except ImportError:
 
 @pytest.mark.skipif(nogo, reason="Matplotlib not installed")
 def test_plot1D_mat():
-
     import ot
     import ot.plot
 
@@ -35,12 +35,11 @@ def test_plot1D_mat():
     M = ot.dist(x.reshape((n_bins, 1)), x.reshape((n_bins, 1)))
     M /= M.max()
 
-    ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
+    ot.plot.plot1D_mat(a, b, M, "Cost matrix M")
 
 
 @pytest.mark.skipif(nogo, reason="Matplotlib not installed")
 def test_plot2D_samples_mat():
-
     import ot
     import ot.plot
 
@@ -50,7 +49,7 @@ def test_plot2D_samples_mat():
     cov_s = np.array([[1, 0], [0, 1]])
 
     mu_t = np.array([4, 4])
-    cov_t = np.array([[1, -.8], [-.8, 1]])
+    cov_t = np.array([[1, -0.8], [-0.8, 1]])
 
     rng = np.random.RandomState(42)
     xs = ot.datasets.make_2D_samples_gauss(n_bins, mu_s, cov_s, random_state=rng)

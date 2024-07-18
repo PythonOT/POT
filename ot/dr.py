@@ -17,6 +17,7 @@ Dimension reduction with OT
 # License: MIT License
 
 from scipy import linalg
+
 try:
     import autograd.numpy as np
     from sklearn.decomposition import PCA
@@ -25,23 +26,23 @@ try:
     import pymanopt.manifolds
     import pymanopt.optimizers
 except ImportError:
-    raise ImportError("Missing dependency for ot.dr. Requires autograd, pymanopt, scikit-learn. You can install with install with 'pip install POT[dr]', or 'conda install autograd pymanopt scikit-learn'")
+    raise ImportError(
+        "Missing dependency for ot.dr. Requires autograd, pymanopt, scikit-learn. You can install with install with 'pip install POT[dr]', or 'conda install autograd pymanopt scikit-learn'"
+    )
 
 from .bregman import sinkhorn as sinkhorn_bregman
 from .utils import dist as dist_utils, check_random_state
 
 
 def dist(x1, x2):
-    r""" Compute squared euclidean distance between samples (autograd)
-    """
+    r"""Compute squared euclidean distance between samples (autograd)"""
     x1p2 = np.sum(np.square(x1), 1)
     x2p2 = np.sum(np.square(x2), 1)
     return x1p2.reshape((-1, 1)) + x2p2.reshape((1, -1)) - 2 * np.dot(x1, x2.T)
 
 
 def sinkhorn(w1, w2, M, reg, k):
-    r"""Sinkhorn algorithm with fixed number of iteration (autograd)
-    """
+    r"""Sinkhorn algorithm with fixed number of iteration (autograd)"""
     K = np.exp(-M / reg)
     ui = np.ones((M.shape[0],))
     vi = np.ones((M.shape[1],))
@@ -53,15 +54,13 @@ def sinkhorn(w1, w2, M, reg, k):
 
 
 def logsumexp(M, axis):
-    r"""Log-sum-exp reduction compatible with autograd (no numpy implementation)
-    """
+    r"""Log-sum-exp reduction compatible with autograd (no numpy implementation)"""
     amax = np.amax(M, axis=axis, keepdims=True)
     return np.log(np.sum(np.exp(M - amax), axis=axis)) + np.squeeze(amax, axis=axis)
 
 
 def sinkhorn_log(w1, w2, M, reg, k):
-    r"""Sinkhorn algorithm in log-domain with fixed number of iteration (autograd)
-    """
+    r"""Sinkhorn algorithm in log-domain with fixed number of iteration (autograd)"""
     Mr = -M / reg
     ui = np.zeros((M.shape[0],))
     vi = np.zeros((M.shape[1],))
@@ -75,8 +74,7 @@ def sinkhorn_log(w1, w2, M, reg, k):
 
 
 def split_classes(X, y):
-    r"""split samples in :math:`\mathbf{X}` by classes in :math:`\mathbf{y}`
-    """
+    r"""split samples in :math:`\mathbf{X}` by classes in :math:`\mathbf{y}`"""
     lstsclass = np.unique(y)
     return [X[y == i, :].astype(np.float32) for i in lstsclass]
 
@@ -126,8 +124,7 @@ def fda(X, y, p=2, reg=1e-16):
     mx0 = np.mean(mxc, 1)
     Cb = 0
     for i in range(nc):
-        Cb += (mxc[:, i] - mx0).reshape((-1, 1)) * \
-            (mxc[:, i] - mx0).reshape((1, -1))
+        Cb += (mxc[:, i] - mx0).reshape((-1, 1)) * (mxc[:, i] - mx0).reshape((1, -1))
 
     w, V = linalg.eig(Cb, Cw + reg * np.eye(d))
 
@@ -141,7 +138,19 @@ def fda(X, y, p=2, reg=1e-16):
     return Popt, proj
 
 
-def wda(X, y, p=2, reg=1, k=10, solver=None, sinkhorn_method='sinkhorn', maxiter=100, verbose=0, P0=None, normalize=False):
+def wda(
+    X,
+    y,
+    p=2,
+    reg=1,
+    k=10,
+    solver=None,
+    sinkhorn_method="sinkhorn",
+    maxiter=100,
+    verbose=0,
+    P0=None,
+    normalize=False,
+):
     r"""
     Wasserstein Discriminant Analysis :ref:`[11] <references-wda>`
 
@@ -202,9 +211,9 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, sinkhorn_method='sinkhorn', maxiter
             Wasserstein Discriminant Analysis. arXiv preprint arXiv:1608.08063.
     """  # noqa
 
-    if sinkhorn_method.lower() == 'sinkhorn':
+    if sinkhorn_method.lower() == "sinkhorn":
         sinkhorn_solver = sinkhorn
-    elif sinkhorn_method.lower() == 'sinkhorn_log':
+    elif sinkhorn_method.lower() == "sinkhorn_log":
         sinkhorn_solver = sinkhorn_log
     else:
         raise ValueError("Unknown Sinkhorn method '%s'." % sinkhorn_method)
@@ -258,9 +267,13 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, sinkhorn_method='sinkhorn', maxiter
 
     # declare solver and solve
     if solver is None:
-        solver = pymanopt.optimizers.SteepestDescent(max_iterations=maxiter, log_verbosity=verbose)
-    elif solver in ['tr', 'TrustRegions']:
-        solver = pymanopt.optimizers.TrustRegions(max_iterations=maxiter, log_verbosity=verbose)
+        solver = pymanopt.optimizers.SteepestDescent(
+            max_iterations=maxiter, log_verbosity=verbose
+        )
+    elif solver in ["tr", "TrustRegions"]:
+        solver = pymanopt.optimizers.TrustRegions(
+            max_iterations=maxiter, log_verbosity=verbose
+        )
 
     Popt = solver.run(problem, initial_point=P0)
 
@@ -270,7 +283,20 @@ def wda(X, y, p=2, reg=1, k=10, solver=None, sinkhorn_method='sinkhorn', maxiter
     return Popt.point, proj
 
 
-def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopThr=1e-3, maxiter=100, verbose=0, random_state=None):
+def projection_robust_wasserstein(
+    X,
+    Y,
+    a,
+    b,
+    tau,
+    U0=None,
+    reg=0.1,
+    k=2,
+    stopThr=1e-3,
+    maxiter=100,
+    verbose=0,
+    random_state=None,
+):
     r"""
     Projection Robust Wasserstein Distance :ref:`[32] <references-projection-robust-wasserstein>`
 
@@ -322,7 +348,7 @@ def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopTh
     References
     ----------
     .. [32] Huang, M. , Ma S. & Lai L. (2021).
-            A Riemannian Block Coordinate Descent Method for Computing 
+            A Riemannian Block Coordinate Descent Method for Computing
             the Projection Robust Wasserstein Distance, ICML.
     """  # noqa
 
@@ -347,17 +373,24 @@ def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopTh
     def Vpi(X, Y, a, b, pi):
         # Return the second order matrix of the displacements: sum_ij { (pi)_ij (X_i-Y_j)(X_i-Y_j)^T }.
         A = X.T.dot(pi).dot(Y)
-        return X.T.dot(np.diag(a)).dot(X) + Y.T.dot(np.diag(np.sum(pi, 0))).dot(Y) - A - A.T
+        return (
+            X.T.dot(np.diag(a)).dot(X)
+            + Y.T.dot(np.diag(np.sum(pi, 0))).dot(Y)
+            - A
+            - A.T
+        )
 
     err = 1
     iter = 0
 
     while err > stopThr and iter < maxiter:
-
         # Projected cost matrix
         UUT = U.dot(U.T)
-        M = np.diag(np.diag(X.dot(UUT.dot(X.T)))).dot(ones) + ones.dot(
-            np.diag(np.diag(Y.dot(UUT.dot(Y.T))))) - 2 * X.dot(UUT.dot(Y.T))
+        M = (
+            np.diag(np.diag(X.dot(UUT.dot(X.T)))).dot(ones)
+            + ones.dot(np.diag(np.diag(Y.dot(UUT.dot(Y.T)))))
+            - 2 * X.dot(UUT.dot(Y.T))
+        )
 
         A = np.empty(M.shape, dtype=M.dtype)
         np.divide(M, -reg, out=A)
@@ -367,7 +400,7 @@ def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopTh
         Ap = (1 / a).reshape(-1, 1) * A
         AtransposeU = np.dot(A.T, u)
         v = np.divide(b, AtransposeU)
-        u = 1. / np.dot(Ap, v)
+        u = 1.0 / np.dot(Ap, v)
         pi = u.reshape((-1, 1)) * A * v.reshape((1, -1))
 
         V = Vpi(X, Y, a, b, pi)
@@ -383,14 +416,26 @@ def projection_robust_wasserstein(X, Y, a, b, tau, U0=None, reg=0.1, k=2, stopTh
 
         f_val = np.trace(U.T.dot(V.dot(U)))
         if verbose:
-            print('RBCD Iteration: ', iter, ' error', err, '\t fval: ', f_val)
+            print("RBCD Iteration: ", iter, " error", err, "\t fval: ", f_val)
 
         iter = iter + 1
 
     return pi, U
 
 
-def ewca(X, U0=None, reg=1, k=2, method='BCD', sinkhorn_method='sinkhorn', stopThr=1e-6, maxiter=100, maxiter_sink=1000, maxiter_MM=10, verbose=0):
+def ewca(
+    X,
+    U0=None,
+    reg=1,
+    k=2,
+    method="BCD",
+    sinkhorn_method="sinkhorn",
+    stopThr=1e-6,
+    maxiter=100,
+    maxiter_sink=1000,
+    maxiter_MM=10,
+    verbose=0,
+):
     r"""
     Entropic Wasserstein Component Analysis :ref:`[52] <references-entropic-wasserstein-component_analysis>`.
 
@@ -452,17 +497,21 @@ def ewca(X, U0=None, reg=1, k=2, method='BCD', sinkhorn_method='sinkhorn', stopT
     if U0 is None:
         pca_fitted = PCA(n_components=k).fit(X)
         U = pca_fitted.components_.T
-        if method == 'MM':
+        if method == "MM":
             lambda_scm = pca_fitted.explained_variance_[0]
     else:
         U = U0
 
     # marginals
-    u0 = (1. / n) * np.ones(n)
+    u0 = (1.0 / n) * np.ones(n)
 
     # print iterations
     if verbose > 0:
-        print('{:4s}|{:13s}|{:12s}|{:12s}'.format('It.', 'Loss', 'Crit.', 'Thres.') + '\n' + '-' * 40)
+        print(
+            "{:4s}|{:13s}|{:12s}|{:12s}".format("It.", "Loss", "Crit.", "Thres.")
+            + "\n"
+            + "-" * 40
+        )
 
     def compute_loss(M, pi, reg):
         return np.sum(M * pi) + reg * np.sum(pi * (np.log(pi) - 1))
@@ -485,12 +534,17 @@ def ewca(X, U0=None, reg=1, k=2, method='BCD', sinkhorn_method='sinkhorn', stopT
         # Solve transport
         M = dist_utils(X, (X @ U) @ U.T)
         pi, log_sinkhorn = sinkhorn_bregman(
-            u0, u0, M, reg,
+            u0,
+            u0,
+            M,
+            reg,
             numItermax=maxiter_sink,
-            method=sinkhorn_method, warmstart=sinkhorn_warmstart,
-            warn=False, log=True
+            method=sinkhorn_method,
+            warmstart=sinkhorn_warmstart,
+            warn=False,
+            log=True,
         )
-        key_warmstart = 'warmstart'
+        key_warmstart = "warmstart"
         if key_warmstart in log_sinkhorn:
             sinkhorn_warmstart = log_sinkhorn[key_warmstart]
         if (pi >= 1e-300).all():
@@ -501,13 +555,13 @@ def ewca(X, U0=None, reg=1, k=2, method='BCD', sinkhorn_method='sinkhorn', stopT
         # Solve PCA
         pi_sym = (pi + pi.T) / 2
 
-        if method == 'BCD':
+        if method == "BCD":
             # block coordinate descent
-            S = X.T @ (2 * pi_sym - (1. / n) * np.eye(n)) @ X
+            S = X.T @ (2 * pi_sym - (1.0 / n) * np.eye(n)) @ X
             _, U = np.linalg.eigh(S)
             U = U[:, ::-1][:, :k]
 
-        elif method == 'MM':
+        elif method == "MM":
             # majorization-minimization
             eig, _ = np.linalg.eigh(pi_sym)
             lambda_pi = eig[0]
@@ -535,6 +589,6 @@ def ewca(X, U0=None, reg=1, k=2, method='BCD', sinkhorn_method='sinkhorn', stopT
 
         # print
         if verbose > 0:
-            print('{:4d}|{:8e}|{:8e}|{:8e}'.format(it, loss, crit, stopThr))
+            print("{:4d}|{:8e}|{:8e}|{:8e}".format(it, loss, crit, stopThr))
 
     return pi, U

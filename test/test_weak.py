@@ -1,4 +1,4 @@
-"""Tests for main module ot.weak """
+"""Tests for main module ot.weak"""
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #

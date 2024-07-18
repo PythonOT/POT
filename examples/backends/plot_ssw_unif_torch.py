@@ -44,6 +44,7 @@ x0 = F.normalize(x0, dim=-1)
 # Plot data
 # ---------
 
+
 def plot_sphere(ax):
     xlist = np.linspace(-1.0, 1.0, 50)
     ylist = np.linspace(-1.0, 1.0, 50)
@@ -52,16 +53,16 @@ def plot_sphere(ax):
 
     Z = np.sqrt(np.maximum(r**2 - X**2 - Y**2, 0))
 
-    ax.plot_wireframe(X, Y, Z, color="gray", alpha=.3)
-    ax.plot_wireframe(X, Y, -Z, color="gray", alpha=.3)  # Now plot the bottom half
+    ax.plot_wireframe(X, Y, Z, color="gray", alpha=0.3)
+    ax.plot_wireframe(X, Y, -Z, color="gray", alpha=0.3)  # Now plot the bottom half
 
 
 # plot the distributions
 pl.figure(1)
-ax = pl.axes(projection='3d')
+ax = pl.axes(projection="3d")
 plot_sphere(ax)
-ax.scatter(x0[:, 0], x0[:, 1], x0[:, 2], label='Data samples', alpha=0.5)
-ax.set_title('Data distribution')
+ax.scatter(x0[:, 0], x0[:, 1], x0[:, 2], label="Data samples", alpha=0.5)
+ax.set_title("Data distribution")
 ax.legend()
 
 
@@ -94,7 +95,7 @@ for i in range(n_iter):
 pl.figure(1)
 pl.semilogy(losses)
 pl.grid()
-pl.title('SSW')
+pl.title("SSW")
 pl.xlabel("Iterations")
 
 
@@ -108,11 +109,17 @@ fig = pl.figure(3, (10, 10))
 for i in range(9):
     # pl.subplot(3, 3, i + 1)
     # ax = pl.axes(projection='3d')
-    ax = fig.add_subplot(3, 3, i + 1, projection='3d')
+    ax = fig.add_subplot(3, 3, i + 1, projection="3d")
     plot_sphere(ax)
-    ax.scatter(xvisu[ivisu[i], :, 0], xvisu[ivisu[i], :, 1], xvisu[ivisu[i], :, 2], label='Data samples', alpha=0.5)
-    ax.set_title('Iter. {}'.format(ivisu[i]))
-    #ax.axis("off")
+    ax.scatter(
+        xvisu[ivisu[i], :, 0],
+        xvisu[ivisu[i], :, 1],
+        xvisu[ivisu[i], :, 2],
+        label="Data samples",
+        alpha=0.5,
+    )
+    ax.set_title("Iter. {}".format(ivisu[i]))
+    # ax.axis("off")
     if i == 0:
         ax.legend()
 
@@ -127,27 +134,37 @@ pl.figure(4, (8, 8))
 def _update_plot(i):
     i = 3 * i
     pl.clf()
-    ax = pl.axes(projection='3d')
+    ax = pl.axes(projection="3d")
     plot_sphere(ax)
-    ax.scatter(xvisu[i, :, 0], xvisu[i, :, 1], xvisu[i, :, 2], label='Data samples$', alpha=0.5)
+    ax.scatter(
+        xvisu[i, :, 0], xvisu[i, :, 1], xvisu[i, :, 2], label="Data samples$", alpha=0.5
+    )
     ax.axis("off")
     ax.set_xlim((-1.5, 1.5))
     ax.set_ylim((-1.5, 1.5))
-    ax.set_title('Iter. {}'.format(i))
+    ax.set_title("Iter. {}".format(i))
     return 1
 
 
 print(xvisu.shape)
 
 i = 0
-ax = pl.axes(projection='3d')
+ax = pl.axes(projection="3d")
 plot_sphere(ax)
-ax.scatter(xvisu[i, :, 0], xvisu[i, :, 1], xvisu[i, :, 2], label='Data samples from $G\#\mu_n$', alpha=0.5)
+ax.scatter(
+    xvisu[i, :, 0],
+    xvisu[i, :, 1],
+    xvisu[i, :, 2],
+    label="Data samples from $G\#\mu_n$",
+    alpha=0.5,
+)
 ax.axis("off")
 ax.set_xlim((-1.5, 1.5))
 ax.set_ylim((-1.5, 1.5))
-ax.set_title('Iter. {}'.format(ivisu[i]))
+ax.set_title("Iter. {}".format(ivisu[i]))
 
 
-ani = animation.FuncAnimation(pl.gcf(), _update_plot, n_iter // 5, interval=200, repeat_delay=2000)
+ani = animation.FuncAnimation(
+    pl.gcf(), _update_plot, n_iter // 5, interval=200, repeat_delay=2000
+)
 # %%

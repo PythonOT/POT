@@ -53,8 +53,7 @@ M = ot.dist(X_source, Y_target)
 # Call the "SAG" method to find the transportation matrix in the discrete case
 
 method = "SAG"
-sag_pi = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method,
-                                                numItermax)
+sag_pi = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method, numItermax)
 print(sag_pi)
 
 #############################################################################
@@ -84,9 +83,10 @@ M = ot.dist(X_source, Y_target)
 # case.
 
 method = "ASGD"
-asgd_pi, log_asgd = ot.stochastic.solve_semi_dual_entropic(a, b, M, reg, method,
-                                                           numItermax, log=log)
-print(log_asgd['alpha'], log_asgd['beta'])
+asgd_pi, log_asgd = ot.stochastic.solve_semi_dual_entropic(
+    a, b, M, reg, method, numItermax, log=log
+)
+print(log_asgd["alpha"], log_asgd["beta"])
 print(asgd_pi)
 
 #############################################################################
@@ -103,7 +103,7 @@ print(sinkhorn_pi)
 # For SAG
 
 pl.figure(4, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, sag_pi, 'semi-dual : OT matrix SAG')
+ot.plot.plot1D_mat(a, b, sag_pi, "semi-dual : OT matrix SAG")
 pl.show()
 
 
@@ -111,7 +111,7 @@ pl.show()
 # For ASGD
 
 pl.figure(4, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, asgd_pi, 'semi-dual : OT matrix ASGD')
+ot.plot.plot1D_mat(a, b, asgd_pi, "semi-dual : OT matrix ASGD")
 pl.show()
 
 
@@ -119,7 +119,7 @@ pl.show()
 # For Sinkhorn
 
 pl.figure(4, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, sinkhorn_pi, 'OT matrix Sinkhorn')
+ot.plot.plot1D_mat(a, b, sinkhorn_pi, "OT matrix Sinkhorn")
 pl.show()
 
 
@@ -154,10 +154,10 @@ M = ot.dist(X_source, Y_target)
 # Call the "SGD" dual method to find the transportation matrix in the
 # semi-continuous case
 
-sgd_dual_pi, log_sgd = ot.stochastic.solve_dual_entropic(a, b, M, reg,
-                                                         batch_size, numItermax,
-                                                         lr, log=log)
-print(log_sgd['alpha'], log_sgd['beta'])
+sgd_dual_pi, log_sgd = ot.stochastic.solve_dual_entropic(
+    a, b, M, reg, batch_size, numItermax, lr, log=log
+)
+print(log_sgd["alpha"], log_sgd["beta"])
 print(sgd_dual_pi)
 
 #############################################################################
@@ -177,7 +177,7 @@ print(sinkhorn_pi)
 # For SGD
 
 pl.figure(4, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, sgd_dual_pi, 'dual : OT matrix SGD')
+ot.plot.plot1D_mat(a, b, sgd_dual_pi, "dual : OT matrix SGD")
 pl.show()
 
 
@@ -185,5 +185,5 @@ pl.show()
 # For Sinkhorn
 
 pl.figure(4, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, sinkhorn_pi, 'OT matrix Sinkhorn')
+ot.plot.plot1D_mat(a, b, sinkhorn_pi, "OT matrix Sinkhorn")
 pl.show()

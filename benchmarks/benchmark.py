@@ -8,10 +8,12 @@ import gc
 def setup_backends():
     if jax:
         from jax.config import config
+
         config.update("jax_enable_x64", True)
 
     if tf:
         from tensorflow.python.ops.numpy_ops import np_config
+
         np_config.enable_numpy_behavior()
 
 
@@ -36,10 +38,7 @@ def exec_bench(setup, tested_function, param_list, n_runs, warmup_runs):
             print(nx, param_list[i])
             args = inputs[i]
             results_nx = nx._bench(
-                tested_function,
-                *args,
-                n_runs=n_runs,
-                warmup_runs=warmup_runs
+                tested_function, *args, n_runs=n_runs, warmup_runs=warmup_runs
             )
             gc.collect()
             results_nx_with_param_in_key = dict()
@@ -64,10 +63,11 @@ def convert_to_html_table(results, param_name, main_title=None, comments=None):
     assert cpus_cols + gpus_cols == len(devices_names)
 
     if main_title is not None:
-        string += f'<tr><th align="center" colspan="{length}">{str(main_title)}</th></tr>\n'
+        string += (
+            f'<tr><th align="center" colspan="{length}">{str(main_title)}</th></tr>\n'
+        )
 
     for i, bitsize in enumerate(bitsizes):
-
         if i != 0:
             string += f'<tr><td colspan="{length}">&nbsp;</td></tr>\n'
 

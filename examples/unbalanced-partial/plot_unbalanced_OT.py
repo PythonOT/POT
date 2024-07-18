@@ -44,7 +44,7 @@ mu_s = np.array([-1, -1])
 cov_s = np.array([[1, 0], [0, 1]])
 
 mu_t = np.array([4, 4])
-cov_t = np.array([[1, -.8], [-.8, 1]])
+cov_t = np.array([[1, -0.8], [-0.8, 1]])
 
 np.random.seed(0)
 xs = ot.datasets.make_2D_samples_gauss(n, mu_s, cov_s)
@@ -52,8 +52,8 @@ xt = ot.datasets.make_2D_samples_gauss(n, mu_t, cov_t)
 
 n_noise = 10
 
-xs = np.concatenate((xs, ((np.random.rand(n_noise, 2) - 4))), axis=0)
-xt = np.concatenate((xt, ((np.random.rand(n_noise, 2) + 6))), axis=0)
+xs = np.concatenate((xs, (np.random.rand(n_noise, 2) - 4)), axis=0)
+xt = np.concatenate((xt, (np.random.rand(n_noise, 2) + 6)), axis=0)
 
 n = n + n_noise
 
@@ -74,8 +74,8 @@ reg_m_l2 = 5
 mass = 0.7
 
 entropic_kl_uot = ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg, reg_m_kl)
-kl_uot = ot.unbalanced.mm_unbalanced(a, b, M, reg_m_kl, div='kl')
-l2_uot = ot.unbalanced.mm_unbalanced(a, b, M, reg_m_l2, div='l2')
+kl_uot = ot.unbalanced.mm_unbalanced(a, b, M, reg_m_kl, div="kl")
+l2_uot = ot.unbalanced.mm_unbalanced(a, b, M, reg_m_l2, div="l2")
 partial_ot = ot.partial.partial_wasserstein(a, b, M, m=mass)
 
 ##############################################################################
@@ -84,9 +84,12 @@ partial_ot = ot.partial.partial_wasserstein(a, b, M, m=mass)
 
 pl.figure(2)
 transp = [partial_ot, l2_uot, kl_uot, entropic_kl_uot]
-title = ["partial OT \n m=" + str(mass), "$\ell_2$-UOT \n $\mathrm{reg_m}$=" +
-         str(reg_m_l2), "kl-UOT \n $\mathrm{reg_m}$=" + str(reg_m_kl),
-         "entropic kl-UOT \n $\mathrm{reg_m}$=" + str(reg_m_kl)]
+title = [
+    "partial OT \n m=" + str(mass),
+    "$\ell_2$-UOT \n $\mathrm{reg_m}$=" + str(reg_m_l2),
+    "kl-UOT \n $\mathrm{reg_m}$=" + str(reg_m_kl),
+    "entropic kl-UOT \n $\mathrm{reg_m}$=" + str(reg_m_kl),
+]
 
 for p in range(4):
     pl.subplot(2, 4, p + 1)
@@ -96,19 +99,23 @@ for p in range(4):
     for i in range(n):
         for j in range(n):
             if P[i, j] > 0:
-                pl.plot([xs[i, 0], xt[j, 0]], [xs[i, 1], xt[j, 1]], color='C2',
-                        alpha=P[i, j] * 0.3)
-    pl.scatter(xs[:, 0], xs[:, 1], c='C0', alpha=0.2)
-    pl.scatter(xt[:, 0], xt[:, 1], c='C1', alpha=0.2)
-    pl.scatter(xs[:, 0], xs[:, 1], c='C0', s=P.sum(1).ravel() * (1 + p) * 2)
-    pl.scatter(xt[:, 0], xt[:, 1], c='C1', s=P.sum(0).ravel() * (1 + p) * 2)
+                pl.plot(
+                    [xs[i, 0], xt[j, 0]],
+                    [xs[i, 1], xt[j, 1]],
+                    color="C2",
+                    alpha=P[i, j] * 0.3,
+                )
+    pl.scatter(xs[:, 0], xs[:, 1], c="C0", alpha=0.2)
+    pl.scatter(xt[:, 0], xt[:, 1], c="C1", alpha=0.2)
+    pl.scatter(xs[:, 0], xs[:, 1], c="C0", s=P.sum(1).ravel() * (1 + p) * 2)
+    pl.scatter(xt[:, 0], xt[:, 1], c="C1", s=P.sum(0).ravel() * (1 + p) * 2)
     pl.title(title[p])
     pl.yticks(())
     pl.xticks(())
     if p < 1:
         pl.ylabel("mappings")
     pl.subplot(2, 4, p + 5)
-    pl.imshow(P, cmap='jet')
+    pl.imshow(P, cmap="jet")
     pl.yticks(())
     pl.xticks(())
     if p < 1:

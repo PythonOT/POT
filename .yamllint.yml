@@ -1,0 +1,10 @@
+extends: default
+
+ignore: |
+  .github/workflows/*.yml
+  .circleci/config.yml
+  codecov.yml
+
+rules:
+  line-length: disable
+  document-start: disable

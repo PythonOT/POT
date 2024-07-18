@@ -30,8 +30,8 @@ from ot.lp import wasserstein_1d
 from ot.datasets import make_1D_gauss as gauss
 from ot.utils import proj_simplex
 
-red = np.array(mpl.colors.to_rgb('red'))
-blue = np.array(mpl.colors.to_rgb('blue'))
+red = np.array(mpl.colors.to_rgb("red"))
+blue = np.array(mpl.colors.to_rgb("blue"))
 
 
 n = 100  # nb bins
@@ -61,8 +61,8 @@ nb_iter_max = 800
 loss_iter = []
 
 pl.figure(1, figsize=(8, 4))
-pl.plot(x, a, 'b', label='Source distribution')
-pl.plot(x, b, 'r', label='Target distribution')
+pl.plot(x, a, "b", label="Source distribution")
+pl.plot(x, b, "r", label="Target distribution")
 
 for i in range(nb_iter_max):
     # Compute the Wasserstein 1D with torch backend
@@ -81,15 +81,17 @@ for i in range(nb_iter_max):
     # plot one curve every 10 iterations
     if i % 10 == 0:
         mix = float(i) / nb_iter_max
-        pl.plot(x, a_torch.clone().detach().cpu().numpy(), c=(1 - mix) * blue + mix * red)
+        pl.plot(
+            x, a_torch.clone().detach().cpu().numpy(), c=(1 - mix) * blue + mix * red
+        )
 
 pl.legend()
-pl.title('Distribution along the iterations of the projected gradient descent')
+pl.title("Distribution along the iterations of the projected gradient descent")
 pl.show()
 
 pl.figure(2)
 pl.plot(range(nb_iter_max), loss_iter, lw=3)
-pl.title('Evolution of the loss along iterations', fontsize=16)
+pl.title("Evolution of the loss along iterations", fontsize=16)
 pl.show()
 
 # %%
@@ -126,7 +128,9 @@ t = 0.5
 
 for i in range(nb_iter_max):
     # Compute the Wasserstein 1D with torch backend
-    loss = (1 - t) * wasserstein_1d(x_torch, x_torch, a_torch.detach(), bary_torch, p=2) + t * wasserstein_1d(x_torch, x_torch, b_torch, bary_torch, p=2)
+    loss = (1 - t) * wasserstein_1d(
+        x_torch, x_torch, a_torch.detach(), bary_torch, p=2
+    ) + t * wasserstein_1d(x_torch, x_torch, b_torch, bary_torch, p=2)
     # record the corresponding loss value
     loss_iter.append(loss.clone().detach().cpu().numpy())
     loss.backward()
@@ -139,14 +143,14 @@ for i in range(nb_iter_max):
         bary_torch.data = proj_simplex(bary_torch)  # projection onto the simplex
 
 pl.figure(3, figsize=(8, 4))
-pl.plot(x, a, 'b', label='Source distribution')
-pl.plot(x, b, 'r', label='Target distribution')
-pl.plot(x, bary_torch.clone().detach().cpu().numpy(), c='green', label='W barycenter')
+pl.plot(x, a, "b", label="Source distribution")
+pl.plot(x, b, "r", label="Target distribution")
+pl.plot(x, bary_torch.clone().detach().cpu().numpy(), c="green", label="W barycenter")
 pl.legend()
-pl.title('Wasserstein barycenter computed by gradient descent')
+pl.title("Wasserstein barycenter computed by gradient descent")
 pl.show()
 
 pl.figure(4)
 pl.plot(range(nb_iter_max), loss_iter, lw=3)
-pl.title('Evolution of the loss along iterations', fontsize=16)
+pl.title("Evolution of the loss along iterations", fontsize=16)
 pl.show()

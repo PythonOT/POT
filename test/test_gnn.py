@@ -5,7 +5,6 @@
 #
 # License: MIT License
 
-
 import pytest
 
 try:  # test if pytorch_geometric is installed
@@ -40,12 +39,13 @@ def test_TFGW_optim():
             self.n_templates = n_templates
             self.n_template_nodes = n_template_nodes
 
-            self.TFGW = TFGWPooling(self.n_templates, self.n_template_nodes, self.n_features)
+            self.TFGW = TFGWPooling(
+                self.n_templates, self.n_template_nodes, self.n_features
+            )
 
             self.linear = Linear(self.n_templates, 1)
 
         def forward(self, x, edge_index):
-
             x = self.TFGW(x, edge_index)
 
             x = self.linear(x)
@@ -69,8 +69,8 @@ def test_TFGW_optim():
     x1 = torch.rand(n_nodes, n_features)
     x2 = torch.rand(n_nodes, n_features)
 
-    graph1 = GraphData(x=x1, edge_index=edge_index1, y=torch.tensor([0.]))
-    graph2 = GraphData(x=x2, edge_index=edge_index2, y=torch.tensor([1.]))
+    graph1 = GraphData(x=x1, edge_index=edge_index1, y=torch.tensor([0.0]))
+    graph2 = GraphData(x=x2, edge_index=edge_index2, y=torch.tensor([1.0]))
 
     dataset = DataLoader([graph1, graph2], batch_size=1)
 
@@ -83,7 +83,6 @@ def test_TFGW_optim():
 
     for i in range(n_epochs):
         for data in dataset:
-
             out = model_FGW(data.x, data.edge_index)
             loss = criterion(out, data.y)
             loss.backward()
@@ -115,7 +114,6 @@ def test_TFGW_variants():
             self.linear = Linear(self.n_templates, 1)
 
         def forward(self, x, edge_index, batch=None):
-
             x = self.TFGW(x, edge_index, batch=batch)
 
             x = self.linear(x)
@@ -132,17 +130,28 @@ def test_TFGW_variants():
     C1 = torch.randint(0, 2, size=(n_nodes, n_nodes))
     edge_index1 = torch.stack(torch.where(C1 == 1))
     x1 = torch.rand(n_nodes, n_features)
-    graph1 = GraphData(x=x1, edge_index=edge_index1, y=torch.tensor([0.]))
+    graph1 = GraphData(x=x1, edge_index=edge_index1, y=torch.tensor([0.0]))
     batch1 = torch.tensor([1] * n_nodes)
-    batch1[:n_nodes // 2] = 0
+    batch1[: n_nodes // 2] = 0
 
     criterion = torch.nn.CrossEntropyLoss()
 
     for train_node_weights in [True, False]:
         for alpha in [None, 0, 0.5]:
             for multi_alpha in [True, False]:
-                model = GNN_pooling(n_features, n_templates, n_template_nodes,
-                                    pooling_layer=TFGWPooling(n_templates, n_template_nodes, n_features, alpha=alpha, multi_alpha=multi_alpha, train_node_weights=train_node_weights))
+                model = GNN_pooling(
+                    n_features,
+                    n_templates,
+                    n_template_nodes,
+                    pooling_layer=TFGWPooling(
+                        n_templates,
+                        n_template_nodes,
+                        n_features,
+                        alpha=alpha,
+                        multi_alpha=multi_alpha,
+                        train_node_weights=train_node_weights,
+                    ),
+                )
 
                 # predict
                 out1 = model(graph1.x, graph1.edge_index)
@@ -177,7 +186,6 @@ def test_TW_variants():
             self.linear = Linear(self.n_templates, 1)
 
         def forward(self, x, edge_index, batch=None):
-
             x = self.TFGW(x, edge_index, batch=batch)
 
             x = self.linear(x)
@@ -194,16 +202,24 @@ def test_TW_variants():
     C1 = torch.randint(0, 2, size=(n_nodes, n_nodes))
     edge_index1 = torch.stack(torch.where(C1 == 1))
     x1 = torch.rand(n_nodes, n_features)
-    graph1 = GraphData(x=x1, edge_index=edge_index1, y=torch.tensor([0.]))
+    graph1 = GraphData(x=x1, edge_index=edge_index1, y=torch.tensor([0.0]))
     batch1 = torch.tensor([1] * n_nodes)
-    batch1[:n_nodes // 2] = 0
+    batch1[: n_nodes // 2] = 0
 
     criterion = torch.nn.CrossEntropyLoss()
 
     for train_node_weights in [True, False]:
-
-        model = GNN_pooling(n_features, n_templates, n_template_nodes,
-                            pooling_layer=TWPooling(n_templates, n_template_nodes, n_features, train_node_weights=train_node_weights))
+        model = GNN_pooling(
+            n_features,
+            n_templates,
+            n_template_nodes,
+            pooling_layer=TWPooling(
+                n_templates,
+                n_template_nodes,
+                n_features,
+                train_node_weights=train_node_weights,
+            ),
+        )
 
         out1 = model(graph1.x, graph1.edge_index)
         loss = criterion(out1, graph1.y)
@@ -232,12 +248,13 @@ def test_TW():
             self.n_templates = n_templates
             self.n_template_nodes = n_template_nodes
 
-            self.TFGW = TWPooling(self.n_templates, self.n_template_nodes, self.n_features)
+            self.TFGW = TWPooling(
+                self.n_templates, self.n_template_nodes, self.n_features
+            )
 
             self.linear = Linear(self.n_templates, 1)
 
         def forward(self, x, edge_index):
-
             x = self.TFGW(x, edge_index)
 
             x = self.linear(x)
@@ -261,8 +278,8 @@ def test_TW():
     x1 = torch.rand(n_nodes, n_features)
     x2 = torch.rand(n_nodes, n_features)
 
-    graph1 = GraphData(x=x1, edge_index=edge_index1, y=torch.tensor([0.]))
-    graph2 = GraphData(x=x2, edge_index=edge_index2, y=torch.tensor([1.]))
+    graph1 = GraphData(x=x1, edge_index=edge_index1, y=torch.tensor([0.0]))
+    graph2 = GraphData(x=x2, edge_index=edge_index2, y=torch.tensor([1.0]))
 
     dataset = DataLoader([graph1, graph2], batch_size=1)
 
@@ -275,7 +292,6 @@ def test_TW():
 
     for i in range(n_epochs):
         for data in dataset:
-
             out = model_W(data.x, data.edge_index)
             loss = criterion(out, data.y)
             loss.backward()

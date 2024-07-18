@@ -25,7 +25,7 @@ def scipy_sparse_to_spmatrix(A):
     return SP
 
 
-def barycenter(A, M, weights=None, verbose=False, log=False, solver='highs-ipm'):
+def barycenter(A, M, weights=None, verbose=False, log=False, solver="highs-ipm"):
     r"""Compute the Wasserstein barycenter of distributions A
 
      The function solves the following optimization problem [16]:
@@ -95,7 +95,9 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver='highs-ipm')
 
     lst_idiag1 = [sps.kron(sps.eye(n), np.ones((1, n))) for i in range(n_distributions)]
     #  row constraints
-    A_eq1 = sps.hstack((sps.block_diag(lst_idiag1), sps.coo_matrix((n_distributions * n, n))))
+    A_eq1 = sps.hstack(
+        (sps.block_diag(lst_idiag1), sps.coo_matrix((n_distributions * n, n)))
+    )
 
     # columns constraints
     lst_idiag2 = []
@@ -115,28 +117,33 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver='highs-ipm')
     A_eq = sps.vstack((A_eq1, A_eq2))
     b_eq = np.concatenate((b_eq1, b_eq2))
 
-    if not cvxopt or solver in ['interior-point', 'highs', 'highs-ipm', 'highs-ds']:
+    if not cvxopt or solver in ["interior-point", "highs", "highs-ipm", "highs-ds"]:
         # cvxopt not installed or interior point
 
         if solver is None:
-            solver = 'interior-point'
+            solver = "interior-point"
 
-        options = {'disp': verbose}
-        sol = sp.optimize.linprog(c, A_eq=A_eq, b_eq=b_eq, method=solver,
-                                  options=options)
+        options = {"disp": verbose}
+        sol = sp.optimize.linprog(
+            c, A_eq=A_eq, b_eq=b_eq, method=solver, options=options
+        )
         x = sol.x
         b = x[-n:]
 
     else:
-
         h = np.zeros((n_distributions * n2 + n))
         G = -sps.eye(n_distributions * n2 + n)
 
-        sol = solvers.lp(matrix(c), scipy_sparse_to_spmatrix(G), matrix(h),
-                         A=scipy_sparse_to_spmatrix(A_eq), b=matrix(b_eq),
-                         solver=solver)
+        sol = solvers.lp(
+            matrix(c),
+            scipy_sparse_to_spmatrix(G),
+            matrix(h),
+            A=scipy_sparse_to_spmatrix(A_eq),
+            b=matrix(b_eq),
+            solver=solver,
+        )
 
-        x = np.array(sol['x'])
+        x = np.array(sol["x"])
         b = x[-n:].ravel()
 
     if log:

@@ -8,6 +8,7 @@ Wrapper functions for geomloss
 # License: MIT License
 
 import numpy as np
+
 try:
     import geomloss
     from geomloss import SamplesLoss
@@ -18,8 +19,10 @@ except ImportError:
     geomloss = False
 
 
-def get_sinkhorn_geomloss_lazytensor(X_a, X_b, f, g, a, b, metric='sqeuclidean', blur=0.1, nx=None):
-    """ Get a LazyTensor of sinkhorn solution T = exp((f+g^T-C)/reg)*(ab^T)
+def get_sinkhorn_geomloss_lazytensor(
+    X_a, X_b, f, g, a, b, metric="sqeuclidean", blur=0.1, nx=None
+):
+    """Get a LazyTensor of sinkhorn solution T = exp((f+g^T-C)/reg)*(ab^T)
 
     Parameters
     ----------
@@ -51,20 +54,35 @@ def get_sinkhorn_geomloss_lazytensor(X_a, X_b, f, g, a, b, metric='sqeuclidean',
     shape = (X_a.shape[0], X_b.shape[0])
 
     def func(i, j, X_a, X_b, f, g, a, b, metric, blur):
-        if metric == 'sqeuclidean':
+        if metric == "sqeuclidean":
             C = dist(X_a[i], X_b[j], metric=metric) / 2
         else:
             C = dist(X_a[i], X_b[j], metric=metric)
-        return nx.exp((f[i, None] + g[None, j] - C) / (blur**2)) * (a[i, None] * b[None, j])
+        return nx.exp((f[i, None] + g[None, j] - C) / (blur**2)) * (
+            a[i, None] * b[None, j]
+        )
 
-    T = LazyTensor(shape, func, X_a=X_a, X_b=X_b, f=f, g=g, a=a, b=b, metric=metric, blur=blur)
+    T = LazyTensor(
+        shape, func, X_a=X_a, X_b=X_b, f=f, g=g, a=a, b=b, metric=metric, blur=blur
+    )
 
     return T
 
 
-def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean', scaling=0.95,
-                                 verbose=False, debias=False, log=False, backend='auto'):
-    r""" Solve the entropic regularization optimal transport problem with geomloss
+def empirical_sinkhorn2_geomloss(
+    X_s,
+    X_t,
+    reg,
+    a=None,
+    b=None,
+    metric="sqeuclidean",
+    scaling=0.95,
+    verbose=False,
+    debias=False,
+    log=False,
+    backend="auto",
+):
+    r"""Solve the entropic regularization optimal transport problem with geomloss
 
     The function solves the following optimization problem:
 
@@ -103,7 +121,7 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
     b : array-like, shape (n_samples_b,), default=None
         samples weights in the target domain
     metric : str, default='sqeuclidean'
-        Metric used for the cost matrix computation Only acepted values are
+        Metric used for the cost matrix computation Only accepted values are
         'sqeuclidean' and 'euclidean'.
     scaling : float, default=0.95
         Scaling parameter used for epsilon scaling. Value close to one promote
@@ -142,18 +160,17 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
     """
 
     if geomloss:
-
         nx = get_backend(X_s, X_t, a, b)
 
-        if nx.__name__ not in ['torch', 'numpy']:
-            raise ValueError('geomloss only support torch or numpy backend')
+        if nx.__name__ not in ["torch", "numpy"]:
+            raise ValueError("geomloss only support torch or numpy backend")
 
         if a is None:
             a = nx.ones(X_s.shape[0], type_as=X_s) / X_s.shape[0]
         if b is None:
             b = nx.ones(X_t.shape[0], type_as=X_t) / X_t.shape[0]
 
-        if nx.__name__ == 'numpy':
+        if nx.__name__ == "numpy":
             X_s_torch = torch.tensor(X_s)
             X_t_torch = torch.tensor(X_t)
 
@@ -170,42 +187,54 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
         # after that we are all in torch
 
         # set blur value and p
-        if metric == 'sqeuclidean':
+        if metric == "sqeuclidean":
             p = 2
             blur = np.sqrt(reg / 2)  # because geomloss divides cost by two
-        elif metric == 'euclidean':
+        elif metric == "euclidean":
             p = 1
             blur = np.sqrt(reg)
         else:
-            raise ValueError('geomloss only supports sqeuclidean and euclidean metrics')
+            raise ValueError("geomloss only supports sqeuclidean and euclidean metrics")
 
         # force gradients for computing dual
         a_torch.requires_grad = True
         b_torch.requires_grad = True
 
-        loss = SamplesLoss(loss='sinkhorn', p=p, blur=blur, backend=backend, debias=debias, scaling=scaling, verbose=verbose)
+        loss = SamplesLoss(
+            loss="sinkhorn",
+            p=p,
+            blur=blur,
+            backend=backend,
+            debias=debias,
+            scaling=scaling,
+            verbose=verbose,
+        )
 
         # compute value
-        value = loss(a_torch, X_s_torch, b_torch, X_t_torch)  # linear + entropic/KL reg?
+        value = loss(
+            a_torch, X_s_torch, b_torch, X_t_torch
+        )  # linear + entropic/KL reg?
 
         # get dual potentials
         f, g = grad(value, [a_torch, b_torch])
 
-        if metric == 'sqeuclidean':
+        if metric == "sqeuclidean":
             value *= 2  # because geomloss divides cost by two
 
-        if nx.__name__ == 'numpy':
+        if nx.__name__ == "numpy":
             f = f.cpu().detach().numpy()
             g = g.cpu().detach().numpy()
             value = value.cpu().detach().numpy()
 
         if log:
             log = {}
-            log['f'] = f
-            log['g'] = g
-            log['value'] = value
+            log["f"] = f
+            log["g"] = g
+            log["value"] = value
 
-            log['lazy_plan'] = get_sinkhorn_geomloss_lazytensor(X_s, X_t, f, g, a, b, metric=metric, blur=blur, nx=nx)
+            log["lazy_plan"] = get_sinkhorn_geomloss_lazytensor(
+                X_s, X_t, f, g, a, b, metric=metric, blur=blur, nx=nx
+            )
 
             return value, log
 
@@ -213,4 +242,4 @@ def empirical_sinkhorn2_geomloss(X_s, X_t, reg, a=None, b=None, metric='sqeuclid
             return value
 
     else:
-        raise ImportError('geomloss not installed')
+        raise ImportError("geomloss not installed")

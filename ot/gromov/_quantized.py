@@ -12,12 +12,14 @@ import warnings
 try:
     from networkx.algorithms.community import asyn_fluidc, louvain_communities
     from networkx import from_numpy_array, pagerank
+
     networkx_import = True
 except ImportError:
     networkx_import = False
 
 try:
     from sklearn.cluster import SpectralClustering, KMeans
+
     sklearn_import = True
 except ImportError:
     sklearn_import = False
@@ -32,9 +34,23 @@ from ._utils import init_matrix, gwloss
 
 
 def quantized_fused_gromov_wasserstein_partitioned(
-        CR1, CR2, list_R1, list_R2, list_p1, list_p2, MR=None,
-        alpha=1., build_OT=False, log=False, armijo=False, max_iter=1e4,
-        tol_rel=1e-9, tol_abs=1e-9, nx=None, **kwargs):
+    CR1,
+    CR2,
+    list_R1,
+    list_R2,
+    list_p1,
+    list_p2,
+    MR=None,
+    alpha=1.0,
+    build_OT=False,
+    log=False,
+    armijo=False,
+    max_iter=1e4,
+    tol_rel=1e-9,
+    tol_abs=1e-9,
+    nx=None,
+    **kwargs,
+):
     r"""
     Returns the quantized Fused Gromov-Wasserstein transport between
     :math:`(\mathbf{C_1}, \mathbf{F_1}, \mathbf{p})` and :math:`(\mathbf{C_2},
@@ -155,24 +171,43 @@ def quantized_fused_gromov_wasserstein_partitioned(
     pR2 = nx.from_numpy(list_to_array([nx.sum(q) for q in list_p2]))
 
     # compute global alignment
-    if alpha == 1.:
+    if alpha == 1.0:
         res_global = gromov_wasserstein(
-            CR1, CR2, pR1, pR2, loss_fun='square_loss', log=log,
-            armijo=armijo, max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs)
+            CR1,
+            CR2,
+            pR1,
+            pR2,
+            loss_fun="square_loss",
+            log=log,
+            armijo=armijo,
+            max_iter=max_iter,
+            tol_rel=tol_rel,
+            tol_abs=tol_abs,
+        )
 
         if log:
-            T_global, dist_global = res_global[0], res_global[1]['gw_dist']
+            T_global, dist_global = res_global[0], res_global[1]["gw_dist"]
         else:
             T_global = res_global
 
-    elif (alpha < 1.) and (alpha > 0.):
-
+    elif (alpha < 1.0) and (alpha > 0.0):
         res_global = fused_gromov_wasserstein(
-            MR, CR1, CR2, pR1, pR2, 'square_loss', alpha=alpha, log=log,
-            armijo=armijo, max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs)
+            MR,
+            CR1,
+            CR2,
+            pR1,
+            pR2,
+            "square_loss",
+            alpha=alpha,
+            log=log,
+            armijo=armijo,
+            max_iter=max_iter,
+            tol_rel=tol_rel,
+            tol_abs=tol_abs,
+        )
 
         if log:
-            T_global, dist_global = res_global[0], res_global[1]['fgw_dist']
+            T_global, dist_global = res_global[0], res_global[1]["fgw_dist"]
         else:
             T_global = res_global
 
@@ -180,11 +215,12 @@ def quantized_fused_gromov_wasserstein_partitioned(
         raise ValueError(
             f"""
             `alpha='{alpha}'` should be in ]0, 1].
-            """)
+            """
+        )
 
     if log:
         log_ = {}
-        log_['global dist'] = dist_global
+        log_["global dist"] = dist_global
 
     # compute local alignments
     Ts_local = {}
@@ -193,13 +229,20 @@ def quantized_fused_gromov_wasserstein_partitioned(
 
     for i in range(npart1):
         for j in range(npart2):
-            if T_global[i, j] != 0.:
-                res_1d = emd_1d(list_R1[i], list_R2[j], list_p1_norm[i], list_p2_norm[j],
-                                metric='sqeuclidean', p=1., log=log)
+            if T_global[i, j] != 0.0:
+                res_1d = emd_1d(
+                    list_R1[i],
+                    list_R2[j],
+                    list_p1_norm[i],
+                    list_p2_norm[j],
+                    metric="sqeuclidean",
+                    p=1.0,
+                    log=log,
+                )
                 if log:
                     T_local, log_local = res_1d
                     Ts_local[(i, j)] = T_local
-                    log_[f'local dist ({i},{j})'] = log_local['cost']
+                    log_[f"local dist ({i},{j})"] = log_local["cost"]
                 else:
                     Ts_local[(i, j)] = res_1d
 
@@ -208,8 +251,10 @@ def quantized_fused_gromov_wasserstein_partitioned(
         for i in range(npart1):
             list_Ti = []
             for j in range(npart2):
-                if T_global[i, j] == 0.:
-                    T_local = nx.zeros((list_R1[i].shape[0], list_R2[j].shape[0]), type_as=T_global)
+                if T_global[i, j] == 0.0:
+                    T_local = nx.zeros(
+                        (list_R1[i].shape[0], list_R2[j].shape[0]), type_as=T_global
+                    )
                 else:
                     T_local = T_global[i, j] * Ts_local[(i, j)]
                 list_Ti.append(T_local)
@@ -228,8 +273,9 @@ def quantized_fused_gromov_wasserstein_partitioned(
         return T_global, Ts_local, T
 
 
-def get_graph_partition(C, npart, part_method='random', F=None, alpha=1.,
-                        random_state=0, nx=None):
+def get_graph_partition(
+    C, npart, part_method="random", F=None, alpha=1.0, random_state=0, nx=None
+):
     r"""
     Partitioning a given graph with structure matrix :math:`\mathbf{C} \in R^{n \times n}`
     into `npart` partitions either 'random', or using one of {'louvain', 'fluid'}
@@ -277,14 +323,14 @@ def get_graph_partition(C, npart, part_method='random', F=None, alpha=1.,
     n = C.shape[0]
     C0 = C
 
-    if (alpha != 1.) and (F is None):
+    if (alpha != 1.0) and (F is None):
         raise ValueError("`alpha != 1` but node features are not provided.")
 
     if npart >= n:
         warnings.warn(
             "Requested number of partitions higher than the number of nodes"
             "hence we enforce each node to be a partition.",
-            stacklevel=2
+            stacklevel=2,
         )
 
         part = np.arange(n)
@@ -292,12 +338,12 @@ def get_graph_partition(C, npart, part_method='random', F=None, alpha=1.,
     elif npart == 1:
         part = np.zeros(n)
 
-    elif part_method == 'random':
+    elif part_method == "random":
         # randomly partition the space
         random.seed(random_state)
         part = list_to_array(random.choices(np.arange(npart), k=C.shape[0]))
 
-    elif part_method == 'louvain':
+    elif part_method == "louvain":
         C = nx.to_numpy(C0)
         graph = from_numpy_array(C)
         part_sets = louvain_communities(graph, seed=random_state)
@@ -306,7 +352,7 @@ def get_graph_partition(C, npart, part_method='random', F=None, alpha=1.,
             set_ = list(set_)
             part[set_] = iset_
 
-    elif part_method == 'fluid':
+    elif part_method == "fluid":
         C = nx.to_numpy(C0)
         graph = from_numpy_array(C)
         part_sets = asyn_fluidc(graph, npart, seed=random_state)
@@ -315,14 +361,14 @@ def get_graph_partition(C, npart, part_method='random', F=None, alpha=1.,
             set_ = list(set_)
             part[set_] = iset_
 
-    elif part_method == 'spectral':
+    elif part_method == "spectral":
         C = nx.to_numpy(C0)
-        sc = SpectralClustering(n_clusters=npart,
-                                random_state=random_state,
-                                affinity='precomputed').fit(C)
+        sc = SpectralClustering(
+            n_clusters=npart, random_state=random_state, affinity="precomputed"
+        ).fit(C)
         part = sc.labels_
 
-    elif part_method in ['GW', 'FGW']:
+    elif part_method in ["GW", "FGW"]:
         raise ValueError(f"`part_method == {part_method}` not implemented yet.")
 
     else:
@@ -330,11 +376,12 @@ def get_graph_partition(C, npart, part_method='random', F=None, alpha=1.,
             f"""
             Unknown `part_method='{part_method}'`. Use one of:
             {'random', 'louvain', 'fluid', 'spectral', 'GW', 'FGW'}.
-            """)
+            """
+        )
     return nx.from_numpy(part, type_as=C0)
 
 
-def get_graph_representants(C, part, rep_method='pagerank', random_state=0, nx=None):
+def get_graph_representants(C, part, rep_method="pagerank", random_state=0, nx=None):
     r"""
     Get representative node for each partition given by :math:`\mathbf{part} \in R^{n}`
     of a graph with structure matrix :math:`\mathbf{C} \in R^{n \times n}`.
@@ -376,13 +423,13 @@ def get_graph_representants(C, part, rep_method='pagerank', random_state=0, nx=N
     if n_part_ids == C.shape[0]:
         rep_indices = nx.arange(n_part_ids)
 
-    elif rep_method == 'random':
+    elif rep_method == "random":
         random.seed(random_state)
         for id_, part_id in enumerate(part_ids):
             indices = nx.where(part == part_id)[0]
             rep_indices.append(random.choice(indices))
 
-    elif rep_method == 'pagerank':
+    elif rep_method == "pagerank":
         C0, part0 = C, part
         C = nx.to_numpy(C0)
         part = nx.to_numpy(part0)
@@ -401,13 +448,15 @@ def get_graph_representants(C, part, rep_method='pagerank', random_state=0, nx=N
             f"""
             Unknown `rep_method='{rep_method}'`. Use one of:
             {'random', 'pagerank'}.
-            """)
+            """
+        )
 
     return rep_indices
 
 
-def format_partitioned_graph(C, p, part, rep_indices, F=None, M=None,
-                             alpha=1., nx=None):
+def format_partitioned_graph(
+    C, p, part, rep_indices, F=None, M=None, alpha=1.0, nx=None
+):
     r"""
     Format an attributed graph :math:`(\mathbf{C}, \mathbf{F}, \mathbf{p})`
     with structure matrix :math:`(\mathbf{C} \in R^{n \times n}`, feature matrix
@@ -464,16 +513,17 @@ def format_partitioned_graph(C, p, part, rep_indices, F=None, M=None,
 
         nx = get_backend(*arr)
 
-    if alpha != 1.:
+    if alpha != 1.0:
         if (M is None) or (F is None):
             raise ValueError(
                 f"""
                 `alpha == {alpha} != 1` but features information is not properly provided.
-                """)
+                """
+            )
 
     CR = C[rep_indices, :][:, rep_indices]
 
-    if alpha != 1.:
+    if alpha != 1.0:
         C_new = alpha * C + (1 - alpha) * M
     else:
         C_new = C
@@ -488,7 +538,6 @@ def format_partitioned_graph(C, p, part, rep_indices, F=None, M=None,
         list_p.append(p[indices])
 
     if F is None:
-
         return CR, list_R, list_p
     else:
         FR = F[rep_indices, :]
@@ -497,10 +546,27 @@ def format_partitioned_graph(C, p, part, rep_indices, F=None, M=None,
 
 
 def quantized_fused_gromov_wasserstein(
-        C1, C2, npart1, npart2, p=None, q=None, C1_aux=None, C2_aux=None,
-        F1=None, F2=None, alpha=1., part_method='fluid',
-        rep_method='random', log=False, armijo=False, max_iter=1e4,
-        tol_rel=1e-9, tol_abs=1e-9, random_state=0, **kwargs):
+    C1,
+    C2,
+    npart1,
+    npart2,
+    p=None,
+    q=None,
+    C1_aux=None,
+    C2_aux=None,
+    F1=None,
+    F2=None,
+    alpha=1.0,
+    part_method="fluid",
+    rep_method="random",
+    log=False,
+    armijo=False,
+    max_iter=1e4,
+    tol_rel=1e-9,
+    tol_abs=1e-9,
+    random_state=0,
+    **kwargs,
+):
     r"""
     Returns the quantized Fused Gromov-Wasserstein transport between
     :math:`(\mathbf{C_1}, \mathbf{F_1}, \mathbf{p})` and :math:`(\mathbf{C_2},
@@ -626,7 +692,9 @@ def quantized_fused_gromov_wasserstein(
         Quantized gromov-wasserstein. ECML PKDD 2021. Springer International Publishing.
 
     """
-    if (part_method in ['fluid', 'louvain', 'fluid_fused', 'louvain_fused'] or (rep_method in ['pagerank', 'pagerank_fused'])):
+    if part_method in ["fluid", "louvain", "fluid_fused", "louvain_fused"] or (
+        rep_method in ["pagerank", "pagerank_fused"]
+    ):
         if not networkx_import:
             warnings.warn(
                 f"""
@@ -635,10 +703,10 @@ def quantized_fused_gromov_wasserstein(
                 default methods. Consider installing Networkx to fix this.
                 """
             )
-        part_method = 'random'
-        rep_method = 'random'
+        part_method = "random"
+        rep_method = "random"
 
-    if (part_method in ['spectral', 'spectral_fused']) and (not sklearn_import):
+    if (part_method in ["spectral", "spectral_fused"]) and (not sklearn_import):
         warnings.warn(
             f"""
             Scikit-learn is not installed, so part_method={part_method} and/or
@@ -646,16 +714,17 @@ def quantized_fused_gromov_wasserstein(
             default methods. Consider installing Scikit-learn to fix this.
             """
         )
-        part_method = 'random'
-        rep_method = 'random'
+        part_method = "random"
+        rep_method = "random"
 
-    if (('fused' in part_method) or ('fused' in rep_method) or (part_method == 'FGW')):
+    if ("fused" in part_method) or ("fused" in rep_method) or (part_method == "FGW"):
         if (F1 is None) or (F2 is None):
             raise ValueError(
                 f"""
                 `part_method='{part_method}'` and/or `rep_method='{rep_method}'`
                 require feature matrices which are not provided as inputs.
-                """)
+                """
+            )
 
     arr = [C1, C2]
     if C1_aux is not None:
@@ -684,22 +753,29 @@ def quantized_fused_gromov_wasserstein(
     DF1 = None
     DF2 = None
     # compute attributed graph partitions potentially using the auxiliary structure
-    if 'fused' in part_method:
-
+    if "fused" in part_method:
         DF1 = dist(F1, F1)
         DF2 = dist(F2, F2)
         C1_new = alpha * C1_aux + (1 - alpha) * DF1
         C2_new = alpha * C2_aux + (1 - alpha) * DF2
 
         part_method_ = part_method[:-6]
-        part1 = get_graph_partition(C1_new, npart1, part_method_, random_state=random_state, nx=nx)
-        part2 = get_graph_partition(C2_new, npart2, part_method_, random_state=random_state, nx=nx)
+        part1 = get_graph_partition(
+            C1_new, npart1, part_method_, random_state=random_state, nx=nx
+        )
+        part2 = get_graph_partition(
+            C2_new, npart2, part_method_, random_state=random_state, nx=nx
+        )
 
     else:
-        part1 = get_graph_partition(C1_aux, npart1, part_method, F1, alpha, random_state, nx)
-        part2 = get_graph_partition(C2_aux, npart2, part_method, F2, alpha, random_state, nx)
+        part1 = get_graph_partition(
+            C1_aux, npart1, part_method, F1, alpha, random_state, nx
+        )
+        part2 = get_graph_partition(
+            C2_aux, npart2, part_method, F2, alpha, random_state, nx
+        )
 
-    if 'fused' in rep_method:
+    if "fused" in rep_method:
         if DF1 is None:
             DF1 = dist(F1, F1)
             DF2 = dist(F2, F2)
@@ -708,17 +784,29 @@ def quantized_fused_gromov_wasserstein(
 
         rep_method_ = rep_method[:-6]
 
-        rep_indices1 = get_graph_representants(C1_new, part1, rep_method_, random_state, nx)
-        rep_indices2 = get_graph_representants(C2_new, part2, rep_method_, random_state, nx)
+        rep_indices1 = get_graph_representants(
+            C1_new, part1, rep_method_, random_state, nx
+        )
+        rep_indices2 = get_graph_representants(
+            C2_new, part2, rep_method_, random_state, nx
+        )
 
     else:
-        rep_indices1 = get_graph_representants(C1_aux, part1, rep_method, random_state, nx)
-        rep_indices2 = get_graph_representants(C2_aux, part2, rep_method, random_state, nx)
+        rep_indices1 = get_graph_representants(
+            C1_aux, part1, rep_method, random_state, nx
+        )
+        rep_indices2 = get_graph_representants(
+            C2_aux, part2, rep_method, random_state, nx
+        )
 
     # format partitions over (C1, F1) and (C2, F2)
     if (F1 is None) and (F2 is None):
-        CR1, list_R1, list_p1 = format_partitioned_graph(C1, p, part1, rep_indices1, nx=nx)
-        CR2, list_R2, list_p2 = format_partitioned_graph(C2, q, part2, rep_indices2, nx=nx)
+        CR1, list_R1, list_p1 = format_partitioned_graph(
+            C1, p, part1, rep_indices1, nx=nx
+        )
+        CR2, list_R2, list_p2 = format_partitioned_graph(
+            C2, q, part2, rep_indices2, nx=nx
+        )
 
         MR = None
     else:
@@ -726,31 +814,49 @@ def quantized_fused_gromov_wasserstein(
             DF1 = dist(F1, F1)
             DF2 = dist(F2, F2)
 
-        CR1, list_R1, list_p1, FR1 = format_partitioned_graph(C1, p, part1, rep_indices1, F1, DF1, alpha, nx)
-        CR2, list_R2, list_p2, FR2 = format_partitioned_graph(C2, q, part2, rep_indices2, F2, DF2, alpha, nx)
+        CR1, list_R1, list_p1, FR1 = format_partitioned_graph(
+            C1, p, part1, rep_indices1, F1, DF1, alpha, nx
+        )
+        CR2, list_R2, list_p2, FR2 = format_partitioned_graph(
+            C2, q, part2, rep_indices2, F2, DF2, alpha, nx
+        )
 
         MR = dist(FR1, FR2)
     # call to partitioned quantized fused gromov-wasserstein solver
 
     res = quantized_fused_gromov_wasserstein_partitioned(
-        CR1, CR2, list_R1, list_R2, list_p1, list_p2, MR, alpha, build_OT=True,
-        log=log, armijo=armijo, max_iter=max_iter, tol_rel=tol_rel,
-        tol_abs=tol_abs, nx=nx, **kwargs)
+        CR1,
+        CR2,
+        list_R1,
+        list_R2,
+        list_p1,
+        list_p2,
+        MR,
+        alpha,
+        build_OT=True,
+        log=log,
+        armijo=armijo,
+        max_iter=max_iter,
+        tol_rel=tol_rel,
+        tol_abs=tol_abs,
+        nx=nx,
+        **kwargs,
+    )
 
     if log:
         T_global, Ts_local, T, log_ = res
 
         # compute the transport cost on structures
-        constC, hC1, hC2 = init_matrix(C1, C2, p, q, 'square_loss', nx)
+        constC, hC1, hC2 = init_matrix(C1, C2, p, q, "square_loss", nx)
         structure_cost = gwloss(constC, hC1, hC2, T, nx)
 
-        if alpha != 1.:
+        if alpha != 1.0:
             M = dist(F1, F2)
             feature_cost = nx.sum(M * T)
         else:
-            feature_cost = 0.
+            feature_cost = 0.0
 
-        log_['qFGW_dist'] = alpha * structure_cost + (1 - alpha) * feature_cost
+        log_["qFGW_dist"] = alpha * structure_cost + (1 - alpha) * feature_cost
         return T_global, Ts_local, T, log_
 
     else:
@@ -760,7 +866,8 @@ def quantized_fused_gromov_wasserstein(
 
 
 def get_partition_and_representants_samples(
-        X, npart, method='kmeans', random_state=0, nx=None):
+    X, npart, method="kmeans", random_state=0, nx=None
+):
     r"""
     Compute `npart` partitions and representants over samples :math:`\mathbf{X} \in R^{n \times d}`
     using either a random or a kmeans algorithm.
@@ -807,7 +914,7 @@ def get_partition_and_representants_samples(
         warnings.warn(
             "Requested number of partitions higher than the number of nodes"
             "hence we enforce each node to be a partition.",
-            stacklevel=2
+            stacklevel=2,
         )
 
         part = nx.arange(n)
@@ -818,7 +925,7 @@ def get_partition_and_representants_samples(
         part = nx.zeros(n)
         rep_indices = [random.choice(nx.arange(n))]
 
-    elif method == 'random':
+    elif method == "random":
         # randomly partition the space
         random.seed(random_state)
         part = list_to_array(random.choices(np.arange(npart), k=X.shape[0]))
@@ -831,7 +938,7 @@ def get_partition_and_representants_samples(
             indices = nx.where(part == part_id)[0]
             rep_indices.append(random.choice(indices))
 
-    elif method == 'kmeans':
+    elif method == "kmeans":
         X = nx.to_numpy(X0)
         km = KMeans(n_clusters=npart, random_state=random_state).fit(X)
         part = nx.from_numpy(km.labels_, type_as=X0)
@@ -847,13 +954,13 @@ def get_partition_and_representants_samples(
         raise ValueError(
             f"""
             Unknown `method='{method}'`. Use one of: {'random', 'kmeans'}
-            """)
+            """
+        )
 
     return part, rep_indices
 
 
-def format_partitioned_samples(
-        X, p, part, rep_indices, F=None, alpha=1., nx=None):
+def format_partitioned_samples(X, p, part, rep_indices, F=None, alpha=1.0, nx=None):
     r"""
     Format an attributed graph :math:`(\mathbf{D}(\mathbf{X}), \mathbf{F}, \mathbf{p})`
     with euclidean structure matrix :math:`(\mathbf{D}(\mathbf{X}) \in R^{n \times n}`,
@@ -906,12 +1013,13 @@ def format_partitioned_samples(
 
         nx = get_backend(*arr)
 
-    if alpha != 1.:
+    if alpha != 1.0:
         if F is None:
             raise ValueError(
                 f"""
                 `alpha == {alpha} != 1` but features information is not properly provided.
-                """)
+                """
+            )
 
     XR = X[rep_indices, :]
     CR = dist(XR, XR)
@@ -927,13 +1035,12 @@ def format_partitioned_samples(
         if alpha != 1:
             features_R = dist(F[indices], F[rep_indices[id_]][None, :])
         else:
-            features_R = 0.
+            features_R = 0.0
 
         list_R.append(alpha * structure_R + (1 - alpha) * features_R)
         list_p.append(p[indices])
 
     if F is None:
-
         return CR, list_R, list_p
     else:
         FR = F[rep_indices, :]
@@ -942,9 +1049,24 @@ def format_partitioned_samples(
 
 
 def quantized_fused_gromov_wasserstein_samples(
-        X1, X2, npart1, npart2, p=None, q=None, F1=None, F2=None, alpha=1.,
-        method='kmeans', log=False, armijo=False, max_iter=1e4,
-        tol_rel=1e-9, tol_abs=1e-9, random_state=0, **kwargs):
+    X1,
+    X2,
+    npart1,
+    npart2,
+    p=None,
+    q=None,
+    F1=None,
+    F2=None,
+    alpha=1.0,
+    method="kmeans",
+    log=False,
+    armijo=False,
+    max_iter=1e4,
+    tol_rel=1e-9,
+    tol_abs=1e-9,
+    random_state=0,
+    **kwargs,
+):
     r"""
     Returns the quantized Fused Gromov-Wasserstein transport between samples
     endowed with their respective euclidean geometry :math:`(\mathbf{D}(\mathbf{X_1}), \mathbf{F_1}, \mathbf{p})`
@@ -1054,7 +1176,7 @@ def quantized_fused_gromov_wasserstein_samples(
 
     """
 
-    if (method in ['kmeans', 'kmeans_fused']) and (not sklearn_import):
+    if (method in ["kmeans", "kmeans_fused"]) and (not sklearn_import):
         warnings.warn(
             f"""
             Scikit-learn is not installed, so method={method} cannot be used
@@ -1062,13 +1184,14 @@ def quantized_fused_gromov_wasserstein_samples(
             Scikit-learn to fix this.
             """
         )
-        method = 'random'
+        method = "random"
 
-    if ('fused' in method) and ((F1 is None) or (F2 is None)):
+    if ("fused" in method) and ((F1 is None) or (F2 is None)):
         raise ValueError(
             f"""
             `method='{method}'` requires feature matrices which are not provided as inputs.
-            """)
+            """
+        )
 
     arr = [X1, X2]
     if p is not None:
@@ -1087,7 +1210,7 @@ def quantized_fused_gromov_wasserstein_samples(
     nx = get_backend(*arr)
 
     # compute attributed partitions and representants
-    if ('fused' in method) and (alpha != 1.):
+    if ("fused" in method) and (alpha != 1.0):
         X1_new = nx.concatenate([alpha * X1, (1 - alpha) * F1], axis=1)
         X2_new = nx.concatenate([alpha * X2, (1 - alpha) * F2], axis=1)
         method_ = method[:-6]
@@ -1095,32 +1218,52 @@ def quantized_fused_gromov_wasserstein_samples(
         X1_new, X2_new = X1, X2
         method_ = method
     part1, rep_indices1 = get_partition_and_representants_samples(
-        X1_new, npart1, method_, random_state, nx)
+        X1_new, npart1, method_, random_state, nx
+    )
     part2, rep_indices2 = get_partition_and_representants_samples(
-        X2_new, npart2, method_, random_state, nx)
+        X2_new, npart2, method_, random_state, nx
+    )
     # format partitions over (C1, F1) and (C2, F2)
 
     if (F1 is None) and (F2 is None):
         CR1, list_R1, list_p1 = format_partitioned_samples(
-            X1, p, part1, rep_indices1, nx=nx)
+            X1, p, part1, rep_indices1, nx=nx
+        )
         CR2, list_R2, list_p2 = format_partitioned_samples(
-            X2, q, part2, rep_indices2, nx=nx)
+            X2, q, part2, rep_indices2, nx=nx
+        )
 
         MR = None
     else:
         CR1, list_R1, list_p1, FR1 = format_partitioned_samples(
-            X1, p, part1, rep_indices1, F1, alpha, nx)
+            X1, p, part1, rep_indices1, F1, alpha, nx
+        )
         CR2, list_R2, list_p2, FR2 = format_partitioned_samples(
-            X2, q, part2, rep_indices2, F2, alpha, nx)
+            X2, q, part2, rep_indices2, F2, alpha, nx
+        )
 
         MR = dist(FR1, FR2)
 
     # call to partitioned quantized fused gromov-wasserstein solver
 
     res = quantized_fused_gromov_wasserstein_partitioned(
-        CR1, CR2, list_R1, list_R2, list_p1, list_p2, MR, alpha, build_OT=True,
-        log=log, armijo=armijo, max_iter=max_iter, tol_rel=tol_rel,
-        tol_abs=tol_abs, nx=nx, **kwargs)
+        CR1,
+        CR2,
+        list_R1,
+        list_R2,
+        list_p1,
+        list_p2,
+        MR,
+        alpha,
+        build_OT=True,
+        log=log,
+        armijo=armijo,
+        max_iter=max_iter,
+        tol_rel=tol_rel,
+        tol_abs=tol_abs,
+        nx=nx,
+        **kwargs,
+    )
 
     if log:
         T_global, Ts_local, T, log_ = res
@@ -1129,16 +1272,16 @@ def quantized_fused_gromov_wasserstein_samples(
         C2 = dist(X2, X2)
 
         # compute the transport cost on structures
-        constC, hC1, hC2 = init_matrix(C1, C2, p, q, 'square_loss', nx)
+        constC, hC1, hC2 = init_matrix(C1, C2, p, q, "square_loss", nx)
         structure_cost = gwloss(constC, hC1, hC2, T, nx)
 
-        if alpha != 1.:
+        if alpha != 1.0:
             M = dist(F1, F2)
             feature_cost = nx.sum(M * T)
         else:
-            feature_cost = 0.
+            feature_cost = 0.0
 
-        log_['qFGW_dist'] = alpha * structure_cost + (1 - alpha) * feature_cost
+        log_["qFGW_dist"] = alpha * structure_cost + (1 - alpha) * feature_cost
         return T_global, Ts_local, T, log_
 
     else:

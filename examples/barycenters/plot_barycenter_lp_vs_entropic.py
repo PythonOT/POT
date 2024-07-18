@@ -26,17 +26,18 @@ SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
 import numpy as np
 import matplotlib.pylab as pl
 import ot
+
 # necessary for 3d plot even if not used
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 from matplotlib.collections import PolyCollection  # noqa
 
-#import ot.lp.cvx as cvx
+# import ot.lp.cvx as cvx
 
 ##############################################################################
 # Gaussian Data
 # -------------
 
-#%% parameters
+# %% parameters
 
 problems = []
 
@@ -59,15 +60,15 @@ M = ot.utils.dist0(n)
 M /= M.max()
 
 
-#%% plot the distributions
+# %% plot the distributions
 
 pl.figure(1, figsize=(6.4, 3))
 for i in range(n_distributions):
     pl.plot(x, A[:, i])
-pl.title('Distributions')
+pl.title("Distributions")
 pl.tight_layout()
 
-#%% barycenter computation
+# %% barycenter computation
 
 alpha = 0.5  # 0<=alpha<=1
 weights = np.array([1 - alpha, alpha])
@@ -91,14 +92,14 @@ pl.clf()
 pl.subplot(2, 1, 1)
 for i in range(n_distributions):
     pl.plot(x, A[:, i])
-pl.title('Distributions')
+pl.title("Distributions")
 
 pl.subplot(2, 1, 2)
-pl.plot(x, bary_l2, 'r', label='l2')
-pl.plot(x, bary_wass, 'g', label='Reg Wasserstein')
-pl.plot(x, bary_wass2, 'b', label='LP Wasserstein')
+pl.plot(x, bary_l2, "r", label="l2")
+pl.plot(x, bary_wass, "g", label="Reg Wasserstein")
+pl.plot(x, bary_wass2, "b", label="LP Wasserstein")
 pl.legend()
-pl.title('Barycenters')
+pl.title("Barycenters")
 pl.tight_layout()
 
 problems.append([A, [bary_l2, bary_wass, bary_wass2]])
@@ -107,7 +108,7 @@ problems.append([A, [bary_l2, bary_wass, bary_wass2]])
 # Stair Data
 # ----------
 
-#%% parameters
+# %% parameters
 
 a1 = 1.0 * (x > 10) * (x < 50)
 a2 = 1.0 * (x > 60) * (x < 80)
@@ -124,16 +125,16 @@ M = ot.utils.dist0(n)
 M /= M.max()
 
 
-#%% plot the distributions
+# %% plot the distributions
 
 pl.figure(1, figsize=(6.4, 3))
 for i in range(n_distributions):
     pl.plot(x, A[:, i])
-pl.title('Distributions')
+pl.title("Distributions")
 pl.tight_layout()
 
 
-#%% barycenter computation
+# %% barycenter computation
 
 alpha = 0.5  # 0<=alpha<=1
 weights = np.array([1 - alpha, alpha])
@@ -160,14 +161,14 @@ pl.clf()
 pl.subplot(2, 1, 1)
 for i in range(n_distributions):
     pl.plot(x, A[:, i])
-pl.title('Distributions')
+pl.title("Distributions")
 
 pl.subplot(2, 1, 2)
-pl.plot(x, bary_l2, 'r', label='l2')
-pl.plot(x, bary_wass, 'g', label='Reg Wasserstein')
-pl.plot(x, bary_wass2, 'b', label='LP Wasserstein')
+pl.plot(x, bary_l2, "r", label="l2")
+pl.plot(x, bary_wass, "g", label="Reg Wasserstein")
+pl.plot(x, bary_wass2, "b", label="LP Wasserstein")
 pl.legend()
-pl.title('Barycenters')
+pl.title("Barycenters")
 pl.tight_layout()
 
 
@@ -175,14 +176,14 @@ pl.tight_layout()
 # Dirac Data
 # ----------
 
-#%% parameters
+# %% parameters
 
 a1 = np.zeros(n)
 a2 = np.zeros(n)
 
-a1[10] = .25
-a1[20] = .5
-a1[30] = .25
+a1[10] = 0.25
+a1[20] = 0.5
+a1[30] = 0.25
 a2[80] = 1
 
 
@@ -198,16 +199,16 @@ M = ot.utils.dist0(n)
 M /= M.max()
 
 
-#%% plot the distributions
+# %% plot the distributions
 
 pl.figure(1, figsize=(6.4, 3))
 for i in range(n_distributions):
     pl.plot(x, A[:, i])
-pl.title('Distributions')
+pl.title("Distributions")
 pl.tight_layout()
 
 
-#%% barycenter computation
+# %% barycenter computation
 
 alpha = 0.5  # 0<=alpha<=1
 weights = np.array([1 - alpha, alpha])
@@ -234,14 +235,14 @@ pl.clf()
 pl.subplot(2, 1, 1)
 for i in range(n_distributions):
     pl.plot(x, A[:, i])
-pl.title('Distributions')
+pl.title("Distributions")
 
 pl.subplot(2, 1, 2)
-pl.plot(x, bary_l2, 'r', label='l2')
-pl.plot(x, bary_wass, 'g', label='Reg Wasserstein')
-pl.plot(x, bary_wass2, 'b', label='LP Wasserstein')
+pl.plot(x, bary_l2, "r", label="l2")
+pl.plot(x, bary_wass, "g", label="Reg Wasserstein")
+pl.plot(x, bary_wass2, "b", label="LP Wasserstein")
 pl.legend()
-pl.title('Barycenters')
+pl.title("Barycenters")
 pl.tight_layout()
 
 
@@ -250,17 +251,16 @@ pl.tight_layout()
 # ------------
 #
 
-#%% plot
+# %% plot
 
 nbm = len(problems)
-nbm2 = (nbm // 2)
+nbm2 = nbm // 2
 
 
 pl.figure(2, (20, 6))
 pl.clf()
 
 for i in range(nbm):
-
     A = problems[i][0]
     bary_l2 = problems[i][1][0]
     bary_wass = problems[i][1][1]
@@ -270,19 +270,19 @@ for i in range(nbm):
     for j in range(n_distributions):
         pl.plot(x, A[:, j])
     if i == nbm2:
-        pl.title('Distributions')
+        pl.title("Distributions")
     pl.xticks(())
     pl.yticks(())
 
     pl.subplot(2, nbm, 1 + i + nbm)
 
-    pl.plot(x, bary_l2, 'r', label='L2 (Euclidean)')
-    pl.plot(x, bary_wass, 'g', label='Reg Wasserstein')
-    pl.plot(x, bary_wass2, 'b', label='LP Wasserstein')
+    pl.plot(x, bary_l2, "r", label="L2 (Euclidean)")
+    pl.plot(x, bary_wass, "g", label="Reg Wasserstein")
+    pl.plot(x, bary_wass2, "b", label="LP Wasserstein")
     if i == nbm - 1:
         pl.legend()
     if i == nbm2:
-        pl.title('Barycenters')
+        pl.title("Barycenters")
 
     pl.xticks(())
     pl.yticks(())
