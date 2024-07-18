@@ -37,13 +37,14 @@ from ._convolutional import (
 from ._empirical import (
     empirical_sinkhorn,
     empirical_sinkhorn2,
+    empirical_sinkhorn_divergence,
 )
 
 from ._screenkhorn import screenkhorn
 
 from ._dictionary import unmix
 
-from ._geomloss import geomloss
+from ._geomloss import geomloss, empirical_sinkhorn2_geomloss
 
 
 __all__ = [
@@ -68,7 +69,8 @@ __all__ = [
     "convolutional_barycenter2d_debiased",
     "empirical_sinkhorn",
     "empirical_sinkhorn2",
-    "empirical_sinkhorn2_geomloss" "empirical_sinkhorn_divergence",
+    "empirical_sinkhorn2_geomloss",
+    "empirical_sinkhorn_divergence",
     "geomloss",
     "screenkhorn",
     "unmix",
