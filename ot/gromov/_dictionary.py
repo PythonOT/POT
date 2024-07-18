@@ -16,8 +16,28 @@ from ..backend import get_backend
 from ._gw import gromov_wasserstein, fused_gromov_wasserstein
 
 
-def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, epochs=20, batch_size=32, learning_rate=1., Cdict_init=None, projection='nonnegative_symmetric', use_log=True,
-                                           tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False, random_state=None, **kwargs):
+def gromov_wasserstein_dictionary_learning(
+    Cs,
+    D,
+    nt,
+    reg=0.0,
+    ps=None,
+    q=None,
+    epochs=20,
+    batch_size=32,
+    learning_rate=1.0,
+    Cdict_init=None,
+    projection="nonnegative_symmetric",
+    use_log=True,
+    tol_outer=10 ** (-5),
+    tol_inner=10 ** (-5),
+    max_iter_outer=20,
+    max_iter_inner=200,
+    use_adam_optimizer=True,
+    verbose=False,
+    random_state=None,
+    **kwargs,
+):
     r"""
     Infer Gromov-Wasserstein linear dictionary :math:`\{ (\mathbf{C_{dict}[d]}, q) \}_{d \in [D]}`  from the list of structures :math:`\{ (\mathbf{C_s},\mathbf{p_s}) \}_s`
 
@@ -118,22 +138,24 @@ def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, e
     if Cdict_init is None:
         # Initialize randomly structures of dictionary atoms based on samples
         dataset_means = [C.mean() for C in Cs]
-        Cdict = rng.normal(loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(D, nt, nt))
+        Cdict = rng.normal(
+            loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(D, nt, nt)
+        )
     else:
         Cdict = nx.to_numpy(Cdict_init).copy()
         assert Cdict.shape == (D, nt, nt)
 
-    if 'symmetric' in projection:
+    if "symmetric" in projection:
         Cdict = 0.5 * (Cdict + Cdict.transpose((0, 2, 1)))
         symmetric = True
     else:
         symmetric = False
-    if 'nonnegative' in projection:
-        Cdict[Cdict < 0.] = 0
+    if "nonnegative" in projection:
+        Cdict[Cdict < 0.0] = 0
     if use_adam_optimizer:
         adam_moments = _initialize_adam_optimizer(Cdict)
 
-    log = {'loss_batches': [], 'loss_epochs': []}
+    log = {"loss_batches": [], "loss_epochs": []}
     const_q = q[:, None] * q[None, :]
     Cdict_best_state = Cdict.copy()
     loss_best_state = np.inf
@@ -142,77 +164,115 @@ def gromov_wasserstein_dictionary_learning(Cs, D, nt, reg=0., ps=None, q=None, e
     iter_by_epoch = dataset_size // batch_size + int((dataset_size % batch_size) > 0)
 
     for epoch in range(epochs):
-        cumulated_loss_over_epoch = 0.
+        cumulated_loss_over_epoch = 0.0
 
         for _ in range(iter_by_epoch):
             # batch sampling
             batch = rng.choice(range(dataset_size), size=batch_size, replace=False)
-            cumulated_loss_over_batch = 0.
+            cumulated_loss_over_batch = 0.0
             unmixings = np.zeros((batch_size, D))
             Cs_embedded = np.zeros((batch_size, nt, nt))
             Ts = [None] * batch_size
 
             for batch_idx, C_idx in enumerate(batch):
                 # BCD solver for Gromov-Wasserstein linear unmixing used independently on each structure of the sampled batch
-                unmixings[batch_idx], Cs_embedded[batch_idx], Ts[batch_idx], current_loss = gromov_wasserstein_linear_unmixing(
-                    Cs[C_idx], Cdict, reg=reg, p=ps[C_idx], q=q, tol_outer=tol_outer, tol_inner=tol_inner,
-                    max_iter_outer=max_iter_outer, max_iter_inner=max_iter_inner, symmetric=symmetric, **kwargs
+                (
+                    unmixings[batch_idx],
+                    Cs_embedded[batch_idx],
+                    Ts[batch_idx],
+                    current_loss,
+                ) = gromov_wasserstein_linear_unmixing(
+                    Cs[C_idx],
+                    Cdict,
+                    reg=reg,
+                    p=ps[C_idx],
+                    q=q,
+                    tol_outer=tol_outer,
+                    tol_inner=tol_inner,
+                    max_iter_outer=max_iter_outer,
+                    max_iter_inner=max_iter_inner,
+                    symmetric=symmetric,
+                    **kwargs,
                 )
                 cumulated_loss_over_batch += current_loss
             cumulated_loss_over_epoch += cumulated_loss_over_batch
 
             if use_log:
-                log['loss_batches'].append(cumulated_loss_over_batch)
+                log["loss_batches"].append(cumulated_loss_over_batch)
 
             # Stochastic projected gradient step over dictionary atoms
             grad_Cdict = np.zeros_like(Cdict)
             for batch_idx, C_idx in enumerate(batch):
-                shared_term_structures = Cs_embedded[batch_idx] * const_q - (Cs[C_idx].dot(Ts[batch_idx])).T.dot(Ts[batch_idx])
-                grad_Cdict += unmixings[batch_idx][:, None, None] * shared_term_structures[None, :, :]
+                shared_term_structures = Cs_embedded[batch_idx] * const_q - (
+                    Cs[C_idx].dot(Ts[batch_idx])
+                ).T.dot(Ts[batch_idx])
+                grad_Cdict += (
+                    unmixings[batch_idx][:, None, None]
+                    * shared_term_structures[None, :, :]
+                )
             grad_Cdict *= 2 / batch_size
             if use_adam_optimizer:
-                Cdict, adam_moments = _adam_stochastic_updates(Cdict, grad_Cdict, learning_rate, adam_moments)
+                Cdict, adam_moments = _adam_stochastic_updates(
+                    Cdict, grad_Cdict, learning_rate, adam_moments
+                )
             else:
                 Cdict -= learning_rate * grad_Cdict
-            if 'symmetric' in projection:
+            if "symmetric" in projection:
                 Cdict = 0.5 * (Cdict + Cdict.transpose((0, 2, 1)))
-            if 'nonnegative' in projection:
-                Cdict[Cdict < 0.] = 0.
+            if "nonnegative" in projection:
+                Cdict[Cdict < 0.0] = 0.0
 
         if use_log:
-            log['loss_epochs'].append(cumulated_loss_over_epoch)
+            log["loss_epochs"].append(cumulated_loss_over_epoch)
         if loss_best_state > cumulated_loss_over_epoch:
             loss_best_state = cumulated_loss_over_epoch
             Cdict_best_state = Cdict.copy()
         if verbose:
-            print('--- epoch =', epoch, ' cumulated reconstruction error: ', cumulated_loss_over_epoch)
+            print(
+                "--- epoch =",
+                epoch,
+                " cumulated reconstruction error: ",
+                cumulated_loss_over_epoch,
+            )
 
     return nx.from_numpy(Cdict_best_state), log
 
 
 def _initialize_adam_optimizer(variable):
-
     # Initialization for our numpy implementation of adam optimizer
     atoms_adam_m = np.zeros_like(variable)  # Initialize first  moment tensor
     atoms_adam_v = np.zeros_like(variable)  # Initialize second moment tensor
     atoms_adam_count = 1
 
-    return {'mean': atoms_adam_m, 'var': atoms_adam_v, 'count': atoms_adam_count}
+    return {"mean": atoms_adam_m, "var": atoms_adam_v, "count": atoms_adam_count}
 
 
-def _adam_stochastic_updates(variable, grad, learning_rate, adam_moments, beta_1=0.9, beta_2=0.99, eps=1e-09):
-
-    adam_moments['mean'] = beta_1 * adam_moments['mean'] + (1 - beta_1) * grad
-    adam_moments['var'] = beta_2 * adam_moments['var'] + (1 - beta_2) * (grad**2)
-    unbiased_m = adam_moments['mean'] / (1 - beta_1**adam_moments['count'])
-    unbiased_v = adam_moments['var'] / (1 - beta_2**adam_moments['count'])
+def _adam_stochastic_updates(
+    variable, grad, learning_rate, adam_moments, beta_1=0.9, beta_2=0.99, eps=1e-09
+):
+    adam_moments["mean"] = beta_1 * adam_moments["mean"] + (1 - beta_1) * grad
+    adam_moments["var"] = beta_2 * adam_moments["var"] + (1 - beta_2) * (grad**2)
+    unbiased_m = adam_moments["mean"] / (1 - beta_1 ** adam_moments["count"])
+    unbiased_v = adam_moments["var"] / (1 - beta_2 ** adam_moments["count"])
     variable -= learning_rate * unbiased_m / (np.sqrt(unbiased_v) + eps)
-    adam_moments['count'] += 1
+    adam_moments["count"] += 1
 
     return variable, adam_moments
 
 
-def gromov_wasserstein_linear_unmixing(C, Cdict, reg=0., p=None, q=None, tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, symmetric=None, **kwargs):
+def gromov_wasserstein_linear_unmixing(
+    C,
+    Cdict,
+    reg=0.0,
+    p=None,
+    q=None,
+    tol_outer=10 ** (-5),
+    tol_inner=10 ** (-5),
+    max_iter_outer=20,
+    max_iter_inner=200,
+    symmetric=None,
+    **kwargs,
+):
     r"""
     Returns the Gromov-Wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{p})` onto the dictionary :math:`\{ (\mathbf{C_{dict}[d]}, \mathbf{q}) \}_{d \in [D]}`.
 
@@ -300,28 +360,68 @@ def gromov_wasserstein_linear_unmixing(C, Cdict, reg=0., p=None, q=None, tol_out
         previous_loss = current_loss
         # 1. Solve GW transport between (C,p) and (\sum_d Cdictionary[d],q) fixing the unmixing w
         T, log = gromov_wasserstein(
-            C1=C, C2=Cembedded, p=p, q=q, loss_fun='square_loss', G0=T,
-            max_iter=max_iter_inner, tol_rel=tol_inner, tol_abs=0., log=True, armijo=False, symmetric=symmetric, **kwargs)
-        current_loss = log['gw_dist']
+            C1=C,
+            C2=Cembedded,
+            p=p,
+            q=q,
+            loss_fun="square_loss",
+            G0=T,
+            max_iter=max_iter_inner,
+            tol_rel=tol_inner,
+            tol_abs=0.0,
+            log=True,
+            armijo=False,
+            symmetric=symmetric,
+            **kwargs,
+        )
+        current_loss = log["gw_dist"]
         if reg != 0:
             current_loss -= reg * np.sum(w**2)
 
         # 2. Solve linear unmixing problem over w with a fixed transport plan T
         w, Cembedded, current_loss = _cg_gromov_wasserstein_unmixing(
-            C=C, Cdict=Cdict, Cembedded=Cembedded, w=w, const_q=const_q, T=T,
-            starting_loss=current_loss, reg=reg, tol=tol_inner, max_iter=max_iter_inner, **kwargs
+            C=C,
+            Cdict=Cdict,
+            Cembedded=Cembedded,
+            w=w,
+            const_q=const_q,
+            T=T,
+            starting_loss=current_loss,
+            reg=reg,
+            tol=tol_inner,
+            max_iter=max_iter_inner,
+            **kwargs,
         )
 
         if previous_loss != 0:
-            convergence_criterion = abs(previous_loss - current_loss) / abs(previous_loss)
+            convergence_criterion = abs(previous_loss - current_loss) / abs(
+                previous_loss
+            )
         else:  # handle numerical issues around 0
-            convergence_criterion = abs(previous_loss - current_loss) / 10**(-15)
+            convergence_criterion = abs(previous_loss - current_loss) / 10 ** (-15)
         outer_count += 1
 
-    return nx.from_numpy(w), nx.from_numpy(Cembedded), nx.from_numpy(T), nx.from_numpy(current_loss)
+    return (
+        nx.from_numpy(w),
+        nx.from_numpy(Cembedded),
+        nx.from_numpy(T),
+        nx.from_numpy(current_loss),
+    )
 
 
-def _cg_gromov_wasserstein_unmixing(C, Cdict, Cembedded, w, const_q, T, starting_loss, reg=0., tol=10**(-5), max_iter=200, **kwargs):
+def _cg_gromov_wasserstein_unmixing(
+    C,
+    Cdict,
+    Cembedded,
+    w,
+    const_q,
+    T,
+    starting_loss,
+    reg=0.0,
+    tol=10 ** (-5),
+    max_iter=200,
+    **kwargs,
+):
     r"""
     Returns for a fixed admissible transport plan,
     the linear unmixing w minimizing the Gromov-Wasserstein cost between :math:`(\mathbf{C},\mathbf{p})` and :math:`(\sum_d w[d]*\mathbf{C_{dict}[d]}, \mathbf{q})`
@@ -380,10 +480,13 @@ def _cg_gromov_wasserstein_unmixing(C, Cdict, Cembedded, w, const_q, T, starting
     const_TCT = np.transpose(C.dot(T)).dot(T)
 
     while (convergence_criterion > tol) and (count < max_iter):
-
         previous_loss = current_loss
         # 1) Compute gradient at current point w
-        grad_w = 2 * np.sum(Cdict * (Cembedded[None, :, :] * const_q[None, :, :] - const_TCT[None, :, :]), axis=(1, 2))
+        grad_w = 2 * np.sum(
+            Cdict
+            * (Cembedded[None, :, :] * const_q[None, :, :] - const_TCT[None, :, :]),
+            axis=(1, 2),
+        )
         grad_w -= 2 * reg * w
 
         # 2) Conditional gradient direction finding: x= \argmin_x x^T.grad_w
@@ -392,7 +495,9 @@ def _cg_gromov_wasserstein_unmixing(C, Cdict, Cembedded, w, const_q, T, starting
         x /= np.sum(x)
 
         # 3) Line-search step: solve \argmin_{\gamma \in [0,1]} a*gamma^2 + b*gamma + c
-        gamma, a, b, Cembedded_diff = _linesearch_gromov_wasserstein_unmixing(w, grad_w, x, Cdict, Cembedded, const_q, const_TCT, reg)
+        gamma, a, b, Cembedded_diff = _linesearch_gromov_wasserstein_unmixing(
+            w, grad_w, x, Cdict, Cembedded, const_q, const_TCT, reg
+        )
 
         # 4) Updates: w <-- (1-gamma)*w + gamma*x
         w += gamma * (x - w)
@@ -400,15 +505,19 @@ def _cg_gromov_wasserstein_unmixing(C, Cdict, Cembedded, w, const_q, T, starting
         current_loss += a * (gamma**2) + b * gamma
 
         if previous_loss != 0:  # not that the loss can be negative if reg >0
-            convergence_criterion = abs(previous_loss - current_loss) / abs(previous_loss)
+            convergence_criterion = abs(previous_loss - current_loss) / abs(
+                previous_loss
+            )
         else:  # handle numerical issues around 0
-            convergence_criterion = abs(previous_loss - current_loss) / 10**(-15)
+            convergence_criterion = abs(previous_loss - current_loss) / 10 ** (-15)
         count += 1
 
     return w, Cembedded, current_loss
 
 
-def _linesearch_gromov_wasserstein_unmixing(w, grad_w, x, Cdict, Cembedded, const_q, const_TCT, reg, **kwargs):
+def _linesearch_gromov_wasserstein_unmixing(
+    w, grad_w, x, Cdict, Cembedded, const_q, const_TCT, reg, **kwargs
+):
     r"""
     Compute optimal steps for the line search problem of Gromov-Wasserstein linear unmixing
     .. math::
@@ -459,11 +568,11 @@ def _linesearch_gromov_wasserstein_unmixing(w, grad_w, x, Cdict, Cembedded, cons
     a = trace_diffx - trace_diffw
     b = 2 * (trace_diffw - np.sum(Cembedded_diff * const_TCT))
     if reg != 0:
-        a -= reg * np.sum((x - w)**2)
+        a -= reg * np.sum((x - w) ** 2)
         b -= 2 * reg * np.sum(w * (x - w))
 
     if a > 0:
-        gamma = min(1, max(0, - b / (2 * a)))
+        gamma = min(1, max(0, -b / (2 * a)))
     elif a + b < 0:
         gamma = 1
     else:
@@ -472,10 +581,32 @@ def _linesearch_gromov_wasserstein_unmixing(w, grad_w, x, Cdict, Cembedded, cons
     return gamma, a, b, Cembedded_diff
 
 
-def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., ps=None, q=None, epochs=20, batch_size=32, learning_rate_C=1., learning_rate_Y=1.,
-                                                 Cdict_init=None, Ydict_init=None, projection='nonnegative_symmetric', use_log=False,
-                                                 tol_outer=10**(-5), tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, use_adam_optimizer=True, verbose=False,
-                                                 random_state=None, **kwargs):
+def fused_gromov_wasserstein_dictionary_learning(
+    Cs,
+    Ys,
+    D,
+    nt,
+    alpha,
+    reg=0.0,
+    ps=None,
+    q=None,
+    epochs=20,
+    batch_size=32,
+    learning_rate_C=1.0,
+    learning_rate_Y=1.0,
+    Cdict_init=None,
+    Ydict_init=None,
+    projection="nonnegative_symmetric",
+    use_log=False,
+    tol_outer=10 ** (-5),
+    tol_inner=10 ** (-5),
+    max_iter_outer=20,
+    max_iter_inner=200,
+    use_adam_optimizer=True,
+    verbose=False,
+    random_state=None,
+    **kwargs,
+):
     r"""
     Infer Fused Gromov-Wasserstein linear dictionary :math:`\{ (\mathbf{C_{dict}[d]}, \mathbf{Y_{dict}[d]}, \mathbf{q}) \}_{d \in [D]}`  from the list of S attributed structures :math:`\{ (\mathbf{C_s}, \mathbf{Y_s},\mathbf{p_s}) \}_s`
 
@@ -597,31 +728,37 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
     if Cdict_init is None:
         # Initialize randomly structures of dictionary atoms based on samples
         dataset_means = [C.mean() for C in Cs]
-        Cdict = rng.normal(loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(D, nt, nt))
+        Cdict = rng.normal(
+            loc=np.mean(dataset_means), scale=np.std(dataset_means), size=(D, nt, nt)
+        )
     else:
         Cdict = nx.to_numpy(Cdict_init).copy()
         assert Cdict.shape == (D, nt, nt)
     if Ydict_init is None:
         # Initialize randomly features of dictionary atoms based on samples distribution by feature component
         dataset_feature_means = np.stack([F.mean(axis=0) for F in Ys])
-        Ydict = rng.normal(loc=dataset_feature_means.mean(axis=0), scale=dataset_feature_means.std(axis=0), size=(D, nt, d))
+        Ydict = rng.normal(
+            loc=dataset_feature_means.mean(axis=0),
+            scale=dataset_feature_means.std(axis=0),
+            size=(D, nt, d),
+        )
     else:
         Ydict = nx.to_numpy(Ydict_init).copy()
         assert Ydict.shape == (D, nt, d)
 
-    if 'symmetric' in projection:
+    if "symmetric" in projection:
         Cdict = 0.5 * (Cdict + Cdict.transpose((0, 2, 1)))
         symmetric = True
     else:
         symmetric = False
-    if 'nonnegative' in projection:
-        Cdict[Cdict < 0.] = 0.
+    if "nonnegative" in projection:
+        Cdict[Cdict < 0.0] = 0.0
 
     if use_adam_optimizer:
         adam_moments_C = _initialize_adam_optimizer(Cdict)
         adam_moments_Y = _initialize_adam_optimizer(Ydict)
 
-    log = {'loss_batches': [], 'loss_epochs': []}
+    log = {"loss_batches": [], "loss_epochs": []}
     const_q = q[:, None] * q[None, :]
     diag_q = np.diag(q)
     Cdict_best_state = Cdict.copy()
@@ -632,13 +769,12 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
     iter_by_epoch = dataset_size // batch_size + int((dataset_size % batch_size) > 0)
 
     for epoch in range(epochs):
-        cumulated_loss_over_epoch = 0.
+        cumulated_loss_over_epoch = 0.0
 
         for _ in range(iter_by_epoch):
-
             # Batch iterations
             batch = rng.choice(range(dataset_size), size=batch_size, replace=False)
-            cumulated_loss_over_batch = 0.
+            cumulated_loss_over_batch = 0.0
             unmixings = np.zeros((batch_size, D))
             Cs_embedded = np.zeros((batch_size, nt, nt))
             Ys_embedded = np.zeros((batch_size, nt, d))
@@ -646,53 +782,106 @@ def fused_gromov_wasserstein_dictionary_learning(Cs, Ys, D, nt, alpha, reg=0., p
 
             for batch_idx, C_idx in enumerate(batch):
                 # BCD solver for Gromov-Wasserstein linear unmixing used independently on each structure of the sampled batch
-                unmixings[batch_idx], Cs_embedded[batch_idx], Ys_embedded[batch_idx], Ts[batch_idx], current_loss = fused_gromov_wasserstein_linear_unmixing(
-                    Cs[C_idx], Ys[C_idx], Cdict, Ydict, alpha, reg=reg, p=ps[C_idx], q=q,
-                    tol_outer=tol_outer, tol_inner=tol_inner, max_iter_outer=max_iter_outer, max_iter_inner=max_iter_inner, symmetric=symmetric, **kwargs
+                (
+                    unmixings[batch_idx],
+                    Cs_embedded[batch_idx],
+                    Ys_embedded[batch_idx],
+                    Ts[batch_idx],
+                    current_loss,
+                ) = fused_gromov_wasserstein_linear_unmixing(
+                    Cs[C_idx],
+                    Ys[C_idx],
+                    Cdict,
+                    Ydict,
+                    alpha,
+                    reg=reg,
+                    p=ps[C_idx],
+                    q=q,
+                    tol_outer=tol_outer,
+                    tol_inner=tol_inner,
+                    max_iter_outer=max_iter_outer,
+                    max_iter_inner=max_iter_inner,
+                    symmetric=symmetric,
+                    **kwargs,
                 )
                 cumulated_loss_over_batch += current_loss
             cumulated_loss_over_epoch += cumulated_loss_over_batch
             if use_log:
-                log['loss_batches'].append(cumulated_loss_over_batch)
+                log["loss_batches"].append(cumulated_loss_over_batch)
 
             # Stochastic projected gradient step over dictionary atoms
             grad_Cdict = np.zeros_like(Cdict)
             grad_Ydict = np.zeros_like(Ydict)
 
             for batch_idx, C_idx in enumerate(batch):
-                shared_term_structures = Cs_embedded[batch_idx] * const_q - (Cs[C_idx].dot(Ts[batch_idx])).T.dot(Ts[batch_idx])
-                shared_term_features = diag_q.dot(Ys_embedded[batch_idx]) - Ts[batch_idx].T.dot(Ys[C_idx])
-                grad_Cdict += alpha * unmixings[batch_idx][:, None, None] * shared_term_structures[None, :, :]
-                grad_Ydict += (1 - alpha) * unmixings[batch_idx][:, None, None] * shared_term_features[None, :, :]
+                shared_term_structures = Cs_embedded[batch_idx] * const_q - (
+                    Cs[C_idx].dot(Ts[batch_idx])
+                ).T.dot(Ts[batch_idx])
+                shared_term_features = diag_q.dot(Ys_embedded[batch_idx]) - Ts[
+                    batch_idx
+                ].T.dot(Ys[C_idx])
+                grad_Cdict += (
+                    alpha
+                    * unmixings[batch_idx][:, None, None]
+                    * shared_term_structures[None, :, :]
+                )
+                grad_Ydict += (
+                    (1 - alpha)
+                    * unmixings[batch_idx][:, None, None]
+                    * shared_term_features[None, :, :]
+                )
             grad_Cdict *= 2 / batch_size
             grad_Ydict *= 2 / batch_size
 
             if use_adam_optimizer:
-                Cdict, adam_moments_C = _adam_stochastic_updates(Cdict, grad_Cdict, learning_rate_C, adam_moments_C)
-                Ydict, adam_moments_Y = _adam_stochastic_updates(Ydict, grad_Ydict, learning_rate_Y, adam_moments_Y)
+                Cdict, adam_moments_C = _adam_stochastic_updates(
+                    Cdict, grad_Cdict, learning_rate_C, adam_moments_C
+                )
+                Ydict, adam_moments_Y = _adam_stochastic_updates(
+                    Ydict, grad_Ydict, learning_rate_Y, adam_moments_Y
+                )
             else:
                 Cdict -= learning_rate_C * grad_Cdict
                 Ydict -= learning_rate_Y * grad_Ydict
 
-            if 'symmetric' in projection:
+            if "symmetric" in projection:
                 Cdict = 0.5 * (Cdict + Cdict.transpose((0, 2, 1)))
-            if 'nonnegative' in projection:
-                Cdict[Cdict < 0.] = 0.
+            if "nonnegative" in projection:
+                Cdict[Cdict < 0.0] = 0.0
 
         if use_log:
-            log['loss_epochs'].append(cumulated_loss_over_epoch)
+            log["loss_epochs"].append(cumulated_loss_over_epoch)
         if loss_best_state > cumulated_loss_over_epoch:
             loss_best_state = cumulated_loss_over_epoch
             Cdict_best_state = Cdict.copy()
             Ydict_best_state = Ydict.copy()
         if verbose:
-            print('--- epoch: ', epoch, ' cumulated reconstruction error: ', cumulated_loss_over_epoch)
+            print(
+                "--- epoch: ",
+                epoch,
+                " cumulated reconstruction error: ",
+                cumulated_loss_over_epoch,
+            )
 
     return nx.from_numpy(Cdict_best_state), nx.from_numpy(Ydict_best_state), log
 
 
-def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict, Ydict, alpha, reg=0., p=None, q=None, tol_outer=10**(-5),
-                                             tol_inner=10**(-5), max_iter_outer=20, max_iter_inner=200, symmetric=True, **kwargs):
+def fused_gromov_wasserstein_linear_unmixing(
+    C,
+    Y,
+    Cdict,
+    Ydict,
+    alpha,
+    reg=0.0,
+    p=None,
+    q=None,
+    tol_outer=10 ** (-5),
+    tol_inner=10 ** (-5),
+    max_iter_outer=20,
+    max_iter_inner=200,
+    symmetric=True,
+    **kwargs,
+):
     r"""
     Returns the Fused Gromov-Wasserstein linear unmixing of :math:`(\mathbf{C},\mathbf{Y},\mathbf{p})` onto the attributed dictionary atoms :math:`\{ (\mathbf{C_{dict}[d]},\mathbf{Y_{dict}[d]}, \mathbf{q}) \}_{d \in [D]}`
 
@@ -796,35 +985,97 @@ def fused_gromov_wasserstein_linear_unmixing(C, Y, Cdict, Ydict, alpha, reg=0., 
     convergence_criterion = np.inf
     current_loss = 10**15
     outer_count = 0
-    Ys_constM = (Y**2).dot(np.ones((d, nt)))  # constant in computing euclidean pairwise feature matrix
+    Ys_constM = (Y**2).dot(
+        np.ones((d, nt))
+    )  # constant in computing euclidean pairwise feature matrix
 
     while (convergence_criterion > tol_outer) and (outer_count < max_iter_outer):
         previous_loss = current_loss
 
         # 1. Solve GW transport between (C,p) and (\sum_d Cdictionary[d],q) fixing the unmixing w
         Yt_varM = (np.ones((ns, d))).dot((Yembedded**2).T)
-        M = Ys_constM + Yt_varM - 2 * Y.dot(Yembedded.T)  # euclidean distance matrix between features
+        M = (
+            Ys_constM + Yt_varM - 2 * Y.dot(Yembedded.T)
+        )  # euclidean distance matrix between features
         T, log = fused_gromov_wasserstein(
-            M, C, Cembedded, p, q, loss_fun='square_loss', alpha=alpha,
-            max_iter=max_iter_inner, tol_rel=tol_inner, tol_abs=0., armijo=False, G0=T, log=True, symmetric=symmetric, **kwargs)
-        current_loss = log['fgw_dist']
+            M,
+            C,
+            Cembedded,
+            p,
+            q,
+            loss_fun="square_loss",
+            alpha=alpha,
+            max_iter=max_iter_inner,
+            tol_rel=tol_inner,
+            tol_abs=0.0,
+            armijo=False,
+            G0=T,
+            log=True,
+            symmetric=symmetric,
+            **kwargs,
+        )
+        current_loss = log["fgw_dist"]
         if reg != 0:
             current_loss -= reg * np.sum(w**2)
 
         # 2. Solve linear unmixing problem over w with a fixed transport plan T
-        w, Cembedded, Yembedded, current_loss = _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdict, Ydict, Cembedded, Yembedded, w,
-                                                                                      T, p, q, const_q, diag_q, current_loss, alpha, reg,
-                                                                                      tol=tol_inner, max_iter=max_iter_inner, **kwargs)
+        w, Cembedded, Yembedded, current_loss = _cg_fused_gromov_wasserstein_unmixing(
+            C,
+            Y,
+            Cdict,
+            Ydict,
+            Cembedded,
+            Yembedded,
+            w,
+            T,
+            p,
+            q,
+            const_q,
+            diag_q,
+            current_loss,
+            alpha,
+            reg,
+            tol=tol_inner,
+            max_iter=max_iter_inner,
+            **kwargs,
+        )
         if previous_loss != 0:
-            convergence_criterion = abs(previous_loss - current_loss) / abs(previous_loss)
+            convergence_criterion = abs(previous_loss - current_loss) / abs(
+                previous_loss
+            )
         else:
-            convergence_criterion = abs(previous_loss - current_loss) / 10**(-12)
+            convergence_criterion = abs(previous_loss - current_loss) / 10 ** (-12)
         outer_count += 1
 
-    return nx.from_numpy(w), nx.from_numpy(Cembedded), nx.from_numpy(Yembedded), nx.from_numpy(T), nx.from_numpy(current_loss)
+    return (
+        nx.from_numpy(w),
+        nx.from_numpy(Cembedded),
+        nx.from_numpy(Yembedded),
+        nx.from_numpy(T),
+        nx.from_numpy(current_loss),
+    )
 
 
-def _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdict, Ydict, Cembedded, Yembedded, w, T, p, q, const_q, diag_q, starting_loss, alpha, reg, tol=10**(-6), max_iter=200, **kwargs):
+def _cg_fused_gromov_wasserstein_unmixing(
+    C,
+    Y,
+    Cdict,
+    Ydict,
+    Cembedded,
+    Yembedded,
+    w,
+    T,
+    p,
+    q,
+    const_q,
+    diag_q,
+    starting_loss,
+    alpha,
+    reg,
+    tol=10 ** (-6),
+    max_iter=200,
+    **kwargs,
+):
     r"""
     Returns for a fixed admissible transport plan,
     the optimal linear unmixing :math:`\mathbf{w}` minimizing the Fused Gromov-Wasserstein cost between :math:`(\mathbf{C},\mathbf{Y},\mathbf{p})` and :math:`(\sum_d w_d \mathbf{C_{dict}[d]},\sum_d w_d*\mathbf{Y_{dict}[d]}, \mathbf{q})`
@@ -901,9 +1152,16 @@ def _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdict, Ydict, Cembedded, Yembedd
 
         # 1) Compute gradient at current point w
         # structure
-        grad_w = alpha * np.sum(Cdict * (Cembedded[None, :, :] * const_q[None, :, :] - const_TCT[None, :, :]), axis=(1, 2))
+        grad_w = alpha * np.sum(
+            Cdict
+            * (Cembedded[None, :, :] * const_q[None, :, :] - const_TCT[None, :, :]),
+            axis=(1, 2),
+        )
         # feature
-        grad_w += (1 - alpha) * np.sum(Ydict * (diag_q.dot(Yembedded)[None, :, :] - T.T.dot(Y)[None, :, :]), axis=(1, 2))
+        grad_w += (1 - alpha) * np.sum(
+            Ydict * (diag_q.dot(Yembedded)[None, :, :] - T.T.dot(Y)[None, :, :]),
+            axis=(1, 2),
+        )
         grad_w -= reg * w
         grad_w *= 2
 
@@ -913,7 +1171,24 @@ def _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdict, Ydict, Cembedded, Yembedd
         x /= np.sum(x)
 
         # 3) Line-search step: solve \argmin_{\gamma \in [0,1]} a*gamma^2 + b*gamma + c
-        gamma, a, b, Cembedded_diff, Yembedded_diff = _linesearch_fused_gromov_wasserstein_unmixing(w, grad_w, x, Y, Cdict, Ydict, Cembedded, Yembedded, T, const_q, const_TCT, ones_ns_d, alpha, reg)
+        gamma, a, b, Cembedded_diff, Yembedded_diff = (
+            _linesearch_fused_gromov_wasserstein_unmixing(
+                w,
+                grad_w,
+                x,
+                Y,
+                Cdict,
+                Ydict,
+                Cembedded,
+                Yembedded,
+                T,
+                const_q,
+                const_TCT,
+                ones_ns_d,
+                alpha,
+                reg,
+            )
+        )
 
         # 4) Updates: w <-- (1-gamma)*w + gamma*x
         w += gamma * (x - w)
@@ -922,15 +1197,33 @@ def _cg_fused_gromov_wasserstein_unmixing(C, Y, Cdict, Ydict, Cembedded, Yembedd
         current_loss += a * (gamma**2) + b * gamma
 
         if previous_loss != 0:
-            convergence_criterion = abs(previous_loss - current_loss) / abs(previous_loss)
+            convergence_criterion = abs(previous_loss - current_loss) / abs(
+                previous_loss
+            )
         else:
-            convergence_criterion = abs(previous_loss - current_loss) / 10**(-12)
+            convergence_criterion = abs(previous_loss - current_loss) / 10 ** (-12)
         count += 1
 
     return w, Cembedded, Yembedded, current_loss
 
 
-def _linesearch_fused_gromov_wasserstein_unmixing(w, grad_w, x, Y, Cdict, Ydict, Cembedded, Yembedded, T, const_q, const_TCT, ones_ns_d, alpha, reg, **kwargs):
+def _linesearch_fused_gromov_wasserstein_unmixing(
+    w,
+    grad_w,
+    x,
+    Y,
+    Cdict,
+    Ydict,
+    Cembedded,
+    Yembedded,
+    T,
+    const_q,
+    const_TCT,
+    ones_ns_d,
+    alpha,
+    reg,
+    **kwargs,
+):
     r"""
     Compute optimal steps for the line search problem of Fused Gromov-Wasserstein linear unmixing
     .. math::
@@ -1002,12 +1295,14 @@ def _linesearch_fused_gromov_wasserstein_unmixing(w, grad_w, x, Y, Cdict, Ydict,
     Yembedded_diff = Yembedded_x - Yembedded
     # Constant factor appearing in the factorization a*gamma^2 + b*g + c of the Gromov-Wasserstein reconstruction loss
     a_w = np.sum(ones_ns_d.dot((Yembedded_diff**2).T) * T)
-    b_w = 2 * np.sum(T * (ones_ns_d.dot((Yembedded * Yembedded_diff).T) - Y.dot(Yembedded_diff.T)))
+    b_w = 2 * np.sum(
+        T * (ones_ns_d.dot((Yembedded * Yembedded_diff).T) - Y.dot(Yembedded_diff.T))
+    )
 
     a = alpha * a_gw + (1 - alpha) * a_w
     b = alpha * b_gw + (1 - alpha) * b_w
     if reg != 0:
-        a -= reg * np.sum((x - w)**2)
+        a -= reg * np.sum((x - w) ** 2)
         b -= 2 * reg * np.sum(w * (x - w))
     if a > 0:
         gamma = min(1, max(0, -b / (2 * a)))

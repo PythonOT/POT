@@ -19,7 +19,7 @@ from .backend import get_backend
 
 
 def coordinate_grad_semi_dual(b, M, reg, beta, i):
-    r'''
+    r"""
     Compute the coordinate gradient update for regularized discrete distributions for :math:`(i, :)`
 
     The function computes the gradient of the semi dual problem:
@@ -62,7 +62,7 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
     References
     ----------
     .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
-    '''
+    """
     r = M[i, :] - beta
     exp_beta = np.exp(-r / reg) * b
     khi = exp_beta / (np.sum(exp_beta))
@@ -126,7 +126,7 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None, random_state
     """
 
     if lr is None:
-        lr = 1. / max(a / reg)
+        lr = 1.0 / max(a / reg)
     n_source = np.shape(M)[0]
     n_target = np.shape(M)[1]
     cur_beta = np.zeros(n_target)
@@ -135,16 +135,17 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None, random_state
     rng = check_random_state(random_state)
     for _ in range(numItermax):
         i = rng.randint(n_source)
-        cur_coord_grad = a[i] * coordinate_grad_semi_dual(b, M, reg,
-                                                          cur_beta, i)
-        sum_stored_gradient += (cur_coord_grad - stored_gradient[i])
+        cur_coord_grad = a[i] * coordinate_grad_semi_dual(b, M, reg, cur_beta, i)
+        sum_stored_gradient += cur_coord_grad - stored_gradient[i]
         stored_gradient[i] = cur_coord_grad
-        cur_beta += lr * (1. / n_source) * sum_stored_gradient
+        cur_beta += lr * (1.0 / n_source) * sum_stored_gradient
     return cur_beta
 
 
-def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None, random_state=None):
-    r'''
+def averaged_sgd_entropic_transport(
+    a, b, M, reg, numItermax=300000, lr=None, random_state=None
+):
+    r"""
     Compute the ASGD algorithm to solve the regularized semi continous measures optimal transport max problem
 
     The function solves the following optimization problem:
@@ -194,10 +195,10 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None, ra
     References
     ----------
     .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
-    '''
+    """
 
     if lr is None:
-        lr = 1. / max(a / reg)
+        lr = 1.0 / max(a / reg)
     n_source = np.shape(M)[0]
     n_target = np.shape(M)[1]
     cur_beta = np.zeros(n_target)
@@ -208,12 +209,12 @@ def averaged_sgd_entropic_transport(a, b, M, reg, numItermax=300000, lr=None, ra
         i = rng.randint(n_source)
         cur_coord_grad = coordinate_grad_semi_dual(b, M, reg, cur_beta, i)
         cur_beta += (lr / np.sqrt(k)) * cur_coord_grad
-        ave_beta = (1. / k) * cur_beta + (1 - 1. / k) * ave_beta
+        ave_beta = (1.0 / k) * cur_beta + (1 - 1.0 / k) * ave_beta
     return ave_beta
 
 
 def c_transform_entropic(b, M, reg, beta):
-    r'''
+    r"""
     The goal is to recover u from the c-transform.
 
     The function computes the c-transform of a dual variable from the other
@@ -253,7 +254,7 @@ def c_transform_entropic(b, M, reg, beta):
     References
     ----------
     .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
-    '''
+    """
 
     n_source = np.shape(M)[0]
     alpha = np.zeros(n_source)
@@ -265,9 +266,10 @@ def c_transform_entropic(b, M, reg, beta):
     return alpha
 
 
-def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
-                             log=False):
-    r'''
+def solve_semi_dual_entropic(
+    a, b, M, reg, method, numItermax=10000, lr=None, log=False
+):
+    r"""
     Compute the transportation matrix to solve the regularized discrete measures optimal transport max problem
 
     The function solves the following optimization problem:
@@ -327,7 +329,7 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
     References
     ----------
     .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
-    '''
+    """
 
     if method.lower() == "sag":
         opt_beta = sag_entropic_transport(a, b, M, reg, numItermax, lr)
@@ -338,13 +340,16 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
         return None
 
     opt_alpha = c_transform_entropic(b, M, reg, opt_beta)
-    pi = (np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg) *
-          a[:, None] * b[None, :])
+    pi = (
+        np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg)
+        * a[:, None]
+        * b[None, :]
+    )
 
     if log:
         log = {}
-        log['alpha'] = opt_alpha
-        log['beta'] = opt_beta
+        log["alpha"] = opt_alpha
+        log["beta"] = opt_beta
         return pi, log
     else:
         return pi
@@ -355,9 +360,8 @@ def solve_semi_dual_entropic(a, b, M, reg, method, numItermax=10000, lr=None,
 ##############################################################################
 
 
-def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
-                    batch_beta):
-    r'''
+def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha, batch_beta):
+    r"""
     Computes the partial gradient of the dual optimal transport problem.
 
     For each :math:`(i,j)` in a batch of coordinates, the partial gradients are :
@@ -416,22 +420,33 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha,
     References
     ----------
     .. [19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet, A.& Blondel, M. Large-scale Optimal Transport and Mapping Estimation. International Conference on Learning Representation (2018)
-    '''
-    G = - (np.exp((alpha[batch_alpha, None] + beta[None, batch_beta] -
-                   M[batch_alpha, :][:, batch_beta]) / reg) *
-           a[batch_alpha, None] * b[None, batch_beta])
+    """
+    G = -(
+        np.exp(
+            (
+                alpha[batch_alpha, None]
+                + beta[None, batch_beta]
+                - M[batch_alpha, :][:, batch_beta]
+            )
+            / reg
+        )
+        * a[batch_alpha, None]
+        * b[None, batch_beta]
+    )
     grad_beta = np.zeros(np.shape(M)[1])
     grad_alpha = np.zeros(np.shape(M)[0])
-    grad_beta[batch_beta] = (b[batch_beta] * len(batch_alpha) / np.shape(M)[0]
-                             + G.sum(0))
-    grad_alpha[batch_alpha] = (a[batch_alpha] * len(batch_beta)
-                               / np.shape(M)[1] + G.sum(1))
+    grad_beta[batch_beta] = b[batch_beta] * len(batch_alpha) / np.shape(M)[0] + G.sum(0)
+    grad_alpha[batch_alpha] = a[batch_alpha] * len(batch_beta) / np.shape(M)[1] + G.sum(
+        1
+    )
 
     return grad_alpha, grad_beta
 
 
-def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr, random_state=None):
-    r'''
+def sgd_entropic_regularization(
+    a, b, M, reg, batch_size, numItermax, lr, random_state=None
+):
+    r"""
     Compute the sgd algorithm to solve the regularized discrete measures optimal transport dual problem
 
     The function solves the following optimization problem:
@@ -482,7 +497,7 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr, random
     References
     ----------
     .. [19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet, A.& Blondel, M. Large-scale Optimal Transport and Mapping Estimation. International Conference on Learning Representation (2018)
-    '''
+    """
 
     n_source = np.shape(M)[0]
     n_target = np.shape(M)[1]
@@ -493,18 +508,17 @@ def sgd_entropic_regularization(a, b, M, reg, batch_size, numItermax, lr, random
         k = np.sqrt(cur_iter + 1)
         batch_alpha = rng.choice(n_source, batch_size, replace=False)
         batch_beta = rng.choice(n_target, batch_size, replace=False)
-        update_alpha, update_beta = batch_grad_dual(a, b, M, reg, cur_alpha,
-                                                    cur_beta, batch_size,
-                                                    batch_alpha, batch_beta)
+        update_alpha, update_beta = batch_grad_dual(
+            a, b, M, reg, cur_alpha, cur_beta, batch_size, batch_alpha, batch_beta
+        )
         cur_alpha[batch_alpha] += (lr / k) * update_alpha[batch_alpha]
         cur_beta[batch_beta] += (lr / k) * update_beta[batch_beta]
 
     return cur_alpha, cur_beta
 
 
-def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
-                        log=False):
-    r'''
+def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1, log=False):
+    r"""
     Compute the transportation matrix to solve the regularized discrete measures optimal transport dual problem
 
     The function solves the following optimization problem:
@@ -554,16 +568,20 @@ def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
     References
     ----------
     .. [19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet, A.& Blondel, M. Large-scale Optimal Transport and Mapping Estimation. International Conference on Learning Representation (2018)
-    '''
+    """
 
-    opt_alpha, opt_beta = sgd_entropic_regularization(a, b, M, reg, batch_size,
-                                                      numItermax, lr)
-    pi = (np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg) *
-          a[:, None] * b[None, :])
+    opt_alpha, opt_beta = sgd_entropic_regularization(
+        a, b, M, reg, batch_size, numItermax, lr
+    )
+    pi = (
+        np.exp((opt_alpha[:, None] + opt_beta[None, :] - M[:, :]) / reg)
+        * a[:, None]
+        * b[None, :]
+    )
     if log:
         log = {}
-        log['alpha'] = opt_alpha
-        log['beta'] = opt_beta
+        log["alpha"] = opt_alpha
+        log["beta"] = opt_beta
         return pi, log
     else:
         return pi
@@ -573,7 +591,8 @@ def solve_dual_entropic(a, b, M, reg, batch_size, numItermax=10000, lr=1,
 # Losses for stochastic optimization
 ################################################################################
 
-def loss_dual_entropic(u, v, xs, xt, reg=1, ws=None, wt=None, metric='sqeuclidean'):
+
+def loss_dual_entropic(u, v, xs, xt, reg=1, ws=None, wt=None, metric="sqeuclidean"):
     r"""
     Compute the dual loss of the entropic OT as in equation (6)-(7) of [19]
 
@@ -631,7 +650,7 @@ def loss_dual_entropic(u, v, xs, xt, reg=1, ws=None, wt=None, metric='sqeuclidea
     return nx.sum(u * ws) + nx.sum(v * wt) + nx.sum(ws[:, None] * F * wt[None, :])
 
 
-def plan_dual_entropic(u, v, xs, xt, reg=1, ws=None, wt=None, metric='sqeuclidean'):
+def plan_dual_entropic(u, v, xs, xt, reg=1, ws=None, wt=None, metric="sqeuclidean"):
     r"""
     Compute the primal OT plan the entropic OT as in equation (8) of [19]
 
@@ -689,7 +708,7 @@ def plan_dual_entropic(u, v, xs, xt, reg=1, ws=None, wt=None, metric='sqeuclidea
     return ws[:, None] * H * wt[None, :]
 
 
-def loss_dual_quadratic(u, v, xs, xt, reg=1, ws=None, wt=None, metric='sqeuclidean'):
+def loss_dual_quadratic(u, v, xs, xt, reg=1, ws=None, wt=None, metric="sqeuclidean"):
     r"""
     Compute the dual loss of the quadratic regularized OT as in equation (6)-(7) of [19]
 
@@ -742,12 +761,12 @@ def loss_dual_quadratic(u, v, xs, xt, reg=1, ws=None, wt=None, metric='sqeuclide
     else:
         M = dist(xs, xt, metric=metric)
 
-    F = -1.0 / (4 * reg) * nx.maximum(u[:, None] + v[None, :] - M, 0.0)**2
+    F = -1.0 / (4 * reg) * nx.maximum(u[:, None] + v[None, :] - M, 0.0) ** 2
 
     return nx.sum(u * ws) + nx.sum(v * wt) + nx.sum(ws[:, None] * F * wt[None, :])
 
 
-def plan_dual_quadratic(u, v, xs, xt, reg=1, ws=None, wt=None, metric='sqeuclidean'):
+def plan_dual_quadratic(u, v, xs, xt, reg=1, ws=None, wt=None, metric="sqeuclidean"):
     r"""
     Compute the primal OT plan the quadratic regularized OT as in equation (8) of [19]
 

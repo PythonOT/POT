@@ -11,12 +11,11 @@ Gromov-Wasserstein and Fused-Gromov-Wasserstein utils.
 #
 # License: MIT License
 
-
 from ..utils import list_to_array
 from ..backend import get_backend
 
 
-def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
+def init_matrix(C1, C2, p, q, loss_fun="square_loss", nx=None):
     r"""Return loss matrices and tensors for Gromov-Wasserstein fast computation
 
     Returns the value of :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2}) \otimes \mathbf{T}` with the
@@ -95,19 +94,21 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
         C1, C2, p, q = list_to_array(C1, C2, p, q)
         nx = get_backend(C1, C2, p, q)
 
-    if loss_fun == 'square_loss':
+    if loss_fun == "square_loss":
+
         def f1(a):
-            return (a**2)
+            return a**2
 
         def f2(b):
-            return (b**2)
+            return b**2
 
         def h1(a):
             return a
 
         def h2(b):
             return 2 * b
-    elif loss_fun == 'kl_loss':
+    elif loss_fun == "kl_loss":
+
         def f1(a):
             return a * nx.log(a + 1e-16) - a
 
@@ -120,15 +121,15 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
         def h2(b):
             return nx.log(b + 1e-16)
     else:
-        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
+        raise ValueError(
+            f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}."
+        )
 
     constC1 = nx.dot(
-        nx.dot(f1(C1), nx.reshape(p, (-1, 1))),
-        nx.ones((1, len(q)), type_as=q)
+        nx.dot(f1(C1), nx.reshape(p, (-1, 1))), nx.ones((1, len(q)), type_as=q)
     )
     constC2 = nx.dot(
-        nx.ones((len(p), 1), type_as=p),
-        nx.dot(nx.reshape(q, (1, -1)), f2(C2).T)
+        nx.ones((len(p), 1), type_as=p), nx.dot(nx.reshape(q, (1, -1)), f2(C2).T)
     )
     constC = constC1 + constC2
     hC1 = h1(C1)
@@ -170,9 +171,7 @@ def tensor_product(constC, hC1, hC2, T, nx=None):
         constC, hC1, hC2, T = list_to_array(constC, hC1, hC2, T)
         nx = get_backend(constC, hC1, hC2, T)
 
-    A = - nx.dot(
-        nx.dot(hC1, T), hC2.T
-    )
+    A = -nx.dot(nx.dot(hC1, T), hC2.T)
     tens = constC + A
     # tens -= tens.min()
     return tens
@@ -249,8 +248,7 @@ def gwggrad(constC, hC1, hC2, T, nx=None):
         International Conference on Machine Learning (ICML). 2016.
 
     """
-    return 2 * tensor_product(constC, hC1, hC2,
-                              T, nx)  # [12] Prop. 2 misses a 2 factor
+    return 2 * tensor_product(constC, hC1, hC2, T, nx)  # [12] Prop. 2 misses a 2 factor
 
 
 def update_square_loss(p, lambdas, T, Cs, nx=None):
@@ -297,12 +295,9 @@ def update_square_loss(p, lambdas, T, Cs, nx=None):
         nx = get_backend(p, *T, *Cs)
 
     # Correct order mistake in Equation 14 in [12]
-    tmpsum = sum([
-        lambdas[s] * nx.dot(
-            nx.dot(T[s], Cs[s]),
-            T[s].T
-        ) for s in range(len(T))
-    ])
+    tmpsum = sum(
+        [lambdas[s] * nx.dot(nx.dot(T[s], Cs[s]), T[s].T) for s in range(len(T))]
+    )
     ppt = nx.outer(p, p)
 
     return tmpsum / ppt
@@ -353,12 +348,12 @@ def update_kl_loss(p, lambdas, T, Cs, nx=None):
         nx = get_backend(p, *T, *Cs)
 
     # Correct order mistake in Equation 15 in [12]
-    tmpsum = sum([
-        lambdas[s] * nx.dot(
-            nx.dot(T[s], nx.log(nx.maximum(Cs[s], 1e-15))),
-            T[s].T
-        ) for s in range(len(T))
-    ])
+    tmpsum = sum(
+        [
+            lambdas[s] * nx.dot(nx.dot(T[s], nx.log(nx.maximum(Cs[s], 1e-15))), T[s].T)
+            for s in range(len(T))
+        ]
+    )
     ppt = nx.outer(p, p)
 
     return nx.exp(tmpsum / ppt)
@@ -399,15 +394,14 @@ def update_feature_matrix(lambdas, Ys, Ts, p, nx=None):
     if nx is None:
         nx = get_backend(*Ys, *Ts, p)
 
-    p = 1. / p
-    tmpsum = sum([
-        lambdas[s] * nx.dot(Ys[s], Ts[s].T) * p[None, :]
-        for s in range(len(Ts))
-    ])
+    p = 1.0 / p
+    tmpsum = sum(
+        [lambdas[s] * nx.dot(Ys[s], Ts[s].T) * p[None, :] for s in range(len(Ts))]
+    )
     return tmpsum
 
 
-def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
+def init_matrix_semirelaxed(C1, C2, p, loss_fun="square_loss", nx=None):
     r"""Return loss matrices and tensors for semi-relaxed Gromov-Wasserstein fast computation
 
     Returns the value of :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2}) \otimes \mathbf{T}` with the
@@ -488,19 +482,21 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
         C1, C2, p = list_to_array(C1, C2, p)
         nx = get_backend(C1, C2, p)
 
-    if loss_fun == 'square_loss':
+    if loss_fun == "square_loss":
+
         def f1(a):
-            return (a**2)
+            return a**2
 
         def f2(b):
-            return (b**2)
+            return b**2
 
         def h1(a):
             return a
 
         def h2(b):
             return 2 * b
-    elif loss_fun == 'kl_loss':
+    elif loss_fun == "kl_loss":
+
         def f1(a):
             return a * nx.log(a + 1e-16) - a
 
@@ -513,10 +509,13 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
         def h2(b):
             return nx.log(b + 1e-16)
     else:
-        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
+        raise ValueError(
+            f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}."
+        )
 
-    constC = nx.dot(nx.dot(f1(C1), nx.reshape(p, (-1, 1))),
-                    nx.ones((1, C2.shape[0]), type_as=p))
+    constC = nx.dot(
+        nx.dot(f1(C1), nx.reshape(p, (-1, 1))), nx.ones((1, C2.shape[0]), type_as=p)
+    )
 
     hC1 = h1(C1)
     hC2 = h2(C2)

@@ -1,5 +1,4 @@
-
-#%%
+# %%
 # -*- coding: utf-8 -*-
 """
 ============================================
@@ -26,13 +25,13 @@ import ot
 #
 # The four distributions are constructed from 4 simple images
 
-this_file = os.path.realpath('__file__')
-data_path = os.path.join(Path(this_file).parent.parent.parent, 'data')
+this_file = os.path.realpath("__file__")
+data_path = os.path.join(Path(this_file).parent.parent.parent, "data")
 
-f1 = 1 - plt.imread(os.path.join(data_path, 'redcross.png'))[::2, ::2, 2]
-f2 = 1 - plt.imread(os.path.join(data_path, 'tooth.png'))[::2, ::2, 2]
-f3 = 1 - plt.imread(os.path.join(data_path, 'heart.png'))[::2, ::2, 2]
-f4 = 1 - plt.imread(os.path.join(data_path, 'duck.png'))[::2, ::2, 2]
+f1 = 1 - plt.imread(os.path.join(data_path, "redcross.png"))[::2, ::2, 2]
+f2 = 1 - plt.imread(os.path.join(data_path, "tooth.png"))[::2, ::2, 2]
+f3 = 1 - plt.imread(os.path.join(data_path, "heart.png"))[::2, ::2, 2]
+f4 = 1 - plt.imread(os.path.join(data_path, "duck.png"))[::2, ::2, 2]
 
 f1 = f1 / np.sum(f1)
 f2 = f2 / np.sum(f2)
@@ -56,8 +55,8 @@ v4 = np.array((0, 0, 0, 1))
 #
 
 fig, axes = plt.subplots(nb_images, nb_images, figsize=(7, 7))
-plt.suptitle('Convolutional Wasserstein Barycenters in POT')
-cm = 'Blues'
+plt.suptitle("Convolutional Wasserstein Barycenters in POT")
+cm = "Blues"
 # regularization parameter
 reg = 0.004
 for i in range(nb_images):
@@ -81,9 +80,8 @@ for i in range(nb_images):
         else:
             # call to barycenter computation
             axes[i, j].imshow(
-                ot.bregman.convolutional_barycenter2d(A, reg, weights),
-                cmap=cm
+                ot.bregman.convolutional_barycenter2d(A, reg, weights), cmap=cm
             )
-        axes[i, j].axis('off')
+        axes[i, j].axis("off")
 plt.tight_layout()
 plt.show()

@@ -1,4 +1,4 @@
-"""Tests for ot.smooth model """
+"""Tests for ot.smooth model"""
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #
@@ -11,7 +11,6 @@ from scipy.optimize import check_grad
 
 
 def test_smooth_ot_dual():
-
     # get data
     n = 100
     rng = np.random.RandomState(0)
@@ -22,25 +21,23 @@ def test_smooth_ot_dual():
     M = ot.dist(x, x)
 
     with pytest.raises(NotImplementedError):
-        Gl2, log = ot.smooth.smooth_ot_dual(u, u, M, 1, reg_type='none')
+        Gl2, log = ot.smooth.smooth_ot_dual(u, u, M, 1, reg_type="none")
 
     # squared l2 regularisation
-    Gl2, log = ot.smooth.smooth_ot_dual(u, u, M, 1, reg_type='l2', log=True, stopThr=1e-10)
+    Gl2, log = ot.smooth.smooth_ot_dual(
+        u, u, M, 1, reg_type="l2", log=True, stopThr=1e-10
+    )
 
     # check constraints
-    np.testing.assert_allclose(
-        u, Gl2.sum(1), atol=1e-05)  # cf convergence sinkhorn
-    np.testing.assert_allclose(
-        u, Gl2.sum(0), atol=1e-05)  # cf convergence sinkhorn
+    np.testing.assert_allclose(u, Gl2.sum(1), atol=1e-05)  # cf convergence sinkhorn
+    np.testing.assert_allclose(u, Gl2.sum(0), atol=1e-05)  # cf convergence sinkhorn
 
     # kl regularisation
-    G = ot.smooth.smooth_ot_dual(u, u, M, 1, reg_type='kl', stopThr=1e-10)
+    G = ot.smooth.smooth_ot_dual(u, u, M, 1, reg_type="kl", stopThr=1e-10)
 
     # check constraints
-    np.testing.assert_allclose(
-        u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
-    np.testing.assert_allclose(
-        u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
+    np.testing.assert_allclose(u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
+    np.testing.assert_allclose(u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
 
     G2 = ot.sinkhorn(u, u, M, 1, stopThr=1e-10)
     np.testing.assert_allclose(G, G2, atol=1e-05)
@@ -48,24 +45,25 @@ def test_smooth_ot_dual():
     # sparsity-constrained regularisation
     max_nz = 2
     Gsc, log = ot.smooth.smooth_ot_dual(
-        u, u, M, 1,
+        u,
+        u,
+        M,
+        1,
         max_nz=max_nz,
         log=True,
-        reg_type='sparsity_constrained',
-        stopThr=1e-10)
+        reg_type="sparsity_constrained",
+        stopThr=1e-10,
+    )
 
     # check marginal constraints
     np.testing.assert_allclose(u, Gsc.sum(1), atol=1e-03)
     np.testing.assert_allclose(u, Gsc.sum(0), atol=1e-03)
 
     # check sparsity constraints
-    np.testing.assert_array_less(
-        np.sum(Gsc > 0, axis=0),
-        np.ones(n) * max_nz + 1)
+    np.testing.assert_array_less(np.sum(Gsc > 0, axis=0), np.ones(n) * max_nz + 1)
 
 
 def test_smooth_ot_semi_dual():
-
     # get data
     n = 100
     rng = np.random.RandomState(0)
@@ -76,25 +74,23 @@ def test_smooth_ot_semi_dual():
     M = ot.dist(x, x)
 
     with pytest.raises(NotImplementedError):
-        Gl2, log = ot.smooth.smooth_ot_semi_dual(u, u, M, 1, reg_type='none')
+        Gl2, log = ot.smooth.smooth_ot_semi_dual(u, u, M, 1, reg_type="none")
 
     # squared l2 regularisation
-    Gl2, log = ot.smooth.smooth_ot_semi_dual(u, u, M, 1, reg_type='l2', log=True, stopThr=1e-10)
+    Gl2, log = ot.smooth.smooth_ot_semi_dual(
+        u, u, M, 1, reg_type="l2", log=True, stopThr=1e-10
+    )
 
     # check constraints
-    np.testing.assert_allclose(
-        u, Gl2.sum(1), atol=1e-05)  # cf convergence sinkhorn
-    np.testing.assert_allclose(
-        u, Gl2.sum(0), atol=1e-05)  # cf convergence sinkhorn
+    np.testing.assert_allclose(u, Gl2.sum(1), atol=1e-05)  # cf convergence sinkhorn
+    np.testing.assert_allclose(u, Gl2.sum(0), atol=1e-05)  # cf convergence sinkhorn
 
     # kl regularisation
-    G = ot.smooth.smooth_ot_semi_dual(u, u, M, 1, reg_type='kl', stopThr=1e-10)
+    G = ot.smooth.smooth_ot_semi_dual(u, u, M, 1, reg_type="kl", stopThr=1e-10)
 
     # check constraints
-    np.testing.assert_allclose(
-        u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
-    np.testing.assert_allclose(
-        u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
+    np.testing.assert_allclose(u, G.sum(1), atol=1e-05)  # cf convergence sinkhorn
+    np.testing.assert_allclose(u, G.sum(0), atol=1e-05)  # cf convergence sinkhorn
 
     G2 = ot.sinkhorn(u, u, M, 1, stopThr=1e-10)
     np.testing.assert_allclose(G, G2, atol=1e-05)
@@ -102,23 +98,24 @@ def test_smooth_ot_semi_dual():
     # sparsity-constrained regularisation
     max_nz = 2
     Gsc = ot.smooth.smooth_ot_semi_dual(
-        u, u, M, 1, reg_type='sparsity_constrained',
-        max_nz=max_nz, stopThr=1e-10)
+        u, u, M, 1, reg_type="sparsity_constrained", max_nz=max_nz, stopThr=1e-10
+    )
 
     # check marginal constraints
     np.testing.assert_allclose(u, Gsc.sum(1), atol=1e-03)
     np.testing.assert_allclose(u, Gsc.sum(0), atol=1e-03)
 
     # check sparsity constraints
-    np.testing.assert_array_less(np.sum(Gsc > 0, axis=0),
-                                 np.ones(n) * max_nz + 1)
+    np.testing.assert_array_less(np.sum(Gsc > 0, axis=0), np.ones(n) * max_nz + 1)
 
 
 def test_sparsity_constrained_gradient():
     max_nz = 5
     regularizer = ot.smooth.SparsityConstrained(max_nz=max_nz)
     rng = np.random.RandomState(0)
-    X = rng.randn(10,)
+    X = rng.randn(
+        10,
+    )
     b = 0.5
 
     def delta_omega_func(X):

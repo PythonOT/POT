@@ -17,7 +17,7 @@ from ..utils import list_to_array
 
 
 def quantile_function(qs, cws, xs):
-    r""" Computes the quantile function of an empirical distribution
+    r"""Computes the quantile function of an empirical distribution
 
     Parameters
     ----------
@@ -35,7 +35,7 @@ def quantile_function(qs, cws, xs):
     """
     nx = get_backend(qs, cws)
     n = xs.shape[0]
-    if nx.__name__ == 'torch':
+    if nx.__name__ == "torch":
         # this is to ensure the best performance for torch searchsorted
         # and avoid a warning related to non-contiguous arrays
         cws = cws.T.contiguous()
@@ -47,7 +47,9 @@ def quantile_function(qs, cws, xs):
     return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0)
 
 
-def wasserstein_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True):
+def wasserstein_1d(
+    u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True
+):
     r"""
     Computes the 1 dimensional OT loss [15] between two (batched) empirical
     distributions
@@ -100,11 +102,11 @@ def wasserstein_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, requ
     m = v_values.shape[0]
 
     if u_weights is None:
-        u_weights = nx.full(u_values.shape, 1. / n, type_as=u_values)
+        u_weights = nx.full(u_values.shape, 1.0 / n, type_as=u_values)
     elif u_weights.ndim != u_values.ndim:
         u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
     if v_weights is None:
-        v_weights = nx.full(v_values.shape, 1. / m, type_as=v_values)
+        v_weights = nx.full(v_values.shape, 1.0 / m, type_as=v_values)
     elif v_weights.ndim != v_values.ndim:
         v_weights = nx.repeat(v_weights[..., None], v_values.shape[-1], -1)
 
@@ -133,8 +135,17 @@ def wasserstein_1d(u_values, v_values, u_weights=None, v_weights=None, p=1, requ
     return nx.sum(delta * nx.power(diff_quantiles, p), axis=0)
 
 
-def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
-           log=False, check_marginals=True):
+def emd_1d(
+    x_a,
+    x_b,
+    a=None,
+    b=None,
+    metric="sqeuclidean",
+    p=1.0,
+    dense=True,
+    log=False,
+    check_marginals=True,
+):
     r"""Solves the Earth Movers distance problem between 1d measures and returns
     the OT matrix
 
@@ -230,10 +241,12 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     if b is not None:
         b = list_to_array(b, nx=nx)
 
-    assert (x_a.ndim == 1 or x_a.ndim == 2 and x_a.shape[1] == 1), \
-        "emd_1d should only be used with monodimensional data"
-    assert (x_b.ndim == 1 or x_b.ndim == 2 and x_b.shape[1] == 1), \
-        "emd_1d should only be used with monodimensional data"
+    assert (
+        x_a.ndim == 1 or x_a.ndim == 2 and x_a.shape[1] == 1
+    ), "emd_1d should only be used with monodimensional data"
+    assert (
+        x_b.ndim == 1 or x_b.ndim == 2 and x_b.shape[1] == 1
+    ), "emd_1d should only be used with monodimensional data"
 
     # if empty array given then use uniform distributions
     if a is None or a.ndim == 0 or len(a) == 0:
@@ -246,8 +259,8 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         np.testing.assert_almost_equal(
             nx.to_numpy(nx.sum(a, axis=0)),
             nx.to_numpy(nx.sum(b, axis=0)),
-            err_msg='a and b vector must have the same sum',
-            decimal=6
+            err_msg="a and b vector must have the same sum",
+            decimal=6,
         )
     b = b * nx.sum(a) / nx.sum(b)
 
@@ -261,7 +274,8 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         nx.to_numpy(b[perm_b]).astype(np.float64),
         nx.to_numpy(x_a_1d[perm_a]).astype(np.float64),
         nx.to_numpy(x_b_1d[perm_b]).astype(np.float64),
-        metric=metric, p=p
+        metric=metric,
+        p=p,
     )
 
     G = nx.coo_matrix(
@@ -269,20 +283,21 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         perm_a[indices[:, 0]],
         perm_b[indices[:, 1]],
         shape=(a.shape[0], b.shape[0]),
-        type_as=x_a
+        type_as=x_a,
     )
     if dense:
         G = nx.todense(G)
     elif str(nx) == "jax":
         warnings.warn("JAX does not support sparse matrices, converting to dense")
     if log:
-        log = {'cost': nx.from_numpy(cost, type_as=x_a)}
+        log = {"cost": nx.from_numpy(cost, type_as=x_a)}
         return G, log
     return G
 
 
-def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
-            log=False):
+def emd2_1d(
+    x_a, x_b, a=None, b=None, metric="sqeuclidean", p=1.0, dense=True, log=False
+):
     r"""Solves the Earth Movers distance problem between 1d measures and returns
     the loss
 
@@ -369,11 +384,12 @@ def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     """
     # If we do not return G (log==False), then we should not to cast it to dense
     # (useless overhead)
-    G, log_emd = emd_1d(x_a=x_a, x_b=x_b, a=a, b=b, metric=metric, p=p,
-                        dense=dense and log, log=True)
-    cost = log_emd['cost']
+    G, log_emd = emd_1d(
+        x_a=x_a, x_b=x_b, a=a, b=b, metric=metric, p=p, dense=dense and log, log=True
+    )
+    cost = log_emd["cost"]
     if log:
-        log_emd = {'G': G}
+        log_emd = {"G": G}
         return cost, log_emd
     return cost
 
@@ -412,14 +428,16 @@ def roll_cols(M, shifts):
 
     n_rows, n_cols = M.shape
 
-    arange1 = nx.tile(nx.reshape(nx.arange(n_cols, type_as=shifts), (1, n_cols)), (n_rows, 1))
+    arange1 = nx.tile(
+        nx.reshape(nx.arange(n_cols, type_as=shifts), (1, n_cols)), (n_rows, 1)
+    )
     arange2 = (arange1 - shifts) % n_cols
 
     return nx.take_along_axis(M, arange2, 1)
 
 
 def derivative_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p=2):
-    r""" Computes the left and right derivative of the cost (Equation (6.3) and (6.4) of [1])
+    r"""Computes the left and right derivative of the cost (Equation (6.3) and (6.4) of [1])
 
     Parameters
     ----------
@@ -467,13 +485,15 @@ def derivative_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p=2):
 
     v_cdf_theta2 = nx.copy(v_cdf_theta)
     v_cdf_theta2[mask_n] = np.inf
-    shift = (-nx.argmin(v_cdf_theta2, axis=-1))
+    shift = -nx.argmin(v_cdf_theta2, axis=-1)
 
     v_cdf_theta = roll_cols(v_cdf_theta, nx.reshape(shift, (-1, 1)))
     v_values = roll_cols(v_values, nx.reshape(shift, (-1, 1)))
-    v_values = nx.concatenate([v_values, nx.reshape(v_values[:, 0], (-1, 1)) + 1], axis=1)
+    v_values = nx.concatenate(
+        [v_values, nx.reshape(v_values[:, 0], (-1, 1)) + 1], axis=1
+    )
 
-    if nx.__name__ == 'torch':
+    if nx.__name__ == "torch":
         # this is to ensure the best performance for torch searchsorted
         # and avoid a warning related to non-contiguous arrays
         u_cdf = u_cdf.contiguous()
@@ -485,9 +505,11 @@ def derivative_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p=2):
 
     # Deal with 1
     u_cdfm = nx.concatenate([u_cdf, nx.reshape(u_cdf[:, 0], (-1, 1)) + 1], axis=1)
-    u_valuesm = nx.concatenate([u_values, nx.reshape(u_values[:, 0], (-1, 1)) + 1], axis=1)
+    u_valuesm = nx.concatenate(
+        [u_values, nx.reshape(u_values[:, 0], (-1, 1)) + 1], axis=1
+    )
 
-    if nx.__name__ == 'torch':
+    if nx.__name__ == "torch":
         # this is to ensure the best performance for torch searchsorted
         # and avoid a warning related to non-contiguous arrays
         u_cdfm = u_cdfm.contiguous()
@@ -496,17 +518,23 @@ def derivative_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p=2):
     u_indexm = nx.searchsorted(u_cdfm, v_cdf_theta, side="right")
     u_icdfm_theta = nx.take_along_axis(u_valuesm, nx.clip(u_indexm, 0, n), -1)
 
-    dCp = nx.sum(nx.power(nx.abs(u_icdf_theta - v_values[:, 1:]), p)
-                 - nx.power(nx.abs(u_icdf_theta - v_values[:, :-1]), p), axis=-1)
+    dCp = nx.sum(
+        nx.power(nx.abs(u_icdf_theta - v_values[:, 1:]), p)
+        - nx.power(nx.abs(u_icdf_theta - v_values[:, :-1]), p),
+        axis=-1,
+    )
 
-    dCm = nx.sum(nx.power(nx.abs(u_icdfm_theta - v_values[:, 1:]), p)
-                 - nx.power(nx.abs(u_icdfm_theta - v_values[:, :-1]), p), axis=-1)
+    dCm = nx.sum(
+        nx.power(nx.abs(u_icdfm_theta - v_values[:, 1:]), p)
+        - nx.power(nx.abs(u_icdfm_theta - v_values[:, :-1]), p),
+        axis=-1,
+    )
 
     return dCp.reshape(-1, 1), dCm.reshape(-1, 1)
 
 
 def ot_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p):
-    r""" Computes the the cost (Equation (6.2) of [1])
+    r"""Computes the the cost (Equation (6.2) of [1])
 
     Parameters
     ----------
@@ -553,11 +581,13 @@ def ot_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p):
     # Put negative values at the end
     v_cdf_theta2 = nx.copy(v_cdf_theta)
     v_cdf_theta2[mask_n] = np.inf
-    shift = (-nx.argmin(v_cdf_theta2, axis=-1))
+    shift = -nx.argmin(v_cdf_theta2, axis=-1)
 
     v_cdf_theta = roll_cols(v_cdf_theta, nx.reshape(shift, (-1, 1)))
     v_values = roll_cols(v_values, nx.reshape(shift, (-1, 1)))
-    v_values = nx.concatenate([v_values, nx.reshape(v_values[:, 0], (-1, 1)) + 1], axis=1)
+    v_values = nx.concatenate(
+        [v_values, nx.reshape(v_values[:, 0], (-1, 1)) + 1], axis=1
+    )
 
     # Compute absciss
     cdf_axis = nx.sort(nx.concatenate((u_cdf, v_cdf_theta), -1), -1)
@@ -565,7 +595,7 @@ def ot_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p):
 
     delta = cdf_axis_pad[..., 1:] - cdf_axis_pad[..., :-1]
 
-    if nx.__name__ == 'torch':
+    if nx.__name__ == "torch":
         # this is to ensure the best performance for torch searchsorted
         # and avoid a warninng related to non-contiguous arrays
         u_cdf = u_cdf.contiguous()
@@ -576,7 +606,9 @@ def ot_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p):
     u_index = nx.searchsorted(u_cdf, cdf_axis)
     u_icdf = nx.take_along_axis(u_values, u_index.clip(0, n - 1), -1)
 
-    v_values = nx.concatenate([v_values, nx.reshape(v_values[:, 0], (-1, 1)) + 1], axis=1)
+    v_values = nx.concatenate(
+        [v_values, nx.reshape(v_values[:, 0], (-1, 1)) + 1], axis=1
+    )
     v_index = nx.searchsorted(v_cdf_theta, cdf_axis)
     v_icdf = nx.take_along_axis(v_values, v_index.clip(0, m), -1)
 
@@ -588,9 +620,20 @@ def ot_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p):
     return ot_cost
 
 
-def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
-                         Lm=10, Lp=10, tm=-1, tp=1, eps=1e-6, require_sort=True,
-                         log=False):
+def binary_search_circle(
+    u_values,
+    v_values,
+    u_weights=None,
+    v_weights=None,
+    p=1,
+    Lm=10,
+    Lp=10,
+    tm=-1,
+    tp=1,
+    eps=1e-6,
+    require_sort=True,
+    log=False,
+):
     r"""Computes the Wasserstein distance on the circle using the Binary search algorithm proposed in [44].
     Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
     takes the value modulo 1.
@@ -676,18 +719,20 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
 
     if u_values.shape[1] != v_values.shape[1]:
         raise ValueError(
-            "u and v must have the same number of batches {} and {} respectively given".format(u_values.shape[1],
-                                                                                               v_values.shape[1]))
+            "u and v must have the same number of batches {} and {} respectively given".format(
+                u_values.shape[1], v_values.shape[1]
+            )
+        )
 
     u_values = u_values % 1
     v_values = v_values % 1
 
     if u_weights is None:
-        u_weights = nx.full(u_values.shape, 1. / n, type_as=u_values)
+        u_weights = nx.full(u_values.shape, 1.0 / n, type_as=u_values)
     elif u_weights.ndim != u_values.ndim:
         u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
     if v_weights is None:
-        v_weights = nx.full(v_values.shape, 1. / m, type_as=v_values)
+        v_weights = nx.full(v_values.shape, 1.0 / m, type_as=v_values)
     elif v_weights.ndim != v_values.ndim:
         v_weights = nx.repeat(v_weights[..., None], v_values.shape[-1], -1)
 
@@ -728,18 +773,30 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
 
         if nx.any(mask):
             # can probably be improved by computing only relevant values
-            dCptp, dCmtp = derivative_cost_on_circle(tp, u_values, v_values, u_cdf, v_cdf, p)
-            dCptm, dCmtm = derivative_cost_on_circle(tm, u_values, v_values, u_cdf, v_cdf, p)
-            Ctm = ot_cost_on_circle(tm, u_values, v_values, u_cdf, v_cdf, p).reshape(-1, 1)
-            Ctp = ot_cost_on_circle(tp, u_values, v_values, u_cdf, v_cdf, p).reshape(-1, 1)
+            dCptp, dCmtp = derivative_cost_on_circle(
+                tp, u_values, v_values, u_cdf, v_cdf, p
+            )
+            dCptm, dCmtm = derivative_cost_on_circle(
+                tm, u_values, v_values, u_cdf, v_cdf, p
+            )
+            Ctm = ot_cost_on_circle(tm, u_values, v_values, u_cdf, v_cdf, p).reshape(
+                -1, 1
+            )
+            Ctp = ot_cost_on_circle(tp, u_values, v_values, u_cdf, v_cdf, p).reshape(
+                -1, 1
+            )
 
             mask_end = mask * (nx.abs(dCptm - dCmtp) > 0.001)
-            tc[mask_end > 0] = ((Ctp - Ctm + tm * dCptm - tp * dCmtp) / (dCptm - dCmtp))[mask_end > 0]
+            tc[mask_end > 0] = (
+                (Ctp - Ctm + tm * dCptm - tp * dCmtp) / (dCptm - dCmtp)
+            )[mask_end > 0]
             done[nx.prod(mask, axis=-1) > 0] = 1
         elif nx.any(1 - done):
             tm[((1 - mask) * (dCp < 0)) > 0] = tc[((1 - mask) * (dCp < 0)) > 0]
             tp[((1 - mask) * (dCp >= 0)) > 0] = tc[((1 - mask) * (dCp >= 0)) > 0]
-            tc[((1 - mask) * (1 - done)) > 0] = (tm[((1 - mask) * (1 - done)) > 0] + tp[((1 - mask) * (1 - done)) > 0]) / 2
+            tc[((1 - mask) * (1 - done)) > 0] = (
+                tm[((1 - mask) * (1 - done)) > 0] + tp[((1 - mask) * (1 - done)) > 0]
+            ) / 2
 
     w = ot_cost_on_circle(nx.detach(tc), u_values, v_values, u_cdf, v_cdf, p)
 
@@ -748,7 +805,9 @@ def binary_search_circle(u_values, v_values, u_weights=None, v_weights=None, p=1
     return w
 
 
-def wasserstein1_circle(u_values, v_values, u_weights=None, v_weights=None, require_sort=True):
+def wasserstein1_circle(
+    u_values, v_values, u_weights=None, v_weights=None, require_sort=True
+):
     r"""Computes the 1-Wasserstein distance on the circle using the level median [45].
     Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
     takes the value modulo 1.
@@ -805,18 +864,20 @@ def wasserstein1_circle(u_values, v_values, u_weights=None, v_weights=None, requ
 
     if u_values.shape[1] != v_values.shape[1]:
         raise ValueError(
-            "u and v must have the same number of batchs {} and {} respectively given".format(u_values.shape[1],
-                                                                                              v_values.shape[1]))
+            "u and v must have the same number of batchs {} and {} respectively given".format(
+                u_values.shape[1], v_values.shape[1]
+            )
+        )
 
     u_values = u_values % 1
     v_values = v_values % 1
 
     if u_weights is None:
-        u_weights = nx.full(u_values.shape, 1. / n, type_as=u_values)
+        u_weights = nx.full(u_values.shape, 1.0 / n, type_as=u_values)
     elif u_weights.ndim != u_values.ndim:
         u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
     if v_weights is None:
-        v_weights = nx.full(v_values.shape, 1. / m, type_as=v_values)
+        v_weights = nx.full(v_values.shape, 1.0 / m, type_as=v_values)
     elif v_weights.ndim != v_values.ndim:
         v_weights = nx.repeat(v_weights[..., None], v_values.shape[-1], -1)
 
@@ -833,7 +894,12 @@ def wasserstein1_circle(u_values, v_values, u_weights=None, v_weights=None, requ
     # Code inspired from https://gitlab.gwdg.de/shundri/circularOT/-/tree/master/
     values_sorted, values_sorter = nx.sort2(nx.concatenate((u_values, v_values), 0), 0)
 
-    cdf_diff = nx.cumsum(nx.take_along_axis(nx.concatenate((u_weights, -v_weights), 0), values_sorter, 0), 0)
+    cdf_diff = nx.cumsum(
+        nx.take_along_axis(
+            nx.concatenate((u_weights, -v_weights), 0), values_sorter, 0
+        ),
+        0,
+    )
     cdf_diff_sorted, cdf_diff_sorter = nx.sort2(cdf_diff, axis=0)
 
     values_sorted = nx.zero_pad(values_sorted, pad_width=[(0, 1), (0, 0)], value=1)
@@ -849,8 +915,19 @@ def wasserstein1_circle(u_values, v_values, u_weights=None, v_weights=None, requ
     return nx.sum(delta * nx.abs(cdf_diff - levMed), axis=0)
 
 
-def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
-                       Lm=10, Lp=10, tm=-1, tp=1, eps=1e-6, require_sort=True):
+def wasserstein_circle(
+    u_values,
+    v_values,
+    u_weights=None,
+    v_weights=None,
+    p=1,
+    Lm=10,
+    Lp=10,
+    tm=-1,
+    tp=1,
+    eps=1e-6,
+    require_sort=True,
+):
     r"""Computes the Wasserstein distance on the circle using either [45] for p=1 or
     the binary search algorithm proposed in [44] otherwise.
     Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
@@ -922,11 +999,23 @@ def wasserstein_circle(u_values, v_values, u_weights=None, v_weights=None, p=1,
     assert p >= 1, "The OT loss is only valid for p>=1, {p} was given".format(p=p)
 
     if p == 1:
-        return wasserstein1_circle(u_values, v_values, u_weights, v_weights, require_sort)
+        return wasserstein1_circle(
+            u_values, v_values, u_weights, v_weights, require_sort
+        )
 
-    return binary_search_circle(u_values, v_values, u_weights, v_weights,
-                                p=p, Lm=Lm, Lp=Lp, tm=tm, tp=tp, eps=eps,
-                                require_sort=require_sort)
+    return binary_search_circle(
+        u_values,
+        v_values,
+        u_weights,
+        v_weights,
+        p=p,
+        Lm=Lm,
+        Lp=Lp,
+        tm=tm,
+        tp=tp,
+        eps=eps,
+        require_sort=require_sort,
+    )
 
 
 def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
@@ -986,7 +1075,7 @@ def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
         u_values = nx.reshape(u_values, (n, 1))
 
     if u_weights is None:
-        u_weights = nx.full(u_values.shape, 1. / n, type_as=u_values)
+        u_weights = nx.full(u_values.shape, 1.0 / n, type_as=u_values)
     elif u_weights.ndim != u_values.ndim:
         u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
 

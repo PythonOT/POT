@@ -17,8 +17,21 @@ from ..backend import get_backend
 from ._utils import projC, projR
 
 
-def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
-          stopThr=1e-3, verbose=False, log=False, warn=True):
+def unmix(
+    a,
+    D,
+    M,
+    M0,
+    h0,
+    reg,
+    reg0,
+    alpha,
+    numItermax=1000,
+    stopThr=1e-3,
+    verbose=False,
+    log=False,
+    warn=True,
+):
     r"""
     Compute the unmixing of an observation with a given dictionary using Wasserstein distance
 
@@ -111,7 +124,7 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
     err = 1
     # log = {'niter':0, 'all_err':[]}
     if log:
-        log = {'err': []}
+        log = {"err": []}
 
     for ii in range(numItermax):
         K = projC(K, a)
@@ -127,21 +140,23 @@ def unmix(a, D, M, M0, h0, reg, reg0, alpha, numItermax=1000,
         err = nx.norm(nx.sum(K0, axis=1) - old)
         old = new
         if log:
-            log['err'].append(err)
+            log["err"].append(err)
 
         if verbose:
             if ii % 200 == 0:
-                print('{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
-            print('{:5d}|{:8e}|'.format(ii, err))
+                print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+            print("{:5d}|{:8e}|".format(ii, err))
         if err < stopThr:
             break
     else:
         if warn:
-            warnings.warn("Unmixing algorithm did not converge. You might want to "
-                          "increase the number of iterations `numItermax` "
-                          "or the regularization parameter `reg`.")
+            warnings.warn(
+                "Unmixing algorithm did not converge. You might want to "
+                "increase the number of iterations `numItermax` "
+                "or the regularization parameter `reg`."
+            )
     if log:
-        log['niter'] = ii
+        log["niter"] = ii
         return nx.sum(K0, axis=1), log
     else:
         return nx.sum(K0, axis=1)

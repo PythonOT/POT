@@ -1,4 +1,4 @@
-"""Tests for backend module """
+"""Tests for backend module"""
 
 # Author: Remi Flamary <remi.flamary@polytechnique.edu>
 #         Nicolas Courty <ncourty@irisa.fr>
@@ -16,7 +16,6 @@ from ot.backend import get_backend, get_backend_list, jax, tf, to_numpy, torch
 
 
 def test_get_backend_list():
-
     lst = get_backend_list()
 
     assert len(lst) > 0
@@ -24,7 +23,6 @@ def test_get_backend_list():
 
 
 def test_to_numpy(nx):
-
     v = nx.zeros(10)
     M = nx.ones((10, 10))
 
@@ -46,12 +44,11 @@ def test_get_backend_invalid():
 
 
 def test_get_backend(nx):
-
     A = np.zeros((3, 2))
     B = np.zeros((3, 1))
 
     nx_np = get_backend(A)
-    assert nx_np.__name__ == 'numpy'
+    assert nx_np.__name__ == "numpy"
 
     A2, B2 = nx.from_numpy(A, B)
 
@@ -79,7 +76,6 @@ def test_get_backend(nx):
 
 
 def test_convert_between_backends(nx):
-
     A = np.zeros((3, 2))
     B = np.zeros((3, 1))
 
@@ -98,7 +94,6 @@ def test_convert_between_backends(nx):
 
 
 def test_empty_backend():
-
     rnd = np.random.RandomState(0)
     M = rnd.randn(10, 3)
     v = rnd.randn(3)
@@ -156,7 +151,7 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.isinf(M)
     with pytest.raises(NotImplementedError):
-        nx.einsum('ij->i', M)
+        nx.einsum("ij->i", M)
     with pytest.raises(NotImplementedError):
         nx.sort(M)
     with pytest.raises(NotImplementedError):
@@ -277,7 +272,6 @@ def test_empty_backend():
 
 
 def test_func_backends(nx):
-
     rnd = np.random.RandomState(0)
     M = rnd.randn(10, 3)
     SquareM = rnd.randn(10, 10)
@@ -295,8 +289,7 @@ def test_func_backends(nx):
     lst_tot = []
 
     for nx in [ot.backend.NumpyBackend(), nx]:
-
-        print('Backend: ', nx.__name__)
+        print("Backend: ", nx.__name__)
 
         lst_b = []
         lst_name = []
@@ -317,283 +310,288 @@ def test_func_backends(nx):
         A = nx.set_gradients(val, v, v)
 
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('set_gradients')
+        lst_name.append("set_gradients")
 
         A = nx.detach(Mb)
         A, B = nx.detach(Mb, Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('detach')
+        lst_name.append("detach")
 
         A = nx.zeros((10, 3))
         A = nx.zeros((10, 3), type_as=Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('zeros')
+        lst_name.append("zeros")
 
         A = nx.ones((10, 3))
         A = nx.ones((10, 3), type_as=Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('ones')
+        lst_name.append("ones")
 
         A = nx.arange(10, 1, 2)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('arange')
+        lst_name.append("arange")
 
         A = nx.full((10, 3), 3.14)
         A = nx.full((10, 3), 3.14, type_as=Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('full')
+        lst_name.append("full")
 
         A = nx.eye(10, 3)
         A = nx.eye(10, 3, type_as=Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('eye')
+        lst_name.append("eye")
 
         A = nx.sum(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('sum')
+        lst_name.append("sum")
 
         A = nx.sum(Mb, axis=1, keepdims=True)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('sum(axis)')
+        lst_name.append("sum(axis)")
 
         A = nx.cumsum(Mb, 0)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('cumsum(axis)')
+        lst_name.append("cumsum(axis)")
 
         A = nx.max(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('max')
+        lst_name.append("max")
 
         A = nx.max(Mb, axis=1, keepdims=True)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('max(axis)')
+        lst_name.append("max(axis)")
 
         A = nx.min(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('min')
+        lst_name.append("min")
 
         A = nx.min(Mb, axis=1, keepdims=True)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('min(axis)')
+        lst_name.append("min(axis)")
 
         A = nx.maximum(vb, 0)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('maximum')
+        lst_name.append("maximum")
 
         A = nx.minimum(vb, 0)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('minimum')
+        lst_name.append("minimum")
 
         A = nx.sign(vb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('sign')
+        lst_name.append("sign")
 
         A = nx.abs(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('abs')
+        lst_name.append("abs")
 
         A = nx.log(A)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('log')
+        lst_name.append("log")
 
         A = nx.exp(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('exp')
+        lst_name.append("exp")
 
         A = nx.sqrt(nx.abs(Mb))
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('sqrt')
+        lst_name.append("sqrt")
 
         A = nx.power(Mb, 2)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('power')
+        lst_name.append("power")
 
         A = nx.dot(vb, vb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('dot(v,v)')
+        lst_name.append("dot(v,v)")
 
         A = nx.dot(Mb, vb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('dot(M,v)')
+        lst_name.append("dot(M,v)")
 
         A = nx.dot(Mb, Mb.T)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('dot(M,M)')
+        lst_name.append("dot(M,M)")
 
         A = nx.norm(vb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('norm')
+        lst_name.append("norm")
 
         A = nx.norm(Mb, axis=1)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('norm(M,axis=1)')
+        lst_name.append("norm(M,axis=1)")
 
         A = nx.norm(Mb, axis=1, keepdims=True)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('norm(M,axis=1,keepdims=True)')
+        lst_name.append("norm(M,axis=1,keepdims=True)")
 
         A = nx.any(vb > 0)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('any')
+        lst_name.append("any")
 
         A = nx.isnan(vb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('isnan')
+        lst_name.append("isnan")
 
         A = nx.isinf(vb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('isinf')
+        lst_name.append("isinf")
 
-        A = nx.einsum('ij->i', Mb)
+        A = nx.einsum("ij->i", Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('einsum(ij->i)')
+        lst_name.append("einsum(ij->i)")
 
-        A = nx.einsum('ij,j->i', Mb, vb)
+        A = nx.einsum("ij,j->i", Mb, vb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('nx.einsum(ij,j->i)')
+        lst_name.append("nx.einsum(ij,j->i)")
 
-        A = nx.einsum('ij->i', Mb)
+        A = nx.einsum("ij->i", Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('nx.einsum(ij->i)')
+        lst_name.append("nx.einsum(ij->i)")
 
         A = nx.sort(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('sort')
+        lst_name.append("sort")
 
         A = nx.argsort(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('argsort')
+        lst_name.append("argsort")
 
         tmp = nx.sort(Mb)
-        A = nx.searchsorted(tmp, tmp, 'right')
+        A = nx.searchsorted(tmp, tmp, "right")
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('searchsorted')
+        lst_name.append("searchsorted")
 
         A = nx.flip(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('flip')
+        lst_name.append("flip")
 
         A = nx.outer(vb, vb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('outer')
+        lst_name.append("outer")
 
         A = nx.clip(vb, 0, 1)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('clip')
+        lst_name.append("clip")
 
         A = nx.repeat(Mb, 0)
         A = nx.repeat(Mb, 2, -1)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('repeat')
+        lst_name.append("repeat")
 
         A = nx.take_along_axis(vb, nx.arange(3), -1)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('take_along_axis')
+        lst_name.append("take_along_axis")
 
         A = nx.concatenate((Mb, Mb), -1)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('concatenate')
+        lst_name.append("concatenate")
 
         A = nx.zero_pad(Mb, len(Mb.shape) * [(3, 3)])
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('zero_pad')
+        lst_name.append("zero_pad")
 
         A = nx.argmax(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('argmax')
+        lst_name.append("argmax")
 
         A = nx.argmin(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('argmin')
+        lst_name.append("argmin")
 
         A = nx.mean(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('mean')
+        lst_name.append("mean")
 
         A = nx.median(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('median')
+        lst_name.append("median")
 
         A = nx.std(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('std')
+        lst_name.append("std")
 
         A = nx.linspace(0, 1, 50)
         A = nx.linspace(0, 1, 50, type_as=Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('linspace')
+        lst_name.append("linspace")
 
         X, Y = nx.meshgrid(vb, vb)
         lst_b.append(np.stack([nx.to_numpy(X), nx.to_numpy(Y)]))
-        lst_name.append('meshgrid')
+        lst_name.append("meshgrid")
 
         A = nx.diag(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('diag2D')
+        lst_name.append("diag2D")
 
         A = nx.diag(vb, 1)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('diag1D')
+        lst_name.append("diag1D")
 
         A = nx.unique(nx.from_numpy(np.stack([M, M])))
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('unique')
+        lst_name.append("unique")
 
-        A, A2 = nx.unique(nx.from_numpy(np.stack([M, M]).reshape(-1)), return_inverse=True)
+        A, A2 = nx.unique(
+            nx.from_numpy(np.stack([M, M]).reshape(-1)), return_inverse=True
+        )
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('unique(M,return_inverse=True)[0]')
+        lst_name.append("unique(M,return_inverse=True)[0]")
         lst_b.append(nx.to_numpy(A2))
-        lst_name.append('unique(M,return_inverse=True)[1]')
+        lst_name.append("unique(M,return_inverse=True)[1]")
 
         A = nx.logsumexp(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('logsumexp')
+        lst_name.append("logsumexp")
 
         A = nx.stack([Mb, Mb])
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('stack')
+        lst_name.append("stack")
 
         A = nx.reshape(Mb, (5, 3, 2))
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('reshape')
+        lst_name.append("reshape")
 
         sp_Mb = nx.coo_matrix(sp_datab, sp_rowb, sp_colb, shape=(4, 4))
         nx.todense(Mb)
         lst_b.append(nx.to_numpy(nx.todense(sp_Mb)))
-        lst_name.append('coo_matrix')
+        lst_name.append("coo_matrix")
 
-        assert not nx.issparse(Mb), 'Assert fail on: issparse (expected False)'
-        assert nx.issparse(sp_Mb) or nx.__name__ in ("jax", "tf"), 'Assert fail on: issparse (expected True)'
+        assert not nx.issparse(Mb), "Assert fail on: issparse (expected False)"
+        assert nx.issparse(sp_Mb) or nx.__name__ in (
+            "jax",
+            "tf",
+        ), "Assert fail on: issparse (expected True)"
 
         A = nx.tocsr(sp_Mb)
         lst_b.append(nx.to_numpy(nx.todense(A)))
-        lst_name.append('tocsr')
+        lst_name.append("tocsr")
 
-        A = nx.eliminate_zeros(nx.copy(sp_datab), threshold=5.)
+        A = nx.eliminate_zeros(nx.copy(sp_datab), threshold=5.0)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('eliminate_zeros (dense)')
+        lst_name.append("eliminate_zeros (dense)")
 
         A = nx.eliminate_zeros(sp_Mb)
         lst_b.append(nx.to_numpy(nx.todense(A)))
-        lst_name.append('eliminate_zeros (sparse)')
+        lst_name.append("eliminate_zeros (sparse)")
 
         A = nx.where(Mb >= nx.stack([nx.linspace(0, 1, 10)] * 3, axis=1), Mb, 0.0)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('where (cond, x, y)')
+        lst_name.append("where (cond, x, y)")
 
         A = nx.where(nx.from_numpy(np.array([True, False])))
         lst_b.append(nx.to_numpy(nx.stack(A)))
-        lst_name.append('where (cond)')
+        lst_name.append("where (cond)")
 
         A = nx.copy(Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('copy')
+        lst_name.append("copy")
 
-        assert nx.allclose(Mb, Mb), 'Assert fail on: allclose (expected True)'
-        assert not nx.allclose(2 * Mb, Mb), 'Assert fail on: allclose (expected False)'
+        assert nx.allclose(Mb, Mb), "Assert fail on: allclose (expected True)"
+        assert not nx.allclose(2 * Mb, Mb), "Assert fail on: allclose (expected False)"
 
         A = nx.squeeze(nx.zeros((3, 1, 4, 1)))
-        assert tuple(A.shape) == (3, 4), 'Assert fail on: squeeze'
+        assert tuple(A.shape) == (3, 4), "Assert fail on: squeeze"
 
         A = nx.bitsize(Mb)
         lst_b.append(float(A))
@@ -606,15 +604,15 @@ def test_func_backends(nx):
 
         A = nx.solve(SquareMb, Mb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('solve')
+        lst_name.append("solve")
 
         A = nx.trace(SquareMb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('trace')
+        lst_name.append("trace")
 
         A = nx.inv(SquareMb)
         lst_b.append(nx.to_numpy(A))
-        lst_name.append('matrix inverse')
+        lst_name.append("matrix inverse")
 
         A = nx.sqrtm(SquareMb.T @ SquareMb)
         lst_b.append(nx.to_numpy(A))
@@ -701,12 +699,11 @@ def test_func_backends(nx):
 
     for a1, a2, name in zip(lst_np, lst_b, lst_name):
         np.testing.assert_allclose(
-            a2, a1, atol=1e-7, err_msg=f'ASSERT FAILED ON: {name}'
+            a2, a1, atol=1e-7, err_msg=f"ASSERT FAILED ON: {name}"
         )
 
 
 def test_random_backends(nx):
-
     tmp_u = nx.rand()
 
     assert tmp_u < 1
@@ -735,14 +732,12 @@ def test_random_backends(nx):
 
 
 def test_gradients_backends():
-
     rnd = np.random.RandomState(0)
     v = rnd.randn(10)
     c = rnd.randn()
     e = rnd.randn()
 
     if torch:
-
         nx = ot.backend.TorchBackend()
 
         v2 = torch.tensor(v, requires_grad=True)
@@ -760,24 +755,26 @@ def test_gradients_backends():
     if jax:
         nx = ot.backend.JaxBackend()
         with jax.checking_leaks():
+
             def fun(a, b, d):
-                val = b * nx.sum(a ** 4) + d
+                val = b * nx.sum(a**4) + d
                 return nx.set_gradients(val, (a, b, d), (a, b, 2 * d))
+
             grad_val = jax.grad(fun, argnums=(0, 1, 2))(v, c, e)
 
-        np.testing.assert_almost_equal(fun(v, c, e), c * np.sum(v ** 4) + e, decimal=4)
+        np.testing.assert_almost_equal(fun(v, c, e), c * np.sum(v**4) + e, decimal=4)
         np.testing.assert_allclose(grad_val[0], v, atol=1e-4)
         np.testing.assert_allclose(grad_val[2], 2 * e, atol=1e-4)
 
     if tf:
         nx = ot.backend.TensorflowBackend()
-        w = tf.Variable(tf.random.normal((3, 2)), name='w')
-        b = tf.Variable(tf.random.normal((2,), dtype=tf.float32), name='b')
+        w = tf.Variable(tf.random.normal((3, 2)), name="w")
+        b = tf.Variable(tf.random.normal((2,), dtype=tf.float32), name="b")
         x = tf.random.normal((1, 3), dtype=tf.float32)
 
         with tf.GradientTape() as tape:
             y = x @ w + b
-            loss = tf.reduce_mean(y ** 2)
+            loss = tf.reduce_mean(y**2)
             manipulated_loss = nx.set_gradients(loss, (w, b), (w, b))
             [dl_dw, dl_db] = tape.gradient(manipulated_loss, [w, b])
             assert nx.allclose(dl_dw, w)
@@ -787,6 +784,6 @@ def test_gradients_backends():
 def test_get_backend_none():
     a, b = np.zeros((2, 3)), None
     nx = get_backend(a, b)
-    assert str(nx) == 'numpy'
+    assert str(nx) == "numpy"
     with pytest.raises(ValueError):
         get_backend(None, None)

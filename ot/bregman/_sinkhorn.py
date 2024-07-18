@@ -19,8 +19,20 @@ from ..utils import list_to_array
 from ..backend import get_backend
 
 
-def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9,
-             verbose=False, log=False, warn=True, warmstart=None, **kwargs):
+def sinkhorn(
+    a,
+    b,
+    M,
+    reg,
+    method="sinkhorn",
+    numItermax=1000,
+    stopThr=1e-9,
+    verbose=False,
+    log=False,
+    warn=True,
+    warmstart=None,
+    **kwargs,
+):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -150,36 +162,93 @@ def sinkhorn(a, b, M, reg, method='sinkhorn', numItermax=1000, stopThr=1e-9,
 
     """
 
-    if method.lower() == 'sinkhorn':
-        return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
-                              stopThr=stopThr, verbose=verbose, log=log,
-                              warn=warn, warmstart=warmstart,
-                              **kwargs)
-    elif method.lower() == 'sinkhorn_log':
-        return sinkhorn_log(a, b, M, reg, numItermax=numItermax,
-                            stopThr=stopThr, verbose=verbose, log=log,
-                            warn=warn, warmstart=warmstart,
-                            **kwargs)
-    elif method.lower() == 'greenkhorn':
-        return greenkhorn(a, b, M, reg, numItermax=numItermax,
-                          stopThr=stopThr, verbose=verbose, log=log,
-                          warn=warn, warmstart=warmstart)
-    elif method.lower() == 'sinkhorn_stabilized':
-        return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
-                                   stopThr=stopThr, warmstart=warmstart,
-                                   verbose=verbose, log=log, warn=warn,
-                                   **kwargs)
-    elif method.lower() == 'sinkhorn_epsilon_scaling':
-        return sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=numItermax,
-                                        stopThr=stopThr, warmstart=warmstart,
-                                        verbose=verbose, log=log, warn=warn,
-                                        **kwargs)
+    if method.lower() == "sinkhorn":
+        return sinkhorn_knopp(
+            a,
+            b,
+            M,
+            reg,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            warn=warn,
+            warmstart=warmstart,
+            **kwargs,
+        )
+    elif method.lower() == "sinkhorn_log":
+        return sinkhorn_log(
+            a,
+            b,
+            M,
+            reg,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            warn=warn,
+            warmstart=warmstart,
+            **kwargs,
+        )
+    elif method.lower() == "greenkhorn":
+        return greenkhorn(
+            a,
+            b,
+            M,
+            reg,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            warn=warn,
+            warmstart=warmstart,
+        )
+    elif method.lower() == "sinkhorn_stabilized":
+        return sinkhorn_stabilized(
+            a,
+            b,
+            M,
+            reg,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            warmstart=warmstart,
+            verbose=verbose,
+            log=log,
+            warn=warn,
+            **kwargs,
+        )
+    elif method.lower() == "sinkhorn_epsilon_scaling":
+        return sinkhorn_epsilon_scaling(
+            a,
+            b,
+            M,
+            reg,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            warmstart=warmstart,
+            verbose=verbose,
+            log=log,
+            warn=warn,
+            **kwargs,
+        )
     else:
         raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
-              stopThr=1e-9, verbose=False, log=False, warn=False, warmstart=None, **kwargs):
+def sinkhorn2(
+    a,
+    b,
+    M,
+    reg,
+    method="sinkhorn",
+    numItermax=1000,
+    stopThr=1e-9,
+    verbose=False,
+    log=False,
+    warn=False,
+    warmstart=None,
+    **kwargs,
+):
     r"""
     Solve the entropic regularization optimal transport problem and return the loss
 
@@ -320,21 +389,48 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
     nx = get_backend(M, a, b)
 
     if len(b.shape) < 2:
-        if method.lower() == 'sinkhorn':
-            res = sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
-                                 stopThr=stopThr, verbose=verbose,
-                                 log=log, warn=warn, warmstart=warmstart,
-                                 **kwargs)
-        elif method.lower() == 'sinkhorn_log':
-            res = sinkhorn_log(a, b, M, reg, numItermax=numItermax,
-                               stopThr=stopThr, verbose=verbose,
-                               log=log, warn=warn, warmstart=warmstart,
-                               **kwargs)
-        elif method.lower() == 'sinkhorn_stabilized':
-            res = sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
-                                      stopThr=stopThr, warmstart=warmstart,
-                                      verbose=verbose, log=log, warn=warn,
-                                      **kwargs)
+        if method.lower() == "sinkhorn":
+            res = sinkhorn_knopp(
+                a,
+                b,
+                M,
+                reg,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=log,
+                warn=warn,
+                warmstart=warmstart,
+                **kwargs,
+            )
+        elif method.lower() == "sinkhorn_log":
+            res = sinkhorn_log(
+                a,
+                b,
+                M,
+                reg,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=log,
+                warn=warn,
+                warmstart=warmstart,
+                **kwargs,
+            )
+        elif method.lower() == "sinkhorn_stabilized":
+            res = sinkhorn_stabilized(
+                a,
+                b,
+                M,
+                reg,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                warmstart=warmstart,
+                verbose=verbose,
+                log=log,
+                warn=warn,
+                **kwargs,
+            )
         else:
             raise ValueError("Unknown method '%s'." % method)
         if log:
@@ -343,28 +439,65 @@ def sinkhorn2(a, b, M, reg, method='sinkhorn', numItermax=1000,
             return nx.sum(M * res)
 
     else:
-
-        if method.lower() == 'sinkhorn':
-            return sinkhorn_knopp(a, b, M, reg, numItermax=numItermax,
-                                  stopThr=stopThr, verbose=verbose,
-                                  log=log, warn=warn, warmstart=warmstart,
-                                  **kwargs)
-        elif method.lower() == 'sinkhorn_log':
-            return sinkhorn_log(a, b, M, reg, numItermax=numItermax,
-                                stopThr=stopThr, verbose=verbose,
-                                log=log, warn=warn, warmstart=warmstart,
-                                **kwargs)
-        elif method.lower() == 'sinkhorn_stabilized':
-            return sinkhorn_stabilized(a, b, M, reg, numItermax=numItermax,
-                                       stopThr=stopThr, warmstart=warmstart,
-                                       verbose=verbose, log=log, warn=warn,
-                                       **kwargs)
+        if method.lower() == "sinkhorn":
+            return sinkhorn_knopp(
+                a,
+                b,
+                M,
+                reg,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=log,
+                warn=warn,
+                warmstart=warmstart,
+                **kwargs,
+            )
+        elif method.lower() == "sinkhorn_log":
+            return sinkhorn_log(
+                a,
+                b,
+                M,
+                reg,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=log,
+                warn=warn,
+                warmstart=warmstart,
+                **kwargs,
+            )
+        elif method.lower() == "sinkhorn_stabilized":
+            return sinkhorn_stabilized(
+                a,
+                b,
+                M,
+                reg,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                warmstart=warmstart,
+                verbose=verbose,
+                log=log,
+                warn=warn,
+                **kwargs,
+            )
         else:
             raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
-                   verbose=False, log=False, warn=True, warmstart=None, **kwargs):
+def sinkhorn_knopp(
+    a,
+    b,
+    M,
+    reg,
+    numItermax=1000,
+    stopThr=1e-9,
+    verbose=False,
+    log=False,
+    warn=True,
+    warmstart=None,
+    **kwargs,
+):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -472,7 +605,7 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
         n_hists = 0
 
     if log:
-        log = {'err': []}
+        log = {"err": []}
 
     # we assume that no distances are null except those of the diagonal of
     # distances
@@ -496,14 +629,18 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
         vprev = v
         KtransposeU = nx.dot(K.T, u)
         v = b / KtransposeU
-        u = 1. / nx.dot(Kp, v)
+        u = 1.0 / nx.dot(Kp, v)
 
-        if (nx.any(KtransposeU == 0)
-                or nx.any(nx.isnan(u)) or nx.any(nx.isnan(v))
-                or nx.any(nx.isinf(u)) or nx.any(nx.isinf(v))):
+        if (
+            nx.any(KtransposeU == 0)
+            or nx.any(nx.isnan(u))
+            or nx.any(nx.isnan(v))
+            or nx.any(nx.isinf(u))
+            or nx.any(nx.isinf(v))
+        ):
             # we have reached the machine precision
             # come back to previous solution and quit loop
-            warnings.warn('Warning: numerical errors at iteration %d' % ii)
+            warnings.warn("Warning: numerical errors at iteration %d" % ii)
             u = uprev
             v = vprev
             break
@@ -511,48 +648,59 @@ def sinkhorn_knopp(a, b, M, reg, numItermax=1000, stopThr=1e-9,
             # we can speed up the process by checking for the error only all
             # the 10th iterations
             if n_hists:
-                tmp2 = nx.einsum('ik,ij,jk->jk', u, K, v)
+                tmp2 = nx.einsum("ik,ij,jk->jk", u, K, v)
             else:
                 # compute right marginal tmp2= (diag(u)Kdiag(v))^T1
-                tmp2 = nx.einsum('i,ij,j->j', u, K, v)
+                tmp2 = nx.einsum("i,ij,j->j", u, K, v)
             err = nx.norm(tmp2 - b)  # violation of marginal
             if log:
-                log['err'].append(err)
+                log["err"].append(err)
 
             if err < stopThr:
                 break
             if verbose:
                 if ii % 200 == 0:
-                    print(
-                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(ii, err))
+                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+                print("{:5d}|{:8e}|".format(ii, err))
     else:
         if warn:
-            warnings.warn("Sinkhorn did not converge. You might want to "
-                          "increase the number of iterations `numItermax` "
-                          "or the regularization parameter `reg`.")
+            warnings.warn(
+                "Sinkhorn did not converge. You might want to "
+                "increase the number of iterations `numItermax` "
+                "or the regularization parameter `reg`."
+            )
     if log:
-        log['niter'] = ii
-        log['u'] = u
-        log['v'] = v
+        log["niter"] = ii
+        log["u"] = u
+        log["v"] = v
 
     if n_hists:  # return only loss
-        res = nx.einsum('ik,ij,jk,ij->k', u, K, v, M)
+        res = nx.einsum("ik,ij,jk,ij->k", u, K, v, M)
         if log:
             return res, log
         else:
             return res
 
     else:  # return OT matrix
-
         if log:
             return u.reshape((-1, 1)) * K * v.reshape((1, -1)), log
         else:
             return u.reshape((-1, 1)) * K * v.reshape((1, -1))
 
 
-def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
-                 log=False, warn=True, warmstart=None, **kwargs):
+def sinkhorn_log(
+    a,
+    b,
+    M,
+    reg,
+    numItermax=1000,
+    stopThr=1e-9,
+    verbose=False,
+    log=False,
+    warn=True,
+    warmstart=None,
+    **kwargs,
+):
     r"""
     Solve the entropic regularization optimal transport problem in log space
     and return the OT matrix
@@ -670,37 +818,47 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
         warmstart = [None] * n_hists
 
     if n_hists:  # we do not want to use tensors sor we do a loop
-
         lst_loss = []
         lst_u = []
         lst_v = []
 
         for k in range(n_hists):
-            res = sinkhorn_log(a, b[:, k], M, reg, numItermax=numItermax, stopThr=stopThr,
-                               verbose=verbose, log=log, warmstart=warmstart[k], **kwargs)
+            res = sinkhorn_log(
+                a,
+                b[:, k],
+                M,
+                reg,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=log,
+                warmstart=warmstart[k],
+                **kwargs,
+            )
 
             if log:
                 lst_loss.append(nx.sum(M * res[0]))
-                lst_u.append(res[1]['log_u'])
-                lst_v.append(res[1]['log_v'])
+                lst_u.append(res[1]["log_u"])
+                lst_v.append(res[1]["log_v"])
             else:
                 lst_loss.append(nx.sum(M * res))
         res = nx.stack(lst_loss)
         if log:
-            log = {'log_u': nx.stack(lst_u, 1),
-                   'log_v': nx.stack(lst_v, 1), }
-            log['u'] = nx.exp(log['log_u'])
-            log['v'] = nx.exp(log['log_v'])
+            log = {
+                "log_u": nx.stack(lst_u, 1),
+                "log_v": nx.stack(lst_v, 1),
+            }
+            log["u"] = nx.exp(log["log_u"])
+            log["v"] = nx.exp(log["log_v"])
             return res, log
         else:
             return res
 
     else:
-
         if log:
-            log = {'err': []}
+            log = {"err": []}
 
-        Mr = - M / reg
+        Mr = -M / reg
 
         # we assume that no distances are null except those of the diagonal of
         # distances
@@ -721,7 +879,6 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
 
         err = 1
         for ii in range(numItermax):
-
             v = logb - nx.logsumexp(Mr + u[:, None], 0)
             u = loga - nx.logsumexp(Mr + v[None, :], 1)
 
@@ -733,27 +890,28 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
                 tmp2 = nx.sum(nx.exp(get_logT(u, v)), 0)
                 err = nx.norm(tmp2 - b)  # violation of marginal
                 if log:
-                    log['err'].append(err)
+                    log["err"].append(err)
 
                 if verbose:
                     if ii % 200 == 0:
-                        print(
-                            '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
-                    print('{:5d}|{:8e}|'.format(ii, err))
+                        print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+                    print("{:5d}|{:8e}|".format(ii, err))
                 if err < stopThr:
                     break
         else:
             if warn:
-                warnings.warn("Sinkhorn did not converge. You might want to "
-                              "increase the number of iterations `numItermax` "
-                              "or the regularization parameter `reg`.")
+                warnings.warn(
+                    "Sinkhorn did not converge. You might want to "
+                    "increase the number of iterations `numItermax` "
+                    "or the regularization parameter `reg`."
+                )
 
         if log:
-            log['niter'] = ii
-            log['log_u'] = u
-            log['log_v'] = v
-            log['u'] = nx.exp(u)
-            log['v'] = nx.exp(v)
+            log["niter"] = ii
+            log["log_u"] = u
+            log["log_v"] = v
+            log["u"] = nx.exp(u)
+            log["v"] = nx.exp(v)
 
             return nx.exp(get_logT(u, v)), log
 
@@ -761,8 +919,18 @@ def sinkhorn_log(a, b, M, reg, numItermax=1000, stopThr=1e-9, verbose=False,
             return nx.exp(get_logT(u, v))
 
 
-def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
-               log=False, warn=True, warmstart=None):
+def greenkhorn(
+    a,
+    b,
+    M,
+    reg,
+    numItermax=10000,
+    stopThr=1e-9,
+    verbose=False,
+    log=False,
+    warn=True,
+    warmstart=None,
+):
     r"""
     Solve the entropic regularization optimal transport problem and return the OT matrix
 
@@ -859,8 +1027,10 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
 
     nx = get_backend(M, a, b)
     if nx.__name__ in ("jax", "tf"):
-        raise TypeError("JAX or TF arrays have been received. Greenkhorn is not "
-                        "compatible with  neither JAX nor TF")
+        raise TypeError(
+            "JAX or TF arrays have been received. Greenkhorn is not "
+            "compatible with  neither JAX nor TF"
+        )
 
     if len(a) == 0:
         a = nx.ones((M.shape[0],), type_as=M) / M.shape[0]
@@ -873,8 +1043,8 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
     K = nx.exp(-M / reg)
 
     if warmstart is None:
-        u = nx.full((dim_a,), 1. / dim_a, type_as=K)
-        v = nx.full((dim_b,), 1. / dim_b, type_as=K)
+        u = nx.full((dim_a,), 1.0 / dim_a, type_as=K)
+        v = nx.full((dim_b,), 1.0 / dim_b, type_as=K)
     else:
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
     G = u[:, None] * K * v[None, :]
@@ -884,8 +1054,8 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
     stopThr_val = 1
     if log:
         log = dict()
-        log['u'] = u
-        log['v'] = v
+        log["u"] = u
+        log["v"] = v
 
     for ii in range(numItermax):
         i_1 = nx.argmax(nx.abs(viol))
@@ -900,7 +1070,7 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
             G[i_1, :] = new_u * K[i_1, :] * v
 
             viol[i_1] = nx.dot(new_u * K[i_1, :], v) - a[i_1]
-            viol_2 += (K[i_1, :].T * (new_u - old_u) * v)
+            viol_2 += K[i_1, :].T * (new_u - old_u) * v
             u[i_1] = new_u
         else:
             old_v = v[i_2]
@@ -916,14 +1086,16 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
             break
     else:
         if warn:
-            warnings.warn("Sinkhorn did not converge. You might want to "
-                          "increase the number of iterations `numItermax` "
-                          "or the regularization parameter `reg`.")
+            warnings.warn(
+                "Sinkhorn did not converge. You might want to "
+                "increase the number of iterations `numItermax` "
+                "or the regularization parameter `reg`."
+            )
 
     if log:
         log["n_iter"] = ii
-        log['u'] = u
-        log['v'] = v
+        log["u"] = u
+        log["v"] = v
 
     if log:
         return G, log
@@ -931,9 +1103,21 @@ def greenkhorn(a, b, M, reg, numItermax=10000, stopThr=1e-9, verbose=False,
         return G
 
 
-def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
-                        warmstart=None, verbose=False, print_period=20,
-                        log=False, warn=True, **kwargs):
+def sinkhorn_stabilized(
+    a,
+    b,
+    M,
+    reg,
+    numItermax=1000,
+    tau=1e3,
+    stopThr=1e-9,
+    warmstart=None,
+    verbose=False,
+    print_period=20,
+    log=False,
+    warn=True,
+    **kwargs,
+):
     r"""
     Solve the entropic regularization OT problem with log stabilization
 
@@ -1055,7 +1239,7 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
     dim_b = len(b)
 
     if log:
-        log = {'err': []}
+        log = {"err": []}
 
     # we assume that no distances are null except those of the diagonal of
     # distances
@@ -1074,19 +1258,20 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
 
     def get_K(alpha, beta):
         """log space computation"""
-        return nx.exp(-(M - alpha.reshape((dim_a, 1))
-                        - beta.reshape((1, dim_b))) / reg)
+        return nx.exp(-(M - alpha.reshape((dim_a, 1)) - beta.reshape((1, dim_b))) / reg)
 
     def get_Gamma(alpha, beta, u, v):
         """log space gamma computation"""
-        return nx.exp(-(M - alpha.reshape((dim_a, 1)) - beta.reshape((1, dim_b)))
-                      / reg + nx.log(u.reshape((dim_a, 1))) + nx.log(v.reshape((1, dim_b))))
+        return nx.exp(
+            -(M - alpha.reshape((dim_a, 1)) - beta.reshape((1, dim_b))) / reg
+            + nx.log(u.reshape((dim_a, 1)))
+            + nx.log(v.reshape((1, dim_b)))
+        )
 
     K = get_K(alpha, beta)
     transp = K
     err = 1
     for ii in range(numItermax):
-
         uprev = u
         vprev = v
 
@@ -1097,8 +1282,10 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         # remove numerical problems and store them in K
         if nx.max(nx.abs(u)) > tau or nx.max(nx.abs(v)) > tau:
             if n_hists:
-                alpha, beta = alpha + reg * \
-                    nx.max(nx.log(u), 1), beta + reg * nx.max(nx.log(v))
+                alpha, beta = (
+                    alpha + reg * nx.max(nx.log(u), 1),
+                    beta + reg * nx.max(nx.log(v)),
+                )
             else:
                 alpha, beta = alpha + reg * nx.log(u), beta + reg * nx.log(v)
                 if n_hists:
@@ -1122,13 +1309,12 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
                 transp = get_Gamma(alpha, beta, u, v)
                 err = nx.norm(nx.sum(transp, axis=0) - b)
             if log:
-                log['err'].append(err)
+                log["err"].append(err)
 
             if verbose:
                 if ii % (print_period * 20) == 0:
-                    print(
-                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(ii, err))
+                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+                print("{:5d}|{:8e}|".format(ii, err))
 
         if err <= stopThr:
             break
@@ -1136,15 +1322,17 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         if nx.any(nx.isnan(u)) or nx.any(nx.isnan(v)):
             # we have reached the machine precision
             # come back to previous solution and quit loop
-            warnings.warn('Numerical errors at iteration %d' % ii)
+            warnings.warn("Numerical errors at iteration %d" % ii)
             u = uprev
             v = vprev
             break
     else:
         if warn:
-            warnings.warn("Sinkhorn did not converge. You might want to "
-                          "increase the number of iterations `numItermax` "
-                          "or the regularization parameter `reg`.")
+            warnings.warn(
+                "Sinkhorn did not converge. You might want to "
+                "increase the number of iterations `numItermax` "
+                "or the regularization parameter `reg`."
+            )
     if log:
         if n_hists:
             alpha = alpha[:, None]
@@ -1152,35 +1340,52 @@ def sinkhorn_stabilized(a, b, M, reg, numItermax=1000, tau=1e3, stopThr=1e-9,
         logu = alpha / reg + nx.log(u)
         logv = beta / reg + nx.log(v)
         log["n_iter"] = ii
-        log['logu'] = logu
-        log['logv'] = logv
-        log['alpha'] = alpha + reg * nx.log(u)
-        log['beta'] = beta + reg * nx.log(v)
-        log['warmstart'] = (log['alpha'], log['beta'])
+        log["logu"] = logu
+        log["logv"] = logv
+        log["alpha"] = alpha + reg * nx.log(u)
+        log["beta"] = beta + reg * nx.log(v)
+        log["warmstart"] = (log["alpha"], log["beta"])
         if n_hists:
-            res = nx.stack([
-                nx.sum(get_Gamma(alpha, beta, u[:, i], v[:, i]) * M)
-                for i in range(n_hists)
-            ])
+            res = nx.stack(
+                [
+                    nx.sum(get_Gamma(alpha, beta, u[:, i], v[:, i]) * M)
+                    for i in range(n_hists)
+                ]
+            )
             return res, log
 
         else:
             return get_Gamma(alpha, beta, u, v), log
     else:
         if n_hists:
-            res = nx.stack([
-                nx.sum(get_Gamma(alpha, beta, u[:, i], v[:, i]) * M)
-                for i in range(n_hists)
-            ])
+            res = nx.stack(
+                [
+                    nx.sum(get_Gamma(alpha, beta, u[:, i], v[:, i]) * M)
+                    for i in range(n_hists)
+                ]
+            )
             return res
         else:
             return get_Gamma(alpha, beta, u, v)
 
 
-def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
-                             numInnerItermax=100, tau=1e3, stopThr=1e-9,
-                             warmstart=None, verbose=False, print_period=10,
-                             log=False, warn=True, **kwargs):
+def sinkhorn_epsilon_scaling(
+    a,
+    b,
+    M,
+    reg,
+    numItermax=100,
+    epsilon0=1e4,
+    numInnerItermax=100,
+    tau=1e3,
+    stopThr=1e-9,
+    warmstart=None,
+    verbose=False,
+    print_period=10,
+    log=False,
+    warn=True,
+    **kwargs,
+):
     r"""
     Solve the entropic regularization optimal transport problem with log
     stabilization and epsilon scaling.
@@ -1292,7 +1497,7 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
 
     ii = 0
     if log:
-        log = {'err': []}
+        log = {"err": []}
 
     # we assume that no distances are null except those of the diagonal of
     # distances
@@ -1307,44 +1512,55 @@ def sinkhorn_epsilon_scaling(a, b, M, reg, numItermax=100, epsilon0=1e4,
 
     err = 1
     for ii in range(numItermax):
-
         regi = get_reg(ii)
 
-        G, logi = sinkhorn_stabilized(a, b, M, regi,
-                                      numItermax=numInnerItermax, stopThr=stopThr,
-                                      warmstart=(alpha, beta), verbose=False,
-                                      print_period=20, tau=tau, log=True)
+        G, logi = sinkhorn_stabilized(
+            a,
+            b,
+            M,
+            regi,
+            numItermax=numInnerItermax,
+            stopThr=stopThr,
+            warmstart=(alpha, beta),
+            verbose=False,
+            print_period=20,
+            tau=tau,
+            log=True,
+        )
 
-        alpha = logi['alpha']
-        beta = logi['beta']
+        alpha = logi["alpha"]
+        beta = logi["beta"]
 
         if ii % (print_period) == 0:  # spsion nearly converged
             # we can speed up the process by checking for the error only all
             # the 10th iterations
             transp = G
-            err = nx.norm(nx.sum(transp, axis=0) - b) ** 2 + \
-                nx.norm(nx.sum(transp, axis=1) - a) ** 2
+            err = (
+                nx.norm(nx.sum(transp, axis=0) - b) ** 2
+                + nx.norm(nx.sum(transp, axis=1) - a) ** 2
+            )
             if log:
-                log['err'].append(err)
+                log["err"].append(err)
 
             if verbose:
                 if ii % (print_period * 10) == 0:
-                    print('{:5s}|{:12s}'.format(
-                        'It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(ii, err))
+                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+                print("{:5d}|{:8e}|".format(ii, err))
 
         if err <= stopThr and ii > numItermin:
             break
     else:
         if warn:
-            warnings.warn("Sinkhorn did not converge. You might want to "
-                          "increase the number of iterations `numItermax` "
-                          "or the regularization parameter `reg`.")
+            warnings.warn(
+                "Sinkhorn did not converge. You might want to "
+                "increase the number of iterations `numItermax` "
+                "or the regularization parameter `reg`."
+            )
     if log:
-        log['alpha'] = alpha
-        log['beta'] = beta
-        log['warmstart'] = (log['alpha'], log['beta'])
-        log['niter'] = ii
+        log["alpha"] = alpha
+        log["beta"] = beta
+        log["warmstart"] = (log["alpha"], log["beta"])
+        log["niter"] = ii
         return G, log
     else:
         return G

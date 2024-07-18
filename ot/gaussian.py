@@ -85,15 +85,16 @@ def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
 
     if log:
         log = {}
-        log['Cs12'] = Cs12
-        log['Cs12inv'] = Cs12inv
+        log["Cs12"] = Cs12
+        log["Cs12inv"] = Cs12inv
         return A, b, log
     else:
         return A, b
 
 
-def empirical_bures_wasserstein_mapping(xs, xt, reg=1e-6, ws=None,
-                                        wt=None, bias=True, log=False):
+def empirical_bures_wasserstein_mapping(
+    xs, xt, reg=1e-6, ws=None, wt=None, bias=True, log=False
+):
     r"""Return OT linear operator between samples.
 
     The function estimates the optimal linear operator that aligns the two
@@ -187,11 +188,12 @@ def empirical_bures_wasserstein_mapping(xs, xt, reg=1e-6, ws=None,
     if is_input_finite and not is_all_finite(A, b):
         warnings.warn(
             "Numerical errors were encountered in ot.gaussian.empirical_bures_wasserstein_mapping. "
-            "Consider increasing the regularization parameter `reg`.")
+            "Consider increasing the regularization parameter `reg`."
+        )
 
     if log:
-        log['Cs'] = Cs
-        log['Ct'] = Ct
+        log["Cs"] = Cs
+        log["Ct"] = Ct
         return A, b, log
     else:
         return A, b
@@ -249,18 +251,19 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     Cs12 = nx.sqrtm(Cs)
 
     B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
-    W = nx.sqrt(nx.maximum(nx.norm(ms - mt)**2 + B, 0))
+    W = nx.sqrt(nx.maximum(nx.norm(ms - mt) ** 2 + B, 0))
 
     if log:
         log = {}
-        log['Cs12'] = Cs12
+        log["Cs12"] = Cs12
         return W, log
     else:
         return W
 
 
-def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
-                                         wt=None, bias=True, log=False):
+def empirical_bures_wasserstein_distance(
+    xs, xt, reg=1e-6, ws=None, wt=None, bias=True, log=False
+):
     r"""Return Bures Wasserstein distance from mean and covariance of distribution.
 
     The function estimates the Bures-Wasserstein distance between two
@@ -336,15 +339,17 @@ def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
 
     if log:
         W, log = bures_wasserstein_distance(mxs, mxt, Cs, Ct, log=log)
-        log['Cs'] = Cs
-        log['Ct'] = Ct
+        log["Cs"] = Cs
+        log["Ct"] = Ct
         return W, log
     else:
         W = bures_wasserstein_distance(mxs, mxt, Cs, Ct)
         return W
 
 
-def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, log=False):
+def bures_wasserstein_barycenter(
+    m, C, weights=None, num_iter=1000, eps=1e-7, log=False
+):
     r"""Return OT linear operator between samples.
 
     The function estimates the optimal barycenter of the
@@ -397,7 +402,10 @@ def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, lo
         SIAM Journal on Mathematical Analysis, vol. 43, no. 2, pp. 904-924,
         2011.
     """
-    nx = get_backend(*C, *m,)
+    nx = get_backend(
+        *C,
+        *m,
+    )
 
     if weights is None:
         weights = nx.ones(C.shape[0], type_as=C[0]) / C.shape[0]
@@ -430,16 +438,15 @@ def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, lo
 
     if log:
         log = {}
-        log['num_iter'] = it
-        log['final_diff'] = diff
+        log["num_iter"] = it
+        log["final_diff"] = diff
         return mb, Cb, log
     else:
         return mb, Cb
 
 
 def empirical_bures_wasserstein_barycenter(
-    X, reg=1e-6, weights=None, num_iter=1000, eps=1e-7,
-    w=None, bias=True, log=False
+    X, reg=1e-6, weights=None, num_iter=1000, eps=1e-7, w=None, bias=True, log=False
 ):
     r"""Return OT linear operator between samples.
 
@@ -510,7 +517,9 @@ def empirical_bures_wasserstein_barycenter(
         m = [nx.zeros((1, d[i]), type_as=X[i]) for i in range(k)]
 
     if w is None:
-        w = [nx.ones((X[i].shape[0], 1), type_as=X[i]) / X[i].shape[0] for i in range(k)]
+        w = [
+            nx.ones((X[i].shape[0], 1), type_as=X[i]) / X[i].shape[0] for i in range(k)
+        ]
 
     C = [
         nx.dot((X[i] * w[i]).T, X[i]) / nx.sum(w[i]) + reg * nx.eye(d[i], type_as=X[i])
@@ -519,15 +528,19 @@ def empirical_bures_wasserstein_barycenter(
     m = nx.stack(m, axis=0)
     C = nx.stack(C, axis=0)
     if log:
-        mb, Cb, log = bures_wasserstein_barycenter(m, C, weights=weights, num_iter=num_iter, eps=eps, log=log)
+        mb, Cb, log = bures_wasserstein_barycenter(
+            m, C, weights=weights, num_iter=num_iter, eps=eps, log=log
+        )
         return mb, Cb, log
     else:
-        mb, Cb = bures_wasserstein_barycenter(m, C, weights=weights, num_iter=num_iter, eps=eps, log=log)
+        mb, Cb = bures_wasserstein_barycenter(
+            m, C, weights=weights, num_iter=num_iter, eps=eps, log=log
+        )
         return mb, Cb
 
 
 def gaussian_gromov_wasserstein_distance(Cov_s, Cov_t, log=False):
-    r""" Return the Gaussian Gromov-Wasserstein value from [57].
+    r"""Return the Gaussian Gromov-Wasserstein value from [57].
 
     This function return the closed form value of the Gaussian Gromov-Wasserstein
     distance between two Gaussian distributions
@@ -571,18 +584,21 @@ def gaussian_gromov_wasserstein_distance(Cov_s, Cov_t, log=False):
     d_t = nx.flip(nx.sort(nx.eigh(Cov_t)[0]))
 
     # compute the gaussien Gromov-Wasserstein distance
-    res = 4 * (nx.sum(d_s) - nx.sum(d_t))**2 + 8 * nx.sum((d_s[:n] - d_t)**2) + 8 * nx.sum((d_s[n:])**2)
+    res = (
+        4 * (nx.sum(d_s) - nx.sum(d_t)) ** 2
+        + 8 * nx.sum((d_s[:n] - d_t) ** 2)
+        + 8 * nx.sum((d_s[n:]) ** 2)
+    )
     if log:
         log = {}
-        log['d_s'] = d_s
-        log['d_t'] = d_t
+        log["d_s"] = d_s
+        log["d_t"] = d_t
         return nx.sqrt(res), log
     else:
         return nx.sqrt(res)
 
 
-def empirical_gaussian_gromov_wasserstein_distance(xs, xt, ws=None,
-                                                   wt=None, log=False):
+def empirical_gaussian_gromov_wasserstein_distance(xs, xt, ws=None, wt=None, log=False):
     r"""Return Gaussian Gromov-Wasserstein distance between samples.
 
     The function estimates the Gaussian Gromov-Wasserstein distance between two
@@ -637,16 +653,18 @@ def empirical_gaussian_gromov_wasserstein_distance(xs, xt, ws=None,
 
     if log:
         G, log = gaussian_gromov_wasserstein_distance(Cs, Ct, log=log)
-        log['Cov_s'] = Cs
-        log['Cov_t'] = Ct
+        log["Cov_s"] = Cs
+        log["Cov_t"] = Ct
         return G, log
     else:
         G = gaussian_gromov_wasserstein_distance(Cs, Ct)
         return G
 
 
-def gaussian_gromov_wasserstein_mapping(mu_s, mu_t, Cov_s, Cov_t, sign_eigs=None, log=False):
-    r""" Return the Gaussian Gromov-Wasserstein mapping from [57].
+def gaussian_gromov_wasserstein_mapping(
+    mu_s, mu_t, Cov_s, Cov_t, sign_eigs=None, log=False
+):
+    r"""Return the Gaussian Gromov-Wasserstein mapping from [57].
 
     This function return the closed form value of the Gaussian
     Gromov-Wasserstein mapping between two Gaussian distributions
@@ -702,9 +720,21 @@ def gaussian_gromov_wasserstein_mapping(mu_s, mu_t, Cov_s, Cov_t, sign_eigs=None
         sign_eigs = nx.ones(min(m, n), type_as=mu_s)
 
     if m >= n:
-        A = nx.concatenate((nx.diag(sign_eigs * nx.sqrt(d_t) / nx.sqrt(d_s[:n])), nx.zeros((n, m - n), type_as=mu_s)), axis=1).T
+        A = nx.concatenate(
+            (
+                nx.diag(sign_eigs * nx.sqrt(d_t) / nx.sqrt(d_s[:n])),
+                nx.zeros((n, m - n), type_as=mu_s),
+            ),
+            axis=1,
+        ).T
     else:
-        A = nx.concatenate((nx.diag(sign_eigs * nx.sqrt(d_t[:m]) / nx.sqrt(d_s)), nx.zeros((n - m, m), type_as=mu_s)), axis=0).T
+        A = nx.concatenate(
+            (
+                nx.diag(sign_eigs * nx.sqrt(d_t[:m]) / nx.sqrt(d_s)),
+                nx.zeros((n - m, m), type_as=mu_s),
+            ),
+            axis=0,
+        ).T
 
     A = nx.dot(nx.dot(U_s, A), U_t.T)
 
@@ -713,17 +743,18 @@ def gaussian_gromov_wasserstein_mapping(mu_s, mu_t, Cov_s, Cov_t, sign_eigs=None
 
     if log:
         log = {}
-        log['d_s'] = d_s
-        log['d_t'] = d_t
-        log['U_s'] = U_s
-        log['U_t'] = U_t
+        log["d_s"] = d_s
+        log["d_t"] = d_t
+        log["U_s"] = U_s
+        log["U_t"] = U_t
         return A, b, log
     else:
         return A, b
 
 
-def empirical_gaussian_gromov_wasserstein_mapping(xs, xt, ws=None,
-                                                  wt=None, sign_eigs=None, log=False):
+def empirical_gaussian_gromov_wasserstein_mapping(
+    xs, xt, ws=None, wt=None, sign_eigs=None, log=False
+):
     r"""Return Gaussian Gromov-Wasserstein mapping between samples.
 
     The function estimates the Gaussian Gromov-Wasserstein mapping between two
@@ -800,16 +831,28 @@ def empirical_gaussian_gromov_wasserstein_mapping(xs, xt, ws=None,
     # select the sign of the eigenvalues
     if sign_eigs is None:
         sign_eigs = nx.ones(min(m, n), type_as=mu_s)
-    elif sign_eigs == 'skewness':
+    elif sign_eigs == "skewness":
         size = min(m, n)
-        skew_s = nx.sum((nx.dot(xs, U_s[:, :size]))**3 * ws, axis=0)
-        skew_t = nx.sum((nx.dot(xt, U_t[:, :size]))**3 * wt, axis=0)
+        skew_s = nx.sum((nx.dot(xs, U_s[:, :size])) ** 3 * ws, axis=0)
+        skew_t = nx.sum((nx.dot(xt, U_t[:, :size])) ** 3 * wt, axis=0)
         sign_eigs = nx.sign(skew_t * skew_s)
 
     if m >= n:
-        A = nx.concatenate((nx.diag(sign_eigs * nx.sqrt(d_t) / nx.sqrt(d_s[:n])), nx.zeros((n, m - n), type_as=mu_s)), axis=1).T
+        A = nx.concatenate(
+            (
+                nx.diag(sign_eigs * nx.sqrt(d_t) / nx.sqrt(d_s[:n])),
+                nx.zeros((n, m - n), type_as=mu_s),
+            ),
+            axis=1,
+        ).T
     else:
-        A = nx.concatenate((nx.diag(sign_eigs * nx.sqrt(d_t[:m]) / nx.sqrt(d_s)), nx.zeros((n - m, m), type_as=mu_s)), axis=0).T
+        A = nx.concatenate(
+            (
+                nx.diag(sign_eigs * nx.sqrt(d_t[:m]) / nx.sqrt(d_s)),
+                nx.zeros((n - m, m), type_as=mu_s),
+            ),
+            axis=0,
+        ).T
 
     A = nx.dot(nx.dot(U_s, A), U_t.T)
 
@@ -818,12 +861,12 @@ def empirical_gaussian_gromov_wasserstein_mapping(xs, xt, ws=None,
 
     if log:
         log = {}
-        log['d_s'] = d_s
-        log['d_t'] = d_t
-        log['U_s'] = U_s
-        log['U_t'] = U_t
-        log['Cov_s'] = Cov_s
-        log['Cov_t'] = Cov_t
+        log["d_s"] = d_s
+        log["d_t"] = d_t
+        log["U_s"] = U_s
+        log["U_t"] = U_t
+        log["Cov_s"] = Cov_s
+        log["Cov_t"] = Cov_t
         return A, b, log
     else:
         return A, b

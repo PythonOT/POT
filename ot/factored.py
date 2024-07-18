@@ -11,10 +11,23 @@ from .utils import dist, get_lowrank_lazytensor
 from .lp import emd
 from .bregman import sinkhorn
 
-__all__ = ['factored_optimal_transport']
+__all__ = ["factored_optimal_transport"]
 
 
-def factored_optimal_transport(Xa, Xb, a=None, b=None, reg=0.0, r=100, X0=None, stopThr=1e-7, numItermax=100, verbose=False, log=False, **kwargs):
+def factored_optimal_transport(
+    Xa,
+    Xb,
+    a=None,
+    b=None,
+    reg=0.0,
+    r=100,
+    X0=None,
+    stopThr=1e-7,
+    numItermax=100,
+    verbose=False,
+    log=False,
+    **kwargs,
+):
     r"""Solves factored OT problem and return OT plans and intermediate distribution
 
     This function solve the following OT problem [40]_
@@ -107,7 +120,7 @@ def factored_optimal_transport(Xa, Xb, a=None, b=None, reg=0.0, r=100, X0=None, 
         M = dist(X1, X2)
         if reg > 0:
             G, log = sinkhorn(w1, w2, M, reg, log=True, **kwargs)
-            log['cost'] = nx.sum(G * M)
+            log["cost"] = nx.sum(G * M)
             return G, log
         else:
             return emd(w1, w2, M, log=True, **kwargs)
@@ -116,7 +129,6 @@ def factored_optimal_transport(Xa, Xb, a=None, b=None, reg=0.0, r=100, X0=None, 
 
     # solve the barycenter
     for i in range(numItermax):
-
         old_X = X
 
         # solve OT with template
@@ -132,15 +144,16 @@ def factored_optimal_transport(Xa, Xb, a=None, b=None, reg=0.0, r=100, X0=None, 
             norm_delta.append(delta)
 
     if log:
-        log_dic = {'delta_iter': norm_delta,
-                   'ua': loga['u'],
-                   'va': loga['v'],
-                   'ub': logb['u'],
-                   'vb': logb['v'],
-                   'costa': loga['cost'],
-                   'costb': logb['cost'],
-                   'lazy_plan': get_lowrank_lazytensor(Ga * r, Gb.T, nx=nx),
-                   }
+        log_dic = {
+            "delta_iter": norm_delta,
+            "ua": loga["u"],
+            "va": loga["v"],
+            "ub": logb["u"],
+            "vb": logb["v"],
+            "costa": loga["cost"],
+            "costb": logb["cost"],
+            "lazy_plan": get_lowrank_lazytensor(Ga * r, Gb.T, nx=nx),
+        }
         return Ga, Gb, X, log_dic
 
     return Ga, Gb, X

@@ -17,8 +17,18 @@ from ..lp import emd_1d, emd
 from ..backend import get_backend
 
 
-def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
-                           nb_samples_p=None, nb_samples_q=None, std=True, random_state=None):
+def GW_distance_estimation(
+    C1,
+    C2,
+    p,
+    q,
+    loss_fun,
+    T,
+    nb_samples_p=None,
+    nb_samples_q=None,
+    std=True,
+    random_state=None,
+):
     r"""
     Returns an approximation of the Gromov-Wasserstein loss between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
     with a fixed transport plan :math:`\mathbf{T}`. To recover an approximation of the Gromov-Wasserstein distance as defined in [13] compute :math:`d_{GW} = \frac{1}{2} \sqrt{\mathbf{GW}}`.
@@ -122,21 +132,24 @@ def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
             len_q,
             size=nb_samples_q,
             p=nx.to_numpy(T_indexi / nx.sum(T_indexi)),
-            replace=True
+            replace=True,
         )
         index_l[i] = generator.choice(
             len_q,
             size=nb_samples_q,
             p=nx.to_numpy(T_indexj / nx.sum(T_indexj)),
-            replace=True
+            replace=True,
         )
 
-    list_value_sample = nx.stack([
-        loss_fun(
-            C1[np.ix_(index_i, index_j)],
-            C2[np.ix_(index_k[:, n], index_l[:, n])]
-        ) for n in range(nb_samples_q)
-    ], axis=2)
+    list_value_sample = nx.stack(
+        [
+            loss_fun(
+                C1[np.ix_(index_i, index_j)], C2[np.ix_(index_k[:, n], index_l[:, n])]
+            )
+            for n in range(nb_samples_q)
+        ],
+        axis=2,
+    )
 
     if std:
         std_value = nx.sum(nx.std(list_value_sample, axis=2) ** 2) ** 0.5
@@ -145,8 +158,19 @@ def GW_distance_estimation(C1, C2, p, q, loss_fun, T,
         return nx.mean(list_value_sample)
 
 
-def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
-                                 alpha=1, max_iter=100, threshold_plan=0, log=False, verbose=False, random_state=None):
+def pointwise_gromov_wasserstein(
+    C1,
+    C2,
+    p,
+    q,
+    loss_fun,
+    alpha=1,
+    max_iter=100,
+    threshold_plan=0,
+    log=False,
+    verbose=False,
+    random_state=None,
+):
     r"""
     Returns the gromov-wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})` using a stochastic Frank-Wolfe.
     This method has a :math:`\mathcal{O}(\mathrm{max\_iter} \times PN^2)` time complexity with `P` the number of Sinkhorn iterations.
@@ -232,21 +256,23 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
         )
 
         if alpha == 1:
-            T = nx.tocsr(
-                emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False)
-            )
+            T = nx.tocsr(emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False))
         else:
-            new_T = nx.tocsr(
-                emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False)
-            )
+            new_T = nx.tocsr(emd_1d(C1[index[0]], C2[index[1]], a=p, b=q, dense=False))
             T = (1 - alpha) * T + alpha * new_T
             # To limit the number of non 0, the values below the threshold are set to 0.
             T = nx.eliminate_zeros(T, threshold=threshold_plan)
 
         if cpt % 10 == 0 or cpt == (max_iter - 1):
             gw_dist_estimated = GW_distance_estimation(
-                C1=C1, C2=C2, loss_fun=loss_fun,
-                p=p, q=q, T=T, std=False, random_state=generator
+                C1=C1,
+                C2=C2,
+                loss_fun=loss_fun,
+                p=p,
+                q=q,
+                T=T,
+                std=False,
+                random_state=generator,
             )
 
             if gw_dist_estimated < best_gw_dist_estimated:
@@ -255,22 +281,35 @@ def pointwise_gromov_wasserstein(C1, C2, p, q, loss_fun,
 
             if verbose:
                 if cpt % 200 == 0:
-                    print('{:5s}|{:12s}'.format('It.', 'Best gw estimated') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(cpt, best_gw_dist_estimated))
+                    print(
+                        "{:5s}|{:12s}".format("It.", "Best gw estimated")
+                        + "\n"
+                        + "-" * 19
+                    )
+                print("{:5d}|{:8e}|".format(cpt, best_gw_dist_estimated))
 
     if log:
         log = {}
         log["gw_dist_estimated"], log["gw_dist_std"] = GW_distance_estimation(
-            C1=C1, C2=C2, loss_fun=loss_fun,
-            p=p, q=q, T=best_T, random_state=generator
+            C1=C1, C2=C2, loss_fun=loss_fun, p=p, q=q, T=best_T, random_state=generator
         )
         return best_T, log
     return best_T
 
 
-def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
-                               nb_samples_grad=100, epsilon=1, max_iter=500, log=False, verbose=False,
-                               random_state=None):
+def sampled_gromov_wasserstein(
+    C1,
+    C2,
+    p,
+    q,
+    loss_fun,
+    nb_samples_grad=100,
+    epsilon=1,
+    max_iter=500,
+    log=False,
+    verbose=False,
+    random_state=None,
+):
     r"""
     Returns the gromov-wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})` using a 1-stochastic Frank-Wolfe.
     This method has a :math:`\mathcal{O}(\mathrm{max\_iter} \times N \log(N))` time complexity by relying on the 1D Optimal Transport solver.
@@ -355,7 +394,9 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
     continue_loop = 0
 
     # The gradient of GW is more complex if the two matrices are not symmetric.
-    C_are_symmetric = nx.allclose(C1, C1.T, rtol=1e-10, atol=1e-10) and nx.allclose(C2, C2.T, rtol=1e-10, atol=1e-10)
+    C_are_symmetric = nx.allclose(C1, C1.T, rtol=1e-10, atol=1e-10) and nx.allclose(
+        C2, C2.T, rtol=1e-10, atol=1e-10
+    )
 
     for cpt in range(max_iter):
         index0 = generator.choice(
@@ -364,21 +405,28 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
         Lik = 0
         for i, index0_i in enumerate(index0):
             index1 = generator.choice(
-                len_q, size=nb_samples_grad_q,
+                len_q,
+                size=nb_samples_grad_q,
                 p=nx.to_numpy(T[index0_i, :] / nx.sum(T[index0_i, :])),
-                replace=False
+                replace=False,
             )
             # If the matrices C are not symmetric, the gradient has 2 terms, thus the term is chosen randomly.
             if (not C_are_symmetric) and generator.rand(1) > 0.5:
-                Lik += nx.mean(loss_fun(
-                    C1[:, [index0[i]] * nb_samples_grad_q][:, None, :],
-                    C2[:, index1][None, :, :]
-                ), axis=2)
+                Lik += nx.mean(
+                    loss_fun(
+                        C1[:, [index0[i]] * nb_samples_grad_q][:, None, :],
+                        C2[:, index1][None, :, :],
+                    ),
+                    axis=2,
+                )
             else:
-                Lik += nx.mean(loss_fun(
-                    C1[[index0[i]] * nb_samples_grad_q, :][:, :, None],
-                    C2[index1, :][:, None, :]
-                ), axis=0)
+                Lik += nx.mean(
+                    loss_fun(
+                        C1[[index0[i]] * nb_samples_grad_q, :][:, :, None],
+                        C2[index1, :][:, None, :],
+                    ),
+                    axis=0,
+                )
 
         max_Lik = nx.max(Lik)
         if max_Lik == 0:
@@ -411,15 +459,16 @@ def sampled_gromov_wasserstein(C1, C2, p, q, loss_fun,
 
         if verbose and cpt % 10 == 0:
             if cpt % 200 == 0:
-                print('{:5s}|{:12s}'.format('It.', '||T_n - T_{n+1}||') + '\n' + '-' * 19)
-            print('{:5d}|{:8e}|'.format(cpt, change_T))
+                print(
+                    "{:5s}|{:12s}".format("It.", "||T_n - T_{n+1}||") + "\n" + "-" * 19
+                )
+            print("{:5d}|{:8e}|".format(cpt, change_T))
         T = nx.copy(new_T)
 
     if log:
         log = {}
         log["gw_dist_estimated"], log["gw_dist_std"] = GW_distance_estimation(
-            C1=C1, C2=C2, loss_fun=loss_fun,
-            p=p, q=q, T=T, random_state=generator
+            C1=C1, C2=C2, loss_fun=loss_fun, p=p, q=q, T=T, random_state=generator
         )
         return T, log
     return T

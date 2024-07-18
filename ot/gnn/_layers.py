@@ -10,7 +10,11 @@ Template Fused Gromov Wasserstein
 
 import torch
 import torch.nn as nn
-from ._utils import TFGW_template_initialization, FGW_distance_to_templates, wasserstein_distance_to_templates
+from ._utils import (
+    TFGW_template_initialization,
+    FGW_distance_to_templates,
+    wasserstein_distance_to_templates,
+)
 
 
 class TFGWPooling(nn.Module):
@@ -58,7 +62,17 @@ class TFGWPooling(nn.Module):
             "Template based graph neural network with optimal transport distances"
     """
 
-    def __init__(self, n_features, n_tplt=2, n_tplt_nodes=2, alpha=None, train_node_weights=True, multi_alpha=False, feature_init_mean=0., feature_init_std=1.):
+    def __init__(
+        self,
+        n_features,
+        n_tplt=2,
+        n_tplt_nodes=2,
+        alpha=None,
+        train_node_weights=True,
+        multi_alpha=False,
+        feature_init_mean=0.0,
+        feature_init_std=1.0,
+    ):
         r"""
         Template Fused Gromov-Wasserstein (TFGW) layer. This layer is a pooling layer for graph neural networks.
             Computes the fused Gromov-Wasserstein distances between the graph and a set of templates.
@@ -101,7 +115,7 @@ class TFGWPooling(nn.Module):
         .. [53]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
                 "Template based graph neural network with optimal transport distances"
 
-            """
+        """
         super().__init__()
 
         self.n_tplt = n_tplt
@@ -111,7 +125,13 @@ class TFGWPooling(nn.Module):
         self.feature_init_mean = feature_init_mean
         self.feature_init_std = feature_init_std
 
-        tplt_adjacencies, tplt_features, self.q0 = TFGW_template_initialization(self.n_tplt, self.n_tplt_nodes, self.n_features, self.feature_init_mean, self.feature_init_std)
+        tplt_adjacencies, tplt_features, self.q0 = TFGW_template_initialization(
+            self.n_tplt,
+            self.n_tplt_nodes,
+            self.n_features,
+            self.feature_init_mean,
+            self.feature_init_std,
+        )
         self.tplt_adjacencies = nn.Parameter(tplt_adjacencies)
         self.tplt_features = nn.Parameter(tplt_features)
 
@@ -146,7 +166,16 @@ class TFGWPooling(nn.Module):
         """
         alpha = torch.sigmoid(self.alpha0)
         q = self.softmax(self.q0)
-        x = FGW_distance_to_templates(edge_index, self.tplt_adjacencies, x, self.tplt_features, q, alpha, self.multi_alpha, batch)
+        x = FGW_distance_to_templates(
+            edge_index,
+            self.tplt_adjacencies,
+            x,
+            self.tplt_features,
+            q,
+            alpha,
+            self.multi_alpha,
+            batch,
+        )
         return x
 
 
@@ -185,7 +214,15 @@ class TWPooling(nn.Module):
 
     """
 
-    def __init__(self, n_features, n_tplt=2, n_tplt_nodes=2, train_node_weights=True, feature_init_mean=0., feature_init_std=1.):
+    def __init__(
+        self,
+        n_features,
+        n_tplt=2,
+        n_tplt_nodes=2,
+        train_node_weights=True,
+        feature_init_mean=0.0,
+        feature_init_std=1.0,
+    ):
         r"""
         Template Wasserstein (TW) layer, also kown as OT-GNN layer. This layer is a pooling layer for graph neural networks.
             Computes the Wasserstein distances between the features of the graph features and a set of templates.
@@ -226,7 +263,13 @@ class TWPooling(nn.Module):
         self.feature_init_mean = feature_init_mean
         self.feature_init_std = feature_init_std
 
-        _, tplt_features, self.q0 = TFGW_template_initialization(self.n_tplt, self.n_tplt_nodes, self.n_features, self.feature_init_mean, self.feature_init_std)
+        _, tplt_features, self.q0 = TFGW_template_initialization(
+            self.n_tplt,
+            self.n_tplt_nodes,
+            self.n_features,
+            self.feature_init_mean,
+            self.feature_init_std,
+        )
 
         self.tplt_features = nn.Parameter(tplt_features)
         self.softmax = nn.Softmax(dim=1)

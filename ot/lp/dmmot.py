@@ -146,11 +146,13 @@ def dmmot_monge_1dgrid_loss(A, verbose=False, log=False):
     xx = {}
     dual = [np.zeros(d) for d in dims]
 
-    idx = [0, ] * len(AA)
+    idx = [
+        0,
+    ] * len(AA)
     obj = 0
 
     if verbose:
-        print('i minval oldidx\t\tobj\t\tvals')
+        print("i minval oldidx\t\tobj\t\tvals")
 
     while all([i < _ for _, i in zip(dims, idx)]):
         vals = [v[i] for v, i in zip(AA, idx)]
@@ -164,12 +166,14 @@ def dmmot_monge_1dgrid_loss(A, verbose=False, log=False):
         oldidx = idx.copy()
         idx[i] += 1
         if idx[i] < dims[i]:
-            temp = (dist_monge_max_min(idx) -
-                    dist_monge_max_min(oldidx) +
-                    dual[i][idx[i] - 1])
+            temp = (
+                dist_monge_max_min(idx)
+                - dist_monge_max_min(oldidx)
+                + dual[i][idx[i] - 1]
+            )
             dual[i][idx[i]] += temp
         if verbose:
-            print(i, minval, oldidx, obj, '\t', vals)
+            print(i, minval, oldidx, obj, "\t", vals)
 
     # the above terminates when any entry in idx equals the corresponding
     # value in dims this leaves other dimensions incomplete; the remaining
@@ -183,10 +187,12 @@ def dmmot_monge_1dgrid_loss(A, verbose=False, log=False):
     dualobj = sum([np.dot(A[:, i], arr) for i, arr in enumerate(dual)])
     obj = nx.from_numpy(obj)
 
-    log_dict = {'A': xx,
-                'primal objective': obj,
-                'dual': dual,
-                'dual objective': dualobj}
+    log_dict = {
+        "A": xx,
+        "primal objective": obj,
+        "dual": dual,
+        "dual objective": dualobj,
+    }
 
     # define forward/backward relations for pytorch
     obj = nx.set_gradients(obj, (A_copy), (dual))
@@ -198,13 +204,14 @@ def dmmot_monge_1dgrid_loss(A, verbose=False, log=False):
 
 
 def dmmot_monge_1dgrid_optimize(
-        A,
-        niters=100,
-        lr_init=1e-5,
-        lr_decay=0.995,
-        print_rate=100,
-        verbose=False,
-        log=False):
+    A,
+    niters=100,
+    lr_init=1e-5,
+    lr_decay=0.995,
+    print_rate=100,
+    verbose=False,
+    log=False,
+):
     r"""Minimize the d-dimensional EMD using gradient descent.
 
     Discrete Multi-Marginal Optimal Transport (d-MMOT): Let :math:`a_1, \ldots,
@@ -300,9 +307,8 @@ def dmmot_monge_1dgrid_optimize(
     n, d = A.shape  # n is dim, d is n_hists
 
     def dualIter(A, lr):
-        funcval, log_dict = dmmot_monge_1dgrid_loss(
-            A, verbose=verbose, log=True)
-        grad = np.column_stack(log_dict['dual'])
+        funcval, log_dict = dmmot_monge_1dgrid_loss(A, verbose=verbose, log=True)
+        grad = np.column_stack(log_dict["dual"])
         A_new = np.reshape(A, (n, d)) - grad * lr
         return funcval, A_new, grad, log_dict
 
@@ -322,16 +328,15 @@ def dmmot_monge_1dgrid_optimize(
     funcval, _, grad, log_dict = dualIter(A, lr)
     gn = np.linalg.norm(grad)
 
-    print(f'Inital:\t\tObj:\t{funcval:.4f}\tGradNorm:\t{gn:.4f}')
+    print(f"Inital:\t\tObj:\t{funcval:.4f}\tGradNorm:\t{gn:.4f}")
 
     for i in range(niters):
-
         A = renormalize(A)
         funcval, A, grad, log_dict = dualIter(A, lr)
         gn = np.linalg.norm(grad)
 
         if i % print_rate == 0:
-            print(f'Iter {i:2.0f}:\tObj:\t{funcval:.4f}\tGradNorm:\t{gn:.4f}')
+            print(f"Iter {i:2.0f}:\tObj:\t{funcval:.4f}\tGradNorm:\t{gn:.4f}")
 
         lr *= lr_decay
 

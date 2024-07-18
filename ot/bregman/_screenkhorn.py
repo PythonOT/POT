@@ -17,9 +17,21 @@ from ..utils import list_to_array
 from ..backend import get_backend
 
 
-def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
-                restricted=True, maxiter=10000, maxfun=10000, pgtol=1e-09,
-                verbose=False, log=False):
+def screenkhorn(
+    a,
+    b,
+    M,
+    reg,
+    ns_budget=None,
+    nt_budget=None,
+    uniform=False,
+    restricted=True,
+    maxiter=10000,
+    maxfun=10000,
+    pgtol=1e-09,
+    verbose=False,
+    log=False,
+):
     r"""
     Screening Sinkhorn Algorithm for Regularized Optimal Transport
 
@@ -119,15 +131,18 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
     except ImportError:
         warnings.warn(
             "Bottleneck module is not installed. Install it from"
-            " https://pypi.org/project/Bottleneck/ for better performance.")
+            " https://pypi.org/project/Bottleneck/ for better performance."
+        )
         bottleneck = np
 
     a, b, M = list_to_array(a, b, M)
 
     nx = get_backend(M, a, b)
     if nx.__name__ in ("jax", "tf"):
-        raise TypeError("JAX or TF arrays have been received but screenkhorn is not "
-                        "compatible with neither JAX nor TF.")
+        raise TypeError(
+            "JAX or TF arrays have been received but screenkhorn is not "
+            "compatible with neither JAX nor TF."
+        )
 
     ns, nt = M.shape
 
@@ -155,8 +170,8 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
         epsilon = 0.0
         kappa = 1.0
 
-        cst_u = 0.
-        cst_v = 0.
+        cst_u = 0.0
+        cst_v = 0.0
 
         bounds_u = [(0.0, np.inf)] * ns
         bounds_v = [(0.0, np.inf)] * nt
@@ -181,9 +196,10 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
                 epsilon_u_square = a[0] / aK_sort[ns_budget - 1]
             else:
                 aK_sort = nx.from_numpy(
-                    bottleneck.partition(nx.to_numpy(
-                        K_sum_cols), ns_budget - 1)[ns_budget - 1],
-                    type_as=M
+                    bottleneck.partition(nx.to_numpy(K_sum_cols), ns_budget - 1)[
+                        ns_budget - 1
+                    ],
+                    type_as=M,
                 )
                 epsilon_u_square = a[0] / aK_sort
 
@@ -192,9 +208,10 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
                 epsilon_v_square = b[0] / bK_sort[nt_budget - 1]
             else:
                 bK_sort = nx.from_numpy(
-                    bottleneck.partition(nx.to_numpy(
-                        K_sum_rows), nt_budget - 1)[nt_budget - 1],
-                    type_as=M
+                    bottleneck.partition(nx.to_numpy(K_sum_rows), nt_budget - 1)[
+                        nt_budget - 1
+                    ],
+                    type_as=M,
                 )
                 epsilon_v_square = b[0] / bK_sort
         else:
@@ -215,7 +232,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
             if uniform:
                 aK = a / K_sum_cols
                 aK_sort = nx.flip(nx.sort(aK), axis=0)
-            epsilon_u_square = nx.mean(aK_sort[ns_budget - 1:ns_budget + 1])
+            epsilon_u_square = nx.mean(aK_sort[ns_budget - 1 : ns_budget + 1])
             Isel = a >= epsilon_u_square * K_sum_cols
             ns_budget = nx.sum(Isel)
 
@@ -223,7 +240,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
             if uniform:
                 bK = b / K_sum_rows
                 bK_sort = nx.flip(nx.sort(bK), axis=0)
-            epsilon_v_square = nx.mean(bK_sort[nt_budget - 1:nt_budget + 1])
+            epsilon_v_square = nx.mean(bK_sort[nt_budget - 1 : nt_budget + 1])
             Jsel = b >= epsilon_v_square * K_sum_rows
             nt_budget = nx.sum(Jsel)
 
@@ -233,8 +250,10 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
         if verbose:
             print("epsilon = %s\n" % epsilon)
             print("kappa = %s\n" % kappa)
-            print('Cardinality of selected points: |Isel| = %s \t |Jsel| = %s \n'
-                  % (sum(Isel), sum(Jsel)))
+            print(
+                "Cardinality of selected points: |Isel| = %s \t |Jsel| = %s \n"
+                % (sum(Isel), sum(Jsel))
+            )
 
         # Ic, Jc: complementary of the active sets I and J
         Ic = ~Isel
@@ -263,26 +282,47 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
             b_J_min = b_J[0]
 
         # box constraints in L-BFGS-B (see Proposition 1 in [26])
-        bounds_u = [(max(a_I_min / ((nt - nt_budget) * epsilon + nt_budget * (b_J_max / (
-                    ns * epsilon * kappa * K_min))), epsilon / kappa), a_I_max / (nt * epsilon * K_min))] * ns_budget
+        bounds_u = [
+            (
+                max(
+                    a_I_min
+                    / (
+                        (nt - nt_budget) * epsilon
+                        + nt_budget * (b_J_max / (ns * epsilon * kappa * K_min))
+                    ),
+                    epsilon / kappa,
+                ),
+                a_I_max / (nt * epsilon * K_min),
+            )
+        ] * ns_budget
 
-        bounds_v = [(
-            max(b_J_min / ((ns - ns_budget) * epsilon + ns_budget * (kappa * a_I_max / (nt * epsilon * K_min))),
-                epsilon * kappa), b_J_max / (ns * epsilon * K_min))] * nt_budget
+        bounds_v = [
+            (
+                max(
+                    b_J_min
+                    / (
+                        (ns - ns_budget) * epsilon
+                        + ns_budget * (kappa * a_I_max / (nt * epsilon * K_min))
+                    ),
+                    epsilon * kappa,
+                ),
+                b_J_max / (ns * epsilon * K_min),
+            )
+        ] * nt_budget
 
         # pre-calculated constants for the objective
-        vec_eps_IJc = epsilon * kappa * nx.sum(
-            K_IJc * nx.ones((nt - nt_budget,), type_as=M)[None, :],
-            axis=1
+        vec_eps_IJc = (
+            epsilon
+            * kappa
+            * nx.sum(K_IJc * nx.ones((nt - nt_budget,), type_as=M)[None, :], axis=1)
         )
         vec_eps_IcJ = (epsilon / kappa) * nx.sum(
-            nx.ones((ns - ns_budget,), type_as=M)[:, None] * K_IcJ,
-            axis=0
+            nx.ones((ns - ns_budget,), type_as=M)[:, None] * K_IcJ, axis=0
         )
 
     # initialisation
-    u0 = nx.full((ns_budget,), 1. / ns_budget + epsilon / kappa, type_as=M)
-    v0 = nx.full((nt_budget,), 1. / nt_budget + epsilon * kappa, type_as=M)
+    u0 = nx.full((ns_budget,), 1.0 / ns_budget + epsilon / kappa, type_as=M)
+    v0 = nx.full((nt_budget,), 1.0 / nt_budget + epsilon * kappa, type_as=M)
 
     # pre-calculed constants for Restricted Sinkhorn (see Algorithm 1 in supplementary of [26])
     if restricted:
@@ -322,7 +362,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
         part_IJ = (
             nx.dot(nx.dot(usc, K_IJ), vsc)
             - kappa * nx.dot(a_I, nx.log(usc))
-            - (1. / kappa) * nx.dot(b_J, nx.log(vsc))
+            - (1.0 / kappa) * nx.dot(b_J, nx.log(vsc))
         )
         part_IJc = nx.dot(usc, vec_eps_IJc)
         part_IcJ = nx.dot(vec_eps_IcJ, vsc)
@@ -332,7 +372,7 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
     def screened_grad(usc, vsc):
         # gradients of Psi_(kappa,epsilon) w.r.t u and v
         grad_u = nx.dot(K_IJ, vsc) + vec_eps_IJc - kappa * a_I / usc
-        grad_v = nx.dot(K_IJ.T, usc) + vec_eps_IcJ - (1. / kappa) * b_J / vsc
+        grad_v = nx.dot(K_IJ.T, usc) + vec_eps_IcJ - (1.0 / kappa) * b_J / vsc
         return grad_u, grad_v
 
     def bfgspost(theta):
@@ -357,12 +397,9 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
     def obj(theta):
         return bfgspost(nx.from_numpy(theta, type_as=M))
 
-    theta, _, _ = fmin_l_bfgs_b(func=obj,
-                                x0=theta0,
-                                bounds=bounds,
-                                maxfun=maxfun,
-                                pgtol=pgtol,
-                                maxiter=maxiter)
+    theta, _, _ = fmin_l_bfgs_b(
+        func=obj, x0=theta0, bounds=bounds, maxfun=maxfun, pgtol=pgtol, maxiter=maxiter
+    )
     theta = nx.from_numpy(theta, type_as=M)
 
     usc = theta[:ns_budget]
@@ -375,10 +412,10 @@ def screenkhorn(a, b, M, reg, ns_budget=None, nt_budget=None, uniform=False,
 
     if log:
         log = {}
-        log['u'] = usc_full
-        log['v'] = vsc_full
-        log['Isel'] = Isel
-        log['Jsel'] = Jsel
+        log["u"] = usc_full
+        log["v"] = vsc_full
+        log["Isel"] = Isel
+        log["Jsel"] = Jsel
 
     gamma = usc_full[:, None] * K * vsc_full[None, :]
     gamma = gamma / nx.sum(gamma)

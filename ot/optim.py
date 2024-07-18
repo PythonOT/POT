@@ -26,8 +26,18 @@ with warnings.catch_warnings():
 
 
 def line_search_armijo(
-    f, xk, pk, gfk, old_fval, args=(), c1=1e-4,
-    alpha0=0.99, alpha_min=0., alpha_max=None, nx=None, **kwargs
+    f,
+    xk,
+    pk,
+    gfk,
+    old_fval,
+    args=(),
+    c1=1e-4,
+    alpha0=0.99,
+    alpha_min=0.0,
+    alpha_max=None,
+    nx=None,
+    **kwargs,
 ):
     r"""
     Armijo linesearch function that works with matrices
@@ -107,7 +117,7 @@ def line_search_armijo(
             return nx.to_numpy(fval)
 
     if old_fval is None:
-        phi0 = phi(0.)
+        phi0 = phi(0.0)
     elif isinstance(old_fval, float):
         # prevent bug from nx.to_numpy that can look for .cpu or .gpu
         phi0 = old_fval
@@ -116,18 +126,38 @@ def line_search_armijo(
 
     derphi0 = np.sum(pk * gfk)  # Quickfix for matrices
     alpha, phi1 = scalar_search_armijo(
-        phi, phi0, derphi0, c1=c1, alpha0=alpha0, amin=alpha_min)
+        phi, phi0, derphi0, c1=c1, alpha0=alpha0, amin=alpha_min
+    )
 
     if alpha is None:
-        return 0., fc[0], nx.from_numpy(phi0, type_as=xk0)
+        return 0.0, fc[0], nx.from_numpy(phi0, type_as=xk0)
     else:
         alpha = np.clip(alpha, alpha_min, alpha_max)
-        return nx.from_numpy(alpha, type_as=xk0), fc[0], nx.from_numpy(phi1, type_as=xk0)
+        return (
+            nx.from_numpy(alpha, type_as=xk0),
+            fc[0],
+            nx.from_numpy(phi1, type_as=xk0),
+        )
 
 
-def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_search, G0=None,
-                                 numItermax=200, stopThr=1e-9,
-                                 stopThr2=1e-9, verbose=False, log=False, **kwargs):
+def generic_conditional_gradient(
+    a,
+    b,
+    M,
+    f,
+    df,
+    reg1,
+    reg2,
+    lp_solver,
+    line_search,
+    G0=None,
+    numItermax=200,
+    stopThr=1e-9,
+    stopThr2=1e-9,
+    verbose=False,
+    log=False,
+    **kwargs,
+):
     r"""
     Solve the general regularized OT problem or its semi-relaxed version with
     conditional gradient or generalized conditional gradient depending on the
@@ -244,7 +274,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
     loop = 1
 
     if log:
-        log = {'loss': []}
+        log = {"loss": []}
 
     if G0 is None:
         G = nx.outer(a, b)
@@ -253,30 +283,37 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         G = nx.copy(G0)
 
     if reg2 is None:
+
         def cost(G):
             return nx.sum(M * G) + reg1 * f(G)
     else:
+
         def cost(G):
             return nx.sum(M * G) + reg1 * f(G) + reg2 * nx.sum(G * nx.log(G))
+
     cost_G = cost(G)
     if log:
-        log['loss'].append(cost_G)
+        log["loss"].append(cost_G)
 
     it = 0
 
     if verbose:
-        print('{:5s}|{:12s}|{:8s}|{:8s}'.format(
-            'It.', 'Loss', 'Relative loss', 'Absolute loss') + '\n' + '-' * 48)
-        print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, cost_G, 0, 0))
+        print(
+            "{:5s}|{:12s}|{:8s}|{:8s}".format(
+                "It.", "Loss", "Relative loss", "Absolute loss"
+            )
+            + "\n"
+            + "-" * 48
+        )
+        print("{:5d}|{:8e}|{:8e}|{:8e}".format(it, cost_G, 0, 0))
 
     while loop:
-
         it += 1
         old_cost_G = cost_G
         # problem linearization
         Mi = M + reg1 * df(G)
 
-        if not (reg2 is None):
+        if reg2 is not None:
             Mi = Mi + reg2 * (1 + nx.log(G))
         # set M positive
         Mi = Mi + nx.min(Mi)
@@ -296,18 +333,29 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
             loop = 0
 
         abs_delta_cost_G = abs(cost_G - old_cost_G)
-        relative_delta_cost_G = abs_delta_cost_G / abs(cost_G) if cost_G != 0. else np.nan
+        relative_delta_cost_G = (
+            abs_delta_cost_G / abs(cost_G) if cost_G != 0.0 else np.nan
+        )
         if relative_delta_cost_G < stopThr or abs_delta_cost_G < stopThr2:
             loop = 0
 
         if log:
-            log['loss'].append(cost_G)
+            log["loss"].append(cost_G)
 
         if verbose:
             if it % 20 == 0:
-                print('{:5s}|{:12s}|{:8s}|{:8s}'.format(
-                    'It.', 'Loss', 'Relative loss', 'Absolute loss') + '\n' + '-' * 48)
-            print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, cost_G, relative_delta_cost_G, abs_delta_cost_G))
+                print(
+                    "{:5s}|{:12s}|{:8s}|{:8s}".format(
+                        "It.", "Loss", "Relative loss", "Absolute loss"
+                    )
+                    + "\n"
+                    + "-" * 48
+                )
+            print(
+                "{:5d}|{:8e}|{:8e}|{:8e}".format(
+                    it, cost_G, relative_delta_cost_G, abs_delta_cost_G
+                )
+            )
 
     if log:
         log.update(innerlog_)
@@ -316,9 +364,23 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         return G
 
 
-def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
-       numItermax=200, numItermaxEmd=100000, stopThr=1e-9, stopThr2=1e-9,
-       verbose=False, log=False, **kwargs):
+def cg(
+    a,
+    b,
+    M,
+    reg,
+    f,
+    df,
+    G0=None,
+    line_search=line_search_armijo,
+    numItermax=200,
+    numItermaxEmd=100000,
+    stopThr=1e-9,
+    stopThr2=1e-9,
+    verbose=False,
+    log=False,
+    **kwargs,
+):
     r"""
     Solve the general regularized OT problem with conditional gradient
 
@@ -397,13 +459,42 @@ def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
     def lp_solver(a, b, M, **kwargs):
         return emd(a, b, M, numItermaxEmd, log=True)
 
-    return generic_conditional_gradient(a, b, M, f, df, reg, None, lp_solver, line_search, G0=G0,
-                                        numItermax=numItermax, stopThr=stopThr,
-                                        stopThr2=stopThr2, verbose=verbose, log=log, **kwargs)
+    return generic_conditional_gradient(
+        a,
+        b,
+        M,
+        f,
+        df,
+        reg,
+        None,
+        lp_solver,
+        line_search,
+        G0=G0,
+        numItermax=numItermax,
+        stopThr=stopThr,
+        stopThr2=stopThr2,
+        verbose=verbose,
+        log=log,
+        **kwargs,
+    )
 
 
-def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
-                   numItermax=200, stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, **kwargs):
+def semirelaxed_cg(
+    a,
+    b,
+    M,
+    reg,
+    f,
+    df,
+    G0=None,
+    line_search=line_search_armijo,
+    numItermax=200,
+    stopThr=1e-9,
+    stopThr2=1e-9,
+    verbose=False,
+    log=False,
+    **kwargs,
+):
     r"""
     Solve the general regularized and semi-relaxed OT problem with conditional gradient
 
@@ -481,13 +572,43 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
         # return by default an empty inner_log
         return Gc, {}
 
-    return generic_conditional_gradient(a, b, M, f, df, reg, None, lp_solver, line_search, G0=G0,
-                                        numItermax=numItermax, stopThr=stopThr,
-                                        stopThr2=stopThr2, verbose=verbose, log=log, **kwargs)
+    return generic_conditional_gradient(
+        a,
+        b,
+        M,
+        f,
+        df,
+        reg,
+        None,
+        lp_solver,
+        line_search,
+        G0=G0,
+        numItermax=numItermax,
+        stopThr=stopThr,
+        stopThr2=stopThr2,
+        verbose=verbose,
+        log=log,
+        **kwargs,
+    )
 
 
-def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
-        numInnerItermax=200, stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, **kwargs):
+def gcg(
+    a,
+    b,
+    M,
+    reg1,
+    reg2,
+    f,
+    df,
+    G0=None,
+    numItermax=10,
+    numInnerItermax=200,
+    stopThr=1e-9,
+    stopThr2=1e-9,
+    verbose=False,
+    log=False,
+    **kwargs,
+):
     r"""
     Solve the general regularized OT problem with the generalized conditional gradient
 
@@ -568,8 +689,24 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
     def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
         return line_search_armijo(cost, G, deltaG, Mi, cost_G, **kwargs)
 
-    return generic_conditional_gradient(a, b, M, f, df, reg2, reg1, lp_solver, line_search, G0=G0,
-                                        numItermax=numItermax, stopThr=stopThr, stopThr2=stopThr2, verbose=verbose, log=log, **kwargs)
+    return generic_conditional_gradient(
+        a,
+        b,
+        M,
+        f,
+        df,
+        reg2,
+        reg1,
+        lp_solver,
+        line_search,
+        G0=G0,
+        numItermax=numItermax,
+        stopThr=stopThr,
+        stopThr2=stopThr2,
+        verbose=verbose,
+        log=log,
+        **kwargs,
+    )
 
 
 def solve_1d_linesearch_quad(a, b):
@@ -591,10 +728,10 @@ def solve_1d_linesearch_quad(a, b):
         The optimal value which leads to the minimal cost
     """
     if a > 0:  # convex
-        minimum = min(1., max(0., -b / (2.0 * a)))
+        minimum = min(1.0, max(0.0, -b / (2.0 * a)))
         return minimum
     else:  # non convex
         if a + b < 0:
-            return 1.
+            return 1.0
         else:
-            return 0.
+            return 0.0

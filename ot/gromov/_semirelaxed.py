@@ -18,8 +18,19 @@ from ..backend import get_backend
 from ._utils import init_matrix_semirelaxed, gwloss, gwggrad
 
 
-def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symmetric=None, log=False, G0=None,
-                                   max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
+def semirelaxed_gromov_wasserstein(
+    C1,
+    C2,
+    p=None,
+    loss_fun="square_loss",
+    symmetric=None,
+    log=False,
+    G0=None,
+    max_iter=1e4,
+    tol_rel=1e-9,
+    tol_abs=1e-9,
+    **kwargs,
+):
     r"""
     Returns the semi-relaxed Gromov-Wasserstein divergence transport from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}` (see [48]).
 
@@ -107,7 +118,9 @@ def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symme
     nx = get_backend(*arr)
 
     if symmetric is None:
-        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
+        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(
+            C2, C2.T, atol=1e-10
+        )
     if G0 is None:
         q = unif(C2.shape[0], type_as=p)
         G0 = nx.outer(p, q)
@@ -126,6 +139,7 @@ def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symme
         return gwloss(constC + marginal_product, hC1, hC2, G, nx)
 
     if symmetric:
+
         def df(G):
             qG = nx.sum(G, 0)
             marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
@@ -137,21 +151,75 @@ def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symme
             qG = nx.sum(G, 0)
             marginal_product_1 = nx.outer(ones_p, nx.dot(qG, fC2t))
             marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
-            return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G, nx) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G, nx))
+            return 0.5 * (
+                gwggrad(constC + marginal_product_1, hC1, hC2, G, nx)
+                + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G, nx)
+            )
 
     def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
-        return solve_semirelaxed_gromov_linesearch(G, deltaG, cost_G, hC1, hC2, ones_p, M=0., reg=1., fC2t=fC2t, nx=nx, **kwargs)
+        return solve_semirelaxed_gromov_linesearch(
+            G,
+            deltaG,
+            cost_G,
+            hC1,
+            hC2,
+            ones_p,
+            M=0.0,
+            reg=1.0,
+            fC2t=fC2t,
+            nx=nx,
+            **kwargs,
+        )
 
     if log:
-        res, log = semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=True, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
-        log['srgw_dist'] = log['loss'][-1]
+        res, log = semirelaxed_cg(
+            p,
+            q,
+            0.0,
+            1.0,
+            f,
+            df,
+            G0,
+            line_search,
+            log=True,
+            numItermax=max_iter,
+            stopThr=tol_rel,
+            stopThr2=tol_abs,
+            **kwargs,
+        )
+        log["srgw_dist"] = log["loss"][-1]
         return res, log
     else:
-        return semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
+        return semirelaxed_cg(
+            p,
+            q,
+            0.0,
+            1.0,
+            f,
+            df,
+            G0,
+            line_search,
+            log=False,
+            numItermax=max_iter,
+            stopThr=tol_rel,
+            stopThr2=tol_abs,
+            **kwargs,
+        )
 
 
-def semirelaxed_gromov_wasserstein2(C1, C2, p=None, loss_fun='square_loss', symmetric=None, log=False, G0=None,
-                                    max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
+def semirelaxed_gromov_wasserstein2(
+    C1,
+    C2,
+    p=None,
+    loss_fun="square_loss",
+    symmetric=None,
+    log=False,
+    G0=None,
+    max_iter=1e4,
+    tol_rel=1e-9,
+    tol_abs=1e-9,
+    **kwargs,
+):
     r"""
     Returns the semi-relaxed Gromov-Wasserstein divergence from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}` (see [48]).
 
@@ -237,20 +305,32 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p=None, loss_fun='square_loss', symm
         p = unif(C1.shape[0], type_as=C1)
 
     T, log_srgw = semirelaxed_gromov_wasserstein(
-        C1, C2, p, loss_fun, symmetric, log=True, G0=G0,
-        max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs, **kwargs)
+        C1,
+        C2,
+        p,
+        loss_fun,
+        symmetric,
+        log=True,
+        G0=G0,
+        max_iter=max_iter,
+        tol_rel=tol_rel,
+        tol_abs=tol_abs,
+        **kwargs,
+    )
 
     q = nx.sum(T, 0)
-    log_srgw['T'] = T
-    srgw = log_srgw['srgw_dist']
+    log_srgw["T"] = T
+    srgw = log_srgw["srgw_dist"]
 
-    if loss_fun == 'square_loss':
+    if loss_fun == "square_loss":
         gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
         gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
 
-    elif loss_fun == 'kl_loss':
-        gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(T, nx.dot(nx.log(C2 + 1e-15), T.T))
-        gC2 = - nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
+    elif loss_fun == "kl_loss":
+        gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(
+            T, nx.dot(nx.log(C2 + 1e-15), T.T)
+        )
+        gC2 = -nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
 
     srgw = nx.set_gradients(srgw, (C1, C2), (gC1, gC2))
 
@@ -261,8 +341,20 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p=None, loss_fun='square_loss', symm
 
 
 def semirelaxed_fused_gromov_wasserstein(
-        M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, alpha=0.5,
-        G0=None, log=False, max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
+    M,
+    C1,
+    C2,
+    p=None,
+    loss_fun="square_loss",
+    symmetric=None,
+    alpha=0.5,
+    G0=None,
+    log=False,
+    max_iter=1e4,
+    tol_rel=1e-9,
+    tol_abs=1e-9,
+    **kwargs,
+):
     r"""
     Computes the semi-relaxed Fused Gromov-Wasserstein transport between two graphs (see [48]).
 
@@ -356,7 +448,9 @@ def semirelaxed_fused_gromov_wasserstein(
     nx = get_backend(*arr)
 
     if symmetric is None:
-        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
+        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(
+            C2, C2.T, atol=1e-10
+        )
 
     if G0 is None:
         q = unif(C2.shape[0], type_as=p)
@@ -376,6 +470,7 @@ def semirelaxed_fused_gromov_wasserstein(
         return gwloss(constC + marginal_product, hC1, hC2, G, nx)
 
     if symmetric:
+
         def df(G):
             qG = nx.sum(G, 0)
             marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
@@ -387,22 +482,77 @@ def semirelaxed_fused_gromov_wasserstein(
             qG = nx.sum(G, 0)
             marginal_product_1 = nx.outer(ones_p, nx.dot(qG, fC2t))
             marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
-            return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G, nx) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G, nx))
+            return 0.5 * (
+                gwggrad(constC + marginal_product_1, hC1, hC2, G, nx)
+                + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G, nx)
+            )
 
     def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
         return solve_semirelaxed_gromov_linesearch(
-            G, deltaG, cost_G, hC1, hC2, ones_p, M=(1 - alpha) * M, reg=alpha, fC2t=fC2t, nx=nx, **kwargs)
+            G,
+            deltaG,
+            cost_G,
+            hC1,
+            hC2,
+            ones_p,
+            M=(1 - alpha) * M,
+            reg=alpha,
+            fC2t=fC2t,
+            nx=nx,
+            **kwargs,
+        )
 
     if log:
-        res, log = semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=True, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
-        log['srfgw_dist'] = log['loss'][-1]
+        res, log = semirelaxed_cg(
+            p,
+            q,
+            (1 - alpha) * M,
+            alpha,
+            f,
+            df,
+            G0,
+            line_search,
+            log=True,
+            numItermax=max_iter,
+            stopThr=tol_rel,
+            stopThr2=tol_abs,
+            **kwargs,
+        )
+        log["srfgw_dist"] = log["loss"][-1]
         return res, log
     else:
-        return semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
+        return semirelaxed_cg(
+            p,
+            q,
+            (1 - alpha) * M,
+            alpha,
+            f,
+            df,
+            G0,
+            line_search,
+            log=False,
+            numItermax=max_iter,
+            stopThr=tol_rel,
+            stopThr2=tol_abs,
+            **kwargs,
+        )
 
 
-def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, alpha=0.5, G0=None, log=False,
-                                          max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
+def semirelaxed_fused_gromov_wasserstein2(
+    M,
+    C1,
+    C2,
+    p=None,
+    loss_fun="square_loss",
+    symmetric=None,
+    alpha=0.5,
+    G0=None,
+    log=False,
+    max_iter=1e4,
+    tol_rel=1e-9,
+    tol_abs=1e-9,
+    **kwargs,
+):
     r"""
     Computes the semi-relaxed FGW divergence between two graphs (see [48]).
 
@@ -495,31 +645,48 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p=None, loss_fun='square_lo
         p = unif(C1.shape[0], type_as=C1)
 
     T, log_fgw = semirelaxed_fused_gromov_wasserstein(
-        M, C1, C2, p, loss_fun, symmetric, alpha, G0, log=True,
-        max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs, **kwargs)
+        M,
+        C1,
+        C2,
+        p,
+        loss_fun,
+        symmetric,
+        alpha,
+        G0,
+        log=True,
+        max_iter=max_iter,
+        tol_rel=tol_rel,
+        tol_abs=tol_abs,
+        **kwargs,
+    )
     q = nx.sum(T, 0)
-    srfgw_dist = log_fgw['srfgw_dist']
-    log_fgw['T'] = T
-    log_fgw['lin_loss'] = nx.sum(M * T) * (1 - alpha)
-    log_fgw['quad_loss'] = srfgw_dist - log_fgw['lin_loss']
+    srfgw_dist = log_fgw["srfgw_dist"]
+    log_fgw["T"] = T
+    log_fgw["lin_loss"] = nx.sum(M * T) * (1 - alpha)
+    log_fgw["quad_loss"] = srfgw_dist - log_fgw["lin_loss"]
 
-    if loss_fun == 'square_loss':
+    if loss_fun == "square_loss":
         gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
         gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
 
-    elif loss_fun == 'kl_loss':
-        gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(T, nx.dot(nx.log(C2 + 1e-15), T.T))
-        gC2 = - nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
+    elif loss_fun == "kl_loss":
+        gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(
+            T, nx.dot(nx.log(C2 + 1e-15), T.T)
+        )
+        gC2 = -nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
 
     if isinstance(alpha, int) or isinstance(alpha, float):
-        srfgw_dist = nx.set_gradients(srfgw_dist, (C1, C2, M),
-                                      (alpha * gC1, alpha * gC2, (1 - alpha) * T))
+        srfgw_dist = nx.set_gradients(
+            srfgw_dist, (C1, C2, M), (alpha * gC1, alpha * gC2, (1 - alpha) * T)
+        )
     else:
         lin_term = nx.sum(T * M)
         srgw_term = (srfgw_dist - (1 - alpha) * lin_term) / alpha
-        srfgw_dist = nx.set_gradients(srfgw_dist, (C1, C2, M, alpha),
-                                      (alpha * gC1, alpha * gC2, (1 - alpha) * T,
-                                       srgw_term - lin_term))
+        srfgw_dist = nx.set_gradients(
+            srfgw_dist,
+            (C1, C2, M, alpha),
+            (alpha * gC1, alpha * gC2, (1 - alpha) * T, srgw_term - lin_term),
+        )
 
     if log:
         return srfgw_dist, log_fgw
@@ -527,8 +694,21 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p=None, loss_fun='square_lo
         return srfgw_dist
 
 
-def solve_semirelaxed_gromov_linesearch(G, deltaG, cost_G, C1, C2, ones_p,
-                                        M, reg, fC2t=None, alpha_min=None, alpha_max=None, nx=None, **kwargs):
+def solve_semirelaxed_gromov_linesearch(
+    G,
+    deltaG,
+    cost_G,
+    C1,
+    C2,
+    ones_p,
+    M,
+    reg,
+    fC2t=None,
+    alpha_min=None,
+    alpha_max=None,
+    nx=None,
+    **kwargs,
+):
     """
     Solve the linesearch in the Conditional Gradient iterations for the semi-relaxed Gromov-Wasserstein divergence.
 
@@ -591,26 +771,40 @@ def solve_semirelaxed_gromov_linesearch(G, deltaG, cost_G, C1, C2, ones_p,
     qG, qdeltaG = nx.sum(G, 0), nx.sum(deltaG, 0)
     dot = nx.dot(nx.dot(C1, deltaG), C2.T)
     if fC2t is None:
-        fC2t = C2.T ** 2
+        fC2t = C2.T**2
     dot_qG = nx.dot(nx.outer(ones_p, qG), fC2t)
     dot_qdeltaG = nx.dot(nx.outer(ones_p, qdeltaG), fC2t)
 
     a = reg * nx.sum((dot_qdeltaG - dot) * deltaG)
-    b = nx.sum(M * deltaG) + reg * (nx.sum((dot_qdeltaG - dot) * G) + nx.sum((dot_qG - nx.dot(nx.dot(C1, G), C2.T)) * deltaG))
+    b = nx.sum(M * deltaG) + reg * (
+        nx.sum((dot_qdeltaG - dot) * G)
+        + nx.sum((dot_qG - nx.dot(nx.dot(C1, G), C2.T)) * deltaG)
+    )
 
     alpha = solve_1d_linesearch_quad(a, b)
     if alpha_min is not None or alpha_max is not None:
         alpha = np.clip(alpha, alpha_min, alpha_max)
 
     # the new cost can be deduced from the line search quadratic function
-    cost_G = cost_G + a * (alpha ** 2) + b * alpha
+    cost_G = cost_G + a * (alpha**2) + b * alpha
 
     return alpha, 1, cost_G
 
 
 def entropic_semirelaxed_gromov_wasserstein(
-        C1, C2, p=None, loss_fun='square_loss', epsilon=0.1, symmetric=None,
-        G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
+    C1,
+    C2,
+    p=None,
+    loss_fun="square_loss",
+    epsilon=0.1,
+    symmetric=None,
+    G0=None,
+    max_iter=1e4,
+    tol=1e-9,
+    log=False,
+    verbose=False,
+    **kwargs,
+):
     r"""
     Returns the entropic-regularized semi-relaxed gromov-wasserstein divergence
     transport plan from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
@@ -694,7 +888,9 @@ def entropic_semirelaxed_gromov_wasserstein(
     nx = get_backend(*arr)
 
     if symmetric is None:
-        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
+        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(
+            C2, C2.T, atol=1e-10
+        )
     if G0 is None:
         q = unif(C2.shape[0], type_as=p)
         G0 = nx.outer(p, q)
@@ -708,6 +904,7 @@ def entropic_semirelaxed_gromov_wasserstein(
     ones_p = nx.ones(p.shape[0], type_as=p)
 
     if symmetric:
+
         def df(G):
             qG = nx.sum(G, 0)
             marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
@@ -719,20 +916,22 @@ def entropic_semirelaxed_gromov_wasserstein(
             qG = nx.sum(G, 0)
             marginal_product_1 = nx.outer(ones_p, nx.dot(qG, fC2t))
             marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
-            return 0.5 * (gwggrad(constC + marginal_product_1, hC1, hC2, G, nx) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G, nx))
+            return 0.5 * (
+                gwggrad(constC + marginal_product_1, hC1, hC2, G, nx)
+                + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G, nx)
+            )
 
     cpt = 0
     err = 1e15
     G = G0
 
     if log:
-        log = {'err': []}
+        log = {"err": []}
 
-    while (err > tol and cpt < max_iter):
-
+    while err > tol and cpt < max_iter:
         Gprev = G
         # compute the kernel
-        K = G * nx.exp(- df(G) / epsilon)
+        K = G * nx.exp(-df(G) / epsilon)
         scaling = p / nx.sum(K, 1)
         G = nx.reshape(scaling, (-1, 1)) * K
         if cpt % 10 == 0:
@@ -741,28 +940,38 @@ def entropic_semirelaxed_gromov_wasserstein(
             err = nx.norm(G - Gprev)
 
             if log:
-                log['err'].append(err)
+                log["err"].append(err)
 
             if verbose:
                 if cpt % 200 == 0:
-                    print('{:5s}|{:12s}'.format(
-                        'It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(cpt, err))
+                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+                print("{:5d}|{:8e}|".format(cpt, err))
 
         cpt += 1
 
     if log:
         qG = nx.sum(G, 0)
         marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
-        log['srgw_dist'] = gwloss(constC + marginal_product, hC1, hC2, G, nx)
+        log["srgw_dist"] = gwloss(constC + marginal_product, hC1, hC2, G, nx)
         return G, log
     else:
         return G
 
 
 def entropic_semirelaxed_gromov_wasserstein2(
-        C1, C2, p=None, loss_fun='square_loss', epsilon=0.1, symmetric=None,
-        G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
+    C1,
+    C2,
+    p=None,
+    loss_fun="square_loss",
+    epsilon=0.1,
+    symmetric=None,
+    G0=None,
+    max_iter=1e4,
+    tol=1e-9,
+    log=False,
+    verbose=False,
+    **kwargs,
+):
     r"""
     Returns the entropic-regularized semi-relaxed gromov-wasserstein divergence
     from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
@@ -839,20 +1048,44 @@ def entropic_semirelaxed_gromov_wasserstein2(
             International Conference on Learning Representations (ICLR), 2022.
     """
     T, log_srgw = entropic_semirelaxed_gromov_wasserstein(
-        C1, C2, p, loss_fun, epsilon, symmetric, G0,
-        max_iter, tol, log=True, verbose=verbose, **kwargs)
+        C1,
+        C2,
+        p,
+        loss_fun,
+        epsilon,
+        symmetric,
+        G0,
+        max_iter,
+        tol,
+        log=True,
+        verbose=verbose,
+        **kwargs,
+    )
 
-    log_srgw['T'] = T
+    log_srgw["T"] = T
 
     if log:
-        return log_srgw['srgw_dist'], log_srgw
+        return log_srgw["srgw_dist"], log_srgw
     else:
-        return log_srgw['srgw_dist']
+        return log_srgw["srgw_dist"]
 
 
 def entropic_semirelaxed_fused_gromov_wasserstein(
-        M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, epsilon=0.1,
-        alpha=0.5, G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
+    M,
+    C1,
+    C2,
+    p=None,
+    loss_fun="square_loss",
+    symmetric=None,
+    epsilon=0.1,
+    alpha=0.5,
+    G0=None,
+    max_iter=1e4,
+    tol=1e-9,
+    log=False,
+    verbose=False,
+    **kwargs,
+):
     r"""
     Computes the entropic-regularized semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
     estimated using a Mirror Descent algorithm following the KL geometry.
@@ -942,7 +1175,9 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
     nx = get_backend(*arr)
 
     if symmetric is None:
-        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
+        symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(
+            C2, C2.T, atol=1e-10
+        )
     if G0 is None:
         q = unif(C2.shape[0], type_as=p)
         G0 = nx.outer(p, q)
@@ -956,6 +1191,7 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
     ones_p = nx.ones(p.shape[0], type_as=p)
     dM = (1 - alpha) * M
     if symmetric:
+
         def df(G):
             qG = nx.sum(G, 0)
             marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
@@ -967,20 +1203,27 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
             qG = nx.sum(G, 0)
             marginal_product_1 = nx.outer(ones_p, nx.dot(qG, fC2t))
             marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
-            return 0.5 * alpha * (gwggrad(constC + marginal_product_1, hC1, hC2, G, nx) + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G, nx)) + dM
+            return (
+                0.5
+                * alpha
+                * (
+                    gwggrad(constC + marginal_product_1, hC1, hC2, G, nx)
+                    + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G, nx)
+                )
+                + dM
+            )
 
     cpt = 0
     err = 1e15
     G = G0
 
     if log:
-        log = {'err': []}
+        log = {"err": []}
 
-    while (err > tol and cpt < max_iter):
-
+    while err > tol and cpt < max_iter:
         Gprev = G
         # compute the kernel
-        K = G * nx.exp(- df(G) / epsilon)
+        K = G * nx.exp(-df(G) / epsilon)
         scaling = p / nx.sum(K, 1)
         G = nx.reshape(scaling, (-1, 1)) * K
         if cpt % 10 == 0:
@@ -989,30 +1232,42 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
             err = nx.norm(G - Gprev)
 
             if log:
-                log['err'].append(err)
+                log["err"].append(err)
 
             if verbose:
                 if cpt % 200 == 0:
-                    print('{:5s}|{:12s}'.format(
-                        'It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(cpt, err))
+                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+                print("{:5d}|{:8e}|".format(cpt, err))
 
         cpt += 1
 
     if log:
         qG = nx.sum(G, 0)
         marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
-        log['lin_loss'] = nx.sum(M * G) * (1 - alpha)
-        log['quad_loss'] = alpha * gwloss(constC + marginal_product, hC1, hC2, G, nx)
-        log['srfgw_dist'] = log['lin_loss'] + log['quad_loss']
+        log["lin_loss"] = nx.sum(M * G) * (1 - alpha)
+        log["quad_loss"] = alpha * gwloss(constC + marginal_product, hC1, hC2, G, nx)
+        log["srfgw_dist"] = log["lin_loss"] + log["quad_loss"]
         return G, log
     else:
         return G
 
 
 def entropic_semirelaxed_fused_gromov_wasserstein2(
-        M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, epsilon=0.1,
-        alpha=0.5, G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
+    M,
+    C1,
+    C2,
+    p=None,
+    loss_fun="square_loss",
+    symmetric=None,
+    epsilon=0.1,
+    alpha=0.5,
+    G0=None,
+    max_iter=1e4,
+    tol=1e-9,
+    log=False,
+    verbose=False,
+    **kwargs,
+):
     r"""
     Computes the entropic-regularized semi-relaxed FGW divergence between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
     estimated using a Mirror Descent algorithm following the KL geometry.
@@ -1091,12 +1346,25 @@ def entropic_semirelaxed_fused_gromov_wasserstein2(
             International Conference on Learning Representations (ICLR), 2022.
     """
     T, log_srfgw = entropic_semirelaxed_fused_gromov_wasserstein(
-        M, C1, C2, p, loss_fun, symmetric, epsilon, alpha, G0,
-        max_iter, tol, log=True, verbose=verbose, **kwargs)
+        M,
+        C1,
+        C2,
+        p,
+        loss_fun,
+        symmetric,
+        epsilon,
+        alpha,
+        G0,
+        max_iter,
+        tol,
+        log=True,
+        verbose=verbose,
+        **kwargs,
+    )
 
-    log_srfgw['T'] = T
+    log_srfgw["T"] = T
 
     if log:
-        return log_srfgw['srfgw_dist'], log_srfgw
+        return log_srfgw["srfgw_dist"], log_srfgw
     else:
-        return log_srfgw['srfgw_dist']
+        return log_srfgw["srfgw_dist"]
