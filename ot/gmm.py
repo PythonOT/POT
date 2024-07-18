@@ -13,6 +13,7 @@ from .backend import get_backend
 from .lp import emd2, emd
 import numpy as np
 from .lp import dist
+from .gaussian import bures_wasserstein_mapping
 
 
 def gaussian_pdf(x, m, C):
@@ -323,3 +324,39 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
             out[i_sample] = A[i, j] @ x[i_sample] + b[i, j]
 
         return out
+
+
+
+
+
+def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t, plan=None, atol=1e-8):
+    r"""
+        Args:
+            m0: gaussian mixture 0
+            m1: gaussian mixture 1
+            x: (..., d) array-like
+            y: (..., d) array-like (same shape as x)
+            atol: absolute tolerance for the condition T_kl(x) = y
+
+        Returns:
+           density of the MW2 OT plan between m0 and m1 at (x, y)
+    """
+    
+    if plan is None:
+        plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
+
+    def Tk0k1(k0, k1):
+        A, b = bures_wasserstein_mapping(m_s[k0], m_t[k1], C_s[k0], C_t[k1])
+        Tx = x @ A + b
+        g = gaussian_pdf(x, m_s[k0], C_s[k0])
+        out = plan[k0, k1] * g
+        norms = np.linalg.norm(Tx - y, axis=-1)
+        out[norms > atol] = 0
+        return out
+
+    mat = np.array(
+        [
+            [Tk0k1(k0, k1) for k1 in range(m_t.shape[0])]
+            for k0 in range(m_s.shape[0])
+        ])
+    return np.sum(mat, axis=(0, 1))

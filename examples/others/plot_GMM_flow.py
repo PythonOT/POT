@@ -47,6 +47,7 @@ C_s.requires_grad_()
 C_t = torch.randn(kt, d, d)
 C_t = torch.matmul(C_t, torch.transpose(C_t, 2, 1)) + eps*torch.eye(d)[None, :, :] * torch.ones(kt, 1, 1)
 w_s = torch.randn(ks)
+w_s = proj_simplex(w_s)
 w_s.requires_grad_()
 w_t = torch.tensor(ot.unif(kt))
 
