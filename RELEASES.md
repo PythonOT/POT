@@ -4,6 +4,7 @@
 
 #### New features
 - Add feature `mass=True` for `nx.kl_div` (PR #654)
+- Add feature `semirelaxed_fgw_barycenters` and generic FGW-related barycenter updates `update_barycenter_structure` and `update_barycenter_feature` (PR #659)
 - Gaussian Mixture Model OT `ot.gmm` (PR #649)
 - Fixed `ot.gaussian` ignoring weights when computing means (PR #649, Issue #648)
 

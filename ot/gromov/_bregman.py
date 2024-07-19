@@ -19,7 +19,7 @@ from ..utils import dist, UndefinedParameter, list_to_array, check_random_state,
 from ..backend import get_backend
 
 from ._utils import init_matrix, gwloss, gwggrad
-from ._utils import update_square_loss, update_kl_loss, update_feature_matrix
+from ._utils import update_barycenter_structure, update_barycenter_feature
 
 
 def entropic_gromov_wasserstein(
@@ -807,10 +807,8 @@ def entropic_gromov_barycenters(
             curr_loss = np.sum([output[1]['gw_dist'] for output in res])
 
         # update barycenters
-        if loss_fun == 'square_loss':
-            C = update_square_loss(p, lambdas, T, Cs, nx)
-        elif loss_fun == 'kl_loss':
-            C = update_kl_loss(p, lambdas, T, Cs, nx)
+        C = update_barycenter_structure(
+            T, Cs, lambdas, p, loss_fun, target=False, check_zeros=False, nx=nx)
 
         # update convergence criterion
         if stop_criterion == 'barycenter':
@@ -1651,13 +1649,14 @@ def entropic_fused_gromov_barycenters(
     # Initialization of C : random euclidean distance matrix (if not provided by user)
     if fixed_structure:
         if init_C is None:
-            raise UndefinedParameter('If C is fixed it must be initialized')
+            raise UndefinedParameter(
+                'If C is fixed it must be provided in init_C')
         else:
             C = init_C
     else:
         if init_C is None:
-            generator = check_random_state(random_state)
-            xalea = generator.randn(N, 2)
+            rng = check_random_state(random_state)
+            xalea = rng.randn(N, 2)
             C = dist(xalea, xalea)
             C = nx.from_numpy(C, type_as=ps[0])
         else:
@@ -1666,7 +1665,8 @@ def entropic_fused_gromov_barycenters(
     # Initialization of Y
     if fixed_features:
         if init_Y is None:
-            raise UndefinedParameter('If Y is fixed it must be initialized')
+            raise UndefinedParameter(
+                'If Y is fixed it must be provided in init_Y')
         else:
             Y = init_Y
     else:
@@ -1681,20 +1681,12 @@ def entropic_fused_gromov_barycenters(
     if warmstartT:
         T = [None] * S
 
-    cpt = 0
-
     if stop_criterion == 'barycenter':
         inner_log = False
-        err_feature = 1e15
-        err_structure = 1e15
-        err_rel_loss = 0.
 
     else:
         inner_log = True
-        err_feature = 0.
-        err_structure = 0.
         curr_loss = 1e15
-        err_rel_loss = 1e15
 
     if log:
         log_ = {}
@@ -1706,7 +1698,8 @@ def entropic_fused_gromov_barycenters(
             log_['loss'] = []
             log_['err_rel_loss'] = []
 
-    while ((err_feature > tol or err_structure > tol or err_rel_loss > tol) and cpt < max_iter):
+    for cpt in range(max_iter):  # break if specified errors are below tol.
+
         if stop_criterion == 'barycenter':
             Cprev = C
             Yprev = Y
@@ -1732,16 +1725,14 @@ def entropic_fused_gromov_barycenters(
 
         # update barycenters
         if not fixed_features:
-            Ys_temp = [y.T for y in Ys]
-            X = update_feature_matrix(lambdas, Ys_temp, T, p, nx).T
+            X = update_barycenter_feature(
+                T, Ys, lambdas, p, target=False, check_zeros=False, nx=nx)
+
             Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
 
         if not fixed_structure:
-            if loss_fun == 'square_loss':
-                C = update_square_loss(p, lambdas, T, Cs, nx)
-
-            elif loss_fun == 'kl_loss':
-                C = update_kl_loss(p, lambdas, T, Cs, nx)
+            C = update_barycenter_structure(
+                T, Cs, lambdas, p, loss_fun, target=False, check_zeros=False, nx=nx)
 
         # update convergence criterion
         if stop_criterion == 'barycenter':
@@ -1761,6 +1752,9 @@ def entropic_fused_gromov_barycenters(
                         'It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(cpt, err_structure))
                 print('{:5d}|{:8e}|'.format(cpt, err_feature))
+
+            if (err_feature <= tol) or (err_structure <= tol):
+                break
         else:
             err_rel_loss = abs(curr_loss - prev_loss) / prev_loss if prev_loss != 0. else np.nan
             if log:
@@ -1773,7 +1767,8 @@ def entropic_fused_gromov_barycenters(
                         'It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(cpt, err_rel_loss))
 
-        cpt += 1
+            if err_rel_loss <= tol:
+                break
 
     if log:
         log_['T'] = T
