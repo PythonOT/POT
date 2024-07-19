@@ -1218,13 +1218,14 @@ def semirelaxed_fgw_barycenters(
 
     if fixed_structure:
         if init_C is None:
-            raise UndefinedParameter('If C is fixed it must be initialized')
+            raise UndefinedParameter(
+                'If C is fixed it must be provided in init_C')
         else:
             C = init_C
     else:
         if init_C is None:
-            generator = check_random_state(random_state)
-            xalea = generator.randn(N, 2)
+            rng = check_random_state(random_state)
+            xalea = rng.randn(N, 2)
             C = dist(xalea, xalea)
             C = nx.from_numpy(C, type_as=ps[0])
         else:
@@ -1232,7 +1233,8 @@ def semirelaxed_fgw_barycenters(
 
     if fixed_features:
         if init_X is None:
-            raise UndefinedParameter('If X is fixed it must be initialized')
+            raise UndefinedParameter(
+                'If X is fixed it must be provided in init_X')
         else:
             X = init_X
     else:
@@ -1247,20 +1249,12 @@ def semirelaxed_fgw_barycenters(
     if warmstartT:
         T = [None] * S
 
-    cpt = 0
-
     if stop_criterion == 'barycenter':
         inner_log = False
-        err_feature = 1e15
-        err_structure = 1e15
-        err_rel_loss = 0.
 
     else:
         inner_log = True
-        err_feature = 0.
-        err_structure = 0.
         curr_loss = 1e15
-        err_rel_loss = 1e15
 
     if log:
         log_ = {}
@@ -1271,8 +1265,8 @@ def semirelaxed_fgw_barycenters(
             log_['loss'] = []
             log_['err_rel_loss'] = []
 
-    while ((err_feature > tol or err_structure > tol or err_rel_loss > tol) and cpt < max_iter):
-        print('-- cpt :', cpt)
+    for cpt in range(max_iter):  # break if specified errors are below tol.
+
         if stop_criterion == 'barycenter':
             Cprev = C
             Xprev = X
@@ -1324,6 +1318,9 @@ def semirelaxed_fgw_barycenters(
                         'It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(cpt, err_structure))
                 print('{:5d}|{:8e}|'.format(cpt, err_feature))
+
+            if (err_feature <= tol) or (err_structure <= tol):
+                break
         else:
             err_rel_loss = abs(curr_loss - prev_loss) / prev_loss if prev_loss != 0. else np.nan
             if log:
@@ -1336,7 +1333,8 @@ def semirelaxed_fgw_barycenters(
                         'It.', 'Err') + '\n' + '-' * 19)
                 print('{:5d}|{:8e}|'.format(cpt, err_rel_loss))
 
-        cpt += 1
+            if err_rel_loss <= tol:
+                break
 
     if log:
         log_['T'] = T
