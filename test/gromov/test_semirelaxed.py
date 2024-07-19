@@ -717,8 +717,7 @@ def test_semirelaxed_fgw_barycenter(nx):
         np.testing.assert_allclose(X.shape, (n_samples, ys.shape[1]))
 
     # test correspondance with utils function
-    print('-- recovery kl loss')
-
+    
     recovered_C = ot.gromov.update_barycenter_structure(
         log['T'], [C1, C2], lambdas, None, 'kl_loss', True)
 

@@ -21,7 +21,7 @@ from ..utils import check_random_state, unif
 from ..backend import get_backend, NumpyBackend
 
 from ._utils import init_matrix, gwloss, gwggrad
-from ._utils import update_square_loss, update_kl_loss, update_feature_matrix
+from ._utils import update_barycenter_structure, update_barycenter_feature
 
 
 def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric=None, log=False, armijo=False, G0=None,
@@ -883,11 +883,8 @@ def gromov_barycenters(
             curr_loss = np.sum([output[1]['gw_dist'] for output in res])
 
         # update barycenters
-        if loss_fun == 'square_loss':
-            C = update_square_loss(p, lambdas, T, Cs, nx)
-
-        elif loss_fun == 'kl_loss':
-            C = update_kl_loss(p, lambdas, T, Cs, nx)
+        C = update_barycenter_structure(
+            T, Cs, lambdas, p, loss_fun, target=False, check_zeros=False, nx=nx)
 
         # update convergence criterion
         if stop_criterion == 'barycenter':
@@ -1126,16 +1123,14 @@ def fgw_barycenters(
 
         # update barycenters
         if not fixed_features:
-            Ys_temp = [y.T for y in Ys]
-            X = update_feature_matrix(lambdas, Ys_temp, T, p, nx).T
+            X = update_barycenter_feature(
+                T, Ys, lambdas, p, target=False, check_zeros=False, nx=nx)
+
             Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
 
         if not fixed_structure:
-            if loss_fun == 'square_loss':
-                C = update_square_loss(p, lambdas, T, Cs, nx)
-
-            elif loss_fun == 'kl_loss':
-                C = update_kl_loss(p, lambdas, T, Cs, nx)
+            C = update_barycenter_structure(
+                T, Cs, lambdas, p, loss_fun, target=False, check_zeros=False, nx=nx)
 
         # update convergence criterion
         if stop_criterion == 'barycenter':

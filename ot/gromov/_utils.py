@@ -288,9 +288,6 @@ def update_square_loss(p, lambdas, T, Cs, nx=None):
 
     References
     ----------
-    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
-        "Gromov-Wasserstein averaging of kernel and distance matrices."
-        International Conference on Machine Learning (ICML). 2016.
 
     """
     if nx is None:
@@ -523,11 +520,12 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
 
 
 def update_barycenter_structure(
-        Ts, Cs, lambdas, p=None, loss_fun='square_loss', target=True, nx=None):
+        Ts, Cs, lambdas, p=None, loss_fun='square_loss', target=True,
+        check_zeros=True, nx=None):
     r"""
     Updates :math:`\mathbf{C}` according to the inner loss L with the `S`
-    :math:`\mathbf{T}_s` couplings calculated at each iteration of relaxed
-    versions of the GW barycenter problem like in :ref:`[48]`.
+    :math:`\mathbf{T}_s` couplings calculated at each iteration of variants of
+    the GW barycenter problem (e.g GW :ref:`[12]`, srGW :ref:`[48]`).
     If `target=True` it solves for:
 
     .. math::
@@ -548,7 +546,7 @@ def update_barycenter_structure(
 
     - :math:`\mathbf{C}^{(s)}`: pairwise matrix in the s^{th} source space .
     - :math:`\mathbf{C}`: pairwise matrix in the target space.
-    - :math:`\mathbf{C}`: inner divergence for the GW loss
+    - :math:`L`: inner divergence for the GW loss
 
     Parameters
     ----------
@@ -564,6 +562,9 @@ def update_barycenter_structure(
         Name of loss function to use in ['square_loss', 'kl_loss'].
     target: bool, optional. Default is True.
         Whether the barycenter is positioned as target (True) or source (False).
+    check_zeros: bool, optional. Default is True.
+        Whether to check if marginals on the barycenter contains zeros or not.
+        Can be set to False to gain time if marginals are known to be positive.
     nx : backend, optional
         If let to its default value None, a backend test will be conducted.
 
@@ -574,6 +575,10 @@ def update_barycenter_structure(
 
     References
     ----------
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
+
     .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
@@ -589,53 +594,65 @@ def update_barycenter_structure(
 
     S = len(Ts)
 
-    if loss_fun == 'square_loss':
-        def inner_transform(C):
-            return C
-
-        def outer_transform(C):
-            return C
-
-    elif loss_fun == 'kl_loss':
-        def inner_transform(C):
-            return C if target else nx.log(nx.maximum(C, 1e-16))
-
-        def outer_transform(C):
-            return C if target else nx.exp(C)
-
-    else:
-        raise ValueError(f"not supported loss_fun = {loss_fun}")
-
-    if target:
-        list_structures = [lambdas[s] * nx.dot(
-            nx.dot(Ts[s].T, inner_transform(Cs[s])), Ts[s])
-            for s in range(S)]
-    else:
-        list_structures = [lambdas[s] * nx.dot(
-            nx.dot(Ts[s], inner_transform(Cs[s])), Ts[s].T)
-            for s in range(S)]
-
     if p is None:
         p = nx.concatenate(
             [nx.sum(Ts[s], int(not target))[None, :] for s in range(S)],
             axis=0)
 
+    # compute coefficients for the barycenter coming from marginals
+
     if len(p.shape) == 1:  # shared target masses potentially with zeros
-        inv_p = nx.nan_to_num(1. / p, nan=1., posinf=1., neginf=1.)
+        if check_zeros:
+            inv_p = nx.nan_to_num(1. / p, nan=1., posinf=1., neginf=1.)
+        else:
+            inv_p = 1. / p
+
         prod = nx.outer(inv_p, inv_p)
 
     else:
         quotient = sum([nx.outer(p[s], p[s]) for s in range(S)])
-        prod = nx.nan_to_num(1. / quotient, nan=1., posinf=1., neginf=1.)
+        if check_zeros:
+            prod = nx.nan_to_num(1. / quotient, nan=1., posinf=1., neginf=1.)
+        else:
+            prod = 1. / quotient
 
-    return outer_transform(sum(list_structures) * prod)
+    # compute coefficients for the barycenter coming from Ts and Cs
+
+    if loss_fun == 'square_loss':
+        if target:
+            list_structures = [lambdas[s] * nx.dot(
+                nx.dot(Ts[s].T, Cs[s]), Ts[s]) for s in range(S)]
+        else:
+            list_structures = [lambdas[s] * nx.dot(
+                nx.dot(Ts[s], Cs[s]), Ts[s].T) for s in range(S)]
+
+        return sum(list_structures) * prod
+
+    elif loss_fun == 'kl_loss':
+        if target:
+            list_structures = [lambdas[s] * nx.dot(
+                nx.dot(Ts[s].T, Cs[s]), Ts[s])
+                for s in range(S)]
+
+            return sum(list_structures) * prod
+        else:
+            list_structures = [lambdas[s] * nx.dot(
+                nx.dot(Ts[s], nx.log(nx.maximum(Cs[s], 1e-16))), Ts[s].T)
+                for s in range(S)]
+
+            return nx.exp(sum(list_structures) * prod)
+
+    else:
+        raise ValueError(f"not supported loss_fun = {loss_fun}")
 
 
 def update_barycenter_feature(
-        Ts, Ys, lambdas, p=None, loss_fun='square_loss', target=True, nx=None):
+        Ts, Ys, lambdas, p=None, loss_fun='square_loss', target=True,
+        check_zeros=True, nx=None):
     r"""Updates the feature with respect to the `S` :math:`\mathbf{T}_s`
-    couplings calculated at each iteration of relaxed versions of the FGW
-    barycenter problem in :ref:`[48]` with inner wasserstein loss `loss_fun`.
+    couplings calculated at each iteration of variants of the FGW
+    barycenter problem with inner wasserstein loss `loss_fun`
+    (e.g FGW :ref:`[24]`, srFGW :ref:`[48]`).
     If `target=True` the barycenter is considered as the target else as the source.
 
     Parameters
@@ -652,6 +669,9 @@ def update_barycenter_feature(
         Name of loss function to use in ['square_loss'].
     target: bool, optional. Default is True.
         Whether the barycenter is positioned as target (True) or source (False).
+    check_zeros: bool, optional. Default is True.
+        Whether to check if marginals on the barycenter contains zeros or not.
+        Can be set to False to gain time if marginals are known to be positive.
     nx : backend, optional
         If let to its default value None, a backend test will be conducted.
 
@@ -661,6 +681,10 @@ def update_barycenter_feature(
 
     References
     ----------
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain and Courty Nicolas
+        "Optimal Transport for structured data with application on graphs"
+        International Conference on Machine Learning (ICML). 2019.
+
     .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
             "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
             International Conference on Learning Representations (ICLR), 2022.
@@ -688,10 +712,15 @@ def update_barycenter_feature(
             axis=0)
 
     if len(p.shape) == 1:  # shared target masses potentially with zeros
-        inv_p = nx.nan_to_num(1. / p, nan=1., posinf=1., neginf=1.)
-
+        if check_zeros:
+            inv_p = nx.nan_to_num(1. / p, nan=1., posinf=1., neginf=1.)
+        else:
+            inv_p = 1. / p
     else:
         p_sum = sum(p)
-        inv_p = nx.nan_to_num(1. / p_sum, nan=1., posinf=1., neginf=1.)
+        if check_zeros:
+            inv_p = nx.nan_to_num(1. / p_sum, nan=1., posinf=1., neginf=1.)
+        else:
+            inv_p = 1. / p_sum
 
     return sum(list_features) * inv_p[:, None]
