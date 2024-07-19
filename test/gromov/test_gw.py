@@ -796,9 +796,9 @@ def test_fgw_barycenter(nx):
     )
     # test correspondance with utils function
     recovered_Cb = ot.gromov.update_barycenter_structure(
-        logb['Ts_iter'][-1], Csb, lambdas, pb, target=False, check_zeros=False)
+        logb['Ts_iter'][-1], Csb, lambdas, pb, target=False, check_zeros=True)
     recovered_Xb = ot.gromov.update_barycenter_feature(
-        logb['Ts_iter'][-1], Ysb, lambdas, pb, target=False, check_zeros=False)
+        logb['Ts_iter'][-1], Ysb, lambdas, pb, target=False, check_zeros=True)
 
     np.testing.assert_allclose(Cb, recovered_Cb)
     np.testing.assert_allclose(Xb, recovered_Xb)

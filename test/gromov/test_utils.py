@@ -47,9 +47,9 @@ def test_update_barycenter(nx):
         [elem.T for elem in Tb], Ysb, lambdas, pb, target=False)
 
     Cbt = ot.gromov.update_barycenter_structure(
-        Tb, Csb, lambdas, None, target=True)
+        Tb, Csb, lambdas, None, target=True, check_zeros=False)
     Xbt = ot.gromov.update_barycenter_feature(
-        Tb, Ysb, lambdas, None, target=True)
+        Tb, Ysb, lambdas, None, target=True, check_zeros=False)
 
     np.testing.assert_allclose(Cb, Cbt)
     np.testing.assert_allclose(Xb, Xbt)

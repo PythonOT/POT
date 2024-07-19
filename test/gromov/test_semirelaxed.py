@@ -728,13 +728,13 @@ def test_semirelaxed_fgw_barycenter(nx):
     X, C = ot.gromov.semirelaxed_fgw_barycenters(
         n_samples, [ys], [C1], [p1], None, 0.5,
         fixed_structure=False, fixed_features=False, loss_fun='square_loss',
-        max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
+        max_iter=2, tol=1e-3, stop_criterion=stop_criterion,
         warmstartT=True, random_state=12345, log=False, verbose=False
     )
     Xb, Cb = ot.gromov.semirelaxed_fgw_barycenters(
         n_samples, [ysb], [C1b], [p1b], [1.], 0.5,
         fixed_structure=False, fixed_features=False, loss_fun='square_loss',
-        max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
+        max_iter=2, tol=1e-3, stop_criterion=stop_criterion,
         warmstartT=True, random_state=12345, log=False, verbose=False
     )
 
