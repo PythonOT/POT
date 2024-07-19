@@ -795,8 +795,10 @@ def test_fgw_barycenter(nx):
         random_state=12345, log=True
     )
     # test correspondance with utils function
-    recovered_Cb = ot.gromov.update_square_loss(pb, lambdas, logb['Ts_iter'][-1], Csb)
-    recovered_Xb = ot.gromov.update_feature_matrix(lambdas, [y.T for y in Ysb], logb['Ts_iter'][-1], pb).T
+    recovered_Cb = ot.gromov.update_barycenter_structure(
+        logb['Ts_iter'][-1], Csb, lambdas, pb, target=False, check_zeros=True)
+    recovered_Xb = ot.gromov.update_barycenter_feature(
+        logb['Ts_iter'][-1], Ysb, lambdas, pb, target=False, check_zeros=True)
 
     np.testing.assert_allclose(Cb, recovered_Cb)
     np.testing.assert_allclose(Xb, recovered_Xb)
@@ -864,7 +866,10 @@ def test_fgw_barycenter(nx):
         np.testing.assert_allclose(X.shape, (n_samples, ys.shape[1]))
 
     # test correspondance with utils function
-    recovered_C = ot.gromov.update_kl_loss(p, lambdas, log['T'], [C1, C2])
+    recovered_C = ot.gromov.update_barycenter_structure(
+        log['T'], [C1, C2], lambdas, p, loss_fun='kl_loss',
+        target=False, check_zeros=False)
+
     np.testing.assert_allclose(C, recovered_C)
 
     # test edge cases for fgw barycenters:
