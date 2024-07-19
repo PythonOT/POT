@@ -40,23 +40,38 @@ def get_gmms(nx=None):
     return m_s, m_t, C_s, C_t, w_s, w_t
 
 
-def test_gaussian_pdf():
+def test_gaussian_pdf(nx):
     rng = np.random.RandomState(seed=42)
     n = 7
     d = 3
-    x = rng.randn(n, d)
-    m, _, C, _, _, _ = get_gmms()
+    x = nx.from_numpy(rng.randn(n, d))
+    m, _, C, _, _, _ = get_gmms(nx)
     pdf = gaussian_pdf(x, m[0], C[0])
     assert pdf.shape == (n,)
 
+    x = nx.from_numpy(rng.randn(n, n, d))
+    pdf = gaussian_pdf(x, m[0], C[0])
+    assert pdf.shape == (n, n,)
 
-def test_gmm_pdf():
+    with pytest.raises(AssertionError):
+        gaussian_pdf(x, m[0, :-1], C[0])
+
+
+def test_gmm_pdf(nx):
     rng = np.random.RandomState(seed=42)
     n = 7
     d = 3
-    x = rng.randn(n, d)
-    m_s, _, C_s, _, w_s, _ = get_gmms()
-    gmm_pdf(x, m_s, C_s, w_s)
+    x = nx.from_numpy(rng.randn(n, d))
+    m, _, C, _, w, _ = get_gmms(nx)
+    pdf = gmm_pdf(x, m, C, w)
+    assert pdf.shape == (n,)
+
+    x = nx.from_numpy(rng.randn(n, n, d))
+    pdf = gmm_pdf(x, m, C, w)
+    assert pdf.shape == (n, n,)
+
+    with pytest.raises(AssertionError):
+        gmm_pdf(x, m[:-1], C, w)
 
 
 @pytest.skip_backend('tf')  # skips because of array assignment

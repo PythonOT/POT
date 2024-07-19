@@ -5,8 +5,14 @@ r"""
 GMM Plan 1D
 ====================================================
 
-Illustration of the GMM plan for 
-the Mixture Wasserstein between two GMM in 1D.
+Illustration of the GMM plan for
+the Mixture Wasserstein between two GMM in 1D,
+as well as the two maps T_mean and T_rand.
+T_mean is the barycentric projection of the GMM coupling,
+and T_rand takes a random gaussian image between two components,
+according to the coupling and the GMMs.
+See [69] for details.
+.. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in the space of Gaussian mixture models. SIAM Journal on Imaging Sciences, 13(2), 936-970.
 
 """
 
@@ -20,51 +26,61 @@ the Mixture Wasserstein between two GMM in 1D.
 
 import numpy as np
 import matplotlib.pylab as pl
-from matplotlib import colormaps as cm 
+from matplotlib import colormaps as cm
 import ot
-import ot.plot
+from ot.plot import plot1D_mat, rescale_for_imshow_plot
 from ot.utils import proj_SDP, proj_simplex
-from ot.gmm import gmm_ot_loss, gmm_ot_plan_density, gmm_ot_plan, gmm_pdf
+from ot.gmm import gmm_ot_plan_density, gmm_pdf, gmm_ot_apply_map
 
-# %%
 ##############################################################################
-# Generate data and plot it
+# Generate GMMOT plan plot it
 # -------------------------
-np.random.seed(3)
-ks = 3
-kt = 2
+ks = 2
+kt = 3
 d = 1
 eps = 0.1
-m_s = np.random.rand(ks, d) 
-m_t = np.random.rand(kt, d) 
-C_s = np.random.randn(ks, d, d)*0.1
-C_s = np.matmul(C_s, np.transpose(C_s, (0, 2, 1)))
-C_t = np.random.randn(kt, d, d)*0.1
-C_t = np.matmul(C_t, np.transpose(C_t, (0, 2, 1))) 
-w_s = ot.unif(ks)
-w_t = ot.unif(kt)
+m_s = np.array([[1], [2]])
+m_t = np.array([[3], [4.2], [5]])
+C_s = np.array([[[.05]], [[.06]]])
+C_t = np.array([[[.03]], [[.07]], [[.04]]])
+w_s = np.array([.4, .6])
+w_t = np.array([.4, .2, .4])
 
-axis = [-3, 3, -3, 3]
-pl.figure(1, (20, 10))
-pl.clf()
+n = 500
+a_x, b_x = 0, 3
+x = np.linspace(a_x, b_x, n)
+a_y, b_y = 2, 6
+y = np.linspace(a_y, b_y, n)
+xx, yy = np.meshgrid(x, y, indexing='ij')
+plan_density = gmm_ot_plan_density(xx[:, :, None], yy[:, :, None],
+                                   m_s, m_t, C_s, C_t, w_s, w_t,
+                                   plan=None, atol=2e-2)
+
+a = gmm_pdf(x[:, None], m_s, C_s, w_s)
+b = gmm_pdf(y[:, None], m_t, C_t, w_t)
+plot1D_mat(a, b, plan_density, title='GMM OT plan')
 
 
-# %%
 ##############################################################################
-# Compute plan 
-# ------------
+# Generate GMMOT maps and plot them over plan
+# -------------------------
+ax_s, ax_t, ax_M = plot1D_mat(a, b, plan_density,
+                              title='GMM OT plan with T_mean and T_rand maps')
+T_mean = gmm_ot_apply_map(x[:, None], m_s, m_t, C_s, C_t,
+                          w_s, w_t, method='bary')[:, 0]
+x_rescaled, T_mean_rescaled = rescale_for_imshow_plot(x, T_mean, n,
+                                                      a_y=a_y, b_y=b_y)
 
-n = 100
-x = np.linspace(0, 1, n)
-y = np.linspace(0, 1, n)
-xx, yy = np.meshgrid(x, y)
-xx = xx.reshape((n**2, 1))
-yy = yy.reshape((n**2, 1))
-plan = gmm_ot_plan_density(xx, yy, m_s, m_t, C_s, C_t, w_s, w_t, plan=None, atol=0.1)
+ax_M.plot(x_rescaled, T_mean_rescaled, label='T_mean', alpha=.5,
+          linewidth=5, color='aqua')
 
-a = gmm_pdf(x[:,None], m_s, C_s, w_s)
-b = gmm_pdf(y[:,None], m_t, C_t, w_t)
-plan = plan.reshape((n,n))
-ot.plot.plot1D_mat(a, b, plan, title='Plan between two GMM')
+T_rand = gmm_ot_apply_map(x[:, None], m_s, m_t, C_s, C_t,
+                          w_s, w_t, method='rand', seed=0)[:, 0]
+x_rescaled, T_rand_rescaled = rescale_for_imshow_plot(x, T_rand, n,
+                                                      a_y=a_y, b_y=b_y)
 
-# %%
+ax_M.scatter(x_rescaled, T_rand_rescaled, label='T_rand', alpha=.5,
+             s=20, color='orange')
+
+ax_M.legend(loc='upper left', fontsize=13)
+

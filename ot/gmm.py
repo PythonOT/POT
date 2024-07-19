@@ -18,11 +18,12 @@ from .gaussian import bures_wasserstein_mapping
 
 def gaussian_pdf(x, m, C):
     r"""
-    Compute the probability density function of a multivariate Gaussian distribution.
+    Compute the probability density function of a multivariate 
+    Gaussian distribution.
 
     Parameters
     ----------
-    x : array-like, shape (n_samples, d)
+    x : array-like, shape (..., d)
         The input samples.
     m : array-like, shape (d,)
         The mean vector of the Gaussian distribution.
@@ -31,24 +32,27 @@ def gaussian_pdf(x, m, C):
 
     Returns
     -------
-    pdf : array-like, shape (n_samples,)
+    pdf : array-like, shape (...,)
         The probability density function evaluated at each sample.
 
     """
-    _, d = x.shape
-    z = (2 * np.pi) ** (-d / 2) * np.linalg.det(C) ** (-0.5)
-    exp = np.exp(-0.5 * np.sum((x - m) @ np.linalg.inv(C) * (x - m), axis=1))
+    assert x.shape[-1] == m.shape[-1] == C.shape[-1] == C.shape[-2], \
+        "Dimension mismatch"
+    nx = get_backend(x, m, C)
+    d = x.shape[-1]
+    z = (2 * np.pi) ** (-d / 2) * nx.det(C) ** (-0.5)
+    exp = nx.exp(-0.5 * nx.sum(((x - m) @ nx.inv(C)) * (x - m), axis=-1))
     return z * exp
 
 
 def gmm_pdf(x, m, C, w):
     r"""
-    Compute the probability density function (PDF) of a Gaussian Mixture Model (GMM) 
-    at given points.
+    Compute the probability density function (PDF) of a 
+    Gaussian Mixture Model (GMM) at given points.
 
     Parameters
     ----------
-    x : array-like, shape (n_samples, d)
+    x : array-like, shape (..., d)
         The input samples.
     m : array-like, shape (n_components, d)
         The means of the Gaussian components.
@@ -59,11 +63,14 @@ def gmm_pdf(x, m, C, w):
 
     Returns
     -------
-    out : array-like, shape (n_components,)
+    out : array-like, shape (...,)
         The PDF values at the given points.
 
     """
-    out = np.zeros((x.shape[0]))
+    assert m.shape[0] == C.shape[0] == w.shape[0], \
+        "All GMM parameters must have the same amount of components"
+    nx = get_backend(x, m, C, w)
+    out = nx.zeros((x.shape[:-1]))
     for k in range(m.shape[0]):
         out = out + w[k] * gaussian_pdf(x, m[k], C[k])
     return out
@@ -270,7 +277,6 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
     n_samples = x.shape[0]
 
     if method == 'bary':
-        # TODO asserts
         normalization = gmm_pdf(x, m_s, C_s, w_s)[:, None]
         out = nx.zeros(x.shape)
 
@@ -326,10 +332,8 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
         return out
 
 
-
-
-
-def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t, plan=None, atol=1e-8):
+def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t, 
+                        plan=None, atol=1e-2):
     r"""
         Args:
             m0: gaussian mixture 0
@@ -341,13 +345,14 @@ def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t, plan=None, atol=1e-8
         Returns:
            density of the MW2 OT plan between m0 and m1 at (x, y)
     """
-    
+
     if plan is None:
         plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
 
     def Tk0k1(k0, k1):
         A, b = bures_wasserstein_mapping(m_s[k0], m_t[k1], C_s[k0], C_t[k1])
         Tx = x @ A + b
+        print('Tx', Tx.shape)
         g = gaussian_pdf(x, m_s[k0], C_s[k0])
         out = plan[k0, k1] * g
         norms = np.linalg.norm(Tx - y, axis=-1)
