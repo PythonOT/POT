@@ -100,10 +100,11 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, c=None, method='sinkhorn',
     --------
 
     >>> import ot
+    >>> import numpy as np
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[0., 1.], [1., 0.]]
-    >>> ot.round(ot.sinkhorn_unbalanced(a, b, M, 1, 1), 7)
+    >>> np.round(ot.sinkhorn_unbalanced(a, b, M, 1, 1), 7)
     array([[0.3220536, 0.1184769],
            [0.1184769, 0.3220536]])
 
@@ -398,10 +399,11 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, c=None,
     --------
 
     >>> import ot
+    >>> import numpy as np
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[0., 1.],[1., 0.]]
-    >>> ot.round(ot.unbalanced.sinkhorn_knopp_unbalanced(a, b, M, 1., 1.), 7)
+    >>> np.round(ot.unbalanced.sinkhorn_knopp_unbalanced(a, b, M, 1., 1.), 7)
     array([[0.3220536, 0.1184769],
            [0.1184769, 0.3220536]])
 
@@ -615,6 +617,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, c=None,
     --------
 
     >>> import ot
+    >>> import numpy as np
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[0., 1.],[1., 0.]]
