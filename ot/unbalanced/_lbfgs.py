@@ -87,10 +87,13 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
         G = G.reshape((m, n))
 
         # compute loss
-        val = np.sum(G * M) + reg * reg_fun(G) + regm_fun(G)
-
+        val = np.sum(G * M) + regm_fun(G)
+        if reg > 0:
+            val = val + reg * reg_fun(G)
         # compute gradient
-        grad = M + reg * grad_reg_fun(G) + grad_regm_fun(G)
+        grad = M + grad_regm_fun(G)
+        if reg > 0:
+            grad = grad + reg * grad_reg_fun(G)
 
         return val, grad.ravel()
 
@@ -105,7 +108,7 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
 
     .. math::
         W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
-        + \mathrm{reg} \mathrm{div}(\gamma, \mathbf{c})
+        \mathrm{reg} \mathrm{div}(\gamma, \mathbf{c}) +
         \mathrm{reg_{m1}} \cdot \mathrm{div_m}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_{m2}} \cdot \mathrm{div_m}(\gamma^T \mathbf{1}, \mathbf{b})
 
@@ -203,8 +206,6 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     G0 = np.zeros(M.shape) if G0 is None else nx.to_numpy(G0)
     if reg > 0:  # regularized case
         c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
-    else:  # unregularized case
-        c = 0
 
     # wrap the callable function to handle numpy arrays
     if isinstance(reg_div, tuple):
@@ -248,7 +249,7 @@ def lbfgsb_unbalanced2(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl',
 
     .. math::
         W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
-        + \mathrm{reg} \mathrm{div}(\gamma, \mathbf{c})
+        \mathrm{reg} \mathrm{div}(\gamma, \mathbf{c}) +
         \mathrm{reg_{m1}} \cdot \mathrm{div_m}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_{m2}} \cdot \mathrm{div_m}(\gamma^T \mathbf{1}, \mathbf{b})
 
@@ -319,12 +320,10 @@ def lbfgsb_unbalanced2(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl',
     >>> a=[.5, .5]
     >>> b=[.5, .5]
     >>> M=[[1., 36.],[9., 4.]]
-    >>> np.round(ot.unbalanced.lbfgsb_unbalanced(a, b, M, reg=0, reg_m=5, reg_div='kl', regm_div='kl'), 2)
-    array([[0.45, 0.  ],
-           [0.  , 0.34]])
-    >>> np.round(ot.unbalanced.lbfgsb_unbalanced(a, b, M, reg=0, reg_m=5, reg_div='l2', regm_div='l2'), 2)
-    array([[0.4, 0. ],
-           [0. , 0.1]])
+    >>> np.round(ot.unbalanced.lbfgsb_unbalanced2(a, b, M, reg=0, reg_m=5, reg_div='kl', regm_div='kl'), 2)
+    0.8
+    >>> np.round(ot.unbalanced.lbfgsb_unbalanced2(a, b, M, reg=0, reg_m=5, reg_div='l2', regm_div='l2'), 2)
+    1.79
 
     References
     ----------
