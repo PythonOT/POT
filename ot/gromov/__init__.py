@@ -42,6 +42,7 @@ from ._semirelaxed import (semirelaxed_gromov_wasserstein,
                            entropic_semirelaxed_gromov_wasserstein2,
                            entropic_semirelaxed_fused_gromov_wasserstein,
                            entropic_semirelaxed_fused_gromov_wasserstein2,
+                           semirelaxed_gromov_barycenters,
                            semirelaxed_fgw_barycenters)
 
 from ._dictionary import (gromov_wasserstein_dictionary_learning,
@@ -78,11 +79,13 @@ __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad',
            'semirelaxed_fused_gromov_wasserstein', 'semirelaxed_fused_gromov_wasserstein2',
            'solve_semirelaxed_gromov_linesearch', 'entropic_semirelaxed_gromov_wasserstein',
            'entropic_semirelaxed_gromov_wasserstein2', 'entropic_semirelaxed_fused_gromov_wasserstein',
-           'entropic_semirelaxed_fused_gromov_wasserstein2', 'gromov_wasserstein_dictionary_learning',
+           'entropic_semirelaxed_fused_gromov_wasserstein2',
+           'semirelaxed_fgw_barycenters', 'semirelaxed_gromov_barycenters',
+           'gromov_wasserstein_dictionary_learning',
            'gromov_wasserstein_linear_unmixing', 'fused_gromov_wasserstein_dictionary_learning',
            'fused_gromov_wasserstein_linear_unmixing', 'lowrank_gromov_wasserstein_samples',
            'quantized_fused_gromov_wasserstein_partitioned', 'get_graph_partition',
            'get_graph_representants', 'format_partitioned_graph',
            'quantized_fused_gromov_wasserstein', 'get_partition_and_representants_samples',
            'format_partitioned_samples', 'quantized_fused_gromov_wasserstein_samples',
-           'semirelaxed_fgw_barycenters']
+           ]
