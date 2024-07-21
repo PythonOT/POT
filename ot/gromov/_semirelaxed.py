@@ -11,13 +11,13 @@ Semi-relaxed Gromov-Wasserstein and Fused-Gromov-Wasserstein solvers.
 import numpy as np
 
 
-from ..utils import (
+from ot.utils import (
     list_to_array, unif, dist, UndefinedParameter, check_random_state
 )
-from ..optim import semirelaxed_cg, solve_1d_linesearch_quad
-from ..backend import get_backend
+from ot.optim import semirelaxed_cg, solve_1d_linesearch_quad
+from ot.backend import get_backend
 
-from ._utils import (
+from ot.gromov import (
     init_matrix_semirelaxed, gwloss, gwggrad,
     update_barycenter_structure, update_barycenter_feature,
 )
@@ -1233,13 +1233,13 @@ def semirelaxed_gromov_barycenters(
         if warmstartT:
             res = [semirelaxed_gromov_wasserstein(
                 Cs[s], C, ps[s], loss_fun, symmetric, G0=T[s],
-                max_iter=max_iter, tol_rel=1e-5, tol_abs=0., log=inner_log,
+                max_iter=max_iter, tol_rel=tol, tol_abs=0., log=inner_log,
                 verbose=verbose, **kwargs)
                 for s in range(S)]
         else:
             res = [semirelaxed_gromov_wasserstein(
                 Cs[s], C, ps[s], loss_fun, symmetric, G0=None,
-                max_iter=max_iter, tol_rel=1e-5, tol_abs=0., log=inner_log,
+                max_iter=max_iter, tol_rel=tol, tol_abs=0., log=inner_log,
                 verbose=verbose, **kwargs)
                 for s in range(S)]
 
@@ -1254,7 +1254,8 @@ def semirelaxed_gromov_barycenters(
             [nx.sum(T[s], 0)[None, :] for s in range(S)], axis=0)
 
         C = update_barycenter_structure(T, Cs, lambdas, p, loss_fun, nx=nx)
-
+        print('p:', p)
+        print('C:', C)
         # update convergence criterion
         if stop_criterion == 'barycenter':
             err = nx.norm(C - Cprev)
@@ -1455,12 +1456,12 @@ def semirelaxed_fgw_barycenters(
         if warmstartT:
             res = [semirelaxed_fused_gromov_wasserstein(
                 Ms[s], Cs[s], C, ps[s], loss_fun, symmetric, alpha, T[s],
-                inner_log, max_iter, tol_rel=1e-5, tol_abs=0., **kwargs)
+                inner_log, max_iter, tol_rel=tol, tol_abs=0., **kwargs)
                 for s in range(S)]
         else:
             res = [semirelaxed_fused_gromov_wasserstein(
                 Ms[s], Cs[s], C, ps[s], loss_fun, symmetric, alpha, None,
-                inner_log, max_iter, tol_rel=1e-5, tol_abs=0., **kwargs)
+                inner_log, max_iter, tol_rel=tol, tol_abs=0., **kwargs)
                 for s in range(S)]
         if stop_criterion == 'barycenter':
             T = res
