@@ -1809,7 +1809,7 @@ class JaxBackend(Backend):
         return jnp.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
 
     def det(self, x):
-        return jnp.numpy.linalg.det(x)
+        return jnp.linalg.det(x)
 
 
 if jax:

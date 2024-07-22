@@ -128,7 +128,7 @@ def dist_bures_squared(m_s, m_t, C_s, C_t):
     return nx.maximum(D_means + D_covs, 0)
 
 
-def gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t):
+def gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t, log=False):
     r"""
     Compute the Gaussian Mixture Model (GMM) Optimal Transport distance between
     two GMMs introduced in [69].
@@ -147,11 +147,17 @@ def gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t):
         Weights of the source GMM components.
     w_t : array-like, shape (k_t,)
         Weights of the target GMM components.
+    log: bool, optional (default=False)
+        If True, returns a dictionary containing the cost and dual variables.
+        Otherwise returns only the GMM optimal transportation cost.
 
     Returns
     -------
-    loss : float
+    loss : float or array-like
         The GMM-OT loss.
+    log : dict, optional
+        If input log is true, a dictionary containing the
+        cost and dual variables and exit status
 
     References
     ----------
@@ -167,10 +173,10 @@ def gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t):
         "Target GMM has different amount of components"
 
     D = dist_bures_squared(m_s, m_t, C_s, C_t)
-    return emd2(w_s, w_t, D)
+    return emd2(w_s, w_t, D, log=log)
 
 
-def gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t):
+def gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t, log=False):
     r"""
     Compute the Gaussian Mixture Model (GMM) Optimal Transport plan between
     two GMMs introduced in [69].
@@ -189,11 +195,17 @@ def gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t):
         Weights of the source GMM components.
     w_t : array-like, shape (k_t,)
         Weights of the target GMM components.
+    log : bool, optional (default=False)
+        If True, returns a dictionary containing the cost and dual variables.
+        Otherwise returns only the GMM optimal transportation matrix.
 
     Returns
     -------
     plan : array-like, shape (k_s, k_t)
         The GMM-OT plan.
+    log : dict, optional
+        If input log is true, a dictionary containing the
+        cost and dual variables and exit status
 
     References
     ----------
@@ -209,7 +221,7 @@ def gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t):
         "Target GMM has different amount of components"
 
     D = dist_bures_squared(m_s, m_t, C_s, C_t)
-    return emd(w_s, w_t, D)
+    return emd(w_s, w_t, D, log=log)
 
 
 def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,

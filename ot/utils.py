@@ -1301,7 +1301,7 @@ def proj_SDP(S, nx=None, vmin=0.):
 
     Parameters
     ----------
-    S : array_like (n, d, d)
+    S : array_like (n, d, d) or (d, d)
         The input symmetric matrix or matrices.
     nx : module, optional
         The numerical backend module to use. If not provided, the backend will
@@ -1315,7 +1315,7 @@ def proj_SDP(S, nx=None, vmin=0.):
 
     Returns
     -------
-    P : ndarray (n, d, d)
+    P : ndarray (n, d, d) or (d, d)
         The projected symmetric positive definite matrix.
 
     """
