@@ -1,4 +1,3 @@
-# %%
 # -*- coding: utf-8 -*-
 r"""
 ====================================================
@@ -22,14 +21,10 @@ See [69] for details.
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 1
 
 import numpy as np
-import matplotlib.pylab as pl
-from matplotlib import colormaps as cm
-import ot
 from ot.plot import plot1D_mat, rescale_for_imshow_plot
-from ot.utils import proj_SDP, proj_simplex
 from ot.gmm import gmm_ot_plan_density, gmm_pdf, gmm_ot_apply_map
 
 ##############################################################################
@@ -83,4 +78,3 @@ ax_M.scatter(x_rescaled, T_rand_rescaled, label='T_rand', alpha=.5,
              s=20, color='orange')
 
 ax_M.legend(loc='upper left', fontsize=13)
-

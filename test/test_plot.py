@@ -39,6 +39,27 @@ def test_plot1D_mat():
 
 
 @pytest.mark.skipif(nogo, reason="Matplotlib not installed")
+def test_rescale_for_imshow_plot():
+
+    import ot
+    import ot.plot
+
+    n = 7
+    a_x, b_x = -1, 3
+    x = np.linspace(a_x, b_x, n)
+    a_y, b_y = 2, 6
+    y = np.linspace(a_y, b_y, n)
+
+    x_rescaled, y_rescaled = ot.plot.rescale_for_imshow_plot(x, y, n)
+    assert x_rescaled.shape == (n, )
+    assert y_rescaled.shape == (n, )
+
+    x_rescaled, y_rescaled = ot.plot.rescale_for_imshow_plot(x, y, n, a_y=a_y + 1, b_y=b_y - 1)
+    assert x_rescaled.shape[0] <= n
+    assert y_rescaled.shape[0] <= n
+
+
+@pytest.mark.skipif(nogo, reason="Matplotlib not installed")
 def test_plot2D_samples_mat():
 
     import ot
@@ -59,3 +80,4 @@ def test_plot2D_samples_mat():
     G = 1.0 * (rng.rand(n_bins, n_bins) < 0.01)
 
     ot.plot.plot2D_samples_mat(xs, xt, G, thr=1e-5)
+    ot.plot.plot2D_samples_mat(xs, xt, G, thr=1e-5, alpha=0.5)
