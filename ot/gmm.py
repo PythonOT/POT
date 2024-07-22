@@ -18,7 +18,7 @@ from .gaussian import bures_wasserstein_mapping
 
 def gaussian_pdf(x, m, C):
     r"""
-    Compute the probability density function of a multivariate 
+    Compute the probability density function of a multivariate
     Gaussian distribution.
 
     Parameters
@@ -47,7 +47,7 @@ def gaussian_pdf(x, m, C):
 
 def gmm_pdf(x, m, C, w):
     r"""
-    Compute the probability density function (PDF) of a 
+    Compute the probability density function (PDF) of a
     Gaussian Mixture Model (GMM) at given points.
 
     Parameters
@@ -332,7 +332,7 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
         return out
 
 
-def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t, 
+def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t,
                         plan=None, atol=1e-2):
     r"""
         Args:
