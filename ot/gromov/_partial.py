@@ -14,8 +14,7 @@ from ..utils import list_to_array, unif
 from ..backend import get_backend, NumpyBackend
 from ..partial import entropic_partial_wasserstein
 from ._utils import _transform_matrix, gwloss, gwggrad
-from ..optim import partial_cg
-from ._gw import solve_gromov_linesearch
+from ..optim import partial_cg, solve_1d_linesearch_quad
 
 import numpy as np
 import warnings
@@ -23,7 +22,7 @@ import warnings
 
 def partial_gromov_wasserstein(
         C1, C2, p=None, q=None, m=None, loss_fun='square_loss', nb_dummies=1,
-        G0=None, thres=1, numItermax=1000, tol=1e-7, symmetric=None,
+        G0=None, thres=1, numItermax=1e4, tol=1e-8, symmetric=None, warn=True,
         log=False, verbose=False, **kwargs):
     r"""
     Returns the Partial Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})`
@@ -97,6 +96,8 @@ def partial_gromov_wasserstein(
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
+    warn: bool, optional.
+        Whether to raise a warning when EMD did not converge.
     log : bool, optional
         return log if True
     verbose : bool, optional
@@ -177,11 +178,12 @@ def partial_gromov_wasserstein(
 
     if G0 is None:
         G0 = np.outer(p, q) * m / (np.sum(p) * np.sum(q))  # make sure |G0|=m, G01_m\leq p, G0.T1_n\leq q.
+
     else:
         G0 = nx.to_numpy(G0_)
         # Check marginals of G0
-        np.testing.assert_all(G0.sum(axis=1) <= p)
-        np.testing.assert_all(G0.sum(axis=0) <= q)
+        assert np.all(G0.sum(1) <= p)
+        assert np.all(G0.sum(0) <= q)
 
     q_extended = np.append(q, [(np.sum(p) - m) / nb_dummies] * nb_dummies)
     p_extended = np.append(p, [(np.sum(q) - m) / nb_dummies] * nb_dummies)
@@ -225,10 +227,10 @@ def partial_gromov_wasserstein(
                 gwggrad(constC1 + constC2, hC1, hC2, G, np_) +
                 gwggrad(constC1t + constC2t, hC1t, hC2t, G, np_))
 
-    def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
-        return solve_gromov_linesearch(
-            G, deltaG, cost_G, hC1, hC2, M=0., reg=1., nx=np_,
-            symmetric=symmetric, **kwargs)
+    def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
+        return solve_partial_gromov_linesearch(
+            G, deltaG, cost_G, df_G, fC1, fC2, hC1, hC2, M=0., reg=1.,
+            ones_p=ones_p, ones_q=ones_q, nx=np_, **kwargs)
 
     if not nx.is_floating_point(C10):
         warnings.warn(
@@ -242,7 +244,7 @@ def partial_gromov_wasserstein(
     if log:
         res, log = partial_cg(p, q, p_extended, q_extended, 0., 1., f, df, G0,
                               line_search, log=True, numItermax=numItermax,
-                              stopThr=tol, stopThr2=0., **kwargs)
+                              stopThr=tol, stopThr2=0., warn=warn, **kwargs)
         log['partial_gw_dist'] = nx.from_numpy(log['loss'][-1], type_as=C10)
         return nx.from_numpy(res, type_as=C10), log
     else:
@@ -254,7 +256,7 @@ def partial_gromov_wasserstein(
 
 def partial_gromov_wasserstein2(
         C1, C2, p=None, q=None, m=None, loss_fun='square_loss', nb_dummies=1, G0=None,
-        thres=1, numItermax=1000, tol=1e-7, symmetric=None, log=False,
+        thres=1, numItermax=1e4, tol=1e-7, symmetric=None, warn=False, log=False,
         verbose=False, **kwargs):
     r"""
     Returns the Partial Gromov-Wasserstein discrepancy between
@@ -330,6 +332,8 @@ def partial_gromov_wasserstein2(
         Either C1 and C2 are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
+    warn: bool, optional.
+        Whether to raise a warning when EMD did not converge.
     log : bool, optional
         return log if True
     verbose : bool, optional
@@ -388,7 +392,7 @@ def partial_gromov_wasserstein2(
 
     T, log_pgw = partial_gromov_wasserstein(
         C1, C2, p, q, m, loss_fun, nb_dummies, G0, thres,
-        numItermax, tol, symmetric, True, verbose, **kwargs)
+        numItermax, tol, symmetric, warn, True, verbose, **kwargs)
 
     log_pgw['T'] = T
     pgw = log_pgw['partial_gw_dist']
@@ -406,6 +410,100 @@ def partial_gromov_wasserstein2(
         return pgw, log_pgw
     else:
         return pgw
+
+
+def solve_partial_gromov_linesearch(
+        G, deltaG, cost_G, df_G, fC1, fC2, hC1, hC2, M, reg,
+        ones_p=None, ones_q=None, alpha_min=None, alpha_max=None,
+        nx=None, **kwargs):
+    """
+    Solve the linesearch in the FW iterations of partial (F)GW following eq.5 of :ref:`[29]`.
+
+    Parameters
+    ----------
+
+    G : array-like, shape(ns,nt)
+        The transport map at a given iteration of the FW
+    deltaG : array-like (ns,nt)
+        Difference between the optimal map found by linearization in the FW algorithm and the value at a given iteration
+    cost_G : float
+        Value of the cost at `G`
+    df_G : float
+        Gradient of the GW cost at `G`
+    fC1 : array-like (ns,ns), optional
+        Transformed Structure matrix in the source domain.
+        For the 'square_loss' and 'kl_loss', we provide fC1 from ot.gromov._transform_matrix
+    fC2 : array-like (nt,nt), optional
+        Transformed Structure matrix in the source domain.
+        For the 'square_loss' and 'kl_loss', we provide fC2 from ot.gromov._transform_matrix
+    hC1 : array-like (ns,ns), optional
+        Transformed Structure matrix in the source domain.
+        For the 'square_loss' and 'kl_loss', we provide hC1 from ot.gromov._transform_matrix
+    hC2 : array-like (nt,nt), optional
+        Transformed Structure matrix in the source domain.
+        For the 'square_loss' and 'kl_loss', we provide hC2 from ot.gromov._transform_matrix
+    M : array-like (ns,nt)
+        Cost matrix between the features.
+    reg : float
+        Regularization parameter.
+    ones_p: array-like (ns,), optional
+        Vector of ones associated to the first marginal.
+    ones_q: array-like (ns,), optional
+        Vector of ones associated to the second marginal.
+    alpha_min : float, optional
+        Minimum value for alpha
+    alpha_max : float, optional
+        Maximum value for alpha
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    -------
+    alpha : float
+        The optimal step size of the FW
+    fc : int
+        nb of function call. Useless here
+    cost_G : float
+        The value of the cost for the next iteration
+
+    References
+    ----------
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+        Transport with Applications on Positive-Unlabeled Learning".
+        NeurIPS.
+
+    """
+    if nx is None:
+        if isinstance(M, int) or isinstance(M, float):
+            nx = get_backend(G, deltaG, df_G, fC1, fC2, hC1, hC2)
+        else:
+            nx = get_backend(G, deltaG, df_G, fC1, fC2, hC1, hC2, M)
+
+    if ones_p is None:
+        ones_p = nx.ones(G.shape[0], type_as=G)
+    if ones_q is None:
+        ones_q = nx.ones(G.shape[1], type_as=G)
+
+    # compute f(dG)
+    def f(G):
+        pG = nx.sum(G, 1)
+        qG = nx.sum(G, 0)
+        constC1 = nx.outer(np.dot(fC1, pG), ones_q)
+        constC2 = nx.outer(ones_p, np.dot(qG, fC2.T))
+        return gwloss(constC1 + constC2, hC1, hC2, G, nx)
+
+    a = reg * f(deltaG)
+    # formula to check for partial FGW
+    b = nx.sum(M * deltaG) + reg * nx.sum(df_G * deltaG)
+
+    alpha = solve_1d_linesearch_quad(a, b)
+    if alpha_min is not None or alpha_max is not None:
+        alpha = np.clip(alpha, alpha_min, alpha_max)
+
+    # the new cost is deduced from the line search quadratic function
+    cost_G = cost_G + a * (alpha ** 2) + b * alpha
+
+    return alpha, 1, cost_G
 
 
 def entropic_partial_gromov_wasserstein(

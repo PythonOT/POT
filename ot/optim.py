@@ -270,26 +270,27 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, cost_G, 0, 0))
 
     while loop:
+        print(f'cost_G: {cost_G}')
 
         it += 1
         old_cost_G = cost_G
         # problem linearization
-        Mi = M + reg1 * df(G)
+        df_G = df(G)
+        Mi = M + reg1 * df_G
 
         if not (reg2 is None):
             Mi = Mi + reg2 * (1 + nx.log(G))
-        # set M positive
-        Mi = Mi + nx.min(Mi)
 
         # solve linear program
         Gc, innerlog_ = lp_solver(a, b, Mi, **kwargs)
-
+        print(f'Gc: {nx.sum(Gc)} / pc : {nx.sum(Gc, 1)} / qc:{nx.sum(Gc, 0)}')
         # line search
         deltaG = Gc - G
 
-        alpha, fc, cost_G = line_search(cost, G, deltaG, Mi, cost_G, **kwargs)
+        alpha, fc, cost_G = line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs)
 
         G = G + alpha * deltaG
+        print(f'G: {nx.sum(G)} / p : {nx.sum(G, 1)} / q:{nx.sum(G, 0)}')
 
         # test convergence
         if it >= numItermax:
@@ -539,6 +540,8 @@ def partial_cg(a, b, a_extended, b_extended, M, reg, f, df, G0=None, line_search
         Stop threshold on the relative variation (>0)
     stopThr2 : float, optional
         Stop threshold on the absolute variation (>0)
+    warn: bool, optional.
+        Whether to raise a warning when EMD did not converge.
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -667,7 +670,7 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
     def lp_solver(a, b, Mi, **kwargs):
         return sinkhorn(a, b, Mi, reg1, numItermax=numInnerItermax, log=True, **kwargs)
 
-    def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+    def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
         return line_search_armijo(cost, G, deltaG, Mi, cost_G, **kwargs)
 
     return generic_conditional_gradient(a, b, M, f, df, reg2, reg1, lp_solver, line_search, G0=G0,
