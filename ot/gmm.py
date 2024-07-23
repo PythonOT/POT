@@ -368,7 +368,7 @@ def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t,
         The optimal transport plan between the source and target GMMs.
         If not provided, it will be computed using `gmm_ot_plan`.
     atol : float, optional
-        The absolute tolerance used to determine the support of the GMM-OT 
+        The absolute tolerance used to determine the support of the GMM-OT
         coupling.
 
     Returns
