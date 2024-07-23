@@ -342,12 +342,12 @@ def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t,
                         plan=None, atol=1e-2):
     """
     Compute the density of the Gaussian Mixture Model - Optimal Transport
-    coupling between GMMS at given points.
+    coupling between GMMS at given points, as introduced in [69].
     Given two arrays of points x and y, the function computes the density at
     each point `(x[i], y[i])` of the product space.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     x : array-like, shape (n_samples, d)
         Entry points in source space for density computation.
     y : array-like, shape (n_samples, d)
@@ -371,10 +371,14 @@ def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t,
         The absolute tolerance used to determine the support of the GMM-OT 
         coupling.
 
-    Returns:
-    --------
+    Returns
+    -------
     density : array-like, shape (n_samples,)
         The density of the GMM-ot coupling between the two GMMs.
+
+    References
+    ----------
+    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in the space of Gaussian mixture models. SIAM Journal on Imaging Sciences, 13(2), 936-970.
 
     """
     if plan is None:
