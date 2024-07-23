@@ -105,7 +105,6 @@ def dist_bures_squared(m_s, m_t, C_s, C_t):
 
     """
     nx = get_backend(m_s, C_s, m_t, C_t)
-    k_s, k_t = m_s.shape[0], m_t.shape[0]
 
     assert m_s.shape[0] == C_s.shape[0], \
         "Source GMM has different amount of components"
@@ -117,13 +116,17 @@ def dist_bures_squared(m_s, m_t, C_s, C_t):
         "All GMMs must have the same dimension"
 
     D_means = dist(m_s, m_t, metric='sqeuclidean')
-    D_covs = nx.zeros((k_s, k_t), type_as=m_s)
 
-    for i in range(k_s):
-        Cs12 = nx.sqrtm(C_s[i])  # nx.sqrtm is not batchable
-        for j in range(k_t):
-            C = nx.sqrtm(Cs12 @ C_t[j] @ Cs12)
-            D_covs[i, j] = nx.trace(C_s[i] + C_t[j] - 2 * C)
+    # C2[i, j] = Cs12[i] @ C_t[j] @ Cs12[i], shape (k_s, k_t, d, d)
+    Cs12 = nx.sqrtm(C_s)  # broadcasts matrix sqrt over (k_s,)
+    C2 = nx.einsum('ikl,jlm,imn->ijkn', Cs12, C_t, Cs12)
+    C = nx.sqrtm(C2)  # broadcasts matrix sqrt over (k_s, k_t)
+
+    # D_covs[i,j] = trace(C_s[i] + C_t[j] - 2C[i,j])
+    trace_C_s = nx.einsum('ikk->i', C_s)[:, None]  # (k_s, 1)
+    trace_C_t = nx.einsum('ikk->i', C_t)[None, :]  # (1, k_t)
+    D_covs = trace_C_s + trace_C_t  # broadcasts to (k_s, k_t)
+    D_covs -= 2 * nx.einsum('ijkk->ij', C)
 
     return nx.maximum(D_means + D_covs, 0)
 
@@ -237,33 +240,24 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
     ----------
     x : array-like, shape (n_samples, d)
         Input data points.
-
     m_s : array-like, shape (k_s, d)
         Mean vectors of the source GMM components.
-
     m_t : array-like, shape (k_t, d)
         Mean vectors of the target GMM components.
-
     C_s : array-like, shape (k_s, d, d)
         Covariance matrices of the source GMM components.
-
     C_t : array-like, shape (k_t, d, d)
         Covariance matrices of the target GMM components.
-
     w_s : array-like, shape (k_s,)
         Weights of the source GMM components.
-
     w_t : array-like, shape (k_t,)
         Weights of the target GMM components.
-
     plan : array-like, shape (k_s, k_t), optional
         Optimal transport plan between the source and target GMM components.
         If not provided, it will be computed internally.
-
     method : {'bary', 'rand'}, optional
         Method for applying the GMM OT mapping. 'bary' uses barycentric mapping,
         while 'rand' uses random sampling. Default is 'bary'.
-
     seed : int, optional
         Seed for the random number generator. Only used when method='rand'.
 
@@ -291,21 +285,21 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
     if method == 'bary':
         normalization = gmm_pdf(x, m_s, C_s, w_s)[:, None]
         out = nx.zeros(x.shape)
+        print('where plan > 0', nx.where(plan > 0))
 
-        for i in range(k_s):
+        # only need to compute for non-zero plan entries
+        for (i, j) in zip(*nx.where(plan > 0)):
             Cs12 = nx.sqrtm(C_s[i])
             Cs12inv = nx.inv(Cs12)
+            g = gaussian_pdf(x, m_s[i], C_s[i])[:, None]
 
-            for j in range(k_t):
-                g = gaussian_pdf(x, m_s[i], C_s[i])[:, None]
+            M0 = nx.sqrtm(Cs12 @ C_t[j] @ Cs12)
+            A = Cs12inv @ M0 @ Cs12inv
+            b = m_t[j] - A @ m_s[i]
 
-                M0 = nx.sqrtm(Cs12 @ C_t[j] @ Cs12)
-                A = Cs12inv @ M0 @ Cs12inv
-                b = m_t[j] - A @ m_s[i]
-
-                # gaussian mapping between components i and j applied to x
-                T_ij_x = x @ A + b
-                out = out + plan[i, j] * g * T_ij_x
+            # gaussian mapping between components i and j applied to x
+            T_ij_x = x @ A + b
+            out = out + plan[i, j] * g * T_ij_x
 
         return out / normalization
 
@@ -317,14 +311,14 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
         A = nx.zeros((k_s, k_t, d, d))
         b = nx.zeros((k_s, k_t, d))
 
-        for i in range(k_s):
+        # only need to compute for non-zero plan entries
+        for (i, j) in zip(*nx.where(plan > 0)):
             Cs12 = nx.sqrtm(C_s[i])
             Cs12inv = nx.inv(Cs12)
 
-            for j in range(k_t):
-                M0 = nx.sqrtm(Cs12 @ C_t[j] @ Cs12)
-                A[i, j] = Cs12inv @ M0 @ Cs12inv
-                b[i, j] = m_t[j] - A[i, j] @ m_s[i]
+            M0 = nx.sqrtm(Cs12 @ C_t[j] @ Cs12)
+            A[i, j] = Cs12inv @ M0 @ Cs12inv
+            b[i, j] = m_t[j] - A[i, j] @ m_s[i]
 
         normalization = gmm_pdf(x, m_s, C_s, w_s)  # (n_samples,)
         gs = np.stack(
@@ -346,25 +340,49 @@ def gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None,
 
 def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t,
                         plan=None, atol=1e-2):
-    r"""
-        Args:
-            m0: gaussian mixture 0
-            m1: gaussian mixture 1
-            x: (..., d) array-like
-            y: (..., d) array-like (same shape as x)
-            atol: absolute tolerance for the condition T_kl(x) = y
-
-        Returns:
-           density of the MW2 OT plan between m0 and m1 at (x, y)
     """
+    Compute the density of the Gaussian Mixture Model - Optimal Transport
+    coupling between GMMS at given points.
+    Given two arrays of points x and y, the function computes the density at
+    each point `(x[i], y[i])` of the product space.
 
+    Parameters:
+    -----------
+    x : array-like, shape (n_samples, d)
+        Entry points in source space for density computation.
+    y : array-like, shape (n_samples, d)
+        Entry points in target space for density computation.
+    m_s : array-like, shape (k_s, d)
+        The means of the source GMM components.
+    m_t : array-like, shape (k_t, d)
+        The means of the target GMM components.
+    C_s : array-like, shape (k_s, d, d)
+        The covariance matrices of the source GMM components.
+    C_t : array-like, shape (k_t, d, d)
+        The covariance matrices of the target GMM components.
+    w_s : array-like, shape (k_s,)
+        The weights of the source GMM components.
+    w_t : array-like, shape (k_t,)
+        The weights of the target GMM components.
+    plan : array-like, shape (k_s, k_t), optional
+        The optimal transport plan between the source and target GMMs.
+        If not provided, it will be computed using `gmm_ot_plan`.
+    atol : float, optional
+        The absolute tolerance used to determine the support of the GMM-OT 
+        coupling.
+
+    Returns:
+    --------
+    density : array-like, shape (n_samples,)
+        The density of the GMM-ot coupling between the two GMMs.
+
+    """
     if plan is None:
         plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
 
     def Tk0k1(k0, k1):
         A, b = bures_wasserstein_mapping(m_s[k0], m_t[k1], C_s[k0], C_t[k1])
         Tx = x @ A + b
-        print('Tx', Tx.shape)
         g = gaussian_pdf(x, m_s[k0], C_s[k0])
         out = plan[k0, k1] * g
         norms = np.linalg.norm(Tx - y, axis=-1)

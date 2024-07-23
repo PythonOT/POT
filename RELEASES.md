@@ -10,6 +10,7 @@
   #659)
 - Improved `ot.plot.plot1D_mat` (PR #649)
 - Added `nx.det` (PR #649)
+- `nx.sqrtm` is now broadcastable (takes ..., d, d) inputs (PR #649)
 
 #### Closed issues
 - Fixed `ot.gaussian` ignoring weights when computing means (PR #649, Issue #648)
