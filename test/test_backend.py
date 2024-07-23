@@ -622,6 +622,10 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append("matrix square root")
 
+        A = nx.sqrtm(nx.stack([SquareMb.T @ SquareMb] * 2, axis=0))
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("broadcast matrix square root")
+
         D, U = nx.eigh(SquareMb.T @ SquareMb)
         lst_b.append(nx.to_numpy(nx.dot(U, nx.dot(nx.diag(D), U.T))))
         lst_name.append("eigh ")

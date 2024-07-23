@@ -926,9 +926,11 @@ class Backend():
 
     def sqrtm(self, a):
         r"""
-        Computes the matrix square root. Requires input to be definite positive.
+        Computes the matrix square root.
+        Requires input symmetric positive semi-definite.
 
-        This function follows the api from :any:`scipy.linalg.sqrtm`.
+        This function follows the api from :any:`scipy.linalg.sqrtm`,
+        allowing batches.
 
         See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.sqrtm.html
         """
@@ -1356,7 +1358,13 @@ class NumpyBackend(Backend):
 
     def sqrtm(self, a):
         L, V = np.linalg.eigh(a)
-        return (V * np.sqrt(L)[None, :]) @ V.T
+        L = np.sqrt(L)
+        if len(a.shape) == 2:  # input was (d, d)
+            return (V * L[None, :]) @ V.T
+        else:  # input was (n, d, d)
+            Q = np.einsum('ijk,ik->ijk', V, L)  # Q[i] = V[i] @ diag(L[i])
+            # R[i] = Q[i] @ V[i].T
+            return np.einsum('ijk,ikl->ijl', Q, np.transpose(V, (0, 2, 1)))
 
     def eigh(self, a):
         return np.linalg.eigh(a)
@@ -1761,7 +1769,13 @@ class JaxBackend(Backend):
 
     def sqrtm(self, a):
         L, V = jnp.linalg.eigh(a)
-        return (V * jnp.sqrt(L)[None, :]) @ V.T
+        L = jnp.sqrt(L)
+        if len(a.shape) == 2:  # input was (d, d)
+            return (V * L[None, :]) @ V.T
+        else:  # input was (n, d, d)
+            Q = jnp.einsum('ijk,ik->ijk', V, L)  # Q[i] = V[i] @ diag(L[i])
+            # R[i] = Q[i] @ V[i].T
+            return jnp.einsum('ijk,ikl->ijl', Q, jnp.transpose(V, (0, 2, 1)))
 
     def eigh(self, a):
         return jnp.linalg.eigh(a)
@@ -2254,7 +2268,14 @@ class TorchBackend(Backend):
 
     def sqrtm(self, a):
         L, V = torch.linalg.eigh(a)
-        return (V * torch.sqrt(L)[None, :]) @ V.T
+        L = torch.sqrt(L)
+        if len(a.shape) == 2:  # input was (d, d)
+            return (V * L[None, :]) @ V.T
+        else:  # input was (n, d, d)
+            Q = torch.einsum('ijk,ik->ijk', V, L)  # Q[i] = V[i] @ diag(L[i])
+            # R[i] = Q[i] @ V[i].T
+            return torch.einsum('ijk,ikl->ijl', Q,
+                                torch.transpose(V, 1, 2))
 
     def eigh(self, a):
         return torch.linalg.eigh(a)
@@ -2661,7 +2682,13 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
-        return (V * cp.sqrt(L)[None, :]) @ V.T
+        L = cp.sqrt(L)
+        if len(a.shape) == 2:  # input was (d, d)
+            return (V * L[None, :]) @ V.T
+        else:  # input was (n, d, d)
+            Q = cp.einsum('ijk,ik->ijk', V, L)  # Q[i] = V[i] @ diag(L[i])
+            # R[i] = Q[i] @ V[i].T
+            return cp.einsum('ijk,ikl->ijl', Q, cp.transpose(V, perm=[0, 2, 1]))
 
     def eigh(self, a):
         return cp.linalg.eigh(a)
@@ -3091,7 +3118,13 @@ class TensorflowBackend(Backend):
 
     def sqrtm(self, a):
         L, V = tf.linalg.eigh(a)
-        return (V * tf.sqrt(L)[None, :]) @ V.T
+        L = tf.sqrt(L)
+        if len(a.shape) == 2:  # input was (d, d)
+            return (V * L[None, :]) @ V.T
+        else:  # input was (n, d, d)
+            Q = tf.einsum('ijk,ik->ijk', V, L)  # Q[i] = V[i] @ diag(L[i])
+            # R[i] = Q[i] @ V[i].T
+            return tf.einsum('ijk,ikl->ijl', Q, tf.transpose(V, (0, 2, 1)))
 
     def eigh(self, a):
         return tf.linalg.eigh(a)
