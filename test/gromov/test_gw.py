@@ -317,7 +317,7 @@ def test_gw_helper_backend(nx):
     def df(G):
         return ot.gromov.gwggrad(constCb, hC1b, hC2b, G, None)
 
-    def line_search(cost, G, deltaG, Mi, cost_G):
+    def line_search(cost, G, deltaG, Mi, cost_G, df_G):
         return ot.gromov.solve_gromov_linesearch(G, deltaG, cost_G, C1b, C2b, M=0., reg=1., nx=None)
     # feed the precomputed local optimum Gb to cg
     res, log = ot.optim.cg(pb, qb, 0., 1., f, df, Gb, line_search, log=True, numItermax=1e4, stopThr=1e-9, stopThr2=1e-9)
@@ -751,12 +751,12 @@ def test_fgw_helper_backend(nx):
     def df(G):
         return ot.gromov.gwggrad(constCb, hC1b, hC2b, G, None)
 
-    def line_search(cost, G, deltaG, Mi, cost_G):
+    def line_search(cost, G, deltaG, Mi, cost_G, df_G):
         return ot.gromov.solve_gromov_linesearch(G, deltaG, cost_G, C1b, C2b, M=(1 - alpha) * Mb, reg=alpha, nx=None)
     # feed the precomputed local optimum Gb to cg
     res, log = ot.optim.cg(pb, qb, (1 - alpha) * Mb, alpha, f, df, Gb, line_search, log=True, numItermax=1e4, stopThr=1e-9, stopThr2=1e-9)
 
-    def line_search(cost, G, deltaG, Mi, cost_G):
+    def line_search(cost, G, deltaG, Mi, cost_G, df_G):
         return ot.optim.line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=None)
     # feed the precomputed local optimum Gb to cg
     res_armijo, log_armijo = ot.optim.cg(pb, qb, (1 - alpha) * Mb, alpha, f, df, Gb, line_search, log=True, numItermax=1e4, stopThr=1e-9, stopThr2=1e-9)

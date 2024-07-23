@@ -476,7 +476,7 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
 
     if armijo:
         def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
-            return line_search_armijo(cost, G, deltaG, Mi, cost_G, df_G, nx=np_, **kwargs)
+            return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=np_, **kwargs)
     else:
         def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
             return solve_gromov_linesearch(G, deltaG, cost_G, hC1, hC2, M=(1 - alpha) * M, reg=alpha, nx=np_, symmetric=symmetric, **kwargs)

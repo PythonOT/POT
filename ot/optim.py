@@ -283,15 +283,13 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
 
         # solve linear program
         Gc, innerlog_ = lp_solver(a, b, Mi, **kwargs)
-        print(f'Gc: {nx.sum(Gc)} / pc : {nx.sum(Gc, 1)} / qc:{nx.sum(Gc, 0)}')
         # line search
         deltaG = Gc - G
 
         alpha, fc, cost_G = line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs)
 
         G = G + alpha * deltaG
-        print(f'G: {nx.sum(G)} / p : {nx.sum(G, 1)} / q:{nx.sum(G, 0)}')
-
+        
         # test convergence
         if it >= numItermax:
             loop = 0
@@ -572,7 +570,7 @@ def partial_cg(a, b, a_extended, b_extended, M, reg, f, df, G0=None, line_search
 
     def lp_solver(a, b, Mi, **kwargs):
         # add dummy nodes to Mi
-        Mi_extended = np.zeros((a_extended.shape[0], b_extended.shape[0]), dtype=Mi.dtype)
+        Mi_extended = np.zeros((n_extended, m_extended), dtype=Mi.dtype)
         Mi_extended[:n, :m] = Mi
         Mi_extended[-nb_dummies:, -nb_dummies:] = np.max(M) * 1e2
 
