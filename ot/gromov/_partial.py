@@ -13,7 +13,7 @@ Partial (Fused) Gromov-Wasserstein solvers.
 from ..utils import list_to_array, unif
 from ..backend import get_backend, NumpyBackend
 from ..partial import entropic_partial_wasserstein
-from .utils import _transform_matrix, gwloss, gwggrad
+from ._utils import _transform_matrix, gwloss, gwggrad
 from ..optim import partial_cg
 from ._gw import solve_gromov_linesearch
 
@@ -194,8 +194,8 @@ def partial_gromov_wasserstein(
     if not symmetric:
         fC1t, hC1t, hC2t = fC1.T, hC1.T, hC2.T
 
-    ones_p = np.ones(p.shape[0], type_as=p)
-    ones_q = np.ones(p.shape[0], type_as=p)
+    ones_p = np_.ones(p.shape[0], type_as=p)
+    ones_q = np_.ones(p.shape[0], type_as=p)
 
     def f(G):
         pG = G.sum(1)
@@ -400,7 +400,7 @@ def partial_gromov_wasserstein2(
         gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(T, nx.dot(nx.log(C2 + 1e-15), T.T))
         gC2 = - nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
 
-    pgw = nx.set_gradients(pgw, (C1, C2), gC1, gC2)
+    pgw = nx.set_gradients(pgw, (C1, C2), (gC1, gC2))
 
     if log:
         return pgw, log_pgw

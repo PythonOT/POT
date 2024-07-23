@@ -569,11 +569,11 @@ def partial_cg(a, b, a_extended, b_extended, M, reg, f, df, G0=None, line_search
 
     def lp_solver(a, b, Mi, **kwargs):
         # add dummy nodes to Mi
-        Mi_extended = np.zeros((a_extended.shape[0], b_extended.shape[0]), type_as=Mi)
-        Mi_extended[:n_extended, :m_extended] = Mi
+        Mi_extended = np.zeros((a_extended.shape[0], b_extended.shape[0]), dtype=Mi.dtype)
+        Mi_extended[:n, :m] = Mi
         Mi_extended[-nb_dummies:, -nb_dummies:] = np.max(M) * 1e2
 
-        G_extended, log_ = emd(p_extended, q_extended, Mi_extended, numItermax, log=True)
+        G_extended, log_ = emd(a_extended, b_extended, Mi_extended, numItermax, log=True)
         Gc = G_extended[:n, :m]
 
         if warn:

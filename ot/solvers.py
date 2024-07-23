@@ -18,8 +18,9 @@ from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
                      entropic_gromov_wasserstein2, entropic_fused_gromov_wasserstein2,
                      semirelaxed_gromov_wasserstein2, semirelaxed_fused_gromov_wasserstein2,
                      entropic_semirelaxed_fused_gromov_wasserstein2,
-                     entropic_semirelaxed_gromov_wasserstein2)
-from .partial import partial_gromov_wasserstein2, entropic_partial_gromov_wasserstein2
+                     entropic_semirelaxed_gromov_wasserstein2,
+                     partial_gromov_wasserstein2,
+                     entropic_partial_gromov_wasserstein2)
 from .gaussian import empirical_bures_wasserstein_distance
 from .factored import factored_optimal_transport
 from .lowrank import lowrank_sinkhorn

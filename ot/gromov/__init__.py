@@ -63,10 +63,10 @@ from ._quantized import (quantized_fused_gromov_wasserstein_partitioned,
                          quantized_fused_gromov_wasserstein_samples
                          )
 
-from .partial import (partial_gromov_wasserstein,
-                      partial_gromov_wasserstein2,
-                      entropic_partial_gromov_wasserstein,
-                      entropic_partial_gromov_wasserstein2)
+from ._partial import (partial_gromov_wasserstein,
+                       partial_gromov_wasserstein2,
+                       entropic_partial_gromov_wasserstein,
+                       entropic_partial_gromov_wasserstein2)
 
 __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad',
            'init_matrix_semirelaxed',
