@@ -9,7 +9,7 @@
 import numpy as np
 import pytest
 from ot.utils import proj_simplex
-from ot.gmm import gaussian_pdf, gmm_pdf, dist_bures_squared, gmm_ot_loss, gmm_ot_plan, gmm_ot_apply_map
+from ot.gmm import gaussian_pdf, gmm_pdf, dist_bures_squared, gmm_ot_loss, gmm_ot_plan, gmm_ot_apply_map, gmm_ot_plan_density
 
 try:
     import torch
@@ -162,3 +162,16 @@ def test_gradient_gmm_ot_loss_pytorch():
     assert (grad_m_s**2).sum().item() > 0
     assert (grad_C_s**2).sum().item() > 0
     assert (grad_w_s**2).sum().item() > 0
+
+
+def test_gmm_ot_plan_density():
+    m_s, m_t, C_s, C_t, w_s, w_t = get_gmms()
+    rng = np.random.RandomState(seed=42)
+    n = 7
+    x = rng.randn(n, 3)
+
+    density = gmm_ot_plan_density(x, x, m_s, m_t, C_s, C_t, w_s, w_t)
+    assert density.shape == (n,)
+
+    plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
+    gmm_ot_plan_density(x, x, m_s, m_t, C_s, C_t, w_s, w_t, plan=plan)
