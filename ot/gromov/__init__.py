@@ -64,6 +64,11 @@ from ._quantized import (quantized_fused_gromov_wasserstein_partitioned,
                          quantized_fused_gromov_wasserstein_samples
                          )
 
+from .partial import (partial_gromov_wasserstein,
+                      partial_gromov_wasserstein2,
+                      entropic_partial_gromov_wasserstein,
+                      entropic_partial_gromov_wasserstein2)
+
 __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad',
            'init_matrix_semirelaxed',
            'update_barycenter_structure', 'update_barycenter_feature',
@@ -88,4 +93,6 @@ __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad',
            'get_graph_representants', 'format_partitioned_graph',
            'quantized_fused_gromov_wasserstein', 'get_partition_and_representants_samples',
            'format_partitioned_samples', 'quantized_fused_gromov_wasserstein_samples',
+           'partial_gromov_wasserstein', 'partial_gromov_wasserstein2',
+           'entropic_partial_gromov_wasserstein', 'entropic_partial_gromov_wasserstein2'
            ]
