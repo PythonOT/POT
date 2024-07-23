@@ -89,8 +89,8 @@ def _transform_matrix(C1, C2, loss_fun='square_loss', nx=None):
 
     """
     if nx is None:
-        C1, C2, p, q = list_to_array(C1, C2, p, q)
-        nx = get_backend(C1, C2, p, q)
+        C1, C2 = list_to_array(C1, C2)
+        nx = get_backend(C1, C2)
 
     if loss_fun == 'square_loss':
         def f1(a):
