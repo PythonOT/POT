@@ -134,11 +134,9 @@ def test_entropic_partial_gromov_wasserstein():
     P = sp.linalg.sqrtm(cov_t)
     xt = rng.randn(n_samples, 3).dot(P) + mu_t
     xt = np.concatenate((xt, ((rng.rand(n_noise, 3) + 1) * 10)), axis=0)
-    xt2 = xs[::-1].copy()
 
     C1 = ot.dist(xs, xs)
     C2 = ot.dist(xt, xt)
-    C3 = ot.dist(xt2, xt2)
 
     m = 1
 
