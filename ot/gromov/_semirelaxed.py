@@ -11,15 +11,16 @@ Semi-relaxed Gromov-Wasserstein and Fused-Gromov-Wasserstein solvers.
 import numpy as np
 
 
-from ot.utils import (
+from ..utils import (
     list_to_array, unif, dist, UndefinedParameter, check_random_state
 )
-from ot.optim import semirelaxed_cg, solve_1d_linesearch_quad
-from ot.backend import get_backend
+from ..optim import semirelaxed_cg, solve_1d_linesearch_quad
+from ..backend import get_backend
 
-from ot.gromov import (
+from ._utils import (
     init_matrix_semirelaxed, gwloss, gwggrad,
     update_barycenter_structure, update_barycenter_feature,
+    _semirelaxed_init_plan
 )
 
 
