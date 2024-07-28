@@ -459,8 +459,7 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1.,
 
         def get_transport_from_partition(part):
             if n > m:  # partition C1 to deduce map from C1 to C2
-                T_ = nx.zeros((n, m), type_as=C1)
-                T_[nx.arange(n), part] = 1.
+                T_ = nx.eye(m, type_as=C1)[part]
                 T_ = p[:, None] * T_
                 q = nx.sum(T_, 0)
 
@@ -473,8 +472,7 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1.,
 
                 T = nx.dot(T_, inv_q[:, None] * T_emd)
             elif m > n:
-                T_ = nx.zeros((m, n), type_as=C1)
-                T_[nx.arange(m), part] = 1. / m  # assume uniform masses on C2
+                T_ = nx.eye(n, type_as=C1)[part] / m  # assume uniform masses on C2
                 q = nx.sum(T_, 0)
 
                 factored_C2 = nx.dot(nx.dot(T_.T, C2), T_) / nx.outer(q, q)

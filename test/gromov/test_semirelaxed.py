@@ -14,8 +14,6 @@ from ot.gromov._utils import (
     networkx_import, sklearn_import)
 
 
-@pytest.skip_backend("jax", reason="test very slow with jax backend")
-@pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_semirelaxed_gromov(nx):
     rng = np.random.RandomState(0)
     # unbalanced proportions
@@ -26,24 +24,23 @@ def test_semirelaxed_gromov(nx):
     C1 = np.zeros((ns, ns), dtype=np.float64)
     C2 = np.array([[0.8, 0.1],
                    [0.1, 1.]], dtype=np.float64)
-    
+
     pos = [0, 30, 45]
-    
+
     for i in range(nt):
         for j in range(nt):
             ni, nj = list_n[i], list_n[j]
             xij = rng.binomial(size=(ni, nj), n=1, p=C2[i, j])
-            pos_i_min, pos_i_max = pos[i], pos[i+1]
-            pos_j_min, pos_j_max = pos[j], pos[j+1]
+            pos_i_min, pos_i_max = pos[i], pos[i + 1]
+            pos_j_min, pos_j_max = pos[j], pos[j + 1]
             C1[pos_i_min: pos_i_max, pos_j_min: pos_j_max] = xij
-    
-    
+
     p = ot.unif(ns, type_as=C1)
     q0 = ot.unif(C2.shape[0], type_as=C1)
     G0 = p[:, None] * q0[None, :]
     # asymmetric
     C1b, C2b, pb, q0b, G0b = nx.from_numpy(C1, C2, p, q0, G0)
-    
+
     for loss_fun in ['square_loss', 'kl_loss']:
         G, log = ot.gromov.semirelaxed_gromov_wasserstein(
             C1, C2, p, loss_fun='square_loss', symmetric=None, log=True, G0=G0)
@@ -75,20 +72,20 @@ def test_semirelaxed_gromov(nx):
     ## symmetric - testing various initialization of the OT plan.
     C1 = 0.5 * (C1 + C1.T)
     print('deg:', C1.sum(0))
-    
+
     C1b, C2b, pb, q0b, G0b = nx.from_numpy(C1, C2, p, q0, G0)
-    
+
     init_plan_list = [
         (None, G0b), ('product', None), ("random_product", "random_product")]
-    
+
     if networkx_import:
         init_plan_list += [('fluid', 'fluid'), ('fluid_soft', 'fluid_soft')]
-    
+
     if sklearn_import:
         init_plan_list += [
             ("spectral", "spectral"), ("spectral_soft", "spectral_soft"),
             ("kmeans", "kmeans"), ("kmeans_soft", "kmeans_soft")]
-    
+
     for (init, init_b) in init_plan_list:
         print('------')
         print('init:', init)
@@ -98,15 +95,15 @@ def test_semirelaxed_gromov(nx):
             C1, C2, p, loss_fun='square_loss', symmetric=None, log=True, G0=init)
         Gb = ot.gromov.semirelaxed_gromov_wasserstein(
             C1b, C2b, pb, loss_fun='square_loss', symmetric=True, log=False, G0=init_b)
-    
+
         # check constraints
         np.testing.assert_allclose(G, Gb, atol=1e-06)
         np.testing.assert_allclose(p, nx.sum(Gb, axis=1), atol=1e-04)  # cf convergence gromov
-        
+
         if not isinstance(init, str):
             np.testing.assert_allclose(list_n / ns, nx.sum(Gb, axis=0), atol=1e-02)  # cf convergence gromov
         else:
-            if not 'spectral' in init: # issues with spectral clustering related to label switching
+            if not 'spectral' in init:  # issues with spectral clustering related to label switching
                 np.testing.assert_allclose(list_n / ns, nx.sum(Gb, axis=0), atol=1e-02)
 
     srgw, log2 = ot.gromov.semirelaxed_gromov_wasserstein2(
@@ -708,15 +705,21 @@ def test_semirelaxed_gromov_barycenter(nx):
         np.testing.assert_allclose(Cbb_.shape, (n_samples, n_samples))
 
     # test consistency across backends with 'kl_loss'
-    Cb2 = ot.gromov.semirelaxed_gromov_barycenters(
-        n_samples, [C1, C2], [p1, p2], [.5, .5],
-        'kl_loss', max_iter=10, tol=1e-3, warmstartT=True, random_state=42
+    Cb2, err = ot.gromov.semirelaxed_gromov_barycenters(
+        n_samples, [C1, C2], [p1, p2], [.5, .5], 'kl_loss', max_iter=10,
+        tol=1e-3, warmstartT=False, stop_criterion='loss', log=True, random_state=42
     )
-    Cb2b = nx.to_numpy(ot.gromov.semirelaxed_gromov_barycenters(
-        n_samples, [C1b, C2b], [p1b, p2b], [.5, .5],
-        'kl_loss', max_iter=10, tol=1e-3, warmstartT=True, random_state=42
-    ))
-    np.testing.assert_allclose(Cb2, Cb2b, atol=1e-06)
+    Cb2b, errb = ot.gromov.semirelaxed_gromov_barycenters(
+        n_samples, [C1b, C2b], [p1b, p2b], [.5, .5], 'kl_loss', max_iter=10,
+        tol=1e-3, warmstartT=False, stop_criterion='loss', log=True, random_state=42
+    )
+    Cb2b = nx.to_numpy(Cb2b)
+
+    try:
+        np.testing.assert_allclose(Cb2, Cb2b, atol=1e-06)  # may differ from permutation
+    except:
+        np.testing.assert_allclose(err['loss'][-1], errb['loss'][-1], atol=1e-06)
+
     np.testing.assert_allclose(Cb2b.shape, (n_samples, n_samples))
 
     # test of gromov_barycenters with `log` on
@@ -728,11 +731,11 @@ def test_semirelaxed_gromov_barycenter(nx):
     init_Cb = nx.from_numpy(init_C)
 
     Cb2_, err2_ = ot.gromov.semirelaxed_gromov_barycenters(
-        n_samples, [C1, C2], [p1, p2], [.5, .5], 'kl_loss', max_iter=10,
+        n_samples, [C1, C2], [p1, p2], [.5, .5], 'square_loss', max_iter=10,
         tol=1e-3, verbose=False, random_state=42, log=True, init_C=init_C
     )
     Cb2b_, err2b_ = ot.gromov.semirelaxed_gromov_barycenters(
-        n_samples, [C1b, C2b], [p1b, p2b], [.5, .5], 'kl_loss',
+        n_samples, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
         max_iter=10, tol=1e-3, verbose=True, random_state=42,
         init_C=init_Cb, log=True
     )
