@@ -14,7 +14,7 @@ Gromov-Wasserstein and Fused-Gromov-Wasserstein utils.
 
 from ..utils import list_to_array, euclidean_distances
 from ..backend import get_backend
-from .lp import emd
+from ..lp import emd
 
 try:
     from networkx.algorithms.community import asyn_fluidc
@@ -441,6 +441,7 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1.,
 
     n = C1.shape[0]
     m = C2.shape[0]
+
     if method in list_partitioning_methods:
         min_size = min(n, m)
         if n > m:  # partition C1 to deduce map from C1 to C2
@@ -458,7 +459,7 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1.,
 
         def get_transport_from_partition(part):
             if n > m:  # partition C1 to deduce map from C1 to C2
-                T_ = nx.zeros((n, m))
+                T_ = nx.zeros((n, m), type_as=C1)
                 T_[nx.arange(n), part] = 1.
                 T_ = p[:, None] * T_
                 q = nx.sum(T_, 0)
@@ -472,7 +473,7 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1.,
 
                 T = nx.dot(T_, inv_q[:, None] * T_emd)
             elif m > n:
-                T_ = nx.zeros((m, n))
+                T_ = nx.zeros((m, n), type_as=C1)
                 T_[nx.arange(m), part] = 1. / m  # assume uniform masses on C2
                 q = nx.sum(T_, 0)
 
@@ -491,15 +492,16 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1.,
                 q = p
                 T = emd(p, q, M_structure)
 
-                return T, q
+            return T, q
 
     # Handle initialization via structure information
 
     if method == 'product':
-        q = nx.ones(m, type_as=C2)
+        q = nx.ones(m, type_as=C2) / m
         T = nx.outer(p, q)
 
     elif method == 'random_product':
+        np.random.seed(random_state)
         q = np.random.uniform(0, m, size=(m,))
         q = q / q.sum()
         q = nx.from_numpy(q)
@@ -512,10 +514,12 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1.,
         else:
             graph = from_numpy_array(C_to_partition)
             part_sets = asyn_fluidc(graph, min_size, seed=random_state)
-            part = nx.zeros(C_to_partition)
+            part = np.zeros(C_to_partition.shape[0], dtype=int)
             for iset_, set_ in enumerate(part_sets):
                 set_ = list(set_)
                 part[set_] = iset_
+            part = nx.from_numpy(part)
+
             T, q = get_transport_from_partition(part)
 
         if 'soft' in method:

@@ -114,7 +114,7 @@ def semirelaxed_gromov_wasserstein(
     else:
         p = unif(C1.shape[0], type_as=C1)
 
-    if G0 is not None:
+    if (G0 is not None) and (not isinstance(G0, str)):
         arr.append(G0)
 
     nx = get_backend(*arr)
@@ -128,6 +128,7 @@ def semirelaxed_gromov_wasserstein(
     elif isinstance(G0, str):
         G0 = semirelaxed_init_plan(
             C1, C2, p, method=G0, random_state=random_state, nx=nx)
+        q = nx.sum(G0, 0)
     else:
         q = nx.sum(G0, 0)
         # Check first marginal of G0
@@ -383,7 +384,7 @@ def semirelaxed_fused_gromov_wasserstein(
     else:
         p = unif(C1.shape[0], type_as=C1)
 
-    if G0 is not None:
+    if (G0 is not None) and (not isinstance(G0, str)):
         arr.append(G0)
 
     nx = get_backend(*arr)
@@ -397,6 +398,7 @@ def semirelaxed_fused_gromov_wasserstein(
     elif isinstance(G0, str):
         G0 = semirelaxed_init_plan(
             C1, C2, p, M, alpha, G0, random_state, nx)
+        q = nx.sum(G0, 0)
     else:
         q = nx.sum(G0, 0)
         # Check first marginal of G0
@@ -741,7 +743,7 @@ def entropic_semirelaxed_gromov_wasserstein(
     else:
         p = unif(C1.shape[0], type_as=C1)
 
-    if G0 is not None:
+    if (G0 is not None) and (not isinstance(G0, str)):
         arr.append(G0)
 
     nx = get_backend(*arr)
@@ -755,6 +757,7 @@ def entropic_semirelaxed_gromov_wasserstein(
     elif isinstance(G0, str):
         G0 = semirelaxed_init_plan(
             C1, C2, p, method=G0, random_state=random_state, nx=nx)
+        q = nx.sum(G0, 0)
     else:
         q = nx.sum(G0, 0)
         # Check first marginal of G0
@@ -1003,7 +1006,7 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
     else:
         p = unif(C1.shape[0], type_as=C1)
 
-    if G0 is not None:
+    if (G0 is not None) and (not isinstance(G0, str)):
         arr.append(G0)
 
     nx = get_backend(*arr)
@@ -1017,6 +1020,7 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
     elif isinstance(G0, str):
         G0 = semirelaxed_init_plan(
             C1, C2, p, M, alpha, G0, random_state, nx)
+        q = nx.sum(G0, 0)
     else:
         q = nx.sum(G0, 0)
         # Check first marginal of G0

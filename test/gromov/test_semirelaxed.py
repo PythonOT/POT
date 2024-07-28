@@ -10,7 +10,12 @@ import pytest
 import ot
 from ot.backend import torch
 
+from ot.gromov._utils import (
+    networkx_import, sklearn_import)
 
+
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
+@pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_semirelaxed_gromov(nx):
     rng = np.random.RandomState(0)
     # unbalanced proportions
@@ -19,19 +24,26 @@ def test_semirelaxed_gromov(nx):
     ns = np.sum(list_n)
     # create directed sbm with C2 as connectivity matrix
     C1 = np.zeros((ns, ns), dtype=np.float64)
-    C2 = np.array([[0.8, 0.05],
-                   [0.05, 1.]], dtype=np.float64)
+    C2 = np.array([[0.8, 0.1],
+                   [0.1, 1.]], dtype=np.float64)
+    
+    pos = [0, 30, 45]
+    
     for i in range(nt):
         for j in range(nt):
             ni, nj = list_n[i], list_n[j]
             xij = rng.binomial(size=(ni, nj), n=1, p=C2[i, j])
-            C1[i * ni: (i + 1) * ni, j * nj: (j + 1) * nj] = xij
+            pos_i_min, pos_i_max = pos[i], pos[i+1]
+            pos_j_min, pos_j_max = pos[j], pos[j+1]
+            C1[pos_i_min: pos_i_max, pos_j_min: pos_j_max] = xij
+    
+    
     p = ot.unif(ns, type_as=C1)
     q0 = ot.unif(C2.shape[0], type_as=C1)
     G0 = p[:, None] * q0[None, :]
     # asymmetric
     C1b, C2b, pb, q0b, G0b = nx.from_numpy(C1, C2, p, q0, G0)
-
+    
     for loss_fun in ['square_loss', 'kl_loss']:
         G, log = ot.gromov.semirelaxed_gromov_wasserstein(
             C1, C2, p, loss_fun='square_loss', symmetric=None, log=True, G0=G0)
@@ -60,19 +72,42 @@ def test_semirelaxed_gromov(nx):
         np.testing.assert_allclose(log2['srgw_dist'], logb['srgw_dist'], atol=1e-07)
         np.testing.assert_allclose(logb2['srgw_dist'], log['srgw_dist'], atol=1e-07)
 
-    # symmetric
+    ## symmetric - testing various initialization of the OT plan.
     C1 = 0.5 * (C1 + C1.T)
+    print('deg:', C1.sum(0))
+    
     C1b, C2b, pb, q0b, G0b = nx.from_numpy(C1, C2, p, q0, G0)
+    
+    init_plan_list = [
+        (None, G0b), ('product', None), ("random_product", "random_product")]
+    
+    if networkx_import:
+        init_plan_list += [('fluid', 'fluid'), ('fluid_soft', 'fluid_soft')]
+    
+    if sklearn_import:
+        init_plan_list += [
+            ("spectral", "spectral"), ("spectral_soft", "spectral_soft"),
+            ("kmeans", "kmeans"), ("kmeans_soft", "kmeans_soft")]
+    
+    for (init, init_b) in init_plan_list:
+        print('------')
+        print('init:', init)
+        print('init_b:', init_b)
 
-    G, log = ot.gromov.semirelaxed_gromov_wasserstein(
-        C1, C2, p, loss_fun='square_loss', symmetric=None, log=True, G0=None)
-    Gb = ot.gromov.semirelaxed_gromov_wasserstein(
-        C1b, C2b, pb, loss_fun='square_loss', symmetric=True, log=False, G0=G0b)
-
-    # check constraints
-    np.testing.assert_allclose(G, Gb, atol=1e-06)
-    np.testing.assert_allclose(p, nx.sum(Gb, axis=1), atol=1e-04)  # cf convergence gromov
-    np.testing.assert_allclose(list_n / ns, nx.sum(Gb, axis=0), atol=1e-02)  # cf convergence gromov
+        G, log = ot.gromov.semirelaxed_gromov_wasserstein(
+            C1, C2, p, loss_fun='square_loss', symmetric=None, log=True, G0=init)
+        Gb = ot.gromov.semirelaxed_gromov_wasserstein(
+            C1b, C2b, pb, loss_fun='square_loss', symmetric=True, log=False, G0=init_b)
+    
+        # check constraints
+        np.testing.assert_allclose(G, Gb, atol=1e-06)
+        np.testing.assert_allclose(p, nx.sum(Gb, axis=1), atol=1e-04)  # cf convergence gromov
+        
+        if not isinstance(init, str):
+            np.testing.assert_allclose(list_n / ns, nx.sum(Gb, axis=0), atol=1e-02)  # cf convergence gromov
+        else:
+            if not 'spectral' in init: # issues with spectral clustering related to label switching
+                np.testing.assert_allclose(list_n / ns, nx.sum(Gb, axis=0), atol=1e-02)
 
     srgw, log2 = ot.gromov.semirelaxed_gromov_wasserstein2(
         C1, C2, p, loss_fun='square_loss', symmetric=True, log=True, G0=G0)
