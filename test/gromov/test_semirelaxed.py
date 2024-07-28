@@ -69,7 +69,7 @@ def test_semirelaxed_gromov(nx):
         np.testing.assert_allclose(log2['srgw_dist'], logb['srgw_dist'], atol=1e-07)
         np.testing.assert_allclose(logb2['srgw_dist'], log['srgw_dist'], atol=1e-07)
 
-    ## symmetric - testing various initialization of the OT plan.
+    # symmetric - testing various initialization of the OT plan.
     C1 = 0.5 * (C1 + C1.T)
     print('deg:', C1.sum(0))
 
@@ -87,9 +87,6 @@ def test_semirelaxed_gromov(nx):
             ("kmeans", "kmeans"), ("kmeans_soft", "kmeans_soft")]
 
     for (init, init_b) in init_plan_list:
-        print('------')
-        print('init:', init)
-        print('init_b:', init_b)
 
         G, log = ot.gromov.semirelaxed_gromov_wasserstein(
             C1, C2, p, loss_fun='square_loss', symmetric=None, log=True, G0=init)
@@ -103,7 +100,7 @@ def test_semirelaxed_gromov(nx):
         if not isinstance(init, str):
             np.testing.assert_allclose(list_n / ns, nx.sum(Gb, axis=0), atol=1e-02)  # cf convergence gromov
         else:
-            if not 'spectral' in init:  # issues with spectral clustering related to label switching
+            if 'spectral' not in init:  # issues with spectral clustering related to label switching
                 np.testing.assert_allclose(list_n / ns, nx.sum(Gb, axis=0), atol=1e-02)
 
     srgw, log2 = ot.gromov.semirelaxed_gromov_wasserstein2(
@@ -717,7 +714,7 @@ def test_semirelaxed_gromov_barycenter(nx):
 
     try:
         np.testing.assert_allclose(Cb2, Cb2b, atol=1e-06)  # may differ from permutation
-    except:
+    except AssertionError:
         np.testing.assert_allclose(err['loss'][-1], errb['loss'][-1], atol=1e-06)
 
     np.testing.assert_allclose(Cb2b.shape, (n_samples, n_samples))

@@ -75,9 +75,9 @@ def semirelaxed_gromov_wasserstein(
         If `G0=None` the initial transport plan of the solver is pq^T.
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
-        if G0 is a string it will be interpreted as a method for 
+        if G0 is a string it will be interpreted as a method for
         `semirelaxed_init_plan` taking values in "product", "random_product",
-        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     max_iter : int, optional
         Max number of iterations
     tol_rel : float, optional
@@ -223,9 +223,9 @@ def semirelaxed_gromov_wasserstein2(
         If `G0=None` the initial transport plan of the solver is pq^T.
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
-        if G0 is a string it will be interpreted as a method for 
+        if G0 is a string it will be interpreted as a method for
         `semirelaxed_init_plan` taking values in "product", "random_product",
-        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     max_iter : int, optional
         Max number of iterations
     tol_rel : float, optional
@@ -338,9 +338,9 @@ def semirelaxed_fused_gromov_wasserstein(
         If `G0=None` the initial transport plan of the solver is pq^T.
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
-        if G0 is a string it will be interpreted as a method for 
+        if G0 is a string it will be interpreted as a method for
         `semirelaxed_init_plan` taking values in "product", "random_product",
-        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     log : bool, optional
         record log if True
     max_iter : int, optional
@@ -493,9 +493,9 @@ def semirelaxed_fused_gromov_wasserstein2(
         If `G0=None` the initial transport plan of the solver is pq^T.
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
-        if G0 is a string it will be interpreted as a method for 
+        if G0 is a string it will be interpreted as a method for
         `semirelaxed_init_plan` taking values in "product", "random_product",
-        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     log : bool, optional
         Record log if True.
     max_iter : int, optional
@@ -708,9 +708,9 @@ def entropic_semirelaxed_gromov_wasserstein(
         If `G0=None` the initial transport plan of the solver is pq^T.
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
-        if G0 is a string it will be interpreted as a method for 
+        if G0 is a string it will be interpreted as a method for
         `semirelaxed_init_plan` taking values in "product", "random_product",
-        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -875,9 +875,9 @@ def entropic_semirelaxed_gromov_wasserstein2(
         If `G0=None` the initial transport plan of the solver is pq^T.
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
-        if G0 is a string it will be interpreted as a method for 
+        if G0 is a string it will be interpreted as a method for
         `semirelaxed_init_plan` taking values in "product", "random_product",
-        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -971,9 +971,9 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
         If `G0=None` the initial transport plan of the solver is pq^T.
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
-        if G0 is a string it will be interpreted as a method for 
+        if G0 is a string it will be interpreted as a method for
         `semirelaxed_init_plan` taking values in "product", "random_product",
-        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -1141,9 +1141,9 @@ def entropic_semirelaxed_fused_gromov_wasserstein2(
         If `G0=None` the initial transport plan of the solver is pq^T.
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
-        if G0 is a string it will be interpreted as a method for 
+        if G0 is a string it will be interpreted as a method for
         `semirelaxed_init_plan` taking values in "product", "random_product",
-        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
