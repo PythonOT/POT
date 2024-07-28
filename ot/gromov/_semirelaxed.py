@@ -20,12 +20,13 @@ from ..backend import get_backend
 from ._utils import (
     init_matrix_semirelaxed, gwloss, gwggrad,
     update_barycenter_structure, update_barycenter_feature,
-    _semirelaxed_init_plan
+    semirelaxed_init_plan
 )
 
 
-def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symmetric=None, log=False, G0=None,
-                                   max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
+def semirelaxed_gromov_wasserstein(
+        C1, C2, p=None, loss_fun='square_loss', symmetric=None, log=False, G0=None,
+        max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, random_state=0, **kwargs):
     r"""
     Returns the semi-relaxed Gromov-Wasserstein divergence transport from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}` (see [48]).
 
@@ -70,15 +71,21 @@ def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symme
         Print information along iterations
     log : bool, optional
         record log if True
-    G0: array-like, shape (ns,nt), optional
-        If None the initial transport plan of the solver is pq^T.
-        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    G0: array-like of shape (ns,nt) or string, optional
+        If `G0=None` the initial transport plan of the solver is pq^T.
+        If G0 is a tensor it must satisfy marginal constraints and will be
+        used as initial transport of the solver.
+        if G0 is a string it will be interpreted as a method for 
+        `semirelaxed_init_plan` taking values in "product", "random_product",
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
     max_iter : int, optional
         Max number of iterations
     tol_rel : float, optional
         Stop threshold on relative error (>0)
     tol_abs : float, optional
         Stop threshold on absolute error (>0)
+    random_state: int, optional
+        Random seed used in stochastic initialization methods.
     **kwargs : dict
         parameters can be directly passed to the ot.optim.cg solver
 
@@ -114,9 +121,13 @@ def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symme
 
     if symmetric is None:
         symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
+
     if G0 is None:
         q = unif(C2.shape[0], type_as=p)
         G0 = nx.outer(p, q)
+    elif isinstance(G0, str):
+        G0 = semirelaxed_init_plan(
+            C1, C2, p, method=G0, random_state=random_state, nx=nx)
     else:
         q = nx.sum(G0, 0)
         # Check first marginal of G0
@@ -156,8 +167,10 @@ def semirelaxed_gromov_wasserstein(C1, C2, p=None, loss_fun='square_loss', symme
         return semirelaxed_cg(p, q, 0., 1., f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
 
 
-def semirelaxed_gromov_wasserstein2(C1, C2, p=None, loss_fun='square_loss', symmetric=None, log=False, G0=None,
-                                    max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
+def semirelaxed_gromov_wasserstein2(
+        C1, C2, p=None, loss_fun='square_loss', symmetric=None, log=False,
+        G0=None, max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, random_state=0,
+        **kwargs):
     r"""
     Returns the semi-relaxed Gromov-Wasserstein divergence from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}` (see [48]).
 
@@ -205,15 +218,21 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p=None, loss_fun='square_loss', symm
         Print information along iterations
     log : bool, optional
         record log if True
-    G0: array-like, shape (ns,nt), optional
-        If None the initial transport plan of the solver is pq^T.
-        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    G0: array-like of shape (ns,nt) or string, optional
+        If `G0=None` the initial transport plan of the solver is pq^T.
+        If G0 is a tensor it must satisfy marginal constraints and will be
+        used as initial transport of the solver.
+        if G0 is a string it will be interpreted as a method for 
+        `semirelaxed_init_plan` taking values in "product", "random_product",
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
     max_iter : int, optional
         Max number of iterations
     tol_rel : float, optional
         Stop threshold on relative error (>0)
     tol_abs : float, optional
         Stop threshold on absolute error (>0)
+    random_state: int, optional
+        Random seed used in stochastic initialization methods.
     **kwargs : dict
         parameters can be directly passed to the ot.optim.cg solver
 
@@ -244,7 +263,8 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p=None, loss_fun='square_loss', symm
 
     T, log_srgw = semirelaxed_gromov_wasserstein(
         C1, C2, p, loss_fun, symmetric, log=True, G0=G0,
-        max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs, **kwargs)
+        max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs,
+        random_state=random_state, **kwargs)
 
     q = nx.sum(T, 0)
     log_srgw['T'] = T
@@ -268,7 +288,8 @@ def semirelaxed_gromov_wasserstein2(C1, C2, p=None, loss_fun='square_loss', symm
 
 def semirelaxed_fused_gromov_wasserstein(
         M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, alpha=0.5,
-        G0=None, log=False, max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
+        G0=None, log=False, max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9,
+        random_state=0, **kwargs):
     r"""
     Computes the semi-relaxed Fused Gromov-Wasserstein transport between two graphs (see [48]).
 
@@ -312,9 +333,13 @@ def semirelaxed_fused_gromov_wasserstein(
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     alpha : float, optional
         Trade-off parameter (0 < alpha < 1)
-    G0: array-like, shape (ns,nt), optional
-        If None the initial transport plan of the solver is pq^T.
-        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    G0: array-like of shape (ns,nt) or string, optional
+        If `G0=None` the initial transport plan of the solver is pq^T.
+        If G0 is a tensor it must satisfy marginal constraints and will be
+        used as initial transport of the solver.
+        if G0 is a string it will be interpreted as a method for 
+        `semirelaxed_init_plan` taking values in "product", "random_product",
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
     log : bool, optional
         record log if True
     max_iter : int, optional
@@ -323,6 +348,8 @@ def semirelaxed_fused_gromov_wasserstein(
         Stop threshold on relative error (>0)
     tol_abs : float, optional
         Stop threshold on absolute error (>0)
+    random_state: int, optional
+        Random seed used in stochastic initialization methods.
     **kwargs : dict
         parameters can be directly passed to the ot.optim.cg solver
 
@@ -367,6 +394,9 @@ def semirelaxed_fused_gromov_wasserstein(
     if G0 is None:
         q = unif(C2.shape[0], type_as=p)
         G0 = nx.outer(p, q)
+    elif isinstance(G0, str):
+        G0 = semirelaxed_init_plan(
+            C1, C2, p, M, alpha, G0, random_state, nx)
     else:
         q = nx.sum(G0, 0)
         # Check first marginal of G0
@@ -407,8 +437,10 @@ def semirelaxed_fused_gromov_wasserstein(
         return semirelaxed_cg(p, q, (1 - alpha) * M, alpha, f, df, G0, line_search, log=False, numItermax=max_iter, stopThr=tol_rel, stopThr2=tol_abs, **kwargs)
 
 
-def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, alpha=0.5, G0=None, log=False,
-                                          max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9, **kwargs):
+def semirelaxed_fused_gromov_wasserstein2(
+        M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, alpha=0.5,
+        G0=None, log=False, max_iter=1e4, tol_rel=1e-9, tol_abs=1e-9,
+        random_state=0, **kwargs):
     r"""
     Computes the semi-relaxed FGW divergence between two graphs (see [48]).
 
@@ -455,9 +487,13 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p=None, loss_fun='square_lo
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
     alpha : float, optional
         Trade-off parameter (0 < alpha < 1)
-    G0: array-like, shape (ns,nt), optional
-        If None the initial transport plan of the solver is pq^T.
-        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    G0: array-like of shape (ns,nt) or string, optional
+        If `G0=None` the initial transport plan of the solver is pq^T.
+        If G0 is a tensor it must satisfy marginal constraints and will be
+        used as initial transport of the solver.
+        if G0 is a string it will be interpreted as a method for 
+        `semirelaxed_init_plan` taking values in "product", "random_product",
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
     log : bool, optional
         Record log if True.
     max_iter : int, optional
@@ -466,6 +502,8 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p=None, loss_fun='square_lo
         Stop threshold on relative error (>0)
     tol_abs : float, optional
         Stop threshold on absolute error (>0)
+    random_state: int, optional
+        Random seed used in stochastic initialization methods.
     **kwargs : dict
         Parameters can be directly passed to the ot.optim.cg solver.
 
@@ -502,7 +540,8 @@ def semirelaxed_fused_gromov_wasserstein2(M, C1, C2, p=None, loss_fun='square_lo
 
     T, log_fgw = semirelaxed_fused_gromov_wasserstein(
         M, C1, C2, p, loss_fun, symmetric, alpha, G0, log=True,
-        max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs, **kwargs)
+        max_iter=max_iter, tol_rel=tol_rel, tol_abs=tol_abs,
+        random_state=random_state, **kwargs)
     q = nx.sum(T, 0)
     srfgw_dist = log_fgw['srfgw_dist']
     log_fgw['T'] = T
@@ -616,7 +655,8 @@ def solve_semirelaxed_gromov_linesearch(G, deltaG, cost_G, C1, C2, ones_p,
 
 def entropic_semirelaxed_gromov_wasserstein(
         C1, C2, p=None, loss_fun='square_loss', epsilon=0.1, symmetric=None,
-        G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
+        G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False,
+        random_state=0):
     r"""
     Returns the entropic-regularized semi-relaxed gromov-wasserstein divergence
     transport plan from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
@@ -662,9 +702,13 @@ def entropic_semirelaxed_gromov_wasserstein(
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
     verbose : bool, optional
         Print information along iterations
-    G0: array-like, shape (ns,nt), optional
-        If None the initial transport plan of the solver is pq^T.
-        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    G0: array-like of shape (ns,nt) or string, optional
+        If `G0=None` the initial transport plan of the solver is pq^T.
+        If G0 is a tensor it must satisfy marginal constraints and will be
+        used as initial transport of the solver.
+        if G0 is a string it will be interpreted as a method for 
+        `semirelaxed_init_plan` taking values in "product", "random_product",
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -673,6 +717,9 @@ def entropic_semirelaxed_gromov_wasserstein(
         record log if True
     verbose : bool, optional
         Print information along iterations
+    random_state: int, optional
+        Random seed used in stochastic initialization methods.
+
     Returns
     -------
     G : array-like, shape (`ns`, `nt`)
@@ -701,9 +748,13 @@ def entropic_semirelaxed_gromov_wasserstein(
 
     if symmetric is None:
         symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
+
     if G0 is None:
         q = unif(C2.shape[0], type_as=p)
         G0 = nx.outer(p, q)
+    elif isinstance(G0, str):
+        G0 = semirelaxed_init_plan(
+            C1, C2, p, method=G0, random_state=random_state, nx=nx)
     else:
         q = nx.sum(G0, 0)
         # Check first marginal of G0
@@ -768,7 +819,8 @@ def entropic_semirelaxed_gromov_wasserstein(
 
 def entropic_semirelaxed_gromov_wasserstein2(
         C1, C2, p=None, loss_fun='square_loss', epsilon=0.1, symmetric=None,
-        G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
+        G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False,
+        random_state=0, **kwargs):
     r"""
     Returns the entropic-regularized semi-relaxed gromov-wasserstein divergence
     from :math:`(\mathbf{C_1}, \mathbf{p})` to :math:`\mathbf{C_2}`
@@ -816,9 +868,13 @@ def entropic_semirelaxed_gromov_wasserstein2(
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
     verbose : bool, optional
         Print information along iterations
-    G0: array-like, shape (ns,nt), optional
-        If None the initial transport plan of the solver is pq^T.
-        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    G0: array-like of shape (ns,nt) or string, optional
+        If `G0=None` the initial transport plan of the solver is pq^T.
+        If G0 is a tensor it must satisfy marginal constraints and will be
+        used as initial transport of the solver.
+        if G0 is a string it will be interpreted as a method for 
+        `semirelaxed_init_plan` taking values in "product", "random_product",
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -827,8 +883,8 @@ def entropic_semirelaxed_gromov_wasserstein2(
         record log if True
     verbose : bool, optional
         Print information along iterations
-    **kwargs : dict
-        parameters can be directly passed to the ot.optim.cg solver
+    random_state: int, optional
+        Random seed used in stochastic initialization methods.
 
     Returns
     -------
@@ -845,8 +901,8 @@ def entropic_semirelaxed_gromov_wasserstein2(
             International Conference on Learning Representations (ICLR), 2022.
     """
     T, log_srgw = entropic_semirelaxed_gromov_wasserstein(
-        C1, C2, p, loss_fun, epsilon, symmetric, G0,
-        max_iter, tol, log=True, verbose=verbose, **kwargs)
+        C1, C2, p, loss_fun, epsilon, symmetric, G0, max_iter, tol,
+        log=True, verbose=verbose, random_state=random_state)
 
     log_srgw['T'] = T
 
@@ -858,7 +914,8 @@ def entropic_semirelaxed_gromov_wasserstein2(
 
 def entropic_semirelaxed_fused_gromov_wasserstein(
         M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, epsilon=0.1,
-        alpha=0.5, G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
+        alpha=0.5, G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False,
+        random_state=0):
     r"""
     Computes the entropic-regularized semi-relaxed FGW transport between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
     estimated using a Mirror Descent algorithm following the KL geometry.
@@ -907,9 +964,13 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
     alpha : float, optional
         Trade-off parameter (0 < alpha < 1)
-    G0: array-like, shape (ns,nt), optional
-        If None the initial transport plan of the solver is pq^T.
-        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    G0: array-like of shape (ns,nt) or string, optional
+        If `G0=None` the initial transport plan of the solver is pq^T.
+        If G0 is a tensor it must satisfy marginal constraints and will be
+        used as initial transport of the solver.
+        if G0 is a string it will be interpreted as a method for 
+        `semirelaxed_init_plan` taking values in "product", "random_product",
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -918,8 +979,8 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
         record log if True
     verbose : bool, optional
         Print information along iterations
-    **kwargs : dict
-        parameters can be directly passed to the ot.optim.cg solver
+    random_state: int, optional
+        Random seed used in stochastic initialization methods.
 
     Returns
     -------
@@ -949,9 +1010,13 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
 
     if symmetric is None:
         symmetric = nx.allclose(C1, C1.T, atol=1e-10) and nx.allclose(C2, C2.T, atol=1e-10)
+
     if G0 is None:
         q = unif(C2.shape[0], type_as=p)
         G0 = nx.outer(p, q)
+    elif isinstance(G0, str):
+        G0 = semirelaxed_init_plan(
+            C1, C2, p, M, alpha, G0, random_state, nx)
     else:
         q = nx.sum(G0, 0)
         # Check first marginal of G0
@@ -1018,7 +1083,8 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
 
 def entropic_semirelaxed_fused_gromov_wasserstein2(
         M, C1, C2, p=None, loss_fun='square_loss', symmetric=None, epsilon=0.1,
-        alpha=0.5, G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False, **kwargs):
+        alpha=0.5, G0=None, max_iter=1e4, tol=1e-9, log=False, verbose=False,
+        random_state=0):
     r"""
     Computes the entropic-regularized semi-relaxed FGW divergence between two graphs (see :ref:`[48] <references-semirelaxed-fused-gromov-wasserstein>`)
     estimated using a Mirror Descent algorithm following the KL geometry.
@@ -1067,9 +1133,13 @@ def entropic_semirelaxed_fused_gromov_wasserstein2(
         Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymetric).
     alpha : float, optional
         Trade-off parameter (0 < alpha < 1)
-    G0: array-like, shape (ns,nt), optional
-        If None the initial transport plan of the solver is pq^T.
-        Otherwise G0 must satisfy marginal constraints and will be used as initial transport of the solver.
+    G0: array-like of shape (ns,nt) or string, optional
+        If `G0=None` the initial transport plan of the solver is pq^T.
+        If G0 is a tensor it must satisfy marginal constraints and will be
+        used as initial transport of the solver.
+        if G0 is a string it will be interpreted as a method for 
+        `semirelaxed_init_plan` taking values in "product", "random_product",
+        "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".        
     max_iter : int, optional
         Max number of iterations
     tol : float, optional
@@ -1078,8 +1148,8 @@ def entropic_semirelaxed_fused_gromov_wasserstein2(
         record log if True
     verbose : bool, optional
         Print information along iterations
-    **kwargs : dict
-        Parameters can be directly passed to the ot.optim.cg solver.
+    random_state: int, optional
+        Random seed used in stochastic initialization methods.
 
     Returns
     -------
@@ -1097,8 +1167,8 @@ def entropic_semirelaxed_fused_gromov_wasserstein2(
             International Conference on Learning Representations (ICLR), 2022.
     """
     T, log_srfgw = entropic_semirelaxed_fused_gromov_wasserstein(
-        M, C1, C2, p, loss_fun, symmetric, epsilon, alpha, G0,
-        max_iter, tol, log=True, verbose=verbose, **kwargs)
+        M, C1, C2, p, loss_fun, symmetric, epsilon, alpha, G0, max_iter, tol,
+        log=True, verbose=verbose, random_state=random_state)
 
     log_srfgw['T'] = T
 

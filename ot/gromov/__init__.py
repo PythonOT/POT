@@ -11,9 +11,8 @@ Solvers related to Gromov-Wasserstein problems.
 
 # All submodules and packages
 from ._utils import (init_matrix, tensor_product, gwloss, gwggrad,
-                     init_matrix_semirelaxed,
-                     update_barycenter_structure, update_barycenter_feature,
-                     )
+                     init_matrix_semirelaxed, semirelaxed_init_plan,
+                     update_barycenter_structure, update_barycenter_feature)
 
 from ._gw import (gromov_wasserstein, gromov_wasserstein2,
                   fused_gromov_wasserstein, fused_gromov_wasserstein2,
@@ -65,7 +64,7 @@ from ._quantized import (quantized_fused_gromov_wasserstein_partitioned,
                          )
 
 __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad',
-           'init_matrix_semirelaxed',
+           'init_matrix_semirelaxed', 'semirelaxed_init_plan',
            'update_barycenter_structure', 'update_barycenter_feature',
            'gromov_wasserstein', 'gromov_wasserstein2', 'fused_gromov_wasserstein',
            'fused_gromov_wasserstein2', 'solve_gromov_linesearch', 'gromov_barycenters',

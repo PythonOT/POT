@@ -17,7 +17,7 @@ from ..backend import get_backend
 from .lp import emd
 
 try:
-    from networkx.algorithms.community import asyn_fluidc   
+    from networkx.algorithms.community import asyn_fluidc
     from networkx import from_numpy_array
     networkx_import = True
 except ImportError:
@@ -388,6 +388,178 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
     return constC, hC1, hC2, fC2t
 
 
+def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1.,
+                          method='product', random_state=0, nx=None):
+    """
+    Heuristics to initialize the semi-relaxed (F)GW transport plan between a
+    graph :math:`(\mathbf{C1}, \mathbf{p})` and a structure matrix :math:`\mathbf{C2}`.
+
+
+    Parameters
+    ----------
+    C1 : array-like, shape (ns, ns)
+        Metric cost matrix in the source space.
+    C2 : array-like, shape (nt, nt)
+        Metric cost matrix in the target space.
+    p : array-like, shape (ns,)
+        Probability distribution in the source space.
+    M : array-like, shape (ns, nt)
+        Metric cost matrix between features across domains
+    alpha : float, optional
+        Trade-off parameter (0 <= alpha <= 1)
+    method : str, optional
+        Method to initialize the transport plan. The default is 'product'.
+    random_state: int, optional
+        Random seed used for stochastic methods.
+    nx : backend, optional
+        POT backend.
+
+    Returns
+    -------
+    T : array-like, shape (ns, ns)
+        Admissible transport plan for the sr(F)GW problems.
+
+    References
+    ----------
+    .. [48]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+            International Conference on Learning Representations (ICLR), 2022.
+
+    """
+    list_partitioning_methods = [
+        'fluid', 'spectral', 'kmeans', 'fluid_soft', 'spectral_soft',
+        'kmeans_soft']
+
+    if method not in list_partitioning_methods + ['product', 'random_product']:
+        raise ValueError(f'Unsupported initialization method = {method}.')
+
+    if nx is None:
+        arr = [C1, C2, p]
+        if M is not None:
+            arr += arr
+        nx = get_backend(*arr)
+
+    n = C1.shape[0]
+    m = C2.shape[0]
+    if method in list_partitioning_methods:
+        min_size = min(n, m)
+        if n > m:  # partition C1 to deduce map from C1 to C2
+            C_to_partition = nx.to_numpy(C1)
+        elif m > n:  # partition C2 to deduce map from C1 to C2
+            C_to_partition = nx.to_numpy(C2)
+        else:  # equal size -> simple Wasserstein alignment
+            C_to_partition = None
+            warnings.warn(
+                "Both structures have the same size so no partitioning is"
+                "performed to initialize the transport plan even though"
+                f"initialization method is {method}",
+                stacklevel=2
+            )
+
+        def get_transport_from_partition(part):
+            if n > m:  # partition C1 to deduce map from C1 to C2
+                T_ = nx.zeros((n, m))
+                T_[nx.arange(n), part] = 1.
+                T_ = p[:, None] * T_
+                q = nx.sum(T_, 0)
+
+                factored_C1 = nx.dot(nx.dot(T_.T, C1), T_) / nx.outer(q, q)
+
+                # alignment of both structure seen as feature matrices
+                M_structure = euclidean_distances(factored_C1, C2)
+                T_emd = emd(q, q, M_structure)
+                inv_q = 1. / q
+
+                T = nx.dot(T_, inv_q[:, None] * T_emd)
+            elif m > n:
+                T_ = nx.zeros((m, n))
+                T_[nx.arange(m), part] = 1. / m  # assume uniform masses on C2
+                q = nx.sum(T_, 0)
+
+                factored_C2 = nx.dot(nx.dot(T_.T, C2), T_) / nx.outer(q, q)
+
+                # alignment of both structure seen as feature matrices
+                M_structure = euclidean_distances(factored_C2, C1)
+                T_emd = emd(q, p, M_structure)
+                inv_q = 1. / q
+
+                T = nx.dot(T_, inv_q[:, None] * T_emd).T
+                q = nx.sum(T, 0)  # uniform one
+            else:
+                # alignment of both structure seen as feature matrices
+                M_structure = euclidean_distances(C1, C2)
+                q = p
+                T = emd(p, q, M_structure)
+
+                return T, q
+
+    # Handle initialization via structure information
+
+    if method == 'product':
+        q = nx.ones(m, type_as=C2)
+        T = nx.outer(p, q)
+
+    elif method == 'random_product':
+        q = np.random.uniform(0, m, size=(m,))
+        q = q / q.sum()
+        q = nx.from_numpy(q)
+        T = nx.outer(p, q)
+
+    elif method in ['fluid', 'fluid_soft']:
+        # compute fluid partitioning on the biggest graph
+        if C_to_partition is None:
+            T, q = get_transport_from_partition(None)
+        else:
+            graph = from_numpy_array(C_to_partition)
+            part_sets = asyn_fluidc(graph, min_size, seed=random_state)
+            part = nx.zeros(C_to_partition)
+            for iset_, set_ in enumerate(part_sets):
+                set_ = list(set_)
+                part[set_] = iset_
+            T, q = get_transport_from_partition(part)
+
+        if 'soft' in method:
+            T = (T + nx.outer(p, q)) / 2.
+
+    elif method in ['spectral', 'spectral_soft']:
+        # compute spectral partitioning on the biggest graph
+        if C_to_partition is None:
+            T, q = get_transport_from_partition(None)
+        else:
+            sc = SpectralClustering(n_clusters=min_size,
+                                    random_state=random_state,
+                                    affinity='precomputed').fit(C_to_partition)
+            part = sc.labels_
+            T, q = get_transport_from_partition(part)
+
+        if 'soft' in method:
+            T = (T + nx.outer(p, q)) / 2.
+
+    elif method in ['kmeans', 'kmeans_soft']:
+        # compute spectral partitioning on the biggest graph
+        if C_to_partition is None:
+            T, q = get_transport_from_partition(None)
+        else:
+            km = KMeans(n_clusters=min_size, random_state=random_state,
+                        n_init=1).fit(C_to_partition)
+
+            part = km.labels_
+            T, q = get_transport_from_partition(part)
+
+        if 'soft' in method:
+            T = (T + nx.outer(p, q)) / 2.
+
+    # Add feature information solving a semi-relaxed Wasserstein problem
+    if M is not None:
+        # get minimum by rows as binary mask
+        TM = nx.ones(1, type_as=p) * (M == nx.reshape(nx.min(M, axis=1), (-1, 1)))
+        TM *= nx.reshape((p / nx.sum(TM, axis=1)), (-1, 1))
+
+        T = alpha * T + (1 - alpha) * TM
+
+    return T
+
+
 def update_barycenter_structure(
         Ts, Cs, lambdas, p=None, loss_fun='square_loss', target=True,
         check_zeros=True, nx=None):
@@ -593,159 +765,3 @@ def update_barycenter_feature(
             inv_p = 1. / p_sum
 
     return sum(list_features) * inv_p[:, None]
-
-
-def _semirelaxed_init_plan(C1, C2, p, method='product', random_state=0, nx=None):
-    """
-    Heuristics to initialize the semi-relaxed (F)GW transport plan between a
-    graph :math:`(\mathbf{C1}, \mathbf{p})` and a structure matrix :math:`\mathbf{C2}`.
-    
-                  
-    Parameters
-    ----------
-    C1 : array-like, shape (ns, ns)
-        Metric cost matrix in the source space.
-    C2 : array-like, shape (nt, nt)
-        Metric cost matrix in the target space.
-    p : array-like, shape (ns,)
-        Probability distribution in the source space.
-    method : str, optional
-        Method to initialize the transport plan. The default is 'product'.
-    random_state: int, optional
-        Random seed used for stochastic methods.
-    nx : backend, optional
-        POT backend.
-
-    Returns
-    -------
-    T : array-like, shape (ns, ns)
-        Admissible transport plan for the sr(F)GW problems.
-        
-    References
-    ----------
-    .. [48]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
-            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
-            International Conference on Learning Representations (ICLR), 2022.
-
-    """
-    list_partitioning_methods = [
-        'fluid', 'spectral', 'kmeans', 'fluid_soft', 'spectral_soft',
-        'kmeans_soft']
-    
-    if method not in list_partitioning_methods + ['product', 'random_product']:
-        raise ValueError(f'Unsupported initialization method = {method}.')
-        
-    if nx is None:
-        C1, C2, p = list_to_array(C1, C2, p)
-        nx = get_backend(C1, C2, p)
-    
-    n = C1.shape[0]
-    m = C2.shape[0]
-    if method in list_partitioning_methods:
-        min_size = min(n, m)
-        if n > m: # partition C1 to deduce map from C1 to C2
-            C_to_partition = nx.to_numpy(C1)
-        elif m > n: # partition C2 to deduce map from C1 to C2
-            C_to_partition = nx.to_numpy(C2)
-        else: # equal size -> simple Wasserstein alignment
-            C_to_partition = None
-            warnings.warn(
-                "Both structures have the same size so no partitioning is"
-                "performed to initialize the transport plan even though"
-                f"initialization method is {method}",
-                stacklevel=2
-            )
-
-        
-        def get_transport_from_partition(part):
-            if n > m: # partition C1 to deduce map from C1 to C2
-                T_ = nx.zeros((n, m))
-                T_[nx.arange(n), part] = 1.
-                T_ = p[:, None] * T_
-                q = nx.sum(T_, 0)
-                
-                factored_C1 = nx.dot(nx.dot(T_.T, C1), T_) / nx.outer(q, q)
-                
-                # alignment of both structure seen as feature matrices
-                M_structure = euclidean_distances(factored_C1, C2)
-                T_emd = emd(q, q, M_structure)
-                inv_q = 1. / q
-                
-                T = nx.dot(T_, inv_q[:, None] * T_emd)
-            elif m > n:
-                T_ = nx.zeros((m, n))
-                T_[nx.arange(m), part] = 1. / m # assume uniform masses on C2
-                q = nx.sum(T_, 0)
-                
-                factored_C2 = nx.dot(nx.dot(T_.T, C2), T_) / nx.outer(q, q)
-                
-                # alignment of both structure seen as feature matrices
-                M_structure = euclidean_distances(factored_C2, C1)
-                T_emd = emd(q, p, M_structure)
-                inv_q = 1. / q
-                
-                T = nx.dot(T_, inv_q[:, None] * T_emd).T
-                q = nx.sum(T, 0) # uniform one
-            else:
-                # alignment of both structure seen as feature matrices
-                M_structure = euclidean_distances(C1, C2)
-                q = p
-                T = emd(p, q, M_structure)
-                
-                return T, q
-        
-    if method == 'product':
-        q = nx.ones(m, type_as=C2)
-        T = nx.outer(p, q)
-        
-    elif method == 'random_product':
-        q = np.random.uniform(0, m, size=(m,))
-        q = q / q.sum()
-        q = nx.from_numpy(q)
-        T = nx.outer(p, q)
-    
-    elif method in ['fluid', 'fluid_soft']:
-        # compute fluid partitioning on the biggest graph
-        if C_to_partition is None:
-            T, q = get_transport_from_partition(None)
-        else:
-            graph = from_numpy_array(C_to_partition)
-            part_sets = asyn_fluidc(graph, min_size, seed=random_state)
-            part = nx.zeros(C_to_partition)
-            for iset_, set_ in enumerate(part_sets):
-                set_ = list(set_)
-                part[set_] = iset_
-            T, q = get_transport_from_partition(part)
-        
-        if 'soft' in method:
-            T = (T + nx.outer(p, q)) / 2.
-    
-    elif method in ['spectral', 'spectral_soft']:
-        # compute spectral partitioning on the biggest graph
-        if C_to_partition is None:
-            T, q = get_transport_from_partition(None)
-        else:
-            sc = SpectralClustering(n_clusters=min_size,
-                                    random_state=random_state,
-                                    affinity='precomputed').fit(C_to_partition)
-            part = sc.labels_
-            T, q = get_transport_from_partition(part)
-        
-        if 'soft' in method:
-            T = (T + nx.outer(p, q)) / 2.
-    
-    elif method in ['kmeans', 'kmeans_soft']:
-        # compute spectral partitioning on the biggest graph
-        if C_to_partition is None:
-            T, q = get_transport_from_partition(None)
-        else:
-            km = KMeans(n_clusters=min_size, random_state=random_state,
-                        n_init=1).fit(C_to_partition)
-                               
-            part = km.labels_
-            T, q = get_transport_from_partition(part)
-            
-        if 'soft' in method:
-            T = (T + nx.outer(p, q)) / 2.
-
-    return T
