@@ -12,7 +12,7 @@ import numpy as np
 
 
 from ..utils import (
-    list_to_array, unif, dist, UndefinedParameter, check_random_state
+    list_to_array, unif, dist, UndefinedParameter
 )
 from ..optim import semirelaxed_cg, solve_1d_linesearch_quad
 from ..backend import get_backend
@@ -405,7 +405,7 @@ def semirelaxed_fused_gromov_wasserstein(
         G0 = nx.outer(p, q)
     elif isinstance(G0, str):
         G0 = semirelaxed_init_plan(
-            C1, C2, p, M, alpha, G0, random_state, nx)
+            C1, C2, p, M, alpha, G0, random_state=random_state, nx=nx)
         q = nx.sum(G0, 0)
     else:
         q = nx.sum(G0, 0)
@@ -1027,7 +1027,7 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
         G0 = nx.outer(p, q)
     elif isinstance(G0, str):
         G0 = semirelaxed_init_plan(
-            C1, C2, p, M, alpha, G0, random_state, nx)
+            C1, C2, p, M, alpha, G0, random_state=random_state, nx=nx)
         q = nx.sum(G0, 0)
     else:
         q = nx.sum(G0, 0)
@@ -1285,7 +1285,8 @@ def semirelaxed_gromov_barycenters(
     if lambdas is None:
         lambdas = nx.ones(S) / S
     else:
-        lambdas = list_to_array(lambdas, nx)
+        lambdas = list_to_array(lambdas)
+        lambdas = nx.from_numpy(lambdas)
 
     # Initialization of transport plans and C (if not provided by user)
     if init_C is None:
@@ -1294,7 +1295,7 @@ def semirelaxed_gromov_barycenters(
             T = [semirelaxed_init_plan(
                 Cs[i], init_C, ps[i], method=G0, use_target=False,
                 random_state=random_state, nx=nx) for i in range(S)]
-            init_C = update_barycenter_structure(
+            C = update_barycenter_structure(
                 T, Cs, lambdas, loss_fun=loss_fun, nx=nx)
 
         else:  # relies on partitioning of inputs
@@ -1514,9 +1515,8 @@ def semirelaxed_fgw_barycenters(
     if lambdas is None:
         lambdas = nx.ones(S) / S
     else:
-        lambdas = list_to_array(lambdas, nx)
-
-    d = Ys[0].shape[1]  # dimension on the node features
+        lambdas = list_to_array(lambdas)
+        lambdas = nx.from_numpy(lambdas)
 
     if fixed_structure:
         if init_C is None:
@@ -1545,12 +1545,16 @@ def semirelaxed_fgw_barycenters(
                 random_state=random_state, nx=nx) for i in range(S)]
 
         if init_C is None:
-            init_C = update_barycenter_structure(
+            C = update_barycenter_structure(
                 T, Cs, lambdas, loss_fun=loss_fun, nx=nx)
-        if init_X is None:
-            init_X = update_barycenter_feature(
-                T, Ys, lambdas, loss_fun=loss_fun, nx=nx)
+        else:
+            C = init_C
 
+        if init_X is None:
+            X = update_barycenter_feature(
+                T, Ys, lambdas, loss_fun=loss_fun, nx=nx)
+        else:
+            X = init_X
     else:
         # more computationally costly inits could be used on structures
         # so we assume affordable a Kmeans-like init for features

@@ -399,7 +399,7 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
     ----------
     C1 : array-like, shape (ns, ns)
         Metric cost matrix in the source space.
-    C2 : array-like, shape (nt, nt) 
+    C2 : array-like, shape (nt, nt)
         Metric cost matrix in the target space.
     p : array-like, shape (ns,), optional.
         Probability distribution in the source space. If let to None, uniform
