@@ -388,8 +388,8 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
     return constC, hC1, hC2, fC2t
 
 
-def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1.,
-                          method='product', random_state=0, nx=None):
+def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
+                          use_target=True, random_state=0, nx=None):
     """
     Heuristics to initialize the semi-relaxed (F)GW transport plan between a
     graph :math:`(\mathbf{C1}, \mathbf{p})` and a structure matrix :math:`\mathbf{C2}`.
@@ -399,16 +399,20 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1.,
     ----------
     C1 : array-like, shape (ns, ns)
         Metric cost matrix in the source space.
-    C2 : array-like, shape (nt, nt)
+    C2 : array-like, shape (nt, nt) 
         Metric cost matrix in the target space.
-    p : array-like, shape (ns,)
-        Probability distribution in the source space.
-    M : array-like, shape (ns, nt)
-        Metric cost matrix between features across domains
+    p : array-like, shape (ns,), optional.
+        Probability distribution in the source space. If let to None, uniform
+        weights are assumed on C1.
+    M : array-like, shape (ns, nt), optional.
+        Metric cost matrix between features across domains.
     alpha : float, optional
         Trade-off parameter (0 <= alpha <= 1)
     method : str, optional
         Method to initialize the transport plan. The default is 'product'.
+    use_target : bool, optional.
+        Whether or not to use the target structure/features to further align
+        transport plan provided by the `method`.
     random_state: int, optional
         Random seed used for stochastic methods.
     nx : backend, optional
@@ -436,14 +440,15 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1.,
     if nx is None:
         arr = [C1, C2, p]
         if M is not None:
-            arr += arr
+            arr.append(M)
+
         nx = get_backend(*arr)
 
     n = C1.shape[0]
     m = C2.shape[0]
+    min_size = min(n, m)
 
     if method in list_partitioning_methods:
-        min_size = min(n, m)
         if n > m:  # partition C1 to deduce map from C1 to C2
             C_to_partition = nx.to_numpy(C1)
         elif m > n:  # partition C2 to deduce map from C1 to C2
@@ -466,11 +471,15 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1.,
                 factored_C1 = nx.dot(nx.dot(T_.T, C1), T_) / nx.outer(q, q)
 
                 # alignment of both structure seen as feature matrices
-                M_structure = euclidean_distances(factored_C1, C2)
-                T_emd = emd(q, q, M_structure)
-                inv_q = 1. / q
+                if use_target:
+                    M_structure = euclidean_distances(factored_C1, C2)
+                    T_emd = emd(q, q, M_structure)
+                    inv_q = 1. / q
 
-                T = nx.dot(T_, inv_q[:, None] * T_emd)
+                    T = nx.dot(T_, inv_q[:, None] * T_emd)
+                else:
+                    T = T_
+
             elif m > n:
                 T_ = nx.eye(n, type_as=C1)[part] / m  # assume uniform masses on C2
                 q = nx.sum(T_, 0)
@@ -551,8 +560,8 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1.,
         if 'soft' in method:
             T = (T + nx.outer(p, q)) / 2.
 
-    # Add feature information solving a semi-relaxed Wasserstein problem
-    if M is not None:
+    if (M is not None):
+        # Add feature information solving a semi-relaxed Wasserstein problem
         # get minimum by rows as binary mask
         TM = nx.ones(1, type_as=p) * (M == nx.reshape(nx.min(M, axis=1), (-1, 1)))
         TM *= nx.reshape((p / nx.sum(TM, axis=1)), (-1, 1))

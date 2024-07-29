@@ -20,8 +20,16 @@ from ..backend import get_backend
 from ._utils import (
     init_matrix_semirelaxed, gwloss, gwggrad,
     update_barycenter_structure, update_barycenter_feature,
-    semirelaxed_init_plan
+    semirelaxed_init_plan,
 )
+
+try:
+    from sklearn.cluster import KMeans
+    sklearn_import = True
+except ImportError:
+    sklearn_import = False
+
+import warnings
 
 
 def semirelaxed_gromov_wasserstein(
@@ -1186,7 +1194,7 @@ def semirelaxed_gromov_barycenters(
         N, Cs, ps=None, lambdas=None, loss_fun='square_loss',
         symmetric=True, max_iter=1000, tol=1e-9,
         stop_criterion='barycenter', warmstartT=False, verbose=False,
-        log=False, init_C=None, random_state=None, **kwargs):
+        log=False, init_C=None, G0='product', random_state=None, **kwargs):
     r"""
     Returns the Semi-relaxed Gromov-Wasserstein barycenters of `S` measured similarity matrices
     :math:`(\mathbf{C}_s)_{1 \leq s \leq S}`
@@ -1211,7 +1219,7 @@ def semirelaxed_gromov_barycenters(
     ps : list of S array-like of shape (ns,), optional
         Sample weights in the `S` spaces.
         If let to its default value None, uniform distributions are taken.
-    lambdas : list of float, optional
+    lambdas : array-like of shape (S,) , optional
         List of the `S` spaces' weights.
         If let to its default value None, uniform weights are taken.
     loss_fun : callable, optional
@@ -1234,8 +1242,13 @@ def semirelaxed_gromov_barycenters(
         Print information along iterations.
     log : bool, optional
         Record log if True.
-    init_C : bool | array-like, shape(N,N)
+    init_C : array-like of shape (N,N), optional.
         Random initial value for the :math:`\mathbf{C}` matrix provided by user.
+        Default is None and relies `G0` to produce an initial structure.
+    G0: str, optional. Default is 'product'.
+        Initialization method following heuristics developed in `semirelaxed_init_plan`.
+        Methods based on the clustering of inputs are used to deduce an initial
+        barycenter structure if `init_C=None`.
     random_state : int or RandomState instance, optional
         Fix the seed for reproducibility
 
@@ -1270,20 +1283,52 @@ def semirelaxed_gromov_barycenters(
 
     S = len(Cs)
     if lambdas is None:
-        lambdas = [1. / S] * S
+        lambdas = nx.ones(S) / S
+    else:
+        lambdas = list_to_array(lambdas, nx)
 
-    # Initialization of C : random SPD matrix (if not provided by user)
+    # Initialization of transport plans and C (if not provided by user)
     if init_C is None:
-        rng = check_random_state(random_state)
-        xalea = rng.randn(N, 2)
-        C = dist(xalea, xalea)
-        C /= C.max()
-        C = nx.from_numpy(C, type_as=Cs[0])
+        init_C = nx.zeros((N, N), type_as=Cs[0])
+        if G0 in ['product', 'random_product']:
+            T = [semirelaxed_init_plan(
+                Cs[i], init_C, ps[i], method=G0, use_target=False,
+                random_state=random_state, nx=nx) for i in range(S)]
+            init_C = update_barycenter_structure(
+                T, Cs, lambdas, loss_fun=loss_fun, nx=nx)
+
+        else:  # relies on partitioning of inputs
+            shapes = np.array([C.shape[0] for C in Cs])
+            large_graphs_idx = np.where(shapes > N)[0]
+            small_graphs_idx = np.where(shapes <= N)
+            T = []
+            list_init_C = []  # store different barycenter structure to average
+
+            # we first compute an initial informative barycenter structure
+            # on graphs we can compress
+            # then use it on graphs to expand
+            for indices in [large_graphs_idx, small_graphs_idx]:
+                if indices.shape[0] > 0:
+                    sub_T = [semirelaxed_init_plan(
+                        Cs[i], init_C, ps[i], method=G0, use_target=False,
+                        random_state=random_state, nx=nx) for i in indices]
+                    sub_Cs = [Cs[i] for i in indices]
+                    sub_lambdas = lambdas[indices]
+
+                    init_C = update_barycenter_structure(
+                        sub_T, sub_Cs, sub_lambdas, loss_fun=loss_fun, nx=nx)
+                    T += sub_T
+                    list_init_C.append(init_C)
+
+            if len(list_init_C) == 2:
+                init_C = update_barycenter_structure(
+                    T, Cs, lambdas, loss_fun=loss_fun, nx=nx)
+            C = init_C
     else:
         C = init_C
-
-    if warmstartT:
-        T = [None] * S
+        T = [semirelaxed_init_plan(
+            Cs[i], C, ps[i], method=G0, use_target=True,
+            random_state=random_state, nx=nx) for i in range(S)]
 
     if stop_criterion == 'barycenter':
         inner_log = False
@@ -1313,7 +1358,7 @@ def semirelaxed_gromov_barycenters(
                 for s in range(S)]
         else:
             res = [semirelaxed_gromov_wasserstein(
-                Cs[s], C, ps[s], loss_fun, symmetric, G0=None,
+                Cs[s], C, ps[s], loss_fun, symmetric, G0=G0,
                 max_iter=max_iter, tol_rel=tol, tol_abs=0., log=inner_log,
                 verbose=verbose, **kwargs)
                 for s in range(S)]
@@ -1329,8 +1374,7 @@ def semirelaxed_gromov_barycenters(
             [nx.sum(T[s], 0)[None, :] for s in range(S)], axis=0)
 
         C = update_barycenter_structure(T, Cs, lambdas, p, loss_fun, nx=nx)
-        print('p:', p)
-        print('C:', C)
+
         # update convergence criterion
         if stop_criterion == 'barycenter':
             err = nx.norm(C - Cprev)
@@ -1366,7 +1410,7 @@ def semirelaxed_fgw_barycenters(
         fixed_features=False, p=None, loss_fun='square_loss',
         symmetric=True, max_iter=100, tol=1e-9, stop_criterion='barycenter',
         warmstartT=False, verbose=False, log=False, init_C=None, init_X=None,
-        random_state=None, **kwargs):
+        G0='product', random_state=None, **kwargs):
     r"""
     Returns the Semi-relaxed Fused Gromov-Wasserstein barycenters of `S` measurable networks
     with node features :math:`(\mathbf{C}_s, \mathbf{Y}_s, \mathbf{p}_s)_{1 \leq s \leq S}`
@@ -1396,7 +1440,7 @@ def semirelaxed_fgw_barycenters(
     ps : list of array-like, each element has shape (ns,), optional
         Masses of all samples.
         If let to its default value None, uniform distributions are taken.
-    lambdas : list of float, optional
+    lambdas : array-like of shape (S,) , optional
         List of the `S` spaces' weights.
         If let to its default value None, uniform weights are taken.
     alpha : float, optional
@@ -1431,6 +1475,8 @@ def semirelaxed_fgw_barycenters(
     init_X : array-like, shape (N,d), optional
         Initialization for the barycenters' features. If not set a
         random init is used.
+    G0: str, optional. Default is 'product'.
+        Initialization method following heuristics developed in `semirelaxed_init_plan`.
     random_state : int or RandomState instance, optional
         Fix the seed for reproducibility
 
@@ -1466,7 +1512,9 @@ def semirelaxed_fgw_barycenters(
 
     S = len(Cs)
     if lambdas is None:
-        lambdas = [1. / S] * S
+        lambdas = nx.ones(S) / S
+    else:
+        lambdas = list_to_array(lambdas, nx)
 
     d = Ys[0].shape[1]  # dimension on the node features
 
@@ -1476,14 +1524,6 @@ def semirelaxed_fgw_barycenters(
                 'If C is fixed it must be provided in init_C')
         else:
             C = init_C
-    else:
-        if init_C is None:
-            rng = check_random_state(random_state)
-            xalea = rng.randn(N, 2)
-            C = dist(xalea, xalea)
-            C = nx.from_numpy(C, type_as=ps[0])
-        else:
-            C = init_C
 
     if fixed_features:
         if init_X is None:
@@ -1491,17 +1531,84 @@ def semirelaxed_fgw_barycenters(
                 'If X is fixed it must be provided in init_X')
         else:
             X = init_X
-    else:
-        if init_X is None:
-            X = nx.zeros((N, d), type_as=ps[0])
 
+    # Initialization of transport plans, C and X (if not provided by user)
+    if G0 in ['product', 'random_product']:
+        # both init_X and init_C are simply deduced from transport plans
+        # if not initialized
+        if init_C is None:
+            init_C = nx.zeros((N, N), type_as=Cs[0])  # to know the barycenter shape
+
+        if G0 in ['product', 'random_product']:
+            T = [semirelaxed_init_plan(
+                Cs[i], init_C, ps[i], method=G0, use_target=False,
+                random_state=random_state, nx=nx) for i in range(S)]
+
+        if init_C is None:
+            init_C = update_barycenter_structure(
+                T, Cs, lambdas, loss_fun=loss_fun, nx=nx)
+        if init_X is None:
+            init_X = update_barycenter_feature(
+                T, Ys, lambdas, loss_fun=loss_fun, nx=nx)
+
+    else:
+        # more computationally costly inits could be used on structures
+        # so we assume affordable a Kmeans-like init for features
+        # and use it by default.
+
+        if init_X is None:
+            stacked_features = nx.to_numpy(nx.concatenate(Ys, axis=0))
+            if sklearn_import:
+                km = KMeans(n_clusters=N, random_state=random_state,
+                            n_init=1).fit(stacked_features)
+                init_X = nx.from_numpy(km.cluster_centers_)
+            else:
+                warnings.warn(
+                    "Kmeans clustering cannot be performed to init barycenter features,"
+                    "consider installing scikit-learn.",
+                    stacklevel=2
+                )
+            X = init_X
         else:
             X = init_X
 
-    Ms = [dist(Ys[s], X) for s in range(len(Ys))]
+        Ms = [dist(Ys[s], X) for s in range(len(Ys))]
 
-    if warmstartT:
-        T = [None] * S
+        if (init_C is None):
+            init_C = nx.zeros((N, N), type_as=Cs[0])
+
+            # relies on partitioning of inputs
+            shapes = np.array([C.shape[0] for C in Cs])
+            large_graphs_idx = np.where(shapes > N)[0]
+            small_graphs_idx = np.where(shapes <= N)
+            T = []
+            list_init_C = []  # store different barycenter structure to average
+
+            # we first compute an initial informative barycenter structure
+            # on graphs we can compress
+            # then use it on graphs to expand
+            for indices in [large_graphs_idx, small_graphs_idx]:
+                if indices.shape[0] > 0:
+                    sub_T = [semirelaxed_init_plan(
+                        Cs[i], init_C, ps[i], Ms[i], alpha, method=G0, use_target=False,
+                        random_state=random_state, nx=nx) for i in indices]
+                    sub_Cs = [Cs[i] for i in indices]
+                    sub_lambdas = lambdas[indices]
+
+                    init_C = update_barycenter_structure(
+                        sub_T, sub_Cs, sub_lambdas, loss_fun=loss_fun, nx=nx)
+                    T += sub_T
+                    list_init_C.append(init_C)
+
+            if len(list_init_C) == 2:
+                init_C = update_barycenter_structure(
+                    T, Cs, lambdas, loss_fun=loss_fun, nx=nx)
+            C = init_C
+        else:
+            C = init_C
+            T = [semirelaxed_init_plan(
+                Cs[i], C, ps[i], Ms[i], alpha, method=G0, use_target=True,
+                random_state=random_state, nx=nx) for i in range(S)]
 
     if stop_criterion == 'barycenter':
         inner_log = False
@@ -1535,9 +1642,10 @@ def semirelaxed_fgw_barycenters(
                 for s in range(S)]
         else:
             res = [semirelaxed_fused_gromov_wasserstein(
-                Ms[s], Cs[s], C, ps[s], loss_fun, symmetric, alpha, None,
+                Ms[s], Cs[s], C, ps[s], loss_fun, symmetric, alpha, G0,
                 inner_log, max_iter, tol_rel=tol, tol_abs=0., **kwargs)
                 for s in range(S)]
+
         if stop_criterion == 'barycenter':
             T = res
         else:
