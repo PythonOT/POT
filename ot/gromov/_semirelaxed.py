@@ -12,7 +12,7 @@ import numpy as np
 
 
 from ..utils import (
-    list_to_array, unif, dist, UndefinedParameter
+    list_to_array, unif, dist, UndefinedParameter, euclidean_distances
 )
 from ..optim import semirelaxed_cg, solve_1d_linesearch_quad
 from ..backend import get_backend
@@ -1312,7 +1312,7 @@ def semirelaxed_gromov_barycenters(
             shapes = np.array([C.shape[0] for C in Cs])
             large_graphs_idx = np.where(shapes > N)[0]
             small_graphs_idx = np.where(shapes <= N)[0]
-            T = []
+            T = [None] * S
             list_init_C = []  # store different barycenter structure to average
 
             # we first compute an initial informative barycenter structure
@@ -1320,21 +1320,25 @@ def semirelaxed_gromov_barycenters(
             # then use it on graphs to expand
             print('--- looping on indices ---')
             for indices in [large_graphs_idx, small_graphs_idx]:
-                if indices.shape[0] > 0:
+                if len(indices) > 0:
                     sub_T = [semirelaxed_init_plan(
                         Cs[i], init_C, ps[i], method=G0, use_target=False,
                         random_state=random_state, nx=nx) for i in indices]
                     sub_Cs = [Cs[i] for i in indices]
-                    sub_lambdas = lambdas[indices]
+                    print('shapes sub_CS:', [x.shape for x in sub_Cs])
+                    sub_lambdas = lambdas[indices] / nx.sum(lambdas[indices])
+                    print('sub_lambdas:', sub_lambdas)
                     print('sub_T:', sub_T)
                     init_C = update_barycenter_structure(
                         sub_T, sub_Cs, sub_lambdas, loss_fun=loss_fun, nx=nx)
                     print('init_C:', init_C.shape)
-                    T += sub_T
+                    for i, idx in enumerate(indices):
+                        T[idx] = sub_T[i]
                     list_init_C.append(init_C)
 
             if len(list_init_C) == 2:
                 print('len(T):', len(T), T[0].shape, T[1].shape)
+                print('len(Cs):', [x.shape for x in Cs])
                 init_C = update_barycenter_structure(
                     T, Cs, lambdas, loss_fun=loss_fun, nx=nx)
             C = init_C
@@ -1553,11 +1557,10 @@ def semirelaxed_fgw_barycenters(
         if init_C is None:
             init_C = nx.zeros((N, N), type_as=Cs[0])  # to know the barycenter shape
 
-        T = [semirelaxed_init_plan(
-            Cs[i], init_C, ps[i], method=G0, use_target=False,
-            random_state=random_state, nx=nx) for i in range(S)]
+            T = [semirelaxed_init_plan(
+                Cs[i], init_C, ps[i], method=G0, use_target=False,
+                random_state=random_state, nx=nx) for i in range(S)]
 
-        if init_C is None:
             C = update_barycenter_structure(
                 T, Cs, lambdas, loss_fun=loss_fun, nx=nx)
             if G0 in ['product', 'random_product']:
@@ -1571,6 +1574,10 @@ def semirelaxed_fgw_barycenters(
                 C = C + noise
 
         else:
+            T = [semirelaxed_init_plan(
+                Cs[i], init_C, ps[i], method=G0, use_target=False,
+                random_state=random_state, nx=nx) for i in range(S)]
+
             C = init_C
 
         if init_X is None:
@@ -1587,17 +1594,24 @@ def semirelaxed_fgw_barycenters(
         # and use it by default.
 
         if init_X is None:
-            stacked_features = nx.to_numpy(nx.concatenate(Ys, axis=0))
+            stacked_features = nx.concatenate(Ys, axis=0)
             if sklearn_import:
+                stacked_features = nx.to_numpy(stacked_features)
                 km = KMeans(n_clusters=N, random_state=random_state,
                             n_init=1).fit(stacked_features)
                 init_X = nx.from_numpy(km.cluster_centers_)
             else:
                 warnings.warn(
-                    "Kmeans clustering cannot be performed to init barycenter features,"
-                    "consider installing scikit-learn.",
+                    "Kmeans clustering cannot be performed to init barycenter "
+                    "features, so we only randomly sample input features. "
+                    "Consider installing scikit-learn.",
                     stacklevel=2
                 )
+                np.random.seed(random_state)
+                selected_idx = np.random.choice(
+                    np.arange(stacked_features.shape[0]), size=N, replace=False)
+                init_X = stacked_features[selected_idx]
+
             X = init_X
         else:
             X = init_X
@@ -1611,14 +1625,14 @@ def semirelaxed_fgw_barycenters(
             shapes = np.array([C.shape[0] for C in Cs])
             large_graphs_idx = np.where(shapes > N)[0]
             small_graphs_idx = np.where(shapes <= N)[0]
-            T = []
+            T = [None] * S
             list_init_C = []  # store different barycenter structure to average
 
             # we first compute an initial informative barycenter structure
             # on graphs we can compress
             # then use it on graphs to expand
             for indices in [large_graphs_idx, small_graphs_idx]:
-                if indices.shape[0] > 0:
+                if len(indices) > 0:
                     sub_T = [semirelaxed_init_plan(
                         Cs[i], init_C, ps[i], Ms[i], alpha, method=G0, use_target=False,
                         random_state=random_state, nx=nx) for i in indices]
@@ -1627,7 +1641,10 @@ def semirelaxed_fgw_barycenters(
 
                     init_C = update_barycenter_structure(
                         sub_T, sub_Cs, sub_lambdas, loss_fun=loss_fun, nx=nx)
-                    T += sub_T
+
+                    for i, idx in enumerate(indices):
+                        T[idx] = sub_T[i]
+
                     list_init_C.append(init_C)
 
             if len(list_init_C) == 2:
