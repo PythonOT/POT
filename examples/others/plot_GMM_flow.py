@@ -115,7 +115,6 @@ for _ in range(n_gd_its):
     loss.backward()
     opt.step()
     with torch.no_grad():
-        w_s.data = proj_simplex(w_s.data)
         C_s.data = proj_SDP(C_s.data, vmin=1e-6)
         m_list.append(m_s.data.numpy().copy())
         C_list.append(C_s.data.numpy().copy())
@@ -188,3 +187,5 @@ for k in its_to_show:
 
 pl.axis(axis)
 pl.legend(fontsize=15)
+
+# %%
