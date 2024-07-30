@@ -26,10 +26,11 @@ See [69] for details.
 import numpy as np
 from ot.plot import plot1D_mat, rescale_for_imshow_plot
 from ot.gmm import gmm_ot_plan_density, gmm_pdf, gmm_ot_apply_map
+import matplotlib.pyplot as plt
 
 ##############################################################################
 # Generate GMMOT plan plot it
-# -------------------------
+# ---------------------------
 ks = 2
 kt = 3
 d = 1
@@ -46,21 +47,25 @@ a_x, b_x = 0, 3
 x = np.linspace(a_x, b_x, n)
 a_y, b_y = 2, 6
 y = np.linspace(a_y, b_y, n)
-xx, yy = np.meshgrid(x, y, indexing='ij')
-plan_density = gmm_ot_plan_density(xx[:, :, None], yy[:, :, None],
+plan_density = gmm_ot_plan_density(x[:, None], y[:, None],
                                    m_s, m_t, C_s, C_t, w_s, w_t,
                                    plan=None, atol=2e-2)
 
 a = gmm_pdf(x[:, None], m_s, C_s, w_s)
 b = gmm_pdf(y[:, None], m_t, C_t, w_t)
-plot1D_mat(a, b, plan_density, title='GMM OT plan')
+plt.figure(figsize=(8, 8))
+plot1D_mat(a, b, plan_density, title='GMM OT plan', plot_style='xy',
+           a_label='Source distribution', b_label='Target distribution')
 
 
 ##############################################################################
 # Generate GMMOT maps and plot them over plan
-# -------------------------
-ax_s, ax_t, ax_M = plot1D_mat(a, b, plan_density,
-                              title='GMM OT plan with T_mean and T_rand maps')
+# -------------------------------------------
+plt.figure(figsize=(8, 8))
+ax_s, ax_t, ax_M = plot1D_mat(a, b, plan_density, plot_style='xy',
+                              title='GMM OT plan with T_mean and T_rand maps',
+                              a_label='Source distribution',
+                              b_label='Target distribution')
 T_mean = gmm_ot_apply_map(x[:, None], m_s, m_t, C_s, C_t,
                           w_s, w_t, method='bary')[:, 0]
 x_rescaled, T_mean_rescaled = rescale_for_imshow_plot(x, T_mean, n,
@@ -78,3 +83,5 @@ ax_M.scatter(x_rescaled, T_rand_rescaled, label='T_rand', alpha=.5,
              s=20, color='orange')
 
 ax_M.legend(loc='upper left', fontsize=13)
+
+# %%

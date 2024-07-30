@@ -348,9 +348,9 @@ def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t,
 
     Parameters
     ----------
-    x : array-like, shape (n_samples, d)
+    x : array-like, shape (n, d)
         Entry points in source space for density computation.
-    y : array-like, shape (n_samples, d)
+    y : array-like, shape (m, d)
         Entry points in target space for density computation.
     m_s : array-like, shape (k_s, d)
         The means of the source GMM components.
@@ -373,29 +373,38 @@ def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t,
 
     Returns
     -------
-    density : array-like, shape (n_samples,)
-        The density of the GMM-ot coupling between the two GMMs.
+    density : array-like, shape (n, m)
+        The density of the GMM-OT coupling between the two GMMs.
 
     References
     ----------
     .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in the space of Gaussian mixture models. SIAM Journal on Imaging Sciences, 13(2), 936-970.
 
     """
+    assert x.shape[-1] == y.shape[-1], \
+        "x (n, d) and y (m, d) must have the same dimension d"
+    n, m = x.shape[0], y.shape[0]
+    nx = get_backend(x, y, m_s, m_t, C_s, C_t, w_s, w_t)
+
+    # hand-made d-variate meshgrid in ij indexing
+    xx = x[:, None, :] * nx.ones((1, m, 1))  # shapes (n, m, d)
+    yy = y[None, :, :] * nx.ones((n, 1, 1))  # shapes (n, m, d)
+
     if plan is None:
         plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
 
     def Tk0k1(k0, k1):
         A, b = bures_wasserstein_mapping(m_s[k0], m_t[k1], C_s[k0], C_t[k1])
-        Tx = x @ A + b
-        g = gaussian_pdf(x, m_s[k0], C_s[k0])
+        Tx = xx @ A + b
+        g = gaussian_pdf(xx, m_s[k0], C_s[k0])
         out = plan[k0, k1] * g
-        norms = np.linalg.norm(Tx - y, axis=-1)
+        norms = nx.norm(Tx - yy, axis=-1)
         out[norms > atol] = 0
         return out
 
-    mat = np.array(
+    mat = nx.stack(
         [
-            [Tk0k1(k0, k1) for k1 in range(m_t.shape[0])]
+            nx.stack([Tk0k1(k0, k1) for k1 in range(m_t.shape[0])])
             for k0 in range(m_s.shape[0])
         ])
-    return np.sum(mat, axis=(0, 1))
+    return nx.sum(mat, axis=(0, 1))

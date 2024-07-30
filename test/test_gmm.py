@@ -164,14 +164,18 @@ def test_gradient_gmm_ot_loss_pytorch():
     assert (grad_w_s**2).sum().item() > 0
 
 
-def test_gmm_ot_plan_density():
-    m_s, m_t, C_s, C_t, w_s, w_t = get_gmms()
+def test_gmm_ot_plan_density(nx):
+    m_s, m_t, C_s, C_t, w_s, w_t = get_gmms(nx)
     rng = np.random.RandomState(seed=42)
     n = 7
-    x = rng.randn(n, 3)
+    x = nx.from_numpy(rng.randn(n, 3))
+    y = nx.from_numpy(rng.randn(n + 1, 3))
 
-    density = gmm_ot_plan_density(x, x, m_s, m_t, C_s, C_t, w_s, w_t)
-    assert density.shape == (n,)
+    density = gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t)
+    assert density.shape == (n, n + 1)
 
     plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
     gmm_ot_plan_density(x, x, m_s, m_t, C_s, C_t, w_s, w_t, plan=plan)
+
+    with pytest.raises(AssertionError):
+        gmm_ot_plan_density(x[:, 1:], y, m_s, m_t, C_s, C_t, w_s, w_t)
