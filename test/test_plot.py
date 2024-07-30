@@ -35,7 +35,34 @@ def test_plot1D_mat():
     M = ot.dist(x.reshape((n_bins, 1)), x.reshape((n_bins, 1)))
     M /= M.max()
 
-    ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
+    ot.plot.plot1D_mat(a, b, M)
+    ot.plot.plot1D_mat(a, b, M, plot_style='xy')
+
+    with pytest.raises(AssertionError):
+        ot.plot.plot1D_mat(a, b, M, plot_style='NotAValidStyle')
+
+
+@pytest.mark.skipif(nogo, reason="Matplotlib not installed")
+def test_rescale_for_imshow_plot():
+
+    import ot
+    import ot.plot
+
+    n = 7
+    a_x, b_x = -1, 3
+    x = np.linspace(a_x, b_x, n)
+    a_y, b_y = 2, 6
+    y = np.linspace(a_y, b_y, n)
+
+    x_rescaled, y_rescaled = ot.plot.rescale_for_imshow_plot(x, y, n)
+    assert x_rescaled.shape == (n, )
+    assert y_rescaled.shape == (n, )
+
+    x_rescaled, y_rescaled = ot.plot.rescale_for_imshow_plot(x, y, n, m=n, a_y=a_y + 1, b_y=b_y - 1)
+    assert x_rescaled.shape[0] <= n
+    assert y_rescaled.shape[0] <= n
+    with pytest.raises(AssertionError):
+        ot.plot.rescale_for_imshow_plot(x[3:], y, n)
 
 
 @pytest.mark.skipif(nogo, reason="Matplotlib not installed")
@@ -59,3 +86,4 @@ def test_plot2D_samples_mat():
     G = 1.0 * (rng.rand(n_bins, n_bins) < 0.01)
 
     ot.plot.plot2D_samples_mat(xs, xt, G, thr=1e-5)
+    ot.plot.plot2D_samples_mat(xs, xt, G, thr=1e-5, alpha=0.5)
