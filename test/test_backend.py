@@ -274,6 +274,8 @@ def test_empty_backend():
         nx.assert_same_dtype_device(M, M)
     with pytest.raises(NotImplementedError):
         nx.eigh(M)
+    with pytest.raises(NotImplementedError):
+        nx.det(M)
 
 
 def test_func_backends(nx):
@@ -620,6 +622,10 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append("matrix square root")
 
+        A = nx.sqrtm(nx.stack([SquareMb.T @ SquareMb] * 2, axis=0))[None, :]
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("broadcast matrix square root")
+
         D, U = nx.eigh(SquareMb.T @ SquareMb)
         lst_b.append(nx.to_numpy(nx.dot(U, nx.dot(nx.diag(D), U.T))))
         lst_name.append("eigh ")
@@ -682,6 +688,10 @@ def test_func_backends(nx):
         vec = nx.nan_to_num(vec, nan=0)
         lst_b.append(nx.to_numpy(vec))
         lst_name.append("nan_to_num")
+
+        d = nx.det(M1b)
+        lst_b.append(nx.to_numpy(d))
+        lst_name.append("det")
 
         assert not nx.array_equal(Mb, vb), "array_equal (shape)"
         assert nx.array_equal(Mb, Mb), "array_equal (elements) - expected true"

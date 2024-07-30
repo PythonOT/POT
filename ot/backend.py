@@ -926,9 +926,11 @@ class Backend():
 
     def sqrtm(self, a):
         r"""
-        Computes the matrix square root. Requires input to be definite positive.
+        Computes the matrix square root.
+        Requires input symmetric positive semi-definite.
 
-        This function follows the api from :any:`scipy.linalg.sqrtm`.
+        This function follows the api from :any:`scipy.linalg.sqrtm`,
+        allowing batches.
 
         See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.sqrtm.html
         """
@@ -1055,6 +1057,14 @@ class Backend():
         Replace NaN with zero and infinity with large finite numbers or with the numbers defined by the user.
 
         See: https://numpy.org/doc/stable/reference/generated/numpy.nan_to_num.html#numpy.nan_to_num
+        """
+        raise NotImplementedError()
+
+    def det(self, a):
+        r"""
+        Compute the determinant of an array.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.det.html
         """
         raise NotImplementedError()
 
@@ -1348,7 +1358,11 @@ class NumpyBackend(Backend):
 
     def sqrtm(self, a):
         L, V = np.linalg.eigh(a)
-        return (V * np.sqrt(L)[None, :]) @ V.T
+        L = np.sqrt(L)
+        # Q[...] = V[...] @ diag(L[...])
+        Q = np.einsum('...jk,...k->...jk', V, L)
+        # R[...] = Q[...] @ V[...].T
+        return np.einsum('...jk,...kl->...jl', Q, np.swapaxes(V, -1, -2))
 
     def eigh(self, a):
         return np.linalg.eigh(a)
@@ -1411,6 +1425,9 @@ class NumpyBackend(Backend):
 
     def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
         return np.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
+
+    def det(self, a):
+        return np.linalg.det(a)
 
 
 _register_backend_implementation(NumpyBackend)
@@ -1750,7 +1767,11 @@ class JaxBackend(Backend):
 
     def sqrtm(self, a):
         L, V = jnp.linalg.eigh(a)
-        return (V * jnp.sqrt(L)[None, :]) @ V.T
+        L = jnp.sqrt(L)
+        # Q[...] = V[...] @ diag(L[...])
+        Q = jnp.einsum('...jk,...k->...jk', V, L)
+        # R[...] = Q[...] @ V[...].T
+        return jnp.einsum('...jk,...kl->...jl', Q, jnp.swapaxes(V, -1, -2))
 
     def eigh(self, a):
         return jnp.linalg.eigh(a)
@@ -1796,6 +1817,9 @@ class JaxBackend(Backend):
 
     def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
         return jnp.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
+
+    def det(self, x):
+        return jnp.linalg.det(x)
 
 
 if jax:
@@ -2240,7 +2264,12 @@ class TorchBackend(Backend):
 
     def sqrtm(self, a):
         L, V = torch.linalg.eigh(a)
-        return (V * torch.sqrt(L)[None, :]) @ V.T
+        L = torch.sqrt(L)
+        # Q[...] = V[...] @ diag(L[...])
+        Q = torch.einsum('...jk,...k->...jk', V, L)
+        # R[...] = Q[...] @ V[...].T
+        return torch.einsum('...jk,...kl->...jl', Q,
+                            torch.transpose(V, -1, -2))
 
     def eigh(self, a):
         return torch.linalg.eigh(a)
@@ -2289,6 +2318,9 @@ class TorchBackend(Backend):
     def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
         out = None if copy else x
         return torch.nan_to_num(x, nan=nan, posinf=posinf, neginf=neginf, out=out)
+
+    def det(self, x):
+        return torch.linalg.det(x)
 
 
 if torch:
@@ -2644,7 +2676,12 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
-        return (V * cp.sqrt(L)[None, :]) @ V.T
+        L = cp.sqrt(L)
+        # Q[...] = V[...] @ diag(L[...])
+        Q = cp.einsum('...jk,...k->...jk', V, L)
+        # R[...] = Q[...] @ V[...].T
+        return cp.einsum('...jk,...kl->...jl', Q,
+                         cp.swapaxes(V, -1, -2))
 
     def eigh(self, a):
         return cp.linalg.eigh(a)
@@ -2690,6 +2727,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
         return cp.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
+
+    def det(self, x):
+        return cp.linalg.det(x)
 
 
 if cp:
@@ -3071,7 +3111,12 @@ class TensorflowBackend(Backend):
 
     def sqrtm(self, a):
         L, V = tf.linalg.eigh(a)
-        return (V * tf.sqrt(L)[None, :]) @ V.T
+        L = tf.sqrt(L)
+        # Q[...] = V[...] @ diag(L[...])
+        Q = tf.einsum('...jk,...k->...jk', V, L)
+        # R[...] = Q[...] @ V[...].T
+        return tf.einsum('...jk,...kl->...jl', Q,
+                         tf.linalg.matrix_transpose(V, (0, 2, 1)))
 
     def eigh(self, a):
         return tf.linalg.eigh(a)
@@ -3120,6 +3165,9 @@ class TensorflowBackend(Backend):
         x = self.to_numpy(x)
         x = np.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
         return self.from_numpy(x)
+
+    def det(self, x):
+        return tf.linalg.det(x)
 
 
 if tf:
