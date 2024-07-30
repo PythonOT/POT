@@ -84,7 +84,7 @@ def semirelaxed_gromov_wasserstein(
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
         if G0 is a string it will be interpreted as a method for
-        `semirelaxed_init_plan` taking values in "product", "random_product",
+        `semirelaxed_init_plan` taking values in "product", "random_product", "random",
         "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     max_iter : int, optional
         Max number of iterations
@@ -232,7 +232,7 @@ def semirelaxed_gromov_wasserstein2(
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
         if G0 is a string it will be interpreted as a method for
-        `semirelaxed_init_plan` taking values in "product", "random_product",
+        `semirelaxed_init_plan` taking values in "product", "random_product", "random",
         "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     max_iter : int, optional
         Max number of iterations
@@ -347,7 +347,7 @@ def semirelaxed_fused_gromov_wasserstein(
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
         if G0 is a string it will be interpreted as a method for
-        `semirelaxed_init_plan` taking values in "product", "random_product",
+        `semirelaxed_init_plan` taking values in "product", "random_product", "random",
         "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     log : bool, optional
         record log if True
@@ -502,7 +502,7 @@ def semirelaxed_fused_gromov_wasserstein2(
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
         if G0 is a string it will be interpreted as a method for
-        `semirelaxed_init_plan` taking values in "product", "random_product",
+        `semirelaxed_init_plan` taking values in "product", "random_product", "random",
         "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     log : bool, optional
         Record log if True.
@@ -717,7 +717,7 @@ def entropic_semirelaxed_gromov_wasserstein(
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
         if G0 is a string it will be interpreted as a method for
-        `semirelaxed_init_plan` taking values in "product", "random_product",
+        `semirelaxed_init_plan` taking values in "product", "random_product", "random",
         "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     max_iter : int, optional
         Max number of iterations
@@ -884,7 +884,7 @@ def entropic_semirelaxed_gromov_wasserstein2(
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
         if G0 is a string it will be interpreted as a method for
-        `semirelaxed_init_plan` taking values in "product", "random_product",
+        `semirelaxed_init_plan` taking values in "product", "random_product", "random",
         "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     max_iter : int, optional
         Max number of iterations
@@ -980,7 +980,7 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
         if G0 is a string it will be interpreted as a method for
-        `semirelaxed_init_plan` taking values in "product", "random_product",
+        `semirelaxed_init_plan` taking values in "product", "random_product", "random",
         "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     max_iter : int, optional
         Max number of iterations
@@ -1150,7 +1150,7 @@ def entropic_semirelaxed_fused_gromov_wasserstein2(
         If G0 is a tensor it must satisfy marginal constraints and will be
         used as initial transport of the solver.
         if G0 is a string it will be interpreted as a method for
-        `semirelaxed_init_plan` taking values in "product", "random_product",
+        `semirelaxed_init_plan` taking values in "product", "random_product", "random",
         "fluid", "fluid_soft", "spectral", "spectral_soft", "kmeans", "kmeans_soft".
     max_iter : int, optional
         Max number of iterations
@@ -1245,7 +1245,7 @@ def semirelaxed_gromov_barycenters(
     init_C : array-like of shape (N,N), optional.
         Random initial value for the :math:`\mathbf{C}` matrix provided by user.
         Default is None and relies `G0` to produce an initial structure.
-    G0: str, optional. Default is 'product'.
+    G0: str, optional. Default is 'random'.
         Initialization method following heuristics developed in `semirelaxed_init_plan`.
         Methods based on the clustering of inputs are used to deduce an initial
         barycenter structure if `init_C=None`.
@@ -1291,23 +1291,34 @@ def semirelaxed_gromov_barycenters(
     # Initialization of transport plans and C (if not provided by user)
     if init_C is None:
         init_C = nx.zeros((N, N), type_as=Cs[0])
-        if G0 in ['product', 'random_product']:
+        if G0 in ['product', 'random_product', 'random']:
             T = [semirelaxed_init_plan(
                 Cs[i], init_C, ps[i], method=G0, use_target=False,
                 random_state=random_state, nx=nx) for i in range(S)]
             C = update_barycenter_structure(
                 T, Cs, lambdas, loss_fun=loss_fun, nx=nx)
 
+            if G0 in ['product', 'random_product']:
+                # initial structure is constant so we add a small random noise
+                # to avoid getting stuck at init
+                np.random.seed(random_state)
+                noise = np.random.uniform(-0.01, 0.01, size=(N, N))
+                if symmetric:
+                    noise = (noise + noise.T) / 2.
+                noise = nx.from_numpy(noise)
+                C = C + noise
+
         else:  # relies on partitioning of inputs
             shapes = np.array([C.shape[0] for C in Cs])
             large_graphs_idx = np.where(shapes > N)[0]
-            small_graphs_idx = np.where(shapes <= N)
+            small_graphs_idx = np.where(shapes <= N)[0]
             T = []
             list_init_C = []  # store different barycenter structure to average
 
             # we first compute an initial informative barycenter structure
             # on graphs we can compress
             # then use it on graphs to expand
+            print('--- looping on indices ---')
             for indices in [large_graphs_idx, small_graphs_idx]:
                 if indices.shape[0] > 0:
                     sub_T = [semirelaxed_init_plan(
@@ -1315,16 +1326,19 @@ def semirelaxed_gromov_barycenters(
                         random_state=random_state, nx=nx) for i in indices]
                     sub_Cs = [Cs[i] for i in indices]
                     sub_lambdas = lambdas[indices]
-
+                    print('sub_T:', sub_T)
                     init_C = update_barycenter_structure(
                         sub_T, sub_Cs, sub_lambdas, loss_fun=loss_fun, nx=nx)
+                    print('init_C:', init_C.shape)
                     T += sub_T
                     list_init_C.append(init_C)
 
             if len(list_init_C) == 2:
+                print('len(T):', len(T), T[0].shape, T[1].shape)
                 init_C = update_barycenter_structure(
                     T, Cs, lambdas, loss_fun=loss_fun, nx=nx)
             C = init_C
+
     else:
         C = init_C
         T = [semirelaxed_init_plan(
@@ -1533,20 +1547,29 @@ def semirelaxed_fgw_barycenters(
             X = init_X
 
     # Initialization of transport plans, C and X (if not provided by user)
-    if G0 in ['product', 'random_product']:
+    if G0 in ['product', 'random_product', 'random']:
         # both init_X and init_C are simply deduced from transport plans
         # if not initialized
         if init_C is None:
             init_C = nx.zeros((N, N), type_as=Cs[0])  # to know the barycenter shape
 
-        if G0 in ['product', 'random_product']:
-            T = [semirelaxed_init_plan(
-                Cs[i], init_C, ps[i], method=G0, use_target=False,
-                random_state=random_state, nx=nx) for i in range(S)]
+        T = [semirelaxed_init_plan(
+            Cs[i], init_C, ps[i], method=G0, use_target=False,
+            random_state=random_state, nx=nx) for i in range(S)]
 
         if init_C is None:
             C = update_barycenter_structure(
                 T, Cs, lambdas, loss_fun=loss_fun, nx=nx)
+            if G0 in ['product', 'random_product']:
+                # initial structure is constant so we add a small random noise
+                # to avoid getting stuck at init
+                np.random.seed(random_state)
+                noise = np.random.uniform(-0.01, 0.01, size=(N, N))
+                if symmetric:
+                    noise = (noise + noise.T) / 2.
+                noise = nx.from_numpy(noise)
+                C = C + noise
+
         else:
             C = init_C
 
@@ -1555,6 +1578,9 @@ def semirelaxed_fgw_barycenters(
                 T, Ys, lambdas, loss_fun=loss_fun, nx=nx)
         else:
             X = init_X
+
+        Ms = [dist(Ys[s], X) for s in range(len(Ys))]
+
     else:
         # more computationally costly inits could be used on structures
         # so we assume affordable a Kmeans-like init for features
@@ -1584,7 +1610,7 @@ def semirelaxed_fgw_barycenters(
             # relies on partitioning of inputs
             shapes = np.array([C.shape[0] for C in Cs])
             large_graphs_idx = np.where(shapes > N)[0]
-            small_graphs_idx = np.where(shapes <= N)
+            small_graphs_idx = np.where(shapes <= N)[0]
             T = []
             list_init_C = []  # store different barycenter structure to average
 

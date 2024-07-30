@@ -434,7 +434,7 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
         'fluid', 'spectral', 'kmeans', 'fluid_soft', 'spectral_soft',
         'kmeans_soft']
 
-    if method not in list_partitioning_methods + ['product', 'random_product']:
+    if method not in list_partitioning_methods + ['product', 'random_product', 'random']:
         raise ValueError(f'Unsupported initialization method = {method}.')
 
     if nx is None:
@@ -504,15 +504,21 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
     # Handle initialization via structure information
 
     if method == 'product':
-        q = nx.ones(m, type_as=C2) / m
+        q = nx.ones(m, type_as=C1) / m
         T = nx.outer(p, q)
 
     elif method == 'random_product':
         np.random.seed(random_state)
         q = np.random.uniform(0, m, size=(m,))
         q = q / q.sum()
-        q = nx.from_numpy(q)
+        q = nx.from_numpy(q, type_as=p)
         T = nx.outer(p, q)
+
+    elif method == 'random':
+        np.random.seed(random_state)
+        U = np.random.uniform(0, n * m, size=(n, m))
+        U = (p / U.sum(1))[:, None] * U
+        T = nx.from_numpy(U, type_as=C1)
 
     elif method in ['fluid', 'fluid_soft']:
         # compute fluid partitioning on the biggest graph
