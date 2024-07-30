@@ -399,7 +399,7 @@ def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t,
         g = gaussian_pdf(xx, m_s[k0], C_s[k0])
         out = plan[k0, k1] * g
         norms = nx.norm(Tx - yy, axis=-1)
-        out[norms > atol] = 0
+        out = out * ((norms < atol) * 1.)
         return out
 
     mat = nx.stack(
