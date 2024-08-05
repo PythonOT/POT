@@ -109,7 +109,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
             return 2 * b
     elif loss_fun == 'kl_loss':
         def f1(a):
-            return a * nx.log(a + 1e-15) - a
+            return a * nx.log(a + 1e-16) - a
 
         def f2(b):
             return b
@@ -118,7 +118,7 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
             return a
 
         def h2(b):
-            return nx.log(b + 1e-15)
+            return nx.log(b + 1e-16)
     else:
         raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
 
@@ -253,160 +253,6 @@ def gwggrad(constC, hC1, hC2, T, nx=None):
                               T, nx)  # [12] Prop. 2 misses a 2 factor
 
 
-def update_square_loss(p, lambdas, T, Cs, nx=None):
-    r"""
-    Updates :math:`\mathbf{C}` according to the L2 Loss kernel with the `S`
-    :math:`\mathbf{T}_s` couplings calculated at each iteration of the GW
-    barycenter problem in :ref:`[12]`:
-
-    .. math::
-
-        \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
-
-    Where :
-
-    - :math:`\mathbf{C}_s`: metric cost matrix
-    - :math:`\mathbf{p}_s`: distribution
-
-    Parameters
-    ----------
-    p : array-like, shape (N,)
-        Masses in the targeted barycenter.
-    lambdas : list of float
-        List of the `S` spaces' weights.
-    T : list of S array-like of shape (N, ns)
-        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
-    Cs : list of S array-like, shape(ns,ns)
-        Metric cost matrices.
-    nx : backend, optional
-        If let to its default value None, a backend test will be conducted.
-
-    Returns
-    ----------
-    C : array-like, shape (`nt`, `nt`)
-        Updated :math:`\mathbf{C}` matrix.
-
-    References
-    ----------
-    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
-        "Gromov-Wasserstein averaging of kernel and distance matrices."
-        International Conference on Machine Learning (ICML). 2016.
-
-    """
-    if nx is None:
-        nx = get_backend(p, *T, *Cs)
-
-    # Correct order mistake in Equation 14 in [12]
-    tmpsum = sum([
-        lambdas[s] * nx.dot(
-            nx.dot(T[s], Cs[s]),
-            T[s].T
-        ) for s in range(len(T))
-    ])
-    ppt = nx.outer(p, p)
-
-    return tmpsum / ppt
-
-
-def update_kl_loss(p, lambdas, T, Cs, nx=None):
-    r"""
-    Updates :math:`\mathbf{C}` according to the KL Loss kernel with the `S`
-    :math:`\mathbf{T}_s` couplings calculated at each iteration of the GW
-    barycenter problem in :ref:`[12]`:
-
-    .. math::
-
-        \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad \sum_s \lambda_s \mathrm{GW}(\mathbf{C}, \mathbf{C}_s, \mathbf{p}, \mathbf{p}_s)
-
-    Where :
-
-    - :math:`\mathbf{C}_s`: metric cost matrix
-    - :math:`\mathbf{p}_s`: distribution
-
-
-    Parameters
-    ----------
-    p  : array-like, shape (N,)
-        Weights in the targeted barycenter.
-    lambdas : list of float
-        List of the `S` spaces' weights
-    T : list of S array-like of shape (N, ns)
-        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
-    Cs : list of S array-like, shape(ns,ns)
-        Metric cost matrices.
-    nx : backend, optional
-        If let to its default value None, a backend test will be conducted.
-
-    Returns
-    ----------
-    C : array-like, shape (`ns`, `ns`)
-        updated :math:`\mathbf{C}` matrix
-
-    References
-    ----------
-    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
-        "Gromov-Wasserstein averaging of kernel and distance matrices."
-        International Conference on Machine Learning (ICML). 2016.
-
-    """
-    if nx is None:
-        nx = get_backend(p, *T, *Cs)
-
-    # Correct order mistake in Equation 15 in [12]
-    tmpsum = sum([
-        lambdas[s] * nx.dot(
-            nx.dot(T[s], nx.log(nx.maximum(Cs[s], 1e-15))),
-            T[s].T
-        ) for s in range(len(T))
-    ])
-    ppt = nx.outer(p, p)
-
-    return nx.exp(tmpsum / ppt)
-
-
-def update_feature_matrix(lambdas, Ys, Ts, p, nx=None):
-    r"""Updates the feature with respect to the `S` :math:`\mathbf{T}_s` couplings.
-
-
-    See "Solving the barycenter problem with Block Coordinate Descent (BCD)"
-    in :ref:`[24] <references-update-feature-matrix>` calculated at each iteration
-
-    Parameters
-    ----------
-    p : array-like, shape (N,)
-        masses in the targeted barycenter
-    lambdas : list of float
-        List of the `S` spaces' weights
-    Ts : list of S array-like, shape (N, ns)
-        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration
-    Ys : list of S array-like, shape (d,ns)
-        The features.
-    nx : backend, optional
-        If let to its default value None, a backend test will be conducted.
-
-    Returns
-    -------
-    X : array-like, shape (`d`, `N`)
-
-
-    .. _references-update-feature-matrix:
-    References
-    ----------
-    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain and Courty Nicolas
-        "Optimal Transport for structured data with application on graphs"
-        International Conference on Machine Learning (ICML). 2019.
-    """
-    if nx is None:
-        nx = get_backend(*Ys, *Ts, p)
-
-    p = 1. / p
-    tmpsum = sum([
-        lambdas[s] * nx.dot(Ys[s], Ts[s].T) * p[None, :]
-        for s in range(len(Ts))
-    ])
-    return tmpsum
-
-
 def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
     r"""Return loss matrices and tensors for semi-relaxed Gromov-Wasserstein fast computation
 
@@ -502,7 +348,7 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
             return 2 * b
     elif loss_fun == 'kl_loss':
         def f1(a):
-            return a * nx.log(a + 1e-15) - a
+            return a * nx.log(a + 1e-16) - a
 
         def f2(b):
             return b
@@ -511,7 +357,7 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
             return a
 
         def h2(b):
-            return nx.log(b + 1e-15)
+            return nx.log(b + 1e-16)
     else:
         raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
 
@@ -522,3 +368,210 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
     hC2 = h2(C2)
     fC2t = f2(C2).T
     return constC, hC1, hC2, fC2t
+
+
+def update_barycenter_structure(
+        Ts, Cs, lambdas, p=None, loss_fun='square_loss', target=True,
+        check_zeros=True, nx=None):
+    r"""
+    Updates :math:`\mathbf{C}` according to the inner loss L with the `S`
+    :math:`\mathbf{T}_s` couplings calculated at each iteration of variants of
+    the GW barycenter problem (e.g GW :ref:`[12]`, srGW :ref:`[48]`).
+    If `target=True` it solves for:
+
+    .. math::
+
+        \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad
+        \sum_s \lambda_s \sum_{i,j,k,l}
+        L(\mathbf{C}^{(s)}_{i,k}, \mathbf{C}_{j,l}) \mathbf{T}^{(s)}_{i,j} \mathbf{T}^{(s)}_{k,l}
+
+    Else it solves the symmetric problem:
+
+    .. math::
+
+        \mathbf{C}^* = \mathop{\arg \min}_{\mathbf{C}\in \mathbb{R}^{N \times N}} \quad
+        \sum_s \lambda_s \sum_{i,j,k,l}
+        L(\mathbf{C}_{j,l}, \mathbf{C}^{(s)}_{i,k}) \mathbf{T}^{(s)}_{i,j} \mathbf{T}^{(s)}_{k,l}
+
+    Where :
+
+    - :math:`\mathbf{C}^{(s)}`: pairwise matrix in the s^{th} source space .
+    - :math:`\mathbf{C}`: pairwise matrix in the target space.
+    - :math:`L`: inner divergence for the GW loss
+
+    Parameters
+    ----------
+    Ts : list of S array-like of shape (ns, N) if `target=True` else (N, ns).
+        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
+    Cs : list of S array-like, shape(ns, ns)
+        Metric cost matrices.
+    lambdas : list of float,
+        List of the `S` spaces' weights.
+    p : array-like, shape (N,) or (S,N)
+        Masses or list of masses in the targeted barycenter.
+    loss_fun : str, optional. Default is 'square_loss'
+        Name of loss function to use in ['square_loss', 'kl_loss'].
+    target: bool, optional. Default is True.
+        Whether the barycenter is positioned as target (True) or source (False).
+    check_zeros: bool, optional. Default is True.
+        Whether to check if marginals on the barycenter contains zeros or not.
+        Can be set to False to gain time if marginals are known to be positive.
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    ----------
+    C : array-like, shape (`nt`, `nt`)
+        Updated :math:`\mathbf{C}` matrix.
+
+    References
+    ----------
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
+
+    .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+            International Conference on Learning Representations (ICLR), 2022.
+
+    """
+
+    if nx is None:
+        arr = [*Ts, *Cs]
+        if p is not None:
+            arr += [p]
+
+        nx = get_backend(*arr)
+
+    S = len(Ts)
+
+    if p is None:
+        p = nx.concatenate(
+            [nx.sum(Ts[s], int(not target))[None, :] for s in range(S)],
+            axis=0)
+
+    # compute coefficients for the barycenter coming from marginals
+
+    if len(p.shape) == 1:  # shared target masses potentially with zeros
+        if check_zeros:
+            inv_p = nx.nan_to_num(1. / p, nan=1., posinf=1., neginf=1.)
+        else:
+            inv_p = 1. / p
+
+        prod = nx.outer(inv_p, inv_p)
+
+    else:
+        quotient = sum([nx.outer(p[s], p[s]) for s in range(S)])
+        if check_zeros:
+            prod = nx.nan_to_num(1. / quotient, nan=1., posinf=1., neginf=1.)
+        else:
+            prod = 1. / quotient
+
+    # compute coefficients for the barycenter coming from Ts and Cs
+
+    if loss_fun == 'square_loss':
+        if target:
+            list_structures = [lambdas[s] * nx.dot(
+                nx.dot(Ts[s].T, Cs[s]), Ts[s]) for s in range(S)]
+        else:
+            list_structures = [lambdas[s] * nx.dot(
+                nx.dot(Ts[s], Cs[s]), Ts[s].T) for s in range(S)]
+
+        return sum(list_structures) * prod
+
+    elif loss_fun == 'kl_loss':
+        if target:
+            list_structures = [lambdas[s] * nx.dot(
+                nx.dot(Ts[s].T, Cs[s]), Ts[s])
+                for s in range(S)]
+
+            return sum(list_structures) * prod
+        else:
+            list_structures = [lambdas[s] * nx.dot(
+                nx.dot(Ts[s], nx.log(nx.maximum(Cs[s], 1e-16))), Ts[s].T)
+                for s in range(S)]
+
+            return nx.exp(sum(list_structures) * prod)
+
+    else:
+        raise ValueError(f"not supported loss_fun = {loss_fun}")
+
+
+def update_barycenter_feature(
+        Ts, Ys, lambdas, p=None, loss_fun='square_loss', target=True,
+        check_zeros=True, nx=None):
+    r"""Updates the feature with respect to the `S` :math:`\mathbf{T}_s`
+    couplings calculated at each iteration of variants of the FGW
+    barycenter problem with inner wasserstein loss `loss_fun`
+    (e.g FGW :ref:`[24]`, srFGW :ref:`[48]`).
+    If `target=True` the barycenter is considered as the target else as the source.
+
+    Parameters
+    ----------
+    Ts : list of S array-like of shape (ns, N) if `target=True` else (N, ns).
+        The `S` :math:`\mathbf{T}_s` couplings calculated at each iteration.
+    Ys : list of S array-like, shape (ns, d)
+        Feature matrices.
+    lambdas : list of float
+        List of the `S` spaces' weights
+    p : array-like, shape (N,) or (S,N)
+        Masses or list of masses in the targeted barycenter.
+    loss_fun : str, optional. Default is 'square_loss'
+        Name of loss function to use in ['square_loss'].
+    target: bool, optional. Default is True.
+        Whether the barycenter is positioned as target (True) or source (False).
+    check_zeros: bool, optional. Default is True.
+        Whether to check if marginals on the barycenter contains zeros or not.
+        Can be set to False to gain time if marginals are known to be positive.
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    -------
+    X : array-like, shape (N, d)
+
+    References
+    ----------
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain and Courty Nicolas
+        "Optimal Transport for structured data with application on graphs"
+        International Conference on Machine Learning (ICML). 2019.
+
+    .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+            International Conference on Learning Representations (ICLR), 2022.
+    """
+    if nx is None:
+        arr = [*Ts, *Ys]
+        if p is not None:
+            arr += [p]
+
+        nx = get_backend(*arr)
+
+    if loss_fun != 'square_loss':
+        raise ValueError(f"not supported loss_fun = {loss_fun}")
+
+    S = len(Ts)
+
+    if target:
+        list_features = [lambdas[s] * nx.dot(Ts[s].T, Ys[s]) for s in range(S)]
+    else:
+        list_features = [lambdas[s] * nx.dot(Ts[s], Ys[s]) for s in range(S)]
+
+    if p is None:
+        p = nx.concatenate(
+            [nx.sum(Ts[s], int(not target))[None, :] for s in range(S)],
+            axis=0)
+
+    if len(p.shape) == 1:  # shared target masses potentially with zeros
+        if check_zeros:
+            inv_p = nx.nan_to_num(1. / p, nan=1., posinf=1., neginf=1.)
+        else:
+            inv_p = 1. / p
+    else:
+        p_sum = sum(p)
+        if check_zeros:
+            inv_p = nx.nan_to_num(1. / p_sum, nan=1., posinf=1., neginf=1.)
+        else:
+            inv_p = 1. / p_sum
+
+    return sum(list_features) * inv_p[:, None]

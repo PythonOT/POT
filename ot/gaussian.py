@@ -160,21 +160,21 @@ def empirical_bures_wasserstein_mapping(xs, xt, reg=1e-6, ws=None,
 
     d = xs.shape[1]
 
+    if ws is None:
+        ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
+
+    if wt is None:
+        wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
+
     if bias:
-        mxs = nx.mean(xs, axis=0)[None, :]
-        mxt = nx.mean(xt, axis=0)[None, :]
+        mxs = nx.dot(ws.T, xs) / nx.sum(ws)
+        mxt = nx.dot(wt.T, xt) / nx.sum(wt)
 
         xs = xs - mxs
         xt = xt - mxt
     else:
         mxs = nx.zeros((1, d), type_as=xs)
         mxt = nx.zeros((1, d), type_as=xs)
-
-    if ws is None:
-        ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
-
-    if wt is None:
-        wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
 
     Cs = nx.dot((xs * ws).T, xs) / nx.sum(ws) + reg * nx.eye(d, type_as=xs)
     Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt) + reg * nx.eye(d, type_as=xt)
@@ -315,21 +315,21 @@ def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
 
     d = xs.shape[1]
 
+    if ws is None:
+        ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
+
+    if wt is None:
+        wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
+
     if bias:
-        mxs = nx.mean(xs, axis=0)[None, :]
-        mxt = nx.mean(xt, axis=0)[None, :]
+        mxs = nx.dot(ws.T, xs) / nx.sum(ws)
+        mxt = nx.dot(wt.T, xt) / nx.sum(wt)
 
         xs = xs - mxs
         xt = xt - mxt
     else:
         mxs = nx.zeros((1, d), type_as=xs)
         mxt = nx.zeros((1, d), type_as=xs)
-
-    if ws is None:
-        ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
-
-    if wt is None:
-        wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
 
     Cs = nx.dot((xs * ws).T, xs) / nx.sum(ws) + reg * nx.eye(d, type_as=xs)
     Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt) + reg * nx.eye(d, type_as=xt)
@@ -503,14 +503,14 @@ def empirical_bures_wasserstein_barycenter(
     k = len(X)
     d = [X[i].shape[1] for i in range(k)]
 
+    if w is None:
+        w = [nx.ones((X[i].shape[0], 1), type_as=X[i]) / X[i].shape[0] for i in range(k)]
+
     if bias:
-        m = [nx.mean(X[i], axis=0)[None, :] for i in range(k)]
+        m = [nx.dot(w[i].T, X[i]) / nx.sum(w[i]) for i in range(k)]
         X = [X[i] - m[i] for i in range(k)]
     else:
         m = [nx.zeros((1, d[i]), type_as=X[i]) for i in range(k)]
-
-    if w is None:
-        w = [nx.ones((X[i].shape[0], 1), type_as=X[i]) / X[i].shape[0] for i in range(k)]
 
     C = [
         nx.dot((X[i] * w[i]).T, X[i]) / nx.sum(w[i]) + reg * nx.eye(d[i], type_as=X[i])
@@ -727,7 +727,7 @@ def empirical_gaussian_gromov_wasserstein_mapping(xs, xt, ws=None,
     r"""Return Gaussian Gromov-Wasserstein mapping between samples.
 
     The function estimates the Gaussian Gromov-Wasserstein mapping between two
-    Gaussien distributions source :math:`\mu_s` and target :math:`\mu_t`, whose
+    Gaussian distributions source :math:`\mu_s` and target :math:`\mu_t`, whose
     parameters are estimated from the provided samples :math:`\mathcal{X}_s` and
     :math:`\mathcal{X}_t`. See [57] Theorem 4.1 for more details.
 
@@ -788,7 +788,7 @@ def empirical_gaussian_gromov_wasserstein_mapping(xs, xt, ws=None,
     Cov_s = nx.dot((xs * ws).T, xs) / nx.sum(ws)
     Cov_t = nx.dot((xt * wt).T, xt) / nx.sum(wt)
 
-    # compte and sort eigenvalues/eigenvectors decreasingly
+    # compute and sort eigenvalues/eigenvectors decreasingly
     d_s, U_s = nx.eigh(Cov_s)
     id_s = nx.flip(nx.argsort(d_s))
     d_s, U_s = d_s[id_s], U_s[:, id_s]

@@ -120,6 +120,7 @@ if not os.environ.get(DISABLE_JAX_KEY, False):
         import jax.scipy.special as jspecial
         from jax.lib import xla_bridge
         jax_type = jax.numpy.ndarray
+        jax_new_version = float('.'.join(jax.__version__.split('.')[1:])) > 4.24
     except ImportError:
         jax = False
         jax_type = float
@@ -925,9 +926,11 @@ class Backend():
 
     def sqrtm(self, a):
         r"""
-        Computes the matrix square root. Requires input to be definite positive.
+        Computes the matrix square root.
+        Requires input symmetric positive semi-definite.
 
-        This function follows the api from :any:`scipy.linalg.sqrtm`.
+        This function follows the api from :any:`scipy.linalg.sqrtm`,
+        allowing batches.
 
         See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.sqrtm.html
         """
@@ -943,16 +946,17 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def kl_div(self, p, q, eps=1e-16):
+    def kl_div(self, p, q, mass=False, eps=1e-16):
         r"""
-        Computes the Kullback-Leibler divergence.
+        Computes the (Generalized) Kullback-Leibler divergence.
 
         This function follows the api from :any:`scipy.stats.entropy`.
 
         Parameter eps is used to avoid numerical errors and is added in the log.
 
         .. math::
-             KL(p,q) = \sum_i p(i) \log (\frac{p(i)}{q(i)}+\epsilon)
+             KL(p,q) = \langle \mathbf{p}, log(\mathbf{p} / \mathbf{q} + eps \rangle
+             + \mathbb{1}_{mass=True} \langle \mathbf{q} - \mathbf{p}, \mathbf{1} \rangle
 
         See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.entropy.html
         """
@@ -1053,6 +1057,14 @@ class Backend():
         Replace NaN with zero and infinity with large finite numbers or with the numbers defined by the user.
 
         See: https://numpy.org/doc/stable/reference/generated/numpy.nan_to_num.html#numpy.nan_to_num
+        """
+        raise NotImplementedError()
+
+    def det(self, a):
+        r"""
+        Compute the determinant of an array.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.det.html
         """
         raise NotImplementedError()
 
@@ -1346,13 +1358,20 @@ class NumpyBackend(Backend):
 
     def sqrtm(self, a):
         L, V = np.linalg.eigh(a)
-        return (V * np.sqrt(L)[None, :]) @ V.T
+        L = np.sqrt(L)
+        # Q[...] = V[...] @ diag(L[...])
+        Q = np.einsum('...jk,...k->...jk', V, L)
+        # R[...] = Q[...] @ V[...].T
+        return np.einsum('...jk,...kl->...jl', Q, np.swapaxes(V, -1, -2))
 
     def eigh(self, a):
         return np.linalg.eigh(a)
 
-    def kl_div(self, p, q, eps=1e-16):
-        return np.sum(p * np.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16):
+        value = np.sum(p * np.log(p / q + eps))
+        if mass:
+            value = value + np.sum(q - p)
+        return value
 
     def isfinite(self, a):
         return np.isfinite(a)
@@ -1407,6 +1426,9 @@ class NumpyBackend(Backend):
     def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
         return np.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
 
+    def det(self, a):
+        return np.linalg.det(a)
+
 
 _register_backend_implementation(NumpyBackend)
 
@@ -1439,11 +1461,19 @@ class JaxBackend(Backend):
                 jax.device_put(jnp.array(1, dtype=jnp.float64), d)
             ]
 
+        self.jax_new_version = jax_new_version
+
     def _to_numpy(self, a):
         return np.array(a)
 
+    def _get_device(self, a):
+        if self.jax_new_version:
+            return list(a.devices())[0]
+        else:
+            return a.device_buffer.device()
+
     def _change_device(self, a, type_as):
-        return jax.device_put(a, type_as.device_buffer.device())
+        return jax.device_put(a, self._get_device(type_as))
 
     def _from_numpy(self, a, type_as=None):
         if isinstance(a, float):
@@ -1688,7 +1718,10 @@ class JaxBackend(Backend):
         return jnp.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
 
     def dtype_device(self, a):
-        return a.dtype, a.device_buffer.device()
+        if self.jax_new_version:
+            return a.dtype, list(a.devices())[0]
+        else:
+            return a.dtype, a.device_buffer.device()
 
     def assert_same_dtype_device(self, a, b):
         a_dtype, a_device = self.dtype_device(a)
@@ -1734,13 +1767,20 @@ class JaxBackend(Backend):
 
     def sqrtm(self, a):
         L, V = jnp.linalg.eigh(a)
-        return (V * jnp.sqrt(L)[None, :]) @ V.T
+        L = jnp.sqrt(L)
+        # Q[...] = V[...] @ diag(L[...])
+        Q = jnp.einsum('...jk,...k->...jk', V, L)
+        # R[...] = Q[...] @ V[...].T
+        return jnp.einsum('...jk,...kl->...jl', Q, jnp.swapaxes(V, -1, -2))
 
     def eigh(self, a):
         return jnp.linalg.eigh(a)
 
-    def kl_div(self, p, q, eps=1e-16):
-        return jnp.sum(p * jnp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16):
+        value = jnp.sum(p * jnp.log(p / q + eps))
+        if mass:
+            value = value + jnp.sum(q - p)
+        return value
 
     def isfinite(self, a):
         return jnp.isfinite(a)
@@ -1777,6 +1817,9 @@ class JaxBackend(Backend):
 
     def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
         return jnp.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
+
+    def det(self, x):
+        return jnp.linalg.det(x)
 
 
 if jax:
@@ -2221,13 +2264,21 @@ class TorchBackend(Backend):
 
     def sqrtm(self, a):
         L, V = torch.linalg.eigh(a)
-        return (V * torch.sqrt(L)[None, :]) @ V.T
+        L = torch.sqrt(L)
+        # Q[...] = V[...] @ diag(L[...])
+        Q = torch.einsum('...jk,...k->...jk', V, L)
+        # R[...] = Q[...] @ V[...].T
+        return torch.einsum('...jk,...kl->...jl', Q,
+                            torch.transpose(V, -1, -2))
 
     def eigh(self, a):
         return torch.linalg.eigh(a)
 
-    def kl_div(self, p, q, eps=1e-16):
-        return torch.sum(p * torch.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16):
+        value = torch.sum(p * torch.log(p / q + eps))
+        if mass:
+            value = value + torch.sum(q - p)
+        return value
 
     def isfinite(self, a):
         return torch.isfinite(a)
@@ -2267,6 +2318,9 @@ class TorchBackend(Backend):
     def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
         out = None if copy else x
         return torch.nan_to_num(x, nan=nan, posinf=posinf, neginf=neginf, out=out)
+
+    def det(self, x):
+        return torch.linalg.det(x)
 
 
 if torch:
@@ -2622,13 +2676,21 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
-        return (V * cp.sqrt(L)[None, :]) @ V.T
+        L = cp.sqrt(L)
+        # Q[...] = V[...] @ diag(L[...])
+        Q = cp.einsum('...jk,...k->...jk', V, L)
+        # R[...] = Q[...] @ V[...].T
+        return cp.einsum('...jk,...kl->...jl', Q,
+                         cp.swapaxes(V, -1, -2))
 
     def eigh(self, a):
         return cp.linalg.eigh(a)
 
-    def kl_div(self, p, q, eps=1e-16):
-        return cp.sum(p * cp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16):
+        value = cp.sum(p * cp.log(p / q + eps))
+        if mass:
+            value = value + cp.sum(q - p)
+        return value
 
     def isfinite(self, a):
         return cp.isfinite(a)
@@ -2665,6 +2727,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def nan_to_num(self, x, copy=True, nan=0.0, posinf=None, neginf=None):
         return cp.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
+
+    def det(self, x):
+        return cp.linalg.det(x)
 
 
 if cp:
@@ -3046,13 +3111,21 @@ class TensorflowBackend(Backend):
 
     def sqrtm(self, a):
         L, V = tf.linalg.eigh(a)
-        return (V * tf.sqrt(L)[None, :]) @ V.T
+        L = tf.sqrt(L)
+        # Q[...] = V[...] @ diag(L[...])
+        Q = tf.einsum('...jk,...k->...jk', V, L)
+        # R[...] = Q[...] @ V[...].T
+        return tf.einsum('...jk,...kl->...jl', Q,
+                         tf.linalg.matrix_transpose(V, (0, 2, 1)))
 
     def eigh(self, a):
         return tf.linalg.eigh(a)
 
-    def kl_div(self, p, q, eps=1e-16):
-        return tnp.sum(p * tnp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16):
+        value = tnp.sum(p * tnp.log(p / q + eps))
+        if mass:
+            value = value + tnp.sum(q - p)
+        return value
 
     def isfinite(self, a):
         return tnp.isfinite(a)
@@ -3092,6 +3165,9 @@ class TensorflowBackend(Backend):
         x = self.to_numpy(x)
         x = np.nan_to_num(x, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
         return self.from_numpy(x)
+
+    def det(self, x):
+        return tf.linalg.det(x)
 
 
 if tf:

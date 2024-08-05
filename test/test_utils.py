@@ -620,3 +620,44 @@ def test_label_normalization(nx):
     # labels are shifted but the shift if expected
     y_normalized_start = ot.utils.label_normalization(y, start=1)
     np.testing.assert_array_equal(y, y_normalized_start)
+
+
+def test_proj_SDP(nx):
+    t = np.pi / 8
+    U = np.array([[np.cos(t), -np.sin(t)], [np.sin(t), np.cos(t)]])
+    w = np.array([1., -1.])
+    S = np.stack([U @ np.diag(w) @ U.T] * 2, axis=0)
+    S_nx = nx.from_numpy(S)
+    R = ot.utils.proj_SDP(S_nx)
+
+    w_expected = np.array([1., 0.])
+    S_expected = np.stack([U @ np.diag(w_expected) @ U.T] * 2, axis=0)
+    assert np.allclose(nx.to_numpy(R), S_expected)
+
+    R0 = ot.utils.proj_SDP(S_nx[0])
+    assert np.allclose(nx.to_numpy(R0), S_expected[0])
+
+
+def test_laplacian():
+    n = 100
+    rng = np.random.RandomState(0)
+    x = rng.randn(n, 2)
+    M = ot.dist(x, x)
+    L = ot.utils.laplacian(M)
+    assert L.shape == (n, n)
+
+
+def test_kl_div(nx):
+    n = 10
+    rng = np.random.RandomState(0)
+    # test on non-negative tensors
+    x = rng.randn(n)
+    x = x - x.min() + 1e-5
+    y = rng.randn(n)
+    y = y - y.min() + 1e-5
+    xb = nx.from_numpy(x)
+    yb = nx.from_numpy(y)
+    kl = nx.kl_div(xb, yb)
+    kl_mass = nx.kl_div(xb, yb, True)
+    recovered_kl = kl_mass - nx.sum(yb - xb)
+    np.testing.assert_allclose(kl, recovered_kl)

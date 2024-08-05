@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# Author: Remi Flamary <remi.flamary@polytechnique.edu>
+#
+# License: MIT License
 
 import os
 import re
@@ -46,8 +49,6 @@ if sys.platform.startswith('darwin'):
     sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path'])
     os.environ['CFLAGS'] = '-isysroot "{}"'.format(sdk_path.rstrip().decode("utf-8"))
 
-with open('requirements_all.txt') as f:
-    optional_requirements = f.read().splitlines()
 
 setup(
     name='POT',
@@ -74,15 +75,16 @@ setup(
     data_files=[],
     install_requires=["numpy>=1.16", "scipy>=1.6"],
     extras_require={
-        'backend-numpy': [], # in requirements.
-        'backend-jax': ['jax<=0.4.24', 'jaxlib<=0.4.24'],
-        'backend-cupy': [], # should be installed with conda, not pip, or figure out what CUDA version above.
+        'backend-numpy': [],  # in requirements.
+        'backend-jax': ['jax', 'jaxlib'],
+        'backend-cupy': [],  # should be installed with conda, not pip
         'backend-tf': ['tensorflow'],
         'backend-torch': ['torch'],
-        'cvxopt': ['cvxopt'], # on it's own to prevent accidental GPL violations
+        'cvxopt': ['cvxopt'],  # on it's own to prevent accidental GPL violations
         'dr': ['scikit-learn', 'pymanopt', 'autograd'],
         'gnn': ['torch', 'torch_geometric'],
-        'all': optional_requirements
+        'plot': ['matplotlib'],
+        'all': ['jax', 'jaxlib', 'tensorflow', 'torch', 'cvxopt', 'scikit-learn', 'pymanopt', 'autograd', 'torch_geometric', 'matplotlib']
     },
     python_requires=">=3.7",
     classifiers=[

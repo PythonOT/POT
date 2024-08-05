@@ -1,6 +1,27 @@
 # Releases
 
-## 0.9.4dev
+## 0.9.5dev
+
+#### New features
+- Add feature `mass=True` for `nx.kl_div` (PR #654)
+- Gaussian Mixture Model OT `ot.gmm` (PR #649)
+- Add feature `semirelaxed_fgw_barycenters` and generic FGW-related barycenter
+  updates `update_barycenter_structure` and `update_barycenter_feature` (PR
+  #659)
+- Improved `ot.plot.plot1D_mat` (PR #649)
+- Added `nx.det` (PR #649)
+- `nx.sqrtm` is now broadcastable (takes ..., d, d) inputs (PR #649)
+
+#### Closed issues
+- Fixed `ot.gaussian` ignoring weights when computing means (PR #649, Issue #648)
+
+## 0.9.4
+*June 2024*
+
+This new release contains several new features and bug fixes. Among the new features
+we have novel [Quantized FGW](https://pythonot.github.io/auto_examples/gromov/plot_quantized_gromov_wasserstein.html) solvers that can be used to speed up the computation of the FGW loss on large datasets or to promote a structure on the pairwise matrices. We also updated the continuous entropic mapping to provide efficient out-of-sample continuous mapping thanks to entropic regularization. We also have a new general unbalanced solvers for `ot.solve` and BFGS solver and illustrative example. Finally we have a new solver for the [Low Rank Gromov-Wasserstein](https://pythonot.github.io/auto_examples/others/plot_lowrank_GW.html) that can be used to compute the GW distance between two large scale datasets with a low rank approximation.
+
+From a maintenance point of view, we now have a new option to install optional dependencies with `pip install POT[all]` and the specific backends or submodules' dependencies may also be installed individually. The pip options are: `backend-jax, backend-tf, backend-torch, cvxopt, dr, gnn, plot, all`. We also provide with this release support for NumPy 2.0 (the wheels should now be compatible with NumPy 2.0 and below). We also fixed several issues such as gradient sign errors for FGW solvers, empty weights for `ot.emd2`, and line-search in partial GW. We also split the `test/test_gromov.py` into `test/gromov/` to make the tests more manageable.
 
 #### New features
 + NumPy 2.0 support is added (PR #629)
@@ -23,6 +44,7 @@
 - Fix line-search in partial GW and change default init to the interior of partial transport plans (PR #602)
 - Fix `ot.da.sinkhorn_lpl1_mm` compatibility with JAX (PR #592)
 - Fiw linesearch import error on Scipy 1.14 (PR #642, Issue #641)
+- Upgrade supported JAX versions from jax<=0.4.24 to jax<=0.4.30 (PR #643)
 
 ## 0.9.3
 *January 2024*
