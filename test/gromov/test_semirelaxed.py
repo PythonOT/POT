@@ -793,23 +793,24 @@ def test_semirelaxed_gromov_barycenter(nx):
             np.testing.assert_allclose(Cb_, Cbb_, atol=1e-06)
             np.testing.assert_array_almost_equal(err_['err'], nx.to_numpy(*errb_['err']))
             np.testing.assert_allclose(Cbb_.shape, (n_samples, n_samples))
+
     # test consistency across backends with larger barycenter than inputs
     C = ot.gromov.semirelaxed_gromov_barycenters(
         ns, [C1, C2], None, [.5, .5], 'square_loss', max_iter=10,
         tol=1e-3, stop_criterion='loss', verbose=False,
-        random_state=42, G0='kmeans'
+        random_state=42, G0=init
     )
     Cb = ot.gromov.semirelaxed_gromov_barycenters(
         ns, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
         max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
-        verbose=False, random_state=42, G0='kmeans')
+        verbose=False, random_state=42, G0=init_b)
 
     np.testing.assert_allclose(C, nx.to_numpy(Cb), atol=1e-06)
     # test providing init_C
     Cb_ = ot.gromov.semirelaxed_gromov_barycenters(
         ns, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
         max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
-        verbose=False, random_state=42, G0='kmeans', init_C=Cb)
+        verbose=False, random_state=42, G0=init_b, init_C=Cb)
 
     np.testing.assert_allclose(Cb, Cb_, atol=1e-06)
 

@@ -12,7 +12,7 @@ import numpy as np
 
 
 from ..utils import (
-    list_to_array, unif, dist, UndefinedParameter, euclidean_distances
+    list_to_array, unif, dist, UndefinedParameter
 )
 from ..optim import semirelaxed_cg, solve_1d_linesearch_quad
 from ..backend import get_backend
@@ -1318,27 +1318,20 @@ def semirelaxed_gromov_barycenters(
             # we first compute an initial informative barycenter structure
             # on graphs we can compress
             # then use it on graphs to expand
-            print('--- looping on indices ---')
             for indices in [large_graphs_idx, small_graphs_idx]:
                 if len(indices) > 0:
                     sub_T = [semirelaxed_init_plan(
                         Cs[i], init_C, ps[i], method=G0, use_target=False,
                         random_state=random_state, nx=nx) for i in indices]
                     sub_Cs = [Cs[i] for i in indices]
-                    print('shapes sub_CS:', [x.shape for x in sub_Cs])
                     sub_lambdas = lambdas[indices] / nx.sum(lambdas[indices])
-                    print('sub_lambdas:', sub_lambdas)
-                    print('sub_T:', sub_T)
                     init_C = update_barycenter_structure(
                         sub_T, sub_Cs, sub_lambdas, loss_fun=loss_fun, nx=nx)
-                    print('init_C:', init_C.shape)
                     for i, idx in enumerate(indices):
                         T[idx] = sub_T[i]
                     list_init_C.append(init_C)
 
             if len(list_init_C) == 2:
-                print('len(T):', len(T), T[0].shape, T[1].shape)
-                print('len(Cs):', [x.shape for x in Cs])
                 init_C = update_barycenter_structure(
                     T, Cs, lambdas, loss_fun=loss_fun, nx=nx)
             C = init_C
@@ -1637,7 +1630,7 @@ def semirelaxed_fgw_barycenters(
                         Cs[i], init_C, ps[i], Ms[i], alpha, method=G0, use_target=False,
                         random_state=random_state, nx=nx) for i in indices]
                     sub_Cs = [Cs[i] for i in indices]
-                    sub_lambdas = lambdas[indices]
+                    sub_lambdas = lambdas[indices] / nx.sum(lambdas[indices])
 
                     init_C = update_barycenter_structure(
                         sub_T, sub_Cs, sub_lambdas, loss_fun=loss_fun, nx=nx)

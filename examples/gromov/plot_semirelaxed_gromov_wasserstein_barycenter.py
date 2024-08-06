@@ -44,7 +44,7 @@ import numpy as np
 import matplotlib.pylab as pl
 from sklearn.manifold import MDS
 from ot.gromov import (
-    semirelaxed_gromov_barycenters, semirelaxed_fgw_barycenters)
+    semirelaxed_gromov_barycenters)
 import ot
 import networkx
 from networkx.generators.community import stochastic_block_model as sbm
@@ -115,7 +115,7 @@ pl.show()
 
 #############################################################################
 #
-# Estimate the Gromov-Wasserstein dictionary from the dataset
+# Estimate the srGW barycenter from the dataset
 # -----------------------------------------------------------
 
 
@@ -124,17 +124,18 @@ ps = [ot.unif(C.shape[0]) for C in dataset]  # uniform weights on nodes
 lambdas = [1. / n_samples for _ in range(n_samples)]  # uniform barycenter
 N = 3  # 3 nodes in the barycenter
 
-# Optionally provide an initial barycenter structure `init_C`
+# Here we use the Fluid partitioning method to deduce initial transport plans
+# for the barycenter problem. An initlal structure is also deduced from these
+# initial transport plans. Then a warmstart strategy is used iteratively to
+# init each individual srGW problem within the BCD algorithm.
 
-init_C = np.array([[0.6, 0.2, 0.2],
-                   [0.2, 0.6, 0.2],
-                   [0.2, 0.2, 0.6]])
-
-print('init_C:', init_C)
+init_plan = 'fluid'  # notice that several init options are implemented in `ot.gromov.semirelaxed_init_plan`
+warmstartT = True
 
 C, log = semirelaxed_gromov_barycenters(
-    N=N, Cs=dataset, ps=ps, lambdas=lambdas, loss_fun='square_loss', tol=1e-6,
-    stop_criterion='loss', warmstartT=True, log=True, init_C=init_C)
+    N=N, Cs=dataset, ps=ps, lambdas=lambdas, loss_fun='square_loss',
+    tol=1e-6, stop_criterion='loss', warmstartT=warmstartT, log=True,
+    G0=init_plan, verbose=False)
 
 # visualize loss evolution over epochs
 pl.figure(2, (4, 3))
@@ -145,5 +146,3 @@ pl.xlabel('BCD iterations', fontsize=12)
 pl.ylabel('loss', fontsize=12)
 pl.tight_layout()
 pl.show()
-
-print('C:', C)

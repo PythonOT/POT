@@ -437,12 +437,14 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
     if method not in list_partitioning_methods + ['product', 'random_product', 'random']:
         raise ValueError(f'Unsupported initialization method = {method}.')
 
-    if nx is None:
-        arr = [C1, C2, p]
-        if M is not None:
-            arr.append(M)
+    if (method in ['kmeans', 'kmeans_soft']) and (not sklearn_import):
+        raise ValueError(f'Scikit-learn must be installed to use method = {method}')
 
-        nx = get_backend(*arr)
+    if (method in ['fluid', 'fluid_soft']) and (not networkx_import):
+        raise ValueError(f'Networkx must be installed to use method = {method}')
+
+    if nx is None:
+        nx = get_backend(C1, C2, p, M)
 
     n = C1.shape[0]
     m = C2.shape[0]
@@ -644,10 +646,7 @@ def update_barycenter_structure(
     """
 
     if nx is None:
-        arr = [*Ts, *Cs]
-        if p is not None:
-            arr += [p]
-
+        arr = [*Ts, *Cs, p]
         nx = get_backend(*arr)
 
     S = len(Ts)
@@ -748,10 +747,7 @@ def update_barycenter_feature(
             International Conference on Learning Representations (ICLR), 2022.
     """
     if nx is None:
-        arr = [*Ts, *Ys]
-        if p is not None:
-            arr += [p]
-
+        arr = [*Ts, *Ys, p]
         nx = get_backend(*arr)
 
     if loss_fun != 'square_loss':
