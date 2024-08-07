@@ -371,3 +371,5 @@ distances between Gaussian distributions](https://hal.science/hal-03197398v2/fil
 [68] Chowdhury, S., Miller, D., & Needham, T. (2021). [Quantized gromov-wasserstein](https://link.springer.com/chapter/10.1007/978-3-030-86523-8_49). ECML PKDD 2021. Springer International Publishing.
 
 [69] Delon, J., & Desolneux, A. (2020). [A Wasserstein-type distance in the space of Gaussian mixture models](https://epubs.siam.org/doi/abs/10.1137/19M1301047). SIAM Journal on Imaging Sciences, 13(2), 936-970.
+
+[70] Séjourné, T., Vialard, F. X., & Peyré, G. (2022). [Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe](https://proceedings.mlr.press/v151/sejourne22a.html). In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
