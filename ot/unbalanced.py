@@ -915,8 +915,8 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
     >>> b=[.5, .5]
     >>> M=[[0., 1.],[1., 0.]]
     >>> ot.unbalanced.sinkhorn_unbalanced_translation_invariant(a, b, M, 1., 1.)
-    array([[0.32205361, 0.1184769],
-           [0.1184769, 0.32205361]])
+    array([[0.32205357, 0.11847689],
+           [0.11847689, 0.32205357]])
 
     .. _references-sinkhorn-unbalanced-translation-invariant:
     References
