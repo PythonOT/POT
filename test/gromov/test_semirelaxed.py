@@ -817,11 +817,13 @@ def test_semirelaxed_gromov_barycenter(nx):
     # test consistency across backends with 'kl_loss'
     Cb2, err = ot.gromov.semirelaxed_gromov_barycenters(
         n_samples, [C1, C2], [p1, p2], [.5, .5], 'kl_loss', max_iter=10,
-        tol=1e-3, warmstartT=False, stop_criterion='loss', log=True, random_state=42
+        tol=1e-3, warmstartT=False, stop_criterion='loss', log=True,
+        G0=init_b, random_state=42
     )
     Cb2b, errb = ot.gromov.semirelaxed_gromov_barycenters(
         n_samples, [C1b, C2b], [p1b, p2b], [.5, .5], 'kl_loss', max_iter=10,
-        tol=1e-3, warmstartT=False, stop_criterion='loss', log=True, random_state=42
+        tol=1e-3, warmstartT=False, stop_criterion='loss', log=True,
+        G0=init_b, random_state=42
     )
     Cb2b = nx.to_numpy(Cb2b)
 
