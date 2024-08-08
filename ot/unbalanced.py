@@ -811,23 +811,6 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="entropy",
             return ot_matrix
 
 
-def rescale_potentials(f, g, a, b, rho1, rho2):
-    """
-        TODO
-    """
-    nx = get_backend(f, g, a, b)
-
-    tau = (rho1 * rho2) / (rho1 + rho2)
-    transl = tau * (nx.logsumexp(nx.log(a) - f / rho1)
-                    - nx.logsumexp(nx.log(b) - g / rho2))
-    return transl
-
-
-def softmin(a, f, rho):
-    nx = get_backend(a, f)
-    return - rho * nx.logsumexp(nx.log(a) - f / rho)
-
-
 def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl",
                                               warmstart=None, numItermax=1000, stopThr=1e-6,
                                               verbose=False, log=False, **kwargs):
@@ -875,7 +858,7 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
         For semi-relaxed case, use either
         `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
         If reg_m is an array, it must have the same backend as input arrays (a, b, M).
-    reg_type : string, optional TODO: CHECKE ENTROPY?
+    reg_type : string, optional
         Regularizer term. Can take two values:
         'entropy' (negative entropy)
         :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`, or
@@ -959,8 +942,12 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
     else:
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
-    # potentials
-    f, g = reg * nx.log(u), reg * nx.log(v)
+    u_, v_ = u, v
+
+    if reg_type == "kl":
+        K = nx.exp(-M / reg) * a.reshape(-1)[:, None] * b.reshape(-1)[None, :]
+    elif reg_type == "entropy":
+        K = nx.exp(-M / reg)
 
     fi_1 = reg_m1 / (reg_m1 + reg) if reg_m1 != float("inf") else 1
     fi_2 = reg_m2 / (reg_m2 + reg) if reg_m2 != float("inf") else 1
@@ -968,26 +955,49 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
     k1 = reg * reg_m1 / ((reg + reg_m1) * (reg_m1 + reg_m2)) if reg_m1 != float("inf") else 0
     k2 = reg * reg_m2 / ((reg + reg_m2) * (reg_m1 + reg_m2)) if reg_m2 != float("inf") else 0
 
-    xi1 = (reg_m2 * reg) / (reg_m1 * (reg + reg_m1 + reg_m2))
-    xi2 = (reg_m1 * reg) / (reg_m2 * (reg + reg_m1 + reg_m2))
+    k_rho1 = k1 * reg_m1 / reg if reg_m1 != float("inf") else 0
+    k_rho2 = k2 * reg_m2 / reg if reg_m2 != float("inf") else 0
+
+    if reg_m1 == float("inf") and reg_m2 == float("inf"):
+        xi1, xi2 = 0, 0
+        fi_12 = 1
+    elif reg_m1 == float("inf"):
+        xi1 = 0
+        xi2 = reg / reg_m2
+        fi_12 = reg_m2
+    elif reg_m2 == float("inf"):
+        xi1 = reg / reg_m1
+        xi2 = 0
+        fi_12 = reg_m1
+    else:
+        xi1 = (reg_m2 * reg) / (reg_m1 * (reg + reg_m1 + reg_m2))
+        xi2 = (reg_m1 * reg) / (reg_m2 * (reg + reg_m1 + reg_m2))
+        fi_12 = reg_m1 * reg_m2 / (reg_m1 + reg_m2)
+
+    xi_rho1 = xi1 * reg_m1 / reg if reg_m1 != float("inf") else 0
+    xi_rho2 = xi2 * reg_m2 / reg if reg_m2 != float("inf") else 0
+
+    reg_ratio1 = reg / reg_m1 if reg_m1 != float("inf") else 0
+    reg_ratio2 = reg / reg_m2 if reg_m2 != float("inf") else 0
 
     err = 1.
 
     for i in range(numItermax):
-        fprev = f
-        gprev = g
+        uprev = u
+        vprev = v
 
-        f_hat = -reg * fi_1 * nx.logsumexp(nx.log(b)[None, :] + (g[None, :] - M) / reg, axis=1) - k2 * softmin(b, g, reg_m2)
-        f = f_hat + xi1 * softmin(a, f_hat, reg_m1)
+        Kv = nx.dot(K, v_)
+        u_hat = (a / Kv) ** fi_1 * nx.sum(b * v_**reg_ratio2)**k_rho2
+        u_ = u_hat * nx.sum(a * u_hat**(-reg_ratio1))**(-xi_rho1)
 
-        g_hat = -reg * fi_2 * nx.logsumexp(nx.log(a)[:, None] + (f[:, None] - M) / reg, axis=0) - k1 * softmin(a, f, reg_m1)
-        g = g_hat + xi2 * softmin(b, g_hat, reg_m2)
+        Ktu = nx.dot(K.T, u_)
+        v_hat = (b / Ktu) ** fi_2 * nx.sum(a * u_**(-reg_ratio1))**k_rho1
+        v_ = v_hat * nx.sum(b * v_hat**(-reg_ratio2))**(-xi_rho2)
 
-        tprev = rescale_potentials(fprev, gprev, a, b, reg_m1, reg_m2)
-        uprev, vprev = nx.exp((fprev + tprev) / reg), nx.exp((gprev - tprev) / reg)
+        t = (nx.sum(a * u_**(-reg_ratio1)) / nx.sum(b * v_**(-reg_ratio2)))**(fi_12 / reg)
 
-        t = rescale_potentials(f, g, a, b, reg_m1, reg_m2)
-        u, v = nx.exp((f + t) / reg), nx.exp((g - t) / reg)
+        u = u_ * t
+        v = v_ / t
 
         err_u = nx.max(nx.abs(u - uprev)) / max(
             nx.max(nx.abs(u)), nx.max(nx.abs(uprev)), 1.
@@ -1010,8 +1020,6 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
     if log:
         log['logu'] = nx.log(u + 1e-300)
         log['logv'] = nx.log(v + 1e-300)
-
-    K = nx.exp(-M / reg) * a.reshape(-1)[:, None] * b.reshape(-1)[None, :]
 
     if n_hists:  # return only loss
         res = nx.einsum('ik,ij,jk,ij->k', u, K, v, M)
