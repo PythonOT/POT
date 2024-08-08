@@ -73,7 +73,7 @@ reg_m_kl = 0.05
 reg_m_l2 = 5
 mass = 0.7
 
-entropic_kl_uot = ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg, reg_m_kl)
+entropic_kl_uot = ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg, reg_m_kl, reg_type="kl")
 kl_uot = ot.unbalanced.mm_unbalanced(a, b, M, reg_m_kl, div='kl')
 l2_uot = ot.unbalanced.mm_unbalanced(a, b, M, reg_m_l2, div='l2')
 partial_ot = ot.partial.partial_wasserstein(a, b, M, m=mass)
