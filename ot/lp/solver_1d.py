@@ -152,7 +152,7 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     - x_a and x_b are the samples
     - a and b are the sample weights
 
-    This implementation only supports metrics 
+    This implementation only supports metrics
     of the form :math:`d(x, y) = |x - y|^p`.
 
     Uses the algorithm detailed in [1]_
@@ -304,7 +304,7 @@ def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     - x_a and x_b are the samples
     - a and b are the sample weights
 
-    This implementation only supports metrics 
+    This implementation only supports metrics
     of the form :math:`d(x, y) = |x - y|^p`.
 
     Uses the algorithm detailed in [1]_
