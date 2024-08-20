@@ -234,10 +234,12 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         "emd_1d should only be used with monodimensional data"
     assert (x_b.ndim == 1 or x_b.ndim == 2 and x_b.shape[1] == 1), \
         "emd_1d should only be used with monodimensional data"
-    assert metric in ['sqeuclidean', 'minkowski', 'cityblock', 'euclidean'], \
-        "Solver for EMD in 1d only supports metrics " + \
-        "from the following list: " + \
-        "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
+    if metric not in ['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']:
+        raise ValueError(
+            "Solver for EMD in 1d only supports metrics " +
+            "from the following list: " +
+            "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
+        )
 
     # if empty array given then use uniform distributions
     if a is None or a.ndim == 0 or len(a) == 0:
