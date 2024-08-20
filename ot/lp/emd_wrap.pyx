@@ -141,10 +141,8 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
     v : (nt,) ndarray, float64
         Target dirac locations (on the real line)
     metric: str, optional (default='sqeuclidean')
-        Metric to be used. Only strings listed in :func:`ot.dist` are accepted.
-        Due to implementation details, this function runs faster when
-        `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'` metrics
-        are used.
+        Metric to be used. Only works with either of the strings
+        `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'`.
     p: float, optional (default=1.0)
          The p-norm to apply for if metric='minkowski'
 
@@ -182,8 +180,9 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
         elif metric == 'minkowski':
             m_ij = math.pow(math.fabs(u[i] - v[j]), p)
         else:
-            m_ij = dist(u[i].reshape((1, 1)), v[j].reshape((1, 1)),
-                        metric=metric)[0, 0]
+            raise ValueError("Solver for EMD in 1d only supports metrics " +
+                             "from the following list: " +
+                             "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`")
         if w_i < w_j or j == m - 1:
             cost += m_ij * w_i
             G[cur_idx] = w_i
