@@ -14,6 +14,7 @@
 
 #### Closed issues
 - Fixed `ot.gaussian` ignoring weights when computing means (PR #649, Issue #648)
+- Fixed `ot.emd_1d` and `ot.emd2_1d` incorrectly allowing any metric (PR #670, Issue #669)
 
 ## 0.9.4
 *June 2024*

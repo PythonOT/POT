@@ -152,7 +152,8 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     - x_a and x_b are the samples
     - a and b are the sample weights
 
-    When 'minkowski' is used as a metric, :math:`d(x, y) = |x - y|^p`.
+    This implementation only supports metrics
+    of the form :math:`d(x, y) = |x - y|^p`.
 
     Uses the algorithm detailed in [1]_
 
@@ -167,9 +168,8 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     b : (nt,) ndarray, float64, optional
         Target histogram (default is uniform weight)
     metric: str, optional (default='sqeuclidean')
-        Metric to be used. Only strings listed in :func:`ot.dist` are accepted.
-        Due to implementation details, this function runs faster when
-        `'sqeuclidean'`, `'cityblock'`,  or `'euclidean'` metrics are used.
+        Metric to be used. Only works with either of the strings
+        `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'`.
     p: float, optional (default=1.0)
          The p-norm to apply for if metric='minkowski'
     dense: boolean, optional (default=True)
@@ -234,6 +234,12 @@ def emd_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
         "emd_1d should only be used with monodimensional data"
     assert (x_b.ndim == 1 or x_b.ndim == 2 and x_b.shape[1] == 1), \
         "emd_1d should only be used with monodimensional data"
+    if metric not in ['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']:
+        raise ValueError(
+            "Solver for EMD in 1d only supports metrics " +
+            "from the following list: " +
+            "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
+        )
 
     # if empty array given then use uniform distributions
     if a is None or a.ndim == 0 or len(a) == 0:
@@ -300,7 +306,8 @@ def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     - x_a and x_b are the samples
     - a and b are the sample weights
 
-    When 'minkowski' is used as a metric, :math:`d(x, y) = |x - y|^p`.
+    This implementation only supports metrics
+    of the form :math:`d(x, y) = |x - y|^p`.
 
     Uses the algorithm detailed in [1]_
 
@@ -315,10 +322,8 @@ def emd2_1d(x_a, x_b, a=None, b=None, metric='sqeuclidean', p=1., dense=True,
     b : (nt,) ndarray, float64, optional
         Target histogram (default is uniform weight)
     metric: str, optional (default='sqeuclidean')
-        Metric to be used. Only strings listed in :func:`ot.dist` are accepted.
-        Due to implementation details, this function runs faster when
-        `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'` metrics
-        are used.
+        Metric to be used. Only works with either of the strings
+        `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'`.
     p: float, optional (default=1.0)
          The p-norm to apply for if metric='minkowski'
     dense: boolean, optional (default=True)
