@@ -36,6 +36,7 @@ from . import factored
 from . import solvers
 from . import gaussian
 from . import lowrank
+from . import gmm
 
 
 # OT functions

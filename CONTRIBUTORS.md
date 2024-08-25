@@ -42,7 +42,8 @@ The contributors to this library are:
 * [Minhui Huang](https://mhhuang95.github.io) (Projection Robust Wasserstein Distance)
 * [Nathan Cassereau](https://github.com/ncassereau-idris) (Backends)
 * [Cédric Vincent-Cuaz](https://github.com/cedricvincentcuaz) (Graph Dictionary Learning, FGW, semi-relaxed FGW, quantized FGW)
-* [Eloi Tanguy](https://github.com/eloitanguy) (Generalized Wasserstein Barycenters)
+* [Eloi Tanguy](https://github.com/eloitanguy) (Generalized Wasserstein
+  Barycenters, GMMOT)
 * [Camille Le Coz](https://www.linkedin.com/in/camille-le-coz-8593b91a1/) (EMD2 debug)
 * [Eduardo Fernandes Montesuma](https://eddardd.github.io/my-personal-blog/) (Free support sinkhorn barycenter)
 * [Theo Gnassounou](https://github.com/tgnassou) (OT between Gaussian distributions)
@@ -51,6 +52,7 @@ The contributors to this library are:
 * [Xizheng Yu](https://github.com/x12hengyu) (Efficient Discrete Multi Marginal Optimal Transport Regularization)
 * [Sonia Mazelet](https://github.com/SoniaMaz8) (Template based GNN layers)
 * [Laurène David](https://github.com/laudavid) (Low rank sinkhorn, Low rank Gromov-Wasserstein samples)
+* [Julie Delon](https://judelo.github.io/) (GMM OT)
 
 ## Acknowledgments
 

@@ -50,6 +50,12 @@ def test_emd_1d_emd2_1d_with_weights():
     np.testing.assert_allclose(w_u, G.sum(1))
     np.testing.assert_allclose(w_v, G.sum(0))
 
+    # check that an error is raised if the metric is not a Minkowski one
+    np.testing.assert_raises(ValueError, ot.emd_1d,
+                             u, v, w_u, w_v, metric='cosine')
+    np.testing.assert_raises(ValueError, ot.emd2_1d,
+                             u, v, w_u, w_v, metric='cosine')
+
 
 def test_wasserstein_1d(nx):
     rng = np.random.RandomState(0)

@@ -22,6 +22,7 @@ API and modules
    dr
    factored
    gaussian
+   gmm
    gnn
    gromov
    lowrank
