@@ -667,7 +667,7 @@ def update_barycenter_structure(
         prod = nx.outer(inv_p, inv_p)
 
     else:
-        quotient = sum([nx.outer(p[s], p[s]) for s in range(S)])
+        quotient = sum([lambdas[s] * nx.outer(p[s], p[s]) for s in range(S)])
         if check_zeros:
             prod = nx.nan_to_num(1. / quotient, nan=1., posinf=1., neginf=1.)
         else:
@@ -771,7 +771,7 @@ def update_barycenter_feature(
         else:
             inv_p = 1. / p
     else:
-        p_sum = sum(p)
+        p_sum = sum([lambdas[s] * p[s] for s in range(S)])
         if check_zeros:
             inv_p = nx.nan_to_num(1. / p_sum, nan=1., posinf=1., neginf=1.)
         else:
