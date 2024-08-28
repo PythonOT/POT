@@ -390,10 +390,29 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
 
 def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
                           use_target=True, random_state=0, nx=None):
-    """
-    Heuristics to initialize the semi-relaxed (F)GW transport plan between a
-    graph :math:`(\mathbf{C1}, \mathbf{p})` and a structure matrix :math:`\mathbf{C2}`.
+    r"""
+    Heuristics to initialize the semi-relaxed (F)GW transport plan
+    :math:`\mathbf{T} \in \mathcal{U}_{nt}(\mathbf{p})`, between a graph
+    :math:`(\mathbf{C1}, \mathbf{p})` and a structure matrix :math:`\mathbf{C2}`,
+    where :math:`\mathcal{U}_{nt}(\mathbf{p}) = \{\mathbf{T} \in \mathbb{R}_{+}^{ns * nt}, \mathbf{T} \mathbf{1}_{nt} = \mathbf{p} \}`.
+    Available methods are:
+        - "product" or "random_product": :math:`\mathbf{T} = \mathbf{pq}^{T}`
+          with :math:`\mathbf{q}` uniform or randomly samples in the nt probability simplex.
 
+        - "random": random sampling in :math:`\mathcal{U}_{nt}(\mathbf{p})`.
+
+        - "fluid": Fluid algorithm from networkx for graph partitioning.
+
+        - "spectral", "kmeans" : Spectral or Kmeans clustering from sklearn.
+
+        - "fluid_soft", "spectral_soft", "kmeans_soft": :math:`\mathbf{T}_0` given
+          by corresponding clustering with target marginal :math:`\mathbf{q}_0`, further
+          centered as :math:`\mathbf{T} = (\mathbf{T}_0 + \mathbf{pq}_0^T) / 2` .
+
+    If a metric cost matrix between features across domains :math:`\mathbf{M}`
+    is a provided, it will be used as cost matrix in a semi-relaxed Wasserstein
+    problem providing :math:`\mathbf{T}_M \in \mathcal{U}_{nt}(\mathbf{p})`. Then
+    the outputed transport plan is :math:`\alpha \mathbf{T}  + (1 - \alpha ) \mathbf{T}_{M}`.
 
     Parameters
     ----------
