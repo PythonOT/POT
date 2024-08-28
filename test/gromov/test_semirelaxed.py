@@ -809,17 +809,19 @@ def test_semirelaxed_gromov_barycenter(nx):
                 np.testing.assert_allclose(Cbb_.shape, (n_samples, n_samples))
 
     # test consistency across backends with larger barycenter than inputs
-    C = ot.gromov.semirelaxed_gromov_barycenters(
-        ns, [C1, C2], None, [.5, .5], 'square_loss', max_iter=5,
-        tol=1e-3, stop_criterion='loss', verbose=False,
-        random_state=42, G0=init
-    )
-    Cb = ot.gromov.semirelaxed_gromov_barycenters(
-        ns, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
-        max_iter=5, tol=1e-3, stop_criterion=stop_criterion,
-        verbose=False, random_state=42, G0=init_b)
+    if sklearn_import:
+        C = ot.gromov.semirelaxed_gromov_barycenters(
+            ns, [C1, C2], None, [.5, .5], 'square_loss', max_iter=5,
+            tol=1e-3, stop_criterion='loss', verbose=False,
+            random_state=42, G0='kmeans'
+        )
+        Cb = ot.gromov.semirelaxed_gromov_barycenters(
+            ns, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
+            max_iter=5, tol=1e-3, stop_criterion=stop_criterion,
+            verbose=False, random_state=42, G0='kmeans')
 
-    np.testing.assert_allclose(C, nx.to_numpy(Cb), atol=1e-06)
+        np.testing.assert_allclose(C, nx.to_numpy(Cb), atol=1e-06)
+
     # test providing init_C
     Cb_ = ot.gromov.semirelaxed_gromov_barycenters(
         ns, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
@@ -1036,32 +1038,41 @@ def test_semirelaxed_fgw_barycenter(nx):
             np.testing.assert_allclose(X, nx.to_numpy(Xb))
             np.testing.assert_allclose(C, nx.to_numpy(Cb))
 
-    # test while providing advanced T inits and init_X != None
+    # test while providing advanced T inits and init_X != None, and init_C !=None
     Xb_, Cb_, logb_ = ot.gromov.semirelaxed_fgw_barycenters(
         n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
         fixed_structure=False, fixed_features=False, loss_fun='square_loss',
-        max_iter=10, tol=1e-3, stop_criterion='loss', G0=init_b,
+        max_iter=10, tol=1e-3, stop_criterion='loss', G0='random',
         warmstartT=True, random_state=12345, log=True, verbose=True,
         init_C=Cb, init_X=Xb
     )
     np.testing.assert_allclose(Xb, Xb_)
     np.testing.assert_allclose(Cb, Cb_)
 
+    Xb_, Cb_, logb_ = ot.gromov.semirelaxed_fgw_barycenters(
+        n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
+        fixed_structure=False, fixed_features=False, loss_fun='square_loss',
+        max_iter=10, tol=1e-3, stop_criterion='loss', G0='kmeans',
+        warmstartT=True, random_state=12345, log=True, verbose=True,
+        init_C=Cb, init_X=Xb
+    )
+
     # test consistency of backends while barycenter size not strictly inferior to sizes
-    X, C, log = ot.gromov.semirelaxed_fgw_barycenters(
-        ns, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
-        fixed_structure=False, fixed_features=False, loss_fun='square_loss',
-        max_iter=10, tol=1e-3, stop_criterion='loss', G0=init,
-        warmstartT=True, random_state=12345, log=True, verbose=True
-    )
-    Xb, Cb, logb = ot.gromov.semirelaxed_fgw_barycenters(
-        ns, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
-        fixed_structure=False, fixed_features=False, loss_fun='square_loss',
-        max_iter=10, tol=1e-3, stop_criterion='loss', G0=init_b,
-        warmstartT=True, random_state=12345, log=True, verbose=True
-    )
-    np.testing.assert_allclose(X, nx.to_numpy(Xb))
-    np.testing.assert_allclose(C, nx.to_numpy(Cb))
+    if sklearn_import:
+        X, C, log = ot.gromov.semirelaxed_fgw_barycenters(
+            ns, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
+            fixed_structure=False, fixed_features=False, loss_fun='square_loss',
+            max_iter=10, tol=1e-3, stop_criterion='loss', G0='kmeans',
+            warmstartT=True, random_state=12345, log=True, verbose=True
+        )
+        Xb, Cb, logb = ot.gromov.semirelaxed_fgw_barycenters(
+            ns, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
+            fixed_structure=False, fixed_features=False, loss_fun='square_loss',
+            max_iter=10, tol=1e-3, stop_criterion='loss', G0='kmeans',
+            warmstartT=True, random_state=12345, log=True, verbose=True
+        )
+        np.testing.assert_allclose(X, nx.to_numpy(Xb))
+        np.testing.assert_allclose(C, nx.to_numpy(Cb))
 
     # test edge cases for semirelaxed fgw barycenters:
     # unique input structure

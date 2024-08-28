@@ -477,7 +477,9 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
     def lp_solver(a, b, Mi, **kwargs):
         # get minimum by rows as binary mask
         min_ = nx.reshape(nx.min(Mi, axis=1), (-1, 1))
-        # instead of exact equality to min_ we consider a small margin for float precision issues.
+        # instead of exact elements equal to min_ we consider a small margin (1e-15)
+        # for float precision issues. Then the mass is splitted uniformly
+        # between these elements.
         Gc = nx.ones(1, type_as=a) * (Mi <= min_ + 1e-15)
         Gc *= nx.reshape((a / nx.sum(Gc, axis=1)), (-1, 1))
         # return by default an empty inner_log

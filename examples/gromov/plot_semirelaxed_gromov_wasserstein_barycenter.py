@@ -63,6 +63,7 @@ clusters = [1, 2, 3]
 Nc = n_samples // len(clusters)  # number of graphs by cluster
 nlabels = len(clusters)
 dataset = []
+node_labels = []
 labels = []
 
 p_inter = 0.1
@@ -82,8 +83,10 @@ for n_cluster in clusters:
             sizes = [n_nodes]
 
         G = sbm(sizes, P, seed=i, directed=False)
+        part = np.array([G.nodes[i]['block'] for i in range(np.sum(sizes))])
         C = networkx.to_numpy_array(G)
         dataset.append(C)
+        node_labels.append(part)
         labels.append(n_cluster)
 
 
@@ -177,21 +180,14 @@ pl.show()
 #
 # Endow the dataset with node features
 # ------------------------------------
-# We follow this feature assignment on all nodes of a graph depending on its label/number of clusters
-# 1 cluster --> 0 as nodes feature
-# 2 clusters --> 1 as nodes feature
-# 3 clusters --> 2 as nodes feature
-# features are one-hot encoded following these assignments
+# node labels, corresponding to the true SBM cluster assignments,
+# are set for each graph as one-hot encoded node features.
+
 dataset_features = []
 for i in range(len(dataset)):
     n = dataset[i].shape[0]
     F = np.zeros((n, 3))
-    if i < Nc:  # graph with 1 cluster
-        F[:, 0] = 1.
-    elif i < 2 * Nc:  # graph with 2 clusters
-        F[:, 1] = 1.
-    else:  # graph with 3 clusters
-        F[:, 2] = 1.
+    F[np.arange(n), node_labels[i]] = 1.
     dataset_features.append(F)
 
 pl.figure(3, (12, 8))
@@ -199,7 +195,7 @@ pl.clf()
 for idx_c, c in enumerate(clusters):
     C = dataset[(c - 1) * Nc]  # sample with c clusters
     F = dataset_features[(c - 1) * Nc]
-    colors = ['C' + str(np.argmax(F[i])) for i in range(F.shape[0])]
+    colors = [f'C{labels[i]}' for i in range(F.shape[0])]
     # get 2d position for nodes
     x = MDS(dissimilarity='precomputed', random_state=0).fit_transform(1 - C)
     pl.subplot(2, nlabels, c)
@@ -220,9 +216,9 @@ pl.show()
 # We emphasize the dependence to the trade-off parameter alpha that weights the
 # relative importance between structures (alpha=1) and features (alpha=0),
 # knowing that embeddings that perfectly cluster graphs w.r.t their features
-# should collapse in one node with the proper feature/label.
+# should ease the identification of the number of clusters in the graphs.
 
-list_alphas = [0.8, 0.85, 0.9, 0.9999]
+list_alphas = [0.0001, 0.5, 0.9999]
 list_unmixings2D = []
 
 for ialpha, alpha in enumerate(list_alphas):
@@ -248,7 +244,7 @@ y = [1., 0.]
 z = [0.5, np.sqrt(3) / 2.]
 extremities = np.stack([x, y, z])
 
-pl.figure(4, (16, 4))
+pl.figure(4, (12, 4))
 pl.clf()
 pl.suptitle('Embedding spaces', fontsize=14)
 for ialpha, alpha in enumerate(list_alphas):
