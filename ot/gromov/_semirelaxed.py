@@ -29,8 +29,6 @@ try:
 except ImportError:
     sklearn_import = False
 
-import warnings
-
 
 def semirelaxed_gromov_wasserstein(
         C1, C2, p=None, loss_fun='square_loss', symmetric=None, log=False, G0=None,
