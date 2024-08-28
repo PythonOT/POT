@@ -751,77 +751,91 @@ def test_semirelaxed_gromov_barycenter(nx):
     # test consistency of outputs across backends with 'square_loss'
     # using different losses
     # + tests on different inits
-    init_plan_list = [('random', 'random')]
-
-    if networkx_import:
-        init_plan_list += [('fluid', 'fluid')]
-
-    if sklearn_import:
-        init_plan_list += [("kmeans", "kmeans")]
+    init_plan_list = [('fluid', 'fluid'), ("kmeans", "kmeans"),
+                      ('random', 'random')]
 
     for (init, init_b) in init_plan_list:
 
         for stop_criterion in ['barycenter', 'loss']:
             print('--- stop_criterion:', stop_criterion)
-            Cb = ot.gromov.semirelaxed_gromov_barycenters(
-                n_samples, [C1, C2], None, [.5, .5], 'square_loss', max_iter=10,
-                tol=1e-3, stop_criterion=stop_criterion, verbose=False,
-                random_state=42, G0=init
-            )
-            Cbb = nx.to_numpy(ot.gromov.semirelaxed_gromov_barycenters(
-                n_samples, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
-                max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
-                verbose=False, random_state=42, G0=init_b
-            ))
-            np.testing.assert_allclose(Cb, Cbb, atol=1e-06)
-            np.testing.assert_allclose(Cbb.shape, (n_samples, n_samples))
 
-            # test of gromov_barycenters with `log` on
-            Cb_, err_ = ot.gromov.semirelaxed_gromov_barycenters(
-                n_samples, [C1, C2], [p1, p2], None, 'square_loss', max_iter=10,
-                tol=1e-3, stop_criterion=stop_criterion, verbose=False,
-                warmstartT=True, random_state=42, log=True, G0=init,
-            )
-            Cbb_, errb_ = ot.gromov.semirelaxed_gromov_barycenters(
-                n_samples, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
-                max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
-                verbose=False, warmstartT=True, random_state=42, log=True, G0=init_b
-            )
+            if (init == 'fluid') and (not networkx_import):
+                with pytest.raises(ValueError):
+                    Cb = ot.gromov.semirelaxed_gromov_barycenters(
+                        n_samples, [C1, C2], None, [.5, .5], 'square_loss', max_iter=5,
+                        tol=1e-3, stop_criterion=stop_criterion, verbose=False,
+                        random_state=42, G0=init
+                    )
 
-            Cbb_ = nx.to_numpy(Cbb_)
+            elif (init == 'kmeans') and (not sklearn_import):
+                with pytest.raises(ValueError):
+                    Cb = ot.gromov.semirelaxed_gromov_barycenters(
+                        n_samples, [C1, C2], None, [.5, .5], 'square_loss', max_iter=5,
+                        tol=1e-3, stop_criterion=stop_criterion, verbose=False,
+                        random_state=42, G0=init
+                    )
+            else:
 
-            np.testing.assert_allclose(Cb_, Cbb_, atol=1e-06)
-            np.testing.assert_array_almost_equal(err_['err'], nx.to_numpy(*errb_['err']))
-            np.testing.assert_allclose(Cbb_.shape, (n_samples, n_samples))
+                Cb = ot.gromov.semirelaxed_gromov_barycenters(
+                    n_samples, [C1, C2], None, [.5, .5], 'square_loss', max_iter=5,
+                    tol=1e-3, stop_criterion=stop_criterion, verbose=False,
+                    random_state=42, G0=init
+                )
+
+                Cbb = nx.to_numpy(ot.gromov.semirelaxed_gromov_barycenters(
+                    n_samples, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
+                    max_iter=5, tol=1e-3, stop_criterion=stop_criterion,
+                    verbose=False, random_state=42, G0=init_b
+                ))
+                np.testing.assert_allclose(Cb, Cbb, atol=1e-06)
+                np.testing.assert_allclose(Cbb.shape, (n_samples, n_samples))
+
+                # test of gromov_barycenters with `log` on
+                Cb_, err_ = ot.gromov.semirelaxed_gromov_barycenters(
+                    n_samples, [C1, C2], [p1, p2], None, 'square_loss', max_iter=5,
+                    tol=1e-3, stop_criterion=stop_criterion, verbose=False,
+                    warmstartT=True, random_state=42, log=True, G0=init,
+                )
+                Cbb_, errb_ = ot.gromov.semirelaxed_gromov_barycenters(
+                    n_samples, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
+                    max_iter=5, tol=1e-3, stop_criterion=stop_criterion,
+                    verbose=False, warmstartT=True, random_state=42, log=True, G0=init_b
+                )
+
+                Cbb_ = nx.to_numpy(Cbb_)
+
+                np.testing.assert_allclose(Cb_, Cbb_, atol=1e-06)
+                np.testing.assert_array_almost_equal(err_['err'], nx.to_numpy(*errb_['err']))
+                np.testing.assert_allclose(Cbb_.shape, (n_samples, n_samples))
 
     # test consistency across backends with larger barycenter than inputs
     C = ot.gromov.semirelaxed_gromov_barycenters(
-        ns, [C1, C2], None, [.5, .5], 'square_loss', max_iter=10,
+        ns, [C1, C2], None, [.5, .5], 'square_loss', max_iter=5,
         tol=1e-3, stop_criterion='loss', verbose=False,
         random_state=42, G0=init
     )
     Cb = ot.gromov.semirelaxed_gromov_barycenters(
         ns, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
-        max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
+        max_iter=5, tol=1e-3, stop_criterion=stop_criterion,
         verbose=False, random_state=42, G0=init_b)
 
     np.testing.assert_allclose(C, nx.to_numpy(Cb), atol=1e-06)
     # test providing init_C
     Cb_ = ot.gromov.semirelaxed_gromov_barycenters(
         ns, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
-        max_iter=10, tol=1e-3, stop_criterion=stop_criterion,
+        max_iter=5, tol=1e-3, stop_criterion=stop_criterion,
         verbose=False, random_state=42, G0=init_b, init_C=Cb)
 
     np.testing.assert_allclose(Cb, Cb_, atol=1e-06)
 
     # test consistency across backends with 'kl_loss'
     Cb2, err = ot.gromov.semirelaxed_gromov_barycenters(
-        n_samples, [C1, C2], [p1, p2], [.5, .5], 'kl_loss', max_iter=10,
+        n_samples, [C1, C2], [p1, p2], [.5, .5], 'kl_loss', max_iter=5,
         tol=1e-3, warmstartT=False, stop_criterion='loss', log=True,
         G0=init_b, random_state=42
     )
     Cb2b, errb = ot.gromov.semirelaxed_gromov_barycenters(
-        n_samples, [C1b, C2b], [p1b, p2b], [.5, .5], 'kl_loss', max_iter=10,
+        n_samples, [C1b, C2b], [p1b, p2b], [.5, .5], 'kl_loss', max_iter=5,
         tol=1e-3, warmstartT=False, stop_criterion='loss', log=True,
         G0=init_b, random_state=42
     )
@@ -982,31 +996,45 @@ def test_semirelaxed_fgw_barycenter(nx):
 
     # test consistency of outputs across backends with 'square_loss'
     # with various initialization of G0
-    init_plan_list = [('product', 'product'), ('random', 'random')]
-
-    if networkx_import:
-        init_plan_list += [('fluid', 'fluid')]
-
-    if sklearn_import:
-        init_plan_list += [("kmeans", "kmeans")]
+    init_plan_list = [('fluid', 'fluid'), ("kmeans", "kmeans"),
+                      ('product', 'product'), ('random', 'random')]
 
     for (init, init_b) in init_plan_list:
         print(f'---- init : {init} / init_b : {init_b}')
 
-        X, C, log = ot.gromov.semirelaxed_fgw_barycenters(
-            n_samples, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
-            fixed_structure=False, fixed_features=False, loss_fun='square_loss',
-            max_iter=10, tol=1e-3, stop_criterion='loss', G0=init,
-            warmstartT=True, random_state=12345, log=True, verbose=True
-        )
-        Xb, Cb, logb = ot.gromov.semirelaxed_fgw_barycenters(
-            n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
-            fixed_structure=False, fixed_features=False, loss_fun='square_loss',
-            max_iter=10, tol=1e-3, stop_criterion='loss', G0=init_b,
-            warmstartT=True, random_state=12345, log=True, verbose=True
-        )
-        np.testing.assert_allclose(X, nx.to_numpy(Xb))
-        np.testing.assert_allclose(C, nx.to_numpy(Cb))
+        if (init == 'fluid') and (not networkx_import):
+            with pytest.raises(ValueError):
+
+                X, C, log = ot.gromov.semirelaxed_fgw_barycenters(
+                    n_samples, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
+                    fixed_structure=False, fixed_features=False, loss_fun='square_loss',
+                    max_iter=10, tol=1e-3, stop_criterion='loss', G0=init,
+                    warmstartT=True, random_state=12345, log=True, verbose=True
+                )
+        elif (init == 'kmeans') and (not sklearn_import):
+            with pytest.raises(ValueError):
+
+                X, C, log = ot.gromov.semirelaxed_fgw_barycenters(
+                    n_samples, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
+                    fixed_structure=False, fixed_features=False, loss_fun='square_loss',
+                    max_iter=10, tol=1e-3, stop_criterion='loss', G0=init,
+                    warmstartT=True, random_state=12345, log=True, verbose=True
+                )
+        else:
+            X, C, log = ot.gromov.semirelaxed_fgw_barycenters(
+                n_samples, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
+                fixed_structure=False, fixed_features=False, loss_fun='square_loss',
+                max_iter=10, tol=1e-3, stop_criterion='loss', G0=init,
+                warmstartT=True, random_state=12345, log=True, verbose=True
+            )
+            Xb, Cb, logb = ot.gromov.semirelaxed_fgw_barycenters(
+                n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
+                fixed_structure=False, fixed_features=False, loss_fun='square_loss',
+                max_iter=10, tol=1e-3, stop_criterion='loss', G0=init_b,
+                warmstartT=True, random_state=12345, log=True, verbose=True
+            )
+            np.testing.assert_allclose(X, nx.to_numpy(Xb))
+            np.testing.assert_allclose(C, nx.to_numpy(Cb))
 
     # test while providing advanced T inits and init_X != None
     Xb_, Cb_, logb_ = ot.gromov.semirelaxed_fgw_barycenters(

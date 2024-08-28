@@ -1606,20 +1606,11 @@ def semirelaxed_fgw_barycenters(
                 stacked_features = nx.to_numpy(stacked_features)
                 km = KMeans(n_clusters=N, random_state=random_state,
                             n_init=1).fit(stacked_features)
-                init_X = nx.from_numpy(km.cluster_centers_)
+                X = nx.from_numpy(km.cluster_centers_)
             else:
-                warnings.warn(
-                    "Kmeans clustering cannot be performed to init barycenter "
-                    "features, so we only randomly sample input features. "
-                    "Consider installing scikit-learn.",
-                    stacklevel=2
+                raise ValueError(
+                    f"Scikit-learn must be installed to use G0={G0} while init_X=None."
                 )
-                np.random.seed(random_state)
-                selected_idx = np.random.choice(
-                    np.arange(stacked_features.shape[0]), size=N, replace=False)
-                init_X = stacked_features[selected_idx]
-
-            X = init_X
         else:
             X = init_X
 
