@@ -823,12 +823,18 @@ def test_semirelaxed_gromov_barycenter(nx):
         np.testing.assert_allclose(C, nx.to_numpy(Cb), atol=1e-06)
 
     # test providing init_C
+    C_ = ot.gromov.semirelaxed_gromov_barycenters(
+        ns, [C1, C2], None, [.5, .5], 'square_loss', max_iter=5,
+        tol=1e-3, stop_criterion='loss', verbose=False,
+        random_state=42, G0=init, init_C=C
+    )
+
     Cb_ = ot.gromov.semirelaxed_gromov_barycenters(
         ns, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
         max_iter=5, tol=1e-3, stop_criterion=stop_criterion,
         verbose=False, random_state=42, G0=init_b, init_C=Cb)
 
-    np.testing.assert_allclose(Cb, Cb_, atol=1e-06)
+    np.testing.assert_allclose(C_, Cb_, atol=1e-06)
 
     # test consistency across backends with 'kl_loss'
     Cb2, err = ot.gromov.semirelaxed_gromov_barycenters(
@@ -1049,16 +1055,16 @@ def test_semirelaxed_fgw_barycenter(nx):
     np.testing.assert_allclose(Xb, Xb_)
     np.testing.assert_allclose(Cb, Cb_)
 
-    Xb_, Cb_, logb_ = ot.gromov.semirelaxed_fgw_barycenters(
-        n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
-        fixed_structure=False, fixed_features=False, loss_fun='square_loss',
-        max_iter=10, tol=1e-3, stop_criterion='loss', G0='kmeans',
-        warmstartT=True, random_state=12345, log=True, verbose=True,
-        init_C=Cb, init_X=Xb
-    )
-
     # test consistency of backends while barycenter size not strictly inferior to sizes
     if sklearn_import:
+        Xb_, Cb_, logb_ = ot.gromov.semirelaxed_fgw_barycenters(
+            n_samples, [ysb, ytb], [C1b, C2b], [p1b, p2b], [.5, .5], 0.5,
+            fixed_structure=False, fixed_features=False, loss_fun='square_loss',
+            max_iter=10, tol=1e-3, stop_criterion='loss', G0='kmeans',
+            warmstartT=True, random_state=12345, log=True, verbose=True,
+            init_C=Cb, init_X=Xb
+        )
+
         X, C, log = ot.gromov.semirelaxed_fgw_barycenters(
             ns, [ys, yt], [C1, C2], [p1, p2], [.5, .5], 0.5,
             fixed_structure=False, fixed_features=False, loss_fun='square_loss',
