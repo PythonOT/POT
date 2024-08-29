@@ -826,13 +826,13 @@ def test_semirelaxed_gromov_barycenter(nx):
     C_ = ot.gromov.semirelaxed_gromov_barycenters(
         ns, [C1, C2], None, [.5, .5], 'square_loss', max_iter=5,
         tol=1e-3, stop_criterion='loss', verbose=False,
-        random_state=42, G0=init, init_C=C
+        random_state=42, G0=init, init_C=C1
     )
 
     Cb_ = ot.gromov.semirelaxed_gromov_barycenters(
         ns, [C1b, C2b], [p1b, p2b], [.5, .5], 'square_loss',
         max_iter=5, tol=1e-3, stop_criterion=stop_criterion,
-        verbose=False, random_state=42, G0=init_b, init_C=Cb)
+        verbose=False, random_state=42, G0=init_b, init_C=C1b)
 
     np.testing.assert_allclose(C_, Cb_, atol=1e-06)
 
