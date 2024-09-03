@@ -8,6 +8,8 @@ import numpy as np
 import pytest
 
 import ot
+from ot.gromov._utils import (
+    networkx_import, sklearn_import)
 
 
 def test_update_barycenter(nx):
@@ -61,3 +63,51 @@ def test_update_barycenter(nx):
     with pytest.raises(ValueError):
         Xbt = ot.gromov.update_barycenter_feature(
             Tb, Ysb, lambdas, None, loss_fun='unknown', target=True)
+
+
+def test_semirelaxed_init_plan(nx):
+    ns = 5
+    nt = 10
+
+    Xs, ys = ot.datasets.make_data_classif('3gauss', ns, random_state=42)
+    Xt, yt = ot.datasets.make_data_classif('3gauss2', nt, random_state=42)
+
+    rng = np.random.RandomState(42)
+    ys = rng.randn(Xs.shape[0], 2)
+    yt = rng.randn(Xt.shape[0], 2)
+
+    C1 = ot.dist(Xs)
+    C2 = ot.dist(Xt)
+    C1 /= C1.max()
+    C2 /= C2.max()
+
+    p1, p2 = ot.unif(ns), ot.unif(nt)
+
+    ysb, ytb, C1b, C2b, p1b, p2b = nx.from_numpy(ys, yt, C1, C2, p1, p2)
+
+    # test not supported method
+    with pytest.raises(ValueError):
+        _ = ot.gromov.semirelaxed_init_plan(C1b, C2b, p1b, method='unknown')
+
+    if sklearn_import:
+        # tests consistency across backends with m > n
+        for method in ['kmeans', 'spectral']:
+            T = ot.gromov.semirelaxed_init_plan(C1b, C2b, p1b, method=method)
+            Tb = ot.gromov.semirelaxed_init_plan(C1b, C2b, p1b, method=method)
+            np.testing.assert_allclose(T, Tb)
+
+            # tests consistency across backends with m = n
+            T = ot.gromov.semirelaxed_init_plan(C1b, C1b, p1b, method=method)
+            Tb = ot.gromov.semirelaxed_init_plan(C1b, C1b, p1b, method=method)
+            np.testing.assert_allclose(T, Tb)
+
+    if networkx_import:
+        # tests consistency across backends with m > n
+        T = ot.gromov.semirelaxed_init_plan(C1b, C2b, p1b, method='fluid')
+        Tb = ot.gromov.semirelaxed_init_plan(C1b, C2b, p1b, method='fluid')
+        np.testing.assert_allclose(T, Tb)
+
+        # tests consistency across backends with m = n
+        T = ot.gromov.semirelaxed_init_plan(C1b, C1b, p1b, method='fluid')
+        Tb = ot.gromov.semirelaxed_init_plan(C1b, C1b, p1b, method='fluid')
+        np.testing.assert_allclose(T, Tb)
