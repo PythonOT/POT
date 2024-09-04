@@ -33,6 +33,117 @@ import numpy as np
 import warnings
 
 
+def _transform_matrix(C1, C2, loss_fun='square_loss', nx=None):
+    r"""Return transformed structure matrices for Gromov-Wasserstein fast computation
+
+    Returns the matrices involved in the computation of :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2})`
+    with the selected loss function as the loss function of Gromov-Wasserstein discrepancy.
+
+    The matrices are computed as described in Proposition 1 in :ref:`[12] <references-init-matrix>`
+
+    Where :
+
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
+
+    The square-loss function :math:`L(a, b) = |a - b|^2` is read as :
+
+    .. math::
+
+        L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)
+
+        \mathrm{with} \ f_1(a) &= a^2
+
+                        f_2(b) &= b^2
+
+                        h_1(a) &= a
+
+                        h_2(b) &= 2b
+
+    The kl-loss function :math:`L(a, b) = a \log\left(\frac{a}{b}\right) - a + b` is read as :
+
+    .. math::
+
+        L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)
+
+        \mathrm{with} \ f_1(a) &= a \log(a) - a
+
+                        f_2(b) &= b
+
+                        h_1(a) &= a
+
+                        h_2(b) &= \log(b)
+
+    Parameters
+    ----------
+    C1 : array-like, shape (ns, ns)
+        Metric cost matrix in the source space
+    C2 : array-like, shape (nt, nt)
+        Metric cost matrix in the target space
+    loss_fun : str, optional
+        Name of loss function to use: either 'square_loss' or 'kl_loss' (default='square_loss')
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    -------
+    fC1 : array-like, shape (ns, ns)
+        :math:`\mathbf{f1}(\mathbf{C1})` matrix in Eq. (6)
+    fC2 : array-like, shape (nt, nt)
+        :math:`\mathbf{f2}(\mathbf{C2})` matrix in Eq. (6)
+    hC1 : array-like, shape (ns, ns)
+        :math:`\mathbf{h1}(\mathbf{C1})` matrix in Eq. (6)
+    hC2 : array-like, shape (nt, nt)
+        :math:`\mathbf{h2}(\mathbf{C2})` matrix in Eq. (6)
+
+
+    .. _references-transform_matrix:
+    References
+    ----------
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
+
+    """
+    if nx is None:
+        C1, C2 = list_to_array(C1, C2)
+        nx = get_backend(C1, C2)
+
+    if loss_fun == 'square_loss':
+        def f1(a):
+            return (a**2)
+
+        def f2(b):
+            return (b**2)
+
+        def h1(a):
+            return a
+
+        def h2(b):
+            return 2 * b
+    elif loss_fun == 'kl_loss':
+        def f1(a):
+            return a * nx.log(a + 1e-16) - a
+
+        def f2(b):
+            return b
+
+        def h1(a):
+            return a
+
+        def h2(b):
+            return nx.log(b + 1e-16)
+    else:
+        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
+
+    fC1 = f1(C1)
+    fC2 = f2(C2)
+    hC1 = h1(C1)
+    hC2 = h2(C2)
+
+    return fC1, fC2, hC1, hC2
+
+
 def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
     r"""Return loss matrices and tensors for Gromov-Wasserstein fast computation
 
@@ -112,44 +223,16 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
         C1, C2, p, q = list_to_array(C1, C2, p, q)
         nx = get_backend(C1, C2, p, q)
 
-    if loss_fun == 'square_loss':
-        def f1(a):
-            return (a**2)
-
-        def f2(b):
-            return (b**2)
-
-        def h1(a):
-            return a
-
-        def h2(b):
-            return 2 * b
-    elif loss_fun == 'kl_loss':
-        def f1(a):
-            return a * nx.log(a + 1e-16) - a
-
-        def f2(b):
-            return b
-
-        def h1(a):
-            return a
-
-        def h2(b):
-            return nx.log(b + 1e-16)
-    else:
-        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
-
+    fC1, fC2, hC1, hC2 = _transform_matrix(C1, C2, loss_fun, nx)
     constC1 = nx.dot(
-        nx.dot(f1(C1), nx.reshape(p, (-1, 1))),
+        nx.dot(fC1, nx.reshape(p, (-1, 1))),
         nx.ones((1, len(q)), type_as=q)
     )
     constC2 = nx.dot(
         nx.ones((len(p), 1), type_as=p),
-        nx.dot(nx.reshape(q, (1, -1)), f2(C2).T)
+        nx.dot(nx.reshape(q, (1, -1)), fC2.T)
     )
     constC = constC1 + constC2
-    hC1 = h1(C1)
-    hC2 = h2(C2)
 
     return constC, hC1, hC2
 
@@ -352,39 +435,12 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
         C1, C2, p = list_to_array(C1, C2, p)
         nx = get_backend(C1, C2, p)
 
-    if loss_fun == 'square_loss':
-        def f1(a):
-            return (a**2)
+    fC1, fC2, hC1, hC2 = _transform_matrix(C1, C2, loss_fun, nx)
 
-        def f2(b):
-            return (b**2)
-
-        def h1(a):
-            return a
-
-        def h2(b):
-            return 2 * b
-    elif loss_fun == 'kl_loss':
-        def f1(a):
-            return a * nx.log(a + 1e-16) - a
-
-        def f2(b):
-            return b
-
-        def h1(a):
-            return a
-
-        def h2(b):
-            return nx.log(b + 1e-16)
-    else:
-        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
-
-    constC = nx.dot(nx.dot(f1(C1), nx.reshape(p, (-1, 1))),
+    constC = nx.dot(nx.dot(fC1, nx.reshape(p, (-1, 1))),
                     nx.ones((1, C2.shape[0]), type_as=p))
 
-    hC1 = h1(C1)
-    hC2 = h2(C2)
-    fC2t = f2(C2).T
+    fC2t = fC2.T
     return constC, hC1, hC2, fC2t
 
 

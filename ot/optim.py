@@ -270,27 +270,26 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, cost_G, 0, 0))
 
     while loop:
+        print(f'cost_G: {cost_G}')
 
         it += 1
         old_cost_G = cost_G
         # problem linearization
-        Mi = M + reg1 * df(G)
+        df_G = df(G)
+        Mi = M + reg1 * df_G
 
         if not (reg2 is None):
             Mi = Mi + reg2 * (1 + nx.log(G))
-        # set M positive
-        Mi = Mi + nx.min(Mi)
 
         # solve linear program
         Gc, innerlog_ = lp_solver(a, b, Mi, **kwargs)
-
         # line search
         deltaG = Gc - G
 
-        alpha, fc, cost_G = line_search(cost, G, deltaG, Mi, cost_G, **kwargs)
+        alpha, fc, cost_G = line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs)
 
         G = G + alpha * deltaG
-
+        
         # test convergence
         if it >= numItermax:
             loop = 0
@@ -490,6 +489,110 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
                                         stopThr2=stopThr2, verbose=verbose, log=log, **kwargs)
 
 
+def partial_cg(a, b, a_extended, b_extended, M, reg, f, df, G0=None, line_search=line_search_armijo,
+               numItermax=200, stopThr=1e-9, stopThr2=1e-9, warn=True, verbose=False, log=False, **kwargs):
+    r"""
+    Solve the general regularized partial OT problem with conditional gradient
+
+        The function solves the following optimization problem:
+
+    .. math::
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot f(\gamma)
+
+        s.t. \ \gamma \mathbf{1} &= \mathbf{a}
+
+             \gamma \mathbf{1} &= \mathbf{b}
+
+             \mathbf{1}^T \gamma^T \mathbf{1} = m &\leq \min\{\|\mathbf{p}\|_1, \|\mathbf{q}\|_1\}
+
+             \gamma &\geq 0
+
+    where :
+
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
+    - :math:`f` is the regularization term (and `df` is its gradient)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights
+    - `m` is the amount of mass to be transported
+
+    The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[1] <references-cg>`
+
+    Parameters
+    ----------
+    a : array-like, shape (ns,)
+        samples weights in the source domain
+    b : array-like, shape (nt,)
+        currently estimated samples weights in the target domain
+    a_extended : array-like, shape (ns + nb_dummies,)
+        samples weights in the source domain with added dummy nodes
+    b_extended : array-like, shape (nt + nb_dummies,)
+        currently estimated samples weights in the target domain with added dummy nodes
+    M : array-like, shape (ns, nt)
+        loss matrix
+    reg : float
+        Regularization term >0
+    G0 :  array-like, shape (ns,nt), optional
+        initial guess (default is indep joint density)
+    line_search: function,
+        Function to find the optimal step.
+        Default is the armijo line-search.
+    numItermax : int, optional
+        Max number of iterations
+    stopThr : float, optional
+        Stop threshold on the relative variation (>0)
+    stopThr2 : float, optional
+        Stop threshold on the absolute variation (>0)
+    warn: bool, optional.
+        Whether to raise a warning when EMD did not converge.
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        record log if True
+    **kwargs : dict
+             Parameters for linesearch
+
+    Returns
+    -------
+    gamma : (ns x nt) ndarray
+        Optimal transportation matrix for the given parameters
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    .. _references-partial-cg:
+    References
+    ----------
+
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+        Transport with Applications on Positive-Unlabeled Learning".
+        NeurIPS.
+
+    """
+    n, m = a.shape[0], b.shape[0]
+    n_extended, m_extended = a_extended.shape[0], b_extended.shape[0]
+    nb_dummies = n_extended - n
+
+    def lp_solver(a, b, Mi, **kwargs):
+        # add dummy nodes to Mi
+        Mi_extended = np.zeros((n_extended, m_extended), dtype=Mi.dtype)
+        Mi_extended[:n, :m] = Mi
+        Mi_extended[-nb_dummies:, -nb_dummies:] = np.max(M) * 1e2
+
+        G_extended, log_ = emd(a_extended, b_extended, Mi_extended, numItermax, log=True)
+        Gc = G_extended[:n, :m]
+
+        if warn:
+            if log_['warning'] is not None:
+                raise ValueError("Error in the EMD resolution: try to increase the"
+                                 " number of dummy points")
+
+        return Gc, log_
+
+    return generic_conditional_gradient(a, b, M, f, df, reg, None, lp_solver, line_search, G0=G0,
+                                        numItermax=numItermax, stopThr=stopThr,
+                                        stopThr2=stopThr2, verbose=verbose, log=log, **kwargs)
+
+
 def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
         numInnerItermax=200, stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, **kwargs):
     r"""
@@ -569,7 +672,7 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
     def lp_solver(a, b, Mi, **kwargs):
         return sinkhorn(a, b, Mi, reg1, numItermax=numInnerItermax, log=True, **kwargs)
 
-    def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+    def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
         return line_search_armijo(cost, G, deltaG, Mi, cost_G, **kwargs)
 
     return generic_conditional_gradient(a, b, M, f, df, reg2, reg1, lp_solver, line_search, G0=G0,

@@ -125,8 +125,8 @@ C2 = sp.spatial.distance.cdist(xt, xt)
 # transport 100% of the mass
 print('------m = 1')
 m = 1
-res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True)
-res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
+res0, log0 = ot.gromov.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True)
+res, log = ot.gromov.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
                                                           m=m, log=True,
                                                           verbose=True)
 
@@ -146,9 +146,9 @@ pl.show()
 # transport 2/3 of the mass
 print('------m = 2/3')
 m = 2 / 3
-res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True,
+res0, log0 = ot.gromov.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True,
                                                    verbose=True)
-res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
+res, log = ot.gromov.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
                                                           m=m, log=True,
                                                           verbose=True)
 
