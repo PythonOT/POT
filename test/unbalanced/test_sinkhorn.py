@@ -14,8 +14,8 @@ import pytest
 from ot.unbalanced import barycenter_unbalanced
 
 
-@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"])
-def test_unbalanced_convergence(nx, method):
+@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], ["kl", "entropy"]))
+def test_unbalanced_convergence(nx, method, reg_type):
     # test generalized sinkhorn for unbalanced OT
     n = 100
     rng = np.random.RandomState(42)
@@ -30,26 +30,27 @@ def test_unbalanced_convergence(nx, method):
 
     epsilon = 1.
     reg_m = 1.
-    stopThr = 1e-12
 
     G, log = ot.unbalanced.sinkhorn_unbalanced(
         a, b, M, reg=epsilon, reg_m=reg_m, method=method,
-        c=None, log=True, verbose=True, numItermax=1000, stopThr=stopThr
+        reg_type=reg_type, log=True, verbose=True
     )
     loss = nx.to_numpy(ot.unbalanced.sinkhorn_unbalanced2(
         a, b, M, reg=epsilon, reg_m=reg_m, method=method,
-        c=None, verbose=True, numItermax=1000, stopThr=stopThr
+        reg_type=reg_type, verbose=True
     ))
     # check fixed point equations
     # in log-domain
     fi = reg_m / (reg_m + epsilon)
-
     logb = nx.log(b + 1e-16)
     loga = nx.log(a + 1e-16)
-    log_ab = loga[:, None] + logb[None, :]
-
-    logKtu = nx.logsumexp(log["logu"][None, :] - M.T / epsilon + log_ab.T, axis=1)
-    logKv = nx.logsumexp(log["logv"][None, :] - M / epsilon + log_ab, axis=1)
+    if reg_type == "entropy":
+        logKtu = nx.logsumexp(log["logu"][None, :] - M.T / epsilon, axis=1)
+        logKv = nx.logsumexp(log["logv"][None, :] - M / epsilon, axis=1)
+    elif reg_type == "kl":
+        log_ab = loga[:, None] + logb[None, :]
+        logKtu = nx.logsumexp(log["logu"][None, :] - M.T / epsilon + log_ab.T, axis=1)
+        logKv = nx.logsumexp(log["logv"][None, :] - M / epsilon + log_ab, axis=1)
     v_final = fi * (logb - logKtu)
     u_final = fi * (loga - logKv)
 
@@ -68,19 +69,17 @@ def test_unbalanced_convergence(nx, method):
 
     G = ot.unbalanced.sinkhorn_unbalanced(
         a, b, M, reg=epsilon, reg_m=reg_m,
-        method=method, c=None, verbose=True,
-        stopThr=stopThr
+        method=method, reg_type=reg_type, verbose=True
     )
     G_np = ot.unbalanced.sinkhorn_unbalanced(
         a_np, b_np, M_np, reg=epsilon, reg_m=reg_m,
-        method=method, c=None, verbose=True,
-        stopThr=stopThr
+        method=method, reg_type=reg_type, verbose=True
     )
     np.testing.assert_allclose(G_np, nx.to_numpy(G))
 
 
-@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"])
-def test_unbalanced_warmstart(nx, method):
+@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], ["kl", "entropy"]))
+def test_unbalanced_warmstart(nx, method, reg_type):
     # test generalized sinkhorn for unbalanced OT
     n = 100
     rng = np.random.RandomState(42)
@@ -96,33 +95,33 @@ def test_unbalanced_warmstart(nx, method):
 
     G0, log0 = ot.unbalanced.sinkhorn_unbalanced(
         a, b, M, reg=epsilon, reg_m=reg_m, method=method,
-        c=None, warmstart=None, log=True, verbose=True
+        reg_type=reg_type, warmstart=None, log=True, verbose=True
     )
     loss0 = ot.unbalanced.sinkhorn_unbalanced2(
         a, b, M, reg=epsilon, reg_m=reg_m, method=method,
-        c=None, warmstart=None, verbose=True
+        reg_type=reg_type, warmstart=None, verbose=True
     )
 
     dim_a, dim_b = M.shape
     warmstart = (nx.zeros(dim_a, type_as=M), nx.zeros(dim_b, type_as=M))
     G, log = ot.unbalanced.sinkhorn_unbalanced(
         a, b, M, reg=epsilon, reg_m=reg_m, method=method,
-        c=None, warmstart=warmstart, log=True, verbose=True
+        reg_type=reg_type, warmstart=warmstart, log=True, verbose=True
     )
     loss = ot.unbalanced.sinkhorn_unbalanced2(
         a, b, M, reg=epsilon, reg_m=reg_m, method=method,
-        c=None, warmstart=warmstart, verbose=True
+        reg_type=reg_type, warmstart=warmstart, verbose=True
     )
 
     _, log_emd = ot.lp.emd(a, b, M, log=True)
     warmstart1 = (log_emd["u"], log_emd["v"])
     G1, log1 = ot.unbalanced.sinkhorn_unbalanced(
         a, b, M, reg=epsilon, reg_m=reg_m, method=method,
-        c=None, warmstart=warmstart1, log=True, verbose=True
+        reg_type=reg_type, warmstart=warmstart1, log=True, verbose=True
     )
     loss1 = ot.unbalanced.sinkhorn_unbalanced2(
         a, b, M, reg=epsilon, reg_m=reg_m, method=method,
-        c=None, warmstart=warmstart1, verbose=True
+        reg_type=reg_type, warmstart=warmstart1, verbose=True
     )
 
     np.testing.assert_allclose(

@@ -40,9 +40,18 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
     def grad_kl(G):
         return np.log(G / c + 1e-16)
 
+    def reg_entropy(G):
+        return np.sum(G * np.log(G + 1e-16)) - np.sum(G)
+
+    def grad_entropy(G):
+        return np.log(G + 1e-16)
+
     if reg_div == 'kl':
         reg_fun = reg_kl
         grad_reg_fun = grad_kl
+    elif reg_div == 'entropy':
+        reg_fun = reg_entropy
+        grad_reg_fun = grad_entropy
     elif isinstance(reg_div, tuple):
         reg_fun = reg_div[0]
         grad_reg_fun = reg_div[1]
@@ -147,7 +156,8 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
         If reg_m is an array, it must be a Numpy array.
     reg_div: string, optional
         Divergence used for regularization.
-        Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic) or a tuple
+        Can take three values: 'entropy' (negative entropy), or
+        'kl' (Kullback-Leibler) or 'l2' (quadratic) or a tuple
         of two calable functions returning the reg term and its derivative.
         Note that the callable functions should be able to handle numpy arrays
         and not tesors from the backend
@@ -204,8 +214,7 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     # convert to numpy
     a, b, M = nx.to_numpy(a, b, M)
     G0 = np.zeros(M.shape) if G0 is None else nx.to_numpy(G0)
-    if reg > 0:  # regularized case
-        c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
+    c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
 
     # wrap the callable function to handle numpy arrays
     if isinstance(reg_div, tuple):
@@ -288,7 +297,8 @@ def lbfgsb_unbalanced2(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl',
         If reg_m is an array, it must be a Numpy array.
     reg_div: string, optional
         Divergence used for regularization.
-        Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic) or a tuple
+        Can take three values: 'entropy' (negative entropy), or
+        'kl' (Kullback-Leibler) or 'l2' (quadratic) or a tuple
         of two calable functions returning the reg term and its derivative.
         Note that the callable functions should be able to handle numpy arrays
         and not tesors from the backend

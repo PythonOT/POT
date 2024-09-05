@@ -16,9 +16,9 @@ from ..backend import get_backend
 from ..utils import list_to_array, get_parameter_pair
 
 
-def sinkhorn_unbalanced(a, b, M, reg, reg_m, c=None, method='sinkhorn',
-                        warmstart=None, numItermax=1000, stopThr=1e-6,
-                        verbose=False, log=False, **kwargs):
+def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
+                        reg_type="kl", c=None, warmstart=None, numItermax=1000,
+                        stopThr=1e-6, verbose=False, log=False, **kwargs):
     r"""
     Solve the unbalanced entropic regularization optimal transport problem
     and return the OT plan
@@ -64,12 +64,20 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, c=None, method='sinkhorn',
         For semi-relaxed case, use either
         `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
         If reg_m is an array, it must have the same backend as input arrays (a, b, M).
-    c : array-like (dim_a, dim_b), optional (default=None)
-        Reference measure for the regularization.
-        If None, then use `\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
     method : str
         method used for the solver either 'sinkhorn', 'sinkhorn_stabilized' or
         'sinkhorn_reg_scaling', see those function for specific parameters
+    reg_type : string, optional
+        Regularizer term. Can take two values:
+        reg_type = 'entropy' (negative entropy)
+        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
+        This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
+        reg_type = 'kl' (Kullback-Leibler)
+        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+    c : array-like (dim_a, dim_b), optional (default=None)
+        Reference measure for the regularization.
+        If None, then use `\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+        If reg_type = 'entropy', then `\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the u,v sinkhorn scaling vectors).
@@ -138,20 +146,20 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, c=None, method='sinkhorn',
     """
 
     if method.lower() == 'sinkhorn':
-        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, c,
+        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
                                          warmstart, numItermax=numItermax,
                                          stopThr=stopThr, verbose=verbose,
                                          log=log, **kwargs)
 
     elif method.lower() == 'sinkhorn_stabilized':
-        return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, c,
+        return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type, c,
                                               warmstart, numItermax=numItermax,
                                               stopThr=stopThr,
                                               verbose=verbose,
                                               log=log, **kwargs)
     elif method.lower() in ['sinkhorn_reg_scaling']:
         warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
-        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, c,
+        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
                                          warmstart, numItermax=numItermax,
                                          stopThr=stopThr, verbose=verbose,
                                          log=log, **kwargs)
@@ -159,9 +167,9 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, c=None, method='sinkhorn',
         raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn_unbalanced2(a, b, M, reg, reg_m, c=None, method='sinkhorn',
-                         warmstart=None, numItermax=1000, stopThr=1e-6,
-                         verbose=False, log=False, **kwargs):
+def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
+                         reg_type="kl", c=None, warmstart=None, numItermax=1000,
+                         stopThr=1e-6, verbose=False, log=False, **kwargs):
     r"""
     Solve the entropic regularization unbalanced optimal transport problem and
     return the loss
@@ -206,12 +214,20 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, c=None, method='sinkhorn',
         For semi-relaxed case, use either
         `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
         If reg_m is an array, it must have the same backend as input arrays (a, b, M).
-    c : array-like (dim_a, dim_b), optional (default=None)
-        Reference measure for the regularization.
-        If None, then use `\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
     method : str
         method used for the solver either 'sinkhorn', 'sinkhorn_stabilized' or
         'sinkhorn_reg_scaling', see those function for specific parameterss
+    reg_type : string, optional
+        Regularizer term. Can take two values:
+        reg_type = 'entropy' (negative entropy)
+        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
+        This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
+        reg_type = 'kl' (Kullback-Leibler)
+        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+    c : array-like (dim_a, dim_b), optional (default=None)
+        Reference measure for the regularization.
+        If None, then use `\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+        If reg_type = 'entropy', then `\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the u,v sinkhorn scaling vectors).
@@ -273,19 +289,19 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, c=None, method='sinkhorn',
 
     if len(b.shape) < 2:
         if method.lower() == 'sinkhorn':
-            res = sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, c,
+            res = sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
                                             warmstart, numItermax=numItermax,
                                             stopThr=stopThr, verbose=verbose,
                                             log=log, **kwargs)
 
         elif method.lower() == 'sinkhorn_stabilized':
-            res = sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, c,
+            res = sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type, c,
                                                  warmstart, numItermax=numItermax,
                                                  stopThr=stopThr, verbose=verbose,
                                                  log=log, **kwargs)
         elif method.lower() in ['sinkhorn_reg_scaling']:
             warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
-            res = sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, c,
+            res = sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
                                             warmstart, numItermax=numItermax,
                                             stopThr=stopThr, verbose=verbose,
                                             log=log, **kwargs)
@@ -299,19 +315,19 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, c=None, method='sinkhorn',
 
     else:
         if method.lower() == 'sinkhorn':
-            return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, c,
+            return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
                                              warmstart, numItermax=numItermax,
                                              stopThr=stopThr, verbose=verbose,
                                              log=log, **kwargs)
 
         elif method.lower() == 'sinkhorn_stabilized':
-            return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, c,
+            return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type, c,
                                                   warmstart, numItermax=numItermax,
                                                   stopThr=stopThr, verbose=verbose,
                                                   log=log, **kwargs)
         elif method.lower() in ['sinkhorn_reg_scaling']:
             warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
-            return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, c,
+            return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
                                              warmstart, numItermax=numItermax,
                                              stopThr=stopThr, verbose=verbose,
                                              log=log, **kwargs)
@@ -319,7 +335,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, c=None, method='sinkhorn',
             raise ValueError('Unknown method %s.' % method)
 
 
-def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, c=None,
+def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
                               warmstart=None, numItermax=1000, stopThr=1e-6,
                               verbose=False, log=False, **kwargs):
     r"""
@@ -366,9 +382,17 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, c=None,
         For semi-relaxed case, use either
         `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
         If reg_m is an array, it must have the same backend as input arrays (a, b, M).
+    reg_type : string, optional
+        Regularizer term. Can take two values:
+        reg_type = 'entropy' (negative entropy)
+        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
+        This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
+        reg_type = 'kl' (Kullback-Leibler)
+        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
     c : array-like (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use `\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+        If reg_type = 'entropy', then `\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the u,v sinkhorn scaling vectors).
@@ -457,6 +481,10 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, c=None,
     else:
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
+    if reg_type == "entropy":
+        warnings.warn('If reg_type = entropy, then the matrix c is overwritten by the one matrix.')
+        c = nx.ones((dim_a, dim_b), type_as=M)
+
     if n_hists:
         K = nx.exp(-M / reg)
     else:
@@ -533,7 +561,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, c=None,
             return plan
 
 
-def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, c=None,
+def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
                                    warmstart=None, tau=1e5,
                                    numItermax=1000, stopThr=1e-6,
                                    verbose=False, log=False, **kwargs):
@@ -583,9 +611,17 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, c=None,
         For semi-relaxed case, use either
         `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
         If reg_m is an array, it must have the same backend as input arrays (a, b, M).
+    reg_type : string, optional
+        Regularizer term. Can take two values:
+        reg_type = 'entropy' (negative entropy)
+        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
+        This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
+        reg_type = 'kl' (Kullback-Leibler)
+        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
     c : array-like (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use `\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+        If reg_type = 'entropy', then `\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the u,v sinkhorn scaling vectors).
@@ -673,6 +709,10 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, c=None,
             v = nx.ones(dim_b, type_as=M)
     else:
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
+
+    if reg_type == "entropy":
+        warnings.warn('If reg_type = entropy, then the matrix c is overwritten by the one matrix.')
+        c = nx.ones((dim_a, dim_b), type_as=M)
 
     if n_hists:
         M0 = M

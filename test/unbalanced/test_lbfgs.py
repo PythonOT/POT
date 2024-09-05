@@ -13,7 +13,7 @@ import ot
 import pytest
 
 
-@pytest.mark.parametrize("reg_div,regm_div,returnCost", itertools.product(['kl', 'l2'], ['kl', 'l2'], ['linear', 'total']))
+@pytest.mark.parametrize("reg_div,regm_div,returnCost", itertools.product(['kl', 'l2', 'entropy'], ['kl', 'l2'], ['linear', 'total']))
 def test_lbfgsb_unbalanced(nx, reg_div, regm_div, returnCost):
 
     np.random.seed(42)
@@ -46,7 +46,7 @@ def test_lbfgsb_unbalanced(nx, reg_div, regm_div, returnCost):
     np.testing.assert_allclose(loss, nx.to_numpy(loss0), atol=1e-06)
 
 
-@pytest.mark.parametrize("reg_div,regm_div,returnCost", itertools.product(['kl', 'l2'], ['kl', 'l2'], ['linear', 'total']))
+@pytest.mark.parametrize("reg_div,regm_div,returnCost", itertools.product(['kl', 'l2', 'entropy'], ['kl', 'l2'], ['linear', 'total']))
 def test_lbfgsb_unbalanced_relaxation_parameters(nx, reg_div, regm_div, returnCost):
 
     np.random.seed(42)
@@ -93,7 +93,7 @@ def test_lbfgsb_unbalanced_relaxation_parameters(nx, reg_div, regm_div, returnCo
         np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss0), atol=1e-06)
 
 
-@pytest.mark.parametrize("reg_div,regm_div,returnCost", itertools.product(['kl', 'l2'], ['kl', 'l2'], ['linear', 'total']))
+@pytest.mark.parametrize("reg_div,regm_div,returnCost", itertools.product(['kl', 'l2', 'entropy'], ['kl', 'l2'], ['linear', 'total']))
 def test_lbfgsb_reference_measure(nx, reg_div, regm_div, returnCost):
 
     np.random.seed(42)
