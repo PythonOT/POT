@@ -19,7 +19,7 @@
 <!-- - Go over all the following points, and put an `x` in all the boxes that apply. -->
 <!--- If you're unsure about any of these, don't hesitate to ask. We're here to help! -->
 
-- [ ] I have read the [**CONTRIBUTING**](CONTRIBUTING.md) document.
+- [ ] I have read the [**CONTRIBUTING**](https://pythonot.github.io/contributing.html) document.
 - [ ] The documentation is up-to-date with the changes I made (check build artifacts).
 - [ ] All tests passed, and additional code has been **covered with new tests**.
 - [ ] I have added the PR and Issue fix to the [**RELEASES.md**](RELEASES.md) file.
