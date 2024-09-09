@@ -16,7 +16,7 @@ from ot.backend import torch
 
 
 lst_reg = [None, 1]
-lst_reg_type = ['KL', 'L2', 'tuple']
+lst_reg_type = ['KL', 'entropy', 'L2', 'tuple']
 lst_unbalanced = [None, 0.9]
 lst_unbalanced_type = ['KL', 'L2', 'TV']
 
