@@ -263,25 +263,8 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     a, b, M = nx.to_numpy(a, b, M)
     G0 = np.zeros(M.shape) if G0 is None else nx.to_numpy(G0)
     c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
-
-    # wrap the callable function to handle numpy arrays
-    if isinstance(reg_div, tuple):
-        f0, df0 = reg_div
-        try:
-            f0(G0)
-            df0(G0)
-        except BaseException:
-            warnings.warn("The callable functions should be able to handle numpy arrays, wrapper ar added to handle this which comes with overhead")
-
-            def f(x):
-                return nx.to_numpy(f0(nx.from_numpy(x, type_as=M0)))
-
-            def df(x):
-                return nx.to_numpy(df0(nx.from_numpy(x, type_as=M0)))
-
-            reg_div = (f, df)
-
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
+
     _func = _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div, regm_div)
 
     res = minimize(_func, G0.ravel(), method=method, jac=True, bounds=Bounds(0, np.inf),

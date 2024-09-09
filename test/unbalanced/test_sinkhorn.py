@@ -362,7 +362,7 @@ def test_sinkhorn_wrong_returnCost(nx):
     np.testing.assert_raises(ValueError, sinkhorn2, "invalid_returnCost")
 
 
-@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"])
 def test_unbalanced_barycenter(nx, method):
     # test generalized sinkhorn for unbalanced OT barycenter
     n = 100
