@@ -140,6 +140,51 @@ def test_unbalanced_warmstart(nx, method, reg_type):
     np.testing.assert_allclose(nx.to_numpy(loss0), nx.to_numpy(loss1), atol=1e-5)
 
 
+@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], ["kl", "entropy"]))
+def test_unbalanced_reference_measure(nx, method, reg_type):
+    # test generalized sinkhorn for unbalanced OT
+    n = 100
+    rng = np.random.RandomState(42)
+
+    x = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n)
+    M = ot.dist(x, x)
+    a, b, M = nx.from_numpy(a, b, M)
+
+    epsilon = 1.
+    reg_m = 1.
+
+    G0, log0 = ot.unbalanced.sinkhorn_unbalanced(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, c=None, log=True
+    )
+    loss0 = ot.unbalanced.sinkhorn_unbalanced2(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method, reg_type=reg_type, c=None
+    )
+
+    if reg_type == "kl":
+        c = a[:, None] * b[None, :]
+    elif reg_type == "entropy":
+        c = nx.ones(M.shape, type_as=M)
+
+    G, log = ot.unbalanced.sinkhorn_unbalanced(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, c=c, log=True
+    )
+    loss = ot.unbalanced.sinkhorn_unbalanced2(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, c=c
+    )
+
+    np.testing.assert_allclose(
+        nx.to_numpy(log["logu"]), nx.to_numpy(log0["logu"]), atol=1e-05)
+    np.testing.assert_allclose(
+        nx.to_numpy(log["logv"]), nx.to_numpy(log0["logv"]), atol=1e-05)
+    np.testing.assert_allclose(nx.to_numpy(G), nx.to_numpy(G0), atol=1e-05)
+    np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss0), atol=1e-5)
+
+
 @pytest.mark.parametrize("method, log", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], [True, False]))
 def test_sinkhorn_unbalanced2(nx, method, log):
     n = 100
