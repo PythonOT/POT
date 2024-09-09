@@ -127,6 +127,7 @@ def mm_unbalanced(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, numItermax=1
     if log:
         log = {'err': [], 'G': []}
 
+    div = div.lower()
     if div == 'kl':
         sum_r = reg + reg_m1 + reg_m2
         r1, r2, r = reg_m1 / sum_r, reg_m2 / sum_r, reg / sum_r

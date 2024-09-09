@@ -242,6 +242,7 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     ot.unbalanced.sinkhorn_unbalanced2 : Entropic regularized OT loss
     """
 
+    reg_div, regm_div = reg_div.lower(), regm_div.lower()
     if reg_div not in ["entropy", "kl", "l2"]:
         raise ValueError("Unknown reg_div = {}. Must be either 'entropy', 'kl' or 'l2'".format(reg_div))
     if regm_div not in ["kl", "l2", "tv"]:
