@@ -162,3 +162,24 @@ def test_mm_wrong_divergence(nx):
 
     np.testing.assert_raises(ValueError, mm_div, "div_not_existed")
     np.testing.assert_raises(ValueError, mm2_div, "div_not_existed")
+
+
+def test_mm_wrong_returnCost(nx):
+
+    n = 100
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
+    rng = np.random.RandomState(75)
+    y = rng.randn(n, 2)
+    a_np = ot.utils.unif(n)
+    b_np = ot.utils.unif(n)
+
+    M = ot.dist(x, y)
+    M = M / M.max()
+    a, b, M = nx.from_numpy(a_np, b_np, M)
+
+    def mm2(returnCost):
+        return ot.unbalanced.mm_unbalanced2(a, b, M, reg_m=100, reg=1e-2,
+                                            returnCost=returnCost, verbose=True)
+
+    np.testing.assert_raises(ValueError, mm2, "invalid_returnCost")

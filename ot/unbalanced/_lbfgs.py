@@ -19,14 +19,47 @@ from ..utils import list_to_array, get_parameter_pair
 
 def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div='kl'):
     """
-    return the loss function (scipy.optimize compatible) for regularized
-    unbalanced OT
+    Return loss function for the L-BFGS-B solver
+
+    .. note:: This function will be fed into scipy.optimize, so all input arrays must be Numpy arrays.
+
+    Parameters
+    ----------
+    a : array-like (dim_a,)
+        Unnormalized histogram of dimension `dim_a`
+    b : array-like (dim_b,)
+        Unnormalized histogram of dimension `dim_b`
+    M : array-like (dim_a, dim_b)
+        loss matrix
+    reg: float
+        regularization term >=0
+    c : array-like (dim_a, dim_b), optional (default = None)
+        Reference measure for the regularization.
+        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+    reg_m1: float
+        Marginal relaxation term with respect to the first marginal:
+        nonnegative (including 0) but cannot be infinity.
+    reg_m2: float
+        Marginal relaxation term with respect to the second marginal:
+        nonnegative (including 0) but cannot be infinity.
+    reg_div: string, optional
+        Divergence used for regularization.
+        Can take three values: 'entropy' (negative entropy), or
+        'kl' (Kullback-Leibler) or 'l2' (half-squared) or a tuple
+        of two calable functions returning the reg term and its derivative.
+        Note that the callable functions should be able to handle Numpy arrays
+        and not tesors from the backend
+    regm_div: string, optional
+        Divergence to quantify the difference between the marginals.
+        Can take three values: 'kl' (Kullback-Leibler) or 'l2' (half-squared) or 'tv' (Total Variation)
+
+    Returns
+    -------
+    Loss function (scipy.optimize compatible) for regularized unbalanced OT
     """
 
     m, n = M.shape
-
-    def kl(p, q):
-        return np.sum(p * np.log(p / q + 1e-16)) - np.sum(p) + np.sum(q)
+    nx_numpy = get_backend(M, a, b)
 
     def reg_l2(G):
         return np.sum((G - c)**2) / 2
@@ -35,7 +68,7 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
         return G - c
 
     def reg_kl(G):
-        return kl(G, c)
+        return nx_numpy.kl_div(G, c, mass=True)
 
     def grad_kl(G):
         return np.log(G / c + 1e-16)
@@ -68,7 +101,7 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
             reg_m2 * np.outer(np.ones(m), (G.sum(0) - b))
 
     def marg_kl(G):
-        return reg_m1 * kl(G.sum(1), a) + reg_m2 * kl(G.sum(0), b)
+        return reg_m1 * nx_numpy.kl_div(G.sum(1), a, mass=True) + reg_m2 * nx_numpy.kl_div(G.sum(0), b, mass=True)
 
     def grad_marg_kl(G):
         return reg_m1 * np.outer(np.log(G.sum(1) / a + 1e-16), np.ones(n)) + \
@@ -112,11 +145,11 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
 def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', G0=None, numItermax=1000,
                       stopThr=1e-15, method='L-BFGS-B', verbose=False, log=False):
     r"""
-    Solve the unbalanced optimal transport problem and return the OT plan using L-BFGS-B.
+    Solve the unbalanced optimal transport problem and return the OT plan using L-BFGS-B algorithm.
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        W = \arg \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
         \mathrm{reg} \mathrm{div}(\gamma, \mathbf{c}) +
         \mathrm{reg_{m1}} \cdot \mathrm{div_m}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_{m2}} \cdot \mathrm{div_m}(\gamma^T \mathbf{1}, \mathbf{b})
@@ -134,7 +167,9 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     - :math:`\mathrm{div}` is a divergence, either Kullback-Leibler divergence,
     or half-squared :math:`\ell_2` divergence
 
-    The algorithm used for solving the problem is a L-BFGS-B from scipy.optimize
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. First, it converts all arrays into Numpy arrays,
+        then uses the L-BFGS-B algorithm from scipy.optimize to solve the optimization problem.
 
     Parameters
     ----------
@@ -148,22 +183,22 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
         regularization term >=0
     c : array-like (dim_a, dim_b), optional (default = None)
         Reference measure for the regularization.
-        If None, then use `\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
     reg_m: float or indexable object of length 1 or 2
-        Marginal relaxation term >= 0, but cannot be infinity.
-        If reg_m is a scalar or an indexable object of length 1,
-        then the same reg_m is applied to both marginal relaxations.
-        If reg_m is an array, it must be a Numpy array.
+        Marginal relaxation term: nonnegative (including 0) but cannot be infinity.
+        If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
+        then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
+        If :math:`\mathrm{reg_{m}}` is an array, it must be a Numpy array.
     reg_div: string, optional
         Divergence used for regularization.
         Can take three values: 'entropy' (negative entropy), or
-        'kl' (Kullback-Leibler) or 'l2' (quadratic) or a tuple
+        'kl' (Kullback-Leibler) or 'l2' (half-squared) or a tuple
         of two calable functions returning the reg term and its derivative.
-        Note that the callable functions should be able to handle numpy arrays
+        Note that the callable functions should be able to handle Numpy arrays
         and not tesors from the backend
     regm_div: string, optional
         Divergence to quantify the difference between the marginals.
-        Can take three values: 'kl' (Kullback-Leibler) or 'l2' (quadratic) or 'tv' (Total Variation)
+        Can take three values: 'kl' (Kullback-Leibler) or 'l2' (half-squared) or 'tv' (Total Variation)
     G0: array-like (dim_a, dim_b)
         Initialization of the transport matrix
     numItermax : int, optional
@@ -207,9 +242,21 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     ot.unbalanced.sinkhorn_unbalanced2 : Entropic regularized OT loss
     """
 
+    if reg_div not in ["entropy", "kl", "l2"]:
+        raise ValueError("Unknown reg_div = {}. Must be either 'entropy', 'kl' or 'l2'".format(reg_div))
+    if regm_div not in ["kl", "l2", "tv"]:
+        raise ValueError("Unknown regm_div = {}. Must be either 'kl', 'l2' or 'tv'".format(regm_div))
+
     M, a, b = list_to_array(M, a, b)
     nx = get_backend(M, a, b)
     M0 = M
+
+    dim_a, dim_b = M.shape
+
+    if len(a) == 0 or a is None:
+        a = nx.ones(dim_a, type_as=M) / dim_a
+    if len(b) == 0 or b is None:
+        b = nx.ones(dim_b, type_as=M) / dim_b
 
     # convert to numpy
     a, b, M = nx.to_numpy(a, b, M)
@@ -253,11 +300,11 @@ def lbfgsb_unbalanced2(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl',
                        G0=None, returnCost="linear", numItermax=1000, stopThr=1e-15,
                        method='L-BFGS-B', verbose=False, log=False):
     r"""
-    Solve the unbalanced optimal transport problem and return the OT plan using L-BFGS-B.
+    Solve the unbalanced optimal transport problem and return the OT cost using L-BFGS-B.
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
         \mathrm{reg} \mathrm{div}(\gamma, \mathbf{c}) +
         \mathrm{reg_{m1}} \cdot \mathrm{div_m}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_{m2}} \cdot \mathrm{div_m}(\gamma^T \mathbf{1}, \mathbf{b})
@@ -275,7 +322,9 @@ def lbfgsb_unbalanced2(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl',
     - :math:`\mathrm{div}` is a divergence, either Kullback-Leibler divergence,
     or half-squared :math:`\ell_2` divergence
 
-    The algorithm used for solving the problem is a L-BFGS-B from scipy.optimize
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. First, it converts all arrays into Numpy arrays,
+        then uses the L-BFGS-B algorithm from scipy.optimize to solve the optimization problem.
 
     Parameters
     ----------
@@ -289,24 +338,27 @@ def lbfgsb_unbalanced2(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl',
         regularization term >=0
     c : array-like (dim_a, dim_b), optional (default = None)
         Reference measure for the regularization.
-        If None, then use `\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
     reg_m: float or indexable object of length 1 or 2
-        Marginal relaxation term >= 0, but cannot be infinity.
-        If reg_m is a scalar or an indexable object of length 1,
-        then the same reg_m is applied to both marginal relaxations.
-        If reg_m is an array, it must be a Numpy array.
+        Marginal relaxation term: nonnegative (including 0) but cannot be infinity.
+        If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
+        then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
+        If :math:`\mathrm{reg_{m}}` is an array, it must be a Numpy array.
     reg_div: string, optional
         Divergence used for regularization.
         Can take three values: 'entropy' (negative entropy), or
-        'kl' (Kullback-Leibler) or 'l2' (quadratic) or a tuple
+        'kl' (Kullback-Leibler) or 'l2' (half-squared) or a tuple
         of two calable functions returning the reg term and its derivative.
-        Note that the callable functions should be able to handle numpy arrays
+        Note that the callable functions should be able to handle Numpy arrays
         and not tesors from the backend
     regm_div: string, optional
         Divergence to quantify the difference between the marginals.
-        Can take three values: 'kl' (Kullback-Leibler) or 'l2' (quadratic) or 'tv' (Total Variation)
+        Can take three values: 'kl' (Kullback-Leibler) or 'l2' (half-squared) or 'tv' (Total Variation)
     G0: array-like (dim_a, dim_b)
         Initialization of the transport matrix
+    returnCost: string, optional (default = "linear")
+        If `returnCost` = "linear", then return the linear part of the unbalanced OT loss.
+        If `returnCost` = "total", then return the total unbalanced OT loss.
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -318,8 +370,8 @@ def lbfgsb_unbalanced2(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl',
 
     Returns
     -------
-    gamma : (dim_a, dim_b) array-like
-            Optimal transportation matrix for the given parameters
+    ot_cost : array-like
+        the OT cost between :math:`\mathbf{a}` and :math:`\mathbf{b}`
     log : dict
         log dictionary returned only if `log` is `True`
 

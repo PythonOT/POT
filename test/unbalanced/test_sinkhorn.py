@@ -295,6 +295,28 @@ def test_stabilized_vs_sinkhorn(nx):
     np.testing.assert_allclose(G2, G2_np, atol=1e-5)
 
 
+def test_sinkhorn_wrong_returnCost(nx):
+
+    n = 100
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
+    rng = np.random.RandomState(75)
+    y = rng.randn(n, 2)
+    a_np = ot.utils.unif(n)
+    b_np = ot.utils.unif(n)
+
+    M = ot.dist(x, y)
+    M = M / M.max()
+    a, b, M = nx.from_numpy(a_np, b_np, M)
+    epsilon = 1
+    reg_m = 1.
+
+    def sinkhorn2(returnCost):
+        return ot.unbalanced.sinkhorn_unbalanced2(a, b, M, epsilon, reg_m, returnCost=returnCost)
+
+    np.testing.assert_raises(ValueError, sinkhorn2, "invalid_returnCost")
+
+
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized"])
 def test_unbalanced_barycenter(nx, method):
     # test generalized sinkhorn for unbalanced OT barycenter

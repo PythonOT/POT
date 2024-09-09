@@ -13,7 +13,7 @@ import ot
 import pytest
 
 
-@pytest.mark.parametrize("reg_div,regm_div,returnCost", itertools.product(['kl', 'l2', 'entropy'], ['kl', 'l2'], ['linear', 'total']))
+@pytest.mark.parametrize("reg_div,regm_div,returnCost", itertools.product(['kl', 'l2', 'entropy'], ['kl', 'l2', 'tv'], ['linear', 'total']))
 def test_lbfgsb_unbalanced(nx, reg_div, regm_div, returnCost):
 
     np.random.seed(42)
@@ -46,7 +46,7 @@ def test_lbfgsb_unbalanced(nx, reg_div, regm_div, returnCost):
     np.testing.assert_allclose(loss, nx.to_numpy(loss0), atol=1e-06)
 
 
-@pytest.mark.parametrize("reg_div,regm_div,returnCost", itertools.product(['kl', 'l2', 'entropy'], ['kl', 'l2'], ['linear', 'total']))
+@pytest.mark.parametrize("reg_div,regm_div,returnCost", itertools.product(['kl', 'l2', 'entropy'], ['kl', 'l2', 'tv'], ['linear', 'total']))
 def test_lbfgsb_unbalanced_relaxation_parameters(nx, reg_div, regm_div, returnCost):
 
     np.random.seed(42)
@@ -93,7 +93,7 @@ def test_lbfgsb_unbalanced_relaxation_parameters(nx, reg_div, regm_div, returnCo
         np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss0), atol=1e-06)
 
 
-@pytest.mark.parametrize("reg_div,regm_div,returnCost", itertools.product(['kl', 'l2', 'entropy'], ['kl', 'l2'], ['linear', 'total']))
+@pytest.mark.parametrize("reg_div,regm_div,returnCost", itertools.product(['kl', 'l2', 'entropy'], ['kl', 'l2', 'tv'], ['linear', 'total']))
 def test_lbfgsb_reference_measure(nx, reg_div, regm_div, returnCost):
 
     np.random.seed(42)
@@ -124,3 +124,72 @@ def test_lbfgsb_reference_measure(nx, reg_div, regm_div, returnCost):
 
     np.testing.assert_allclose(nx.to_numpy(G), nx.to_numpy(G0), atol=1e-06)
     np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss0), atol=1e-06)
+
+
+def test_lbfgsb_wrong_divergence(nx):
+
+    n = 100
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
+    rng = np.random.RandomState(75)
+    y = rng.randn(n, 2)
+    a_np = ot.utils.unif(n)
+    b_np = ot.utils.unif(n)
+
+    M = ot.dist(x, y)
+    M = M / M.max()
+    a, b, M = nx.from_numpy(a_np, b_np, M)
+
+    def lbfgsb_div(div):
+        return ot.unbalanced.lbfgsb_unbalanced(a, b, M, reg=1, reg_m=10, reg_div=div)
+
+    def lbfgsb2_div(div):
+        return ot.unbalanced.lbfgsb_unbalanced2(a, b, M, reg=1, reg_m=10, reg_div=div)
+
+    np.testing.assert_raises(ValueError, lbfgsb_div, "div_not_existed")
+    np.testing.assert_raises(ValueError, lbfgsb2_div, "div_not_existed")
+
+
+def test_lbfgsb_wrong_marginal_divergence(nx):
+
+    n = 100
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
+    rng = np.random.RandomState(75)
+    y = rng.randn(n, 2)
+    a_np = ot.utils.unif(n)
+    b_np = ot.utils.unif(n)
+
+    M = ot.dist(x, y)
+    M = M / M.max()
+    a, b, M = nx.from_numpy(a_np, b_np, M)
+
+    def lbfgsb_div(div):
+        return ot.unbalanced.lbfgsb_unbalanced(a, b, M, reg=1, reg_m=10, regm_div=div)
+
+    def lbfgsb2_div(div):
+        return ot.unbalanced.lbfgsb_unbalanced2(a, b, M, reg=1, reg_m=10, regm_div=div)
+
+    np.testing.assert_raises(ValueError, lbfgsb_div, "div_not_existed")
+    np.testing.assert_raises(ValueError, lbfgsb2_div, "div_not_existed")
+
+
+def test_lbfgsb_wrong_returnCost(nx):
+
+    n = 100
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
+    rng = np.random.RandomState(75)
+    y = rng.randn(n, 2)
+    a_np = ot.utils.unif(n)
+    b_np = ot.utils.unif(n)
+
+    M = ot.dist(x, y)
+    M = M / M.max()
+    a, b, M = nx.from_numpy(a_np, b_np, M)
+
+    def lbfgsb2(returnCost):
+        return ot.unbalanced.lbfgsb_unbalanced2(a, b, M, reg=1, reg_m=10,
+                                                returnCost=returnCost, verbose=True)
+
+    np.testing.assert_raises(ValueError, lbfgsb2, "invalid_returnCost")

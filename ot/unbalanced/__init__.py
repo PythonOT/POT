@@ -19,7 +19,7 @@ from ._sinkhorn import (sinkhorn_knopp_unbalanced,
 
 from ._mm import (mm_unbalanced, mm_unbalanced2)
 
-from ._lbfgs import (_get_loss_unbalanced, lbfgsb_unbalanced, lbfgsb_unbalanced2)
+from ._lbfgs import (lbfgsb_unbalanced, lbfgsb_unbalanced2)
 
 __all__ = ['sinkhorn_knopp_unbalanced', 'sinkhorn_unbalanced', 'sinkhorn_stabilized_unbalanced',
            'sinkhorn_unbalanced2', 'barycenter_unbalanced_sinkhorn', 'barycenter_unbalanced_stabilized',

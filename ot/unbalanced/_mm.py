@@ -20,7 +20,7 @@ def mm_unbalanced(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, numItermax=1
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        W = \arg \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
         \mathrm{reg_{m1}} \cdot \mathrm{div}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_{m2}} \cdot \mathrm{div}(\gamma^T \mathbf{1}, \mathbf{b}) +
         \mathrm{reg} \cdot \mathrm{div}(\gamma, \mathbf{c})
@@ -48,19 +48,20 @@ def mm_unbalanced(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, numItermax=1
     M : array-like (dim_a, dim_b)
         loss matrix
     reg_m: float or indexable object of length 1 or 2
-        Marginal relaxation term >= 0, but cannot be infinity.
-        If reg_m is a scalar or an indexable object of length 1,
-        then the same reg_m is applied to both marginal relaxations.
-        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
+        Marginal relaxation term: nonnegative but cannot be infinity.
+        If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
+        then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
+        If :math:`\mathrm{reg_{m}}` is an array,
+        it must have the same backend as input arrays `(a, b, M)`.
     reg : float, optional (default = 0)
         Regularization term >= 0.
         By default, solve the unregularized problem
     c : array-like (dim_a, dim_b), optional (default = None)
         Reference measure for the regularization.
-        If None, then use `\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
     div: string, optional
         Divergence to quantify the difference between the marginals.
-        Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic)
+        Can take two values: 'kl' (Kullback-Leibler) or 'l2' (half-squared)
     G0: array-like (dim_a, dim_b)
         Initialization of the transport matrix
     numItermax : int, optional
@@ -131,7 +132,7 @@ def mm_unbalanced(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, numItermax=1
         r1, r2, r = reg_m1 / sum_r, reg_m2 / sum_r, reg / sum_r
         K = (a[:, None]**r1) * (b[None, :]**r2) * (c**r) * nx.exp(- M / sum_r)
     elif div == 'l2':
-        K = reg_m1 * a[:, None] + reg_m2 * b[None, :] + reg * c - M
+        K = (reg_m1 * a[:, None]) + (reg_m2 * b[None, :]) + reg * c - M
         K = nx.maximum(K, nx.zeros((dim_a, dim_b), type_as=M))
     else:
         raise ValueError("Unknown div = {}. Must be either 'kl' or 'l2'".format(div))
@@ -180,11 +181,11 @@ def mm_unbalanced(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, numItermax=1
 def mm_unbalanced2(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, returnCost="linear",
                    numItermax=1000, stopThr=1e-15, verbose=False, log=False):
     r"""
-    Solve the unbalanced optimal transport problem and return the OT plan.
+    Solve the unbalanced optimal transport problem and return the OT cost.
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
         \mathrm{reg_{m1}} \cdot \mathrm{div}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_{m2}} \cdot \mathrm{div}(\gamma^T \mathbf{1}, \mathbf{b}) +
         \mathrm{reg} \cdot \mathrm{div}(\gamma, \mathbf{c})
@@ -212,24 +213,25 @@ def mm_unbalanced2(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, returnCost=
     M : array-like (dim_a, dim_b)
         loss matrix
     reg_m: float or indexable object of length 1 or 2
-        Marginal relaxation term >= 0, but cannot be infinity.
-        If reg_m is a scalar or an indexable object of length 1,
-        then the same reg_m is applied to both marginal relaxations.
-        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
+        Marginal relaxation term: nonnegative but cannot be infinity.
+        If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
+        then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
+        If :math:`\mathrm{reg_{m}}` is an array,
+        it must have the same backend as input arrays `(a, b, M)`.
     reg : float, optional (default = 0)
         Entropy regularization term >= 0.
         By default, solve the unregularized problem
     c : array-like (dim_a, dim_b), optional (default = None)
         Reference measure for the regularization.
-        If None, then use `\mathbf{c} = mathbf{a} mathbf{b}^T`.
+        If None, then use :math:`\mathbf{c} = mathbf{a} mathbf{b}^T`.
     div: string, optional
         Divergence to quantify the difference between the marginals.
-        Can take two values: 'kl' (Kullback-Leibler) or 'l2' (quadratic)
+        Can take two values: 'kl' (Kullback-Leibler) or 'l2' (half-squared)
     G0: array-like (dim_a, dim_b)
         Initialization of the transport matrix
     returnCost: string, optional (default = "linear")
-        If returnCost = "linear", then return the linear part of the unbalanced OT loss.
-        If returnCost = "total", then return total unbalanced OT loss.
+        If `returnCost` = "linear", then return the linear part of the unbalanced OT loss.
+        If `returnCost` = "total", then return the total unbalanced OT loss.
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -241,7 +243,7 @@ def mm_unbalanced2(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, returnCost=
 
     Returns
     -------
-    ot_distance : array-like
+    ot_cost : array-like
         the OT cost between :math:`\mathbf{a}` and :math:`\mathbf{b}`
     log : dict
         log dictionary returned only if `log` is `True`
