@@ -10,6 +10,8 @@
 - Improved `ot.plot.plot1D_mat` (PR #649)
 - Added `nx.det` (PR #649)
 - `nx.sqrtm` is now broadcastable (takes ..., d, d) inputs (PR #649)
+- restructure `ot.unbalanced` module (PR #658)
+- add `ot.unbalanced.lbfgsb_unbalanced2` and add flexible reference measure `c` in all unbalanced solvers (PR #658)
 
 #### Closed issues
 - Fixed `ot.gaussian` ignoring weights when computing means (PR #649, Issue #648)
