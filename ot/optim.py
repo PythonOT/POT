@@ -237,7 +237,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
     ot.lp.emd : Unregularized optimal transport
     ot.bregman.sinkhorn : Entropic regularized optimal transport
     """
-    
+
     if nx is None:
         if isinstance(M, int) or isinstance(M, float):
             nx = get_backend(a, b)
@@ -292,7 +292,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         alpha, fc, cost_G = line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs)
 
         G = G + alpha * deltaG
-        
+
         # test convergence
         if it >= numItermax:
             loop = 0
@@ -406,7 +406,7 @@ def cg(a, b, M, reg, f, df, G0=None, line_search=None,
     if line_search is None:
         def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
             return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=nx, **kwargs)
-        
+
     def lp_solver(a, b, M, **kwargs):
         return emd(a, b, M, numItermaxEmd, log=True)
 
@@ -491,11 +491,11 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=None,
             nx = get_backend(a, b)
         else:
             nx = get_backend(a, b, M)
-    
+
     if line_search is None:
         def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
             return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=nx, **kwargs)
-    
+
     def lp_solver(a, b, Mi, **kwargs):
         # get minimum by rows as binary mask
         min_ = nx.reshape(nx.min(Mi, axis=1), (-1, 1))
