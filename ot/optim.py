@@ -127,7 +127,7 @@ def line_search_armijo(
 
 def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_search, G0=None,
                                  numItermax=200, stopThr=1e-9,
-                                 stopThr2=1e-9, verbose=False, log=False, **kwargs):
+                                 stopThr2=1e-9, verbose=False, log=False, nx=None, **kwargs):
     r"""
     Solve the general regularized OT problem or its semi-relaxed version with
     conditional gradient or generalized conditional gradient depending on the
@@ -208,6 +208,8 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         Print information along iterations
     log : bool, optional
         record log if True
+    nx : backend, optional
+        If let to its default value None, the backend will be deduced from other inputs.
     **kwargs : dict
              Parameters for linesearch
 
@@ -235,11 +237,12 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
     ot.lp.emd : Unregularized optimal transport
     ot.bregman.sinkhorn : Entropic regularized optimal transport
     """
-
-    if isinstance(M, int) or isinstance(M, float):
-        nx = get_backend(a, b)
-    else:
-        nx = get_backend(a, b, M)
+    
+    if nx is None:
+        if isinstance(M, int) or isinstance(M, float):
+            nx = get_backend(a, b)
+        else:
+            nx = get_backend(a, b, M)
 
     loop = 1
 
@@ -315,9 +318,9 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         return G
 
 
-def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
+def cg(a, b, M, reg, f, df, G0=None, line_search=None,
        numItermax=200, numItermaxEmd=100000, stopThr=1e-9, stopThr2=1e-9,
-       verbose=False, log=False, **kwargs):
+       verbose=False, log=False, nx=None, **kwargs):
     r"""
     Solve the general regularized OT problem with conditional gradient
 
@@ -356,7 +359,7 @@ def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
         initial guess (default is indep joint density)
     line_search: function,
         Function to find the optimal step.
-        Default is line_search_armijo.
+        Default is None and calls a wrapper to line_search_armijo.
     numItermax : int, optional
         Max number of iterations
     numItermaxEmd : int, optional
@@ -369,6 +372,8 @@ def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
         Print information along iterations
     log : bool, optional
         record log if True
+    nx : backend, optional
+        If let to its default value None, the backend will be deduced from other inputs.
     **kwargs : dict
              Parameters for linesearch
 
@@ -392,17 +397,26 @@ def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
     ot.bregman.sinkhorn : Entropic regularized optimal transport
 
     """
+    if nx is None:
+        if isinstance(M, int) or isinstance(M, float):
+            nx = get_backend(a, b)
+        else:
+            nx = get_backend(a, b, M)
 
+    if line_search is None:
+        def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=nx, **kwargs)
+        
     def lp_solver(a, b, M, **kwargs):
         return emd(a, b, M, numItermaxEmd, log=True)
 
     return generic_conditional_gradient(a, b, M, f, df, reg, None, lp_solver, line_search, G0=G0,
                                         numItermax=numItermax, stopThr=stopThr,
-                                        stopThr2=stopThr2, verbose=verbose, log=log, **kwargs)
+                                        stopThr2=stopThr2, verbose=verbose, log=log, nx=nx, **kwargs)
 
 
-def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
-                   numItermax=200, stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, **kwargs):
+def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=None,
+                   numItermax=200, stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, nx=None, **kwargs):
     r"""
     Solve the general regularized and semi-relaxed OT problem with conditional gradient
 
@@ -439,7 +453,7 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
         initial guess (default is indep joint density)
     line_search: function,
         Function to find the optimal step.
-        Default is the armijo line-search.
+        Default is None and calls a wrapper to line_search_armijo.
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -450,6 +464,8 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
         Print information along iterations
     log : bool, optional
         record log if True
+    nx : backend, optional
+        If let to its default value None, the backend will be deduced from other inputs.
     **kwargs : dict
              Parameters for linesearch
 
@@ -470,9 +486,16 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
             International Conference on Learning Representations (ICLR), 2021.
 
     """
-
-    nx = get_backend(a, b)
-
+    if nx is None:
+        if isinstance(M, int) or isinstance(M, float):
+            nx = get_backend(a, b)
+        else:
+            nx = get_backend(a, b, M)
+    
+    if line_search is None:
+        def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=nx, **kwargs)
+    
     def lp_solver(a, b, Mi, **kwargs):
         # get minimum by rows as binary mask
         min_ = nx.reshape(nx.min(Mi, axis=1), (-1, 1))
@@ -486,7 +509,7 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
 
     return generic_conditional_gradient(a, b, M, f, df, reg, None, lp_solver, line_search, G0=G0,
                                         numItermax=numItermax, stopThr=stopThr,
-                                        stopThr2=stopThr2, verbose=verbose, log=log, **kwargs)
+                                        stopThr2=stopThr2, verbose=verbose, log=log, nx=nx, **kwargs)
 
 
 def partial_cg(a, b, a_extended, b_extended, M, reg, f, df, G0=None, line_search=line_search_armijo,
