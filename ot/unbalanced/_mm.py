@@ -43,8 +43,12 @@ def mm_unbalanced(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, numItermax=1
     ----------
     a : array-like (dim_a,)
         Unnormalized histogram of dimension `dim_a`
+        If `a` is an empty list or array ([]),
+        then `a` is set to uniform distribution.
     b : array-like (dim_b,)
         Unnormalized histogram of dimension `dim_b`
+        If `b` is an empty list or array ([]),
+        then `b` is set to uniform distribution.
     M : array-like (dim_a, dim_b)
         loss matrix
     reg_m: float or indexable object of length 1 or 2
@@ -209,8 +213,12 @@ def mm_unbalanced2(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, returnCost=
     ----------
     a : array-like (dim_a,)
         Unnormalized histogram of dimension `dim_a`
+        If `a` is an empty list or array ([]),
+        then `a` is set to uniform distribution.
     b : array-like (dim_b,)
         Unnormalized histogram of dimension `dim_b`
+        If `b` is an empty list or array ([]),
+        then `b` is set to uniform distribution.
     M : array-like (dim_a, dim_b)
         loss matrix
     reg_m: float or indexable object of length 1 or 2

@@ -126,6 +126,41 @@ def test_lbfgsb_reference_measure(nx, reg_div, regm_div, returnCost):
     np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss0), atol=1e-06)
 
 
+@pytest.mark.parametrize("reg_div,regm_div,returnCost", itertools.product(['kl', 'l2', 'entropy'], ['kl', 'l2', 'tv'], ['linear', 'total']))
+def test_lbfgsb_marginals(nx, reg_div, regm_div, returnCost):
+
+    np.random.seed(42)
+
+    xs = np.random.randn(5, 2)
+    xt = np.random.randn(6, 2)
+    M = ot.dist(xs, xt)
+    a = ot.unif(5)
+    b = ot.unif(6)
+
+    a, b, M = nx.from_numpy(a, b, M)
+
+    G, _ = ot.unbalanced.lbfgsb_unbalanced(a, b, M, reg=1, reg_m=10,
+                                           reg_div=reg_div, regm_div=regm_div,
+                                           log=True, verbose=False)
+    loss, _ = ot.unbalanced.lbfgsb_unbalanced2(a, b, M, reg=1, reg_m=10,
+                                               reg_div=reg_div, regm_div=regm_div,
+                                               returnCost=returnCost, log=True, verbose=False)
+
+    a_empty, b_empty = np.array([]), np.array([])
+    a_empty, b_empty = nx.from_numpy(a_empty, b_empty)
+
+    G0, _ = ot.unbalanced.lbfgsb_unbalanced(a_empty, b_empty, M, reg=1, reg_m=10,
+                                            reg_div=reg_div, regm_div=regm_div,
+                                            log=True, verbose=False)
+
+    loss0, _ = ot.unbalanced.lbfgsb_unbalanced2(a_empty, b_empty, M, reg=1, reg_m=10,
+                                                reg_div=reg_div, regm_div=regm_div,
+                                                returnCost=returnCost, log=True, verbose=False)
+
+    np.testing.assert_allclose(nx.to_numpy(G), nx.to_numpy(G0), atol=1e-06)
+    np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss0), atol=1e-06)
+
+
 def test_lbfgsb_wrong_divergence(nx):
 
     n = 100

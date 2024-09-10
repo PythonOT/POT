@@ -135,6 +135,43 @@ def test_mm_reference_measure(nx, div):
     np.testing.assert_allclose(loss_0, loss_1, atol=1e-5)
 
 
+@pytest.mark.parametrize("div", ["kl", "l2"])
+def test_mm_marginals(nx, div):
+    n = 100
+    rng = np.random.RandomState(42)
+    x = rng.randn(n, 2)
+    rng = np.random.RandomState(75)
+    y = rng.randn(n, 2)
+    a_np = ot.utils.unif(n)
+    b_np = ot.utils.unif(n)
+
+    M = ot.dist(x, y)
+    M = M / M.max()
+    a, b, M = nx.from_numpy(a_np, b_np, M)
+
+    reg = 1e-2
+    reg_m = 100
+
+    G0, _ = ot.unbalanced.mm_unbalanced(a, b, M, reg_m=reg_m, c=None, reg=reg,
+                                        div=div, verbose=False, log=True)
+    loss_0 = ot.unbalanced.mm_unbalanced2(a, b, M, reg_m=reg_m, c=None, reg=reg,
+                                          div=div, verbose=True)
+    loss_0 = nx.to_numpy(loss_0)
+
+    a_empty, b_empty = np.array([]), np.array([])
+    a_empty, b_empty = nx.from_numpy(a_empty, b_empty)
+
+    G1, _ = ot.unbalanced.mm_unbalanced(a_empty, b_empty, M, reg_m=reg_m,
+                                        reg=reg, div=div,
+                                        verbose=False, log=True)
+    loss_1 = ot.unbalanced.mm_unbalanced2(a_empty, b_empty, M, reg_m=reg_m,
+                                          reg=reg, div=div, verbose=True)
+    loss_1 = nx.to_numpy(loss_1)
+
+    np.testing.assert_allclose(nx.to_numpy(G0), nx.to_numpy(G1), atol=1e-05)
+    np.testing.assert_allclose(loss_0, loss_1, atol=1e-5)
+
+
 def test_mm_wrong_divergence(nx):
 
     n = 100

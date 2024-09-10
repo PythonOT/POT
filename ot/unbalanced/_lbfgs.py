@@ -175,8 +175,12 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     ----------
     a : array-like (dim_a,)
         Unnormalized histogram of dimension `dim_a`
+        If `a` is an empty list or array ([]),
+        then `a` is set to uniform distribution.
     b : array-like (dim_b,)
         Unnormalized histogram of dimension `dim_b`
+        If `b` is an empty list or array ([]),
+        then `b` is set to uniform distribution.
     M : array-like (dim_a, dim_b)
         loss matrix
     reg: float
@@ -276,14 +280,14 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
 
     dim_a, dim_b = M.shape
 
-    if len(a) == 0 or a is None:
+    if len(a) == 0:
         a = nx.ones(dim_a, type_as=M) / dim_a
-    if len(b) == 0 or b is None:
+    if len(b) == 0:
         b = nx.ones(dim_b, type_as=M) / dim_b
 
     # convert to numpy
     a, b, M = nx.to_numpy(a, b, M)
-    G0 = np.zeros(M.shape) if G0 is None else nx.to_numpy(G0)
+    G0 = a[:, None] * b[None, :] if G0 is None else nx.to_numpy(G0)
     c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
 
     _func = _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div, regm_div)
@@ -335,8 +339,12 @@ def lbfgsb_unbalanced2(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl',
     ----------
     a : array-like (dim_a,)
         Unnormalized histogram of dimension `dim_a`
+        If `a` is an empty list or array ([]),
+        then `a` is set to uniform distribution.
     b : array-like (dim_b,)
         Unnormalized histogram of dimension `dim_b`
+        If `b` is an empty list or array ([]),
+        then `b` is set to uniform distribution.
     M : array-like (dim_a, dim_b)
         loss matrix
     reg: float

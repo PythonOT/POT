@@ -62,20 +62,49 @@ def test_unbalanced_convergence(nx, method, reg_type):
     # check if sinkhorn_unbalanced2 returns the correct loss
     np.testing.assert_allclose(nx.to_numpy(nx.sum(G * M)), loss, atol=1e-5)
 
-    # check in case no histogram is provided
-    M_np = nx.to_numpy(M)
-    a_np, b_np = np.array([]), np.array([])
-    a, b = nx.from_numpy(a_np, b_np)
 
-    G = ot.unbalanced.sinkhorn_unbalanced(
-        a, b, M, reg=epsilon, reg_m=reg_m,
-        method=method, reg_type=reg_type, verbose=True
+@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], ["kl", "entropy"]))
+def test_unbalanced_marginals(nx, method, reg_type):
+    # test generalized sinkhorn for unbalanced OT
+    n = 100
+    rng = np.random.RandomState(42)
+
+    x = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n)
+    M = ot.dist(x, x)
+    a, b, M = nx.from_numpy(a, b, M)
+
+    epsilon = 1.
+    reg_m = 1.
+
+    G0, log0 = ot.unbalanced.sinkhorn_unbalanced(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, log=True
     )
-    G_np = ot.unbalanced.sinkhorn_unbalanced(
-        a_np, b_np, M_np, reg=epsilon, reg_m=reg_m,
-        method=method, reg_type=reg_type, verbose=True
+    loss0 = ot.unbalanced.sinkhorn_unbalanced2(
+        a, b, M, reg=epsilon, reg_m=reg_m, method=method, reg_type=reg_type,
     )
-    np.testing.assert_allclose(G_np, nx.to_numpy(G))
+
+    # check in case no histogram is provided or histogram is None
+    a_empty, b_empty = np.array([]), np.array([])
+    a_empty, b_empty = nx.from_numpy(a_empty, b_empty)
+
+    G_empty, log_empty = ot.unbalanced.sinkhorn_unbalanced(
+        a_empty, b_empty, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type, log=True
+    )
+    loss_empty = ot.unbalanced.sinkhorn_unbalanced2(
+        a_empty, b_empty, M, reg=epsilon, reg_m=reg_m, method=method,
+        reg_type=reg_type
+    )
+
+    np.testing.assert_allclose(
+        nx.to_numpy(log_empty["logu"]), nx.to_numpy(log0["logu"]), atol=1e-05)
+    np.testing.assert_allclose(
+        nx.to_numpy(log_empty["logv"]), nx.to_numpy(log0["logv"]), atol=1e-05)
+    np.testing.assert_allclose(nx.to_numpy(G_empty), nx.to_numpy(G0), atol=1e-05)
+    np.testing.assert_allclose(nx.to_numpy(loss_empty), nx.to_numpy(loss0), atol=1e-5)
 
 
 @pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], ["kl", "entropy"]))

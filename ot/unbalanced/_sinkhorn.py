@@ -49,9 +49,13 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
     ----------
     a : array-like (dim_a,)
         Unnormalized histogram of dimension `dim_a`
-    b : array-like (dim_b,) or array-like (dim_b, n_hists)
+        If `a` is an empty list or array ([]),
+        then `a` is set to uniform distribution.
+    b : array-like (dim_b,)
         One or multiple unnormalized histograms of dimension `dim_b`.
-        If many, compute all the OT distances :math:`(\mathbf{a}, \mathbf{b}_i)_i`
+        If `b` is an empty list or array ([]),
+        then `b` is set to uniform distribution.
+        If many, compute all the OT costs :math:`(\mathbf{a}, \mathbf{b}_i)_i`
     M : array-like (dim_a, dim_b)
         loss matrix
     reg : float
@@ -202,9 +206,13 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     ----------
     a : array-like (dim_a,)
         Unnormalized histogram of dimension `dim_a`
-    b : array-like (dim_b,) or array-like (dim_b, n_hists)
+        If `a` is an empty list or array ([]),
+        then `a` is set to uniform distribution.
+    b : array-like (dim_b,)
         One or multiple unnormalized histograms of dimension `dim_b`.
-        If many, compute all the OT distances :math:`(\mathbf{a}, \mathbf{b}_i)_i`
+        If `b` is an empty list or array ([]),
+        then `b` is set to uniform distribution.
+        If many, compute all the OT costs :math:`(\mathbf{a}, \mathbf{b}_i)_i`
     M : array-like (dim_a, dim_b)
         loss matrix
     reg : float
@@ -381,9 +389,13 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
     ----------
     a : array-like (dim_a,)
         Unnormalized histogram of dimension `dim_a`
-    b : array-like (dim_b,) or array-like (dim_b, n_hists)
-        One or multiple unnormalized histograms of dimension `dim_b`
-        If many, compute all the OT distances (a, b_i)
+        If `a` is an empty list or array ([]),
+        then `a` is set to uniform distribution.
+    b : array-like (dim_b,)
+        One or multiple unnormalized histograms of dimension `dim_b`.
+        If `b` is an empty list or array ([]),
+        then `b` is set to uniform distribution.
+        If many, compute all the OT costs :math:`(\mathbf{a}, \mathbf{b}_i)_i`
     M : array-like (dim_a, dim_b)
         loss matrix
     reg : float
@@ -613,9 +625,13 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
     ----------
     a : array-like (dim_a,)
         Unnormalized histogram of dimension `dim_a`
-    b : array-like (dim_b,) or array-like (dim_b, n_hists)
+        If `a` is an empty list or array ([]),
+        then `a` is set to uniform distribution.
+    b : array-like (dim_b,)
         One or multiple unnormalized histograms of dimension `dim_b`.
-        If many, compute all the OT distances :math:`(\mathbf{a}, \mathbf{b}_i)_i`
+        If `b` is an empty list or array ([]),
+        then `b` is set to uniform distribution.
+        If many, compute all the OT costs :math:`(\mathbf{a}, \mathbf{b}_i)_i`
     M : array-like (dim_a, dim_b)
         loss matrix
     reg : float
@@ -704,9 +720,9 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
 
     dim_a, dim_b = M.shape
 
-    if len(a) == 0 or a is None:
+    if len(a) == 0:
         a = nx.ones(dim_a, type_as=M) / dim_a
-    if len(b) == 0 or b is None:
+    if len(b) == 0:
         b = nx.ones(dim_b, type_as=M) / dim_b
 
     if len(b.shape) > 1:
