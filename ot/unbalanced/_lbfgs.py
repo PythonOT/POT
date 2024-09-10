@@ -9,6 +9,7 @@ Regularized Unbalanced OT solvers
 #
 # License: MIT License
 
+import warnings
 import numpy as np
 from scipy.optimize import minimize, Bounds
 
@@ -241,11 +242,33 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     ot.unbalanced.sinkhorn_unbalanced2 : Entropic regularized OT loss
     """
 
-    reg_div, regm_div = reg_div.lower(), regm_div.lower()
-    if reg_div not in ["entropy", "kl", "l2"]:
-        raise ValueError("Unknown reg_div = {}. Must be either 'entropy', 'kl' or 'l2'".format(reg_div))
+    # wrap the callable function to handle numpy arrays
+    if isinstance(reg_div, tuple):
+        f0, df0 = reg_div
+        try:
+            f0(G0)
+            df0(G0)
+        except BaseException:
+            warnings.warn("The callable functions should be able to handle numpy arrays, wrapper ar added to handle this which comes with overhead")
+
+            def f(x):
+                return nx.to_numpy(f0(nx.from_numpy(x, type_as=M0)))
+
+            def df(x):
+                return nx.to_numpy(df0(nx.from_numpy(x, type_as=M0)))
+
+            reg_div = (f, df)
+
+    else:
+        reg_div = reg_div.lower()
+        if reg_div not in ["entropy", "kl", "l2"]:
+            raise ValueError("Unknown reg_div = {}. Must be either 'entropy', 'kl' or 'l2', or a tuple".format(reg_div))
+
+    regm_div = regm_div.lower()
     if regm_div not in ["kl", "l2", "tv"]:
         raise ValueError("Unknown regm_div = {}. Must be either 'kl', 'l2' or 'tv'".format(regm_div))
+
+    reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
     M, a, b = list_to_array(M, a, b)
     nx = get_backend(M, a, b)
@@ -262,7 +285,6 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     a, b, M = nx.to_numpy(a, b, M)
     G0 = np.zeros(M.shape) if G0 is None else nx.to_numpy(G0)
     c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
-    reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
     _func = _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div, regm_div)
 
