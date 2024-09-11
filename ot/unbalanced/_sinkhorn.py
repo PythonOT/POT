@@ -1609,7 +1609,6 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
             reg_div = (f, df)
 
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
-    reg_m1, reg_m2, reg = nx.to_numpy(reg_m1, reg_m2, reg)
     _func = _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div, regm_div)
 
     res = minimize(_func, G0.ravel(), method=method, jac=True, bounds=Bounds(0, np.inf),

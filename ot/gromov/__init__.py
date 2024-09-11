@@ -11,8 +11,8 @@ Solvers related to Gromov-Wasserstein problems.
 
 # All submodules and packages
 from ._utils import (init_matrix, tensor_product, gwloss, gwggrad,
-                     update_square_loss, update_kl_loss, update_feature_matrix,
-                     init_matrix_semirelaxed)
+                     init_matrix_semirelaxed, semirelaxed_init_plan,
+                     update_barycenter_structure, update_barycenter_feature)
 
 from ._gw import (gromov_wasserstein, gromov_wasserstein2,
                   fused_gromov_wasserstein, fused_gromov_wasserstein2,
@@ -40,14 +40,17 @@ from ._semirelaxed import (semirelaxed_gromov_wasserstein,
                            entropic_semirelaxed_gromov_wasserstein,
                            entropic_semirelaxed_gromov_wasserstein2,
                            entropic_semirelaxed_fused_gromov_wasserstein,
-                           entropic_semirelaxed_fused_gromov_wasserstein2)
+                           entropic_semirelaxed_fused_gromov_wasserstein2,
+                           semirelaxed_gromov_barycenters,
+                           semirelaxed_fgw_barycenters)
 
 from ._dictionary import (gromov_wasserstein_dictionary_learning,
                           gromov_wasserstein_linear_unmixing,
                           fused_gromov_wasserstein_dictionary_learning,
                           fused_gromov_wasserstein_linear_unmixing)
 
-from ._lowrank import (_flat_product_operator, lowrank_gromov_wasserstein_samples)
+from ._lowrank import (_flat_product_operator,
+                       lowrank_gromov_wasserstein_samples)
 
 
 from ._quantized import (quantized_fused_gromov_wasserstein_partitioned,
@@ -60,8 +63,9 @@ from ._quantized import (quantized_fused_gromov_wasserstein_partitioned,
                          quantized_fused_gromov_wasserstein_samples
                          )
 
-__all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad', 'update_square_loss',
-           'update_kl_loss', 'update_feature_matrix', 'init_matrix_semirelaxed',
+__all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad',
+           'init_matrix_semirelaxed', 'semirelaxed_init_plan',
+           'update_barycenter_structure', 'update_barycenter_feature',
            'gromov_wasserstein', 'gromov_wasserstein2', 'fused_gromov_wasserstein',
            'fused_gromov_wasserstein2', 'solve_gromov_linesearch', 'gromov_barycenters',
            'fgw_barycenters', 'entropic_gromov_wasserstein', 'entropic_gromov_wasserstein2',
@@ -74,10 +78,13 @@ __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad', 'update_square_
            'semirelaxed_fused_gromov_wasserstein', 'semirelaxed_fused_gromov_wasserstein2',
            'solve_semirelaxed_gromov_linesearch', 'entropic_semirelaxed_gromov_wasserstein',
            'entropic_semirelaxed_gromov_wasserstein2', 'entropic_semirelaxed_fused_gromov_wasserstein',
-           'entropic_semirelaxed_fused_gromov_wasserstein2', 'gromov_wasserstein_dictionary_learning',
+           'entropic_semirelaxed_fused_gromov_wasserstein2',
+           'semirelaxed_fgw_barycenters', 'semirelaxed_gromov_barycenters',
+           'gromov_wasserstein_dictionary_learning',
            'gromov_wasserstein_linear_unmixing', 'fused_gromov_wasserstein_dictionary_learning',
            'fused_gromov_wasserstein_linear_unmixing', 'lowrank_gromov_wasserstein_samples',
            'quantized_fused_gromov_wasserstein_partitioned', 'get_graph_partition',
            'get_graph_representants', 'format_partitioned_graph',
            'quantized_fused_gromov_wasserstein', 'get_partition_and_representants_samples',
-           'format_partitioned_samples', 'quantized_fused_gromov_wasserstein_samples']
+           'format_partitioned_samples', 'quantized_fused_gromov_wasserstein_samples',
+           ]

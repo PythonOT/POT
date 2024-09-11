@@ -3,10 +3,11 @@
 ## 0.9.5dev
 
 #### New features
-+ Implementation of Fused Unbalanced Gromov-Wasserstein and Unbalanced Co-Optimal Transport solvers (PR #617)
-+ Add feature `mass=True` for `nx.kl_div` (PR #654)
+- Add feature `mass=True` for `nx.kl_div` (PR #654)
 
 #### Closed issues
+- Fixed `ot.gaussian` ignoring weights when computing means (PR #649, Issue #648)
+- Fixed `ot.emd_1d` and `ot.emd2_1d` incorrectly allowing any metric (PR #670, Issue #669)
 
 ## 0.9.4
 *June 2024*
