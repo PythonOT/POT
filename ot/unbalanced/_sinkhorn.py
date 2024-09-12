@@ -140,6 +140,10 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
         Learning with a Wasserstein Loss,  Advances in Neural Information
         Processing Systems (NIPS) 2015
 
+    .. [70] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
+       Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
+       In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
+
 
     See Also
     --------
@@ -163,6 +167,14 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
                                               stopThr=stopThr,
                                               verbose=verbose,
                                               log=log, **kwargs)
+
+    elif method.lower() == 'sinkhorn_translation_invariant':
+        return sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type, c,
+                                                         warmstart, numItermax=numItermax,
+                                                         stopThr=stopThr,
+                                                         verbose=verbose,
+                                                         log=log, **kwargs)
+
     elif method.lower() in ['sinkhorn_reg_scaling']:
         warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
         return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
@@ -293,6 +305,10 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
         Learning with a Wasserstein Loss,  Advances in Neural Information
         Processing Systems (NIPS) 2015
 
+    .. [70] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
+       Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
+       In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
+
     See Also
     --------
     ot.unbalanced.sinkhorn_knopp : Unbalanced Classic Sinkhorn :ref:`[10] <references-sinkhorn-unbalanced2>`
@@ -314,6 +330,13 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
                                                  warmstart, numItermax=numItermax,
                                                  stopThr=stopThr, verbose=verbose,
                                                  log=True, **kwargs)
+
+        elif method.lower() == 'sinkhorn_translation_invariant':
+            res = sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type, c,
+                                                            warmstart, numItermax=numItermax,
+                                                            stopThr=stopThr, verbose=verbose,
+                                                            log=log, **kwargs)
+
         elif method.lower() in ['sinkhorn_reg_scaling']:
             warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
             res = sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
@@ -347,6 +370,13 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
                                                   warmstart, numItermax=numItermax,
                                                   stopThr=stopThr, verbose=verbose,
                                                   log=log, **kwargs)
+
+        elif method.lower() == 'sinkhorn_translation_invariant':
+            return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type, c,
+                                                  warmstart, numItermax=numItermax,
+                                                  stopThr=stopThr, verbose=verbose,
+                                                  log=log, **kwargs)
+
         elif method.lower() in ['sinkhorn_reg_scaling']:
             warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
             return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
@@ -863,6 +893,241 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
             return plan, dict_log
         else:
             return plan
+
+
+def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl", c=None,
+                                              warmstart=None, numItermax=1000, stopThr=1e-6,
+                                              verbose=False, log=False, **kwargs):
+    """
+    Solve the entropic regularization unbalanced optimal transport problem and
+    return the OT plan
+
+    The function solves the following optimization problem:
+
+    .. math::
+        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot \Omega(\gamma) +
+        \mathrm{reg_{m1}} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
+        \mathrm{reg_{m2}} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
+
+        s.t.
+             \gamma \geq 0
+
+    where :
+
+    - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
+    - :math:`\Omega` is the entropic regularization term,KL divergence
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
+    - KL is the Kullback-Leibler divergence
+
+    The algorithm used for solving the problem is the translation invariant Sinkhorn algorithm as proposed in :ref:`[70] <references-sinkhorn-unbalanced-translation-invariant>`
+
+
+    Parameters
+    ----------
+    a : array-like (dim_a,)
+        Unnormalized histogram of dimension `dim_a`
+    b : array-like (dim_b,) or array-like (dim_b, n_hists)
+        One or multiple unnormalized histograms of dimension `dim_b`
+        If many, compute all the OT distances (a, b_i)
+    M : array-like (dim_a, dim_b)
+        loss matrix
+    reg : float
+        Entropy regularization term > 0
+    reg_m: float or indexable object of length 1 or 2
+        Marginal relaxation term.
+        If reg_m is a scalar or an indexable object of length 1,
+        then the same reg_m is applied to both marginal relaxations.
+        The entropic balanced OT can be recovered using `reg_m=float("inf")`.
+        For semi-relaxed case, use either
+        `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
+        If reg_m is an array, it must have the same backend as input arrays (a, b, M).
+    reg_type : string, optional
+        Regularizer term. Can take two values:
+        'entropy' (negative entropy)
+        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`, or
+        'kl' (Kullback-Leibler)
+        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+    c : array-like (dim_a, dim_b), optional (default=None)
+        Reference measure for the regularization.
+        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+        If :math:`\texttt{reg_type}='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors).
+    numItermax : int, optional
+        Max number of iterations
+    stopThr : float, optional
+        Stop threshold on error (> 0)
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    if n_hists == 1:
+        - gamma : (dim_a, dim_b) array-like
+            Optimal transportation matrix for the given parameters
+        - log : dict
+            log dictionary returned only if `log` is `True`
+    else:
+        - ot_distance : (n_hists,) array-like
+            the OT distance between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
+        - log : dict
+            log dictionary returned only if `log` is `True`
+
+    Examples
+    --------
+
+    >>> import ot
+    >>> a=[.5, .5]
+    >>> b=[.5, .5]
+    >>> M=[[0., 1.],[1., 0.]]
+    >>> ot.unbalanced.sinkhorn_unbalanced_translation_invariant(a, b, M, 1., 1.)
+    array([[0.32205357, 0.11847689],
+           [0.11847689, 0.32205357]])
+
+    .. _references-sinkhorn-unbalanced-translation-invariant:
+    References
+    ----------
+    .. [70] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
+       Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
+       In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
+    """
+
+    M, a, b = list_to_array(M, a, b)
+    nx = get_backend(M, a, b)
+
+    dim_a, dim_b = M.shape
+
+    if len(a) == 0:
+        a = nx.ones(dim_a, type_as=M) / dim_a
+    if len(b) == 0:
+        b = nx.ones(dim_b, type_as=M) / dim_b
+
+    if len(b.shape) > 1:
+        n_hists = b.shape[1]
+    else:
+        n_hists = 0
+
+    reg_m1, reg_m2 = get_parameter_pair(reg_m)
+
+    if log:
+        log = {'err': []}
+
+    # we assume that no distances are null except those of the diagonal of
+    # distances
+    if warmstart is None:
+        if n_hists:
+            u = nx.ones((dim_a, 1), type_as=M)
+            v = nx.ones((dim_b, n_hists), type_as=M)
+            a = a.reshape(dim_a, 1)
+        else:
+            u = nx.ones(dim_a, type_as=M)
+            v = nx.ones(dim_b, type_as=M)
+    else:
+        u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
+
+    u_, v_ = u, v
+
+    if reg_type == "entropy":
+        warnings.warn('If reg_type = entropy, then the matrix c is overwritten by the one matrix.')
+        c = nx.ones((dim_a, dim_b), type_as=M)
+
+    if n_hists:
+        M0 = M
+    else:
+        c = a[:, None] * b[None, :] if c is None else c
+        M0 = M - reg * nx.log(c)
+    K = nx.exp(-M0 / reg)
+
+    fi_1 = reg_m1 / (reg_m1 + reg) if reg_m1 != float("inf") else 1
+    fi_2 = reg_m2 / (reg_m2 + reg) if reg_m2 != float("inf") else 1
+
+    k1 = reg * reg_m1 / ((reg + reg_m1) * (reg_m1 + reg_m2)) if reg_m1 != float("inf") else 0
+    k2 = reg * reg_m2 / ((reg + reg_m2) * (reg_m1 + reg_m2)) if reg_m2 != float("inf") else 0
+
+    k_rho1 = k1 * reg_m1 / reg if reg_m1 != float("inf") else 0
+    k_rho2 = k2 * reg_m2 / reg if reg_m2 != float("inf") else 0
+
+    if reg_m1 == float("inf") and reg_m2 == float("inf"):
+        xi1, xi2 = 0, 0
+        fi_12 = 1
+    elif reg_m1 == float("inf"):
+        xi1 = 0
+        xi2 = reg / reg_m2
+        fi_12 = reg_m2
+    elif reg_m2 == float("inf"):
+        xi1 = reg / reg_m1
+        xi2 = 0
+        fi_12 = reg_m1
+    else:
+        xi1 = (reg_m2 * reg) / (reg_m1 * (reg + reg_m1 + reg_m2))
+        xi2 = (reg_m1 * reg) / (reg_m2 * (reg + reg_m1 + reg_m2))
+        fi_12 = reg_m1 * reg_m2 / (reg_m1 + reg_m2)
+
+    xi_rho1 = xi1 * reg_m1 / reg if reg_m1 != float("inf") else 0
+    xi_rho2 = xi2 * reg_m2 / reg if reg_m2 != float("inf") else 0
+
+    reg_ratio1 = reg / reg_m1 if reg_m1 != float("inf") else 0
+    reg_ratio2 = reg / reg_m2 if reg_m2 != float("inf") else 0
+
+    err = 1.
+
+    for i in range(numItermax):
+        uprev = u
+        vprev = v
+
+        Kv = nx.dot(K, v_)
+        u_hat = (a / Kv) ** fi_1 * nx.sum(b * v_**reg_ratio2)**k_rho2
+        u_ = u_hat * nx.sum(a * u_hat**(-reg_ratio1))**(-xi_rho1)
+
+        Ktu = nx.dot(K.T, u_)
+        v_hat = (b / Ktu) ** fi_2 * nx.sum(a * u_**(-reg_ratio1))**k_rho1
+        v_ = v_hat * nx.sum(b * v_hat**(-reg_ratio2))**(-xi_rho2)
+
+        t = (nx.sum(a * u_**(-reg_ratio1)) / nx.sum(b * v_**(-reg_ratio2)))**(fi_12 / reg)
+
+        u = u_ * t
+        v = v_ / t
+
+        err_u = nx.max(nx.abs(u - uprev)) / max(
+            nx.max(nx.abs(u)), nx.max(nx.abs(uprev)), 1.
+        )
+        err_v = nx.max(nx.abs(v - vprev)) / max(
+            nx.max(nx.abs(v)), nx.max(nx.abs(vprev)), 1.
+        )
+        err = 0.5 * (err_u + err_v)
+        if log:
+            log['err'].append(err)
+            if verbose:
+                if i % 50 == 0:
+                    print(
+                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
+                print('{:5d}|{:8e}|'.format(i, err))
+
+        if err < stopThr:
+            break
+
+    if log:
+        log['logu'] = nx.log(u + 1e-300)
+        log['logv'] = nx.log(v + 1e-300)
+
+    if n_hists:  # return only loss
+        res = nx.einsum('ik,ij,jk,ij->k', u, K, v, M)
+        if log:
+            return res, log
+        else:
+            return res
+
+    else:  # return OT matrix
+
+        if log:
+            return u[:, None] * K * v[None, :], log
+        else:
+            return u[:, None] * K * v[None, :]
 
 
 def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
