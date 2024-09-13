@@ -335,7 +335,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
             res = sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type, c,
                                                             warmstart, numItermax=numItermax,
                                                             stopThr=stopThr, verbose=verbose,
-                                                            log=log, **kwargs)
+                                                            log=True, **kwargs)
 
         elif method.lower() in ['sinkhorn_reg_scaling']:
             warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
@@ -1015,7 +1015,7 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
     if log:
-        log = {'err': []}
+        dict_log = {'err': []}
 
     # we assume that no distances are null except those of the diagonal of
     # distances
@@ -1101,7 +1101,7 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
         )
         err = 0.5 * (err_u + err_v)
         if log:
-            log['err'].append(err)
+            dict_log['err'].append(err)
             if verbose:
                 if i % 50 == 0:
                     print(
@@ -1112,8 +1112,8 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
             break
 
     if log:
-        log['logu'] = nx.log(u + 1e-300)
-        log['logv'] = nx.log(v + 1e-300)
+        dict_log['logu'] = nx.log(u + 1e-300)
+        dict_log['logv'] = nx.log(v + 1e-300)
 
     if n_hists:  # return only loss
         res = nx.einsum('ik,ij,jk,ij->k', u, K, v, M)
@@ -1123,11 +1123,22 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
             return res
 
     else:  # return OT matrix
+        plan = u[:, None] * K * v[None, :]
 
         if log:
-            return u[:, None] * K * v[None, :], log
+            linear_cost = nx.sum(plan * M)
+            dict_log["cost"] = linear_cost
+
+            total_cost = linear_cost + reg * nx.kl_div(plan, c)
+            if reg_m1 != float("inf"):
+                total_cost = total_cost + reg_m1 * nx.kl_div(nx.sum(plan, 1), a)
+            if reg_m2 != float("inf"):
+                total_cost = total_cost + reg_m2 * nx.kl_div(nx.sum(plan, 0), b)
+            dict_log["total_cost"] = total_cost
+
+            return plan, dict_log
         else:
-            return u[:, None] * K * v[None, :]
+            return plan
 
 
 def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
