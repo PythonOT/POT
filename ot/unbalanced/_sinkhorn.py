@@ -1118,7 +1118,7 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
     if n_hists:  # return only loss
         res = nx.einsum('ik,ij,jk,ij->k', u, K, v, M)
         if log:
-            return res, log
+            return res, dict_log
         else:
             return res
 
