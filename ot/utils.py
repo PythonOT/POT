@@ -1043,10 +1043,7 @@ class OTResult:
         This pair of arrays has the same shape, numerical type
         and properties as the input weights "a" and "b".
         """
-        if self._potentials is not None:
-            return self._potentials
-        else:
-            raise NotImplementedError()
+        return self._potentials
 
     @property
     def potential_a(self):
@@ -1054,7 +1051,7 @@ class OTResult:
         if self._potentials is not None:
             return self._potentials[0]
         else:
-            raise NotImplementedError()
+            return None
 
     @property
     def potential_b(self):
@@ -1062,7 +1059,7 @@ class OTResult:
         if self._potentials is not None:
             return self._potentials[1]
         else:
-            raise NotImplementedError()
+            return None
 
     # Transport plan -------------------------------------------
     @property
@@ -1071,10 +1068,7 @@ class OTResult:
         # N.B.: We may catch out-of-memory errors and suggest
         # the use of lazy_plan or sparse_plan when appropriate.
 
-        if self._plan is not None:
-            return self._plan
-        else:
-            raise NotImplementedError()
+        return self._plan
 
     @property
     def sparse_plan(self):
@@ -1084,15 +1078,12 @@ class OTResult:
         elif self._plan is not None:
             return self._backend.tocsr(self._plan)
         else:
-            raise NotImplementedError()
+            return None
 
     @property
     def lazy_plan(self):
         """Transport plan, encoded as a symbolic KeOps LazyTensor."""
-        if self._lazy_plan is not None:
-            return self._lazy_plan
-        else:
-            raise NotImplementedError()
+        return self._lazy_plan
 
     # Loss values --------------------------------
 
@@ -1100,26 +1091,17 @@ class OTResult:
     def value(self):
         """Full transport cost, including possible regularization terms and
         quadratic term for Gromov Wasserstein solutions."""
-        if self._value is not None:
-            return self._value
-        else:
-            raise NotImplementedError()
+        return self._value
 
     @property
     def value_linear(self):
         """The "minimal" transport cost, i.e. the product between the transport plan and the cost."""
-        if self._value_linear is not None:
-            return self._value_linear
-        else:
-            raise NotImplementedError()
+        return self._value_linear
 
     @property
     def value_quad(self):
         """The quadratic part of the transport cost for Gromov-Wasserstein solutions."""
-        if self._value_quad is not None:
-            return self._value_quad
-        else:
-            raise NotImplementedError()
+        return self._value_quad
 
     # Marginal constraints -------------------------
     @property
@@ -1129,7 +1111,7 @@ class OTResult:
         if self._plan is not None:
             return self.marginal_a, self.marginal_b
         else:
-            raise NotImplementedError()
+            return None
 
     @property
     def marginal_a(self):
@@ -1142,7 +1124,7 @@ class OTResult:
             nx = self._backend
             return reduce_lazytensor(lp, nx.sum, axis=1, nx=nx, batch_size=bs)
         else:
-            raise NotImplementedError()
+            return None
 
     @property
     def marginal_b(self):
@@ -1155,23 +1137,17 @@ class OTResult:
             nx = self._backend
             return reduce_lazytensor(lp, nx.sum, axis=0, nx=nx, batch_size=bs)
         else:
-            raise NotImplementedError()
+            return None
 
     @property
     def status(self):
         """Optimization status of the solver."""
-        if self._status is not None:
-            return self._status
-        else:
-            raise NotImplementedError()
+        return self._status
 
     @property
     def log(self):
         """Dictionary containing potential information about the solver."""
-        if self._log is not None:
-            return self._log
-        else:
-            raise NotImplementedError()
+        return self._log
 
     # Barycentric mappings -------------------------
     # Return the displacement vectors as an array

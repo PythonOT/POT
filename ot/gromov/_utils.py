@@ -797,3 +797,347 @@ def update_barycenter_feature(
             inv_p = 1. / p_sum
 
     return sum(list_features) * inv_p[:, None]
+
+
+############################################################################
+# Methods related to fused unbalanced GW and unbalanced Co-Optimal Transport.
+############################################################################
+
+def div_to_product(pi, a, b, pi1=None, pi2=None, divergence="kl", mass=True, nx=None):
+    r"""Calculate the Bregman divergence between an arbitrary measure and a product measure.
+    This implementation induces cheaper cost than the direct calculation.
+    Only support for Kullback-Leibler and half-squared L2 divergences.
+
+    For half-squared L2 divergence:
+    .. math::
+        \frac{1}{2} || \pi - a \otimes b ||^2
+        = \frac{1}{2} \Big[ \sum_{i, j} \pi_{ij}^2 + (\sum_i a_i^2) ( \sum_j b_j^2) - 2 \sum_{i, j} a_i \pi_{ij} b_j \Big]
+
+    For Kullback-Leibler divergence:
+    .. math::
+        KL(\pi | a \otimes b)
+        = \langle \pi, \log \pi \rangle - \lange \pi_1, \log a \rangle
+        - \langle \pi_2, \log b \rangle - m(\pi) + m(a) m(b)
+
+    where:
+    - :math:`\pi` is the (`dim_a`, `dim_b`) transport plan
+    - :math:`\pi_1` and :math:`\pi_2` are the marginal distributions
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
+    - :math:`m` denotes the mass of the measure
+
+    Parameters
+    ----------
+    pi : array-like (dim_a, dim_b)
+        Transport plan
+    a : array-like (dim_a,)
+        Unnormalized histogram of dimension `dim_a`
+    b : array-like (dim_b,)
+        Unnormalized histogram of dimension `dim_b`
+    pi1 : array-like (dim_a,), optional (default = None)
+        Marginal distribution with respect to the first dimension of the transport plan
+        Only used in case of Kullback-Leibler divergence.
+    pi2 : array-like (dim_a,), optional (default = None)
+        Marginal distribution with respect to the second dimension of the transport plan
+        Only used in case of Kullback-Leibler divergence.
+    divergence : string, default = "kl"
+        Bregman divergence, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
+    mass : bool, optional. Default is False.
+        Only used in case of Kullback-Leibler divergence.
+        If False, calculate the relative entropy.
+        If True, calculate the Kullback-Leibler divergence.
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    -------
+    Bregman divergence between an arbitrary measure and a product measure.
+    """
+
+    arr = [pi, a, b]
+
+    if nx is None:
+        for item in [pi1, pi2]:
+            if item is not None:
+                arr.append(list_to_array(item))
+        nx = get_backend(*arr)
+
+    if divergence == "kl":
+
+        if pi1 is None:
+            pi1 = nx.sum(pi, 1)
+        if pi2 is None:
+            pi2 = nx.sum(pi, 0)
+
+        res = nx.sum(pi * nx.log(pi + 1.0 * (pi == 0))) \
+            - nx.sum(pi1 * nx.log(a)) - nx.sum(pi2 * nx.log(b))
+        if mass:
+            res = res - nx.sum(pi1) + nx.sum(a) * nx.sum(b)
+
+    elif divergence == "l2":
+        res = (nx.sum(pi**2) + nx.sum(a**2) * nx.sum(b**2)
+               - 2 * nx.dot(a, nx.dot(pi, b))) / 2
+
+    return res
+
+
+def div_between_product(mu, nu, alpha, beta, divergence, nx=None):
+    r"""Calculate the Bregmain divergence between two product measures.
+    This implementation induces cheaper cost than the direct calculation.
+    Only support for Kullback-Leibler and half-squared L2 divergences.
+
+    For half-squared L2 divergence:
+    .. math::
+        \frac{1}{2} || \mu \otimes \nu, \alpha \otimes \beta ||^2
+        = \frac{1}{2} \Big[ ||\alpha||^2 ||\beta||^2 + ||\mu||^2 ||\nu||^2 - 2 \langle \alpha, \mu \rangle \langle \beta, \nu \rangle \Big]
+
+    For Kullback-Leibler divergence:
+    .. math::
+        KL(\mu \otimes \nu, \alpha \otimes \beta)
+        = m(\mu) * KL(\nu, \beta) + m(\nu) * KL(\mu, \alpha) + (m(\mu) - m(\alpha)) * (m(\nu) - m(\beta))
+
+    where:
+    - :math:`\mu` and :math:`\alpha` are two measures having the same shape.
+    - :math:`\nu` and :math:`\beta` are two measures having the same shape.
+    - :math:`m` denotes the mass of the measure
+
+    Parameters
+    ----------
+    mu : array-like
+        vector or matrix
+    nu : array-like
+        vector or matrix
+    alpha : array-like
+        vector or matrix with the same shape as `\mu`
+    beta : array-like
+        vector or matrix with the same shape as `\nu`
+    divergence : string, default = "kl"
+        Bregman divergence, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    ----------
+    Bregman divergence between two product measures.
+    """
+
+    if nx is None:
+        mu, nu, alpha, beta = list_to_array(mu, nu, alpha, beta)
+        nx = get_backend(mu, nu, alpha, beta)
+
+    if divergence == "kl":
+        m_mu, m_nu = nx.sum(mu), nx.sum(nu)
+        m_alpha, m_beta = nx.sum(alpha), nx.sum(beta)
+        const = (m_mu - m_alpha) * (m_nu - m_beta)
+        res = m_nu * nx.kl_div(mu, alpha, mass=True) + m_mu * nx.kl_div(nu, beta, mass=True) + const
+
+    elif divergence == "l2":
+        res = (nx.sum(alpha**2) * nx.sum(beta**2) - 2 * nx.sum(alpha * mu) * nx.sum(beta * nu)
+               + nx.sum(mu**2) * nx.sum(nu**2)) / 2
+
+    return res
+
+
+# Support functions for BCD schemes
+def uot_cost_matrix(data, pi, tuple_p, hyperparams, divergence, reg_type, nx=None):
+    r"""The Block Coordinate Descent algorithm for FUGW and UCOOT
+    requires solving an UOT problem in each iteration.
+    In particular, we need to specify the following inputs:
+    - Cost matrix
+    - Hyperparameters (marginal-relaxations and regularization)
+    - Reference measures in the marginal-relaxation and regularization terms
+
+    This method returns the cost matrix.
+    The method `get_uot_parameters` returns the rest of the inputs.
+
+    Parameters
+    ----------
+    data : tuple of arrays
+        vector or matrix
+    pi : array-like
+        vector or matrix
+    tuple_p : tuple of arrays
+        Tuple of reference measures in the marginal-relaxation terms
+        w.r.t the (either sample or feature) coupling
+    hyperparams : tuple of floats
+        Hyperparameters of marginal-relaxation and regularization terms
+        in the fused unbalanced across-domain divergence
+    divergence : string, default = "kl"
+        Bregman divergence, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
+    reg_type : string,
+        Type of regularization term in the fused unbalanced across-domain divergence
+        - `reg_type = "joint"` corresponds to FUGW
+        - `reg_type = "independent"` corresponds to UCOOT
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    ----------
+    Cost matrix of the UOT subroutine for UCOOT and FUGW
+    """
+
+    X_sqr, Y_sqr, X, Y, M = data
+    rho_x, rho_y, eps = hyperparams
+    a, b = tuple_p
+
+    if nx is None:
+        X, Y, a, b = list_to_array(X, Y, a, b)
+        nx = get_backend(X, Y, a, b)
+
+    pi1, pi2 = nx.sum(pi, 1), nx.sum(pi, 0)
+    A, B = nx.dot(X_sqr, pi1), nx.dot(Y_sqr, pi2)
+    uot_cost = A[:, None] + B[None, :] - 2 * nx.dot(nx.dot(X, pi), Y.T)
+    if M is not None:
+        uot_cost = uot_cost + M
+
+    if divergence == "kl":
+        if rho_x != float("inf") and rho_x != 0:
+            uot_cost = uot_cost + rho_x * nx.kl_div(pi1, a, mass=False)
+        if rho_y != float("inf") and rho_y != 0:
+            uot_cost = uot_cost + rho_y * nx.kl_div(pi2, b, mass=False)
+        if reg_type == "joint" and eps > 0:
+            uot_cost = uot_cost + eps * div_to_product(pi, a, b, pi1, pi2,
+                                                       divergence, mass=False, nx=nx)
+
+    return uot_cost
+
+
+def uot_parameters_and_measures(pi, tuple_weights, hyperparams, reg_type, divergence, nx):
+    r"""The Block Coordinate Descent algorithm for FUGW and UCOOT
+    requires solving an UOT problem in each iteration.
+    In particular, we need to specify the following inputs:
+    - Cost matrix
+    - Hyperparameters (marginal-relaxations and regularization)
+    - Reference measures in the marginal-relaxation and regularization terms
+
+    The method `local_cost` returns the cost matrix.
+    This method returns the rest of the inputs.
+
+    Parameters
+    ----------
+    pi : array-like
+        vector or matrix
+    tuple_weights : tuple of arrays
+        Tuple of reference measures in the marginal-relaxation and regularization terms
+        w.r.t the (either sample or feature) coupling
+    hyperparams : tuple of floats
+        Hyperparameters of marginal-relaxation and regularization terms
+        in the fused unbalanced across-domain divergence
+    reg_type : string,
+        Type of regularization term in the fused unbalanced across-domain divergence
+        - `reg_type = "joint"` corresponds to FUGW
+        - `reg_type = "independent"` corresponds to UCOOT
+    divergence : string, default = "kl"
+        Bregman divergence, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    ----------
+    Tuple of hyperparameters and distributions (weights)
+    """
+
+    rho_x, rho_y, eps = hyperparams
+    wx, wy, wxy = tuple_weights
+
+    if divergence == "l2":
+        pi1, pi2 = nx.sum(pi, 1), nx.sum(pi, 0)
+        l2_pi1, l2_pi2, l2_pi = nx.sum(pi1**2), nx.sum(pi2**2), nx.sum(pi**2)
+
+        weighted_wx = wx * nx.sum(pi1 * wx) / l2_pi1
+        weighted_wy = wy * nx.sum(pi2 * wy) / l2_pi2
+        weighted_wxy = wxy * nx.sum(pi * wxy) / l2_pi if reg_type == "joint" else wxy
+        weighted_w = (weighted_wx, weighted_wy, weighted_wxy)
+
+        new_rho = (rho_x * l2_pi1, rho_y * l2_pi2)
+        new_eps = eps * l2_pi if reg_type == "joint" else eps
+
+    elif divergence == "kl":
+        mass = nx.sum(pi)
+        new_rho = (rho_x * mass, rho_y * mass)
+        new_eps = mass * eps if reg_type == "joint" else eps
+        weighted_w = tuple_weights
+
+    return weighted_w, new_rho, new_eps
+
+
+def fused_unbalanced_across_spaces_cost(M_linear, data, tuple_pxy_samp, tuple_pxy_feat,
+                                        pi_samp, pi_feat, hyperparams, divergence, reg_type, nx):
+    r"""Return the fused unbalanced across-space divergence between two spaces
+
+    Parameters
+    ----------
+    M_linear : tuple of arrays
+        Pair of cost matrices corresponding to the Wasserstein terms w.r.t sample and feature couplings
+    data : tuple of arrays
+        Tuple of input spaces represented as matrices
+    tuple_pxy_samp : tuple of arrays
+        Tuple of reference measures in the marginal-relaxation and regularization terms
+        w.r.t the sample coupling
+    tuple_pxy_feat : tuple of arrays
+        Tuple of reference measures in the marginal-relaxation and regularization terms
+        w.r.t the feature coupling
+    pi_samp : array-like
+        Sample coupling
+    pi_feat : array-like
+        Feature coupling
+    hyperparams : tuple of floats
+        Hyperparameters of marginal-relaxation and regularization terms
+        in the fused unbalanced across-domain divergence
+    divergence : string, default = "kl"
+        Bregman divergence, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
+    reg_type : string,
+        Type of regularization term in the fused unbalanced across-domain divergence
+        - `reg_type = "joint"` corresponds to FUGW
+        - `reg_type = "independent"` corresponds to UCOOT
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    ----------
+    Fused unbalanced across-space divergence between two spaces
+    """
+
+    rho_x, rho_y, eps_samp, eps_feat = hyperparams
+    M_samp, M_feat = M_linear
+    px_samp, py_samp, pxy_samp = tuple_pxy_samp
+    px_feat, py_feat, pxy_feat = tuple_pxy_feat
+    X_sqr, Y_sqr, X, Y = data
+
+    pi1_samp, pi2_samp = nx.sum(pi_samp, 1), nx.sum(pi_samp, 0)
+    pi1_feat, pi2_feat = nx.sum(pi_feat, 1), nx.sum(pi_feat, 0)
+
+    A_sqr = nx.dot(nx.dot(X_sqr, pi1_feat), pi1_samp)
+    B_sqr = nx.dot(nx.dot(Y_sqr, pi2_feat), pi2_samp)
+    AB = nx.dot(nx.dot(X, pi_feat), Y.T) * pi_samp
+    linear_cost = A_sqr + B_sqr - 2 * nx.sum(AB)
+
+    ucoot_cost = linear_cost
+    if M_samp is not None:
+        ucoot_cost = ucoot_cost + nx.sum(pi_samp * M_samp)
+    if M_feat is not None:
+        ucoot_cost = ucoot_cost + nx.sum(pi_feat * M_feat)
+
+    if rho_x != float("inf") and rho_x != 0:
+        ucoot_cost = ucoot_cost + \
+            rho_x * div_between_product(pi1_samp, pi1_feat,
+                                        px_samp, px_feat, divergence, nx)
+    if rho_y != float("inf") and rho_y != 0:
+        ucoot_cost = ucoot_cost + \
+            rho_y * div_between_product(pi2_samp, pi2_feat,
+                                        py_samp, py_feat, divergence, nx)
+
+    if reg_type == "joint" and eps_samp != 0:
+        div_cost = div_between_product(pi_samp, pi_feat,
+                                       pxy_samp, pxy_feat, divergence, nx)
+        ucoot_cost = ucoot_cost + eps_samp * div_cost
+    elif reg_type == "independent":
+        if eps_samp != 0:
+            div_samp = div_to_product(pi_samp, pi1_samp, pi2_samp,
+                                      px_samp, py_samp, divergence, mass=True, nx=nx)
+            ucoot_cost = ucoot_cost + eps_samp * div_samp
+        if eps_feat != 0:
+            div_feat = div_to_product(pi_feat, pi1_feat, pi2_feat,
+                                      px_feat, py_feat, divergence, mass=True, nx=nx)
+            ucoot_cost = ucoot_cost + eps_feat * div_feat
+
+    return linear_cost, ucoot_cost

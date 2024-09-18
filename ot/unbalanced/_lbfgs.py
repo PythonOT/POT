@@ -125,6 +125,8 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
         regm_fun = marg_l2
         grad_regm_fun = grad_marg_l2
 
+    print("reg_m1 = {}".format(reg_m1))
+
     def _func(G):
         G = G.reshape((m, n))
 
@@ -133,6 +135,10 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
         if reg > 0:
             val = val + reg * reg_fun(G)
         # compute gradient
+        print("reg = {}".format(reg))
+        print("shape of M = {}".format(M.shape))
+        print("G shape = {}".format(G.shape))
+        print("shape of grad = {}".format(grad_regm_fun(G).shape))
         grad = M + grad_regm_fun(G)
         if reg > 0:
             grad = grad + reg * grad_reg_fun(G)
@@ -286,7 +292,7 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
         b = nx.ones(dim_b, type_as=M) / dim_b
 
     # convert to numpy
-    a, b, M = nx.to_numpy(a, b, M)
+    a, b, M, reg_m1, reg_m2, reg = nx.to_numpy(a, b, M, reg_m1, reg_m2, reg)
     G0 = a[:, None] * b[None, :] if G0 is None else nx.to_numpy(G0)
     c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
 
