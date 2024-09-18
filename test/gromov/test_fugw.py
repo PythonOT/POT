@@ -326,7 +326,7 @@ def test_reg_marginals(nx, unbalanced_solver, divergence, eps):
             divergence=divergence, unbalanced_solver=unbalanced_solver,
             alpha=alpha, M=M_samp, init_duals=None, init_pi=None, max_iter=max_iter,
             tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-           log=False, verbose=False
+            log=False, verbose=False
         )
 
         fugw_nx = nx.to_numpy(fugw_nx)
