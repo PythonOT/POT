@@ -7,7 +7,7 @@ General OT solvers with unified API
 #
 # License: MIT License
 
-from .utils import OTResult, dist, get_parameter_pair
+from .utils import OTResult, dist
 from .lp import emd2, wasserstein_1d
 from .backend import get_backend
 from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
@@ -267,11 +267,6 @@ def solve(M, a=None, b=None, reg=None, c=None, reg_type="KL", unbalanced=None,
         b = nx.ones(M.shape[1], type_as=M) / M.shape[1]
     if c is None:
         c = a[:, None] * b[None, :]
-
-    if unbalanced is None:
-        reg_m1, reg_m2 = float("inf"), float("inf") # balanced OT
-    else:
-        reg_m1, reg_m2 = get_parameter_pair(unbalanced)
 
     if reg is None:
         reg = 0
