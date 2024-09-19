@@ -309,6 +309,24 @@ def solve(M, a=None, b=None, reg=None, c=None, reg_type="KL", unbalanced=None,
             value_linear = log['cost']
             value = log['total_cost']
 
+        elif unbalanced_type.lower() == 'tv':
+
+            if max_iter is None:
+                max_iter = 1000
+            if tol is None:
+                tol = 1e-12
+            if isinstance(reg_type, str):
+                reg_type = reg_type.lower()
+
+            plan, log = lbfgsb_unbalanced(
+                a, b, M, reg=reg, reg_m=unbalanced, c=c, reg_div=reg_type,
+                regm_div=unbalanced_type, numItermax=max_iter,
+                stopThr=tol, verbose=verbose, log=True, G0=plan_init
+            )
+
+            value_linear = log['cost']
+            value = log['total_cost']
+
         else:
             raise (NotImplementedError('Unknown unbalanced_type="{}"'.format(unbalanced_type)))
 
