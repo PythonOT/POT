@@ -1091,6 +1091,16 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
         v_hat = (b / Ktu) ** fi_2 * nx.sum(a * u_**(-reg_ratio1))**k_rho1
         v_ = v_hat * nx.sum(b * v_hat**(-reg_ratio2))**(-xi_rho2)
 
+        if (nx.any(Ktu == 0.)
+                or nx.any(nx.isnan(u_)) or nx.any(nx.isnan(v_))
+                or nx.any(nx.isinf(u_)) or nx.any(nx.isinf(v_))):
+            # we have reached the machine precision
+            # come back to previous solution and quit loop
+            warnings.warn('Numerical errors at iteration %s' % i)
+            u = uprev
+            v = vprev
+            break
+
         t = (nx.sum(a * u_**(-reg_ratio1)) / nx.sum(b * v_**(-reg_ratio2)))**(fi_12 / reg)
 
         u = u_ * t
