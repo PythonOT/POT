@@ -12,6 +12,7 @@
 - `nx.sqrtm` is now broadcastable (takes ..., d, d) inputs (PR #649)
 - restructure `ot.unbalanced` module (PR #658)
 - add `ot.unbalanced.lbfgsb_unbalanced2` and add flexible reference measure `c` in all unbalanced solvers (PR #658)
+- Added `sinkhorn_unbalanced_translation_invariant` in `ot.unbalanced.sinkhorn_unbalanced` (PR #676)
 
 #### Closed issues
 - Fixed `ot.gaussian` ignoring weights when computing means (PR #649, Issue #648)

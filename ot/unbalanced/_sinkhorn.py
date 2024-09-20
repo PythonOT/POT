@@ -372,10 +372,10 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
                                                   log=log, **kwargs)
 
         elif method.lower() == 'sinkhorn_translation_invariant':
-            return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type, c,
-                                                  warmstart, numItermax=numItermax,
-                                                  stopThr=stopThr, verbose=verbose,
-                                                  log=log, **kwargs)
+            return sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type, c,
+                                                             warmstart, numItermax=numItermax,
+                                                             stopThr=stopThr, verbose=verbose,
+                                                             log=log, **kwargs)
 
         elif method.lower() in ['sinkhorn_reg_scaling']:
             warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
