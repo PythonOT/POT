@@ -373,6 +373,17 @@ def test_unbalanced_multiple_inputs(nx, method):
     np.testing.assert_allclose(
         nx.to_numpy(v_final), nx.to_numpy(log["logv"]), atol=1e-05)
 
+    losses = ot.unbalanced.sinkhorn_unbalanced2(a, b, M, reg=epsilon,
+                                                reg_m=reg_m, method=method)
+
+    loss1 = ot.unbalanced.sinkhorn_unbalanced2(a, b[:, 0], M, reg=epsilon,
+                                               reg_m=reg_m, method=method)
+    loss2 = ot.unbalanced.sinkhorn_unbalanced2(a, b[:, 1], M, reg=epsilon,
+                                               reg_m=reg_m, method=method)
+
+    np.testing.assert_allclose(
+        nx.to_numpy(losses), nx.to_numpy([loss1, loss2]), atol=1e-5)
+
 
 def test_stabilized_vs_sinkhorn(nx):
     # test if stable version matches sinkhorn
