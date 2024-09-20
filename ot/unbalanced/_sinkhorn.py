@@ -71,7 +71,7 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
         If :math:`\mathrm{reg_{m}}` is an array,
         it must have the same backend as input arrays `(a, b, M)`.
     method : str
-        method used for the solver either 'sinkhorn', 'sinkhorn_stabilized' or
+        method used for the solver either 'sinkhorn', 'sinkhorn_stabilized', 'sinkhorn_translation_invariant' or
         'sinkhorn_reg_scaling', see those function for specific parameters
     reg_type : string, optional
         Regularizer term. Can take two values:
@@ -147,11 +147,13 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
 
     See Also
     --------
-    ot.unbalanced.sinkhorn_knopp_unbalanced : Unbalanced Classic Sinkhorn :ref:`[10] <references-sinkhorn-unbalanced>`
+    ot.unbalanced.sinkhorn_knopp_unbalanced: Unbalanced Classic Sinkhorn :ref:`[10] <references-sinkhorn-unbalanced>`
     ot.unbalanced.sinkhorn_stabilized_unbalanced:
         Unbalanced Stabilized sinkhorn :ref:`[9, 10] <references-sinkhorn-unbalanced>`
     ot.unbalanced.sinkhorn_reg_scaling_unbalanced:
         Unbalanced Sinkhorn with epsilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced>`
+    ot.unbalanced.sinkhorn_unbalanced_translation_invariant:
+        Translation Invariant Unbalanced Sinkhorn :ref:`[70] <references-sinkhorn-unbalanced-translation-invariant>`
 
     """
 
@@ -240,7 +242,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
         If :math:`\mathrm{reg_{m}}` is an array,
         it must have the same backend as input arrays `(a, b, M)`.
     method : str
-        method used for the solver either 'sinkhorn', 'sinkhorn_stabilized' or
+        method used for the solver either 'sinkhorn', 'sinkhorn_stabilized', 'sinkhorn_translation_invariant' or
         'sinkhorn_reg_scaling', see those function for specific parameters
     reg_type : string, optional
         Regularizer term. Can take two values:
@@ -311,9 +313,10 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
 
     See Also
     --------
-    ot.unbalanced.sinkhorn_knopp : Unbalanced Classic Sinkhorn :ref:`[10] <references-sinkhorn-unbalanced2>`
+    ot.unbalanced.sinkhorn_knopp: Unbalanced Classic Sinkhorn :ref:`[10] <references-sinkhorn-unbalanced2>`
     ot.unbalanced.sinkhorn_stabilized: Unbalanced Stabilized sinkhorn :ref:`[9, 10] <references-sinkhorn-unbalanced2>`
     ot.unbalanced.sinkhorn_reg_scaling: Unbalanced Sinkhorn with epsilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced2>`
+    ot.unbalanced.sinkhorn_unbalanced_translation_invariant: Translation Invariant Unbalanced Sinkhorn :ref:`[70] <references-sinkhorn-unbalanced2>`
 
     """
     M, a, b = list_to_array(M, a, b)
@@ -898,15 +901,15 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
 def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl", c=None,
                                               warmstart=None, numItermax=1000, stopThr=1e-6,
                                               verbose=False, log=False, **kwargs):
-    """
+    r"""    
     Solve the entropic regularization unbalanced optimal transport problem and
     return the OT plan
 
     The function solves the following optimization problem:
 
     .. math::
-        W = \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
-        \mathrm{reg} \cdot \Omega(\gamma) +
+        W = \arg \min_\gamma \ \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot \mathrm{KL}(\gamma, \mathbf{c}) +
         \mathrm{reg_{m1}} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_{m2}} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
@@ -1500,7 +1503,7 @@ def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
                                                 stopThr=stopThr,
                                                 verbose=verbose,
                                                 log=log, **kwargs)
-    elif method.lower() in ['sinkhorn_reg_scaling']:
+    elif method.lower() in ['sinkhorn_reg_scaling', 'sinkhorn_translation_invariant']:
         warnings.warn('Method not implemented yet. Using classic Sinkhorn Knopp')
         return barycenter_unbalanced(A, M, reg, reg_m,
                                      weights=weights,

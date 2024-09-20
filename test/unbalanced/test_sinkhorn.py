@@ -288,7 +288,7 @@ def test_unbalanced_relaxation_parameters(nx, method, reg_m):
             nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05)
 
 
-@pytest.mark.parametrize("method,reg_m1, reg_m2", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling", "sinkhorn_translation_invariant"], [1, float("inf")], [1, float("inf")]))
+@pytest.mark.parametrize("method, reg_m1, reg_m2", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling", "sinkhorn_translation_invariant"], [1, float("inf")], [1, float("inf")]))
 def test_unbalanced_relaxation_parameters_pair(nx, method, reg_m1, reg_m2):
     # test generalized sinkhorn for unbalanced OT
     n = 100
@@ -536,7 +536,7 @@ def test_wrong_method(nx):
 
 def test_implemented_methods(nx):
     IMPLEMENTED_METHODS = ['sinkhorn', 'sinkhorn_stabilized']
-    TO_BE_IMPLEMENTED_METHODS = ['sinkhorn_reg_scaling']
+    TO_BE_IMPLEMENTED_METHODS = ['sinkhorn_reg_scaling', 'sinkhorn_translation_invariant']
     NOT_VALID_TOKENS = ['foo']
     # test generalized sinkhorn for unbalanced OT barycenter
     n = 3
