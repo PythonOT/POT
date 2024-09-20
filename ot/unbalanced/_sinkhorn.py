@@ -901,7 +901,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
 def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl", c=None,
                                               warmstart=None, numItermax=1000, stopThr=1e-6,
                                               verbose=False, log=False, **kwargs):
-    r"""    
+    r"""
     Solve the entropic regularization unbalanced optimal transport problem and
     return the OT plan
 
