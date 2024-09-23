@@ -362,6 +362,9 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
             return cost
 
     else:
+        if reg_type == "kl":
+            warnings.warn('Reg_type not implemented yet. Use entropy.')
+
         if method.lower() == 'sinkhorn':
             return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
                                              warmstart, numItermax=numItermax,
