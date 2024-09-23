@@ -386,7 +386,7 @@ def test_unbalanced_multiple_inputs(nx, method):
                                                reg_type="entropy")
 
     np.testing.assert_allclose(
-        nx.to_numpy(losses), nx.to_numpy([loss1, loss2]), atol=1e-4)
+        nx.to_numpy(losses), np.array([loss1, loss2]), atol=1e-4)
 
 
 def test_stabilized_vs_sinkhorn(nx):
