@@ -404,7 +404,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
                 value_linear = nx.sum(M * plan)
 
-                value = log['loss']
+                value = log['cost']
 
             else:
                 raise (NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
