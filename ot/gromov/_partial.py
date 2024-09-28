@@ -623,7 +623,7 @@ def entropic_partial_gromov_wasserstein(
     ot.partial.partial_gromov_wasserstein: exact Partial Gromov-Wasserstein
     """
 
-    arr = [C1, C2]
+    arr = [C1, C2, G0]
     if p is not None:
         arr.append(list_to_array(p))
     else:
@@ -632,9 +632,6 @@ def entropic_partial_gromov_wasserstein(
         arr.append(list_to_array(q))
     else:
         q = unif(C2.shape[0], type_as=C2)
-
-    if G0 is not None:
-        arr.append(G0)
 
     nx = get_backend(*arr)
 
