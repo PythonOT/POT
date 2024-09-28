@@ -116,7 +116,7 @@ def partial_gromov_wasserstein(
 
     Examples
     --------
-    >>> import ot
+    >>> from ot.gromov import partial_gromov_wasserstein
     >>> import scipy as sp
     >>> a = np.array([0.25] * 4)
     >>> b = np.array([0.25] * 4)
@@ -168,11 +168,11 @@ def partial_gromov_wasserstein(
         symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
 
     if m is None:
-        m = np.min((np.sum(p), np.sum(q)))
+        m = min(np.sum(p), np.sum(q))
     elif m < 0:
         raise ValueError("Problem infeasible. Parameter m should be greater"
                          " than 0.")
-    elif m > np.min((np.sum(p), np.sum(q))):
+    elif m > min(np.sum(p), np.sum(q)):
         raise ValueError("Problem infeasible. Parameter m should lower or"
                          " equal than min(|a|_1, |b|_1).")
 
@@ -359,7 +359,7 @@ def partial_gromov_wasserstein2(
 
     Examples
     --------
-    >>> import ot
+    >>> from ot.gromov import partial_gromov_wasserstein2
     >>> import scipy as sp
     >>> a = np.array([0.25] * 4)
     >>> b = np.array([0.25] * 4)
@@ -488,8 +488,8 @@ def solve_partial_gromov_linesearch(
     def f(G):
         pG = nx.sum(G, 1)
         qG = nx.sum(G, 0)
-        constC1 = nx.outer(np.dot(fC1, pG), ones_q)
-        constC2 = nx.outer(ones_p, np.dot(qG, fC2.T))
+        constC1 = nx.outer(nx.dot(fC1, pG), ones_q)
+        constC2 = nx.outer(ones_p, nx.dot(qG, fC2.T))
         return gwloss(constC1 + constC2, hC1, hC2, G, nx)
 
     a = reg * f(deltaG)
@@ -580,7 +580,7 @@ def entropic_partial_gromov_wasserstein(
 
     Examples
     --------
-    >>> import ot
+    >>> from ot.gromov import entropic_partial_gromov_wasserstein
     >>> import scipy as sp
     >>> a = np.array([0.25] * 4)
     >>> b = np.array([0.25] * 4)
@@ -625,31 +625,35 @@ def entropic_partial_gromov_wasserstein(
 
     arr = [C1, C2, G0]
     if p is not None:
-        arr.append(list_to_array(p))
-    else:
-        p = unif(C1.shape[0], type_as=C1)
+        p = list_to_array(p)
+        arr.append(p)
     if q is not None:
-        arr.append(list_to_array(q))
-    else:
-        q = unif(C2.shape[0], type_as=C2)
+        q = list_to_array(q)
+        arr.append(q)
 
     nx = get_backend(*arr)
 
-    if G0 is None:
-        G0 = nx.outer(p, q)
-    else:
-        # Check marginals of G0
-        np.testing.assert_all(nx.sum(G0, 1) <= p)
-        np.testing.assert_all(nx.sum(G0, 0) <= q)
+    if p is None:
+        p = nx.ones(C1.shape[0], type_as=C1) / C1.shape[0]
+    if q is None:
+        q = nx.ones(C2.shape[0], type_as=C2) / C2.shape[0]
 
     if m is None:
-        m = nx.min((nx.sum(p), nx.sum(q)))
+        m = min(nx.sum(p), nx.sum(q))
     elif m < 0:
         raise ValueError("Problem infeasible. Parameter m should be greater"
                          " than 0.")
-    elif m > nx.min((nx.sum(p), nx.sum(q))):
+    elif m > min(nx.sum(p), nx.sum(q)):
         raise ValueError("Problem infeasible. Parameter m should lower or"
                          " equal than min(|a|_1, |b|_1).")
+
+    if G0 is None:
+        G0 = nx.outer(p, q) * m / (nx.sum(p) * nx.sum(q))  # make sure |G0|=m, G01_m\leq p, G0.T1_n\leq q.
+
+    else:
+        # Check marginals of G0
+        assert nx.any(nx.sum(G0, 1) <= p)
+        assert nx.any(nx.sum(G0, 0) <= q)
 
     if symmetric is None:
         symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
@@ -801,7 +805,7 @@ def entropic_partial_gromov_wasserstein2(
 
     Examples
     --------
-    >>> import ot
+    >>> from ot.gromov import entropic_partial_gromov_wasserstein2
     >>> import scipy as sp
     >>> a = np.array([0.25] * 4)
     >>> b = np.array([0.25] * 4)
