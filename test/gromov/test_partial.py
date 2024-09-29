@@ -177,7 +177,7 @@ def test_partial_partial_gromov_linesearch(nx):
     G0 = np.outer(p, q) * m / (np.sum(p) * np.sum(q))  # make sure |G0|=m, G01_m\leq p, G0.T1_n\leq q.
     G0b = nx.from_numpy(G0)
 
-    ### computing necessary inputs to the line-search
+    # computing necessary inputs to the line-search
     Gb, _ = ot.gromov.partial_gromov_wasserstein(
         C1b, C2b, pb, qb, m=m, log=True)
 
@@ -194,6 +194,7 @@ def test_partial_partial_gromov_linesearch(nx):
 
     df_G0b = ot.gromov.gwggrad(constC1 + constC2, hC1, hC2, G0b)
 
+    # perform line-search
     alpha, _, cost_Gb = ot.gromov.solve_partial_gromov_linesearch(
         G0b, deltaGb, cost_G0b, df_G0b, fC1, fC2, hC1, hC2, 0., 1.,
         alpha_min=0., alpha_max=1.)
