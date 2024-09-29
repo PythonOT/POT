@@ -52,6 +52,7 @@ def test_partial_gromov_wasserstein(nx):
     n_noise = 10  # nb of samples (noise)
 
     p = ot.unif(n_samples + n_noise)
+    psub = ot.unif(n_samples - 5 + n_noise)
     q = ot.unif(n_samples + n_noise)
 
     mu_s = np.array([0, 0])
@@ -60,20 +61,24 @@ def test_partial_gromov_wasserstein(nx):
     mu_t = np.array([0, 0, 0])
     cov_t = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
+    # clean samples
     xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=rng)
-    xs = np.concatenate((xs, ((rng.rand(n_noise, 2) + 1) * 4)), axis=0)
     P = sp.linalg.sqrtm(cov_t)
     xt = rng.randn(n_samples, 3).dot(P) + mu_t
+    # add noise
+    xs = np.concatenate((xs, ((rng.rand(n_noise, 2) + 1) * 4)), axis=0)
     xt = np.concatenate((xt, ((rng.rand(n_noise, 3) + 1) * 10)), axis=0)
     xt2 = xs[::-1].copy()
 
     C1 = ot.dist(xs, xs)
+    C1sub = ot.dist(xs[5:], xs[5:])
+
     C2 = ot.dist(xt, xt)
     C3 = ot.dist(xt2, xt2)
 
     m = 2. / 3.
 
-    C1b, C2b, C3b, pb, qb = nx.from_numpy(C1, C2, C3, p, q)
+    C1b, C1subb, C2b, C3b, pb, psubb, qb = nx.from_numpy(C1, C1sub, C2, C3, p, psub, q)
     G0 = np.outer(p, q) * m / (np.sum(p) * np.sum(q))  # make sure |G0|=m, G01_m\leq p, G0.T1_n\leq q.
     G0b = nx.from_numpy(G0)
 
@@ -95,6 +100,21 @@ def test_partial_gromov_wasserstein(nx):
         assert np.all(res.sum(0) <= q)  # cf convergence wasserstein
         np.testing.assert_allclose(
             np.sum(res), m, atol=1e-15)
+
+    # tests with different number of samples across spaces
+    m = 0.5
+    res, log = ot.gromov.partial_gromov_wasserstein(
+        C1, C1sub, p=p, q=psub, m=m, log=True)
+
+    resb, logb = ot.gromov.partial_gromov_wasserstein(
+        C1b, C1subb, p=pb, q=psubb, m=m, log=True)
+
+    resb_ = nx.to_numpy(resb)
+    np.testing.assert_allclose(res, resb_, atol=1e-15)
+    assert np.all(res.sum(1) <= p)  # cf convergence wasserstein
+    assert np.all(res.sum(0) <= psub)  # cf convergence wasserstein
+    np.testing.assert_allclose(
+        np.sum(res), m, atol=1e-15)
 
     # Edge cases - tests with m=1 set by default (coincide with gw)
     m = 1
@@ -189,6 +209,7 @@ def test_entropic_partial_gromov_wasserstein(nx):
     n_noise = 10  # nb of samples (noise)
 
     p = ot.unif(n_samples + n_noise)
+    psub = ot.unif(n_samples - 5 + n_noise)
     q = ot.unif(n_samples + n_noise)
 
     mu_s = np.array([0, 0])
@@ -197,20 +218,24 @@ def test_entropic_partial_gromov_wasserstein(nx):
     mu_t = np.array([0, 0, 0])
     cov_t = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
+    # clean samples
     xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=rng)
-    xs = np.concatenate((xs, ((rng.rand(n_noise, 2) + 1) * 4)), axis=0)
     P = sp.linalg.sqrtm(cov_t)
     xt = rng.randn(n_samples, 3).dot(P) + mu_t
+    # add noise
+    xs = np.concatenate((xs, ((rng.rand(n_noise, 2) + 1) * 4)), axis=0)
     xt = np.concatenate((xt, ((rng.rand(n_noise, 3) + 1) * 10)), axis=0)
     xt2 = xs[::-1].copy()
 
     C1 = ot.dist(xs, xs)
+    C1sub = ot.dist(xs[5:], xs[5:])
+
     C2 = ot.dist(xt, xt)
     C3 = ot.dist(xt2, xt2)
 
     m = 2. / 3.
 
-    C1b, C2b, C3b, pb, qb = nx.from_numpy(C1, C2, C3, p, q)
+    C1b, C1subb, C2b, C3b, pb, psubb, qb = nx.from_numpy(C1, C1sub, C2, C3, p, psub, q)
     G0 = np.outer(p, q) * m / (np.sum(p) * np.sum(q))  # make sure |G0|=m, G01_m\leq p, G0.T1_n\leq q.
     G0b = nx.from_numpy(G0)
 
@@ -247,6 +272,21 @@ def test_entropic_partial_gromov_wasserstein(nx):
     np.testing.assert_allclose(res, resb_, atol=1e-7)
     np.testing.assert_allclose(
         np.sum(res), 1., atol=1e-8)
+
+    # tests with different number of samples across spaces
+    m = 0.5
+    res, log = ot.gromov.entropic_partial_gromov_wasserstein(
+        C1, C1sub, p=p, q=psub, reg=1e4, m=m, log=True)
+
+    resb, logb = ot.gromov.entropic_partial_gromov_wasserstein(
+        C1b, C1subb, p=pb, q=psubb, reg=1e4, m=m, log=True)
+
+    resb_ = nx.to_numpy(resb)
+    np.testing.assert_allclose(res, resb_, atol=1e-15)
+    assert np.all(res.sum(1) <= p)  # cf convergence wasserstein
+    assert np.all(res.sum(0) <= psub)  # cf convergence wasserstein
+    np.testing.assert_allclose(
+        np.sum(res), m, atol=1e-15)
 
     # tests for pGW2
     for loss_fun in ['square_loss', 'kl_loss']:

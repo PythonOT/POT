@@ -127,8 +127,8 @@ print('------m = 1')
 m = 1
 res0, log0 = ot.gromov.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True)
 res, log = ot.gromov.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
-                                                          m=m, log=True,
-                                                          verbose=True)
+                                                         m=m, log=True,
+                                                         verbose=True)
 
 print('Wasserstein distance (m = 1): ' + str(log0['partial_gw_dist']))
 print('Entropic Wasserstein distance (m = 1): ' + str(log['partial_gw_dist']))
@@ -147,10 +147,10 @@ pl.show()
 print('------m = 2/3')
 m = 2 / 3
 res0, log0 = ot.gromov.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True,
-                                                   verbose=True)
+                                                  verbose=True)
 res, log = ot.gromov.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
-                                                          m=m, log=True,
-                                                          verbose=True)
+                                                         m=m, log=True,
+                                                         verbose=True)
 
 print('Partial Wasserstein distance (m = 2/3): ' +
       str(log0['partial_gw_dist']))

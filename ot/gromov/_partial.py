@@ -197,7 +197,7 @@ def partial_gromov_wasserstein(
         fC1t, hC1t, hC2t = fC1.T, hC1.T, hC2.T
 
     ones_p = np_.ones(p.shape[0], type_as=p)
-    ones_q = np_.ones(p.shape[0], type_as=p)
+    ones_q = np_.ones(q.shape[0], type_as=q)
 
     def f(G):
         pG = G.sum(1)
@@ -665,7 +665,7 @@ def entropic_partial_gromov_wasserstein(
         fC1t, hC1t, hC2t = fC1.T, hC1.T, hC2.T
 
     ones_p = nx.ones(p.shape[0], type_as=p)
-    ones_q = nx.ones(p.shape[0], type_as=p)
+    ones_q = nx.ones(q.shape[0], type_as=q)
 
     def f(G):
         pG = nx.sum(G, 1)
