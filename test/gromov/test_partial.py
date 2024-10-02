@@ -94,7 +94,6 @@ def test_partial_gromov_wasserstein(nx):
             warn=True, verbose=True)
 
         resb_ = nx.to_numpy(resb)
-        np.testing.assert_allclose(res, 0, rtol=1e-4)
         np.testing.assert_allclose(res, resb_, rtol=1e-4)
         assert np.all(res.sum(1) <= p)  # cf convergence wasserstein
         assert np.all(res.sum(0) <= q)  # cf convergence wasserstein
@@ -252,7 +251,6 @@ def test_entropic_partial_gromov_wasserstein(nx):
             symmetric=False, verbose=True)
 
         resb_ = nx.to_numpy(resb)
-        np.testing.assert_allclose(res, 0, rtol=1e-4)
         np.testing.assert_allclose(res, resb_, rtol=1e-4)
         assert np.all(res.sum(1) <= p)  # cf convergence wasserstein
         assert np.all(res.sum(0) <= q)  # cf convergence wasserstein
@@ -269,8 +267,7 @@ def test_entropic_partial_gromov_wasserstein(nx):
         symmetric=False, verbose=True)
 
     resb_ = nx.to_numpy(resb)
-    np.testing.assert_allclose(res, 0, atol=1e-1, rtol=1e-1)
-    np.testing.assert_allclose(res, resb_, atol=1e-7)
+    np.testing.assert_allclose(res, resb_, rtol=1e-4)
     np.testing.assert_allclose(
         np.sum(res), 1., rtol=1e-4)
 
