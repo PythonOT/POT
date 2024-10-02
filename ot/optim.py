@@ -273,7 +273,6 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         print('{:5d}|{:8e}|{:8e}|{:8e}'.format(it, cost_G, 0, 0))
 
     while loop:
-        print(f'cost_G: {cost_G}')
 
         it += 1
         old_cost_G = cost_G

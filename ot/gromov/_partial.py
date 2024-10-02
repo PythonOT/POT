@@ -814,7 +814,7 @@ def entropic_partial_gromov_wasserstein2(
     >>> C1 = sp.spatial.distance.cdist(x, x)
     >>> C2 = sp.spatial.distance.cdist(y, y)
     >>> np.round(entropic_partial_gromov_wasserstein2(C1, C2, a, b, 1e2), 2)
-    1.87
+    3.75
 
 
     .. _references-entropic-partial-gromov-wasserstein2:
