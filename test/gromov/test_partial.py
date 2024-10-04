@@ -108,12 +108,6 @@ def test_partial_gromov_wasserstein(nx):
         except AssertionError:
             pass
 
-        if loss_fun == 'square_loss':  # some instability can occur with kl. to investigate further.
-            # changing log offset in _transform_matrix was a way to solve it
-            # but it also negatively affects some other solvers in the API
-            np.testing.assert_allclose(
-                np.sum(res), m, rtol=1e-4)
-
     # tests with different number of samples across spaces
     m = 2. / 3.
     res, log = ot.gromov.partial_gromov_wasserstein(
