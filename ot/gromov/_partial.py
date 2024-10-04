@@ -228,9 +228,9 @@ def partial_gromov_wasserstein(
                 gwggrad(constC1t + constC2t, hC1t, hC2t, G, np_))
 
     def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
-        return solve_partial_gromov_linesearch(
+        return _solve_partial_gromov_linesearch(
             G, deltaG, cost_G, df_G, fC1, fC2, hC1, hC2, M=0., reg=1.,
-            ones_p=ones_p, ones_q=ones_q, nx=np_, **kwargs)
+            loss_fun=loss_fun, ones_p=ones_p, ones_q=ones_q, nx=np_, **kwargs)
 
     if not nx.is_floating_point(C10):
         warnings.warn(
@@ -412,10 +412,10 @@ def partial_gromov_wasserstein2(
         return pgw
 
 
-def solve_partial_gromov_linesearch(
+def _solve_partial_gromov_linesearch(
         G, deltaG, cost_G, df_G, fC1, fC2, hC1, hC2, M, reg,
-        ones_p=None, ones_q=None, alpha_min=None, alpha_max=None,
-        nx=None, **kwargs):
+        ones_p=None, ones_q=None, alpha_min=None,
+        alpha_max=None, nx=None, **kwargs):
     """
     Solve the linesearch in the FW iterations of partial (F)GW following eq.5 of :ref:`[29]`.
 

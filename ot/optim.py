@@ -276,6 +276,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
 
         it += 1
         old_cost_G = cost_G
+        print(f'cost G: {cost_G} / G.sum() : {nx.sum(G)}')
         # problem linearization
         df_G = df(G)
         Mi = M + reg1 * df_G

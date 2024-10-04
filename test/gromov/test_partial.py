@@ -79,19 +79,21 @@ def test_partial_gromov_wasserstein(nx):
     m = 2. / 3.
 
     C1b, C1subb, C2b, C3b, pb, psubb, qb = nx.from_numpy(C1, C1sub, C2, C3, p, psub, q)
+
     G0 = np.outer(p, q) * m / (np.sum(p) * np.sum(q))  # make sure |G0|=m, G01_m\leq p, G0.T1_n\leq q.
     G0b = nx.from_numpy(G0)
 
     # check consistency across backends and stability w.r.t loss/marginals/sym
     list_sym = [True, None]
     for i, loss_fun in enumerate(['square_loss', 'kl_loss']):
+        print(f'i {i} / loss_fun {loss_fun}')
         res, log = ot.gromov.partial_gromov_wasserstein(
-            C1, C3, p=p, q=None, m=m, G0=None, log=True, symmetric=list_sym[i],
-            warn=True, verbose=True)
+            C1, C3, p=p, q=None, m=m, loss_fun=loss_fun, n_dummies=1,
+            G0=G0, log=True, symmetric=list_sym[i], warn=True, verbose=True)
 
         resb, logb = ot.gromov.partial_gromov_wasserstein(
-            C1b, C3b, p=None, q=qb, m=m, G0=G0b, log=True, symmetric=False,
-            warn=True, verbose=True)
+            C1b, C3b, p=None, q=qb, m=m, loss_fun=loss_fun, n_dummies=1,
+            G0=G0b, log=True, symmetric=False, warn=True, verbose=True)
 
         resb_ = nx.to_numpy(resb)
         np.testing.assert_allclose(res, resb_, rtol=1e-4)
@@ -194,7 +196,7 @@ def test_partial_partial_gromov_linesearch(nx):
     df_G0b = ot.gromov.gwggrad(constC1 + constC2, hC1, hC2, G0b)
 
     # perform line-search
-    alpha, _, cost_Gb = ot.gromov.solve_partial_gromov_linesearch(
+    alpha, _, cost_Gb = ot.gromov._solve_partial_gromov_linesearch(
         G0b, deltaGb, cost_G0b, df_G0b, fC1, fC2, hC1, hC2, 0., 1.,
         alpha_min=0., alpha_max=1.)
 
@@ -243,12 +245,12 @@ def test_entropic_partial_gromov_wasserstein(nx):
     list_sym = [True, None]
     for i, loss_fun in enumerate(['square_loss', 'kl_loss']):
         res, log = ot.gromov.entropic_partial_gromov_wasserstein(
-            C1, C3, p=p, q=None, reg=1e4, m=m, G0=None, log=True,
-            symmetric=list_sym[i], verbose=True)
+            C1, C3, p=p, q=None, reg=1e4, m=m, loss_fun=loss_fun, G0=None,
+            log=True, symmetric=list_sym[i], verbose=True)
 
         resb, logb = ot.gromov.entropic_partial_gromov_wasserstein(
-            C1b, C3b, p=None, q=qb, reg=1e4, m=m, G0=G0b, log=True,
-            symmetric=False, verbose=True)
+            C1b, C3b, p=None, q=qb, reg=1e4, m=m, loss_fun=loss_fun, G0=G0b,
+            log=True, symmetric=False, verbose=True)
 
         resb_ = nx.to_numpy(resb)
         np.testing.assert_allclose(res, resb_, rtol=1e-4)

@@ -123,7 +123,7 @@ def _transform_matrix(C1, C2, loss_fun='square_loss', nx=None):
             return 2 * b
     elif loss_fun == 'kl_loss':
         def f1(a):
-            return a * nx.log(a + 1e-16) - a
+            return a * nx.log(a + 1e-200) - a
 
         def f2(b):
             return b
@@ -132,7 +132,7 @@ def _transform_matrix(C1, C2, loss_fun='square_loss', nx=None):
             return a
 
         def h2(b):
-            return nx.log(b + 1e-16)
+            return nx.log(b + 1e-200)
     else:
         raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
 
