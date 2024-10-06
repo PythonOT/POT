@@ -228,9 +228,9 @@ def partial_gromov_wasserstein(
                 gwggrad(constC1t + constC2t, hC1t, hC2t, G, np_))
 
     def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
+        df_Gc = df(deltaG + G)
         return _solve_partial_gromov_linesearch(
-            G, deltaG, cost_G, df_G, fC1, fC2, hC1, hC2, M=0., reg=1.,
-            loss_fun=loss_fun, ones_p=ones_p, ones_q=ones_q, nx=np_, **kwargs)
+            G, deltaG, cost_G, df_G, df_Gc, M=0., reg=1., nx=np_, **kwargs)
 
     if not nx.is_floating_point(C10):
         warnings.warn(
@@ -413,9 +413,8 @@ def partial_gromov_wasserstein2(
 
 
 def _solve_partial_gromov_linesearch(
-        G, deltaG, cost_G, df_G, fC1, fC2, hC1, hC2, M, reg,
-        ones_p=None, ones_q=None, alpha_min=None,
-        alpha_max=None, nx=None, **kwargs):
+        G, deltaG, cost_G, df_G, df_Gc, M, reg, alpha_min=None, alpha_max=None,
+        nx=None, **kwargs):
     """
     Solve the linesearch in the FW iterations of partial (F)GW following eq.5 of :ref:`[29]`.
 
@@ -425,31 +424,18 @@ def _solve_partial_gromov_linesearch(
     G : array-like, shape(ns,nt)
         The transport map at a given iteration of the FW
     deltaG : array-like (ns,nt)
-        Difference between the optimal map found by linearization in the FW algorithm and the value at a given iteration
+        Difference between the optimal map `Gc` found by linearization in the
+        FW algorithm and the value at a given iteration
     cost_G : float
         Value of the cost at `G`
-    df_G : float
+    df_G : array-like (ns,nt)
         Gradient of the GW cost at `G`
-    fC1 : array-like (ns,ns), optional
-        Transformed Structure matrix in the source domain.
-        For the 'square_loss' and 'kl_loss', we provide fC1 from ot.gromov._transform_matrix
-    fC2 : array-like (nt,nt), optional
-        Transformed Structure matrix in the source domain.
-        For the 'square_loss' and 'kl_loss', we provide fC2 from ot.gromov._transform_matrix
-    hC1 : array-like (ns,ns), optional
-        Transformed Structure matrix in the source domain.
-        For the 'square_loss' and 'kl_loss', we provide hC1 from ot.gromov._transform_matrix
-    hC2 : array-like (nt,nt), optional
-        Transformed Structure matrix in the source domain.
-        For the 'square_loss' and 'kl_loss', we provide hC2 from ot.gromov._transform_matrix
+    df_Gc : array-like (ns,nt)
+        Gradient of the GW cost at `Gc`
     M : array-like (ns,nt)
         Cost matrix between the features.
     reg : float
         Regularization parameter.
-    ones_p: array-like (ns,), optional
-        Vector of ones associated to the first marginal.
-    ones_q: array-like (ns,), optional
-        Vector of ones associated to the second marginal.
     alpha_min : float, optional
         Minimum value for alpha
     alpha_max : float, optional
@@ -465,7 +451,7 @@ def _solve_partial_gromov_linesearch(
         nb of function call. Useless here
     cost_G : float
         The value of the cost for the next iteration
-
+    df_G : 
     References
     ----------
     ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
@@ -475,24 +461,14 @@ def _solve_partial_gromov_linesearch(
     """
     if nx is None:
         if isinstance(M, int) or isinstance(M, float):
-            nx = get_backend(G, deltaG, df_G, fC1, fC2, hC1, hC2)
+            nx = get_backend(G, deltaG, df_G, df_Gc)
         else:
-            nx = get_backend(G, deltaG, df_G, fC1, fC2, hC1, hC2, M)
+            nx = get_backend(G, deltaG, df_G, df_Gc, M)
 
-    if ones_p is None:
-        ones_p = nx.ones(G.shape[0], type_as=G)
-    if ones_q is None:
-        ones_q = nx.ones(G.shape[1], type_as=G)
+    df_deltaG = df_Gc - df_G
+    cost_deltaG = 0.5 * nx.sum(df_deltaG * deltaG)
 
-    # compute f(dG)
-    def f(G):
-        pG = nx.sum(G, 1)
-        qG = nx.sum(G, 0)
-        constC1 = nx.outer(nx.dot(fC1, pG), ones_q)
-        constC2 = nx.outer(ones_p, nx.dot(qG, fC2.T))
-        return gwloss(constC1 + constC2, hC1, hC2, G, nx)
-
-    a = reg * f(deltaG)
+    a = reg * cost_deltaG
     # formula to check for partial FGW
     b = nx.sum(M * deltaG) + reg * nx.sum(df_G * deltaG)
 
@@ -503,7 +479,9 @@ def _solve_partial_gromov_linesearch(
     # the new cost is deduced from the line search quadratic function
     cost_G = cost_G + a * (alpha ** 2) + b * alpha
 
-    return alpha, 1, cost_G
+    # update the gradient for next cg iteration
+    df_G = df_G + alpha * df_deltaG
+    return alpha, 1, cost_G, df_G
 
 
 def entropic_partial_gromov_wasserstein(

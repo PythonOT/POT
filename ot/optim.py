@@ -265,6 +265,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
     if log:
         log['loss'].append(cost_G)
 
+    df_G = None
     it = 0
 
     if verbose:
@@ -277,7 +278,8 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         it += 1
         old_cost_G = cost_G
         # problem linearization
-        df_G = df(G)
+        if df_G is None:
+            df_G = df(G)
         Mi = M + reg1 * df_G
 
         if not (reg2 is None):
@@ -288,7 +290,15 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         # line search
         deltaG = Gc - G
 
-        alpha, fc, cost_G = line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs)
+        res_line_search = line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs)
+        if len(res_line_search) == 3:
+            # the line-search does not allow to update the gradient
+            alpha, fc, cost_G = res_line_search
+            df_G = None
+        else:
+            # the line-search allows to update the gradient directly
+            # e.g. while using quadratic losses as the gromov-wasserstein loss
+            alpha, fc, cost_G, df_G = res_line_search
 
         G = G + alpha * deltaG
 

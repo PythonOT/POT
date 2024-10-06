@@ -200,10 +200,11 @@ def test_partial_partial_gromov_linesearch(nx):
     cost_G0b = ot.gromov.gwloss(constC1 + constC2, hC1, hC2, G0b)
 
     df_G0b = ot.gromov.gwggrad(constC1 + constC2, hC1, hC2, G0b)
+    df_Gb = ot.gromov.gwggrad(constC1 + constC2, hC1, hC2, Gb)
 
     # perform line-search
-    alpha, _, cost_Gb = ot.gromov._solve_partial_gromov_linesearch(
-        G0b, deltaGb, cost_G0b, df_G0b, fC1, fC2, hC1, hC2, 0., 1.,
+    alpha, _, cost_Gb, _ = ot.gromov._solve_partial_gromov_linesearch(
+        G0b, deltaGb, cost_G0b, df_G0b, df_Gb, 0., 1.,
         alpha_min=0., alpha_max=1.)
 
     np.testing.assert_allclose(alpha, 1., rtol=1e-4)

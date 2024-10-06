@@ -626,9 +626,11 @@ def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss',
     if loss_fun == 'square_loss':
         gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
         gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
+
     elif loss_fun == 'kl_loss':
         gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(T, nx.dot(nx.log(C2 + 1e-15), T.T))
         gC2 = - nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
+
     if isinstance(alpha, int) or isinstance(alpha, float):
         fgw_dist = nx.set_gradients(fgw_dist, (p, q, C1, C2, M),
                                     (log_fgw['u'] - nx.mean(log_fgw['u']),
