@@ -451,7 +451,9 @@ def _solve_partial_gromov_linesearch(
         nb of function call. Useless here
     cost_G : float
         The value of the cost for the next iteration
-    df_G : 
+    df_G : array-like (ns,nt)
+        Updated gradient of the GW cost
+
     References
     ----------
     ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
