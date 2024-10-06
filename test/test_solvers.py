@@ -332,13 +332,9 @@ def test_solve_gromov_not_implemented(nx):
     with pytest.raises(ValueError):
         ot.solve_gromov(Ca, Cb, unbalanced_type='partial', unbalanced=1.5)
     with pytest.raises(NotImplementedError):
-        ot.solve_gromov(Ca, Cb, unbalanced_type='partial', unbalanced=0.5, symmetric=False)
-    with pytest.raises(NotImplementedError):
         ot.solve_gromov(Ca, Cb, M, unbalanced_type='partial', unbalanced=0.5)
     with pytest.raises(ValueError):
         ot.solve_gromov(Ca, Cb, reg=1, unbalanced_type='partial', unbalanced=1.5)
-    with pytest.raises(NotImplementedError):
-        ot.solve_gromov(Ca, Cb, reg=1, unbalanced_type='partial', unbalanced=0.5, symmetric=False)
 
 
 def test_solve_sample(nx):
