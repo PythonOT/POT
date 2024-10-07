@@ -419,9 +419,7 @@ def test_OTResult():
     # tets get citation
     print(res.citation)
 
-    lst_attributes = ['a_to_b',
-                      'b_to_a',
-                      'lazy_plan',
+    lst_attributes = ['lazy_plan',
                       'marginal_a',
                       'marginal_b',
                       'marginals',
@@ -436,6 +434,11 @@ def test_OTResult():
                       'value_quad',
                       'log']
     for at in lst_attributes:
+        print(at)
+        assert getattr(res, at) is None
+
+    list_not_implemented = ['a_to_b', 'b_to_a']
+    for at in list_not_implemented:
         print(at)
         with pytest.raises(NotImplementedError):
             getattr(res, at)

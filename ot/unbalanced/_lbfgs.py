@@ -286,7 +286,7 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
         b = nx.ones(dim_b, type_as=M) / dim_b
 
     # convert to numpy
-    a, b, M = nx.to_numpy(a, b, M)
+    a, b, M, reg_m1, reg_m2, reg = nx.to_numpy(a, b, M, reg_m1, reg_m2, reg)
     G0 = a[:, None] * b[None, :] if G0 is None else nx.to_numpy(G0)
     c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
 
