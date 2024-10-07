@@ -6,13 +6,16 @@ Solvers related to Gromov-Wasserstein problems.
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Cedric Vincent-Cuaz <cedvincentcuaz@gmail.com>
+#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
 # License: MIT License
 
 # All submodules and packages
 from ._utils import (init_matrix, tensor_product, gwloss, gwggrad,
                      init_matrix_semirelaxed, semirelaxed_init_plan,
-                     update_barycenter_structure, update_barycenter_feature)
+                     update_barycenter_structure, update_barycenter_feature,
+                     div_between_product, div_to_product, fused_unbalanced_across_spaces_cost,
+                     uot_cost_matrix, uot_parameters_and_measures)
 
 from ._gw import (gromov_wasserstein, gromov_wasserstein2,
                   fused_gromov_wasserstein, fused_gromov_wasserstein2,
@@ -63,9 +66,17 @@ from ._quantized import (quantized_fused_gromov_wasserstein_partitioned,
                          quantized_fused_gromov_wasserstein_samples
                          )
 
+from ._unbalanced import (fused_unbalanced_gromov_wasserstein,
+                          fused_unbalanced_gromov_wasserstein2,
+                          unbalanced_co_optimal_transport,
+                          unbalanced_co_optimal_transport2,
+                          fused_unbalanced_across_spaces_divergence)
+
 __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad',
            'init_matrix_semirelaxed', 'semirelaxed_init_plan',
            'update_barycenter_structure', 'update_barycenter_feature',
+           'div_between_product', 'div_to_product', 'fused_unbalanced_across_spaces_cost',
+           'uot_cost_matrix', 'uot_parameters_and_measures',
            'gromov_wasserstein', 'gromov_wasserstein2', 'fused_gromov_wasserstein',
            'fused_gromov_wasserstein2', 'solve_gromov_linesearch', 'gromov_barycenters',
            'fgw_barycenters', 'entropic_gromov_wasserstein', 'entropic_gromov_wasserstein2',
@@ -87,4 +98,7 @@ __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad',
            'get_graph_representants', 'format_partitioned_graph',
            'quantized_fused_gromov_wasserstein', 'get_partition_and_representants_samples',
            'format_partitioned_samples', 'quantized_fused_gromov_wasserstein_samples',
+           'fused_unbalanced_gromov_wasserstein', 'fused_unbalanced_gromov_wasserstein2',
+           'unbalanced_co_optimal_transport', 'unbalanced_co_optimal_transport2',
+           'fused_unbalanced_across_spaces_divergence'
            ]

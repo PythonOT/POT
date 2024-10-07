@@ -35,7 +35,7 @@ def fused_unbalanced_across_spaces_divergence(
     :math:`(\mathbf{X}, \mathbf{w}_{xs}, \mathbf{w}_{xf})` and
     :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`.
 
-    The function solves the following problem using Block Coordiante Descent algorithm:
+    The function solves the following problem using Block Coordinate Descent algorithm:
 
     .. math::
         \mathbf{Div} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
@@ -202,11 +202,6 @@ def fused_unbalanced_across_spaces_divergence(
 
     arr = [X, Y]
 
-    for item in [wx_samp, wx_feat, wy_samp, wy_feat,
-                 M_samp, M_feat, pi_samp, pi_feat]:
-        if item is not None:
-            arr.append(list_to_array(item))
-
     for tuple in [duals_samp, duals_feat]:
         if tuple is not None:
             d1, d2 = duals_feat
@@ -215,15 +210,20 @@ def fused_unbalanced_across_spaces_divergence(
             if d2 is not None:
                 arr.append(list_to_array(d2))
 
-    nx = get_backend(*arr)
+    nx = get_backend(*arr, wx_samp, wx_feat, wy_samp, wy_feat, M_samp, M_feat, pi_samp, pi_feat)
 
     # constant input variables
-    if M_samp is None or alpha_samp == 0:
-        M_samp, alpha_samp = None, 0
+    if M_samp is None:
+        if alpha_samp > 0:
+            warnings.warn("M_samp is None but alpha_samp = {} > 0. \
+                          The algo will treat as if alpha_samp = 0.".format(alpha_samp))
     else:
         M_samp = alpha_samp * M_samp
-    if M_feat is None or alpha_feat == 0:
-        M_feat, alpha_feat = None, 0
+
+    if M_feat is None:
+        if alpha_feat > 0:
+            warnings.warn("M_feat is None but alpha_feat = {} > 0. \
+                          The algo will treat as if alpha_feat = 0.".format(alpha_feat))
     else:
         M_feat = alpha_feat * M_feat
 
@@ -359,8 +359,8 @@ def fused_unbalanced_across_spaces_divergence(
 
     # sanity check
     if nx.sum(nx.isnan(pi_samp)) > 0 or nx.sum(nx.isnan(pi_feat)) > 0:
-        warnings.warn("There is NaN in coupling. \
-                      Adjust the relaxation or regularization parameters.")
+        raise (ValueError("There is NaN in coupling. \
+                          Adjust the relaxation or regularization parameters."))
 
     if log:
         linear_cost, ucoot_cost = fused_unbalanced_across_spaces_cost(
@@ -401,7 +401,7 @@ def unbalanced_co_optimal_transport(
     :math:`(\mathbf{X}, \mathbf{w}_{xs}, \mathbf{w}_{xf})` and
     :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`.
 
-    The function solves the following problem using Block Coordiante Descent algorithm:
+    The function solves the following problem using Block Coordinate Descent algorithm:
 
     .. math::
         \mathbf{UCOOT} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
@@ -547,7 +547,7 @@ def unbalanced_co_optimal_transport2(
     :math:`(\mathbf{X}, \mathbf{w}_{xs}, \mathbf{w}_{xf})` and
     :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`.
 
-    The function solves the following problem using Block Coordiante Descent algorithm:
+    The function solves the following problem using Block Coordinate Descent algorithm:
 
     .. math::
         \mathbf{UCOOT} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
@@ -744,12 +744,13 @@ def fused_unbalanced_gromov_wasserstein(
         tol=1e-7, max_iter_ot=500, tol_ot=1e-7,
         log=False, verbose=False, **kwargs_solve):
 
-    r"""Compute the lower bound of the fused unbalanced Gromov-Wasserstein between two similarity matrices.
+    r"""Compute the lower bound of the fused unbalanced Gromov-Wasserstein (FUGW) between two similarity matrices.
+    In practice, this lower bound is used interchangeably with the true FUGW.
 
     Return the transport plan between
     :math:`(\mathbf{C^X}, \mathbf{w_X})` and :math:`(\mathbf{C^Y}, \mathbf{w_Y})`.
 
-    The function solves the following problem using Block Coordiante Descent algorithm:
+    The function solves the following problem using Block Coordinate Descent algorithm:
 
     .. math::
         \mathbf{LB-FUGW} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}: mass(P) = mass(Q)}
@@ -886,7 +887,8 @@ def fused_unbalanced_gromov_wasserstein2(
         tol=1e-7, max_iter_ot=500, tol_ot=1e-7,
         log=False, verbose=False, **kwargs_solve):
 
-    r"""Compute the lower bound of the fused unbalanced Gromov-Wasserstein between two similarity matrices.
+    r"""Compute the lower bound of the fused unbalanced Gromov-Wasserstein (FUGW) between two similarity matrices.
+    In practice, this lower bound is used interchangeably with the true FUGW.
 
     Return the lower bound of the fused unbalanced Gromov-Wasserstein cost between
     :math:`(\mathbf{C^X}, \mathbf{w_X})` and :math:`(\mathbf{C^Y}, \mathbf{w_Y})`.

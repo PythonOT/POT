@@ -251,14 +251,7 @@ def solve(M, a=None, b=None, reg=None, c=None, reg_type="KL", unbalanced=None,
     """
 
     # detect backend
-    arr = [M]
-    if a is not None:
-        arr.append(a)
-    if b is not None:
-        arr.append(b)
-    if c is not None:
-        arr.append(c)
-    nx = get_backend(*arr)
+    nx = get_backend(M, a, b, c)
 
     # create uniform weights if not given
     if a is None:

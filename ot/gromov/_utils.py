@@ -8,6 +8,7 @@ Gromov-Wasserstein and Fused-Gromov-Wasserstein utils.
 #         Rémi Flamary <remi.flamary@unice.fr>
 #         Titouan Vayer <titouan.vayer@irisa.fr>
 #         Cédric Vincent-Cuaz <cedvincentcuaz@gmail.com>
+#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 #
 # License: MIT License
 
@@ -853,13 +854,10 @@ def div_to_product(pi, a, b, pi1=None, pi2=None, divergence="kl", mass=True, nx=
     Bregman divergence between an arbitrary measure and a product measure.
     """
 
-    arr = [pi, a, b]
+    arr = [pi, a, b, pi1, pi2]
 
     if nx is None:
-        for item in [pi1, pi2]:
-            if item is not None:
-                arr.append(list_to_array(item))
-        nx = get_backend(*arr)
+        nx = get_backend(*arr, pi1, pi2)
 
     if divergence == "kl":
 
@@ -921,7 +919,6 @@ def div_between_product(mu, nu, alpha, beta, divergence, nx=None):
     """
 
     if nx is None:
-        mu, nu, alpha, beta = list_to_array(mu, nu, alpha, beta)
         nx = get_backend(mu, nu, alpha, beta)
 
     if divergence == "kl":
@@ -980,7 +977,6 @@ def uot_cost_matrix(data, pi, tuple_p, hyperparams, divergence, reg_type, nx=Non
     a, b = tuple_p
 
     if nx is None:
-        X, Y, a, b = list_to_array(X, Y, a, b)
         nx = get_backend(X, Y, a, b)
 
     pi1, pi2 = nx.sum(pi, 1), nx.sum(pi, 0)
