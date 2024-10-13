@@ -65,7 +65,7 @@ from ._quantized import (quantized_fused_gromov_wasserstein_partitioned,
 
 from ._partial import (partial_gromov_wasserstein,
                        partial_gromov_wasserstein2,
-                       _solve_partial_gromov_linesearch,
+                       solve_partial_gromov_linesearch,
                        entropic_partial_gromov_wasserstein,
                        entropic_partial_gromov_wasserstein2)
 
@@ -103,6 +103,7 @@ __all__ = ['init_matrix', 'tensor_product', 'gwloss', 'gwggrad',
            'get_partition_and_representants_samples', 'format_partitioned_samples',
            'quantized_fused_gromov_wasserstein_samples',
            'partial_gromov_wasserstein', 'partial_gromov_wasserstein2',
+           'solve_partial_gromov_linesearch',
            'entropic_partial_gromov_wasserstein',
            'entropic_partial_gromov_wasserstein2'
            ]

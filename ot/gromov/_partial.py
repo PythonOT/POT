@@ -229,7 +229,7 @@ def partial_gromov_wasserstein(
 
     def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
         df_Gc = df(deltaG + G)
-        return _solve_partial_gromov_linesearch(
+        return solve_partial_gromov_linesearch(
             G, deltaG, cost_G, df_G, df_Gc, M=0., reg=1., nx=np_, **kwargs)
 
     if not nx.is_floating_point(C10):
@@ -412,7 +412,7 @@ def partial_gromov_wasserstein2(
         return pgw
 
 
-def _solve_partial_gromov_linesearch(
+def solve_partial_gromov_linesearch(
         G, deltaG, cost_G, df_G, df_Gc, M, reg, alpha_min=None, alpha_max=None,
         nx=None, **kwargs):
     """

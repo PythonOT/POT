@@ -203,7 +203,7 @@ def test_partial_partial_gromov_linesearch(nx):
     df_Gb = ot.gromov.gwggrad(constC1 + constC2, hC1, hC2, Gb)
 
     # perform line-search
-    alpha, _, cost_Gb, _ = ot.gromov._solve_partial_gromov_linesearch(
+    alpha, _, cost_Gb, _ = ot.gromov.solve_partial_gromov_linesearch(
         G0b, deltaGb, cost_G0b, df_G0b, df_Gb, 0., 1.,
         alpha_min=0., alpha_max=1.)
 

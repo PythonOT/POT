@@ -189,13 +189,25 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         Entropic Regularization term >0. Ignored if set to None.
     lp_solver: function,
         linear program solver for direction finding of the (generalized) conditional gradient.
-        If set to emd will solve the general regularized OT problem using cg.
-        If set to lp_semi_relaxed_OT will solve the general regularized semi-relaxed OT problem using cg.
-        If set to sinkhorn will solve the general regularized OT problem using generalized cg.
+        This function must take as inputs : the cost function, the transport plan,
+        the conditional gradient direction for the regularization, the gradient
+        of the complete objective, the cost evaluated at G, the gradient
+        of the regularizer evaluated at G. Additional inputs can be added via kwargs.
+        To this end, we define wrappers in functions `cg`, `semirelaxed_cg`, `gcg` and
+        `partial_cg`. These respectively call `emd` for the general regularized OT problem using cg,
+        `lp_semi_relaxed_OT` for the general regularized semi-relaxed OT problem using cg,
+        `sinkhorn` for the general regularized OT problem using generalized cg.
     line_search: function,
         Function to find the optimal step. Currently used instances are:
-        line_search_armijo (generic solver). solve_gromov_linesearch for (F)GW problem.
-        solve_semirelaxed_gromov_linesearch for sr(F)GW problem. gcg_linesearch for the Generalized cg.
+        `line_search_armijo` (generic solver).
+        `solve_gromov_linesearch` for (F)GW problem.
+        `solve_semirelaxed_gromov_linesearch` for sr(F)GW problem.
+        `gcg_linesearch` for the Generalized cg. These instances output the
+        line-search step alpha, the number of iterations used in the solver if applicable
+        and the loss value at step alpha.
+        `solve_partial_gromov_linesearch` for partial (F)GW problem. The latter
+        also outputs the next step gradient reading as a convex combination
+        of previously computed gradients.
     G0 :  array-like, shape (ns,nt), optional
         initial guess (default is indep joint density)
     numItermax : int, optional
