@@ -26,19 +26,21 @@ def fused_unbalanced_across_spaces_divergence(
 
     r"""Compute the fused unbalanced cross-spaces divergence between two matrices equipped
     with the distributions on rows and columns. We consider two cases of matrix:
+
     - (Squared) similarity matrix in Gromov-Wasserstein setting,
     whose rows and columns represent the samples.
+
     - Arbitrary-size matrix in Co-Optimal Transport setting,
     whose rows represent samples, and columns represent corresponding features/dimensions.
 
-    Return the sample and feature transport plans between
+    More precisely, this function returns the sample and feature transport plans between
     :math:`(\mathbf{X}, \mathbf{w}_{xs}, \mathbf{w}_{xf})` and
-    :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`.
-
-    The function solves the following problem using Block Coordinate Descent algorithm:
+    :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`,
+    by solving the following problem using Block Coordinate Descent algorithm:
 
     .. math::
-        \mathbf{Div} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
+
+        \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
         &\quad \sum_{i,j,k,l}
         (\mathbf{X}_{i,k} - \mathbf{Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l} \\
         &+ \rho_s \mathbf{Div}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
@@ -47,7 +49,7 @@ def fused_unbalanced_across_spaces_divergence(
         + \alpha_f \sum_{k, l} \mathbf{Q}_{k,l} \mathbf{M^{(f)}}_{k, l}
         + \mathbf{Reg}(\mathbf{P}, \mathbf{Q})
 
-    Where :
+    Where:
 
     - :math:`\mathbf{X}`: Source input (arbitrary-size) matrix
     - :math:`\mathbf{Y}`: Target input (arbitrary-size) matrix
@@ -59,20 +61,22 @@ def fused_unbalanced_across_spaces_divergence(
     - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
     - :math:`\mathbf{Div}`: Either Kullback-Leibler divergence or half-squared L2 norm.
     - :math:`\mathbf{Reg}`: Regularizer for sample and feature couplings.
+
     We consider two types of regularizer:
         + Independent regularization used in unbalanced Co-Optimal Transport
+
         .. math::
             \mathbf{Reg}(\mathbf{P}, \mathbf{Q}) =
             \varepsilon_s \mathbf{Div}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
             + \varepsilon_f \mathbf{Div}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
 
         + Joint regularization used in fused unbalanced Gromov-Wasserstein
+
         .. math::
             \mathbf{Reg}(\mathbf{P}, \mathbf{Q}) =
             \varepsilon \mathbf{Div}(\mathbf{P} \otimes \mathbf{Q} | (\mathbf{w}_{xs} \mathbf{w}_{ys}^T) \otimes (\mathbf{w}_{xf} \mathbf{w}_{yf}^T) )
 
-    .. note:: This function allows epsilon to be zero.
-              In that case, unbalanced_method must be either "mm" or "lbfgsb".
+    .. note:: This function allows epsilon to be zero. In that case, `unbalanced_method` must be either "mm" or "lbfgsb".
 
     Parameters
     ----------
@@ -94,23 +98,29 @@ def fused_unbalanced_across_spaces_divergence(
         Uniform distribution by default.
     reg_marginals: float or indexable object of length 1 or 2
         Marginal relaxation terms for sample and feature couplings.
-        If reg_marginals is a scalar or an indexable object of length 1,
-        then the same reg_marginals is applied to both marginal relaxations.
+        If `reg_marginals` is a scalar or an indexable object of length 1,
+        then the same value is applied to both marginal relaxations.
     epsilon : scalar or indexable object of length 2, float or int, optional (default = 0)
         Regularization parameters for entropic approximation of sample and feature couplings.
-        Allow the case where epsilon contains 0. In that case, the MM solver is used by default
-        instead of Sinkhorn solver. If epsilon is scalar, then the same epsilon is applied to
+        Allow the case where `epsilon` contains 0. In that case, the MM solver is used by default
+        instead of Sinkhorn solver. If `epsilon` is scalar, then the same value is applied to
         both regularization of sample and feature couplings.
     reg_type: string, optional
-        reg_type = "joint": then use joint regularization for couplings.
-        reg_type = "indepedent": then use independent regularization for couplings.
+
+        - If `reg_type` = "joint": then use joint regularization for couplings.
+
+        - If `reg_type` = "indepedent": then use independent regularization for couplings.
     divergence : string, optional (default = "kl")
-        If divergence = "kl", then Div is the Kullback-Leibler divergence.
-        If divergence = "l2", then Div is the half squared Euclidean norm.
+
+        - If `divergence` = "kl", then Div is the Kullback-Leibler divergence.
+
+        - If `divergence` = "l2", then Div is the half squared Euclidean norm.
     unbalanced_solver : string, optional (default = "sinkhorn")
         Solver for the unbalanced OT subroutine.
-        If divergence = "kl", then unbalanced_solver can be: "sinkhorn", "sinkhorn_log", "mm", "lbfgsb"
-        If divergence = "l2", then unbalanced_solver can be "mm", "lbfgsb"
+
+        - If `divergence` = "kl", then `unbalanced_solver` can be: "sinkhorn", "sinkhorn_log", "mm", "lbfgsb"
+
+        - If `divergence` = "l2", then `unbalanced_solver` can be "mm", "lbfgsb"
     alpha : scalar or indexable object of length 2, float or int, optional (default = 0)
         Coeffficient parameter of linear terms with respect to the sample and feature couplings.
         If alpha is scalar, then the same alpha is applied to both linear terms.
@@ -140,8 +150,8 @@ def fused_unbalanced_across_spaces_divergence(
         Tolerance of unbalanced solver for each of the
         two unbalanced optimal transport problems in each BCD iteration.
     log : bool, optional (default = False)
-        If True then the cost and 4 dual vectors, including
-        2 from sample and 2 from feature couplings, are recorded.
+        If True then the cost and four dual vectors, including
+        two from sample and two from feature couplings, are recorded.
     verbose : bool, optional (default = False)
         If True then print the COOT cost at every multiplier of `eval_bcd`-th iteration.
 
@@ -153,7 +163,9 @@ def fused_unbalanced_across_spaces_divergence(
         Feature coupling matrix.
     log : dictionary, optional
         Returned if `log` is True. The keys are:
-            error : list of L1 norms between the current and previous sample coupling.
+
+            error : array-like, float
+                list of L1 norms between the current and previous sample coupling.
             duals_sample : (n_sample_x, n_sample_y) tuple, float
                 Pair of dual vectors when solving OT problem w.r.t the sample coupling.
             duals_feature : (n_feature_x, n_feature_y) tuple, float
@@ -397,15 +409,13 @@ def unbalanced_co_optimal_transport(
     r"""Compute the unbalanced Co-Optimal Transport between two Euclidean point clouds
     (represented as matrices whose rows are samples and columns are the features/dimensions).
 
-    Return the sample and feature transport plans between
+    More precisely, this function returns the sample and feature transport plans between
     :math:`(\mathbf{X}, \mathbf{w}_{xs}, \mathbf{w}_{xf})` and
-    :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`.
-
-    The function solves the following problem using Block Coordinate Descent algorithm:
+    :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`,
+    by solving the following problem using Block Coordinate Descent algorithm:
 
     .. math::
-        \mathbf{UCOOT} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
-        &\quad \sum_{i,j,k,l}
+        \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}} &\quad \sum_{i,j,k,l}
         (\mathbf{X}_{i,k} - \mathbf{Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l} \\
         &+ \rho_s \mathbf{Div}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
         + \rho_f \mathbf{Div}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w}_{xf} \mathbf{w}_{yf}^T) \\
@@ -414,7 +424,7 @@ def unbalanced_co_optimal_transport(
         &+ \varepsilon_s \mathbf{Div}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
         + \varepsilon_f \mathbf{Div}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
 
-    Where :
+    Where:
 
     - :math:`\mathbf{X}`: Source input (arbitrary-size) matrix
     - :math:`\mathbf{Y}`: Target input (arbitrary-size) matrix
@@ -426,8 +436,7 @@ def unbalanced_co_optimal_transport(
     - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
     - :math:`\mathbf{Div}`: Either Kullback-Leibler divergence or half-squared L2 norm.
 
-    .. note:: This function allows epsilon to be zero.
-              In that case, unbalanced_method must be either "mm" or "lbfgsb".
+    .. note:: This function allows `epsilon` to be zero. In that case, `unbalanced_method` must be either "mm" or "lbfgsb".
 
     Parameters
     ----------
@@ -449,20 +458,24 @@ def unbalanced_co_optimal_transport(
         Uniform distribution by default.
     reg_marginals: float or indexable object of length 1 or 2
         Marginal relaxation terms for sample and feature couplings.
-        If reg_marginals is a scalar or an indexable object of length 1,
-        then the same reg_marginals is applied to both marginal relaxations.
+        If `reg_marginals is a scalar` or an indexable object of length 1,
+        then the same value is applied to both marginal relaxations.
     epsilon : scalar or indexable object of length 2, float or int, optional (default = 0)
         Regularization parameters for entropic approximation of sample and feature couplings.
-        Allow the case where epsilon contains 0. In that case, the MM solver is used by default
-        instead of Sinkhorn solver. If epsilon is scalar, then the same epsilon is applied to
+        Allow the case where `epsilon` contains 0. In that case, the MM solver is used by default
+        instead of Sinkhorn solver. If `epsilon` is scalar, then the same value is applied to
         both regularization of sample and feature couplings.
     divergence : string, optional (default = "kl")
-        If divergence = "kl", then Div is the Kullback-Leibler divergence.
-        If divergence = "l2", then Div is the half squared Euclidean norm.
+
+        - If `divergence` = "kl", then Div is the Kullback-Leibler divergence.
+
+        - If `divergence` = "l2", then Div is the half squared Euclidean norm.
     unbalanced_solver : string, optional (default = "sinkhorn")
         Solver for the unbalanced OT subroutine.
-        If divergence = "kl", then unbalanced_solver can be: "sinkhorn", "sinkhorn_log", "mm", "lbfgsb"
-        If divergence = "l2", then unbalanced_solver can be "mm", "lbfgsb"
+
+        - If `divergence` = "kl", then `unbalanced_solver` can be: "sinkhorn", "sinkhorn_log", "mm", "lbfgsb"
+
+        - If `divergence` = "l2", then `unbalanced_solver` can be "mm", "lbfgsb"
     alpha : scalar or indexable object of length 2, float or int, optional (default = 0)
         Coeffficient parameter of linear terms with respect to the sample and feature couplings.
         If alpha is scalar, then the same alpha is applied to both linear terms.
@@ -492,8 +505,8 @@ def unbalanced_co_optimal_transport(
         Tolerance of unbalanced solver for each of the
         two unbalanced optimal transport problems in each BCD iteration.
     log : bool, optional (default = False)
-        If True then the cost and 4 dual vectors, including
-        2 from sample and 2 from feature couplings, are recorded.
+        If True then the cost and four dual vectors, including
+        two from sample and two from feature couplings, are recorded.
     verbose : bool, optional (default = False)
         If True then print the COOT cost at every multiplier of `eval_bcd`-th iteration.
 
@@ -505,10 +518,12 @@ def unbalanced_co_optimal_transport(
         Feature coupling matrix.
     log : dictionary, optional
         Returned if `log` is True. The keys are:
-            error : list of L1 norms between the current and previous sample coupling.
-            duals_sample : (n_sample_x, n_sample_y) tuple, float
+
+            error : array-like, float
+                list of L1 norms between the current and previous sample coupling.
+            duals_sample : (n_sample_x, n_sample_y)-tuple, float
                 Pair of dual vectors when solving OT problem w.r.t the sample coupling.
-            duals_feature : (n_feature_x, n_feature_y) tuple, float
+            duals_feature : (n_feature_x, n_feature_y)-tuple, float
                 Pair of dual vectors when solving OT problem w.r.t the feature coupling.
             linear : float
                 Linear part of the cost.
@@ -517,8 +532,8 @@ def unbalanced_co_optimal_transport(
 
     References
     ----------
-    .. [70] H. Tran, H. Janati, N. Courty, R. Flamary, I. Redko, P. Demetci and R. Singh,
-    Unbalanced Co-Optimal Transport, AAAI Conference on Artificial Intelligence, 2023.
+    .. [71] Tran, H., Janati, H., Courty, N., Flamary, R., Redko, I., Demetci, P., & Singh, R.
+            Unbalanced Co-Optimal Transport. AAAI Conference on Artificial Intelligence, 2023.
     """
 
     return fused_unbalanced_across_spaces_divergence(
@@ -543,15 +558,13 @@ def unbalanced_co_optimal_transport2(
     r"""Compute the unbalanced Co-Optimal Transport between two Euclidean point clouds
     (represented as matrices whose rows are samples and columns are the features/dimensions).
 
-    Return the unbalanced Co-Optimal Transport cost between
+    More precisely, this function returns the unbalanced Co-Optimal Transport cost between
     :math:`(\mathbf{X}, \mathbf{w}_{xs}, \mathbf{w}_{xf})` and
-    :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`.
-
-    The function solves the following problem using Block Coordinate Descent algorithm:
+    :math:`(\mathbf{Y}, \mathbf{w}_{ys}, \mathbf{w}_{yf})`,
+    by solving the following problem using Block Coordinate Descent algorithm:
 
     .. math::
-        \mathbf{UCOOT} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}}
-        &\quad \sum_{i,j,k,l}
+        \mathop{\min}_{\mathbf{P}, \mathbf{Q}} &\quad \sum_{i,j,k,l}
         (\mathbf{X}_{i,k} - \mathbf{Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l} \\
         &+ \rho_s \mathbf{Div}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
         + \rho_f \mathbf{Div}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w}_{xf} \mathbf{w}_{yf}^T) \\
@@ -560,7 +573,7 @@ def unbalanced_co_optimal_transport2(
         &+ \varepsilon_s \mathbf{Div}(\mathbf{P} | \mathbf{w}_{xs} \mathbf{w}_{ys}^T)
         + \varepsilon_f \mathbf{Div}(\mathbf{Q} | \mathbf{w}_{xf} \mathbf{w}_{yf}^T)
 
-    Where :
+    Where:
 
     - :math:`\mathbf{X}`: Source input (arbitrary-size) matrix
     - :math:`\mathbf{Y}`: Target input (arbitrary-size) matrix
@@ -572,11 +585,8 @@ def unbalanced_co_optimal_transport2(
     - :math:`\mathbf{w}_{yf}`: Distribution of the features in the target space
     - :math:`\mathbf{Div}`: Either Kullback-Leibler divergence or half-squared L2 norm.
 
-    .. note:: This function allows epsilon to be zero.
-              In that case, unbalanced_method must be either "mm" or "lbfgsb".
-
-              The computation of gradients is only supported for KL divergence.
-              The case of half squared-L2 norm uses those of KL divergence.
+    .. note:: This function allows `epsilon` to be zero. In that case, `unbalanced_method` must be either "mm" or "lbfgsb".
+            Also the computation of gradients is only supported for KL divergence. The case of half squared-L2 norm uses those of KL divergence.
 
     Parameters
     ----------
@@ -598,20 +608,24 @@ def unbalanced_co_optimal_transport2(
         Uniform distribution by default.
     reg_marginals: float or indexable object of length 1 or 2
         Marginal relaxation terms for sample and feature couplings.
-        If reg_marginals is a scalar or an indexable object of length 1,
-        then the same reg_marginals is applied to both marginal relaxations.
+        If `reg_marginals` is a scalar or an indexable object of length 1,
+        then the same value is applied to both marginal relaxations.
     epsilon : scalar or indexable object of length 2, float or int, optional (default = 0)
         Regularization parameters for entropic approximation of sample and feature couplings.
-        Allow the case where epsilon contains 0. In that case, the MM solver is used by default
-        instead of Sinkhorn solver. If epsilon is scalar, then the same epsilon is applied to
+        Allow the case where `epsilon` contains 0. In that case, the MM solver is used by default
+        instead of Sinkhorn solver. If `epsilon` is scalar, then the same value is applied to
         both regularization of sample and feature couplings.
     divergence : string, optional (default = "kl")
-        If divergence = "kl", then Div is the Kullback-Leibler divergence.
-        If divergence = "l2", then Div is the half squared Euclidean norm.
+
+        - If `divergence` = "kl", then Div is the Kullback-Leibler divergence.
+
+        - If `divergence` = "l2", then Div is the half squared Euclidean norm.
     unbalanced_solver : string, optional (default = "sinkhorn")
         Solver for the unbalanced OT subroutine.
-        If divergence = "kl", then unbalanced_solver can be: "sinkhorn", "sinkhorn_log", "mm", "lbfgsb"
-        If divergence = "l2", then unbalanced_solver can be "mm", "lbfgsb"
+
+        - If `divergence` = "kl", then `unbalanced_solver` can be: "sinkhorn", "sinkhorn_log", "mm", "lbfgsb"
+
+        - If `divergence` = "l2", then `unbalanced_solver` can be "mm", "lbfgsb"
     alpha : scalar or indexable object of length 2, float or int, optional (default = 0)
         Coeffficient parameter of linear terms with respect to the sample and feature couplings.
         If alpha is scalar, then the same alpha is applied to both linear terms.
@@ -641,8 +655,8 @@ def unbalanced_co_optimal_transport2(
         Tolerance of unbalanced solver for each of the
         two unbalanced optimal transport problems in each BCD iteration.
     log : bool, optional (default = False)
-        If True then the cost and 4 dual vectors, including
-        2 from sample and 2 from feature couplings, are recorded.
+        If True then the cost and four dual vectors, including
+        two from sample and two from feature couplings, are recorded.
     verbose : bool, optional (default = False)
         If True then print the COOT cost at every multiplier of `eval_bcd`-th iteration.
 
@@ -652,10 +666,12 @@ def unbalanced_co_optimal_transport2(
         UCOOT cost.
     log : dictionary, optional
         Returned if `log` is True. The keys are:
-            error : list of L1 norms between the current and previous sample coupling.
-            duals_sample : (n_sample_x, n_sample_y) tuple, float
+
+            error : array-like, float
+                list of L1 norms between the current and previous sample coupling.
+            duals_sample : (n_sample_x, n_sample_y)-tuple, float
                 Pair of dual vectors when solving OT problem w.r.t the sample coupling.
-            duals_feature : (n_feature_x, n_feature_y) tuple, float
+            duals_feature : (n_feature_x, n_feature_y)-tuple, float
                 Pair of dual vectors when solving OT problem w.r.t the feature coupling.
             linear : float
                 Linear part of UCOOT cost.
@@ -666,8 +682,8 @@ def unbalanced_co_optimal_transport2(
 
     References
     ----------
-    .. [70] H. Tran, H. Janati, N. Courty, R. Flamary, I. Redko, P. Demetci and R. Singh,
-    Unbalanced Co-Optimal Transport, AAAI Conference on Artificial Intelligence, 2023.
+    .. [71] Tran, H., Janati, H., Courty, N., Flamary, R., Redko, I., Demetci, P., & Singh, R.
+            Unbalanced Co-Optimal Transport. AAAI Conference on Artificial Intelligence, 2023.
     """
 
     if divergence != "kl":
@@ -747,20 +763,19 @@ def fused_unbalanced_gromov_wasserstein(
     r"""Compute the lower bound of the fused unbalanced Gromov-Wasserstein (FUGW) between two similarity matrices.
     In practice, this lower bound is used interchangeably with the true FUGW.
 
-    Return the transport plan between
-    :math:`(\mathbf{C^X}, \mathbf{w_X})` and :math:`(\mathbf{C^Y}, \mathbf{w_Y})`.
-
-    The function solves the following problem using Block Coordinate Descent algorithm:
+    More precisely, this function returns the transport plan between
+    :math:`(\mathbf{C^X}, \mathbf{w_X})` and :math:`(\mathbf{C^Y}, \mathbf{w_Y})`,
+    by solving the following problem using Block Coordinate Descent algorithm:
 
     .. math::
-        \mathbf{LB-FUGW} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}: mass(P) = mass(Q)}
-        &\quad \sum_{i,j,k,l} (\mathbf{C^X}_{i,k} - \mathbf{C^Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l} \\
+        \mathop{\arg \min}_{\substack{\mathbf{P}, \mathbf{Q}: \\ mass(P) = mass(Q)}}
+        &\quad \sum_{i,j,k,l} (\mathbf{C^X}_{i,k} - \mathbf{C^Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l}
+        + \frac{\alpha}{2} \sum_{i,j} (\mathbf{P}_{i,j} + \mathbf{Q}_{i,j}) \mathbf{M}_{i, j} \\
         &+ \rho_1 \mathbf{Div}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w_X} \mathbf{w_X}^T)
-        + \rho_2 \mathbf{Div}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w_Y} \mathbf{w_Y}^T)
-        &+ \alpha / 2 \sum_{i,j} (\mathbf{P}_{i,j} + \mathbf{Q}_{i,j}) \mathbf{M}_{i, j}
-        + \varepsilon \mathbf{Div}(\mathbf{P} \otimes \mathbf{Q} | (\mathbf{w_X} \mathbf{w_Y}^T) \otimes (\mathbf{w_X} \mathbf{w_Y}^T))
+        + \rho_2 \mathbf{Div}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w_Y} \mathbf{w_Y}^T) \\
+        &+ \varepsilon \mathbf{Div}(\mathbf{P} \otimes \mathbf{Q} | (\mathbf{w_X} \mathbf{w_Y}^T) \otimes (\mathbf{w_X} \mathbf{w_Y}^T))
 
-    Where :
+    Where:
 
     - :math:`\mathbf{C^X}`: Source similarity matrix
     - :math:`\mathbf{C^Y}`: Target similarity matrix
@@ -769,8 +784,7 @@ def fused_unbalanced_gromov_wasserstein(
     - :math:`\mathbf{w_Y}`: Distribution of the samples in the target space
     - :math:`\mathbf{Div}`: Either Kullback-Leibler divergence or half-squared L2 norm.
 
-    .. note:: This function allows epsilon to be zero.
-              In that case, unbalanced_method must be either "mm" or "lbfgsb".
+    .. note:: This function allows epsilon to be zero. In that case, `unbalanced_method` must be either "mm" or "lbfgsb".
 
     Parameters
     ----------
@@ -786,27 +800,31 @@ def fused_unbalanced_gromov_wasserstein(
         Uniform distribution by default.
     reg_marginals: float or indexable object of length 1 or 2
         Marginal relaxation terms for sample and feature couplings.
-        If reg_marginals is a scalar or an indexable object of length 1,
-        then the same reg_marginals is applied to both marginal relaxations.
+        If `reg_marginals` is a scalar or an indexable object of length 1,
+        then the same value is applied to both marginal relaxations.
     epsilon : scalar, float or int, optional (default = 0)
         Regularization parameters for entropic approximation of sample and feature couplings.
-        Allow the case where epsilon contains 0. In that case, the MM solver is used by default
-        instead of Sinkhorn solver. If epsilon is scalar, then the same epsilon is applied to
+        Allow the case where `epsilon` contains 0. In that case, the MM solver is used by default
+        instead of Sinkhorn solver. If `epsilon` is scalar, then the same value is applied to
         both regularization of sample and feature couplings.
     divergence : string, optional (default = "kl")
-        If divergence = "kl", then Div is the Kullback-Leibler divergence.
-        If divergence = "l2", then Div is the half squared Euclidean norm.
+
+        - If `divergence` = "kl", then Div is the Kullback-Leibler divergence.
+
+        - If `divergence` = "l2", then Div is the half squared Euclidean norm.
     unbalanced_solver : string, optional (default = "sinkhorn")
         Solver for the unbalanced OT subroutine.
-        If divergence = "kl", then unbalanced_solver can be: "sinkhorn", "sinkhorn_log", "mm", "lbfgsb"
-        If divergence = "l2", then unbalanced_solver can be "mm", "lbfgsb"
+
+        - If `divergence` = "kl", then `unbalanced_solver` can be: "sinkhorn", "sinkhorn_log", "mm", "lbfgsb"
+
+        - If `divergence` = "l2", then `unbalanced_solver` can be "mm", "lbfgsb"
     alpha : scalar, float or int, optional (default = 0)
         Coeffficient parameter of linear terms with respect to the sample and feature couplings.
         If alpha is scalar, then the same alpha is applied to both linear terms.
     M : (n_sample_x, n_sample_y), float, optional (default = None)
         Sample matrix associated to the Wasserstein linear term on sample coupling.
     init_pi :(n_sample_x, n_sample_y) array-like, optional (default = None)
-        Initialization of sample coupling. By default = wx wy^T.
+        Initialization of sample coupling. By default = :math:`w_X w_Y^T`.
     init_duals : tuple of vectors ((n_sample_x, ), (n_sample_y, )), optional (default = None).
         Initialization of sample and feature dual vectors
         if using Sinkhorn algorithm. Zero vectors by default.
@@ -822,8 +840,8 @@ def fused_unbalanced_gromov_wasserstein(
         Tolerance of unbalanced solver for each of the
         two unbalanced optimal transport problems in each BCD iteration.
     log : bool, optional (default = False)
-        If True then the cost and 4 dual vectors, including
-        2 from sample and 2 from feature couplings, are recorded.
+        If True then the cost and four dual vectors, including
+        two from sample and two from feature couplings, are recorded.
     verbose : bool, optional (default = False)
         If True then print the COOT cost at every multiplier of `eval_bcd`-th iteration.
 
@@ -837,10 +855,12 @@ def fused_unbalanced_gromov_wasserstein(
         In practice, we usually ignore this output.
     log : dictionary, optional
         Returned if `log` is True. The keys are:
-            error : list of L1 norms between the current and previous sample couplings.
-            duals : (n_sample_x, n_sample_y) tuple, float
+
+            error : array-like, float
+                list of L1 norms between the current and previous sample couplings.
+            duals : (n_sample_x, n_sample_y)-tuple, float
                 Pair of dual vectors when solving OT problem w.r.t the sample coupling.
-            linear_cost : float
+            linear : float
                 Linear part of FUGW cost.
             fugw_cost : float
                 Total FUGW cost.
@@ -849,9 +869,13 @@ def fused_unbalanced_gromov_wasserstein(
 
     References
     ----------
-    .. [69] Thual, A., Tran, H., Zemskova, T., Courty, N., Flamary, R., Dehaene, S. & Thirion, B.,
-    Aligning individual brains with Fused Unbalanced Gromov-Wasserstein,
-    Advances in Neural Information Systems, 35 (2022).
+    .. [70] Thual, A., Tran, H., Zemskova, T., Courty, N., Flamary, R., Dehaene, S., & Thirion, B.
+            Aligning individual brains with Fused Unbalanced Gromov-Wasserstein.
+            Advances in Neural Information Systems, 35 (2022).
+
+    .. [72] Thibault Séjourné, François-Xavier Vialard, & Gabriel Peyré.
+            The Unbalanced Gromov Wasserstein Distance: Conic Formulation and Relaxation.
+            Neural Information Processing Systems, 34 (2021).
     """
 
     alpha = (alpha / 2, alpha / 2)
@@ -890,20 +914,19 @@ def fused_unbalanced_gromov_wasserstein2(
     r"""Compute the lower bound of the fused unbalanced Gromov-Wasserstein (FUGW) between two similarity matrices.
     In practice, this lower bound is used interchangeably with the true FUGW.
 
-    Return the lower bound of the fused unbalanced Gromov-Wasserstein cost between
-    :math:`(\mathbf{C^X}, \mathbf{w_X})` and :math:`(\mathbf{C^Y}, \mathbf{w_Y})`.
-
-    The function solves the following problem using Block Coordinate Descent algorithm:
+    More precisely, this function returns the lower bound of the fused unbalanced Gromov-Wasserstein cost between
+    :math:`(\mathbf{C^X}, \mathbf{w_X})` and :math:`(\mathbf{C^Y}, \mathbf{w_Y})`,
+    by solving the following problem using Block Coordinate Descent algorithm:
 
     .. math::
-        \mathbf{LB-FUGW} = \mathop{\arg \min}_{\mathbf{P}, \mathbf{Q}: mass(P) = mass(Q)}
-        &\quad \sum_{i,j,k,l} (\mathbf{C^X}_{i,k} - \mathbf{C^Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l} \\
+        \mathop{\min}_{\substack{\mathbf{P}, \mathbf{Q}: \\ mass(P) = mass(Q)}}
+        &\quad \sum_{i,j,k,l} (\mathbf{C^X}_{i,k} - \mathbf{C^Y}_{j,l})^2 \mathbf{P}_{i,j} \mathbf{Q}_{k,l}
+        + \frac{\alpha}{2} \sum_{i,j} (\mathbf{P}_{i,j} + \mathbf{Q}_{i,j}) \mathbf{M}_{i, j} \\
         &+ \rho_1 \mathbf{Div}(\mathbf{P}_{\# 1} \mathbf{Q}_{\# 1}^T | \mathbf{w_X} \mathbf{w_X}^T)
-        + \rho_2 \mathbf{Div}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w_Y} \mathbf{w_Y}^T)
-        &+ \alpha / 2 \sum_{i,j} (\mathbf{P}_{i,j} + \mathbf{Q}_{i,j}) \mathbf{M}_{i, j}
-        + \varepsilon \mathbf{Div}(\mathbf{P} \otimes \mathbf{Q} | (\mathbf{w_X} \mathbf{w_Y}^T) \otimes (\mathbf{w_X} \mathbf{w_Y}^T))
+        + \rho_2 \mathbf{Div}(\mathbf{P}_{\# 2} \mathbf{Q}_{\# 2}^T | \mathbf{w_Y} \mathbf{w_Y}^T) \\
+        &+ \varepsilon \mathbf{Div}(\mathbf{P} \otimes \mathbf{Q} | (\mathbf{w_X} \mathbf{w_Y}^T) \otimes (\mathbf{w_X} \mathbf{w_Y}^T))
 
-    Where :
+    Where:
 
     - :math:`\mathbf{C^X}`: Source similarity matrix
     - :math:`\mathbf{C^Y}`: Target similarity matrix
@@ -912,12 +935,8 @@ def fused_unbalanced_gromov_wasserstein2(
     - :math:`\mathbf{w_Y}`: Distribution of the samples in the target space
     - :math:`\mathbf{Div}`: Either Kullback-Leibler divergence or half-squared L2 norm.
 
-    .. note:: This function allows epsilon to be zero.
-              In that case, unbalanced_method must be either "mm" or "lbfgsb".
-
-              The computation of gradients is only supported for KL divergence,
-              but not for half squared-L2 norm.
-              In case of half squared-L2 norm, the calculation of KL divergence will be used.
+    .. note:: This function allows `epsilon` to be zero. In that case, unbalanced_method must be either "mm" or "lbfgsb".
+            Also the computation of gradients is only supported for KL divergence, but not for half squared-L2 norm. In case of half squared-L2 norm, the calculation of KL divergence will be used.
 
     Parameters
     ----------
@@ -933,27 +952,31 @@ def fused_unbalanced_gromov_wasserstein2(
         Uniform distribution by default.
     reg_marginals: float or indexable object of length 1 or 2
         Marginal relaxation terms for sample and feature couplings.
-        If reg_marginals is a scalar or an indexable object of length 1,
-        then the same reg_marginals is applied to both marginal relaxations.
+        If `reg_marginals` is a scalar or an indexable object of length 1,
+        then the same value is applied to both marginal relaxations.
     epsilon : scalar, float or int, optional (default = 0)
         Regularization parameters for entropic approximation of sample and feature couplings.
-        Allow the case where epsilon contains 0. In that case, the MM solver is used by default
-        instead of Sinkhorn solver. If epsilon is scalar, then the same epsilon is applied to
+        Allow the case where `epsilon` contains 0. In that case, the MM solver is used by default
+        instead of Sinkhorn solver. If `epsilon` is scalar, then the same value is applied to
         both regularization of sample and feature couplings.
     divergence : string, optional (default = "kl")
-        If divergence = "kl", then Div is the Kullback-Leibler divergence.
-        If divergence = "l2", then Div is the half squared Euclidean norm.
+
+        - If `divergence` = "kl", then Div is the Kullback-Leibler divergence.
+
+        - If `divergence` = "l2", then Div is the half squared Euclidean norm.
     unbalanced_solver : string, optional (default = "sinkhorn")
         Solver for the unbalanced OT subroutine.
-        If divergence = "kl", then unbalanced_solver can be: "sinkhorn", "sinkhorn_log", "mm", "lbfgsb"
-        If divergence = "l2", then unbalanced_solver can be "mm", "lbfgsb"
+
+        - If `divergence` = "kl", then `unbalanced_solver` can be: "sinkhorn", "sinkhorn_log", "mm", "lbfgsb"
+
+        - If `divergence` = "l2", then `unbalanced_solver` can be "mm", "lbfgsb"
     alpha : scalar, float or int, optional (default = 0)
         Coeffficient parameter of linear terms with respect to the sample and feature couplings.
         If alpha is scalar, then the same alpha is applied to both linear terms.
     M : (n_sample_x, n_sample_y), float, optional (default = None)
         Sample matrix associated to the Wasserstein linear term on sample coupling.
     init_pi :(n_sample_x, n_sample_y) array-like, optional (default = None)
-        Initialization of sample coupling. By default = wx wy^T.
+        Initialization of sample coupling. By default = :math:`w_X w_Y^T`.
     init_duals : tuple of vectors ((n_sample_x, ), (n_sample_y, )), optional (default = None).
         Initialization of sample and feature dual vectors
         if using Sinkhorn algorithm. Zero vectors by default.
@@ -969,8 +992,8 @@ def fused_unbalanced_gromov_wasserstein2(
         Tolerance of unbalanced solver for each of the
         two unbalanced optimal transport problems in each BCD iteration.
     log : bool, optional (default = False)
-        If True then the cost and 4 dual vectors, including
-        Two from sample and two from feature couplings, are recorded.
+        If True then the cost and four dual vectors, including
+        two from sample and two from feature couplings, are recorded.
     verbose : bool, optional (default = False)
         If True then print the COOT cost at every multiplier of `eval_bcd`-th iteration.
 
@@ -980,8 +1003,10 @@ def fused_unbalanced_gromov_wasserstein2(
         Total FUGW cost
     log : dictionary, optional
         Returned if `log` is True. The keys are:
-            error : list of L1 norms between the current and previous sample couplings.
-            duals : (n_sample_x, n_sample_y) tuple, float
+
+            error : array-like, float
+                list of L1 norms between the current and previous sample couplings.
+            duals : (n_sample_x, n_sample_y)-tuple, float
                 Pair of dual vectors when solving OT problem w.r.t the sample coupling.
             linear : float
                 Linear part of FUGW cost.
@@ -992,9 +1017,13 @@ def fused_unbalanced_gromov_wasserstein2(
 
     References
     ----------
-    .. [69] Thual, A., Tran, H., Zemskova, T., Courty, N., Flamary, R., Dehaene, S. & Thirion, B.,
-    Aligning individual brains with Fused Unbalanced Gromov-Wasserstein,
-    Advances in Neural Information Systems, 35 (2022).
+    .. [70] Thual, A., Tran, H., Zemskova, T., Courty, N., Flamary, R., Dehaene, S., & Thirion, B.
+            Aligning individual brains with Fused Unbalanced Gromov-Wasserstein.
+            Advances in Neural Information Systems, 35 (2022).
+
+    .. [72] Thibault Séjourné, François-Xavier Vialard, & Gabriel Peyré.
+            The Unbalanced Gromov Wasserstein Distance: Conic Formulation and Relaxation.
+            Neural Information Processing Systems, 34 (2021).
     """
 
     if divergence != "kl":

@@ -805,22 +805,24 @@ def update_barycenter_feature(
 ############################################################################
 
 def div_to_product(pi, a, b, pi1=None, pi2=None, divergence="kl", mass=True, nx=None):
-    r"""Calculate the Bregman divergence between an arbitrary measure and a product measure.
-    This implementation induces cheaper cost than the direct calculation.
+    r"""Fast computation of the Bregman divergence between an arbitrary measure and a product measure.
     Only support for Kullback-Leibler and half-squared L2 divergences.
 
-    For half-squared L2 divergence:
+    - For half-squared L2 divergence:
+
     .. math::
         \frac{1}{2} || \pi - a \otimes b ||^2
         = \frac{1}{2} \Big[ \sum_{i, j} \pi_{ij}^2 + (\sum_i a_i^2) ( \sum_j b_j^2) - 2 \sum_{i, j} a_i \pi_{ij} b_j \Big]
 
-    For Kullback-Leibler divergence:
+    - For Kullback-Leibler divergence:
+
     .. math::
         KL(\pi | a \otimes b)
-        = \langle \pi, \log \pi \rangle - \lange \pi_1, \log a \rangle
+        = \langle \pi, \log \pi \rangle - \langle \pi_1, \log a \rangle
         - \langle \pi_2, \log b \rangle - m(\pi) + m(a) m(b)
 
-    where:
+    where :
+
     - :math:`\pi` is the (`dim_a`, `dim_b`) transport plan
     - :math:`\pi_1` and :math:`\pi_2` are the marginal distributions
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
@@ -879,21 +881,23 @@ def div_to_product(pi, a, b, pi1=None, pi2=None, divergence="kl", mass=True, nx=
 
 
 def div_between_product(mu, nu, alpha, beta, divergence, nx=None):
-    r"""Calculate the Bregmain divergence between two product measures.
-    This implementation induces cheaper cost than the direct calculation.
+    r"""Fast computation of the Bregman divergence between two product measures.
     Only support for Kullback-Leibler and half-squared L2 divergences.
 
     For half-squared L2 divergence:
+
     .. math::
         \frac{1}{2} || \mu \otimes \nu, \alpha \otimes \beta ||^2
         = \frac{1}{2} \Big[ ||\alpha||^2 ||\beta||^2 + ||\mu||^2 ||\nu||^2 - 2 \langle \alpha, \mu \rangle \langle \beta, \nu \rangle \Big]
 
     For Kullback-Leibler divergence:
+
     .. math::
         KL(\mu \otimes \nu, \alpha \otimes \beta)
         = m(\mu) * KL(\nu, \beta) + m(\nu) * KL(\mu, \alpha) + (m(\mu) - m(\alpha)) * (m(\nu) - m(\beta))
 
     where:
+
     - :math:`\mu` and :math:`\alpha` are two measures having the same shape.
     - :math:`\nu` and :math:`\beta` are two measures having the same shape.
     - :math:`m` denotes the mass of the measure
@@ -939,12 +943,15 @@ def uot_cost_matrix(data, pi, tuple_p, hyperparams, divergence, reg_type, nx=Non
     r"""The Block Coordinate Descent algorithm for FUGW and UCOOT
     requires solving an UOT problem in each iteration.
     In particular, we need to specify the following inputs:
+
     - Cost matrix
+
     - Hyperparameters (marginal-relaxations and regularization)
+
     - Reference measures in the marginal-relaxation and regularization terms
 
     This method returns the cost matrix.
-    The method `get_uot_parameters` returns the rest of the inputs.
+    The method :any:`ot.gromov.uot_parameters_and_measures` returns the rest of the inputs.
 
     Parameters
     ----------
@@ -962,7 +969,9 @@ def uot_cost_matrix(data, pi, tuple_p, hyperparams, divergence, reg_type, nx=Non
         Bregman divergence, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
     reg_type : string,
         Type of regularization term in the fused unbalanced across-domain divergence
+
         - `reg_type = "joint"` corresponds to FUGW
+
         - `reg_type = "independent"` corresponds to UCOOT
     nx : backend, optional
         If let to its default value None, a backend test will be conducted.
@@ -1001,11 +1010,14 @@ def uot_parameters_and_measures(pi, tuple_weights, hyperparams, reg_type, diverg
     r"""The Block Coordinate Descent algorithm for FUGW and UCOOT
     requires solving an UOT problem in each iteration.
     In particular, we need to specify the following inputs:
+
     - Cost matrix
+
     - Hyperparameters (marginal-relaxations and regularization)
+
     - Reference measures in the marginal-relaxation and regularization terms
 
-    The method `local_cost` returns the cost matrix.
+    The method :any:`ot.gromov.uot_cost_matrix` returns the cost matrix.
     This method returns the rest of the inputs.
 
     Parameters
@@ -1020,7 +1032,9 @@ def uot_parameters_and_measures(pi, tuple_weights, hyperparams, reg_type, diverg
         in the fused unbalanced across-domain divergence
     reg_type : string,
         Type of regularization term in the fused unbalanced across-domain divergence
+
         - `reg_type = "joint"` corresponds to FUGW
+
         - `reg_type = "independent"` corresponds to UCOOT
     divergence : string, default = "kl"
         Bregman divergence, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
@@ -1083,7 +1097,9 @@ def fused_unbalanced_across_spaces_cost(M_linear, data, tuple_pxy_samp, tuple_px
         Bregman divergence, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
     reg_type : string,
         Type of regularization term in the fused unbalanced across-domain divergence
+
         - `reg_type = "joint"` corresponds to FUGW
+
         - `reg_type = "independent"` corresponds to UCOOT
     nx : backend, optional
         If let to its default value None, a backend test will be conducted.
