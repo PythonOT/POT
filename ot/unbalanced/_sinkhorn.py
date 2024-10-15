@@ -140,7 +140,7 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
         Learning with a Wasserstein Loss,  Advances in Neural Information
         Processing Systems (NIPS) 2015
 
-    .. [70] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
+    .. [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
        Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
        In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
 
