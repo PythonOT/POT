@@ -153,7 +153,7 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
     ot.unbalanced.sinkhorn_reg_scaling_unbalanced:
         Unbalanced Sinkhorn with epsilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced>`
     ot.unbalanced.sinkhorn_unbalanced_translation_invariant:
-        Translation Invariant Unbalanced Sinkhorn :ref:`[70] <references-sinkhorn-unbalanced-translation-invariant>`
+        Translation Invariant Unbalanced Sinkhorn :ref:`[73] <references-sinkhorn-unbalanced-translation-invariant>`
 
     """
 
@@ -307,7 +307,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
         Learning with a Wasserstein Loss,  Advances in Neural Information
         Processing Systems (NIPS) 2015
 
-    .. [70] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
+    .. [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
        Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
        In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
 
@@ -316,7 +316,7 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     ot.unbalanced.sinkhorn_knopp: Unbalanced Classic Sinkhorn :ref:`[10] <references-sinkhorn-unbalanced2>`
     ot.unbalanced.sinkhorn_stabilized: Unbalanced Stabilized sinkhorn :ref:`[9, 10] <references-sinkhorn-unbalanced2>`
     ot.unbalanced.sinkhorn_reg_scaling: Unbalanced Sinkhorn with epsilon scaling :ref:`[9, 10] <references-sinkhorn-unbalanced2>`
-    ot.unbalanced.sinkhorn_unbalanced_translation_invariant: Translation Invariant Unbalanced Sinkhorn :ref:`[70] <references-sinkhorn-unbalanced2>`
+    ot.unbalanced.sinkhorn_unbalanced_translation_invariant: Translation Invariant Unbalanced Sinkhorn :ref:`[73] <references-sinkhorn-unbalanced2>`
 
     """
     M, a, b = list_to_array(M, a, b)
@@ -926,7 +926,7 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - KL is the Kullback-Leibler divergence
 
-    The algorithm used for solving the problem is the translation invariant Sinkhorn algorithm as proposed in :ref:`[70] <references-sinkhorn-unbalanced-translation-invariant>`
+    The algorithm used for solving the problem is the translation invariant Sinkhorn algorithm as proposed in :ref:`[73] <references-sinkhorn-unbalanced-translation-invariant>`
 
 
     Parameters
@@ -998,7 +998,7 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
     .. _references-sinkhorn-unbalanced-translation-invariant:
     References
     ----------
-    .. [70] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
+    .. [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
        Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
        In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
     """
