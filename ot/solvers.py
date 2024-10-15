@@ -12,7 +12,6 @@ from .lp import emd2, wasserstein_1d
 from .backend import get_backend
 from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
 from .bregman import sinkhorn_log, empirical_sinkhorn2, empirical_sinkhorn2_geomloss
-from .partial import partial_wasserstein_lagrange
 from .smooth import smooth_ot_dual
 from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
                      entropic_gromov_wasserstein2, entropic_fused_gromov_wasserstein2,
@@ -29,7 +28,7 @@ from .optim import cg
 lst_method_lazy = ['1d', 'gaussian', 'lowrank', 'factored', 'geomloss', 'geomloss_auto', 'geomloss_tensorized', 'geomloss_online', 'geomloss_multiscale']
 
 
-def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
+def solve(M, a=None, b=None, reg=None, c=None, reg_type="KL", unbalanced=None,
           unbalanced_type='KL', method=None, n_threads=1, max_iter=None, plan_init=None,
           potentials_init=None, tol=None, verbose=False, grad='autodiff'):
     r"""Solve the discrete optimal transport problem and return :any:`OTResult` object
@@ -38,12 +37,12 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
     .. math::
         \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) +
-        \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) +
-        \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
+        \lambda_1 U(\mathbf{T}\mathbf{1},\mathbf{a}) +
+        \lambda_2 U(\mathbf{T}^T\mathbf{1},\mathbf{b})
 
     The regularization is selected with `reg` (:math:`\lambda_r`) and `reg_type`. By
     default ``reg=None`` and there is no regularization. The unbalanced marginal
-    penalization can be selected with `unbalanced` (:math:`\lambda_u`) and
+    penalization can be selected with `unbalanced` (:math:`(\lambda_1, \lambda_2)`) and
     `unbalanced_type`. By default ``unbalanced=None`` and the function
     solves the exact optimal transport problem (respecting the marginals).
 
@@ -58,13 +57,24 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     reg : float, optional
         Regularization weight :math:`\lambda_r`, by default None (no reg., exact
         OT)
+    c : array-like (dim_a, dim_b), optional (default=None)
+        Reference measure for the regularization.
+        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+        If :math:`\texttt{reg_type}='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     reg_type : str, optional
         Type of regularization :math:`R`  either "KL", "L2", "entropy",
         by default "KL". a tuple of functions can be provided for general
         solver (see :any:`cg`). This is only used when ``reg!=None``.
-    unbalanced : float, optional
-        Unbalanced penalization weight :math:`\lambda_u`, by default None
-        (balanced OT)
+    unbalanced : float or indexable object of length 1 or 2
+        Marginal relaxation term.
+        If it is a scalar or an indexable object of length 1,
+        then the same relaxation is applied to both marginal relaxations.
+        The balanced OT can be recovered using :math:`unbalanced=float("inf")`.
+        For semi-relaxed case, use either
+        :math:`unbalanced=(float("inf"), scalar)` or
+        :math:`unbalanced=(scalar, float("inf"))`.
+        If unbalanced is an array,
+        it must have the same backend as input arrays `(a, b, M)`.
     unbalanced_type : str, optional
         Type of unbalanced penalization function :math:`U`  either "KL", "L2",
         "TV", by default "KL".
@@ -174,7 +184,9 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     - **Unbalanced OT [41]** (when ``unbalanced!=None``):
 
     .. math::
-        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
+        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} +
+        \lambda_1 U(\mathbf{T}\mathbf{1},\mathbf{a}) +
+        \lambda_2 U(\mathbf{T}^T\mathbf{1},\mathbf{b})
 
     can be solved with the following code:
 
@@ -191,7 +203,9 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     - **Regularized unbalanced regularized OT [34]** (when ``unbalanced!=None`` and ``reg!=None``):
 
     .. math::
-        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
+        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) +
+        \lambda_1 U(\mathbf{T}\mathbf{1},\mathbf{a}) +
+        \lambda_2 U(\mathbf{T}^T\mathbf{1},\mathbf{b})
 
     can be solved with the following code:
 
@@ -238,18 +252,18 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     """
 
     # detect backend
-    arr = [M]
-    if a is not None:
-        arr.append(a)
-    if b is not None:
-        arr.append(b)
-    nx = get_backend(*arr)
+    nx = get_backend(M, a, b, c)
 
     # create uniform weights if not given
     if a is None:
         a = nx.ones(M.shape[0], type_as=M) / M.shape[0]
     if b is None:
         b = nx.ones(M.shape[1], type_as=M) / M.shape[1]
+    if c is None:
+        c = a[:, None] * b[None, :]
+
+    if reg is None:
+        reg = 0
 
     # default values for solutions
     potentials = None
@@ -258,7 +272,7 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
     plan = None
     status = None
 
-    if reg is None or reg == 0:  # exact OT
+    if reg == 0:  # exact OT
 
         if unbalanced is None:  # Exact balanced OT
 
@@ -281,32 +295,31 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
             if tol is None:
                 tol = 1e-12
 
-            plan, log = mm_unbalanced(a, b, M, reg_m=unbalanced,
-                                      div=unbalanced_type.lower(), numItermax=max_iter,
+            plan, log = mm_unbalanced(a, b, M, reg_m=unbalanced, c=c, reg=reg,
+                                      div=unbalanced_type, numItermax=max_iter,
                                       stopThr=tol, log=True,
                                       verbose=verbose, G0=plan_init)
 
             value_linear = log['cost']
-
-            if unbalanced_type.lower() == 'kl':
-                value = value_linear + unbalanced * (nx.kl_div(nx.sum(plan, 1), a) + nx.kl_div(nx.sum(plan, 0), b))
-            else:
-                err_a = nx.sum(plan, 1) - a
-                err_b = nx.sum(plan, 0) - b
-                value = value_linear + unbalanced * nx.sum(err_a**2) + unbalanced * nx.sum(err_b**2)
+            value = log['total_cost']
 
         elif unbalanced_type.lower() == 'tv':
 
             if max_iter is None:
-                max_iter = 1000000
+                max_iter = 1000
+            if tol is None:
+                tol = 1e-12
+            if isinstance(reg_type, str):
+                reg_type = reg_type.lower()
 
-            plan, log = partial_wasserstein_lagrange(a, b, M, reg_m=unbalanced**2, log=True, numItermax=max_iter)
+            plan, log = lbfgsb_unbalanced(
+                a, b, M, reg=reg, reg_m=unbalanced, c=c, reg_div=reg_type,
+                regm_div=unbalanced_type, numItermax=max_iter,
+                stopThr=tol, verbose=verbose, log=True, G0=plan_init
+            )
 
-            value_linear = nx.sum(M * plan)
-            err_a = nx.sum(plan, 1) - a
-            err_b = nx.sum(plan, 0) - b
-            value = value_linear + nx.sqrt(unbalanced**2 / 2.0 * (nx.sum(nx.abs(err_a)) +
-                                                                  nx.sum(nx.abs(err_b))))
+            value_linear = log['cost']
+            value = log['total_cost']
 
         else:
             raise (NotImplementedError('Unknown unbalanced_type="{}"'.format(unbalanced_type)))
@@ -317,12 +330,15 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
 
             if isinstance(reg_type, tuple):  # general solver
 
+                f, df = reg_type
+
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
                     tol = 1e-9
 
-                plan, log = cg(a, b, M, reg=reg, f=reg_type[0], df=reg_type[1], numItermax=max_iter, stopThr=tol, log=True, verbose=verbose, G0=plan_init)
+                plan, log = cg(a, b, M, reg=reg, f=f, df=df, numItermax=max_iter,
+                               stopThr=tol, log=True, verbose=verbose, G0=plan_init)
 
                 value_linear = nx.sum(M * plan)
                 value = log['loss'][-1]
@@ -383,11 +399,16 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
                 if tol is None:
                     tol = 1e-9
 
-                plan, log = sinkhorn_knopp_unbalanced(a, b, M, reg=reg, reg_m=unbalanced, numItermax=max_iter, stopThr=tol, verbose=verbose, log=True)
+                plan, log = sinkhorn_knopp_unbalanced(
+                    a, b, M, reg=reg, reg_m=unbalanced,
+                    method=method, reg_type=reg_type, c=c,
+                    warmstart=potentials_init,
+                    numItermax=max_iter, stopThr=tol,
+                    verbose=verbose, log=True
+                )
 
-                value_linear = nx.sum(M * plan)
-
-                value = value_linear + reg * nx.kl_div(plan, a[:, None] * b[None, :]) + unbalanced * (nx.kl_div(nx.sum(plan, 1), a) + nx.kl_div(nx.sum(plan, 0), b))
+                value_linear = log['cost']
+                value = log['total_cost']
 
                 potentials = (log['logu'], log['logv'])
 
@@ -400,11 +421,14 @@ def solve(M, a=None, b=None, reg=None, reg_type="KL", unbalanced=None,
                 if isinstance(reg_type, str):
                     reg_type = reg_type.lower()
 
-                plan, log = lbfgsb_unbalanced(a, b, M, reg=reg, reg_m=unbalanced, reg_div=reg_type, regm_div=unbalanced_type.lower(), numItermax=max_iter, stopThr=tol, verbose=verbose, log=True, G0=plan_init)
+                plan, log = lbfgsb_unbalanced(
+                    a, b, M, reg=reg, reg_m=unbalanced, c=c, reg_div=reg_type,
+                    regm_div=unbalanced_type, numItermax=max_iter,
+                    stopThr=tol, verbose=verbose, log=True, G0=plan_init
+                )
 
-                value_linear = nx.sum(M * plan)
-
-                value = log['cost']
+                value_linear = log['cost']
+                value = log['total_cost']
 
             else:
                 raise (NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
@@ -902,7 +926,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     return res
 
 
-def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_type="KL",
+def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, c=None, reg_type="KL",
                  unbalanced=None,
                  unbalanced_type='KL', lazy=False, batch_size=None, method=None, n_threads=1, max_iter=None, plan_init=None, rank=100, scaling=0.95,
                  potentials_init=None, X_init=None, tol=None, verbose=False,
@@ -939,11 +963,22 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
     reg : float, optional
         Regularization weight :math:`\lambda_r`, by default None (no reg., exact
         OT)
+    c : array-like (dim_a, dim_b), optional (default=None)
+        Reference measure for the regularization.
+        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+        If :math:`\texttt{reg_type}='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     reg_type : str, optional
         Type of regularization :math:`R`  either "KL", "L2", "entropy", by default "KL"
-    unbalanced : float, optional
-        Unbalanced penalization weight :math:`\lambda_u`, by default None
-        (balanced OT)
+    unbalanced : float or indexable object of length 1 or 2
+        Marginal relaxation term.
+        If it is a scalar or an indexable object of length 1,
+        then the same relaxation is applied to both marginal relaxations.
+        The balanced OT can be recovered using :math:`unbalanced=float("inf")`.
+        For semi-relaxed case, use either
+        :math:`unbalanced=(float("inf"), scalar)` or
+        :math:`unbalanced=(scalar, float("inf"))`.
+        If unbalanced is an array,
+        it must have the same backend as input arrays `(a, b, M)`.
     unbalanced_type : str, optional
         Type of unbalanced penalization function :math:`U`  either "KL", "L2", "TV", by default "KL"
     lazy : bool, optional
@@ -1242,7 +1277,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, reg_t
         # compute cost matrix M and use solve function
         M = dist(X_a, X_b, metric)
 
-        res = solve(M, a, b, reg, reg_type, unbalanced, unbalanced_type, method, n_threads, max_iter, plan_init, potentials_init, tol, verbose, grad)
+        res = solve(M, a, b, reg, c, reg_type, unbalanced, unbalanced_type, method, n_threads, max_iter, plan_init, potentials_init, tol, verbose, grad)
 
         return res
 
