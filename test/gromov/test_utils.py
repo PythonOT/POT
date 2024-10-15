@@ -4,6 +4,7 @@
 #
 # License: MIT License
 
+import itertools
 import numpy as np
 import pytest
 
@@ -111,3 +112,39 @@ def test_semirelaxed_init_plan(nx):
         T = ot.gromov.semirelaxed_init_plan(C1b, C1b, p1b, method='fluid')
         Tb = ot.gromov.semirelaxed_init_plan(C1b, C1b, p1b, method='fluid')
         np.testing.assert_allclose(T, Tb)
+
+
+@pytest.mark.parametrize("divergence", ["kl", "l2"])
+def test_div_between_product(nx, divergence):
+    ns = 5
+    nt = 10
+
+    ps, pt = ot.unif(ns), ot.unif(nt)
+    ps, pt = nx.from_numpy(ps), nx.from_numpy(pt)
+    ps1, pt1 = 2 * ps, 2 * pt
+
+    res_nx = ot.gromov.div_between_product(ps, pt, ps1, pt1, divergence, nx=nx)
+    res = ot.gromov.div_between_product(ps, pt, ps1, pt1, divergence, nx=None)
+
+    np.testing.assert_allclose(res_nx, res, atol=1e-06)
+
+
+@pytest.mark.parametrize("divergence, mass", itertools.product(["kl", "l2"], [True, False]))
+def test_div_to_product(nx, divergence, mass):
+    ns = 5
+    nt = 10
+
+    a, b = ot.unif(ns), ot.unif(nt)
+    a, b = nx.from_numpy(a), nx.from_numpy(b)
+
+    pi = 2 * a[:, None] * b[None, :]
+    pi1, pi2 = nx.sum(pi, 1), nx.sum(pi, 0)
+
+    res = ot.gromov.div_to_product(pi, a, b, pi1=None, pi2=None, divergence=divergence, mass=mass, nx=None)
+    res1 = ot.gromov.div_to_product(pi, a, b, pi1=None, pi2=None, divergence=divergence, mass=mass, nx=nx)
+    res2 = ot.gromov.div_to_product(pi, a, b, pi1=pi1, pi2=pi2, divergence=divergence, mass=mass, nx=None)
+    res3 = ot.gromov.div_to_product(pi, a, b, pi1=pi1, pi2=pi2, divergence=divergence, mass=mass, nx=nx)
+
+    np.testing.assert_allclose(res1, res, atol=1e-06)
+    np.testing.assert_allclose(res2, res, atol=1e-06)
+    np.testing.assert_allclose(res3, res, atol=1e-06)

@@ -545,7 +545,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
     else:
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
-    if reg_type == "entropy":
+    if reg_type.lower() == "entropy":
         warnings.warn('If reg_type = entropy, then the matrix c is overwritten by the one matrix.')
         c = nx.ones((dim_a, dim_b), type_as=M)
 
