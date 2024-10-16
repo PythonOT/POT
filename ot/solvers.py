@@ -17,8 +17,9 @@ from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
                      entropic_gromov_wasserstein2, entropic_fused_gromov_wasserstein2,
                      semirelaxed_gromov_wasserstein2, semirelaxed_fused_gromov_wasserstein2,
                      entropic_semirelaxed_fused_gromov_wasserstein2,
-                     entropic_semirelaxed_gromov_wasserstein2)
-from .partial import partial_gromov_wasserstein2, entropic_partial_gromov_wasserstein2
+                     entropic_semirelaxed_gromov_wasserstein2,
+                     partial_gromov_wasserstein2,
+                     entropic_partial_gromov_wasserstein2)
 from .gaussian import empirical_bures_wasserstein_distance
 from .factored import factored_optimal_transport
 from .lowrank import lowrank_sinkhorn
@@ -779,10 +780,6 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
 
                 if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
                     raise (ValueError('Partial GW mass given in reg is too large'))
-                if loss.lower() != 'l2':
-                    raise (NotImplementedError('Partial GW only implemented with L2 loss'))
-                if symmetric is not None:
-                    raise (NotImplementedError('Partial GW only implemented with symmetric=True'))
 
                 # default values for solver
                 if max_iter is None:
@@ -790,7 +787,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 if tol is None:
                     tol = 1e-7
 
-                value, log = partial_gromov_wasserstein2(Ca, Cb, a, b, m=unbalanced, log=True, numItermax=max_iter, G0=plan_init, tol=tol, verbose=verbose)
+                value, log = partial_gromov_wasserstein2(Ca, Cb, a, b, m=unbalanced, loss_fun=loss_fun, log=True, numItermax=max_iter, G0=plan_init, tol=tol, symmetric=symmetric, verbose=verbose)
 
                 value_quad = value
                 plan = log['T']
@@ -902,10 +899,6 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
 
                 if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
                     raise (ValueError('Partial GW mass given in reg is too large'))
-                if loss.lower() != 'l2':
-                    raise (NotImplementedError('Partial GW only implemented with L2 loss'))
-                if symmetric is not None:
-                    raise (NotImplementedError('Partial GW only implemented with symmetric=True'))
 
                 # default values for solver
                 if max_iter is None:
@@ -913,7 +906,7 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 if tol is None:
                     tol = 1e-7
 
-                value_quad, log = entropic_partial_gromov_wasserstein2(Ca, Cb, a, b, reg=reg, m=unbalanced, log=True, numItermax=max_iter, G0=plan_init, tol=tol, verbose=verbose)
+                value_quad, log = entropic_partial_gromov_wasserstein2(Ca, Cb, a, b, reg=reg, loss_fun=loss_fun, m=unbalanced, log=True, numItermax=max_iter, G0=plan_init, tol=tol, symmetric=symmetric, verbose=verbose)
 
                 value_quad = value
                 plan = log['T']

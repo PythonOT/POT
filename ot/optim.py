@@ -127,7 +127,7 @@ def line_search_armijo(
 
 def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_search, G0=None,
                                  numItermax=200, stopThr=1e-9,
-                                 stopThr2=1e-9, verbose=False, log=False, **kwargs):
+                                 stopThr2=1e-9, verbose=False, log=False, nx=None, **kwargs):
     r"""
     Solve the general regularized OT problem or its semi-relaxed version with
     conditional gradient or generalized conditional gradient depending on the
@@ -189,13 +189,44 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         Entropic Regularization term >0. Ignored if set to None.
     lp_solver: function,
         linear program solver for direction finding of the (generalized) conditional gradient.
-        If set to emd will solve the general regularized OT problem using cg.
-        If set to lp_semi_relaxed_OT will solve the general regularized semi-relaxed OT problem using cg.
-        If set to sinkhorn will solve the general regularized OT problem using generalized cg.
+        This function must take the form `lp_solver(a, b, Mi, **kwargs)` with p:
+        `a` and `b` are sample weights in both domains; `Mi` is the gradient of
+        the regularized objective; optimal arguments via kwargs.
+        It must output an admissible transport plan.
+
+        For instance, for the general regularized OT problem with conditional gradient :ref:`[1] <references-cg>`:
+
+            def lp_solver(a, b, M, **kwargs):
+                return ot.emd(a, b, M)
+
+        or with the generalized conditional gradient instead :ref:`[5, 7] <references-gcg>`:
+
+            def lp_solver(a, b, Mi, **kwargs):
+                return ot.sinkhorn(a, b, Mi)
+
     line_search: function,
-        Function to find the optimal step. Currently used instances are:
-        line_search_armijo (generic solver). solve_gromov_linesearch for (F)GW problem.
-        solve_semirelaxed_gromov_linesearch for sr(F)GW problem. gcg_linesearch for the Generalized cg.
+        Function to find the optimal step. This function must take the form
+        `line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs)` with: `cost`
+        the cost function, `G` the transport plan, `deltaG` the conditional
+        gradient direction given by lp_solver, `Mi` the gradient of regularized
+        objective, `cost_G` the cost at G, `df_G` the gradient of the regularizer
+        at G. Two types of outputs are supported:
+
+        Instances such as `ot.optim.line_search_armijo` (generic solver),
+        `ot.gromov.solve_gromov_linesearch` (FGW problems),
+        `solve_semirelaxed_gromov_linesearch` (srFGW problems) and
+        `gcg_linesearch` (generalized cg), output : the line-search step alpha,
+        the number of iterations used in the solver if applicable and the loss
+        value at step alpha. These can be called e.g as:
+
+            def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
+                return ot.optim.line_search_armijo(cost, G, deltaG, Mi, cost_G, **kwargs)
+
+        Instances such as `ot.gromov.solve_partial_gromov_linesearch` for partial
+        (F)GW problems add as finale output, the next step gradient reading as
+        a convex combination of previously computed gradients, taking advantage of the regularizer
+        quadratic form.
+
     G0 :  array-like, shape (ns,nt), optional
         initial guess (default is indep joint density)
     numItermax : int, optional
@@ -208,6 +239,8 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         Print information along iterations
     log : bool, optional
         record log if True
+    nx : backend, optional
+        If let to its default value None, the backend will be deduced from other inputs.
     **kwargs : dict
              Parameters for linesearch
 
@@ -236,10 +269,11 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
     ot.bregman.sinkhorn : Entropic regularized optimal transport
     """
 
-    if isinstance(M, int) or isinstance(M, float):
-        nx = get_backend(a, b)
-    else:
-        nx = get_backend(a, b, M)
+    if nx is None:
+        if isinstance(M, int) or isinstance(M, float):
+            nx = get_backend(a, b)
+        else:
+            nx = get_backend(a, b, M)
 
     loop = 1
 
@@ -262,6 +296,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
     if log:
         log['loss'].append(cost_G)
 
+    df_G = None
     it = 0
 
     if verbose:
@@ -274,20 +309,27 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         it += 1
         old_cost_G = cost_G
         # problem linearization
-        Mi = M + reg1 * df(G)
+        if df_G is None:
+            df_G = df(G)
+        Mi = M + reg1 * df_G
 
         if not (reg2 is None):
             Mi = Mi + reg2 * (1 + nx.log(G))
-        # set M positive
-        Mi = Mi + nx.min(Mi)
 
         # solve linear program
         Gc, innerlog_ = lp_solver(a, b, Mi, **kwargs)
-
         # line search
         deltaG = Gc - G
 
-        alpha, fc, cost_G = line_search(cost, G, deltaG, Mi, cost_G, **kwargs)
+        res_line_search = line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs)
+        if len(res_line_search) == 3:
+            # the line-search does not allow to update the gradient
+            alpha, fc, cost_G = res_line_search
+            df_G = None
+        else:
+            # the line-search allows to update the gradient directly
+            # e.g. while using quadratic losses as the gromov-wasserstein loss
+            alpha, fc, cost_G, df_G = res_line_search
 
         G = G + alpha * deltaG
 
@@ -316,9 +358,9 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         return G
 
 
-def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
+def cg(a, b, M, reg, f, df, G0=None, line_search=None,
        numItermax=200, numItermaxEmd=100000, stopThr=1e-9, stopThr2=1e-9,
-       verbose=False, log=False, **kwargs):
+       verbose=False, log=False, nx=None, **kwargs):
     r"""
     Solve the general regularized OT problem with conditional gradient
 
@@ -357,7 +399,7 @@ def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
         initial guess (default is indep joint density)
     line_search: function,
         Function to find the optimal step.
-        Default is line_search_armijo.
+        Default is None and calls a wrapper to line_search_armijo.
     numItermax : int, optional
         Max number of iterations
     numItermaxEmd : int, optional
@@ -370,6 +412,8 @@ def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
         Print information along iterations
     log : bool, optional
         record log if True
+    nx : backend, optional
+        If let to its default value None, the backend will be deduced from other inputs.
     **kwargs : dict
              Parameters for linesearch
 
@@ -393,17 +437,26 @@ def cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
     ot.bregman.sinkhorn : Entropic regularized optimal transport
 
     """
+    if nx is None:
+        if isinstance(M, int) or isinstance(M, float):
+            nx = get_backend(a, b)
+        else:
+            nx = get_backend(a, b, M)
+
+    if line_search is None:
+        def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=nx, **kwargs)
 
     def lp_solver(a, b, M, **kwargs):
         return emd(a, b, M, numItermaxEmd, log=True)
 
     return generic_conditional_gradient(a, b, M, f, df, reg, None, lp_solver, line_search, G0=G0,
                                         numItermax=numItermax, stopThr=stopThr,
-                                        stopThr2=stopThr2, verbose=verbose, log=log, **kwargs)
+                                        stopThr2=stopThr2, verbose=verbose, log=log, nx=nx, **kwargs)
 
 
-def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
-                   numItermax=200, stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, **kwargs):
+def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=None,
+                   numItermax=200, stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, nx=None, **kwargs):
     r"""
     Solve the general regularized and semi-relaxed OT problem with conditional gradient
 
@@ -440,7 +493,7 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
         initial guess (default is indep joint density)
     line_search: function,
         Function to find the optimal step.
-        Default is the armijo line-search.
+        Default is None and calls a wrapper to line_search_armijo.
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -451,6 +504,8 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
         Print information along iterations
     log : bool, optional
         record log if True
+    nx : backend, optional
+        If let to its default value None, the backend will be deduced from other inputs.
     **kwargs : dict
              Parameters for linesearch
 
@@ -471,8 +526,15 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
             International Conference on Learning Representations (ICLR), 2021.
 
     """
+    if nx is None:
+        if isinstance(M, int) or isinstance(M, float):
+            nx = get_backend(a, b)
+        else:
+            nx = get_backend(a, b, M)
 
-    nx = get_backend(a, b)
+    if line_search is None:
+        def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
+            return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=nx, **kwargs)
 
     def lp_solver(a, b, Mi, **kwargs):
         # get minimum by rows as binary mask
@@ -484,6 +546,110 @@ def semirelaxed_cg(a, b, M, reg, f, df, G0=None, line_search=line_search_armijo,
         Gc *= nx.reshape((a / nx.sum(Gc, axis=1)), (-1, 1))
         # return by default an empty inner_log
         return Gc, {}
+
+    return generic_conditional_gradient(a, b, M, f, df, reg, None, lp_solver, line_search, G0=G0,
+                                        numItermax=numItermax, stopThr=stopThr,
+                                        stopThr2=stopThr2, verbose=verbose, log=log, nx=nx, **kwargs)
+
+
+def partial_cg(a, b, a_extended, b_extended, M, reg, f, df, G0=None, line_search=line_search_armijo,
+               numItermax=200, stopThr=1e-9, stopThr2=1e-9, warn=True, verbose=False, log=False, **kwargs):
+    r"""
+    Solve the general regularized partial OT problem with conditional gradient
+
+        The function solves the following optimization problem:
+
+    .. math::
+        \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
+        \mathrm{reg} \cdot f(\gamma)
+
+        s.t. \ \gamma \mathbf{1} &= \mathbf{a}
+
+             \gamma \mathbf{1} &= \mathbf{b}
+
+             \mathbf{1}^T \gamma^T \mathbf{1} = m &\leq \min\{\|\mathbf{p}\|_1, \|\mathbf{q}\|_1\}
+
+             \gamma &\geq 0
+
+    where :
+
+    - :math:`\mathbf{M}` is the (`ns`, `nt`) metric cost matrix
+    - :math:`f` is the regularization term (and `df` is its gradient)
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights
+    - `m` is the amount of mass to be transported
+
+    The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[1] <references-cg>`
+
+    Parameters
+    ----------
+    a : array-like, shape (ns,)
+        samples weights in the source domain
+    b : array-like, shape (nt,)
+        currently estimated samples weights in the target domain
+    a_extended : array-like, shape (ns + nb_dummies,)
+        samples weights in the source domain with added dummy nodes
+    b_extended : array-like, shape (nt + nb_dummies,)
+        currently estimated samples weights in the target domain with added dummy nodes
+    M : array-like, shape (ns, nt)
+        loss matrix
+    reg : float
+        Regularization term >0
+    G0 :  array-like, shape (ns,nt), optional
+        initial guess (default is indep joint density)
+    line_search: function,
+        Function to find the optimal step.
+        Default is the armijo line-search.
+    numItermax : int, optional
+        Max number of iterations
+    stopThr : float, optional
+        Stop threshold on the relative variation (>0)
+    stopThr2 : float, optional
+        Stop threshold on the absolute variation (>0)
+    warn: bool, optional.
+        Whether to raise a warning when EMD did not converge.
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        record log if True
+    **kwargs : dict
+             Parameters for linesearch
+
+    Returns
+    -------
+    gamma : (ns x nt) ndarray
+        Optimal transportation matrix for the given parameters
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    .. _references-partial-cg:
+    References
+    ----------
+
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+        Transport with Applications on Positive-Unlabeled Learning".
+        NeurIPS.
+
+    """
+    n, m = a.shape[0], b.shape[0]
+    n_extended, m_extended = a_extended.shape[0], b_extended.shape[0]
+    nb_dummies = n_extended - n
+
+    def lp_solver(a, b, Mi, **kwargs):
+        # add dummy nodes to Mi
+        Mi_extended = np.zeros((n_extended, m_extended), dtype=Mi.dtype)
+        Mi_extended[:n, :m] = Mi
+        Mi_extended[-nb_dummies:, -nb_dummies:] = np.max(M) * 1e2
+
+        G_extended, log_ = emd(a_extended, b_extended, Mi_extended, numItermax, log=True)
+        Gc = G_extended[:n, :m]
+
+        if warn:
+            if log_['warning'] is not None:
+                raise ValueError("Error in the EMD resolution: try to increase the"
+                                 " number of dummy points")
+
+        return Gc, log_
 
     return generic_conditional_gradient(a, b, M, f, df, reg, None, lp_solver, line_search, G0=G0,
                                         numItermax=numItermax, stopThr=stopThr,
@@ -569,7 +735,7 @@ def gcg(a, b, M, reg1, reg2, f, df, G0=None, numItermax=10,
     def lp_solver(a, b, Mi, **kwargs):
         return sinkhorn(a, b, Mi, reg1, numItermax=numInnerItermax, log=True, **kwargs)
 
-    def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+    def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
         return line_search_armijo(cost, G, deltaG, Mi, cost_G, **kwargs)
 
     return generic_conditional_gradient(a, b, M, f, df, reg2, reg1, lp_solver, line_search, G0=G0,

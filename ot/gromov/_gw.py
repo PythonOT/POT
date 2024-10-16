@@ -167,10 +167,10 @@ def gromov_wasserstein(C1, C2, p=None, q=None, loss_fun='square_loss', symmetric
             return 0.5 * (gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_))
 
     if armijo:
-        def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+        def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
             return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=np_, **kwargs)
     else:
-        def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+        def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
             return solve_gromov_linesearch(G, deltaG, cost_G, hC1, hC2, M=0., reg=1., nx=np_, symmetric=symmetric, **kwargs)
 
     if not nx.is_floating_point(C10):
@@ -475,11 +475,12 @@ def fused_gromov_wasserstein(M, C1, C2, p=None, q=None, loss_fun='square_loss', 
             return 0.5 * (gwggrad(constC, hC1, hC2, G, np_) + gwggrad(constCt, hC1t, hC2t, G, np_))
 
     if armijo:
-        def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+        def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
             return line_search_armijo(cost, G, deltaG, Mi, cost_G, nx=np_, **kwargs)
     else:
-        def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+        def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
             return solve_gromov_linesearch(G, deltaG, cost_G, hC1, hC2, M=(1 - alpha) * M, reg=alpha, nx=np_, symmetric=symmetric, **kwargs)
+
     if not nx.is_floating_point(M0):
         warnings.warn(
             "Input feature matrix consists of integer. The transport plan will be "
@@ -625,9 +626,11 @@ def fused_gromov_wasserstein2(M, C1, C2, p=None, q=None, loss_fun='square_loss',
     if loss_fun == 'square_loss':
         gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
         gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
+
     elif loss_fun == 'kl_loss':
         gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(T, nx.dot(nx.log(C2 + 1e-15), T.T))
         gC2 = - nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
+
     if isinstance(alpha, int) or isinstance(alpha, float):
         fgw_dist = nx.set_gradients(fgw_dist, (p, q, C1, C2, M),
                                     (log_fgw['u'] - nx.mean(log_fgw['u']),
