@@ -1590,7 +1590,7 @@ class JaxBackend(Backend):
         if a.ndim == 1:
             return jnp.searchsorted(a, v, side)
         else:
-            return jax.vmap(jnp.searchsorted, in_axes=[0, 1, None])(a, v, side)
+            return jax.vmap(lambda b, u: jnp.searchsorted(b, u, side))(a, v)
 
     def flip(self, a, axis=None):
         return jnp.flip(a, axis)
