@@ -1590,9 +1590,7 @@ class JaxBackend(Backend):
         if a.ndim == 1:
             return jnp.searchsorted(a, v, side)
         else:
-            # this is a not very efficient way to make jax numpy
-            # searchsorted work on 2d arrays
-            return jnp.array([jnp.searchsorted(a[i, :], v[i, :], side) for i in range(a.shape[0])])
+            return jax.vmap(jnp.searchsorted, in_axes=[0, 1, None])(a, v, side)
 
     def flip(self, a, axis=None):
         return jnp.flip(a, axis)
