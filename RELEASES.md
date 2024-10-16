@@ -13,6 +13,7 @@
 - Restructured `ot.unbalanced` module (PR #658)
 - Added `ot.unbalanced.lbfgsb_unbalanced2` and add flexible reference measure `c` in all unbalanced solvers (PR #658)
 - Implemented Fused unbalanced Gromov-Wasserstein and unbalanced Co-Optimal Transport (PR #677)
+- Added `ot.unbalanced.sinkhorn_unbalanced_translation_invariant` (PR #676)
 
 #### Closed issues
 - Fixed `ot.gaussian` ignoring weights when computing means (PR #649, Issue #648)
