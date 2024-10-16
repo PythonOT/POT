@@ -189,6 +189,44 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         Entropic Regularization term >0. Ignored if set to None.
     lp_solver: function,
         linear program solver for direction finding of the (generalized) conditional gradient.
+        This function must take the form `lp_solver(a, b, Mi, **kwargs)` with p:
+        `a` and `b` are sample weights in both domains; `Mi` is the gradient of
+        the regularized objective; optimal arguments via kwargs.
+        It must output an admissible transport plan.
+
+        For instance, for the general regularized OT problem with conditional gradient :ref:`[1] <references-cg>`:
+
+            def lp_solver(a, b, M, **kwargs):
+                return ot.emd(a, b, M)
+
+        or with the generalized conditional gradient instead :ref:`[5, 7] <references-gcg>`:
+
+            def lp_solver(a, b, Mi, **kwargs):
+                return ot.sinkhorn(a, b, Mi)
+
+    line_search: function,
+        Function to find the optimal step. This function must take the form
+        `line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs)` with: `cost`
+        the cost function, `G` the transport plan, `deltaG` the conditional
+        gradient direction given by lp_solver, `Mi` the gradient of regularized
+        objective, `cost_G` the cost at G, `df_G` the gradient of the regularizer
+        at G. Two types of outputs are supported:
+
+        Instances such as `ot.optim.line_search_armijo` (generic solver),
+        `ot.gromov.solve_gromov_linesearch` (FGW problems),
+        `solve_semirelaxed_gromov_linesearch` (srFGW problems) and
+        `gcg_linesearch` (generalized cg), output : the line-search step alpha,
+        the number of iterations used in the solver if applicable and the loss
+        value at step alpha. These can be called e.g as:
+
+            def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
+                return ot.optim.line_search_armijo(cost, G, deltaG, Mi, cost_G, **kwargs)
+
+        Instances such as `ot.gromov.solve_partial_gromov_linesearch` for partial
+        (F)GW problems add as finale output, the next step gradient reading as
+        a convex combination of previously computed gradients, taking advantage of the regularizer
+        quadratic from.
+
         This function must take as inputs : the cost function, the transport plan,
         the conditional gradient direction for the regularization, the gradient
         of the complete objective, the cost evaluated at G, the gradient
@@ -197,17 +235,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         `partial_cg`. These respectively call `emd` for the general regularized OT problem using cg,
         `lp_semi_relaxed_OT` for the general regularized semi-relaxed OT problem using cg,
         `sinkhorn` for the general regularized OT problem using generalized cg.
-    line_search: function,
-        Function to find the optimal step. Currently used instances are:
-        `line_search_armijo` (generic solver).
-        `solve_gromov_linesearch` for (F)GW problem.
-        `solve_semirelaxed_gromov_linesearch` for sr(F)GW problem.
-        `gcg_linesearch` for the Generalized cg. These instances output the
-        line-search step alpha, the number of iterations used in the solver if applicable
-        and the loss value at step alpha.
-        `solve_partial_gromov_linesearch` for partial (F)GW problem. The latter
-        also outputs the next step gradient reading as a convex combination
-        of previously computed gradients.
+
     G0 :  array-like, shape (ns,nt), optional
         initial guess (default is indep joint density)
     numItermax : int, optional
