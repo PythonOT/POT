@@ -14,7 +14,7 @@ import pytest
 from ot.unbalanced import barycenter_unbalanced
 
 
-@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], ["kl", "entropy"]))
+@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling", "sinkhorn_translation_invariant"], ["kl", "entropy"]))
 def test_unbalanced_convergence(nx, method, reg_type):
     # test generalized sinkhorn for unbalanced OT
     n = 100
@@ -63,7 +63,7 @@ def test_unbalanced_convergence(nx, method, reg_type):
     np.testing.assert_allclose(nx.to_numpy(nx.sum(G * M)), loss, atol=1e-5)
 
 
-@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], ["kl", "entropy"]))
+@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling", "sinkhorn_translation_invariant"], ["kl", "entropy"]))
 def test_unbalanced_marginals(nx, method, reg_type):
     # test generalized sinkhorn for unbalanced OT
     n = 100
@@ -107,7 +107,7 @@ def test_unbalanced_marginals(nx, method, reg_type):
     np.testing.assert_allclose(nx.to_numpy(loss_empty), nx.to_numpy(loss0), atol=1e-5)
 
 
-@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], ["kl", "entropy"]))
+@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling", "sinkhorn_translation_invariant"], ["kl", "entropy"]))
 def test_unbalanced_warmstart(nx, method, reg_type):
     # test generalized sinkhorn for unbalanced OT
     n = 100
@@ -169,7 +169,7 @@ def test_unbalanced_warmstart(nx, method, reg_type):
     np.testing.assert_allclose(nx.to_numpy(loss0), nx.to_numpy(loss1), atol=1e-5)
 
 
-@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], ["kl", "entropy"]))
+@pytest.mark.parametrize("method,reg_type", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling", "sinkhorn_translation_invariant"], ["kl", "entropy"]))
 def test_unbalanced_reference_measure(nx, method, reg_type):
     # test generalized sinkhorn for unbalanced OT
     n = 100
@@ -214,7 +214,7 @@ def test_unbalanced_reference_measure(nx, method, reg_type):
     np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss0), atol=1e-5)
 
 
-@pytest.mark.parametrize("method, log", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], [True, False]))
+@pytest.mark.parametrize("method, log", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling", "sinkhorn_translation_invariant"], [True, False]))
 def test_sinkhorn_unbalanced2(nx, method, log):
     n = 100
     rng = np.random.RandomState(42)
@@ -244,7 +244,7 @@ def test_sinkhorn_unbalanced2(nx, method, log):
     np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss0), atol=1e-5)
 
 
-@pytest.mark.parametrize("method,reg_m", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"], [1, float("inf")]))
+@pytest.mark.parametrize("method,reg_m", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling", "sinkhorn_translation_invariant"], [1, float("inf")]))
 def test_unbalanced_relaxation_parameters(nx, method, reg_m):
     # test generalized sinkhorn for unbalanced OT
     n = 100
@@ -288,7 +288,48 @@ def test_unbalanced_relaxation_parameters(nx, method, reg_m):
             nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05)
 
 
-@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling"])
+@pytest.mark.parametrize("method, reg_m1, reg_m2", itertools.product(["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling", "sinkhorn_translation_invariant"], [1, float("inf")], [1, float("inf")]))
+def test_unbalanced_relaxation_parameters_pair(nx, method, reg_m1, reg_m2):
+    # test generalized sinkhorn for unbalanced OT
+    n = 100
+    rng = np.random.RandomState(50)
+
+    x = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+
+    # make dists unbalanced
+    b = rng.rand(n, 2)
+
+    M = ot.dist(x, x)
+    epsilon = 1.
+
+    a, b, M = nx.from_numpy(a, b, M)
+
+    # options for reg_m
+    full_list_reg_m = [reg_m1, reg_m2]
+    full_tuple_reg_m = (reg_m1, reg_m2)
+    list_options = [full_tuple_reg_m, full_list_reg_m]
+
+    loss, log = ot.unbalanced.sinkhorn_unbalanced(
+        a, b, M, reg=epsilon, reg_m=(reg_m1, reg_m2),
+        method=method, log=True, verbose=True
+    )
+
+    for opt in list_options:
+        loss_opt, log_opt = ot.unbalanced.sinkhorn_unbalanced(
+            a, b, M, reg=epsilon, reg_m=opt,
+            method=method, log=True, verbose=True
+        )
+
+        np.testing.assert_allclose(
+            nx.to_numpy(log["logu"]), nx.to_numpy(log_opt["logu"]), atol=1e-05)
+        np.testing.assert_allclose(
+            nx.to_numpy(log["logv"]), nx.to_numpy(log_opt["logv"]), atol=1e-05)
+        np.testing.assert_allclose(
+            nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05)
+
+
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_reg_scaling", "sinkhorn_translation_invariant"])
 def test_unbalanced_multiple_inputs(nx, method):
     # test generalized sinkhorn for unbalanced OT
     n = 100
@@ -332,6 +373,21 @@ def test_unbalanced_multiple_inputs(nx, method):
     np.testing.assert_allclose(
         nx.to_numpy(v_final), nx.to_numpy(log["logv"]), atol=1e-05)
 
+    # reg_type="entropy" as multiple inputs does not work for KL yet
+    losses = ot.unbalanced.sinkhorn_unbalanced2(a, b, M, reg=epsilon,
+                                                reg_m=reg_m, method=method,
+                                                reg_type="entropy")
+
+    loss1 = ot.unbalanced.sinkhorn_unbalanced2(a, b[:, 0], M, reg=epsilon,
+                                               reg_m=reg_m, method=method,
+                                               reg_type="entropy")
+    loss2 = ot.unbalanced.sinkhorn_unbalanced2(a, b[:, 1], M, reg=epsilon,
+                                               reg_m=reg_m, method=method,
+                                               reg_type="entropy")
+
+    np.testing.assert_allclose(
+        nx.to_numpy(losses), np.array([loss1, loss2]), atol=1e-4)
+
 
 def test_stabilized_vs_sinkhorn(nx):
     # test if stable version matches sinkhorn
@@ -362,11 +418,17 @@ def test_stabilized_vs_sinkhorn(nx):
     G2_np, _ = ot.unbalanced.sinkhorn_unbalanced2(
         a, b, M, epsilon, reg_m, method="sinkhorn", log=True, stopThr=stopThr
     )
+    G3, _ = ot.unbalanced.sinkhorn_unbalanced2(
+        ab, bb, Mb, epsilon, reg_m, method="sinkhorn_translation_invariant", log=True, stopThr=stopThr
+    )
+
     G = nx.to_numpy(G)
     G2 = nx.to_numpy(G2)
+    G3 = nx.to_numpy(G3)
 
     np.testing.assert_allclose(G, G2, atol=1e-5)
     np.testing.assert_allclose(G2, G2_np, atol=1e-5)
+    np.testing.assert_allclose(G3, G, atol=1e-5)
 
 
 def test_sinkhorn_wrong_returnCost(nx):
@@ -489,7 +551,7 @@ def test_wrong_method(nx):
 
 def test_implemented_methods(nx):
     IMPLEMENTED_METHODS = ['sinkhorn', 'sinkhorn_stabilized']
-    TO_BE_IMPLEMENTED_METHODS = ['sinkhorn_reg_scaling']
+    TO_BE_IMPLEMENTED_METHODS = ['sinkhorn_reg_scaling', 'sinkhorn_translation_invariant']
     NOT_VALID_TOKENS = ['foo']
     # test generalized sinkhorn for unbalanced OT barycenter
     n = 3
