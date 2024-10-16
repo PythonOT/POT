@@ -225,16 +225,7 @@ def generic_conditional_gradient(a, b, M, f, df, reg1, reg2, lp_solver, line_sea
         Instances such as `ot.gromov.solve_partial_gromov_linesearch` for partial
         (F)GW problems add as finale output, the next step gradient reading as
         a convex combination of previously computed gradients, taking advantage of the regularizer
-        quadratic from.
-
-        This function must take as inputs : the cost function, the transport plan,
-        the conditional gradient direction for the regularization, the gradient
-        of the complete objective, the cost evaluated at G, the gradient
-        of the regularizer evaluated at G. Additional inputs can be added via kwargs.
-        To this end, we define wrappers in functions `cg`, `semirelaxed_cg`, `gcg` and
-        `partial_cg`. These respectively call `emd` for the general regularized OT problem using cg,
-        `lp_semi_relaxed_OT` for the general regularized semi-relaxed OT problem using cg,
-        `sinkhorn` for the general regularized OT problem using generalized cg.
+        quadratic form.
 
     G0 :  array-like, shape (ns,nt), optional
         initial guess (default is indep joint density)
