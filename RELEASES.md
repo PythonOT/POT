@@ -15,6 +15,7 @@
 - Implemented Fused unbalanced Gromov-Wasserstein and unbalanced Co-Optimal Transport (PR #677)
 - Notes before depreciating partial Gromov-Wasserstein function in `ot.partial` (PR #663)
 - Create `ot.gromov._partial` add new features `loss_fun = "kl_loss"` and `symmetry=False` to all solvers while increasing speed + updating adequatly `ot.solvers` (PR #663)
+- Added `ot.unbalanced.sinkhorn_unbalanced_translation_invariant` (PR #676)
 
 #### Closed issues
 - Fixed `ot.gaussian` ignoring weights when computing means (PR #649, Issue #648)
