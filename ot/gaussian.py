@@ -344,6 +344,26 @@ def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
         return W
 
 
+def bures_wasserstein_barycenter_fixpoint():
+    pass # TODO
+
+
+def bures_wasserstein_barycenter_gradient_descent():
+    r"""
+
+    References
+    ----------
+    [] Chewi, S., Maunu, T., Rigollet, P., & Stromme, A. J. (2020, July).
+    Gradient descent algorithms for Bures-Wasserstein barycenters.
+    In Conference on Learning Theory (pp. 1276-1304). PMLR.
+
+    [] Altschuler, J., Chewi, S., Gerber, P. R., & Stromme, A. (2021).
+    Averaging on the Bures-Wasserstein manifold: dimension-free convergence
+    of gradient descent. Advances in Neural Information Processing Systems, 34, 22132-22145.
+    """
+    pass # TODO
+
+
 def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, log=False):
     r"""Return OT linear operator between samples.
 
@@ -412,11 +432,7 @@ def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, lo
         # fixed point update
         Cb12 = nx.sqrtm(Cb)
 
-        Cnew = Cb12 @ C @ Cb12
-        C_ = []
-        for i in range(len(C)):
-            C_.append(nx.sqrtm(Cnew[i]))
-        Cnew = nx.stack(C_, axis=0)
+        Cnew = nx.sqrtm(Cb12 @ C @ Cb12)
         Cnew *= weights[:, None, None]
         Cnew = nx.sum(Cnew, axis=0)
 
