@@ -1308,3 +1308,15 @@ def proj_SDP(S, nx=None, vmin=0.):
         Q = nx.einsum('ijk,ik->ijk', P, w)  # Q[i] = P[i] @ diag(w[i])
         # R[i] = Q[i] @ P[i].T
         return nx.einsum('ijk,ikl->ijl', Q, nx.transpose(P, (0, 2, 1)))
+
+
+def exp_bures(Sigma, S):
+    r"""
+        Exponential map Bures-Wasserstein space as Sigma: \exp_\Sigma(S)
+    """
+    nx = get_backend(S)
+    d = S.shape[-1]
+    Id = nx.eye(d, type_as=S)
+    C = Id + S
+
+    return dots(C, Sigma, C)

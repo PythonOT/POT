@@ -108,6 +108,7 @@ def test_empirical_bures_wasserstein_distance(nx, bias):
     np.testing.assert_allclose(10 * bias, nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
 
 
+@pytest.mark.parametrize("method", ["fixed_point", "gradient_descent"])
 def test_bures_wasserstein_barycenter(nx):
     n = 50
     k = 10
@@ -129,21 +130,21 @@ def test_bures_wasserstein_barycenter(nx):
     m = nx.from_numpy(m)
     C = nx.from_numpy(C)
 
-    mblog, Cblog, log = ot.gaussian.bures_wasserstein_barycenter(m, C, log=True)
-    mb, Cb = ot.gaussian.bures_wasserstein_barycenter(m, C, log=False)
+    mblog, Cblog, log = ot.gaussian.bures_wasserstein_barycenter(m, C, method=method, log=True)
+    mb, Cb = ot.gaussian.bures_wasserstein_barycenter(m, C, method=method, log=False)
 
     np.testing.assert_allclose(Cb, Cblog, rtol=1e-2, atol=1e-2)
     np.testing.assert_allclose(mb, mblog, rtol=1e-2, atol=1e-2)
 
     # Test weights argument
     weights = nx.ones(k) / k
-    mbw, Cbw = ot.gaussian.bures_wasserstein_barycenter(m, C, weights=weights, log=False)
+    mbw, Cbw = ot.gaussian.bures_wasserstein_barycenter(m, C, weights=weights, method=method, log=False)
     np.testing.assert_allclose(Cbw, Cb, rtol=1e-2, atol=1e-2)
 
     # test with closed form for diagonal covariance matrices
     Cdiag = [nx.diag(nx.diag(C[i])) for i in range(k)]
     Cdiag = nx.stack(Cdiag, axis=0)
-    mbdiag, Cbdiag = ot.gaussian.bures_wasserstein_barycenter(m, Cdiag, log=False)
+    mbdiag, Cbdiag = ot.gaussian.bures_wasserstein_barycenter(m, Cdiag, method=method, log=False)
 
     Cdiag_sqrt = [nx.sqrtm(C) for C in Cdiag]
     Cdiag_sqrt = nx.stack(Cdiag_sqrt, axis=0)
