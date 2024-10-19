@@ -9,6 +9,7 @@ Optimal transport for Gaussian distributions
 # License: MIT License
 
 import warnings
+import numpy as np
 
 from .backend import get_backend
 from .utils import dots, is_all_finite, list_to_array, exp_bures
@@ -468,8 +469,10 @@ def bures_barycenter_gradient_descent(C, weights=None, num_iter=1000, eps=1e-7, 
     """
     nx = get_backend(*C,)
 
+    n = C.shape[0]
+
     if weights is None:
-        weights = nx.ones(C.shape[0], type_as=C[0]) / C.shape[0]
+        weights = nx.ones(C.shape[0], type_as=C[0]) / n
 
     # Init the covariance barycenter
     Cb = nx.mean(C * weights[:, None, None], axis=0)
@@ -479,21 +482,19 @@ def bures_barycenter_gradient_descent(C, weights=None, num_iter=1000, eps=1e-7, 
         Cb12 = nx.sqrtm(Cb)
         Cb12_ = nx.inv(Cb12)
 
-        # TODO: add stochastic option with batch_size != number of covs
+        if batch_size is not None and batch_size < n:  # if stochastic gradient descent
+            if batch_size <= 0:
+                raise ValueError("batch_size must be an integer between 0 and {}".format(n))
+            inds = np.random.choice(n, batch_size, replace=True, p=nx._to_numpy(weights))
+            M = nx.sqrtm(nx.einsum("ij,njk,kl -> nil", Cb12, C[inds], Cb12))
+            grad_bw = Id - nx.mean(nx.einsum("ij,njk,kl -> nil", Cb12_, M, Cb12_), axis=0)
+        else:  # gradient descent
+            M = nx.sqrtm(nx.einsum("ij,njk,kl -> nil", Cb12, C, Cb12))
+            grad_bw = Id - nx.sum(nx.einsum("ij,njk,kl -> nil", Cb12_, M, Cb12_) * weights[:, None, None], axis=0)
 
-        # if batch_size is not None:
-        #     inds = np.random.choice(len(sigmas), batch_size, replace=True, p=weights.cpu().numpy())
-        #     M = sqrtm(dots(sk12, sigmas[inds], sk12))
-        #     grad_bw = Id - torch.mean(dots(sk_12, M, sk_12), axis=0)
-        # else:
-        #     M = sqrtm(dots(sk12, sigmas, sk12))
-        #     grad_bw = Id - torch.sum(dots(sk_12, M, sk_12) * weights[:, None, None], axis=0)
-
-        M = nx.sqrtm(nx.einsum("ij,njk,kl -> nil", Cb12, C, Cb12))
-        grad_bw = Id - nx.sum(nx.einsum("ij,njk,kl -> nil", Cb12_, M, Cb12_) * weights[:, None, None], axis=0)
         Cnew = exp_bures(Cb, - step_size * grad_bw)
 
-        # Right criteria?
+        # Right criteria? (for GD, seems fine, but for SGD?)
         # check convergence
         diff = nx.norm(Cb - Cnew)
         if diff <= eps:
@@ -513,7 +514,7 @@ def bures_barycenter_gradient_descent(C, weights=None, num_iter=1000, eps=1e-7, 
         return Cb
 
 
-def bures_wasserstein_barycenter(m, C, weights=None, method="fixed_point", num_iter=1000, eps=1e-7, log=False):
+def bures_wasserstein_barycenter(m, C, weights=None, method="fixed_point", num_iter=1000, eps=1e-7, log=False, step_size=1, batch_size=None):
     r"""Return the (Bures-)Wasserstein barycenter between Gaussian distributions.
 
     The function estimates the (Bures)-Wasserstein barycenter between Gaussian distributions :math:`\left{\mathcal{N}(\mu_i,\Sigma_i)\right}_{i=1}^n`
@@ -552,6 +553,10 @@ def bures_wasserstein_barycenter(m, C, weights=None, method="fixed_point", num_i
         tolerance for the fixed point algorithm
     log : bool, optional
         record log if True
+    step_size: float, optional
+        step size for the gradient descent, 1 by default
+    batch_size: int, optional
+        batch size if use a stochastic gradient descent. If not None, use method='gradient_descent'
 
 
     Returns
@@ -586,10 +591,10 @@ def bures_wasserstein_barycenter(m, C, weights=None, method="fixed_point", num_i
     # Compute the mean barycenter
     mb = nx.sum(m * weights[:, None], axis=0)
 
-    if method == "fixed_point":
+    if method == "gradient_descent" or batch_size is not None:
+        out = bures_barycenter_gradient_descent(C, weights=weights, num_iter=num_iter, eps=eps, log=log, step_size=step_size, batch_size=batch_size)
+    elif method == "fixed_point":
         out = bures_barycenter_fixpoint(C, weights=weights, num_iter=num_iter, eps=eps, log=log)
-    elif method == "gradient_descent":
-        out = bures_barycenter_gradient_descent(C, weights=weights, num_iter=num_iter, eps=eps, log=log, step_size=1, batch_size=None)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
