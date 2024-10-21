@@ -196,7 +196,7 @@ def test_srgw_helper_backend(nx):
             marginal_product = nx.outer(ones_pb, nx.dot(qG, fC2tb))
             return ot.gromov.gwggrad(constCb + marginal_product, hC1b, hC2b, G, nx=None)
 
-        def line_search(cost, G, deltaG, Mi, cost_G):
+        def line_search(cost, G, deltaG, Mi, cost_G, df_G):
             return ot.gromov.solve_semirelaxed_gromov_linesearch(
                 G, deltaG, cost_G, hC1b, hC2b, ones_pb, 0., 1., fC2t=fC2tb, nx=None)
         # feed the precomputed local optimum Gb to semirelaxed_cg
@@ -423,7 +423,7 @@ def test_srfgw_helper_backend(nx):
         marginal_product = nx.outer(ones_pb, nx.dot(qG, fC2tb))
         return ot.gromov.gwggrad(constCb + marginal_product, hC1b, hC2b, G, nx=None)
 
-    def line_search(cost, G, deltaG, Mi, cost_G):
+    def line_search(cost, G, deltaG, Mi, cost_G, df_G):
         return ot.gromov.solve_semirelaxed_gromov_linesearch(
             G, deltaG, cost_G, C1b, C2b, ones_pb, M=(1 - alpha) * Mb, reg=alpha, nx=None)
     # feed the precomputed local optimum Gb to semirelaxed_cg
