@@ -2,6 +2,9 @@
 
 ## 0.9.5dev
 
+#### Breaking change
+- Custom functions provided as parameter `line_search` to `ot.optim.generic_conditional_gradient` must now have the signature `line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs)`, adding as input `df_G` the gradient of the regularizer evaluated at the transport plan `G`. This change aims at improving speed of solvers having quadratic polynomial functions as regularizer such as the Gromov-Wassertein loss (PR #663).
+
 #### New features
 - Added feature `mass=True` for `nx.kl_div` (PR #654)
 - Implemented Gaussian Mixture Model OT `ot.gmm` (PR #649)
@@ -13,6 +16,8 @@
 - Restructured `ot.unbalanced` module (PR #658)
 - Added `ot.unbalanced.lbfgsb_unbalanced2` and add flexible reference measure `c` in all unbalanced solvers (PR #658)
 - Implemented Fused unbalanced Gromov-Wasserstein and unbalanced Co-Optimal Transport (PR #677)
+- Notes before depreciating partial Gromov-Wasserstein function in `ot.partial` moved to ot.gromov  (PR #663)
+- Create `ot.gromov._partial` add new features `loss_fun = "kl_loss"` and `symmetry=False` to all solvers while increasing speed + updating adequatly `ot.solvers` (PR #663)
 - Added `ot.unbalanced.sinkhorn_unbalanced_translation_invariant` (PR #676)
 
 #### Closed issues
