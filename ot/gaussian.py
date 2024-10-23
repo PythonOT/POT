@@ -9,9 +9,10 @@ Optimal transport for Gaussian distributions
 # License: MIT License
 
 import warnings
+import numpy as np
 
 from .backend import get_backend
-from .utils import dots, is_all_finite, list_to_array
+from .utils import dots, is_all_finite, list_to_array, exp_bures
 
 
 def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
@@ -344,15 +345,185 @@ def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
         return W
 
 
-def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, log=False):
-    r"""Return OT linear operator between samples.
+def bures_barycenter_fixpoint(C, weights=None, num_iter=1000, eps=1e-7, log=False):
+    r"""Return the (Bures-)Wasserstein barycenter between centered Gaussian distributions.
 
-    The function estimates the optimal barycenter of the
-    empirical distributions. This is equivalent to resolving the fixed point
-     algorithm for multiple Gaussian distributions :math:`\left{\mathcal{N}(\mu,\Sigma)\right}_{i=1}^n`
+    The function estimates the (Bures)-Wasserstein barycenter between centered Gaussian distributions :math:`\left{\mathcal{N}(\mu_i,\Sigma_i)\right}_{i=1}^n`
+    :ref:`[1] <references-OT-mapping-linear-barycenter>` by solving
+
+    .. math::
+        \Sigma_b = \argmin_{\Sigma \in S_d^{+}(\mathbb{R})}\ \sum_{i=1}^n w_i W_2^2\big(\mathcal{N}(0,\Sigma), \mathcal{N}(0, \Sigma_i)\big)
+
+    The barycenter still follows a Gaussian distribution :math:`\mathcal{N}(0,\Sigma_b)`
+    where :math: `\Sigma_b` is solution of the following fixed-point algorithm:
+
+    .. math::
+        \Sigma_b = \sum_{i=1}^n w_i \left(\Sigma_b^{1/2}\Sigma_i^{1/2}\Sigma_b^{1/2}\right)^{1/2}
+
+    Parameters
+    ----------
+    C : array-like (k,d,d)
+        covariance of k distributions
+    weights : array-like (k), optional
+        weights for each distribution
+    method : str
+        method used for the solver, either 'fixed_point' or 'gradient_descent'
+    num_iter : int, optional
+        number of iteration for the fixed point algorithm
+    eps : float, optional
+        tolerance for the fixed point algorithm
+    log : bool, optional
+        record log if True
+
+    Returns
+    -------
+    Cb : (d, d) array-like
+        covariance of the barycenter
+    log : dict
+        log dictionary return only if log==True in parameters
+
+    References
+    ----------
+    .. [1] M. Agueh and G. Carlier, "Barycenters in the Wasserstein space",
+        SIAM Journal on Mathematical Analysis, vol. 43, no. 2, pp. 904-924,
+        2011.
+    """
+    nx = get_backend(*C,)
+
+    if weights is None:
+        weights = nx.ones(C.shape[0], type_as=C[0]) / C.shape[0]
+
+    # Init the covariance barycenter
+    Cb = nx.mean(C * weights[:, None, None], axis=0)
+
+    for it in range(num_iter):
+        # fixed point update
+        Cb12 = nx.sqrtm(Cb)
+
+        Cnew = nx.sqrtm(Cb12 @ C @ Cb12)
+        Cnew *= weights[:, None, None]
+        Cnew = nx.sum(Cnew, axis=0)
+
+        # check convergence
+        diff = nx.norm(Cb - Cnew)
+        if diff <= eps:
+            break
+        Cb = Cnew
+
+    if diff > eps:
+        print("Dit not converge.")
+
+    if log:
+        log = {}
+        log['num_iter'] = it
+        log['final_diff'] = diff
+        return Cb, log
+    else:
+        return Cb
+
+
+def bures_barycenter_gradient_descent(C, weights=None, num_iter=1000, eps=1e-7, log=False, step_size=1, batch_size=None):
+    r"""Return OT linear operator between covariances.
+
+    The function estimates the optimal barycenter of empirical distributions. This is equivalent to resolving the fixed point
+     algorithm for multiple Gaussian distributions :math:`\left{\mathcal{N}(0,\Sigma)\right}_{i=1}^n`
     :ref:`[1] <references-OT-mapping-linear-barycenter>`.
 
-    The barycenter still following a Gaussian distribution :math:`\mathcal{N}(\mu_b,\Sigma_b)`
+    The barycenter still follows a Gaussian distribution :math:`\mathcal{N}(0,\Sigma_b)`
+
+    Parameters
+    ----------
+    C : array-like (k,d,d)
+        covariance of k distributions
+    weights : array-like (k), optional
+        weights for each distribution
+    method : str
+        method used for the solver, either 'fixed_point' or 'gradient_descent'
+    num_iter : int, optional
+        number of iteration for the fixed point algorithm
+    eps : float, optional
+        tolerance for the fixed point algorithm
+    log : bool, optional
+        record log if True
+    step_size: float, optional
+        step size for the gradient descent, 1 by default
+    batch_size: int, optional
+        batch size if use a stochastic gradient descent
+
+    Returns
+    -------
+    Cb : (d, d) array-like
+        covariance of the barycenter
+    log : dict
+        log dictionary return only if log==True in parameters
+
+    References
+    ----------
+    .. [74] Chewi, S., Maunu, T., Rigollet, P., & Stromme, A. J. (2020).
+    Gradient descent algorithms for Bures-Wasserstein barycenters.
+    In Conference on Learning Theory (pp. 1276-1304). PMLR.
+
+    .. [75] Altschuler, J., Chewi, S., Gerber, P. R., & Stromme, A. (2021).
+    Averaging on the Bures-Wasserstein manifold: dimension-free convergence
+    of gradient descent. Advances in Neural Information Processing Systems, 34, 22132-22145.
+    """
+    nx = get_backend(*C,)
+
+    n = C.shape[0]
+
+    if weights is None:
+        weights = nx.ones(C.shape[0], type_as=C[0]) / n
+
+    # Init the covariance barycenter
+    Cb = nx.mean(C * weights[:, None, None], axis=0)
+    Id = nx.eye(C.shape[-1], type_as=Cb)
+
+    for it in range(num_iter):
+        Cb12 = nx.sqrtm(Cb)
+        Cb12_ = nx.inv(Cb12)
+
+        if batch_size is not None and batch_size < n:  # if stochastic gradient descent
+            if batch_size <= 0:
+                raise ValueError("batch_size must be an integer between 0 and {}".format(n))
+            inds = np.random.choice(n, batch_size, replace=True, p=nx._to_numpy(weights))
+            M = nx.sqrtm(nx.einsum("ij,njk,kl -> nil", Cb12, C[inds], Cb12))
+            grad_bw = Id - nx.mean(nx.einsum("ij,njk,kl -> nil", Cb12_, M, Cb12_), axis=0)
+        else:  # gradient descent
+            M = nx.sqrtm(nx.einsum("ij,njk,kl -> nil", Cb12, C, Cb12))
+            grad_bw = Id - nx.sum(nx.einsum("ij,njk,kl -> nil", Cb12_, M, Cb12_) * weights[:, None, None], axis=0)
+
+        Cnew = exp_bures(Cb, - step_size * grad_bw)
+
+        # Right criteria? (for GD, seems fine, but for SGD?)
+        # check convergence
+        diff = nx.norm(Cb - Cnew)
+        if diff <= eps:
+            break
+
+        Cb = Cnew
+
+    if diff > eps:
+        print("Dit not converge.")
+
+    if log:
+        log = {}
+        log['num_iter'] = it
+        log['final_diff'] = diff
+        return Cb, log
+    else:
+        return Cb
+
+
+def bures_wasserstein_barycenter(m, C, weights=None, method="fixed_point", num_iter=1000, eps=1e-7, log=False, step_size=1, batch_size=None):
+    r"""Return the (Bures-)Wasserstein barycenter between Gaussian distributions.
+
+    The function estimates the (Bures)-Wasserstein barycenter between Gaussian distributions :math:`\left{\mathcal{N}(\mu_i,\Sigma_i)\right}_{i=1}^n`
+    :ref:`[1] <references-OT-mapping-linear-barycenter>` by solving
+
+    .. math::
+        (\mu_b, \Sigma_b) = \argmin_{\mu,\Sigma}\ \sum_{i=1}^n w_i W_2^2\big(\mathcal{N}(\mu,\Sigma), \mathcal{N}(\mu_i, \Sigma_i)\big)
+
+    The barycenter still follows a Gaussian distribution :math:`\mathcal{N}(\mu_b,\Sigma_b)`
     where :
 
     .. math::
@@ -363,6 +534,8 @@ def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, lo
     .. math::
         \Sigma_b = \sum_{i=1}^n w_i \left(\Sigma_b^{1/2}\Sigma_i^{1/2}\Sigma_b^{1/2}\right)^{1/2}
 
+    We propose two solvers: one based on solving the previous fixed-point problem [1]. Another based on
+    gradient descent in the Bures-Wasserstein space [74,75].
 
     Parameters
     ----------
@@ -372,12 +545,18 @@ def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, lo
         covariance of k distributions
     weights : array-like (k), optional
         weights for each distribution
+    method : str
+        method used for the solver, either 'fixed_point' or 'gradient_descent'
     num_iter : int, optional
         number of iteration for the fixed point algorithm
     eps : float, optional
         tolerance for the fixed point algorithm
     log : bool, optional
         record log if True
+    step_size: float, optional
+        step size for the gradient descent, 1 by default
+    batch_size: int, optional
+        batch size if use a stochastic gradient descent. If not None, use method='gradient_descent'
 
 
     Returns
@@ -389,15 +568,22 @@ def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, lo
     log : dict
         log dictionary return only if log==True in parameters
 
-
-    .. _references-OT-mapping-linear-barycenter:
+    .. _references-OT-bures_wasserstein-barycenter:
     References
     ----------
     .. [1] M. Agueh and G. Carlier, "Barycenters in the Wasserstein space",
         SIAM Journal on Mathematical Analysis, vol. 43, no. 2, pp. 904-924,
         2011.
+
+    .. [74] Chewi, S., Maunu, T., Rigollet, P., & Stromme, A. J. (2020).
+    Gradient descent algorithms for Bures-Wasserstein barycenters.
+    In Conference on Learning Theory (pp. 1276-1304). PMLR.
+
+    .. [75] Altschuler, J., Chewi, S., Gerber, P. R., & Stromme, A. (2021).
+    Averaging on the Bures-Wasserstein manifold: dimension-free convergence
+    of gradient descent. Advances in Neural Information Processing Systems, 34, 22132-22145.
     """
-    nx = get_backend(*C, *m,)
+    nx = get_backend(*m,)
 
     if weights is None:
         weights = nx.ones(C.shape[0], type_as=C[0]) / C.shape[0]
@@ -405,35 +591,18 @@ def bures_wasserstein_barycenter(m, C, weights=None, num_iter=1000, eps=1e-7, lo
     # Compute the mean barycenter
     mb = nx.sum(m * weights[:, None], axis=0)
 
-    # Init the covariance barycenter
-    Cb = nx.mean(C * weights[:, None, None], axis=0)
-
-    for it in range(num_iter):
-        # fixed point update
-        Cb12 = nx.sqrtm(Cb)
-
-        Cnew = Cb12 @ C @ Cb12
-        C_ = []
-        for i in range(len(C)):
-            C_.append(nx.sqrtm(Cnew[i]))
-        Cnew = nx.stack(C_, axis=0)
-        Cnew *= weights[:, None, None]
-        Cnew = nx.sum(Cnew, axis=0)
-
-        # check convergence
-        diff = nx.norm(Cb - Cnew)
-        if diff <= eps:
-            break
-        Cb = Cnew
+    if method == "gradient_descent" or batch_size is not None:
+        out = bures_barycenter_gradient_descent(C, weights=weights, num_iter=num_iter, eps=eps, log=log, step_size=step_size, batch_size=batch_size)
+    elif method == "fixed_point":
+        out = bures_barycenter_fixpoint(C, weights=weights, num_iter=num_iter, eps=eps, log=log)
     else:
-        print("Dit not converge.")
+        raise ValueError("Unknown method '%s'." % method)
 
     if log:
-        log = {}
-        log['num_iter'] = it
-        log['final_diff'] = diff
+        Cb, log = out
         return mb, Cb, log
     else:
+        Cb = out
         return mb, Cb
 
 
