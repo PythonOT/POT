@@ -109,7 +109,7 @@ def test_empirical_bures_wasserstein_distance(nx, bias):
 
 
 @pytest.mark.parametrize("method", ["fixed_point", "gradient_descent"])
-def test_bures_wasserstein_barycenter(nx):
+def test_bures_wasserstein_barycenter(nx, method):
     n = 50
     k = 10
     X = []

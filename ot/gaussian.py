@@ -514,7 +514,9 @@ def bures_barycenter_gradient_descent(C, weights=None, num_iter=1000, eps=1e-7, 
         return Cb
 
 
-def bures_wasserstein_barycenter(m, C, weights=None, method="fixed_point", num_iter=1000, eps=1e-7, log=False, step_size=1, batch_size=None):
+def bures_wasserstein_barycenter(m, C, weights=None, method="fixed_point",
+                                 num_iter=1000, eps=1e-7, log=False,
+                                 step_size=1, batch_size=None):
     r"""Return the (Bures-)Wasserstein barycenter between Gaussian distributions.
 
     The function estimates the (Bures)-Wasserstein barycenter between Gaussian distributions :math:`\left{\mathcal{N}(\mu_i,\Sigma_i)\right}_{i=1}^n`
@@ -592,9 +594,13 @@ def bures_wasserstein_barycenter(m, C, weights=None, method="fixed_point", num_i
     mb = nx.sum(m * weights[:, None], axis=0)
 
     if method == "gradient_descent" or batch_size is not None:
-        out = bures_barycenter_gradient_descent(C, weights=weights, num_iter=num_iter, eps=eps, log=log, step_size=step_size, batch_size=batch_size)
+        out = bures_barycenter_gradient_descent(C, weights=weights,
+                                                num_iter=num_iter, eps=eps,
+                                                log=log, step_size=step_size,
+                                                batch_size=batch_size)
     elif method == "fixed_point":
-        out = bures_barycenter_fixpoint(C, weights=weights, num_iter=num_iter, eps=eps, log=log)
+        out = bures_barycenter_fixpoint(C, weights=weights, num_iter=num_iter,
+                                        eps=eps, log=log)
     else:
         raise ValueError("Unknown method '%s'." % method)
 
