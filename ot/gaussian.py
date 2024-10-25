@@ -485,18 +485,25 @@ def bures_barycenter_gradient_descent(C, weights=None, num_iter=1000, eps=1e-7, 
         if batch_size is not None and batch_size < n:  # if stochastic gradient descent
             if batch_size <= 0:
                 raise ValueError("batch_size must be an integer between 0 and {}".format(n))
-            inds = np.random.choice(n, batch_size, replace=True, p=nx._to_numpy(weights))
+            inds = np.random.choice(n, batch_size, replace=True,
+                                    p=nx._to_numpy(weights))
             M = nx.sqrtm(nx.einsum("ij,njk,kl -> nil", Cb12, C[inds], Cb12))
-            grad_bw = Id - nx.mean(nx.einsum("ij,njk,kl -> nil", Cb12_, M, Cb12_), axis=0)
+            ot_maps = nx.einsum("ij,njk,kl -> nil", Cb12_, M, Cb12_)
+            grad_bw = Id - nx.mean(ot_maps, axis=0)
         else:  # gradient descent
             M = nx.sqrtm(nx.einsum("ij,njk,kl -> nil", Cb12, C, Cb12))
-            grad_bw = Id - nx.sum(nx.einsum("ij,njk,kl -> nil", Cb12_, M, Cb12_) * weights[:, None, None], axis=0)
+            ot_maps = nx.einsum("ij,njk,kl -> nil", Cb12_, M, Cb12_)
+            grad_bw = Id - nx.sum(ot_maps * weights[:, None, None], axis=0)
 
-        Cnew = exp_bures(Cb, - step_size * grad_bw)
+        Cnew = exp_bures(Cb, - step_size * grad_bw, nx=nx)
 
-        # Right criteria? (for GD, seems fine, but for SGD?)
         # check convergence
-        diff = nx.norm(Cb - Cnew)
+        if batch_size is not None and batch_size < n:
+            # TODO: criteria for SGD: on gradients? + test SGD
+            diff = nx.norm(Cb - Cnew)
+        else:
+            diff = nx.norm(Cb - Cnew)
+
         if diff <= eps:
             break
 
