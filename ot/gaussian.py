@@ -348,17 +348,17 @@ def empirical_bures_wasserstein_distance(xs, xt, reg=1e-6, ws=None,
 def bures_barycenter_fixpoint(C, weights=None, num_iter=1000, eps=1e-7, log=False):
     r"""Return the (Bures-)Wasserstein barycenter between centered Gaussian distributions.
 
-    The function estimates the (Bures)-Wasserstein barycenter between centered Gaussian distributions :math:`\left{\mathcal{N}(\mu_i,\Sigma_i)\right}_{i=1}^n`
-    :ref:`[1] <references-OT-mapping-linear-barycenter>` by solving
+    The function estimates the (Bures)-Wasserstein barycenter between centered Gaussian distributions :math:`\big(\mathcal{N}(0,\Sigma_i)\big)_{i=1}^n`
+    :ref:`[16] <references-OT-bures-barycenter-fixed-point>` by solving
 
     .. math::
-        \Sigma_b = \argmin_{\Sigma \in S_d^{+}(\mathbb{R})}\ \sum_{i=1}^n w_i W_2^2\big(\mathcal{N}(0,\Sigma), \mathcal{N}(0, \Sigma_i)\big)
+        \Sigma_b = \mathrm{argmin}_{\Sigma \in S_d^{+}(\mathbb{R})}\ \sum_{i=1}^n w_i W_2^2\big(\mathcal{N}(0,\Sigma), \mathcal{N}(0, \Sigma_i)\big).
 
     The barycenter still follows a Gaussian distribution :math:`\mathcal{N}(0,\Sigma_b)`
-    where :math: `\Sigma_b` is solution of the following fixed-point algorithm:
+    where :math:`\Sigma_b` is solution of the following fixed-point algorithm:
 
     .. math::
-        \Sigma_b = \sum_{i=1}^n w_i \left(\Sigma_b^{1/2}\Sigma_i^{1/2}\Sigma_b^{1/2}\right)^{1/2}
+        \Sigma_b = \sum_{i=1}^n w_i \left(\Sigma_b^{1/2}\Sigma_i^{1/2}\Sigma_b^{1/2}\right)^{1/2}.
 
     Parameters
     ----------
@@ -382,9 +382,11 @@ def bures_barycenter_fixpoint(C, weights=None, num_iter=1000, eps=1e-7, log=Fals
     log : dict
         log dictionary return only if log==True in parameters
 
+
+    .. _references-OT-bures-barycenter-fixed-point:
     References
     ----------
-    .. [1] M. Agueh and G. Carlier, "Barycenters in the Wasserstein space",
+    .. [16] M. Agueh and G. Carlier, "Barycenters in the Wasserstein space",
         SIAM Journal on Mathematical Analysis, vol. 43, no. 2, pp. 904-924,
         2011.
     """
@@ -423,13 +425,14 @@ def bures_barycenter_fixpoint(C, weights=None, num_iter=1000, eps=1e-7, log=Fals
 
 
 def bures_barycenter_gradient_descent(C, weights=None, num_iter=1000, eps=1e-7, log=False, step_size=1, batch_size=None):
-    r"""Return OT linear operator between covariances.
+    r"""Return the (Bures-)Wasserstein barycenter between centered Gaussian distributions.
 
-    The function estimates the optimal barycenter of empirical distributions. This is equivalent to resolving the fixed point
-     algorithm for multiple Gaussian distributions :math:`\left{\mathcal{N}(0,\Sigma)\right}_{i=1}^n`
-    :ref:`[1] <references-OT-mapping-linear-barycenter>`.
+    The function estimates the (Bures)-Wasserstein barycenter between centered Gaussian distributions :math:`\big(\mathcal{N}(0,\Sigma_i)\big)_{i=1}^n`
+    by using a gradient descent in the Wasserstein space :ref:`[74, 75] <references-OT-bures-barycenter-gradient_descent>`
+    on the objective 
 
-    The barycenter still follows a Gaussian distribution :math:`\mathcal{N}(0,\Sigma_b)`
+    .. math::
+        \mathcal{L}(\Sigma) = \sum_{i=1}^n w_i W_2^2\big(\mathcal{N}(0,\Sigma), \mathcal{N}(0,\Sigma_i)\big).
 
     Parameters
     ----------
@@ -445,9 +448,9 @@ def bures_barycenter_gradient_descent(C, weights=None, num_iter=1000, eps=1e-7, 
         tolerance for the fixed point algorithm
     log : bool, optional
         record log if True
-    step_size: float, optional
+    step_size : float, optional
         step size for the gradient descent, 1 by default
-    batch_size: int, optional
+    batch_size : int, optional
         batch size if use a stochastic gradient descent
 
     Returns
@@ -457,15 +460,17 @@ def bures_barycenter_gradient_descent(C, weights=None, num_iter=1000, eps=1e-7, 
     log : dict
         log dictionary return only if log==True in parameters
 
+
+    .. _references-OT-bures-barycenter-gradient_descent:
     References
     ----------
     .. [74] Chewi, S., Maunu, T., Rigollet, P., & Stromme, A. J. (2020).
-    Gradient descent algorithms for Bures-Wasserstein barycenters.
-    In Conference on Learning Theory (pp. 1276-1304). PMLR.
+        Gradient descent algorithms for Bures-Wasserstein barycenters.
+        In Conference on Learning Theory (pp. 1276-1304). PMLR.
 
     .. [75] Altschuler, J., Chewi, S., Gerber, P. R., & Stromme, A. (2021).
-    Averaging on the Bures-Wasserstein manifold: dimension-free convergence
-    of gradient descent. Advances in Neural Information Processing Systems, 34, 22132-22145.
+        Averaging on the Bures-Wasserstein manifold: dimension-free convergence
+        of gradient descent. Advances in Neural Information Processing Systems, 34, 22132-22145.
     """
     nx = get_backend(*C,)
 
@@ -526,19 +531,19 @@ def bures_wasserstein_barycenter(m, C, weights=None, method="fixed_point",
                                  step_size=1, batch_size=None):
     r"""Return the (Bures-)Wasserstein barycenter between Gaussian distributions.
 
-    The function estimates the (Bures)-Wasserstein barycenter between Gaussian distributions :math:`\left{\mathcal{N}(\mu_i,\Sigma_i)\right}_{i=1}^n`
-    :ref:`[1] <references-OT-mapping-linear-barycenter>` by solving
+    The function estimates the (Bures)-Wasserstein barycenter between Gaussian distributions :math:`\big(\mathcal{N}(\mu_i,\Sigma_i)\big)_{i=1}^n`
+    :ref:`[16, 74, 75] <references-OT-bures_wasserstein-barycenter>` by solving
 
     .. math::
-        (\mu_b, \Sigma_b) = \argmin_{\mu,\Sigma}\ \sum_{i=1}^n w_i W_2^2\big(\mathcal{N}(\mu,\Sigma), \mathcal{N}(\mu_i, \Sigma_i)\big)
+        (\mu_b, \Sigma_b) = \mathrm{argmin}_{\mu,\Sigma}\ \sum_{i=1}^n w_i W_2^2\big(\mathcal{N}(\mu,\Sigma), \mathcal{N}(\mu_i, \Sigma_i)\big)
 
     The barycenter still follows a Gaussian distribution :math:`\mathcal{N}(\mu_b,\Sigma_b)`
-    where :
+    where:
 
     .. math::
-        \mu_b = \sum_{i=1}^n w_i \mu_i
+        \mu_b = \sum_{i=1}^n w_i \mu_i,
 
-    And the barycentric covariance is the solution of the following fixed-point algorithm:
+    and the barycentric covariance is the solution of the following fixed-point algorithm:
 
     .. math::
         \Sigma_b = \sum_{i=1}^n w_i \left(\Sigma_b^{1/2}\Sigma_i^{1/2}\Sigma_b^{1/2}\right)^{1/2}
@@ -562,9 +567,9 @@ def bures_wasserstein_barycenter(m, C, weights=None, method="fixed_point",
         tolerance for the fixed point algorithm
     log : bool, optional
         record log if True
-    step_size: float, optional
+    step_size : float, optional
         step size for the gradient descent, 1 by default
-    batch_size: int, optional
+    batch_size : int, optional
         batch size if use a stochastic gradient descent. If not None, use method='gradient_descent'
 
 
@@ -577,20 +582,21 @@ def bures_wasserstein_barycenter(m, C, weights=None, method="fixed_point",
     log : dict
         log dictionary return only if log==True in parameters
 
+
     .. _references-OT-bures_wasserstein-barycenter:
     References
     ----------
-    .. [1] M. Agueh and G. Carlier, "Barycenters in the Wasserstein space",
+    .. [16] M. Agueh and G. Carlier, "Barycenters in the Wasserstein space",
         SIAM Journal on Mathematical Analysis, vol. 43, no. 2, pp. 904-924,
         2011.
 
     .. [74] Chewi, S., Maunu, T., Rigollet, P., & Stromme, A. J. (2020).
-    Gradient descent algorithms for Bures-Wasserstein barycenters.
-    In Conference on Learning Theory (pp. 1276-1304). PMLR.
+        Gradient descent algorithms for Bures-Wasserstein barycenters.
+        In Conference on Learning Theory (pp. 1276-1304). PMLR.
 
     .. [75] Altschuler, J., Chewi, S., Gerber, P. R., & Stromme, A. (2021).
-    Averaging on the Bures-Wasserstein manifold: dimension-free convergence
-    of gradient descent. Advances in Neural Information Processing Systems, 34, 22132-22145.
+        Averaging on the Bures-Wasserstein manifold: dimension-free convergence
+        of gradient descent. Advances in Neural Information Processing Systems, 34, 22132-22145.
     """
     nx = get_backend(*m,)
 
