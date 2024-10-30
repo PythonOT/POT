@@ -15,8 +15,8 @@ def test__flat_product_operator():
     X = np.reshape(1.0 * np.arange(2 * n), (n, d))
     A1, A2 = ot.lowrank.compute_lr_sqeuclidean_matrix(X, X, rescale_cost=False)
 
-    A1_ = ot.gromov._flat_product_operator(A1)
-    A2_ = ot.gromov._flat_product_operator(A2)
+    A1_ = ot.gromov._lowrank._flat_product_operator(A1)
+    A2_ = ot.gromov._lowrank._flat_product_operator(A2)
     cost = ot.dist(X, X)
 
     # test value

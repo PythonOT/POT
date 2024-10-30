@@ -1890,7 +1890,12 @@ class TorchBackend(Backend):
         return a.cpu().detach().numpy()
 
     def _from_numpy(self, a, type_as=None):
-        if isinstance(a, float) or isinstance(a, int):
+        if (
+            isinstance(a, float)
+            or isinstance(a, int)
+            or isinstance(a, np.float32)
+            or isinstance(a, np.float64)
+        ):
             a = np.array(a)
         if type_as is None:
             return torch.from_numpy(a)
