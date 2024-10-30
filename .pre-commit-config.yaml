@@ -1,0 +1,51 @@
+repos:
+  # Ruff skada
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.2
+    hooks:
+      - id: ruff
+        name: ruff lint
+        args: ["--fix"]
+        files: ^ot/
+      - id: ruff
+        name: ruff lint preview
+        args: ["--fix", "--preview", "--select=NPY201"]
+        files: ^ot/
+      - id: ruff
+        name: ruff lint doc, tutorials, tests and examples
+        # D103: missing docstring in public function
+        # D400: docstring first line must end with period
+        args: ["--ignore=D103,D400", "--fix"]
+        files: ^docs/|^examples/^test/
+      - id: ruff-format
+        files: ^ot/|^docs/|^examples/|
+
+  # Codespell
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.6
+    hooks:
+      - id: codespell
+        additional_dependencies:
+          - tomli
+        files: ^ot/|^docs/|^examples/
+        types_or: [python, bib, rst, inc]
+        args: [
+          "--ignore-words",
+          "ignore-words.txt",
+        ]
+
+  # yamllint
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+      # args: [--strict]
+
+# # rstcheck
+  # - repo: https://github.com/rstcheck/rstcheck.git
+  #   rev: v6.2.0
+  #   hooks:
+  #     - id: rstcheck
+  #       additional_dependencies:
+  #         - tomli
+  #       files: ^docs/source/.*\.(rst|inc)$
