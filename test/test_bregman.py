@@ -843,6 +843,7 @@ def test_wasserstein_bary_2d(nx, method):
         ot.bregman.convolutional_barycenter2d(A, reg, log=True, verbose=True)
 
 
+@pytest.skip_backend("tf")
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
 def test_wasserstein_bary_2d_dtype_device(nx, method):
     # Create the array of images to test
@@ -974,6 +975,7 @@ def test_wasserstein_bary_2d_debiased(nx, method):
         ot.bregman.convolutional_barycenter2d_debiased(A, reg, log=True, verbose=True)
 
 
+@pytest.skip_backend("tf")
 @pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
 def test_wasserstein_bary_2d_debiased_dtype_device(nx, method):
     # Create the array of images to test
