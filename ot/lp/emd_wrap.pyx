@@ -120,7 +120,7 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[uint32_t, ndim=1, mode="c"] iM, np.ndarray[uint32_t, ndim=1, mode="c"] jM,np.ndarray[double, ndim=1, mode="c"] M, uint64_t max_iter):
+def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[int, ndim=1, mode="c"] iM, np.ndarray[int, ndim=1, mode="c"] jM, np.ndarray[double, ndim=1, mode="c"] M, uint64_t max_iter):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
 
@@ -175,12 +175,13 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim
     cdef int nmax=n1+n2-1
     cdef int result_code = 0
     cdef uint64_t nG=0
+    cdef uint64_t maxiter = max_iter
 
     cdef double cost=0
     cdef np.ndarray[double, ndim=1, mode="c"] alpha=np.zeros(n1)
     cdef np.ndarray[double, ndim=1, mode="c"] beta=np.zeros(n2)
 
-    cdef np.ndarray[double, ndim=2, mode="c"] G=np.zeros(nmax)
+    cdef np.ndarray[double, ndim=1, mode="c"] G=np.zeros(nmax)
     cdef np.ndarray[uint32_t, ndim=1, mode="c"] iG=np.zeros(nmax, dtype=np.uint32)
     cdef np.ndarray[uint32_t, ndim=1, mode="c"] jG=np.zeros(nmax, dtype=np.uint32)
 
@@ -188,7 +189,7 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim
         result_code = EMD_wrap_sparse(n1, n2, <double*> a.data, <double*> b.data,
                                         <uint32_t*> iM.data, <uint32_t*> jM.data, <double*> M.data, iM.shape[0],
                                         <uint32_t*> iG.data, <uint32_t*> jG.data, <double*> G.data, &nG,
-                                        <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+                                        <double*> alpha.data, <double*> beta.data, <double*> &cost, maxiter)
     return G[:nG], iG[:nG], jG[:nG], cost, alpha, beta, result_code
 
 
