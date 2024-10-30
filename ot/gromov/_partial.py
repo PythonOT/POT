@@ -9,7 +9,6 @@ Partial (Fused) Gromov-Wasserstein solvers.
 #
 # License: MIT License
 
-
 from ..utils import list_to_array, unif
 from ..backend import get_backend, NumpyBackend
 from ..partial import entropic_partial_wasserstein
@@ -21,9 +20,23 @@ import warnings
 
 
 def partial_gromov_wasserstein(
-        C1, C2, p=None, q=None, m=None, loss_fun='square_loss', nb_dummies=1,
-        G0=None, thres=1, numItermax=1e4, tol=1e-8, symmetric=None, warn=True,
-        log=False, verbose=False, **kwargs):
+    C1,
+    C2,
+    p=None,
+    q=None,
+    m=None,
+    loss_fun="square_loss",
+    nb_dummies=1,
+    G0=None,
+    thres=1,
+    numItermax=1e4,
+    tol=1e-8,
+    symmetric=None,
+    warn=True,
+    log=False,
+    verbose=False,
+    **kwargs,
+):
     r"""
     Returns the Partial Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{p})`
     and :math:`(\mathbf{C_2}, \mathbf{q})`.
@@ -165,19 +178,24 @@ def partial_gromov_wasserstein(
     C1 = nx.to_numpy(C10)
     C2 = nx.to_numpy(C20)
     if symmetric is None:
-        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
+        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(
+            C2, C2.T, atol=1e-10
+        )
 
     if m is None:
         m = min(np.sum(p), np.sum(q))
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater"
-                         " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
     elif m > min(np.sum(p), np.sum(q)):
-        raise ValueError("Problem infeasible. Parameter m should lower or"
-                         " equal than min(|a|_1, |b|_1).")
+        raise ValueError(
+            "Problem infeasible. Parameter m should lower or"
+            " equal than min(|a|_1, |b|_1)."
+        )
 
     if G0 is None:
-        G0 = np.outer(p, q) * m / (np.sum(p) * np.sum(q))  # make sure |G0|=m, G01_m\leq p, G0.T1_n\leq q.
+        G0 = (
+            np.outer(p, q) * m / (np.sum(p) * np.sum(q))
+        )  # make sure |G0|=m, G01_m\leq p, G0.T1_n\leq q.
 
     else:
         G0 = nx.to_numpy(G0_)
@@ -207,6 +225,7 @@ def partial_gromov_wasserstein(
         return gwloss(constC1 + constC2, hC1, hC2, G, np_)
 
     if symmetric:
+
         def df(G):
             pG = G.sum(1)
             qG = G.sum(0)
@@ -224,13 +243,15 @@ def partial_gromov_wasserstein(
             constC2t = np.outer(ones_p, np.dot(qG, fC2))
 
             return 0.5 * (
-                gwggrad(constC1 + constC2, hC1, hC2, G, np_) +
-                gwggrad(constC1t + constC2t, hC1t, hC2t, G, np_))
+                gwggrad(constC1 + constC2, hC1, hC2, G, np_)
+                + gwggrad(constC1t + constC2t, hC1t, hC2t, G, np_)
+            )
 
     def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
         df_Gc = df(deltaG + G)
         return solve_partial_gromov_linesearch(
-            G, deltaG, cost_G, df_G, df_Gc, M=0., reg=1., nx=np_, **kwargs)
+            G, deltaG, cost_G, df_G, df_Gc, M=0.0, reg=1.0, nx=np_, **kwargs
+        )
 
     if not nx.is_floating_point(C10):
         warnings.warn(
@@ -238,26 +259,71 @@ def partial_gromov_wasserstein(
             "casted accordingly, possibly resulting in a loss of precision. "
             "If this behaviour is unwanted, please make sure your input "
             "structure matrix consists of floating point elements.",
-            stacklevel=2
+            stacklevel=2,
         )
 
     if log:
-        res, log = partial_cg(p, q, p_extended, q_extended, 0., 1., f, df, G0,
-                              line_search, log=True, numItermax=numItermax,
-                              stopThr=tol, stopThr2=0., warn=warn, **kwargs)
-        log['partial_gw_dist'] = nx.from_numpy(log['loss'][-1], type_as=C10)
+        res, log = partial_cg(
+            p,
+            q,
+            p_extended,
+            q_extended,
+            0.0,
+            1.0,
+            f,
+            df,
+            G0,
+            line_search,
+            log=True,
+            numItermax=numItermax,
+            stopThr=tol,
+            stopThr2=0.0,
+            warn=warn,
+            **kwargs,
+        )
+        log["partial_gw_dist"] = nx.from_numpy(log["loss"][-1], type_as=C10)
         return nx.from_numpy(res, type_as=C10), log
     else:
         return nx.from_numpy(
-            partial_cg(p, q, p_extended, q_extended, 0., 1., f, df, G0,
-                       line_search, log=False, numItermax=numItermax,
-                       stopThr=tol, stopThr2=0., **kwargs), type_as=C10)
+            partial_cg(
+                p,
+                q,
+                p_extended,
+                q_extended,
+                0.0,
+                1.0,
+                f,
+                df,
+                G0,
+                line_search,
+                log=False,
+                numItermax=numItermax,
+                stopThr=tol,
+                stopThr2=0.0,
+                **kwargs,
+            ),
+            type_as=C10,
+        )
 
 
 def partial_gromov_wasserstein2(
-        C1, C2, p=None, q=None, m=None, loss_fun='square_loss', nb_dummies=1, G0=None,
-        thres=1, numItermax=1e4, tol=1e-7, symmetric=None, warn=False, log=False,
-        verbose=False, **kwargs):
+    C1,
+    C2,
+    p=None,
+    q=None,
+    m=None,
+    loss_fun="square_loss",
+    nb_dummies=1,
+    G0=None,
+    thres=1,
+    numItermax=1e4,
+    tol=1e-7,
+    symmetric=None,
+    warn=False,
+    log=False,
+    verbose=False,
+    **kwargs,
+):
     r"""
     Returns the Partial Gromov-Wasserstein discrepancy between
     :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`.
@@ -391,18 +457,35 @@ def partial_gromov_wasserstein2(
         q = unif(C2.shape[0], type_as=C1)
 
     T, log_pgw = partial_gromov_wasserstein(
-        C1, C2, p, q, m, loss_fun, nb_dummies, G0, thres,
-        numItermax, tol, symmetric, warn, True, verbose, **kwargs)
+        C1,
+        C2,
+        p,
+        q,
+        m,
+        loss_fun,
+        nb_dummies,
+        G0,
+        thres,
+        numItermax,
+        tol,
+        symmetric,
+        warn,
+        True,
+        verbose,
+        **kwargs,
+    )
 
-    log_pgw['T'] = T
-    pgw = log_pgw['partial_gw_dist']
+    log_pgw["T"] = T
+    pgw = log_pgw["partial_gw_dist"]
 
-    if loss_fun == 'square_loss':
+    if loss_fun == "square_loss":
         gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
         gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
-    elif loss_fun == 'kl_loss':
-        gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(T, nx.dot(nx.log(C2 + 1e-15), T.T))
-        gC2 = - nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
+    elif loss_fun == "kl_loss":
+        gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(
+            T, nx.dot(nx.log(C2 + 1e-15), T.T)
+        )
+        gC2 = -nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
 
     pgw = nx.set_gradients(pgw, (C1, C2), (gC1, gC2))
 
@@ -413,8 +496,18 @@ def partial_gromov_wasserstein2(
 
 
 def solve_partial_gromov_linesearch(
-        G, deltaG, cost_G, df_G, df_Gc, M, reg, alpha_min=None, alpha_max=None,
-        nx=None, **kwargs):
+    G,
+    deltaG,
+    cost_G,
+    df_G,
+    df_Gc,
+    M,
+    reg,
+    alpha_min=None,
+    alpha_max=None,
+    nx=None,
+    **kwargs,
+):
     """
     Solve the linesearch in the FW iterations of partial (F)GW following eq.5 of :ref:`[29]`.
 
@@ -479,7 +572,7 @@ def solve_partial_gromov_linesearch(
         alpha = np.clip(alpha, alpha_min, alpha_max)
 
     # the new cost is deduced from the line search quadratic function
-    cost_G = cost_G + a * (alpha ** 2) + b * alpha
+    cost_G = cost_G + a * (alpha**2) + b * alpha
 
     # update the gradient for next cg iteration
     df_G = df_G + alpha * df_deltaG
@@ -487,8 +580,20 @@ def solve_partial_gromov_linesearch(
 
 
 def entropic_partial_gromov_wasserstein(
-        C1, C2, p=None, q=None, reg=1., m=None, loss_fun='square_loss', G0=None,
-        numItermax=1000, tol=1e-7, symmetric=None, log=False, verbose=False):
+    C1,
+    C2,
+    p=None,
+    q=None,
+    reg=1.0,
+    m=None,
+    loss_fun="square_loss",
+    G0=None,
+    numItermax=1000,
+    tol=1e-7,
+    symmetric=None,
+    log=False,
+    verbose=False,
+):
     r"""
     Returns the partial Gromov-Wasserstein transport between
     :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
@@ -621,14 +726,17 @@ def entropic_partial_gromov_wasserstein(
     if m is None:
         m = min(nx.sum(p), nx.sum(q))
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater"
-                         " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
     elif m > min(nx.sum(p), nx.sum(q)):
-        raise ValueError("Problem infeasible. Parameter m should lower or"
-                         " equal than min(|a|_1, |b|_1).")
+        raise ValueError(
+            "Problem infeasible. Parameter m should lower or"
+            " equal than min(|a|_1, |b|_1)."
+        )
 
     if G0 is None:
-        G0 = nx.outer(p, q) * m / (nx.sum(p) * nx.sum(q))  # make sure |G0|=m, G01_m\leq p, G0.T1_n\leq q.
+        G0 = (
+            nx.outer(p, q) * m / (nx.sum(p) * nx.sum(q))
+        )  # make sure |G0|=m, G01_m\leq p, G0.T1_n\leq q.
 
     else:
         # Check marginals of G0
@@ -636,7 +744,9 @@ def entropic_partial_gromov_wasserstein(
         assert nx.any(nx.sum(G0, 0) <= q)
 
     if symmetric is None:
-        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(C2, C2.T, atol=1e-10)
+        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(
+            C2, C2.T, atol=1e-10
+        )
 
     # Setup gradient computation
     fC1, fC2, hC1, hC2 = _transform_matrix(C1, C2, loss_fun, nx)
@@ -655,6 +765,7 @@ def entropic_partial_gromov_wasserstein(
         return gwloss(constC1 + constC2, hC1, hC2, G, nx)
 
     if symmetric:
+
         def df(G):
             pG = nx.sum(G, 1)
             qG = nx.sum(G, 0)
@@ -672,40 +783,56 @@ def entropic_partial_gromov_wasserstein(
             constC2t = nx.outer(ones_p, nx.dot(qG, fC2))
 
             return 0.5 * (
-                gwggrad(constC1 + constC2, hC1, hC2, G, nx) +
-                gwggrad(constC1t + constC2t, hC1t, hC2t, G, nx))
+                gwggrad(constC1 + constC2, hC1, hC2, G, nx)
+                + gwggrad(constC1t + constC2t, hC1t, hC2t, G, nx)
+            )
 
     cpt = 0
     err = 1
 
-    loge = {'err': []}
+    loge = {"err": []}
 
-    while (err > tol and cpt < numItermax):
+    while err > tol and cpt < numItermax:
         Gprev = G0
         M_entr = df(G0)
         G0 = entropic_partial_wasserstein(p, q, M_entr, reg, m)
         if cpt % 10 == 0:  # to speed up the computations
             err = np.linalg.norm(G0 - Gprev)
             if log:
-                loge['err'].append(err)
+                loge["err"].append(err)
             if verbose:
                 if cpt % 200 == 0:
-                    print('{:5s}|{:12s}|{:12s}'.format(
-                        'It.', 'Err', 'Loss') + '\n' + '-' * 31)
-                print('{:5d}|{:8e}|{:8e}'.format(cpt, err, f(G0)))
+                    print(
+                        "{:5s}|{:12s}|{:12s}".format("It.", "Err", "Loss")
+                        + "\n"
+                        + "-" * 31
+                    )
+                print("{:5d}|{:8e}|{:8e}".format(cpt, err, f(G0)))
 
         cpt += 1
 
     if log:
-        loge['partial_gw_dist'] = f(G0)
+        loge["partial_gw_dist"] = f(G0)
         return G0, loge
     else:
         return G0
 
 
 def entropic_partial_gromov_wasserstein2(
-        C1, C2, p=None, q=None, reg=1., m=None, loss_fun='square_loss', G0=None,
-        numItermax=1000, tol=1e-7, symmetric=None, log=False, verbose=False):
+    C1,
+    C2,
+    p=None,
+    q=None,
+    reg=1.0,
+    m=None,
+    loss_fun="square_loss",
+    G0=None,
+    numItermax=1000,
+    tol=1e-7,
+    symmetric=None,
+    log=False,
+    verbose=False,
+):
     r"""
     Returns the partial Gromov-Wasserstein discrepancy between
     :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
@@ -810,12 +937,12 @@ def entropic_partial_gromov_wasserstein2(
     """
 
     partial_gw, log_gw = entropic_partial_gromov_wasserstein(
-        C1, C2, p, q, reg, m, loss_fun, G0, numItermax, tol,
-        symmetric, True, verbose)
+        C1, C2, p, q, reg, m, loss_fun, G0, numItermax, tol, symmetric, True, verbose
+    )
 
-    log_gw['T'] = partial_gw
+    log_gw["T"] = partial_gw
 
     if log:
-        return log_gw['partial_gw_dist'], log_gw
+        return log_gw["partial_gw_dist"], log_gw
     else:
-        return log_gw['partial_gw_dist']
+        return log_gw["partial_gw_dist"]

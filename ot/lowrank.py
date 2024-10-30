@@ -6,7 +6,6 @@ Low rank OT solvers
 #
 # License: MIT License
 
-
 import warnings
 from .utils import unif, dist, get_lowrank_lazytensor
 from .backend import get_backend
@@ -15,6 +14,7 @@ from .bregman import sinkhorn
 # test if sklearn is installed for linux-minimal-deps
 try:
     import sklearn.cluster
+
     sklearn_import = True
 except ImportError:
     sklearn_import = False
@@ -119,7 +119,9 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init, random_state, nx=Non
             g = nx.ones(rank, type_as=X_s) / rank
 
             # Init Q
-            kmeans_Xs = sklearn.cluster.KMeans(n_clusters=rank, random_state=random_state, n_init="auto")
+            kmeans_Xs = sklearn.cluster.KMeans(
+                n_clusters=rank, random_state=random_state, n_init="auto"
+            )
             kmeans_Xs.fit(X_s)
             Z_Xs = nx.from_numpy(kmeans_Xs.cluster_centers_)
             C_Xs = dist(X_s, Z_Xs)  # shape (ns, rank)
@@ -127,7 +129,9 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init, random_state, nx=Non
             Q = sinkhorn(a, g, C_Xs, reg=reg_init, numItermax=10000, stopThr=1e-3)
 
             # Init R
-            kmeans_Xt = sklearn.cluster.KMeans(n_clusters=rank, random_state=random_state, n_init="auto")
+            kmeans_Xt = sklearn.cluster.KMeans(
+                n_clusters=rank, random_state=random_state, n_init="auto"
+            )
             kmeans_Xt.fit(X_t)
             Z_Xt = nx.from_numpy(kmeans_Xt.cluster_centers_)
             C_Xt = dist(X_t, Z_Xt)  # shape (nt, rank)
@@ -135,7 +139,9 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init, random_state, nx=Non
             R = sinkhorn(b, g, C_Xt, reg=reg_init, numItermax=10000, stopThr=1e-3)
 
         else:
-            raise ImportError("Scikit-learn should be installed to use the 'kmeans' init.")
+            raise ImportError(
+                "Scikit-learn should be installed to use the 'kmeans' init."
+            )
 
     return Q, R, g
 
@@ -250,7 +256,10 @@ def _LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=N
     r = len(eps3)  # rank
     g_ = nx.copy(eps3)  # \tilde{g}
     q3_1, q3_2 = nx.ones(r, type_as=p1), nx.ones(r, type_as=p1)  # q^{(3)}_1, q^{(3)}_2
-    v1_, v2_ = nx.ones(r, type_as=p1), nx.ones(r, type_as=p1)  # \tilde{v}^{(1)}, \tilde{v}^{(2)}
+    v1_, v2_ = (
+        nx.ones(r, type_as=p1),
+        nx.ones(r, type_as=p1),
+    )  # \tilde{v}^{(1)}, \tilde{v}^{(2)}
     q1, q2 = nx.ones(r, type_as=p1), nx.ones(r, type_as=p1)  # q^{(1)}, q^{(2)}
     err = 1  # initial error
 
@@ -309,9 +318,24 @@ def _LR_Dysktra(eps1, eps2, eps3, p1, p2, alpha, stopThr, numItermax, warn, nx=N
     return Q, R, g
 
 
-def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, rescale_cost=True,
-                     init="random", reg_init=1e-1, seed_init=49, gamma_init="rescale",
-                     numItermax=2000, stopThr=1e-7, warn=True, log=False):
+def lowrank_sinkhorn(
+    X_s,
+    X_t,
+    a=None,
+    b=None,
+    reg=0,
+    rank=None,
+    alpha=1e-10,
+    rescale_cost=True,
+    init="random",
+    reg_init=1e-1,
+    seed_init=49,
+    gamma_init="rescale",
+    numItermax=2000,
+    stopThr=1e-7,
+    warn=True,
+    log=False,
+):
     r"""
     Solve the entropic regularization optimal transport problem under low-nonnegative rank constraints
     on the couplings.
@@ -412,8 +436,11 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, re
 
     # Dykstra won't converge if 1/rank < alpha (see Section 3.2)
     if 1 / r < alpha:
-        raise ValueError("alpha ({a}) should be smaller than 1/rank ({r}) for the Dykstra algorithm to converge.".format(
-            a=alpha, r=1 / rank))
+        raise ValueError(
+            "alpha ({a}) should be smaller than 1/rank ({r}) for the Dykstra algorithm to converge.".format(
+                a=alpha, r=1 / rank
+            )
+        )
 
     # Low rank decomposition of the sqeuclidean cost matrix
     M1, M2 = compute_lr_sqeuclidean_matrix(X_s, X_t, rescale_cost, nx)
@@ -424,13 +451,15 @@ def lowrank_sinkhorn(X_s, X_t, a=None, b=None, reg=0, rank=None, alpha=1e-10, re
     # Gamma initialization
     if gamma_init == "theory":
         L = nx.sqrt(
-            3 * (2 / (alpha**4)) * ((nx.norm(M1) * nx.norm(M2)) ** 2) +
-            (reg + (2 / (alpha**3)) * (nx.norm(M1) * nx.norm(M2))) ** 2
+            3 * (2 / (alpha**4)) * ((nx.norm(M1) * nx.norm(M2)) ** 2)
+            + (reg + (2 / (alpha**3)) * (nx.norm(M1) * nx.norm(M2))) ** 2
         )
         gamma = 1 / (2 * L)
 
     if gamma_init not in ["rescale", "theory"]:
-        raise (NotImplementedError('Not implemented gamma_init="{}"'.format(gamma_init)))
+        raise (
+            NotImplementedError('Not implemented gamma_init="{}"'.format(gamma_init))
+        )
 
     # -------------------------- Low rank algorithm ------------------------------
     # see "Section 3.3, Algorithm 3 LOT"

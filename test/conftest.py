@@ -12,14 +12,16 @@ from ot.backend import get_backend_list, jax, tf
 
 
 if jax:
-    os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
+    os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
     from jax import config
+
     config.update("jax_enable_x64", True)
 
 if tf:
     # make sure TF doesn't allocate entire GPU
     import tensorflow as tf
-    physical_devices = tf.config.list_physical_devices('GPU')
+
+    physical_devices = tf.config.list_physical_devices("GPU")
     for device in physical_devices:
         try:
             tf.config.experimental.set_memory_growth(device, True)
@@ -28,6 +30,7 @@ if tf:
 
     # allow numpy API for TF
     from tensorflow.python.ops.numpy_ops import np_config
+
     np_config.enable_numpy_behavior()
 
 
@@ -45,12 +48,12 @@ def skip_arg(arg, value, reason=None, getter=lambda x: x):
     if isinstance(arg, (tuple, list)):
         n = len(arg)
     else:
-        arg = (arg, )
+        arg = (arg,)
         n = 1
     if n != 1 and isinstance(value, (tuple, list)):
         pass
     else:
-        value = (value, )
+        value = (value,)
     if isinstance(getter, (tuple, list)):
         pass
     else:
@@ -60,7 +63,6 @@ def skip_arg(arg, value, reason=None, getter=lambda x: x):
         reason = f"Param {arg} should be skipped for value {value}"
 
     def wrapper(function):
-
         @functools.wraps(function)
         def wrapped(*args, **kwargs):
             if all(

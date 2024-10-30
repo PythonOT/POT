@@ -26,7 +26,7 @@ from ot.datasets import make_1D_gauss as gauss
 # -------------
 
 
-#%% parameters
+# %% parameters
 
 n = 100  # nb bins
 
@@ -46,24 +46,24 @@ M /= M.max()
 # Plot distributions and loss matrix
 # ----------------------------------
 
-#%% plot the distributions
+# %% plot the distributions
 
 pl.figure(1, figsize=(6.4, 3))
-pl.plot(x, a, 'b', label='Source distribution')
-pl.plot(x, b, 'r', label='Target distribution')
+pl.plot(x, a, "b", label="Source distribution")
+pl.plot(x, b, "r", label="Target distribution")
 pl.legend()
 
-#%% plot distributions and loss matrix
+# %% plot distributions and loss matrix
 
 pl.figure(2, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, M, 'Cost matrix M')
+ot.plot.plot1D_mat(a, b, M, "Cost matrix M")
 
 ##############################################################################
 # Solve EMD
 # ---------
 
 
-#%% EMD
+# %% EMD
 
 # use fast 1D solver
 G0 = ot.emd_1d(x, x, a, b)
@@ -72,19 +72,19 @@ G0 = ot.emd_1d(x, x, a, b)
 # G0 = ot.emd(a, b, M)
 
 pl.figure(3, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, G0, 'OT matrix G0')
+ot.plot.plot1D_mat(a, b, G0, "OT matrix G0")
 
 ##############################################################################
 # Solve Sinkhorn
 # --------------
 
 
-#%% Sinkhorn
+# %% Sinkhorn
 
 lambd = 1e-3
 Gs = ot.sinkhorn(a, b, M, lambd, verbose=True)
 
 pl.figure(4, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, Gs, 'OT matrix Sinkhorn')
+ot.plot.plot1D_mat(a, b, Gs, "OT matrix Sinkhorn")
 
 pl.show()

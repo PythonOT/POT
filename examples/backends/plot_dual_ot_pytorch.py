@@ -30,10 +30,10 @@ n_target_samples = 100
 theta = 2 * np.pi / 20
 noise_level = 0.1
 
-Xs, ys = ot.datasets.make_data_classif(
-    'gaussrot', n_source_samples, nz=noise_level)
+Xs, ys = ot.datasets.make_data_classif("gaussrot", n_source_samples, nz=noise_level)
 Xt, yt = ot.datasets.make_data_classif(
-    'gaussrot', n_target_samples, theta=theta, nz=noise_level)
+    "gaussrot", n_target_samples, theta=theta, nz=noise_level
+)
 
 # one of the target mode changes its variance (no linear mapping)
 Xt[yt == 2] *= 3
@@ -46,10 +46,10 @@ Xt = Xt + 4
 
 pl.figure(1, (10, 5))
 pl.clf()
-pl.scatter(Xs[:, 0], Xs[:, 1], marker='+', label='Source samples')
-pl.scatter(Xt[:, 0], Xt[:, 1], marker='o', label='Target samples')
+pl.scatter(Xs[:, 0], Xs[:, 1], marker="+", label="Source samples")
+pl.scatter(Xt[:, 0], Xt[:, 1], marker="o", label="Target samples")
 pl.legend(loc=0)
-pl.title('Source and target distributions')
+pl.title("Source and target distributions")
 
 # %%
 # Convert data to torch tensors
@@ -76,10 +76,9 @@ n_iter = 200
 losses = []
 
 for i in range(n_iter):
-
     # generate noise samples
 
-    # minus because we maximize te dual loss
+    # minus because we maximize the dual loss
     loss = -ot.stochastic.loss_dual_entropic(u, v, xs, xt, reg=reg)
     losses.append(float(loss.detach()))
 
@@ -94,7 +93,7 @@ for i in range(n_iter):
 pl.figure(2)
 pl.plot(losses)
 pl.grid()
-pl.title('Dual objective (negative)')
+pl.title("Dual objective (negative)")
 pl.xlabel("Iterations")
 
 Ge = ot.stochastic.plan_dual_entropic(u, v, xs, xt, reg=reg)
@@ -106,10 +105,10 @@ Ge = ot.stochastic.plan_dual_entropic(u, v, xs, xt, reg=reg)
 pl.figure(3, (10, 5))
 pl.clf()
 ot.plot.plot2D_samples_mat(Xs, Xt, Ge.detach().numpy(), alpha=0.1)
-pl.scatter(Xs[:, 0], Xs[:, 1], marker='+', label='Source samples', zorder=2)
-pl.scatter(Xt[:, 0], Xt[:, 1], marker='o', label='Target samples', zorder=2)
+pl.scatter(Xs[:, 0], Xs[:, 1], marker="+", label="Source samples", zorder=2)
+pl.scatter(Xt[:, 0], Xt[:, 1], marker="o", label="Target samples", zorder=2)
 pl.legend(loc=0)
-pl.title('Source and target distributions')
+pl.title("Source and target distributions")
 
 
 # %%
@@ -131,10 +130,9 @@ losses = []
 
 
 for i in range(n_iter):
-
     # generate noise samples
 
-    # minus because we maximize te dual loss
+    # minus because we maximize the dual loss
     loss = -ot.stochastic.loss_dual_quadratic(u, v, xs, xt, reg=reg)
     losses.append(float(loss.detach()))
 
@@ -149,7 +147,7 @@ for i in range(n_iter):
 pl.figure(4)
 pl.plot(losses)
 pl.grid()
-pl.title('Dual objective (negative)')
+pl.title("Dual objective (negative)")
 pl.xlabel("Iterations")
 
 Gq = ot.stochastic.plan_dual_quadratic(u, v, xs, xt, reg=reg)
@@ -162,7 +160,7 @@ Gq = ot.stochastic.plan_dual_quadratic(u, v, xs, xt, reg=reg)
 pl.figure(5, (10, 5))
 pl.clf()
 ot.plot.plot2D_samples_mat(Xs, Xt, Gq.detach().numpy(), alpha=0.1)
-pl.scatter(Xs[:, 0], Xs[:, 1], marker='+', label='Source samples', zorder=2)
-pl.scatter(Xt[:, 0], Xt[:, 1], marker='o', label='Target samples', zorder=2)
+pl.scatter(Xs[:, 0], Xs[:, 1], marker="+", label="Source samples", zorder=2)
+pl.scatter(Xt[:, 0], Xt[:, 1], marker="o", label="Target samples", zorder=2)
 pl.legend(loc=0)
-pl.title('OT plan with quadratic regularization')
+pl.title("OT plan with quadratic regularization")

@@ -23,20 +23,20 @@ def test_emd_1d_emd2_1d_with_weights():
     u = rng.randn(n, 1)
     v = rng.randn(m, 1)
 
-    w_u = rng.uniform(0., 1., n)
+    w_u = rng.uniform(0.0, 1.0, n)
     w_u = w_u / w_u.sum()
 
-    w_v = rng.uniform(0., 1., m)
+    w_v = rng.uniform(0.0, 1.0, m)
     w_v = w_v / w_v.sum()
 
-    M = ot.dist(u, v, metric='sqeuclidean')
+    M = ot.dist(u, v, metric="sqeuclidean")
 
     G, log = ot.emd(w_u, w_v, M, log=True)
     wass = log["cost"]
-    G_1d, log = ot.emd_1d(u, v, w_u, w_v, metric='sqeuclidean', log=True)
+    G_1d, log = ot.emd_1d(u, v, w_u, w_v, metric="sqeuclidean", log=True)
     wass1d = log["cost"]
-    wass1d_emd2 = ot.emd2_1d(u, v, w_u, w_v, metric='sqeuclidean', log=False)
-    wass1d_euc = ot.emd2_1d(u, v, w_u, w_v, metric='euclidean', log=False)
+    wass1d_emd2 = ot.emd2_1d(u, v, w_u, w_v, metric="sqeuclidean", log=False)
+    wass1d_euc = ot.emd2_1d(u, v, w_u, w_v, metric="euclidean", log=False)
 
     # check loss is similar
     np.testing.assert_allclose(wass, wass1d)
@@ -51,10 +51,8 @@ def test_emd_1d_emd2_1d_with_weights():
     np.testing.assert_allclose(w_v, G.sum(0))
 
     # check that an error is raised if the metric is not a Minkowski one
-    np.testing.assert_raises(ValueError, ot.emd_1d,
-                             u, v, w_u, w_v, metric='cosine')
-    np.testing.assert_raises(ValueError, ot.emd2_1d,
-                             u, v, w_u, w_v, metric='cosine')
+    np.testing.assert_raises(ValueError, ot.emd_1d, u, v, w_u, w_v, metric="cosine")
+    np.testing.assert_raises(ValueError, ot.emd2_1d, u, v, w_u, w_v, metric="cosine")
 
 
 def test_wasserstein_1d(nx):
@@ -70,12 +68,13 @@ def test_wasserstein_1d(nx):
     xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v)
 
     # test 1 : wasserstein_1d should be close to scipy W_1 implementation
-    np.testing.assert_almost_equal(wasserstein_1d(xb, xb, rho_ub, rho_vb, p=1),
-                                   wasserstein_distance(x, x, rho_u, rho_v))
+    np.testing.assert_almost_equal(
+        wasserstein_1d(xb, xb, rho_ub, rho_vb, p=1),
+        wasserstein_distance(x, x, rho_u, rho_v),
+    )
 
     # test 2 : wasserstein_1d should be close to one when only translating the support
-    np.testing.assert_almost_equal(wasserstein_1d(xb, xb + 1, p=2),
-                                   1.)
+    np.testing.assert_almost_equal(wasserstein_1d(xb, xb + 1, p=2), 1.0)
 
     # test 3 : arrays test
     X = np.stack((np.linspace(0, 5, n), np.linspace(0, 5, n) * 10), -1)
@@ -121,7 +120,7 @@ def test_wasserstein_1d_device_tf():
         res = wasserstein_1d(xb, xb, rho_ub, rho_vb, p=1)
         nx.assert_same_dtype_device(xb, res)
 
-    if len(tf.config.list_physical_devices('GPU')) > 0:
+    if len(tf.config.list_physical_devices("GPU")) > 0:
         # Check that everything happens on the GPU
         xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v)
         res = wasserstein_1d(xb, xb, rho_ub, rho_vb, p=1)
@@ -137,14 +136,14 @@ def test_emd_1d_emd2_1d():
     u = rng.randn(n, 1)
     v = rng.randn(m, 1)
 
-    M = ot.dist(u, v, metric='sqeuclidean')
+    M = ot.dist(u, v, metric="sqeuclidean")
 
     G, log = ot.emd([], [], M, log=True)
     wass = log["cost"]
-    G_1d, log = ot.emd_1d(u, v, [], [], metric='sqeuclidean', log=True)
+    G_1d, log = ot.emd_1d(u, v, [], [], metric="sqeuclidean", log=True)
     wass1d = log["cost"]
-    wass1d_emd2 = ot.emd2_1d(u, v, [], [], metric='sqeuclidean', log=False)
-    wass1d_euc = ot.emd2_1d(u, v, [], [], metric='euclidean', log=False)
+    wass1d_emd2 = ot.emd2_1d(u, v, [], [], metric="sqeuclidean", log=False)
+    wass1d_euc = ot.emd2_1d(u, v, [], [], metric="euclidean", log=False)
 
     # check loss is similar
     np.testing.assert_allclose(wass, wass1d)
@@ -209,7 +208,7 @@ def test_emd1d_device_tf():
         nx.assert_same_dtype_device(xb, emd)
         nx.assert_same_dtype_device(xb, emd2)
 
-    if len(tf.config.list_physical_devices('GPU')) > 0:
+    if len(tf.config.list_physical_devices("GPU")) > 0:
         # Check that everything happens on the GPU
         xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v)
         emd = ot.emd_1d(xb, xb, rho_ub, rho_vb)
@@ -224,13 +223,17 @@ def test_wasserstein_1d_circle():
     n = 20
     m = 30
     rng = np.random.RandomState(0)
-    u = rng.rand(n,)
-    v = rng.rand(m,)
+    u = rng.rand(
+        n,
+    )
+    v = rng.rand(
+        m,
+    )
 
-    w_u = rng.uniform(0., 1., n)
+    w_u = rng.uniform(0.0, 1.0, n)
     w_u = w_u / w_u.sum()
 
-    w_v = rng.uniform(0., 1., m)
+    w_v = rng.uniform(0.0, 1.0, m)
     w_v = w_v / w_v.sum()
 
     M1 = np.minimum(np.abs(u[:, None] - v[None]), 1 - np.abs(u[:, None] - v[None]))
@@ -281,8 +284,12 @@ def test_wasserstein_1d_unif_circle():
     m = 1000
 
     rng = np.random.RandomState(0)
-    u = rng.rand(n,)
-    v = rng.rand(m,)
+    u = rng.rand(
+        n,
+    )
+    v = rng.rand(
+        m,
+    )
 
     # w_u = rng.uniform(0., 1., n)
     # w_u = w_u / w_u.sum()
@@ -323,8 +330,12 @@ def test_binary_search_circle_log():
     n = 20
     m = 30
     rng = np.random.RandomState(0)
-    u = rng.rand(n,)
-    v = rng.rand(m,)
+    u = rng.rand(
+        n,
+    )
+    v = rng.rand(
+        m,
+    )
 
     wass2_bsc, log = ot.binary_search_circle(u, v, p=2, log=True)
     optimal_thetas = log["optimal_theta"]

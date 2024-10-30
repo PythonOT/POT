@@ -43,8 +43,7 @@ International Conference on Learning Representations (ICLR), 2022.
 import numpy as np
 import matplotlib.pylab as pl
 from sklearn.manifold import MDS
-from ot.gromov import (
-    semirelaxed_gromov_barycenters, semirelaxed_fgw_barycenters)
+from ot.gromov import semirelaxed_gromov_barycenters, semirelaxed_fgw_barycenters
 import ot
 import networkx
 from networkx.generators.community import stochastic_block_model as sbm
@@ -83,7 +82,7 @@ for n_cluster in clusters:
             sizes = [n_nodes]
 
         G = sbm(sizes, P, seed=i, directed=False)
-        part = np.array([G.nodes[i]['block'] for i in range(np.sum(sizes))])
+        part = np.array([G.nodes[i]["block"] for i in range(np.sum(sizes))])
         C = networkx.to_numpy_array(G)
         dataset.append(C)
         node_labels.append(part)
@@ -92,16 +91,23 @@ for n_cluster in clusters:
 
 # Visualize samples
 
-def plot_graph(x, C, binary=True, color='C0', s=None):
+
+def plot_graph(x, C, binary=True, color="C0", s=None):
     for j in range(C.shape[0]):
         for i in range(j):
             if binary:
                 if C[i, j] > 0:
-                    pl.plot([x[i, 0], x[j, 0]], [x[i, 1], x[j, 1]], alpha=0.2, color='k')
+                    pl.plot(
+                        [x[i, 0], x[j, 0]], [x[i, 1], x[j, 1]], alpha=0.2, color="k"
+                    )
             else:  # connection intensity proportional to C[i,j]
-                pl.plot([x[i, 0], x[j, 0]], [x[i, 1], x[j, 1]], alpha=C[i, j], color='k')
+                pl.plot(
+                    [x[i, 0], x[j, 0]], [x[i, 1], x[j, 1]], alpha=C[i, j], color="k"
+                )
 
-    pl.scatter(x[:, 0], x[:, 1], c=color, s=s, zorder=10, edgecolors='k', cmap='tab10', vmax=9)
+    pl.scatter(
+        x[:, 0], x[:, 1], c=color, s=s, zorder=10, edgecolors="k", cmap="tab10", vmax=9
+    )
 
 
 pl.figure(1, (12, 8))
@@ -109,14 +115,14 @@ pl.clf()
 for idx_c, c in enumerate(clusters):
     C = dataset[(c - 1) * Nc]  # sample with c clusters
     # get 2d position for nodes
-    x = MDS(dissimilarity='precomputed', random_state=0).fit_transform(1 - C)
+    x = MDS(dissimilarity="precomputed", random_state=0).fit_transform(1 - C)
     pl.subplot(2, nlabels, c)
-    pl.title('(graph) sample from label ' + str(c), fontsize=14)
-    plot_graph(x, C, binary=True, color='C0', s=50.)
+    pl.title("(graph) sample from label " + str(c), fontsize=14)
+    plot_graph(x, C, binary=True, color="C0", s=50.0)
     pl.axis("off")
     pl.subplot(2, nlabels, nlabels + c)
-    pl.title('(matrix) sample from label %s \n' % c, fontsize=14)
-    pl.imshow(C, interpolation='nearest')
+    pl.title("(matrix) sample from label %s \n" % c, fontsize=14)
+    pl.imshow(C, interpolation="nearest")
     pl.axis("off")
 pl.tight_layout()
 pl.show()
@@ -129,7 +135,7 @@ pl.show()
 
 np.random.seed(0)
 ps = [ot.unif(C.shape[0]) for C in dataset]  # uniform weights on input nodes
-lambdas = [1. / n_samples for _ in range(n_samples)]  # uniform barycenter
+lambdas = [1.0 / n_samples for _ in range(n_samples)]  # uniform barycenter
 N = 3  # 3 nodes in the barycenter
 
 # Here we use the Fluid partitioning method to deduce initial transport plans
@@ -137,41 +143,71 @@ N = 3  # 3 nodes in the barycenter
 # initial transport plans. Then a warmstart strategy is used iteratively to
 # init each individual srGW problem within the BCD algorithm.
 
-init_plan = 'fluid'  # notice that several init options are implemented in `ot.gromov.semirelaxed_init_plan`
+init_plan = "fluid"  # notice that several init options are implemented in `ot.gromov.semirelaxed_init_plan`
 warmstartT = True
 
 C, log = semirelaxed_gromov_barycenters(
-    N=N, Cs=dataset, ps=ps, lambdas=lambdas, loss_fun='square_loss',
-    tol=1e-6, stop_criterion='loss', warmstartT=warmstartT, log=True,
-    G0=init_plan, verbose=False)
+    N=N,
+    Cs=dataset,
+    ps=ps,
+    lambdas=lambdas,
+    loss_fun="square_loss",
+    tol=1e-6,
+    stop_criterion="loss",
+    warmstartT=warmstartT,
+    log=True,
+    G0=init_plan,
+    verbose=False,
+)
 
-print('barycenter structure:', C)
+print("barycenter structure:", C)
 
-unmixings = log['p']
+unmixings = log["p"]
 # Compute the 2D representation of the embeddings living in the 2-simplex of probability
 unmixings2D = np.zeros(shape=(n_samples, 2))
 for i, w in enumerate(unmixings):
-    unmixings2D[i, 0] = (2. * w[1] + w[2]) / 2.
-    unmixings2D[i, 1] = (np.sqrt(3.) * w[2]) / 2.
-x = [0., 0.]
-y = [1., 0.]
-z = [0.5, np.sqrt(3) / 2.]
+    unmixings2D[i, 0] = (2.0 * w[1] + w[2]) / 2.0
+    unmixings2D[i, 1] = (np.sqrt(3.0) * w[2]) / 2.0
+x = [0.0, 0.0]
+y = [1.0, 0.0]
+z = [0.5, np.sqrt(3) / 2.0]
 extremities = np.stack([x, y, z])
 
 pl.figure(2, (4, 4))
 pl.clf()
-pl.title('Embedding space', fontsize=14)
+pl.title("Embedding space", fontsize=14)
 for cluster in range(nlabels):
     start, end = Nc * cluster, Nc * (cluster + 1)
     if cluster == 0:
-        pl.scatter(unmixings2D[start:end, 0], unmixings2D[start:end, 1], c='C' + str(cluster), marker='o', s=80., label='1 cluster')
+        pl.scatter(
+            unmixings2D[start:end, 0],
+            unmixings2D[start:end, 1],
+            c="C" + str(cluster),
+            marker="o",
+            s=80.0,
+            label="1 cluster",
+        )
     else:
-        pl.scatter(unmixings2D[start:end, 0], unmixings2D[start:end, 1], c='C' + str(cluster), marker='o', s=80., label='%s clusters' % (cluster + 1))
-pl.scatter(extremities[:, 0], extremities[:, 1], c='black', marker='x', s=100., label='bary. nodes')
-pl.plot([x[0], y[0]], [x[1], y[1]], color='black', linewidth=2.)
-pl.plot([x[0], z[0]], [x[1], z[1]], color='black', linewidth=2.)
-pl.plot([y[0], z[0]], [y[1], z[1]], color='black', linewidth=2.)
-pl.axis('off')
+        pl.scatter(
+            unmixings2D[start:end, 0],
+            unmixings2D[start:end, 1],
+            c="C" + str(cluster),
+            marker="o",
+            s=80.0,
+            label="%s clusters" % (cluster + 1),
+        )
+pl.scatter(
+    extremities[:, 0],
+    extremities[:, 1],
+    c="black",
+    marker="x",
+    s=100.0,
+    label="bary. nodes",
+)
+pl.plot([x[0], y[0]], [x[1], y[1]], color="black", linewidth=2.0)
+pl.plot([x[0], z[0]], [x[1], z[1]], color="black", linewidth=2.0)
+pl.plot([y[0], z[0]], [y[1], z[1]], color="black", linewidth=2.0)
+pl.axis("off")
 pl.legend(fontsize=11)
 pl.tight_layout()
 pl.show()
@@ -187,7 +223,7 @@ dataset_features = []
 for i in range(len(dataset)):
     n = dataset[i].shape[0]
     F = np.zeros((n, 3))
-    F[np.arange(n), node_labels[i]] = 1.
+    F[np.arange(n), node_labels[i]] = 1.0
     dataset_features.append(F)
 
 pl.figure(3, (12, 8))
@@ -195,16 +231,16 @@ pl.clf()
 for idx_c, c in enumerate(clusters):
     C = dataset[(c - 1) * Nc]  # sample with c clusters
     F = dataset_features[(c - 1) * Nc]
-    colors = [f'C{labels[i]}' for i in range(F.shape[0])]
+    colors = [f"C{labels[i]}" for i in range(F.shape[0])]
     # get 2d position for nodes
-    x = MDS(dissimilarity='precomputed', random_state=0).fit_transform(1 - C)
+    x = MDS(dissimilarity="precomputed", random_state=0).fit_transform(1 - C)
     pl.subplot(2, nlabels, c)
-    pl.title('(graph) sample from label ' + str(c), fontsize=14)
+    pl.title("(graph) sample from label " + str(c), fontsize=14)
     plot_graph(x, C, binary=True, color=colors, s=50)
     pl.axis("off")
     pl.subplot(2, nlabels, nlabels + c)
-    pl.title('(matrix) sample from label %s \n' % c, fontsize=14)
-    pl.imshow(C, interpolation='nearest')
+    pl.title("(matrix) sample from label %s \n" % c, fontsize=14)
+    pl.imshow(C, interpolation="nearest")
     pl.axis("off")
 pl.tight_layout()
 pl.show()
@@ -222,45 +258,76 @@ list_alphas = [0.0001, 0.5, 0.9999]
 list_unmixings2D = []
 
 for ialpha, alpha in enumerate(list_alphas):
-    print('--- alpha:', alpha)
+    print("--- alpha:", alpha)
     C, F, log = semirelaxed_fgw_barycenters(
-        N=N, Ys=dataset_features, Cs=dataset, ps=ps, lambdas=lambdas,
-        alpha=alpha, loss_fun='square_loss', tol=1e-6, stop_criterion='loss',
-        warmstartT=warmstartT, log=True, G0=init_plan)
+        N=N,
+        Ys=dataset_features,
+        Cs=dataset,
+        ps=ps,
+        lambdas=lambdas,
+        alpha=alpha,
+        loss_fun="square_loss",
+        tol=1e-6,
+        stop_criterion="loss",
+        warmstartT=warmstartT,
+        log=True,
+        G0=init_plan,
+    )
 
-    print('barycenter structure:', C)
-    print('barycenter features:', F)
+    print("barycenter structure:", C)
+    print("barycenter features:", F)
 
-    unmixings = log['p']
+    unmixings = log["p"]
     # Compute the 2D representation of the embeddings living in the 2-simplex of probability
     unmixings2D = np.zeros(shape=(n_samples, 2))
     for i, w in enumerate(unmixings):
-        unmixings2D[i, 0] = (2. * w[1] + w[2]) / 2.
-        unmixings2D[i, 1] = (np.sqrt(3.) * w[2]) / 2.
+        unmixings2D[i, 0] = (2.0 * w[1] + w[2]) / 2.0
+        unmixings2D[i, 1] = (np.sqrt(3.0) * w[2]) / 2.0
     list_unmixings2D.append(unmixings2D.copy())
 
-x = [0., 0.]
-y = [1., 0.]
-z = [0.5, np.sqrt(3) / 2.]
+x = [0.0, 0.0]
+y = [1.0, 0.0]
+z = [0.5, np.sqrt(3) / 2.0]
 extremities = np.stack([x, y, z])
 
 pl.figure(4, (12, 4))
 pl.clf()
-pl.suptitle('Embedding spaces', fontsize=14)
+pl.suptitle("Embedding spaces", fontsize=14)
 for ialpha, alpha in enumerate(list_alphas):
     pl.subplot(1, len(list_alphas), ialpha + 1)
-    pl.title(f'alpha = {alpha}', fontsize=14)
+    pl.title(f"alpha = {alpha}", fontsize=14)
     for cluster in range(nlabels):
         start, end = Nc * cluster, Nc * (cluster + 1)
         if cluster == 0:
-            pl.scatter(list_unmixings2D[ialpha][start:end, 0], list_unmixings2D[ialpha][start:end, 1], c='C' + str(cluster), marker='o', s=80., label='1 cluster')
+            pl.scatter(
+                list_unmixings2D[ialpha][start:end, 0],
+                list_unmixings2D[ialpha][start:end, 1],
+                c="C" + str(cluster),
+                marker="o",
+                s=80.0,
+                label="1 cluster",
+            )
         else:
-            pl.scatter(list_unmixings2D[ialpha][start:end, 0], list_unmixings2D[ialpha][start:end, 1], c='C' + str(cluster), marker='o', s=80., label='%s clusters' % (cluster + 1))
-    pl.scatter(extremities[:, 0], extremities[:, 1], c='black', marker='x', s=100., label='bary. nodes')
-    pl.plot([x[0], y[0]], [x[1], y[1]], color='black', linewidth=2.)
-    pl.plot([x[0], z[0]], [x[1], z[1]], color='black', linewidth=2.)
-    pl.plot([y[0], z[0]], [y[1], z[1]], color='black', linewidth=2.)
-    pl.axis('off')
+            pl.scatter(
+                list_unmixings2D[ialpha][start:end, 0],
+                list_unmixings2D[ialpha][start:end, 1],
+                c="C" + str(cluster),
+                marker="o",
+                s=80.0,
+                label="%s clusters" % (cluster + 1),
+            )
+    pl.scatter(
+        extremities[:, 0],
+        extremities[:, 1],
+        c="black",
+        marker="x",
+        s=100.0,
+        label="bary. nodes",
+    )
+    pl.plot([x[0], y[0]], [x[1], y[1]], color="black", linewidth=2.0)
+    pl.plot([x[0], z[0]], [x[1], z[1]], color="black", linewidth=2.0)
+    pl.plot([y[0], z[0]], [y[1], z[1]], color="black", linewidth=2.0)
+    pl.axis("off")
     pl.legend(fontsize=11)
 pl.tight_layout()
 pl.show()

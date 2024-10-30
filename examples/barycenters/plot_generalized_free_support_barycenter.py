@@ -32,9 +32,15 @@ import matplotlib.animation as animation
 
 # Input measures
 sub_sample_factor = 8
-I1 = pl.imread('../../data/redcross.png').astype(np.float64)[::sub_sample_factor, ::sub_sample_factor, 2]
-I2 = pl.imread('../../data/tooth.png').astype(np.float64)[::-sub_sample_factor, ::sub_sample_factor, 2]
-I3 = pl.imread('../../data/heart.png').astype(np.float64)[::-sub_sample_factor, ::sub_sample_factor, 2]
+I1 = pl.imread("../../data/redcross.png").astype(np.float64)[
+    ::sub_sample_factor, ::sub_sample_factor, 2
+]
+I2 = pl.imread("../../data/tooth.png").astype(np.float64)[
+    ::-sub_sample_factor, ::sub_sample_factor, 2
+]
+I3 = pl.imread("../../data/heart.png").astype(np.float64)[
+    ::-sub_sample_factor, ::sub_sample_factor, 2
+]
 
 sz = I1.shape[0]
 UU, VV = np.meshgrid(np.arange(sz), np.arange(sz))
@@ -64,7 +70,7 @@ X_visu = [Xi @ Pi for (Xi, Pi) in zip(X_list, P_list)]
 fig = plt.figure(figsize=(3, 3))
 axis = fig.add_subplot(1, 1, 1, projection="3d")
 for Xi in X_visu:
-    axis.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker='o', alpha=.6)
+    axis.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker="o", alpha=0.6)
 axis.view_init(azim=45)
 axis.set_xticks([])
 axis.set_yticks([])
@@ -80,8 +86,8 @@ fig = plt.figure(figsize=(3, 3))
 
 axis = fig.add_subplot(1, 1, 1, projection="3d")
 for Xi in X_visu:
-    axis.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker='o', alpha=.6)
-axis.scatter(Y[:, 0], Y[:, 1], Y[:, 2], marker='o', alpha=.6)
+    axis.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker="o", alpha=0.6)
+axis.scatter(Y[:, 0], Y[:, 1], Y[:, 2], marker="o", alpha=0.6)
 axis.view_init(azim=45)
 axis.set_xticks([])
 axis.set_yticks([])
@@ -95,28 +101,28 @@ plt.show()
 
 fig = plt.figure(figsize=(9, 3))
 
-ax = fig.add_subplot(1, 3, 1, projection='3d')
+ax = fig.add_subplot(1, 3, 1, projection="3d")
 for Xi in X_visu:
-    ax.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker='o', alpha=.6)
-ax.scatter(Y[:, 0], Y[:, 1], Y[:, 2], marker='o', alpha=.6)
+    ax.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker="o", alpha=0.6)
+ax.scatter(Y[:, 0], Y[:, 1], Y[:, 2], marker="o", alpha=0.6)
 ax.view_init(elev=0, azim=0)
 ax.set_xticks([])
 ax.set_yticks([])
 ax.set_zticks([])
 
-ax = fig.add_subplot(1, 3, 2, projection='3d')
+ax = fig.add_subplot(1, 3, 2, projection="3d")
 for Xi in X_visu:
-    ax.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker='o', alpha=.6)
-ax.scatter(Y[:, 0], Y[:, 1], Y[:, 2], marker='o', alpha=.6)
+    ax.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker="o", alpha=0.6)
+ax.scatter(Y[:, 0], Y[:, 1], Y[:, 2], marker="o", alpha=0.6)
 ax.view_init(elev=0, azim=90)
 ax.set_xticks([])
 ax.set_yticks([])
 ax.set_zticks([])
 
-ax = fig.add_subplot(1, 3, 3, projection='3d')
+ax = fig.add_subplot(1, 3, 3, projection="3d")
 for Xi in X_visu:
-    ax.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker='o', alpha=.6)
-ax.scatter(Y[:, 0], Y[:, 1], Y[:, 2], marker='o', alpha=.6)
+    ax.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker="o", alpha=0.6)
+ax.scatter(Y[:, 0], Y[:, 1], Y[:, 2], marker="o", alpha=0.6)
 ax.view_init(elev=90, azim=0)
 ax.set_xticks([])
 ax.set_yticks([])
@@ -135,13 +141,13 @@ ax = fig.add_subplot(1, 1, 1, projection="3d")
 
 def _init():
     for Xi in X_visu:
-        ax.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker='o', alpha=.6)
-    ax.scatter(Y[:, 0], Y[:, 1], Y[:, 2], marker='o', alpha=.6)
+        ax.scatter(Xi[:, 0], Xi[:, 1], Xi[:, 2], marker="o", alpha=0.6)
+    ax.scatter(Y[:, 0], Y[:, 1], Y[:, 2], marker="o", alpha=0.6)
     ax.view_init(elev=0, azim=0)
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_zticks([])
-    return fig,
+    return (fig,)
 
 
 def _update_plot(i):
@@ -149,7 +155,15 @@ def _update_plot(i):
         ax.view_init(elev=0, azim=4 * i)
     else:
         ax.view_init(elev=i - 45, azim=4 * i)
-    return fig,
+    return (fig,)
 
 
-ani = animation.FuncAnimation(fig, _update_plot, init_func=_init, frames=136, interval=50, blit=True, repeat_delay=2000)
+ani = animation.FuncAnimation(
+    fig,
+    _update_plot,
+    init_func=_init,
+    frames=136,
+    interval=50,
+    blit=True,
+    repeat_delay=2000,
+)
