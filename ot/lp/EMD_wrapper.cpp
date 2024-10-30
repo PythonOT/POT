@@ -238,19 +238,18 @@ int EMD_wrap_sparse(int n1, int n2, double *X, double *Y,
 
     std::vector<double> weights2(m);
     Digraph di(n, m);
-    NetworkSimplexSimple<Digraph, double, double, node_id_type> net(di, true, n + m, nD, maxIter);
+    NetworkSimplexSimple<Digraph, double, double, node_id_type> net(di, true, n + m, n*m, maxIter);
 
     // Set supply and demand, don't account for 0 values (faster)
 
     // Demand is actually negative supply...
 
-    cur = 0;
     for (uint64_t i = 0; i < n2; i++)
     {
         double val = *(Y + i);
         if (val > 0)
         {
-            weights2[cur] = -val;
+            weights2[i] = -val;
         }
     }
 
