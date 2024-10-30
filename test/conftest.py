@@ -7,6 +7,10 @@
 import functools
 import os
 import pytest
+import numpy as np
+
+# set numpy print options : TODO update tests when all release use modern numpy
+np.set_printoptions(legacy="1.25")
 
 from ot.backend import get_backend_list, jax, tf
 
