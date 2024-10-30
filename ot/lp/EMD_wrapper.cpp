@@ -216,3 +216,83 @@ int EMD_wrap_omp(int n1, int n2, double *X, double *Y, double *D, double *G,
 
     return ret;
 }
+
+
+
+int EMD_wrap_sparse(int n1, int n2, double *X, double *Y,
+                        uint32_t *iD, uint32_t *jD, double *D, uint64_t nD,
+                        uint32_t *iG, uint32_t *jG, double *G, uint64_t *nG,
+                        double *alpha, double *beta, double *cost, uint64_t maxIter)
+    {
+    // beware M and C are stored in row major C style!!!
+
+    using namespace lemon;
+    uint64_t n, m, cur;
+
+    typedef FullBipartiteDigraph Digraph;
+    DIGRAPH_TYPEDEFS(Digraph);
+
+    n = n1;
+    m = n2;
+
+
+    std::vector<double> weights2(m);
+    Digraph di(n, m);
+    NetworkSimplexSimple<Digraph, double, double, node_id_type> net(di, true, n + m, nD, maxIter);
+
+    // Set supply and demand, don't account for 0 values (faster)
+
+    // Demand is actually negative supply...
+
+    cur = 0;
+    for (uint64_t i = 0; i < n2; i++)
+    {
+        double val = *(Y + i);
+        if (val > 0)
+        {
+            weights2[cur] = -val;
+        }
+    }
+
+    // Define the graph
+    net.supplyMap(X, n, &weights2[0], m);
+
+    // Set the cost of each edge
+    for (uint64_t k = 0; k < nD; k++)
+    {
+        int i = iD[k];
+        int j = jD[k];
+        net.setCost(di.arcFromId(i * m + j), D[k]);
+    }
+
+    // Solve the problem with the network simplex algorithm
+
+    int ret = net.run();
+    if (ret == (int)net.OPTIMAL || ret == (int)net.MAX_ITER_REACHED)
+    {
+        *cost = net.totalCost();
+        Arc a;
+        di.first(a);
+        cur = 0;
+        for (; a != INVALID; di.next(a))
+        {
+            int i = di.source(a);
+            int j = di.target(a);
+            double flow = net.flow(a);
+            if (flow > 0)
+            {
+
+                *(G + cur) = flow;
+                *(iG + cur) = i;
+                *(jG + cur) = j - n;
+                *(alpha + i) = -net.potential(i);
+                *(beta + j - n) = net.potential(j);
+                cur++;
+            }
+        }
+        *nG = cur; // nb of value +1 for numpy indexing
+    }
+
+    return ret;
+
+}

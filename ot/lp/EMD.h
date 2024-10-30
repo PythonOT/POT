@@ -31,6 +31,7 @@ enum ProblemType {
 
 int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter);
 int EMD_wrap_omp(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, int numThreads);
+int EMD_wrap_sparse(int n1, int n2, double *X, double *Y, uint32_t *iD, uint32_t *jD, double *D, uint64_t nD, uint32_t *iG, uint32_t *jG, double *G, uint64_t *nG, double *alpha, double *beta, double *cost, uint64_t maxIter);
 
 
 
