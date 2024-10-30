@@ -56,8 +56,10 @@ w_t = torch.tensor(ot.unif(kt))
 
 def draw_cov(mu, C, color=None, label=None, nstd=1, alpha=0.5):
     def eigsorted(cov):
+        if torch.is_tensor(cov):
+            cov = cov.detach().numpy()
         vals, vecs = np.linalg.eigh(cov)
-        order = vals.argsort()[::-1]
+        order = vals.argsort()[::-1].copy()
         return vals[order], vecs[:, order]
 
     vals, vecs = eigsorted(C)
