@@ -144,7 +144,9 @@ def test_bures_wasserstein_barycenter(nx, method):
     m = nx.from_numpy(m)
     C = nx.from_numpy(C)
 
-    mblog, Cblog, log = ot.gaussian.bures_wasserstein_barycenter(m, C, method=method, log=True)
+    mblog, Cblog, log = ot.gaussian.bures_wasserstein_barycenter(
+        m, C, method=method, log=True
+    )
     mb, Cb = ot.gaussian.bures_wasserstein_barycenter(m, C, method=method, log=False)
 
     np.testing.assert_allclose(Cb, Cblog, rtol=1e-2, atol=1e-2)
@@ -152,13 +154,17 @@ def test_bures_wasserstein_barycenter(nx, method):
 
     # Test weights argument
     weights = nx.ones(k) / k
-    mbw, Cbw = ot.gaussian.bures_wasserstein_barycenter(m, C, weights=weights, method=method, log=False)
+    mbw, Cbw = ot.gaussian.bures_wasserstein_barycenter(
+        m, C, weights=weights, method=method, log=False
+    )
     np.testing.assert_allclose(Cbw, Cb, rtol=1e-2, atol=1e-2)
 
     # test with closed form for diagonal covariance matrices
     Cdiag = [nx.diag(nx.diag(C[i])) for i in range(k)]
     Cdiag = nx.stack(Cdiag, axis=0)
-    mbdiag, Cbdiag = ot.gaussian.bures_wasserstein_barycenter(m, Cdiag, method=method, log=False)
+    mbdiag, Cbdiag = ot.gaussian.bures_wasserstein_barycenter(
+        m, Cdiag, method=method, log=False
+    )
 
     Cdiag_sqrt = [nx.sqrtm(C) for C in Cdiag]
     Cdiag_sqrt = nx.stack(Cdiag_sqrt, axis=0)
@@ -176,7 +182,7 @@ def test_fixedpoint_vs_gradientdescent_bures_wasserstein_barycenter(nx):
     m = []
     C = []
     for _ in range(k):
-        X_, y_ = make_data_classif('3gauss', n)
+        X_, y_ = make_data_classif("3gauss", n)
         m_ = np.mean(X_, axis=0)[None, :]
         C_ = np.cov(X_.T)
         X.append(X_)
@@ -189,8 +195,12 @@ def test_fixedpoint_vs_gradientdescent_bures_wasserstein_barycenter(nx):
     m = nx.from_numpy(m)
     C = nx.from_numpy(C)
 
-    mb, Cb = ot.gaussian.bures_wasserstein_barycenter(m, C, method="fixed_point", log=False)
-    mb2, Cb2 = ot.gaussian.bures_wasserstein_barycenter(m, C, method="gradient_descent", log=False)
+    mb, Cb = ot.gaussian.bures_wasserstein_barycenter(
+        m, C, method="fixed_point", log=False
+    )
+    mb2, Cb2 = ot.gaussian.bures_wasserstein_barycenter(
+        m, C, method="gradient_descent", log=False
+    )
 
     np.testing.assert_allclose(mb, mb2, atol=1e-5)
     np.testing.assert_allclose(Cb, Cb2, atol=1e-5)

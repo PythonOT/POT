@@ -1340,12 +1340,30 @@ def proj_SDP(S, nx=None, vmin=0.0):
     else:  # input was (n, d, d): broadcasting
         Q = nx.einsum("ijk,ik->ijk", P, w)  # Q[i] = P[i] @ diag(w[i])
         # R[i] = Q[i] @ P[i].T
-        return nx.einsum('ijk,ikl->ijl', Q, nx.transpose(P, (0, 2, 1)))
+        return nx.einsum("ijk,ikl->ijl", Q, nx.transpose(P, (0, 2, 1)))
 
 
 def exp_bures(Sigma, S, nx=None):
     r"""
-        Exponential map Bures-Wasserstein space as Sigma: \exp_\Sigma(S)
+    Exponential map in Bures-Wasserstein space at Sigma:
+
+    .. math::
+        \exp_\Sigma(S) = (I_d+S)\Sigma(I_d+S).
+
+    Parameters
+    ----------
+    Sigma : array-like (d,d)
+        SPD matrix
+    S : array-like (d,d)
+        Symmetric matrix
+    nx : module, optional
+        The numerical backend module to use. If not provided, the backend will
+        be fetched from the input matrices `Sigma, S`.
+
+    Returns
+    -------
+    P : array-like (d,d)
+        SPD matrix obtained as the exponential map of S at Sigma
     """
     if nx is None:
         nx = get_backend(Sigma, S)
