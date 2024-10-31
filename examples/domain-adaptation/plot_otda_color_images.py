@@ -49,11 +49,11 @@ def minmax(img):
 # -------------
 
 # Loading images
-this_file = os.path.realpath('__file__')
-data_path = os.path.join(Path(this_file).parent.parent.parent, 'data')
+this_file = os.path.realpath("__file__")
+data_path = os.path.join(Path(this_file).parent.parent.parent, "data")
 
-I1 = plt.imread(os.path.join(data_path, 'ocean_day.jpg')).astype(np.float64) / 256
-I2 = plt.imread(os.path.join(data_path, 'ocean_sunset.jpg')).astype(np.float64) / 256
+I1 = plt.imread(os.path.join(data_path, "ocean_day.jpg")).astype(np.float64) / 256
+I2 = plt.imread(os.path.join(data_path, "ocean_sunset.jpg")).astype(np.float64) / 256
 
 X1 = im2mat(I1)
 X2 = im2mat(I2)
@@ -75,13 +75,13 @@ plt.figure(1, figsize=(6.4, 3))
 
 plt.subplot(1, 2, 1)
 plt.imshow(I1)
-plt.axis('off')
-plt.title('Image 1')
+plt.axis("off")
+plt.title("Image 1")
 
 plt.subplot(1, 2, 2)
 plt.imshow(I2)
-plt.axis('off')
-plt.title('Image 2')
+plt.axis("off")
+plt.title("Image 2")
 
 
 ##############################################################################
@@ -93,16 +93,16 @@ plt.figure(2, figsize=(6.4, 3))
 plt.subplot(1, 2, 1)
 plt.scatter(Xs[:, 0], Xs[:, 2], c=Xs)
 plt.axis([0, 1, 0, 1])
-plt.xlabel('Red')
-plt.ylabel('Blue')
-plt.title('Image 1')
+plt.xlabel("Red")
+plt.ylabel("Blue")
+plt.title("Image 1")
 
 plt.subplot(1, 2, 2)
 plt.scatter(Xt[:, 0], Xt[:, 2], c=Xt)
 plt.axis([0, 1, 0, 1])
-plt.xlabel('Red')
-plt.ylabel('Blue')
-plt.title('Image 2')
+plt.xlabel("Red")
+plt.ylabel("Blue")
+plt.title("Image 2")
 plt.tight_layout()
 
 
@@ -140,33 +140,33 @@ plt.figure(3, figsize=(8, 4))
 
 plt.subplot(2, 3, 1)
 plt.imshow(I1)
-plt.axis('off')
-plt.title('Image 1')
+plt.axis("off")
+plt.title("Image 1")
 
 plt.subplot(2, 3, 2)
 plt.imshow(I1t)
-plt.axis('off')
-plt.title('Image 1 Adapt')
+plt.axis("off")
+plt.title("Image 1 Adapt")
 
 plt.subplot(2, 3, 3)
 plt.imshow(I1te)
-plt.axis('off')
-plt.title('Image 1 Adapt (reg)')
+plt.axis("off")
+plt.title("Image 1 Adapt (reg)")
 
 plt.subplot(2, 3, 4)
 plt.imshow(I2)
-plt.axis('off')
-plt.title('Image 2')
+plt.axis("off")
+plt.title("Image 2")
 
 plt.subplot(2, 3, 5)
 plt.imshow(I2t)
-plt.axis('off')
-plt.title('Image 2 Adapt')
+plt.axis("off")
+plt.title("Image 2 Adapt")
 
 plt.subplot(2, 3, 6)
 plt.imshow(I2te)
-plt.axis('off')
-plt.title('Image 2 Adapt (reg)')
+plt.axis("off")
+plt.title("Image 2 Adapt (reg)")
 plt.tight_layout()
 
 plt.show()

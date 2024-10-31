@@ -12,7 +12,6 @@ Gromov-Wasserstein and Fused-Gromov-Wasserstein utils.
 #
 # License: MIT License
 
-
 from ..utils import list_to_array, euclidean_distances
 from ..backend import get_backend
 from ..lp import emd
@@ -20,12 +19,14 @@ from ..lp import emd
 try:
     from networkx.algorithms.community import asyn_fluidc
     from networkx import from_numpy_array
+
     networkx_import = True
 except ImportError:
     networkx_import = False
 
 try:
     from sklearn.cluster import SpectralClustering, KMeans
+
     sklearn_import = True
 except ImportError:
     sklearn_import = False
@@ -34,7 +35,7 @@ import numpy as np
 import warnings
 
 
-def _transform_matrix(C1, C2, loss_fun='square_loss', nx=None):
+def _transform_matrix(C1, C2, loss_fun="square_loss", nx=None):
     r"""Return transformed structure matrices for Gromov-Wasserstein fast computation
 
     Returns the matrices involved in the computation of :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2})`
@@ -110,19 +111,21 @@ def _transform_matrix(C1, C2, loss_fun='square_loss', nx=None):
         C1, C2 = list_to_array(C1, C2)
         nx = get_backend(C1, C2)
 
-    if loss_fun == 'square_loss':
+    if loss_fun == "square_loss":
+
         def f1(a):
-            return (a**2)
+            return a**2
 
         def f2(b):
-            return (b**2)
+            return b**2
 
         def h1(a):
             return a
 
         def h2(b):
             return 2 * b
-    elif loss_fun == 'kl_loss':
+    elif loss_fun == "kl_loss":
+
         def f1(a):
             return a * nx.log(a + 1e-18) - a
 
@@ -135,7 +138,9 @@ def _transform_matrix(C1, C2, loss_fun='square_loss', nx=None):
         def h2(b):
             return nx.log(b + 1e-18)
     else:
-        raise ValueError(f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}.")
+        raise ValueError(
+            f"Unknown `loss_fun='{loss_fun}'`. Use one of: {'square_loss', 'kl_loss'}."
+        )
 
     fC1 = f1(C1)
     fC2 = f2(C2)
@@ -145,7 +150,7 @@ def _transform_matrix(C1, C2, loss_fun='square_loss', nx=None):
     return fC1, fC2, hC1, hC2
 
 
-def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
+def init_matrix(C1, C2, p, q, loss_fun="square_loss", nx=None):
     r"""Return loss matrices and tensors for Gromov-Wasserstein fast computation
 
     Returns the value of :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2}) \otimes \mathbf{T}` with the
@@ -226,12 +231,10 @@ def init_matrix(C1, C2, p, q, loss_fun='square_loss', nx=None):
 
     fC1, fC2, hC1, hC2 = _transform_matrix(C1, C2, loss_fun, nx)
     constC1 = nx.dot(
-        nx.dot(fC1, nx.reshape(p, (-1, 1))),
-        nx.ones((1, len(q)), type_as=q)
+        nx.dot(fC1, nx.reshape(p, (-1, 1))), nx.ones((1, len(q)), type_as=q)
     )
     constC2 = nx.dot(
-        nx.ones((len(p), 1), type_as=p),
-        nx.dot(nx.reshape(q, (1, -1)), fC2.T)
+        nx.ones((len(p), 1), type_as=p), nx.dot(nx.reshape(q, (1, -1)), fC2.T)
     )
     constC = constC1 + constC2
 
@@ -271,9 +274,7 @@ def tensor_product(constC, hC1, hC2, T, nx=None):
         constC, hC1, hC2, T = list_to_array(constC, hC1, hC2, T)
         nx = get_backend(constC, hC1, hC2, T)
 
-    A = - nx.dot(
-        nx.dot(hC1, T), hC2.T
-    )
+    A = -nx.dot(nx.dot(hC1, T), hC2.T)
     tens = constC + A
     # tens -= tens.min()
     return tens
@@ -350,11 +351,10 @@ def gwggrad(constC, hC1, hC2, T, nx=None):
         International Conference on Machine Learning (ICML). 2016.
 
     """
-    return 2 * tensor_product(constC, hC1, hC2,
-                              T, nx)  # [12] Prop. 2 misses a 2 factor
+    return 2 * tensor_product(constC, hC1, hC2, T, nx)  # [12] Prop. 2 misses a 2 factor
 
 
-def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
+def init_matrix_semirelaxed(C1, C2, p, loss_fun="square_loss", nx=None):
     r"""Return loss matrices and tensors for semi-relaxed Gromov-Wasserstein fast computation
 
     Returns the value of :math:`\mathcal{L}(\mathbf{C_1}, \mathbf{C_2}) \otimes \mathbf{T}` with the
@@ -438,15 +438,25 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun='square_loss', nx=None):
 
     fC1, fC2, hC1, hC2 = _transform_matrix(C1, C2, loss_fun, nx)
 
-    constC = nx.dot(nx.dot(fC1, nx.reshape(p, (-1, 1))),
-                    nx.ones((1, C2.shape[0]), type_as=p))
+    constC = nx.dot(
+        nx.dot(fC1, nx.reshape(p, (-1, 1))), nx.ones((1, C2.shape[0]), type_as=p)
+    )
 
     fC2t = fC2.T
     return constC, hC1, hC2, fC2t
 
 
-def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
-                          use_target=True, random_state=0, nx=None):
+def semirelaxed_init_plan(
+    C1,
+    C2,
+    p,
+    M=None,
+    alpha=1.0,
+    method="product",
+    use_target=True,
+    random_state=0,
+    nx=None,
+):
     r"""
     Heuristics to initialize the semi-relaxed (F)GW transport plan
     :math:`\mathbf{T} \in \mathcal{U}_{nt}(\mathbf{p})`, between a graph
@@ -469,7 +479,7 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
     If a metric cost matrix between features across domains :math:`\mathbf{M}`
     is a provided, it will be used as cost matrix in a semi-relaxed Wasserstein
     problem providing :math:`\mathbf{T}_M \in \mathcal{U}_{nt}(\mathbf{p})`. Then
-    the outputed transport plan is :math:`\alpha \mathbf{T}  + (1 - \alpha ) \mathbf{T}_{M}`.
+    the outputted transport plan is :math:`\alpha \mathbf{T}  + (1 - \alpha ) \mathbf{T}_{M}`.
 
     Parameters
     ----------
@@ -507,17 +517,26 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
 
     """
     list_partitioning_methods = [
-        'fluid', 'spectral', 'kmeans', 'fluid_soft', 'spectral_soft',
-        'kmeans_soft']
+        "fluid",
+        "spectral",
+        "kmeans",
+        "fluid_soft",
+        "spectral_soft",
+        "kmeans_soft",
+    ]
 
-    if method not in list_partitioning_methods + ['product', 'random_product', 'random']:
-        raise ValueError(f'Unsupported initialization method = {method}.')
+    if method not in list_partitioning_methods + [
+        "product",
+        "random_product",
+        "random",
+    ]:
+        raise ValueError(f"Unsupported initialization method = {method}.")
 
-    if (method in ['kmeans', 'kmeans_soft']) and (not sklearn_import):
-        raise ValueError(f'Scikit-learn must be installed to use method = {method}')
+    if (method in ["kmeans", "kmeans_soft"]) and (not sklearn_import):
+        raise ValueError(f"Scikit-learn must be installed to use method = {method}")
 
-    if (method in ['fluid', 'fluid_soft']) and (not networkx_import):
-        raise ValueError(f'Networkx must be installed to use method = {method}')
+    if (method in ["fluid", "fluid_soft"]) and (not networkx_import):
+        raise ValueError(f"Networkx must be installed to use method = {method}")
 
     if nx is None:
         nx = get_backend(C1, C2, p, M)
@@ -537,7 +556,7 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
                 "Both structures have the same size so no partitioning is"
                 "performed to initialize the transport plan even though"
                 f"initialization method is {method}",
-                stacklevel=2
+                stacklevel=2,
             )
 
         def get_transport_from_partition(part):
@@ -552,7 +571,7 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
                 if use_target:
                     M_structure = euclidean_distances(factored_C1, C2)
                     T_emd = emd(q, q, M_structure)
-                    inv_q = 1. / q
+                    inv_q = 1.0 / q
 
                     T = nx.dot(T_, inv_q[:, None] * T_emd)
                 else:
@@ -567,7 +586,7 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
                 # alignment of both structure seen as feature matrices
                 M_structure = euclidean_distances(factored_C2, C1)
                 T_emd = emd(q, p, M_structure)
-                inv_q = 1. / q
+                inv_q = 1.0 / q
 
                 T = nx.dot(T_, inv_q[:, None] * T_emd).T
                 q = nx.sum(T, 0)  # uniform one
@@ -581,24 +600,24 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
 
     # Handle initialization via structure information
 
-    if method == 'product':
+    if method == "product":
         q = nx.ones(m, type_as=C1) / m
         T = nx.outer(p, q)
 
-    elif method == 'random_product':
+    elif method == "random_product":
         np.random.seed(random_state)
         q = np.random.uniform(0, m, size=(m,))
         q = q / q.sum()
         q = nx.from_numpy(q, type_as=p)
         T = nx.outer(p, q)
 
-    elif method == 'random':
+    elif method == "random":
         np.random.seed(random_state)
         U = np.random.uniform(0, n * m, size=(n, m))
         U = (p / U.sum(1))[:, None] * U
         T = nx.from_numpy(U, type_as=C1)
 
-    elif method in ['fluid', 'fluid_soft']:
+    elif method in ["fluid", "fluid_soft"]:
         # compute fluid partitioning on the biggest graph
         if C_to_partition is None:
             T, q = get_transport_from_partition(None)
@@ -613,38 +632,39 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
 
             T, q = get_transport_from_partition(part)
 
-        if 'soft' in method:
-            T = (T + nx.outer(p, q)) / 2.
+        if "soft" in method:
+            T = (T + nx.outer(p, q)) / 2.0
 
-    elif method in ['spectral', 'spectral_soft']:
+    elif method in ["spectral", "spectral_soft"]:
         # compute spectral partitioning on the biggest graph
         if C_to_partition is None:
             T, q = get_transport_from_partition(None)
         else:
-            sc = SpectralClustering(n_clusters=min_size,
-                                    random_state=random_state,
-                                    affinity='precomputed').fit(C_to_partition)
+            sc = SpectralClustering(
+                n_clusters=min_size, random_state=random_state, affinity="precomputed"
+            ).fit(C_to_partition)
             part = sc.labels_
             T, q = get_transport_from_partition(part)
 
-        if 'soft' in method:
-            T = (T + nx.outer(p, q)) / 2.
+        if "soft" in method:
+            T = (T + nx.outer(p, q)) / 2.0
 
-    elif method in ['kmeans', 'kmeans_soft']:
+    elif method in ["kmeans", "kmeans_soft"]:
         # compute spectral partitioning on the biggest graph
         if C_to_partition is None:
             T, q = get_transport_from_partition(None)
         else:
-            km = KMeans(n_clusters=min_size, random_state=random_state,
-                        n_init=1).fit(C_to_partition)
+            km = KMeans(n_clusters=min_size, random_state=random_state, n_init=1).fit(
+                C_to_partition
+            )
 
             part = km.labels_
             T, q = get_transport_from_partition(part)
 
-        if 'soft' in method:
-            T = (T + nx.outer(p, q)) / 2.
+        if "soft" in method:
+            T = (T + nx.outer(p, q)) / 2.0
 
-    if (M is not None):
+    if M is not None:
         # Add feature information solving a semi-relaxed Wasserstein problem
         # get minimum by rows as binary mask
         TM = nx.ones(1, type_as=p) * (M == nx.reshape(nx.min(M, axis=1), (-1, 1)))
@@ -656,8 +676,15 @@ def semirelaxed_init_plan(C1, C2, p, M=None, alpha=1., method='product',
 
 
 def update_barycenter_structure(
-        Ts, Cs, lambdas, p=None, loss_fun='square_loss', target=True,
-        check_zeros=True, nx=None):
+    Ts,
+    Cs,
+    lambdas,
+    p=None,
+    loss_fun="square_loss",
+    target=True,
+    check_zeros=True,
+    nx=None,
+):
     r"""
     Updates :math:`\mathbf{C}` according to the inner loss L with the `S`
     :math:`\mathbf{T}_s` couplings calculated at each iteration of variants of
@@ -729,49 +756,53 @@ def update_barycenter_structure(
 
     if p is None:
         p = nx.concatenate(
-            [nx.sum(Ts[s], int(not target))[None, :] for s in range(S)],
-            axis=0)
+            [nx.sum(Ts[s], int(not target))[None, :] for s in range(S)], axis=0
+        )
 
     # compute coefficients for the barycenter coming from marginals
 
     if len(p.shape) == 1:  # shared target masses potentially with zeros
         if check_zeros:
-            inv_p = nx.nan_to_num(1. / p, nan=1., posinf=1., neginf=1.)
+            inv_p = nx.nan_to_num(1.0 / p, nan=1.0, posinf=1.0, neginf=1.0)
         else:
-            inv_p = 1. / p
+            inv_p = 1.0 / p
 
         prod = nx.outer(inv_p, inv_p)
 
     else:
         quotient = sum([lambdas[s] * nx.outer(p[s], p[s]) for s in range(S)])
         if check_zeros:
-            prod = nx.nan_to_num(1. / quotient, nan=1., posinf=1., neginf=1.)
+            prod = nx.nan_to_num(1.0 / quotient, nan=1.0, posinf=1.0, neginf=1.0)
         else:
-            prod = 1. / quotient
+            prod = 1.0 / quotient
 
     # compute coefficients for the barycenter coming from Ts and Cs
 
-    if loss_fun == 'square_loss':
+    if loss_fun == "square_loss":
         if target:
-            list_structures = [lambdas[s] * nx.dot(
-                nx.dot(Ts[s].T, Cs[s]), Ts[s]) for s in range(S)]
+            list_structures = [
+                lambdas[s] * nx.dot(nx.dot(Ts[s].T, Cs[s]), Ts[s]) for s in range(S)
+            ]
         else:
-            list_structures = [lambdas[s] * nx.dot(
-                nx.dot(Ts[s], Cs[s]), Ts[s].T) for s in range(S)]
+            list_structures = [
+                lambdas[s] * nx.dot(nx.dot(Ts[s], Cs[s]), Ts[s].T) for s in range(S)
+            ]
 
         return sum(list_structures) * prod
 
-    elif loss_fun == 'kl_loss':
+    elif loss_fun == "kl_loss":
         if target:
-            list_structures = [lambdas[s] * nx.dot(
-                nx.dot(Ts[s].T, Cs[s]), Ts[s])
-                for s in range(S)]
+            list_structures = [
+                lambdas[s] * nx.dot(nx.dot(Ts[s].T, Cs[s]), Ts[s]) for s in range(S)
+            ]
 
             return sum(list_structures) * prod
         else:
-            list_structures = [lambdas[s] * nx.dot(
-                nx.dot(Ts[s], nx.log(nx.maximum(Cs[s], 1e-16))), Ts[s].T)
-                for s in range(S)]
+            list_structures = [
+                lambdas[s]
+                * nx.dot(nx.dot(Ts[s], nx.log(nx.maximum(Cs[s], 1e-16))), Ts[s].T)
+                for s in range(S)
+            ]
 
             return nx.exp(sum(list_structures) * prod)
 
@@ -780,8 +811,15 @@ def update_barycenter_structure(
 
 
 def update_barycenter_feature(
-        Ts, Ys, lambdas, p=None, loss_fun='square_loss', target=True,
-        check_zeros=True, nx=None):
+    Ts,
+    Ys,
+    lambdas,
+    p=None,
+    loss_fun="square_loss",
+    target=True,
+    check_zeros=True,
+    nx=None,
+):
     r"""Updates the feature with respect to the `S` :math:`\mathbf{T}_s`
     couplings calculated at each iteration of variants of the FGW
     barycenter problem with inner wasserstein loss `loss_fun`
@@ -826,7 +864,7 @@ def update_barycenter_feature(
         arr = [*Ts, *Ys, p]
         nx = get_backend(*arr)
 
-    if loss_fun != 'square_loss':
+    if loss_fun != "square_loss":
         raise ValueError(f"not supported loss_fun = {loss_fun}")
 
     S = len(Ts)
@@ -838,20 +876,20 @@ def update_barycenter_feature(
 
     if p is None:
         p = nx.concatenate(
-            [nx.sum(Ts[s], int(not target))[None, :] for s in range(S)],
-            axis=0)
+            [nx.sum(Ts[s], int(not target))[None, :] for s in range(S)], axis=0
+        )
 
     if len(p.shape) == 1:  # shared target masses potentially with zeros
         if check_zeros:
-            inv_p = nx.nan_to_num(1. / p, nan=1., posinf=1., neginf=1.)
+            inv_p = nx.nan_to_num(1.0 / p, nan=1.0, posinf=1.0, neginf=1.0)
         else:
-            inv_p = 1. / p
+            inv_p = 1.0 / p
     else:
         p_sum = sum([lambdas[s] * p[s] for s in range(S)])
         if check_zeros:
-            inv_p = nx.nan_to_num(1. / p_sum, nan=1., posinf=1., neginf=1.)
+            inv_p = nx.nan_to_num(1.0 / p_sum, nan=1.0, posinf=1.0, neginf=1.0)
         else:
-            inv_p = 1. / p_sum
+            inv_p = 1.0 / p_sum
 
     return sum(list_features) * inv_p[:, None]
 
@@ -859,6 +897,7 @@ def update_barycenter_feature(
 ############################################################################
 # Methods related to fused unbalanced GW and unbalanced Co-Optimal Transport.
 ############################################################################
+
 
 def div_to_product(pi, a, b, pi1=None, pi2=None, divergence="kl", mass=True, nx=None):
     r"""Fast computation of the Bregman divergence between an arbitrary measure and a product measure.
@@ -918,20 +957,23 @@ def div_to_product(pi, a, b, pi1=None, pi2=None, divergence="kl", mass=True, nx=
         nx = get_backend(*arr, pi1, pi2)
 
     if divergence == "kl":
-
         if pi1 is None:
             pi1 = nx.sum(pi, 1)
         if pi2 is None:
             pi2 = nx.sum(pi, 0)
 
-        res = nx.sum(pi * nx.log(pi + 1.0 * (pi == 0))) \
-            - nx.sum(pi1 * nx.log(a)) - nx.sum(pi2 * nx.log(b))
+        res = (
+            nx.sum(pi * nx.log(pi + 1.0 * (pi == 0)))
+            - nx.sum(pi1 * nx.log(a))
+            - nx.sum(pi2 * nx.log(b))
+        )
         if mass:
             res = res - nx.sum(pi1) + nx.sum(a) * nx.sum(b)
 
     elif divergence == "l2":
-        res = (nx.sum(pi**2) + nx.sum(a**2) * nx.sum(b**2)
-               - 2 * nx.dot(a, nx.dot(pi, b))) / 2
+        res = (
+            nx.sum(pi**2) + nx.sum(a**2) * nx.sum(b**2) - 2 * nx.dot(a, nx.dot(pi, b))
+        ) / 2
 
     return res
 
@@ -985,11 +1027,18 @@ def div_between_product(mu, nu, alpha, beta, divergence, nx=None):
         m_mu, m_nu = nx.sum(mu), nx.sum(nu)
         m_alpha, m_beta = nx.sum(alpha), nx.sum(beta)
         const = (m_mu - m_alpha) * (m_nu - m_beta)
-        res = m_nu * nx.kl_div(mu, alpha, mass=True) + m_mu * nx.kl_div(nu, beta, mass=True) + const
+        res = (
+            m_nu * nx.kl_div(mu, alpha, mass=True)
+            + m_mu * nx.kl_div(nu, beta, mass=True)
+            + const
+        )
 
     elif divergence == "l2":
-        res = (nx.sum(alpha**2) * nx.sum(beta**2) - 2 * nx.sum(alpha * mu) * nx.sum(beta * nu)
-               + nx.sum(mu**2) * nx.sum(nu**2)) / 2
+        res = (
+            nx.sum(alpha**2) * nx.sum(beta**2)
+            - 2 * nx.sum(alpha * mu) * nx.sum(beta * nu)
+            + nx.sum(mu**2) * nx.sum(nu**2)
+        ) / 2
 
     return res
 
@@ -1056,13 +1105,16 @@ def uot_cost_matrix(data, pi, tuple_p, hyperparams, divergence, reg_type, nx=Non
         if rho_y != float("inf") and rho_y != 0:
             uot_cost = uot_cost + rho_y * nx.kl_div(pi2, b, mass=False)
         if reg_type == "joint" and eps > 0:
-            uot_cost = uot_cost + eps * div_to_product(pi, a, b, pi1, pi2,
-                                                       divergence, mass=False, nx=nx)
+            uot_cost = uot_cost + eps * div_to_product(
+                pi, a, b, pi1, pi2, divergence, mass=False, nx=nx
+            )
 
     return uot_cost
 
 
-def uot_parameters_and_measures(pi, tuple_weights, hyperparams, reg_type, divergence, nx):
+def uot_parameters_and_measures(
+    pi, tuple_weights, hyperparams, reg_type, divergence, nx
+):
     r"""The Block Coordinate Descent algorithm for FUGW and UCOOT
     requires solving an UOT problem in each iteration.
     In particular, we need to specify the following inputs:
@@ -1126,8 +1178,18 @@ def uot_parameters_and_measures(pi, tuple_weights, hyperparams, reg_type, diverg
     return weighted_w, new_rho, new_eps
 
 
-def fused_unbalanced_across_spaces_cost(M_linear, data, tuple_pxy_samp, tuple_pxy_feat,
-                                        pi_samp, pi_feat, hyperparams, divergence, reg_type, nx):
+def fused_unbalanced_across_spaces_cost(
+    M_linear,
+    data,
+    tuple_pxy_samp,
+    tuple_pxy_feat,
+    pi_samp,
+    pi_feat,
+    hyperparams,
+    divergence,
+    reg_type,
+    nx,
+):
     r"""Return the fused unbalanced across-space divergence between two spaces
 
     Parameters
@@ -1186,26 +1248,43 @@ def fused_unbalanced_across_spaces_cost(M_linear, data, tuple_pxy_samp, tuple_px
         ucoot_cost = ucoot_cost + nx.sum(pi_feat * M_feat)
 
     if rho_x != float("inf") and rho_x != 0:
-        ucoot_cost = ucoot_cost + \
-            rho_x * div_between_product(pi1_samp, pi1_feat,
-                                        px_samp, px_feat, divergence, nx)
+        ucoot_cost = ucoot_cost + rho_x * div_between_product(
+            pi1_samp, pi1_feat, px_samp, px_feat, divergence, nx
+        )
     if rho_y != float("inf") and rho_y != 0:
-        ucoot_cost = ucoot_cost + \
-            rho_y * div_between_product(pi2_samp, pi2_feat,
-                                        py_samp, py_feat, divergence, nx)
+        ucoot_cost = ucoot_cost + rho_y * div_between_product(
+            pi2_samp, pi2_feat, py_samp, py_feat, divergence, nx
+        )
 
     if reg_type == "joint" and eps_samp != 0:
-        div_cost = div_between_product(pi_samp, pi_feat,
-                                       pxy_samp, pxy_feat, divergence, nx)
+        div_cost = div_between_product(
+            pi_samp, pi_feat, pxy_samp, pxy_feat, divergence, nx
+        )
         ucoot_cost = ucoot_cost + eps_samp * div_cost
     elif reg_type == "independent":
         if eps_samp != 0:
-            div_samp = div_to_product(pi_samp, pi1_samp, pi2_samp,
-                                      px_samp, py_samp, divergence, mass=True, nx=nx)
+            div_samp = div_to_product(
+                pi_samp,
+                pi1_samp,
+                pi2_samp,
+                px_samp,
+                py_samp,
+                divergence,
+                mass=True,
+                nx=nx,
+            )
             ucoot_cost = ucoot_cost + eps_samp * div_samp
         if eps_feat != 0:
-            div_feat = div_to_product(pi_feat, pi1_feat, pi2_feat,
-                                      px_feat, py_feat, divergence, mass=True, nx=nx)
+            div_feat = div_to_product(
+                pi_feat,
+                pi1_feat,
+                pi2_feat,
+                px_feat,
+                py_feat,
+                divergence,
+                mass=True,
+                nx=nx,
+            )
             ucoot_cost = ucoot_cost + eps_feat * div_feat
 
     return linear_cost, ucoot_cost

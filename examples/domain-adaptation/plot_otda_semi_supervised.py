@@ -5,7 +5,7 @@ OTDA unsupervised vs semi-supervised setting
 ============================================
 
 This example introduces a semi supervised domain adaptation in a 2D setting.
-It explicits the problem of semi supervised domain adaptation and introduces
+It explicit the problem of semi supervised domain adaptation and introduces
 some optimal transport approaches to solve it.
 
 Quantities such as optimal couplings, greater coupling coefficients and
@@ -31,8 +31,8 @@ import ot
 n_samples_source = 150
 n_samples_target = 150
 
-Xs, ys = ot.datasets.make_data_classif('3gauss', n_samples_source)
-Xt, yt = ot.datasets.make_data_classif('3gauss2', n_samples_target)
+Xs, ys = ot.datasets.make_data_classif("3gauss", n_samples_source)
+Xt, yt = ot.datasets.make_data_classif("3gauss2", n_samples_target)
 
 
 ##############################################################################
@@ -69,30 +69,30 @@ transp_Xs_sinkhorn_semi = ot_sinkhorn_semi.transform(Xs=Xs)
 
 pl.figure(1, figsize=(10, 10))
 pl.subplot(2, 2, 1)
-pl.scatter(Xs[:, 0], Xs[:, 1], c=ys, marker='+', label='Source samples')
+pl.scatter(Xs[:, 0], Xs[:, 1], c=ys, marker="+", label="Source samples")
 pl.xticks([])
 pl.yticks([])
 pl.legend(loc=0)
-pl.title('Source  samples')
+pl.title("Source  samples")
 
 pl.subplot(2, 2, 2)
-pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker='o', label='Target samples')
+pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker="o", label="Target samples")
 pl.xticks([])
 pl.yticks([])
 pl.legend(loc=0)
-pl.title('Target samples')
+pl.title("Target samples")
 
 pl.subplot(2, 2, 3)
-pl.imshow(ot_sinkhorn_un.cost_, interpolation='nearest')
+pl.imshow(ot_sinkhorn_un.cost_, interpolation="nearest")
 pl.xticks([])
 pl.yticks([])
-pl.title('Cost matrix - unsupervised DA')
+pl.title("Cost matrix - unsupervised DA")
 
 pl.subplot(2, 2, 4)
-pl.imshow(ot_sinkhorn_semi.cost_, interpolation='nearest')
+pl.imshow(ot_sinkhorn_semi.cost_, interpolation="nearest")
 pl.xticks([])
 pl.yticks([])
-pl.title('Cost matrix - semi-supervised DA')
+pl.title("Cost matrix - semi-supervised DA")
 
 pl.tight_layout()
 
@@ -107,16 +107,16 @@ pl.tight_layout()
 pl.figure(2, figsize=(8, 4))
 
 pl.subplot(1, 2, 1)
-pl.imshow(ot_sinkhorn_un.coupling_, interpolation='nearest')
+pl.imshow(ot_sinkhorn_un.coupling_, interpolation="nearest")
 pl.xticks([])
 pl.yticks([])
-pl.title('Optimal coupling\nUnsupervised DA')
+pl.title("Optimal coupling\nUnsupervised DA")
 
 pl.subplot(1, 2, 2)
-pl.imshow(ot_sinkhorn_semi.coupling_, interpolation='nearest')
+pl.imshow(ot_sinkhorn_semi.coupling_, interpolation="nearest")
 pl.xticks([])
 pl.yticks([])
-pl.title('Optimal coupling\nSemi-supervised DA')
+pl.title("Optimal coupling\nSemi-supervised DA")
 
 pl.tight_layout()
 
@@ -128,21 +128,31 @@ pl.tight_layout()
 # display transported samples
 pl.figure(4, figsize=(8, 4))
 pl.subplot(1, 2, 1)
-pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker='o',
-           label='Target samples', alpha=0.5)
-pl.scatter(transp_Xs_sinkhorn_un[:, 0], transp_Xs_sinkhorn_un[:, 1], c=ys,
-           marker='+', label='Transp samples', s=30)
-pl.title('Transported samples\nEmdTransport')
+pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker="o", label="Target samples", alpha=0.5)
+pl.scatter(
+    transp_Xs_sinkhorn_un[:, 0],
+    transp_Xs_sinkhorn_un[:, 1],
+    c=ys,
+    marker="+",
+    label="Transp samples",
+    s=30,
+)
+pl.title("Transported samples\nEmdTransport")
 pl.legend(loc=0)
 pl.xticks([])
 pl.yticks([])
 
 pl.subplot(1, 2, 2)
-pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker='o',
-           label='Target samples', alpha=0.5)
-pl.scatter(transp_Xs_sinkhorn_semi[:, 0], transp_Xs_sinkhorn_semi[:, 1], c=ys,
-           marker='+', label='Transp samples', s=30)
-pl.title('Transported samples\nSinkhornTransport')
+pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker="o", label="Target samples", alpha=0.5)
+pl.scatter(
+    transp_Xs_sinkhorn_semi[:, 0],
+    transp_Xs_sinkhorn_semi[:, 1],
+    c=ys,
+    marker="+",
+    label="Transp samples",
+    s=30,
+)
+pl.title("Transported samples\nSinkhornTransport")
 pl.xticks([])
 pl.yticks([])
 

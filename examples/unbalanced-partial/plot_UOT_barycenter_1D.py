@@ -21,6 +21,7 @@ as proposed in [10] for Unbalanced inputs.
 import numpy as np
 import matplotlib.pylab as pl
 import ot
+
 # necessary for 3d plot even if not used
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 from matplotlib.collections import PolyCollection
@@ -41,7 +42,7 @@ a1 = ot.datasets.make_1D_gauss(n, m=20, s=5)  # m= mean, s= std
 a2 = ot.datasets.make_1D_gauss(n, m=60, s=8)
 
 # make unbalanced dists
-a2 *= 3.
+a2 *= 3.0
 
 # creating matrix A containing all distributions
 A = np.vstack((a1, a2)).T
@@ -60,7 +61,7 @@ M /= M.max()
 pl.figure(1, figsize=(6.4, 3))
 for i in range(n_distributions):
     pl.plot(x, A[:, i])
-pl.title('Distributions')
+pl.title("Distributions")
 pl.tight_layout()
 
 ##############################################################################
@@ -77,7 +78,7 @@ bary_l2 = A.dot(weights)
 
 # wasserstein
 reg = 1e-3
-alpha = 1.
+alpha = 1.0
 
 bary_wass = ot.unbalanced.barycenter_unbalanced(A, M, reg, alpha, weights=weights)
 
@@ -86,13 +87,13 @@ pl.clf()
 pl.subplot(2, 1, 1)
 for i in range(n_distributions):
     pl.plot(x, A[:, i])
-pl.title('Distributions')
+pl.title("Distributions")
 
 pl.subplot(2, 1, 2)
-pl.plot(x, bary_l2, 'r', label='l2')
-pl.plot(x, bary_wass, 'g', label='Wasserstein')
+pl.plot(x, bary_l2, "r", label="l2")
+pl.plot(x, bary_wass, "g", label="Wasserstein")
 pl.legend()
-pl.title('Barycenters')
+pl.title("Barycenters")
 pl.tight_layout()
 
 ##############################################################################
@@ -113,54 +114,56 @@ for i in range(0, n_weight):
     weight = weight_list[i]
     weights = np.array([1 - weight, weight])
     B_l2[:, i] = A.dot(weights)
-    B_wass[:, i] = ot.unbalanced.barycenter_unbalanced(A, M, reg, alpha, weights=weights)
+    B_wass[:, i] = ot.unbalanced.barycenter_unbalanced(
+        A, M, reg, alpha, weights=weights
+    )
 
 
 # plot interpolation
 
 pl.figure(3)
 
-cmap = pl.get_cmap('viridis')
+cmap = pl.get_cmap("viridis")
 verts = []
 zs = weight_list
 for i, z in enumerate(zs):
     ys = B_l2[:, i]
     verts.append(list(zip(x, ys)))
 
-ax = pl.gcf().add_subplot(projection='3d')
+ax = pl.gcf().add_subplot(projection="3d")
 
 poly = PolyCollection(verts, facecolors=[cmap(a) for a in weight_list])
 poly.set_alpha(0.7)
-ax.add_collection3d(poly, zs=zs, zdir='y')
-ax.set_xlabel('x')
+ax.add_collection3d(poly, zs=zs, zdir="y")
+ax.set_xlabel("x")
 ax.set_xlim3d(0, n)
-ax.set_ylabel(r'$\alpha$')
+ax.set_ylabel(r"$\alpha$")
 ax.set_ylim3d(0, 1)
-ax.set_zlabel('')
+ax.set_zlabel("")
 ax.set_zlim3d(0, B_l2.max() * 1.01)
-pl.title('Barycenter interpolation with l2')
+pl.title("Barycenter interpolation with l2")
 pl.tight_layout()
 
 pl.figure(4)
-cmap = pl.get_cmap('viridis')
+cmap = pl.get_cmap("viridis")
 verts = []
 zs = weight_list
 for i, z in enumerate(zs):
     ys = B_wass[:, i]
     verts.append(list(zip(x, ys)))
 
-ax = pl.gcf().add_subplot(projection='3d')
+ax = pl.gcf().add_subplot(projection="3d")
 
 poly = PolyCollection(verts, facecolors=[cmap(a) for a in weight_list])
 poly.set_alpha(0.7)
-ax.add_collection3d(poly, zs=zs, zdir='y')
-ax.set_xlabel('x')
+ax.add_collection3d(poly, zs=zs, zdir="y")
+ax.set_xlabel("x")
 ax.set_xlim3d(0, n)
-ax.set_ylabel(r'$\alpha$')
+ax.set_ylabel(r"$\alpha$")
 ax.set_ylim3d(0, 1)
-ax.set_zlabel('')
+ax.set_zlabel("")
 ax.set_zlim3d(0, B_l2.max() * 1.01)
-pl.title('Barycenter interpolation with Wasserstein')
+pl.title("Barycenter interpolation with Wasserstein")
 pl.tight_layout()
 
 pl.show()

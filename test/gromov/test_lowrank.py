@@ -1,4 +1,4 @@
-""" Tests for gromov._lowrank.py """
+"""Tests for gromov._lowrank.py"""
 
 # Author: Laurène DAVID <laurene.david@ip-paris.fr>
 #
@@ -15,8 +15,8 @@ def test__flat_product_operator():
     X = np.reshape(1.0 * np.arange(2 * n), (n, d))
     A1, A2 = ot.lowrank.compute_lr_sqeuclidean_matrix(X, X, rescale_cost=False)
 
-    A1_ = ot.gromov._flat_product_operator(A1)
-    A2_ = ot.gromov._flat_product_operator(A2)
+    A1_ = ot.gromov._lowrank._flat_product_operator(A1)
+    A2_ = ot.gromov._lowrank._flat_product_operator(A2)
     cost = ot.dist(X, X)
 
     # test value
@@ -35,7 +35,9 @@ def test_lowrank_gromov_wasserstein_samples():
     a = ot.unif(n_samples)
     b = ot.unif(n_samples)
 
-    Q, R, g, log = ot.gromov.lowrank_gromov_wasserstein_samples(X_s, X_t, a, b, reg=0.1, log=True, rescale_cost=False)
+    Q, R, g, log = ot.gromov.lowrank_gromov_wasserstein_samples(
+        X_s, X_t, a, b, reg=0.1, log=True, rescale_cost=False
+    )
     P = log["lazy_plan"][:]
 
     # check constraints for P
@@ -49,13 +51,29 @@ def test_lowrank_gromov_wasserstein_samples():
     # check warn parameter when low rank GW algorithm doesn't converge
     with pytest.warns(UserWarning):
         ot.gromov.lowrank_gromov_wasserstein_samples(
-            X_s, X_t, a, b, reg=0.1, stopThr=0, numItermax=1, warn=True, warn_dykstra=False
+            X_s,
+            X_t,
+            a,
+            b,
+            reg=0.1,
+            stopThr=0,
+            numItermax=1,
+            warn=True,
+            warn_dykstra=False,
         )
 
     # check warn parameter when Dykstra algorithm doesn't converge
     with pytest.warns(UserWarning):
         ot.gromov.lowrank_gromov_wasserstein_samples(
-            X_s, X_t, a, b, reg=0.1, stopThr_dykstra=0, numItermax_dykstra=1, warn=False, warn_dykstra=True
+            X_s,
+            X_t,
+            a,
+            b,
+            reg=0.1,
+            stopThr_dykstra=0,
+            numItermax_dykstra=1,
+            warn=False,
+            warn_dykstra=True,
         )
 
 
@@ -73,7 +91,9 @@ def test_lowrank_gromov_wasserstein_samples_alpha_error(alpha, rank):
     b = ot.unif(n_samples)
 
     with pytest.raises(ValueError):
-        ot.gromov.lowrank_gromov_wasserstein_samples(X_s, X_t, a, b, reg=0.1, rank=rank, alpha=alpha, warn=False)
+        ot.gromov.lowrank_gromov_wasserstein_samples(
+            X_s, X_t, a, b, reg=0.1, rank=rank, alpha=alpha, warn=False
+        )
 
 
 @pytest.mark.parametrize(("gamma_init"), ("rescale", "theory", "other"))
@@ -91,10 +111,14 @@ def test_lowrank_wasserstein_samples_gamma_init(gamma_init):
 
     if gamma_init not in ["rescale", "theory"]:
         with pytest.raises(NotImplementedError):
-            ot.gromov.lowrank_gromov_wasserstein_samples(X_s, X_t, a, b, reg=0.1, gamma_init=gamma_init, log=True)
+            ot.gromov.lowrank_gromov_wasserstein_samples(
+                X_s, X_t, a, b, reg=0.1, gamma_init=gamma_init, log=True
+            )
 
     else:
-        Q, R, g, log = ot.gromov.lowrank_gromov_wasserstein_samples(X_s, X_t, a, b, reg=0.1, gamma_init=gamma_init, log=True)
+        Q, R, g, log = ot.gromov.lowrank_gromov_wasserstein_samples(
+            X_s, X_t, a, b, reg=0.1, gamma_init=gamma_init, log=True
+        )
         P = log["lazy_plan"][:]
 
         # check constraints for P
@@ -102,7 +126,7 @@ def test_lowrank_wasserstein_samples_gamma_init(gamma_init):
         np.testing.assert_allclose(b, P.sum(0), atol=1e-04)
 
 
-@pytest.skip_backend('tf')
+@pytest.skip_backend("tf")
 def test_lowrank_gromov_wasserstein_samples_backends(nx):
     # Test low rank sinkhorn for different backends
     n_samples = 20  # nb samples
@@ -117,7 +141,9 @@ def test_lowrank_gromov_wasserstein_samples_backends(nx):
 
     ab, bb, X_sb, X_tb = nx.from_numpy(a, b, X_s, X_t)
 
-    Q, R, g, log = ot.gromov.lowrank_gromov_wasserstein_samples(X_sb, X_tb, ab, bb, reg=0.1, log=True)
+    Q, R, g, log = ot.gromov.lowrank_gromov_wasserstein_samples(
+        X_sb, X_tb, ab, bb, reg=0.1, log=True
+    )
     lazy_plan = log["lazy_plan"]
     P = lazy_plan[:]
 

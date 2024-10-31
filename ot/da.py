@@ -18,19 +18,50 @@ import warnings
 from .backend import get_backend
 from .bregman import sinkhorn, jcpot_barycenter
 from .lp import emd
-from .utils import unif, dist, kernel, cost_normalization, label_normalization, laplacian, dots
-from .utils import BaseEstimator, check_params, deprecated, labels_to_masks, list_to_array
+from .utils import (
+    unif,
+    dist,
+    kernel,
+    cost_normalization,
+    label_normalization,
+    laplacian,
+    dots,
+)
+from .utils import (
+    BaseEstimator,
+    check_params,
+    deprecated,
+    labels_to_masks,
+    list_to_array,
+)
 from .unbalanced import sinkhorn_unbalanced
-from .gaussian import empirical_bures_wasserstein_mapping, empirical_gaussian_gromov_wasserstein_mapping
+from .gaussian import (
+    empirical_bures_wasserstein_mapping,
+    empirical_gaussian_gromov_wasserstein_mapping,
+)
 from .optim import cg
 from .optim import gcg
-from .mapping import nearest_brenier_potential_fit, nearest_brenier_potential_predict_bounds, joint_OT_mapping_linear, \
-    joint_OT_mapping_kernel
+from .mapping import (
+    nearest_brenier_potential_fit,
+    nearest_brenier_potential_predict_bounds,
+    joint_OT_mapping_linear,
+    joint_OT_mapping_kernel,
+)
 
 
-def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
-                     numInnerItermax=200, stopInnerThr=1e-9, verbose=False,
-                     log=False):
+def sinkhorn_lpl1_mm(
+    a,
+    labels_a,
+    b,
+    M,
+    reg,
+    eta=0.1,
+    numItermax=10,
+    numInnerItermax=200,
+    stopInnerThr=1e-9,
+    verbose=False,
+    log=False,
+):
     r"""
     Solve the entropic regularization optimal transport problem with non-convex
     group lasso regularization
@@ -130,14 +161,25 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
     for _ in range(numItermax):
         Mreg = M + eta * W
         if log:
-            transp, log = sinkhorn(a, b, Mreg, reg, numItermax=numInnerItermax,
-                                   stopThr=stopInnerThr, log=True)
+            transp, log = sinkhorn(
+                a,
+                b,
+                Mreg,
+                reg,
+                numItermax=numInnerItermax,
+                stopThr=stopInnerThr,
+                log=True,
+            )
         else:
-            transp = sinkhorn(a, b, Mreg, reg, numItermax=numInnerItermax,
-                              stopThr=stopInnerThr)
+            transp = sinkhorn(
+                a, b, Mreg, reg, numItermax=numInnerItermax, stopThr=stopInnerThr
+            )
         # the transport has been computed
         # check if classes are really separated
-        W = nx.repeat(transp.T[:, :, None], n_labels, axis=2) * unroll_labels_idx[None, :, :]
+        W = (
+            nx.repeat(transp.T[:, :, None], n_labels, axis=2)
+            * unroll_labels_idx[None, :, :]
+        )
         W = nx.sum(W, axis=1)
         W = nx.dot(W, unroll_labels_idx.T)
         W = p * ((W.T + epsilon) ** (p - 1))
@@ -148,9 +190,20 @@ def sinkhorn_lpl1_mm(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
         return transp
 
 
-def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
-                     numInnerItermax=200, stopInnerThr=1e-9, eps=1e-12,
-                     verbose=False, log=False):
+def sinkhorn_l1l2_gl(
+    a,
+    labels_a,
+    b,
+    M,
+    reg,
+    eta=0.1,
+    numItermax=10,
+    numInnerItermax=200,
+    stopInnerThr=1e-9,
+    eps=1e-12,
+    verbose=False,
+    log=False,
+):
     r"""
     Solve the entropic regularization optimal transport problem with group
     lasso regularization
@@ -252,17 +305,44 @@ def sinkhorn_l1l2_gl(a, labels_a, b, M, reg, eta=0.1, numItermax=10,
         G_norm = G_split / nx.clip(W, eps, None)
         return nx.sum(G_norm, axis=2).T
 
-    return gcg(a, b, M, reg, eta, f, df, G0=None, numItermax=numItermax,
-               numInnerItermax=numInnerItermax, stopThr=stopInnerThr,
-               verbose=verbose, log=log)
+    return gcg(
+        a,
+        b,
+        M,
+        reg,
+        eta,
+        f,
+        df,
+        G0=None,
+        numItermax=numItermax,
+        numInnerItermax=numInnerItermax,
+        stopThr=stopInnerThr,
+        verbose=verbose,
+        log=log,
+    )
 
 
 OT_mapping_linear = deprecated(empirical_bures_wasserstein_mapping)
 
 
-def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, alpha=.5,
-                numItermax=100, stopThr=1e-9, numInnerItermax=100000,
-                stopInnerThr=1e-9, log=False, verbose=False):
+def emd_laplace(
+    a,
+    b,
+    xs,
+    xt,
+    M,
+    sim="knn",
+    sim_param=None,
+    reg="pos",
+    eta=1,
+    alpha=0.5,
+    numItermax=100,
+    stopThr=1e-9,
+    numInnerItermax=100000,
+    stopInnerThr=1e-9,
+    log=False,
+    verbose=False,
+):
     r"""Solve the optimal transport problem (OT) with Laplacian regularization
 
     .. math::
@@ -359,62 +439,82 @@ def emd_laplace(a, b, xs, xt, M, sim='knn', sim_param=None, reg='pos', eta=1, al
     """
     if not isinstance(sim_param, (int, float, type(None))):
         raise ValueError(
-            'Similarity parameter should be an int or a float. Got {type} instead.'.format(type=type(sim_param).__name__))
+            "Similarity parameter should be an int or a float. Got {type} instead.".format(
+                type=type(sim_param).__name__
+            )
+        )
 
     a, b, xs, xt, M = list_to_array(a, b, xs, xt, M)
     nx = get_backend(a, b, xs, xt, M)
 
-    if sim == 'gauss':
+    if sim == "gauss":
         if sim_param is None:
-            sim_param = 1 / (2 * (nx.mean(dist(xs, xs, 'sqeuclidean')) ** 2))
+            sim_param = 1 / (2 * (nx.mean(dist(xs, xs, "sqeuclidean")) ** 2))
         sS = kernel(xs, xs, method=sim, sigma=sim_param)
         sT = kernel(xt, xt, method=sim, sigma=sim_param)
 
-    elif sim == 'knn':
+    elif sim == "knn":
         if sim_param is None:
             sim_param = 3
         try:
             from sklearn.neighbors import kneighbors_graph
         except ImportError:
-            raise ValueError('scikit-learn must be installed to use knn similarity. Install with `$pip install scikit-learn`.')
+            raise ValueError(
+                "scikit-learn must be installed to use knn similarity. Install with `$pip install scikit-learn`."
+            )
 
-        sS = nx.from_numpy(kneighbors_graph(
-            X=nx.to_numpy(xs), n_neighbors=int(sim_param)
-        ).toarray(), type_as=xs)
+        sS = nx.from_numpy(
+            kneighbors_graph(X=nx.to_numpy(xs), n_neighbors=int(sim_param)).toarray(),
+            type_as=xs,
+        )
         sS = (sS + sS.T) / 2
-        sT = nx.from_numpy(kneighbors_graph(
-            X=nx.to_numpy(xt), n_neighbors=int(sim_param)
-        ).toarray(), type_as=xt)
+        sT = nx.from_numpy(
+            kneighbors_graph(X=nx.to_numpy(xt), n_neighbors=int(sim_param)).toarray(),
+            type_as=xt,
+        )
         sT = (sT + sT.T) / 2
     else:
-        raise ValueError('Unknown similarity type {sim}. Currently supported similarity types are "knn" and "gauss".'.format(sim=sim))
+        raise ValueError(
+            'Unknown similarity type {sim}. Currently supported similarity types are "knn" and "gauss".'.format(
+                sim=sim
+            )
+        )
 
     lS = laplacian(sS)
     lT = laplacian(sT)
 
     def f(G):
-        return (
-            alpha * nx.trace(dots(xt.T, G.T, lS, G, xt))
-            + (1 - alpha) * nx.trace(dots(xs.T, G, lT, G.T, xs))
+        return alpha * nx.trace(dots(xt.T, G.T, lS, G, xt)) + (1 - alpha) * nx.trace(
+            dots(xs.T, G, lT, G.T, xs)
         )
 
     ls2 = lS + lS.T
     lt2 = lT + lT.T
     xt2 = nx.dot(xt, xt.T)
 
-    if reg == 'disp':
+    if reg == "disp":
         Cs = -eta * alpha / xs.shape[0] * dots(ls2, xs, xt.T)
         Ct = -eta * (1 - alpha) / xt.shape[0] * dots(xs, xt.T, lt2)
         M = M + Cs + Ct
 
     def df(G):
-        return (
-            alpha * dots(ls2, G, xt2)
-            + (1 - alpha) * dots(xs, xs.T, G, lt2)
-        )
+        return alpha * dots(ls2, G, xt2) + (1 - alpha) * dots(xs, xs.T, G, lt2)
 
-    return cg(a, b, M, reg=eta, f=f, df=df, G0=None, numItermax=numItermax, numItermaxEmd=numInnerItermax,
-              stopThr=stopThr, stopThr2=stopInnerThr, verbose=verbose, log=log)
+    return cg(
+        a,
+        b,
+        M,
+        reg=eta,
+        f=f,
+        df=df,
+        G0=None,
+        numItermax=numItermax,
+        numItermaxEmd=numInnerItermax,
+        stopThr=stopThr,
+        stopThr2=stopInnerThr,
+        verbose=verbose,
+        log=log,
+    )
 
 
 def distribution_estimation_uniform(X):
@@ -435,7 +535,6 @@ def distribution_estimation_uniform(X):
 
 
 class BaseTransport(BaseEstimator):
-
     """Base class for OTDA objects
 
     .. note::
@@ -489,13 +588,13 @@ class BaseTransport(BaseEstimator):
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs, Xt=Xt):
-
             # pairwise distance
             self.cost_ = dist(Xs, Xt, metric=self.metric)
-            self.cost_, self.norm_cost_ = cost_normalization(self.cost_, self.norm, return_value=True)
+            self.cost_, self.norm_cost_ = cost_normalization(
+                self.cost_, self.norm, return_value=True
+            )
 
             if (ys is not None) and (yt is not None):
-
                 if self.limit_max != np.inf:
                     self.limit_max = self.limit_max * nx.max(self.cost_)
 
@@ -514,7 +613,7 @@ class BaseTransport(BaseEstimator):
                 # we suppress potential RuntimeWarning caused by Inf multiplication
                 # (as we explicitly cover potential NANs later)
                 with warnings.catch_warnings():
-                    warnings.simplefilter('ignore', category=RuntimeWarning)
+                    warnings.simplefilter("ignore", category=RuntimeWarning)
                     cost_correction = label_match * missing_labels * self.limit_max
                 # this operation is necessary because 0 * Inf = NAN
                 # thus is irrelevant when limit_max is finite
@@ -588,7 +687,6 @@ class BaseTransport(BaseEstimator):
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs):
-
             if nx.array_equal(self.xs_, Xs):
                 # perform standard barycentric mapping
                 transp = self.coupling_ / nx.sum(self.coupling_, axis=1)[:, None]
@@ -602,8 +700,9 @@ class BaseTransport(BaseEstimator):
                 # perform out of sample mapping
                 indices = nx.arange(Xs.shape[0])
                 batch_ind = [
-                    indices[i:i + batch_size]
-                    for i in range(0, len(indices), batch_size)]
+                    indices[i : i + batch_size]
+                    for i in range(0, len(indices), batch_size)
+                ]
 
                 transp_Xs = []
                 for bi in batch_ind:
@@ -665,8 +764,7 @@ class BaseTransport(BaseEstimator):
 
             return transp_ys.T
 
-    def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None,
-                          batch_size=128):
+    def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
         r"""Transports target samples :math:`\mathbf{X_t}` onto source samples :math:`\mathbf{X_s}`
 
         Parameters
@@ -695,7 +793,6 @@ class BaseTransport(BaseEstimator):
 
         # check the necessary inputs parameters are here
         if check_params(Xt=Xt):
-
             if nx.array_equal(self.xt_, Xt):
                 # perform standard barycentric mapping
                 transp_ = self.coupling_.T / nx.sum(self.coupling_, 0)[:, None]
@@ -709,8 +806,9 @@ class BaseTransport(BaseEstimator):
                 # perform out of sample mapping
                 indices = nx.arange(Xt.shape[0])
                 batch_ind = [
-                    indices[i:i + batch_size]
-                    for i in range(0, len(indices), batch_size)]
+                    indices[i : i + batch_size]
+                    for i in range(0, len(indices), batch_size)
+                ]
 
                 transp_Xt = []
                 for bi in batch_ind:
@@ -762,7 +860,7 @@ class BaseTransport(BaseEstimator):
 
 
 class LinearTransport(BaseTransport):
-    r""" OT linear operator between empirical distributions
+    r"""OT linear operator between empirical distributions
 
     The function estimates the optimal linear operator that aligns the two
     empirical distributions. This is equivalent to estimating the closed
@@ -806,8 +904,13 @@ class LinearTransport(BaseTransport):
 
     """
 
-    def __init__(self, reg=1e-8, bias=True, log=False,
-                 distribution_estimation=distribution_estimation_uniform):
+    def __init__(
+        self,
+        reg=1e-8,
+        bias=True,
+        log=False,
+        distribution_estimation=distribution_estimation_uniform,
+    ):
         self.bias = bias
         self.log = log
         self.reg = reg
@@ -844,16 +947,24 @@ class LinearTransport(BaseTransport):
         self.mu_t = self.distribution_estimation(Xt)
 
         # coupling estimation
-        returned_ = empirical_bures_wasserstein_mapping(Xs, Xt, reg=self.reg,
-                                                        ws=nx.reshape(self.mu_s, (-1, 1)),
-                                                        wt=nx.reshape(self.mu_t, (-1, 1)),
-                                                        bias=self.bias, log=self.log)
+        returned_ = empirical_bures_wasserstein_mapping(
+            Xs,
+            Xt,
+            reg=self.reg,
+            ws=nx.reshape(self.mu_s, (-1, 1)),
+            wt=nx.reshape(self.mu_t, (-1, 1)),
+            bias=self.bias,
+            log=self.log,
+        )
 
         # deal with the value of log
         if self.log:
             self.A_, self.B_, self.log_ = returned_
         else:
-            self.A_, self.B_, = returned_
+            (
+                self.A_,
+                self.B_,
+            ) = returned_
             self.log_ = dict()
 
         # re compute inverse mapping
@@ -895,8 +1006,7 @@ class LinearTransport(BaseTransport):
 
             return transp_Xs
 
-    def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None,
-                          batch_size=128):
+    def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
         r"""Transports target samples :math:`\mathbf{X_t}` onto source samples :math:`\mathbf{X_s}`
 
         Parameters
@@ -931,7 +1041,7 @@ class LinearTransport(BaseTransport):
 
 
 class LinearGWTransport(LinearTransport):
-    r""" OT Gaussian Gromov-Wasserstein linear operator between empirical distributions
+    r"""OT Gaussian Gromov-Wasserstein linear operator between empirical distributions
 
     The function estimates the optimal linear operator that aligns the two
     empirical distributions optimally wrt the Gromov-Wasserstein distance. This is equivalent to estimating the closed
@@ -968,8 +1078,12 @@ class LinearGWTransport(LinearTransport):
 
     """
 
-    def __init__(self, log=False, sign_eigs=None,
-                 distribution_estimation=distribution_estimation_uniform):
+    def __init__(
+        self,
+        log=False,
+        sign_eigs=None,
+        distribution_estimation=distribution_estimation_uniform,
+    ):
         self.sign_eigs = sign_eigs
         self.log = log
         self.distribution_estimation = distribution_estimation
@@ -1005,36 +1119,47 @@ class LinearGWTransport(LinearTransport):
         self.mu_t = self.distribution_estimation(Xt)
 
         # coupling estimation
-        returned_ = empirical_gaussian_gromov_wasserstein_mapping(Xs, Xt,
-                                                                  ws=self.mu_s[:, None],
-                                                                  wt=self.mu_t[:, None],
-                                                                  sign_eigs=self.sign_eigs,
-                                                                  log=self.log)
+        returned_ = empirical_gaussian_gromov_wasserstein_mapping(
+            Xs,
+            Xt,
+            ws=self.mu_s[:, None],
+            wt=self.mu_t[:, None],
+            sign_eigs=self.sign_eigs,
+            log=self.log,
+        )
 
         # deal with the value of log
         if self.log:
             self.A_, self.B_, self.log_ = returned_
         else:
-            self.A_, self.B_, = returned_
+            (
+                self.A_,
+                self.B_,
+            ) = returned_
             self.log_ = dict()
 
         # re compute inverse mapping
-        returned_1_ = empirical_gaussian_gromov_wasserstein_mapping(Xt, Xs,
-                                                                    ws=self.mu_t[:, None],
-                                                                    wt=self.mu_s[:, None],
-                                                                    sign_eigs=self.sign_eigs,
-                                                                    log=self.log)
+        returned_1_ = empirical_gaussian_gromov_wasserstein_mapping(
+            Xt,
+            Xs,
+            ws=self.mu_t[:, None],
+            wt=self.mu_s[:, None],
+            sign_eigs=self.sign_eigs,
+            log=self.log,
+        )
         if self.log:
             self.A1_, self.B1_, self.log_1_ = returned_1_
         else:
-            self.A1_, self.B1_, = returned_1_
+            (
+                self.A1_,
+                self.B1_,
+            ) = returned_1_
             self.log_ = dict()
 
         return self
 
 
 class SinkhornTransport(BaseTransport):
-
     """Domain Adaptation OT method based on Sinkhorn Algorithm
 
     Parameters
@@ -1104,14 +1229,22 @@ class SinkhornTransport(BaseTransport):
 
     """
 
-    def __init__(self, reg_e=1., method="sinkhorn_log", max_iter=1000,
-                 tol=10e-9, verbose=False, log=False,
-                 metric="sqeuclidean", norm=None,
-                 distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='continuous', limit_max=np.inf):
-
-        if out_of_sample_map not in ['ferradans', 'continuous']:
-            raise ValueError('Unknown out_of_sample_map method')
+    def __init__(
+        self,
+        reg_e=1.0,
+        method="sinkhorn_log",
+        max_iter=1000,
+        tol=10e-9,
+        verbose=False,
+        log=False,
+        metric="sqeuclidean",
+        norm=None,
+        distribution_estimation=distribution_estimation_uniform,
+        out_of_sample_map="continuous",
+        limit_max=np.inf,
+    ):
+        if out_of_sample_map not in ["ferradans", "continuous"]:
+            raise ValueError("Unknown out_of_sample_map method")
 
         self.reg_e = reg_e
         self.method = method
@@ -1152,17 +1285,26 @@ class SinkhornTransport(BaseTransport):
 
         super(SinkhornTransport, self).fit(Xs, ys, Xt, yt)
 
-        if self.out_of_sample_map == 'continuous':
+        if self.out_of_sample_map == "continuous":
             self.log = True
-            if not self.method == 'sinkhorn_log':
-                self.method = 'sinkhorn_log'
-                warnings.warn("The method has been set to 'sinkhorn_log' as it is the only method available for out_of_sample_map='continuous'")
+            if not self.method == "sinkhorn_log":
+                self.method = "sinkhorn_log"
+                warnings.warn(
+                    "The method has been set to 'sinkhorn_log' as it is the only method available for out_of_sample_map='continuous'"
+                )
 
         # coupling estimation
         returned_ = sinkhorn(
-            a=self.mu_s, b=self.mu_t, M=self.cost_, reg=self.reg_e,
-            method=self.method, numItermax=self.max_iter, stopThr=self.tol,
-            verbose=self.verbose, log=self.log)
+            a=self.mu_s,
+            b=self.mu_t,
+            M=self.cost_,
+            reg=self.reg_e,
+            method=self.method,
+            numItermax=self.max_iter,
+            stopThr=self.tol,
+            verbose=self.verbose,
+            log=self.log,
+        )
 
         # deal with the value of log
         if self.log:
@@ -1200,18 +1342,17 @@ class SinkhornTransport(BaseTransport):
         """
         nx = self.nx
 
-        if self.out_of_sample_map == 'ferradans':
+        if self.out_of_sample_map == "ferradans":
             return super(SinkhornTransport, self).transform(Xs, ys, Xt, yt, batch_size)
 
         else:  # self.out_of_sample_map == 'continuous':
-
             # check the necessary inputs parameters are here
-            g = self.log_['log_v']
+            g = self.log_["log_v"]
 
             indices = nx.arange(Xs.shape[0])
             batch_ind = [
-                indices[i:i + batch_size]
-                for i in range(0, len(indices), batch_size)]
+                indices[i : i + batch_size] for i in range(0, len(indices), batch_size)
+            ]
 
             transp_Xs = []
             for bi in batch_ind:
@@ -1258,22 +1399,21 @@ class SinkhornTransport(BaseTransport):
 
         nx = self.nx
 
-        if self.out_of_sample_map == 'ferradans':
-            return super(SinkhornTransport, self).inverse_transform(Xs, ys, Xt, yt, batch_size)
+        if self.out_of_sample_map == "ferradans":
+            return super(SinkhornTransport, self).inverse_transform(
+                Xs, ys, Xt, yt, batch_size
+            )
 
         else:  # self.out_of_sample_map == 'continuous':
-
-            f = self.log_['log_u']
+            f = self.log_["log_u"]
 
             indices = nx.arange(Xt.shape[0])
             batch_ind = [
-                indices[i:i + batch_size]
-                for i in range(0, len(indices), batch_size
-                               )]
+                indices[i : i + batch_size] for i in range(0, len(indices), batch_size)
+            ]
 
             transp_Xt = []
             for bi in batch_ind:
-
                 M = dist(Xt[bi], self.xs_, metric=self.metric)
                 M = cost_normalization(M, self.norm, value=self.norm_cost_)
 
@@ -1289,7 +1429,6 @@ class SinkhornTransport(BaseTransport):
 
 
 class EMDTransport(BaseTransport):
-
     """Domain Adaptation OT method based on Earth Mover's Distance
 
     Parameters
@@ -1332,10 +1471,16 @@ class EMDTransport(BaseTransport):
         Sciences, 7(3), 1853-1882.
     """
 
-    def __init__(self, metric="sqeuclidean", norm=None, log=False,
-                 distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='ferradans', limit_max=10,
-                 max_iter=100000):
+    def __init__(
+        self,
+        metric="sqeuclidean",
+        norm=None,
+        log=False,
+        distribution_estimation=distribution_estimation_uniform,
+        out_of_sample_map="ferradans",
+        limit_max=10,
+        max_iter=100000,
+    ):
         self.metric = metric
         self.norm = norm
         self.log = log
@@ -1372,8 +1517,12 @@ class EMDTransport(BaseTransport):
         super(EMDTransport, self).fit(Xs, ys, Xt, yt)
 
         returned_ = emd(
-            a=self.mu_s, b=self.mu_t, M=self.cost_, numItermax=self.max_iter,
-            log=self.log)
+            a=self.mu_s,
+            b=self.mu_t,
+            M=self.cost_,
+            numItermax=self.max_iter,
+            log=self.log,
+        )
 
         # coupling estimation
         if self.log:
@@ -1444,12 +1593,21 @@ class SinkhornLpl1Transport(BaseTransport):
             Sciences, 7(3), 1853-1882.
     """
 
-    def __init__(self, reg_e=1., reg_cl=0.1,
-                 max_iter=10, max_inner_iter=200, log=False,
-                 tol=10e-9, verbose=False,
-                 metric="sqeuclidean", norm=None,
-                 distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='ferradans', limit_max=np.inf):
+    def __init__(
+        self,
+        reg_e=1.0,
+        reg_cl=0.1,
+        max_iter=10,
+        max_inner_iter=200,
+        log=False,
+        tol=10e-9,
+        verbose=False,
+        metric="sqeuclidean",
+        norm=None,
+        distribution_estimation=distribution_estimation_uniform,
+        out_of_sample_map="ferradans",
+        limit_max=np.inf,
+    ):
         self.reg_e = reg_e
         self.reg_cl = reg_cl
         self.max_iter = max_iter
@@ -1493,10 +1651,18 @@ class SinkhornLpl1Transport(BaseTransport):
             super(SinkhornLpl1Transport, self).fit(Xs, ys, Xt, yt)
 
             returned_ = sinkhorn_lpl1_mm(
-                a=self.mu_s, labels_a=ys, b=self.mu_t, M=self.cost_,
-                reg=self.reg_e, eta=self.reg_cl, numItermax=self.max_iter,
-                numInnerItermax=self.max_inner_iter, stopInnerThr=self.tol,
-                verbose=self.verbose, log=self.log)
+                a=self.mu_s,
+                labels_a=ys,
+                b=self.mu_t,
+                M=self.cost_,
+                reg=self.reg_e,
+                eta=self.reg_cl,
+                numItermax=self.max_iter,
+                numInnerItermax=self.max_inner_iter,
+                stopInnerThr=self.tol,
+                verbose=self.verbose,
+                log=self.log,
+            )
 
         # deal with the value of log
         if self.log:
@@ -1508,7 +1674,6 @@ class SinkhornLpl1Transport(BaseTransport):
 
 
 class EMDLaplaceTransport(BaseTransport):
-
     """Domain Adaptation OT method based on Earth Mover's Distance with Laplacian regularization
 
     Parameters
@@ -1570,11 +1735,24 @@ class EMDLaplaceTransport(BaseTransport):
         Regularized discrete optimal transport. SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
     """
 
-    def __init__(self, reg_type='pos', reg_lap=1., reg_src=1., metric="sqeuclidean",
-                 norm=None, similarity="knn", similarity_param=None, max_iter=100, tol=1e-9,
-                 max_inner_iter=100000, inner_tol=1e-9, log=False, verbose=False,
-                 distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='ferradans'):
+    def __init__(
+        self,
+        reg_type="pos",
+        reg_lap=1.0,
+        reg_src=1.0,
+        metric="sqeuclidean",
+        norm=None,
+        similarity="knn",
+        similarity_param=None,
+        max_iter=100,
+        tol=1e-9,
+        max_inner_iter=100000,
+        inner_tol=1e-9,
+        log=False,
+        verbose=False,
+        distribution_estimation=distribution_estimation_uniform,
+        out_of_sample_map="ferradans",
+    ):
         self.reg = reg_type
         self.reg_lap = reg_lap
         self.reg_src = reg_src
@@ -1618,10 +1796,24 @@ class EMDLaplaceTransport(BaseTransport):
 
         super(EMDLaplaceTransport, self).fit(Xs, ys, Xt, yt)
 
-        returned_ = emd_laplace(a=self.mu_s, b=self.mu_t, xs=self.xs_,
-                                xt=self.xt_, M=self.cost_, sim=self.similarity, sim_param=self.sim_param, reg=self.reg, eta=self.reg_lap,
-                                alpha=self.reg_src, numItermax=self.max_iter, stopThr=self.tol, numInnerItermax=self.max_inner_iter,
-                                stopInnerThr=self.inner_tol, log=self.log, verbose=self.verbose)
+        returned_ = emd_laplace(
+            a=self.mu_s,
+            b=self.mu_t,
+            xs=self.xs_,
+            xt=self.xt_,
+            M=self.cost_,
+            sim=self.similarity,
+            sim_param=self.sim_param,
+            reg=self.reg,
+            eta=self.reg_lap,
+            alpha=self.reg_src,
+            numItermax=self.max_iter,
+            stopThr=self.tol,
+            numInnerItermax=self.max_inner_iter,
+            stopInnerThr=self.inner_tol,
+            log=self.log,
+            verbose=self.verbose,
+        )
 
         # coupling estimation
         if self.log:
@@ -1633,7 +1825,6 @@ class EMDLaplaceTransport(BaseTransport):
 
 
 class SinkhornL1l2Transport(BaseTransport):
-
     """Domain Adaptation OT method based on sinkhorn algorithm +
     L1L2 class regularization.
 
@@ -1695,12 +1886,21 @@ class SinkhornL1l2Transport(BaseTransport):
             Sciences, 7(3), 1853-1882.
     """
 
-    def __init__(self, reg_e=1., reg_cl=0.1,
-                 max_iter=10, max_inner_iter=200,
-                 tol=10e-9, verbose=False, log=False,
-                 metric="sqeuclidean", norm=None,
-                 distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='ferradans', limit_max=10):
+    def __init__(
+        self,
+        reg_e=1.0,
+        reg_cl=0.1,
+        max_iter=10,
+        max_inner_iter=200,
+        tol=10e-9,
+        verbose=False,
+        log=False,
+        metric="sqeuclidean",
+        norm=None,
+        distribution_estimation=distribution_estimation_uniform,
+        out_of_sample_map="ferradans",
+        limit_max=10,
+    ):
         self.reg_e = reg_e
         self.reg_cl = reg_cl
         self.max_iter = max_iter
@@ -1741,14 +1941,21 @@ class SinkhornL1l2Transport(BaseTransport):
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs, Xt=Xt, ys=ys):
-
             super(SinkhornL1l2Transport, self).fit(Xs, ys, Xt, yt)
 
             returned_ = sinkhorn_l1l2_gl(
-                a=self.mu_s, labels_a=ys, b=self.mu_t, M=self.cost_,
-                reg=self.reg_e, eta=self.reg_cl, numItermax=self.max_iter,
-                numInnerItermax=self.max_inner_iter, stopInnerThr=self.tol,
-                verbose=self.verbose, log=self.log)
+                a=self.mu_s,
+                labels_a=ys,
+                b=self.mu_t,
+                M=self.cost_,
+                reg=self.reg_e,
+                eta=self.reg_cl,
+                numItermax=self.max_iter,
+                numInnerItermax=self.max_inner_iter,
+                stopInnerThr=self.tol,
+                verbose=self.verbose,
+                log=self.log,
+            )
 
             # deal with the value of log
             if self.log:
@@ -1761,7 +1968,6 @@ class SinkhornL1l2Transport(BaseTransport):
 
 
 class MappingTransport(BaseEstimator):
-
     """MappingTransport: DA methods that aims at jointly estimating a optimal
     transport coupling and the associated mapping
 
@@ -1821,10 +2027,23 @@ class MappingTransport(BaseEstimator):
 
     """
 
-    def __init__(self, mu=1, eta=0.001, bias=False, metric="sqeuclidean",
-                 norm=None, kernel="linear", sigma=1, max_iter=100, tol=1e-5,
-                 max_inner_iter=10, inner_tol=1e-6, log=False, verbose=False,
-                 verbose2=False):
+    def __init__(
+        self,
+        mu=1,
+        eta=0.001,
+        bias=False,
+        metric="sqeuclidean",
+        norm=None,
+        kernel="linear",
+        sigma=1,
+        max_iter=100,
+        tol=1e-5,
+        max_inner_iter=10,
+        inner_tol=1e-6,
+        log=False,
+        verbose=False,
+        verbose2=False,
+    ):
         self.metric = metric
         self.norm = norm
         self.mu = mu
@@ -1869,26 +2088,41 @@ class MappingTransport(BaseEstimator):
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs, Xt=Xt):
-
             self.xs_ = Xs
             self.xt_ = Xt
 
             if self.kernel == "linear":
                 returned_ = joint_OT_mapping_linear(
-                    Xs, Xt, mu=self.mu, eta=self.eta, bias=self.bias,
-                    verbose=self.verbose, verbose2=self.verbose2,
+                    Xs,
+                    Xt,
+                    mu=self.mu,
+                    eta=self.eta,
+                    bias=self.bias,
+                    verbose=self.verbose,
+                    verbose2=self.verbose2,
                     numItermax=self.max_iter,
-                    numInnerItermax=self.max_inner_iter, stopThr=self.tol,
-                    stopInnerThr=self.inner_tol, log=self.log)
+                    numInnerItermax=self.max_inner_iter,
+                    stopThr=self.tol,
+                    stopInnerThr=self.inner_tol,
+                    log=self.log,
+                )
 
             elif self.kernel == "gaussian":
                 returned_ = joint_OT_mapping_kernel(
-                    Xs, Xt, mu=self.mu, eta=self.eta, bias=self.bias,
-                    sigma=self.sigma, verbose=self.verbose,
-                    verbose2=self.verbose, numItermax=self.max_iter,
+                    Xs,
+                    Xt,
+                    mu=self.mu,
+                    eta=self.eta,
+                    bias=self.bias,
+                    sigma=self.sigma,
+                    verbose=self.verbose,
+                    verbose2=self.verbose,
+                    numItermax=self.max_iter,
                     numInnerItermax=self.max_inner_iter,
-                    stopInnerThr=self.inner_tol, stopThr=self.tol,
-                    log=self.log)
+                    stopInnerThr=self.inner_tol,
+                    stopThr=self.tol,
+                    log=self.log,
+                )
 
             # deal with the value of log
             if self.log:
@@ -1916,7 +2150,6 @@ class MappingTransport(BaseEstimator):
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs):
-
             if nx.array_equal(self.xs_, Xs):
                 # perform standard barycentric mapping
                 transp = self.coupling_ / nx.sum(self.coupling_, 1)[:, None]
@@ -1928,8 +2161,7 @@ class MappingTransport(BaseEstimator):
                 transp_Xs = nx.dot(transp, self.xt_)
             else:
                 if self.kernel == "gaussian":
-                    K = kernel(Xs, self.xs_, method=self.kernel,
-                               sigma=self.sigma)
+                    K = kernel(Xs, self.xs_, method=self.kernel, sigma=self.sigma)
                 elif self.kernel == "linear":
                     K = Xs
                 if self.bias:
@@ -1942,7 +2174,6 @@ class MappingTransport(BaseEstimator):
 
 
 class UnbalancedSinkhornTransport(BaseTransport):
-
     """Domain Adaptation unbalanced OT method based on sinkhorn algorithm
 
     Parameters
@@ -1999,11 +2230,21 @@ class UnbalancedSinkhornTransport(BaseTransport):
             Sciences, 7(3), 1853-1882.
     """
 
-    def __init__(self, reg_e=1., reg_m=0.1, method='sinkhorn',
-                 max_iter=10, tol=1e-9, verbose=False, log=False,
-                 metric="sqeuclidean", norm=None,
-                 distribution_estimation=distribution_estimation_uniform,
-                 out_of_sample_map='ferradans', limit_max=10):
+    def __init__(
+        self,
+        reg_e=1.0,
+        reg_m=0.1,
+        method="sinkhorn",
+        max_iter=10,
+        tol=1e-9,
+        verbose=False,
+        log=False,
+        metric="sqeuclidean",
+        norm=None,
+        distribution_estimation=distribution_estimation_uniform,
+        out_of_sample_map="ferradans",
+        limit_max=10,
+    ):
         self.reg_e = reg_e
         self.reg_m = reg_m
         self.method = method
@@ -2044,14 +2285,20 @@ class UnbalancedSinkhornTransport(BaseTransport):
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs, Xt=Xt):
-
             super(UnbalancedSinkhornTransport, self).fit(Xs, ys, Xt, yt)
 
             returned_ = sinkhorn_unbalanced(
-                a=self.mu_s, b=self.mu_t, M=self.cost_,
-                reg=self.reg_e, reg_m=self.reg_m, method=self.method,
-                numItermax=self.max_iter, stopThr=self.tol,
-                verbose=self.verbose, log=self.log)
+                a=self.mu_s,
+                b=self.mu_t,
+                M=self.cost_,
+                reg=self.reg_e,
+                reg_m=self.reg_m,
+                method=self.method,
+                numItermax=self.max_iter,
+                stopThr=self.tol,
+                verbose=self.verbose,
+                log=self.log,
+            )
 
             # deal with the value of log
             if self.log:
@@ -2064,7 +2311,6 @@ class UnbalancedSinkhornTransport(BaseTransport):
 
 
 class JCPOTTransport(BaseTransport):
-
     """Domain Adaptation OT method for multi-source target shift based on Wasserstein barycenter algorithm.
 
     Parameters
@@ -2117,10 +2363,16 @@ class JCPOTTransport(BaseTransport):
 
     """
 
-    def __init__(self, reg_e=.1, max_iter=10,
-                 tol=10e-9, verbose=False, log=False,
-                 metric="sqeuclidean",
-                 out_of_sample_map='ferradans'):
+    def __init__(
+        self,
+        reg_e=0.1,
+        max_iter=10,
+        tol=10e-9,
+        verbose=False,
+        log=False,
+        metric="sqeuclidean",
+        out_of_sample_map="ferradans",
+    ):
         self.reg_e = reg_e
         self.max_iter = max_iter
         self.tol = tol
@@ -2157,15 +2409,22 @@ class JCPOTTransport(BaseTransport):
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs, Xt=Xt, ys=ys):
-
             self.xs_ = Xs
             self.xt_ = Xt
 
-            returned_ = jcpot_barycenter(Xs=Xs, Ys=ys, Xt=Xt, reg=self.reg_e,
-                                         metric=self.metric, distrinumItermax=self.max_iter, stopThr=self.tol,
-                                         verbose=self.verbose, log=True)
+            returned_ = jcpot_barycenter(
+                Xs=Xs,
+                Ys=ys,
+                Xt=Xt,
+                reg=self.reg_e,
+                metric=self.metric,
+                distrinumItermax=self.max_iter,
+                stopThr=self.tol,
+                verbose=self.verbose,
+                log=True,
+            )
 
-            self.coupling_ = returned_[1]['gamma']
+            self.coupling_ = returned_[1]["gamma"]
 
             # deal with the value of log
             if self.log:
@@ -2202,9 +2461,7 @@ class JCPOTTransport(BaseTransport):
 
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs):
-
             if all([nx.allclose(x, y) for x, y in zip(self.xs_, Xs)]):
-
                 # perform standard barycentric mapping for each source domain
 
                 for coupling in self.coupling_:
@@ -2216,12 +2473,12 @@ class JCPOTTransport(BaseTransport):
                     # compute transported samples
                     transp_Xs.append(nx.dot(transp, self.xt_))
             else:
-
                 # perform out of sample mapping
                 indices = nx.arange(Xs.shape[0])
                 batch_ind = [
-                    indices[i:i + batch_size]
-                    for i in range(0, len(indices), batch_size)]
+                    indices[i : i + batch_size]
+                    for i in range(0, len(indices), batch_size)
+                ]
 
                 transp_Xs = []
 
@@ -2275,8 +2532,7 @@ class JCPOTTransport(BaseTransport):
         # check the necessary inputs parameters are here
         if check_params(ys=ys):
             yt = nx.zeros(
-                (len(nx.unique(nx.concatenate(ys))), self.xt_.shape[0]),
-                type_as=ys[0]
+                (len(nx.unique(nx.concatenate(ys))), self.xt_.shape[0]), type_as=ys[0]
             )
             for i in range(len(ys)):
                 ysTemp = label_normalization(ys[i])
@@ -2291,7 +2547,7 @@ class JCPOTTransport(BaseTransport):
                 transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
                 if self.log:
-                    D1 = self.log_['D1'][i]
+                    D1 = self.log_["D1"][i]
                 else:
                     D1 = nx.zeros((n, ns), type_as=transp)
 
@@ -2331,7 +2587,6 @@ class JCPOTTransport(BaseTransport):
                 D1[int(c), ytTemp == c] = 1
 
             for i in range(len(self.xs_)):
-
                 # perform label propagation
                 transp = self.coupling_[i] / nx.sum(self.coupling_[i], 1)[:, None]
 
@@ -2403,7 +2658,14 @@ class NearestBrenierPotential(BaseTransport):
     ot.mapping.nearest_brenier_potential_predict_bounds : Predicting SSNB images on new source data
     """
 
-    def __init__(self, strongly_convex_constant=0.6, gradient_lipschitz_constant=1.4, log=False, its=100, seed=None):
+    def __init__(
+        self,
+        strongly_convex_constant=0.6,
+        gradient_lipschitz_constant=1.4,
+        log=False,
+        its=100,
+        seed=None,
+    ):
         self.strongly_convex_constant = strongly_convex_constant
         self.gradient_lipschitz_constant = gradient_lipschitz_constant
         self.log = log
@@ -2452,10 +2714,15 @@ class NearestBrenierPotential(BaseTransport):
 
         """
         self.fit_Xs, self.fit_ys, self.fit_Xt = Xs, ys, Xt
-        returned = nearest_brenier_potential_fit(Xs, Xt, X_classes=ys,
-                                                 strongly_convex_constant=self.strongly_convex_constant,
-                                                 gradient_lipschitz_constant=self.gradient_lipschitz_constant,
-                                                 its=self.its, log=self.log)
+        returned = nearest_brenier_potential_fit(
+            Xs,
+            Xt,
+            X_classes=ys,
+            strongly_convex_constant=self.strongly_convex_constant,
+            gradient_lipschitz_constant=self.gradient_lipschitz_constant,
+            its=self.its,
+            log=self.log,
+        )
 
         if self.log:
             self.phi, self.G, self.fit_log = returned
@@ -2504,9 +2771,16 @@ class NearestBrenierPotential(BaseTransport):
 
         """
         returned = nearest_brenier_potential_predict_bounds(
-            self.fit_Xs, self.phi, self.G, Xs, X_classes=self.fit_ys, Y_classes=ys,
+            self.fit_Xs,
+            self.phi,
+            self.G,
+            Xs,
+            X_classes=self.fit_ys,
+            Y_classes=ys,
             strongly_convex_constant=self.strongly_convex_constant,
-            gradient_lipschitz_constant=self.gradient_lipschitz_constant, log=self.log)
+            gradient_lipschitz_constant=self.gradient_lipschitz_constant,
+            log=self.log,
+        )
         if self.log:
             _, G_lu, self.predict_log = returned
         else:

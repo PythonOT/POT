@@ -5,7 +5,7 @@ Detecting outliers by learning sample marginal distribution with CO-Optimal Tran
 ======================================================================================================================================
 
 In this example, we consider two point clouds living in different Euclidean spaces, where the outliers
-are artifically injected into the target data. We illustrate two methods which allow to filter out
+are artificially injected into the target data. We illustrate two methods which allow to filter out
 these outliers.
 
 The first method requires learning the sample marginal distribution which minimizes
@@ -70,15 +70,15 @@ n2, d2 = 10, 8
 n = 15
 
 X = (
-    torch.cos(torch.arange(n1) * torch.pi / n1)[:, None] +
-    torch.cos(torch.arange(d1) * torch.pi / d1)[None, :]
+    torch.cos(torch.arange(n1) * torch.pi / n1)[:, None]
+    + torch.cos(torch.arange(d1) * torch.pi / d1)[None, :]
 )
 
 # Generate clean target data mixed with outliers
 Y_noisy = torch.randn((n, d2)) * 10.0
 Y_noisy[:n2, :] = (
-    torch.cos(torch.arange(n2) * torch.pi / n2)[:, None] +
-    torch.cos(torch.arange(d2) * torch.pi / d2)[None, :]
+    torch.cos(torch.arange(n2) * torch.pi / n2)[:, None]
+    + torch.cos(torch.arange(d2) * torch.pi / d2)[None, :]
 )
 Y = Y_noisy[:n2, :]
 
@@ -86,13 +86,13 @@ X, Y_noisy, Y = X.double(), Y_noisy.double(), Y.double()
 
 fig, axes = pl.subplots(nrows=1, ncols=3, figsize=(12, 5))
 axes[0].imshow(X, vmin=-2, vmax=2)
-axes[0].set_title('$X$')
+axes[0].set_title("$X$")
 
 axes[1].imshow(Y, vmin=-2, vmax=2)
-axes[1].set_title('Clean $Y$')
+axes[1].set_title("Clean $Y$")
 
 axes[2].imshow(Y_noisy, vmin=-2, vmax=2)
-axes[2].set_title('Noisy $Y$')
+axes[2].set_title("Noisy $Y$")
 
 pl.tight_layout()
 
@@ -107,7 +107,6 @@ niter = 1000
 b = torch.tensor(ot.unif(n), requires_grad=True)
 
 for i in range(niter):
-
     loss = coot2(X, Y_noisy, wy_samp=b, log=False, verbose=False)
     losses.append(float(loss))
 
@@ -121,7 +120,7 @@ for i in range(niter):
 
 # Estimated sample marginal distribution and training loss curve
 pl.plot(losses[10:])
-pl.title('CO-Optimal Transport distance')
+pl.title("CO-Optimal Transport distance")
 
 print(f"Marginal distribution = {b.detach().numpy()}")
 
@@ -141,7 +140,7 @@ pl.clf()
 
 ax1 = pl.subplot(2, 2, 3)
 pl.imshow(X, vmin=-2, vmax=2)
-pl.xlabel('$X$')
+pl.xlabel("$X$")
 
 ax2 = pl.subplot(2, 2, 2)
 ax2.yaxis.tick_right()
@@ -151,18 +150,20 @@ ax2.xaxis.tick_top()
 
 for i in range(n1):
     j = np.argmax(pi_sample[i, :])
-    xyA = (d1 - .5, i)
-    xyB = (j, d2 - .5)
-    con = ConnectionPatch(xyA=xyA, xyB=xyB, coordsA=ax1.transData,
-                          coordsB=ax2.transData, color="black")
+    xyA = (d1 - 0.5, i)
+    xyB = (j, d2 - 0.5)
+    con = ConnectionPatch(
+        xyA=xyA, xyB=xyB, coordsA=ax1.transData, coordsB=ax2.transData, color="black"
+    )
     fig.add_artist(con)
 
 for i in range(d1):
     j = np.argmax(pi_feature[i, :])
-    xyA = (i, -.5)
-    xyB = (-.5, j)
+    xyA = (i, -0.5)
+    xyB = (-0.5, j)
     con = ConnectionPatch(
-        xyA=xyA, xyB=xyB, coordsA=ax1.transData, coordsB=ax2.transData, color="blue")
+        xyA=xyA, xyB=xyB, coordsA=ax1.transData, coordsB=ax2.transData, color="blue"
+    )
     fig.add_artist(con)
 
 # %%
@@ -171,9 +172,18 @@ for i in range(d1):
 # -----------------------------------------------------------------------------------------
 
 pi_sample, pi_feature = unbalanced_co_optimal_transport(
-    X=X, Y=Y_noisy, reg_marginals=(10, 10), epsilon=0, divergence="kl",
-    unbalanced_solver="mm", max_iter=1000, tol=1e-6,
-    max_iter_ot=1000, tol_ot=1e-6, log=False, verbose=False
+    X=X,
+    Y=Y_noisy,
+    reg_marginals=(10, 10),
+    epsilon=0,
+    divergence="kl",
+    unbalanced_solver="mm",
+    max_iter=1000,
+    tol=1e-6,
+    max_iter_ot=1000,
+    tol_ot=1e-6,
+    log=False,
+    verbose=False,
 )
 
 # %%
@@ -187,7 +197,7 @@ pl.clf()
 
 ax1 = pl.subplot(2, 2, 3)
 pl.imshow(X, vmin=-2, vmax=2)
-pl.xlabel('$X$')
+pl.xlabel("$X$")
 
 ax2 = pl.subplot(2, 2, 2)
 ax2.yaxis.tick_right()
@@ -197,16 +207,18 @@ ax2.xaxis.tick_top()
 
 for i in range(n1):
     j = np.argmax(pi_sample[i, :])
-    xyA = (d1 - .5, i)
-    xyB = (j, d2 - .5)
-    con = ConnectionPatch(xyA=xyA, xyB=xyB, coordsA=ax1.transData,
-                          coordsB=ax2.transData, color="black")
+    xyA = (d1 - 0.5, i)
+    xyB = (j, d2 - 0.5)
+    con = ConnectionPatch(
+        xyA=xyA, xyB=xyB, coordsA=ax1.transData, coordsB=ax2.transData, color="black"
+    )
     fig.add_artist(con)
 
 for i in range(d1):
     j = np.argmax(pi_feature[i, :])
-    xyA = (i, -.5)
-    xyB = (-.5, j)
+    xyA = (i, -0.5)
+    xyB = (-0.5, j)
     con = ConnectionPatch(
-        xyA=xyA, xyB=xyB, coordsA=ax1.transData, coordsB=ax2.transData, color="blue")
+        xyA=xyA, xyB=xyB, coordsA=ax1.transData, coordsB=ax2.transData, color="blue"
+    )
     fig.add_artist(con)

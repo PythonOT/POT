@@ -55,30 +55,38 @@ Xs = rng.uniform(-1, 1, size=(n_fitting_samples, 2))
 Xs_classes = (Xs[:, 0] < 0).astype(int)
 Xt = np.stack([Xs[:, 0] + 2 * np.sign(Xs[:, 0]), 2 * Xs[:, 1]], axis=-1)
 
-plt.scatter(Xs[Xs_classes == 0, 0], Xs[Xs_classes == 0, 1], c='blue', label='source class 0')
-plt.scatter(Xs[Xs_classes == 1, 0], Xs[Xs_classes == 1, 1], c='dodgerblue', label='source class 1')
-plt.scatter(Xt[:, 0], Xt[:, 1], c='red', label='target')
-plt.axis('equal')
-plt.title('Splitting sphere dataset')
-plt.legend(loc='upper right')
+plt.scatter(
+    Xs[Xs_classes == 0, 0], Xs[Xs_classes == 0, 1], c="blue", label="source class 0"
+)
+plt.scatter(
+    Xs[Xs_classes == 1, 0],
+    Xs[Xs_classes == 1, 1],
+    c="dodgerblue",
+    label="source class 1",
+)
+plt.scatter(Xt[:, 0], Xt[:, 1], c="red", label="target")
+plt.axis("equal")
+plt.title("Splitting sphere dataset")
+plt.legend(loc="upper right")
 plt.show()
 
 # %%
 # Fitting the Nearest Brenier Potential
 L = 3  # need L > 2 to allow the 2*y term, default is 1.4
-phi, G = ot.mapping.nearest_brenier_potential_fit(Xs, Xt, Xs_classes, its=10, init_method='barycentric',
-                                                  gradient_lipschitz_constant=L)
+phi, G = ot.mapping.nearest_brenier_potential_fit(
+    Xs, Xt, Xs_classes, its=10, init_method="barycentric", gradient_lipschitz_constant=L
+)
 
 # %%
 # Plotting the images of the source data
 plt.clf()
-plt.scatter(Xs[:, 0], Xs[:, 1], c='dodgerblue', label='source')
-plt.scatter(Xt[:, 0], Xt[:, 1], c='red', label='target')
+plt.scatter(Xs[:, 0], Xs[:, 1], c="dodgerblue", label="source")
+plt.scatter(Xt[:, 0], Xt[:, 1], c="red", label="target")
 for i in range(n_fitting_samples):
-    plt.plot([Xs[i, 0], G[i, 0]], [Xs[i, 1], G[i, 1]], color='black', alpha=.5)
-plt.title('Images of in-data source samples by the fitted SSNB')
-plt.legend(loc='upper right')
-plt.axis('equal')
+    plt.plot([Xs[i, 0], G[i, 0]], [Xs[i, 1], G[i, 1]], color="black", alpha=0.5)
+plt.title("Images of in-data source samples by the fitted SSNB")
+plt.legend(loc="upper right")
+plt.axis("equal")
 plt.show()
 
 # %%
@@ -86,29 +94,34 @@ plt.show()
 n_predict_samples = 50
 Ys = rng.uniform(-1, 1, size=(n_predict_samples, 2))
 Ys_classes = (Ys[:, 0] < 0).astype(int)
-phi_lu, G_lu = ot.mapping.nearest_brenier_potential_predict_bounds(Xs, phi, G, Ys, Xs_classes, Ys_classes,
-                                                                   gradient_lipschitz_constant=L)
+phi_lu, G_lu = ot.mapping.nearest_brenier_potential_predict_bounds(
+    Xs, phi, G, Ys, Xs_classes, Ys_classes, gradient_lipschitz_constant=L
+)
 
 # %%
 # Plot predictions for the gradient of the lower-bounding potential
 plt.clf()
-plt.scatter(Xs[:, 0], Xs[:, 1], c='dodgerblue', label='source')
-plt.scatter(Xt[:, 0], Xt[:, 1], c='red', label='target')
+plt.scatter(Xs[:, 0], Xs[:, 1], c="dodgerblue", label="source")
+plt.scatter(Xt[:, 0], Xt[:, 1], c="red", label="target")
 for i in range(n_predict_samples):
-    plt.plot([Ys[i, 0], G_lu[0, i, 0]], [Ys[i, 1], G_lu[0, i, 1]], color='black', alpha=.5)
-plt.title('Images of new source samples by $\\nabla \\varphi_l$')
-plt.legend(loc='upper right')
-plt.axis('equal')
+    plt.plot(
+        [Ys[i, 0], G_lu[0, i, 0]], [Ys[i, 1], G_lu[0, i, 1]], color="black", alpha=0.5
+    )
+plt.title("Images of new source samples by $\\nabla \\varphi_l$")
+plt.legend(loc="upper right")
+plt.axis("equal")
 plt.show()
 
 # %%
 # Plot predictions for the gradient of the upper-bounding potential
 plt.clf()
-plt.scatter(Xs[:, 0], Xs[:, 1], c='dodgerblue', label='source')
-plt.scatter(Xt[:, 0], Xt[:, 1], c='red', label='target')
+plt.scatter(Xs[:, 0], Xs[:, 1], c="dodgerblue", label="source")
+plt.scatter(Xt[:, 0], Xt[:, 1], c="red", label="target")
 for i in range(n_predict_samples):
-    plt.plot([Ys[i, 0], G_lu[1, i, 0]], [Ys[i, 1], G_lu[1, i, 1]], color='black', alpha=.5)
-plt.title('Images of new source samples by $\\nabla \\varphi_u$')
-plt.legend(loc='upper right')
-plt.axis('equal')
+    plt.plot(
+        [Ys[i, 0], G_lu[1, i, 0]], [Ys[i, 1], G_lu[1, i, 1]], color="black", alpha=0.5
+    )
+plt.title("Images of new source samples by $\\nabla \\varphi_u$")
+plt.legend(loc="upper right")
+plt.axis("equal")
 plt.show()

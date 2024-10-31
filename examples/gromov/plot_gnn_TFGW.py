@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ==============================
-Graph classification with Tempate Based Fused Gromov Wasserstein
+Graph classification with Template Based Fused Gromov Wasserstein
 ==============================
 
 This example first illustrates how to train a graph classification gnn based on the Template Fused Gromov Wasserstein layer as proposed in [52] .
@@ -17,7 +17,7 @@ This example first illustrates how to train a graph classification gnn based on 
 
 # sphinx_gallery_thumbnail_number = 1
 
-#%%
+# %%
 
 import matplotlib.pyplot as pl
 import torch
@@ -47,15 +47,15 @@ n_graphs = 50
 n_nodes = 10
 n_node_classes = 2
 
-#edge probabilities for the SBMs
+# edge probabilities for the SBMs
 P1 = [[0.8]]
 P2 = [[0.9, 0.1], [0.1, 0.9]]
 
-#block sizes
+# block sizes
 block_sizes1 = [n_nodes]
 block_sizes2 = [n_nodes // 2, n_nodes // 2]
 
-#node features
+# node features
 x1 = torch.tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 x1 = one_hot(x1, num_classes=n_node_classes)
 x1 = torch.reshape(x1, (n_nodes, n_node_classes))
@@ -64,19 +64,25 @@ x2 = torch.tensor([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
 x2 = one_hot(x2, num_classes=n_node_classes)
 x2 = torch.reshape(x2, (n_nodes, n_node_classes))
 
-graphs1 = [GraphData(x=x1, edge_index=sbm(block_sizes1, P1), y=torch.tensor([0])) for i in range(n_graphs)]
-graphs2 = [GraphData(x=x2, edge_index=sbm(block_sizes2, P2), y=torch.tensor([1])) for i in range(n_graphs)]
+graphs1 = [
+    GraphData(x=x1, edge_index=sbm(block_sizes1, P1), y=torch.tensor([0]))
+    for i in range(n_graphs)
+]
+graphs2 = [
+    GraphData(x=x2, edge_index=sbm(block_sizes2, P2), y=torch.tensor([1]))
+    for i in range(n_graphs)
+]
 
 graphs = graphs1 + graphs2
 
-#split the data into train and test sets
+# split the data into train and test sets
 train_graphs, test_graphs = random_split(graphs, [n_graphs, n_graphs])
 
 train_loader = DataLoader(train_graphs, batch_size=10, shuffle=True)
 test_loader = DataLoader(test_graphs, batch_size=10, shuffle=False)
 
 
-#%%
+# %%
 
 ##############################################################################
 # Plot data
@@ -89,24 +95,28 @@ fontsize = 10
 pl.figure(0, figsize=(8, 2.5))
 pl.clf()
 pl.subplot(121)
-pl.axis('off')
-pl.title('Graph of class 1', fontsize=fontsize)
+pl.axis("off")
+pl.title("Graph of class 1", fontsize=fontsize)
 G = to_networkx(graphs1[0], to_undirected=True)
 pos = nx.spring_layout(G, seed=0)
 nx.draw_networkx(G, pos, with_labels=False, node_color="tab:blue")
 
 pl.subplot(122)
-pl.axis('off')
-pl.title('Graph of class 2', fontsize=fontsize)
+pl.axis("off")
+pl.title("Graph of class 2", fontsize=fontsize)
 G = to_networkx(graphs2[0], to_undirected=True)
 pos = nx.spring_layout(G, seed=0)
-nx.draw_networkx(G, pos, with_labels=False, nodelist=[0, 1, 2, 3, 4], node_color="tab:blue")
-nx.draw_networkx(G, pos, with_labels=False, nodelist=[5, 6, 7, 8, 9], node_color="tab:red")
+nx.draw_networkx(
+    G, pos, with_labels=False, nodelist=[0, 1, 2, 3, 4], node_color="tab:blue"
+)
+nx.draw_networkx(
+    G, pos, with_labels=False, nodelist=[5, 6, 7, 8, 9], node_color="tab:red"
+)
 
 pl.tight_layout()
 pl.show()
 
-#%%
+# %%
 
 ##############################################################################
 # Pooling architecture using the TFGW layer
@@ -118,7 +128,16 @@ class pooling_TFGW(nn.Module):
     Pooling architecture using the TFGW layer.
     """
 
-    def __init__(self, n_features, n_templates, n_template_nodes, n_classes, n_hidden_layers, feature_init_mean=0., feature_init_std=1.):
+    def __init__(
+        self,
+        n_features,
+        n_templates,
+        n_template_nodes,
+        n_classes,
+        n_hidden_layers,
+        feature_init_mean=0.0,
+        feature_init_std=1.0,
+    ):
         """
         Pooling architecture using the TFGW layer.
         """
@@ -131,7 +150,13 @@ class pooling_TFGW(nn.Module):
 
         self.conv = GCNConv(self.n_features, self.n_hidden_layers)
 
-        self.TFGW = TFGWPooling(self.n_hidden_layers, self.n_templates, self.n_template_nodes, feature_init_mean=feature_init_mean, feature_init_std=feature_init_std)
+        self.TFGW = TFGWPooling(
+            self.n_hidden_layers,
+            self.n_templates,
+            self.n_template_nodes,
+            feature_init_mean=feature_init_mean,
+            feature_init_std=feature_init_std,
+        )
 
         self.linear = Linear(self.n_templates, n_classes)
 
@@ -154,11 +179,19 @@ class pooling_TFGW(nn.Module):
 
 n_epochs = 25
 
-#store latent embeddings and classes for TSNE visualization
+# store latent embeddings and classes for TSNE visualization
 embeddings_for_TSNE = []
 classes = []
 
-model = pooling_TFGW(n_features=2, n_templates=2, n_template_nodes=2, n_classes=2, n_hidden_layers=2, feature_init_mean=0.5, feature_init_std=0.5)
+model = pooling_TFGW(
+    n_features=2,
+    n_templates=2,
+    n_template_nodes=2,
+    n_classes=2,
+    n_hidden_layers=2,
+    feature_init_mean=0.5,
+    feature_init_std=0.5,
+)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=0.0005)
 criterion = torch.nn.CrossEntropyLoss()
@@ -167,7 +200,6 @@ all_accuracy = []
 all_loss = []
 
 for epoch in range(n_epochs):
-
     losses = []
     accs = []
 
@@ -184,12 +216,14 @@ for epoch in range(n_epochs):
         accs.append(train_acc)
         losses.append(loss.item())
 
-        #store last classes and embeddings for TSNE visualization
+        # store last classes and embeddings for TSNE visualization
         if epoch == n_epochs - 1:
             embeddings_for_TSNE.append(latent_embedding)
             classes.append(data.y)
 
-    print(f'Epoch: {epoch:03d}, Loss: {torch.mean(torch.tensor(losses)):.4f},Train Accuracy: {torch.mean(torch.tensor(accs)):.4f}')
+    print(
+        f"Epoch: {epoch:03d}, Loss: {torch.mean(torch.tensor(losses)):.4f},Train Accuracy: {torch.mean(torch.tensor(accs)):.4f}"
+    )
 
     all_accuracy.append(torch.mean(torch.tensor(accs)))
     all_loss.append(torch.mean(torch.tensor(losses)))
@@ -199,18 +233,18 @@ pl.figure(1, figsize=(8, 2.5))
 pl.clf()
 pl.subplot(121)
 pl.plot(all_loss)
-pl.xlabel('epochs')
-pl.title('Loss')
+pl.xlabel("epochs")
+pl.title("Loss")
 
 pl.subplot(122)
 pl.plot(all_accuracy)
-pl.xlabel('epochs')
-pl.title('Accuracy')
+pl.xlabel("epochs")
+pl.title("Accuracy")
 
 pl.tight_layout()
 pl.show()
 
-#Test
+# Test
 
 test_accs = []
 
@@ -225,17 +259,21 @@ for data in test_loader:
 
 classes = torch.hstack(classes)
 
-print(f'Test Accuracy: {torch.mean(torch.tensor(test_acc)):.4f}')
+print(f"Test Accuracy: {torch.mean(torch.tensor(test_acc)):.4f}")
 
-#%%
+# %%
 ##############################################################################
 # TSNE visualization of graph classification
 # ---------
 
-indices = torch.randint(2 * n_graphs, (60,))  # select a subset of embeddings for TSNE visualization
+indices = torch.randint(
+    2 * n_graphs, (60,)
+)  # select a subset of embeddings for TSNE visualization
 latent_embeddings = torch.vstack(embeddings_for_TSNE).detach().numpy()[indices, :]
 
-TSNE_embeddings = TSNE(n_components=2, perplexity=20, random_state=1).fit_transform(latent_embeddings)
+TSNE_embeddings = TSNE(n_components=2, perplexity=20, random_state=1).fit_transform(
+    latent_embeddings
+)
 
 class_0 = classes[indices] == 0
 class_1 = classes[indices] == 1
@@ -244,12 +282,22 @@ TSNE_embeddings_0 = TSNE_embeddings[class_0, :]
 TSNE_embeddings_1 = TSNE_embeddings[class_1, :]
 
 pl.figure(2, figsize=(6, 2.5))
-pl.scatter(TSNE_embeddings_0[:, 0], TSNE_embeddings_0[:, 1],
-           alpha=0.5, marker='o', label='class 1')
-pl.scatter(TSNE_embeddings_1[:, 0], TSNE_embeddings_1[:, 1],
-           alpha=0.5, marker='o', label='class 2')
+pl.scatter(
+    TSNE_embeddings_0[:, 0],
+    TSNE_embeddings_0[:, 1],
+    alpha=0.5,
+    marker="o",
+    label="class 1",
+)
+pl.scatter(
+    TSNE_embeddings_1[:, 0],
+    TSNE_embeddings_1[:, 1],
+    alpha=0.5,
+    marker="o",
+    label="class 2",
+)
 pl.legend()
-pl.title('TSNE in the latent space after training')
+pl.title("TSNE in the latent space after training")
 pl.show()
 
 
