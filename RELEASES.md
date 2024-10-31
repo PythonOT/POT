@@ -6,6 +6,7 @@
 - Custom functions provided as parameter `line_search` to `ot.optim.generic_conditional_gradient` must now have the signature `line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs)`, adding as input `df_G` the gradient of the regularizer evaluated at the transport plan `G`. This change aims at improving speed of solvers having quadratic polynomial functions as regularizer such as the Gromov-Wassertein loss (PR #663).
 
 #### New features
+- New linter based on pre-commit using ruff, codespell and yamllint (PR #681)
 - Added feature `mass=True` for `nx.kl_div` (PR #654)
 - Implemented Gaussian Mixture Model OT `ot.gmm` (PR #649)
 - Added feature `semirelaxed_fgw_barycenters` and generic FGW-related barycenter updates `update_barycenter_structure` and `update_barycenter_feature` (PR #659)

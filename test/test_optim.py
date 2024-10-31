@@ -1,4 +1,4 @@
-"""Tests for module optim fro OT optimization """
+"""Tests for module optim fro OT optimization"""
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #
@@ -9,7 +9,6 @@ import ot
 
 
 def test_conditional_gradient(nx):
-
     n_bins = 100  # nb bins
     # bin positions
     x = np.arange(n_bins, dtype=np.float64)
@@ -29,7 +28,7 @@ def test_conditional_gradient(nx):
         return G
 
     def fb(G):
-        return 0.5 * nx.sum(G ** 2)
+        return 0.5 * nx.sum(G**2)
 
     ab, bb, Mb = nx.from_numpy(a, b, M)
 
@@ -51,7 +50,7 @@ def test_conditional_gradient_itermax(nx):
     cov_s = np.array([[1, 0], [0, 1]])
 
     mu_t = np.array([4, 4])
-    cov_t = np.array([[1, -.8], [-.8, 1]])
+    cov_t = np.array([[1, -0.8], [-0.8, 1]])
 
     xs = ot.datasets.make_2D_samples_gauss(n, mu_s, cov_s)
     xt = ot.datasets.make_2D_samples_gauss(n, mu_t, cov_t)
@@ -69,16 +68,18 @@ def test_conditional_gradient_itermax(nx):
         return G
 
     def fb(G):
-        return 0.5 * nx.sum(G ** 2)
+        return 0.5 * nx.sum(G**2)
 
     ab, bb, Mb = nx.from_numpy(a, b, M)
 
     reg = 1e-1
 
-    G, log = ot.optim.cg(a, b, M, reg, f, df, numItermaxEmd=10000,
-                         verbose=True, log=True)
-    Gb, log = ot.optim.cg(ab, bb, Mb, reg, fb, df, numItermaxEmd=10000,
-                          verbose=True, log=True)
+    G, log = ot.optim.cg(
+        a, b, M, reg, f, df, numItermaxEmd=10000, verbose=True, log=True
+    )
+    Gb, log = ot.optim.cg(
+        ab, bb, Mb, reg, fb, df, numItermaxEmd=10000, verbose=True, log=True
+    )
     Gb = nx.to_numpy(Gb)
 
     np.testing.assert_allclose(Gb, G)
@@ -87,7 +88,6 @@ def test_conditional_gradient_itermax(nx):
 
 
 def test_generalized_conditional_gradient(nx):
-
     n_bins = 100  # nb bins
     # bin positions
     x = np.arange(n_bins, dtype=np.float64)
@@ -107,7 +107,7 @@ def test_generalized_conditional_gradient(nx):
         return G
 
     def fb(G):
-        return 0.5 * nx.sum(G ** 2)
+        return 0.5 * nx.sum(G**2)
 
     reg1 = 1e-3
     reg2 = 1e-1
@@ -133,22 +133,19 @@ def test_line_search_armijo(nx):
     xk = np.array([[0.25, 0.25], [0.25, 0.25]])
     pk = np.array([[-0.25, 0.25], [0.25, -0.25]])
     gfk = np.array([[23.04273441, 23.0449082], [23.04273441, 23.0449082]])
-    old_fval = -123.
+    old_fval = -123.0
 
     xkb, pkb, gfkb = nx.from_numpy(xk, pk, gfk)
 
     def f(x):
-        return 1.
+        return 1.0
+
     # Should not throw an exception and return 0. for alpha
-    alpha, a, b = ot.optim.line_search_armijo(
-        f, xkb, pkb, gfkb, old_fval
-    )
-    alpha_np, anp, bnp = ot.optim.line_search_armijo(
-        f, xk, pk, gfk, old_fval
-    )
+    alpha, a, b = ot.optim.line_search_armijo(f, xkb, pkb, gfkb, old_fval)
+    alpha_np, anp, bnp = ot.optim.line_search_armijo(f, xk, pk, gfk, old_fval)
     assert a == anp
     assert b == bnp
-    assert alpha == 0.
+    assert alpha == 0.0
 
     # check line search armijo
     def f(x):
@@ -186,6 +183,7 @@ def test_line_search_armijo(nx):
 
 def test_line_search_armijo_dtype_device(nx):
     for tp in nx.__type_list__:
+
         def f(x):
             return nx.sum((x - 5.0) ** 2)
 
@@ -207,7 +205,9 @@ def test_line_search_armijo_dtype_device(nx):
         # check the case where the direction is not far enough
         pk = np.array([[[3.0, 3.0]]])
         pkb = nx.from_numpy(pk, type_as=tp)
-        alpha, _, fval = ot.optim.line_search_armijo(f, xkb, pkb, gfkb, old_fval, alpha0=1.0)
+        alpha, _, fval = ot.optim.line_search_armijo(
+            f, xkb, pkb, gfkb, old_fval, alpha0=1.0
+        )
         alpha = nx.to_numpy(alpha)
         np.testing.assert_allclose(alpha, 1.0)
         nx.assert_same_dtype_device(old_fval, fval)

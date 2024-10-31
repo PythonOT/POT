@@ -23,6 +23,15 @@ GitHub, clone, and develop on a branch. Steps:
    $ cd POT
    ```
 
+2. Install pre-commit hooks to ensure that your code is properly formatted:
+
+   ```bash
+   $ pip install pre-commit
+   $ pre-commit install
+   ```
+
+   This will install the pre-commit hooks that will run on every commit. If the hooks fail, the commit will be aborted.
+
 3. Create a ``feature`` branch to hold your development changes:
 
    ```bash
@@ -56,7 +65,7 @@ Pull Request Checklist
 We recommended that your contribution complies with the
 following rules before you submit a pull request:
 
--  Follow the PEP8 Guidelines.
+-  Follow the PEP8 Guidelines which should be handles automatically by pre-commit.
 
 -  If your pull request addresses an issue, please use the pull request title
    to describe the issue and mention the issue number in the pull request description. This will make sure a link back to the original issue is
@@ -101,27 +110,19 @@ following rules before you submit a pull request:
 You can also check for common programming errors with the following
 tools:
 
-
--  No pyflakes warnings, check with:
-
-  ```bash
-  $ pip install pyflakes
-  $ pyflakes path/to/module.py
-  ```
-
--  No PEP8 warnings, check with:
+- All lint checks pass. You can run the following command to check:
 
   ```bash
-  $ pip install pep8
-  $ pep8 path/to/module.py
+  $ pre-commit run --all-files
   ```
 
--  AutoPEP8 can help you fix some of the easy redundant errors:
+  This will run the pre-commit checks on all files in the repository.
+
+- All tests pass. You can run the following command to check:
 
   ```bash
-  $ pip install autopep8
-  $ autopep8 path/to/pep8.py
-  ```
+   $ pytest --durations=20 -v test/ --doctest-modules
+  ```   
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing

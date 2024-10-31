@@ -9,7 +9,15 @@
 import numpy as np
 import pytest
 from ot.utils import proj_simplex
-from ot.gmm import gaussian_pdf, gmm_pdf, dist_bures_squared, gmm_ot_loss, gmm_ot_plan, gmm_ot_apply_map, gmm_ot_plan_density
+from ot.gmm import (
+    gaussian_pdf,
+    gmm_pdf,
+    dist_bures_squared,
+    gmm_ot_loss,
+    gmm_ot_plan,
+    gmm_ot_apply_map,
+    gmm_ot_plan_density,
+)
 
 try:
     import torch
@@ -51,7 +59,10 @@ def test_gaussian_pdf(nx):
 
     x = nx.from_numpy(rng.randn(n, n, d))
     pdf = gaussian_pdf(x, m[0], C[0])
-    assert pdf.shape == (n, n,)
+    assert pdf.shape == (
+        n,
+        n,
+    )
 
     with pytest.raises(AssertionError):
         gaussian_pdf(x, m[0, :-1], C[0])
@@ -68,13 +79,16 @@ def test_gmm_pdf(nx):
 
     x = nx.from_numpy(rng.randn(n, n, d))
     pdf = gmm_pdf(x, m, C, w)
-    assert pdf.shape == (n, n,)
+    assert pdf.shape == (
+        n,
+        n,
+    )
 
     with pytest.raises(AssertionError):
         gmm_pdf(x, m[:-1], C, w)
 
 
-@pytest.skip_backend('tf')  # skips because of array assignment
+@pytest.skip_backend("tf")  # skips because of array assignment
 @pytest.skip_backend("jax")
 def test_dist_bures_squared(nx):
     m_s, m_t, C_s, C_t, _, _ = get_gmms(nx)
@@ -93,7 +107,7 @@ def test_dist_bures_squared(nx):
         dist_bures_squared(m_s, m_t[1:], C_s, C_t)
 
 
-@pytest.skip_backend('tf')  # skips because of array assignment
+@pytest.skip_backend("tf")  # skips because of array assignment
 @pytest.skip_backend("jax")
 def test_gmm_ot_loss(nx):
     m_s, m_t, C_s, C_t, w_s, w_t = get_gmms(nx)
@@ -112,7 +126,7 @@ def test_gmm_ot_loss(nx):
         gmm_ot_loss(m_s, m_t, C_s, C_t, w_s, w_t[1:])
 
 
-@pytest.skip_backend('tf')  # skips because of array assignment
+@pytest.skip_backend("tf")  # skips because of array assignment
 @pytest.skip_backend("jax")
 def test_gmm_ot_plan(nx):
     m_s, m_t, C_s, C_t, w_s, w_t = get_gmms(nx)
@@ -138,7 +152,7 @@ def test_gmm_apply_map():
     rng = np.random.RandomState(seed=42)
     x = rng.randn(7, 3)
 
-    for method in ['bary', 'rand']:
+    for method in ["bary", "rand"]:
         gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, method=method)
 
     plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)

@@ -13,17 +13,39 @@ from functools import partial
 import ot
 from ot.backend import get_backend
 from ot.utils import list_to_array, get_parameter_pair
-from ._utils import fused_unbalanced_across_spaces_cost, uot_cost_matrix, uot_parameters_and_measures
+from ._utils import (
+    fused_unbalanced_across_spaces_cost,
+    uot_cost_matrix,
+    uot_parameters_and_measures,
+)
 
 
 def fused_unbalanced_across_spaces_divergence(
-        X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
-        reg_marginals=10, epsilon=0, reg_type="joint", divergence="kl",
-        unbalanced_solver="sinkhorn", alpha=0, M_samp=None, M_feat=None,
-        rescale_plan=True, init_pi=None, init_duals=None, max_iter=100,
-        tol=1e-7, max_iter_ot=500, tol_ot=1e-7, log=False, verbose=False,
-        **kwargs_solver):
-
+    X,
+    Y,
+    wx_samp=None,
+    wx_feat=None,
+    wy_samp=None,
+    wy_feat=None,
+    reg_marginals=10,
+    epsilon=0,
+    reg_type="joint",
+    divergence="kl",
+    unbalanced_solver="sinkhorn",
+    alpha=0,
+    M_samp=None,
+    M_feat=None,
+    rescale_plan=True,
+    init_pi=None,
+    init_duals=None,
+    max_iter=100,
+    tol=1e-7,
+    max_iter_ot=500,
+    tol_ot=1e-7,
+    log=False,
+    verbose=False,
+    **kwargs_solver,
+):
     r"""Compute the fused unbalanced cross-spaces divergence between two matrices equipped
     with the distributions on rows and columns. We consider two cases of matrix:
 
@@ -109,7 +131,7 @@ def fused_unbalanced_across_spaces_divergence(
 
         - If `reg_type` = "joint": then use joint regularization for couplings.
 
-        - If `reg_type` = "indepedent": then use independent regularization for couplings.
+        - If `reg_type` = "independent": then use independent regularization for couplings.
     divergence : string, optional (default = "kl")
 
         - If `divergence` = "kl", then Div is the Kullback-Leibler divergence.
@@ -195,12 +217,18 @@ def fused_unbalanced_across_spaces_divergence(
     if reg_type == "joint":  # same regularization
         eps_feat = eps_samp
     if unbalanced_solver in ["sinkhorn", "sinkhorn_log"] and divergence == "l2":
-        warnings.warn("Sinkhorn algorithm does not support L2 norm. \
-                      Divergence is set to 'kl'.")
+        warnings.warn(
+            "Sinkhorn algorithm does not support L2 norm. \
+                      Divergence is set to 'kl'."
+        )
         divergence = "kl"
-    if unbalanced_solver in ["sinkhorn", "sinkhorn_log"] and (eps_samp == 0 or eps_feat == 0):
-        warnings.warn("Sinkhorn algorithm does not support unregularized problem. \
-                      Solver is set to 'mm'.")
+    if unbalanced_solver in ["sinkhorn", "sinkhorn_log"] and (
+        eps_samp == 0 or eps_feat == 0
+    ):
+        warnings.warn(
+            "Sinkhorn algorithm does not support unregularized problem. \
+                      Solver is set to 'mm'."
+        )
         unbalanced_solver = "mm"
 
     if init_pi is None:
@@ -222,20 +250,26 @@ def fused_unbalanced_across_spaces_divergence(
             if d2 is not None:
                 arr.append(list_to_array(d2))
 
-    nx = get_backend(*arr, wx_samp, wx_feat, wy_samp, wy_feat, M_samp, M_feat, pi_samp, pi_feat)
+    nx = get_backend(
+        *arr, wx_samp, wx_feat, wy_samp, wy_feat, M_samp, M_feat, pi_samp, pi_feat
+    )
 
     # constant input variables
     if M_samp is None:
         if alpha_samp > 0:
-            warnings.warn("M_samp is None but alpha_samp = {} > 0. \
-                          The algo will treat as if alpha_samp = 0.".format(alpha_samp))
+            warnings.warn(
+                "M_samp is None but alpha_samp = {} > 0. \
+                          The algo will treat as if alpha_samp = 0.".format(alpha_samp)
+            )
     else:
         M_samp = alpha_samp * M_samp
 
     if M_feat is None:
         if alpha_feat > 0:
-            warnings.warn("M_feat is None but alpha_feat = {} > 0. \
-                          The algo will treat as if alpha_feat = 0.".format(alpha_feat))
+            warnings.warn(
+                "M_feat is None but alpha_feat = {} > 0. \
+                          The algo will treat as if alpha_feat = 0.".format(alpha_feat)
+            )
     else:
         M_feat = alpha_feat * M_feat
 
@@ -260,29 +294,31 @@ def fused_unbalanced_across_spaces_divergence(
 
     if unbalanced_solver in ["sinkhorn", "sinkhorn_log"]:
         if duals_samp is None:
-            duals_samp = (nx.zeros(nx_samp, type_as=X),
-                          nx.zeros(ny_samp, type_as=Y))
+            duals_samp = (nx.zeros(nx_samp, type_as=X), nx.zeros(ny_samp, type_as=Y))
         if duals_feat is None:
-            duals_feat = (nx.zeros(nx_feat, type_as=X),
-                          nx.zeros(ny_feat, type_as=Y))
+            duals_feat = (nx.zeros(nx_feat, type_as=X), nx.zeros(ny_feat, type_as=Y))
 
     # shortcut functions
     X_sqr, Y_sqr = X**2, Y**2
-    local_cost_samp = partial(uot_cost_matrix,
-                              data=(X_sqr, Y_sqr, X, Y, M_samp),
-                              tuple_p=(wx_feat, wy_feat),
-                              hyperparams=(rho_x, rho_y, eps_feat),
-                              divergence=divergence,
-                              reg_type=reg_type,
-                              nx=nx)
+    local_cost_samp = partial(
+        uot_cost_matrix,
+        data=(X_sqr, Y_sqr, X, Y, M_samp),
+        tuple_p=(wx_feat, wy_feat),
+        hyperparams=(rho_x, rho_y, eps_feat),
+        divergence=divergence,
+        reg_type=reg_type,
+        nx=nx,
+    )
 
-    local_cost_feat = partial(uot_cost_matrix,
-                              data=(X_sqr.T, Y_sqr.T, X.T, Y.T, M_feat),
-                              tuple_p=(wx_samp, wy_samp),
-                              hyperparams=(rho_x, rho_y, eps_samp),
-                              divergence=divergence,
-                              reg_type=reg_type,
-                              nx=nx)
+    local_cost_feat = partial(
+        uot_cost_matrix,
+        data=(X_sqr.T, Y_sqr.T, X.T, Y.T, M_feat),
+        tuple_p=(wx_samp, wy_samp),
+        hyperparams=(rho_x, rho_y, eps_samp),
+        divergence=divergence,
+        reg_type=reg_type,
+        nx=nx,
+    )
 
     parameters_uot_l2_samp = partial(
         uot_parameters_and_measures,
@@ -290,7 +326,7 @@ def fused_unbalanced_across_spaces_divergence(
         hyperparams=(rho_x, rho_y, eps_samp),
         reg_type=reg_type,
         divergence=divergence,
-        nx=nx
+        nx=nx,
     )
 
     parameters_uot_l2_feat = partial(
@@ -299,7 +335,7 @@ def fused_unbalanced_across_spaces_divergence(
         hyperparams=(rho_x, rho_y, eps_feat),
         reg_type=reg_type,
         divergence=divergence,
-        nx=nx
+        nx=nx,
     )
 
     solver = partial(
@@ -309,13 +345,12 @@ def fused_unbalanced_across_spaces_divergence(
         method=unbalanced_solver,
         max_iter=max_iter_ot,
         tol=tol_ot,
-        verbose=False
+        verbose=False,
     )
 
     # initialize log
     if log:
-        dict_log = {"backend": nx,
-                    "error": []}
+        dict_log = {"backend": nx, "error": []}
 
     for idx in range(max_iter):
         pi_samp_prev = nx.copy(pi_samp)
@@ -332,9 +367,16 @@ def fused_unbalanced_across_spaces_divergence(
             new_w, new_rho, new_eps = parameters_uot_l2_feat(pi_feat)
             new_wx, new_wy, new_wxy = new_w
 
-        res = solver(M=uot_cost, a=new_wx, b=new_wy,
-                     reg=new_eps, c=new_wxy, unbalanced=new_rho,
-                     plan_init=pi_feat, potentials_init=duals_feat)
+        res = solver(
+            M=uot_cost,
+            a=new_wx,
+            b=new_wy,
+            reg=new_eps,
+            c=new_wxy,
+            unbalanced=new_rho,
+            plan_init=pi_feat,
+            potentials_init=duals_feat,
+        )
         pi_feat, duals_feat = res.plan, res.potentials
 
         if rescale_plan:
@@ -352,9 +394,16 @@ def fused_unbalanced_across_spaces_divergence(
             new_w, new_rho, new_eps = parameters_uot_l2_samp(pi_samp)
             new_wx, new_wy, new_wxy = new_w
 
-        res = solver(M=uot_cost, a=new_wx, b=new_wy,
-                     reg=new_eps, c=new_wxy, unbalanced=new_rho,
-                     plan_init=pi_samp, potentials_init=duals_samp)
+        res = solver(
+            M=uot_cost,
+            a=new_wx,
+            b=new_wy,
+            reg=new_eps,
+            c=new_wxy,
+            unbalanced=new_rho,
+            plan_init=pi_samp,
+            potentials_init=duals_samp,
+        )
         pi_samp, duals_samp = res.plan, res.potentials
 
         if rescale_plan:
@@ -365,14 +414,18 @@ def fused_unbalanced_across_spaces_divergence(
         if log:
             dict_log["error"].append(err)
         if verbose:
-            print('{:5d}|{:8e}|'.format(idx + 1, err))
+            print("{:5d}|{:8e}|".format(idx + 1, err))
         if err < tol:
             break
 
     # sanity check
     if nx.sum(nx.isnan(pi_samp)) > 0 or nx.sum(nx.isnan(pi_feat)) > 0:
-        raise (ValueError("There is NaN in coupling. \
-                          Adjust the relaxation or regularization parameters."))
+        raise (
+            ValueError(
+                "There is NaN in coupling. \
+                          Adjust the relaxation or regularization parameters."
+            )
+        )
 
     if log:
         linear_cost, ucoot_cost = fused_unbalanced_across_spaces_cost(
@@ -380,11 +433,12 @@ def fused_unbalanced_across_spaces_divergence(
             data=(X_sqr, Y_sqr, X, Y),
             tuple_pxy_samp=(wx_samp, wy_samp, wxy_samp),
             tuple_pxy_feat=(wx_feat, wy_feat, wxy_feat),
-            pi_samp=pi_samp, pi_feat=pi_feat,
+            pi_samp=pi_samp,
+            pi_feat=pi_feat,
             hyperparams=(rho_x, rho_y, eps_samp, eps_feat),
             divergence=divergence,
             reg_type=reg_type,
-            nx=nx
+            nx=nx,
         )
 
         dict_log["duals_sample"] = duals_samp
@@ -399,13 +453,30 @@ def fused_unbalanced_across_spaces_divergence(
 
 
 def unbalanced_co_optimal_transport(
-        X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
-        reg_marginals=10, epsilon=0, divergence="kl",
-        unbalanced_solver="mm", alpha=0, M_samp=None, M_feat=None,
-        rescale_plan=True, init_pi=None, init_duals=None,
-        max_iter=100, tol=1e-7, max_iter_ot=500, tol_ot=1e-7,
-        log=False, verbose=False, **kwargs_solve):
-
+    X,
+    Y,
+    wx_samp=None,
+    wx_feat=None,
+    wy_samp=None,
+    wy_feat=None,
+    reg_marginals=10,
+    epsilon=0,
+    divergence="kl",
+    unbalanced_solver="mm",
+    alpha=0,
+    M_samp=None,
+    M_feat=None,
+    rescale_plan=True,
+    init_pi=None,
+    init_duals=None,
+    max_iter=100,
+    tol=1e-7,
+    max_iter_ot=500,
+    tol_ot=1e-7,
+    log=False,
+    verbose=False,
+    **kwargs_solve,
+):
     r"""Compute the unbalanced Co-Optimal Transport between two Euclidean point clouds
     (represented as matrices whose rows are samples and columns are the features/dimensions).
 
@@ -537,24 +608,58 @@ def unbalanced_co_optimal_transport(
     """
 
     return fused_unbalanced_across_spaces_divergence(
-        X=X, Y=Y, wx_samp=wx_samp, wx_feat=wx_feat,
-        wy_samp=wy_samp, wy_feat=wy_feat, reg_marginals=reg_marginals,
-        epsilon=epsilon, reg_type="independent",
-        divergence=divergence, unbalanced_solver=unbalanced_solver,
-        alpha=alpha, M_samp=M_samp, M_feat=M_feat, rescale_plan=rescale_plan,
-        init_pi=init_pi, init_duals=init_duals, max_iter=max_iter, tol=tol,
-        max_iter_ot=max_iter_ot, tol_ot=tol_ot, log=log, verbose=verbose,
-        **kwargs_solve)
+        X=X,
+        Y=Y,
+        wx_samp=wx_samp,
+        wx_feat=wx_feat,
+        wy_samp=wy_samp,
+        wy_feat=wy_feat,
+        reg_marginals=reg_marginals,
+        epsilon=epsilon,
+        reg_type="independent",
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=M_samp,
+        M_feat=M_feat,
+        rescale_plan=rescale_plan,
+        init_pi=init_pi,
+        init_duals=init_duals,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=log,
+        verbose=verbose,
+        **kwargs_solve,
+    )
 
 
 def unbalanced_co_optimal_transport2(
-        X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
-        reg_marginals=10, epsilon=0, divergence="kl",
-        unbalanced_solver="sinkhorn", alpha=0, M_samp=None, M_feat=None,
-        rescale_plan=True, init_pi=None, init_duals=None,
-        max_iter=100, tol=1e-7, max_iter_ot=500, tol_ot=1e-7,
-        log=False, verbose=False, **kwargs_solve):
-
+    X,
+    Y,
+    wx_samp=None,
+    wx_feat=None,
+    wy_samp=None,
+    wy_feat=None,
+    reg_marginals=10,
+    epsilon=0,
+    divergence="kl",
+    unbalanced_solver="sinkhorn",
+    alpha=0,
+    M_samp=None,
+    M_feat=None,
+    rescale_plan=True,
+    init_pi=None,
+    init_duals=None,
+    max_iter=100,
+    tol=1e-7,
+    max_iter_ot=500,
+    tol_ot=1e-7,
+    log=False,
+    verbose=False,
+    **kwargs_solve,
+):
     r"""Compute the unbalanced Co-Optimal Transport between two Euclidean point clouds
     (represented as matrices whose rows are samples and columns are the features/dimensions).
 
@@ -687,16 +792,36 @@ def unbalanced_co_optimal_transport2(
     """
 
     if divergence != "kl":
-        warnings.warn("The computation of gradients is only supported for KL divergence, not \
-                      for {} divergence".format(divergence))
+        warnings.warn(
+            "The computation of gradients is only supported for KL divergence, not \
+                      for {} divergence".format(divergence)
+        )
 
     pi_samp, pi_feat, log_ucoot = unbalanced_co_optimal_transport(
-        X=X, Y=Y, wx_samp=wx_samp, wx_feat=wx_feat, wy_samp=wy_samp, wy_feat=wy_feat,
-        reg_marginals=reg_marginals, epsilon=epsilon, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha, M_samp=M_samp, M_feat=M_feat,
-        rescale_plan=rescale_plan, init_pi=init_pi, init_duals=init_duals,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=True, verbose=verbose, **kwargs_solve)
+        X=X,
+        Y=Y,
+        wx_samp=wx_samp,
+        wx_feat=wx_feat,
+        wy_samp=wy_samp,
+        wy_feat=wy_feat,
+        reg_marginals=reg_marginals,
+        epsilon=epsilon,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=M_samp,
+        M_feat=M_feat,
+        rescale_plan=rescale_plan,
+        init_pi=init_pi,
+        init_duals=init_duals,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=True,
+        verbose=verbose,
+        **kwargs_solve,
+    )
 
     nx = log_ucoot["backend"]
 
@@ -725,26 +850,33 @@ def unbalanced_co_optimal_transport2(
     m_wy_feat, m_wy_samp = nx.sum(wy_feat), nx.sum(wy_samp)
 
     # calculate subgradients
-    gradX = 2 * X * (pi1_samp[:, None] * pi1_feat[None, :]) - \
-        2 * nx.dot(nx.dot(pi_samp, Y), pi_feat.T)  # shape (nx_samp, nx_feat)
-    gradY = 2 * Y * (pi2_samp[:, None] * pi2_feat[None, :]) - \
-        2 * nx.dot(nx.dot(pi_samp.T, X), pi_feat)  # shape (ny_samp, ny_feat)
+    gradX = 2 * X * (pi1_samp[:, None] * pi1_feat[None, :]) - 2 * nx.dot(
+        nx.dot(pi_samp, Y), pi_feat.T
+    )  # shape (nx_samp, nx_feat)
+    gradY = 2 * Y * (pi2_samp[:, None] * pi2_feat[None, :]) - 2 * nx.dot(
+        nx.dot(pi_samp.T, X), pi_feat
+    )  # shape (ny_samp, ny_feat)
 
-    grad_wx_samp = rho_x * (m_wx_feat - m_feat * pi1_samp / wx_samp) + \
-        eps_samp * (m_wy_samp - pi1_samp / wx_samp)
-    grad_wx_feat = rho_x * (m_wx_samp - m_samp * pi1_feat / wx_feat) + \
-        eps_feat * (m_wy_feat - pi1_feat / wx_feat)
-    grad_wy_samp = rho_y * (m_wy_feat - m_feat * pi2_samp / wy_samp) + \
-        eps_samp * (m_wx_samp - pi2_samp / wy_samp)
-    grad_wy_feat = rho_y * (m_wy_samp - m_samp * pi2_feat / wy_feat) + \
-        eps_feat * (m_wx_feat - pi2_feat / wy_feat)
+    grad_wx_samp = rho_x * (m_wx_feat - m_feat * pi1_samp / wx_samp) + eps_samp * (
+        m_wy_samp - pi1_samp / wx_samp
+    )
+    grad_wx_feat = rho_x * (m_wx_samp - m_samp * pi1_feat / wx_feat) + eps_feat * (
+        m_wy_feat - pi1_feat / wx_feat
+    )
+    grad_wy_samp = rho_y * (m_wy_feat - m_feat * pi2_samp / wy_samp) + eps_samp * (
+        m_wx_samp - pi2_samp / wy_samp
+    )
+    grad_wy_feat = rho_y * (m_wy_samp - m_samp * pi2_feat / wy_feat) + eps_feat * (
+        m_wx_feat - pi2_feat / wy_feat
+    )
 
     # set gradients
     ucoot = log_ucoot["ucoot_cost"]
-    ucoot = nx.set_gradients(ucoot,
-                             (X, Y, wx_samp, wx_feat, wy_samp, wy_feat),
-                             (gradX, gradY, grad_wx_samp, grad_wx_feat, grad_wy_samp, grad_wy_feat)
-                             )
+    ucoot = nx.set_gradients(
+        ucoot,
+        (X, Y, wx_samp, wx_feat, wy_samp, wy_feat),
+        (gradX, gradY, grad_wx_samp, grad_wx_feat, grad_wy_samp, grad_wy_feat),
+    )
 
     if log:
         return ucoot, log_ucoot
@@ -754,12 +886,26 @@ def unbalanced_co_optimal_transport2(
 
 
 def fused_unbalanced_gromov_wasserstein(
-        Cx, Cy, wx=None, wy=None, reg_marginals=10, epsilon=0,
-        divergence="kl", unbalanced_solver="mm", alpha=0,
-        M=None, init_duals=None, init_pi=None, max_iter=100,
-        tol=1e-7, max_iter_ot=500, tol_ot=1e-7,
-        log=False, verbose=False, **kwargs_solve):
-
+    Cx,
+    Cy,
+    wx=None,
+    wy=None,
+    reg_marginals=10,
+    epsilon=0,
+    divergence="kl",
+    unbalanced_solver="mm",
+    alpha=0,
+    M=None,
+    init_duals=None,
+    init_pi=None,
+    max_iter=100,
+    tol=1e-7,
+    max_iter_ot=500,
+    tol_ot=1e-7,
+    log=False,
+    verbose=False,
+    **kwargs_solve,
+):
     r"""Compute the lower bound of the fused unbalanced Gromov-Wasserstein (FUGW) between two similarity matrices.
     In practice, this lower bound is used interchangeably with the true FUGW.
 
@@ -881,22 +1027,40 @@ def fused_unbalanced_gromov_wasserstein(
     alpha = (alpha / 2, alpha / 2)
 
     pi_samp, pi_feat, dict_log = fused_unbalanced_across_spaces_divergence(
-        X=Cx, Y=Cy, wx_samp=wx, wx_feat=wx, wy_samp=wy, wy_feat=wy,
-        reg_marginals=reg_marginals, epsilon=epsilon, reg_type="joint",
-        divergence=divergence, unbalanced_solver=unbalanced_solver,
-        alpha=alpha, M_samp=M, M_feat=M, rescale_plan=True,
+        X=Cx,
+        Y=Cy,
+        wx_samp=wx,
+        wx_feat=wx,
+        wy_samp=wy,
+        wy_feat=wy,
+        reg_marginals=reg_marginals,
+        epsilon=epsilon,
+        reg_type="joint",
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=M,
+        M_feat=M,
+        rescale_plan=True,
         init_pi=(init_pi, init_pi),
-        init_duals=(init_duals, init_duals), max_iter=max_iter, tol=tol,
-        max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=True, verbose=verbose, **kwargs_solve
+        init_duals=(init_duals, init_duals),
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=True,
+        verbose=verbose,
+        **kwargs_solve,
     )
 
     if log:
-        log_fugw = {"error": dict_log["error"],
-                    "duals": dict_log["duals_sample"],
-                    "linear_cost": dict_log["linear_cost"],
-                    "fugw_cost": dict_log["ucoot_cost"],
-                    "backend": dict_log["backend"]}
+        log_fugw = {
+            "error": dict_log["error"],
+            "duals": dict_log["duals_sample"],
+            "linear_cost": dict_log["linear_cost"],
+            "fugw_cost": dict_log["ucoot_cost"],
+            "backend": dict_log["backend"],
+        }
 
         return pi_samp, pi_feat, log_fugw
 
@@ -905,12 +1069,26 @@ def fused_unbalanced_gromov_wasserstein(
 
 
 def fused_unbalanced_gromov_wasserstein2(
-        Cx, Cy, wx=None, wy=None, reg_marginals=10, epsilon=0,
-        divergence="kl", unbalanced_solver="mm", alpha=0,
-        M=None, init_duals=None, init_pi=None, max_iter=100,
-        tol=1e-7, max_iter_ot=500, tol_ot=1e-7,
-        log=False, verbose=False, **kwargs_solve):
-
+    Cx,
+    Cy,
+    wx=None,
+    wy=None,
+    reg_marginals=10,
+    epsilon=0,
+    divergence="kl",
+    unbalanced_solver="mm",
+    alpha=0,
+    M=None,
+    init_duals=None,
+    init_pi=None,
+    max_iter=100,
+    tol=1e-7,
+    max_iter_ot=500,
+    tol_ot=1e-7,
+    log=False,
+    verbose=False,
+    **kwargs_solve,
+):
     r"""Compute the lower bound of the fused unbalanced Gromov-Wasserstein (FUGW) between two similarity matrices.
     In practice, this lower bound is used interchangeably with the true FUGW.
 
@@ -1027,16 +1205,33 @@ def fused_unbalanced_gromov_wasserstein2(
     """
 
     if divergence != "kl":
-        warnings.warn("The computation of gradients is only supported for KL divergence, \
-                      but not for {} divergence. The gradient of the KL case will be used.".format(divergence))
+        warnings.warn(
+            "The computation of gradients is only supported for KL divergence, \
+                      but not for {} divergence. The gradient of the KL case will be used.".format(
+                divergence
+            )
+        )
 
     pi_samp, pi_feat, log_fugw = fused_unbalanced_gromov_wasserstein(
-        Cx=Cx, Cy=Cy, wx=wx, wy=wy, reg_marginals=reg_marginals,
-        epsilon=epsilon, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha, M=M,
-        init_duals=init_duals, init_pi=init_pi,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot,
-        tol_ot=tol_ot, log=True, verbose=verbose, **kwargs_solve
+        Cx=Cx,
+        Cy=Cy,
+        wx=wx,
+        wy=wy,
+        reg_marginals=reg_marginals,
+        epsilon=epsilon,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M=M,
+        init_duals=init_duals,
+        init_pi=init_pi,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=True,
+        verbose=verbose,
+        **kwargs_solve,
     )
 
     nx = log_fugw["backend"]
@@ -1055,23 +1250,30 @@ def fused_unbalanced_gromov_wasserstein2(
     m_wx, m_wy = nx.sum(wx), nx.sum(wy)
 
     # calculate subgradients
-    gradX = 2 * Cx * (pi1_samp[:, None] * pi1_feat[None, :]) - \
-        2 * nx.dot(nx.dot(pi_samp, Cy), pi_feat.T)  # shape (nx_samp, nx_feat)
-    gradY = 2 * Cy * (pi2_samp[:, None] * pi2_feat[None, :]) - \
-        2 * nx.dot(nx.dot(pi_samp.T, Cx), pi_feat)  # shape (ny_samp, ny_feat)
+    gradX = 2 * Cx * (pi1_samp[:, None] * pi1_feat[None, :]) - 2 * nx.dot(
+        nx.dot(pi_samp, Cy), pi_feat.T
+    )  # shape (nx_samp, nx_feat)
+    gradY = 2 * Cy * (pi2_samp[:, None] * pi2_feat[None, :]) - 2 * nx.dot(
+        nx.dot(pi_samp.T, Cx), pi_feat
+    )  # shape (ny_samp, ny_feat)
 
     gradM = alpha / 2 * (pi_samp + pi_feat)
 
     rho_x, rho_y = get_parameter_pair(reg_marginals)
-    grad_wx = 2 * m_wx * (rho_x + epsilon * m_wy**2) - \
-        (rho_x + epsilon) * (m_feat * pi1_samp + m_samp * pi1_feat) / wx
-    grad_wy = 2 * m_wy * (rho_y + epsilon * m_wx**2) - \
-        (rho_y + epsilon) * (m_feat * pi2_samp + m_samp * pi2_feat) / wy
+    grad_wx = (
+        2 * m_wx * (rho_x + epsilon * m_wy**2)
+        - (rho_x + epsilon) * (m_feat * pi1_samp + m_samp * pi1_feat) / wx
+    )
+    grad_wy = (
+        2 * m_wy * (rho_y + epsilon * m_wx**2)
+        - (rho_y + epsilon) * (m_feat * pi2_samp + m_samp * pi2_feat) / wy
+    )
 
     # set gradients
     fugw = log_fugw["fugw_cost"]
-    fugw = nx.set_gradients(fugw, (Cx, Cy, M, wx, wy),
-                            (gradX, gradY, gradM, grad_wx, grad_wy))
+    fugw = nx.set_gradients(
+        fugw, (Cx, Cy, M, wx, wy), (gradX, gradY, gradM, grad_wx, grad_wy)
+    )
 
     if log:
         return fugw, log_fugw

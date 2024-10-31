@@ -1,4 +1,4 @@
-"""Tests for module dr on Dimensionality Reduction """
+"""Tests for module dr on Dimensionality Reduction"""
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Minhui Huang <mhhuang@ucdavis.edu>
@@ -12,6 +12,7 @@ import pytest
 
 try:  # test if autograd and pymanopt are installed
     import ot.dr
+
     nogo = False
 except ImportError:
     nogo = True
@@ -19,12 +20,11 @@ except ImportError:
 
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
 def test_fda():
-
     n_samples = 90  # nb samples in source and target datasets
     rng = np.random.RandomState(0)
 
     # generate gaussian dataset
-    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples, random_state=rng)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", n_samples, random_state=rng)
 
     n_features_noise = 8
 
@@ -41,12 +41,11 @@ def test_fda():
 
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
 def test_wda():
-
     n_samples = 100  # nb samples in source and target datasets
     rng = np.random.RandomState(0)
 
     # generate gaussian dataset
-    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples, random_state=rng)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", n_samples, random_state=rng)
 
     n_features_noise = 8
 
@@ -63,12 +62,11 @@ def test_wda():
 
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
 def test_wda_low_reg():
-
     n_samples = 100  # nb samples in source and target datasets
     rng = np.random.RandomState(0)
 
     # generate gaussian dataset
-    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples, random_state=rng)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", n_samples, random_state=rng)
 
     n_features_noise = 8
 
@@ -76,7 +74,9 @@ def test_wda_low_reg():
 
     p = 2
 
-    Pwda, projwda = ot.dr.wda(xs, ys, p, reg=0.01, maxiter=10, sinkhorn_method='sinkhorn_log')
+    Pwda, projwda = ot.dr.wda(
+        xs, ys, p, reg=0.01, maxiter=10, sinkhorn_method="sinkhorn_log"
+    )
 
     projwda(xs)
 
@@ -85,12 +85,11 @@ def test_wda_low_reg():
 
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
 def test_wda_normalized():
-
     n_samples = 100  # nb samples in source and target datasets
     rng = np.random.RandomState(0)
 
     # generate gaussian dataset
-    xs, ys = ot.datasets.make_data_classif('gaussrot', n_samples, random_state=rng)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", n_samples, random_state=rng)
 
     n_features_noise = 8
 
@@ -120,8 +119,8 @@ def test_prw():
         assert dim >= 1
         assert dim == int(dim)
 
-        a = (1. / n) * np.ones(n)
-        b = (1. / n) * np.ones(n)
+        a = (1.0 / n) * np.ones(n)
+        b = (1.0 / n) * np.ones(n)
 
         # First measure : uniform on the hypercube
         X = rng.uniform(-1, 1, size=(n, d))
@@ -137,17 +136,20 @@ def test_prw():
     tau = 0.002
     reg = 0.2
 
-    pi, U = ot.dr.projection_robust_wasserstein(X, Y, a, b, tau, reg=reg, k=k, maxiter=1000, verbose=1)
+    pi, U = ot.dr.projection_robust_wasserstein(
+        X, Y, a, b, tau, reg=reg, k=k, maxiter=1000, verbose=1
+    )
 
     U0 = rng.randn(d, k)
     U0, _ = np.linalg.qr(U0)
 
-    pi, U = ot.dr.projection_robust_wasserstein(X, Y, a, b, tau, U0=U0, reg=reg, k=k, maxiter=1000, verbose=1)
+    pi, U = ot.dr.projection_robust_wasserstein(
+        X, Y, a, b, tau, U0=U0, reg=reg, k=k, maxiter=1000, verbose=1
+    )
 
 
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
 def test_ewca():
-
     d = 5
     n_samples = 50
     k = 3
@@ -164,7 +166,9 @@ def test_ewca():
     assert X.shape == (n_samples, d)
 
     # compute first 3 components with BCD
-    pi, U = ot.dr.ewca(X, reg=0.01, method='BCD', k=k, verbose=1, sinkhorn_method='sinkhorn_log')
+    pi, U = ot.dr.ewca(
+        X, reg=0.01, method="BCD", k=k, verbose=1, sinkhorn_method="sinkhorn_log"
+    )
     assert pi.shape == (n_samples, n_samples)
     assert (pi >= 0).all()
     assert np.allclose(pi.sum(0), 1 / n_samples, atol=1e-3)
@@ -178,7 +182,9 @@ def test_ewca():
     assert np.allclose(cos, np.ones(k), atol=1e-3)
 
     # compute first 3 components with MM
-    pi, U = ot.dr.ewca(X, reg=0.01, method='MM', k=k, verbose=1, sinkhorn_method='sinkhorn_log')
+    pi, U = ot.dr.ewca(
+        X, reg=0.01, method="MM", k=k, verbose=1, sinkhorn_method="sinkhorn_log"
+    )
     assert pi.shape == (n_samples, n_samples)
     assert (pi >= 0).all()
     assert np.allclose(pi.sum(0), 1 / n_samples, atol=1e-3)
@@ -192,7 +198,9 @@ def test_ewca():
     assert np.allclose(cos, np.ones(k), atol=1e-3)
 
     # compute last 3 components
-    pi, U = ot.dr.ewca(X, reg=100000, method='MM', k=k, verbose=1, sinkhorn_method='sinkhorn_log')
+    pi, U = ot.dr.ewca(
+        X, reg=100000, method="MM", k=k, verbose=1, sinkhorn_method="sinkhorn_log"
+    )
 
     # test that U contains the last principal components
     U_last_eigvec = np.linalg.svd(X.T, full_matrices=False)[0][:, -k:]

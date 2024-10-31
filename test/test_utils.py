@@ -1,4 +1,4 @@
-"""Tests for module utils for timing and parallel computation """
+"""Tests for module utils for timing and parallel computation"""
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #
@@ -63,7 +63,6 @@ def test_proj_simplex(nx):
 
 
 def test_projection_sparse_simplex():
-
     def double_sort_projection_sparse_simplex(X, max_nz, z=1, axis=None):
         r"""This is an equivalent but less efficient version
         of ot.utils.projection_sparse_simplex, as it uses two
@@ -73,17 +72,13 @@ def test_projection_sparse_simplex():
         if axis == 0:
             # For each column of X, find top max_nz values and
             # their corresponding indices. This incurs a sort.
-            max_nz_indices = np.argpartition(
-                X,
-                kth=-max_nz,
-                axis=0)[-max_nz:]
+            max_nz_indices = np.argpartition(X, kth=-max_nz, axis=0)[-max_nz:]
 
             max_nz_values = X[max_nz_indices, np.arange(X.shape[1])]
 
             # Project the top max_nz values onto the simplex.
             # This incurs a second sort.
-            G_nz_values = ot.smooth.projection_simplex(
-                max_nz_values, z=z, axis=0)
+            G_nz_values = ot.smooth.projection_simplex(max_nz_values, z=z, axis=0)
 
             # Put the projection of max_nz_values to their original indices
             # and set all other values zero.
@@ -91,13 +86,11 @@ def test_projection_sparse_simplex():
             G[max_nz_indices, np.arange(X.shape[1])] = G_nz_values
             return G
         elif axis == 1:
-            return double_sort_projection_sparse_simplex(
-                X.T, max_nz, z, axis=0).T
+            return double_sort_projection_sparse_simplex(X.T, max_nz, z, axis=0).T
 
         else:
             X = X.ravel().reshape(-1, 1)
-            return double_sort_projection_sparse_simplex(
-                X, max_nz, z, axis=0).ravel()
+            return double_sort_projection_sparse_simplex(X, max_nz, z, axis=0).ravel()
 
     m, n = 5, 10
     rng = np.random.RandomState(0)
@@ -105,18 +98,14 @@ def test_projection_sparse_simplex():
     max_nz = 3
 
     for axis in [0, 1, None]:
-        slow_sparse_proj = double_sort_projection_sparse_simplex(
-            X, max_nz, axis=axis)
-        fast_sparse_proj = ot.utils.projection_sparse_simplex(
-            X, max_nz, axis=axis)
+        slow_sparse_proj = double_sort_projection_sparse_simplex(X, max_nz, axis=axis)
+        fast_sparse_proj = ot.utils.projection_sparse_simplex(X, max_nz, axis=axis)
 
         # check that two versions produce consistent results
-        np.testing.assert_allclose(
-            slow_sparse_proj, fast_sparse_proj)
+        np.testing.assert_allclose(slow_sparse_proj, fast_sparse_proj)
 
 
 def test_parmap():
-
     n = 10
 
     def f(i):
@@ -132,7 +121,6 @@ def test_parmap():
 
 
 def test_tic_toc():
-
     import time
 
     ot.tic()
@@ -150,7 +138,6 @@ def test_tic_toc():
 
 
 def test_kernel():
-
     n = 100
     rng = np.random.RandomState(0)
     x = rng.randn(n, 2)
@@ -162,7 +149,6 @@ def test_kernel():
 
 
 def test_unif():
-
     n = 100
 
     u = ot.unif(n)
@@ -171,7 +157,6 @@ def test_unif():
 
 
 def test_unif_backend(nx):
-
     n = 100
 
     for tp in nx.__type_list__:
@@ -183,7 +168,6 @@ def test_unif_backend(nx):
 
 
 def test_dist():
-
     n = 10
 
     rng = np.random.RandomState(0)
@@ -197,7 +181,7 @@ def test_dist():
     D2 = ot.dist(x, x)
     D3 = ot.dist(x)
 
-    D4 = ot.dist(x, x, metric='minkowski', p=2)
+    D4 = ot.dist(x, x, metric="minkowski", p=2)
 
     assert D4[0, 1] == D4[1, 0]
 
@@ -207,17 +191,36 @@ def test_dist():
 
     # tests that every metric runs correctly
     metrics_w = [
-        'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
-        'euclidean', 'hamming', 'jaccard',
-        'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-        'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule'
+        "braycurtis",
+        "canberra",
+        "chebyshev",
+        "cityblock",
+        "correlation",
+        "cosine",
+        "dice",
+        "euclidean",
+        "hamming",
+        "jaccard",
+        "matching",
+        "minkowski",
+        "rogerstanimoto",
+        "russellrao",
+        "sokalmichener",
+        "sokalsneath",
+        "sqeuclidean",
+        "yule",
     ]  # those that support weights
-    metrics = ['mahalanobis', 'seuclidean']  # do not support weights depending on scipy's version
+    metrics = [
+        "mahalanobis",
+        "seuclidean",
+    ]  # do not support weights depending on scipy's version
 
     for metric in metrics_w:
         print(metric)
-        ot.dist(x, x, metric=metric, p=3, w=rng.random((2, )))
-        ot.dist(x, x, metric=metric, p=3, w=None)  # check that not having any weight does not cause issues
+        ot.dist(x, x, metric=metric, p=3, w=rng.random((2,)))
+        ot.dist(
+            x, x, metric=metric, p=3, w=None
+        )  # check that not having any weight does not cause issues
     for metric in metrics:
         print(metric)
         ot.dist(x, x, metric=metric, p=3)
@@ -228,16 +231,14 @@ def test_dist():
 
 
 def test_dist_backends(nx):
-
     n = 100
     rng = np.random.RandomState(0)
     x = rng.randn(n, 2)
     x1 = nx.from_numpy(x)
 
-    lst_metric = ['euclidean', 'sqeuclidean']
+    lst_metric = ["euclidean", "sqeuclidean"]
 
     for metric in lst_metric:
-
         D = ot.dist(x, x, metric=metric)
         D1 = ot.dist(x1, x1, metric=metric)
 
@@ -246,16 +247,14 @@ def test_dist_backends(nx):
 
 
 def test_dist0():
-
     n = 100
-    M = ot.utils.dist0(n, method='lin_square')
+    M = ot.utils.dist0(n, method="lin_square")
 
     # dist0 default to linear sampling with quadratic loss
     np.testing.assert_allclose(M[0, -1], (n - 1) * (n - 1))
 
 
 def test_dots():
-
     n1, n2, n3, n4 = 100, 50, 200, 100
 
     rng = np.random.RandomState(0)
@@ -272,7 +271,6 @@ def test_dots():
 
 
 def test_clean_zeros():
-
     n = 100
     nz = 50
     nz2 = 20
@@ -302,28 +300,27 @@ def test_cost_normalization(nx):
     M1 = nx.to_numpy(M0)
     np.testing.assert_allclose(C, M1)
 
-    M = ot.utils.cost_normalization(C1, 'median')
+    M = ot.utils.cost_normalization(C1, "median")
     M1 = nx.to_numpy(M)
     np.testing.assert_allclose(np.median(M1), 1)
 
-    M = ot.utils.cost_normalization(C1, 'max')
+    M = ot.utils.cost_normalization(C1, "max")
     M1 = nx.to_numpy(M)
     np.testing.assert_allclose(M1.max(), 1)
 
-    M = ot.utils.cost_normalization(C1, 'log')
+    M = ot.utils.cost_normalization(C1, "log")
     M1 = nx.to_numpy(M)
     np.testing.assert_allclose(M1.max(), np.log(1 + C).max())
 
-    M = ot.utils.cost_normalization(C1, 'loglog')
+    M = ot.utils.cost_normalization(C1, "loglog")
     M1 = nx.to_numpy(M)
     np.testing.assert_allclose(M1.max(), np.log(1 + np.log(1 + C)).max())
 
     with pytest.raises(ValueError):
-        ot.utils.cost_normalization(C1, 'error')
+        ot.utils.cost_normalization(C1, "error")
 
 
 def test_list_to_array(nx):
-
     lst = [np.array([1, 2, 3]), np.array([4, 5, 6])]
 
     a1, a2 = ot.utils.list_to_array(*lst)
@@ -335,17 +332,16 @@ def test_list_to_array(nx):
 
 
 def test_check_params():
-
-    res1 = ot.utils.check_params(first='OK', second=20)
+    res1 = ot.utils.check_params(first="OK", second=20)
     assert res1 is True
 
-    res0 = ot.utils.check_params(first='OK', second=None)
+    res0 = ot.utils.check_params(first="OK", second=None)
     assert res0 is False
 
 
 def test_check_random_state_error():
     with pytest.raises(ValueError):
-        ot.utils.check_random_state('error')
+        ot.utils.check_random_state("error")
 
 
 def test_get_parameter_pair_error():
@@ -354,16 +350,15 @@ def test_get_parameter_pair_error():
 
 
 def test_deprecated_func():
-
-    @ot.utils.deprecated('deprecated text for fun')
+    @ot.utils.deprecated("deprecated text for fun")
     def fun():
         pass
 
     def fun2():
         pass
 
-    @ot.utils.deprecated('deprecated text for class')
-    class Class():
+    @ot.utils.deprecated("deprecated text for class")
+    class Class:
         pass
 
     with pytest.warns(DeprecationWarning):
@@ -374,7 +369,7 @@ def test_deprecated_func():
         print(cl)
 
     if sys.version_info < (3, 5):
-        print('Not tested')
+        print("Not tested")
     else:
         assert ot.utils._is_deprecated(fun) is True
 
@@ -382,35 +377,31 @@ def test_deprecated_func():
 
 
 def test_BaseEstimator():
-
     class Class(ot.utils.BaseEstimator):
-
-        def __init__(self, first='spam', second='eggs'):
-
+        def __init__(self, first="spam", second="eggs"):
             self.first = first
             self.second = second
 
     cl = Class()
 
     names = cl._get_param_names()
-    assert 'first' in names
-    assert 'second' in names
+    assert "first" in names
+    assert "second" in names
 
     params = cl.get_params()
-    assert 'first' in params
-    assert 'second' in params
+    assert "first" in params
+    assert "second" in params
 
-    params['first'] = 'spam again'
+    params["first"] = "spam again"
     cl.set_params(**params)
 
     with pytest.raises(ValueError):
         cl.set_params(bibi=10)
 
-    assert cl.first == 'spam again'
+    assert cl.first == "spam again"
 
 
 def test_OTResult():
-
     res = ot.utils.OTResult()
 
     # test print
@@ -419,25 +410,27 @@ def test_OTResult():
     # tets get citation
     print(res.citation)
 
-    lst_attributes = ['lazy_plan',
-                      'marginal_a',
-                      'marginal_b',
-                      'marginals',
-                      'plan',
-                      'potential_a',
-                      'potential_b',
-                      'potentials',
-                      'sparse_plan',
-                      'status',
-                      'value',
-                      'value_linear',
-                      'value_quad',
-                      'log']
+    lst_attributes = [
+        "lazy_plan",
+        "marginal_a",
+        "marginal_b",
+        "marginals",
+        "plan",
+        "potential_a",
+        "potential_b",
+        "potentials",
+        "sparse_plan",
+        "status",
+        "value",
+        "value_linear",
+        "value_quad",
+        "log",
+    ]
     for at in lst_attributes:
         print(at)
         assert getattr(res, at) is None
 
-    list_not_implemented = ['a_to_b', 'b_to_a']
+    list_not_implemented = ["a_to_b", "b_to_a"]
     for at in list_not_implemented:
         print(at)
         with pytest.raises(NotImplementedError):
@@ -455,7 +448,6 @@ def test_get_coordinate_circle():
 
 
 def test_LazyTensor(nx):
-
     n1 = 100
     n2 = 200
     shape = (n1, n2)
@@ -496,7 +488,6 @@ def test_LazyTensor(nx):
 
 
 def test_OTResult_LazyTensor(nx):
-
     T, a, b = get_LazyTensor(nx)
 
     res = ot.utils.OTResult(lazy_plan=T, batch_size=9, backend=nx)
@@ -506,7 +497,6 @@ def test_OTResult_LazyTensor(nx):
 
 
 def test_LazyTensor_reduce(nx):
-
     T, a, b = get_LazyTensor(nx)
 
     T0 = T[:]
@@ -558,7 +548,6 @@ def test_LazyTensor_reduce(nx):
 
 
 def test_lowrank_LazyTensor(nx):
-
     p = 5
     n1 = 100
     n2 = 200
@@ -602,13 +591,15 @@ def test_lowrank_LazyTensor(nx):
 
 def test_labels_to_mask_helper(nx):
     y = np.array([1, 0, 2, 2, 1])
-    out = np.array([
-        [0, 1, 0],
-        [1, 0, 0],
-        [0, 0, 1],
-        [0, 0, 1],
-        [0, 1, 0],
-    ])
+    out = np.array(
+        [
+            [0, 1, 0],
+            [1, 0, 0],
+            [0, 0, 1],
+            [0, 0, 1],
+            [0, 1, 0],
+        ]
+    )
     y = nx.from_numpy(y)
     masks = ot.utils.labels_to_masks(y)
     np.testing.assert_array_equal(out, masks)
@@ -628,12 +619,12 @@ def test_label_normalization(nx):
 def test_proj_SDP(nx):
     t = np.pi / 8
     U = np.array([[np.cos(t), -np.sin(t)], [np.sin(t), np.cos(t)]])
-    w = np.array([1., -1.])
+    w = np.array([1.0, -1.0])
     S = np.stack([U @ np.diag(w) @ U.T] * 2, axis=0)
     S_nx = nx.from_numpy(S)
     R = ot.utils.proj_SDP(S_nx)
 
-    w_expected = np.array([1., 0.])
+    w_expected = np.array([1.0, 0.0])
     S_expected = np.stack([U @ np.diag(w_expected) @ U.T] * 2, axis=0)
     assert np.allclose(nx.to_numpy(R), S_expected)
 

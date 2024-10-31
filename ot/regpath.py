@@ -107,8 +107,9 @@ def recast_ot_as_lasso(a, b, C):
     iHb = np.tile(np.arange(dim_b), dim_a) + dim_a
     j = np.concatenate((jHa, jHb))
     i = np.concatenate((iHa, iHb))
-    H = sp.csc_matrix((np.ones(dim_a * dim_b * 2), (i, j)),
-                      shape=(dim_a + dim_b, dim_a * dim_b))
+    H = sp.csc_matrix(
+        (np.ones(dim_a * dim_b * 2), (i, j)), shape=(dim_a + dim_b, dim_a * dim_b)
+    )
     return H, y, c
 
 
@@ -201,10 +202,12 @@ def recast_semi_relaxed_as_lasso(a, b, C):
     jHc = np.arange(dim_a * dim_b)
     iHc = np.tile(np.arange(dim_b), dim_a)
 
-    Hr = sp.csc_matrix((np.ones(dim_a * dim_b), (iHr, jHr)),
-                       shape=(dim_a, dim_a * dim_b))
-    Hc = sp.csc_matrix((np.ones(dim_a * dim_b), (iHc, jHc)),
-                       shape=(dim_b, dim_a * dim_b))
+    Hr = sp.csc_matrix(
+        (np.ones(dim_a * dim_b), (iHr, jHr)), shape=(dim_a, dim_a * dim_b)
+    )
+    Hc = sp.csc_matrix(
+        (np.ones(dim_a * dim_b), (iHc, jHc)), shape=(dim_b, dim_a * dim_b)
+    )
 
     return Hr, Hc, c
 
@@ -266,15 +269,17 @@ def ot_next_gamma(phi, delta, HtH, Hty, c, active_index, current_gamma):
         Unbalanced optimal transport through non-negative penalized
         linear regression. NeurIPS.
     """
-    M = (HtH[:, active_index].dot(phi) - Hty) / \
-        (HtH[:, active_index].dot(delta) - c + 1e-16)
+    M = (HtH[:, active_index].dot(phi) - Hty) / (
+        HtH[:, active_index].dot(delta) - c + 1e-16
+    )
     M[active_index] = 0
     M[M > (current_gamma - 1e-10 * current_gamma)] = 0
     return np.max(M), np.argmax(M)
 
 
-def semi_relaxed_next_gamma(phi, delta, phi_u, delta_u, HrHr, Hc, Hra,
-                            c, active_index, current_gamma):
+def semi_relaxed_next_gamma(
+    phi, delta, phi_u, delta_u, HrHr, Hc, Hra, c, active_index, current_gamma
+):
     r""" This function computes the next value of gamma when a variable is
     active in the regularization path of semi-relaxed UOT.
 
@@ -341,8 +346,9 @@ def semi_relaxed_next_gamma(phi, delta, phi_u, delta_u, HrHr, Hc, Hra,
         linear regression. NeurIPS.
     """
 
-    M = (HrHr[:, active_index].dot(phi) - Hra + Hc.T.dot(phi_u)) / \
-        (HrHr[:, active_index].dot(delta) - c + Hc.T.dot(delta_u) + 1e-16)
+    M = (HrHr[:, active_index].dot(phi) - Hra + Hc.T.dot(phi_u)) / (
+        HrHr[:, active_index].dot(delta) - c + Hc.T.dot(delta_u) + 1e-16
+    )
     M[active_index] = 0
     M[M > (current_gamma - 1e-10 * current_gamma)] = 0
     return np.max(M), np.argmax(M)
@@ -533,8 +539,7 @@ def construct_augmented_H(active_index, m, Hc, HrHr):
     return H_augmented
 
 
-def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
-                       itmax=50000):
+def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4, itmax=50000):
     r"""This function gives the regularization path of l2-penalized UOT problem
 
     The problem to optimize is the Lasso reformulation of the l2-penalized UOT:
@@ -621,15 +626,14 @@ def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
     id_pop = -1
 
     while n_iter < itmax and gamma_list[-1] > reg:
-        H_inv = complement_schur(H_inv, add_col, 2., id_pop)
+        H_inv = complement_schur(H_inv, add_col, 2.0, id_pop)
         current_gamma = gamma_list[-1]
 
         # compute the intercept and slope of solutions in current iteration
         # t = phi - gamma * delta
         phi = H_inv.dot(Hty[active_index])
         delta = H_inv.dot(c[active_index])
-        gamma, ik = ot_next_gamma(phi, delta, HtH, Hty, c, active_index,
-                                  current_gamma)
+        gamma, ik = ot_next_gamma(phi, delta, HtH, Hty, c, active_index, current_gamma)
 
         # compute the next lambda when removing a point from the active set
         alt_gamma, id_pop = compute_next_removal(phi, delta, current_gamma)
@@ -643,7 +647,7 @@ def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
 
         # compute the solution of current segment
         tA = phi - gamma * delta
-        sol = np.zeros((n * m, ))
+        sol = np.zeros((n * m,))
         sol[active_index] = tA
 
         if id_pop != -1:
@@ -658,23 +662,23 @@ def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
         n_iter += 1
 
     if itmax <= n_iter:
-        print('maximum iteration has been reached !')
+        print("maximum iteration has been reached !")
 
     # correct the last solution and gamma
     if len(t_list) > 1:
-        t_final = (t_list[-2] + (t_list[-1] - t_list[-2]) *
-                   (reg - gamma_list[-2]) / (gamma_list[-1] - gamma_list[-2]))
+        t_final = t_list[-2] + (t_list[-1] - t_list[-2]) * (reg - gamma_list[-2]) / (
+            gamma_list[-1] - gamma_list[-2]
+        )
         t_list[-1] = t_final
         gamma_list[-1] = reg
     else:
         gamma_list[-1] = reg
-        print('Regularization path does not exist !')
+        print("Regularization path does not exist !")
 
     return t_list[-1], t_list, gamma_list
 
 
-def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
-                      itmax=50000):
+def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4, itmax=50000):
     r"""This function gives the regularization path of semi-relaxed
     l2-UOT problem.
 
@@ -771,7 +775,7 @@ def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
         if n_iter == 1:
             H_inv = np.linalg.inv(augmented_H0)
         else:
-            H_inv = complement_schur(H_inv, add_col, 1., id_pop + m)
+            H_inv = complement_schur(H_inv, add_col, 1.0, id_pop + m)
         # compute the intercept and slope of solutions in current iteration
         augmented_phi = H_inv.dot(np.concatenate((b, Hra[active_index])))
         augmented_delta = H_inv[:, m:].dot(c[active_index])
@@ -779,9 +783,9 @@ def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
         delta = augmented_delta[m:]
         phi_u = augmented_phi[0:m]
         delta_u = augmented_delta[0:m]
-        gamma, ik = semi_relaxed_next_gamma(phi, delta, phi_u, delta_u,
-                                            HrHr, Hc, Hra, c, active_index,
-                                            current_gamma)
+        gamma, ik = semi_relaxed_next_gamma(
+            phi, delta, phi_u, delta_u, HrHr, Hc, Hra, c, active_index, current_gamma
+        )
 
         # compute the next lambda when removing a point from the active set
         alt_gamma, id_pop = compute_next_removal(phi, delta, current_gamma)
@@ -795,15 +799,16 @@ def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
 
         # compute the solution of current segment
         tA = phi - gamma * delta
-        sol = np.zeros((n * m, ))
+        sol = np.zeros((n * m,))
         sol[active_index] = tA
         if id_pop != -1:
             active_index.pop(id_pop)
             add_col = None
         else:
             active_index.append(ik)
-            add_col = np.concatenate((Hc.toarray()[:, ik],
-                                      HrHr.toarray()[active_index[:-1], ik]))
+            add_col = np.concatenate(
+                (Hc.toarray()[:, ik], HrHr.toarray()[active_index[:-1], ik])
+            )
             add_col = add_col[:, np.newaxis]
 
         gamma_list.append(gamma)
@@ -812,23 +817,25 @@ def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
         n_iter += 1
 
     if itmax <= n_iter:
-        print('maximum iteration has been reached !')
+        print("maximum iteration has been reached !")
 
     # correct the last solution and gamma
     if len(t_list) > 1:
-        t_final = (t_list[-2] + (t_list[-1] - t_list[-2]) *
-                   (reg - gamma_list[-2]) / (gamma_list[-1] - gamma_list[-2]))
+        t_final = t_list[-2] + (t_list[-1] - t_list[-2]) * (reg - gamma_list[-2]) / (
+            gamma_list[-1] - gamma_list[-2]
+        )
         t_list[-1] = t_final
         gamma_list[-1] = reg
     else:
         gamma_list[-1] = reg
-        print('Regularization path does not exist !')
+        print("Regularization path does not exist !")
 
     return t_list[-1], t_list, gamma_list
 
 
-def regularization_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
-                        semi_relaxed=False, itmax=50000):
+def regularization_path(
+    a: np.array, b: np.array, C: np.array, reg=1e-4, semi_relaxed=False, itmax=50000
+):
     r"""This function provides all the solutions of the regularization path \
     of the l2-UOT problem :ref:`[41] <references-regpath>`.
 
@@ -899,16 +906,14 @@ def regularization_path(a: np.array, b: np.array, C: np.array, reg=1e-4,
         linear regression. NeurIPS.
     """
     if semi_relaxed:
-        t, t_list, gamma_list = semi_relaxed_path(a, b, C, reg=reg,
-                                                  itmax=itmax)
+        t, t_list, gamma_list = semi_relaxed_path(a, b, C, reg=reg, itmax=itmax)
     else:
-        t, t_list, gamma_list = fully_relaxed_path(a, b, C, reg=reg,
-                                                   itmax=itmax)
+        t, t_list, gamma_list = fully_relaxed_path(a, b, C, reg=reg, itmax=itmax)
     return t, t_list, gamma_list
 
 
 def compute_transport_plan(gamma, gamma_list, Pi_list):
-    r""" Given the regularization path, this function computes the transport
+    r"""Given the regularization path, this function computes the transport
     plan for any value of gamma thanks to the piecewise linearity of the path.
 
     .. math::
@@ -973,6 +978,5 @@ def compute_transport_plan(gamma, gamma_list, Pi_list):
         gamma_k1 = gamma_list[idx + 1]
         pi_k0 = Pi_list[idx]
         pi_k1 = Pi_list[idx + 1]
-        Pi = pi_k0 + (pi_k1 - pi_k0) * (gamma - gamma_k0) \
-            / (gamma_k1 - gamma_k0)
+        Pi = pi_k0 + (pi_k1 - pi_k0) * (gamma - gamma_k0) / (gamma_k1 - gamma_k0)
     return Pi

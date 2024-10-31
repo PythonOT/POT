@@ -25,7 +25,7 @@ from scipy.special import iv
 # Plot data
 # ---------
 
-#%% plot the distributions
+# %% plot the distributions
 
 
 def pdf_von_Mises(theta, mu, kappa):
@@ -51,7 +51,7 @@ for k, mu in enumerate(mu_targets):
         label = "Source distributions"
     else:
         label = None
-    pl.plot(t / (2 * np.pi), pdf_t, c='b', label=label)
+    pl.plot(t / (2 * np.pi), pdf_t, c="b", label=label)
 
 pl.plot(t / (2 * np.pi), pdf1, c="r", label="Target distribution")
 pl.legend()
@@ -82,7 +82,7 @@ pl.scatter(np.cos(x2), np.sin(x2), c="r")
 # and attains its maximum in :math:`\mu_{\mathrm{target}}+1` (the antipodal point) contrary to the
 # Euclidean version.
 
-#%% Compute and plot distributions
+# %% Compute and plot distributions
 
 mu_targets = np.linspace(0, 2 * np.pi, 200)
 xs = np.random.vonmises(mu1 - np.pi, kappa1, size=(500,)) + np.pi
@@ -118,10 +118,24 @@ std_w2 = np.std(L_w2, axis=0)
 
 pl.figure(1)
 pl.plot(mu_targets / (2 * np.pi), m_w2_circle, label="Wasserstein circle")
-pl.fill_between(mu_targets / (2 * np.pi), m_w2_circle - 2 * std_w2_circle, m_w2_circle + 2 * std_w2_circle, alpha=0.5)
+pl.fill_between(
+    mu_targets / (2 * np.pi),
+    m_w2_circle - 2 * std_w2_circle,
+    m_w2_circle + 2 * std_w2_circle,
+    alpha=0.5,
+)
 pl.plot(mu_targets / (2 * np.pi), m_w2, label="Euclidean Wasserstein")
-pl.fill_between(mu_targets / (2 * np.pi), m_w2 - 2 * std_w2, m_w2 + 2 * std_w2, alpha=0.5)
-pl.vlines(x=[mu1 / (2 * np.pi)], ymin=0, ymax=np.max(w2), linestyle="--", color="k", label=r"$\mu_{\mathrm{target}}$")
+pl.fill_between(
+    mu_targets / (2 * np.pi), m_w2 - 2 * std_w2, m_w2 + 2 * std_w2, alpha=0.5
+)
+pl.vlines(
+    x=[mu1 / (2 * np.pi)],
+    ymin=0,
+    ymax=np.max(w2),
+    linestyle="--",
+    color="k",
+    label=r"$\mu_{\mathrm{target}}$",
+)
 pl.legend()
 pl.xlabel(r"$\mu_{\mathrm{source}}$")
 pl.show()
@@ -132,7 +146,7 @@ pl.show()
 # ----------------------------------------------------------------------
 # When :math:`\kappa=0`, the von Mises distribution is the uniform distribution on :math:`S^1`.
 
-#%% Compute Wasserstein between Von Mises and uniform
+# %% Compute Wasserstein between Von Mises and uniform
 
 kappas = np.logspace(-5, 2, 100)
 n_try = 20

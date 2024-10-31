@@ -21,30 +21,30 @@ __time_tic_toc = time.time()
 
 
 def tic():
-    r""" Python implementation of Matlab tic() function """
+    r"""Python implementation of Matlab tic() function"""
     global __time_tic_toc
     __time_tic_toc = time.time()
 
 
-def toc(message='Elapsed time : {} s'):
-    r""" Python implementation of Matlab toc() function """
+def toc(message="Elapsed time : {} s"):
+    r"""Python implementation of Matlab toc() function"""
     t = time.time()
     print(message.format(t - __time_tic_toc))
     return t - __time_tic_toc
 
 
 def toq():
-    r""" Python implementation of Julia toc() function """
+    r"""Python implementation of Julia toc() function"""
     t = time.time()
     return t - __time_tic_toc
 
 
-def kernel(x1, x2, method='gaussian', sigma=1, **kwargs):
+def kernel(x1, x2, method="gaussian", sigma=1, **kwargs):
     r"""Compute kernel matrix"""
 
     nx = get_backend(x1, x2)
 
-    if method.lower() in ['gaussian', 'gauss', 'rbf']:
+    if method.lower() in ["gaussian", "gauss", "rbf"]:
         K = nx.exp(-dist(x1, x2) / (2 * sigma**2))
     return K
 
@@ -57,10 +57,9 @@ def laplacian(x):
 
 
 def list_to_array(*lst, nx=None):
-    r""" Convert a list if in numpy format """
+    r"""Convert a list if in numpy format"""
     lst_not_empty = [a for a in lst if len(a) > 0 and not isinstance(a, list)]
     if nx is None:  # find backend
-
         if len(lst_not_empty) == 0:
             type_as = np.zeros(0)
             nx = get_backend(type_as)
@@ -73,8 +72,10 @@ def list_to_array(*lst, nx=None):
         else:
             type_as = lst_not_empty[0]
     if len(lst) > 1:
-        return [nx.from_numpy(np.array(a), type_as=type_as)
-                if isinstance(a, list) else a for a in lst]
+        return [
+            nx.from_numpy(np.array(a), type_as=type_as) if isinstance(a, list) else a
+            for a in lst
+        ]
     else:
         if isinstance(lst[0], list):
             return nx.from_numpy(np.array(lst[0]), type_as=type_as)
@@ -166,10 +167,14 @@ def projection_sparse_simplex(V, max_nz, z=1, axis=None, nx=None):
     if V.ndim == 1:
         return projection_sparse_simplex(
             # V[nx.newaxis, :], max_nz, z, axis=1).ravel()
-            V[None, :], max_nz, z, axis=1).ravel()
+            V[None, :],
+            max_nz,
+            z,
+            axis=1,
+        ).ravel()
 
     if V.ndim > 2:
-        raise ValueError('V.ndim must be <= 2')
+        raise ValueError("V.ndim must be <= 2")
 
     if axis == 1:
         # For each row of V, find top max_nz values; arrange the
@@ -199,9 +204,10 @@ def projection_sparse_simplex(V, max_nz, z=1, axis=None, nx=None):
 
         if isinstance(nx, JaxBackend):
             # in Jax, we need to use the `at` property of `jax.numpy.ndarray`
-            # to do in-place array modificatons.
-            sparse_projection = sparse_projection.at[
-                row_indices, max_nz_indices].set(nz_projection)
+            # to do in-place array modifications.
+            sparse_projection = sparse_projection.at[row_indices, max_nz_indices].set(
+                nz_projection
+            )
         else:
             sparse_projection[row_indices, max_nz_indices] = nz_projection
         return sparse_projection
@@ -238,8 +244,7 @@ def unif(n, type_as=None):
 
 
 def clean_zeros(a, b, M):
-    r""" Remove all components with zeros weights in :math:`\mathbf{a}` and :math:`\mathbf{b}`
-    """
+    r"""Remove all components with zeros weights in :math:`\mathbf{a}` and :math:`\mathbf{b}`"""
     M2 = M[a > 0, :][:, b > 0].copy()  # copy force c style matrix (froemd)
     a2 = a[a > 0]
     b2 = b[b > 0]
@@ -268,8 +273,8 @@ def euclidean_distances(X, Y, squared=False):
 
     nx = get_backend(X, Y)
 
-    a2 = nx.einsum('ij,ij->i', X, X)
-    b2 = nx.einsum('ij,ij->i', Y, Y)
+    a2 = nx.einsum("ij,ij->i", X, X)
+    b2 = nx.einsum("ij,ij->i", Y, Y)
 
     c = -2 * nx.dot(X, Y.T)
     c += a2[:, None]
@@ -286,7 +291,7 @@ def euclidean_distances(X, Y, squared=False):
     return c
 
 
-def dist(x1, x2=None, metric='sqeuclidean', p=2, w=None):
+def dist(x1, x2=None, metric="sqeuclidean", p=2, w=None):
     r"""Compute distance between samples in :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}`
 
     .. note:: This function is backend-compatible and will work on arrays
@@ -326,7 +331,7 @@ def dist(x1, x2=None, metric='sqeuclidean', p=2, w=None):
     elif metric == "euclidean":
         return euclidean_distances(x1, x2, squared=False)
     else:
-        if not get_backend(x1, x2).__name__ == 'numpy':
+        if not get_backend(x1, x2).__name__ == "numpy":
             raise NotImplementedError()
         else:
             if isinstance(metric, str) and metric.endswith("minkowski"):
@@ -336,7 +341,7 @@ def dist(x1, x2=None, metric='sqeuclidean', p=2, w=None):
             return cdist(x1, x2, metric=metric)
 
 
-def dist0(n, method='lin_square'):
+def dist0(n, method="lin_square"):
     r"""Compute standard cost matrices of size (`n`, `n`) for OT problems
 
     Parameters
@@ -354,14 +359,14 @@ def dist0(n, method='lin_square'):
         Distance matrix computed with given metric.
     """
     res = 0
-    if method == 'lin_square':
+    if method == "lin_square":
         x = np.arange(n, dtype=np.float64).reshape((n, 1))
         res = dist(x, x)
     return res
 
 
 def cost_normalization(C, norm=None, return_value=False, value=None):
-    r""" Apply normalization to the loss matrix
+    r"""Apply normalization to the loss matrix
 
     Parameters
     ----------
@@ -394,9 +399,11 @@ def cost_normalization(C, norm=None, return_value=False, value=None):
     elif norm == "loglog":
         C = nx.log(1 + nx.log(1 + C))
     else:
-        raise ValueError('Norm %s is not a valid option.\n'
-                         'Valid options are:\n'
-                         'median, max, log, loglog' % norm)
+        raise ValueError(
+            "Norm %s is not a valid option.\n"
+            "Valid options are:\n"
+            "median, max, log, loglog" % norm
+        )
     if return_value:
         return C, value
     else:
@@ -404,7 +411,7 @@ def cost_normalization(C, norm=None, return_value=False, value=None):
 
 
 def dots(*args):
-    r""" dots function for multiple matrix multiply """
+    r"""dots function for multiple matrix multiply"""
     nx = get_backend(*args)
     return reduce(nx.dot, args)
 
@@ -416,7 +423,7 @@ def is_all_finite(*args):
 
 
 def label_normalization(y, start=0, nx=None):
-    r""" Transform labels to start at a given value
+    r"""Transform labels to start at a given value
 
     Parameters
     ----------
@@ -466,15 +473,14 @@ def labels_to_masks(y, type_as=None, nx=None):
 
 
 def parmap(f, X, nprocs="default"):
-    r""" parallel map for multiprocessing.
+    r"""parallel map for multiprocessing.
     The function has been deprecated and only performs a regular map.
     """
     return list(map(f, X))
 
 
 def check_params(**kwargs):
-    r"""check_params: check whether some parameters are missing
-    """
+    r"""check_params: check whether some parameters are missing"""
 
     missing_params = []
     check = True
@@ -510,8 +516,9 @@ def check_random_state(seed):
         return np.random.RandomState(seed)
     if isinstance(seed, np.random.RandomState):
         return seed
-    raise ValueError('{} cannot be used to seed a numpy.random.RandomState'
-                     ' instance'.format(seed))
+    raise ValueError(
+        "{} cannot be used to seed a numpy.random.RandomState" " instance".format(seed)
+    )
 
 
 def get_coordinate_circle(x):
@@ -545,7 +552,7 @@ def get_coordinate_circle(x):
 
 
 def reduce_lazytensor(a, func, axis=None, nx=None, batch_size=100):
-    """ Reduce a LazyTensor along an axis with function fun using batches.
+    """Reduce a LazyTensor along an axis with function fun using batches.
 
     When axis=None, reduce the LazyTensor to a scalar as a sum of fun over
     batches taken along dim.
@@ -584,33 +591,33 @@ def reduce_lazytensor(a, func, axis=None, nx=None, batch_size=100):
     if axis is None:
         res = 0.0
         for i in range(0, a.shape[0], batch_size):
-            res += func(a[i:i + batch_size])
+            res += func(a[i : i + batch_size])
         return res
     elif axis == 0:
         res = nx.zeros(a.shape[1:], type_as=a[0])
         if nx.__name__ in ["jax", "tf"]:
             lst = []
             for j in range(0, a.shape[1], batch_size):
-                lst.append(func(a[:, j:j + batch_size], 0))
+                lst.append(func(a[:, j : j + batch_size], 0))
             return nx.concatenate(lst, axis=0)
         else:
             for j in range(0, a.shape[1], batch_size):
-                res[j:j + batch_size] = func(a[:, j:j + batch_size], axis=0)
+                res[j : j + batch_size] = func(a[:, j : j + batch_size], axis=0)
         return res
     elif axis == 1:
         if len(a.shape) == 2:
-            shape = (a.shape[0])
+            shape = a.shape[0]
         else:
             shape = (a.shape[0], *a.shape[2:])
         res = nx.zeros(shape, type_as=a[0])
         if nx.__name__ in ["jax", "tf"]:
             lst = []
             for i in range(0, a.shape[0], batch_size):
-                lst.append(func(a[i:i + batch_size], 1))
+                lst.append(func(a[i : i + batch_size], 1))
             return nx.concatenate(lst, axis=0)
         else:
             for i in range(0, a.shape[0], batch_size):
-                res[i:i + batch_size] = func(a[i:i + batch_size], axis=1)
+                res[i : i + batch_size] = func(a[i : i + batch_size], axis=1)
         return res
 
     else:
@@ -618,7 +625,7 @@ def reduce_lazytensor(a, func, axis=None, nx=None, batch_size=100):
 
 
 def get_lowrank_lazytensor(Q, R, d=None, nx=None):
-    """ Get a low rank LazyTensor T=Q@R^T or T=Q@diag(d)@R^T
+    """Get a low rank LazyTensor T=Q@R^T or T=Q@diag(d)@R^T
 
     Parameters
     ----------
@@ -681,8 +688,10 @@ def get_parameter_pair(parameter):
         param_1, param_2 = parameter[0], parameter[0]
     else:
         if len(parameter) > 2:
-            raise ValueError("Parameter must be either a scalar, \
-                             or an indexable object of length 1 or 2.")
+            raise ValueError(
+                "Parameter must be either a scalar, \
+                             or an indexable object of length 1 or 2."
+            )
         else:
             param_1, param_2 = parameter[0], parameter[1]
 
@@ -715,7 +724,7 @@ class deprecated(object):
     # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
     # but with many changes.
 
-    def __init__(self, extra=''):
+    def __init__(self, extra=""):
         self.extra = extra
 
     def __call__(self, obj):
@@ -743,7 +752,7 @@ class deprecated(object):
 
         cls.__init__ = wrapped
 
-        wrapped.__name__ = '__init__'
+        wrapped.__name__ = "__init__"
         wrapped.__doc__ = self._update_doc(init.__doc__)
         wrapped.deprecated_original = init
 
@@ -776,16 +785,15 @@ class deprecated(object):
 
 
 def _is_deprecated(func):
-    r"""Helper to check if func is wraped by our deprecated decorator"""
+    r"""Helper to check if func is wrapped by our deprecated decorator"""
     if sys.version_info < (3, 5):
-        raise NotImplementedError("This is only available for python3.5 "
-                                  "or above")
-    closures = getattr(func, '__closure__', [])
+        raise NotImplementedError("This is only available for python3.5 " "or above")
+    closures = getattr(func, "__closure__", [])
     if closures is None:
         closures = []
-    is_deprecated = ('deprecated' in ''.join([c.cell_contents
-                                              for c in closures
-                                              if isinstance(c.cell_contents, str)]))
+    is_deprecated = "deprecated" in "".join(
+        [c.cell_contents for c in closures if isinstance(c.cell_contents, str)]
+    )
     return is_deprecated
 
 
@@ -804,9 +812,7 @@ class BaseEstimator(object):
     nx: Backend = None
 
     def _get_backend(self, *arrays):
-        nx = get_backend(
-            *[input_ for input_ in arrays if input_ is not None]
-        )
+        nx = get_backend(*[input_ for input_ in arrays if input_ is not None])
         if nx.__name__ in ("tf",):
             raise TypeError("Domain adaptation does not support TF backend.")
         self.nx = nx
@@ -818,7 +824,7 @@ class BaseEstimator(object):
 
         # fetch the constructor or the original constructor before
         # deprecation wrapping if any
-        init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+        init = getattr(cls.__init__, "deprecated_original", cls.__init__)
         if init is object.__init__:
             # No explicit constructor to introspect
             return []
@@ -827,16 +833,20 @@ class BaseEstimator(object):
         # to represent
         init_signature = signature(init)
         # Consider the constructor parameters excluding 'self'
-        parameters = [p for p in init_signature.parameters.values()
-                      if p.name != 'self' and p.kind != p.VAR_KEYWORD]
+        parameters = [
+            p
+            for p in init_signature.parameters.values()
+            if p.name != "self" and p.kind != p.VAR_KEYWORD
+        ]
         for p in parameters:
             if p.kind == p.VAR_POSITIONAL:
-                raise RuntimeError("POT estimators should always "
-                                   "specify their parameters in the signature"
-                                   " of their __init__ (no varargs)."
-                                   " %s with constructor %s doesn't "
-                                   " follow this convention."
-                                   % (cls, init_signature))
+                raise RuntimeError(
+                    "POT estimators should always "
+                    "specify their parameters in the signature"
+                    " of their __init__ (no varargs)."
+                    " %s with constructor %s doesn't "
+                    " follow this convention." % (cls, init_signature)
+                )
         # Extract and sort argument names excluding 'self'
         return sorted([p.name for p in parameters])
 
@@ -864,16 +874,16 @@ class BaseEstimator(object):
             try:
                 with warnings.catch_warnings(record=True) as w:
                     value = getattr(self, key, None)
-                if len(w) and w[0].category == DeprecationWarning:
+                if len(w) and isinstance(w[0].category, DeprecationWarning):
                     # if the parameter is deprecated, don't show it
                     continue
             finally:
                 warnings.filters.pop(0)
 
             # XXX: should we rather test if instance of estimator?
-            if deep and hasattr(value, 'get_params'):
+            if deep and hasattr(value, "get_params"):
                 deep_items = value.get_params().items()
-                out.update((key + '__' + k, val) for k, val in deep_items)
+                out.update((key + "__" + k, val) for k, val in deep_items)
             out[key] = value
         return out
 
@@ -895,24 +905,27 @@ class BaseEstimator(object):
         valid_params = self.get_params(deep=True)
         # for key, value in iteritems(params):
         for key, value in params.items():
-            split = key.split('__', 1)
+            split = key.split("__", 1)
             if len(split) > 1:
                 # nested objects case
                 name, sub_name = split
                 if name not in valid_params:
-                    raise ValueError('Invalid parameter %s for estimator %s. '
-                                     'Check the list of available parameters '
-                                     'with `estimator.get_params().keys()`.' %
-                                     (name, self))
+                    raise ValueError(
+                        "Invalid parameter %s for estimator %s. "
+                        "Check the list of available parameters "
+                        "with `estimator.get_params().keys()`." % (name, self)
+                    )
                 sub_object = valid_params[name]
                 sub_object.set_params(**{sub_name: value})
             else:
                 # simple objects case
                 if key not in valid_params:
-                    raise ValueError('Invalid parameter %s for estimator %s. '
-                                     'Check the list of available parameters '
-                                     'with `estimator.get_params().keys()`.' %
-                                     (key, self.__class__.__name__))
+                    raise ValueError(
+                        "Invalid parameter %s for estimator %s. "
+                        "Check the list of available parameters "
+                        "with `estimator.get_params().keys()`."
+                        % (key, self.__class__.__name__)
+                    )
                 setattr(self, key, value)
         return self
 
@@ -922,11 +935,12 @@ class UndefinedParameter(Exception):
     Aim at raising an Exception when a undefined parameter is called
 
     """
+
     pass
 
 
 class OTResult:
-    """ Base class for OT results.
+    """Base class for OT results.
 
     Parameters
     ----------
@@ -995,8 +1009,20 @@ class OTResult:
 
     """
 
-    def __init__(self, potentials=None, value=None, value_linear=None, value_quad=None, plan=None, log=None, backend=None, sparse_plan=None, lazy_plan=None, status=None, batch_size=100):
-
+    def __init__(
+        self,
+        potentials=None,
+        value=None,
+        value_linear=None,
+        value_quad=None,
+        plan=None,
+        log=None,
+        backend=None,
+        sparse_plan=None,
+        lazy_plan=None,
+        status=None,
+        batch_size=100,
+    ):
         self._potentials = potentials
         self._value = value
         self._value_linear = value_linear
@@ -1021,19 +1047,23 @@ class OTResult:
     # Dual potentials --------------------------------------------
 
     def __repr__(self):
-        s = 'OTResult('
+        s = "OTResult("
         if self._value is not None:
-            s += 'value={},'.format(self._value)
+            s += "value={},".format(self._value)
         if self._value_linear is not None:
-            s += 'value_linear={},'.format(self._value_linear)
+            s += "value_linear={},".format(self._value_linear)
         if self._plan is not None:
-            s += 'plan={}(shape={}),'.format(self._plan.__class__.__name__, self._plan.shape)
+            s += "plan={}(shape={}),".format(
+                self._plan.__class__.__name__, self._plan.shape
+            )
         if self._lazy_plan is not None:
-            s += 'lazy_plan={}(shape={}),'.format(self._lazy_plan.__class__.__name__, self._lazy_plan.shape)
-        if s[-1] != '(':
-            s = s[:-1] + ')'
+            s += "lazy_plan={}(shape={}),".format(
+                self._lazy_plan.__class__.__name__, self._lazy_plan.shape
+            )
+        if s[-1] != "(":
+            s = s[:-1] + ")"
         else:
-            s = s + ')'
+            s = s + ")"
         return s
 
     @property
@@ -1204,7 +1234,7 @@ class OTResult:
 
 
 class LazyTensor(object):
-    """ A lazy tensor is a tensor that is not stored in memory. Instead, it is
+    """A lazy tensor is a tensor that is not stored in memory. Instead, it is
     defined by a function that computes its values on the fly from slices.
 
     Parameters
@@ -1241,7 +1271,6 @@ class LazyTensor(object):
     """
 
     def __init__(self, shape, getitem, **kwargs):
-
         self._getitem = getitem
         self.shape = shape
         self.ndim = len(shape)
@@ -1262,15 +1291,19 @@ class LazyTensor(object):
             for i in range(self.ndim - len(key)):
                 k.append(slice(None))
         else:
-            raise NotImplementedError("Only integer, slice, and tuple indexing is supported")
+            raise NotImplementedError(
+                "Only integer, slice, and tuple indexing is supported"
+            )
 
         return self._getitem(*k, **self.kwargs)
 
     def __repr__(self):
-        return "LazyTensor(shape={},attributes=({}))".format(self.shape, ','.join(self.kwargs.keys()))
+        return "LazyTensor(shape={},attributes=({}))".format(
+            self.shape, ",".join(self.kwargs.keys())
+        )
 
 
-def proj_SDP(S, nx=None, vmin=0.):
+def proj_SDP(S, nx=None, vmin=0.0):
     """
     Project a symmetric matrix onto the space of symmetric matrices with
     eigenvalues larger or equal to `vmin`.
@@ -1305,7 +1338,7 @@ def proj_SDP(S, nx=None, vmin=0.):
         return P @ nx.diag(w) @ P.T
 
     else:  # input was (n, d, d): broadcasting
-        Q = nx.einsum('ijk,ik->ijk', P, w)  # Q[i] = P[i] @ diag(w[i])
+        Q = nx.einsum("ijk,ik->ijk", P, w)  # Q[i] = P[i] @ diag(w[i])
         # R[i] = Q[i] @ P[i].T
         return nx.einsum('ijk,ikl->ijl', Q, nx.transpose(P, (0, 2, 1)))
 

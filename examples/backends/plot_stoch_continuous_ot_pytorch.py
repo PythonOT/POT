@@ -45,11 +45,11 @@ Xt = Xt + 4
 nvisu = 300
 pl.figure(1, (5, 5))
 pl.clf()
-pl.scatter(Xs[:nvisu, 0], Xs[:nvisu, 1], marker='+', label='Source samples', alpha=0.5)
-pl.scatter(Xt[:nvisu, 0], Xt[:nvisu, 1], marker='o', label='Target samples', alpha=0.5)
+pl.scatter(Xs[:nvisu, 0], Xs[:nvisu, 1], marker="+", label="Source samples", alpha=0.5)
+pl.scatter(Xt[:nvisu, 0], Xt[:nvisu, 1], marker="o", label="Target samples", alpha=0.5)
 pl.legend(loc=0)
 ax_bounds = pl.axis()
-pl.title('Source and target distributions')
+pl.title("Source and target distributions")
 
 # %%
 # Convert data to torch tensors
@@ -86,7 +86,7 @@ v = Potential().double()
 
 reg = 1
 
-optimizer = torch.optim.Adam(list(u.parameters()) + list(v.parameters()), lr=.005)
+optimizer = torch.optim.Adam(list(u.parameters()) + list(v.parameters()), lr=0.005)
 
 # number of iteration
 n_iter = 500
@@ -96,7 +96,6 @@ n_batch = 500
 losses = []
 
 for i in range(n_iter):
-
     # generate noise samples
 
     iperms = torch.randint(0, n_source_samples, (n_batch,))
@@ -105,7 +104,7 @@ for i in range(n_iter):
     xsi = xs[iperms]
     xti = xt[ipermt]
 
-    # minus because we maximize te dual loss
+    # minus because we maximize the dual loss
     loss = -ot.stochastic.loss_dual_entropic(u(xsi), v(xti), xsi, xti, reg=reg)
     losses.append(float(loss.detach()))
 
@@ -120,7 +119,7 @@ for i in range(n_iter):
 pl.figure(2)
 pl.plot(losses)
 pl.grid()
-pl.title('Dual objective (negative)')
+pl.title("Dual objective (negative)")
 pl.xlabel("Iterations")
 
 
@@ -137,7 +136,7 @@ XX, YY = np.meshgrid(xl, yl)
 
 xg = np.concatenate((XX.ravel()[:, None], YY.ravel()[:, None]), axis=1)
 
-wxg = np.exp(-((xg[:, 0] - 4)**2 + (xg[:, 1] - 4)**2) / (2 * 2))
+wxg = np.exp(-((xg[:, 0] - 4) ** 2 + (xg[:, 1] - 4) ** 2) / (2 * 2))
 wxg = wxg / np.sum(wxg)
 
 xg = torch.tensor(xg)
@@ -149,41 +148,74 @@ pl.clf()
 pl.subplot(1, 3, 1)
 
 iv = 2
-Gg = ot.stochastic.plan_dual_entropic(u(xs[iv:iv + 1, :]), v(xg), xs[iv:iv + 1, :], xg, reg=reg, wt=wxg)
+Gg = ot.stochastic.plan_dual_entropic(
+    u(xs[iv : iv + 1, :]), v(xg), xs[iv : iv + 1, :], xg, reg=reg, wt=wxg
+)
 Gg = Gg.reshape((nv, nv)).detach().numpy()
 
-pl.scatter(Xs[:nvisu, 0], Xs[:nvisu, 1], marker='+', zorder=2, alpha=0.05)
-pl.scatter(Xt[:nvisu, 0], Xt[:nvisu, 1], marker='o', zorder=2, alpha=0.05)
-pl.scatter(Xs[iv:iv + 1, 0], Xs[iv:iv + 1, 1], s=100, marker='+', label='Source sample', zorder=2, alpha=1, color='C0')
-pl.pcolormesh(XX, YY, Gg, cmap='Greens', label='Density of transported source sample')
+pl.scatter(Xs[:nvisu, 0], Xs[:nvisu, 1], marker="+", zorder=2, alpha=0.05)
+pl.scatter(Xt[:nvisu, 0], Xt[:nvisu, 1], marker="o", zorder=2, alpha=0.05)
+pl.scatter(
+    Xs[iv : iv + 1, 0],
+    Xs[iv : iv + 1, 1],
+    s=100,
+    marker="+",
+    label="Source sample",
+    zorder=2,
+    alpha=1,
+    color="C0",
+)
+pl.pcolormesh(XX, YY, Gg, cmap="Greens", label="Density of transported source sample")
 pl.legend(loc=0)
 ax_bounds = pl.axis()
-pl.title('Density of transported source sample')
+pl.title("Density of transported source sample")
 
 pl.subplot(1, 3, 2)
 
 iv = 3
-Gg = ot.stochastic.plan_dual_entropic(u(xs[iv:iv + 1, :]), v(xg), xs[iv:iv + 1, :], xg, reg=reg, wt=wxg)
+Gg = ot.stochastic.plan_dual_entropic(
+    u(xs[iv : iv + 1, :]), v(xg), xs[iv : iv + 1, :], xg, reg=reg, wt=wxg
+)
 Gg = Gg.reshape((nv, nv)).detach().numpy()
 
-pl.scatter(Xs[:nvisu, 0], Xs[:nvisu, 1], marker='+', zorder=2, alpha=0.05)
-pl.scatter(Xt[:nvisu, 0], Xt[:nvisu, 1], marker='o', zorder=2, alpha=0.05)
-pl.scatter(Xs[iv:iv + 1, 0], Xs[iv:iv + 1, 1], s=100, marker='+', label='Source sample', zorder=2, alpha=1, color='C0')
-pl.pcolormesh(XX, YY, Gg, cmap='Greens', label='Density of transported source sample')
+pl.scatter(Xs[:nvisu, 0], Xs[:nvisu, 1], marker="+", zorder=2, alpha=0.05)
+pl.scatter(Xt[:nvisu, 0], Xt[:nvisu, 1], marker="o", zorder=2, alpha=0.05)
+pl.scatter(
+    Xs[iv : iv + 1, 0],
+    Xs[iv : iv + 1, 1],
+    s=100,
+    marker="+",
+    label="Source sample",
+    zorder=2,
+    alpha=1,
+    color="C0",
+)
+pl.pcolormesh(XX, YY, Gg, cmap="Greens", label="Density of transported source sample")
 pl.legend(loc=0)
 ax_bounds = pl.axis()
-pl.title('Density of transported source sample')
+pl.title("Density of transported source sample")
 
 pl.subplot(1, 3, 3)
 
 iv = 6
-Gg = ot.stochastic.plan_dual_entropic(u(xs[iv:iv + 1, :]), v(xg), xs[iv:iv + 1, :], xg, reg=reg, wt=wxg)
+Gg = ot.stochastic.plan_dual_entropic(
+    u(xs[iv : iv + 1, :]), v(xg), xs[iv : iv + 1, :], xg, reg=reg, wt=wxg
+)
 Gg = Gg.reshape((nv, nv)).detach().numpy()
 
-pl.scatter(Xs[:nvisu, 0], Xs[:nvisu, 1], marker='+', zorder=2, alpha=0.05)
-pl.scatter(Xt[:nvisu, 0], Xt[:nvisu, 1], marker='o', zorder=2, alpha=0.05)
-pl.scatter(Xs[iv:iv + 1, 0], Xs[iv:iv + 1, 1], s=100, marker='+', label='Source sample', zorder=2, alpha=1, color='C0')
-pl.pcolormesh(XX, YY, Gg, cmap='Greens', label='Density of transported source sample')
+pl.scatter(Xs[:nvisu, 0], Xs[:nvisu, 1], marker="+", zorder=2, alpha=0.05)
+pl.scatter(Xt[:nvisu, 0], Xt[:nvisu, 1], marker="o", zorder=2, alpha=0.05)
+pl.scatter(
+    Xs[iv : iv + 1, 0],
+    Xs[iv : iv + 1, 1],
+    s=100,
+    marker="+",
+    label="Source sample",
+    zorder=2,
+    alpha=1,
+    color="C0",
+)
+pl.pcolormesh(XX, YY, Gg, cmap="Greens", label="Density of transported source sample")
 pl.legend(loc=0)
 ax_bounds = pl.axis()
-pl.title('Density of transported source sample')
+pl.title("Density of transported source sample")

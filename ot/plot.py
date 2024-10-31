@@ -17,10 +17,19 @@ import matplotlib.pylab as pl
 from matplotlib import gridspec
 
 
-def plot1D_mat(a, b, M, title='', plot_style='yx',
-               a_label='', b_label='', color_source='b',
-               color_target='r', coupling_cmap='gray_r'):
-    r""" Plot matrix :math:`\mathbf{M}` with the source and target 1D distributions.
+def plot1D_mat(
+    a,
+    b,
+    M,
+    title="",
+    plot_style="yx",
+    a_label="",
+    b_label="",
+    color_source="b",
+    color_target="r",
+    coupling_cmap="gray_r",
+):
+    r"""Plot matrix :math:`\mathbf{M}` with the source and target 1D distributions.
 
     Creates a subplot with the source distribution :math:`\mathbf{a}` and target
     distribution :math:`\mathbf{b}`t.
@@ -63,12 +72,12 @@ def plot1D_mat(a, b, M, title='', plot_style='yx',
     .. seealso::
         :func:`rescale_for_imshow_plot`
     """
-    assert plot_style in ['yx', 'xy'], "plot_style should be 'yx' or 'xy'"
+    assert plot_style in ["yx", "xy"], "plot_style should be 'yx' or 'xy'"
     na, nb = M.shape
 
-    gs = gridspec.GridSpec(3, 3, height_ratios=[1, 1, 1],
-                           width_ratios=[1, 1, 1],
-                           hspace=0, wspace=0)
+    gs = gridspec.GridSpec(
+        3, 3, height_ratios=[1, 1, 1], width_ratios=[1, 1, 1], hspace=0, wspace=0
+    )
 
     xa = np.arange(na)
     xb = np.arange(nb)
@@ -79,23 +88,28 @@ def plot1D_mat(a, b, M, title='', plot_style='yx',
             ax.set_xticks(())
             ax.set_yticks(())
 
-        ax.spines['top'].set_visible(visible_spines)
-        ax.spines['right'].set_visible(visible_spines)
-        ax.spines['bottom'].set_visible(visible_spines)
-        ax.spines['left'].set_visible(visible_spines)
+        ax.spines["top"].set_visible(visible_spines)
+        ax.spines["right"].set_visible(visible_spines)
+        ax.spines["bottom"].set_visible(visible_spines)
+        ax.spines["left"].set_visible(visible_spines)
 
-    if plot_style == 'xy':
+    if plot_style == "xy":
         # horizontal source on the bottom, flipped vertically
         ax1 = pl.subplot(gs[2, 1:])
         ax1.plot(xa, np.max(a) - a, color=color_source, linewidth=2)
-        ax1.fill(xa, np.max(a) - a, np.max(a) * np.ones_like(a),
-                 color=color_source, alpha=.5)
-        ax1.set_title(a_label, y=-.15)
+        ax1.fill(
+            xa,
+            np.max(a) - a,
+            np.max(a) * np.ones_like(a),
+            color=color_source,
+            alpha=0.5,
+        )
+        ax1.set_title(a_label, y=-0.15)
 
         # vertical target on the left
         ax2 = pl.subplot(gs[0:2, 0])
         ax2.plot(b, xb, color=color_target, linewidth=2)
-        ax2.fill(b, xb, color=color_target, alpha=.5)
+        ax2.fill(b, xb, color=color_target, alpha=0.5)
         ax2.invert_xaxis()
         ax2.invert_yaxis()
         ax2.set_title(b_label)
@@ -105,8 +119,7 @@ def plot1D_mat(a, b, M, title='', plot_style='yx',
 
         # coupling matrix in the middle
         ax3 = pl.subplot(gs[0:2, 1:], sharey=ax2, sharex=ax1)
-        ax3.imshow(M.T, interpolation='nearest', origin='lower',
-                   cmap=coupling_cmap)
+        ax3.imshow(M.T, interpolation="nearest", origin="lower", cmap=coupling_cmap)
         ax3.set_title(title)
         _set_ticks_and_spines(ax3, empty_ticks=False, visible_spines=True)
 
@@ -117,14 +130,14 @@ def plot1D_mat(a, b, M, title='', plot_style='yx',
         # vertical source on the left
         ax1 = pl.subplot(gs[1:, 0])
         ax1.plot(a, xa, color=color_source, linewidth=2)
-        ax1.fill(a, xa, color=color_source, alpha=.5)
+        ax1.fill(a, xa, color=color_source, alpha=0.5)
         ax1.invert_xaxis()
         ax1.set_title(a_label)
 
         # horizontal target on the top
         ax2 = pl.subplot(gs[0, 1:])
         ax2.plot(xb, b, color=color_target, linewidth=2)
-        ax2.fill(xb, b, color=color_target, alpha=.5)
+        ax2.fill(xb, b, color=color_target, alpha=0.5)
         ax2.set_title(b_label)
 
         _set_ticks_and_spines(ax1, empty_ticks=True, visible_spines=False)
@@ -132,12 +145,17 @@ def plot1D_mat(a, b, M, title='', plot_style='yx',
 
         # coupling matrix in the middle
         ax3 = pl.subplot(gs[1:, 1:], sharey=ax1, sharex=ax2)
-        ax3.imshow(M, interpolation='nearest', cmap=coupling_cmap)
+        ax3.imshow(M, interpolation="nearest", cmap=coupling_cmap)
         # Set title below matrix plot
-        ax3.text(0.5, -0.025, title,
-                 ha='center', va='top',
-                 transform=ax3.transAxes,
-                 fontsize='large')
+        ax3.text(
+            0.5,
+            -0.025,
+            title,
+            ha="center",
+            va="top",
+            transform=ax3.transAxes,
+            fontsize="large",
+        )
         _set_ticks_and_spines(ax3, empty_ticks=False, visible_spines=True)
 
         pl.subplots_adjust(hspace=0, wspace=0)
@@ -190,7 +208,7 @@ def rescale_for_imshow_plot(x, y, n, m=None, a_y=None, b_y=None):
 
 
 def plot2D_samples_mat(xs, xt, G, thr=1e-8, **kwargs):
-    r""" Plot matrix :math:`\mathbf{G}` in 2D with lines using alpha values
+    r"""Plot matrix :math:`\mathbf{G}` in 2D with lines using alpha values
 
     Plot lines between source and target 2D samples with a color
     proportional to the value of the matrix :math:`\mathbf{G}` between samples.
@@ -211,16 +229,20 @@ def plot2D_samples_mat(xs, xt, G, thr=1e-8, **kwargs):
         nothing given)
     """
 
-    if ('color' not in kwargs) and ('c' not in kwargs):
-        kwargs['color'] = 'k'
+    if ("color" not in kwargs) and ("c" not in kwargs):
+        kwargs["color"] = "k"
     mx = G.max()
-    if 'alpha' in kwargs:
-        scale = kwargs['alpha']
-        del kwargs['alpha']
+    if "alpha" in kwargs:
+        scale = kwargs["alpha"]
+        del kwargs["alpha"]
     else:
         scale = 1
     for i in range(xs.shape[0]):
         for j in range(xt.shape[0]):
             if G[i, j] / mx > thr:
-                pl.plot([xs[i, 0], xt[j, 0]], [xs[i, 1], xt[j, 1]],
-                        alpha=G[i, j] / mx * scale, **kwargs)
+                pl.plot(
+                    [xs[i, 0], xt[j, 0]],
+                    [xs[i, 1], xt[j, 1]],
+                    alpha=G[i, j] / mx * scale,
+                    **kwargs,
+                )

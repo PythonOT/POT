@@ -16,9 +16,22 @@ from ..backend import get_backend
 from ..utils import list_to_array, get_parameter_pair
 
 
-def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
-                        reg_type="kl", c=None, warmstart=None, numItermax=1000,
-                        stopThr=1e-6, verbose=False, log=False, **kwargs):
+def sinkhorn_unbalanced(
+    a,
+    b,
+    M,
+    reg,
+    reg_m,
+    method="sinkhorn",
+    reg_type="kl",
+    c=None,
+    warmstart=None,
+    numItermax=1000,
+    stopThr=1e-6,
+    verbose=False,
+    log=False,
+    **kwargs,
+):
     r"""
     Solve the unbalanced entropic regularization optimal transport problem
     and return the OT plan
@@ -157,40 +170,95 @@ def sinkhorn_unbalanced(a, b, M, reg, reg_m, method='sinkhorn',
 
     """
 
-    if method.lower() == 'sinkhorn':
-        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
-                                         warmstart, numItermax=numItermax,
-                                         stopThr=stopThr, verbose=verbose,
-                                         log=log, **kwargs)
+    if method.lower() == "sinkhorn":
+        return sinkhorn_knopp_unbalanced(
+            a,
+            b,
+            M,
+            reg,
+            reg_m,
+            reg_type,
+            c,
+            warmstart,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            **kwargs,
+        )
 
-    elif method.lower() == 'sinkhorn_stabilized':
-        return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type, c,
-                                              warmstart, numItermax=numItermax,
-                                              stopThr=stopThr,
-                                              verbose=verbose,
-                                              log=log, **kwargs)
+    elif method.lower() == "sinkhorn_stabilized":
+        return sinkhorn_stabilized_unbalanced(
+            a,
+            b,
+            M,
+            reg,
+            reg_m,
+            reg_type,
+            c,
+            warmstart,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            **kwargs,
+        )
 
-    elif method.lower() == 'sinkhorn_translation_invariant':
-        return sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type, c,
-                                                         warmstart, numItermax=numItermax,
-                                                         stopThr=stopThr,
-                                                         verbose=verbose,
-                                                         log=log, **kwargs)
+    elif method.lower() == "sinkhorn_translation_invariant":
+        return sinkhorn_unbalanced_translation_invariant(
+            a,
+            b,
+            M,
+            reg,
+            reg_m,
+            reg_type,
+            c,
+            warmstart,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            **kwargs,
+        )
 
-    elif method.lower() in ['sinkhorn_reg_scaling']:
-        warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
-        return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
-                                         warmstart, numItermax=numItermax,
-                                         stopThr=stopThr, verbose=verbose,
-                                         log=log, **kwargs)
+    elif method.lower() in ["sinkhorn_reg_scaling"]:
+        warnings.warn("Method not implemented yet. Using classic Sinkhorn-Knopp")
+        return sinkhorn_knopp_unbalanced(
+            a,
+            b,
+            M,
+            reg,
+            reg_m,
+            reg_type,
+            c,
+            warmstart,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            **kwargs,
+        )
     else:
         raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
-                         reg_type="kl", c=None, warmstart=None,
-                         returnCost="linear", numItermax=1000,
-                         stopThr=1e-6, verbose=False, log=False, **kwargs):
+def sinkhorn_unbalanced2(
+    a,
+    b,
+    M,
+    reg,
+    reg_m,
+    method="sinkhorn",
+    reg_type="kl",
+    c=None,
+    warmstart=None,
+    returnCost="linear",
+    numItermax=1000,
+    stopThr=1e-6,
+    verbose=False,
+    log=False,
+    **kwargs,
+):
     r"""
     Solve the entropic regularization unbalanced optimal transport problem and
     return the cost
@@ -322,37 +390,81 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
     M, a, b = list_to_array(M, a, b)
 
     if len(b.shape) < 2:
-        if method.lower() == 'sinkhorn':
-            res = sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
-                                            warmstart, numItermax=numItermax,
-                                            stopThr=stopThr, verbose=verbose,
-                                            log=True, **kwargs)
+        if method.lower() == "sinkhorn":
+            res = sinkhorn_knopp_unbalanced(
+                a,
+                b,
+                M,
+                reg,
+                reg_m,
+                reg_type,
+                c,
+                warmstart,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=True,
+                **kwargs,
+            )
 
-        elif method.lower() == 'sinkhorn_stabilized':
-            res = sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type, c,
-                                                 warmstart, numItermax=numItermax,
-                                                 stopThr=stopThr, verbose=verbose,
-                                                 log=True, **kwargs)
+        elif method.lower() == "sinkhorn_stabilized":
+            res = sinkhorn_stabilized_unbalanced(
+                a,
+                b,
+                M,
+                reg,
+                reg_m,
+                reg_type,
+                c,
+                warmstart,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=True,
+                **kwargs,
+            )
 
-        elif method.lower() == 'sinkhorn_translation_invariant':
-            res = sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type, c,
-                                                            warmstart, numItermax=numItermax,
-                                                            stopThr=stopThr, verbose=verbose,
-                                                            log=True, **kwargs)
+        elif method.lower() == "sinkhorn_translation_invariant":
+            res = sinkhorn_unbalanced_translation_invariant(
+                a,
+                b,
+                M,
+                reg,
+                reg_m,
+                reg_type,
+                c,
+                warmstart,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=True,
+                **kwargs,
+            )
 
-        elif method.lower() in ['sinkhorn_reg_scaling']:
-            warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
-            res = sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
-                                            warmstart, numItermax=numItermax,
-                                            stopThr=stopThr, verbose=verbose,
-                                            log=True, **kwargs)
+        elif method.lower() in ["sinkhorn_reg_scaling"]:
+            warnings.warn("Method not implemented yet. Using classic Sinkhorn-Knopp")
+            res = sinkhorn_knopp_unbalanced(
+                a,
+                b,
+                M,
+                reg,
+                reg_m,
+                reg_type,
+                c,
+                warmstart,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=True,
+                **kwargs,
+            )
         else:
-            raise ValueError('Unknown method %s.' % method)
+            raise ValueError("Unknown method %s." % method)
 
         if returnCost == "linear":
-            cost = res[1]['cost']
+            cost = res[1]["cost"]
         elif returnCost == "total":
-            cost = res[1]['total_cost']
+            cost = res[1]["total_cost"]
         else:
             raise ValueError("Unknown returnCost = {}".format(returnCost))
 
@@ -363,39 +475,95 @@ def sinkhorn_unbalanced2(a, b, M, reg, reg_m, method='sinkhorn',
 
     else:
         if reg_type == "kl":
-            warnings.warn('Reg_type not implemented yet. Use entropy.')
+            warnings.warn("Reg_type not implemented yet. Use entropy.")
 
-        if method.lower() == 'sinkhorn':
-            return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
-                                             warmstart, numItermax=numItermax,
-                                             stopThr=stopThr, verbose=verbose,
-                                             log=log, **kwargs)
+        if method.lower() == "sinkhorn":
+            return sinkhorn_knopp_unbalanced(
+                a,
+                b,
+                M,
+                reg,
+                reg_m,
+                reg_type,
+                c,
+                warmstart,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=log,
+                **kwargs,
+            )
 
-        elif method.lower() == 'sinkhorn_stabilized':
-            return sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type, c,
-                                                  warmstart, numItermax=numItermax,
-                                                  stopThr=stopThr, verbose=verbose,
-                                                  log=log, **kwargs)
+        elif method.lower() == "sinkhorn_stabilized":
+            return sinkhorn_stabilized_unbalanced(
+                a,
+                b,
+                M,
+                reg,
+                reg_m,
+                reg_type,
+                c,
+                warmstart,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=log,
+                **kwargs,
+            )
 
-        elif method.lower() == 'sinkhorn_translation_invariant':
-            return sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type, c,
-                                                             warmstart, numItermax=numItermax,
-                                                             stopThr=stopThr, verbose=verbose,
-                                                             log=log, **kwargs)
+        elif method.lower() == "sinkhorn_translation_invariant":
+            return sinkhorn_unbalanced_translation_invariant(
+                a,
+                b,
+                M,
+                reg,
+                reg_m,
+                reg_type,
+                c,
+                warmstart,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=log,
+                **kwargs,
+            )
 
-        elif method.lower() in ['sinkhorn_reg_scaling']:
-            warnings.warn('Method not implemented yet. Using classic Sinkhorn-Knopp')
-            return sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type, c,
-                                             warmstart, numItermax=numItermax,
-                                             stopThr=stopThr, verbose=verbose,
-                                             log=log, **kwargs)
+        elif method.lower() in ["sinkhorn_reg_scaling"]:
+            warnings.warn("Method not implemented yet. Using classic Sinkhorn-Knopp")
+            return sinkhorn_knopp_unbalanced(
+                a,
+                b,
+                M,
+                reg,
+                reg_m,
+                reg_type,
+                c,
+                warmstart,
+                numItermax=numItermax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=log,
+                **kwargs,
+            )
         else:
-            raise ValueError('Unknown method %s.' % method)
+            raise ValueError("Unknown method %s." % method)
 
 
-def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
-                              warmstart=None, numItermax=1000, stopThr=1e-6,
-                              verbose=False, log=False, **kwargs):
+def sinkhorn_knopp_unbalanced(
+    a,
+    b,
+    M,
+    reg,
+    reg_m,
+    reg_type="kl",
+    c=None,
+    warmstart=None,
+    numItermax=1000,
+    stopThr=1e-6,
+    verbose=False,
+    log=False,
+    **kwargs,
+):
     r"""
     Solve the entropic regularization unbalanced optimal transport problem and
     return the OT plan
@@ -530,7 +698,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
     if log:
-        dict_log = {'err': []}
+        dict_log = {"err": []}
 
     # we assume that no distances are null except those of the diagonal of
     # distances
@@ -546,7 +714,9 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
     if reg_type.lower() == "entropy":
-        warnings.warn('If reg_type = entropy, then the matrix c is overwritten by the one matrix.')
+        warnings.warn(
+            "If reg_type = entropy, then the matrix c is overwritten by the one matrix."
+        )
         c = nx.ones((dim_a, dim_b), type_as=M)
 
     if n_hists:
@@ -558,7 +728,7 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
     fi_1 = reg_m1 / (reg_m1 + reg) if reg_m1 != float("inf") else 1
     fi_2 = reg_m2 / (reg_m2 + reg) if reg_m2 != float("inf") else 1
 
-    err = 1.
+    err = 1.0
 
     for i in range(numItermax):
         uprev = u
@@ -569,39 +739,42 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
         Ktu = nx.dot(K.T, u)
         v = (b / Ktu) ** fi_2
 
-        if (nx.any(Ktu == 0.)
-                or nx.any(nx.isnan(u)) or nx.any(nx.isnan(v))
-                or nx.any(nx.isinf(u)) or nx.any(nx.isinf(v))):
+        if (
+            nx.any(Ktu == 0.0)
+            or nx.any(nx.isnan(u))
+            or nx.any(nx.isnan(v))
+            or nx.any(nx.isinf(u))
+            or nx.any(nx.isinf(v))
+        ):
             # we have reached the machine precision
             # come back to previous solution and quit loop
-            warnings.warn('Numerical errors at iteration %s' % i)
+            warnings.warn("Numerical errors at iteration %s" % i)
             u = uprev
             v = vprev
             break
 
         err_u = nx.max(nx.abs(u - uprev)) / max(
-            nx.max(nx.abs(u)), nx.max(nx.abs(uprev)), 1.
+            nx.max(nx.abs(u)), nx.max(nx.abs(uprev)), 1.0
         )
         err_v = nx.max(nx.abs(v - vprev)) / max(
-            nx.max(nx.abs(v)), nx.max(nx.abs(vprev)), 1.
+            nx.max(nx.abs(v)), nx.max(nx.abs(vprev)), 1.0
         )
         err = 0.5 * (err_u + err_v)
         if log:
-            dict_log['err'].append(err)
+            dict_log["err"].append(err)
             if verbose:
                 if i % 50 == 0:
-                    print(
-                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(i, err))
+                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+                print("{:5d}|{:8e}|".format(i, err))
         if err < stopThr:
             break
 
     if log:
-        dict_log['logu'] = nx.log(u + 1e-300)
-        dict_log['logv'] = nx.log(v + 1e-300)
+        dict_log["logu"] = nx.log(u + 1e-300)
+        dict_log["logv"] = nx.log(v + 1e-300)
 
     if n_hists:  # return only loss
-        res = nx.einsum('ik,ij,jk,ij->k', u, K, v, M)
+        res = nx.einsum("ik,ij,jk,ij->k", u, K, v, M)
         if log:
             return res, dict_log
         else:
@@ -626,10 +799,22 @@ def sinkhorn_knopp_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
             return plan
 
 
-def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
-                                   warmstart=None, tau=1e5,
-                                   numItermax=1000, stopThr=1e-6,
-                                   verbose=False, log=False, **kwargs):
+def sinkhorn_stabilized_unbalanced(
+    a,
+    b,
+    M,
+    reg,
+    reg_m,
+    reg_type="kl",
+    c=None,
+    warmstart=None,
+    tau=1e5,
+    numItermax=1000,
+    stopThr=1e-6,
+    verbose=False,
+    log=False,
+    **kwargs,
+):
     r"""
     Solve the entropic regularization unbalanced optimal transport
     problem and return the loss
@@ -769,7 +954,7 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
     if log:
-        dict_log = {'err': []}
+        dict_log = {"err": []}
 
     # we assume that no distances are null except those of the diagonal of
     # distances
@@ -785,7 +970,9 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
     if reg_type == "entropy":
-        warnings.warn('If reg_type = entropy, then the matrix c is overwritten by the one matrix.')
+        warnings.warn(
+            "If reg_type = entropy, then the matrix c is overwritten by the one matrix."
+        )
         c = nx.ones((dim_a, dim_b), type_as=M)
 
     if n_hists:
@@ -799,19 +986,19 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
     fi_2 = reg_m2 / (reg_m2 + reg) if reg_m2 != float("inf") else 1
 
     cpt = 0
-    err = 1.
+    err = 1.0
     alpha = nx.zeros(dim_a, type_as=M)
     beta = nx.zeros(dim_b, type_as=M)
     ones_a = nx.ones(dim_a, type_as=M)
     ones_b = nx.ones(dim_b, type_as=M)
 
-    while (err > stopThr and cpt < numItermax):
+    while err > stopThr and cpt < numItermax:
         uprev = u
         vprev = v
 
         Kv = nx.dot(K, v)
-        f_alpha = nx.exp(- alpha / (reg + reg_m1)) if reg_m1 != float("inf") else ones_a
-        f_beta = nx.exp(- beta / (reg + reg_m2)) if reg_m2 != float("inf") else ones_b
+        f_alpha = nx.exp(-alpha / (reg + reg_m1)) if reg_m1 != float("inf") else ones_a
+        f_beta = nx.exp(-beta / (reg + reg_m2)) if reg_m2 != float("inf") else ones_b
 
         if n_hists:
             f_alpha = f_alpha[:, None]
@@ -832,12 +1019,16 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
             v = nx.ones(v.shape, type_as=v)
         Kv = nx.dot(K, v)
 
-        if (nx.any(Ktu == 0.)
-                or nx.any(nx.isnan(u)) or nx.any(nx.isnan(v))
-                or nx.any(nx.isinf(u)) or nx.any(nx.isinf(v))):
+        if (
+            nx.any(Ktu == 0.0)
+            or nx.any(nx.isnan(u))
+            or nx.any(nx.isnan(v))
+            or nx.any(nx.isinf(u))
+            or nx.any(nx.isinf(v))
+        ):
             # we have reached the machine precision
             # come back to previous solution and quit loop
-            warnings.warn('Numerical errors at iteration %s' % cpt)
+            warnings.warn("Numerical errors at iteration %s" % cpt)
             u = uprev
             v = vprev
             break
@@ -845,21 +1036,22 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
             # we can speed up the process by checking for the error only all
             # the 10th iterations
             err = nx.max(nx.abs(u - uprev)) / max(
-                nx.max(nx.abs(u)), nx.max(nx.abs(uprev)), 1.
+                nx.max(nx.abs(u)), nx.max(nx.abs(uprev)), 1.0
             )
             if log:
-                dict_log['err'].append(err)
+                dict_log["err"].append(err)
             if verbose:
                 if cpt % 200 == 0:
-                    print(
-                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(cpt, err))
+                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+                print("{:5d}|{:8e}|".format(cpt, err))
         cpt = cpt + 1
 
     if err > stopThr:
-        warnings.warn("Stabilized Unbalanced Sinkhorn did not converge." +
-                      "Try a larger entropy `reg` or a lower mass `reg_m`." +
-                      "Or a larger absorption threshold `tau`.")
+        warnings.warn(
+            "Stabilized Unbalanced Sinkhorn did not converge."
+            + "Try a larger entropy `reg` or a lower mass `reg_m`."
+            + "Or a larger absorption threshold `tau`."
+        )
     if n_hists:
         logu = alpha[:, None] / reg + nx.log(u)
         logv = beta[:, None] / reg + nx.log(v)
@@ -867,15 +1059,15 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
         logu = alpha / reg + nx.log(u)
         logv = beta / reg + nx.log(v)
     if log:
-        dict_log['logu'] = logu
-        dict_log['logv'] = logv
+        dict_log["logu"] = logu
+        dict_log["logv"] = logv
     if n_hists:  # return only loss
         res = nx.logsumexp(
             nx.log(M + 1e-100)[:, :, None]
             + logu[:, None, :]
             + logv[None, :, :]
             - M0[:, :, None] / reg,
-            axis=(0, 1)
+            axis=(0, 1),
         )
         res = nx.exp(res)
         if log:
@@ -901,9 +1093,21 @@ def sinkhorn_stabilized_unbalanced(a, b, M, reg, reg_m, reg_type="kl", c=None,
             return plan
 
 
-def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl", c=None,
-                                              warmstart=None, numItermax=1000, stopThr=1e-6,
-                                              verbose=False, log=False, **kwargs):
+def sinkhorn_unbalanced_translation_invariant(
+    a,
+    b,
+    M,
+    reg,
+    reg_m,
+    reg_type="kl",
+    c=None,
+    warmstart=None,
+    numItermax=1000,
+    stopThr=1e-6,
+    verbose=False,
+    log=False,
+    **kwargs,
+):
     r"""
     Solve the entropic regularization unbalanced optimal transport problem and
     return the OT plan
@@ -1021,7 +1225,7 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
     if log:
-        dict_log = {'err': []}
+        dict_log = {"err": []}
 
     # we assume that no distances are null except those of the diagonal of
     # distances
@@ -1039,7 +1243,9 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
     u_, v_ = u, v
 
     if reg_type == "entropy":
-        warnings.warn('If reg_type = entropy, then the matrix c is overwritten by the one matrix.')
+        warnings.warn(
+            "If reg_type = entropy, then the matrix c is overwritten by the one matrix."
+        )
         c = nx.ones((dim_a, dim_b), type_as=M)
 
     if n_hists:
@@ -1052,8 +1258,16 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
     fi_1 = reg_m1 / (reg_m1 + reg) if reg_m1 != float("inf") else 1
     fi_2 = reg_m2 / (reg_m2 + reg) if reg_m2 != float("inf") else 1
 
-    k1 = reg * reg_m1 / ((reg + reg_m1) * (reg_m1 + reg_m2)) if reg_m1 != float("inf") else 0
-    k2 = reg * reg_m2 / ((reg + reg_m2) * (reg_m1 + reg_m2)) if reg_m2 != float("inf") else 0
+    k1 = (
+        reg * reg_m1 / ((reg + reg_m1) * (reg_m1 + reg_m2))
+        if reg_m1 != float("inf")
+        else 0
+    )
+    k2 = (
+        reg * reg_m2 / ((reg + reg_m2) * (reg_m1 + reg_m2))
+        if reg_m2 != float("inf")
+        else 0
+    )
 
     k_rho1 = k1 * reg_m1 / reg if reg_m1 != float("inf") else 0
     k_rho2 = k2 * reg_m2 / reg if reg_m2 != float("inf") else 0
@@ -1080,59 +1294,64 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
     reg_ratio1 = reg / reg_m1 if reg_m1 != float("inf") else 0
     reg_ratio2 = reg / reg_m2 if reg_m2 != float("inf") else 0
 
-    err = 1.
+    err = 1.0
 
     for i in range(numItermax):
         uprev = u
         vprev = v
 
         Kv = nx.dot(K, v_)
-        u_hat = (a / Kv) ** fi_1 * nx.sum(b * v_**reg_ratio2)**k_rho2
-        u_ = u_hat * nx.sum(a * u_hat**(-reg_ratio1))**(-xi_rho1)
+        u_hat = (a / Kv) ** fi_1 * nx.sum(b * v_**reg_ratio2) ** k_rho2
+        u_ = u_hat * nx.sum(a * u_hat ** (-reg_ratio1)) ** (-xi_rho1)
 
         Ktu = nx.dot(K.T, u_)
-        v_hat = (b / Ktu) ** fi_2 * nx.sum(a * u_**(-reg_ratio1))**k_rho1
-        v_ = v_hat * nx.sum(b * v_hat**(-reg_ratio2))**(-xi_rho2)
+        v_hat = (b / Ktu) ** fi_2 * nx.sum(a * u_ ** (-reg_ratio1)) ** k_rho1
+        v_ = v_hat * nx.sum(b * v_hat ** (-reg_ratio2)) ** (-xi_rho2)
 
-        if (nx.any(Ktu == 0.)
-                or nx.any(nx.isnan(u_)) or nx.any(nx.isnan(v_))
-                or nx.any(nx.isinf(u_)) or nx.any(nx.isinf(v_))):
+        if (
+            nx.any(Ktu == 0.0)
+            or nx.any(nx.isnan(u_))
+            or nx.any(nx.isnan(v_))
+            or nx.any(nx.isinf(u_))
+            or nx.any(nx.isinf(v_))
+        ):
             # we have reached the machine precision
             # come back to previous solution and quit loop
-            warnings.warn('Numerical errors at iteration %s' % i)
+            warnings.warn("Numerical errors at iteration %s" % i)
             u = uprev
             v = vprev
             break
 
-        t = (nx.sum(a * u_**(-reg_ratio1)) / nx.sum(b * v_**(-reg_ratio2)))**(fi_12 / reg)
+        t = (nx.sum(a * u_ ** (-reg_ratio1)) / nx.sum(b * v_ ** (-reg_ratio2))) ** (
+            fi_12 / reg
+        )
 
         u = u_ * t
         v = v_ / t
 
         err_u = nx.max(nx.abs(u - uprev)) / max(
-            nx.max(nx.abs(u)), nx.max(nx.abs(uprev)), 1.
+            nx.max(nx.abs(u)), nx.max(nx.abs(uprev)), 1.0
         )
         err_v = nx.max(nx.abs(v - vprev)) / max(
-            nx.max(nx.abs(v)), nx.max(nx.abs(vprev)), 1.
+            nx.max(nx.abs(v)), nx.max(nx.abs(vprev)), 1.0
         )
         err = 0.5 * (err_u + err_v)
         if log:
-            dict_log['err'].append(err)
+            dict_log["err"].append(err)
             if verbose:
                 if i % 50 == 0:
-                    print(
-                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(i, err))
+                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+                print("{:5d}|{:8e}|".format(i, err))
 
         if err < stopThr:
             break
 
     if log:
-        dict_log['logu'] = nx.log(u + 1e-300)
-        dict_log['logv'] = nx.log(v + 1e-300)
+        dict_log["logu"] = nx.log(u + 1e-300)
+        dict_log["logv"] = nx.log(v + 1e-300)
 
     if n_hists:  # return only loss
-        res = nx.einsum('ik,ij,jk,ij->k', u, K, v, M)
+        res = nx.einsum("ik,ij,jk,ij->k", u, K, v, M)
         if log:
             return res, dict_log
         else:
@@ -1157,9 +1376,18 @@ def sinkhorn_unbalanced_translation_invariant(a, b, M, reg, reg_m, reg_type="kl"
             return plan
 
 
-def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
-                                     numItermax=1000, stopThr=1e-6,
-                                     verbose=False, log=False):
+def barycenter_unbalanced_stabilized(
+    A,
+    M,
+    reg,
+    reg_m,
+    weights=None,
+    tau=1e3,
+    numItermax=1000,
+    stopThr=1e-6,
+    verbose=False,
+    log=False,
+):
     r"""Compute the entropic unbalanced wasserstein barycenter of :math:`\mathbf{A}` with stabilization.
 
      The function solves the following optimization problem:
@@ -1229,10 +1457,10 @@ def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
     if weights is None:
         weights = nx.ones(n_hists, type_as=A) / n_hists
     else:
-        assert (len(weights) == A.shape[1])
+        assert len(weights) == A.shape[1]
 
     if log:
-        log = {'err': []}
+        log = {"err": []}
 
     fi = reg_m / (reg_m + reg)
 
@@ -1245,15 +1473,15 @@ def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
     fi = reg_m / (reg_m + reg)
 
     cpt = 0
-    err = 1.
+    err = 1.0
     alpha = nx.zeros(dim, type_as=A)
     beta = nx.zeros(dim, type_as=A)
     q = nx.ones(dim, type_as=A) / dim
     for i in range(numItermax):
         qprev = nx.copy(q)
         Kv = nx.dot(K, v)
-        f_alpha = nx.exp(- alpha / (reg + reg_m))
-        f_beta = nx.exp(- beta / (reg + reg_m))
+        f_alpha = nx.exp(-alpha / (reg + reg_m))
+        f_beta = nx.exp(-beta / (reg + reg_m))
         f_alpha = f_alpha[:, None]
         f_beta = f_beta[:, None]
         u = ((A / (Kv + 1e-16)) ** fi) * f_alpha
@@ -1270,46 +1498,59 @@ def barycenter_unbalanced_stabilized(A, M, reg, reg_m, weights=None, tau=1e3,
             K = nx.exp((alpha[:, None] + beta[None, :] - M) / reg)
             v = nx.ones(v.shape, type_as=v)
         Kv = nx.dot(K, v)
-        if (nx.any(Ktu == 0.)
-                or nx.any(nx.isnan(u)) or nx.any(nx.isnan(v))
-                or nx.any(nx.isinf(u)) or nx.any(nx.isinf(v))):
+        if (
+            nx.any(Ktu == 0.0)
+            or nx.any(nx.isnan(u))
+            or nx.any(nx.isnan(v))
+            or nx.any(nx.isinf(u))
+            or nx.any(nx.isinf(v))
+        ):
             # we have reached the machine precision
             # come back to previous solution and quit loop
-            warnings.warn('Numerical errors at iteration %s' % cpt)
+            warnings.warn("Numerical errors at iteration %s" % cpt)
             q = qprev
             break
         if (i % 10 == 0 and not absorbing) or i == 0:
             # we can speed up the process by checking for the error only all
             # the 10th iterations
             err = nx.max(nx.abs(q - qprev)) / max(
-                nx.max(nx.abs(q)), nx.max(nx.abs(qprev)), 1.
+                nx.max(nx.abs(q)), nx.max(nx.abs(qprev)), 1.0
             )
             if log:
-                log['err'].append(err)
+                log["err"].append(err)
             if verbose:
                 if i % 50 == 0:
-                    print(
-                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
-                print('{:5d}|{:8e}|'.format(i, err))
+                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+                print("{:5d}|{:8e}|".format(i, err))
             if err < stopThr:
                 break
 
     if err > stopThr:
-        warnings.warn("Stabilized Unbalanced Sinkhorn did not converge." +
-                      "Try a larger entropy `reg` or a lower mass `reg_m`." +
-                      "Or a larger absorption threshold `tau`.")
+        warnings.warn(
+            "Stabilized Unbalanced Sinkhorn did not converge."
+            + "Try a larger entropy `reg` or a lower mass `reg_m`."
+            + "Or a larger absorption threshold `tau`."
+        )
     if log:
-        log['niter'] = i
-        log['logu'] = nx.log(u + 1e-300)
-        log['logv'] = nx.log(v + 1e-300)
+        log["niter"] = i
+        log["logu"] = nx.log(u + 1e-300)
+        log["logv"] = nx.log(v + 1e-300)
         return q, log
     else:
         return q
 
 
-def barycenter_unbalanced_sinkhorn(A, M, reg, reg_m, weights=None,
-                                   numItermax=1000, stopThr=1e-6,
-                                   verbose=False, log=False):
+def barycenter_unbalanced_sinkhorn(
+    A,
+    M,
+    reg,
+    reg_m,
+    weights=None,
+    numItermax=1000,
+    stopThr=1e-6,
+    verbose=False,
+    log=False,
+):
     r"""Compute the entropic unbalanced wasserstein barycenter of :math:`\mathbf{A}`.
 
      The function solves the following optimization problem with :math:`\mathbf{a}`
@@ -1338,7 +1579,7 @@ def barycenter_unbalanced_sinkhorn(A, M, reg, reg_m, weights=None,
     reg_m: float
         Marginal relaxation term > 0
     weights : array-like (n_hists,) optional
-        Weight of each distribution (barycentric coodinates)
+        Weight of each distribution (barycentric coordinates)
         If None, uniform weights are used.
     numItermax : int, optional
         Max number of iterations
@@ -1377,10 +1618,10 @@ def barycenter_unbalanced_sinkhorn(A, M, reg, reg_m, weights=None,
     if weights is None:
         weights = nx.ones(n_hists, type_as=A) / n_hists
     else:
-        assert (len(weights) == A.shape[1])
+        assert len(weights) == A.shape[1]
 
     if log:
-        log = {'err': []}
+        log = {"err": []}
 
     K = nx.exp(-M / reg)
 
@@ -1389,7 +1630,7 @@ def barycenter_unbalanced_sinkhorn(A, M, reg, reg_m, weights=None,
     v = nx.ones((dim, n_hists), type_as=A)
     u = nx.ones((dim, 1), type_as=A)
     q = nx.ones(dim, type_as=A)
-    err = 1.
+    err = 1.0
 
     for i in range(numItermax):
         uprev = nx.copy(u)
@@ -1404,12 +1645,16 @@ def barycenter_unbalanced_sinkhorn(A, M, reg, reg_m, weights=None,
         Q = q[:, None]
         v = (Q / Ktu) ** fi
 
-        if (nx.any(Ktu == 0.)
-                or nx.any(nx.isnan(u)) or nx.any(nx.isnan(v))
-                or nx.any(nx.isinf(u)) or nx.any(nx.isinf(v))):
+        if (
+            nx.any(Ktu == 0.0)
+            or nx.any(nx.isnan(u))
+            or nx.any(nx.isnan(v))
+            or nx.any(nx.isinf(u))
+            or nx.any(nx.isinf(v))
+        ):
             # we have reached the machine precision
             # come back to previous solution and quit loop
-            warnings.warn('Numerical errors at iteration %s' % i)
+            warnings.warn("Numerical errors at iteration %s" % i)
             u = uprev
             v = vprev
             q = qprev
@@ -1419,29 +1664,38 @@ def barycenter_unbalanced_sinkhorn(A, M, reg, reg_m, weights=None,
             nx.max(nx.abs(q)), nx.max(nx.abs(qprev)), 1.0
         )
         if log:
-            log['err'].append(err)
+            log["err"].append(err)
         # if barycenter did not change + at least 10 iterations - stop
         if err < stopThr and i > 10:
             break
 
         if verbose:
             if i % 10 == 0:
-                print(
-                    '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 19)
-            print('{:5d}|{:8e}|'.format(i, err))
+                print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+            print("{:5d}|{:8e}|".format(i, err))
 
     if log:
-        log['niter'] = i
-        log['logu'] = nx.log(u + 1e-300)
-        log['logv'] = nx.log(v + 1e-300)
+        log["niter"] = i
+        log["logu"] = nx.log(u + 1e-300)
+        log["logv"] = nx.log(v + 1e-300)
         return q, log
     else:
         return q
 
 
-def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
-                          numItermax=1000, stopThr=1e-6,
-                          verbose=False, log=False, **kwargs):
+def barycenter_unbalanced(
+    A,
+    M,
+    reg,
+    reg_m,
+    method="sinkhorn",
+    weights=None,
+    numItermax=1000,
+    stopThr=1e-6,
+    verbose=False,
+    log=False,
+    **kwargs,
+):
     r"""Compute the entropic unbalanced wasserstein barycenter of :math:`\mathbf{A}`.
 
      The function solves the following optimization problem with :math:`\mathbf{a}`
@@ -1470,7 +1724,7 @@ def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
     reg_m: float
         Marginal relaxation term > 0
     weights : array-like (n_hists,) optional
-        Weight of each distribution (barycentric coodinates)
+        Weight of each distribution (barycentric coordinates)
         If None, uniform weights are used.
     numItermax : int, optional
         Max number of iterations
@@ -1502,26 +1756,46 @@ def barycenter_unbalanced(A, M, reg, reg_m, method="sinkhorn", weights=None,
 
     """
 
-    if method.lower() == 'sinkhorn':
-        return barycenter_unbalanced_sinkhorn(A, M, reg, reg_m,
-                                              weights=weights,
-                                              numItermax=numItermax,
-                                              stopThr=stopThr, verbose=verbose,
-                                              log=log, **kwargs)
+    if method.lower() == "sinkhorn":
+        return barycenter_unbalanced_sinkhorn(
+            A,
+            M,
+            reg,
+            reg_m,
+            weights=weights,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            **kwargs,
+        )
 
-    elif method.lower() == 'sinkhorn_stabilized':
-        return barycenter_unbalanced_stabilized(A, M, reg, reg_m,
-                                                weights=weights,
-                                                numItermax=numItermax,
-                                                stopThr=stopThr,
-                                                verbose=verbose,
-                                                log=log, **kwargs)
-    elif method.lower() in ['sinkhorn_reg_scaling', 'sinkhorn_translation_invariant']:
-        warnings.warn('Method not implemented yet. Using classic Sinkhorn Knopp')
-        return barycenter_unbalanced(A, M, reg, reg_m,
-                                     weights=weights,
-                                     numItermax=numItermax,
-                                     stopThr=stopThr, verbose=verbose,
-                                     log=log, **kwargs)
+    elif method.lower() == "sinkhorn_stabilized":
+        return barycenter_unbalanced_stabilized(
+            A,
+            M,
+            reg,
+            reg_m,
+            weights=weights,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            **kwargs,
+        )
+    elif method.lower() in ["sinkhorn_reg_scaling", "sinkhorn_translation_invariant"]:
+        warnings.warn("Method not implemented yet. Using classic Sinkhorn Knopp")
+        return barycenter_unbalanced(
+            A,
+            M,
+            reg,
+            reg_m,
+            weights=weights,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            **kwargs,
+        )
     else:
         raise ValueError("Unknown method '%s'." % method)

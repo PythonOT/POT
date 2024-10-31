@@ -96,15 +96,16 @@ import scipy.linalg
 import scipy.special as special
 from scipy.sparse import coo_matrix, csr_matrix, issparse
 
-DISABLE_TORCH_KEY = 'POT_BACKEND_DISABLE_PYTORCH'
-DISABLE_JAX_KEY = 'POT_BACKEND_DISABLE_JAX'
-DISABLE_CUPY_KEY = 'POT_BACKEND_DISABLE_CUPY'
-DISABLE_TF_KEY = 'POT_BACKEND_DISABLE_TENSORFLOW'
+DISABLE_TORCH_KEY = "POT_BACKEND_DISABLE_PYTORCH"
+DISABLE_JAX_KEY = "POT_BACKEND_DISABLE_JAX"
+DISABLE_CUPY_KEY = "POT_BACKEND_DISABLE_CUPY"
+DISABLE_TF_KEY = "POT_BACKEND_DISABLE_TENSORFLOW"
 
 
 if not os.environ.get(DISABLE_TORCH_KEY, False):
     try:
         import torch
+
         torch_type = torch.Tensor
     except ImportError:
         torch = False
@@ -119,8 +120,9 @@ if not os.environ.get(DISABLE_JAX_KEY, False):
         import jax.numpy as jnp
         import jax.scipy.special as jspecial
         from jax.lib import xla_bridge
+
         jax_type = jax.numpy.ndarray
-        jax_new_version = float('.'.join(jax.__version__.split('.')[1:])) > 4.24
+        jax_new_version = float(".".join(jax.__version__.split(".")[1:])) > 4.24
     except ImportError:
         jax = False
         jax_type = float
@@ -132,6 +134,7 @@ if not os.environ.get(DISABLE_CUPY_KEY, False):
     try:
         import cupy as cp
         import cupyx
+
         cp_type = cp.ndarray
     except ImportError:
         cp = False
@@ -144,6 +147,7 @@ if not os.environ.get(DISABLE_TF_KEY, False):
     try:
         import tensorflow as tf
         import tensorflow.experimental.numpy as tnp
+
         tf_type = tf.Tensor
     except ImportError:
         tf = False
@@ -153,7 +157,9 @@ else:
     tf_type = float
 
 
-str_type_error = "All array should be from the same type/backend. Current types are : {}"
+str_type_error = (
+    "All array should be from the same type/backend. Current types are : {}"
+)
 
 
 # Mapping between argument types and the existing backend
@@ -194,8 +200,7 @@ def get_backend_list():
     """
     return [
         _get_backend_instance(backend_impl)
-        for backend_impl
-        in get_available_backend_implementations()
+        for backend_impl in get_available_backend_implementations()
     ]
 
 
@@ -207,9 +212,9 @@ def get_available_backend_implementations():
 def get_backend(*args):
     """Returns the proper backend for a list of input arrays
 
-        Accepts None entries in the arguments, and ignores them
+    Accepts None entries in the arguments, and ignores them
 
-        Also raises TypeError if all arrays are not from the same backend
+    Also raises TypeError if all arrays are not from the same backend
     """
     args = [arg for arg in args if arg is not None]  # exclude None entries
 
@@ -233,7 +238,7 @@ def to_numpy(*args):
         return [get_backend(a).to_numpy(a) for a in args]
 
 
-class Backend():
+class Backend:
     """
     Backend abstract class.
     Implementations: :py:class:`JaxBackend`, :py:class:`NumpyBackend`, :py:class:`TorchBackend`,
@@ -279,7 +284,7 @@ class Backend():
         raise NotImplementedError()
 
     def set_gradients(self, val, inputs, grads):
-        """Define the gradients for the value val wrt the inputs """
+        """Define the gradients for the value val wrt the inputs"""
         raise NotImplementedError()
 
     def detach(self, *arrays):
@@ -406,7 +411,7 @@ class Backend():
         raise NotImplementedError()
 
     def sign(self, a):
-        r""" Returns an element-wise indication of the sign of a number.
+        r"""Returns an element-wise indication of the sign of a number.
 
         This function follows the api from :any:`numpy.sign`
 
@@ -544,7 +549,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def searchsorted(self, a, v, side='left'):
+    def searchsorted(self, a, v, side="left"):
         r"""
         Finds indices where elements should be inserted to maintain order in given tensor.
 
@@ -804,7 +809,7 @@ class Backend():
         """
         raise NotImplementedError()
 
-    def eliminate_zeros(self, a, threshold=0.):
+    def eliminate_zeros(self, a, threshold=0.0):
         r"""
         Removes entries smaller than the given threshold from the sparse tensor.
 
@@ -1077,10 +1082,9 @@ class NumpyBackend(Backend):
     - `__type__` is np.ndarray
     """
 
-    __name__ = 'numpy'
+    __name__ = "numpy"
     __type__ = np.ndarray
-    __type_list__ = [np.array(1, dtype=np.float32),
-                     np.array(1, dtype=np.float64)]
+    __type_list__ = [np.array(1, dtype=np.float32), np.array(1, dtype=np.float64)]
 
     rng_ = np.random.RandomState()
 
@@ -1190,7 +1194,7 @@ class NumpyBackend(Backend):
     def argsort(self, a, axis=-1):
         return np.argsort(a, axis)
 
-    def searchsorted(self, a, v, side='left'):
+    def searchsorted(self, a, v, side="left"):
         if a.ndim == 1:
             return np.searchsorted(a, v, side)
         else:
@@ -1286,7 +1290,7 @@ class NumpyBackend(Backend):
         else:
             return csr_matrix(a)
 
-    def eliminate_zeros(self, a, threshold=0.):
+    def eliminate_zeros(self, a, threshold=0.0):
         if threshold > 0:
             if self.issparse(a):
                 a.data[self.abs(a.data) <= threshold] = 0
@@ -1360,9 +1364,9 @@ class NumpyBackend(Backend):
         L, V = np.linalg.eigh(a)
         L = np.sqrt(L)
         # Q[...] = V[...] @ diag(L[...])
-        Q = np.einsum('...jk,...k->...jk', V, L)
+        Q = np.einsum("...jk,...k->...jk", V, L)
         # R[...] = Q[...] @ V[...].T
-        return np.einsum('...jk,...kl->...jl', Q, np.swapaxes(V, -1, -2))
+        return np.einsum("...jk,...kl->...jl", Q, np.swapaxes(V, -1, -2))
 
     def eigh(self, a):
         return np.linalg.eigh(a)
@@ -1441,7 +1445,7 @@ class JaxBackend(Backend):
     - `__type__` is jax.numpy.ndarray
     """
 
-    __name__ = 'jax'
+    __name__ = "jax"
     __type__ = jax_type
     __type_list__ = None
 
@@ -1458,7 +1462,7 @@ class JaxBackend(Backend):
         for d in available_devices:
             self.__type_list__ += [
                 jax.device_put(jnp.array(1, dtype=jnp.float32), d),
-                jax.device_put(jnp.array(1, dtype=jnp.float64), d)
+                jax.device_put(jnp.array(1, dtype=jnp.float64), d),
             ]
 
         self.jax_new_version = jax_new_version
@@ -1485,7 +1489,8 @@ class JaxBackend(Backend):
 
     def set_gradients(self, val, inputs, grads):
         from jax.flatten_util import ravel_pytree
-        val, = jax.lax.stop_gradient((val,))
+
+        (val,) = jax.lax.stop_gradient((val,))
 
         ravelled_inputs, _ = ravel_pytree(inputs)
         ravelled_grads, _ = ravel_pytree(grads)
@@ -1493,7 +1498,7 @@ class JaxBackend(Backend):
         aux = jnp.sum(ravelled_inputs * ravelled_grads) / 2
         aux = aux - jax.lax.stop_gradient(aux)
 
-        val, = jax.tree_map(lambda z: z + aux, (val,))
+        (val,) = jax.tree_map(lambda z: z + aux, (val,))
         return val
 
     def _detach(self, a):
@@ -1518,7 +1523,9 @@ class JaxBackend(Backend):
         if type_as is None:
             return jnp.full(shape, fill_value)
         else:
-            return self._change_device(jnp.full(shape, fill_value, dtype=type_as.dtype), type_as)
+            return self._change_device(
+                jnp.full(shape, fill_value, dtype=type_as.dtype), type_as
+            )
 
     def eye(self, N, M=None, type_as=None):
         if type_as is None:
@@ -1586,7 +1593,7 @@ class JaxBackend(Backend):
     def argsort(self, a, axis=-1):
         return jnp.argsort(a, axis)
 
-    def searchsorted(self, a, v, side='left'):
+    def searchsorted(self, a, v, side="left"):
         if a.ndim == 1:
             return jnp.searchsorted(a, v, side)
         else:
@@ -1632,7 +1639,9 @@ class JaxBackend(Backend):
         if type_as is None:
             return jnp.linspace(start, stop, num)
         else:
-            return self._change_device(jnp.linspace(start, stop, num, dtype=type_as.dtype), type_as)
+            return self._change_device(
+                jnp.linspace(start, stop, num, dtype=type_as.dtype), type_as
+            )
 
     def meshgrid(self, a, b):
         return jnp.meshgrid(a, b)
@@ -1688,14 +1697,10 @@ class JaxBackend(Backend):
         # Currently, JAX does not support sparse matrices
         return a
 
-    def eliminate_zeros(self, a, threshold=0.):
+    def eliminate_zeros(self, a, threshold=0.0):
         # Currently, JAX does not support sparse matrices
         if threshold > 0:
-            return self.where(
-                self.abs(a) <= threshold,
-                self.zeros((1,), type_as=a),
-                a
-            )
+            return self.where(self.abs(a) <= threshold, self.zeros((1,), type_as=a), a)
         return a
 
     def todense(self, a):
@@ -1726,7 +1731,9 @@ class JaxBackend(Backend):
         b_dtype, b_device = self.dtype_device(b)
 
         assert a_dtype == b_dtype, "Dtype discrepancy"
-        assert a_device == b_device, f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
+        assert (
+            a_device == b_device
+        ), f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
 
     def squeeze(self, a, axis=None):
         return jnp.squeeze(a, axis=axis)
@@ -1767,9 +1774,9 @@ class JaxBackend(Backend):
         L, V = jnp.linalg.eigh(a)
         L = jnp.sqrt(L)
         # Q[...] = V[...] @ diag(L[...])
-        Q = jnp.einsum('...jk,...k->...jk', V, L)
+        Q = jnp.einsum("...jk,...k->...jk", V, L)
         # R[...] = Q[...] @ V[...].T
-        return jnp.einsum('...jk,...kl->...jl', Q, jnp.swapaxes(V, -1, -2))
+        return jnp.einsum("...jk,...kl->...jl", Q, jnp.swapaxes(V, -1, -2))
 
     def eigh(self, a):
         return jnp.linalg.eigh(a)
@@ -1833,25 +1840,30 @@ class TorchBackend(Backend):
     - `__type__` is torch.Tensor
     """
 
-    __name__ = 'torch'
+    __name__ = "torch"
     __type__ = torch_type
     __type_list__ = None
 
     rng_ = None
 
     def __init__(self):
-
         self.rng_ = torch.Generator("cpu")
         self.rng_.seed()
 
-        self.__type_list__ = [torch.tensor(1, dtype=torch.float32),
-                              torch.tensor(1, dtype=torch.float64)]
+        self.__type_list__ = [
+            torch.tensor(1, dtype=torch.float32),
+            torch.tensor(1, dtype=torch.float64),
+        ]
 
         if torch.cuda.is_available():
             self.rng_cuda_ = torch.Generator("cuda")
             self.rng_cuda_.seed()
-            self.__type_list__.append(torch.tensor(1, dtype=torch.float32, device='cuda'))
-            self.__type_list__.append(torch.tensor(1, dtype=torch.float64, device='cuda'))
+            self.__type_list__.append(
+                torch.tensor(1, dtype=torch.float32, device="cuda")
+            )
+            self.__type_list__.append(
+                torch.tensor(1, dtype=torch.float64, device="cuda")
+            )
         else:
             self.rng_cuda_ = torch.Generator("cpu")
 
@@ -1860,7 +1872,6 @@ class TorchBackend(Backend):
         # define a function that takes inputs val and grads
         # ad returns a val tensor with proper gradients
         class ValFunction(Function):
-
             @staticmethod
             def forward(ctx, val, grads, *inputs):
                 ctx.grads = grads
@@ -1879,7 +1890,12 @@ class TorchBackend(Backend):
         return a.cpu().detach().numpy()
 
     def _from_numpy(self, a, type_as=None):
-        if isinstance(a, float) or isinstance(a, int):
+        if (
+            isinstance(a, float)
+            or isinstance(a, int)
+            or isinstance(a, np.float32)
+            or isinstance(a, np.float64)
+        ):
             a = np.array(a)
         if type_as is None:
             return torch.from_numpy(a)
@@ -1887,7 +1903,6 @@ class TorchBackend(Backend):
             return torch.as_tensor(a, dtype=type_as.dtype, device=type_as.device)
 
     def set_gradients(self, val, inputs, grads):
-
         Func = self.ValFunction
 
         res = Func.apply(val, grads, *inputs)
@@ -1925,7 +1940,9 @@ class TorchBackend(Backend):
         if type_as is None:
             return torch.full(shape, fill_value)
         else:
-            return torch.full(shape, fill_value, dtype=type_as.dtype, device=type_as.device)
+            return torch.full(
+                shape, fill_value, dtype=type_as.dtype, device=type_as.device
+            )
 
     def eye(self, N, M=None, type_as=None):
         if M is None:
@@ -2023,8 +2040,8 @@ class TorchBackend(Backend):
         sorted, indices = torch.sort(a, dim=axis)
         return indices
 
-    def searchsorted(self, a, v, side='left'):
-        right = (side != 'left')
+    def searchsorted(self, a, v, side="left"):
+        right = side != "left"
         return torch.searchsorted(a, v, right=right)
 
     def flip(self, a, axis=None):
@@ -2082,8 +2099,10 @@ class TorchBackend(Backend):
                 return torch.quantile(a, 0.5, interpolation="midpoint")
 
         # Else, use numpy
-        warnings.warn("The median is being computed using numpy and the array has been detached "
-                      "in the Pytorch backend.")
+        warnings.warn(
+            "The median is being computed using numpy and the array has been detached "
+            "in the Pytorch backend."
+        )
         a_ = self.to_numpy(a)
         a_median = np.median(a_, axis=axis)
         return self.from_numpy(a_median, type_as=a)
@@ -2098,7 +2117,9 @@ class TorchBackend(Backend):
         if type_as is None:
             return torch.linspace(start, stop, num)
         else:
-            return torch.linspace(start, stop, num, dtype=type_as.dtype, device=type_as.device)
+            return torch.linspace(
+                start, stop, num, dtype=type_as.dtype, device=type_as.device
+            )
 
     def meshgrid(self, a, b):
         try:
@@ -2139,15 +2160,29 @@ class TorchBackend(Backend):
 
     def rand(self, *size, type_as=None):
         if type_as is not None:
-            generator = self.rng_cuda_ if self.device_type(type_as) == "GPU" else self.rng_
-            return torch.rand(size=size, generator=generator, dtype=type_as.dtype, device=type_as.device)
+            generator = (
+                self.rng_cuda_ if self.device_type(type_as) == "GPU" else self.rng_
+            )
+            return torch.rand(
+                size=size,
+                generator=generator,
+                dtype=type_as.dtype,
+                device=type_as.device,
+            )
         else:
             return torch.rand(size=size, generator=self.rng_)
 
     def randn(self, *size, type_as=None):
         if type_as is not None:
-            generator = self.rng_cuda_ if self.device_type(type_as) == "GPU" else self.rng_
-            return torch.randn(size=size, dtype=type_as.dtype, generator=generator, device=type_as.device)
+            generator = (
+                self.rng_cuda_ if self.device_type(type_as) == "GPU" else self.rng_
+            )
+            return torch.randn(
+                size=size,
+                dtype=type_as.dtype,
+                generator=generator,
+                device=type_as.device,
+            )
         else:
             return torch.randn(size=size, generator=self.rng_)
 
@@ -2156,8 +2191,11 @@ class TorchBackend(Backend):
             return torch.sparse_coo_tensor(torch.stack([rows, cols]), data, size=shape)
         else:
             return torch.sparse_coo_tensor(
-                torch.stack([rows, cols]), data, size=shape,
-                dtype=type_as.dtype, device=type_as.device
+                torch.stack([rows, cols]),
+                data,
+                size=shape,
+                dtype=type_as.dtype,
+                device=type_as.device,
             )
 
     def issparse(self, a):
@@ -2167,7 +2205,7 @@ class TorchBackend(Backend):
         # Versions older than 1.9 do not support CSR tensors. PyTorch 1.9 and 1.10 offer a very limited support
         return self.todense(a)
 
-    def eliminate_zeros(self, a, threshold=0.):
+    def eliminate_zeros(self, a, threshold=0.0):
         if self.issparse(a):
             if threshold > 0:
                 mask = self.abs(a) <= threshold
@@ -2209,7 +2247,9 @@ class TorchBackend(Backend):
         b_dtype, b_device = self.dtype_device(b)
 
         assert a_dtype == b_dtype, "Dtype discrepancy"
-        assert a_device == b_device, f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
+        assert (
+            a_device == b_device
+        ), f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
 
     def squeeze(self, a, axis=None):
         if axis is None:
@@ -2241,7 +2281,7 @@ class TorchBackend(Backend):
             if self.device_type(type_as) == "GPU":  # pragma: no cover
                 end.record()
                 torch.cuda.synchronize()
-                duration = start.elapsed_time(end) / 1000.
+                duration = start.elapsed_time(end) / 1000.0
             else:
                 end = time.perf_counter()
                 duration = end - start
@@ -2264,10 +2304,9 @@ class TorchBackend(Backend):
         L, V = torch.linalg.eigh(a)
         L = torch.sqrt(L)
         # Q[...] = V[...] @ diag(L[...])
-        Q = torch.einsum('...jk,...k->...jk', V, L)
+        Q = torch.einsum("...jk,...k->...jk", V, L)
         # R[...] = Q[...] @ V[...].T
-        return torch.einsum('...jk,...kl->...jl', Q,
-                            torch.transpose(V, -1, -2))
+        return torch.einsum("...jk,...kl->...jl", Q, torch.transpose(V, -1, -2))
 
     def eigh(self, a):
         return torch.linalg.eigh(a)
@@ -2334,7 +2373,7 @@ class CupyBackend(Backend):  # pragma: no cover
     - `__type__` is cp.ndarray
     """
 
-    __name__ = 'cupy'
+    __name__ = "cupy"
     __type__ = cp_type
     __type_list__ = None
 
@@ -2345,7 +2384,7 @@ class CupyBackend(Backend):  # pragma: no cover
 
         self.__type_list__ = [
             cp.array(1, dtype=cp.float32),
-            cp.array(1, dtype=cp.float64)
+            cp.array(1, dtype=cp.float64),
         ]
 
     def _to_numpy(self, a):
@@ -2464,7 +2503,7 @@ class CupyBackend(Backend):  # pragma: no cover
     def argsort(self, a, axis=-1):
         return cp.argsort(a, axis)
 
-    def searchsorted(self, a, v, side='left'):
+    def searchsorted(self, a, v, side="left"):
         if a.ndim == 1:
             return cp.searchsorted(a, v, side)
         else:
@@ -2573,9 +2612,7 @@ class CupyBackend(Backend):  # pragma: no cover
         rows = self.from_numpy(rows)
         cols = self.from_numpy(cols)
         if type_as is None:
-            return cupyx.scipy.sparse.coo_matrix(
-                (data, (rows, cols)), shape=shape
-            )
+            return cupyx.scipy.sparse.coo_matrix((data, (rows, cols)), shape=shape)
         else:
             with cp.cuda.Device(type_as.device):
                 return cupyx.scipy.sparse.coo_matrix(
@@ -2591,7 +2628,7 @@ class CupyBackend(Backend):  # pragma: no cover
         else:
             return cupyx.scipy.sparse.csr_matrix(a)
 
-    def eliminate_zeros(self, a, threshold=0.):
+    def eliminate_zeros(self, a, threshold=0.0):
         if threshold > 0:
             if self.issparse(a):
                 a.data[self.abs(a.data) <= threshold] = 0
@@ -2628,7 +2665,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
         # cupy has implicit type conversion so
         # we automatically validate the test for type
-        assert a_device == b_device, f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
+        assert (
+            a_device == b_device
+        ), f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
 
     def squeeze(self, a, axis=None):
         return cp.squeeze(a, axis=axis)
@@ -2657,7 +2696,7 @@ class CupyBackend(Backend):  # pragma: no cover
             end_gpu.record()
             end_gpu.synchronize()
             key = ("Cupy", self.device_type(type_as), self.bitsize(type_as))
-            t_gpu = cp.cuda.get_elapsed_time(start_gpu, end_gpu) / 1000.
+            t_gpu = cp.cuda.get_elapsed_time(start_gpu, end_gpu) / 1000.0
             results[key] = t_gpu / n_runs
         mempool.free_all_blocks()
         pinned_mempool.free_all_blocks()
@@ -2676,10 +2715,9 @@ class CupyBackend(Backend):  # pragma: no cover
         L, V = cp.linalg.eigh(a)
         L = cp.sqrt(L)
         # Q[...] = V[...] @ diag(L[...])
-        Q = cp.einsum('...jk,...k->...jk', V, L)
+        Q = cp.einsum("...jk,...k->...jk", V, L)
         # R[...] = Q[...] @ V[...].T
-        return cp.einsum('...jk,...kl->...jl', Q,
-                         cp.swapaxes(V, -1, -2))
+        return cp.einsum("...jk,...kl->...jl", Q, cp.swapaxes(V, -1, -2))
 
     def eigh(self, a):
         return cp.linalg.eigh(a)
@@ -2736,7 +2774,6 @@ if cp:
 
 
 class TensorflowBackend(Backend):
-
     __name__ = "tf"
     __type__ = tf_type
     __type_list__ = None
@@ -2748,7 +2785,7 @@ class TensorflowBackend(Backend):
 
         self.__type_list__ = [
             tf.convert_to_tensor([1], dtype=tf.float32),
-            tf.convert_to_tensor([1], dtype=tf.float64)
+            tf.convert_to_tensor([1], dtype=tf.float64),
         ]
 
         tmp = self.randn(15, 10)
@@ -2760,7 +2797,7 @@ class TensorflowBackend(Backend):
                 "numpy API. You can activate it by running: \n"
                 "from tensorflow.python.ops.numpy_ops import np_config\n"
                 "np_config.enable_numpy_behavior()",
-                stacklevel=2
+                stacklevel=2,
             )
 
     def _to_numpy(self, a):
@@ -2787,7 +2824,9 @@ class TensorflowBackend(Backend):
         def tmp(input):
             def grad(upstream):
                 return grads
+
             return val, grad
+
         return tmp(inputs)
 
     def _detach(self, a):
@@ -2891,7 +2930,7 @@ class TensorflowBackend(Backend):
     def argsort(self, a, axis=-1):
         return tnp.argsort(a, axis)
 
-    def searchsorted(self, a, v, side='left'):
+    def searchsorted(self, a, v, side="left"):
         return tf.searchsorted(a, v, side=side)
 
     def flip(self, a, axis=None):
@@ -2925,8 +2964,10 @@ class TensorflowBackend(Backend):
         return tnp.mean(a, axis=axis)
 
     def median(self, a, axis=None):
-        warnings.warn("The median is being computed using numpy and the array has been detached "
-                      "in the Tensorflow backend.")
+        warnings.warn(
+            "The median is being computed using numpy and the array has been detached "
+            "in the Tensorflow backend."
+        )
         a_ = self.to_numpy(a)
         a_median = np.median(a_, axis=axis)
         return self.from_numpy(a_median, type_as=a)
@@ -2977,11 +3018,9 @@ class TensorflowBackend(Backend):
 
     def rand(self, *size, type_as=None):
         if type_as is None:
-            return self.rng_.uniform(size, minval=0., maxval=1.)
+            return self.rng_.uniform(size, minval=0.0, maxval=1.0)
         else:
-            return self.rng_.uniform(
-                size, minval=0., maxval=1., dtype=type_as.dtype
-            )
+            return self.rng_.uniform(size, minval=0.0, maxval=1.0, dtype=type_as.dtype)
 
     def randn(self, *size, type_as=None):
         if type_as is None:
@@ -2999,15 +3038,13 @@ class TensorflowBackend(Backend):
         if shape is None:
             shape = (
                 self._convert_to_index_for_coo(rows),
-                self._convert_to_index_for_coo(cols)
+                self._convert_to_index_for_coo(cols),
             )
         if type_as is not None:
             data = self.from_numpy(data, type_as=type_as)
 
         sparse_tensor = tf.sparse.SparseTensor(
-            indices=tnp.stack([rows, cols]).T,
-            values=data,
-            dense_shape=shape
+            indices=tnp.stack([rows, cols]).T, values=data, dense_shape=shape
         )
         # if type_as is not None:
         #     sparse_tensor = self.from_numpy(sparse_tensor, type_as=type_as)
@@ -3020,7 +3057,7 @@ class TensorflowBackend(Backend):
     def tocsr(self, a):
         return a
 
-    def eliminate_zeros(self, a, threshold=0.):
+    def eliminate_zeros(self, a, threshold=0.0):
         if self.issparse(a):
             values = a.values
             if threshold > 0:
@@ -3030,7 +3067,7 @@ class TensorflowBackend(Backend):
             return tf.sparse.retain(a, ~mask)
         else:
             if threshold > 0:
-                a = tnp.where(self.abs(a) > threshold, a, 0.)
+                a = tnp.where(self.abs(a) > threshold, a, 0.0)
             return a
 
     def todense(self, a):
@@ -3049,9 +3086,7 @@ class TensorflowBackend(Backend):
         return tf.identity(a)
 
     def allclose(self, a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
-        return tnp.allclose(
-            a, b, rtol=rtol, atol=atol, equal_nan=equal_nan
-        )
+        return tnp.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
 
     def dtype_device(self, a):
         return a.dtype, a.device.split("device:")[1]
@@ -3061,7 +3096,9 @@ class TensorflowBackend(Backend):
         b_dtype, b_device = self.dtype_device(b)
 
         assert a_dtype == b_dtype, "Dtype discrepancy"
-        assert a_device == b_device, f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
+        assert (
+            a_device == b_device
+        ), f"Device discrepancy. First input is on {str(a_device)}, whereas second input is on {str(b_device)}"
 
     def squeeze(self, a, axis=None):
         return tnp.squeeze(a, axis=axis)
@@ -3075,7 +3112,7 @@ class TensorflowBackend(Backend):
     def _bench(self, callable, *args, n_runs=1, warmup_runs=1):
         results = dict()
         device_contexts = [tf.device("/CPU:0")]
-        if len(tf.config.list_physical_devices('GPU')) > 0:  # pragma: no cover
+        if len(tf.config.list_physical_devices("GPU")) > 0:  # pragma: no cover
             device_contexts.append(tf.device("/GPU:0"))
 
         for device_context in device_contexts:
@@ -3092,7 +3129,7 @@ class TensorflowBackend(Backend):
                     key = (
                         "Tensorflow",
                         self.device_type(inputs[0]),
-                        self.bitsize(type_as)
+                        self.bitsize(type_as),
                     )
                     results[key] = (t1 - t0) / n_runs
 
@@ -3111,10 +3148,11 @@ class TensorflowBackend(Backend):
         L, V = tf.linalg.eigh(a)
         L = tf.sqrt(L)
         # Q[...] = V[...] @ diag(L[...])
-        Q = tf.einsum('...jk,...k->...jk', V, L)
+        Q = tf.einsum("...jk,...k->...jk", V, L)
         # R[...] = Q[...] @ V[...].T
-        return tf.einsum('...jk,...kl->...jl', Q,
-                         tf.linalg.matrix_transpose(V, (0, 2, 1)))
+        return tf.einsum(
+            "...jk,...kl->...jl", Q, tf.linalg.matrix_transpose(V, (0, 2, 1))
+        )
 
     def eigh(self, a):
         return tf.linalg.eigh(a)
