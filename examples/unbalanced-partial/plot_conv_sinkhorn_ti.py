@@ -40,7 +40,7 @@ mu_s = np.array([-1, -1])
 cov_s = np.array([[1, 0], [0, 1]])
 
 mu_t = np.array([4, 4])
-cov_t = np.array([[1, -.8], [-.8, 1]])
+cov_t = np.array([[1, -0.8], [-0.8, 1]])
 
 
 ##############################################################################
@@ -56,8 +56,8 @@ for seed in range(n_iter):
     xs = ot.datasets.make_2D_samples_gauss(n, mu_s, cov_s)
     xt = ot.datasets.make_2D_samples_gauss(n, mu_t, cov_t)
 
-    xs = np.concatenate((xs, ((np.random.rand(n_noise, 2) - 4))), axis=0)
-    xt = np.concatenate((xt, ((np.random.rand(n_noise, 2) + 6))), axis=0)
+    xs = np.concatenate((xs, (np.random.rand(n_noise, 2) - 4)), axis=0)
+    xt = np.concatenate((xt, (np.random.rand(n_noise, 2) + 6)), axis=0)
 
     n = n + n_noise
 
@@ -67,10 +67,29 @@ for seed in range(n_iter):
     M = ot.dist(xs, xt)
     M /= M.max()
 
-    entropic_kl_uot, log_uot = ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg, reg_m_kl, reg_type="kl", log=True, numItermax=num_iter_max, stopThr=0)
-    entropic_kl_uot_ti, log_uot_ti = ot.unbalanced.sinkhorn_unbalanced(a, b, M, reg, reg_m_kl, reg_type="kl",
-                                                                       method="sinkhorn_translation_invariant", log=True,
-                                                                       numItermax=num_iter_max, stopThr=0)
+    entropic_kl_uot, log_uot = ot.unbalanced.sinkhorn_unbalanced(
+        a,
+        b,
+        M,
+        reg,
+        reg_m_kl,
+        reg_type="kl",
+        log=True,
+        numItermax=num_iter_max,
+        stopThr=0,
+    )
+    entropic_kl_uot_ti, log_uot_ti = ot.unbalanced.sinkhorn_unbalanced(
+        a,
+        b,
+        M,
+        reg,
+        reg_m_kl,
+        reg_type="kl",
+        method="sinkhorn_translation_invariant",
+        log=True,
+        numItermax=num_iter_max,
+        stopThr=0,
+    )
 
     err_sinkhorn_uot[seed] = log_uot["err"]
     err_sinkhorn_uot_ti[seed] = log_uot_ti["err"]
@@ -91,7 +110,9 @@ pl.plot(absc, mean_sinkh, label="Sinkhorn")
 pl.fill_between(absc, mean_sinkh - 2 * std_sinkh, mean_sinkh + 2 * std_sinkh, alpha=0.5)
 
 pl.plot(absc, mean_sinkh_ti, label="Translation Invariant Sinkhorn")
-pl.fill_between(absc, mean_sinkh_ti - 2 * std_sinkh_ti, mean_sinkh_ti + 2 * std_sinkh_ti, alpha=0.5)
+pl.fill_between(
+    absc, mean_sinkh_ti - 2 * std_sinkh_ti, mean_sinkh_ti + 2 * std_sinkh_ti, alpha=0.5
+)
 
 pl.yscale("log")
 pl.legend()

@@ -20,8 +20,18 @@ from .optim import cg
 from .utils import dist, unif, list_to_array, kernel, dots
 
 
-def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly_convex_constant=.6,
-                                  gradient_lipschitz_constant=1.4, its=100, log=False, init_method='barycentric'):
+def nearest_brenier_potential_fit(
+    X,
+    V,
+    X_classes=None,
+    a=None,
+    b=None,
+    strongly_convex_constant=0.6,
+    gradient_lipschitz_constant=1.4,
+    its=100,
+    log=False,
+    init_method="barycentric",
+):
     r"""
     Computes optimal values and gradients at X for a strongly convex potential :math:`\varphi` with Lipschitz gradients
     on the partitions defined by `X_classes`, where :math:`\varphi` is optimal such that
@@ -105,9 +115,11 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
     try:
         import cvxpy as cvx
     except ImportError:
-        print('Please install CVXPY to use this function')
+        print("Please install CVXPY to use this function")
         return
-    assert X.shape == V.shape, f"point shape should be the same as value shape, yet {X.shape} != {V.shape}"
+    assert (
+        X.shape == V.shape
+    ), f"point shape should be the same as value shape, yet {X.shape} != {V.shape}"
     nx = get_backend(X, V, X_classes, a, b)
     X, V = to_numpy(X), to_numpy(V)
     n, d = X.shape
@@ -118,19 +130,18 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
         X_classes = np.zeros(n)
     a = unif(n) if a is None else nx.to_numpy(a)
     b = unif(n) if b is None else nx.to_numpy(b)
-    assert a.shape[-1] == b.shape[-1] == n, 'incorrect measure weight sizes'
+    assert a.shape[-1] == b.shape[-1] == n, "incorrect measure weight sizes"
 
-    assert init_method in ['target', 'barycentric'], f"Unsupported initialization method '{init_method}'"
-    if init_method == 'target':
+    assert init_method in [
+        "target",
+        "barycentric",
+    ], f"Unsupported initialization method '{init_method}'"
+    if init_method == "target":
         G_val = V
     else:  # Init G_val with barycentric projection
         G_val = emd(a, b, dist(X, V)) @ V / a.reshape(n, 1)
     phi_val = None
-    log_dict = {
-        'G_list': [],
-        'phi_list': [],
-        'its': []
-    }
+    log_dict = {"G_list": [], "phi_list": [], "its": []}
 
     for _ in range(its):  # alternate optimisation iterations
         cost_matrix = dist(G_val, V)
@@ -146,29 +157,35 @@ def nearest_brenier_potential_fit(X, V, X_classes=None, a=None, b=None, strongly
             for j in range(n):
                 cost += cvx.sum_squares(G[i, :] - V[j, :]) * plan[i, j]
         objective = cvx.Minimize(cost)  # OT cost
-        c1, c2, c3 = _ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
+        c1, c2, c3 = _ssnb_qcqp_constants(
+            strongly_convex_constant, gradient_lipschitz_constant
+        )
 
         for k in np.unique(X_classes):  # constraints for the convex interpolation
             for i in np.where(X_classes == k)[0]:
                 for j in np.where(X_classes == k)[0]:
                     constraints += [
-                        phi[i] >= phi[j] + G[j].T @ (X[i] - X[j]) + c1 * cvx.sum_squares(G[i] - G[j])
-                        + c2 * cvx.sum_squares(X[i] - X[j]) - c3 * (G[j] - G[i]).T @ (X[j] - X[i])
+                        phi[i]
+                        >= phi[j]
+                        + G[j].T @ (X[i] - X[j])
+                        + c1 * cvx.sum_squares(G[i] - G[j])
+                        + c2 * cvx.sum_squares(X[i] - X[j])
+                        - c3 * (G[j] - G[i]).T @ (X[j] - X[i])
                     ]
         problem = cvx.Problem(objective, constraints)
         problem.solve(solver=cvx.ECOS)
         phi_val, G_val = phi.value, G.value
         it_log_dict = {
-            'solve_time': problem.solver_stats.solve_time,
-            'setup_time': problem.solver_stats.setup_time,
-            'num_iters': problem.solver_stats.num_iters,
-            'status': problem.status,
-            'value': problem.value
+            "solve_time": problem.solver_stats.solve_time,
+            "setup_time": problem.solver_stats.setup_time,
+            "num_iters": problem.solver_stats.num_iters,
+            "status": problem.status,
+            "value": problem.value,
         }
         if log:
-            log_dict['its'].append(it_log_dict)
-            log_dict['G_list'].append(G_val)
-            log_dict['phi_list'].append(phi_val)
+            log_dict["its"].append(it_log_dict)
+            log_dict["G_list"].append(G_val)
+            log_dict["phi_list"].append(phi_val)
 
     # convert back to backend
     phi_val = nx.from_numpy(phi_val)
@@ -194,7 +211,9 @@ def _ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant):
     c3 : float
 
     """
-    assert 0 < strongly_convex_constant < gradient_lipschitz_constant, "incompatible regularity assumption"
+    assert (
+        0 < strongly_convex_constant < gradient_lipschitz_constant
+    ), "incompatible regularity assumption"
     c = 1 / (2 * (1 - strongly_convex_constant / gradient_lipschitz_constant))
     c1 = c / gradient_lipschitz_constant
     c2 = strongly_convex_constant * c
@@ -202,8 +221,17 @@ def _ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant):
     return c1, c2, c3
 
 
-def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_classes=None,
-                                             strongly_convex_constant=0.6, gradient_lipschitz_constant=1.4, log=False):
+def nearest_brenier_potential_predict_bounds(
+    X,
+    phi,
+    G,
+    Y,
+    X_classes=None,
+    Y_classes=None,
+    strongly_convex_constant=0.6,
+    gradient_lipschitz_constant=1.4,
+    log=False,
+):
     r"""
     Compute the values of the lower and upper bounding potentials at the input points Y, using the potential optimal
     values phi at X and their gradients G at X. The 'lower' potential corresponds to the method from :ref:`[58]`,
@@ -292,7 +320,7 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
     try:
         import cvxpy as cvx
     except ImportError:
-        print('Please install CVXPY to use this function')
+        print("Please install CVXPY to use this function")
         return
     nx = get_backend(X, phi, G, Y)
     X = to_numpy(X)
@@ -302,18 +330,22 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
     m, d = Y.shape
     if Y_classes is not None:
         Y_classes = to_numpy(Y_classes)
-        assert Y_classes.size == m, 'wrong number of class items for Y'
+        assert Y_classes.size == m, "wrong number of class items for Y"
     else:
         Y_classes = np.zeros(m)
-    assert X.shape[1] == d, f'incompatible dimensions between X: {X.shape} and Y: {Y.shape}'
+    assert (
+        X.shape[1] == d
+    ), f"incompatible dimensions between X: {X.shape} and Y: {Y.shape}"
     n, _ = X.shape
     if X_classes is not None:
         X_classes = to_numpy(X_classes)
         assert X_classes.size == n, "incorrect number of class items"
     else:
         X_classes = np.zeros(n)
-    assert X_classes.size == n, 'wrong number of class items for X'
-    c1, c2, c3 = _ssnb_qcqp_constants(strongly_convex_constant, gradient_lipschitz_constant)
+    assert X_classes.size == n, "wrong number of class items for X"
+    c1, c2, c3 = _ssnb_qcqp_constants(
+        strongly_convex_constant, gradient_lipschitz_constant
+    )
     phi_lu = np.zeros((2, m))
     G_lu = np.zeros((2, m, d))
     log_dict = {}
@@ -328,20 +360,24 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
         k = Y_classes[y_idx]
         for j in np.where(X_classes == k)[0]:
             constraints += [
-                phi_l_y >= phi[j] + G[j].T @ (Y[y_idx] - X[j]) + c1 * cvx.sum_squares(G_l_y - G[j])
-                + c2 * cvx.sum_squares(Y[y_idx] - X[j]) - c3 * (G[j] - G_l_y).T @ (X[j] - Y[y_idx])
+                phi_l_y
+                >= phi[j]
+                + G[j].T @ (Y[y_idx] - X[j])
+                + c1 * cvx.sum_squares(G_l_y - G[j])
+                + c2 * cvx.sum_squares(Y[y_idx] - X[j])
+                - c3 * (G[j] - G_l_y).T @ (X[j] - Y[y_idx])
             ]
         problem = cvx.Problem(objective, constraints)
         problem.solve(solver=cvx.ECOS)
         phi_lu[0, y_idx] = phi_l_y.value
         G_lu[0, y_idx] = G_l_y.value
         if log:
-            log_item['l'] = {
-                'solve_time': problem.solver_stats.solve_time,
-                'setup_time': problem.solver_stats.setup_time,
-                'num_iters': problem.solver_stats.num_iters,
-                'status': problem.status,
-                'value': problem.value
+            log_item["l"] = {
+                "solve_time": problem.solver_stats.solve_time,
+                "setup_time": problem.solver_stats.setup_time,
+                "num_iters": problem.solver_stats.num_iters,
+                "status": problem.status,
+                "value": problem.value,
             }
 
         # upper bound
@@ -351,20 +387,24 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
         constraints = []
         for i in np.where(X_classes == k)[0]:
             constraints += [
-                phi[i] >= phi_u_y + G_u_y.T @ (X[i] - Y[y_idx]) + c1 * cvx.sum_squares(G[i] - G_u_y)
-                + c2 * cvx.sum_squares(X[i] - Y[y_idx]) - c3 * (G_u_y - G[i]).T @ (Y[y_idx] - X[i])
+                phi[i]
+                >= phi_u_y
+                + G_u_y.T @ (X[i] - Y[y_idx])
+                + c1 * cvx.sum_squares(G[i] - G_u_y)
+                + c2 * cvx.sum_squares(X[i] - Y[y_idx])
+                - c3 * (G_u_y - G[i]).T @ (Y[y_idx] - X[i])
             ]
         problem = cvx.Problem(objective, constraints)
         problem.solve(solver=cvx.ECOS)
         phi_lu[1, y_idx] = phi_u_y.value
         G_lu[1, y_idx] = G_u_y.value
         if log:
-            log_item['u'] = {
-                'solve_time': problem.solver_stats.solve_time,
-                'setup_time': problem.solver_stats.setup_time,
-                'num_iters': problem.solver_stats.num_iters,
-                'status': problem.status,
-                'value': problem.value
+            log_item["u"] = {
+                "solve_time": problem.solver_stats.solve_time,
+                "setup_time": problem.solver_stats.setup_time,
+                "num_iters": problem.solver_stats.num_iters,
+                "status": problem.status,
+                "value": problem.value,
             }
             log_dict[y_idx] = log_item
 
@@ -374,10 +414,21 @@ def nearest_brenier_potential_predict_bounds(X, phi, G, Y, X_classes=None, Y_cla
     return phi_lu, G_lu, log_dict
 
 
-def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
-                            verbose2=False, numItermax=100, numInnerItermax=10,
-                            stopInnerThr=1e-6, stopThr=1e-5, log=False,
-                            **kwargs):
+def joint_OT_mapping_linear(
+    xs,
+    xt,
+    mu=1,
+    eta=0.001,
+    bias=False,
+    verbose=False,
+    verbose2=False,
+    numItermax=100,
+    numInnerItermax=10,
+    stopInnerThr=1e-6,
+    stopThr=1e-5,
+    log=False,
+    **kwargs,
+):
     r"""Joint OT and linear mapping estimation as proposed in
     :ref:`[8] <references-joint-OT-mapping-linear>`.
 
@@ -487,7 +538,7 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
             return x
 
     if log:
-        log = {'err': []}
+        log = {"err": []}
 
     a = unif(ns, type_as=xs)
     b = unif(nt, type_as=xt)
@@ -505,7 +556,7 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
         )
 
     def solve_L(G):
-        """ solve L problem with fixed G (least square)"""
+        """solve L problem with fixed G (least square)"""
         xst = ns * nx.dot(G, xt)
         return nx.solve(xstxs + eta * Id, nx.dot(xs1.T, xst) + eta * I0)
 
@@ -519,8 +570,17 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
         def df(G):
             return -2 * ns * nx.dot(xsi - ns * nx.dot(G, xt), xt.T)
 
-        G = cg(a, b, M, 1.0 / mu, f, df, G0=G0,
-               numItermax=numInnerItermax, stopThr=stopInnerThr)
+        G = cg(
+            a,
+            b,
+            M,
+            1.0 / mu,
+            f,
+            df,
+            G0=G0,
+            numItermax=numInnerItermax,
+            stopThr=stopInnerThr,
+        )
         return G
 
     L = solve_L(G)
@@ -528,9 +588,10 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
     vloss.append(loss(L, G))
 
     if verbose:
-        print('{:5s}|{:12s}|{:8s}'.format(
-            'It.', 'Loss', 'Delta loss') + '\n' + '-' * 32)
-        print('{:5d}|{:8e}|{:8e}'.format(0, vloss[-1], 0))
+        print(
+            "{:5s}|{:12s}|{:8s}".format("It.", "Loss", "Delta loss") + "\n" + "-" * 32
+        )
+        print("{:5d}|{:8e}|{:8e}".format(0, vloss[-1], 0))
 
     # init loop
     if numItermax > 0:
@@ -540,7 +601,6 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
     it = 0
 
     while loop:
-
         it += 1
 
         # update G
@@ -559,22 +619,40 @@ def joint_OT_mapping_linear(xs, xt, mu=1, eta=0.001, bias=False, verbose=False,
 
         if verbose:
             if it % 20 == 0:
-                print('{:5s}|{:12s}|{:8s}'.format(
-                    'It.', 'Loss', 'Delta loss') + '\n' + '-' * 32)
-            print('{:5d}|{:8e}|{:8e}'.format(
-                it, vloss[-1], (vloss[-1] - vloss[-2]) / abs(vloss[-2])))
+                print(
+                    "{:5s}|{:12s}|{:8s}".format("It.", "Loss", "Delta loss")
+                    + "\n"
+                    + "-" * 32
+                )
+            print(
+                "{:5d}|{:8e}|{:8e}".format(
+                    it, vloss[-1], (vloss[-1] - vloss[-2]) / abs(vloss[-2])
+                )
+            )
     if log:
-        log['loss'] = vloss
+        log["loss"] = vloss
         return G, L, log
     else:
         return G, L
 
 
-def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
-                            sigma=1, bias=False, verbose=False, verbose2=False,
-                            numItermax=100, numInnerItermax=10,
-                            stopInnerThr=1e-6, stopThr=1e-5, log=False,
-                            **kwargs):
+def joint_OT_mapping_kernel(
+    xs,
+    xt,
+    mu=1,
+    eta=0.001,
+    kerneltype="gaussian",
+    sigma=1,
+    bias=False,
+    verbose=False,
+    verbose2=False,
+    numItermax=100,
+    numInnerItermax=10,
+    stopInnerThr=1e-6,
+    stopThr=1e-5,
+    log=False,
+    **kwargs,
+):
     r"""Joint OT and nonlinear mapping estimation with kernels as proposed in
     :ref:`[8] <references-joint-OT-mapping-kernel>`.
 
@@ -701,7 +779,7 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
         Kreg = K
 
     if log:
-        log = {'err': []}
+        log = {"err": []}
 
     a = unif(ns, type_as=xs)
     b = unif(nt, type_as=xt)
@@ -719,12 +797,12 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
         )
 
     def solve_L_nobias(G):
-        """ solve L problem with fixed G (least square)"""
+        """solve L problem with fixed G (least square)"""
         xst = ns * nx.dot(G, xt)
         return nx.solve(K0, xst)
 
     def solve_L_bias(G):
-        """ solve L problem with fixed G (least square)"""
+        """solve L problem with fixed G (least square)"""
         xst = ns * nx.dot(G, xt)
         return nx.solve(K0, nx.dot(K1.T, xst))
 
@@ -738,8 +816,17 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
         def df(G):
             return -2 * ns * nx.dot(xsi - ns * nx.dot(G, xt), xt.T)
 
-        G = cg(a, b, M, 1.0 / mu, f, df, G0=G0,
-               numItermax=numInnerItermax, stopThr=stopInnerThr)
+        G = cg(
+            a,
+            b,
+            M,
+            1.0 / mu,
+            f,
+            df,
+            G0=G0,
+            numItermax=numInnerItermax,
+            stopThr=stopInnerThr,
+        )
         return G
 
     if bias:
@@ -752,9 +839,10 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
     vloss.append(loss(L, G))
 
     if verbose:
-        print('{:5s}|{:12s}|{:8s}'.format(
-            'It.', 'Loss', 'Delta loss') + '\n' + '-' * 32)
-        print('{:5d}|{:8e}|{:8e}'.format(0, vloss[-1], 0))
+        print(
+            "{:5s}|{:12s}|{:8s}".format("It.", "Loss", "Delta loss") + "\n" + "-" * 32
+        )
+        print("{:5d}|{:8e}|{:8e}".format(0, vloss[-1], 0))
 
     # init loop
     if numItermax > 0:
@@ -764,7 +852,6 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
     it = 0
 
     while loop:
-
         it += 1
 
         # update G
@@ -783,12 +870,18 @@ def joint_OT_mapping_kernel(xs, xt, mu=1, eta=0.001, kerneltype='gaussian',
 
         if verbose:
             if it % 20 == 0:
-                print('{:5s}|{:12s}|{:8s}'.format(
-                    'It.', 'Loss', 'Delta loss') + '\n' + '-' * 32)
-            print('{:5d}|{:8e}|{:8e}'.format(
-                it, vloss[-1], (vloss[-1] - vloss[-2]) / abs(vloss[-2])))
+                print(
+                    "{:5s}|{:12s}|{:8s}".format("It.", "Loss", "Delta loss")
+                    + "\n"
+                    + "-" * 32
+                )
+            print(
+                "{:5d}|{:8e}|{:8e}".format(
+                    it, vloss[-1], (vloss[-1] - vloss[-2]) / abs(vloss[-2])
+                )
+            )
     if log:
-        log['loss'] = vloss
+        log["loss"] = vloss
         return G, L, log
     else:
         return G, L

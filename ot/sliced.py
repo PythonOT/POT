@@ -9,7 +9,6 @@ Sliced OT Distances
 #
 # License: MIT License
 
-
 import numpy as np
 from .backend import get_backend, NumpyBackend
 from .utils import list_to_array, get_coordinate_circle
@@ -51,7 +50,7 @@ def get_random_projections(d, n_projections, seed=None, backend=None, type_as=No
     else:
         nx = backend
 
-    if isinstance(seed, np.random.RandomState) and str(nx) == 'numpy':
+    if isinstance(seed, np.random.RandomState) and str(nx) == "numpy":
         projections = seed.randn(d, n_projections)
     else:
         if seed is not None:
@@ -62,8 +61,17 @@ def get_random_projections(d, n_projections, seed=None, backend=None, type_as=No
     return projections
 
 
-def sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, p=2,
-                                projections=None, seed=None, log=False):
+def sliced_wasserstein_distance(
+    X_s,
+    X_t,
+    a=None,
+    b=None,
+    n_projections=50,
+    p=2,
+    projections=None,
+    seed=None,
+    log=False,
+):
     r"""
     Computes a Monte-Carlo approximation of the p-Sliced Wasserstein distance
 
@@ -135,8 +143,10 @@ def sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, p=2,
 
     if X_s.shape[1] != X_t.shape[1]:
         raise ValueError(
-            "X_s and X_t must have the same number of dimensions {} and {} respectively given".format(X_s.shape[1],
-                                                                                                      X_t.shape[1]))
+            "X_s and X_t must have the same number of dimensions {} and {} respectively given".format(
+                X_s.shape[1], X_t.shape[1]
+            )
+        )
 
     if a is None:
         a = nx.full(n, 1 / n, type_as=X_s)
@@ -146,7 +156,9 @@ def sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, p=2,
     d = X_s.shape[1]
 
     if projections is None:
-        projections = get_random_projections(d, n_projections, seed, backend=nx, type_as=X_s)
+        projections = get_random_projections(
+            d, n_projections, seed, backend=nx, type_as=X_s
+        )
     else:
         n_projections = projections.shape[1]
 
@@ -161,8 +173,17 @@ def sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, p=2,
     return res
 
 
-def max_sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, p=2,
-                                    projections=None, seed=None, log=False):
+def max_sliced_wasserstein_distance(
+    X_s,
+    X_t,
+    a=None,
+    b=None,
+    n_projections=50,
+    p=2,
+    projections=None,
+    seed=None,
+    log=False,
+):
     r"""
     Computes a Monte-Carlo approximation of the max p-Sliced Wasserstein distance
 
@@ -235,8 +256,10 @@ def max_sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, 
 
     if X_s.shape[1] != X_t.shape[1]:
         raise ValueError(
-            "X_s and X_t must have the same number of dimensions {} and {} respectively given".format(X_s.shape[1],
-                                                                                                      X_t.shape[1]))
+            "X_s and X_t must have the same number of dimensions {} and {} respectively given".format(
+                X_s.shape[1], X_t.shape[1]
+            )
+        )
 
     if a is None:
         a = nx.full(n, 1 / n, type_as=X_s)
@@ -246,7 +269,9 @@ def max_sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, 
     d = X_s.shape[1]
 
     if projections is None:
-        projections = get_random_projections(d, n_projections, seed, backend=nx, type_as=X_s)
+        projections = get_random_projections(
+            d, n_projections, seed, backend=nx, type_as=X_s
+        )
 
     X_s_projections = nx.dot(X_s, projections)
     X_t_projections = nx.dot(X_t, projections)
@@ -259,8 +284,17 @@ def max_sliced_wasserstein_distance(X_s, X_t, a=None, b=None, n_projections=50, 
     return res
 
 
-def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
-                              p=2, projections=None, seed=None, log=False):
+def sliced_wasserstein_sphere(
+    X_s,
+    X_t,
+    a=None,
+    b=None,
+    n_projections=50,
+    p=2,
+    projections=None,
+    seed=None,
+    log=False,
+):
     r"""
     Compute the spherical sliced-Wasserstein discrepancy.
 
@@ -323,16 +357,18 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
 
     if X_s.shape[1] != X_t.shape[1]:
         raise ValueError(
-            "X_s and X_t must have the same number of dimensions {} and {} respectively given".format(X_s.shape[1],
-                                                                                                      X_t.shape[1]))
-    if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10**(-4)):
+            "X_s and X_t must have the same number of dimensions {} and {} respectively given".format(
+                X_s.shape[1], X_t.shape[1]
+            )
+        )
+    if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10 ** (-4)):
         raise ValueError("X_s is not on the sphere.")
-    if nx.any(nx.abs(nx.sum(X_t**2, axis=-1) - 1) > 10**(-4)):
+    if nx.any(nx.abs(nx.sum(X_t**2, axis=-1) - 1) > 10 ** (-4)):
         raise ValueError("X_t is not on the sphere.")
 
     if projections is None:
         # Uniforms and independent samples on the Stiefel manifold V_{d,2}
-        if isinstance(seed, np.random.RandomState) and str(nx) == 'numpy':
+        if isinstance(seed, np.random.RandomState) and str(nx) == "numpy":
             Z = seed.randn(n_projections, d, 2)
         else:
             if seed is not None:
@@ -353,10 +389,16 @@ def sliced_wasserstein_sphere(X_s, X_t, a=None, b=None, n_projections=50,
     Xpt = Xpt / nx.sqrt(nx.sum(Xpt**2, -1, keepdims=True))
 
     # Get coordinates on [0,1[
-    Xps_coords = nx.reshape(get_coordinate_circle(nx.reshape(Xps, (-1, 2))), (n_projections, n))
-    Xpt_coords = nx.reshape(get_coordinate_circle(nx.reshape(Xpt, (-1, 2))), (n_projections, m))
+    Xps_coords = nx.reshape(
+        get_coordinate_circle(nx.reshape(Xps, (-1, 2))), (n_projections, n)
+    )
+    Xpt_coords = nx.reshape(
+        get_coordinate_circle(nx.reshape(Xpt, (-1, 2))), (n_projections, m)
+    )
 
-    projected_emd = wasserstein_circle(Xps_coords.T, Xpt_coords.T, u_weights=a, v_weights=b, p=p)
+    projected_emd = wasserstein_circle(
+        Xps_coords.T, Xpt_coords.T, u_weights=a, v_weights=b, p=p
+    )
     res = nx.mean(projected_emd) ** (1 / p)
 
     if log:
@@ -415,11 +457,11 @@ def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log
 
     n, d = X_s.shape
 
-    if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10**(-4)):
+    if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10 ** (-4)):
         raise ValueError("X_s is not on the sphere.")
 
     # Uniforms and independent samples on the Stiefel manifold V_{d,2}
-    if isinstance(seed, np.random.RandomState) and str(nx) == 'numpy':
+    if isinstance(seed, np.random.RandomState) and str(nx) == "numpy":
         Z = seed.randn(n_projections, d, 2)
     else:
         if seed is not None:
@@ -436,7 +478,9 @@ def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log
     Xps = Xps / nx.sqrt(nx.sum(Xps**2, -1, keepdims=True))
 
     # Get coordinates on [0,1[
-    Xps_coords = nx.reshape(get_coordinate_circle(nx.reshape(Xps, (-1, 2))), (n_projections, n))
+    Xps_coords = nx.reshape(
+        get_coordinate_circle(nx.reshape(Xps, (-1, 2))), (n_projections, n)
+    )
 
     projected_emd = semidiscrete_wasserstein2_unif_circle(Xps_coords.T, u_weights=a)
     res = nx.mean(projected_emd) ** (1 / 2)

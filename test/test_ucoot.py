@@ -4,25 +4,28 @@
 #
 # License: MIT License
 
-
 import itertools
 import numpy as np
 import ot
 import pytest
-from ot.gromov._unbalanced import unbalanced_co_optimal_transport, unbalanced_co_optimal_transport2
+from ot.gromov._unbalanced import (
+    unbalanced_co_optimal_transport,
+    unbalanced_co_optimal_transport2,
+)
 
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
-@pytest.mark.parametrize("unbalanced_solver, divergence", itertools.product(["mm", "lbfgsb"], ["kl", "l2"]))
+@pytest.mark.parametrize(
+    "unbalanced_solver, divergence", itertools.product(["mm", "lbfgsb"], ["kl", "l2"])
+)
 def test_sanity(nx, unbalanced_solver, divergence):
     n_samples = 5  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=4)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
     xt = xs[::-1].copy()
 
     px_s, px_f = ot.unif(n_samples), ot.unif(2)
@@ -43,21 +46,51 @@ def test_sanity(nx, unbalanced_solver, divergence):
     id_feature = np.eye(2, 2) / 2
 
     pi_sample, pi_feature = unbalanced_co_optimal_transport(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=0,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=0,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     pi_sample_nx, pi_feature_nx = unbalanced_co_optimal_transport(
-        X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=0,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs_nx,
+        Y=xt_nx,
+        wx_samp=px_s_nx,
+        wx_feat=px_f_nx,
+        wy_samp=py_s_nx,
+        wy_feat=py_f_nx,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=0,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
     pi_sample_nx = nx.to_numpy(pi_sample_nx)
     pi_feature_nx = nx.to_numpy(pi_feature_nx)
@@ -69,21 +102,51 @@ def test_sanity(nx, unbalanced_solver, divergence):
 
     # test divergence
     ucoot = unbalanced_co_optimal_transport2(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=0,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=0,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     ucoot_nx = unbalanced_co_optimal_transport2(
-        X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=0,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs_nx,
+        Y=xt_nx,
+        wx_samp=px_s_nx,
+        wx_feat=px_f_nx,
+        wy_samp=py_s_nx,
+        wy_feat=py_f_nx,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=0,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     ucoot_nx = nx.to_numpy(ucoot_nx)
@@ -93,15 +156,19 @@ def test_sanity(nx, unbalanced_solver, divergence):
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
-@pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]))
+@pytest.mark.parametrize(
+    "unbalanced_solver, divergence, eps",
+    itertools.product(
+        ["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]
+    ),
+)
 def test_init_plans(nx, unbalanced_solver, divergence, eps):
     n_samples = 5  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=4)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
     xt = xs[::-1].copy()
 
     px_s, px_f = ot.unif(n_samples), ot.unif(2)
@@ -121,21 +188,51 @@ def test_init_plans(nx, unbalanced_solver, divergence, eps):
 
     # test couplings
     pi_sample, pi_feature = unbalanced_co_optimal_transport(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     pi_sample_nx, pi_feature_nx = unbalanced_co_optimal_transport(
-        X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=(G0_samp_nx, G0_feat_nx), init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs_nx,
+        Y=xt_nx,
+        wx_samp=px_s_nx,
+        wx_feat=px_f_nx,
+        wy_samp=py_s_nx,
+        wy_feat=py_f_nx,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=(G0_samp_nx, G0_feat_nx),
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
     pi_sample_nx = nx.to_numpy(pi_sample_nx)
     pi_feature_nx = nx.to_numpy(pi_feature_nx)
@@ -145,21 +242,51 @@ def test_init_plans(nx, unbalanced_solver, divergence, eps):
 
     # test divergence
     ucoot = unbalanced_co_optimal_transport2(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     ucoot_nx = unbalanced_co_optimal_transport2(
-        X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=(G0_samp_nx, G0_feat_nx), init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs_nx,
+        Y=xt_nx,
+        wx_samp=px_s_nx,
+        wx_feat=px_f_nx,
+        wy_samp=py_s_nx,
+        wy_feat=py_f_nx,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=(G0_samp_nx, G0_feat_nx),
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     ucoot_nx = nx.to_numpy(ucoot_nx)
@@ -168,15 +295,19 @@ def test_init_plans(nx, unbalanced_solver, divergence, eps):
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
-@pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]))
+@pytest.mark.parametrize(
+    "unbalanced_solver, divergence, eps",
+    itertools.product(
+        ["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]
+    ),
+)
 def test_init_duals(nx, unbalanced_solver, divergence, eps):
     n_samples = 5  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=4)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
     xt = xs[::-1].copy()
 
     px_s, px_f = ot.unif(n_samples), ot.unif(2)
@@ -198,21 +329,51 @@ def test_init_duals(nx, unbalanced_solver, divergence, eps):
 
     # test couplings
     pi_sample, pi_feature = unbalanced_co_optimal_transport(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     pi_sample_nx, pi_feature_nx = unbalanced_co_optimal_transport(
-        X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=init_duals,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs_nx,
+        Y=xt_nx,
+        wx_samp=px_s_nx,
+        wx_feat=px_f_nx,
+        wy_samp=py_s_nx,
+        wy_feat=py_f_nx,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=init_duals,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
     pi_sample_nx = nx.to_numpy(pi_sample_nx)
     pi_feature_nx = nx.to_numpy(pi_feature_nx)
@@ -222,21 +383,51 @@ def test_init_duals(nx, unbalanced_solver, divergence, eps):
 
     # test divergence
     ucoot = unbalanced_co_optimal_transport2(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     ucoot_nx = unbalanced_co_optimal_transport2(
-        X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=init_duals,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs_nx,
+        Y=xt_nx,
+        wx_samp=px_s_nx,
+        wx_feat=px_f_nx,
+        wy_samp=py_s_nx,
+        wy_feat=py_f_nx,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=init_duals,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     ucoot_nx = nx.to_numpy(ucoot_nx)
@@ -245,15 +436,19 @@ def test_init_duals(nx, unbalanced_solver, divergence, eps):
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
-@pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1e-2]))
+@pytest.mark.parametrize(
+    "unbalanced_solver, divergence, eps",
+    itertools.product(
+        ["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1e-2]
+    ),
+)
 def test_linear_part(nx, unbalanced_solver, divergence, eps):
     n_samples = 5  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=4)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
     xt = xs[::-1].copy()
 
     px_s, px_f = ot.unif(n_samples), ot.unif(2)
@@ -278,21 +473,51 @@ def test_linear_part(nx, unbalanced_solver, divergence, eps):
 
     # test couplings
     pi_sample, pi_feature = unbalanced_co_optimal_transport(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=M_samp, M_feat=M_feat, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=M_samp,
+        M_feat=M_feat,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     pi_sample_nx, pi_feature_nx = unbalanced_co_optimal_transport(
-        X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=M_samp_nx, M_feat=M_feat_nx, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs_nx,
+        Y=xt_nx,
+        wx_samp=px_s_nx,
+        wx_feat=px_f_nx,
+        wy_samp=py_s_nx,
+        wy_feat=py_f_nx,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=M_samp_nx,
+        M_feat=M_feat_nx,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
     pi_sample_nx = nx.to_numpy(pi_sample_nx)
     pi_feature_nx = nx.to_numpy(pi_feature_nx)
@@ -302,21 +527,51 @@ def test_linear_part(nx, unbalanced_solver, divergence, eps):
 
     # test divergence
     ucoot = unbalanced_co_optimal_transport2(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=M_samp, M_feat=M_feat, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=M_samp,
+        M_feat=M_feat,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     ucoot_nx = unbalanced_co_optimal_transport2(
-        X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=M_samp_nx, M_feat=M_feat_nx, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs_nx,
+        Y=xt_nx,
+        wx_samp=px_s_nx,
+        wx_feat=px_f_nx,
+        wy_samp=py_s_nx,
+        wy_feat=py_f_nx,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=M_samp_nx,
+        M_feat=M_feat_nx,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     ucoot_nx = nx.to_numpy(ucoot_nx)
@@ -325,15 +580,19 @@ def test_linear_part(nx, unbalanced_solver, divergence, eps):
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
-@pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]))
+@pytest.mark.parametrize(
+    "unbalanced_solver, divergence, eps",
+    itertools.product(
+        ["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]
+    ),
+)
 def test_reg_marginals(nx, unbalanced_solver, divergence, eps):
     n_samples = 5  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=4)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
     xt = xs[::-1].copy()
 
     px_s, px_f = ot.unif(n_samples), ot.unif(2)
@@ -357,33 +616,77 @@ def test_reg_marginals(nx, unbalanced_solver, divergence, eps):
 
     # test couplings
     pi_sample, pi_feature = unbalanced_co_optimal_transport(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     # test divergence
     ucoot = unbalanced_co_optimal_transport2(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     for opt in list_options:
-
         pi_sample_nx, pi_feature_nx = unbalanced_co_optimal_transport(
-            X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-            reg_marginals=opt, epsilon=eps, divergence=divergence,
-            unbalanced_solver=unbalanced_solver, alpha=alpha,
-            M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-            max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-            log=False, verbose=False
+            X=xs_nx,
+            Y=xt_nx,
+            wx_samp=px_s_nx,
+            wx_feat=px_f_nx,
+            wy_samp=py_s_nx,
+            wy_feat=py_f_nx,
+            reg_marginals=opt,
+            epsilon=eps,
+            divergence=divergence,
+            unbalanced_solver=unbalanced_solver,
+            alpha=alpha,
+            M_samp=None,
+            M_feat=None,
+            init_pi=None,
+            init_duals=None,
+            max_iter=max_iter,
+            tol=tol,
+            max_iter_ot=max_iter_ot,
+            tol_ot=tol_ot,
+            log=False,
+            verbose=False,
         )
         pi_sample_nx = nx.to_numpy(pi_sample_nx)
         pi_feature_nx = nx.to_numpy(pi_feature_nx)
@@ -393,12 +696,28 @@ def test_reg_marginals(nx, unbalanced_solver, divergence, eps):
 
         # test divergence
         ucoot_nx = unbalanced_co_optimal_transport2(
-            X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-            reg_marginals=opt, epsilon=eps, divergence=divergence,
-            unbalanced_solver=unbalanced_solver, alpha=alpha,
-            M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-            max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-            method_sinkhorn="sinkhorn", log=False, verbose=False
+            X=xs_nx,
+            Y=xt_nx,
+            wx_samp=px_s_nx,
+            wx_feat=px_f_nx,
+            wy_samp=py_s_nx,
+            wy_feat=py_f_nx,
+            reg_marginals=opt,
+            epsilon=eps,
+            divergence=divergence,
+            unbalanced_solver=unbalanced_solver,
+            alpha=alpha,
+            M_samp=None,
+            M_feat=None,
+            init_pi=None,
+            init_duals=None,
+            max_iter=max_iter,
+            tol=tol,
+            max_iter_ot=max_iter_ot,
+            tol_ot=tol_ot,
+            method_sinkhorn="sinkhorn",
+            log=False,
+            verbose=False,
         )
 
         ucoot_nx = nx.to_numpy(ucoot_nx)
@@ -407,15 +726,19 @@ def test_reg_marginals(nx, unbalanced_solver, divergence, eps):
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
-@pytest.mark.parametrize("unbalanced_solver, divergence, alpha", itertools.product(["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]))
+@pytest.mark.parametrize(
+    "unbalanced_solver, divergence, alpha",
+    itertools.product(
+        ["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]
+    ),
+)
 def test_eps(nx, unbalanced_solver, divergence, alpha):
     n_samples = 5  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=4)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
     xt = xs[::-1].copy()
 
     px_s, px_f = ot.unif(n_samples), ot.unif(2)
@@ -440,33 +763,77 @@ def test_eps(nx, unbalanced_solver, divergence, alpha):
 
     # test couplings
     pi_sample, pi_feature = unbalanced_co_optimal_transport(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     # test divergence
     ucoot = unbalanced_co_optimal_transport2(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     for opt in list_options:
-
         pi_sample_nx, pi_feature_nx = unbalanced_co_optimal_transport(
-            X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-            reg_marginals=reg_m, epsilon=opt, divergence=divergence,
-            unbalanced_solver=unbalanced_solver, alpha=alpha,
-            M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-            max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-            log=False, verbose=False
+            X=xs_nx,
+            Y=xt_nx,
+            wx_samp=px_s_nx,
+            wx_feat=px_f_nx,
+            wy_samp=py_s_nx,
+            wy_feat=py_f_nx,
+            reg_marginals=reg_m,
+            epsilon=opt,
+            divergence=divergence,
+            unbalanced_solver=unbalanced_solver,
+            alpha=alpha,
+            M_samp=None,
+            M_feat=None,
+            init_pi=None,
+            init_duals=None,
+            max_iter=max_iter,
+            tol=tol,
+            max_iter_ot=max_iter_ot,
+            tol_ot=tol_ot,
+            log=False,
+            verbose=False,
         )
         pi_sample_nx = nx.to_numpy(pi_sample_nx)
         pi_feature_nx = nx.to_numpy(pi_feature_nx)
@@ -476,12 +843,27 @@ def test_eps(nx, unbalanced_solver, divergence, alpha):
 
         # test divergence
         ucoot_nx = unbalanced_co_optimal_transport2(
-            X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-            reg_marginals=reg_m, epsilon=opt, divergence=divergence,
-            unbalanced_solver=unbalanced_solver, alpha=alpha,
-            M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-            max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-            log=False, verbose=False
+            X=xs_nx,
+            Y=xt_nx,
+            wx_samp=px_s_nx,
+            wx_feat=px_f_nx,
+            wy_samp=py_s_nx,
+            wy_feat=py_f_nx,
+            reg_marginals=reg_m,
+            epsilon=opt,
+            divergence=divergence,
+            unbalanced_solver=unbalanced_solver,
+            alpha=alpha,
+            M_samp=None,
+            M_feat=None,
+            init_pi=None,
+            init_duals=None,
+            max_iter=max_iter,
+            tol=tol,
+            max_iter_ot=max_iter_ot,
+            tol_ot=tol_ot,
+            log=False,
+            verbose=False,
         )
 
         ucoot_nx = nx.to_numpy(ucoot_nx)
@@ -490,15 +872,19 @@ def test_eps(nx, unbalanced_solver, divergence, alpha):
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
-@pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1e-2]))
+@pytest.mark.parametrize(
+    "unbalanced_solver, divergence, eps",
+    itertools.product(
+        ["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1e-2]
+    ),
+)
 def test_alpha(nx, unbalanced_solver, divergence, eps):
     n_samples = 5  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=4)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
     xt = xs[::-1].copy()
 
     px_s, px_f = ot.unif(n_samples), ot.unif(2)
@@ -529,32 +915,77 @@ def test_alpha(nx, unbalanced_solver, divergence, eps):
 
     # test couplings
     pi_sample, pi_feature = unbalanced_co_optimal_transport(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=M_samp, M_feat=M_feat, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=M_samp,
+        M_feat=M_feat,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     # test divergence
     ucoot = unbalanced_co_optimal_transport2(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=M_samp, M_feat=M_feat, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=M_samp,
+        M_feat=M_feat,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     for opt in list_options:
         pi_sample_nx, pi_feature_nx = unbalanced_co_optimal_transport(
-            X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-            reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-            unbalanced_solver=unbalanced_solver, alpha=opt,
-            M_samp=M_samp_nx, M_feat=M_feat_nx, init_pi=None, init_duals=None,
-            max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-            log=False, verbose=False
+            X=xs_nx,
+            Y=xt_nx,
+            wx_samp=px_s_nx,
+            wx_feat=px_f_nx,
+            wy_samp=py_s_nx,
+            wy_feat=py_f_nx,
+            reg_marginals=reg_m,
+            epsilon=eps,
+            divergence=divergence,
+            unbalanced_solver=unbalanced_solver,
+            alpha=opt,
+            M_samp=M_samp_nx,
+            M_feat=M_feat_nx,
+            init_pi=None,
+            init_duals=None,
+            max_iter=max_iter,
+            tol=tol,
+            max_iter_ot=max_iter_ot,
+            tol_ot=tol_ot,
+            log=False,
+            verbose=False,
         )
         pi_sample_nx = nx.to_numpy(pi_sample_nx)
         pi_feature_nx = nx.to_numpy(pi_feature_nx)
@@ -563,12 +994,27 @@ def test_alpha(nx, unbalanced_solver, divergence, eps):
         np.testing.assert_allclose(pi_feature, pi_feature_nx, atol=1e-06)
 
         ucoot_nx = unbalanced_co_optimal_transport2(
-            X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-            reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-            unbalanced_solver=unbalanced_solver, alpha=opt,
-            M_samp=M_samp_nx, M_feat=M_feat_nx, init_pi=None, init_duals=None,
-            max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-            log=False, verbose=False
+            X=xs_nx,
+            Y=xt_nx,
+            wx_samp=px_s_nx,
+            wx_feat=px_f_nx,
+            wy_samp=py_s_nx,
+            wy_feat=py_f_nx,
+            reg_marginals=reg_m,
+            epsilon=eps,
+            divergence=divergence,
+            unbalanced_solver=unbalanced_solver,
+            alpha=opt,
+            M_samp=M_samp_nx,
+            M_feat=M_feat_nx,
+            init_pi=None,
+            init_duals=None,
+            max_iter=max_iter,
+            tol=tol,
+            max_iter_ot=max_iter_ot,
+            tol_ot=tol_ot,
+            log=False,
+            verbose=False,
         )
 
         ucoot_nx = nx.to_numpy(ucoot_nx)
@@ -577,15 +1023,19 @@ def test_alpha(nx, unbalanced_solver, divergence, eps):
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
-@pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]))
+@pytest.mark.parametrize(
+    "unbalanced_solver, divergence, eps",
+    itertools.product(
+        ["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]
+    ),
+)
 def test_log(nx, unbalanced_solver, divergence, eps):
     n_samples = 5  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=4)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
     xt = xs[::-1].copy()
 
     px_s, px_f = ot.unif(n_samples), ot.unif(2)
@@ -603,21 +1053,51 @@ def test_log(nx, unbalanced_solver, divergence, eps):
 
     # test couplings
     pi_sample, pi_feature = unbalanced_co_optimal_transport(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     pi_sample_nx, pi_feature_nx, log = unbalanced_co_optimal_transport(
-        X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=True, verbose=False
+        X=xs_nx,
+        Y=xt_nx,
+        wx_samp=px_s_nx,
+        wx_feat=px_f_nx,
+        wy_samp=py_s_nx,
+        wy_feat=py_f_nx,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=True,
+        verbose=False,
     )
     pi_sample_nx = nx.to_numpy(pi_sample_nx)
     pi_feature_nx = nx.to_numpy(pi_feature_nx)
@@ -627,21 +1107,51 @@ def test_log(nx, unbalanced_solver, divergence, eps):
 
     # test divergence
     ucoot = unbalanced_co_optimal_transport2(
-        X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=px_s,
+        wx_feat=px_f,
+        wy_samp=py_s,
+        wy_feat=py_f,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     ucoot_nx = unbalanced_co_optimal_transport2(
-        X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs_nx,
+        Y=xt_nx,
+        wx_samp=px_s_nx,
+        wx_feat=px_f_nx,
+        wy_samp=py_s_nx,
+        wy_feat=py_f_nx,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     ucoot_nx = nx.to_numpy(ucoot_nx)
@@ -650,15 +1160,19 @@ def test_log(nx, unbalanced_solver, divergence, eps):
 
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tensorflow backend")
-@pytest.mark.parametrize("unbalanced_solver, divergence, eps", itertools.product(["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]))
+@pytest.mark.parametrize(
+    "unbalanced_solver, divergence, eps",
+    itertools.product(
+        ["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"], ["kl", "l2"], [0, 1]
+    ),
+)
 def test_marginals(nx, unbalanced_solver, divergence, eps):
     n_samples = 5  # nb samples
 
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=4)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
     xt = xs[::-1].copy()
 
     px_s, px_f = ot.unif(n_samples), ot.unif(2)
@@ -676,21 +1190,51 @@ def test_marginals(nx, unbalanced_solver, divergence, eps):
 
     # test couplings
     pi_sample, pi_feature = unbalanced_co_optimal_transport(
-        X=xs, Y=xt, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=None,
+        wx_feat=None,
+        wy_samp=None,
+        wy_feat=None,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     pi_sample_nx, pi_feature_nx = unbalanced_co_optimal_transport(
-        X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs_nx,
+        Y=xt_nx,
+        wx_samp=px_s_nx,
+        wx_feat=px_f_nx,
+        wy_samp=py_s_nx,
+        wy_feat=py_f_nx,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
     pi_sample_nx = nx.to_numpy(pi_sample_nx)
     pi_feature_nx = nx.to_numpy(pi_feature_nx)
@@ -700,21 +1244,51 @@ def test_marginals(nx, unbalanced_solver, divergence, eps):
 
     # test divergence
     ucoot = unbalanced_co_optimal_transport2(
-        X=xs, Y=xt, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs,
+        Y=xt,
+        wx_samp=None,
+        wx_feat=None,
+        wy_samp=None,
+        wy_feat=None,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     ucoot_nx = unbalanced_co_optimal_transport2(
-        X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx, wy_feat=py_f_nx,
-        reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-        unbalanced_solver=unbalanced_solver, alpha=alpha,
-        M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-        max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-        log=False, verbose=False
+        X=xs_nx,
+        Y=xt_nx,
+        wx_samp=px_s_nx,
+        wx_feat=px_f_nx,
+        wy_samp=py_s_nx,
+        wy_feat=py_f_nx,
+        reg_marginals=reg_m,
+        epsilon=eps,
+        divergence=divergence,
+        unbalanced_solver=unbalanced_solver,
+        alpha=alpha,
+        M_samp=None,
+        M_feat=None,
+        init_pi=None,
+        init_duals=None,
+        max_iter=max_iter,
+        tol=tol,
+        max_iter_ot=max_iter_ot,
+        tol_ot=tol_ot,
+        log=False,
+        verbose=False,
     )
 
     ucoot_nx = nx.to_numpy(ucoot_nx)
@@ -729,8 +1303,7 @@ def test_raise_value_error(nx):
     mu_s = np.array([0, 0])
     cov_s = np.array([[1, 0], [0, 1]])
 
-    xs = ot.datasets.make_2D_samples_gauss(
-        n_samples, mu_s, cov_s, random_state=4)
+    xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s, random_state=4)
     xt = xs[::-1].copy()
 
     px_s, px_f = ot.unif(n_samples), ot.unif(2)
@@ -749,22 +1322,52 @@ def test_raise_value_error(nx):
     # raise error of divergence
     def ucoot_div(divergence):
         return unbalanced_co_optimal_transport(
-            X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-            reg_marginals=reg_m, epsilon=eps, divergence=divergence,
-            unbalanced_solver="mm", alpha=0,
-            M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-            max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-            log=False, verbose=False
+            X=xs,
+            Y=xt,
+            wx_samp=px_s,
+            wx_feat=px_f,
+            wy_samp=py_s,
+            wy_feat=py_f,
+            reg_marginals=reg_m,
+            epsilon=eps,
+            divergence=divergence,
+            unbalanced_solver="mm",
+            alpha=0,
+            M_samp=None,
+            M_feat=None,
+            init_pi=None,
+            init_duals=None,
+            max_iter=max_iter,
+            tol=tol,
+            max_iter_ot=max_iter_ot,
+            tol_ot=tol_ot,
+            log=False,
+            verbose=False,
         )
 
     def ucoot_div_nx(divergence):
         return unbalanced_co_optimal_transport(
-            X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx,
-            wy_feat=py_f_nx, reg_marginals=reg_m, epsilon=eps,
-            divergence=divergence, unbalanced_solver="mm", alpha=0,
-            M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-            max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-            log=False, verbose=False
+            X=xs_nx,
+            Y=xt_nx,
+            wx_samp=px_s_nx,
+            wx_feat=px_f_nx,
+            wy_samp=py_s_nx,
+            wy_feat=py_f_nx,
+            reg_marginals=reg_m,
+            epsilon=eps,
+            divergence=divergence,
+            unbalanced_solver="mm",
+            alpha=0,
+            M_samp=None,
+            M_feat=None,
+            init_pi=None,
+            init_duals=None,
+            max_iter=max_iter,
+            tol=tol,
+            max_iter_ot=max_iter_ot,
+            tol_ot=tol_ot,
+            log=False,
+            verbose=False,
         )
 
     np.testing.assert_raises(NotImplementedError, ucoot_div, "div_not_existed")
@@ -773,22 +1376,52 @@ def test_raise_value_error(nx):
     # raise error of solver
     def ucoot_solver(unbalanced_solver):
         return unbalanced_co_optimal_transport(
-            X=xs, Y=xt, wx_samp=px_s, wx_feat=px_f, wy_samp=py_s, wy_feat=py_f,
-            reg_marginals=reg_m, epsilon=eps, divergence="kl",
-            unbalanced_solver=unbalanced_solver, alpha=0,
-            M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-            max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-            log=False, verbose=False
+            X=xs,
+            Y=xt,
+            wx_samp=px_s,
+            wx_feat=px_f,
+            wy_samp=py_s,
+            wy_feat=py_f,
+            reg_marginals=reg_m,
+            epsilon=eps,
+            divergence="kl",
+            unbalanced_solver=unbalanced_solver,
+            alpha=0,
+            M_samp=None,
+            M_feat=None,
+            init_pi=None,
+            init_duals=None,
+            max_iter=max_iter,
+            tol=tol,
+            max_iter_ot=max_iter_ot,
+            tol_ot=tol_ot,
+            log=False,
+            verbose=False,
         )
 
     def ucoot_solver_nx(unbalanced_solver):
         return unbalanced_co_optimal_transport(
-            X=xs_nx, Y=xt_nx, wx_samp=px_s_nx, wx_feat=px_f_nx, wy_samp=py_s_nx,
-            wy_feat=py_f_nx, reg_marginals=reg_m, epsilon=eps,
-            divergence="kl", unbalanced_solver=unbalanced_solver, alpha=0,
-            M_samp=None, M_feat=None, init_pi=None, init_duals=None,
-            max_iter=max_iter, tol=tol, max_iter_ot=max_iter_ot, tol_ot=tol_ot,
-            log=False, verbose=False
+            X=xs_nx,
+            Y=xt_nx,
+            wx_samp=px_s_nx,
+            wx_feat=px_f_nx,
+            wy_samp=py_s_nx,
+            wy_feat=py_f_nx,
+            reg_marginals=reg_m,
+            epsilon=eps,
+            divergence="kl",
+            unbalanced_solver=unbalanced_solver,
+            alpha=0,
+            M_samp=None,
+            M_feat=None,
+            init_pi=None,
+            init_duals=None,
+            max_iter=max_iter,
+            tol=tol,
+            max_iter_ot=max_iter_ot,
+            tol_ot=tol_ot,
+            log=False,
+            verbose=False,
         )
 
     np.testing.assert_raises(NotImplementedError, ucoot_solver, "solver_not_existed")

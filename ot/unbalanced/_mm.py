@@ -13,8 +13,20 @@ from ..backend import get_backend
 from ..utils import list_to_array, get_parameter_pair
 
 
-def mm_unbalanced(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, numItermax=1000,
-                  stopThr=1e-15, verbose=False, log=False):
+def mm_unbalanced(
+    a,
+    b,
+    M,
+    reg_m,
+    c=None,
+    reg=0,
+    div="kl",
+    G0=None,
+    numItermax=1000,
+    stopThr=1e-15,
+    verbose=False,
+    log=False,
+):
     r"""
     Solve the unbalanced optimal transport problem and return the OT plan.
     The function solves the following optimization problem:
@@ -129,14 +141,14 @@ def mm_unbalanced(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, numItermax=1
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
     if log:
-        log = {'err': [], 'G': []}
+        log = {"err": [], "G": []}
 
     div = div.lower()
-    if div == 'kl':
+    if div == "kl":
         sum_r = reg + reg_m1 + reg_m2
         r1, r2, r = reg_m1 / sum_r, reg_m2 / sum_r, reg / sum_r
-        K = (a[:, None]**r1) * (b[None, :]**r2) * (c**r) * nx.exp(- M / sum_r)
-    elif div == 'l2':
+        K = (a[:, None] ** r1) * (b[None, :] ** r2) * (c**r) * nx.exp(-M / sum_r)
+    elif div == "l2":
         K = (reg_m1 * a[:, None]) + (reg_m2 * b[None, :]) + reg * c - M
         K = nx.maximum(K, nx.zeros((dim_a, dim_b), type_as=M))
     else:
@@ -145,36 +157,50 @@ def mm_unbalanced(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, numItermax=1
     for i in range(numItermax):
         Gprev = G
 
-        if div == 'kl':
-            Gd = (nx.sum(G, 1, keepdims=True)**r1) * (nx.sum(G, 0, keepdims=True)**r2) + 1e-16
-            G = K * G**(r1 + r2) / Gd
-        elif div == 'l2':
-            Gd = reg_m1 * nx.sum(G, 1, keepdims=True) + \
-                reg_m2 * nx.sum(G, 0, keepdims=True) + reg * G + 1e-16
+        if div == "kl":
+            Gd = (nx.sum(G, 1, keepdims=True) ** r1) * (
+                nx.sum(G, 0, keepdims=True) ** r2
+            ) + 1e-16
+            G = K * G ** (r1 + r2) / Gd
+        elif div == "l2":
+            Gd = (
+                reg_m1 * nx.sum(G, 1, keepdims=True)
+                + reg_m2 * nx.sum(G, 0, keepdims=True)
+                + reg * G
+                + 1e-16
+            )
             G = K * G / Gd
 
         err = nx.sqrt(nx.sum((G - Gprev) ** 2))
         if log:
-            log['err'].append(err)
-            log['G'].append(G)
+            log["err"].append(err)
+            log["G"].append(G)
         if verbose:
-            print('{:5d}|{:8e}|'.format(i, err))
+            print("{:5d}|{:8e}|".format(i, err))
         if err < stopThr:
             break
 
     if log:
         linear_cost = nx.sum(G * M)
-        log['cost'] = linear_cost
+        log["cost"] = linear_cost
 
         m1, m2 = nx.sum(G, 1), nx.sum(G, 0)
         if div == "kl":
-            cost = linear_cost + reg_m1 * nx.kl_div(m1, a, mass=True) + reg_m2 * nx.kl_div(m2, b, mass=True)
+            cost = (
+                linear_cost
+                + reg_m1 * nx.kl_div(m1, a, mass=True)
+                + reg_m2 * nx.kl_div(m2, b, mass=True)
+            )
             if reg > 0:
                 cost = cost + reg * nx.kl_div(G, c, mass=True)
         else:
-            cost = linear_cost + reg_m1 * 0.5 * nx.sum((m1 - a)**2) + reg_m2 * 0.5 * nx.sum((m2 - b)**2)
+            cost = (
+                linear_cost
+                + reg_m1 * 0.5 * nx.sum((m1 - a) ** 2)
+                + reg_m2 * 0.5 * nx.sum((m2 - b) ** 2)
+            )
             if reg > 0:
-                cost = cost + reg * 0.5 * nx.sum((G - c)**2)
+                cost = cost + reg * 0.5 * nx.sum((G - c) ** 2)
 
         log["total_cost"] = cost
 
@@ -183,8 +209,21 @@ def mm_unbalanced(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, numItermax=1
         return G
 
 
-def mm_unbalanced2(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, returnCost="linear",
-                   numItermax=1000, stopThr=1e-15, verbose=False, log=False):
+def mm_unbalanced2(
+    a,
+    b,
+    M,
+    reg_m,
+    c=None,
+    reg=0,
+    div="kl",
+    G0=None,
+    returnCost="linear",
+    numItermax=1000,
+    stopThr=1e-15,
+    verbose=False,
+    log=False,
+):
     r"""
     Solve the unbalanced optimal transport problem and return the OT cost.
     The function solves the following optimization problem:
@@ -280,14 +319,25 @@ def mm_unbalanced2(a, b, M, reg_m, c=None, reg=0, div='kl', G0=None, returnCost=
     ot.unbalanced.sinkhorn_unbalanced2 : Entropic regularized OT loss
     """
 
-    _, log_mm = mm_unbalanced(a, b, M, reg_m, c=c, reg=reg, div=div, G0=G0,
-                              numItermax=numItermax, stopThr=stopThr,
-                              verbose=verbose, log=True)
+    _, log_mm = mm_unbalanced(
+        a,
+        b,
+        M,
+        reg_m,
+        c=c,
+        reg=reg,
+        div=div,
+        G0=G0,
+        numItermax=numItermax,
+        stopThr=stopThr,
+        verbose=verbose,
+        log=True,
+    )
 
     if returnCost == "linear":
-        cost = log_mm['cost']
+        cost = log_mm["cost"]
     elif returnCost == "total":
-        cost = log_mm['total_cost']
+        cost = log_mm["total_cost"]
     else:
         raise ValueError("Unknown returnCost = {}".format(returnCost))
 

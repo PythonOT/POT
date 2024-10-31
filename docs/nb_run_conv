@@ -9,7 +9,6 @@ Created on Fri Sep  1 16:43:45 2017
 @author: rflamary
 """
 
-import sys
 import json
 import glob
 import hashlib
@@ -17,10 +16,10 @@ import subprocess
 
 import os
 
-cache_file = 'cache_nbrun'
+cache_file = "cache_nbrun"
 
-path_doc = 'source/auto_examples/'
-path_nb = '../notebooks/'
+path_doc = "source/auto_examples/"
+path_nb = "../notebooks/"
 
 
 def load_json(fname):
@@ -34,7 +33,7 @@ def load_json(fname):
 
 
 def save_json(fname, nb):
-    f = open(fname, 'w')
+    f = open(fname, "w")
     f.write(json.dumps(nb))
     f.close()
 
@@ -60,22 +59,45 @@ def to_update(fname, cache):
 
 
 def update(fname, cache):
-
-    # jupyter nbconvert --to notebook --execute mynotebook.ipynb --output targte
-    subprocess.check_call(['cp', path_doc + fname, path_nb])
-    print(' '.join(['jupyter', 'nbconvert', '--to', 'notebook', '--ExecutePreprocessor.timeout=600', '--execute', path_nb + fname, '--inplace']))
-    subprocess.check_call(['jupyter', 'nbconvert', '--to', 'notebook', '--ExecutePreprocessor.timeout=600', '--execute', path_nb + fname, '--inplace'])
+    # jupyter nbconvert --to notebook --execute mynotebook.ipynb --output target
+    subprocess.check_call(["cp", path_doc + fname, path_nb])
+    print(
+        " ".join(
+            [
+                "jupyter",
+                "nbconvert",
+                "--to",
+                "notebook",
+                "--ExecutePreprocessor.timeout=600",
+                "--execute",
+                path_nb + fname,
+                "--inplace",
+            ]
+        )
+    )
+    subprocess.check_call(
+        [
+            "jupyter",
+            "nbconvert",
+            "--to",
+            "notebook",
+            "--ExecutePreprocessor.timeout=600",
+            "--execute",
+            path_nb + fname,
+            "--inplace",
+        ]
+    )
     cache[fname] = md5(path_doc + fname)
 
 
 cache = load_json(cache_file)
 
-lst_file = glob.glob(path_doc + '*.ipynb')
+lst_file = glob.glob(path_doc + "*.ipynb")
 
 lst_file = [os.path.basename(name) for name in lst_file]
 
 for fname in lst_file:
     if to_update(fname, cache):
-        print('Updating file: {}'.format(fname))
+        print("Updating file: {}".format(fname))
         update(fname, cache)
         save_json(cache_file, cache)

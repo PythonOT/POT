@@ -20,7 +20,7 @@ International Conference on Machine Learning (ICML). 2019.
 #
 # License: MIT License
 
-#%% load libraries
+# %% load libraries
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -29,11 +29,11 @@ from scipy.sparse.csgraph import shortest_path
 import matplotlib.colors as mcol
 from matplotlib import cm
 from ot.gromov import fgw_barycenters
-#%% Graph functions
+# %% Graph functions
 
 
 def find_thresh(C, inf=0.5, sup=3, step=10):
-    """ Trick to find the adequate thresholds from where value of the C matrix are considered close enough to say that nodes are connected
+    """Trick to find the adequate thresholds from where value of the C matrix are considered close enough to say that nodes are connected
         The threshold is found by a linesearch between values "inf" and "sup" with "step" thresholds tested.
         The optimal threshold is the one which minimizes the reconstruction error between the shortest_path matrix coming from the thresholded adjacency matrix
         and the original matrix.
@@ -52,14 +52,14 @@ def find_thresh(C, inf=0.5, sup=3, step=10):
     search = np.linspace(inf, sup, step)
     for thresh in search:
         Cprime = sp_to_adjacency(C, 0, thresh)
-        SC = shortest_path(Cprime, method='D')
-        SC[SC == float('inf')] = 100
+        SC = shortest_path(Cprime, method="D")
+        SC[SC == float("inf")] = 100
         dist.append(np.linalg.norm(SC - C))
     return search[np.argmin(dist)], dist
 
 
 def sp_to_adjacency(C, threshinf=0.2, threshsup=1.8):
-    """ Thresholds the structure matrix in order to compute an adjacency matrix.
+    """Thresholds the structure matrix in order to compute an adjacency matrix.
     All values between threshinf and threshsup are considered representing connected nodes and set to 1. Else are set to 0
     Parameters
     ----------
@@ -84,9 +84,10 @@ def sp_to_adjacency(C, threshinf=0.2, threshsup=1.8):
     return C
 
 
-def build_noisy_circular_graph(N=20, mu=0, sigma=0.3, with_noise=False, structure_noise=False, p=None):
-    """ Create a noisy circular graph
-    """
+def build_noisy_circular_graph(
+    N=20, mu=0, sigma=0.3, with_noise=False, structure_noise=False, p=None
+):
+    """Create a noisy circular graph"""
     g = nx.Graph()
     g.add_nodes_from(list(range(N)))
     for i in range(N):
@@ -116,21 +117,22 @@ def build_noisy_circular_graph(N=20, mu=0, sigma=0.3, with_noise=False, structur
 
 def graph_colors(nx_graph, vmin=0, vmax=7):
     cnorm = mcol.Normalize(vmin=vmin, vmax=vmax)
-    cpick = cm.ScalarMappable(norm=cnorm, cmap='viridis')
+    cpick = cm.ScalarMappable(norm=cnorm, cmap="viridis")
     cpick.set_array([])
     val_map = {}
-    for k, v in nx.get_node_attributes(nx_graph, 'attr_name').items():
+    for k, v in nx.get_node_attributes(nx_graph, "attr_name").items():
         val_map[k] = cpick.to_rgba(v)
     colors = []
     for node in nx_graph.nodes():
         colors.append(val_map[node])
     return colors
 
+
 ##############################################################################
 # Generate data
 # -------------
 
-#%% circular dataset
+# %% circular dataset
 # We build a dataset of noisy circular graphs.
 # Noise is added on the structures by random connections and on the features by gaussian noise.
 
@@ -138,32 +140,47 @@ def graph_colors(nx_graph, vmin=0, vmax=7):
 np.random.seed(30)
 X0 = []
 for k in range(9):
-    X0.append(build_noisy_circular_graph(np.random.randint(15, 25), with_noise=True, structure_noise=True, p=3))
+    X0.append(
+        build_noisy_circular_graph(
+            np.random.randint(15, 25), with_noise=True, structure_noise=True, p=3
+        )
+    )
 
 ##############################################################################
 # Plot data
 # ---------
 
-#%% Plot graphs
+# %% Plot graphs
 
 plt.figure(figsize=(8, 10))
 for i in range(len(X0)):
     plt.subplot(3, 3, i + 1)
     g = X0[i]
     pos = nx.kamada_kawai_layout(g)
-    nx.draw(g, pos=pos, node_color=graph_colors(g, vmin=-1, vmax=1), with_labels=False, node_size=100)
-plt.suptitle('Dataset of noisy graphs. Color indicates the label', fontsize=20)
+    nx.draw(
+        g,
+        pos=pos,
+        node_color=graph_colors(g, vmin=-1, vmax=1),
+        with_labels=False,
+        node_size=100,
+    )
+plt.suptitle("Dataset of noisy graphs. Color indicates the label", fontsize=20)
 plt.show()
 
 ##############################################################################
 # Barycenter computation
 # ----------------------
 
-#%% We compute the barycenter using FGW. Structure matrices are computed using the shortest_path distance in the graph
+# %% We compute the barycenter using FGW. Structure matrices are computed using the shortest_path distance in the graph
 # Features distances are the euclidean distances
 Cs = [shortest_path(nx.adjacency_matrix(x).todense()) for x in X0]
 ps = [np.ones(len(x.nodes())) / len(x.nodes()) for x in X0]
-Ys = [np.array([v for (k, v) in nx.get_node_attributes(x, 'attr_name').items()]).reshape(-1, 1) for x in X0]
+Ys = [
+    np.array([v for (k, v) in nx.get_node_attributes(x, "attr_name").items()]).reshape(
+        -1, 1
+    )
+    for x in X0
+]
 lambdas = np.array([np.ones(len(Ys)) / len(Ys)]).ravel()
 sizebary = 15  # we choose a barycenter with 15 nodes
 
@@ -173,13 +190,17 @@ A, C, log = fgw_barycenters(sizebary, Ys, Cs, ps, lambdas, alpha=0.95, log=True)
 # Plot Barycenter
 # -------------------------
 
-#%% Create the barycenter
-bary = nx.from_numpy_array(sp_to_adjacency(C, threshinf=0, threshsup=find_thresh(C, sup=100, step=100)[0]))
+# %% Create the barycenter
+bary = nx.from_numpy_array(
+    sp_to_adjacency(C, threshinf=0, threshsup=find_thresh(C, sup=100, step=100)[0])
+)
 for i, v in enumerate(A.ravel()):
     bary.add_node(i, attr_name=v)
 
-#%%
+# %%
 pos = nx.kamada_kawai_layout(bary)
-nx.draw(bary, pos=pos, node_color=graph_colors(bary, vmin=-1, vmax=1), with_labels=False)
-plt.suptitle('Barycenter', fontsize=20)
+nx.draw(
+    bary, pos=pos, node_color=graph_colors(bary, vmin=-1, vmax=1), with_labels=False
+)
+plt.suptitle("Barycenter", fontsize=20)
 plt.show()

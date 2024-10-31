@@ -16,8 +16,9 @@ import warnings
 # License: MIT License
 
 
-def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
-                                 **kwargs):
+def partial_wasserstein_lagrange(
+    a, b, M, reg_m=None, nb_dummies=1, log=False, **kwargs
+):
     r"""
     Solves the partial optimal transport problem for the quadratic cost
     and returns the OT plan
@@ -125,8 +126,7 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
     nx = get_backend(a, b, M)
 
     if nx.sum(a) > 1 + 1e-15 or nx.sum(b) > 1 + 1e-15:  # 1e-15 for numerical errors
-        raise ValueError("Problem infeasible. Check that a and b are in the "
-                         "simplex")
+        raise ValueError("Problem infeasible. Check that a and b are in the " "simplex")
 
     if reg_m is None:
         reg_m = float(nx.max(M)) + 1
@@ -151,27 +151,31 @@ def partial_wasserstein_lagrange(a, b, M, reg_m=None, nb_dummies=1, log=False,
 
     # extend a, b, M with "reservoir" or "dummy" points
     M_extended = np.zeros((len(idx_x) + nb_dummies, len(idx_y) + nb_dummies))
-    M_extended[:len(idx_x), :len(idx_y)] = M_star[np.ix_(idx_x, idx_y)]
+    M_extended[: len(idx_x), : len(idx_y)] = M_star[np.ix_(idx_x, idx_y)]
 
-    a_extended = np.append(a[idx_x], [(np.sum(a) - np.sum(a[idx_x]) +
-                                       np.sum(b)) / nb_dummies] * nb_dummies)
-    b_extended = np.append(b[idx_y], [(np.sum(b) - np.sum(b[idx_y]) +
-                                       np.sum(a)) / nb_dummies] * nb_dummies)
+    a_extended = np.append(
+        a[idx_x], [(np.sum(a) - np.sum(a[idx_x]) + np.sum(b)) / nb_dummies] * nb_dummies
+    )
+    b_extended = np.append(
+        b[idx_y], [(np.sum(b) - np.sum(b[idx_y]) + np.sum(a)) / nb_dummies] * nb_dummies
+    )
 
-    gamma_extended, log_emd = emd(a_extended, b_extended, M_extended, log=True,
-                                  **kwargs)
+    gamma_extended, log_emd = emd(
+        a_extended, b_extended, M_extended, log=True, **kwargs
+    )
     gamma = np.zeros((len(a), len(b)))
     gamma[np.ix_(idx_x, idx_y)] = gamma_extended[:-nb_dummies, :-nb_dummies]
 
     # convert back to backend
     gamma = nx.from_numpy(gamma, type_as=M0)
 
-    if log_emd['warning'] is not None:
-        raise ValueError("Error in the EMD resolution: try to increase the"
-                         " number of dummy points")
-    log_emd['cost'] = nx.sum(gamma * M0)
-    log_emd['u'] = nx.from_numpy(log_emd['u'], type_as=a0)
-    log_emd['v'] = nx.from_numpy(log_emd['v'], type_as=b0)
+    if log_emd["warning"] is not None:
+        raise ValueError(
+            "Error in the EMD resolution: try to increase the" " number of dummy points"
+        )
+    log_emd["cost"] = nx.sum(gamma * M0)
+    log_emd["u"] = nx.from_numpy(log_emd["u"], type_as=a0)
+    log_emd["v"] = nx.from_numpy(log_emd["v"], type_as=b0)
 
     if log:
         return gamma, log_emd
@@ -283,11 +287,12 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     if m is None:
         return partial_wasserstein_lagrange(a, b, M, log=log, **kwargs)
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater"
-                         " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
     elif m > nx.min(nx.stack((nx.sum(a), nx.sum(b)))):
-        raise ValueError("Problem infeasible. Parameter m should lower or"
-                         " equal than min(|a|_1, |b|_1).")
+        raise ValueError(
+            "Problem infeasible. Parameter m should lower or"
+            " equal than min(|a|_1, |b|_1)."
+        )
 
     b_extension = nx.ones(nb_dummies, type_as=b) * (nx.sum(a) - m) / nb_dummies
     b_extended = nx.concatenate((b, b_extension))
@@ -295,22 +300,26 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     a_extended = nx.concatenate((a, a_extension))
     M_extension = nx.ones((nb_dummies, nb_dummies), type_as=M) * nx.max(M) * 2
     M_extended = nx.concatenate(
-        (nx.concatenate((M, nx.zeros((M.shape[0], M_extension.shape[1]))), axis=1),
-         nx.concatenate((nx.zeros((M_extension.shape[0], M.shape[1])), M_extension), axis=1)),
-        axis=0
+        (
+            nx.concatenate((M, nx.zeros((M.shape[0], M_extension.shape[1]))), axis=1),
+            nx.concatenate(
+                (nx.zeros((M_extension.shape[0], M.shape[1])), M_extension), axis=1
+            ),
+        ),
+        axis=0,
     )
 
-    gamma, log_emd = emd(a_extended, b_extended, M_extended, log=True,
-                         **kwargs)
+    gamma, log_emd = emd(a_extended, b_extended, M_extended, log=True, **kwargs)
 
-    gamma = gamma[:len(a), :len(b)]
+    gamma = gamma[: len(a), : len(b)]
 
-    if log_emd['warning'] is not None:
-        raise ValueError("Error in the EMD resolution: try to increase the"
-                         " number of dummy points")
-    log_emd['partial_w_dist'] = nx.sum(M * gamma)
-    log_emd['u'] = log_emd['u'][:len(a)]
-    log_emd['v'] = log_emd['v'][:len(b)]
+    if log_emd["warning"] is not None:
+        raise ValueError(
+            "Error in the EMD resolution: try to increase the" " number of dummy points"
+        )
+    log_emd["partial_w_dist"] = nx.sum(M * gamma)
+    log_emd["u"] = log_emd["u"][: len(a)]
+    log_emd["v"] = log_emd["v"][: len(b)]
 
     if log:
         return gamma, log_emd
@@ -404,9 +413,8 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
 
     nx = get_backend(a, b, M)
 
-    partial_gw, log_w = partial_wasserstein(a, b, M, m, nb_dummies, log=True,
-                                            **kwargs)
-    log_w['T'] = partial_gw
+    partial_gw, log_w = partial_wasserstein(a, b, M, m, nb_dummies, log=True, **kwargs)
+    log_w["T"] = partial_gw
 
     if log:
         return nx.sum(partial_gw * M), log_w
@@ -414,8 +422,9 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
         return nx.sum(partial_gw * M)
 
 
-def entropic_partial_wasserstein(a, b, M, reg, m=None, numItermax=1000,
-                                 stopThr=1e-100, verbose=False, log=False):
+def entropic_partial_wasserstein(
+    a, b, M, reg, m=None, numItermax=1000, stopThr=1e-100, verbose=False, log=False
+):
     r"""
     Solves the partial optimal transport problem
     and returns the OT plan
@@ -513,13 +522,14 @@ def entropic_partial_wasserstein(a, b, M, reg, m=None, numItermax=1000,
     if m is None:
         m = nx.min(nx.stack((nx.sum(a), nx.sum(b)))) * 1.0
     if m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater"
-                         " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
     if m > nx.min(nx.stack((nx.sum(a), nx.sum(b)))):
-        raise ValueError("Problem infeasible. Parameter m should lower or"
-                         " equal than min(|a|_1, |b|_1).")
+        raise ValueError(
+            "Problem infeasible. Parameter m should lower or"
+            " equal than min(|a|_1, |b|_1)."
+        )
 
-    log_e = {'err': []}
+    log_e = {"err": []}
 
     if nx.__name__ == "numpy":
         # Next 3 lines equivalent to K=nx.exp(-M/reg), but faster to compute
@@ -536,7 +546,7 @@ def entropic_partial_wasserstein(a, b, M, reg, m=None, numItermax=1000,
     q2 = nx.ones(K.shape, type_as=K)
     q3 = nx.ones(K.shape, type_as=K)
 
-    while (err > stopThr and cpt < numItermax):
+    while err > stopThr and cpt < numItermax:
         Kprev = K
         K = K * q1
         K1 = nx.dot(nx.diag(nx.minimum(a / nx.sum(K, axis=1), dx)), K)
@@ -551,20 +561,19 @@ def entropic_partial_wasserstein(a, b, M, reg, m=None, numItermax=1000,
         q3 = q3 * K2prev / K
 
         if nx.any(nx.isnan(K)) or nx.any(nx.isinf(K)):
-            print('Warning: numerical errors at iteration', cpt)
+            print("Warning: numerical errors at iteration", cpt)
             break
         if cpt % 10 == 0:
             err = nx.norm(Kprev - K)
             if log:
-                log_e['err'].append(err)
+                log_e["err"].append(err)
             if verbose:
                 if cpt % 200 == 0:
-                    print(
-                        '{:5s}|{:12s}'.format('It.', 'Err') + '\n' + '-' * 11)
-                print('{:5d}|{:8e}|'.format(cpt, err))
+                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 11)
+                print("{:5d}|{:8e}|".format(cpt, err))
 
         cpt = cpt + 1
-    log_e['partial_w_dist'] = nx.sum(M * K)
+    log_e["partial_w_dist"] = nx.sum(M * K)
     if log:
         return K, log_e
     else:
@@ -605,10 +614,10 @@ def gwgrad_partial(C1, C2, T):
     warnings.warn(
         "This function will be deprecated in a near future, please use "
         "ot.gromov.gwggrad` instead.",
-        stacklevel=2
+        stacklevel=2,
     )
-    cC1 = np.dot(C1 ** 2 / 2, np.dot(T, np.ones(C2.shape[0]).reshape(-1, 1)))
-    cC2 = np.dot(np.dot(np.ones(C1.shape[0]).reshape(1, -1), T), C2 ** 2 / 2)
+    cC1 = np.dot(C1**2 / 2, np.dot(T, np.ones(C2.shape[0]).reshape(-1, 1)))
+    cC2 = np.dot(np.dot(np.ones(C1.shape[0]).reshape(1, -1), T), C2**2 / 2)
     constC = cC1 + cC2
     A = -np.dot(C1, T).dot(C2.T)
     tens = constC + A
@@ -639,16 +648,28 @@ def gwloss_partial(C1, C2, T):
     warnings.warn(
         "This function will be deprecated in a near future, please use "
         "ot.gromov.gwloss` instead.",
-        stacklevel=2
+        stacklevel=2,
     )
 
     g = gwgrad_partial(C1, C2, T) * 0.5
     return np.sum(g * T)
 
 
-def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
-                               thres=1, numItermax=1000, tol=1e-7,
-                               log=False, verbose=False, **kwargs):
+def partial_gromov_wasserstein(
+    C1,
+    C2,
+    p,
+    q,
+    m=None,
+    nb_dummies=1,
+    G0=None,
+    thres=1,
+    numItermax=1000,
+    tol=1e-7,
+    log=False,
+    verbose=False,
+    **kwargs,
+):
     r"""
     Solves the partial optimal transport problem
     and returns the OT plan
@@ -753,20 +774,23 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     warnings.warn(
         "This function will be deprecated in a near future, please use "
         "ot.gromov.partial_gromov_wasserstein` instead.",
-        stacklevel=2
+        stacklevel=2,
     )
 
     if m is None:
         m = np.min((np.sum(p), np.sum(q)))
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater"
-                         " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
     elif m > np.min((np.sum(p), np.sum(q))):
-        raise ValueError("Problem infeasible. Parameter m should lower or"
-                         " equal than min(|a|_1, |b|_1).")
+        raise ValueError(
+            "Problem infeasible. Parameter m should lower or"
+            " equal than min(|a|_1, |b|_1)."
+        )
 
     if G0 is None:
-        G0 = np.outer(p, q) * m / (np.sum(p) * np.sum(q))  # make sure |G0|=m, G01_m\leq p, G0.T1_n\leq q.
+        G0 = (
+            np.outer(p, q) * m / (np.sum(p) * np.sum(q))
+        )  # make sure |G0|=m, G01_m\leq p, G0.T1_n\leq q.
 
     dim_G_extended = (len(p) + nb_dummies, len(q) + nb_dummies)
     q_extended = np.append(q, [(np.sum(p) - m) / nb_dummies] * nb_dummies)
@@ -776,36 +800,41 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     err = 1
 
     if log:
-        log = {'err': []}
+        log = {"err": []}
 
-    while (err > tol and cpt < numItermax):
-
+    while err > tol and cpt < numItermax:
         Gprev = np.copy(G0)
 
-        M = 0.5 * gwgrad_partial(C1, C2, G0)  # rescaling the gradient with 0.5 for line-search while not changing Gc
+        M = 0.5 * gwgrad_partial(
+            C1, C2, G0
+        )  # rescaling the gradient with 0.5 for line-search while not changing Gc
         M_emd = np.zeros(dim_G_extended)
-        M_emd[:len(p), :len(q)] = M
+        M_emd[: len(p), : len(q)] = M
         M_emd[-nb_dummies:, -nb_dummies:] = np.max(M) * 1e2
         M_emd = np.asarray(M_emd, dtype=np.float64)
 
         Gc, logemd = emd(p_extended, q_extended, M_emd, log=True, **kwargs)
 
-        if logemd['warning'] is not None:
-            raise ValueError("Error in the EMD resolution: try to increase the"
-                             " number of dummy points")
+        if logemd["warning"] is not None:
+            raise ValueError(
+                "Error in the EMD resolution: try to increase the"
+                " number of dummy points"
+            )
 
-        G0 = Gc[:len(p), :len(q)]
+        G0 = Gc[: len(p), : len(q)]
 
         if cpt % 10 == 0:  # to speed up the computations
             err = np.linalg.norm(G0 - Gprev)
             if log:
-                log['err'].append(err)
+                log["err"].append(err)
             if verbose:
                 if cpt % 200 == 0:
-                    print('{:5s}|{:12s}|{:12s}'.format(
-                        'It.', 'Err', 'Loss') + '\n' + '-' * 31)
-                print('{:5d}|{:8e}|{:8e}'.format(cpt, err,
-                                                 gwloss_partial(C1, C2, G0)))
+                    print(
+                        "{:5s}|{:12s}|{:12s}".format("It.", "Err", "Loss")
+                        + "\n"
+                        + "-" * 31
+                    )
+                print("{:5d}|{:8e}|{:8e}".format(cpt, err, gwloss_partial(C1, C2, G0)))
 
         deltaG = G0 - Gprev
         a = gwloss_partial(C1, C2, deltaG)
@@ -826,15 +855,27 @@ def partial_gromov_wasserstein(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
         cpt += 1
 
     if log:
-        log['partial_gw_dist'] = gwloss_partial(C1, C2, G0)
-        return G0[:len(p), :len(q)], log
+        log["partial_gw_dist"] = gwloss_partial(C1, C2, G0)
+        return G0[: len(p), : len(q)], log
     else:
-        return G0[:len(p), :len(q)]
+        return G0[: len(p), : len(q)]
 
 
-def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
-                                thres=1, numItermax=1000, tol=1e-7,
-                                log=False, verbose=False, **kwargs):
+def partial_gromov_wasserstein2(
+    C1,
+    C2,
+    p,
+    q,
+    m=None,
+    nb_dummies=1,
+    G0=None,
+    thres=1,
+    numItermax=1000,
+    tol=1e-7,
+    log=False,
+    verbose=False,
+    **kwargs,
+):
     r"""
     Solves the partial optimal transport problem
     and returns the partial Gromov-Wasserstein discrepancy
@@ -942,25 +983,34 @@ def partial_gromov_wasserstein2(C1, C2, p, q, m=None, nb_dummies=1, G0=None,
     warnings.warn(
         "This function will be deprecated in a near future, please use "
         "ot.gromov.partial_gromov_wasserstein2` instead.",
-        stacklevel=2
+        stacklevel=2,
     )
 
-    partial_gw, log_gw = partial_gromov_wasserstein(C1, C2, p, q, m,
-                                                    nb_dummies, G0, thres,
-                                                    numItermax, tol, True,
-                                                    verbose, **kwargs)
+    partial_gw, log_gw = partial_gromov_wasserstein(
+        C1, C2, p, q, m, nb_dummies, G0, thres, numItermax, tol, True, verbose, **kwargs
+    )
 
-    log_gw['T'] = partial_gw
+    log_gw["T"] = partial_gw
 
     if log:
-        return log_gw['partial_gw_dist'], log_gw
+        return log_gw["partial_gw_dist"], log_gw
     else:
-        return log_gw['partial_gw_dist']
+        return log_gw["partial_gw_dist"]
 
 
-def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
-                                        numItermax=1000, tol=1e-7, log=False,
-                                        verbose=False):
+def entropic_partial_gromov_wasserstein(
+    C1,
+    C2,
+    p,
+    q,
+    reg,
+    m=None,
+    G0=None,
+    numItermax=1000,
+    tol=1e-7,
+    log=False,
+    verbose=False,
+):
     r"""
     Returns the partial Gromov-Wasserstein transport between
     :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
@@ -1073,7 +1123,7 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
     warnings.warn(
         "This function will be deprecated in a near future, please use "
         "ot.gromov.entropic_partial_gromov_wasserstein` instead.",
-        stacklevel=2
+        stacklevel=2,
     )
 
     if G0 is None:
@@ -1082,44 +1132,57 @@ def entropic_partial_gromov_wasserstein(C1, C2, p, q, reg, m=None, G0=None,
     if m is None:
         m = np.min((np.sum(p), np.sum(q)))
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater"
-                         " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
     elif m > np.min((np.sum(p), np.sum(q))):
-        raise ValueError("Problem infeasible. Parameter m should lower or"
-                         " equal than min(|a|_1, |b|_1).")
+        raise ValueError(
+            "Problem infeasible. Parameter m should lower or"
+            " equal than min(|a|_1, |b|_1)."
+        )
 
     cpt = 0
     err = 1
 
-    loge = {'err': []}
+    loge = {"err": []}
 
-    while (err > tol and cpt < numItermax):
+    while err > tol and cpt < numItermax:
         Gprev = G0
         M_entr = gwgrad_partial(C1, C2, G0)
         G0 = entropic_partial_wasserstein(p, q, M_entr, reg, m)
         if cpt % 10 == 0:  # to speed up the computations
             err = np.linalg.norm(G0 - Gprev)
             if log:
-                loge['err'].append(err)
+                loge["err"].append(err)
             if verbose:
                 if cpt % 200 == 0:
-                    print('{:5s}|{:12s}|{:12s}'.format(
-                        'It.', 'Err', 'Loss') + '\n' + '-' * 31)
-                print('{:5d}|{:8e}|{:8e}'.format(cpt, err,
-                                                 gwloss_partial(C1, C2, G0)))
+                    print(
+                        "{:5s}|{:12s}|{:12s}".format("It.", "Err", "Loss")
+                        + "\n"
+                        + "-" * 31
+                    )
+                print("{:5d}|{:8e}|{:8e}".format(cpt, err, gwloss_partial(C1, C2, G0)))
 
         cpt += 1
 
     if log:
-        loge['partial_gw_dist'] = gwloss_partial(C1, C2, G0)
+        loge["partial_gw_dist"] = gwloss_partial(C1, C2, G0)
         return G0, loge
     else:
         return G0
 
 
-def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
-                                         numItermax=1000, tol=1e-7, log=False,
-                                         verbose=False):
+def entropic_partial_gromov_wasserstein2(
+    C1,
+    C2,
+    p,
+    q,
+    reg,
+    m=None,
+    G0=None,
+    numItermax=1000,
+    tol=1e-7,
+    log=False,
+    verbose=False,
+):
     r"""
     Returns the partial Gromov-Wasserstein discrepancy between
     :math:`(\mathbf{C_1}, \mathbf{p})` and :math:`(\mathbf{C_2}, \mathbf{q})`
@@ -1219,17 +1282,16 @@ def entropic_partial_gromov_wasserstein2(C1, C2, p, q, reg, m=None, G0=None,
     warnings.warn(
         "This function will be deprecated in a near future, please use "
         "ot.gromov.entropic_partial_gromov_wasserstein2` instead.",
-        stacklevel=2
+        stacklevel=2,
     )
 
-    partial_gw, log_gw = entropic_partial_gromov_wasserstein(C1, C2, p, q, reg,
-                                                             m, G0, numItermax,
-                                                             tol, True,
-                                                             verbose)
+    partial_gw, log_gw = entropic_partial_gromov_wasserstein(
+        C1, C2, p, q, reg, m, G0, numItermax, tol, True, verbose
+    )
 
-    log_gw['T'] = partial_gw
+    log_gw["T"] = partial_gw
 
     if log:
-        return log_gw['partial_gw_dist'], log_gw
+        return log_gw["partial_gw_dist"], log_gw
     else:
-        return log_gw['partial_gw_dist']
+        return log_gw["partial_gw_dist"]

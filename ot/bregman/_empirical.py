@@ -17,8 +17,8 @@ from ..backend import get_backend
 from ._sinkhorn import sinkhorn, sinkhorn2
 
 
-def get_sinkhorn_lazytensor(X_a, X_b, f, g, metric='sqeuclidean', reg=1e-1, nx=None):
-    r""" Get a LazyTensor of Sinkhorn solution from the dual potentials
+def get_sinkhorn_lazytensor(X_a, X_b, f, g, metric="sqeuclidean", reg=1e-1, nx=None):
+    r"""Get a LazyTensor of Sinkhorn solution from the dual potentials
 
     The returned LazyTensor is
     :math:`\mathbf{T} = exp(  \mathbf{f} \mathbf{1}_b^\top + \mathbf{1}_a \mathbf{g}^\top - \mathbf{C}/reg)`, where :math:`\mathbf{C}` is the pairwise metric matrix between samples :math:`\mathbf{X}_a` and :math:`\mathbf{X}_b`.
@@ -61,10 +61,24 @@ def get_sinkhorn_lazytensor(X_a, X_b, f, g, metric='sqeuclidean', reg=1e-1, nx=N
     return T
 
 
-def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
-                       numIterMax=10000, stopThr=1e-9, isLazy=False, batchSize=100, verbose=False,
-                       log=False, warn=True, warmstart=None, **kwargs):
-    r'''
+def empirical_sinkhorn(
+    X_s,
+    X_t,
+    reg,
+    a=None,
+    b=None,
+    metric="sqeuclidean",
+    numIterMax=10000,
+    stopThr=1e-9,
+    isLazy=False,
+    batchSize=100,
+    verbose=False,
+    log=False,
+    warn=True,
+    warmstart=None,
+    **kwargs,
+):
+    r"""
     Solve the entropic regularization optimal transport problem and return the
     OT matrix from empirical data
 
@@ -154,7 +168,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
 
     .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016).
         Scaling algorithms for unbalanced transport problems. arXiv preprint arXiv:1607.05816.
-    '''
+    """
 
     X_s, X_t = list_to_array(X_s, X_t)
 
@@ -181,8 +195,7 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         elif isinstance(batchSize, tuple) and len(batchSize) == 2:
             bs, bt = batchSize[0], batchSize[1]
         else:
-            raise ValueError(
-                "Batch size must be in integer or a tuple of two integers")
+            raise ValueError("Batch size must be in integer or a tuple of two integers")
 
         range_s, range_t = range(0, ns, bs), range(0, nt, bt)
 
@@ -193,35 +206,31 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         X_t_np = nx.to_numpy(X_t)
 
         for i_ot in range(numIterMax):
-
             lse_f_cols = []
             for i in range_s:
-                M = dist(X_s_np[i:i + bs, :], X_t_np, metric=metric)
+                M = dist(X_s_np[i : i + bs, :], X_t_np, metric=metric)
                 M = nx.from_numpy(M, type_as=a)
-                lse_f_cols.append(
-                    nx.logsumexp(g[None, :] - M / reg, axis=1)
-                )
+                lse_f_cols.append(nx.logsumexp(g[None, :] - M / reg, axis=1))
             lse_f = nx.concatenate(lse_f_cols, axis=0)
             f = log_a - lse_f
 
             lse_g_cols = []
             for j in range_t:
-                M = dist(X_s_np, X_t_np[j:j + bt, :], metric=metric)
+                M = dist(X_s_np, X_t_np[j : j + bt, :], metric=metric)
                 M = nx.from_numpy(M, type_as=a)
-                lse_g_cols.append(
-                    nx.logsumexp(f[:, None] - M / reg, axis=0)
-                )
+                lse_g_cols.append(nx.logsumexp(f[:, None] - M / reg, axis=0))
             lse_g = nx.concatenate(lse_g_cols, axis=0)
             g = log_b - lse_g
 
             if (i_ot + 1) % 10 == 0:
                 m1_cols = []
                 for i in range_s:
-                    M = dist(X_s_np[i:i + bs, :], X_t_np, metric=metric)
+                    M = dist(X_s_np[i : i + bs, :], X_t_np, metric=metric)
                     M = nx.from_numpy(M, type_as=a)
                     m1_cols.append(
-                        nx.sum(nx.exp(f[i:i + bs, None] +
-                                      g[None, :] - M / reg), axis=1)
+                        nx.sum(
+                            nx.exp(f[i : i + bs, None] + g[None, :] - M / reg), axis=1
+                        )
                     )
                 m1 = nx.concatenate(m1_cols, axis=0)
                 err = nx.sum(nx.abs(m1 - a))
@@ -229,16 +238,19 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
                     dict_log["err"].append(err)
 
                 if verbose and (i_ot + 1) % 100 == 0:
-                    print("Error in marginal at iteration {} = {}".format(
-                        i_ot + 1, err))
+                    print(
+                        "Error in marginal at iteration {} = {}".format(i_ot + 1, err)
+                    )
 
                 if err <= stopThr:
                     break
         else:
             if warn:
-                warnings.warn("Sinkhorn did not converge. You might want to "
-                              "increase the number of iterations `numItermax` "
-                              "or the regularization parameter `reg`.")
+                warnings.warn(
+                    "Sinkhorn did not converge. You might want to "
+                    "increase the number of iterations `numItermax` "
+                    "or the regularization parameter `reg`."
+                )
         if log:
             dict_log["u"] = f
             dict_log["v"] = g
@@ -251,19 +263,53 @@ def empirical_sinkhorn(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     else:
         M = dist(X_s, X_t, metric=metric)
         if log:
-            pi, log = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr,
-                               verbose=verbose, log=True, warmstart=warmstart, **kwargs)
+            pi, log = sinkhorn(
+                a,
+                b,
+                M,
+                reg,
+                numItermax=numIterMax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=True,
+                warmstart=warmstart,
+                **kwargs,
+            )
             return pi, log
         else:
-            pi = sinkhorn(a, b, M, reg, numItermax=numIterMax, stopThr=stopThr,
-                          verbose=verbose, log=False, warmstart=warmstart, **kwargs)
+            pi = sinkhorn(
+                a,
+                b,
+                M,
+                reg,
+                numItermax=numIterMax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=False,
+                warmstart=warmstart,
+                **kwargs,
+            )
             return pi
 
 
-def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
-                        numIterMax=10000, stopThr=1e-9, isLazy=False, batchSize=100,
-                        verbose=False, log=False, warn=True, warmstart=None, **kwargs):
-    r'''
+def empirical_sinkhorn2(
+    X_s,
+    X_t,
+    reg,
+    a=None,
+    b=None,
+    metric="sqeuclidean",
+    numIterMax=10000,
+    stopThr=1e-9,
+    isLazy=False,
+    batchSize=100,
+    verbose=False,
+    log=False,
+    warn=True,
+    warmstart=None,
+    **kwargs,
+):
+    r"""
     Solve the entropic regularization optimal transport problem from empirical
     data and return the OT loss
 
@@ -359,7 +405,7 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
     .. [10] Chizat, L., Peyré, G., Schmitzer, B., & Vialard, F. X. (2016).
         Scaling algorithms for unbalanced transport problems.
         arXiv preprint arXiv:1607.05816.
-    '''
+    """
 
     X_s, X_t = list_to_array(X_s, X_t)
 
@@ -373,22 +419,39 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
 
     if isLazy:
         if log:
-            f, g, dict_log = empirical_sinkhorn(X_s, X_t, reg, a, b, metric,
-                                                numIterMax=numIterMax,
-                                                stopThr=stopThr,
-                                                isLazy=isLazy,
-                                                batchSize=batchSize,
-                                                verbose=verbose, log=log,
-                                                warn=warn,
-                                                warmstart=warmstart)
+            f, g, dict_log = empirical_sinkhorn(
+                X_s,
+                X_t,
+                reg,
+                a,
+                b,
+                metric,
+                numIterMax=numIterMax,
+                stopThr=stopThr,
+                isLazy=isLazy,
+                batchSize=batchSize,
+                verbose=verbose,
+                log=log,
+                warn=warn,
+                warmstart=warmstart,
+            )
         else:
-            f, g = empirical_sinkhorn(X_s, X_t, reg, a, b, metric,
-                                      numIterMax=numIterMax,
-                                      stopThr=stopThr,
-                                      isLazy=isLazy, batchSize=batchSize,
-                                      verbose=verbose, log=log,
-                                      warn=warn,
-                                      warmstart=warmstart)
+            f, g = empirical_sinkhorn(
+                X_s,
+                X_t,
+                reg,
+                a,
+                b,
+                metric,
+                numIterMax=numIterMax,
+                stopThr=stopThr,
+                isLazy=isLazy,
+                batchSize=batchSize,
+                verbose=verbose,
+                log=log,
+                warn=warn,
+                warmstart=warmstart,
+            )
 
         bs = batchSize if isinstance(batchSize, int) else batchSize[0]
         range_s = range(0, ns, bs)
@@ -399,9 +462,9 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         X_t_np = nx.to_numpy(X_t)
 
         for i in range_s:
-            M_block = dist(X_s_np[i:i + bs, :], X_t_np, metric=metric)
+            M_block = dist(X_s_np[i : i + bs, :], X_t_np, metric=metric)
             M_block = nx.from_numpy(M_block, type_as=a)
-            pi_block = nx.exp(f[i:i + bs, None] + g[None, :] - M_block / reg)
+            pi_block = nx.exp(f[i : i + bs, None] + g[None, :] - M_block / reg)
             loss += nx.sum(M_block * pi_block)
 
         if log:
@@ -413,21 +476,53 @@ def empirical_sinkhorn2(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
         M = dist(X_s, X_t, metric=metric)
 
         if log:
-            sinkhorn_loss, log = sinkhorn2(a, b, M, reg, numItermax=numIterMax,
-                                           stopThr=stopThr, verbose=verbose, log=log,
-                                           warn=warn, warmstart=warmstart, **kwargs)
+            sinkhorn_loss, log = sinkhorn2(
+                a,
+                b,
+                M,
+                reg,
+                numItermax=numIterMax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=log,
+                warn=warn,
+                warmstart=warmstart,
+                **kwargs,
+            )
             return sinkhorn_loss, log
         else:
-            sinkhorn_loss = sinkhorn2(a, b, M, reg, numItermax=numIterMax,
-                                      stopThr=stopThr, verbose=verbose, log=log,
-                                      warn=warn, warmstart=warmstart, **kwargs)
+            sinkhorn_loss = sinkhorn2(
+                a,
+                b,
+                M,
+                reg,
+                numItermax=numIterMax,
+                stopThr=stopThr,
+                verbose=verbose,
+                log=log,
+                warn=warn,
+                warmstart=warmstart,
+                **kwargs,
+            )
             return sinkhorn_loss
 
 
-def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeuclidean',
-                                  numIterMax=10000, stopThr=1e-9, verbose=False,
-                                  log=False, warn=True, warmstart=None, **kwargs):
-    r'''
+def empirical_sinkhorn_divergence(
+    X_s,
+    X_t,
+    reg,
+    a=None,
+    b=None,
+    metric="sqeuclidean",
+    numIterMax=10000,
+    stopThr=1e-9,
+    verbose=False,
+    log=False,
+    warn=True,
+    warmstart=None,
+    **kwargs,
+):
+    r"""
     Compute the sinkhorn divergence loss from empirical data
 
     The function solves the following optimization problems and return the
@@ -533,7 +628,7 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
         Models with Sinkhorn Divergences,  Proceedings of the Twenty-First
         International Conference on Artificial Intelligence and Statistics,
         (AISTATS) 21, 2018
-    '''
+    """
     X_s, X_t = list_to_array(X_s, X_t)
 
     nx = get_backend(X_s, X_t)
@@ -545,50 +640,114 @@ def empirical_sinkhorn_divergence(X_s, X_t, reg, a=None, b=None, metric='sqeucli
         warmstart_b = (v, v)
 
     if log:
-        sinkhorn_loss_ab, log_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
-                                                       numIterMax=numIterMax, stopThr=stopThr,
-                                                       verbose=verbose, log=log, warn=warn,
-                                                       warmstart=warmstart, **kwargs)
+        sinkhorn_loss_ab, log_ab = empirical_sinkhorn2(
+            X_s,
+            X_t,
+            reg,
+            a,
+            b,
+            metric=metric,
+            numIterMax=numIterMax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            warn=warn,
+            warmstart=warmstart,
+            **kwargs,
+        )
 
-        sinkhorn_loss_a, log_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric,
-                                                     numIterMax=numIterMax, stopThr=stopThr,
-                                                     verbose=verbose, log=log, warn=warn,
-                                                     warmstart=warmstart_a, **kwargs)
+        sinkhorn_loss_a, log_a = empirical_sinkhorn2(
+            X_s,
+            X_s,
+            reg,
+            a,
+            a,
+            metric=metric,
+            numIterMax=numIterMax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            warn=warn,
+            warmstart=warmstart_a,
+            **kwargs,
+        )
 
-        sinkhorn_loss_b, log_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric,
-                                                     numIterMax=numIterMax, stopThr=stopThr,
-                                                     verbose=verbose, log=log, warn=warn,
-                                                     warmstart=warmstart_b, **kwargs)
+        sinkhorn_loss_b, log_b = empirical_sinkhorn2(
+            X_t,
+            X_t,
+            reg,
+            b,
+            b,
+            metric=metric,
+            numIterMax=numIterMax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            warn=warn,
+            warmstart=warmstart_b,
+            **kwargs,
+        )
 
-        sinkhorn_div = sinkhorn_loss_ab - 0.5 * \
-            (sinkhorn_loss_a + sinkhorn_loss_b)
+        sinkhorn_div = sinkhorn_loss_ab - 0.5 * (sinkhorn_loss_a + sinkhorn_loss_b)
 
         log = {}
-        log['sinkhorn_loss_ab'] = sinkhorn_loss_ab
-        log['sinkhorn_loss_a'] = sinkhorn_loss_a
-        log['sinkhorn_loss_b'] = sinkhorn_loss_b
-        log['log_sinkhorn_ab'] = log_ab
-        log['log_sinkhorn_a'] = log_a
-        log['log_sinkhorn_b'] = log_b
+        log["sinkhorn_loss_ab"] = sinkhorn_loss_ab
+        log["sinkhorn_loss_a"] = sinkhorn_loss_a
+        log["sinkhorn_loss_b"] = sinkhorn_loss_b
+        log["log_sinkhorn_ab"] = log_ab
+        log["log_sinkhorn_a"] = log_a
+        log["log_sinkhorn_b"] = log_b
 
         return nx.maximum(0, sinkhorn_div), log
 
     else:
-        sinkhorn_loss_ab = empirical_sinkhorn2(X_s, X_t, reg, a, b, metric=metric,
-                                               numIterMax=numIterMax, stopThr=stopThr,
-                                               verbose=verbose, log=log, warn=warn,
-                                               warmstart=warmstart, **kwargs)
+        sinkhorn_loss_ab = empirical_sinkhorn2(
+            X_s,
+            X_t,
+            reg,
+            a,
+            b,
+            metric=metric,
+            numIterMax=numIterMax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            warn=warn,
+            warmstart=warmstart,
+            **kwargs,
+        )
 
-        sinkhorn_loss_a = empirical_sinkhorn2(X_s, X_s, reg, a, a, metric=metric,
-                                              numIterMax=numIterMax, stopThr=stopThr,
-                                              verbose=verbose, log=log, warn=warn,
-                                              warmstart=warmstart_a, **kwargs)
+        sinkhorn_loss_a = empirical_sinkhorn2(
+            X_s,
+            X_s,
+            reg,
+            a,
+            a,
+            metric=metric,
+            numIterMax=numIterMax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            warn=warn,
+            warmstart=warmstart_a,
+            **kwargs,
+        )
 
-        sinkhorn_loss_b = empirical_sinkhorn2(X_t, X_t, reg, b, b, metric=metric,
-                                              numIterMax=numIterMax, stopThr=stopThr,
-                                              verbose=verbose, log=log, warn=warn,
-                                              warmstart=warmstart_b, **kwargs)
+        sinkhorn_loss_b = empirical_sinkhorn2(
+            X_t,
+            X_t,
+            reg,
+            b,
+            b,
+            metric=metric,
+            numIterMax=numIterMax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+            warn=warn,
+            warmstart=warmstart_b,
+            **kwargs,
+        )
 
-        sinkhorn_div = sinkhorn_loss_ab - 0.5 * \
-            (sinkhorn_loss_a + sinkhorn_loss_b)
+        sinkhorn_div = sinkhorn_loss_ab - 0.5 * (sinkhorn_loss_a + sinkhorn_loss_b)
         return nx.maximum(0, sinkhorn_div)

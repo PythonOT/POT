@@ -13,24 +13,54 @@ from .backend import get_backend
 from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
 from .bregman import sinkhorn_log, empirical_sinkhorn2, empirical_sinkhorn2_geomloss
 from .smooth import smooth_ot_dual
-from .gromov import (gromov_wasserstein2, fused_gromov_wasserstein2,
-                     entropic_gromov_wasserstein2, entropic_fused_gromov_wasserstein2,
-                     semirelaxed_gromov_wasserstein2, semirelaxed_fused_gromov_wasserstein2,
-                     entropic_semirelaxed_fused_gromov_wasserstein2,
-                     entropic_semirelaxed_gromov_wasserstein2,
-                     partial_gromov_wasserstein2,
-                     entropic_partial_gromov_wasserstein2)
+from .gromov import (
+    gromov_wasserstein2,
+    fused_gromov_wasserstein2,
+    entropic_gromov_wasserstein2,
+    entropic_fused_gromov_wasserstein2,
+    semirelaxed_gromov_wasserstein2,
+    semirelaxed_fused_gromov_wasserstein2,
+    entropic_semirelaxed_fused_gromov_wasserstein2,
+    entropic_semirelaxed_gromov_wasserstein2,
+    partial_gromov_wasserstein2,
+    entropic_partial_gromov_wasserstein2,
+)
 from .gaussian import empirical_bures_wasserstein_distance
 from .factored import factored_optimal_transport
 from .lowrank import lowrank_sinkhorn
 from .optim import cg
 
-lst_method_lazy = ['1d', 'gaussian', 'lowrank', 'factored', 'geomloss', 'geomloss_auto', 'geomloss_tensorized', 'geomloss_online', 'geomloss_multiscale']
+lst_method_lazy = [
+    "1d",
+    "gaussian",
+    "lowrank",
+    "factored",
+    "geomloss",
+    "geomloss_auto",
+    "geomloss_tensorized",
+    "geomloss_online",
+    "geomloss_multiscale",
+]
 
 
-def solve(M, a=None, b=None, reg=None, c=None, reg_type="KL", unbalanced=None,
-          unbalanced_type='KL', method=None, n_threads=1, max_iter=None, plan_init=None,
-          potentials_init=None, tol=None, verbose=False, grad='autodiff'):
+def solve(
+    M,
+    a=None,
+    b=None,
+    reg=None,
+    c=None,
+    reg_type="KL",
+    unbalanced=None,
+    unbalanced_type="KL",
+    method=None,
+    n_threads=1,
+    max_iter=None,
+    plan_init=None,
+    potentials_init=None,
+    tol=None,
+    verbose=False,
+    grad="autodiff",
+):
     r"""Solve the discrete optimal transport problem and return :any:`OTResult` object
 
     The function solves the following general optimal transport problem
@@ -273,38 +303,52 @@ def solve(M, a=None, b=None, reg=None, c=None, reg_type="KL", unbalanced=None,
     status = None
 
     if reg == 0:  # exact OT
-
         if unbalanced is None:  # Exact balanced OT
-
             # default values for EMD solver
             if max_iter is None:
                 max_iter = 1000000
 
-            value_linear, log = emd2(a, b, M, numItermax=max_iter, log=True, return_matrix=True, numThreads=n_threads)
+            value_linear, log = emd2(
+                a,
+                b,
+                M,
+                numItermax=max_iter,
+                log=True,
+                return_matrix=True,
+                numThreads=n_threads,
+            )
 
             value = value_linear
-            potentials = (log['u'], log['v'])
-            plan = log['G']
-            status = log["warning"] if log["warning"] is not None else 'Converged'
+            potentials = (log["u"], log["v"])
+            plan = log["G"]
+            status = log["warning"] if log["warning"] is not None else "Converged"
 
-        elif unbalanced_type.lower() in ['kl', 'l2']:  # unbalanced exact OT
-
+        elif unbalanced_type.lower() in ["kl", "l2"]:  # unbalanced exact OT
             # default values for exact unbalanced OT
             if max_iter is None:
                 max_iter = 1000
             if tol is None:
                 tol = 1e-12
 
-            plan, log = mm_unbalanced(a, b, M, reg_m=unbalanced, c=c, reg=reg,
-                                      div=unbalanced_type, numItermax=max_iter,
-                                      stopThr=tol, log=True,
-                                      verbose=verbose, G0=plan_init)
+            plan, log = mm_unbalanced(
+                a,
+                b,
+                M,
+                reg_m=unbalanced,
+                c=c,
+                reg=reg,
+                div=unbalanced_type,
+                numItermax=max_iter,
+                stopThr=tol,
+                log=True,
+                verbose=verbose,
+                G0=plan_init,
+            )
 
-            value_linear = log['cost']
-            value = log['total_cost']
+            value_linear = log["cost"]
+            value = log["total_cost"]
 
-        elif unbalanced_type.lower() == 'tv':
-
+        elif unbalanced_type.lower() == "tv":
             if max_iter is None:
                 max_iter = 1000
             if tol is None:
@@ -313,23 +357,34 @@ def solve(M, a=None, b=None, reg=None, c=None, reg_type="KL", unbalanced=None,
                 reg_type = reg_type.lower()
 
             plan, log = lbfgsb_unbalanced(
-                a, b, M, reg=reg, reg_m=unbalanced, c=c, reg_div=reg_type,
-                regm_div=unbalanced_type, numItermax=max_iter,
-                stopThr=tol, verbose=verbose, log=True, G0=plan_init
+                a,
+                b,
+                M,
+                reg=reg,
+                reg_m=unbalanced,
+                c=c,
+                reg_div=reg_type,
+                regm_div=unbalanced_type,
+                numItermax=max_iter,
+                stopThr=tol,
+                verbose=verbose,
+                log=True,
+                G0=plan_init,
             )
 
-            value_linear = log['cost']
-            value = log['total_cost']
+            value_linear = log["cost"]
+            value = log["total_cost"]
 
         else:
-            raise (NotImplementedError('Unknown unbalanced_type="{}"'.format(unbalanced_type)))
+            raise (
+                NotImplementedError(
+                    'Unknown unbalanced_type="{}"'.format(unbalanced_type)
+                )
+            )
 
     else:  # regularized OT
-
         if unbalanced is None:  # Balanced regularized OT
-
             if isinstance(reg_type, tuple):  # general solver
-
                 f, df = reg_type
 
                 if max_iter is None:
@@ -337,16 +392,26 @@ def solve(M, a=None, b=None, reg=None, c=None, reg_type="KL", unbalanced=None,
                 if tol is None:
                     tol = 1e-9
 
-                plan, log = cg(a, b, M, reg=reg, f=f, df=df, numItermax=max_iter,
-                               stopThr=tol, log=True, verbose=verbose, G0=plan_init)
+                plan, log = cg(
+                    a,
+                    b,
+                    M,
+                    reg=reg,
+                    f=f,
+                    df=df,
+                    numItermax=max_iter,
+                    stopThr=tol,
+                    log=True,
+                    verbose=verbose,
+                    G0=plan_init,
+                )
 
                 value_linear = nx.sum(M * plan)
-                value = log['loss'][-1]
-                potentials = (log['u'], log['v'])
+                value = log["loss"][-1]
+                potentials = (log["u"], log["v"])
 
-            elif reg_type.lower() in ['entropy', 'kl']:
-
-                if grad == 'envelope':  # if envelope then detach the input
+            elif reg_type.lower() in ["entropy", "kl"]:
+                if grad == "envelope":  # if envelope then detach the input
                     M0, a0, b0 = M, a, b
                     M, a, b = nx.detach(M, a, b)
 
@@ -356,64 +421,103 @@ def solve(M, a=None, b=None, reg=None, c=None, reg_type="KL", unbalanced=None,
                 if tol is None:
                     tol = 1e-9
 
-                plan, log = sinkhorn_log(a, b, M, reg=reg, numItermax=max_iter,
-                                         stopThr=tol, log=True,
-                                         verbose=verbose)
+                plan, log = sinkhorn_log(
+                    a,
+                    b,
+                    M,
+                    reg=reg,
+                    numItermax=max_iter,
+                    stopThr=tol,
+                    log=True,
+                    verbose=verbose,
+                )
 
                 value_linear = nx.sum(M * plan)
 
-                if reg_type.lower() == 'entropy':
+                if reg_type.lower() == "entropy":
                     value = value_linear + reg * nx.sum(plan * nx.log(plan + 1e-16))
                 else:
-                    value = value_linear + reg * nx.kl_div(plan, a[:, None] * b[None, :])
+                    value = value_linear + reg * nx.kl_div(
+                        plan, a[:, None] * b[None, :]
+                    )
 
-                potentials = (log['log_u'], log['log_v'])
+                potentials = (log["log_u"], log["log_v"])
 
-                if grad == 'envelope':  # set the gradient at convergence
+                if grad == "envelope":  # set the gradient at convergence
+                    value = nx.set_gradients(
+                        value,
+                        (M0, a0, b0),
+                        (
+                            plan,
+                            reg * (potentials[0] - potentials[0].mean()),
+                            reg * (potentials[1] - potentials[1].mean()),
+                        ),
+                    )
 
-                    value = nx.set_gradients(value, (M0, a0, b0),
-                                             (plan, reg * (potentials[0] - potentials[0].mean()), reg * (potentials[1] - potentials[1].mean())))
-
-            elif reg_type.lower() == 'l2':
-
+            elif reg_type.lower() == "l2":
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
                     tol = 1e-9
 
-                plan, log = smooth_ot_dual(a, b, M, reg=reg, numItermax=max_iter, stopThr=tol, log=True, verbose=verbose)
+                plan, log = smooth_ot_dual(
+                    a,
+                    b,
+                    M,
+                    reg=reg,
+                    numItermax=max_iter,
+                    stopThr=tol,
+                    log=True,
+                    verbose=verbose,
+                )
 
                 value_linear = nx.sum(M * plan)
                 value = value_linear + reg * nx.sum(plan**2)
-                potentials = (log['alpha'], log['beta'])
+                potentials = (log["alpha"], log["beta"])
 
             else:
-                raise (NotImplementedError('Not implemented reg_type="{}"'.format(reg_type)))
+                raise (
+                    NotImplementedError(
+                        'Not implemented reg_type="{}"'.format(reg_type)
+                    )
+                )
 
         else:  # unbalanced AND regularized OT
-
-            if not isinstance(reg_type, tuple) and reg_type.lower() in ['kl'] and unbalanced_type.lower() == 'kl':
-
+            if (
+                not isinstance(reg_type, tuple)
+                and reg_type.lower() in ["kl"]
+                and unbalanced_type.lower() == "kl"
+            ):
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
                     tol = 1e-9
 
                 plan, log = sinkhorn_knopp_unbalanced(
-                    a, b, M, reg=reg, reg_m=unbalanced,
-                    method=method, reg_type=reg_type, c=c,
+                    a,
+                    b,
+                    M,
+                    reg=reg,
+                    reg_m=unbalanced,
+                    method=method,
+                    reg_type=reg_type,
+                    c=c,
                     warmstart=potentials_init,
-                    numItermax=max_iter, stopThr=tol,
-                    verbose=verbose, log=True
+                    numItermax=max_iter,
+                    stopThr=tol,
+                    verbose=verbose,
+                    log=True,
                 )
 
-                value_linear = log['cost']
-                value = log['total_cost']
+                value_linear = log["cost"]
+                value = log["total_cost"]
 
-                potentials = (log['logu'], log['logv'])
+                potentials = (log["logu"], log["logv"])
 
-            elif (isinstance(reg_type, tuple) or reg_type.lower() in ['kl', 'l2', 'entropy']) and unbalanced_type.lower() in ['kl', 'l2', 'tv']:
-
+            elif (
+                isinstance(reg_type, tuple)
+                or reg_type.lower() in ["kl", "l2", "entropy"]
+            ) and unbalanced_type.lower() in ["kl", "l2", "tv"]:
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
@@ -422,29 +526,66 @@ def solve(M, a=None, b=None, reg=None, c=None, reg_type="KL", unbalanced=None,
                     reg_type = reg_type.lower()
 
                 plan, log = lbfgsb_unbalanced(
-                    a, b, M, reg=reg, reg_m=unbalanced, c=c, reg_div=reg_type,
-                    regm_div=unbalanced_type, numItermax=max_iter,
-                    stopThr=tol, verbose=verbose, log=True, G0=plan_init
+                    a,
+                    b,
+                    M,
+                    reg=reg,
+                    reg_m=unbalanced,
+                    c=c,
+                    reg_div=reg_type,
+                    regm_div=unbalanced_type,
+                    numItermax=max_iter,
+                    stopThr=tol,
+                    verbose=verbose,
+                    log=True,
+                    G0=plan_init,
                 )
 
-                value_linear = log['cost']
-                value = log['total_cost']
+                value_linear = log["cost"]
+                value = log["total_cost"]
 
             else:
-                raise (NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
+                raise (
+                    NotImplementedError(
+                        'Not implemented reg_type="{}" and unbalanced_type="{}"'.format(
+                            reg_type, unbalanced_type
+                        )
+                    )
+                )
 
-    res = OTResult(potentials=potentials, value=value,
-                   value_linear=value_linear, plan=plan, status=status, backend=nx)
+    res = OTResult(
+        potentials=potentials,
+        value=value,
+        value_linear=value_linear,
+        plan=plan,
+        status=status,
+        backend=nx,
+    )
 
     return res
 
 
-def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
-                 alpha=0.5, reg=None,
-                 reg_type="entropy", unbalanced=None, unbalanced_type='KL',
-                 n_threads=1, method=None, max_iter=None, plan_init=None, tol=None,
-                 verbose=False):
-    r""" Solve the discrete (Fused) Gromov-Wasserstein and return :any:`OTResult` object
+def solve_gromov(
+    Ca,
+    Cb,
+    M=None,
+    a=None,
+    b=None,
+    loss="L2",
+    symmetric=None,
+    alpha=0.5,
+    reg=None,
+    reg_type="entropy",
+    unbalanced=None,
+    unbalanced_type="KL",
+    n_threads=1,
+    method=None,
+    max_iter=None,
+    plan_init=None,
+    tol=None,
+    verbose=False,
+):
+    r"""Solve the discrete (Fused) Gromov-Wasserstein and return :any:`OTResult` object
 
     The function solves the following optimization problem:
 
@@ -686,100 +827,154 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
     status = None
     log = None
 
-    loss_dict = {'l2': 'square_loss', 'kl': 'kl_loss'}
+    loss_dict = {"l2": "square_loss", "kl": "kl_loss"}
 
     if loss.lower() not in loss_dict.keys():
         raise (NotImplementedError('Not implemented GW loss="{}"'.format(loss)))
     loss_fun = loss_dict[loss.lower()]
 
     if reg is None or reg == 0:  # exact OT
-
-        if unbalanced is None and unbalanced_type.lower() not in ['semirelaxed']:  # Exact balanced OT
-
+        if unbalanced is None and unbalanced_type.lower() not in [
+            "semirelaxed"
+        ]:  # Exact balanced OT
             if M is None or alpha == 1:  # Gromov-Wasserstein problem
-
                 # default values for solver
                 if max_iter is None:
                     max_iter = 10000
                 if tol is None:
                     tol = 1e-9
 
-                value, log = gromov_wasserstein2(Ca, Cb, a, b, loss_fun=loss_fun, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value, log = gromov_wasserstein2(
+                    Ca,
+                    Cb,
+                    a,
+                    b,
+                    loss_fun=loss_fun,
+                    log=True,
+                    symmetric=symmetric,
+                    max_iter=max_iter,
+                    G0=plan_init,
+                    tol_rel=tol,
+                    tol_abs=tol,
+                    verbose=verbose,
+                )
 
                 value_quad = value
                 if alpha == 1:  # set to 0 for FGW with alpha=1
                     value_linear = 0
-                plan = log['T']
-                potentials = (log['u'], log['v'])
+                plan = log["T"]
+                potentials = (log["u"], log["v"])
 
             elif alpha == 0:  # Wasserstein problem
-
                 # default values for EMD solver
                 if max_iter is None:
                     max_iter = 1000000
 
-                value_linear, log = emd2(a, b, M, numItermax=max_iter, log=True, return_matrix=True, numThreads=n_threads)
+                value_linear, log = emd2(
+                    a,
+                    b,
+                    M,
+                    numItermax=max_iter,
+                    log=True,
+                    return_matrix=True,
+                    numThreads=n_threads,
+                )
 
                 value = value_linear
-                potentials = (log['u'], log['v'])
-                plan = log['G']
-                status = log["warning"] if log["warning"] is not None else 'Converged'
+                potentials = (log["u"], log["v"])
+                plan = log["G"]
+                status = log["warning"] if log["warning"] is not None else "Converged"
                 value_quad = 0
 
             else:  # Fused Gromov-Wasserstein problem
-
                 # default values for solver
                 if max_iter is None:
                     max_iter = 10000
                 if tol is None:
                     tol = 1e-9
 
-                value, log = fused_gromov_wasserstein2(M, Ca, Cb, a, b, loss_fun=loss_fun, alpha=alpha, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value, log = fused_gromov_wasserstein2(
+                    M,
+                    Ca,
+                    Cb,
+                    a,
+                    b,
+                    loss_fun=loss_fun,
+                    alpha=alpha,
+                    log=True,
+                    symmetric=symmetric,
+                    max_iter=max_iter,
+                    G0=plan_init,
+                    tol_rel=tol,
+                    tol_abs=tol,
+                    verbose=verbose,
+                )
 
-                value_linear = log['lin_loss']
-                value_quad = log['quad_loss']
-                plan = log['T']
-                potentials = (log['u'], log['v'])
+                value_linear = log["lin_loss"]
+                value_quad = log["quad_loss"]
+                plan = log["T"]
+                potentials = (log["u"], log["v"])
 
-        elif unbalanced_type.lower() in ['semirelaxed']:  # Semi-relaxed  OT
-
+        elif unbalanced_type.lower() in ["semirelaxed"]:  # Semi-relaxed  OT
             if M is None or alpha == 1:  # Semi relaxed Gromov-Wasserstein problem
-
                 # default values for solver
                 if max_iter is None:
                     max_iter = 10000
                 if tol is None:
                     tol = 1e-9
 
-                value, log = semirelaxed_gromov_wasserstein2(Ca, Cb, a, loss_fun=loss_fun, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value, log = semirelaxed_gromov_wasserstein2(
+                    Ca,
+                    Cb,
+                    a,
+                    loss_fun=loss_fun,
+                    log=True,
+                    symmetric=symmetric,
+                    max_iter=max_iter,
+                    G0=plan_init,
+                    tol_rel=tol,
+                    tol_abs=tol,
+                    verbose=verbose,
+                )
 
                 value_quad = value
                 if alpha == 1:  # set to 0 for FGW with alpha=1
                     value_linear = 0
-                plan = log['T']
+                plan = log["T"]
                 # potentials = (log['u'], log['v']) TODO
 
             else:  # Semi relaxed Fused Gromov-Wasserstein problem
-
                 # default values for solver
                 if max_iter is None:
                     max_iter = 10000
                 if tol is None:
                     tol = 1e-9
 
-                value, log = semirelaxed_fused_gromov_wasserstein2(M, Ca, Cb, a, loss_fun=loss_fun, alpha=alpha, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value, log = semirelaxed_fused_gromov_wasserstein2(
+                    M,
+                    Ca,
+                    Cb,
+                    a,
+                    loss_fun=loss_fun,
+                    alpha=alpha,
+                    log=True,
+                    symmetric=symmetric,
+                    max_iter=max_iter,
+                    G0=plan_init,
+                    tol_rel=tol,
+                    tol_abs=tol,
+                    verbose=verbose,
+                )
 
-                value_linear = log['lin_loss']
-                value_quad = log['quad_loss']
-                plan = log['T']
+                value_linear = log["lin_loss"]
+                value_quad = log["quad_loss"]
+                plan = log["T"]
                 # potentials = (log['u'], log['v']) TODO
 
-        elif unbalanced_type.lower() in ['partial']:  # Partial OT
-
+        elif unbalanced_type.lower() in ["partial"]:  # Partial OT
             if M is None:  # Partial Gromov-Wasserstein problem
-
                 if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
-                    raise (ValueError('Partial GW mass given in reg is too large'))
+                    raise (ValueError("Partial GW mass given in reg is too large"))
 
                 # default values for solver
                 if max_iter is None:
@@ -787,118 +982,200 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 if tol is None:
                     tol = 1e-7
 
-                value, log = partial_gromov_wasserstein2(Ca, Cb, a, b, m=unbalanced, loss_fun=loss_fun, log=True, numItermax=max_iter, G0=plan_init, tol=tol, symmetric=symmetric, verbose=verbose)
+                value, log = partial_gromov_wasserstein2(
+                    Ca,
+                    Cb,
+                    a,
+                    b,
+                    m=unbalanced,
+                    loss_fun=loss_fun,
+                    log=True,
+                    numItermax=max_iter,
+                    G0=plan_init,
+                    tol=tol,
+                    symmetric=symmetric,
+                    verbose=verbose,
+                )
 
                 value_quad = value
-                plan = log['T']
+                plan = log["T"]
                 # potentials = (log['u'], log['v']) TODO
 
             else:  # partial FGW
+                raise (NotImplementedError("Partial FGW not implemented yet"))
 
-                raise (NotImplementedError('Partial FGW not implemented yet'))
-
-        elif unbalanced_type.lower() in ['kl', 'l2']:  # unbalanced exact OT
-
+        elif unbalanced_type.lower() in ["kl", "l2"]:  # unbalanced exact OT
             raise (NotImplementedError('Unbalanced_type="{}"'.format(unbalanced_type)))
 
         else:
-            raise (NotImplementedError('Unknown unbalanced_type="{}"'.format(unbalanced_type)))
+            raise (
+                NotImplementedError(
+                    'Unknown unbalanced_type="{}"'.format(unbalanced_type)
+                )
+            )
 
     else:  # regularized OT
-
-        if unbalanced is None and unbalanced_type.lower() not in ['semirelaxed']:  # Balanced regularized OT
-
-            if reg_type.lower() in ['entropy'] and (M is None or alpha == 1):  # Entropic Gromov-Wasserstein problem
-
+        if unbalanced is None and unbalanced_type.lower() not in [
+            "semirelaxed"
+        ]:  # Balanced regularized OT
+            if reg_type.lower() in ["entropy"] and (
+                M is None or alpha == 1
+            ):  # Entropic Gromov-Wasserstein problem
                 # default values for solver
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
                     tol = 1e-9
                 if method is None:
-                    method = 'PGD'
+                    method = "PGD"
 
-                value_quad, log = entropic_gromov_wasserstein2(Ca, Cb, a, b, epsilon=reg, loss_fun=loss_fun, log=True, symmetric=symmetric, solver=method, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value_quad, log = entropic_gromov_wasserstein2(
+                    Ca,
+                    Cb,
+                    a,
+                    b,
+                    epsilon=reg,
+                    loss_fun=loss_fun,
+                    log=True,
+                    symmetric=symmetric,
+                    solver=method,
+                    max_iter=max_iter,
+                    G0=plan_init,
+                    tol_rel=tol,
+                    tol_abs=tol,
+                    verbose=verbose,
+                )
 
-                plan = log['T']
+                plan = log["T"]
                 value_linear = 0
                 value = value_quad + reg * nx.sum(plan * nx.log(plan + 1e-16))
                 # potentials = (log['log_u'], log['log_v'])  #TODO
 
-            elif reg_type.lower() in ['entropy'] and M is not None and alpha == 0:  # Entropic Wasserstein problem
-
+            elif (
+                reg_type.lower() in ["entropy"] and M is not None and alpha == 0
+            ):  # Entropic Wasserstein problem
                 # default values for solver
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
                     tol = 1e-9
 
-                plan, log = sinkhorn_log(a, b, M, reg=reg, numItermax=max_iter,
-                                         stopThr=tol, log=True,
-                                         verbose=verbose)
+                plan, log = sinkhorn_log(
+                    a,
+                    b,
+                    M,
+                    reg=reg,
+                    numItermax=max_iter,
+                    stopThr=tol,
+                    log=True,
+                    verbose=verbose,
+                )
 
                 value_linear = nx.sum(M * plan)
                 value = value_linear + reg * nx.sum(plan * nx.log(plan + 1e-16))
-                potentials = (log['log_u'], log['log_v'])
+                potentials = (log["log_u"], log["log_v"])
 
-            elif reg_type.lower() in ['entropy'] and M is not None:  # Entropic Fused Gromov-Wasserstein problem
-
+            elif (
+                reg_type.lower() in ["entropy"] and M is not None
+            ):  # Entropic Fused Gromov-Wasserstein problem
                 # default values for solver
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
                     tol = 1e-9
                 if method is None:
-                    method = 'PGD'
+                    method = "PGD"
 
-                value_noreg, log = entropic_fused_gromov_wasserstein2(M, Ca, Cb, a, b, loss_fun=loss_fun, alpha=alpha, log=True, symmetric=symmetric, solver=method, max_iter=max_iter, G0=plan_init, tol_rel=tol, tol_abs=tol, verbose=verbose)
+                value_noreg, log = entropic_fused_gromov_wasserstein2(
+                    M,
+                    Ca,
+                    Cb,
+                    a,
+                    b,
+                    loss_fun=loss_fun,
+                    alpha=alpha,
+                    log=True,
+                    symmetric=symmetric,
+                    solver=method,
+                    max_iter=max_iter,
+                    G0=plan_init,
+                    tol_rel=tol,
+                    tol_abs=tol,
+                    verbose=verbose,
+                )
 
-                value_linear = log['lin_loss']
-                value_quad = log['quad_loss']
-                plan = log['T']
+                value_linear = log["lin_loss"]
+                value_quad = log["quad_loss"]
+                plan = log["T"]
                 # potentials = (log['u'], log['v'])
                 value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
 
             else:
-                raise (NotImplementedError('Not implemented reg_type="{}"'.format(reg_type)))
+                raise (
+                    NotImplementedError(
+                        'Not implemented reg_type="{}"'.format(reg_type)
+                    )
+                )
 
-        elif unbalanced_type.lower() in ['semirelaxed']:  # Semi-relaxed  OT
-
-            if reg_type.lower() in ['entropy'] and (M is None or alpha == 1):  # Entropic Semi-relaxed Gromov-Wasserstein problem
-
+        elif unbalanced_type.lower() in ["semirelaxed"]:  # Semi-relaxed  OT
+            if reg_type.lower() in ["entropy"] and (
+                M is None or alpha == 1
+            ):  # Entropic Semi-relaxed Gromov-Wasserstein problem
                 # default values for solver
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
                     tol = 1e-9
 
-                value_quad, log = entropic_semirelaxed_gromov_wasserstein2(Ca, Cb, a, epsilon=reg, loss_fun=loss_fun, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol=tol, verbose=verbose)
+                value_quad, log = entropic_semirelaxed_gromov_wasserstein2(
+                    Ca,
+                    Cb,
+                    a,
+                    epsilon=reg,
+                    loss_fun=loss_fun,
+                    log=True,
+                    symmetric=symmetric,
+                    max_iter=max_iter,
+                    G0=plan_init,
+                    tol=tol,
+                    verbose=verbose,
+                )
 
-                plan = log['T']
+                plan = log["T"]
                 value_linear = 0
                 value = value_quad + reg * nx.sum(plan * nx.log(plan + 1e-16))
 
             else:  # Entropic Semi-relaxed FGW problem
-
                 # default values for solver
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
                     tol = 1e-9
 
-                value_noreg, log = entropic_semirelaxed_fused_gromov_wasserstein2(M, Ca, Cb, a, loss_fun=loss_fun, alpha=alpha, log=True, symmetric=symmetric, max_iter=max_iter, G0=plan_init, tol=tol, verbose=verbose)
+                value_noreg, log = entropic_semirelaxed_fused_gromov_wasserstein2(
+                    M,
+                    Ca,
+                    Cb,
+                    a,
+                    loss_fun=loss_fun,
+                    alpha=alpha,
+                    log=True,
+                    symmetric=symmetric,
+                    max_iter=max_iter,
+                    G0=plan_init,
+                    tol=tol,
+                    verbose=verbose,
+                )
 
-                value_linear = log['lin_loss']
-                value_quad = log['quad_loss']
-                plan = log['T']
+                value_linear = log["lin_loss"]
+                value_quad = log["quad_loss"]
+                plan = log["T"]
                 value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
 
-        elif unbalanced_type.lower() in ['partial']:  # Partial OT
-
+        elif unbalanced_type.lower() in ["partial"]:  # Partial OT
             if M is None:  # Partial Gromov-Wasserstein problem
-
                 if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
-                    raise (ValueError('Partial GW mass given in reg is too large'))
+                    raise (ValueError("Partial GW mass given in reg is too large"))
 
                 # default values for solver
                 if max_iter is None:
@@ -906,31 +1183,77 @@ def solve_gromov(Ca, Cb, M=None, a=None, b=None, loss='L2', symmetric=None,
                 if tol is None:
                     tol = 1e-7
 
-                value_quad, log = entropic_partial_gromov_wasserstein2(Ca, Cb, a, b, reg=reg, loss_fun=loss_fun, m=unbalanced, log=True, numItermax=max_iter, G0=plan_init, tol=tol, symmetric=symmetric, verbose=verbose)
+                value_quad, log = entropic_partial_gromov_wasserstein2(
+                    Ca,
+                    Cb,
+                    a,
+                    b,
+                    reg=reg,
+                    loss_fun=loss_fun,
+                    m=unbalanced,
+                    log=True,
+                    numItermax=max_iter,
+                    G0=plan_init,
+                    tol=tol,
+                    symmetric=symmetric,
+                    verbose=verbose,
+                )
 
                 value_quad = value
-                plan = log['T']
+                plan = log["T"]
                 # potentials = (log['u'], log['v']) TODO
 
             else:  # partial FGW
-
-                raise (NotImplementedError('Partial entropic FGW not implemented yet'))
+                raise (NotImplementedError("Partial entropic FGW not implemented yet"))
 
         else:  # unbalanced AND regularized OT
+            raise (
+                NotImplementedError(
+                    'Not implemented reg_type="{}" and unbalanced_type="{}"'.format(
+                        reg_type, unbalanced_type
+                    )
+                )
+            )
 
-            raise (NotImplementedError('Not implemented reg_type="{}" and unbalanced_type="{}"'.format(reg_type, unbalanced_type)))
-
-    res = OTResult(potentials=potentials, value=value,
-                   value_linear=value_linear, value_quad=value_quad, plan=plan, status=status, backend=nx, log=log)
+    res = OTResult(
+        potentials=potentials,
+        value=value,
+        value_linear=value_linear,
+        value_quad=value_quad,
+        plan=plan,
+        status=status,
+        backend=nx,
+        log=log,
+    )
 
     return res
 
 
-def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, c=None, reg_type="KL",
-                 unbalanced=None,
-                 unbalanced_type='KL', lazy=False, batch_size=None, method=None, n_threads=1, max_iter=None, plan_init=None, rank=100, scaling=0.95,
-                 potentials_init=None, X_init=None, tol=None, verbose=False,
-                 grad='autodiff'):
+def solve_sample(
+    X_a,
+    X_b,
+    a=None,
+    b=None,
+    metric="sqeuclidean",
+    reg=None,
+    c=None,
+    reg_type="KL",
+    unbalanced=None,
+    unbalanced_type="KL",
+    lazy=False,
+    batch_size=None,
+    method=None,
+    n_threads=1,
+    max_iter=None,
+    plan_init=None,
+    rank=100,
+    scaling=0.95,
+    potentials_init=None,
+    X_init=None,
+    tol=None,
+    verbose=False,
+    grad="autodiff",
+):
     r"""Solve the discrete optimal transport problem using the samples in the source and target domains.
 
     The function solves the following general optimal transport problem
@@ -1193,7 +1516,7 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, c=Non
     - **Gaussian Bures-Wasserstein [2]** (when ``method='gaussian'``):
 
     This method computes the Gaussian Bures-Wasserstein distance between two
-    Gaussian distributions estimated from teh empirical distributions
+    Gaussian distributions estimated from the empirical distributions
 
     .. math::
         \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \mathcal{B}(\Sigma_s, \Sigma_t)^{2}
@@ -1273,16 +1596,31 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, c=Non
         lazy = True
 
     if not lazy:  # default non lazy solver calls ot.solve
-
         # compute cost matrix M and use solve function
         M = dist(X_a, X_b, metric)
 
-        res = solve(M, a, b, reg, c, reg_type, unbalanced, unbalanced_type, method, n_threads, max_iter, plan_init, potentials_init, tol, verbose, grad)
+        res = solve(
+            M,
+            a,
+            b,
+            reg,
+            c,
+            reg_type,
+            unbalanced,
+            unbalanced_type,
+            method,
+            n_threads,
+            max_iter,
+            plan_init,
+            potentials_init,
+            tol,
+            verbose,
+            grad,
+        )
 
         return res
 
     else:
-
         # Detect backend
         nx = get_backend(X_a, X_b, a, b)
 
@@ -1295,35 +1633,41 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, c=Non
         status = None
         log = None
 
-        method = method.lower() if method is not None else ''
+        method = method.lower() if method is not None else ""
 
-        if method == '1d':  # Wasserstein 1d (parallel on all dimensions)
-            if metric == 'sqeuclidean':
+        if method == "1d":  # Wasserstein 1d (parallel on all dimensions)
+            if metric == "sqeuclidean":
                 p = 2
-            elif metric in ['euclidean', 'cityblock']:
+            elif metric in ["euclidean", "cityblock"]:
                 p = 1
             else:
-                raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
+                raise (
+                    NotImplementedError('Not implemented metric="{}"'.format(metric))
+                )
 
             value = wasserstein_1d(X_a, X_b, a, b, p=p)
             value_linear = value
 
-        elif method == 'gaussian':  # Gaussian Bures-Wasserstein
-
-            if not metric.lower() in ['sqeuclidean']:
-                raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
+        elif method == "gaussian":  # Gaussian Bures-Wasserstein
+            if metric.lower() not in ["sqeuclidean"]:
+                raise (
+                    NotImplementedError('Not implemented metric="{}"'.format(metric))
+                )
 
             if reg is None:
                 reg = 1e-6
 
-            value, log = empirical_bures_wasserstein_distance(X_a, X_b, reg=reg, log=True)
+            value, log = empirical_bures_wasserstein_distance(
+                X_a, X_b, reg=reg, log=True
+            )
             value = value**2  # return the value (squared bures distance)
             value_linear = value  # return the value
 
-        elif method == 'factored':  # Factored OT
-
-            if not metric.lower() in ['sqeuclidean']:
-                raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
+        elif method == "factored":  # Factored OT
+            if metric.lower() not in ["sqeuclidean"]:
+                raise (
+                    NotImplementedError('Not implemented metric="{}"'.format(metric))
+                )
 
             if max_iter is None:
                 max_iter = 100
@@ -1332,19 +1676,29 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, c=Non
             if reg is None:
                 reg = 0
 
-            Q, R, X, log = factored_optimal_transport(X_a, X_b, reg=reg, r=rank, log=True, stopThr=tol, numItermax=max_iter, verbose=verbose)
-            log['X'] = X
+            Q, R, X, log = factored_optimal_transport(
+                X_a,
+                X_b,
+                reg=reg,
+                r=rank,
+                log=True,
+                stopThr=tol,
+                numItermax=max_iter,
+                verbose=verbose,
+            )
+            log["X"] = X
 
-            value_linear = log['costa'] + log['costb']
+            value_linear = log["costa"] + log["costb"]
             value = value_linear  # TODO add reg term
-            lazy_plan = log['lazy_plan']
+            lazy_plan = log["lazy_plan"]
             if not lazy0:  # store plan if not lazy
                 plan = lazy_plan[:]
 
         elif method == "lowrank":
-
-            if not metric.lower() in ['sqeuclidean']:
-                raise (NotImplementedError('Not implemented metric="{}"'.format(metric)))
+            if metric.lower() not in ["sqeuclidean"]:
+                raise (
+                    NotImplementedError('Not implemented metric="{}"'.format(metric))
+                )
 
             if max_iter is None:
                 max_iter = 2000
@@ -1353,46 +1707,77 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, c=Non
             if reg is None:
                 reg = 0
 
-            Q, R, g, log = lowrank_sinkhorn(X_a, X_b, rank=rank, reg=reg, a=a, b=b, numItermax=max_iter, stopThr=tol, log=True)
-            value = log['value']
-            value_linear = log['value_linear']
-            lazy_plan = log['lazy_plan']
+            Q, R, g, log = lowrank_sinkhorn(
+                X_a,
+                X_b,
+                rank=rank,
+                reg=reg,
+                a=a,
+                b=b,
+                numItermax=max_iter,
+                stopThr=tol,
+                log=True,
+            )
+            value = log["value"]
+            value_linear = log["value_linear"]
+            lazy_plan = log["lazy_plan"]
             if not lazy0:  # store plan if not lazy
                 plan = lazy_plan[:]
 
-        elif method.startswith('geomloss'):  # Geomloss solver for entropic OT
-
-            split_method = method.split('_')
+        elif method.startswith("geomloss"):  # Geomloss solver for entropic OT
+            split_method = method.split("_")
             if len(split_method) == 2:
                 backend = split_method[1]
             else:
                 if lazy0 is None:
-                    backend = 'auto'
+                    backend = "auto"
                 elif lazy0:
-                    backend = 'online'
+                    backend = "online"
                 else:
-                    backend = 'tensorized'
+                    backend = "tensorized"
 
-            value, log = empirical_sinkhorn2_geomloss(X_a, X_b, reg=reg, a=a, b=b, metric=metric, log=True, verbose=verbose, scaling=scaling, backend=backend)
+            value, log = empirical_sinkhorn2_geomloss(
+                X_a,
+                X_b,
+                reg=reg,
+                a=a,
+                b=b,
+                metric=metric,
+                log=True,
+                verbose=verbose,
+                scaling=scaling,
+                backend=backend,
+            )
 
-            lazy_plan = log['lazy_plan']
+            lazy_plan = log["lazy_plan"]
             if not lazy0:  # store plan if not lazy
                 plan = lazy_plan[:]
 
             # return scaled potentials (to be consistent with other solvers)
-            potentials = (log['f'] / (lazy_plan.blur**2), log['g'] / (lazy_plan.blur**2))
+            potentials = (
+                log["f"] / (lazy_plan.blur**2),
+                log["g"] / (lazy_plan.blur**2),
+            )
 
         elif reg is None or reg == 0:  # exact OT
-
             if unbalanced is None:  # balanced EMD solver not available for lazy
-                raise (NotImplementedError('Exact OT solver with lazy=True not implemented'))
+                raise (
+                    NotImplementedError(
+                        "Exact OT solver with lazy=True not implemented"
+                    )
+                )
 
             else:
-                raise (NotImplementedError('Non regularized solver with unbalanced_type="{}" not implemented'.format(unbalanced_type)))
+                raise (
+                    NotImplementedError(
+                        'Non regularized solver with unbalanced_type="{}" not implemented'.format(
+                            unbalanced_type
+                        )
+                    )
+                )
 
         else:
             if unbalanced is None:
-
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
@@ -1400,15 +1785,41 @@ def solve_sample(X_a, X_b, a=None, b=None, metric='sqeuclidean', reg=None, c=Non
                 if batch_size is None:
                     batch_size = 100
 
-                value_linear, log = empirical_sinkhorn2(X_a, X_b, reg, a, b, metric=metric, numIterMax=max_iter, stopThr=tol,
-                                                        isLazy=True, batchSize=batch_size, verbose=verbose, log=True)
+                value_linear, log = empirical_sinkhorn2(
+                    X_a,
+                    X_b,
+                    reg,
+                    a,
+                    b,
+                    metric=metric,
+                    numIterMax=max_iter,
+                    stopThr=tol,
+                    isLazy=True,
+                    batchSize=batch_size,
+                    verbose=verbose,
+                    log=True,
+                )
                 # compute potentials
                 potentials = (log["u"], log["v"])
-                lazy_plan = log['lazy_plan']
+                lazy_plan = log["lazy_plan"]
 
             else:
-                raise (NotImplementedError('Not implemented unbalanced_type="{}" with regularization'.format(unbalanced_type)))
+                raise (
+                    NotImplementedError(
+                        'Not implemented unbalanced_type="{}" with regularization'.format(
+                            unbalanced_type
+                        )
+                    )
+                )
 
-        res = OTResult(potentials=potentials, value=value, lazy_plan=lazy_plan,
-                       value_linear=value_linear, plan=plan, status=status, backend=nx, log=log)
+        res = OTResult(
+            potentials=potentials,
+            value=value,
+            lazy_plan=lazy_plan,
+            value_linear=value_linear,
+            plan=plan,
+            status=status,
+            backend=nx,
+            log=log,
+        )
         return res
