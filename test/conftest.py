@@ -8,9 +8,11 @@ import functools
 import os
 import pytest
 import numpy as np
+from sys import platform
 
 # set numpy print options : TODO update tests when all release use modern numpy
-np.set_printoptions(legacy="1.13")
+if platform == "linux":
+    np.set_printoptions(legacy="1.25")
 
 from ot.backend import get_backend_list, jax, tf
 
