@@ -206,6 +206,74 @@ def test_fixedpoint_vs_gradientdescent_bures_wasserstein_barycenter(nx):
     np.testing.assert_allclose(Cb, Cb2, atol=1e-5)
 
 
+def test_stochastic_gd_bures_wasserstein_barycenter(nx):
+    n = 50
+    k = 10
+    X = []
+    y = []
+    m = []
+    C = []
+    for _ in range(k):
+        X_, y_ = make_data_classif("3gauss", n)
+        m_ = np.mean(X_, axis=0)[None, :]
+        C_ = np.cov(X_.T)
+        X.append(X_)
+        y.append(y_)
+        m.append(m_)
+        C.append(C_)
+    m = np.array(m)
+    C = np.array(C)
+    X = nx.from_numpy(*X)
+    m = nx.from_numpy(m)
+    C = nx.from_numpy(C)
+
+    mb, Cb = ot.gaussian.bures_wasserstein_barycenter(
+        m, C, method="fixed_point", log=False
+    )
+
+    n_samples = [10, 20, 50]  # for 1 or 5, too slow to converge
+    for n in n_samples:
+        mb2, Cb2 = ot.gaussian.bures_wasserstein_barycenter(
+            m, C, method="gradient_descent", log=False, batch_size=n
+        )
+
+        np.testing.assert_allclose(mb, mb2, atol=1e-5)
+        np.testing.assert_allclose(Cb, Cb2, atol=1e-5)
+
+    with pytest.raises(ValueError):
+        mb2, Cb2 = ot.gaussian.bures_wasserstein_barycenter(
+            m, C, method="gradient_descent", log=False, batch_size=-5
+        )
+
+
+def test_not_implemented_method(nx):
+    n = 50
+    k = 10
+    X = []
+    y = []
+    m = []
+    C = []
+    for _ in range(k):
+        X_, y_ = make_data_classif("3gauss", n)
+        m_ = np.mean(X_, axis=0)[None, :]
+        C_ = np.cov(X_.T)
+        X.append(X_)
+        y.append(y_)
+        m.append(m_)
+        C.append(C_)
+    m = np.array(m)
+    C = np.array(C)
+    X = nx.from_numpy(*X)
+    m = nx.from_numpy(m)
+    C = nx.from_numpy(C)
+
+    not_implemented = "new_method"
+    with pytest.raises(ValueError):
+        mb, Cb = ot.gaussian.bures_wasserstein_barycenter(
+            m, C, method=not_implemented, log=False
+        )
+
+
 @pytest.mark.parametrize("bias", [True, False])
 def test_empirical_bures_wasserstein_barycenter(nx, bias):
     n = 50

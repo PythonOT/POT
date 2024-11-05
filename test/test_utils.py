@@ -655,3 +655,29 @@ def test_kl_div(nx):
     kl_mass = nx.kl_div(xb, yb, True)
     recovered_kl = kl_mass - nx.sum(yb - xb)
     np.testing.assert_allclose(kl, recovered_kl)
+
+
+def test_exp_bures(nx):
+    d = 2
+    Sigma = nx.eye(d)
+
+    rng = np.random.RandomState(42)
+    X = rng.randn(d, d)
+    z = rng.randn(d)
+    X, z = nx.from_numpy(X, z)
+    S = X + nx.transpose(X)
+
+    Lambda = ot.utils.exp_bures(Sigma, S)
+
+    # asserst SPD
+    np.testing.assert_array_less(np.zeros(1), nx.to_numpy(z.T @ Lambda @ z))
+
+    # OT map from Lambda to Sigma
+    Lambda_12 = nx.sqrtm(Lambda)
+    Lambda_12_ = nx.inv(Lambda_12)
+    M = nx.sqrtm(nx.einsum("ij, jk, kl", Lambda_12, Sigma, Lambda_12))
+    T = nx.einsum("ij, jk, kl", Lambda_12_, M, Lambda_12_)
+
+    # exp_\Lambda(log_\Lambda(Sigma)) = Sigma
+    Sigma_exp = ot.utils.exp_bures(Lambda, T - nx.eye(d))
+    np.testing.assert_allclose(nx.to_numpy(Sigma), nx.to_numpy(Sigma_exp), atol=1e-5)

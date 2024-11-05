@@ -492,6 +492,8 @@ def bures_barycenter_gradient_descent(
     Cb = nx.mean(C * weights[:, None, None], axis=0)
     Id = nx.eye(C.shape[-1], type_as=Cb)
 
+    L_grads = []
+
     for it in range(num_iter):
         Cb12 = nx.sqrtm(Cb)
         Cb12_ = nx.inv(Cb12)
@@ -517,7 +519,11 @@ def bures_barycenter_gradient_descent(
         # check convergence
         if batch_size is not None and batch_size < n:
             # TODO: criteria for SGD: on gradients? + test SGD
-            diff = nx.norm(Cb - Cnew)
+            L_grads.append(nx.sum(grad_bw**2))
+            diff = np.mean(L_grads)
+
+            # L_values.append(nx.norm(Cb - Cnew))
+            # print(diff, np.mean(L_values))
         else:
             diff = nx.norm(Cb - Cnew)
 
@@ -530,10 +536,10 @@ def bures_barycenter_gradient_descent(
         print("Dit not converge.")
 
     if log:
-        log = {}
-        log["num_iter"] = it
-        log["final_diff"] = diff
-        return Cb, log
+        dict_log = {}
+        dict_log["num_iter"] = it
+        dict_log["final_diff"] = diff
+        return Cb, dict_log
     else:
         return Cb
 
