@@ -675,8 +675,8 @@ def test_exp_bures(nx):
     # OT map from Lambda to Sigma
     Lambda_12 = nx.sqrtm(Lambda)
     Lambda_12_ = nx.inv(Lambda_12)
-    M = nx.sqrtm(nx.einsum("ij, jk, kl", Lambda_12, Sigma, Lambda_12))
-    T = nx.einsum("ij, jk, kl", Lambda_12_, M, Lambda_12_)
+    M = nx.sqrtm(nx.einsum("ij, jk, kl -> il", Lambda_12, Sigma, Lambda_12))
+    T = nx.einsum("ij, jk, kl -> il", Lambda_12_, M, Lambda_12_)
 
     # exp_\Lambda(log_\Lambda(Sigma)) = Sigma
     Sigma_exp = ot.utils.exp_bures(Lambda, T - nx.eye(d))

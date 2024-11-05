@@ -1371,4 +1371,4 @@ def exp_bures(Sigma, S, nx=None):
     Id = nx.eye(d, type_as=S)
     C = Id + S
 
-    return dots(C, Sigma, C)
+    return nx.einsum("ij,jk,kl -> il", C, Sigma, C)
