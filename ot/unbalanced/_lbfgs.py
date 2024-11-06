@@ -17,7 +17,7 @@ from ..backend import get_backend
 from ..utils import list_to_array, get_parameter_pair
 
 
-def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div='kl'):
+def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div="kl", regm_div="kl"):
     """
     Return loss function for the L-BFGS-B solver
 
@@ -62,7 +62,7 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
     nx_numpy = get_backend(M, a, b)
 
     def reg_l2(G):
-        return np.sum((G - c)**2) / 2
+        return np.sum((G - c) ** 2) / 2
 
     def grad_l2(G):
         return G - c
@@ -79,10 +79,10 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
     def grad_entropy(G):
         return np.log(G + 1e-16)
 
-    if reg_div == 'kl':
+    if reg_div == "kl":
         reg_fun = reg_kl
         grad_reg_fun = grad_kl
-    elif reg_div == 'entropy':
+    elif reg_div == "entropy":
         reg_fun = reg_entropy
         grad_reg_fun = grad_entropy
     elif isinstance(reg_div, tuple):
@@ -93,32 +93,39 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
         grad_reg_fun = grad_l2
 
     def marg_l2(G):
-        return reg_m1 * 0.5 * np.sum((G.sum(1) - a)**2) + \
-            reg_m2 * 0.5 * np.sum((G.sum(0) - b)**2)
+        return reg_m1 * 0.5 * np.sum((G.sum(1) - a) ** 2) + reg_m2 * 0.5 * np.sum(
+            (G.sum(0) - b) ** 2
+        )
 
     def grad_marg_l2(G):
-        return reg_m1 * np.outer((G.sum(1) - a), np.ones(n)) + \
-            reg_m2 * np.outer(np.ones(m), (G.sum(0) - b))
+        return reg_m1 * np.outer((G.sum(1) - a), np.ones(n)) + reg_m2 * np.outer(
+            np.ones(m), (G.sum(0) - b)
+        )
 
     def marg_kl(G):
-        return reg_m1 * nx_numpy.kl_div(G.sum(1), a, mass=True) + reg_m2 * nx_numpy.kl_div(G.sum(0), b, mass=True)
+        return reg_m1 * nx_numpy.kl_div(
+            G.sum(1), a, mass=True
+        ) + reg_m2 * nx_numpy.kl_div(G.sum(0), b, mass=True)
 
     def grad_marg_kl(G):
-        return reg_m1 * np.outer(np.log(G.sum(1) / a + 1e-16), np.ones(n)) + \
-            reg_m2 * np.outer(np.ones(m), np.log(G.sum(0) / b + 1e-16))
+        return reg_m1 * np.outer(
+            np.log(G.sum(1) / a + 1e-16), np.ones(n)
+        ) + reg_m2 * np.outer(np.ones(m), np.log(G.sum(0) / b + 1e-16))
 
     def marg_tv(G):
-        return reg_m1 * np.sum(np.abs(G.sum(1) - a)) + \
-            reg_m2 * np.sum(np.abs(G.sum(0) - b))
+        return reg_m1 * np.sum(np.abs(G.sum(1) - a)) + reg_m2 * np.sum(
+            np.abs(G.sum(0) - b)
+        )
 
     def grad_marg_tv(G):
-        return reg_m1 * np.outer(np.sign(G.sum(1) - a), np.ones(n)) + \
-            reg_m2 * np.outer(np.ones(m), np.sign(G.sum(0) - b))
+        return reg_m1 * np.outer(np.sign(G.sum(1) - a), np.ones(n)) + reg_m2 * np.outer(
+            np.ones(m), np.sign(G.sum(0) - b)
+        )
 
-    if regm_div == 'kl':
+    if regm_div == "kl":
         regm_fun = marg_kl
         grad_regm_fun = grad_marg_kl
-    elif regm_div == 'tv':
+    elif regm_div == "tv":
         regm_fun = marg_tv
         grad_regm_fun = grad_marg_tv
     else:
@@ -142,8 +149,22 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div='kl', regm_div
     return _func
 
 
-def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', G0=None, numItermax=1000,
-                      stopThr=1e-15, method='L-BFGS-B', verbose=False, log=False):
+def lbfgsb_unbalanced(
+    a,
+    b,
+    M,
+    reg,
+    reg_m,
+    c=None,
+    reg_div="kl",
+    regm_div="kl",
+    G0=None,
+    numItermax=1000,
+    stopThr=1e-15,
+    method="L-BFGS-B",
+    verbose=False,
+    log=False,
+):
     r"""
     Solve the unbalanced optimal transport problem and return the OT plan using L-BFGS-B algorithm.
     The function solves the following optimization problem:
@@ -253,7 +274,9 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
             f0(G0)
             df0(G0)
         except BaseException:
-            warnings.warn("The callable functions should be able to handle numpy arrays, wrapper ar added to handle this which comes with overhead")
+            warnings.warn(
+                "The callable functions should be able to handle numpy arrays, wrapper ar added to handle this which comes with overhead"
+            )
 
             def f(x):
                 return nx.to_numpy(f0(nx.from_numpy(x, type_as=M0)))
@@ -266,11 +289,17 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
     else:
         reg_div = reg_div.lower()
         if reg_div not in ["entropy", "kl", "l2"]:
-            raise ValueError("Unknown reg_div = {}. Must be either 'entropy', 'kl' or 'l2', or a tuple".format(reg_div))
+            raise ValueError(
+                "Unknown reg_div = {}. Must be either 'entropy', 'kl' or 'l2', or a tuple".format(
+                    reg_div
+                )
+            )
 
     regm_div = regm_div.lower()
     if regm_div not in ["kl", "l2", "tv"]:
-        raise ValueError("Unknown regm_div = {}. Must be either 'kl', 'l2' or 'tv'".format(regm_div))
+        raise ValueError(
+            "Unknown regm_div = {}. Must be either 'kl', 'l2' or 'tv'".format(regm_div)
+        )
 
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
@@ -286,28 +315,49 @@ def lbfgsb_unbalanced(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl', 
         b = nx.ones(dim_b, type_as=M) / dim_b
 
     # convert to numpy
-    a, b, M = nx.to_numpy(a, b, M)
+    a, b, M, reg_m1, reg_m2, reg = nx.to_numpy(a, b, M, reg_m1, reg_m2, reg)
     G0 = a[:, None] * b[None, :] if G0 is None else nx.to_numpy(G0)
     c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
 
     _func = _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div, regm_div)
 
-    res = minimize(_func, G0.ravel(), method=method, jac=True, bounds=Bounds(0, np.inf),
-                   tol=stopThr, options=dict(maxiter=numItermax, disp=verbose))
+    res = minimize(
+        _func,
+        G0.ravel(),
+        method=method,
+        jac=True,
+        bounds=Bounds(0, np.inf),
+        tol=stopThr,
+        options=dict(maxiter=numItermax, disp=verbose),
+    )
 
     G = nx.from_numpy(res.x.reshape(M.shape), type_as=M0)
 
     if log:
-        log = {'cost': nx.sum(G * M), 'res': res}
-        log['total_cost'] = nx.from_numpy(res.fun, type_as=M0)
+        log = {"cost": nx.sum(G * M), "res": res}
+        log["total_cost"] = nx.from_numpy(res.fun, type_as=M0)
         return G, log
     else:
         return G
 
 
-def lbfgsb_unbalanced2(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl',
-                       G0=None, returnCost="linear", numItermax=1000, stopThr=1e-15,
-                       method='L-BFGS-B', verbose=False, log=False):
+def lbfgsb_unbalanced2(
+    a,
+    b,
+    M,
+    reg,
+    reg_m,
+    c=None,
+    reg_div="kl",
+    regm_div="kl",
+    G0=None,
+    returnCost="linear",
+    numItermax=1000,
+    stopThr=1e-15,
+    method="L-BFGS-B",
+    verbose=False,
+    log=False,
+):
     r"""
     Solve the unbalanced optimal transport problem and return the OT cost using L-BFGS-B.
     The function solves the following optimization problem:
@@ -411,15 +461,27 @@ def lbfgsb_unbalanced2(a, b, M, reg, reg_m, c=None, reg_div='kl', regm_div='kl',
     ot.unbalanced.sinkhorn_unbalanced2 : Entropic regularized OT loss
     """
 
-    _, log_lbfgs = lbfgsb_unbalanced(a=a, b=b, M=M, reg=reg, reg_m=reg_m, c=c,
-                                     reg_div=reg_div, regm_div=regm_div, G0=G0,
-                                     numItermax=numItermax, stopThr=stopThr,
-                                     method=method, verbose=verbose, log=True)
+    _, log_lbfgs = lbfgsb_unbalanced(
+        a=a,
+        b=b,
+        M=M,
+        reg=reg,
+        reg_m=reg_m,
+        c=c,
+        reg_div=reg_div,
+        regm_div=regm_div,
+        G0=G0,
+        numItermax=numItermax,
+        stopThr=stopThr,
+        method=method,
+        verbose=verbose,
+        log=True,
+    )
 
     if returnCost == "linear":
-        cost = log_lbfgs['cost']
+        cost = log_lbfgs["cost"]
     elif returnCost == "total":
-        cost = log_lbfgs['total_cost']
+        cost = log_lbfgs["total_cost"]
     else:
         raise ValueError("Unknown returnCost = {}".format(returnCost))
 

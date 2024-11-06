@@ -4,7 +4,7 @@
 OT for domain adaptation on empirical distributions
 ===================================================
 
-This example introduces a domain adaptation in a 2D setting. It explicits
+This example introduces a domain adaptation in a 2D setting. It explicit
 the problem of domain adaptation and introduces some optimal transport
 approaches to solve it.
 
@@ -31,11 +31,11 @@ import ot.plot
 n_samples_source = 150
 n_samples_target = 150
 
-Xs, ys = ot.datasets.make_data_classif('3gauss', n_samples_source)
-Xt, yt = ot.datasets.make_data_classif('3gauss2', n_samples_target)
+Xs, ys = ot.datasets.make_data_classif("3gauss", n_samples_source)
+Xt, yt = ot.datasets.make_data_classif("3gauss2", n_samples_target)
 
 # Cost matrix
-M = ot.dist(Xs, Xt, metric='sqeuclidean')
+M = ot.dist(Xs, Xt, metric="sqeuclidean")
 
 
 ##############################################################################
@@ -66,24 +66,24 @@ transp_Xs_lpl1 = ot_lpl1.transform(Xs=Xs)
 
 pl.figure(1, figsize=(10, 10))
 pl.subplot(2, 2, 1)
-pl.scatter(Xs[:, 0], Xs[:, 1], c=ys, marker='+', label='Source samples')
+pl.scatter(Xs[:, 0], Xs[:, 1], c=ys, marker="+", label="Source samples")
 pl.xticks([])
 pl.yticks([])
 pl.legend(loc=0)
-pl.title('Source  samples')
+pl.title("Source  samples")
 
 pl.subplot(2, 2, 2)
-pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker='o', label='Target samples')
+pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker="o", label="Target samples")
 pl.xticks([])
 pl.yticks([])
 pl.legend(loc=0)
-pl.title('Target samples')
+pl.title("Target samples")
 
 pl.subplot(2, 2, 3)
-pl.imshow(M, interpolation='nearest')
+pl.imshow(M, interpolation="nearest")
 pl.xticks([])
 pl.yticks([])
-pl.title('Matrix of pairwise distances')
+pl.title("Matrix of pairwise distances")
 pl.tight_layout()
 
 
@@ -93,46 +93,46 @@ pl.tight_layout()
 pl.figure(2, figsize=(10, 6))
 
 pl.subplot(2, 3, 1)
-pl.imshow(ot_emd.coupling_, interpolation='nearest')
+pl.imshow(ot_emd.coupling_, interpolation="nearest")
 pl.xticks([])
 pl.yticks([])
-pl.title('Optimal coupling\nEMDTransport')
+pl.title("Optimal coupling\nEMDTransport")
 
 pl.subplot(2, 3, 2)
-pl.imshow(ot_sinkhorn.coupling_, interpolation='nearest')
+pl.imshow(ot_sinkhorn.coupling_, interpolation="nearest")
 pl.xticks([])
 pl.yticks([])
-pl.title('Optimal coupling\nSinkhornTransport')
+pl.title("Optimal coupling\nSinkhornTransport")
 
 pl.subplot(2, 3, 3)
-pl.imshow(ot_lpl1.coupling_, interpolation='nearest')
+pl.imshow(ot_lpl1.coupling_, interpolation="nearest")
 pl.xticks([])
 pl.yticks([])
-pl.title('Optimal coupling\nSinkhornLpl1Transport')
+pl.title("Optimal coupling\nSinkhornLpl1Transport")
 
 pl.subplot(2, 3, 4)
-ot.plot.plot2D_samples_mat(Xs, Xt, ot_emd.coupling_, c=[.5, .5, 1])
-pl.scatter(Xs[:, 0], Xs[:, 1], c=ys, marker='+', label='Source samples')
-pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker='o', label='Target samples')
+ot.plot.plot2D_samples_mat(Xs, Xt, ot_emd.coupling_, c=[0.5, 0.5, 1])
+pl.scatter(Xs[:, 0], Xs[:, 1], c=ys, marker="+", label="Source samples")
+pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker="o", label="Target samples")
 pl.xticks([])
 pl.yticks([])
-pl.title('Main coupling coefficients\nEMDTransport')
+pl.title("Main coupling coefficients\nEMDTransport")
 
 pl.subplot(2, 3, 5)
-ot.plot.plot2D_samples_mat(Xs, Xt, ot_sinkhorn.coupling_, c=[.5, .5, 1])
-pl.scatter(Xs[:, 0], Xs[:, 1], c=ys, marker='+', label='Source samples')
-pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker='o', label='Target samples')
+ot.plot.plot2D_samples_mat(Xs, Xt, ot_sinkhorn.coupling_, c=[0.5, 0.5, 1])
+pl.scatter(Xs[:, 0], Xs[:, 1], c=ys, marker="+", label="Source samples")
+pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker="o", label="Target samples")
 pl.xticks([])
 pl.yticks([])
-pl.title('Main coupling coefficients\nSinkhornTransport')
+pl.title("Main coupling coefficients\nSinkhornTransport")
 
 pl.subplot(2, 3, 6)
-ot.plot.plot2D_samples_mat(Xs, Xt, ot_lpl1.coupling_, c=[.5, .5, 1])
-pl.scatter(Xs[:, 0], Xs[:, 1], c=ys, marker='+', label='Source samples')
-pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker='o', label='Target samples')
+ot.plot.plot2D_samples_mat(Xs, Xt, ot_lpl1.coupling_, c=[0.5, 0.5, 1])
+pl.scatter(Xs[:, 0], Xs[:, 1], c=ys, marker="+", label="Source samples")
+pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker="o", label="Target samples")
 pl.xticks([])
 pl.yticks([])
-pl.title('Main coupling coefficients\nSinkhornLpl1Transport')
+pl.title("Main coupling coefficients\nSinkhornLpl1Transport")
 pl.tight_layout()
 
 
@@ -143,30 +143,45 @@ pl.tight_layout()
 # display transported samples
 pl.figure(4, figsize=(10, 4))
 pl.subplot(1, 3, 1)
-pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker='o',
-           label='Target samples', alpha=0.5)
-pl.scatter(transp_Xs_emd[:, 0], transp_Xs_emd[:, 1], c=ys,
-           marker='+', label='Transp samples', s=30)
-pl.title('Transported samples\nEmdTransport')
+pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker="o", label="Target samples", alpha=0.5)
+pl.scatter(
+    transp_Xs_emd[:, 0],
+    transp_Xs_emd[:, 1],
+    c=ys,
+    marker="+",
+    label="Transp samples",
+    s=30,
+)
+pl.title("Transported samples\nEmdTransport")
 pl.legend(loc=0)
 pl.xticks([])
 pl.yticks([])
 
 pl.subplot(1, 3, 2)
-pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker='o',
-           label='Target samples', alpha=0.5)
-pl.scatter(transp_Xs_sinkhorn[:, 0], transp_Xs_sinkhorn[:, 1], c=ys,
-           marker='+', label='Transp samples', s=30)
-pl.title('Transported samples\nSinkhornTransport')
+pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker="o", label="Target samples", alpha=0.5)
+pl.scatter(
+    transp_Xs_sinkhorn[:, 0],
+    transp_Xs_sinkhorn[:, 1],
+    c=ys,
+    marker="+",
+    label="Transp samples",
+    s=30,
+)
+pl.title("Transported samples\nSinkhornTransport")
 pl.xticks([])
 pl.yticks([])
 
 pl.subplot(1, 3, 3)
-pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker='o',
-           label='Target samples', alpha=0.5)
-pl.scatter(transp_Xs_lpl1[:, 0], transp_Xs_lpl1[:, 1], c=ys,
-           marker='+', label='Transp samples', s=30)
-pl.title('Transported samples\nSinkhornLpl1Transport')
+pl.scatter(Xt[:, 0], Xt[:, 1], c=yt, marker="o", label="Target samples", alpha=0.5)
+pl.scatter(
+    transp_Xs_lpl1[:, 0],
+    transp_Xs_lpl1[:, 1],
+    c=ys,
+    marker="+",
+    label="Transp samples",
+    s=30,
+)
+pl.title("Transported samples\nSinkhornLpl1Transport")
 pl.xticks([])
 pl.yticks([])
 

@@ -45,9 +45,9 @@ M = sp.spatial.distance.cdist(xs, xt)
 
 fig = pl.figure()
 ax1 = fig.add_subplot(131)
-ax1.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
+ax1.plot(xs[:, 0], xs[:, 1], "+b", label="Source samples")
 ax2 = fig.add_subplot(132)
-ax2.scatter(xt[:, 0], xt[:, 1], color='r')
+ax2.scatter(xt[:, 0], xt[:, 1], color="r")
 ax3 = fig.add_subplot(133)
 ax3.imshow(M)
 pl.show()
@@ -61,20 +61,18 @@ p = ot.unif(n_samples + n_noise)
 q = ot.unif(n_samples + n_noise)
 
 w0, log0 = ot.partial.partial_wasserstein(p, q, M, m=0.5, log=True)
-w, log = ot.partial.entropic_partial_wasserstein(p, q, M, reg=0.1, m=0.5,
-                                                 log=True)
+w, log = ot.partial.entropic_partial_wasserstein(p, q, M, reg=0.1, m=0.5, log=True)
 
-print('Partial Wasserstein distance (m = 0.5): ' + str(log0['partial_w_dist']))
-print('Entropic partial Wasserstein distance (m = 0.5): ' +
-      str(log['partial_w_dist']))
+print("Partial Wasserstein distance (m = 0.5): " + str(log0["partial_w_dist"]))
+print("Entropic partial Wasserstein distance (m = 0.5): " + str(log["partial_w_dist"]))
 
 pl.figure(1, (10, 5))
 pl.subplot(1, 2, 1)
-pl.imshow(w0, cmap='jet')
-pl.title('Partial Wasserstein')
+pl.imshow(w0, cmap="jet")
+pl.title("Partial Wasserstein")
 pl.subplot(1, 2, 2)
-pl.imshow(w, cmap='jet')
-pl.title('Entropic partial Wasserstein')
+pl.imshow(w, cmap="jet")
+pl.title("Entropic partial Wasserstein")
 pl.show()
 
 
@@ -108,9 +106,9 @@ xt = np.concatenate((xt, ((np.random.rand(n_noise, 3) + 1) * 10)), axis=0)
 
 fig = pl.figure()
 ax1 = fig.add_subplot(121)
-ax1.plot(xs[:, 0], xs[:, 1], '+b', label='Source samples')
-ax2 = fig.add_subplot(122, projection='3d')
-ax2.scatter(xt[:, 0], xt[:, 1], xt[:, 2], color='r')
+ax1.plot(xs[:, 0], xs[:, 1], "+b", label="Source samples")
+ax2 = fig.add_subplot(122, projection="3d")
+ax2.scatter(xt[:, 0], xt[:, 1], xt[:, 2], color="r")
 pl.show()
 
 
@@ -123,46 +121,45 @@ C1 = sp.spatial.distance.cdist(xs, xs)
 C2 = sp.spatial.distance.cdist(xt, xt)
 
 # transport 100% of the mass
-print('------m = 1')
+print("------m = 1")
 m = 1
-res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True)
-res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
-                                                          m=m, log=True,
-                                                          verbose=True)
+res0, log0 = ot.gromov.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True)
+res, log = ot.gromov.entropic_partial_gromov_wasserstein(
+    C1, C2, p, q, 10, m=m, log=True, verbose=True
+)
 
-print('Wasserstein distance (m = 1): ' + str(log0['partial_gw_dist']))
-print('Entropic Wasserstein distance (m = 1): ' + str(log['partial_gw_dist']))
+print("Wasserstein distance (m = 1): " + str(log0["partial_gw_dist"]))
+print("Entropic Wasserstein distance (m = 1): " + str(log["partial_gw_dist"]))
 
 pl.figure(1, (10, 5))
 pl.title("mass to be transported m = 1")
 pl.subplot(1, 2, 1)
-pl.imshow(res0, cmap='jet')
-pl.title('Gromov-Wasserstein')
+pl.imshow(res0, cmap="jet")
+pl.title("Gromov-Wasserstein")
 pl.subplot(1, 2, 2)
-pl.imshow(res, cmap='jet')
-pl.title('Entropic Gromov-Wasserstein')
+pl.imshow(res, cmap="jet")
+pl.title("Entropic Gromov-Wasserstein")
 pl.show()
 
 # transport 2/3 of the mass
-print('------m = 2/3')
+print("------m = 2/3")
 m = 2 / 3
-res0, log0 = ot.partial.partial_gromov_wasserstein(C1, C2, p, q, m=m, log=True,
-                                                   verbose=True)
-res, log = ot.partial.entropic_partial_gromov_wasserstein(C1, C2, p, q, 10,
-                                                          m=m, log=True,
-                                                          verbose=True)
+res0, log0 = ot.gromov.partial_gromov_wasserstein(
+    C1, C2, p, q, m=m, log=True, verbose=True
+)
+res, log = ot.gromov.entropic_partial_gromov_wasserstein(
+    C1, C2, p, q, 10, m=m, log=True, verbose=True
+)
 
-print('Partial Wasserstein distance (m = 2/3): ' +
-      str(log0['partial_gw_dist']))
-print('Entropic partial Wasserstein distance (m = 2/3): ' +
-      str(log['partial_gw_dist']))
+print("Partial Wasserstein distance (m = 2/3): " + str(log0["partial_gw_dist"]))
+print("Entropic partial Wasserstein distance (m = 2/3): " + str(log["partial_gw_dist"]))
 
 pl.figure(1, (10, 5))
 pl.title("mass to be transported m = 2/3")
 pl.subplot(1, 2, 1)
-pl.imshow(res0, cmap='jet')
-pl.title('Partial Gromov-Wasserstein')
+pl.imshow(res0, cmap="jet")
+pl.title("Partial Gromov-Wasserstein")
 pl.subplot(1, 2, 2)
-pl.imshow(res, cmap='jet')
-pl.title('Entropic partial Gromov-Wasserstein')
+pl.imshow(res, cmap="jet")
+pl.title("Entropic partial Gromov-Wasserstein")
 pl.show()

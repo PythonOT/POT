@@ -24,15 +24,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import ot
-from ot.bregman import (barycenter, barycenter_debiased,
-                        convolutional_barycenter2d,
-                        convolutional_barycenter2d_debiased)
+from ot.bregman import (
+    barycenter,
+    barycenter_debiased,
+    convolutional_barycenter2d,
+    convolutional_barycenter2d_debiased,
+)
 
 ##############################################################################
 # Debiased barycenter of 1D Gaussians
 # ------------------------------------
 
-#%% parameters
+# %% parameters
 
 n = 100  # nb bins
 
@@ -51,7 +54,7 @@ n_distributions = A.shape[1]
 M = ot.utils.dist0(n)
 M /= M.max()
 
-#%% barycenter computation
+# %% barycenter computation
 
 alpha = 0.2  # 0<=alpha<=1
 weights = np.array([1 - alpha, alpha])
@@ -64,8 +67,9 @@ bars_debiased = [barycenter_debiased(A, M, reg, weights) for reg in epsilons]
 labels = ["Sinkhorn barycenter", "Debiased barycenter"]
 colors = ["indianred", "gold"]
 
-f, axes = plt.subplots(1, len(epsilons), tight_layout=True, sharey=True,
-                       figsize=(12, 4), num=1)
+f, axes = plt.subplots(
+    1, len(epsilons), tight_layout=True, sharey=True, figsize=(12, 4), num=1
+)
 for ax, eps, bar, bar_debiased in zip(axes, epsilons, bars, bars_debiased):
     ax.plot(A[:, 0], color="k", ls="--", label="Input data", alpha=0.3)
     ax.plot(A[:, 1], color="k", ls="--", alpha=0.3)
@@ -79,10 +83,10 @@ plt.show()
 ##############################################################################
 # Debiased barycenter of 2D images
 # ---------------------------------
-this_file = os.path.realpath('__file__')
-data_path = os.path.join(Path(this_file).parent.parent.parent, 'data')
-f1 = 1 - plt.imread(os.path.join(data_path, 'heart.png'))[:, :, 2]
-f2 = 1 - plt.imread(os.path.join(data_path, 'duck.png'))[:, :, 2]
+this_file = os.path.realpath("__file__")
+data_path = os.path.join(Path(this_file).parent.parent.parent, "data")
+f1 = 1 - plt.imread(os.path.join(data_path, "heart.png"))[:, :, 2]
+f2 = 1 - plt.imread(os.path.join(data_path, "duck.png"))[:, :, 2]
 
 A = np.asarray([f1, f2]) + 1e-2
 A /= A.sum(axis=(1, 2))[:, None, None]
@@ -121,10 +125,10 @@ for jj, (method, ax_row, bars) in enumerate(zip(titles, axes, all_bars)):
             ax.set_title(r"$\varepsilon = %.3f$" % eps, fontsize=13)
         ax.set_xticks([])
         ax.set_yticks([])
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['bottom'].set_visible(False)
-        ax.spines['left'].set_visible(False)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.spines["bottom"].set_visible(False)
+        ax.spines["left"].set_visible(False)
         if ii == 0:
             ax.set_ylabel(method, fontsize=15)
 fig.tight_layout()

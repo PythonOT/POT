@@ -8,10 +8,6 @@ Solvers for the original linear program OT problem.
 #
 # License: MIT License
 
-import os
-import multiprocessing
-import sys
-
 import numpy as np
 import warnings
 
@@ -21,18 +17,35 @@ from .dmmot import dmmot_monge_1dgrid_loss, dmmot_monge_1dgrid_optimize
 
 # import compiled emd
 from .emd_wrap import emd_c, check_result, emd_1d_sorted
-from .solver_1d import (emd_1d, emd2_1d, wasserstein_1d,
-                        binary_search_circle, wasserstein_circle,
-                        semidiscrete_wasserstein2_unif_circle)
+from .solver_1d import (
+    emd_1d,
+    emd2_1d,
+    wasserstein_1d,
+    binary_search_circle,
+    wasserstein_circle,
+    semidiscrete_wasserstein2_unif_circle,
+)
 
 from ..utils import dist, list_to_array
-from ..utils import parmap
 from ..backend import get_backend
 
-__all__ = ['emd', 'emd2', 'barycenter', 'free_support_barycenter', 'cvx', ' emd_1d_sorted',
-           'emd_1d', 'emd2_1d', 'wasserstein_1d', 'generalized_free_support_barycenter',
-           'binary_search_circle', 'wasserstein_circle', 'semidiscrete_wasserstein2_unif_circle',
-           'dmmot_monge_1dgrid_loss', 'dmmot_monge_1dgrid_optimize']
+__all__ = [
+    "emd",
+    "emd2",
+    "barycenter",
+    "free_support_barycenter",
+    "cvx",
+    "emd_1d_sorted",
+    "emd_1d",
+    "emd2_1d",
+    "wasserstein_1d",
+    "generalized_free_support_barycenter",
+    "binary_search_circle",
+    "wasserstein_circle",
+    "semidiscrete_wasserstein2_unif_circle",
+    "dmmot_monge_1dgrid_loss",
+    "dmmot_monge_1dgrid_optimize",
+]
 
 
 def check_number_threads(numThreads):
@@ -48,10 +61,14 @@ def check_number_threads(numThreads):
     numThreads : int
         Corrected number of threads
     """
-    if (numThreads is None) or (isinstance(numThreads, str) and numThreads.lower() == 'max'):
+    if (numThreads is None) or (
+        isinstance(numThreads, str) and numThreads.lower() == "max"
+    ):
         return -1
     if (not isinstance(numThreads, int)) or numThreads < 1:
-        raise ValueError('numThreads should either be "max" or a strictly positive integer')
+        raise ValueError(
+            'numThreads should either be "max" or a strictly positive integer'
+        )
     return numThreads
 
 
@@ -202,7 +219,16 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     return center_ot_dual(alpha, beta, a, b)
 
 
-def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1, check_marginals=True):
+def emd(
+    a,
+    b,
+    M,
+    numItermax=100000,
+    log=False,
+    center_dual=True,
+    numThreads=1,
+    check_marginals=True,
+):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
 
@@ -318,16 +344,13 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1, c
     if len(b) == 0:
         b = nx.ones((M.shape[1],), type_as=type_as) / M.shape[1]
 
-    # store original tensors
-    a0, b0, M0 = a, b, M
-
     # convert to numpy
     M, a, b = nx.to_numpy(M, a, b)
 
     # ensure float64
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64, order='C')
+    M = np.asarray(M, dtype=np.float64, order="C")
 
     # if empty array given then use uniform distributions
     if len(a) == 0:
@@ -335,14 +358,18 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1, c
     if len(b) == 0:
         b = np.ones((M.shape[1],), dtype=np.float64) / M.shape[1]
 
-    assert (a.shape[0] == M.shape[0] and b.shape[0] == M.shape[1]), \
-        "Dimension mismatch, check dimensions of M with a and b"
+    assert (
+        a.shape[0] == M.shape[0] and b.shape[0] == M.shape[1]
+    ), "Dimension mismatch, check dimensions of M with a and b"
 
     # ensure that same mass
     if check_marginals:
-        np.testing.assert_almost_equal(a.sum(0),
-                                       b.sum(0), err_msg='a and b vector must have the same sum',
-                                       decimal=6)
+        np.testing.assert_almost_equal(
+            a.sum(0),
+            b.sum(0),
+            err_msg="a and b vector must have the same sum",
+            decimal=6,
+        )
     b = b * a.sum() / b.sum()
 
     asel = a != 0
@@ -365,22 +392,31 @@ def emd(a, b, M, numItermax=100000, log=False, center_dual=True, numThreads=1, c
             "casted accordingly, possibly resulting in a loss of precision. "
             "If this behaviour is unwanted, please make sure your input "
             "histogram consists of floating point elements.",
-            stacklevel=2
+            stacklevel=2,
         )
     if log:
         log = {}
-        log['cost'] = cost
-        log['u'] = nx.from_numpy(u, type_as=type_as)
-        log['v'] = nx.from_numpy(v, type_as=type_as)
-        log['warning'] = result_code_string
-        log['result_code'] = result_code
+        log["cost"] = cost
+        log["u"] = nx.from_numpy(u, type_as=type_as)
+        log["v"] = nx.from_numpy(v, type_as=type_as)
+        log["warning"] = result_code_string
+        log["result_code"] = result_code
         return nx.from_numpy(G, type_as=type_as), log
     return nx.from_numpy(G, type_as=type_as)
 
 
-def emd2(a, b, M, processes=1,
-         numItermax=100000, log=False, return_matrix=False,
-         center_dual=True, numThreads=1, check_marginals=True):
+def emd2(
+    a,
+    b,
+    M,
+    processes=1,
+    numItermax=100000,
+    log=False,
+    return_matrix=False,
+    center_dual=True,
+    numThreads=1,
+    check_marginals=True,
+):
     r"""Solves the Earth Movers distance problem and returns the loss
 
     .. math::
@@ -504,16 +540,20 @@ def emd2(a, b, M, processes=1,
 
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64, order='C')
+    M = np.asarray(M, dtype=np.float64, order="C")
 
-    assert (a.shape[0] == M.shape[0] and b.shape[0] == M.shape[1]), \
-        "Dimension mismatch, check dimensions of M with a and b"
+    assert (
+        a.shape[0] == M.shape[0] and b.shape[0] == M.shape[1]
+    ), "Dimension mismatch, check dimensions of M with a and b"
 
     # ensure that same mass
     if check_marginals:
-        np.testing.assert_almost_equal(a.sum(0),
-                                       b.sum(0, keepdims=True), err_msg='a and b vector must have the same sum',
-                                       decimal=6)
+        np.testing.assert_almost_equal(
+            a.sum(0),
+            b.sum(0, keepdims=True),
+            err_msg="a and b vector must have the same sum",
+            decimal=6,
+        )
     b = b * a.sum(0) / b.sum(0, keepdims=True)
 
     asel = a != 0
@@ -521,6 +561,7 @@ def emd2(a, b, M, processes=1,
     numThreads = check_number_threads(numThreads)
 
     if log or return_matrix:
+
         def f(b):
             bsel = b != 0
 
@@ -540,20 +581,23 @@ def emd2(a, b, M, processes=1,
                     "casted accordingly, possibly resulting in a loss of precision. "
                     "If this behaviour is unwanted, please make sure your input "
                     "histogram consists of floating point elements.",
-                    stacklevel=2
+                    stacklevel=2,
                 )
             G = nx.from_numpy(G, type_as=type_as)
             if return_matrix:
-                log['G'] = G
-            log['u'] = nx.from_numpy(u, type_as=type_as)
-            log['v'] = nx.from_numpy(v, type_as=type_as)
-            log['warning'] = result_code_string
-            log['result_code'] = result_code
-            cost = nx.set_gradients(nx.from_numpy(cost, type_as=type_as),
-                                    (a0, b0, M0), (log['u'] - nx.mean(log['u']),
-                                                   log['v'] - nx.mean(log['v']), G))
+                log["G"] = G
+            log["u"] = nx.from_numpy(u, type_as=type_as)
+            log["v"] = nx.from_numpy(v, type_as=type_as)
+            log["warning"] = result_code_string
+            log["result_code"] = result_code
+            cost = nx.set_gradients(
+                nx.from_numpy(cost, type_as=type_as),
+                (a0, b0, M0),
+                (log["u"] - nx.mean(log["u"]), log["v"] - nx.mean(log["v"]), G),
+            )
             return [cost, log]
     else:
+
         def f(b):
             bsel = b != 0
             G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
@@ -570,12 +614,18 @@ def emd2(a, b, M, processes=1,
                     "casted accordingly, possibly resulting in a loss of precision. "
                     "If this behaviour is unwanted, please make sure your input "
                     "histogram consists of floating point elements.",
-                    stacklevel=2
+                    stacklevel=2,
                 )
             G = nx.from_numpy(G, type_as=type_as)
-            cost = nx.set_gradients(nx.from_numpy(cost, type_as=type_as),
-                                    (a0, b0, M0), (nx.from_numpy(u - np.mean(u), type_as=type_as),
-                                                   nx.from_numpy(v - np.mean(v), type_as=type_as), G))
+            cost = nx.set_gradients(
+                nx.from_numpy(cost, type_as=type_as),
+                (a0, b0, M0),
+                (
+                    nx.from_numpy(u - np.mean(u), type_as=type_as),
+                    nx.from_numpy(v - np.mean(v), type_as=type_as),
+                    G,
+                ),
+            )
 
             check_result(result_code)
             return cost
@@ -594,8 +644,18 @@ def emd2(a, b, M, processes=1,
     return res
 
 
-def free_support_barycenter(measures_locations, measures_weights, X_init, b=None, weights=None, numItermax=100,
-                            stopThr=1e-7, verbose=False, log=None, numThreads=1):
+def free_support_barycenter(
+    measures_locations,
+    measures_weights,
+    X_init,
+    b=None,
+    weights=None,
+    numItermax=100,
+    stopThr=1e-7,
+    verbose=False,
+    log=None,
+    numThreads=1,
+):
     r"""
     Solves the free support (locations of the barycenters are optimized, not the weights) Wasserstein barycenter problem (i.e. the weighted Frechet mean for the 2-Wasserstein distance), formally:
 
@@ -680,16 +740,19 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
     log_dict = {}
     displacement_square_norms = []
 
-    displacement_square_norm = stopThr + 1.
+    displacement_square_norm = stopThr + 1.0
 
-    while (displacement_square_norm > stopThr and iter_count < numItermax):
-
+    while displacement_square_norm > stopThr and iter_count < numItermax:
         T_sum = nx.zeros((k, d), type_as=X_init)
 
-        for (measure_locations_i, measure_weights_i, weight_i) in zip(measures_locations, measures_weights, weights):
+        for measure_locations_i, measure_weights_i, weight_i in zip(
+            measures_locations, measures_weights, weights
+        ):
             M_i = dist(X, measure_locations_i)
             T_i = emd(b, measure_weights_i, M_i, numThreads=numThreads)
-            T_sum = T_sum + weight_i * 1. / b[:, None] * nx.dot(T_i, measure_locations_i)
+            T_sum = T_sum + weight_i * 1.0 / b[:, None] * nx.dot(
+                T_i, measure_locations_i
+            )
 
         displacement_square_norm = nx.sum((T_sum - X) ** 2)
         if log:
@@ -698,19 +761,36 @@ def free_support_barycenter(measures_locations, measures_weights, X_init, b=None
         X = T_sum
 
         if verbose:
-            print('iteration %d, displacement_square_norm=%f\n', iter_count, displacement_square_norm)
+            print(
+                "iteration %d, displacement_square_norm=%f\n",
+                iter_count,
+                displacement_square_norm,
+            )
 
         iter_count += 1
 
     if log:
-        log_dict['displacement_square_norms'] = displacement_square_norms
+        log_dict["displacement_square_norms"] = displacement_square_norms
         return X, log_dict
     else:
         return X
 
 
-def generalized_free_support_barycenter(X_list, a_list, P_list, n_samples_bary, Y_init=None, b=None, weights=None,
-                                        numItermax=100, stopThr=1e-7, verbose=False, log=None, numThreads=1, eps=0):
+def generalized_free_support_barycenter(
+    X_list,
+    a_list,
+    P_list,
+    n_samples_bary,
+    Y_init=None,
+    b=None,
+    weights=None,
+    numItermax=100,
+    stopThr=1e-7,
+    verbose=False,
+    log=None,
+    numThreads=1,
+    eps=0,
+):
     r"""
     Solves the free support generalized Wasserstein barycenter problem: finding a barycenter (a discrete measure with
     a fixed amount of points of uniform weights) whose respective projections fit the input measures.
@@ -789,12 +869,16 @@ def generalized_free_support_barycenter(X_list, a_list, P_list, n_samples_bary, 
         weights = nx.ones(p, type_as=X_list[0]) / p
 
     # variable change matrix to reduce the problem to a Wasserstein Barycenter (WB)
-    A = eps * nx.eye(d, type_as=X_list[0])  # if eps nonzero: will force the invertibility of A
-    for (P_i, lambda_i) in zip(P_list, weights):
+    A = eps * nx.eye(
+        d, type_as=X_list[0]
+    )  # if eps nonzero: will force the invertibility of A
+    for P_i, lambda_i in zip(P_list, weights):
         A = A + lambda_i * P_i.T @ P_i
     B = nx.inv(nx.sqrtm(A))
 
-    Z_list = [x @ Pi @ B.T for (x, Pi) in zip(X_list, P_list)]  # change of variables -> (WB) problem on Z
+    Z_list = [
+        x @ Pi @ B.T for (x, Pi) in zip(X_list, P_list)
+    ]  # change of variables -> (WB) problem on Z
 
     if Y_init is None:
         Y_init = nx.randn(n_samples_bary, d, type_as=X_list[0])
@@ -802,8 +886,17 @@ def generalized_free_support_barycenter(X_list, a_list, P_list, n_samples_bary, 
     if b is None:
         b = nx.ones(n_samples_bary, type_as=X_list[0]) / n_samples_bary  # not optimized
 
-    out = free_support_barycenter(Z_list, a_list, Y_init, b, numItermax=numItermax,
-                                  stopThr=stopThr, verbose=verbose, log=log, numThreads=numThreads)
+    out = free_support_barycenter(
+        Z_list,
+        a_list,
+        Y_init,
+        b,
+        numItermax=numItermax,
+        stopThr=stopThr,
+        verbose=verbose,
+        log=log,
+        numThreads=numThreads,
+    )
 
     if log:  # unpack
         Y, log_dict = out

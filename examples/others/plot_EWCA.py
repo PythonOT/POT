@@ -61,8 +61,8 @@ pl.scatter(
     s=50,
 )
 pl.scatter(
-    X[n_samples // 2:, 0],
-    X[n_samples // 2:, 1],
+    X[n_samples // 2 :, 0],
+    X[n_samples // 2 :, 1],
     color=[cmap(y[i] + 1) for i in range(n_samples // 2, n_samples)],
     alpha=0.4,
     label="Class 2",

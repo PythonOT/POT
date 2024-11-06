@@ -16,7 +16,7 @@ from ot.backend import tf, torch
 def test_get_random_projections():
     rng = np.random.RandomState(0)
     projections = get_random_projections(1000, 50, rng)
-    np.testing.assert_almost_equal(np.sum(projections ** 2, 0), 1.)
+    np.testing.assert_almost_equal(np.sum(projections**2, 0), 1.0)
 
 
 def test_sliced_same_dist():
@@ -27,7 +27,7 @@ def test_sliced_same_dist():
     u = ot.utils.unif(n)
 
     res = ot.sliced_wasserstein_distance(x, x, u, u, 10, seed=rng)
-    np.testing.assert_almost_equal(res, 0.)
+    np.testing.assert_almost_equal(res, 0.0)
 
 
 def test_sliced_bad_shapes():
@@ -69,7 +69,7 @@ def test_sliced_different_dists():
     y = rng.randn(n, 2)
 
     res = ot.sliced_wasserstein_distance(x, y, u, u, 10, seed=rng)
-    assert res > 0.
+    assert res > 0.0
 
 
 def test_1d_sliced_equals_emd():
@@ -84,7 +84,7 @@ def test_1d_sliced_equals_emd():
     u = ot.utils.unif(m)
     res = ot.sliced_wasserstein_distance(x, y, a, u, 10, seed=42)
     expected = ot.emd2_1d(x.squeeze(), y.squeeze(), a, u)
-    np.testing.assert_almost_equal(res ** 2, expected)
+    np.testing.assert_almost_equal(res**2, expected)
 
 
 def test_max_sliced_same_dist():
@@ -95,7 +95,7 @@ def test_max_sliced_same_dist():
     u = ot.utils.unif(n)
 
     res = ot.max_sliced_wasserstein_distance(x, x, u, u, 10, seed=rng)
-    np.testing.assert_almost_equal(res, 0.)
+    np.testing.assert_almost_equal(res, 0.0)
 
 
 def test_max_sliced_different_dists():
@@ -107,7 +107,7 @@ def test_max_sliced_different_dists():
     y = rng.randn(n, 2)
 
     res, log = ot.max_sliced_wasserstein_distance(x, y, u, u, 10, seed=rng, log=True)
-    assert res > 0.
+    assert res > 0.0
 
 
 def test_sliced_same_proj():
@@ -116,16 +116,17 @@ def test_sliced_same_proj():
     rng = np.random.RandomState(0)
     X = rng.randn(8, 2)
     Y = rng.randn(8, 2)
-    cost1, log1 = ot.sliced_wasserstein_distance(X, Y, seed=seed, n_projections=n_projections, log=True)
+    cost1, log1 = ot.sliced_wasserstein_distance(
+        X, Y, seed=seed, n_projections=n_projections, log=True
+    )
     P = get_random_projections(X.shape[1], n_projections=10, seed=seed)
     cost2, log2 = ot.sliced_wasserstein_distance(X, Y, projections=P, log=True)
 
-    assert np.allclose(log1['projections'], log2['projections'])
+    assert np.allclose(log1["projections"], log2["projections"])
     assert np.isclose(cost1, cost2)
 
 
 def test_sliced_backend(nx):
-
     n = 100
     rng = np.random.RandomState(0)
 
@@ -188,7 +189,7 @@ def test_sliced_backend_device_tf():
         valb = ot.sliced_wasserstein_distance(xb, yb, projections=Pb)
         nx.assert_same_dtype_device(xb, valb)
 
-    if len(tf.config.list_physical_devices('GPU')) > 0:
+    if len(tf.config.list_physical_devices("GPU")) > 0:
         # Check that everything happens on the GPU
         xb, yb, Pb = nx.from_numpy(x, y, P)
         valb = ot.sliced_wasserstein_distance(xb, yb, projections=Pb)
@@ -197,7 +198,6 @@ def test_sliced_backend_device_tf():
 
 
 def test_max_sliced_backend(nx):
-
     n = 100
     rng = np.random.RandomState(0)
 
@@ -213,8 +213,12 @@ def test_max_sliced_backend(nx):
 
     val0 = ot.max_sliced_wasserstein_distance(x, y, projections=P)
 
-    val = ot.max_sliced_wasserstein_distance(xb, yb, n_projections=n_projections, seed=0)
-    val2 = ot.max_sliced_wasserstein_distance(xb, yb, n_projections=n_projections, seed=0)
+    val = ot.max_sliced_wasserstein_distance(
+        xb, yb, n_projections=n_projections, seed=0
+    )
+    val2 = ot.max_sliced_wasserstein_distance(
+        xb, yb, n_projections=n_projections, seed=0
+    )
 
     assert val > 0
     assert val == val2
@@ -260,7 +264,7 @@ def test_max_sliced_backend_device_tf():
         valb = ot.max_sliced_wasserstein_distance(xb, yb, projections=Pb)
         nx.assert_same_dtype_device(xb, valb)
 
-    if len(tf.config.list_physical_devices('GPU')) > 0:
+    if len(tf.config.list_physical_devices("GPU")) > 0:
         # Check that everything happens on the GPU
         xb, yb, Pb = nx.from_numpy(x, y, P)
         valb = ot.max_sliced_wasserstein_distance(xb, yb, projections=Pb)
@@ -275,12 +279,15 @@ def test_projections_stiefel():
     x = rng.randn(100, 3)
     x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
 
-    ssw, log = ot.sliced_wasserstein_sphere(x, x, n_projections=n_projs,
-                                            seed=rng, log=True)
+    ssw, log = ot.sliced_wasserstein_sphere(
+        x, x, n_projections=n_projs, seed=rng, log=True
+    )
 
     P = log["projections"]
     P_T = np.transpose(P, [0, 2, 1])
-    np.testing.assert_almost_equal(np.matmul(P_T, P), np.array([np.eye(2) for k in range(n_projs)]))
+    np.testing.assert_almost_equal(
+        np.matmul(P_T, P), np.array([np.eye(2) for k in range(n_projs)])
+    )
 
 
 def test_sliced_sphere_same_dist():
@@ -292,7 +299,7 @@ def test_sliced_sphere_same_dist():
     u = ot.utils.unif(n)
 
     res = ot.sliced_wasserstein_sphere(x, x, u, u, 10, seed=rng)
-    np.testing.assert_almost_equal(res, 0.)
+    np.testing.assert_almost_equal(res, 0.0)
 
 
 def test_sliced_sphere_same_proj():
@@ -308,10 +315,14 @@ def test_sliced_sphere_same_proj():
 
     seed = 42
 
-    cost1, log1 = ot.sliced_wasserstein_sphere(x, y, seed=seed, n_projections=n_projections, log=True)
-    cost2, log2 = ot.sliced_wasserstein_sphere(x, y, seed=seed, n_projections=n_projections, log=True)
+    cost1, log1 = ot.sliced_wasserstein_sphere(
+        x, y, seed=seed, n_projections=n_projections, log=True
+    )
+    cost2, log2 = ot.sliced_wasserstein_sphere(
+        x, y, seed=seed, n_projections=n_projections, log=True
+    )
 
-    assert np.allclose(log1['projections'], log2['projections'])
+    assert np.allclose(log1["projections"], log2["projections"])
     assert np.isclose(cost1, cost2)
 
 
@@ -378,7 +389,7 @@ def test_sliced_sphere_different_dists():
     y = y / np.sqrt(np.sum(y**2, -1, keepdims=True))
 
     res = ot.sliced_wasserstein_sphere(x, y, u, u, 10, seed=rng)
-    assert res > 0.
+    assert res > 0.0
 
 
 def test_1d_sliced_sphere_equals_emd():
@@ -403,7 +414,7 @@ def test_1d_sliced_sphere_equals_emd():
     res1 = ot.sliced_wasserstein_sphere(x, y, a, u, 10, seed=42, p=1)
     expected1 = ot.binary_search_circle(x_coords.T, y_coords.T, a, u, p=1)
 
-    np.testing.assert_almost_equal(res ** 2, expected)
+    np.testing.assert_almost_equal(res**2, expected)
     np.testing.assert_almost_equal(res1, expected1, decimal=3)
 
 
@@ -426,7 +437,9 @@ def test_sliced_sphere_backend_type_devices(nx):
 
         xb, yb = nx.from_numpy(x, y, type_as=tp)
 
-        valb = ot.sliced_wasserstein_sphere(xb, yb, projections=nx.from_numpy(P, type_as=tp))
+        valb = ot.sliced_wasserstein_sphere(
+            xb, yb, projections=nx.from_numpy(P, type_as=tp)
+        )
 
         nx.assert_same_dtype_device(xb, valb)
         np.testing.assert_almost_equal(sw_np, nx.to_numpy(valb))

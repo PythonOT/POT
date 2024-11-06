@@ -14,11 +14,28 @@ from .backend import get_backend
 from .bregman import sinkhorn
 
 
-def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
-                         epsilon=0, alpha=0, M_samp=None, M_feat=None,
-                         warmstart=None, nits_bcd=100, tol_bcd=1e-7, eval_bcd=1,
-                         nits_ot=500, tol_sinkhorn=1e-7, method_sinkhorn="sinkhorn",
-                         early_stopping_tol=1e-6, log=False, verbose=False):
+def co_optimal_transport(
+    X,
+    Y,
+    wx_samp=None,
+    wx_feat=None,
+    wy_samp=None,
+    wy_feat=None,
+    epsilon=0,
+    alpha=0,
+    M_samp=None,
+    M_feat=None,
+    warmstart=None,
+    nits_bcd=100,
+    tol_bcd=1e-7,
+    eval_bcd=1,
+    nits_ot=500,
+    tol_sinkhorn=1e-7,
+    method_sinkhorn="sinkhorn",
+    early_stopping_tol=1e-6,
+    log=False,
+    verbose=False,
+):
     r"""Compute the CO-Optimal Transport between two matrices.
 
     Return the sample and feature transport plans between
@@ -143,7 +160,10 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
 
     if method_sinkhorn not in ["sinkhorn", "sinkhorn_log"]:
         raise ValueError(
-            "Method {} is not supported in CO-Optimal Transport.".format(method_sinkhorn))
+            "Method {} is not supported in CO-Optimal Transport.".format(
+                method_sinkhorn
+            )
+        )
 
     X, Y = list_to_array(X, Y)
     nx = get_backend(X, Y)
@@ -152,7 +172,9 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
         eps_samp, eps_feat = epsilon, epsilon
     else:
         if len(epsilon) != 2:
-            raise ValueError("Epsilon must be either a scalar or an indexable object of length 2.")
+            raise ValueError(
+                "Epsilon must be either a scalar or an indexable object of length 2."
+            )
         else:
             eps_samp, eps_feat = epsilon[0], epsilon[1]
 
@@ -160,7 +182,9 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
         alpha_samp, alpha_feat = alpha, alpha
     else:
         if len(alpha) != 2:
-            raise ValueError("Alpha must be either a scalar or an indexable object of length 2.")
+            raise ValueError(
+                "Alpha must be either a scalar or an indexable object of length 2."
+            )
         else:
             alpha_samp, alpha_feat = alpha[0], alpha[1]
 
@@ -187,18 +211,27 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
     wxy_feat = wx_feat[:, None] * wy_feat[None, :]
 
     # pre-calculate cost constants
-    XY_sqr = (X ** 2 @ wx_feat)[:, None] + (Y ** 2 @
-                                            wy_feat)[None, :] + alpha_samp * M_samp
-    XY_sqr_T = ((X.T)**2 @ wx_samp)[:, None] + ((Y.T)
-                                                ** 2 @ wy_samp)[None, :] + alpha_feat * M_feat
+    XY_sqr = (X**2 @ wx_feat)[:, None] + (Y**2 @ wy_feat)[None, :] + alpha_samp * M_samp
+    XY_sqr_T = (
+        ((X.T) ** 2 @ wx_samp)[:, None]
+        + ((Y.T) ** 2 @ wy_samp)[None, :]
+        + alpha_feat * M_feat
+    )
 
     # initialize coupling and dual vectors
     if warmstart is None:
-        pi_samp, pi_feat = wxy_samp, wxy_feat  # shape nx_samp x ny_samp and nx_feat x ny_feat
-        duals_samp = (nx.zeros(nx_samp, type_as=X), nx.zeros(
-            ny_samp, type_as=Y))  # shape nx_samp, ny_samp
-        duals_feat = (nx.zeros(nx_feat, type_as=X), nx.zeros(
-            ny_feat, type_as=Y))  # shape nx_feat, ny_feat
+        pi_samp, pi_feat = (
+            wxy_samp,
+            wxy_feat,
+        )  # shape nx_samp x ny_samp and nx_feat x ny_feat
+        duals_samp = (
+            nx.zeros(nx_samp, type_as=X),
+            nx.zeros(ny_samp, type_as=Y),
+        )  # shape nx_samp, ny_samp
+        duals_feat = (
+            nx.zeros(nx_feat, type_as=X),
+            nx.zeros(ny_feat, type_as=Y),
+        )  # shape nx_feat, ny_feat
     else:
         pi_samp, pi_feat = warmstart["pi_sample"], warmstart["pi_feature"]
         duals_samp, duals_feat = warmstart["duals_sample"], warmstart["duals_feature"]
@@ -213,22 +246,42 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
         # update sample coupling
         ot_cost = XY_sqr - 2 * X @ pi_feat @ Y.T  # size nx_samp x ny_samp
         if eps_samp > 0:
-            pi_samp, dict_log = sinkhorn(a=wx_samp, b=wy_samp, M=ot_cost, reg=eps_samp, method=method_sinkhorn,
-                                         numItermax=nits_ot, stopThr=tol_sinkhorn, log=True, warmstart=duals_samp)
+            pi_samp, dict_log = sinkhorn(
+                a=wx_samp,
+                b=wy_samp,
+                M=ot_cost,
+                reg=eps_samp,
+                method=method_sinkhorn,
+                numItermax=nits_ot,
+                stopThr=tol_sinkhorn,
+                log=True,
+                warmstart=duals_samp,
+            )
             duals_samp = (nx.log(dict_log["u"]), nx.log(dict_log["v"]))
         elif eps_samp == 0:
             pi_samp, dict_log = emd(
-                a=wx_samp, b=wy_samp, M=ot_cost, numItermax=nits_ot, log=True)
+                a=wx_samp, b=wy_samp, M=ot_cost, numItermax=nits_ot, log=True
+            )
             duals_samp = (dict_log["u"], dict_log["v"])
         # update feature coupling
         ot_cost = XY_sqr_T - 2 * X.T @ pi_samp @ Y  # size nx_feat x ny_feat
         if eps_feat > 0:
-            pi_feat, dict_log = sinkhorn(a=wx_feat, b=wy_feat, M=ot_cost, reg=eps_feat, method=method_sinkhorn,
-                                         numItermax=nits_ot, stopThr=tol_sinkhorn, log=True, warmstart=duals_feat)
+            pi_feat, dict_log = sinkhorn(
+                a=wx_feat,
+                b=wy_feat,
+                M=ot_cost,
+                reg=eps_feat,
+                method=method_sinkhorn,
+                numItermax=nits_ot,
+                stopThr=tol_sinkhorn,
+                log=True,
+                warmstart=duals_feat,
+            )
             duals_feat = (nx.log(dict_log["u"]), nx.log(dict_log["v"]))
         elif eps_feat == 0:
             pi_feat, dict_log = emd(
-                a=wx_feat, b=wy_feat, M=ot_cost, numItermax=nits_ot, log=True)
+                a=wx_feat, b=wy_feat, M=ot_cost, numItermax=nits_ot, log=True
+            )
             duals_feat = (dict_log["u"], dict_log["v"])
 
         if idx % eval_bcd == 0:
@@ -251,16 +304,21 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
 
             if verbose:
                 print(
-                    "CO-Optimal Transport cost at iteration {}: {}".format(idx + 1, coot))
+                    "CO-Optimal Transport cost at iteration {}: {}".format(
+                        idx + 1, coot
+                    )
+                )
 
     # sanity check
     if nx.sum(nx.isnan(pi_samp)) > 0 or nx.sum(nx.isnan(pi_feat)) > 0:
         warnings.warn("There is NaN in coupling.")
 
     if log:
-        dict_log = {"duals_sample": duals_samp,
-                    "duals_feature": duals_feat,
-                    "distances": list_coot[1:]}
+        dict_log = {
+            "duals_sample": duals_samp,
+            "duals_feature": duals_feat,
+            "distances": list_coot[1:],
+        }
 
         return pi_samp, pi_feat, dict_log
 
@@ -268,12 +326,28 @@ def co_optimal_transport(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat
         return pi_samp, pi_feat
 
 
-def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_feat=None,
-                          epsilon=0, alpha=0, M_samp=None, M_feat=None,
-                          warmstart=None, log=False, verbose=False, early_stopping_tol=1e-6,
-                          nits_bcd=100, tol_bcd=1e-7, eval_bcd=1,
-                          nits_ot=500, tol_sinkhorn=1e-7,
-                          method_sinkhorn="sinkhorn"):
+def co_optimal_transport2(
+    X,
+    Y,
+    wx_samp=None,
+    wx_feat=None,
+    wy_samp=None,
+    wy_feat=None,
+    epsilon=0,
+    alpha=0,
+    M_samp=None,
+    M_feat=None,
+    warmstart=None,
+    log=False,
+    verbose=False,
+    early_stopping_tol=1e-6,
+    nits_bcd=100,
+    tol_bcd=1e-7,
+    eval_bcd=1,
+    nits_ot=500,
+    tol_sinkhorn=1e-7,
+    method_sinkhorn="sinkhorn",
+):
     r"""Compute the CO-Optimal Transport distance between two measures.
 
     Returns the CO-Optimal Transport distance between
@@ -386,13 +460,28 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
         Advances in Neural Information Processing ny_sampstems, 33 (2020).
     """
 
-    pi_samp, pi_feat, dict_log = co_optimal_transport(X=X, Y=Y, wx_samp=wx_samp, wx_feat=wx_feat, wy_samp=wy_samp,
-                                                      wy_feat=wy_feat, epsilon=epsilon, alpha=alpha, M_samp=M_samp,
-                                                      M_feat=M_feat, warmstart=warmstart, nits_bcd=nits_bcd,
-                                                      tol_bcd=tol_bcd, eval_bcd=eval_bcd, nits_ot=nits_ot,
-                                                      tol_sinkhorn=tol_sinkhorn, method_sinkhorn=method_sinkhorn,
-                                                      early_stopping_tol=early_stopping_tol,
-                                                      log=True, verbose=verbose)
+    pi_samp, pi_feat, dict_log = co_optimal_transport(
+        X=X,
+        Y=Y,
+        wx_samp=wx_samp,
+        wx_feat=wx_feat,
+        wy_samp=wy_samp,
+        wy_feat=wy_feat,
+        epsilon=epsilon,
+        alpha=alpha,
+        M_samp=M_samp,
+        M_feat=M_feat,
+        warmstart=warmstart,
+        nits_bcd=nits_bcd,
+        tol_bcd=tol_bcd,
+        eval_bcd=eval_bcd,
+        nits_ot=nits_ot,
+        tol_sinkhorn=tol_sinkhorn,
+        method_sinkhorn=method_sinkhorn,
+        early_stopping_tol=early_stopping_tol,
+        log=True,
+        verbose=verbose,
+    )
 
     X, Y = list_to_array(X, Y)
     nx = get_backend(X, Y)
@@ -413,14 +502,19 @@ def co_optimal_transport2(X, Y, wx_samp=None, wx_feat=None, wy_samp=None, wy_fea
     vx_samp, vy_samp = dict_log["duals_sample"]
     vx_feat, vy_feat = dict_log["duals_feature"]
 
-    gradX = 2 * X * (wx_samp[:, None] * wx_feat[None, :]) - \
-        2 * pi_samp @ Y @ pi_feat.T  # shape (nx_samp, nx_feat)
-    gradY = 2 * Y * (wy_samp[:, None] * wy_feat[None, :]) - \
-        2 * pi_samp.T @ X @ pi_feat  # shape (ny_samp, ny_feat)
+    gradX = (
+        2 * X * (wx_samp[:, None] * wx_feat[None, :]) - 2 * pi_samp @ Y @ pi_feat.T
+    )  # shape (nx_samp, nx_feat)
+    gradY = (
+        2 * Y * (wy_samp[:, None] * wy_feat[None, :]) - 2 * pi_samp.T @ X @ pi_feat
+    )  # shape (ny_samp, ny_feat)
 
     coot = dict_log["distances"][-1]
-    coot = nx.set_gradients(coot, (wx_samp, wx_feat, wy_samp, wy_feat, X, Y),
-                            (vx_samp, vx_feat, vy_samp, vy_feat, gradX, gradY))
+    coot = nx.set_gradients(
+        coot,
+        (wx_samp, wx_feat, wy_samp, wy_feat, X, Y),
+        (vx_samp, vx_feat, vy_samp, vy_feat, gradX, gradY),
+    )
 
     if log:
         return coot, dict_log
