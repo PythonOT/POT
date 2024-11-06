@@ -659,13 +659,14 @@ def test_kl_div(nx):
 
 def test_exp_bures(nx):
     d = 2
-    Sigma = nx.eye(d)
 
     rng = np.random.RandomState(42)
     X = rng.randn(d, d)
     z = rng.randn(d)
     X, z = nx.from_numpy(X, z)
     S = X + nx.transpose(X)
+
+    Sigma = nx.eye(d, type_as=S)
 
     Lambda = ot.utils.exp_bures(Sigma, S)
 
@@ -679,5 +680,5 @@ def test_exp_bures(nx):
     T = nx.einsum("ij, jk, kl -> il", Lambda_12_, M, Lambda_12_)
 
     # exp_\Lambda(log_\Lambda(Sigma)) = Sigma
-    Sigma_exp = ot.utils.exp_bures(Lambda, T - nx.eye(d))
+    Sigma_exp = ot.utils.exp_bures(Lambda, T - nx.eye(d, type_as=T))
     np.testing.assert_allclose(nx.to_numpy(Sigma), nx.to_numpy(Sigma_exp), atol=1e-5)
