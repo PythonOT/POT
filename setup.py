@@ -57,8 +57,8 @@ setup(
     description="Python Optimal Transport Library",
     long_description=README,
     long_description_content_type="text/markdown",
-    author="Remi Flamary, Nicolas Courty, POT Contributors",
-    author_email="remi.flamary@gmail.com, ncourty@gmail.com",
+    author="Remi Flamary, Nicolas Courty, Cédric Vincent-Cuaz, POT Contributors",
+    author_email="remi.flamary@gmail.com, ncourty@gmail.com, cedvincentcuaz@gmail.com",
     url="https://github.com/PythonOT/POT",
     packages=find_packages(exclude=["benchmarks"]),
     ext_modules=cythonize(
