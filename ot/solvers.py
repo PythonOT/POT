@@ -1275,9 +1275,9 @@ def solve_sample(
 
     Parameters
     ----------
-    X_s : array-like, shape (n_samples_a, dim)
+    X_a : array-like, shape (n_samples_a, dim)
         samples in the source domain
-    X_t : array-like, shape (n_samples_b, dim)
+    X_b : array-like, shape (n_samples_b, dim)
         samples in the target domain
     a : array-like, shape (dim_a,), optional
         Samples weights in the source domain (default is uniform)

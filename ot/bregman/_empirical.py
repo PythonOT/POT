@@ -15,6 +15,7 @@ from ..utils import dist, list_to_array, unif, LazyTensor
 from ..backend import get_backend
 
 from ._sinkhorn import sinkhorn, sinkhorn2
+from ._approx_kernel import kernel_nystroem, sinkhorn_low_rank_kernel
 
 
 def get_sinkhorn_lazytensor(X_a, X_b, f, g, metric="sqeuclidean", reg=1e-1, nx=None):
@@ -263,7 +264,7 @@ def empirical_sinkhorn(
     else:
         M = dist(X_s, X_t, metric=metric)
         if log:
-            pi, log = sinkhorn(
+            G, log = sinkhorn(
                 a,
                 b,
                 M,
@@ -275,9 +276,9 @@ def empirical_sinkhorn(
                 warmstart=warmstart,
                 **kwargs,
             )
-            return pi, log
+            return G, log
         else:
-            pi = sinkhorn(
+            G = sinkhorn(
                 a,
                 b,
                 M,
@@ -289,7 +290,7 @@ def empirical_sinkhorn(
                 warmstart=warmstart,
                 **kwargs,
             )
-            return pi
+            return G
 
 
 def empirical_sinkhorn2(
@@ -751,3 +752,89 @@ def empirical_sinkhorn_divergence(
 
         sinkhorn_div = sinkhorn_loss_ab - 0.5 * (sinkhorn_loss_a + sinkhorn_loss_b)
         return nx.maximum(0, sinkhorn_div)
+
+
+def empirical_sinkhorn_nystroem(
+    X_s,
+    X_t,
+    a=None,
+    b=None,
+    reg=1.0,
+    rank=50,
+    numItermax=1000,
+    stopThr=1e-9,
+    verbose=False,
+    log=False,
+    warn=True,
+    warmstart=None,
+    random_state=None,
+):
+    left_factor, right_factor = kernel_nystroem(
+        X_s, X_t, rank=rank, reg=reg, random_state=random_state
+    )
+    res = sinkhorn_low_rank_kernel(
+        K1=left_factor,
+        K2=right_factor,
+        a=a,
+        b=b,
+        numItermax=numItermax,
+        stopThr=stopThr,
+        verbose=verbose,
+        log=log,
+        warn=warn,
+        warmstart=warmstart,
+    )
+    return res
+
+
+def empirical_sinkhorn_nystroem2(
+    X_s,
+    X_t,
+    a=None,
+    b=None,
+    reg=1.0,
+    rank=50,
+    numItermax=1000,
+    stopThr=1e-9,
+    verbose=False,
+    log=False,
+    warn=True,
+    warmstart=None,
+    random_state=None,
+):
+    nx = get_backend(X_s, X_t)
+    M = dist(X_s, X_t, metric="sqeuclidean")
+    if log:
+        G, log_ = empirical_sinkhorn_nystroem(
+            X_s,
+            X_t,
+            a=a,
+            b=b,
+            reg=reg,
+            rank=rank,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=True,
+            warn=warn,
+            warmstart=warmstart,
+            random_state=random_state,
+        )
+        return nx.sum(M * G), log_
+    else:
+        G = empirical_sinkhorn_nystroem(
+            X_s,
+            X_t,
+            a=a,
+            b=b,
+            reg=reg,
+            rank=rank,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=False,
+            warn=warn,
+            warmstart=warmstart,
+            random_state=random_state,
+        )
+        return nx.sum(M * G)
