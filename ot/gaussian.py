@@ -519,6 +519,8 @@ def bures_barycenter_gradient_descent(
         # check convergence
         if batch_size is not None and batch_size < n:
             # TODO: criteria for SGD: on gradients? + test SGD
+            # TOO slow, test with value? (but don't want to compute the full barycenter)
+            # + need to make bures_wasserstein_distance batchable (TODO)
             L_grads.append(nx.sum(grad_bw**2))
             diff = np.mean(L_grads)
 
