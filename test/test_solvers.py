@@ -144,6 +144,78 @@ def test_solve(nx):
 
 
 @pytest.mark.skipif(not torch, reason="torch no installed")
+def test_solve_last_step():
+    n_samples_s = 10
+    n_samples_t = 7
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+    a = ot.utils.unif(n_samples_s)
+    b = ot.utils.unif(n_samples_t)
+    M = ot.dist(x, y)
+
+    # Check that for one iteration, autodiff and last_step give the same gradients
+    a = torch.tensor(a, requires_grad=True)
+    b = torch.tensor(b, requires_grad=True)
+    M = torch.tensor(M, requires_grad=True)
+
+    sol0 = ot.solve(M, a, b, max_iter=1, grad="autodiff")
+    sol0.value.backward()
+
+    gM0 = M.grad.clone()
+    ga0 = a.grad.clone()
+    gb0 = b.grad.clone()
+
+    a = torch.tensor(a, requires_grad=True)
+    b = torch.tensor(b, requires_grad=True)
+    M = torch.tensor(M, requires_grad=True)
+
+    sol = ot.solve(M, a, b, max_iter=1, grad="last_step")
+    sol.value.backward()
+
+    gM = M.grad.clone()
+    ga = a.grad.clone()
+    gb = b.grad.clone()
+
+    # Note, gradients are invariant to change in constant so we center them
+    assert torch.allclose(gM0, gM)
+    assert torch.allclose(ga0 - ga0.mean(), ga - ga.mean())
+    assert torch.allclose(gb0 - gb0.mean(), gb - gb.mean())
+
+    # Check that for multiple iterations, autodiff and last_step give different gradients
+    a = torch.tensor(a, requires_grad=True)
+    b = torch.tensor(b, requires_grad=True)
+    M = torch.tensor(M, requires_grad=True)
+
+    sol0 = ot.solve(M, a, b, reg=1, grad="autodiff")
+    sol0.value.backward()
+
+    gM0 = M.grad.clone()
+    ga0 = a.grad.clone()
+    gb0 = b.grad.clone()
+
+    a = torch.tensor(a, requires_grad=True)
+    b = torch.tensor(b, requires_grad=True)
+    M = torch.tensor(M, requires_grad=True)
+
+    sol = ot.solve(M, a, b, reg=1, grad="last_ste")
+    sol.value.backward()
+
+    print(sol, sol0)
+
+    gM = M.grad.clone()
+    ga = a.grad.clone()
+    gb = b.grad.clone()
+
+    # Note, gradients are invariant to change in constant so we center them
+    assert not torch.allclose(gM0, gM)
+    assert not torch.allclose(ga0 - ga0.mean(), ga - ga.mean())
+    assert not torch.allclose(gb0 - gb0.mean(), gb - gb.mean())
+
+
+@pytest.mark.skipif(not torch, reason="torch no installed")
 def test_solve_envelope():
     n_samples_s = 10
     n_samples_t = 7
@@ -178,7 +250,7 @@ def test_solve_envelope():
     ga = a.grad.clone()
     gb = b.grad.clone()
 
-    # Note, gradients aer invariant to change in constant so we center them
+    # Note, gradients are invariant to change in constant so we center them
     assert torch.allclose(gM0, gM)
     assert torch.allclose(ga0 - ga0.mean(), ga - ga.mean())
     assert torch.allclose(gb0 - gb0.mean(), gb - gb.mean())
