@@ -250,9 +250,31 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     nx = get_backend(ms, mt, Cs, Ct)
 
     Cs12 = nx.sqrtm(Cs)
-
     B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
     W = nx.sqrt(nx.maximum(nx.norm(ms - mt) ** 2 + B, 0))
+
+    if log:
+        log = {}
+        log["Cs12"] = Cs12
+        return W, log
+    else:
+        return W
+
+
+def bures_wasserstein_distance_batch(ms, mt, Cs, Ct, log=False):
+    """
+    TODO
+    Maybe try to merge it with bures_wasserstein_distance
+    """
+    ms, mt, Cs, Ct = list_to_array(ms, mt, Cs, Ct)
+    nx = get_backend(ms, mt, Cs, Ct)
+
+    Cs12 = nx.sqrtm(Cs)
+    M = nx.einsum("nij, mjk, nkl -> nmil", Cs12, Ct, Cs12)
+    B = nx.trace(Cs[:, None] + Ct[None] - 2 * nx.sqrtm(M))
+
+    squared_dist_m = nx.norm(ms[:, None] - mt[None], axis=-1) ** 2
+    W = nx.sqrt(nx.maximum(squared_dist_m + B, 0))
 
     if log:
         log = {}

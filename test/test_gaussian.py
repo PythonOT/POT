@@ -99,6 +99,47 @@ def test_bures_wasserstein_distance(nx):
     np.testing.assert_allclose(10, nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
 
 
+def test_bures_wasserstein_distance_batch(nx):
+    n = 50
+    k = 2
+    X = []
+    y = []
+    m = []
+    C = []
+    for _ in range(k):
+        X_, y_ = make_data_classif("3gauss", n)
+        m_ = np.mean(X_, axis=0)[None, :]
+        C_ = np.cov(X_.T)
+        X.append(X_)
+        y.append(y_)
+        m.append(m_)
+        C.append(C_)
+    m = np.array(m)
+    C = np.array(C)
+    X = nx.from_numpy(*X)
+    m = nx.from_numpy(m)
+    C = nx.from_numpy(C)
+
+    Wb = ot.gaussian.bures_wasserstein_distance(m[0, 0], m[1, 0], C[0], C[1], log=False)
+
+    Wb2 = ot.gaussian.bures_wasserstein_distance_batch(
+        m[0, 0][None], m[1, 0][None], C[0][None], C[1][None]
+    )
+    np.testing.assert_allclose(nx.to_numpy(Wb), nx.to_numpy(Wb2[0, 0]), atol=1e-5)
+
+    Wb2 = ot.gaussian.bures_wasserstein_distance_batch(
+        m[:, 0], m[1, 0][None], C, C[1][None]
+    )
+    np.testing.assert_allclose(nx.to_numpy(Wb), nx.to_numpy(Wb2[0, 0]), atol=1e-5)
+    np.testing.assert_allclose(0, nx.to_numpy(Wb2[1, 0]), atol=1e-5)
+
+    Wb2 = ot.gaussian.bures_wasserstein_distance_batch(m[:, 0], m[:, 0], C, C)
+    np.testing.assert_allclose(nx.to_numpy(Wb), nx.to_numpy(Wb2[1, 0]), atol=1e-5)
+    np.testing.assert_allclose(nx.to_numpy(Wb), nx.to_numpy(Wb2[0, 1]), atol=1e-5)
+    np.testing.assert_allclose(0, nx.to_numpy(Wb2[0, 0]), atol=1e-5)
+    np.testing.assert_allclose(0, nx.to_numpy(Wb2[1, 1]), atol=1e-5)
+
+
 @pytest.mark.parametrize("bias", [True, False])
 def test_empirical_bures_wasserstein_distance(nx, bias):
     ns = 400
