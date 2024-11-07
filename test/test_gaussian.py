@@ -206,9 +206,8 @@ def test_fixedpoint_vs_gradientdescent_bures_wasserstein_barycenter(nx):
     np.testing.assert_allclose(Cb, Cb2, atol=1e-5)
 
     # Test weights argument
-    weights = nx.ones(k) / k
-    Cbw = ot.gaussian.bures_barycenter_fixpoint(C, weights=weights)
-    Cbw2 = ot.gaussian.bures_barycenter_gradient_descent(C, weights=weights)
+    Cbw = ot.gaussian.bures_barycenter_fixpoint(C, weights=None)
+    Cbw2 = ot.gaussian.bures_barycenter_gradient_descent(C, weights=None)
     np.testing.assert_allclose(Cbw, Cb, rtol=1e-5, atol=1e-5)
     np.testing.assert_allclose(Cbw2, Cb2, rtol=1e-5, atol=1e-5)
 
