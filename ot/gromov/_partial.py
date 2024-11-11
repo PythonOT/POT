@@ -495,6 +495,492 @@ def partial_gromov_wasserstein2(
         return pgw
 
 
+def partial_fused_gromov_wasserstein(
+    M,
+    C1,
+    C2,
+    p=None,
+    q=None,
+    m=None,
+    loss_fun="square_loss",
+    alpha=0.5,
+    nb_dummies=1,
+    G0=None,
+    thres=1,
+    numItermax=1e4,
+    tol=1e-8,
+    symmetric=None,
+    warn=True,
+    log=False,
+    verbose=False,
+    **kwargs,
+):
+    r"""
+    Returns the Partial Fused Gromov-Wasserstein transport between :math:`(\mathbf{C_1}, \mathbf{F_1}, \mathbf{p})`
+    and :math:`(\mathbf{C_2}, \mathbf{F_2}, \mathbf{q})`, with pairwise
+    distance matrix :math:`\mathbf{M}` between node feature matrices.
+
+    The function solves the following optimization problem using Conditional Gradient:
+
+    .. math::
+        \mathbf{T}^* \in \mathop{\arg \min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
+             \mathbf{1}^T \mathbf{T}^T \mathbf{1} = m &\leq \min\{\|\mathbf{p}\|_1, \|\mathbf{q}\|_1\}
+
+    where :
+
+    - :math:`\mathbf{M}`: metric cost matrix between features across domains
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space.
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space.
+    - :math:`\mathbf{p}`: Distribution in the source space.
+    - :math:`\mathbf{q}`: Distribution in the target space.
+    - `m` is the amount of mass to be transported
+    - `L`: Loss function to account for the misfit between the similarity matrices.
+
+    The formulation of the problem has been proposed in
+    :ref:`[29] <references-partial-gromov-wasserstein>`
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
+    .. note:: All computations in the conjugate gradient solver are done with
+        numpy to limit memory overhead.
+    .. note:: This function will cast the computed transport plan to the data
+        type of the provided input :math:`\mathbf{C}_1`. Casting to an integer
+        tensor might result in a loss of precision. If this behaviour is
+        unwanted, please make sure to provide a floating point input.
+
+    Parameters
+    ----------
+    M : array-like, shape (ns, nt)
+        Metric cost matrix between features across domains
+    C1 : array-like, shape (ns, ns)
+        Metric cost matrix in the source space
+    C2 : array-like, shape (nt, nt)
+        Metric costfr matrix in the target space
+    p : array-like, shape (ns,), optional
+        Distribution in the source space.
+        If let to its default value None, uniform distribution is taken.
+    q : array-like, shape (nt,), optional
+        Distribution in the target space.
+        If let to its default value None, uniform distribution is taken.
+    m : float, optional
+        Amount of mass to be transported
+        (default: :math:`\min\{\|\mathbf{p}\|_1, \|\mathbf{q}\|_1\}`)
+    loss_fun : str, optional
+        Loss function used for the solver either 'square_loss' or 'kl_loss'.
+    alpha : float, optional
+        Trade-off parameter (0 < alpha < 1)
+    nb_dummies : int, optional
+        Number of dummy points to add (avoid instabilities in the EMD solver)
+    G0 : array-like, shape (ns, nt), optional
+        Initialization of the transportation matrix
+    thres : float, optional
+        quantile of the gradient matrix to populate the cost matrix when 0
+        (default: 1)
+    numItermax : int, optional
+        Max number of iterations
+    tol : float, optional
+        tolerance for stopping iterations
+    symmetric : bool, optional
+        Either C1 and C2 are to be assumed symmetric or not.
+        If let to its default None value, a symmetry test will be conducted.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
+    warn: bool, optional.
+        Whether to raise a warning when EMD did not converge.
+    log : bool, optional
+        return log if True
+    verbose : bool, optional
+        Print information along iterations
+    **kwargs : dict
+        parameters can be directly passed to the emd solver
+
+
+    Returns
+    -------
+    T : array-like, shape (`ns`, `nt`)
+        Optimal transport matrix between the two spaces.
+
+    log : dict
+        Convergence information and loss.
+
+    .. _references-partial-gromov-wasserstein:
+    References
+    ----------
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+        Transport with Applications on Positive-Unlabeled Learning".
+        NeurIPS.
+
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain
+        and Courty Nicolas "Optimal Transport for structured data with
+        application on graphs", International Conference on Machine Learning
+        (ICML). 2019.
+    """
+    arr = [M, C1, C2]
+    if p is not None:
+        arr.append(list_to_array(p))
+    else:
+        p = unif(C1.shape[0], type_as=C1)
+    if q is not None:
+        arr.append(list_to_array(q))
+    else:
+        q = unif(C2.shape[0], type_as=C1)
+    if G0 is not None:
+        G0_ = G0
+        arr.append(G0)
+
+    nx = get_backend(*arr)
+    p0, q0, M0, C10, C20 = p, q, M, C1, C2
+
+    p = nx.to_numpy(p0)
+    q = nx.to_numpy(q0)
+    M = nx.to_numpy(M0)
+    C1 = nx.to_numpy(C10)
+    C2 = nx.to_numpy(C20)
+    if symmetric is None:
+        symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(
+            C2, C2.T, atol=1e-10
+        )
+
+    if m is None:
+        m = min(np.sum(p), np.sum(q))
+    elif m < 0:
+        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
+    elif m > min(np.sum(p), np.sum(q)):
+        raise ValueError(
+            "Problem infeasible. Parameter m should lower or"
+            " equal than min(|a|_1, |b|_1)."
+        )
+
+    if G0 is None:
+        G0 = (
+            np.outer(p, q) * m / (np.sum(p) * np.sum(q))
+        )  # make sure |G0|=m, G01_m\leq p, G0.T1_n\leq q.
+
+    else:
+        G0 = nx.to_numpy(G0_)
+        # Check marginals of G0
+        assert np.all(G0.sum(1) <= p)
+        assert np.all(G0.sum(0) <= q)
+
+    q_extended = np.append(q, [(np.sum(p) - m) / nb_dummies] * nb_dummies)
+    p_extended = np.append(p, [(np.sum(q) - m) / nb_dummies] * nb_dummies)
+
+    # cg for GW is implemented using numpy on CPU
+    np_ = NumpyBackend()
+
+    fC1, fC2, hC1, hC2 = _transform_matrix(C1, C2, loss_fun, np_)
+    fC2t = fC2.T
+    if not symmetric:
+        fC1t, hC1t, hC2t = fC1.T, hC1.T, hC2.T
+
+    ones_p = np_.ones(p.shape[0], type_as=p)
+    ones_q = np_.ones(q.shape[0], type_as=q)
+
+    def f(G):
+        pG = G.sum(1)
+        qG = G.sum(0)
+        constC1 = np.outer(np.dot(fC1, pG), ones_q)
+        constC2 = np.outer(ones_p, np.dot(qG, fC2t))
+        return gwloss(constC1 + constC2, hC1, hC2, G, np_)
+
+    if symmetric:
+
+        def df(G):
+            pG = G.sum(1)
+            qG = G.sum(0)
+            constC1 = np.outer(np.dot(fC1, pG), ones_q)
+            constC2 = np.outer(ones_p, np.dot(qG, fC2t))
+            return gwggrad(constC1 + constC2, hC1, hC2, G, np_)
+    else:
+
+        def df(G):
+            pG = G.sum(1)
+            qG = G.sum(0)
+            constC1 = np.outer(np.dot(fC1, pG), ones_q)
+            constC2 = np.outer(ones_p, np.dot(qG, fC2t))
+            constC1t = np.outer(np.dot(fC1t, pG), ones_q)
+            constC2t = np.outer(ones_p, np.dot(qG, fC2))
+
+            return 0.5 * (
+                gwggrad(constC1 + constC2, hC1, hC2, G, np_)
+                + gwggrad(constC1t + constC2t, hC1t, hC2t, G, np_)
+            )
+
+    def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
+        df_Gc = df(deltaG + G)
+        return solve_partial_gromov_linesearch(
+            G,
+            deltaG,
+            cost_G,
+            df_G,
+            df_Gc,
+            M=(1 - alpha) * M,
+            reg=alpha,
+            nx=np_,
+            **kwargs,
+        )
+
+    if not nx.is_floating_point(C10):
+        warnings.warn(
+            "Input structure matrix consists of integers. The transport plan will be "
+            "casted accordingly, possibly resulting in a loss of precision. "
+            "If this behaviour is unwanted, please make sure your input "
+            "structure matrix consists of floating point elements.",
+            stacklevel=2,
+        )
+
+    if log:
+        res, log = partial_cg(
+            p,
+            q,
+            p_extended,
+            q_extended,
+            (1 - alpha) * M,
+            alpha,
+            f,
+            df,
+            G0,
+            line_search,
+            log=True,
+            numItermax=numItermax,
+            stopThr=tol,
+            stopThr2=0.0,
+            warn=warn,
+            **kwargs,
+        )
+        log["partial_fgw_dist"] = nx.from_numpy(log["loss"][-1], type_as=C10)
+        return nx.from_numpy(res, type_as=C10), log
+    else:
+        return nx.from_numpy(
+            partial_cg(
+                p,
+                q,
+                p_extended,
+                q_extended,
+                (1 - alpha) * M,
+                alpha,
+                f,
+                df,
+                G0,
+                line_search,
+                log=False,
+                numItermax=numItermax,
+                stopThr=tol,
+                stopThr2=0.0,
+                **kwargs,
+            ),
+            type_as=C10,
+        )
+
+
+def partial_fused_gromov_wasserstein2(
+    M,
+    C1,
+    C2,
+    p=None,
+    q=None,
+    m=None,
+    loss_fun="square_loss",
+    alpha=0.5,
+    nb_dummies=1,
+    G0=None,
+    thres=1,
+    numItermax=1e4,
+    tol=1e-7,
+    symmetric=None,
+    warn=False,
+    log=False,
+    verbose=False,
+    **kwargs,
+):
+    r"""
+    Returns the Partial Fused Gromov-Wasserstein discrepancy between :math:`(\mathbf{C_1}, \mathbf{F_1}, \mathbf{p})`
+    and :math:`(\mathbf{C_2}, \mathbf{F_2}, \mathbf{q})`, with pairwise
+    distance matrix :math:`\mathbf{M}` between node feature matrices.
+
+    The function solves the following optimization problem using Conditional Gradient:
+
+    .. math::
+        \mathbf{PFGW}_{\alpha} = \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
+
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
+
+             \mathbf{T} &\geq 0
+
+             \mathbf{1}^T \mathbf{T}^T \mathbf{1} = m &\leq \min\{\|\mathbf{p}\|_1, \|\mathbf{q}\|_1\}
+
+    where :
+
+    - :math:`\mathbf{M}`: metric cost matrix between features across domains
+    - :math:`\mathbf{C_1}`: Metric cost matrix in the source space.
+    - :math:`\mathbf{C_2}`: Metric cost matrix in the target space.
+    - :math:`\mathbf{p}`: Distribution in the source space.
+    - :math:`\mathbf{q}`: Distribution in the target space.
+    - `m` is the amount of mass to be transported
+    - `L`: Loss function to account for the misfit between the similarity matrices.
+
+
+    The formulation of the problem has been proposed in
+    :ref:`[29] <references-partial-gromov-wasserstein2>`
+
+    Note that when using backends, this loss function is differentiable wrt the
+    matrices (M, C1, C2).
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
+    .. note:: All computations in the conjugate gradient solver are done with
+        numpy to limit memory overhead.
+    .. note:: This function will cast the computed transport plan to the data
+        type of the provided input :math:`\mathbf{C}_1`. Casting to an integer
+        tensor might result in a loss of precision. If this behaviour is
+        unwanted, please make sure to provide a floating point input.
+
+    Parameters
+    ----------
+    M : array-like, shape (ns, nt)
+        Metric cost matrix between features across domains
+    C1 : ndarray, shape (ns, ns)
+        Metric cost matrix in the source space
+    C2 : ndarray, shape (nt, nt)
+        Metric cost matrix in the target space
+    p : ndarray, shape (ns,)
+        Distribution in the source space
+    q : ndarray, shape (nt,)
+        Distribution in the target space
+    m : float, optional
+        Amount of mass to be transported
+        (default: :math:`\min\{\|\mathbf{p}\|_1, \|\mathbf{q}\|_1\}`)
+    loss_fun : str, optional
+        Loss function used for the solver either 'square_loss' or 'kl_loss'.
+    alpha : float, optional
+        Trade-off parameter (0 < alpha < 1)
+    nb_dummies : int, optional
+        Number of dummy points to add (avoid instabilities in the EMD solver)
+    G0 : ndarray, shape (ns, nt), optional
+        Initialization of the transportation matrix
+    thres : float, optional
+        quantile of the gradient matrix to populate the cost matrix when 0
+        (default: 1)
+    numItermax : int, optional
+        Max number of iterations
+    tol : float, optional
+        tolerance for stopping iterations
+    symmetric : bool, optional
+        Either C1 and C2 are to be assumed symmetric or not.
+        If let to its default None value, a symmetry test will be conducted.
+        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
+    warn: bool, optional.
+        Whether to raise a warning when EMD did not converge.
+    log : bool, optional
+        return log if True
+    verbose : bool, optional
+        Print information along iterations
+    **kwargs : dict
+        parameters can be directly passed to the emd solver
+
+
+    .. warning::
+        When dealing with a large number of points, the EMD solver may face
+        some instabilities, especially when the mass associated to the dummy
+        point is large. To avoid them, increase the number of dummy points
+        (allows a smoother repartition of the mass over the points).
+
+
+    Returns
+    -------
+    partial_fgw_dist : float
+        partial FGW discrepancy
+    log : dict
+        log dictionary returned only if `log` is `True`
+
+    .. _references-partial-gromov-wasserstein2:
+    References
+    ----------
+    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+        Transport with Applications on Positive-Unlabeled Learning".
+        NeurIPS.
+
+    .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain
+        and Courty Nicolas "Optimal Transport for structured data with
+        application on graphs", International Conference on Machine Learning
+        (ICML). 2019.
+    """
+    # simple get_backend as the full one will be handled in gromov_wasserstein
+    nx = get_backend(M, C1, C2)
+
+    # init marginals if set as None
+    if p is None:
+        p = unif(C1.shape[0], type_as=C1)
+    if q is None:
+        q = unif(C2.shape[0], type_as=C1)
+
+    T, log_pfgw = partial_fused_gromov_wasserstein(
+        M,
+        C1,
+        C2,
+        p,
+        q,
+        m,
+        loss_fun,
+        alpha,
+        nb_dummies,
+        G0,
+        thres,
+        numItermax,
+        tol,
+        symmetric,
+        warn,
+        True,
+        verbose,
+        **kwargs,
+    )
+
+    log_pfgw["T"] = T
+    pfgw = log_pfgw["partial_fgw_dist"]
+
+    # compute separate terms for gradients and log
+    lin_term = nx.sum(T * M)
+    log_pfgw["quad_loss"] = pfgw - (1 - alpha) * lin_term
+    log_pfgw["lin_loss"] = lin_term * (1 - alpha)
+    pgw_term = log_pfgw["quad_loss"] / alpha
+
+    if loss_fun == "square_loss":
+        gC1 = 2 * C1 * nx.outer(p, p) - 2 * nx.dot(T, nx.dot(C2, T.T))
+        gC2 = 2 * C2 * nx.outer(q, q) - 2 * nx.dot(T.T, nx.dot(C1, T))
+    elif loss_fun == "kl_loss":
+        gC1 = nx.log(C1 + 1e-15) * nx.outer(p, p) - nx.dot(
+            T, nx.dot(nx.log(C2 + 1e-15), T.T)
+        )
+        gC2 = -nx.dot(T.T, nx.dot(C1, T)) / (C2 + 1e-15) + nx.outer(q, q)
+
+    if isinstance(alpha, int) or isinstance(alpha, float):
+        pfgw = nx.set_gradients(
+            pfgw, (M, C1, C2), ((1 - alpha) * T, alpha * gC1, alpha * gC2)
+        )
+    else:
+        pfgw = nx.set_gradients(
+            pfgw,
+            (M, C1, C2, alpha),
+            ((1 - alpha) * T, alpha * gC1, alpha * gC2, pgw_term - lin_term),
+        )
+    if log:
+        return pfgw, log_pfgw
+    else:
+        return pfgw
+
+
 def solve_partial_gromov_linesearch(
     G,
     deltaG,
