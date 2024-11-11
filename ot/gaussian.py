@@ -531,6 +531,11 @@ def bures_barycenter_gradient_descent(
             M = nx.sqrtm(nx.einsum("ij,njk,kl -> nil", Cb12, C[inds], Cb12))
             ot_maps = nx.einsum("ij,njk,kl -> nil", Cb12_, M, Cb12_)
             grad_bw = Id - nx.mean(ot_maps, axis=0)
+
+            # step size from [74] (page 15)
+            step_size = 2 / (0.7 * (it + 2 / 0.7 + 1))
+
+            # TODO: Add one where we take samples in order, + averaging? cf [74]
         else:  # gradient descent
             M = nx.sqrtm(nx.einsum("ij,njk,kl -> nil", Cb12, C, Cb12))
             ot_maps = nx.einsum("ij,njk,kl -> nil", Cb12_, M, Cb12_)

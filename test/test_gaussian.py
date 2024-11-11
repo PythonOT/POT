@@ -278,16 +278,25 @@ def test_stochastic_gd_bures_wasserstein_barycenter(nx):
         m, C, method="fixed_point", log=False
     )
 
+    loss = nx.mean(
+        ot.gaussian.bures_wasserstein_distance_batch(mb[None], m, Cb[None], C)
+    )
+
     n_samples = [1, 5]
     for n in n_samples:
         mb2, Cb2 = ot.gaussian.bures_wasserstein_barycenter(
             m, C, method="gradient_descent", log=False, batch_size=n
         )
 
+        loss2 = nx.mean(
+            ot.gaussian.bures_wasserstein_distance_batch(mb2[None], m, Cb2[None], C)
+        )
+
         np.testing.assert_allclose(mb, mb2, atol=1e-5)
         # atol big for now because too slow, need to see if
         # it can be improved...
-        np.testing.assert_allclose(Cb, Cb2, atol=0.5)
+        np.testing.assert_allclose(Cb, Cb2, atol=1e-1)
+        np.testing.assert_allclose(loss, loss2, atol=1e-3)
 
     with pytest.raises(ValueError):
         mb2, Cb2 = ot.gaussian.bures_wasserstein_barycenter(
