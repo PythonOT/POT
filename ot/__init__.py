@@ -74,7 +74,7 @@ from .lowrank import lowrank_sinkhorn
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.9.5dev0"
+__version__ = "0.9.6dev0"
 
 __all__ = [
     "emd",
