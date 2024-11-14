@@ -637,13 +637,15 @@ def partial_fused_gromov_wasserstein(
         arr.append(G0)
 
     nx = get_backend(*arr)
-    p0, q0, M0, C10, C20 = p, q, M, C1, C2
+    p0, q0, M0, C10, C20, alpha0 = p, q, M, C1, C2, alpha
 
     p = nx.to_numpy(p0)
     q = nx.to_numpy(q0)
     M = nx.to_numpy(M0)
     C1 = nx.to_numpy(C10)
     C2 = nx.to_numpy(C20)
+    alpha = nx.to_numpy(alpha0)
+
     if symmetric is None:
         symmetric = np.allclose(C1, C1.T, atol=1e-10) and np.allclose(
             C2, C2.T, atol=1e-10
