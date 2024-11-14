@@ -7,9 +7,9 @@
 # License: MIT License
 
 import numpy as np
-import torch
 import scipy as sp
 import ot
+from ot.backend import torch
 import pytest
 
 
