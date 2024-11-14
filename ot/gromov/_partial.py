@@ -1054,7 +1054,6 @@ def solve_partial_gromov_linesearch(
     a = reg * cost_deltaG
     # formula to check for partial FGW
     b = nx.sum(M * deltaG) + reg * nx.sum(df_G * deltaG)
-
     alpha = solve_1d_linesearch_quad(a, b)
     if alpha_min is not None or alpha_max is not None:
         alpha = np.clip(alpha, alpha_min, alpha_max)

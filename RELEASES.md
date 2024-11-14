@@ -2,6 +2,11 @@
 
 ## 0.9.6dev
 
+#### New features
+- Implement CG solvers for partial FGW (PR #687)
+
+#### Closed issues
+
 
 ## 0.9.5
 
