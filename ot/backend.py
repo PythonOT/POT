@@ -2330,7 +2330,7 @@ class TorchBackend(Backend):
 
     def sqrtm(self, a):
         L, V = torch.linalg.eigh(a)
-        L = torch.sqrt(torch.maximum(L, torch.tensor(0)))
+        L = torch.sqrt(L)
         # Q[...] = V[...] @ diag(L[...])
         Q = torch.einsum("...jk,...k->...jk", V, L)
         # R[...] = Q[...] @ V[...].T
