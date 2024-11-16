@@ -1081,14 +1081,6 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def cholesky(self, a):
-        r"""
-        Cholesky decomposition.
-
-        See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.cholesky.html
-        """
-        raise NotImplementedError()
-
 
 class NumpyBackend(Backend):
     """
@@ -1451,9 +1443,6 @@ class NumpyBackend(Backend):
 
     def slogdet(self, a):
         return np.linalg.slogdet(a)
-
-    def cholesky(self, x):
-        return np.linalg.cholesky(x)
 
 
 _register_backend_implementation(NumpyBackend)
@@ -1850,9 +1839,6 @@ class JaxBackend(Backend):
 
     def slogdet(self, a):
         return jnp.linalg.slogdet(a)
-
-    def cholesky(self, x):
-        return jnp.linalg.cholesky(x)
 
 
 if jax:
@@ -2390,9 +2376,6 @@ class TorchBackend(Backend):
     def slogdet(self, a):
         return torch.linalg.slogdet(a)
 
-    def cholesky(self, x):
-        return torch.linalg.cholesky(x)
-
 
 if torch:
     # Only register torch backend if it is installed
@@ -2803,9 +2786,6 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def slogdet(self, a):
         return cp.linalg.slogdet(a)
-
-    def cholesky(self, x):
-        return cp.linalg.cholesky(x)
 
 
 if cp:
@@ -3247,9 +3227,6 @@ class TensorflowBackend(Backend):
 
     def slogdet(self, a):
         return tf.linalg.slogdet(a)
-
-    def cholesky(self, x):
-        return tf.linalg.cholesky(x)
 
 
 if tf:
