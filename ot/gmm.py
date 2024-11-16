@@ -15,6 +15,7 @@ import numpy as np
 from .lp import dist
 from .gaussian import bures_wasserstein_mapping
 
+
 def gaussian_logpdf(x, m, C):
     r"""
     Compute the log of the probability density function of a multivariate
@@ -43,8 +44,9 @@ def gaussian_logpdf(x, m, C):
     diff = x - m
     inv_C = nx.inv(C)
     z = nx.sum(diff * (diff @ inv_C), axis=-1)
-    _, log_det_C = nx.slogdet(C) # TODO: C should be positive definite
+    _, log_det_C = nx.slogdet(C)
     return -0.5 * (d * np.log(2 * np.pi) + log_det_C + z)
+
 
 def gaussian_pdf(x, m, C):
     r"""
@@ -67,6 +69,7 @@ def gaussian_pdf(x, m, C):
 
     """
     return get_backend(x, m, C).exp(gaussian_logpdf(x, m, C))
+
 
 def gmm_pdf(x, m, C, w):
     r"""
@@ -304,7 +307,9 @@ def gmm_ot_apply_map(
 
     if method == "bary":
         out = nx.zeros(x.shape)
-        logpdf = [gaussian_logpdf(x, m_s[k], C_s[k])[:, None] for k in range(m_s.shape[0])]
+        logpdf = [
+            gaussian_logpdf(x, m_s[k], C_s[k])[:, None] for k in range(m_s.shape[0])
+        ]
         print("where plan > 0", nx.where(plan > 0))
 
         # only need to compute for non-zero plan entries
@@ -322,7 +327,7 @@ def gmm_ot_apply_map(
             denom = nx.zeros(T_ij_x.shape)
             for k in range(w_s.shape[0]):
                 denom = denom + w_s[k] * nx.exp(logpdf[k] - logpdf[i])
-            
+
             out = out + plan[i, j] * T_ij_x / denom
 
         return out
@@ -344,7 +349,9 @@ def gmm_ot_apply_map(
             A[i, j] = Cs12inv @ M0 @ Cs12inv
             b[i, j] = m_t[j] - A[i, j] @ m_s[i]
 
-        logpdf = nx.stack([gaussian_logpdf(x, m_s[k], C_s[k]) for k in range(k_s)], axis=-1)
+        logpdf = nx.stack(
+            [gaussian_logpdf(x, m_s[k], C_s[k]) for k in range(k_s)], axis=-1
+        )
         # (n_samples, k_s)
         out = nx.zeros(x.shape)
 

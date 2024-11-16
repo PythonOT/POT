@@ -1072,7 +1072,7 @@ class Backend:
         See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.det.html
         """
         raise NotImplementedError()
-    
+
     def slogdet(self, a):
         r"""
         Compute the sign and (natural) logarithm of the determinant of an array.
@@ -1080,7 +1080,7 @@ class Backend:
         See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.slogdet.html
         """
         raise NotImplementedError()
-    
+
     def cholesky(self, a):
         r"""
         Cholesky decomposition.
@@ -1448,10 +1448,10 @@ class NumpyBackend(Backend):
 
     def det(self, a):
         return np.linalg.det(a)
-    
+
     def slogdet(self, a):
         return np.linalg.slogdet(a)
-    
+
     def cholesky(self, x):
         return np.linalg.cholesky(x)
 
@@ -1847,10 +1847,10 @@ class JaxBackend(Backend):
 
     def det(self, x):
         return jnp.linalg.det(x)
-    
+
     def slogdet(self, a):
         return jnp.linalg.slogdet(a)
-    
+
     def cholesky(self, x):
         return jnp.linalg.cholesky(x)
 
@@ -2386,10 +2386,10 @@ class TorchBackend(Backend):
 
     def det(self, x):
         return torch.linalg.det(x)
-    
+
     def slogdet(self, a):
         return torch.linalg.slogdet(a)
-    
+
     def cholesky(self, x):
         return torch.linalg.cholesky(x)
 
@@ -2800,10 +2800,10 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def det(self, x):
         return cp.linalg.det(x)
-    
+
     def slogdet(self, a):
         return cp.linalg.slogdet(a)
-    
+
     def cholesky(self, x):
         return cp.linalg.cholesky(x)
 
@@ -3244,10 +3244,10 @@ class TensorflowBackend(Backend):
 
     def det(self, x):
         return tf.linalg.det(x)
-    
+
     def slogdet(self, a):
         return tf.linalg.slogdet(a)
-    
+
     def cholesky(self, x):
         return tf.linalg.cholesky(x)
 
