@@ -15,10 +15,9 @@ import numpy as np
 from .lp import dist
 from .gaussian import bures_wasserstein_mapping
 
-
-def gaussian_pdf(x, m, C):
+def gaussian_logpdf(x, m, C):
     r"""
-    Compute the probability density function of a multivariate
+    Compute the log of the probability density function of a multivariate
     Gaussian distribution.
 
     Parameters
@@ -40,11 +39,34 @@ def gaussian_pdf(x, m, C):
         x.shape[-1] == m.shape[-1] == C.shape[-1] == C.shape[-2]
     ), "Dimension mismatch"
     nx = get_backend(x, m, C)
-    d = x.shape[-1]
-    z = (2 * np.pi) ** (-d / 2) * nx.det(C) ** (-0.5)
-    exp = nx.exp(-0.5 * nx.sum(((x - m) @ nx.inv(C)) * (x - m), axis=-1))
-    return z * exp
+    d = m.shape[0]
+    diff = x - m
+    inv_C = nx.inv(C)
+    z = nx.sum(diff * (diff @ inv_C), axis=-1)
+    _, log_det_C = nx.slogdet(C) # TODO: C should be positive definite
+    return -0.5 * (d * np.log(2 * np.pi) + log_det_C + z)
 
+def gaussian_pdf(x, m, C):
+    r"""
+    Compute the probability density function of a multivariate
+    Gaussian distribution.
+
+    Parameters
+    ----------
+    x : array-like, shape (..., d)
+        The input samples.
+    m : array-like, shape (d,)
+        The mean vector of the Gaussian distribution.
+    C : array-like, shape (d, d)
+        The covariance matrix of the Gaussian distribution.
+
+    Returns
+    -------
+    pdf : array-like, shape (...,)
+        The probability density function evaluated at each sample.
+
+    """
+    return get_backend(x, m, C).exp(gaussian_logpdf(x, m, C))
 
 def gmm_pdf(x, m, C, w):
     r"""
@@ -281,15 +303,14 @@ def gmm_ot_apply_map(
     n_samples = x.shape[0]
 
     if method == "bary":
-        normalization = gmm_pdf(x, m_s, C_s, w_s)[:, None]
         out = nx.zeros(x.shape)
+        logpdf = [gaussian_logpdf(x, m_s[k], C_s[k])[:, None] for k in range(m_s.shape[0])]
         print("where plan > 0", nx.where(plan > 0))
 
         # only need to compute for non-zero plan entries
         for i, j in zip(*nx.where(plan > 0)):
             Cs12 = nx.sqrtm(C_s[i])
             Cs12inv = nx.inv(Cs12)
-            g = gaussian_pdf(x, m_s[i], C_s[i])[:, None]
 
             M0 = nx.sqrtm(Cs12 @ C_t[j] @ Cs12)
             A = Cs12inv @ M0 @ Cs12inv
@@ -297,9 +318,14 @@ def gmm_ot_apply_map(
 
             # gaussian mapping between components i and j applied to x
             T_ij_x = x @ A + b
-            out = out + plan[i, j] * g * T_ij_x
 
-        return out / normalization
+            denom = nx.zeros(T_ij_x.shape)
+            for k in range(w_s.shape[0]):
+                denom = denom + w_s[k] * nx.exp(logpdf[k] - logpdf[i])
+            
+            out = out + plan[i, j] * T_ij_x / denom
+
+        return out
 
     else:  # rand
         # A[i, j] is the linear part of the gaussian mapping between components
@@ -318,13 +344,17 @@ def gmm_ot_apply_map(
             A[i, j] = Cs12inv @ M0 @ Cs12inv
             b[i, j] = m_t[j] - A[i, j] @ m_s[i]
 
-        normalization = gmm_pdf(x, m_s, C_s, w_s)  # (n_samples,)
-        gs = np.stack([gaussian_pdf(x, m_s[i], C_s[i]) for i in range(k_s)], axis=-1)
+        logpdf = nx.stack([gaussian_logpdf(x, m_s[k], C_s[k]) for k in range(k_s)], axis=-1)
         # (n_samples, k_s)
         out = nx.zeros(x.shape)
 
         for i_sample in range(n_samples):
-            p_mat = plan * gs[i_sample][:, None] / normalization[i_sample]
+            log_g = logpdf[i_sample]
+            denom = nx.zeros(plan.shape)
+            for k in range(k_s):
+                denom[k, :] = nx.sum(w_s * nx.exp(log_g - log_g[k]), axis=0)
+            p_mat = plan / denom
+
             p = p_mat.reshape(k_s * k_t)  # stack line-by-line
             # sample between 0 and k_s * k_t - 1
             ij_mat = rng.choice(k_s * k_t, p=p)

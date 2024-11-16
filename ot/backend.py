@@ -1072,6 +1072,22 @@ class Backend:
         See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.det.html
         """
         raise NotImplementedError()
+    
+    def slogdet(self, a):
+        r"""
+        Compute the sign and (natural) logarithm of the determinant of an array.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.slogdet.html
+        """
+        raise NotImplementedError()
+    
+    def cholesky(self, a):
+        r"""
+        Cholesky decomposition.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.cholesky.html
+        """
+        raise NotImplementedError()
 
 
 class NumpyBackend(Backend):
@@ -1432,6 +1448,12 @@ class NumpyBackend(Backend):
 
     def det(self, a):
         return np.linalg.det(a)
+    
+    def slogdet(self, a):
+        return np.linalg.slogdet(a)
+    
+    def cholesky(self, x):
+        return np.linalg.cholesky(x)
 
 
 _register_backend_implementation(NumpyBackend)
@@ -1825,6 +1847,12 @@ class JaxBackend(Backend):
 
     def det(self, x):
         return jnp.linalg.det(x)
+    
+    def slogdet(self, a):
+        return jnp.linalg.slogdet(a)
+    
+    def cholesky(self, x):
+        return jnp.linalg.cholesky(x)
 
 
 if jax:
@@ -2302,7 +2330,7 @@ class TorchBackend(Backend):
 
     def sqrtm(self, a):
         L, V = torch.linalg.eigh(a)
-        L = torch.sqrt(L)
+        L = torch.sqrt(torch.maximum(L, torch.tensor(0)))
         # Q[...] = V[...] @ diag(L[...])
         Q = torch.einsum("...jk,...k->...jk", V, L)
         # R[...] = Q[...] @ V[...].T
@@ -2358,6 +2386,12 @@ class TorchBackend(Backend):
 
     def det(self, x):
         return torch.linalg.det(x)
+    
+    def slogdet(self, a):
+        return torch.linalg.slogdet(a)
+    
+    def cholesky(self, x):
+        return torch.linalg.cholesky(x)
 
 
 if torch:
@@ -2766,6 +2800,12 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def det(self, x):
         return cp.linalg.det(x)
+    
+    def slogdet(self, a):
+        return cp.linalg.slogdet(a)
+    
+    def cholesky(self, x):
+        return cp.linalg.cholesky(x)
 
 
 if cp:
@@ -3204,6 +3244,12 @@ class TensorflowBackend(Backend):
 
     def det(self, x):
         return tf.linalg.det(x)
+    
+    def slogdet(self, a):
+        return tf.linalg.slogdet(a)
+    
+    def cholesky(self, x):
+        return tf.linalg.cholesky(x)
 
 
 if tf:
