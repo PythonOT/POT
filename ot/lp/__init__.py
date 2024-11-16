@@ -263,6 +263,8 @@ def emd(
 
     .. note:: An error will be raised if the vectors :math:`\mathbf{a}` and :math:`\mathbf{b}` do not sum to the same value.
 
+    .. note:: An error will be raided if the loss matrix :math:`\mathbf{M}` contains NaNs.
+
     Uses the algorithm proposed in :ref:`[1] <references-emd>`.
 
     Parameters
@@ -347,6 +349,9 @@ def emd(
     # convert to numpy
     M, a, b = nx.to_numpy(M, a, b)
 
+    if np.isnan(M).any():
+        raise ValueError('The loss matrix should not contain NaN values.')
+  
     # ensure float64
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
@@ -537,6 +542,9 @@ def emd2(
 
     # convert to numpy
     M, a, b = nx.to_numpy(M, a, b)
+
+    if np.isnan(M).any():
+        raise ValueError('The loss matrix should not contain NaN values.')
 
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
