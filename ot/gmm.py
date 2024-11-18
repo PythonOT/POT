@@ -307,10 +307,9 @@ def gmm_ot_apply_map(
 
     if method == "bary":
         out = nx.zeros(x.shape)
-        logpdf = [
-            gaussian_logpdf(x, m_s[k], C_s[k])[:, None] for k in range(m_s.shape[0])
-        ]
-        print("where plan > 0", nx.where(plan > 0))
+        logpdf = nx.stack(
+            [gaussian_logpdf(x, m_s[k], C_s[k])[:, None] for k in range(k_s)]
+        )
 
         # only need to compute for non-zero plan entries
         for i, j in zip(*nx.where(plan > 0)):
@@ -323,10 +322,8 @@ def gmm_ot_apply_map(
 
             # gaussian mapping between components i and j applied to x
             T_ij_x = x @ A + b
-
-            denom = nx.zeros(T_ij_x.shape)
-            for k in range(w_s.shape[0]):
-                denom = denom + w_s[k] * nx.exp(logpdf[k] - logpdf[i])
+            z = w_s[:, None, None] * nx.exp(logpdf - logpdf[i][None, :, :])
+            denom = nx.sum(z, axis=0)
 
             out = out + plan[i, j] * T_ij_x / denom
 
@@ -357,9 +354,9 @@ def gmm_ot_apply_map(
 
         for i_sample in range(n_samples):
             log_g = logpdf[i_sample]
-            denom = nx.zeros(plan.shape)
-            for k in range(k_s):
-                denom[k, :] = nx.sum(w_s * nx.exp(log_g - log_g[k]), axis=0)
+            log_diff = log_g[:, None] - log_g[None, :]
+            weighted_exp = w_s[:, None] * nx.exp(log_diff)
+            denom = nx.sum(weighted_exp, axis=0)[:, None] * nx.ones(plan.shape[1])
             p_mat = plan / denom
 
             p = p_mat.reshape(k_s * k_t)  # stack line-by-line
