@@ -173,7 +173,7 @@ def nearest_brenier_potential_fit(
                         - c3 * (G[j] - G[i]).T @ (X[j] - X[i])
                     ]
         problem = cvx.Problem(objective, constraints)
-        problem.solve(solver=cvx.ECOS)
+        problem.solve()
         phi_val, G_val = phi.value, G.value
         it_log_dict = {
             "solve_time": problem.solver_stats.solve_time,
@@ -368,7 +368,7 @@ def nearest_brenier_potential_predict_bounds(
                 - c3 * (G[j] - G_l_y).T @ (X[j] - Y[y_idx])
             ]
         problem = cvx.Problem(objective, constraints)
-        problem.solve(solver=cvx.ECOS)
+        problem.solve()
         phi_lu[0, y_idx] = phi_l_y.value
         G_lu[0, y_idx] = G_l_y.value
         if log:
@@ -395,7 +395,7 @@ def nearest_brenier_potential_predict_bounds(
                 - c3 * (G_u_y - G[i]).T @ (Y[y_idx] - X[i])
             ]
         problem = cvx.Problem(objective, constraints)
-        problem.solve(solver=cvx.ECOS)
+        problem.solve()
         phi_lu[1, y_idx] = phi_u_y.value
         G_lu[1, y_idx] = G_u_y.value
         if log:
