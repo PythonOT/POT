@@ -2,9 +2,11 @@
 
 ## 0.9.6dev
 
+#### New features
+- Implement CG solvers for partial FGW (PR #687)
+
 #### Closed issues
-- Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver
-  (PR #692, Issue #668)
+- Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
 
 
 ## 0.9.5
