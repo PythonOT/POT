@@ -41,7 +41,8 @@ The contributors to this library are:
 * [Tanguy Kerdoncuff](https://hv0nnus.github.io/) (Sampled Gromov Wasserstein)
 * [Minhui Huang](https://mhhuang95.github.io) (Projection Robust Wasserstein Distance)
 * [Nathan Cassereau](https://github.com/ncassereau-idris) (Backends)
-* [Cédric Vincent-Cuaz](https://github.com/cedricvincentcuaz) (Graph Dictionary Learning, FGW, semi-relaxed FGW, quantized FGW)
+* [Cédric Vincent-Cuaz](https://github.com/cedricvincentcuaz) (Graph Dictionary Learning, FGW,
+  semi-relaxed FGW, quantized FGW, partial FGW)
 * [Eloi Tanguy](https://github.com/eloitanguy) (Generalized Wasserstein
   Barycenters, GMMOT)
 * [Camille Le Coz](https://www.linkedin.com/in/camille-le-coz-8593b91a1/) (EMD2 debug)
