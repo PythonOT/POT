@@ -235,7 +235,7 @@ def nearest_brenier_potential_predict_bounds(
     strongly_convex_constant=0.6,
     gradient_lipschitz_constant=1.4,
     log=False,
-    solver=None
+    solver=None,
 ):
     r"""
     Compute the values of the lower and upper bounding potentials at the input points Y, using the potential optimal
