@@ -179,8 +179,6 @@ def test_solve_last_step():
     ga = a.grad.clone()
     gb = b.grad.clone()
 
-    print(gM, gM0)
-
     # Note, gradients are invariant to change in constant so we center them
     assert not torch.allclose(gM0, gM)
     assert not torch.allclose(ga0 - ga0.mean(), ga - ga.mean())
