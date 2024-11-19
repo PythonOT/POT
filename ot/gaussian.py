@@ -207,7 +207,7 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     empirical distributions source :math:`\mu_s` and target :math:`\mu_t`,
     discussed in remark 2.31 :ref:`[1] <references-bures-wasserstein-distance>`.
 
-    The Bures Wasserstein distance between source and target distribution :math:`\mathcal{W}`
+    The Bures Wasserstein distance between source and target distribution :math:`\mathcal{W}_2`
 
     .. math::
         \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \mathcal{B}(\Sigma_s, \Sigma_t)^{2}
@@ -219,13 +219,13 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
 
     Parameters
     ----------
-    ms : array-like (d,)
+    ms : array-like (d,) or (n,d)
         mean of the source distribution
-    mt : array-like (d,)
+    mt : array-like (d,) or (m,d)
         mean of the target distribution
-    Cs : array-like (d,d)
+    Cs : array-like (d,d) or (n,d,d)
         covariance of the source distribution
-    Ct : array-like (d,d)
+    Ct : array-like (d,d) or (m,d,d)
         covariance of the target distribution
     log : bool, optional
         record log if True
@@ -233,7 +233,9 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
 
     Returns
     -------
-    W : float
+    W : float if ms and md of shape (d,), array-like (n,) if ms of shape (n,d),
+    mt  of shape (d,), array-like (m,) if ms of shape (d,) and mt of shape (m,d),
+    array-like (n,m) if ms of shape (n,d) and mt of shape (m,d)
         Bures Wasserstein distance
     log : dict
         log dictionary return only if log==True in parameters
@@ -250,30 +252,27 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     nx = get_backend(ms, mt, Cs, Ct)
 
     Cs12 = nx.sqrtm(Cs)
-    B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
-    W = nx.sqrt(nx.maximum(nx.norm(ms - mt) ** 2 + B, 0))
 
-    if log:
-        log = {}
-        log["Cs12"] = Cs12
-        return W, log
+    if len(ms.shape) == 1 and len(mt.shape) == 1:
+        # Return float
+        squared_dist_m = nx.norm(ms - mt) ** 2
+        B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
+    elif len(ms.shape) == 1:
+        # Return shape (m,)
+        M = nx.einsum("ij, mjk, kl -> mil", Cs12, Ct, Cs12)
+        B = nx.trace(Cs[None] + Ct - 2 * nx.sqrtm(M))
+        squared_dist_m = nx.norm(ms[None] - mt, axis=-1) ** 2
+    elif len(mt.shape) == 1:
+        # Return shape (n,)
+        M = nx.einsum("nij, jk, nkl -> nil", Cs12, Ct, Cs12)
+        B = nx.trace(Cs + Ct[None] - 2 * nx.sqrtm(M))
+        squared_dist_m = nx.norm(ms - mt[None], axis=-1) ** 2
     else:
-        return W
+        # Return shape (n,m)
+        M = nx.einsum("nij, mjk, nkl -> nmil", Cs12, Ct, Cs12)
+        B = nx.trace(Cs[:, None] + Ct[None] - 2 * nx.sqrtm(M))
+        squared_dist_m = nx.norm(ms[:, None] - mt[None], axis=-1) ** 2
 
-
-def bures_wasserstein_distance_batch(ms, mt, Cs, Ct, log=False):
-    """
-    TODO
-    Maybe try to merge it with bures_wasserstein_distance
-    """
-    ms, mt, Cs, Ct = list_to_array(ms, mt, Cs, Ct)
-    nx = get_backend(ms, mt, Cs, Ct)
-
-    Cs12 = nx.sqrtm(Cs)
-    M = nx.einsum("nij, mjk, nkl -> nmil", Cs12, Ct, Cs12)
-    B = nx.trace(Cs[:, None] + Ct[None] - 2 * nx.sqrtm(M))
-
-    squared_dist_m = nx.norm(ms[:, None] - mt[None], axis=-1) ** 2
     W = nx.sqrt(nx.maximum(squared_dist_m + B, 0))
 
     if log:
@@ -361,12 +360,12 @@ def empirical_bures_wasserstein_distance(
     Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt) + reg * nx.eye(d, type_as=xt)
 
     if log:
-        W, log = bures_wasserstein_distance(mxs, mxt, Cs, Ct, log=log)
+        W, log = bures_wasserstein_distance(mxs[0], mxt[0], Cs, Ct, log=log)
         log["Cs"] = Cs
         log["Ct"] = Ct
         return W, log
     else:
-        W = bures_wasserstein_distance(mxs, mxt, Cs, Ct)
+        W = bures_wasserstein_distance(mxs[0], mxt[0], Cs, Ct)
         return W
 
 

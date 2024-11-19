@@ -122,22 +122,35 @@ def test_bures_wasserstein_distance_batch(nx):
 
     Wb = ot.gaussian.bures_wasserstein_distance(m[0, 0], m[1, 0], C[0], C[1], log=False)
 
-    Wb2 = ot.gaussian.bures_wasserstein_distance_batch(
+    Wb2 = ot.gaussian.bures_wasserstein_distance(
         m[0, 0][None], m[1, 0][None], C[0][None], C[1][None]
     )
     np.testing.assert_allclose(nx.to_numpy(Wb), nx.to_numpy(Wb2[0, 0]), atol=1e-5)
+    np.testing.assert_equal(Wb2.shape, (1, 1))
 
-    Wb2 = ot.gaussian.bures_wasserstein_distance_batch(
-        m[:, 0], m[1, 0][None], C, C[1][None]
-    )
+    Wb2 = ot.gaussian.bures_wasserstein_distance(m[:, 0], m[1, 0][None], C, C[1][None])
     np.testing.assert_allclose(nx.to_numpy(Wb), nx.to_numpy(Wb2[0, 0]), atol=1e-5)
     np.testing.assert_allclose(0, nx.to_numpy(Wb2[1, 0]), atol=1e-5)
+    np.testing.assert_equal(Wb2.shape, (2, 1))
 
-    Wb2 = ot.gaussian.bures_wasserstein_distance_batch(m[:, 0], m[:, 0], C, C)
+    Wb2 = ot.gaussian.bures_wasserstein_distance(
+        m[0, 0][None], m[1, 0], C[0][None], C[1]
+    )
+    np.testing.assert_allclose(nx.to_numpy(Wb), nx.to_numpy(Wb2[0]), atol=1e-5)
+    np.testing.assert_equal(Wb2.shape, (1,))
+
+    Wb2 = ot.gaussian.bures_wasserstein_distance(
+        m[0, 0], m[1, 0][None], C[0], C[1][None]
+    )
+    np.testing.assert_allclose(nx.to_numpy(Wb), nx.to_numpy(Wb2[0]), atol=1e-5)
+    np.testing.assert_equal(Wb2.shape, (1,))
+
+    Wb2 = ot.gaussian.bures_wasserstein_distance(m[:, 0], m[:, 0], C, C)
     np.testing.assert_allclose(nx.to_numpy(Wb), nx.to_numpy(Wb2[1, 0]), atol=1e-5)
     np.testing.assert_allclose(nx.to_numpy(Wb), nx.to_numpy(Wb2[0, 1]), atol=1e-5)
     np.testing.assert_allclose(0, nx.to_numpy(Wb2[0, 0]), atol=1e-5)
     np.testing.assert_allclose(0, nx.to_numpy(Wb2[1, 1]), atol=1e-5)
+    np.testing.assert_equal(Wb2.shape, (2, 2))
 
 
 @pytest.mark.parametrize("bias", [True, False])
@@ -278,9 +291,7 @@ def test_stochastic_gd_bures_wasserstein_barycenter(nx):
         m, C, method="fixed_point", log=False
     )
 
-    loss = nx.mean(
-        ot.gaussian.bures_wasserstein_distance_batch(mb[None], m, Cb[None], C)
-    )
+    loss = nx.mean(ot.gaussian.bures_wasserstein_distance(mb[None], m, Cb[None], C))
 
     n_samples = [1, 5]
     for n in n_samples:
@@ -289,7 +300,7 @@ def test_stochastic_gd_bures_wasserstein_barycenter(nx):
         )
 
         loss2 = nx.mean(
-            ot.gaussian.bures_wasserstein_distance_batch(mb2[None], m, Cb2[None], C)
+            ot.gaussian.bures_wasserstein_distance(mb2[None], m, Cb2[None], C)
         )
 
         np.testing.assert_allclose(mb, mb2, atol=1e-5)
