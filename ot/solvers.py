@@ -23,6 +23,7 @@ from .gromov import (
     entropic_semirelaxed_fused_gromov_wasserstein2,
     entropic_semirelaxed_gromov_wasserstein2,
     partial_gromov_wasserstein2,
+    partial_fused_gromov_wasserstein2,
     entropic_partial_gromov_wasserstein2,
 )
 from .gaussian import empirical_bures_wasserstein_distance
@@ -799,6 +800,7 @@ def solve_gromov(
     .. code-block:: python
 
         res = ot.solve_gromov(Ca, Cb, unbalanced_type='partial', unbalanced=0.8) # partial GW with m=0.8
+        res = ot.solve_gromov(Ca, Cb, M, unbalanced_type='partial', unbalanced=0.8, alpha=0.5) # partial FGW with m=0.8
 
 
     .. _references-solve-gromov:
@@ -1022,7 +1024,36 @@ def solve_gromov(
                 # potentials = (log['u'], log['v']) TODO
 
             else:  # partial FGW
-                raise (NotImplementedError("Partial FGW not implemented yet"))
+                if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
+                    raise (ValueError("Partial FGW mass given in reg is too large"))
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-7
+
+                value, log = partial_fused_gromov_wasserstein2(
+                    M,
+                    Ca,
+                    Cb,
+                    a,
+                    b,
+                    m=unbalanced,
+                    loss_fun=loss_fun,
+                    alpha=alpha,
+                    log=True,
+                    numItermax=max_iter,
+                    G0=plan_init,
+                    tol=tol,
+                    symmetric=symmetric,
+                    verbose=verbose,
+                )
+
+                value_linear = log["lin_loss"]
+                value_quad = log["quad_loss"]
+                plan = log["T"]
+                # potentials = (log['u'], log['v']) TODO
 
         elif unbalanced_type.lower() in ["kl", "l2"]:  # unbalanced exact OT
             raise (NotImplementedError('Unbalanced_type="{}"'.format(unbalanced_type)))
