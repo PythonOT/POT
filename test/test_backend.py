@@ -271,6 +271,8 @@ def test_empty_backend():
         nx.eigh(M)
     with pytest.raises(NotImplementedError):
         nx.det(M)
+    with pytest.raises(NotImplementedError):
+        nx.slogdet(M)
 
 
 def test_func_backends(nx):
@@ -690,6 +692,11 @@ def test_func_backends(nx):
         d = nx.det(M1b)
         lst_b.append(nx.to_numpy(d))
         lst_name.append("det")
+
+        s, logabsd = nx.slogdet(M1b)
+        s, logabsd = nx.to_numpy(s), nx.to_numpy(logabsd)
+        lst_b.append(np.array([s, logabsd]))
+        lst_name.append("slogdet")
 
         assert not nx.array_equal(Mb, vb), "array_equal (shape)"
         assert nx.array_equal(Mb, Mb), "array_equal (elements) - expected true"

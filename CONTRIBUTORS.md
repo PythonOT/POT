@@ -54,6 +54,7 @@ The contributors to this library are:
 * [Sonia Mazelet](https://github.com/SoniaMaz8) (Template based GNN layers)
 * [Laurène David](https://github.com/laudavid) (Low rank sinkhorn, Low rank Gromov-Wasserstein samples)
 * [Julie Delon](https://judelo.github.io/) (GMM OT)
+* [Samuel Boïté](https://samuelbx.github.io/) (GMM OT)
 
 ## Acknowledgments
 

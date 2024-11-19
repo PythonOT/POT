@@ -7,6 +7,7 @@
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
+- Fixed numerical errors in `ot.gmm` (PR #690, Issue #689)
 
 
 ## 0.9.5
