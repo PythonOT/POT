@@ -413,7 +413,7 @@ def solve(
 
             elif reg_type.lower() in ["entropy", "kl"]:
                 if (
-                    grad == "envelope" or grad == "last_step"
+                    grad in ["envelope",  "last_step"]
                 ):  # if envelope or last_step then detach the input
                     M0, a0, b0 = M, a, b
                     M, a, b = nx.detach(M, a, b)
