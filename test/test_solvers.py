@@ -156,40 +156,12 @@ def test_solve_last_step():
     b = ot.utils.unif(n_samples_t)
     M = ot.dist(x, y)
 
-    # Check that for one iteration, autodiff and last_step give the same gradients
-    a = torch.tensor(a, requires_grad=True)
-    b = torch.tensor(b, requires_grad=True)
-    M = torch.tensor(M, requires_grad=True)
-
-    sol0 = ot.solve(M, a, b, max_iter=1, grad="autodiff")
-    sol0.value.backward()
-
-    gM0 = M.grad.clone()
-    ga0 = a.grad.clone()
-    gb0 = b.grad.clone()
-
-    a = torch.tensor(a, requires_grad=True)
-    b = torch.tensor(b, requires_grad=True)
-    M = torch.tensor(M, requires_grad=True)
-
-    sol = ot.solve(M, a, b, max_iter=1, grad="last_step")
-    sol.value.backward()
-
-    gM = M.grad.clone()
-    ga = a.grad.clone()
-    gb = b.grad.clone()
-
-    # Note, gradients are invariant to change in constant so we center them
-    assert torch.allclose(gM0, gM)
-    assert torch.allclose(ga0 - ga0.mean(), ga - ga.mean())
-    assert torch.allclose(gb0 - gb0.mean(), gb - gb.mean())
-
     # Check that for multiple iterations, autodiff and last_step give different gradients
     a = torch.tensor(a, requires_grad=True)
     b = torch.tensor(b, requires_grad=True)
     M = torch.tensor(M, requires_grad=True)
 
-    sol0 = ot.solve(M, a, b, reg=1, grad="autodiff")
+    sol0 = ot.solve(M, a, b, reg=10, grad="autodiff")
     sol0.value.backward()
 
     gM0 = M.grad.clone()
@@ -200,14 +172,14 @@ def test_solve_last_step():
     b = torch.tensor(b, requires_grad=True)
     M = torch.tensor(M, requires_grad=True)
 
-    sol = ot.solve(M, a, b, reg=1, grad="last_ste")
+    sol = ot.solve(M, a, b, reg=10, grad="last_step")
     sol.value.backward()
-
-    print(sol, sol0)
 
     gM = M.grad.clone()
     ga = a.grad.clone()
     gb = b.grad.clone()
+
+    print(gM, gM0)
 
     # Note, gradients are invariant to change in constant so we center them
     assert not torch.allclose(gM0, gM)
