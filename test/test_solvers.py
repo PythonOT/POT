@@ -184,6 +184,9 @@ def test_solve_last_step():
     assert not torch.allclose(ga0 - ga0.mean(), ga - ga.mean())
     assert not torch.allclose(gb0 - gb0.mean(), gb - gb.mean())
 
+    with pytest.raises(ValueError):
+        ot.solve(M, a, b, grad="last_step", max_iter=0, reg=10)
+
 
 @pytest.mark.skipif(not torch, reason="torch no installed")
 def test_solve_envelope():
