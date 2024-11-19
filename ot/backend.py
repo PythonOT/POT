@@ -1073,6 +1073,14 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def slogdet(self, a):
+        r"""
+        Compute the sign and (natural) logarithm of the determinant of an array.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.slogdet.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -1433,6 +1441,9 @@ class NumpyBackend(Backend):
 
     def det(self, a):
         return np.linalg.det(a)
+
+    def slogdet(self, a):
+        return np.linalg.slogdet(a)
 
 
 _register_backend_implementation(NumpyBackend)
@@ -1827,6 +1838,9 @@ class JaxBackend(Backend):
 
     def det(self, x):
         return jnp.linalg.det(x)
+
+    def slogdet(self, a):
+        return jnp.linalg.slogdet(a)
 
 
 if jax:
@@ -2362,6 +2376,9 @@ class TorchBackend(Backend):
     def det(self, x):
         return torch.linalg.det(x)
 
+    def slogdet(self, a):
+        return torch.linalg.slogdet(a)
+
 
 if torch:
     # Only register torch backend if it is installed
@@ -2770,6 +2787,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def det(self, x):
         return cp.linalg.det(x)
+
+    def slogdet(self, a):
+        return cp.linalg.slogdet(a)
 
 
 if cp:
@@ -3209,6 +3229,9 @@ class TensorflowBackend(Backend):
 
     def det(self, x):
         return tf.linalg.det(x)
+
+    def slogdet(self, a):
+        return tf.linalg.slogdet(a)
 
 
 if tf:
