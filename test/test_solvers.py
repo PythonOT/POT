@@ -197,6 +197,38 @@ def test_solve_last_step():
 
 
 @pytest.mark.skipif(not torch, reason="torch no installed")
+def test_solve_detach():
+    n_samples_s = 10
+    n_samples_t = 7
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+    a = ot.utils.unif(n_samples_s)
+    b = ot.utils.unif(n_samples_t)
+    M = ot.dist(x, y)
+
+    # Check that last_step and autodiff give the same result and similar gradients
+    a = torch.tensor(a, requires_grad=True)
+    b = torch.tensor(b, requires_grad=True)
+    M = torch.tensor(M, requires_grad=True)
+
+    sol0 = ot.solve(M, a, b, reg=10, grad="detach")
+
+    with pytest.raises(RuntimeError):
+        sol0.value.backward()
+
+    sol = ot.solve(M, a, b, reg=10, grad="autodiff")
+
+    assert torch.allclose(sol0.plan, sol.plan)
+    assert torch.allclose(sol0.value, sol.value)
+    assert torch.allclose(sol0.value_linear, sol.value_linear)
+    assert torch.allclose(sol0.potentials[0], sol.potentials[0])
+    assert torch.allclose(sol0.potentials[1], sol.potentials[1])
+
+
+@pytest.mark.skipif(not torch, reason="torch no installed")
 def test_solve_envelope():
     n_samples_s = 10
     n_samples_t = 7
