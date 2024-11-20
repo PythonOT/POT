@@ -445,16 +445,17 @@ def solve(
                 potentials = (log["log_u"], log["log_v"])
 
                 if grad == "last_step":
-                    plan, log = sinkhorn_log(
-                        a0,
-                        b0,
-                        M0,
-                        reg=reg,
-                        numItermax=1,
-                        stopThr=tol,
-                        log=True,
-                        warmstart=potentials,
-                    )
+                    loga = nx.log(a0)
+                    logb = nx.log(b0)
+                    v = logb - nx.logsumexp(-M0 / reg + potentials[0][:, None], 0)
+                    u = loga - nx.logsumexp(-M0 / reg + potentials[1][None, :], 1)
+                    plan = nx.exp(-M0 / reg + u[:, None] + v[None, :])
+                    potentials = (u, v)
+                    log["niter"] = max_iter + 1
+                    log["log_u"] = u
+                    log["log_v"] = v
+                    log["u"] = nx.exp(u)
+                    log["v"] = nx.exp(v)
 
                 value_linear = nx.sum(M * plan)
 

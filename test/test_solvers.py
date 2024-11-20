@@ -179,10 +179,19 @@ def test_solve_last_step():
     ga = a.grad.clone()
     gb = b.grad.clone()
 
+    cos = torch.nn.CosineSimilarity(dim=0, eps=1e-6)
+
     # Note, gradients are invariant to change in constant so we center them
-    assert not torch.allclose(gM0, gM)
-    assert not torch.allclose(ga0 - ga0.mean(), ga - ga.mean())
-    assert not torch.allclose(gb0 - gb0.mean(), gb - gb.mean())
+    tolerance = 0.96
+    assert cos(gM0.flatten(), gM.flatten()) > tolerance
+    assert cos(ga0 - ga0.mean(), ga - ga.mean()) > tolerance
+    assert cos(gb0 - gb0.mean(), gb - gb.mean()) > tolerance
+
+    assert torch.allclose(sol0.plan, sol.plan)
+    assert torch.allclose(sol0.value, sol.value)
+    assert torch.allclose(sol0.value_linear, sol.value_linear)
+    assert torch.allclose(sol0.potentials[0], sol.potentials[0])
+    assert torch.allclose(sol0.potentials[1], sol.potentials[1])
 
     with pytest.raises(ValueError):
         ot.solve(M, a, b, grad="last_step", max_iter=0, reg=10)
