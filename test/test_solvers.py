@@ -156,7 +156,7 @@ def test_solve_last_step():
     b = ot.utils.unif(n_samples_t)
     M = ot.dist(x, y)
 
-    # Check that for multiple iterations, autodiff and last_step give different gradients
+    # Check that last_step and autodiff give the same result and similar gradients
     a = torch.tensor(a, requires_grad=True)
     b = torch.tensor(b, requires_grad=True)
     M = torch.tensor(M, requires_grad=True)
@@ -179,9 +179,8 @@ def test_solve_last_step():
     ga = a.grad.clone()
     gb = b.grad.clone()
 
-    cos = torch.nn.CosineSimilarity(dim=0, eps=1e-6)
-
     # Note, gradients are invariant to change in constant so we center them
+    cos = torch.nn.CosineSimilarity(dim=0, eps=1e-6)
     tolerance = 0.96
     assert cos(gM0.flatten(), gM.flatten()) > tolerance
     assert cos(ga0 - ga0.mean(), ga - ga.mean()) > tolerance
