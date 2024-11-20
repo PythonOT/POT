@@ -131,6 +131,7 @@ def solve(
         'envelope' provides gradients only for `value` and and other outputs are
         detached. This is useful for memory saving when only the value is needed. 'last_step' provides
         gradients only for the last iteration of the Sinkhorn solver, but provides gradient for both the OT plan and the objective values.
+        'detach' does not compute the gradients for the Sinkhorn solver.
 
     Returns
     -------
@@ -415,7 +416,8 @@ def solve(
                 if grad in [
                     "envelope",
                     "last_step",
-                ]:  # if envelope or last_step then detach the input
+                    "detach",
+                ]:  # if envelope, last_step or detach then detach the input
                     M0, a0, b0 = M, a, b
                     M, a, b = nx.detach(M, a, b)
 
@@ -444,6 +446,7 @@ def solve(
 
                 potentials = (log["log_u"], log["log_v"])
 
+                # if last_step, compute the last step of the Sinkhorn algorithm with the non-detached inputs
                 if grad == "last_step":
                     loga = nx.log(a0)
                     logb = nx.log(b0)
