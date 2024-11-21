@@ -15,10 +15,8 @@ This example illustrates the differences in terms of computation time between th
 
 # sphinx_gallery_thumbnail_number = 4
 
-import numpy as np
 import matplotlib.pylab as pl
 import ot
-from ot.datasets import make_1D_gauss as gauss
 from ot.backend import torch
 
 
@@ -78,7 +76,7 @@ for i in range(n_trials):
     times_last_step[i] = ot.toq()
 
 pl.figure(1, figsize=(5, 3))
-pl.ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
+pl.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
 pl.boxplot(
     ([times_autodiff, times_envelope, times_last_step]),
     tick_labels=["autodiff", "envelope", "last_step"],
