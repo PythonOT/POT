@@ -1,4 +1,3 @@
-# %%
 # -*- coding: utf-8 -*-
 """
 ================================================
@@ -27,7 +26,7 @@ from ot.backend import torch
 
 # %% parameters
 
-n_trials = 30
+n_trials = 10
 times_autodiff = torch.zeros(n_trials)
 times_envelope = torch.zeros(n_trials)
 times_last_step = torch.zeros(n_trials)
