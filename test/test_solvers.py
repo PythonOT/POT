@@ -144,6 +144,91 @@ def test_solve(nx):
 
 
 @pytest.mark.skipif(not torch, reason="torch no installed")
+def test_solve_last_step():
+    n_samples_s = 10
+    n_samples_t = 7
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+    a = ot.utils.unif(n_samples_s)
+    b = ot.utils.unif(n_samples_t)
+    M = ot.dist(x, y)
+
+    # Check that last_step and autodiff give the same result and similar gradients
+    a = torch.tensor(a, requires_grad=True)
+    b = torch.tensor(b, requires_grad=True)
+    M = torch.tensor(M, requires_grad=True)
+
+    sol0 = ot.solve(M, a, b, reg=10, grad="autodiff")
+    sol0.value.backward()
+
+    gM0 = M.grad.clone()
+    ga0 = a.grad.clone()
+    gb0 = b.grad.clone()
+
+    a = torch.tensor(a, requires_grad=True)
+    b = torch.tensor(b, requires_grad=True)
+    M = torch.tensor(M, requires_grad=True)
+
+    sol = ot.solve(M, a, b, reg=10, grad="last_step")
+    sol.value.backward()
+
+    gM = M.grad.clone()
+    ga = a.grad.clone()
+    gb = b.grad.clone()
+
+    # Note, gradients are invariant to change in constant so we center them
+    cos = torch.nn.CosineSimilarity(dim=0, eps=1e-6)
+    tolerance = 0.96
+    assert cos(gM0.flatten(), gM.flatten()) > tolerance
+    assert cos(ga0 - ga0.mean(), ga - ga.mean()) > tolerance
+    assert cos(gb0 - gb0.mean(), gb - gb.mean()) > tolerance
+
+    assert torch.allclose(sol0.plan, sol.plan)
+    assert torch.allclose(sol0.value, sol.value)
+    assert torch.allclose(sol0.value_linear, sol.value_linear)
+    assert torch.allclose(sol0.potentials[0], sol.potentials[0])
+    assert torch.allclose(sol0.potentials[1], sol.potentials[1])
+
+    with pytest.raises(ValueError):
+        ot.solve(M, a, b, grad="last_step", max_iter=0, reg=10)
+
+
+@pytest.mark.skipif(not torch, reason="torch no installed")
+def test_solve_detach():
+    n_samples_s = 10
+    n_samples_t = 7
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+    a = ot.utils.unif(n_samples_s)
+    b = ot.utils.unif(n_samples_t)
+    M = ot.dist(x, y)
+
+    # Check that last_step and autodiff give the same result and similar gradients
+    a = torch.tensor(a, requires_grad=True)
+    b = torch.tensor(b, requires_grad=True)
+    M = torch.tensor(M, requires_grad=True)
+
+    sol0 = ot.solve(M, a, b, reg=10, grad="detach")
+
+    with pytest.raises(RuntimeError):
+        sol0.value.backward()
+
+    sol = ot.solve(M, a, b, reg=10, grad="autodiff")
+
+    assert torch.allclose(sol0.plan, sol.plan)
+    assert torch.allclose(sol0.value, sol.value)
+    assert torch.allclose(sol0.value_linear, sol.value_linear)
+    assert torch.allclose(sol0.potentials[0], sol.potentials[0])
+    assert torch.allclose(sol0.potentials[1], sol.potentials[1])
+
+
+@pytest.mark.skipif(not torch, reason="torch no installed")
 def test_solve_envelope():
     n_samples_s = 10
     n_samples_t = 7
@@ -178,7 +263,7 @@ def test_solve_envelope():
     ga = a.grad.clone()
     gb = b.grad.clone()
 
-    # Note, gradients aer invariant to change in constant so we center them
+    # Note, gradients are invariant to change in constant so we center them
     assert torch.allclose(gM0, gM)
     assert torch.allclose(ga0 - ga0.mean(), ga - ga.mean())
     assert torch.allclose(gb0 - gb0.mean(), gb - gb.mean())
