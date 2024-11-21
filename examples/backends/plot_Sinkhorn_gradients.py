@@ -13,7 +13,7 @@ This example illustrates the differences in terms of computation time between th
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 1
 
 import matplotlib.pylab as pl
 import ot
