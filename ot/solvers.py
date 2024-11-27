@@ -863,7 +863,8 @@ def solve_gromov(
 
     if reg is None or reg == 0:  # exact OT
         if unbalanced is None and unbalanced_type.lower() not in [
-            "semirelaxed"
+            "semirelaxed",
+            "partial",
         ]:  # Exact balanced OT
             if M is None or alpha == 1:  # Gromov-Wasserstein problem
                 # default values for solver
