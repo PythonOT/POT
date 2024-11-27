@@ -251,7 +251,7 @@ def clean_zeros(a, b, M):
     return a2, b2, M2
 
 
-def euclidean_distances(X, Y, squared=False):
+def euclidean_distances(X, Y, squared=False, nx=None):
     r"""
     Considering the rows of :math:`\mathbf{X}` (and :math:`\mathbf{Y} = \mathbf{X}`) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -270,13 +270,13 @@ def euclidean_distances(X, Y, squared=False):
     -------
     distances : array-like, shape (`n_samples_1`, `n_samples_2`)
     """
-
-    nx = get_backend(X, Y)
+    if nx is None:
+        nx = get_backend(X, Y)
 
     a2 = nx.einsum("ij,ij->i", X, X)
     b2 = nx.einsum("ij,ij->i", Y, Y)
 
-    c = -2 * nx.dot(X, Y.T)
+    c = -2 * nx.dot(X, nx.transpose(Y))
     c += a2[:, None]
     c += b2[None, :]
 
@@ -331,9 +331,9 @@ def dist(x1, x2=None, metric="sqeuclidean", p=2, w=None, nx=None):
     if x2 is None:
         x2 = x1
     if metric == "sqeuclidean":
-        return euclidean_distances(x1, x2, squared=True)
+        return euclidean_distances(x1, x2, squared=True, nx=nx)
     elif metric == "euclidean":
-        return euclidean_distances(x1, x2, squared=False)
+        return euclidean_distances(x1, x2, squared=False, nx=nx)
     elif metric == "cityblock":
         return nx.sum(nx.abs(x1[:, None, :] - x2[None, :, :]), axis=2)
     elif metric == "minkowski":
