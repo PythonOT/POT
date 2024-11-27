@@ -10,6 +10,7 @@
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
 - Fixed numerical errors in `ot.gmm` (PR #690, Issue #689)
 - Add version number to the documentation (PR #696)
+- Update doc for default regularization in `ot.unbalanced` sinkhorn solvers (Issue #691, PR #700)
 
 ## 0.9.5
 
