@@ -126,11 +126,13 @@ def solve(
     verbose : bool, optional
         Print information in the solver, by default False
     grad : str, optional
-        Type of gradient computation, either or 'autodiff' or 'envelope'  used only for
+        Type of gradient computation, either or 'autodiff', 'envelope' or 'last_step' used only for
         Sinkhorn solver. By default 'autodiff' provides gradients wrt all
         outputs (`plan, value, value_linear`) but with important memory cost.
         'envelope' provides gradients only for `value` and and other outputs are
-        detached. This is useful for memory saving when only the value is needed.
+        detached. This is useful for memory saving when only the value is needed. 'last_step' provides
+        gradients only for the last iteration of the Sinkhorn solver, but provides gradient for both the OT plan and the objective values.
+        'detach' does not compute the gradients for the Sinkhorn solver.
 
     Returns
     -------
@@ -282,7 +284,6 @@ def solve(
         linear regression. NeurIPS.
 
     """
-
     # detect backend
     nx = get_backend(M, a, b, c)
 
@@ -413,7 +414,11 @@ def solve(
                 potentials = (log["u"], log["v"])
 
             elif reg_type.lower() in ["entropy", "kl"]:
-                if grad == "envelope":  # if envelope then detach the input
+                if grad in [
+                    "envelope",
+                    "last_step",
+                    "detach",
+                ]:  # if envelope, last_step or detach then detach the input
                     M0, a0, b0 = M, a, b
                     M, a, b = nx.detach(M, a, b)
 
@@ -422,6 +427,12 @@ def solve(
                     max_iter = 1000
                 if tol is None:
                     tol = 1e-9
+                if grad == "last_step":
+                    if max_iter == 0:
+                        raise ValueError(
+                            "The maximum number of iterations must be greater than 0 when using grad=last_step."
+                        )
+                    max_iter = max_iter - 1
 
                 plan, log = sinkhorn_log(
                     a,
@@ -434,6 +445,22 @@ def solve(
                     verbose=verbose,
                 )
 
+                potentials = (log["log_u"], log["log_v"])
+
+                # if last_step, compute the last step of the Sinkhorn algorithm with the non-detached inputs
+                if grad == "last_step":
+                    loga = nx.log(a0)
+                    logb = nx.log(b0)
+                    v = logb - nx.logsumexp(-M0 / reg + potentials[0][:, None], 0)
+                    u = loga - nx.logsumexp(-M0 / reg + potentials[1][None, :], 1)
+                    plan = nx.exp(-M0 / reg + u[:, None] + v[None, :])
+                    potentials = (u, v)
+                    log["niter"] = max_iter + 1
+                    log["log_u"] = u
+                    log["log_v"] = v
+                    log["u"] = nx.exp(u)
+                    log["v"] = nx.exp(v)
+
                 value_linear = nx.sum(M * plan)
 
                 if reg_type.lower() == "entropy":
@@ -442,8 +469,6 @@ def solve(
                     value = value_linear + reg * nx.kl_div(
                         plan, a[:, None] * b[None, :]
                     )
-
-                potentials = (log["log_u"], log["log_v"])
 
                 if grad == "envelope":  # set the gradient at convergence
                     value = nx.set_gradients(
