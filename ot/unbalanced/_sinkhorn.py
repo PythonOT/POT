@@ -55,7 +55,12 @@ def sinkhorn_unbalanced(
     - KL is the Kullback-Leibler divergence
 
     The algorithm used for solving the problem is the generalized
-    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25] <references-sinkhorn-unbalanced>`
+    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25]
+    <references-sinkhorn-unbalanced>`
+
+    .. warning::
+        Starting from version 0.9.5, the default value has been changed to `reg_type='kl'` instead of `reg_type='entropy'`. This makes the function more consistent with the literature
+        and the other solvers. If you want to use the entropy regularization, please set `reg_type='entropy'` explicitly.
 
 
     Parameters
@@ -91,7 +96,7 @@ def sinkhorn_unbalanced(
         + Negative entropy: 'entropy':
         :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
         This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
-        + Kullback-Leibler divergence: 'kl':
+        + Kullback-Leibler divergence (default): 'kl':
         :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
     c : array-like (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
@@ -281,8 +286,12 @@ def sinkhorn_unbalanced2(
     - KL is the Kullback-Leibler divergence
 
     The algorithm used for solving the problem is the generalized
-    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25] <references-sinkhorn-unbalanced2>`
+    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25]
+    <references-sinkhorn-unbalanced2>`
 
+    .. warning::
+        Starting from version 0.9.5, the default value has been changed to `reg_type='kl'` instead of `reg_type='entropy'`. This makes the function more consistent with the literature
+        and the other solvers. If you want to use the entropy regularization, please set `reg_type='entropy'` explicitly.
 
     Parameters
     ----------
@@ -587,6 +596,10 @@ def sinkhorn_knopp_unbalanced(
     - KL is the Kullback-Leibler divergence
 
     The algorithm used for solving the problem is the generalized Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25] <references-sinkhorn-knopp-unbalanced>`
+
+    .. warning::
+        Starting from version 0.9.5, the default value has been changed to `reg_type='kl'` instead of `reg_type='entropy'`. This makes the function more consistent with the literature
+        and the other solvers. If you want to use the entropy regularization, please set `reg_type='entropy'` explicitly.
 
 
     Parameters
@@ -895,6 +908,10 @@ def sinkhorn_stabilized_unbalanced(
     log : bool, optional
         record `log` if `True`
 
+    .. warning::
+        Starting from version 0.9.5, the default value has been changed to `reg_type='kl'` instead of `reg_type='entropy'`. This makes the function more consistent with the literature
+        and the other solvers. If you want to use the entropy regularization, please set `reg_type='entropy'` explicitly.
+
 
     Returns
     -------
@@ -1131,7 +1148,6 @@ def sinkhorn_unbalanced_translation_invariant(
     - KL is the Kullback-Leibler divergence
 
     The algorithm used for solving the problem is the translation invariant Sinkhorn algorithm as proposed in :ref:`[73] <references-sinkhorn-unbalanced-translation-invariant>`
-
 
     Parameters
     ----------
