@@ -25,6 +25,7 @@ from .gromov import (
     partial_gromov_wasserstein2,
     partial_fused_gromov_wasserstein2,
     entropic_partial_gromov_wasserstein2,
+    entropic_partial_fused_gromov_wasserstein2,
 )
 from .gaussian import empirical_bures_wasserstein_distance
 from .factored import factored_optimal_transport
@@ -974,7 +975,7 @@ def solve_gromov(
                 # potentials = (log['u'], log['v']) TODO
 
         elif unbalanced_type.lower() in ["partial"]:  # Partial OT
-            if M is None:  # Partial Gromov-Wasserstein problem
+            if M is None or alpha == 1.0:  # Partial Gromov-Wasserstein problem
                 if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
                     raise (ValueError("Partial GW mass given in reg is too large"))
 
@@ -1204,7 +1205,7 @@ def solve_gromov(
                 value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
 
         elif unbalanced_type.lower() in ["partial"]:  # Partial OT
-            if M is None:  # Partial Gromov-Wasserstein problem
+            if M is None or alpha == 1.0:  # Partial Gromov-Wasserstein problem
                 if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
                     raise (ValueError("Partial GW mass given in reg is too large"))
 
@@ -1214,7 +1215,7 @@ def solve_gromov(
                 if tol is None:
                     tol = 1e-7
 
-                value_quad, log = entropic_partial_gromov_wasserstein2(
+                value_noreg, log = entropic_partial_gromov_wasserstein2(
                     Ca,
                     Cb,
                     a,
@@ -1230,12 +1231,43 @@ def solve_gromov(
                     verbose=verbose,
                 )
 
-                value_quad = value
+                value_quad = value_noreg
                 plan = log["T"]
                 # potentials = (log['u'], log['v']) TODO
-
+                value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
             else:  # partial FGW
-                raise (NotImplementedError("Partial entropic FGW not implemented yet"))
+                if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
+                    raise (ValueError("Partial FGW mass given in reg is too large"))
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-7
+
+                value_noreg, log = entropic_partial_fused_gromov_wasserstein2(
+                    M,
+                    Ca,
+                    Cb,
+                    a,
+                    b,
+                    reg=reg,
+                    loss_fun=loss_fun,
+                    alpha=alpha,
+                    m=unbalanced,
+                    log=True,
+                    numItermax=max_iter,
+                    G0=plan_init,
+                    tol=tol,
+                    symmetric=symmetric,
+                    verbose=verbose,
+                )
+
+                value_linear = log["lin_loss"]
+                value_quad = log["quad_loss"]
+                plan = log["T"]
+                # potentials = (log['u'], log['v']) TODO
+                value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
 
         else:  # unbalanced AND regularized OT
             raise (
