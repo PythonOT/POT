@@ -17,25 +17,25 @@ import warnings
 from inspect import signature
 from .backend import get_backend, Backend, NumpyBackend, JaxBackend
 
-__time_tic_toc = time.time()
+__time_tic_toc = time.perf_counter()
 
 
 def tic():
     r"""Python implementation of Matlab tic() function"""
     global __time_tic_toc
-    __time_tic_toc = time.time()
+    __time_tic_toc = time.perf_counter()
 
 
 def toc(message="Elapsed time : {} s"):
     r"""Python implementation of Matlab toc() function"""
-    t = time.time()
+    t = time.perf_counter()
     print(message.format(t - __time_tic_toc))
     return t - __time_tic_toc
 
 
 def toq():
     r"""Python implementation of Julia toc() function"""
-    t = time.time()
+    t = time.perf_counter()
     return t - __time_tic_toc
 
 
@@ -291,11 +291,12 @@ def euclidean_distances(X, Y, squared=False):
     return c
 
 
-def dist(x1, x2=None, metric="sqeuclidean", p=2, w=None):
+def dist(x1, x2=None, metric="sqeuclidean", p=2, w=None, nx=None):
     r"""Compute distance between samples in :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}`
 
     .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends.
+        from all compatible backends for the following metrics:
+        'sqeuclidean', 'euclidean', 'cityblock', 'minkowski', 'cosine', 'correlation'.
 
     Parameters
     ----------
@@ -315,7 +316,8 @@ def dist(x1, x2=None, metric="sqeuclidean", p=2, w=None):
         p-norm for the Minkowski and the Weighted Minkowski metrics. Default value is 2.
     w : array-like, rank 1
         Weights for the weighted metrics.
-
+    nx : Backend, optional
+        Backend to perform computations on. If omitted, the backend defaults to that of `x1`.
 
     Returns
     -------
@@ -324,12 +326,39 @@ def dist(x1, x2=None, metric="sqeuclidean", p=2, w=None):
         distance matrix computed with given metric
 
     """
+    if nx is None:
+        nx = get_backend(x1, x2)
     if x2 is None:
         x2 = x1
     if metric == "sqeuclidean":
         return euclidean_distances(x1, x2, squared=True)
     elif metric == "euclidean":
         return euclidean_distances(x1, x2, squared=False)
+    elif metric == "cityblock":
+        return nx.sum(nx.abs(x1[:, None, :] - x2[None, :, :]), axis=2)
+    elif metric == "minkowski":
+        if w is None:
+            return nx.power(
+                nx.sum(nx.power(nx.abs(x1[:, None, :] - x2[None, :, :]), p), axis=2),
+                1 / p,
+            )
+        return nx.power(
+            nx.sum(
+                w[None, None, :] * nx.power(nx.abs(x1[:, None, :] - x2[None, :, :]), p),
+                axis=2,
+            ),
+            1 / p,
+        )
+    elif metric == "cosine":
+        nx1 = nx.sqrt(nx.einsum("ij,ij->i", x1, x1))
+        nx2 = nx.sqrt(nx.einsum("ij,ij->i", x2, x2))
+        return 1.0 - (nx.dot(x1, nx.transpose(x2)) / nx1[:, None] / nx2[None, :])
+    elif metric == "correlation":
+        x1 = x1 - nx.mean(x1, axis=1)[:, None]
+        x2 = x2 - nx.mean(x2, axis=1)[:, None]
+        nx1 = nx.sqrt(nx.einsum("ij,ij->i", x1, x1))
+        nx2 = nx.sqrt(nx.einsum("ij,ij->i", x2, x2))
+        return 1.0 - (nx.dot(x1, nx.transpose(x2)) / nx1[:, None] / nx2[None, :])
     else:
         if not get_backend(x1, x2).__name__ == "numpy":
             raise NotImplementedError()
