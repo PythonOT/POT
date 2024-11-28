@@ -1,3 +1,5 @@
+# CFF file for POT contributors
+
 cff-version: 1.2.0
 title: POT Python Optimal Transport
 message: >-
@@ -70,7 +72,6 @@ authors:
     family-names: Fernandes Montesuma
     affiliation: Université Paris-Saclay & CEA-List
     orcid: 'https://orcid.org/0000-0003-3850-4602'
-
 identifiers:
   - type: url
     value: 'https://github.com/PythonOT/POT'
@@ -80,5 +81,8 @@ url: 'https://pythonot.github.io/'
 keywords:
   - optimal transport
   - python
+  - sinkhorn
+  - wasserstein
+  - gromov-wasserstein
 license: MIT
 version: 0.9.5
