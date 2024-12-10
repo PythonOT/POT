@@ -1,0 +1,18 @@
+name: "Check updated RELEASES.md file"
+
+on:
+  pull_request:
+    branches:
+      - 'master'
+jobs:
+  check_release_file:
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Changed files
+        uses: tj-actions/verify-changed-files@v20
+        with:
+          files: 'RELEASES.md'
+          fail-if-unchanged: true
