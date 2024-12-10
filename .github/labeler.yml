@@ -1,0 +1,29 @@
+
+Documentation:
+- changed-files:
+  - any-glob-to-any-file: docs/**
+
+Examples:
+- changed-files:
+  - any-glob-to-any-file: examples/**
+
+Tests:
+- changed-files:
+  - any-glob-to-any-file: test/**
+
+CI:
+- changed-files:
+  - any-glob-to-any-file: .github/workflows/**
+  - any-glob-to-any-file: .circleci/**
+
+ot.bregman:
+- changed-files:
+  - any-glob-to-any-file: ot/bergman/**
+
+ot.gromov:
+- changed-files:
+  - any-glob-to-any-file: ot/gromov/**
+
+ot.unbalanced:
+- changed-files:
+  - any-glob-to-any-file: ot/unbalanced/**
