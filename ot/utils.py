@@ -291,7 +291,16 @@ def euclidean_distances(X, Y, squared=False, nx=None):
     return c
 
 
-def dist(x1, x2=None, metric="sqeuclidean", p=2, w=None, nx=None):
+def dist(
+    x1,
+    x2=None,
+    metric="sqeuclidean",
+    p=2,
+    w=None,
+    backend="auto",
+    nx=None,
+    use_tensor=False,
+):
     r"""Compute distance between samples in :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}`
 
     .. note:: This function is backend-compatible and will work on arrays
@@ -316,6 +325,14 @@ def dist(x1, x2=None, metric="sqeuclidean", p=2, w=None, nx=None):
         p-norm for the Minkowski and the Weighted Minkowski metrics. Default value is 2.
     w : array-like, rank 1
         Weights for the weighted metrics.
+    backend : str, optional
+        Backend to use for the computation. If 'auto', the backend is
+        automatically selected based on the input data. if 'scipy',
+        the ``scipy.spatial.distance.cdist`` function is used (and gradients are
+        detached).
+    use_tensor : bool, optional
+        If true use tensorized computation for the distance matrix which can
+        cause memory issues for large datasets.
     nx : Backend, optional
         Backend to perform computations on. If omitted, the backend defaults to that of `x1`.
 
@@ -330,25 +347,55 @@ def dist(x1, x2=None, metric="sqeuclidean", p=2, w=None, nx=None):
         nx = get_backend(x1, x2)
     if x2 is None:
         x2 = x1
-    if metric == "sqeuclidean":
+    if backend == "scipy":  # force scipy backend with cdist function
+        x1 = nx.to_numpy(x1)
+        x2 = nx.to_numpy(x2)
+        if isinstance(metric, str) and metric.endswith("minkowski"):
+            return nx.from_numpy(cdist(x1, x2, metric=metric, p=p, w=w))
+        if w is not None:
+            return nx.from_numpy(cdist(x1, x2, metric=metric, w=w))
+        return nx.from_numpy(cdist(x1, x2, metric=metric))
+    elif metric == "sqeuclidean":
         return euclidean_distances(x1, x2, squared=True, nx=nx)
     elif metric == "euclidean":
         return euclidean_distances(x1, x2, squared=False, nx=nx)
     elif metric == "cityblock":
-        return nx.sum(nx.abs(x1[:, None, :] - x2[None, :, :]), axis=2)
+        if use_tensor:
+            return nx.sum(nx.abs(x1[:, None, :] - x2[None, :, :]), axis=2)
+        else:
+            M = 0.0
+            for i in range(x1.shape[1]):
+                M += nx.abs(x1[:, i][:, None] - x2[:, i][None, :])
+            return M
     elif metric == "minkowski":
         if w is None:
-            return nx.power(
-                nx.sum(nx.power(nx.abs(x1[:, None, :] - x2[None, :, :]), p), axis=2),
-                1 / p,
-            )
-        return nx.power(
-            nx.sum(
-                w[None, None, :] * nx.power(nx.abs(x1[:, None, :] - x2[None, :, :]), p),
-                axis=2,
-            ),
-            1 / p,
-        )
+            if use_tensor:
+                return nx.power(
+                    nx.sum(
+                        nx.power(nx.abs(x1[:, None, :] - x2[None, :, :]), p), axis=2
+                    ),
+                    1 / p,
+                )
+            else:
+                M = 0.0
+                for i in range(x1.shape[1]):
+                    M += nx.abs(x1[:, i][:, None] - x2[:, i][None, :]) ** p
+                return M ** (1 / p)
+        else:
+            if use_tensor:
+                return nx.power(
+                    nx.sum(
+                        w[None, None, :]
+                        * nx.power(nx.abs(x1[:, None, :] - x2[None, :, :]), p),
+                        axis=2,
+                    ),
+                    1 / p,
+                )
+            else:
+                M = 0.0
+                for i in range(x1.shape[1]):
+                    M += w[i] * nx.abs(x1[:, i][:, None] - x2[:, i][None, :]) ** p
+                return M ** (1 / p)
     elif metric == "cosine":
         nx1 = nx.sqrt(nx.einsum("ij,ij->i", x1, x1))
         nx2 = nx.sqrt(nx.einsum("ij,ij->i", x2, x2))
