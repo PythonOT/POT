@@ -12,7 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Verify Changed files
-        uses: tj-actions/verify-changed-files@v20
+        uses: tj-actions/changed-files@v45
+        id: changed-release-file
         with:
           files: 'RELEASES.md'
-          fail-if-unchanged: true
+      - name: Check if RELEASES.md file is changed
+        if: steps.changed-release-file.outputs.any_changed == 'false'
+        run: exit 1
