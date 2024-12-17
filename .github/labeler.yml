@@ -1,0 +1,97 @@
+
+Documentation:
+- changed-files:
+  - any-glob-to-any-file: docs/**
+
+Examples:
+- changed-files:
+  - any-glob-to-any-file: examples/**
+
+Tests:
+- changed-files:
+  - any-glob-to-any-file: test/**
+
+CI:
+- changed-files:
+  - any-glob-to-any-file: .github/workflows/**
+  - any-glob-to-any-file: .circleci/**
+
+ot.bregman:
+- changed-files:
+  - any-glob-to-any-file: ot/bergman/**
+
+ot.gromov:
+- changed-files:
+  - any-glob-to-any-file: ot/gromov/**
+
+ot.unbalanced:
+- changed-files:
+  - any-glob-to-any-file: ot/unbalanced/**
+
+ot.lp:
+- changed-files:
+  - any-glob-to-any-file: ot/lp/**
+
+ot.utils:
+- changed-files:
+  - any-glob-to-any-file: ot/utils.py
+
+ot.backend:
+- changed-files:
+  - any-glob-to-any-file: ot/backend.py
+
+ot.coot:
+- changed-files:
+  - any-glob-to-any-file: ot/coot.py
+
+ot.optim:
+- changed-files:
+  - any-glob-to-any-file: ot/optim.py
+
+ot.plot:
+- changed-files:
+  - any-glob-to-any-file: ot/plot.py
+
+ot.factored:
+- changed-files:
+  - any-glob-to-any-file: ot/factored.py
+
+ot.gaussian:
+- changed-files:
+  - any-glob-to-any-file: ot/gaussian.py
+
+ot.gmm:
+- changed-files:
+  - any-glob-to-any-file: ot/gmm.py
+
+ot.lowrank:
+- changed-files:
+  - any-glob-to-any-file: ot/lowrank.py
+
+ot.solvers:
+- changed-files:
+  - any-glob-to-any-file: ot/solvers.py
+
+ot.partial:
+- changed-files:
+  - any-glob-to-any-file: ot/partial.py
+
+ot.sliced:
+- changed-files:
+  - any-glob-to-any-file: ot/sliced.py
+
+ot.smooth:
+- changed-files:
+  - any-glob-to-any-file: ot/smooth.py
+
+ot.weak:
+- changed-files:
+  - any-glob-to-any-file: ot/weak.py
+
+ot.dr:
+- changed-files:
+  - any-glob-to-any-file: ot/dr.py
+
+ot.gnn:
+- changed-files:
+  - any-glob-to-any-file: ot/gnn/**
