@@ -5,6 +5,7 @@
 #### New features
 - Implement CG solvers for partial FGW (PR #687)
 - Added feature `grad=last_step` for `ot.solvers.solve` (PR #693)
+- Implement projected gradient descent solvers for entropic partial FGW (PR #702)
 - Automatic PR labeling and release file update check (PR #704)
 
 #### Closed issues
