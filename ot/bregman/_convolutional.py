@@ -10,8 +10,36 @@ Bregman projections solvers for entropic regularized Wasserstein convolutional b
 
 import warnings
 
-from ..utils import list_to_array
 from ..backend import get_backend
+from ..utils import list_to_array
+
+
+def _get_convol_img_fn(nx, width, height, reg, type_as, log_domain=False):
+    """
+    Return the convolution operator for 2D images. The function constructed is equivalent to blurring on horizontal then vertical directions.
+    """
+    t1 = nx.linspace(0, 1, width, type_as=type_as)
+    Y1, X1 = nx.meshgrid(t1, t1)
+    M1 = -((X1 - Y1) ** 2) / reg
+
+    t2 = nx.linspace(0, 1, height, type_as=type_as)
+    Y2, X2 = nx.meshgrid(t2, t2)
+    M2 = -((X2 - Y2) ** 2) / reg
+
+    def convol_imgs(log_imgs):
+        log_imgs = nx.logsumexp(M1[:, :, None] + log_imgs[None], axis=1)
+        log_imgs = nx.logsumexp(M2[:, :, None] + log_imgs.T[None], axis=1).T
+        return log_imgs
+
+    if not log_domain:
+        K1, K2 = nx.exp(M1), nx.exp(M2)
+
+        def convol_imgs(imgs):
+            kx = nx.einsum("...ij,kjl->kil", K1, imgs)
+            kxy = nx.einsum("...ij,klj->kli", K2, kx)
+            return kxy
+
+    return convol_imgs
 
 
 def convolutional_barycenter2d(
@@ -133,37 +161,26 @@ def _convolutional_barycenter2d(
     """
 
     A = list_to_array(A)
+    n_hists, width, height = A.shape
 
     nx = get_backend(A)
 
     if weights is None:
-        weights = nx.ones((A.shape[0],), type_as=A) / A.shape[0]
+        weights = nx.ones((n_hists,), type_as=A) / n_hists
     else:
-        assert len(weights) == A.shape[0]
+        assert len(weights) == n_hists
 
     if log:
         log = {"err": []}
 
-    bar = nx.ones(A.shape[1:], type_as=A)
+    bar = nx.ones((width, height), type_as=A)
     bar /= nx.sum(bar)
     U = nx.ones(A.shape, type_as=A)
     V = nx.ones(A.shape, type_as=A)
     err = 1
 
     # build the convolution operator
-    # this is equivalent to blurring on horizontal then vertical directions
-    t = nx.linspace(0, 1, A.shape[1], type_as=A)
-    [Y, X] = nx.meshgrid(t, t)
-    K1 = nx.exp(-((X - Y) ** 2) / reg)
-
-    t = nx.linspace(0, 1, A.shape[2], type_as=A)
-    [Y, X] = nx.meshgrid(t, t)
-    K2 = nx.exp(-((X - Y) ** 2) / reg)
-
-    def convol_imgs(imgs):
-        kx = nx.einsum("...ij,kjl->kil", K1, imgs)
-        kxy = nx.einsum("...ij,klj->kli", K2, kx)
-        return kxy
+    convol_imgs = _get_convol_img_fn(nx, width, height, reg, type_as=A)
 
     KU = convol_imgs(U)
     for ii in range(numItermax):
@@ -195,6 +212,7 @@ def _convolutional_barycenter2d(
     if log:
         log["niter"] = ii
         log["U"] = U
+        log["V"] = V
         return bar, log
     else:
         return bar
@@ -236,19 +254,7 @@ def _convolutional_barycenter2d_log(
 
     err = 1
     # build the convolution operator
-    # this is equivalent to blurring on horizontal then vertical directions
-    t = nx.linspace(0, 1, width, type_as=A)
-    [Y, X] = nx.meshgrid(t, t)
-    M1 = -((X - Y) ** 2) / reg
-
-    t = nx.linspace(0, 1, height, type_as=A)
-    [Y, X] = nx.meshgrid(t, t)
-    M2 = -((X - Y) ** 2) / reg
-
-    def convol_img(log_img):
-        log_img = nx.logsumexp(M1[:, :, None] + log_img[None], axis=1)
-        log_img = nx.logsumexp(M2[:, :, None] + log_img.T[None], axis=1).T
-        return log_img
+    convol_img = _get_convol_img_fn(nx, width, height, reg, type_as=A, log_domain=True)
 
     logA = nx.log(A + stabThr)
     log_KU, G, F = nx.zeros((3, *logA.shape), type_as=A)
@@ -417,23 +423,11 @@ def _convolutional_barycenter2d_debiased(
     bar /= width * height
     U = nx.ones(A.shape, type_as=A)
     V = nx.ones(A.shape, type_as=A)
-    c = nx.ones(A.shape[1:], type_as=A)
+    c = nx.ones((width, height), type_as=A)
     err = 1
 
     # build the convolution operator
-    # this is equivalent to blurring on horizontal then vertical directions
-    t = nx.linspace(0, 1, width, type_as=A)
-    [Y, X] = nx.meshgrid(t, t)
-    K1 = nx.exp(-((X - Y) ** 2) / reg)
-
-    t = nx.linspace(0, 1, height, type_as=A)
-    [Y, X] = nx.meshgrid(t, t)
-    K2 = nx.exp(-((X - Y) ** 2) / reg)
-
-    def convol_imgs(imgs):
-        kx = nx.einsum("...ij,kjl->kil", K1, imgs)
-        kxy = nx.einsum("...ij,klj->kli", K2, kx)
-        return kxy
+    convol_imgs = _get_convol_img_fn(nx, width, height, reg, type_as=A)
 
     KU = convol_imgs(U)
     for ii in range(numItermax):
@@ -471,6 +465,7 @@ def _convolutional_barycenter2d_debiased(
     if log:
         log["niter"] = ii
         log["U"] = U
+        log["V"] = V
         return bar, log
     else:
         return bar
@@ -507,19 +502,7 @@ def _convolutional_barycenter2d_debiased_log(
 
     err = 1
     # build the convolution operator
-    # this is equivalent to blurring on horizontal then vertical directions
-    t = nx.linspace(0, 1, width, type_as=A)
-    [Y, X] = nx.meshgrid(t, t)
-    M1 = -((X - Y) ** 2) / reg
-
-    t = nx.linspace(0, 1, height, type_as=A)
-    [Y, X] = nx.meshgrid(t, t)
-    M2 = -((X - Y) ** 2) / reg
-
-    def convol_img(log_img):
-        log_img = nx.logsumexp(M1[:, :, None] + log_img[None], axis=1)
-        log_img = nx.logsumexp(M2[:, :, None] + log_img.T[None], axis=1).T
-        return log_img
+    convol_img = _get_convol_img_fn(nx, width, height, reg, type_as=A, log_domain=True)
 
     logA = nx.log(A + stabThr)
     log_bar, c = nx.zeros((2, width, height), type_as=A)
