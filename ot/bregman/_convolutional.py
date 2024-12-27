@@ -46,6 +46,13 @@ def _get_convol_img_fn(nx, width, height, reg, type_as, log_domain=False):
     return convol_imgs
 
 
+def _print_report(ii, err):
+    """Print the report of the iteration."""
+    if ii % 200 == 0:
+        print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+    print("{:5d}|{:8e}|".format(ii, err))
+
+
 def convolutional_barycenter2d(
     A,
     reg,
@@ -198,11 +205,8 @@ def _convolutional_barycenter2d(
             # log and verbose print
             if log:
                 log["err"].append(err)
-
             if verbose:
-                if ii % 200 == 0:
-                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
-                print("{:5d}|{:8e}|".format(ii, err))
+                _print_report(ii, err)
             if err < stopThr:
                 break
 
@@ -271,11 +275,8 @@ def _convolutional_barycenter2d_log(
             # log and verbose print
             if log:
                 log["err"].append(err)
-
             if verbose:
-                if ii % 200 == 0:
-                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
-                print("{:5d}|{:8e}|".format(ii, err))
+                _print_report(ii, err)
             if err < stopThr:
                 break
         G = log_bar[None, :, :] - log_KU
@@ -441,11 +442,8 @@ def _convolutional_barycenter2d_debiased(
             # log and verbose print
             if log:
                 log["err"].append(err)
-
             if verbose:
-                if ii % 200 == 0:
-                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
-                print("{:5d}|{:8e}|".format(ii, err))
+                _print_report(ii, err)
 
             # debiased Sinkhorn does not converge monotonically
             # guarantee a few iterations are done before stopping
@@ -515,11 +513,8 @@ def _convolutional_barycenter2d_debiased_log(
             # log and verbose print
             if log:
                 log["err"].append(err)
-
             if verbose:
-                if ii % 200 == 0:
-                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
-                print("{:5d}|{:8e}|".format(ii, err))
+                _print_report(ii, err)
             if err < stopThr and ii > 20:
                 break
         G = log_bar[None, :, :] - log_KU
