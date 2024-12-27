@@ -13,11 +13,15 @@ import warnings
 from ..backend import get_backend
 from ..utils import list_to_array
 
+_warning_msg = (
+    "Convolutional Sinkhorn did not converge. "
+    "Try a larger number of iterations `numItermax` "
+    "or a larger entropy `reg`."
+)
+
 
 def _get_convol_img_fn(nx, width, height, reg, type_as, log_domain=False):
-    """
-    Return the convolution operator for 2D images. The function constructed is equivalent to blurring on horizontal then vertical directions.
-    """
+    """Return the convolution operator for 2D images. The function constructed is equivalent to blurring on horizontal then vertical directions."""
     t1 = nx.linspace(0, 1, width, type_as=type_as)
     Y1, X1 = nx.meshgrid(t1, t1)
     M1 = -((X1 - Y1) ** 2) / reg
@@ -204,11 +208,7 @@ def _convolutional_barycenter2d(
 
     else:
         if warn:
-            warnings.warn(
-                "Convolutional Sinkhorn did not converge. "
-                "Try a larger number of iterations `numItermax` "
-                "or a larger entropy `reg`."
-            )
+            warnings.warn(_warning_msg)
     if log:
         log["niter"] = ii
         log["U"] = U
@@ -282,11 +282,7 @@ def _convolutional_barycenter2d_log(
 
     else:
         if warn:
-            warnings.warn(
-                "Convolutional Sinkhorn did not converge. "
-                "Try a larger number of iterations `numItermax` "
-                "or a larger entropy `reg`."
-            )
+            warnings.warn(_warning_msg)
     if log:
         log["niter"] = ii
         return nx.exp(log_bar), log
@@ -457,11 +453,7 @@ def _convolutional_barycenter2d_debiased(
                 break
     else:
         if warn:
-            warnings.warn(
-                "Sinkhorn did not converge. You might want to "
-                "increase the number of iterations `numItermax` "
-                "or the regularization parameter `reg`."
-            )
+            warnings.warn(_warning_msg)
     if log:
         log["niter"] = ii
         log["U"] = U
@@ -534,11 +526,7 @@ def _convolutional_barycenter2d_debiased_log(
 
     else:
         if warn:
-            warnings.warn(
-                "Convolutional Sinkhorn did not converge. "
-                "Try a larger number of iterations `numItermax` "
-                "or a larger entropy `reg`."
-            )
+            warnings.warn(_warning_msg)
     if log:
         log["niter"] = ii
         return nx.exp(log_bar), log
