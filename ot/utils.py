@@ -228,12 +228,12 @@ def unif(n, type_as=None):
     ----------
     n : int
         number of bins in the histogram
-    type_as : array_like
+    type_as : array-like
         array of the same type of the expected output (numpy/pytorch/jax)
 
     Returns
     -------
-    h : array_like (`n`,)
+    h : array-like, shape (n,)
         histogram of length `n` such that :math:`\forall i, \mathbf{h}_i = \frac{1}{n}`
     """
     if type_as is None:
