@@ -45,7 +45,7 @@ def partial_gromov_wasserstein(
 
     .. math::
         \mathbf{T}^* \in \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
-        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) T_{i,j} T_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -332,7 +332,7 @@ def partial_gromov_wasserstein2(
 
     .. math::
         \mathbf{PGW} = \mathop{\min}_\mathbf{T} \quad \sum_{i,j,k,l}
-        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) T_{i,j} T_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -524,7 +524,7 @@ def partial_fused_gromov_wasserstein(
 
     .. math::
         \mathbf{T}^* \in \mathop{\arg \min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
-        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) T_{i,j} T_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -812,7 +812,7 @@ def partial_fused_gromov_wasserstein2(
 
     .. math::
         \mathbf{PFGW}_{\alpha} = \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
-        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) T_{i,j} T_{k,l}
 
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
@@ -1088,18 +1088,18 @@ def entropic_partial_gromov_wasserstein(
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_{\gamma} \quad \sum_{i,j,k,l}
-        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})\cdot
-        \gamma_{i,j}\cdot\gamma_{k,l} + \mathrm{reg} \cdot\Omega(\gamma)
+        \mathbf{T} = \mathop{\arg \min}_{\mathbf{T}} \quad \sum_{i,j,k,l}
+        L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})
+        T_{i,j} T_{k,l} + \mathrm{reg} \Omega(\mathbf{T})
 
     .. math::
-        s.t. \ \gamma &\geq 0
+        s.t. \ \mathbf{T} &\geq 0
 
-             \gamma \mathbf{1} &\leq \mathbf{a}
+             \mathbf{T} \mathbf{1} &\leq \mathbf{a}
 
-             \gamma^T \mathbf{1} &\leq \mathbf{b}
+             \mathbf{T}^T \mathbf{1} &\leq \mathbf{b}
 
-             \mathbf{1}^T \gamma^T \mathbf{1} = m
+             \mathbf{1}^T \mathbf{T}^T \mathbf{1} = m
              &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\}
 
     where :
@@ -1109,7 +1109,7 @@ def entropic_partial_gromov_wasserstein(
     - :math:`\mathbf{p}` and :math:`\mathbf{q}` are the sample weights
     - `L`: quadratic loss function
     - :math:`\Omega` is the entropic regularization term,
-      :math:`\Omega=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+      :math:`\Omega(\mathbf{T})=\sum_{i,j} T_{i,j}\log(T_{i,j})`
     - `m` is the amount of mass to be transported
 
     The formulation of the GW problem has been proposed in
@@ -1173,7 +1173,7 @@ def entropic_partial_gromov_wasserstein(
 
     Returns
     -------
-    :math: `gamma` : ndarray, shape (dim_a, dim_b)
+    T : ndarray, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`
@@ -1327,18 +1327,18 @@ def entropic_partial_gromov_wasserstein2(
     The function solves the following optimization problem:
 
     .. math::
-        PGW = \min_{\gamma} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k},
-             \mathbf{C_2}_{j,l})\cdot
-             \gamma_{i,j}\cdot\gamma_{k,l} + \mathrm{reg} \cdot\Omega(\gamma)
+        PGW = \min_{\mathbf{T}} \quad \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k},
+             \mathbf{C_2}_{j,l})
+             T_{i,j}T_{k,l} + \mathrm{reg} \Omega(\mathbf{T})
 
     .. math::
-        s.t. \ \gamma &\geq 0
+        s.t. \ \mathbf{T} &\geq 0
 
-             \gamma \mathbf{1} &\leq \mathbf{a}
+             \mathbf{T} \mathbf{1} &\leq \mathbf{a}
 
-             \gamma^T \mathbf{1} &\leq \mathbf{b}
+             \mathbf{T}^T \mathbf{1} &\leq \mathbf{b}
 
-             \mathbf{1}^T \gamma^T \mathbf{1} = m &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\}
+             \mathbf{1}^T \mathbf{T}^T \mathbf{1} = m &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\}
 
     where :
 
@@ -1347,7 +1347,7 @@ def entropic_partial_gromov_wasserstein2(
     - :math:`\mathbf{p}` and :math:`\mathbf{q}` are the sample weights
     - `L`: Loss function to account for the misfit between the similarity matrices.
     - :math:`\Omega` is the entropic regularization term,
-      :math:`\Omega=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+      :math:`\Omega(\mathbf{T})=\sum_{i,j} T_{i,j}\log(T_{i,j})`
     - `m` is the amount of mass to be transported
 
     The formulation of the GW problem has been proposed in
@@ -1461,18 +1461,18 @@ def entropic_partial_fused_gromov_wasserstein(
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_{\gamma} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F
-        + \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})\cdot
-        \gamma_{i,j}\cdot\gamma_{k,l} + \mathrm{reg} \cdot\Omega(\gamma)
+        \mathbf{T} = \mathop{\arg \min}_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F
+        + \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})
+        T_{i,j} T_{k,l} + \mathrm{reg} \Omega(\mathbf{T})
 
     .. math::
-        s.t. \ \gamma &\geq 0
+        s.t. \ \mathbf{T} &\geq 0
 
-             \gamma \mathbf{1} &\leq \mathbf{a}
+             \mathbf{T} \mathbf{1} &\leq \mathbf{a}
 
-             \gamma^T \mathbf{1} &\leq \mathbf{b}
+             \mathbf{T}^T \mathbf{1} &\leq \mathbf{b}
 
-             \mathbf{1}^T \gamma^T \mathbf{1} = m
+             \mathbf{1}^T \mathbf{T}^T \mathbf{1} = m
              &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\}
 
     where :
@@ -1483,7 +1483,7 @@ def entropic_partial_fused_gromov_wasserstein(
     - :math:`\mathbf{p}` and :math:`\mathbf{q}` are the sample weights
     - `L`: quadratic loss function
     - :math:`\Omega` is the entropic regularization term,
-      :math:`\Omega=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+      :math:`\Omega(\mathbf{T})=\sum_{i,j} T_{i,j}\log(T_{i,j})`
     - `m` is the amount of mass to be transported
 
     The formulation of the FGW problem has been proposed in
@@ -1530,7 +1530,7 @@ def entropic_partial_fused_gromov_wasserstein(
 
     Returns
     -------
-    :math: `gamma` : ndarray, shape (dim_a, dim_b)
+    T : ndarray, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`
@@ -1693,18 +1693,18 @@ def entropic_partial_fused_gromov_wasserstein2(
     The function solves the following optimization problem:
 
     .. math::
-        PGW = \min_{\gamma} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F
-        + \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})\cdot
-        \gamma_{i,j}\cdot\gamma_{k,l} + \mathrm{reg} \cdot\Omega(\gamma)
+        PGW = \min_{\mathbf{T}} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F
+        + \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) T_{i,j} T_{k,l}
+        + \mathrm{reg} \cdot\Omega(\mathbf{T})
 
     .. math::
-        s.t. \ \gamma &\geq 0
+        s.t. \ \mathbf{T} &\geq 0
 
-             \gamma \mathbf{1} &\leq \mathbf{a}
+             \mathbf{T} \mathbf{1} &\leq \mathbf{a}
 
-             \gamma^T \mathbf{1} &\leq \mathbf{b}
+             \mathbf{T}^T \mathbf{1} &\leq \mathbf{b}
 
-             \mathbf{1}^T \gamma^T \mathbf{1} = m &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\}
+             \mathbf{1}^T \mathbf{T}^T \mathbf{1} = m &\leq \min\{\|\mathbf{a}\|_1, \|\mathbf{b}\|_1\}
 
     where :
 
@@ -1714,7 +1714,7 @@ def entropic_partial_fused_gromov_wasserstein2(
     - :math:`\mathbf{p}` and :math:`\mathbf{q}` are the sample weights
     - `L`: Loss function to account for the misfit between the similarity matrices.
     - :math:`\Omega` is the entropic regularization term,
-      :math:`\Omega=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+      :math:`\Omega(\mathbf{T})=\sum_{i,j} T_{i,j}\log(T_{i,j})`
     - `m` is the amount of mass to be transported
 
     The formulation of the FGW problem has been proposed in

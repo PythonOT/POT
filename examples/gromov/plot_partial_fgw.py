@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -*-
-"""
+r"""
 =================================
 Plot partial FGW for subgraph matching
 =================================
 
 This example illustrates the computation of partial (Fused) Gromov-Wasserstein
-divergences for subgraph matching tasks [18, 29].
+divergences for subgraph matching tasks, using the exact formulation $p(F)GW$ and
+the entropically regularized one $p(F)GW_e$ [18, 29].
+
+We first create a clean circular graph of 15 nodes with node features correlated with
+node positions on the unit circle, and a noisy version where 5 nodes out of the
+circle are added. Then knowing the proportion of clean samples in the target graph
+$m=3/4$, we show how to identify them using :
+    - The partial GW matching and its entropic counterpart, omitting node features.
+    - The partial Fused GW matching and its entropic counterpart.
 
 [18] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain
 and Courty Nicolas
@@ -19,6 +27,8 @@ Transport with Applications on Positive-Unlabeled Learning". NeurIPS.
 # Author: Cédric Vincent-Cuaz <cedvincentcuaz@gmail.com>
 #
 # License: MIT License
+
+# sphinx_gallery_thumbnail_number = 3
 
 # %% load libraries
 import numpy as np
@@ -35,7 +45,10 @@ from ot.gromov import (
     entropic_partial_fused_gromov_wasserstein,
 )
 from ot import unif, dist
-# %% Graph generation and visualization functions
+
+##############################################################################
+# Utils for generation and visualization
+# -------------
 
 
 def build_noisy_circular_graph(n_clean=15, n_noise=5, random_seed=0):
@@ -56,6 +69,7 @@ def build_noisy_circular_graph(n_clean=15, n_noise=5, random_seed=0):
         for i, j in enumerate(noisy_nodes):
             g.add_node(i + n_clean, weight=math.sin(2 * j * math.pi / n_clean))
             g.add_edge(i + n_clean, j)
+            g.add_edge(i + n_clean, (j + 1) % n_clean)
     return g
 
 
@@ -138,11 +152,15 @@ def draw_graph(
         scaled_Gweights = Gweights / (0.5 * Gweights.max())
         nodes_size = node_size * scaled_Gweights
         for node, node_color in enumerate(nodes_color_part):
+            if nodes_size[node] == 0:
+                local_node_size = 0
+            else:
+                local_node_size = max(0.1 * node_size, nodes_size[node])
             nx.draw_networkx_nodes(
                 G,
                 pos,
                 nodelist=[node],
-                node_size=nodes_size[node],
+                node_size=local_node_size,
                 alpha=1,
                 node_color=node_color,
             )
@@ -198,17 +216,15 @@ def draw_transp_colored(
                     [pos1[k1][1], pos2[k2][1]],
                     "-",
                     lw=0.8,
-                    alpha=0.5 * T[k1, k2] / T_max,
+                    alpha=max(0.05, 0.8 * T[k1, k2] / T_max),
                     color=nodes_color_part1[k1],
                 )
     return pos1, pos2
 
 
-# %%
 ##############################################################################
 # Generate and visualize data
 # -------------
-
 # We build a clean circular graph that will be matched to a noisy circular graph.
 
 clean_graph = build_noisy_circular_graph(n_clean=15, n_noise=0)
@@ -239,13 +255,16 @@ pl.show()
 ##############################################################################
 # Partial (Entropic) Gromov-Wasserstein computation and visualization
 # ----------------------
-
 # Adjacency matrices are compared using both exact and entropic partial GW
-# discarding for now node features
+# discarding for now node features.
+# Then for illustration, the node sizes are proportional to their optimized masses
+# and the intensity of the link between two nodes across graphs is set proportionally
+# to the corresponding transported mass.
+
 Cs = [nx.adjacency_matrix(G).toarray().astype(np.float64) for G in graphs]
 ps = [unif(C.shape[0]) for C in Cs]
 
-# provide an informative initialization for visualization
+# provide an informative initialization for better visualization
 m = 3.0 / 4.0
 partial_id = np.zeros((15, 20))
 partial_id[:15, :15] = np.eye(15) / 15.0
@@ -268,18 +287,20 @@ list_dist = [
     np.round(logent["partial_gw_dist"], 3),
 ]
 list_dist_str = ["pGW", "pGW_e"]
+
 pl.figure(2, figsize=(10, 3))
 pl.clf()
 for i in range(2):
     pl.subplot(1, 2, i + 1)
     pl.axis("off")
     pl.title(
-        r"$%s(\mathbf{C_1},\mathbf{p_1},\mathbf{C_2}) =%s$"
+        r"$%s(\mathbf{C_1},\mathbf{p_1}^\star,\mathbf{C_2},\mathbf{p_2}^\star) =%s$"
         % (list_dist_str[i], list_dist[i]),
         fontsize=14,
     )
 
     p2 = list_T[i].sum(0)
+
     pos1, pos2 = draw_transp_colored(
         clean_graph,
         Cs[0],
@@ -298,9 +319,9 @@ pl.show()
 ##############################################################################
 # Partial (Entropic) Fused Gromov-Wasserstein computation and visualization
 # ----------------------
-
-# Add now node features compared using pairwise euclidean distance
+# We add now node features compared using pairwise euclidean distance
 # to illustrate partial FGW computation with trade-off parameter alpha=0.5
+
 Ys = [
     np.array([v for (k, v) in nx.get_node_attributes(G, "weight").items()]).reshape(
         -1, 1
@@ -308,7 +329,7 @@ Ys = [
     for G in graphs
 ]
 M = dist(Ys[0], Ys[1])
-# provide an informative initialization for visualization
+# provide an informative initialization for better visualization
 m = 3.0 / 4.0
 partial_id = np.zeros((15, 20))
 partial_id[:15, :15] = np.eye(15) / 15.0
@@ -357,7 +378,7 @@ for i in range(2):
     pl.subplot(1, 2, i + 1)
     pl.axis("off")
     pl.title(
-        r"$%s(\mathbf{C_1},\mathbf{p_1},\mathbf{C_2}) =%s$"
+        r"$%s(\mathbf{C_1},\mathbf{p_1}^\star,\mathbf{C_2}, \mathbf{p_2}^\star) =%s$"
         % (list_dist_str[i], list_dist[i]),
         fontsize=14,
     )
