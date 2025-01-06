@@ -1173,7 +1173,7 @@ def entropic_partial_gromov_wasserstein(
 
     Returns
     -------
-    :math: `gamma` : (dim_a, dim_b) ndarray
+    :math: `gamma` : ndarray, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`
@@ -1461,7 +1461,7 @@ def entropic_partial_fused_gromov_wasserstein(
     The function solves the following optimization problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_{\gamma} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        \gamma = \mathop{\arg \min}_{\gamma} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F
         + \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})\cdot
         \gamma_{i,j}\cdot\gamma_{k,l} + \mathrm{reg} \cdot\Omega(\gamma)
 
@@ -1530,7 +1530,7 @@ def entropic_partial_fused_gromov_wasserstein(
 
     Returns
     -------
-    :math: `gamma` : (dim_a, dim_b) ndarray
+    :math: `gamma` : ndarray, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`
@@ -1693,7 +1693,7 @@ def entropic_partial_fused_gromov_wasserstein2(
     The function solves the following optimization problem:
 
     .. math::
-        PGW = \min_{\gamma} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
+        PGW = \min_{\gamma} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F
         + \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l})\cdot
         \gamma_{i,j}\cdot\gamma_{k,l} + \mathrm{reg} \cdot\Omega(\gamma)
 
