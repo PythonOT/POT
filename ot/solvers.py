@@ -32,6 +32,9 @@ from .factored import factored_optimal_transport
 from .lowrank import lowrank_sinkhorn
 from .optim import cg
 
+import warnings
+
+
 lst_method_lazy = [
     "1d",
     "gaussian",
@@ -658,7 +661,8 @@ def solve_gromov(
         ``alpha=0.5`` for Fused Gromov-Wasserstein problem (``M!=None``)
     unbalanced : float, optional
         Unbalanced penalization weight :math:`\lambda_u`, by default None
-        (balanced OT), Not implemented yet
+        (balanced OT). Not implemented yet for "KL" unbalanced penalization
+        function :math:`U`. Corresponds to the total transport mass for partial OT.
     unbalanced_type : str, optional
         Type of unbalanced penalization function :math:`U` either "KL", "semirelaxed",
         "partial", by default "KL" but note that it is not implemented yet.
@@ -864,8 +868,14 @@ def solve_gromov(
     if reg is None or reg == 0:  # exact OT
         if unbalanced is None and unbalanced_type.lower() not in [
             "semirelaxed",
-            "partial",
         ]:  # Exact balanced OT
+            if unbalanced_type.lower() in ["partial"]:
+                warnings.warn(
+                    "Exact balanced OT is computed as `unbalanced=None` even though "
+                    f"unbalanced_type = {unbalanced_type}.",
+                    stacklevel=2,
+                )
+
             if M is None or alpha == 1:  # Gromov-Wasserstein problem
                 # default values for solver
                 if max_iter is None:
@@ -1002,14 +1012,7 @@ def solve_gromov(
 
         elif unbalanced_type.lower() in ["partial"]:  # Partial OT
             if M is None or alpha == 1.0:  # Partial Gromov-Wasserstein problem
-                if unbalanced is None:
-                    raise (
-                        ValueError(
-                            "Partial GW mass given in `unbalanced` must be float and not None"
-                        )
-                    )
-
-                elif unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
+                if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
                     raise (
                         ValueError("Partial GW mass given in `unbalanced` is too large")
                     )
@@ -1040,14 +1043,7 @@ def solve_gromov(
                 # potentials = (log['u'], log['v']) TODO
 
             else:  # partial FGW
-                if unbalanced is None:
-                    raise (
-                        ValueError(
-                            "Partial GW mass given in `unbalanced` must be float and not None"
-                        )
-                    )
-
-                elif unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
+                if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
                     raise (
                         ValueError("Partial GW mass given in `unbalanced` is too large")
                     )
@@ -1092,8 +1088,14 @@ def solve_gromov(
     else:  # regularized OT
         if unbalanced is None and unbalanced_type.lower() not in [
             "semirelaxed",
-            "partial",
         ]:  # Balanced regularized OT
+            if unbalanced_type.lower() in ["partial"]:
+                warnings.warn(
+                    "Exact balanced OT is computed as `unbalanced=None` even though "
+                    f"unbalanced_type = {unbalanced_type}.",
+                    stacklevel=2,
+                )
+
             if reg_type.lower() in ["entropy"] and (
                 M is None or alpha == 1
             ):  # Entropic Gromov-Wasserstein problem
@@ -1250,14 +1252,7 @@ def solve_gromov(
 
         elif unbalanced_type.lower() in ["partial"]:  # Partial OT
             if M is None or alpha == 1.0:  # Partial Gromov-Wasserstein problem
-                if unbalanced is None:
-                    raise (
-                        ValueError(
-                            "Partial GW mass given in `unbalanced` must be float and not None"
-                        )
-                    )
-
-                elif unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
+                if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
                     raise (
                         ValueError("Partial GW mass given in `unbalanced` is too large")
                     )
@@ -1289,14 +1284,7 @@ def solve_gromov(
                 # potentials = (log['u'], log['v']) TODO
                 value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
             else:  # partial FGW
-                if unbalanced is None:
-                    raise (
-                        ValueError(
-                            "Partial GW mass given in `unbalanced` must be float and not None"
-                        )
-                    )
-
-                elif unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
+                if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
                     raise (
                         ValueError("Partial GW mass given in `unbalanced` is too large")
                     )
