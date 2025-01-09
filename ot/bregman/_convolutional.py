@@ -246,6 +246,8 @@ def _convolutional_barycenter2d_log(
     A = list_to_array(A)
 
     nx = get_backend(A)
+    # This error is raised because we are using mutable assignment in the line
+    #  `log_KU[k] = ...` which is not allowed in Jax and TF.
     if nx.__name__ in ("jax", "tf"):
         raise NotImplementedError(
             "Log-domain functions are not yet implemented"
@@ -483,6 +485,8 @@ def _convolutional_barycenter2d_debiased_log(
     A = list_to_array(A)
     n_hists, width, height = A.shape
     nx = get_backend(A)
+    # This error is raised because we are using mutable assignment in the line
+    #  `log_KU[k] = ...` which is not allowed in Jax and TF.
     if nx.__name__ in ("jax", "tf"):
         raise NotImplementedError(
             "Log-domain functions are not yet implemented"
