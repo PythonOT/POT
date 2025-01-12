@@ -41,6 +41,7 @@ This release also contains few bug fixes, concerning the support of any metric i
 - Notes before depreciating partial Gromov-Wasserstein function in `ot.partial` moved to ot.gromov  (PR #663)
 - Create `ot.gromov._partial` add new features `loss_fun = "kl_loss"` and `symmetry=False` to all solvers while increasing speed + updating adequatly `ot.solvers` (PR #663)
 - Added `ot.unbalanced.sinkhorn_unbalanced_translation_invariant` (PR #676)
+- Refactored `ot.bregman._convolutional` to improve readability (PR #709)
 
 #### Closed issues
 - Fixed `ot.gaussian` ignoring weights when computing means (PR #649, Issue #648)
