@@ -614,6 +614,10 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append("trace")
 
+        A = nx.trace(nx.stack([SquareMb, SquareMb], axis=0))
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("broadcast trace")
+
         A = nx.inv(SquareMb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("matrix inverse")
