@@ -79,7 +79,7 @@ def solve(
 
     Parameters
     ----------
-    M : array_like, shape (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         Loss matrix
     a : array-like, shape (dim_a,), optional
         Samples weights in the source domain (default is uniform)
@@ -88,10 +88,10 @@ def solve(
     reg : float, optional
         Regularization weight :math:`\lambda_r`, by default None (no reg., exact
         OT)
-    c : array-like (dim_a, dim_b), optional (default=None)
+    c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     reg_type : str, optional
         Type of regularization :math:`R`  either "KL", "L2", "entropy",
         by default "KL". a tuple of functions can be provided for general
@@ -116,9 +116,9 @@ def solve(
         Number of OMP threads for exact OT solver, by default 1
     max_iter : int, optional
         Maximum number of iterations, by default None (default values in each solvers)
-    plan_init : array_like, shape (dim_a, dim_b), optional
+    plan_init : array-like, shape (dim_a, dim_b), optional
         Initialization of the OT plan for iterative methods, by default None
-    potentials_init : (array_like(dim_a,),array_like(dim_b,)), optional
+    potentials_init : (array-like(dim_a,),array-like(dim_b,)), optional
         Initialization of the OT dual potentials for iterative methods, by default None
     tol : _type_, optional
         Tolerance for solution precision, by default None (default values in each solvers)
@@ -628,11 +628,11 @@ def solve_gromov(
 
     Parameters
     ----------
-    Ca : array_like, shape (dim_a, dim_a)
+    Ca : array-like, shape (dim_a, dim_a)
         Cost matrix in the source domain
-    Cb : array_like, shape (dim_b, dim_b)
+    Cb : array-like, shape (dim_b, dim_b)
         Cost matrix in the target domain
-    M : array_like, shape (dim_a, dim_b), optional
+    M : array-like, shape (dim_a, dim_b), optional
         Linear cost matrix for Fused Gromov-Wasserstein (default is None).
     a : array-like, shape (dim_a,), optional
         Samples weights in the source domain (default is uniform)
@@ -669,7 +669,7 @@ def solve_gromov(
     max_iter : int, optional
         Maximum number of iterations, by default None (default values in each
         solvers)
-    plan_init : array_like, shape (dim_a, dim_b), optional
+    plan_init : array-like, shape (dim_a, dim_b), optional
         Initialization of the OT plan for iterative methods, by default None
     tol : float, optional
         Tolerance for solution precision, by default None (default values in
@@ -1342,10 +1342,10 @@ def solve_sample(
     reg : float, optional
         Regularization weight :math:`\lambda_r`, by default None (no reg., exact
         OT)
-    c : array-like (dim_a, dim_b), optional (default=None)
+    c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     reg_type : str, optional
         Type of regularization :math:`R`  either "KL", "L2", "entropy", by default "KL"
     unbalanced : float or indexable object of length 1 or 2
@@ -1374,13 +1374,13 @@ def solve_sample(
         Number of OMP threads for exact OT solver, by default 1
     max_iter : int, optional
         Maximum number of iteration, by default None (default values in each solvers)
-    plan_init : array_like, shape (dim_a, dim_b), optional
+    plan_init : array-like, shape (dim_a, dim_b), optional
         Initialization of the OT plan for iterative methods, by default None
     rank : int, optional
         Rank of the OT matrix for lazy solers (method='factored'), by default 100
     scaling : float, optional
         Scaling factor for the epsilon scaling lazy solvers (method='geomloss'), by default 0.95
-    potentials_init : (array_like(dim_a,),array_like(dim_b,)), optional
+    potentials_init : (array-like(dim_a,),array-like(dim_b,)), optional
         Initialization of the OT dual potentials for iterative methods, by default None
     tol : _type_, optional
         Tolerance for solution precision, by default None (default values in each solvers)
@@ -1511,7 +1511,7 @@ def solve_sample(
     .. math::
         \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
 
-        with  M_{i,j} = d(x_i,y_j)
+        \text{with} \ M_{i,j} = d(x_i,y_j)
 
     can be solved with the following code:
 
@@ -1530,7 +1530,7 @@ def solve_sample(
     .. math::
         \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
 
-        with  M_{i,j} = d(x_i,y_j)
+        \text{with} \ M_{i,j} = d(x_i,y_j)
 
     can be solved with the following code:
 

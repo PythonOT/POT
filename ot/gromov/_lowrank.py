@@ -92,14 +92,14 @@ def lowrank_gromov_wasserstein_samples(
 
     where :
 
-    - :math: `A` is the (`dim_a`, `dim_a`) square pairwise cost matrix of the source domain.
-    - :math: `B` is the (`dim_a`, `dim_a`) square pairwise cost matrix of the target domain.
-    - :math: `\mathcal{Q}_{A,B}` is quadratic objective function of the Gromov Wasserstein plan.
-    - :math: `Q` and `R` are the low-rank matrix decomposition of the Gromov-Wasserstein plan.
-    - :math: `g` is the weight vector for the low-rank decomposition of the Gromov-Wasserstein plan.
+    - :math:`A` is the (`dim_a`, `dim_a`) square pairwise cost matrix of the source domain.
+    - :math:`B` is the (`dim_a`, `dim_a`) square pairwise cost matrix of the target domain.
+    - :math:`\mathcal{Q}_{A,B}` is quadratic objective function of the Gromov Wasserstein plan.
+    - :math:`Q` and `R` are the low-rank matrix decomposition of the Gromov-Wasserstein plan.
+    - :math:`g` is the weight vector for the low-rank decomposition of the Gromov-Wasserstein plan.
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target weights (histograms, both sum to 1).
-    - :math: `r` is the rank of the Gromov-Wasserstein plan.
-    - :math: `\mathcal{C(a,b,r)}` are the low-rank couplings of the OT problem.
+    - :math:`r` is the rank of the Gromov-Wasserstein plan.
+    - :math:`\mathcal{C(a,b,r)}` are the low-rank couplings of the OT problem.
     - :math:`H((Q,R,g))` is the values of the three respective entropies evaluated for each term.
 
 

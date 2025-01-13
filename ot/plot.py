@@ -32,7 +32,7 @@ def plot1D_mat(
     r"""Plot matrix :math:`\mathbf{M}` with the source and target 1D distributions.
 
     Creates a subplot with the source distribution :math:`\mathbf{a}` and target
-    distribution :math:`\mathbf{b}`t.
+    distribution :math:`\mathbf{b}`.
     In 'yx' mode (default), the source is on the left and
     the target on the top, and in 'xy' mode, source on the bottom (upside
     down) and the target on the left.
@@ -69,8 +69,9 @@ def plot1D_mat(
     ax2 : target plot ax
     ax3 : coupling plot ax
 
-    .. seealso::
-        :func:`rescale_for_imshow_plot`
+    See Also
+    --------
+    :func:`rescale_for_imshow_plot`
     """
     assert plot_style in ["yx", "xy"], "plot_style should be 'yx' or 'xy'"
     na, nb = M.shape
@@ -188,8 +189,9 @@ def rescale_for_imshow_plot(x, y, n, m=None, a_y=None, b_y=None):
     yr : ndarray, shape (nx,)
         Rescaled y values (due to slicing, may have less elements than y)
 
-    .. seealso::
-        :func:`plot1D_mat`
+    See Also
+    --------
+    :func:`plot1D_mat`
 
     """
     # slice over the y values that are in the y range

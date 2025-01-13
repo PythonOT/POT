@@ -1002,18 +1002,18 @@ def solve_partial_gromov_linesearch(
     Parameters
     ----------
 
-    G : array-like, shape(ns,nt)
+    G : array-like, shape(ns, nt)
         The transport map at a given iteration of the FW
-    deltaG : array-like (ns,nt)
+    deltaG : array-like, shape (ns, nt)
         Difference between the optimal map `Gc` found by linearization in the
         FW algorithm and the value at a given iteration
     cost_G : float
         Value of the cost at `G`
-    df_G : array-like (ns,nt)
+    df_G : array-like, shape (ns, nt)
         Gradient of the GW cost at `G`
-    df_Gc : array-like (ns,nt)
+    df_Gc : array-like, shape (ns, nt)
         Gradient of the GW cost at `Gc`
-    M : array-like (ns,nt)
+    M : array-like, shape (ns, nt)
         Cost matrix between the features.
     reg : float
         Regularization parameter.
@@ -1032,7 +1032,7 @@ def solve_partial_gromov_linesearch(
         nb of function call. Useless here
     cost_G : float
         The value of the cost for the next iteration
-    df_G : array-like (ns,nt)
+    df_G : array-like, shape (ns, nt)
         Updated gradient of the GW cost
 
     References
@@ -1173,7 +1173,7 @@ def entropic_partial_gromov_wasserstein(
 
     Returns
     -------
-    :math: `gamma` : (dim_a, dim_b) ndarray
+    :math:`gamma` : ndarray, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`

@@ -160,7 +160,7 @@ def emd_1d(
     where :
 
     - d is the metric
-    - x_a and x_b are the samples
+    - :math:`x_a` and :math:`x_b` are the samples
     - a and b are the sample weights
 
     This implementation only supports metrics
@@ -170,13 +170,13 @@ def emd_1d(
 
     Parameters
     ----------
-    x_a : (ns,) or (ns, 1) ndarray, float64
+    x_a : ndarray of float64, shape (ns,) or (ns, 1)
         Source dirac locations (on the real line)
-    x_b : (nt,) or (ns, 1) ndarray, float64
+    x_b : ndarray of float64, shape (nt,) or (ns, 1)
         Target dirac locations (on the real line)
-    a : (ns,) ndarray, float64, optional
+    a : ndarray of float64, shape (ns,), optional
         Source histogram (default is uniform weight)
-    b : (nt,) ndarray, float64, optional
+    b : ndarray of float64, shape (nt,), optional
         Target histogram (default is uniform weight)
     metric: str, optional (default='sqeuclidean')
         Metric to be used. Only works with either of the strings
@@ -184,7 +184,7 @@ def emd_1d(
     p: float, optional (default=1.0)
          The p-norm to apply for if metric='minkowski'
     dense: boolean, optional (default=True)
-        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
+        If True, returns :math:`\gamma` as a dense ndarray of shape (ns, nt).
         Otherwise returns a sparse representation using scipy's `coo_matrix`
         format. Due to implementation details, this function runs faster when
         `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'` metrics
@@ -198,7 +198,7 @@ def emd_1d(
 
     Returns
     -------
-    gamma: (ns, nt) ndarray
+    gamma: ndarray, shape (ns, nt)
         Optimal transportation matrix for the given parameters
     log: dict
         If input log is True, a dictionary containing the cost
@@ -318,7 +318,7 @@ def emd2_1d(
     where :
 
     - d is the metric
-    - x_a and x_b are the samples
+    - :math:`x_a` and :math:`x_b` are the samples
     - a and b are the sample weights
 
     This implementation only supports metrics
@@ -328,13 +328,13 @@ def emd2_1d(
 
     Parameters
     ----------
-    x_a : (ns,) or (ns, 1) ndarray, float64
+    x_a : ndarray of float64, shape (ns,) or (ns, 1)
         Source dirac locations (on the real line)
-    x_b : (nt,) or (ns, 1) ndarray, float64
+    x_b : ndarray of float64, shape (nt,) or (ns, 1)
         Target dirac locations (on the real line)
-    a : (ns,) ndarray, float64, optional
+    a : ndarray of float64, shape (ns,), optional
         Source histogram (default is uniform weight)
-    b : (nt,) ndarray, float64, optional
+    b : ndarray of float64, shape (nt,), optional
         Target histogram (default is uniform weight)
     metric: str, optional (default='sqeuclidean')
         Metric to be used. Only works with either of the strings
@@ -342,7 +342,7 @@ def emd2_1d(
     p: float, optional (default=1.0)
          The p-norm to apply for if metric='minkowski'
     dense: boolean, optional (default=True)
-        If True, returns math:`\gamma` as a dense ndarray of shape (ns, nt).
+        If True, returns :math:`\gamma` as a dense ndarray of shape (ns, nt).
         Otherwise returns a sparse representation using scipy's `coo_matrix`
         format. Only used if log is set to True. Due to implementation details,
         this function runs faster when dense is set to False.
@@ -405,9 +405,9 @@ def roll_cols(M, shifts):
 
     Parameters
     ----------
-    M : (nr, nc) ndarray
+    M : ndarray, shape (nr, nc)
         Matrix to shift
-    shifts: int or (nr,) ndarray
+    shifts: int or ndarray, shape (nr,)
 
     Returns
     -------
@@ -1046,7 +1046,7 @@ def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
 
     Parameters
     ----------
-    u_values: ndarray, shape (n, ...)
+    u_values : ndarray, shape (n, ...)
         Samples
     u_weights : ndarray, shape (n, ...), optional
         samples weights in the source domain
