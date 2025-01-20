@@ -8,6 +8,10 @@
 # License: MIT License
 
 import warnings
+from ._barycenter_solvers import barycenter
+
+
+__all__ = ["barycenter"]
 
 
 warnings.warn(
