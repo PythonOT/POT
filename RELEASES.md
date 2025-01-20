@@ -6,6 +6,8 @@
 - Implement CG solvers for partial FGW (PR #687)
 - Added feature `grad=last_step` for `ot.solvers.solve` (PR #693)
 - Automatic PR labeling and release file update check (PR #704)
+- Implement fixed-point solver for OT barycenters with generic cost functions
+  (generalizes `ot.lp.free_support_barycenter`). (PR #???)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
