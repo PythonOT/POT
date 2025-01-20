@@ -395,7 +395,7 @@ def test_generalised_free_support_barycenter_backends(nx):
     np.testing.assert_allclose(Y, nx.to_numpy(Y2))
 
 
-@pytest.mark.skipif(not ot.lp.cvx.cvxopt, reason="No cvxopt available")
+@pytest.mark.skipif(not ot.lp._barycenter_solvers.cvxopt, reason="No cvxopt available")
 def test_lp_barycenter_cvxopt():
     a1 = np.array([1.0, 0, 0])[:, None]
     a2 = np.array([0, 0, 1.0])[:, None]

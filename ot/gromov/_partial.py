@@ -185,7 +185,7 @@ def partial_gromov_wasserstein(
     if m is None:
         m = min(np.sum(p), np.sum(q))
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater than 0.")
     elif m > min(np.sum(p), np.sum(q)):
         raise ValueError(
             "Problem infeasible. Parameter m should lower or"
@@ -654,7 +654,7 @@ def partial_fused_gromov_wasserstein(
     if m is None:
         m = min(np.sum(p), np.sum(q))
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater than 0.")
     elif m > min(np.sum(p), np.sum(q)):
         raise ValueError(
             "Problem infeasible. Parameter m should lower or"
@@ -1213,7 +1213,7 @@ def entropic_partial_gromov_wasserstein(
     if m is None:
         m = min(nx.sum(p), nx.sum(q))
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater than 0.")
     elif m > min(nx.sum(p), nx.sum(q)):
         raise ValueError(
             "Problem infeasible. Parameter m should lower or"
