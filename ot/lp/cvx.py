@@ -7,6 +7,11 @@
 #
 # License: MIT License
 
-print(
-    "The module ot.lp.cvx is deprecated and will be removed in future versions. The function `barycenter` was moved to ot.lp._barycenter_solvers and can be importer via ot.lp."
+import warnings
+
+
+warnings.warn(
+    "The module ot.lp.cvx is deprecated and will be removed in future versions."
+    "The function `barycenter` was moved to ot.lp._barycenter_solvers and can"
+    "be importer via ot.lp."
 )
