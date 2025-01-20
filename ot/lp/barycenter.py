@@ -1,3 +1,7 @@
+from ..backend import get_backend
+from ..utils import dist
+from .network_simplex import emd
+
 
 def free_support_barycenter(
     measures_locations,
