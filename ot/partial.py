@@ -126,7 +126,7 @@ def partial_wasserstein_lagrange(
     nx = get_backend(a, b, M)
 
     if nx.sum(a) > 1 + 1e-15 or nx.sum(b) > 1 + 1e-15:  # 1e-15 for numerical errors
-        raise ValueError("Problem infeasible. Check that a and b are in the " "simplex")
+        raise ValueError("Problem infeasible. Check that a and b are in the simplex")
 
     if reg_m is None:
         reg_m = float(nx.max(M)) + 1
@@ -171,7 +171,7 @@ def partial_wasserstein_lagrange(
 
     if log_emd["warning"] is not None:
         raise ValueError(
-            "Error in the EMD resolution: try to increase the" " number of dummy points"
+            "Error in the EMD resolution: try to increase the number of dummy points"
         )
     log_emd["cost"] = nx.sum(gamma * M0)
     log_emd["u"] = nx.from_numpy(log_emd["u"], type_as=a0)
@@ -287,7 +287,7 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     if m is None:
         return partial_wasserstein_lagrange(a, b, M, log=log, **kwargs)
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater than 0.")
     elif m > nx.min(nx.stack((nx.sum(a), nx.sum(b)))):
         raise ValueError(
             "Problem infeasible. Parameter m should lower or"
@@ -315,7 +315,7 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
 
     if log_emd["warning"] is not None:
         raise ValueError(
-            "Error in the EMD resolution: try to increase the" " number of dummy points"
+            "Error in the EMD resolution: try to increase the number of dummy points"
         )
     log_emd["partial_w_dist"] = nx.sum(M * gamma)
     log_emd["u"] = log_emd["u"][: len(a)]
@@ -522,7 +522,7 @@ def entropic_partial_wasserstein(
     if m is None:
         m = nx.min(nx.stack((nx.sum(a), nx.sum(b)))) * 1.0
     if m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater than 0.")
     if m > nx.min(nx.stack((nx.sum(a), nx.sum(b)))):
         raise ValueError(
             "Problem infeasible. Parameter m should lower or"
@@ -780,7 +780,7 @@ def partial_gromov_wasserstein(
     if m is None:
         m = np.min((np.sum(p), np.sum(q)))
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater than 0.")
     elif m > np.min((np.sum(p), np.sum(q))):
         raise ValueError(
             "Problem infeasible. Parameter m should lower or"
@@ -1132,7 +1132,7 @@ def entropic_partial_gromov_wasserstein(
     if m is None:
         m = np.min((np.sum(p), np.sum(q)))
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater than 0.")
     elif m > np.min((np.sum(p), np.sum(q))):
         raise ValueError(
             "Problem infeasible. Parameter m should lower or"
