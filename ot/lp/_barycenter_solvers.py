@@ -422,3 +422,90 @@ def generalized_free_support_barycenter(
         return Y, log_dict
     else:
         return Y
+
+
+class StoppingCriterionReached(Exception):
+    pass
+
+
+def solve_OT_barycenter_fixed_point(
+    X_init,
+    Y_list,
+    b_list,
+    cost_list,
+    B,
+    max_its=5,
+    stop_threshold=1e-5,
+    log=False,
+):
+    """
+    Solves the OT barycenter problem using the fixed point algorithm, iterating
+    the function B on plans between the current barycentre and the measures.
+
+    Parameters
+    ----------
+    X_init : array-like
+        Array of shape (n, d) representing initial barycentre points.
+    Y_list : list of array-like
+        List of K arrays of measure positions, each of shape (m_k, d_k).
+    b_list : list of array-like
+        List of K arrays of measure weights, each of shape (m_k).
+    cost_list : list of callable
+        List of K cost functions R^(n, d) x R^(m_k, d_k) -> R_+^(n, m_k).
+    B : callable
+        Function from R^d_1 x ... x R^d_K to R^d accepting a list of K arrays of shape (n, d_K), computing the ground barycentre.
+    max_its : int, optional
+        Maximum number of iterations (default is 5).
+    stop_threshold : float, optional
+        If the iterations move less than this, terminate (default is 1e-5).
+    log : bool, optional
+        Whether to return the log dictionary (default is False).
+
+    Returns
+    -------
+    X : array-like
+        Array of shape (n, d) representing barycentre points.
+    log_dict : list of array-like, optional
+        log containing the exit status, list of iterations and list of
+        displacements if log is True.
+    """
+    nx = get_backend(X_init, Y_list[0])
+    K = len(Y_list)
+    n = X_init.shape[0]
+    a = nx.ones(n) / n
+    X_list = [X_init] if log else []  # store the iterations
+    X = X_init
+    dX_list = []  # store the displacement squared norms
+    exit_status = "Unknown"
+
+    try:
+        for _ in range(max_its):
+            pi_list = [  # compute the pairwise transport plans
+                emd(a, b_list[k], cost_list[k](X, Y_list[k])) for k in range(K)
+            ]
+            Y_perm = []
+            for k in range(K):  # compute barycentric projections
+                Y_perm.append(n * pi_list[k] @ Y_list[k])
+            X_next = B(Y_perm)
+
+            if log:
+                X_list.append(X_next)
+
+            # stationary criterion: move less than the threshold
+            dX = nx.sum((X - X_next) ** 2)
+            X = X_next
+
+            if log:
+                dX_list.append(dX)
+
+            if dX < stop_threshold:
+                exit_status = "Stationary Point"
+                raise StoppingCriterionReached
+
+        exit_status = "Max iterations reached"
+        raise StoppingCriterionReached
+
+    except StoppingCriterionReached:
+        if log:
+            return X, {"X_list": X_list, "exit_status": exit_status, "dX_list": dX_list}
+        return X

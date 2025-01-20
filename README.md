@@ -391,3 +391,7 @@ Artificial Intelligence.
 [72] Thibault Séjourné, François-Xavier Vialard, and Gabriel Peyré (2021). [The Unbalanced Gromov Wasserstein Distance: Conic Formulation and Relaxation](https://proceedings.neurips.cc/paper/2021/file/4990974d150d0de5e6e15a1454fe6b0f-Paper.pdf). Neural Information Processing Systems (NeurIPS).
 
 [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022). [Faster Unbalanced Optimal Transport: Translation Invariant Sinkhorn and 1-D Frank-Wolfe](https://proceedings.mlr.press/v151/sejourne22a.html). In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
+
+[74] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). [Computing
+Barycentres of Measures for Generic Transport
+Costs](https://arxiv.org/abs/2501.04016). arXiv preprint 2501.04016 (2024)
