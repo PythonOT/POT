@@ -11,33 +11,9 @@ Solvers for the original linear program OT problem.
 import numpy as np
 import warnings
 
-from ..utils import list_to_array
+from ..utils import list_to_array, check_number_threads
 from ..backend import get_backend
 from .emd_wrap import emd_c, check_result
-
-
-def check_number_threads(numThreads):
-    """Checks whether or not the requested number of threads has a valid value.
-
-    Parameters
-    ----------
-    numThreads : int or str
-        The requested number of threads, should either be a strictly positive integer or "max" or None
-
-    Returns
-    -------
-    numThreads : int
-        Corrected number of threads
-    """
-    if (numThreads is None) or (
-        isinstance(numThreads, str) and numThreads.lower() == "max"
-    ):
-        return -1
-    if (not isinstance(numThreads, int)) or numThreads < 1:
-        raise ValueError(
-            'numThreads should either be "max" or a strictly positive integer'
-        )
-    return numThreads
 
 
 def center_ot_dual(alpha0, beta0, a=None, b=None):

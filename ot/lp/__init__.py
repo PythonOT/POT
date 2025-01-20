@@ -16,6 +16,7 @@ from .barycenter_solvers import (
     free_support_barycenter,
     generalized_free_support_barycenter,
 )
+from ..utils import check_number_threads
 
 # import compiled emd
 from .emd_wrap import emd_1d_sorted
@@ -44,4 +45,5 @@ __all__ = [
     "semidiscrete_wasserstein2_unif_circle",
     "dmmot_monge_1dgrid_loss",
     "dmmot_monge_1dgrid_optimize",
+    "check_number_threads",
 ]

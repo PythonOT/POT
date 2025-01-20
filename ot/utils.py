@@ -1341,3 +1341,27 @@ def proj_SDP(S, nx=None, vmin=0.0):
         Q = nx.einsum("ijk,ik->ijk", P, w)  # Q[i] = P[i] @ diag(w[i])
         # R[i] = Q[i] @ P[i].T
         return nx.einsum("ijk,ikl->ijl", Q, nx.transpose(P, (0, 2, 1)))
+
+
+def check_number_threads(numThreads):
+    """Checks whether or not the requested number of threads has a valid value.
+
+    Parameters
+    ----------
+    numThreads : int or str
+        The requested number of threads, should either be a strictly positive integer or "max" or None
+
+    Returns
+    -------
+    numThreads : int
+        Corrected number of threads
+    """
+    if (numThreads is None) or (
+        isinstance(numThreads, str) and numThreads.lower() == "max"
+    ):
+        return -1
+    if (not isinstance(numThreads, int)) or numThreads < 1:
+        raise ValueError(
+            'numThreads should either be "max" or a strictly positive integer'
+        )
+    return numThreads
