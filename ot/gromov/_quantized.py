@@ -375,7 +375,7 @@ def get_graph_partition(
         raise ValueError(
             f"""
             Unknown `part_method='{part_method}'`. Use one of:
-            {'random', 'louvain', 'fluid', 'spectral', 'GW', 'FGW'}.
+            {"random", "louvain", "fluid", "spectral", "GW", "FGW"}.
             """
         )
     return nx.from_numpy(part, type_as=C0)
@@ -447,7 +447,7 @@ def get_graph_representants(C, part, rep_method="pagerank", random_state=0, nx=N
         raise ValueError(
             f"""
             Unknown `rep_method='{rep_method}'`. Use one of:
-            {'random', 'pagerank'}.
+            {"random", "pagerank"}.
             """
         )
 
@@ -953,7 +953,7 @@ def get_partition_and_representants_samples(
     else:
         raise ValueError(
             f"""
-            Unknown `method='{method}'`. Use one of: {'random', 'kmeans'}
+            Unknown `method='{method}'`. Use one of: {"random", "kmeans"}
             """
         )
 

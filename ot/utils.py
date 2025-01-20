@@ -517,7 +517,7 @@ def check_random_state(seed):
     if isinstance(seed, np.random.RandomState):
         return seed
     raise ValueError(
-        "{} cannot be used to seed a numpy.random.RandomState" " instance".format(seed)
+        "{} cannot be used to seed a numpy.random.RandomState instance".format(seed)
     )
 
 
@@ -787,7 +787,7 @@ class deprecated(object):
 def _is_deprecated(func):
     r"""Helper to check if func is wrapped by our deprecated decorator"""
     if sys.version_info < (3, 5):
-        raise NotImplementedError("This is only available for python3.5 " "or above")
+        raise NotImplementedError("This is only available for python3.5 or above")
     closures = getattr(func, "__closure__", [])
     if closures is None:
         closures = []
