@@ -3,8 +3,8 @@
 Optimal transport for Gaussian Mixtures
 """
 
-# Author: Eloi Tanguy <eloi.tanguy@u-paris>
-#         Remi Flamary <remi.flamary@polytehnique.edu>
+# Author: Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
+#         Remi Flamary <remi.flamary@polytechnique.edu>
 #         Julie Delon <julie.delon@math.cnrs.fr>
 #
 # License: MIT License

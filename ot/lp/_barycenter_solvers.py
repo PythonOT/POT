@@ -428,7 +428,7 @@ class StoppingCriterionReached(Exception):
     pass
 
 
-def solve_OT_barycenter_fixed_point(
+def free_support_barycenter_generic_costs(
     X_init,
     Y_list,
     b_list,

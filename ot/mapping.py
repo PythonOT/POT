@@ -7,7 +7,7 @@ Optimal Transport maps and variants
     use it you need to explicitly import :mod:`ot.mapping`
 """
 
-# Author: Eloi Tanguy <eloi.tanguy@u-paris.fr>
+# Author: Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
 #         Remi Flamary <remi.flamary@unice.fr>
 #
 # License: MIT License
