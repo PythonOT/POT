@@ -392,6 +392,4 @@ Artificial Intelligence.
 
 [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022). [Faster Unbalanced Optimal Transport: Translation Invariant Sinkhorn and 1-D Frank-Wolfe](https://proceedings.mlr.press/v151/sejourne22a.html). In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
 
-[74] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). [Computing
-Barycentres of Measures for Generic Transport
-Costs](https://arxiv.org/abs/2501.04016). arXiv preprint 2501.04016 (2024)
+[74] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). [Computing Barycentres of Measures for Generic Transport Costs](https://arxiv.org/abs/2501.04016). arXiv preprint 2501.04016 (2024)
