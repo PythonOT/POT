@@ -8,7 +8,8 @@
 - Automatic PR labeling and release file update check (PR #704)
 - Reorganize sub-module `ot/lp/__init__.py` into separate files (PR #714)
 - Implement fixed-point solver for OT barycenters with generic cost functions
-  (generalizes `ot.lp.free_support_barycenter`). (PR #715)
+  (generalizes `ot.lp.free_support_barycenter`), with example. (PR #715)
+- Implement fixed-point solver for barycenters between GMMs (PR #715), with example.
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)

@@ -458,7 +458,9 @@ def free_support_barycenter_generic_costs(
     - :math:`Y_k` (m_k, d_k) is the k-th measure support
       (`measure_locations[k]`),
     - :math:`b_k` (m_k) is the k-th measure weights (`measure_weights[k]`),
-    - :math:`c_k: \mathbb{R}^{n\times d}\times\mathbb{R}^{m_k\times d_k} \rightarrow \mathbb{R}_+^{n\times m_k}` is the k-th cost function (which computes the pairwise cost matrix)
+    - :math:`c_k: \mathbb{R}^{n\times d}\times\mathbb{R}^{m_k\times d_k}
+         \rightarrow \mathbb{R}_+^{n\times m_k}` is the k-th cost function
+         (which computes the pairwise cost matrix)
     - :math:`\mathcal{T}_{c_k}(X, a, Y_k, b)` is the OT cost between the barycenter measure and the k-th measure with respect to the cost :math:`c_k`:
 
     .. math::
@@ -475,18 +477,19 @@ def free_support_barycenter_generic_costs(
 
     The algorithm requires a given ground barycenter function `B` which computes
     (broadcasted of `n`) solutions of the following minimisation problem given
-    :math:`(Y_1, \cdots, Y_K) \in
-    \mathbb{R}^{n\times d_1}\times\cdots\times\mathbb{R}^{n\times d_K}`:
+    :math:`(Y_1, \cdots, Y_K) \in \mathbb{R}^{n\times
+    d_1}\times\cdots\times\mathbb{R}^{n\times d_K}`:
 
     .. math::
         B(y_1, \cdots, y_K) = \mathrm{argmin}_{x \in \mathbb{R}^d} \sum_{k=1}^K c_k(x, y_k),
 
     where :math:`c_k(x, y_k) \in \mathbb{R}_+` is the cost between the points
-    :math:`x` and :math:`y_k`. The function :math:`B:\mathbb{R}^{d_1}\times
-    \cdots\times\mathbb{R}^{d_K} \longrightarrow \mathbb{R}^d` is an input to
-    this function, and for certain costs it can be computed explicitly of
-    through a numerical solver. The input function B takes a list of K arrays of
-    shape (n, d_k) and returns an array of shape (n, d).
+    :math:`x` and :math:`y_k`. The function :math:`B:\mathbb{R}^{n\times
+    d_1}\times \cdots\times\mathbb{R}^{n\times d_K} \longrightarrow
+    \mathbb{R}^{n\times d}` is an input to this function, and for certain costs
+    it can be computed explicitly of through a numerical solver. The input
+    function B takes a list of K arrays of shape (n, d_k) and returns an array
+    of shape (n, d).
 
     This function implements [74] Algorithm 2, which generalises [20] and [43]
     to general costs and includes convergence guarantees, including for discrete
@@ -526,8 +529,6 @@ def free_support_barycenter_generic_costs(
         log containing the exit status, list of iterations and list of
         displacements if log is True.
 
-    .. _references-free-support-barycenter-generic-costs:
-
     References
     ----------
     .. [74] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
@@ -543,8 +544,10 @@ def free_support_barycenter_generic_costs(
 
     See Also
     --------
-    ot.lp.free_support_barycenter : Free support solver for the case where :math:`c_k(x,y) = \|x-y\|_2^2`.
-    ot.lp.generalized_free_support_barycenter : Free support solver for the case where :math:`c_k(x,y) = \|P_kx-y\|_2^2` with :math:`P_k` linear.
+    ot.lp.free_support_barycenter : Free support solver for the case where
+    :math:`c_k(x,y) = \|x-y\|_2^2`. ot.lp.generalized_free_support_barycenter :
+    Free support solver for the case where :math:`c_k(x,y) = \|P_kx-y\|_2^2`
+    with :math:`P_k` linear.
     """
     nx = get_backend(X_init, measure_locations[0])
     K = len(measure_locations)

@@ -16,7 +16,7 @@ the space of Gaussian distributions :math:`\mathcal{N}` (or equivalently the
 Bures-Wasserstein manifold), and to compute barycenters with respect to the
 2-Wasserstein distance between measures in :math:`\mathcal{P}(\mathcal{N})`: a
 gaussian mixture is a finite combination of Diracs on specific gaussians, and
-two mixtures are compared with the 2-Wasserstein distance on this space with
+two mixtures are compared with the 2-Wasserstein distance on this space, where
 ground cost the squared Bures distance between gaussians.
 
 [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in the space
