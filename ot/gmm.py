@@ -13,7 +13,7 @@ from .backend import get_backend
 from .lp import emd2, emd
 import numpy as np
 from .utils import dist
-from .gaussian import bures_wasserstein_mapping
+from .gaussian import bures_wasserstein_mapping, bures_wasserstein_barycenter
 
 
 def gaussian_logpdf(x, m, C):
@@ -440,3 +440,115 @@ def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t, plan=None, atol=1e-2
         ]
     )
     return nx.sum(mat, axis=(0, 1))
+
+
+def solve_gmm_barycenter_fixed_point(
+    means,
+    covs,
+    means_list,
+    covs_list,
+    b_list,
+    weights,
+    max_its=300,
+    log=False,
+    barycentric_proj_method="euclidean",
+):
+    r"""
+    Solves the GMM OT barycenter problem using the fixed point algorithm.
+
+    Parameters
+    ----------
+    means : array-like
+        Initial (n, d) GMM means.
+    covs : array-like
+        Initial (n, d, d) GMM covariances.
+    means_list : list of array-like
+        List of K (m_k, d) GMM means.
+    covs_list : list of array-like
+        List of K (m_k, d, d) GMM covariances.
+    b_list : list of array-like
+        List of K (m_k) arrays of weights.
+    weights : array-like
+        Array (K,) of the barycentre coefficients.
+    max_its : int, optional
+        Maximum number of iterations (default is 300).
+    log : bool, optional
+        Whether to return the list of iterations (default is False).
+    barycentric_proj_method : str, optional
+        Method to project the barycentre weights: 'euclidean' (default) or 'bures'.
+
+    Returns
+    -------
+    means : array-like
+        (n, d) barycentre GMM means.
+    covs : array-like
+        (n, d, d) barycentre GMM covariances.
+    log_dict : dict, optional
+        Dictionary containing the list of iterations if log is True.
+    """
+    nx = get_backend(means, covs[0], means_list[0], covs_list[0])
+    K = len(means_list)
+    n = means.shape[0]
+    d = means.shape[1]
+    means_its = [means.copy()]
+    covs_its = [covs.copy()]
+    a = nx.ones(n, type_as=means) / n
+
+    for _ in range(max_its):
+        pi_list = [
+            gmm_ot_plan(means, means_list[k], covs, covs_list[k], a, b_list[k])
+            for k in range(K)
+        ]
+
+        means_selection, covs_selection = None, None
+        # in the euclidean case, the selection of Gaussians from each K sources
+        # comes from a  barycentric projection is a convex combination of the
+        # selected means and  covariances, which can be computed without a
+        # for loop on i
+        if barycentric_proj_method == "euclidean":
+            means_selection = nx.zeros((n, K, d), type_as=means)
+            covs_selection = nx.zeros((n, K, d, d), type_as=means)
+
+            for k in range(K):
+                means_selection[:, k, :] = n * pi_list[k] @ means_list[k]
+                covs_selection[:, k, :, :] = (
+                    nx.einsum("ij,jab->iab", pi_list[k], covs_list[k]) * n
+                )
+
+        # each component i of the barycentre will be a Bures barycentre of the
+        # selected components of the K GMMs. In the 'bures' barycentric
+        # projection option, the selected components are also Bures barycentres.
+        for i in range(n):
+            # means_slice_i (K, d) is the selected means, each comes from a
+            # Gaussian barycentre along the disintegration of pi_k at i
+            # covs_slice_i (K, d, d) are the selected covariances
+            means_selection_i = []
+            covs_selection_i = []
+
+            # use previous computation (convex combination)
+            if barycentric_proj_method == "euclidean":
+                means_selection_i = means_selection[i]
+                covs_selection_i = covs_selection[i]
+
+            # compute Bures barycentre of the selected components
+            elif barycentric_proj_method == "bures":
+                w = (1 / a[i]) * pi_list[k][i, :]
+                for k in range(K):
+                    m, C = bures_wasserstein_barycenter(means_list[k], covs_list[k], w)
+                    means_selection_i.append(m)
+                    covs_selection_i.append(C)
+
+            else:
+                raise ValueError("Unknown barycentric_proj_method")
+
+            means[i], covs[i] = bures_wasserstein_barycenter(
+                means_selection_i, covs_selection_i, weights
+            )
+
+        if log:
+            means_its.append(means.copy())
+            covs_its.append(covs.copy())
+
+    if log:
+        return means, covs, {"means_its": means_its, "covs_its": covs_its}
+    return means, covs
