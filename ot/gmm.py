@@ -442,36 +442,50 @@ def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t, plan=None, atol=1e-2
     return nx.sum(mat, axis=(0, 1))
 
 
-def solve_gmm_barycenter_fixed_point(
-    means,
-    covs,
+def gmm_barycenter_fixed_point(
     means_list,
     covs_list,
-    b_list,
+    w_list,
+    means_init,
+    covs_init,
     weights,
-    max_its=300,
+    w_bar=None,
+    iterations=100,
     log=False,
     barycentric_proj_method="euclidean",
 ):
     r"""
-    Solves the GMM OT barycenter problem using the fixed point algorithm.
+    Solves the Gaussian Mixture Model OT barycenter problem (defined in [69])
+    using the fixed point algorithm (proposed in [74]). The
+    weights of the barycenter are not optimized, and stay the same as the input
+    `w_list` or are initialized to uniform.
+
+    The algorithm uses barycentric projections of GMM-OT plans, and these can be
+    computed either through Bures Barycenters (slow but accurate,
+    barycentric_proj_method='bures') or by convex combination (fast,
+    barycentric_proj_method='euclidean', default).
+
+    This is a special case of the generic free-support barycenter solver
+    `ot.lp.free_support_barycenter_generic_costs`.
 
     Parameters
     ----------
-    means : array-like
-        Initial (n, d) GMM means.
-    covs : array-like
-        Initial (n, d, d) GMM covariances.
     means_list : list of array-like
         List of K (m_k, d) GMM means.
     covs_list : list of array-like
         List of K (m_k, d, d) GMM covariances.
-    b_list : list of array-like
+    w_list : list of array-like
         List of K (m_k) arrays of weights.
+    means_init : array-like
+        Initial (n, d) GMM means.
+    covs_init : array-like
+        Initial (n, d, d) GMM covariances.
     weights : array-like
         Array (K,) of the barycentre coefficients.
-    max_its : int, optional
-        Maximum number of iterations (default is 300).
+    w_bar : array-like, optional
+        Initial weights (n) of the barycentre GMM. If None, initialized to uniform.
+    iterations : int, optional
+        Number of iterations (default is 100).
     log : bool, optional
         Whether to return the list of iterations (default is False).
     barycentric_proj_method : str, optional
@@ -485,30 +499,46 @@ def solve_gmm_barycenter_fixed_point(
         (n, d, d) barycentre GMM covariances.
     log_dict : dict, optional
         Dictionary containing the list of iterations if log is True.
-    """
-    nx = get_backend(means, covs[0], means_list[0], covs_list[0])
-    K = len(means_list)
-    n = means.shape[0]
-    d = means.shape[1]
-    means_its = [means.copy()]
-    covs_its = [covs.copy()]
-    a = nx.ones(n, type_as=means) / n
 
-    for _ in range(max_its):
+    References
+    ----------
+    .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in the space of Gaussian mixture models. SIAM Journal on Imaging Sciences, 13(2), 936-970.
+
+    .. [74] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing barycenters of Measures for Generic Transport Costs. arXiv preprint 2501.04016 (2024)
+
+    See Also
+    --------
+    ot.lp.free_support_barycenter_generic_costs : Compute barycenter of measures for generic transport costs.
+    """
+    nx = get_backend(
+        means_init, covs_init, means_list[0], covs_list[0], w_list[0], weights
+    )
+    K = len(means_list)
+    n = means_init.shape[0]
+    d = means_init.shape[1]
+    means_its = [nx.copy(means_init)]
+    covs_its = [nx.copy(covs_init)]
+    means, covs = means_init, covs_init
+
+    if w_bar is None:
+        w_bar = nx.ones(n, type_as=means) / n
+
+    for _ in range(iterations):
         pi_list = [
-            gmm_ot_plan(means, means_list[k], covs, covs_list[k], a, b_list[k])
+            gmm_ot_plan(means, means_list[k], covs, covs_list[k], w_bar, w_list[k])
             for k in range(K)
         ]
 
+        # filled in the euclidean case
         means_selection, covs_selection = None, None
+
         # in the euclidean case, the selection of Gaussians from each K sources
-        # comes from a  barycentric projection is a convex combination of the
-        # selected means and  covariances, which can be computed without a
-        # for loop on i
+        # comes from a barycentric projection: it is a convex combination of the
+        # selected means and covariances, which can be computed without a
+        # for loop on i = 0, ..., n -1
         if barycentric_proj_method == "euclidean":
             means_selection = nx.zeros((n, K, d), type_as=means)
             covs_selection = nx.zeros((n, K, d, d), type_as=means)
-
             for k in range(K):
                 means_selection[:, k, :] = n * pi_list[k] @ means_list[k]
                 covs_selection[:, k, :, :] = (
@@ -519,24 +549,27 @@ def solve_gmm_barycenter_fixed_point(
         # selected components of the K GMMs. In the 'bures' barycentric
         # projection option, the selected components are also Bures barycentres.
         for i in range(n):
-            # means_slice_i (K, d) is the selected means, each comes from a
+            # means_selection_i (K, d) is the selected means, each comes from a
             # Gaussian barycentre along the disintegration of pi_k at i
-            # covs_slice_i (K, d, d) are the selected covariances
-            means_selection_i = []
-            covs_selection_i = []
+            # covs_selection_i (K, d, d) are the selected covariances
+            means_selection_i = None
+            covs_selection_i = None
 
             # use previous computation (convex combination)
             if barycentric_proj_method == "euclidean":
                 means_selection_i = means_selection[i]
                 covs_selection_i = covs_selection[i]
 
-            # compute Bures barycentre of the selected components
+            # compute Bures barycentre of certain components to get the
+            # selection at i
             elif barycentric_proj_method == "bures":
-                w = (1 / a[i]) * pi_list[k][i, :]
+                means_selection_i = nx.zeros((K, d), type_as=means)
+                covs_selection_i = nx.zeros((K, d, d), type_as=means)
                 for k in range(K):
+                    w = (1 / w_bar[i]) * pi_list[k][i, :]
                     m, C = bures_wasserstein_barycenter(means_list[k], covs_list[k], w)
-                    means_selection_i.append(m)
-                    covs_selection_i.append(C)
+                    means_selection_i[k] = m
+                    covs_selection_i[k] = C
 
             else:
                 raise ValueError("Unknown barycentric_proj_method")
@@ -546,8 +579,8 @@ def solve_gmm_barycenter_fixed_point(
             )
 
         if log:
-            means_its.append(means.copy())
-            covs_its.append(covs.copy())
+            means_its.append(nx.copy(means))
+            covs_its.append(nx.copy(covs))
 
     if log:
         return means, covs, {"means_its": means_its, "covs_its": covs_its}

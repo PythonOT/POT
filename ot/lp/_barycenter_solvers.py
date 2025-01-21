@@ -435,7 +435,7 @@ def free_support_barycenter_generic_costs(
     cost_list,
     B,
     a=None,
-    numItermax=5,
+    numItermax=100,
     stopThr=1e-5,
     log=False,
 ):
@@ -512,7 +512,7 @@ def free_support_barycenter_generic_costs(
         Array of shape (n,) representing weights of the barycenter
         measure.Defaults to uniform.
     numItermax : int, optional
-        Maximum number of iterations (default is 5).
+        Maximum number of iterations (default is 100).
     stopThr : float, optional
         If the iterations move less than this, terminate (default is 1e-5).
     log : bool, optional
