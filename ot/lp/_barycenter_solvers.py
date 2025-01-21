@@ -429,11 +429,12 @@ class StoppingCriterionReached(Exception):
 
 
 def free_support_barycenter_generic_costs(
-    X_init,
     measure_locations,
     measure_weights,
+    X_init,
     cost_list,
     B,
+    a=None,
     numItermax=5,
     stopThr=1e-5,
     log=False,
@@ -441,7 +442,7 @@ def free_support_barycenter_generic_costs(
     r"""
     Solves the OT barycenter problem for generic costs using the fixed point
     algorithm, iterating the ground barycenter function B on transport plans
-    between the current barycentre and the measures.
+    between the current barycenter and the measures.
 
     The problem finds an optimal barycenter support `X` of given size (n, d)
     (enforced by the initialisation), minimising a sum of pairwise transport
@@ -452,12 +453,13 @@ def free_support_barycenter_generic_costs(
 
     where:
 
-    - :math:`X` (n, d) is the barycentre support,
-    - :math:`a` (n) is the (fixed) barycentre weights,
-    - :math:`Y_k` (m_k, d_k) is the k-th measure support (`measure_locations[k]`),
+    - :math:`X` (n, d) is the barycenter support,
+    - :math:`a` (n) is the (fixed) barycenter weights,
+    - :math:`Y_k` (m_k, d_k) is the k-th measure support
+      (`measure_locations[k]`),
     - :math:`b_k` (m_k) is the k-th measure weights (`measure_weights[k]`),
     - :math:`c_k: \mathbb{R}^{n\times d}\times\mathbb{R}^{m_k\times d_k} \rightarrow \mathbb{R}_+^{n\times m_k}` is the k-th cost function (which computes the pairwise cost matrix)
-    - :math:`\mathcal{T}_{c_k}(X, a, Y_k, b)` is the OT cost between the barycentre measure and the k-th measure with respect to the cost :math:`c_k`:
+    - :math:`\mathcal{T}_{c_k}(X, a, Y_k, b)` is the OT cost between the barycenter measure and the k-th measure with respect to the cost :math:`c_k`:
 
     .. math::
         \mathcal{T}_{c_k}(X, a, Y_k, b_k) = \min_\pi \quad \langle \pi, c_k(X, Y_k) \rangle_F
@@ -471,9 +473,10 @@ def free_support_barycenter_generic_costs(
     in other words, :math:`\mathcal{T}_{c_k}(X, a, Y_k, b)` is `ot.emd2(a, b_k,
     c_k(X, Y_k))`.
 
-    The algorithm requires a given ground barycentre function `B` which computes
-    a solution of the following minimisation problem given :math:`(y_1, \cdots,
-    y_K) \in \mathbb{R}^{d_1}\times\cdots\times\mathbb{R}^{d_K}`:
+    The algorithm requires a given ground barycenter function `B` which computes
+    (broadcasted of `n`) solutions of the following minimisation problem given
+    :math:`(Y_1, \cdots, Y_K) \in
+    \mathbb{R}^{n\times d_1}\times\cdots\times\mathbb{R}^{n\times d_K}`:
 
     .. math::
         B(y_1, \cdots, y_K) = \mathrm{argmin}_{x \in \mathbb{R}^d} \sum_{k=1}^K c_k(x, y_k),
@@ -482,23 +485,32 @@ def free_support_barycenter_generic_costs(
     :math:`x` and :math:`y_k`. The function :math:`B:\mathbb{R}^{d_1}\times
     \cdots\times\mathbb{R}^{d_K} \longrightarrow \mathbb{R}^d` is an input to
     this function, and for certain costs it can be computed explicitly of
-    through a numerical solver.
+    through a numerical solver. The input function B takes a list of K arrays of
+    shape (n, d_k) and returns an array of shape (n, d).
 
     This function implements [74] Algorithm 2, which generalises [20] and [43]
-    to general costs and includes convergence guarantees, including for discrete measures.
+    to general costs and includes convergence guarantees, including for discrete
+    measures.
 
     Parameters
     ----------
-    X_init : array-like
-        Array of shape (n, d) representing initial barycentre points.
     measure_locations : list of array-like
         List of K arrays of measure positions, each of shape (m_k, d_k).
     measure_weights : list of array-like
         List of K arrays of measure weights, each of shape (m_k).
+    X_init : array-like
+        Array of shape (n, d) representing initial barycenter points.
     cost_list : list of callable
-        List of K cost functions :math:`c_k: \mathbb{R}^{n\times d}\times\mathbb{R}^{m_k\times d_k} \rightarrow \mathbb{R}_+^{n\times m_k}`.
+        List of K cost functions :math:`c_k: \mathbb{R}^{n\times
+        d}\times\mathbb{R}^{m_k\times d_k} \rightarrow \mathbb{R}_+^{n\times
+        m_k}`.
     B : callable
-        Function from :math:`\mathbb{R}^{d_1} \times\cdots \times \mathbb{R}^{d_K}` to :math:`\mathbb{R}^d` accepting a list of K arrays of shape (n\times d_K), computing the ground barycentre.
+        Function List(array(n, d_k)) -> array(n, d) accepting a list of K arrays
+        of shape (n\times d_K), computing the ground barycenters (broadcasted
+        over n).
+    a : array-like, optional
+        Array of shape (n,) representing weights of the barycenter
+        measure.Defaults to uniform.
     numItermax : int, optional
         Maximum number of iterations (default is 5).
     stopThr : float, optional
@@ -509,7 +521,7 @@ def free_support_barycenter_generic_costs(
     Returns
     -------
     X : array-like
-        Array of shape (n, d) representing barycentre points.
+        Array of shape (n, d) representing barycenter points.
     log_dict : list of array-like, optional
         log containing the exit status, list of iterations and list of
         displacements if log is True.
@@ -518,22 +530,27 @@ def free_support_barycenter_generic_costs(
 
     References
     ----------
-    .. [74] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). [Computing Barycentres of Measures for Generic Transport Costs](https://arxiv.org/abs/2501.04016). arXiv preprint 2501.04016 (2024)
+    .. [74] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
+        barycenters of Measures for Generic Transport Costs. arXiv preprint
+        2501.04016 (2024)
 
-    .. [20] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein barycenters." International Conference on Machine Learning. 2014.
+    .. [20] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein
+        barycenters." International Conference on Machine Learning. 2014.
 
-    .. [43] Álvarez-Esteban, Pedro C., et al. "A fixed-point approach to barycenters in Wasserstein space." Journal of Mathematical Analysis and Applications 441.2 (2016): 744-762.
+    .. [43] Álvarez-Esteban, Pedro C., et al. "A fixed-point approach to
+        barycenters in Wasserstein space." Journal of Mathematical Analysis and
+        Applications 441.2 (2016): 744-762.
 
     See Also
     --------
-    ot.lp.free_support_barycenter : Free support solver for the case where
-    :math:`c_k(x,y) = \|x-y\|_2^2`.
+    ot.lp.free_support_barycenter : Free support solver for the case where :math:`c_k(x,y) = \|x-y\|_2^2`.
     ot.lp.generalized_free_support_barycenter : Free support solver for the case where :math:`c_k(x,y) = \|P_kx-y\|_2^2` with :math:`P_k` linear.
     """
     nx = get_backend(X_init, measure_locations[0])
     K = len(measure_locations)
     n = X_init.shape[0]
-    a = nx.ones(n) / n
+    if a is None:
+        a = nx.ones(n, type_as=X_init) / n
     X_list = [X_init] if log else []  # store the iterations
     X = X_init
     dX_list = []  # store the displacement squared norms
