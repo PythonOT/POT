@@ -6,9 +6,9 @@ OT Barycenter with Generic Costs Demo
 
 This example illustrates the computation of an Optimal Transport for a ground
 cost that is not a power of a norm. We take the example of ground costs
-:math:`c_k(x, y) = |P_k(x)-y|^2`, where :math:`P_k` is the (non-linear)
+:math:`c_k(x, y) = \|P_k(x)-y\|_2^2`, where :math:`P_k` is the (non-linear)
 projection onto a circle k. This is an example of the fixed-point barycenter
-solver introduced in [74] which generalises [20].
+solver introduced in [74] which generalises [20] and [43].
 
 The ground barycenter function :math:`B(y_1, ..., y_K)` = \mathrm{argmin}_{x \in
 \mathbb{R}^2} \sum_k \lambda_k c_k(x, y_k) is computed by gradient descent over
@@ -21,6 +21,8 @@ Costs](https://arxiv.org/abs/2501.04016). arXiv preprint 2501.04016 (2024)
 [20] Cuturi, M. and Doucet, A. (2014) [Fast Computation of Wasserstein
 Barycenters](http://proceedings.mlr.press/v32/cuturi14.html). International
 Conference in Machine Learning
+
+[43] Álvarez-Esteban, Pedro C., et al. "A fixed-point approach to barycenters in Wasserstein space." Journal of Mathematical Analysis and Applications 441.2 (2016): 744-762.
 
 """
 
@@ -147,8 +149,8 @@ X_bar = free_support_barycenter_generic_costs(
     b_list,
     cost_list,
     B,
-    max_its=fixed_point_its,
-    stop_threshold=stop_threshold,
+    numItermax=fixed_point_its,
+    stopThr=stop_threshold,
 )
 
 # %% Plot Barycenter (Iteration 10)
