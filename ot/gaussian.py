@@ -694,7 +694,7 @@ def empirical_bures_wasserstein_barycenter(
 
     The function estimates the optimal barycenter of the
     empirical distributions. This is equivalent to resolving the fixed point
-     algorithm for multiple Gaussian distributions :math:`\left{\mathcal{N}(\mu,\Sigma)\right}_{i=1}^n`
+    algorithm for multiple Gaussian distributions :math:`\left\{\mathcal{N}(\mu,\Sigma)\right\}_{i=1}^n`
     :ref:`[1] <references-OT-mapping-linear-barycenter>`.
 
     The barycenter still following a Gaussian distribution :math:`\mathcal{N}(\mu_b,\Sigma_b)`
