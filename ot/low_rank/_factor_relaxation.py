@@ -51,7 +51,7 @@ def _compute_gradient_Q(M, Q, R, X, g_Q, nx):
         nx.dot(M, R), X.T
     )  # The order of multiplications is important because r<<min{n,m}
     term2 = nx.diag(nx.dot(nx.dot(term1.T, Q), nx.diag(1 / g_Q))).reshape(1, -1)
-    term3 = nx.ones((n, 1), type_as=M) @ term2
+    term3 = nx.dot(nx.ones((n, 1), type_as=M), term2)
     grad_Q = term1 - term3
 
     return grad_Q
