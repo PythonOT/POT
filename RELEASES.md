@@ -8,7 +8,7 @@
 - Automatic PR labeling and release file update check (PR #704)
 - Reorganize sub-module `ot/lp/__init__.py` into separate files (PR #714)
 - Fix documentation in the module `ot.gaussian` (PR #718)
-- Implement low rank through Factor Relaxation with Latent Coupling
+- Implement low rank through Factor Relaxation with Latent Coupling (PR #719)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
