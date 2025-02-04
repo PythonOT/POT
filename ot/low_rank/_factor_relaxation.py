@@ -92,7 +92,7 @@ def solve_balanced_FRLC(
     r,
     tau,
     gamma,
-    stopThr=1e-5,
+    stopThr=1e-7,
     numItermax=1000,
     log=False,
 ):
