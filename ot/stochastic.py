@@ -58,10 +58,13 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
     -------
     coordinate gradient : ndarray, shape (nt,)
 
+
     .. _references-coordinate-grad-semi-dual:
     References
     ----------
-    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
+    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016)
+        Stochastic Optimization for Large-scale Optimal Transport.
+        Advances in Neural Information Processing Systems (2016).
     """
     r = M[i, :] - beta
     exp_beta = np.exp(-r / reg) * b
@@ -119,10 +122,13 @@ def sag_entropic_transport(a, b, M, reg, numItermax=10000, lr=None, random_state
     v : ndarray, shape (`nt`,)
         Dual variable.
 
+
     .. _references-sag-entropic-transport:
     References
     ----------
-    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
+    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016)
+        Stochastic Optimization for Large-scale Optimal Transport.
+        Advances in Neural Information Processing Systems (2016).
     """
 
     if lr is None:
@@ -191,10 +197,13 @@ def averaged_sgd_entropic_transport(
     ave_v : ndarray, shape (`nt`,)
         dual variable
 
+
     .. _references-averaged-sgd-entropic-transport:
     References
     ----------
-    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
+    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016)
+        Stochastic Optimization for Large-scale Optimal Transport.
+        Advances in Neural Information Processing Systems (2016).
     """
 
     if lr is None:
@@ -250,10 +259,13 @@ def c_transform_entropic(b, M, reg, beta):
     u : ndarray, shape (`ns`,)
         Dual variable.
 
+
     .. _references-c-transform-entropic:
     References
     ----------
-    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
+    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016)
+        Stochastic Optimization for Large-scale Optimal Transport.
+        Advances in Neural Information Processing Systems (2016).
     """
 
     n_source = np.shape(M)[0]
@@ -325,10 +337,13 @@ def solve_semi_dual_entropic(
     log : dict
         log dictionary return only if log==True in parameters
 
+
     .. _references-solve-semi-dual-entropic:
     References
     ----------
-    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016) Stochastic Optimization for Large-scale Optimal Transport. Advances in Neural Information Processing Systems (2016).
+    .. [18] Genevay, A., Cuturi, M., Peyré, G. & Bach, F. (2016)
+        Stochastic Optimization for Large-scale Optimal Transport.
+        Advances in Neural Information Processing Systems (2016).
     """
 
     if method.lower() == "sag":
@@ -416,10 +431,12 @@ def batch_grad_dual(a, b, M, reg, alpha, beta, batch_size, batch_alpha, batch_be
     grad : ndarray, shape (`ns`,)
         partial grad F
 
+
     .. _references-batch-grad-dual:
     References
     ----------
-    .. [19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet, A.& Blondel, M. Large-scale Optimal Transport and Mapping Estimation. International Conference on Learning Representation (2018)
+    .. [19] Seguy, V., Bhushan Damodaran, B., Flamary, R., Courty, N., Rolet, A.& Blondel, M.
+        Large-scale Optimal Transport and Mapping Estimation. International Conference on Learning Representation (2018)
     """
     G = -(
         np.exp(

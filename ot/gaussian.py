@@ -566,8 +566,8 @@ def gaussian_gromov_wasserstein_distance(Cov_s, Cov_t, log=False):
     References
     ----------
     .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
-    distances between Gaussian distributions. Journal of Applied Probability,
-    59(4), 1178-1198.
+        distances between Gaussian distributions. Journal of Applied Probability,
+        59(4), 1178-1198.
     """
 
     nx = get_backend(Cov_s, Cov_t)
@@ -630,8 +630,8 @@ def empirical_gaussian_gromov_wasserstein_distance(xs, xt, ws=None, wt=None, log
     References
     ----------
     .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
-    distances between Gaussian distributions. Journal of Applied Probability,
-    59(4), 1178-1198.
+        distances between Gaussian distributions. Journal of Applied Probability,
+        59(4), 1178-1198.
     """
     xs, xt = list_to_array(xs, xt)
     nx = get_backend(xs, xt)
@@ -698,8 +698,8 @@ def gaussian_gromov_wasserstein_mapping(
     References
     ----------
     .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
-    distances between Gaussian distributions. Journal of Applied Probability,
-    59(4), 1178-1198.
+        distances between Gaussian distributions. Journal of Applied Probability,
+        59(4), 1178-1198.
     """
 
     nx = get_backend(mu_s, mu_t, Cov_s, Cov_t)
@@ -788,12 +788,13 @@ def empirical_gaussian_gromov_wasserstein_mapping(
     b : (1, dt) array-like
         bias
 
+
     .. _references-empirical_gaussian_gromov_wasserstein_mapping:
     References
     ----------
     .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
-    distances between Gaussian distributions. Journal of Applied Probability,
-    59(4), 1178-1198.
+        distances between Gaussian distributions. Journal of Applied Probability,
+        59(4), 1178-1198.
     """
 
     xs, xt = list_to_array(xs, xt)
