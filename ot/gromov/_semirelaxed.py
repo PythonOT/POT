@@ -474,12 +474,12 @@ def semirelaxed_fused_gromov_wasserstein(
         (ICML). 2019.
 
     .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
-            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
-            International Conference on Learning Representations (ICLR), 2022.
+        "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+        International Conference on Learning Representations (ICLR), 2022.
 
     .. [62] H. Van Assel, C. Vincent-Cuaz, T. Vayer, R. Flamary, N. Courty.
-            "Interpolating between Clustering and Dimensionality Reduction with
-            Gromov-Wasserstein". NeurIPS 2023 Workshop OTML.
+        "Interpolating between Clustering and Dimensionality Reduction with
+        Gromov-Wasserstein". NeurIPS 2023 Workshop OTML.
     """
     arr = [M, C1, C2]
     if p is not None:
@@ -688,12 +688,12 @@ def semirelaxed_fused_gromov_wasserstein2(
         (ICML). 2019.
 
     .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
-            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
-            International Conference on Learning Representations (ICLR), 2022.
+        "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+        International Conference on Learning Representations (ICLR), 2022.
 
     .. [62] H. Van Assel, C. Vincent-Cuaz, T. Vayer, R. Flamary, N. Courty.
-            "Interpolating between Clustering and Dimensionality Reduction with
-            Gromov-Wasserstein". NeurIPS 2023 Workshop OTML.
+        "Interpolating between Clustering and Dimensionality Reduction with
+        Gromov-Wasserstein". NeurIPS 2023 Workshop OTML.
     """
     # partial get_backend as the full one will be handled in gromov_wasserstein
     nx = get_backend(C1, C2)
@@ -1244,8 +1244,8 @@ def entropic_semirelaxed_fused_gromov_wasserstein(
     References
     ----------
     .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
-            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
-            International Conference on Learning Representations (ICLR), 2022.
+        "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+        International Conference on Learning Representations (ICLR), 2022.
     """
     arr = [M, C1, C2]
     if p is not None:
@@ -1437,8 +1437,8 @@ def entropic_semirelaxed_fused_gromov_wasserstein2(
     References
     ----------
     .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
-            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
-            International Conference on Learning Representations (ICLR), 2022.
+        "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+        International Conference on Learning Representations (ICLR), 2022.
     """
     T, log_srfgw = entropic_semirelaxed_fused_gromov_wasserstein(
         M,

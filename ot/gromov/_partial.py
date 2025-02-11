@@ -611,6 +611,7 @@ def partial_fused_gromov_wasserstein(
     log : dict
         Convergence information and loss.
 
+
     .. _references-partial-gromov-wasserstein:
     References
     ----------
@@ -906,6 +907,7 @@ def partial_fused_gromov_wasserstein2(
         partial FGW discrepancy
     log : dict
         log dictionary returned only if `log` is `True`
+
 
     .. _references-partial-gromov-wasserstein2:
     References

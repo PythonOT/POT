@@ -287,12 +287,14 @@ def generic_conditional_gradient(
     .. _references_gcg:
     References
     ----------
+    .. [1] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+        Regularized discrete optimal transport. SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
 
-    .. [1] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). Regularized discrete optimal transport. SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
+    .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, "Optimal Transport for Domain Adaptation,"
+        in IEEE Transactions on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
 
-    .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, "Optimal Transport for Domain Adaptation," in IEEE Transactions on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
-
-    .. [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized conditional gradient: analysis of convergence and applications. arXiv preprint arXiv:1510.06567.
+    .. [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized conditional gradient:
+        analysis of convergence and applications. arXiv preprint arXiv:1510.06567.
 
     See Also
     --------
@@ -492,8 +494,8 @@ def cg(
     .. _references-cg:
     References
     ----------
-
-    .. [1] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014). Regularized discrete optimal transport. SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
+    .. [1] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
+        Regularized discrete optimal transport. SIAM Journal on Imaging Sciences, 7(3), 1853-1882.
 
     See Also
     --------
@@ -616,10 +618,9 @@ def semirelaxed_cg(
     .. _references-cg:
     References
     ----------
-
-    .. [48]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
-            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
-            International Conference on Learning Representations (ICLR), 2021.
+    .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+        "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+        International Conference on Learning Representations (ICLR), 2021.
 
     """
     if nx is None:
@@ -755,7 +756,6 @@ def partial_cg(
     .. _references-partial-cg:
     References
     ----------
-
     ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
         Transport with Applications on Positive-Unlabeled Learning".
         NeurIPS.
@@ -885,10 +885,11 @@ def gcg(
     .. _references-gcg:
     References
     ----------
+    .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, "Optimal Transport for Domain Adaptation,"
+        in IEEE Transactions on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
 
-    .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy, "Optimal Transport for Domain Adaptation," in IEEE Transactions on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
-
-    .. [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized conditional gradient: analysis of convergence and applications. arXiv preprint arXiv:1510.06567.
+    .. [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015). Generalized conditional gradient:
+        analysis of convergence and applications. arXiv preprint arXiv:1510.06567.
 
     See Also
     --------

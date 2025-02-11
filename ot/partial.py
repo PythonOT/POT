@@ -113,8 +113,8 @@ def partial_wasserstein_lagrange(
     References
     ----------
     .. [28] Caffarelli, L. A., & McCann, R. J. (2010) Free boundaries in
-       optimal transport and Monge-Ampere obstacle problems. Annals of
-       mathematics, 673-730.
+        optimal transport and Monge-Ampere obstacle problems. Annals of
+        mathematics, 673-730.
 
     See Also
     --------
@@ -498,8 +498,8 @@ def entropic_partial_wasserstein(
     References
     ----------
     .. [3] Benamou, J. D., Carlier, G., Cuturi, M., Nenna, L., & Peyré, G.
-       (2015). Iterative Bregman projections for regularized transportation
-       problems. SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
+        (2015). Iterative Bregman projections for regularized transportation
+        problems. SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
 
     See Also
     --------
@@ -766,7 +766,7 @@ def partial_gromov_wasserstein(
     .. _references-partial-gromov-wasserstein:
     References
     ----------
-    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+    .. [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
         Transport with Applications on Positive-Unlabeled Learning".
         NeurIPS.
 
@@ -975,7 +975,7 @@ def partial_gromov_wasserstein2(
     .. _references-partial-gromov-wasserstein2:
     References
     ----------
-    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+    .. [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
         Transport with Applications on Positive-Unlabeled Learning".
         NeurIPS.
 
@@ -1098,7 +1098,7 @@ def entropic_partial_gromov_wasserstein(
 
     Returns
     -------
-    :math: `gamma` : (dim_a, dim_b) ndarray
+    :math:`gamma` : ndarray, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`

@@ -576,11 +576,14 @@ def smooth_ot_dual(
     .. _references-smooth-ot-dual:
     References
     ----------
-    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal Transport, Advances in Neural Information Processing Systems (NIPS) 26, 2013
+    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal Transport,
+        Advances in Neural Information Processing Systems (NIPS) 26, 2013
 
-    .. [17] Blondel, M., Seguy, V., & Rolet, A. (2018). Smooth and Sparse Optimal Transport. Proceedings of the Twenty-First International Conference on Artificial Intelligence and Statistics (AISTATS).
+    .. [17] Blondel, M., Seguy, V., & Rolet, A. (2018). Smooth and Sparse Optimal Transport.
+        Proceedings of the Twenty-First International Conference on Artificial Intelligence and Statistics (AISTATS).
 
-    .. [50] Liu, T., Puigcerver, J., & Blondel, M. (2023). Sparsity-constrained optimal transport. Proceedings of the Eleventh International Conference on Learning Representations (ICLR).
+    .. [50] Liu, T., Puigcerver, J., & Blondel, M. (2023). Sparsity-constrained optimal transport.
+        Proceedings of the Eleventh International Conference on Learning Representations (ICLR).
 
     See Also
     --------
@@ -707,11 +710,14 @@ def smooth_ot_semi_dual(
     .. _references-smooth-ot-semi-dual:
     References
     ----------
-    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal Transport, Advances in Neural Information Processing Systems (NIPS) 26, 2013
+    .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation of Optimal Transport,
+        Advances in Neural Information Processing Systems (NIPS) 26, 2013
 
-    .. [17] Blondel, M., Seguy, V., & Rolet, A. (2018). Smooth and Sparse Optimal Transport. Proceedings of the Twenty-First International Conference on Artificial Intelligence and Statistics (AISTATS).
+    .. [17] Blondel, M., Seguy, V., & Rolet, A. (2018). Smooth and Sparse Optimal Transport.
+        Proceedings of the Twenty-First International Conference on Artificial Intelligence and Statistics (AISTATS).
 
-    .. [50] Liu, T., Puigcerver, J., & Blondel, M. (2023). Sparsity-constrained optimal transport. Proceedings of the Eleventh International Conference on Learning Representations (ICLR).
+    .. [50] Liu, T., Puigcerver, J., & Blondel, M. (2023). Sparsity-constrained optimal transport.
+        Proceedings of the Eleventh International Conference on Learning Representations (ICLR).
 
     See Also
     --------

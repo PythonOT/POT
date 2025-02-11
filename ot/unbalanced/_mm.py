@@ -116,6 +116,7 @@ def mm_unbalanced(
     .. [41] Chapel, L., Flamary, R., Wu, H., Févotte, C., and Gasso, G. (2021).
         Unbalanced optimal transport through non-negative penalized
         linear regression. NeurIPS.
+
     See Also
     --------
     ot.lp.emd : Unregularized OT

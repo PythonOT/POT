@@ -743,8 +743,8 @@ def joint_OT_mapping_kernel(
     References
     ----------
     .. [8] M. Perrot, N. Courty, R. Flamary, A. Habrard,
-       "Mapping estimation for discrete optimal transport",
-       Neural Information Processing Systems (NIPS), 2016.
+        "Mapping estimation for discrete optimal transport",
+        Neural Information Processing Systems (NIPS), 2016.
 
     See Also
     --------

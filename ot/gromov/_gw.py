@@ -911,7 +911,6 @@ def solve_gromov_linesearch(
 
 
     .. _references-solve-linesearch:
-
     References
     ----------
     .. [24] Vayer Titouan, Chapel Laetitia, Flamary Rémi, Tavenard Romain and Courty Nicolas
@@ -1292,6 +1291,7 @@ def fgw_barycenters(
         - :math:`\mathbf{p}`: (`N`,) barycenter weights
         - :math:`(\mathbf{M}_s)_s`: all distance matrices between the feature of the barycenter and the other features :math:`(dist(\mathbf{X}, \mathbf{Y}_s))_s` shape (`N`, `ns`)
         - values used in convergence evaluation.
+
 
     .. _references-fgw-barycenters:
     References

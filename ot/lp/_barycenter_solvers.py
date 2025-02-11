@@ -227,12 +227,13 @@ def free_support_barycenter(
 
 
     .. _references-free-support-barycenter:
-
     References
     ----------
-    .. [20] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein barycenters." International Conference on Machine Learning. 2014.
+    .. [20] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein barycenters."
+        International Conference on Machine Learning. 2014.
 
-    .. [43] Álvarez-Esteban, Pedro C., et al. "A fixed-point approach to barycenters in Wasserstein space." Journal of Mathematical Analysis and Applications 441.2 (2016): 744-762.
+    .. [43] Álvarez-Esteban, Pedro C., et al. "A fixed-point approach to barycenters in Wasserstein space."
+        Journal of Mathematical Analysis and Applications 441.2 (2016): 744-762.
 
     """
 
@@ -369,9 +370,12 @@ def generalized_free_support_barycenter(
     .. _references-generalized-free-support-barycenter:
     References
     ----------
-    .. [20] Cuturi, M. and Doucet, A.. "Fast computation of Wasserstein barycenters." International Conference on Machine Learning. 2014.
+    .. [20] Cuturi, M. and Doucet, A.. "Fast computation of Wasserstein barycenters."
+        International Conference on Machine Learning. 2014.
 
-    .. [42] Delon, J., Gozlan, N., and Saint-Dizier, A.. Generalized Wasserstein barycenters between probability measures living on different subspaces. arXiv preprint arXiv:2105.09755, 2021.
+    .. [42] Delon, J., Gozlan, N., and Saint-Dizier, A.. Generalized Wasserstein barycenters
+        between probability measures living on different subspaces.
+        arXiv preprint arXiv:2105.09755, 2021.
 
     """
     nx = get_backend(*X_list, *a_list, *P_list)

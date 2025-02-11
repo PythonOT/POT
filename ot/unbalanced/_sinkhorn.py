@@ -141,6 +141,7 @@ def sinkhorn_unbalanced(
     array([[0.3220536, 0.1184769],
            [0.1184769, 0.3220536]])
 
+
     .. _references-sinkhorn-unbalanced:
     References
     ----------
@@ -368,6 +369,7 @@ def sinkhorn_unbalanced2(
     >>> np.round(ot.unbalanced.sinkhorn_unbalanced2(a, b, M, 1., 1.), 8)
     0.19600125
 
+
     .. _references-sinkhorn-unbalanced2:
     References
     ----------
@@ -387,8 +389,8 @@ def sinkhorn_unbalanced2(
         Processing Systems (NIPS) 2015
 
     .. [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
-       Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
-       In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
+        Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
+        In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
 
     See Also
     --------
@@ -679,6 +681,7 @@ def sinkhorn_knopp_unbalanced(
     array([[0.3220536, 0.1184769],
            [0.1184769, 0.3220536]])
 
+
     .. _references-sinkhorn-knopp-unbalanced:
     References
     ----------
@@ -940,6 +943,7 @@ def sinkhorn_stabilized_unbalanced(
     >>> np.round(ot.unbalanced.sinkhorn_stabilized_unbalanced(a, b, M, 1., 1.), 7)
     array([[0.3220536, 0.1184769],
            [0.1184769, 0.3220536]])
+
 
     .. _references-sinkhorn-stabilized-unbalanced:
     References
@@ -1219,12 +1223,13 @@ def sinkhorn_unbalanced_translation_invariant(
     array([[0.32205357, 0.11847689],
            [0.11847689, 0.32205357]])
 
+
     .. _references-sinkhorn-unbalanced-translation-invariant:
     References
     ----------
     .. [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
-       Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
-       In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
+        Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
+        In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
     """
 
     M, a, b = list_to_array(M, a, b)

@@ -208,7 +208,7 @@ def wda(
     References
     ----------
     .. [11] Flamary, R., Cuturi, M., Courty, N., & Rakotomamonjy, A. (2016).
-            Wasserstein Discriminant Analysis. arXiv preprint arXiv:1608.08063.
+        Wasserstein Discriminant Analysis. arXiv preprint arXiv:1608.08063.
     """  # noqa
 
     if sinkhorn_method.lower() == "sinkhorn":
@@ -348,8 +348,8 @@ def projection_robust_wasserstein(
     References
     ----------
     .. [32] Huang, M. , Ma S. & Lai L. (2021).
-            A Riemannian Block Coordinate Descent Method for Computing
-            the Projection Robust Wasserstein Distance, ICML.
+        A Riemannian Block Coordinate Descent Method for Computing
+        the Projection Robust Wasserstein Distance, ICML.
     """  # noqa
 
     # initialization
@@ -489,7 +489,7 @@ def ewca(
     References
     ----------
     .. [52] Collas, A., Vayer, T., Flamary, F., & Breloy, A. (2023).
-            Entropic Wasserstein Component Analysis.
+        Entropic Wasserstein Component Analysis.
     """  # noqa
     n, d = X.shape
     X = X - X.mean(0)
