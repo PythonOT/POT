@@ -229,7 +229,7 @@ def free_support_barycenter(
     .. _references-free-support-barycenter:
     References
     ----------
-    .. [20] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein barycenters." 
+    .. [20] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein barycenters."
         International Conference on Machine Learning. 2014.
 
     .. [43] Álvarez-Esteban, Pedro C., et al. "A fixed-point approach to barycenters in Wasserstein space."
