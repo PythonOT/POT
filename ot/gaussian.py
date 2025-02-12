@@ -200,14 +200,77 @@ def empirical_bures_wasserstein_mapping(
         return A, b
 
 
+def bures_distance(Cs, Ct, log=False):
+    r"""Return Bures distance.
+
+    The function computes the Bures distance between :math:`\mu_s=\mathcal{N}(0,\Sigma_s)` and :math:`\mu_t=\mathcal{N}(0,\Sigma_t)`,
+    given by:
+
+    .. math::
+        \mathbf{B}(\Sigma_s, \Sigma_t)^{2} = \text{Tr}\left(\Sigma_s + \Sigma_t - 2 \sqrt{\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2}} \right)
+
+    Parameters
+    ----------
+    Cs : array-like (d,d) or (n,d,d)
+        covariance of the source distribution
+    Ct : array-like (d,d) or (m,d,d)
+        covariance of the target distribution
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    W : float if Cs and Cd of shape (d,d), array-like (n,) if Cs of shape (n,d,d),
+    Ct  of shape (d,d), array-like (m,) if Cs of shape (d,d) and Ct of shape (m,d,d),
+    array-like (n,m) if Cs of shape (n,d,d) and mt of shape (m,d,d)
+        Bures Wasserstein distance
+    log : dict
+        log dictionary return only if log==True in parameters
+
+    .. _references-bures-wasserstein-distance:
+    References
+    ----------
+
+    .. [1] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
+        Transport", 2018.
+    """
+    Cs, Ct = list_to_array(Cs, Ct)
+    nx = get_backend(Cs, Ct)
+
+    Cs12 = nx.sqrtm(Cs)
+
+    if len(Cs.shape) == 2 and len(Ct.shape) == 2:
+        # Return float
+        bw2 = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
+    elif len(Cs.shape) == 2:
+        # Return shape (m,)
+        M = nx.einsum("ij, mjk, kl -> mil", Cs12, Ct, Cs12)
+        bw2 = nx.trace(Cs[None] + Ct - 2 * nx.sqrtm(M))
+    elif len(Ct.shape) == 2:
+        # Return shape (n,)
+        M = nx.einsum("nij, jk, nkl -> nil", Cs12, Ct, Cs12)
+        bw2 = nx.trace(Cs + Ct[None] - 2 * nx.sqrtm(M))
+    else:
+        # Return shape (n,m)
+        M = nx.einsum("nij, mjk, nkl -> nmil", Cs12, Ct, Cs12)
+        bw2 = nx.trace(Cs[:, None] + Ct[None] - 2 * nx.sqrtm(M))
+
+    W = nx.sqrt(nx.maximum(bw2, 0))
+
+    if log:
+        log = {}
+        log["Cs12"] = Cs12
+        return W, log
+    else:
+        return W
+
+
 def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     r"""Return Bures Wasserstein distance between samples.
 
-    The function estimates the Bures-Wasserstein distance between two
-    empirical distributions source :math:`\mu_s` and target :math:`\mu_t`,
-    discussed in remark 2.31 :ref:`[1] <references-bures-wasserstein-distance>`.
-
-    The Bures Wasserstein distance between source and target distribution :math:`\mathcal{W}_2`
+    The function computes the Bures-Wasserstein distance between :math:`\mu_s=\mathcal{N}(m_s,\Sigma_s)` and :math:`\mu_t=\mathcal{N}(m_t,\Sigma_t)`,
+    as discussed in remark 2.31 :ref:`[1] <references-bures-wasserstein-distance>`.
 
     .. math::
         \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \mathcal{B}(\Sigma_s, \Sigma_t)^{2}
@@ -230,7 +293,6 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     log : bool, optional
         record log if True
 
-
     Returns
     -------
     W : float if ms and md of shape (d,), array-like (n,) if ms of shape (n,d),
@@ -251,29 +313,38 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     ms, mt, Cs, Ct = list_to_array(ms, mt, Cs, Ct)
     nx = get_backend(ms, mt, Cs, Ct)
 
-    Cs12 = nx.sqrtm(Cs)
+    assert (
+        ms.shape[0] == Cs.shape[0]
+    ), "Source Gaussians has different amount of components"
+
+    assert (
+        mt.shape[0] == Ct.shape[0]
+    ), "Target Gaussians has different amount of components"
+
+    assert (
+        ms.shape[-1] == mt.shape[-1] == Cs.shape[-1] == Ct.shape[-1]
+    ), "All Gaussian must have the same dimension"
+
+    if log:
+        bw, log_dict = bures_distance(Cs, Ct, log)
+        Cs12 = log_dict["Cs12"]
+    else:
+        bw = bures_distance(Cs, Ct)
 
     if len(ms.shape) == 1 and len(mt.shape) == 1:
         # Return float
         squared_dist_m = nx.norm(ms - mt) ** 2
-        B = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
     elif len(ms.shape) == 1:
         # Return shape (m,)
-        M = nx.einsum("ij, mjk, kl -> mil", Cs12, Ct, Cs12)
-        B = nx.trace(Cs[None] + Ct - 2 * nx.sqrtm(M))
         squared_dist_m = nx.norm(ms[None] - mt, axis=-1) ** 2
     elif len(mt.shape) == 1:
         # Return shape (n,)
-        M = nx.einsum("nij, jk, nkl -> nil", Cs12, Ct, Cs12)
-        B = nx.trace(Cs + Ct[None] - 2 * nx.sqrtm(M))
         squared_dist_m = nx.norm(ms - mt[None], axis=-1) ** 2
     else:
         # Return shape (n,m)
-        M = nx.einsum("nij, mjk, nkl -> nmil", Cs12, Ct, Cs12)
-        B = nx.trace(Cs[:, None] + Ct[None] - 2 * nx.sqrtm(M))
         squared_dist_m = nx.norm(ms[:, None] - mt[None], axis=-1) ** 2
 
-    W = nx.sqrt(nx.maximum(squared_dist_m + B, 0))
+    W = nx.sqrt(nx.maximum(squared_dist_m + bw**2, 0))
 
     if log:
         log = {}
