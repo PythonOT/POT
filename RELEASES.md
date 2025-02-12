@@ -8,6 +8,8 @@
 - Automatic PR labeling and release file update check (PR #704)
 - Reorganize sub-module `ot/lp/__init__.py` into separate files (PR #714)
 - Fix documentation in the module `ot.gaussian` (PR #718)
+- Added `ot.gaussian.bures_barycenter_gradient_descent` (PR #680)
+- `ot.gaussian_bures_wasserstein_distance` can be batched (PR #680)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
@@ -44,7 +46,6 @@ This release also contains few bug fixes, concerning the support of any metric i
 - Create `ot.gromov._partial` add new features `loss_fun = "kl_loss"` and `symmetry=False` to all solvers while increasing speed + updating adequatly `ot.solvers` (PR #663)
 - Added `ot.unbalanced.sinkhorn_unbalanced_translation_invariant` (PR #676)
 - Added `ot.gaussian.bures_barycenter_gradient_descent` (PR #680)
-- Refactored `ot.bregman._convolutional` to improve readability (PR #709)
 
 #### Closed issues
 - Fixed `ot.gaussian` ignoring weights when computing means (PR #649, Issue #648)
