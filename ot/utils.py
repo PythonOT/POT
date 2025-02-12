@@ -1373,7 +1373,7 @@ def exp_bures(Sigma, S, nx=None):
 
     return nx.einsum("ij,jk,kl -> il", C, Sigma, C)
 
-  
+
 def check_number_threads(numThreads):
     """Checks whether or not the requested number of threads has a valid value.
 

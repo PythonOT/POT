@@ -674,10 +674,10 @@ def test_exp_bures(nx):
     np.testing.assert_array_less(np.zeros(1), nx.to_numpy(z.T @ Lambda @ z))
 
     # OT map from Lambda to Sigma
-    Lambda_12 = nx.sqrtm(Lambda)
-    Lambda_12_ = nx.inv(Lambda_12)
-    M = nx.sqrtm(nx.einsum("ij, jk, kl -> il", Lambda_12, Sigma, Lambda_12))
-    T = nx.einsum("ij, jk, kl -> il", Lambda_12_, M, Lambda_12_)
+    Lambda12 = nx.sqrtm(Lambda)
+    Lambda12inv = nx.inv(Lambda12)
+    M = nx.sqrtm(nx.einsum("ij, jk, kl -> il", Lambda12, Sigma, Lambda12))
+    T = nx.einsum("ij, jk, kl -> il", Lambda12inv, M, Lambda12inv)
 
     # exp_\Lambda(log_\Lambda(Sigma)) = Sigma
     Sigma_exp = ot.utils.exp_bures(Lambda, T - nx.eye(d, type_as=T))
