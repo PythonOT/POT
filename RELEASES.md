@@ -8,6 +8,8 @@
 - Automatic PR labeling and release file update check (PR #704)
 - Reorganize sub-module `ot/lp/__init__.py` into separate files (PR #714)
 - Implement projected gradient descent solvers for entropic partial FGW (PR #702)
+=======
+- Fix documentation in the module `ot.gaussian` (PR #718)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
