@@ -200,7 +200,7 @@ def empirical_bures_wasserstein_mapping(
         return A, b
 
 
-def bures_distance(Cs, Ct, log=False):
+def bures_distance(Cs, Ct, log=False, nx=None):
     r"""Return Bures distance.
 
     The function computes the Bures distance between :math:`\mu_s=\mathcal{N}(0,\Sigma_s)` and :math:`\mu_t=\mathcal{N}(0,\Sigma_t)`,
@@ -217,7 +217,9 @@ def bures_distance(Cs, Ct, log=False):
         covariance of the target distribution
     log : bool, optional
         record log if True
-
+    nx : module, optional
+        The numerical backend module to use. If not provided, the backend will
+        be fetched from the input matrices `Cs, Ct`.
 
     Returns
     -------
@@ -236,7 +238,11 @@ def bures_distance(Cs, Ct, log=False):
         Transport", 2018.
     """
     Cs, Ct = list_to_array(Cs, Ct)
-    nx = get_backend(Cs, Ct)
+
+    if nx is None:
+        nx = get_backend(Cs, Ct)
+
+    assert Cs.shape[-1] == Ct.shape[-1], "All Gaussian must have the same dimension"
 
     Cs12 = nx.sqrtm(Cs)
 
@@ -326,10 +332,10 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     ), "All Gaussian must have the same dimension"
 
     if log:
-        bw, log_dict = bures_distance(Cs, Ct, log)
+        bw, log_dict = bures_distance(Cs, Ct, log=log, nx=nx)
         Cs12 = log_dict["Cs12"]
     else:
-        bw = bures_distance(Cs, Ct)
+        bw = bures_distance(Cs, Ct, nx=nx)
 
     if len(ms.shape) == 1 and len(mt.shape) == 1:
         # Return float
@@ -440,7 +446,9 @@ def empirical_bures_wasserstein_distance(
         return W
 
 
-def bures_barycenter_fixpoint(C, weights=None, num_iter=1000, eps=1e-7, log=False):
+def bures_barycenter_fixpoint(
+    C, weights=None, num_iter=1000, eps=1e-7, log=False, nx=None
+):
     r"""Return the (Bures-)Wasserstein barycenter between centered Gaussian distributions.
 
     The function estimates the (Bures)-Wasserstein barycenter between centered Gaussian distributions :math:`\big(\mathcal{N}(0,\Sigma_i)\big)_{i=1}^n`
@@ -469,6 +477,9 @@ def bures_barycenter_fixpoint(C, weights=None, num_iter=1000, eps=1e-7, log=Fals
         tolerance for the fixed point algorithm
     log : bool, optional
         record log if True
+    nx : module, optional
+        The numerical backend module to use. If not provided, the backend will
+        be fetched from the input matrices `C`.
 
     Returns
     -------
@@ -485,9 +496,10 @@ def bures_barycenter_fixpoint(C, weights=None, num_iter=1000, eps=1e-7, log=Fals
         SIAM Journal on Mathematical Analysis, vol. 43, no. 2, pp. 904-924,
         2011.
     """
-    nx = get_backend(
-        *C,
-    )
+    if nx is None:
+        nx = get_backend(
+            *C,
+        )
 
     if weights is None:
         weights = nx.ones(C.shape[0], type_as=C[0]) / C.shape[0]
@@ -522,7 +534,14 @@ def bures_barycenter_fixpoint(C, weights=None, num_iter=1000, eps=1e-7, log=Fals
 
 
 def bures_barycenter_gradient_descent(
-    C, weights=None, num_iter=1000, eps=1e-7, log=False, step_size=1, batch_size=None
+    C,
+    weights=None,
+    num_iter=1000,
+    eps=1e-7,
+    log=False,
+    step_size=1,
+    batch_size=None,
+    nx=None,
 ):
     r"""Return the (Bures-)Wasserstein barycenter between centered Gaussian distributions.
 
@@ -551,6 +570,9 @@ def bures_barycenter_gradient_descent(
         step size for the gradient descent, 1 by default
     batch_size : int, optional
         batch size if use a stochastic gradient descent
+    nx : module, optional
+        The numerical backend module to use. If not provided, the backend will
+        be fetched from the input matrices `C`.
 
     Returns
     -------
@@ -571,9 +593,10 @@ def bures_barycenter_gradient_descent(
         Averaging on the Bures-Wasserstein manifold: dimension-free convergence
         of gradient descent. Advances in Neural Information Processing Systems, 34, 22132-22145.
     """
-    nx = get_backend(
-        *C,
-    )
+    if nx is None:
+        nx = get_backend(
+            *C,
+        )
 
     n = C.shape[0]
 
@@ -742,10 +765,11 @@ def bures_wasserstein_barycenter(
             log=log,
             step_size=step_size,
             batch_size=batch_size,
+            nx=nx,
         )
     elif method == "fixed_point":
         out = bures_barycenter_fixpoint(
-            C, weights=weights, num_iter=num_iter, eps=eps, log=log
+            C, weights=weights, num_iter=num_iter, eps=eps, log=log, nx=nx
         )
     else:
         raise ValueError("Unknown method '%s'." % method)
