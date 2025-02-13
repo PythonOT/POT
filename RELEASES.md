@@ -7,6 +7,7 @@
 - Added feature `grad=last_step` for `ot.solvers.solve` (PR #693)
 - Automatic PR labeling and release file update check (PR #704)
 - Reorganize sub-module `ot/lp/__init__.py` into separate files (PR #714)
+- Implement projected gradient descent solvers for entropic partial FGW (PR #702)
 - Fix documentation in the module `ot.gaussian` (PR #718)
 
 #### Closed issues

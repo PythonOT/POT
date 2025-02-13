@@ -25,11 +25,15 @@ from .gromov import (
     partial_gromov_wasserstein2,
     partial_fused_gromov_wasserstein2,
     entropic_partial_gromov_wasserstein2,
+    entropic_partial_fused_gromov_wasserstein2,
 )
 from .gaussian import empirical_bures_wasserstein_distance
 from .factored import factored_optimal_transport
 from .lowrank import lowrank_sinkhorn
 from .optim import cg
+
+import warnings
+
 
 lst_method_lazy = [
     "1d",
@@ -657,7 +661,8 @@ def solve_gromov(
         ``alpha=0.5`` for Fused Gromov-Wasserstein problem (``M!=None``)
     unbalanced : float, optional
         Unbalanced penalization weight :math:`\lambda_u`, by default None
-        (balanced OT), Not implemented yet
+        (balanced OT). Not implemented yet for "KL" unbalanced penalization
+        function :math:`U`. Corresponds to the total transport mass for partial OT.
     unbalanced_type : str, optional
         Type of unbalanced penalization function :math:`U` either "KL", "semirelaxed",
         "partial", by default "KL" but note that it is not implemented yet.
@@ -862,8 +867,15 @@ def solve_gromov(
 
     if reg is None or reg == 0:  # exact OT
         if unbalanced is None and unbalanced_type.lower() not in [
-            "semirelaxed"
+            "semirelaxed",
         ]:  # Exact balanced OT
+            if unbalanced_type.lower() in ["partial"]:
+                warnings.warn(
+                    "Exact balanced OT is computed as `unbalanced=None` even though "
+                    f"unbalanced_type = {unbalanced_type}.",
+                    stacklevel=2,
+                )
+
             if M is None or alpha == 1:  # Gromov-Wasserstein problem
                 # default values for solver
                 if max_iter is None:
@@ -999,9 +1011,11 @@ def solve_gromov(
                 # potentials = (log['u'], log['v']) TODO
 
         elif unbalanced_type.lower() in ["partial"]:  # Partial OT
-            if M is None:  # Partial Gromov-Wasserstein problem
+            if M is None or alpha == 1.0:  # Partial Gromov-Wasserstein problem
                 if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
-                    raise (ValueError("Partial GW mass given in reg is too large"))
+                    raise (
+                        ValueError("Partial GW mass given in `unbalanced` is too large")
+                    )
 
                 # default values for solver
                 if max_iter is None:
@@ -1030,8 +1044,9 @@ def solve_gromov(
 
             else:  # partial FGW
                 if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
-                    raise (ValueError("Partial FGW mass given in reg is too large"))
-
+                    raise (
+                        ValueError("Partial GW mass given in `unbalanced` is too large")
+                    )
                 # default values for solver
                 if max_iter is None:
                     max_iter = 1000
@@ -1072,8 +1087,15 @@ def solve_gromov(
 
     else:  # regularized OT
         if unbalanced is None and unbalanced_type.lower() not in [
-            "semirelaxed"
+            "semirelaxed",
         ]:  # Balanced regularized OT
+            if unbalanced_type.lower() in ["partial"]:
+                warnings.warn(
+                    "Exact balanced OT is computed as `unbalanced=None` even though "
+                    f"unbalanced_type = {unbalanced_type}.",
+                    stacklevel=2,
+                )
+
             if reg_type.lower() in ["entropy"] and (
                 M is None or alpha == 1
             ):  # Entropic Gromov-Wasserstein problem
@@ -1229,9 +1251,11 @@ def solve_gromov(
                 value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
 
         elif unbalanced_type.lower() in ["partial"]:  # Partial OT
-            if M is None:  # Partial Gromov-Wasserstein problem
+            if M is None or alpha == 1.0:  # Partial Gromov-Wasserstein problem
                 if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
-                    raise (ValueError("Partial GW mass given in reg is too large"))
+                    raise (
+                        ValueError("Partial GW mass given in `unbalanced` is too large")
+                    )
 
                 # default values for solver
                 if max_iter is None:
@@ -1239,7 +1263,7 @@ def solve_gromov(
                 if tol is None:
                     tol = 1e-7
 
-                value_quad, log = entropic_partial_gromov_wasserstein2(
+                value_noreg, log = entropic_partial_gromov_wasserstein2(
                     Ca,
                     Cb,
                     a,
@@ -1255,12 +1279,45 @@ def solve_gromov(
                     verbose=verbose,
                 )
 
-                value_quad = value
+                value_quad = value_noreg
                 plan = log["T"]
                 # potentials = (log['u'], log['v']) TODO
-
+                value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
             else:  # partial FGW
-                raise (NotImplementedError("Partial entropic FGW not implemented yet"))
+                if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
+                    raise (
+                        ValueError("Partial GW mass given in `unbalanced` is too large")
+                    )
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-7
+
+                value_noreg, log = entropic_partial_fused_gromov_wasserstein2(
+                    M,
+                    Ca,
+                    Cb,
+                    a,
+                    b,
+                    reg=reg,
+                    loss_fun=loss_fun,
+                    alpha=alpha,
+                    m=unbalanced,
+                    log=True,
+                    numItermax=max_iter,
+                    G0=plan_init,
+                    tol=tol,
+                    symmetric=symmetric,
+                    verbose=verbose,
+                )
+
+                value_linear = log["lin_loss"]
+                value_quad = log["quad_loss"]
+                plan = log["T"]
+                # potentials = (log['u'], log['v']) TODO
+                value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
 
         else:  # unbalanced AND regularized OT
             raise (
