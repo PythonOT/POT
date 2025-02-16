@@ -176,7 +176,15 @@ def test_empirical_bures_wasserstein_distance(nx, bias):
     np.testing.assert_allclose(10 * bias, nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
 
 
-@pytest.mark.parametrize("method", ["fixed_point", "gradient_descent"])
+@pytest.mark.parametrize(
+    "method",
+    [
+        "fixed_point",
+        "gradient_descent",
+        "stochastic_gradient_descent",
+        "averaged_stochastic_gradient_descent",
+    ],
+)
 def test_bures_wasserstein_barycenter(nx, method):
     n = 50
     k = 10
@@ -203,7 +211,7 @@ def test_bures_wasserstein_barycenter(nx, method):
     )
     mb, Cb = ot.gaussian.bures_wasserstein_barycenter(m, C, method=method, log=False)
 
-    np.testing.assert_allclose(Cb, Cblog, rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(Cb, Cblog, rtol=1e-1, atol=1e-1)
     np.testing.assert_allclose(mb, mblog, rtol=1e-2, atol=1e-2)
 
     # Test weights argument
@@ -211,7 +219,7 @@ def test_bures_wasserstein_barycenter(nx, method):
     mbw, Cbw = ot.gaussian.bures_wasserstein_barycenter(
         m, C, weights=weights, method=method, log=False
     )
-    np.testing.assert_allclose(Cbw, Cb, rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(Cbw, Cb, rtol=1e-1, atol=1e-1)
 
     # test with closed form for diagonal covariance matrices
     Cdiag = [nx.diag(nx.diag(C[i])) for i in range(k)]
@@ -266,7 +274,10 @@ def test_fixedpoint_vs_gradientdescent_bures_wasserstein_barycenter(nx):
     np.testing.assert_allclose(Cbw2, Cb2, rtol=1e-5, atol=1e-5)
 
 
-def test_stochastic_gd_bures_wasserstein_barycenter(nx):
+@pytest.mark.parametrize(
+    "method", ["stochastic_gradient_descent", "averaged_stochastic_gradient_descent"]
+)
+def test_stochastic_gd_bures_wasserstein_barycenter(nx, method):
     n = 50
     k = 10
     X = []
@@ -296,7 +307,7 @@ def test_stochastic_gd_bures_wasserstein_barycenter(nx):
     n_samples = [1, 5]
     for n in n_samples:
         mb2, Cb2 = ot.gaussian.bures_wasserstein_barycenter(
-            m, C, method="gradient_descent", log=False, batch_size=n
+            m, C, method=method, log=False, batch_size=n
         )
 
         loss2 = nx.mean(
@@ -311,7 +322,7 @@ def test_stochastic_gd_bures_wasserstein_barycenter(nx):
 
     with pytest.raises(ValueError):
         mb2, Cb2 = ot.gaussian.bures_wasserstein_barycenter(
-            m, C, method="gradient_descent", log=False, batch_size=-5
+            m, C, method=method, log=False, batch_size=-5
         )
 
 

@@ -541,6 +541,7 @@ def bures_barycenter_gradient_descent(
     log=False,
     step_size=1,
     batch_size=None,
+    averaged=False,
     nx=None,
 ):
     r"""Return the (Bures-)Wasserstein barycenter between centered Gaussian distributions.
@@ -570,6 +571,8 @@ def bures_barycenter_gradient_descent(
         step size for the gradient descent, 1 by default
     batch_size : int, optional
         batch size if use a stochastic gradient descent
+    averaged : bool, optional
+        if True, use the averaged procedure of :ref:`[74] <references-OT-bures-barycenter-gradient_descent>`
     nx : module, optional
         The numerical backend module to use. If not provided, the backend will
         be fetched from the input matrices `C`.
@@ -607,7 +610,9 @@ def bures_barycenter_gradient_descent(
     Cb = nx.mean(C * weights[:, None, None], axis=0)
     Id = nx.eye(C.shape[-1], type_as=Cb)
 
-    L_grads = []
+    L_diff = []
+
+    Cb_averaged = nx.copy(Cb)
 
     for it in range(num_iter):
         Cb12 = nx.sqrtm(Cb)
@@ -627,8 +632,6 @@ def bures_barycenter_gradient_descent(
 
             # step size from [74] (page 15)
             step_size = 2 / (0.7 * (it + 2 / 0.7 + 1))
-
-            # TODO: Add one where we take samples in order, + averaging? cf [74]
         else:  # gradient descent
             M = nx.sqrtm(nx.einsum("ij,njk,kl -> nil", Cb12, C, Cb12))
             ot_maps = nx.einsum("ij,njk,kl -> nil", Cb12_, M, Cb12_)
@@ -636,31 +639,31 @@ def bures_barycenter_gradient_descent(
 
         Cnew = exp_bures(Cb, -step_size * grad_bw, nx=nx)
 
+        if averaged:
+            # ot map between Cb_averaged and Cnew
+            Cb_averaged12 = nx.sqrtm(Cb_averaged)
+            Cb_averaged12inv = nx.inv(Cb_averaged12)
+            M = nx.sqrtm(nx.einsum("ij,jk,kl->il", Cb_averaged12, Cnew, Cb_averaged12))
+            ot_map = nx.einsum("ij,jk,kl->il", Cb_averaged12inv, M, Cb_averaged12inv)
+            map = Id * step_size / (step_size + 1) + ot_map / (step_size + 1)
+            Cb_averaged = nx.einsum("ij,jk,kl->il", map, Cb_averaged, map)
+
         # check convergence
-        if batch_size is not None and batch_size < n:
-            # TODO: criteria for SGD: on gradients? + test SGD
-            # TOO slow, test with value? (but don't want to compute the full barycenter)
-            # + need to make bures_wasserstein_distance batchable (TODO)
-            L_grads.append(nx.sum(grad_bw**2))
-            diff = np.mean(L_grads)
+        L_diff.append(nx.norm(Cb - Cnew))
 
-            # L_values.append(nx.norm(Cb - Cnew))
-            # print(diff, np.mean(L_values))
-        else:
-            diff = nx.norm(Cb - Cnew)
-
-        if diff <= eps:
+        # Criteria to stop
+        if np.mean(L_diff[-100:]) <= eps:
             break
 
         Cb = Cnew
 
-    if diff > eps:
-        print("Dit not converge.")
+    if averaged:
+        Cb = Cb_averaged
 
     if log:
         dict_log = {}
         dict_log["num_iter"] = it
-        dict_log["final_diff"] = diff
+        dict_log["final_diff"] = L_diff[-1]
         return Cb, dict_log
     else:
         return Cb
@@ -708,7 +711,8 @@ def bures_wasserstein_barycenter(
     weights : array-like (k), optional
         weights for each distribution
     method : str
-        method used for the solver, either 'fixed_point' or 'gradient_descent'
+        method used for the solver, either 'fixed_point', 'gradient_descent', 'stochastic_gradient_descent' or
+        'averaged_stochastic_gradient_descent'
     num_iter : int, optional
         number of iteration for the fixed point algorithm
     eps : float, optional
@@ -756,7 +760,7 @@ def bures_wasserstein_barycenter(
     # Compute the mean barycenter
     mb = nx.sum(m * weights[:, None], axis=0)
 
-    if method == "gradient_descent" or batch_size is not None:
+    if method == "gradient_descent":
         out = bures_barycenter_gradient_descent(
             C,
             weights=weights,
@@ -764,7 +768,27 @@ def bures_wasserstein_barycenter(
             eps=eps,
             log=log,
             step_size=step_size,
-            batch_size=batch_size,
+            nx=nx,
+        )
+    elif method == "stochastic_gradient_descent":
+        out = bures_barycenter_gradient_descent(
+            C,
+            weights=weights,
+            num_iter=num_iter,
+            eps=eps,
+            log=log,
+            batch_size=1 if batch_size is None else batch_size,
+            nx=nx,
+        )
+    elif method == "averaged_stochastic_gradient_descent":
+        out = bures_barycenter_gradient_descent(
+            C,
+            weights=weights,
+            num_iter=num_iter,
+            eps=eps,
+            log=log,
+            batch_size=1 if batch_size is None else batch_size,
+            averaged=True,
             nx=nx,
         )
     elif method == "fixed_point":
