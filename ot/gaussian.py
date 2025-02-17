@@ -204,7 +204,7 @@ def bures_distance(Cs, Ct, log=False, nx=None):
     r"""Return Bures distance.
 
     The function computes the Bures distance between :math:`\mu_s=\mathcal{N}(0,\Sigma_s)` and :math:`\mu_t=\mathcal{N}(0,\Sigma_t)`,
-    given by:
+    given by (see e.g. Remark 2.31 :ref:`[15] <references-bures-wasserstein-distance>`):
 
     .. math::
         \mathbf{B}(\Sigma_s, \Sigma_t)^{2} = \text{Tr}\left(\Sigma_s + \Sigma_t - 2 \sqrt{\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2}} \right)
@@ -223,19 +223,17 @@ def bures_distance(Cs, Ct, log=False, nx=None):
 
     Returns
     -------
-    W : float if Cs and Cd of shape (d,d), array-like (n,) if Cs of shape (n,d,d),
-    Ct  of shape (d,d), array-like (m,) if Cs of shape (d,d) and Ct of shape (m,d,d),
-    array-like (n,m) if Cs of shape (n,d,d) and mt of shape (m,d,d)
+    W : float if Cs and Cd of shape (d,d), array-like (n,) if Cs of shape (n,d,d), Ct  of shape (d,d), array-like (m,) if Cs of shape (d,d) and Ct of shape (m,d,d), array-like (n,m) if Cs of shape (n,d,d) and mt of shape (m,d,d)
         Bures Wasserstein distance
     log : dict
         log dictionary return only if log==True in parameters
 
+
     .. _references-bures-wasserstein-distance:
     References
     ----------
-
-    .. [1] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
-        Transport", 2018.
+    .. [15] Peyré, G., & Cuturi, M. (2019). Computational optimal transport: With applications to data science.
+        Foundations and Trends® in Machine Learning, 11(5-6), 355-607.
     """
     Cs, Ct = list_to_array(Cs, Ct)
 
@@ -276,7 +274,7 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     r"""Return Bures Wasserstein distance between samples.
 
     The function computes the Bures-Wasserstein distance between :math:`\mu_s=\mathcal{N}(m_s,\Sigma_s)` and :math:`\mu_t=\mathcal{N}(m_t,\Sigma_t)`,
-    as discussed in remark 2.31 :ref:`[1] <references-bures-wasserstein-distance>`.
+    as discussed in remark 2.31 :ref:`[15] <references-bures-wasserstein-distance>`.
 
     .. math::
         \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \mathcal{B}(\Sigma_s, \Sigma_t)^{2}
@@ -301,9 +299,7 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
 
     Returns
     -------
-    W : float if ms and md of shape (d,), array-like (n,) if ms of shape (n,d),
-    mt  of shape (d,), array-like (m,) if ms of shape (d,) and mt of shape (m,d),
-    array-like (n,m) if ms of shape (n,d) and mt of shape (m,d)
+    W : float if ms and md of shape (d,), array-like (n,) if ms of shape (n,d), mt  of shape (d,), array-like (m,) if ms of shape (d,) and mt of shape (m,d), array-like (n,m) if ms of shape (n,d) and mt of shape (m,d)
         Bures Wasserstein distance
     log : dict
         log dictionary return only if log==True in parameters
@@ -313,8 +309,8 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     References
     ----------
 
-    .. [1] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
-        Transport", 2018.
+    .. [15] Peyré, G., & Cuturi, M. (2019). Computational optimal transport: With applications to data science.
+        Foundations and Trends® in Machine Learning, 11(5-6), 355-607.
     """
     ms, mt, Cs, Ct = list_to_array(ms, mt, Cs, Ct)
     nx = get_backend(ms, mt, Cs, Ct)
@@ -455,7 +451,7 @@ def bures_barycenter_fixpoint(
     :ref:`[16] <references-OT-bures-barycenter-fixed-point>` by solving
 
     .. math::
-        \Sigma_b = \mathrm{argmin}_{\Sigma \in S_d^{+}(\mathbb{R})}\ \sum_{i=1}^n w_i W_2^2\big(\mathcal{N}(0,\Sigma), \mathcal{N}(0, \Sigma_i)\big).
+        \Sigma_b = \mathrm{argmin}_{\Sigma \in S_d^{++}(\mathbb{R})}\ \sum_{i=1}^n w_i W_2^2\big(\mathcal{N}(0,\Sigma), \mathcal{N}(0, \Sigma_i)\big).
 
     The barycenter still follows a Gaussian distribution :math:`\mathcal{N}(0,\Sigma_b)`
     where :math:`\Sigma_b` is solution of the following fixed-point algorithm:
@@ -699,7 +695,7 @@ def bures_wasserstein_barycenter(
     .. math::
         \Sigma_b = \sum_{i=1}^n w_i \left(\Sigma_b^{1/2}\Sigma_i^{1/2}\Sigma_b^{1/2}\right)^{1/2}
 
-    We propose two solvers: one based on solving the previous fixed-point problem [1]. Another based on
+    We propose two solvers: one based on solving the previous fixed-point problem [16]. Another based on
     gradient descent in the Bures-Wasserstein space [74,75].
 
     Parameters
@@ -926,9 +922,8 @@ def gaussian_gromov_wasserstein_distance(Cov_s, Cov_t, log=False):
     .. _references-gaussien_gromov_wasserstein_distance:
     References
     ----------
-    .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
-    distances between Gaussian distributions. Journal of Applied Probability,
-    59(4), 1178-1198.
+    .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein distances between Gaussian distributions.
+        Journal of Applied Probability, 59(4), 1178-1198.
     """
 
     nx = get_backend(Cov_s, Cov_t)
@@ -990,9 +985,9 @@ def empirical_gaussian_gromov_wasserstein_distance(xs, xt, ws=None, wt=None, log
     .. _references-gaussien_gromov_wasserstein:
     References
     ----------
-    .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
-    distances between Gaussian distributions. Journal of Applied Probability,
-    59(4), 1178-1198.
+    .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022).
+        Gromov–Wasserstein distances between Gaussian distributions.
+        Journal of Applied Probability, 59(4), 1178-1198.
     """
     xs, xt = list_to_array(xs, xt)
     nx = get_backend(xs, xt)
@@ -1058,9 +1053,9 @@ def gaussian_gromov_wasserstein_mapping(
     .. _references-gaussien_gromov_wasserstein_mapping:
     References
     ----------
-    .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
-    distances between Gaussian distributions. Journal of Applied Probability,
-    59(4), 1178-1198.
+    .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022).
+        Gromov–Wasserstein distances between Gaussian distributions.
+        Journal of Applied Probability, 59(4), 1178-1198.
     """
 
     nx = get_backend(mu_s, mu_t, Cov_s, Cov_t)
@@ -1149,12 +1144,13 @@ def empirical_gaussian_gromov_wasserstein_mapping(
     b : (1, dt) array-like
         bias
 
+
     .. _references-empirical_gaussian_gromov_wasserstein_mapping:
     References
     ----------
-    .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
-    distances between Gaussian distributions. Journal of Applied Probability,
-    59(4), 1178-1198.
+    .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022).
+        Gromov–Wasserstein distances between Gaussian distributions.
+        Journal of Applied Probability, 59(4), 1178-1198.
     """
 
     xs, xt = list_to_array(xs, xt)

@@ -92,11 +92,13 @@ def test_bures_wasserstein_distance(nx):
     msb, mtb, Csb, Ctb = nx.from_numpy(ms, mt, Cs, Ct)
     Wb_log, log = ot.gaussian.bures_wasserstein_distance(msb, mtb, Csb, Ctb, log=True)
     Wb = ot.gaussian.bures_wasserstein_distance(msb, mtb, Csb, Ctb, log=False)
+    Wb2 = ot.gaussian.bures_distance(Csb, Ctb, log=False)
 
     np.testing.assert_allclose(
         nx.to_numpy(Wb_log), nx.to_numpy(Wb), rtol=1e-2, atol=1e-2
     )
     np.testing.assert_allclose(10, nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(0, Wb2, rtol=1e-2, atol=1e-2)
 
 
 def test_bures_wasserstein_distance_batch(nx):
