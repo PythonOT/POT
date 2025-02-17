@@ -1343,6 +1343,37 @@ def proj_SDP(S, nx=None, vmin=0.0):
         return nx.einsum("ijk,ikl->ijl", Q, nx.transpose(P, (0, 2, 1)))
 
 
+def exp_bures(Sigma, S, nx=None):
+    r"""
+    Exponential map in Bures-Wasserstein space at Sigma:
+
+    .. math::
+        \exp_\Sigma(S) = (I_d+S)\Sigma(I_d+S).
+
+    Parameters
+    ----------
+    Sigma : array-like (d,d)
+        SPD matrix
+    S : array-like (d,d)
+        Symmetric matrix
+    nx : module, optional
+        The numerical backend module to use. If not provided, the backend will
+        be fetched from the input matrices `Sigma, S`.
+
+    Returns
+    -------
+    P : array-like (d,d)
+        SPD matrix obtained as the exponential map of S at Sigma
+    """
+    if nx is None:
+        nx = get_backend(Sigma, S)
+    d = S.shape[-1]
+    Id = nx.eye(d, type_as=S)
+    C = Id + S
+
+    return nx.einsum("ij,jk,kl -> il", C, Sigma, C)
+
+
 def check_number_threads(numThreads):
     """Checks whether or not the requested number of threads has a valid value.
 
