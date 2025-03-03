@@ -13,6 +13,8 @@ import ot
 from ot.datasets import make_1D_gauss as gauss
 from ot.backend import torch, tf
 
+# import ot.lp._barycenter_solvers  # TODO: remove this import
+
 
 def test_emd_dimension_and_mass_mismatch():
     # test emd and emd2 for dimension mismatch
@@ -393,6 +395,99 @@ def test_generalised_free_support_barycenter_backends(nx):
     Y2 = ot.lp.generalized_free_support_barycenter(X2, a2, P2, 1, Y_init=Y_init2)
 
     np.testing.assert_allclose(Y, nx.to_numpy(Y2))
+
+
+def test_free_support_barycenter_generic_costs():
+    measures_locations = [
+        np.array([-1.0]).reshape((1, 1)),
+        np.array([1.0]).reshape((1, 1)),
+    ]
+    measures_weights = [np.array([1.0]), np.array([1.0])]
+
+    X_init = np.array([-12.0]).reshape((1, 1))
+
+    # obvious barycenter location between two Diracs
+    bar_locations = np.array([0.0]).reshape((1, 1))
+
+    def cost(x, y):
+        return ot.dist(x, y)
+
+    cost_list = [cost, cost]
+
+    def B(y):
+        out = 0
+        for yk in y:
+            out += yk / len(y)
+        return out
+
+    X = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations, measures_weights, X_init, cost_list, B
+    )
+
+    np.testing.assert_allclose(X, bar_locations, rtol=1e-5, atol=1e-7)
+
+    # test with log and specific weights
+    X2, log = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        B,
+        a=ot.unif(1),
+        log=True,
+    )
+
+    assert "X_list" in log
+    assert "exit_status" in log
+    assert "dX_list" in log
+
+    np.testing.assert_allclose(X, X2, rtol=1e-5, atol=1e-7)
+
+    # test with one iteration for Max Iterations Reached
+    X3, log2 = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        B,
+        numItermax=1,
+        log=True,
+    )
+    assert log2["exit_status"] == "Max iterations reached"
+
+
+def test_free_support_barycenter_generic_costs_backends(nx):
+    measures_locations = [
+        np.array([-1.0]).reshape((1, 1)),
+        np.array([1.0]).reshape((1, 1)),
+    ]
+    measures_weights = [np.array([1.0]), np.array([1.0])]
+    X_init = np.array([-12.0]).reshape((1, 1))
+
+    def cost(x, y):
+        return ot.dist(x, y)
+
+    cost_list = [cost, cost]
+
+    def B(y):
+        out = 0
+        for yk in y:
+            out += yk / len(y)
+        return out
+
+    X = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations, measures_weights, X_init, cost_list, B
+    )
+
+    measures_locations2 = nx.from_numpy(*measures_locations)
+    measures_weights2 = nx.from_numpy(*measures_weights)
+    X_init2 = nx.from_numpy(X_init)
+
+    X2 = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations2, measures_weights2, X_init2, cost_list, B
+    )
+
+    np.testing.assert_allclose(X, nx.to_numpy(X2))
 
 
 @pytest.mark.skipif(not ot.lp._barycenter_solvers.cvxopt, reason="No cvxopt available")
