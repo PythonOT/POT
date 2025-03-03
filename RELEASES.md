@@ -10,6 +10,7 @@
 - Implement fixed-point solver for OT barycenters with generic cost functions
   (generalizes `ot.lp.free_support_barycenter`), with example. (PR #715)
 - Implement fixed-point solver for barycenters between GMMs (PR #715), with example.
+- Fix documentation in the module `ot.gaussian` (PR #718)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
