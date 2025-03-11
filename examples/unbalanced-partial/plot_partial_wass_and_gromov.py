@@ -5,7 +5,10 @@ Partial Wasserstein and Gromov-Wasserstein example
 ==================================================
 
 This example is designed to show how to use the Partial (Gromov-)Wasserstein
-distance computation in POT.
+distance computation in POT [29].
+
+[29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+Transport with Applications on Positive-Unlabeled Learning". NeurIPS.
 """
 
 # Author: Laetitia Chapel <laetitia.chapel@irisa.fr>
