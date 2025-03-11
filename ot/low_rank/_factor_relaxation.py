@@ -178,6 +178,7 @@ def solve_balanced_FRLC(
             a=a,
             b=g_Q,
             M=grad_Q,
+            c=Q,
             reg=1 / gamma_k,
             reg_m=[float("inf"), tau],
             method="sinkhorn_stabilized",
@@ -187,6 +188,7 @@ def solve_balanced_FRLC(
             a=b,
             b=g_R,
             M=grad_R,
+            c=R,
             reg=1 / gamma_k,
             reg_m=[float("inf"), tau],
             method="sinkhorn_stabilized",
@@ -199,8 +201,14 @@ def solve_balanced_FRLC(
 
         gamma_T = gamma / nx.max(nx.abs(grad_T))
 
-        T_new = sinkhorn(
-            g_R, g_Q, grad_T, reg=1 / gamma_T, method="sinkhorn_log"
+        T_new = sinkhorn_unbalanced(
+            M=grad_T,
+            a=g_Q,
+            b=g_R,
+            reg=1 / gamma_T,
+            c=T,
+            reg_m=[float("inf"), float("inf")],
+            method="sinkhorn_stabilized",
         )  # Shape (r, r)
 
         X_new = nx.dot(nx.dot(nx.diag(1 / g_Q), T_new), nx.diag(1 / g_R))  # Shape (r,r)
