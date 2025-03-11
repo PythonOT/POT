@@ -163,8 +163,6 @@ def test_bures_wasserstein_distance_batch(nx):
 
     with pytest.raises(AssertionError):
         Wb3 = ot.gaussian.bures_wasserstein_distance(m[0, 0], m[:, 0], C[0], C)
-        np.testing.assert_allclose(0, nx.to_numpy(Wb3[0]), atol=1e-5)
-        np.testing.assert_allclose(0, nx.to_numpy(Wb3[1]), atol=1e-5)
 
 
 @pytest.mark.parametrize("bias", [True, False])
