@@ -1364,7 +1364,6 @@ class NumpyBackend(Backend):
 
     def trace(self, a):
         return np.einsum("...ii", a)
-        # return np.trace(a)
 
     def inv(self, a):
         return scipy.linalg.inv(a)
@@ -1777,8 +1776,7 @@ class JaxBackend(Backend):
         return jnp.linalg.solve(a, b)
 
     def trace(self, a):
-        return jnp.einsum("...ii", a)
-        # return jnp.trace(a)
+        return jnp.diagonal(a, axis1=-2, axis2=-1).sum(-1)
 
     def inv(self, a):
         return jnp.linalg.inv(a)
@@ -2311,8 +2309,7 @@ class TorchBackend(Backend):
         return torch.linalg.solve(a, b)
 
     def trace(self, a):
-        return torch.einsum("...ii", a)
-        # return torch.trace(a)
+        return torch.diagonal(a, dim1=-2, dim2=-1).sum(-1)
 
     def inv(self, a):
         return torch.linalg.inv(a)
@@ -2726,8 +2723,7 @@ class CupyBackend(Backend):  # pragma: no cover
         return cp.linalg.solve(a, b)
 
     def trace(self, a):
-        return cp.einsum("..ii", a)
-        # return cp.trace(a)
+        return cp.trace(a, axis1=-2, axis2=-1)
 
     def inv(self, a):
         return cp.linalg.inv(a)
@@ -3163,8 +3159,7 @@ class TensorflowBackend(Backend):
         return tf.linalg.solve(a, b)
 
     def trace(self, a):
-        return tf.einsum("...ii", a)
-        # return tf.linalg.trace(a)
+        return tf.linalg.trace(a)
 
     def inv(self, a):
         return tf.linalg.inv(a)

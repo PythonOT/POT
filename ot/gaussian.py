@@ -200,7 +200,7 @@ def empirical_bures_wasserstein_mapping(
         return A, b
 
 
-def bures_distance(Cs, Ct, log=False, nx=None):
+def bures_distance(Cs, Ct, paired=False, log=False, nx=None):
     r"""Return Bures distance.
 
     The function computes the Bures distance between :math:`\mu_s=\mathcal{N}(0,\Sigma_s)` and :math:`\mu_t=\mathcal{N}(0,\Sigma_t)`,
@@ -215,6 +215,8 @@ def bures_distance(Cs, Ct, log=False, nx=None):
         covariance of the source distribution
     Ct : array-like (d,d) or (m,d,d)
         covariance of the target distribution
+    paired: bool, optional
+        if True and n==m, return the paired distances and crossed distance otherwise
     log : bool, optional
         record log if True
     nx : module, optional
@@ -223,7 +225,7 @@ def bures_distance(Cs, Ct, log=False, nx=None):
 
     Returns
     -------
-    W : float if Cs and Cd of shape (d,d), array-like (n,) if Cs of shape (n,d,d), Ct  of shape (d,d), array-like (m,) if Cs of shape (d,d) and Ct of shape (m,d,d), array-like (n,m) if Cs of shape (n,d,d) and mt of shape (m,d,d)
+    W : float if Cs and Cd of shape (d,d), array-like (n,m) if Cs of shape (n,d,d) and Ct of shape (m,d,d), array-like (n,) if Cs and Ct of shape (n, d, d) and paired is True
         Bures Wasserstein distance
     log : dict
         log dictionary return only if log==True in parameters
@@ -247,18 +249,18 @@ def bures_distance(Cs, Ct, log=False, nx=None):
     if len(Cs.shape) == 2 and len(Ct.shape) == 2:
         # Return float
         bw2 = nx.trace(Cs + Ct - 2 * nx.sqrtm(dots(Cs12, Ct, Cs12)))
-    elif len(Cs.shape) == 2:
-        # Return shape (m,)
-        M = nx.einsum("ij, mjk, kl -> mil", Cs12, Ct, Cs12)
-        bw2 = nx.trace(Cs[None] + Ct - 2 * nx.sqrtm(M))
-    elif len(Ct.shape) == 2:
-        # Return shape (n,)
-        M = nx.einsum("nij, jk, nkl -> nil", Cs12, Ct, Cs12)
-        bw2 = nx.trace(Cs + Ct[None] - 2 * nx.sqrtm(M))
     else:
-        # Return shape (n,m)
-        M = nx.einsum("nij, mjk, nkl -> nmil", Cs12, Ct, Cs12)
-        bw2 = nx.trace(Cs[:, None] + Ct[None] - 2 * nx.sqrtm(M))
+        assert (
+            len(Cs.shape) == 3 and len(Ct.shape) == 3
+        ), "Both Cs and Ct should be batched"
+        if paired and len(Cs) == len(Ct):
+            # Return shape (n,)
+            M = nx.einsum("nij, njk, nkl -> nil", Cs12, Ct, Cs12)
+            bw2 = nx.trace(Cs + Ct - 2 * nx.sqrtm(M))
+        else:
+            # Return shape (n,m)
+            M = nx.einsum("nij, mjk, nkl -> nmil", Cs12, Ct, Cs12)
+            bw2 = nx.trace(Cs[:, None] + Ct[None] - 2 * nx.sqrtm(M))
 
     W = nx.sqrt(nx.maximum(bw2, 0))
 
@@ -270,7 +272,7 @@ def bures_distance(Cs, Ct, log=False, nx=None):
         return W
 
 
-def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
+def bures_wasserstein_distance(ms, mt, Cs, Ct, paired=False, log=False):
     r"""Return Bures Wasserstein distance between samples.
 
     The function computes the Bures-Wasserstein distance between :math:`\mu_s=\mathcal{N}(m_s,\Sigma_s)` and :math:`\mu_t=\mathcal{N}(m_t,\Sigma_t)`,
@@ -294,12 +296,14 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
         covariance of the source distribution
     Ct : array-like (d,d) or (m,d,d)
         covariance of the target distribution
+    paired: bool, optional
+        if True and n==m, return the paired distances and crossed distance otherwise
     log : bool, optional
         record log if True
 
     Returns
     -------
-    W : float if ms and md of shape (d,), array-like (n,) if ms of shape (n,d), mt  of shape (d,), array-like (m,) if ms of shape (d,) and mt of shape (m,d), array-like (n,m) if ms of shape (n,d) and mt of shape (m,d)
+    W : float if ms and md of shape (d,), array-like (n,m) if ms of shape (n,d) and mt of shape (m,d), array-like (n,) if ms and mt of shape (n,d) and paired is True
         Bures Wasserstein distance
     log : dict
         log dictionary return only if log==True in parameters
@@ -328,23 +332,24 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, log=False):
     ), "All Gaussian must have the same dimension"
 
     if log:
-        bw, log_dict = bures_distance(Cs, Ct, log=log, nx=nx)
+        bw, log_dict = bures_distance(Cs, Ct, paired=paired, log=log, nx=nx)
         Cs12 = log_dict["Cs12"]
     else:
-        bw = bures_distance(Cs, Ct, nx=nx)
+        bw = bures_distance(Cs, Ct, paired=paired, nx=nx)
 
     if len(ms.shape) == 1 and len(mt.shape) == 1:
         # Return float
         squared_dist_m = nx.norm(ms - mt) ** 2
-    elif len(ms.shape) == 1:
-        # Return shape (m,)
-        squared_dist_m = nx.norm(ms[None] - mt, axis=-1) ** 2
-    elif len(mt.shape) == 1:
-        # Return shape (n,)
-        squared_dist_m = nx.norm(ms - mt[None], axis=-1) ** 2
     else:
-        # Return shape (n,m)
-        squared_dist_m = nx.norm(ms[:, None] - mt[None], axis=-1) ** 2
+        assert (
+            len(ms.shape) == 2 and len(mt.shape) == 2
+        ), "Both ms and mt should be batched"
+        if paired and len(ms.shape) == len(mt.shape):
+            # Return shape (n,)
+            squared_dist_m = nx.norm(ms - mt, axis=-1) ** 2
+        else:
+            # Return shape (n,m)
+            squared_dist_m = nx.norm(ms[:, None] - mt[None], axis=-1) ** 2
 
     W = nx.sqrt(nx.maximum(squared_dist_m + bw**2, 0))
 
@@ -882,12 +887,14 @@ def empirical_bures_wasserstein_barycenter(
         nx.dot((X[i] * w[i]).T, X[i]) / nx.sum(w[i]) + reg * nx.eye(d[i], type_as=X[i])
         for i in range(k)
     ]
-    m = nx.stack(m, axis=0)
+    m = nx.stack(m, axis=0)[:, 0]
     C = nx.stack(C, axis=0)
+
     if log:
         mb, Cb, log = bures_wasserstein_barycenter(
             m, C, weights=weights, num_iter=num_iter, eps=eps, log=log
         )
+
         return mb, Cb, log
     else:
         mb, Cb = bures_wasserstein_barycenter(
