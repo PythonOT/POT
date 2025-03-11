@@ -148,8 +148,8 @@ def test_bures_wasserstein_distance_batch(nx):
     np.testing.assert_allclose(0, nx.to_numpy(Wb3[0]), atol=1e-5)
     np.testing.assert_allclose(0, nx.to_numpy(Wb3[1]), atol=1e-5)
 
-    m_rev = np.zeros((k, 2))
-    C_rev = np.zeros((k, 2, 2))
+    m_rev = nx.zeros((k, 2))
+    C_rev = nx.zeros((k, 2, 2))
     m_rev[0] = m[1, 0]
     m_rev[1] = m[0, 0]
     C_rev[0] = C[1]
