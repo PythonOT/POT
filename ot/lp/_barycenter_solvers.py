@@ -426,3 +426,172 @@ def generalized_free_support_barycenter(
         return Y, log_dict
     else:
         return Y
+
+
+class StoppingCriterionReached(Exception):
+    pass
+
+
+def free_support_barycenter_generic_costs(
+    measure_locations,
+    measure_weights,
+    X_init,
+    cost_list,
+    B,
+    a=None,
+    numItermax=100,
+    stopThr=1e-5,
+    log=False,
+):
+    r"""
+    Solves the OT barycenter problem for generic costs using the fixed point
+    algorithm, iterating the ground barycenter function B on transport plans
+    between the current barycenter and the measures.
+
+    The problem finds an optimal barycenter support `X` of given size (n, d)
+    (enforced by the initialisation), minimising a sum of pairwise transport
+    costs for the costs :math:`c_k`:
+
+    .. math::
+        \min_{X} \sum_{k=1}^K \mathcal{T}_{c_k}(X, a, Y_k, b_k),
+
+    where:
+
+    - :math:`X` (n, d) is the barycenter support,
+    - :math:`a` (n) is the (fixed) barycenter weights,
+    - :math:`Y_k` (m_k, d_k) is the k-th measure support
+      (`measure_locations[k]`),
+    - :math:`b_k` (m_k) is the k-th measure weights (`measure_weights[k]`),
+    - :math:`c_k: \mathbb{R}^{n\times d}\times\mathbb{R}^{m_k\times d_k}
+         \rightarrow \mathbb{R}_+^{n\times m_k}` is the k-th cost function
+         (which computes the pairwise cost matrix)
+    - :math:`\mathcal{T}_{c_k}(X, a, Y_k, b)` is the OT cost between the barycenter measure and the k-th measure with respect to the cost :math:`c_k`:
+
+    .. math::
+        \mathcal{T}_{c_k}(X, a, Y_k, b_k) = \min_\pi \quad \langle \pi, c_k(X, Y_k) \rangle_F
+
+        s.t. \ \pi \mathbf{1} = \mathbf{a}
+
+             \pi^T \mathbf{1} = \mathbf{b_k}
+
+             \pi \geq 0
+
+    in other words, :math:`\mathcal{T}_{c_k}(X, a, Y_k, b)` is `ot.emd2(a, b_k,
+    c_k(X, Y_k))`.
+
+    The algorithm requires a given ground barycenter function `B` which computes
+    (broadcasted of `n`) solutions of the following minimisation problem given
+    :math:`(Y_1, \cdots, Y_K) \in \mathbb{R}^{n\times
+    d_1}\times\cdots\times\mathbb{R}^{n\times d_K}`:
+
+    .. math::
+        B(y_1, \cdots, y_K) = \mathrm{argmin}_{x \in \mathbb{R}^d} \sum_{k=1}^K c_k(x, y_k),
+
+    where :math:`c_k(x, y_k) \in \mathbb{R}_+` is the cost between the points
+    :math:`x` and :math:`y_k`. The function :math:`B:\mathbb{R}^{n\times
+    d_1}\times \cdots\times\mathbb{R}^{n\times d_K} \longrightarrow
+    \mathbb{R}^{n\times d}` is an input to this function, and for certain costs
+    it can be computed explicitly of through a numerical solver. The input
+    function B takes a list of K arrays of shape (n, d_k) and returns an array
+    of shape (n, d).
+
+    This function implements [76] Algorithm 2, which generalises [20] and [43]
+    to general costs and includes convergence guarantees, including for discrete
+    measures.
+
+    Parameters
+    ----------
+    measure_locations : list of array-like
+        List of K arrays of measure positions, each of shape (m_k, d_k).
+    measure_weights : list of array-like
+        List of K arrays of measure weights, each of shape (m_k).
+    X_init : array-like
+        Array of shape (n, d) representing initial barycenter points.
+    cost_list : list of callable
+        List of K cost functions :math:`c_k: \mathbb{R}^{n\times
+        d}\times\mathbb{R}^{m_k\times d_k} \rightarrow \mathbb{R}_+^{n\times
+        m_k}`.
+    B : callable
+        Function List(array(n, d_k)) -> array(n, d) accepting a list of K arrays
+        of shape (n\times d_K), computing the ground barycenters (broadcasted
+        over n).
+    a : array-like, optional
+        Array of shape (n,) representing weights of the barycenter
+        measure.Defaults to uniform.
+    numItermax : int, optional
+        Maximum number of iterations (default is 100).
+    stopThr : float, optional
+        If the iterations move less than this, terminate (default is 1e-5).
+    log : bool, optional
+        Whether to return the log dictionary (default is False).
+
+    Returns
+    -------
+    X : array-like
+        Array of shape (n, d) representing barycenter points.
+    log_dict : list of array-like, optional
+        log containing the exit status, list of iterations and list of
+        displacements if log is True.
+
+    References
+    ----------
+    .. [76] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
+        barycenters of Measures for Generic Transport Costs. arXiv preprint
+        2501.04016 (2024)
+
+    .. [20] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein
+        barycenters." International Conference on Machine Learning. 2014.
+
+    .. [43] Álvarez-Esteban, Pedro C., et al. "A fixed-point approach to
+        barycenters in Wasserstein space." Journal of Mathematical Analysis and
+        Applications 441.2 (2016): 744-762.
+
+    See Also
+    --------
+    ot.lp.free_support_barycenter : Free support solver for the case where
+    :math:`c_k(x,y) = \|x-y\|_2^2`. ot.lp.generalized_free_support_barycenter :
+    Free support solver for the case where :math:`c_k(x,y) = \|P_kx-y\|_2^2`
+    with :math:`P_k` linear.
+    """
+    nx = get_backend(X_init, measure_locations[0])
+    K = len(measure_locations)
+    n = X_init.shape[0]
+    if a is None:
+        a = nx.ones(n, type_as=X_init) / n
+    X_list = [X_init] if log else []  # store the iterations
+    X = X_init
+    dX_list = []  # store the displacement squared norms
+    exit_status = "Unknown"
+
+    try:
+        for _ in range(numItermax):
+            pi_list = [  # compute the pairwise transport plans
+                emd(a, measure_weights[k], cost_list[k](X, measure_locations[k]))
+                for k in range(K)
+            ]
+            Y_perm = []
+            for k in range(K):  # compute barycentric projections
+                Y_perm.append(n * pi_list[k] @ measure_locations[k])
+            X_next = B(Y_perm)
+
+            if log:
+                X_list.append(X_next)
+
+            # stationary criterion: move less than the threshold
+            dX = nx.sum((X - X_next) ** 2)
+            X = X_next
+
+            if log:
+                dX_list.append(dX)
+
+            if dX < stopThr:
+                exit_status = "Stationary Point"
+                raise StoppingCriterionReached
+
+        exit_status = "Max iterations reached"
+        raise StoppingCriterionReached
+
+    except StoppingCriterionReached:
+        if log:
+            return X, {"X_list": X_list, "exit_status": exit_status, "dX_list": dX_list}
+        return X
