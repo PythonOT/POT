@@ -10,7 +10,12 @@
 - Implement fixed-point solver for OT barycenters with generic cost functions
   (generalizes `ot.lp.free_support_barycenter`), with example. (PR #715)
 - Implement fixed-point solver for barycenters between GMMs (PR #715), with example.
+- Implement projected gradient descent solvers for entropic partial FGW (PR #702)
 - Fix documentation in the module `ot.gaussian` (PR #718)
+- Refactored `ot.bregman._convolutional` to improve readability (PR #709)
+- Added `ot.gaussian.bures_barycenter_gradient_descent` (PR #680)
+- Added `ot.gaussian.bures_wasserstein_distance` (PR #680)
+- `ot.gaussian.bures_wasserstein_distance` can be batched (PR #680)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
@@ -18,6 +23,7 @@
 - Add version number to the documentation (PR #696)
 - Update doc for default regularization in `ot.unbalanced` sinkhorn solvers (Issue #691, PR #700)
 - Clean documentation for `gromov`, `lp` and `unbalanced` folders (PR #710)
+- Clean references in documentation (PR #722)
 
 ## 0.9.5
 
@@ -46,7 +52,6 @@ This release also contains few bug fixes, concerning the support of any metric i
 - Notes before depreciating partial Gromov-Wasserstein function in `ot.partial` moved to ot.gromov  (PR #663)
 - Create `ot.gromov._partial` add new features `loss_fun = "kl_loss"` and `symmetry=False` to all solvers while increasing speed + updating adequatly `ot.solvers` (PR #663)
 - Added `ot.unbalanced.sinkhorn_unbalanced_translation_invariant` (PR #676)
-- Refactored `ot.bregman._convolutional` to improve readability (PR #709)
 
 #### Closed issues
 - Fixed `ot.gaussian` ignoring weights when computing means (PR #649, Issue #648)

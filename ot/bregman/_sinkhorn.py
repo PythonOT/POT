@@ -129,10 +129,10 @@ def sinkhorn(
     array([[0.36552929, 0.13447071],
            [0.13447071, 0.36552929]])
 
+
     .. _references-sinkhorn:
     References
     ----------
-
     .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation
         of Optimal Transport, Advances in Neural Information Processing
         Systems (NIPS) 26, 2013
@@ -1459,6 +1459,7 @@ def sinkhorn_epsilon_scaling(
     >>> ot.bregman.sinkhorn_epsilon_scaling(a, b, M, 1)
     array([[0.36552929, 0.13447071],
            [0.13447071, 0.36552929]])
+
 
     .. _references-sinkhorn-epsilon-scaling:
     References
