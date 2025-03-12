@@ -20,6 +20,7 @@
 - Add version number to the documentation (PR #696)
 - Update doc for default regularization in `ot.unbalanced` sinkhorn solvers (Issue #691, PR #700)
 - Clean documentation for `gromov`, `lp` and `unbalanced` folders (PR #710)
+- Clean references in documentation (PR #722)
 
 ## 0.9.5
 

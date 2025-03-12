@@ -428,9 +428,9 @@ def init_matrix_semirelaxed(C1, C2, p, loss_fun="square_loss", nx=None):
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
-    .. [48]  Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
-            "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
-            International Conference on Learning Representations (ICLR), 2022.
+    .. [48] Cédric Vincent-Cuaz, Rémi Flamary, Marco Corneli, Titouan Vayer, Nicolas Courty.
+        "Semi-relaxed Gromov-Wasserstein divergence and applications on graphs"
+        International Conference on Learning Representations (ICLR), 2022.
     """
     if nx is None:
         C1, C2, p = list_to_array(C1, C2, p)
