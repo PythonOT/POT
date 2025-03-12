@@ -8,13 +8,13 @@ This example illustrates the computation of an Optimal Transport Barycenter for
 a ground cost that is not a power of a norm. We take the example of ground costs
 :math:`c_k(x, y) = \|P_k(x)-y\|_2^2`, where :math:`P_k` is the (non-linear)
 projection onto a circle k. This is an example of the fixed-point barycenter
-solver introduced in [74] which generalises [20] and [43].
+solver introduced in [76] which generalises [20] and [43].
 
 The ground barycenter function :math:`B(y_1, ..., y_K) = \mathrm{argmin}_{x \in
 \mathbb{R}^2} \sum_k \lambda_k c_k(x, y_k)` is computed by gradient descent over
 :math:`x` with Pytorch.
 
-[74] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
+[76] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
 Barycentres of Measures for Generic Transport Costs. arXiv preprint 2501.04016
 (2024)
 

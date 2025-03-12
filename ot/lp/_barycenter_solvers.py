@@ -495,7 +495,7 @@ def free_support_barycenter_generic_costs(
     function B takes a list of K arrays of shape (n, d_k) and returns an array
     of shape (n, d).
 
-    This function implements [74] Algorithm 2, which generalises [20] and [43]
+    This function implements [76] Algorithm 2, which generalises [20] and [43]
     to general costs and includes convergence guarantees, including for discrete
     measures.
 
@@ -535,7 +535,7 @@ def free_support_barycenter_generic_costs(
 
     References
     ----------
-    .. [74] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
+    .. [76] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
         barycenters of Measures for Generic Transport Costs. arXiv preprint
         2501.04016 (2024)
 
