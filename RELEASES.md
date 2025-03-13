@@ -13,6 +13,7 @@
 - Added `ot.gaussian.bures_barycenter_gradient_descent` (PR #680)
 - Added `ot.gaussian.bures_wasserstein_distance` (PR #680)
 - `ot.gaussian.bures_wasserstein_distance` can be batched (PR #680)
+- Implement a robust version of entropic partial wasserstein `entropic_partial_wasserstein_logscale` (PR #723)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
