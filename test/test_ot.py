@@ -13,8 +13,6 @@ import ot
 from ot.datasets import make_1D_gauss as gauss
 from ot.backend import torch, tf
 
-# import ot.lp._barycenter_solvers  # TODO: remove this import
-
 
 def test_emd_dimension_and_mass_mismatch():
     # test emd and emd2 for dimension mismatch
@@ -414,14 +412,14 @@ def test_free_support_barycenter_generic_costs():
 
     cost_list = [cost, cost]
 
-    def B(y):
+    def ground_bary(y):
         out = 0
         for yk in y:
             out += yk / len(y)
         return out
 
     X = ot.lp.free_support_barycenter_generic_costs(
-        measures_locations, measures_weights, X_init, cost_list, B
+        measures_locations, measures_weights, X_init, cost_list, ground_bary
     )
 
     np.testing.assert_allclose(X, bar_locations, rtol=1e-5, atol=1e-7)
@@ -432,7 +430,7 @@ def test_free_support_barycenter_generic_costs():
         measures_weights,
         X_init,
         cost_list,
-        B,
+        ground_bary,
         a=ot.unif(1),
         log=True,
     )
@@ -449,11 +447,94 @@ def test_free_support_barycenter_generic_costs():
         measures_weights,
         X_init,
         cost_list,
-        B,
+        ground_bary,
         numItermax=1,
         log=True,
     )
     assert log2["exit_status"] == "Max iterations reached"
+
+    # test with a single callable cost
+    X3, log3 = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost,
+        ground_bary,
+        numItermax=1,
+        log=True,
+    )
+
+    # test with no ground_bary but in numpy: requires pytorch backend
+    with pytest.raises(AssertionError):
+        ot.lp.free_support_barycenter_generic_costs(
+            measures_locations,
+            measures_weights,
+            X_init,
+            cost_list,
+            ground_bary=None,
+            numItermax=1,
+        )
+
+
+@pytest.mark.skipif(not torch, reason="No torch available")
+def test_free_support_barycenter_generic_costs_auto_ground_bary():
+    measures_locations = [
+        torch.tensor([1.0]).reshape((1, 1)),
+        torch.tensor([2.0]).reshape((1, 1)),
+    ]
+    measures_weights = [torch.tensor([1.0]), torch.tensor([1.0])]
+
+    X_init = torch.tensor([1.2]).reshape((1, 1))
+
+    def cost(x, y):
+        return ot.dist(x, y)
+
+    cost_list = [cost, cost]
+
+    def ground_bary(y):
+        out = 0
+        for yk in y:
+            out += yk / len(y)
+        return out
+
+    X = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary,
+        numItermax=1,
+    )
+
+    X2, log2 = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary=None,
+        ground_bary_lr=1e-2,
+        ground_bary_stopThr=1e-20,
+        ground_bary_numItermax=50,
+        numItermax=10,
+        log=True,
+    )
+
+    np.testing.assert_allclose(X2.numpy(), X.numpy(), rtol=1e-4, atol=1e-4)
+
+    X3 = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary=None,
+        ground_bary_lr=1e-2,
+        ground_bary_stopThr=1e-20,
+        ground_bary_numItermax=50,
+        numItermax=10,
+        ground_bary_solver="Adam",
+    )
+
+    np.testing.assert_allclose(X2.numpy(), X3.numpy(), rtol=1e-3, atol=1e-3)
 
 
 def test_free_support_barycenter_generic_costs_backends(nx):
@@ -469,14 +550,14 @@ def test_free_support_barycenter_generic_costs_backends(nx):
 
     cost_list = [cost, cost]
 
-    def B(y):
+    def ground_bary(y):
         out = 0
         for yk in y:
             out += yk / len(y)
         return out
 
     X = ot.lp.free_support_barycenter_generic_costs(
-        measures_locations, measures_weights, X_init, cost_list, B
+        measures_locations, measures_weights, X_init, cost_list, ground_bary
     )
 
     measures_locations2 = nx.from_numpy(*measures_locations)
@@ -484,7 +565,7 @@ def test_free_support_barycenter_generic_costs_backends(nx):
     X_init2 = nx.from_numpy(X_init)
 
     X2 = ot.lp.free_support_barycenter_generic_costs(
-        measures_locations2, measures_weights2, X_init2, cost_list, B
+        measures_locations2, measures_weights2, X_init2, cost_list, ground_bary
     )
 
     np.testing.assert_allclose(X, nx.to_numpy(X2))
