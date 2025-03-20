@@ -332,7 +332,8 @@ def dist(
         detached).
     use_tensor : bool, optional
         If true use tensorized computation for the distance matrix which can
-        cause memory issues for large datasets.
+        cause memory issues for large datasets. Default is False and the
+        parameter is used only for the 'cityblock' and 'minkowski' metrics.
     nx : Backend, optional
         Backend to perform computations on. If omitted, the backend defaults to that of `x1`.
 

@@ -254,6 +254,9 @@ def test_dist():
     with pytest.raises(ValueError):
         ot.dist(x, x, metric="wminkowski")
 
+    with pytest.raises(ValueError):
+        ot.dist(x, x, metric="fakeone")
+
 
 @pytest.mark.parametrize("metric", lst_metrics)
 def test_dist_backends(nx, metric):
@@ -262,11 +265,18 @@ def test_dist_backends(nx, metric):
     x = rng.randn(n, 2)
     x1 = nx.from_numpy(x)
 
+    # force numpy backend
+    D0 = ot.dist(x, x, metric=metric, backend="numpy")
+
+    # default backend
     D = ot.dist(x, x, metric=metric)
+
+    # force nx arrays
     D1 = ot.dist(x1, x1, metric=metric)
 
     # low atol because jax forces float32
     np.testing.assert_allclose(D, nx.to_numpy(D1), atol=1e-5)
+    np.testing.assert_allclose(D, D0, atol=1e-5)
 
 
 @pytest.mark.parametrize("metric", lst_all_metrics)
@@ -278,9 +288,11 @@ def test_dist_vs_cdist(metric):
     y = rng.randn(n + 1, 2)
 
     D = ot.dist(x, y, metric=metric)
+    Dt = ot.dist(x, y, metric=metric, use_tensor=True)
     D2 = scipy.spatial.distance.cdist(x, y, metric=metric)
 
     np.testing.assert_allclose(D, D2, atol=1e-15)
+    np.testing.assert_allclose(D, Dt, atol=1e-15)
 
 
 def test_dist0():
