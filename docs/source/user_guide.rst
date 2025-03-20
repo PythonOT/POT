@@ -1,6 +1,6 @@
 
-Quick start guide
-=================
+User guide
+==========
 
 In the following we provide some pointers about which functions and classes
 to use for different problems related to optimal transport (OT) and machine
