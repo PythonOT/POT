@@ -2,12 +2,10 @@
 
 ## Creators and Maintainers 
 
-This toolbox has been created by
+This toolbox has been created by [Rémi Flamary](https://remi.flamary.com/)
+and [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/).
 
-* [Rémi Flamary](https://remi.flamary.com/)
-* [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
-
-It is currently maintained by 
+It is currently maintained by :
 
 * [Rémi Flamary](https://remi.flamary.com/)
 * [Cédric Vincent-Cuaz](https://cedricvincentcuaz.github.io/)
