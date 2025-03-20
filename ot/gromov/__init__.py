@@ -107,6 +107,8 @@ from ._partial import (
     solve_partial_gromov_linesearch,
     entropic_partial_gromov_wasserstein,
     entropic_partial_gromov_wasserstein2,
+    entropic_partial_fused_gromov_wasserstein,
+    entropic_partial_fused_gromov_wasserstein2,
 )
 
 
@@ -180,4 +182,6 @@ __all__ = [
     "solve_partial_gromov_linesearch",
     "entropic_partial_gromov_wasserstein",
     "entropic_partial_gromov_wasserstein2",
+    "entropic_partial_fused_gromov_wasserstein",
+    "entropic_partial_fused_gromov_wasserstein2",
 ]

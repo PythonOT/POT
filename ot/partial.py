@@ -113,8 +113,8 @@ def partial_wasserstein_lagrange(
     References
     ----------
     .. [28] Caffarelli, L. A., & McCann, R. J. (2010) Free boundaries in
-       optimal transport and Monge-Ampere obstacle problems. Annals of
-       mathematics, 673-730.
+        optimal transport and Monge-Ampere obstacle problems. Annals of
+        mathematics, 673-730.
 
     See Also
     --------
@@ -126,7 +126,7 @@ def partial_wasserstein_lagrange(
     nx = get_backend(a, b, M)
 
     if nx.sum(a) > 1 + 1e-15 or nx.sum(b) > 1 + 1e-15:  # 1e-15 for numerical errors
-        raise ValueError("Problem infeasible. Check that a and b are in the " "simplex")
+        raise ValueError("Problem infeasible. Check that a and b are in the simplex")
 
     if reg_m is None:
         reg_m = float(nx.max(M)) + 1
@@ -171,7 +171,7 @@ def partial_wasserstein_lagrange(
 
     if log_emd["warning"] is not None:
         raise ValueError(
-            "Error in the EMD resolution: try to increase the" " number of dummy points"
+            "Error in the EMD resolution: try to increase the number of dummy points"
         )
     log_emd["cost"] = nx.sum(gamma * M0)
     log_emd["u"] = nx.from_numpy(log_emd["u"], type_as=a0)
@@ -287,7 +287,7 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     if m is None:
         return partial_wasserstein_lagrange(a, b, M, log=log, **kwargs)
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater than 0.")
     elif m > nx.min(nx.stack((nx.sum(a), nx.sum(b)))):
         raise ValueError(
             "Problem infeasible. Parameter m should lower or"
@@ -315,7 +315,7 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
 
     if log_emd["warning"] is not None:
         raise ValueError(
-            "Error in the EMD resolution: try to increase the" " number of dummy points"
+            "Error in the EMD resolution: try to increase the number of dummy points"
         )
     log_emd["partial_w_dist"] = nx.sum(M * gamma)
     log_emd["u"] = log_emd["u"][: len(a)]
@@ -498,8 +498,8 @@ def entropic_partial_wasserstein(
     References
     ----------
     .. [3] Benamou, J. D., Carlier, G., Cuturi, M., Nenna, L., & Peyré, G.
-       (2015). Iterative Bregman projections for regularized transportation
-       problems. SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
+        (2015). Iterative Bregman projections for regularized transportation
+        problems. SIAM Journal on Scientific Computing, 37(2), A1111-A1138.
 
     See Also
     --------
@@ -522,7 +522,7 @@ def entropic_partial_wasserstein(
     if m is None:
         m = nx.min(nx.stack((nx.sum(a), nx.sum(b)))) * 1.0
     if m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater than 0.")
     if m > nx.min(nx.stack((nx.sum(a), nx.sum(b)))):
         raise ValueError(
             "Problem infeasible. Parameter m should lower or"
@@ -766,7 +766,7 @@ def partial_gromov_wasserstein(
     .. _references-partial-gromov-wasserstein:
     References
     ----------
-    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+    .. [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
         Transport with Applications on Positive-Unlabeled Learning".
         NeurIPS.
 
@@ -780,7 +780,7 @@ def partial_gromov_wasserstein(
     if m is None:
         m = np.min((np.sum(p), np.sum(q)))
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater than 0.")
     elif m > np.min((np.sum(p), np.sum(q))):
         raise ValueError(
             "Problem infeasible. Parameter m should lower or"
@@ -975,7 +975,7 @@ def partial_gromov_wasserstein2(
     .. _references-partial-gromov-wasserstein2:
     References
     ----------
-    ..  [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
+    .. [29] Chapel, L., Alaya, M., Gasso, G. (2020). "Partial Optimal
         Transport with Applications on Positive-Unlabeled Learning".
         NeurIPS.
 
@@ -1098,7 +1098,7 @@ def entropic_partial_gromov_wasserstein(
 
     Returns
     -------
-    :math: `gamma` : (dim_a, dim_b) ndarray
+    :math:`gamma` : ndarray, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`
@@ -1132,7 +1132,7 @@ def entropic_partial_gromov_wasserstein(
     if m is None:
         m = np.min((np.sum(p), np.sum(q)))
     elif m < 0:
-        raise ValueError("Problem infeasible. Parameter m should be greater" " than 0.")
+        raise ValueError("Problem infeasible. Parameter m should be greater than 0.")
     elif m > np.min((np.sum(p), np.sum(q))):
         raise ValueError(
             "Problem infeasible. Parameter m should lower or"

@@ -12,7 +12,7 @@ Optimal transport for Gaussian Mixtures
 from .backend import get_backend
 from .lp import emd2, emd
 import numpy as np
-from .lp import dist
+from .utils import dist
 from .gaussian import bures_wasserstein_mapping
 
 

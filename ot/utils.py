@@ -228,12 +228,12 @@ def unif(n, type_as=None):
     ----------
     n : int
         number of bins in the histogram
-    type_as : array_like
+    type_as : array-like
         array of the same type of the expected output (numpy/pytorch/jax)
 
     Returns
     -------
-    h : array_like (`n`,)
+    h : array-like, shape (n,)
         histogram of length `n` such that :math:`\forall i, \mathbf{h}_i = \frac{1}{n}`
     """
     if type_as is None:
@@ -593,7 +593,7 @@ def check_random_state(seed):
     if isinstance(seed, np.random.RandomState):
         return seed
     raise ValueError(
-        "{} cannot be used to seed a numpy.random.RandomState" " instance".format(seed)
+        "{} cannot be used to seed a numpy.random.RandomState instance".format(seed)
     )
 
 
@@ -863,7 +863,7 @@ class deprecated(object):
 def _is_deprecated(func):
     r"""Helper to check if func is wrapped by our deprecated decorator"""
     if sys.version_info < (3, 5):
-        raise NotImplementedError("This is only available for python3.5 " "or above")
+        raise NotImplementedError("This is only available for python3.5 or above")
     closures = getattr(func, "__closure__", [])
     if closures is None:
         closures = []
@@ -1417,3 +1417,58 @@ def proj_SDP(S, nx=None, vmin=0.0):
         Q = nx.einsum("ijk,ik->ijk", P, w)  # Q[i] = P[i] @ diag(w[i])
         # R[i] = Q[i] @ P[i].T
         return nx.einsum("ijk,ikl->ijl", Q, nx.transpose(P, (0, 2, 1)))
+
+
+def exp_bures(Sigma, S, nx=None):
+    r"""
+    Exponential map in Bures-Wasserstein space at Sigma:
+
+    .. math::
+        \exp_\Sigma(S) = (I_d+S)\Sigma(I_d+S).
+
+    Parameters
+    ----------
+    Sigma : array-like (d,d)
+        SPD matrix
+    S : array-like (d,d)
+        Symmetric matrix
+    nx : module, optional
+        The numerical backend module to use. If not provided, the backend will
+        be fetched from the input matrices `Sigma, S`.
+
+    Returns
+    -------
+    P : array-like (d,d)
+        SPD matrix obtained as the exponential map of S at Sigma
+    """
+    if nx is None:
+        nx = get_backend(Sigma, S)
+    d = S.shape[-1]
+    Id = nx.eye(d, type_as=S)
+    C = Id + S
+
+    return nx.einsum("ij,jk,kl -> il", C, Sigma, C)
+
+
+def check_number_threads(numThreads):
+    """Checks whether or not the requested number of threads has a valid value.
+
+    Parameters
+    ----------
+    numThreads : int or str
+        The requested number of threads, should either be a strictly positive integer or "max" or None
+
+    Returns
+    -------
+    numThreads : int
+        Corrected number of threads
+    """
+    if (numThreads is None) or (
+        isinstance(numThreads, str) and numThreads.lower() == "max"
+    ):
+        return -1
+    if (not isinstance(numThreads, int)) or numThreads < 1:
+        raise ValueError(
+            'numThreads should either be "max" or a strictly positive integer'
+        )
+    return numThreads

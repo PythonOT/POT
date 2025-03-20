@@ -6,12 +6,22 @@
 - Implement CG solvers for partial FGW (PR #687)
 - Added feature `grad=last_step` for `ot.solvers.solve` (PR #693)
 - Automatic PR labeling and release file update check (PR #704)
+- Reorganize sub-module `ot/lp/__init__.py` into separate files (PR #714)
+- Fix warning raise when import the library (PR #716)
+- Implement projected gradient descent solvers for entropic partial FGW (PR #702)
+- Fix documentation in the module `ot.gaussian` (PR #718)
+- Refactored `ot.bregman._convolutional` to improve readability (PR #709)
+- Added `ot.gaussian.bures_barycenter_gradient_descent` (PR #680)
+- Added `ot.gaussian.bures_wasserstein_distance` (PR #680)
+- `ot.gaussian.bures_wasserstein_distance` can be batched (PR #680)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
 - Fixed numerical errors in `ot.gmm` (PR #690, Issue #689)
 - Add version number to the documentation (PR #696)
 - Update doc for default regularization in `ot.unbalanced` sinkhorn solvers (Issue #691, PR #700)
+- Clean documentation for `gromov`, `lp` and `unbalanced` folders (PR #710)
+- Clean references in documentation (PR #722)
 
 ## 0.9.5
 
