@@ -347,7 +347,7 @@ intersphinx_mapping = {
 }
 
 sphinx_gallery_conf = {
-    "examples_dirs": ["../../examples", "../../examples/da"],
+    "examples_dirs": ["../../examples"],
     "gallery_dirs": "auto_examples",
     "filename_pattern": "plot_",  # (?!barycenter_fgw)
     "nested_sections": False,

@@ -65,7 +65,7 @@ pl.title("Cost matrix M")
 
 # %% EMD
 
-G0 = ot.emd(a, b, M)
+G0 = ot.solve(M, a, b).plan
 
 pl.figure(3)
 pl.imshow(G0, interpolation="nearest")
