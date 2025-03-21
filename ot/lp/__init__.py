@@ -8,7 +8,6 @@ Solvers for the original linear program OT problem.
 #
 # License: MIT License
 
-from . import cvx
 from .dmmot import dmmot_monge_1dgrid_loss, dmmot_monge_1dgrid_optimize
 from ._network_simplex import emd, emd2
 from ._barycenter_solvers import (
