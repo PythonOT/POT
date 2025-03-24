@@ -154,6 +154,7 @@ C = ot.dist(x1, x2, metric="cityblock")
 
 # Solve the OT problem with the custom cost matrix
 P_city = ot.solve(C).plan
+# the parameters a and b are not provided so uniform weights are assumed
 
 # Compute the OT loss (equivalent to ot.solve(C).value)
 loss_city = np.sum(P_city * C)
@@ -176,6 +177,10 @@ pl.show()
 # with the more general :func:`ot.solve` function.
 # But the same can be done with the :func:`ot.solve_sample` function by passing
 # :code:`metric='cityblock'` as argument.
+#
+# The cost matrix can be computed with the :func:`ot.dist` function which
+# computes the pairwise distance between two sets of samples or can be provided
+# directly as a matrix by the user when no samples are available.
 #
 # .. note::
 #    The examples above use the new API of POT. The old API is still available
@@ -388,7 +393,7 @@ pl.show()
 # sphinx_gallery_end_ignore
 # %%
 #
-# Gromov-Wasserstein (GW) and Fused GW
+# Gromov-Wasserstein and Fused GW
 # -------------------------------------
 #
 # Solve the Gromov-Wasserstein problem
@@ -519,3 +524,121 @@ pl.show()
 # pl.title("Unbalanced Entropic GW plan")
 # pl.show()
 # # sphinx_gallery_end_ignore
+# %%
+#
+# Large scale OT
+# --------------
+#
+# We discuss here strategies to solve large scale OT problems using approximations
+# of the exact OT problem.
+#
+# Large scale Sinkhorn
+# ~~~~~~~~~~~~~~~~~~~~
+#
+# When having samples with a large number of points, the Sinkhorn algorithm can
+# be implemented in a Lazy version which is more memory efficient and avoids
+# the computation of the :math:`n \times m` cost matrix.
+#
+# POT provides two implementation of the lazy Sinkhorn algorithm that return their
+# results in a lazy form of type :class:`ot.utils.LazyTensor`. This object can be
+# used to compute the loss or the OT plan in a lazy way or to recover its values
+# in a dense form.
+#
+
+# Solve the Sinkhorn problem in a lazy way
+sol = ot.solve_sample(x1, x2, a, b, reg=1e-1, lazy=True)
+
+# Solve the sinkhoorn in a lazy way with geomloss
+sol_geo = ot.solve_sample(x1, x2, a, b, reg=1e-1, method="geomloss", lazy=True)
+
+# get the OT lazy plan and loss
+P_sink_lazy = sol.lazy_plan
+
+# recover values for Lazy plan
+P12 = P_sink_lazy[1, 2]
+P1dots = P_sink_lazy[1, :]
+P_sink_lazy_dense = P_sink_lazy[
+    :
+]  # convert to dense matrix !!warning this can be memory consuming
+
+# sphinx_gallery_start_ignore
+pl.figure(1, (3, 3))
+plot2D_samples_mat(x1, x2, P_sink_lazy_dense)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.title("Lazy Sinkhorn OT plan")
+pl.show()
+
+pl.figure(2, (3, 1.7))
+pl.imshow(P_sink_lazy_dense, cmap="Greys")
+pl.title("Lazy Sinkhorn OT plan")
+pl.show()
+
+# sphinx_gallery_end_ignore
+#
+# %%
+#
+# the first example shows how to solve the Sinkhorn problem in a lazy way with
+# the default POT implementation. The second example shows how to solve the
+# Sinkhorn problem in a lazy way with the PyKeops/Geomloss implementation that provides
+# a very efficient way to solve large scale problems on low dimensionality
+# samples.
+#
+# Factored and Low rank OT
+# ------------------------
+#
+# The Sinkhorn algorithm can be implemented in a low rank version that
+# approximates the OT plan with a low rank matrix. This can be useful to
+# accelerate the computation of the OT plan for large scale problems.
+# A similar non-regularized version of low rank factorization is also available.
+#
+
+# Solve the Factored OT problem (use lazy=True for large scale)
+P_fact = ot.solve_sample(x1, x2, a, b, method="factored", rank=8).plan
+
+P_lowrank = ot.solve_sample(x1, x2, a, b, reg=0.1, method="lowrank", rank=8).plan
+
+# sphinx_gallery_start_ignore
+pl.figure(1, (6, 3))
+
+pl.subplot(1, 2, 1)
+plot2D_samples_mat(x1, x2, P_fact)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.title("Factored OT plan")
+
+pl.subplot(1, 2, 2)
+plot2D_samples_mat(x1, x2, P_lowrank)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.title("Low rank OT plan")
+pl.show()
+
+pl.figure(2, (6, 1.7))
+
+pl.subplot(1, 2, 1)
+pl.imshow(P_fact, cmap="Greys")
+pl.title("Factored OT plan")
+
+pl.subplot(1, 2, 2)
+pl.imshow(P_lowrank, cmap="Greys")
+pl.title("Low rank OT plan")
+pl.show()
+
+# sphinx_gallery_end_ignore
+
+# %%
+#
+# Gaussian OT with Bures-Wasserstein
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# The Gaussian Wasserstein  or Bures-Wasserstein distance is the Wasserstein distance
+# between Gaussian distributions. It can be used as an approximation of the
+# Wasserstein distance between empirical distributions by estimating the
+# covariance matrices of the samples.
+#
+
+# Compute the Bures-Wasserstein distance
+bw_value = ot.solve_sample(x1, x2, a, b, method="gaussian").value
+
+print(f"Bures-Wasserstein distance = {bw_value:1.3f}")

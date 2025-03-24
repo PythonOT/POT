@@ -53,6 +53,10 @@ def get_sinkhorn_lazytensor(X_a, X_b, f, g, metric="sqeuclidean", reg=1e-1, nx=N
     shape = (X_a.shape[0], X_b.shape[0])
 
     def func(i, j, X_a, X_b, f, g, metric, reg):
+        if isinstance(i, int):
+            i = slice(i, i + 1)
+        if isinstance(j, int):
+            j = slice(j, j + 1)
         C = dist(X_a[i], X_b[j], metric=metric)
         return nx.exp(f[i, None] + g[None, j] - C / reg)
 
