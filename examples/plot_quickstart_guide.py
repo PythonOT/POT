@@ -304,7 +304,7 @@ pl.show()
 #    user-defined regularization, the :func:`ot.optim.cg` function can be used
 #    to solve the regularized OT problem with Conditional Gradient algorithm.
 #
-# Unbalanced and Partial Optimal Transport
+# Unbalanced and Partial OT
 # ----------------------------
 #
 # Solve the Unbalanced OT problem
@@ -388,8 +388,8 @@ pl.show()
 # sphinx_gallery_end_ignore
 # %%
 #
-# Gromov-Wasserstein and Fused Gromov-Wasserstein
-# -----------------------------------------------
+# Gromov-Wasserstein (GW) and Fused GW
+# -------------------------------------
 #
 # Solve the Gromov-Wasserstein problem
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
