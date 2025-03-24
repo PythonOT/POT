@@ -492,25 +492,26 @@ pl.show()
 #      loss_fgw = ot.gromov.fused_gromov_wasserstein2(C1, C2, M, a, b, alpha=0.1)
 #      loss_efgw = ot.gromov.entropic_fused_gromov_wasserstein2(C1, C2, M, a, b, alpha=0.1, epsilon=reg)
 #
-# Unbalanced Gromov-Wasserstein
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
 
+# # Unbalanced Gromov-Wasserstein
+# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# #
+#
 # # Solve the Unbalanced Gromov-Wasserstein problem
 # P_gw_unb = ot.solve_gromov(C1, C2, a=a, b=b, unbalanced=1e-2).plan
-
+#
 # # Solve the Unbalanced Entropic Gromov-Wasserstein problem
 # P_egw_unb = ot.solve_gromov(C1, C2, a=a, b=b, reg=1e-2, reg_type='KL', unbalanced=1e-2).plan
-
+#
 # # sphinx_gallery_start_ignore
 # pl.figure(1, (6, 3))
-
+#
 # pl.subplot(1, 2, 1)
 # plot2D_samples_mat(x1, x2, P_gw_unb)
 # pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
 # pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
 # pl.title("Unbalanced GW plan")
-
+#
 # pl.subplot(1, 2, 2)
 # plot2D_samples_mat(x1, x2, P_egw_unb)
 # pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
