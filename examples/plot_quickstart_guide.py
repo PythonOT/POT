@@ -642,4 +642,3 @@ pl.show()
 # sphinx_gallery_end_ignore
 # %%
 #
-# For more details on the unified and classical API of POT
