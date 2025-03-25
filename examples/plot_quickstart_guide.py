@@ -596,6 +596,9 @@ print(f"Bures-Wasserstein distance = {bw_value:1.3f}")
 # The color intensity represents the amount of mass transported
 # between the samples.
 #
+
+# plot all plans
+
 # sphinx_gallery_start_ignore
 pl.figure(1, (9, 13))
 
