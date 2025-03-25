@@ -197,7 +197,7 @@ that will return the optimal transport matrix :math:`\gamma^*`:
     # unified API
     T = ot.solve(M, a, b).plan  # exact linear program
 
-    # old API
+    # classical API
     T = ot.emd(a, b, M)  # exact linear program
 
 The method implemented for solving the OT problem is the network simplex. It is
@@ -234,7 +234,7 @@ It can computed from an already estimated OT matrix with
     # Wasserstein distance / EMD value with unified API
     W = ot.solve(M, a, b, return_matrix=False).value  
 
-    # with old API
+    # with classical API
     W = ot.emd2(a, b, M)  
 
 Note that the well known  `Wasserstein distance
@@ -349,7 +349,7 @@ equation above is given to those functions with the parameter :code:`reg`.
     P = ot.solve(M, a, b, reg=1).plan  # OT Sinkhorn matrix
     loss = ot.solve(M, a, b, reg=1).value # OT Sinkhorn value
 
-    # old API
+    # classical API
     P = ot.sinkhorn(a, b, M, reg=1)  # OT Sinkhorn matrix
     loss = ot.sinkhorn2(a, b, M, reg=1)  # OT Sinkhorn value
 

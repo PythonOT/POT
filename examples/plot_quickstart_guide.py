@@ -11,9 +11,9 @@ For better readability, only the use of POT is provided and the plotting code
 with matplotlib is hidden (but is available in the source file of the example).
 
 .. note::
-    We use here the unified API of POT which is more flexible and allows to solve a wider range of problems with just a few functions. The old API is still available (the unified API
-    one is a convenient wrapper around the old one) and we provide pointers to the
-    old API when needed.
+    We use here the unified API of POT which is more flexible and allows to solve a wider range of problems with just a few functions. The classical API is still available (the unified API
+    one is a convenient wrapper around the classical one) and we provide pointers to the
+    classical API when needed.
 
 """
 
@@ -589,14 +589,13 @@ print(f"Bures-Wasserstein distance = {bw_value:1.3f}")
 #    The Gaussian Wasserstein problem can be solved with the old API using the
 #    :func:`ot.gaussian.empirical_bures_wasserstein_distance` function.
 #
-# All OT plans
-# ------------
+# Comparing all OT plans
+# ----------------------
 #
 # The figure below shows all the OT plans computed in this example.
 # The color intensity represents the amount of mass transported
 # between the samples.
 #
-
 # sphinx_gallery_start_ignore
 pl.figure(1, (9, 13))
 
@@ -635,6 +634,9 @@ plot_plan(P_egw, "Entropic GW plan", axis=False)
 
 pl.subplot(4, 3, 12)
 plot_plan(P_fgw, "Fused GW plan", axis=False)
-
 pl.show()
+
 # sphinx_gallery_end_ignore
+# %%
+#
+# For more details on the unified and classical API of POT
