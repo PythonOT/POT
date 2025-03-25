@@ -61,7 +61,8 @@ style = {"markeredgecolor": "k"}
 
 
 def plot_plan(P=None, title="", axis=True):
-    plot2D_samples_mat(x1, x2, P)
+    if P is not None:
+        plot2D_samples_mat(x1, x2, P)
     pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
     pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
     if not axis:
@@ -70,10 +71,8 @@ def plot_plan(P=None, title="", axis=True):
 
 
 pl.figure(1, (4, 4))
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+plot_plan(title="Source and target distributions")
 pl.legend(loc=0)
-pl.title("Source and target distributions")
 pl.show()
 
 pl.figure(2, (3.5, 1.7))
@@ -114,10 +113,7 @@ from ot.plot import plot2D_samples_mat
 pl.figure(1, (8, 4))
 
 pl.subplot(1, 2, 1)
-plot2D_samples_mat(x1, x2, P)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("OT plan P loss={:.3f}".format(loss))
+plot_plan(P, "OT plan P loss={:.3f}".format(loss))
 
 pl.subplot(1, 2, 2)
 pl.scatter(x1[:, 0], x1[:, 1], c=alpha, cmap="viridis", edgecolors="k")
@@ -183,10 +179,7 @@ loss_city = sol.value  # same as np.sum(P_city * C)
 
 # sphinx_gallery_start_ignore
 pl.figure(1, (3, 3))
-plot2D_samples_mat(x1, x2, P)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("OT plan (Citybloc) loss={:.3f}".format(loss_city))
+plot_plan(P_city, "OT plan (Citybloc) loss={:.3f}".format(loss_city))
 
 pl.figure(2, (3, 1.7))
 pl.imshow(P_city, cmap="Greys")
@@ -232,10 +225,7 @@ loss_sink_linear = sol.value_linear  # np.sum(P_sink * C) linear part of loss
 
 # sphinx_gallery_start_ignore
 pl.figure(1, (3, 3))
-plot2D_samples_mat(x1, x2, P_sink)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Sinkhorn OT plan loss={:.3f}".format(loss_sink))
+plot_plan(P_sink, "Sinkhorn OT plan loss={:.3f}".format(loss_sink))
 pl.show()
 
 pl.figure(2, (3, 1.7))
@@ -263,22 +253,13 @@ loss_quad = ot.solve_sample(x1, x2, a, b, reg=3, reg_type="L2").value
 pl.figure(1, (9, 3))
 
 pl.subplot(1, 3, 1)
-plot2D_samples_mat(x1, x2, P)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("OT plan loss={:.3f}".format(loss))
+plot_plan(P, "OT plan loss={:.3f}".format(loss))
 
 pl.subplot(1, 3, 2)
-plot2D_samples_mat(x1, x2, P_sink)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Sinkhorn plan loss={:.3f}".format(loss_sink))
+plot_plan(P_sink, "Sinkhorn plan loss={:.3f}".format(loss_sink))
 
 pl.subplot(1, 3, 3)
-plot2D_samples_mat(x1, x2, P_quad)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Quadratic plan loss={:.3f}".format(loss_quad))
+plot_plan(P_quad, "Quadratic reg plan loss={:.3f}".format(loss_quad))
 pl.show()
 # sphinx_gallery_end_ignore
 # %%
@@ -304,10 +285,7 @@ P_reg = ot.solve_sample(x1, x2, a, b, reg=3, reg_type=(f, df)).plan
 
 # sphinx_gallery_start_ignore
 pl.figure(1, (3, 3))
-plot2D_samples_mat(x1, x2, P_reg)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Custom reg plan")
+plot_plan(P_reg, "User-defined reg plan")
 pl.show()
 # sphinx_gallery_end_ignore
 # %%
@@ -354,23 +332,13 @@ P_unb_l2 = ot.solve_sample(x1, x2, a, b, unbalanced=7e1, unbalanced_type="L2").p
 pl.figure(1, (9, 3))
 
 pl.subplot(1, 3, 1)
-plot2D_samples_mat(x1, x2, P_unb_kl)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Unbalanced KL plan")
+plot_plan(P_unb_kl, "Unbalanced KL plan")
 
 pl.subplot(1, 3, 2)
-plot2D_samples_mat(x1, x2, P_unb_kl_reg)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Unbalanced KL + reg plan")
+plot_plan(P_unb_kl_reg, "Unbalanced KL + reg plan")
 
 pl.subplot(1, 3, 3)
-plot2D_samples_mat(x1, x2, P_unb_l2)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Unbalanced L2 plan")
-
+plot_plan(P_unb_l2, "Unbalanced L2 plan")
 pl.show()
 # sphinx_gallery_end_ignore
 # %%
@@ -396,16 +364,10 @@ P_part_const = ot.partial.partial_wasserstein(a, b, C, m=0.5)  # 50% mass transp
 pl.figure(1, (6, 3))
 
 pl.subplot(1, 2, 1)
-plot2D_samples_mat(x1, x2, P_part_pen)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Partial (Unb. TV) plan")
+plot_plan(P_part_pen, "Partial TV plan")
 
 pl.subplot(1, 2, 2)
-plot2D_samples_mat(x1, x2, P_part_const)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Partial 50% mass plan")
+plot_plan(P_part_const, "Partial 50% mass plan")
 pl.show()
 
 # sphinx_gallery_end_ignore
@@ -442,16 +404,10 @@ P_egw = ot.solve_gromov(C1, C2, a=a, b=b, reg=1e-2).plan
 pl.figure(1, (6, 3))
 
 pl.subplot(1, 2, 1)
-plot2D_samples_mat(x1, x2, P_gw)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("GW plan")
+plot_plan(P_gw, "GW plan")
 
 pl.subplot(1, 2, 2)
-plot2D_samples_mat(x1, x2, P_egw)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Entropic GW plan")
+plot_plan(P_egw, "Entropic GW plan")
 pl.show()
 # sphinx_gallery_end_ignore
 # %%
@@ -490,16 +446,10 @@ P_efgw = ot.solve_gromov(C1, C2, M, a=a, b=b, alpha=0.1, reg=1e-3).plan
 pl.figure(1, (6, 3))
 
 pl.subplot(1, 2, 1)
-plot2D_samples_mat(x1, x2, P_fgw)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("FGW plan")
+plot_plan(P_fgw, "FGW plan")
 
 pl.subplot(1, 2, 2)
-plot2D_samples_mat(x1, x2, P_efgw)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Entropic FGW plan")
+plot_plan(P_efgw, "Entropic FGW plan")
 pl.show()
 
 # sphinx_gallery_end_ignore
@@ -554,10 +504,7 @@ P_sink_lazy_dense = P_sink_lazy[:]
 
 # sphinx_gallery_start_ignore
 pl.figure(1, (3, 3))
-plot2D_samples_mat(x1, x2, P_sink_lazy_dense)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Lazy Sinkhorn OT plan")
+plot_plan(P_sink_lazy_dense, "Lazy Sinkhorn OT plan")
 pl.show()
 
 pl.figure(2, (3, 1.7))
@@ -598,16 +545,10 @@ P_lowrank = ot.solve_sample(x1, x2, a, b, reg=0.1, method="lowrank", rank=10).pl
 pl.figure(1, (6, 3))
 
 pl.subplot(1, 2, 1)
-plot2D_samples_mat(x1, x2, P_fact)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Factored OT plan")
+plot_plan(P_fact, "Factored OT plan")
 
 pl.subplot(1, 2, 2)
-plot2D_samples_mat(x1, x2, P_lowrank)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.title("Low rank OT plan")
+plot_plan(P_lowrank, "Low rank OT plan")
 pl.show()
 
 pl.figure(2, (6, 1.7))
@@ -659,87 +600,40 @@ print(f"Bures-Wasserstein distance = {bw_value:1.3f}")
 # sphinx_gallery_start_ignore
 pl.figure(1, (9, 13))
 
-
 pl.subplot(4, 3, 1)
-plot2D_samples_mat(x1, x2, P)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.axis("off")
-pl.title("OT plan")
+plot_plan(P, "OT plan", axis=False)
 
 pl.subplot(4, 3, 2)
-plot2D_samples_mat(x1, x2, P_sink)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.axis("off")
-pl.title("Sinkhorn plan")
+plot_plan(P_sink, "Sinkhorn plan", axis=False)
 
 pl.subplot(4, 3, 3)
-plot2D_samples_mat(x1, x2, P_quad)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.axis("off")
-pl.title("Quadratic reg. plan")
+plot_plan(P_quad, "Quadratic reg. plan", axis=False)
 
 pl.subplot(4, 3, 4)
-plot2D_samples_mat(x1, x2, P_unb_kl)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.axis("off")
-pl.title("Unbalanced KL plan")
+plot_plan(P_unb_kl, "Unbalanced KL plan", axis=False)
 
 pl.subplot(4, 3, 5)
-plot2D_samples_mat(x1, x2, P_unb_kl_reg)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.axis("off")
-pl.title("Unbalanced KL + reg plan")
+plot_plan(P_unb_kl_reg, "Unbalanced KL + reg plan", axis=False)
 
 pl.subplot(4, 3, 6)
-plot2D_samples_mat(x1, x2, P_unb_l2)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.axis("off")
-pl.title("Unbalanced L2 plan")
+plot_plan(P_unb_l2, "Unbalanced L2 plan", axis=False)
 
 pl.subplot(4, 3, 7)
-plot2D_samples_mat(x1, x2, P_part_const)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.axis("off")
-pl.title("Partial 50% mass plan")
+plot_plan(P_part_const, "Partial 50% mass plan", axis=False)
 
 pl.subplot(4, 3, 8)
-plot2D_samples_mat(x1, x2, P_fact)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.axis("off")
-pl.title("Factored OT plan")
+plot_plan(P_fact, "Factored OT plan", axis=False)
 
 pl.subplot(4, 3, 9)
-plot2D_samples_mat(x1, x2, P_lowrank)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.axis("off")
-pl.title("Low rank OT plan")
+plot_plan(P_lowrank, "Low rank OT plan", axis=False)
 
 pl.subplot(4, 3, 10)
-plot2D_samples_mat(x1, x2, P_gw)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.axis("off")
-pl.title("GW plan")
+plot_plan(P_gw, "GW plan", axis=False)
 
 pl.subplot(4, 3, 11)
-plot2D_samples_mat(x1, x2, P_egw)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.axis("off")
-pl.title("Entropic GW plan")
+plot_plan(P_egw, "Entropic GW plan", axis=False)
 
 pl.subplot(4, 3, 12)
-plot2D_samples_mat(x1, x2, P_fgw)
-pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-pl.axis("off")
-pl.title("Fused GW plan")
+plot_plan(P_fgw, "Fused GW plan", axis=False)
+
+pl.show()
