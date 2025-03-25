@@ -11,7 +11,7 @@ For better readability, only the use of POT is provided and the plotting code
 with matplotlib is hidden (but is available in the source file of the example).
 
 .. note::
-    We use here the new API of POT which is more flexible and allows to solve a wider range of problems with just a few functions. The old API is still available (the new
+    We use here the unified API of POT which is more flexible and allows to solve a wider range of problems with just a few functions. The old API is still available (the unified API
     one is a convenient wrapper around the old one) and we provide pointers to the
     old API when needed.
 
@@ -198,7 +198,7 @@ pl.show()
 # directly as a matrix by the user when no samples are available.
 #
 # .. note::
-#    The examples above use the new API of POT. The old API is still available
+#    The examples above use the unified API of POT. The old API is still available
 #    and and OT plan and loss can be computed with the :func:`ot.emd`  and
 #    the :func:`ot.emd2` functions as below:
 #
@@ -291,7 +291,7 @@ pl.show()
 # %%
 #
 # .. note::
-#    The examples above use the new API of POT. The old API is still available
+#    The examples above use the unified API of POT. The old API is still available
 #    and and the entropic OT plan and loss can be computed with the
 #    :func:`ot.sinkhorn` # and :func:`ot.sinkhorn2` functions as below:
 #
@@ -637,3 +637,4 @@ pl.subplot(4, 3, 12)
 plot_plan(P_fgw, "Fused GW plan", axis=False)
 
 pl.show()
+# sphinx_gallery_end_ignore
