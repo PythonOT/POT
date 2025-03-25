@@ -31,8 +31,8 @@ import ot
 
 
 # %%
-# Data generation
-# --------------
+# 2D data example
+# ---------------
 #
 # We first generate two sets of samples in 2D that 25 and 50
 # samples respectively located on circles. The weights of the samples are
@@ -53,8 +53,21 @@ x1 /= np.sqrt(np.sum(x1**2, 1, keepdims=True)) / 2
 x2 = np.random.randn(n2, 2)
 x2 /= np.sqrt(np.sum(x2**2, 1, keepdims=True)) / 4
 
+# Compute the cost matrix
+C = ot.dist(x1, x2)  # Squared Euclidean cost matrix by default
+
 # sphinx_gallery_start_ignore
 style = {"markeredgecolor": "k"}
+
+
+def plot_plan(P=None, title="", axis=True):
+    plot2D_samples_mat(x1, x2, P)
+    pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+    pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+    if not axis:
+        pl.axis("off")
+    pl.title(title)
+
 
 pl.figure(1, (4, 4))
 pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
@@ -62,6 +75,12 @@ pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
 pl.legend(loc=0)
 pl.title("Source and target distributions")
 pl.show()
+
+pl.figure(2, (3.5, 1.7))
+pl.imshow(C)
+pl.colorbar()
+pl.title("Cost matrix C")
+
 # sphinx_gallery_end_ignore
 
 # %%
@@ -139,8 +158,8 @@ pl.show()
 
 
 # %%
-# Solve the Optimal Transport problem with a custom cost matrix
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Optimal Transport problem with a custom cost matrix
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # The cost matrix can be customized by passing it to the more general
 # :func:`ot.solve` function. The cost matrix should be a matrix of size
@@ -150,14 +169,17 @@ pl.show()
 # In this example, we use the Citybloc distance as the cost matrix.
 
 # Compute the cost matrix
-C = ot.dist(x1, x2, metric="cityblock")
+C_city = ot.dist(x1, x2, metric="cityblock")
 
 # Solve the OT problem with the custom cost matrix
-P_city = ot.solve(C).plan
+sol = ot.solve(C_city)
 # the parameters a and b are not provided so uniform weights are assumed
+P_city = sol.plan
+# on empirical data the same can be done with ot.solve_sample :
+# sol = ot.solve_sample(x1, x2, metric='cityblock')
 
 # Compute the OT loss (equivalent to ot.solve(C).value)
-loss_city = np.sum(P_city * C)
+loss_city = sol.value  # same as np.sum(P_city * C)
 
 # sphinx_gallery_start_ignore
 pl.figure(1, (3, 3))
@@ -192,9 +214,7 @@ pl.show()
 #       P = ot.emd(a, b, C)
 #       loss = ot.emd2(a, b, C) # same as np.sum(P*C) but differentiable wrt a/b
 #
-
-
-# %%
+#
 # Sinkhorn and Regularized OT
 # ---------------------------
 #
@@ -229,8 +249,7 @@ pl.show()
 # The Sinkhorn algorithm can be faster than the exact OT solver for large
 # regularization strength but the solution is only an approximation of the
 # exact OT problem and the OT plan is not sparse.
-
-# %%
+#
 # Quadratic Regularized OT
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -281,8 +300,7 @@ def df(G):
     return G
 
 
-P_reg = ot.solve_sample(x1, x2, a, b, reg=1e2, reg_type=(f, df)).plan
-
+P_reg = ot.solve_sample(x1, x2, a, b, reg=3, reg_type=(f, df)).plan
 
 # sphinx_gallery_start_ignore
 pl.figure(1, (3, 3))
@@ -312,7 +330,7 @@ pl.show()
 # Unbalanced and Partial OT
 # ----------------------------
 #
-# Solve the Unbalanced OT problem
+# Unbalanced Optimal Transport
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Unbalanced OT relaxes the marginal constraints and allows for the source and
@@ -393,10 +411,10 @@ pl.show()
 # sphinx_gallery_end_ignore
 # %%
 #
-# Gromov-Wasserstein and Fused GW
+# Gromov-Wasserstein and Fused Gromov-Wasserstein
 # -------------------------------------
 #
-# Solve the Gromov-Wasserstein problem
+# Gromov-Wasserstein and Entropic GW
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # The Gromov-Wasserstein distance is a similarity measure between metric
@@ -414,8 +432,7 @@ C2 /= C2.max()
 # Solve the Gromov-Wasserstein problem
 sol_gw = ot.solve_gromov(C1, C2, a=a, b=b)
 P_gw = sol_gw.plan
-loss_gw = sol_gw.value
-loss_gw_linear = sol_gw.value_linear  # linear part of loss
+loss_gw = sol_gw.value  # quadratic + reg if reg>0
 loss_gw_quad = sol_gw.value_quad  # quadratic part of loss
 
 # Solve the Entropic Gromov-Wasserstein problem
@@ -460,9 +477,13 @@ pl.show()
 M = C / np.max(C)
 
 # Solve FGW problem with alpha=0.1
-P_fgw = ot.solve_gromov(C1, C2, M, a=a, b=b, alpha=0.1).plan  # C is cost across spaces
+sol = ot.solve_gromov(C1, C2, M, a=a, b=b, alpha=0.1)
+P_fgw = sol.plan
+loss_fgw = sol.value
+loss_fgw_linear = sol.value_linear  # linear part of loss (wrt M)
+loss_fgw_quad = sol.value_quad  # quadratic part of loss (wrt C1 and C2)
 
-# SOlve entropic FGW problem with alpha=0.1
+# Solve entropic FGW problem with alpha=0.1
 P_efgw = ot.solve_gromov(C1, C2, M, a=a, b=b, alpha=0.1, reg=1e-3).plan
 
 # sphinx_gallery_start_ignore
@@ -497,35 +518,6 @@ pl.show()
 #      loss_fgw = ot.gromov.fused_gromov_wasserstein2(C1, C2, M, a, b, alpha=0.1)
 #      loss_efgw = ot.gromov.entropic_fused_gromov_wasserstein2(C1, C2, M, a, b, alpha=0.1, epsilon=reg)
 #
-
-# # Unbalanced Gromov-Wasserstein
-# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# #
-#
-# # Solve the Unbalanced Gromov-Wasserstein problem
-# P_gw_unb = ot.solve_gromov(C1, C2, a=a, b=b, unbalanced=1e-2).plan
-#
-# # Solve the Unbalanced Entropic Gromov-Wasserstein problem
-# P_egw_unb = ot.solve_gromov(C1, C2, a=a, b=b, reg=1e-2, reg_type='KL', unbalanced=1e-2).plan
-#
-# # sphinx_gallery_start_ignore
-# pl.figure(1, (6, 3))
-#
-# pl.subplot(1, 2, 1)
-# plot2D_samples_mat(x1, x2, P_gw_unb)
-# pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-# pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-# pl.title("Unbalanced GW plan")
-#
-# pl.subplot(1, 2, 2)
-# plot2D_samples_mat(x1, x2, P_egw_unb)
-# pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
-# pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
-# pl.title("Unbalanced Entropic GW plan")
-# pl.show()
-# # sphinx_gallery_end_ignore
-# %%
-#
 # Large scale OT
 # --------------
 #
@@ -557,9 +549,8 @@ P_sink_lazy = sol.lazy_plan
 # recover values for Lazy plan
 P12 = P_sink_lazy[1, 2]
 P1dots = P_sink_lazy[1, :]
-P_sink_lazy_dense = P_sink_lazy[
-    :
-]  # convert to dense matrix !!warning this can be memory consuming
+# convert to dense matrix !!warning this can be memory consuming
+P_sink_lazy_dense = P_sink_lazy[:]
 
 # sphinx_gallery_start_ignore
 pl.figure(1, (3, 3))
@@ -575,8 +566,13 @@ pl.title("Lazy Sinkhorn OT plan")
 pl.show()
 
 # sphinx_gallery_end_ignore
-#
 # %%
+# .. note::
+#    The lazy Sinkhorn algorithm can be found in the old API with the
+#    :func:`ot.bregman.empirical_sinkhorn` function with parameter
+#    :code:`lazy=True`. Similarly the geoloss implementation is available
+#    with the :func:`ot.bregman.empirical_sinkhorn2_geomloss`.
+#
 #
 # the first example shows how to solve the Sinkhorn problem in a lazy way with
 # the default POT implementation. The second example shows how to solve the
@@ -585,7 +581,7 @@ pl.show()
 # samples.
 #
 # Factored and Low rank OT
-# ------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # The Sinkhorn algorithm can be implemented in a low rank version that
 # approximates the OT plan with a low rank matrix. This can be useful to
@@ -594,9 +590,9 @@ pl.show()
 #
 
 # Solve the Factored OT problem (use lazy=True for large scale)
-P_fact = ot.solve_sample(x1, x2, a, b, method="factored", rank=8).plan
+P_fact = ot.solve_sample(x1, x2, a, b, method="factored", rank=15).plan
 
-P_lowrank = ot.solve_sample(x1, x2, a, b, reg=0.1, method="lowrank", rank=8).plan
+P_lowrank = ot.solve_sample(x1, x2, a, b, reg=0.1, method="lowrank", rank=10).plan
 
 # sphinx_gallery_start_ignore
 pl.figure(1, (6, 3))
@@ -626,8 +622,11 @@ pl.title("Low rank OT plan")
 pl.show()
 
 # sphinx_gallery_end_ignore
-
 # %%
+# .. note::
+#    The factored OT problem can be solved with the old API using the
+#    :func:`ot.factored.factored_optimal_transport` function and the low rank
+#    OT problem can be solved with the :func:`ot.lowrank.lowrank_sinkhorn` function.
 #
 # Gaussian OT with Bures-Wasserstein
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -641,4 +640,106 @@ pl.show()
 # Compute the Bures-Wasserstein distance
 bw_value = ot.solve_sample(x1, x2, a, b, method="gaussian").value
 
+print(f"Exact OT loss = {loss:1.3f}")
 print(f"Bures-Wasserstein distance = {bw_value:1.3f}")
+
+# %%
+# .. note::
+#    The Gaussian Wasserstein problem can be solved with the old API using the
+#    :func:`ot.gaussian.empirical_bures_wasserstein_distance` function.
+#
+# All OT plans
+# ------------
+#
+# The figure below shows all the OT plans computed in this example.
+# The color intensity represents the amount of mass transported
+# between the samples.
+#
+
+# sphinx_gallery_start_ignore
+pl.figure(1, (9, 13))
+
+
+pl.subplot(4, 3, 1)
+plot2D_samples_mat(x1, x2, P)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.axis("off")
+pl.title("OT plan")
+
+pl.subplot(4, 3, 2)
+plot2D_samples_mat(x1, x2, P_sink)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.axis("off")
+pl.title("Sinkhorn plan")
+
+pl.subplot(4, 3, 3)
+plot2D_samples_mat(x1, x2, P_quad)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.axis("off")
+pl.title("Quadratic reg. plan")
+
+pl.subplot(4, 3, 4)
+plot2D_samples_mat(x1, x2, P_unb_kl)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.axis("off")
+pl.title("Unbalanced KL plan")
+
+pl.subplot(4, 3, 5)
+plot2D_samples_mat(x1, x2, P_unb_kl_reg)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.axis("off")
+pl.title("Unbalanced KL + reg plan")
+
+pl.subplot(4, 3, 6)
+plot2D_samples_mat(x1, x2, P_unb_l2)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.axis("off")
+pl.title("Unbalanced L2 plan")
+
+pl.subplot(4, 3, 7)
+plot2D_samples_mat(x1, x2, P_part_const)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.axis("off")
+pl.title("Partial 50% mass plan")
+
+pl.subplot(4, 3, 8)
+plot2D_samples_mat(x1, x2, P_fact)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.axis("off")
+pl.title("Factored OT plan")
+
+pl.subplot(4, 3, 9)
+plot2D_samples_mat(x1, x2, P_lowrank)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.axis("off")
+pl.title("Low rank OT plan")
+
+pl.subplot(4, 3, 10)
+plot2D_samples_mat(x1, x2, P_gw)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.axis("off")
+pl.title("GW plan")
+
+pl.subplot(4, 3, 11)
+plot2D_samples_mat(x1, x2, P_egw)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.axis("off")
+pl.title("Entropic GW plan")
+
+pl.subplot(4, 3, 12)
+plot2D_samples_mat(x1, x2, P_fgw)
+pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.axis("off")
+pl.title("Fused GW plan")
