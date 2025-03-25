@@ -198,7 +198,7 @@ pl.show()
 # directly as a matrix by the user when no samples are available.
 #
 # .. note::
-#    The examples above use the unified API of POT. The old API is still available
+#    The examples above use the unified API of POT. The classic API is still available
 #    and and OT plan and loss can be computed with the :func:`ot.emd`  and
 #    the :func:`ot.emd2` functions as below:
 #
@@ -291,7 +291,7 @@ pl.show()
 # %%
 #
 # .. note::
-#    The examples above use the unified API of POT. The old API is still available
+#    The examples above use the unified API of POT. The classic API is still available
 #    and and the entropic OT plan and loss can be computed with the
 #    :func:`ot.sinkhorn` # and :func:`ot.sinkhorn2` functions as below:
 #
@@ -343,7 +343,7 @@ pl.show()
 # sphinx_gallery_end_ignore
 # %%
 # .. note::
-#    Solving the unbalanced OT problem with the old API can be done with the
+#    Solving the unbalanced OT problem with the classic API can be done with the
 #    :func:`ot.unbalanced.sinkhorn_unbalanced` function as below:
 #
 #    .. code-block:: python
@@ -357,7 +357,7 @@ pl.show()
 # Solve the Unbalanced OT problem with TV penalization (equivalent)
 P_part_pen = ot.solve_sample(x1, x2, a, b, unbalanced=3, unbalanced_type="TV").plan
 
-# Solve the Partial OT problem with mass constraints (only old API)
+# Solve the Partial OT problem with mass constraints (only classic API)
 P_part_const = ot.partial.partial_wasserstein(a, b, C, m=0.5)  # 50% mass transported
 
 # sphinx_gallery_start_ignore
@@ -412,7 +412,7 @@ pl.show()
 # sphinx_gallery_end_ignore
 # %%
 # .. note::
-#    The Gromov-Wasserstein problem can be solved with the old API using the
+#    The Gromov-Wasserstein problem can be solved with the classic API using the
 #    :func:`ot.gromov.gromov_wasserstein` function and the Entropic
 #    Gromov-Wasserstein problem can be solved with the
 #    :func:`ot.gromov.entropic_gromov_wasserstein` function.
@@ -455,7 +455,7 @@ pl.show()
 # sphinx_gallery_end_ignore
 # %%
 # .. note::
-#    The Fused Gromov-Wasserstein problem can be solved with the old API using
+#    The Fused Gromov-Wasserstein problem can be solved with the classic API using
 #    the :func:`ot.gromov.fused_gromov_wasserstein` function and the Entropic
 #    Fused Gromov-Wasserstein problem can be solved with the
 #    :func:`ot.gromov.entropic_fused_gromov_wasserstein` function.
@@ -515,7 +515,7 @@ pl.show()
 # sphinx_gallery_end_ignore
 # %%
 # .. note::
-#    The lazy Sinkhorn algorithm can be found in the old API with the
+#    The lazy Sinkhorn algorithm can be found in the classic API with the
 #    :func:`ot.bregman.empirical_sinkhorn` function with parameter
 #    :code:`lazy=True`. Similarly the geoloss implementation is available
 #    with the :func:`ot.bregman.empirical_sinkhorn2_geomloss`.
@@ -565,7 +565,7 @@ pl.show()
 # sphinx_gallery_end_ignore
 # %%
 # .. note::
-#    The factored OT problem can be solved with the old API using the
+#    The factored OT problem can be solved with the classic API using the
 #    :func:`ot.factored.factored_optimal_transport` function and the low rank
 #    OT problem can be solved with the :func:`ot.lowrank.lowrank_sinkhorn` function.
 #
@@ -586,7 +586,7 @@ print(f"Bures-Wasserstein distance = {bw_value:1.3f}")
 
 # %%
 # .. note::
-#    The Gaussian Wasserstein problem can be solved with the old API using the
+#    The Gaussian Wasserstein problem can be solved with the classic API using the
 #    :func:`ot.gaussian.empirical_bures_wasserstein_distance` function.
 #
 # Comparing all OT plans
