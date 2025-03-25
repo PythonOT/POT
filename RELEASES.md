@@ -17,6 +17,8 @@
 - Added `ot.gaussian.bures_barycenter_gradient_descent` (PR #680)
 - Added `ot.gaussian.bures_wasserstein_distance` (PR #680)
 - `ot.gaussian.bures_wasserstein_distance` can be batched (PR #680)
+- Backend implementation of `ot.dist` for (PR #701)
+- Updated documentation Quickstart guide and User guide with new API (PR #726)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)

@@ -204,12 +204,9 @@ The examples folder contain several examples and use case for the library. The f
 
 ## Acknowledgements
 
-This toolbox has been created by
+This toolbox has been created by [Rémi Flamary](https://remi.flamary.com/) and [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/).
 
-* [Rémi Flamary](https://remi.flamary.com/)
-* [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
-
-It is currently maintained by
+It is currently maintained by :
 
 * [Rémi Flamary](https://remi.flamary.com/)
 * [Cédric Vincent-Cuaz](https://cedricvincentcuaz.github.io/)
@@ -219,8 +216,6 @@ The numerous contributors to this library are listed [here](CONTRIBUTORS.md).
 POT has benefited from the financing or manpower from the following partners:
 
 <img src="https://pythonot.github.io/master/_static/images/logo_anr.jpg" alt="ANR" style="height:60px;"/><img src="https://pythonot.github.io/master/_static/images/logo_cnrs.jpg" alt="CNRS" style="height:60px;"/><img src="https://pythonot.github.io/master/_static/images/logo_3ia.jpg" alt="3IA" style="height:60px;"/><img src="https://pythonot.github.io/master/_static/images/logo_hiparis.png" alt="Hi!PARIS" style="height:60px;"/>
-
-
 
 ## Contributions and code of conduct
 
