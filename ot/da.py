@@ -132,13 +132,13 @@ def sinkhorn_lpl1_mm(
     References
     ----------
     .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
-       "Optimal Transport for Domain Adaptation," in IEEE
-       Transactions on Pattern Analysis and Machine Intelligence ,
-       vol.PP, no.99, pp.1-1
+        "Optimal Transport for Domain Adaptation," in IEEE
+        Transactions on Pattern Analysis and Machine Intelligence ,
+        vol.PP, no.99, pp.1-1
 
     .. [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
-       Generalized conditional gradient: analysis of convergence
-       and applications. arXiv preprint arXiv:1510.06567.
+        Generalized conditional gradient: analysis of convergence
+        and applications. arXiv preprint arXiv:1510.06567.
 
     See Also
     --------
@@ -276,12 +276,12 @@ def sinkhorn_l1l2_gl(
     References
     ----------
     .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
-       "Optimal Transport for Domain Adaptation," in IEEE Transactions
-       on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+        "Optimal Transport for Domain Adaptation," in IEEE Transactions
+        on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
 
     .. [7] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
-       Generalized conditional gradient: analysis of convergence and
-       applications. arXiv preprint arXiv:1510.06567.
+        Generalized conditional gradient: analysis of convergence and
+        applications. arXiv preprint arXiv:1510.06567.
 
     See Also
     --------
@@ -423,9 +423,9 @@ def emd_laplace(
     References
     ----------
     .. [5] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
-       "Optimal Transport for Domain Adaptation," in IEEE
-       Transactions on Pattern Analysis and Machine Intelligence,
-       vol.PP, no.99, pp.1-1
+        "Optimal Transport for Domain Adaptation," in IEEE
+        Transactions on Pattern Analysis and Machine Intelligence,
+        vol.PP, no.99, pp.1-1
 
     .. [30] R. Flamary, N. Courty, D. Tuia, A. Rakotomamonjy,
         "Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching,"
@@ -743,8 +743,8 @@ class BaseTransport(BaseEstimator):
         References
         ----------
         .. [27] Ievgen Redko, Nicolas Courty, Rémi Flamary, Devis Tuia
-           "Optimal transport for multi-source domain adaptation under target shift",
-           International Conference on Artificial Intelligence and Statistics (AISTATS), 2019.
+            "Optimal transport for multi-source domain adaptation under target shift",
+            International Conference on Artificial Intelligence and Statistics (AISTATS), 2019.
 
         """
         nx = self.nx
@@ -1073,8 +1073,8 @@ class LinearGWTransport(LinearTransport):
     References
     ----------
     .. [57] Delon, J., Desolneux, A., & Salmona, A. (2022). Gromov–Wasserstein
-            distances between Gaussian distributions. Journal of Applied Probability,
-            59(4), 1178-1198.
+        distances between Gaussian distributions. Journal of Applied Probability,
+        59(4), 1178-1198.
 
     """
 
@@ -1580,17 +1580,17 @@ class SinkhornLpl1Transport(BaseTransport):
     References
     ----------
     .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
-       "Optimal Transport for Domain Adaptation," in IEEE
-       Transactions on Pattern Analysis and Machine Intelligence ,
-       vol.PP, no.99, pp.1-1
+        "Optimal Transport for Domain Adaptation," in IEEE
+        Transactions on Pattern Analysis and Machine Intelligence ,
+        vol.PP, no.99, pp.1-1
 
     .. [2] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
-       Generalized conditional gradient: analysis of convergence
-       and applications. arXiv preprint arXiv:1510.06567.
+        Generalized conditional gradient: analysis of convergence
+        and applications. arXiv preprint arXiv:1510.06567.
 
     .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
-            Regularized discrete optimal transport. SIAM Journal on Imaging
-            Sciences, 7(3), 1853-1882.
+        Regularized discrete optimal transport. SIAM Journal on Imaging
+        Sciences, 7(3), 1853-1882.
     """
 
     def __init__(
@@ -1724,8 +1724,8 @@ class EMDLaplaceTransport(BaseTransport):
     References
     ----------
     .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
-           "Optimal Transport for Domain Adaptation," in IEEE Transactions
-           on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
+        "Optimal Transport for Domain Adaptation," in IEEE Transactions
+        on Pattern Analysis and Machine Intelligence , vol.PP, no.99, pp.1-1
 
     .. [2] R. Flamary, N. Courty, D. Tuia, A. Rakotomamonjy,
         "Optimal transport with Laplacian regularization: Applications to domain adaptation and shape matching,"
@@ -1873,13 +1873,13 @@ class SinkhornL1l2Transport(BaseTransport):
     References
     ----------
     .. [1] N. Courty; R. Flamary; D. Tuia; A. Rakotomamonjy,
-       "Optimal Transport for Domain Adaptation," in IEEE
-       Transactions on Pattern Analysis and Machine Intelligence ,
-       vol.PP, no.99, pp.1-1
+        "Optimal Transport for Domain Adaptation," in IEEE
+        Transactions on Pattern Analysis and Machine Intelligence ,
+        vol.PP, no.99, pp.1-1
 
     .. [2] Rakotomamonjy, A., Flamary, R., & Courty, N. (2015).
-       Generalized conditional gradient: analysis of convergence
-       and applications. arXiv preprint arXiv:1510.06567.
+        Generalized conditional gradient: analysis of convergence
+        and applications. arXiv preprint arXiv:1510.06567.
 
     .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
             Regularized discrete optimal transport. SIAM Journal on Imaging
@@ -2352,14 +2352,13 @@ class JCPOTTransport(BaseTransport):
     References
     ----------
     .. [1] Ievgen Redko, Nicolas Courty, Rémi Flamary, Devis Tuia
-       "Optimal transport for multi-source domain adaptation under target shift",
-       International Conference on Artificial Intelligence and Statistics (AISTATS),
-       vol. 89, p.849-858, 2019.
+        "Optimal transport for multi-source domain adaptation under target shift",
+        International Conference on Artificial Intelligence and Statistics (AISTATS),
+        vol. 89, p.849-858, 2019.
 
     .. [6] Ferradans, S., Papadakis, N., Peyré, G., & Aujol, J. F. (2014).
-            Regularized discrete optimal transport. SIAM Journal on Imaging
-            Sciences, 7(3), 1853-1882.
-
+        Regularized discrete optimal transport. SIAM Journal on Imaging
+        Sciences, 7(3), 1853-1882.
 
     """
 
@@ -2524,8 +2523,8 @@ class JCPOTTransport(BaseTransport):
         References
         ----------
         .. [27] Ievgen Redko, Nicolas Courty, Rémi Flamary, Devis Tuia
-           "Optimal transport for multi-source domain adaptation under target shift",
-           International Conference on Artificial Intelligence and Statistics (AISTATS), 2019.
+            "Optimal transport for multi-source domain adaptation under target shift",
+            International Conference on Artificial Intelligence and Statistics (AISTATS), 2019.
         """
         nx = self.nx
 

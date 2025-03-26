@@ -336,6 +336,7 @@ def free_support_sinkhorn_barycenter(
     ot.bregman.sinkhorn : Entropic regularized OT solver
     ot.lp.free_support_barycenter : Barycenter solver based on Linear Programming
 
+
     .. _references-free-support-barycenter:
     References
     ----------

@@ -18,7 +18,7 @@ from ..utils import list_to_array, get_parameter_pair
 
 
 def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div="kl", regm_div="kl"):
-    """
+    r"""
     Return loss function for the L-BFGS-B solver
 
     .. note:: This function will be fed into scipy.optimize, so all input arrays must be Numpy arrays.
