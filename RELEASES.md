@@ -7,12 +7,15 @@
 - Added feature `grad=last_step` for `ot.solvers.solve` (PR #693)
 - Automatic PR labeling and release file update check (PR #704)
 - Reorganize sub-module `ot/lp/__init__.py` into separate files (PR #714)
+- Fix warning raise when import the library (PR #716)
 - Implement projected gradient descent solvers for entropic partial FGW (PR #702)
 - Fix documentation in the module `ot.gaussian` (PR #718)
 - Refactored `ot.bregman._convolutional` to improve readability (PR #709)
 - Added `ot.gaussian.bures_barycenter_gradient_descent` (PR #680)
 - Added `ot.gaussian.bures_wasserstein_distance` (PR #680)
 - `ot.gaussian.bures_wasserstein_distance` can be batched (PR #680)
+- Backend implementation of `ot.dist` for (PR #701)
+- Updated documentation Quickstart guide and User guide with new API (PR #726)
 - Implement a robust version of entropic partial wasserstein `entropic_partial_wasserstein_logscale` (PR #723)
 
 #### Closed issues
