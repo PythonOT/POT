@@ -1,0 +1,88 @@
+# CFF file for POT contributors
+
+cff-version: 1.2.0
+title: POT Python Optimal Transport
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Rémi
+    family-names: Flamary
+    affiliation: École Polytechnique
+    orcid: 'https://orcid.org/0000-0002-4212-6627'
+  - given-names: Cédric
+    family-names: Vincent-Cuaz
+    affiliation: EPFL
+  - given-names: Nicolas
+    family-names: Courty
+    affiliation: Université Bretagne Sud
+  - given-names: Alexandre
+    family-names: Gramfort
+    affiliation: INRIA
+  - given-names: Oleksii
+    family-names: Kachaiev
+    affiliation: Università degli Studi di Genova
+  - given-names: Huy
+    family-names: Quang Tran
+    affiliation: Université Bretagne Sud
+  - given-names: Laurène
+    family-names: David
+    affiliation: Institut Polytechnique de Paris
+  - given-names: Clément
+    family-names: Bonet
+    affiliation: ENSAE - CREST
+  - given-names: Nathan
+    family-names: Cassereau
+    affiliation: IDRIS-CNRS
+  - given-names: Théo
+    family-names: Gnassounou
+    affiliation: INRIA
+  - given-names: Eloi
+    family-names: Tanguy
+    affiliation: Université Paris-Cité
+  - given-names: Julie
+    family-names: Delon
+    affiliation: Université Paris-Cité
+  - given-names: Antoine
+    family-names: Collas
+    affiliation: INRIA
+  - given-names: Sonia
+    family-names: Mazelet
+    affiliation: Ecole Polytechnique
+  - given-names: Laetitia
+    family-names: Chapel
+    affiliation: Institut Agro Rennes-Angers, IRISA
+  - given-names: Tanguy
+    family-names: Kerdoncuff
+    affiliation: Université de Lyon
+  - given-names: Xizheng
+    family-names: Yu
+    affiliation: Brown University
+  - given-names: Matthew
+    family-names: Feickert
+    affiliation: University of Wisconsin-Madison
+  - given-names: Paul
+    family-names: Krzakala
+    affiliation: Telecom Paris
+  - given-names: Tianlin
+    family-names: Liu
+    affiliation: University of Basel
+  - given-names: Eduardo
+    family-names: Fernandes Montesuma
+    affiliation: Université Paris-Saclay & CEA-List
+    orcid: 'https://orcid.org/0000-0003-3850-4602'
+identifiers:
+  - type: url
+    value: 'https://github.com/PythonOT/POT'
+    description: Code
+repository-code: 'https://github.com/PythonOT/POT'
+url: 'https://pythonot.github.io/'
+keywords:
+  - optimal transport
+  - python
+  - sinkhorn
+  - wasserstein
+  - gromov-wasserstein
+license: MIT
+version: 0.9.5

@@ -2,12 +2,10 @@
 
 ## Creators and Maintainers 
 
-This toolbox has been created by
+This toolbox has been created by [Rémi Flamary](https://remi.flamary.com/)
+and [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/).
 
-* [Rémi Flamary](https://remi.flamary.com/)
-* [Nicolas Courty](http://people.irisa.fr/Nicolas.Courty/)
-
-It is currently maintained by 
+It is currently maintained by :
 
 * [Rémi Flamary](https://remi.flamary.com/)
 * [Cédric Vincent-Cuaz](https://cedricvincentcuaz.github.io/)
@@ -41,18 +39,20 @@ The contributors to this library are:
 * [Tanguy Kerdoncuff](https://hv0nnus.github.io/) (Sampled Gromov Wasserstein)
 * [Minhui Huang](https://mhhuang95.github.io) (Projection Robust Wasserstein Distance)
 * [Nathan Cassereau](https://github.com/ncassereau-idris) (Backends)
-* [Cédric Vincent-Cuaz](https://github.com/cedricvincentcuaz) (Graph Dictionary Learning, FGW, semi-relaxed FGW, quantized FGW)
+* [Cédric Vincent-Cuaz](https://github.com/cedricvincentcuaz) (Graph Dictionary Learning, FGW,
+  semi-relaxed FGW, quantized FGW, partial FGW)
 * [Eloi Tanguy](https://github.com/eloitanguy) (Generalized Wasserstein
   Barycenters, GMMOT)
 * [Camille Le Coz](https://www.linkedin.com/in/camille-le-coz-8593b91a1/) (EMD2 debug)
 * [Eduardo Fernandes Montesuma](https://eddardd.github.io/my-personal-blog/) (Free support sinkhorn barycenter)
 * [Theo Gnassounou](https://github.com/tgnassou) (OT between Gaussian distributions)
-* [Clément Bonet](https://clbonet.github.io) (Wassertstein on circle, Spherical Sliced-Wasserstein)
+* [Clément Bonet](https://clbonet.github.io) (Wasserstein on circle, Spherical Sliced-Wasserstein)
 * [Ronak Mehta](https://ronakrm.github.io) (Efficient Discrete Multi Marginal Optimal Transport Regularization)
 * [Xizheng Yu](https://github.com/x12hengyu) (Efficient Discrete Multi Marginal Optimal Transport Regularization)
 * [Sonia Mazelet](https://github.com/SoniaMaz8) (Template based GNN layers)
 * [Laurène David](https://github.com/laudavid) (Low rank sinkhorn, Low rank Gromov-Wasserstein samples)
 * [Julie Delon](https://judelo.github.io/) (GMM OT)
+* [Samuel Boïté](https://samuelbx.github.io/) (GMM OT)
 
 ## Acknowledgments
 

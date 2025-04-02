@@ -4,6 +4,7 @@ ignore: |
   .github/workflows/*.yml
   .circleci/config.yml
   codecov.yml
+  .github/labeler.yml
 
 rules:
   line-length: disable

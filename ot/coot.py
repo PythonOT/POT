@@ -148,7 +148,7 @@ def co_optimal_transport(
             duals_feature : (n_feature_x, n_feature_y) tuple, float
                 Pair of dual vectors when solving OT problem w.r.t the feature coupling.
             distances : list, float
-                List of COOT distances.
+                List of COOT distances along iterations.
 
     References
     ----------

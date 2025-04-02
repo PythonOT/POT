@@ -81,8 +81,8 @@ def weak_optimal_transport(
     References
     ----------
     .. [39] Gozlan, N., Roberto, C., Samson, P. M., & Tetali, P. (2017).
-            Kantorovich duality for general transport costs and applications.
-            Journal of Functional Analysis, 273(11), 3327-3405.
+        Kantorovich duality for general transport costs and applications.
+        Journal of Functional Analysis, 273(11), 3327-3405.
 
     See Also
     --------

@@ -1253,6 +1253,11 @@ def test_lazy_empirical_sinkhorn(nx):
         X_sb, X_tb, 1, numIterMax=numIterMax, isLazy=True, batchSize=1, log=False
     )
 
+    # test lazy plan
+    np.testing.assert_allclose(
+        G_sqe[1, 1], G_lazy[1, 1], atol=1e-03
+    )  # metric sqeuclidian
+
     # check constraints
     np.testing.assert_allclose(
         sinkhorn_sqe.sum(1), G_sqe.sum(1), atol=1e-05

@@ -8,6 +8,31 @@ import ot
 import numpy as np
 import sys
 import pytest
+import scipy
+
+lst_metrics = [
+    "euclidean",
+    "sqeuclidean",
+    "cityblock",
+    "cosine",
+    "minkowski",
+    "correlation",
+]
+
+lst_all_metrics = lst_metrics + [
+    "braycurtis",
+    "canberra",
+    "chebyshev",
+    "dice",
+    "hamming",
+    "jaccard",
+    "matching",
+    "rogerstanimoto",
+    "russellrao",
+    "sokalmichener",
+    "sokalsneath",
+    "yule",
+]
 
 
 def get_LazyTensor(nx):
@@ -185,7 +210,7 @@ def test_dist():
 
     assert D4[0, 1] == D4[1, 0]
 
-    # dist shoul return squared euclidean
+    # dist should return squared euclidean
     np.testing.assert_allclose(D, D2, atol=1e-14)
     np.testing.assert_allclose(D, D3, atol=1e-14)
 
@@ -229,21 +254,45 @@ def test_dist():
     with pytest.raises(ValueError):
         ot.dist(x, x, metric="wminkowski")
 
+    with pytest.raises(ValueError):
+        ot.dist(x, x, metric="fakeone")
 
-def test_dist_backends(nx):
+
+@pytest.mark.parametrize("metric", lst_metrics)
+def test_dist_backends(nx, metric):
     n = 100
     rng = np.random.RandomState(0)
     x = rng.randn(n, 2)
     x1 = nx.from_numpy(x)
 
-    lst_metric = ["euclidean", "sqeuclidean"]
+    # force numpy backend
+    D0 = ot.dist(x, x, metric=metric, backend="numpy")
 
-    for metric in lst_metric:
-        D = ot.dist(x, x, metric=metric)
-        D1 = ot.dist(x1, x1, metric=metric)
+    # default backend
+    D = ot.dist(x, x, metric=metric)
 
-        # low atol because jax forces float32
-        np.testing.assert_allclose(D, nx.to_numpy(D1), atol=1e-5)
+    # force nx arrays
+    D1 = ot.dist(x1, x1, metric=metric)
+
+    # low atol because jax forces float32
+    np.testing.assert_allclose(D, nx.to_numpy(D1), atol=1e-5)
+    np.testing.assert_allclose(D, D0, atol=1e-5)
+
+
+@pytest.mark.parametrize("metric", lst_all_metrics)
+def test_dist_vs_cdist(metric):
+    n = 10
+
+    rng = np.random.RandomState(0)
+    x = rng.randn(n, 2)
+    y = rng.randn(n + 1, 2)
+
+    D = ot.dist(x, y, metric=metric)
+    Dt = ot.dist(x, y, metric=metric, use_tensor=True)
+    D2 = scipy.spatial.distance.cdist(x, y, metric=metric)
+
+    np.testing.assert_allclose(D, D2, atol=1e-15)
+    np.testing.assert_allclose(D, Dt, atol=1e-15)
 
 
 def test_dist0():
@@ -655,3 +704,30 @@ def test_kl_div(nx):
     kl_mass = nx.kl_div(xb, yb, True)
     recovered_kl = kl_mass - nx.sum(yb - xb)
     np.testing.assert_allclose(kl, recovered_kl)
+
+
+def test_exp_bures(nx):
+    d = 2
+
+    rng = np.random.RandomState(42)
+    X = rng.randn(d, d)
+    z = rng.randn(d)
+    X, z = nx.from_numpy(X, z)
+    S = X + nx.transpose(X)
+
+    Sigma = nx.eye(d, type_as=S)
+
+    Lambda = ot.utils.exp_bures(Sigma, S)
+
+    # asserst SPD
+    np.testing.assert_array_less(np.zeros(1), nx.to_numpy(z.T @ Lambda @ z))
+
+    # OT map from Lambda to Sigma
+    Lambda12 = nx.sqrtm(Lambda)
+    Lambda12inv = nx.inv(Lambda12)
+    M = nx.sqrtm(nx.einsum("ij, jk, kl -> il", Lambda12, Sigma, Lambda12))
+    T = nx.einsum("ij, jk, kl -> il", Lambda12inv, M, Lambda12inv)
+
+    # exp_\Lambda(log_\Lambda(Sigma)) = Sigma
+    Sigma_exp = ot.utils.exp_bures(Lambda, T - nx.eye(d, type_as=T))
+    np.testing.assert_allclose(nx.to_numpy(Sigma), nx.to_numpy(Sigma_exp), atol=1e-5)

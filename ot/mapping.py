@@ -31,6 +31,7 @@ def nearest_brenier_potential_fit(
     its=100,
     log=False,
     init_method="barycentric",
+    solver=None,
 ):
     r"""
     Computes optimal values and gradients at X for a strongly convex potential :math:`\varphi` with Lipschitz gradients
@@ -87,7 +88,10 @@ def nearest_brenier_potential_fit(
     log : bool, optional
         record log if true
     init_method : str, optional
-        'target' initialises G=V, 'barycentric' initialises at the image of X by the barycentric projection
+        'target' initialises G=V, 'barycentric' initialises at the image of X by
+        the barycentric projection
+    solver : str, optional
+        The CVXPY solver to use
 
     Returns
     -------
@@ -173,7 +177,7 @@ def nearest_brenier_potential_fit(
                         - c3 * (G[j] - G[i]).T @ (X[j] - X[i])
                     ]
         problem = cvx.Problem(objective, constraints)
-        problem.solve(solver=cvx.ECOS)
+        problem.solve(solver=solver)
         phi_val, G_val = phi.value, G.value
         it_log_dict = {
             "solve_time": problem.solver_stats.solve_time,
@@ -231,6 +235,7 @@ def nearest_brenier_potential_predict_bounds(
     strongly_convex_constant=0.6,
     gradient_lipschitz_constant=1.4,
     log=False,
+    solver=None,
 ):
     r"""
     Compute the values of the lower and upper bounding potentials at the input points Y, using the potential optimal
@@ -290,6 +295,8 @@ def nearest_brenier_potential_predict_bounds(
         constant for the Lipschitz property of the input gradient G, defaults to 1.4
     log : bool, optional
         record log if true
+    solver : str, optional
+        The CVXPY solver to use
 
     Returns
     -------
@@ -368,7 +375,7 @@ def nearest_brenier_potential_predict_bounds(
                 - c3 * (G[j] - G_l_y).T @ (X[j] - Y[y_idx])
             ]
         problem = cvx.Problem(objective, constraints)
-        problem.solve(solver=cvx.ECOS)
+        problem.solve(solver=solver)
         phi_lu[0, y_idx] = phi_l_y.value
         G_lu[0, y_idx] = G_l_y.value
         if log:
@@ -395,7 +402,7 @@ def nearest_brenier_potential_predict_bounds(
                 - c3 * (G_u_y - G[i]).T @ (Y[y_idx] - X[i])
             ]
         problem = cvx.Problem(objective, constraints)
-        problem.solve(solver=cvx.ECOS)
+        problem.solve(solver=solver)
         phi_lu[1, y_idx] = phi_u_y.value
         G_lu[1, y_idx] = G_u_y.value
         if log:
@@ -736,8 +743,8 @@ def joint_OT_mapping_kernel(
     References
     ----------
     .. [8] M. Perrot, N. Courty, R. Flamary, A. Habrard,
-       "Mapping estimation for discrete optimal transport",
-       Neural Information Processing Systems (NIPS), 2016.
+        "Mapping estimation for discrete optimal transport",
+        Neural Information Processing Systems (NIPS), 2016.
 
     See Also
     --------
