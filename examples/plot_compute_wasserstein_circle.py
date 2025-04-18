@@ -102,16 +102,22 @@ xs2 = np.concatenate([xs[None] for k in range(200)], axis=0) / (2 * np.pi)
 
 L_w2_circle = np.zeros((n_try, 200))
 L_w2 = np.zeros((n_try, 200))
+L_lcot = np.zeros((n_try, 200))
 
 for i in range(n_try):
     w2_circle = ot.wasserstein_circle(xs2.T, xts2[i].T, p=2)
     w2 = ot.wasserstein_1d(xs2.T, xts2[i].T, p=2)
+    w_lcot = ot.linear_circular_ot(xs2.T, xts2[i].T, p=2)
 
     L_w2_circle[i] = w2_circle
     L_w2[i] = w2
+    L_lcot[i] = w_lcot
 
 m_w2_circle = np.mean(L_w2_circle, axis=0)
 std_w2_circle = np.std(L_w2_circle, axis=0)
+
+m_w2_lcot = np.mean(L_lcot, axis=0)
+std_w2_lcot = np.std(L_lcot, axis=0)
 
 m_w2 = np.mean(L_w2, axis=0)
 std_w2 = np.std(L_w2, axis=0)
@@ -127,6 +133,13 @@ pl.fill_between(
 pl.plot(mu_targets / (2 * np.pi), m_w2, label="Euclidean Wasserstein")
 pl.fill_between(
     mu_targets / (2 * np.pi), m_w2 - 2 * std_w2, m_w2 + 2 * std_w2, alpha=0.5
+)
+pl.plot(mu_targets / (2 * np.pi), m_w2_lcot, label="Linear COT")
+pl.fill_between(
+    mu_targets / (2 * np.pi),
+    m_w2_lcot - 2 * std_w2_lcot,
+    m_w2_lcot + 2 * std_w2_lcot,
+    alpha=0.5,
 )
 pl.vlines(
     x=[mu1 / (2 * np.pi)],

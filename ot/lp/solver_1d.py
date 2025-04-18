@@ -1003,10 +1003,10 @@ def wasserstein_circle(
     """
     assert p >= 1, "The OT loss is only valid for p>=1, {p} was given".format(p=p)
 
-    if p == 1:
-        return wasserstein1_circle(
-            u_values, v_values, u_weights, v_weights, require_sort
-        )
+    # if p == 1:
+    #     return wasserstein1_circle(
+    #         u_values, v_values, u_weights, v_weights, require_sort
+    #     )
 
     return binary_search_circle(
         u_values,
@@ -1095,3 +1095,92 @@ def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
     cpt2 = nx.sum(u_values * u_weights * ns, axis=0)
 
     return cpt1 - u_mean**2 + cpt2 + 1 / 12
+
+
+def linear_circular_embedding(x, u_values, u_weights=None):
+    """
+    Inputs:
+    - x: shape (m,), points where we evaluate the embedding
+    - u_values: shape (n, ...) (coordinates on [0,1[)
+    - u_weights: shape (n, ...)
+
+    Output:
+    - embedding of shape (m, ...)
+    """
+    if u_weights is not None:
+        nx = get_backend(u_values, u_weights)
+    else:
+        nx = get_backend(u_values)
+
+    n = u_values.shape[0]
+    u_values = u_values % 1
+
+    if len(u_values.shape) == 1:
+        u_values = nx.reshape(u_values, (n, 1))
+
+    if u_weights is None:
+        u_weights = nx.full(u_values.shape, 1.0 / n, type_as=u_values)
+    elif u_weights.ndim != u_values.ndim:
+        u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
+
+    u_values = nx.sort(u_values, 0)
+    u_cdf = nx.cumsum(u_weights, 0)
+    u_cdf = nx.zero_pad(u_cdf, [(1, 0), (0, 0)])
+
+    q_s = (
+        x[:, None] - nx.sum(u_values * u_weights, axis=0)[None] + 0.5
+    )  # shape (m, ...)
+    u_quantiles = quantile_function(
+        q_s, u_cdf, u_values
+    )  # use quantile_function or Interp1d ?
+    return u_quantiles
+
+
+def linear_circular_ot(u_values, v_values, u_weights=None, v_weights=None, p=2):
+    """
+        LCOT from [1]
+
+    Parameters
+    ----------
+
+        Inputs:
+        - u_values: shape (n, ...) - samples in the source domain (coordinates on [0,1[)
+        - v_values: shape (m, ...) - samples in the target domain (coordinates on [0,1[)
+        - u_weights: shape (n, ...), optional - weights of the first empirical distribution, if None then uniform weights are used
+        - v_weights, shape (m, ...), optional - weights of the second empirical distribution, if None then uniform weights are used
+
+    Returns
+    -------
+        Outputs:
+        - return batchs LCOT
+
+    Examples
+    --------
+
+    References
+    ----------
+    .. [76] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). LCOT: Linear Circular Optimal Transport. International Conference on Learning Representations.
+    """
+    if u_weights is not None:
+        nx = get_backend(u_values, u_weights)
+    else:
+        nx = get_backend(u_values)
+
+    n = u_values.shape[0]
+    u_values = u_values % 1
+
+    if len(u_values.shape) == 1:
+        u_values = nx.reshape(u_values, (n, 1))
+
+    if u_weights is None:
+        u_weights = nx.full(u_values.shape, 1.0 / n, type_as=u_values)
+    elif u_weights.ndim != u_values.ndim:
+        u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
+
+    unif_s1 = nx.linspace(0, 1, 100)
+
+    emb_u = linear_circular_embedding(unif_s1, u_values, u_weights)
+    emb_v = linear_circular_embedding(unif_s1, v_values, v_weights)
+
+    dist_uv = nx.minimum(nx.abs(emb_u - emb_v), 1 - nx.abs(emb_u - emb_v))
+    return nx.mean(dist_uv**p, axis=0)

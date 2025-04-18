@@ -48,6 +48,7 @@ from .lp import (
     binary_search_circle,
     wasserstein_circle,
     semidiscrete_wasserstein2_unif_circle,
+    linear_circular_ot,
 )
 from .bregman import sinkhorn, sinkhorn2, barycenter
 from .unbalanced import sinkhorn_unbalanced, barycenter_unbalanced, sinkhorn_unbalanced2
@@ -129,6 +130,7 @@ __all__ = [
     "binary_search_circle",
     "wasserstein_circle",
     "semidiscrete_wasserstein2_unif_circle",
+    "linear_circular_ot",
     "sliced_wasserstein_sphere_unif",
     "lowrank_sinkhorn",
     "lowrank_gromov_wasserstein_samples",

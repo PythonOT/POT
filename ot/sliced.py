@@ -415,7 +415,7 @@ def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log
     where
 
     - :math:`\mu_n=\sum_{i=1}^n \alpha_i \delta_{x_i}`
-    - :math:`\nu=\mathrm{Unif}(S^1)`
+    - :math:`\nu=\mathrm{Unif}(S^{d-1})`
 
     Parameters
     ----------
