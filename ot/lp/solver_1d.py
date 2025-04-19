@@ -1097,7 +1097,7 @@ def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
     return cpt1 - u_mean**2 + cpt2 + 1 / 12
 
 
-def linear_circular_embedding(x, u_values, u_weights=None):
+def linear_circular_embedding(x, u_values, u_weights=None, require_sort=True):
     """
     Inputs:
     - x: shape (m,), points where we evaluate the embedding
@@ -1123,20 +1123,24 @@ def linear_circular_embedding(x, u_values, u_weights=None):
     elif u_weights.ndim != u_values.ndim:
         u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
 
-    u_values = nx.sort(u_values, 0)
+    if require_sort:
+        u_sorter = nx.argsort(u_values, 0)
+        u_values = nx.take_along_axis(u_values, u_sorter, 0)
+        u_weights = nx.take_along_axis(u_weights, u_sorter, 0)
+
     u_cdf = nx.cumsum(u_weights, 0)
     u_cdf = nx.zero_pad(u_cdf, [(1, 0), (0, 0)])
 
     q_s = (
         x[:, None] - nx.sum(u_values * u_weights, axis=0)[None] + 0.5
     )  # shape (m, ...)
-    u_quantiles = quantile_function(
-        q_s, u_cdf, u_values
-    )  # use quantile_function or Interp1d ?
-    return u_quantiles
+
+    u_quantiles = quantile_function(q_s % 1, u_cdf, u_values)
+
+    return (u_quantiles - x[:, None]) % 1
 
 
-def linear_circular_ot(u_values, v_values, u_weights=None, v_weights=None, p=2):
+def linear_circular_ot(u_values, v_values=None, u_weights=None, v_weights=None, p=2):
     """
         LCOT from [1]
 
@@ -1145,7 +1149,7 @@ def linear_circular_ot(u_values, v_values, u_weights=None, v_weights=None, p=2):
 
         Inputs:
         - u_values: shape (n, ...) - samples in the source domain (coordinates on [0,1[)
-        - v_values: shape (m, ...) - samples in the target domain (coordinates on [0,1[)
+        - v_values: shape (m, ...) , optional- samples in the target domain (coordinates on [0,1[), if None, compute distance against uniform distribution
         - u_weights: shape (n, ...), optional - weights of the first empirical distribution, if None then uniform weights are used
         - v_weights, shape (m, ...), optional - weights of the second empirical distribution, if None then uniform weights are used
 
@@ -1177,10 +1181,14 @@ def linear_circular_ot(u_values, v_values, u_weights=None, v_weights=None, p=2):
     elif u_weights.ndim != u_values.ndim:
         u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
 
-    unif_s1 = nx.linspace(0, 1, 100)
+    unif_s1 = nx.linspace(0, 1, 101)[:, None]
 
     emb_u = linear_circular_embedding(unif_s1, u_values, u_weights)
-    emb_v = linear_circular_embedding(unif_s1, v_values, v_weights)
 
+    if v_values is None:
+        dist_u = nx.minimum(nx.abs(emb_u), 1 - nx.abs(emb_u))
+        return nx.mean(dist_u**p, axis=0)
+
+    emb_v = linear_circular_embedding(unif_s1, v_values, v_weights)
     dist_uv = nx.minimum(nx.abs(emb_u - emb_v), 1 - nx.abs(emb_u - emb_v))
     return nx.mean(dist_uv**p, axis=0)
