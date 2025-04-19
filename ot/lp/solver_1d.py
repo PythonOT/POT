@@ -933,8 +933,8 @@ def wasserstein_circle(
     eps=1e-6,
     require_sort=True,
 ):
-    r"""Computes the Wasserstein distance on the circle using either [45] for p=1 or
-    the binary search algorithm proposed in [44] otherwise.
+    r"""Computes the Wasserstein distance on the circle using either :ref:`[45] <references-wasserstein-circle>` for p=1 or
+    the binary search algorithm proposed in :ref:`[44] <references-wasserstein-circle>` otherwise.
     Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
     takes the value modulo 1.
     If the values are on :math:`S^1\subset\mathbb{R}^2`, it requires to first find the coordinates
@@ -996,6 +996,8 @@ def wasserstein_circle(
     >>> wasserstein_circle(u.T, v.T)
     array([0.1])
 
+
+    .. _references-wasserstein-circle:
     References
     ----------
     .. [44] Hundrieser, Shayan, Marcel Klatt, and Axel Munk. "The statistics of circular optimal transport." Directional Statistics for Innovative Applications: A Bicentennial Tribute to Florence Nightingale. Singapore: Springer Nature Singapore, 2022. 57-82.
@@ -1042,7 +1044,7 @@ def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
     .. math::
         u = \frac{\pi + \mathrm{atan2}(-x_2,-x_1)}{2\pi},
 
-    using e.g. ot.utils.get_coordinate_circle(x)
+    using e.g. ot.utils.get_coordinate_circle(x).
 
     Parameters
     ----------
@@ -1098,14 +1100,32 @@ def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
 
 
 def linear_circular_embedding(x, u_values, u_weights=None, require_sort=True):
-    """
-    Inputs:
-    - x: shape (m,), points where we evaluate the embedding
-    - u_values: shape (n, ...) (coordinates on [0,1[)
-    - u_weights: shape (n, ...)
+    r"""Returns the embedding :math:`\hat{\mu}(x)` of Linear Circular OT with reference
+    :math:`\eta=\mathrm{Unif}(S^1)` evaluated in :math:`x`.
 
-    Output:
-    - embedding of shape (m, ...)
+    For any :math:`x\in [0,1[`, the embedding is given by (see :ref:`[76] <references-lcot>`)
+
+    .. math``
+        \hat{\mu}(x) = F_{\mu}^{-1}\big(x - \int z\mathrm{d}\mu(z) + \frac12) - x.
+
+    Parameters
+    ----------
+    x : ndary, shape (m,)
+        Points in [0,1[ where to evaluate the embedding
+    u_values : ndarray, shape (n, ...)
+        samples in the source domain (coordinates on [0,1[)
+    u_weights : ndarray, shape (n, ...), optional
+        samples weights in the source domain
+
+    Returns
+    -------
+    embedding: ndarray of shape (m, ...)
+        Embedding evaluated at :math:`x`
+
+    .. _references-lcot:
+    References
+    ----------
+    .. [76] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). LCOT: Linear Circular Optimal Transport. International Conference on Learning Representations.
     """
     if u_weights is not None:
         nx = get_backend(u_values, u_weights)
@@ -1140,27 +1160,47 @@ def linear_circular_embedding(x, u_values, u_weights=None, require_sort=True):
     return (u_quantiles - x[:, None]) % 1
 
 
-def linear_circular_ot(u_values, v_values=None, u_weights=None, v_weights=None, p=2):
-    """
-        LCOT from [1]
+def linear_circular_ot(u_values, v_values=None, u_weights=None, v_weights=None):
+    r"""Computes the Linear Circular Optimal Transport distance from :ref:`[76] <references-lcot>` using :math:`\eta=\mathrm{Unif}(S^1)`
+    as reference measure.
+    Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
+    takes the value modulo 1.
+    If the values are on :math:`S^1\subset\mathbb{R}^2`, it is required to first find the coordinates
+    using e.g. the atan2 function.
+
+    General loss returned:
+
+    .. math::
+        \mathrm{LCOT}_2^2(\mu, \nu) = \int_0^1 d_{S^1}\big(\hat{\mu}(t), \hat{\nu}(t)\big)^2\ \mathrm{d}t
+
+    where :math:`\hat{\mu}(x)=F_{\mu}^{-1}(x-\int z\mathrm{d}\mu(z)+\frac12) - x` for all :math:`x\in [0,1[`,
+    and :math:`d_{S^1}(x,y)=\min(|x-y|, 1-|x-y|)` for :math:`x,y\in [0,1[`.
 
     Parameters
     ----------
-
-        Inputs:
-        - u_values: shape (n, ...) - samples in the source domain (coordinates on [0,1[)
-        - v_values: shape (m, ...) , optional- samples in the target domain (coordinates on [0,1[), if None, compute distance against uniform distribution
-        - u_weights: shape (n, ...), optional - weights of the first empirical distribution, if None then uniform weights are used
-        - v_weights, shape (m, ...), optional - weights of the second empirical distribution, if None then uniform weights are used
+    u_values : ndarray, shape (n, ...)
+        samples in the source domain (coordinates on [0,1[)
+    v_values : ndarray, shape (n, ...), optional
+        samples in the target domain (coordinates on [0,1[), if None, compute distance against uniform distribution
+    u_weights : ndarray, shape (n, ...), optional
+        samples weights in the source domain
+    v_weights : ndarray, shape (n, ...), optional
+        samples weights in the target domain
 
     Returns
     -------
-        Outputs:
-        - return batchs LCOT
+    loss: float
+        Cost associated to the linear optimal transportation
 
     Examples
     --------
+    >>> u = np.array([[0.2,0.5,0.8]])%1
+    >>> v = np.array([[0.4,0.5,0.7]])%1
+    >>> linear_circular_ot(u.T, v.T)
+    array([0.0127])
 
+
+    .. _references-lcot:
     References
     ----------
     .. [76] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). LCOT: Linear Circular Optimal Transport. International Conference on Learning Representations.
@@ -1187,8 +1227,8 @@ def linear_circular_ot(u_values, v_values=None, u_weights=None, v_weights=None, 
 
     if v_values is None:
         dist_u = nx.minimum(nx.abs(emb_u), 1 - nx.abs(emb_u))
-        return nx.mean(dist_u**p, axis=0)
+        return nx.mean(dist_u**2, axis=0)
 
     emb_v = linear_circular_embedding(unif_s1, v_values, v_weights)
     dist_uv = nx.minimum(nx.abs(emb_u - emb_v), 1 - nx.abs(emb_u - emb_v))
-    return nx.mean(dist_uv**p, axis=0)
+    return nx.mean(dist_uv**2, axis=0)
