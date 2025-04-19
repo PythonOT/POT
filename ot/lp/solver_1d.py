@@ -1181,7 +1181,7 @@ def linear_circular_ot(u_values, v_values=None, u_weights=None, v_weights=None, 
     elif u_weights.ndim != u_values.ndim:
         u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
 
-    unif_s1 = nx.linspace(0, 1, 101)[:, None]
+    unif_s1 = nx.linspace(0, 1, 101)[:-1]
 
     emb_u = linear_circular_embedding(unif_s1, u_values, u_weights)
 
