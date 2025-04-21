@@ -68,7 +68,7 @@ from .gromov import (
 )
 from .weak import weak_optimal_transport
 from .factored import factored_optimal_transport
-from .solvers import solve, solve_gromov, solve_sample
+from .solvers import solve, solve_gromov, solve_sample, bary_sample
 from .lowrank import lowrank_sinkhorn
 
 # utils functions
@@ -116,6 +116,7 @@ __all__ = [
     "solve",
     "solve_gromov",
     "solve_sample",
+    "bary_sample",
     "smooth",
     "stochastic",
     "unbalanced",

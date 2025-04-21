@@ -1310,6 +1310,177 @@ class OTResult:
         """
 
 
+class BaryResult:
+    """Base class for OT barycenter results.
+
+    Parameters
+    ----------
+    X : array-like, shape (`n`, `d`)
+        Barycenter features.
+    C: array-like, shape (`n`, `n`)
+        Barycenter structure for Gromov Wasserstein solutions.
+    b : array-like, shape (`n`,)
+        Barycenter weights.
+    value : float, array-like
+        Full transport cost, including possible regularization terms and
+        quadratic term for Gromov Wasserstein solutions.
+    value_linear : float, array-like
+        The linear part of the transport cost, i.e. the product between the
+        transport plan and the cost.
+    value_quad : float, array-like
+        The quadratic part of the transport cost for Gromov-Wasserstein
+        solutions.
+    log : dict
+        Dictionary containing potential information about the solver.
+    list_res: list of OTResult
+        List of results for the individual OT matching.
+
+    Attributes
+    ----------
+
+    X : array-like, shape (`n`, `d`)
+        Barycenter features.
+    C: array-like, shape (`n`, `n`)
+        Barycenter structure for Gromov Wasserstein solutions.
+    b : array-like, shape (`n`,)
+        Barycenter weights.
+    value : float, array-like
+        Full transport cost, including possible regularization terms and
+        quadratic term for Gromov Wasserstein solutions.
+    value_linear : float, array-like
+        The linear part of the transport cost, i.e. the product between the
+        transport plan and the cost.
+    value_quad : float, array-like
+        The quadratic part of the transport cost for Gromov-Wasserstein
+        solutions.
+    log : dict
+        Dictionary containing potential information about the solver.
+    list_res: list of OTResult
+        List of results for the individual OT matching.
+    backend : Backend
+        Backend used to compute the results.
+    """
+
+    def __init__(
+        self,
+        X=None,
+        C=None,
+        b=None,
+        value=None,
+        value_linear=None,
+        value_quad=None,
+        log=None,
+        list_res=None,
+        backend=None,
+    ):
+        self._X = X
+        self._C = C
+        self._b = b
+        self._value = value
+        self._value_linear = value_linear
+        self._value_quad = value_quad
+        self._log = log
+        self._list_res = list_res
+        self._backend = backend if backend is not None else NumpyBackend()
+
+    def __repr__(self):
+        s = "BaryResult("
+        if self._value is not None:
+            s += "value={},".format(self._value)
+        if self._value_linear is not None:
+            s += "value_linear={},".format(self._value_linear)
+        if self._X is not None:
+            s += "X={}(shape={}),".format(self._X.__class__.__name__, self._X.shape)
+        if self._C is not None:
+            s += "C={}(shape={}),".format(self._C.__class__.__name__, self._C.shape)
+        if self._b is not None:
+            s += "b={}(shape={}),".format(self._b.__class__.__name__, self._b.shape)
+        if s[-1] != "(":
+            s = s[:-1] + ")"
+        else:
+            s = s + ")"
+        return s
+
+    # Barycerters --------------------------------
+
+    @property
+    def X(self):
+        """Barycenter features."""
+        return self._X
+
+    @property
+    def C(self):
+        """Barycenter structure for Gromov Wasserstein solutions."""
+        return self._C
+
+    @property
+    def b(self):
+        """Barycenter weights."""
+        return self._b
+
+    # Loss values --------------------------------
+
+    @property
+    def value(self):
+        """Full transport cost, including possible regularization terms and
+        quadratic term for Gromov Wasserstein solutions."""
+        return self._value
+
+    @property
+    def value_linear(self):
+        """The "minimal" transport cost, i.e. the product between the transport plan and the cost."""
+        return self._value_linear
+
+    @property
+    def value_quad(self):
+        """The quadratic part of the transport cost for Gromov-Wasserstein solutions."""
+        return self._value_quad
+
+    # List of OTResult objects -------------------------
+
+    @property
+    def list_res(self):
+        """List of results for the individual OT matching."""
+        return self._list_res
+
+    @property
+    def status(self):
+        """Optimization status of the solver."""
+        return self._status
+
+    @property
+    def log(self):
+        """Dictionary containing potential information about the solver."""
+        return self._log
+
+    # Miscellaneous --------------------------------
+
+    @property
+    def citation(self):
+        """Appropriate citation(s) for this result, in plain text and BibTex formats."""
+
+        # The string below refers to the POT library:
+        # successor methods may concatenate the relevant references
+        # to the original definitions, solvers and underlying numerical backends.
+        return """POT library:
+
+            POT Python Optimal Transport library, Journal of Machine Learning Research, 22(78):1−8, 2021.
+            Website: https://pythonot.github.io/
+            Rémi Flamary, Nicolas Courty, Alexandre Gramfort, Mokhtar Z. Alaya, Aurélie Boisbunon, Stanislas Chambon, Laetitia Chapel, Adrien Corenflos, Kilian Fatras, Nemo Fournier, Léo Gautheron, Nathalie T.H. Gayraud, Hicham Janati, Alain Rakotomamonjy, Ievgen Redko, Antoine Rolet, Antony Schutz, Vivien Seguy, Danica J. Sutherland, Romain Tavenard, Alexander Tong, Titouan Vayer;
+
+            @article{flamary2021pot,
+              author  = {R{\'e}mi Flamary and Nicolas Courty and Alexandre Gramfort and Mokhtar Z. Alaya and Aur{\'e}lie Boisbunon and Stanislas Chambon and Laetitia Chapel and Adrien Corenflos and Kilian Fatras and Nemo Fournier and L{\'e}o Gautheron and Nathalie T.H. Gayraud and Hicham Janati and Alain Rakotomamonjy and Ievgen Redko and Antoine Rolet and Antony Schutz and Vivien Seguy and Danica J. Sutherland and Romain Tavenard and Alexander Tong and Titouan Vayer},
+              title   = {{POT}: {Python} {Optimal} {Transport}},
+              journal = {Journal of Machine Learning Research},
+              year    = {2021},
+              volume  = {22},
+              number  = {78},
+              pages   = {1-8},
+              url     = {http://jmlr.org/papers/v22/20-451.html}
+            }
+        """
+
+
 class LazyTensor(object):
     """A lazy tensor is a tensor that is not stored in memory. Instead, it is
     defined by a function that computes its values on the fly from slices.
