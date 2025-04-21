@@ -107,7 +107,7 @@ L_lcot = np.zeros((n_try, 200))
 for i in range(n_try):
     w2_circle = ot.wasserstein_circle(xs2.T, xts2[i].T, p=2)
     w2 = ot.wasserstein_1d(xs2.T, xts2[i].T, p=2)
-    w_lcot = ot.linear_circular_ot(xs2.T, xts2[i].T, p=2)
+    w_lcot = ot.linear_circular_ot(xs2.T, xts2[i].T)
 
     L_w2_circle[i] = w2_circle
     L_w2[i] = w2
