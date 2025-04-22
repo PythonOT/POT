@@ -1948,6 +1948,7 @@ def _bary_sample_bcd(
     w_s,
     metric,
     inner_solver,
+    update_masses,
     max_iter_bary,
     tol_bary,
     verbose,
@@ -1972,6 +1973,8 @@ def _bary_sample_bcd(
         Metric to use for the cost matrix, by default "sqeuclidean"
     inner_solver : callable
         Function to solve the inner OT problem
+    update_masses : bool
+        Update the masses of the barycenter, depending on whether balanced or unbalanced OT is used.
     max_iter_bary : int
         Maximum number of iterations for the barycenter
     tol_bary : float
@@ -2003,6 +2006,10 @@ def _bary_sample_bcd(
         # Solve the inner OT problem for each source distribution
         list_res = [inner_solver(X_s[k], X, a_s[k], b) for k in range(n_samples)]
 
+        # Update the estimated barycenter weights in unbalanced cases
+        if update_masses:
+            b = sum([w_s[k] * list_res[k].plan.sum(axis=0) for k in range(n_samples)])
+            inv_b = 1.0 / b
         # Update the barycenter samples
         if metric in ["sqeuclidean", "euclidean"]:
             X_new = (
@@ -2461,6 +2468,8 @@ def bary_sample(
                 verbose=False,
             )
 
+        # compute the barycenter using BCD
+        update_masses = unbalanced is not None
         res = _bary_sample_bcd(
             X_s,
             X_init,
@@ -2469,6 +2478,7 @@ def bary_sample(
             w_s,
             metric,
             inner_solver,
+            update_masses,
             max_iter_bary,
             tol_bary,
             verbose,
