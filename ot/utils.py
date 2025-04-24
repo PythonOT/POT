@@ -1334,6 +1334,8 @@ class BaryResult:
         Dictionary containing potential information about the solver.
     list_res: list of OTResult
         List of results for the individual OT matching.
+    status : int or str
+        Status of the solver.
 
     Attributes
     ----------
@@ -1357,6 +1359,8 @@ class BaryResult:
         Dictionary containing potential information about the solver.
     list_res: list of OTResult
         List of results for the individual OT matching.
+    status : int or str
+        Status of the solver.
     backend : Backend
         Backend used to compute the results.
     """
@@ -1371,6 +1375,7 @@ class BaryResult:
         value_quad=None,
         log=None,
         list_res=None,
+        status=None,
         backend=None,
     ):
         self._X = X
@@ -1381,6 +1386,7 @@ class BaryResult:
         self._value_quad = value_quad
         self._log = log
         self._list_res = list_res
+        self._status = status
         self._backend = backend if backend is not None else NumpyBackend()
 
     def __repr__(self):

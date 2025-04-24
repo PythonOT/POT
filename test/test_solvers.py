@@ -741,12 +741,16 @@ def assert_allclose_bary_sol(sol1, sol2):
 @pytest.skip_backend("jax", reason="test very slow with jax backend")
 @pytest.skip_backend("tf", reason="test very slow with tf backend")
 @pytest.mark.parametrize(
-    "reg,reg_type,unbalanced,unbalanced_type",
-    itertools.product(lst_reg, lst_reg_type, lst_unbalanced, lst_unbalanced_type),
+    "reg,reg_type,unbalanced,unbalanced_type,warmstart",
+    itertools.product(
+        lst_reg, lst_reg_type, lst_unbalanced, lst_unbalanced_type, [True, False]
+    ),
 )
-def test_bary_sample(nx, reg, reg_type, unbalanced, unbalanced_type):
+def test_bary_sample_free_support(
+    nx, reg, reg_type, unbalanced, unbalanced_type, warmstart
+):
     # test bary_sample when is_Lazy = False
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState()
 
     K = 3  # number of distributions
     ns = rng.randint(10, 20, K)  # number of samples within each distribution
@@ -781,7 +785,8 @@ def test_bary_sample(nx, reg, reg_type, unbalanced, unbalanced_type):
             reg_type=reg_type,
             unbalanced=unbalanced,
             unbalanced_type=unbalanced_type,
-            max_iter_bary=4,
+            warmstart=warmstart,
+            max_iter_bary=3,
             tol_bary=1e-3,
             verbose=True,
         )
@@ -798,7 +803,8 @@ def test_bary_sample(nx, reg, reg_type, unbalanced, unbalanced_type):
             reg_type=reg_type,
             unbalanced=unbalanced,
             unbalanced_type=unbalanced_type,
-            max_iter_bary=4,
+            warmstart=warmstart,
+            max_iter_bary=3,
             tol_bary=1e-3,
             verbose=True,
         )
@@ -831,7 +837,8 @@ def test_bary_sample(nx, reg, reg_type, unbalanced, unbalanced_type):
             reg_type=reg_type,
             unbalanced=unbalanced,
             unbalanced_type=unbalanced_type,
-            max_iter_bary=4,
+            warmstart=warmstart,
+            max_iter_bary=3,
             tol_bary=1e-3,
             verbose=True,
         )

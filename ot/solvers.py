@@ -1949,6 +1949,9 @@ def _bary_sample_bcd(
     metric,
     inner_solver,
     update_masses,
+    warmstart_plan,
+    warmstart_potentials,
+    stopping_criterion,
     max_iter_bary,
     tol_bary,
     verbose,
@@ -1975,6 +1978,12 @@ def _bary_sample_bcd(
         Function to solve the inner OT problem
     update_masses : bool
         Update the masses of the barycenter, depending on whether balanced or unbalanced OT is used.
+    warmstart_plan : bool
+        Use the previous plan as initialization for the inner solver. Set based on inner solver type in ot.bary_sample
+    warmstart_potentials : bool
+        Use the previous potentials as initialization for the inner solver. Set based on inner solver type in ot.bary_sample
+    stopping_criterion : str
+        Stopping criterion for the BCD algorithm. Can be "loss" or "bary".
     max_iter_bary : int
         Maximum number of iterations for the barycenter
     tol_bary : float
@@ -1994,22 +2003,41 @@ def _bary_sample_bcd(
     b = b_init
     inv_b = 1.0 / b
 
-    prev_loss = np.inf
+    prev_criterion = np.inf
     n_samples = len(X_s)
 
     if log:
-        log_ = {"loss": []}
+        log_ = {"stopping_criterion": []}
     else:
         log_ = None
+
     # Compute the barycenter using BCD
     for it in range(max_iter_bary):
         # Solve the inner OT problem for each source distribution
-        list_res = [inner_solver(X_s[k], X, a_s[k], b) for k in range(n_samples)]
+        if it == 0:
+            list_res = [
+                inner_solver(X_s[k], X, a_s[k], b, None, None) for k in range(n_samples)
+            ]
+        elif warmstart_plan:
+            list_res = [
+                inner_solver(X_s[k], X, a_s[k], b, list_res[k].plan, None)
+                for k in range(n_samples)
+            ]
+        elif warmstart_potentials:
+            list_res = [
+                inner_solver(X_s[k], X, a_s[k], b, None, list_res[k].potentials)
+                for k in range(n_samples)
+            ]
+        else:
+            list_res = [
+                inner_solver(X_s[k], X, a_s[k], b, None, None) for k in range(n_samples)
+            ]
 
         # Update the estimated barycenter weights in unbalanced cases
         if update_masses:
             b = sum([w_s[k] * list_res[k].plan.sum(axis=0) for k in range(n_samples)])
             inv_b = 1.0 / b
+
         # Update the barycenter samples
         if metric in ["sqeuclidean", "euclidean"]:
             X_new = (
@@ -2019,30 +2047,40 @@ def _bary_sample_bcd(
         else:
             raise NotImplementedError('Not implemented metric="{}"'.format(metric))
 
-        # compute loss
-        new_loss = sum([w_s[k] * list_res[k].value for k in range(n_samples)])
+        # compute criterion
+        if stopping_criterion == "loss":
+            new_criterion = sum([w_s[k] * list_res[k].value for k in range(n_samples)])
+        else:  # stopping_criterion = "bary"
+            new_criterion = nx.norm(X_new - X, ord=2)
 
         if verbose:
             if it % 1 == 0:
-                print(f"BCD iteration {it}: loss = {new_loss:.4f}")
+                print(
+                    f"BCD iteration {it}: criterion {stopping_criterion} = {new_criterion:.4f}"
+                )
 
         if log:
-            log_["loss"].append(new_loss)
+            log_["stopping_criterion"].append(new_criterion)
         # Check convergence
-        if abs(new_loss - prev_loss) / abs(prev_loss) < tol_bary:
+        if abs(new_criterion - prev_criterion) / abs(prev_criterion) < tol_bary:
             print(f"BCD converged in {it} iterations")
             break
 
         X = X_new
-        prev_loss = new_loss
+        prev_criterion = new_criterion
 
-    # compute value_linear
+    # compute loss values
+
     value_linear = sum([w_s[k] * list_res[k].value_linear for k in range(n_samples)])
+    if stopping_criterion == "loss":
+        value = new_criterion
+    else:
+        value = sum([w_s[k] * list_res[k].value for k in range(n_samples)])
     # update BaryResult
     bary_res = BaryResult(
         X=X_new,
         b=b,
-        value=new_loss,
+        value=value,
         value_linear=value_linear,
         log=log_,
         list_res=list_res,
@@ -2070,6 +2108,8 @@ def bary_sample(
     batch_size=None,
     method=None,
     n_threads=1,
+    warmstart=False,
+    stopping_criterion="loss",
     max_iter_bary=1000,
     max_iter=None,
     rank=100,
@@ -2154,6 +2194,11 @@ def bary_sample(
         large scale solver.
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
+    warmstart : bool, optional
+        Use the previous OT or potentials as initialization for the next inner solver iteration, by default False.
+    stopping_criterion : str, optional
+        Stopping criterion for the outer loop of the BCD solver, by default 'loss'.
+        Either 'loss' to use the optimize objective or 'bary' for variations of the barycenter w.r.t the Frobenius norm.
     max_iter_bary : int, optional
         Maximum number of iteration for the BCD solver, by default 1000.
     max_iter : int, optional
@@ -2398,6 +2443,13 @@ def bary_sample(
     if method is not None and method.lower() in lst_method_lazy:
         raise NotImplementedError("Barycenter with Lazy tensors not implemented yet")
 
+    if stopping_criterion not in ["loss", "bary"]:
+        raise ValueError(
+            "stopping_criterion must be either 'loss' or 'bary', got {}".format(
+                stopping_criterion
+            )
+        )
+
     n_samples = len(X_s)
 
     if (
@@ -2449,7 +2501,28 @@ def bary_sample(
         if b_init is None:
             b_init = nx.ones((n,), type_as=X_s[0]) / n
 
-        def inner_solver(X_a, X, a, b):
+        if warmstart:
+            if reg is None:  # exact OT
+                warmstart_plan = True
+                warmstart_potentials = False
+            else:  # regularized OT
+                # unbalanced AND regularized OT
+                if (
+                    not isinstance(reg_type, tuple)
+                    and reg_type.lower() in ["kl"]
+                    and unbalanced_type.lower() == "kl"
+                ):
+                    warmstart_plan = False
+                    warmstart_potentials = True
+
+                else:
+                    warmstart_plan = True
+                    warmstart_potentials = False
+        else:
+            warmstart_plan = False
+            warmstart_potentials = False
+
+        def inner_solver(X_a, X, a, b, plan_init, potentials_init):
             return solve_sample(
                 X_a=X_a,
                 X_b=X,
@@ -2465,6 +2538,8 @@ def bary_sample(
                 n_threads=n_threads,
                 max_iter=max_iter,
                 tol=tol,
+                plan_init=plan_init,
+                potentials_init=potentials_init,
                 verbose=False,
             )
 
@@ -2479,6 +2554,9 @@ def bary_sample(
             metric,
             inner_solver,
             update_masses,
+            warmstart_plan,
+            warmstart_potentials,
+            stopping_criterion,
             max_iter_bary,
             tol_bary,
             verbose,
