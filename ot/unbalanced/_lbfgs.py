@@ -46,9 +46,9 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div="kl", regm_div
         Divergence used for regularization.
         Can take three values: 'entropy' (negative entropy), or
         'kl' (Kullback-Leibler) or 'l2' (half-squared) or a tuple
-        of two calable functions returning the reg term and its derivative.
+        of two callable functions returning the reg term and its derivative.
         Note that the callable functions should be able to handle Numpy arrays
-        and not tesors from the backend
+        and not tensors from the backend
     regm_div: string, optional
         Divergence to quantify the difference between the marginals.
         Can take three values: 'kl' (Kullback-Leibler) or 'l2' (half-squared) or 'tv' (Total Variation)
@@ -218,9 +218,9 @@ def lbfgsb_unbalanced(
         Divergence used for regularization.
         Can take three values: 'entropy' (negative entropy), or
         'kl' (Kullback-Leibler) or 'l2' (half-squared) or a tuple
-        of two calable functions returning the reg term and its derivative.
+        of two callable functions returning the reg term and its derivative.
         Note that the callable functions should be able to handle Numpy arrays
-        and not tesors from the backend
+        and not tensors from the backend
     regm_div: string, optional
         Divergence to quantify the difference between the marginals.
         Can take three values: 'kl' (Kullback-Leibler) or 'l2' (half-squared) or 'tv' (Total Variation)

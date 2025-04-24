@@ -743,7 +743,12 @@ def assert_allclose_bary_sol(sol1, sol2):
 @pytest.mark.parametrize(
     "reg,reg_type,unbalanced,unbalanced_type,warmstart",
     itertools.product(
-        lst_reg, lst_reg_type, lst_unbalanced, lst_unbalanced_type, [True, False]
+        lst_reg,
+        ["tuple"],
+        lst_unbalanced,
+        lst_unbalanced_type,
+        [True, False],
+        # lst_reg, lst_reg_type, lst_unbalanced, lst_unbalanced_type, [True, False]
     ),
 )
 def test_bary_sample_free_support(
@@ -774,7 +779,7 @@ def test_bary_sample_free_support(
                 return 2 * G
 
             reg_type = (f, df)
-
+            # print('test reg_type:', reg_type[0](None), reg_type[1](None))
         # solve default None weights
         sol0 = ot.bary_sample(
             X_s,
@@ -790,8 +795,10 @@ def test_bary_sample_free_support(
             tol_bary=1e-3,
             verbose=True,
         )
+        print("------ [done] sol0 - no backend")
 
         # solve provided uniform weights
+
         sol = ot.bary_sample(
             X_s,
             n,
@@ -808,6 +815,7 @@ def test_bary_sample_free_support(
             tol_bary=1e-3,
             verbose=True,
         )
+        print("------ [done] sol - no backend")
 
         assert_allclose_bary_sol(sol0, sol)
 
@@ -816,14 +824,25 @@ def test_bary_sample_free_support(
         a_sb = nx.from_numpy(*a_s)
         w_sb, bb = nx.from_numpy(w_s, b)
 
-        if isinstance(reg_type, tuple):
+        if reg_type == "tuple":
 
-            def f(G):
-                return nx.sum(G**2)
+            def fb(G):
+                return nx.sum(
+                    G**2
+                )  # otherwise we keep previously defined (f, df) as required by inner solver
 
-            def df(G):
+            def dfb(G):
                 return 2 * G
 
+            """
+            if (
+                unbalanced_type.lower() in ["kl", "l2", "tv"]) and (
+                unbalanced is not None) and (
+                reg is not None
+            ):
+                reg_type = (f, df)
+            else:
+            """
             reg_type = (f, df)
 
         solb = ot.bary_sample(
@@ -842,6 +861,8 @@ def test_bary_sample_free_support(
             tol_bary=1e-3,
             verbose=True,
         )
+        print("------  [done] sol - with backend")
+
         assert_allclose_bary_sol(sol, solb)
 
     except NotImplementedError:

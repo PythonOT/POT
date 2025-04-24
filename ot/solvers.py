@@ -2032,7 +2032,7 @@ def _bary_sample_bcd(
             list_res = [
                 inner_solver(X_s[k], X, a_s[k], b, None, None) for k in range(n_samples)
             ]
-
+        print("inv_b:", inv_b)
         # Update the estimated barycenter weights in unbalanced cases
         if update_masses:
             b = sum([w_s[k] * list_res[k].plan.sum(axis=0) for k in range(n_samples)])
