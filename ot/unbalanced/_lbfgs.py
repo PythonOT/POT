@@ -46,9 +46,9 @@ def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div="kl", regm_div
         Divergence used for regularization.
         Can take three values: 'entropy' (negative entropy), or
         'kl' (Kullback-Leibler) or 'l2' (half-squared) or a tuple
-        of two calable functions returning the reg term and its derivative.
+        of two callable functions returning the reg term and its derivative.
         Note that the callable functions should be able to handle Numpy arrays
-        and not tesors from the backend
+        and not tensors from the backend
     regm_div: string, optional
         Divergence to quantify the difference between the marginals.
         Can take three values: 'kl' (Kullback-Leibler) or 'l2' (half-squared) or 'tv' (Total Variation)
@@ -405,26 +405,26 @@ def lbfgsb_unbalanced2(
         loss matrix
     reg: float
         regularization term >=0
-    c : array-like (dim_a, dim_b), optional (default = None)
-        Reference measure for the regularization.
-        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
     reg_m: float or indexable object of length 1 or 2
         Marginal relaxation term: nonnegative (including 0) but cannot be infinity.
         If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
         then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
         If :math:`\mathrm{reg_{m}}` is an array, it must be a Numpy array.
-    reg_div: string, optional
+    c : array-like (dim_a, dim_b), optional (default = None)
+        Reference measure for the regularization.
+        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+    reg_div: string or pair of callable functions, optional (default = 'kl')
         Divergence used for regularization.
         Can take three values: 'entropy' (negative entropy), or
         'kl' (Kullback-Leibler) or 'l2' (half-squared) or a tuple
         of two callable functions returning the reg term and its derivative.
         Note that the callable functions should be able to handle Numpy arrays
         and not tensors from the backend
-    regm_div: string, optional
+    regm_div: string, optional (default = 'kl')
         Divergence to quantify the difference between the marginals.
         Can take three values: 'kl' (Kullback-Leibler) or 'l2' (half-squared) or 'tv' (Total Variation)
-    G0: array-like (dim_a, dim_b)
-        Initialization of the transport matrix
+    G0: array-like (dim_a, dim_b), optional (default = None)
+        Initialization of the transport matrix. None corresponds to uniform product.
     returnCost: string, optional (default = "linear")
         If `returnCost` = "linear", then return the linear part of the unbalanced OT loss.
         If `returnCost` = "total", then return the total unbalanced OT loss.
