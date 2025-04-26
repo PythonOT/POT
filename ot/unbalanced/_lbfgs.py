@@ -219,7 +219,8 @@ def lbfgsb_unbalanced(
         'kl' (Kullback-Leibler) or 'l2' (half-squared) or a tuple
         of two callable functions returning the reg term and its derivative.
         Note that the callable functions should be able to handle Numpy arrays
-        and not tensors from the backend
+        and not tensors from the backend, otherwise functions will be converted to Numpy
+        leading to a computational overhead.
     regm_div: string, optional (default = 'kl')
         Divergence to quantify the difference between the marginals.
         Can take three values: 'kl' (Kullback-Leibler) or 'l2' (half-squared) or 'tv' (Total Variation)
@@ -407,7 +408,8 @@ def lbfgsb_unbalanced2(
         'kl' (Kullback-Leibler) or 'l2' (half-squared) or a tuple
         of two callable functions returning the reg term and its derivative.
         Note that the callable functions should be able to handle Numpy arrays
-        and not tensors from the backend
+        and not tensors from the backend, otherwise functions will be converted to Numpy
+        leading to a computational overhead.
     regm_div: string, optional (default = 'kl')
         Divergence to quantify the difference between the marginals.
         Can take three values: 'kl' (Kullback-Leibler) or 'l2' (half-squared) or 'tv' (Total Variation)
