@@ -746,3 +746,6 @@ def test_fun_to_numpy(nx):
     res_np = fun_numpy(arr)
 
     np.testing.assert_allclose(res, res_np)
+
+    with pytest.raises(ValueError):
+        ot.utils.fun_to_numpy(fun, None, nx, warn=True)
