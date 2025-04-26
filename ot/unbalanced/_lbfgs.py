@@ -9,12 +9,11 @@ Regularized Unbalanced OT solvers
 #
 # License: MIT License
 
-import warnings
 import numpy as np
 from scipy.optimize import minimize, Bounds
 
 from ..backend import get_backend
-from ..utils import list_to_array, get_parameter_pair
+from ..utils import list_to_array, get_parameter_pair, fun_to_numpy
 
 
 def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div="kl", regm_div="kl"):
@@ -306,24 +305,13 @@ def lbfgsb_unbalanced(
     G0 = a[:, None] * b[None, :] if G0 is None else nx.to_numpy(G0)
     c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
 
-    # wrap the callable function to handle numpy arrays
+    # potentially convert the callable function to handle numpy arrays
     if isinstance(reg_div, tuple):
         f0, df0 = reg_div
-        try:
-            f0(G0)
-            df0(G0)
-        except BaseException:
-            warnings.warn(
-                "The callable functions should be able to handle numpy arrays, wrapper ar added to handle this which comes with overhead"
-            )
+        f = fun_to_numpy(f0, G0, nx, warn=True)
+        df = fun_to_numpy(df0, G0, nx, warn=True)
 
-            def f(x):
-                return nx.to_numpy(f0(nx.from_numpy(x, type_as=M0)))
-
-            def df(x):
-                return nx.to_numpy(df0(nx.from_numpy(x, type_as=M0)))
-
-            reg_div = (f, df)
+        reg_div = (f, df)
 
     _func = _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div, regm_div)
 
