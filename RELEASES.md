@@ -17,6 +17,7 @@
 - Backend implementation of `ot.dist` for (PR #701)
 - Updated documentation Quickstart guide and User guide with new API (PR #726)
 - Fix jax version for auto-grad (PR #732)
+- Fix reg_div function compatibility with numpy in `ot.unbalanced.lbfgsb_unbalanced` via new function `ot.utils.fun_to_numpy` (PR #731)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
