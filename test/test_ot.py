@@ -395,6 +395,182 @@ def test_generalised_free_support_barycenter_backends(nx):
     np.testing.assert_allclose(Y, nx.to_numpy(Y2))
 
 
+def test_free_support_barycenter_generic_costs():
+    measures_locations = [
+        np.array([-1.0]).reshape((1, 1)),
+        np.array([1.0]).reshape((1, 1)),
+    ]
+    measures_weights = [np.array([1.0]), np.array([1.0])]
+
+    X_init = np.array([-12.0]).reshape((1, 1))
+
+    # obvious barycenter location between two Diracs
+    bar_locations = np.array([0.0]).reshape((1, 1))
+
+    def cost(x, y):
+        return ot.dist(x, y)
+
+    cost_list = [cost, cost]
+
+    def ground_bary(y):
+        out = 0
+        for yk in y:
+            out += yk / len(y)
+        return out
+
+    X = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations, measures_weights, X_init, cost_list, ground_bary
+    )
+
+    np.testing.assert_allclose(X, bar_locations, rtol=1e-5, atol=1e-7)
+
+    # test with log and specific weights
+    X2, log = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary,
+        a=ot.unif(1),
+        log=True,
+    )
+
+    assert "X_list" in log
+    assert "exit_status" in log
+    assert "dX_list" in log
+
+    np.testing.assert_allclose(X, X2, rtol=1e-5, atol=1e-7)
+
+    # test with one iteration for Max Iterations Reached
+    X3, log2 = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary,
+        numItermax=1,
+        log=True,
+    )
+    assert log2["exit_status"] == "Max iterations reached"
+
+    # test with a single callable cost
+    X3, log3 = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost,
+        ground_bary,
+        numItermax=1,
+        log=True,
+    )
+
+    # test with no ground_bary but in numpy: requires pytorch backend
+    with pytest.raises(AssertionError):
+        ot.lp.free_support_barycenter_generic_costs(
+            measures_locations,
+            measures_weights,
+            X_init,
+            cost_list,
+            ground_bary=None,
+            numItermax=1,
+        )
+
+
+@pytest.mark.skipif(not torch, reason="No torch available")
+def test_free_support_barycenter_generic_costs_auto_ground_bary():
+    measures_locations = [
+        torch.tensor([1.0]).reshape((1, 1)),
+        torch.tensor([2.0]).reshape((1, 1)),
+    ]
+    measures_weights = [torch.tensor([1.0]), torch.tensor([1.0])]
+
+    X_init = torch.tensor([1.2]).reshape((1, 1))
+
+    def cost(x, y):
+        return ot.dist(x, y)
+
+    cost_list = [cost, cost]
+
+    def ground_bary(y):
+        out = 0
+        for yk in y:
+            out += yk / len(y)
+        return out
+
+    X = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary,
+        numItermax=1,
+    )
+
+    X2, log2 = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary=None,
+        ground_bary_lr=1e-2,
+        ground_bary_stopThr=1e-20,
+        ground_bary_numItermax=50,
+        numItermax=10,
+        log=True,
+    )
+
+    np.testing.assert_allclose(X2.numpy(), X.numpy(), rtol=1e-4, atol=1e-4)
+
+    X3 = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary=None,
+        ground_bary_lr=1e-2,
+        ground_bary_stopThr=1e-20,
+        ground_bary_numItermax=50,
+        numItermax=10,
+        ground_bary_solver="Adam",
+    )
+
+    np.testing.assert_allclose(X2.numpy(), X3.numpy(), rtol=1e-3, atol=1e-3)
+
+
+def test_free_support_barycenter_generic_costs_backends(nx):
+    measures_locations = [
+        np.array([-1.0]).reshape((1, 1)),
+        np.array([1.0]).reshape((1, 1)),
+    ]
+    measures_weights = [np.array([1.0]), np.array([1.0])]
+    X_init = np.array([-12.0]).reshape((1, 1))
+
+    def cost(x, y):
+        return ot.dist(x, y)
+
+    cost_list = [cost, cost]
+
+    def ground_bary(y):
+        out = 0
+        for yk in y:
+            out += yk / len(y)
+        return out
+
+    X = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations, measures_weights, X_init, cost_list, ground_bary
+    )
+
+    measures_locations2 = nx.from_numpy(*measures_locations)
+    measures_weights2 = nx.from_numpy(*measures_weights)
+    X_init2 = nx.from_numpy(X_init)
+
+    X2 = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations2, measures_weights2, X_init2, cost_list, ground_bary
+    )
+
+    np.testing.assert_allclose(X, nx.to_numpy(X2))
+
+
 @pytest.mark.skipif(not ot.lp._barycenter_solvers.cvxopt, reason="No cvxopt available")
 def test_lp_barycenter_cvxopt():
     a1 = np.array([1.0, 0, 0])[:, None]

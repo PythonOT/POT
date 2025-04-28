@@ -7,6 +7,9 @@
 - Added feature `grad=last_step` for `ot.solvers.solve` (PR #693)
 - Automatic PR labeling and release file update check (PR #704)
 - Reorganize sub-module `ot/lp/__init__.py` into separate files (PR #714)
+- Implement fixed-point solver for OT barycenters with generic cost functions
+  (generalizes `ot.lp.free_support_barycenter`), with example. (PR #715)
+- Implement fixed-point solver for barycenters between GMMs (PR #715), with example.
 - Fix warning raise when import the library (PR #716)
 - Implement projected gradient descent solvers for entropic partial FGW (PR #702)
 - Fix documentation in the module `ot.gaussian` (PR #718)
