@@ -355,3 +355,54 @@ def test_wasserstein_circle_bad_shape():
 
     with pytest.raises(ValueError):
         _ = ot.wasserstein_circle(u, v, p=1)
+
+
+def test_linear_circular_ot_devices(nx):
+    rng = np.random.RandomState(0)
+
+    n = 10
+    x = np.linspace(0, 1, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+    rho_v = np.abs(rng.randn(n))
+    rho_v /= rho_v.sum()
+
+    for tp in nx.__type_list__:
+        print(nx.dtype_device(tp))
+
+        xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
+
+        lcot = ot.linear_circular_ot(xb, xb, rho_ub, rho_vb)
+
+        nx.assert_same_dtype_device(xb, lcot)
+
+
+def test_linear_circular_ot_bad_shape():
+    n = 20
+    m = 30
+    rng = np.random.RandomState(0)
+    u = rng.rand(n, 2)
+    v = rng.rand(m, 1)
+
+    with pytest.raises(ValueError):
+        _ = ot.linear_circular_ot(u, v)
+
+
+def test_linear_circular_ot_same_dist():
+    n = 20
+    rng = np.random.RandomState(0)
+    u = rng.rand(n)
+
+    lcot = ot.linear_circular_ot(u, u)
+    np.testing.assert_almost_equal(lcot, 0.0)
+
+
+def test_linear_circular_ot_different_dist():
+    n = 20
+    m = 30
+    rng = np.random.RandomState(0)
+    u = rng.rand(n)
+    v = rng.rand(m)
+
+    lcot = ot.linear_circular_ot(u, v)
+    assert lcot > 0.0
