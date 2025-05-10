@@ -1228,7 +1228,19 @@ def linear_circular_ot(u_values, v_values=None, u_weights=None, v_weights=None):
     if v_values is None:
         dist_u = nx.minimum(nx.abs(emb_u), 1 - nx.abs(emb_u))
         return nx.mean(dist_u**2, axis=0)
+    else:
+        m = v_values.shape[0]
+        if len(v_values.shape) == 1:
+            v_values = nx.reshape(v_values, (m, 1))
+
+        if u_values.shape[1] != v_values.shape[1]:
+            raise ValueError(
+                "u and v must have the same number of batchs {} and {} respectively given".format(
+                    u_values.shape[1], v_values.shape[1]
+                )
+            )
 
     emb_v = linear_circular_embedding(unif_s1, v_values, v_weights)
+
     dist_uv = nx.minimum(nx.abs(emb_u - emb_v), 1 - nx.abs(emb_u - emb_v))
     return nx.mean(dist_uv**2, axis=0)

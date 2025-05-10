@@ -58,6 +58,7 @@ from .sliced import (
     max_sliced_wasserstein_distance,
     sliced_wasserstein_sphere,
     sliced_wasserstein_sphere_unif,
+    linear_sliced_wasserstein_sphere,
 )
 from .gromov import (
     gromov_wasserstein,
@@ -106,6 +107,7 @@ __all__ = [
     "sinkhorn_unbalanced2",
     "sliced_wasserstein_distance",
     "sliced_wasserstein_sphere",
+    "linear_sliced_wasserstein_sphere",
     "gromov_wasserstein",
     "gromov_wasserstein2",
     "gromov_barycenters",

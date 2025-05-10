@@ -454,6 +454,8 @@ def sliced_wasserstein_sphere(
     ----------
     .. [46] Bonet, C., Berg, P., Courty, N., Septier, F., Drumetz, L., & Pham, M. T. (2023). Spherical sliced-wasserstein. International Conference on Learning Representations.
     """
+    d = X_s.shape[-1]
+
     if a is not None and b is not None:
         nx = get_backend(X_s, X_t, a, b)
     else:
@@ -470,11 +472,16 @@ def sliced_wasserstein_sphere(
     if nx.any(nx.abs(nx.sum(X_t**2, axis=-1) - 1) > 10 ** (-4)):
         raise ValueError("X_t is not on the sphere.")
 
-    Xps_coords, projections = projection_sphere_to_circle(
+    if projections is None:
+        projections = get_projections_sphere(
+            d, n_projections, seed=seed, backend=nx, type_as=X_s
+        )
+
+    Xps_coords, _ = projection_sphere_to_circle(
         X_s, n_projections=n_projections, projections=projections, seed=seed, backend=nx
     )
 
-    Xpt_coords, projections = projection_sphere_to_circle(
+    Xpt_coords, _ = projection_sphere_to_circle(
         X_t, n_projections=n_projections, projections=projections, seed=seed, backend=nx
     )
 
@@ -536,6 +543,8 @@ def sliced_wasserstein_sphere_unif(
     -----------
     .. [46] Bonet, C., Berg, P., Courty, N., Septier, F., Drumetz, L., & Pham, M. T. (2023). Spherical sliced-wasserstein. International Conference on Learning Representations.
     """
+    d = X_s.shape[-1]
+
     if a is not None:
         nx = get_backend(X_s, a)
     else:
@@ -544,7 +553,12 @@ def sliced_wasserstein_sphere_unif(
     if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10 ** (-4)):
         raise ValueError("X_s is not on the sphere.")
 
-    Xps_coords, projections = projection_sphere_to_circle(
+    if projections is None:
+        projections = get_projections_sphere(
+            d, n_projections, seed=seed, backend=nx, type_as=X_s
+        )
+
+    Xps_coords, _ = projection_sphere_to_circle(
         X_s, n_projections=n_projections, projections=projections, seed=seed, backend=nx
     )
 
@@ -616,6 +630,7 @@ def linear_sliced_wasserstein_sphere(
     ----------
     .. [77] Liu, X., Bai, Y., Martín, R. D., Shi, K., Shahbazi, A., Landman, B. A., Chang, C., & Kolouri, S. (2025). Linear Spherical Sliced Optimal Transport: A Fast Metric for Comparing Spherical Data. International Conference on Learning Representations.
     """
+    d = X_s.shape[-1]
 
     if a is not None and b is not None:
         nx = get_backend(X_s, X_t, a, b)
@@ -633,12 +648,17 @@ def linear_sliced_wasserstein_sphere(
     if nx.any(nx.abs(nx.sum(X_t**2, axis=-1) - 1) > 10 ** (-4)):
         raise ValueError("X_t is not on the sphere.")
 
-    Xps_coords, projections = projection_sphere_to_circle(
+    if projections is None:
+        projections = get_projections_sphere(
+            d, n_projections, seed=seed, backend=nx, type_as=X_s
+        )
+
+    Xps_coords, _ = projection_sphere_to_circle(
         X_s, n_projections=n_projections, projections=projections, seed=seed, backend=nx
     )
 
     if X_t is not None:
-        Xpt_coords, projections = projection_sphere_to_circle(
+        Xpt_coords, _ = projection_sphere_to_circle(
             X_t,
             n_projections=n_projections,
             projections=projections,
