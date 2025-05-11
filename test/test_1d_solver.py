@@ -377,6 +377,32 @@ def test_linear_circular_ot_devices(nx):
         nx.assert_same_dtype_device(xb, lcot)
 
 
+@pytest.mark.skipif(not tf, reason="tf not installed")
+def test_linear_circular_ot_device_tf():
+    nx = ot.backend.TensorflowBackend()
+    rng = np.random.RandomState(0)
+
+    n = 10
+    x = np.linspace(0, 1, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+    rho_v = np.abs(rng.randn(n))
+    rho_v /= rho_v.sum()
+
+    # Check that everything stays on the CPU
+    with tf.device("/CPU:0"):
+        xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v)
+        res = ot.linear_circular_ot(xb, xb, rho_ub, rho_vb)
+        nx.assert_same_dtype_device(xb, res)
+
+    if len(tf.config.list_physical_devices("GPU")) > 0:
+        # Check that everything happens on the GPU
+        xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v)
+        res = ot.linear_circular_ot(xb, xb, rho_ub, rho_vb)
+        nx.assert_same_dtype_device(xb, res)
+        assert nx.dtype_device(res)[1].startswith("GPU")
+
+
 def test_linear_circular_ot_bad_shape():
     n = 20
     m = 30
@@ -406,3 +432,36 @@ def test_linear_circular_ot_different_dist():
 
     lcot = ot.linear_circular_ot(u, v)
     assert lcot > 0.0
+
+
+def test_linear_circular_embedding_shape():
+    n = 20
+    rng = np.random.RandomState(0)
+    u = rng.rand(n, 2)
+
+    ts = np.linspace(0, 1, 101)[:-1]
+
+    emb = ot.lp.solver_1d.linear_circular_embedding(ts, u)
+    assert emb.shape == (100, 2)
+
+    emb = ot.lp.solver_1d.linear_circular_embedding(ts, u[:, 0])
+    assert emb.shape == (100, 1)
+
+
+def test_linear_circular_ot_unif_circle():
+    n = 20
+    m = 1000
+
+    rng = np.random.RandomState(0)
+    u = rng.rand(
+        n,
+    )
+    v = rng.rand(
+        m,
+    )
+
+    lcot = ot.linear_circular_ot(u, v)
+    lcot_unif = ot.linear_circular_ot(u)
+
+    # check loss is similar
+    np.testing.assert_allclose(lcot, lcot_unif, atol=1e-2)

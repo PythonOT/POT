@@ -314,7 +314,7 @@ def get_projections_sphere(d, n_projections, seed=None, backend=None, type_as=No
     >>> n_projections = 100
     >>> d = 5
     >>> projs = get_projections_sphere(d, n_projections)
-    >>> np.allclose(np.einsum("nij, njk -> nik", projs, projs), np.eye(2))  # doctest: +NORMALIZE_WHITESPACE
+    >>> np.allclose(np.einsum("nij, nik -> njk", projs, projs), np.eye(2))  # doctest: +NORMALIZE_WHITESPACE
     True
     """
     if backend is None:

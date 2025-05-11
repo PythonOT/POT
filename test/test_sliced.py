@@ -370,15 +370,23 @@ def test_sliced_sphere_values_on_the_sphere():
     n = 100
     rng = np.random.RandomState(0)
 
+    u = ot.utils.unif(n)
+
     x = rng.randn(n, 3)
     x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
 
+    # dimension problem
     y = rng.randn(n, 4)
-
-    u = ot.utils.unif(n)
-
     with pytest.raises(ValueError):
         _ = ot.sliced_wasserstein_sphere(x, y, u, u, 10, seed=rng)
+
+    # not on the sphere
+    y = rng.randn(n, 3)
+    with pytest.raises(ValueError):
+        _ = ot.sliced_wasserstein_sphere(x, y, u, u, 10, seed=rng)
+
+    with pytest.raises(ValueError):
+        _ = ot.sliced_wasserstein_sphere(y, x, u, u, 10, seed=rng)
 
 
 def test_sliced_sphere_log():
@@ -588,15 +596,25 @@ def test_linear_sliced_sphere_values_on_the_sphere():
     n = 100
     rng = np.random.RandomState(0)
 
+    u = ot.utils.unif(n)
+
     x = rng.randn(n, 3)
     x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
 
+    # shape problem
     y = rng.randn(n, 4)
-
-    u = ot.utils.unif(n)
 
     with pytest.raises(ValueError):
         _ = ot.linear_sliced_wasserstein_sphere(x, y, u, u, 10, seed=rng)
+
+    # not on sphere
+    y = rng.randn(n, 3)
+
+    with pytest.raises(ValueError):
+        _ = ot.linear_sliced_wasserstein_sphere(x, y, u, u, 10, seed=rng)
+
+    with pytest.raises(ValueError):
+        _ = ot.linear_sliced_wasserstein_sphere(y, x, u, u, 10, seed=rng)
 
 
 def test_linear_sliced_sphere_log():
@@ -670,8 +688,6 @@ def test_linear_sliced_sphere_backend_type_devices(nx):
     P = log["projections"]
 
     for tp in nx.__type_list__:
-        print(nx.dtype_device(tp))
-
         xb, yb = nx.from_numpy(x, y, type_as=tp)
 
         valb = ot.linear_sliced_wasserstein_sphere(
@@ -680,3 +696,32 @@ def test_linear_sliced_sphere_backend_type_devices(nx):
 
         nx.assert_same_dtype_device(xb, valb)
         np.testing.assert_almost_equal(sw_np, nx.to_numpy(valb))
+
+
+@pytest.mark.skipif(not tf, reason="tf not installed")
+def test_linear_sliced_sphere_backend_device_tf():
+    nx = ot.backend.TensorflowBackend()
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 3)
+    x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
+
+    y = rng.randn(2 * n, 3)
+    y = y / np.sqrt(np.sum(y**2, -1, keepdims=True))
+
+    sw_np, log = ot.linear_sliced_wasserstein_sphere(x, y, log=True)
+    P = log["projections"]
+
+    # Check that everything stays on the CPU
+    with tf.device("/CPU:0"):
+        xb, yb, Pb = nx.from_numpy(x, y, P)
+        valb = ot.linear_sliced_wasserstein_sphere(xb, yb, projections=P)
+        nx.assert_same_dtype_device(xb, valb)
+
+    if len(tf.config.list_physical_devices("GPU")) > 0:
+        # Check that everything happens on the GPU
+        xb, yb, Pb = nx.from_numpy(x, y, P)
+        valb = ot.linear_sliced_wasserstein_sphere(xb, yb, projections=Pb)
+        nx.assert_same_dtype_device(xb, valb)
+        assert nx.dtype_device(valb)[1].startswith("GPU")
