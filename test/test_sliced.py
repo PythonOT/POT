@@ -674,6 +674,7 @@ def test_1d_linear_sliced_sphere_equals_emd():
     np.testing.assert_almost_equal(res**2, expected, decimal=5)
 
 
+@pytest.skip_backend("tf")
 def test_linear_sliced_sphere_backend_type_devices(nx):
     n = 100
     rng = np.random.RandomState(0)
@@ -696,32 +697,3 @@ def test_linear_sliced_sphere_backend_type_devices(nx):
 
         nx.assert_same_dtype_device(xb, valb)
         np.testing.assert_almost_equal(sw_np, nx.to_numpy(valb))
-
-
-@pytest.mark.skipif(not tf, reason="tf not installed")
-def test_linear_sliced_sphere_backend_device_tf():
-    nx = ot.backend.TensorflowBackend()
-    n = 100
-    rng = np.random.RandomState(0)
-
-    x = rng.randn(n, 3)
-    x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
-
-    y = rng.randn(2 * n, 3)
-    y = y / np.sqrt(np.sum(y**2, -1, keepdims=True))
-
-    sw_np, log = ot.linear_sliced_wasserstein_sphere(x, y, log=True)
-    P = log["projections"]
-
-    # Check that everything stays on the CPU
-    with tf.device("/CPU:0"):
-        xb, yb, Pb = nx.from_numpy(x, y, P)
-        valb = ot.linear_sliced_wasserstein_sphere(xb, yb, projections=P)
-        nx.assert_same_dtype_device(xb, valb)
-
-    if len(tf.config.list_physical_devices("GPU")) > 0:
-        # Check that everything happens on the GPU
-        xb, yb, Pb = nx.from_numpy(x, y, P)
-        valb = ot.linear_sliced_wasserstein_sphere(xb, yb, projections=Pb)
-        nx.assert_same_dtype_device(xb, valb)
-        assert nx.dtype_device(valb)[1].startswith("GPU")

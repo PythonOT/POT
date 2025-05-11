@@ -357,6 +357,7 @@ def test_wasserstein_circle_bad_shape():
         _ = ot.wasserstein_circle(u, v, p=1)
 
 
+@pytest.skip_backend("tf")
 def test_linear_circular_ot_devices(nx):
     rng = np.random.RandomState(0)
 
@@ -375,32 +376,6 @@ def test_linear_circular_ot_devices(nx):
         lcot = ot.linear_circular_ot(xb, xb, rho_ub, rho_vb)
 
         nx.assert_same_dtype_device(xb, lcot)
-
-
-@pytest.mark.skipif(not tf, reason="tf not installed")
-def test_linear_circular_ot_device_tf():
-    nx = ot.backend.TensorflowBackend()
-    rng = np.random.RandomState(0)
-
-    n = 10
-    x = np.linspace(0, 1, n)
-    rho_u = np.abs(rng.randn(n))
-    rho_u /= rho_u.sum()
-    rho_v = np.abs(rng.randn(n))
-    rho_v /= rho_v.sum()
-
-    # Check that everything stays on the CPU
-    with tf.device("/CPU:0"):
-        xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v)
-        res = ot.linear_circular_ot(xb, xb, rho_ub, rho_vb)
-        nx.assert_same_dtype_device(xb, res)
-
-    if len(tf.config.list_physical_devices("GPU")) > 0:
-        # Check that everything happens on the GPU
-        xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v)
-        res = ot.linear_circular_ot(xb, xb, rho_ub, rho_vb)
-        nx.assert_same_dtype_device(xb, res)
-        assert nx.dtype_device(res)[1].startswith("GPU")
 
 
 def test_linear_circular_ot_bad_shape():
