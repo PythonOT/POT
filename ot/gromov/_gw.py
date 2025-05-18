@@ -65,7 +65,7 @@ def gromov_wasserstein(
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
-    .. note:: All computations in the conjugate gradient solver are done with
+    .. note:: All computations in the conditional gradient solver are done with
         numpy to limit memory overhead.
     .. note:: This function will cast the computed transport plan to the data
         type of the provided input :math:`\mathbf{C}_1`. Casting to an integer
@@ -300,7 +300,7 @@ def gromov_wasserstein2(
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
-    .. note:: All computations in the conjugate gradient solver are done with
+    .. note:: All computations in the conditional gradient solver are done with
         numpy to limit memory overhead.
     .. note:: This function will cast the computed transport plan to the data
         type of the provided input :math:`\mathbf{C}_1`. Casting to an integer
@@ -468,7 +468,7 @@ def fused_gromov_wasserstein(
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
-    .. note:: All computations in the conjugate gradient solver are done with
+    .. note:: All computations in the conditional gradient solver are done with
         numpy to limit memory overhead.
     .. note:: This function will cast the computed transport plan to the data
         type of the provided input :math:`\mathbf{M}`. Casting to an integer
@@ -707,7 +707,7 @@ def fused_gromov_wasserstein2(
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
-    .. note:: All computations in the conjugate gradient solver are done with
+    .. note:: All computations in the conditional gradient solver are done with
         numpy to limit memory overhead.
     .. note:: This function will cast the computed transport plan to the data
         type of the provided input :math:`\mathbf{M}`. Casting to an integer
