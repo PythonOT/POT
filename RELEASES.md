@@ -16,6 +16,7 @@
 - `ot.gaussian.bures_wasserstein_distance` can be batched (PR #680)
 - Backend implementation of `ot.dist` for (PR #701)
 - Updated documentation Quickstart guide and User guide with new API (PR #726)
+- Fix jax version for auto-grad (PR #732)
 - Implement low rank through Factor Relaxation with Latent Coupling (PR #719)
 
 #### Closed issues
