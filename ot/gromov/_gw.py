@@ -48,11 +48,11 @@ def gromov_wasserstein(
         \mathbf{T}^* \in \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma}^T \mathbf{1} &= \mathbf{q}
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf{T} &\geq 0
 
     Where :
 
@@ -279,11 +279,11 @@ def gromov_wasserstein2(
         \mathbf{GW} = \min_\mathbf{T} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma}^T \mathbf{1} &= \mathbf{q}
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf{T} &\geq 0
 
     Where :
 
