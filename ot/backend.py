@@ -1509,7 +1509,7 @@ class JaxBackend(Backend):
         aux = jnp.sum(ravelled_inputs * ravelled_grads) / 2
         aux = aux - jax.lax.stop_gradient(aux)
 
-        (val,) = jax.tree_map(lambda z: z + aux, (val,))
+        (val,) = jax.tree_util.tree_map(lambda z: z + aux, (val,))
         return val
 
     def _detach(self, a):

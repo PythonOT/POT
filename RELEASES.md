@@ -16,6 +16,7 @@
 - `ot.gaussian.bures_wasserstein_distance` can be batched (PR #680)
 - Backend implementation of `ot.dist` for (PR #701)
 - Updated documentation Quickstart guide and User guide with new API (PR #726)
+- Fix jax version for auto-grad (PR #732)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
@@ -24,6 +25,7 @@
 - Update doc for default regularization in `ot.unbalanced` sinkhorn solvers (Issue #691, PR #700)
 - Clean documentation for `gromov`, `lp` and `unbalanced` folders (PR #710)
 - Clean references in documentation (PR #722)
+- Clean documentation for `ot.gromov.gromov_wasserstein` (PR #737)
 
 ## 0.9.5
 
