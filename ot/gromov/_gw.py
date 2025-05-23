@@ -48,11 +48,11 @@ def gromov_wasserstein(
         \mathbf{T}^* \in \mathop{\arg \min}_\mathbf{T} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma}^T \mathbf{1} &= \mathbf{q}
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf{T} &\geq 0
 
     Where :
 
@@ -65,7 +65,7 @@ def gromov_wasserstein(
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
-    .. note:: All computations in the conjugate gradient solver are done with
+    .. note:: All computations in the conditional gradient solver are done with
         numpy to limit memory overhead.
     .. note:: This function will cast the computed transport plan to the data
         type of the provided input :math:`\mathbf{C}_1`. Casting to an integer
@@ -279,11 +279,11 @@ def gromov_wasserstein2(
         \mathbf{GW} = \min_\mathbf{T} \quad \sum_{i,j,k,l}
         L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
 
-        s.t. \ \mathbf{\gamma} \mathbf{1} &= \mathbf{p}
+        s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
-             \mathbf{\gamma}^T \mathbf{1} &= \mathbf{q}
+             \mathbf{T}^T \mathbf{1} &= \mathbf{q}
 
-             \mathbf{\gamma} &\geq 0
+             \mathbf{T} &\geq 0
 
     Where :
 
@@ -300,7 +300,7 @@ def gromov_wasserstein2(
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
-    .. note:: All computations in the conjugate gradient solver are done with
+    .. note:: All computations in the conditional gradient solver are done with
         numpy to limit memory overhead.
     .. note:: This function will cast the computed transport plan to the data
         type of the provided input :math:`\mathbf{C}_1`. Casting to an integer
@@ -468,7 +468,7 @@ def fused_gromov_wasserstein(
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
-    .. note:: All computations in the conjugate gradient solver are done with
+    .. note:: All computations in the conditional gradient solver are done with
         numpy to limit memory overhead.
     .. note:: This function will cast the computed transport plan to the data
         type of the provided input :math:`\mathbf{M}`. Casting to an integer
@@ -707,7 +707,7 @@ def fused_gromov_wasserstein2(
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. But the algorithm uses the C++ CPU backend
         which can lead to copy overhead on GPU arrays.
-    .. note:: All computations in the conjugate gradient solver are done with
+    .. note:: All computations in the conditional gradient solver are done with
         numpy to limit memory overhead.
     .. note:: This function will cast the computed transport plan to the data
         type of the provided input :math:`\mathbf{M}`. Casting to an integer
