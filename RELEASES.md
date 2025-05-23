@@ -27,6 +27,7 @@
 - Update doc for default regularization in `ot.unbalanced` sinkhorn solvers (Issue #691, PR #700)
 - Clean documentation for `gromov`, `lp` and `unbalanced` folders (PR #710)
 - Clean references in documentation (PR #722)
+- Clean documentation for `ot.gromov.gromov_wasserstein` (PR #737)
 
 ## 0.9.5
 
