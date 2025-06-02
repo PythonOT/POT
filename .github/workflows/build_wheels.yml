@@ -34,7 +34,7 @@ jobs:
 
     - name: Build wheels
       env:
-        CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp* cp36* cp*musl* *i686" # remove pypy on mac and win (wrong version)
+        CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp* cp36* cp37* cp38* cp*musl* *i686" # remove pypy on mac and win (wrong version)
       run: |
         python -m cibuildwheel --output-dir wheelhouse
 
