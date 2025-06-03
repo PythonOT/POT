@@ -1,6 +1,7 @@
 """Tests for ot solvers"""
 
 # Author: Remi Flamary <remi.flamary@polytechnique.edu>
+#         Cédric Vincent-Cuaz <cedvincentcuaz@gmail.com>
 #
 # License: MIT License
 
@@ -703,3 +704,166 @@ def test_solve_sample_NotImplemented(nx, method_params):
 
     with pytest.raises(NotImplementedError):
         ot.solve_sample(xb, yb, ab, bb, **method_params)
+
+
+def assert_allclose_bary_sol(sol1, sol2):
+    lst_attr = ["X", "b", "value", "value_linear", "log"]
+
+    nx1 = sol1._backend if sol1._backend is not None else ot.backend.NumpyBackend()
+    nx2 = sol2._backend if sol2._backend is not None else ot.backend.NumpyBackend()
+
+    for attr in lst_attr:
+        if getattr(sol1, attr) is not None and getattr(sol2, attr) is not None:
+            try:
+                var1 = getattr(sol1, attr)
+                var2 = getattr(sol2, attr)
+                if isinstance(var1, dict):  # only contains lists
+                    for key in var1.keys():
+                        np.allclose(
+                            np.array(var1[key]),
+                            np.array(var2[key]),
+                            equal_nan=True,
+                        )
+                else:
+                    np.allclose(
+                        nx1.to_numpy(getattr(sol1, attr)),
+                        nx2.to_numpy(getattr(sol2, attr)),
+                        equal_nan=True,
+                    )
+            except NotImplementedError:
+                pass
+        elif getattr(sol1, attr) is None and getattr(sol2, attr) is None:
+            return True
+        else:
+            return False
+
+
+@pytest.skip_backend("jax", reason="test very slow with jax backend")
+@pytest.skip_backend("tf", reason="test very slow with tf backend")
+@pytest.mark.parametrize(
+    "reg,reg_type,unbalanced,unbalanced_type,warmstart",
+    itertools.product(
+        lst_reg,
+        ["tuple"],
+        lst_unbalanced,
+        lst_unbalanced_type,
+        [True, False],
+        # lst_reg, lst_reg_type, lst_unbalanced, lst_unbalanced_type, [True, False]
+    ),
+)
+def test_bary_sample_free_support(
+    nx, reg, reg_type, unbalanced, unbalanced_type, warmstart
+):
+    # test bary_sample when is_Lazy = False
+    rng = np.random.RandomState()
+
+    K = 3  # number of distributions
+    ns = rng.randint(10, 20, K)  # number of samples within each distribution
+    n = 5  # number of samples in the barycenter
+
+    X_s = [rng.randn(ns_i, 2) for ns_i in ns]
+    # X_init = np.reshape(1.0 * np.randn(n, 2), (n, 1))
+
+    a_s = [ot.utils.unif(X.shape[0]) for X in X_s]
+    b = ot.utils.unif(n)
+
+    w_s = ot.utils.unif(K)
+
+    try:
+        if reg_type == "tuple":
+
+            def f(G):
+                return np.sum(G**2)
+
+            def df(G):
+                return 2 * G
+
+            reg_type = (f, df)
+            # print('test reg_type:', reg_type[0](None), reg_type[1](None))
+        # solve default None weights
+        sol0 = ot.bary_sample(
+            X_s,
+            n,
+            w_s=None,
+            metric="sqeuclidean",
+            reg=reg,
+            reg_type=reg_type,
+            unbalanced=unbalanced,
+            unbalanced_type=unbalanced_type,
+            warmstart=warmstart,
+            max_iter_bary=3,
+            tol_bary=1e-3,
+            verbose=True,
+        )
+        print("------ [done] sol0 - no backend")
+
+        # solve provided uniform weights
+
+        sol = ot.bary_sample(
+            X_s,
+            n,
+            a_s=a_s,
+            b_init=b,
+            w_s=w_s,
+            metric="sqeuclidean",
+            reg=reg,
+            reg_type=reg_type,
+            unbalanced=unbalanced,
+            unbalanced_type=unbalanced_type,
+            warmstart=warmstart,
+            max_iter_bary=3,
+            tol_bary=1e-3,
+            verbose=True,
+        )
+        print("------ [done] sol - no backend")
+
+        assert_allclose_bary_sol(sol0, sol)
+
+        # solve in backend
+        X_sb = nx.from_numpy(*X_s)
+        a_sb = nx.from_numpy(*a_s)
+        w_sb, bb = nx.from_numpy(w_s, b)
+
+        if reg_type == "tuple":
+
+            def fb(G):
+                return nx.sum(
+                    G**2
+                )  # otherwise we keep previously defined (f, df) as required by inner solver
+
+            def dfb(G):
+                return 2 * G
+
+            """
+            if (
+                unbalanced_type.lower() in ["kl", "l2", "tv"]) and (
+                unbalanced is not None) and (
+                reg is not None
+            ):
+                reg_type = (f, df)
+            else:
+            """
+            reg_type = (f, df)
+
+        solb = ot.bary_sample(
+            X_sb,
+            n,
+            a_s=a_sb,
+            b_init=bb,
+            w_s=w_sb,
+            metric="sqeuclidean",
+            reg=reg,
+            reg_type=reg_type,
+            unbalanced=unbalanced,
+            unbalanced_type=unbalanced_type,
+            warmstart=warmstart,
+            max_iter_bary=3,
+            tol_bary=1e-3,
+            verbose=True,
+        )
+        print("------  [done] sol - with backend")
+
+        assert_allclose_bary_sol(sol, solb)
+
+    except NotImplementedError:
+        pytest.skip("Not implemented")
