@@ -132,12 +132,14 @@ def draw_gmm(ms, Cs, ws, color=None, nstd=0.5, alpha=1, label=None, ax=None):
 
 # %%
 # Plot the results
+c_list = ["#7ED321", "#4A90E2", "#9013FE", "#F5A623"]
+c_bar = "#D0021B"
 fig, ax = plt.subplots(figsize=(6, 6))
 axis = [-4, 4, -2, 6]
 ax.set_title("Fixed Point Barycenter (3 Iterations)", fontsize=16)
 for k in range(K):
-    draw_gmm(means_list[k], covs_list[k], w_list[k], color="C0", ax=ax)
-draw_gmm(means_bar, covs_bar, ot.unif(n), color="C1", ax=ax)
+    draw_gmm(means_list[k], covs_list[k], w_list[k], color=c_list[k], ax=ax)
+draw_gmm(means_bar, covs_bar, ot.unif(n), color=c_bar, ax=ax)
 ax.axis(axis)
 ax.axis("off")
 
