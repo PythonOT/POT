@@ -140,3 +140,5 @@ for k in range(K):
 draw_gmm(means_bar, covs_bar, ot.unif(n), color="C1", ax=ax)
 ax.axis(axis)
 ax.axis("off")
+
+# %%

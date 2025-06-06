@@ -688,25 +688,25 @@ def free_support_barycenter_generic_costs(
             exit_status = "Stationary Point"
             break
 
-        if log:
-            log_dict = {
-                "X_list": X_list,
-                "exit_status": exit_status,
-                "a_list": a_list,
-                "diff_list": diff_list,
-            }
-            if method == "true_fixed_point":
-                return X, a, log_dict
-            else:
-                return X, log_dict
-
+    if log:
+        log_dict = {
+            "X_list": X_list,
+            "exit_status": exit_status,
+            "a_list": a_list,
+            "diff_list": diff_list,
+        }
         if method == "true_fixed_point":
-            return X, a
+            return X, a, log_dict
         else:
-            return X
+            return X, log_dict
+
+    if method == "true_fixed_point":
+        return X, a
+    else:
+        return X
 
 
-def to_int_array(x):
+def _to_int_array(x):
     """
     Converts an array to an integer type array.
     """
@@ -727,8 +727,6 @@ def to_int_array(x):
         import tensorflow as tf
 
         return tf.cast(x, tf.int32)
-
-    raise TypeError(f"Unsupported backend {str(nx)}")
 
 
 def NorthWestMMGluing(pi_list, log=False):
@@ -831,7 +829,7 @@ def NorthWestMMGluing(pi_list, log=False):
 
     log_dict["gamma"] = gamma
     J = list(gamma_weights.keys())  # list of multi-indices (j_1, ..., j_K)
-    J = to_int_array(nx.from_numpy(np.array(J), type_as=pi_list[0]))
+    J = _to_int_array(nx.from_numpy(np.array(J), type_as=pi_list[0]))
     w = nx.stack(list(gamma_weights.values()))
     if log:
         return J, w, log_dict
@@ -885,10 +883,6 @@ def _clean_discrete_measure(X, a, tol=1e-10):
             unique_X_idx.append(i)
             X_idx_to_Y_idx[i] = len(unique_X_idx) - 1
             b.append(a[i])
-            # j is a duplicate of i
-            if j not in X_idx_to_Y_idx:
-                X_idx_to_Y_idx[j] = X_idx_to_Y_idx[i]
-                b[X_idx_to_Y_idx[i]] += a[j]
 
         else:  # i is not new, check if j is known
             if j not in X_idx_to_Y_idx:

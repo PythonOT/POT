@@ -518,6 +518,20 @@ def test_free_support_barycenter_generic_costs():
     np.testing.assert_allclose(a5, ot.unif(1), rtol=1e-5, atol=1e-7)
     np.testing.assert_allclose(X, X5, rtol=1e-5, atol=1e-7)
 
+    # test with (too) lax convergence criterion
+    # for Stationary Point exit status
+    X6, log6 = ot.lp.free_support_barycenter_generic_costs(
+        [np.array([-1.0]).reshape((1, 1))],
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary,
+        numItermax=3,
+        stopThr=1e20,
+        log=True,
+    )
+    assert log6["exit_status"] == "Stationary Point"
+
 
 @pytest.mark.skipif(not torch, reason="No torch available")
 def test_free_support_barycenter_generic_costs_auto_ground_bary():
@@ -578,6 +592,17 @@ def test_free_support_barycenter_generic_costs_auto_ground_bary():
     )
 
     np.testing.assert_allclose(X2.numpy(), X3.numpy(), rtol=1e-3, atol=1e-3)
+
+    # test with (too) lax convergence criterion for ground barycenter
+    ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary=None,
+        numItermax=1,
+        ground_bary_stopThr=100,
+    )
 
 
 def test_free_support_barycenter_generic_costs_backends(nx):
@@ -711,6 +736,16 @@ def test_north_west_mm_gluing():
     np.testing.assert_allclose(J, J2)
     np.testing.assert_allclose(w, w2)
 
+    # test setting with highly non-injective plans
+    n = 6
+    a = ot.unif(n)
+    b_list = [a] * 3
+    pi_list = [a[:, None] @ a[None, :]] * 3
+    J, w, log_dict = ot.lp.NorthWestMMGluing(pi_list, log=True)
+    # Test the validity of the gluing
+    gamma = log_dict["gamma"]
+    verify_gluing_validity(gamma, J, w, pi_list)
+
 
 def test_north_west_mm_gluing_backends(nx):
     rng = np.random.RandomState(0)
@@ -745,6 +780,36 @@ def test_clean_discrete_measure(nx):
     assert X_clean.shape == X_true.shape
     np.testing.assert_allclose(a_clean, a_true)
     np.testing.assert_allclose(X_clean, X_true)
+
+    a = nx.ones(3) / 3.0
+    X = nx.from_numpy(np.array([[1.0, 1.0], [2.0, 2.0], [1.0, 1.0]]))
+    X_clean, a_clean = ot.lp._barycenter_solvers._clean_discrete_measure(X, a)
+    a_true = nx.from_numpy(np.array([2 / 3, 1 / 3]))
+    X_true = nx.from_numpy(np.array([[1.0, 1.0], [2.0, 2.0]]))
+    assert a_clean.shape == a_true.shape
+    assert X_clean.shape == X_true.shape
+    np.testing.assert_allclose(a_clean, a_true)
+    np.testing.assert_allclose(X_clean, X_true)
+
+    n = 5
+    a = nx.ones(n) / n
+    v = nx.from_numpy(np.array([1.0, 2.0, 3.0]))
+    X = nx.stack([v] * n, axis=0)
+    X_clean, a_clean = ot.lp._barycenter_solvers._clean_discrete_measure(X, a)
+    a_true = np.array([1.0])
+    X_true = np.array([1.0, 2.0, 3.0]).reshape(1, 3)
+    assert a_clean.shape == a_true.shape
+    assert X_clean.shape == X_true.shape
+    np.testing.assert_allclose(a_clean, a_true)
+    np.testing.assert_allclose(X_clean, X_true)
+
+
+def test_to_int_array(nx):
+    a_np = np.array([1.0, 2.0, 3.0])
+    a = nx.from_numpy(a_np)
+    a_int = ot.lp._barycenter_solvers._to_int_array(a)
+    a_np_int = a_np.astype(int)
+    np.testing.assert_allclose(nx.to_numpy(a_int), a_np_int)
 
 
 @pytest.mark.skipif(not ot.lp._barycenter_solvers.cvxopt, reason="No cvxopt available")

@@ -162,11 +162,11 @@ def B(y, its=150, lr=1, stop_threshold=stop_threshold):
 
 # %%
 # Compute the barycenter measure with the true fixed-point algorithm
-fixed_point_its = 3
+fixed_point_its = 5
 torch.manual_seed(42)
 X_init = torch.rand(n, d)
 t0 = time()
-X_bar, a_bar = free_support_barycenter_generic_costs(
+X_bar, a_bar, log_dict = free_support_barycenter_generic_costs(
     Y_list,
     b_list,
     X_init,
@@ -175,16 +175,18 @@ X_bar, a_bar = free_support_barycenter_generic_costs(
     numItermax=fixed_point_its,
     stopThr=stop_threshold,
     method="true_fixed_point",
+    log=True,
+    clean_measure=True,
 )
 dt_true_fixed_point = time() - t0
 
 # %%
 # Compute the barycenter measure with the barycentric (default) algorithm
-fixed_point_its = 3
+fixed_point_its = 5
 torch.manual_seed(42)
 X_init = torch.rand(n, d)
 t0 = time()
-X_bar2 = free_support_barycenter_generic_costs(
+X_bar2, log_dict2 = free_support_barycenter_generic_costs(
     Y_list,
     b_list,
     X_init,
@@ -192,6 +194,7 @@ X_bar2 = free_support_barycenter_generic_costs(
     B,
     numItermax=fixed_point_its,
     stopThr=stop_threshold,
+    log=True,
 )
 dt_barycentric = time() - t0
 
@@ -249,5 +252,33 @@ axes[1].axis("off")
 axes[1].legend()
 
 plt.tight_layout()
+
+# %%
+# Plot energy convergence
+fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+
+V_list = [V(X, a).item() for (X, a) in zip(log_dict["X_list"], log_dict["a_list"])]
+V_list2 = [V(X, torch.ones(n) / n).item() for X in log_dict2["X_list"]]
+
+# Plot for True Fixed-Point Algorithm
+axes[0].plot(V_list, lw=5, alpha=0.6)
+axes[0].scatter(range(len(V_list)), V_list, color="blue", alpha=0.8, s=100)
+axes[0].set_title("True Fixed-Point Algorithm")
+axes[0].set_xlabel("Iteration")
+axes[0].set_ylabel("Barycenter Energy")
+axes[0].set_yscale("log")
+axes[0].xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+
+# Plot for Heuristic Barycentric Algorithm
+axes[1].plot(V_list2, lw=5, alpha=0.6)
+axes[1].scatter(range(len(V_list2)), V_list2, color="blue", alpha=0.8, s=100)
+axes[1].set_title("Heuristic Barycentric Algorithm")
+axes[1].set_xlabel("Iteration")
+axes[1].set_ylabel("Barycenter Energy")
+axes[1].set_yscale("log")
+axes[1].xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+
+plt.tight_layout()
+plt.show()
 
 # %%
