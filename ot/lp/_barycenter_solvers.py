@@ -10,7 +10,7 @@ OT Barycenter Solvers
 
 from ..backend import get_backend
 from ..utils import dist
-from ._network_simplex import emd
+from ._network_simplex import emd, emd2
 
 import numpy as np
 import scipy as sp
@@ -432,12 +432,14 @@ def free_support_barycenter_generic_costs(
     ground_bary=None,
     a=None,
     numItermax=100,
+    method="L2_barycentric_proj",
     stopThr=1e-5,
     log=False,
     ground_bary_lr=1e-2,
     ground_bary_numItermax=100,
     ground_bary_stopThr=1e-5,
     ground_bary_solver="SGD",
+    clean_measure=False,
 ):
     r"""
     Solves the OT barycenter problem for generic costs using the fixed point
@@ -491,7 +493,22 @@ def free_support_barycenter_generic_costs(
     function B takes a list of K arrays of shape (n, d_k) and returns an array
     of shape (n, d).
 
-    This function implements [76] Algorithm 2, which generalises [20] and [43]
+    This function implements two algorithms:
+
+    - Algorithm 2 from [76] when `method=true_fixed_point` is used, which may
+      increase the support size of the barycenter at each iteration, with a
+      maximum final size of :math:`N_0 + T\sum_k n_k - TK` for T iterations and
+      an initial support size of :math:`N_0`. The computation of the iterates is
+      done using the North West Corner multi-marginal gluing method. This method
+      has convergence guarantees [76].
+
+    - Algorithm 3 from [76] when `method=L2_barycentric_proj` is used, which is
+      a heuristic simplification which fixes the weights and support size of the
+      barycenter by performing barycentric projections of the pair-wise OT
+      matrices. This method is substantially faster than the first one, but does
+      not have convergence guarantees. (Default)
+
+    The implemented methods ([76] Algorithms 2 and 3), generalises [20] and [43]
     to general costs and includes convergence guarantees, including for discrete
     measures.
 
@@ -511,12 +528,16 @@ def free_support_barycenter_generic_costs(
         Function List(array(n, d_k)) -> array(n, d) accepting a list of K arrays
         of shape (n\times d_K), computing the ground barycenters (broadcasted
         over n). If not provided, done with Adam on PyTorch (requires PyTorch
-        backend)
+        backend), inefficiently using the cost functions in `cost_list`.
     a : array-like, optional
         Array of shape (n,) representing weights of the barycenter
         measure.Defaults to uniform.
     numItermax : int, optional
         Maximum number of iterations (default is 100).
+    method : str, optional
+        Barycentre method: 'L2_barycentric_proj' (default) for Euclidean
+        barycentric projection, or 'true_fixed_point' for iterates using the
+        North West Corner multi-marginal gluing method.
     stopThr : float, optional
         If the iterations move less than this, terminate (default is 1e-5).
     log : bool, optional
@@ -531,6 +552,10 @@ def free_support_barycenter_generic_costs(
     ground_bary_solver : str, optional
         Solver for auto ground bary solver (torch SGD or Adam). Default is
         "SGD".
+    clean_measure : bool, optional
+        For method=='true_fixed_point', whether to clean the discrete measure
+        (X, a) at each iteration to remove duplicate points and sum their
+        weights (default is False).
 
     Returns
     -------
@@ -557,9 +582,16 @@ def free_support_barycenter_generic_costs(
     --------
     ot.lp.free_support_barycenter : Free support solver for the case where
     :math:`c_k(x,y) = \lambda_k\|x-y\|_2^2`.
+
     ot.lp.generalized_free_support_barycenter : Free support solver for the case
     where :math:`c_k(x,y) = \|P_kx-y\|_2^2` with :math:`P_k` linear.
+
+    ot.lp.NorthWestMMGluing : gluing method used in the `true_fixed_point` method.
     """
+    assert method in [
+        "L2_barycentric_proj",
+        "true_fixed_point",
+    ], "Method must be 'L2_barycentric_proj' or 'true_fixed_point'"
     nx = get_backend(X_init, measure_locations[0])
     K = len(measure_locations)
     n = X_init.shape[0]
@@ -604,8 +636,9 @@ def free_support_barycenter_generic_costs(
             raise ImportError("PyTorch is required to use ground_bary=None")
 
     X_list = [X_init] if log else []  # store the iterations
+    a_list = [nx.copy(a)] if log and method == "true_fixed_point" else []
     X = X_init
-    dX_list = []  # store the displacement squared norms
+    diff_list = []  # store the displacement squared norms
     exit_status = "Max iterations reached"
 
     for _ in range(numItermax):
@@ -614,27 +647,255 @@ def free_support_barycenter_generic_costs(
             for k in range(K)
         ]
         Y_perm = []
-        for k in range(K):  # compute barycentric projections
-            Y_perm.append(n * pi_list[k] @ measure_locations[k])
-        if auto_ground_bary:  # use previous position as initialization
-            X_next = ground_bary(Y_perm, X)
-        else:
+
+        if method == "L2_barycentric_proj":
+            a_next = a  # barycentre weights are fixed
+            for k in range(K):  # L2 barycentric projection of pi_k
+                Y_perm.append((1 / a[:, None]) * pi_list[k] @ measure_locations[k])
+            if auto_ground_bary:  # use previous position as initialization
+                X_next = ground_bary(Y_perm, X)
+            else:
+                X_next = ground_bary(Y_perm)
+
+        elif method == "true_fixed_point":
+            # North West Corner gluing of pi_k
+            J, a_next = NorthWestMMGluing(pi_list)
+            # J is a (N, K) array of indices, w is a (N,) array of weights
+            # Each Y_perm[k] is a (N, d_k) array of some points in Y_list[k]
+            Y_perm = [measure_locations[k][J[:, k]] for k in range(K)]
+            # warm start impossible due to possible size mismatch
             X_next = ground_bary(Y_perm)
+
+            if clean_measure and method == "true_fixed_point":
+                # clean the discrete measure (X, a) to remove duplicates
+                X_next, a_next = _clean_discrete_measure(X_next, a_next)
 
         if log:
             X_list.append(X_next)
+            if method == "true_fixed_point":
+                a_list.append(a_next)
 
         # stationary criterion: move less than the threshold
-        dX = nx.sum((X - X_next) ** 2)
-        X = X_next
+        diff = emd2(a, a_next, dist(X, X_next))
 
         if log:
-            dX_list.append(dX)
+            diff_list.append(diff)
 
-        if dX < stopThr:
+        X = X_next
+        a = a_next
+
+        if diff < stopThr * nx.sum(X**2) / X.shape[0]:
             exit_status = "Stationary Point"
             break
 
+        if log:
+            log_dict = {
+                "X_list": X_list,
+                "exit_status": exit_status,
+                "a_list": a_list,
+                "diff_list": diff_list,
+            }
+            if method == "true_fixed_point":
+                return X, a, log_dict
+            else:
+                return X, log_dict
+
+        if method == "true_fixed_point":
+            return X, a
+        else:
+            return X
+
+
+def to_int_array(x):
+    """
+    Converts an array to an integer type array.
+    """
+    nx = get_backend(x)
+    if str(nx) == "numpy":
+        return x.astype(int)
+
+    if str(nx) == "torch":
+        return x.to(int)
+
+    if str(nx) == "jax":
+        return x.astype(int)
+
+    if str(nx) == "cupy":
+        return x.astype(int)
+
+    if str(nx) == "tf":
+        import tensorflow as tf
+
+        return tf.cast(x, tf.int32)
+
+    raise TypeError(f"Unsupported backend {str(nx)}")
+
+
+def NorthWestMMGluing(pi_list, log=False):
+    r"""
+    Glue transport plans :math:`(pi_1, ..., pi_K)` which have a common first
+    marginal using the (multi-marginal) North-West Corner method. Writing the
+    marginals of each :math:`pi_k\in \mathbb{R}^{n\times n_l}` as :math:`a \in
+    \mathbb{R}^n` and :math:`b_k \in \mathbb{R}^{n_k}`, the output represents a
+    particular K-marginal transport plan :math:`\rho \in
+    \mathbb{R}^{n_1\times\cdots\times n_K}` whose k-th marginal is :math:`b_k`.
+    This K-plan is such that there exists a K+1-marginal transport plan
+    :math:`\gamma \in \mathbb{R}^{n\times n_1 \times \cdots \times n_K}` such
+    that :math:`\sum_i\gamma_{i,j_1,\cdots,j_K} = \rho_{j_1, \cdots, j_K}` and
+    with Einstein summation convention, :math:`\gamma_{i, j_1, \cdots, j_K} =
+    [\pi_k]_{i, j_k}` for all :math:`k=1,\cdots,K`.
+
+    Instead of outputting the full K-multi-marginal plan :math:`\rho`, this
+    function provides an array `J` of shape (N, K) where each `J[i]` is of the
+    form `(J[i, 1], ..., J[i, K])` with each `J[i, k]` between 0 and
+    :math:`n_k-1`, and a weight vector `w` of size N, such that the K-plan
+    :math:`rho` writes:
+
+    .. math::
+        \rho_{j_1, \cdots, j_K} = 1\left(\exists i \text{ s.t. } (j_1, \cdots, j_K) = (J[i, 1], \cdots, J[i, K])\right)\ w_i.
+
+    This representation is useful for its memory efficiency, as it avoids
+    storing the full K-marginal plan.
+
+    If `log=True`, the function computes the full K+1-marginal transport plan
+    :math:`\gamma`and stores it in log_dict['gamma']. Note that this option is
+    extremely costly in memory.
+
+    Parameters
+    ----------
+    pi_list : list of arrays (n, n_k)
+        List of transport plans.
+
+    log : bool, optional
+        If True, return a log dictionary (computationally expensive).
+
+    Returns
+    -------
+    J : array (N, K)
+        The indices (J[i, 1], ..., J[i, K]) of the K-plan rho.
+    w : array (N,)
+        The weights w_i of the K-plan rho.
+    log_dict : dict, optional
+        If log=True, a dictionary containing the full K+1-marginal transport
+        plan under the key 'gamma'.
+    """
+    nx = get_backend(pi_list[0])
+    a = nx.sum(pi_list[0], axis=1)  # common first marginal a in Delta_n
+    nk_list = [pi.shape[1] for pi in pi_list]  # list of n_k
+    K = len(pi_list)
+    n = pi_list[0].shape[0]  # number of points in the first marginal
+    gamma = None
+
+    log_dict = {}
+    if log:  # n x n_1 x ... x n_K tensor
+        gamma = nx.zeros([n] + nk_list, type_as=pi_list[0])
+
+    gamma_weights = {}  # dict of (j_1, ..., j_K) : weight
+    P_list = [nx.copy(pi) for pi in pi_list]  # copy of the transport plans
+
+    # jjs is a list of K lists of size m_k
+    # checks if each jj_idx[k] is < m_k
+    # this is to avoid over-shooting the while loop due to numerical
+    # imprecision in the conditions "x > 0"
+    def jj_idx_in_range(jj_idx, jjs):
+        out = True
+        for k in range(K):
+            out = out and jj_idx[k] < len(jjs[k])
+        return out
+
+    for i in range(n):
+        # jjs[k] is the list of indices j in [0, n_k - 1] such that Pk[i, j] >0
+        jjs = [nx.to_numpy(nx.where(P[i, :] > 0)[0]) for P in P_list]
+        # list [0, ..., 0] of size K for use with jjs: current indices in jjs
+        jj_idx = [0] * K
+        u = a[i]  # mass at i, will decrease to 0 as we fill gamma[i, :]
+
+        # while there is mass to add to gamma[i, :]
+        while u > 0 and jj_idx_in_range(jj_idx, jjs):
+            # current multi-index j_1 ... j_K
+            jj = tuple(jjs[k][jj_idx[k]] for k in range(K))
+            # min transport plan value: min_k pi_k[i, j_k]
+            v = nx.min(nx.stack([P_list[k][i, jj[k]] for k in range(K)]))
+            if log:  # assign mass v to gamma[i, j_1, ..., j_K]
+                gamma[(i,) + jj] = v
+            if jj in gamma_weights:
+                gamma_weights[jj] += v
+            else:
+                gamma_weights[jj] = v
+            u -= v  # at i, we u-v mass left to assign
+            for k in range(K):  # update plan copies Pk
+                P_list[k][i, jj[k]] -= v  # Pk[i, j_k] has v less mass left
+                if P_list[k][i, jj[k]] == 0:
+                    # move to next index in jjs[k] if Pk[i, j_k] is empty
+                    jj_idx[k] += 1
+
+    log_dict["gamma"] = gamma
+    J = list(gamma_weights.keys())  # list of multi-indices (j_1, ..., j_K)
+    J = to_int_array(nx.from_numpy(np.array(J), type_as=pi_list[0]))
+    w = nx.stack(list(gamma_weights.values()))
     if log:
-        return X, {"X_list": X_list, "exit_status": exit_status, "dX_list": dX_list}
-    return X
+        return J, w, log_dict
+    return J, w
+
+
+def _clean_discrete_measure(X, a, tol=1e-10):
+    r"""
+    Simplifies a discrete measure by consolidating duplicate points and summing
+    their weights. Given a discrete measure with support X (n, d) and weights a
+    (n), returns a points Y (m, d) and weights b (m) such that Y is the set of
+    unique points in X and b is the sum of weights in a for each point in Y
+
+    Parameters
+    ----------
+    X : array-like
+        Array of shape (n, d) representing the support points of the discrete
+        measure.
+    a : array-like
+        Array of shape (n,) representing the weights associated with the support
+        points.
+    tol : float, optional
+        Tolerance for determining uniqueness of points in `X`. Points closer
+        than `tol` are considered identical. Default is 1e-10.
+
+    Returns
+    -------
+    Y : array-like
+        Array of shape (m, d) representing the unique support points of the
+        discrete measure.
+    b : array-like
+        Array of shape (m,) representing the summed weights for each unique
+        point in `Y`.
+    """
+    nx = get_backend(X, a)
+    D = dist(X, X)
+    # each D[I[k], J[k]] < tol so X[I[k]] = X[J[k]]
+    idxI, idxJ = nx.where(D < tol)
+    idxI = nx.to_numpy(idxI)
+    idxJ = nx.to_numpy(idxJ)
+    # keep only the cases I[k] <= J[k] to avoid pairs (i, j) (j, i) with i != j
+    mask = idxI <= idxJ
+    idxI, idxJ = idxI[mask], idxJ[mask]
+    X_idx_to_Y_idx = {}  # X[i] = Y[X_idx_to_Y_idx[i]]
+    # indices of unique points in X, at the end, Y := X[unique_X_idx]
+    unique_X_idx = []
+
+    b = []
+    for i, j in zip(idxI, idxJ):
+        if i not in X_idx_to_Y_idx:  # i is a new point
+            unique_X_idx.append(i)
+            X_idx_to_Y_idx[i] = len(unique_X_idx) - 1
+            b.append(a[i])
+            # j is a duplicate of i
+            if j not in X_idx_to_Y_idx:
+                X_idx_to_Y_idx[j] = X_idx_to_Y_idx[i]
+                b[X_idx_to_Y_idx[i]] += a[j]
+
+        else:  # i is not new, check if j is known
+            if j not in X_idx_to_Y_idx:
+                b[X_idx_to_Y_idx[i]] += a[j]
+                X_idx_to_Y_idx[j] = X_idx_to_Y_idx[i]
+
+    # create the unique points array Y
+    Y = X[tuple(unique_X_idx), :]
+    b = nx.from_numpy(np.array(b), type_as=X)
+    return Y, b

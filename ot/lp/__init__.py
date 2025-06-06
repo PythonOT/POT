@@ -15,6 +15,7 @@ from ._barycenter_solvers import (
     free_support_barycenter,
     generalized_free_support_barycenter,
     free_support_barycenter_generic_costs,
+    NorthWestMMGluing,
 )
 from ..utils import check_number_threads
 
@@ -47,4 +48,5 @@ __all__ = [
     "dmmot_monge_1dgrid_optimize",
     "check_number_threads",
     "free_support_barycenter_generic_costs",
+    "NorthWestMMGluing",
 ]

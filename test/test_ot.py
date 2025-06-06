@@ -11,7 +11,7 @@ import pytest
 
 import ot
 from ot.datasets import make_1D_gauss as gauss
-from ot.backend import torch, tf
+from ot.backend import torch, tf, get_backend
 
 
 def test_emd_dimension_and_mass_mismatch():
@@ -437,7 +437,7 @@ def test_free_support_barycenter_generic_costs():
 
     assert "X_list" in log
     assert "exit_status" in log
-    assert "dX_list" in log
+    assert "diff_list" in log
 
     np.testing.assert_allclose(X, X2, rtol=1e-5, atol=1e-7)
 
@@ -474,6 +474,49 @@ def test_free_support_barycenter_generic_costs():
             ground_bary=None,
             numItermax=1,
         )
+
+    # test with unknown method
+    with pytest.raises(AssertionError):
+        ot.lp.free_support_barycenter_generic_costs(
+            measures_locations,
+            measures_weights,
+            X_init,
+            cost_list,
+            ground_bary,
+            numItermax=1,
+            method="unknown_method",
+        )
+
+    # test true fixed-point method
+    X4, a4, log4 = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary,
+        numItermax=3,
+        method="true_fixed_point",
+        log=True,
+    )
+
+    assert "a_list" in log4
+    assert X4.shape[0] == a4.shape[0] == 1
+    np.testing.assert_allclose(a4, ot.unif(1), rtol=1e-5, atol=1e-7)
+    np.testing.assert_allclose(X, X4, rtol=1e-5, atol=1e-7)
+
+    # test with measure cleaning and no log
+    X5, a5 = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary,
+        numItermax=3,
+        method="true_fixed_point",
+        clean_measure=True,
+    )
+    np.testing.assert_allclose(a5, ot.unif(1), rtol=1e-5, atol=1e-7)
+    np.testing.assert_allclose(X, X5, rtol=1e-5, atol=1e-7)
 
 
 @pytest.mark.skipif(not torch, reason="No torch available")
@@ -512,9 +555,9 @@ def test_free_support_barycenter_generic_costs_auto_ground_bary():
         X_init,
         cost_list,
         ground_bary=None,
-        ground_bary_lr=1e-2,
+        ground_bary_lr=2e-2,
         ground_bary_stopThr=1e-20,
-        ground_bary_numItermax=50,
+        ground_bary_numItermax=100,
         numItermax=10,
         log=True,
     )
@@ -529,7 +572,7 @@ def test_free_support_barycenter_generic_costs_auto_ground_bary():
         ground_bary=None,
         ground_bary_lr=1e-2,
         ground_bary_stopThr=1e-20,
-        ground_bary_numItermax=50,
+        ground_bary_numItermax=100,
         numItermax=10,
         ground_bary_solver="Adam",
     )
@@ -557,7 +600,12 @@ def test_free_support_barycenter_generic_costs_backends(nx):
         return out
 
     X = ot.lp.free_support_barycenter_generic_costs(
-        measures_locations, measures_weights, X_init, cost_list, ground_bary
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary,
+        method="L2_barycentric_proj",
     )
 
     measures_locations2 = nx.from_numpy(*measures_locations)
@@ -565,10 +613,138 @@ def test_free_support_barycenter_generic_costs_backends(nx):
     X_init2 = nx.from_numpy(X_init)
 
     X2 = ot.lp.free_support_barycenter_generic_costs(
-        measures_locations2, measures_weights2, X_init2, cost_list, ground_bary
+        measures_locations2,
+        measures_weights2,
+        X_init2,
+        cost_list,
+        ground_bary,
+        method="L2_barycentric_proj",
     )
 
     np.testing.assert_allclose(X, nx.to_numpy(X2))
+
+    X, a = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations,
+        measures_weights,
+        X_init,
+        cost_list,
+        ground_bary,
+        method="true_fixed_point",
+    )
+
+    measures_locations2 = nx.from_numpy(*measures_locations)
+    measures_weights2 = nx.from_numpy(*measures_weights)
+    X_init2 = nx.from_numpy(X_init)
+
+    X2, a2 = ot.lp.free_support_barycenter_generic_costs(
+        measures_locations2,
+        measures_weights2,
+        X_init2,
+        cost_list,
+        ground_bary,
+        method="true_fixed_point",
+    )
+
+    np.testing.assert_allclose(a, nx.to_numpy(a2))
+    np.testing.assert_allclose(X, nx.to_numpy(X2))
+
+
+def verify_gluing_validity(gamma, J, w, pi_list):
+    """
+    Test the validity of the North-West gluing.
+    """
+    nx = get_backend(gamma)
+    K = len(pi_list)
+    n = pi_list[0].shape[0]
+    nk_list = [pi.shape[1] for pi in pi_list]
+
+    # Check first marginal
+    a = nx.sum(gamma, axis=tuple(range(1, K + 1)))
+    assert nx.allclose(a, nx.sum(pi_list[0], axis=1))
+
+    # Check other marginals
+    for k in range(K):
+        b_k = nx.sum(gamma, axis=tuple(i for i in range(K + 1) if i != k + 1))
+        assert nx.allclose(b_k, nx.sum(pi_list[k], axis=0))
+
+    # Check bi-marginals
+    for k in range(K):
+        gamma_0k = nx.sum(gamma, axis=tuple(i for i in range(1, K + 1) if i != k + 1))
+        assert nx.allclose(gamma_0k, pi_list[k])
+
+    # Check that N <= n + sum_k n_k - K
+    N = J.shape[0]
+    n_k_sum = sum(nk_list)
+    assert N <= n + n_k_sum - K, f"N={N}, n={n}, sum(n_k)={n_k_sum}, K={K}"
+
+    # Check that w is on the simplex
+    w_sum = nx.sum(w)
+    assert nx.allclose(w_sum, 1), f"Sum of weights w is not 1: {w_sum}"
+
+    # Check that gamma_1...K and (J, w) are consistent
+    rho = nx.zeros(nk_list, type_as=gamma)
+    for i in range(N):
+        jj = J[i]
+        rho[tuple(jj)] += w[i]
+
+    gamma_1toK = nx.sum(gamma, axis=0)
+    assert nx.allclose(rho, gamma_1toK), "rho and gamma_1...K are not consistent"
+
+
+def test_north_west_mm_gluing():
+    rng = np.random.RandomState(0)
+    n = 7
+    nk_list = [5, 6, 4]
+    a = rng.rand(n)
+    a = a / np.sum(a)
+    b_list = [rng.rand(nk) for nk in nk_list]
+    b_list = [b / np.sum(b) for b in b_list]
+    M_list = [rng.rand(n, nk) for nk in nk_list]
+    pi_list = [ot.emd(a, b, M) for b, M in zip(b_list, M_list)]
+    J, w, log_dict = ot.lp.NorthWestMMGluing(pi_list, log=True)
+    # Test the validity of the gluing
+    gamma = log_dict["gamma"]
+    verify_gluing_validity(gamma, J, w, pi_list)
+
+    # test without log
+    J2, w2 = ot.lp.NorthWestMMGluing(pi_list, log=False)
+    np.testing.assert_allclose(J, J2)
+    np.testing.assert_allclose(w, w2)
+
+
+def test_north_west_mm_gluing_backends(nx):
+    rng = np.random.RandomState(0)
+    n = 7
+    nk_list = [5, 6, 4]
+    a = rng.rand(n)
+    a = a / np.sum(a)
+    b_list = [rng.rand(nk) for nk in nk_list]
+    b_list = [b / np.sum(b) for b in b_list]
+    M_list = [rng.rand(n, nk) for nk in nk_list]
+    pi_list = [ot.emd(a, b, M) for b, M in zip(b_list, M_list)]
+
+    pi_list2 = [nx.from_numpy(pi) for pi in pi_list]
+    J, w, log_dict = ot.lp.NorthWestMMGluing(pi_list2, log=True)
+    gamma = log_dict["gamma"]
+
+    # Test equality with numpy solution
+    J_np, w_np, log_dict_np = ot.lp.NorthWestMMGluing(pi_list, log=True)
+    gamma_np = log_dict_np["gamma"]
+    np.testing.assert_allclose(J, J_np)
+    np.testing.assert_allclose(w, w_np)
+    np.testing.assert_allclose(gamma, gamma_np)
+
+
+def test_clean_discrete_measure(nx):
+    a = nx.ones(3) / 3.0
+    X = nx.from_numpy(np.array([[1.0, 1.0], [1.0, 1.0], [2.0, 2.0]]))
+    X_clean, a_clean = ot.lp._barycenter_solvers._clean_discrete_measure(X, a)
+    a_true = nx.from_numpy(np.array([2 / 3, 1 / 3]))
+    X_true = nx.from_numpy(np.array([[1.0, 1.0], [2.0, 2.0]]))
+    assert a_clean.shape == a_true.shape
+    assert X_clean.shape == X_true.shape
+    np.testing.assert_allclose(a_clean, a_true)
+    np.testing.assert_allclose(X_clean, X_true)
 
 
 @pytest.mark.skipif(not ot.lp._barycenter_solvers.cvxopt, reason="No cvxopt available")

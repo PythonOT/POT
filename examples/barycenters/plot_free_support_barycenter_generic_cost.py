@@ -6,13 +6,28 @@ OT Barycenter with Generic Costs Demo
 
 This example illustrates the computation of an Optimal Transport Barycenter for
 a ground cost that is not a power of a norm. We take the example of ground costs
-:math:`c_k(x, y) = \|P_k(x)-y\|_2^2`, where :math:`P_k` is the (non-linear)
-projection onto a circle k. This is an example of the fixed-point barycenter
-solver introduced in [76] which generalises [20] and [43].
+:math:`c_k(x, y) = \lambda_k\|P_k(x)-y\|_2^2`, where :math:`P_k` is the
+(non-linear) projection onto a circle k, and :math:`(\lambda_k)` are weights. A
+barycenter is defined ([76]) as a minimiser of the energy :math:`V(\mu) = \sum_k
+\mathcal{T}_{c_k}(\mu, \nu_k)` where :math:`\mu` is a candidate barycenter
+measure, the measures  :math:`\nu_k` are the target measures and
+:math:`\mathcal{T}_{c_k}` is the OT cost for ground cost :math:`c_k`. This is an
+example of the fixed-point barycenter solver introduced in [76] which
+generalises [20] and [43].
 
 The ground barycenter function :math:`B(y_1, ..., y_K) = \mathrm{argmin}_{x \in
 \mathbb{R}^2} \sum_k \lambda_k c_k(x, y_k)` is computed by gradient descent over
 :math:`x` with Pytorch.
+
+We compare two algorithms from [76]: the first ([76], Algorithm 2,
+'true_fixed_point' in POT) has convergence guarantees but the iterations may
+increase in support size and thus require more computational resources. The
+second ([76], Algorithm 3, 'L2_barycentric_proj' in POT) is a simplified
+heuristic that imposes a fixed support size for the barycenter and fixed
+weights.
+
+We initialise both algorithms with a support size of 136, computing a barycenter
+between measures with uniform weights and 50 points.
 
 [76] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
 Barycentres of Measures for Generic Transport Costs. arXiv preprint 2501.04016
@@ -36,16 +51,18 @@ Wasserstein space. Journal of Mathematical Analysis and Applications 441.2
 # %%
 # Generate data
 import torch
+import ot
 from torch.optim import Adam
 from ot.utils import dist
 import numpy as np
 from ot.lp import free_support_barycenter_generic_costs
 import matplotlib.pyplot as plt
+from time import time
 
 
 torch.manual_seed(42)
 
-n = 200  # number of points of the of the barycentre
+n = 136  # number of points of the of the barycentre
 d = 2  # dimensions of the original measure
 K = 4  # number of measures to barycentre
 m = 50  # number of points of the measures
@@ -128,7 +145,7 @@ def B(y, its=150, lr=1, stop_threshold=stop_threshold):
     Computes the ground barycenter for measure supports y: List(n, d_k).
     Output: (n, d) array
     """
-    x = torch.randn(n, d)
+    x = torch.randn(y[0].shape[0], d)
     x.requires_grad_(True)
     opt = Adam([x], lr=lr)
     for _ in range(its):
@@ -144,10 +161,30 @@ def B(y, its=150, lr=1, stop_threshold=stop_threshold):
 
 
 # %%
-# Compute the barycenter measure
+# Compute the barycenter measure with the true fixed-point algorithm
 fixed_point_its = 3
+torch.manual_seed(42)
 X_init = torch.rand(n, d)
-X_bar = free_support_barycenter_generic_costs(
+t0 = time()
+X_bar, a_bar = free_support_barycenter_generic_costs(
+    Y_list,
+    b_list,
+    X_init,
+    cost_list,
+    B,
+    numItermax=fixed_point_its,
+    stopThr=stop_threshold,
+    method="true_fixed_point",
+)
+dt_true_fixed_point = time() - t0
+
+# %%
+# Compute the barycenter measure with the barycentric (default) algorithm
+fixed_point_its = 3
+torch.manual_seed(42)
+X_init = torch.rand(n, d)
+t0 = time()
+X_bar2 = free_support_barycenter_generic_costs(
     Y_list,
     b_list,
     X_init,
@@ -156,22 +193,61 @@ X_bar = free_support_barycenter_generic_costs(
     numItermax=fixed_point_its,
     stopThr=stop_threshold,
 )
+dt_barycentric = time() - t0
 
 # %%
-# Plot Barycenter (Iteration 3)
+# Plot Barycenters (Iteration 3)
 alpha = 0.4
 s = 80
 labels = ["circle 1", "circle 2", "circle 3", "circle 4"]
+
+
+# Compute barycenter energies
+def V(X, a):
+    v = 0
+    for k in range(K):
+        v += (1 / K) * ot.emd2(a, b_list[k], cost_list[k](X, Y_list[k]))
+    return v
+
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+# Plot for the true fixed-point algorithm
 for Y, label in zip(Y_list, labels):
-    plt.scatter(*(Y.numpy()).T, alpha=alpha, label=label, s=s)
-plt.scatter(
-    *(X_bar.detach().numpy()).T, label="Barycenter", c="black", alpha=alpha, s=s
+    axes[0].scatter(*(Y.numpy()).T, alpha=alpha, label=label, s=s)
+axes[0].scatter(
+    *(X_bar.detach().numpy()).T,
+    label="Barycenter",
+    c="black",
+    alpha=alpha * a_bar.numpy() / np.max(a_bar.numpy()),
+    s=s,
 )
-plt.axis("equal")
-plt.xlim(-0.3, 1.3)
-plt.ylim(-0.3, 1.3)
-plt.axis("off")
-plt.legend()
+axes[0].set_title(
+    "True Fixed-Point Algorithm\n"
+    f"Support size: {a_bar.shape[0]}\n"
+    f"Barycenter cost: {V(X_bar, a_bar).item():.6f}\n"
+    f"Computation time {dt_true_fixed_point:.4f}s"
+)
+axes[0].axis("equal")
+axes[0].axis("off")
+axes[0].legend()
+
+# Plot for the heuristic algorithm
+for Y, label in zip(Y_list, labels):
+    axes[1].scatter(*(Y.numpy()).T, alpha=alpha, label=label, s=s)
+axes[1].scatter(
+    *(X_bar2.detach().numpy()).T, label="Barycenter", c="black", alpha=alpha, s=s
+)
+axes[1].set_title(
+    "Heuristic Barycentric Algorithm\n"
+    f"Support size: {X_bar2.shape[0]}\n"
+    f"Barycenter cost: {V(X_bar2, torch.ones(n) / n).item():.6f}\n"
+    f"Computation time {dt_barycentric:.4f}s"
+)
+axes[1].axis("equal")
+axes[1].axis("off")
+axes[1].legend()
+
 plt.tight_layout()
 
 # %%
