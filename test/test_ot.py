@@ -605,6 +605,8 @@ def test_free_support_barycenter_generic_costs_auto_ground_bary():
     )
 
 
+@pytest.skip_backend("tf")  # skips because of array assignment
+@pytest.skip_backend("jax")
 def test_free_support_barycenter_generic_costs_backends(nx):
     measures_locations = [
         np.array([-1.0]).reshape((1, 1)),
@@ -747,6 +749,8 @@ def test_north_west_mm_gluing():
     verify_gluing_validity(gamma, J, w, pi_list)
 
 
+@pytest.skip_backend("tf")  # skips because of array assignment
+@pytest.skip_backend("jax")
 def test_north_west_mm_gluing_backends(nx):
     rng = np.random.RandomState(0)
     n = 7
