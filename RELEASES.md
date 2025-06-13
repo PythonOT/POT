@@ -28,6 +28,7 @@
 - Clean documentation for `gromov`, `lp` and `unbalanced` folders (PR #710)
 - Clean references in documentation (PR #722)
 - Clean documentation for `ot.gromov.gromov_wasserstein` (PR #737)
+- Debug wheels building (PR #739)
 
 ## 0.9.5
 
