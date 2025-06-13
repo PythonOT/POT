@@ -17,6 +17,8 @@
 - Backend implementation of `ot.dist` for (PR #701)
 - Updated documentation Quickstart guide and User guide with new API (PR #726)
 - Fix jax version for auto-grad (PR #732)
+- Added `ot.solver_1d.linear_circular_ot` (PR #736)
+- Added `ot.sliced.linear_sliced_wasserstein_sphere` (PR #736)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
