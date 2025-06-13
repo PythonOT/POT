@@ -791,10 +791,12 @@ def binary_search_circle(
                 -1, 1
             )
 
-            mask_end = mask * (nx.abs(dCptm - dCmtp) > 0.001)
-            tc[mask_end > 0] = (
-                (Ctp - Ctm + tm * dCptm - tp * dCmtp) / (dCptm - dCmtp)
-            )[mask_end > 0]
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=RuntimeWarning)
+                mask_end = mask * (nx.abs(dCptm - dCmtp) > 0.001)
+                tc[mask_end > 0] = (
+                    (Ctp - Ctm + tm * dCptm - tp * dCmtp) / (dCptm - dCmtp)
+                )[mask_end > 0]
             done[nx.prod(mask, axis=-1) > 0] = 1
         elif nx.any(1 - done):
             tm[((1 - mask) * (dCp < 0)) > 0] = tc[((1 - mask) * (dCp < 0)) > 0]
