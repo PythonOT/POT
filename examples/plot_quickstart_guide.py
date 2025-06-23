@@ -4,6 +4,8 @@
 Quickstart Guide
 =============================================
 
+.. note::
+    Notebook currently under development and has not been released yet. To be added in release: 0.9.6
 
 Quickstart guide to the POT toolbox.
 

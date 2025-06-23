@@ -4,6 +4,9 @@
 Gaussian Bures-Wasserstein barycenters
 ========================================================
 
+.. note::
+    Notebook added in release: 0.9.2.
+
 Illustration of Gaussian Bures-Wasserstein barycenters.
 
 """
