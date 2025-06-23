@@ -5,7 +5,7 @@ Low rank Sinkhorn
 ========================================
 
 .. note::
-    Notebook added in release: 0.9.2.
+    Example added in release: 0.9.2.
 
 This example illustrates the computation of Low Rank Sinkhorn [26].
 

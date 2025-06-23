@@ -5,7 +5,7 @@ Comparison of Fused Gromov-Wasserstein solvers
 ==============================
 
 .. note::
-    Notebook added in release: 0.9.1.
+    Example added in release: 0.9.1.
 
 This example illustrates the computation of FGW for attributed graphs
 using 4 different solvers to estimate the distance based on Conditional

@@ -5,7 +5,7 @@ Quantized Fused Gromov-Wasserstein examples
 ===============================================
 
 .. note::
-    Notebook added in release: 0.9.4.
+    Examples added in release: 0.9.4.
 
 These examples show how to use the quantized (Fused) Gromov-Wasserstein
 solvers (qFGW) [68]. POT provides a generic solver `quantized_fused_gromov_wasserstein_partitioned`

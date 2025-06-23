@@ -4,6 +4,8 @@ r"""
 Dual OT solvers for entropic and quadratic regularized OT with Pytorch
 ======================================================================
 
+.. note::
+    Example added in release: 0.8.2.
 
 """
 

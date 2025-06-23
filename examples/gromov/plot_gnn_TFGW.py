@@ -5,7 +5,7 @@ Graph classification with Template Based Fused Gromov Wasserstein
 ==============================
 
 .. note::
-    Notebook added in release: 0.9.1.
+    Example added in release: 0.9.1.
 
 This example first illustrates how to train a graph classification gnn based on the Template Fused Gromov Wasserstein layer as proposed in [52] .
 
