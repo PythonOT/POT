@@ -7,9 +7,9 @@ Partial OT solvers
 #         Yikun Bai < yikun.bai@vanderbilt.edu >
 #         Cédric Vincent-Cuaz <cedvincentcuaz@gmail.com>
 
-from .utils import list_to_array
-from .backend import get_backend
-from .lp import emd
+from ..utils import list_to_array
+from ..backend import get_backend
+from ..lp import emd
 from .partial_wrap import partial_wasserstein_1d_cy
 import numpy as np
 import warnings
