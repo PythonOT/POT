@@ -1320,7 +1320,7 @@ def partial_wasserstein_1d(
 
              \gamma &\geq 0
 
-             \mathbf{1}^T \gamma^T \mathbf{1} = n_transported_samples
+             \mathbf{1}^T \gamma^T \mathbf{1} = n_\text{transported samples}
 
     Parameters
     ----------
@@ -1328,7 +1328,7 @@ def partial_wasserstein_1d(
         Source dirac locations (on the real line)
     x_b : ndarray of float64, shape (m,) or (m, 1)
         Target dirac locations (on the real line)
-    n_transported_samples : int, optional
+    n_transported_samples : int, optional (default: min(n, m))
         number of samples to be transported
     p : float, optional
         power of the metric (default: 1)
@@ -1375,10 +1375,8 @@ def partial_wasserstein_1d(
     """
     x_a, x_b = list_to_array(x_a, x_b)
     nx = get_backend(x_a, x_b)
-    if a is not None:
-        a = list_to_array(a, nx=nx)
-    if b is not None:
-        b = list_to_array(b, nx=nx)
+    if n_transported_samples is None:
+        n_transported_samples = min(x_a.shape[0], x_b.shape[0])
 
     assert (
         x_a.ndim == 1 or x_a.ndim == 2 and x_a.shape[1] == 1
