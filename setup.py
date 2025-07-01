@@ -62,24 +62,26 @@ setup(
     url="https://github.com/PythonOT/POT",
     packages=find_packages(exclude=["benchmarks"]),
     ext_modules=cythonize(
-        Extension(
-            name="ot.lp.emd_wrap",
-            sources=[
-                "ot/lp/emd_wrap.pyx",
-                "ot/lp/EMD_wrapper.cpp",
-            ],  # cython/c++ src files
-            language="c++",
-            include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/lp")],
-            extra_compile_args=compile_args,
-            extra_link_args=link_args,
-        ),
-        Extension(
-            name="ot.partial.partial_wrap",
-            sources=["partial_wrap.pyx"],
-            include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/partial")],
-            extra_compile_args=["-O3"],
-            language="c++"
-        )
+        [
+            Extension(
+                name="ot.lp.emd_wrap",
+                sources=[
+                    "ot/lp/emd_wrap.pyx",
+                    "ot/lp/EMD_wrapper.cpp",
+                ],  # cython/c++ src files
+                language="c++",
+                include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/lp")],
+                extra_compile_args=compile_args,
+                extra_link_args=link_args,
+            ),
+            Extension(
+                name="ot.partial.partial_wrap",
+                sources=["partial_wrap.pyx"],
+                include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/partial")],
+                extra_compile_args=["-O3"],
+                language="c++"
+            )
+        ]
     ),
     platforms=["linux", "macosx", "windows"],
     download_url="https://github.com/PythonOT/POT/archive/{}.tar.gz".format(
