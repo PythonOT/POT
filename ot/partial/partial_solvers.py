@@ -10,6 +10,7 @@ Partial OT solvers
 from .utils import list_to_array
 from .backend import get_backend
 from .lp import emd
+from .partial_wrap import partial_wasserstein_1d_cy
 import numpy as np
 import warnings
 
@@ -1295,3 +1296,104 @@ def entropic_partial_gromov_wasserstein2(
         return log_gw["partial_gw_dist"], log_gw
     else:
         return log_gw["partial_gw_dist"]
+
+
+def partial_wasserstein_1d(
+    x_a,
+    x_b,
+    n_transported_samples=None,
+    p=1,
+    log=False
+):
+    r"""Solves the partial Wasserstein distance problem between 1d measures and returns
+    the OT matrix
+
+    The function considers the following problem:
+
+    .. math::
+        \gamma = \mathop{\arg \min}_\gamma \quad \sum_{ij} \gamma_{ij} \|x_a[i] - x_b[j]\|^p_p  
+
+    .. math::
+        s.t. \ \gamma \mathbf{1} &\leq \mathbf{1}
+
+             \gamma^T \mathbf{1} &\leq \mathbf{1}
+
+             \gamma &\geq 0
+
+             \mathbf{1}^T \gamma^T \mathbf{1} = n_transported_samples
+
+    Parameters
+    ----------
+    x_a : ndarray of float64, shape (n,) or (n, 1)
+        Source dirac locations (on the real line)
+    x_b : ndarray of float64, shape (m,) or (m, 1)
+        Target dirac locations (on the real line)
+    n_transported_samples : int, optional
+        number of samples to be transported
+    p : float, optional
+        power of the metric (default: 1)
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    indices_x : np.ndarray of shape (min(n, m, n_transported_samples), )
+        Indices of elements from the x distribution to be included in the partial solutions
+        Order of appearance in this array indicates order of inclusion in the solution
+    indices_y : np.ndarray of shape (min(n, m, n_transported_samples), )
+        Indices of elements from the x distribution to be included in the partial solutions
+        Order of appearance in this array indicates order of inclusion in the solution
+    list_marginal_costs : list of length min(n, m, n_transported_samples)
+        List of marginal costs associated to the intermediate partial problems
+        `np.cumsum(list_marginal_costs)` gives the corresponding total costs for intermediate partial problems
+
+    Examples
+    --------
+    >>> x = np.array([5., -2., 4.])
+    >>> y = np.array([-1., 1., 3.])
+    >>> ind_x, ind_y, marginal_costs = partial_wasserstein_1d(x, y, n_transported_samples=2)
+    >>> ind_x
+    array([1, 2])
+    >>> ind_y
+    array([0, 2])
+    >>> np.sum(marginal_costs)
+    2.0
+    >>> np.sum(np.abs(x[ind_x].sort() - y[ind_y].sort()))
+    2.0
+
+    References
+    ----------
+    ..  [76] Chapel, L., Tavenard, R. (2025). 
+        "One for all and all for one: 
+        Efficient computation of partial Wasserstein distances on the line".
+        ICLR.
+
+    See Also
+    --------
+    ot.partial.partial_wasserstein: Partial Wasserstein in dimension higher than 1
+    """
+    x_a, x_b = list_to_array(x_a, x_b)
+    nx = get_backend(x_a, x_b)
+    if a is not None:
+        a = list_to_array(a, nx=nx)
+    if b is not None:
+        b = list_to_array(b, nx=nx)
+
+    assert (
+        x_a.ndim == 1 or x_a.ndim == 2 and x_a.shape[1] == 1
+    ), "partial_wasserstein_1d should only be used with monodimensional data"
+    assert (
+        x_b.ndim == 1 or x_b.ndim == 2 and x_b.shape[1] == 1
+    ), "partial_wasserstein_1d should only be used with monodimensional data"
+
+    x_a_1d = nx.reshape(x_a, (-1,))
+    x_b_1d = nx.reshape(x_b, (-1,))
+
+    ind_x, ind_y, marginal_costs = partial_wasserstein_1d_cy(
+        nx.to_numpy(x_a_1d).astype(np.float64), 
+        nx.to_numpy(x_b_1d).astype(np.float64), 
+        max_iter=n_transported_samples, 
+        p=p 
+    )
+    return ind_x, ind_y, marginal_costs
