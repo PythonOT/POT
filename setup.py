@@ -76,7 +76,7 @@ setup(
             ),
             Extension(
                 name="ot.partial.partial_wrap",
-                sources=["partial_wrap.pyx"],
+                sources=["ot/partial/partial_wrap.pyx"],
                 include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/partial")],
                 extra_compile_args=["-O3"],
                 language="c++"
