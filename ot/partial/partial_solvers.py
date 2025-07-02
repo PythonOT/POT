@@ -1298,20 +1298,14 @@ def entropic_partial_gromov_wasserstein2(
         return log_gw["partial_gw_dist"]
 
 
-def partial_wasserstein_1d(
-    x_a,
-    x_b,
-    n_transported_samples=None,
-    p=1,
-    log=False
-):
+def partial_wasserstein_1d(x_a, x_b, n_transported_samples=None, p=1, log=False):
     r"""Solves the partial Wasserstein distance problem between 1d measures and returns
     the OT matrix
 
     The function considers the following problem:
 
     .. math::
-        \gamma = \mathop{\arg \min}_\gamma \quad \sum_{ij} \gamma_{ij} \|x_a[i] - x_b[j]\|^p_p  
+        \gamma = \mathop{\arg \min}_\gamma \quad \sum_{ij} \gamma_{ij} \|x_a[i] - x_b[j]\|^p_p
 
     .. math::
         s.t. \ \gamma \mathbf{1} &\leq \mathbf{1}
@@ -1364,8 +1358,8 @@ def partial_wasserstein_1d(
 
     References
     ----------
-    ..  [76] Chapel, L., Tavenard, R. (2025). 
-        "One for all and all for one: 
+    ..  [76] Chapel, L., Tavenard, R. (2025).
+        "One for all and all for one:
         Efficient computation of partial Wasserstein distances on the line".
         ICLR.
 
@@ -1389,9 +1383,9 @@ def partial_wasserstein_1d(
     x_b_1d = nx.reshape(x_b, (-1,))
 
     ind_x, ind_y, marginal_costs = partial_wasserstein_1d_cy(
-        nx.to_numpy(x_a_1d).astype(np.float64), 
-        nx.to_numpy(x_b_1d).astype(np.float64), 
-        max_iter=n_transported_samples, 
-        p=p 
+        nx.to_numpy(x_a_1d).astype(np.float64),
+        nx.to_numpy(x_b_1d).astype(np.float64),
+        max_iter=n_transported_samples,
+        p=p,
     )
     return ind_x, ind_y, marginal_costs
