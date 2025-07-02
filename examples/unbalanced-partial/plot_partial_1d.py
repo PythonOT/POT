@@ -8,6 +8,8 @@ This script demonstrates how to compute and visualize the Partial Wasserstein di
 We illustrate the intermediate transport plans for all `k = 1...n`, where `n = min(len(x_a), len(x_b))`.
 """
 
+# sphinx_gallery_thumbnail_number = 5
+
 import numpy as np
 import matplotlib.pyplot as plt
 from ot.partial import partial_wasserstein_1d
@@ -18,6 +20,9 @@ def plot_partial_transport(
 ):
     y_a = np.ones_like(x_a)
     y_b = -np.ones_like(x_b)
+
+    ax.plot([x_a.min() - 1, x_a.max() + 1], [1, 1], "k-", lw=0.5, alpha=0.5)
+    ax.plot([x_b.min() - 1, x_b.max() + 1], [-1, -1], "k-", lw=0.5, alpha=0.5)
 
     # Plot all points
     ax.plot(x_a, y_a, "o", color="C0", label="x_a")
@@ -67,9 +72,13 @@ cumulative_costs = np.cumsum(marginal_costs)
 fig, axes = plt.subplots(n, 1, figsize=(10, 2.2 * n), sharex=True)
 
 for k, ax in enumerate(axes):
+    plt.figure(figsize=(10, 2))
     plot_partial_transport(
-        ax, x_a, x_b, indices_a[: k + 1], indices_b[: k + 1], marginal_costs[: k + 1]
+        plt.gca(),
+        x_a,
+        x_b,
+        indices_a[: k + 1],
+        indices_b[: k + 1],
+        marginal_costs[: k + 1],
     )
-
-plt.tight_layout()
-plt.show()
+    plt.show()
