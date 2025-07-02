@@ -20,13 +20,15 @@ def plot_partial_transport(
 ):
     y_a = np.ones_like(x_a)
     y_b = -np.ones_like(x_b)
+    min_min = min(x_a.min(), x_b.min())
+    max_max = max(x_a.max(), x_b.max())
 
-    ax.plot([x_a.min() - 1, x_a.max() + 1], [1, 1], "k-", lw=0.5, alpha=0.5)
-    ax.plot([x_b.min() - 1, x_b.max() + 1], [-1, -1], "k-", lw=0.5, alpha=0.5)
+    ax.plot([min_min - 1, max_max + 1], [1, 1], "k-", lw=0.5, alpha=0.5)
+    ax.plot([min_min - 1, max_max + 1], [-1, -1], "k-", lw=0.5, alpha=0.5)
 
     # Plot all points
-    ax.plot(x_a, y_a, "o", color="C0", label="x_a")
-    ax.plot(x_b, y_b, "o", color="C1", label="x_b")
+    ax.plot(x_a, y_a, "o", color="C0", label="x_a", markersize=8)
+    ax.plot(x_b, y_b, "o", color="C1", label="x_b", markersize=8)
 
     # Plot transport lines
     if indices_a is not None and indices_b is not None:
@@ -39,11 +41,12 @@ def plot_partial_transport(
     if marginal_costs is not None:
         k = len(marginal_costs)
         ax.set_title(
-            f"Partial Transport - k = {k}, Cumulative Cost = {sum(marginal_costs):.2f}"
+            f"Partial Transport - k = {k}, Cumulative Cost = {sum(marginal_costs):.2f}",
+            fontsize=16,
         )
     else:
-        ax.set_title("Original 1D Discrete Distributions")
-    ax.legend(loc="upper right")
+        ax.set_title("Original 1D Discrete Distributions", fontsize=16)
+    ax.legend(loc="upper right", fontsize=14)
     ax.set_yticks([])
     ax.set_xticks([])
     ax.set_ylim(-2, 2)
@@ -69,9 +72,7 @@ indices_a, indices_b, marginal_costs = partial_wasserstein_1d(x_a, x_b)
 cumulative_costs = np.cumsum(marginal_costs)
 
 # Visualize all partial transport plans
-fig, axes = plt.subplots(n, 1, figsize=(10, 2.2 * n), sharex=True)
-
-for k, ax in enumerate(axes):
+for k in range(n):
     plt.figure(figsize=(10, 2))
     plot_partial_transport(
         plt.gca(),
