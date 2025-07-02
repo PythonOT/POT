@@ -1,5 +1,7 @@
 """
-Partial Wasserstein 1D - Gallery Example
+=========================
+Partial Wasserstein in 1D
+=========================
 
 This script demonstrates how to compute and visualize the Partial Wasserstein distance between two 1D discrete distributions using `ot.partial.partial_wasserstein_1d`.
 
@@ -25,7 +27,6 @@ plt.grid(True)
 plt.show()
 
 # %%
-# Run the function on our example data
 indices_a, indices_b, marginal_costs = partial_wasserstein_1d(x_a, x_b)
 
 # Compute cumulative cost
@@ -43,8 +44,11 @@ for k, ax in enumerate(axes):
     )
     ax.grid(True)
 
-    for i, j in zip(indices_a[: k + 1], indices_b[: k + 1]):
-        ax.plot([x_a[i], x_b[j]], [1, -1], "k--", alpha=0.7)
+    subset_a = np.sort(x_a[indices_a[: k + 1]])
+    subset_b = np.sort(x_b[indices_b[: k + 1]])
+
+    for x_a_i, x_b_j in zip(subset_a, subset_b):
+        ax.plot([x_a_i, x_b_j], [1, -1], "k--", alpha=0.7)
 
 plt.tight_layout()
 plt.show()
