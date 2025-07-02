@@ -12,18 +12,49 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ot.partial import partial_wasserstein_1d
 
+
+def plot_partial_transport(
+    ax, x_a, x_b, indices_a=None, indices_b=None, marginal_costs=None
+):
+    y_a = np.ones_like(x_a)
+    y_b = -np.ones_like(x_b)
+
+    # Plot all points
+    ax.plot(x_a, y_a, "o", color="C0", label="x_a")
+    ax.plot(x_b, y_b, "o", color="C1", label="x_b")
+
+    # Plot transport lines
+    if indices_a is not None and indices_b is not None:
+        subset_a = np.sort(x_a[indices_a])
+        subset_b = np.sort(x_b[indices_b])
+
+        for x_a_i, x_b_j in zip(subset_a, subset_b):
+            ax.plot([x_a_i, x_b_j], [1, -1], "k--", alpha=0.7)
+
+    if marginal_costs is not None:
+        k = len(marginal_costs)
+        ax.set_title(
+            f"Partial Transport - k = {k}, Cumulative Cost = {marginal_costs.sum():.2f}"
+        )
+    else:
+        ax.set_title("Original 1D Discrete Distributions")
+    ax.legend(loc="upper right")
+    ax.set_yticks([])
+    ax.set_xticks([])
+    ax.set_ylim(-2, 2)
+    ax.set_xlim(min(x_a.min(), x_b.min()) - 1, max(x_a.max(), x_b.max()) + 1)
+    ax.axis("off")
+
+
 # Simulate two 1D discrete distributions
-np.random.seed(42)
+np.random.seed(0)
 n = 6
 x_a = np.sort(np.random.uniform(0, 10, size=n))
 x_b = np.sort(np.random.uniform(0, 10, size=n))
 
 # Plot original distributions
 plt.figure(figsize=(10, 2))
-plt.eventplot([x_a, x_b], lineoffsets=[1, -1], colors=["C0", "C1"], linelengths=0.6)
-plt.yticks([1, -1], ["x_a", "x_b"])
-plt.title("Original 1D Discrete Distributions")
-plt.grid(True)
+plot_partial_transport(plt.gca(), x_a, x_b)
 plt.show()
 
 # %%
@@ -36,19 +67,9 @@ cumulative_costs = np.cumsum(marginal_costs)
 fig, axes = plt.subplots(n, 1, figsize=(10, 2.2 * n), sharex=True)
 
 for k, ax in enumerate(axes):
-    ax.eventplot([x_a, x_b], lineoffsets=[1, -1], colors=["C0", "C1"], linelengths=0.6)
-    ax.set_yticks([1, -1])
-    ax.set_yticklabels(["x_a", "x_b"])
-    ax.set_title(
-        f"Partial Transport - k = {k+1}, Cumulative Cost = {cumulative_costs[k]:.2f}"
+    plot_partial_transport(
+        ax, x_a, x_b, indices_a[: k + 1], indices_b[: k + 1], marginal_costs[: k + 1]
     )
-    ax.grid(True)
-
-    subset_a = np.sort(x_a[indices_a[: k + 1]])
-    subset_b = np.sort(x_b[indices_b[: k + 1]])
-
-    for x_a_i, x_b_j in zip(subset_a, subset_b):
-        ax.plot([x_a_i, x_b_j], [1, -1], "k--", alpha=0.7)
 
 plt.tight_layout()
 plt.show()
