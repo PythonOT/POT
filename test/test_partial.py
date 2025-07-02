@@ -295,8 +295,8 @@ def test_partial_wasserstein_1d():
     n_samples = 20  # nb samples
 
     rng = np.random.RandomState(42)
-    xs = ot.datasets.make_1D_gauss(n_samples, 0., 1., random_state=rng)
-    xt = ot.datasets.make_1D_gauss(n_samples, 0., 1., random_state=rng)
+    xs = rng.randn(n_samples, 1)
+    xt = rng.randn(n_samples, 1)
 
     ind_x_half, ind_y_half, marginal_costs_half = ot.partial.partial_wasserstein_1d(
         xs, xt, n_transported_samples=n_samples // 2
