@@ -19,7 +19,7 @@ from .partial_solvers import (
     partial_gromov_wasserstein2,
     entropic_partial_gromov_wasserstein,
     entropic_partial_gromov_wasserstein2,
-    partial_wasserstein_1d
+    partial_wasserstein_1d,
 )
 
 __all__ = [
@@ -33,5 +33,5 @@ __all__ = [
     "partial_gromov_wasserstein",
     "partial_gromov_wasserstein2",
     "entropic_partial_gromov_wasserstein",
-    "entropic_partial_gromov_wasserstein2"
+    "entropic_partial_gromov_wasserstein2",
 ]

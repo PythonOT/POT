@@ -79,8 +79,8 @@ setup(
                 sources=["ot/partial/partial_cython.pyx"],
                 include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/partial")],
                 extra_compile_args=["-O3"],
-                language="c++"
-            )
+                language="c++",
+            ),
         ]
     ),
     platforms=["linux", "macosx", "windows"],
