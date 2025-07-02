@@ -1342,7 +1342,7 @@ def partial_wasserstein_1d(
         Indices of elements from the x distribution to be included in the partial solutions
         Order of appearance in this array indicates order of inclusion in the solution
     indices_y : np.ndarray of shape (min(n, m, n_transported_samples), )
-        Indices of elements from the x distribution to be included in the partial solutions
+        Indices of elements from the y distribution to be included in the partial solutions
         Order of appearance in this array indicates order of inclusion in the solution
     list_marginal_costs : list of length min(n, m, n_transported_samples)
         List of marginal costs associated to the intermediate partial problems

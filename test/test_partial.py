@@ -298,12 +298,12 @@ def test_partial_wasserstein_1d():
     xs = rng.randn(n_samples, 1)
     xt = rng.randn(n_samples, 1)
 
-    ind_x_half, ind_y_half, marginal_costs_half = ot.partial.partial_wasserstein_1d(
-        xs, xt, n_transported_samples=n_samples // 2
+    ind_xs_half, ind_xt_half, marginal_costs_half = ot.partial.partial_wasserstein_1d(
+        xs, xt, n_transported_samples=n_samples // 2, p=1
     )
 
-    ind_x, ind_y, marginal_costs = ot.partial.partial_wasserstein_1d(
-        xs, xt
+    ind_xs, ind_xt, marginal_costs = ot.partial.partial_wasserstein_1d(
+        xs, xt, p=1
     )
 
     np.testing.assert_allclose(
@@ -312,7 +312,7 @@ def test_partial_wasserstein_1d():
         atol=1e-04
     )
     np.testing.assert_allclose(
-        np.sum(np.abs(np.sort(xs[ind_x_half]) - np.sort(xt[ind_y_half]))), 
+        np.sum(np.abs(np.sort(xs[ind_xs_half]) - np.sort(xt[ind_xt_half]))), 
         np.sum(marginal_costs_half), 
         atol=1e-04
     )

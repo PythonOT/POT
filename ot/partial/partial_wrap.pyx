@@ -206,7 +206,8 @@ def generate_solution_using_marginal_costs(
     cdef list list_marginal_costs = []
     cdef list list_active_set_inserts = []
     cdef int n = sorted_distrib_indicator.shape[0]
-    cdef int c, i, j, p_s, p_e
+    cdef int i, j, p_s, p_e
+    cdef double c
     cdef double marginal_cost
     cdef object new_chain
     while len(costs) > 0 and max_iter > len(active_set) // 2:
