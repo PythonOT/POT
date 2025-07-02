@@ -1298,7 +1298,7 @@ def entropic_partial_gromov_wasserstein2(
         return log_gw["partial_gw_dist"]
 
 
-def partial_wasserstein_1d(x_a, x_b, n_transported_samples=None, p=1, log=False):
+def partial_wasserstein_1d(x_a, x_b, n_transported_samples=None, p=1):
     r"""Solves the partial Wasserstein distance problem between 1d measures and returns
     the OT matrix
 
