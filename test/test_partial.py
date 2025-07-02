@@ -312,7 +312,7 @@ def test_partial_wasserstein_1d():
         atol=1e-04
     )
     np.testing.assert_allclose(
-        np.sum(np.abs(xs[ind_x_half].sort() - xt[ind_y_half].sort())), 
+        np.sum(np.abs(np.sort(xs[ind_x_half]) - np.sort(xt[ind_y_half]))), 
         np.sum(marginal_costs_half), 
         atol=1e-04
     )

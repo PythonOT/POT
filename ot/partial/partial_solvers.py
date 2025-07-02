@@ -1359,7 +1359,7 @@ def partial_wasserstein_1d(
     array([0, 2])
     >>> np.sum(marginal_costs)
     2.0
-    >>> np.sum(np.abs(x[ind_x].sort() - y[ind_y].sort()))
+    >>> np.sum(np.abs(np.sort(x[ind_x]) - np.sort(y[ind_y])))
     2.0
 
     References
