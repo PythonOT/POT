@@ -34,7 +34,7 @@ def plot_partial_transport(
     if marginal_costs is not None:
         k = len(marginal_costs)
         ax.set_title(
-            f"Partial Transport - k = {k}, Cumulative Cost = {marginal_costs.sum():.2f}"
+            f"Partial Transport - k = {k}, Cumulative Cost = {sum(marginal_costs):.2f}"
         )
     else:
         ax.set_title("Original 1D Discrete Distributions")
