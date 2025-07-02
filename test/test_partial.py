@@ -60,8 +60,10 @@ def test_raise_errors():
         )
 
     with pytest.raises(AssertionError):
-        # xs and xt are not 1d here
-        ot.partial.partial_wasserstein_1d(xs, xt)
+        xs_2d = rng.randn(n_samples, 2)
+        xt_2d = rng.randn(n_samples, 2)
+        ot.partial.partial_wasserstein_1d(xs_2d, xt_2d)
+
 
 def test_partial_wasserstein_lagrange():
     n_samples = 20  # nb samples (gaussian)
@@ -291,6 +293,7 @@ def test_partial_gromov_wasserstein():
     )  # cf convergence wasserstein
     np.testing.assert_allclose(np.sum(res), m, atol=1e-04)
 
+
 def test_partial_wasserstein_1d():
     n_samples = 20  # nb samples
 
@@ -302,17 +305,13 @@ def test_partial_wasserstein_1d():
         xs, xt, n_transported_samples=n_samples // 2, p=1
     )
 
-    ind_xs, ind_xt, marginal_costs = ot.partial.partial_wasserstein_1d(
-        xs, xt, p=1
-    )
+    ind_xs, ind_xt, marginal_costs = ot.partial.partial_wasserstein_1d(xs, xt, p=1)
 
     np.testing.assert_allclose(
-        marginal_costs_half, 
-        marginal_costs[:n_samples//2], 
-        atol=1e-04
+        marginal_costs_half, marginal_costs[: n_samples // 2], atol=1e-04
     )
     np.testing.assert_allclose(
-        np.sum(np.abs(np.sort(xs[ind_xs_half]) - np.sort(xt[ind_xt_half]))), 
-        np.sum(marginal_costs_half), 
-        atol=1e-04
+        np.sum(np.abs(np.sort(xs[ind_xs_half]) - np.sort(xt[ind_xt_half]))),
+        np.sum(marginal_costs_half),
+        atol=1e-04,
     )

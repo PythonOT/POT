@@ -1300,7 +1300,8 @@ def entropic_partial_gromov_wasserstein2(
 
 def partial_wasserstein_1d(x_a, x_b, n_transported_samples=None, p=1):
     r"""Solves the partial Wasserstein distance problem between 1d measures and returns
-    the OT matrix
+    all required information to reconstruct the solutions to all partial problems for any
+    amount of transported samples up to `n_transported_samples`.
 
     The function considers the following problem:
 
