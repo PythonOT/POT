@@ -75,8 +75,8 @@ setup(
                 extra_link_args=link_args,
             ),
             Extension(
-                name="ot.partial.partial_wrap",
-                sources=["ot/partial/partial_wrap.pyx"],
+                name="ot.partial.partial_cython",
+                sources=["ot/partial/partial_cython.pyx"],
                 include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/partial")],
                 extra_compile_args=["-O3"],
                 language="c++"
