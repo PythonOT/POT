@@ -124,7 +124,7 @@ def compute_costs(np.ndarray[np.float64_t, ndim=1] sorted_z,
             else:
                 cost = get_cost_wp(sorted_z, sorted_distrib_indicator, idx_start, idx_end, p)
             if idx_end == idx_start + 1:
-                l_costs.append((abs(cost), idx_start, idx_end))
+                heapq.heappush(l_costs, (abs(cost), idx_start, idx_end))
             minimal_chain_ending_at[idx_end] = (idx_start, abs(cost))
     return l_costs, precompute_chain_costs_cumsum(minimal_chain_ending_at, n)
 
