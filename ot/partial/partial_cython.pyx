@@ -11,37 +11,38 @@ import heapq
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def insert_new_chain(dict chains_starting_at, dict chains_ending_at, tuple candidate_chain):
-    """Insert the `candidate_chain` into the already known chains stored in 
+def insert_new_chain(np.ndarray[np.int64_t, ndim=1] chains_starting_at, np.ndarray[np.int64_t, ndim=1] chains_ending_at, int i, int j):
+    """Insert the `candidate_chain=(i,j)` into the already known chains stored in 
     `chains_starting_at` and `chains_ending_at`.
     `chains_starting_at` and `chains_ending_at` are modified in-place and 
     the chain in which the candidate is inserted is returned.
     """
-    cdef int i = candidate_chain[0]
-    cdef int j = candidate_chain[1]
-    if i - 1 in chains_ending_at:
+    cdef int n = chains_starting_at.shape[0]
+    if i - 1 >= 0 and i - 1 < n and chains_ending_at[i - 1] != -1:
         i = chains_ending_at[i - 1]
-    if j + 1 in chains_starting_at:
+    if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1]:
         j = chains_starting_at[j + 1]
-    if i in chains_starting_at:
-        del chains_ending_at[chains_starting_at[i]]
-    chains_starting_at[i] = j
-    if j in chains_ending_at:
-        del chains_starting_at[chains_ending_at[j]]
-    chains_ending_at[j] = i
+    if i >= 0 and i < n:
+        if chains_starting_at[i] != -1:
+            chains_ending_at[chains_starting_at[i]] = -1
+        chains_starting_at[i] = j
+    if j >= 0 and j < n:
+        if chains_ending_at[j] != -1:
+            chains_starting_at[chains_ending_at[j]] = -1
+        chains_ending_at[j] = i
     return i, j
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def compute_cost_for_chain(int idx_start, int idx_end, dict chain_costs_cumsum):
+def compute_cost_for_chain(int idx_start, int idx_end, np.ndarray[np.float64_t, ndim=1] chain_costs_cumsum):
     """Compute the associated cost for a chain (set of contiguous points
     included in the solution) ranging from `idx_start` to `idx_end` (both included).
     """
-    return chain_costs_cumsum[idx_end] - chain_costs_cumsum.get(idx_start - 1, 0)
+    return chain_costs_cumsum[idx_end] - chain_costs_cumsum[idx_start - 1]
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def precompute_chain_costs_cumsum(dict minimal_chain_ending_at, int n):
+def precompute_chain_costs_cumsum(np.ndarray[np.int64_t, ndim=1] minimal_chain_ending_at_idx, np.ndarray[np.float64_t, ndim=1] minimal_chain_ending_at_cost, int n):
     """For each position `i` at which a chain could end,
     Compute (using dynamic programming and the costs of minimal chains that have been precomputed)
     the cost of the largest chain ending at `i`.
@@ -49,13 +50,17 @@ def precompute_chain_costs_cumsum(dict minimal_chain_ending_at, int n):
     This is useful because this can be used later, to compute the cost of any chain in O(1)
     (cf. `compute_cost_for_chain`).
     """
-    cdef dict chain_costs_cumsum = {}
-    cdef int i
-    cdef start, additional_cost
+    cdef np.ndarray[np.float64_t, ndim=1] chain_costs_cumsum = np.zeros((n, ), dtype=np.float64)
+    cdef int i, start
+    cdef double additional_cost
     for i in range(n):
-        if i in minimal_chain_ending_at:
-            start, additional_cost = minimal_chain_ending_at[i]
-            chain_costs_cumsum[i] = chain_costs_cumsum.get(start - 1, 0) + additional_cost
+        if minimal_chain_ending_at_idx[i] != -1:
+            start = minimal_chain_ending_at_idx[i]
+            additional_cost = minimal_chain_ending_at_cost[i]
+            if start == 0:
+                chain_costs_cumsum[i] = additional_cost
+            else:
+                chain_costs_cumsum[i] = chain_costs_cumsum[start - 1] + additional_cost
     return chain_costs_cumsum
 
 @cython.boundscheck(False)
@@ -95,9 +100,10 @@ def compute_costs(np.ndarray[np.float64_t, ndim=1] sorted_z,
     elements from x as elements from y)
     """
     cdef list l_costs = []
-    cdef dict minimal_chain_ending_at = {}
-    cdef dict last_pos_for_rank_x = {}
-    cdef dict last_pos_for_rank_y = {}
+    cdef np.ndarray[np.int64_t, ndim=1] minimal_chain_ending_at_idx = np.full((sorted_z.shape[0], ), -1, dtype=np.int64)
+    cdef np.ndarray[np.float64_t, ndim=1] minimal_chain_ending_at_cost = np.full((sorted_z.shape[0], ), -1.0, dtype=np.float64)
+    cdef np.ndarray[np.int64_t, ndim=1] last_pos_for_rank_x = np.full((sorted_z.shape[0], ), -1, dtype=np.int64)
+    cdef np.ndarray[np.int64_t, ndim=1] last_pos_for_rank_y = np.full((sorted_z.shape[0], ), -1, dtype=np.int64)
     cdef int n = diff_ranks.shape[0]
     cdef int idx_end, cur_rank, idx_start, target_rank
     cdef double cost
@@ -110,12 +116,12 @@ def compute_costs(np.ndarray[np.float64_t, ndim=1] sorted_z,
         idx_start = -1
         if sorted_distrib_indicator[idx_end] == 0:
             target_rank = cur_rank - 1
-            if target_rank in last_pos_for_rank_y:
+            if last_pos_for_rank_y[target_rank] != -1:
                 idx_start = last_pos_for_rank_y[target_rank]
             last_pos_for_rank_x[cur_rank] = idx_end
         else:
             target_rank = cur_rank + 1
-            if target_rank in last_pos_for_rank_x:
+            if last_pos_for_rank_x[target_rank] != -1:
                 idx_start = last_pos_for_rank_x[target_rank]
             last_pos_for_rank_y[cur_rank] = idx_end
         if idx_start != -1:
@@ -125,8 +131,9 @@ def compute_costs(np.ndarray[np.float64_t, ndim=1] sorted_z,
                 cost = get_cost_wp(sorted_z, sorted_distrib_indicator, idx_start, idx_end, p)
             if idx_end == idx_start + 1:
                 heapq.heappush(l_costs, (abs(cost), idx_start, idx_end))
-            minimal_chain_ending_at[idx_end] = (idx_start, abs(cost))
-    return l_costs, precompute_chain_costs_cumsum(minimal_chain_ending_at, n)
+            minimal_chain_ending_at_idx[idx_end] = idx_start
+            minimal_chain_ending_at_cost[idx_end] = abs(cost)
+    return l_costs, precompute_chain_costs_cumsum(minimal_chain_ending_at_idx, minimal_chain_ending_at_cost, n)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -186,7 +193,7 @@ def preprocess(np.ndarray[np.float64_t, ndim=1] x, np.ndarray[np.float64_t, ndim
 def generate_solution_using_marginal_costs(
     list costs,
     np.ndarray[np.int64_t, ndim=1] ranks_xy,
-    dict chain_costs_cumsum,
+    np.ndarray[np.float64_t, ndim=1] chain_costs_cumsum,
     int max_iter,
     np.ndarray[np.int64_t, ndim=1] sorted_distrib_indicator
 ):
@@ -197,41 +204,45 @@ def generate_solution_using_marginal_costs(
     that are in the active set, and the second one contains the indices from `sorted_y`
     that are in the active set. 
     The third returned element is a list of marginal costs induced by each step:
-    `list_marginal_costs[i]` is the marginal cost induced by the `i`-th step of the algorithm, such
-    that `np.cumsum(list_marginal_costs[:i])` gives all intermediate costs up to step `i`.
+    `arr_marginal_costs[i]` is the marginal cost induced by the `i`-th step of the algorithm, such
+    that `np.cumsum(arr_marginal_costs[:i])` gives all intermediate costs up to step `i`.
     """
-    cdef set active_set = set()
-    cdef dict chains_starting_at = {}
-    cdef dict chains_ending_at = {}
-    cdef list list_marginal_costs = []
-    cdef list list_active_set_inserts = []
+    cdef np.ndarray[np.int64_t, ndim=1] active_set = np.zeros((sorted_distrib_indicator.shape[0], ), dtype=np.int64)
+    cdef np.ndarray[np.int64_t, ndim=1] chains_starting_at = np.full((sorted_distrib_indicator.shape[0], ), -1, dtype=np.int64)
+    cdef np.ndarray[np.int64_t, ndim=1] chains_ending_at = np.full((sorted_distrib_indicator.shape[0], ), -1, dtype=np.int64)
+    cdef np.ndarray[np.int64_t, ndim=2] active_set_inserts = np.zeros((max_iter, 2), dtype=np.int64)
     cdef int n = sorted_distrib_indicator.shape[0]
     cdef int i, j, p_s, p_e
+    cdef int n_pairs_in_active_set = 0
     cdef double c
     cdef double marginal_cost
-    cdef object new_chain
-    while len(costs) > 0 and max_iter > len(active_set) // 2:
+    cdef np.ndarray[np.float64_t, ndim=1] arr_marginal_costs = np.zeros((max_iter, ), dtype=np.float64)
+
+    while len(costs) > 0 and max_iter > n_pairs_in_active_set:
         c, i, j = heapq.heappop(costs)
-        if i in active_set or j in active_set:
+        if active_set[i] == 1 or active_set[j] == 1:
             continue
-        new_chain = None
         # Case 1: j == i + 1 => "Simple" insert
         if j == i + 1:
-            new_chain = insert_new_chain(chains_starting_at, chains_ending_at, (i, j))
+            p_s, p_e = insert_new_chain(chains_starting_at, chains_ending_at, i, j)
         # Case 2: insert a chain that contains a chain
-        elif j - 1 in chains_ending_at:
-            del chains_starting_at[i + 1]
-            del chains_ending_at[j - 1]
-            new_chain = insert_new_chain(chains_starting_at, chains_ending_at, (i, j))
+        elif chains_ending_at[j - 1] != -1:
+            if i + 1 >= 0 and i + 1 < n:
+                chains_starting_at[i + 1] = -1
+            if j - 1 >= 0 and j - 1 < n:
+                chains_ending_at[j - 1] = -1
+            p_s, p_e = insert_new_chain(chains_starting_at, chains_ending_at, i, j)
         # There should be no "Case 3"
         else:
             raise ValueError
-        active_set.update({i, j})
-        list_active_set_inserts.append((i, j))
-        list_marginal_costs.append(c)
+        active_set_inserts[n_pairs_in_active_set, 0] = i
+        active_set_inserts[n_pairs_in_active_set, 1] = j
+        arr_marginal_costs[n_pairs_in_active_set] = c
+        active_set[i] = 1
+        active_set[j] = 1
+        n_pairs_in_active_set += 1
         
         # We now need to update the candidate chains wrt the chain we have just created
-        p_s, p_e = new_chain
         if p_s == 0 or p_e == n - 1:
             continue
         if sorted_distrib_indicator[p_s - 1] != sorted_distrib_indicator[p_e + 1]:
@@ -240,22 +251,24 @@ def generate_solution_using_marginal_costs(
                              - compute_cost_for_chain(p_s, p_e, chain_costs_cumsum))
             heapq.heappush(costs, (marginal_cost, p_s - 1, p_e + 1))
     # Generate index arrays in the order of insertion in the active set
-    cdef list indices_sorted_x = []
-    cdef list indices_sorted_y = []
+    cdef np.ndarray[np.int64_t, ndim=1] indices_sorted_x = np.zeros((max_iter, ), dtype=np.int64) - 1
+    cdef np.ndarray[np.int64_t, ndim=1] indices_sorted_y = np.zeros((max_iter, ), dtype=np.int64) - 1
     cdef int a, b
-    for a, b in list_active_set_inserts:
+    for i in range(max_iter):
+        a = active_set_inserts[i, 0]
+        b = active_set_inserts[i, 1]
         if sorted_distrib_indicator[a] == 0:
-            indices_sorted_x.append(ranks_xy[a])
+            indices_sorted_x[i] = ranks_xy[a]
         else:
-            indices_sorted_y.append(ranks_xy[a])
+            indices_sorted_y[i] = ranks_xy[a]
         if sorted_distrib_indicator[b] == 0:
-            indices_sorted_x.append(ranks_xy[b])
+            indices_sorted_x[i] = ranks_xy[b]
         else:
-            indices_sorted_y.append(ranks_xy[b])
+            indices_sorted_y[i] = ranks_xy[b]
     return (
-        np.array(indices_sorted_x, dtype=np.int64),
-        np.array(indices_sorted_y, dtype=np.int64),
-        list_marginal_costs
+        indices_sorted_x,
+        indices_sorted_y,
+        arr_marginal_costs
     )
 
 @cython.boundscheck(False)
@@ -433,12 +446,12 @@ def partial_wasserstein_1d_cy(
     cdef np.ndarray[np.int64_t, ndim=1] ranks_xy
     cdef np.ndarray[np.int64_t, ndim=1] diff_ranks
     cdef list costs
-    cdef dict chain_costs_cumsum
+    cdef np.ndarray[np.float64_t, ndim=1] chain_costs_cumsum
     cdef np.ndarray[np.int64_t, ndim=1] indices_x
     cdef np.ndarray[np.int64_t, ndim=1] indices_y
     cdef np.ndarray[np.int64_t, ndim=1] sol_indices_x_sorted
     cdef np.ndarray[np.int64_t, ndim=1] sol_indices_y_sorted
-    cdef list marginal_costs
+    cdef np.ndarray[np.float64_t, ndim=1] marginal_costs
 
     indices_sort_x, indices_sort_y, indices_sort_xy, sorted_distrib_indicator = preprocess(x, y)
 
