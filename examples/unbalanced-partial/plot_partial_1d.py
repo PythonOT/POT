@@ -61,7 +61,7 @@ x_a = np.sort(np.random.uniform(0, 10, size=n))
 x_b = np.sort(np.random.uniform(0, 10, size=n))
 
 # Plot original distributions
-plt.figure(figsize=(10, 2))
+plt.figure(figsize=(6, 2))
 plot_partial_transport(plt.gca(), x_a, x_b)
 plt.show()
 
@@ -73,7 +73,7 @@ cumulative_costs = np.cumsum(marginal_costs)
 
 # Visualize all partial transport plans
 for k in range(n):
-    plt.figure(figsize=(10, 2))
+    plt.figure(figsize=(6, 2))
     plot_partial_transport(
         plt.gca(),
         x_a,
