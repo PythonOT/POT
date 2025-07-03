@@ -26,10 +26,6 @@ def plot_partial_transport(
     ax.plot([min_min - 1, max_max + 1], [1, 1], "k-", lw=0.5, alpha=0.5)
     ax.plot([min_min - 1, max_max + 1], [-1, -1], "k-", lw=0.5, alpha=0.5)
 
-    # Plot all points
-    ax.plot(x_a, y_a, "o", color="C0", label="x_a", markersize=8)
-    ax.plot(x_b, y_b, "o", color="C1", label="x_b", markersize=8)
-
     # Plot transport lines
     if indices_a is not None and indices_b is not None:
         subset_a = np.sort(x_a[indices_a])
@@ -37,6 +33,10 @@ def plot_partial_transport(
 
         for x_a_i, x_b_j in zip(subset_a, subset_b):
             ax.plot([x_a_i, x_b_j], [1, -1], "k--", alpha=0.7)
+
+    # Plot all points
+    ax.plot(x_a, y_a, "o", color="C0", label="x_a", markersize=8)
+    ax.plot(x_b, y_b, "o", color="C1", label="x_b", markersize=8)
 
     if marginal_costs is not None:
         k = len(marginal_costs)
