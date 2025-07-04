@@ -18,6 +18,7 @@ def insert_new_chain(np.ndarray[np.int64_t, ndim=1] chains_starting_at, np.ndarr
     the chain in which the candidate is inserted is returned.
     """
     cdef int n = chains_starting_at.shape[0]
+    assert chains_starting_at.shape == chains_ending_at.shape
     if i - 1 >= 0 and i - 1 < n and chains_ending_at[i - 1] != -1:
         i = chains_ending_at[i - 1]
     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1] != -1:
