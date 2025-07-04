@@ -315,3 +315,26 @@ def test_partial_wasserstein_1d():
         np.sum(marginal_costs_half),
         atol=1e-04,
     )
+
+    n = 20
+    x = np.random.rand(n)
+    y = np.random.rand(n)
+
+    M = ot.dist(x[:, None], y[:, None], metric="minkowski", p=1)
+    indices_x, indices_y, marginal_costs = ot.partial.partial_wasserstein_1d(
+        x, y, max_iter=n
+    )
+    costs = np.cumsum(marginal_costs)
+
+    for i in range(1, n):
+        np.testing.assert_allclose(
+            costs[i - 1] / n,
+            ot.partial.partial_wasserstein2([], [], M, m=i / n),
+            atol=1e-8,
+        )
+
+        t = ot.partial.partial_wasserstein([], [], M, m=i / n)
+        ind_x, ind_y = np.where(t > 1e-6)
+
+        np.testing.assert_array_equal(np.sort(indices_x[:i]), np.sort(ind_x))
+        np.testing.assert_array_equal(np.sort(indices_y[:i]), np.sort(ind_y))
