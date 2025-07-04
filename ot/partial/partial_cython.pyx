@@ -20,7 +20,7 @@ def insert_new_chain(np.ndarray[np.int64_t, ndim=1] chains_starting_at, np.ndarr
     cdef int n = chains_starting_at.shape[0]
     if i - 1 >= 0 and i - 1 < n and chains_ending_at[i - 1] != -1:
         i = chains_ending_at[i - 1]
-    if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1]:
+    if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1] != -1:
         j = chains_starting_at[j + 1]
     if i >= 0 and i < n:
         if chains_starting_at[i] != -1:

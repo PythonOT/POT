@@ -2687,13 +2687,13 @@ static CYTHON_INLINE PyObject* __Pyx_PyLong_From_int(int value);
 static CYTHON_INLINE npy_int64 __Pyx_PyLong_As_npy_int64(PyObject *);
 
 /* CIntToPy.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyLong_From_npy_int64(npy_int64 value);
-
-/* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyLong_From_long(long value);
 
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyLong_From_Py_intptr_t(Py_intptr_t value);
+
+/* CIntToPy.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyLong_From_npy_int64(npy_int64 value);
 
 /* FormatTypeName.proto */
 #if CYTHON_COMPILING_IN_LIMITED_API
@@ -2974,7 +2974,7 @@ static const char __pyx_k_2T_33a_2T_33a_2_G1A_2_G1A_2_L_1[] = "\200\001\360,\000
 static const char __pyx_k_2_8r_7r_4Bl_LPQ_G1A_66RRSSddggh[] = "\200\001\3602\000\0058\260r\270\027\300\001\300\021\330\0047\260r\270\027\300\001\300\021\330\0044\260B\260l\300\"\300L\320PQ\330\004<\270G\3001\300A\340\0046\3206R\320RS\320Sd\320dg\320gh\330\0046\3206R\320RS\320Sd\320dg\320gh\340\004\013\210:\220R\220q";
 static const char __pyx_k_6RvR_WW_eekkmmn_RuBF_ddeemmppvv[] = "\200\001\360&\000\0056\260R\260v\270R\320?W\320W]\320]^\320^e\320ek\320km\320mn\330\004=\270R\270u\300B\320F^\320^d\320de\320em\320mp\320pv\320vx\320xy\330\004;\2702\270U\300\"\320D\\\320\\b\320bc\320ck\320kn\320nt\320tv\320vw\330\004=\270R\270v\300R\300z\320QU\320U[\320[]\320]^\330\004\021\320\021)\250\026\250q\260\001\340\004%\240Q\360\006\000\005@\001\270r\300\026\300r\310\035\320V\\\320\\^\320^_\340\004\n\210#\210Q\210g\220R\220r\230\024\230Y\240b\250\001\330\010\013\2103\210d\220%\220x\230q\240\001\330\010\013\210:\220Q\220c\230\023\230B\230c\240\032\2501\250C\250s\260!\330\014\r\340\010\013\2102\210S\220\002\220\"\220A\330\014\021\220\026\320\027'\240q\320(<\320<N\310c\320QR\340\r\035\230Q\230b\240\002\240#\240T\250\021\330\014\017\210r\220\022\2202\220S\230\002\230$\230b\240\002\240\"\240B\240a\330\020\"\240!\2402\240R\240v\250Q\330\014\017\210r\220\022\2202\220S\230\002\230$\230b\240\002\240\"\240B\240a\330\020 \240\001\240\022\2402\240V\2501\330\014\021\220\026\320\027'\240q\320(<\320<N\310c\320QR\360\006\000\r\023\220!\330\010\032\230!\320\0332\260%\260q\330\010\032\230!\320\0332\260%\260q\330\010\032\230!\320\0334\260A\330\010\022\220!\2205\230\001\330\010\022\220!\2205\230\001\330\010!\240\021\360\006\000\t\014\2104\210s\220\"\220C\220t\2303\230b\240\002\240!\330\014\r\330\010\013\320\013#\2401\240D\250\002\250#\250S\3200H\310\001\310\024\310R\310q\340\014\035\320\0353\2601\260D\270\002\270#\270T\300\022\3003\300a\330\035\037\320\0375\260Q\260e\2705\300\001\330\014\021\220\031\230!\2308\240?\260$\260b\270\003\2704\270r\300\021\340\004;\2702\270V\3002\300]\320RX\320XZ\320Zb\320bd\320de\330\004;\2702\270V\3002\300]\320RX\320XZ\320Zb\320bd\320de\340\004\010\210\005\210U\220!\2201\330\010\014\320\014\036\230a\230s\240!\330\010\014\320\014\036\230a\230s\240!\330\010\013\320\013#\2401\240C\240s\250!\330\014\034\230A\230U\240(\250!\2501\340\014\034\230A\230U\240(\250!\2501\330\010\013\320\013#\2401\240C\240s\250!\330\014\034\230A\230U\240(\250!\2501\340\014""\034\230A\230U\240(\250!\2501\330\004\005\330\010\t\330\010\t\330\010\t";
 static const char __pyx_k_6XQj_qPQ_SSTT_eeffg_5XQ_OsRS_5X[] = "\200\001\360\010\000\0056\260X\270Q\270j\310\007\310q\320PQ\330\004;\320;S\320ST\320T^\320^e\320ef\320fg\330\0045\260X\270Q\320>O\310s\320RS\330\0045\260X\270Q\320>O\310s\320RS\330\004\013\2102\210T\220\021\220\"\220D\230\001\230\031\240\"\240J\250c\260\021";
-static const char __pyx_k_6_r_2S_b_Bb_4ARr_D_ARr_r_2S_b_B[] = "\200\001\360\020\000\005\022\320\021#\2406\250\021\250!\330\004\007\200r\210\022\2102\210S\220\002\220$\220b\230\002\230\"\230B\230b\240\004\320$4\260A\260R\260r\270\023\270D\300\001\330\010\014\320\014\034\230A\230R\230r\240\021\330\004\007\200r\210\022\2102\210S\220\002\220$\220b\230\002\230\"\230B\230b\240\004\320$6\260a\260r\270\022\2701\330\010\014\320\014\036\230a\230r\240\022\2401\330\004\007\200r\210\023\210B\210d\220\"\220B\220a\330\010\013\320\013\035\230Q\230c\240\024\240Q\330\014\034\230A\320\035/\250q\260\007\260q\330\010\032\230!\2305\240\001\330\004\007\200r\210\023\210B\210d\220\"\220B\220a\330\010\013\320\013\033\2301\230C\230t\2401\330\014\036\230a\320\037/\250q\260\007\260q\330\010\030\230\001\230\025\230a\330\004\013\2103\210a";
+static const char __pyx_k_6_r_2S_b_Bb_4ARr_D_ARr_r_2S_b_B[] = "\200\001\360\020\000\005\022\320\021#\2406\250\021\250!\330\004\007\200r\210\022\2102\210S\220\002\220$\220b\230\002\230\"\230B\230b\240\004\320$4\260A\260R\260r\270\023\270D\300\001\330\010\014\320\014\034\230A\230R\230r\240\021\330\004\007\200r\210\022\2102\210S\220\002\220$\220b\230\002\230\"\230B\230b\240\004\320$6\260a\260r\270\022\2703\270d\300!\330\010\014\320\014\036\230a\230r\240\022\2401\330\004\007\200r\210\023\210B\210d\220\"\220B\220a\330\010\013\320\013\035\230Q\230c\240\024\240Q\330\014\034\230A\320\035/\250q\260\007\260q\330\010\032\230!\2305\240\001\330\004\007\200r\210\023\210B\210d\220\"\220B\220a\330\010\013\320\013\033\2301\230C\230t\2401\330\014\036\230a\320\037/\250q\260\007\260q\330\010\030\230\001\230\025\230a\330\004\013\2103\210a";
 static const char __pyx_k_81A_9_81A_NaqPQQbbccdde_b_Bb_aq[] = "\200\001\360\026\000\005:\270\022\2708\3001\300A\330\0049\270\022\2708\3001\300A\330\004:\320:N\310a\310q\320PQ\320Qb\320bc\320cd\320de\330\004.\250b\260\014\270B\270b\300\006\300a\300q\310\006\310a\310t\320SY\320Y[\320[d\320df\320fk\320kl\320lm\320ms\320st\320tx\320x~\360\000\000\001A\002\360\000\000A\002B\002\330\004C\3003\300a\300q\330\004\013\320\013\033\320\033+\320+<\270A";
 static const char __pyx_k_Fb_RxW_ffiiooqqr_I_5PRRZZ_aahhn[] = "\200\001\360\014\000\022\023\360\024\000\005\031\230\001\330\004F\300b\310\005\310R\310x\320W]\320]^\320^f\320fi\320io\320oq\320qr\330\004I\310\022\3105\320PR\320RZ\320Z`\320`a\320ah\320hn\320nt\320tv\320vw\330\004>\270b\300\005\300R\300x\310v\320UV\320V^\320^a\320ag\320gi\320ij\330\004>\270b\300\005\300R\300x\310v\320UV\320V^\320^a\320ag\320gi\320ij\330\004\021\220\032\2306\240\021\240!\360\006\000\005\t\210\013\2205\230\001\230\021\360\n\000\t\024\220:\230Q\230a\330\010\025\220Q\330\010\013\320\013#\2401\240I\250S\260\001\330\014\032\230)\2402\240Q\330\014\017\320\017\"\240!\240=\260\004\260A\330\020\034\320\034/\250q\260\001\330\014\037\230q\240\014\250A\340\014\032\230)\2402\240Q\330\014\017\320\017\"\240!\240=\260\004\260A\330\020\034\320\034/\250q\260\001\330\014\037\230q\240\014\250A\330\010\013\210:\220T\230\021\330\014\017\210r\220\023\220A\330\020\027\220{\240!\240>\260\033\270A\340\020\027\220{\240!\240:\320-G\300{\320R[\320[\\\330\014\017\210x\220s\230*\240B\240a\330\020\025\220Y\230a\230z\250\023\250A\250W\260K\270q\330\014'\240q\250\013\2601\330\014(\250\001\250\033\260C\260q\270\001\330\004\013\2109\320\0241\260\021\3202O\320Om\320mn";
 static const char __pyx_k_numpy_core_multiarray_failed_to[] = "numpy.core.multiarray failed to import";
@@ -4811,7 +4811,7 @@ static PyObject *__pyx_pf_2ot_7partial_14partial_cython_insert_new_chain(CYTHON_
  *     cdef int n = chains_starting_at.shape[0]
  *     if i - 1 >= 0 and i - 1 < n and chains_ending_at[i - 1] != -1:             # <<<<<<<<<<<<<<
  *         i = chains_ending_at[i - 1]
- *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1]:
+ *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1] != -1:
 */
   __pyx_t_3 = ((__pyx_v_i - 1) >= 0);
   if (__pyx_t_3) {
@@ -4835,7 +4835,7 @@ static PyObject *__pyx_pf_2ot_7partial_14partial_cython_insert_new_chain(CYTHON_
  *     cdef int n = chains_starting_at.shape[0]
  *     if i - 1 >= 0 and i - 1 < n and chains_ending_at[i - 1] != -1:
  *         i = chains_ending_at[i - 1]             # <<<<<<<<<<<<<<
- *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1]:
+ *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1] != -1:
  *         j = chains_starting_at[j + 1]
 */
     __pyx_t_4 = (__pyx_v_i - 1);
@@ -4846,14 +4846,14 @@ static PyObject *__pyx_pf_2ot_7partial_14partial_cython_insert_new_chain(CYTHON_
  *     cdef int n = chains_starting_at.shape[0]
  *     if i - 1 >= 0 and i - 1 < n and chains_ending_at[i - 1] != -1:             # <<<<<<<<<<<<<<
  *         i = chains_ending_at[i - 1]
- *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1]:
+ *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1] != -1:
 */
   }
 
   /* "ot/partial/partial_cython.pyx":23
  *     if i - 1 >= 0 and i - 1 < n and chains_ending_at[i - 1] != -1:
  *         i = chains_ending_at[i - 1]
- *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1]:             # <<<<<<<<<<<<<<
+ *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1] != -1:             # <<<<<<<<<<<<<<
  *         j = chains_starting_at[j + 1]
  *     if i >= 0 and i < n:
 */
@@ -4870,14 +4870,14 @@ static PyObject *__pyx_pf_2ot_7partial_14partial_cython_insert_new_chain(CYTHON_
     goto __pyx_L8_bool_binop_done;
   }
   __pyx_t_4 = (__pyx_v_j + 1);
-  __pyx_t_3 = ((*__Pyx_BufPtrStrided1d(__pyx_t_5numpy_int64_t *, __pyx_pybuffernd_chains_starting_at.rcbuffer->pybuffer.buf, __pyx_t_4, __pyx_pybuffernd_chains_starting_at.diminfo[0].strides)) != 0);
+  __pyx_t_3 = ((*__Pyx_BufPtrStrided1d(__pyx_t_5numpy_int64_t *, __pyx_pybuffernd_chains_starting_at.rcbuffer->pybuffer.buf, __pyx_t_4, __pyx_pybuffernd_chains_starting_at.diminfo[0].strides)) != -1LL);
   __pyx_t_2 = __pyx_t_3;
   __pyx_L8_bool_binop_done:;
   if (__pyx_t_2) {
 
     /* "ot/partial/partial_cython.pyx":24
  *         i = chains_ending_at[i - 1]
- *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1]:
+ *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1] != -1:
  *         j = chains_starting_at[j + 1]             # <<<<<<<<<<<<<<
  *     if i >= 0 and i < n:
  *         if chains_starting_at[i] != -1:
@@ -4888,14 +4888,14 @@ static PyObject *__pyx_pf_2ot_7partial_14partial_cython_insert_new_chain(CYTHON_
     /* "ot/partial/partial_cython.pyx":23
  *     if i - 1 >= 0 and i - 1 < n and chains_ending_at[i - 1] != -1:
  *         i = chains_ending_at[i - 1]
- *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1]:             # <<<<<<<<<<<<<<
+ *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1] != -1:             # <<<<<<<<<<<<<<
  *         j = chains_starting_at[j + 1]
  *     if i >= 0 and i < n:
 */
   }
 
   /* "ot/partial/partial_cython.pyx":25
- *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1]:
+ *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1] != -1:
  *         j = chains_starting_at[j + 1]
  *     if i >= 0 and i < n:             # <<<<<<<<<<<<<<
  *         if chains_starting_at[i] != -1:
@@ -4954,7 +4954,7 @@ static PyObject *__pyx_pf_2ot_7partial_14partial_cython_insert_new_chain(CYTHON_
     *__Pyx_BufPtrStrided1d(__pyx_t_5numpy_int64_t *, __pyx_pybuffernd_chains_starting_at.rcbuffer->pybuffer.buf, __pyx_t_4, __pyx_pybuffernd_chains_starting_at.diminfo[0].strides) = __pyx_v_j;
 
     /* "ot/partial/partial_cython.pyx":25
- *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1]:
+ *     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1] != -1:
  *         j = chains_starting_at[j + 1]
  *     if i >= 0 and i < n:             # <<<<<<<<<<<<<<
  *         if chains_starting_at[i] != -1:
@@ -14368,7 +14368,7 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
   PyObject* tuple_dedup_map = PyDict_New();
   if (unlikely(!tuple_dedup_map)) return -1;
   {
-    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 5, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 12, 239};
+    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 5, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 12, 243};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_chains_starting_at, __pyx_mstate->__pyx_n_u_chains_ending_at, __pyx_mstate->__pyx_n_u_i, __pyx_mstate->__pyx_n_u_j, __pyx_mstate->__pyx_n_u_n};
     __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_ot_partial_partial_cython_pyx, __pyx_mstate->__pyx_n_u_insert_new_chain, __pyx_k_6_r_2S_b_Bb_4ARr_D_ARr_r_2S_b_B, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
   }
@@ -20184,77 +20184,6 @@ raise_neg_overflow:
 }
 
 /* CIntToPy */
-  static CYTHON_INLINE PyObject* __Pyx_PyLong_From_npy_int64(npy_int64 value) {
-#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#endif
-    const npy_int64 neg_one = (npy_int64) -1, const_zero = (npy_int64) 0;
-#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
-#pragma GCC diagnostic pop
-#endif
-    const int is_unsigned = neg_one > const_zero;
-    if (is_unsigned) {
-        if (sizeof(npy_int64) < sizeof(long)) {
-            return PyLong_FromLong((long) value);
-        } else if (sizeof(npy_int64) <= sizeof(unsigned long)) {
-            return PyLong_FromUnsignedLong((unsigned long) value);
-#if defined(HAVE_LONG_LONG) && !CYTHON_COMPILING_IN_PYPY
-        } else if (sizeof(npy_int64) <= sizeof(unsigned PY_LONG_LONG)) {
-            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
-#endif
-        }
-    } else {
-        if (sizeof(npy_int64) <= sizeof(long)) {
-            return PyLong_FromLong((long) value);
-#ifdef HAVE_LONG_LONG
-        } else if (sizeof(npy_int64) <= sizeof(PY_LONG_LONG)) {
-            return PyLong_FromLongLong((PY_LONG_LONG) value);
-#endif
-        }
-    }
-    {
-        unsigned char *bytes = (unsigned char *)&value;
-#if !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX >= 0x030d00A4
-        if (is_unsigned) {
-            return PyLong_FromUnsignedNativeBytes(bytes, sizeof(value), -1);
-        } else {
-            return PyLong_FromNativeBytes(bytes, sizeof(value), -1);
-        }
-#elif !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX < 0x030d0000
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        return _PyLong_FromByteArray(bytes, sizeof(npy_int64),
-                                     little, !is_unsigned);
-#else
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        PyObject *from_bytes, *result = NULL, *kwds = NULL;
-        PyObject *py_bytes = NULL, *order_str = NULL;
-        from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
-        if (!from_bytes) return NULL;
-        py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(npy_int64));
-        if (!py_bytes) goto limited_bad;
-        order_str = PyUnicode_FromString(little ? "little" : "big");
-        if (!order_str) goto limited_bad;
-        {
-            PyObject *args[3+(CYTHON_VECTORCALL ? 1 : 0)] = { NULL, py_bytes, order_str };
-            if (!is_unsigned) {
-                kwds = __Pyx_MakeVectorcallBuilderKwds(1);
-                if (!kwds) goto limited_bad;
-                if (__Pyx_VectorcallBuilder_AddArgStr("signed", __Pyx_NewRef(Py_True), kwds, args+3, 0) < 0) goto limited_bad;
-            }
-            result = __Pyx_Object_Vectorcall_CallFromBuilder(from_bytes, args+1, 2 | __Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET, kwds);
-        }
-        limited_bad:
-        Py_XDECREF(kwds);
-        Py_XDECREF(order_str);
-        Py_XDECREF(py_bytes);
-        Py_XDECREF(from_bytes);
-        return result;
-#endif
-    }
-}
-
-/* CIntToPy */
   static CYTHON_INLINE PyObject* __Pyx_PyLong_From_long(long value) {
 #ifdef __Pyx_HAS_GCC_DIAGNOSTIC
 #pragma GCC diagnostic push
@@ -20374,6 +20303,77 @@ raise_neg_overflow:
         from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
         if (!from_bytes) return NULL;
         py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(Py_intptr_t));
+        if (!py_bytes) goto limited_bad;
+        order_str = PyUnicode_FromString(little ? "little" : "big");
+        if (!order_str) goto limited_bad;
+        {
+            PyObject *args[3+(CYTHON_VECTORCALL ? 1 : 0)] = { NULL, py_bytes, order_str };
+            if (!is_unsigned) {
+                kwds = __Pyx_MakeVectorcallBuilderKwds(1);
+                if (!kwds) goto limited_bad;
+                if (__Pyx_VectorcallBuilder_AddArgStr("signed", __Pyx_NewRef(Py_True), kwds, args+3, 0) < 0) goto limited_bad;
+            }
+            result = __Pyx_Object_Vectorcall_CallFromBuilder(from_bytes, args+1, 2 | __Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET, kwds);
+        }
+        limited_bad:
+        Py_XDECREF(kwds);
+        Py_XDECREF(order_str);
+        Py_XDECREF(py_bytes);
+        Py_XDECREF(from_bytes);
+        return result;
+#endif
+    }
+}
+
+/* CIntToPy */
+  static CYTHON_INLINE PyObject* __Pyx_PyLong_From_npy_int64(npy_int64 value) {
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif
+    const npy_int64 neg_one = (npy_int64) -1, const_zero = (npy_int64) 0;
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic pop
+#endif
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(npy_int64) < sizeof(long)) {
+            return PyLong_FromLong((long) value);
+        } else if (sizeof(npy_int64) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+#if defined(HAVE_LONG_LONG) && !CYTHON_COMPILING_IN_PYPY
+        } else if (sizeof(npy_int64) <= sizeof(unsigned PY_LONG_LONG)) {
+            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+#endif
+        }
+    } else {
+        if (sizeof(npy_int64) <= sizeof(long)) {
+            return PyLong_FromLong((long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(npy_int64) <= sizeof(PY_LONG_LONG)) {
+            return PyLong_FromLongLong((PY_LONG_LONG) value);
+#endif
+        }
+    }
+    {
+        unsigned char *bytes = (unsigned char *)&value;
+#if !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX >= 0x030d00A4
+        if (is_unsigned) {
+            return PyLong_FromUnsignedNativeBytes(bytes, sizeof(value), -1);
+        } else {
+            return PyLong_FromNativeBytes(bytes, sizeof(value), -1);
+        }
+#elif !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX < 0x030d0000
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        return _PyLong_FromByteArray(bytes, sizeof(npy_int64),
+                                     little, !is_unsigned);
+#else
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        PyObject *from_bytes, *result = NULL, *kwds = NULL;
+        PyObject *py_bytes = NULL, *order_str = NULL;
+        from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
+        if (!from_bytes) return NULL;
+        py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(npy_int64));
         if (!py_bytes) goto limited_bad;
         order_str = PyUnicode_FromString(little ? "little" : "big");
         if (!order_str) goto limited_bad;
