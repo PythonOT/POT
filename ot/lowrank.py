@@ -508,9 +508,9 @@ def lowrank_sinkhorn(
     lazy_plan = get_lowrank_lazytensor(Q, R, 1 / g)
 
     # Compute value_linear (using trace formula)
-    v1 = nx.dot(Q.T, M1)
-    v2 = nx.dot(R, (v1.T * diag_g).T)
-    value_linear = nx.sum(nx.diag(nx.dot(M2.T, v2)))
+    A = nx.dot(M1.T, Q)
+    B = nx.dot(M2.T, R * diag_g)
+    value_linear = nx.sum(A * B)
 
     # Compute value with entropy reg (see "Section 3.2" in the paper)
     reg_Q = nx.sum(Q * nx.log(Q + 1e-16))  # entropy for Q

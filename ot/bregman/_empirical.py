@@ -17,7 +17,11 @@ from ..utils import dist, list_to_array, unif, LazyTensor
 from ..backend import get_backend
 
 from ._sinkhorn import sinkhorn, sinkhorn2
-from ..lowrank import kernel_nystroem, sinkhorn_low_rank_kernel
+from ..lowrank import (
+    kernel_nystroem,
+    sinkhorn_low_rank_kernel,
+    compute_lr_sqeuclidean_matrix,
+)
 
 
 def get_sinkhorn_lazytensor(X_a, X_b, f, g, metric="sqeuclidean", reg=1e-1, nx=None):
@@ -796,16 +800,9 @@ def empirical_sinkhorn_nystroem(
     rank : int, optional
         The rank used for the Nystroem approximation, default 50.
     numItermax : int, optional
-        Max number of iterations
+        Max number of iterations of Sinkhorn
     stopThr : float, optional
-        Stop threshold on error (>0)
-    isLazy: boolean, optional
-        If True, then only calculate the cost matrix by block and return
-        the dual potentials only (to save memory). If False, calculate full
-        cost matrix and return outputs of sinkhorn function.
-    batchSize: int or tuple of 2 int, optional
-        Size of the batches used to compute the sinkhorn update without memory overhead.
-        When a tuple is provided it sets the size of the left/right batches.
+        Stop threshold on error on the dual variables (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -821,21 +818,8 @@ def empirical_sinkhorn_nystroem(
 
     Returns
     -------
-    gamma : array-like, shape (n_samples_a, n_samples_b)
-        Regularized optimal transportation matrix for the given parameters
-    log : dict
-        log dictionary return only if log==True in parameters
-
-    Examples
-    --------
-
-    >>> import numpy as np
-    >>> n_samples_a = 2
-    >>> n_samples_b = 2
-    >>> reg = 0.1
-    >>> X_s = np.reshape(np.arange(n_samples_a, dtype=np.float64), (n_samples_a, 1))
-    >>> X_t = np.reshape(np.arange(0, n_samples_b, dtype=np.float64), (n_samples_b, 1))
-    >>> empirical_sinkhorn_nystroem(X_s, X_t, reg=reg, verbose=False)  # doctest: +NORMALIZE_WHITESPACE
+    gamma : LazyTensor
+        OT plan as lazy tensor.
 
 
     References
@@ -849,7 +833,7 @@ def empirical_sinkhorn_nystroem(
     left_factor, right_factor = kernel_nystroem(
         X_s, X_t, rank=rank, sigma=math.sqrt(reg / 2.0), random_state=random_state
     )
-    res = sinkhorn_low_rank_kernel(
+    _, _, dict_log = sinkhorn_low_rank_kernel(
         K1=left_factor,
         K2=right_factor,
         a=a,
@@ -857,11 +841,14 @@ def empirical_sinkhorn_nystroem(
         numItermax=numItermax,
         stopThr=stopThr,
         verbose=verbose,
-        log=log,
+        log=True,
         warn=warn,
         warmstart=warmstart,
     )
-    return res
+    if log:
+        return dict_log["lazy_plan"], dict_log
+    else:
+        return dict_log["lazy_plan"]
 
 
 def empirical_sinkhorn_nystroem2(
@@ -881,8 +868,7 @@ def empirical_sinkhorn_nystroem2(
 ):
     r"""
     Solve the entropic regularization optimal transport problem from empirical
-    data and return the OT loss
-
+    data and return the OT loss (without entropy term).
 
     Parameters
     ----------
@@ -897,16 +883,9 @@ def empirical_sinkhorn_nystroem2(
     b : array-like, shape (n_samples_b,)
         samples weights in the target domain
     numItermax : int, optional
-        Max number of iterations
+        Max number of iterations of Sinkhorn
     stopThr : float, optional
-        Stop threshold on error (>0)
-    isLazy: boolean, optional
-        If True, then only calculate the cost matrix by block and return
-        the dual potentials only (to save memory). If False, calculate
-        full cost matrix and return outputs of sinkhorn function.
-    batchSize: int or tuple of 2 int, optional
-        Size of the batches used to compute the sinkhorn update without memory overhead.
-        When a tuple is provided it sets the size of the left/right batches.
+        Stop threshold on error on the dual variables (>0)
     verbose : bool, optional
         Print information along iterations
     log : bool, optional
@@ -916,42 +895,50 @@ def empirical_sinkhorn_nystroem2(
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the u,v sinkhorn scaling vectors)
+    random_state : int, optional
+        The random state for sampling the components in each distribution.
 
     """
 
     nx = get_backend(X_s, X_t)
-    M = dist(X_s, X_t, metric="sqeuclidean")
+    M1, M2 = compute_lr_sqeuclidean_matrix(X_s, X_t, False, nx=nx)
+    left_factor, right_factor = kernel_nystroem(
+        X_s, X_t, rank=rank, sigma=math.sqrt(reg / 2.0), random_state=random_state
+    )
     if log:
-        G, log_ = empirical_sinkhorn_nystroem(
-            X_s,
-            X_t,
+        u, v, dict_log = sinkhorn_low_rank_kernel(
+            K1=left_factor,
+            K2=right_factor,
             a=a,
             b=b,
-            reg=reg,
-            rank=rank,
             numItermax=numItermax,
             stopThr=stopThr,
             verbose=verbose,
             log=True,
             warn=warn,
             warmstart=warmstart,
-            random_state=random_state,
         )
-        return nx.sum(M * G), log_
     else:
-        G = empirical_sinkhorn_nystroem(
-            X_s,
-            X_t,
+        u, v = sinkhorn_low_rank_kernel(
+            K1=left_factor,
+            K2=right_factor,
             a=a,
             b=b,
-            reg=reg,
-            rank=rank,
             numItermax=numItermax,
             stopThr=stopThr,
             verbose=verbose,
             log=False,
             warn=warn,
             warmstart=warmstart,
-            random_state=random_state,
         )
-        return nx.sum(M * G)
+    Q = u.reshape((-1, 1)) * left_factor
+    R = v.reshape((-1, 1)) * right_factor
+    # Compute the cost (using trace formula)
+    A = Q.T @ M1
+    B = R.T @ M2
+    loss = nx.sum(A * B)
+
+    if log:
+        return loss, dict_log
+    else:
+        return loss

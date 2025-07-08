@@ -1,6 +1,7 @@
 """Test for low rank sinkhorn solvers"""
 
 # Author: Laurène DAVID <laurene.david@ip-paris.fr>
+#         Titouan Vayer <titouan.vayer@inria.fr>
 #
 # License: MIT License
 
@@ -8,6 +9,57 @@ import ot
 import numpy as np
 import pytest
 from ot.lowrank import sklearn_import  # check sklearn installation
+
+
+def test_nystroem_sinkhorn():
+    # test Nystrom approximation for Sinkhorn
+    offset = 2
+    n_samples_per_blob = 50
+    random_state = 42
+    std = 0.1
+    np.random.seed(random_state)
+
+    # Définir les centres des 4 blobs
+    centers = np.array(
+        [
+            [-offset, -offset],  # Classe 0 - blob 1
+            [-offset, offset],  # Classe 0 - blob 2
+            [offset, -offset],  # Classe 1 - blob 1
+            [offset, offset],  # Classe 1 - blob 2
+        ]
+    )
+
+    X_list = []
+    y_list = []
+
+    for i, center in enumerate(centers):
+        blob_points = np.random.randn(n_samples_per_blob, 2) * std + center
+        label = 0 if i < 2 else 1
+        X_list.append(blob_points)
+        y_list.append(np.full(n_samples_per_blob, label))
+
+    X = np.vstack(X_list)
+    y = np.concatenate(y_list)
+    Xs = X[y == 0]
+    Xt = X[y == 1]
+
+    reg = 5.0
+    rank = 5
+    G_nys = ot.bregman.empirical_sinkhorn_nystroem(
+        Xs,
+        Xt,
+        rank=rank,
+        reg=reg,
+        numItermax=3000,
+        verbose=True,
+        random_state=random_state,
+    )[:]
+
+    G_sinkh = ot.bregman.empirical_sinkhorn(
+        Xs, Xt, reg=reg, numIterMax=3000, verbose=True
+    )
+
+    np.testing.assert_allclose(G_sinkh, G_nys, atol=1e-04)
 
 
 def test_compute_lr_sqeuclidean_matrix():
