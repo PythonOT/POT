@@ -55,21 +55,26 @@ def sinkhorn_unbalanced(
     - KL is the Kullback-Leibler divergence
 
     The algorithm used for solving the problem is the generalized
-    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25] <references-sinkhorn-unbalanced>`
+    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25]
+    <references-sinkhorn-unbalanced>`
+
+    .. warning::
+        Starting from version 0.9.5, the default value has been changed to `reg_type='kl'` instead of `reg_type='entropy'`. This makes the function more consistent with the literature
+        and the other solvers. If you want to use the entropy regularization, please set `reg_type='entropy'` explicitly.
 
 
     Parameters
     ----------
-    a : array-like (dim_a,)
+    a : array-like, shape (dim_a,)
         Unnormalized histogram of dimension `dim_a`
         If `a` is an empty list or array ([]),
         then `a` is set to uniform distribution.
-    b : array-like (dim_b,)
+    b : array-like, shape (dim_b,)
         One or multiple unnormalized histograms of dimension `dim_b`.
         If `b` is an empty list or array ([]),
         then `b` is set to uniform distribution.
         If many, compute all the OT costs :math:`(\mathbf{a}, \mathbf{b}_i)_i`
-    M : array-like (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Entropy regularization term > 0
@@ -88,15 +93,16 @@ def sinkhorn_unbalanced(
         'sinkhorn_reg_scaling', see those function for specific parameters
     reg_type : string, optional
         Regularizer term. Can take two values:
-        + Negative entropy: 'entropy':
-        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
-        This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
-        + Kullback-Leibler divergence: 'kl':
-        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
-    c : array-like (dim_a, dim_b), optional (default=None)
+
+        - Negative entropy: 'entropy':
+          :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
+          This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
+        - Kullback-Leibler divergence (default): 'kl':
+          :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+    c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the `u`, `v` sinkhorn scaling vectors).
@@ -113,12 +119,12 @@ def sinkhorn_unbalanced(
     Returns
     -------
     if n_hists == 1:
-        - gamma : (dim_a, dim_b) array-like
+        - gamma : array-like, shape(dim_a, dim_b)
             Optimal transportation matrix for the given parameters
         - log : dict
             log dictionary returned only if `log` is `True`
     else:
-        - ot_distance : (n_hists,) array-like
+        - ot_distance : array-like, shape (n_hists,)
             the OT distance between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
         - log : dict
             log dictionary returned only if `log` is `True`
@@ -134,6 +140,7 @@ def sinkhorn_unbalanced(
     >>> np.round(ot.sinkhorn_unbalanced(a, b, M, 1, 1), 7)
     array([[0.3220536, 0.1184769],
            [0.1184769, 0.3220536]])
+
 
     .. _references-sinkhorn-unbalanced:
     References
@@ -281,21 +288,25 @@ def sinkhorn_unbalanced2(
     - KL is the Kullback-Leibler divergence
 
     The algorithm used for solving the problem is the generalized
-    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25] <references-sinkhorn-unbalanced2>`
+    Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25]
+    <references-sinkhorn-unbalanced2>`
 
+    .. warning::
+        Starting from version 0.9.5, the default value has been changed to `reg_type='kl'` instead of `reg_type='entropy'`. This makes the function more consistent with the literature
+        and the other solvers. If you want to use the entropy regularization, please set `reg_type='entropy'` explicitly.
 
     Parameters
     ----------
-    a : array-like (dim_a,)
+    a : array-like, shape (dim_a,)
         Unnormalized histogram of dimension `dim_a`
         If `a` is an empty list or array ([]),
         then `a` is set to uniform distribution.
-    b : array-like (dim_b,)
+    b : array-like, shape (dim_b,)
         One or multiple unnormalized histograms of dimension `dim_b`.
         If `b` is an empty list or array ([]),
         then `b` is set to uniform distribution.
         If many, compute all the OT costs :math:`(\mathbf{a}, \mathbf{b}_i)_i`
-    M : array-like (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Entropy regularization term > 0
@@ -314,15 +325,16 @@ def sinkhorn_unbalanced2(
         'sinkhorn_reg_scaling', see those function for specific parameters
     reg_type : string, optional
         Regularizer term. Can take two values:
-        + Negative entropy: 'entropy':
-        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
-        This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
-        + Kullback-Leibler divergence: 'kl':
-        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
-    c : array-like (dim_a, dim_b), optional (default=None)
+
+        - Negative entropy: 'entropy':
+          :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
+          This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
+        - Kullback-Leibler divergence: 'kl':
+          :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+    c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the u,v sinkhorn scaling vectors).
@@ -341,7 +353,7 @@ def sinkhorn_unbalanced2(
 
     Returns
     -------
-    ot_cost : (n_hists,) array-like
+    ot_cost : array-like, shape (n_hists,)
         the OT cost between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
     log : dict
         log dictionary returned only if `log` is `True`
@@ -356,6 +368,7 @@ def sinkhorn_unbalanced2(
     >>> M=[[0., 1.],[1., 0.]]
     >>> np.round(ot.unbalanced.sinkhorn_unbalanced2(a, b, M, 1., 1.), 8)
     0.19600125
+
 
     .. _references-sinkhorn-unbalanced2:
     References
@@ -376,8 +389,8 @@ def sinkhorn_unbalanced2(
         Processing Systems (NIPS) 2015
 
     .. [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
-       Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
-       In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
+        Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
+        In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
 
     See Also
     --------
@@ -588,19 +601,23 @@ def sinkhorn_knopp_unbalanced(
 
     The algorithm used for solving the problem is the generalized Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25] <references-sinkhorn-knopp-unbalanced>`
 
+    .. warning::
+        Starting from version 0.9.5, the default value has been changed to `reg_type='kl'` instead of `reg_type='entropy'`. This makes the function more consistent with the literature
+        and the other solvers. If you want to use the entropy regularization, please set `reg_type='entropy'` explicitly.
+
 
     Parameters
     ----------
-    a : array-like (dim_a,)
+    a : array-like, shape (dim_a,)
         Unnormalized histogram of dimension `dim_a`
         If `a` is an empty list or array ([]),
         then `a` is set to uniform distribution.
-    b : array-like (dim_b,)
+    b : array-like, shape (dim_b,)
         One or multiple unnormalized histograms of dimension `dim_b`.
         If `b` is an empty list or array ([]),
         then `b` is set to uniform distribution.
         If many, compute all the OT costs :math:`(\mathbf{a}, \mathbf{b}_i)_i`
-    M : array-like (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Entropy regularization term > 0
@@ -616,15 +633,16 @@ def sinkhorn_knopp_unbalanced(
         it must have the same backend as input arrays `(a, b, M)`.
     reg_type : string, optional
         Regularizer term. Can take two values:
-        + Negative entropy: 'entropy':
-        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
-        This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
-        + Kullback-Leibler divergence: 'kl':
-        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
-    c : array-like (dim_a, dim_b), optional (default=None)
+
+        - Negative entropy: 'entropy':
+          :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
+          This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
+        - Kullback-Leibler divergence: 'kl':
+          :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+    c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the `u`, `v` sinkhorn scaling vectors).
@@ -641,12 +659,12 @@ def sinkhorn_knopp_unbalanced(
     Returns
     -------
     if n_hists == 1:
-        - gamma : (dim_a, dim_b) array-like
+        - gamma : array-like, shape (dim_a, dim_b)
             Optimal transportation matrix for the given parameters
         - log : dict
             log dictionary returned only if `log` is `True`
     else:
-        - ot_cost : (n_hists,) array-like
+        - ot_cost : array-like, shape (n_hists,)
             the OT cost between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
         - log : dict
             log dictionary returned only if `log` is `True`
@@ -662,6 +680,7 @@ def sinkhorn_knopp_unbalanced(
     >>> np.round(ot.unbalanced.sinkhorn_knopp_unbalanced(a, b, M, 1., 1.), 7)
     array([[0.3220536, 0.1184769],
            [0.1184769, 0.3220536]])
+
 
     .. _references-sinkhorn-knopp-unbalanced:
     References
@@ -844,16 +863,16 @@ def sinkhorn_stabilized_unbalanced(
 
     Parameters
     ----------
-    a : array-like (dim_a,)
+    a : array-like, shape (dim_a,)
         Unnormalized histogram of dimension `dim_a`
         If `a` is an empty list or array ([]),
         then `a` is set to uniform distribution.
-    b : array-like (dim_b,)
+    b : array-like, shape (dim_b,)
         One or multiple unnormalized histograms of dimension `dim_b`.
         If `b` is an empty list or array ([]),
         then `b` is set to uniform distribution.
         If many, compute all the OT costs :math:`(\mathbf{a}, \mathbf{b}_i)_i`
-    M : array-like (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Entropy regularization term > 0
@@ -872,15 +891,16 @@ def sinkhorn_stabilized_unbalanced(
         'sinkhorn_reg_scaling', see those function for specific parameters
     reg_type : string, optional
         Regularizer term. Can take two values:
-        + Negative entropy: 'entropy':
-        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
-        This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
-        + Kullback-Leibler divergence: 'kl':
-        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
-    c : array-like (dim_a, dim_b), optional (default=None)
+
+        - Negative entropy: 'entropy':
+          :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
+          This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
+        - Kullback-Leibler divergence: 'kl':
+          :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+    c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the `u`, `v` sinkhorn scaling vectors).
@@ -895,16 +915,20 @@ def sinkhorn_stabilized_unbalanced(
     log : bool, optional
         record `log` if `True`
 
+    .. warning::
+        Starting from version 0.9.5, the default value has been changed to `reg_type='kl'` instead of `reg_type='entropy'`. This makes the function more consistent with the literature
+        and the other solvers. If you want to use the entropy regularization, please set `reg_type='entropy'` explicitly.
+
 
     Returns
     -------
     if n_hists == 1:
-        - gamma : (dim_a, dim_b) array-like
+        - gamma : array-like, shape (dim_a, dim_b)
             Optimal transportation matrix for the given parameters
         - log : dict
             log dictionary returned only if `log` is `True`
     else:
-        - ot_cost : (n_hists,) array-like
+        - ot_cost : array-like, shape (n_hists,)
             the OT cost between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
         - log : dict
             log dictionary returned only if `log` is `True`
@@ -919,6 +943,7 @@ def sinkhorn_stabilized_unbalanced(
     >>> np.round(ot.unbalanced.sinkhorn_stabilized_unbalanced(a, b, M, 1., 1.), 7)
     array([[0.3220536, 0.1184769],
            [0.1184769, 0.3220536]])
+
 
     .. _references-sinkhorn-stabilized-unbalanced:
     References
@@ -1132,15 +1157,14 @@ def sinkhorn_unbalanced_translation_invariant(
 
     The algorithm used for solving the problem is the translation invariant Sinkhorn algorithm as proposed in :ref:`[73] <references-sinkhorn-unbalanced-translation-invariant>`
 
-
     Parameters
     ----------
-    a : array-like (dim_a,)
+    a : array-like, shape (dim_a,)
         Unnormalized histogram of dimension `dim_a`
-    b : array-like (dim_b,) or array-like (dim_b, n_hists)
+    b : array-like, shape (dim_b,) or (dim_b, n_hists)
         One or multiple unnormalized histograms of dimension `dim_b`
         If many, compute all the OT distances (a, b_i)
-    M : array-like (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         loss matrix
     reg : float
         Entropy regularization term > 0
@@ -1158,10 +1182,10 @@ def sinkhorn_unbalanced_translation_invariant(
         :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`, or
         'kl' (Kullback-Leibler)
         :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
-    c : array-like (dim_a, dim_b), optional (default=None)
+    c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the u,v sinkhorn scaling vectors).
@@ -1178,12 +1202,12 @@ def sinkhorn_unbalanced_translation_invariant(
     Returns
     -------
     if n_hists == 1:
-        - gamma : (dim_a, dim_b) array-like
+        - gamma : array-like, shape (dim_a, dim_b)
             Optimal transportation matrix for the given parameters
         - log : dict
             log dictionary returned only if `log` is `True`
     else:
-        - ot_distance : (n_hists,) array-like
+        - ot_distance : array-like, shape (n_hists,)
             the OT distance between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
         - log : dict
             log dictionary returned only if `log` is `True`
@@ -1199,12 +1223,13 @@ def sinkhorn_unbalanced_translation_invariant(
     array([[0.32205357, 0.11847689],
            [0.11847689, 0.32205357]])
 
+
     .. _references-sinkhorn-unbalanced-translation-invariant:
     References
     ----------
     .. [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
-       Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
-       In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
+        Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
+        In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
     """
 
     M, a, b = list_to_array(M, a, b)
@@ -1407,9 +1432,9 @@ def barycenter_unbalanced_stabilized(
 
     Parameters
     ----------
-    A : array-like (dim, n_hists)
+    A : array-like, shape (dim, n_hists)
         `n_hists` training distributions :math:`\mathbf{a}_i` of dimension `dim`
-    M : array-like (dim, dim)
+    M : array-like, shape (dim, dim)
         ground metric matrix for OT.
     reg : float
         Entropy regularization term > 0
@@ -1417,7 +1442,7 @@ def barycenter_unbalanced_stabilized(
         Marginal relaxation term > 0
     tau : float
         Stabilization threshold for log domain absorption.
-    weights : array-like (n_hists,) optional
+    weights : array-like, shape (n_hists,) optional
         Weight of each distribution (barycentric coordinates)
         If None, uniform weights are used.
     numItermax : int, optional
@@ -1432,7 +1457,7 @@ def barycenter_unbalanced_stabilized(
 
     Returns
     -------
-    a : (dim,) array-like
+    a : array-like, shape (dim,)
         Unbalanced Wasserstein barycenter
     log : dict
         log dictionary return only if :math:`log==True` in parameters
@@ -1570,15 +1595,15 @@ def barycenter_unbalanced_sinkhorn(
 
     Parameters
     ----------
-    A : array-like (dim, n_hists)
+    A : array-like, shape (dim, n_hists)
         `n_hists` training distributions :math:`\mathbf{a}_i` of dimension `dim`
-    M : array-like (dim, dim)
+    M : array-like, shape (dim, dim)
         ground metric matrix for OT.
     reg : float
         Entropy regularization term > 0
     reg_m: float
         Marginal relaxation term > 0
-    weights : array-like (n_hists,) optional
+    weights : array-like, shape (n_hists,) optional
         Weight of each distribution (barycentric coordinates)
         If None, uniform weights are used.
     numItermax : int, optional
@@ -1593,7 +1618,7 @@ def barycenter_unbalanced_sinkhorn(
 
     Returns
     -------
-    a : (dim,) array-like
+    a : array-like, shape (dim,)
         Unbalanced Wasserstein barycenter
     log : dict
         log dictionary return only if :math:`log==True` in parameters
@@ -1715,15 +1740,15 @@ def barycenter_unbalanced(
 
     Parameters
     ----------
-    A : array-like (dim, n_hists)
+    A : array-like, shape (dim, n_hists)
         `n_hists` training distributions :math:`\mathbf{a}_i` of dimension `dim`
-    M : array-like (dim, dim)
+    M : array-like, shape (dim, dim)
         ground metric matrix for OT.
     reg : float
         Entropy regularization term > 0
     reg_m: float
         Marginal relaxation term > 0
-    weights : array-like (n_hists,) optional
+    weights : array-like, shape (n_hists,) optional
         Weight of each distribution (barycentric coordinates)
         If None, uniform weights are used.
     numItermax : int, optional
@@ -1738,7 +1763,7 @@ def barycenter_unbalanced(
 
     Returns
     -------
-    a : (dim,) array-like
+    a : array-like, shape (dim,)
         Unbalanced Wasserstein barycenter
     log : dict
         log dictionary return only if log==True in parameters

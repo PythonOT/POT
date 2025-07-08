@@ -1073,6 +1073,14 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def slogdet(self, a):
+        r"""
+        Compute the sign and (natural) logarithm of the determinant of an array.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.slogdet.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -1355,7 +1363,7 @@ class NumpyBackend(Backend):
         return np.linalg.solve(a, b)
 
     def trace(self, a):
-        return np.trace(a)
+        return np.einsum("...ii", a)
 
     def inv(self, a):
         return scipy.linalg.inv(a)
@@ -1436,6 +1444,9 @@ class NumpyBackend(Backend):
     def det(self, a):
         return np.linalg.det(a)
 
+    def slogdet(self, a):
+        return np.linalg.slogdet(a)
+
 
 _register_backend_implementation(NumpyBackend)
 
@@ -1501,7 +1512,7 @@ class JaxBackend(Backend):
         aux = jnp.sum(ravelled_inputs * ravelled_grads) / 2
         aux = aux - jax.lax.stop_gradient(aux)
 
-        (val,) = jax.tree_map(lambda z: z + aux, (val,))
+        (val,) = jax.tree_util.tree_map(lambda z: z + aux, (val,))
         return val
 
     def _detach(self, a):
@@ -1768,7 +1779,7 @@ class JaxBackend(Backend):
         return jnp.linalg.solve(a, b)
 
     def trace(self, a):
-        return jnp.trace(a)
+        return jnp.diagonal(a, axis1=-2, axis2=-1).sum(-1)
 
     def inv(self, a):
         return jnp.linalg.inv(a)
@@ -1831,6 +1842,9 @@ class JaxBackend(Backend):
 
     def det(self, x):
         return jnp.linalg.det(x)
+
+    def slogdet(self, a):
+        return jnp.linalg.slogdet(a)
 
 
 if jax:
@@ -2301,7 +2315,7 @@ class TorchBackend(Backend):
         return torch.linalg.solve(a, b)
 
     def trace(self, a):
-        return torch.trace(a)
+        return torch.diagonal(a, dim1=-2, dim2=-1).sum(-1)
 
     def inv(self, a):
         return torch.linalg.inv(a)
@@ -2367,6 +2381,9 @@ class TorchBackend(Backend):
 
     def det(self, x):
         return torch.linalg.det(x)
+
+    def slogdet(self, a):
+        return torch.linalg.slogdet(a)
 
 
 if torch:
@@ -2715,7 +2732,7 @@ class CupyBackend(Backend):  # pragma: no cover
         return cp.linalg.solve(a, b)
 
     def trace(self, a):
-        return cp.trace(a)
+        return cp.trace(a, axis1=-2, axis2=-1)
 
     def inv(self, a):
         return cp.linalg.inv(a)
@@ -2778,6 +2795,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def det(self, x):
         return cp.linalg.det(x)
+
+    def slogdet(self, a):
+        return cp.linalg.slogdet(a)
 
 
 if cp:
@@ -3219,6 +3239,9 @@ class TensorflowBackend(Backend):
 
     def det(self, x):
         return tf.linalg.det(x)
+
+    def slogdet(self, a):
+        return tf.linalg.slogdet(a)
 
 
 if tf:

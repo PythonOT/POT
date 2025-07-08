@@ -23,12 +23,17 @@ from .gromov import (
     entropic_semirelaxed_fused_gromov_wasserstein2,
     entropic_semirelaxed_gromov_wasserstein2,
     partial_gromov_wasserstein2,
+    partial_fused_gromov_wasserstein2,
     entropic_partial_gromov_wasserstein2,
+    entropic_partial_fused_gromov_wasserstein2,
 )
 from .gaussian import empirical_bures_wasserstein_distance
 from .factored import factored_optimal_transport
 from .lowrank import lowrank_sinkhorn
 from .optim import cg
+
+import warnings
+
 
 lst_method_lazy = [
     "1d",
@@ -78,7 +83,7 @@ def solve(
 
     Parameters
     ----------
-    M : array_like, shape (dim_a, dim_b)
+    M : array-like, shape (dim_a, dim_b)
         Loss matrix
     a : array-like, shape (dim_a,), optional
         Samples weights in the source domain (default is uniform)
@@ -87,10 +92,10 @@ def solve(
     reg : float, optional
         Regularization weight :math:`\lambda_r`, by default None (no reg., exact
         OT)
-    c : array-like (dim_a, dim_b), optional (default=None)
+    c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     reg_type : str, optional
         Type of regularization :math:`R`  either "KL", "L2", "entropy",
         by default "KL". a tuple of functions can be provided for general
@@ -115,20 +120,22 @@ def solve(
         Number of OMP threads for exact OT solver, by default 1
     max_iter : int, optional
         Maximum number of iterations, by default None (default values in each solvers)
-    plan_init : array_like, shape (dim_a, dim_b), optional
+    plan_init : array-like, shape (dim_a, dim_b), optional
         Initialization of the OT plan for iterative methods, by default None
-    potentials_init : (array_like(dim_a,),array_like(dim_b,)), optional
+    potentials_init : (array-like(dim_a,),array-like(dim_b,)), optional
         Initialization of the OT dual potentials for iterative methods, by default None
     tol : _type_, optional
         Tolerance for solution precision, by default None (default values in each solvers)
     verbose : bool, optional
         Print information in the solver, by default False
     grad : str, optional
-        Type of gradient computation, either or 'autodiff' or 'envelope'  used only for
+        Type of gradient computation, either or 'autodiff', 'envelope' or 'last_step' used only for
         Sinkhorn solver. By default 'autodiff' provides gradients wrt all
         outputs (`plan, value, value_linear`) but with important memory cost.
         'envelope' provides gradients only for `value` and and other outputs are
-        detached. This is useful for memory saving when only the value is needed.
+        detached. This is useful for memory saving when only the value is needed. 'last_step' provides
+        gradients only for the last iteration of the Sinkhorn solver, but provides gradient for both the OT plan and the objective values.
+        'detach' does not compute the gradients for the Sinkhorn solver.
 
     Returns
     -------
@@ -280,7 +287,6 @@ def solve(
         linear regression. NeurIPS.
 
     """
-
     # detect backend
     nx = get_backend(M, a, b, c)
 
@@ -411,7 +417,11 @@ def solve(
                 potentials = (log["u"], log["v"])
 
             elif reg_type.lower() in ["entropy", "kl"]:
-                if grad == "envelope":  # if envelope then detach the input
+                if grad in [
+                    "envelope",
+                    "last_step",
+                    "detach",
+                ]:  # if envelope, last_step or detach then detach the input
                     M0, a0, b0 = M, a, b
                     M, a, b = nx.detach(M, a, b)
 
@@ -420,6 +430,12 @@ def solve(
                     max_iter = 1000
                 if tol is None:
                     tol = 1e-9
+                if grad == "last_step":
+                    if max_iter == 0:
+                        raise ValueError(
+                            "The maximum number of iterations must be greater than 0 when using grad=last_step."
+                        )
+                    max_iter = max_iter - 1
 
                 plan, log = sinkhorn_log(
                     a,
@@ -432,6 +448,22 @@ def solve(
                     verbose=verbose,
                 )
 
+                potentials = (log["log_u"], log["log_v"])
+
+                # if last_step, compute the last step of the Sinkhorn algorithm with the non-detached inputs
+                if grad == "last_step":
+                    loga = nx.log(a0)
+                    logb = nx.log(b0)
+                    v = logb - nx.logsumexp(-M0 / reg + potentials[0][:, None], 0)
+                    u = loga - nx.logsumexp(-M0 / reg + potentials[1][None, :], 1)
+                    plan = nx.exp(-M0 / reg + u[:, None] + v[None, :])
+                    potentials = (u, v)
+                    log["niter"] = max_iter + 1
+                    log["log_u"] = u
+                    log["log_v"] = v
+                    log["u"] = nx.exp(u)
+                    log["v"] = nx.exp(v)
+
                 value_linear = nx.sum(M * plan)
 
                 if reg_type.lower() == "entropy":
@@ -440,8 +472,6 @@ def solve(
                     value = value_linear + reg * nx.kl_div(
                         plan, a[:, None] * b[None, :]
                     )
-
-                potentials = (log["log_u"], log["log_v"])
 
                 if grad == "envelope":  # set the gradient at convergence
                     value = nx.set_gradients(
@@ -602,11 +632,11 @@ def solve_gromov(
 
     Parameters
     ----------
-    Ca : array_like, shape (dim_a, dim_a)
+    Ca : array-like, shape (dim_a, dim_a)
         Cost matrix in the source domain
-    Cb : array_like, shape (dim_b, dim_b)
+    Cb : array-like, shape (dim_b, dim_b)
         Cost matrix in the target domain
-    M : array_like, shape (dim_a, dim_b), optional
+    M : array-like, shape (dim_a, dim_b), optional
         Linear cost matrix for Fused Gromov-Wasserstein (default is None).
     a : array-like, shape (dim_a,), optional
         Samples weights in the source domain (default is uniform)
@@ -631,7 +661,8 @@ def solve_gromov(
         ``alpha=0.5`` for Fused Gromov-Wasserstein problem (``M!=None``)
     unbalanced : float, optional
         Unbalanced penalization weight :math:`\lambda_u`, by default None
-        (balanced OT), Not implemented yet
+        (balanced OT). Not implemented yet for "KL" unbalanced penalization
+        function :math:`U`. Corresponds to the total transport mass for partial OT.
     unbalanced_type : str, optional
         Type of unbalanced penalization function :math:`U` either "KL", "semirelaxed",
         "partial", by default "KL" but note that it is not implemented yet.
@@ -643,7 +674,7 @@ def solve_gromov(
     max_iter : int, optional
         Maximum number of iterations, by default None (default values in each
         solvers)
-    plan_init : array_like, shape (dim_a, dim_b), optional
+    plan_init : array-like, shape (dim_a, dim_b), optional
         Initialization of the OT plan for iterative methods, by default None
     tol : float, optional
         Tolerance for solution precision, by default None (default values in
@@ -779,6 +810,7 @@ def solve_gromov(
     .. code-block:: python
 
         res = ot.solve_gromov(Ca, Cb, unbalanced_type='partial', unbalanced=0.8) # partial GW with m=0.8
+        res = ot.solve_gromov(Ca, Cb, M, unbalanced_type='partial', unbalanced=0.8, alpha=0.5) # partial FGW with m=0.8
 
 
     .. _references-solve-gromov:
@@ -835,8 +867,15 @@ def solve_gromov(
 
     if reg is None or reg == 0:  # exact OT
         if unbalanced is None and unbalanced_type.lower() not in [
-            "semirelaxed"
+            "semirelaxed",
         ]:  # Exact balanced OT
+            if unbalanced_type.lower() in ["partial"]:
+                warnings.warn(
+                    "Exact balanced OT is computed as `unbalanced=None` even though "
+                    f"unbalanced_type = {unbalanced_type}.",
+                    stacklevel=2,
+                )
+
             if M is None or alpha == 1:  # Gromov-Wasserstein problem
                 # default values for solver
                 if max_iter is None:
@@ -972,9 +1011,11 @@ def solve_gromov(
                 # potentials = (log['u'], log['v']) TODO
 
         elif unbalanced_type.lower() in ["partial"]:  # Partial OT
-            if M is None:  # Partial Gromov-Wasserstein problem
+            if M is None or alpha == 1.0:  # Partial Gromov-Wasserstein problem
                 if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
-                    raise (ValueError("Partial GW mass given in reg is too large"))
+                    raise (
+                        ValueError("Partial GW mass given in `unbalanced` is too large")
+                    )
 
                 # default values for solver
                 if max_iter is None:
@@ -1002,7 +1043,37 @@ def solve_gromov(
                 # potentials = (log['u'], log['v']) TODO
 
             else:  # partial FGW
-                raise (NotImplementedError("Partial FGW not implemented yet"))
+                if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
+                    raise (
+                        ValueError("Partial GW mass given in `unbalanced` is too large")
+                    )
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-7
+
+                value, log = partial_fused_gromov_wasserstein2(
+                    M,
+                    Ca,
+                    Cb,
+                    a,
+                    b,
+                    m=unbalanced,
+                    loss_fun=loss_fun,
+                    alpha=alpha,
+                    log=True,
+                    numItermax=max_iter,
+                    G0=plan_init,
+                    tol=tol,
+                    symmetric=symmetric,
+                    verbose=verbose,
+                )
+
+                value_linear = log["lin_loss"]
+                value_quad = log["quad_loss"]
+                plan = log["T"]
+                # potentials = (log['u'], log['v']) TODO
 
         elif unbalanced_type.lower() in ["kl", "l2"]:  # unbalanced exact OT
             raise (NotImplementedError('Unbalanced_type="{}"'.format(unbalanced_type)))
@@ -1016,8 +1087,15 @@ def solve_gromov(
 
     else:  # regularized OT
         if unbalanced is None and unbalanced_type.lower() not in [
-            "semirelaxed"
+            "semirelaxed",
         ]:  # Balanced regularized OT
+            if unbalanced_type.lower() in ["partial"]:
+                warnings.warn(
+                    "Exact balanced OT is computed as `unbalanced=None` even though "
+                    f"unbalanced_type = {unbalanced_type}.",
+                    stacklevel=2,
+                )
+
             if reg_type.lower() in ["entropy"] and (
                 M is None or alpha == 1
             ):  # Entropic Gromov-Wasserstein problem
@@ -1173,9 +1251,11 @@ def solve_gromov(
                 value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
 
         elif unbalanced_type.lower() in ["partial"]:  # Partial OT
-            if M is None:  # Partial Gromov-Wasserstein problem
+            if M is None or alpha == 1.0:  # Partial Gromov-Wasserstein problem
                 if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
-                    raise (ValueError("Partial GW mass given in reg is too large"))
+                    raise (
+                        ValueError("Partial GW mass given in `unbalanced` is too large")
+                    )
 
                 # default values for solver
                 if max_iter is None:
@@ -1183,7 +1263,7 @@ def solve_gromov(
                 if tol is None:
                     tol = 1e-7
 
-                value_quad, log = entropic_partial_gromov_wasserstein2(
+                value_noreg, log = entropic_partial_gromov_wasserstein2(
                     Ca,
                     Cb,
                     a,
@@ -1199,12 +1279,45 @@ def solve_gromov(
                     verbose=verbose,
                 )
 
-                value_quad = value
+                value_quad = value_noreg
                 plan = log["T"]
                 # potentials = (log['u'], log['v']) TODO
-
+                value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
             else:  # partial FGW
-                raise (NotImplementedError("Partial entropic FGW not implemented yet"))
+                if unbalanced > nx.sum(a) or unbalanced > nx.sum(b):
+                    raise (
+                        ValueError("Partial GW mass given in `unbalanced` is too large")
+                    )
+
+                # default values for solver
+                if max_iter is None:
+                    max_iter = 1000
+                if tol is None:
+                    tol = 1e-7
+
+                value_noreg, log = entropic_partial_fused_gromov_wasserstein2(
+                    M,
+                    Ca,
+                    Cb,
+                    a,
+                    b,
+                    reg=reg,
+                    loss_fun=loss_fun,
+                    alpha=alpha,
+                    m=unbalanced,
+                    log=True,
+                    numItermax=max_iter,
+                    G0=plan_init,
+                    tol=tol,
+                    symmetric=symmetric,
+                    verbose=verbose,
+                )
+
+                value_linear = log["lin_loss"]
+                value_quad = log["quad_loss"]
+                plan = log["T"]
+                # potentials = (log['u'], log['v']) TODO
+                value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
 
         else:  # unbalanced AND regularized OT
             raise (
@@ -1286,10 +1399,10 @@ def solve_sample(
     reg : float, optional
         Regularization weight :math:`\lambda_r`, by default None (no reg., exact
         OT)
-    c : array-like (dim_a, dim_b), optional (default=None)
+    c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     reg_type : str, optional
         Type of regularization :math:`R`  either "KL", "L2", "entropy", by default "KL"
     unbalanced : float or indexable object of length 1 or 2
@@ -1318,13 +1431,13 @@ def solve_sample(
         Number of OMP threads for exact OT solver, by default 1
     max_iter : int, optional
         Maximum number of iteration, by default None (default values in each solvers)
-    plan_init : array_like, shape (dim_a, dim_b), optional
+    plan_init : array-like, shape (dim_a, dim_b), optional
         Initialization of the OT plan for iterative methods, by default None
     rank : int, optional
         Rank of the OT matrix for lazy solers (method='factored'), by default 100
     scaling : float, optional
         Scaling factor for the epsilon scaling lazy solvers (method='geomloss'), by default 0.95
-    potentials_init : (array_like(dim_a,),array_like(dim_b,)), optional
+    potentials_init : (array-like(dim_a,),array-like(dim_b,)), optional
         Initialization of the OT dual potentials for iterative methods, by default None
     tol : _type_, optional
         Tolerance for solution precision, by default None (default values in each solvers)
@@ -1455,7 +1568,7 @@ def solve_sample(
     .. math::
         \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
 
-        with  M_{i,j} = d(x_i,y_j)
+        \text{with} \ M_{i,j} = d(x_i,y_j)
 
     can be solved with the following code:
 
@@ -1474,7 +1587,7 @@ def solve_sample(
     .. math::
         \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
 
-        with  M_{i,j} = d(x_i,y_j)
+        \text{with} \ M_{i,j} = d(x_i,y_j)
 
     can be solved with the following code:
 

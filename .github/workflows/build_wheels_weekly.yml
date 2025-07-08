@@ -18,10 +18,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.10
+    - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
-        python-version: "3.10"
+        python-version: "3.11"
 
     - name: Install dependencies
       run: |
@@ -29,7 +29,7 @@ jobs:
 
     - name: Install cibuildwheel
       run: |
-        python -m pip install cibuildwheel==2.16.2
+        python -m pip install cibuildwheel==2.23.3
 
     - name: Set up QEMU
       if: runner.os == 'Linux'
@@ -39,13 +39,13 @@ jobs:
 
     - name: Build wheels
       env:
-        CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp* cp*musl* cp36* *i686" # remove pypy on mac and win (wrong version)
+        CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp* cp*musl* cp36* cp37* cp38* *i686" # remove pypy on mac and win (wrong version)
         CIBW_ARCHS_LINUX: auto aarch64 # force aarch64 with QEMU
         CIBW_ARCHS_MACOS: x86_64 universal2 arm64
       run: |
         python -m cibuildwheel --output-dir wheelhouse
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-${{ strategy.job-index }}
         path: ./wheelhouse

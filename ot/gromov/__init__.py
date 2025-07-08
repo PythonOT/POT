@@ -102,9 +102,13 @@ from ._unbalanced import (
 from ._partial import (
     partial_gromov_wasserstein,
     partial_gromov_wasserstein2,
+    partial_fused_gromov_wasserstein,
+    partial_fused_gromov_wasserstein2,
     solve_partial_gromov_linesearch,
     entropic_partial_gromov_wasserstein,
     entropic_partial_gromov_wasserstein2,
+    entropic_partial_fused_gromov_wasserstein,
+    entropic_partial_fused_gromov_wasserstein2,
 )
 
 
@@ -173,7 +177,11 @@ __all__ = [
     "fused_unbalanced_across_spaces_divergence",
     "partial_gromov_wasserstein",
     "partial_gromov_wasserstein2",
+    "partial_fused_gromov_wasserstein",
+    "partial_fused_gromov_wasserstein2",
     "solve_partial_gromov_linesearch",
     "entropic_partial_gromov_wasserstein",
     "entropic_partial_gromov_wasserstein2",
+    "entropic_partial_fused_gromov_wasserstein",
+    "entropic_partial_fused_gromov_wasserstein2",
 ]

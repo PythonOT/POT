@@ -91,7 +91,7 @@ def build_noisy_circular_graph(
     g = nx.Graph()
     g.add_nodes_from(list(range(N)))
     for i in range(N):
-        noise = float(np.random.normal(mu, sigma, 1))
+        noise = np.random.normal(mu, sigma, 1)[0]
         if with_noise:
             g.add_node(i, attr_name=math.sin((2 * i * math.pi / N)) + noise)
         else:
@@ -107,7 +107,7 @@ def build_noisy_circular_graph(
                 if i == N - 1:
                     g.add_edge(i, 1)
     g.add_edge(N, 0)
-    noise = float(np.random.normal(mu, sigma, 1))
+    noise = np.random.normal(mu, sigma, 1)[0]
     if with_noise:
         g.add_node(N, attr_name=math.sin((2 * N * math.pi / N)) + noise)
     else:
@@ -157,7 +157,7 @@ for i in range(len(X0)):
     plt.subplot(3, 3, i + 1)
     g = X0[i]
     pos = nx.kamada_kawai_layout(g)
-    nx.draw(
+    nx.draw_networkx(
         g,
         pos=pos,
         node_color=graph_colors(g, vmin=-1, vmax=1),
@@ -173,7 +173,7 @@ plt.show()
 
 # %% We compute the barycenter using FGW. Structure matrices are computed using the shortest_path distance in the graph
 # Features distances are the euclidean distances
-Cs = [shortest_path(nx.adjacency_matrix(x).todense()) for x in X0]
+Cs = [shortest_path(nx.adjacency_matrix(x).toarray()) for x in X0]
 ps = [np.ones(len(x.nodes())) / len(x.nodes()) for x in X0]
 Ys = [
     np.array([v for (k, v) in nx.get_node_attributes(x, "attr_name").items()]).reshape(
@@ -199,7 +199,7 @@ for i, v in enumerate(A.ravel()):
 
 # %%
 pos = nx.kamada_kawai_layout(bary)
-nx.draw(
+nx.draw_networkx(
     bary, pos=pos, node_color=graph_colors(bary, vmin=-1, vmax=1), with_labels=False
 )
 plt.suptitle("Barycenter", fontsize=20)

@@ -17,9 +17,10 @@ Contents
    :maxdepth: 1
 
    self
-   quickstart
-   all
+   auto_examples/plot_quickstart_guide
    auto_examples/index
+   user_guide
+   all
    releases
    contributors
    contributing

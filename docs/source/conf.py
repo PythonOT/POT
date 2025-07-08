@@ -162,7 +162,7 @@ html_theme = "sphinx_rtd_theme"
 # further.  For a list of options available for each theme, see the
 # documentation.
 
-html_theme_options = {}
+html_theme_options = {"version_selector": True}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -347,7 +347,7 @@ intersphinx_mapping = {
 }
 
 sphinx_gallery_conf = {
-    "examples_dirs": ["../../examples", "../../examples/da"],
+    "examples_dirs": ["../../examples"],
     "gallery_dirs": "auto_examples",
     "filename_pattern": "plot_",  # (?!barycenter_fgw)
     "nested_sections": False,
