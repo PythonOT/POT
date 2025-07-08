@@ -3,6 +3,7 @@ Low rank OT solvers
 """
 
 # Author: Laurène David <laurene.david@ip-paris.fr>
+#         Titouan Vayer <titouan.vayer@inria.fr>
 #
 # License: MIT License
 
@@ -10,6 +11,8 @@ import warnings
 from .utils import unif, dist, get_lowrank_lazytensor
 from .backend import get_backend
 from .bregman import sinkhorn
+import random
+import math
 
 # test if sklearn is installed for linux-minimal-deps
 try:
@@ -524,3 +527,212 @@ def lowrank_sinkhorn(
         return Q, R, g, dict_log
 
     return Q, R, g
+
+
+def kernel_nystroem(X_s, X_t, rank=50, sigma=1.0, random_state=None):
+    r"""
+    Compute left and right factors corresponding to the Nystroem method on the Gaussian kernel :math:`K(x^s_i, x^t_j) = \exp(-\|x^s_i-x^t_j\|^2/2\sigma^2)`.
+    The Nystroem approximation is computed with :math:`\min(n, \lceil(r / 2))\rceil' components in each distribution, where :math:`n` is the number of samples in the distribution and :math:`r` the rank.
+
+    Parameters
+    ----------
+    X_s : array-like, shape (n_samples_a, dim)
+        samples in the source domain
+    X_t : array-like, shape (n_samples_b, dim)
+        samples in the target domain
+    rank : int, optional
+        The rank used for the Nystroem approximation, default 50.
+    sigma : float, optional
+        The standard deviation parameter for the Gaussian kernel.
+    random_state : int, optional
+        The random state for sampling the components in each distribution.
+
+    Returns
+    -------
+    left_factor : array-like, shape (n_samples_a, dim_r)
+        Left factor of Nystroem
+    right_factor : array-like, shape (n_samples_b, dim_r)
+        Right factor of Nystroem
+    """
+    nx = get_backend(X_s, X_t)
+
+    random.seed(random_state)
+    n, m = X_s.shape[0], X_t.shape[0]
+    n_components_source = min(n, math.ceil(rank / 2))
+    n_components_target = min(m, math.ceil(rank / 2))
+    # draw n_components/2 points in each distribution
+    inds_source = nx.arange(n)
+    random.shuffle(inds_source)
+    basis_source = X_s[inds_source[:n_components_source]]
+
+    inds_target = nx.arange(m)
+    random.shuffle(inds_target)
+    basis_target = X_t[inds_target[:n_components_target]]
+
+    basis = nx.concatenate((basis_source, basis_target))
+
+    Mzz = dist(basis, metric="sqeuclidean")  # compute \|z_i - z_j\|_2^2
+    basis_kernel = nx.exp(-Mzz / (2.0 * sigma**2))
+
+    normalization = nx.pinv(basis_kernel, hermitian=True)
+
+    Mxz = dist(X_s, basis, metric="sqeuclidean")
+    Myz = dist(X_t, basis, metric="sqeuclidean")
+
+    left_factor = nx.exp(-Mxz / (2.0 * sigma**2)) @ normalization
+    right_factor = nx.exp(-Myz / (2.0 * sigma**2))
+
+    return left_factor, right_factor  # left_factor @ right_factor.T approx K
+
+
+def sinkhorn_low_rank_kernel(
+    K1,  # left factor
+    K2,  # right factor
+    a=None,
+    b=None,
+    numItermax=1000,
+    stopThr=1e-9,
+    verbose=False,
+    log=False,
+    warn=True,
+    warmstart=None,
+):
+    r"""
+    Compute the Sinkhorn algorithm for a kernel :math:`K` that can be written as a low rank factorization :math:`K = K_1 K_2`.
+
+    Precisely :
+
+    - :math:`\mathbf{K}_1`, `\mathbf{K}_2` are the (`dim_a`, `dim_r`), (`dim_b`, `dim_r`) kernel matrices
+    - :math:`\Omega` is the entropic regularization term
+      :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target
+      weights (histograms, both sum to 1)
+
+    The algorithm used for solving the problem is the Sinkhorn-Knopp
+    matrix scaling algorithm as proposed in :ref:`[2] <references-sinkhorn-knopp>`
+
+    Parameters
+    ----------
+    K_1 : array-like, shape (n_samples_a, dim_r)
+        Left factor
+    K_2 : array-like, shape (n_samples_b, dim_r)
+        Right factor
+    a : array-like, shape (n_samples_a,)
+        samples weights in the source domain
+    b : array-like, shape (n_samples_b,) or array-like, shape (n_samples_b, n_hists)
+        samples in the target domain, compute sinkhorn with multiple targets
+        if :math:`\mathbf{b}` is a matrix
+    numItermax : int, optional
+        Max number of iterations
+    stopThr : float, optional
+        Stop threshold on error (>0)
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
+    warmstart: tuple of arrays, shape (n_samples_a, n_samples_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors)
+
+    Returns
+    ---------
+    u : array-like, shape (n_samples_a, ) or array-like, shape (n_samples_a, n_hists)
+        Left dual variable
+    v: array-like, shape (n_samples_b, ) or array-like, shape (n_samples_b, n_hists)
+        Right dual variable
+    log : dict (lazy_plan)
+        log dictionary return only if log==True in parameters
+
+    """
+
+    nx = get_backend(K1, K2, a, b)
+
+    if a is None:
+        a = nx.full((K1.shape[0],), 1.0 / K1.shape[0], type_as=K1)
+    if b is None:
+        b = nx.full((K2.shape[0],), 1.0 / K2.shape[0], type_as=K2)
+
+    # init data
+    dim_a = len(a)
+    dim_b = b.shape[0]
+
+    if len(b.shape) > 1:
+        n_hists = b.shape[1]
+    else:
+        n_hists = 0
+
+    if log:
+        dict_log = {"err": []}
+
+    # we assume that no distances are null except those of the diagonal of
+    # distances
+    if warmstart is None:
+        if n_hists:
+            u = nx.ones((dim_a, n_hists), type_as=K1) / dim_a
+            v = nx.ones((dim_b, n_hists), type_as=K2) / dim_b
+        else:
+            u = nx.ones(dim_a, type_as=K1) / dim_a
+            v = nx.ones(dim_b, type_as=K2) / dim_b
+    else:
+        u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
+
+    err = 1
+    for ii in range(numItermax):
+        uprev = u
+        vprev = v
+        KtransposeU = K2 @ (nx.transpose(K1) @ u)
+        v = b / KtransposeU
+        KV = K1 @ (nx.transpose(K2) @ v)
+        u = a / KV
+
+        if (
+            nx.any(KtransposeU == 0)
+            or nx.any(nx.isnan(u))
+            or nx.any(nx.isnan(v))
+            or nx.any(nx.isinf(u))
+            or nx.any(nx.isinf(v))
+        ):
+            # we have reached the machine precision
+            # come back to previous solution and quit loop
+            warnings.warn("Warning: numerical errors at iteration %d" % ii)
+            u = uprev
+            v = vprev
+            break
+        if ii % 10 == 0:
+            # we can speed up the process by checking for the error only all
+            # the 10th iterations
+            if n_hists:
+                tmp2 = nx.einsum("ik, ir, jr, jk->jk", u, K1, K2, v)
+            else:
+                tmp2 = nx.einsum("i, ir, jr ,j->j", u, K1, K2, v)
+            err = nx.norm(tmp2 - b)  # violation of marginal
+            if log:
+                dict_log["err"].append(err)
+
+            if err < stopThr:
+                break
+            if verbose:
+                if ii % 200 == 0:
+                    print("{:5s}|{:12s}".format("It.", "Err") + "\n" + "-" * 19)
+                print("{:5d}|{:8e}|".format(ii, err))
+    else:
+        if warn:
+            warnings.warn(
+                "Sinkhorn did not converge. You might want to "
+                "increase the number of iterations `numItermax` "
+                "or the regularization parameter `reg`."
+            )
+
+    if log:
+        dict_log["niter"] = ii
+        dict_log["u"] = u
+        dict_log["v"] = v
+        dict_log["lazy_plan"] = get_lowrank_lazytensor(
+            u.reshape((-1, 1)) * K1, v.reshape((-1, 1)) * K2
+        )
+        return u, v, dict_log
+
+    else:
+        return u, v

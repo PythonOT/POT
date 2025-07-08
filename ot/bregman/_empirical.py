@@ -6,16 +6,18 @@ Bregman projections solvers for entropic regularized OT for empirical distributi
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Kilian Fatras <kilian.fatras@irisa.fr>
 #         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
+#         Titouan Vayer <titouan.vayer@inria.fr>
 #
 # License: MIT License
 
 import warnings
+import math
 
 from ..utils import dist, list_to_array, unif, LazyTensor
 from ..backend import get_backend
 
 from ._sinkhorn import sinkhorn, sinkhorn2
-from ._approx_kernel import kernel_nystroem, sinkhorn_low_rank_kernel
+from ..lowrank import kernel_nystroem, sinkhorn_low_rank_kernel
 
 
 def get_sinkhorn_lazytensor(X_a, X_b, f, g, metric="sqeuclidean", reg=1e-1, nx=None):
@@ -773,8 +775,79 @@ def empirical_sinkhorn_nystroem(
     warmstart=None,
     random_state=None,
 ):
+    r"""
+    Solves the entropic regularization optimal transport problem with Sinkhorn and Nystroem factorization [76] and returns the
+    OT matrix from empirical data.
+    Corresponds to an approximation of entropic OT (for a squared Euclidean cost) that runs in linear time.
+    The rank controls the level of approximation (the higher the better the approximation, but the slower is the computation).
+
+    Parameters
+    ----------
+    X_s : array-like, shape (n_samples_a, dim)
+        samples in the source domain
+    X_t : array-like, shape (n_samples_b, dim)
+        samples in the target domain
+    a : array-like, shape (n_samples_a,)
+        samples weights in the source domain
+    b : array-like, shape (n_samples_b,)
+        samples weights in the target domain
+    reg : float
+        Regularization term >0
+    rank : int, optional
+        The rank used for the Nystroem approximation, default 50.
+    numItermax : int, optional
+        Max number of iterations
+    stopThr : float, optional
+        Stop threshold on error (>0)
+    isLazy: boolean, optional
+        If True, then only calculate the cost matrix by block and return
+        the dual potentials only (to save memory). If False, calculate full
+        cost matrix and return outputs of sinkhorn function.
+    batchSize: int or tuple of 2 int, optional
+        Size of the batches used to compute the sinkhorn update without memory overhead.
+        When a tuple is provided it sets the size of the left/right batches.
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors)
+    random_state : int, optional
+        The random state for sampling the components in each distribution.
+
+
+    Returns
+    -------
+    gamma : array-like, shape (n_samples_a, n_samples_b)
+        Regularized optimal transportation matrix for the given parameters
+    log : dict
+        log dictionary return only if log==True in parameters
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> n_samples_a = 2
+    >>> n_samples_b = 2
+    >>> reg = 0.1
+    >>> X_s = np.reshape(np.arange(n_samples_a, dtype=np.float64), (n_samples_a, 1))
+    >>> X_t = np.reshape(np.arange(0, n_samples_b, dtype=np.float64), (n_samples_b, 1))
+    >>> empirical_sinkhorn_nystroem(X_s, X_t, reg=reg, verbose=False)  # doctest: +NORMALIZE_WHITESPACE
+
+
+    References
+    ----------
+
+    .. [76] Massively scalable Sinkhorn distances via the Nyström method,
+    Jason Altschuler, Francis Bach, Alessandro Rudi, Jonathan Niles-Weed, NeurIPS 2019.
+
+    """
+
     left_factor, right_factor = kernel_nystroem(
-        X_s, X_t, rank=rank, reg=reg, random_state=random_state
+        X_s, X_t, rank=rank, sigma=math.sqrt(reg / 2.0), random_state=random_state
     )
     res = sinkhorn_low_rank_kernel(
         K1=left_factor,
@@ -806,6 +879,46 @@ def empirical_sinkhorn_nystroem2(
     warmstart=None,
     random_state=None,
 ):
+    r"""
+    Solve the entropic regularization optimal transport problem from empirical
+    data and return the OT loss
+
+
+    Parameters
+    ----------
+    X_s : array-like, shape (n_samples_a, dim)
+        samples in the source domain
+    X_t : array-like, shape (n_samples_b, dim)
+        samples in the target domain
+    reg : float
+        Regularization term >0
+    a : array-like, shape (n_samples_a,)
+        samples weights in the source domain
+    b : array-like, shape (n_samples_b,)
+        samples weights in the target domain
+    numItermax : int, optional
+        Max number of iterations
+    stopThr : float, optional
+        Stop threshold on error (>0)
+    isLazy: boolean, optional
+        If True, then only calculate the cost matrix by block and return
+        the dual potentials only (to save memory). If False, calculate
+        full cost matrix and return outputs of sinkhorn function.
+    batchSize: int or tuple of 2 int, optional
+        Size of the batches used to compute the sinkhorn update without memory overhead.
+        When a tuple is provided it sets the size of the left/right batches.
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors)
+
+    """
+
     nx = get_backend(X_s, X_t)
     M = dist(X_s, X_t, metric="sqeuclidean")
     if log:
