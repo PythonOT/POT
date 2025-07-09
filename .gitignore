@@ -122,6 +122,4 @@ debug
 
 # pytest cahche
 .pytest_cache
-/docs
-/ot/mytest
-/test/mytest
+
