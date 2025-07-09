@@ -784,6 +784,7 @@ def empirical_sinkhorn_nystroem(
     OT matrix from empirical data.
     Corresponds to an approximation of entropic OT (for a squared Euclidean cost) that runs in linear time.
     The number of anchors controls the level of approximation (the higher, the better the approximation, but the slower the computation becomes).
+    Warning: with low level of regularization, the OT plan can have non-positive values.
 
     Parameters
     ----------
@@ -815,7 +816,6 @@ def empirical_sinkhorn_nystroem(
     random_state : int, optional
         The random state for sampling the components in each distribution.
 
-
     Returns
     -------
     gamma : LazyTensor
@@ -844,7 +844,6 @@ def empirical_sinkhorn_nystroem(
     Jason Altschuler, Francis Bach, Alessandro Rudi, Jonathan Niles-Weed, NeurIPS 2019.
 
     """
-
     left_factor, right_factor = kernel_nystroem(
         X_s, X_t, anchors=anchors, sigma=math.sqrt(reg / 2.0), random_state=random_state
     )
@@ -861,6 +860,8 @@ def empirical_sinkhorn_nystroem(
         warmstart=warmstart,
     )
     if log:
+        dict_log["left_factor"] = left_factor
+        dict_log["right_factor"] = right_factor
         return dict_log["lazy_plan"], dict_log
     else:
         return dict_log["lazy_plan"]
@@ -886,6 +887,7 @@ def empirical_sinkhorn_nystroem2(
     OT loss from empirical data.
     Corresponds to an approximation of entropic OT (for a squared Euclidean cost) that runs in linear time.
     The number of anchors controls the level of approximation (the higher, the better the approximation, but the slower the computation becomes).
+    Warning: with low level of regularization, the OT plan can have non-positive values.
 
     Parameters
     ----------
@@ -966,6 +968,8 @@ def empirical_sinkhorn_nystroem2(
             warn=warn,
             warmstart=warmstart,
         )
+        dict_log["left_factor"] = left_factor
+        dict_log["right_factor"] = right_factor
     else:
         u, v = sinkhorn_low_rank_kernel(
             K1=left_factor,

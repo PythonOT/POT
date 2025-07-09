@@ -11,6 +11,19 @@ import pytest
 from ot.lowrank import sklearn_import  # check sklearn installation
 
 
+def test_nystroem_kernel_approx():
+    # test nystroem kernel approx in easy regime (nb anchors = nb points)
+    n = 30
+    d = 3
+    Xs = np.random.randn(n, d)
+    Xt = np.random.randn(n, d) + 2
+    sigma = 2.0
+    K = np.exp(-ot.dist(Xs, Xt) / (2 * sigma**2))
+    U, V = ot.lowrank.kernel_nystroem(Xs, Xt, anchors=60, sigma=sigma, random_state=42)
+
+    np.testing.assert_allclose(K, U @ V.T, atol=1e-7)
+
+
 def test_nystroem_sinkhorn():
     # test Nystrom approximation for Sinkhorn
     offset = 2
@@ -19,13 +32,12 @@ def test_nystroem_sinkhorn():
     std = 0.1
     np.random.seed(random_state)
 
-    # Définir les centres des 4 blobs
     centers = np.array(
         [
-            [-offset, -offset],  # Classe 0 - blob 1
-            [-offset, offset],  # Classe 0 - blob 2
-            [offset, -offset],  # Classe 1 - blob 1
-            [offset, offset],  # Classe 1 - blob 2
+            [-offset, -offset],  # Class 0 - blob 1
+            [-offset, offset],  # Class 0 - blob 2
+            [offset, -offset],  # Class 1 - blob 1
+            [offset, offset],  # Class 1 - blob 2
         ]
     )
 
@@ -44,11 +56,12 @@ def test_nystroem_sinkhorn():
     Xt = X[y == 1]
 
     reg = 5.0
-    rank = 5
+    anchors = 5
+
     G_nys = ot.bregman.empirical_sinkhorn_nystroem(
         Xs,
         Xt,
-        rank=rank,
+        anchors=anchors,
         reg=reg,
         numItermax=3000,
         verbose=True,
@@ -59,7 +72,12 @@ def test_nystroem_sinkhorn():
         Xs, Xt, reg=reg, numIterMax=3000, verbose=True
     )
 
+    a = ot.unif(Xs.shape[0])
+    b = ot.unif(Xt.shape[0])
+
     np.testing.assert_allclose(G_sinkh, G_nys, atol=1e-04)
+    np.testing.assert_allclose(a, G_nys.sum(1), atol=1e-05)
+    np.testing.assert_allclose(b, G_nys.sum(0), atol=1e-05)
 
 
 def test_compute_lr_sqeuclidean_matrix():

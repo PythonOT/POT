@@ -562,7 +562,7 @@ def kernel_nystroem(X_s, X_t, anchors=50, sigma=1.0, random_state=None):
     n_components_source = min(n, math.ceil(anchors / 2))
     n_components_target = min(m, math.ceil(anchors / 2))
     # draw n_components/2 points in each distribution
-    inds_source = nx.arange(n)
+    inds_source = nx.arange(n)  # sample n_components_source uniformly
     random.shuffle(inds_source)
     basis_source = X_s[inds_source[:n_components_source]]
 
@@ -599,7 +599,7 @@ def sinkhorn_low_rank_kernel(
     warmstart=None,
 ):
     r"""
-    Compute the Sinkhorn algorithm for a kernel :math:`K` that can be written as a low rank factorization :math:`K = K_1 K_2`.
+    Compute the Sinkhorn algorithm for a kernel :math:`K` that can be written as a low rank factorization :math:`K = K_1 K_2^\top`.
 
     Precisely :
 
@@ -704,10 +704,9 @@ def sinkhorn_low_rank_kernel(
         if ii % 10 == 0:
             # we can speed up the process by checking for the error only all
             # the 10th iterations
-            if n_hists:
-                tmp2 = nx.einsum("ik, ir, jr, jk->jk", u, K1, K2, v)
-            else:
-                tmp2 = nx.einsum("i, ir, jr ,j->j", u, K1, K2, v)
+            tmp2 = (
+                v * (K2 @ (nx.transpose(K1) @ u))
+            )  # same as nx.einsum("ik, ir, jr, jk->jk", u, K1, K2, v) and nx.einsum("i, ir, jr, j->j", u, K1, K2, v) in the scalar case
             err = nx.norm(tmp2 - b)  # violation of marginal
             if log:
                 dict_log["err"].append(err)
