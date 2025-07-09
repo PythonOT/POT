@@ -529,10 +529,11 @@ def lowrank_sinkhorn(
     return Q, R, g
 
 
-def kernel_nystroem(X_s, X_t, rank=50, sigma=1.0, random_state=None):
+def kernel_nystroem(X_s, X_t, anchors=50, sigma=1.0, random_state=None):
     r"""
     Compute left and right factors corresponding to the Nystroem method on the Gaussian kernel :math:`K(x^s_i, x^t_j) = \exp(-\|x^s_i-x^t_j\|^2/2\sigma^2)`.
-    The Nystroem approximation is computed with :math:`\min(n, \lceil(r / 2))\rceil' components in each distribution, where :math:`n` is the number of samples in the distribution and :math:`r` the rank.
+    The Nystroem approximation is computed by sampling :math:`\min(n, \lceil(c / 2))\rceil' components in each distribution,
+    where :math:`n` is the number of samples in the distribution and :math:`c` the total number of anchor points.
 
     Parameters
     ----------
@@ -540,8 +541,8 @@ def kernel_nystroem(X_s, X_t, rank=50, sigma=1.0, random_state=None):
         samples in the source domain
     X_t : array-like, shape (n_samples_b, dim)
         samples in the target domain
-    rank : int, optional
-        The rank used for the Nystroem approximation, default 50.
+    anchors : int, optional
+        The total number of anchors sampled for the Nystroem approximation (anchors/2 in each distribution), default 50.
     sigma : float, optional
         The standard deviation parameter for the Gaussian kernel.
     random_state : int, optional
@@ -558,8 +559,8 @@ def kernel_nystroem(X_s, X_t, rank=50, sigma=1.0, random_state=None):
 
     random.seed(random_state)
     n, m = X_s.shape[0], X_t.shape[0]
-    n_components_source = min(n, math.ceil(rank / 2))
-    n_components_target = min(m, math.ceil(rank / 2))
+    n_components_source = min(n, math.ceil(anchors / 2))
+    n_components_target = min(m, math.ceil(anchors / 2))
     # draw n_components/2 points in each distribution
     inds_source = nx.arange(n)
     random.shuffle(inds_source)

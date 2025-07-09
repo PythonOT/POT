@@ -124,3 +124,4 @@ debug
 .pytest_cache
 /docs
 /ot/mytest
+/test/mytest
