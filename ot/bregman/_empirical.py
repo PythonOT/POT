@@ -840,8 +840,7 @@ def empirical_sinkhorn_nystroem(
     References
     ----------
 
-    .. [76] Massively scalable Sinkhorn distances via the Nyström method,
-    Jason Altschuler, Francis Bach, Alessandro Rudi, Jonathan Niles-Weed, NeurIPS 2019.
+    .. [76] Massively scalable Sinkhorn distances via the Nyström method, Jason Altschuler, Francis Bach, Alessandro Rudi, Jonathan Niles-Weed, NeurIPS 2019.
 
     """
     left_factor, right_factor = kernel_nystroem(
@@ -944,8 +943,7 @@ def empirical_sinkhorn_nystroem2(
     References
     ----------
 
-    .. [76] Massively scalable Sinkhorn distances via the Nyström method,
-    Jason Altschuler, Francis Bach, Alessandro Rudi, Jonathan Niles-Weed, NeurIPS 2019.
+    .. [76] Massively scalable Sinkhorn distances via the Nyström method, Jason Altschuler, Francis Bach, Alessandro Rudi, Jonathan Niles-Weed, NeurIPS 2019.
 
 
     """

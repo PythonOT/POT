@@ -25,7 +25,7 @@ def test_nystroem_kernel_approx():
 
 
 def test_nystroem_sinkhorn():
-    # test Nystrom approximation for Sinkhorn
+    # test Nystrom approximation for Sinkhorn (ot plan)
     offset = 2
     n_samples_per_blob = 50
     random_state = 42
@@ -78,6 +78,57 @@ def test_nystroem_sinkhorn():
     np.testing.assert_allclose(G_sinkh, G_nys, atol=1e-04)
     np.testing.assert_allclose(a, G_nys.sum(1), atol=1e-05)
     np.testing.assert_allclose(b, G_nys.sum(0), atol=1e-05)
+
+
+def test_nystroem_sinkhorn2():
+    # test Nystrom approximation for Sinkhorn (loss)
+    offset = 2
+    n_samples_per_blob = 50
+    random_state = 42
+    std = 0.1
+    np.random.seed(random_state)
+
+    centers = np.array(
+        [
+            [-offset, -offset],  # Class 0 - blob 1
+            [-offset, offset],  # Class 0 - blob 2
+            [offset, -offset],  # Class 1 - blob 1
+            [offset, offset],  # Class 1 - blob 2
+        ]
+    )
+
+    X_list = []
+    y_list = []
+
+    for i, center in enumerate(centers):
+        blob_points = np.random.randn(n_samples_per_blob, 2) * std + center
+        label = 0 if i < 2 else 1
+        X_list.append(blob_points)
+        y_list.append(np.full(n_samples_per_blob, label))
+
+    X = np.vstack(X_list)
+    y = np.concatenate(y_list)
+    Xs = X[y == 0]
+    Xt = X[y == 1]
+
+    reg = 5.0
+    anchors = 5
+
+    loss1 = ot.bregman.empirical_sinkhorn_nystroem2(
+        Xs,
+        Xt,
+        anchors=anchors,
+        reg=reg,
+        numItermax=3000,
+        verbose=True,
+        random_state=random_state,
+    )
+
+    loss2 = ot.bregman.empirical_sinkhorn2(
+        Xs, Xt, reg=reg, numIterMax=3000, verbose=True
+    )
+
+    np.testing.assert_allclose(loss1, loss2, atol=1e-07, rtol=1e-3)
 
 
 def test_compute_lr_sqeuclidean_matrix():

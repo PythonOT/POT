@@ -532,7 +532,7 @@ def lowrank_sinkhorn(
 def kernel_nystroem(X_s, X_t, anchors=50, sigma=1.0, random_state=None):
     r"""
     Compute left and right factors corresponding to the Nystroem method on the Gaussian kernel :math:`K(x^s_i, x^t_j) = \exp(-\|x^s_i-x^t_j\|^2/2\sigma^2)`.
-    The Nystroem approximation is computed by sampling :math:`\min(n, \lceil(c / 2))\rceil' components in each distribution,
+    The Nystroem approximation is computed by sampling :math:`\min(n, \lceil(c / 2))\rceil)` components in each distribution,
     where :math:`n` is the number of samples in the distribution and :math:`c` the total number of anchor points.
 
     Parameters
@@ -599,11 +599,11 @@ def sinkhorn_low_rank_kernel(
     warmstart=None,
 ):
     r"""
-    Compute the Sinkhorn algorithm for a kernel :math:`K` that can be written as a low rank factorization :math:`K = K_1 K_2^\top`.
+    Compute the Sinkhorn algorithm for a kernel :math:`K` that can be written as a low rank factorization :math:`\mathbf{K} = \mathbf{K}_1 \mathbf{K}_2^\top`.
 
     Precisely :
 
-    - :math:`\mathbf{K}_1`, `\mathbf{K}_2` are the (`dim_a`, `dim_r`), (`dim_b`, `dim_r`) kernel matrices
+    - :math:`\mathbf{K}_1, \mathbf{K}_2` are the (`dim_a`, `dim_r`), (`dim_b`, `dim_r`) kernel matrices
     - :math:`\Omega` is the entropic regularization term
       :math:`\Omega(\gamma)=\sum_{i,j} \gamma_{i,j}\log(\gamma_{i,j})`
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target
