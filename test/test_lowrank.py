@@ -68,7 +68,7 @@ def test_nystroem_sinkhorn(log):
         verbose=True,
         random_state=random_state,
         log=log,
-    )[:]
+    )
     if log:
         G_nys, log_ = res
     else:
@@ -81,9 +81,9 @@ def test_nystroem_sinkhorn(log):
     a = ot.unif(Xs.shape[0])
     b = ot.unif(Xt.shape[0])
 
-    np.testing.assert_allclose(G_sinkh, G_nys, atol=1e-04)
-    np.testing.assert_allclose(a, G_nys.sum(1), atol=1e-05)
-    np.testing.assert_allclose(b, G_nys.sum(0), atol=1e-05)
+    np.testing.assert_allclose(G_sinkh, G_nys[:], atol=1e-04)
+    np.testing.assert_allclose(a, G_nys[:].sum(1), atol=1e-05)
+    np.testing.assert_allclose(b, G_nys[:].sum(0), atol=1e-05)
 
 
 @pytest.mark.parametrize("log", [False, True])
