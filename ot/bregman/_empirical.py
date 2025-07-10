@@ -835,7 +835,7 @@ def empirical_sinkhorn_nystroem(
     >>> X_t = np.reshape(np.arange(0, n_samples_b, dtype=np.float64), (n_samples_b, 1))
     >>> empirical_sinkhorn_nystroem(X_s, X_t, reg, anchors, random_state=42)[:]  # doctest: +ELLIPSIS
     array([[2.50000000e-01, 1.46537753e-01, 7.29587925e-10, 1.03462246e-01],
-       [3.63816797e-10, 1.03462247e-01, 2.49999999e-01, 1.46537754e-01]])
+           [3.63816797e-10, 1.03462247e-01, 2.49999999e-01, 1.46537754e-01]])
 
     References
     ----------

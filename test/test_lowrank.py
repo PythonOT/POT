@@ -24,7 +24,8 @@ def test_nystroem_kernel_approx():
     np.testing.assert_allclose(K, U @ V.T, atol=1e-7)
 
 
-def test_nystroem_sinkhorn():
+@pytest.mark.parametrize("log", [False, True])
+def test_nystroem_sinkhorn(log):
     # test Nystrom approximation for Sinkhorn (ot plan)
     offset = 2
     n_samples_per_blob = 50
@@ -58,7 +59,7 @@ def test_nystroem_sinkhorn():
     reg = 5.0
     anchors = 5
 
-    G_nys = ot.bregman.empirical_sinkhorn_nystroem(
+    res = ot.bregman.empirical_sinkhorn_nystroem(
         Xs,
         Xt,
         anchors=anchors,
@@ -66,7 +67,12 @@ def test_nystroem_sinkhorn():
         numItermax=3000,
         verbose=True,
         random_state=random_state,
+        log=log,
     )[:]
+    if log:
+        G_nys, log_ = res
+    else:
+        G_nys = res
 
     G_sinkh = ot.bregman.empirical_sinkhorn(
         Xs, Xt, reg=reg, numIterMax=3000, verbose=True
@@ -80,7 +86,8 @@ def test_nystroem_sinkhorn():
     np.testing.assert_allclose(b, G_nys.sum(0), atol=1e-05)
 
 
-def test_nystroem_sinkhorn2():
+@pytest.mark.parametrize("log", [False, True])
+def test_nystroem_sinkhorn2(log):
     # test Nystrom approximation for Sinkhorn (loss)
     offset = 2
     n_samples_per_blob = 50
@@ -114,7 +121,7 @@ def test_nystroem_sinkhorn2():
     reg = 5.0
     anchors = 5
 
-    loss1 = ot.bregman.empirical_sinkhorn_nystroem2(
+    res = ot.bregman.empirical_sinkhorn_nystroem2(
         Xs,
         Xt,
         anchors=anchors,
@@ -122,7 +129,13 @@ def test_nystroem_sinkhorn2():
         numItermax=3000,
         verbose=True,
         random_state=random_state,
+        log=log,
     )
+
+    if log:
+        loss1, log_ = res
+    else:
+        loss1 = res
 
     loss2 = ot.bregman.empirical_sinkhorn2(
         Xs, Xt, reg=reg, numIterMax=3000, verbose=True

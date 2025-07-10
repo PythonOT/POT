@@ -599,7 +599,7 @@ def sinkhorn_low_rank_kernel(
     warmstart=None,
 ):
     r"""
-    Compute the Sinkhorn algorithm for a kernel :math:`K` that can be written as a low rank factorization :math:`\mathbf{K} = \mathbf{K}_1 \mathbf{K}_2^\top`.
+    Compute the Sinkhorn algorithm for a kernel :math:`\mathbf{K}` that can be written as a low rank factorization :math:`\mathbf{K} = \mathbf{K}_1 \mathbf{K}_2^\top`.
 
     Precisely :
 
