@@ -24,8 +24,8 @@ def test_nystroem_kernel_approx():
     np.testing.assert_allclose(K, U @ V.T, atol=1e-7)
 
 
-@pytest.mark.parametrize("log", [False, True])
-def test_nystroem_sinkhorn(log):
+@pytest.mark.parametrize("log, warn", [[False, False], [True, True]])
+def test_nystroem_sinkhorn(log, warn):
     # test Nystrom approximation for Sinkhorn (ot plan)
     offset = 2
     n_samples_per_blob = 50
@@ -68,6 +68,7 @@ def test_nystroem_sinkhorn(log):
         verbose=True,
         random_state=random_state,
         log=log,
+        warn=warn,
     )
     if log:
         G_nys, log_ = res

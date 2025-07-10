@@ -600,6 +600,7 @@ def sinkhorn_low_rank_kernel(
 ):
     r"""
     Compute the Sinkhorn algorithm for a kernel :math:`\mathbf{K}` that can be written as a low rank factorization :math:`\mathbf{K} = \mathbf{K}_1 \mathbf{K}_2^\top`.
+    Does not implement multiple targets.
 
     Precisely :
 
@@ -620,9 +621,8 @@ def sinkhorn_low_rank_kernel(
         Right factor
     a : array-like, shape (n_samples_a,)
         samples weights in the source domain
-    b : array-like, shape (n_samples_b,) or array-like, shape (n_samples_b, n_hists)
-        samples in the target domain, compute sinkhorn with multiple targets
-        if :math:`\mathbf{b}` is a matrix
+    b : array-like, shape (n_samples_b,)
+        samples in the target domain
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -639,9 +639,9 @@ def sinkhorn_low_rank_kernel(
 
     Returns
     ---------
-    u : array-like, shape (n_samples_a, ) or array-like, shape (n_samples_a, n_hists)
+    u : array-like, shape (n_samples_a, )
         Left dual variable
-    v: array-like, shape (n_samples_b, ) or array-like, shape (n_samples_b, n_hists)
+    v: array-like, shape (n_samples_b, )
         Right dual variable
     log : dict (lazy_plan)
         log dictionary return only if log==True in parameters
@@ -659,23 +659,14 @@ def sinkhorn_low_rank_kernel(
     dim_a = len(a)
     dim_b = b.shape[0]
 
-    if len(b.shape) > 1:
-        n_hists = b.shape[1]
-    else:
-        n_hists = 0
-
     if log:
         dict_log = {"err": []}
 
     # we assume that no distances are null except those of the diagonal of
     # distances
     if warmstart is None:
-        if n_hists:
-            u = nx.ones((dim_a, n_hists), type_as=K1) / dim_a
-            v = nx.ones((dim_b, n_hists), type_as=K2) / dim_b
-        else:
-            u = nx.ones(dim_a, type_as=K1) / dim_a
-            v = nx.ones(dim_b, type_as=K2) / dim_b
+        u = nx.ones(dim_a, type_as=K1) / dim_a
+        v = nx.ones(dim_b, type_as=K2) / dim_b
     else:
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
