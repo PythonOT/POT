@@ -4,6 +4,8 @@
 Quickstart Guide
 =============================================
 
+.. note::
+    Example added in release: 0.9.6
 
 Quickstart guide to the POT toolbox.
 

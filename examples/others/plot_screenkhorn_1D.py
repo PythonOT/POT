@@ -4,6 +4,9 @@
 Screened optimal transport (Screenkhorn)
 ========================================
 
+.. note::
+    Example added in release: 0.7.0.
+
 This example illustrates the computation of Screenkhorn [26].
 
 [26] Alaya M. Z., Bérar M., Gasso G., Rakotomamonjy A. (2019).

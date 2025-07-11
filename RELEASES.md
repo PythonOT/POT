@@ -17,6 +17,7 @@
 - Backend implementation of `ot.dist` for (PR #701)
 - Updated documentation Quickstart guide and User guide with new API (PR #726)
 - Fix jax version for auto-grad (PR #732)
+- Added to each example in the examples gallery the information about the release version in which it was introduced (PR #743)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
