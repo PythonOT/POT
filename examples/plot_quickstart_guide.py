@@ -4,9 +4,6 @@
 Quickstart Guide
 =============================================
 
-.. note::
-    Example added in release: 0.9.6
-
 Quickstart guide to the POT toolbox.
 
 For better readability, only the use of POT is provided and the plotting code
