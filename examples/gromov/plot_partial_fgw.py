@@ -5,7 +5,7 @@ Plot partial FGW for subgraph matching
 =================================
 
 .. note::
-    Example currently under development and has not been released yet. To be added in release: 0.9.6
+    Example added in release: 0.9.6.
 
 This example illustrates the computation of partial (Fused) Gromov-Wasserstein
 divergences for subgraph matching tasks, using the exact formulation $p(F)GW$ and

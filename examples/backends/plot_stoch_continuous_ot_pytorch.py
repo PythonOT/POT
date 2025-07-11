@@ -5,7 +5,7 @@ Continuous OT plan estimation with Pytorch
 ======================================================================
 
 .. note::
-    Notebook added in release: 0.8.2.
+    Example added in release: 0.8.2.
 
 """
 
