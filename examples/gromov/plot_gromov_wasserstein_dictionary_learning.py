@@ -5,6 +5,9 @@ r"""
 (Fused) Gromov-Wasserstein Linear Dictionary Learning
 =====================================================
 
+.. note::
+    Example added in release: 0.8.2.
+
 In this example, we illustrate how to learn a Gromov-Wasserstein dictionary on
 a dataset of structured data such as graphs, denoted
 :math:`\{ \mathbf{C_s} \}_{s \in [S]}` where every nodes have uniform weights.

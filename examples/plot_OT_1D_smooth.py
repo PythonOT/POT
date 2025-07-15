@@ -4,6 +4,9 @@
 Smooth and sparse OT example
 ================================
 
+.. note::
+    Example updated in release: 0.9.1.
+
 This example illustrates the computation of
 Smooth and Sparse (KL an L2 reg.) OT and
 sparsity-constrained OT, together with their visualizations.

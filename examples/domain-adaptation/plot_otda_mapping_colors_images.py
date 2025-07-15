@@ -4,6 +4,9 @@
 OT for image color adaptation with mapping estimation
 =====================================================
 
+.. note::
+    Example added in release: 0.1.9.
+
 OT for domain adaptation with image color adaptation [6] with mapping
 estimation [8].
 

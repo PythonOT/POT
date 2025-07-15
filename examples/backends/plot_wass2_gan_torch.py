@@ -4,6 +4,9 @@ r"""
 Wasserstein 2 Minibatch GAN with PyTorch
 ========================================
 
+.. note::
+    Example added in release: 0.8.0.
+
 In this example we train a Wasserstein GAN using Wasserstein 2 on minibatches
 as a distribution fitting term.
 
