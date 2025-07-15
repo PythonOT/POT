@@ -6,6 +6,9 @@ Different gradient computations for regularized optimal transport
 
 This example illustrates the differences in terms of computation time between the gradient options for the Sinkhorn solver.
 
+.. note::
+    Example added in release: 0.9.6
+
 """
 
 # Author: Sonia Mazelet <sonia.mazelet@polytechnique.edu>

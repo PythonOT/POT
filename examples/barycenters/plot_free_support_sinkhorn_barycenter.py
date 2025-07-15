@@ -4,6 +4,9 @@
 2D free support Sinkhorn barycenters of distributions
 ========================================================
 
+.. note::
+    Example added in release: 0.9.1.
+
 Illustration of Sinkhorn barycenter calculation between empirical distributions understood as point clouds
 
 """

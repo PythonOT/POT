@@ -4,6 +4,9 @@
 OT for domain adaptation
 ========================
 
+.. note::
+    Example added in release: 0.1.9.
+
 This example introduces a domain adaptation in a 2D setting and the 4 OTDA
 approaches currently supported in POT.
 

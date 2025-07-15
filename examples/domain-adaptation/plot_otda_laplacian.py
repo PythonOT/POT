@@ -4,6 +4,9 @@
 OT with Laplacian regularization for domain adaptation
 ======================================================
 
+.. note::
+    Example added in release: 0.7.0.
+
 This example introduces a domain adaptation in a 2D setting and OTDA
 approach with Laplacian regularization.
 
