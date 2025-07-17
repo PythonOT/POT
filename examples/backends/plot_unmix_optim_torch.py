@@ -4,6 +4,9 @@ r"""
 Wasserstein unmixing with PyTorch
 =================================
 
+.. note::
+    Example added in release: 0.8.0.
+
 In this example we estimate mixing parameters from distributions that minimize
 the Wasserstein distance. In other words we suppose that a target
 distribution :math:`\mu^t` can be expressed as a weighted sum of source

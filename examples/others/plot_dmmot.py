@@ -4,6 +4,9 @@ r"""
 Computing d-dimensional Barycenters via d-MMOT
 ===============================================================================
 
+.. note::
+    Example added in release: 0.9.1.
+
 When the cost is discretized (Monge), the d-MMOT solver can more quickly
 compute and minimize the distance between many distributions without the need
 for intermediate barycenter computations. This example compares the time to

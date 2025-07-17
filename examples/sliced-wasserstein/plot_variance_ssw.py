@@ -4,6 +4,9 @@
 Spherical Sliced Wasserstein on distributions in S^2
 ====================================================
 
+.. note::
+    Example added in release: 0.8.0.
+
 This example illustrates the computation of the spherical sliced Wasserstein discrepancy as
 proposed in [46].
 
