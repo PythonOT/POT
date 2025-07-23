@@ -4,6 +4,9 @@
 Low rank Gromov-Wasterstein between samples
 ========================================
 
+.. note::
+    Example added in release: 0.9.4.
+
 Comparison between entropic Gromov-Wasserstein and Low Rank Gromov Wasserstein [67]
 on two curves in 2D and 3D, both sampled with 200 points.
 

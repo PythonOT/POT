@@ -4,6 +4,9 @@
 Entropic Wasserstein Component Analysis
 =======================================
 
+.. note::
+    Example added in release: 0.9.1.
+
 This example illustrates the use of EWCA as proposed in [52].
 
 

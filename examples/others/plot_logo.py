@@ -4,6 +4,9 @@ r"""
 Logo of the POT toolbox
 =======================
 
+.. note::
+    Example added in release: 0.8.2.
+
 In this example we plot the logo of the POT toolbox.
 
 This logo is that it is done 100% in Python and generated using

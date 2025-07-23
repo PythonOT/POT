@@ -5,6 +5,9 @@ r"""
 Semi-relaxed (Fused) Gromov-Wasserstein Barycenter as Dictionary Learning
 =====================================================
 
+.. note::
+    Example added in release: 0.9.5.
+
 In this example, we illustrate how to learn a semi-relaxed Gromov-Wasserstein
 (srGW) barycenter using a Block-Coordinate Descent algorithm, on a dataset of
 structured data such as graphs, denoted :math:`\{ \mathbf{C_s} \}_{s \in [S]}`

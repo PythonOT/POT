@@ -4,6 +4,9 @@
 Partial Wasserstein and Gromov-Wasserstein example
 ==================================================
 
+.. note::
+    Example added in release: 0.7.0.
+
 This example is designed to show how to use the Partial (Gromov-)Wasserstein
 distance computation in POT [29].
 
