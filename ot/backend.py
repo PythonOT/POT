@@ -459,6 +459,16 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def logsumexp(self, a, axis=None, keepdims=False):
+        r"""
+        Computes the log of the sum of exponentials of input elements.
+
+        This function follows the api from :any:`scipy.special.logsumexp`
+
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.logsumexp.html
+        """
+        raise NotImplementedError()
+
     def sqrt(self, a):
         r"""
         Returns the non-ngeative square root of a tensor, element-wise.
@@ -706,16 +716,6 @@ class Backend:
         This function follows the api from :any:`numpy.unique`
 
         See: https://numpy.org/doc/stable/reference/generated/numpy.unique.html
-        """
-        raise NotImplementedError()
-
-    def logsumexp(self, a, axis=None):
-        r"""
-        Computes the log of the sum of exponentials of input elements.
-
-        This function follows the api from :any:`scipy.special.logsumexp`
-
-        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.logsumexp.html
         """
         raise NotImplementedError()
 
@@ -1175,6 +1175,9 @@ class NumpyBackend(Backend):
     def log(self, a):
         return np.log(a)
 
+    def logsumexp(self, a, axis=None, keepdims=False):
+        return special.logsumexp(a, axis=axis, keepdims=keepdims)
+
     def sqrt(self, a):
         return np.sqrt(a)
 
@@ -1263,9 +1266,6 @@ class NumpyBackend(Backend):
 
     def unique(self, a, return_inverse=False):
         return np.unique(a, return_inverse=return_inverse)
-
-    def logsumexp(self, a, axis=None):
-        return special.logsumexp(a, axis=axis)
 
     def stack(self, arrays, axis=0):
         return np.stack(arrays, axis)
@@ -1577,6 +1577,9 @@ class JaxBackend(Backend):
     def log(self, a):
         return jnp.log(a)
 
+    def logsumexp(self, a, axis=None, keepdims=False):
+        return jspecial.logsumexp(a, axis=axis, keepdims=keepdims)
+
     def sqrt(self, a):
         return jnp.sqrt(a)
 
@@ -1662,9 +1665,6 @@ class JaxBackend(Backend):
 
     def unique(self, a, return_inverse=False):
         return jnp.unique(a, return_inverse=return_inverse)
-
-    def logsumexp(self, a, axis=None):
-        return jspecial.logsumexp(a, axis=axis)
 
     def stack(self, arrays, axis=0):
         return jnp.stack(arrays, axis)
@@ -2148,11 +2148,11 @@ class TorchBackend(Backend):
     def unique(self, a, return_inverse=False):
         return torch.unique(a, return_inverse=return_inverse)
 
-    def logsumexp(self, a, axis=None):
+    def logsumexp(self, a, axis=None, keepdims=False):
         if axis is not None:
-            return torch.logsumexp(a, dim=axis)
+            return torch.logsumexp(a, dim=axis, keepdim=keepdims)
         else:
-            return torch.logsumexp(a, dim=tuple(range(len(a.shape))))
+            return torch.logsumexp(a, dim=tuple(range(len(a.shape))), keepdim=keepdims)
 
     def stack(self, arrays, axis=0):
         return torch.stack(arrays, dim=axis)
