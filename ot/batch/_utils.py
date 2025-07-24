@@ -107,29 +107,19 @@ def bregman_batch(K, a=None, b=None, nx=None, max_iter=10000, tol=1e-5, grad="de
     if b is None:
         b = nx.ones((B, m)) / m
 
-    f = a / nx.sum(K, axis=2)
-    g = b / nx.sum(K, axis=1)
-
-    n_iters = 0
+    f = nx.ones((B, n))  # a / nx.sum(K, axis=2)
+    g = nx.ones((B, m))  # b / nx.sum(K, axis=1)
 
     with grad_enabled(nx, grad == "autodiff"):
-        for _ in range(max_iter):
-            f_prev = f
-            g_prev = g
-
-            summand_f = nx.sum(K * g[:, None, :], axis=2)
-            f = a / summand_f
-
-            summand_g = nx.sum(K * f[:, :, None], axis=1)
-            g = b / summand_g
-
-            n_iters += 1
-
-            max_err_u = nx.max(nx.abs(f_prev - f))
-            max_err_v = nx.max(nx.abs(g_prev - g))
-
-            if max_err_u < tol and max_err_v < tol:
-                break
+        for n_iters in range(max_iter):
+            f = a / nx.sum(K * g[:, None, :], axis=2)
+            g = b / nx.sum(K * f[:, :, None], axis=1)
+            if n_iters % 10 == 0:
+                T = K * f[:, :, None] * g[:, None, :]
+                marginal = nx.sum(T, axis=2)
+                err = nx.max(nx.abs(marginal - a))
+                if err < tol:
+                    break
 
     if grad == "last_step":
         summand_f = nx.sum(K * g[:, None, :], axis=2)
@@ -228,36 +218,28 @@ def bregman_log_batch(
     if b is None:
         b = nx.ones((B, m)) / m
 
-    u = nx.log(a) - nx.log_sum_exp(K, axis=2).squeeze()
-    v = nx.log(b) - nx.log_sum_exp(K, axis=1).squeeze()
-
-    n_iters = 0
+    u = nx.zeros((B, n), type_as=K)  # u = nx.log(a) - nx.logsumexp(K, axis=2).squeeze()
+    v = nx.zeros((B, m), type_as=K)  # v = nx.log(b) - nx.logsumexp(K, axis=1).squeeze()
 
     with grad_enabled(nx, grad == "autodiff"):
-        for _ in range(max_iter):
-            u_prev = u
-            v_prev = v
+        for n_iters in range(max_iter):
+            u = nx.log(a) - nx.logsumexp(K + v[:, None, :], axis=2).squeeze()
+            v = nx.log(b) - nx.logsumexp(K + u[:, :, None], axis=1).squeeze()
 
-            summand_u = nx.log_sum_exp(K + v[:, None, :], axis=2).squeeze()
-            u = nx.log(a) - summand_u
-
-            summand_v = nx.log_sum_exp(K + u[:, :, None], axis=1).squeeze()
-            v = nx.log(b) - summand_v
-
-            n_iters += 1
-
-            max_err_u = nx.max(nx.abs(u_prev - u))
-            max_err_v = nx.max(nx.abs(v_prev - v))
-
-            if max_err_u < tol and max_err_v < tol:
-                break
+            # Check convergence once every 10 iterations
+            if n_iters % 10 == 0:
+                T = nx.exp(K + u[:, :, None] + v[:, None, :])
+                marginal = nx.sum(T, axis=2)
+                err = nx.max(nx.abs(marginal - a))
+                if err < tol:
+                    break
 
     if grad == "last_step":
         summand_u = K + v[:, None, :]
-        u = nx.log(a) - nx.log_sum_exp(summand_u, axis=2).squeeze()
+        u = nx.log(a) - nx.logsumexp(summand_u, axis=2).squeeze()
 
         summand_v = K + u[:, :, None]
-        v = nx.log(b) - nx.log_sum_exp(summand_v, axis=1).squeeze()
+        v = nx.log(b) - nx.logsumexp(summand_v, axis=1).squeeze()
 
     log_T = K + u[:, :, None] + v[:, None, :]
     T = nx.exp(log_T)

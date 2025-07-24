@@ -114,7 +114,7 @@ def cost_matrix_kl_batch(X, Y, logits_X=False, nx=None):
     return M
 
 
-def loss_linear_batch(M, T):
+def loss_linear_batch(M, T, nx=None):
     r"""Computes the linear optimal transport loss given cost matrix and transport plan.
 
     Parameters
@@ -172,12 +172,19 @@ def entropy_batch(T, nx=None):
 
 
 def linear_solver_batch(
-    M, epsilon, a=None, b=None, max_iter=1000, tol=1e-5, log_dual=True, grad="detach"
+    M,
+    a=None,
+    b=None,
+    epsilon=1e-3,
+    max_iter=1000,
+    tol=1e-5,
+    log_dual=True,
+    grad="detach",
 ):
     r"""Solves the linear optimal transport problem using Bregman projections.
 
     .. math::
-        T = \mathop{\arg \min}_T \quad \langle T, \mathbf{M} \rangle_F +
+        \mathop{\min}_T \quad \langle T, \mathbf{M} \rangle_F +
         \mathrm{\epsilon}\cdot\Omega(T)
 
         s.t. \ T \mathbf{1} &= \mathbf{a}
@@ -259,12 +266,14 @@ def linear_solver_batch(
     entr = entropy_batch(T, nx=nx)
     value_linear = loss_linear_batch(M, T)
     value = value_linear + epsilon * entr
+    log = {"n_iter": out["n_iters"]}
 
     res = OTResult(
         value=value,
         value_linear=value_linear,
         plan=T,
         backend=nx,
+        log=log,
     )
 
     return res
