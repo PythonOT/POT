@@ -30,7 +30,7 @@
 - Clean references in documentation (PR #722)
 - Clean documentation for `ot.gromov.gromov_wasserstein` (PR #737)
 - Debug wheels building (PR #739)
-- Fix doc for projection sparse simplex (PR #734)
+- Fix doc for projection sparse simplex (PR #734, PR #746)
 
 ## 0.9.5
 
