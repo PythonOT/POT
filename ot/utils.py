@@ -160,8 +160,9 @@ def projection_sparse_simplex(V, max_nz, z=1, axis=None, nx=None):
     -------
     projection: ndarray, shape :math:`\mathbf{V}`.shape
 
-    References:
-        Sparse projections onto the simplex
+    References
+    ----------
+    .. [1] Sparse projections onto the simplex
         Anastasios Kyrillidis, Stephen Becker, Volkan Cevher and, Christoph Koch
         ICML 2013
         https://arxiv.org/abs/1206.1529
