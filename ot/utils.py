@@ -145,6 +145,10 @@ def projection_sparse_simplex(V, max_nz, z=1, axis=None, nx=None):
     Parameters
     ----------
     V: 1-dim or 2-dim ndarray
+    max_nz: int
+        Maximum number of non-zero elements in the projection.
+        If `max_nz` is larger than the number of elements in `V`, then
+        the projection is equivalent to `proj_simplex(V, z)`.
     z: float or array
         If array, len(z) must be compatible with :math:`\mathbf{V}`
     axis: None or int
