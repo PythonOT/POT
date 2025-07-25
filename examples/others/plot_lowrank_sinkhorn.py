@@ -4,6 +4,9 @@
 Low rank Sinkhorn
 ========================================
 
+.. note::
+    Example added in release: 0.9.2.
+
 This example illustrates the computation of Low Rank Sinkhorn [26].
 
 [65] Scetbon, M., Cuturi, M., & Peyré, G. (2021).

@@ -3,6 +3,10 @@
 ==========================
 Gromov-Wasserstein example
 ==========================
+
+.. note::
+    Example added in release: 0.8.0.
+
 This example is designed to show how to use the Gromov-Wasserstein distance
 computation in POT.
 We first compare 3 solvers to estimate the distance based on

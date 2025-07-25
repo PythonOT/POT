@@ -4,6 +4,9 @@
 Generalized Wasserstein Barycenter Demo
 =======================================
 
+.. note::
+    Example added in release: 0.9.1.
+
 This example illustrates the computation of Generalized Wasserstein Barycenter
 as proposed in [42].
 
