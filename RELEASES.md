@@ -16,9 +16,10 @@
 - `ot.gaussian.bures_wasserstein_distance` can be batched (PR #680)
 - Backend implementation of `ot.dist` for (PR #701)
 - Updated documentation Quickstart guide and User guide with new API (PR #726)
-- Fix jax version for auto-grad (PR #732)
-- Add Nystrom kernel approximation for Sinkhorn (PR #742)
+- Fix jax version for auto-grad (PR #732)- Add Nystrom kernel approximation for Sinkhorn (PR #742)
+- Fix reg_div function compatibility with numpy in `ot.unbalanced.lbfgsb_unbalanced` via new function `ot.utils.fun_to_numpy` (PR #731)
 - Added to each example in the examples gallery the information about the release version in which it was introduced (PR #743)
+- Removed release information from quickstart guide (PR #744)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)

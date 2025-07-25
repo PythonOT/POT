@@ -1473,3 +1473,43 @@ def check_number_threads(numThreads):
             'numThreads should either be "max" or a strictly positive integer'
         )
     return numThreads
+
+
+def fun_to_numpy(fun, arr, nx, warn=True):
+    """Convert a function to a numpy function.
+
+    Parameters
+    ----------
+    fun : callable
+        The function to convert.
+    arr : array-like
+        The input to test the function. Can be from any backend.
+    nx : Backend
+        The backend to use for the conversion.
+    warn : bool, optional
+        Whether to raise a warning if the function is not compatible with numpy.
+        Default is True.
+    Returns
+    -------
+    fun_numpy : callable
+        The converted function.
+    """
+    if arr is None:
+        raise ValueError("arr should not be None to test fun")
+
+    nx_arr = get_backend(arr)
+    if nx_arr.__name__ != "numpy":
+        arr = nx.to_numpy(arr)
+    try:
+        fun(arr)
+        return fun
+    except BaseException:
+        if warn:
+            warnings.warn(
+                "The callable function should be able to handle numpy arrays, a compatible function is created and comes with overhead"
+            )
+
+        def fun_numpy(x):
+            return nx.to_numpy(fun(nx.from_numpy(x)))
+
+        return fun_numpy
