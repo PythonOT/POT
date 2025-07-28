@@ -94,7 +94,7 @@ def test_wasserstein_1d_type_devices(nx):
     rho_v /= rho_v.sum()
 
     for tp in nx.__type_list__:
-        print(nx.dtype_device(tp))
+        # print(nx.dtype_device(tp))
 
         xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
 
@@ -178,7 +178,7 @@ def test_emd1d_type_devices(nx):
     rho_v /= rho_v.sum()
 
     for tp in nx.__type_list__:
-        print(nx.dtype_device(tp))
+        # print(nx.dtype_device(tp))
 
         xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
 
@@ -216,6 +216,32 @@ def test_emd1d_device_tf():
         nx.assert_same_dtype_device(xb, emd)
         nx.assert_same_dtype_device(xb, emd2)
         assert nx.dtype_device(emd)[1].startswith("GPU")
+
+
+def test_emd_dual_with_weights():
+    # test emd1d_dual gives similar results as emd
+    n = 20
+    m = 30
+    rng = np.random.RandomState(0)
+    u = rng.randn(n, 1)
+    v = rng.randn(m, 1)
+
+    w_u = rng.uniform(0.0, 1.0, n)
+    w_u = w_u / w_u.sum()
+
+    w_v = rng.uniform(0.0, 1.0, m)
+    w_v = w_v / w_v.sum()
+
+    M = ot.dist(u, v, metric="sqeuclidean")
+
+    G, log = ot.emd(w_u, w_v, M, log=True)
+    wass = log["cost"]
+
+    f, g, wass1d = ot.emd_1d_dual(u, v, w_u, w_v, p=2)
+
+    # check loss is similar
+    np.testing.assert_allclose(wass, wass1d)
+    np.testing.assert_allclose(wass, np.sum(f * w_u) + np.sum(g * w_v))
 
 
 def test_wasserstein_1d_circle():
@@ -267,7 +293,7 @@ def test_wasserstein1d_circle_devices(nx):
     rho_v /= rho_v.sum()
 
     for tp in nx.__type_list__:
-        print(nx.dtype_device(tp))
+        # print(nx.dtype_device(tp))
 
         xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
 
@@ -317,7 +343,7 @@ def test_wasserstein1d_unif_circle_devices(nx):
     rho_u /= rho_u.sum()
 
     for tp in nx.__type_list__:
-        print(nx.dtype_device(tp))
+        # print(nx.dtype_device(tp))
 
         xb, rho_ub = nx.from_numpy(x, rho_u, type_as=tp)
 

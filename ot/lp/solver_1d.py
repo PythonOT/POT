@@ -16,7 +16,7 @@ from ..backend import get_backend
 from ..utils import list_to_array
 
 
-def quantile_function(qs, cws, xs):
+def quantile_function(qs, cws, xs, return_index=False):
     r"""Computes the quantile function of an empirical distribution
 
     Parameters
@@ -27,6 +27,7 @@ def quantile_function(qs, cws, xs):
         cumulative weights of the 1D empirical distribution, if batched, must be similar to xs
     xs: array-like, shape (n, ...)
         locations of the 1D empirical distribution, batched against the `xs.ndim - 1` first dimensions
+    return_index: bool
 
     Returns
     -------
@@ -43,8 +44,14 @@ def quantile_function(qs, cws, xs):
     else:
         cws = cws.T
         qs = qs.T
-    idx = nx.searchsorted(cws, qs).T
-    return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0)
+    # idx = nx.searchsorted(cws, qs).T
+    # return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0)
+
+    idx = nx.clip(nx.searchsorted(cws, qs).T, 0, n - 1)
+    if return_index:
+        return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0), idx
+    else:
+        return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0)
 
 
 def wasserstein_1d(
@@ -397,6 +404,119 @@ def emd2_1d(
         log_emd = {"G": G}
         return cost, log_emd
     return cost
+
+
+def emd_1d_dual(
+    u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True
+):
+    r"""
+    TODO
+
+    Parameters
+    ----------
+    u_values: array-like, shape (n, ...)
+        locations of the first empirical distribution
+    v_values: array-like, shape (m, ...)
+        locations of the second empirical distribution
+    u_weights: array-like, shape (n, ...), optional
+        weights of the first empirical distribution, if None then uniform weights are used
+    v_weights: array-like, shape (m, ...), optional
+        weights of the second empirical distribution, if None then uniform weights are used
+    p: int, optional
+        order of the ground metric used, should be at least 1, default is 1
+    require_sort: bool, optional
+        sort the distributions atoms locations, if False we will consider they have been sorted prior to being passed to
+        the function, default is True
+
+    Returns
+    -------
+    f: array-like shape (n, ...)
+        First dual potential
+    g: array-like shape (m, ...)
+        Second dual potential
+    loss: float/array-like, shape (...)
+        the batched EMD
+    """
+    if u_weights is not None and v_weights is not None:
+        nx = get_backend(u_values, v_values, u_weights, v_weights)
+    else:
+        nx = get_backend(u_values, v_values)
+
+    n = u_values.shape[0]
+    m = v_values.shape[0]
+
+    # Init weights or broadcast if necessary
+    if u_weights is None:
+        u_weights = nx.full(u_values.shape, 1.0 / n, type_as=u_values)
+    elif u_weights.ndim != u_values.ndim:
+        u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
+
+    if v_weights is None:
+        v_weights = nx.full(v_values.shape, 1.0 / m, type_as=v_values)
+    elif v_weights.ndim != v_values.ndim:
+        v_weights = nx.repeat(v_weights[..., None], v_values.shape[-1], -1)
+
+    # Sort w.r.t. support if not already done
+    if require_sort:
+        u_sorter = nx.argsort(u_values, 0)
+        u_values = nx.take_along_axis(u_values, u_sorter, 0)
+
+        v_sorter = nx.argsort(v_values, 0)
+        v_values = nx.take_along_axis(v_values, v_sorter, 0)
+
+        u_weights = nx.take_along_axis(u_weights, u_sorter, 0)
+        v_weights = nx.take_along_axis(v_weights, v_sorter, 0)
+
+    # eps trick to have strictly increasing cdf and avoid zero mass issues
+    eps = 1e-12
+    u_cdf = nx.cumsum(u_weights + eps, 0) - eps
+    v_cdf = nx.cumsum(v_weights + eps, 0) - eps
+
+    cdf_axis = nx.sort(nx.concatenate((u_cdf, v_cdf), 0), 0)
+
+    u_icdf, u_index = quantile_function(cdf_axis, u_cdf, u_values, return_index=True)
+    v_icdf, v_index = quantile_function(cdf_axis, v_cdf, v_values, return_index=True)
+
+    diff_dist = nx.power(nx.abs(u_icdf - v_icdf), p)
+    cdf_axis = nx.zero_pad(
+        cdf_axis, pad_width=[(1, 0)] + (cdf_axis.ndim - 1) * [(0, 0)]
+    )
+
+    # delta = cdf_axis[1:, ...] - cdf_axis[:-1, ...]
+    # print(delta.dtype)
+    # print("?", diff_dist)
+    # # print("!!", nx.sum(delta * diff_dist, axis=0))
+
+    # parallel North-West corner rule (?)
+    mask_u = u_index[1:, ...] - u_index[:-1, ...]
+    mask_u = nx.zero_pad(mask_u, pad_width=[(1, 0)] + (mask_u.ndim - 1) * [(0, 0)])
+    mask_v = v_index[1:, ...] - v_index[:-1, ...]
+    mask_v = nx.zero_pad(mask_v, pad_width=[(1, 0)] + (mask_v.ndim - 1) * [(0, 0)])
+
+    c1 = nx.where((mask_u[:-1, ...] + mask_u[1:, ...]) > 1, -1, 0)
+    c1 = nx.cumsum(c1 * diff_dist[:-1, ...], axis=0)
+    c1 = nx.zero_pad(c1, pad_width=[(1, 0)] + (c1.ndim - 1) * [(0, 0)])
+
+    c2 = nx.where((mask_v[:-1, ...] + mask_v[1:, ...]) > 1, -1, 0)
+    c2 = nx.cumsum(c2 * diff_dist[:-1, ...], axis=0)
+    c2 = nx.zero_pad(c2, pad_width=[(1, 0)] + (c2.ndim - 1) * [(0, 0)])
+
+    masked_u_dist = mask_u * diff_dist
+    masked_v_dist = mask_v * diff_dist
+
+    T = nx.cumsum(masked_u_dist - masked_v_dist, axis=0) + c1 - c2
+
+    tmp = nx.copy(mask_u > 0)  # avoid in-place problem
+    tmp[0, ...] = 1
+    f = nx.reshape(T[tmp], u_values.shape)
+    f[0, ...] = 0
+
+    tmp = nx.copy(mask_v > 0)  # avoid in-place problem
+    tmp[0, ...] = 1
+    g = -nx.reshape(T[tmp], v_values.shape)
+
+    loss = nx.sum(f * u_weights) + nx.sum(g * v_weights)
+    return f, g, loss
 
 
 def roll_cols(M, shifts):
