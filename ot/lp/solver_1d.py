@@ -482,12 +482,7 @@ def emd_1d_dual(
         cdf_axis, pad_width=[(1, 0)] + (cdf_axis.ndim - 1) * [(0, 0)]
     )
 
-    # delta = cdf_axis[1:, ...] - cdf_axis[:-1, ...]
-    # print(delta.dtype)
-    # print("?", diff_dist)
-    # # print("!!", nx.sum(delta * diff_dist, axis=0))
-
-    # parallel North-West corner rule (?)
+    # parallel North-West corner rule
     mask_u = u_index[1:, ...] - u_index[:-1, ...]
     mask_u = nx.zero_pad(mask_u, pad_width=[(1, 0)] + (mask_u.ndim - 1) * [(0, 0)])
     mask_v = v_index[1:, ...] - v_index[:-1, ...]
@@ -511,11 +506,20 @@ def emd_1d_dual(
     f = nx.reshape(T[tmp], u_values.shape)
     f[0, ...] = 0
 
-    tmp = nx.copy(mask_v > 0)  # avoid in-place problem
-    tmp[0, ...] = 1
-    g = -nx.reshape(T[tmp], v_values.shape)
+    # Complementary slackness
+    C = nx.power(nx.abs(u_values[:, None] - v_values[None]), p) - f[:, None]
+    g = nx.min(C, axis=0)
 
-    loss = nx.sum(f * u_weights) + nx.sum(g * v_weights)
+    loss = nx.sum(f * u_weights, axis=0) + nx.sum(g * v_weights, axis=0)
+
+    # unsort potentials
+    if require_sort:
+        u_rev_sorter = nx.argsort(u_sorter, 0)
+        f = nx.take_along_axis(f, u_rev_sorter, 0)
+
+        v_rev_sorter = nx.argsort(v_sorter, 0)
+        g = nx.take_along_axis(g, v_rev_sorter, 0)
+
     return f, g, loss
 
 

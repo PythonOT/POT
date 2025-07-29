@@ -218,7 +218,7 @@ def test_emd1d_device_tf():
         assert nx.dtype_device(emd)[1].startswith("GPU")
 
 
-def test_emd_dual_with_weights():
+def test_emd1d_dual_with_weights():
     # test emd1d_dual gives similar results as emd
     n = 20
     m = 30
@@ -241,7 +241,42 @@ def test_emd_dual_with_weights():
 
     # check loss is similar
     np.testing.assert_allclose(wass, wass1d)
-    np.testing.assert_allclose(wass, np.sum(f * w_u) + np.sum(g * w_v))
+    np.testing.assert_allclose(wass, np.sum(f[:, 0] * w_u) + np.sum(g[:, 0] * w_v))
+
+
+def test_emd1d_dual_batch(nx):
+    rng = np.random.RandomState(0)
+
+    n = 100
+    x = np.linspace(0, 5, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+    rho_v = np.abs(rng.randn(n))
+    rho_v /= rho_v.sum()
+
+    xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v)
+
+    X = np.stack((np.linspace(0, 5, n), np.linspace(0, 5, n) * 10), -1)
+    Xb = nx.from_numpy(X)
+    f, g, res = ot.emd_1d_dual(Xb, Xb, rho_ub, rho_vb, p=2)
+    np.testing.assert_almost_equal(100 * res[0], res[1], decimal=4)
+
+
+def test_emd1d_dual_type_devices(nx):
+    rng = np.random.RandomState(0)
+
+    n = 10
+    x = np.linspace(0, 5, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+    rho_v = np.abs(rng.randn(n))
+    rho_v /= rho_v.sum()
+
+    for tp in nx.__type_list__:
+        # print(nx.dtype_device(tp))
+        xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
+        f, g, res = ot.emd_1d_dual(xb, xb, rho_ub, rho_vb, p=1)
+        nx.assert_same_dtype_device(xb, res)
 
 
 def test_wasserstein_1d_circle():
