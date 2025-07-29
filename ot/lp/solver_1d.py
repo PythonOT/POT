@@ -503,7 +503,16 @@ def emd_1d_dual(
 
     tmp = nx.copy(mask_u > 0)  # avoid in-place problem
     tmp[0, ...] = 1
-    f = nx.reshape(T[tmp], u_values.shape)
+    # f = nx.reshape(T[tmp], u_values.shape) # work only with one axis
+    f = nx.reshape(
+        nx.index_select(
+            nx.reshape(T.T, (-1,)),
+            0,
+            # nx.reshape(tmp.T, (-1,)).nonzero().squeeze()
+            nx.nonzero(nx.reshape(tmp.T, (-1,))).squeeze(),
+        ),
+        u_values.T.shape,
+    ).T
     f[0, ...] = 0
 
     # Complementary slackness

@@ -1081,6 +1081,20 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def index_select(self, input, axis, index):
+        r"""
+        TODO
+
+        See: https://docs.pytorch.org/docs/stable/generated/torch.index_select.html
+        """
+
+    def nonzero(self, input, as_tuple=False):
+        r"""
+        TODO
+
+        See: https://docs.pytorch.org/docs/stable/generated/torch.nonzero.html
+        """
+
 
 class NumpyBackend(Backend):
     """
@@ -1443,6 +1457,16 @@ class NumpyBackend(Backend):
 
     def slogdet(self, a):
         return np.linalg.slogdet(a)
+
+    def index_select(self, input, axis, index):
+        return np.take(input, index, axis)
+
+    def nonzero(self, input, as_tuple=False):
+        if as_tuple:
+            return np.nonzero(input)
+        else:  # TOCHECK
+            L_tuple = np.nonzero(input)
+            return np.concatenate([t[None] for t in L_tuple], axis=0)
 
 
 _register_backend_implementation(NumpyBackend)
@@ -1839,6 +1863,16 @@ class JaxBackend(Backend):
 
     def slogdet(self, a):
         return jnp.linalg.slogdet(a)
+
+    def index_select(self, input, axis, index):
+        return jnp.take(input, index, axis)
+
+    def nonzero(self, input, as_tuple=False):
+        if as_tuple:
+            return jnp.nonzero(input)
+        else:  # TOCHECK
+            L_tuple = jnp.nonzero(input)
+            return jnp.concatenate([t[None] for t in L_tuple], axis=0)
 
 
 if jax:
@@ -2376,6 +2410,12 @@ class TorchBackend(Backend):
     def slogdet(self, a):
         return torch.linalg.slogdet(a)
 
+    def index_select(self, input, axis, index):
+        return torch.index_select(input, axis, index)
+
+    def nonzero(self, input, as_tuple=False):
+        return torch.nonzero(input, as_tuple=as_tuple)
+
 
 if torch:
     # Only register torch backend if it is installed
@@ -2786,6 +2826,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def slogdet(self, a):
         return cp.linalg.slogdet(a)
+
+    def index_select(self, input, axis, index):
+        return cp.take(input, index, axis)
 
 
 if cp:
