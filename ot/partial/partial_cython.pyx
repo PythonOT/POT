@@ -18,7 +18,6 @@ def insert_new_chain(np.ndarray[np.int64_t, ndim=1] chains_starting_at, np.ndarr
     the chain in which the candidate is inserted is returned.
     """
     cdef int n = chains_starting_at.shape[0]
-    assert chains_starting_at.shape == chains_ending_at.shape
     if i - 1 >= 0 and i - 1 < n and chains_ending_at[i - 1] != -1:
         i = chains_ending_at[i - 1]
     if j + 1 >= 0 and j + 1 < n and chains_starting_at[j + 1] != -1:
@@ -39,7 +38,10 @@ def compute_cost_for_chain(int idx_start, int idx_end, np.ndarray[np.float64_t, 
     """Compute the associated cost for a chain (set of contiguous points
     included in the solution) ranging from `idx_start` to `idx_end` (both included).
     """
-    return chain_costs_cumsum[idx_end] - chain_costs_cumsum[idx_start - 1]
+    if idx_start == 0:
+        return chain_costs_cumsum[idx_end]
+    else:
+        return chain_costs_cumsum[idx_end] - chain_costs_cumsum[idx_start - 1]
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -57,6 +59,7 @@ def precompute_chain_costs_cumsum(np.ndarray[np.int64_t, ndim=1] minimal_chain_e
     for i in range(n):
         if minimal_chain_ending_at_idx[i] != -1:
             start = minimal_chain_ending_at_idx[i]
+            assert start >= 0 and start < n, "start should be in [0, n-1]"
             additional_cost = minimal_chain_ending_at_cost[i]
             if start == 0:
                 chain_costs_cumsum[i] = additional_cost
@@ -85,7 +88,7 @@ def get_cost_wp(np.ndarray[np.float64_t, ndim=1] sorted_z, np.ndarray[np.int64_t
 
 
 @cython.boundscheck(False)
-@cython.wraparound(False)
+@cython.wraparound(True)
 def compute_costs(np.ndarray[np.float64_t, ndim=1] sorted_z,
                  np.ndarray[np.float64_t, ndim=1] diff_cum_sum,
                  np.ndarray[np.int64_t, ndim=1] diff_ranks,
@@ -103,11 +106,13 @@ def compute_costs(np.ndarray[np.float64_t, ndim=1] sorted_z,
     cdef list l_costs = []
     cdef np.ndarray[np.int64_t, ndim=1] minimal_chain_ending_at_idx = np.full((sorted_z.shape[0], ), -1, dtype=np.int64)
     cdef np.ndarray[np.float64_t, ndim=1] minimal_chain_ending_at_cost = np.full((sorted_z.shape[0], ), -1.0, dtype=np.float64)
-    cdef np.ndarray[np.int64_t, ndim=1] last_pos_for_rank_x = np.full((sorted_z.shape[0], ), -1, dtype=np.int64)
-    cdef np.ndarray[np.int64_t, ndim=1] last_pos_for_rank_y = np.full((sorted_z.shape[0], ), -1, dtype=np.int64)
+    cdef np.ndarray[np.int64_t, ndim=1] last_pos_for_rank_x = np.full((2 * sorted_z.shape[0], ), -1, dtype=np.int64)
+    cdef np.ndarray[np.int64_t, ndim=1] last_pos_for_rank_y = np.full((2 * sorted_z.shape[0], ), -1, dtype=np.int64)
     cdef int n = diff_ranks.shape[0]
     cdef int idx_end, cur_rank, idx_start, target_rank
     cdef double cost
+    assert sorted_z.shape[0] == diff_ranks.shape[0] == sorted_distrib_indicator.shape[0], \
+        "All input arrays must have the same length"
     for idx_end in range(n):
         # For each item in either distrib, find the scope of the smallest
         # "minimal chain" that would end at that point and extend on the left, 

@@ -322,7 +322,7 @@ def test_partial_wasserstein_1d():
 
     M = ot.dist(x[:, None], y[:, None], metric="minkowski", p=1)
     indices_x, indices_y, marginal_costs = ot.partial.partial_wasserstein_1d(
-        x, y, max_iter=n
+        x, y, n_transported_samples=n
     )
     costs = np.cumsum(marginal_costs)
 
