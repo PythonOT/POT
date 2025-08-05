@@ -4,6 +4,9 @@
 Wasserstein Discriminant Analysis
 =================================
 
+.. note::
+    Example added in release: 0.3.0.
+
 This example illustrate the use of WDA as proposed in [11].
 
 

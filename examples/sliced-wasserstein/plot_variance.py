@@ -4,6 +4,9 @@
 Sliced Wasserstein Distance on 2D distributions
 ===============================================
 
+.. note::
+    Example added in release: 0.8.0.
+
 This example illustrates the computation of the sliced Wasserstein Distance as
 proposed in [31].
 

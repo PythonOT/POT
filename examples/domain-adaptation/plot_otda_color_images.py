@@ -4,6 +4,9 @@
 OT for image color adaptation
 =============================
 
+.. note::
+    Example added in release: 0.1.9.
+
 This example presents a way of transferring colors between two images
 with Optimal Transport as introduced in [6]
 

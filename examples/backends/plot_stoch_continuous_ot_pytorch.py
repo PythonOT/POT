@@ -4,6 +4,8 @@ r"""
 Continuous OT plan estimation with Pytorch
 ======================================================================
 
+.. note::
+    Example added in release: 0.8.2.
 
 """
 

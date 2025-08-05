@@ -18,6 +18,9 @@
 - Updated documentation Quickstart guide and User guide with new API (PR #726)
 - Fix jax version for auto-grad (PR #732)
 - Implement 1d solver for partial optimal transport (PR #741)
+- Fix reg_div function compatibility with numpy in `ot.unbalanced.lbfgsb_unbalanced` via new function `ot.utils.fun_to_numpy` (PR #731)
+- Added to each example in the examples gallery the information about the release version in which it was introduced (PR #743)
+- Removed release information from quickstart guide (PR #744)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
@@ -28,6 +31,7 @@
 - Clean references in documentation (PR #722)
 - Clean documentation for `ot.gromov.gromov_wasserstein` (PR #737)
 - Debug wheels building (PR #739)
+- Fix doc for projection sparse simplex (PR #734, PR #746)
 
 ## 0.9.5
 
