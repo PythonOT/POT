@@ -410,7 +410,18 @@ def emd_1d_dual(
     u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True
 ):
     r"""
-    TODO
+    Computes the 1 dimensional OT loss between two (batched) empirical
+    distributions
+
+    .. math:
+        OT_{loss} = \int_0^1 |cdf_u^{-1}(q) - cdf_v^{-1}(q)|^p dq
+
+    and returns the dual potentials and the loss, i.e. such that
+
+    .. math:
+        OT_{loss}(u,v) = \int f(x)\mathrm{d}u(x) + \int g(y)\mathrm{d}v(y).
+
+    We do so by solving the dual problem using a parallel North-West corner rule.
 
     Parameters
     ----------
@@ -530,6 +541,99 @@ def emd_1d_dual(
         g = nx.take_along_axis(g, v_rev_sorter, 0)
 
     return f, g, loss
+
+
+def emd_1d_dual_backprop(
+    u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True
+):
+    r"""
+    Computes the 1 dimensional OT loss between two (batched) empirical
+    distributions
+
+    .. math:
+        OT_{loss} = \int_0^1 |cdf_u^{-1}(q) - cdf_v^{-1}(q)|^p dq
+
+    and returns the dual potentials and the loss, i.e. such that
+
+    .. math:
+        OT_{loss}(u,v) = \int f(x)\mathrm{d}u(x) + \int g(y)\mathrm{d}v(y).
+
+    We do so by backpropagating through the `wasserstein_1d` function. Thus, the function
+    only works in torch and jax.
+
+    Parameters
+    ----------
+    u_values: array-like, shape (n, ...)
+        locations of the first empirical distribution
+    v_values: array-like, shape (m, ...)
+        locations of the second empirical distribution
+    u_weights: array-like, shape (n, ...), optional
+        weights of the first empirical distribution, if None then uniform weights are used
+    v_weights: array-like, shape (m, ...), optional
+        weights of the second empirical distribution, if None then uniform weights are used
+    p: int, optional
+        order of the ground metric used, should be at least 1, default is 1
+    require_sort: bool, optional
+        sort the distributions atoms locations, if False we will consider they have been sorted prior to being passed to
+        the function, default is True
+
+    Returns
+    -------
+    f: array-like shape (n, ...)
+        First dual potential
+    g: array-like shape (m, ...)
+        Second dual potential
+    loss: float/array-like, shape (...)
+        the batched EMD
+    """
+    if u_weights is not None and v_weights is not None:
+        nx = get_backend(u_values, v_values, u_weights, v_weights)
+    else:
+        nx = get_backend(u_values, v_values)
+
+    assert nx.__name__ in ["torch", "jax"], "Function only valid in torch and jax"
+
+    n = u_values.shape[0]
+    m = v_values.shape[0]
+
+    # Init weights or broadcast if necessary
+    if u_weights is None:
+        u_weights = nx.full(u_values.shape, 1.0 / n, type_as=u_values)
+    elif u_weights.ndim != u_values.ndim:
+        u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
+
+    if v_weights is None:
+        v_weights = nx.full(v_values.shape, 1.0 / m, type_as=v_values)
+    elif v_weights.ndim != v_values.ndim:
+        v_weights = nx.repeat(v_weights[..., None], v_values.shape[-1], -1)
+
+    if nx.__name__ == "torch":
+        u_weights.requires_grad_(True)
+        v_weights.requires_grad_(True)
+        cost_output = wasserstein_1d(
+            u_values, v_values, u_weights, v_weights, p=p, require_sort=require_sort
+        )
+        loss = cost_output.sum()
+        loss.backward()
+
+        return (
+            u_weights.grad,
+            v_weights.grad,
+            cost_output.detach(),
+        )  # value can not be backward anymore
+    elif nx.__name__ == "jax":
+        import jax
+
+        def ot_1d(a, b):
+            return wasserstein_1d(
+                u_values, v_values, a, b, p=p, require_sort=require_sort
+            ).sum()
+
+        f, g = jax.grad(ot_1d, argnums=[0, 1])(u_weights, v_weights)
+        cost_output = wasserstein_1d(
+            u_values, v_values, u_weights, v_weights, p=p, require_sort=require_sort
+        )
+        return f, g, cost_output
 
 
 def roll_cols(M, shifts):

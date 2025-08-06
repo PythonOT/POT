@@ -263,6 +263,30 @@ def test_emd1d_dual_batch(nx):
     np.testing.assert_almost_equal(100 * res[0], res[1], decimal=4)
 
 
+def test_emd1d_dual_backprop_batch(nx):
+    rng = np.random.RandomState(0)
+
+    n = 100
+    x = np.linspace(0, 5, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+    rho_v = np.abs(rng.randn(n))
+    rho_v /= rho_v.sum()
+
+    xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v)
+
+    X = np.stack((np.linspace(0, 5, n), np.linspace(0, 5, n) * 10), -1)
+    Xb = nx.from_numpy(X)
+
+    if nx.__name__ in ["torch", "jax"]:
+        f, g, res = ot.emd_1d_dual_backprop(Xb, Xb, rho_ub, rho_vb, p=2)
+        np.testing.assert_almost_equal(100 * res[0], res[1], decimal=4)
+    else:
+        np.testing.assert_raises(
+            AssertionError, ot.emd_1d_dual_backprop, Xb, Xb, rho_ub, rho_vb, p=2
+        )
+
+
 def test_emd1d_dual_type_devices(nx):
     rng = np.random.RandomState(0)
 
@@ -278,6 +302,14 @@ def test_emd1d_dual_type_devices(nx):
         xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
         f, g, res = ot.emd_1d_dual(xb, xb, rho_ub, rho_vb, p=1)
         nx.assert_same_dtype_device(xb, res)
+        nx.assert_same_dtype_device(xb, f)
+        nx.assert_same_dtype_device(xb, g)
+
+        if nx.__name__ == "torch" or nx.__name__ == "jax":
+            f, g, res = ot.emd_1d_dual_backprop(xb, xb, rho_ub, rho_vb, p=1)
+            nx.assert_same_dtype_device(xb, res)
+            nx.assert_same_dtype_device(xb, f)
+            nx.assert_same_dtype_device(xb, g)
 
 
 def test_wasserstein_1d_circle():
