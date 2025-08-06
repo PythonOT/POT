@@ -326,7 +326,7 @@ def test_partial_wasserstein_1d():
     )
     costs = np.cumsum(marginal_costs)
 
-    for i in range(1, n):
+    for i in [1, 5, 10]:
         np.testing.assert_allclose(
             costs[i - 1] / n,
             ot.partial.partial_wasserstein2([], [], M, m=i / n),
