@@ -41,7 +41,7 @@ THIS EXAMPLE REQUIRES CVXPY
         2017.
 """
 
-# Author: Eloi Tanguy <eloi.tanguy@u-paris.fr>
+# Author: Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
 # License: MIT License
 
 # sphinx_gallery_thumbnail_number = 3
