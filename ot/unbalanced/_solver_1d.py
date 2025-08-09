@@ -31,10 +31,10 @@ def uot_1d(
     v_weights=None,
     p=1,
     require_sort=True,
-    numItermax=1000,
+    numItermax=10,
     stopThr=1e-6,
-    log=False,
     mode="icdf",
+    log=False,
 ):
     r"""
     TODO, TOTEST, seems not very stable?
@@ -71,10 +71,10 @@ def uot_1d(
         sort the distributions atoms locations, if False we will consider they have been sorted prior to being passed to
         the function, default is True
     numItermax: int, optional
-    log: bool, optional
     mode: str, optional
         "icdf" for inverse CDF, "backprop" for backpropagation mode.
         Default is "icdf".
+    log: bool, optional
 
     Returns
     -------
