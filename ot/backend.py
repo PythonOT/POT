@@ -569,7 +569,7 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         """
         Limits the values in a tensor.
 
@@ -1233,7 +1233,7 @@ class NumpyBackend(Backend):
     def outer(self, a, b):
         return np.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return np.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -1640,7 +1640,7 @@ class JaxBackend(Backend):
     def outer(self, a, b):
         return jnp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return jnp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -2103,7 +2103,7 @@ class TorchBackend(Backend):
     def outer(self, a, b):
         return torch.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return torch.clamp(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -2577,7 +2577,7 @@ class CupyBackend(Backend):  # pragma: no cover
     def outer(self, a, b):
         return cp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return cp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -3002,7 +3002,7 @@ class TensorflowBackend(Backend):
     def outer(self, a, b):
         return tnp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return tnp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):

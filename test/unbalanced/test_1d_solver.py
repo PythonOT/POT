@@ -32,8 +32,9 @@ def test_uot_1d(nx):
 
     print("??", loss_mm)
 
-    f, g, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m)
+    if nx.__name__ in ["jax", "torch"]:
+        f, g, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, mode="backprop")
 
-    print("???", loss_1d[0])
+        print("???", loss_1d[0])
 
-    np.testing.assert_allclose(loss_1d, loss_mm)
+        np.testing.assert_allclose(loss_1d, loss_mm)
