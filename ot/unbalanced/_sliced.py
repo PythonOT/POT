@@ -10,11 +10,133 @@ Sliced Unbalanced OT solvers
 from ..backend import get_backend
 from ..utils import get_parameter_pair, list_to_array
 from ..sliced import get_random_projections
-from ._solver_1d import rescale_potentials
+from ._solver_1d import rescale_potentials, uot_1d
 from ..lp.solver_1d import emd_1d_dual, emd_1d_dual_backprop, wasserstein_1d
 
 
-def unbalanced_sliced_ot_pot(
+def sliced_unbalanced_ot(
+    X_s,
+    X_t,
+    reg_m,
+    a=None,
+    b=None,
+    n_projections=50,
+    p=2,
+    projections=None,
+    seed=None,
+    numItermax=10,
+    mode="backprop",
+    log=False,
+):
+    r"""
+    Compute SUOT
+
+    TODO
+
+    Parameters
+    ----------
+    X_s : ndarray, shape (n_samples_a, dim)
+        samples in the source domain
+    X_t : ndarray, shape (n_samples_b, dim)
+        samples in the target domain
+    reg_m: float or indexable object of length 1 or 2
+        Marginal relaxation term.
+        If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
+        then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
+        The balanced OT can be recovered using :math:`\mathrm{reg_{m}}=float("inf")`.
+        For semi-relaxed case, use either
+        :math:`\mathrm{reg_{m}}=(float("inf"), scalar)` or
+        :math:`\mathrm{reg_{m}}=(scalar, float("inf"))`.
+        If :math:`\mathrm{reg_{m}}` is an array,
+        it must have the same backend as input arrays `(a, b, M)`.
+    a : ndarray, shape (n_samples_a,), optional
+        samples weights in the source domain
+    b : ndarray, shape (n_samples_b,), optional
+        samples weights in the target domain
+    n_projections : int, optional
+        Number of projections used for the Monte-Carlo approximation
+    p: float, optional, by default =2
+        Power p used for computing the sliced Wasserstein
+    projections: shape (dim, n_projections), optional
+        Projection matrix (n_projections and seed are not used in this case)
+    seed: int or RandomState or None, optional
+        Seed used for random number generator
+    numItermax: int, optional
+    mode: str, optional
+        "icdf" for inverse CDF, "backprop" for backpropagation mode.
+        Default is "icdf".
+    log: bool, optional
+        if True, returns the projections used and their associated UOTs and reweighted marginals.
+
+    Returns
+    -------
+    loss: float/array-like, shape (...)
+        SUOT
+
+    References
+    ----------
+    [] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
+    Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research
+    """
+    assert mode in ["backprop", "icdf"]
+
+    X_s, X_t = list_to_array(X_s, X_t)
+
+    if a is not None and b is not None and projections is None:
+        nx = get_backend(X_s, X_t, a, b)
+    elif a is not None and b is not None and projections is not None:
+        nx = get_backend(X_s, X_t, a, b, projections)
+    elif a is None and b is None and projections is not None:
+        nx = get_backend(X_s, X_t, projections)
+    else:
+        nx = get_backend(X_s, X_t)
+
+    n = X_s.shape[0]
+    m = X_t.shape[0]
+
+    if X_s.shape[1] != X_t.shape[1]:
+        raise ValueError(
+            "X_s and X_t must have the same number of dimensions {} and {} respectively given".format(
+                X_s.shape[1], X_t.shape[1]
+            )
+        )
+
+    if a is None:
+        a = nx.full(n, 1 / n, type_as=X_s)
+    if b is None:
+        b = nx.full(m, 1 / m, type_as=X_s)
+
+    d = X_s.shape[1]
+
+    if projections is None:
+        projections = get_random_projections(
+            d, n_projections, seed, backend=nx, type_as=X_s
+        )
+    else:
+        n_projections = projections.shape[1]
+
+    X_s_projections = nx.dot(X_s, projections)  # shape (n, n_projs)
+    X_t_projections = nx.dot(X_t, projections)
+
+    a_reweighted, b_reweighted, projected_uot = uot_1d(
+        X_s_projections, X_t_projections, reg_m, a, b, p, require_sort=True, mode=mode
+    )
+
+    res = nx.mean(projected_uot) ** (1.0 / p)
+
+    if log:
+        dico = {
+            "projection": projections,
+            "projected_uots": projected_uot,
+            "a_reweighted": a_reweighted,
+            "b_reweighted": b_reweighted,
+        }
+        return res, dico
+
+    return res
+
+
+def unbalanced_sliced_ot(
     X_s,
     X_t,
     reg_m,
@@ -72,12 +194,12 @@ def unbalanced_sliced_ot_pot(
 
     Returns
     -------
-    f: array-like shape (n, ...)
-        First dual potential
-    g: array-like shape (m, ...)
-        Second dual potential
+    a_reweighted: array-like shape (n, ...)
+        First marginal reweighted
+    b_reweighted: array-like shape (m, ...)
+        Second marginal reweighted
     loss: float/array-like, shape (...)
-        the batched EMD
+        USOT
 
     References
     ----------

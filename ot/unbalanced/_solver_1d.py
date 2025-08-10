@@ -78,12 +78,12 @@ def uot_1d(
 
     Returns
     -------
-    f: array-like shape (n, ...)
-        First dual potential
-    g: array-like shape (m, ...)
-        Second dual potential
+    u_reweighted: array-like shape (n, ...)
+        First marginal reweighted
+    v_reweighted: array-like shape (m, ...)
+        Second marginal reweighted
     loss: float/array-like, shape (...)
-        the batched EMD
+        the batched 1D UOT
 
     References
     ---------
