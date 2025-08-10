@@ -1083,17 +1083,19 @@ class Backend:
 
     def index_select(self, input, axis, index):
         r"""
-        TODO
+        Returns a new tensor which indexes the input tensor along dimension dim using the entries in index.
 
         See: https://docs.pytorch.org/docs/stable/generated/torch.index_select.html
         """
+        raise NotImplementedError()
 
     def nonzero(self, input, as_tuple=False):
         r"""
-        TODO
+        Returns a tensor containing the indices of all non-zero elements of input.
 
         See: https://docs.pytorch.org/docs/stable/generated/torch.nonzero.html
         """
+        raise NotImplementedError()
 
 
 class NumpyBackend(Backend):
@@ -1464,9 +1466,9 @@ class NumpyBackend(Backend):
     def nonzero(self, input, as_tuple=False):
         if as_tuple:
             return np.nonzero(input)
-        else:  # TOCHECK
+        else:
             L_tuple = np.nonzero(input)
-            return np.concatenate([t[None] for t in L_tuple], axis=0)
+            return np.concatenate([t[None] for t in L_tuple], axis=0).T
 
 
 _register_backend_implementation(NumpyBackend)
@@ -1870,9 +1872,9 @@ class JaxBackend(Backend):
     def nonzero(self, input, as_tuple=False):
         if as_tuple:
             return jnp.nonzero(input)
-        else:  # TOCHECK
+        else:
             L_tuple = jnp.nonzero(input)
-            return jnp.concatenate([t[None] for t in L_tuple], axis=0)
+            return jnp.concatenate([t[None] for t in L_tuple], axis=0).T
 
 
 if jax:

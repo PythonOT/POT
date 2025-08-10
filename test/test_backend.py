@@ -97,6 +97,7 @@ def test_empty_backend():
     rnd = np.random.RandomState(0)
     M = rnd.randn(10, 3)
     v = rnd.randn(3)
+    inds = rnd.randint(10)
 
     nx = ot.backend.Backend()
 
@@ -273,6 +274,10 @@ def test_empty_backend():
         nx.det(M)
     with pytest.raises(NotImplementedError):
         nx.slogdet(M)
+    with pytest.raises(NotImplementedError):
+        nx.index_select(M, 0, inds)
+    with pytest.raises(NotImplementedError):
+        nx.nonzero(M)
 
 
 def test_func_backends(nx):
@@ -701,6 +706,14 @@ def test_func_backends(nx):
         s, logabsd = nx.to_numpy(s), nx.to_numpy(logabsd)
         lst_b.append(np.array([s, logabsd]))
         lst_name.append("slogdet")
+
+        vec = nx.index_select(vb, 0, nx.from_numpy(np.array([0, 1])))
+        lst_b.append(nx.to_numpy(vec))
+        lst_name.append("index_select")
+
+        vec = nx.nonzero(Mb)
+        lst_b.append(nx.to_numpy(vec))
+        lst_name.append("nonzero")
 
         assert not nx.array_equal(Mb, vb), "array_equal (shape)"
         assert nx.array_equal(Mb, Mb), "array_equal (elements) - expected true"
