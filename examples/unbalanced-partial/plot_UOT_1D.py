@@ -96,7 +96,7 @@ pl.title("Distributions and transported mass for UOT")
 # -------------------------
 
 alpha = 1000.0  # Unbalanced KL relaxation parameter
-f, g, loss = ot.unbalanced.uot_1d(x, x, a, b, alpha)
+a_reweighted, b_reweighted, loss = ot.unbalanced.uot_1d(x, x, a, b, alpha)
 
 
 # plot the transported mass
@@ -105,7 +105,7 @@ f, g, loss = ot.unbalanced.uot_1d(x, x, a, b, alpha)
 pl.figure(4, figsize=(6.4, 3))
 pl.plot(x, a, "b", label="Source distribution")
 pl.plot(x, b, "r", label="Target distribution")
-pl.fill(x, f, "b", alpha=0.5, label="Transported source")
-pl.fill(x, g, "r", alpha=0.5, label="Transported target")
+pl.fill(x, a_reweighted, "b", alpha=0.5, label="Transported source")
+pl.fill(x, b_reweighted, "r", alpha=0.5, label="Transported target")
 pl.legend(loc="upper right")
 pl.title("Distributions and transported mass for UOT")

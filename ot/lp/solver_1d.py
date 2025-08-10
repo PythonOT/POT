@@ -127,8 +127,8 @@ def wasserstein_1d(
         u_weights = nx.take_along_axis(u_weights, u_sorter, 0)
         v_weights = nx.take_along_axis(v_weights, v_sorter, 0)
 
-    u_cumweights = nx.clip(nx.cumsum(u_weights, 0), a_max=1)
-    v_cumweights = nx.clip(nx.cumsum(v_weights, 0), a_max=1)
+    u_cumweights = nx.cumsum(u_weights, 0)
+    v_cumweights = nx.cumsum(v_weights, 0)
 
     qs = nx.sort(nx.concatenate((u_cumweights, v_cumweights), 0), 0)
     u_quantiles = quantile_function(qs, u_cumweights, u_values)

@@ -169,6 +169,10 @@ def unbalanced_sliced_ot_pot(
         a_reweighted = (a * nx.exp(-f / reg_m1))[..., X_s_sorter]
         b_reweighted = (b * nx.exp(-g / reg_m2))[..., X_t_sorter]
 
+        # normalize the weights for compatibility with wasserstein_1d
+        a_reweighted = a_reweighted / nx.sum(a_reweighted, axis=1, keepdims=True)
+        b_reweighted = b_reweighted / nx.sum(b_reweighted, axis=1, keepdims=True)
+
         # solve for new potentials
         if mode == "icdf":
             fd, gd, loss = emd_1d_dual(
@@ -205,19 +209,24 @@ def unbalanced_sliced_ot_pot(
     a_reweighted = (a * nx.exp(-f / reg_m1))[..., X_s_sorter]
     b_reweighted = (b * nx.exp(-g / reg_m2))[..., X_t_sorter]
 
-    loss = nx.mean(
-        wasserstein_1d(
-            X_s_sorted,
-            X_t_sorted,
-            u_weights=a_reweighted.T,
-            v_weights=b_reweighted.T,
-            p=p,
-            require_sort=False,
-        )
+    a_reweighted = a_reweighted / nx.sum(a_reweighted, axis=1, keepdims=True)
+    b_reweighted = b_reweighted / nx.sum(b_reweighted, axis=1, keepdims=True)
+
+    ot_loss = wasserstein_1d(
+        X_s_sorted,
+        X_t_sorted,
+        u_weights=a_reweighted.T,
+        v_weights=b_reweighted.T,
+        p=p,
+        require_sort=False,
     )
+    sot_loss = nx.mean(ot_loss * nx.sum(a_reweighted, axis=1))
+
     a_reweighted, b_reweighted = a * nx.exp(-f / reg_m1), b * nx.exp(-g / reg_m2)
     uot_loss = (
-        loss + reg_m1 * nx.kl_div(a_reweighted, a) + reg_m2 * nx.kl_div(b_reweighted, b)
+        sot_loss
+        + reg_m1 * nx.kl_div(a_reweighted, a)
+        + reg_m2 * nx.kl_div(b_reweighted, b)
     )
 
     if log:
