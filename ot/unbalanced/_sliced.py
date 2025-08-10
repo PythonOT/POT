@@ -291,6 +291,8 @@ def unbalanced_sliced_ot(
         a_reweighted = (a * nx.exp(-f / reg_m1))[..., X_s_sorter]
         b_reweighted = (b * nx.exp(-g / reg_m2))[..., X_t_sorter]
 
+        full_mass = nx.sum(a_reweighted, axis=1)
+
         # normalize the weights for compatibility with wasserstein_1d
         a_reweighted = a_reweighted / nx.sum(a_reweighted, axis=1, keepdims=True)
         b_reweighted = b_reweighted / nx.sum(b_reweighted, axis=1, keepdims=True)
@@ -324,16 +326,6 @@ def unbalanced_sliced_ot(
         f = f + t * (nx.mean(nx.take_along_axis(fd, X_s_rev_sorter, 1), axis=0) - f)
         g = g + t * (nx.mean(nx.take_along_axis(gd, X_t_rev_sorter, 1), axis=0) - g)
 
-    # Last iter before output
-    transl = rescale_potentials(f, g, a, b, reg_m1, reg_m2, nx)
-    f, g = f + transl, g - transl
-
-    a_reweighted = (a * nx.exp(-f / reg_m1))[..., X_s_sorter]
-    b_reweighted = (b * nx.exp(-g / reg_m2))[..., X_t_sorter]
-
-    a_reweighted = a_reweighted / nx.sum(a_reweighted, axis=1, keepdims=True)
-    b_reweighted = b_reweighted / nx.sum(b_reweighted, axis=1, keepdims=True)
-
     ot_loss = wasserstein_1d(
         X_s_sorted,
         X_t_sorted,
@@ -342,9 +334,10 @@ def unbalanced_sliced_ot(
         p=p,
         require_sort=False,
     )
-    sot_loss = nx.mean(ot_loss * nx.sum(a_reweighted, axis=1))
+    sot_loss = nx.mean(ot_loss * full_mass)
 
     a_reweighted, b_reweighted = a * nx.exp(-f / reg_m1), b * nx.exp(-g / reg_m2)
+
     uot_loss = (
         sot_loss
         + reg_m1 * nx.kl_div(a_reweighted, a)

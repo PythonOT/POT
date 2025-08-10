@@ -141,6 +141,8 @@ def uot_1d(
         u_reweighted = u_weights_sorted * nx.exp(-f / reg_m1)
         v_reweighted = v_weights_sorted * nx.exp(-g / reg_m2)
 
+        full_mass = nx.sum(u_reweighted, axis=0)
+
         # Normalize weights
         u_reweighted = u_reweighted / nx.sum(u_reweighted, axis=0, keepdims=True)
         v_reweighted = v_reweighted / nx.sum(v_reweighted, axis=0, keepdims=True)
@@ -175,7 +177,7 @@ def uot_1d(
         v_reweighted = nx.take_along_axis(v_reweighted, v_rev_sorter, 0)
 
     # rescale OT loss
-    loss = loss * nx.sum(u_reweighted, axis=0)
+    loss = loss * full_mass
 
     uot_loss = (
         loss

@@ -52,7 +52,12 @@ from .lp import (
     semidiscrete_wasserstein2_unif_circle,
 )
 from .bregman import sinkhorn, sinkhorn2, barycenter
-from .unbalanced import sinkhorn_unbalanced, barycenter_unbalanced, sinkhorn_unbalanced2
+from .unbalanced import (
+    sinkhorn_unbalanced,
+    barycenter_unbalanced,
+    sinkhorn_unbalanced2,
+    unbalanced_sliced_ot,
+)
 from .da import sinkhorn_lpl1_mm
 from .sliced import (
     sliced_wasserstein_distance,
@@ -109,6 +114,7 @@ __all__ = [
     "sinkhorn_unbalanced2",
     "sliced_wasserstein_distance",
     "sliced_wasserstein_sphere",
+    "unbalanced_sliced_ot",
     "gromov_wasserstein",
     "gromov_wasserstein2",
     "gromov_barycenters",

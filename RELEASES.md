@@ -20,6 +20,8 @@
 - Fix reg_div function compatibility with numpy in `ot.unbalanced.lbfgsb_unbalanced` via new function `ot.utils.fun_to_numpy` (PR #731)
 - Added to each example in the examples gallery the information about the release version in which it was introduced (PR #743)
 - Removed release information from quickstart guide (PR #744)
+- Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #)
+- Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)

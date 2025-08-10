@@ -26,6 +26,8 @@ from ._lbfgs import lbfgsb_unbalanced, lbfgsb_unbalanced2
 
 from ._solver_1d import uot_1d
 
+from ._sliced import sliced_unbalanced_ot, unbalanced_sliced_ot
+
 __all__ = [
     "sinkhorn_knopp_unbalanced",
     "sinkhorn_unbalanced",
@@ -41,4 +43,6 @@ __all__ = [
     "lbfgsb_unbalanced",
     "lbfgsb_unbalanced2",
     "uot_1d",
+    "sliced_unbalanced_ot",
+    "unbalanced_sliced_ot",
 ]
