@@ -10,7 +10,7 @@ distribution on the sphere by minimizing SSW:
 .. math::
      \min_{x} SSW_2(\nu, \frac{1}{n}\sum_{i=1}^n \delta_{x_i})
 
-where :math:`\nu=\mathrm{Unif}(S^1)`.
+where :math:`\nu=\mathrm{Unif}(S^{d-1})`.
 
 """
 
@@ -46,15 +46,18 @@ x0 = F.normalize(x0, dim=-1)
 
 
 def plot_sphere(ax):
-    xlist = np.linspace(-1.0, 1.0, 50)
-    ylist = np.linspace(-1.0, 1.0, 50)
-    r = np.linspace(1.0, 1.0, 50)
-    X, Y = np.meshgrid(xlist, ylist)
+    # Create a sphere using spherical coordinates
+    phi = np.linspace(0, 2 * np.pi, 100)
+    theta = np.linspace(0, np.pi, 100)
+    phi, theta = np.meshgrid(phi, theta)
 
-    Z = np.sqrt(np.maximum(r**2 - X**2 - Y**2, 0))
+    # Compute the spherical coordinates
+    X = np.sin(theta) * np.cos(phi)
+    Y = np.sin(theta) * np.sin(phi)
+    Z = np.cos(theta)
 
+    # Plot the wireframe
     ax.plot_wireframe(X, Y, Z, color="gray", alpha=0.3)
-    ax.plot_wireframe(X, Y, -Z, color="gray", alpha=0.3)  # Now plot the bottom half
 
 
 # plot the distributions
