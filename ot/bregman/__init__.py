@@ -38,6 +38,8 @@ from ._empirical import (
     empirical_sinkhorn,
     empirical_sinkhorn2,
     empirical_sinkhorn_divergence,
+    empirical_sinkhorn_nystroem,
+    empirical_sinkhorn_nystroem2,
 )
 
 from ._screenkhorn import screenkhorn
@@ -71,6 +73,8 @@ __all__ = [
     "empirical_sinkhorn2",
     "empirical_sinkhorn2_geomloss",
     "empirical_sinkhorn_divergence",
+    "empirical_sinkhorn_nystroem",
+    "empirical_sinkhorn_nystroem2",
     "geomloss",
     "screenkhorn",
     "unmix",

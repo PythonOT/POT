@@ -1368,6 +1368,9 @@ class NumpyBackend(Backend):
     def inv(self, a):
         return scipy.linalg.inv(a)
 
+    def pinv(self, a, hermitian=False):
+        return np.linalg.pinv(a, hermitian=hermitian)
+
     def sqrtm(self, a):
         L, V = np.linalg.eigh(a)
         L = np.sqrt(L)
@@ -1780,6 +1783,9 @@ class JaxBackend(Backend):
 
     def inv(self, a):
         return jnp.linalg.inv(a)
+
+    def pinv(self, a, hermitian=False):
+        return jnp.linalg.pinv(a, hermitian=hermitian)
 
     def sqrtm(self, a):
         L, V = jnp.linalg.eigh(a)
@@ -2314,6 +2320,9 @@ class TorchBackend(Backend):
     def inv(self, a):
         return torch.linalg.inv(a)
 
+    def pinv(self, a, hermitian=False):
+        return torch.linalg.pinv(a, hermitian=hermitian)
+
     def sqrtm(self, a):
         L, V = torch.linalg.eigh(a)
         L = torch.sqrt(L)
@@ -2727,6 +2736,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def inv(self, a):
         return cp.linalg.inv(a)
+
+    def pinv(self, a, hermitian=False):
+        return cp.linalg.pinv(a)
 
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
@@ -3163,6 +3175,9 @@ class TensorflowBackend(Backend):
 
     def inv(self, a):
         return tf.linalg.inv(a)
+
+    def pinv(self, a, hermitian=False):
+        return tf.linalg.pinv(a)
 
     def sqrtm(self, a):
         L, V = tf.linalg.eigh(a)
