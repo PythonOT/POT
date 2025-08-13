@@ -181,7 +181,7 @@ m_w2 = np.mean(L_w2, axis=0)
 std_w2 = np.std(L_w2, axis=0)
 
 m_lcot = np.mean(L_lcot, axis=0)
-std_lcot = np.mean(L_lcot, axis=0)
+std_lcot = np.std(L_lcot, axis=0)
 
 pl.figure(1)
 pl.plot(kappas, m_w2, label="Wasserstein")
