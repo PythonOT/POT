@@ -140,24 +140,29 @@ def projection_sparse_simplex(V, max_nz, z=1, axis=None, nx=None):
     r"""Projection of :math:`\mathbf{V}` onto the simplex with cardinality constraint (maximum number of non-zero elements) and then scaled by `z`.
 
     .. math::
-        P\left(\mathbf{V}, max_nz, z\right) = \mathop{\arg \min}_{\substack{\mathbf{y} >= 0 \\ \sum_i \mathbf{y}_i = z} \\ ||p||_0 \le \text{max_nz}} \quad \|\mathbf{y} - \mathbf{V}\|^2
+        P\left(\mathbf{V}, \text{max_nz}, z\right) = \mathop{\arg \min}_{\substack{\mathbf{y} >= 0 \\ \sum_i \mathbf{y}_i = z} \\ ||p||_0 \le \text{max_nz}} \quad \|\mathbf{y} - \mathbf{V}\|^2
 
     Parameters
     ----------
     V: 1-dim or 2-dim ndarray
+    max_nz: int
+        Maximum number of non-zero elements in the projection.
+        If `max_nz` is larger than the number of elements in `V`, then
+        the projection is equivalent to `proj_simplex(V, z)`.
     z: float or array
         If array, len(z) must be compatible with :math:`\mathbf{V}`
     axis: None or int
-        - axis=None: project :math:`\mathbf{V}` by :math:`P(\mathbf{V}.\mathrm{ravel}(), max_nz, z)`
-        - axis=1: project each :math:`\mathbf{V}_i` by :math:`P(\mathbf{V}_i, max_nz, z_i)`
-        - axis=0: project each :math:`\mathbf{V}_{:, j}` by :math:`P(\mathbf{V}_{:, j}, max_nz, z_j)`
+        - axis=None: project :math:`\mathbf{V}` by :math:`P(\mathbf{V}.\mathrm{ravel}(), \text{max_nz}, z)`
+        - axis=1: project each :math:`\mathbf{V}_i` by :math:`P(\mathbf{V}_i, \text{max_nz}, z_i)`
+        - axis=0: project each :math:`\mathbf{V}_{:, j}` by :math:`P(\mathbf{V}_{:, j}, \text{max_nz}, z_j)`
 
     Returns
     -------
     projection: ndarray, shape :math:`\mathbf{V}`.shape
 
-    References:
-        Sparse projections onto the simplex
+    References
+    ----------
+    .. [1] Sparse projections onto the simplex
         Anastasios Kyrillidis, Stephen Becker, Volkan Cevher and, Christoph Koch
         ICML 2013
         https://arxiv.org/abs/1206.1529
