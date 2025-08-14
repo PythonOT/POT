@@ -1,4 +1,4 @@
 
 
-POT backend examples
---------------------
+Differentiable OT with PyTorch
+------------------------------

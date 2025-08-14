@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 ====================================================
-Optimal Transport between 2D empirical distributions
+Optimal Transport between empirical distributions
 ====================================================
 
-Illustration of 2D optimal transport between distributions that are weighted
+Illustration of optimal transport between distributions in 2D that are weighted
 sum of Diracs. The OT matrix is plotted with the samples.
 
 """
@@ -56,7 +56,7 @@ pl.legend(loc=0)
 pl.title("Source and target distributions")
 
 pl.figure(2)
-pl.imshow(M, interpolation="nearest")
+pl.imshow(M, interpolation="nearest", cmap="gray_r")
 pl.title("Cost matrix M")
 
 ##############################################################################
@@ -68,7 +68,7 @@ pl.title("Cost matrix M")
 G0 = ot.solve(M, a, b).plan
 
 pl.figure(3)
-pl.imshow(G0, interpolation="nearest")
+pl.imshow(G0, interpolation="nearest", cmap="gray_r")
 pl.title("OT matrix G0")
 
 pl.figure(4)
@@ -91,7 +91,7 @@ lambd = 1e-1
 Gs = ot.sinkhorn(a, b, M, lambd)
 
 pl.figure(5)
-pl.imshow(Gs, interpolation="nearest")
+pl.imshow(Gs, interpolation="nearest", cmap="gray_r")
 pl.title("OT matrix sinkhorn")
 
 pl.figure(6)
@@ -116,7 +116,7 @@ lambd = 1e-1
 Ges = ot.bregman.empirical_sinkhorn(xs, xt, lambd)
 
 pl.figure(7)
-pl.imshow(Ges, interpolation="nearest")
+pl.imshow(Ges, interpolation="nearest", cmap="gray_r")
 pl.title("OT matrix empirical sinkhorn")
 
 pl.figure(8)

@@ -12,6 +12,11 @@ It is currently maintained by :
 
 ## Contributors
 
+<a href="https://github.com/PythonOT/POT/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=PythonOT/POT" />
+</a>
+
+
 The contributors to this library are:
 
 * [Rémi Flamary](http://remi.flamary.com/) (EMD wrapper, Pytorch backend, DA
@@ -53,6 +58,7 @@ The contributors to this library are:
 * [Laurène David](https://github.com/laudavid) (Low rank sinkhorn, Low rank Gromov-Wasserstein samples)
 * [Julie Delon](https://judelo.github.io/) (GMM OT)
 * [Samuel Boïté](https://samuelbx.github.io/) (GMM OT)
+
 
 ## Acknowledgments
 

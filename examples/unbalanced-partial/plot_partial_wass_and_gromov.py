@@ -139,6 +139,7 @@ print("Entropic Wasserstein distance (m = 1): " + str(log["partial_gw_dist"]))
 
 pl.figure(1, (10, 5))
 pl.title("mass to be transported m = 1")
+pl.axis("off")
 pl.subplot(1, 2, 1)
 pl.imshow(res0, cmap="jet")
 pl.title("Gromov-Wasserstein")
@@ -160,8 +161,9 @@ res, log = ot.gromov.entropic_partial_gromov_wasserstein(
 print("Partial Wasserstein distance (m = 2/3): " + str(log0["partial_gw_dist"]))
 print("Entropic partial Wasserstein distance (m = 2/3): " + str(log["partial_gw_dist"]))
 
-pl.figure(1, (10, 5))
+pl.figure(2, (10, 5))
 pl.title("mass to be transported m = 2/3")
+pl.axis("off")
 pl.subplot(1, 2, 1)
 pl.imshow(res0, cmap="jet")
 pl.title("Partial Gromov-Wasserstein")

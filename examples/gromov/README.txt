@@ -1,4 +1,4 @@
 
 
-Gromov and Fused-Gromov-Wasserstein
------------------------------------
+Gromov-Wasserstein (GW) and Fused GW
+------------------------------------
