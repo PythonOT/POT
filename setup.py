@@ -33,8 +33,12 @@ with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as f:
 
 # clean cython output is clean is called
 if "clean" in sys.argv[1:]:
-    if os.path.isfile("ot/lp/emd_wrap.cpp"):
-        os.remove("ot/lp/emd_wrap.cpp")
+    for cpp_file in [
+        "ot/lp/emd_wrap.cpp",
+        "ot/partial/partial_cython.cpp",
+    ]:
+        if os.path.isfile(cpp_file):
+            os.remove(cpp_file)
 
 # add platform dependant optional compilation argument
 openmp_supported, flags = check_openmp_support()
