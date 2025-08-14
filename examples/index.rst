@@ -121,6 +121,7 @@ Wasserstein and (F)GW barycenters
     ../../examples/gromov/plot_barycenter_fgw.py
     ../../examples/gromov/plot_semirelaxed_gromov_wasserstein_barycenter.py
     ../../examples/gromov/plot_gromov_barycenter.py
+    ../../examplesbackends/plot_sliced_wass_grad_flow_pytorch.py
 
 Domain adaptation with OT
 --------------------------
