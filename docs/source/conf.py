@@ -356,4 +356,5 @@ sphinx_gallery_conf = {
     "doc_module": ("ot", "numpy", "scipy", "pylab"),
     "matplotlib_animations": True,
     "reference_url": {"ot": None},
+    "copyfile_regex": r"index.rst",
 }
