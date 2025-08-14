@@ -22,7 +22,7 @@ Differentiable OT with PyTorch
 ------------------------------
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
     :glob:
     :hidden:
 
@@ -38,7 +38,7 @@ Gromov-Wasserstein (GW) and Fused GW
 ------------------------------------
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
     :glob:
     :hidden:
 
@@ -91,6 +91,7 @@ OT on Gaussian and Gaussian Mixture Models
 .. minigallery:: 
     ../../examples/gaussian_gmm/plot_*.py
     ../../examples/domain-adaptation/plot_otda_linear_mapping.py
+    ../../examples/barycenters/plot_gaussian_barycenter.py
 
 Factored an Low-Rank OT
 ------------------------------------
