@@ -14,9 +14,25 @@ learning.
 
 Website and documentation: [https://PythonOT.github.io/](https://PythonOT.github.io/)
 
-Source Code (MIT): [https://github.com/PythonOT/POT](https://github.com/PythonOT/POT)
+Source Code (MIT):
+[https://github.com/PythonOT/POT](https://github.com/PythonOT/POT)
 
-POT provides the following generic OT solvers (links to examples):
+
+POT has the following main features:
+* A large set of differentiable solvers for optimal transport problems, including:
+  *  Exact linear OT, entropic and quadratic regularized OT, 
+  *  Gromov-Wasserstein (GW) distances, Fused GW distances and variants of
+     quadratic OT,
+  *  Unbalanced and partial OT for different divergences,
+*  OT barycenters (Wasserstein and GW) for fixed and free support,
+*  Fast OT solvers in 1D, on the circle and between Gaussian Mixture Models (GMMs),
+*  Many ML related solvers, such as domain adaptation, optimal transport mapping
+   estimation, subspace learning, Graph Neural Networks (GNNs) layers.
+*  Several backends for easy use with Pytorch, Jax, Tensorflow, Numpy and Cupy arrays.
+
+### Implemented Features
+
+POT provides the following generic OT solvers:
 
 * [OT Network Simplex solver](https://pythonot.github.io/auto_examples/plot_OT_1D.html) for the linear program/ Earth Movers Distance [1] .
 * [Conditional gradient](https://pythonot.github.io/auto_examples/plot_optim_OTreg.html) [6] and [Generalized conditional gradient](https://pythonot.github.io/auto_examples/plot_optim_OTreg.html) for regularized OT [7].
@@ -173,6 +189,12 @@ import ot
 ```python
 # a,b are 1D histograms (sum to 1 and positive)
 # M is the ground cost matrix
+
+# With the unified  API :
+Wd = ot.solve(M, a, b).value # exact linear program
+Wd_reg = ot.solve(M, a, b, reg=reg).value # entropic regularized OT
+
+# With the old API :
 Wd = ot.emd2(a, b, M) # exact linear program
 Wd_reg = ot.sinkhorn2(a, b, M, reg) # entropic regularized OT
 # if b is a matrix compute all distances to a and return a vector
@@ -183,8 +205,27 @@ Wd_reg = ot.sinkhorn2(a, b, M, reg) # entropic regularized OT
 ```python
 # a,b are 1D histograms (sum to 1 and positive)
 # M is the ground cost matrix
+
+# With the unified API :
+T = ot.solve(M, a, b).plan # exact linear program
+T_reg = ot.solve(M, a, b, reg=reg).plan # entropic regularized OT
+
+# With the old API :
 T = ot.emd(a, b, M) # exact linear program
 T_reg = ot.sinkhorn(a, b, M, reg) # entropic regularized OT
+```
+
+* Compute OT on empirical distributions
+
+```python
+# X and Y are two 2D arrays of shape (n_samples, n_features)
+
+# with squared euclidean metric
+T = ot.solve_sample(X, Y).plan # exact linear program
+T_reg = ot.solve_sample(X, Y, reg=reg).plan # entropic regularized OT
+
+Wass_2 = ot.solve_sample(X, Y).value # Squared Wasserstein_2
+Wass_1 = ot.solve_sample(X, Y, metric='euclidean').value # Wasserstein 1
 ```
 
 * Compute Wasserstein barycenter
@@ -209,7 +250,11 @@ It is currently maintained by :
 * [Rémi Flamary](https://remi.flamary.com/)
 * [Cédric Vincent-Cuaz](https://cedricvincentcuaz.github.io/)
 
-The numerous contributors to this library are listed [here](CONTRIBUTORS.md).
+The POT contributors to this library are listed [here](CONTRIBUTORS.md).
+
+<a href="https://github.com/PythonOT/POT/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=PythonOT/POT" />
+</a>
 
 POT has benefited from the financing or manpower from the following partners:
 
