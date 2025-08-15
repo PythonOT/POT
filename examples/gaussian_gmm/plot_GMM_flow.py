@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 r"""
 ====================================================
-GMM Flow
+Gradient Flow for GMM-OT distance
 ====================================================
 
 Illustration of the flow of a Gaussian Mixture with

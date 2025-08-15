@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 r"""
 ====================================================
-GMM Plan 1D
+OT between GMM : plan and maps in 1D
 ====================================================
 
 Illustration of the GMM plan for

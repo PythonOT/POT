@@ -1,5 +1,5 @@
 
 
 
-Domain adaptation examples
+Domain adaptation with OT
 --------------------------

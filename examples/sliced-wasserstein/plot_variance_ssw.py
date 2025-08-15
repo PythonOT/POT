@@ -18,7 +18,7 @@ proposed in [46].
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 2
+# sphinx_gallery_thumbnail_number = 1
 
 import matplotlib.pylab as pl
 import numpy as np

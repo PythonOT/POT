@@ -16,7 +16,7 @@ as proposed in [10] for Unbalanced inputs.
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 2
+# sphinx_gallery_thumbnail_number = 4
 
 import numpy as np
 import matplotlib.pylab as pl
