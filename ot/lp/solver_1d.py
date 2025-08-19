@@ -690,8 +690,8 @@ def binary_search_circle(
 
     Returns
     -------
-    loss: float
-        Cost associated to the optimal transportation
+    loss: float/array-like, shape (...)
+        Batched cost associated to the optimal transportation
     log: dict, optional
         log dictionary returned only if log==True in parameters
 
@@ -791,6 +791,9 @@ def binary_search_circle(
                 -1, 1
             )
 
+            # Avoid warning raised when dCptm - dCmtp == 0, for which
+            # tc is not updated as mask_end is False,
+            # see Issue #736
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=RuntimeWarning)
                 mask_end = mask * (nx.abs(dCptm - dCmtp) > 0.001)
@@ -840,8 +843,8 @@ def wasserstein1_circle(
 
     Returns
     -------
-    loss: float
-        Cost associated to the optimal transportation
+    loss: float/array-like, shape (...)
+        Batched cost associated to the optimal transportation
 
     Examples
     --------
@@ -988,8 +991,8 @@ def wasserstein_circle(
 
     Returns
     -------
-    loss: float
-        Cost associated to the optimal transportation
+    loss: float/array-like, shape (...)
+        Batched cost associated to the optimal transportation
 
     Examples
     --------
@@ -1006,11 +1009,6 @@ def wasserstein_circle(
     .. [45] Delon, Julie, Julien Salomon, and Andrei Sobolevski. "Fast transport optimization for Monge costs on the circle." SIAM Journal on Applied Mathematics 70.7 (2010): 2239-2258.
     """
     assert p >= 1, "The OT loss is only valid for p>=1, {p} was given".format(p=p)
-
-    # if p == 1:
-    #     return wasserstein1_circle(
-    #         u_values, v_values, u_weights, v_weights, require_sort
-    #     )
 
     return binary_search_circle(
         u_values,
@@ -1057,8 +1055,8 @@ def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
 
     Returns
     -------
-    loss: float
-        Cost associated to the optimal transportation
+    loss: float/array-like, shape (...)
+        Batched cost associated to the optimal transportation
 
     Examples
     --------
@@ -1191,8 +1189,8 @@ def linear_circular_ot(u_values, v_values=None, u_weights=None, v_weights=None):
 
     Returns
     -------
-    loss: float
-        Cost associated to the linear optimal transportation
+    loss: float/array-like, shape (...)
+        Batched cost associated to the linear optimal transportation
 
     Examples
     --------
