@@ -793,7 +793,7 @@ def binary_search_circle(
 
             # Avoid warning raised when dCptm - dCmtp == 0, for which
             # tc is not updated as mask_end is False,
-            # see Issue #736
+            # see Issue #738
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=RuntimeWarning)
                 mask_end = mask * (nx.abs(dCptm - dCmtp) > 0.001)
