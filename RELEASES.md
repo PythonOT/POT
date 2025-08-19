@@ -18,6 +18,7 @@
 - Updated documentation Quickstart guide and User guide with new API (PR #726)
 - Fix jax version for auto-grad (PR #732)
 - Added `ot.solver_1d.linear_circular_ot` and `ot.sliced.linear_sliced_wasserstein_sphere` (PR #736)
+- Implement 1d solver for partial optimal transport (PR #741)
 - Fix reg_div function compatibility with numpy in `ot.unbalanced.lbfgsb_unbalanced` via new function `ot.utils.fun_to_numpy` (PR #731)
 - Added to each example in the examples gallery the information about the release version in which it was introduced (PR #743)
 - Removed release information from quickstart guide (PR #744)
