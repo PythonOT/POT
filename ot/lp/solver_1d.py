@@ -1125,7 +1125,7 @@ def linear_circular_embedding(x, u_values, u_weights=None, require_sort=True):
     .. _references-lcot:
     References
     ----------
-    .. [76] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). LCOT: Linear Circular Optimal Transport. International Conference on Learning Representations.
+    .. [77] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). LCOT: Linear Circular Optimal Transport. International Conference on Learning Representations.
     """
     if u_weights is not None:
         nx = get_backend(u_values, u_weights)
@@ -1203,7 +1203,7 @@ def linear_circular_ot(u_values, v_values=None, u_weights=None, v_weights=None):
     .. _references-lcot:
     References
     ----------
-    .. [76] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). LCOT: Linear Circular Optimal Transport. International Conference on Learning Representations.
+    .. [77] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). LCOT: Linear Circular Optimal Transport. International Conference on Learning Representations.
     """
     if u_weights is not None:
         nx = get_backend(u_values, u_weights)
