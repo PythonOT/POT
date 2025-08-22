@@ -523,9 +523,7 @@ def free_support_barycenter_generic_costs(
     - :math:`Y_k` (m_k, d_k) is the k-th measure support
       (`measure_locations[k]`),
     - :math:`b_k` (m_k) is the k-th measure weights (`measure_weights[k]`),
-    - :math:`c_k: \mathbb{R}^{n\times d}\times\mathbb{R}^{m_k\times d_k}
-         \rightarrow \mathbb{R}_+^{n\times m_k}` is the k-th cost function
-         (which computes the pairwise cost matrix)
+    - :math:`c_k: \mathbb{R}^{n\times d}\times\mathbb{R}^{m_k\times d_k}\rightarrow \mathbb{R}_+^{n\times m_k}` is the k-th cost function (which computes the pairwise cost matrix)
     - :math:`\mathcal{T}_{c_k}(X, a, Y_k, b)` is the OT cost between the barycenter measure and the k-th measure with respect to the cost :math:`c_k`:
 
     .. math::
@@ -537,8 +535,7 @@ def free_support_barycenter_generic_costs(
 
              \pi \geq 0
 
-    in other words, :math:`\mathcal{T}_{c_k}(X, a, Y_k, b)` is `ot.emd2(a, b_k,
-    c_k(X, Y_k))`.
+    in other words, :math:`\mathcal{T}_{c_k}(X, a, Y_k, b_k)` is `ot.emd2(a, b_k, c_k(X, Y_k))`.
 
     The function :math:`B:\mathbb{R}^{n\times d_1}\times
     \cdots\times\mathbb{R}^{n\times d_K} \longrightarrow \mathbb{R}^{n\times d}`
@@ -829,7 +826,7 @@ def NorthWestMMGluing(pi_list, a=None, log=False, nx=None):
     :math:`\rho` writes:
 
     .. math::
-        \rho_{j_1, \cdots, j_K} = 1\left(\exists i \text{ s.t. } (j_1, \cdots, j_K) = (J[i, 1], \cdots, J[i, K])\right)\ w_i.
+        \rho_{j_1, \cdots, j_K} = \mathbb{1}\left(\exists i \text{ s.t. } (j_1, \cdots, j_K) = (J[i, 1], \cdots, J[i, K])\right)\ w_i.
 
     This representation is useful for its memory efficiency, as it avoids
     storing the full K-marginal plan.
