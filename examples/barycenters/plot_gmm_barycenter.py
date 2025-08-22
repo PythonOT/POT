@@ -6,7 +6,7 @@ Gaussian Mixture Model OT Barycenters
 
 This example illustrates the computation of a barycenter between Gaussian
 Mixtures in the sense of GMM-OT [69]. This computation is done using the
-fixed-point method for OT barycenters with generic costs [76], for which POT
+fixed-point method for OT barycenters with generic costs [77], for which POT
 provides a general solver, and a specific GMM solver. Note that this is a
 'free-support' method, implying that the number of components of the barycenter
 GMM and their weights are fixed.
@@ -22,7 +22,7 @@ ground cost the squared Bures distance between gaussians.
 [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in the space
 of Gaussian mixture models. SIAM Journal on Imaging Sciences, 13(2), 936-970.
 
-[76] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
+[77] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
 Barycentres of Measures for Generic Transport Costs. arXiv preprint 2501.04016
 (2024)
 

@@ -424,6 +424,69 @@ def generalized_free_support_barycenter(
         return Y
 
 
+def ot_barycenter_energy(measure_locations, measure_weights, X, a, cost_list, nx=None):
+    r"""
+    Computes the energy of the OT barycenter functional for a given barycenter
+    support `X` and weights `a`: .. math::
+        V(X, a) = \sum_{k=1}^K w_k \mathcal{T}_{c_k}(X, a, Y_k, b_k),
+
+    where: - :math:`X` (n, d) is the barycenter support, - :math:`a` (n) is the
+    barycenter weights, - :math:`Y_k` (m_k, d_k) is the k-th measure support
+      (`measure_locations[k]`),
+    - :math:`b_k` (m_k) is the k-th measure weights (`measure_weights[k]`),
+    - :math:`c_k: \mathbb{R}^{n\times d}\times\mathbb{R}^{m_k\times d_k}
+         \rightarrow \mathbb{R}_+^{n\times m_k}` is the k-th cost function
+         (which computes the pairwise cost matrix)
+    - :math:`\mathcal{T}_{c_k}(X, a, Y_k, b)` is the OT cost between the
+      barycenter measure and the k-th measure with respect to the cost
+      :math:`c_k`.
+    The function computes :math:`V(X, a)` as defined above.
+
+    Parameters
+    ----------
+    measure_locations : list of array-like
+        List of K arrays of measure positions, each of shape (m_k, d_k).
+    measure_weights : list of array-like
+        List of K arrays of measure weights, each of shape (m_k).
+    X : array-like
+        Array of shape (n, d) representing barycenter points.
+    a : array-like
+        Array of shape (n,) representing barycenter weights.
+    cost_list : list of callable or callable
+        List of K cost functions :math:`c_k: \mathbb{R}^{n\times
+        d}\times\mathbb{R}^{m_k\times d_k} \rightarrow \mathbb{R}_+^{n\times
+        m_k}`. If cost_list is a single callable, the same cost is used K times.
+    nx : backend, optional
+        The backend to use.
+
+    Returns
+    -------
+    V : float
+        The value of the OT barycenter functional :math:`V(X, a)`.
+
+    References
+    ----------
+    .. [77] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
+        barycenters of Measures for Generic Transport Costs. arXiv preprint
+        2501.04016 (2024)
+
+    See Also
+    --------
+    ot.lp.free_support_barycenter_generic_costs : Free support solver for the
+    associated barycenter problem.
+    """
+    if nx is None:
+        nx = get_backend(*measure_locations, *measure_weights, X, a)
+    K = len(measure_locations)
+    if callable(cost_list):
+        cost_list = [cost_list] * K
+    V = 0
+    for k in range(K):
+        C_k = cost_list[k](X, measure_locations[k])
+        V += emd2(a, measure_weights[k], C_k)
+    return V
+
+
 def free_support_barycenter_generic_costs(
     measure_locations,
     measure_weights,
@@ -442,9 +505,9 @@ def free_support_barycenter_generic_costs(
     clean_measure=False,
 ):
     r"""
-    Solves the OT barycenter problem for generic costs using the fixed point
-    algorithm, iterating the ground barycenter function B on transport plans
-    between the current barycenter and the measures.
+    Solves the OT barycenter problem [77] for generic costs using the fixed
+    point algorithm, iterating the ground barycenter function B on transport
+    plans between the current barycenter and the measures.
 
     The problem finds an optimal barycenter support `X` of given size (n, d)
     (enforced by the initialisation), minimising a sum of pairwise transport
@@ -477,38 +540,35 @@ def free_support_barycenter_generic_costs(
     in other words, :math:`\mathcal{T}_{c_k}(X, a, Y_k, b)` is `ot.emd2(a, b_k,
     c_k(X, Y_k))`.
 
-    The algorithm requires a given ground barycenter function `B` which computes
-    (broadcasted of `n`) solutions of the following minimisation problem given
-    :math:`(Y_1, \cdots, Y_K) \in \mathbb{R}^{n\times
-    d_1}\times\cdots\times\mathbb{R}^{n\times d_K}`:
+    The function :math:`B:\mathbb{R}^{n\times d_1}\times
+    \cdots\times\mathbb{R}^{n\times d_K} \longrightarrow \mathbb{R}^{n\times d}`
+    is an input to the solver. `B` computes solutions of the following
+    minimisation problem given :math:`(Y_1, \cdots, Y_K) \in \mathbb{R}^{n\times
+    d_1}\times\cdots\times\mathbb{R}^{n\times d_K}` (broadcasted along `n`):
 
     .. math::
         B(y_1, \cdots, y_K) = \mathrm{argmin}_{x \in \mathbb{R}^d} \sum_{k=1}^K c_k(x, y_k),
 
-    where :math:`c_k(x, y_k) \in \mathbb{R}_+` is the cost between the points
-    :math:`x` and :math:`y_k`. The function :math:`B:\mathbb{R}^{n\times
-    d_1}\times \cdots\times\mathbb{R}^{n\times d_K} \longrightarrow
-    \mathbb{R}^{n\times d}` is an input to this function, and for certain costs
-    it can be computed explicitly of through a numerical solver. The input
-    function B takes a list of K arrays of shape (n, d_k) and returns an array
-    of shape (n, d).
+    The input function B takes a list of K arrays of shape (n, d_k) and returns
+    an array of shape (n, d). For certain costs, :math:`B` can be computed
+    explicitly, or through a numerical solver.
 
     This function implements two algorithms:
 
-    - Algorithm 2 from [76] when `method=true_fixed_point` is used, which may
+    - Algorithm 2 from [77] when `method=true_fixed_point` is used, which may
       increase the support size of the barycenter at each iteration, with a
       maximum final size of :math:`N_0 + T\sum_k n_k - TK` for T iterations and
       an initial support size of :math:`N_0`. The computation of the iterates is
       done using the North West Corner multi-marginal gluing method. This method
-      has convergence guarantees [76].
+      has convergence guarantees [77].
 
-    - Algorithm 3 from [76] when `method=L2_barycentric_proj` is used, which is
+    - Algorithm 3 from [77] when `method=L2_barycentric_proj` is used, which is
       a heuristic simplification which fixes the weights and support size of the
       barycenter by performing barycentric projections of the pair-wise OT
       matrices. This method is substantially faster than the first one, but does
       not have convergence guarantees. (Default)
 
-    The implemented methods ([76] Algorithms 2 and 3), generalises [20] and [43]
+    The implemented methods ([77] Algorithms 2 and 3), generalises [20] and [43]
     to general costs and includes convergence guarantees, including for discrete
     measures.
 
@@ -526,9 +586,10 @@ def free_support_barycenter_generic_costs(
         m_k}`. If cost_list is a single callable, the same cost is used K times.
     ground_bary : callable or None, optional
         Function List(array(n, d_k)) -> array(n, d) accepting a list of K arrays
-        of shape (n\times d_K), computing the ground barycenters (broadcasted
-        over n). If not provided, done with Adam on PyTorch (requires PyTorch
-        backend), inefficiently using the cost functions in `cost_list`.
+        of shape :math:`(n\times d_K)`, computing the ground barycenters
+        (broadcasted over n). If not provided, done with Adam on PyTorch
+        (requires PyTorch backend), inefficiently using the cost functions in
+        `cost_list`.
     a : array-like, optional
         Array of shape (n,) representing weights of the barycenter
         measure.Defaults to uniform.
@@ -539,7 +600,8 @@ def free_support_barycenter_generic_costs(
         barycentric projection, or 'true_fixed_point' for iterates using the
         North West Corner multi-marginal gluing method.
     stopThr : float, optional
-        If the iterations move less than this, terminate (default is 1e-5).
+        If :math:`W_2^2(a_t, X_t, a_{t+1}, X_{t+1}) < \mathrm{stopThr} \times
+        \frac{1}{n}\|X_t\|_2^2`, terminate (default is 1e-5).
     log : bool, optional
         Whether to return the log dictionary (default is False).
     ground_bary_lr : float, optional
@@ -548,7 +610,8 @@ def free_support_barycenter_generic_costs(
         Maximum number of iterations for the ground barycenter solver (if auto
         is used).
     ground_bary_stopThr : float, optional
-        Stop threshold for the ground barycenter solver (if auto is used).
+        Stop threshold for the ground barycenter solver (if auto is used): stop
+        if the energy decreases less than this value.
     ground_bary_solver : str, optional
         Solver for auto ground bary solver (torch SGD or Adam). Default is
         "SGD".
@@ -567,7 +630,7 @@ def free_support_barycenter_generic_costs(
 
     References
     ----------
-    .. [76] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
+    .. [77] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
         barycenters of Measures for Generic Transport Costs. arXiv preprint
         2501.04016 (2024)
 
@@ -578,6 +641,11 @@ def free_support_barycenter_generic_costs(
         barycenters in Wasserstein space." Journal of Mathematical Analysis and
         Applications 441.2 (2016): 744-762.
 
+    .. note:: For the case of the L2 cost :math:`c_k(x, y) = \|x-y\|_2^2`,
+        the ground barycenter is simply the Euclidean barycenter, i.e.
+        :math:`B(y_1, \cdots, y_K) = \sum_k w_k y_k`. In this case, we recover
+        the free-support algorithm from [20].
+
     See Also
     --------
     ot.lp.free_support_barycenter : Free support solver for the case where
@@ -586,7 +654,8 @@ def free_support_barycenter_generic_costs(
     ot.lp.generalized_free_support_barycenter : Free support solver for the case
     where :math:`c_k(x,y) = \|P_kx-y\|_2^2` with :math:`P_k` linear.
 
-    ot.lp.NorthWestMMGluing : gluing method used in the `true_fixed_point` method.
+    ot.lp.NorthWestMMGluing : gluing method used in the `true_fixed_point`
+    method.
     """
     assert method in [
         "L2_barycentric_proj",
@@ -636,22 +705,29 @@ def free_support_barycenter_generic_costs(
             raise ImportError("PyTorch is required to use ground_bary=None")
 
     X_list = [X_init] if log else []  # store the iterations
-    a_list = [nx.copy(a)] if log and method == "true_fixed_point" else []
+    a_list = [a] if log and method == "true_fixed_point" else []
     X = X_init
-    diff_list = []  # store the displacement squared norms
+    diff_list = []  # store energy differences
+    V_list = []  # store energy values
     exit_status = "Max iterations reached"
 
-    for _ in range(numItermax):
+    for i in range(numItermax):
         pi_list = [  # compute the pairwise transport plans
             emd(a, measure_weights[k], cost_list[k](X, measure_locations[k]))
             for k in range(K)
         ]
-        Y_perm = []
+        if i == 0:  # compute initial energy
+            V = ot_barycenter_energy(
+                measure_locations, measure_weights, X, a, cost_list, nx=nx
+            )
+            if log:
+                V_list.append(V)
 
         if method == "L2_barycentric_proj":
             a_next = a  # barycentre weights are fixed
-            for k in range(K):  # L2 barycentric projection of pi_k
-                Y_perm.append((1 / a[:, None]) * pi_list[k] @ measure_locations[k])
+            Y_perm = [
+                (1 / a[:, None]) * pi_list[k] @ measure_locations[k] for k in range(K)
+            ]  # L2 barycentric projection of pi_k
             if auto_ground_bary:  # use previous position as initialization
                 X_next = ground_bary(Y_perm, X)
             else:
@@ -659,7 +735,7 @@ def free_support_barycenter_generic_costs(
 
         elif method == "true_fixed_point":
             # North West Corner gluing of pi_k
-            J, a_next = NorthWestMMGluing(pi_list)
+            J, a_next = NorthWestMMGluing(pi_list, nx=nx)
             # J is a (N, K) array of indices, w is a (N,) array of weights
             # Each Y_perm[k] is a (N, d_k) array of some points in Y_list[k]
             Y_perm = [measure_locations[k][J[:, k]] for k in range(K)]
@@ -668,23 +744,24 @@ def free_support_barycenter_generic_costs(
 
             if clean_measure and method == "true_fixed_point":
                 # clean the discrete measure (X, a) to remove duplicates
-                X_next, a_next = _clean_discrete_measure(X_next, a_next)
+                X_next, a_next = _clean_discrete_measure(X_next, a_next, nx=nx)
 
+        V_next = ot_barycenter_energy(
+            measure_locations, measure_weights, X_next, a_next, cost_list, nx=nx
+        )
+        diff = V - V_next
         if log:
             X_list.append(X_next)
+            V_list.append(V_next)
             if method == "true_fixed_point":
                 a_list.append(a_next)
-
-        # stationary criterion: move less than the threshold
-        diff = emd2(a, a_next, dist(X, X_next))
-
-        if log:
             diff_list.append(diff)
 
         X = X_next
         a = a_next
+        V = V_next
 
-        if diff < stopThr * nx.sum(X**2) / X.shape[0]:
+        if diff < stopThr:
             exit_status = "Stationary Point"
             break
 
@@ -694,6 +771,7 @@ def free_support_barycenter_generic_costs(
             "exit_status": exit_status,
             "a_list": a_list,
             "diff_list": diff_list,
+            "V_list": V_list,
         }
         if method == "true_fixed_point":
             return X, a, log_dict
@@ -706,11 +784,12 @@ def free_support_barycenter_generic_costs(
         return X
 
 
-def _to_int_array(x):
+def _to_int_array(x, nx=None):
     """
     Converts an array to an integer type array.
     """
-    nx = get_backend(x)
+    if nx is None:
+        nx = get_backend(x)
     if str(nx) == "numpy":
         return x.astype(int)
 
@@ -729,11 +808,11 @@ def _to_int_array(x):
         return tf.cast(x, tf.int32)
 
 
-def NorthWestMMGluing(pi_list, log=False):
+def NorthWestMMGluing(pi_list, a=None, log=False, nx=None):
     r"""
-    Glue transport plans :math:`(pi_1, ..., pi_K)` which have a common first
+    Glue transport plans :math:`(\pi_1, ..., \pi_K)` which have a common first
     marginal using the (multi-marginal) North-West Corner method. Writing the
-    marginals of each :math:`pi_k\in \mathbb{R}^{n\times n_l}` as :math:`a \in
+    marginals of each :math:`\pi_k\in \mathbb{R}^{n\times n_l}` as :math:`a \in
     \mathbb{R}^n` and :math:`b_k \in \mathbb{R}^{n_k}`, the output represents a
     particular K-marginal transport plan :math:`\rho \in
     \mathbb{R}^{n_1\times\cdots\times n_K}` whose k-th marginal is :math:`b_k`.
@@ -747,7 +826,7 @@ def NorthWestMMGluing(pi_list, log=False):
     function provides an array `J` of shape (N, K) where each `J[i]` is of the
     form `(J[i, 1], ..., J[i, K])` with each `J[i, k]` between 0 and
     :math:`n_k-1`, and a weight vector `w` of size N, such that the K-plan
-    :math:`rho` writes:
+    :math:`\rho` writes:
 
     .. math::
         \rho_{j_1, \cdots, j_K} = 1\left(\exists i \text{ s.t. } (j_1, \cdots, j_K) = (J[i, 1], \cdots, J[i, K])\right)\ w_i.
@@ -756,29 +835,36 @@ def NorthWestMMGluing(pi_list, log=False):
     storing the full K-marginal plan.
 
     If `log=True`, the function computes the full K+1-marginal transport plan
-    :math:`\gamma`and stores it in log_dict['gamma']. Note that this option is
+    :math:`\gamma` and stores it in log_dict['gamma']. Note that this option is
     extremely costly in memory.
 
     Parameters
     ----------
     pi_list : list of arrays (n, n_k)
         List of transport plans.
-
     log : bool, optional
         If True, return a log dictionary (computationally expensive).
+    a : array (n,), optional
+        The common first marginal of each transport plan. If None is provided,
+        it is computed as the first marginal of the first transport plan.
+    nx : backend, optional
+        The backend to use. If None is provided, the backend of the first
+        transport plan is used.
 
     Returns
     -------
     J : array (N, K)
-        The indices (J[i, 1], ..., J[i, K]) of the K-plan rho.
+        The indices (J[i, 1], ..., J[i, K]) of the K-plan :math:`\rho`.
     w : array (N,)
-        The weights w_i of the K-plan rho.
+        The weights w_i of the K-plan :math:`\rho`.
     log_dict : dict, optional
         If log=True, a dictionary containing the full K+1-marginal transport
         plan under the key 'gamma'.
     """
-    nx = get_backend(pi_list[0])
-    a = nx.sum(pi_list[0], axis=1)  # common first marginal a in Delta_n
+    if nx is None:
+        nx = get_backend(pi_list[0])
+    if a is None:
+        a = nx.sum(pi_list[0], axis=1)  # common first marginal a in Delta_n
     nk_list = [pi.shape[1] for pi in pi_list]  # list of n_k
     K = len(pi_list)
     n = pi_list[0].shape[0]  # number of points in the first marginal
@@ -829,14 +915,14 @@ def NorthWestMMGluing(pi_list, log=False):
 
     log_dict["gamma"] = gamma
     J = list(gamma_weights.keys())  # list of multi-indices (j_1, ..., j_K)
-    J = _to_int_array(nx.from_numpy(np.array(J), type_as=pi_list[0]))
+    J = _to_int_array(nx.from_numpy(np.array(J), type_as=pi_list[0]), nx=nx)
     w = nx.stack(list(gamma_weights.values()))
     if log:
         return J, w, log_dict
     return J, w
 
 
-def _clean_discrete_measure(X, a, tol=1e-10):
+def _clean_discrete_measure(X, a, tol=1e-10, nx=None):
     r"""
     Simplifies a discrete measure by consolidating duplicate points and summing
     their weights. Given a discrete measure with support X (n, d) and weights a
@@ -854,6 +940,8 @@ def _clean_discrete_measure(X, a, tol=1e-10):
     tol : float, optional
         Tolerance for determining uniqueness of points in `X`. Points closer
         than `tol` are considered identical. Default is 1e-10.
+    nx : backend, optional
+        The backend to use. If None is provided, the backend of `X` is used
 
     Returns
     -------

@@ -456,7 +456,7 @@ def gmm_barycenter_fixed_point(
 ):
     r"""
     Solves the Gaussian Mixture Model OT barycenter problem (defined in [69])
-    using the fixed point algorithm (proposed in [76]). The
+    using the fixed point algorithm (proposed in [77]). The
     weights of the barycenter are not optimized, and stay the same as the input
     `w_list` or are initialized to uniform.
 
@@ -504,7 +504,7 @@ def gmm_barycenter_fixed_point(
     ----------
     .. [69] Delon, J., & Desolneux, A. (2020). A Wasserstein-type distance in the space of Gaussian mixture models. SIAM Journal on Imaging Sciences, 13(2), 936-970.
 
-    .. [76] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing barycenters of Measures for Generic Transport Costs. arXiv preprint 2501.04016 (2024)
+    .. [77] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing barycenters of Measures for Generic Transport Costs. arXiv preprint 2501.04016 (2024)
 
     See Also
     --------

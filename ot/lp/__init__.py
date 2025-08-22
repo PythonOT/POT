@@ -15,6 +15,7 @@ from ._barycenter_solvers import (
     free_support_barycenter,
     generalized_free_support_barycenter,
     free_support_barycenter_generic_costs,
+    ot_barycenter_energy,
     NorthWestMMGluing,
 )
 from ..utils import check_number_threads
@@ -49,4 +50,5 @@ __all__ = [
     "check_number_threads",
     "free_support_barycenter_generic_costs",
     "NorthWestMMGluing",
+    "ot_barycenter_energy",
 ]

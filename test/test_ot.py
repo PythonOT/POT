@@ -675,6 +675,10 @@ def test_free_support_barycenter_generic_costs_backends(nx):
     np.testing.assert_allclose(a, nx.to_numpy(a2))
     np.testing.assert_allclose(X, nx.to_numpy(X2))
 
+    ot.lp.ot_barycenter_energy(  # test without backend and callable cost
+        measures_locations, measures_weights, X, a, cost, nx=None
+    )
+
 
 def verify_gluing_validity(gamma, J, w, pi_list):
     """
@@ -763,7 +767,7 @@ def test_north_west_mm_gluing_backends(nx):
     pi_list = [ot.emd(a, b, M) for b, M in zip(b_list, M_list)]
 
     pi_list2 = [nx.from_numpy(pi) for pi in pi_list]
-    J, w, log_dict = ot.lp.NorthWestMMGluing(pi_list2, log=True)
+    J, w, log_dict = ot.lp.NorthWestMMGluing(pi_list2, log=True, nx=nx)
     gamma = log_dict["gamma"]
 
     # Test equality with numpy solution
@@ -787,7 +791,7 @@ def test_clean_discrete_measure(nx):
 
     a = nx.ones(3) / 3.0
     X = nx.from_numpy(np.array([[1.0, 1.0], [2.0, 2.0], [1.0, 1.0]]))
-    X_clean, a_clean = ot.lp._barycenter_solvers._clean_discrete_measure(X, a)
+    X_clean, a_clean = ot.lp._barycenter_solvers._clean_discrete_measure(X, a, nx=nx)
     a_true = nx.from_numpy(np.array([2 / 3, 1 / 3]))
     X_true = nx.from_numpy(np.array([[1.0, 1.0], [2.0, 2.0]]))
     assert a_clean.shape == a_true.shape
@@ -814,6 +818,7 @@ def test_to_int_array(nx):
     a_int = ot.lp._barycenter_solvers._to_int_array(a)
     a_np_int = a_np.astype(int)
     np.testing.assert_allclose(nx.to_numpy(a_int), a_np_int)
+    ot.lp._barycenter_solvers._to_int_array(a, nx=nx)
 
 
 @pytest.mark.skipif(not ot.lp._barycenter_solvers.cvxopt, reason="No cvxopt available")

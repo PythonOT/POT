@@ -8,28 +8,28 @@ This example illustrates the computation of an Optimal Transport Barycenter for
 a ground cost that is not a power of a norm. We take the example of ground costs
 :math:`c_k(x, y) = \lambda_k\|P_k(x)-y\|_2^2`, where :math:`P_k` is the
 (non-linear) projection onto a circle k, and :math:`(\lambda_k)` are weights. A
-barycenter is defined ([76]) as a minimiser of the energy :math:`V(\mu) = \sum_k
+barycenter is defined ([77]) as a minimiser of the energy :math:`V(\mu) = \sum_k
 \mathcal{T}_{c_k}(\mu, \nu_k)` where :math:`\mu` is a candidate barycenter
 measure, the measures  :math:`\nu_k` are the target measures and
 :math:`\mathcal{T}_{c_k}` is the OT cost for ground cost :math:`c_k`. This is an
-example of the fixed-point barycenter solver introduced in [76] which
+example of the fixed-point barycenter solver introduced in [77] which
 generalises [20] and [43].
 
 The ground barycenter function :math:`B(y_1, ..., y_K) = \mathrm{argmin}_{x \in
 \mathbb{R}^2} \sum_k \lambda_k c_k(x, y_k)` is computed by gradient descent over
 :math:`x` with Pytorch.
 
-We compare two algorithms from [76]: the first ([76], Algorithm 2,
+We compare two algorithms from [77]: the first ([77], Algorithm 2,
 'true_fixed_point' in POT) has convergence guarantees but the iterations may
 increase in support size and thus require more computational resources. The
-second ([76], Algorithm 3, 'L2_barycentric_proj' in POT) is a simplified
+second ([77], Algorithm 3, 'L2_barycentric_proj' in POT) is a simplified
 heuristic that imposes a fixed support size for the barycenter and fixed
 weights.
 
 We initialise both algorithms with a support size of 136, computing a barycenter
 between measures with uniform weights and 50 points.
 
-[76] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
+[77] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). Computing
 Barycentres of Measures for Generic Transport Costs. arXiv preprint 2501.04016
 (2024)
 
@@ -51,7 +51,6 @@ Wasserstein space. Journal of Mathematical Analysis and Applications 441.2
 # %%
 # Generate data
 import torch
-import ot
 from torch.optim import Adam
 from ot.utils import dist
 import numpy as np
@@ -62,7 +61,7 @@ from time import time
 
 torch.manual_seed(42)
 
-n = 136  # number of points of the of the barycentre
+n = 136  # number of points of the barycentre
 d = 2  # dimensions of the original measure
 K = 4  # number of measures to barycentre
 m = 50  # number of points of the measures
@@ -204,15 +203,6 @@ alpha = 0.4
 s = 80
 labels = ["circle 1", "circle 2", "circle 3", "circle 4"]
 
-
-# Compute barycenter energies
-def V(X, a):
-    v = 0
-    for k in range(K):
-        v += (1 / K) * ot.emd2(a, b_list[k], cost_list[k](X, Y_list[k]))
-    return v
-
-
 fig, axes = plt.subplots(1, 2, figsize=(12, 6))
 
 # Plot for the true fixed-point algorithm
@@ -228,7 +218,7 @@ axes[0].scatter(
 axes[0].set_title(
     "True Fixed-Point Algorithm\n"
     f"Support size: {a_bar.shape[0]}\n"
-    f"Barycenter cost: {V(X_bar, a_bar).item():.6f}\n"
+    f"Barycenter cost: {log_dict['V_list'][-1].item():.6f}\n"
     f"Computation time {dt_true_fixed_point:.4f}s"
 )
 axes[0].axis("equal")
@@ -244,7 +234,7 @@ axes[1].scatter(
 axes[1].set_title(
     "Heuristic Barycentric Algorithm\n"
     f"Support size: {X_bar2.shape[0]}\n"
-    f"Barycenter cost: {V(X_bar2, torch.ones(n) / n).item():.6f}\n"
+    f"Barycenter cost: {log_dict2['V_list'][-1].item():.6f}\n"
     f"Computation time {dt_barycentric:.4f}s"
 )
 axes[1].axis("equal")
@@ -255,10 +245,10 @@ plt.tight_layout()
 
 # %%
 # Plot energy convergence
-fig, axes = plt.subplots(1, 2, figsize=(8, 4))
-
-V_list = [V(X, a).item() for (X, a) in zip(log_dict["X_list"], log_dict["a_list"])]
-V_list2 = [V(X, torch.ones(n) / n).item() for X in log_dict2["X_list"]]
+fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+V_list = [V.item() for V in log_dict["V_list"]]
+V_list2 = [V.item() for V in log_dict2["V_list"]]
+diff = np.array(V_list2) - np.array(V_list)
 
 # Plot for True Fixed-Point Algorithm
 axes[0].plot(V_list, lw=5, alpha=0.6)
@@ -277,6 +267,15 @@ axes[1].set_xlabel("Iteration")
 axes[1].set_ylabel("Barycenter Energy")
 axes[1].set_yscale("log")
 axes[1].xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+
+# Plot difference between the two
+axes[2].plot(diff, lw=5, alpha=0.6)
+axes[2].scatter(range(len(diff)), diff, color="blue", alpha=0.8, s=100)
+axes[2].set_title("Heuristic Fixed-Point Energy - True")
+axes[2].set_xlabel("Iteration")
+axes[2].set_ylabel("$V_{\\mathrm{heuristic}} - V_{\\mathrm{true}}$")
+axes[2].set_yscale("log")
+axes[2].xaxis.set_major_locator(plt.MaxNLocator(integer=True))
 
 plt.tight_layout()
 plt.show()
