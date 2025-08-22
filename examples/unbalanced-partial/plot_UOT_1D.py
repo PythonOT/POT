@@ -90,13 +90,15 @@ pl.legend(loc="upper right")
 pl.title("Distributions and transported mass for UOT")
 
 
-# %%
 ##############################################################################
-# Solve Unbalanced UOT with Frank-Wolfe
-# -------------------------
+# Solve 1D UOT with Frank-Wolfe (TODO: check the behaviour)
+# -----------------------------
 
 alpha = 1000.0  # Unbalanced KL relaxation parameter
-a_reweighted, b_reweighted, loss = ot.unbalanced.uot_1d(x, x, a, b, alpha)
+
+a_reweighted, b_reweighted, loss = ot.unbalanced.uot_1d(
+    x, x, alpha, u_weights=a, v_weights=b
+)
 
 
 # plot the transported mass
