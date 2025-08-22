@@ -59,6 +59,11 @@ def test_raise_errors():
             M, M, p, q, reg=1, m=-1, log=True
         )
 
+    with pytest.raises(AssertionError):
+        xs_2d = rng.randn(n_samples, 2)
+        xt_2d = rng.randn(n_samples, 2)
+        ot.partial.partial_wasserstein_1d(xs_2d, xt_2d)
+
 
 def test_partial_wasserstein_lagrange():
     n_samples = 20  # nb samples (gaussian)
@@ -287,3 +292,49 @@ def test_partial_gromov_wasserstein():
         res.sum(0) <= q, [True] * len(q)
     )  # cf convergence wasserstein
     np.testing.assert_allclose(np.sum(res), m, atol=1e-04)
+
+
+def test_partial_wasserstein_1d():
+    n_samples = 20  # nb samples
+
+    rng = np.random.RandomState(42)
+    xs = rng.randn(n_samples, 1)
+    xt = rng.randn(n_samples, 1)
+
+    ind_xs_half, ind_xt_half, marginal_costs_half = ot.partial.partial_wasserstein_1d(
+        xs, xt, n_transported_samples=n_samples // 2, p=1
+    )
+
+    ind_xs, ind_xt, marginal_costs = ot.partial.partial_wasserstein_1d(xs, xt, p=1)
+
+    np.testing.assert_allclose(
+        marginal_costs_half, marginal_costs[: n_samples // 2], atol=1e-04
+    )
+    np.testing.assert_allclose(
+        np.sum(np.abs(np.sort(xs[ind_xs_half]) - np.sort(xt[ind_xt_half]))),
+        np.sum(marginal_costs_half),
+        atol=1e-04,
+    )
+
+    n = 20
+    x = np.random.rand(n)
+    y = np.random.rand(n)
+
+    M = ot.dist(x[:, None], y[:, None], metric="minkowski", p=1)
+    indices_x, indices_y, marginal_costs = ot.partial.partial_wasserstein_1d(
+        x, y, n_transported_samples=n
+    )
+    costs = np.cumsum(marginal_costs)
+
+    for i in [1, 5, 10]:
+        np.testing.assert_allclose(
+            costs[i - 1] / n,
+            ot.partial.partial_wasserstein2([], [], M, m=i / n),
+            atol=1e-8,
+        )
+
+        t = ot.partial.partial_wasserstein([], [], M, m=i / n)
+        ind_x, ind_y = np.where(t > 1e-6)
+
+        np.testing.assert_array_equal(np.sort(indices_x[:i]), np.sort(ind_x))
+        np.testing.assert_array_equal(np.sort(indices_y[:i]), np.sort(ind_y))
