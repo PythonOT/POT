@@ -12,6 +12,7 @@ from ..utils import OTResult
 from ot.backend import get_backend
 from ot.batch._linear import loss_linear_batch
 from ot.batch._utils import grad_enabled, bmv, bop, bregman_log_batch
+from abc import ABC, abstractmethod
 
 
 def transpose(C, nx=None):
@@ -20,33 +21,7 @@ def transpose(C, nx=None):
     return nx.transpose(C, (0, 2, 1)) if C.ndim == 3 else nx.transpose(C, (0, 2, 1, 3))
 
 
-def cost_tensor_l2_batch(X, Y, p=2, q=1, nx=None):
-    r"""Computes the cost tensor for a batch of samples using the Lp norm.
-
-    .. math::
-        M_{bij} = ( \sum_{d} (x_{bid} - y_{bjd})^p )^{q/p} = ||x_{bi} - y_{bj}||_p^q
-
-    Parameters
-    ----------
-    X : array-like, shape (B, ns, d)
-        Samples from source distribution
-    Y : array-like, shape (B, nt, d)
-        Samples from target distribution
-    p : float, optional
-        The order of the norm to use. Default is 2 (Euclidean distance).
-    q : float, optional
-        If None, use the Lp norm. If specified, it computes the Lp norm raised to the power of q.
-    nx : backend, optional
-        Backend to use for computations. If None, it will be inferred from the inputs.
-
-    Returns
-    -------
-    M : array-like, shape (B, ns, nt)
-        Cost matrix where M[bij] is the cost between sample i in batch b and sample j in batch b.
-    """
-
-
-class QuadraticMetric:
+class QuadraticMetric(ABC):
     """
     Gromov-Wasserstein writes as:
         GW(T,C1,C2) = sum_ijkl T_ik T_jl l(C1_ij, C2_kl) = < LxT, T >
@@ -57,7 +32,7 @@ class QuadraticMetric:
 
     Typical use:
     L = metric.cost_tensor(C1, C2, T)
-    cost = cost_quadratic(L, T)
+    loss = loss_quadratic_batch(L, T)
 
     References
     ----------
@@ -66,127 +41,62 @@ class QuadraticMetric:
         International Conference on Machine Learning (ICML). 2016.
     """
 
+    @abstractmethod
     def f1(self, C1, nx=None):
         raise NotImplementedError("Subclasses should implement this method")
 
+    @abstractmethod
     def f2(self, C2, nx=None):
         raise NotImplementedError("Subclasses should implement this method")
 
+    @abstractmethod
     def h1(self, C1, nx=None):
         raise NotImplementedError("Subclasses should implement this method")
 
+    @abstractmethod
     def h2(self, C2, nx=None):
         raise NotImplementedError("Subclasses should implement this method")
 
-    def cost_tensor(self, a, b, C1, C2, symmetric=None, nx=None):
+    def cost_tensor(self, a, b, C1, C2, symmetric=True, nx=None):
+        """
+        "Compute" the cost tensor L for the quadratic OT problem.
+        The full tensor is not stored, only the matrices required for fast computation of the gradient of < LxT, T> (which we denote \nabla_T L).
+        Note that < LxT, T> = 0.5 < \nabla_T L, T >
+
+        The most general formula is:
+            \nabla_T L = (f1(C1) + f1(C1)^T) T 1 1^T
+                        + 1 1^T T (f2(C2) + f2(C2)^T)^T
+                        + h1(C1) T h2(C2)^T
+                        + h1(C1)^T T h2(C2)
+
+        If we assume T 1 = a and T^T 1 = b (i.e. the transport plan satisfies the marginal constraints), then some terms can be simplified:
+            \nabla_T L = const
+                        + h1(C1) T h2(C2)^T
+                        + h1(C1)^T T h2(C2)
+            where
+            const = (f1(C1) + f1(C1)^T) a 1^T + 1 b^T (f2(C2) + f2(C2)^T)^T
+
+        If we also assume that C1 and C2 are symmetric, then this further simplifies to:
+            0.5 \nabla_T L = const - h1(C1) T h2(C2)^T
+            where
+            const = f1(C1) a 1^T + 1 b^T f2(C2)^T
+        """
         if nx is None:
             nx = get_backend(C1, C2)
 
-        if symmetric is None:
-            symmetric = nx.allclose(
-                C1, transpose(C1, nx=nx), atol=1e-10
-            ) and nx.allclose(C2, transpose(C2, nx=nx), atol=1e-10)
-
-        if not symmetric:
-            L = self.cost_tensor(a, b, C1, C2, symmetric=True, nx=nx)
-            C1t = transpose(C1, nx=nx)
-            C2t = transpose(C2, nx=nx)
-            Lt = self.cost_tensor(a, b, C1t, C2t, symmetric=True, nx=nx)
-            L["constC"] = (Lt["constC"] + L["constC"]) / 2
-            L["hC1t"] = Lt["hC1"]
-            L["hC2t"] = Lt["hC2"]
-            return L
-
-        B, N1, N2 = C1.shape[0], C1.shape[1], C2.shape[1]
-
         fC1 = self.f1(C1, nx=nx)
         fC2 = self.f2(C2, nx=nx)
+        if not symmetric:
+            fC1 = 0.5 * (fC1 + transpose(fC1, nx=nx))
+            fC2 = 0.5 * (fC2 + transpose(fC2, nx=nx))
         hC1 = self.h1(C1, nx=nx)
         hC2 = self.h2(C2, nx=nx)
 
-        fC1a = bmv(fC1, a, nx=nx)  # nx.einsum('bij,bj->bi', fC1, a)
-        constC1 = bop(
-            fC1a, nx.ones((B, N2), type_as=b), nx=nx
-        )  # nx.einsum('bi,bj->bij', fC1a, nx.ones((B, N2), type_as=b))
+        constC = compute_const_from_marginals(fC1, fC2, a, b, nx=nx)
 
-        fC2b = bmv(fC2, b, nx=nx)
-        constC2 = bop(nx.ones((B, N1), type_as=a), fC2b, nx=nx)
-
-        constC = constC1 + constC2
-
-        L = {"constC": constC, "hC1": hC1, "hC2": hC2}
+        L = {"constC": constC, "hC1": hC1, "hC2": hC2, "fC1": fC1, "fC2": fC2}
 
         return L
-
-
-def detach_cost_tensor(L, nx=None):
-    """
-    Detach the cost tensor L to avoid gradients.
-    """
-    if nx is None:
-        nx = get_backend(L["constC"], L["hC1"], L["hC2"])
-    L_detached = {}
-    for key, value in L.items():
-        L_detached[key] = nx.detach(value)
-    return L_detached
-
-
-def tensor_product(L, T, nx=None):
-    """
-    Compute the tensor product LxT for the cost tensor L and transport plan T.
-    The formula is:
-        LxT = const - hC1 T hC2^T
-        const = < fC1 a 1^T + 1 (fC2 b)^T
-
-    References
-    ----------
-    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
-        "Gromov-Wasserstein averaging of kernel and distance matrices."
-        International Conference on Machine Learning (ICML). 2016.
-    """
-
-    if nx is None:
-        nx = get_backend(T)
-
-    if "hC1t" in L:
-        # Handle the case when C1 and C2 are asymmetric
-        constC = L["constC"]
-        hC1 = L["hC1"]
-        hC1t = L["hC1t"]
-        hC2 = L["hC2"]
-        hC2t = L["hC2t"]
-
-        dot = nx.einsum("bijd,bjk->bikd", hC1, T)
-        dot = nx.einsum("bikd,bjkd->bijd", dot, hC2)
-        dot = dot.sum(axis=-1)
-
-        dot_t = nx.einsum("bijd,bjk->bikd", hC1t, T)
-        dot_t = nx.einsum("bikd,bjkd->bijd", dot_t, hC2t)
-        dot_t = dot_t.sum(axis=-1)
-
-        dot = (dot + dot_t) / 2  # Average the two symmetric terms
-
-    else:
-        constC = L["constC"]
-        hC1 = L["hC1"]
-        hC2 = L["hC2"]
-
-        dot = nx.einsum("bijd,bjk->bikd", hC1, T)
-        dot = nx.einsum("bikd,bjkd->bijd", dot, hC2)
-        dot = dot.sum(
-            axis=-1
-        )  # Handle the case when C1 and C2 are 3D tensors i.e. there are "edge features"
-
-    return constC - dot
-
-
-def loss_quadratic_batch(L, T, nx=None):
-    """
-    Computes the quadratic cost < LxT, T > where L is the cost tensor
-    and T is the transport plan.
-    """
-    LT = tensor_product(L, T, nx=nx)
-    return (LT * T).sum((1, 2))
 
 
 class QuadraticEuclidean(QuadraticMetric):
@@ -264,6 +174,87 @@ def get_quadratic_metric(metric_name):
         raise ValueError(f"Unknown metric type: {metric_name}")
 
 
+def detach_cost_tensor(L, nx=None):
+    """
+    Detach the cost tensor L to avoid gradients.
+    """
+    if nx is None:
+        nx = get_backend(L["constC"], L["hC1"], L["hC2"])
+    L_detached = {}
+    for key, value in L.items():
+        L_detached[key] = nx.detach(value)
+    return L_detached
+
+
+def compute_const_from_T(fC1, fC2, T, nx=None):
+    """
+    Compute the constant term f1(C1) a 1^T + 1 b^T f2(C2)^T
+    where a and b are the marginals of T.
+    """
+    return compute_const_from_marginals(fC1, fC2, T.sum(axis=2), T.sum(axis=1), nx=nx)
+
+
+def compute_const_from_marginals(fC1, fC2, a, b, nx=None):
+    """
+    Compute the constant term f1(C1) a 1^T + 1 b^T f2(C2)^T
+    """
+    if nx is None:
+        nx = get_backend(fC1, fC2, a, b)
+    fC1a = bmv(fC1, a, nx=nx)
+    fC2b = bmv(fC2, b, nx=nx)
+    constC = fC1a[:, :, None] + fC2b[:, None, :]
+    return constC
+
+
+def tensor_product(L, T, nx=None, recompute_const=False, symmetric=True):
+    """
+    Compute the tensor product LxT for the cost tensor L and transport plan T.
+    The formula is:
+        LxT = const - hC1 T hC2^T
+        const = < fC1 a 1^T + 1 (fC2 b)^T
+
+    References
+    ----------
+    .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
+        "Gromov-Wasserstein averaging of kernel and distance matrices."
+        International Conference on Machine Learning (ICML). 2016.
+    """
+
+    if nx is None:
+        nx = get_backend(T)
+
+    if recompute_const:
+        const = compute_const_from_T(L["fC1"], L["fC2"], T, nx=nx)
+    else:
+        const = L["constC"]
+
+    hC1 = L["hC1"]
+    hC2 = L["hC2"]
+
+    dot = nx.einsum("bijd,bjk->bikd", hC1, T)
+    dot = nx.einsum("bikd,bjkd->bijd", dot, hC2)
+    dot = dot.sum(axis=-1)
+
+    if not symmetric:
+        dot_t = nx.einsum("bijd,bjk->bikd", transpose(hC1), T)
+        dot_t = nx.einsum("bikd,bjkd->bijd", dot_t, transpose(hC2))
+        dot_t = dot_t.sum(axis=-1)
+        dot = (dot + dot_t) / 2  # Average the two symmetric terms
+
+    return const - dot
+
+
+def loss_quadratic_batch(L, T, recompute_const=False, symmetric=True, nx=None):
+    """
+    Computes the quadratic cost < LxT, T > where L is the cost tensor
+    and T is the transport plan.
+    """
+    LT = tensor_product(
+        L, T, nx=nx, recompute_const=recompute_const, symmetric=symmetric
+    )
+    return (LT * T).sum((1, 2))
+
+
 def quadratic_solver_batch(
     C1,
     C2,
@@ -280,6 +271,7 @@ def quadratic_solver_batch(
     max_iter_inner=50,
     tol_inner=1e-5,
     grad="detach",
+    assume_inner_convergence=True,
 ):
     r"""Solves the quadratic optimal transport problem proximal gradient.
 
@@ -357,7 +349,10 @@ def quadratic_solver_batch(
         detached. This is useful for memory saving when only the value is needed. 'last_step' provides
         gradients only for the last iteration of the Sinkhorn solver, but provides gradient for both the OT plan and the objective values.
         'detach' does not compute the gradients for the Sinkhorn solver.
-
+    assume_inner_convergence : bool, optional
+        If True, assumes that the inner Bregman projection always converged i.e. the transport plan satisfies the marginal constraints.
+        This enables faster computations of the tensor product but might results in inaccurate results (e.g. negative values of the loss).
+        Default is True.
     Returns
     -------
     res : OTResult()
@@ -394,7 +389,7 @@ def quadratic_solver_batch(
     -- "Scalable Gromov-Wasserstein learning for graph partitioning and matching." Advances in neural information processing systems, 2019.
     """
 
-    # -------------- Get backend -------------- #
+    # -------------- Setup -------------- #
 
     nx = get_backend(a, b, M, C1, C2, T_init)
     B, n, m = (C1.shape[0], C1.shape[1], C2.shape[1])
@@ -403,6 +398,11 @@ def quadratic_solver_batch(
         a = nx.ones((B, n), type_as=C1) / n
     if b is None:
         b = nx.ones((B, m), type_as=C2) / m
+
+    if symmetric is None:
+        symmetric = nx.allclose(C1, transpose(C1, nx=nx), atol=1e-10) and nx.allclose(
+            C2, transpose(C2, nx=nx), atol=1e-10
+        )
 
     # -------------- Get cost_tensor (quadratic part) -------------- #
 
@@ -443,8 +443,8 @@ def quadratic_solver_batch(
     # -------------- Solver -------------- #
 
     if T_init is None:
-        cst = nx.sqrt(nx.sum(a, axis=1) * nx.sum(b, axis=1))
-        T_init = bop(a, b, nx=nx) / cst[:, None, None]  # B x n x m
+        const = nx.sqrt(nx.sum(a, axis=1) * nx.sum(b, axis=1))
+        T_init = bop(a, b, nx=nx) / const[:, None, None]  # B x n x m
 
     grad_inner = "autodiff" if grad == "autodiff" else "detach"
 
@@ -453,7 +453,9 @@ def quadratic_solver_batch(
         log_T = nx.log(T + 1e-15)  # Avoid log(0)
         for iter in range(max_iter):
             T_prev = T
-            Mk = (1 - alpha) * M + 2 * alpha * tensor_product(L, T, nx=nx)
+            Mk = (1 - alpha) * M + 2 * alpha * tensor_product(
+                L, T, nx=nx, recompute_const=False, symmetric=symmetric
+            )
             K = -Mk / epsilon + log_T
             out = bregman_log_batch(
                 K, a, b, nx=nx, max_iter=max_iter_inner, tol=tol_inner, grad=grad_inner
@@ -474,7 +476,9 @@ def quadratic_solver_batch(
         raise ValueError(f"Unknown gradient mode: {grad}")
 
     value_linear = loss_linear_batch(M, T, nx=nx)
-    value_quadratic = loss_quadratic_batch(L, T, nx=nx)
+    value_quadratic = loss_quadratic_batch(
+        L, T, nx=nx, recompute_const=True, symmetric=symmetric
+    )  # Always recompute const for accurate value
     value = (1 - alpha) * value_linear + alpha * value_quadratic
     log = {"n_iter": iter}
 
