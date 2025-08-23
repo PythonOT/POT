@@ -881,6 +881,16 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def unsqueeze(self, a, axis):
+        r"""
+        Add a dimension of size one at the specified axis.
+
+        This function follows the api from :any:`numpy.expand_dims`.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.expand_dims.html
+        """
+        raise NotImplementedError()
+
     def bitsize(self, type_as):
         r"""
         Gives the number of bits used by the data type of the given tensor.
@@ -1339,6 +1349,9 @@ class NumpyBackend(Backend):
     def squeeze(self, a, axis=None):
         return np.squeeze(a, axis=axis)
 
+    def unsqueeze(self, a, axis):
+        return np.expand_dims(a, axis=axis)
+
     def bitsize(self, type_as):
         return type_as.itemsize * 8
 
@@ -1748,6 +1761,9 @@ class JaxBackend(Backend):
 
     def squeeze(self, a, axis=None):
         return jnp.squeeze(a, axis=axis)
+
+    def unsqueeze(self, a, axis):
+        return jnp.expand_dims(a, axis=axis)
 
     def bitsize(self, type_as):
         return type_as.dtype.itemsize * 8
@@ -2270,6 +2286,9 @@ class TorchBackend(Backend):
             return torch.squeeze(a)
         else:
             return torch.squeeze(a, dim=axis)
+
+    def unsqueeze(self, a, axis):
+        return torch.unsqueeze(a, dim=axis)
 
     def bitsize(self, type_as):
         return torch.finfo(type_as.dtype).bits
@@ -3122,6 +3141,9 @@ class TensorflowBackend(Backend):
 
     def squeeze(self, a, axis=None):
         return tnp.squeeze(a, axis=axis)
+
+    def unsqueeze(self, a, axis):
+        return super().unsqueeze(a, axis)
 
     def bitsize(self, type_as):
         return type_as.dtype.size * 8

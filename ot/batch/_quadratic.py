@@ -125,12 +125,12 @@ class QuadraticEuclidean(QuadraticMetric):
 
     def h1(self, C1, nx=None):
         if C1.ndim == 3:
-            C1 = C1.unsqueeze(-1)
+            C1 = nx.unsqueeze(C1, -1)
         return 2 * C1
 
     def h2(self, C2, nx=None):
         if C2.ndim == 3:
-            C2 = C2.unsqueeze(-1)
+            C2 = nx.unsqueeze(C2, -1)
         return C2
 
 
@@ -271,7 +271,6 @@ def quadratic_solver_batch(
     max_iter_inner=50,
     tol_inner=1e-5,
     grad="detach",
-    assume_inner_convergence=True,
 ):
     r"""Solves the quadratic optimal transport problem proximal gradient.
 
@@ -484,8 +483,9 @@ def quadratic_solver_batch(
 
     res = OTResult(
         value=value,
-        value_linear=value_linear,
-        value_quad=value_quadratic,
+        value_linear=value_linear
+        * (1 - alpha),  # Weight the linear value for consistency with ot.solve_gromov
+        value_quad=value_quadratic * alpha,  # idem
         plan=T,
         backend=nx,
         log=log,
