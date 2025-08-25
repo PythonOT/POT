@@ -367,14 +367,14 @@ def solve_gromov_batch(
 
     Examples
     --------
-    >>> from ot.batch import quadratic_solver_batch
+    >>> from ot.batch import solve_gromov_batch
     >>> import numpy as np
     >>> a = np.ones((B, ns)) / ns
     >>> b = np.ones((B, nt)) / nt
     >>> C1 = np.random.rand(B, ns, ns)
     >>> C2 = np.random.rand(B, nt, nt)
     >>> M = np.random.rand(B, ns, nt)
-    >>> res = quadratic_solver_batch(C1=C1, C2=C2, a=a, b=b, M=M, alpha=0.5, epsilon=0.01)
+    >>> res = solve_gromov_batch(C1=C1, C2=C2, a=a, b=b, M=M, alpha=0.5, epsilon=0.01)
     >>> res.plan.shape
     (B, ns, nt)
     >>> res.value.shape
