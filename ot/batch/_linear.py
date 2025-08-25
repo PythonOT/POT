@@ -232,13 +232,11 @@ def solve_batch(
 
     Examples
     --------
-    >>> from ot.batch import solve_batch, cost_matrix_l2_batch
+    >>> from ot.batch import solve_batch
     >>> import numpy as np
     >>> a = np.ones((B, ns)) / ns
     >>> b = np.ones((B, nt)) / nt
-    >>> X = np.random.rand(B, ns, d)
-    >>> Y = np.random.rand(B, nt, d)
-    >>> M = cost_matrix_l2_batch(X, Y)
+    >>> M = np.random.rand(B, ns, nt)
     >>> res = solve_batch(M=M, epsilon=0.01, a=a, b=b)
     >>> res.plan.shape
     (B, ns, nt)
