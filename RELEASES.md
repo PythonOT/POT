@@ -3,6 +3,7 @@
 ## 0.9.6dev
 
 #### New features
+- Implement batch parallel solvers in ot.batch
 - Implement CG solvers for partial FGW (PR #687)
 - Added feature `grad=last_step` for `ot.solvers.solve` (PR #693)
 - Automatic PR labeling and release file update check (PR #704)
