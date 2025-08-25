@@ -11,7 +11,7 @@ Batch operations for quadratic optimal transport.
 from ..utils import OTResult
 from ot.backend import get_backend
 from ot.batch._linear import loss_linear_batch
-from ot.batch._utils import grad_enabled, bmv, bop, bregman_log_batch
+from ot.batch._utils import bmv, bop, bregman_log_batch
 from abc import ABC, abstractmethod
 
 
@@ -447,7 +447,7 @@ def solve_gromov_batch(
 
     grad_inner = "autodiff" if grad == "autodiff" else "detach"
 
-    with grad_enabled(nx, grad == "autodiff"):
+    with nx.set_grad_enabled(grad == "autodiff"):
         T = T_init
         log_T = nx.log(T + 1e-15)  # Avoid log(0)
         for iter in range(max_iter):
