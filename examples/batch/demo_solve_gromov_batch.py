@@ -34,10 +34,10 @@ M = cost_matrix_l2_batch(X1, X2)
 
 cost_linear_list = []
 cost_quadratic_list = []
-alpha_list = np.linspace(0.0, 1, 20)
+alpha_list = np.linspace(0.001, 0.999, 20)
 
 for alpha in alpha_list:
-    res = quadratic_solver_batch(
+    res = solve_gromov_batch(
         alpha=alpha,
         epsilon=epsilon,
         M=M,
@@ -49,8 +49,8 @@ for alpha in alpha_list:
         tol_inner=tol_inner,
     )
 
-    cost_linear = res.value_linear.mean()
-    cost_quadratic = res.value_quad.mean()
+    cost_linear = res.value_linear.mean() / (1 - alpha)
+    cost_quadratic = res.value_quad.mean() / (alpha)
     cost_linear_list.append(cost_linear)
     cost_quadratic_list.append(cost_quadratic)
 

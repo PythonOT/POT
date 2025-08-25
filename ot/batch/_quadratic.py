@@ -255,7 +255,7 @@ def loss_quadratic_batch(L, T, recompute_const=False, symmetric=True, nx=None):
     return (LT * T).sum((1, 2))
 
 
-def quadratic_solver_batch(
+def solve_gromov_batch(
     C1,
     C2,
     a=None,

@@ -8,7 +8,7 @@ Batch operations for optimal transport.
 #
 # License: MIT License
 
-from ._linear import linear_solver_batch
-from ._quadratic import quadratic_solver_batch
+from ._linear import solve_batch
+from ._quadratic import solve_gromov_batch
 
-__all__ = ["linear_solver_batch", "quadratic_solver_batch"]
+__all__ = ["solve_batch", "solve_gromov_batch"]

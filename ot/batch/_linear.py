@@ -171,7 +171,7 @@ def entropy_batch(T, nx=None):
     return -nx.sum(T * nx.log(T + 1e-10), axis=(1, 2))
 
 
-def linear_solver_batch(
+def solve_batch(
     M,
     a=None,
     b=None,

@@ -8,13 +8,13 @@
 # License: MIT License
 
 import numpy as np
-from ot.batch import quadratic_solver_batch
+from ot.batch import solve_gromov_batch
 from ot import solve_gromov
 from ot.batch._linear import cost_matrix_l2_batch
 
 
-def test_quadratic_solver_batch():
-    """Check that quadratic_solver_batch gives the same results as solve for each instance in the batch."""
+def test_solve_gromov_batch():
+    """Check that solve_gromov_batch gives the same results as solve for each instance in the batch."""
     b = 2
     n = 8
     d = 2
@@ -38,7 +38,7 @@ def test_quadratic_solver_batch():
 
     M = cost_matrix_l2_batch(X1, X2)
 
-    res = quadratic_solver_batch(
+    res = solve_gromov_batch(
         alpha=alpha,
         epsilon=epsilon,
         M=M,
@@ -70,4 +70,4 @@ def test_quadratic_solver_batch():
         np.testing.assert_allclose(plan_i, plan_batch[i], atol=1e-05)
 
 
-test_quadratic_solver_batch()
+test_solve_gromov_batch()

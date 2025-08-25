@@ -8,12 +8,12 @@
 # License: MIT License
 
 import numpy as np
-from ot.batch import linear_solver_batch
+from ot.batch import solve_batch
 from ot import solve
 
 
-def test_linear_solver_batch():
-    """Check that linear_solver_batch gives the same results as solve for each instance in the batch."""
+def test_solve_batch():
+    """Check that solve_batch gives the same results as solve for each instance in the batch."""
     batchsize = 4
     n = 16
     rng = np.random.RandomState(0)
@@ -24,7 +24,7 @@ def test_linear_solver_batch():
     max_iter = 10000
     tol = 1e-5
 
-    res = linear_solver_batch(
+    res = solve_batch(
         M,
         a=None,
         b=None,

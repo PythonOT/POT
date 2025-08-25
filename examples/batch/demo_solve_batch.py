@@ -37,9 +37,7 @@ plt.figure(figsize=(10, 6))
 cost_list = []
 n_iter_list = []
 for epsilon in epsilons:
-    res = linear_solver_batch(
-        epsilon=epsilon, M=M, max_iter=max_iter, tol=tol, log_dual=True
-    )
+    res = solve_batch(epsilon=epsilon, M=M, max_iter=max_iter, tol=tol, log_dual=True)
     n_iter = res.log["n_iter"]
     cost = res.value_linear.mean()
     cost_list.append(cost)
