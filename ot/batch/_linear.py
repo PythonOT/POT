@@ -181,7 +181,7 @@ def solve_batch(
     log_dual=True,
     grad="detach",
 ):
-    r"""Solves the linear optimal transport problem using Bregman projections.
+    r"""Solves a batch of linear optimal transport problems using Bregman projections.
 
     .. math::
         \mathop{\min}_T \quad \langle T, \mathbf{M} \rangle_F +
@@ -229,19 +229,6 @@ def solve_batch(
         - res.value_linear : Linear OT loss with the optimal OT plan
 
         See :any:`OTResult` for more information.
-
-    Examples
-    --------
-    >>> from ot.batch import solve_batch
-    >>> import numpy as np
-    >>> a = np.ones((B, ns)) / ns
-    >>> b = np.ones((B, nt)) / nt
-    >>> M = np.random.rand(B, ns, nt)
-    >>> res = solve_batch(M=M, epsilon=0.01, a=a, b=b)
-    >>> res.plan.shape
-    (B, ns, nt)
-    >>> res.value.shape
-    (B,)
     """
 
     nx = get_backend(a, b, M)

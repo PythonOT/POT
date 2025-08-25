@@ -272,7 +272,7 @@ def solve_gromov_batch(
     tol_inner=1e-5,
     grad="detach",
 ):
-    r"""Solves the quadratic optimal transport problem proximal gradient.
+    r"""Solves a batch of gromov optimal transport problems using proximal gradient [12, 41].
 
     .. math::
         \min_{\mathbf{T}\geq 0} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
@@ -365,27 +365,13 @@ def solve_gromov_batch(
 
         See :any:`OTResult` for more information.
 
-    Examples
-    --------
-    >>> from ot.batch import solve_gromov_batch
-    >>> import numpy as np
-    >>> a = np.ones((B, ns)) / ns
-    >>> b = np.ones((B, nt)) / nt
-    >>> C1 = np.random.rand(B, ns, ns)
-    >>> C2 = np.random.rand(B, nt, nt)
-    >>> M = np.random.rand(B, ns, nt)
-    >>> res = solve_gromov_batch(C1=C1, C2=C2, a=a, b=b, M=M, alpha=0.5, epsilon=0.01)
-    >>> res.plan.shape
-    (B, ns, nt)
-    >>> res.value.shape
-    (B,)
-
     References
     ----------
     .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
-    -- "Scalable Gromov-Wasserstein learning for graph partitioning and matching." Advances in neural information processing systems, 2019.
+    .. [41] Xu, H., Luo, D., & Carin, L. (2019). "Scalable Gromov-Wasserstein learning for graph partitioning and matching."
+        Advances in neural information processing systems (NeurIPS). 2019.
     """
 
     # -------------- Setup -------------- #
