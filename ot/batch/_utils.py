@@ -1,6 +1,4 @@
-from contextlib import contextmanager
-from ot.backend import get_backend, TorchBackend
-import torch
+from ot.backend import get_backend
 
 
 def bmm(A, B, nx):
@@ -22,23 +20,6 @@ def bop(a, b, nx):
     Batched outer product for vectors a and b.
     """
     return nx.einsum("bi,bj->bij", a, b)
-
-
-@contextmanager
-def grad_enabled(nx, enabled):
-    """
-    Context manager to enable/disable gradient tracking.
-    Useful to save memory when gradients are not needed.
-    """
-    if isinstance(nx, TorchBackend):
-        prev = torch.is_grad_enabled()
-        torch.set_grad_enabled(enabled)
-        try:
-            yield
-        finally:
-            torch.set_grad_enabled(prev)
-    else:
-        yield
 
 
 def bregman_batch(K, a=None, b=None, nx=None, max_iter=10000, tol=1e-5, grad="detach"):
@@ -110,7 +91,7 @@ def bregman_batch(K, a=None, b=None, nx=None, max_iter=10000, tol=1e-5, grad="de
     f = nx.ones((B, n))  # a / nx.sum(K, axis=2)
     g = nx.ones((B, m))  # b / nx.sum(K, axis=1)
 
-    with grad_enabled(nx, grad == "autodiff"):
+    with nx.set_grad_enabled(grad == "autodiff"):
         for n_iters in range(max_iter):
             f = a / nx.sum(K * g[:, None, :], axis=2)
             g = b / nx.sum(K * f[:, :, None], axis=1)
@@ -221,7 +202,7 @@ def bregman_log_batch(
     u = nx.zeros((B, n), type_as=K)  # u = nx.log(a) - nx.logsumexp(K, axis=2).squeeze()
     v = nx.zeros((B, m), type_as=K)  # v = nx.log(b) - nx.logsumexp(K, axis=1).squeeze()
 
-    with grad_enabled(nx, grad == "autodiff"):
+    with nx.set_grad_enabled(grad == "autodiff"):
         for n_iters in range(max_iter):
             u = nx.log(a) - nx.logsumexp(K + v[:, None, :], axis=2).squeeze()
             v = nx.log(b) - nx.logsumexp(K + u[:, :, None], axis=1).squeeze()

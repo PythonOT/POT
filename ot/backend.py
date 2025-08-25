@@ -95,6 +95,7 @@ import scipy
 import scipy.linalg
 import scipy.special as special
 from scipy.sparse import coo_matrix, csr_matrix, issparse
+from contextlib import contextmanager
 
 DISABLE_TORCH_KEY = "POT_BACKEND_DISABLE_PYTORCH"
 DISABLE_JAX_KEY = "POT_BACKEND_DISABLE_JAX"
@@ -298,6 +299,14 @@ class Backend:
 
     def _detach(self, a):
         """Detach the tensor from the computation graph"""
+        raise NotImplementedError()
+
+    @contextmanager
+    def set_grad_enabled(self, enabled):
+        """Context manager to set gradient computation on or off.
+
+        See: https://docs.pytorch.org/docs/stable/generated/torch.autograd.grad_mode.set_grad_enabled.html
+        """
         raise NotImplementedError()
 
     def zeros(self, shape, type_as=None):
@@ -1125,6 +1134,11 @@ class NumpyBackend(Backend):
         # No gradients for numpy
         return a
 
+    @contextmanager
+    def set_grad_enabled(self, enabled):
+        # No gradients for numpy
+        yield
+
     def zeros(self, shape, type_as=None):
         if type_as is None:
             return np.zeros(shape)
@@ -1527,6 +1541,12 @@ class JaxBackend(Backend):
 
     def _detach(self, a):
         return jax.lax.stop_gradient(a)
+
+    @contextmanager
+    def set_grad_enabled(self, enabled):
+        # No global flag in JAX, gradients are enabled/disabled by using
+        # jax.grad or not
+        yield
 
     def zeros(self, shape, type_as=None):
         if type_as is None:
@@ -1941,6 +1961,11 @@ class TorchBackend(Backend):
 
     def _detach(self, a):
         return a.detach()
+
+    @contextmanager
+    def set_grad_enabled(self, enabled):
+        with torch.set_grad_enabled(enabled):
+            yield
 
     def zeros(self, shape, type_as=None):
         if isinstance(shape, int):
