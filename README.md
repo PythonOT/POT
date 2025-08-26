@@ -38,13 +38,12 @@ POT provides the following generic OT solvers:
 * [Conditional gradient](https://pythonot.github.io/auto_examples/plot_optim_OTreg.html) [6] and [Generalized conditional gradient](https://pythonot.github.io/auto_examples/plot_optim_OTreg.html) for regularized OT [7].
 * Entropic regularization OT solver with [Sinkhorn Knopp
   Algorithm](https://pythonot.github.io/auto_examples/plot_OT_1D.html) [2] ,
-  stabilized version [9] [10] [34], lazy CPU/GPU solver from geomloss [60] [61], greedy Sinkhorn [22] and [Screening
-  Sinkhorn [26]
-  ](https://pythonot.github.io/auto_examples/plot_screenkhorn_1D.html).
+  stabilized version [9] [10] [34], lazy CPU/GPU solver from geomloss [60] [61], greedy Sinkhorn [22] and Screening
+  Sinkhorn [26].
 * Bregman projections for [Wasserstein barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html) [3], [convolutional barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_convolutional_barycenter.html) [21]  and unmixing [4].
 * Sinkhorn divergence [23] and entropic regularization OT from empirical data.
 * Debiased Sinkhorn barycenters [Sinkhorn divergence barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_debiased_barycenter.html) [37]
-* [Smooth optimal transport solvers](https://pythonot.github.io/auto_examples/plot_OT_1D_smooth.html) (dual and semi-dual) for KL and squared L2 regularizations [17].
+* Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularizations [17].
 * Weak OT solver between empirical distributions [39]
 * Non regularized [Wasserstein barycenters [16] ](https://pythonot.github.io/auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html) with LP solver (only small scale).
 * [Gromov-Wasserstein distances](https://pythonot.github.io/auto_examples/gromov/plot_gromov.html) and [GW barycenters](https://pythonot.github.io/auto_examples/gromov/plot_gromov_barycenter.html)  (exact [13] and regularized [12,51]), differentiable using gradients from Graph Dictionary Learning [38]
