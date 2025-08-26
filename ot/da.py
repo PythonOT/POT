@@ -8,7 +8,7 @@ Domain adaptation with optimal transport
 #         Michael Perrot <michael.perrot@univ-st-etienne.fr>
 #         Nathalie Gayraud <nat.gayraud@gmail.com>
 #         Ievgen Redko <ievgen.redko@univ-st-etienne.fr>
-#         Eloi Tanguy <eloi.tanguy@u-paris.fr>
+#         Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
 #
 # License: MIT License
 

@@ -47,7 +47,7 @@ The contributors to this library are:
 * [Cédric Vincent-Cuaz](https://github.com/cedricvincentcuaz) (Graph Dictionary Learning, FGW,
   semi-relaxed FGW, quantized FGW, partial FGW)
 * [Eloi Tanguy](https://github.com/eloitanguy) (Generalized Wasserstein
-  Barycenters, GMMOT)
+  Barycenters, GMMOT, Barycenters for General Transport Costs)
 * [Camille Le Coz](https://www.linkedin.com/in/camille-le-coz-8593b91a1/) (EMD2 debug)
 * [Eduardo Fernandes Montesuma](https://eddardd.github.io/my-personal-blog/) (Free support sinkhorn barycenter)
 * [Theo Gnassounou](https://github.com/tgnassou) (OT between Gaussian distributions)

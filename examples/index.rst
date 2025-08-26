@@ -92,6 +92,7 @@ OT on Gaussian and Gaussian Mixture Models
     ../../examples/gaussian_gmm/plot_*.py
     ../../examples/domain-adaptation/plot_otda_linear_mapping.py
     ../../examples/barycenters/plot_gaussian_barycenter.py
+    ../../examples/barycenters/plot_gmm_barycenter.py
 
 Factored an Low-Rank OT
 ------------------------------------
