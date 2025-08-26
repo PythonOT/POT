@@ -26,7 +26,7 @@ jobs:
         python -m pip install --user --upgrade --progress-bar off pip
         python -m pip install --user --upgrade --progress-bar off -r requirements_all.txt
         python -m pip install --user --upgrade --progress-bar off -r docs/requirements.txt
-        python -m pip install --user --upgrade --progress-bar off ipython "https://api.github.com/repos/sphinx-gallery/sphinx-gallery/zipball/master" memory_profiler
+        python -m pip install --user --upgrade --progress-bar off ipython sphinx-gallery memory_profiler
         python -m pip install --user -e .
     # Look at what we have and fail early if there is some library conflict
     - name: Check installation
