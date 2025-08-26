@@ -681,8 +681,8 @@ def free_support_barycenter_generic_costs(
                 x = x_init.clone().detach().requires_grad_(True)
                 solver = Adam if ground_bary_solver == "Adam" else SGD
                 opt = solver([x], lr=ground_bary_lr)
-                for _ in range(ground_bary_numItermax):
-                    x_prev = x.data.clone()
+                loss_prev = None
+                for i in range(ground_bary_numItermax):
                     opt.zero_grad()
                     # inefficient cost computation but compatible
                     # with the choice of cost_list[k] giving the cost matrix
@@ -693,7 +693,11 @@ def free_support_barycenter_generic_costs(
                     )
                     loss.backward()
                     opt.step()
-                    diff = torch.sum((x.data - x_prev) ** 2)
+                    if i == 0:
+                        diff = ground_bary_stopThr + 1.0
+                    else:
+                        diff = torch.sum((loss.item() - loss_prev) ** 2)
+                    loss_prev = loss.item()
                     if diff < ground_bary_stopThr:
                         break
                 return x.detach()

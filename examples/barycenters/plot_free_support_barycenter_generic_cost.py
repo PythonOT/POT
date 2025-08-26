@@ -64,8 +64,8 @@ torch.manual_seed(42)
 n = 136  # number of points of the barycentre
 d = 2  # dimensions of the original measure
 K = 4  # number of measures to barycentre
-m = 50  # number of points of the measures
-b_list = [torch.ones(m) / m] * K  # weights of the 4 measures
+m_list = [49, 50, 51, 51]  # number of points of the measures
+b_list = [torch.ones(m) / m for m in m_list]  # weights of the 4 measures
 weights = torch.ones(K) / K  # weights for the barycentre
 stop_threshold = 1e-20  # stop threshold for B and for fixed-point algo
 
@@ -94,7 +94,7 @@ P_list = [
 # onto the K circles
 Y_list = []
 for k in range(K):
-    t = torch.rand(m) * 2 * np.pi
+    t = torch.rand(m_list[k]) * 2 * np.pi
     X_temp = 0.5 * torch.stack([torch.cos(t), torch.sin(t)], axis=1)
     X_temp = X_temp + torch.tensor([0.5, 0.5])[None, :]
     Y_list.append(P_list[k](X_temp))
@@ -244,8 +244,10 @@ axes[1].legend()
 plt.tight_layout()
 
 # %%
-# Plot energy convergence
-fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+# Plot energy convergence and support sizes
+size = 3
+n_plots = 4
+fig, axes = plt.subplots(1, n_plots, figsize=(size * n_plots, size))
 V_list = [V.item() for V in log_dict["V_list"]]
 V_list2 = [V.item() for V in log_dict2["V_list"]]
 diff = np.array(V_list2) - np.array(V_list)
@@ -276,6 +278,23 @@ axes[2].set_xlabel("Iteration")
 axes[2].set_ylabel("$V_{\\mathrm{heuristic}} - V_{\\mathrm{true}}$")
 axes[2].set_yscale("log")
 axes[2].xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+
+# plot support sizes
+support_sizes = [Xi.shape[0] for Xi in log_dict["X_list"]]
+support_sizes2 = [Xi.shape[0] for Xi in log_dict2["X_list"]]
+
+axes[3].plot(support_sizes, color="C0", lw=5, alpha=0.6, label="True FP")
+axes[3].scatter(
+    range(len(support_sizes)), support_sizes, color="blue", alpha=0.8, s=100
+)
+axes[3].plot(support_sizes2, color="red", lw=5, alpha=0.6, label="Heur. FP")
+axes[3].scatter(
+    range(len(support_sizes2)), support_sizes2, color="red", alpha=0.8, s=100
+)
+axes[3].legend(loc="best")
+axes[3].set_xlabel("Iteration")
+axes[3].xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+axes[3].set_title("Support Sizes")
 
 plt.tight_layout()
 plt.show()
