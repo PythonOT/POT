@@ -561,6 +561,7 @@ def test_free_support_barycenter_generic_costs_auto_ground_bary():
         cost_list,
         ground_bary,
         numItermax=1,
+        stopThr=-1,
     )
 
     X2, log2 = ot.lp.free_support_barycenter_generic_costs(
@@ -573,6 +574,7 @@ def test_free_support_barycenter_generic_costs_auto_ground_bary():
         ground_bary_stopThr=1e-20,
         ground_bary_numItermax=100,
         numItermax=10,
+        stopThr=-1,
         log=True,
     )
 
@@ -589,6 +591,7 @@ def test_free_support_barycenter_generic_costs_auto_ground_bary():
         ground_bary_numItermax=100,
         numItermax=10,
         ground_bary_solver="Adam",
+        stopThr=-1,
     )
 
     np.testing.assert_allclose(X2.numpy(), X3.numpy(), rtol=1e-3, atol=1e-3)
