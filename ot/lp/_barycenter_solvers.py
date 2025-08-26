@@ -696,7 +696,7 @@ def free_support_barycenter_generic_costs(
                     if i == 0:
                         diff = ground_bary_stopThr + 1.0
                     else:
-                        diff = (loss.item() - loss_prev) ** 2
+                        diff = loss_prev - loss.item()
                     loss_prev = loss.item()
                     if diff < ground_bary_stopThr:
                         break
