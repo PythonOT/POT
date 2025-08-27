@@ -15,6 +15,8 @@ Illustration of Sinkhorn barycenter calculation between empirical distributions 
 #
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 2
+
 import numpy as np
 import matplotlib.pyplot as plt
 import ot

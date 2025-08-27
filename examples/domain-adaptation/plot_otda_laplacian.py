@@ -76,7 +76,7 @@ pl.tight_layout()
 # Fig 2 : plot optimal couplings and transported samples
 # ------------------------------------------------------
 
-param_img = {"interpolation": "nearest"}
+param_img = {"interpolation": "nearest", "cmap": "gray_r"}
 
 pl.figure(2, figsize=(15, 8))
 pl.subplot(2, 3, 1)

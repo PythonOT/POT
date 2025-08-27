@@ -12,6 +12,11 @@ It is currently maintained by :
 
 ## Contributors
 
+<a href="https://github.com/PythonOT/POT/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=PythonOT/POT" />
+</a>
+
+
 The contributors to this library are:
 
 * [Rémi Flamary](http://remi.flamary.com/) (EMD wrapper, Pytorch backend, DA
@@ -42,7 +47,7 @@ The contributors to this library are:
 * [Cédric Vincent-Cuaz](https://github.com/cedricvincentcuaz) (Graph Dictionary Learning, FGW,
   semi-relaxed FGW, quantized FGW, partial FGW)
 * [Eloi Tanguy](https://github.com/eloitanguy) (Generalized Wasserstein
-  Barycenters, GMMOT)
+  Barycenters, GMMOT, Barycenters for General Transport Costs)
 * [Camille Le Coz](https://www.linkedin.com/in/camille-le-coz-8593b91a1/) (EMD2 debug)
 * [Eduardo Fernandes Montesuma](https://eddardd.github.io/my-personal-blog/) (Free support sinkhorn barycenter)
 * [Theo Gnassounou](https://github.com/tgnassou) (OT between Gaussian distributions)
@@ -53,6 +58,7 @@ The contributors to this library are:
 * [Laurène David](https://github.com/laudavid) (Low rank sinkhorn, Low rank Gromov-Wasserstein samples)
 * [Julie Delon](https://judelo.github.io/) (GMM OT)
 * [Samuel Boïté](https://samuelbx.github.io/) (GMM OT)
+
 
 ## Acknowledgments
 

@@ -580,7 +580,7 @@ def linear_sliced_wasserstein_sphere(
     seed=None,
     log=False,
 ):
-    r"""Computes the linear spherical sliced wasserstein distance from :ref:`[78] <references-lssot>`.
+    r"""Computes the linear spherical sliced wasserstein distance from :ref:`[79] <references-lssot>`.
 
     General loss returned:
 
@@ -628,7 +628,7 @@ def linear_sliced_wasserstein_sphere(
     .. _references-lssot:
     References
     ----------
-    .. [78] Liu, X., Bai, Y., Martín, R. D., Shi, K., Shahbazi, A., Landman, B. A., Chang, C., & Kolouri, S. (2025). Linear Spherical Sliced Optimal Transport: A Fast Metric for Comparing Spherical Data. International Conference on Learning Representations.
+    .. [79] Liu, X., Bai, Y., Martín, R. D., Shi, K., Shahbazi, A., Landman, B. A., Chang, C., & Kolouri, S. (2025). Linear Spherical Sliced Optimal Transport: A Fast Metric for Comparing Spherical Data. International Conference on Learning Representations.
     """
     d = X_s.shape[-1]
 

@@ -1103,7 +1103,7 @@ def linear_circular_embedding(x, u_values, u_weights=None, require_sort=True):
     r"""Returns the embedding :math:`\hat{\mu}(x)` of Linear Circular OT with reference
     :math:`\eta=\mathrm{Unif}(S^1)` evaluated in :math:`x`.
 
-    For any :math:`x\in [0,1[`, the embedding is given by (see :ref:`[76] <references-lcot>`)
+    For any :math:`x\in [0,1[`, the embedding is given by (see :ref:`[78] <references-lcot>`)
 
     .. math``
         \hat{\mu}(x) = F_{\mu}^{-1}\big(x - \int z\mathrm{d}\mu(z) + \frac12) - x.
@@ -1125,7 +1125,7 @@ def linear_circular_embedding(x, u_values, u_weights=None, require_sort=True):
     .. _references-lcot:
     References
     ----------
-    .. [77] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). LCOT: Linear Circular Optimal Transport. International Conference on Learning Representations.
+    .. [78] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). LCOT: Linear Circular Optimal Transport. International Conference on Learning Representations.
     """
     if u_weights is not None:
         nx = get_backend(u_values, u_weights)
@@ -1161,7 +1161,7 @@ def linear_circular_embedding(x, u_values, u_weights=None, require_sort=True):
 
 
 def linear_circular_ot(u_values, v_values=None, u_weights=None, v_weights=None):
-    r"""Computes the Linear Circular Optimal Transport distance from :ref:`[76] <references-lcot>` using :math:`\eta=\mathrm{Unif}(S^1)`
+    r"""Computes the Linear Circular Optimal Transport distance from :ref:`[78] <references-lcot>` using :math:`\eta=\mathrm{Unif}(S^1)`
     as reference measure.
     Samples need to be in :math:`S^1\cong [0,1[`. If they are on :math:`\mathbb{R}`,
     takes the value modulo 1.
@@ -1203,7 +1203,7 @@ def linear_circular_ot(u_values, v_values=None, u_weights=None, v_weights=None):
     .. _references-lcot:
     References
     ----------
-    .. [77] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). LCOT: Linear Circular Optimal Transport. International Conference on Learning Representations.
+    .. [78] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). LCOT: Linear Circular Optimal Transport. International Conference on Learning Representations.
     """
     if u_weights is not None:
         nx = get_backend(u_values, u_weights)
