@@ -108,7 +108,7 @@ entropic_gw_loss = np.round(log["gw_dist"], 3)
 
 # Plot entropic gw
 pl.figure(2)
-pl.imshow(gw, interpolation="nearest", aspect="auto")
+pl.imshow(gw, interpolation="nearest", aspect="auto", cmap="gray_r")
 pl.title("Entropic Gromov-Wasserstein (loss={})".format(entropic_gw_loss))
 pl.show()
 
@@ -169,11 +169,11 @@ for rank in list_rank:
 pl.figure(3, figsize=(10, 4))
 
 pl.subplot(1, 2, 1)
-pl.imshow(list_P_GW[0], interpolation="nearest", aspect="auto")
+pl.imshow(list_P_GW[0], interpolation="nearest", aspect="auto", cmap="gray_r")
 pl.title("Low rank GW (rank=10, loss={})".format(list_loss_GW[0]))
 
 pl.subplot(1, 2, 2)
-pl.imshow(list_P_GW[1], interpolation="nearest", aspect="auto")
+pl.imshow(list_P_GW[1], interpolation="nearest", aspect="auto", cmap="gray_r")
 pl.title("Low rank GW (rank=50, loss={})".format(list_loss_GW[1]))
 
 pl.tight_layout()

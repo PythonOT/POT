@@ -1,6 +1,6 @@
 """Tests for module gaussian"""
 
-# Author: Eloi Tanguy <eloi.tanguy@u-paris>
+# Author: Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
 #         Remi Flamary <remi.flamary@polytehnique.edu>
 #         Julie Delon <julie.delon@math.cnrs.fr>
 #
@@ -17,6 +17,7 @@ from ot.gmm import (
     gmm_ot_plan,
     gmm_ot_apply_map,
     gmm_ot_plan_density,
+    gmm_barycenter_fixed_point,
 )
 
 try:
@@ -193,3 +194,54 @@ def test_gmm_ot_plan_density(nx):
 
     with pytest.raises(AssertionError):
         gmm_ot_plan_density(x[:, 1:], y, m_s, m_t, C_s, C_t, w_s, w_t)
+
+
+@pytest.skip_backend("tf")  # skips because of array assignment
+@pytest.skip_backend("jax")
+def test_gmm_barycenter_fixed_point(nx):
+    m_s, m_t, C_s, C_t, w_s, w_t = get_gmms(nx)
+    means_list = [m_s, m_t]
+    covs_list = [C_s, C_t]
+    w_list = [w_s, w_t]
+    n_iter = 3
+    n = m_s.shape[0]  # number of components of barycenter
+    means_init = m_s
+    covs_init = C_s
+    weights = nx.ones(2, type_as=m_s) / 2  # barycenter coefficients
+
+    # with euclidean barycentric projections
+    means, covs = gmm_barycenter_fixed_point(
+        means_list, covs_list, w_list, means_init, covs_init, weights, iterations=n_iter
+    )
+
+    # with bures barycentric projections and assigned weights to uniform
+    means_bures_proj, covs_bures_proj, log = gmm_barycenter_fixed_point(
+        means_list,
+        covs_list,
+        w_list,
+        means_init,
+        covs_init,
+        weights,
+        iterations=n_iter,
+        w_bar=nx.ones(n, type_as=m_s) / n,
+        barycentric_proj_method="bures",
+        log=True,
+    )
+
+    assert "means_its" in log
+    assert "covs_its" in log
+
+    assert np.allclose(means, means_bures_proj, atol=1e-6)
+    assert np.allclose(covs, covs_bures_proj, atol=1e-6)
+
+    with pytest.raises(ValueError):
+        gmm_barycenter_fixed_point(
+            means_list,
+            covs_list,
+            w_list,
+            means_init,
+            covs_init,
+            weights,
+            iterations=n_iter,
+            barycentric_proj_method="unknown",
+        )

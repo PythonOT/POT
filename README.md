@@ -14,21 +14,36 @@ learning.
 
 Website and documentation: [https://PythonOT.github.io/](https://PythonOT.github.io/)
 
-Source Code (MIT): [https://github.com/PythonOT/POT](https://github.com/PythonOT/POT)
+Source Code (MIT):
+[https://github.com/PythonOT/POT](https://github.com/PythonOT/POT)
 
-POT provides the following generic OT solvers (links to examples):
+
+POT has the following main features:
+* A large set of differentiable solvers for optimal transport problems, including:
+  *  Exact linear OT, entropic and quadratic regularized OT, 
+  *  Gromov-Wasserstein (GW) distances, Fused GW distances and variants of
+     quadratic OT,
+  *  Unbalanced and partial OT for different divergences,
+*  OT barycenters (Wasserstein and GW) for fixed and free support,
+*  Fast OT solvers in 1D, on the circle and between Gaussian Mixture Models (GMMs),
+*  Many ML related solvers, such as domain adaptation, optimal transport mapping
+   estimation, subspace learning, Graph Neural Networks (GNNs) layers.
+*  Several backends for easy use with Pytorch, Jax, Tensorflow, Numpy and Cupy arrays.
+
+### Implemented Features
+
+POT provides the following generic OT solvers:
 
 * [OT Network Simplex solver](https://pythonot.github.io/auto_examples/plot_OT_1D.html) for the linear program/ Earth Movers Distance [1] .
 * [Conditional gradient](https://pythonot.github.io/auto_examples/plot_optim_OTreg.html) [6] and [Generalized conditional gradient](https://pythonot.github.io/auto_examples/plot_optim_OTreg.html) for regularized OT [7].
 * Entropic regularization OT solver with [Sinkhorn Knopp
   Algorithm](https://pythonot.github.io/auto_examples/plot_OT_1D.html) [2] ,
-  stabilized version [9] [10] [34], lazy CPU/GPU solver from geomloss [60] [61], greedy Sinkhorn [22] and [Screening
-  Sinkhorn [26]
-  ](https://pythonot.github.io/auto_examples/plot_screenkhorn_1D.html).
+  stabilized version [9] [10] [34], lazy CPU/GPU solver from geomloss [60] [61], greedy Sinkhorn [22] and Screening
+  Sinkhorn [26].
 * Bregman projections for [Wasserstein barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html) [3], [convolutional barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_convolutional_barycenter.html) [21]  and unmixing [4].
 * Sinkhorn divergence [23] and entropic regularization OT from empirical data.
 * Debiased Sinkhorn barycenters [Sinkhorn divergence barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_debiased_barycenter.html) [37]
-* [Smooth optimal transport solvers](https://pythonot.github.io/auto_examples/plot_OT_1D_smooth.html) (dual and semi-dual) for KL and squared L2 regularizations [17].
+* Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularizations [17].
 * Weak OT solver between empirical distributions [39]
 * Non regularized [Wasserstein barycenters [16] ](https://pythonot.github.io/auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html) with LP solver (only small scale).
 * [Gromov-Wasserstein distances](https://pythonot.github.io/auto_examples/gromov/plot_gromov.html) and [GW barycenters](https://pythonot.github.io/auto_examples/gromov/plot_gromov_barycenter.html)  (exact [13] and regularized [12,51]), differentiable using gradients from Graph Dictionary Learning [38]
@@ -42,18 +57,21 @@ POT provides the following generic OT solvers (links to examples):
 * [One dimensional Unbalanced OT](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_UOT_1D.html) with KL relaxation and [barycenter](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_UOT_barycenter_1D.html) [10, 25]. Also [exact unbalanced OT](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_unbalanced_ot.html) with KL and quadratic regularization and the [regularization path of UOT](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_regpath.html) [41]
 * [Partial Wasserstein and Gromov-Wasserstein](https://pythonot.github.io/auto_examples/unbalanced-partial/plot_partial_wass_and_gromov.html) and [Partial Fused Gromov-Wasserstein](https://pythonot.github.io/auto_examples/gromov/plot_partial_fgw.html) (exact [29] and entropic [3] formulations).
 * [Sliced Wasserstein](https://pythonot.github.io/auto_examples/sliced-wasserstein/plot_variance.html) [31, 32] and Max-sliced Wasserstein [35] that can be used for gradient flows [36].
-* [Wasserstein distance on the circle](https://pythonot.github.io/auto_examples/plot_compute_wasserstein_circle.html) [44, 45]
-* [Spherical Sliced Wasserstein](https://pythonot.github.io/auto_examples/sliced-wasserstein/plot_variance_ssw.html) [46]
+* [Wasserstein distance on the
+  circle](https://pythonot.github.io/auto_examples/sliced-wasserstein/plot_compute_wasserstein_circle.html)
+  [44, 45] and  [Spherical Sliced Wasserstein](https://pythonot.github.io/auto_examples/sliced-wasserstein/plot_variance_ssw.html) [46]
 * [Graph Dictionary Learning solvers](https://pythonot.github.io/auto_examples/gromov/plot_gromov_wasserstein_dictionary_learning.html) [38].
 * [Semi-relaxed (Fused) Gromov-Wasserstein divergences](https://pythonot.github.io/auto_examples/gromov/plot_semirelaxed_fgw.html) with corresponding [barycenter solvers](https://pythonot.github.io/auto_examples/gromov/plot_semirelaxed_gromov_wasserstein_barycenter.hmtl) (exact and regularized [48]).
 * [Quantized (Fused) Gromov-Wasserstein distances](https://pythonot.github.io/auto_examples/gromov/plot_quantized_gromov_wasserstein.html) [68].
 * [Efficient Discrete Multi Marginal Optimal Transport Regularization](https://pythonot.github.io/auto_examples/others/plot_demd_gradient_minimize.html) [50].
 * [Several backends](https://pythonot.github.io/quickstart.html#solving-ot-with-multiple-backends) for easy use of POT with  [Pytorch](https://pytorch.org/)/[jax](https://github.com/google/jax)/[Numpy](https://numpy.org/)/[Cupy](https://cupy.dev/)/[Tensorflow](https://www.tensorflow.org/) arrays.
 * [Smooth Strongly Convex Nearest Brenier Potentials](https://pythonot.github.io/auto_examples/others/plot_SSNB.html#sphx-glr-auto-examples-others-plot-ssnb-py) [58], with an extension to bounding potentials using [59].
-* [Gaussian Mixture Model OT](https://pythonot.github.io/auto_examples/others/plot_GMMOT_plan.html#sphx-glr-auto-examples-others-plot-gmmot-plan-py) [69].
+* [Gaussian Mixture Model OT](https://pythonot.github.io/auto_examples/gaussian_gmm/plot_GMMOT_plan.html#sphx-glr-auto-examples-others-plot-gmmot-plan-py) [69].
 * [Co-Optimal Transport](https://pythonot.github.io/auto_examples/others/plot_COOT.html) [49] and
 [unbalanced Co-Optimal Transport](https://pythonot.github.io/auto_examples/others/plot_learning_weights_with_COOT.html) [71].
 * Fused unbalanced Gromov-Wasserstein [70].
+* [Optimal Transport Barycenters for Generic Costs](https://pythonot.github.io/auto_examples/barycenters/plot_free_support_barycenter_generic_cost.html) [77]
+* [Barycenters between Gaussian Mixture Models](https://pythonot.github.io/auto_examples/barycenters/plot_gmm_barycenter.html) [69, 77]
 
 POT provides the following Machine Learning related solvers:
 
@@ -173,6 +191,12 @@ import ot
 ```python
 # a,b are 1D histograms (sum to 1 and positive)
 # M is the ground cost matrix
+
+# With the unified  API :
+Wd = ot.solve(M, a, b).value # exact linear program
+Wd_reg = ot.solve(M, a, b, reg=reg).value # entropic regularized OT
+
+# With the old API :
 Wd = ot.emd2(a, b, M) # exact linear program
 Wd_reg = ot.sinkhorn2(a, b, M, reg) # entropic regularized OT
 # if b is a matrix compute all distances to a and return a vector
@@ -183,8 +207,27 @@ Wd_reg = ot.sinkhorn2(a, b, M, reg) # entropic regularized OT
 ```python
 # a,b are 1D histograms (sum to 1 and positive)
 # M is the ground cost matrix
+
+# With the unified API :
+T = ot.solve(M, a, b).plan # exact linear program
+T_reg = ot.solve(M, a, b, reg=reg).plan # entropic regularized OT
+
+# With the old API :
 T = ot.emd(a, b, M) # exact linear program
 T_reg = ot.sinkhorn(a, b, M, reg) # entropic regularized OT
+```
+
+* Compute OT on empirical distributions
+
+```python
+# X and Y are two 2D arrays of shape (n_samples, n_features)
+
+# with squared euclidean metric
+T = ot.solve_sample(X, Y).plan # exact linear program
+T_reg = ot.solve_sample(X, Y, reg=reg).plan # entropic regularized OT
+
+Wass_2 = ot.solve_sample(X, Y).value # Squared Wasserstein_2
+Wass_1 = ot.solve_sample(X, Y, metric='euclidean').value # Wasserstein 1
 ```
 
 * Compute Wasserstein barycenter
@@ -209,7 +252,11 @@ It is currently maintained by :
 * [Rémi Flamary](https://remi.flamary.com/)
 * [Cédric Vincent-Cuaz](https://cedricvincentcuaz.github.io/)
 
-The numerous contributors to this library are listed [here](CONTRIBUTORS.md).
+The POT contributors to this library are listed [here](CONTRIBUTORS.md).
+
+<a href="https://github.com/PythonOT/POT/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=PythonOT/POT" />
+</a>
 
 POT has benefited from the financing or manpower from the following partners:
 
@@ -391,3 +438,9 @@ Artificial Intelligence.
 [75] Altschuler, J., Chewi, S., Gerber, P. R., & Stromme, A. (2021). [Averaging on the Bures-Wasserstein manifold: dimension-free convergence of gradient descent](https://papers.neurips.cc/paper_files/paper/2021/hash/b9acb4ae6121c941324b2b1d3fac5c30-Abstract.html). Advances in Neural Information Processing Systems, 34, 22132-22145.
 
 [76] Chapel, L., Tavenard, R. (2025). [One for all and all for one: Efficient computation of partial Wasserstein distances on the line](https://iclr.cc/virtual/2025/poster/28547). In International Conference on Learning Representations.
+
+[77] Tanguy, Eloi and Delon, Julie and Gozlan, Nathaël (2024). [Computing Barycentres of Measures for Generic Transport Costs](https://arxiv.org/abs/2501.04016). arXiv preprint 2501.04016 (2024)
+
+[78] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). [LCOT: Linear Circular Optimal Transport](https://openreview.net/forum?id=49z97Y9lMq). International Conference on Learning Representations.
+
+[79] Liu, X., Bai, Y., Martín, R. D., Shi, K., Shahbazi, A., Landman, B. A., Chang, C., & Kolouri, S. (2025). [Linear Spherical Sliced Optimal Transport: A Fast Metric for Comparing Spherical Data](https://openreview.net/forum?id=fgUFZAxywx). International Conference on Learning Representations.
