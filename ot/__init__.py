@@ -50,6 +50,7 @@ from .lp import (
     binary_search_circle,
     wasserstein_circle,
     semidiscrete_wasserstein2_unif_circle,
+    linear_circular_ot,
 )
 from .bregman import sinkhorn, sinkhorn2, barycenter
 from .unbalanced import (
@@ -64,6 +65,7 @@ from .sliced import (
     max_sliced_wasserstein_distance,
     sliced_wasserstein_sphere,
     sliced_wasserstein_sphere_unif,
+    linear_sliced_wasserstein_sphere,
 )
 from .gromov import (
     gromov_wasserstein,
@@ -115,6 +117,7 @@ __all__ = [
     "sliced_wasserstein_distance",
     "sliced_wasserstein_sphere",
     "unbalanced_sliced_ot",
+    "linear_sliced_wasserstein_sphere",
     "gromov_wasserstein",
     "gromov_wasserstein2",
     "gromov_barycenters",
@@ -139,6 +142,7 @@ __all__ = [
     "binary_search_circle",
     "wasserstein_circle",
     "semidiscrete_wasserstein2_unif_circle",
+    "linear_circular_ot",
     "sliced_wasserstein_sphere_unif",
     "lowrank_sinkhorn",
     "lowrank_gromov_wasserstein_samples",

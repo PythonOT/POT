@@ -44,6 +44,8 @@ where all the marginal distributions are uniform.
 #         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 4
+
 from matplotlib.patches import ConnectionPatch
 import torch
 import numpy as np

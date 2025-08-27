@@ -33,8 +33,12 @@ with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as f:
 
 # clean cython output is clean is called
 if "clean" in sys.argv[1:]:
-    if os.path.isfile("ot/lp/emd_wrap.cpp"):
-        os.remove("ot/lp/emd_wrap.cpp")
+    for cpp_file in [
+        "ot/lp/emd_wrap.cpp",
+        "ot/partial/partial_cython.cpp",
+    ]:
+        if os.path.isfile(cpp_file):
+            os.remove(cpp_file)
 
 # add platform dependant optional compilation argument
 openmp_supported, flags = check_openmp_support()
@@ -62,17 +66,26 @@ setup(
     url="https://github.com/PythonOT/POT",
     packages=find_packages(exclude=["benchmarks"]),
     ext_modules=cythonize(
-        Extension(
-            name="ot.lp.emd_wrap",
-            sources=[
-                "ot/lp/emd_wrap.pyx",
-                "ot/lp/EMD_wrapper.cpp",
-            ],  # cython/c++ src files
-            language="c++",
-            include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/lp")],
-            extra_compile_args=compile_args,
-            extra_link_args=link_args,
-        )
+        [
+            Extension(
+                name="ot.lp.emd_wrap",
+                sources=[
+                    "ot/lp/emd_wrap.pyx",
+                    "ot/lp/EMD_wrapper.cpp",
+                ],  # cython/c++ src files
+                language="c++",
+                include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/lp")],
+                extra_compile_args=compile_args,
+                extra_link_args=link_args,
+            ),
+            Extension(
+                name="ot.partial.partial_cython",
+                sources=["ot/partial/partial_cython.pyx"],
+                include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/partial")],
+                extra_compile_args=compile_args,
+                language="c++",
+            ),
+        ]
     ),
     platforms=["linux", "macosx", "windows"],
     download_url="https://github.com/PythonOT/POT/archive/{}.tar.gz".format(

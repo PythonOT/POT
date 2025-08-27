@@ -14,6 +14,9 @@ from ._barycenter_solvers import (
     barycenter,
     free_support_barycenter,
     generalized_free_support_barycenter,
+    free_support_barycenter_generic_costs,
+    ot_barycenter_energy,
+    NorthWestMMGluing,
 )
 from ..utils import check_number_threads
 
@@ -28,6 +31,7 @@ from .solver_1d import (
     binary_search_circle,
     wasserstein_circle,
     semidiscrete_wasserstein2_unif_circle,
+    linear_circular_ot,
 )
 
 __all__ = [
@@ -46,7 +50,11 @@ __all__ = [
     "binary_search_circle",
     "wasserstein_circle",
     "semidiscrete_wasserstein2_unif_circle",
+    "linear_circular_ot",
     "dmmot_monge_1dgrid_loss",
     "dmmot_monge_1dgrid_optimize",
     "check_number_threads",
+    "free_support_barycenter_generic_costs",
+    "NorthWestMMGluing",
+    "ot_barycenter_energy",
 ]
