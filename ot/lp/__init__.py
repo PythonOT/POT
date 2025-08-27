@@ -29,6 +29,7 @@ from .solver_1d import (
     binary_search_circle,
     wasserstein_circle,
     semidiscrete_wasserstein2_unif_circle,
+    linear_circular_ot,
 )
 
 __all__ = [
@@ -45,6 +46,7 @@ __all__ = [
     "binary_search_circle",
     "wasserstein_circle",
     "semidiscrete_wasserstein2_unif_circle",
+    "linear_circular_ot",
     "dmmot_monge_1dgrid_loss",
     "dmmot_monge_1dgrid_optimize",
     "check_number_threads",
