@@ -91,10 +91,26 @@ pl.title("Distributions and transported mass for UOT")
 
 
 ##############################################################################
+# Solve Unbalanced OT
+# -------------------------
+
+alpha = 1.0  # Unbalanced KL relaxation parameter
+Gs = ot.unbalanced.mm_unbalanced(a, b, M, alpha, verbose=False)
+
+pl.figure(4, figsize=(6.4, 3))
+pl.plot(x, a, "b", label="Source distribution")
+pl.plot(x, b, "r", label="Target distribution")
+pl.fill(x, Gs.sum(1), "b", alpha=0.5, label="Transported source")
+pl.fill(x, Gs.sum(0), "r", alpha=0.5, label="Transported target")
+pl.legend(loc="upper right")
+pl.title("Distributions and transported mass for UOT")
+
+
+##############################################################################
 # Solve 1D UOT with Frank-Wolfe (TODO: check the behaviour)
 # -----------------------------
 
-alpha = 1000.0  # Unbalanced KL relaxation parameter
+alpha = 10000.0  # Unbalanced KL relaxation parameter
 
 a_reweighted, b_reweighted, loss = ot.unbalanced.uot_1d(
     x, x, alpha, u_weights=a, v_weights=b
@@ -109,5 +125,92 @@ pl.plot(x, a, "b", label="Source distribution")
 pl.plot(x, b, "r", label="Target distribution")
 pl.fill(x, a_reweighted, "b", alpha=0.5, label="Transported source")
 pl.fill(x, b_reweighted, "r", alpha=0.5, label="Transported target")
+pl.legend(loc="upper right")
+pl.title("Distributions and transported mass for UOT")
+
+
+##############################################################################
+# Solve 1D UOT with Frank-Wolfe (TODO: check the behaviour)
+# -----------------------------
+import torch
+
+alpha = 10000.0  # Unbalanced KL relaxation parameter
+
+a_reweighted, b_reweighted, loss = ot.unbalanced.unbalanced_sliced_ot(
+    torch.tensor(x.reshape((n, 1)), dtype=torch.float64),
+    torch.tensor(x.reshape((n, 1)), dtype=torch.float64),
+    alpha,
+    torch.tensor(a, dtype=torch.float64),
+    torch.tensor(b, dtype=torch.float64),
+    mode="backprop",
+)
+
+
+# plot the transported mass
+# -------------------------
+
+pl.figure(4, figsize=(6.4, 3))
+pl.plot(x, a, "b", label="Source distribution")
+pl.plot(x, b, "r", label="Target distribution")
+pl.fill(x, a_reweighted, "b", alpha=0.5, label="Transported source")
+pl.fill(x, b_reweighted, "r", alpha=0.5, label="Transported target")
+pl.legend(loc="upper right")
+pl.title("Distributions and transported mass for UOT")
+
+
+##############################################################################
+# Solve 1D UOT with Frank-Wolfe (TODO: check the behaviour)
+# -----------------------------
+import torch
+
+alpha = 10000.0  # (10000, 10000)  # Unbalanced KL relaxation parameter
+
+a_reweighted, b_reweighted, loss = ot.unbalanced.unbalanced_sliced_ot(
+    torch.tensor(x.reshape((n, 1)), dtype=torch.float64),
+    torch.tensor(x.reshape((n, 1)), dtype=torch.float64),
+    alpha,
+    torch.tensor(a, dtype=torch.float64),
+    torch.tensor(b, dtype=torch.float64),
+    mode="backprop",
+)
+
+
+# plot the transported mass
+# -------------------------
+
+pl.figure(4, figsize=(6.4, 3))
+pl.plot(x, a, "b", label="Source distribution")
+pl.plot(x, b, "r", label="Target distribution")
+pl.fill(x, a_reweighted.detach().numpy(), "b", alpha=0.5, label="Transported source")
+pl.fill(x, b_reweighted.detach().numpy(), "r", alpha=0.5, label="Transported target")
+pl.legend(loc="upper right")
+pl.title("Distributions and transported mass for UOT")
+
+
+##############################################################################
+# Solve 1D UOT with Frank-Wolfe (TODO: check the behaviour)
+# -----------------------------
+import torch
+
+alpha = 10000.0  # (10000, 10000)  # Unbalanced KL relaxation parameter
+
+a_reweighted, b_reweighted, loss = ot.unbalanced.unbalanced_sliced_ot(
+    torch.tensor(x.reshape((n, 1)), dtype=torch.float32),
+    torch.tensor(x.reshape((n, 1)), dtype=torch.float32),
+    alpha,
+    torch.tensor(a, dtype=torch.float32),
+    torch.tensor(b, dtype=torch.float32),
+    mode="backprop",
+)
+
+
+# plot the transported mass
+# -------------------------
+
+pl.figure(4, figsize=(6.4, 3))
+pl.plot(x, a, "b", label="Source distribution")
+pl.plot(x, b, "r", label="Target distribution")
+pl.fill(x, a_reweighted.detach().numpy(), "b", alpha=0.5, label="Transported source")
+pl.fill(x, b_reweighted.detach().numpy(), "r", alpha=0.5, label="Transported target")
 pl.legend(loc="upper right")
 pl.title("Distributions and transported mass for UOT")
