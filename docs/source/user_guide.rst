@@ -1217,3 +1217,6 @@ References
     couplings <http://proceedings.mlr.press/v89/forrow19a/forrow19a.pdf>`_. In
     The 22nd International Conference on Artificial Intelligence and Statistics
     (pp. 2454-2465). PMLR.
+
+.. [41] Xu, H., Luo, D., & Carin, L. (2019). `Scalable Gromov-Wasserstein learning for graph partitioning and matching
+    <https://arxiv.org/abs/1906.03666>`_\ , Advances in neural information processing systems, 32.
