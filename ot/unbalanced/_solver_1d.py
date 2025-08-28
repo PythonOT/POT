@@ -14,11 +14,41 @@ from ..lp.solver_1d import emd_1d_dual, emd_1d_dual_backprop
 
 def rescale_potentials(f, g, a, b, rho1, rho2, nx):
     r"""
-    TODO
+    Find the optimal :math: `\lambda` in the translation invariant dual of UOT
+    with KL regularization and returns it, see Proposition 2 in :ref:`[73] <references-uot>`.
+
+    Parameters
+    ----------
+    f: array-like, shape (n, ...)
+        first dual potential
+    g: array-like, shape (m, ...)
+        second dual potential
+    a: array-like, shape (n, ...)
+        weights of the first empirical distribution
+    b: array-like, shape (m, ...)
+        weights of the second empirical distribution
+    rho1: float
+        Marginal relaxation term for the first marginal
+    rho2: float
+        Marginal relaxation term for the second marginal
+    nx: module
+        backend module
+
+    Returns
+    -------
+    transl: array-like, shape (...)
+        optimal translation
+
+    .. _references-uot:
+    References
+    ----------
+    .. [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
+       Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
+       In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
     """
     tau = (rho1 * rho2) / (rho1 + rho2)
-    num = nx.logsumexp(-f / rho1 + nx.log(a))
-    denom = nx.logsumexp(-g / rho2 + nx.log(b))
+    num = nx.logsumexp(-f / rho1 + nx.log(a), axis=0)
+    denom = nx.logsumexp(-g / rho2 + nx.log(b), axis=0)
     transl = tau * (num - denom)
     return transl
 
@@ -32,18 +62,18 @@ def uot_1d(
     p=1,
     require_sort=True,
     numItermax=10,
-    stopThr=1e-6,
     mode="icdf",
+    returnCost="linear",
     log=False,
 ):
     r"""
-    TODO, TOTEST, seems not very stable?
-
     Solves the 1D unbalanced OT problem with KL regularization.
     The function implements the Frank-Wolfe algorithm to solve the dual problem,
-    as proposed in [73].
+    as proposed in :ref:`[73] <references-uot>`.
 
-    TODO: add math equation
+    The unbalanced OT problem reads
+    .. math:
+        \mathrm{UOT}(\mu,\nu) = \min_{\gamma \in \mathcal{M}_{+}(\mathbb{R}\times\mathbb{R})} W_2^2(\pi^1_\#\gamma,\pi^2_\#\gamma) + \mathrm{reg_{m}}_1 \mathrm{KL}(\pi^1_\#\gamma|\mu) + \mathrm{reg_{m}}_2 \mathrm{KL}(\pi^2_\#\gamma|\nu).
 
     Parameters
     ----------
@@ -55,12 +85,12 @@ def uot_1d(
         Marginal relaxation term.
         If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
         then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
-        The balanced OT can be recovered using :math:`\mathrm{reg_{m}}=float("inf")`.
+        (TODO?) The balanced OT can be recovered using :math:`\mathrm{reg_{m}}=float("inf")`.
         For semi-relaxed case, use either
         :math:`\mathrm{reg_{m}}=(float("inf"), scalar)` or
         :math:`\mathrm{reg_{m}}=(scalar, float("inf"))`.
         If :math:`\mathrm{reg_{m}}` is an array,
-        it must have the same backend as input arrays `(a, b, M)`.
+        it must have the same backend as input arrays `(a, b)`.
     u_weights: array-like, shape (n, ...), optional
         weights of the first empirical distribution, if None then uniform weights are used
     v_weights: array-like, shape (m, ...), optional
@@ -74,6 +104,9 @@ def uot_1d(
     mode: str, optional
         "icdf" for inverse CDF, "backprop" for backpropagation mode.
         Default is "icdf".
+    returnCost: string, optional (default = "linear")
+        If `returnCost` = "linear", then return the linear part of the unbalanced OT loss.
+        If `returnCost` = "total", then return the total unbalanced OT loss.
     log: bool, optional
 
     Returns
@@ -83,8 +116,9 @@ def uot_1d(
     v_reweighted: array-like shape (m, ...)
         Second marginal reweighted
     loss: float/array-like, shape (...)
-        the batched 1D UOT
+        The batched 1D UOT
 
+    .. _references-uot:
     References
     ---------
     .. [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
@@ -128,15 +162,21 @@ def uot_1d(
         v_weights_sorted = nx.take_along_axis(v_weights, v_sorter, 0)
 
     f = nx.zeros(u_weights.shape, type_as=u_weights)
+    fd = nx.zeros(u_weights.shape, type_as=u_weights)
     g = nx.zeros(v_weights.shape, type_as=v_weights)
+    gd = nx.zeros(v_weights.shape, type_as=v_weights)
 
     for i in range(numItermax):
+        t = 2.0 / (2.0 + i - 1)
+        f = f + t * (fd - f)
+        g = g + t * (gd - g)
+
         transl = rescale_potentials(
             f, g, u_weights_sorted, v_weights_sorted, reg_m1, reg_m2, nx
         )
 
-        f = f + transl
-        g = g - transl
+        f = f + transl[None]
+        g = g - transl[None]
 
         u_reweighted = u_weights_sorted * nx.exp(-f / reg_m1)
         v_reweighted = v_weights_sorted * nx.exp(-g / reg_m2)
@@ -144,15 +184,15 @@ def uot_1d(
         full_mass = nx.sum(u_reweighted, axis=0)
 
         # Normalize weights
-        u_reweighted = u_reweighted / nx.sum(u_reweighted, axis=0, keepdims=True)
-        v_reweighted = v_reweighted / nx.sum(v_reweighted, axis=0, keepdims=True)
+        u_rescaled = u_reweighted / nx.sum(u_reweighted, axis=0, keepdims=True)
+        v_rescaled = v_reweighted / nx.sum(v_reweighted, axis=0, keepdims=True)
 
         if mode == "icdf":
             fd, gd, loss = emd_1d_dual(
                 u_values_sorted,
                 v_values_sorted,
-                u_weights=u_reweighted,
-                v_weights=v_reweighted,
+                u_weights=u_rescaled,
+                v_weights=v_rescaled,
                 p=p,
                 require_sort=False,
             )
@@ -160,15 +200,15 @@ def uot_1d(
             fd, gd, loss = emd_1d_dual_backprop(
                 u_values_sorted,
                 v_values_sorted,
-                u_weights=u_reweighted,
-                v_weights=v_reweighted,
+                u_weights=u_rescaled,
+                v_weights=v_rescaled,
                 p=p,
                 require_sort=False,
             )
 
-        t = 2.0 / (2.0 + i)
-        f = f + t * (fd - f)
-        g = g + t * (gd - g)
+        # t = 2.0 / (2.0 + i)
+        # f = f + t * (fd - f)
+        # g = g + t * (gd - g)
 
     if require_sort:
         f = nx.take_along_axis(f, u_rev_sorter, 0)
@@ -177,15 +217,20 @@ def uot_1d(
         v_reweighted = nx.take_along_axis(v_reweighted, v_rev_sorter, 0)
 
     # rescale OT loss
-    loss = loss * full_mass
+    linear_loss = loss * full_mass
 
     uot_loss = (
-        loss
-        + reg_m1 * nx.kl_div(u_reweighted, u_weights)
-        + reg_m2 * nx.kl_div(v_reweighted, v_weights)
+        linear_loss
+        + reg_m1 * nx.kl_div(u_reweighted, u_weights, mass=True)
+        + reg_m2 * nx.kl_div(v_reweighted, v_weights, mass=True)
     )
 
+    if returnCost == "linear":
+        out_loss = linear_loss
+    elif returnCost == "total":
+        out_loss = uot_loss
+
     if log:
-        dico = {"f": f, "g": g}
-        return u_reweighted, v_reweighted, uot_loss, dico
-    return u_reweighted, v_reweighted, uot_loss
+        dico = {"f": f, "g": g, "total_cost": uot_loss, "linear_cost": linear_loss}
+        return u_reweighted, v_reweighted, out_loss, dico
+    return u_reweighted, v_reweighted, out_loss

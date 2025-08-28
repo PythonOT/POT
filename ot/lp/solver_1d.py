@@ -617,8 +617,8 @@ def emd_1d_dual_backprop(
         loss.backward()
 
         return (
-            u_weights.grad,
-            v_weights.grad,
+            u_weights.grad.detach(),
+            v_weights.grad.detach(),
             cost_output.detach(),
         )  # value can not be backward anymore
     elif nx.__name__ == "jax":

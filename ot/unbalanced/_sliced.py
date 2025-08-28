@@ -340,8 +340,8 @@ def unbalanced_sliced_ot(
 
     uot_loss = (
         sot_loss
-        + reg_m1 * nx.kl_div(a_reweighted, a)
-        + reg_m2 * nx.kl_div(b_reweighted, b)
+        + reg_m1 * nx.kl_div(a_reweighted, a, mass=True)
+        + reg_m2 * nx.kl_div(b_reweighted, b, mass=True)
     )
 
     if log:
