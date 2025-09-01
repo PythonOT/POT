@@ -11,7 +11,6 @@ Bregman projections solvers for entropic regularized OT for empirical distributi
 # License: MIT License
 
 import warnings
-import math
 
 from ..utils import dist, list_to_array, unif, LazyTensor
 from ..backend import get_backend
@@ -843,8 +842,9 @@ def empirical_sinkhorn_nystroem(
     .. [76] Massively scalable Sinkhorn distances via the Nyström method, Jason Altschuler, Francis Bach, Alessandro Rudi, Jonathan Niles-Weed, NeurIPS 2019.
 
     """
+    nx = get_backend(X_s, X_t)
     left_factor, right_factor = kernel_nystroem(
-        X_s, X_t, anchors=anchors, sigma=math.sqrt(reg / 2.0), random_state=random_state
+        X_s, X_t, anchors=anchors, sigma=nx.sqrt(reg / 2.0), random_state=random_state
     )
     _, _, dict_log = sinkhorn_low_rank_kernel(
         K1=left_factor,
@@ -951,7 +951,7 @@ def empirical_sinkhorn_nystroem2(
     nx = get_backend(X_s, X_t)
     M1, M2 = compute_lr_sqeuclidean_matrix(X_s, X_t, False, nx=nx)
     left_factor, right_factor = kernel_nystroem(
-        X_s, X_t, anchors=anchors, sigma=math.sqrt(reg / 2.0), random_state=random_state
+        X_s, X_t, anchors=anchors, sigma=nx.sqrt(reg / 2.0), random_state=random_state
     )
     if log:
         u, v, dict_log = sinkhorn_low_rank_kernel(

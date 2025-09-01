@@ -11,8 +11,6 @@ import warnings
 from .utils import unif, dist, get_lowrank_lazytensor
 from .backend import get_backend
 from .bregman import sinkhorn
-import random
-import math
 
 # test if sklearn is installed for linux-minimal-deps
 try:
@@ -556,18 +554,20 @@ def kernel_nystroem(X_s, X_t, anchors=50, sigma=1.0, random_state=None):
         Right factor of Nystroem
     """
     nx = get_backend(X_s, X_t)
+    nx.seed(random_state)
 
-    random.seed(random_state)
     n, m = X_s.shape[0], X_t.shape[0]
-    n_components_source = min(n, math.ceil(anchors / 2))
-    n_components_target = min(m, math.ceil(anchors / 2))
+
+    if not isinstance(anchors, int) or anchors < 2:
+        raise ValueError("anchors must be an integer >= 2")
+
+    n_components_source = min(n, anchors // 2)
+    n_components_target = min(m, anchors // 2)
     # draw n_components/2 points in each distribution
-    inds_source = nx.arange(n)  # sample n_components_source uniformly
-    random.shuffle(inds_source)
+    inds_source = nx.randperm(n)  # sample n_components_source uniformly
     basis_source = X_s[inds_source[:n_components_source]]
 
-    inds_target = nx.arange(m)
-    random.shuffle(inds_target)
+    inds_target = nx.randperm(m)
     basis_target = X_t[inds_target[:n_components_target]]
 
     basis = nx.concatenate((basis_source, basis_target))

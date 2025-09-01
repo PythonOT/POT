@@ -779,6 +779,16 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def randperm(self, size, type_as=None):
+        r"""
+        Returns a random permutation of integers from 0 to n-1.
+
+        This function follows the api from :any:`torch.randperm`
+
+        See: https://docs.pytorch.org/docs/stable/generated/torch.randperm.html
+        """
+        raise NotImplementedError()
+
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         r"""
         Creates a sparse tensor in COOrdinate format.
@@ -926,6 +936,16 @@ class Backend:
         This function follows the api from :any:`scipy.linalg.inv`.
 
         See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.inv.html
+        """
+        raise NotImplementedError()
+
+    def pinv(self, a, hermitian=False):
+        r"""
+        Computes the pseudo inverse of a matrix.
+
+        This function follows the api from :any:`numpy.linalg.pinv`.
+
+        See: https://numpy.org/devdocs/reference/generated/numpy.linalg.pinv.html
         """
         raise NotImplementedError()
 
@@ -1282,6 +1302,11 @@ class NumpyBackend(Backend):
 
     def randn(self, *size, type_as=None):
         return self.rng_.randn(*size)
+
+    def randperm(self, size, type_as=None):
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        return self.rng_.permutation(size)
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         if type_as is None:
@@ -1692,6 +1717,15 @@ class JaxBackend(Backend):
             return jax.random.normal(subkey, shape=size, dtype=type_as.dtype)
         else:
             return jax.random.normal(subkey, shape=size)
+
+    def randperm(self, size, type_as=None):
+        self.rng_, subkey = jax.random.split(self.rng_)
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        if type_as is not None:
+            return jax.random.permutation(subkey, size).astype(type_as.dtype)
+        else:
+            return jax.random.permutation(subkey, size)
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         # Currently, JAX does not support sparse matrices
@@ -2206,6 +2240,20 @@ class TorchBackend(Backend):
         else:
             return torch.randn(size=size, generator=self.rng_)
 
+    def randperm(self, size, type_as=None):
+        if type_as is not None:
+            generator = (
+                self.rng_cuda_ if self.device_type(type_as) == "GPU" else self.rng_
+            )
+            return torch.randperm(
+                n=size,
+                dtype=type_as.dtype,
+                generator=generator,
+                device=type_as.device,
+            )
+        else:
+            return torch.randperm(n=size, generator=self.rng_)
+
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         if type_as is None:
             return torch.sparse_coo_tensor(torch.stack([rows, cols]), data, size=shape)
@@ -2633,6 +2681,15 @@ class CupyBackend(Backend):  # pragma: no cover
             with cp.cuda.Device(type_as.device):
                 return self.rng_.randn(*size, dtype=type_as.dtype)
 
+    def randperm(self, size, type_as=None):
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        if type_as is None:
+            return self.rng_.permutation(size)
+        else:
+            with cp.cuda.Device(type_as.device):
+                return self.rng_.permutation(size).astype(type_as.dtype)
+
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         data = self.from_numpy(data)
         rows = self.from_numpy(rows)
@@ -3059,6 +3116,14 @@ class TensorflowBackend(Backend):
             return self.rng_.normal(size)
         else:
             return self.rng_.normal(size, dtype=type_as.dtype)
+
+    def randperm(self, size, type_as=None):
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        if type_as is None:
+            return self.rng_.shuffle(tf.range(size))
+        else:
+            return self.rng_.shuffle(tf.range(size, dtype=type_as.dtype))
 
     def _convert_to_index_for_coo(self, tensor):
         if isinstance(tensor, self.__type__):

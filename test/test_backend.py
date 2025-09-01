@@ -751,6 +751,14 @@ def test_random_backends(nx):
     v2 = nx.randn()
     assert v1 != v2
 
+    nx.seed(0)
+    M1 = nx.to_numpy(nx.randperm(5))
+    nx.seed(0)
+    M2 = nx.to_numpy(nx.randperm(5, type_as=tmp_u))
+    M3 = nx.arange(5)
+    M4 = nx.sort(nx.randperm(5))
+    assert np.allclose(M3, M4)
+
 
 def test_gradients_backends():
     rnd = np.random.RandomState(0)
