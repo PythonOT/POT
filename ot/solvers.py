@@ -1714,7 +1714,7 @@ def solve_sample(
         Low-rank Sinkhorn Factorization. In International Conference on
         Machine Learning.
 
-    .. [76] Altschuler, J., Bach, F., Rudi, A., Niles-Weed, J. (2019).
+    .. [80] Altschuler, J., Bach, F., Rudi, A., Niles-Weed, J. (2019).
         Massively scalable Sinkhorn distances via the Nyström method. NeurIPS.
 
 
