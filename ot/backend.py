@@ -2201,7 +2201,9 @@ class TorchBackend(Backend):
         return torch.reshape(a, shape)
 
     def seed(self, seed=None):
-        if isinstance(seed, int):
+        if seed is None:
+            pass
+        elif isinstance(seed, int):
             self.rng_.manual_seed(seed)
             self.rng_cuda_.manual_seed(seed)
         elif isinstance(seed, torch.Generator):
