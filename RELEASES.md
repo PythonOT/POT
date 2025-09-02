@@ -7,6 +7,9 @@
 - Added feature `grad=last_step` for `ot.solvers.solve` (PR #693)
 - Automatic PR labeling and release file update check (PR #704)
 - Reorganize sub-module `ot/lp/__init__.py` into separate files (PR #714)
+- Implement fixed-point solver for OT barycenters with generic cost functions
+  (generalizes `ot.lp.free_support_barycenter`), with example. (PR #715)
+- Implement fixed-point solver for barycenters between GMMs (PR #715), with example.
 - Fix warning raise when import the library (PR #716)
 - Implement projected gradient descent solvers for entropic partial FGW (PR #702)
 - Fix documentation in the module `ot.gaussian` (PR #718)
@@ -18,9 +21,12 @@
 - Updated documentation Quickstart guide and User guide with new API (PR #726)
 - Fix jax version for auto-grad (PR #732)
 - Add Nystrom kernel approximation for Sinkhorn (PR #742)
+- Added `ot.solver_1d.linear_circular_ot` and `ot.sliced.linear_sliced_wasserstein_sphere` (PR #736)
+- Implement 1d solver for partial optimal transport (PR #741)
 - Fix reg_div function compatibility with numpy in `ot.unbalanced.lbfgsb_unbalanced` via new function `ot.utils.fun_to_numpy` (PR #731)
 - Added to each example in the examples gallery the information about the release version in which it was introduced (PR #743)
 - Removed release information from quickstart guide (PR #744)
+- Update REAMDE with new API and reorganize examples (PR #754)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
@@ -32,6 +38,8 @@
 - Clean documentation for `ot.gromov.gromov_wasserstein` (PR #737)
 - Debug wheels building (PR #739)
 - Fix doc for projection sparse simplex (PR #734, PR #746)
+- Changed the default behavior of `ot.lp.solver_1d.wasserstein_circle` (Issue #738)
+- Avoid raising unnecessary warnings in `ot.lp.solver_1d.binary_search_circle` (Issue #738)
 
 ## 0.9.5
 

@@ -1,5 +1,5 @@
 """Tests for module mapping"""
-# Author: Eloi Tanguy <eloi.tanguy@u-paris.fr>
+# Author: Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
 #
 # License: MIT License
 

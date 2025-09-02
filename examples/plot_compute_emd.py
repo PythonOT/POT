@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ==================
-OT distances in 1D
+Geometry of OT distances
 ==================
 
 Shows how to compute multiple Wasserstein and Sinkhorn with two different

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 r"""
 ===============================================================================
-Computing d-dimensional Barycenters via d-MMOT
+Computing 1-dimensional Barycenters via d-MMOT
 ===============================================================================
 
 .. note::
@@ -18,6 +18,8 @@ primal/dual algorithm and classical LP barycenter approaches.
 #         Xizheng Yu <xyu354@wisc.edu>
 #
 # License: MIT License
+
+# sphinx_gallery_thumbnail_number = 2
 
 # %%
 # Generating 2 distributions

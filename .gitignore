@@ -15,6 +15,7 @@ docs/modules/
 
 # Cython output
 ot/lp/emd_wrap.cpp
+ot/partial/partial_cython.cpp
 
 # Distribution / packaging
 .Python
