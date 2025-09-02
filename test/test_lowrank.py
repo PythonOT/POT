@@ -120,7 +120,7 @@ def test_nystroem_sinkhorn2(log):
     Xt = X[y == 1]
 
     reg = 5.0
-    anchors = 5
+    anchors = 15
 
     res = ot.bregman.empirical_sinkhorn_nystroem2(
         Xs,

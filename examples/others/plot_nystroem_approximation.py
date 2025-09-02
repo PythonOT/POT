@@ -73,7 +73,7 @@ plt.legend()
 
 # %%
 reg = 5.0  # proportional to the std of the Gaussian kernel
-anchors = 5  # number of anchor points for the Nyström approximation
+anchors = 10  # number of anchor points for the Nyström approximation
 ot.tic()
 left_factor, right_factor = kernel_nystroem(
     Xs, Xt, anchors=anchors, sigma=math.sqrt(reg / 2.0), random_state=random_state
