@@ -2241,6 +2241,8 @@ class TorchBackend(Backend):
             return torch.randn(size=size, generator=self.rng_)
 
     def randperm(self, size, type_as=None):
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
         if type_as is not None:
             generator = (
                 self.rng_cuda_ if self.device_type(type_as) == "GPU" else self.rng_

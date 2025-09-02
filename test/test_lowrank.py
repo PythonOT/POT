@@ -144,6 +144,18 @@ def test_nystroem_sinkhorn2(log):
 
     np.testing.assert_allclose(loss1, loss2, atol=1e-07, rtol=1e-3)
 
+    with pytest.raises(ValueError, match="anchors must"):
+        res = ot.bregman.empirical_sinkhorn_nystroem2(
+            Xs,
+            Xt,
+            anchors=1,
+            reg=reg,
+            numItermax=3000,
+            verbose=True,
+            random_state=random_state,
+            log=log,
+        )
+
 
 def test_compute_lr_sqeuclidean_matrix():
     # test computation of low rank cost matrices M1 and M2
