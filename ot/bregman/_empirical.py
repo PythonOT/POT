@@ -833,8 +833,8 @@ def empirical_sinkhorn_nystroem(
     >>> X_s = np.reshape(np.arange(n_samples_a, dtype=np.float64), (n_samples_a, 1))
     >>> X_t = np.reshape(np.arange(0, n_samples_b, dtype=np.float64), (n_samples_b, 1))
     >>> empirical_sinkhorn_nystroem(X_s, X_t, reg, anchors, random_state=42)[:]  # doctest: +ELLIPSIS
-    array([[2.50000000e-01, 1.46537753e-01, 7.29587925e-10, 1.03462246e-01],
-           [3.63816797e-10, 1.03462247e-01, 2.49999999e-01, 1.46537754e-01]])
+    array([[0.125, 0.125, 0.125, 0.125],
+           [0.125, 0.125, 0.125, 0.125]])
 
     References
     ----------
@@ -842,9 +842,8 @@ def empirical_sinkhorn_nystroem(
     .. [80] Massively scalable Sinkhorn distances via the Nyström method, Jason Altschuler, Francis Bach, Alessandro Rudi, Jonathan Niles-Weed, NeurIPS 2019.
 
     """
-    nx = get_backend(X_s, X_t)
     left_factor, right_factor = kernel_nystroem(
-        X_s, X_t, anchors=anchors, sigma=nx.sqrt(reg / 2.0), random_state=random_state
+        X_s, X_t, anchors=anchors, sigma=(reg / 2.0) ** (0.5), random_state=random_state
     )
     _, _, dict_log = sinkhorn_low_rank_kernel(
         K1=left_factor,
@@ -951,7 +950,7 @@ def empirical_sinkhorn_nystroem2(
     nx = get_backend(X_s, X_t)
     M1, M2 = compute_lr_sqeuclidean_matrix(X_s, X_t, False, nx=nx)
     left_factor, right_factor = kernel_nystroem(
-        X_s, X_t, anchors=anchors, sigma=nx.sqrt(reg / 2.0), random_state=random_state
+        X_s, X_t, anchors=anchors, sigma=(reg / 2.0) ** (0.5), random_state=random_state
     )
     if log:
         u, v, dict_log = sinkhorn_low_rank_kernel(

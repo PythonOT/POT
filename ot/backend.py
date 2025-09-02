@@ -3120,10 +3120,15 @@ class TensorflowBackend(Backend):
     def randperm(self, size, type_as=None):
         if not isinstance(size, int):
             raise ValueError("size must be an integer")
+        local_seed = self.rng_.make_seeds(2)[0]
         if type_as is None:
-            return self.rng_.shuffle(tf.range(size))
+            return tf.random.experimental.stateless_shuffle(
+                tf.range(size), seed=local_seed
+            )
         else:
-            return self.rng_.shuffle(tf.range(size, dtype=type_as.dtype))
+            return tf.random.experimental.stateless_shuffle(
+                tf.range(size, dtype=type_as.dtype), seed=local_seed
+            )
 
     def _convert_to_index_for_coo(self, tensor):
         if isinstance(tensor, self.__type__):
