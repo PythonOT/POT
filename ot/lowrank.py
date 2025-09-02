@@ -554,7 +554,8 @@ def kernel_nystroem(X_s, X_t, anchors=50, sigma=1.0, random_state=None):
         Right factor of Nystroem
     """
     nx = get_backend(X_s, X_t)
-    nx.seed(random_state)
+    if random_state is not None:
+        nx.seed(random_state)
 
     n, m = X_s.shape[0], X_t.shape[0]
 
