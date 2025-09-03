@@ -32,6 +32,7 @@ lst_method_params_solve_sample = [
     {"method": "gaussian", "reg": 1},
     {"method": "factored", "rank": 10},
     {"method": "lowrank", "rank": 10},
+    {"method": "nystroem", "rank": 10},
 ]
 
 lst_parameters_solve_sample_NotImplemented = [
@@ -48,6 +49,10 @@ lst_parameters_solve_sample_NotImplemented = [
         "method": "lowrank",
         "metric": "euclidean",
     },  # fail lowrank on metric not euclidean
+    {
+        "method": "nystroem",
+        "metric": "euclidean",
+    },  # fail nystroem on metric not euclidean
     {"lazy": True},  # fail lazy for non regularized
     {"lazy": True, "unbalanced": 1},  # fail lazy for non regularized unbalanced
     {
@@ -683,7 +688,7 @@ def test_solve_sample_methods(nx, method_params):
     assert_allclose_sol(sol, solb)
 
     sol2 = ot.solve_sample(x, x, **method_params)
-    if method_params["method"] not in ["factored", "lowrank"]:
+    if method_params["method"] not in ["factored", "lowrank", "nystroem"]:
         np.testing.assert_allclose(sol2.value, 0)
 
 
