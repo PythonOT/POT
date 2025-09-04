@@ -95,6 +95,7 @@ import scipy
 import scipy.linalg
 import scipy.special as special
 from scipy.sparse import coo_matrix, csr_matrix, issparse
+from contextlib import contextmanager
 
 DISABLE_TORCH_KEY = "POT_BACKEND_DISABLE_PYTORCH"
 DISABLE_JAX_KEY = "POT_BACKEND_DISABLE_JAX"
@@ -300,6 +301,14 @@ class Backend:
         """Detach the tensor from the computation graph"""
         raise NotImplementedError()
 
+    @contextmanager
+    def set_grad_enabled(self, enabled):
+        """Context manager to set gradient computation on or off.
+
+        See: https://docs.pytorch.org/docs/stable/generated/torch.autograd.grad_mode.set_grad_enabled.html
+        """
+        raise NotImplementedError()
+
     def zeros(self, shape, type_as=None):
         r"""
         Creates a tensor full of zeros.
@@ -456,6 +465,16 @@ class Backend:
         This function follows the api from :any:`numpy.log`
 
         See: https://numpy.org/doc/stable/reference/generated/numpy.log.html
+        """
+        raise NotImplementedError()
+
+    def logsumexp(self, a, axis=None, keepdims=False):
+        r"""
+        Computes the log of the sum of exponentials of input elements.
+
+        This function follows the api from :any:`scipy.special.logsumexp`
+
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.logsumexp.html
         """
         raise NotImplementedError()
 
@@ -709,16 +728,6 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def logsumexp(self, a, axis=None):
-        r"""
-        Computes the log of the sum of exponentials of input elements.
-
-        This function follows the api from :any:`scipy.special.logsumexp`
-
-        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.logsumexp.html
-        """
-        raise NotImplementedError()
-
     def stack(self, arrays, axis=0):
         r"""
         Joins a sequence of tensors along a new dimension.
@@ -888,6 +897,16 @@ class Backend:
         This function follows the api from :any:`numpy.squeeze`.
 
         See: https://numpy.org/doc/stable/reference/generated/numpy.squeeze.html
+        """
+        raise NotImplementedError()
+
+    def unsqueeze(self, a, axis):
+        r"""
+        Add a dimension of size one at the specified axis.
+
+        This function follows the api from :any:`numpy.expand_dims`.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.expand_dims.html
         """
         raise NotImplementedError()
 
@@ -1135,6 +1154,11 @@ class NumpyBackend(Backend):
         # No gradients for numpy
         return a
 
+    @contextmanager
+    def set_grad_enabled(self, enabled):
+        # No gradients for numpy
+        yield
+
     def zeros(self, shape, type_as=None):
         if type_as is None:
             return np.zeros(shape)
@@ -1194,6 +1218,9 @@ class NumpyBackend(Backend):
 
     def log(self, a):
         return np.log(a)
+
+    def logsumexp(self, a, axis=None, keepdims=False):
+        return special.logsumexp(a, axis=axis, keepdims=keepdims)
 
     def sqrt(self, a):
         return np.sqrt(a)
@@ -1284,9 +1311,6 @@ class NumpyBackend(Backend):
     def unique(self, a, return_inverse=False):
         return np.unique(a, return_inverse=return_inverse)
 
-    def logsumexp(self, a, axis=None):
-        return special.logsumexp(a, axis=axis)
-
     def stack(self, arrays, axis=0):
         return np.stack(arrays, axis)
 
@@ -1363,6 +1387,9 @@ class NumpyBackend(Backend):
 
     def squeeze(self, a, axis=None):
         return np.squeeze(a, axis=axis)
+
+    def unsqueeze(self, a, axis):
+        return np.expand_dims(a, axis=axis)
 
     def bitsize(self, type_as):
         return type_as.itemsize * 8
@@ -1543,6 +1570,12 @@ class JaxBackend(Backend):
     def _detach(self, a):
         return jax.lax.stop_gradient(a)
 
+    @contextmanager
+    def set_grad_enabled(self, enabled):
+        # No global flag in JAX, gradients are enabled/disabled by using
+        # jax.grad or not
+        yield
+
     def zeros(self, shape, type_as=None):
         if type_as is None:
             return jnp.zeros(shape)
@@ -1604,6 +1637,9 @@ class JaxBackend(Backend):
 
     def log(self, a):
         return jnp.log(a)
+
+    def logsumexp(self, a, axis=None, keepdims=False):
+        return jspecial.logsumexp(a, axis=axis, keepdims=keepdims)
 
     def sqrt(self, a):
         return jnp.sqrt(a)
@@ -1690,9 +1726,6 @@ class JaxBackend(Backend):
 
     def unique(self, a, return_inverse=False):
         return jnp.unique(a, return_inverse=return_inverse)
-
-    def logsumexp(self, a, axis=None):
-        return jspecial.logsumexp(a, axis=axis)
 
     def stack(self, arrays, axis=0):
         return jnp.stack(arrays, axis)
@@ -1785,6 +1818,9 @@ class JaxBackend(Backend):
 
     def squeeze(self, a, axis=None):
         return jnp.squeeze(a, axis=axis)
+
+    def unsqueeze(self, a, axis):
+        return jnp.expand_dims(a, axis=axis)
 
     def bitsize(self, type_as):
         return type_as.dtype.itemsize * 8
@@ -1965,6 +2001,11 @@ class TorchBackend(Backend):
 
     def _detach(self, a):
         return a.detach()
+
+    @contextmanager
+    def set_grad_enabled(self, enabled):
+        with torch.set_grad_enabled(enabled):
+            yield
 
     def zeros(self, shape, type_as=None):
         if isinstance(shape, int):
@@ -2188,11 +2229,11 @@ class TorchBackend(Backend):
     def unique(self, a, return_inverse=False):
         return torch.unique(a, return_inverse=return_inverse)
 
-    def logsumexp(self, a, axis=None):
+    def logsumexp(self, a, axis=None, keepdims=False):
         if axis is not None:
-            return torch.logsumexp(a, dim=axis)
+            return torch.logsumexp(a, dim=axis, keepdim=keepdims)
         else:
-            return torch.logsumexp(a, dim=tuple(range(len(a.shape))))
+            return torch.logsumexp(a, dim=tuple(range(len(a.shape))), keepdim=keepdims)
 
     def stack(self, arrays, axis=0):
         return torch.stack(arrays, dim=axis)
@@ -2328,6 +2369,9 @@ class TorchBackend(Backend):
             return torch.squeeze(a)
         else:
             return torch.squeeze(a, dim=axis)
+
+    def unsqueeze(self, a, axis):
+        return torch.unsqueeze(a, dim=axis)
 
     def bitsize(self, type_as):
         return torch.finfo(type_as.dtype).bits
@@ -3208,6 +3252,9 @@ class TensorflowBackend(Backend):
 
     def squeeze(self, a, axis=None):
         return tnp.squeeze(a, axis=axis)
+
+    def unsqueeze(self, a, axis):
+        return super().unsqueeze(a, axis)
 
     def bitsize(self, type_as):
         return type_as.dtype.size * 8
