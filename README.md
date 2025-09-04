@@ -20,7 +20,7 @@ Source Code (MIT):
 
 POT has the following main features:
 * A large set of differentiable solvers for optimal transport problems, including:
-  *  Exact linear OT, entropic and quadratic regularized OT, 
+  *  Exact linear OT, entropic and quadratic regularized OT,
   *  Gromov-Wasserstein (GW) distances, Fused GW distances and variants of
      quadratic OT,
   *  Unbalanced and partial OT for different divergences,
@@ -444,3 +444,5 @@ Artificial Intelligence.
 [78] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). [LCOT: Linear Circular Optimal Transport](https://openreview.net/forum?id=49z97Y9lMq). International Conference on Learning Representations.
 
 [79] Liu, X., Bai, Y., Martín, R. D., Shi, K., Shahbazi, A., Landman, B. A., Chang, C., & Kolouri, S. (2025). [Linear Spherical Sliced Optimal Transport: A Fast Metric for Comparing Spherical Data](https://openreview.net/forum?id=fgUFZAxywx). International Conference on Learning Representations.
+
+[80] Altschuler, J., Bach, F., Rudi, A., Niles-Weed, J., [Massively scalable Sinkhorn distances via the Nyström method](https://proceedings.neurips.cc/paper_files/paper/2019/file/f55cadb97eaff2ba1980e001b0bd9842-Paper.pdf), Advances in Neural Information Processing Systems, 2019.

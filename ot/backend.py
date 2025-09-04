@@ -788,6 +788,16 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def randperm(self, size, type_as=None):
+        r"""
+        Returns a random permutation of integers from 0 to n-1.
+
+        This function follows the api from :any:`torch.randperm`
+
+        See: https://docs.pytorch.org/docs/stable/generated/torch.randperm.html
+        """
+        raise NotImplementedError()
+
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         r"""
         Creates a sparse tensor in COOrdinate format.
@@ -945,6 +955,16 @@ class Backend:
         This function follows the api from :any:`scipy.linalg.inv`.
 
         See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.inv.html
+        """
+        raise NotImplementedError()
+
+    def pinv(self, a, hermitian=False):
+        r"""
+        Computes the pseudo inverse of a matrix.
+
+        This function follows the api from :any:`numpy.linalg.pinv`.
+
+        See: https://numpy.org/devdocs/reference/generated/numpy.linalg.pinv.html
         """
         raise NotImplementedError()
 
@@ -1307,6 +1327,11 @@ class NumpyBackend(Backend):
     def randn(self, *size, type_as=None):
         return self.rng_.randn(*size)
 
+    def randperm(self, size, type_as=None):
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        return self.rng_.permutation(size)
+
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         if type_as is None:
             return coo_matrix((data, (rows, cols)), shape=shape)
@@ -1394,6 +1419,9 @@ class NumpyBackend(Backend):
 
     def inv(self, a):
         return scipy.linalg.inv(a)
+
+    def pinv(self, a, hermitian=False):
+        return np.linalg.pinv(a, hermitian=hermitian)
 
     def sqrtm(self, a):
         L, V = np.linalg.eigh(a)
@@ -1723,6 +1751,15 @@ class JaxBackend(Backend):
         else:
             return jax.random.normal(subkey, shape=size)
 
+    def randperm(self, size, type_as=None):
+        self.rng_, subkey = jax.random.split(self.rng_)
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        if type_as is not None:
+            return jax.random.permutation(subkey, size).astype(type_as.dtype)
+        else:
+            return jax.random.permutation(subkey, size)
+
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         # Currently, JAX does not support sparse matrices
         data = self.to_numpy(data)
@@ -1816,6 +1853,9 @@ class JaxBackend(Backend):
 
     def inv(self, a):
         return jnp.linalg.inv(a)
+
+    def pinv(self, a, hermitian=False):
+        return jnp.linalg.pinv(a, hermitian=hermitian)
 
     def sqrtm(self, a):
         L, V = jnp.linalg.eigh(a)
@@ -2202,7 +2242,9 @@ class TorchBackend(Backend):
         return torch.reshape(a, shape)
 
     def seed(self, seed=None):
-        if isinstance(seed, int):
+        if seed is None:
+            pass
+        elif isinstance(seed, int):
             self.rng_.manual_seed(seed)
             self.rng_cuda_.manual_seed(seed)
         elif isinstance(seed, torch.Generator):
@@ -2240,6 +2282,22 @@ class TorchBackend(Backend):
             )
         else:
             return torch.randn(size=size, generator=self.rng_)
+
+    def randperm(self, size, type_as=None):
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        if type_as is not None:
+            generator = (
+                self.rng_cuda_ if self.device_type(type_as) == "GPU" else self.rng_
+            )
+            return torch.randperm(
+                n=size,
+                dtype=type_as.dtype,
+                generator=generator,
+                device=type_as.device,
+            )
+        else:
+            return torch.randperm(n=size, generator=self.rng_)
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         if type_as is None:
@@ -2357,6 +2415,9 @@ class TorchBackend(Backend):
 
     def inv(self, a):
         return torch.linalg.inv(a)
+
+    def pinv(self, a, hermitian=False):
+        return torch.linalg.pinv(a, hermitian=hermitian)
 
     def sqrtm(self, a):
         L, V = torch.linalg.eigh(a)
@@ -2668,6 +2729,15 @@ class CupyBackend(Backend):  # pragma: no cover
             with cp.cuda.Device(type_as.device):
                 return self.rng_.randn(*size, dtype=type_as.dtype)
 
+    def randperm(self, size, type_as=None):
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        if type_as is None:
+            return self.rng_.permutation(size)
+        else:
+            with cp.cuda.Device(type_as.device):
+                return self.rng_.permutation(size).astype(type_as.dtype)
+
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         data = self.from_numpy(data)
         rows = self.from_numpy(rows)
@@ -2771,6 +2841,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def inv(self, a):
         return cp.linalg.inv(a)
+
+    def pinv(self, a, hermitian=False):
+        return cp.linalg.pinv(a)
 
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
@@ -3092,6 +3165,19 @@ class TensorflowBackend(Backend):
         else:
             return self.rng_.normal(size, dtype=type_as.dtype)
 
+    def randperm(self, size, type_as=None):
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        local_seed = self.rng_.make_seeds(2)[0]
+        if type_as is None:
+            return tf.random.experimental.stateless_shuffle(
+                tf.range(size), seed=local_seed
+            )
+        else:
+            return tf.random.experimental.stateless_shuffle(
+                tf.range(size, dtype=type_as.dtype), seed=local_seed
+            )
+
     def _convert_to_index_for_coo(self, tensor):
         if isinstance(tensor, self.__type__):
             return int(self.max(tensor)) + 1
@@ -3210,6 +3296,9 @@ class TensorflowBackend(Backend):
 
     def inv(self, a):
         return tf.linalg.inv(a)
+
+    def pinv(self, a, hermitian=False):
+        return tf.linalg.pinv(a)
 
     def sqrtm(self, a):
         L, V = tf.linalg.eigh(a)
