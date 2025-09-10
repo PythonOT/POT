@@ -44,3 +44,6 @@ def test_solve_batch():
         value_i = res_i.value_linear
         np.testing.assert_allclose(plan_i, plan_batch[i], atol=1e-05)
         np.testing.assert_allclose(value_i, values_batch[i], atol=1e-4)
+
+
+test_solve_batch()

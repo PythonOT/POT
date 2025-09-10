@@ -1,6 +1,20 @@
 from ot.backend import get_backend
 
 
+def entropy_batch(T, nx=None, eps=1e-16):
+    """Computes the entropy of the transport plan T."""
+    if nx is None:
+        nx = get_backend(T)
+    return -nx.sum(T * nx.log(T + eps), axis=(1, 2))
+
+
+def norm_batch(u, p=2, nx=None):
+    """Computes the lp norm of a batch of vectors u."""
+    if nx is None:
+        nx = get_backend(u)
+    return nx.sum(u**p, axis=1) ** (1 / p)
+
+
 def bmm(A, B, nx):
     """
     Batched matrix multiplication for tensors A and B.
@@ -22,7 +36,9 @@ def bop(a, b, nx):
     return nx.einsum("bi,bj->bij", a, b)
 
 
-def bregman_batch(K, a=None, b=None, nx=None, max_iter=10000, tol=1e-5, grad="detach"):
+def bregman_projection_batch(
+    K, a=None, b=None, nx=None, max_iter=10000, tol=1e-5, grad="detach"
+):
     r"""
     Apply Bregman projection to a batch of affinity matrices K.
 
@@ -69,7 +85,7 @@ def bregman_batch(K, a=None, b=None, nx=None, max_iter=10000, tol=1e-5, grad="de
     tol : float, optional
         Tolerance for convergence. The solver stops when the maximum change in `f` and `g` is below this value.
     grad : str, optional
-        Type of gradient computation, either 'detach', 'autodiff', 'last_step' or 'envelope'.
+        Type of gradient computation, either 'detach', 'autodiff' or 'last_step'.
         
     Returns
     -------
@@ -88,35 +104,39 @@ def bregman_batch(K, a=None, b=None, nx=None, max_iter=10000, tol=1e-5, grad="de
     if b is None:
         b = nx.ones((B, m)) / m
 
+    if grad == "detach":
+        K = nx.detach(K)
+    elif grad == "last_step":
+        K_, K = K.clone(), nx.detach(K)
+
     f = nx.ones((B, n))  # a / nx.sum(K, axis=2)
     g = nx.ones((B, m))  # b / nx.sum(K, axis=1)
 
-    with nx.set_grad_enabled(grad == "autodiff"):
-        for n_iters in range(max_iter):
-            f = a / nx.sum(K * g[:, None, :], axis=2)
-            g = b / nx.sum(K * f[:, :, None], axis=1)
-            if n_iters % 10 == 0:
-                T = K * f[:, :, None] * g[:, None, :]
-                marginal = nx.sum(T, axis=2)
-                err = nx.max(nx.abs(marginal - a))
-                if err < tol:
-                    break
+    for n_iters in range(max_iter):
+        f = a / nx.sum(K * g[:, None, :], axis=2)
+        g = b / nx.sum(K * f[:, :, None], axis=1)
+        if n_iters % 10 == 0:
+            T = K * f[:, :, None] * g[:, None, :]
+            marginal = nx.sum(T, axis=2)
+            err = nx.max(norm_batch(marginal - a))
+            if err < tol:
+                break
 
     if grad == "last_step":
-        summand_f = nx.sum(K * g[:, None, :], axis=2)
+        summand_f = nx.sum(K_ * g[:, None, :], axis=2)
         f = a / summand_f
-
-        summand_g = nx.sum(K * f[:, :, None], axis=1)
+        summand_g = nx.sum(K_ * f[:, :, None], axis=1)
         g = b / summand_g
 
     T = K * f[:, :, None] * g[:, None, :]
+    potentials = (f, g)
 
-    out = {"T": T, "n_iters": n_iters}
+    out = {"T": T, "n_iters": n_iters, "potentials": potentials}
 
     return out
 
 
-def bregman_log_batch(
+def bregman_log_projection_batch(
     K, a=None, b=None, nx=None, max_iter=10000, tol=1e-5, grad="detach"
 ):
     r"""
@@ -167,8 +187,8 @@ def bregman_log_batch(
     tol : float, optional
         Tolerance for convergence. The solver stops when the maximum change in `f` and `g` is below this value.
     grad : str, optional
-        Type of gradient computation, either 'detach', 'autodiff', 'last_step' or 'envelope'.
-        
+        Type of gradient computation, either 'detach', 'autodiff' or 'last_step'.
+
     Returns
     -------
     dict
@@ -202,27 +222,34 @@ def bregman_log_batch(
     u = nx.zeros((B, n), type_as=K)  # u = nx.log(a) - nx.logsumexp(K, axis=2).squeeze()
     v = nx.zeros((B, m), type_as=K)  # v = nx.log(b) - nx.logsumexp(K, axis=1).squeeze()
 
-    with nx.set_grad_enabled(grad == "autodiff"):
-        for n_iters in range(max_iter):
-            u = nx.log(a) - nx.logsumexp(K + v[:, None, :], axis=2).squeeze()
-            v = nx.log(b) - nx.logsumexp(K + u[:, :, None], axis=1).squeeze()
+    loga = nx.log(a)
+    logb = nx.log(b)
 
-            # Check convergence once every 10 iterations
-            if n_iters % 10 == 0:
-                T = nx.exp(K + u[:, :, None] + v[:, None, :])
-                marginal = nx.sum(T, axis=2)
-                err = nx.max(nx.abs(marginal - a))
-                if err < tol:
-                    break
+    if grad == "detach":
+        K = nx.detach(K)
+    elif grad == "last_step":
+        K_, K = K.clone(), nx.detach(K)
+
+    for n_iters in range(max_iter):
+        u = loga - nx.logsumexp(K + v[:, None, :], axis=2).squeeze()
+        v = logb - nx.logsumexp(K + u[:, :, None], axis=1).squeeze()
+
+        # Check convergence once every 10 iterations
+        if n_iters % 10 == 0:
+            T = nx.exp(K + u[:, :, None] + v[:, None, :])
+            marginal = nx.sum(T, axis=2)
+            err = nx.max(norm_batch(marginal - a))
+            if err < tol:
+                break
 
     if grad == "last_step":
-        summand_u = K + v[:, None, :]
-        u = nx.log(a) - nx.logsumexp(summand_u, axis=2).squeeze()
-
-        summand_v = K + u[:, :, None]
-        v = nx.log(b) - nx.logsumexp(summand_v, axis=1).squeeze()
+        summand_u = K_ + v[:, None, :]
+        u = loga - nx.logsumexp(summand_u, axis=2).squeeze()
+        summand_v = K_ + u[:, :, None]
+        v = logb - nx.logsumexp(summand_v, axis=1).squeeze()
 
     log_T = K + u[:, :, None] + v[:, None, :]
     T = nx.exp(log_T)
+    log_potentials = (u, v)
 
-    return {"T": T, "log_T": log_T, "n_iters": n_iters}
+    return {"T": T, "log_T": log_T, "n_iters": n_iters, "potentials": log_potentials}

@@ -10,10 +10,14 @@ Batch operations for linear optimal transport.
 
 from ..backend import get_backend
 from ..utils import OTResult
-from ._utils import bregman_log_batch, bregman_batch
+from ._utils import (
+    bregman_log_projection_batch,
+    bregman_projection_batch,
+    entropy_batch,
+)
 
 
-def cost_matrix_lp_batch(X, Y, p=2, q=1, nx=None):
+def dist_lp_batch(X, Y, p=2, q=1, nx=None):
     r"""Computes the cost matrix for a batch of samples using the Lp norm.
 
     .. math::
@@ -47,7 +51,7 @@ def cost_matrix_lp_batch(X, Y, p=2, q=1, nx=None):
     return M
 
 
-def cost_matrix_l2_batch(X, Y, squared=True, nx=None):
+def dist_euclidean_batch(X, Y, squared=True, nx=None):
     r"""Computes the squared Euclidean cost matrix for a batch of samples.
 
     .. math::
@@ -81,7 +85,7 @@ def cost_matrix_l2_batch(X, Y, squared=True, nx=None):
     return M
 
 
-def cost_matrix_kl_batch(X, Y, logits_X=False, nx=None):
+def dist_kl_batch(X, Y, logits_X=False, nx=None, eps=1e-10):
     r"""Computes the KL divergence cost matrix for a batch of samples.
 
     .. math::
@@ -106,9 +110,9 @@ def cost_matrix_kl_batch(X, Y, logits_X=False, nx=None):
 
     if nx is None:
         nx = get_backend(X, Y)
-    entr_y = nx.sum(Y * nx.log(Y + 1e-10), axis=-1)  # B x m
+    entr_y = nx.sum(Y * nx.log(Y + eps), axis=-1)  # B x m
     if logits_X:
-        M = entr_y[:, None, :] - Y[:, None, :] + nx.log(X + 1e-10)[:, :, None]
+        M = entr_y[:, None, :] - Y[:, None, :] + nx.log(X + eps)[:, :, None]
     else:
         M = entr_y[:, None, :] - Y[:, None, :] * X[:, :, None]
     return M
@@ -142,63 +146,83 @@ def loss_linear_samples_batch(X, Y, T, metric="l2"):
         Samples from target distribution
     T : array-like, shape (B, ns, nt)
         Transport plan
-    metric : str, optional
-        Metric to use for computing the cost matrix. Can be a string in ['l2','kl']
-        or a float for the Lp norm,
-        or a callable function that takes X and Y as inputs and returns the cost matrix.
-
+    metric : str | callable, optional
+            'sqeuclidean', 'euclidean', 'minkowski' or 'kl'
     Returns
     -------
     loss : array-like, shape (B,)
         Loss value for each batch element
     """
-
-    if callable(metric):
-        M = metric(X, Y)
-    elif metric == "l2":
-        M = cost_matrix_l2_batch(X, Y)
-    elif metric == "kl":
-        M = cost_matrix_kl_batch(X, Y)
-    else:
-        raise ValueError(f"Unknown metric: {metric}")
+    M = dist_batch(X, Y, metric=metric)
     return loss_linear_batch(M, T)
 
 
-def entropy_batch(T, nx=None):
-    """Computes the entropy of the transport plan T."""
-    if nx is None:
-        nx = get_backend(T)
-    return -nx.sum(T * nx.log(T + 1e-10), axis=(1, 2))
+def dist_batch(
+    X1,
+    X2=None,
+    metric="sqeuclidean",
+    p=2,
+    nx=None,
+):
+    r"""Batched version of ot.dist, use it to compute many distance matrices in parallel.
+
+    Parameters
+    ----------
+
+    X1 : array-like, shape (b,n1,d)
+        `b` matrices with `n1` samples of size `d`
+    X2 : array-like, shape (b,n2,d), optional
+        `b` matrices with `n2` samples of size `d` (if None then :math:`\mathbf{X_2} = \mathbf{X_1}`)
+    metric : str | callable, optional
+        'sqeuclidean', 'euclidean', 'minkowski' or 'kl'
+    p : float, optional
+        p-norm for the Minkowski metrics. Default value is 2.
+    nx : Backend, optional
+        Backend to perform computations on. If omitted, the backend defaults to that of `x1`.
+
+    Returns
+    -------
+
+    M : array-like, shape (`b`, `n1`, `n2`)
+        distance matrix computed with given metric
+
+    """
+    X2 = X2 if X2 is not None else X1
+    metric = metric.lower()
+    if callable(metric):
+        M = metric(X1, X2)
+    if metric == "sqeuclidean":
+        M = dist_euclidean_batch(X1, X2, squared=True, nx=nx)
+    elif metric == "euclidean":
+        M = dist_euclidean_batch(X1, X2, squared=False, nx=nx)
+    elif metric == "minkowski":
+        M = dist_lp_batch(X1, X2, p=p, q=1, nx=nx)
+    elif metric == "kl":
+        M = dist_kl_batch(X1, X2, logits_X=False, nx=nx)
+    else:
+        raise ValueError(f"Unknown metric: {metric}")
+    return M
 
 
 def solve_batch(
     M,
+    reg,
     a=None,
     b=None,
-    epsilon=1e-3,
     max_iter=1000,
     tol=1e-5,
-    log_dual=True,
+    solver="log_sinkhorn",
+    reg_type="entropy",
     grad="detach",
 ):
-    r"""Solves a batch of linear optimal transport problems using Bregman projections.
-
-    .. math::
-        \mathop{\min}_T \quad \langle T, \mathbf{M} \rangle_F +
-        \mathrm{\epsilon}\cdot\Omega(T)
-
-        s.t. \ T \mathbf{1} &= \mathbf{a}
-
-             T^T \mathbf{1} &= \mathbf{b}
-
-             T &\geq 0
+    r"""Batched version of ot.solve, use it to solve many OT problems in parallel.
 
     Parameters
     ----------
     M : array-like, shape (B, ns, nt)
         Cost matrix
-    epsilon : float
-        Regularization parameter
+    reg : float
+        Regularization parameter for entropic regularization
     a : array-like, shape (B, ns)
         Source distribution (optional). If None, uniform distribution is used.
     b : array-like, shape (B, nt)
@@ -207,8 +231,10 @@ def solve_batch(
         Maximum number of iterations
     tol : float
         Tolerance for convergence
-    log_dual : bool
-        If True, performs Bregman projection in log space. This is more stable.
+    solver: str
+        Solver to use, either 'log_sinkhorn' or 'sinkhorn'. Default is "log_sinkhorn" which is more stable.
+    reg_type : str, optional
+        Type of regularization :math:`R`  either "KL", or "entropy". Default is "entropy".
     grad : str, optional
         Type of gradient computation, either or 'autodiff', 'envelope' or 'last_step' used only for
         Sinkhorn solver. By default 'autodiff' provides gradients wrt all
@@ -233,12 +259,25 @@ def solve_batch(
 
     nx = get_backend(a, b, M)
 
-    if log_dual:
-        K = -M / epsilon
-        out = bregman_log_batch(K, a, b, nx=nx, max_iter=max_iter, tol=tol, grad=grad)
+    B, n, m = M.shape
+
+    if a is None:
+        a = nx.ones((B, n)) / n
+    if b is None:
+        b = nx.ones((B, m)) / m
+
+    if solver == "log_sinkhorn":
+        K = -M / reg
+        out = bregman_log_projection_batch(
+            K, a, b, nx=nx, max_iter=max_iter, tol=tol, grad=grad
+        )
+    elif solver == "sinkhorn":
+        K = nx.exp(-M / reg)
+        out = bregman_projection_batch(
+            K, a, b, nx=nx, max_iter=max_iter, tol=tol, grad=grad
+        )
     else:
-        K = nx.exp(-M / epsilon)
-        out = bregman_batch(K, a, b, nx=nx, max_iter=max_iter, tol=tol, grad=grad)
+        raise ValueError(f"Unknown solver: {solver}")
 
     T = out["T"]
 
@@ -248,17 +287,97 @@ def solve_batch(
     elif grad == "envelope":
         T = nx.detach(T)
 
-    entr = entropy_batch(T, nx=nx)
     value_linear = loss_linear_batch(M, T)
-    value = value_linear + epsilon * entr
+    if reg_type.lower() == "entropy":
+        entr = -entropy_batch(T, nx=nx)
+        value = value_linear + reg * entr
+    elif reg_type.lower() == "kl":
+        ref = nx.einsum("bi,bj->bij", a, b)
+        kl = nx.sum(T * nx.log(T / ref + 1e-16), axis=(1, 2))
+        value = value_linear + reg * kl
     log = {"n_iter": out["n_iters"]}
 
     res = OTResult(
         value=value,
         value_linear=value_linear,
+        potentials=out["potentials"],
         plan=T,
         backend=nx,
         log=log,
     )
 
     return res
+
+
+def solve_sample_batch(
+    X_a,
+    X_b,
+    reg,
+    a=None,
+    b=None,
+    metric="sqeuclidean",
+    p=2,
+    max_iter=1000,
+    tol=1e-5,
+    solver="log_sinkhorn",
+    reg_type="entropy",
+    grad="detach",
+):
+    r"""Batched version of ot.solve, use it to solve many OT problems in parallel.
+
+    Parameters
+    ----------
+    M : array-like, shape (B, ns, nt)
+        Cost matrix
+    reg : float
+        Regularization parameter for entropic regularization
+    metric : str | callable, optional
+        'sqeuclidean', 'euclidean', 'minkowski' or 'kl'
+    p : float, optional
+        p-norm for the Minkowski metrics. Default value is 2.
+    a : array-like, shape (B, ns)
+        Source distribution (optional). If None, uniform distribution is used.
+    b : array-like, shape (B, nt)
+        Target distribution (optional). If None, uniform distribution is used.
+    max_iter : int
+        Maximum number of iterations
+    tol : float
+        Tolerance for convergence
+    solver: str
+        Solver to use, either 'log_sinkhorn' or 'sinkhorn'. Default is "log_sinkhorn" which is more stable.
+    reg_type : str, optional
+        Type of regularization :math:`R`  either "KL", or "entropy". Default is "entropy".
+    grad : str, optional
+        Type of gradient computation, either or 'autodiff', 'envelope' or 'last_step' used only for
+        Sinkhorn solver. By default 'autodiff' provides gradients wrt all
+        outputs (`plan, value, value_linear`) but with important memory cost.
+        'envelope' provides gradients only for `value` and and other outputs are
+        detached. This is useful for memory saving when only the value is needed. 'last_step' provides
+        gradients only for the last iteration of the Sinkhorn solver, but provides gradient for both the OT plan and the objective values.
+        'detach' does not compute the gradients for the Sinkhorn solver.
+
+    Returns
+    -------
+    res : OTResult()
+        Result of the optimization problem. The information can be obtained as follows:
+
+        - res.plan : OT plan :math:`\mathbf{T}`
+        - res.potentials : OT dual potentials
+        - res.value : Optimal value of the optimization problem
+        - res.value_linear : Linear OT loss with the optimal OT plan
+
+        See :any:`OTResult` for more information.
+    """
+
+    M = dist_batch(X_a, X_b, metric=metric, p=p)
+    return solve_batch(
+        M,
+        reg,
+        a=a,
+        b=b,
+        max_iter=max_iter,
+        tol=tol,
+        solver=solver,
+        reg_type=reg_type,
+        grad=grad,
+    )

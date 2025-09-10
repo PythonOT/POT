@@ -1,4 +1,0 @@
-
-
-Batch parrallel optimal transport
------------------------------------

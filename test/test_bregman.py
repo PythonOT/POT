@@ -1,6 +1,9 @@
-"""Tests batch._quadratic"""
+"""Tests for module bregman on OT with bregman projections"""
 
-# Author: Krzakala Paul <paulkrzakala@gmail.com>
+# Author: Remi Flamary <remi.flamary@unice.fr>
+#         Kilian Fatras <kilian.fatras@irisa.fr>
+#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
+#         Eduardo Fernandes Montesuma <eduardo.fernandes-montesuma@universite-paris-saclay.fr>
 #
 # License: MIT License
 
