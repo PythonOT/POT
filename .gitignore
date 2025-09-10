@@ -123,3 +123,5 @@ debug
 
 # pytest cahche
 .pytest_cache
+
+docs/source/
