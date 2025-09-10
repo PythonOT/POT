@@ -14,56 +14,87 @@ from ot.batch._linear import loss_linear_batch
 from ot.batch._utils import bmv, bop, bregman_log_projection_batch
 
 
-def loss_quadratic_batch(L, T, recompute_const=False, symmetric=True, nx=None):
-    """
-    Computes the quadratic cost < LxT, T > where L is the cost tensor
-    and T is the transport plan.
-    """
-    LT = tensor_product_batch(
-        L, T, nx=nx, recompute_const=recompute_const, symmetric=symmetric
-    )
-    return (LT * T).sum((1, 2))
-
-
-def loss_quadratic_samples_batch(
-    a, b, C1, C2, T, loss="sqeuclidean", symmetric=None, nx=None, logits=None
-):
-    """
-    Computes the quadratic cost < LxT, T > where L is the cost tensor
-    and T is the transport plan.
-    """
-    if isinstance(loss, str):
-        L = tensor_batch(
-            a, b, C1, C2, symmetric=symmetric, nx=nx, loss=loss, logits=logits
-        )
-    elif callable(loss):
-        L = loss(a, b, C1, C2, symmetric=symmetric, nx=nx)
-    else:
-        raise ValueError(f"Unknown loss function: {loss}")
-    return loss_quadratic_batch(L, T, recompute_const=True, symmetric=symmetric, nx=nx)
-
-
 def tensor_batch(
     a, b, C1, C2, symmetric=True, nx=None, loss="sqeuclidean", logits=None
 ):
-    """
-    Gromov-Wasserstein writes as:
-        GW(T,C1,C2) = sum_ijkl T_ik T_jl l(C1_ij, C2_kl) = < LxT, T >
-    Where L is a tensor L[i,j,k,l] = l(C1_ij, C2_kl).
+    r"""
+    Compute the Gromov-Wasserstein cost tensor for a batch of problems.
 
-    For loss function of form l(a,b) = f1(a) + f2(b) - < h1(a), h2(b) >
-    The tensor product LxT can be computed fast using tensor_product [12].
+    The Gromov-Wasserstein distance can be expressed as:
 
-    This function can be used to precompute the cost tensor L for the following losses:
+    .. math::
+        \text{GW}(\mathbf{T}, \mathbf{C}_1, \mathbf{C}_2) = \sum_{ijkl} T_{ik} T_{jl} \ell(C_{1,ij}, C_{2,kl}) = \langle \mathcal{L} \times \mathbf{T}, \mathbf{T} \rangle
 
-    KL divergence
-        l(a,b) = sum_i a_i log(a_i/b_i)
-    Expect x and y to be probability distributions
-    If logits is True, x is expected to be logits (unnormalized log probabilities)
-    l(x, y) = sum_i y_i * (log(y_i) - x_i)
+    where :math:`\mathcal{L}` is a 4D tensor with elements :math:`\mathcal{L}[i,j,k,l] = \ell(C_{1,ij}, C_{2,kl})`.
 
-    Squared Euclidean loss
-        l(a,b) = (a-b)^2 = a^2 + b^2 - 2ab
+    For loss functions of the form :math:`\ell(a,b) = f_1(a) + f_2(b) - \langle h_1(a), h_2(b) \rangle`,
+    the tensor product :math:`\mathcal{L} \times \mathbf{T}` can be computed efficiently without explicitly computing :math:`\mathcal{L}` [12].
+
+    This function precomputes all matrices that implicitly define `\mathcal{L}` for various loss functions.
+
+    Parameters
+    ----------
+    a : array-like, shape (B, n)
+        Source distributions for each problem in the batch.
+    b : array-like, shape (B, m)
+        Target distributions for each problem in the batch.
+    C1 : array-like, shape (B, n, n) or (B, n, n, d)
+        Source cost matrices for each problem. Can be a 3D array for scalar costs or a 4D array for vector-valued costs (edge features).
+    C2 : array-like, shape (B, m, m) or (B, n, n, d)
+        Target cost matrices for each problem. Can be a 3D array for scalar costs or a 4D array for vector-valued costs (edge features).
+    symmetric : bool, optional
+        Whether the cost matrices are symmetric. Default is True.
+    nx : backend object, optional
+        Numerical backend to use for computations. If None, the default backend is used.
+    loss : str, optional
+        Loss function to use. Supported values: 'sqeuclidean', 'kl'.
+        Default is 'sqeuclidean'.
+    logits : bool, optional
+        For KL divergence, whether inputs are logits (unnormalized log probabilities).
+        If True, inputs are treated as logits. Default is None.
+
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - constC : array-like, shape (B, n, m)
+            Constant term in the tensor product.
+        - hC1 : array-like, shape (B, n, n, d) or (B, n, n)
+        - hC2 : array-like, shape (B, m, m, d) or (B, m, m)
+        - fC1 : array-like, shape (B, n, n)
+        - fC2 : array-like, shape (B, m, m)
+
+
+    Supported loss functions:
+    ------------------------------
+
+    **Squared Euclidean loss**:
+
+    .. math::
+        \ell(a, b) = \|a - b\|_2^2 = \sum_i (a_i - b_i)^2
+
+    **KL divergence**:
+
+    .. math::
+        \ell(a, b) = \sum_i a_i \log\left(\frac{a_i}{b_i}\right)
+
+    If ``logits=True``, the entries of C1 are treated as logits (unnormalized log probabilities)
+    and the loss becomes:
+
+    .. math::
+        \ell(x, y) = \sum_i y_i (\log(y_i) - x_i)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from ot.gromov import tensor_batch
+    >>> # Create batch of cost matrices
+    >>> C1 = np.random.rand(3, 5, 5)  # 3 problems, 5x5 source matrices
+    >>> C2 = np.random.rand(3, 4, 4)  # 3 problems, 4x4 target matrices
+    >>> a = np.ones((3, 5)) / 5  # Uniform source distributions
+    >>> b = np.ones((3, 4)) / 4  # Uniform target distributions
+    >>> L = tensor_batch(a, b, C1, C2, loss='sqeuclidean')
+    >>> L.shape  # Should be (3, 5, 5, 4, 4)
 
     References
     ----------
@@ -122,6 +153,109 @@ def tensor_batch(
     return compute_tensor_batch(f1, f2, h1, h2, a, b, C1, C2, symmetric=symmetric)
 
 
+def loss_quadratic_batch(L, T, recompute_const=False, symmetric=True, nx=None):
+    r"""
+    Computes the gromov-wasserstein cost given a cost tensor and transport plan. Batched version.
+
+    Parameters
+    ----------
+    L : dict
+        Cost tensor as returned by `tensor_batch`.
+    T : array-like, shape (B, n, m)
+        Transport plan.
+    recompute_const : bool, optional
+        Whether to recompute the constant term. Default is False. This should be set to True if T does not satisfy the marginal constraints.
+    symmetric : bool, optional
+        Whether to use symmetric version. Default is True.
+    nx : module, optional
+        Backend to use. Default is None.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from ot.gromov import tensor_batch, loss_quadratic_batch
+    >>> # Create batch of cost matrices
+    >>> C1 = np.random.rand(3, 5, 5)  # 3 problems, 5x5 source matrices
+    >>> C2 = np.random.rand(3, 4, 4)  # 3 problems, 4x4 target matrices
+    >>> a = np.ones((3, 5)) / 5  # Uniform source distributions
+    >>> b = np.ones((3, 4)) / 4  # Uniform target distributions
+    >>> L = tensor_batch(a, b, C1, C2, loss='sqeuclidean')
+    >>> # Use the uniform transport plan for testing
+    >>> T = np.ones((3, 5, 4)) / (5 * 4)
+    >>> loss = loss_quadratic_batch(L, T, recompute_const=True)
+    >>> loss.shape
+    (3,)
+
+    See Also
+    --------
+    ot.batch.tensor_batch : From computing the cost tensor L.
+    ot.batch.solve_gromov_batch : For finding the optimal transport plan T.
+    """
+    LT = tensor_product_batch(
+        L, T, nx=nx, recompute_const=recompute_const, symmetric=symmetric
+    )
+    return (LT * T).sum((1, 2))
+
+
+def loss_quadratic_samples_batch(
+    a, b, C1, C2, T, loss="sqeuclidean", symmetric=None, nx=None, logits=None
+):
+    r"""
+    Computes the gromov-wasserstein for samples C1, C2 and transport plan. Batched version.
+
+    Parameters
+    ----------
+    a : array-like, shape (B, n)
+        Source distributions.
+    b : array-like, shape (B, m)
+        Target distributions.
+    C1 : array-like, shape (B, n, n) or (B, n, n, d)
+        Source cost matrices.
+    C2 : array-like, shape (B, m, m) or (B, n, n, d)
+        Target cost matrices.
+    T : array-like, shape (B, n, m)
+        Transport plan.
+    loss : str, optional
+        Loss function to use. Supported values: 'sqeuclidean', 'kl'.
+        Default is 'sqeuclidean'.
+    recompute_const : bool, optional
+        Whether to recompute the constant term. Default is False. This should be set to True if T does not satisfy the marginal constraints.
+    symmetric : bool, optional
+        Whether to use symmetric version. Default is True.
+    nx : module, optional
+        Backend to use. Default is None.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from ot.gromov import loss_quadratic_samples_batch
+    >>> # Create batch of cost matrices
+    >>> C1 = np.random.rand(3, 5, 5)  # 3 problems, 5x5 source matrices
+    >>> C2 = np.random.rand(3, 4, 4)  # 3 problems, 4x4 target matrices
+    >>> a = np.ones((3, 5)) / 5  # Uniform source distributions
+    >>> b = np.ones((3, 4)) / 4  # Uniform target distributions
+    >>> # Use the uniform transport plan for testing
+    >>> T = np.ones((3, 5, 4)) / (5 * 4)
+    >>> loss = loss_quadratic_samples_batch(a, b, C1, C2, T, recompute_const=True)
+    >>> loss.shape
+    (3,)
+
+    See Also
+    --------
+    ot.batch.tensor_batch : From computing the cost tensor L.
+    ot.batch.solve_gromov_batch : For finding the optimal transport plan T.
+    """
+    if isinstance(loss, str):
+        L = tensor_batch(
+            a, b, C1, C2, symmetric=symmetric, nx=nx, loss=loss, logits=logits
+        )
+    elif callable(loss):
+        L = loss(a, b, C1, C2, symmetric=symmetric, nx=nx)
+    else:
+        raise ValueError(f"Unknown loss function: {loss}")
+    return loss_quadratic_batch(L, T, recompute_const=True, symmetric=symmetric, nx=nx)
+
+
 def solve_gromov_batch(
     C1,
     C2,
@@ -140,37 +274,47 @@ def solve_gromov_batch(
     grad="detach",
     logits=None,
 ):
-    r"""Solves a batch of gromov optimal transport problems using proximal gradient [12, 41].
+    r"""
+    Solves a batch of Gromov-Wasserstein optimal transport problems using proximal gradient [12, 81].
+    For each problem in the batch, solves:
 
     .. math::
-        \min_{\mathbf{T}\geq 0} \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
+        \begin{aligned}
+            \min_{\mathbf{T} \geq 0} \quad & \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} \\
+            \text{s.t.} \quad & \mathbf{T} \mathbf{1} = \mathbf{a} \\
+            & \mathbf{T}^T \mathbf{1} = \mathbf{b} \\
+            & \mathbf{T} \geq 0
+        \end{aligned}
 
-        s.t. \ T \mathbf{1} &= \mathbf{a}
-
-             T^T \mathbf{1} &= \mathbf{b}
-
-             T &\geq 0
-
-    If :math:`M` and :math:`\alpha` are given, solves the more general fused-gromov-wasserstein problem:
-
-    .. math::
-        \min_{\mathbf{T}\geq 0} (1-\alpha) \sum_{i,j} M_{i,j} \mathbf{T}_{i,j}  + \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l}
-
-        s.t. \ T \mathbf{1} &= \mathbf{a}
-
-             T^T \mathbf{1} &= \mathbf{b}
-
-             T &\geq 0
-
-    Writing the objective as :math:`(1-\alpha) < M, T > + \alpha < L \otimes T, T >`, the solver uses proximal gradient descent i.e. each iteration is:
+    If :math:`\mathbf{M}` and :math:`\alpha` are given, solves the more general fused Gromov-Wasserstein problem:
 
     .. math::
-        T_k+1 = Minimize < M_k, T > + \epsilon KL(T || T_k) where M_k = (1 - \alpha)  M + 2 * \alpha L \otimes T_k
+        \begin{aligned}
+            \min_{\mathbf{T} \geq 0} \quad & (1-\alpha) \sum_{i,j} M_{i,j} \mathbf{T}_{i,j} + \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} \\
+            \text{s.t.} \quad & \mathbf{T} \mathbf{1} = \mathbf{a} \\
+            & \mathbf{T}^T \mathbf{1} = \mathbf{b} \\
+            & \mathbf{T} \geq 0
+        \end{aligned}
 
-    i.e.
+    Writing the objective as :math:`(1-\alpha) \langle \mathbf{M}, \mathbf{T} \rangle + \alpha \langle \mathcal{L} \otimes \mathbf{T}, \mathbf{T} \rangle`,
+    the solver uses proximal gradient descent where each iteration is:
 
     .. math::
-        T_k+1 = Minimize < M_k - \epsilon * \log(T_k), T > - \epsilon H(T)
+        \begin{aligned}
+            \mathbf{T}_{k+1} = \mathop{\arg \min}_{\mathbf{T} \geq 0} \quad & \langle \mathbf{M}_k, \mathbf{T} \rangle + \epsilon \, \text{KL}(\mathbf{T} \| \mathbf{T}_k) \\
+            \text{where} \quad & \mathbf{M}_k = (1 - \alpha) \mathbf{M} + 2 \alpha \mathcal{L} \otimes \mathbf{T}_k
+        \end{aligned}
+
+    This can be rewritten as:
+
+    .. math::
+        \begin{aligned}
+            \mathbf{T}_{k+1} = \mathop{\arg \min}_{\mathbf{T} \geq 0} \quad & \langle \mathbf{M}_k - \epsilon \log(\mathbf{T}_k), \mathbf{T} \rangle - \epsilon H(\mathbf{T})
+        \end{aligned}
+
+    where :math:`H(\mathbf{T})` is the entropy of :math:`\mathbf{T}`. Thus each iteration can be solved using the Bregman projection solver implemented in `bregman_log_projection_batch`. 
+    
+    Note that the inner optimization problem does not need to be solved exactly. In practice it sufficient to set `max_iter_inner` to a low value (e.g. 20) and/or `tol_inner` to a high value (e.g. 1e-2).
 
     Parameters
     ----------
@@ -230,12 +374,17 @@ def solve_gromov_batch(
 
         See :any:`OTResult` for more information.
 
+    See Also
+    --------
+    ot.batch.tensor_batch : From computing the cost tensor L.
+    ot.solve_gromov : Non-batched solver for Gromov-Wasserstein. Note that the non-batched solver uses a different algorithm (conditional gradient) and might not give the same results.
+    
     References
     ----------
     .. [12] Gabriel Peyré, Marco Cuturi, and Justin Solomon,
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
-    .. [41] Xu, H., Luo, D., & Carin, L. (2019). "Scalable Gromov-Wasserstein learning for graph partitioning and matching."
+    .. [81] Xu, H., Luo, D., & Carin, L. (2019). "Scalable Gromov-Wasserstein learning for graph partitioning and matching."
         Advances in neural information processing systems (NeurIPS). 2019.
     """
 

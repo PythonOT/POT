@@ -8,7 +8,13 @@
 # License: MIT License
 
 import numpy as np
-from ot.batch import solve_batch
+from ot.batch import (
+    solve_batch,
+    solve_sample_batch,
+    dist_batch,
+    loss_linear_samples_batch,
+    loss_linear_batch,
+)
 from ot import solve
 
 
@@ -44,3 +50,24 @@ def test_solve_batch():
         value_i = res_i.value_linear
         np.testing.assert_allclose(plan_i, plan_batch[i], atol=1e-05)
         np.testing.assert_allclose(value_i, values_batch[i], atol=1e-4)
+
+
+@pytest.mark.parametrize("metric", ["sqeuclidean", "euclidean", "minkowski", "kl"])
+def test_all(metric):
+    """Check that all functions run without error."""
+
+    batchsize = 2
+    n = 4
+    d = 2
+    rng = np.random.RandomState(0)
+    X = rng.rand(batchsize, n, d)
+    M = dist_batch(X, X, metric=metric)
+
+    # Solve batch
+    res = solve_batch(M, reg=0.1, max_iter=10, tol=1e-5)
+
+    # Solve sample batch
+    res = solve_sample_batch(X, X, reg=0.1, max_iter=10, tol=1e-5, metric=metric)
+
+    # Compute loss
+    loss = res.value_linear

@@ -119,7 +119,11 @@ def dist_kl_batch(X, Y, logits_X=False, nx=None, eps=1e-10):
 
 
 def loss_linear_batch(M, T, nx=None):
-    r"""Computes the linear optimal transport loss given cost matrix and transport plan.
+    r"""Computes the linear optimal transport loss given a batch cost matrices and transport plans.
+
+    .. math::
+
+        L(T, M)_b =  \langle T_b, M_b \rangle_F
 
     Parameters
     ----------
@@ -131,12 +135,17 @@ def loss_linear_batch(M, T, nx=None):
     -------
     loss : array-like, shape (B,)
         Loss value for each batch element
+    See Also
+    --------
+    ot.batch.dist_batch : batched cost matrix computation for computing M.
+    ot.batch.solve_batch : solver for computing the optimal T.
     """
     return (M * T).sum((1, 2))
 
 
 def loss_linear_samples_batch(X, Y, T, metric="l2"):
-    r"""Computes the linear optimal transport loss given samples and transport plan.
+    r"""Computes the linear optimal transport loss given samples and transport plan. This is the equivalent of
+    calling `dist_batch` and then `loss_linear_batch`.
 
     Parameters
     ----------
@@ -152,6 +161,11 @@ def loss_linear_samples_batch(X, Y, T, metric="l2"):
     -------
     loss : array-like, shape (B,)
         Loss value for each batch element
+
+    See Also
+    --------
+    ot.batch.dist_batch : batched cost matrix computation for computing M.
+    ot.batch.solve_batch : solver for computing the optimal T.
     """
     M = dist_batch(X, Y, metric=metric)
     return loss_linear_batch(M, T)
@@ -186,6 +200,19 @@ def dist_batch(
     M : array-like, shape (`b`, `n1`, `n2`)
         distance matrix computed with given metric
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from ot.batch import dist_batch
+    >>> X1 = np.random.randn(5, 10, 3)
+    >>> X2 = np.random.randn(5, 15, 3)
+    >>> M = dist_batch(X1, X2, metric="euclidean")
+    >>> M.shape
+    (5, 10, 15)
+
+    See Also
+    --------
+    ot.dist : equivalent non-batched function.
     """
     X2 = X2 if X2 is not None else X1
     metric = metric.lower()
@@ -255,6 +282,25 @@ def solve_batch(
         - res.value_linear : Linear OT loss with the optimal OT plan
 
         See :any:`OTResult` for more information.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from ot.batch import solve_batch, dist_batch
+    >>> X = np.random.randn(5, 10, 3)  # 5 batches of 10 samples in 3D
+    >>> Y = np.random.randn(5, 15, 3)  # 5 batches of 15 samples in 3D
+    >>> M = dist_batch(X, Y, metric="euclidean")  # Compute cost matrices
+    >>> reg = 0.1
+    >>> result = solve_batch(M, reg)
+    >>> result.plan.shape  # Optimal transport plans for each batch
+    (5, 10, 15)
+    >>> result.value.shape  # Optimal transport values for each batch
+    (5,)
+
+    See Also
+    --------
+    ot.batch.dist_batch : batched cost matrix computation for computing M.
+    ot.solve : non-batched version of the OT solver.
     """
 
     nx = get_backend(a, b, M)
@@ -367,6 +413,10 @@ def solve_sample_batch(
         - res.value_linear : Linear OT loss with the optimal OT plan
 
         See :any:`OTResult` for more information.
+
+    See Also
+    --------
+    ot.batch.solve_batch : solver for computing the optimal T from arbitrary cost matrix M.
     """
 
     M = dist_batch(X_a, X_b, metric=metric, p=p)

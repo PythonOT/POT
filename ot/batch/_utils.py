@@ -2,7 +2,21 @@ from ot.backend import get_backend
 
 
 def entropy_batch(T, nx=None, eps=1e-16):
-    """Computes the entropy of the transport plan T."""
+    r"""Computes the entropy of a batch of transport plans T.
+
+    .. math::
+        H(T)_b = - \sum_{i,j} T_{b,i,j} \log(T_{b,i,j})
+
+    Parameters
+    ----------
+
+    T : array-like, shape (b,n1,n2)
+        `b` transport of size `n1` x `n2`.
+    eps : float, optional
+        Small constant to avoid numerical issues with log(0). Default is 1e-16.
+    nx : Backend, optional
+        Backend to perform computations on. If omitted, the backend defaults to that of `T`.
+    """
     if nx is None:
         nx = get_backend(T)
     return -nx.sum(T * nx.log(T + eps), axis=(1, 2))
@@ -13,13 +27,6 @@ def norm_batch(u, p=2, nx=None):
     if nx is None:
         nx = get_backend(u)
     return nx.sum(u**p, axis=1) ** (1 / p)
-
-
-def bmm(A, B, nx):
-    """
-    Batched matrix multiplication for tensors A and B.
-    """
-    return nx.einsum("bij,bjk->bik", A, B)
 
 
 def bmv(A, b, nx):
@@ -40,59 +47,78 @@ def bregman_projection_batch(
     K, a=None, b=None, nx=None, max_iter=10000, tol=1e-5, grad="detach"
 ):
     r"""
-    Apply Bregman projection to a batch of affinity matrices K.
+    Apply Bregman projection to a batch of affinity matrices :math:`\mathbf{K}`.
 
     The function solves the following optimization problem:
 
     .. math::
-        T = \mathop{\arg \max}_T \quad \langle T, \log(K) \rangle_F 
+        \begin{aligned}
+            \mathbf{T} = \mathop{\arg \min}_\mathbf{T} \quad & \text{KL}(\mathbf{T} \| \mathbf{K}) \\
+            \text{s.t.} \quad & \mathbf{T} \mathbf{1} = \mathbf{a} \\
+            & \mathbf{T}^T \mathbf{1} = \mathbf{b} \\
+            & \mathbf{T} \geq 0
+        \end{aligned}
 
-        s.t. \ T \mathbf{1} &= \mathbf{a}
+    This is equivalent to:
 
-             T^T \mathbf{1} &= \mathbf{b}
-
-             T &\geq 0
-             
-    Which is equivalent to solving:
-    
     .. math::
-        T = \mathop{\arg \min}_T \quad KL(T || K)
-        s.t. \ T \mathbf{1} &= \mathbf{a}
+        \begin{aligned}
+            \mathbf{T} = \mathop{\arg \max}_\mathbf{T} \quad & \langle \mathbf{T},  \log(\mathbf{K}) \rangle_F \\
+            \text{s.t.} \quad & \mathbf{T} \mathbf{1} = \mathbf{a} \\
+            & \mathbf{T}^T \mathbf{1} = \mathbf{b} \\
+            & \mathbf{T} \geq 0
+        \end{aligned}
 
-             T^T \mathbf{1} &= \mathbf{b}
+    The optimal solution has the form :math:`\mathbf{T} = \text{diag}(\mathbf{f}) \mathbf{K} \text{diag}(\mathbf{g})`,
+    where the dual variables :math:`\mathbf{u}` and :math:`\mathbf{v}` are found iteratively using:
 
-             T &\geq 0
-             
-    We know that the optimal has the form :math: `T = \text{diag}(f) K \text{diag}(g)`,
-    where the dual variables :math: `f` and :math: `g` can be found iteratively.
-    
     .. math::
-        f_{k+1} = \frac{a}{K g_{k}} \quad \text{and} \
-        g_{k+1} = \frac{b}{f_{k} K}
+        \mathbf{f}^{(k+1)} = \frac{\mathbf{a}}{\sum \mathbf{K} \mathbf{g}^{(k)}}
         
+        \mathbf{g}^{(k+1)} = \frac{\mathbf{b}}{\sum \mathbf{K}^T \mathbf{f}^{(k)}}
+
     Parameters
     ----------
     K : array-like, shape (B, n, m)
-        Affinity matrix
+        Affinity matrix for each problem in the batch.
     a : array-like, shape (B, n), optional
-        Source distribution (optional). If None, uniform distribution is used.
+        Source distribution for each problem. If None, uniform distribution is used.
     b : array-like, shape (B, m), optional
-        Target distribution (optional). If None, uniform distribution is used.
-    nx : Backend, optional
-        Backend to use for computations. If None, the default backend is used.
+        Target distribution for each problem. If None, uniform distribution is used.
+    nx : backend object, optional
+        Numerical backend to use for computations. If None, the default backend is used.
     max_iter : int, optional
-        Maximum number of iterations to run the solver.
+        Maximum number of iterations.
     tol : float, optional
-        Tolerance for convergence. The solver stops when the maximum change in `f` and `g` is below this value.
+        Tolerance for convergence. The solver stops when the maximum change in
+        the dual variables is below this value.
     grad : str, optional
-        Type of gradient computation, either 'detach', 'autodiff' or 'last_step'.
-        
+        Gradient computation mode: 'detach', 'autodiff', or 'last_step'.
+
     Returns
     -------
     dict
-        A dictionary containing:
-        - 'T': the transport plan
-        - 'n_iters': number of iterations performed
+        Dictionary containing:
+        - 'T' : array-like, shape (B, n, m)
+            Optimal transport plan for each problem.
+        - 'potentials' : tuple of array-like, shapes ((B, n), (B, m))
+            Scaling factors (f, g).
+        - 'n_iters' : int
+            Number of iterations performed.
+
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from ot.batch import bregman_projection_batch
+    >>> # Create batch of affinity matrices
+    >>> K = np.random.randn(5, 10, 15)  # 5 problems, 10x15 cost matrices
+    >>> result = bregman_projection_batch(K)
+    >>> T = result['T']  # Shape (5, 10, 15)
+
+    See Also
+    --------
+    ot.batch.bregman_log_projection_batch : Bregman projection in the log-domain.
     """
     if nx is None:
         nx = get_backend(a, b, K)
@@ -140,75 +166,84 @@ def bregman_log_projection_batch(
     K, a=None, b=None, nx=None, max_iter=10000, tol=1e-5, grad="detach"
 ):
     r"""
-    Apply Bregman projection to a batch of affinity matrices :math:`\exp(K)`.
+    Apply Bregman projection to a batch of affinity matrices :math:`\exp(\mathbf{K})`.
 
     The function solves the following optimization problem:
 
     .. math::
-        T = \mathop{\arg \max}_T \quad \langle T, K) \rangle_F 
+        \begin{aligned}
+            \mathbf{T} = \mathop{\arg \min}_\mathbf{T} \quad & \text{KL}(\mathbf{T} \| \exp(\mathbf{K})) \\
+            \text{s.t.} \quad & \mathbf{T} \mathbf{1} = \mathbf{a} \\
+            & \mathbf{T}^T \mathbf{1} = \mathbf{b} \\
+            & \mathbf{T} \geq 0
+        \end{aligned}
 
-        s.t. \ T \mathbf{1} &= \mathbf{a}
+    This is equivalent to:
 
-             T^T \mathbf{1} &= \mathbf{b}
-
-             T &\geq 0
-             
-    Which is equivalent to solving:
-    
     .. math::
-        T = \mathop{\arg \min}_T \quad KL(T || \exp(K))
-        s.t. \ T \mathbf{1} &= \mathbf{a}
+        \begin{aligned}
+            \mathbf{T} = \mathop{\arg \max}_\mathbf{T} \quad & \langle \mathbf{T}, \mathbf{K} \rangle_F \\
+            \text{s.t.} \quad & \mathbf{T} \mathbf{1} = \mathbf{a} \\
+            & \mathbf{T}^T \mathbf{1} = \mathbf{b} \\
+            & \mathbf{T} \geq 0
+        \end{aligned}
 
-             T^T \mathbf{1} &= \mathbf{b}
+    The optimal solution has the form :math:`\mathbf{T} = \text{diag}(\exp(\mathbf{u})) \exp(\mathbf{K}) \text{diag}(\exp(\mathbf{v}))`,
+    where the dual variables :math:`\mathbf{u}` and :math:`\mathbf{v}` are found iteratively using:
 
-             T &\geq 0
-
-    We know that the optimal has the form :math: `T = \text{diag}(\exp(u)) \exp(K) \text{diag}(\exp(v))`,
-    where the dual variables :math: `u` and :math: `v` can be found iteratively.
-    
     .. math::
-        u_{k+1} = \log(a) - \log(\exp(K) \exp(v_{k})) \quad \text{and} \
-        v_{k+1} = \log(b) - \log(\exp(K) \exp(u_{k}))
+        \mathbf{u}^{(k+1)} = \log(\mathbf{a}) - \text{LSE}(\mathbf{K} + \mathbf{v}^{(k)})
 
-    The iterations are performed using the log-sum-exp trick to avoid numerical issues.
+        \mathbf{v}^{(k+1)} = \log(\mathbf{b}) - \text{LSE}(\mathbf{K}^T + \mathbf{u}^{(k)})
+
+    where LSE denotes the log-sum-exp operation. The iterations are performed using
+    the log-sum-exp trick to avoid numerical issues.
 
     Parameters
     ----------
     K : array-like, shape (B, n, m)
-        Affinity matrix
+        Affinity matrix for each problem in the batch.
     a : array-like, shape (B, n), optional
-        Source distribution (optional). If None, uniform distribution is used.
+        Source distribution for each problem. If None, uniform distribution is used.
     b : array-like, shape (B, m), optional
-        Target distribution (optional). If None, uniform distribution is used.
-    nx : Backend, optional
-        Backend to use for computations. If None, the default backend is used.
+        Target distribution for each problem. If None, uniform distribution is used.
+    nx : backend object, optional
+        Numerical backend to use for computations. If None, the default backend is used.
     max_iter : int, optional
-        Maximum number of iterations to run the solver.
+        Maximum number of iterations.
     tol : float, optional
-        Tolerance for convergence. The solver stops when the maximum change in `f` and `g` is below this value.
+        Tolerance for convergence. The solver stops when the maximum change in
+        the dual variables is below this value.
     grad : str, optional
-        Type of gradient computation, either 'detach', 'autodiff' or 'last_step'.
+        Gradient computation mode: 'detach', 'autodiff', or 'last_step'.
 
     Returns
     -------
     dict
-        A dictionary containing:
-        - 'T': the transport plan
-        - 'n_iters': number of iterations performed
+        Dictionary containing:
+        - 'T' : array-like, shape (B, n, m)
+            Optimal transport plan for each problem.
+        - 'log_T' : array-like, shape (B, n, m)
+            Logarithm of the optimal transport plan for each problem.
+        - 'potentials' : tuple of array-like, shapes ((B, n), (B, m))
+            Log-scaling factors (u, v).
+        - 'n_iters' : int
+            Number of iterations performed.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from ot.batch import bregman_log_projection_batch
+    >>> # Create batch of affinity matrices
+    >>> K = np.random.randn(5, 10, 15)  # 5 problems, 10x15 cost matrices
+    >>> result = bregman_log_projection_batch(K)
+    >>> T = result['T']  # Shape (5, 10, 15)
+
+    See Also
+    --------
+    ot.batch.bregman_projection_batch : standard Bregman projection.
     """
 
-    """
-    Apply Bregman projection to a batch of affinity matrices exp(K)
-    Meaning:
-    Solve argmin_{T transport plan} KL(T||exp(K)) = argmax_T <T,K>
-    
-    We know that the optimal has the form T = diag(exp(u)) exp(K) diag(exp(v)) (where u = log f and v = log g)
-    Given v the optimal u is given by u = log(a) - log( exp(K) exp(v) ) 
-    this can be computed with the log-sum-exp trick.
-    Idem for v given u.
-    
-    The solver iteratively updates f and g until convergence.
-    """
     if nx is None:
         nx = get_backend(a, b, K)
 

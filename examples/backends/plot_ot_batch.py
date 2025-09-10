@@ -10,10 +10,26 @@ In that case using a for loop to solve the problems sequentially is inefficient.
 This example shows how to use the batch solvers implemented in POT to solve
 many problems in parallel on CPU or GPU (even more efficient on GPU).
 
+.. sphinx_gallery_thumbnail_number:: 1
 """
 
 # Author: Paul Krzakala <paul.krzakala@gmail.com>
 # License: MIT License
+
+# sphinx_gallery_start_ignore
+import matplotlib.pyplot as plt
+from matplotlib.image import imread
+import os
+
+thumbnail_path = "images/no_more_for_loops.png"
+img = imread(thumbnail_path)
+fig, ax = plt.subplots(figsize=(8, 6))
+ax.imshow(img)
+ax.axis("off")
+plt.tight_layout()
+plt.show()
+plt.close(fig)
+# sphinx_gallery_end_ignore
 
 #############################################################################
 #

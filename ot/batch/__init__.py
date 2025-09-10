@@ -19,6 +19,7 @@ from ._quadratic import (
     solve_gromov_batch,
     loss_quadratic_batch,
     loss_quadratic_samples_batch,
+    tensor_batch,
 )
 from ._utils import (
     bregman_log_projection_batch,
@@ -38,4 +39,5 @@ __all__ = [
     "entropy_batch",
     "loss_quadratic_batch",
     "loss_quadratic_samples_batch",
+    "tensor_batch",
 ]
