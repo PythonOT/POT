@@ -20,7 +20,7 @@ def test_solve_batch():
 
     M = rng.rand(batchsize, n, n)
 
-    epsilon = 0.1
+    reg = 0.1
     max_iter = 10000
     tol = 1e-5
 
@@ -28,10 +28,10 @@ def test_solve_batch():
         M,
         a=None,
         b=None,
-        epsilon=epsilon,
+        reg=reg,
         max_iter=max_iter,
         tol=tol,
-        log_dual=True,
+        solver="log_sinkhorn",
         grad="detach",
     )
     plan_batch = res.plan
@@ -39,11 +39,8 @@ def test_solve_batch():
 
     for i in range(batchsize):
         M_i = M[i]
-        res_i = solve(M_i, a=None, b=None, reg=epsilon, max_iter=max_iter, tol=tol)
+        res_i = solve(M_i, a=None, b=None, reg=reg, max_iter=max_iter, tol=tol)
         plan_i = res_i.plan
         value_i = res_i.value_linear
         np.testing.assert_allclose(plan_i, plan_batch[i], atol=1e-05)
         np.testing.assert_allclose(value_i, values_batch[i], atol=1e-4)
-
-
-test_solve_batch()

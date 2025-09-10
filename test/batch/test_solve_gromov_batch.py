@@ -10,7 +10,7 @@
 import numpy as np
 from ot.batch import solve_gromov_batch
 from ot import solve_gromov
-from ot.batch._linear import cost_matrix_l2_batch
+from ot.batch._linear import dist_batch
 
 
 def test_solve_gromov_batch():
@@ -18,7 +18,7 @@ def test_solve_gromov_batch():
     b = 2
     n = 8
     d = 2
-    epsilon = 0.01
+    reg = 0.01
     max_iter = 1000
     max_iter_inner = 10000
     tol = 1e-5
@@ -36,11 +36,11 @@ def test_solve_gromov_batch():
         "float32"
     )
 
-    M = cost_matrix_l2_batch(X1, X2)
+    M = dist_batch(X1, X2)
 
     res = solve_gromov_batch(
         alpha=alpha,
-        epsilon=epsilon,
+        reg=reg,
         M=M,
         C1=C1,
         C2=C2,
@@ -68,6 +68,3 @@ def test_solve_gromov_batch():
             values_quadratic_i, values_quadratic_batch[i], atol=1e-4
         )
         np.testing.assert_allclose(plan_i, plan_batch[i], atol=1e-05)
-
-
-test_solve_gromov_batch()
