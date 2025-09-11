@@ -112,9 +112,11 @@ def dist_kl_batch(X, Y, logits_X=False, nx=None, eps=1e-10):
         nx = get_backend(X, Y)
     entr_y = nx.sum(Y * nx.log(Y + eps), axis=-1)  # B x m
     if logits_X:
-        M = entr_y[:, None, :] - Y[:, None, :] + nx.log(X + eps)[:, :, None]
-    else:
         M = entr_y[:, None, :] - Y[:, None, :] * X[:, :, None]
+    else:
+        M = entr_y[:, None, :] - nx.sum(
+            Y[:, None, :] * nx.log(X + eps)[:, :, None], axis=-1
+        )
     return M
 
 

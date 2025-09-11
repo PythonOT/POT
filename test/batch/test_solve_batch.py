@@ -15,7 +15,9 @@ from ot.batch import (
     loss_linear_samples_batch,
     loss_linear_batch,
 )
+
 from ot import solve
+import pytest
 
 
 def test_solve_batch():
@@ -61,7 +63,12 @@ def test_all(metric):
     d = 2
     rng = np.random.RandomState(0)
     X = rng.rand(batchsize, n, d)
+    if metric == "kl":
+        X = np.abs(X) + 1e-6
+        X = X / np.sum(X, axis=-1, keepdims=True)
     M = dist_batch(X, X, metric=metric)
+    is_positive = M >= 0
+    np.testing.assert_equal(is_positive.all(), True)
 
     # Solve batch
     res = solve_batch(M, reg=0.1, max_iter=10, tol=1e-5)
@@ -70,4 +77,10 @@ def test_all(metric):
     res = solve_sample_batch(X, X, reg=0.1, max_iter=10, tol=1e-5, metric=metric)
 
     # Compute loss
-    loss = res.value_linear
+    loss = res.value_linear  # loss given by solver
+    loss2 = loss_linear_batch(M, res.plan)  # recompute loss from plan
+    loss3 = loss_linear_samples_batch(
+        X, X, res.plan, metric=metric
+    )  # recompute loss from plan and samples
+    np.testing.assert_allclose(loss, loss2, atol=1e-5)
+    np.testing.assert_allclose(loss, loss3, atol=1e-5)

@@ -137,10 +137,10 @@ def tensor_batch(
         ], "logits must be either True or False for KL loss"
 
         def f1(C1):
-            return nx.zeros(C1.shape, type_as=C1)
+            return nx.zeros((C1.shape[0], C1.shape[1], C1.shape[2]), type_as=C1)
 
         def f2(C2):
-            assert C2.ndim == 3, "C2 must be a nxnxd tensor"
+            assert C2.ndim == 4, "C2 must be a bxnxnxd tensor"
             fC2 = C2 * nx.log(C2 + 1e-15)  # Avoid log(0)
             return fC2.sum(axis=-1)
 
@@ -405,7 +405,7 @@ def solve_gromov_batch(
 
     # -------------- Get cost_tensor (quadratic part) -------------- #
 
-    if loss == "sqeuclidean":
+    if isinstance(loss, str):
         L = tensor_batch(
             a, b, C1, C2, symmetric=symmetric, nx=nx, loss=loss, logits=logits
         )

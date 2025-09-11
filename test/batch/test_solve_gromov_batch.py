@@ -8,9 +8,11 @@
 # License: MIT License
 
 import numpy as np
-from ot.batch import solve_gromov_batch
+from ot.batch import solve_gromov_batch, loss_quadratic_samples_batch
 from ot import solve_gromov
 from ot.batch._linear import dist_batch
+import pytest
+from itertools import product
 
 
 def test_solve_gromov_batch():
@@ -68,3 +70,35 @@ def test_solve_gromov_batch():
             values_quadratic_i, values_quadratic_batch[i], atol=1e-4
         )
         np.testing.assert_allclose(plan_i, plan_batch[i], atol=1e-05)
+
+
+@pytest.mark.parametrize(
+    "loss, logits",
+    product(
+        ["sqeuclidean", "kl"],
+        [True, False],
+    ),
+)
+def test_all(loss, logits=False):
+    """Check that all functions run without error."""
+
+    batchsize = 2
+    n = 4
+    d = 2
+    rng = np.random.RandomState(0)
+    C = rng.rand(batchsize, n, n, d)
+    a = np.ones((batchsize, n))
+    if loss == "kl":
+        C = np.abs(C) + 1e-6
+        C = C / np.sum(C, axis=-1, keepdims=True)
+
+    res = solve_gromov_batch(C1=C, C2=C, a=a, b=a, loss=loss, logits=logits)
+
+    loss1 = res.value_quad
+    loss2 = loss_quadratic_samples_batch(
+        a=a, b=a, C1=C, C2=C, T=res.plan, loss=loss, logits=logits
+    )
+    np.testing.assert_allclose(loss1, loss2, atol=1e-5)
+
+    if loss == "kl":
+        test_all("kl", logits=True)
