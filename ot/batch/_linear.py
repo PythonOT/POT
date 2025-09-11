@@ -244,7 +244,7 @@ def solve_batch(
     reg_type="entropy",
     grad="detach",
 ):
-    r"""Batched version of ot.solve, use it to solve many OT problems in parallel.
+    r"""Batched version of ot.solve, use it to solve many entropic OT problems in parallel.
 
     Parameters
     ----------
@@ -371,7 +371,7 @@ def solve_sample_batch(
     reg_type="entropy",
     grad="detach",
 ):
-    r"""Batched version of ot.solve, use it to solve many OT problems in parallel.
+    r"""Batched version of ot.solve, use it to solve many entropic OT problems in parallel.
 
     Parameters
     ----------

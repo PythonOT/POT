@@ -228,7 +228,7 @@ def loss_quadratic_samples_batch(
     Examples
     --------
     >>> import numpy as np
-    >>> from ot.gromov import loss_quadratic_samples_batch
+    >>> from ot.batch import loss_quadratic_samples_batch
     >>> # Create batch of cost matrices
     >>> C1 = np.random.rand(3, 5, 5)  # 3 problems, 5x5 source matrices
     >>> C2 = np.random.rand(3, 4, 4)  # 3 problems, 4x4 target matrices
