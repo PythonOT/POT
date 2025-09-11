@@ -94,7 +94,6 @@ def tensor_batch(
     >>> a = np.ones((3, 5)) / 5  # Uniform source distributions
     >>> b = np.ones((3, 4)) / 4  # Uniform target distributions
     >>> L = tensor_batch(a, b, C1, C2, loss='sqeuclidean')
-    >>> L.shape  # Should be (3, 5, 5, 4, 4)
 
     References
     ----------
