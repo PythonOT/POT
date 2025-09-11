@@ -79,7 +79,7 @@ def test_solve_gromov_batch():
         [True, False],
     ),
 )
-def test_all(loss, logits=False):
+def test_all(loss, logits):
     """Check that all functions run without error."""
 
     batchsize = 2
@@ -99,6 +99,3 @@ def test_all(loss, logits=False):
         a=a, b=a, C1=C, C2=C, T=res.plan, loss=loss, logits=logits
     )
     np.testing.assert_allclose(loss1, loss2, atol=1e-5)
-
-    if loss == "kl":
-        test_all("kl", logits=True)
