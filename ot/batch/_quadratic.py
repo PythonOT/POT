@@ -197,7 +197,16 @@ def loss_quadratic_batch(L, T, recompute_const=False, symmetric=True, nx=None):
 
 
 def loss_quadratic_samples_batch(
-    a, b, C1, C2, T, loss="sqeuclidean", symmetric=None, nx=None, logits=None
+    a,
+    b,
+    C1,
+    C2,
+    T,
+    loss="sqeuclidean",
+    symmetric=None,
+    nx=None,
+    logits=None,
+    recompute_const=False,
 ):
     r"""
     Computes the gromov-wasserstein for samples C1, C2 and transport plan. Batched version.
@@ -252,7 +261,9 @@ def loss_quadratic_samples_batch(
         L = loss(a, b, C1, C2, symmetric=symmetric, nx=nx)
     else:
         raise ValueError(f"Unknown loss function: {loss}")
-    return loss_quadratic_batch(L, T, recompute_const=True, symmetric=symmetric, nx=nx)
+    return loss_quadratic_batch(
+        L, T, recompute_const=recompute_const, symmetric=symmetric, nx=nx
+    )
 
 
 def solve_gromov_batch(
