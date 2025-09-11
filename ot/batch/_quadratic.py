@@ -87,7 +87,7 @@ def tensor_batch(
     Examples
     --------
     >>> import numpy as np
-    >>> from ot.gromov import tensor_batch
+    >>> from ot.batch import tensor_batch
     >>> # Create batch of cost matrices
     >>> C1 = np.random.rand(3, 5, 5)  # 3 problems, 5x5 source matrices
     >>> C2 = np.random.rand(3, 4, 4)  # 3 problems, 4x4 target matrices
@@ -173,7 +173,7 @@ def loss_quadratic_batch(L, T, recompute_const=False, symmetric=True, nx=None):
     Examples
     --------
     >>> import numpy as np
-    >>> from ot.gromov import tensor_batch, loss_quadratic_batch
+    >>> from ot.batch import tensor_batch, loss_quadratic_batch
     >>> # Create batch of cost matrices
     >>> C1 = np.random.rand(3, 5, 5)  # 3 problems, 5x5 source matrices
     >>> C2 = np.random.rand(3, 4, 4)  # 3 problems, 4x4 target matrices
