@@ -59,6 +59,8 @@ from .sliced import (
     sliced_wasserstein_sphere,
     sliced_wasserstein_sphere_unif,
     linear_sliced_wasserstein_sphere,
+    min_pivot_sliced,
+    expected_sliced,
 )
 from .gromov import (
     gromov_wasserstein,
@@ -108,6 +110,8 @@ __all__ = [
     "sliced_wasserstein_distance",
     "sliced_wasserstein_sphere",
     "linear_sliced_wasserstein_sphere",
+    "min_pivot_sliced",
+    "expected_sliced",
     "gromov_wasserstein",
     "gromov_wasserstein2",
     "gromov_barycenters",

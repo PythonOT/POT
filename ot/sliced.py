@@ -1,17 +1,17 @@
 """
 Sliced OT Distances
-
 """
 
 # Author: Adrien Corenflos <adrien.corenflos@aalto.fi>
 #         Nicolas Courty   <ncourty@irisa.fr>
 #         Rémi Flamary <remi.flamary@polytechnique.edu>
+#         Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
 #
 # License: MIT License
 
 import numpy as np
 from .backend import get_backend, NumpyBackend
-from .utils import list_to_array, get_coordinate_circle
+from .utils import list_to_array, get_coordinate_circle, dist
 from .lp import (
     wasserstein_circle,
     semidiscrete_wasserstein2_unif_circle,
@@ -674,3 +674,229 @@ def linear_sliced_wasserstein_sphere(
     if log:
         return res, {"projections": projections, "projected_emds": projected_lcot}
     return res
+
+
+def sliced_permutations(X, Y, thetas=None, n_proj=None, log=False, backend=None):
+    r"""
+    Computes all the permutations that sort the projections of two `(n, d)`
+    datasets `X` and `Y` on the directions `thetas`.
+    Each permutation `perm[:, k]` is such that each `X[i, :]` is matched
+    to `Y[perm[i, k], :]` when projected on `thetas[k, :]`.
+
+    Parameters
+    ----------
+    X : array-like, shape (n, d)
+        The first set of vectors.
+    Y : array-like, shape (n, d)
+        The second set of vectors.
+    thetas : array-like, shape (n_proj, d), optional
+        The projection directions. If None, random directions will be generated.
+        Default is None.
+    n_proj : int, optional
+        The number of projection directions. Required if thetas is None.
+    log : bool, optional
+        If True, returns additional logging information. Default is False.
+    backend : ot.backend, optional
+        Backend to use for computations. If None, the backend is inferred from the input arrays. Default is None.
+
+    Returns
+    -------
+    perm : array-like, shape (n, n_proj)
+        All sliced permutations.
+    log_dict : dict, optional
+        A dictionary containing intermediate computations for logging purposes.
+        Returned only if `log` is True.
+    """
+    nx = get_backend(X, Y) if backend is None else backend
+    d = X.shape[1]
+    do_draw_thetas = thetas is None
+    if do_draw_thetas:  # create thetas (n_proj, d)
+        thetas = get_random_projections(d, n_proj, backend=nx).T
+
+    # project on each theta: (n, d) -> (n, n_proj)
+    X_theta = X @ thetas.T  # shape (n, n_proj)
+    Y_theta = Y @ thetas.T  # shape (n, n_proj)
+
+    # sigma[:, i_proj] is a permutation sorting X_theta[:, i_proj]
+    sigma = nx.argsort(X_theta, axis=0)  # (n, n_proj)
+    tau = nx.argsort(Y_theta, axis=0)  # (n, n_proj)
+
+    # perm[:, i_proj] is tau[:, i_proj] o sigma[:, i_proj]^{-1}
+    perm = nx.take_along_axis(tau, nx.argsort(sigma, axis=0), axis=0)  # (n, n_proj)
+
+    if log:
+        log_dict = {
+            "X_theta": X_theta,
+            "Y_theta": Y_theta,
+            "sigma": sigma,
+            "tau": tau,
+            "perm": perm,
+        }
+        if do_draw_thetas:
+            log_dict["thetas"] = thetas
+        return perm, log_dict
+    else:
+        return perm
+
+
+def min_pivot_sliced(
+    X, Y, thetas=None, order=2, n_proj=None, log=False, warm_perm=None
+):
+    r"""
+    Computes the cost and permutation associated to the min-Pivot Sliced
+    Discrepancy (introduced as SWGG in [81] and studied further in [82]). Given
+    the supports `X` and `Y` of two discrete uniform measures with `n` atoms in
+    dimension `d`, the min-Pivot Sliced Discrepancy goes through `n_proj`
+    different projections of the measures on random directions, and retains the
+    permutation that yields the lowest cost between `X` and `Y` (compared
+    in :math:`\mathbb{R}^d`).
+
+    .. math::
+        \mathrm{min\text{-}PS}_p^p(X, Y) \approx
+        \min_{k \in [1, n_{\mathrm{proj}}]} \left(
+        \frac{1}{n} \sum_{i=1}^n \|X_i - Y_{\sigma_k(i)}\|_2^p \right),
+
+    where :math:`\sigma_k` is a permutation such that ordering the projections
+    on the axis `thetas[k, :]` matches `X[i, :]` to `Y[\sigma_k(i), :]`.
+
+    .. note::
+        The computation ignores potential ambiguities in the projections: if two points from a same measure have the same projection on a direction, then multiple sorting permutations are possible. To avoid combinatorial explosion, only one permutation is retained: this strays from theory in pathological cases.
+
+    Parameters
+    ----------
+    X : array-like, shape (n, d)
+        The first set of vectors.
+    Y : array-like, shape (n, d)
+        The second set of vectors.
+    thetas : array-like, shape (n_proj, d), optional
+        The projection directions. If None, random directions will be generated. Default is None.
+    order : int, optional
+        Power to elevate the norm. Default is 2.
+    n_proj : int, optional
+        The number of projection directions. Required if thetas is None.
+    log : bool, optional
+        If True, returns additional logging information. Default is False.
+    warm_perm : array-like, shape (n,), optional
+        A permutation to add to the permutation list. Default is None.
+
+    Returns
+    -------
+    perm : array-like, shape (n,)
+        The permutation that minimizes the cost.
+    min_cost : float
+        The minimum cost corresponding to the optimal permutation.
+    log_dict : dict, optional
+        A dictionary containing intermediate computations for logging purposes.
+        Returned only if `log` is True.
+
+    References
+    ----------
+    .. [81] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023). Fast Optimal Transport through Sliced Generalized Wasserstein Geodesics. Advances in Neural Information Processing Systems, 36, 35350–35385.
+
+    .. [82] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport Plans. arXiv preprint 2506.03661.
+    """
+    n = X.shape[0]
+    nx = get_backend(X, Y)
+    log_dict = {}
+
+    if log:
+        perm, log_dict = sliced_permutations(
+            X, Y, thetas=thetas, n_proj=n_proj, log=True, backend=nx
+        )
+    else:
+        perm = sliced_permutations(
+            X, Y, thetas=thetas, n_proj=n_proj, log=False, backend=nx
+        )
+
+    # add the 'warm perm' to permutations to test
+    if warm_perm is not None:
+        perm = nx.concatenate([perm, warm_perm[:, None]], dim=1)
+        if log:
+            log_dict["perm"] = perm
+
+    min_cost = None
+    idx_min_cost = None
+    costs = []
+
+    for k in range(perm.shape[-1]):
+        cost = nx.sum(nx.abs(X - Y[perm[:, k]]) ** order) / n
+        if min_cost is None or cost < min_cost:
+            min_cost = cost
+            idx_min_cost = k
+        if log:
+            costs.append(cost)
+
+    min_perm = perm[:, idx_min_cost]
+
+    if log:
+        log_dict["costs"] = costs
+        log_dict["idx_min_cost"] = idx_min_cost
+        return min_perm, min_cost, log_dict
+    else:
+        return min_perm, min_cost
+
+
+def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False):
+    r"""
+    Computes the Expected Sliced cost and plan between two `(n, d)`
+    datasets `X` and `Y`. Given a set of `n_proj` projection directions,
+    the expected sliced plan is obtained by averaging the `n_proj` 1d optimal
+    transport plans between the projections of `X` and `Y` on each direction.
+    Expected Sliced was introduced in [83] and further studied in [82].
+
+    .. note::
+        The computation ignores potential ambiguities in the projections: if two points from a same measure have the same projection on a direction, then multiple sorting permutations are possible. To avoid combinatorial explosion, only one permutation is retained: this strays from theory in pathological cases.
+
+    Parameters
+    ----------
+    X : torch.Tensor
+        A tensor of shape (n, d) representing the first set of vectors.
+    Y : torch.Tensor
+        A tensor of shape (n, d) representing the second set of vectors.
+    thetas : torch.Tensor, optional
+        A tensor of shape (n_proj, d) representing the projection directions.
+        If None, random directions will be generated. Default is None.
+    n_proj : int, optional
+        The number of projection directions. Required if thetas is None.
+    order : int, optional
+        Power to elevate the norm. Default is 2.
+    log : bool, optional
+        If True, returns additional logging information. Default is False.
+
+    Returns
+    -------
+    plan : torch.Tensor
+        A tensor of shape (n_proj, n, n) representing the expected sliced plan.
+    log_dict : dict, optional
+        A dictionary containing intermediate computations for logging purposes.
+        Returned only if `log` is True.
+
+    References
+    ----------
+    .. [82] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport Plans. arXiv preprint 2506.03661.
+
+    .. [83] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi A., Kolouri, S. (2024). Expected Sliced Transport Plans. International Conference on Learning Representations.
+    """
+    nx = get_backend(X, Y)
+    n = X.shape[0]
+    log_dict = {}
+    if log:
+        perm, log_dict = sliced_permutations(
+            X, Y, thetas=thetas, n_proj=n_proj, log=log, backend=nx
+        )
+    else:
+        perm = sliced_permutations(
+            X, Y, thetas=thetas, n_proj=n_proj, log=log, backend=nx
+        )
+    plan = nx.zeros((n, n), type_as=X)
+    n_proj = perm.shape[1]
+    range_array = nx.arange(n, type_as=X)
+    for k in range(n_proj):
+        plan[range_array, perm[:, k]] += 1 / (n_proj * n)
+
+    cost = (dist(X, Y, p=order) * plan).sum()
+
+    if log:
+        return plan, cost, log_dict
+    else:
+        return plan, cost
