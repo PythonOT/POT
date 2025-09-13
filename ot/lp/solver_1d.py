@@ -5,6 +5,7 @@ Exact solvers for the 1D Wasserstein distance using cvxopt
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 # Author: Nicolas Courty <ncourty@irisa.fr>
+# Author: Clément Bonet <clement.bonet.mapp@polytechnique.edu>
 #
 # License: MIT License
 

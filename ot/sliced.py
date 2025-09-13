@@ -6,6 +6,7 @@ Sliced OT Distances
 # Author: Adrien Corenflos <adrien.corenflos@aalto.fi>
 #         Nicolas Courty   <ncourty@irisa.fr>
 #         Rémi Flamary <remi.flamary@polytechnique.edu>
+#         Clément Bonet <clement.bonet.mapp@polytechnique.edu>
 #
 # License: MIT License
 

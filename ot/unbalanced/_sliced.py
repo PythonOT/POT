@@ -3,7 +3,7 @@
 Sliced Unbalanced OT solvers
 """
 
-# Author:
+# Author: Clément Bonet <clement.bonet.mapp@polytechnique.edu>
 #
 # License: MIT License
 
@@ -119,7 +119,15 @@ def sliced_unbalanced_ot(
     X_t_projections = nx.dot(X_t, projections)
 
     a_reweighted, b_reweighted, projected_uot = uot_1d(
-        X_s_projections, X_t_projections, reg_m, a, b, p, require_sort=True, mode=mode
+        X_s_projections,
+        X_t_projections,
+        reg_m,
+        a,
+        b,
+        p,
+        require_sort=True,
+        mode=mode,
+        numItermax=numItermax,
     )
 
     res = nx.mean(projected_uot) ** (1.0 / p)

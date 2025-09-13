@@ -3,7 +3,7 @@
 1D Unbalanced OT solvers
 """
 
-# Author:
+# Author: Clément Bonet <clement.bonet.mapp@polytechnique.edu>
 #
 # License: MIT License
 

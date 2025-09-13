@@ -7,11 +7,11 @@ Sliced Unbalanced optimal transport
 This example illustrates the behavior of Sliced UOT versus
 Unbalanced Sliced OT.
 
-The first one removes outliers on each sliced while the second one
+The first one removes outliers on each slice while the second one
 removes outliers of the original marginals.
 """
 
-# Author:
+# Author: Clément Bonet <clement.bonet.mapp@polytechnique.edu>
 #
 # License: MIT License
 
@@ -94,9 +94,8 @@ thetas = np.linspace(0, np.pi, num_proj)
 dir = np.array([(np.cos(theta), np.sin(theta)) for theta in thetas])
 dir_torch = torch.from_numpy(dir).type(torch.float)
 
-
-Xps = torch.dot(Xs_torch, dir_torch.T)  # shape (n, n_projs)
-Xpt = torch.dot(Xt_torch, dir_torch.T)
+Xps = (Xs_torch @ dir_torch.T).T  # shape (n_projs, n)
+Xpt = (Xt_torch @ dir_torch.T).T
 
 ##############################################################################
 # Compute SUOT and USOT
@@ -139,8 +138,8 @@ A_USOT, B_USOT, _ = ot.unbalanced_sliced_ot(
 
 
 ##############################################################################
-# Plot reweighted distributions on several slices
-# -------------
+# Utils plot
+# ----------
 
 # %%
 
@@ -157,8 +156,62 @@ def kde_sklearn(x, x_grid, weights=None, bandwidth=0.2, **kwargs):
     return np.exp(log_pdf)
 
 
-c1 = np.array(mpl.colors.to_rgb("lightcoral"))
-c2 = np.array(mpl.colors.to_rgb("steelblue"))
+def plot_slices(
+    col, nb_slices, x_grid, Xps, Xpt, Xps_weights, Xpt_weights, method, rho1, rho2
+):
+    for i in range(nb_slices):
+        ax = plt.subplot2grid((nb_slices, 3), (i, col))
+        if len(Xps_weights.shape) > 1:  # SUOT
+            weights_src = Xps_weights[i * offset_degree, :].cpu().numpy()
+            weights_tgt = Xpt_weights[i * offset_degree, :].cpu().numpy()
+        else:  # USOT
+            weights_src = Xps_weights.cpu().numpy()
+            weights_tgt = Xpt_weights.cpu().numpy()
+
+        samples_src = Xps[i * offset_degree, :].cpu().numpy()
+        samples_tgt = Xpt[i * offset_degree, :].cpu().numpy()
+
+        pdf_source = kde_sklearn(samples_src, x_grid, weights=weights_src, bandwidth=bw)
+        pdf_target = kde_sklearn(samples_tgt, x_grid, weights=weights_tgt, bandwidth=bw)
+        pdf_source_without_w = kde_sklearn(samples_src, x_grid, bandwidth=bw)
+        pdf_target_without_w = kde_sklearn(samples_tgt, x_grid, bandwidth=bw)
+
+        ax.plot(x_grid, pdf_source, color=c2, alpha=0.8, lw=2)
+        ax.fill(x_grid, pdf_source_without_w, ec="grey", fc="grey", alpha=0.3)
+        ax.fill(x_grid, pdf_source, ec=c2, fc=c2, alpha=0.3)
+
+        ax.plot(x_grid, pdf_target, color=c1, alpha=0.8, lw=2)
+        ax.fill(x_grid, pdf_target_without_w, ec="grey", fc="grey", alpha=0.3)
+        ax.fill(x_grid, pdf_target, ec=c2, fc=c1, alpha=0.3)
+
+        ax.set_xlim(xlim_min, xlim_max)
+
+        if col == 1:
+            ax.set_ylabel(
+                r"$\theta=${}$^o$".format(i * offset_degree),
+                color=colors[i],
+                fontsize=13,
+            )
+
+        ax.set_yticks([])
+        ax.set_xticks([])
+
+        ax.set_xlabel(
+            r"{}  $\rho_1={}$ $\rho_2={}$".format(method, rho1, rho2), fontsize=13
+        )
+
+
+##############################################################################
+# Plot reweighted distributions on several slices
+# -------------
+# We plot the reweighted distributions on several slices. We see that for SUOT,
+# the mode of outliers is kept of some slices (e.g. for :math:`\theta=120°`) while USOT
+# is able to get rid of the outlier mode.
+
+# %%
+
+c1 = np.array(mpl.colors.to_rgb("red"))
+c2 = np.array(mpl.colors.to_rgb("blue"))
 
 # define plotting grid
 xlim_min = -3
@@ -167,7 +220,7 @@ x_grid = np.linspace(xlim_min, xlim_max, 200)
 bw = 0.05
 
 # visu parameters
-nb_slices = 6
+nb_slices = 3  # 4
 offset_degree = int(180 / nb_slices)
 
 delta_degree = np.pi / nb_slices
@@ -176,9 +229,10 @@ colors = plt.cm.Reds(np.linspace(0.3, 1, nb_slices))
 X1 = np.array([-4, 0])
 X2 = np.array([4, 0])
 
-fig = plt.figure(figsize=(28, 8))
-ax1 = plt.subplot2grid((nb_slices, 3), (0, 0), rowspan=nb_slices)
 
+fig = plt.figure(figsize=(9, 3))
+
+ax1 = plt.subplot2grid((nb_slices, 3), (0, 0), rowspan=nb_slices)
 
 for i in range(nb_slices):
     R = get_rot(delta_degree * (-i))
@@ -197,82 +251,25 @@ for i in range(nb_slices):
         ax1.plot(
             [X1_r[0], X2_r[0]], [X1_r[1], X2_r[1]], color=colors[i], alpha=0.8, zorder=0
         )
+
 ax1.scatter(Xs[:, 0], Xs[:, 1], zorder=1, color=c2, label="Source data")
 ax1.scatter(Xt[:, 0], Xt[:, 1], zorder=1, color=c1, label="Target data")
 ax1.set_xlim([-3, 3])
 ax1.set_ylim([-3, 3])
 ax1.set_yticks([])
 ax1.set_xticks([])
-ax1.legend(loc="best", fontsize=18)
-ax1.set_xlabel("Original distributions", fontsize=22)
+# ax1.legend(loc='best',fontsize=13)
+ax1.set_xlabel("Original distributions", fontsize=13)
 
-# ***** plot SUOT
+
 fig.subplots_adjust(hspace=0)
-fig.subplots_adjust(wspace=0.1)
+fig.subplots_adjust(wspace=0.15)
 
-for i in range(nb_slices):
-    ax = plt.subplot2grid((nb_slices, 3), (i, 1))
-    weights_src = A_SUOT[i * offset_degree, :].cpu().numpy()
-    weights_tgt = B_SUOT[i * offset_degree, :].cpu().numpy()
-    samples_src = Xps[i * offset_degree, :].cpu().numpy()
-    samples_tgt = Xpt[i * offset_degree, :].cpu().numpy()
-    pdf_source = kde_sklearn(samples_src, x_grid, weights=weights_src, bandwidth=bw)
-    pdf_target = kde_sklearn(samples_tgt, x_grid, weights=weights_tgt, bandwidth=bw)
-    pdf_source_without_w = kde_sklearn(samples_src, x_grid, bandwidth=bw)
-    pdf_target_without_w = kde_sklearn(samples_tgt, x_grid, bandwidth=bw)
-
-    ax.scatter(samples_src, [-0.2] * samples_src.shape[0], color=c2, s=2)
-    ax.plot(x_grid, pdf_source, color=c2, alpha=0.8, lw=2)
-    ax.fill(x_grid, pdf_source_without_w, ec="grey", fc="grey", alpha=0.3)
-    ax.fill(x_grid, pdf_source, ec=c2, fc=c2, alpha=0.3)
-
-    ax.scatter(samples_tgt, [-0.2] * samples_tgt.shape[0], color=c1, s=2)
-    ax.plot(x_grid, pdf_target, color=c1, alpha=0.8, lw=2)
-    ax.fill(x_grid, pdf_target_without_w, ec="grey", fc="grey", alpha=0.3)
-    ax.fill(x_grid, pdf_target, ec=c2, fc=c1, alpha=0.3)
-
-    # frac_mass = int(100*weights_src.sum())
-    # plt.text(.9, .9, '% mass={}%'.format(frac_mass), ha='right', va='top', color='red',fontsize=14, transform=ax.transAxes)
-
-    ax.set_xlim(xlim_min, xlim_max)
-    ax.set_ylabel(
-        r"$\theta=${}$^o$".format(i * offset_degree), color=colors[i], fontsize=16
-    )
-    ax.set_yticks([])
-    ax.set_yticks([])
-ax.set_xlabel(
-    r"SUOT  $\rho_1={}$ $\rho_2={}$".format(rho1_SUOT, rho2_SUOT), fontsize=22
+plot_slices(
+    1, nb_slices, x_grid, Xps, Xpt, A_SUOT, B_SUOT, "SUOT", rho1_SUOT, rho2_SUOT
 )
-# ***** plot USOT
-
-for i in range(nb_slices):
-    ax = plt.subplot2grid((nb_slices, 3), (i, 2))
-    weights_src = A_USOT.cpu().numpy()
-    weights_tgt = B_USOT.cpu().numpy()
-    samples_src = Xps[i * offset_degree, :].cpu().numpy()
-    samples_tgt = Xpt[i * offset_degree, :].cpu().numpy()
-    pdf_source = kde_sklearn(samples_src, x_grid, weights=weights_src, bandwidth=bw)
-    pdf_target = kde_sklearn(samples_tgt, x_grid, weights=weights_tgt, bandwidth=bw)
-    pdf_source_without_w = kde_sklearn(samples_src, x_grid, bandwidth=bw)
-    pdf_target_without_w = kde_sklearn(samples_tgt, x_grid, bandwidth=bw)
-
-    ax.scatter(samples_src, [-0.2] * samples_src.shape[0], color=c2, s=2)
-    ax.plot(x_grid, pdf_source, color=c2, alpha=0.8, lw=2)
-    ax.fill(x_grid, pdf_source_without_w, ec="grey", fc="grey", alpha=0.3)
-    ax.fill(x_grid, pdf_source, ec=c2, fc=c2, alpha=0.3)
-
-    ax.scatter(samples_tgt, [-0.2] * samples_tgt.shape[0], color=c1, s=2)
-    ax.plot(x_grid, pdf_target, color=c1, alpha=0.8, lw=2)
-    ax.fill(x_grid, pdf_target_without_w, ec="grey", fc="grey", alpha=0.3)
-    ax.fill(x_grid, pdf_target, ec=c2, fc=c1, alpha=0.3)
-
-    ax.set_xlim(xlim_min, xlim_max)
-    ax.set_ylabel(
-        r"$\theta=${}$^o$".format(i * offset_degree), color=colors[i], fontsize=16
-    )
-    ax.set_yticks([])
-ax.set_xlabel(
-    r"USOT  $\rho_1={}$ $\rho_2={}$".format(rho1_USOT, rho2_USOT), fontsize=22
+plot_slices(
+    2, nb_slices, x_grid, Xps, Xpt, A_USOT, B_USOT, "USOT", rho1_USOT, rho2_USOT
 )
 
 plt.show()
