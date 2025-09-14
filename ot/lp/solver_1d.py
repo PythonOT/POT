@@ -15,6 +15,7 @@ import warnings
 from .emd_wrap import emd_1d_sorted
 from ..backend import get_backend
 from ..utils import list_to_array
+from ._network_simplex import center_ot_dual
 
 
 def quantile_function(qs, cws, xs, return_index=False):
@@ -541,6 +542,8 @@ def emd_1d_dual(
         v_rev_sorter = nx.argsort(v_sorter, 0)
         g = nx.take_along_axis(g, v_rev_sorter, 0)
 
+    f, g = center_ot_dual(f, g, u_weights, v_weights)
+
     return f, g, loss
 
 
@@ -617,11 +620,11 @@ def emd_1d_dual_backprop(
         loss = cost_output.sum()
         loss.backward()
 
-        return (
-            u_weights.grad.detach(),
-            v_weights.grad.detach(),
-            cost_output.detach(),
-        )  # value can not be backward anymore
+        f, g = center_ot_dual(
+            u_weights.grad.detach(), v_weights.grad.detach(), u_weights, v_weights
+        )
+
+        return f, g, cost_output.detach()  # value can not be backward anymore
     elif nx.__name__ == "jax":
         import jax
 
@@ -634,6 +637,8 @@ def emd_1d_dual_backprop(
         cost_output = wasserstein_1d(
             u_values, v_values, u_weights, v_weights, p=p, require_sort=require_sort
         )
+
+        f, g = center_ot_dual(f, g, u_weights, v_weights)
         return f, g, cost_output
 
 
