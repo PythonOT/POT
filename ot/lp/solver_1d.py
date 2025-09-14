@@ -612,16 +612,28 @@ def emd_1d_dual_backprop(
         v_weights = nx.repeat(v_weights[..., None], v_values.shape[-1], -1)
 
     if nx.__name__ == "torch":
-        u_weights.requires_grad_(True)
-        v_weights.requires_grad_(True)
+        u_weights_diff = nx.copy(u_weights)
+        v_weights_diff = nx.copy(v_weights)
+
+        u_weights_diff.requires_grad_(True)
+        v_weights_diff.requires_grad_(True)
+
         cost_output = wasserstein_1d(
-            u_values, v_values, u_weights, v_weights, p=p, require_sort=require_sort
+            u_values,
+            v_values,
+            u_weights_diff,
+            v_weights_diff,
+            p=p,
+            require_sort=require_sort,
         )
         loss = cost_output.sum()
         loss.backward()
 
         f, g = center_ot_dual(
-            u_weights.grad.detach(), v_weights.grad.detach(), u_weights, v_weights
+            u_weights_diff.grad.detach(),
+            v_weights_diff.grad.detach(),
+            u_weights,
+            v_weights,
         )
 
         return f, g, cost_output.detach()  # value can not be backward anymore

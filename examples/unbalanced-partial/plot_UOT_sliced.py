@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-===============================
+===================================
 Sliced Unbalanced optimal transport
-===============================
+===================================
 
 This example illustrates the behavior of Sliced UOT versus
 Unbalanced Sliced OT.

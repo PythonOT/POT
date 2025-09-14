@@ -1,6 +1,6 @@
 """Tests for module sliced Unbalanced OT"""
 
-# Author:
+# Author: Clément Bonet <clement.bonet.mapp@polytechnique.edu>
 #
 # License: MIT License
 
