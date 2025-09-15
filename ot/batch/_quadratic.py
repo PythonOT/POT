@@ -190,6 +190,8 @@ def loss_quadratic_batch(L, T, recompute_const=False, symmetric=True, nx=None):
     ot.batch.tensor_batch : From computing the cost tensor L.
     ot.batch.solve_gromov_batch : For finding the optimal transport plan T.
     """
+    if nx is None:
+        nx = get_backend(T)
     LT = tensor_product_batch(
         L, T, nx=nx, recompute_const=recompute_const, symmetric=symmetric
     )
