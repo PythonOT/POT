@@ -142,6 +142,8 @@ def loss_linear_batch(M, T, nx=None):
     ot.batch.dist_batch : batched cost matrix computation for computing M.
     ot.batch.solve_batch : solver for computing the optimal T.
     """
+    if nx is None:
+        nx = get_backend(M, T)
     return nx.sum(M * T, axis=(1, 2))
 
 
