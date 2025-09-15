@@ -14,6 +14,8 @@ from ot.batch import (
     dist_batch,
     loss_linear_samples_batch,
     loss_linear_batch,
+    bregman_projection_batch,
+    bregman_log_projection_batch,
 )
 
 from ot import solve
@@ -53,6 +55,22 @@ def test_solve_batch():
         value_i = res_i.value_linear
         np.testing.assert_allclose(plan_i, plan_batch[i], atol=1e-05)
         np.testing.assert_allclose(value_i, values_batch[i], atol=1e-4)
+
+
+def test_bregman_batch():
+    batchsize = 4
+    d = 2
+    n = 4
+    rng = np.random.RandomState(0)
+    X = rng.rand(batchsize, n, d)
+    M = dist_batch(X, X)
+    K = np.exp(-M / 0.01)
+    log_K = -M / 0.01
+    res = bregman_projection_batch(K, max_iter=50, tol=1e-10)
+    plan = res["T"]
+    res_log = bregman_log_projection_batch(log_K, max_iter=50, tol=1e-10)
+    plan_log = res_log["T"]
+    np.testing.assert_allclose(plan, plan_log, atol=1e-3)
 
 
 @pytest.mark.parametrize("metric", ["sqeuclidean", "euclidean", "minkowski", "kl"])

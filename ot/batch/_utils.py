@@ -266,8 +266,8 @@ def bregman_log_projection_batch(
         K_, K = K.clone(), nx.detach(K)
 
     for n_iters in range(max_iter):
-        u = loga - nx.logsumexp(K + v[:, None, :], axis=2).squeeze()
-        v = logb - nx.logsumexp(K + u[:, :, None], axis=1).squeeze()
+        u = loga - nx.logsumexp(K + v[:, None, :], axis=2)
+        v = logb - nx.logsumexp(K + u[:, :, None], axis=1)
 
         # Check convergence once every 10 iterations
         if n_iters % 10 == 0:
@@ -279,9 +279,9 @@ def bregman_log_projection_batch(
 
     if grad == "last_step":
         summand_u = K_ + v[:, None, :]
-        u = loga - nx.logsumexp(summand_u, axis=2).squeeze()
+        u = loga - nx.logsumexp(summand_u, axis=2)
         summand_v = K_ + u[:, :, None]
-        v = logb - nx.logsumexp(summand_v, axis=1).squeeze()
+        v = logb - nx.logsumexp(summand_v, axis=1)
 
     log_T = K + u[:, :, None] + v[:, None, :]
     T = nx.exp(log_T)
