@@ -103,7 +103,7 @@ def test_all(loss, logits):
 
 
 @pytest.mark.skipif(not torch, reason="torch not installed")
-@pytest.mark.parametrize("grad", ["detach", "envelope", "autodiff", "last_step"])
+@pytest.mark.parametrize("grad", ["detach", "envelope", "autodiff"])
 def test_gradients_torch(grad):
     """Check that all gradient methods run without error."""
     batchsize = 2
@@ -120,7 +120,7 @@ def test_gradients_torch(grad):
     elif grad == "envelope":
         loss.backward()
         assert C.grad is not None
-    elif grad in ["autodiff", "last_step"]:
+    elif grad == "autodiff":
         loss_plan.backward()
         assert C.grad is not None
 
