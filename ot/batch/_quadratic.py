@@ -141,7 +141,7 @@ def tensor_batch(
         def f2(C2):
             assert C2.ndim == 4, "C2 must be a bxnxnxd tensor"
             fC2 = C2 * nx.log(C2 + 1e-15)  # Avoid log(0)
-            return fC2.sum(axis=-1)
+            return nx.sum(fC2, axis=-1)
 
         def h1(C1):
             return C1 if logits else nx.log(C1 + 1e-15)
@@ -193,7 +193,7 @@ def loss_quadratic_batch(L, T, recompute_const=False, symmetric=True, nx=None):
     LT = tensor_product_batch(
         L, T, nx=nx, recompute_const=recompute_const, symmetric=symmetric
     )
-    return (LT * T).sum((1, 2))
+    return nx.sum(LT * T, axis=(1, 2))
 
 
 def loss_quadratic_samples_batch(
@@ -553,7 +553,7 @@ def tensor_product_batch(L, T, nx=None, recompute_const=False, symmetric=True):
 
     if recompute_const:
         const = compute_const_from_marginals(
-            L["fC1"], L["fC2"], T.sum(axis=2), T.sum(axis=1), nx=nx
+            L["fC1"], L["fC2"], nx.sum(T, axis=2), nx.sum(T, axis=1), nx=nx
         )
     else:
         const = L["constC"]
@@ -563,12 +563,12 @@ def tensor_product_batch(L, T, nx=None, recompute_const=False, symmetric=True):
 
     dot = nx.einsum("bijd,bjk->bikd", hC1, T)
     dot = nx.einsum("bikd,bjkd->bijd", dot, hC2)
-    dot = dot.sum(axis=-1)
+    dot = nx.sum(dot, axis=-1)
 
     if not symmetric:
         dot_t = nx.einsum("bijd,bjk->bikd", transpose(hC1), T)
         dot_t = nx.einsum("bikd,bjkd->bijd", dot_t, transpose(hC2))
-        dot_t = dot_t.sum(axis=-1)
+        dot_t = nx.sum(dot_t, axis=-1)
         dot = (dot + dot_t) / 2  # Average the two symmetric terms
 
     return const - dot
