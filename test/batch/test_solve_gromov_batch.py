@@ -102,8 +102,8 @@ def test_all(loss, logits):
     np.testing.assert_allclose(loss1, loss2, atol=1e-5)
 
 
-# @pytest.mark.skipif(not torch, reason="torch not installed")
-# @pytest.mark.parametrize("grad", ["detach", "envelope", "autodiff", "last_step"])
+@pytest.mark.skipif(not torch, reason="torch not installed")
+@pytest.mark.parametrize("grad", ["detach", "envelope", "autodiff", "last_step"])
 def test_gradients_torch(grad):
     """Check that all gradient methods run without error."""
     batchsize = 2
