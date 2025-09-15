@@ -242,7 +242,7 @@ def solve_batch(
     tol=1e-5,
     solver="log_sinkhorn",
     reg_type="entropy",
-    grad="detach",
+    grad="envelope",
 ):
     r"""Batched version of ot.solve, use it to solve many entropic OT problems in parallel.
 
@@ -369,7 +369,7 @@ def solve_sample_batch(
     tol=1e-5,
     solver="log_sinkhorn",
     reg_type="entropy",
-    grad="detach",
+    grad="envelope",
 ):
     r"""Batched version of ot.solve, use it to solve many entropic OT problems in parallel.
 

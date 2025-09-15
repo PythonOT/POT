@@ -18,6 +18,7 @@ from ot.batch import (
 
 from ot import solve
 import pytest
+from ot.backend import torch
 
 
 def test_solve_batch():
@@ -55,7 +56,7 @@ def test_solve_batch():
 
 
 @pytest.mark.parametrize("metric", ["sqeuclidean", "euclidean", "minkowski", "kl"])
-def test_all(metric):
+def test_metrics(metric):
     """Check that all functions run without error."""
 
     batchsize = 2
@@ -84,3 +85,37 @@ def test_all(metric):
     )  # recompute loss from plan and samples
     np.testing.assert_allclose(loss, loss2, atol=1e-5)
     np.testing.assert_allclose(loss, loss3, atol=1e-5)
+
+
+@pytest.mark.skipif(not torch, reason="torch not installed")
+@pytest.mark.parametrize("grad", ["detach", "envelope", "autodiff", "last_step"])
+def test_gradients_torch(grad):
+    """Check that all gradient methods run without error."""
+    batchsize = 2
+    n = 4
+    d = 2
+    X = torch.randn((batchsize, n, d), requires_grad=True)
+    M = dist_batch(X, X)
+    res = solve_batch(M, reg=0.1, max_iter=10, tol=1e-5, grad=grad)
+    loss = res.value_linear.sum()
+    loss_plan = res.plan.sum()
+    if grad == "detach":
+        assert loss.grad == None
+    elif grad == "envelope":
+        loss.backward()
+        assert X.grad is not None
+    elif grad in ["autodiff", "last_step"]:
+        loss_plan.backward()
+        assert X.grad is not None
+
+
+def test_backend(nx):
+    """Check that all gradient methods run without error."""
+    batchsize = 2
+    n = 4
+    d = 2
+    X = np.random.randn(batchsize, n, d)
+    X = nx.from_numpy(X)
+    M = dist_batch(X, X)
+    solve_batch(M, reg=0.1, max_iter=10, tol=1e-5)
+    solve_sample_batch(X, X, reg=0.1, max_iter=10, tol=1e-5)

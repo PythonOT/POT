@@ -281,7 +281,7 @@ def solve_gromov_batch(
     tol=1e-5,
     max_iter_inner=50,
     tol_inner=1e-5,
-    grad="detach",
+    grad="envelope",
     logits=None,
 ):
     r"""
@@ -478,8 +478,6 @@ def solve_gromov_batch(
         L = detach_cost_tensor(L, nx=nx)
     elif grad == "envelope":
         T = nx.detach(T)
-    else:
-        raise ValueError(f"Unknown gradient mode: {grad}")
 
     value_linear = loss_linear_batch(M, T, nx=nx)
     value_quadratic = loss_quadratic_batch(

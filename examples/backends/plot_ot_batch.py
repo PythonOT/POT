@@ -10,26 +10,13 @@ In that case using a for loop to solve the problems sequentially is inefficient.
 This example shows how to use the batch solvers implemented in POT to solve
 many problems in parallel on CPU or GPU (even more efficient on GPU).
 
-.. sphinx_gallery_thumbnail_number:: 1
 """
 
 # Author: Paul Krzakala <paul.krzakala@gmail.com>
 # License: MIT License
 
-# sphinx_gallery_start_ignore
-import matplotlib.pyplot as plt
-from matplotlib.image import imread
-import os
+# sphinx_gallery_thumbnail_number = 1
 
-thumbnail_path = "images/no_more_for_loops.png"
-img = imread(thumbnail_path)
-fig, ax = plt.subplots(figsize=(8, 6))
-ax.imshow(img)
-ax.axis("off")
-plt.tight_layout()
-plt.show()
-plt.close(fig)
-# sphinx_gallery_end_ignore
 
 #############################################################################
 #
@@ -37,6 +24,18 @@ plt.close(fig)
 # ---------------------------------------------
 # Let's create a batch of optimal transport problems with n samples in d dimensions.
 # First we need to compute the cost matrices for each problem. We could do that with a for loop and ot.dist but instead we can directly use ot.batch.dist_batch.
+
+# sphinx_gallery_start_ignore
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(4, 4))
+ax.text(0.5, 0.5, "For", fontsize=160, ha="center", va="center", zorder=0)
+ax.axis("off")
+ax.plot([0, 1], [0, 1], color="red", linewidth=10, zorder=1)
+ax.plot([0, 1], [1, 0], color="red", linewidth=10, zorder=1)
+plt.show()
+plt.close(fig)
+# sphinx_gallery_end_ignore
 
 import ot
 import numpy as np

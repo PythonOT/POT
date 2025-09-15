@@ -13,6 +13,7 @@ from ot import solve_gromov
 from ot.batch._linear import dist_batch
 import pytest
 from itertools import product
+from ot.backend import torch
 
 
 def test_solve_gromov_batch():
@@ -99,3 +100,36 @@ def test_all(loss, logits):
         a=a, b=a, C1=C, C2=C, T=res.plan, loss=loss, logits=logits
     )
     np.testing.assert_allclose(loss1, loss2, atol=1e-5)
+
+
+# @pytest.mark.skipif(not torch, reason="torch not installed")
+# @pytest.mark.parametrize("grad", ["detach", "envelope", "autodiff", "last_step"])
+def test_gradients_torch(grad):
+    """Check that all gradient methods run without error."""
+    batchsize = 2
+    n = 4
+    d = 2
+    C = torch.randn((batchsize, n, n, d), requires_grad=True)
+    res = solve_gromov_batch(
+        C1=C, C2=C, a=None, b=None, loss="sqeuclidean", logits=False, grad=grad
+    )
+    loss = res.value.sum()
+    loss_plan = res.plan.sum()
+    if grad == "detach":
+        assert loss.grad == None
+    elif grad == "envelope":
+        loss.backward()
+        assert C.grad is not None
+    elif grad in ["autodiff", "last_step"]:
+        loss_plan.backward()
+        assert C.grad is not None
+
+
+def test_backend(nx):
+    """Check that all gradient methods run without error."""
+    batchsize = 2
+    n = 4
+    d = 2
+    C = np.random.randn(batchsize, n, n, d)
+    C = nx.from_numpy(C)
+    solve_gromov_batch(C1=C, C2=C, a=None, b=None, loss="sqeuclidean", logits=False)
