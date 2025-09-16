@@ -117,9 +117,9 @@ def test_gradients_torch(grad):
     batchsize = 2
     n = 4
     d = 2
-    X = torch.randn((batchsize, n, d), requires_grad=True)
-    M = dist_batch(X, X)
     for solver in ["sinkhorn", "log_sinkhorn"]:
+        X = torch.randn((batchsize, n, d), requires_grad=True)
+        M = dist_batch(X, X)
         res = solve_batch(M, reg=0.1, max_iter=10, tol=1e-5, grad=grad, solver=solver)
         loss = res.value_linear.sum()
         loss_plan = res.plan.sum()
