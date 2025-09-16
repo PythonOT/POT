@@ -2,6 +2,7 @@
 
 # Author: Adrien Corenflos <adrien.corenflos@aalto.fi>
 #         Nicolas Courty <ncourty@irisa.fr>
+#         Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
 #
 # License: MIT License
 
@@ -110,6 +111,14 @@ def test_max_sliced_different_dists():
     assert res > 0.0
 
 
+def test_max_sliced_dim_check():
+    n = 3
+    x = np.zeros((n, 2))
+    y = np.zeros((n + 1, 3))
+    with pytest.raises(ValueError):
+        _ = ot.max_sliced_wasserstein_distance(x, y, n_projections=10)
+
+
 def test_sliced_same_proj():
     n_projections = 10
     seed = 12
@@ -151,6 +160,16 @@ def test_sliced_backend(nx):
     valb = nx.to_numpy(ot.sliced_wasserstein_distance(xb, yb, projections=Pb))
 
     assert np.allclose(val0, valb)
+
+    a = rng.uniform(0, 1, n)
+    a /= a.sum()
+    b = rng.uniform(0, 1, 2 * n)
+    b /= b.sum()
+    a_b = nx.from_numpy(a)
+    b_b = nx.from_numpy(b)
+    val = ot.sliced_wasserstein_distance(x, y, a=a, b=b, projections=P)
+    val_b = ot.sliced_wasserstein_distance(xb, yb, a=a_b, b=b_b, projections=Pb)
+    np.testing.assert_almost_equal(val, nx.to_numpy(val_b))
 
 
 def test_sliced_backend_type_devices(nx):
@@ -226,6 +245,16 @@ def test_max_sliced_backend(nx):
     valb = nx.to_numpy(ot.max_sliced_wasserstein_distance(xb, yb, projections=Pb))
 
     assert np.allclose(val0, valb)
+
+    a = rng.uniform(0, 1, n)
+    a /= a.sum()
+    b = rng.uniform(0, 1, 2 * n)
+    b /= b.sum()
+    a_b = nx.from_numpy(a)
+    b_b = nx.from_numpy(b)
+    val = ot.max_sliced_wasserstein_distance(x, y, a=a, b=b, projections=P)
+    val_b = ot.max_sliced_wasserstein_distance(xb, yb, a=a_b, b=b_b, projections=Pb)
+    np.testing.assert_almost_equal(val, nx.to_numpy(val_b))
 
 
 def test_max_sliced_backend_type_devices(nx):
@@ -697,3 +726,105 @@ def test_linear_sliced_sphere_backend_type_devices(nx):
 
         nx.assert_same_dtype_device(xb, valb)
         np.testing.assert_almost_equal(sw_np, nx.to_numpy(valb))
+
+
+def test_sliced_permutations(nx):
+    n = 4
+    n_proj = 10
+    d = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    y = rng.randn(n, 2)
+
+    x_b, y_b = nx.from_numpy(x, y)
+    thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
+    thetas_b = nx.from_numpy(thetas)
+
+    perm = ot.sliced.sliced_permutations(x, y, thetas=thetas)
+    perm_b, _ = ot.sliced.sliced_permutations(
+        x_b, y_b, thetas=thetas_b, log=True, backend=nx
+    )
+
+    np.testing.assert_almost_equal(perm, nx.to_numpy(perm_b))
+
+    # test without provided thetas
+    perm = ot.sliced.sliced_permutations(x, y, n_proj=n_proj)
+
+    # test with invalid shapes
+    with pytest.raises(AssertionError):
+        ot.sliced.sliced_permutations(x[1:, :], y, thetas=thetas)
+
+
+def test_min_pivot_sliced(nx):
+    n = 10
+    n_proj = 10
+    d = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    y = rng.randn(n, 2)
+
+    x_b, y_b = nx.from_numpy(x, y)
+    thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
+    thetas_b = nx.from_numpy(thetas)
+
+    min_perm, min_cost = ot.sliced.min_pivot_sliced(x, y, thetas=thetas)
+    min_perm_b, min_cost_b, _ = ot.sliced.min_pivot_sliced(
+        x_b, y_b, thetas=thetas_b, log=True
+    )
+
+    np.testing.assert_almost_equal(min_perm, nx.to_numpy(min_perm_b))
+    np.testing.assert_almost_equal(min_cost, nx.to_numpy(min_cost_b))
+
+    # result should be an upper-bound of W2 and relatively close
+    w2 = ot.emd2(ot.unif(n), ot.unif(n), ot.dist(x, y))
+    assert min_cost >= w2
+    assert min_cost <= 1.5 * w2
+
+    # test without provided thetas and with a warm permutation
+    ot.sliced.min_pivot_sliced(x, y, n_proj=n_proj, warm_perm=np.arange(n), log=True)
+
+    # test with invalid shapes
+    with pytest.raises(AssertionError):
+        ot.sliced.min_pivot_sliced(x[1:, :], y, thetas=thetas)
+
+
+def test_expected_sliced(nx):
+    n = 10
+    n_proj = 10
+    d = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    y = rng.randn(n, 2)
+
+    x_b, y_b = nx.from_numpy(x, y)
+    thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
+    thetas_b = nx.from_numpy(thetas)
+
+    expected_plan, expected_cost = ot.sliced.expected_sliced(x, y, thetas=thetas)
+    expected_plan_b, expected_cost_b, _ = ot.sliced.expected_sliced(
+        x_b, y_b, thetas=thetas_b, log=True
+    )
+
+    np.testing.assert_almost_equal(expected_plan, nx.to_numpy(expected_plan_b))
+    np.testing.assert_almost_equal(expected_cost, nx.to_numpy(expected_cost_b))
+
+    # result should be a coarse upper-bound of W2
+    w2 = ot.emd2(ot.unif(n), ot.unif(n), ot.dist(x, y))
+    assert expected_cost >= w2
+    assert expected_cost <= 3 * w2
+
+    # test without provided thetas
+    ot.sliced.expected_sliced(x, y, n_proj=n_proj, log=True)
+
+    # test with invalid shapes
+    with pytest.raises(AssertionError):
+        ot.sliced.min_pivot_sliced(x[1:, :], y, thetas=thetas)
+
+    # with a small temperature (i.e. large beta),
+    # the cost should be close to min_pivot
+    _, expected_cost = ot.sliced.expected_sliced(x, y, thetas=thetas, beta=100.0)
+    _, min_cost = ot.sliced.min_pivot_sliced(x, y, thetas=thetas)
+    np.testing.assert_almost_equal(expected_cost, min_cost, decimal=3)

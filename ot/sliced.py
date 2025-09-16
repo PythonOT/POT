@@ -707,6 +707,9 @@ def sliced_permutations(X, Y, thetas=None, n_proj=None, log=False, backend=None)
         A dictionary containing intermediate computations for logging purposes.
         Returned only if `log` is True.
     """
+    assert (
+        X.shape == Y.shape
+    ), f"X ({X.shape}) and Y ({Y.shape}) must have the same shape"
     nx = get_backend(X, Y) if backend is None else backend
     d = X.shape[1]
     do_draw_thetas = thetas is None
@@ -795,6 +798,9 @@ def min_pivot_sliced(
 
     .. [82] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport Plans. arXiv preprint 2506.03661.
     """
+    assert (
+        X.shape == Y.shape
+    ), f"X ({X.shape}) and Y ({Y.shape}) must have the same shape"
     n = X.shape[0]
     nx = get_backend(X, Y)
     log_dict = {}
@@ -810,7 +816,7 @@ def min_pivot_sliced(
 
     # add the 'warm perm' to permutations to test
     if warm_perm is not None:
-        perm = nx.concatenate([perm, warm_perm[:, None]], dim=1)
+        perm = nx.concatenate([perm, warm_perm[:, None]], axis=1)
         if log:
             log_dict["perm"] = perm
 
@@ -836,7 +842,7 @@ def min_pivot_sliced(
         return min_perm, min_cost
 
 
-def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False):
+def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False, beta=0.0):
     r"""
     Computes the Expected Sliced cost and plan between two `(n, d)`
     datasets `X` and `Y`. Given a set of `n_proj` projection directions,
@@ -862,6 +868,8 @@ def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False):
         Power to elevate the norm. Default is 2.
     log : bool, optional
         If True, returns additional logging information. Default is False.
+    beta : float, optional
+        Inverse-temperature parameter which weights each projection's contribution to the expected plan. Default is 0 (uniform weighting).
 
     Returns
     -------
@@ -877,6 +885,9 @@ def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False):
 
     .. [83] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi A., Kolouri, S. (2024). Expected Sliced Transport Plans. International Conference on Learning Representations.
     """
+    assert (
+        X.shape == Y.shape
+    ), f"X ({X.shape}) and Y ({Y.shape}) must have the same shape"
     nx = get_backend(X, Y)
     n = X.shape[0]
     log_dict = {}
@@ -891,8 +902,20 @@ def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False):
     plan = nx.zeros((n, n), type_as=X)
     n_proj = perm.shape[1]
     range_array = nx.arange(n, type_as=X)
-    for k in range(n_proj):
-        plan[range_array, perm[:, k]] += 1 / (n_proj * n)
+
+    if beta != 0.0:  # computing the temperature weighting
+        log_factors = nx.zeros(n_proj, type_as=X)  # for beta weighting
+        for k in range(n_proj):
+            cost_k = nx.sum(nx.abs(X - Y[perm[:, k]]) ** order) / n
+            log_factors[k] = -beta * cost_k
+        weights = nx.exp(log_factors - nx.logsumexp(log_factors))
+
+    else:  # uniform weights
+        weights = nx.ones(n_proj, type_as=X) / n_proj
+
+    for k in range(n_proj):  # populating the expected plan
+        # 1 / n is because is a permutation of [1, n]
+        plan[range_array, perm[:, k]] += (1 / n) * weights[k]
 
     cost = (dist(X, Y, p=order) * plan).sum()
 
