@@ -604,7 +604,7 @@ def test_func_backends(nx):
         assert tuple(A.shape) == (3, 4), "Assert fail on: squeeze"
 
         A = nx.unsqueeze(nx.zeros((3, 1, 4)), -1)
-        assert tuple(A.shape) == (3, 4, 1), "Assert fail on: unsqueeze"
+        assert tuple(A.shape) == (3, 1, 4, 1), "Assert fail on: unsqueeze"
 
         A = nx.bitsize(Mb)
         lst_b.append(float(A))
