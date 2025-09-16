@@ -23,7 +23,6 @@ were further studied theoretically in [82].
 ##############################################################################
 # Setup data and imports
 # ----------------------
-# %%
 import numpy as np
 import ot
 import matplotlib.pyplot as plt
@@ -42,7 +41,6 @@ alpha = 0.3
 ##############################################################################
 # Compute min-Pivot Sliced permutation
 # ------------------------------------
-# %%
 min_perm, min_cost, log_min = ot.min_pivot_sliced(X, Y, thetas, log=True)
 min_plan = np.zeros((n, n))
 min_plan[np.arange(n), min_perm] = 1 / n
@@ -50,13 +48,11 @@ min_plan[np.arange(n), min_perm] = 1 / n
 ##############################################################################
 # Compute Expected Sliced Plan
 # ------------------------------------
-# %%
 expected_plan, expected_cost, log_expected = ot.expected_sliced(X, Y, thetas, log=True)
 
 ##############################################################################
 # Compute 2-Wasserstein Plan
 # ------------------------------------
-# %%
 a = np.ones(n, device=X.device) / n
 dists = ot.dist(X, Y)
 W2 = ot.emd2(a, a, dists)
@@ -65,7 +61,6 @@ W2_plan = ot.emd(a, a, dists)
 ##############################################################################
 # Plot resulting assignments
 # ------------------------------------
-# %%
 fig, axs = plt.subplots(2, 3, figsize=(12, 4))
 fig.suptitle("Sliced plans comparison", y=0.95, fontsize=16)
 
@@ -123,7 +118,7 @@ fig.tight_layout()
 ##############################################################################
 # Compare Expected Sliced plans with different inverse-temperatures beta
 # ------------------------------------
-# %% As the temperature decreases, ES becomes sparser and approaches minPS
+## As the temperature decreases, ES becomes sparser and approaches minPS
 betas = [0.0, 5.0, 50.0]
 n_plots = len(betas) + 1
 size = 4
