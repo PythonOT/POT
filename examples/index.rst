@@ -33,7 +33,6 @@ Differentiable OT with PyTorch
     ../../examples/gaussian_gmm/plot_GMM_flow.py
     ../../examples/gromov/plot_gnn_TFGW.py
 
-
 Gromov-Wasserstein (GW) and Fused GW
 ------------------------------------
 

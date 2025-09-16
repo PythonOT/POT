@@ -37,7 +37,6 @@ from . import gaussian
 from . import lowrank
 from . import gmm
 
-
 # OT functions
 from .lp import (
     emd,
@@ -72,6 +71,8 @@ from .weak import weak_optimal_transport
 from .factored import factored_optimal_transport
 from .solvers import solve, solve_gromov, solve_sample
 from .lowrank import lowrank_sinkhorn
+
+from .batch import solve_batch, solve_gromov_batch
 
 # utils functions
 from .utils import dist, unif, tic, toc, toq
@@ -136,4 +137,6 @@ __all__ = [
     "sliced_wasserstein_sphere_unif",
     "lowrank_sinkhorn",
     "lowrank_gromov_wasserstein_samples",
+    "solve_batch",
+    "solve_gromov_batch",
 ]
