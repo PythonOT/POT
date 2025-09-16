@@ -15,6 +15,7 @@ API and modules
 
    
    backend
+   batch
    bregman
    coot
    da
