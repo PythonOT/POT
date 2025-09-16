@@ -27,6 +27,7 @@
 - Added to each example in the examples gallery the information about the release version in which it was introduced (PR #743)
 - Removed release information from quickstart guide (PR #744)
 - Update REAMDE with new API and reorganize examples (PR #754)
+- Speedup and update tests and wheels (PR #759)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
