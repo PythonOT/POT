@@ -3229,7 +3229,7 @@ class TensorflowBackend(Backend):
         return tnp.squeeze(a, axis=axis)
 
     def unsqueeze(self, a, axis):
-        return super().unsqueeze(a, axis)
+        return tnp.expand_dims(a, axis=axis)
 
     def bitsize(self, type_as):
         return type_as.dtype.size * 8
