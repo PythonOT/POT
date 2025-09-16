@@ -259,8 +259,6 @@ def loss_quadratic_samples_batch(
         L = tensor_batch(
             a, b, C1, C2, symmetric=symmetric, nx=nx, loss=loss, logits=logits
         )
-    elif callable(loss):
-        L = loss(a, b, C1, C2, symmetric=symmetric, nx=nx)
     else:
         raise ValueError(f"Unknown loss function: {loss}")
     return loss_quadratic_batch(
@@ -421,8 +419,6 @@ def solve_gromov_batch(
         L = tensor_batch(
             a, b, C1, C2, symmetric=symmetric, nx=nx, loss=loss, logits=logits
         )
-    elif callable(loss):
-        L = loss(a, b, C1, C2, symmetric=symmetric, nx=nx)
     else:
         raise ValueError(f"Unknown loss function: {loss}")
 

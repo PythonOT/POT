@@ -20,22 +20,21 @@ many problems in parallel on CPU or GPU (even more efficient on GPU).
 
 #############################################################################
 #
-# Computing the cost matrices
+# Computing the Cost Matrices
 # ---------------------------------------------
-# Let's create a batch of optimal transport problems with n samples in d dimensions.
-# First we need to compute the cost matrices for each problem. We could do that with a for loop and ot.dist but instead we can directly use ot.batch.dist_batch.
-
-# sphinx_gallery_start_ignore
-import matplotlib.pyplot as plt
-
-fig, ax = plt.subplots(figsize=(4, 4))
-ax.text(0.5, 0.5, "For", fontsize=160, ha="center", va="center", zorder=0)
-ax.axis("off")
-ax.plot([0, 1], [0, 1], color="red", linewidth=10, zorder=1)
-ax.plot([0, 1], [1, 0], color="red", linewidth=10, zorder=1)
-plt.show()
-plt.close(fig)
-# sphinx_gallery_end_ignore
+#
+# We want to create a batch of optimal transport problems with
+# :math:`n` samples in :math:`d` dimensions.
+#
+# To do this, we first need to compute the cost matrices for each problem.
+#
+# .. note::
+#    A straightforward approach would be to use a Python loop and
+#    :func:`ot.dist`.
+#    However, this is inefficient when working with batches.
+#
+# Instead, you can directly use :func:`ot.batch.dist_batch`, which computes
+# all cost matrices in parallel.
 
 import ot
 import numpy as np
@@ -64,10 +63,19 @@ for i in range(n_problems):
 
 #############################################################################
 #
-# Solving the problems
+# Solving the Problems
 # ---------------------------------------------
 #
-# Now we can either solve the problems sequentially with a for loop (ot.solve) or in parallel (ot.batch.solve_batch).
+# Once the cost matrices are computed, we can solve the corresponding
+# optimal transport problems.
+#
+# .. note::
+#    One option is to solve them sequentially with a Python loop using
+#    :func:`ot.solve`.
+#    This is simple but inefficient for large batches.
+#
+# Instead, you can use :func:`ot.batch.solve_batch`, which solves all
+# problems in parallel.
 
 reg = 1.0
 max_iter = 100
@@ -89,11 +97,15 @@ assert np.allclose(np.array(results_values_list), results_values_batch, atol=tol
 
 #############################################################################
 #
-# Compare the computation time
+# Comparing Computation Time
 # ---------------------------------------------
 #
-# Lets compare the computation time of the two approaches on larger problems.
-# Note that the results can be even more impressive on GPU.
+# We now compare the runtime of the two approaches on larger problems.
+#
+# .. note::
+#    The speedup obtained with :mod:`ot.batch` can be even more
+#    significant when computations are performed on a GPU.
+
 
 from time import perf_counter
 
@@ -138,17 +150,31 @@ print(f"Batched approach time: {time_batch:.4f} seconds")
 # Gromov-Wasserstein
 # ---------------------------------------------
 #
-# ot.batch also implements a batched Gromov-Wasserstein solver.
+# The :mod:`ot.batch` module also provides a batched Gromov-Wasserstein solver.
 #
-# But this solver is NOT the same as calling ot.solve_gromov in a for loop.
+# .. note::
+#    This solver is **not** equivalent to calling :func:`ot.solve_gromov`
+#    repeatedly in a loop.
 #
-# ot.solve_gromov uses the conditional gradient algorithm, each inner loop uses exact emd solver.
+# Key differences:
 #
-# ot.batch.solve_gromov_batch uses a proximal variant where each inner loop uses entropic regularization.
+# - :func:`ot.solve_gromov`
+#   Uses the conditional gradient algorithm. Each inner iteration relies on
+#   an exact EMD solver.
 #
-# Both methods have a different value/time trade-off. In this example, solve_gromov_batch is slower but gives a better value.
+# - :func:`ot.batch.solve_gromov_batch`
+#   Uses a proximal variant, where each inner iteration applies entropic
+#   regularization.
 #
-# If your data lives on a GPU, then solve_gromov_batch will always be much faster.
+# As a result:
+#
+# - :func:`ot.solve_gromov` is usually faster on CPU
+# - :func:`ot.batch.solve_gromov_batch` is slower on CPU, but provides
+#   better objective values.
+#
+# .. tip::
+#    If your data is on a GPU, :func:`ot.batch.solve_gromov_batch`
+#    is significantly faster AND provides better objective values.
 
 from ot import solve_gromov
 from ot.batch import solve_gromov_batch
@@ -185,3 +211,17 @@ time_batch_gw, avg_value_batch_gw = benchmark_batch_gw(samples_source, samples_t
 print(f"{'Method':<20}{'Time (s)':<15}{'Avg Value':<15}")
 print(f"{'Naive GW':<20}{time_naive_gw:<15.4f}{avg_value_naive_gw:<15.4f}")
 print(f"{'Batched GW':<20}{time_batch_gw:<15.4f}{avg_value_batch_gw:<15.4f}")
+
+#############################################################################
+#
+# In summary: no more for loops!
+# ---------------------------------------------
+
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(4, 4))
+ax.text(0.5, 0.5, "For", fontsize=160, ha="center", va="center", zorder=0)
+ax.axis("off")
+ax.plot([0, 1], [0, 1], color="red", linewidth=10, zorder=1)
+ax.plot([0, 1], [1, 0], color="red", linewidth=10, zorder=1)
+plt.show()

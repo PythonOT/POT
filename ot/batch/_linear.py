@@ -159,7 +159,7 @@ def loss_linear_samples_batch(X, Y, T, metric="l2"):
         Samples from target distribution
     T : array-like, shape (B, ns, nt)
         Transport plan
-    metric : str | callable, optional
+    metric : str, optional
             'sqeuclidean', 'euclidean', 'minkowski' or 'kl'
     Returns
     -------
@@ -191,7 +191,7 @@ def dist_batch(
         `b` matrices with `n1` samples of size `d`
     X2 : array-like, shape (b,n2,d), optional
         `b` matrices with `n2` samples of size `d` (if None then :math:`\mathbf{X_2} = \mathbf{X_1}`)
-    metric : str | callable, optional
+    metric : str, optional
         'sqeuclidean', 'euclidean', 'minkowski' or 'kl'
     p : float, optional
         p-norm for the Minkowski metrics. Default value is 2.
@@ -220,8 +220,6 @@ def dist_batch(
     """
     X2 = X2 if X2 is not None else X1
     metric = metric.lower()
-    if callable(metric):
-        M = metric(X1, X2)
     if metric == "sqeuclidean":
         M = dist_euclidean_batch(X1, X2, squared=True, nx=nx)
     elif metric == "euclidean":
@@ -381,7 +379,7 @@ def solve_sample_batch(
         Cost matrix
     reg : float
         Regularization parameter for entropic regularization
-    metric : str | callable, optional
+    metric : str, optional
         'sqeuclidean', 'euclidean', 'minkowski' or 'kl'
     p : float, optional
         p-norm for the Minkowski metrics. Default value is 2.

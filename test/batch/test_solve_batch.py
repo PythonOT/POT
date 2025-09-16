@@ -23,7 +23,9 @@ import pytest
 from ot.backend import torch
 
 
-def test_solve_batch():
+@pytest.mark.parametrize("solver", ["sinkhorn", "log_sinkhorn"])
+@pytest.mark.parametrize("reg_type", ["kl", "entropy"])
+def test_solve_batch(solver, reg_type):
     """Check that solve_batch gives the same results as solve for each instance in the batch."""
     batchsize = 4
     n = 16
@@ -42,7 +44,8 @@ def test_solve_batch():
         reg=reg,
         max_iter=max_iter,
         tol=tol,
-        solver="log_sinkhorn",
+        solver=solver,
+        reg_type=reg_type,
         grad="detach",
     )
     plan_batch = res.plan
@@ -50,7 +53,9 @@ def test_solve_batch():
 
     for i in range(batchsize):
         M_i = M[i]
-        res_i = solve(M_i, a=None, b=None, reg=reg, max_iter=max_iter, tol=tol)
+        res_i = solve(
+            M_i, a=None, b=None, reg=reg, max_iter=max_iter, tol=tol, reg_type=reg_type
+        )
         plan_i = res_i.plan
         value_i = res_i.value_linear
         np.testing.assert_allclose(plan_i, plan_batch[i], atol=1e-05)
@@ -114,17 +119,18 @@ def test_gradients_torch(grad):
     d = 2
     X = torch.randn((batchsize, n, d), requires_grad=True)
     M = dist_batch(X, X)
-    res = solve_batch(M, reg=0.1, max_iter=10, tol=1e-5, grad=grad)
-    loss = res.value_linear.sum()
-    loss_plan = res.plan.sum()
-    if grad == "detach":
-        assert loss.grad == None
-    elif grad == "envelope":
-        loss.backward()
-        assert X.grad is not None
-    elif grad in ["autodiff", "last_step"]:
-        loss_plan.backward()
-        assert X.grad is not None
+    for solver in ["sinkhorn", "log_sinkhorn"]:
+        res = solve_batch(M, reg=0.1, max_iter=10, tol=1e-5, grad=grad, solver=solver)
+        loss = res.value_linear.sum()
+        loss_plan = res.plan.sum()
+        if grad == "detach":
+            assert loss.grad == None
+        elif grad == "envelope":
+            loss.backward()
+            assert X.grad is not None
+        elif grad in ["autodiff", "last_step"]:
+            loss_plan.backward()
+            assert X.grad is not None
 
 
 def test_backend(nx):
