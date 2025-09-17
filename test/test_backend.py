@@ -277,6 +277,8 @@ def test_empty_backend():
         nx.det(M)
     with pytest.raises(NotImplementedError):
         nx.slogdet(M)
+    with pytest.raises(NotImplementedError):
+        nx.unsqueeze(M, 0)
 
 
 def test_func_backends(nx):
@@ -600,6 +602,9 @@ def test_func_backends(nx):
 
         A = nx.squeeze(nx.zeros((3, 1, 4, 1)))
         assert tuple(A.shape) == (3, 4), "Assert fail on: squeeze"
+
+        A = nx.unsqueeze(nx.zeros((3, 1, 4)), -1)
+        assert tuple(A.shape) == (3, 1, 4, 1), "Assert fail on: unsqueeze"
 
         A = nx.bitsize(Mb)
         lst_b.append(float(A))
