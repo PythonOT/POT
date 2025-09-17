@@ -747,7 +747,7 @@ def min_pivot_sliced(
 ):
     r"""
     Computes the cost and permutation associated to the min-Pivot Sliced
-    Discrepancy (introduced as SWGG in [81] and studied further in [82]). Given
+    Discrepancy (introduced as SWGG in [82] and studied further in [83]). Given
     the supports `X` and `Y` of two discrete uniform measures with `n` atoms in
     dimension `d`, the min-Pivot Sliced Discrepancy goes through `n_proj`
     different projections of the measures on random directions, and retains the
@@ -794,9 +794,9 @@ def min_pivot_sliced(
 
     References
     ----------
-    .. [81] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023). Fast Optimal Transport through Sliced Generalized Wasserstein Geodesics. Advances in Neural Information Processing Systems, 36, 35350–35385.
+    .. [82] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023). Fast Optimal Transport through Sliced Generalized Wasserstein Geodesics. Advances in Neural Information Processing Systems, 36, 35350–35385.
 
-    .. [82] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport Plans. arXiv preprint 2506.03661.
+    .. [83] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport Plans. arXiv preprint 2506.03661.
     """
     assert (
         X.shape == Y.shape
@@ -848,7 +848,7 @@ def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False, beta=0.0
     datasets `X` and `Y`. Given a set of `n_proj` projection directions,
     the expected sliced plan is obtained by averaging the `n_proj` 1d optimal
     transport plans between the projections of `X` and `Y` on each direction.
-    Expected Sliced was introduced in [83] and further studied in [82].
+    Expected Sliced was introduced in [84] and further studied in [83].
 
     .. note::
         The computation ignores potential ambiguities in the projections: if two points from a same measure have the same projection on a direction, then multiple sorting permutations are possible. To avoid combinatorial explosion, only one permutation is retained: this strays from theory in pathological cases.
@@ -881,9 +881,9 @@ def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False, beta=0.0
 
     References
     ----------
-    .. [82] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport Plans. arXiv preprint 2506.03661.
+    .. [83] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport Plans. arXiv preprint 2506.03661.
 
-    .. [83] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi A., Kolouri, S. (2024). Expected Sliced Transport Plans. International Conference on Learning Representations.
+    .. [84] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi A., Kolouri, S. (2024). Expected Sliced Transport Plans. International Conference on Learning Representations.
     """
     assert (
         X.shape == Y.shape
