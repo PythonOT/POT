@@ -42,6 +42,7 @@
 - Fix doc for projection sparse simplex (PR #734, PR #746)
 - Changed the default behavior of `ot.lp.solver_1d.wasserstein_circle` (Issue #738)
 - Avoid raising unnecessary warnings in `ot.lp.solver_1d.binary_search_circle` (Issue #738)
+- Avoid deprecation warning in `ot.lp.solver_1d.wasserstein_1d` (Issue #760, PR #761)
 
 ## 0.9.5
 
