@@ -1,6 +1,6 @@
 # Releases
 
-## 0.9.6dev
+## 0.9.6
 
 #### New features
 - Implement CG solvers for partial FGW (PR #687)
