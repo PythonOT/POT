@@ -790,6 +790,8 @@ def test_min_pivot_sliced(nx):
         ot.sliced.min_pivot_sliced(x[1:, :], y, thetas=thetas)
 
 
+@pytest.skip_backend("tf")  # skips because of array assignment
+@pytest.skip_backend("jax")
 def test_expected_sliced(nx):
     n = 10
     n_proj = 10
