@@ -1,6 +1,6 @@
 # Releases
 
-## 0.9.6dev
+## 0.9.6
 
 #### New features
 - Implement CG solvers for partial FGW (PR #687)
@@ -28,6 +28,7 @@
 - Removed release information from quickstart guide (PR #744)
 - Implement batch parallel solvers in ot.batch (PR #745)
 - Update REAMDE with new API and reorganize examples (PR #754)
+- Speedup and update tests and wheels (PR #759)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
