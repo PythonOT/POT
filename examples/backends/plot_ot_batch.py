@@ -54,7 +54,7 @@ for i in range(n_problems):
         ot.dist(samples_source[i], samples_target[i])
     )  # List of cost matrices n_samples x n_samples
 # Batched approach
-M_batch = ot.batch.dist_batch(
+M_batch = ot.dist_batch(
     samples_source, samples_target
 )  # Array of cost matrices n_problems x n_samples x n_samples
 
@@ -88,7 +88,7 @@ for i in range(n_problems):
     results_values_list.append(res.value_linear)
 
 # Batched approach
-results_batch = ot.batch.solve_batch(
+results_batch = ot.solve_batch(
     M=M_batch, reg=reg, max_iter=max_iter, tol=tol, reg_type="entropy"
 )
 results_values_batch = results_batch.value_linear
@@ -131,8 +131,8 @@ def benchmark_naive(samples_source, samples_target):
 
 def benchmark_batch(samples_source, samples_target):
     start = perf_counter()
-    M_batch = ot.batch.dist_batch(samples_source, samples_target)
-    res_batch = ot.batch.solve_batch(
+    M_batch = ot.dist_batch(samples_source, samples_target)
+    res_batch = ot.solve_batch(
         M=M_batch, reg=reg, max_iter=max_iter, tol=tol, reg_type="entropy"
     )
     end = perf_counter()
@@ -176,8 +176,7 @@ print(f"Batched approach time: {time_batch:.4f} seconds")
 #    If your data is on a GPU, :func:`ot.batch.solve_gromov_batch`
 #    is significantly faster AND provides better objective values.
 
-from ot import solve_gromov
-from ot.batch import solve_gromov_batch
+from ot import solve_gromov, solve_gromov_batch
 
 
 def benchmark_naive_gw(samples_source, samples_target):
@@ -195,8 +194,8 @@ def benchmark_naive_gw(samples_source, samples_target):
 
 def benchmark_batch_gw(samples_source, samples_target):
     start = perf_counter()
-    C1_batch = ot.batch.dist_batch(samples_source, samples_source)
-    C2_batch = ot.batch.dist_batch(samples_target, samples_target)
+    C1_batch = ot.dist_batch(samples_source, samples_source)
+    C2_batch = ot.dist_batch(samples_target, samples_target)
     res_batch = solve_gromov_batch(
         C1_batch, C2_batch, reg=1, max_iter=100, max_iter_inner=50, tol=tol
     )

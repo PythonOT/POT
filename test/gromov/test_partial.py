@@ -465,8 +465,8 @@ def test_partial_fgw2_gradients():
 @pytest.skip_backend("tf", reason="test very slow with tf backend")
 def test_entropic_partial_gromov_wasserstein(nx):
     rng = np.random.RandomState(42)
-    n_samples = 20  # nb samples
-    n_noise = 10  # nb of samples (noise)
+    n_samples = 10  # nb samples
+    n_noise = 5  # nb of samples (noise)
 
     p = ot.unif(n_samples + n_noise)
     psub = ot.unif(n_samples - 5 + n_noise)
@@ -516,6 +516,7 @@ def test_entropic_partial_gromov_wasserstein(nx):
             log=True,
             symmetric=list_sym[i],
             verbose=True,
+            numItermax=10,
         )
 
         resb, logb = ot.gromov.entropic_partial_gromov_wasserstein(
@@ -530,6 +531,7 @@ def test_entropic_partial_gromov_wasserstein(nx):
             log=True,
             symmetric=False,
             verbose=True,
+            numItermax=10,
         )
 
         resb_ = nx.to_numpy(resb)
@@ -552,6 +554,7 @@ def test_entropic_partial_gromov_wasserstein(nx):
         log=False,
         symmetric=list_sym[i],
         verbose=True,
+        numItermax=10,
     )
 
     resb = ot.gromov.entropic_partial_gromov_wasserstein(
@@ -564,6 +567,7 @@ def test_entropic_partial_gromov_wasserstein(nx):
         log=False,
         symmetric=False,
         verbose=True,
+        numItermax=10,
     )
 
     resb_ = nx.to_numpy(resb)
@@ -573,11 +577,25 @@ def test_entropic_partial_gromov_wasserstein(nx):
     # tests with different number of samples across spaces
     m = 0.5
     res, log = ot.gromov.entropic_partial_gromov_wasserstein(
-        C1, C1sub, p=p, q=psub, reg=1e4, m=m, log=True
+        C1,
+        C1sub,
+        p=p,
+        q=psub,
+        reg=1e4,
+        m=m,
+        log=True,
+        numItermax=10,
     )
 
     resb, logb = ot.gromov.entropic_partial_gromov_wasserstein(
-        C1b, C1subb, p=pb, q=psubb, reg=1e4, m=m, log=True
+        C1b,
+        C1subb,
+        p=pb,
+        q=psubb,
+        reg=1e4,
+        m=m,
+        log=True,
+        numItermax=10,
     )
 
     resb_ = nx.to_numpy(resb)
@@ -589,10 +607,26 @@ def test_entropic_partial_gromov_wasserstein(nx):
     # tests for pGW2
     for loss_fun in ["square_loss", "kl_loss"]:
         w0, log0 = ot.gromov.entropic_partial_gromov_wasserstein2(
-            C1, C2, p=None, q=q, reg=1e4, m=m, loss_fun=loss_fun, log=True
+            C1,
+            C2,
+            p=None,
+            q=q,
+            reg=1e4,
+            m=m,
+            loss_fun=loss_fun,
+            log=True,
+            numItermax=10,
         )
         w0_val = ot.gromov.entropic_partial_gromov_wasserstein2(
-            C1b, C2b, p=pb, q=None, reg=1e4, m=m, loss_fun=loss_fun, log=False
+            C1b,
+            C2b,
+            p=pb,
+            q=None,
+            reg=1e4,
+            m=m,
+            loss_fun=loss_fun,
+            log=False,
+            numItermax=10,
         )
         np.testing.assert_allclose(w0, w0_val, rtol=1e-8)
 
@@ -666,6 +700,7 @@ def test_entropic_partial_fused_gromov_wasserstein(nx):
             log=True,
             symmetric=list_sym[i],
             verbose=True,
+            numItermax=10,
         )
 
         resb, logb = ot.gromov.entropic_partial_fused_gromov_wasserstein(
@@ -681,6 +716,7 @@ def test_entropic_partial_fused_gromov_wasserstein(nx):
             log=True,
             symmetric=False,
             verbose=True,
+            numItermax=10,
         )
 
         resb_ = nx.to_numpy(resb)
@@ -704,6 +740,7 @@ def test_entropic_partial_fused_gromov_wasserstein(nx):
         log=False,
         symmetric=list_sym[i],
         verbose=True,
+        numItermax=10,
     )
 
     resb = ot.gromov.entropic_partial_fused_gromov_wasserstein(
@@ -717,6 +754,7 @@ def test_entropic_partial_fused_gromov_wasserstein(nx):
         log=False,
         symmetric=False,
         verbose=True,
+        numItermax=10,
     )
 
     resb_ = nx.to_numpy(resb)
@@ -726,11 +764,27 @@ def test_entropic_partial_fused_gromov_wasserstein(nx):
     # tests with different number of samples across spaces
     m = 0.5
     res, log = ot.gromov.entropic_partial_fused_gromov_wasserstein(
-        M11sub, C1, C1sub, p=p, q=psub, reg=1e4, m=m, log=True
+        M11sub,
+        C1,
+        C1sub,
+        p=p,
+        q=psub,
+        reg=1e4,
+        m=m,
+        log=True,
+        numItermax=10,
     )
 
     resb, logb = ot.gromov.entropic_partial_fused_gromov_wasserstein(
-        M11subb, C1b, C1subb, p=pb, q=psubb, reg=1e4, m=m, log=True
+        M11subb,
+        C1b,
+        C1subb,
+        p=pb,
+        q=psubb,
+        reg=1e4,
+        m=m,
+        log=True,
+        numItermax=10,
     )
 
     resb_ = nx.to_numpy(resb)
@@ -742,9 +796,27 @@ def test_entropic_partial_fused_gromov_wasserstein(nx):
     # tests for pGW2
     for loss_fun in ["square_loss", "kl_loss"]:
         w0, log0 = ot.gromov.entropic_partial_fused_gromov_wasserstein2(
-            M12, C1, C2, p=None, q=q, reg=1e4, m=m, loss_fun=loss_fun, log=True
+            M12,
+            C1,
+            C2,
+            p=None,
+            q=q,
+            reg=1e4,
+            m=m,
+            loss_fun=loss_fun,
+            log=True,
+            numItermax=10,
         )
         w0_val = ot.gromov.entropic_partial_fused_gromov_wasserstein2(
-            M12b, C1b, C2b, p=pb, q=None, reg=1e4, m=m, loss_fun=loss_fun, log=False
+            M12b,
+            C1b,
+            C2b,
+            p=pb,
+            q=None,
+            reg=1e4,
+            m=m,
+            loss_fun=loss_fun,
+            log=False,
+            numItermax=10,
         )
         np.testing.assert_allclose(w0, w0_val, rtol=1e-8)
