@@ -5,7 +5,7 @@
 *September 2025*
 
 #### Closed issues
-- Fix missing cython file in MANIFEST.in (PR #TODO)
+- Fix missing cython file in MANIFEST.in (PR #763)
 
 ## 0.9.6
 
