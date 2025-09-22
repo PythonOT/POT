@@ -12,6 +12,7 @@ import pytest
 import ot
 from ot.sliced import get_random_projections
 from ot.backend import tf, torch
+from contextlib import nullcontext
 
 
 def test_get_random_projections():
@@ -790,8 +791,6 @@ def test_min_pivot_sliced(nx):
         ot.sliced.min_pivot_sliced(x[1:, :], y, thetas=thetas)
 
 
-@pytest.skip_backend("tf")  # skips because of array assignment
-@pytest.skip_backend("jax")
 def test_expected_sliced(nx):
     n = 10
     n_proj = 10
@@ -805,28 +804,35 @@ def test_expected_sliced(nx):
     thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
     thetas_b = nx.from_numpy(thetas)
 
-    expected_plan, expected_cost = ot.sliced.expected_sliced(x, y, thetas=thetas)
-    expected_plan_b, expected_cost_b, _ = ot.sliced.expected_sliced(
-        x_b, y_b, thetas=thetas_b, log=True
+    context = (
+        nullcontext()
+        if str(nx) not in ["tf", "jax"]
+        else pytest.raises(NotImplementedError)
     )
 
-    np.testing.assert_almost_equal(expected_plan, nx.to_numpy(expected_plan_b))
-    np.testing.assert_almost_equal(expected_cost, nx.to_numpy(expected_cost_b))
+    with context:
+        expected_plan, expected_cost = ot.sliced.expected_sliced(x, y, thetas=thetas)
+        expected_plan_b, expected_cost_b, _ = ot.sliced.expected_sliced(
+            x_b, y_b, thetas=thetas_b, log=True
+        )
 
-    # result should be a coarse upper-bound of W2
-    w2 = ot.emd2(ot.unif(n), ot.unif(n), ot.dist(x, y))
-    assert expected_cost >= w2
-    assert expected_cost <= 3 * w2
+        np.testing.assert_almost_equal(expected_plan, nx.to_numpy(expected_plan_b))
+        np.testing.assert_almost_equal(expected_cost, nx.to_numpy(expected_cost_b))
 
-    # test without provided thetas
-    ot.sliced.expected_sliced(x, y, n_proj=n_proj, log=True)
+        # result should be a coarse upper-bound of W2
+        w2 = ot.emd2(ot.unif(n), ot.unif(n), ot.dist(x, y))
+        assert expected_cost >= w2
+        assert expected_cost <= 3 * w2
 
-    # test with invalid shapes
-    with pytest.raises(AssertionError):
-        ot.sliced.min_pivot_sliced(x[1:, :], y, thetas=thetas)
+        # test without provided thetas
+        ot.sliced.expected_sliced(x, y, n_proj=n_proj, log=True)
 
-    # with a small temperature (i.e. large beta),
-    # the cost should be close to min_pivot
-    _, expected_cost = ot.sliced.expected_sliced(x, y, thetas=thetas, beta=100.0)
-    _, min_cost = ot.sliced.min_pivot_sliced(x, y, thetas=thetas)
-    np.testing.assert_almost_equal(expected_cost, min_cost, decimal=3)
+        # test with invalid shapes
+        with pytest.raises(AssertionError):
+            ot.sliced.min_pivot_sliced(x[1:, :], y, thetas=thetas)
+
+        # with a small temperature (i.e. large beta), the cost should be close
+        # to min_pivot
+        _, expected_cost = ot.sliced.expected_sliced(x, y, thetas=thetas, beta=100.0)
+        _, min_cost = ot.sliced.min_pivot_sliced(x, y, thetas=thetas)
+        np.testing.assert_almost_equal(expected_cost, min_cost, decimal=3)

@@ -853,6 +853,9 @@ def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False, beta=0.0
     .. note::
         The computation ignores potential ambiguities in the projections: if two points from a same measure have the same projection on a direction, then multiple sorting permutations are possible. To avoid combinatorial explosion, only one permutation is retained: this strays from theory in pathological cases.
 
+    .. warning::
+        The function runs on backend but tensorflow and jax are not supported due to array assignment.
+
     Parameters
     ----------
     X : torch.Tensor
@@ -888,8 +891,15 @@ def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False, beta=0.0
     assert (
         X.shape == Y.shape
     ), f"X ({X.shape}) and Y ({Y.shape}) must have the same shape"
+
     nx = get_backend(X, Y)
+    if str(nx) in ["tf", "jax"]:
+        raise NotImplementedError(
+            f"expected_sliced is not implemented for the {str(nx)} backend due"
+            "to array assignment."
+        )
     n = X.shape[0]
+
     log_dict = {}
     if log:
         perm, log_dict = sliced_permutations(
