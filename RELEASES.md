@@ -1,6 +1,6 @@
 # Releases
 
-## 0.9.6post1
+## 0.9.6.post1
 
 *September 2025*
 
