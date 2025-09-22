@@ -74,12 +74,12 @@ from .factored import factored_optimal_transport
 from .solvers import solve, solve_gromov, solve_sample
 from .lowrank import lowrank_sinkhorn
 
-from .batch import solve_batch, solve_gromov_batch
+from .batch import solve_batch, solve_sample_batch, solve_gromov_batch, dist_batch
 
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.9.6dev0"
+__version__ = "0.9.6.post1"
 
 __all__ = [
     "emd",
@@ -143,4 +143,6 @@ __all__ = [
     "lowrank_gromov_wasserstein_samples",
     "solve_batch",
     "solve_gromov_batch",
+    "solve_sample_batch",
+    "dist_batch",
 ]

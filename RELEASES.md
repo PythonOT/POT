@@ -1,6 +1,25 @@
 # Releases
 
-## 0.9.6dev
+## 0.9.7dev
+
+#### New features
+
+- Added Sliced OT plans (PR #757)
+
+## 0.9.6.post1
+
+*September 2025*
+
+#### Closed issues
+- Fix missing cython file in MANIFEST.in (PR #763)
+
+## 0.9.6
+
+*September 2025*
+
+This new release contains several new features and bug fixes. Among the new features we have a new submodule `ot.batch` that contains batch parallel solvers for several OT problems including [Sinkhorn, Gromov-Wasserstein and Fused Gromov-Wasserstein](https://pythonot.github.io/master/auto_examples/backends/plot_ot_batch.html). This new submodule can be used to solve many independent OT problems in parallel on CPU or GPU with shared source and target support sizes. We also implemented a new Nystrom kernel approximation for the Sinkhorn solver that can be used to speed up the computation of the Sinkhorn divergence on large datasets. We also added new 1D solvers for [Linear circular OT](https://pythonot.github.io/master/auto_examples/sliced-wasserstein/plot_compute_wasserstein_circle.html) and new solvers for free support [OT barycenters with generic cost functions](https://pythonot.github.io/master/auto_examples/barycenters/plot_free_support_barycenter_generic_cost.html) and for [barycenters between Gaussian Mixture Models (GMMs)](https://pythonot.github.io/master/auto_examples/barycenters/plot_gmm_barycenter.html). We also implemented two solvers for partial Fused Gromov-Wasserstein problems based on [conditional gradient](https://pythonot.github.io/master/gen_modules/ot.gromov.html#ot.gromov.partial_fused_gromov_wasserstein) and [projected gradient](https://pythonot.github.io/master/gen_modules/ot.gromov.html#ot.gromov.entropic_partial_fused_gromov_wasserstein) descents.
+
+Finally we have updated the documentation to reflect the new generic API and reorganized the [examples gallery](https://pythonot.github.io/auto_examples/index.html).
 
 #### New features
 - Implement CG solvers for partial FGW (PR #687)
@@ -28,7 +47,7 @@
 - Removed release information from quickstart guide (PR #744)
 - Implement batch parallel solvers in ot.batch (PR #745)
 - Update REAMDE with new API and reorganize examples (PR #754)
-- Added Sliced OT plans (PR #757)
+- Speedup and update tests and wheels (PR #759)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
@@ -42,6 +61,8 @@
 - Fix doc for projection sparse simplex (PR #734, PR #746)
 - Changed the default behavior of `ot.lp.solver_1d.wasserstein_circle` (Issue #738)
 - Avoid raising unnecessary warnings in `ot.lp.solver_1d.binary_search_circle` (Issue #738)
+- Avoid deprecation warning in `ot.lp.solver_1d.wasserstein_1d` (Issue #760, PR #761)
+
 
 ## 0.9.5
 
