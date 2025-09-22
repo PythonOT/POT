@@ -77,7 +77,7 @@ from .batch import solve_batch, solve_sample_batch, solve_gromov_batch, dist_bat
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.9.6post1"
+__version__ = "0.9.6.post1"
 
 __all__ = [
     "emd",
