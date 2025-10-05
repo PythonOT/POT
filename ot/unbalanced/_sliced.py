@@ -75,7 +75,7 @@ def sliced_unbalanced_ot(
 
     References
     ----------
-    [80] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
+    [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
     Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research
     """
     assert mode in ["backprop", "icdf"]
@@ -211,7 +211,7 @@ def unbalanced_sliced_ot(
 
     References
     ----------
-    [80] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
+    [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
     Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research
     """
     assert mode in ["backprop", "icdf"]

@@ -24,7 +24,7 @@ and Courty Nicolas
 "Optimal Transport for structured data with application on graphs"
 International Conference on Machine Learning (ICML). 2019.
 
-[51] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019).
+[51] Xu, H., Luo, D., Zha, H., & Carin, L. (2019).
 "Gromov-wasserstein learning for graph matching and node embedding".
 In International Conference on Machine Learning (ICML), 2019.
 

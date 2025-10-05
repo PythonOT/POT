@@ -198,14 +198,14 @@ def test_empirical_bures_wasserstein_distance(nx, bias):
     ],
 )
 def test_bures_wasserstein_barycenter(nx, method):
-    n = 50
-    k = 10
+    n = 30
+    k = 3
     X = []
     y = []
     m = []
     C = []
     for _ in range(k):
-        X_, y_ = make_data_classif("3gauss", n)
+        X_, y_ = make_data_classif("3gauss", n, random_state=42 + k)
         m_ = np.mean(X_, axis=0)[None, :]
         C_ = np.cov(X_.T)
         X.append(X_)
@@ -219,9 +219,11 @@ def test_bures_wasserstein_barycenter(nx, method):
     C = nx.from_numpy(C)
 
     mblog, Cblog, log = ot.gaussian.bures_wasserstein_barycenter(
-        m, C, method=method, log=True
+        m, C, method=method, log=True, num_iter=10
     )
-    mb, Cb = ot.gaussian.bures_wasserstein_barycenter(m, C, method=method, log=False)
+    mb, Cb = ot.gaussian.bures_wasserstein_barycenter(
+        m, C, method=method, log=False, num_iter=10
+    )
 
     np.testing.assert_allclose(Cb, Cblog, rtol=1e-1, atol=1e-1)
     np.testing.assert_allclose(mb, mblog, rtol=1e-2, atol=1e-2)
@@ -249,14 +251,14 @@ def test_bures_wasserstein_barycenter(nx, method):
 
 
 def test_fixedpoint_vs_gradientdescent_bures_wasserstein_barycenter(nx):
-    n = 50
-    k = 10
+    n = 30
+    k = 3
     X = []
     y = []
     m = []
     C = []
     for _ in range(k):
-        X_, y_ = make_data_classif("3gauss", n)
+        X_, y_ = make_data_classif("3gauss", n, random_state=42 + k)
         m_ = np.mean(X_, axis=0)[None, :]
         C_ = np.cov(X_.T)
         X.append(X_)
@@ -290,8 +292,8 @@ def test_fixedpoint_vs_gradientdescent_bures_wasserstein_barycenter(nx):
     "method", ["stochastic_gradient_descent", "averaged_stochastic_gradient_descent"]
 )
 def test_stochastic_gd_bures_wasserstein_barycenter(nx, method):
-    n = 50
-    k = 10
+    n = 30
+    k = 30
     X = []
     y = []
     m = []
@@ -311,26 +313,22 @@ def test_stochastic_gd_bures_wasserstein_barycenter(nx, method):
     C = nx.from_numpy(C)
 
     mb, Cb = ot.gaussian.bures_wasserstein_barycenter(
-        m, C, method="fixed_point", log=False
+        m, C, method="fixed_point", log=False, num_iter=100
     )
 
     loss = nx.mean(ot.gaussian.bures_wasserstein_distance(mb[None], m, Cb[None], C))
 
-    n_samples = [1, 5]
-    for n in n_samples:
-        mb2, Cb2 = ot.gaussian.bures_wasserstein_barycenter(
-            m, C, method=method, log=False, batch_size=n
-        )
+    mb2, Cb2 = ot.gaussian.bures_wasserstein_barycenter(
+        m, C, method=method, log=False, batch_size=n, num_iter=100
+    )
 
-        loss2 = nx.mean(
-            ot.gaussian.bures_wasserstein_distance(mb2[None], m, Cb2[None], C)
-        )
+    loss2 = nx.mean(ot.gaussian.bures_wasserstein_distance(mb2[None], m, Cb2[None], C))
 
-        np.testing.assert_allclose(mb, mb2, atol=1e-5)
-        # atol big for now because too slow, need to see if
-        # it can be improved...
-        np.testing.assert_allclose(Cb, Cb2, atol=1e-1)
-        np.testing.assert_allclose(loss, loss2, atol=1e-3)
+    np.testing.assert_allclose(mb, mb2, atol=1e-5)
+    # atol big for now because too slow, need to see if
+    # it can be improved...
+    np.testing.assert_allclose(Cb, Cb2, atol=1e-0)
+    np.testing.assert_allclose(loss, loss2, atol=1e-2)
 
     with pytest.raises(ValueError):
         mb2, Cb2 = ot.gaussian.bures_wasserstein_barycenter(

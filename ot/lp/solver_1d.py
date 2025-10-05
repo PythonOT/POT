@@ -41,8 +41,8 @@ def quantile_function(qs, cws, xs, return_index=False):
     if nx.__name__ == "torch":
         # this is to ensure the best performance for torch searchsorted
         # and avoid a warning related to non-contiguous arrays
-        cws = cws.T.contiguous()
-        qs = qs.T.contiguous()
+        cws = cws.movedim(0, -1).contiguous()
+        qs = qs.movedim(0, -1).contiguous()
     else:
         cws = cws.T
         qs = qs.T
