@@ -1,6 +1,6 @@
 # Releases
 
-## 0.9.7
+## 0.9.7dev
 
 #### New features
 - Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #)
