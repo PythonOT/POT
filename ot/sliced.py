@@ -9,6 +9,8 @@ Sliced OT Distances
 #
 # License: MIT License
 
+import warnings
+
 import numpy as np
 from .backend import get_backend, NumpyBackend
 from .utils import list_to_array, get_coordinate_circle, dist
@@ -16,10 +18,12 @@ from .lp import (
     wasserstein_circle,
     semidiscrete_wasserstein2_unif_circle,
     linear_circular_ot,
+    wasserstein_1d,
 )
 
 
-def get_random_projections(d, n_projections, seed=None, backend=None, type_as=None):
+def get_random_projections(d, n_projections, seed=None, backend=None,
+                           type_as=None):
     r"""
     Generates n_projections samples from the uniform on the unit sphere of dimension :math:`d-1`: :math:`\mathcal{U}(\mathcal{S}^{d-1})`
 
@@ -595,7 +599,8 @@ def linear_sliced_wasserstein_sphere(
     X_s: ndarray, shape (n_samples_a, dim)
         Samples in the source domain
     X_t: ndarray, shape (n_samples_b, dim), optional
-        Samples in the target domain. If None, computes the distance against the uniform distribution on the sphere.
+        Samples in the target domain. If None, computes the distance against
+        the uniform distribution on the sphere.
     a : ndarray, shape (n_samples_a,), optional
         samples weights in the source domain
     b : ndarray, shape (n_samples_b,), optional
@@ -607,7 +612,8 @@ def linear_sliced_wasserstein_sphere(
     seed: int or RandomState or None, optional
         Seed used for random number generator
     log: bool, optional
-        if True, linear_sliced_wasserstein_sphere returns the projections used and their associated LCOT.
+        if True, linear_sliced_wasserstein_sphere returns the projections used
+        and their associated LCOT.
 
     Returns
     -------
@@ -628,7 +634,10 @@ def linear_sliced_wasserstein_sphere(
     .. _references-lssot:
     References
     ----------
-    .. [79] Liu, X., Bai, Y., Martín, R. D., Shi, K., Shahbazi, A., Landman, B. A., Chang, C., & Kolouri, S. (2025). Linear Spherical Sliced Optimal Transport: A Fast Metric for Comparing Spherical Data. International Conference on Learning Representations.
+    .. [79] Liu, X., Bai, Y., Martín, R. D., Shi, K., Shahbazi, A., Landman,
+       B. A., Chang, C., & Kolouri, S. (2025). Linear Spherical Sliced Optimal
+       Transport: A Fast Metric for Comparing Spherical Data. International
+       Conference on Learning Representations.
     """
     d = X_s.shape[-1]
 
@@ -639,9 +648,8 @@ def linear_sliced_wasserstein_sphere(
 
     if X_s.shape[1] != X_t.shape[1]:
         raise ValueError(
-            "X_s and X_t must have the same number of dimensions {} and {} respectively given".format(
-                X_s.shape[1], X_t.shape[1]
-            )
+            "X_s and X_t must have the same number of dimensions {} and {} \
+            respectively given".format(X_s.shape[1], X_t.shape[1])
         )
     if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10 ** (-4)):
         raise ValueError("X_s is not on the sphere.")
@@ -654,7 +662,8 @@ def linear_sliced_wasserstein_sphere(
         )
 
     Xps_coords, _ = projection_sphere_to_circle(
-        X_s, n_projections=n_projections, projections=projections, seed=seed, backend=nx
+        X_s, n_projections=n_projections, projections=projections, seed=seed,
+        backend=nx
     )
 
     if X_t is not None:
@@ -672,11 +681,24 @@ def linear_sliced_wasserstein_sphere(
     res = nx.mean(projected_lcot) ** (1 / 2)
 
     if log:
-        return res, {"projections": projections, "projected_emds": projected_lcot}
+        return res, {"projections": projections,
+                     "projected_emds": projected_lcot}
     return res
 
 
-def sliced_permutations(X, Y, thetas=None, n_proj=None, log=False, backend=None):
+def sliced_plans(
+    X,
+    Y,
+    a=None,
+    b=None,
+    metric="sqeuclidean",
+    p=2,
+    thetas=None,
+    warm_theta=False,
+    n_proj=None,
+    log=False,
+    backend=None,
+):
     r"""
     Computes all the permutations that sort the projections of two `(n, d)`
     datasets `X` and `Y` on the directions `thetas`.
@@ -687,63 +709,156 @@ def sliced_permutations(X, Y, thetas=None, n_proj=None, log=False, backend=None)
     ----------
     X : array-like, shape (n, d)
         The first set of vectors.
-    Y : array-like, shape (n, d)
+    Y : array-like, shape (m, d)
         The second set of vectors.
+    a : ndarray of float64, shape (ns,), optional
+        Source histogram (default is uniform weight)
+    b : ndarray of float64, shape (nt,), optional
+        Target histogram (default is uniform weight)
+    metric: str, optional (default='sqeuclidean')
+        Metric to be used. Only works with either of the strings
+        `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'`.
+    p: float, optional (default=1.0)
+         The p-norm to apply for if metric='minkowski'
     thetas : array-like, shape (n_proj, d), optional
-        The projection directions. If None, random directions will be generated.
+        The projection directions. If None, random directions will be
+        generated.
         Default is None.
+    warm_theta : array-like, shape (d,), optional
+        A direction to add to the set of directions. Default is None.
     n_proj : int, optional
         The number of projection directions. Required if thetas is None.
     log : bool, optional
         If True, returns additional logging information. Default is False.
     backend : ot.backend, optional
-        Backend to use for computations. If None, the backend is inferred from the input arrays. Default is None.
+        Backend to use for computations. If None, the backend is inferred from
+        the input arrays. Default is None.
 
     Returns
     -------
-    perm : array-like, shape (n, n_proj)
-        All sliced permutations.
+    G, sigma, tau, costs
+    G: ndarray, shape (ns, nt) or coo_matrix if dense is False
+        Optimal transportation matrix for the given parameters
+    sigma : list of elements of array-like
+        All the indices of X sorted along each projection.
+    tau : list of elements of array-like
+        All the indices of Y sorted along each projection.
     log_dict : dict, optional
         A dictionary containing intermediate computations for logging purposes.
         Returned only if `log` is True.
     """
+
     assert (
-        X.shape == Y.shape
-    ), f"X ({X.shape}) and Y ({Y.shape}) must have the same shape"
-    nx = get_backend(X, Y) if backend is None else backend
+        X.shape[1] == Y.shape[1]
+    ), f"X ({X.shape}) and Y ({Y.shape}) must have the same number of columns"
+    if metric == "euclidean":
+        p = 2
+    elif metric == "cityblock":
+        p = 1
+
     d = X.shape[1]
+    n = X.shape[0]
+    m = Y.shape[0]
+    nx = get_backend(X, Y) if backend is None else backend
+
     do_draw_thetas = thetas is None
     if do_draw_thetas:  # create thetas (n_proj, d)
+        assert n_proj is not None, "n_proj must be specified if thetas is None"
         thetas = get_random_projections(d, n_proj, backend=nx).T
+        if warm_theta is not None:
+            thetas = nx.concatenate([thetas, warm_theta[:, None]], axis=1)
+    else:
+        n_proj = thetas.shape[0]
 
-    # project on each theta: (n, d) -> (n, n_proj)
+    # project on each theta: (n or m, d) -> (n or m, n_proj)
     X_theta = X @ thetas.T  # shape (n, n_proj)
-    Y_theta = Y @ thetas.T  # shape (n, n_proj)
+    Y_theta = Y @ thetas.T  # shape (m, n_proj)
 
-    # sigma[:, i_proj] is a permutation sorting X_theta[:, i_proj]
-    sigma = nx.argsort(X_theta, axis=0)  # (n, n_proj)
-    tau = nx.argsort(Y_theta, axis=0)  # (n, n_proj)
+    if n == m and (a is None or b is None or (a == b).all()):
+        # we compute maps (permutations)
+        # sigma[:, i_proj] is a permutation sorting X_theta[:, i_proj]
+        sigma = nx.argsort(X_theta, axis=0)  # (n, n_proj)
+        tau = nx.argsort(Y_theta, axis=0)  # (m, n_proj)
 
-    # perm[:, i_proj] is tau[:, i_proj] o sigma[:, i_proj]^{-1}
-    perm = nx.take_along_axis(tau, nx.argsort(sigma, axis=0), axis=0)  # (n, n_proj)
+        if metric in ("minkowski", "euclidean", "cityblock"):
+            costs = [
+                nx.sum(
+                    ((nx.sum(nx.abs(X[sigma[:, k]] - Y[tau[:, k]]) ** p,
+                             axis=1)) ** (1 / p)) / n
+                )
+                for k in range(n_proj)
+            ]
+        elif metric == "sqeuclidean":
+            costs = [
+                nx.sum((nx.sum((X[sigma[:, k]] - Y[tau[:, k]]) ** 2,
+                               axis=1)) / n)
+                for k in range(n_proj)
+            ]
+        else:
+            raise ValueError(
+                "Sliced plans work only with metrics " +
+                "from the following list: " +
+                "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
+            )
+
+        G = [
+            nx.coo_matrix(
+                np.ones(n) / n,
+                sigma[:, k],
+                tau[:, k],
+                shape=(n, m),
+                type_as=X_theta,
+            )
+            for k in range(n_proj)
+        ]
+
+    else:  # we compute plans
+        _, G = wasserstein_1d(
+            X_theta, Y_theta, a, b, p, require_sort=True, return_plan=True
+        )
+
+        if metric in ("minkowski", "euclidean", "cityblock"):
+            costs = [
+                nx.sum(
+                    (
+                        (nx.sum(nx.abs(X[G[k].row] - Y[G[k].col]) ** p,
+                                axis=1)) ** (1 / p)
+                    ) * G[k].data
+                )
+                for k in range(n_proj)
+            ]
+        elif metric == "sqeuclidean":
+            costs = [
+                nx.sum((nx.sum((X[G[k].row] - Y[G[k].col]) ** 2, axis=1)) *
+                       G[k].data) for k in range(n_proj)
+            ]
+        else:
+            raise ValueError(
+                "Sliced plans work only with metrics " +
+                "from the following list: " +
+                "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
+            )
 
     if log:
-        log_dict = {
-            "X_theta": X_theta,
-            "Y_theta": Y_theta,
-            "sigma": sigma,
-            "tau": tau,
-            "perm": perm,
-        }
-        if do_draw_thetas:
-            log_dict["thetas"] = thetas
-        return perm, log_dict
+        log_dict = {"X_theta": X_theta, "Y_theta": Y_theta, "thetas": thetas}
+        return costs, G, log_dict
     else:
-        return perm
+        return costs, G
 
 
 def min_pivot_sliced(
-    X, Y, thetas=None, order=2, n_proj=None, log=False, warm_perm=None
+    X,
+    Y,
+    a=None,
+    b=None,
+    thetas=None,
+    metric="sqeuclidean",
+    p=2,
+    n_proj=None,
+    dense=True,
+    log=False,
+    warm_theta=None,
+    backend=None,
 ):
     r"""
     Computes the cost and permutation associated to the min-Pivot Sliced
@@ -763,7 +878,11 @@ def min_pivot_sliced(
     on the axis `thetas[k, :]` matches `X[i, :]` to `Y[\sigma_k(i), :]`.
 
     .. note::
-        The computation ignores potential ambiguities in the projections: if two points from a same measure have the same projection on a direction, then multiple sorting permutations are possible. To avoid combinatorial explosion, only one permutation is retained: this strays from theory in pathological cases.
+        The computation ignores potential ambiguities in the projections: if
+        two points from a same measure have the same projection on a direction,
+        then multiple sorting permutations are possible. To avoid combinatorial
+        explosion, only one permutation is retained: this strays from theory in
+        pathological cases.
 
     Parameters
     ----------
@@ -771,16 +890,31 @@ def min_pivot_sliced(
         The first set of vectors.
     Y : array-like, shape (n, d)
         The second set of vectors.
+    a : ndarray of float64, shape (ns,), optional
+        Source histogram (default is uniform weight)
+    b : ndarray of float64, shape (nt,), optional
+        Target histogram (default is uniform weight)
     thetas : array-like, shape (n_proj, d), optional
-        The projection directions. If None, random directions will be generated. Default is None.
-    order : int, optional
-        Power to elevate the norm. Default is 2.
+        The projection directions. If None, random directions will be generated
+        Default is None.
+    metric: str, optional (default='sqeuclidean')
+        Metric to be used. Only works with either of the strings
+        `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'`.
+    p: float, optional (default=1.0)
+         The p-norm to apply for if metric='minkowski'
     n_proj : int, optional
         The number of projection directions. Required if thetas is None.
+    dense: boolean, optional (default=True)
+        If True, returns :math:`\gamma` as a dense ndarray of shape (ns, nt).
+        Otherwise returns a sparse representation using scipy's `coo_matrix`
+        format.
     log : bool, optional
         If True, returns additional logging information. Default is False.
-    warm_perm : array-like, shape (n,), optional
-        A permutation to add to the permutation list. Default is None.
+    warm_theta : array-like, shape (d,), optional
+        A theta to add to the list of thetas. Default is None.
+    backend : ot.backend, optional
+        Backend to use for computations. If None, the backend is inferred from
+        the input arrays. Default is None.
 
     Returns
     -------
@@ -794,55 +928,75 @@ def min_pivot_sliced(
 
     References
     ----------
-    .. [82] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023). Fast Optimal Transport through Sliced Generalized Wasserstein Geodesics. Advances in Neural Information Processing Systems, 36, 35350–35385.
+    .. [82] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023).
+            Fast Optimal Transport through Sliced Generalized Wasserstein
+            Geodesics. Advances in Neural Information Processing Systems, 36,
+            35350–35385.
 
-    .. [83] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport Plans. arXiv preprint 2506.03661.
+    .. [83] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport
+            Plans. arXiv preprint 2506.03661.
     """
+
     assert (
-        X.shape == Y.shape
-    ), f"X ({X.shape}) and Y ({Y.shape}) must have the same shape"
-    n = X.shape[0]
-    nx = get_backend(X, Y)
+        X.shape[1] == Y.shape[1]
+    ), f"X ({X.shape}) and Y ({Y.shape}) must have the same number of columns"
+
+    nx = get_backend(X, Y) if backend is None else backend
+
     log_dict = {}
+    costs, G, log_dict_plans = sliced_plans(
+        X,
+        Y,
+        a,
+        b,
+        metric,
+        p,
+        thetas,
+        n_proj=n_proj,
+        warm_theta=warm_theta,
+        log=True,
+        backend=nx,
+    )
+    pos_min = np.argmin(costs)
+    cost = costs[pos_min]
+    plan = G[pos_min]
 
     if log:
-        perm, log_dict = sliced_permutations(
-            X, Y, thetas=thetas, n_proj=n_proj, log=True, backend=nx
-        )
-    else:
-        perm = sliced_permutations(
-            X, Y, thetas=thetas, n_proj=n_proj, log=False, backend=nx
-        )
+        log_dict = {
+            "thetas": log_dict_plans["thetas"],
+            "costs": costs,
+            "min_theta": log_dict_plans["thetas"][pos_min],
+            "X_min_theta": log_dict_plans["X_theta"][:, pos_min],
+            "Y_min_theta": log_dict_plans["Y_theta"][:, pos_min],
+        }
 
-    # add the 'warm perm' to permutations to test
-    if warm_perm is not None:
-        perm = nx.concatenate([perm, warm_perm[:, None]], axis=1)
-        if log:
-            log_dict["perm"] = perm
-
-    min_cost = None
-    idx_min_cost = None
-    costs = []
-
-    for k in range(perm.shape[-1]):
-        cost = nx.sum(nx.abs(X - Y[perm[:, k]]) ** order) / n
-        if min_cost is None or cost < min_cost:
-            min_cost = cost
-            idx_min_cost = k
-        if log:
-            costs.append(cost)
-
-    min_perm = perm[:, idx_min_cost]
+    if dense:
+        plan = nx.todense(plan)
+    elif str(nx) == "jax":
+        warnings.warn("JAX does not support sparse matrices, converting to\
+        dense")
+        plan = nx.todense(plan)
 
     if log:
-        log_dict["costs"] = costs
-        log_dict["idx_min_cost"] = idx_min_cost
-        return min_perm, min_cost, log_dict
+        return plan, cost, log_dict
     else:
-        return min_perm, min_cost
+        return plan, cost
 
 
-def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False, beta=0.0):
+def expected_sliced(
+    X,
+    Y,
+    a=None,
+    b=None,
+    thetas=None,
+    metric="sqeuclidean",
+    p=2,
+    n_proj=None,
+    dense=True,
+    log=False,
+    backend=None,
+    beta=0.0,
+):
     r"""
     Computes the Expected Sliced cost and plan between two `(n, d)`
     datasets `X` and `Y`. Given a set of `n_proj` projection directions,
@@ -851,17 +1005,22 @@ def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False, beta=0.0
     Expected Sliced was introduced in [84] and further studied in [83].
 
     .. note::
-        The computation ignores potential ambiguities in the projections: if two points from a same measure have the same projection on a direction, then multiple sorting permutations are possible. To avoid combinatorial explosion, only one permutation is retained: this strays from theory in pathological cases.
+        The computation ignores potential ambiguities in the projections: if
+        two points from a same measure have the same projection on a direction,
+        then multiple sorting permutations are possible. To avoid combinatorial
+        explosion, only one permutation is retained: this strays from theory in
+        pathological cases.
 
     .. warning::
-        The function runs on backend but tensorflow and jax are not supported due to array assignment.
+        The function runs on backend but tensorflow and jax are not supported
+        due to array assignment.
 
     Parameters
     ----------
     X : torch.Tensor
-        A tensor of shape (n, d) representing the first set of vectors.
+        A tensor of shape (ns, d) representing the first set of vectors.
     Y : torch.Tensor
-        A tensor of shape (n, d) representing the second set of vectors.
+        A tensor of shape (nt, d) representing the second set of vectors.
     thetas : torch.Tensor, optional
         A tensor of shape (n_proj, d) representing the projection directions.
         If None, random directions will be generated. Default is None.
@@ -869,10 +1028,15 @@ def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False, beta=0.0
         The number of projection directions. Required if thetas is None.
     order : int, optional
         Power to elevate the norm. Default is 2.
+    dense: boolean, optional (default=True)
+        If True, returns :math:`\gamma` as a dense ndarray of shape (ns, nt).
+        Otherwise returns a sparse representation using scipy's `coo_matrix`
+        format.
     log : bool, optional
         If True, returns additional logging information. Default is False.
     beta : float, optional
-        Inverse-temperature parameter which weights each projection's contribution to the expected plan. Default is 0 (uniform weighting).
+        Inverse-temperature parameter which weights each projection's
+        contribution to the expected plan. Default is 0 (uniform weighting).
 
     Returns
     -------
@@ -884,50 +1048,67 @@ def expected_sliced(X, Y, thetas=None, n_proj=None, order=2, log=False, beta=0.0
 
     References
     ----------
-    .. [83] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport Plans. arXiv preprint 2506.03661.
+    .. [83] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport
+    Plans. arXiv preprint 2506.03661.
 
-    .. [84] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi A., Kolouri, S. (2024). Expected Sliced Transport Plans. International Conference on Learning Representations.
+    .. [84] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi
+    A., Kolouri, S. (2024). Expected Sliced Transport Plans. International
+    Conference on Learning Representations.
     """
     assert (
-        X.shape == Y.shape
-    ), f"X ({X.shape}) and Y ({Y.shape}) must have the same shape"
+        X.shape[1] == Y.shape[1]
+    ), f"X ({X.shape}) and Y ({Y.shape}) must have the same number of columns"
 
-    nx = get_backend(X, Y)
+    nx = get_backend(X, Y) if backend is None else backend
+
     if str(nx) in ["tf", "jax"]:
         raise NotImplementedError(
             f"expected_sliced is not implemented for the {str(nx)} backend due"
             "to array assignment."
         )
-    n = X.shape[0]
+
+    ns = X.shape[0]
+    nt = Y.shape[0]
 
     log_dict = {}
+    costs, G, log_dict_plans = sliced_plans(
+        X, Y, a, b, metric, p, thetas, n_proj=n_proj, log=True, backend=nx
+    )
     if log:
-        perm, log_dict = sliced_permutations(
-            X, Y, thetas=thetas, n_proj=n_proj, log=log, backend=nx
-        )
-    else:
-        perm = sliced_permutations(
-            X, Y, thetas=thetas, n_proj=n_proj, log=log, backend=nx
-        )
-    plan = nx.zeros((n, n), type_as=X)
-    n_proj = perm.shape[1]
-    range_array = nx.arange(n, type_as=X)
+        log_dict = {"thetas": log_dict_plans["thetas"], "costs": costs, "G": G}
 
     if beta != 0.0:  # computing the temperature weighting
-        log_factors = nx.zeros(n_proj, type_as=X)  # for beta weighting
-        for k in range(n_proj):
-            cost_k = nx.sum(nx.abs(X - Y[perm[:, k]]) ** order) / n
-            log_factors[k] = -beta * cost_k
+        log_factors = -beta * list_to_array(costs)
         weights = nx.exp(log_factors - nx.logsumexp(log_factors))
+        cost = nx.sum(list_to_array(costs) * weights)
 
     else:  # uniform weights
+        if n_proj is None:
+            n_proj = thetas.shape[0]
         weights = nx.ones(n_proj, type_as=X) / n_proj
 
-    for k in range(n_proj):  # populating the expected plan
-        # 1 / n is because is a permutation of [1, n]
-        plan[range_array, perm[:, k]] += (1 / n) * weights[k]
+    log_dict["weights"] = weights
 
-    cost = (dist(X, Y, p=order) * plan).sum()
+    weights = nx.concatenate([G[i].data * weights[i] for i in range(len(G))])
+    X_idx = nx.concatenate([G[i].row for i in range(len(G))])
+    Y_idx = nx.concatenate([G[i].col for i in range(len(G))])
+    plan = nx.coo_matrix(
+        weights,
+        X_idx,
+        Y_idx,
+        shape=(ns, nt),
+        type_as=X,
+    )
+
+    if beta == 0.0:  # otherwise already computed above
+        cost = plan.multiply(dist(X, Y, metric=metric, p=p)).sum()
+
+    if dense:
+        plan = nx.todense(plan)
+    elif str(nx) == "jax":
+        warnings.warn("JAX does not support sparse matrices, converting to\
+        dense")
+        plan = nx.todense(plan)
 
     if log:
         return plan, cost, log_dict

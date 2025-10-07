@@ -24,39 +24,48 @@ were further studied theoretically in [83].
 # Setup data and imports
 # ----------------------
 import numpy as np
+
 import ot
 import matplotlib.pyplot as plt
 from ot.sliced import get_random_projections
+from ot.lp import wasserstein_1d
+
 
 seed = 0
 np.random.seed(seed)
-n = 10
+n = 20
+m = 10
 d = 2
 X = np.random.randn(n, 2)
-Y = np.random.randn(n, 2) + np.array([5.0, 0.0])[None, :]
-n_proj = 20
+Y = np.random.randn(m, 2) + np.array([5.0, 0.0])[None, :]
+n_proj = 50
 thetas = get_random_projections(d, n_proj).T
 alpha = 0.3
+
+
+proj_X = X @ thetas.T
+proj_Y = Y @ thetas.T
+
 
 ##############################################################################
 # Compute min-Pivot Sliced permutation
 # ------------------------------------
-min_perm, min_cost, log_min = ot.min_pivot_sliced(X, Y, thetas, log=True)
-min_plan = np.zeros((n, n))
-min_plan[np.arange(n), min_perm] = 1 / n
+min_plan, min_cost, log_min = ot.min_pivot_sliced(X, Y, thetas=thetas, log=True)
 
 ##############################################################################
 # Compute Expected Sliced Plan
 # ------------------------------------
-expected_plan, expected_cost, log_expected = ot.expected_sliced(X, Y, thetas, log=True)
-
+expected_plan, expected_cost, log_expected = ot.expected_sliced(
+    X, Y, thetas=thetas, log=True
+)
 ##############################################################################
 # Compute 2-Wasserstein Plan
 # ------------------------------------
 a = np.ones(n, device=X.device) / n
+b = np.ones(m, device=Y.device) / m
 dists = ot.dist(X, Y)
-W2 = ot.emd2(a, a, dists)
-W2_plan = ot.emd(a, a, dists)
+W2 = ot.emd2(a, b, dists)
+W2_plan = ot.emd(a, b, dists)
 
 ##############################################################################
 # Plot resulting assignments
@@ -66,20 +75,21 @@ fig.suptitle("Sliced plans comparison", y=0.95, fontsize=16)
 
 # draw min sliced permutation
 axs[0, 0].set_title(f"Min Pivot Sliced: cost={min_cost:.2f}")
-for i in range(n):
-    axs[0, 0].plot(
-        [X[i, 0], Y[min_perm[i], 0]],
-        [X[i, 1], Y[min_perm[i], 1]],
-        color="black",
-        alpha=alpha,
-        label="min-Sliced perm" if i == 0 else None,
-    )
+for i in range(X.shape[0]):
+    for j in range(Y.shape[0]):
+        if min_plan[i, j] > 0:
+            axs[0, 0].plot(
+                [X[i, 0], Y[j, 0]],
+                [X[i, 1], Y[j, 1]],
+                color="black",
+                alpha=alpha,
+            )
 axs[1, 0].imshow(min_plan, interpolation="nearest", cmap="Blues")
 
 # draw expected sliced plan
 axs[0, 1].set_title(f"Expected Sliced: cost={expected_cost:.2f}")
 for i in range(n):
-    for j in range(n):
+    for j in range(m):
         w = alpha * expected_plan[i, j].item() * n
         axs[0, 1].plot(
             [X[i, 0], Y[j, 0]],
@@ -91,9 +101,9 @@ for i in range(n):
 axs[1, 1].imshow(expected_plan, interpolation="nearest", cmap="Blues")
 
 # draw W2 plan
-axs[0, 2].set_title(f"W2: cost={W2:.2f}")
+axs[0, 2].set_title(f"W$_2$: cost={W2:.2f}")
 for i in range(n):
-    for j in range(n):
+    for j in range(m):
         w = alpha * W2_plan[i, j].item() * n
         axs[0, 2].plot(
             [X[i, 0], Y[j, 0]],
@@ -123,16 +133,17 @@ betas = [0.0, 5.0, 50.0]
 n_plots = len(betas) + 1
 size = 4
 fig, axs = plt.subplots(2, n_plots, figsize=(size * n_plots, size))
+
 fig.suptitle(
-    "Expected Sliced plan varying beta (inverse temperature)", y=0.95, fontsize=16
+    "Expected Sliced plan varying $\\beta$ (inverse temperature)", y=0.95, fontsize=16
 )
 for beta_idx, beta in enumerate(betas):
-    expected_plan, expected_cost = ot.expected_sliced(X, Y, thetas, beta=beta)
+    expected_plan, expected_cost = ot.expected_sliced(X, Y, thetas=thetas, beta=beta)
     print(f"beta={beta}: cost={expected_cost:.2f}")
 
-    axs[0, beta_idx].set_title(f"beta={beta}: cost={expected_cost:.2f}")
+    axs[0, beta_idx].set_title(f"$\\beta$={beta}: cost={expected_cost:.2f}")
     for i in range(n):
-        for j in range(n):
+        for j in range(m):
             w = alpha * expected_plan[i, j].item() * n
             axs[0, beta_idx].plot(
                 [X[i, 0], Y[j, 0]],
@@ -148,14 +159,16 @@ for beta_idx, beta in enumerate(betas):
 
 # draw min sliced permutation (limit when beta -> +inf)
 axs[0, -1].set_title(f"Min Pivot Sliced: cost={min_cost:.2f}")
-for i in range(n):
-    axs[0, -1].plot(
-        [X[i, 0], Y[min_perm[i], 0]],
-        [X[i, 1], Y[min_perm[i], 1]],
-        color="black",
-        alpha=alpha,
-        label="min-Sliced perm" if i == 0 else None,
-    )
+for i in range(X.shape[0]):
+    for j in range(Y.shape[0]):
+        if min_plan[i, j] > 0:
+            axs[0, -1].plot(
+                [X[i, 0], Y[j, 0]],
+                [X[i, 1], Y[j, 1]],
+                color="black",
+                alpha=alpha,
+            )
+
 axs[0, -1].scatter(X[:, 0], X[:, 1], label="X")
 axs[0, -1].scatter(Y[:, 0], Y[:, 1], label="Y")
 axs[1, -1].imshow(min_plan, interpolation="nearest", cmap="Blues")

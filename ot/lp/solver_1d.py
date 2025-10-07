@@ -16,7 +16,7 @@ from ..backend import get_backend
 from ..utils import list_to_array
 
 
-def quantile_function(qs, cws, xs):
+def quantile_function(qs, cws, xs, idx_xs=None):
     r"""Computes the quantile function of an empirical distribution
 
     Parameters
@@ -27,7 +27,8 @@ def quantile_function(qs, cws, xs):
         cumulative weights of the 1D empirical distribution, if batched, must be similar to xs
     xs: array-like, shape (n, ...)
         locations of the 1D empirical distribution, batched against the `xs.ndim - 1` first dimensions
-
+    idx_xs: array-like, shape (n, ...)
+        associated indices. If None, do not return them
     Returns
     -------
     q: array-like, shape (..., n)
@@ -44,11 +45,22 @@ def quantile_function(qs, cws, xs):
         cws = cws.T
         qs = qs.T
     idx = nx.searchsorted(cws, qs).T
-    return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0)
+    if idx_xs is not None:
+        return nx.take_along_axis(
+            xs, nx.clip(idx, 0, n - 1), axis=0
+        ), nx.take_along_axis(idx_xs, nx.clip(idx, 0, n - 1), axis=0)
+    else:
+        return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0)
 
 
 def wasserstein_1d(
-    u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True
+    u_values,
+    v_values,
+    u_weights=None,
+    v_weights=None,
+    p=1,
+    require_sort=True,
+    return_plan=False,
 ):
     r"""
     Computes the 1 dimensional OT loss [15] between two (batched) empirical
@@ -79,7 +91,9 @@ def wasserstein_1d(
     require_sort: bool, optional
         sort the distributions atoms locations, if False we will consider they have been sorted prior to being passed to
         the function, default is True
-
+    return_plan: bool, optional
+        if True, returns also the optimal transport plan between the two
+        (batched) measures as a coo_matrix, default is False
     Returns
     -------
     cost: float/array-like, shape (...)
@@ -124,15 +138,31 @@ def wasserstein_1d(
     v_cumweights = nx.cumsum(v_weights, 0)
 
     qs = nx.sort(nx.concatenate((u_cumweights, v_cumweights), 0), 0)
-    u_quantiles = quantile_function(qs, u_cumweights, u_values)
-    v_quantiles = quantile_function(qs, v_cumweights, v_values)
+    u_quantiles, u_quantiles_idx = quantile_function(
+        qs, u_cumweights, u_values, u_sorter
+    )
+    v_quantiles, v_quantiles_idx = quantile_function(
+        qs, v_cumweights, v_values, v_sorter
+    )
     qs = nx.zero_pad(qs, pad_width=[(1, 0)] + (qs.ndim - 1) * [(0, 0)])
     delta = qs[1:, ...] - qs[:-1, ...]
     diff_quantiles = nx.abs(u_quantiles - v_quantiles)
 
-    if p == 1:
-        return nx.sum(delta * diff_quantiles, axis=0)
-    return nx.sum(delta * nx.power(diff_quantiles, p), axis=0)
+    if return_plan:
+        plan = [
+            nx.coo_matrix(
+                delta[:, k],
+                u_quantiles_idx[:, k],
+                v_quantiles_idx[:, k],
+                shape=(n, m),
+                type_as=u_values,
+            )
+            for k in range(delta.shape[1])
+        ]
+    if return_plan:
+        return nx.sum(delta * nx.power(diff_quantiles, p), axis=0), plan
+    else:
+        return nx.sum(delta * nx.power(diff_quantiles, p), axis=0)
 
 
 def emd_1d(
@@ -201,7 +231,8 @@ def emd_1d(
     gamma: ndarray, shape (ns, nt)
         Optimal transportation matrix for the given parameters
     log: dict
-        If input log is True, a dictionary containing the cost
+        If input log is True, a dictionary containing the cost and the indices
+        of the non-zero elements of the transportation matrix
 
 
     Examples
@@ -297,6 +328,8 @@ def emd_1d(
         warnings.warn("JAX does not support sparse matrices, converting to dense")
     if log:
         log = {"cost": nx.from_numpy(cost, type_as=x_a)}
+        log["perms_x_a"] = perm_a[indices[:, 0]]
+        log["perms_x_b"] = perm_b[indices[:, 1]]
         return G, log
     return G
 
