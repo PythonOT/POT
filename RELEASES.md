@@ -1,5 +1,11 @@
 # Releases
 
+## 0.9.7dev
+
+#### New features
+- Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #)
+- Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #)
+
 ## 0.9.6.post1
 
 *September 2025*

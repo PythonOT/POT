@@ -579,7 +579,7 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         """
         Limits the values in a tensor.
 
@@ -1111,6 +1111,22 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def index_select(self, input, axis, index):
+        r"""
+        Returns a new tensor which indexes the input tensor along dimension dim using the entries in index.
+
+        See: https://docs.pytorch.org/docs/stable/generated/torch.index_select.html
+        """
+        raise NotImplementedError()
+
+    def nonzero(self, input, as_tuple=False):
+        r"""
+        Returns a tensor containing the indices of all non-zero elements of input.
+
+        See: https://docs.pytorch.org/docs/stable/generated/torch.nonzero.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -1252,7 +1268,7 @@ class NumpyBackend(Backend):
     def outer(self, a, b):
         return np.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return np.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -1485,6 +1501,16 @@ class NumpyBackend(Backend):
     def slogdet(self, a):
         return np.linalg.slogdet(a)
 
+    def index_select(self, input, axis, index):
+        return np.take(input, index, axis)
+
+    def nonzero(self, input, as_tuple=False):
+        if as_tuple:
+            return np.nonzero(input)
+        else:
+            L_tuple = np.nonzero(input)
+            return np.concatenate([t[None] for t in L_tuple], axis=0).T
+
 
 _register_backend_implementation(NumpyBackend)
 
@@ -1660,7 +1686,7 @@ class JaxBackend(Backend):
     def outer(self, a, b):
         return jnp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return jnp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -1896,6 +1922,16 @@ class JaxBackend(Backend):
     def slogdet(self, a):
         return jnp.linalg.slogdet(a)
 
+    def index_select(self, input, axis, index):
+        return jnp.take(input, index, axis)
+
+    def nonzero(self, input, as_tuple=False):
+        if as_tuple:
+            return jnp.nonzero(input)
+        else:
+            L_tuple = jnp.nonzero(input)
+            return jnp.concatenate([t[None] for t in L_tuple], axis=0).T
+
 
 if jax:
     # Only register jax backend if it is installed
@@ -2125,7 +2161,7 @@ class TorchBackend(Backend):
     def outer(self, a, b):
         return torch.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return torch.clamp(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -2456,6 +2492,12 @@ class TorchBackend(Backend):
     def slogdet(self, a):
         return torch.linalg.slogdet(a)
 
+    def index_select(self, input, axis, index):
+        return torch.index_select(input, axis, index)
+
+    def nonzero(self, input, as_tuple=False):
+        return torch.nonzero(input, as_tuple=as_tuple)
+
 
 if torch:
     # Only register torch backend if it is installed
@@ -2617,7 +2659,7 @@ class CupyBackend(Backend):  # pragma: no cover
     def outer(self, a, b):
         return cp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return cp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -2879,6 +2921,9 @@ class CupyBackend(Backend):  # pragma: no cover
     def slogdet(self, a):
         return cp.linalg.slogdet(a)
 
+    def index_select(self, input, axis, index):
+        return cp.take(input, index, axis)
+
 
 if cp:
     # Only register cp backend if it is installed
@@ -3051,7 +3096,7 @@ class TensorflowBackend(Backend):
     def outer(self, a, b):
         return tnp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return tnp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
