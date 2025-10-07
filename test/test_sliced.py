@@ -742,19 +742,17 @@ def test_sliced_permutations(nx):
     thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
     thetas_b = nx.from_numpy(thetas)
 
-    perm = ot.sliced.sliced_permutations(x, y, thetas=thetas)
-    perm_b, _ = ot.sliced.sliced_permutations(
-        x_b, y_b, thetas=thetas_b, log=True, backend=nx
-    )
+    perm = ot.sliced.sliced_plans(x, y, thetas=thetas)
+    perm_b, _ = ot.sliced.sliced_plans(x_b, y_b, thetas=thetas_b, log=True, backend=nx)
 
     np.testing.assert_almost_equal(perm, nx.to_numpy(perm_b))
 
     # test without provided thetas
-    perm = ot.sliced.sliced_permutations(x, y, n_proj=n_proj)
+    perm = ot.sliced.sliced_plans(x, y, n_proj=n_proj)
 
     # test with invalid shapes
     with pytest.raises(AssertionError):
-        ot.sliced.sliced_permutations(x[1:, :], y, thetas=thetas)
+        ot.sliced.sliced_plans(x[1:, :], y, thetas=thetas)
 
 
 def test_min_pivot_sliced(nx):
@@ -783,8 +781,8 @@ def test_min_pivot_sliced(nx):
     assert min_cost >= w2
     assert min_cost <= 1.5 * w2
 
-    # test without provided thetas and with a warm permutation
-    ot.sliced.min_pivot_sliced(x, y, n_proj=n_proj, warm_perm=np.arange(n), log=True)
+    # test without provided thetas
+    ot.sliced.min_pivot_sliced(x, y, n_proj=n_proj, log=True)
 
     # test with invalid shapes
     with pytest.raises(AssertionError):
@@ -811,9 +809,11 @@ def test_expected_sliced(nx):
     )
 
     with context:
-        expected_plan, expected_cost = ot.sliced.expected_sliced(x, y, thetas=thetas)
+        expected_plan, expected_cost = ot.sliced.expected_sliced(
+            x, y, dense=True, thetas=thetas
+        )
         expected_plan_b, expected_cost_b, _ = ot.sliced.expected_sliced(
-            x_b, y_b, thetas=thetas_b, log=True
+            x_b, y_b, thetas=thetas_b, dense=True, log=True
         )
 
         np.testing.assert_almost_equal(expected_plan, nx.to_numpy(expected_plan_b))
