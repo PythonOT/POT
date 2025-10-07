@@ -22,8 +22,7 @@ from .lp import (
 )
 
 
-def get_random_projections(d, n_projections, seed=None, backend=None,
-                           type_as=None):
+def get_random_projections(d, n_projections, seed=None, backend=None, type_as=None):
     r"""
     Generates n_projections samples from the uniform on the unit sphere of dimension :math:`d-1`: :math:`\mathcal{U}(\mathcal{S}^{d-1})`
 
@@ -662,8 +661,7 @@ def linear_sliced_wasserstein_sphere(
         )
 
     Xps_coords, _ = projection_sphere_to_circle(
-        X_s, n_projections=n_projections, projections=projections, seed=seed,
-        backend=nx
+        X_s, n_projections=n_projections, projections=projections, seed=seed, backend=nx
     )
 
     if X_t is not None:
@@ -681,8 +679,7 @@ def linear_sliced_wasserstein_sphere(
     res = nx.mean(projected_lcot) ** (1 / 2)
 
     if log:
-        return res, {"projections": projections,
-                     "projected_emds": projected_lcot}
+        return res, {"projections": projections, "projected_emds": projected_lcot}
     return res
 
 
@@ -783,22 +780,24 @@ def sliced_plans(
         if metric in ("minkowski", "euclidean", "cityblock"):
             costs = [
                 nx.sum(
-                    ((nx.sum(nx.abs(X[sigma[:, k]] - Y[tau[:, k]]) ** p,
-                             axis=1)) ** (1 / p)) / n
+                    (
+                        (nx.sum(nx.abs(X[sigma[:, k]] - Y[tau[:, k]]) ** p, axis=1))
+                        ** (1 / p)
+                    )
+                    / n
                 )
                 for k in range(n_proj)
             ]
         elif metric == "sqeuclidean":
             costs = [
-                nx.sum((nx.sum((X[sigma[:, k]] - Y[tau[:, k]]) ** 2,
-                               axis=1)) / n)
+                nx.sum((nx.sum((X[sigma[:, k]] - Y[tau[:, k]]) ** 2, axis=1)) / n)
                 for k in range(n_proj)
             ]
         else:
             raise ValueError(
-                "Sliced plans work only with metrics " +
-                "from the following list: " +
-                "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
+                "Sliced plans work only with metrics "
+                + "from the following list: "
+                + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
             )
 
         G = [
@@ -821,22 +820,23 @@ def sliced_plans(
             costs = [
                 nx.sum(
                     (
-                        (nx.sum(nx.abs(X[G[k].row] - Y[G[k].col]) ** p,
-                                axis=1)) ** (1 / p)
-                    ) * G[k].data
+                        (nx.sum(nx.abs(X[G[k].row] - Y[G[k].col]) ** p, axis=1))
+                        ** (1 / p)
+                    )
+                    * G[k].data
                 )
                 for k in range(n_proj)
             ]
         elif metric == "sqeuclidean":
             costs = [
-                nx.sum((nx.sum((X[G[k].row] - Y[G[k].col]) ** 2, axis=1)) *
-                       G[k].data) for k in range(n_proj)
+                nx.sum((nx.sum((X[G[k].row] - Y[G[k].col]) ** 2, axis=1)) * G[k].data)
+                for k in range(n_proj)
             ]
         else:
             raise ValueError(
-                "Sliced plans work only with metrics " +
-                "from the following list: " +
-                "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
+                "Sliced plans work only with metrics "
+                + "from the following list: "
+                + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
             )
 
     if log:
@@ -973,8 +973,10 @@ def min_pivot_sliced(
     if dense:
         plan = nx.todense(plan)
     elif str(nx) == "jax":
-        warnings.warn("JAX does not support sparse matrices, converting to\
-        dense")
+        warnings.warn(
+            "JAX does not support sparse matrices, converting to\
+        dense"
+        )
         plan = nx.todense(plan)
 
     if log:
@@ -1106,8 +1108,10 @@ def expected_sliced(
     if dense:
         plan = nx.todense(plan)
     elif str(nx) == "jax":
-        warnings.warn("JAX does not support sparse matrices, converting to\
-        dense")
+        warnings.warn(
+            "JAX does not support sparse matrices, converting to\
+        dense"
+        )
         plan = nx.todense(plan)
 
     if log:
