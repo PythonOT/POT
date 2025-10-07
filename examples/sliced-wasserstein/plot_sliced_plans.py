@@ -128,7 +128,8 @@ fig.tight_layout()
 ##############################################################################
 # Compare Expected Sliced plans with different inverse-temperatures beta
 # ------------------------------------
-## As the temperature decreases, ES becomes sparser and approaches minPS
+# As the temperature decreases, ES becomes sparser and approaches minPS
+
 betas = [0.0, 5.0, 50.0]
 n_plots = len(betas) + 1
 size = 4
