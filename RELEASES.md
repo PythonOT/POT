@@ -1,11 +1,5 @@
 # Releases
 
-## 0.9.7dev
-
-#### New features
-
-- Added Sliced OT plans (PR #757)
-
 ## 0.9.6.post1
 
 *September 2025*
