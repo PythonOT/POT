@@ -695,7 +695,6 @@ def sliced_plans(
     n_proj=None,
     dense=False,
     log=False,
-    backend=None,
 ):
     r"""
     Computes all the permutations that sort the projections of two `(n, d)`
@@ -731,9 +730,6 @@ def sliced_plans(
         The number of projection directions. Required if thetas is None.
     log : bool, optional
         If True, returns additional logging information. Default is False.
-    backend : ot.backend, optional
-        Backend to use for computations. If None, the backend is inferred from
-        the input arrays. Default is None.
 
     Returns
     -------
@@ -746,7 +742,17 @@ def sliced_plans(
         Returned only if `log` is True.
     """
 
-    nx = get_backend(X, Y) if backend is None else backend
+    X, Y = list_to_array(X, Y)
+
+    if a is not None and b is not None and thetas is None:
+        nx = get_backend(X, Y, a, b)
+    elif a is not None and b is not None and thetas is not None:
+        nx = get_backend(X, Y, a, b, thetas)
+    elif a is None and b is None and thetas is not None:
+        nx = get_backend(X, Y, thetas)
+    else:
+        nx = get_backend(X, Y)
+
     assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"
     assert Y.ndim == 2, f"Y must be a 2d array, got {Y.ndim}d array instead"
 
@@ -870,7 +876,6 @@ def min_pivot_sliced(
     dense=True,
     log=False,
     warm_theta=None,
-    backend=None,
 ):
     r"""
     Computes the cost and permutation associated to the min-Pivot Sliced
@@ -924,9 +929,6 @@ def min_pivot_sliced(
         If True, returns additional logging information. Default is False.
     warm_theta : array-like, shape (d,), optional
         A theta to add to the list of thetas. Default is None.
-    backend : ot.backend, optional
-        Backend to use for computations. If None, the backend is inferred from
-        the input arrays. Default is None.
 
     Returns
     -------
@@ -961,15 +963,23 @@ def min_pivot_sliced(
     2.125
     """
 
-    nx = get_backend(X, Y) if backend is None else backend
+    X, Y = list_to_array(X, Y)
+
+    if a is not None and b is not None and thetas is None:
+        nx = get_backend(X, Y, a, b)
+    elif a is not None and b is not None and thetas is not None:
+        nx = get_backend(X, Y, a, b, thetas)
+    elif a is None and b is None and thetas is not None:
+        nx = get_backend(X, Y, thetas)
+    else:
+        nx = get_backend(X, Y)
+
     assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"
     assert Y.ndim == 2, f"Y must be a 2d array, got {Y.ndim}d array instead"
 
     assert (
         X.shape[1] == Y.shape[1]
     ), f"X ({X.shape}) and Y ({Y.shape}) must have the same number of columns"
-
-    nx = get_backend(X, Y) if backend is None else backend
 
     log_dict = {}
     G, costs, log_dict_plans = sliced_plans(
@@ -983,7 +993,6 @@ def min_pivot_sliced(
         n_proj=n_proj,
         warm_theta=warm_theta,
         log=True,
-        backend=nx,
     )
     pos_min = nx.argmin(costs)
     cost = costs[pos_min]
@@ -1024,7 +1033,6 @@ def expected_sliced(
     n_proj=None,
     dense=True,
     log=False,
-    backend=None,
     beta=0.0,
 ):
     r"""
@@ -1072,9 +1080,6 @@ def expected_sliced(
         format.
     log : bool, optional
         If True, returns additional logging information. Default is False.
-    backend : ot.backend, optional
-        Backend to use for computations. If None, the backend is inferred from
-        the input arrays. Default is None.
     beta : float, optional
         Inverse-temperature parameter which weights each projection's
         contribution to the expected plan. Default is 0 (uniform weighting).
@@ -1110,7 +1115,16 @@ def expected_sliced(
     2.625
     """
 
-    nx = get_backend(X, Y) if backend is None else backend
+    X, Y = list_to_array(X, Y)
+
+    if a is not None and b is not None and thetas is None:
+        nx = get_backend(X, Y, a, b)
+    elif a is not None and b is not None and thetas is not None:
+        nx = get_backend(X, Y, a, b, thetas)
+    elif a is None and b is None and thetas is not None:
+        nx = get_backend(X, Y, thetas)
+    else:
+        nx = get_backend(X, Y)
 
     assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"
     assert Y.ndim == 2, f"Y must be a 2d array, got {Y.ndim}d array instead"
@@ -1130,7 +1144,7 @@ def expected_sliced(
 
     log_dict = {}
     G, costs, log_dict_plans = sliced_plans(
-        X, Y, a, b, metric, p, thetas, n_proj=n_proj, log=True, backend=nx
+        X, Y, a, b, metric, p, thetas, n_proj=n_proj, log=True
     )
     if log:
         log_dict = {"thetas": log_dict_plans["thetas"], "costs": costs, "G": G}

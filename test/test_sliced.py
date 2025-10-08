@@ -729,7 +729,7 @@ def test_linear_sliced_sphere_backend_type_devices(nx):
         np.testing.assert_almost_equal(sw_np, nx.to_numpy(valb))
 
 
-def test_sliced_permutations(nx):
+def test_sliced_permutations():
     n = 4
     n_proj = 10
     d = 2
@@ -738,15 +738,7 @@ def test_sliced_permutations(nx):
     x = rng.randn(n, 2)
     y = rng.randn(n, 2)
 
-    x_b, y_b = nx.from_numpy(x, y)
     thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
-    thetas_b = nx.from_numpy(thetas)
-
-    plan, _ = ot.sliced.sliced_plans(x, y, thetas=thetas, dense=True)
-    plan_b, _, _ = ot.sliced.sliced_plans(
-        x_b, y_b, thetas=thetas_b, log=True, dense=True, backend=nx
-    )
-    np.testing.assert_almost_equal(plan, nx.to_numpy(plan_b))
 
     # test without provided thetas
     _, _ = ot.sliced.sliced_plans(x, y, n_proj=n_proj)
@@ -756,7 +748,7 @@ def test_sliced_permutations(nx):
         ot.sliced.sliced_plans(x[:, 1:], y, thetas=thetas)
 
 
-def test_sliced_plans(nx):
+def test_sliced_plans():
     x = [1, 2]
     with pytest.raises(AssertionError):
         ot.sliced.min_pivot_sliced(x, x, n_proj=2)
@@ -775,39 +767,23 @@ def test_sliced_plans(nx):
     b = rng.uniform(0, 1, m)
     b /= b.sum()
 
-    x_b, y_b = nx.from_numpy(x, y)
-    print(x_b)
-    t_X = torch.tensor(x_b)
-    t_Y = torch.tensor(y_b)
     thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
-    thetas_b = nx.from_numpy(thetas)
+
+    # test with a and b not uniform
+    ot.sliced.sliced_plans(x, y, a, b, thetas=thetas, dense=True)
 
     # test with the minkowski metric
-    ot.sliced.min_pivot_sliced(x, y, thetas=thetas, metric="minkowski")
+    ot.sliced.sliced_plans(x, y, thetas=thetas, metric="minkowski")
 
     # test with an unsupported metric
     with pytest.raises(ValueError):
-        ot.sliced.min_pivot_sliced(x, y, thetas=thetas, metric="mahalanobis")
+        ot.sliced.sliced_plans(x, y, thetas=thetas, metric="mahalanobis")
 
     # test with a warm theta
-    ot.sliced.min_pivot_sliced(x, y, n_proj=10, warm_theta=thetas[-1])
-
-    # test with a and b uniform
-    plan, _ = ot.sliced.sliced_plans(x, y, thetas=thetas, dense=True)
-    plan_b, _, _ = ot.sliced.sliced_plans(
-        x_b, y_b, thetas=thetas_b, log=True, dense=True, backend=nx
-    )
-    np.testing.assert_almost_equal(plan, nx.to_numpy(plan_b))
-
-    # test with a and b not uniform
-    plan, _ = ot.sliced.sliced_plans(x, y, a, b, thetas=thetas, dense=True)
-    plan_b, _, _ = ot.sliced.sliced_plans(
-        x_b, y_b, a, b, thetas=thetas_b, log=True, dense=True, backend=nx
-    )
-    np.testing.assert_almost_equal(plan, nx.to_numpy(plan_b))
+    ot.sliced.sliced_plans(x, y, n_proj=10, warm_theta=thetas[-1])
 
 
-def test_min_pivot_sliced(nx):
+def test_min_pivot_sliced():
     x = [1, 2]
     with pytest.raises(AssertionError):
         ot.sliced.min_pivot_sliced(x, x, n_proj=2)
@@ -825,17 +801,13 @@ def test_min_pivot_sliced(nx):
     b = rng.uniform(0, 1, m)
     b /= b.sum()
 
-    x_b, y_b = nx.from_numpy(x, y)
     thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
-    thetas_b = nx.from_numpy(thetas)
 
-    G, min_cost = ot.sliced.min_pivot_sliced(x, y, a, b, thetas=thetas, dense=True)
-    G_b, min_cost_b, _ = ot.sliced.min_pivot_sliced(
-        x_b, y_b, a, b, thetas=thetas_b, log=True, dense=True
-    )
+    # identity of the indiscernibles
+    _, min_cost = ot.min_pivot_sliced(x, x, a, a, n_proj=10)
+    np.testing.assert_almost_equal(min_cost, 0.0)
 
-    np.testing.assert_almost_equal(G, nx.to_numpy(G_b))
-    np.testing.assert_almost_equal(min_cost, nx.to_numpy(min_cost_b))
+    _, min_cost = ot.sliced.min_pivot_sliced(x, y, a, b, thetas=thetas, dense=True)
 
     # result should be an upper-bound of W2 and relatively close
     w2 = ot.emd2(a, b, ot.dist(x, y))
@@ -849,8 +821,30 @@ def test_min_pivot_sliced(nx):
     with pytest.raises(AssertionError):
         ot.sliced.min_pivot_sliced(x[:, 1:], y, thetas=thetas)
 
+    # test the logs
+    _, min_cost, log = ot.sliced.min_pivot_sliced(
+        x, y, a, b, thetas=thetas, dense=False, log=True
+    )
+    assert len(log) == 5
+    costs = log["costs"]
+    assert len(costs) == thetas.shape[0]
+    assert len(log["min_theta"]) == d
+    assert (log["thetas"] == thetas).all()
+    for c in costs:
+        assert c > 0
 
-def test_expected_sliced(nx):
+    # test with the minkowski metric
+    ot.sliced.min_pivot_sliced(x, y, thetas=thetas, metric="minkowski")
+
+    # test with an unsupported metric
+    with pytest.raises(ValueError):
+        ot.sliced.min_pivot_sliced(x, y, thetas=thetas, metric="mahalanobis")
+
+    # test with a warm theta
+    ot.sliced.min_pivot_sliced(x, y, n_proj=10, warm_theta=thetas[-1])
+
+
+def test_expected_sliced():
     x = [1, 2]
     with pytest.raises(AssertionError):
         ot.sliced.min_pivot_sliced(x, x, n_proj=2)
@@ -868,9 +862,67 @@ def test_expected_sliced(nx):
     b = rng.uniform(0, 1, m)
     b /= b.sum()
 
-    x_b, y_b = nx.from_numpy(x, y)
     thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
-    thetas_b = nx.from_numpy(thetas)
+
+    _, expected_cost = ot.sliced.expected_sliced(x, y, a, b, dense=True, thetas=thetas)
+    # result should be a coarse upper-bound of W2
+    w2 = ot.emd2(a, b, ot.dist(x, y))
+    assert expected_cost >= w2
+    assert expected_cost <= 3 * w2
+
+    # test without provided thetas
+    ot.sliced.expected_sliced(x, y, n_proj=n_proj, log=True)
+
+    # test with invalid shapes
+    with pytest.raises(AssertionError):
+        ot.sliced.min_pivot_sliced(x[:, 1:], y, thetas=thetas)
+
+    # with a small temperature (i.e. large beta), the cost should be close
+    # to min_pivot
+    _, expected_cost = ot.sliced.expected_sliced(
+        x, y, a, b, thetas=thetas, dense=True, beta=100.0
+    )
+    _, min_cost = ot.sliced.min_pivot_sliced(x, y, a, b, thetas=thetas, dense=True)
+    np.testing.assert_almost_equal(expected_cost, min_cost, decimal=3)
+
+    # test the logs
+    _, min_cost, log = ot.sliced.expected_sliced(
+        x, y, a, b, thetas=thetas, dense=False, log=True
+    )
+    assert len(log) == 4
+    costs = log["costs"]
+    assert len(costs) == thetas.shape[0]
+    assert len(log["weights"]) == thetas.shape[0]
+    assert (log["thetas"] == thetas).all()
+    for c in costs:
+        assert c > 0
+
+    # test with the minkowski metric
+    ot.sliced.expected_sliced(x, y, thetas=thetas, metric="minkowski")
+
+    # test with an unsupported metric
+    with pytest.raises(ValueError):
+        ot.sliced.expected_sliced(x, y, thetas=thetas, metric="mahalanobis")
+
+
+def test_sliced_plans_backends(nx):
+    n = 10
+    m = 24
+    n_proj = 10
+    d = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    y = rng.randn(m, 2)
+    a = rng.uniform(0, 1, n)
+    a /= a.sum()
+    b = rng.uniform(0, 1, m)
+    b /= b.sum()
+
+    x_b, y_b, a_b, b_b = nx.from_numpy(x, y, a, b)
+
+    thetas = ot.sliced.get_random_projections(d, n_proj, seed=0, backend=nx).T
+    thetas_t = nx.to_numpy(thetas)
 
     context = (
         nullcontext()
@@ -879,32 +931,25 @@ def test_expected_sliced(nx):
     )
 
     with context:
-        expected_plan, expected_cost = ot.sliced.expected_sliced(
+        _, expected_cost_b = ot.sliced.expected_sliced(
+            x_b, y_b, a_b, b_b, dense=True, thetas=thetas_t
+        )
+        # result should be the same than numpy version
+        _, expected_cost = ot.sliced.expected_sliced(
             x, y, a, b, dense=True, thetas=thetas
         )
-        expected_plan_b, expected_cost_b, _ = ot.sliced.expected_sliced(
-            x_b, y_b, a, b, thetas=thetas_b, dense=True, log=True
-        )
+        np.testing.assert_almost_equal(expected_cost_b, expected_cost)
 
-        np.testing.assert_almost_equal(expected_plan, nx.to_numpy(expected_plan_b))
-        np.testing.assert_almost_equal(expected_cost, nx.to_numpy(expected_cost_b))
+    # for min_pivot
+    _, min_cost_b = ot.sliced.min_pivot_sliced(
+        x_b, y_b, a_b, b_b, dense=True, thetas=thetas_t
+    )
+    # result should be the same than numpy version
+    _, min_cost = ot.sliced.min_pivot_sliced(x, y, a, b, dense=True, thetas=thetas)
+    np.testing.assert_almost_equal(min_cost_b, min_cost)
 
-        # result should be a coarse upper-bound of W2
-        w2 = ot.emd2(a, b, ot.dist(x, y))
-        assert expected_cost >= w2
-        assert expected_cost <= 3 * w2
+    # for sliced_plans
+    thetas = ot.sliced.get_random_projections(d, n_proj, seed=0, backend=nx).T
 
-        # test without provided thetas
-        ot.sliced.expected_sliced(x, y, n_proj=n_proj, log=True)
-
-        # test with invalid shapes
-        with pytest.raises(AssertionError):
-            ot.sliced.min_pivot_sliced(x[:, 1:], y, thetas=thetas)
-
-        # with a small temperature (i.e. large beta), the cost should be close
-        # to min_pivot
-        _, expected_cost = ot.sliced.expected_sliced(
-            x, y, a, b, thetas=thetas, dense=True, beta=100.0
-        )
-        _, min_cost = ot.sliced.min_pivot_sliced(x, y, a, b, thetas=thetas, dense=True)
-        np.testing.assert_almost_equal(expected_cost, min_cost, decimal=3)
+    # test with the minkowski metric
+    ot.sliced.min_pivot_sliced(x, y, thetas=thetas, metric="minkowski")
