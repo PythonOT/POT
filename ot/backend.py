@@ -729,16 +729,6 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def unstack(self, arrays, axis=0):
-        r"""
-        Split an array into a sequence of arrays along the given axis.
-
-        This function follows the api from :any:`numpy.unstack`
-
-        See: https://numpy.org/doc/stable/reference/generated/numpy.unstack.html
-        """
-        raise NotImplementedError()
-
     def outer(self, a, b):
         r"""
         Computes the outer product between two vectors.
@@ -1310,9 +1300,6 @@ class NumpyBackend(Backend):
     def stack(self, arrays, axis=0):
         return np.stack(arrays, axis)
 
-    def unstack(self, arrays, axis=0):
-        return np.unstack(arrays, axis=axis)
-
     def reshape(self, a, shape):
         return np.reshape(a, shape)
 
@@ -1722,9 +1709,6 @@ class JaxBackend(Backend):
 
     def stack(self, arrays, axis=0):
         return jnp.stack(arrays, axis)
-
-    def unstack(self, arrays, axis=0):
-        return jnp.unstack(arrays, axis=axis)
 
     def reshape(self, a, shape):
         return jnp.reshape(a, shape)
@@ -2228,9 +2212,6 @@ class TorchBackend(Backend):
 
     def stack(self, arrays, axis=0):
         return torch.stack(arrays, dim=axis)
-
-    def unstack(self, arrays, axis=0):
-        return torch.unbind(arrays, dim=axis)
 
     def reshape(self, a, shape):
         return torch.reshape(a, shape)

@@ -777,7 +777,18 @@ def test_sliced_plans(nx):
 
     x_b, y_b = nx.from_numpy(x, y)
     thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
+    print("et là ???", thetas.shape)
     thetas_b = nx.from_numpy(thetas)
+
+    # test with the minkowski metric
+    ot.sliced.min_pivot_sliced(x, y, thetas=thetas, metric="minkowski")
+
+    # test with an unsupported metric
+    with pytest.raises(ValueError):
+        ot.sliced.min_pivot_sliced(x, y, thetas=thetas, metric="mahalanobis")
+
+    # test with a warm theta
+    ot.sliced.min_pivot_sliced(x, y, n_proj=10, warm_theta=thetas[-1])
 
     # test with a and b uniform
     plan, _ = ot.sliced.sliced_plans(x, y, thetas=thetas, dense=True)

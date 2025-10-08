@@ -747,6 +747,7 @@ def sliced_plans(
     """
 
     X, Y = list_to_array(X, Y)
+    nx = get_backend(X, Y) if backend is None else backend
     assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"
     assert Y.ndim == 2, f"Y must be a 2d array, got {Y.ndim}d array instead"
 
@@ -761,7 +762,6 @@ def sliced_plans(
     d = X.shape[1]
     n = X.shape[0]
     m = Y.shape[0]
-    nx = get_backend(X, Y) if backend is None else backend
 
     is_perm = False
     if n == m:
@@ -772,8 +772,9 @@ def sliced_plans(
     if do_draw_thetas:  # create thetas (n_proj, d)
         assert n_proj is not None, "n_proj must be specified if thetas is None"
         thetas = get_random_projections(d, n_proj, backend=nx).T
+
         if warm_theta is not None:
-            thetas = nx.concatenate([thetas, warm_theta[:, None]], axis=1)
+            thetas = nx.concatenate([thetas, warm_theta[:, None].T], axis=0)
     else:
         n_proj = thetas.shape[0]
 
@@ -808,8 +809,9 @@ def sliced_plans(
                 + "from the following list: "
                 + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
             )
+        a = nx.ones(n) / n
         plan = [
-            nx.coo_matrix(np.ones(n) / n, sigma[:, k], tau[:, k], shape=(n, m))
+            nx.coo_matrix(a, sigma[:, k], tau[:, k], shape=(n, m), type_as=a)
             for k in range(n_proj)
         ]
 
@@ -949,8 +951,8 @@ def min_pivot_sliced(
 
         Examples
     --------
-    >>> x=np.array([[3,3], [1,1]])
-    >>> y=np.array([[2,2.5], [3,2]])
+    >>> x=np.array([[3.,3.], [1.,1.]])
+    >>> y=np.array([[2.,2.5], [3.,2.]])
     >>> thetas=np.array([[1, 0], [0, 1]])
     >>> plan, cost = ot.expected_sliced(x, y, thetas)
     >>> plan
@@ -961,6 +963,7 @@ def min_pivot_sliced(
     """
 
     X, Y = list_to_array(X, Y)
+    nx = get_backend(X, Y) if backend is None else backend
     assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"
     assert Y.ndim == 2, f"Y must be a 2d array, got {Y.ndim}d array instead"
 
@@ -1088,8 +1091,8 @@ def expected_sliced(
 
     Examples
     --------
-    >>> x=np.array([[3,3], [1,1]])
-    >>> y=np.array([[2,2.5], [3,2]])
+    >>> x=np.array([[3.,3.], [1.,1.]])
+    >>> y=np.array([[2.,2.5], [3.,2.]])
     >>> thetas=np.array([[1, 0], [0, 1]])
     >>> plan, cost = ot.expected_sliced(x, y, thetas)
     >>> plan
@@ -1100,6 +1103,7 @@ def expected_sliced(
     """
 
     X, Y = list_to_array(X, Y)
+    nx = get_backend(X, Y) if backend is None else backend
 
     assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"
     assert Y.ndim == 2, f"Y must be a 2d array, got {Y.ndim}d array instead"
@@ -1107,8 +1111,6 @@ def expected_sliced(
     assert (
         X.shape[1] == Y.shape[1]
     ), f"X ({X.shape}) and Y ({Y.shape}) must have the same number of columns"
-
-    nx = get_backend(X, Y) if backend is None else backend
 
     if str(nx) in ["tf", "jax"]:
         raise NotImplementedError(
@@ -1141,7 +1143,7 @@ def expected_sliced(
     weights = nx.concatenate([G[i].data * weights[i] for i in range(len(G))])
     X_idx = nx.concatenate([G[i].row for i in range(len(G))])
     Y_idx = nx.concatenate([G[i].col for i in range(len(G))])
-    plan = nx.coo_matrix(weights, X_idx, Y_idx, shape=(n, m))
+    plan = nx.coo_matrix(weights, X_idx, Y_idx, shape=(n, m), type_as=weights)
 
     if beta == 0.0:  # otherwise already computed above
         cost = plan.multiply(dist(X, Y, metric=metric, p=p)).sum()
