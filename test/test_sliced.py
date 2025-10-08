@@ -833,8 +833,10 @@ def test_min_pivot_sliced():
     for c in costs:
         assert c > 0
 
-    # test with the minkowski metric
+    # test with different metrics
     ot.sliced.min_pivot_sliced(x, y, thetas=thetas, metric="minkowski")
+    ot.sliced.min_pivot_sliced(x, y, thetas=thetas, metric="euclidean")
+    ot.sliced.min_pivot_sliced(x, y, thetas=thetas, metric="cityblock")
 
     # test with an unsupported metric
     with pytest.raises(ValueError):
@@ -872,6 +874,7 @@ def test_expected_sliced():
 
     # test without provided thetas
     ot.sliced.expected_sliced(x, y, n_proj=n_proj, log=True)
+    ot.sliced.expected_sliced(x, y, a, b, n_proj=n_proj, log=True)
 
     # test with invalid shapes
     with pytest.raises(AssertionError):
@@ -921,8 +924,8 @@ def test_sliced_plans_backends(nx):
 
     x_b, y_b, a_b, b_b = nx.from_numpy(x, y, a, b)
 
-    thetas = ot.sliced.get_random_projections(d, n_proj, seed=0, backend=nx).T
-    thetas_t = nx.to_numpy(thetas)
+    thetas_b = ot.sliced.get_random_projections(d, n_proj, seed=0, backend=nx).T
+    thetas = nx.to_numpy(thetas_b)
 
     context = (
         nullcontext()
@@ -932,7 +935,7 @@ def test_sliced_plans_backends(nx):
 
     with context:
         _, expected_cost_b = ot.sliced.expected_sliced(
-            x_b, y_b, a_b, b_b, dense=True, thetas=thetas_t
+            x_b, y_b, a_b, b_b, dense=True, thetas=thetas_b
         )
         # result should be the same than numpy version
         _, expected_cost = ot.sliced.expected_sliced(
@@ -942,7 +945,7 @@ def test_sliced_plans_backends(nx):
 
     # for min_pivot
     _, min_cost_b = ot.sliced.min_pivot_sliced(
-        x_b, y_b, a_b, b_b, dense=True, thetas=thetas_t
+        x_b, y_b, a_b, b_b, dense=True, thetas=thetas_b
     )
     # result should be the same than numpy version
     _, min_cost = ot.sliced.min_pivot_sliced(x, y, a, b, dense=True, thetas=thetas)
