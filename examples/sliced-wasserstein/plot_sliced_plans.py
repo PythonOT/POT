@@ -28,7 +28,6 @@ import numpy as np
 import ot
 import matplotlib.pyplot as plt
 from ot.sliced import get_random_projections
-from ot.lp import wasserstein_1d
 
 
 seed = 0

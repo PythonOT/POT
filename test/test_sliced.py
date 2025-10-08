@@ -742,61 +742,118 @@ def test_sliced_permutations(nx):
     thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
     thetas_b = nx.from_numpy(thetas)
 
-    perm = ot.sliced.sliced_plans(x, y, thetas=thetas)
-    perm_b, _ = ot.sliced.sliced_plans(x_b, y_b, thetas=thetas_b, log=True, backend=nx)
-
-    np.testing.assert_almost_equal(perm, nx.to_numpy(perm_b))
+    plan, _ = ot.sliced.sliced_plans(x, y, thetas=thetas, dense=True)
+    plan_b, _, _ = ot.sliced.sliced_plans(
+        x_b, y_b, thetas=thetas_b, log=True, dense=True, backend=nx
+    )
+    np.testing.assert_almost_equal(plan, nx.to_numpy(plan_b))
 
     # test without provided thetas
-    perm = ot.sliced.sliced_plans(x, y, n_proj=n_proj)
+    _, _ = ot.sliced.sliced_plans(x, y, n_proj=n_proj)
 
     # test with invalid shapes
     with pytest.raises(AssertionError):
-        ot.sliced.sliced_plans(x[1:, :], y, thetas=thetas)
+        ot.sliced.sliced_plans(x[:, 1:], y, thetas=thetas)
 
 
-def test_min_pivot_sliced(nx):
-    n = 10
+def test_sliced_plans(nx):
+    x = [1, 2]
+    with pytest.raises(AssertionError):
+        ot.sliced.min_pivot_sliced(x, x, n_proj=2)
+
+    n = 4
+    m = 5
     n_proj = 10
     d = 2
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)
-    y = rng.randn(n, 2)
+    y = rng.randn(m, 2)
+
+    a = rng.uniform(0, 1, n)
+    a /= a.sum()
+    b = rng.uniform(0, 1, m)
+    b /= b.sum()
 
     x_b, y_b = nx.from_numpy(x, y)
     thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
     thetas_b = nx.from_numpy(thetas)
 
-    min_perm, min_cost = ot.sliced.min_pivot_sliced(x, y, thetas=thetas)
-    min_perm_b, min_cost_b, _ = ot.sliced.min_pivot_sliced(
-        x_b, y_b, thetas=thetas_b, log=True
+    # test with a and b uniform
+    plan, _ = ot.sliced.sliced_plans(x, y, thetas=thetas, dense=True)
+    plan_b, _, _ = ot.sliced.sliced_plans(
+        x_b, y_b, thetas=thetas_b, log=True, dense=True, backend=nx
     )
+    np.testing.assert_almost_equal(plan, nx.to_numpy(plan_b))
 
-    np.testing.assert_almost_equal(min_perm, nx.to_numpy(min_perm_b))
-    np.testing.assert_almost_equal(min_cost, nx.to_numpy(min_cost_b))
+    # test with a and b not uniform
+    plan, _ = ot.sliced.sliced_plans(x, y, a, b, thetas=thetas, dense=True)
+    plan_b, _, _ = ot.sliced.sliced_plans(
+        x_b, y_b, a, b, thetas=thetas_b, log=True, dense=True, backend=nx
+    )
+    np.testing.assert_almost_equal(plan, nx.to_numpy(plan_b))
 
-    # result should be an upper-bound of W2 and relatively close
-    w2 = ot.emd2(ot.unif(n), ot.unif(n), ot.dist(x, y))
-    assert min_cost >= w2
-    assert min_cost <= 1.5 * w2
 
-    # test without provided thetas
-    ot.sliced.min_pivot_sliced(x, y, n_proj=n_proj, log=True)
-
-    # test with invalid shapes
+def test_min_pivot_sliced(nx):
+    x = [1, 2]
     with pytest.raises(AssertionError):
-        ot.sliced.min_pivot_sliced(x[1:, :], y, thetas=thetas)
+        ot.sliced.min_pivot_sliced(x, x, n_proj=2)
 
-
-def test_expected_sliced(nx):
     n = 10
+    m = 4
     n_proj = 10
     d = 2
     rng = np.random.RandomState(0)
 
     x = rng.randn(n, 2)
-    y = rng.randn(n, 2)
+    y = rng.randn(m, 2)
+    a = rng.uniform(0, 1, n)
+    a /= a.sum()
+    b = rng.uniform(0, 1, m)
+    b /= b.sum()
+
+    x_b, y_b = nx.from_numpy(x, y)
+    thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
+    thetas_b = nx.from_numpy(thetas)
+
+    G, min_cost = ot.sliced.min_pivot_sliced(x, y, a, b, thetas=thetas, dense=True)
+    G_b, min_cost_b, _ = ot.sliced.min_pivot_sliced(
+        x_b, y_b, a, b, thetas=thetas_b, log=True, dense=True
+    )
+
+    np.testing.assert_almost_equal(G, nx.to_numpy(G_b))
+    np.testing.assert_almost_equal(min_cost, nx.to_numpy(min_cost_b))
+
+    # result should be an upper-bound of W2 and relatively close
+    w2 = ot.emd2(a, b, ot.dist(x, y))
+    assert min_cost >= w2
+    assert min_cost <= 1.5 * w2
+
+    # test without provided thetas
+    ot.sliced.min_pivot_sliced(x, y, a, b, n_proj=n_proj, log=True)
+
+    # test with invalid shapes
+    with pytest.raises(AssertionError):
+        ot.sliced.min_pivot_sliced(x[:, 1:], y, thetas=thetas)
+
+
+def test_expected_sliced(nx):
+    x = [1, 2]
+    with pytest.raises(AssertionError):
+        ot.sliced.min_pivot_sliced(x, x, n_proj=2)
+
+    n = 10
+    m = 24
+    n_proj = 10
+    d = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    y = rng.randn(m, 2)
+    a = rng.uniform(0, 1, n)
+    a /= a.sum()
+    b = rng.uniform(0, 1, m)
+    b /= b.sum()
 
     x_b, y_b = nx.from_numpy(x, y)
     thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
@@ -810,17 +867,17 @@ def test_expected_sliced(nx):
 
     with context:
         expected_plan, expected_cost = ot.sliced.expected_sliced(
-            x, y, dense=True, thetas=thetas
+            x, y, a, b, dense=True, thetas=thetas
         )
         expected_plan_b, expected_cost_b, _ = ot.sliced.expected_sliced(
-            x_b, y_b, thetas=thetas_b, dense=True, log=True
+            x_b, y_b, a, b, thetas=thetas_b, dense=True, log=True
         )
 
         np.testing.assert_almost_equal(expected_plan, nx.to_numpy(expected_plan_b))
         np.testing.assert_almost_equal(expected_cost, nx.to_numpy(expected_cost_b))
 
         # result should be a coarse upper-bound of W2
-        w2 = ot.emd2(ot.unif(n), ot.unif(n), ot.dist(x, y))
+        w2 = ot.emd2(a, b, ot.dist(x, y))
         assert expected_cost >= w2
         assert expected_cost <= 3 * w2
 
@@ -829,10 +886,12 @@ def test_expected_sliced(nx):
 
         # test with invalid shapes
         with pytest.raises(AssertionError):
-            ot.sliced.min_pivot_sliced(x[1:, :], y, thetas=thetas)
+            ot.sliced.min_pivot_sliced(x[:, 1:], y, thetas=thetas)
 
         # with a small temperature (i.e. large beta), the cost should be close
         # to min_pivot
-        _, expected_cost = ot.sliced.expected_sliced(x, y, thetas=thetas, beta=100.0)
-        _, min_cost = ot.sliced.min_pivot_sliced(x, y, thetas=thetas)
+        _, expected_cost = ot.sliced.expected_sliced(
+            x, y, a, b, thetas=thetas, dense=True, beta=100.0
+        )
+        _, min_cost = ot.sliced.min_pivot_sliced(x, y, a, b, thetas=thetas, dense=True)
         np.testing.assert_almost_equal(expected_cost, min_cost, decimal=3)

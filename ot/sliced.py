@@ -691,8 +691,9 @@ def sliced_plans(
     metric="sqeuclidean",
     p=2,
     thetas=None,
-    warm_theta=False,
+    warm_theta=None,
     n_proj=None,
+    dense=False,
     log=False,
     backend=None,
 ):
@@ -723,6 +724,9 @@ def sliced_plans(
         Default is None.
     warm_theta : array-like, shape (d,), optional
         A direction to add to the set of directions. Default is None.
+    dense: bool, optional
+        If True, returns dense matrices instead of sparse ones.
+        Default is False.
     n_proj : int, optional
         The number of projection directions. Required if thetas is None.
     log : bool, optional
@@ -733,17 +737,18 @@ def sliced_plans(
 
     Returns
     -------
-    G, sigma, tau, costs
-    G: ndarray, shape (ns, nt) or coo_matrix if dense is False
+    plan : ndarray, shape (ns, nt) or coo_matrix if dense is False
         Optimal transportation matrix for the given parameters
-    sigma : list of elements of array-like
-        All the indices of X sorted along each projection.
-    tau : list of elements of array-like
-        All the indices of Y sorted along each projection.
+    costs : list of float
+        The cost associated to each projection.
     log_dict : dict, optional
         A dictionary containing intermediate computations for logging purposes.
         Returned only if `log` is True.
     """
+
+    X, Y = list_to_array(X, Y)
+    assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"
+    assert Y.ndim == 2, f"Y must be a 2d array, got {Y.ndim}d array instead"
 
     assert (
         X.shape[1] == Y.shape[1]
@@ -758,6 +763,11 @@ def sliced_plans(
     m = Y.shape[0]
     nx = get_backend(X, Y) if backend is None else backend
 
+    is_perm = False
+    if n == m:
+        if a is None or b is None or (a == b).all():
+            is_perm = True
+
     do_draw_thetas = thetas is None
     if do_draw_thetas:  # create thetas (n_proj, d)
         assert n_proj is not None, "n_proj must be specified if thetas is None"
@@ -771,12 +781,11 @@ def sliced_plans(
     X_theta = X @ thetas.T  # shape (n, n_proj)
     Y_theta = Y @ thetas.T  # shape (m, n_proj)
 
-    if n == m and (a is None or b is None or (a == b).all()):
+    if is_perm:
         # we compute maps (permutations)
         # sigma[:, i_proj] is a permutation sorting X_theta[:, i_proj]
         sigma = nx.argsort(X_theta, axis=0)  # (n, n_proj)
         tau = nx.argsort(Y_theta, axis=0)  # (m, n_proj)
-
         if metric in ("minkowski", "euclidean", "cityblock"):
             costs = [
                 nx.sum(
@@ -799,20 +808,13 @@ def sliced_plans(
                 + "from the following list: "
                 + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
             )
-
-        G = [
-            nx.coo_matrix(
-                np.ones(n) / n,
-                sigma[:, k],
-                tau[:, k],
-                shape=(n, m),
-                type_as=X_theta,
-            )
+        plan = [
+            nx.coo_matrix(np.ones(n) / n, sigma[:, k], tau[:, k], shape=(n, m))
             for k in range(n_proj)
         ]
 
     else:  # we compute plans
-        _, G = wasserstein_1d(
+        _, plan = wasserstein_1d(
             X_theta, Y_theta, a, b, p, require_sort=True, return_plan=True
         )
 
@@ -820,16 +822,19 @@ def sliced_plans(
             costs = [
                 nx.sum(
                     (
-                        (nx.sum(nx.abs(X[G[k].row] - Y[G[k].col]) ** p, axis=1))
+                        (nx.sum(nx.abs(X[plan[k].row] - Y[plan[k].col]) ** p, axis=1))
                         ** (1 / p)
                     )
-                    * G[k].data
+                    * plan[k].data
                 )
                 for k in range(n_proj)
             ]
         elif metric == "sqeuclidean":
             costs = [
-                nx.sum((nx.sum((X[G[k].row] - Y[G[k].col]) ** 2, axis=1)) * G[k].data)
+                nx.sum(
+                    (nx.sum((X[plan[k].row] - Y[plan[k].col]) ** 2, axis=1))
+                    * plan[k].data
+                )
                 for k in range(n_proj)
             ]
         else:
@@ -839,11 +844,17 @@ def sliced_plans(
                 + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
             )
 
+    if dense:
+        plan = [nx.todense(plan[k]) for k in range(n_proj)]
+    elif str(nx) == "jax":
+        warnings.warn("JAX does not support sparse matrices, converting to dense")
+        plan = [nx.todense(plan[k]) for k in range(n_proj)]
+
     if log:
         log_dict = {"X_theta": X_theta, "Y_theta": Y_theta, "thetas": thetas}
-        return costs, G, log_dict
+        return plan, costs, log_dict
     else:
-        return costs, G
+        return plan, costs
 
 
 def min_pivot_sliced(
@@ -863,11 +874,11 @@ def min_pivot_sliced(
     r"""
     Computes the cost and permutation associated to the min-Pivot Sliced
     Discrepancy (introduced as SWGG in [82] and studied further in [83]). Given
-    the supports `X` and `Y` of two discrete uniform measures with `n` atoms in
-    dimension `d`, the min-Pivot Sliced Discrepancy goes through `n_proj`
-    different projections of the measures on random directions, and retains the
-    permutation that yields the lowest cost between `X` and `Y` (compared
-    in :math:`\mathbb{R}^d`).
+    the supports `X` and `Y` of two discrete uniform measures with `n` and `m`
+    atoms in dimension `d`, the min-Pivot Sliced Discrepancy goes through
+    `n_proj` different projections of the measures on random directions, and
+    retains the couplings that yields the lowest cost between `X` and `Y`
+    (compared in :math:`\mathbb{R}^d`). When $n=m$, it gives
 
     .. math::
         \mathrm{min\text{-}PS}_p^p(X, Y) \approx
@@ -888,7 +899,7 @@ def min_pivot_sliced(
     ----------
     X : array-like, shape (n, d)
         The first set of vectors.
-    Y : array-like, shape (n, d)
+    Y : array-like, shape (m, d)
         The second set of vectors.
     a : ndarray of float64, shape (ns,), optional
         Source histogram (default is uniform weight)
@@ -918,10 +929,10 @@ def min_pivot_sliced(
 
     Returns
     -------
-    perm : array-like, shape (n,)
-        The permutation that minimizes the cost.
-    min_cost : float
-        The minimum cost corresponding to the optimal permutation.
+    plan : ndarray, shape (n, m) or coo_matrix if dense is False
+        Optimal transportation matrix for the given parameters.
+    cost : float
+        The cost associated to the optimal permutation.
     log_dict : dict, optional
         A dictionary containing intermediate computations for logging purposes.
         Returned only if `log` is True.
@@ -935,7 +946,23 @@ def min_pivot_sliced(
 
     .. [83] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport
             Plans. arXiv preprint 2506.03661.
+
+        Examples
+    --------
+    >>> x=np.array([[3,3], [1,1]])
+    >>> y=np.array([[2,2.5], [3,2]])
+    >>> thetas=np.array([[1, 0], [0, 1]])
+    >>> plan, cost = ot.expected_sliced(x, y, thetas)
+    >>> plan
+    [[0 0.5]
+    [0.5 0]]
+    >>> cost
+    2.125
     """
+
+    X, Y = list_to_array(X, Y)
+    assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"
+    assert Y.ndim == 2, f"Y must be a 2d array, got {Y.ndim}d array instead"
 
     assert (
         X.shape[1] == Y.shape[1]
@@ -944,7 +971,7 @@ def min_pivot_sliced(
     nx = get_backend(X, Y) if backend is None else backend
 
     log_dict = {}
-    costs, G, log_dict_plans = sliced_plans(
+    G, costs, log_dict_plans = sliced_plans(
         X,
         Y,
         a,
@@ -1000,11 +1027,12 @@ def expected_sliced(
     beta=0.0,
 ):
     r"""
-    Computes the Expected Sliced cost and plan between two `(n, d)`
-    datasets `X` and `Y`. Given a set of `n_proj` projection directions,
-    the expected sliced plan is obtained by averaging the `n_proj` 1d optimal
-    transport plans between the projections of `X` and `Y` on each direction.
-    Expected Sliced was introduced in [84] and further studied in [83].
+    Computes the Expected Sliced cost and plan between two  datasets `X` and
+    `Y` of shapes `(n, d)` and `(m, d)`. Given a set of `n_proj` projection
+    directions, the expected sliced plan is obtained by averaging the `n_proj`
+    1d optimal transport plans between the projections of `X` and `Y` on each
+    direction. Expected Sliced was introduced in [84] and further studied in
+    [83].
 
     .. note::
         The computation ignores potential ambiguities in the projections: if
@@ -1020,9 +1048,9 @@ def expected_sliced(
     Parameters
     ----------
     X : torch.Tensor
-        A tensor of shape (ns, d) representing the first set of vectors.
+        A tensor of shape (n, d) representing the first set of vectors.
     Y : torch.Tensor
-        A tensor of shape (nt, d) representing the second set of vectors.
+        A tensor of shape (m, d) representing the second set of vectors.
     thetas : torch.Tensor, optional
         A tensor of shape (n_proj, d) representing the projection directions.
         If None, random directions will be generated. Default is None.
@@ -1031,7 +1059,7 @@ def expected_sliced(
     order : int, optional
         Power to elevate the norm. Default is 2.
     dense: boolean, optional (default=True)
-        If True, returns :math:`\gamma` as a dense ndarray of shape (ns, nt).
+        If True, returns :math:`\gamma` as a dense ndarray of shape (n, m).
         Otherwise returns a sparse representation using scipy's `coo_matrix`
         format.
     log : bool, optional
@@ -1042,8 +1070,10 @@ def expected_sliced(
 
     Returns
     -------
-    plan : torch.Tensor
-        A tensor of shape (n_proj, n, n) representing the expected sliced plan.
+    plan : ndarray, shape (n, m) or coo_matrix if dense is False
+        Optimal transportation matrix for the given parameters.
+    cost : float
+        The cost associated to the optimal permutation.
     log_dict : dict, optional
         A dictionary containing intermediate computations for logging purposes.
         Returned only if `log` is True.
@@ -1051,12 +1081,29 @@ def expected_sliced(
     References
     ----------
     .. [83] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport
-    Plans. arXiv preprint 2506.03661.
-
+            Plans. arXiv preprint 2506.03661.
     .. [84] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi
-    A., Kolouri, S. (2024). Expected Sliced Transport Plans. International
-    Conference on Learning Representations.
+            A., Kolouri, S. (2024). Expected Sliced Transport Plans.
+            International Conference on Learning Representations.
+
+    Examples
+    --------
+    >>> x=np.array([[3,3], [1,1]])
+    >>> y=np.array([[2,2.5], [3,2]])
+    >>> thetas=np.array([[1, 0], [0, 1]])
+    >>> plan, cost = ot.expected_sliced(x, y, thetas)
+    >>> plan
+    [[0.25 0.25]
+    [0.25 0.25]]
+    >>> cost
+    2.625
     """
+
+    X, Y = list_to_array(X, Y)
+
+    assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"
+    assert Y.ndim == 2, f"Y must be a 2d array, got {Y.ndim}d array instead"
+
     assert (
         X.shape[1] == Y.shape[1]
     ), f"X ({X.shape}) and Y ({Y.shape}) must have the same number of columns"
@@ -1069,11 +1116,11 @@ def expected_sliced(
             "to array assignment."
         )
 
-    ns = X.shape[0]
-    nt = Y.shape[0]
+    n = X.shape[0]
+    m = Y.shape[0]
 
     log_dict = {}
-    costs, G, log_dict_plans = sliced_plans(
+    G, costs, log_dict_plans = sliced_plans(
         X, Y, a, b, metric, p, thetas, n_proj=n_proj, log=True, backend=nx
     )
     if log:
@@ -1087,20 +1134,14 @@ def expected_sliced(
     else:  # uniform weights
         if n_proj is None:
             n_proj = thetas.shape[0]
-        weights = nx.ones(n_proj, type_as=X) / n_proj
+        weights = nx.ones(n_proj) / n_proj
 
     log_dict["weights"] = weights
 
     weights = nx.concatenate([G[i].data * weights[i] for i in range(len(G))])
     X_idx = nx.concatenate([G[i].row for i in range(len(G))])
     Y_idx = nx.concatenate([G[i].col for i in range(len(G))])
-    plan = nx.coo_matrix(
-        weights,
-        X_idx,
-        Y_idx,
-        shape=(ns, nt),
-        type_as=X,
-    )
+    plan = nx.coo_matrix(weights, X_idx, Y_idx, shape=(n, m))
 
     if beta == 0.0:  # otherwise already computed above
         cost = plan.multiply(dist(X, Y, metric=metric, p=p)).sum()
@@ -1108,10 +1149,7 @@ def expected_sliced(
     if dense:
         plan = nx.todense(plan)
     elif str(nx) == "jax":
-        warnings.warn(
-            "JAX does not support sparse matrices, converting to\
-        dense"
-        )
+        warnings.warn("JAX does not support sparse matrices, converting to dense")
         plan = nx.todense(plan)
 
     if log:
