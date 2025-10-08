@@ -746,7 +746,6 @@ def sliced_plans(
         Returned only if `log` is True.
     """
 
-    X, Y = list_to_array(X, Y)
     nx = get_backend(X, Y) if backend is None else backend
     assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"
     assert Y.ndim == 2, f"Y must be a 2d array, got {Y.ndim}d array instead"
@@ -903,9 +902,9 @@ def min_pivot_sliced(
         The first set of vectors.
     Y : array-like, shape (m, d)
         The second set of vectors.
-    a : ndarray of float64, shape (ns,), optional
+    a : ndarray of float64, shape (n,), optional
         Source histogram (default is uniform weight)
-    b : ndarray of float64, shape (nt,), optional
+    b : ndarray of float64, shape (m,), optional
         Target histogram (default is uniform weight)
     thetas : array-like, shape (n_proj, d), optional
         The projection directions. If None, random directions will be generated
@@ -962,7 +961,6 @@ def min_pivot_sliced(
     2.125
     """
 
-    X, Y = list_to_array(X, Y)
     nx = get_backend(X, Y) if backend is None else backend
     assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"
     assert Y.ndim == 2, f"Y must be a 2d array, got {Y.ndim}d array instead"
@@ -987,7 +985,7 @@ def min_pivot_sliced(
         log=True,
         backend=nx,
     )
-    pos_min = np.argmin(costs)
+    pos_min = nx.argmin(costs)
     cost = costs[pos_min]
     plan = G[pos_min]
 
@@ -1050,23 +1048,33 @@ def expected_sliced(
 
     Parameters
     ----------
-    X : torch.Tensor
-        A tensor of shape (n, d) representing the first set of vectors.
-    Y : torch.Tensor
-        A tensor of shape (m, d) representing the second set of vectors.
+    X : array-like, shape (n, d)
+        The first set of vectors.
+    Y : array-like, shape (m, d)
+        The second set of vectors.
+    a : ndarray of float64, shape (n,), optional
+        Source histogram (default is uniform weight)
+    b : ndarray of float64, shape (m,), optional
+        Target histogram (default is uniform weight)
     thetas : torch.Tensor, optional
         A tensor of shape (n_proj, d) representing the projection directions.
         If None, random directions will be generated. Default is None.
+    metric: str, optional (default='sqeuclidean')
+        Metric to be used. Only works with either of the strings
+        `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'`.
+    p: float, optional (default=2)
+            The p-norm to apply for if metric='minkowski'
     n_proj : int, optional
         The number of projection directions. Required if thetas is None.
-    order : int, optional
-        Power to elevate the norm. Default is 2.
     dense: boolean, optional (default=True)
         If True, returns :math:`\gamma` as a dense ndarray of shape (n, m).
         Otherwise returns a sparse representation using scipy's `coo_matrix`
         format.
     log : bool, optional
         If True, returns additional logging information. Default is False.
+    backend : ot.backend, optional
+        Backend to use for computations. If None, the backend is inferred from
+        the input arrays. Default is None.
     beta : float, optional
         Inverse-temperature parameter which weights each projection's
         contribution to the expected plan. Default is 0 (uniform weighting).
@@ -1102,7 +1110,6 @@ def expected_sliced(
     2.625
     """
 
-    X, Y = list_to_array(X, Y)
     nx = get_backend(X, Y) if backend is None else backend
 
     assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"

@@ -776,8 +776,10 @@ def test_sliced_plans(nx):
     b /= b.sum()
 
     x_b, y_b = nx.from_numpy(x, y)
+    print(x_b)
+    t_X = torch.tensor(x_b)
+    t_Y = torch.tensor(y_b)
     thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
-    print("et là ???", thetas.shape)
     thetas_b = nx.from_numpy(thetas)
 
     # test with the minkowski metric
