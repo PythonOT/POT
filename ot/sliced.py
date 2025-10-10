@@ -821,41 +821,85 @@ def sliced_plans(
             for k in range(n_proj)
         ]
 
+        if not dense and str(nx) == "jax":
+            warnings.warn("JAX does not support sparse matrices, converting to dense")
+            plan = [nx.todense(plan[k]) for k in range(n_proj)]
+
     else:  # we compute plans
         _, plan = wasserstein_1d(
             X_theta, Y_theta, a, b, p, require_sort=True, return_plan=True
         )
 
-        if metric in ("minkowski", "euclidean", "cityblock"):
-            costs = [
-                nx.sum(
-                    (
-                        (nx.sum(nx.abs(X[plan[k].row] - Y[plan[k].col]) ** p, axis=1))
-                        ** (1 / p)
+        if str(nx) == "jax":  # dense computation
+            if not dense:
+                warnings.warn(
+                    "JAX does not support sparse matrices, converting to dense"
+                )
+
+            plan = [nx.todense(plan[k]) for k in range(n_proj)]
+
+            if metric in ("minkowski", "euclidean", "cityblock"):
+                costs = [
+                    nx.sum(
+                        (
+                            (
+                                nx.sum(
+                                    nx.abs(X[:, None, :] - Y[None, :, :]) ** p, axis=-1
+                                )
+                            )
+                            ** (1 / p)
+                        )
+                        * plan[k].data
                     )
-                    * plan[k].data
+                    for k in range(n_proj)
+                ]
+            elif metric == "sqeuclidean":
+                costs = [
+                    nx.sum(
+                        (nx.sum((X[:, None, :] - Y[None, :, :]) ** 2, axis=-1))
+                        * plan[k].data
+                    )
+                    for k in range(n_proj)
+                ]
+            else:
+                raise ValueError(
+                    "Sliced plans work only with metrics "
+                    + "from the following list: "
+                    + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
                 )
-                for k in range(n_proj)
-            ]
-        elif metric == "sqeuclidean":
-            costs = [
-                nx.sum(
-                    (nx.sum((X[plan[k].row] - Y[plan[k].col]) ** 2, axis=1))
-                    * plan[k].data
+
+        else:  # not jax, sparse computation
+            if metric in ("minkowski", "euclidean", "cityblock"):
+                costs = [
+                    nx.sum(
+                        (
+                            (
+                                nx.sum(
+                                    nx.abs(X[plan[k].row] - Y[plan[k].col]) ** p, axis=1
+                                )
+                            )
+                            ** (1 / p)
+                        )
+                        * plan[k].data
+                    )
+                    for k in range(n_proj)
+                ]
+            elif metric == "sqeuclidean":
+                costs = [
+                    nx.sum(
+                        (nx.sum((X[plan[k].row] - Y[plan[k].col]) ** 2, axis=1))
+                        * plan[k].data
+                    )
+                    for k in range(n_proj)
+                ]
+            else:
+                raise ValueError(
+                    "Sliced plans work only with metrics "
+                    + "from the following list: "
+                    + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
                 )
-                for k in range(n_proj)
-            ]
-        else:
-            raise ValueError(
-                "Sliced plans work only with metrics "
-                + "from the following list: "
-                + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
-            )
 
     if dense:
-        plan = [nx.todense(plan[k]) for k in range(n_proj)]
-    elif str(nx) == "jax":
-        warnings.warn("JAX does not support sparse matrices, converting to dense")
         plan = [nx.todense(plan[k]) for k in range(n_proj)]
 
     if log:
