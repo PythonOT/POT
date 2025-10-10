@@ -3,6 +3,7 @@
 # Author: Adrien Corenflos <adrien.corenflos@aalto.fi>
 #         Nicolas Courty <ncourty@irisa.fr>
 #         Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
+#         Laetitia Chapel <laetitia.chapel@irisa.fr>
 #
 # License: MIT License
 

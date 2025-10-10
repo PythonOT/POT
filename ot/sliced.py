@@ -6,6 +6,7 @@ Sliced OT Distances
 #         Nicolas Courty   <ncourty@irisa.fr>
 #         Rémi Flamary <remi.flamary@polytechnique.edu>
 #         Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
+#         Laetitia Chapel <laetitia.chapel@irisa.fr>
 #
 # License: MIT License
 
@@ -776,7 +777,7 @@ def sliced_plans(
     do_draw_thetas = thetas is None
     if do_draw_thetas:  # create thetas (n_proj, d)
         assert n_proj is not None, "n_proj must be specified if thetas is None"
-        thetas = get_random_projections(d, n_proj, backend=nx).T
+        thetas = get_random_projections(d, n_proj, backend=nx, type_as=X).T
 
         if warm_theta is not None:
             thetas = nx.concatenate([thetas, warm_theta[:, None].T], axis=0)

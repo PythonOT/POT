@@ -4,7 +4,7 @@
 
 #### New features
 
-- Added Sliced OT plans (PR #757)
+- Added Sliced OT plans (PR #767)
 
 ## 0.9.6.post1
 
