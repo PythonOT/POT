@@ -1,8 +1,0 @@
-[run]
-omit =
-    /tmp/*
-    */_remote_module_non_scriptable.py
-    */site-packages/*
-
-[report]
-skip_covered = True
