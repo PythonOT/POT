@@ -1,12 +1,28 @@
 # Releases
 
-## 0.9.6dev
+## 0.9.6.post1
+
+*September 2025*
+
+#### Closed issues
+- Fix missing cython file in MANIFEST.in (PR #763)
+
+## 0.9.6
+
+*September 2025*
+
+This new release contains several new features and bug fixes. Among the new features we have a new submodule `ot.batch` that contains batch parallel solvers for several OT problems including [Sinkhorn, Gromov-Wasserstein and Fused Gromov-Wasserstein](https://pythonot.github.io/master/auto_examples/backends/plot_ot_batch.html). This new submodule can be used to solve many independent OT problems in parallel on CPU or GPU with shared source and target support sizes. We also implemented a new Nystrom kernel approximation for the Sinkhorn solver that can be used to speed up the computation of the Sinkhorn divergence on large datasets. We also added new 1D solvers for [Linear circular OT](https://pythonot.github.io/master/auto_examples/sliced-wasserstein/plot_compute_wasserstein_circle.html) and new solvers for free support [OT barycenters with generic cost functions](https://pythonot.github.io/master/auto_examples/barycenters/plot_free_support_barycenter_generic_cost.html) and for [barycenters between Gaussian Mixture Models (GMMs)](https://pythonot.github.io/master/auto_examples/barycenters/plot_gmm_barycenter.html). We also implemented two solvers for partial Fused Gromov-Wasserstein problems based on [conditional gradient](https://pythonot.github.io/master/gen_modules/ot.gromov.html#ot.gromov.partial_fused_gromov_wasserstein) and [projected gradient](https://pythonot.github.io/master/gen_modules/ot.gromov.html#ot.gromov.entropic_partial_fused_gromov_wasserstein) descents.
+
+Finally we have updated the documentation to reflect the new generic API and reorganized the [examples gallery](https://pythonot.github.io/auto_examples/index.html).
 
 #### New features
 - Implement CG solvers for partial FGW (PR #687)
 - Added feature `grad=last_step` for `ot.solvers.solve` (PR #693)
 - Automatic PR labeling and release file update check (PR #704)
 - Reorganize sub-module `ot/lp/__init__.py` into separate files (PR #714)
+- Implement fixed-point solver for OT barycenters with generic cost functions
+  (generalizes `ot.lp.free_support_barycenter`), with example. (PR #715)
+- Implement fixed-point solver for barycenters between GMMs (PR #715), with example.
 - Fix warning raise when import the library (PR #716)
 - Implement projected gradient descent solvers for entropic partial FGW (PR #702)
 - Fix documentation in the module `ot.gaussian` (PR #718)
@@ -17,6 +33,15 @@
 - Backend implementation of `ot.dist` for (PR #701)
 - Updated documentation Quickstart guide and User guide with new API (PR #726)
 - Fix jax version for auto-grad (PR #732)
+- Add Nystrom kernel approximation for Sinkhorn (PR #742)
+- Added `ot.solver_1d.linear_circular_ot` and `ot.sliced.linear_sliced_wasserstein_sphere` (PR #736)
+- Implement 1d solver for partial optimal transport (PR #741)
+- Fix reg_div function compatibility with numpy in `ot.unbalanced.lbfgsb_unbalanced` via new function `ot.utils.fun_to_numpy` (PR #731)
+- Added to each example in the examples gallery the information about the release version in which it was introduced (PR #743)
+- Removed release information from quickstart guide (PR #744)
+- Implement batch parallel solvers in ot.batch (PR #745)
+- Update REAMDE with new API and reorganize examples (PR #754)
+- Speedup and update tests and wheels (PR #759)
 
 #### Closed issues
 - Fixed `ot.mapping` solvers which depended on deprecated `cvxpy` `ECOS` solver (PR #692, Issue #668)
@@ -27,6 +52,11 @@
 - Clean references in documentation (PR #722)
 - Clean documentation for `ot.gromov.gromov_wasserstein` (PR #737)
 - Debug wheels building (PR #739)
+- Fix doc for projection sparse simplex (PR #734, PR #746)
+- Changed the default behavior of `ot.lp.solver_1d.wasserstein_circle` (Issue #738)
+- Avoid raising unnecessary warnings in `ot.lp.solver_1d.binary_search_circle` (Issue #738)
+- Avoid deprecation warning in `ot.lp.solver_1d.wasserstein_1d` (Issue #760, PR #761)
+
 
 ## 0.9.5
 
@@ -36,7 +66,7 @@ This new release contains several new features, starting with
 a novel [Gaussian Mixture Model Optimal Transport (GMM-OT)](https://pythonot.github.io/master/gen_modules/ot.gmm.html#examples-using-ot-gmm-gmm-ot-apply-map) solver to compare GMM while enforcing the transport plan to remain a GMM, that benefits from a closed-form solution making it practical for high-dimensional matching problems. We also extended our general unbalanced OT solvers to support any non-negative reference measure in the regularization terms, before adding the novel [translation invariant UOT](https://pythonot.github.io/master/auto_examples/unbalanced-partial/plot_conv_sinkhorn_ti.html) solver showcasing a higher convergence speed. We also implemented several new solvers and enhanced existing ones to perform OT across spaces. These include a [semi-relaxed FGW barycenter](https://pythonot.github.io/master/auto_examples/gromov/plot_semirelaxed_gromov_wasserstein_barycenter.html) solver, coupled with new initialization heuristics for the inner divergence computation, to perform graph partitioning or dictionary learning. Followed by novel [unbalanced FGW and Co-optimal transport](https://pythonot.github.io/master/auto_examples/others/plot_outlier_detection_with_COOT_and_unbalanced_COOT.html) solvers to promote robustness to outliers in such matching problems. And we finally updated the implementation of partial GW now supporting asymmetric structures and the KL divergence, while leveraging a new generic conditional gradient solver for partial transport problems enabling significant speed improvements. These latest updates required some modifications to the line search functions of our generic conditional gradient solver, paving the way for future improvements to other GW-based solvers. Last but not least, we implemented a pre-commit scheme to automatically correct common programming mistakes likely to be made by our future contributors.
 
 This release also contains few bug fixes, concerning the support of any metric in `ot.emd_1d` / `ot.emd2_1d`, and the support of any weights in `ot.gaussian`.
- 
+
 #### Breaking change
 - Custom functions provided as parameter `line_search` to `ot.optim.generic_conditional_gradient` must now have the signature `line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs)`, adding as input `df_G` the gradient of the regularizer evaluated at the transport plan `G`. This change aims at improving speed of solvers having quadratic polynomial functions as regularizer such as the Gromov-Wassertein loss (PR #663).
 

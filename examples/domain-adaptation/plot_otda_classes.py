@@ -4,6 +4,9 @@
 OT for domain adaptation
 ========================
 
+.. note::
+    Example added in release: 0.1.9.
+
 This example introduces a domain adaptation in a 2D setting and the 4 OTDA
 approaches currently supported in POT.
 
@@ -80,7 +83,7 @@ pl.tight_layout()
 # Fig 2 : plot optimal couplings and transported samples
 # ------------------------------------------------------
 
-param_img = {"interpolation": "nearest"}
+param_img = {"interpolation": "nearest", "cmap": "gray_r"}
 
 pl.figure(2, figsize=(15, 8))
 pl.subplot(2, 4, 1)

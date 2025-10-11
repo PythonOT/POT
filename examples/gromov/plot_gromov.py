@@ -3,6 +3,10 @@
 ==========================
 Gromov-Wasserstein example
 ==========================
+
+.. note::
+    Example added in release: 0.8.0.
+
 This example is designed to show how to use the Gromov-Wasserstein distance
 computation in POT.
 We first compare 3 solvers to estimate the distance based on
@@ -22,7 +26,7 @@ International Conference on Machine Learning (ICML). 2019.
 [33] Kerdoncuff T., Emonet R., Marc S. "Sampled Gromov Wasserstein",
 Machine Learning Journal (MJL), 2021.
 
-[51] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019).
+[51] Xu, H., Luo, D., Zha, H., & Carin, L. (2019).
 "Gromov-wasserstein learning for graph matching and node embedding".
 In International Conference on Machine Learning (ICML), 2019.
 

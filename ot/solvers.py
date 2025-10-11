@@ -12,7 +12,12 @@ from .utils import OTResult, BaryResult, dist
 from .lp import emd2, wasserstein_1d
 from .backend import get_backend
 from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
-from .bregman import sinkhorn_log, empirical_sinkhorn2, empirical_sinkhorn2_geomloss
+from .bregman import (
+    sinkhorn_log,
+    empirical_sinkhorn2,
+    empirical_sinkhorn2_geomloss,
+    empirical_sinkhorn_nystroem2,
+)
 from .smooth import smooth_ot_dual
 from .gromov import (
     gromov_wasserstein2,
@@ -41,6 +46,7 @@ lst_method_lazy = [
     "1d",
     "gaussian",
     "lowrank",
+    "nystroem",
     "factored",
     "geomloss",
     "geomloss_auto",
@@ -623,7 +629,7 @@ def solve_gromov(
 
     .. math::
         \min_{\mathbf{T}\geq 0} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F +
-        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} + \lambda_r R(\mathbf{T}) + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
+        \alpha \sum_{i,j,k,l} L(\mathbf{C_1}_{i,k}, \mathbf{C_2}_{j,l}) \mathbf{T}_{i,j} \mathbf{T}_{k,l} + \lambda_r R(\mathbf{T}) + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
 
     The regularization is selected with `reg` (:math:`\lambda_r`) and
     `reg_type`. By default ``reg=None`` and there is no regularization. The
@@ -1368,6 +1374,7 @@ def solve_sample(
     tol=None,
     verbose=False,
     grad="autodiff",
+    random_state=None,
 ):
     r"""Solve the discrete optimal transport problem using the samples in the source and target domains.
 
@@ -1390,9 +1397,9 @@ def solve_sample(
 
     Parameters
     ----------
-    X_s : array-like, shape (n_samples_a, dim)
+    X_a : array-like, shape (n_samples_a, dim)
         samples in the source domain
-    X_t : array-like, shape (n_samples_b, dim)
+    X_b : array-like, shape (n_samples_b, dim)
         samples in the target domain
     a : array-like, shape (dim_a,), optional
         Samples weights in the source domain (default is uniform)
@@ -1436,7 +1443,7 @@ def solve_sample(
     plan_init : array-like, shape (dim_a, dim_b), optional
         Initialization of the OT plan for iterative methods, by default None
     rank : int, optional
-        Rank of the OT matrix for lazy solers (method='factored'), by default 100
+        Rank of the OT matrix for lazy solers (method='factored') or (method='nystroem'), by default 100
     scaling : float, optional
         Scaling factor for the epsilon scaling lazy solvers (method='geomloss'), by default 0.95
     potentials_init : (array-like(dim_a,),array-like(dim_b,)), optional
@@ -1451,6 +1458,8 @@ def solve_sample(
         outputs (`plan, value, value_linear`) but with important memory cost.
         'envelope' provides gradients only for `value` and and other outputs are
         detached. This is useful for memory saving when only the value is needed.
+    random_state : int, optional
+        The random state for sampling the components in each distribution for method='nystroem'.
 
     Returns
     -------
@@ -1628,6 +1637,10 @@ def solve_sample(
         # recover the full low rank plan
         factored_solution = factored_solution_lazy[:]
 
+    - ** Nystroem OT [76] ** (when ``method='nystroem'``):
+
+    Corresponds to a low rank approximation of entropic OT (for a squared Euclidean cost) that runs in linear time.
+
     - **Gaussian Bures-Wasserstein [2]** (when ``method='gaussian'``):
 
     This method computes the Gaussian Bures-Wasserstein distance between two
@@ -1702,6 +1715,9 @@ def solve_sample(
     .. [65] Scetbon, M., Cuturi, M., & Peyré, G. (2021).
         Low-rank Sinkhorn Factorization. In International Conference on
         Machine Learning.
+
+    .. [80] Altschuler, J., Bach, F., Rudi, A., Niles-Weed, J. (2019).
+        Massively scalable Sinkhorn distances via the Nyström method. NeurIPS.
 
 
     """
@@ -1835,6 +1851,37 @@ def solve_sample(
             )
             value = log["value"]
             value_linear = log["value_linear"]
+            lazy_plan = log["lazy_plan"]
+            if not lazy0:  # store plan if not lazy
+                plan = lazy_plan[:]
+
+        elif method == "nystroem":
+            if metric.lower() not in ["sqeuclidean"]:
+                raise (
+                    NotImplementedError('Not implemented metric="{}"'.format(metric))
+                )
+
+            if max_iter is None:
+                max_iter = 1000
+            if tol is None:
+                tol = 1e-7
+            if reg is None:
+                reg = 1.0
+
+            value, log = empirical_sinkhorn_nystroem2(
+                X_a,
+                X_b,
+                reg=reg,
+                anchors=rank,
+                a=a,
+                b=b,
+                numItermax=max_iter,
+                verbose=verbose,
+                stopThr=tol,
+                random_state=random_state,
+                log=True,
+            )
+
             lazy_plan = log["lazy_plan"]
             if not lazy0:  # store plan if not lazy
                 plan = lazy_plan[:]

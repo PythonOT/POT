@@ -31,8 +31,9 @@ lst_method_params_solve_sample = [
     {"method": "1d", "metric": "euclidean"},
     {"method": "gaussian"},
     {"method": "gaussian", "reg": 1},
-    {"method": "factored", "rank": 10},
-    {"method": "lowrank", "rank": 10},
+    {"method": "factored", "rank": 2},
+    {"method": "lowrank", "rank": 2, "max_iter": 5},
+    {"method": "nystroem", "rank": 2},
 ]
 
 lst_parameters_solve_sample_NotImplemented = [
@@ -49,6 +50,10 @@ lst_parameters_solve_sample_NotImplemented = [
         "method": "lowrank",
         "metric": "euclidean",
     },  # fail lowrank on metric not euclidean
+    {
+        "method": "nystroem",
+        "metric": "euclidean",
+    },  # fail nystroem on metric not euclidean
     {"lazy": True},  # fail lazy for non regularized
     {"lazy": True, "unbalanced": 1},  # fail lazy for non regularized unbalanced
     {
@@ -665,10 +670,10 @@ def test_solve_sample_geomloss(nx, metric):
 
 @pytest.mark.parametrize("method_params", lst_method_params_solve_sample)
 def test_solve_sample_methods(nx, method_params):
-    n_samples_s = 20
-    n_samples_t = 7
+    n_samples_s = 10
+    n_samples_t = 9
     n_features = 2
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(42)
 
     x = rng.randn(n_samples_s, n_features)
     y = rng.randn(n_samples_t, n_features)
@@ -684,8 +689,8 @@ def test_solve_sample_methods(nx, method_params):
     assert_allclose_sol(sol, solb)
 
     sol2 = ot.solve_sample(x, x, **method_params)
-    if method_params["method"] not in ["factored", "lowrank"]:
-        np.testing.assert_allclose(sol2.value, 0)
+    if method_params["method"] not in ["factored", "lowrank", "nystroem"]:
+        np.testing.assert_allclose(sol2.value, 0, atol=1e-10)
 
 
 @pytest.mark.parametrize("method_params", lst_parameters_solve_sample_NotImplemented)

@@ -4,6 +4,9 @@ r"""
 Detecting outliers by learning sample marginal distribution with CO-Optimal Transport and by using unbalanced Co-Optimal Transport
 ======================================================================================================================================
 
+.. note::
+    Example added in release: 0.9.5.
+
 In this example, we consider two point clouds living in different Euclidean spaces, where the outliers
 are artificially injected into the target data. We illustrate two methods which allow to filter out
 these outliers.
@@ -40,6 +43,8 @@ where all the marginal distributions are uniform.
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 # License: MIT License
+
+# sphinx_gallery_thumbnail_number = 4
 
 from matplotlib.patches import ConnectionPatch
 import torch

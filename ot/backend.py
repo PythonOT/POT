@@ -459,6 +459,16 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def logsumexp(self, a, axis=None, keepdims=False):
+        r"""
+        Computes the log of the sum of exponentials of input elements.
+
+        This function follows the api from :any:`scipy.special.logsumexp`
+
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.logsumexp.html
+        """
+        raise NotImplementedError()
+
     def sqrt(self, a):
         r"""
         Returns the non-ngeative square root of a tensor, element-wise.
@@ -709,16 +719,6 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def logsumexp(self, a, axis=None):
-        r"""
-        Computes the log of the sum of exponentials of input elements.
-
-        This function follows the api from :any:`scipy.special.logsumexp`
-
-        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.logsumexp.html
-        """
-        raise NotImplementedError()
-
     def stack(self, arrays, axis=0):
         r"""
         Joins a sequence of tensors along a new dimension.
@@ -776,6 +776,16 @@ class Backend:
         This function follows the api from :any:`numpy.random.rand`
 
         See: https://numpy.org/doc/stable/reference/random/generated/numpy.random.rand.html
+        """
+        raise NotImplementedError()
+
+    def randperm(self, size, type_as=None):
+        r"""
+        Returns a random permutation of integers from 0 to n-1.
+
+        This function follows the api from :any:`torch.randperm`
+
+        See: https://docs.pytorch.org/docs/stable/generated/torch.randperm.html
         """
         raise NotImplementedError()
 
@@ -881,6 +891,16 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def unsqueeze(self, a, axis):
+        r"""
+        Add a dimension of size one at the specified axis.
+
+        This function follows the api from :any:`numpy.expand_dims`.
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.expand_dims.html
+        """
+        raise NotImplementedError()
+
     def bitsize(self, type_as):
         r"""
         Gives the number of bits used by the data type of the given tensor.
@@ -926,6 +946,16 @@ class Backend:
         This function follows the api from :any:`scipy.linalg.inv`.
 
         See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.inv.html
+        """
+        raise NotImplementedError()
+
+    def pinv(self, a, hermitian=False):
+        r"""
+        Computes the pseudo inverse of a matrix.
+
+        This function follows the api from :any:`numpy.linalg.pinv`.
+
+        See: https://numpy.org/devdocs/reference/generated/numpy.linalg.pinv.html
         """
         raise NotImplementedError()
 
@@ -1175,6 +1205,9 @@ class NumpyBackend(Backend):
     def log(self, a):
         return np.log(a)
 
+    def logsumexp(self, a, axis=None, keepdims=False):
+        return special.logsumexp(a, axis=axis, keepdims=keepdims)
+
     def sqrt(self, a):
         return np.sqrt(a)
 
@@ -1264,9 +1297,6 @@ class NumpyBackend(Backend):
     def unique(self, a, return_inverse=False):
         return np.unique(a, return_inverse=return_inverse)
 
-    def logsumexp(self, a, axis=None):
-        return special.logsumexp(a, axis=axis)
-
     def stack(self, arrays, axis=0):
         return np.stack(arrays, axis)
 
@@ -1282,6 +1312,11 @@ class NumpyBackend(Backend):
 
     def randn(self, *size, type_as=None):
         return self.rng_.randn(*size)
+
+    def randperm(self, size, type_as=None):
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        return self.rng_.permutation(size)
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         if type_as is None:
@@ -1339,6 +1374,9 @@ class NumpyBackend(Backend):
     def squeeze(self, a, axis=None):
         return np.squeeze(a, axis=axis)
 
+    def unsqueeze(self, a, axis):
+        return np.expand_dims(a, axis=axis)
+
     def bitsize(self, type_as):
         return type_as.itemsize * 8
 
@@ -1367,6 +1405,9 @@ class NumpyBackend(Backend):
 
     def inv(self, a):
         return scipy.linalg.inv(a)
+
+    def pinv(self, a, hermitian=False):
+        return np.linalg.pinv(a, hermitian=hermitian)
 
     def sqrtm(self, a):
         L, V = np.linalg.eigh(a)
@@ -1577,6 +1618,9 @@ class JaxBackend(Backend):
     def log(self, a):
         return jnp.log(a)
 
+    def logsumexp(self, a, axis=None, keepdims=False):
+        return jspecial.logsumexp(a, axis=axis, keepdims=keepdims)
+
     def sqrt(self, a):
         return jnp.sqrt(a)
 
@@ -1663,9 +1707,6 @@ class JaxBackend(Backend):
     def unique(self, a, return_inverse=False):
         return jnp.unique(a, return_inverse=return_inverse)
 
-    def logsumexp(self, a, axis=None):
-        return jspecial.logsumexp(a, axis=axis)
-
     def stack(self, arrays, axis=0):
         return jnp.stack(arrays, axis)
 
@@ -1689,6 +1730,15 @@ class JaxBackend(Backend):
             return jax.random.normal(subkey, shape=size, dtype=type_as.dtype)
         else:
             return jax.random.normal(subkey, shape=size)
+
+    def randperm(self, size, type_as=None):
+        self.rng_, subkey = jax.random.split(self.rng_)
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        if type_as is not None:
+            return jax.random.permutation(subkey, size).astype(type_as.dtype)
+        else:
+            return jax.random.permutation(subkey, size)
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         # Currently, JAX does not support sparse matrices
@@ -1749,6 +1799,9 @@ class JaxBackend(Backend):
     def squeeze(self, a, axis=None):
         return jnp.squeeze(a, axis=axis)
 
+    def unsqueeze(self, a, axis):
+        return jnp.expand_dims(a, axis=axis)
+
     def bitsize(self, type_as):
         return type_as.dtype.itemsize * 8
 
@@ -1780,6 +1833,9 @@ class JaxBackend(Backend):
 
     def inv(self, a):
         return jnp.linalg.inv(a)
+
+    def pinv(self, a, hermitian=False):
+        return jnp.linalg.pinv(a, hermitian=hermitian)
 
     def sqrtm(self, a):
         L, V = jnp.linalg.eigh(a)
@@ -2148,11 +2204,11 @@ class TorchBackend(Backend):
     def unique(self, a, return_inverse=False):
         return torch.unique(a, return_inverse=return_inverse)
 
-    def logsumexp(self, a, axis=None):
+    def logsumexp(self, a, axis=None, keepdims=False):
         if axis is not None:
-            return torch.logsumexp(a, dim=axis)
+            return torch.logsumexp(a, dim=axis, keepdim=keepdims)
         else:
-            return torch.logsumexp(a, dim=tuple(range(len(a.shape))))
+            return torch.logsumexp(a, dim=tuple(range(len(a.shape))), keepdim=keepdims)
 
     def stack(self, arrays, axis=0):
         return torch.stack(arrays, dim=axis)
@@ -2161,7 +2217,9 @@ class TorchBackend(Backend):
         return torch.reshape(a, shape)
 
     def seed(self, seed=None):
-        if isinstance(seed, int):
+        if seed is None:
+            pass
+        elif isinstance(seed, int):
             self.rng_.manual_seed(seed)
             self.rng_cuda_.manual_seed(seed)
         elif isinstance(seed, torch.Generator):
@@ -2199,6 +2257,22 @@ class TorchBackend(Backend):
             )
         else:
             return torch.randn(size=size, generator=self.rng_)
+
+    def randperm(self, size, type_as=None):
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        if type_as is not None:
+            generator = (
+                self.rng_cuda_ if self.device_type(type_as) == "GPU" else self.rng_
+            )
+            return torch.randperm(
+                n=size,
+                dtype=type_as.dtype,
+                generator=generator,
+                device=type_as.device,
+            )
+        else:
+            return torch.randperm(n=size, generator=self.rng_)
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         if type_as is None:
@@ -2271,6 +2345,9 @@ class TorchBackend(Backend):
         else:
             return torch.squeeze(a, dim=axis)
 
+    def unsqueeze(self, a, axis):
+        return torch.unsqueeze(a, dim=axis)
+
     def bitsize(self, type_as):
         return torch.finfo(type_as.dtype).bits
 
@@ -2313,6 +2390,9 @@ class TorchBackend(Backend):
 
     def inv(self, a):
         return torch.linalg.inv(a)
+
+    def pinv(self, a, hermitian=False):
+        return torch.linalg.pinv(a, hermitian=hermitian)
 
     def sqrtm(self, a):
         L, V = torch.linalg.eigh(a)
@@ -2624,6 +2704,15 @@ class CupyBackend(Backend):  # pragma: no cover
             with cp.cuda.Device(type_as.device):
                 return self.rng_.randn(*size, dtype=type_as.dtype)
 
+    def randperm(self, size, type_as=None):
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        if type_as is None:
+            return self.rng_.permutation(size)
+        else:
+            with cp.cuda.Device(type_as.device):
+                return self.rng_.permutation(size).astype(type_as.dtype)
+
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         data = self.from_numpy(data)
         rows = self.from_numpy(rows)
@@ -2727,6 +2816,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def inv(self, a):
         return cp.linalg.inv(a)
+
+    def pinv(self, a, hermitian=False):
+        return cp.linalg.pinv(a)
 
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
@@ -3048,6 +3140,19 @@ class TensorflowBackend(Backend):
         else:
             return self.rng_.normal(size, dtype=type_as.dtype)
 
+    def randperm(self, size, type_as=None):
+        if not isinstance(size, int):
+            raise ValueError("size must be an integer")
+        local_seed = self.rng_.make_seeds(2)[0]
+        if type_as is None:
+            return tf.random.experimental.stateless_shuffle(
+                tf.range(size), seed=local_seed
+            )
+        else:
+            return tf.random.experimental.stateless_shuffle(
+                tf.range(size, dtype=type_as.dtype), seed=local_seed
+            )
+
     def _convert_to_index_for_coo(self, tensor):
         if isinstance(tensor, self.__type__):
             return int(self.max(tensor)) + 1
@@ -3123,6 +3228,9 @@ class TensorflowBackend(Backend):
     def squeeze(self, a, axis=None):
         return tnp.squeeze(a, axis=axis)
 
+    def unsqueeze(self, a, axis):
+        return tnp.expand_dims(a, axis=axis)
+
     def bitsize(self, type_as):
         return type_as.dtype.size * 8
 
@@ -3163,6 +3271,9 @@ class TensorflowBackend(Backend):
 
     def inv(self, a):
         return tf.linalg.inv(a)
+
+    def pinv(self, a, hermitian=False):
+        return tf.linalg.pinv(a)
 
     def sqrtm(self, a):
         L, V = tf.linalg.eigh(a)

@@ -4,6 +4,9 @@
 Spherical Sliced Wasserstein on distributions in S^2
 ====================================================
 
+.. note::
+    Example added in release: 0.8.0.
+
 This example illustrates the computation of the spherical sliced Wasserstein discrepancy as
 proposed in [46].
 
@@ -15,7 +18,7 @@ proposed in [46].
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number = 2
+# sphinx_gallery_thumbnail_number = 1
 
 import matplotlib.pylab as pl
 import numpy as np

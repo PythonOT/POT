@@ -380,10 +380,10 @@ More details about the algorithms used are given in the following note.
     In addition to all those variants of Sinkhorn, we have another
     implementation solving the problem in the smooth dual or semi-dual in
     :any:`ot.smooth`. This solver uses the :any:`scipy.optimize.minimize`
-    function to solve the smooth problem with :code:`L-BFGS-B` algorithm. Tu use
+    function to solve the smooth problem with :code:`L-BFGS-B` algorithm. To use
     this solver, use functions :any:`ot.smooth.smooth_ot_dual` or
     :any:`ot.smooth.smooth_ot_semi_dual` with parameter :code:`reg_type='kl'` to
-    choose entropic/Kullbach-Leibler regularization.
+    choose entropic/Kullback-Leibler regularization.
 
     **Choosing a Sinkhorn solver**
 
@@ -1217,3 +1217,6 @@ References
     couplings <http://proceedings.mlr.press/v89/forrow19a/forrow19a.pdf>`_. In
     The 22nd International Conference on Artificial Intelligence and Statistics
     (pp. 2454-2465). PMLR.
+
+.. [41] Xu, H., Luo, D., & Carin, L. (2019). `Scalable Gromov-Wasserstein learning for graph partitioning and matching
+    <https://arxiv.org/abs/1906.03666>`_\ , Advances in neural information processing systems, 32.

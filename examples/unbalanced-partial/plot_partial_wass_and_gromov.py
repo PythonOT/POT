@@ -4,6 +4,9 @@
 Partial Wasserstein and Gromov-Wasserstein example
 ==================================================
 
+.. note::
+    Example added in release: 0.7.0.
+
 This example is designed to show how to use the Partial (Gromov-)Wasserstein
 distance computation in POT [29].
 
@@ -71,10 +74,10 @@ print("Entropic partial Wasserstein distance (m = 0.5): " + str(log["partial_w_d
 
 pl.figure(1, (10, 5))
 pl.subplot(1, 2, 1)
-pl.imshow(w0, cmap="jet")
+pl.imshow(w0, cmap="gray_r")
 pl.title("Partial Wasserstein")
 pl.subplot(1, 2, 2)
-pl.imshow(w, cmap="jet")
+pl.imshow(w, cmap="gray_r")
 pl.title("Entropic partial Wasserstein")
 pl.show()
 
@@ -136,11 +139,12 @@ print("Entropic Wasserstein distance (m = 1): " + str(log["partial_gw_dist"]))
 
 pl.figure(1, (10, 5))
 pl.title("mass to be transported m = 1")
+pl.axis("off")
 pl.subplot(1, 2, 1)
-pl.imshow(res0, cmap="jet")
+pl.imshow(res0, cmap="gray_r")
 pl.title("Gromov-Wasserstein")
 pl.subplot(1, 2, 2)
-pl.imshow(res, cmap="jet")
+pl.imshow(res, cmap="gray_r")
 pl.title("Entropic Gromov-Wasserstein")
 pl.show()
 
@@ -157,12 +161,13 @@ res, log = ot.gromov.entropic_partial_gromov_wasserstein(
 print("Partial Wasserstein distance (m = 2/3): " + str(log0["partial_gw_dist"]))
 print("Entropic partial Wasserstein distance (m = 2/3): " + str(log["partial_gw_dist"]))
 
-pl.figure(1, (10, 5))
+pl.figure(2, (10, 5))
 pl.title("mass to be transported m = 2/3")
+pl.axis("off")
 pl.subplot(1, 2, 1)
-pl.imshow(res0, cmap="jet")
+pl.imshow(res0, cmap="gray_r")
 pl.title("Partial Gromov-Wasserstein")
 pl.subplot(1, 2, 2)
-pl.imshow(res, cmap="jet")
+pl.imshow(res, cmap="gray_r")
 pl.title("Entropic partial Gromov-Wasserstein")
 pl.show()

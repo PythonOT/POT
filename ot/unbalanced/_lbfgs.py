@@ -9,12 +9,11 @@ Regularized Unbalanced OT solvers
 #
 # License: MIT License
 
-import warnings
 import numpy as np
 from scipy.optimize import minimize, Bounds
 
 from ..backend import get_backend
-from ..utils import list_to_array, get_parameter_pair
+from ..utils import list_to_array, get_parameter_pair, fun_to_numpy
 
 
 def _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div="kl", regm_div="kl"):
@@ -206,26 +205,27 @@ def lbfgsb_unbalanced(
         loss matrix
     reg: float
         regularization term >=0
-    c : array-like (dim_a, dim_b), optional (default = None)
-        Reference measure for the regularization.
-        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
     reg_m: float or indexable object of length 1 or 2
         Marginal relaxation term: nonnegative (including 0) but cannot be infinity.
         If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
         then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
         If :math:`\mathrm{reg_{m}}` is an array, it must be a Numpy array.
-    reg_div: string, optional
+    c : array-like (dim_a, dim_b), optional (default = None)
+        Reference measure for the regularization.
+        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+    reg_div: string or pair of callable functions, optional (default = 'kl')
         Divergence used for regularization.
         Can take three values: 'entropy' (negative entropy), or
         'kl' (Kullback-Leibler) or 'l2' (half-squared) or a tuple
         of two callable functions returning the reg term and its derivative.
         Note that the callable functions should be able to handle Numpy arrays
-        and not tensors from the backend
-    regm_div: string, optional
+        and not tensors from the backend, otherwise functions will be converted to Numpy
+        leading to a computational overhead.
+    regm_div: string, optional (default = 'kl')
         Divergence to quantify the difference between the marginals.
         Can take three values: 'kl' (Kullback-Leibler) or 'l2' (half-squared) or 'tv' (Total Variation)
-    G0: array-like (dim_a, dim_b)
-        Initialization of the transport matrix
+    G0: array-like (dim_a, dim_b), optional (default = None)
+        Initialization of the transport matrix. None corresponds to uniform product.
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -267,26 +267,14 @@ def lbfgsb_unbalanced(
     ot.unbalanced.sinkhorn_unbalanced2 : Entropic regularized OT loss
     """
 
-    # wrap the callable function to handle numpy arrays
-    if isinstance(reg_div, tuple):
-        f0, df0 = reg_div
-        try:
-            f0(G0)
-            df0(G0)
-        except BaseException:
-            warnings.warn(
-                "The callable functions should be able to handle numpy arrays, wrapper ar added to handle this which comes with overhead"
-            )
+    # test settings
+    regm_div = regm_div.lower()
+    if regm_div not in ["kl", "l2", "tv"]:
+        raise ValueError(
+            "Unknown regm_div = {}. Must be either 'kl', 'l2' or 'tv'".format(regm_div)
+        )
 
-            def f(x):
-                return nx.to_numpy(f0(nx.from_numpy(x, type_as=M0)))
-
-            def df(x):
-                return nx.to_numpy(df0(nx.from_numpy(x, type_as=M0)))
-
-            reg_div = (f, df)
-
-    else:
+    if isinstance(reg_div, str):
         reg_div = reg_div.lower()
         if reg_div not in ["entropy", "kl", "l2"]:
             raise ValueError(
@@ -295,16 +283,11 @@ def lbfgsb_unbalanced(
                 )
             )
 
-    regm_div = regm_div.lower()
-    if regm_div not in ["kl", "l2", "tv"]:
-        raise ValueError(
-            "Unknown regm_div = {}. Must be either 'kl', 'l2' or 'tv'".format(regm_div)
-        )
-
+    # convert all inputs to numpy arrays
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
     M, a, b = list_to_array(M, a, b)
-    nx = get_backend(M, a, b)
+    nx = get_backend(M, a, b, G0)
     M0 = M
 
     dim_a, dim_b = M.shape
@@ -315,9 +298,21 @@ def lbfgsb_unbalanced(
         b = nx.ones(dim_b, type_as=M) / dim_b
 
     # convert to numpy
-    a, b, M, reg_m1, reg_m2, reg = nx.to_numpy(a, b, M, reg_m1, reg_m2, reg)
+    if nx.__name__ == "numpy":  # remaining parameters which can be arrays
+        reg_m1, reg_m2, reg = nx.to_numpy(reg_m1, reg_m2, reg)
+    else:
+        a, b, M, reg_m1, reg_m2, reg = nx.to_numpy(a, b, M, reg_m1, reg_m2, reg)
+
     G0 = a[:, None] * b[None, :] if G0 is None else nx.to_numpy(G0)
     c = a[:, None] * b[None, :] if c is None else nx.to_numpy(c)
+
+    # potentially convert the callable function to handle numpy arrays
+    if isinstance(reg_div, tuple):
+        f0, df0 = reg_div
+        f = fun_to_numpy(f0, G0, nx, warn=True)
+        df = fun_to_numpy(df0, G0, nx, warn=True)
+
+        reg_div = (f, df)
 
     _func = _get_loss_unbalanced(a, b, c, M, reg, reg_m1, reg_m2, reg_div, regm_div)
 
@@ -399,26 +394,27 @@ def lbfgsb_unbalanced2(
         loss matrix
     reg: float
         regularization term >=0
-    c : array-like (dim_a, dim_b), optional (default = None)
-        Reference measure for the regularization.
-        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
     reg_m: float or indexable object of length 1 or 2
         Marginal relaxation term: nonnegative (including 0) but cannot be infinity.
         If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
         then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
         If :math:`\mathrm{reg_{m}}` is an array, it must be a Numpy array.
-    reg_div: string, optional
+    c : array-like (dim_a, dim_b), optional (default = None)
+        Reference measure for the regularization.
+        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
+    reg_div: string or pair of callable functions, optional (default = 'kl')
         Divergence used for regularization.
         Can take three values: 'entropy' (negative entropy), or
         'kl' (Kullback-Leibler) or 'l2' (half-squared) or a tuple
-        of two calable functions returning the reg term and its derivative.
+        of two callable functions returning the reg term and its derivative.
         Note that the callable functions should be able to handle Numpy arrays
-        and not tesors from the backend
-    regm_div: string, optional
+        and not tensors from the backend, otherwise functions will be converted to Numpy
+        leading to a computational overhead.
+    regm_div: string, optional (default = 'kl')
         Divergence to quantify the difference between the marginals.
         Can take three values: 'kl' (Kullback-Leibler) or 'l2' (half-squared) or 'tv' (Total Variation)
-    G0: array-like (dim_a, dim_b)
-        Initialization of the transport matrix
+    G0: array-like (dim_a, dim_b), optional (default = None)
+        Initialization of the transport matrix. None corresponds to uniform product.
     returnCost: string, optional (default = "linear")
         If `returnCost` = "linear", then return the linear part of the unbalanced OT loss.
         If `returnCost` = "total", then return the total unbalanced OT loss.

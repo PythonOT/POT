@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 r"""
 ===============================================================================
-Computing d-dimensional Barycenters via d-MMOT
+Computing 1-dimensional Barycenters via d-MMOT
 ===============================================================================
+
+.. note::
+    Example added in release: 0.9.1.
 
 When the cost is discretized (Monge), the d-MMOT solver can more quickly
 compute and minimize the distance between many distributions without the need
@@ -15,6 +18,8 @@ primal/dual algorithm and classical LP barycenter approaches.
 #         Xizheng Yu <xyu354@wisc.edu>
 #
 # License: MIT License
+
+# sphinx_gallery_thumbnail_number = 2
 
 # %%
 # Generating 2 distributions

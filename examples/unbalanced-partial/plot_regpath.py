@@ -3,6 +3,10 @@
 ================================================================
 Regularization path of l2-penalized unbalanced optimal transport
 ================================================================
+
+.. note::
+    Example added in release: 0.8.0.
+
 This example illustrate the regularization path for 2D unbalanced
 optimal transport. We present here both the fully relaxed case
 and the semi-relaxed case.

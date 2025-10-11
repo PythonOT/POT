@@ -37,7 +37,6 @@ from . import gaussian
 from . import lowrank
 from . import gmm
 
-
 # OT functions
 from .lp import (
     emd,
@@ -48,6 +47,7 @@ from .lp import (
     binary_search_circle,
     wasserstein_circle,
     semidiscrete_wasserstein2_unif_circle,
+    linear_circular_ot,
 )
 from .bregman import sinkhorn, sinkhorn2, barycenter
 from .unbalanced import sinkhorn_unbalanced, barycenter_unbalanced, sinkhorn_unbalanced2
@@ -57,6 +57,7 @@ from .sliced import (
     max_sliced_wasserstein_distance,
     sliced_wasserstein_sphere,
     sliced_wasserstein_sphere_unif,
+    linear_sliced_wasserstein_sphere,
 )
 from .gromov import (
     gromov_wasserstein,
@@ -71,10 +72,12 @@ from .factored import factored_optimal_transport
 from .solvers import solve, solve_gromov, solve_sample, bary_sample
 from .lowrank import lowrank_sinkhorn
 
+from .batch import solve_batch, solve_sample_batch, solve_gromov_batch, dist_batch
+
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.9.6dev0"
+__version__ = "0.9.6.post1"
 
 __all__ = [
     "emd",
@@ -105,6 +108,7 @@ __all__ = [
     "sinkhorn_unbalanced2",
     "sliced_wasserstein_distance",
     "sliced_wasserstein_sphere",
+    "linear_sliced_wasserstein_sphere",
     "gromov_wasserstein",
     "gromov_wasserstein2",
     "gromov_barycenters",
@@ -130,7 +134,12 @@ __all__ = [
     "binary_search_circle",
     "wasserstein_circle",
     "semidiscrete_wasserstein2_unif_circle",
+    "linear_circular_ot",
     "sliced_wasserstein_sphere_unif",
     "lowrank_sinkhorn",
     "lowrank_gromov_wasserstein_samples",
+    "solve_batch",
+    "solve_gromov_batch",
+    "solve_sample_batch",
+    "dist_batch",
 ]

@@ -142,7 +142,7 @@ def entropic_gromov_wasserstein(
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
 
-    .. [51] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
+    .. [51] Xu, H., Luo, D., Zha, H., & Carin, L. (2019). Gromov-wasserstein
         learning for graph matching and node embedding. In International
         Conference on Machine Learning (ICML), 2019.
     """
@@ -369,7 +369,7 @@ def entropic_gromov_wasserstein2(
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
-    .. [51] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
+    .. [51] Xu, H., Luo, D., Zha, H., & Carin, L. (2019). Gromov-wasserstein
         learning for graph matching and node embedding. In International
         Conference on Machine Learning (ICML), 2019.
     """
@@ -1125,7 +1125,7 @@ def entropic_fused_gromov_wasserstein(
         distance between networks and stable network invariants.
         Information and Inference: A Journal of the IMA, 8(4), 757-787.
 
-    .. [51] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
+    .. [51] Xu, H., Luo, D., Zha, H., & Carin, L. (2019). Gromov-wasserstein
         learning for graph matching and node embedding. In International
         Conference on Machine Learning (ICML), 2019.
 
@@ -1358,7 +1358,7 @@ def entropic_fused_gromov_wasserstein2(
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
 
-    .. [51] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019). Gromov-wasserstein
+    .. [51] Xu, H., Luo, D., Zha, H., & Carin, L. (2019). Gromov-wasserstein
         learning for graph matching and node embedding. In International
         Conference on Machine Learning (ICML), 2019.
 
