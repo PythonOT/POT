@@ -4,6 +4,9 @@
 Optimal transport with factored couplings
 ==========================================
 
+.. note::
+    Example added in release: 0.8.2.
+
 Illustration of the factored coupling OT between 2D empirical distributions
 
 """

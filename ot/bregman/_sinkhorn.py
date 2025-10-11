@@ -14,7 +14,6 @@ Bregman projections solvers for entropic regularized OT
 import warnings
 
 import numpy as np
-
 from ..utils import list_to_array
 from ..backend import get_backend
 

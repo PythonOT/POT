@@ -6,6 +6,7 @@ Bregman projections solvers for entropic regularized OT for empirical distributi
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Kilian Fatras <kilian.fatras@irisa.fr>
 #         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
+#         Titouan Vayer <titouan.vayer@inria.fr>
 #
 # License: MIT License
 
@@ -15,6 +16,11 @@ from ..utils import dist, list_to_array, unif, LazyTensor
 from ..backend import get_backend
 
 from ._sinkhorn import sinkhorn, sinkhorn2
+from ..lowrank import (
+    kernel_nystroem,
+    sinkhorn_low_rank_kernel,
+    compute_lr_sqeuclidean_matrix,
+)
 
 
 def get_sinkhorn_lazytensor(X_a, X_b, f, g, metric="sqeuclidean", reg=1e-1, nx=None):
@@ -267,7 +273,7 @@ def empirical_sinkhorn(
     else:
         M = dist(X_s, X_t, metric=metric)
         if log:
-            pi, log = sinkhorn(
+            G, log = sinkhorn(
                 a,
                 b,
                 M,
@@ -279,9 +285,9 @@ def empirical_sinkhorn(
                 warmstart=warmstart,
                 **kwargs,
             )
-            return pi, log
+            return G, log
         else:
-            pi = sinkhorn(
+            G = sinkhorn(
                 a,
                 b,
                 M,
@@ -293,7 +299,7 @@ def empirical_sinkhorn(
                 warmstart=warmstart,
                 **kwargs,
             )
-            return pi
+            return G
 
 
 def empirical_sinkhorn2(
@@ -755,3 +761,233 @@ def empirical_sinkhorn_divergence(
 
         sinkhorn_div = sinkhorn_loss_ab - 0.5 * (sinkhorn_loss_a + sinkhorn_loss_b)
         return nx.maximum(0, sinkhorn_div)
+
+
+def empirical_sinkhorn_nystroem(
+    X_s,
+    X_t,
+    reg=1.0,
+    anchors=50,
+    a=None,
+    b=None,
+    numItermax=1000,
+    stopThr=1e-9,
+    verbose=False,
+    log=False,
+    warn=True,
+    warmstart=None,
+    random_state=None,
+):
+    r"""
+    Solves the entropic regularization optimal transport problem with Sinkhorn and Nystroem factorization [76] and returns the
+    OT matrix from empirical data.
+    Corresponds to an approximation of entropic OT (for a squared Euclidean cost) that runs in linear time.
+    The number of anchors controls the level of approximation (the higher, the better the approximation, but the slower the computation becomes).
+    Warning: with low level of regularization, the OT plan can have non-positive values.
+
+    Parameters
+    ----------
+    X_s : array-like, shape (n_samples_a, dim)
+        samples in the source domain
+    X_t : array-like, shape (n_samples_b, dim)
+        samples in the target domain
+    reg : float
+        Regularization term >0
+    anchors : int, optional
+        The total number of anchors sampled for the Nystroem approximation (anchors/2 in each distribution), default 50.
+    a : array-like, shape (n_samples_a,)
+        samples weights in the source domain
+    b : array-like, shape (n_samples_b,)
+        samples weights in the target domain
+    numItermax : int, optional
+        Max number of iterations of Sinkhorn
+    stopThr : float, optional
+        Stop threshold on error on the dual variables (>0)
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors)
+    random_state : int, optional
+        The random state for sampling the components in each distribution.
+
+    Returns
+    -------
+    gamma : LazyTensor
+        OT plan as lazy tensor.
+    log : dict
+        log dictionary return only if log==True in parameters
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> n_samples_a = 2
+    >>> n_samples_b = 4
+    >>> reg = 0.1
+    >>> anchors = 3
+    >>> X_s = np.reshape(np.arange(n_samples_a, dtype=np.float64), (n_samples_a, 1))
+    >>> X_t = np.reshape(np.arange(0, n_samples_b, dtype=np.float64), (n_samples_b, 1))
+    >>> empirical_sinkhorn_nystroem(X_s, X_t, reg, anchors, random_state=42)[:]  # doctest: +ELLIPSIS
+    array([[0.125, 0.125, 0.125, 0.125],
+           [0.125, 0.125, 0.125, 0.125]])
+
+    References
+    ----------
+
+    .. [80] Massively scalable Sinkhorn distances via the Nyström method, Jason Altschuler, Francis Bach, Alessandro Rudi, Jonathan Niles-Weed, NeurIPS 2019.
+
+    """
+    left_factor, right_factor = kernel_nystroem(
+        X_s, X_t, anchors=anchors, sigma=(reg / 2.0) ** (0.5), random_state=random_state
+    )
+    _, _, dict_log = sinkhorn_low_rank_kernel(
+        K1=left_factor,
+        K2=right_factor,
+        a=a,
+        b=b,
+        numItermax=numItermax,
+        stopThr=stopThr,
+        verbose=verbose,
+        log=True,
+        warn=warn,
+        warmstart=warmstart,
+    )
+    if log:
+        dict_log["left_factor"] = left_factor
+        dict_log["right_factor"] = right_factor
+        return dict_log["lazy_plan"], dict_log
+    else:
+        return dict_log["lazy_plan"]
+
+
+def empirical_sinkhorn_nystroem2(
+    X_s,
+    X_t,
+    reg=1.0,
+    anchors=50,
+    a=None,
+    b=None,
+    numItermax=1000,
+    stopThr=1e-9,
+    verbose=False,
+    log=False,
+    warn=True,
+    warmstart=None,
+    random_state=None,
+):
+    r"""
+    Solves the entropic regularization optimal transport problem with Sinkhorn and Nystroem factorization [76] and returns the
+    OT loss from empirical data.
+    Corresponds to an approximation of entropic OT (for a squared Euclidean cost) that runs in linear time.
+    The number of anchors controls the level of approximation (the higher, the better the approximation, but the slower the computation becomes).
+    Warning: with low level of regularization, the OT plan can have non-positive values.
+
+    Parameters
+    ----------
+    X_s : array-like, shape (n_samples_a, dim)
+        samples in the source domain
+    X_t : array-like, shape (n_samples_b, dim)
+        samples in the target domain
+    reg : float
+        Regularization term >0
+    anchors : int, optional
+        The total number of anchors sampled for the Nystroem approximation (anchors/2 in each distribution), default 50.
+    a : array-like, shape (n_samples_a,)
+        samples weights in the source domain
+    b : array-like, shape (n_samples_b,)
+        samples weights in the target domain
+    numItermax : int, optional
+        Max number of iterations of Sinkhorn
+    stopThr : float, optional
+        Stop threshold on error on the dual variables (>0)
+    verbose : bool, optional
+        Print information along iterations
+    log : bool, optional
+        record log if True
+    warn : bool, optional
+        if True, raises a warning if the algorithm doesn't convergence.
+    warmstart: tuple of arrays, shape (dim_a, dim_b), optional
+        Initialization of dual potentials. If provided, the dual potentials should be given
+        (that is the logarithm of the u,v sinkhorn scaling vectors)
+    random_state : int, optional
+        The random state for sampling the components in each distribution.
+
+    Returns
+    -------
+    W : float
+        Optimal transportation loss for the given parameters
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> n_samples_a = 2
+    >>> n_samples_b = 4
+    >>> reg = 0.1
+    >>> anchors = 3
+    >>> X_s = np.reshape(np.arange(n_samples_a, dtype=np.float64), (n_samples_a, 1))
+    >>> X_t = np.reshape(np.arange(0, n_samples_b, dtype=np.float64), (n_samples_b, 1))
+    >>> empirical_sinkhorn_nystroem2(X_s, X_t, reg, anchors, random_state=42)  # doctest: +ELLIPSIS
+    2.5
+
+
+    References
+    ----------
+
+    .. [80] Massively scalable Sinkhorn distances via the Nyström method, Jason Altschuler, Francis Bach, Alessandro Rudi, Jonathan Niles-Weed, NeurIPS 2019.
+
+
+    """
+
+    nx = get_backend(X_s, X_t)
+    M1, M2 = compute_lr_sqeuclidean_matrix(X_s, X_t, False, nx=nx)
+    left_factor, right_factor = kernel_nystroem(
+        X_s, X_t, anchors=anchors, sigma=(reg / 2.0) ** (0.5), random_state=random_state
+    )
+    if log:
+        u, v, dict_log = sinkhorn_low_rank_kernel(
+            K1=left_factor,
+            K2=right_factor,
+            a=a,
+            b=b,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=True,
+            warn=warn,
+            warmstart=warmstart,
+        )
+        dict_log["left_factor"] = left_factor
+        dict_log["right_factor"] = right_factor
+    else:
+        u, v = sinkhorn_low_rank_kernel(
+            K1=left_factor,
+            K2=right_factor,
+            a=a,
+            b=b,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=False,
+            warn=warn,
+            warmstart=warmstart,
+        )
+    Q = u.reshape((-1, 1)) * left_factor
+    R = v.reshape((-1, 1)) * right_factor
+    # Compute the cost (using trace formula)
+    A = Q.T @ M1
+    B = R.T @ M2
+    loss = nx.sum(A * B)
+
+    if log:
+        return loss, dict_log
+    else:
+        return loss

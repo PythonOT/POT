@@ -74,7 +74,7 @@ ot.solvers:
 
 ot.partial:
 - changed-files:
-  - any-glob-to-any-file: ot/partial.py
+  - any-glob-to-any-file: ot/partial/**
 
 ot.sliced:
 - changed-files:

@@ -4,6 +4,9 @@
 2D free support Sinkhorn barycenters of distributions
 ========================================================
 
+.. note::
+    Example added in release: 0.9.1.
+
 Illustration of Sinkhorn barycenter calculation between empirical distributions understood as point clouds
 
 """
@@ -11,6 +14,8 @@ Illustration of Sinkhorn barycenter calculation between empirical distributions 
 # Authors: Eduardo Fernandes Montesuma <eduardo.fernandes-montesuma@universite-paris-saclay.fr>
 #
 # License: MIT License
+
+# sphinx_gallery_thumbnail_number = 2
 
 import numpy as np
 import matplotlib.pyplot as plt

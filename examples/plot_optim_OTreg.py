@@ -138,21 +138,21 @@ nvisu = 40
 pl.figure(5, figsize=(10, 4))
 
 pl.subplot(2, 2, 1)
-pl.imshow(G0[:nvisu, :])
+pl.imshow(G0[:nvisu, :], cmap="gray_r")
 pl.axis("off")
 pl.title("Exact OT")
 
 pl.subplot(2, 2, 2)
-pl.imshow(Gl2[:nvisu, :])
+pl.imshow(Gl2[:nvisu, :], cmap="gray_r")
 pl.axis("off")
 pl.title("Frobenius reg.")
 
 pl.subplot(2, 2, 3)
-pl.imshow(Ge[:nvisu, :])
+pl.imshow(Ge[:nvisu, :], cmap="gray_r")
 pl.axis("off")
 pl.title("Entropic reg.")
 
 pl.subplot(2, 2, 4)
-pl.imshow(Gel2[:nvisu, :])
+pl.imshow(Gel2[:nvisu, :], cmap="gray_r")
 pl.axis("off")
 pl.title("Entropic + Frobenius reg.")

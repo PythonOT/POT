@@ -4,6 +4,9 @@
 Graph classification with Template Based Fused Gromov Wasserstein
 ==============================
 
+.. note::
+    Example added in release: 0.9.1.
+
 This example first illustrates how to train a graph classification gnn based on the Template Fused Gromov Wasserstein layer as proposed in [52] .
 
 [53] C. Vincent-Cuaz, R. Flamary, M. Corneli, T. Vayer, N. Courty (2022).Template based graph neural network with optimal transport distances. Advances in Neural Information Processing Systems, 35.

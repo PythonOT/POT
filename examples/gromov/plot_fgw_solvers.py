@@ -4,6 +4,9 @@
 Comparison of Fused Gromov-Wasserstein solvers
 ==============================
 
+.. note::
+    Example added in release: 0.9.1.
+
 This example illustrates the computation of FGW for attributed graphs
 using 4 different solvers to estimate the distance based on Conditional
 Gradient [24], Sinkhorn projections [12, 51] and alternated Bregman
@@ -21,7 +24,7 @@ and Courty Nicolas
 "Optimal Transport for structured data with application on graphs"
 International Conference on Machine Learning (ICML). 2019.
 
-[51] Xu, H., Luo, D., Zha, H., & Duke, L. C. (2019).
+[51] Xu, H., Luo, D., Zha, H., & Carin, L. (2019).
 "Gromov-wasserstein learning for graph matching and node embedding".
 In International Conference on Machine Learning (ICML), 2019.
 

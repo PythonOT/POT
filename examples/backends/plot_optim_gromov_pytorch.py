@@ -3,6 +3,9 @@ r"""
 Optimizing the Gromov-Wasserstein distance with PyTorch
 =======================================================
 
+.. note::
+    Example added in release: 0.8.0.
+
 In this example, we use the pytorch backend to optimize the Gromov-Wasserstein
 (GW) loss between two graphs expressed as empirical distribution.
 

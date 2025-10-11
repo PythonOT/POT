@@ -4,6 +4,9 @@
 OTDA unsupervised vs semi-supervised setting
 ============================================
 
+.. note::
+    Example added in release: 0.1.9.
+
 This example introduces a semi supervised domain adaptation in a 2D setting.
 It explicit the problem of semi supervised domain adaptation and introduces
 some optimal transport approaches to solve it.
@@ -107,13 +110,13 @@ pl.tight_layout()
 pl.figure(2, figsize=(8, 4))
 
 pl.subplot(1, 2, 1)
-pl.imshow(ot_sinkhorn_un.coupling_, interpolation="nearest")
+pl.imshow(ot_sinkhorn_un.coupling_, interpolation="nearest", cmap="gray_r")
 pl.xticks([])
 pl.yticks([])
 pl.title("Optimal coupling\nUnsupervised DA")
 
 pl.subplot(1, 2, 2)
-pl.imshow(ot_sinkhorn_semi.coupling_, interpolation="nearest")
+pl.imshow(ot_sinkhorn_semi.coupling_, interpolation="nearest", cmap="gray_r")
 pl.xticks([])
 pl.yticks([])
 pl.title("Optimal coupling\nSemi-supervised DA")

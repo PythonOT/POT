@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 r"""
 ====================================================
-GMM Plan 1D
+OT between GMM : plan and maps in 1D
 ====================================================
 
 Illustration of the GMM plan for
@@ -16,7 +16,7 @@ See [69] for details.
 
 """
 
-# Author: Eloi Tanguy <eloi.tanguy@u-paris>
+# Author: Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
 #         Remi Flamary <remi.flamary@polytehnique.edu>
 #         Julie Delon <julie.delon@math.cnrs.fr>
 #

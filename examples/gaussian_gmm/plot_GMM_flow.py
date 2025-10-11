@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 r"""
 ====================================================
-GMM Flow
+Gradient Flow for GMM-OT distance
 ====================================================
 
 Illustration of the flow of a Gaussian Mixture with
@@ -10,7 +10,7 @@ fixed GMM.
 
 """
 
-# Author: Eloi Tanguy <eloi.tanguy@u-paris>
+# Author: Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
 #         Remi Flamary <remi.flamary@polytehnique.edu>
 #         Julie Delon <julie.delon@math.cnrs.fr>
 #

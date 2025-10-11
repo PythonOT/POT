@@ -4,6 +4,9 @@
 OT for domain adaptation on empirical distributions
 ===================================================
 
+.. note::
+    Example added in release: 0.1.9.
+
 This example introduces a domain adaptation in a 2D setting. It explicit
 the problem of domain adaptation and introduces some optimal transport
 approaches to solve it.
@@ -93,19 +96,19 @@ pl.tight_layout()
 pl.figure(2, figsize=(10, 6))
 
 pl.subplot(2, 3, 1)
-pl.imshow(ot_emd.coupling_, interpolation="nearest")
+pl.imshow(ot_emd.coupling_, interpolation="nearest", cmap="gray_r")
 pl.xticks([])
 pl.yticks([])
 pl.title("Optimal coupling\nEMDTransport")
 
 pl.subplot(2, 3, 2)
-pl.imshow(ot_sinkhorn.coupling_, interpolation="nearest")
+pl.imshow(ot_sinkhorn.coupling_, interpolation="nearest", cmap="gray_r")
 pl.xticks([])
 pl.yticks([])
 pl.title("Optimal coupling\nSinkhornTransport")
 
 pl.subplot(2, 3, 3)
-pl.imshow(ot_lpl1.coupling_, interpolation="nearest")
+pl.imshow(ot_lpl1.coupling_, interpolation="nearest", cmap="gray_r")
 pl.xticks([])
 pl.yticks([])
 pl.title("Optimal coupling\nSinkhornLpl1Transport")

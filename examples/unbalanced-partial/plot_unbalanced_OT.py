@@ -3,6 +3,10 @@
 ==============================================================
 2D examples of exact and entropic unbalanced optimal transport
 ==============================================================
+
+.. note::
+    Example added in release: 0.8.2.
+
 This example is designed to show how to compute unbalanced and
 partial OT in POT.
 

@@ -20,6 +20,8 @@ and :math:`(X_2)_{i,j} = \cos(\frac{i}{n_2} \pi) + \cos(\frac{j}{d_2} \pi) + \si
 #         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number = 2
+
 from matplotlib.patches import ConnectionPatch
 import matplotlib.pylab as pl
 import numpy as np

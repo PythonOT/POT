@@ -3,6 +3,9 @@ r"""
 Sliced Wasserstein barycenter and gradient flow with PyTorch
 ============================================================
 
+.. note::
+    Example added in release: 0.8.0.
+
 In this example we use the pytorch backend to optimize the sliced Wasserstein
 loss between two empirical distributions [31].
 

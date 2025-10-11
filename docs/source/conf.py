@@ -15,7 +15,7 @@
 import sys
 import os
 import re
-
+import datetime
 
 # !!!! allow readthedoc compilation
 try:
@@ -90,7 +90,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "POT Python Optimal Transport"
-copyright = "2016-2023, POT Contributors"
+copyright = "2016-{}, POT Contributors".format(datetime.datetime.now().year)
 author = "Rémi Flamary, POT Contributors"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -356,4 +356,5 @@ sphinx_gallery_conf = {
     "doc_module": ("ot", "numpy", "scipy", "pylab"),
     "matplotlib_animations": True,
     "reference_url": {"ot": None},
+    "copyfile_regex": r"index.rst",
 }

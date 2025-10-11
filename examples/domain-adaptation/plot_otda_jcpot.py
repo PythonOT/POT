@@ -4,6 +4,9 @@
 OT for multi-source target shift
 ================================
 
+.. note::
+    Example added in release: 0.7.0.
+
 This example introduces a target shift problem with two 2D source and 1 target domain.
 
 """

@@ -1,4 +1,0 @@
-
-
-Sliced Wasserstein Distance
----------------------------

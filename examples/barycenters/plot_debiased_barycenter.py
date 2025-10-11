@@ -4,6 +4,9 @@
 Debiased Sinkhorn barycenter demo
 =================================
 
+.. note::
+    Example added in release: 0.8.0.
+
 This example illustrates the computation of the debiased Sinkhorn barycenter
 as proposed in [37]_.
 

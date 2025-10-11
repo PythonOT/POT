@@ -4,6 +4,9 @@ r"""
 Smooth and Strongly Convex Nearest Brenier Potentials
 =====================================================
 
+.. note::
+    Example added in release: 0.9.2.
+
 This example is designed to show how to use SSNB [58] in POT.
 SSNB computes an l-strongly convex potential :math:`\varphi` with an L-Lipschitz gradient such that
 :math:`\nabla \varphi \# \mu \approx \nu`. This regularity can be enforced only on the components of a partition
@@ -38,7 +41,7 @@ THIS EXAMPLE REQUIRES CVXPY
         2017.
 """
 
-# Author: Eloi Tanguy <eloi.tanguy@u-paris.fr>
+# Author: Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
 # License: MIT License
 
 # sphinx_gallery_thumbnail_number = 3

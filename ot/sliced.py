@@ -12,7 +12,11 @@ Sliced OT Distances
 import numpy as np
 from .backend import get_backend, NumpyBackend
 from .utils import list_to_array, get_coordinate_circle
-from .lp import wasserstein_circle, semidiscrete_wasserstein2_unif_circle
+from .lp import (
+    wasserstein_circle,
+    semidiscrete_wasserstein2_unif_circle,
+    linear_circular_ot,
+)
 
 
 def get_random_projections(d, n_projections, seed=None, backend=None, type_as=None):
@@ -96,7 +100,7 @@ def sliced_wasserstein_distance(
         samples weights in the target domain
     n_projections : int, optional
         Number of projections used for the Monte-Carlo approximation
-    p: float, optional =
+    p: float, optional
         Power p used for computing the sliced Wasserstein
     projections: shape (dim, n_projections), optional
         Projection matrix (n_projections and seed are not used in this case)
@@ -284,6 +288,109 @@ def max_sliced_wasserstein_distance(
     return res
 
 
+def get_projections_sphere(d, n_projections, seed=None, backend=None, type_as=None):
+    r"""
+    Generates n_projections samples from the uniform distribution on the Stiefel manifold of dimension :math:`d\times 2`: :math:`\mathbb{V}_{d,2}=\{X \in \mathbb{R}^{d\times 2}, X^TX=I_2\}`
+
+    Parameters
+    ----------
+    d : int
+        dimension of the space
+    n_projections : int
+        number of samples requested
+    seed: int or RandomState, optional
+        Seed used for numpy random number generator
+    backend:
+        Backend to use for random generation
+    type_as: optional
+        Type to use for random generation
+
+    Returns
+    -------
+    out: ndarray, shape (n_projections, d, 2)
+
+    Examples
+    --------
+    >>> n_projections = 100
+    >>> d = 5
+    >>> projs = get_projections_sphere(d, n_projections)
+    >>> np.allclose(np.einsum("nij, nik -> njk", projs, projs), np.eye(2))  # doctest: +NORMALIZE_WHITESPACE
+    True
+    """
+    if backend is None:
+        nx = NumpyBackend()
+    else:
+        nx = backend
+
+    if isinstance(seed, np.random.RandomState) and str(nx) == "numpy":
+        Z = seed.randn(n_projections, d, 2)
+    else:
+        if seed is not None:
+            nx.seed(seed)
+        Z = nx.randn(n_projections, d, 2, type_as=type_as)
+
+    projections, _ = nx.qr(Z)
+    return projections
+
+
+def projection_sphere_to_circle(
+    x, n_projections=50, projections=None, seed=None, backend=None
+):
+    r"""
+    Projection of :math:`x\in S^{d-1}` on circles using coordinates on [0,1[.
+
+    To get the projection on the circle, we use the following formula:
+    .. math::
+        P^U(x) = \frac{U^Tx}{\|U^Tx\|_2}
+
+    where :math:`U` is a random matrix sampled from the uniform distribution on the Stiefel manifold of dimension :math:`d\times 2`: :math:`\mathbb{V}_{d,2}=\{X \in \mathbb{R}^{d\times 2}, X^TX=I_2\}`
+    and :math:`x` is a point on the sphere. Then, we apply the function get_coordinate_circle to get the coordinates on :math:`[0,1[`.
+
+    Parameters
+    ----------
+    x : ndarray, shape (n_samples, dim)
+        samples on the sphere
+    n_projections : int, optional
+        Number of projections used for the Monte-Carlo approximation
+    projections: shape (n_projections, dim, 2), optional
+        Projection matrix (n_projections and seed are not used in this case)
+    seed: int or RandomState or None, optional
+        Seed used for random number generator
+    backend:
+        Backend to use for random generation
+
+    Returns
+    -------
+    Xp_coords: ndarray, shape (n_projections, n_samples)
+        Coordinates of the projections on the circle
+    """
+    if backend is None:
+        nx = get_backend(x)
+    else:
+        nx = backend
+
+    n, d = x.shape
+
+    if projections is None:
+        projections = get_projections_sphere(
+            d, n_projections, seed=seed, backend=nx, type_as=x
+        )
+
+    # Projection on S^1
+    # Projection on plane
+    Xp = nx.einsum("ikj, lk -> ilj", projections, x)
+
+    # Projection on sphere
+    Xp = Xp / nx.sqrt(nx.sum(Xp**2, -1, keepdims=True))
+
+    # Get coordinates on [0,1[
+    Xp_coords = nx.reshape(
+        get_coordinate_circle(nx.reshape(Xp, (-1, 2))), (n_projections, n)
+    )
+
+    return Xp_coords, projections
+
+
 def sliced_wasserstein_sphere(
     X_s,
     X_t,
@@ -347,13 +454,12 @@ def sliced_wasserstein_sphere(
     ----------
     .. [46] Bonet, C., Berg, P., Courty, N., Septier, F., Drumetz, L., & Pham, M. T. (2023). Spherical sliced-wasserstein. International Conference on Learning Representations.
     """
+    d = X_s.shape[-1]
+
     if a is not None and b is not None:
         nx = get_backend(X_s, X_t, a, b)
     else:
         nx = get_backend(X_s, X_t)
-
-    n, d = X_s.shape
-    m, _ = X_t.shape
 
     if X_s.shape[1] != X_t.shape[1]:
         raise ValueError(
@@ -367,33 +473,16 @@ def sliced_wasserstein_sphere(
         raise ValueError("X_t is not on the sphere.")
 
     if projections is None:
-        # Uniforms and independent samples on the Stiefel manifold V_{d,2}
-        if isinstance(seed, np.random.RandomState) and str(nx) == "numpy":
-            Z = seed.randn(n_projections, d, 2)
-        else:
-            if seed is not None:
-                nx.seed(seed)
-            Z = nx.randn(n_projections, d, 2, type_as=X_s)
+        projections = get_projections_sphere(
+            d, n_projections, seed=seed, backend=nx, type_as=X_s
+        )
 
-        projections, _ = nx.qr(Z)
-    else:
-        n_projections = projections.shape[0]
-
-    # Projection on S^1
-    # Projection on plane
-    Xps = nx.einsum("ikj, lk -> ilj", projections, X_s)
-    Xpt = nx.einsum("ikj, lk -> ilj", projections, X_t)
-
-    # Projection on sphere
-    Xps = Xps / nx.sqrt(nx.sum(Xps**2, -1, keepdims=True))
-    Xpt = Xpt / nx.sqrt(nx.sum(Xpt**2, -1, keepdims=True))
-
-    # Get coordinates on [0,1[
-    Xps_coords = nx.reshape(
-        get_coordinate_circle(nx.reshape(Xps, (-1, 2))), (n_projections, n)
+    Xps_coords, _ = projection_sphere_to_circle(
+        X_s, n_projections=n_projections, projections=projections, seed=seed, backend=nx
     )
-    Xpt_coords = nx.reshape(
-        get_coordinate_circle(nx.reshape(Xpt, (-1, 2))), (n_projections, m)
+
+    Xpt_coords, _ = projection_sphere_to_circle(
+        X_t, n_projections=n_projections, projections=projections, seed=seed, backend=nx
     )
 
     projected_emd = wasserstein_circle(
@@ -406,7 +495,9 @@ def sliced_wasserstein_sphere(
     return res
 
 
-def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log=False):
+def sliced_wasserstein_sphere_unif(
+    X_s, a=None, n_projections=50, projections=None, seed=None, log=False
+):
     r"""Compute the 2-spherical sliced wasserstein w.r.t. a uniform distribution.
 
     .. math::
@@ -415,7 +506,7 @@ def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log
     where
 
     - :math:`\mu_n=\sum_{i=1}^n \alpha_i \delta_{x_i}`
-    - :math:`\nu=\mathrm{Unif}(S^1)`
+    - :math:`\nu=\mathrm{Unif}(S^{d-1})`
 
     Parameters
     ----------
@@ -425,6 +516,8 @@ def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log
         samples weights in the source domain
     n_projections : int, optional
         Number of projections used for the Monte-Carlo approximation
+    projections: shape (n_projections, dim, 2), optional
+        Projection matrix (n_projections and seed are not used in this case)
     seed: int or RandomState or None, optional
         Seed used for random number generator
     log: bool, optional
@@ -450,36 +543,23 @@ def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log
     -----------
     .. [46] Bonet, C., Berg, P., Courty, N., Septier, F., Drumetz, L., & Pham, M. T. (2023). Spherical sliced-wasserstein. International Conference on Learning Representations.
     """
+    d = X_s.shape[-1]
+
     if a is not None:
         nx = get_backend(X_s, a)
     else:
         nx = get_backend(X_s)
 
-    n, d = X_s.shape
-
     if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10 ** (-4)):
         raise ValueError("X_s is not on the sphere.")
 
-    # Uniforms and independent samples on the Stiefel manifold V_{d,2}
-    if isinstance(seed, np.random.RandomState) and str(nx) == "numpy":
-        Z = seed.randn(n_projections, d, 2)
-    else:
-        if seed is not None:
-            nx.seed(seed)
-        Z = nx.randn(n_projections, d, 2, type_as=X_s)
+    if projections is None:
+        projections = get_projections_sphere(
+            d, n_projections, seed=seed, backend=nx, type_as=X_s
+        )
 
-    projections, _ = nx.qr(Z)
-
-    # Projection on S^1
-    # Projection on plane
-    Xps = nx.einsum("ikj, lk -> ilj", projections, X_s)
-
-    # Projection on sphere
-    Xps = Xps / nx.sqrt(nx.sum(Xps**2, -1, keepdims=True))
-
-    # Get coordinates on [0,1[
-    Xps_coords = nx.reshape(
-        get_coordinate_circle(nx.reshape(Xps, (-1, 2))), (n_projections, n)
+    Xps_coords, _ = projection_sphere_to_circle(
+        X_s, n_projections=n_projections, projections=projections, seed=seed, backend=nx
     )
 
     projected_emd = semidiscrete_wasserstein2_unif_circle(Xps_coords.T, u_weights=a)
@@ -487,4 +567,110 @@ def sliced_wasserstein_sphere_unif(X_s, a=None, n_projections=50, seed=None, log
 
     if log:
         return res, {"projections": projections, "projected_emds": projected_emd}
+    return res
+
+
+def linear_sliced_wasserstein_sphere(
+    X_s,
+    X_t=None,
+    a=None,
+    b=None,
+    n_projections=50,
+    projections=None,
+    seed=None,
+    log=False,
+):
+    r"""Computes the linear spherical sliced wasserstein distance from :ref:`[79] <references-lssot>`.
+
+    General loss returned:
+
+    .. math::
+        \mathrm{LSSOT}_2(\mu, \nu) = \left(\int_{\mathbb{V}_{d,2}} \mathrm{LCOT}_2^2(P^U_\#\mu, P^U_\#\nu)\ \mathrm{d}\sigma(U)\right)^{\frac12},
+
+    where :math:`\mu,\nu\in\mathcal{P}(S^{d-1})` are two probability measures on the sphere, :math:`\mathrm{LCOT}_2` is the linear circular optimal transport distance,
+    and :math:`P^U_\# \mu` stands for the pushforwards of the projection :math:`\forall x\in S^{d-1},\ P^U(x) = \frac{U^Tx}{\|U^Tx\|_2}`.
+
+    Parameters
+    ----------
+    X_s: ndarray, shape (n_samples_a, dim)
+        Samples in the source domain
+    X_t: ndarray, shape (n_samples_b, dim), optional
+        Samples in the target domain. If None, computes the distance against the uniform distribution on the sphere.
+    a : ndarray, shape (n_samples_a,), optional
+        samples weights in the source domain
+    b : ndarray, shape (n_samples_b,), optional
+        samples weights in the target domain
+    n_projections : int, optional
+        Number of projections used for the Monte-Carlo approximation
+    projections: shape (n_projections, dim, 2), optional
+        Projection matrix (n_projections and seed are not used in this case)
+    seed: int or RandomState or None, optional
+        Seed used for random number generator
+    log: bool, optional
+        if True, linear_sliced_wasserstein_sphere returns the projections used and their associated LCOT.
+
+    Returns
+    -------
+    cost: float
+        Linear Spherical Sliced Wasserstein Cost
+    log: dict, optional
+        log dictionary return only if log==True in parameters
+
+    Examples
+    ---------
+    >>> n_samples_a = 20
+    >>> X = np.random.normal(0., 1., (n_samples_a, 5))
+    >>> X = X / np.sqrt(np.sum(X**2, -1, keepdims=True))
+    >>> linear_sliced_wasserstein_sphere(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
+    0.0
+
+
+    .. _references-lssot:
+    References
+    ----------
+    .. [79] Liu, X., Bai, Y., Martín, R. D., Shi, K., Shahbazi, A., Landman, B. A., Chang, C., & Kolouri, S. (2025). Linear Spherical Sliced Optimal Transport: A Fast Metric for Comparing Spherical Data. International Conference on Learning Representations.
+    """
+    d = X_s.shape[-1]
+
+    if a is not None and b is not None:
+        nx = get_backend(X_s, X_t, a, b)
+    else:
+        nx = get_backend(X_s, X_t)
+
+    if X_s.shape[1] != X_t.shape[1]:
+        raise ValueError(
+            "X_s and X_t must have the same number of dimensions {} and {} respectively given".format(
+                X_s.shape[1], X_t.shape[1]
+            )
+        )
+    if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10 ** (-4)):
+        raise ValueError("X_s is not on the sphere.")
+    if nx.any(nx.abs(nx.sum(X_t**2, axis=-1) - 1) > 10 ** (-4)):
+        raise ValueError("X_t is not on the sphere.")
+
+    if projections is None:
+        projections = get_projections_sphere(
+            d, n_projections, seed=seed, backend=nx, type_as=X_s
+        )
+
+    Xps_coords, _ = projection_sphere_to_circle(
+        X_s, n_projections=n_projections, projections=projections, seed=seed, backend=nx
+    )
+
+    if X_t is not None:
+        Xpt_coords, _ = projection_sphere_to_circle(
+            X_t,
+            n_projections=n_projections,
+            projections=projections,
+            seed=seed,
+            backend=nx,
+        )
+
+    projected_lcot = linear_circular_ot(
+        Xps_coords.T, Xpt_coords.T, u_weights=a, v_weights=b
+    )
+    res = nx.mean(projected_lcot) ** (1 / 2)
+
+    if log:
+        return res, {"projections": projections, "projected_emds": projected_lcot}
     return res

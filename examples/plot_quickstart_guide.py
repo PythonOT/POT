@@ -4,7 +4,6 @@
 Quickstart Guide
 =============================================
 
-
 Quickstart guide to the POT toolbox.
 
 For better readability, only the use of POT is provided and the plotting code
@@ -20,7 +19,7 @@ with matplotlib is hidden (but is available in the source file of the example).
 # Author: Remi Flamary
 #
 # License: MIT License
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 18
 
 # Import necessary libraries
 

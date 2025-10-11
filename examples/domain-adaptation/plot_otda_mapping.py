@@ -4,6 +4,9 @@
 OT mapping estimation for domain adaptation
 ===========================================
 
+.. note::
+    Example added in release: 0.1.9.
+
 This example presents how to use MappingTransport to estimate at the same
 time both the coupling transport and approximate the transport map with either
 a linear or a kernelized mapping as introduced in [8].

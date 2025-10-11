@@ -912,8 +912,8 @@ def test_emd_laplace_class(nx):
 def test_nearest_brenier_potential(nx):
     X = nx.ones((2, 2))
     for ssnb in [
-        ot.da.NearestBrenierPotential(log=True),
-        ot.da.NearestBrenierPotential(log=False),
+        ot.da.NearestBrenierPotential(log=True, its=5),
+        ot.da.NearestBrenierPotential(log=False, its=5),
     ]:
         ssnb.fit(Xs=X, Xt=X)
         G_lu = ssnb.transform(Xs=X)

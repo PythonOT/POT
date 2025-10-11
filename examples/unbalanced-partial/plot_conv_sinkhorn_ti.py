@@ -4,6 +4,9 @@
 Translation Invariant Sinkhorn for Unbalanced Optimal Transport
 ===============================================================
 
+.. note::
+    Example added in release: 0.9.5.
+
 This examples illustrates the better convergence of the translation
 invariance Sinkhorn algorithm proposed in [73] compared to the classical
 Sinkhorn algorithm.

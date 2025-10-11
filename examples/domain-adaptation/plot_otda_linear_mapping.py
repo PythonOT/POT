@@ -5,6 +5,8 @@
 Linear OT mapping estimation
 ============================
 
+.. note::
+    Example updated in release: 0.9.1.
 
 """
 

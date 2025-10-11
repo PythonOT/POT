@@ -140,24 +140,29 @@ def projection_sparse_simplex(V, max_nz, z=1, axis=None, nx=None):
     r"""Projection of :math:`\mathbf{V}` onto the simplex with cardinality constraint (maximum number of non-zero elements) and then scaled by `z`.
 
     .. math::
-        P\left(\mathbf{V}, max_nz, z\right) = \mathop{\arg \min}_{\substack{\mathbf{y} >= 0 \\ \sum_i \mathbf{y}_i = z} \\ ||p||_0 \le \text{max_nz}} \quad \|\mathbf{y} - \mathbf{V}\|^2
+        P\left(\mathbf{V}, \text{max_nz}, z\right) = \mathop{\arg \min}_{\substack{\mathbf{y} >= 0 \\ \sum_i \mathbf{y}_i = z} \\ ||p||_0 \le \text{max_nz}} \quad \|\mathbf{y} - \mathbf{V}\|^2
 
     Parameters
     ----------
     V: 1-dim or 2-dim ndarray
+    max_nz: int
+        Maximum number of non-zero elements in the projection.
+        If `max_nz` is larger than the number of elements in `V`, then
+        the projection is equivalent to `proj_simplex(V, z)`.
     z: float or array
         If array, len(z) must be compatible with :math:`\mathbf{V}`
     axis: None or int
-        - axis=None: project :math:`\mathbf{V}` by :math:`P(\mathbf{V}.\mathrm{ravel}(), max_nz, z)`
-        - axis=1: project each :math:`\mathbf{V}_i` by :math:`P(\mathbf{V}_i, max_nz, z_i)`
-        - axis=0: project each :math:`\mathbf{V}_{:, j}` by :math:`P(\mathbf{V}_{:, j}, max_nz, z_j)`
+        - axis=None: project :math:`\mathbf{V}` by :math:`P(\mathbf{V}.\mathrm{ravel}(), \text{max_nz}, z)`
+        - axis=1: project each :math:`\mathbf{V}_i` by :math:`P(\mathbf{V}_i, \text{max_nz}, z_i)`
+        - axis=0: project each :math:`\mathbf{V}_{:, j}` by :math:`P(\mathbf{V}_{:, j}, \text{max_nz}, z_j)`
 
     Returns
     -------
     projection: ndarray, shape :math:`\mathbf{V}`.shape
 
-    References:
-        Sparse projections onto the simplex
+    References
+    ----------
+    .. [1] Sparse projections onto the simplex
         Anastasios Kyrillidis, Stephen Becker, Volkan Cevher and, Christoph Koch
         ICML 2013
         https://arxiv.org/abs/1206.1529
@@ -1473,3 +1478,43 @@ def check_number_threads(numThreads):
             'numThreads should either be "max" or a strictly positive integer'
         )
     return numThreads
+
+
+def fun_to_numpy(fun, arr, nx, warn=True):
+    """Convert a function to a numpy function.
+
+    Parameters
+    ----------
+    fun : callable
+        The function to convert.
+    arr : array-like
+        The input to test the function. Can be from any backend.
+    nx : Backend
+        The backend to use for the conversion.
+    warn : bool, optional
+        Whether to raise a warning if the function is not compatible with numpy.
+        Default is True.
+    Returns
+    -------
+    fun_numpy : callable
+        The converted function.
+    """
+    if arr is None:
+        raise ValueError("arr should not be None to test fun")
+
+    nx_arr = get_backend(arr)
+    if nx_arr.__name__ != "numpy":
+        arr = nx.to_numpy(arr)
+    try:
+        fun(arr)
+        return fun
+    except BaseException:
+        if warn:
+            warnings.warn(
+                "The callable function should be able to handle numpy arrays, a compatible function is created and comes with overhead"
+            )
+
+        def fun_numpy(x):
+            return nx.to_numpy(fun(nx.from_numpy(x)))
+
+        return fun_numpy

@@ -731,3 +731,21 @@ def test_exp_bures(nx):
     # exp_\Lambda(log_\Lambda(Sigma)) = Sigma
     Sigma_exp = ot.utils.exp_bures(Lambda, T - nx.eye(d, type_as=T))
     np.testing.assert_allclose(nx.to_numpy(Sigma), nx.to_numpy(Sigma_exp), atol=1e-5)
+
+
+def test_fun_to_numpy(nx):
+    arr = np.arange(5)
+    arrb = nx.from_numpy(arr)
+
+    def fun(x):  # backend function
+        return nx.sum(x)
+
+    fun_numpy = ot.utils.fun_to_numpy(fun, arrb, nx, warn=True)
+
+    res = nx.to_numpy(fun(arrb))
+    res_np = fun_numpy(arr)
+
+    np.testing.assert_allclose(res, res_np)
+
+    with pytest.raises(ValueError):
+        ot.utils.fun_to_numpy(fun, None, nx, warn=True)
