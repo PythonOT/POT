@@ -756,9 +756,7 @@ def assert_allclose_bary_sol(sol1, sol2):
         # lst_reg, lst_reg_type, lst_unbalanced, lst_unbalanced_type, [True, False]
     ),
 )
-def test_bary_sample_free_support(
-    nx, reg, reg_type, unbalanced, unbalanced_type, warmstart
-):
+def test_bary_free_support(nx, reg, reg_type, unbalanced, unbalanced_type, warmstart):
     # test bary_sample when is_Lazy = False
     rng = np.random.RandomState()
 
