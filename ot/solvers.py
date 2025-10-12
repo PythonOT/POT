@@ -1988,11 +1988,11 @@ def solve_sample(
 
 
 def _bary_sample_bcd(
-    X_s,
-    X_init,
-    a_s,
+    X_a_list,
+    X_b_init,
+    a_list,
     b_init,
-    w_s,
+    w,
     metric,
     inner_solver,
     update_masses,
@@ -2009,15 +2009,15 @@ def _bary_sample_bcd(
 
     Parameters
     ----------
-    X_s : list of array-like, shape (n_samples_k, dim)
+    X_a_list : list of array-like, shape (n_samples_k, dim)
         List of samples in each source distribution
-    X_init : array-like, shape (n_samples_b, dim),
+    X_b_init : array-like, shape (n_samples_b, dim),
         Initialization of the barycenter samples.
-    a_s : list of array-like, shape (dim_k,)
+    a_list : list of array-like, shape (dim_k,)
         List of samples weights in each source distribution
     b_init : array-like, shape (n_samples_b,)
         Initialization of the barycenter weights.
-    w_s : list of array-like, shape (N,)
+    w : list of array-like, shape (N,)
         Samples barycentric weights
     metric : str
         Metric to use for the cost matrix, by default "sqeuclidean"
@@ -2046,12 +2046,12 @@ def _bary_sample_bcd(
     TBD
     """
 
-    X = X_init
+    X_b = X_b_init
     b = b_init
     inv_b = 1.0 / b
 
     prev_criterion = np.inf
-    n_samples = len(X_s)
+    n_samples = len(X_a_list)
 
     if log:
         log_ = {"stopping_criterion": []}
@@ -2063,32 +2063,36 @@ def _bary_sample_bcd(
         # Solve the inner OT problem for each source distribution
         if it == 0:
             list_res = [
-                inner_solver(X_s[k], X, a_s[k], b, None, None) for k in range(n_samples)
+                inner_solver(X_a_list[k], X_b, a_list[k], b, None, None)
+                for k in range(n_samples)
             ]
         elif warmstart_plan:
             list_res = [
-                inner_solver(X_s[k], X, a_s[k], b, list_res[k].plan, None)
+                inner_solver(X_a_list[k], X_b, a_list[k], b, list_res[k].plan, None)
                 for k in range(n_samples)
             ]
         elif warmstart_potentials:
             list_res = [
-                inner_solver(X_s[k], X, a_s[k], b, None, list_res[k].potentials)
+                inner_solver(
+                    X_a_list[k], X_b, a_list[k], b, None, list_res[k].potentials
+                )
                 for k in range(n_samples)
             ]
         else:
             list_res = [
-                inner_solver(X_s[k], X, a_s[k], b, None, None) for k in range(n_samples)
+                inner_solver(X_a_list[k], X_b, a_list[k], b, None, None)
+                for k in range(n_samples)
             ]
         print("inv_b:", inv_b)
         # Update the estimated barycenter weights in unbalanced cases
         if update_masses:
-            b = sum([w_s[k] * list_res[k].plan.sum(axis=0) for k in range(n_samples)])
+            b = sum([w[k] * list_res[k].plan.sum(axis=0) for k in range(n_samples)])
             inv_b = 1.0 / b
 
         # Update the barycenter samples
         if metric in ["sqeuclidean", "euclidean"]:
-            X_new = (
-                sum([w_s[k] * list_res[k].plan.T @ X_s[k] for k in range(n_samples)])
+            X_b_new = (
+                sum([w[k] * list_res[k].plan.T @ X_a_list[k] for k in range(n_samples)])
                 * inv_b[:, None]
             )
         else:
@@ -2096,9 +2100,9 @@ def _bary_sample_bcd(
 
         # compute criterion
         if stopping_criterion == "loss":
-            new_criterion = sum([w_s[k] * list_res[k].value for k in range(n_samples)])
+            new_criterion = sum([w[k] * list_res[k].value for k in range(n_samples)])
         else:  # stopping_criterion = "bary"
-            new_criterion = nx.norm(X_new - X, ord=2)
+            new_criterion = nx.norm(X_b_new - X_b, ord=2)
 
         if verbose:
             if it % 1 == 0:
@@ -2113,19 +2117,19 @@ def _bary_sample_bcd(
             print(f"BCD converged in {it} iterations")
             break
 
-        X = X_new
+        X_b = X_b_new
         prev_criterion = new_criterion
 
     # compute loss values
 
-    value_linear = sum([w_s[k] * list_res[k].value_linear for k in range(n_samples)])
+    value_linear = sum([w[k] * list_res[k].value_linear for k in range(n_samples)])
     if stopping_criterion == "loss":
         value = new_criterion
     else:
-        value = sum([w_s[k] * list_res[k].value for k in range(n_samples)])
+        value = sum([w[k] * list_res[k].value for k in range(n_samples)])
     # update BaryResult
     bary_res = BaryResult(
-        X=X_new,
+        X=X_b,
         b=b,
         value=value,
         value_linear=value_linear,
@@ -2136,14 +2140,13 @@ def _bary_sample_bcd(
     return bary_res
 
 
-def bary_sample(
-    X_s,
+def bary_free_support(
+    X_a_list,
     n,
-    a_s=None,
-    w_s=None,
-    X_init=None,
+    a_list=None,
+    w=None,
+    X_b_init=None,
     b_init=None,
-    learn_X=True,
     learn_b=False,
     metric="sqeuclidean",
     reg=None,
@@ -2166,7 +2169,7 @@ def bary_sample(
     random_state=0,
     verbose=False,
 ):
-    r"""Solve the discrete OT barycenter problem over source distributions using Block-Coordinate Descent.
+    r"""Solve the discrete OT barycenter problem over source distributions optimizing the barycenter support using Block-Coordinate Descent.
 
     The function solves the following general OT barycenter problem
 
@@ -2188,22 +2191,20 @@ def bary_sample(
 
     Parameters
     ----------
-    X_s : list of array-like, shape (n_samples_k, dim)
+    X_a_list : list of array-like, shape (n_samples_k, dim)
         List of samples in each source distribution
     n : int
         number of samples in the barycenter domain
-    a_s : list of array-like, shape (dim_k,), optional
+    a_list : list of array-like, shape (dim_k,), optional
         List of samples weights in each source distribution (default is uniform)
-    w_s : list of array-like, shape (N,), optional
+    w : list of array-like, shape (N,), optional
         Samples barycentric weights (default is uniform)
-    X_init : array-like, shape (n_samples_b, dim), optional
+    X_b_init : array-like, shape (n_samples_b, dim), optional
         Initialization of the barycenter samples (default is gaussian random sampling).
         Shape must match with required n.
     b_init : array-like, shape (n_samples_b,), optional
         Initialization of the barycenter weights (default is uniform).
         Shape must match with required n.
-    learn_X : bool, optional
-        Learn the barycenter samples (default is True)
     learn_b : bool, optional
         Learn the barycenter weights (default is False)
     metric : str, optional
@@ -2497,56 +2498,52 @@ def bary_sample(
             )
         )
 
-    n_samples = len(X_s)
+    n_samples = len(X_a_list)
 
     if (
         not lazy
     ):  # default non lazy solver calls ot.solve_sample within _bary_sample_bcd
         # Detect backend
-        nx = get_backend(*X_s, X_init, b_init, w_s)
+        nx = get_backend(*X_a_list, X_b_init, b_init, w)
 
         # check sample weights
-        if a_s is None:
-            a_s = [
-                nx.ones((X_s[k].shape[0],), type_as=X_s[k]) / X_s[k].shape[0]
+        if a_list is None:
+            a_list = [
+                nx.ones((X_a_list[k].shape[0],), type_as=X_a_list[k])
+                / X_a_list[k].shape[0]
                 for k in range(n_samples)
             ]
 
         # check samples barycentric weights
-        if w_s is None:
-            w_s = nx.ones(n_samples, type_as=X_s[0]) / n_samples
+        if w is None:
+            w = nx.ones(n_samples, type_as=X_a_list[0]) / n_samples
 
-        # check X_init
-        if X_init is None:
-            if (not learn_X) and learn_b:
-                raise ValueError(
-                    "X_init must be provided if learn_X=False and learn_b=True"
-                )
-            else:
-                rng = np.random.RandomState(random_state)
-                mean_ = nx.concatenate(
-                    [nx.mean(X_s[k], axis=0) for k in range(n_samples)],
-                    axis=0,
-                )
-                mean_ = nx.mean(mean_, axis=0)
-                std_ = nx.concatenate(
-                    [nx.std(X_s[k], axis=0) for k in range(n_samples)],
-                    axis=0,
-                )
-                std_ = nx.mean(std_, axis=0)
-                X_init = rng.normal(
-                    loc=mean_,
-                    scale=std_,
-                    size=(n, X_s[0].shape[1]),
-                )
-                X_init = nx.from_numpy(X_init, type_as=X_s[0])
+        # check X_b_init
+        if X_b_init is None:
+            rng = np.random.RandomState(random_state)
+            mean_ = nx.concatenate(
+                [nx.mean(X_a_list[k], axis=0) for k in range(n_samples)],
+                axis=0,
+            )
+            mean_ = nx.mean(mean_, axis=0)
+            std_ = nx.concatenate(
+                [nx.std(X_a_list[k], axis=0) for k in range(n_samples)],
+                axis=0,
+            )
+            std_ = nx.mean(std_, axis=0)
+            X_b_init = rng.normal(
+                loc=mean_,
+                scale=std_,
+                size=(n, X_a_list[0].shape[1]),
+            )
+            X_b_init = nx.from_numpy(X_b_init, type_as=X_a_list[0])
         else:
-            if (X_init.shape[0] != n) or (X_init.shape[1] != X_s[0].shape[1]):
-                raise ValueError("X_init must have shape (n, dim)")
+            if (X_b_init.shape[0] != n) or (X_b_init.shape[1] != X_a_list[0].shape[1]):
+                raise ValueError("X_b_init must have shape (n, dim)")
 
         # check b_init
         if b_init is None:
-            b_init = nx.ones((n,), type_as=X_s[0]) / n
+            b_init = nx.ones((n,), type_as=X_a_list[0]) / n
 
         if warmstart:
             if reg is None:  # exact OT
@@ -2569,10 +2566,10 @@ def bary_sample(
             warmstart_plan = False
             warmstart_potentials = False
 
-        def inner_solver(X_a, X, a, b, plan_init, potentials_init):
+        def inner_solver(X_a, X_b, a, b, plan_init, potentials_init):
             return solve_sample(
                 X_a=X_a,
-                X_b=X,
+                X_b=X_b,
                 a=a,
                 b=b,
                 metric=metric,
@@ -2593,11 +2590,11 @@ def bary_sample(
         # compute the barycenter using BCD
         update_masses = unbalanced is not None
         res = _bary_sample_bcd(
-            X_s,
-            X_init,
-            a_s,
+            X_a_list,
+            X_b_init,
+            a_list,
             b_init,
-            w_s,
+            w,
             metric,
             inner_solver,
             update_masses,

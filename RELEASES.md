@@ -1,5 +1,11 @@
 # Releases
 
+### New features
+- Wrapper for barycenter solvers with free support `ot.solvers.bary_free_support` (PR #730)
+
+### Closed issues
+
+
 ## 0.9.6.post1
 
 *September 2025*
