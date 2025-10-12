@@ -764,13 +764,13 @@ def test_bary_free_support(nx, reg, reg_type, unbalanced, unbalanced_type, warms
     ns = rng.randint(10, 20, K)  # number of samples within each distribution
     n = 5  # number of samples in the barycenter
 
-    X_s = [rng.randn(ns_i, 2) for ns_i in ns]
+    X_list = [rng.randn(ns_i, 2) for ns_i in ns]
     # X_init = np.reshape(1.0 * np.randn(n, 2), (n, 1))
 
-    a_s = [ot.utils.unif(X.shape[0]) for X in X_s]
+    a_list = [ot.utils.unif(X.shape[0]) for X in X_list]
     b = ot.utils.unif(n)
 
-    w_s = ot.utils.unif(K)
+    w = ot.utils.unif(K)
 
     try:
         if reg_type == "tuple":
@@ -784,10 +784,10 @@ def test_bary_free_support(nx, reg, reg_type, unbalanced, unbalanced_type, warms
             reg_type = (f, df)
             # print('test reg_type:', reg_type[0](None), reg_type[1](None))
         # solve default None weights
-        sol0 = ot.bary_sample(
-            X_s,
+        sol0 = ot.bary_free_support(
+            X_list,
             n,
-            w_s=None,
+            w=None,
             metric="sqeuclidean",
             reg=reg,
             reg_type=reg_type,
@@ -802,12 +802,12 @@ def test_bary_free_support(nx, reg, reg_type, unbalanced, unbalanced_type, warms
 
         # solve provided uniform weights
 
-        sol = ot.bary_sample(
-            X_s,
+        sol = ot.bary_free_support(
+            X_list,
             n,
-            a_s=a_s,
+            a_list=a_list,
             b_init=b,
-            w_s=w_s,
+            w=w,
             metric="sqeuclidean",
             reg=reg,
             reg_type=reg_type,
@@ -823,9 +823,9 @@ def test_bary_free_support(nx, reg, reg_type, unbalanced, unbalanced_type, warms
         assert_allclose_bary_sol(sol0, sol)
 
         # solve in backend
-        X_sb = nx.from_numpy(*X_s)
-        a_sb = nx.from_numpy(*a_s)
-        w_sb, bb = nx.from_numpy(w_s, b)
+        X_listb = nx.from_numpy(*X_list)
+        a_listb = nx.from_numpy(*a_list)
+        wb, bb = nx.from_numpy(w, b)
 
         if reg_type == "tuple":
 
@@ -848,12 +848,12 @@ def test_bary_free_support(nx, reg, reg_type, unbalanced, unbalanced_type, warms
             """
             reg_type = (f, df)
 
-        solb = ot.bary_sample(
-            X_sb,
+        solb = ot.bary_free_support(
+            X_listb,
             n,
-            a_s=a_sb,
+            a_listb=a_listb,
             b_init=bb,
-            w_s=w_sb,
+            w=wb,
             metric="sqeuclidean",
             reg=reg,
             reg_type=reg_type,
