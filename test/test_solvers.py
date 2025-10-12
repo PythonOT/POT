@@ -851,7 +851,7 @@ def test_bary_free_support(nx, reg, reg_type, unbalanced, unbalanced_type, warms
         solb = ot.bary_free_support(
             X_listb,
             n,
-            a_listb=a_listb,
+            a_list=a_listb,
             b_init=bb,
             w=wb,
             metric="sqeuclidean",
