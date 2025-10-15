@@ -1,4 +1,5 @@
 # POT: Python Optimal Transport
+TBA
 
 [![PyPI version](https://badge.fury.io/py/POT.svg)](https://badge.fury.io/py/POT)
 [![Anaconda Cloud](https://anaconda.org/conda-forge/pot/badges/version.svg)](https://anaconda.org/conda-forge/pot)
