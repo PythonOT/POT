@@ -749,14 +749,14 @@ def assert_allclose_bary_sol(sol1, sol2):
     "reg,reg_type,unbalanced,unbalanced_type,warmstart",
     itertools.product(
         lst_reg,
-        ["tuple"],
+        ["tuple"],  # lst_reg_type,
         lst_unbalanced,
         lst_unbalanced_type,
         [True, False],
-        # lst_reg, lst_reg_type, lst_unbalanced, lst_unbalanced_type, [True, False]
+        # lst_reg, lst_reg_type, lst_unbalanced, lst_unbalanced_type, warmstart
     ),
 )
-def test_bary_free_support(nx, reg, reg_type, unbalanced, unbalanced_type, warmstart):
+def test_solve_bary_sample(nx, reg, reg_type, unbalanced, unbalanced_type, warmstart):
     # test bary_sample when is_Lazy = False
     rng = np.random.RandomState()
 
@@ -784,7 +784,7 @@ def test_bary_free_support(nx, reg, reg_type, unbalanced, unbalanced_type, warms
             reg_type = (f, df)
             # print('test reg_type:', reg_type[0](None), reg_type[1](None))
         # solve default None weights
-        sol0 = ot.bary_free_support(
+        sol0 = ot.solve_bary_sample(
             X_list,
             n,
             w=None,
@@ -802,7 +802,7 @@ def test_bary_free_support(nx, reg, reg_type, unbalanced, unbalanced_type, warms
 
         # solve provided uniform weights
 
-        sol = ot.bary_free_support(
+        sol = ot.solve_bary_sample(
             X_list,
             n,
             a_list=a_list,
@@ -827,28 +827,16 @@ def test_bary_free_support(nx, reg, reg_type, unbalanced, unbalanced_type, warms
         a_listb = nx.from_numpy(*a_list)
         wb, bb = nx.from_numpy(w, b)
 
-        if reg_type == "tuple":
+        if isinstance(reg_type, tuple):
 
             def fb(G):
                 return nx.sum(
                     G**2
                 )  # otherwise we keep previously defined (f, df) as required by inner solver
 
-            def dfb(G):
-                return 2 * G
+            reg_type = (fb, df)
 
-            """
-            if (
-                unbalanced_type.lower() in ["kl", "l2", "tv"]) and (
-                unbalanced is not None) and (
-                reg is not None
-            ):
-                reg_type = (f, df)
-            else:
-            """
-            reg_type = (f, df)
-
-        solb = ot.bary_free_support(
+        solb = ot.solve_bary_sample(
             X_listb,
             n,
             a_list=a_listb,

@@ -2140,14 +2140,13 @@ def _bary_sample_bcd(
     return bary_res
 
 
-def bary_free_support(
+def solve_bary_sample(
     X_a_list,
     n,
     a_list=None,
     w=None,
     X_b_init=None,
     b_init=None,
-    learn_b=False,
     metric="sqeuclidean",
     reg=None,
     c=None,
@@ -2205,8 +2204,6 @@ def bary_free_support(
     b_init : array-like, shape (n_samples_b,), optional
         Initialization of the barycenter weights (default is uniform).
         Shape must match with required n.
-    learn_b : bool, optional
-        Learn the barycenter weights (default is False)
     metric : str, optional
         Metric to use for the cost matrix, by default "sqeuclidean"
     reg : float, optional
@@ -2485,8 +2482,6 @@ def bary_free_support(
     ----------
 
     """
-    if learn_b:
-        raise NotImplementedError("Barycenter weights learning not implemented yet")
 
     if method is not None and method.lower() in lst_method_lazy:
         raise NotImplementedError("Barycenter with Lazy tensors not implemented yet")
