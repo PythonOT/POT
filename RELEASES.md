@@ -1,12 +1,17 @@
 # Releases
 
+## 0.9.7.dev0
+
+#### Closed issues
+- Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
+- Add test for build from source (PR #772, Issue #764)
+
 ## 0.9.6.post1
 
 *September 2025*
 
 #### Closed issues
 - Fix missing cython file in MANIFEST.in (PR #763)
-- Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
 
 ## 0.9.6
 
