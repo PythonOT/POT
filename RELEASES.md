@@ -6,6 +6,7 @@
 
 #### Closed issues
 - Fix missing cython file in MANIFEST.in (PR #763)
+- Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
 
 ## 0.9.6
 
