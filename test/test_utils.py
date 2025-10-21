@@ -456,7 +456,7 @@ def test_OTResult():
     # test print
     print(res)
 
-    # tets get citation
+    # test get citation
     print(res.citation)
 
     lst_attributes = [
@@ -484,6 +484,31 @@ def test_OTResult():
         print(at)
         with pytest.raises(NotImplementedError):
             getattr(res, at)
+
+
+def test_BaryResult():
+    res = ot.utils.BaryResult()
+
+    # test print
+    print(res)
+
+    # test get citation
+    print(res.citation)
+
+    lst_attributes = [
+        "X",
+        "C",
+        "b",
+        "value",
+        "value_linear",
+        "value_quad",
+        "list_res",
+        "status",
+        "log",
+    ]
+    for at in lst_attributes:
+        print(at)
+        assert getattr(res, at) is None
 
 
 def test_get_coordinate_circle():
