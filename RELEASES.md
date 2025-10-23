@@ -5,6 +5,7 @@
 #### Closed issues
 - Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
 - Add test for build from source (PR #772, Issue #764)
+- Stable `ot.TorchBackend.sqrtm` around repeated eigvals (PR #774, Issue #773)
 
 ## 0.9.6.post1
 
