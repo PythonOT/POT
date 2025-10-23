@@ -1952,13 +1952,13 @@ class TorchBackend(Backend):
             def backward(ctx, grad_output):
                 # the gradients are grad
                 return (None, None) + tuple(g * grad_output for g in ctx.grads)
-        
+
         # define a differentiable SPD matrix sqrt
         # with closed-form VJP
         class MatrixSqrtFunction(Function):
             @staticmethod
             def forward(ctx, a):
-                a_sym = .5 * (a + a.transpose(-2, -1))
+                a_sym = 0.5 * (a + a.transpose(-2, -1))
                 L, V = torch.linalg.eigh(a_sym)
                 s = L.clamp_min(0).sqrt()
                 y = (V * s.unsqueeze(-2)) @ V.transpose(-2, -1)
@@ -1969,7 +1969,7 @@ class TorchBackend(Backend):
             @once_differentiable
             def backward(ctx, g):
                 s, V = ctx.saved_tensors
-                g_sym = .5 * (g + g.transpose(-2, -1))
+                g_sym = 0.5 * (g + g.transpose(-2, -1))
                 ghat = V.transpose(-2, -1) @ g_sym @ V
                 d = s.unsqueeze(-1) + s.unsqueeze(-2)
                 xhat = ghat / d

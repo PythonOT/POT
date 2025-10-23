@@ -823,16 +823,16 @@ def test_gradients_backends():
 
 
 def test_sqrtm_backward_torch():
-  if not torch:
-    pytest.skip("Torch not available")
-  nx = ot.backend.TorchBackend()
-  torch.manual_seed(42)
-  d = 5
-  A = torch.randn(d, d, dtype=torch.float64, device="cpu")
-  A = A @ A.T
-  A.requires_grad_(True)
-  func = lambda x: nx.sqrtm(x).sum()
-  assert torch.autograd.gradcheck(func, (A,), atol=1e-4, rtol=1e-4)
+    if not torch:
+        pytest.skip("Torch not available")
+    nx = ot.backend.TorchBackend()
+    torch.manual_seed(42)
+    d = 5
+    A = torch.randn(d, d, dtype=torch.float64, device="cpu")
+    A = A @ A.T
+    A.requires_grad_(True)
+    func = lambda x: nx.sqrtm(x).sum()
+    assert torch.autograd.gradcheck(func, (A,), atol=1e-4, rtol=1e-4)
 
 
 def test_get_backend_none():
