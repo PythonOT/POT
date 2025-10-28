@@ -22,6 +22,7 @@ import warnings
 cdef extern from "EMD.h":
     int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter) nogil
     int EMD_wrap_omp(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, int numThreads) nogil
+    int EMD_wrap_sparse(int n1, int n2, double *X, double *Y, uint64_t n_edges, long long *edge_sources, long long *edge_targets, double *edge_costs, long long *flow_sources_out, long long *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, double *alpha, double *beta, double *cost, uint64_t maxIter) nogil
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
 
@@ -206,3 +207,78 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
         cur_idx += 1
     cur_idx += 1
     return G[:cur_idx], indices[:cur_idx], cost
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
+                np.ndarray[double, ndim=1, mode="c"] b,
+                np.ndarray[long long, ndim=1, mode="c"] edge_sources,
+                np.ndarray[long long, ndim=1, mode="c"] edge_targets,
+                np.ndarray[double, ndim=1, mode="c"] edge_costs,
+                uint64_t max_iter):
+    """
+    Sparse EMD solver - only considers edges in edge_sources/edge_targets
+
+    Parameters
+    ----------
+    a : (n1,) array
+        Source histogram
+    b : (n2,) array
+        Target histogram
+    edge_sources : (k,) array, int64
+        Source indices for each edge
+    edge_targets : (k,) array, int64
+        Target indices for each edge
+    edge_costs : (k,) array, float64
+        Cost for each edge
+    max_iter : uint64_t
+        Maximum iterations
+
+    Returns
+    -------
+    flow_sources : (n_flows,) array, int64
+        Source indices of non-zero flows
+    flow_targets : (n_flows,) array, int64
+        Target indices of non-zero flows
+    flow_values : (n_flows,) array, float64
+        Flow values
+    cost : float
+        Total cost
+    alpha : (n1,) array
+        Dual variables for sources
+    beta : (n2,) array
+        Dual variables for targets
+    result_code : int
+        Result status
+    """
+    cdef int n1 = a.shape[0]
+    cdef int n2 = b.shape[0]
+    cdef uint64_t n_edges = edge_sources.shape[0]
+    cdef uint64_t n_flows_out = 0
+    cdef int result_code = 0
+    cdef double cost = 0
+
+    # Allocate output arrays (max size = n_edges)
+    cdef np.ndarray[long long, ndim=1, mode="c"] flow_sources = np.zeros(n_edges, dtype=np.int64)
+    cdef np.ndarray[long long, ndim=1, mode="c"] flow_targets = np.zeros(n_edges, dtype=np.int64)
+    cdef np.ndarray[double, ndim=1, mode="c"] flow_values = np.zeros(n_edges, dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] alpha = np.zeros(n1)
+    cdef np.ndarray[double, ndim=1, mode="c"] beta = np.zeros(n2)
+
+    with nogil:
+        result_code = EMD_wrap_sparse(
+            n1, n2,
+            <double*> a.data, <double*> b.data,
+            n_edges,
+            <long long*> edge_sources.data, <long long*> edge_targets.data, <double*> edge_costs.data,
+            <long long*> flow_sources.data, <long long*> flow_targets.data, <double*> flow_values.data,
+            &n_flows_out,
+            <double*> alpha.data, <double*> beta.data, &cost, max_iter
+        )
+
+    # Trim to actual number of flows
+    flow_sources = flow_sources[:n_flows_out]
+    flow_targets = flow_targets[:n_flows_out]
+    flow_values = flow_values[:n_flows_out]
+
+    return flow_sources, flow_targets, flow_values, cost, alpha, beta, result_code

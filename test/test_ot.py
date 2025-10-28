@@ -12,7 +12,7 @@ import pytest
 import ot
 from ot.datasets import make_1D_gauss as gauss
 from ot.backend import torch, tf, get_backend
-
+from scipy.sparse import coo_matrix
 
 def test_emd_dimension_and_mass_mismatch():
     # test emd and emd2 for dimension mismatch
@@ -912,6 +912,153 @@ def test_dual_variables():
     constraint_violation = log["u"][:, None] + log["v"][None, :] - M
 
     assert constraint_violation.max() < 1e-8
+
+
+def test_emd_sparse_vs_dense():
+
+    n_source = 100
+    n_target = 100
+    k = 10 
+
+    rng = np.random.RandomState(42)
+
+    x_source = rng.randn(n_source, 2)
+    x_target = rng.randn(n_target, 2) + 0.5
+
+    a = ot.utils.unif(n_source)
+    b = ot.utils.unif(n_target)
+
+    C = ot.dist(x_source, x_target)
+
+    rows = []
+    cols = []
+    data = []
+
+    for i in range(n_source):
+        distances = C[i, :]
+        nearest_k = np.argpartition(distances, k)[:k]
+        for j in nearest_k:
+            rows.append(i)
+            cols.append(j)
+            data.append(C[i, j])
+
+    C_knn = coo_matrix((data, (rows, cols)), shape=(n_source, n_target))
+
+    large_cost = 1e8
+    C_dense_infty = np.full((n_source, n_target), large_cost)
+    C_knn_array = C_knn.toarray()
+    C_dense_infty[C_knn_array > 0] = C_knn_array[C_knn_array > 0]
+
+    G_dense_initial = ot.emd(a, b, C_dense_infty)
+    eps = 1e-9
+    active_mask = G_dense_initial > eps
+    knn_mask = C_knn_array > 0
+    extra_edges_mask = active_mask & ~knn_mask
+
+    rows_aug = []
+    cols_aug = []
+    data_aug = []
+
+    knn_rows, knn_cols = np.where(knn_mask)
+    for i, j in zip(knn_rows, knn_cols):
+        rows_aug.append(i)
+        cols_aug.append(j)
+        data_aug.append(C[i, j])
+
+    extra_rows, extra_cols = np.where(extra_edges_mask)
+    for i, j in zip(extra_rows, extra_cols):
+        rows_aug.append(i)
+        cols_aug.append(j)
+        data_aug.append(C[i, j])
+
+    C_augmented = coo_matrix((data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target))
+
+    C_augmented_dense = np.full((n_source, n_target), large_cost)
+    C_augmented_array = C_augmented.toarray()
+    C_augmented_dense[C_augmented_array > 0] = C_augmented_array[C_augmented_array > 0]
+
+    G_dense, log_dense = ot.emd(a, b, C_augmented_dense, log=True)
+    G_sparse, log_sparse = ot.emd(a, b, C_augmented, log=True, sparse=True, return_matrix=True)
+
+    cost_dense = log_dense['cost']
+    cost_sparse = log_sparse['cost']
+
+    np.testing.assert_allclose(cost_dense, cost_sparse, rtol=1e-5, atol=1e-7)
+
+    np.testing.assert_allclose(a, G_dense.sum(1), rtol=1e-5, atol=1e-7)
+    np.testing.assert_allclose(b, G_dense.sum(0), rtol=1e-5, atol=1e-7)
+    np.testing.assert_allclose(a, G_sparse.sum(1), rtol=1e-5, atol=1e-7)
+    np.testing.assert_allclose(b, G_sparse.sum(0), rtol=1e-5, atol=1e-7)
+
+
+def test_emd2_sparse_vs_dense():
+
+    n_source = 100
+    n_target = 100
+    k = 10  
+
+    rng = np.random.RandomState(42)
+
+    x_source = rng.randn(n_source, 2)
+    x_target = rng.randn(n_target, 2) + 0.5
+
+    a = ot.utils.unif(n_source)
+    b = ot.utils.unif(n_target)
+
+    C = ot.dist(x_source, x_target)
+
+    rows = []
+    cols = []
+    data = []
+
+    for i in range(n_source):
+        distances = C[i, :]
+        nearest_k = np.argpartition(distances, k)[:k]
+        for j in nearest_k:
+            rows.append(i)
+            cols.append(j)
+            data.append(C[i, j])
+
+    C_knn = coo_matrix((data, (rows, cols)), shape=(n_source, n_target))
+
+    large_cost = 1e8
+    C_dense_infty = np.full((n_source, n_target), large_cost)
+    C_knn_array = C_knn.toarray()
+    C_dense_infty[C_knn_array > 0] = C_knn_array[C_knn_array > 0]
+
+    G_dense_initial = ot.emd(a, b, C_dense_infty)
+
+    eps = 1e-9
+    active_mask = G_dense_initial > eps
+    knn_mask = C_knn_array > 0
+    extra_edges_mask = active_mask & ~knn_mask
+
+    rows_aug = []
+    cols_aug = []
+    data_aug = []
+
+    knn_rows, knn_cols = np.where(knn_mask)
+    for i, j in zip(knn_rows, knn_cols):
+        rows_aug.append(i)
+        cols_aug.append(j)
+        data_aug.append(C[i, j])
+
+    extra_rows, extra_cols = np.where(extra_edges_mask)
+    for i, j in zip(extra_rows, extra_cols):
+        rows_aug.append(i)
+        cols_aug.append(j)
+        data_aug.append(C[i, j])
+
+    C_augmented = coo_matrix((data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target))
+
+    C_augmented_dense = np.full((n_source, n_target), large_cost)
+    C_augmented_array = C_augmented.toarray()
+    C_augmented_dense[C_augmented_array > 0] = C_augmented_array[C_augmented_array > 0]
+
+    cost_dense = ot.emd2(a, b, C_augmented_dense)
+    cost_sparse = ot.emd2(a, b, C_augmented, sparse=True)
+
+    np.testing.assert_allclose(cost_dense, cost_sparse, rtol=1e-5, atol=1e-7)
 
 
 def check_duality_gap(a, b, M, G, u, v, cost):
