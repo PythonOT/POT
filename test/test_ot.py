@@ -14,6 +14,7 @@ from ot.datasets import make_1D_gauss as gauss
 from ot.backend import torch, tf, get_backend
 from scipy.sparse import coo_matrix
 
+
 def test_emd_dimension_and_mass_mismatch():
     # test emd and emd2 for dimension mismatch
     n_samples = 100
@@ -915,10 +916,14 @@ def test_dual_variables():
 
 
 def test_emd_sparse_vs_dense():
+    """Test that sparse and dense EMD solvers produce identical results.
 
+    Uses augmented k-NN graph approach: first solves with dense solver to
+    identify needed edges, then compares both solvers on the same graph.
+    """
     n_source = 100
     n_target = 100
-    k = 10 
+    k = 10
 
     rng = np.random.RandomState(42)
 
@@ -971,17 +976,21 @@ def test_emd_sparse_vs_dense():
         cols_aug.append(j)
         data_aug.append(C[i, j])
 
-    C_augmented = coo_matrix((data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target))
+    C_augmented = coo_matrix(
+        (data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target)
+    )
 
     C_augmented_dense = np.full((n_source, n_target), large_cost)
     C_augmented_array = C_augmented.toarray()
     C_augmented_dense[C_augmented_array > 0] = C_augmented_array[C_augmented_array > 0]
 
     G_dense, log_dense = ot.emd(a, b, C_augmented_dense, log=True)
-    G_sparse, log_sparse = ot.emd(a, b, C_augmented, log=True, sparse=True, return_matrix=True)
+    G_sparse, log_sparse = ot.emd(
+        a, b, C_augmented, log=True, sparse=True, return_matrix=True
+    )
 
-    cost_dense = log_dense['cost']
-    cost_sparse = log_sparse['cost']
+    cost_dense = log_dense["cost"]
+    cost_sparse = log_sparse["cost"]
 
     np.testing.assert_allclose(cost_dense, cost_sparse, rtol=1e-5, atol=1e-7)
 
@@ -992,10 +1001,14 @@ def test_emd_sparse_vs_dense():
 
 
 def test_emd2_sparse_vs_dense():
+    """Test that sparse and dense emd2 solvers produce identical results.
 
+    Uses augmented k-NN graph approach: first solves with dense solver to
+    identify needed edges, then compares both solvers on the same graph.
+    """
     n_source = 100
     n_target = 100
-    k = 10  
+    k = 10
 
     rng = np.random.RandomState(42)
 
@@ -1049,7 +1062,9 @@ def test_emd2_sparse_vs_dense():
         cols_aug.append(j)
         data_aug.append(C[i, j])
 
-    C_augmented = coo_matrix((data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target))
+    C_augmented = coo_matrix(
+        (data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target)
+    )
 
     C_augmented_dense = np.full((n_source, n_target), large_cost)
     C_augmented_array = C_augmented.toarray()

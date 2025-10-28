@@ -294,9 +294,17 @@ def emd(
             else:
                 M_coo = M
 
-            edge_sources = M_coo.row if M_coo.row.dtype == np.int64 else M_coo.row.astype(np.int64)
-            edge_targets = M_coo.col if M_coo.col.dtype == np.int64 else M_coo.col.astype(np.int64)
-            edge_costs = M_coo.data if M_coo.data.dtype == np.float64 else M_coo.data.astype(np.float64)
+            edge_sources = (
+                M_coo.row if M_coo.row.dtype == np.int64 else M_coo.row.astype(np.int64)
+            )
+            edge_targets = (
+                M_coo.col if M_coo.col.dtype == np.int64 else M_coo.col.astype(np.int64)
+            )
+            edge_costs = (
+                M_coo.data
+                if M_coo.data.dtype == np.float64
+                else M_coo.data.astype(np.float64)
+            )
             n1, n2 = M_coo.shape
         elif isinstance(M, tuple) and len(M) == 3:
             edge_sources = np.asarray(M[0], dtype=np.int64)
@@ -305,7 +313,9 @@ def emd(
             n1 = int(edge_sources.max() + 1)
             n2 = int(edge_targets.max() + 1)
         else:
-            raise ValueError("When sparse=True, M must be a scipy sparse matrix or a tuple (row, col, data)")
+            raise ValueError(
+                "When sparse=True, M must be a scipy sparse matrix or a tuple (row, col, data)"
+            )
 
         a, b = list_to_array(a, b)
     else:
@@ -321,9 +331,17 @@ def emd(
         type_as = a
 
     if len(a) == 0:
-        a = nx.ones((n1,), type_as=type_as) / n1 if n1 else nx.ones((M.shape[0],), type_as=type_as) / M.shape[0]
+        a = (
+            nx.ones((n1,), type_as=type_as) / n1
+            if n1
+            else nx.ones((M.shape[0],), type_as=type_as) / M.shape[0]
+        )
     if len(b) == 0:
-        b = nx.ones((n2,), type_as=type_as) / n2 if n2 else nx.ones((M.shape[1],), type_as=type_as) / M.shape[1]
+        b = (
+            nx.ones((n2,), type_as=type_as) / n2
+            if n2
+            else nx.ones((M.shape[1],), type_as=type_as) / M.shape[1]
+        )
 
     if sparse:
         a, b = nx.to_numpy(a, b)
@@ -333,7 +351,6 @@ def emd(
 
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
-
 
     if n1 is None:
         n1, n2 = M.shape
@@ -409,7 +426,9 @@ def emd(
     if G is not None:
         return nx.from_numpy(G, type_as=type_as)
     else:
-        raise ValueError("Cannot return matrix when return_matrix=False and sparse=True without log=True")
+        raise ValueError(
+            "Cannot return matrix when return_matrix=False and sparse=True without log=True"
+        )
 
 
 def emd2(
@@ -419,12 +438,11 @@ def emd2(
     processes=1,
     numItermax=100000,
     log=False,
-    
     center_dual=True,
     numThreads=1,
     check_marginals=True,
     sparse=False,
-    return_matrix=False
+    return_matrix=False,
 ):
     r"""Solves the Earth Movers distance problem and returns the loss
 
@@ -534,7 +552,7 @@ def emd2(
     edge_sources = None
     edge_targets = None
     edge_costs = None
-    n1, n2 = None, None  
+    n1, n2 = None, None
 
     if sparse:
         if sp.issparse(M):
@@ -545,11 +563,21 @@ def emd2(
                 M_coo = M
             t1 = time.perf_counter()
 
-            edge_sources = M_coo.row if M_coo.row.dtype == np.int64 else M_coo.row.astype(np.int64)
-            edge_targets = M_coo.col if M_coo.col.dtype == np.int64 else M_coo.col.astype(np.int64)
-            edge_costs = M_coo.data if M_coo.data.dtype == np.float64 else M_coo.data.astype(np.float64)
+            edge_sources = (
+                M_coo.row if M_coo.row.dtype == np.int64 else M_coo.row.astype(np.int64)
+            )
+            edge_targets = (
+                M_coo.col if M_coo.col.dtype == np.int64 else M_coo.col.astype(np.int64)
+            )
+            edge_costs = (
+                M_coo.data
+                if M_coo.data.dtype == np.float64
+                else M_coo.data.astype(np.float64)
+            )
             t2 = time.perf_counter()
-            print(f"[PY SPARSE] COO conversion: {(t1-t0)*1000:.3f} ms, array copies: {(t2-t1)*1000:.3f} ms")
+            print(
+                f"[PY SPARSE] COO conversion: {(t1-t0)*1000:.3f} ms, array copies: {(t2-t1)*1000:.3f} ms"
+            )
             n1, n2 = M_coo.shape
         elif isinstance(M, tuple) and len(M) == 3:
             edge_sources = np.asarray(M[0], dtype=np.int64)
@@ -577,12 +605,20 @@ def emd2(
 
     # if empty array given then use uniform distributions
     if len(a) == 0:
-        a = nx.ones((n1,), type_as=type_as) / n1 if n1 else nx.ones((M.shape[0],), type_as=type_as) / M.shape[0]
+        a = (
+            nx.ones((n1,), type_as=type_as) / n1
+            if n1
+            else nx.ones((M.shape[0],), type_as=type_as) / M.shape[0]
+        )
     if len(b) == 0:
-        b = nx.ones((n2,), type_as=type_as) / n2 if n2 else nx.ones((M.shape[1],), type_as=type_as) / M.shape[1]
+        b = (
+            nx.ones((n2,), type_as=type_as) / n2
+            if n2
+            else nx.ones((M.shape[1],), type_as=type_as) / M.shape[1]
+        )
 
     a0, b0 = a, b
-    M0 = None if sparse else M  
+    M0 = None if sparse else M
 
     if sparse:
         edge_costs_original = nx.from_numpy(edge_costs, type_as=type_as)
@@ -625,15 +661,24 @@ def emd2(
             bsel = b != 0
 
             if edge_sources is not None:
-                flow_sources, flow_targets, flow_values, cost, u, v, result_code = emd_c_sparse(
-                    a, b, edge_sources, edge_targets, edge_costs, numItermax
+                flow_sources, flow_targets, flow_values, cost, u, v, result_code = (
+                    emd_c_sparse(
+                        a, b, edge_sources, edge_targets, edge_costs, numItermax
+                    )
                 )
 
-                edge_to_idx = {(edge_sources[k], edge_targets[k]): k for k in range(len(edge_sources))}
+                edge_to_idx = {
+                    (edge_sources[k], edge_targets[k]): k
+                    for k in range(len(edge_sources))
+                }
 
                 grad_edge_costs = np.zeros(len(edge_costs), dtype=np.float64)
                 for idx in range(len(flow_sources)):
-                    src, tgt, flow = flow_sources[idx], flow_targets[idx], flow_values[idx]
+                    src, tgt, flow = (
+                        flow_sources[idx],
+                        flow_targets[idx],
+                        flow_values[idx],
+                    )
                     edge_idx = edge_to_idx.get((src, tgt), -1)
                     if edge_idx >= 0:
                         grad_edge_costs[edge_idx] = flow
@@ -679,7 +724,11 @@ def emd2(
                 cost = nx.set_gradients(
                     nx.from_numpy(cost, type_as=type_as),
                     (a0, b0, edge_costs_original),
-                    (log["u"] - nx.mean(log["u"]), log["v"] - nx.mean(log["v"]), nx.from_numpy(grad_edge_costs, type_as=type_as)),
+                    (
+                        log["u"] - nx.mean(log["u"]),
+                        log["v"] - nx.mean(log["v"]),
+                        nx.from_numpy(grad_edge_costs, type_as=type_as),
+                    ),
                 )
             else:
                 cost = nx.set_gradients(
@@ -694,14 +743,23 @@ def emd2(
             bsel = b != 0
 
             if edge_sources is not None:
-                flow_sources, flow_targets, flow_values, cost, u, v, result_code = emd_c_sparse(
-                    a, b, edge_sources, edge_targets, edge_costs, numItermax
+                flow_sources, flow_targets, flow_values, cost, u, v, result_code = (
+                    emd_c_sparse(
+                        a, b, edge_sources, edge_targets, edge_costs, numItermax
+                    )
                 )
 
-                edge_to_idx = {(edge_sources[k], edge_targets[k]): k for k in range(len(edge_sources))}
+                edge_to_idx = {
+                    (edge_sources[k], edge_targets[k]): k
+                    for k in range(len(edge_sources))
+                }
                 grad_edge_costs = np.zeros(len(edge_costs), dtype=np.float64)
                 for idx in range(len(flow_sources)):
-                    src, tgt, flow = flow_sources[idx], flow_targets[idx], flow_values[idx]
+                    src, tgt, flow = (
+                        flow_sources[idx],
+                        flow_targets[idx],
+                        flow_values[idx],
+                    )
                     edge_idx = edge_to_idx.get((src, tgt), -1)
                     if edge_idx >= 0:
                         grad_edge_costs[edge_idx] = flow
