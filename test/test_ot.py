@@ -985,19 +985,32 @@ def test_emd_sparse_vs_dense():
     C_augmented_dense[C_augmented_array > 0] = C_augmented_array[C_augmented_array > 0]
 
     G_dense, log_dense = ot.emd(a, b, C_augmented_dense, log=True)
-    G_sparse, log_sparse = ot.emd(
-        a, b, C_augmented, log=True, sparse=True, return_matrix=True
-    )
+    G_sparse, log_sparse = ot.emd(a, b, C_augmented, log=True)
 
     cost_dense = log_dense["cost"]
     cost_sparse = log_sparse["cost"]
 
     np.testing.assert_allclose(cost_dense, cost_sparse, rtol=1e-5, atol=1e-7)
 
+    # For dense, G_dense is returned; for sparse, reconstruct from flow edges
     np.testing.assert_allclose(a, G_dense.sum(1), rtol=1e-5, atol=1e-7)
     np.testing.assert_allclose(b, G_dense.sum(0), rtol=1e-5, atol=1e-7)
-    np.testing.assert_allclose(a, G_sparse.sum(1), rtol=1e-5, atol=1e-7)
-    np.testing.assert_allclose(b, G_sparse.sum(0), rtol=1e-5, atol=1e-7)
+
+    # Reconstruct sparse matrix from flow for marginal checks
+    if G_sparse is None:
+        G_sparse_reconstructed = np.zeros((n_source, n_target))
+        G_sparse_reconstructed[
+            log_sparse["flow_sources"], log_sparse["flow_targets"]
+        ] = log_sparse["flow_values"]
+        np.testing.assert_allclose(
+            a, G_sparse_reconstructed.sum(1), rtol=1e-5, atol=1e-7
+        )
+        np.testing.assert_allclose(
+            b, G_sparse_reconstructed.sum(0), rtol=1e-5, atol=1e-7
+        )
+    else:
+        np.testing.assert_allclose(a, G_sparse.sum(1), rtol=1e-5, atol=1e-7)
+        np.testing.assert_allclose(b, G_sparse.sum(0), rtol=1e-5, atol=1e-7)
 
 
 def test_emd2_sparse_vs_dense():
@@ -1071,7 +1084,7 @@ def test_emd2_sparse_vs_dense():
     C_augmented_dense[C_augmented_array > 0] = C_augmented_array[C_augmented_array > 0]
 
     cost_dense = ot.emd2(a, b, C_augmented_dense)
-    cost_sparse = ot.emd2(a, b, C_augmented, sparse=True)
+    cost_sparse = ot.emd2(a, b, C_augmented)
 
     np.testing.assert_allclose(cost_dense, cost_sparse, rtol=1e-5, atol=1e-7)
 

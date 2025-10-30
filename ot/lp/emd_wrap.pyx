@@ -14,7 +14,7 @@ from ..utils import dist
 
 cimport cython
 cimport libc.math as math
-from libc.stdint cimport uint64_t
+from libc.stdint cimport uint64_t, int64_t
 
 import warnings
 
@@ -22,7 +22,7 @@ import warnings
 cdef extern from "EMD.h":
     int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter) nogil
     int EMD_wrap_omp(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, int numThreads) nogil
-    int EMD_wrap_sparse(int n1, int n2, double *X, double *Y, uint64_t n_edges, long long *edge_sources, long long *edge_targets, double *edge_costs, long long *flow_sources_out, long long *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, double *alpha, double *beta, double *cost, uint64_t maxIter) nogil
+    int EMD_wrap_sparse(int n1, int n2, double *X, double *Y, uint64_t n_edges, int64_t *edge_sources, int64_t *edge_targets, double *edge_costs, int64_t *flow_sources_out, int64_t *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, double *alpha, double *beta, double *cost, uint64_t maxIter) nogil
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
 
@@ -212,8 +212,8 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
 @cython.wraparound(False)
 def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
                 np.ndarray[double, ndim=1, mode="c"] b,
-                np.ndarray[long long, ndim=1, mode="c"] edge_sources,
-                np.ndarray[long long, ndim=1, mode="c"] edge_targets,
+                np.ndarray[int64_t, ndim=1, mode="c"] edge_sources,
+                np.ndarray[int64_t, ndim=1, mode="c"] edge_targets,
                 np.ndarray[double, ndim=1, mode="c"] edge_costs,
                 uint64_t max_iter):
     """
@@ -259,8 +259,8 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
     cdef double cost = 0
 
     # Allocate output arrays (max size = n_edges)
-    cdef np.ndarray[long long, ndim=1, mode="c"] flow_sources = np.zeros(n_edges, dtype=np.int64)
-    cdef np.ndarray[long long, ndim=1, mode="c"] flow_targets = np.zeros(n_edges, dtype=np.int64)
+    cdef np.ndarray[int64_t, ndim=1, mode="c"] flow_sources = np.zeros(n_edges, dtype=np.int64)
+    cdef np.ndarray[int64_t, ndim=1, mode="c"] flow_targets = np.zeros(n_edges, dtype=np.int64)
     cdef np.ndarray[double, ndim=1, mode="c"] flow_values = np.zeros(n_edges, dtype=np.float64)
     cdef np.ndarray[double, ndim=1, mode="c"] alpha = np.zeros(n1)
     cdef np.ndarray[double, ndim=1, mode="c"] beta = np.zeros(n2)
@@ -270,8 +270,8 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
             n1, n2,
             <double*> a.data, <double*> b.data,
             n_edges,
-            <long long*> edge_sources.data, <long long*> edge_targets.data, <double*> edge_costs.data,
-            <long long*> flow_sources.data, <long long*> flow_targets.data, <double*> flow_values.data,
+            <int64_t*> edge_sources.data, <int64_t*> edge_targets.data, <double*> edge_costs.data,
+            <int64_t*> flow_sources.data, <int64_t*> flow_targets.data, <double*> flow_values.data,
             &n_flows_out,
             <double*> alpha.data, <double*> beta.data, &cost, max_iter
         )

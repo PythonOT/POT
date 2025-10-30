@@ -12,7 +12,6 @@ import numpy as np
 import warnings
 
 import scipy.sparse as sp
-import time
 from ..utils import list_to_array, check_number_threads
 from ..backend import get_backend
 from .emd_wrap import emd_c, emd_c_sparse, check_result
@@ -174,8 +173,6 @@ def emd(
     center_dual=True,
     numThreads=1,
     check_marginals=True,
-    sparse=False,
-    return_matrix=False,
 ):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
@@ -236,22 +233,26 @@ def emd(
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
-    sparse: bool, optional (default=False)
-        If True, uses the sparse solver that only stores edges with finite costs.
-        When sparse=True, M should be a scipy.sparse matrix.
-    return_matrix: bool, optional (default=True)
-        If True, returns the transport matrix. If False and sparse=True, returns
-        sparse flow representation in log.
+
+    .. note:: The solver automatically detects sparse format when M is provided as:
+        - A scipy.sparse matrix (coo, csr, csc, etc.)
+        - A tuple (row_indices, col_indices, costs) representing an edge list
+
+        For sparse inputs, the solver uses a memory-efficient algorithm and returns
+        the flow in edge format (via log dict) instead of a full matrix.
 
 
     Returns
     -------
-    gamma: array-like, shape (ns, nt)
-        Optimal transportation matrix for the given
-        parameters
+    gamma: array-like, shape (ns, nt), or None
+        Optimal transportation matrix for the given parameters.
+        For sparse inputs, returns None (use log=True to get flow in edge format).
     log: dict, optional
-        If input log is true, a dictionary containing the
-        cost and dual variables and exit status
+        If input log is True, a dictionary containing the cost, dual variables,
+        and exit status. For sparse inputs with log=True, also contains:
+        - 'flow_sources': source nodes of flow edges
+        - 'flow_targets': target nodes of flow edges
+        - 'flow_values': flow values on edges
 
 
     Examples
@@ -287,7 +288,10 @@ def emd(
     edge_costs = None
     n1, n2 = None, None
 
-    if sparse:
+    # Auto-detect sparse format
+    is_sparse = sp.issparse(M) or (isinstance(M, tuple) and len(M) == 3)
+
+    if is_sparse:
         if sp.issparse(M):
             if not isinstance(M, sp.coo_matrix):
                 M_coo = sp.coo_matrix(M)
@@ -312,10 +316,6 @@ def emd(
             edge_costs = np.asarray(M[2], dtype=np.float64)
             n1 = int(edge_sources.max() + 1)
             n2 = int(edge_targets.max() + 1)
-        else:
-            raise ValueError(
-                "When sparse=True, M must be a scipy sparse matrix or a tuple (row, col, data)"
-            )
 
         a, b = list_to_array(a, b)
     else:
@@ -343,7 +343,7 @@ def emd(
             else nx.ones((M.shape[1],), type_as=type_as) / M.shape[1]
         )
 
-    if sparse:
+    if is_sparse:
         a, b = nx.to_numpy(a, b)
     else:
         M, a, b = nx.to_numpy(M, a, b)
@@ -375,14 +375,11 @@ def emd(
     numThreads = check_number_threads(numThreads)
 
     if edge_sources is not None:
+        # Sparse solver - never build full matrix
         flow_sources, flow_targets, flow_values, cost, u, v, result_code = emd_c_sparse(
             a, b, edge_sources, edge_targets, edge_costs, numItermax
         )
-        if return_matrix:
-            G = np.zeros((len(a), len(b)), dtype=np.float64)
-            G[flow_sources, flow_targets] = flow_values
-        else:
-            G = None
+        G = None
     else:
         G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
 
@@ -413,7 +410,8 @@ def emd(
         log_dict["warning"] = result_code_string
         log_dict["result_code"] = result_code
 
-        if edge_sources is not None and not return_matrix:
+        if edge_sources is not None:
+            # For sparse, include flow in edge format
             log_dict["flow_sources"] = flow_sources
             log_dict["flow_targets"] = flow_targets
             log_dict["flow_values"] = flow_values
@@ -427,7 +425,7 @@ def emd(
         return nx.from_numpy(G, type_as=type_as)
     else:
         raise ValueError(
-            "Cannot return matrix when return_matrix=False and sparse=True without log=True"
+            "For sparse inputs, log=True is required to get the flow in edge format"
         )
 
 
@@ -441,7 +439,6 @@ def emd2(
     center_dual=True,
     numThreads=1,
     check_marginals=True,
-    sparse=False,
     return_matrix=False,
 ):
     r"""Solves the Earth Movers distance problem and returns the loss
@@ -503,11 +500,12 @@ def emd2(
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
-    sparse: bool, optional (default=False)
-        If True, uses the sparse solver that only stores edges with finite costs.
-        This is memory-efficient when M has many infinite or forbidden edges.
-        When sparse=True, M should be a scipy.sparse matrix (coo, csr, or csc format)
-        or a tuple (row_indices, col_indices, costs) representing the edge list.
+
+    .. note:: The solver automatically detects sparse format when M is provided as:
+        - A scipy.sparse matrix (coo, csr, csc, etc.)
+        - A tuple (row_indices, col_indices, costs) representing an edge list
+
+        For sparse inputs, the solver uses a memory-efficient algorithm.
         Edges not included are treated as having infinite cost (forbidden).
 
 
@@ -554,14 +552,15 @@ def emd2(
     edge_costs = None
     n1, n2 = None, None
 
-    if sparse:
+    # Auto-detect sparse format
+    is_sparse = sp.issparse(M) or (isinstance(M, tuple) and len(M) == 3)
+
+    if is_sparse:
         if sp.issparse(M):
-            t0 = time.perf_counter()
             if not isinstance(M, sp.coo_matrix):
                 M_coo = sp.coo_matrix(M)
             else:
                 M_coo = M
-            t1 = time.perf_counter()
 
             edge_sources = (
                 M_coo.row if M_coo.row.dtype == np.int64 else M_coo.row.astype(np.int64)
@@ -574,10 +573,6 @@ def emd2(
                 if M_coo.data.dtype == np.float64
                 else M_coo.data.astype(np.float64)
             )
-            t2 = time.perf_counter()
-            print(
-                f"[PY SPARSE] COO conversion: {(t1-t0)*1000:.3f} ms, array copies: {(t2-t1)*1000:.3f} ms"
-            )
             n1, n2 = M_coo.shape
         elif isinstance(M, tuple) and len(M) == 3:
             edge_sources = np.asarray(M[0], dtype=np.int64)
@@ -585,10 +580,6 @@ def emd2(
             edge_costs = np.asarray(M[2], dtype=np.float64)
             n1 = int(edge_sources.max() + 1)
             n2 = int(edge_targets.max() + 1)
-        else:
-            raise ValueError(
-                "When sparse=True, M must be a scipy sparse matrix or a tuple (row, col, data)"
-            )
 
         a, b = list_to_array(a, b)
     else:
@@ -618,14 +609,14 @@ def emd2(
         )
 
     a0, b0 = a, b
-    M0 = None if sparse else M
+    M0 = None if is_sparse else M
 
-    if sparse:
+    if is_sparse:
         edge_costs_original = nx.from_numpy(edge_costs, type_as=type_as)
     else:
         edge_costs_original = None
 
-    if sparse:
+    if is_sparse:
         a, b = nx.to_numpy(a, b)
     else:
         M, a, b = nx.to_numpy(M, a, b)
