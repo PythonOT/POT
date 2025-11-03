@@ -234,9 +234,8 @@ def emd(
         If True, checks that the marginals mass are equal. If False, skips the
         check.
 
-    .. note:: The solver automatically detects sparse format when M is provided as:
-        - A scipy.sparse matrix (coo, csr, csc, etc.)
-        - A tuple (row_indices, col_indices, costs) representing an edge list
+    .. note:: The solver automatically detects sparse format when M is provided as
+        a scipy.sparse matrix (coo, csr, csc, etc.).
 
         For sparse inputs, the solver uses a memory-efficient algorithm and returns
         the flow in edge format (via log dict) instead of a full matrix.
@@ -288,36 +287,35 @@ def emd(
     edge_costs = None
     n1, n2 = None, None
 
-    # Auto-detect sparse format
-    is_sparse = sp.issparse(M) or (isinstance(M, tuple) and len(M) == 3)
+    # Check for sparse format
+    is_sparse = sp.issparse(M)
 
     if is_sparse:
-        if sp.issparse(M):
-            if not isinstance(M, sp.coo_matrix):
-                M_coo = sp.coo_matrix(M)
-            else:
-                M_coo = M
+        # Convert to COO format for edge extraction
+        if not isinstance(M, sp.coo_matrix):
+            M_coo = sp.coo_matrix(M)
+        else:
+            M_coo = M
 
-            edge_sources = (
-                M_coo.row if M_coo.row.dtype == np.int64 else M_coo.row.astype(np.int64)
-            )
-            edge_targets = (
-                M_coo.col if M_coo.col.dtype == np.int64 else M_coo.col.astype(np.int64)
-            )
-            edge_costs = (
-                M_coo.data
-                if M_coo.data.dtype == np.float64
-                else M_coo.data.astype(np.float64)
-            )
-            n1, n2 = M_coo.shape
-        elif isinstance(M, tuple) and len(M) == 3:
-            edge_sources = np.asarray(M[0], dtype=np.int64)
-            edge_targets = np.asarray(M[1], dtype=np.int64)
-            edge_costs = np.asarray(M[2], dtype=np.float64)
-            n1 = int(edge_sources.max() + 1)
-            n2 = int(edge_targets.max() + 1)
+        edge_sources = (
+            M_coo.row if M_coo.row.dtype == np.uint64 else M_coo.row.astype(np.uint64)
+        )
+        edge_targets = (
+            M_coo.col if M_coo.col.dtype == np.uint64 else M_coo.col.astype(np.uint64)
+        )
+        edge_costs = (
+            M_coo.data
+            if M_coo.data.dtype == np.float64
+            else M_coo.data.astype(np.float64)
+        )
+        n1, n2 = M_coo.shape
 
         a, b = list_to_array(a, b)
+    elif isinstance(M, tuple):
+        raise ValueError(
+            "Tuple format for sparse cost matrix is not supported. "
+            "Please use scipy.sparse format (e.g., scipy.sparse.coo_matrix, csr_matrix, etc.)."
+        )
     else:
         a, b, M = list_to_array(a, b, M)
 
@@ -330,18 +328,14 @@ def emd(
     else:
         type_as = a
 
+    # Set n1, n2 if not already set (dense case)
+    if n1 is None:
+        n1, n2 = M.shape
+
     if len(a) == 0:
-        a = (
-            nx.ones((n1,), type_as=type_as) / n1
-            if n1
-            else nx.ones((M.shape[0],), type_as=type_as) / M.shape[0]
-        )
+        a = nx.ones((n1,), type_as=type_as) / n1
     if len(b) == 0:
-        b = (
-            nx.ones((n2,), type_as=type_as) / n2
-            if n2
-            else nx.ones((M.shape[1],), type_as=type_as) / M.shape[1]
-        )
+        b = nx.ones((n2,), type_as=type_as) / n2
 
     if is_sparse:
         a, b = nx.to_numpy(a, b)
@@ -351,9 +345,6 @@ def emd(
 
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
-
-    if n1 is None:
-        n1, n2 = M.shape
 
     assert (
         a.shape[0] == n1 and b.shape[0] == n2
@@ -374,59 +365,77 @@ def emd(
 
     numThreads = check_number_threads(numThreads)
 
-    if edge_sources is not None:
+    # ============================================================================
+    # SPARSE SOLVER PATH
+    # ============================================================================
+    if is_sparse:
         # Sparse solver - never build full matrix
         flow_sources, flow_targets, flow_values, cost, u, v, result_code = emd_c_sparse(
             a, b, edge_sources, edge_targets, edge_costs, numItermax
         )
-        G = None
-    else:
-        G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
 
-    if center_dual:
-        u, v = center_ot_dual(u, v, a, b)
-
-    if np.any(~asel) or np.any(~bsel):
-        if edge_sources is not None:
+        # Center dual potentials
+        if center_dual:
             u, v = center_ot_dual(u, v, a, b)
-        else:
-            u, v = estimate_dual_null_weights(u, v, a, b, M)
 
-    result_code_string = check_result(result_code)
-    if not nx.is_floating_point(type_as):
-        warnings.warn(
-            "Input histogram consists of integer. The transport plan will be "
-            "casted accordingly, possibly resulting in a loss of precision. "
-            "If this behaviour is unwanted, please make sure your input "
-            "histogram consists of floating point elements.",
-            stacklevel=2,
-        )
+        if np.any(~asel) or np.any(~bsel):
+            u, v = center_ot_dual(u, v, a, b)
 
-    if log:
-        log_dict = {}
-        log_dict["cost"] = cost
-        log_dict["u"] = nx.from_numpy(u, type_as=type_as)
-        log_dict["v"] = nx.from_numpy(v, type_as=type_as)
-        log_dict["warning"] = result_code_string
-        log_dict["result_code"] = result_code
+        result_code_string = check_result(result_code)
 
-        if edge_sources is not None:
-            # For sparse, include flow in edge format
+        if log:
+            log_dict = {}
+            log_dict["cost"] = cost
+            log_dict["u"] = nx.from_numpy(u, type_as=type_as)
+            log_dict["v"] = nx.from_numpy(v, type_as=type_as)
+            log_dict["warning"] = result_code_string
+            log_dict["result_code"] = result_code
             log_dict["flow_sources"] = flow_sources
             log_dict["flow_targets"] = flow_targets
             log_dict["flow_values"] = flow_values
 
-        if G is not None:
+            return None, log_dict
+        else:
+            raise ValueError(
+                "For sparse inputs, log=True is required to get the flow in edge format"
+            )
+
+    # ============================================================================
+    # DENSE SOLVER PATH
+    # ============================================================================
+    else:
+        # Dense solver
+        G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
+
+        # Center dual potentials
+        if center_dual:
+            u, v = center_ot_dual(u, v, a, b)
+
+        if np.any(~asel) or np.any(~bsel):
+            u, v = estimate_dual_null_weights(u, v, a, b, M)
+
+        result_code_string = check_result(result_code)
+
+        if not nx.is_floating_point(type_as):
+            warnings.warn(
+                "Input histogram consists of integer. The transport plan will be "
+                "casted accordingly, possibly resulting in a loss of precision. "
+                "If this behaviour is unwanted, please make sure your input "
+                "histogram consists of floating point elements.",
+                stacklevel=2,
+            )
+
+        if log:
+            log_dict = {}
+            log_dict["cost"] = cost
+            log_dict["u"] = nx.from_numpy(u, type_as=type_as)
+            log_dict["v"] = nx.from_numpy(v, type_as=type_as)
+            log_dict["warning"] = result_code_string
+            log_dict["result_code"] = result_code
+
             return nx.from_numpy(G, type_as=type_as), log_dict
         else:
-            return None, log_dict
-
-    if G is not None:
-        return nx.from_numpy(G, type_as=type_as)
-    else:
-        raise ValueError(
-            "For sparse inputs, log=True is required to get the flow in edge format"
-        )
+            return nx.from_numpy(G, type_as=type_as)
 
 
 def emd2(
@@ -501,9 +510,8 @@ def emd2(
         If True, checks that the marginals mass are equal. If False, skips the
         check.
 
-    .. note:: The solver automatically detects sparse format when M is provided as:
-        - A scipy.sparse matrix (coo, csr, csc, etc.)
-        - A tuple (row_indices, col_indices, costs) representing an edge list
+    .. note:: The solver automatically detects sparse format when M is provided as
+        a scipy.sparse matrix (coo, csr, csc, etc.).
 
         For sparse inputs, the solver uses a memory-efficient algorithm.
         Edges not included are treated as having infinite cost (forbidden).
@@ -552,36 +560,35 @@ def emd2(
     edge_costs = None
     n1, n2 = None, None
 
-    # Auto-detect sparse format
-    is_sparse = sp.issparse(M) or (isinstance(M, tuple) and len(M) == 3)
+    # Check for sparse format
+    is_sparse = sp.issparse(M)
 
     if is_sparse:
-        if sp.issparse(M):
-            if not isinstance(M, sp.coo_matrix):
-                M_coo = sp.coo_matrix(M)
-            else:
-                M_coo = M
+        # Convert to COO format for edge extraction
+        if not isinstance(M, sp.coo_matrix):
+            M_coo = sp.coo_matrix(M)
+        else:
+            M_coo = M
 
-            edge_sources = (
-                M_coo.row if M_coo.row.dtype == np.int64 else M_coo.row.astype(np.int64)
-            )
-            edge_targets = (
-                M_coo.col if M_coo.col.dtype == np.int64 else M_coo.col.astype(np.int64)
-            )
-            edge_costs = (
-                M_coo.data
-                if M_coo.data.dtype == np.float64
-                else M_coo.data.astype(np.float64)
-            )
-            n1, n2 = M_coo.shape
-        elif isinstance(M, tuple) and len(M) == 3:
-            edge_sources = np.asarray(M[0], dtype=np.int64)
-            edge_targets = np.asarray(M[1], dtype=np.int64)
-            edge_costs = np.asarray(M[2], dtype=np.float64)
-            n1 = int(edge_sources.max() + 1)
-            n2 = int(edge_targets.max() + 1)
+        edge_sources = (
+            M_coo.row if M_coo.row.dtype == np.uint64 else M_coo.row.astype(np.uint64)
+        )
+        edge_targets = (
+            M_coo.col if M_coo.col.dtype == np.uint64 else M_coo.col.astype(np.uint64)
+        )
+        edge_costs = (
+            M_coo.data
+            if M_coo.data.dtype == np.float64
+            else M_coo.data.astype(np.float64)
+        )
+        n1, n2 = M_coo.shape
 
         a, b = list_to_array(a, b)
+    elif isinstance(M, tuple):
+        raise ValueError(
+            "Tuple format for sparse cost matrix is not supported. "
+            "Please use scipy.sparse format (e.g., scipy.sparse.coo_matrix, csr_matrix, etc.)."
+        )
     else:
         a, b, M = list_to_array(a, b, M)
 
@@ -594,19 +601,15 @@ def emd2(
     else:
         type_as = a  # Can't use M for sparse case
 
+    # Set n1, n2 if not already set (dense case)
+    if n1 is None:
+        n1, n2 = M.shape
+
     # if empty array given then use uniform distributions
     if len(a) == 0:
-        a = (
-            nx.ones((n1,), type_as=type_as) / n1
-            if n1
-            else nx.ones((M.shape[0],), type_as=type_as) / M.shape[0]
-        )
+        a = nx.ones((n1,), type_as=type_as) / n1
     if len(b) == 0:
-        b = (
-            nx.ones((n2,), type_as=type_as) / n2
-            if n2
-            else nx.ones((M.shape[1],), type_as=type_as) / M.shape[1]
-        )
+        b = nx.ones((n2,), type_as=type_as) / n2
 
     a0, b0 = a, b
     M0 = None if is_sparse else M
@@ -624,9 +627,6 @@ def emd2(
 
     a = np.asarray(a, dtype=np.float64)
     b = np.asarray(b, dtype=np.float64)
-
-    if n1 is None:
-        n1, n2 = M.shape
 
     assert (
         a.shape[0] == n1 and b.shape[0] == n2
@@ -646,127 +646,88 @@ def emd2(
 
     numThreads = check_number_threads(numThreads)
 
-    if log or return_matrix:
+    # ============================================================================
+    # SPARSE SOLVER PATH
+    # ============================================================================
+    if is_sparse:
 
         def f(b):
             bsel = b != 0
 
-            if edge_sources is not None:
-                flow_sources, flow_targets, flow_values, cost, u, v, result_code = (
-                    emd_c_sparse(
-                        a, b, edge_sources, edge_targets, edge_costs, numItermax
-                    )
+            # Solve sparse EMD
+            flow_sources, flow_targets, flow_values, cost, u, v, result_code = (
+                emd_c_sparse(a, b, edge_sources, edge_targets, edge_costs, numItermax)
+            )
+
+            # Build gradient mapping for edge costs
+            edge_to_idx = {
+                (edge_sources[k], edge_targets[k]): k for k in range(len(edge_sources))
+            }
+
+            grad_edge_costs = np.zeros(len(edge_costs), dtype=np.float64)
+            for idx in range(len(flow_sources)):
+                src, tgt, flow = (
+                    flow_sources[idx],
+                    flow_targets[idx],
+                    flow_values[idx],
                 )
+                edge_idx = edge_to_idx.get((src, tgt), -1)
+                if edge_idx >= 0:
+                    grad_edge_costs[edge_idx] = flow
 
-                edge_to_idx = {
-                    (edge_sources[k], edge_targets[k]): k
-                    for k in range(len(edge_sources))
-                }
-
-                grad_edge_costs = np.zeros(len(edge_costs), dtype=np.float64)
-                for idx in range(len(flow_sources)):
-                    src, tgt, flow = (
-                        flow_sources[idx],
-                        flow_targets[idx],
-                        flow_values[idx],
-                    )
-                    edge_idx = edge_to_idx.get((src, tgt), -1)
-                    if edge_idx >= 0:
-                        grad_edge_costs[edge_idx] = flow
-
-                    if return_matrix:
-                        G = np.zeros((len(a), len(b)), dtype=np.float64)
-                        G[flow_sources, flow_targets] = flow_values
-                    else:
-                        G = None
-            else:
-                G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
-
+            # Center dual potentials
             if center_dual:
                 u, v = center_ot_dual(u, v, a, b)
 
             if np.any(~asel) or np.any(~bsel):
-                if edge_sources is not None:
-                    u, v = center_ot_dual(u, v, a, b)
-                else:
-                    u, v = estimate_dual_null_weights(u, v, a, b, M)
+                u, v = center_ot_dual(u, v, a, b)
 
-            result_code_string = check_result(result_code)
-            log = {}
-            if not nx.is_floating_point(type_as):
-                warnings.warn(
-                    "Input histogram consists of integer. The transport plan will be "
-                    "casted accordingly, possibly resulting in a loss of precision. "
-                    "If this behaviour is unwanted, please make sure your input "
-                    "histogram consists of floating point elements.",
-                    stacklevel=2,
-                )
+            # Prepare cost with gradients
+            cost = nx.set_gradients(
+                nx.from_numpy(cost, type_as=type_as),
+                (a0, b0, edge_costs_original),
+                (
+                    nx.from_numpy(u - np.mean(u), type_as=type_as),
+                    nx.from_numpy(v - np.mean(v), type_as=type_as),
+                    nx.from_numpy(grad_edge_costs, type_as=type_as),
+                ),
+            )
 
-            if G is not None:
-                G = nx.from_numpy(G, type_as=type_as)
+            check_result(result_code)
+
+            if log or return_matrix:
+                log_dict = {}
+                log_dict["u"] = nx.from_numpy(u, type_as=type_as)
+                log_dict["v"] = nx.from_numpy(v, type_as=type_as)
+                log_dict["warning"] = check_result(result_code)
+                log_dict["result_code"] = result_code
+
                 if return_matrix:
-                    log["G"] = G
-            log["u"] = nx.from_numpy(u, type_as=type_as)
-            log["v"] = nx.from_numpy(v, type_as=type_as)
-            log["warning"] = result_code_string
-            log["result_code"] = result_code
+                    G = np.zeros((len(a), len(b)), dtype=np.float64)
+                    G[flow_sources, flow_targets] = flow_values
+                    log_dict["G"] = nx.from_numpy(G, type_as=type_as)
 
-            if edge_sources is not None:
-                cost = nx.set_gradients(
-                    nx.from_numpy(cost, type_as=type_as),
-                    (a0, b0, edge_costs_original),
-                    (
-                        log["u"] - nx.mean(log["u"]),
-                        log["v"] - nx.mean(log["v"]),
-                        nx.from_numpy(grad_edge_costs, type_as=type_as),
-                    ),
-                )
+                return [cost, log_dict]
             else:
-                cost = nx.set_gradients(
-                    nx.from_numpy(cost, type_as=type_as),
-                    (a0, b0, M0),
-                    (log["u"] - nx.mean(log["u"]), log["v"] - nx.mean(log["v"]), G),
-                )
-            return [cost, log]
+                return cost
+
+    # ============================================================================
+    # DENSE SOLVER PATH
+    # ============================================================================
     else:
 
         def f(b):
             bsel = b != 0
 
-            if edge_sources is not None:
-                flow_sources, flow_targets, flow_values, cost, u, v, result_code = (
-                    emd_c_sparse(
-                        a, b, edge_sources, edge_targets, edge_costs, numItermax
-                    )
-                )
+            # Solve dense EMD
+            G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
 
-                edge_to_idx = {
-                    (edge_sources[k], edge_targets[k]): k
-                    for k in range(len(edge_sources))
-                }
-                grad_edge_costs = np.zeros(len(edge_costs), dtype=np.float64)
-                for idx in range(len(flow_sources)):
-                    src, tgt, flow = (
-                        flow_sources[idx],
-                        flow_targets[idx],
-                        flow_values[idx],
-                    )
-                    edge_idx = edge_to_idx.get((src, tgt), -1)
-                    if edge_idx >= 0:
-                        grad_edge_costs[edge_idx] = flow
-
-                G = None
-            else:
-                G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
-
+            # Center dual potentials
             if center_dual:
                 u, v = center_ot_dual(u, v, a, b)
 
             if np.any(~asel) or np.any(~bsel):
-                if edge_sources is not None:
-                    u, v = center_ot_dual(u, v, a, b)
-                else:
-                    u, v = estimate_dual_null_weights(u, v, a, b, M)
+                u, v = estimate_dual_null_weights(u, v, a, b, M)
 
             if not nx.is_floating_point(type_as):
                 warnings.warn(
@@ -777,31 +738,32 @@ def emd2(
                     stacklevel=2,
                 )
 
-            if edge_sources is not None:
-                # Sparse: gradient w.r.t. edge_costs (no need to convert G)
-                cost = nx.set_gradients(
-                    nx.from_numpy(cost, type_as=type_as),
-                    (a0, b0, edge_costs_original),
-                    (
-                        nx.from_numpy(u - np.mean(u), type_as=type_as),
-                        nx.from_numpy(v - np.mean(v), type_as=type_as),
-                        nx.from_numpy(grad_edge_costs, type_as=type_as),
-                    ),
-                )
-            else:
-                G = nx.from_numpy(G, type_as=type_as)
-                cost = nx.set_gradients(
-                    nx.from_numpy(cost, type_as=type_as),
-                    (a0, b0, M0),
-                    (
-                        nx.from_numpy(u - np.mean(u), type_as=type_as),
-                        nx.from_numpy(v - np.mean(v), type_as=type_as),
-                        G,
-                    ),
-                )
+            G = nx.from_numpy(G, type_as=type_as)
+            cost = nx.set_gradients(
+                nx.from_numpy(cost, type_as=type_as),
+                (a0, b0, M0),
+                (
+                    nx.from_numpy(u - np.mean(u), type_as=type_as),
+                    nx.from_numpy(v - np.mean(v), type_as=type_as),
+                    G,
+                ),
+            )
 
             check_result(result_code)
-            return cost
+
+            if log or return_matrix:
+                log_dict = {}
+                log_dict["u"] = nx.from_numpy(u, type_as=type_as)
+                log_dict["v"] = nx.from_numpy(v, type_as=type_as)
+                log_dict["warning"] = check_result(result_code)
+                log_dict["result_code"] = result_code
+
+                if return_matrix:
+                    log_dict["G"] = G
+
+                return [cost, log_dict]
+            else:
+                return cost
 
     if len(b.shape) == 1:
         return f(b)

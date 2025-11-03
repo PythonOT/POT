@@ -38,11 +38,11 @@ int EMD_wrap_sparse(
     double *X,                   
     double *Y,                   
     uint64_t n_edges,            // Number of edges in sparse graph
-    int64_t *edge_sources,       // Source indices for each edge (n_edges)
-    int64_t *edge_targets,       // Target indices for each edge (n_edges)
+    uint64_t *edge_sources,      // Source indices for each edge (n_edges)
+    uint64_t *edge_targets,      // Target indices for each edge (n_edges)
     double *edge_costs,          // Cost for each edge (n_edges)
-    int64_t *flow_sources_out,   // Output: source indices of non-zero flows
-    int64_t *flow_targets_out,   // Output: target indices of non-zero flows
+    uint64_t *flow_sources_out,  // Output: source indices of non-zero flows
+    uint64_t *flow_targets_out,  // Output: target indices of non-zero flows
     double *flow_values_out,     // Output: flow values
     uint64_t *n_flows_out,       
     double *alpha,               // Output: dual variables for sources (n1)

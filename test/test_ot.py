@@ -1089,6 +1089,172 @@ def test_emd2_sparse_vs_dense():
     np.testing.assert_allclose(cost_dense, cost_sparse, rtol=1e-5, atol=1e-7)
 
 
+def test_emd_sparse_backends(nx):
+    """Test that sparse EMD works with different backends for weights a and b.
+
+    Uses augmented k-NN graph approach to ensure feasibility.
+    """
+    n_source = 50
+    n_target = 50
+    k = 10
+
+    rng = np.random.RandomState(42)
+
+    # Create distributions
+    a = ot.utils.unif(n_source)
+    b = ot.utils.unif(n_target)
+
+    # Create cost matrix
+    x_source = rng.randn(n_source, 2)
+    x_target = rng.randn(n_target, 2) + 0.5
+    C = ot.dist(x_source, x_target)
+
+    # Create sparse k-NN graph
+    rows = []
+    cols = []
+    data = []
+
+    for i in range(n_source):
+        distances = C[i, :]
+        nearest_k = np.argpartition(distances, k)[:k]
+        for j in nearest_k:
+            rows.append(i)
+            cols.append(j)
+            data.append(C[i, j])
+
+    C_knn = coo_matrix((data, (rows, cols)), shape=(n_source, n_target))
+
+    # Augment with necessary edges (same approach as test_emd_sparse_vs_dense)
+    large_cost = 1e8
+    C_dense_infty = np.full((n_source, n_target), large_cost)
+    C_knn_array = C_knn.toarray()
+    C_dense_infty[C_knn_array > 0] = C_knn_array[C_knn_array > 0]
+
+    G_dense_initial = ot.emd(a, b, C_dense_infty)
+    eps = 1e-9
+    active_mask = G_dense_initial > eps
+    knn_mask = C_knn_array > 0
+    extra_edges_mask = active_mask & ~knn_mask
+
+    rows_aug = []
+    cols_aug = []
+    data_aug = []
+
+    knn_rows, knn_cols = np.where(knn_mask)
+    for i, j in zip(knn_rows, knn_cols):
+        rows_aug.append(i)
+        cols_aug.append(j)
+        data_aug.append(C[i, j])
+
+    extra_rows, extra_cols = np.where(extra_edges_mask)
+    for i, j in zip(extra_rows, extra_cols):
+        rows_aug.append(i)
+        cols_aug.append(j)
+        data_aug.append(C[i, j])
+
+    C_augmented = coo_matrix(
+        (data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target)
+    )
+
+    # Test with numpy weights (baseline)
+    _, log_np = ot.emd(a, b, C_augmented, log=True)
+
+    # Test with backend weights
+    ab, bb = nx.from_numpy(a, b)
+    _, log_backend = ot.emd(ab, bb, C_augmented, log=True)
+
+    # Compare costs
+    cost_np = log_np["cost"]
+    cost_backend = nx.to_numpy(log_backend["cost"])
+
+    np.testing.assert_allclose(cost_np, cost_backend, rtol=1e-5, atol=1e-7)
+
+    # Check flow values match
+    np.testing.assert_allclose(
+        log_np["flow_values"], log_backend["flow_values"], rtol=1e-5, atol=1e-7
+    )
+
+
+def test_emd2_sparse_backends(nx):
+    """Test that sparse emd2 works with different backends for weights a and b.
+
+    Uses augmented k-NN graph approach to ensure feasibility.
+    """
+    n_source = 50
+    n_target = 50
+    k = 10
+
+    rng = np.random.RandomState(42)
+
+    # Create distributions
+    a = ot.utils.unif(n_source)
+    b = ot.utils.unif(n_target)
+
+    # Create cost matrix
+    x_source = rng.randn(n_source, 2)
+    x_target = rng.randn(n_target, 2) + 0.5
+    C = ot.dist(x_source, x_target)
+
+    # Create sparse k-NN graph
+    rows = []
+    cols = []
+    data = []
+
+    for i in range(n_source):
+        distances = C[i, :]
+        nearest_k = np.argpartition(distances, k)[:k]
+        for j in nearest_k:
+            rows.append(i)
+            cols.append(j)
+            data.append(C[i, j])
+
+    C_knn = coo_matrix((data, (rows, cols)), shape=(n_source, n_target))
+
+    # Augment with necessary edges (same approach as test_emd2_sparse_vs_dense)
+    large_cost = 1e8
+    C_dense_infty = np.full((n_source, n_target), large_cost)
+    C_knn_array = C_knn.toarray()
+    C_dense_infty[C_knn_array > 0] = C_knn_array[C_knn_array > 0]
+
+    G_dense_initial = ot.emd(a, b, C_dense_infty)
+    eps = 1e-9
+    active_mask = G_dense_initial > eps
+    knn_mask = C_knn_array > 0
+    extra_edges_mask = active_mask & ~knn_mask
+
+    rows_aug = []
+    cols_aug = []
+    data_aug = []
+
+    knn_rows, knn_cols = np.where(knn_mask)
+    for i, j in zip(knn_rows, knn_cols):
+        rows_aug.append(i)
+        cols_aug.append(j)
+        data_aug.append(C[i, j])
+
+    extra_rows, extra_cols = np.where(extra_edges_mask)
+    for i, j in zip(extra_rows, extra_cols):
+        rows_aug.append(i)
+        cols_aug.append(j)
+        data_aug.append(C[i, j])
+
+    C_augmented = coo_matrix(
+        (data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target)
+    )
+
+    # Test with numpy weights (baseline)
+    cost_np = ot.emd2(a, b, C_augmented)
+
+    # Test with backend weights
+    ab, bb = nx.from_numpy(a, b)
+    cost_backend = ot.emd2(ab, bb, C_augmented)
+
+    # Compare costs
+    cost_backend_np = nx.to_numpy(cost_backend)
+
+    np.testing.assert_allclose(cost_np, cost_backend_np, rtol=1e-5, atol=1e-7)
+
+
 def check_duality_gap(a, b, M, G, u, v, cost):
     cost_dual = np.vdot(a, u) + np.vdot(b, v)
     # Check that dual and primal cost are equal
