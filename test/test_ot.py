@@ -1100,16 +1100,13 @@ def test_emd_sparse_backends(nx):
 
     rng = np.random.RandomState(42)
 
-    # Create distributions
     a = ot.utils.unif(n_source)
     b = ot.utils.unif(n_target)
 
-    # Create cost matrix
     x_source = rng.randn(n_source, 2)
     x_target = rng.randn(n_target, 2) + 0.5
     C = ot.dist(x_source, x_target)
 
-    # Create sparse k-NN graph
     rows = []
     cols = []
     data = []
@@ -1156,20 +1153,16 @@ def test_emd_sparse_backends(nx):
         (data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target)
     )
 
-    # Test with numpy weights (baseline)
     _, log_np = ot.emd(a, b, C_augmented, log=True)
 
-    # Test with backend weights
     ab, bb = nx.from_numpy(a, b)
     _, log_backend = ot.emd(ab, bb, C_augmented, log=True)
 
-    # Compare costs
     cost_np = log_np["cost"]
     cost_backend = nx.to_numpy(log_backend["cost"])
 
     np.testing.assert_allclose(cost_np, cost_backend, rtol=1e-5, atol=1e-7)
 
-    # Check flow values match
     np.testing.assert_allclose(
         log_np["flow_values"], log_backend["flow_values"], rtol=1e-5, atol=1e-7
     )
@@ -1186,16 +1179,13 @@ def test_emd2_sparse_backends(nx):
 
     rng = np.random.RandomState(42)
 
-    # Create distributions
     a = ot.utils.unif(n_source)
     b = ot.utils.unif(n_target)
 
-    # Create cost matrix
     x_source = rng.randn(n_source, 2)
     x_target = rng.randn(n_target, 2) + 0.5
     C = ot.dist(x_source, x_target)
 
-    # Create sparse k-NN graph
     rows = []
     cols = []
     data = []
@@ -1242,14 +1232,11 @@ def test_emd2_sparse_backends(nx):
         (data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target)
     )
 
-    # Test with numpy weights (baseline)
     cost_np = ot.emd2(a, b, C_augmented)
 
-    # Test with backend weights
     ab, bb = nx.from_numpy(a, b)
     cost_backend = ot.emd2(ab, bb, C_augmented)
 
-    # Compare costs
     cost_backend_np = nx.to_numpy(cost_backend)
 
     np.testing.assert_allclose(cost_np, cost_backend_np, rtol=1e-5, atol=1e-7)
