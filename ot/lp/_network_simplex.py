@@ -172,6 +172,8 @@ def emd(
     center_dual=True,
     numThreads=1,
     check_marginals=True,
+    checkpoint=None,
+    return_checkpoint=False,
 ):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
@@ -232,6 +234,15 @@ def emd(
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
+    checkpoint: dict, optional (default=None)
+        Checkpoint data from a previous emd() call to resume computation.
+        The checkpoint must contain internal solver state including flow,
+        potentials, and tree structure. Obtain by calling emd() with
+        return_checkpoint=True.
+    return_checkpoint: bool, optional (default=False)
+        If True and log=True, includes complete internal solver state in the
+        returned log dictionary for checkpointing. This enables pausing and
+        resuming the optimization.
 
 
     Returns
@@ -241,7 +252,8 @@ def emd(
         parameters
     log: dict, optional
         If input log is true, a dictionary containing the
-        cost and dual variables and exit status
+        cost and dual variables and exit status. If return_checkpoint=True,
+        also contains internal solver state for resuming computation.
 
 
     Examples
@@ -321,7 +333,43 @@ def emd(
 
     numThreads = check_number_threads(numThreads)
 
-    G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
+    checkpoint_data = None
+    if checkpoint is not None:
+        # Extract checkpoint arrays and convert to numpy (strip leading underscore)
+        checkpoint_data = {
+            "flow": nx.to_numpy(checkpoint["_flow"]) if "_flow" in checkpoint else None,
+            "pi": nx.to_numpy(checkpoint["_pi"]) if "_pi" in checkpoint else None,
+            "state": nx.to_numpy(checkpoint["_state"])
+            if "_state" in checkpoint
+            else None,
+            "parent": nx.to_numpy(checkpoint["_parent"])
+            if "_parent" in checkpoint
+            else None,
+            "pred": nx.to_numpy(checkpoint["_pred"]) if "_pred" in checkpoint else None,
+            "thread": nx.to_numpy(checkpoint["_thread"])
+            if "_thread" in checkpoint
+            else None,
+            "rev_thread": nx.to_numpy(checkpoint["_rev_thread"])
+            if "_rev_thread" in checkpoint
+            else None,
+            "succ_num": nx.to_numpy(checkpoint["_succ_num"])
+            if "_succ_num" in checkpoint
+            else None,
+            "last_succ": nx.to_numpy(checkpoint["_last_succ"])
+            if "_last_succ" in checkpoint
+            else None,
+            "forward": nx.to_numpy(checkpoint["_forward"])
+            if "_forward" in checkpoint
+            else None,
+            "search_arc_num": int(checkpoint.get("search_arc_num", 0)),
+            "all_arc_num": int(checkpoint.get("all_arc_num", 0)),
+        }
+        # Filter out None values
+        checkpoint_data = {k: v for k, v in checkpoint_data.items() if v is not None}
+
+    G, cost, u, v, result_code, checkpoint_out = emd_c(
+        a, b, M, numItermax, numThreads, checkpoint_data, int(return_checkpoint)
+    )
 
     if center_dual:
         u, v = center_ot_dual(u, v, a, b)
@@ -345,6 +393,22 @@ def emd(
         log["v"] = nx.from_numpy(v, type_as=type_as)
         log["warning"] = result_code_string
         log["result_code"] = result_code
+
+        # Add checkpoint data if requested (preserve original dtypes, don't cast)
+        if return_checkpoint and checkpoint_out is not None:
+            log["_flow"] = checkpoint_out["flow"]
+            log["_pi"] = checkpoint_out["pi"]
+            log["_state"] = checkpoint_out["state"]
+            log["_parent"] = checkpoint_out["parent"]
+            log["_pred"] = checkpoint_out["pred"]
+            log["_thread"] = checkpoint_out["thread"]
+            log["_rev_thread"] = checkpoint_out["rev_thread"]
+            log["_succ_num"] = checkpoint_out["succ_num"]
+            log["_last_succ"] = checkpoint_out["last_succ"]
+            log["_forward"] = checkpoint_out["forward"]
+            log["search_arc_num"] = int(checkpoint_out["search_arc_num"])
+            log["all_arc_num"] = int(checkpoint_out["all_arc_num"])
+
         return nx.from_numpy(G, type_as=type_as), log
     return nx.from_numpy(G, type_as=type_as)
 

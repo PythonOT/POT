@@ -941,6 +941,116 @@ namespace lemon {
             }
         }
 
+
+        /// This function saves the complete internal state of the solver,
+        /// including flow values, dual potentials, arc states, and the
+        /// spanning tree structure. This allows pausing and resuming
+        /// the optimization later.
+
+        void saveCheckpoint(
+            double* flow_out,
+            double* pi_out,
+            signed char* state_out,
+            int* parent_out,
+            ArcsType* pred_out,
+            int* thread_out,
+            int* rev_thread_out,
+            int* succ_num_out,
+            int* last_succ_out,
+            signed char* forward_out,
+            ArcsType* search_arc_num_out,
+            ArcsType* all_arc_num_out)
+        {
+            // Copy internal state to output arrays
+            std::copy(_flow.begin(), _flow.end(), flow_out);
+            std::copy(_pi.begin(), _pi.end(), pi_out);
+            std::copy(_state.begin(), _state.end(), state_out);
+            std::copy(_parent.begin(), _parent.end(), parent_out);
+            std::copy(_pred.begin(), _pred.end(), pred_out);
+            std::copy(_thread.begin(), _thread.end(), thread_out);
+            std::copy(_rev_thread.begin(), _rev_thread.end(), rev_thread_out);
+            std::copy(_succ_num.begin(), _succ_num.end(), succ_num_out);
+            std::copy(_last_succ.begin(), _last_succ.end(), last_succ_out);
+            
+            // Convert bool vector to signed char
+            for (size_t i = 0; i < _forward.size(); i++) {
+                forward_out[i] = _forward[i] ? 1 : 0;
+            }
+            
+            // Save arc counts needed for start()
+            *search_arc_num_out = _search_arc_num;
+            *all_arc_num_out = _all_arc_num;
+        }
+        
+
+        /// This function restores the complete internal state of the solver
+        /// from a previously saved checkpoint.
+
+        void restoreCheckpoint(
+            double* flow_in,
+            double* pi_in,
+            signed char* state_in,
+            int* parent_in,
+            ArcsType* pred_in,
+            int* thread_in,
+            int* rev_thread_in,
+            int* succ_num_in,
+            int* last_succ_in,
+            signed char* forward_in,
+            ArcsType search_arc_num_in,
+            ArcsType all_arc_num_in)
+        {
+            // Copy from input arrays to internal state
+            std::copy(flow_in, flow_in + _flow.size(), _flow.begin());
+            std::copy(pi_in, pi_in + _pi.size(), _pi.begin());
+            std::copy(state_in, state_in + _state.size(), _state.begin());
+            std::copy(parent_in, parent_in + _parent.size(), _parent.begin());
+            std::copy(pred_in, pred_in + _pred.size(), _pred.begin());
+            std::copy(thread_in, thread_in + _thread.size(), _thread.begin());
+            std::copy(rev_thread_in, rev_thread_in + _rev_thread.size(), _rev_thread.begin());
+            std::copy(succ_num_in, succ_num_in + _succ_num.size(), _succ_num.begin());
+            std::copy(last_succ_in, last_succ_in + _last_succ.size(), _last_succ.begin());
+            
+            // Convert signed char to bool vector
+            for (size_t i = 0; i < _forward.size(); i++) {
+                _forward[i] = (forward_in[i] != 0);
+            }
+            
+            // Restore root (it's always _node_num)
+            _root = _node_num;
+            
+            // Restore arc counts needed by start()
+            _search_arc_num = search_arc_num_in;
+            _all_arc_num = all_arc_num_in;
+        }
+        
+
+        /// This function restores the solver state from a checkpoint and
+        /// continues the optimization from that point. It skips the normal
+        /// initialization phase and goes directly to the simplex iterations.
+
+        ProblemType runFromCheckpoint(
+            double* flow_in,
+            double* pi_in,
+            signed char* state_in,
+            int* parent_in,
+            ArcsType* pred_in,
+            int* thread_in,
+            int* rev_thread_in,
+            int* succ_num_in,
+            int* last_succ_in,
+            signed char* forward_in,
+            ArcsType search_arc_num_in,
+            ArcsType all_arc_num_in)
+        {
+            // Restore state from checkpoint
+            restoreCheckpoint(flow_in, pi_in, state_in, parent_in, pred_in,
+                             thread_in, rev_thread_in, succ_num_in, last_succ_in, forward_in,
+                             search_arc_num_in, all_arc_num_in);
+            
+            return start();
+        }
+
         /// @}
 
     private:

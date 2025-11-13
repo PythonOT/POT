@@ -20,7 +20,14 @@
 
 
 int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
-                double* alpha, double* beta, double *cost, uint64_t maxIter)  {
+                double* alpha, double* beta, double *cost, uint64_t maxIter,
+                int resume_mode, int return_checkpoint,
+                double* flow_state, double* pi_state, signed char* state_state,
+                int* parent_state, int64_t* pred_state,
+                int* thread_state, int* rev_thread_state,
+                int* succ_num_state, int* last_succ_state,
+                signed char* forward_state,
+                int64_t* search_arc_num_out, int64_t* all_arc_num_out)  {
     // beware M and C are stored in row major C style!!!
 
     using namespace lemon;
@@ -93,8 +100,29 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
 
 
     // Solve the problem with the network simplex algorithm
-
-    int ret=net.run();
+    // If resume_mode=1 and checkpoint data provided, resume from checkpoint
+    // Otherwise do normal run
+    
+    int64_t search_arc_num_in = 0, all_arc_num_in = 0;
+    if (resume_mode == 1 && search_arc_num_out != nullptr && all_arc_num_out != nullptr) {
+        search_arc_num_in = *search_arc_num_out;
+        all_arc_num_in = *all_arc_num_out;
+    }
+    
+    int ret;
+    if (resume_mode == 1 && flow_state != nullptr) {
+        // Resume from checkpoint
+        ret = net.runFromCheckpoint(
+            flow_state, pi_state, state_state,
+            parent_state, pred_state,
+            thread_state, rev_thread_state,
+            succ_num_state, last_succ_state, forward_state,
+            search_arc_num_in, all_arc_num_in);
+    } else {
+        // Normal run
+        ret = net.run();
+    }
+    
     uint64_t i, j;
     if (ret==(int)net.OPTIMAL || ret==(int)net.MAX_ITER_REACHED) {
         *cost = 0;
@@ -111,12 +139,18 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
 
     }
 
+    // Save checkpoint if requested and arrays provided
+    if (return_checkpoint == 1 && flow_state != nullptr) {
+        net.saveCheckpoint(
+            flow_state, pi_state, state_state,
+            parent_state, pred_state,
+            thread_state, rev_thread_state,
+            succ_num_state, last_succ_state, forward_state,
+            search_arc_num_out, all_arc_num_out);
+    }
 
     return ret;
 }
-
-
-
 
 
 

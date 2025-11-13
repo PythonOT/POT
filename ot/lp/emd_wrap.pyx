@@ -14,13 +14,21 @@ from ..utils import dist
 
 cimport cython
 cimport libc.math as math
-from libc.stdint cimport uint64_t
+from libc.stdint cimport uint64_t, int64_t
 
 import warnings
 
 
 cdef extern from "EMD.h":
-    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter) nogil
+    int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G, 
+                 double* alpha, double* beta, double *cost, uint64_t maxIter,
+                 int resume_mode, int return_checkpoint,
+                 double* flow_state, double* pi_state, signed char* state_state,
+                 int* parent_state, int64_t* pred_state,
+                 int* thread_state, int* rev_thread_state,
+                 int* succ_num_state, int* last_succ_state,
+                 signed char* forward_state,
+                 int64_t* search_arc_num_out, int64_t* all_arc_num_out) nogil
     int EMD_wrap_omp(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, int numThreads) nogil
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
@@ -40,9 +48,16 @@ def check_result(result_code):
  
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, uint64_t max_iter, int numThreads):
+def emd_c(np.ndarray[double, ndim=1, mode="c"] a, 
+          np.ndarray[double, ndim=1, mode="c"] b, 
+          np.ndarray[double, ndim=2, mode="c"] M, 
+          uint64_t max_iter, 
+          int numThreads,
+          checkpoint_in=None,
+          int return_checkpoint=0):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
+        with optional checkpoint support for pause/resume.
 
         gamm=emd(a,b,M)
 
@@ -79,43 +94,147 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     max_iter : uint64_t
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
+    numThreads : int
+        Number of threads for parallel computation (1 = no OpenMP)
+    checkpoint_in : dict or None
+        Checkpoint data to resume from. Should contain flow, pi, state, parent,
+        pred, thread, rev_thread, succ_num, last_succ, forward arrays.
+    return_checkpoint : int
+        If 1, returns checkpoint data; if 0, returns None for checkpoint.
 
     Returns
     -------
     gamma: (ns x nt) numpy.ndarray
         Optimal transportation matrix for the given parameters
+    cost : float
+        Optimal transport cost
+    alpha : (ns,) numpy.ndarray
+        Source dual potentials
+    beta : (nt,) numpy.ndarray
+        Target dual potentials
+    result_code : int
+        Result code (OPTIMAL, INFEASIBLE, UNBOUNDED, MAX_ITER_REACHED)
+    checkpoint_out : dict or None
+        Checkpoint data if return_checkpoint=1, None otherwise
 
     """
-    cdef int n1= M.shape[0]
-    cdef int n2= M.shape[1]
-    cdef int nmax=n1+n2-1
+    cdef int n1 = M.shape[0]
+    cdef int n2 = M.shape[1]
+    cdef int all_nodes = n1 + n2 + 1
+    cdef int64_t max_arcs = n1 * n2 + 2 * (n1 + n2)
     cdef int result_code = 0
-    cdef int nG=0
+    cdef double cost = 0
+    cdef int64_t search_arc_num = 0
+    cdef int64_t all_arc_num = 0
+    
+    cdef np.ndarray[double, ndim=1, mode="c"] alpha = np.zeros(n1)
+    cdef np.ndarray[double, ndim=1, mode="c"] beta = np.zeros(n2)
+    cdef np.ndarray[double, ndim=2, mode="c"] G = np.zeros([n1, n2])
 
-    cdef double cost=0
-    cdef np.ndarray[double, ndim=1, mode="c"] alpha=np.zeros(n1)
-    cdef np.ndarray[double, ndim=1, mode="c"] beta=np.zeros(n2)
-
-    cdef np.ndarray[double, ndim=2, mode="c"] G=np.zeros([0, 0])
-
-    cdef np.ndarray[double, ndim=1, mode="c"] Gv=np.zeros(0)
+    # Checkpoint arrays (for both input and output)
+    cdef np.ndarray[double, ndim=1, mode="c"] flow_state
+    cdef np.ndarray[double, ndim=1, mode="c"] pi_state
+    cdef np.ndarray[signed char, ndim=1, mode="c"] state_state
+    cdef np.ndarray[int, ndim=1, mode="c"] parent_state
+    cdef np.ndarray[int64_t, ndim=1, mode="c"] pred_state
+    cdef np.ndarray[int, ndim=1, mode="c"] thread_state
+    cdef np.ndarray[int, ndim=1, mode="c"] rev_thread_state
+    cdef np.ndarray[int, ndim=1, mode="c"] succ_num_state
+    cdef np.ndarray[int, ndim=1, mode="c"] last_succ_state
+    cdef np.ndarray[signed char, ndim=1, mode="c"] forward_state
+    
+    cdef int resume_mode = 0
 
     if not len(a):
-        a=np.ones((n1,))/n1
+        a = np.ones((n1,)) / n1
 
     if not len(b):
-        b=np.ones((n2,))/n2
-
-    # init OT matrix
-    G=np.zeros([n1, n2])
-
-    # calling the function
+        b = np.ones((n2,)) / n2
+    
+    # Prepare checkpoint arrays
+    if checkpoint_in is not None:
+        resume_mode = 1
+        flow_state = np.asarray(checkpoint_in['flow'], dtype=np.float64, order='C')
+        pi_state = np.asarray(checkpoint_in['pi'], dtype=np.float64, order='C')
+        state_state = np.asarray(checkpoint_in['state'], dtype=np.int8, order='C')
+        parent_state = np.asarray(checkpoint_in['parent'], dtype=np.int32, order='C')
+        pred_state = np.asarray(checkpoint_in['pred'], dtype=np.int64, order='C')
+        thread_state = np.asarray(checkpoint_in['thread'], dtype=np.int32, order='C')
+        rev_thread_state = np.asarray(checkpoint_in['rev_thread'], dtype=np.int32, order='C')
+        
+        # Sanity check: array sizes must match expected sizes
+        if flow_state.shape[0] != max_arcs or pi_state.shape[0] != all_nodes:
+            raise ValueError(
+                f"Checkpoint size mismatch: expected flow={max_arcs}, pi={all_nodes}, "
+                f"got flow={flow_state.shape[0]}, pi={pi_state.shape[0]}"
+            )
+        succ_num_state = np.asarray(checkpoint_in['succ_num'], dtype=np.int32, order='C')
+        last_succ_state = np.asarray(checkpoint_in['last_succ'], dtype=np.int32, order='C')
+        forward_state = np.asarray(checkpoint_in['forward'], dtype=np.int8, order='C')
+        
+        # Extract the arc counts
+        search_arc_num = checkpoint_in['search_arc_num']
+        all_arc_num = checkpoint_in['all_arc_num']
+    else:
+        # Allocate empty arrays (will be filled if return_checkpoint=1)
+        flow_state = np.zeros(max_arcs, dtype=np.float64)
+        pi_state = np.zeros(all_nodes, dtype=np.float64)
+        state_state = np.zeros(max_arcs, dtype=np.int8)
+        parent_state = np.zeros(all_nodes, dtype=np.int32)
+        pred_state = np.zeros(all_nodes, dtype=np.int64)
+        thread_state = np.zeros(all_nodes, dtype=np.int32)
+        rev_thread_state = np.zeros(all_nodes, dtype=np.int32)
+        succ_num_state = np.zeros(all_nodes, dtype=np.int32)
+        last_succ_state = np.zeros(all_nodes, dtype=np.int32)
+        forward_state = np.zeros(all_nodes, dtype=np.int8)
+    
+    # Call C++ function with checkpoint support
     with nogil:
         if numThreads == 1:
-            result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+            result_code = EMD_wrap(
+                n1, n2, 
+                <double*> a.data, <double*> b.data, <double*> M.data,
+                <double*> G.data, <double*> alpha.data, <double*> beta.data,
+                <double*> &cost, max_iter,
+                resume_mode, return_checkpoint,
+                <double*> flow_state.data,
+                <double*> pi_state.data,
+                <signed char*> state_state.data,
+                <int*> parent_state.data,
+                <int64_t*> pred_state.data,
+                <int*> thread_state.data,
+                <int*> rev_thread_state.data,
+                <int*> succ_num_state.data,
+                <int*> last_succ_state.data,
+                <signed char*> forward_state.data,
+                &search_arc_num,
+                &all_arc_num
+            )
         else:
-            result_code = EMD_wrap_omp(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter, numThreads)
-    return G, cost, alpha, beta, result_code
+            # For now, OpenMP version falls back to regular (not implemented yet)
+            result_code = EMD_wrap_omp(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, 
+                                      <double*> G.data, <double*> alpha.data, <double*> beta.data, 
+                                      <double*> &cost, max_iter, numThreads)
+    
+    # Build checkpoint output dict if requested
+    checkpoint_out = None
+    if return_checkpoint:
+        checkpoint_out = {
+            'flow': flow_state,
+            'pi': pi_state,
+            'state': state_state,
+            'parent': parent_state,
+            'pred': pred_state,
+            'thread': thread_state,
+            'rev_thread': rev_thread_state,
+            'succ_num': succ_num_state,
+            'last_succ': last_succ_state,
+            'forward': forward_state,
+            'search_arc_num': search_arc_num,
+            'all_arc_num': all_arc_num,
+        }
+    
+    return G, cost, alpha, beta, result_code, checkpoint_out
 
 
 @cython.boundscheck(False)
