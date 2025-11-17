@@ -924,12 +924,10 @@ def test_emd_checkpoint():
 
     G_ref, log_ref = ot.emd(a, b, M, numItermax=10000, log=True)
 
-    G1, log1 = ot.emd(a, b, M, numItermax=500, log=True, return_checkpoint=True)
+    G1, log1 = ot.emd(a, b, M, numItermax=500, log=True, warm_start=True)
 
     if log1["result_code"] == 3:  # MAX_ITER_REACHED ?
-        G2, log2 = ot.emd(
-            a, b, M, numItermax=10000, log=True, checkpoint=log1, return_checkpoint=True
-        )
+        G2, log2 = ot.emd(a, b, M, numItermax=10000, log=True, warm_start=log1)
 
         np.testing.assert_allclose(log2["cost"], log_ref["cost"], rtol=1e-6)
         np.testing.assert_allclose(G2, G_ref, rtol=1e-6)
@@ -947,24 +945,34 @@ def test_emd_checkpoint_multiple():
 
     # multiple checkpoint phases with increasing iteration budgets
     max_iters = [100, 300, 600, 1000]
-    checkpoint = None
+    warm_start_data = None
     costs = []
 
     for max_iter in max_iters:
-        G, log = ot.emd(
-            a,
-            b,
-            M,
-            numItermax=max_iter,
-            log=True,
-            checkpoint=checkpoint,
-            return_checkpoint=True,
-        )
+        if warm_start_data is None:
+            G, log = ot.emd(
+                a,
+                b,
+                M,
+                numItermax=max_iter,
+                log=True,
+                warm_start=True,
+            )
+        else:
+            G, log = ot.emd(
+                a,
+                b,
+                M,
+                numItermax=max_iter,
+                log=True,
+                warm_start=warm_start_data,
+            )
         costs.append(log["cost"])
 
         if log["result_code"] != 3:  # converged
             break
-        checkpoint = log
+        # Only use warm_start if checkpoint fields are present
+        warm_start_data = log if "_flow" in log else None
 
     # check cost decreases monotonically
     for i in range(len(costs) - 1):
@@ -981,7 +989,7 @@ def test_emd_checkpoint_structure():
     b = ot.utils.unif(n)
     M = np.random.rand(n, n)
 
-    G, log = ot.emd(a, b, M, numItermax=10, log=True, return_checkpoint=True)
+    G, log = ot.emd(a, b, M, numItermax=10, log=True, warm_start=True)
 
     required_fields = [
         "_flow",
@@ -994,8 +1002,8 @@ def test_emd_checkpoint_structure():
         "_succ_num",
         "_last_succ",
         "_forward",
-        "_search_arc_num",
-        "_all_arc_num",
+        "search_arc_num",  # scalars don't have underscore prefix
+        "all_arc_num",
     ]
 
     for field in required_fields:

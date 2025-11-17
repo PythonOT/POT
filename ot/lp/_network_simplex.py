@@ -172,8 +172,7 @@ def emd(
     center_dual=True,
     numThreads=1,
     check_marginals=True,
-    checkpoint=None,
-    return_checkpoint=False,
+    warm_start=False,
 ):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
@@ -234,15 +233,10 @@ def emd(
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
-    checkpoint: dict, optional (default=None)
-        Checkpoint data from a previous emd() call to resume computation.
-        The checkpoint must contain internal solver state including flow,
-        potentials, and tree structure. Obtain by calling emd() with
-        return_checkpoint=True.
-    return_checkpoint: bool, optional (default=False)
-        If True and log=True, includes complete internal solver state in the
-        returned log dictionary for checkpointing. This enables pausing and
-        resuming the optimization.
+    warm_start: bool or dict, optional (default=False)
+        If True, returns warm start data in the log for resuming computation.
+        If dict (from previous call with warm_start=True), resumes optimization
+        from the provided state. Requires log=True when saving state.
 
 
     Returns
@@ -252,7 +246,7 @@ def emd(
         parameters
     log: dict, optional
         If input log is true, a dictionary containing the
-        cost and dual variables and exit status. If return_checkpoint=True,
+        cost and dual variables and exit status. If warm_start=True,
         also contains internal solver state for resuming computation.
 
 
@@ -269,6 +263,13 @@ def emd(
     >>> ot.emd(a, b, M)
     array([[0.5, 0. ],
            [0. , 0.5]])
+
+    Warm start example for resuming optimization:
+
+    >>> # First call - save warm start data
+    >>> G, log = ot.emd(a, b, M, numItermax=100, log=True, warm_start=True)
+    >>> # Resume from warm start
+    >>> G, log = ot.emd(a, b, M, numItermax=1000, log=True, warm_start=log)
 
 
     .. _references-emd:
@@ -333,39 +334,67 @@ def emd(
 
     numThreads = check_number_threads(numThreads)
 
+    # Handle warm_start parameter
     checkpoint_data = None
-    if checkpoint is not None:
-        # Extract checkpoint arrays and convert to numpy (strip leading underscore)
+    return_checkpoint = False
+
+    if isinstance(warm_start, dict):
+        # Resume from previous warm_start dict
         checkpoint_data = {
-            "flow": nx.to_numpy(checkpoint["_flow"]) if "_flow" in checkpoint else None,
-            "pi": nx.to_numpy(checkpoint["_pi"]) if "_pi" in checkpoint else None,
-            "state": nx.to_numpy(checkpoint["_state"])
-            if "_state" in checkpoint
+            "flow": nx.to_numpy(warm_start.get("_flow", warm_start.get("flow")))
+            if ("_flow" in warm_start or "flow" in warm_start)
             else None,
-            "parent": nx.to_numpy(checkpoint["_parent"])
-            if "_parent" in checkpoint
+            "pi": nx.to_numpy(warm_start.get("_pi", warm_start.get("pi")))
+            if ("_pi" in warm_start or "pi" in warm_start)
             else None,
-            "pred": nx.to_numpy(checkpoint["_pred"]) if "_pred" in checkpoint else None,
-            "thread": nx.to_numpy(checkpoint["_thread"])
-            if "_thread" in checkpoint
+            "state": nx.to_numpy(warm_start.get("_state", warm_start.get("state")))
+            if ("_state" in warm_start or "state" in warm_start)
             else None,
-            "rev_thread": nx.to_numpy(checkpoint["_rev_thread"])
-            if "_rev_thread" in checkpoint
+            "parent": nx.to_numpy(warm_start.get("_parent", warm_start.get("parent")))
+            if ("_parent" in warm_start or "parent" in warm_start)
             else None,
-            "succ_num": nx.to_numpy(checkpoint["_succ_num"])
-            if "_succ_num" in checkpoint
+            "pred": nx.to_numpy(warm_start.get("_pred", warm_start.get("pred")))
+            if ("_pred" in warm_start or "pred" in warm_start)
             else None,
-            "last_succ": nx.to_numpy(checkpoint["_last_succ"])
-            if "_last_succ" in checkpoint
+            "thread": nx.to_numpy(warm_start.get("_thread", warm_start.get("thread")))
+            if ("_thread" in warm_start or "thread" in warm_start)
             else None,
-            "forward": nx.to_numpy(checkpoint["_forward"])
-            if "_forward" in checkpoint
+            "rev_thread": nx.to_numpy(
+                warm_start.get("_rev_thread", warm_start.get("rev_thread"))
+            )
+            if ("_rev_thread" in warm_start or "rev_thread" in warm_start)
             else None,
-            "search_arc_num": int(checkpoint.get("search_arc_num", 0)),
-            "all_arc_num": int(checkpoint.get("all_arc_num", 0)),
+            "succ_num": nx.to_numpy(
+                warm_start.get("_succ_num", warm_start.get("succ_num"))
+            )
+            if ("_succ_num" in warm_start or "succ_num" in warm_start)
+            else None,
+            "last_succ": nx.to_numpy(
+                warm_start.get("_last_succ", warm_start.get("last_succ"))
+            )
+            if ("_last_succ" in warm_start or "last_succ" in warm_start)
+            else None,
+            "forward": nx.to_numpy(
+                warm_start.get("_forward", warm_start.get("forward"))
+            )
+            if ("_forward" in warm_start or "forward" in warm_start)
+            else None,
+            "search_arc_num": int(
+                warm_start.get("search_arc_num", warm_start.get("_search_arc_num", 0))
+            ),
+            "all_arc_num": int(
+                warm_start.get("all_arc_num", warm_start.get("_all_arc_num", 0))
+            ),
         }
         # Filter out None values
         checkpoint_data = {k: v for k, v in checkpoint_data.items() if v is not None}
+    elif warm_start is True:
+        # Save warm_start data - requires log=True
+        if not log:
+            raise ValueError(
+                "warm_start=True requires log=True to return the warm start data"
+            )
+        return_checkpoint = True
 
     G, cost, u, v, result_code, checkpoint_out = emd_c(
         a, b, M, numItermax, numThreads, checkpoint_data, int(return_checkpoint)
