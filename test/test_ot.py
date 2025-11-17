@@ -971,8 +971,8 @@ def test_emd_checkpoint_multiple():
 
         if log["result_code"] != 3:  # converged
             break
-        # Only use warm_start if checkpoint fields are present
-        warm_start_data = log if "_flow" in log else None
+        # Only use warm_start if checkpoint is present
+        warm_start_data = log if "checkpoint" in log else None
 
     # check cost decreases monotonically
     for i in range(len(costs) - 1):
@@ -991,23 +991,28 @@ def test_emd_checkpoint_structure():
 
     G, log = ot.emd(a, b, M, numItermax=10, log=True, warm_start=True)
 
+    # Check that checkpoint key exists
+    assert "checkpoint" in log, "Missing checkpoint key in log"
+
+    checkpoint = log["checkpoint"]
+
     required_fields = [
-        "_flow",
-        "_pi",
-        "_state",
-        "_parent",
-        "_pred",
-        "_thread",
-        "_rev_thread",
-        "_succ_num",
-        "_last_succ",
-        "_forward",
-        "search_arc_num",  # scalars don't have underscore prefix
+        "flow",
+        "pi",
+        "state",
+        "parent",
+        "pred",
+        "thread",
+        "rev_thread",
+        "succ_num",
+        "last_succ",
+        "forward",
+        "search_arc_num",
         "all_arc_num",
     ]
 
     for field in required_fields:
-        assert field in log, f"Missing checkpoint field: {field}"
+        assert field in checkpoint, f"Missing checkpoint field: {field}"
 
 
 def check_duality_gap(a, b, M, G, u, v, cost):

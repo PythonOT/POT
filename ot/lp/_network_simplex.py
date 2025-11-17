@@ -247,7 +247,8 @@ def emd(
     log: dict, optional
         If input log is true, a dictionary containing the
         cost and dual variables and exit status. If warm_start=True,
-        also contains internal solver state for resuming computation.
+        also contains a "checkpoint" key with the internal solver state
+        for resuming computation.
 
 
     Examples
@@ -268,6 +269,7 @@ def emd(
 
     >>> # First call - save warm start data
     >>> G, log = ot.emd(a, b, M, numItermax=100, log=True, warm_start=True)
+    >>> # log["checkpoint"] contains the solver state
     >>> # Resume from warm start
     >>> G, log = ot.emd(a, b, M, numItermax=1000, log=True, warm_start=log)
 
@@ -340,51 +342,47 @@ def emd(
 
     if isinstance(warm_start, dict):
         # Resume from previous warm_start dict
+        # Check if checkpoint is nested under "checkpoint" key or at top level
+        if "checkpoint" in warm_start:
+            chkpt = warm_start["checkpoint"]
+        else:
+            chkpt = warm_start
+
         checkpoint_data = {
-            "flow": nx.to_numpy(warm_start.get("_flow", warm_start.get("flow")))
-            if ("_flow" in warm_start or "flow" in warm_start)
+            "flow": nx.to_numpy(chkpt.get("flow", chkpt.get("_flow")))
+            if ("flow" in chkpt or "_flow" in chkpt)
             else None,
-            "pi": nx.to_numpy(warm_start.get("_pi", warm_start.get("pi")))
-            if ("_pi" in warm_start or "pi" in warm_start)
+            "pi": nx.to_numpy(chkpt.get("pi", chkpt.get("_pi")))
+            if ("pi" in chkpt or "_pi" in chkpt)
             else None,
-            "state": nx.to_numpy(warm_start.get("_state", warm_start.get("state")))
-            if ("_state" in warm_start or "state" in warm_start)
+            "state": nx.to_numpy(chkpt.get("state", chkpt.get("_state")))
+            if ("state" in chkpt or "_state" in chkpt)
             else None,
-            "parent": nx.to_numpy(warm_start.get("_parent", warm_start.get("parent")))
-            if ("_parent" in warm_start or "parent" in warm_start)
+            "parent": nx.to_numpy(chkpt.get("parent", chkpt.get("_parent")))
+            if ("parent" in chkpt or "_parent" in chkpt)
             else None,
-            "pred": nx.to_numpy(warm_start.get("_pred", warm_start.get("pred")))
-            if ("_pred" in warm_start or "pred" in warm_start)
+            "pred": nx.to_numpy(chkpt.get("pred", chkpt.get("_pred")))
+            if ("pred" in chkpt or "_pred" in chkpt)
             else None,
-            "thread": nx.to_numpy(warm_start.get("_thread", warm_start.get("thread")))
-            if ("_thread" in warm_start or "thread" in warm_start)
+            "thread": nx.to_numpy(chkpt.get("thread", chkpt.get("_thread")))
+            if ("thread" in chkpt or "_thread" in chkpt)
             else None,
-            "rev_thread": nx.to_numpy(
-                warm_start.get("_rev_thread", warm_start.get("rev_thread"))
-            )
-            if ("_rev_thread" in warm_start or "rev_thread" in warm_start)
+            "rev_thread": nx.to_numpy(chkpt.get("rev_thread", chkpt.get("_rev_thread")))
+            if ("rev_thread" in chkpt or "_rev_thread" in chkpt)
             else None,
-            "succ_num": nx.to_numpy(
-                warm_start.get("_succ_num", warm_start.get("succ_num"))
-            )
-            if ("_succ_num" in warm_start or "succ_num" in warm_start)
+            "succ_num": nx.to_numpy(chkpt.get("succ_num", chkpt.get("_succ_num")))
+            if ("succ_num" in chkpt or "_succ_num" in chkpt)
             else None,
-            "last_succ": nx.to_numpy(
-                warm_start.get("_last_succ", warm_start.get("last_succ"))
-            )
-            if ("_last_succ" in warm_start or "last_succ" in warm_start)
+            "last_succ": nx.to_numpy(chkpt.get("last_succ", chkpt.get("_last_succ")))
+            if ("last_succ" in chkpt or "_last_succ" in chkpt)
             else None,
-            "forward": nx.to_numpy(
-                warm_start.get("_forward", warm_start.get("forward"))
-            )
-            if ("_forward" in warm_start or "forward" in warm_start)
+            "forward": nx.to_numpy(chkpt.get("forward", chkpt.get("_forward")))
+            if ("forward" in chkpt or "_forward" in chkpt)
             else None,
             "search_arc_num": int(
-                warm_start.get("search_arc_num", warm_start.get("_search_arc_num", 0))
+                chkpt.get("search_arc_num", chkpt.get("_search_arc_num", 0))
             ),
-            "all_arc_num": int(
-                warm_start.get("all_arc_num", warm_start.get("_all_arc_num", 0))
-            ),
+            "all_arc_num": int(chkpt.get("all_arc_num", chkpt.get("_all_arc_num", 0))),
         }
         # Filter out None values
         checkpoint_data = {k: v for k, v in checkpoint_data.items() if v is not None}
@@ -425,18 +423,20 @@ def emd(
 
         # Add checkpoint data if requested (preserve original dtypes, don't cast)
         if return_checkpoint and checkpoint_out is not None:
-            log["_flow"] = checkpoint_out["flow"]
-            log["_pi"] = checkpoint_out["pi"]
-            log["_state"] = checkpoint_out["state"]
-            log["_parent"] = checkpoint_out["parent"]
-            log["_pred"] = checkpoint_out["pred"]
-            log["_thread"] = checkpoint_out["thread"]
-            log["_rev_thread"] = checkpoint_out["rev_thread"]
-            log["_succ_num"] = checkpoint_out["succ_num"]
-            log["_last_succ"] = checkpoint_out["last_succ"]
-            log["_forward"] = checkpoint_out["forward"]
-            log["search_arc_num"] = int(checkpoint_out["search_arc_num"])
-            log["all_arc_num"] = int(checkpoint_out["all_arc_num"])
+            log["checkpoint"] = {
+                "flow": checkpoint_out["flow"],
+                "pi": checkpoint_out["pi"],
+                "state": checkpoint_out["state"],
+                "parent": checkpoint_out["parent"],
+                "pred": checkpoint_out["pred"],
+                "thread": checkpoint_out["thread"],
+                "rev_thread": checkpoint_out["rev_thread"],
+                "succ_num": checkpoint_out["succ_num"],
+                "last_succ": checkpoint_out["last_succ"],
+                "forward": checkpoint_out["forward"],
+                "search_arc_num": int(checkpoint_out["search_arc_num"]),
+                "all_arc_num": int(checkpoint_out["all_arc_num"]),
+            }
 
         return nx.from_numpy(G, type_as=type_as), log
     return nx.from_numpy(G, type_as=type_as)
