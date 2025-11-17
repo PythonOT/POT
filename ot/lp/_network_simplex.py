@@ -172,6 +172,7 @@ def emd(
     center_dual=True,
     numThreads=1,
     check_marginals=True,
+    warm_start=False,
 ):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
@@ -232,6 +233,10 @@ def emd(
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
+    warm_start: bool or dict, optional (default=False)
+        If True, returns warm start data in the log for resuming computation.
+        If dict (from previous call with warm_start=True), resumes optimization
+        from the provided state. Requires log=True when saving state.
 
 
     Returns
@@ -241,7 +246,9 @@ def emd(
         parameters
     log: dict, optional
         If input log is true, a dictionary containing the
-        cost and dual variables and exit status
+        cost and dual variables and exit status. If warm_start=True,
+        also contains a "checkpoint" key with the internal solver state
+        for resuming computation.
 
 
     Examples
@@ -257,6 +264,14 @@ def emd(
     >>> ot.emd(a, b, M)
     array([[0.5, 0. ],
            [0. , 0.5]])
+
+    Warm start example for resuming optimization:
+
+    >>> # First call - save warm start data
+    >>> G, log = ot.emd(a, b, M, numItermax=100, log=True, warm_start=True)
+    >>> # log["checkpoint"] contains the solver state
+    >>> # Resume from warm start
+    >>> G, log = ot.emd(a, b, M, numItermax=1000, log=True, warm_start=log)
 
 
     .. _references-emd:
@@ -321,7 +336,67 @@ def emd(
 
     numThreads = check_number_threads(numThreads)
 
-    G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
+    # Handle warm_start parameter
+    checkpoint_data = None
+    return_checkpoint = False
+
+    if isinstance(warm_start, dict):
+        # Resume from previous warm_start dict
+        # Check if checkpoint is nested under "checkpoint" key or at top level
+        if "checkpoint" in warm_start:
+            chkpt = warm_start["checkpoint"]
+        else:
+            chkpt = warm_start
+
+        checkpoint_data = {
+            "flow": nx.to_numpy(chkpt.get("flow", chkpt.get("_flow")))
+            if ("flow" in chkpt or "_flow" in chkpt)
+            else None,
+            "pi": nx.to_numpy(chkpt.get("pi", chkpt.get("_pi")))
+            if ("pi" in chkpt or "_pi" in chkpt)
+            else None,
+            "state": nx.to_numpy(chkpt.get("state", chkpt.get("_state")))
+            if ("state" in chkpt or "_state" in chkpt)
+            else None,
+            "parent": nx.to_numpy(chkpt.get("parent", chkpt.get("_parent")))
+            if ("parent" in chkpt or "_parent" in chkpt)
+            else None,
+            "pred": nx.to_numpy(chkpt.get("pred", chkpt.get("_pred")))
+            if ("pred" in chkpt or "_pred" in chkpt)
+            else None,
+            "thread": nx.to_numpy(chkpt.get("thread", chkpt.get("_thread")))
+            if ("thread" in chkpt or "_thread" in chkpt)
+            else None,
+            "rev_thread": nx.to_numpy(chkpt.get("rev_thread", chkpt.get("_rev_thread")))
+            if ("rev_thread" in chkpt or "_rev_thread" in chkpt)
+            else None,
+            "succ_num": nx.to_numpy(chkpt.get("succ_num", chkpt.get("_succ_num")))
+            if ("succ_num" in chkpt or "_succ_num" in chkpt)
+            else None,
+            "last_succ": nx.to_numpy(chkpt.get("last_succ", chkpt.get("_last_succ")))
+            if ("last_succ" in chkpt or "_last_succ" in chkpt)
+            else None,
+            "forward": nx.to_numpy(chkpt.get("forward", chkpt.get("_forward")))
+            if ("forward" in chkpt or "_forward" in chkpt)
+            else None,
+            "search_arc_num": int(
+                chkpt.get("search_arc_num", chkpt.get("_search_arc_num", 0))
+            ),
+            "all_arc_num": int(chkpt.get("all_arc_num", chkpt.get("_all_arc_num", 0))),
+        }
+        # Filter out None values
+        checkpoint_data = {k: v for k, v in checkpoint_data.items() if v is not None}
+    elif warm_start is True:
+        # Save warm_start data - requires log=True
+        if not log:
+            raise ValueError(
+                "warm_start=True requires log=True to return the warm start data"
+            )
+        return_checkpoint = True
+
+    G, cost, u, v, result_code, checkpoint_out = emd_c(
+        a, b, M, numItermax, numThreads, checkpoint_data, int(return_checkpoint)
+    )
 
     if center_dual:
         u, v = center_ot_dual(u, v, a, b)
@@ -345,6 +420,24 @@ def emd(
         log["v"] = nx.from_numpy(v, type_as=type_as)
         log["warning"] = result_code_string
         log["result_code"] = result_code
+
+        # Add checkpoint data if requested (preserve original dtypes, don't cast)
+        if return_checkpoint and checkpoint_out is not None:
+            log["checkpoint"] = {
+                "flow": checkpoint_out["flow"],
+                "pi": checkpoint_out["pi"],
+                "state": checkpoint_out["state"],
+                "parent": checkpoint_out["parent"],
+                "pred": checkpoint_out["pred"],
+                "thread": checkpoint_out["thread"],
+                "rev_thread": checkpoint_out["rev_thread"],
+                "succ_num": checkpoint_out["succ_num"],
+                "last_succ": checkpoint_out["last_succ"],
+                "forward": checkpoint_out["forward"],
+                "search_arc_num": int(checkpoint_out["search_arc_num"]),
+                "all_arc_num": int(checkpoint_out["all_arc_num"]),
+            }
+
         return nx.from_numpy(G, type_as=type_as), log
     return nx.from_numpy(G, type_as=type_as)
 

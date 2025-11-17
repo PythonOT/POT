@@ -914,6 +914,107 @@ def test_dual_variables():
     assert constraint_violation.max() < 1e-8
 
 
+def test_emd_checkpoint():
+    # test checkpoint save and resume
+    n = 50
+    rng = np.random.RandomState(42)
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n)
+    M = rng.rand(n, n)
+
+    G_ref, log_ref = ot.emd(a, b, M, numItermax=10000, log=True)
+
+    G1, log1 = ot.emd(a, b, M, numItermax=500, log=True, warm_start=True)
+
+    if log1["result_code"] == 3:  # MAX_ITER_REACHED ?
+        G2, log2 = ot.emd(a, b, M, numItermax=10000, log=True, warm_start=log1)
+
+        np.testing.assert_allclose(log2["cost"], log_ref["cost"], rtol=1e-6)
+        np.testing.assert_allclose(G2, G_ref, rtol=1e-6)
+
+
+def test_emd_checkpoint_multiple():
+    # test multiple checkpoint cycles
+    n = 100
+    rng = np.random.RandomState(123)
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n)
+    M = rng.rand(n, n)
+
+    G_ref, log_ref = ot.emd(a, b, M, numItermax=50000, log=True)
+
+    # multiple checkpoint phases with increasing iteration budgets
+    max_iters = [100, 300, 600, 1000]
+    warm_start_data = None
+    costs = []
+
+    for max_iter in max_iters:
+        if warm_start_data is None:
+            G, log = ot.emd(
+                a,
+                b,
+                M,
+                numItermax=max_iter,
+                log=True,
+                warm_start=True,
+            )
+        else:
+            G, log = ot.emd(
+                a,
+                b,
+                M,
+                numItermax=max_iter,
+                log=True,
+                warm_start=warm_start_data,
+            )
+        costs.append(log["cost"])
+
+        if log["result_code"] != 3:  # converged
+            break
+        # Only use warm_start if checkpoint is present
+        warm_start_data = log if "checkpoint" in log else None
+
+    # check cost decreases monotonically
+    for i in range(len(costs) - 1):
+        assert costs[i + 1] <= costs[i]
+
+    # check final result matches reference
+    np.testing.assert_allclose(log["cost"], log_ref["cost"], rtol=1e-5)
+
+
+def test_emd_checkpoint_structure():
+    # test that checkpoint contains all required fields
+    n = 10
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n)
+    M = np.random.rand(n, n)
+
+    G, log = ot.emd(a, b, M, numItermax=10, log=True, warm_start=True)
+
+    # Check that checkpoint key exists
+    assert "checkpoint" in log, "Missing checkpoint key in log"
+
+    checkpoint = log["checkpoint"]
+
+    required_fields = [
+        "flow",
+        "pi",
+        "state",
+        "parent",
+        "pred",
+        "thread",
+        "rev_thread",
+        "succ_num",
+        "last_succ",
+        "forward",
+        "search_arc_num",
+        "all_arc_num",
+    ]
+
+    for field in required_fields:
+        assert field in checkpoint, f"Missing checkpoint field: {field}"
+
+
 def check_duality_gap(a, b, M, G, u, v, cost):
     cost_dual = np.vdot(a, u) + np.vdot(b, v)
     # Check that dual and primal cost are equal

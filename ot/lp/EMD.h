@@ -29,7 +29,16 @@ enum ProblemType {
     MAX_ITER_REACHED
 };
 
-int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter);
+int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G, 
+             double* alpha, double* beta, double *cost, uint64_t maxIter,
+             int resume_mode=0, int return_checkpoint=0,
+             double* flow_state=nullptr, double* pi_state=nullptr, 
+             signed char* state_state=nullptr, int* parent_state=nullptr, 
+             int64_t* pred_state=nullptr, int* thread_state=nullptr, 
+             int* rev_thread_state=nullptr, int* succ_num_state=nullptr, 
+             int* last_succ_state=nullptr, signed char* forward_state=nullptr,
+             int64_t* search_arc_num_out=nullptr, int64_t* all_arc_num_out=nullptr);
+
 int EMD_wrap_omp(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, int numThreads);
 
 
