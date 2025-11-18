@@ -50,19 +50,7 @@ if openmp_supported:
     link_args += flags
 
 if sys.platform.startswith("darwin"):
-    # Only add -stdlib=libc++ for Clang, not GCC
-    # GCC uses libstdc++ by default and doesn't recognize -stdlib flag
-    import subprocess
-    try:
-        # Check if using clang
-        compiler = os.environ.get('CXX', 'c++')
-        version_output = subprocess.check_output([compiler, '--version'], stderr=subprocess.STDOUT).decode()
-        if 'clang' in version_output.lower():
-            compile_args.append("-stdlib=libc++")
-    except Exception:
-        # If we can't determine, don't add the flag (safer for GCC)
-        pass
-    
+    compile_args.append("-stdlib=libc++")
     sdk_path = subprocess.check_output(["xcrun", "--show-sdk-path"])
     os.environ["CFLAGS"] = '-isysroot "{}"'.format(sdk_path.rstrip().decode("utf-8"))
 
