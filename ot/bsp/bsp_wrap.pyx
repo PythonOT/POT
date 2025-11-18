@@ -35,13 +35,12 @@ def bsp_solve(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2,
     """
     cdef int n = X.shape[0]
     cdef int d = X.shape[1]
-    cdef uint64_t nb_plans = plans.shape[0]
-    cdef  np.ndarray[np.int64, ndim=2, mode="c"] plans = np.zeros((n, n_plan), dtype=np.int64) 
-    cdef np.ndarray[np.int64, ndim=2, mode="c"] plann = np.zeros((n,), dtype=np.int64) 
+    cdef np.ndarray[int, ndim=2, mode="c"] plans = np.zeros((n, n_plans), dtype=np.int64) 
+    cdef np.ndarray[int, ndim=2, mode="c"] plan = np.zeros((n,), dtype=np.int64) 
 
     cdef double cost
 
-    cost = BSPOT_wrap(n, n, d, <double*>X.data, <double*>Y.data, nb_plans, <int*> c_plans.data, <int*> c_plan.data)
+    cost = BSPOT_wrap(n, n, d, <double*>X.data, <double*>Y.data, n_plans, <int*> plans.data, <int*> plan.data)
 
     # add 
 
@@ -50,7 +49,7 @@ def bsp_solve(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def merge_plans(np.ndarray[np.int64, ndim=2, mode="c"] plans):
+def merge_plans(np.ndarray[int, ndim=2, mode="c"] plans):
     """
         Merges OT plans
 
