@@ -996,21 +996,15 @@ def test_emd_sparse_vs_dense():
     np.testing.assert_allclose(a, G_dense.sum(1), rtol=1e-5, atol=1e-7)
     np.testing.assert_allclose(b, G_dense.sum(0), rtol=1e-5, atol=1e-7)
 
-    # Reconstruct sparse matrix from flow for marginal checks
-    if G_sparse is None:
-        G_sparse_reconstructed = np.zeros((n_source, n_target))
-        G_sparse_reconstructed[
-            log_sparse["flow_sources"], log_sparse["flow_targets"]
-        ] = log_sparse["flow_values"]
-        np.testing.assert_allclose(
-            a, G_sparse_reconstructed.sum(1), rtol=1e-5, atol=1e-7
-        )
-        np.testing.assert_allclose(
-            b, G_sparse_reconstructed.sum(0), rtol=1e-5, atol=1e-7
-        )
-    else:
-        np.testing.assert_allclose(a, G_sparse.sum(1), rtol=1e-5, atol=1e-7)
-        np.testing.assert_allclose(b, G_sparse.sum(0), rtol=1e-5, atol=1e-7)
+    # G_sparse is now returned as a sparse matrix
+    from scipy.sparse import issparse
+
+    assert issparse(G_sparse), "Sparse solver should return a sparse matrix"
+
+    # Convert to dense for marginal checks
+    G_sparse_dense = G_sparse.toarray()
+    np.testing.assert_allclose(a, G_sparse_dense.sum(1), rtol=1e-5, atol=1e-7)
+    np.testing.assert_allclose(b, G_sparse_dense.sum(0), rtol=1e-5, atol=1e-7)
 
 
 def test_emd2_sparse_vs_dense():
@@ -1094,6 +1088,13 @@ def test_emd_sparse_backends(nx):
 
     Uses augmented k-NN graph approach to ensure feasibility.
     """
+    # Skip backends that don't support sparse matrices
+    # JAX: no sparse support
+    # TensorFlow: coo_matrix() returns dense tensors
+    backend_name = nx.__class__.__name__.lower()
+    if "jax" in backend_name or "tensorflow" in backend_name:
+        pytest.skip("Backend does not support sparse matrices")
+
     n_source = 50
     n_target = 50
     k = 10
@@ -1153,19 +1154,47 @@ def test_emd_sparse_backends(nx):
         (data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target)
     )
 
-    _, log_np = ot.emd(a, b, C_augmented, log=True)
+    G_np, log_np = ot.emd(a, b, C_augmented, log=True)
 
     ab, bb = nx.from_numpy(a, b)
-    _, log_backend = ot.emd(ab, bb, C_augmented, log=True)
+    # Convert sparse matrix to backend format using backend's coo_matrix method
+    rows_array = np.array(rows_aug, dtype=np.int64)
+    cols_array = np.array(cols_aug, dtype=np.int64)
+    data_array = np.array(data_aug)
+    # For backends that need specific dtypes for indices (e.g., TensorFlow), cast them
+    rows_backend = nx.from_numpy(rows_array)
+    cols_backend = nx.from_numpy(cols_array)
+    data_backend = nx.from_numpy(data_array, type_as=ab)
+    C_augmented_backend = nx.coo_matrix(
+        data_backend, rows_backend, cols_backend, shape=(n_source, n_target)
+    )
+    G_backend, log_backend = ot.emd(ab, bb, C_augmented_backend, log=True)
 
     cost_np = log_np["cost"]
     cost_backend = nx.to_numpy(log_backend["cost"])
 
     np.testing.assert_allclose(cost_np, cost_backend, rtol=1e-5, atol=1e-7)
 
-    np.testing.assert_allclose(
-        log_np["flow_values"], log_backend["flow_values"], rtol=1e-5, atol=1e-7
-    )
+    from scipy.sparse import issparse
+
+    assert issparse(G_np), "NumPy backend should return scipy.sparse matrix"
+
+    # Convert both to dense numpy arrays for comparison
+    if issparse(G_np):
+        G_np_dense = G_np.toarray()
+    else:
+        G_np_dense = np.asarray(G_np)
+
+    # Convert backend result to dense first, then to numpy
+    if nx.issparse(G_backend):
+        G_backend_dense = nx.to_numpy(nx.todense(G_backend))
+    else:
+        G_backend_dense = nx.to_numpy(G_backend)
+
+    if issparse(G_backend_dense):
+        G_backend_dense = G_backend_dense.toarray()
+
+    np.testing.assert_allclose(G_np_dense, G_backend_dense, rtol=1e-5, atol=1e-7)
 
 
 def test_emd2_sparse_backends(nx):
@@ -1173,6 +1202,11 @@ def test_emd2_sparse_backends(nx):
 
     Uses augmented k-NN graph approach to ensure feasibility.
     """
+    # Skip backends that don't support sparse matrices
+    backend_name = nx.__class__.__name__.lower()
+    if "jax" in backend_name or "tensorflow" in backend_name:
+        pytest.skip("Backend does not support sparse matrices")
+
     n_source = 50
     n_target = 50
     k = 10
@@ -1235,7 +1269,18 @@ def test_emd2_sparse_backends(nx):
     cost_np = ot.emd2(a, b, C_augmented)
 
     ab, bb = nx.from_numpy(a, b)
-    cost_backend = ot.emd2(ab, bb, C_augmented)
+    # Convert sparse matrix to backend format
+    rows_array = np.array(rows_aug, dtype=np.int64)
+    cols_array = np.array(cols_aug, dtype=np.int64)
+    data_array = np.array(data_aug)
+    rows_backend = nx.from_numpy(rows_array)
+    cols_backend = nx.from_numpy(cols_array)
+    data_backend = nx.from_numpy(data_array, type_as=ab)
+    C_augmented_backend = nx.coo_matrix(
+        data_backend, rows_backend, cols_backend, shape=(n_source, n_target)
+    )
+
+    cost_backend = ot.emd2(ab, bb, C_augmented_backend)
 
     cost_backend_np = nx.to_numpy(cost_backend)
 

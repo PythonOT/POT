@@ -215,36 +215,72 @@ def plot2D_samples_mat(xs, xt, G, thr=1e-8, **kwargs):
     Plot lines between source and target 2D samples with a color
     proportional to the value of the matrix :math:`\mathbf{G}` between samples.
 
+    Supports both dense and sparse matrices. For sparse matrices, automatically
+    detects the format and efficiently iterates only over non-zero entries.
 
     Parameters
     ----------
     xs : ndarray, shape (ns,2)
         Source samples positions
-    b : ndarray, shape (nt,2)
+    xt : ndarray, shape (nt,2)
         Target samples positions
-    G : ndarray, shape (na,nb)
-        OT matrix
+    G : ndarray or sparse matrix, shape (ns,nt)
+        OT matrix (dense array, scipy.sparse matrix, or backend array)
     thr : float, optional
         threshold above which the line is drawn
     **kwargs : dict
         parameters given to the plot functions (default color is black if
         nothing given)
     """
+    from . import backend
+    from scipy.sparse import issparse, coo_matrix
 
     if ("color" not in kwargs) and ("c" not in kwargs):
         kwargs["color"] = "k"
-    mx = G.max()
-    if "alpha" in kwargs:
-        scale = kwargs["alpha"]
-        del kwargs["alpha"]
-    else:
-        scale = 1
-    for i in range(xs.shape[0]):
-        for j in range(xt.shape[0]):
-            if G[i, j] / mx > thr:
+
+    scale = kwargs.pop("alpha", 1)
+
+    # Convert to numpy/scipy format for plotting
+    try:
+        nx = backend.get_backend(G)
+        if nx.issparse(G):
+            # Backend sparse -> extract as numpy arrays for COO format
+            rows, cols, data = nx.sparse_coo_data(G)
+            rows = nx.to_numpy(rows).astype(int)
+            cols = nx.to_numpy(cols).astype(int)
+            data = nx.to_numpy(data)
+            is_sparse = True
+        else:
+            # Backend dense -> convert to numpy
+            G = nx.to_numpy(G)
+            is_sparse = False
+    except (ValueError, AttributeError):
+        # Not a backend array, check if scipy.sparse
+        is_sparse = issparse(G)
+        if is_sparse:
+            G_coo = G if isinstance(G, coo_matrix) else G.tocoo()
+            rows, cols, data = G_coo.row, G_coo.col, G_coo.data
+
+    if is_sparse:
+        # Sparse: iterate over non-zero entries only
+        mx = data.max() if len(data) > 0 else 1.0
+        for i, j, val in zip(rows, cols, data):
+            if val / mx > thr:
                 pl.plot(
                     [xs[i, 0], xt[j, 0]],
                     [xs[i, 1], xt[j, 1]],
-                    alpha=G[i, j] / mx * scale,
+                    alpha=val / mx * scale,
                     **kwargs,
                 )
+    else:
+        # Dense: iterate over all entries
+        mx = np.max(G)
+        for i in range(xs.shape[0]):
+            for j in range(xt.shape[0]):
+                if G[i, j] / mx > thr:
+                    pl.plot(
+                        [xs[i, 0], xt[j, 0]],
+                        [xs[i, 1], xt[j, 1]],
+                        alpha=G[i, j] / mx * scale,
+                        **kwargs,
+                    )

@@ -839,6 +839,31 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def sparse_coo_data(self, a):
+        r"""
+        Extracts COO format data (row, col, data, shape) from a sparse matrix.
+
+        Returns row indices, column indices, data values, and shape as numpy arrays/tuple.
+        This is used to interface with C++ solvers that require explicit edge lists.
+
+        Parameters
+        ----------
+        a : sparse matrix
+            Sparse matrix in backend's COO format
+
+        Returns
+        -------
+        row : numpy.ndarray
+            Row indices (1D array)
+        col : numpy.ndarray
+            Column indices (1D array)
+        data : numpy.ndarray
+            Data values (1D array)
+        shape : tuple
+            Shape of the matrix (n_rows, n_cols)
+        """
+        raise NotImplementedError()
+
     def where(self, condition, x, y):
         r"""
         Returns elements chosen from x or y depending on condition.
@@ -1349,6 +1374,15 @@ class NumpyBackend(Backend):
         else:
             return a
 
+    def sparse_coo_data(self, a):
+        # Convert to COO format if needed
+        if not isinstance(a, coo_matrix):
+            a_coo = coo_matrix(a)
+        else:
+            a_coo = a
+
+        return a_coo.row, a_coo.col, a_coo.data, a_coo.shape
+
     def where(self, condition, x=None, y=None):
         if x is None and y is None:
             return np.where(condition)
@@ -1767,6 +1801,15 @@ class JaxBackend(Backend):
     def todense(self, a):
         # Currently, JAX does not support sparse matrices
         return a
+
+    def sparse_coo_data(self, a):
+        # JAX doesn't support sparse matrices, so this shouldn't be called
+        # But if it is, convert the dense array to sparse using scipy
+        a_np = self.to_numpy(a)
+        from scipy.sparse import coo_matrix
+
+        a_coo = coo_matrix(a_np)
+        return a_coo.row, a_coo.col, a_coo.data, a_coo.shape
 
     def where(self, condition, x=None, y=None):
         if x is None and y is None:
@@ -2339,6 +2382,20 @@ class TorchBackend(Backend):
             return a.to_dense()
         else:
             return a
+
+    def sparse_coo_data(self, a):
+        # For torch sparse tensors, coalesce first to ensure unique indices
+        a_coalesced = a.coalesce()
+        indices = a_coalesced._indices()
+        values = a_coalesced._values()
+
+        # Convert to numpy
+        row = self.to_numpy(indices[0])
+        col = self.to_numpy(indices[1])
+        data = self.to_numpy(values)
+        shape = tuple(a_coalesced.shape)
+
+        return row, col, data, shape
 
     def where(self, condition, x=None, y=None):
         if x is None and y is None:

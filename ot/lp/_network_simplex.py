@@ -11,7 +11,6 @@ Solvers for the original linear program OT problem.
 import numpy as np
 import warnings
 
-import scipy.sparse as sp
 from ..utils import list_to_array, check_number_threads
 from ..backend import get_backend
 from .emd_wrap import emd_c, emd_c_sparse, check_result
@@ -216,8 +215,13 @@ def emd(
         Source histogram (uniform weight if empty list)
     b : (nt,) array-like, float
         Target histogram (uniform weight if empty list)
-    M : (ns,nt) array-like, float
-        Loss matrix (c-order array in numpy with type float64)
+    M : (ns,nt) array-like or sparse matrix, float
+        Loss matrix. Can be:
+
+        - Dense array (c-order array in numpy with type float64)
+        - Sparse matrix in backend's format (scipy.sparse.coo_matrix for NumPy backend,
+          torch.sparse_coo_tensor for PyTorch backend, etc.)
+
     numItermax : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
@@ -234,24 +238,27 @@ def emd(
         If True, checks that the marginals mass are equal. If False, skips the
         check.
 
-    .. note:: The solver automatically detects sparse format when M is provided as
-        a scipy.sparse matrix (coo, csr, csc, etc.).
+    .. note:: The solver automatically detects sparse format using the backend's
+        :py:meth:`issparse` method. For sparse inputs:
 
-        For sparse inputs, the solver uses a memory-efficient algorithm and returns
-        the flow in edge format (via log dict) instead of a full matrix.
+        - Uses a memory-efficient sparse EMD algorithm
+        - Returns the transport plan as a sparse matrix in the backend's format
+        - Supports scipy.sparse (NumPy), torch.sparse (PyTorch), etc.
+        - JAX and TensorFlow backends don't support sparse matrices
 
 
     Returns
     -------
-    gamma: array-like, shape (ns, nt), or None
+    gamma: array-like or sparse matrix, shape (ns, nt)
         Optimal transportation matrix for the given parameters.
-        For sparse inputs, returns None (use log=True to get flow in edge format).
+
+        - For dense inputs: returns a dense array
+        - For sparse inputs: returns a sparse matrix in the backend's format
+          (e.g., scipy.sparse.coo_matrix for NumPy, torch.sparse_coo_tensor for PyTorch)
+
     log: dict, optional
         If input log is True, a dictionary containing the cost, dual variables,
-        and exit status. For sparse inputs with log=True, also contains:
-        - 'flow_sources': source nodes of flow edges
-        - 'flow_targets': target nodes of flow edges
-        - 'flow_values': flow values on edges
+        and exit status.
 
 
     Examples
@@ -287,39 +294,33 @@ def emd(
     edge_costs = None
     n1, n2 = None, None
 
-    # Check for sparse format
-    is_sparse = sp.issparse(M)
+    # Get backend to check if M is sparse
+    a, b = list_to_array(a, b)
+    nx = get_backend(a, b)
+
+    # Check if M is sparse using backend's issparse method
+    is_sparse = nx.issparse(M)
 
     if is_sparse:
-        # Convert to COO format for edge extraction
-        if not isinstance(M, sp.coo_matrix):
-            M_coo = sp.coo_matrix(M)
-        else:
-            M_coo = M
+        # Extract COO data using backend method - returns numpy arrays
+        edge_sources, edge_targets, edge_costs, (n1, n2) = nx.sparse_coo_data(M)
 
-        edge_sources = (
-            M_coo.row if M_coo.row.dtype == np.uint64 else M_coo.row.astype(np.uint64)
-        )
-        edge_targets = (
-            M_coo.col if M_coo.col.dtype == np.uint64 else M_coo.col.astype(np.uint64)
-        )
-        edge_costs = (
-            M_coo.data
-            if M_coo.data.dtype == np.float64
-            else M_coo.data.astype(np.float64)
-        )
-        n1, n2 = M_coo.shape
+        # Ensure correct dtypes for C++ solver
+        if edge_sources.dtype != np.uint64:
+            edge_sources = edge_sources.astype(np.uint64)
+        if edge_targets.dtype != np.uint64:
+            edge_targets = edge_targets.astype(np.uint64)
+        if edge_costs.dtype != np.float64:
+            edge_costs = edge_costs.astype(np.float64)
 
-        a, b = list_to_array(a, b)
     elif isinstance(M, tuple):
         raise ValueError(
             "Tuple format for sparse cost matrix is not supported. "
-            "Please use scipy.sparse format (e.g., scipy.sparse.coo_matrix, csr_matrix, etc.)."
+            "Please use backend-appropriate sparse COO format (e.g., scipy.sparse.coo_matrix, torch.sparse_coo_tensor, etc.)."
         )
     else:
+        is_sparse = False
         a, b, M = list_to_array(a, b, M)
-
-    nx = get_backend(a, b)
 
     if len(a) != 0:
         type_as = a
@@ -366,56 +367,54 @@ def emd(
     numThreads = check_number_threads(numThreads)
 
     # ============================================================================
-    # SPARSE SOLVER PATH
+    # CALL SOLVER (sparse or dense)
     # ============================================================================
     if is_sparse:
         # Sparse solver - never build full matrix
         flow_sources, flow_targets, flow_values, cost, u, v, result_code = emd_c_sparse(
             a, b, edge_sources, edge_targets, edge_costs, numItermax
         )
-
-        # Center dual potentials
-        if center_dual:
-            u, v = center_ot_dual(u, v, a, b)
-
-        if np.any(~asel) or np.any(~bsel):
-            u, v = center_ot_dual(u, v, a, b)
-
-        result_code_string = check_result(result_code)
-
-        if log:
-            log_dict = {}
-            log_dict["cost"] = cost
-            log_dict["u"] = nx.from_numpy(u, type_as=type_as)
-            log_dict["v"] = nx.from_numpy(v, type_as=type_as)
-            log_dict["warning"] = result_code_string
-            log_dict["result_code"] = result_code
-            log_dict["flow_sources"] = flow_sources
-            log_dict["flow_targets"] = flow_targets
-            log_dict["flow_values"] = flow_values
-
-            return None, log_dict
-        else:
-            raise ValueError(
-                "For sparse inputs, log=True is required to get the flow in edge format"
-            )
-
-    # ============================================================================
-    # DENSE SOLVER PATH
-    # ============================================================================
     else:
         # Dense solver
         G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
 
-        # Center dual potentials
-        if center_dual:
-            u, v = center_ot_dual(u, v, a, b)
+    # ============================================================================
+    # POST-PROCESS DUAL VARIABLES AND CREATE TRANSPORT PLAN
+    # ============================================================================
 
-        if np.any(~asel) or np.any(~bsel):
+    # Center dual potentials
+    if center_dual:
+        u, v = center_ot_dual(u, v, a, b)
+
+    # Handle null weights
+    if np.any(~asel) or np.any(~bsel):
+        if is_sparse:
+            u, v = center_ot_dual(u, v, a, b)
+        else:
             u, v = estimate_dual_null_weights(u, v, a, b, M)
 
-        result_code_string = check_result(result_code)
+    result_code_string = check_result(result_code)
 
+    # Create transport plan in backend format
+    if is_sparse:
+        # Convert flow to sparse matrix using backend's coo_matrix method
+        flow_values_backend = nx.from_numpy(flow_values, type_as=type_as)
+        flow_sources_backend = nx.from_numpy(
+            flow_sources.astype(np.int64), type_as=type_as
+        )
+        flow_targets_backend = nx.from_numpy(
+            flow_targets.astype(np.int64), type_as=type_as
+        )
+
+        G = nx.coo_matrix(
+            flow_values_backend,
+            flow_sources_backend,
+            flow_targets_backend,
+            shape=(n1, n2),
+            type_as=type_as,
+        )
+    else:
+        # Warn about integer casting for dense case
         if not nx.is_floating_point(type_as):
             warnings.warn(
                 "Input histogram consists of integer. The transport plan will be "
@@ -424,18 +423,20 @@ def emd(
                 "histogram consists of floating point elements.",
                 stacklevel=2,
             )
+        G = nx.from_numpy(G, type_as=type_as)
 
-        if log:
-            log_dict = {}
-            log_dict["cost"] = cost
-            log_dict["u"] = nx.from_numpy(u, type_as=type_as)
-            log_dict["v"] = nx.from_numpy(v, type_as=type_as)
-            log_dict["warning"] = result_code_string
-            log_dict["result_code"] = result_code
-
-            return nx.from_numpy(G, type_as=type_as), log_dict
-        else:
-            return nx.from_numpy(G, type_as=type_as)
+    # Return results
+    if log:
+        log_dict = {
+            "cost": cost,
+            "u": nx.from_numpy(u, type_as=type_as),
+            "v": nx.from_numpy(v, type_as=type_as),
+            "warning": result_code_string,
+            "result_code": result_code,
+        }
+        return G, log_dict
+    else:
+        return G
 
 
 def emd2(
@@ -488,8 +489,13 @@ def emd2(
         Source histogram (uniform weight if empty list)
     b : (nt,) array-like, float64
         Target histogram (uniform weight if empty list)
-    M : (ns,nt) array-like, float64
-        Loss matrix (for numpy c-order array with type float64)
+    M : (ns,nt) array-like or sparse matrix, float64
+        Loss matrix. Can be:
+
+        - Dense array (c-order array in numpy with type float64)
+        - Sparse matrix in backend's format (scipy.sparse.coo_matrix for NumPy backend,
+          torch.sparse_coo_tensor for PyTorch backend, etc.)
+
     processes : int, optional (default=1)
         Nb of processes used for multiple emd computation (deprecated)
     numItermax : int, optional (default=100000)
@@ -510,11 +516,13 @@ def emd2(
         If True, checks that the marginals mass are equal. If False, skips the
         check.
 
-    .. note:: The solver automatically detects sparse format when M is provided as
-        a scipy.sparse matrix (coo, csr, csc, etc.).
+    .. note:: The solver automatically detects sparse format using the backend's
+        :py:meth:`issparse` method. For sparse inputs:
 
-        For sparse inputs, the solver uses a memory-efficient algorithm.
-        Edges not included are treated as having infinite cost (forbidden).
+        - Uses a memory-efficient sparse EMD algorithm
+        - Edges not included are treated as having infinite cost (forbidden)
+        - Supports scipy.sparse (NumPy), torch.sparse (PyTorch), etc.
+        - JAX and TensorFlow backends don't support sparse matrices
 
 
     Returns
@@ -560,39 +568,34 @@ def emd2(
     edge_costs = None
     n1, n2 = None, None
 
-    # Check for sparse format
-    is_sparse = sp.issparse(M)
+    # Get backend to check if M is sparse
+    a, b = list_to_array(a, b)
+    nx = get_backend(a, b)
+
+    # Check if M is sparse using backend's issparse method
+    is_sparse = nx.issparse(M)
 
     if is_sparse:
-        # Convert to COO format for edge extraction
-        if not isinstance(M, sp.coo_matrix):
-            M_coo = sp.coo_matrix(M)
-        else:
-            M_coo = M
+        # Extract COO data using backend method - returns numpy arrays
+        edge_sources, edge_targets, edge_costs, (n1, n2) = nx.sparse_coo_data(M)
 
-        edge_sources = (
-            M_coo.row if M_coo.row.dtype == np.uint64 else M_coo.row.astype(np.uint64)
-        )
-        edge_targets = (
-            M_coo.col if M_coo.col.dtype == np.uint64 else M_coo.col.astype(np.uint64)
-        )
-        edge_costs = (
-            M_coo.data
-            if M_coo.data.dtype == np.float64
-            else M_coo.data.astype(np.float64)
-        )
-        n1, n2 = M_coo.shape
+        # Ensure correct dtypes for C++ solver
+        if edge_sources.dtype != np.uint64:
+            edge_sources = edge_sources.astype(np.uint64)
+        if edge_targets.dtype != np.uint64:
+            edge_targets = edge_targets.astype(np.uint64)
+        if edge_costs.dtype != np.float64:
+            edge_costs = edge_costs.astype(np.float64)
 
-        a, b = list_to_array(a, b)
     elif isinstance(M, tuple):
         raise ValueError(
             "Tuple format for sparse cost matrix is not supported. "
-            "Please use scipy.sparse format (e.g., scipy.sparse.coo_matrix, csr_matrix, etc.)."
+            "Please use backend-appropriate sparse COO format (e.g., scipy.sparse.coo_matrix, torch.sparse_coo_tensor, etc.)."
         )
     else:
+        # Dense matrix
+        is_sparse = False
         a, b, M = list_to_array(a, b, M)
-
-    nx = get_backend(a, b)
 
     if len(a) != 0:
         type_as = a
@@ -647,42 +650,46 @@ def emd2(
     numThreads = check_number_threads(numThreads)
 
     # ============================================================================
-    # SPARSE SOLVER PATH
+    # DEFINE SOLVER FUNCTION (works for both sparse and dense)
     # ============================================================================
-    if is_sparse:
+    def f(b):
+        bsel = b != 0
 
-        def f(b):
-            bsel = b != 0
-
+        # Call appropriate solver
+        if is_sparse:
             # Solve sparse EMD
             flow_sources, flow_targets, flow_values, cost, u, v, result_code = (
                 emd_c_sparse(a, b, edge_sources, edge_targets, edge_costs, numItermax)
             )
+        else:
+            # Solve dense EMD
+            G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
 
-            # Build gradient mapping for edge costs
+        # Center dual potentials
+        if center_dual:
+            u, v = center_ot_dual(u, v, a, b)
+
+        # Handle null weights
+        if np.any(~asel) or np.any(~bsel):
+            if is_sparse:
+                u, v = center_ot_dual(u, v, a, b)
+            else:
+                u, v = estimate_dual_null_weights(u, v, a, b, M)
+
+        # Prepare cost with gradients
+        if is_sparse:
+            # Build gradient mapping for sparse case
             edge_to_idx = {
                 (edge_sources[k], edge_targets[k]): k for k in range(len(edge_sources))
             }
 
             grad_edge_costs = np.zeros(len(edge_costs), dtype=np.float64)
             for idx in range(len(flow_sources)):
-                src, tgt, flow = (
-                    flow_sources[idx],
-                    flow_targets[idx],
-                    flow_values[idx],
-                )
+                src, tgt, flow = flow_sources[idx], flow_targets[idx], flow_values[idx]
                 edge_idx = edge_to_idx.get((src, tgt), -1)
                 if edge_idx >= 0:
                     grad_edge_costs[edge_idx] = flow
 
-            # Center dual potentials
-            if center_dual:
-                u, v = center_ot_dual(u, v, a, b)
-
-            if np.any(~asel) or np.any(~bsel):
-                u, v = center_ot_dual(u, v, a, b)
-
-            # Prepare cost with gradients
             cost = nx.set_gradients(
                 nx.from_numpy(cost, type_as=type_as),
                 (a0, b0, edge_costs_original),
@@ -692,43 +699,8 @@ def emd2(
                     nx.from_numpy(grad_edge_costs, type_as=type_as),
                 ),
             )
-
-            check_result(result_code)
-
-            if log or return_matrix:
-                log_dict = {}
-                log_dict["u"] = nx.from_numpy(u, type_as=type_as)
-                log_dict["v"] = nx.from_numpy(v, type_as=type_as)
-                log_dict["warning"] = check_result(result_code)
-                log_dict["result_code"] = result_code
-
-                if return_matrix:
-                    G = np.zeros((len(a), len(b)), dtype=np.float64)
-                    G[flow_sources, flow_targets] = flow_values
-                    log_dict["G"] = nx.from_numpy(G, type_as=type_as)
-
-                return [cost, log_dict]
-            else:
-                return cost
-
-    # ============================================================================
-    # DENSE SOLVER PATH
-    # ============================================================================
-    else:
-
-        def f(b):
-            bsel = b != 0
-
-            # Solve dense EMD
-            G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
-
-            # Center dual potentials
-            if center_dual:
-                u, v = center_ot_dual(u, v, a, b)
-
-            if np.any(~asel) or np.any(~bsel):
-                u, v = estimate_dual_null_weights(u, v, a, b, M)
-
+        else:
+            # Dense case: warn about integer casting
             if not nx.is_floating_point(type_as):
                 warnings.warn(
                     "Input histogram consists of integer. The transport plan will be "
@@ -738,32 +710,39 @@ def emd2(
                     stacklevel=2,
                 )
 
-            G = nx.from_numpy(G, type_as=type_as)
+            G_backend = nx.from_numpy(G, type_as=type_as)
             cost = nx.set_gradients(
                 nx.from_numpy(cost, type_as=type_as),
                 (a0, b0, M0),
                 (
                     nx.from_numpy(u - np.mean(u), type_as=type_as),
                     nx.from_numpy(v - np.mean(v), type_as=type_as),
-                    G,
+                    G_backend,
                 ),
             )
 
-            check_result(result_code)
+        check_result(result_code)
 
-            if log or return_matrix:
-                log_dict = {}
-                log_dict["u"] = nx.from_numpy(u, type_as=type_as)
-                log_dict["v"] = nx.from_numpy(v, type_as=type_as)
-                log_dict["warning"] = check_result(result_code)
-                log_dict["result_code"] = result_code
+        # Return results
+        if log or return_matrix:
+            log_dict = {
+                "u": nx.from_numpy(u, type_as=type_as),
+                "v": nx.from_numpy(v, type_as=type_as),
+                "warning": check_result(result_code),
+                "result_code": result_code,
+            }
 
-                if return_matrix:
-                    log_dict["G"] = G
+            if return_matrix:
+                if is_sparse:
+                    G = np.zeros((len(a), len(b)), dtype=np.float64)
+                    G[flow_sources, flow_targets] = flow_values
+                    log_dict["G"] = nx.from_numpy(G, type_as=type_as)
+                else:
+                    log_dict["G"] = G_backend
 
-                return [cost, log_dict]
-            else:
-                return cost
+            return [cost, log_dict]
+        else:
+            return cost
 
     if len(b.shape) == 1:
         return f(b)
