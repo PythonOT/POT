@@ -1083,6 +1083,102 @@ def test_emd2_sparse_vs_dense():
     np.testing.assert_allclose(cost_dense, cost_sparse, rtol=1e-5, atol=1e-7)
 
 
+def test_emd2_sparse_gradients():
+    """Test that PyTorch sparse tensors support gradient computation."""
+    if not torch:
+        pytest.skip("PyTorch not available")
+
+    n = 10
+    a = torch.tensor(ot.utils.unif(n), requires_grad=True, dtype=torch.float64)
+    b = torch.tensor(ot.utils.unif(n), requires_grad=True, dtype=torch.float64)
+
+    rows, cols, costs = [], [], []
+    for i in range(n):
+        rows.append(i)
+        cols.append(i)
+        costs.append(0.1)
+        for offset in [1, 2]:
+            j = (i + offset) % n
+            rows.append(i)
+            cols.append(j)
+            costs.append(float(offset))
+
+    indices = torch.tensor(
+        np.vstack([np.array(rows), np.array(cols)]), dtype=torch.int64
+    )
+    values = torch.tensor(costs, dtype=torch.float64)
+    M_sparse = torch.sparse_coo_tensor(indices, values, (n, n), dtype=torch.float64)
+
+    cost = ot.emd2(a, b, M_sparse)
+    cost.backward()
+
+    assert a.grad is not None
+    assert b.grad is not None
+    np.testing.assert_allclose(
+        a.grad.sum().item(), -b.grad.sum().item(), rtol=1e-5, atol=1e-7
+    )
+
+
+def test_emd2_sparse_vs_dense_gradients():
+    """Verify gradient w.r.t. cost matrix M equals transport plan G."""
+    if not torch:
+        pytest.skip("PyTorch not available")
+
+    n = 4
+    a = torch.tensor([0.25, 0.25, 0.25, 0.25], requires_grad=True, dtype=torch.float64)
+    b = torch.tensor([0.25, 0.25, 0.25, 0.25], requires_grad=True, dtype=torch.float64)
+
+    M_full = torch.tensor(
+        [
+            [0.1, 1.0, 2.0, 3.0],
+            [1.0, 0.1, 1.0, 2.0],
+            [2.0, 1.0, 0.1, 1.0],
+            [3.0, 2.0, 1.0, 0.1],
+        ],
+        dtype=torch.float64,
+        requires_grad=True,
+    )
+
+    cost_dense = ot.emd2(a, b, M_full)
+    cost_dense.backward()
+    G_dense = ot.emd(a.detach(), b.detach(), M_full.detach())
+
+    np.testing.assert_allclose(
+        M_full.grad.numpy(), G_dense.numpy(), rtol=1e-7, atol=1e-10
+    )
+
+    a.grad = None
+    b.grad = None
+
+    rows, cols, costs = [], [], []
+    for i in range(n):
+        for j in range(max(0, i - 1), min(n, i + 2)):
+            rows.append(i)
+            cols.append(j)
+            costs.append(M_full[i, j].item())
+
+    rows_t = torch.tensor(rows, dtype=torch.int64)
+    cols_t = torch.tensor(cols, dtype=torch.int64)
+    M_sparse = torch.sparse_coo_tensor(
+        torch.stack([rows_t, cols_t]),
+        torch.tensor(costs, dtype=torch.float64),
+        (n, n),
+        dtype=torch.float64,
+        requires_grad=True,
+    )
+
+    cost_sparse = ot.emd2(a, b, M_sparse)
+    cost_sparse.backward()
+    G_sparse = ot.emd(a.detach(), b.detach(), M_sparse.detach()).to_dense()
+
+    grad_values = M_sparse.grad.coalesce().values().numpy()
+    G_values = G_sparse[rows_t, cols_t].numpy()
+
+    np.testing.assert_allclose(grad_values, G_values, rtol=1e-7, atol=1e-10)
+    assert grad_values.sum() > 0
+    assert np.abs(grad_values.sum() - 1.0) < 1e-7
+
+
 def test_emd_sparse_backends(nx):
     """Test that sparse EMD works with different backends for weights a and b.
 

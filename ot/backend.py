@@ -178,7 +178,16 @@ def _get_backend_instance(backend_impl):
 
 
 def _check_args_backend(backend_impl, args):
-    is_instance = set(isinstance(arg, backend_impl.__type__) for arg in args)
+    # Get backend instance to use issparse method
+    backend = _get_backend_instance(backend_impl)
+
+    # Check if each arg is either:
+    # 1. An instance of backend.__type__ (e.g., np.ndarray for NumPy)
+    # 2. A sparse matrix recognized by backend.issparse() (e.g., scipy.sparse for NumPy)
+    is_instance = set(
+        isinstance(arg, backend_impl.__type__) or backend.issparse(arg) for arg in args
+    )
+
     # check that all arguments matched or not the type
     if len(is_instance) == 1:
         return is_instance.pop()

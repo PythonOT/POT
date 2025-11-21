@@ -10,7 +10,6 @@ Solvers for the original linear program OT problem.
 
 import numpy as np
 import warnings
-from scipy.sparse import issparse as scipy_issparse
 
 from ..utils import list_to_array, check_number_threads
 from ..backend import get_backend
@@ -295,12 +294,14 @@ def emd(
     edge_costs = None
     n1, n2 = None, None
 
-    # Get backend to check if M is sparse
-    a, b = list_to_array(a, b)
-    nx = get_backend(a, b)
+    # Get backend from M first, then use it for list_to_array
+    # This ensures empty lists [] are converted to arrays in the correct backend
+    nx_M = get_backend(M)
+    a, b = list_to_array(a, b, nx=nx_M)
+    nx = get_backend(a, b, M)
 
-    # Check if M is sparse (either backend sparse or scipy.sparse)
-    is_sparse = nx.issparse(M) or scipy_issparse(M)
+    # Check if M is sparse using backend's issparse method
+    is_sparse = nx.issparse(M)
 
     if is_sparse:
         # Check if backend supports sparse matrices
@@ -579,14 +580,17 @@ def emd2(
     edge_costs = None
     n1, n2 = None, None
 
-    # Get backend to check if M is sparse
-    a, b = list_to_array(a, b)
-    nx = get_backend(a, b)
+    # Get backend from M first, then use it for list_to_array
+    # This ensures empty lists [] are converted to arrays in the correct backend
+    nx_M = get_backend(M)
+    a, b = list_to_array(a, b, nx=nx_M)
+    nx = get_backend(a, b, M)
 
-    # Check if M is sparse (either backend sparse or scipy.sparse)
-    from scipy.sparse import issparse as scipy_issparse
+    # Check if M is sparse using backend's issparse method
+    is_sparse = nx.issparse(M)
 
-    is_sparse = nx.issparse(M) or scipy_issparse(M)
+    # Save original sparse tensor for gradient tracking (before conversion to numpy)
+    M_original_sparse = None
 
     if is_sparse:
         # Check if backend supports sparse matrices
@@ -598,6 +602,9 @@ def emd2(
                 "sparse implementation is incomplete. Please convert your sparse "
                 "matrix to dense format using M.toarray() or equivalent before calling emd2()."
             )
+
+        # Save original M for gradient tracking (before numpy conversion)
+        M_original_sparse = M
 
         # Extract COO data using backend method - returns numpy arrays
         edge_sources, edge_targets, edge_costs, (n1, n2) = nx.sparse_coo_data(M)
@@ -641,7 +648,9 @@ def emd2(
     M0 = None if is_sparse else M
 
     if is_sparse:
-        edge_costs_original = nx.from_numpy(edge_costs, type_as=type_as)
+        # Use the original sparse tensor (preserves gradients for PyTorch)
+        # instead of converting from numpy
+        edge_costs_original = M_original_sparse
     else:
         edge_costs_original = None
 
@@ -713,13 +722,27 @@ def emd2(
                 if edge_idx >= 0:
                     grad_edge_costs[edge_idx] = flow
 
+            # Convert gradient to sparse format matching edge_costs_original
+            grad_edge_costs_backend = nx.from_numpy(grad_edge_costs, type_as=type_as)
+            if nx.issparse(edge_costs_original):
+                # Reconstruct sparse gradient tensor with same structure as original
+                grad_M_sparse = nx.coo_matrix(
+                    grad_edge_costs_backend,
+                    nx.from_numpy(edge_sources.astype(np.int64), type_as=type_as),
+                    nx.from_numpy(edge_targets.astype(np.int64), type_as=type_as),
+                    shape=(n1, n2),
+                    type_as=type_as,
+                )
+            else:
+                grad_M_sparse = grad_edge_costs_backend
+
             cost = nx.set_gradients(
                 nx.from_numpy(cost, type_as=type_as),
                 (a0, b0, edge_costs_original),
                 (
                     nx.from_numpy(u - np.mean(u), type_as=type_as),
                     nx.from_numpy(v - np.mean(v), type_as=type_as),
-                    nx.from_numpy(grad_edge_costs, type_as=type_as),
+                    grad_M_sparse,
                 ),
             )
         else:
