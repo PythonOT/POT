@@ -20,78 +20,11 @@ concentric circles dataset.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.sparse import coo_matrix
+from scipy.sparse import coo_array
 import ot
 
-
 ##############################################################################
-# Minimal example with 4 points
-# ------------------------------
-
-# %%
-
-X = np.array([[0, 0], [1, 0], [0.5, 0], [1.5, 0]])
-Y = np.array([[0, 1], [1, 1], [0.5, 1], [1.5, 1]])
-a = np.array([0.25, 0.25, 0.25, 0.25])
-b = np.array([0.25, 0.25, 0.25, 0.25])
-
-# Build sparse cost matrix allowing only selected edges
-rows = [0, 1, 2, 3]
-cols = [0, 1, 2, 3]
-vals = [np.linalg.norm(X[i] - Y[j]) for i, j in zip(rows, cols)]
-M_sparse = coo_matrix((vals, (rows, cols)), shape=(4, 4))
-
-
-##############################################################################
-# Solve and display sparse OT solution
-# -------------------------------------
-
-# %%
-
-G, log = ot.emd(a, b, M_sparse, log=True)
-
-print("Sparse OT cost:", log["cost"])
-print("Solution format:", type(G))
-print("Non-zero edges:", G.nnz)
-print("\nEdges:")
-G_coo = G if isinstance(G, coo_matrix) else G.tocoo()
-for i, j, v in zip(G_coo.row, G_coo.col, G_coo.data):
-    if v > 1e-10:
-        print(f"  source {i} -> target {j}, flow={v:.3f}")
-
-
-##############################################################################
-# Visualize sparse vs dense edge structure
-# -----------------------------------------
-
-# %%
-
-plt.figure(figsize=(8, 4))
-
-plt.subplot(1, 2, 1)
-plt.scatter(X[:, 0], X[:, 1], c="r", marker="o", s=100, zorder=3)
-plt.scatter(Y[:, 0], Y[:, 1], c="b", marker="x", s=100, zorder=3)
-for i, j in zip(rows, cols):
-    plt.plot([X[i, 0], Y[j, 0]], [X[i, 1], Y[j, 1]], "b-", linewidth=1, alpha=0.6)
-plt.title("Sparse OT: Allowed Edges Only")
-plt.xlim(-0.5, 2.0)
-plt.ylim(-0.5, 1.5)
-
-plt.subplot(1, 2, 2)
-plt.scatter(X[:, 0], X[:, 1], c="r", marker="o", s=100, zorder=3)
-plt.scatter(Y[:, 0], Y[:, 1], c="b", marker="x", s=100, zorder=3)
-for i in range(len(X)):
-    for j in range(len(Y)):
-        plt.plot([X[i, 0], Y[j, 0]], [X[i, 1], Y[j, 1]], "b-", linewidth=1, alpha=0.3)
-plt.title("Dense OT: All Possible Edges")
-plt.xlim(-0.5, 2.0)
-plt.ylim(-0.5, 1.5)
-
-plt.tight_layout()
-
-
-##############################################################################
-# Larger example: concentric circles
+# Example: concentric circles
 # -----------------------------------
 
 # %%
@@ -144,7 +77,7 @@ for k in range(n_clusters):
             cols.append(j)
             vals.append(M_full[i, j])
 
-M_sparse_large = coo_matrix((vals, (rows, cols)), shape=(n, n))
+M_sparse_large = coo_array((vals, (rows, cols)), shape=(n, n))
 allowed_sparse = set(zip(rows, cols))
 
 ##############################################################################

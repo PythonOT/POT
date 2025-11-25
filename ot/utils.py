@@ -12,6 +12,8 @@ import time
 
 import numpy as np
 from scipy.spatial.distance import cdist
+from scipy.sparse import coo_array
+from sklearn.neighbors import NearestNeighbors
 import sys
 import warnings
 from inspect import signature
@@ -58,7 +60,18 @@ def laplacian(x):
 
 def list_to_array(*lst, nx=None):
     r"""Convert a list if in numpy format"""
-    lst_not_empty = [a for a in lst if len(a) > 0 and not isinstance(a, list)]
+    # Filter to non-empty, non-list items (handle sparse matrices gracefully)
+    lst_not_empty = []
+    for a in lst:
+        if isinstance(a, list):
+            continue
+        try:
+            if len(a) > 0:
+                lst_not_empty.append(a)
+        except TypeError:
+            # Sparse matrices don't support len(), but they're not empty
+            lst_not_empty.append(a)
+
     if nx is None:  # find backend
         if len(lst_not_empty) == 0:
             type_as = np.zeros(0)
@@ -421,6 +434,77 @@ def dist(
             if w is not None:
                 return cdist(x1, x2, metric=metric, w=w)
             return cdist(x1, x2, metric=metric)
+
+
+def dist_knn(
+    x1,
+    x2=None,
+    k=10,
+    metric="euclidean",
+    p=2,
+):
+    r"""Compute sparse k-nearest neighbors distance matrix in COO format
+
+    This function efficiently computes a sparse distance matrix containing only
+    the k-nearest neighbors for each sample, which is useful for large-scale
+    optimal transport problems where the full dense distance matrix would be
+    prohibitively large.
+
+    Parameters
+    ----------
+    x1 : array-like, shape (n1, d)
+        Matrix with `n1` samples of size `d`
+    x2 : array-like, shape (n2, d), optional
+        Matrix with `n2` samples of size `d` (if None then :math:`\mathbf{x_2} = \mathbf{x_1}`)
+    k : int, optional (default=10)
+        Number of nearest neighbors to keep for each sample
+    metric : str, optional (default='euclidean')
+        Distance metric to use. Supported metrics include: 'euclidean', 'manhattan',
+        'chebyshev', 'minkowski', 'cityblock', 'cosine', 'l1', 'l2', 'sqeuclidean',
+        and others supported by sklearn.neighbors.NearestNeighbors
+    p : float, optional (default=2)
+        Parameter for the Minkowski metric
+
+    Returns
+    -------
+    M_sparse : scipy.sparse.coo_array, shape (n1, n2)
+        Sparse distance matrix in COO format containing only k-nearest neighbors
+
+    """
+    nx = get_backend(x1, x2)
+
+    # Convert to numpy for k-NN computation
+    x1_np = nx.to_numpy(x1)
+    x2_np = nx.to_numpy(x2) if x2 is not None else x1_np
+
+    n1 = x1_np.shape[0]
+    n2 = x2_np.shape[0]
+    k_actual = min(k, n2)  # Handle case where k > n2
+
+    # Use sklearn's efficient k-NN implementation
+    metric_params = {}
+    if metric == "minkowski":
+        metric_params["p"] = p
+
+    nbrs = NearestNeighbors(
+        n_neighbors=k_actual,
+        algorithm="auto",
+        metric=metric,
+        metric_params=metric_params if metric_params else None,
+    )
+    nbrs.fit(x2_np)
+
+    # Find k-nearest neighbors and their distances
+    distances, indices = nbrs.kneighbors(x1_np)
+
+    # Build sparse matrix in COO format
+    rows = np.repeat(np.arange(n1), k_actual)
+    cols = indices.ravel()
+    data = distances.ravel()
+
+    M_sparse = coo_array((data, (rows, cols)), shape=(n1, n2))
+
+    return M_sparse
 
 
 def dist0(n, method="lin_square"):

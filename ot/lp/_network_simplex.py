@@ -289,15 +289,10 @@ def emd(
     ot.optim.cg : General regularized OT
     """
 
-    edge_sources = None
-    edge_targets = None
-    edge_costs = None
     n1, n2 = None, None
 
-    # Get backend from M first, then use it for list_to_array
-    # This ensures empty lists [] are converted to arrays in the correct backend
-    nx_M = get_backend(M)
-    a, b = list_to_array(a, b, nx=nx_M)
+    # Convert lists to arrays, using M to detect backend when a,b are empty
+    a, b, M = list_to_array(a, b, M)
     nx = get_backend(a, b, M)
 
     # Check if M is sparse using backend's issparse method
@@ -324,15 +319,6 @@ def emd(
             edge_targets = edge_targets.astype(np.uint64)
         if edge_costs.dtype != np.float64:
             edge_costs = edge_costs.astype(np.float64)
-
-    elif isinstance(M, tuple):
-        raise ValueError(
-            "Tuple format for sparse cost matrix is not supported. "
-            "Please use backend-appropriate sparse COO format (e.g., scipy.sparse.coo_matrix, torch.sparse_coo_tensor, etc.)."
-        )
-    else:
-        is_sparse = False
-        a, b, M = list_to_array(a, b, M)
 
     if len(a) != 0:
         type_as = a
@@ -458,10 +444,10 @@ def emd2(
     processes=1,
     numItermax=100000,
     log=False,
+    return_matrix=False,
     center_dual=True,
     numThreads=1,
     check_marginals=True,
-    return_matrix=False,
 ):
     r"""Solves the Earth Movers distance problem and returns the loss
 
@@ -514,7 +500,7 @@ def emd2(
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
     log: boolean, optional (default=False)
-        If True, returns a dictionary containing dual
+        If True, returns a dictionary containing the cost and dual
         variables. Otherwise returns only the optimal transportation cost.
     return_matrix: boolean, optional (default=False)
         If True, returns the optimal transportation matrix in the log.
@@ -542,8 +528,9 @@ def emd2(
     W: float, array-like
         Optimal transportation loss for the given parameters
     log: dict
-        If input log is true, a dictionary containing dual
-        variables and exit status
+        If input log is true, a dictionary containing the cost, dual
+        variables (u, v), exit status, and optionally the optimal
+        transportation matrix (G) if return_matrix is True
 
 
     Examples
@@ -575,15 +562,9 @@ def emd2(
     ot.optim.cg : General regularized OT
     """
 
-    edge_sources = None
-    edge_targets = None
-    edge_costs = None
     n1, n2 = None, None
 
-    # Get backend from M first, then use it for list_to_array
-    # This ensures empty lists [] are converted to arrays in the correct backend
-    nx_M = get_backend(M)
-    a, b = list_to_array(a, b, nx=nx_M)
+    a, b, M = list_to_array(a, b, M)
     nx = get_backend(a, b, M)
 
     # Check if M is sparse using backend's issparse method
@@ -596,20 +577,13 @@ def emd2(
         # Check if backend supports sparse matrices
         backend_name = nx.__class__.__name__
         if backend_name in ["JaxBackend", "TensorflowBackend"]:
-            raise NotImplementedError(
-                f"Sparse optimal transport is not supported for {backend_name}. "
-                "JAX does not have native sparse matrix support, and TensorFlow's "
-                "sparse implementation is incomplete. Please convert your sparse "
-                "matrix to dense format using M.toarray() or equivalent before calling emd2()."
-            )
+            raise NotImplementedError()
 
         # Save original M for gradient tracking (before numpy conversion)
         M_original_sparse = M
 
-        # Extract COO data using backend method - returns numpy arrays
         edge_sources, edge_targets, edge_costs, (n1, n2) = nx.sparse_coo_data(M)
 
-        # Ensure correct dtypes for C++ solver
         if edge_sources.dtype != np.uint64:
             edge_sources = edge_sources.astype(np.uint64)
         if edge_targets.dtype != np.uint64:
@@ -617,22 +591,12 @@ def emd2(
         if edge_costs.dtype != np.float64:
             edge_costs = edge_costs.astype(np.float64)
 
-    elif isinstance(M, tuple):
-        raise ValueError(
-            "Tuple format for sparse cost matrix is not supported. "
-            "Please use backend-appropriate sparse COO format (e.g., scipy.sparse.coo_matrix, torch.sparse_coo_tensor, etc.)."
-        )
-    else:
-        # Dense matrix
-        is_sparse = False
-        a, b, M = list_to_array(a, b, M)
-
     if len(a) != 0:
         type_as = a
     elif len(b) != 0:
         type_as = b
     else:
-        type_as = a  # Can't use M for sparse case
+        type_as = a
 
     # Set n1, n2 if not already set (dense case)
     if n1 is None:
@@ -649,7 +613,6 @@ def emd2(
 
     if is_sparse:
         # Use the original sparse tensor (preserves gradients for PyTorch)
-        # instead of converting from numpy
         edge_costs_original = M_original_sparse
     else:
         edge_costs_original = None
@@ -682,12 +645,11 @@ def emd2(
     numThreads = check_number_threads(numThreads)
 
     # ============================================================================
-    # DEFINE SOLVER FUNCTION (works for both sparse and dense)
+    # DEFINE SOLVER FUNCTION
     # ============================================================================
     def f(b):
         bsel = b != 0
 
-        # Call appropriate solver
         if is_sparse:
             # Solve sparse EMD
             flow_sources, flow_targets, flow_values, cost, u, v, result_code = (
@@ -745,6 +707,23 @@ def emd2(
                     grad_M_sparse,
                 ),
             )
+
+            # Build transport plan in backend sparse format
+            flow_values_backend = nx.from_numpy(flow_values, type_as=type_as)
+            flow_sources_backend = nx.from_numpy(
+                flow_sources.astype(np.int64), type_as=type_as
+            )
+            flow_targets_backend = nx.from_numpy(
+                flow_targets.astype(np.int64), type_as=type_as
+            )
+
+            G_backend = nx.coo_matrix(
+                flow_values_backend,
+                flow_sources_backend,
+                flow_targets_backend,
+                shape=(n1, n2),
+                type_as=type_as,
+            )
         else:
             # Dense case: warn about integer casting
             if not nx.is_floating_point(type_as):
@@ -772,20 +751,14 @@ def emd2(
         # Return results
         if log or return_matrix:
             log_dict = {
+                "cost": cost,
                 "u": nx.from_numpy(u, type_as=type_as),
                 "v": nx.from_numpy(v, type_as=type_as),
                 "warning": check_result(result_code),
                 "result_code": result_code,
             }
-
             if return_matrix:
-                if is_sparse:
-                    G = np.zeros((len(a), len(b)), dtype=np.float64)
-                    G[flow_sources, flow_targets] = flow_values
-                    log_dict["G"] = nx.from_numpy(G, type_as=type_as)
-                else:
-                    log_dict["G"] = G_backend
-
+                log_dict["G"] = G_backend
             return [cost, log_dict]
         else:
             return cost

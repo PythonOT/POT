@@ -217,22 +217,26 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
                 np.ndarray[double, ndim=1, mode="c"] edge_costs,
                 uint64_t max_iter):
     """
-    Sparse EMD solver - only considers edges in edge_sources/edge_targets
+    Sparse EMD solver using cost matrix in COO (Coordinate) sparse format.
+    
+    The cost matrix is passed as three parallel arrays representing non-zero
+    entries in COO format: (edge_sources[i], edge_targets[i]) -> edge_costs[i].
+    Only edges explicitly provided will be considered by the solver.
 
     Parameters
     ----------
-    a : (n1,) array
+    a : (n1,) array, float64
         Source histogram
-    b : (n2,) array
+    b : (n2,) array, float64
         Target histogram
     edge_sources : (k,) array, uint64
-        Source indices for each edge
+        Source indices for each edge (row indices in COO format)
     edge_targets : (k,) array, uint64
-        Target indices for each edge
+        Target indices for each edge (column indices in COO format)
     edge_costs : (k,) array, float64
-        Cost for each edge
+        Cost for each edge (non-zero values in COO format)
     max_iter : uint64_t
-        Maximum iterations
+        Maximum number of iterations
 
     Returns
     -------

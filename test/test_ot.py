@@ -12,7 +12,7 @@ import pytest
 import ot
 from ot.datasets import make_1D_gauss as gauss
 from ot.backend import torch, tf, get_backend
-from scipy.sparse import coo_matrix
+from scipy.sparse import coo_array
 
 
 def test_emd_dimension_and_mass_mismatch():
@@ -915,12 +915,17 @@ def test_dual_variables():
     assert constraint_violation.max() < 1e-8
 
 
-def test_emd_sparse_vs_dense():
+def test_emd_sparse_vs_dense(nx):
     """Test that sparse and dense EMD solvers produce identical results.
 
     Uses augmented k-NN graph approach: first solves with dense solver to
     identify needed edges, then compares both solvers on the same graph.
     """
+    # Skip for backends that don't support sparse matrices
+    backend_name = nx.__class__.__name__.lower()
+    if "jax" in backend_name or "tensorflow" in backend_name:
+        pytest.skip("Backend does not support sparse matrices")
+
     n_source = 100
     n_target = 100
     k = 10
@@ -935,20 +940,10 @@ def test_emd_sparse_vs_dense():
 
     C = ot.dist(x_source, x_target)
 
-    rows = []
-    cols = []
-    data = []
+    # Compute k-NN sparse cost matrix
+    C_knn = ot.utils.dist_knn(x_source, x_target, k=k, metric="sqeuclidean")
 
-    for i in range(n_source):
-        distances = C[i, :]
-        nearest_k = np.argpartition(distances, k)[:k]
-        for j in nearest_k:
-            rows.append(i)
-            cols.append(j)
-            data.append(C[i, j])
-
-    C_knn = coo_matrix((data, (rows, cols)), shape=(n_source, n_target))
-
+    # First pass: solve with k-NN to identify active edges
     large_cost = 1e8
     C_dense_infty = np.full((n_source, n_target), large_cost)
     C_knn_array = C_knn.toarray()
@@ -976,13 +971,12 @@ def test_emd_sparse_vs_dense():
         cols_aug.append(j)
         data_aug.append(C[i, j])
 
-    C_augmented = coo_matrix(
+    C_augmented = coo_array(
         (data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target)
     )
 
     C_augmented_dense = np.full((n_source, n_target), large_cost)
-    C_augmented_array = C_augmented.toarray()
-    C_augmented_dense[C_augmented_array > 0] = C_augmented_array[C_augmented_array > 0]
+    C_augmented_dense[rows_aug, cols_aug] = data_aug
 
     G_dense, log_dense = ot.emd(a, b, C_augmented_dense, log=True)
     G_sparse, log_sparse = ot.emd(a, b, C_augmented, log=True)
@@ -1007,12 +1001,17 @@ def test_emd_sparse_vs_dense():
     np.testing.assert_allclose(b, G_sparse_dense.sum(0), rtol=1e-5, atol=1e-7)
 
 
-def test_emd2_sparse_vs_dense():
+def test_emd2_sparse_vs_dense(nx):
     """Test that sparse and dense emd2 solvers produce identical results.
 
     Uses augmented k-NN graph approach: first solves with dense solver to
     identify needed edges, then compares both solvers on the same graph.
     """
+    # Skip for backends that don't support sparse matrices
+    backend_name = nx.__class__.__name__.lower()
+    if "jax" in backend_name or "tensorflow" in backend_name:
+        pytest.skip("Backend does not support sparse matrices")
+
     n_source = 100
     n_target = 100
     k = 10
@@ -1027,20 +1026,10 @@ def test_emd2_sparse_vs_dense():
 
     C = ot.dist(x_source, x_target)
 
-    rows = []
-    cols = []
-    data = []
+    # Compute k-NN sparse cost matrix
+    C_knn = ot.utils.dist_knn(x_source, x_target, k=k, metric="sqeuclidean")
 
-    for i in range(n_source):
-        distances = C[i, :]
-        nearest_k = np.argpartition(distances, k)[:k]
-        for j in nearest_k:
-            rows.append(i)
-            cols.append(j)
-            data.append(C[i, j])
-
-    C_knn = coo_matrix((data, (rows, cols)), shape=(n_source, n_target))
-
+    # First pass: solve with k-NN to identify active edges
     large_cost = 1e8
     C_dense_infty = np.full((n_source, n_target), large_cost)
     C_knn_array = C_knn.toarray()
@@ -1069,13 +1058,12 @@ def test_emd2_sparse_vs_dense():
         cols_aug.append(j)
         data_aug.append(C[i, j])
 
-    C_augmented = coo_matrix(
+    C_augmented = coo_array(
         (data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target)
     )
 
     C_augmented_dense = np.full((n_source, n_target), large_cost)
-    C_augmented_array = C_augmented.toarray()
-    C_augmented_dense[C_augmented_array > 0] = C_augmented_array[C_augmented_array > 0]
+    C_augmented_dense[rows_aug, cols_aug] = data_aug
 
     cost_dense = ot.emd2(a, b, C_augmented_dense)
     cost_sparse = ot.emd2(a, b, C_augmented)
@@ -1177,210 +1165,6 @@ def test_emd2_sparse_vs_dense_gradients():
     np.testing.assert_allclose(grad_values, G_values, rtol=1e-7, atol=1e-10)
     assert grad_values.sum() > 0
     assert np.abs(grad_values.sum() - 1.0) < 1e-7
-
-
-def test_emd_sparse_backends(nx):
-    """Test that sparse EMD works with different backends for weights a and b.
-
-    Uses augmented k-NN graph approach to ensure feasibility.
-    """
-    # Skip backends that don't support sparse matrices
-    # JAX: no sparse support
-    # TensorFlow: coo_matrix() returns dense tensors
-    backend_name = nx.__class__.__name__.lower()
-    if "jax" in backend_name or "tensorflow" in backend_name:
-        pytest.skip("Backend does not support sparse matrices")
-
-    n_source = 50
-    n_target = 50
-    k = 10
-
-    rng = np.random.RandomState(42)
-
-    a = ot.utils.unif(n_source)
-    b = ot.utils.unif(n_target)
-
-    x_source = rng.randn(n_source, 2)
-    x_target = rng.randn(n_target, 2) + 0.5
-    C = ot.dist(x_source, x_target)
-
-    rows = []
-    cols = []
-    data = []
-
-    for i in range(n_source):
-        distances = C[i, :]
-        nearest_k = np.argpartition(distances, k)[:k]
-        for j in nearest_k:
-            rows.append(i)
-            cols.append(j)
-            data.append(C[i, j])
-
-    C_knn = coo_matrix((data, (rows, cols)), shape=(n_source, n_target))
-
-    # Augment with necessary edges (same approach as test_emd_sparse_vs_dense)
-    large_cost = 1e8
-    C_dense_infty = np.full((n_source, n_target), large_cost)
-    C_knn_array = C_knn.toarray()
-    C_dense_infty[C_knn_array > 0] = C_knn_array[C_knn_array > 0]
-
-    G_dense_initial = ot.emd(a, b, C_dense_infty)
-    eps = 1e-9
-    active_mask = G_dense_initial > eps
-    knn_mask = C_knn_array > 0
-    extra_edges_mask = active_mask & ~knn_mask
-
-    rows_aug = []
-    cols_aug = []
-    data_aug = []
-
-    knn_rows, knn_cols = np.where(knn_mask)
-    for i, j in zip(knn_rows, knn_cols):
-        rows_aug.append(i)
-        cols_aug.append(j)
-        data_aug.append(C[i, j])
-
-    extra_rows, extra_cols = np.where(extra_edges_mask)
-    for i, j in zip(extra_rows, extra_cols):
-        rows_aug.append(i)
-        cols_aug.append(j)
-        data_aug.append(C[i, j])
-
-    C_augmented = coo_matrix(
-        (data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target)
-    )
-
-    G_np, log_np = ot.emd(a, b, C_augmented, log=True)
-
-    ab, bb = nx.from_numpy(a, b)
-    # Convert sparse matrix to backend format using backend's coo_matrix method
-    rows_array = np.array(rows_aug, dtype=np.int64)
-    cols_array = np.array(cols_aug, dtype=np.int64)
-    data_array = np.array(data_aug)
-    # For backends that need specific dtypes for indices (e.g., TensorFlow), cast them
-    rows_backend = nx.from_numpy(rows_array)
-    cols_backend = nx.from_numpy(cols_array)
-    data_backend = nx.from_numpy(data_array, type_as=ab)
-    C_augmented_backend = nx.coo_matrix(
-        data_backend, rows_backend, cols_backend, shape=(n_source, n_target)
-    )
-    G_backend, log_backend = ot.emd(ab, bb, C_augmented_backend, log=True)
-
-    cost_np = log_np["cost"]
-    cost_backend = nx.to_numpy(log_backend["cost"])
-
-    np.testing.assert_allclose(cost_np, cost_backend, rtol=1e-5, atol=1e-7)
-
-    from scipy.sparse import issparse
-
-    assert issparse(G_np), "NumPy backend should return scipy.sparse matrix"
-
-    # Convert both to dense numpy arrays for comparison
-    if issparse(G_np):
-        G_np_dense = G_np.toarray()
-    else:
-        G_np_dense = np.asarray(G_np)
-
-    # Convert backend result to dense first, then to numpy
-    if nx.issparse(G_backend):
-        G_backend_dense = nx.to_numpy(nx.todense(G_backend))
-    else:
-        G_backend_dense = nx.to_numpy(G_backend)
-
-    if issparse(G_backend_dense):
-        G_backend_dense = G_backend_dense.toarray()
-
-    np.testing.assert_allclose(G_np_dense, G_backend_dense, rtol=1e-5, atol=1e-7)
-
-
-def test_emd2_sparse_backends(nx):
-    """Test that sparse emd2 works with different backends for weights a and b.
-
-    Uses augmented k-NN graph approach to ensure feasibility.
-    """
-    # Skip backends that don't support sparse matrices
-    backend_name = nx.__class__.__name__.lower()
-    if "jax" in backend_name or "tensorflow" in backend_name:
-        pytest.skip("Backend does not support sparse matrices")
-
-    n_source = 50
-    n_target = 50
-    k = 10
-
-    rng = np.random.RandomState(42)
-
-    a = ot.utils.unif(n_source)
-    b = ot.utils.unif(n_target)
-
-    x_source = rng.randn(n_source, 2)
-    x_target = rng.randn(n_target, 2) + 0.5
-    C = ot.dist(x_source, x_target)
-
-    rows = []
-    cols = []
-    data = []
-
-    for i in range(n_source):
-        distances = C[i, :]
-        nearest_k = np.argpartition(distances, k)[:k]
-        for j in nearest_k:
-            rows.append(i)
-            cols.append(j)
-            data.append(C[i, j])
-
-    C_knn = coo_matrix((data, (rows, cols)), shape=(n_source, n_target))
-
-    # Augment with necessary edges (same approach as test_emd2_sparse_vs_dense)
-    large_cost = 1e8
-    C_dense_infty = np.full((n_source, n_target), large_cost)
-    C_knn_array = C_knn.toarray()
-    C_dense_infty[C_knn_array > 0] = C_knn_array[C_knn_array > 0]
-
-    G_dense_initial = ot.emd(a, b, C_dense_infty)
-    eps = 1e-9
-    active_mask = G_dense_initial > eps
-    knn_mask = C_knn_array > 0
-    extra_edges_mask = active_mask & ~knn_mask
-
-    rows_aug = []
-    cols_aug = []
-    data_aug = []
-
-    knn_rows, knn_cols = np.where(knn_mask)
-    for i, j in zip(knn_rows, knn_cols):
-        rows_aug.append(i)
-        cols_aug.append(j)
-        data_aug.append(C[i, j])
-
-    extra_rows, extra_cols = np.where(extra_edges_mask)
-    for i, j in zip(extra_rows, extra_cols):
-        rows_aug.append(i)
-        cols_aug.append(j)
-        data_aug.append(C[i, j])
-
-    C_augmented = coo_matrix(
-        (data_aug, (rows_aug, cols_aug)), shape=(n_source, n_target)
-    )
-
-    cost_np = ot.emd2(a, b, C_augmented)
-
-    ab, bb = nx.from_numpy(a, b)
-    # Convert sparse matrix to backend format
-    rows_array = np.array(rows_aug, dtype=np.int64)
-    cols_array = np.array(cols_aug, dtype=np.int64)
-    data_array = np.array(data_aug)
-    rows_backend = nx.from_numpy(rows_array)
-    cols_backend = nx.from_numpy(cols_array)
-    data_backend = nx.from_numpy(data_array, type_as=ab)
-    C_augmented_backend = nx.coo_matrix(
-        data_backend, rows_backend, cols_backend, shape=(n_source, n_target)
-    )
-
-    cost_backend = ot.emd2(ab, bb, C_augmented_backend)
-
-    cost_backend_np = nx.to_numpy(cost_backend)
-
-    np.testing.assert_allclose(cost_np, cost_backend_np, rtol=1e-5, atol=1e-7)
 
 
 def check_duality_gap(a, b, M, G, u, v, cost):
