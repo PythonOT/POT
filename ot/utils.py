@@ -12,7 +12,6 @@ import time
 
 import numpy as np
 from scipy.spatial.distance import cdist
-from scipy.sparse import coo_array
 import sys
 import warnings
 from inspect import signature
@@ -433,39 +432,6 @@ def dist(
             if w is not None:
                 return cdist(x1, x2, metric=metric, w=w)
             return cdist(x1, x2, metric=metric)
-
-
-def get_sparse_test_matrices(n1, n2, k=2, seed=42, nx=None):
-    if nx is None:
-        nx = NumpyBackend()
-
-    rng = np.random.RandomState(seed)
-    M_orig = rng.rand(n1, n2)
-
-    mask = np.zeros((n1, n2))
-    for i in range(n1):
-        j_list = rng.choice(n2, min(k, n2), replace=False)
-        for j in j_list:
-            mask[i, j] = 1
-    for j in range(n2):
-        i_list = rng.choice(n1, min(k, n1), replace=False)
-        for i in i_list:
-            mask[i, j] = 1
-
-    M_sparse_np = coo_array(M_orig * mask)
-    rows, cols, data = M_sparse_np.row, M_sparse_np.col, M_sparse_np.data
-
-    if nx.__name__ == "numpy":
-        M_sparse = M_sparse_np
-    else:
-        rows_b = nx.from_numpy(rows.astype(np.int64))
-        cols_b = nx.from_numpy(cols.astype(np.int64))
-        data_b = nx.from_numpy(data)
-        M_sparse = nx.coo_matrix(data_b, rows_b, cols_b, shape=(n1, n2))
-
-    M_dense = nx.from_numpy(M_orig + 1e8 * (1 - mask))
-
-    return M_sparse, M_dense
 
 
 def dist0(n, method="lin_square"):
