@@ -14,6 +14,9 @@ comparing sparse and dense formulations on both a minimal example and a larger
 concentric circles dataset.
 """
 
+# Author: Nathan Neike
+#
+# License: MIT License
 # sphinx_gallery_thumbnail_number = 2
 
 import numpy as np
