@@ -94,7 +94,7 @@ import numpy as np
 import scipy
 import scipy.linalg
 import scipy.special as special
-from scipy.sparse import coo_matrix, csr_matrix, issparse
+from scipy.sparse import coo_array, coo_matrix, csr_matrix, issparse
 
 DISABLE_TORCH_KEY = "POT_BACKEND_DISABLE_PYTORCH"
 DISABLE_JAX_KEY = "POT_BACKEND_DISABLE_JAX"
@@ -802,9 +802,9 @@ class Backend:
         r"""
         Creates a sparse tensor in COOrdinate format.
 
-        This function follows the api from :any:`scipy.sparse.coo_matrix`
+        This function follows the api from :any:`scipy.sparse.coo_array`
 
-        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
         """
         raise NotImplementedError()
 
@@ -1354,9 +1354,9 @@ class NumpyBackend(Backend):
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         if type_as is None:
-            return coo_matrix((data, (rows, cols)), shape=shape)
+            return coo_array((data, (rows, cols)), shape=shape)
         else:
-            return coo_matrix((data, (rows, cols)), shape=shape, dtype=type_as.dtype)
+            return coo_array((data, (rows, cols)), shape=shape, dtype=type_as.dtype)
 
     def issparse(self, a):
         return issparse(a)
@@ -1385,8 +1385,9 @@ class NumpyBackend(Backend):
 
     def sparse_coo_data(self, a):
         # Convert to COO format if needed
-        if not isinstance(a, coo_matrix):
-            a_coo = coo_matrix(a)
+        if not isinstance(a, (coo_array, coo_matrix)):
+            # Try to convert to coo_array (prefer modern API)
+            a_coo = coo_array(a)
         else:
             a_coo = a
 
@@ -1815,9 +1816,7 @@ class JaxBackend(Backend):
         # JAX doesn't support sparse matrices, so this shouldn't be called
         # But if it is, convert the dense array to sparse using scipy
         a_np = self.to_numpy(a)
-        from scipy.sparse import coo_matrix
-
-        a_coo = coo_matrix(a_np)
+        a_coo = coo_array(a_np)
         return a_coo.row, a_coo.col, a_coo.data, a_coo.shape
 
     def where(self, condition, x=None, y=None):
