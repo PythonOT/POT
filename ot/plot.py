@@ -15,6 +15,8 @@ Functions for plotting OT matrices
 import numpy as np
 import matplotlib.pylab as pl
 from matplotlib import gridspec
+from . import backend
+from scipy.sparse import issparse, coo_array
 
 
 def plot1D_mat(
@@ -232,8 +234,6 @@ def plot2D_samples_mat(xs, xt, G, thr=1e-8, **kwargs):
         parameters given to the plot functions (default color is black if
         nothing given)
     """
-    from . import backend
-    from scipy.sparse import issparse, coo_matrix
 
     if ("color" not in kwargs) and ("c" not in kwargs):
         kwargs["color"] = "k"
@@ -258,7 +258,7 @@ def plot2D_samples_mat(xs, xt, G, thr=1e-8, **kwargs):
         # Not a backend array, check if scipy.sparse
         is_sparse = issparse(G)
         if is_sparse:
-            G_coo = G if isinstance(G, coo_matrix) else G.tocoo()
+            G_coo = G if isinstance(G, coo_array) else G.tocoo()
             rows, cols, data = G_coo.row, G_coo.col, G_coo.data
 
     if is_sparse:

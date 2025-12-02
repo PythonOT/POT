@@ -94,7 +94,7 @@ import numpy as np
 import scipy
 import scipy.linalg
 import scipy.special as special
-from scipy.sparse import coo_array, coo_matrix, csr_matrix, issparse
+from scipy.sparse import coo_array, csr_matrix, issparse
 
 DISABLE_TORCH_KEY = "POT_BACKEND_DISABLE_PYTORCH"
 DISABLE_JAX_KEY = "POT_BACKEND_DISABLE_JAX"
@@ -1384,9 +1384,8 @@ class NumpyBackend(Backend):
             return a
 
     def sparse_coo_data(self, a):
-        # Convert to COO format if needed
-        if not isinstance(a, (coo_array, coo_matrix)):
-            # Try to convert to coo_array (prefer modern API)
+        # Convert to COO array format if needed
+        if not isinstance(a, coo_array):
             a_coo = coo_array(a)
         else:
             a_coo = a
@@ -2803,10 +2802,10 @@ class CupyBackend(Backend):  # pragma: no cover
         rows = self.from_numpy(rows)
         cols = self.from_numpy(cols)
         if type_as is None:
-            return cupyx.scipy.sparse.coo_matrix((data, (rows, cols)), shape=shape)
+            return cupyx.scipy.sparse.coo_array((data, (rows, cols)), shape=shape)
         else:
             with cp.cuda.Device(type_as.device):
-                return cupyx.scipy.sparse.coo_matrix(
+                return cupyx.scipy.sparse.coo_array(
                     (data, (rows, cols)), shape=shape, dtype=type_as.dtype
                 )
 
