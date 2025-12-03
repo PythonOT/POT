@@ -782,6 +782,24 @@ def test_sliced_plans():
     # test with a warm theta
     ot.sliced.sliced_plans(x, y, n_proj=10, warm_theta=thetas[-1])
 
+    # test permutations
+    n = 5
+    m = 5
+    n_proj = 10
+    d = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    y = rng.randn(m, 2)
+
+    a = rng.uniform(0, 1, n)
+    a /= a.sum()
+    b = rng.uniform(0, 1, m)
+    b /= b.sum()
+
+    # test with the minkowski metric
+    ot.sliced.sliced_plans(x, y, metric="minkowski")
+
 
 def test_min_pivot_sliced():
     x = [1, 2]
@@ -924,7 +942,9 @@ def test_sliced_plans_backends(nx):
 
     x_b, y_b, a_b, b_b = nx.from_numpy(x, y, a, b)
 
-    thetas_b = ot.sliced.get_random_projections(d, n_proj, seed=0, backend=nx).T
+    thetas_b = ot.sliced.get_random_projections(
+        d, n_proj, seed=0, backend=nx, type_as=x
+    ).T
     thetas = nx.to_numpy(thetas_b)
 
     context = (

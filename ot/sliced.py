@@ -756,6 +756,12 @@ def sliced_plans(
     assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"
     assert Y.ndim == 2, f"Y must be a 2d array, got {Y.ndim}d array instead"
 
+    assert metric in ("minkowski", "euclidean", "cityblock", "sqeuclidean"), (
+        "Sliced plans work only with metrics "
+        + "from the following list: "
+        + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
+    )
+
     assert (
         X.shape[1] == Y.shape[1]
     ), f"X ({X.shape}) and Y ({Y.shape}) must have the same number of columns"
@@ -776,7 +782,7 @@ def sliced_plans(
     do_draw_thetas = thetas is None
     if do_draw_thetas:  # create thetas (n_proj, d)
         assert n_proj is not None, "n_proj must be specified if thetas is None"
-        thetas = get_random_projections(d, n_proj, backend=nx).T
+        thetas = get_random_projections(d, n_proj, backend=nx, type_as=X).T
 
         if warm_theta is not None:
             thetas = nx.concatenate([thetas, warm_theta[:, None].T], axis=0)
@@ -787,8 +793,7 @@ def sliced_plans(
     X_theta = X @ thetas.T  # shape (n, n_proj)
     Y_theta = Y @ thetas.T  # shape (m, n_proj)
 
-    if is_perm:
-        # we compute maps (permutations)
+    if is_perm:  # we compute maps (permutations)
         # sigma[:, i_proj] is a permutation sorting X_theta[:, i_proj]
         sigma = nx.argsort(X_theta, axis=0)  # (n, n_proj)
         tau = nx.argsort(Y_theta, axis=0)  # (m, n_proj)
@@ -803,17 +808,12 @@ def sliced_plans(
                 )
                 for k in range(n_proj)
             ]
-        elif metric == "sqeuclidean":
+        else:  # metric = "sqeuclidean":
             costs = [
                 nx.sum((nx.sum((X[sigma[:, k]] - Y[tau[:, k]]) ** 2, axis=1)) / n)
                 for k in range(n_proj)
             ]
-        else:
-            raise ValueError(
-                "Sliced plans work only with metrics "
-                + "from the following list: "
-                + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
-            )
+
         a = nx.ones(n) / n
         plan = [
             nx.coo_matrix(a, sigma[:, k], tau[:, k], shape=(n, m), type_as=a)
@@ -824,6 +824,35 @@ def sliced_plans(
         _, plan = wasserstein_1d(
             X_theta, Y_theta, a, b, p, require_sort=True, return_plan=True
         )
+
+        plan = plan.tocsr().tocoo()  # especially for tensorflow compatibility
+
+        if str(nx) == "jax":
+            plan = [nx.todense(plan[k]) for k in range(n_proj)]
+            if not dense:
+                warnings.warn(
+                    "JAX does not support sparse matrices, converting" "to dense"
+                )
+
+            costs = [
+                nx.sum(
+                    (
+                        (
+                            nx.sum(
+                                nx.abs(
+                                    X[np.nonzero(plan[k])[0]]
+                                    - Y[np.nonzero(plan[k])[1]]
+                                )
+                                ** p,
+                                axis=1,
+                            )
+                        )
+                        ** (1 / p)
+                    )
+                    * plan[np.nonzero(plan[k])]
+                )
+                for k in range(n_proj)
+            ]
 
         if metric in ("minkowski", "euclidean", "cityblock"):
             costs = [
@@ -836,7 +865,7 @@ def sliced_plans(
                 )
                 for k in range(n_proj)
             ]
-        elif metric == "sqeuclidean":
+        else:  # metric = "sqeuclidean"
             costs = [
                 nx.sum(
                     (nx.sum((X[plan[k].row] - Y[plan[k].col]) ** 2, axis=1))
@@ -844,17 +873,8 @@ def sliced_plans(
                 )
                 for k in range(n_proj)
             ]
-        else:
-            raise ValueError(
-                "Sliced plans work only with metrics "
-                + "from the following list: "
-                + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
-            )
 
     if dense:
-        plan = [nx.todense(plan[k]) for k in range(n_proj)]
-    elif str(nx) == "jax":
-        warnings.warn("JAX does not support sparse matrices, converting to dense")
         plan = [nx.todense(plan[k]) for k in range(n_proj)]
 
     if log:
