@@ -42,8 +42,8 @@ thetas = get_random_projections(d, n_proj).T
 alpha = 0.3
 
 
-proj_X = X @ thetas.T
-proj_Y = Y @ thetas.T
+# proj_X = X @ thetas.T
+# proj_Y = Y @ thetas.T
 
 
 ##############################################################################

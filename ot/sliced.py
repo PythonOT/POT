@@ -873,7 +873,7 @@ def sliced_plans(
                             )
                             ** (1 / p)
                         )
-                        * plan[k]
+                        * plan[k].data
                     )
                     for k in range(n_proj)
                 ]
@@ -881,7 +881,7 @@ def sliced_plans(
                 costs = [
                     nx.sum(
                         (nx.sum((X[plan[k].row] - Y[plan[k].col]) ** 2, axis=1))
-                        * plan[k]
+                        * plan[k].data
                     )
                     for k in range(n_proj)
                 ]
