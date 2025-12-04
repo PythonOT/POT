@@ -6,6 +6,7 @@ Sliced OT Distances
 #         Nicolas Courty   <ncourty@irisa.fr>
 #         Rémi Flamary <remi.flamary@polytechnique.edu>
 #         Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
+#         Laetitia Chapel <laetitia.chapel@irisa.fr>
 #
 # License: MIT License
 
@@ -820,20 +821,22 @@ def sliced_plans(
             for k in range(n_proj)
         ]
 
+        if not dense and str(nx) == "jax":
+            warnings.warn("JAX does not support sparse matrices, converting to dense")
+            plan = [nx.todense(plan[k]) for k in range(n_proj)]
+
     else:  # we compute plans
         _, plan = wasserstein_1d(
             X_theta, Y_theta, a, b, p, require_sort=True, return_plan=True
         )
 
-        if str(nx) == "tensorflow":  # tf does not support duplicate entries
-            plan = [plan[k].tocsr().tocoo() for k in range(n_proj)]
-
-        if str(nx) == "jax":
-            plan = [nx.todense(plan[k]) for k in range(n_proj)]
+        if str(nx) == "jax":  # dense computation for jax
             if not dense:
                 warnings.warn(
-                    "JAX does not support sparse matrices, converting" "to dense"
+                    "JAX does not support sparse matrices, converting to dense"
                 )
+
+            plan = [nx.todense(plan[k]) for k in range(n_proj)]
 
             costs = [
                 nx.sum(
@@ -854,7 +857,11 @@ def sliced_plans(
                 )
                 for k in range(n_proj)
             ]
+
         else:
+            if str(nx) == "tensorflow":  # tf does not support multiple indexing
+                plan = [plan[k].tocsr().tocoo() for k in range(n_proj)]
+
             if metric in ("minkowski", "euclidean", "cityblock"):
                 costs = [
                     nx.sum(
@@ -870,7 +877,7 @@ def sliced_plans(
                     )
                     for k in range(n_proj)
                 ]
-            else:  # metric = "sqeuclidean"
+            else:  # metric == "sqeuclidean"
                 costs = [
                     nx.sum(
                         (nx.sum((X[plan[k].row] - Y[plan[k].col]) ** 2, axis=1))
@@ -879,7 +886,7 @@ def sliced_plans(
                     for k in range(n_proj)
                 ]
 
-    if dense:
+    if dense and not str(nx) == "jax":
         plan = [nx.todense(plan[k]) for k in range(n_proj)]
 
     if log:

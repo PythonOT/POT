@@ -3,6 +3,7 @@
 # Author: Adrien Corenflos <adrien.corenflos@aalto.fi>
 #         Nicolas Courty <ncourty@irisa.fr>
 #         Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
+#         Laetitia Chapel <laetitia.chapel@irisa.fr>
 #
 # License: MIT License
 
@@ -943,7 +944,7 @@ def test_sliced_plans_backends(nx):
     x_b, y_b, a_b, b_b = nx.from_numpy(x, y, a, b)
 
     thetas_b = ot.sliced.get_random_projections(
-        d, n_proj, seed=0, backend=nx, type_as=x
+        d, n_proj, seed=0, backend=nx, type_as=x_b
     ).T
     thetas = nx.to_numpy(thetas_b)
 
