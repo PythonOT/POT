@@ -873,7 +873,7 @@ def sliced_plans(
                             )
                             ** (1 / p)
                         )
-                        * plan[k].data
+                        * plan[k]
                     )
                     for k in range(n_proj)
                 ]
@@ -881,12 +881,15 @@ def sliced_plans(
                 costs = [
                     nx.sum(
                         (nx.sum((X[plan[k].row] - Y[plan[k].col]) ** 2, axis=1))
-                        * plan[k].data
+                        * plan[k]
                     )
                     for k in range(n_proj)
                 ]
 
     if dense and not str(nx) == "jax":
+        plan = [nx.todense(plan[k]) for k in range(n_proj)]
+    elif str(nx) == "jax":
+        warnings.warn("JAX does not support sparse matrices, converting to dense")
         plan = [nx.todense(plan[k]) for k in range(n_proj)]
 
     if log:
