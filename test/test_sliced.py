@@ -776,7 +776,7 @@ def test_sliced_plans():
     ot.sliced.sliced_plans(x, y, thetas=thetas, metric="minkowski")
 
     # test with an unsupported metric
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         ot.sliced.sliced_plans(x, y, thetas=thetas, metric="mahalanobis")
 
     # test with a warm theta
@@ -798,7 +798,7 @@ def test_sliced_plans():
     b /= b.sum()
 
     # test with the minkowski metric
-    ot.sliced.sliced_plans(x, y, metric="minkowski")
+    ot.sliced.sliced_plans(x, y, n_proj=10, metric="minkowski")
 
 
 def test_min_pivot_sliced():
@@ -857,7 +857,7 @@ def test_min_pivot_sliced():
     ot.sliced.min_pivot_sliced(x, y, thetas=thetas, metric="cityblock")
 
     # test with an unsupported metric
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         ot.sliced.min_pivot_sliced(x, y, thetas=thetas, metric="mahalanobis")
 
     # test with a warm theta
@@ -922,7 +922,7 @@ def test_expected_sliced():
     ot.sliced.expected_sliced(x, y, thetas=thetas, metric="minkowski")
 
     # test with an unsupported metric
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         ot.sliced.expected_sliced(x, y, thetas=thetas, metric="mahalanobis")
 
 

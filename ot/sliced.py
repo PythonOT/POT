@@ -825,7 +825,8 @@ def sliced_plans(
             X_theta, Y_theta, a, b, p, require_sort=True, return_plan=True
         )
 
-        plan = plan.tocsr().tocoo()  # especially for tensorflow compatibility
+        if str(nx) == "tensorflow":  # tf does not support duplicate entries
+            plan = [plan[k].tocsr().tocoo() for k in range(n_proj)]
 
         if str(nx) == "jax":
             plan = [nx.todense(plan[k]) for k in range(n_proj)]
@@ -853,26 +854,30 @@ def sliced_plans(
                 )
                 for k in range(n_proj)
             ]
-
-        if metric in ("minkowski", "euclidean", "cityblock"):
-            costs = [
-                nx.sum(
-                    (
-                        (nx.sum(nx.abs(X[plan[k].row] - Y[plan[k].col]) ** p, axis=1))
-                        ** (1 / p)
+        else:
+            if metric in ("minkowski", "euclidean", "cityblock"):
+                costs = [
+                    nx.sum(
+                        (
+                            (
+                                nx.sum(
+                                    nx.abs(X[plan[k].row] - Y[plan[k].col]) ** p, axis=1
+                                )
+                            )
+                            ** (1 / p)
+                        )
+                        * plan[k].data
                     )
-                    * plan[k].data
-                )
-                for k in range(n_proj)
-            ]
-        else:  # metric = "sqeuclidean"
-            costs = [
-                nx.sum(
-                    (nx.sum((X[plan[k].row] - Y[plan[k].col]) ** 2, axis=1))
-                    * plan[k].data
-                )
-                for k in range(n_proj)
-            ]
+                    for k in range(n_proj)
+                ]
+            else:  # metric = "sqeuclidean"
+                costs = [
+                    nx.sum(
+                        (nx.sum((X[plan[k].row] - Y[plan[k].col]) ** 2, axis=1))
+                        * plan[k].data
+                    )
+                    for k in range(n_proj)
+                ]
 
     if dense:
         plan = [nx.todense(plan[k]) for k in range(n_proj)]
