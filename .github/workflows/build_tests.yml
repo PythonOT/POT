@@ -74,6 +74,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
     - name: Install POT
       run: |
         pip install -e .
@@ -98,6 +99,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.13"
+        cache: 'pip'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools
@@ -126,6 +128,7 @@ jobs:
        uses: actions/setup-python@v5
        with:
          python-version: ${{ matrix.python-version }}
+         cache: 'pip'
      - name: Install POT
        run: |
          pip install -e .
@@ -153,6 +156,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
     - name: RC.exe
       run: |
         function Invoke-VSDevEnvironment {
