@@ -310,9 +310,9 @@ def solve_batch(
     B, n, m = M.shape
 
     if a is None:
-        a = nx.ones((B, n)) / n
+        a = nx.ones((B, n), type_as=M) / n
     if b is None:
-        b = nx.ones((B, m)) / m
+        b = nx.ones((B, m), type_as=M) / m
 
     if solver == "log_sinkhorn":
         K = -M / reg
