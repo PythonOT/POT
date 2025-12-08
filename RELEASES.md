@@ -11,6 +11,7 @@ This new release adds support for sparse cost matrices in the exact EMD solver. 
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
 - Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
 - Add test for build from source (PR #772, Issue #764)
+- Fix device for batch Ot solver in `ot.batch` (PR #784, Issue #783)
 
 ## 0.9.6.post1
 
