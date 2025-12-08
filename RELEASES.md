@@ -2,6 +2,9 @@
 
 ## 0.9.7dev
 
+This new release adds support for sparse cost matrices in the exact EMD solver. Users can now pass sparse cost matrices (e.g., k-NN graphs, sparse graphs) and receive sparse transport plans, significantly reducing memory footprint for large-scale problems. The implementation is backend-agnostic, automatically handling scipy.sparse for NumPy and torch.sparse for PyTorch, and preserves full gradient computation capabilities for automatic differentiation in PyTorch. This enables efficient solving of OT problems on graphs with millions of nodes where only a sparse subset of edges have finite costs.
+
+
 #### New features
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
 - Added Sliced OT plans (PR #767)
