@@ -819,7 +819,7 @@ def sliced_plans(
             X_theta, Y_theta, a, b, p, require_sort=True, return_plan=True
         )
 
-        if str(nx) == "jax" or str(nx) == "tensorflow":
+        if str(nx) in ["tf", "jax"]:
             if not dense:
                 if str(nx) == "jax":
                     warnings.warn(
@@ -845,10 +845,16 @@ def sliced_plans(
             ]
 
     if dense and not (str(nx) == "jax"):
-        plan = plan_dense.copy()
-    elif str(nx) == "jax" and not is_perm:
-        warnings.warn("JAX does not support sparse matrices, converting to dense")
         plan = [nx.todense(plan[k]) for k in range(n_proj)]
+    elif str(nx) in ["tf", "jax"]:
+        if not is_perm:
+            warnings.warn(
+                "JAX and tensorflow do not support well sparse "
+                "matrices, converting to dense"
+            )
+            plan = [nx.todense(plan[k]) for k in range(n_proj)]
+        else:
+            plan = plan_dense.copy()
 
     if log:
         log_dict = {"X_theta": X_theta, "Y_theta": Y_theta, "thetas": thetas}
