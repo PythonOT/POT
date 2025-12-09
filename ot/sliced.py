@@ -829,12 +829,12 @@ def sliced_plans(
                     warnings.warn(
                         "TensorFlow sparse indexing is limited, converting to dense"
                     )
-            plan = [nx.todense(plan[k]) for k in range(n_proj)]
-            idx_non_zeros = [nx.nonzero(plan[k]) for k in range(n_proj)]
+            plan_dense = [nx.todense(plan[k]) for k in range(n_proj)]
+            idx_non_zeros = [nx.where(plan_dense[k] != 0) for k in range(n_proj)]
             costs = [
                 nx.sum(
                     dist(idx_non_zeros[k][0], idx_non_zeros[k][1])
-                    * plan[k][idx_non_zeros[k][0], idx_non_zeros[k][1]]
+                    * plan_dense[k][idx_non_zeros[k][0], idx_non_zeros[k][1]]
                 )
                 for k in range(n_proj)
             ]
@@ -844,8 +844,8 @@ def sliced_plans(
                 for k in range(n_proj)
             ]
 
-    if dense and not (str(nx) == "jax" or str(nx) == "tensorflow"):
-        plan = [nx.todense(plan[k]) for k in range(n_proj)]
+    if dense and not (str(nx) == "jax"):
+        plan = plan_dense.copy()
     elif str(nx) == "jax" and not is_perm:
         warnings.warn("JAX does not support sparse matrices, converting to dense")
         plan = [nx.todense(plan[k]) for k in range(n_proj)]
@@ -1101,7 +1101,7 @@ def expected_sliced(
     >>> x=np.array([[3.,3.], [1.,1.]])
     >>> y=np.array([[2.,2.5], [3.,2.]])
     >>> thetas=np.array([[1, 0], [0, 1]])
-    >>> plan, cost = expected_sliced(x, y, thetas)
+    >>> plan, cost = expected_sliced(x, y, thetas=thetas)
     >>> plan
     [[0.25 0.25]
     [0.25 0.25]]
@@ -1138,7 +1138,7 @@ def expected_sliced(
 
     log_dict = {}
     G, costs, log_dict_plans = sliced_plans(
-        X, Y, a, b, metric, p, thetas, n_proj=n_proj, log=True
+        X, Y, a, b, metric, p, thetas, n_proj=n_proj, log=True, dense=False
     )
     if log:
         log_dict = {"thetas": log_dict_plans["thetas"], "costs": costs, "G": G}
@@ -1154,7 +1154,6 @@ def expected_sliced(
         weights = nx.ones(n_proj) / n_proj
 
     log_dict["weights"] = weights
-
     weights = nx.concatenate([G[i].data * weights[i] for i in range(len(G))])
     X_idx = nx.concatenate([G[i].row for i in range(len(G))])
     Y_idx = nx.concatenate([G[i].col for i in range(len(G))])
