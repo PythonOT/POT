@@ -766,6 +766,7 @@ def sliced_plans(
     assert (
         X.shape[1] == Y.shape[1]
     ), f"X ({X.shape}) and Y ({Y.shape}) must have the same number of columns"
+
     if metric == "euclidean":
         p = 2
     elif metric == "cityblock":
@@ -818,13 +819,18 @@ def sliced_plans(
             X_theta, Y_theta, a, b, p, require_sort=True, return_plan=True
         )
 
-        if str(nx) == "jax":  # dense computation for jax
+        if str(nx) == "jax" or str(nx) == "tensorflow":
             if not dense:
-                warnings.warn(
-                    "JAX does not support sparse matrices, converting to dense"
-                )
+                if str(nx) == "jax":
+                    warnings.warn(
+                        "JAX does not support sparse matrices, converting to dense"
+                    )
+                else:
+                    warnings.warn(
+                        "TensorFlow sparse indexing is limited, converting to dense"
+                    )
             plan = [nx.todense(plan[k]) for k in range(n_proj)]
-            idx_non_zeros = [np.nonzero(plan[k]) for k in range(n_proj)]
+            idx_non_zeros = [nx.nonzero(plan[k]) for k in range(n_proj)]
             costs = [
                 nx.sum(
                     dist(idx_non_zeros[k][0], idx_non_zeros[k][1])
@@ -833,25 +839,22 @@ def sliced_plans(
                 for k in range(n_proj)
             ]
         else:
-            if str(nx) == "tensorflow":  # tf does not support multiple indexing
-                plan = [plan[k].tocsr().tocoo() for k in range(n_proj)]
-
             costs = [
                 nx.sum(dist(plan[k].row, plan[k].col) * plan[k].data)
                 for k in range(n_proj)
             ]
 
-    if dense and not str(nx) == "jax":
+    if dense and not (str(nx) == "jax" or str(nx) == "tensorflow"):
         plan = [nx.todense(plan[k]) for k in range(n_proj)]
-    elif str(nx) == "jax":
+    elif str(nx) == "jax" and not is_perm:
         warnings.warn("JAX does not support sparse matrices, converting to dense")
         plan = [nx.todense(plan[k]) for k in range(n_proj)]
 
     if log:
         log_dict = {"X_theta": X_theta, "Y_theta": Y_theta, "thetas": thetas}
-        return plan, costs, log_dict
+        return plan, nx.stack(costs), log_dict
     else:
-        return plan, costs
+        return plan, nx.stack(costs)
 
 
 def min_pivot_sliced(
@@ -945,7 +948,7 @@ def min_pivot_sliced(
     >>> x=np.array([[3.,3.], [1.,1.]])
     >>> y=np.array([[2.,2.5], [3.,2.]])
     >>> thetas=np.array([[1, 0], [0, 1]])
-    >>> plan, cost = ot.expected_sliced(x, y, thetas)
+    >>> plan, cost = min_pivot_sliced(x, y, thetas)
     >>> plan
     [[0 0.5]
     [0.5 0]]
@@ -984,6 +987,7 @@ def min_pivot_sliced(
         warm_theta=warm_theta,
         log=True,
     )
+
     pos_min = nx.argmin(costs)
     cost = costs[pos_min]
     plan = G[pos_min]
@@ -1097,7 +1101,7 @@ def expected_sliced(
     >>> x=np.array([[3.,3.], [1.,1.]])
     >>> y=np.array([[2.,2.5], [3.,2.]])
     >>> thetas=np.array([[1, 0], [0, 1]])
-    >>> plan, cost = ot.expected_sliced(x, y, thetas)
+    >>> plan, cost = expected_sliced(x, y, thetas)
     >>> plan
     [[0.25 0.25]
     [0.25 0.25]]
