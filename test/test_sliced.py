@@ -805,7 +805,7 @@ def test_sliced_plans():
 def test_min_pivot_sliced():
     x = [1, 2]
     with pytest.raises(AssertionError):
-        ot.sliced.min_pivot_sliced(x, x, n_proj=2)
+        ot.sliced.min_pivot_sliced(x, x, n_proj=3)
 
     n = 10
     m = 4
@@ -830,6 +830,7 @@ def test_min_pivot_sliced():
 
     # result should be an upper-bound of W2 and relatively close
     w2 = ot.emd2(a, b, ot.dist(x, y))
+    print("w2:", w2, "min_cost:", min_cost)
     assert min_cost >= w2
     assert min_cost <= 1.5 * w2
 

@@ -790,6 +790,12 @@ def sliced_plans(
     else:
         n_proj = thetas.shape[0]
 
+    def dist(i, j):
+        if metric == "sqeuclidean":
+            return nx.sum((X[i] - Y[j]) ** 2, axis=1)
+        else:
+            return nx.sum(nx.abs(X[i] - Y[j]) ** p, axis=1) ** (1 / p)
+
     # project on each theta: (n or m, d) -> (n or m, n_proj)
     X_theta = X @ thetas.T  # shape (n, n_proj)
     Y_theta = Y @ thetas.T  # shape (m, n_proj)
@@ -798,32 +804,14 @@ def sliced_plans(
         # sigma[:, i_proj] is a permutation sorting X_theta[:, i_proj]
         sigma = nx.argsort(X_theta, axis=0)  # (n, n_proj)
         tau = nx.argsort(Y_theta, axis=0)  # (m, n_proj)
-        if metric in ("minkowski", "euclidean", "cityblock"):
-            costs = [
-                nx.sum(
-                    (
-                        (nx.sum(nx.abs(X[sigma[:, k]] - Y[tau[:, k]]) ** p, axis=1))
-                        ** (1 / p)
-                    )
-                    / n
-                )
-                for k in range(n_proj)
-            ]
-        else:  # metric = "sqeuclidean":
-            costs = [
-                nx.sum((nx.sum((X[sigma[:, k]] - Y[tau[:, k]]) ** 2, axis=1)) / n)
-                for k in range(n_proj)
-            ]
+
+        costs = [nx.sum(dist(sigma[:, k], tau[:, k]) / n) for k in range(n_proj)]
 
         a = nx.ones(n) / n
         plan = [
             nx.coo_matrix(a, sigma[:, k], tau[:, k], shape=(n, m), type_as=a)
             for k in range(n_proj)
         ]
-
-        if not dense and str(nx) == "jax":
-            warnings.warn("JAX does not support sparse matrices, converting to dense")
-            plan = [nx.todense(plan[k]) for k in range(n_proj)]
 
     else:  # we compute plans
         _, plan = wasserstein_1d(
@@ -835,56 +823,23 @@ def sliced_plans(
                 warnings.warn(
                     "JAX does not support sparse matrices, converting to dense"
                 )
-
             plan = [nx.todense(plan[k]) for k in range(n_proj)]
-
+            idx_non_zeros = [np.nonzero(plan[k]) for k in range(n_proj)]
             costs = [
                 nx.sum(
-                    (
-                        (
-                            nx.sum(
-                                nx.abs(
-                                    X[np.nonzero(plan[k])[0]]
-                                    - Y[np.nonzero(plan[k])[1]]
-                                )
-                                ** p,
-                                axis=1,
-                            )
-                        )
-                        ** (1 / p)
-                    )
-                    * plan[np.nonzero(plan[k])]
+                    dist(idx_non_zeros[k][0], idx_non_zeros[k][1])
+                    * plan[k][idx_non_zeros[k][0], idx_non_zeros[k][1]]
                 )
                 for k in range(n_proj)
             ]
-
         else:
             if str(nx) == "tensorflow":  # tf does not support multiple indexing
                 plan = [plan[k].tocsr().tocoo() for k in range(n_proj)]
 
-            if metric in ("minkowski", "euclidean", "cityblock"):
-                costs = [
-                    nx.sum(
-                        (
-                            (
-                                nx.sum(
-                                    nx.abs(X[plan[k].row] - Y[plan[k].col]) ** p, axis=1
-                                )
-                            )
-                            ** (1 / p)
-                        )
-                        * plan[k].data
-                    )
-                    for k in range(n_proj)
-                ]
-            else:  # metric == "sqeuclidean"
-                costs = [
-                    nx.sum(
-                        (nx.sum((X[plan[k].row] - Y[plan[k].col]) ** 2, axis=1))
-                        * plan[k].data
-                    )
-                    for k in range(n_proj)
-                ]
+            costs = [
+                nx.sum(dist(plan[k].row, plan[k].col) * plan[k].data)
+                for k in range(n_proj)
+            ]
 
     if dense and not str(nx) == "jax":
         plan = [nx.todense(plan[k]) for k in range(n_proj)]
