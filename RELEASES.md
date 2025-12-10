@@ -7,11 +7,13 @@ This new release adds support for sparse cost matrices in the exact EMD solver. 
 #### New features
 - Add support for sparse cost matrices in exact EMD solver `ot.emd` and `ot.emd2` (PR #778)
 - Migrate backend from deprecated `scipy.sparse.coo_matrix` to modern `scipy.sparse.coo_array` API (PR #TBD)
+- Geomloss function now handles both scalar and slice indices for i and j. Using backend agnostic reshaping. Allows to do plan[i,:] and plan[:,j]
 
 #### Closed issues
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
 - Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
 - Add test for build from source (PR #772, Issue #764)
+- Fix device for batch Ot solver in `ot.batch` (PR #784, Issue #783)
 
 ## 0.9.6.post1
 
