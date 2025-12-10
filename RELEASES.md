@@ -2,9 +2,17 @@
 
 ## 0.9.7.dev0
 
+This new release adds support for sparse cost matrices in the exact EMD solver. Users can now pass sparse cost matrices (e.g., k-NN graphs, sparse graphs) and receive sparse transport plans, significantly reducing memory footprint for large-scale problems. The implementation is backend-agnostic, automatically handling scipy.sparse for NumPy and torch.sparse for PyTorch, and preserves full gradient computation capabilities for automatic differentiation in PyTorch. This enables efficient solving of OT problems on graphs with millions of nodes where only a sparse subset of edges have finite costs.
+
+#### New features
+- Add support for sparse cost matrices in exact EMD solver `ot.emd` and `ot.emd2` (PR #778)
+- Migrate backend from deprecated `scipy.sparse.coo_matrix` to modern `scipy.sparse.coo_array` API (PR #TBD)
+
 #### Closed issues
+- Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
 - Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
 - Add test for build from source (PR #772, Issue #764)
+- Fix device for batch Ot solver in `ot.batch` (PR #784, Issue #783)
 
 ## 0.9.6.post1
 
